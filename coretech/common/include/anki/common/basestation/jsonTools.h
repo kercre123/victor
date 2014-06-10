@@ -38,6 +38,39 @@ namespace Anki
     
     // Gets a value by name.  Returns true if value set successfully, false otherwise.
     template<typename T>
+    bool GetValueOptional(const Json::Value& config, const std::string& key, T& value);
+    
+    // Gets (fixed-length) array of values by name.  Returns true if values is set
+    // successfully, false otherwise.
+    template<typename T, size_t N>
+    bool GetArrayOptional(const Json::Value& config, const std::string& key, std::array<T,N>& values);
+    
+    // Gets (variable-length) vector of values by name.  Returns true if values is
+    // set successfully, false otherwise.
+    template<typename T>
+    bool GetVectorOptional(const Json::Value& config, const std::string& key, std::vector<T>& values);
+    
+    // Get an Anki::Point by name.  Returns true if the point is set successfully,
+    // or false otherwise.
+    template<typename T, size_t N>
+    bool GetPointOptional(const Json::Value& node, const std::string& key, Anki::Point<N,T>& pt);
+    
+    // Get an Anki::Pose3d object by name (translation, rotation axis/angle).
+    // Returns true if Pose is set successfully, false otherwise.
+    bool GetPoseOptional(const Json::Value& node, const std::string& key, Anki::Pose3d& pose);
+    
+    // Dump the json to stdout (pretty-printed). The depth argument limits
+    // the depth of the tree that is printed. It is 0 by default, which
+    // means to print the whole tree
+    void PrintJson(const Json::Value& config, int maxDepth = 0);
+    
+#if 0
+#pragma mark --- Templated Implementations ---
+#endif
+
+    // TODO: Move implementations to a separate _impl.h file
+    
+    template<typename T>
     bool GetValueOptional(const Json::Value& config, const std::string& key, T& value)
     {
       const Json::Value& child(config[key]);
@@ -48,8 +81,6 @@ namespace Anki
       return true;
     }
     
-    // Gets (fixed-length) array of values by name.  Returns true if values is set
-    // successfully, false otherwise.
     template<typename T, size_t N>
     bool GetArrayOptional(const Json::Value& config, const std::string& key, std::array<T,N>& values)
     {
@@ -64,8 +95,6 @@ namespace Anki
       return true;
     }
     
-    // Gets (variable-length) vector of values by name.  Returns true if values is
-    // set successfully, false otherwise.
     template<typename T>
     bool GetVectorOptional(const Json::Value& config, const std::string& key, std::vector<T>& values)
     {
@@ -81,8 +110,6 @@ namespace Anki
       return true;
     }
     
-    // Get an Anki::Point by name.  Returns true if the point is set successfully,
-    // or false otherwise.
     template<typename T, size_t N>
     bool GetPointOptional(const Json::Value& node, const std::string& key, Anki::Point<N,T>& pt)
     {
@@ -100,15 +127,6 @@ namespace Anki
       
       return retVal;
     }
-    
-    // Get an Anki::Pose3d object by name (translation, rotation axis/angle).
-    // Returns true if Pose is set successfully, false otherwise.
-    bool GetPoseOptional(const Json::Value& node, const std::string& key, Anki::Pose3d& pose);
-    
-    // Dump the json to stdout (pretty-printed). The depth argument limits
-    // the depth of the tree that is printed. It is 0 by default, which
-    // means to print the whole tree
-    void PrintJson(const Json::Value& config, int maxDepth = 0);
     
     
   } // namespace JsonTools

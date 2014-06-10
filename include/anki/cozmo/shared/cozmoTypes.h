@@ -74,6 +74,11 @@ namespace Anki {
       IS_PICKING_OR_PLACING = 4
     } RobotStatusFlag;
     
+    
+    // A key associated with each computed pose retrieved from history
+    // to be used to check its validity at a later time.
+    typedef u32 HistPoseKey;
+    
   }
 }
 

@@ -92,7 +92,7 @@ namespace Anki
     }
 
     DebugStreamClient::Object::Object()
-      : bufferLength(0), buffer(NULL), startOfPayload(NULL)
+      : buffer(NULL), bufferLength(0), startOfPayload(NULL)
     {
     }
 
@@ -313,7 +313,7 @@ namespace Anki
 
       SerializedBufferReconstructingIterator iterator(serializedBuffer);
 
-      bool aMessageAlreadyPrinted = false;
+      //bool aMessageAlreadyPrinted = false;
 
       while(iterator.HasNext()) {
         s32 dataLength;

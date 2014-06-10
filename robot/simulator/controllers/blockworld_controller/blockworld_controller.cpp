@@ -181,6 +181,8 @@ int main(int argc, char **argv)
           
           const Block* block = dynamic_cast<Block*>(blocksByID.second);
           
+          CORETECH_THROW_IF(block == nullptr);
+          
           u32 color = VIZ_COLOR_DEFAULT;
           
           // Special treatment for block of interest
@@ -243,7 +245,7 @@ int main(int argc, char **argv)
         } // FOR each ID of this type
       } // FOR each type
       
-    } // if locks were updated
+    } // if blocks were updated
     
     // Draw all robot poses
     // TODO: Only send when pose has changed?
@@ -256,6 +258,16 @@ int main(int argc, char **argv)
       
       // Full Webots CozmoBot model
       VizManager::getInstance()->DrawRobot(robotID, robot->get_pose(), robot->get_headAngle(), robot->get_liftAngle());
+      
+      // Robot bounding box
+      using namespace Quad;
+      Quad2f quadOnGround2d = robot->GetBoundingQuadXY(1.f);
+      Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
+                            Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
+                            Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
+                            Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
+
+      VizManager::getInstance()->DrawQuad(robot->get_ID()+100, quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
     }
 
     /////////// End visualization update ////////////

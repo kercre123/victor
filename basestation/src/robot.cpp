@@ -95,15 +95,21 @@ namespace Anki {
 #pragma mark --- Robot Class Implementations ---
     
     Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner)
-    : ID_(robotID), msgHandler_(msgHandler), world_(world), pathPlanner_(pathPlanner),
-      pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}),
-      frameId_(0),
-      neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
-      headCamPose({0,0,1,  -1,0,0,  0,-1,0},
-                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
-      liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
-      currentHeadAngle(0), currentLiftAngle(0), currPathSegment_(-1),
-      isCarryingBlock_(false), isPickingOrPlacing_(false)      
+      : ID_(robotID)
+      , msgHandler_(msgHandler)
+      , world_(world)
+      , pathPlanner_(pathPlanner)
+      , pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
+      , frameId_(0)
+      , neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose)
+      , headCamPose({0,0,1,  -1,0,0,  0,-1,0},
+                    {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose)
+      , liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose)
+      , currentHeadAngle(0)
+      , currentLiftAngle(0)
+      , currPathSegment_(-1)
+      , isCarryingBlock_(false)
+      , isPickingOrPlacing_(false)
     {
       this->set_headAngle(currentHeadAngle);
       pdo_ = new PathDolerOuter(msgHandler, robotID);
@@ -212,7 +218,7 @@ namespace Anki {
       newHeadPose.rotateBy(Rvec);
       
       // Update the head camera's pose
-      this->camHead.set_pose(newHeadPose);
+      this->camHead.SetPose(newHeadPose);
       
     } // set_headAngle()
 
@@ -672,10 +678,10 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
     
-    const Quad2f Robot::CanonicalBoundingBoxXY({{-0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE}},
-                                               {{-0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE-ROBOT_BOUNDING_LENGTH}},
-                                               {{ 0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE}},
-                                               {{ 0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE-ROBOT_BOUNDING_LENGTH}});
+    const Quad2f Robot::CanonicalBoundingBoxXY({{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
+                                               {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
+                                               {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y}},
+                                               {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y}});
     
     Quad2f Robot::GetBoundingQuadXY(const f32 paddingScale) const
     {
@@ -727,9 +733,10 @@ namespace Anki {
 
     Result Robot::ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                                   TimeStamp_t& t, RobotPoseStamp** p,
+                                                  HistPoseKey* key,
                                                   bool withInterpolation)
     {
-      return poseHistory_.ComputeAndInsertPoseAt(t_request, t, p, withInterpolation);
+      return poseHistory_.ComputeAndInsertPoseAt(t_request, t, p, key, withInterpolation);
     }
 
     Result Robot::GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
@@ -737,11 +744,16 @@ namespace Anki {
       return poseHistory_.GetVisionOnlyPoseAt(t_request, p);
     }
 
-    Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
+    Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key)
     {
-      return poseHistory_.GetComputedPoseAt(t_request, p);
+      return poseHistory_.GetComputedPoseAt(t_request, p, key);
     }
 
+    bool Robot::IsValidPoseKey(const HistPoseKey key) const
+    {
+      return poseHistory_.IsValidPoseKey(key);
+    }
+    
     void Robot::UpdateCurrPoseFromHistory()
     {
       TimeStamp_t t;

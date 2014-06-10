@@ -26,9 +26,12 @@ namespace Anki {
   namespace Vision {
     
     CameraCalibration::CameraCalibration()
-    : nrows(480), ncols(640), focalLength_x(1.f), focalLength_y(1.f),
-    center(0.f,0.f),
-    skew(0.f)
+    : _nrows(480)
+    , _ncols(640)
+    , _focalLength_x(1.f)
+    , _focalLength_y(1.f)
+    , _center(0.f,0.f)
+    , _skew(0.f)
     {
       /*
        std::fill(this->distortionCoeffs.begin(),
@@ -41,9 +44,12 @@ namespace Anki {
                                          const f32 fx,    const f32 fy,
                                          const f32 cenx,  const f32 ceny,
                                          const f32 skew_in)
-    : nrows(nrowsIn), ncols(ncolsIn),
-    focalLength_x(fx), focalLength_y(fy),
-    center(cenx, ceny), skew(skew_in)
+    : _nrows(nrowsIn)
+    , _ncols(ncolsIn)
+    , _focalLength_x(fx)
+    , _focalLength_y(fy)
+    , _center(cenx, ceny)
+    , _skew(skew_in)
     {
       /*
        std::fill(this->distortionCoeffs.begin(),
@@ -55,25 +61,25 @@ namespace Anki {
     CameraCalibration::CameraCalibration(const Json::Value &jsonNode)
     {
       CORETECH_ASSERT(jsonNode.isMember("nrows"));
-      nrows = JsonTools::GetValue<u16>(jsonNode["nrows"]);
+      _nrows = JsonTools::GetValue<u16>(jsonNode["nrows"]);
       
       CORETECH_ASSERT(jsonNode.isMember("ncols"));
-      ncols = JsonTools::GetValue<u16>(jsonNode["ncols"]);
+      _ncols = JsonTools::GetValue<u16>(jsonNode["ncols"]);
       
       CORETECH_ASSERT(jsonNode.isMember("focalLength_x"));
-      focalLength_x = JsonTools::GetValue<f32>(jsonNode["focalLength_x"]);
+      _focalLength_x = JsonTools::GetValue<f32>(jsonNode["focalLength_x"]);
       
       CORETECH_ASSERT(jsonNode.isMember("focalLength_y"))
-      focalLength_y = JsonTools::GetValue<f32>(jsonNode["focalLength_y"]);
+      _focalLength_y = JsonTools::GetValue<f32>(jsonNode["focalLength_y"]);
       
       CORETECH_ASSERT(jsonNode.isMember("center_x"))
-      center.x() = JsonTools::GetValue<f32>(jsonNode["center_x"]);
+      _center.x() = JsonTools::GetValue<f32>(jsonNode["center_x"]);
       
       CORETECH_ASSERT(jsonNode.isMember("center_y"))
-      center.y() = JsonTools::GetValue<f32>(jsonNode["center_y"]);
+      _center.y() = JsonTools::GetValue<f32>(jsonNode["center_y"]);
       
       CORETECH_ASSERT(jsonNode.isMember("skew"))
-      skew = JsonTools::GetValue<f32>(jsonNode["skew"]);
+      _skew = JsonTools::GetValue<f32>(jsonNode["skew"]);
       
       // TODO: Add distortion coefficients
     }
@@ -81,35 +87,35 @@ namespace Anki {
     
     void CameraCalibration::CreateJson(Json::Value& jsonNode) const
     {
-      jsonNode["nrows"] = nrows;
-      jsonNode["ncols"] = ncols;
-      jsonNode["focalLength_x"] = focalLength_x;
-      jsonNode["focalLength_y"] = focalLength_y;
-      jsonNode["center_x"] = center.x();
-      jsonNode["center_y"] = center.y();
-      jsonNode["skew"] = skew;
+      jsonNode["nrows"]         = _nrows;
+      jsonNode["ncols"]         = _ncols;
+      jsonNode["focalLength_x"] = _focalLength_x;
+      jsonNode["focalLength_y"] = _focalLength_y;
+      jsonNode["center_x"]      = _center.x();
+      jsonNode["center_y"]      = _center.y();
+      jsonNode["skew"]          = _skew;
     }
     
     
     template<typename PRECISION>
-    SmallSquareMatrix<3,PRECISION> CameraCalibration::get_calibrationMatrix() const
+    SmallSquareMatrix<3,PRECISION> CameraCalibration::GetCalibrationMatrix() const
     {
       const PRECISION K_data[9] = {
-        static_cast<PRECISION>(focalLength_x), static_cast<PRECISION>(focalLength_x*skew), static_cast<PRECISION>(center.x()),
-        PRECISION(0),                          static_cast<PRECISION>(focalLength_y),      static_cast<PRECISION>(center.y()),
-        PRECISION(0),                          PRECISION(0),                               PRECISION(1)};
+        static_cast<PRECISION>(_focalLength_x), static_cast<PRECISION>(_focalLength_x*_skew), static_cast<PRECISION>(_center.x()),
+        PRECISION(0),                           static_cast<PRECISION>(_focalLength_y),       static_cast<PRECISION>(_center.y()),
+        PRECISION(0),                           PRECISION(0),                                 PRECISION(1)};
       
       return SmallSquareMatrix<3,PRECISION>(K_data);
     } // get_calibrationMatrix()
     
     template<typename PRECISION>
-    SmallSquareMatrix<3,PRECISION> CameraCalibration::get_invCalibrationMatrix() const
+    SmallSquareMatrix<3,PRECISION> CameraCalibration::GetInvCalibrationMatrix() const
     {
       const PRECISION invK_data[9] = {
-        static_cast<PRECISION>(1.f/focalLength_x),
-        static_cast<PRECISION>(-skew/focalLength_y),
-        static_cast<PRECISION>(center.y()*skew/focalLength_y - center.x()/focalLength_x),
-        PRECISION(0),    static_cast<PRECISION>(1.f/focalLength_y),    static_cast<PRECISION>(-center.y()/focalLength_y),
+        static_cast<PRECISION>(1.f/_focalLength_x),
+        static_cast<PRECISION>(-_skew/_focalLength_y),
+        static_cast<PRECISION>(_center.y()*_skew/_focalLength_y - _center.x()/_focalLength_x),
+        PRECISION(0),    static_cast<PRECISION>(1.f/_focalLength_y),    static_cast<PRECISION>(-_center.y()/_focalLength_y),
         PRECISION(0),    PRECISION(0),                                 PRECISION(1)
       };
       
@@ -117,10 +123,10 @@ namespace Anki {
     }
 
     // Explicit instantiation for single and double precision
-    template SmallSquareMatrix<3,f64> CameraCalibration::get_calibrationMatrix() const;
-    template SmallSquareMatrix<3,f32>  CameraCalibration::get_calibrationMatrix() const;
-    template SmallSquareMatrix<3,f64> CameraCalibration::get_invCalibrationMatrix() const;
-    template SmallSquareMatrix<3,f32>  CameraCalibration::get_invCalibrationMatrix() const;
+    template SmallSquareMatrix<3,f64>  CameraCalibration::GetCalibrationMatrix() const;
+    template SmallSquareMatrix<3,f32>  CameraCalibration::GetCalibrationMatrix() const;
+    template SmallSquareMatrix<3,f64>  CameraCalibration::GetInvCalibrationMatrix() const;
+    template SmallSquareMatrix<3,f32>  CameraCalibration::GetInvCalibrationMatrix() const;
     
   } // namespace Vision
 } // namespace Anki

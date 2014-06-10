@@ -24,6 +24,10 @@ namespace Anki {
   
   namespace Vision {
     
+    // Forward declarations:
+    class ObservableObject;
+    class KnownMarker;
+    
     class Camera
     {
     public:
@@ -33,12 +37,12 @@ namespace Anki {
       Camera(const CameraID_t cam_id, const CameraCalibration& calib, const Pose3d& pose);
       
       // Accessors:
-      const CameraID_t          get_id()          const;
-      const Pose3d&             get_pose()        const;
-      const CameraCalibration&  get_calibration() const;
+      const CameraID_t          GetId()          const;
+      const Pose3d&             GetPose()        const;
+      const CameraCalibration&  GetCalibration() const;
       
-      void set_pose(const Pose3d& newPose);
-      void set_calibration(const CameraCalibration& calib);
+      void SetPose(const Pose3d& newPose);
+      void SetCalibration(const CameraCalibration& calib);
       
       bool IsCalibrated() const;
       
@@ -80,7 +84,12 @@ namespace Anki {
                            std::array<Point2f,NumPoints>       &imgPoints) const;
 
       // Register an object as an "occluder" for this camera
-      void AddOccluder(const Vision::ObservableObject* object);
+      void AddOccluder(const ObservableObject& object);
+      
+      // Register a KnownMarker as an "occluder" for this camera
+      void AddOccluder(const KnownMarker& marker);
+      
+      // Clear all occluders known to this camera
       void ClearOccluders();
       
       // Returns true when the point (computed by one of the projection functions
@@ -102,12 +111,12 @@ namespace Anki {
       // (This requires an image class)
       
     protected:
-      CameraID_t         camID;
-      CameraCalibration  calibration;
-      bool               isCalibrationSet;
-      Pose3d             pose;
+      CameraID_t               _camID;
+      bool                     _isCalibrated;
+      CameraCalibration        _calibration;
+      Pose3d                   _pose;
       
-      OccluderList       occluderList;
+      OccluderList             _occluderList;
       
       // TODO: Include const reference or pointer to a parent Robot object?
       void DistortCoordinate(const Point2f& ptIn, Point2f& ptDistorted);
@@ -124,35 +133,35 @@ namespace Anki {
     }; // class Camera
     
     // Inline accessors:
-    inline const CameraID_t Camera::get_id(void) const
-    { return this->camID; }
+    inline const CameraID_t Camera::GetId(void) const
+    { return _camID; }
     
-    inline const Pose3d& Camera::get_pose(void) const
-    { return this->pose; }
+    inline const Pose3d& Camera::GetPose(void) const
+    { return _pose; }
     
-    inline const CameraCalibration& Camera::get_calibration(void) const
-    { return this->calibration; }
+    inline const CameraCalibration& Camera::GetCalibration(void) const
+    { return _calibration; }
     
-    inline void Camera::set_calibration(const CameraCalibration &calib)
-    { this->calibration = calib; this->isCalibrationSet = true; }
+    inline void Camera::SetCalibration(const CameraCalibration &calib)
+    { _calibration = calib; _isCalibrated = true; }
     
-    inline void Camera::set_pose(const Pose3d& newPose)
-    { this->pose = newPose; }
+    inline void Camera::SetPose(const Pose3d& newPose)
+    { _pose = newPose; }
     
     inline bool Camera::IsCalibrated() const {
-      return this->isCalibrationSet;
+      return _isCalibrated; //(_calibration != nullptr);
     }
     
     inline bool Camera::IsOccluded(const Point2f& projectedPoint, const f32 atDistance) const {
-      return occluderList.IsOccluded(projectedPoint, atDistance);
+      return _occluderList.IsOccluded(projectedPoint, atDistance);
     }
     
     inline bool Camera::IsAnythingBehind(const Point2f& projectedPoint, const f32 atDistance) const {
-      return occluderList.IsAnythingBehind(projectedPoint, atDistance);
+      return _occluderList.IsAnythingBehind(projectedPoint, atDistance);
     }
 
     inline bool Camera::IsAnythingBehind(const Quad2f& projectedQuad, const f32 atDistance) const {
-      return occluderList.IsAnythingBehind(projectedQuad, atDistance);
+      return _occluderList.IsAnythingBehind(projectedQuad, atDistance);
     }
 
     

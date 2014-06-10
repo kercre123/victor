@@ -57,11 +57,14 @@ namespace Anki {
       inline const Quad2f& GetImageCorners() const;
       inline const Camera& GetSeenBy()       const;
       
+      inline void MarkUsed(bool used);
+      inline bool IsUsed();
     protected:
       TimeStamp_t    observationTime_;
       Quad2f         imgCorners_;
       Camera         seenByCam_;
       
+      bool           used_;
     }; // class ObservedMarker
     
     
@@ -145,6 +148,14 @@ namespace Anki {
       return seenByCam_;
     }
     
+    inline void ObservedMarker::MarkUsed(bool used) {
+      used_ = used;
+    }
+    
+    inline bool ObservedMarker::IsUsed() {
+      return used_;
+    }
+    
     inline void KnownMarker::SetWasObserved(const bool wasObserved) {
       wasObserved_ = wasObserved;
     }
@@ -152,7 +163,6 @@ namespace Anki {
     inline bool KnownMarker::GetWasObserved() const {
       return wasObserved_;
     }
-    
 
   } // namespace Vision
 } // namespace Anki

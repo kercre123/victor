@@ -92,6 +92,11 @@ namespace Anki {
 
         static RobotState robotState_;
         
+        // History of the last 2 RobotState messages that were sent to the basestation.
+        // Used to avoid repeating a send.
+        TimeStamp_t robotStateSendHist_[2];
+        u8 robotStateSendHistIdx_ = 0;
+        
       } // private namespace
       
 
@@ -105,7 +110,7 @@ namespace Anki {
       void ProcessMessage(const ID msgID, const u8* buffer)
       {
         if(LookupTable_[msgID].dispatchFcn != NULL) {
-          PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
+          //PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
           
           (*LookupTable_[msgID].dispatchFcn)(buffer);
         }
@@ -444,9 +449,24 @@ namespace Anki {
 // ----------- Send messages -----------------
       
       
-      Result SendRobotStateMsg()
+      Result SendRobotStateMsg(const RobotState* msg)
       {
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &robotState_) == true) {
+        const RobotState* m = &robotState_;
+        if (msg) {
+          m = msg;
+        }
+        
+        // Check if a state message with this timestamp was already sent
+        for (u8 i=0; i < 2; ++i) {
+          if (robotStateSendHist_[i] == m->timestamp) {
+            return RESULT_FAIL;
+          }
+        }
+        
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), m) == true) {
+          // Update send history
+          robotStateSendHist_[robotStateSendHistIdx_] = m->timestamp;
+          if (++robotStateSendHistIdx_ > 1) robotStateSendHistIdx_ = 0;
           return RESULT_OK;
         } else {
           return RESULT_FAIL;

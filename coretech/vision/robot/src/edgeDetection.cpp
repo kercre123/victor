@@ -61,7 +61,7 @@ namespace Anki
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
-      const s32 imageStride = image.get_stride();
+      //const s32 imageStride = image.get_stride();
 
       edgeLists.imageHeight = imageHeight;
       edgeLists.imageWidth = imageWidth;
@@ -102,7 +102,7 @@ namespace Anki
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
-      const s32 imageStride = image.get_stride();
+      //const s32 imageStride = image.get_stride();
 
       edgeLists.imageHeight = imageHeight;
       edgeLists.imageWidth = imageWidth;
@@ -119,7 +119,7 @@ namespace Anki
       // Detect horizontal positive and negative transitions
       //
 
-      const s32 imageStride = image.get_stride();
+      //const s32 imageStride = image.get_stride();
 
       //const Rectangle<u32> imageRegionOfInterestU32(imageRegionOfInterest.left, imageRegionOfInterest.right, imageRegionOfInterest.top, imageRegionOfInterest.bottom);
 
@@ -366,7 +366,7 @@ namespace Anki
       // Detect horizontal positive and negative transitions
       //
 
-      const s32 imageStride = image.get_stride();
+      //const s32 imageStride = image.get_stride();
 
       s32 xDecreasingSize = edgeLists.xDecreasing.get_size();
       s32 xIncreasingSize = edgeLists.xIncreasing.get_size();

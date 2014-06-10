@@ -123,8 +123,8 @@ namespace Anki {
       const Block* dockBlock_;
       const Vision::KnownMarker *dockMarker_;
       
-      // Target pose for predock
-      Pose3d nearestPreDockPose_;
+      // Goal pose for path planning (e.g. nearest pre-dock pose)
+      Pose3d goalPose_;
       
       // A general time value for gating state transitions
       double waitUntilTime_;

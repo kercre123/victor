@@ -215,24 +215,23 @@ namespace Anki {
     
     // Input:   list of observed markers
     // Outputs: the objects seen and the unused markers
-    void ObservableObjectLibrary::CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
+    void ObservableObjectLibrary::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
                                                            std::vector<ObservableObject*>& objectsSeen,
                                                            const CameraID_t seenOnlyBy) const
     {
       // Group the markers by object type
       std::map<ObjectType_t, std::vector<const ObservedMarker*>> markersWithObjectType;
-      std::list<ObservedMarker> markersUnused;
       
-      for(auto & marker : markers) {
+      for(auto marker : markers) {
         
-        bool used = false;
+        marker->MarkUsed(false);
         
         // If seenOnlyBy was specified, make sure this marker was seen by that
         // camera
-        if(seenOnlyBy == ANY_CAMERA || marker.GetSeenBy().get_id() == seenOnlyBy)
+        if(seenOnlyBy == ANY_CAMERA || marker->GetSeenBy().GetId() == seenOnlyBy)
         {
           // Find all objects which use this marker...
-          std::set<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(marker);
+          std::set<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(*marker);
           
           // ...if there are any, add this marker to the list of observed markers
           // that corresponds to this object type.
@@ -247,15 +246,10 @@ namespace Anki {
                }
                */
             }
-            markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(&marker);
-            used = true;
+            markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(marker);
+            marker->MarkUsed(true);
           } // IF objectsWithMarker != NULL
         } // IF seenOnlyBy
-        
-        if(not used) {
-          // Keep track of which markers went unused
-          markersUnused.push_back(marker);
-        }
         
       } // For each marker we saw
       
@@ -361,9 +355,6 @@ namespace Anki {
         
       } // FOR each objectType
       
-      // Return the unused markers
-      std::swap(markers, markersUnused);
-      
     } // CreateObjectsFromMarkers()
     
     
@@ -459,7 +450,7 @@ namespace Anki {
         {
           const Vision::ObservedMarker* obsMarker = match.first;
           
-          if(obsMarker->GetSeenBy().get_id() == camera->get_id())
+          if(obsMarker->GetSeenBy().GetId() == camera->GetId())
           {
             const Vision::KnownMarker* libMarker = &match.second;
             

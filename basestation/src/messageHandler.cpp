@@ -163,7 +163,8 @@ namespace Anki {
           // head angle and to attach as parent of the camera pose.
           TimeStamp_t t;
           RobotPoseStamp* p = nullptr;
-          if (robot->ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p) == RESULT_FAIL) {
+          HistPoseKey poseKey;
+          if (robot->ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey) == RESULT_FAIL) {
             PRINT_NAMED_WARNING("MessageHandler.ProcessMessageVisionMarker.HistoricalPoseNotFound", "Time: %d, hist: %d to %d\n", msg.timestamp, robot->GetPoseHistory().GetOldestTimeStamp(), robot->GetPoseHistory().GetNewestTimeStamp());
             return RESULT_FAIL;
           }
@@ -183,13 +184,13 @@ namespace Anki {
           camPose.set_parent(&(p->GetPose()));
           
           // Update the head camera's pose
-          camera.set_pose(camPose);
+          camera.SetPose(camPose);
 
           // Create observed marker
           Vision::ObservedMarker marker(t, msg.markerType, corners, camera);
           
           // Give this vision marker to BlockWorld for processing
-          blockWorld_->QueueObservedMarker(marker);
+          blockWorld_->QueueObservedMarker(marker, poseKey);
         }
         else {
           PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",

@@ -69,9 +69,9 @@ namespace Anki {
       // Used by visionSystem for prediction during tracking
       void UpdateRobotStateMsg();
       
-      // Send messages
-      Result SendRobotStateMsg();     // Only sends message.
-                                      // Actual message contents are updated in UpdateRobotStateMsg()
+      // Sends robot state message, either the one passed in or the one
+      // stored internally that is updated by UpdateRobotStateMsg().
+      Result SendRobotStateMsg(const RobotState* msg = NULL);
       
       // For sending text message to basestation
       int SendText(const char *format, ...);

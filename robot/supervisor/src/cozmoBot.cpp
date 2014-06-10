@@ -44,6 +44,10 @@ namespace Anki {
 
         Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
         bool wasConnected_ = false;
+        
+        // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
+        // times through the main loop
+        s32 robotStateMessageCounter_ = 0;
 
       } // Robot private namespace
       
@@ -161,6 +165,8 @@ namespace Anki {
 
         // Set starting state
         mode_ = INIT_MOTOR_CALIBRATION;
+        
+        robotStateMessageCounter_ = 0;
         
         return RESULT_OK;
         
@@ -303,7 +309,11 @@ namespace Anki {
         
         Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)
-        Messages::SendRobotStateMsg();
+        ++robotStateMessageCounter_;
+        if(robotStateMessageCounter_ == STATE_MESSAGE_FREQUENCY) {
+          Messages::SendRobotStateMsg();
+          robotStateMessageCounter_ = 0;
+        }
 #endif
         
 // TBD - This should be moved to simulator just after step_MainExecution is called

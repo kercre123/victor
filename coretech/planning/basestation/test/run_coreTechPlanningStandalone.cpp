@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
       return -1;
     }
     xythetaPlanner planner(env);
-    float theta = 0.0;
+    //float theta = 0.0;
     if(argc == 7) {
       planner.AllowFreeTurnInPlaceAtGoal();
     }
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
       return -1;
     }
     xythetaPlanner planner(env);
-    float theta = 0.0;
+    //float theta = 0.0;
 
     State_c goal(atof(argv[3]), atof(argv[4]), atof(argv[5]));
     State_c start(atof(argv[6]), atof(argv[7]), atof(argv[8]));

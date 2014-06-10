@@ -35,9 +35,11 @@ namespace Anki {
         // to have settled enough for recalibration.
         const u32 LIFT_RELAX_TIME = 200000;
       
+#if RECALIBRATE_AT_LIMITS
         // Power with which to approach limit angle (after the intended velocity profile has been executed)
         // TODO: Shouldn't have to be this strong. Lower when 2.1 version electronics are ready.
         const f32 LIMIT_APPROACH_POWER = 0.4;
+#endif
         
         const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
         

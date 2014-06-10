@@ -215,7 +215,7 @@ namespace Anki {
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
       
-      virtual Block* Clone() const override
+      virtual Block_Cube1x1* Clone() const override
       {
         // Call the copy constructor
         return new Block_Cube1x1(*this);
@@ -237,7 +237,7 @@ namespace Anki {
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
       
-      virtual Block* Clone() const override
+      virtual Block_2x1* Clone() const override
       {
         // Call the copy constructor
         return new Block_2x1(*this);

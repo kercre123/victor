@@ -46,7 +46,7 @@ namespace Anki {
         // Should be roughly the length of the forks on the lift.
         const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 30;
 
-        const f32 FAR_DIST_TO_BLOCK_THRESH_MM = 100;
+        //const f32 FAR_DIST_TO_BLOCK_THRESH_MM = 100;
         
         // Distance from block face at which robot should "dock"
         f32 dockOffsetDistX_ = 0.f;
@@ -61,7 +61,7 @@ namespace Anki {
         const u32 GIVEUP_DOCKING_TIMEOUT_US = 1000000;
         
         const u16 DOCK_APPROACH_SPEED_MMPS = 10;
-        const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
+        //const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 60;
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
         

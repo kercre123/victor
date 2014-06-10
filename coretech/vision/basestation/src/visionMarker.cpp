@@ -23,7 +23,7 @@ namespace Anki {
     
     
     ObservedMarker::ObservedMarker(const TimeStamp_t t, const Code& withCode, const Quad2f& corners, const Camera& seenBy)
-    : Marker(withCode), observationTime_(t), imgCorners_(corners), seenByCam_(seenBy)
+    : Marker(withCode), observationTime_(t), imgCorners_(corners), seenByCam_(seenBy), used_(false)
     {
 
     }
@@ -133,7 +133,7 @@ namespace Anki {
       using namespace Quad;
       
       // Get the marker's pose relative to the camera
-      Pose3d markerPoseWrtCamera( pose_.getWithRespectTo(&camera.get_pose()) );
+      Pose3d markerPoseWrtCamera( pose_.getWithRespectTo(&camera.GetPose()) );
       
       // Make sure the marker is at least in front of the camera!
       if(markerPoseWrtCamera.get_translation().z() <= 0.f) {

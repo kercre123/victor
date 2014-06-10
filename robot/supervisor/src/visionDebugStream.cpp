@@ -17,13 +17,15 @@ namespace Anki {
       namespace DebugStream
       {
         namespace { // private namespace for all state
+
+          SerializedBuffer debugStreamBuffer_;
+          
+#if SEND_DEBUG_STREAM
           const s32 DEBUG_STREAM_BUFFER_SIZE = 1000000;
           const s32 MAX_BYTES_PER_SECOND = 500000;
           const s32 SEND_EVERY_N_FRAMES = 1;
 
           OFFCHIP u8 debugStreamBufferData_[DEBUG_STREAM_BUFFER_SIZE];
-
-          SerializedBuffer debugStreamBuffer_;
 
           s32 lastSecond;
           s32 bytesSinceLastSecond;
@@ -34,6 +36,7 @@ namespace Anki {
           static u32 computeBenchmarkResults_end;
 
           const Vision::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QQQVGA;
+#endif
         } // private namespace
 
         Result SendBuffer(SerializedBuffer &toSend, MemoryStack scratch)

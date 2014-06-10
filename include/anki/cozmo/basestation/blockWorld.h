@@ -27,6 +27,7 @@
 
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 
 
 namespace Anki
@@ -60,7 +61,7 @@ namespace Anki
       // Empties the queue of all observed markers
       void ClearAllObservedMarkers();
       
-      void QueueObservedMarker(const Vision::ObservedMarker& marker);
+      void QueueObservedMarker(const Vision::ObservedMarker& marker, const HistPoseKey poseKey);
                                //Robot* seenByRobot);
       
       void CommandRobotToDock(const RobotID_t whichRobot,
@@ -107,17 +108,18 @@ namespace Anki
       
       // Typedefs / Aliases
       //using ObsMarkerContainer_t = std::multiset<Vision::ObservedMarker, Vision::ObservedMarker::Sorter()>;
-      using ObsMarkerList_t = std::list<Vision::ObservedMarker>;
-      using ObsMarkerListMap_t = std::map<TimeStamp_t, ObsMarkerList_t>;
+      //using ObsMarkerList_t = std::list<Vision::ObservedMarker>;
+      using PoseKeyObsMarkerMap_t = std::multimap<HistPoseKey, Vision::ObservedMarker>;
+      using ObsMarkerListMap_t = std::map<TimeStamp_t, PoseKeyObsMarkerMap_t>;
       
       
       // Methods
       
       //BlockWorld(); // protected constructor for singleton
 
-      bool UpdateRobotPose(Robot* robot, ObsMarkerList_t& obsMarkersAtTimestamp);
+      bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
       
-      uint32_t UpdateBlockPoses(ObsMarkerList_t& obsMarkersAtTimestamp);
+      uint32_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                   const ObjectsMap_t& objectsExisting,
@@ -128,6 +130,13 @@ namespace Anki
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                ObjectsMap_t& objectsExisting);
       
+      // Remove all posekey-marker pairs from the map if marker is marked used
+      void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);
+      
+      // Generates a list of ObservedMarker pointers that reference the actual ObservedMarkers
+      // stored in poseKeyObsMarkerMap
+      void GetObsMarkerList(const PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap,
+                            std::list<Vision::ObservedMarker*>& lst);
       
 
       // Member Variables

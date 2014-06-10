@@ -542,7 +542,7 @@ namespace Anki
 
       SerializedBuffer::SerializeRawBasicType<Quadrilateral<f32> >("corners", this->corners, buffer, bufferLength);
       SerializedBuffer::SerializeRawBasicType<s32>("markerType", this->markerType, buffer, bufferLength);
-      SerializedBuffer::SerializeRawBasicType<bool>("isValid", this->isValid, buffer, bufferLength);
+      SerializedBuffer::SerializeRawBasicType<ValidityCode>("validity", this->validity, buffer, bufferLength);
       SerializedBuffer::SerializeRawBasicType<f32>("observedOrientation", this->observedOrientation, buffer, bufferLength);
 
       return RESULT_OK;
@@ -556,7 +556,7 @@ namespace Anki
 
       this->corners = SerializedBuffer::DeserializeRawBasicType<Quadrilateral<f32> >(NULL, buffer, bufferLength);
       this->markerType = static_cast<Vision::MarkerType>(SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength));
-      this->isValid = SerializedBuffer::DeserializeRawBasicType<bool>(NULL, buffer, bufferLength);
+      this->validity = SerializedBuffer::DeserializeRawBasicType<ValidityCode>(NULL, buffer, bufferLength);
       this->observedOrientation = SerializedBuffer::DeserializeRawBasicType<f32>(NULL, buffer, bufferLength);
 
       return RESULT_OK;
@@ -737,7 +737,7 @@ namespace Anki
       using namespace VisionMarkerDecisionTree;
 
       Result lastResult = RESULT_FAIL;
-      this->isValid = false;
+      this->validity = UNKNOWN;
 
       Initialize();
 
@@ -844,22 +844,23 @@ namespace Anki
 
             // Mark this as a valid marker (note that reaching this point should
             // be the only way isValid is true.
-            this->isValid = true;
+            this->validity = VALID;
           } else {
 #ifdef OUTPUT_FAILED_MARKER_STEPS
-            AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected");
+            AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected\n");
 #endif
+            this->validity = UNVERIFIED;
           } // if(verifyLabel == multiClassLabel)
 
 
         } else {
 #ifdef OUTPUT_FAILED_MARKER_STEPS
-          AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected");
+          AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected\n");
 #endif
         } // if(multiClassLabel != MARKER_UNKNOWN)
       } else {
         // Not enough contrast at bright/dark pairs.
-        this->isValid = false;
+        this->validity = LOW_CONTRAST;
         
         // This is relatively common (and reasonable/expected), so maybe we
         // don't want to print these messages?
@@ -870,7 +871,7 @@ namespace Anki
          */
       } // if contrast is sufficient
 
-      if(!this->isValid) {
+      if(this->validity != VALID) {
         this->markerType = Vision::MARKER_UNKNOWN;
         this->corners.SetCast(initQuad); // Just copy the non-reordered, non-refined corners
       }

@@ -186,10 +186,13 @@ namespace Anki {
 
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                              TimeStamp_t& t, RobotPoseStamp** p,
+                                             HistPoseKey* key = nullptr,
                                              bool withInterpolation = false);
 
       Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
-      Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
+      Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
+      
+      bool IsValidPoseKey(const HistPoseKey key) const;
       
       // Updates the current pose to the best estimate based on
       // historical poses including vision-based poses.
@@ -319,7 +322,7 @@ namespace Anki {
     { return this->mode; }
     
     inline void Robot::set_camCalibration(const Vision::CameraCalibration& calib)
-    { this->camHead.set_calibration(calib); }
+    { this->camHead.SetCalibration(calib); }
     
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }
