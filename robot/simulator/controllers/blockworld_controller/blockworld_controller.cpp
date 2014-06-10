@@ -165,6 +165,8 @@ int main(int argc, char **argv)
           
           const Block* block = dynamic_cast<Block*>(blocksByID.second);
           
+          CORETECH_THROW_IF(block == nullptr);
+          
           u32 color = VIZ_COLOR_DEFAULT;
           
           // Special treatment for block of interest
