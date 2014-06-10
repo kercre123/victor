@@ -842,7 +842,7 @@ namespace Anki
         s32 &numCorrespondences)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -923,7 +923,7 @@ namespace Anki
         s32 &numCorrespondences)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1003,7 +1003,7 @@ namespace Anki
         Array<f32> &Atb_t)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1156,7 +1156,7 @@ namespace Anki
         Array<f32> &Atb_t)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1309,7 +1309,7 @@ namespace Anki
         s32 &numTemplatePixelsMatched)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1383,7 +1383,7 @@ namespace Anki
         s32 &numTemplatePixelsMatched)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1456,7 +1456,7 @@ namespace Anki
         FixedLengthList<IndexCorrespondence> &matchingIndexes)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1547,7 +1547,7 @@ namespace Anki
         FixedLengthList<IndexCorrespondence> &matchingIndexes)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
