@@ -44,10 +44,10 @@ namespace Anki {
         const f32 SPEED_FILTERING_COEFF = 0.9f;
         
         
-        const f32 Kp_ = 0.5f; // proportional control constant
-        const f32 Ki_ = 0.02f; // integral control constant
+        f32 Kp_ = 0.5f; // proportional control constant
+        f32 Ki_ = 0.02f; // integral control constant
         f32 angleErrorSum_ = 0.f;
-        const f32 MAX_ERROR_SUM = 200.f;
+        f32 MAX_ERROR_SUM = 200.f;
         
         const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
         f32 LIFT_ANGLE_LOW_LIMIT; // Initialize in Init()
@@ -550,6 +550,14 @@ namespace Anki {
       
         return RESULT_OK;
       }
+      
+      void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+      {
+        Kp_ = kp;
+        Ki_ = ki;
+        MAX_ERROR_SUM = maxIntegralError;
+      }
+      
     } // namespace LiftController
   } // namespace Cozmo
 } // namespace Anki

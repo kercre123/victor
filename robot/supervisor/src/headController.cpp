@@ -33,9 +33,9 @@ namespace Anki {
       
       const f32 SPEED_FILTERING_COEFF = 0.9f;
 
-      const f32 Kp_ = 0.5f; // proportional control constant
-      const f32 Ki_ = 0.001f; // integral control constant
-      const f32 MAX_ERROR_SUM = 200.f;
+      f32 Kp_ = 0.5f; // proportional control constant
+      f32 Ki_ = 0.003f; // integral control constant
+      f32 MAX_ERROR_SUM = 200.f;
      
       // Open loop gain
       // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
@@ -399,6 +399,14 @@ namespace Anki {
       
       return RESULT_OK;
     }
+    
+    void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    {
+      Kp_ = kp;
+      Ki_ = ki;
+      MAX_ERROR_SUM = maxIntegralError;
+    }
+    
   } // namespace HeadController
   } // namespace Cozmo
 } // namespace Anki

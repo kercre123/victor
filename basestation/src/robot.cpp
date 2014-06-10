@@ -745,6 +745,25 @@ namespace Anki {
       
     } // GetBoundingBoxXY()
     
+
+    Result Robot::SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    {
+      MessageSetHeadControllerGains m;
+      m.kp = kp;
+      m.ki = ki;
+      m.maxIntegralError = maxIntegralError;
+      return msgHandler_->SendMessage(ID_, m);
+    }
+    
+    Result Robot::SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    {
+      MessageSetLiftControllerGains m;
+      m.kp = kp;
+      m.ki = ki;
+      m.maxIntegralError = maxIntegralError;
+      return msgHandler_->SendMessage(ID_, m);
+    }
+
     
     // ============ Pose history ===============
     

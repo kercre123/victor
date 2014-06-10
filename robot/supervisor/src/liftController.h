@@ -67,6 +67,8 @@ namespace Anki {
       f32 GetAngleRad();
       
       Result Update();
+
+      void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       
     } // namespace LiftController
   } // namespcae Cozmo
