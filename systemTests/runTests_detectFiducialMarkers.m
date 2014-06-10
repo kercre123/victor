@@ -111,7 +111,7 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
                     jsonData.Poses{iPose}.Scene.CameraExposure,...
                     jsonData.Poses{iPose}.Scene.light)];
                 
-                imwrite(image, outputFilenameImage);
+%                 imwrite(image, outputFilenameImage);
 
                 slashIndexes = strfind(outputFilenameImage, '/');
                 outputFilenameImageJustName = outputFilenameImage((slashIndexes(end)+1):end);
@@ -222,6 +222,31 @@ function [numTotal, numGood] = compileQuadResults(curResultsData, showImageDetec
         for iQuad = 1:length(curResultsData.detectedQuads)
             plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [.95,.95,.95], 'LineWidth', 3); % .95 not 1, because printing converts pure white into pure black
             plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [0,0,0], 'LineWidth', 1);
+            
+            if curResultsData.detectedQuadValidity(iQuad) > 0 && curResultsData.detectedQuadValidity(iQuad) < 100000
+%             if curResultsData.detectedQuadValidity(iQuad) < 100000
+                minX = min(curResultsData.detectedQuads{iQuad}(:,1));
+                
+                indsX = find((minX+3) >= curResultsData.detectedQuads{iQuad}(:,1));
+                
+                if length(indsX) == 1
+                    minY = min(curResultsData.detectedQuads{iQuad}(indsX(1),2));
+                else
+                    minY = min(curResultsData.detectedQuads{iQuad}(indsX,2));
+                    
+                    indsY = find(minY == curResultsData.detectedQuads{iQuad}(indsX,2));
+                    
+                    minX = min(curResultsData.detectedQuads{iQuad}(indsX(indsY(1)),1));
+                    minY = min(curResultsData.detectedQuads{iQuad}(indsX(indsY(1)),2));
+                end
+                
+                minX = minX*showImageDetectionsScale;
+                minY = minY*showImageDetectionsScale;
+                            
+                rectangle('Position', [minX-2, minY-10, 15, 15], 'FaceColor', 'k');
+                
+                text(minX, minY, sprintf('%d', curResultsData.detectedQuadValidity(iQuad)), 'Color', [.95,.95,.95], 'FontSize', 16.0);
+            end
         end
     end % if showImageDetections
     
@@ -366,7 +391,7 @@ function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNa
             groundTruthQuads = jsonToQuad(jsonData.Poses{iPose}.VisionMarkers);
             
             for iTestFunction = 1:length(testFunctions)
-                [detectedQuads, detectedMarkers] = testFunctions{iTestFunction}(image);
+                [detectedQuads, detectedQuadValidity, detectedMarkers] = testFunctions{iTestFunction}(image);
                 
                 %check if the quads are in the right places
                 
@@ -404,6 +429,7 @@ function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNa
                 resultsData{iTest}{iPose}{iTestFunction}.markerNames_groundTruth = markerNames_groundTruth;
                 resultsData{iTest}{iPose}{iTestFunction}.markerNames_detected = markerNames_detected;
                 resultsData{iTest}{iPose}{iTestFunction}.detectedQuads = detectedQuads;
+                resultsData{iTest}{iPose}{iTestFunction}.detectedQuadValidity = detectedQuadValidity;                
                 resultsData{iTest}{iPose}{iTestFunction}.detectedMarkers = detectedMarkers;
                 
                 %             figure(1);
