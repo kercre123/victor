@@ -63,6 +63,7 @@ namespace Anki {
       void set_headAngle(const f32& angle);
       void set_liftAngle(const f32& angle);
       void set_camCalibration(const Vision::CameraCalibration& calib);
+      const Vision::CameraCalibration& get_camCalibration() const;
       
       void IncrementPoseFrameID() {++frameId_;}
       PoseFrameID_t GetPoseFrameID() const {return frameId_;}
@@ -208,7 +209,11 @@ namespace Anki {
       void updatePose();
       PoseFrameID_t frameId_;
       
-      Vision::Camera camHead;
+      // Robot stores the calibration, camera just gets a reference to it
+      // This is so we can share the same calibration data across multiple
+      // cameras (e.g. those stored inside the pose history)
+      Vision::CameraCalibration _cameraCalibration;
+      Vision::Camera            _camera;
 
       const Pose3d neckPose; // joint around which head rotates
       const Pose3d headCamPose; // in canonical (untilted) position w.r.t. neck joint
@@ -305,16 +310,22 @@ namespace Anki {
     { return this->pose; }
     
     inline const Vision::Camera& Robot::get_camHead(void) const
-    { return this->camHead; }
+    { return _camera; }
     
     inline Vision::Camera& Robot::get_camHead(void)
-    { return this->camHead; }
+    { return _camera; }
     
     inline Robot::OperationMode Robot::get_operationMode() const
     { return this->mode; }
     
     inline void Robot::set_camCalibration(const Vision::CameraCalibration& calib)
-    { this->camHead.SetCalibration(calib); }
+    {
+      _cameraCalibration = calib;
+      _camera.SetCalibration(_cameraCalibration);
+    }
+    
+    inline const Vision::CameraCalibration& Robot::get_camCalibration() const
+    { return _cameraCalibration; }
     
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }
