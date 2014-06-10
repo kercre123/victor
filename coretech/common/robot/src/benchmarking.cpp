@@ -522,7 +522,7 @@ namespace Anki
       static bool blinkOn = true;
 
       const s32 blackWidth = 10;
-      const s32 displayGridEveryNMilliseconds = 50;
+      //const s32 displayGridEveryNMilliseconds = 50;
       const s32 blinkerWidth = 7;
 
       const s32 totalTimeIndex = CompileBenchmarkResults::GetNameIndex("TotalTime", results);
