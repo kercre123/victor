@@ -513,17 +513,52 @@ namespace Anki
 
     Path::Path()
     {
+      capacity_ = MAX_NUM_PATH_SEGMENTS;
+
+#if CORETECH_ROBOT
+  #if defined CORETECH_BASESTATION
+  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
+  #endif
+      path_ = __pathSegmentStackForRobot;
+#elif defined CORETECH_BASESTATION
+      path_ = new PathSegment[MAX_NUM_PATH_SEGMENTS];
+#else
+#error "one of CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
+#endif
+
       Clear();
     }
+
+    Path::~Path()
+    {
+#if CORETECH_BASESTATION
+      delete [] path_;
+      path_ = nullptr;
+#endif
+    }
     
+    Path& Path::operator=(const Path& rhs)
+    {
+      capacity_ = MAX_NUM_PATH_SEGMENTS;
+      assert(capacity_ == rhs.capacity_);
+
+      numPathSegments_ = rhs.numPathSegments_;
+      memcpy(path_, rhs.path_, numPathSegments_*sizeof(PathSegment));
+      return *this;
+    }
+
     void Path::Clear()
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       numPathSegments_ = 0;
     }
 
     
     void Path::PrintPath() const
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       for(u8 i = 0; i<numPathSegments_; ++i) {
         PrintSegment(i);
       }
@@ -531,6 +566,8 @@ namespace Anki
     
     void Path::PrintSegment(u8 segment) const
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (segment < numPathSegments_) {
         CoreTechPrint("Path segment %d - ", segment);
         path_[segment].Print();
@@ -848,6 +885,8 @@ namespace Anki
   
     bool Path::PopFront(const u8 numSegments)
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (numSegments <= numPathSegments_) {
         numPathSegments_ -= numSegments;
         
@@ -866,6 +905,8 @@ namespace Anki
     
     bool Path::PopBack(const u8 numSegments)
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (numSegments <= numPathSegments_) {
         numPathSegments_ -= numSegments;
         return true;
@@ -885,6 +926,8 @@ namespace Anki
     // at transition points.
     bool Path::CheckSegmentContinuity(f32 tolerance_distance_squared, s8 pathSegmentIdx) const
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       // If checking continuity on non-existent piece
       if (pathSegmentIdx >= numPathSegments_)
         return false;
@@ -908,6 +951,8 @@ namespace Anki
   
     bool Path::CheckContinuity(f32 tolerance_distance_squared, s8 pathSegmentIdx) const
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       // Check entire path?
       if (pathSegmentIdx < 0) {
         for (u8 i=0; i< numPathSegments_; ++i) {
@@ -928,6 +973,8 @@ namespace Anki
     bool Path::AppendLine(u32 matID, f32 x_start, f32 y_start, f32 x_end, f32 y_end,
                           f32 targetSpeed, f32 accel, f32 decel)
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         CoreTechPrint("ERROR (AppendLine): Exceeded path size\n");
         return false;
@@ -943,6 +990,8 @@ namespace Anki
   
     void Path::AddArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                       f32 targetSpeed, f32 accel, f32 decel) {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       path_[numPathSegments_].DefineArc(x_center, y_center, radius, startRad, sweepRad,
                                         targetSpeed, accel, decel);
       numPathSegments_++;
@@ -952,6 +1001,8 @@ namespace Anki
     bool Path::AppendArc(u32 matID, f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                          f32 targetSpeed, f32 accel, f32 decel)
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         CoreTechPrint("ERROR (AppendArc): Exceeded path size\n");
         return false;
@@ -1022,6 +1073,8 @@ namespace Anki
     bool Path::AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
                                f32 targetRotSpeed, f32 rotAccel, f32 rotDecel)
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         CoreTechPrint("ERROR (AppendArc): Exceeded path size\n");
         return false;
@@ -1036,6 +1089,8 @@ namespace Anki
 
     bool Path::AppendSegment(const PathSegment& segment)
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         CoreTechPrint("ERROR (AppendSegment): Exceeded path size\n");
         return false;
