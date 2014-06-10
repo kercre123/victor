@@ -421,6 +421,7 @@ function pose_filename_ButtonDownFcn(~, ~, ~)
     global curPoseIndex;
 
     curImageFilename = [dataPath, jsonTestData.Poses{curPoseIndex}.ImageFile];
+    curImageFilename = strrep(curImageFilename, '//' , '/');
     clipboard('copy', curImageFilename)
     disp(sprintf('Copied to clipboard: %s', curImageFilename));
 

@@ -16,7 +16,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     showImageDetections = true;
     showImageDetectionWidth = 640;
     
-    recompileBasics = true;
+    recompileBasics = false;
     basicsFilename = 'basicsResults.mat';
     markerDirectoryList = {'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/symbols/withFiducials/', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/letters/withFiducials', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/dice/withFiducials'};
     
@@ -56,8 +56,9 @@ function allCompiledResults = compileStats(resultsData, testPath, allTestFilenam
     
     allCompiledResults = cell(length(resultsData), 1);
     
+    filenameNameLookup = '';
+    
     for iTest = 1:length(resultsData)
-        %     for iTest = length(resultsData)
         allCompiledResults{iTest} = cell(length(resultsData{iTest}), 1);
         
         if showImageDetections
@@ -67,27 +68,46 @@ function allCompiledResults = compileStats(resultsData, testPath, allTestFilenam
         for iPose = 1:length(allCompiledResults{iTest})
             allCompiledResults{iTest}{iPose} = cell(length(resultsData{iTest}{iPose}), 1);
             
+            if showImageDetections
+                imageFilename = [testPath, jsonData.Poses{iPose}.ImageFile];
+                imageFilename = strrep(imageFilename, '//', '/');
+                image = imread(imageFilename);
+                
+                outputFilenameImage = [resultsDirectory, sprintf('detection_dist%d_angle%d_expose%0.1f_light%d.png',...
+                    jsonData.Poses{iPose}.Scene.Distance,...
+                    jsonData.Poses{iPose}.Scene.angle,...
+                    jsonData.Poses{iPose}.Scene.CameraExposure,...
+                    jsonData.Poses{iPose}.Scene.light)];
+                
+                imwrite(image, outputFilenameImage);
+
+                slashIndexes = strfind(outputFilenameImage, '/');
+                outputFilenameImageJustName = outputFilenameImage((slashIndexes(end)+1):end);
+                slashIndexes = strfind(imageFilename, '/');
+                imageFilenameJustName = imageFilename((slashIndexes(end)+1):end);
+                
+                filenameNameLookup = [filenameNameLookup, sprintf('%d %d \t%s \t%s\n', iTest, iPose, outputFilenameImageJustName, imageFilenameJustName)]; %#ok<AGROW>
+                
+                imageWithBorder = zeros([size(image,1) + 50, size(image,2)], 'uint8');
+                imageWithBorder(1:size(image,1), :) = image;
+                
+                if showImageDetectionWidth(1) ~= size(image,2)
+                    showImageDetectionsScale = showImageDetectionWidth(1) / size(image,2);
+                    imageWithBorder = imresize(imageWithBorder, size(imageWithBorder)*showImageDetectionsScale, 'nearest');
+                else
+                    showImageDetectionsScale = 1;
+                end
+            end % if showImageDetections
+            
             for iTestFunction = 1:length(allCompiledResults{iTest}{iPose})
                 curResultsData = resultsData{iTest}{iPose}{iTestFunction};
                 
                 if showImageDetections
-                    image = imread([testPath, jsonData.Poses{iPose}.ImageFile]);
-                    
-                    imageWithBorder = zeros([size(image,1) + 50, size(image,2)], 'uint8');
-                    imageWithBorder(1:size(image,1), :) = image;
-                    
                     figureHandle = figure(1);
                     
                     hold off;
                     
                     useImpixelinfo = false;
-                    
-                    if showImageDetectionWidth(1) ~= size(image,2)
-                        showImageDetectionsScale = showImageDetectionWidth(1) / size(image,2);
-                        imageWithBorder = imresize(imageWithBorder, size(imageWithBorder)*showImageDetectionsScale, 'nearest');
-                    else
-                        showImageDetectionsScale = 1;
-                    end
                     
                     imshow(imageWithBorder);
                     
@@ -99,7 +119,6 @@ function allCompiledResults = compileStats(resultsData, testPath, allTestFilenam
                     
                     hold on;
                 end % if showImageDetections
-                
                 
                 [curCompiled.numQuadsTotal, curCompiled.numQuadsDetected] = compileQuadResults(curResultsData, showImageDetections, showImageDetectionsScale);
                 
@@ -120,7 +139,7 @@ function allCompiledResults = compileStats(resultsData, testPath, allTestFilenam
                     
                     text(0, size(image,1)*showImageDetectionsScale, resultsText, 'Color', [.95,.95,.95], 'FontSize', 8*showImageDetectionsScale, 'VerticalAlignment', 'top');
                     
-                    outputFilename = [resultsDirectory, sprintf('detection_dist%d_angle%d_expose%0.1f_light%d_%s.png',...
+                    outputFilenameResult = [resultsDirectory, sprintf('detection_dist%d_angle%d_expose%0.1f_light%d_%s.png',...
                         jsonData.Poses{iPose}.Scene.Distance,...
                         jsonData.Poses{iPose}.Scene.angle,...
                         jsonData.Poses{iPose}.Scene.CameraExposure,...
@@ -128,17 +147,22 @@ function allCompiledResults = compileStats(resultsData, testPath, allTestFilenam
                         testFunctionNames{iTestFunction})];
                     
                     set(figureHandle, 'PaperUnits', 'inches', 'PaperPosition', [0,0,size(imageWithBorder,2)/100,size(imageWithBorder,1)/100])
-                    print(figureHandle, '-dpng', '-r100', outputFilename)
+                    print(figureHandle, '-dpng', '-r100', outputFilenameResult)
                     
                     disp(resultsText);
                     disp(' ');
                     
                     pause(.03)
-                end % if showImageDetections
-                
+                end % if showImageDetections                
             end % for iTestFunction = 1:length(allCompiledResults{iTest}{iPose})
         end % for iPose = 1:length(allCompiledResults{iTest})
     end % for iTest = 1:length(resultsData)
+    
+    outputFilenameNameLookup = [resultsDirectory, 'filenameLookup.txt'];
+    
+    fileId = fopen(outputFilenameNameLookup, 'w');
+    fprintf(fileId, filenameNameLookup);
+    fclose(fileId);
     
 function [numTotal, numGood] = compileQuadResults(curResultsData, showImageDetections, showImageDetectionsScale)
     global maxMatchDistance_pixels;
@@ -274,8 +298,8 @@ function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNa
         @extractMarkers_matlabOriginal_withRefinement};
     
     testFunctionNames = {...
-        'C-noRef',...
-        'C-ref',...
+        'c-noRef',...
+        'c-ref',...
         'matlab-noRef',...
         'matlab-ref'};
     
