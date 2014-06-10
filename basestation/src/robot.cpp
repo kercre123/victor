@@ -6,7 +6,10 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
+// TODO:(bn) should these be a full path?
 #include "pathPlanner.h"
+#include "pathDolerOuter.h"
+
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
@@ -100,12 +103,17 @@ namespace Anki {
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
       liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
       currentHeadAngle(0), currentLiftAngle(0), currPathSegment_(-1),
-      isCarryingBlock_(false), isPickingOrPlacing_(false)
+      isCarryingBlock_(false), isPickingOrPlacing_(false)      
     {
       this->set_headAngle(currentHeadAngle);
-      
+      pdo_ = new PathDolerOuter(msgHandler, robotID);
     } // Constructor: Robot
    
+    Robot::~Robot()
+    {
+      delete pdo_;
+      pdo_ = nullptr;
+    }
     
     void Robot::updatePose()
     {
@@ -139,6 +147,8 @@ namespace Anki {
           PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot");
           SendExecutePath(path_);
         }
+
+        pdo_->Update(GetCurrPathSegment());
       }
      
       // Visualize path if robot has just started traversing it.
@@ -514,78 +524,12 @@ namespace Anki {
     // Sends a path to the robot to be immediately executed
     Result Robot::SendExecutePath(const Planning::Path& path) const
     {
-      // Send path segments
-      for (u8 i=0; i<path.GetNumSegments(); i++)
-      {
-        switch (path.GetSegmentConstRef(i).GetType())
-        {
-          case Planning::PST_LINE:
-          {
-            MessageAppendPathSegmentLine m;
-            const Planning::PathSegmentDef::s_line* l = &(path.GetSegmentConstRef(i).GetDef().line);
-            m.x_start_mm = l->startPt_x;
-            m.y_start_mm = l->startPt_y;
-            m.x_end_mm = l->endPt_x;
-            m.y_end_mm = l->endPt_y;
-            m.pathID = 0;
-            m.segmentID = i;
-            
-            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
-            m.accel = path.GetSegmentConstRef(i).GetAccel();
-            m.decel = path.GetSegmentConstRef(i).GetDecel();
-            
-            if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
-              return RESULT_FAIL;
-            break;
-          }
-          case Planning::PST_ARC:
-          {
-            MessageAppendPathSegmentArc m;
-            const Planning::PathSegmentDef::s_arc* a = &(path.GetSegmentConstRef(i).GetDef().arc);
-            m.x_center_mm = a->centerPt_x;
-            m.y_center_mm = a->centerPt_y;
-            m.radius_mm = a->radius;
-            m.startRad = a->startRad;
-            m.sweepRad = a->sweepRad;
-            m.pathID = 0;
-            m.segmentID = i;
-            
-            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
-            m.accel = path.GetSegmentConstRef(i).GetAccel();
-            m.decel = path.GetSegmentConstRef(i).GetDecel();
-            
-            if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
-              return RESULT_FAIL;
-            break;
-          }
-          case Planning::PST_POINT_TURN:
-          {
-            MessageAppendPathSegmentPointTurn m;
-            const Planning::PathSegmentDef::s_turn* t = &(path.GetSegmentConstRef(i).GetDef().turn);
-            m.x_center_mm = t->x;
-            m.y_center_mm = t->y;
-            m.targetRad = t->targetAngle;
-            m.pathID = 0;
-            m.segmentID = i;
-            
-            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
-            m.accel = path.GetSegmentConstRef(i).GetAccel();
-            m.decel = path.GetSegmentConstRef(i).GetDecel();
+      pdo_->SetPath(path);
 
-            if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
-              return RESULT_FAIL;
-            break;
-          }
-          default:
-            PRINT_NAMED_ERROR("Invalid path segment", "Can't send path segment of unknown type");
-            return RESULT_FAIL;
-            
-        }
-      }
-      
       // Send start path execution message
       MessageExecutePath m;
       m.pathID = 0;
+      printf("Robot: sending execute path message\n");
       return msgHandler_->SendMessage(ID_, m);
     }
     

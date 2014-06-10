@@ -31,6 +31,7 @@ namespace Anki {
     class BlockWorld;
     class IMessageHandler;
     class IPathPlanner;
+    class PathDolerOuter;
     
     class Robot
     {
@@ -43,6 +44,7 @@ namespace Anki {
       };
       
       Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner);
+      ~Robot();
       
       void Update();
       
@@ -205,6 +207,7 @@ namespace Anki {
       
       IPathPlanner* pathPlanner_;
       Planning::Path path_;
+      PathDolerOuter* pdo_;
       
       Pose3d pose;
       void updatePose();
