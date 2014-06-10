@@ -69,7 +69,9 @@ namespace Anki {
     Quadrilateral<N,T>  operator- (const Quadrilateral<N,T> &quad2) const;
     Quadrilateral<N,T>& operator+=(const Quadrilateral<N,T> &quad2);
     Quadrilateral<N,T>& operator-=(const Quadrilateral<N,T> &quad2);
+
     Quadrilateral<N,T>& operator*=(const T value);
+    Quadrilateral<N,T>& operator+=(const T value);
 
     Quadrilateral<N,T>& operator+=(const Point<N,T> &point);
     Quadrilateral<N,T>& operator-=(const Point<N,T> &point);
