@@ -61,6 +61,9 @@ namespace Anki {
       f32 maxRotationWheelSpeedDiff = 0.f;
       
       VelocityProfileGenerator vpg_;
+
+      // TODO:(bn) show this to kevin!
+    f32 currDesiredAngle_; // only used in point turn
       
       const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.1f;
       
@@ -406,6 +409,7 @@ namespace Anki {
       
       
       f32 currAngle = Localization::GetCurrentMatOrientation().ToFloat();
+      currDesiredAngle_ = currAngle;
       
       // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
       // which determines the turning direction.
@@ -450,12 +454,13 @@ namespace Anki {
       Radians currAngle = Cozmo::Localization::GetCurrentMatOrientation();
       float angularDistToTarget = currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
       
-      // Update current angular velocity.
-      f32 currDesiredAngle;
-      vpg_.Step(currAngularVel_, currDesiredAngle);
+      // Update current angular velocity, if we got close to where we should be
+      if (ABS(currDesiredAngle_ - currAngle) < POINT_TURN_TARGET_DIST_STOP_RAD) {
+        vpg_.Step(currAngularVel_, currDesiredAngle_);
       
-      PRINT("currAngle: %f, targetRad: %f, AngularDist: %f, currAngularVel: %f, currDesiredAngle: %f\n",
-            currAngle.ToFloat(), targetRad_.ToFloat(), angularDistToTarget, currAngularVel_, currDesiredAngle);
+        PRINT("currAngle: %f, targetRad: %f, AngularDist: %f, currAngularVel: %f, currDesiredAngle: %f\n",
+                  currAngle.ToFloat(), targetRad_.ToFloat(), angularDistToTarget, currAngularVel_, currDesiredAngle_);
+      }
       
       // Check for stop condition
       if (ABS(angularDistToTarget) < POINT_TURN_TARGET_DIST_STOP_RAD) {

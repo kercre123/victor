@@ -6,9 +6,13 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include "anki/planning/shared/path.h"
 
 namespace Anki
 {
+
+class RotatedRectangle;
+
 namespace Planning
 {
 
@@ -29,7 +33,6 @@ typedef int16_t StateXY;
 typedef float Cost;
 typedef uint8_t ActionID;
 
-class Rectangle;
 class xythetaEnvironment;
 class State;
 class StateID;
@@ -47,6 +50,7 @@ public:
   bool Import(const Json::Value& config);
 
   bool operator==(const State& other) const;
+  bool operator!=(const State& other) const;
 
   StateID GetStateID() const;
 
@@ -95,6 +99,8 @@ public:
   // returns true if successful
   bool Import(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env);
 
+  void AddSegmentsToPath(State_c start, Path& path) const;
+
   // id of this action (unique per starting angle)
   ActionID id;
 
@@ -113,6 +119,9 @@ public:
   // vector containing continuous relative offsets for positions in
   // between (0,0,startTheta) and (end)
   std::vector<State_c> intermediatePositions;
+private:
+
+  std::vector<PathSegment> pathSegments_;
 };
 
 class Successor
@@ -154,7 +163,7 @@ private:
   Successor nextSucc_;
 
   const std::vector<MotionPrimitive>& motionPrimitives_;
-  const std::vector<Rectangle*>& obstacles_;
+  const std::vector<RotatedRectangle*>& obstacles_;
 };
 
 // TODO:(bn) move some of these to seperate files
@@ -206,11 +215,31 @@ public:
   // returns true if everything worked
   bool Init(const char* mprimFilename, const char* mapFile);
 
+  // inits with motion primitives and an empty environment
+  bool Init(const Json::Value& mprimJson);
+
+  // dumps the obstacles to the given map file
+  void WriteEnvironment(const char* mapFile) const;
+
   // Imports motion primitives from the given json file. Returns true if success
   bool ReadMotionPrimitives(const char* mprimFilename);
 
-  // Returns an iterator to the successors from state "start"
+  void AddObstacle(RotatedRectangle* rect);
+  void ClearObstacles();
+
+  // Returns an iterator to the successors from state "start". Use
+  // this one if you want to check each action
   SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;
+
+  // This function tries to apply the given action to the state. If it
+  // is a valid, collision-free action, it updates state to be the
+  // successor and returns true, otherwise it returns false and does
+  // not change state
+  bool ApplyAction(const ActionID& action, StateID& stateID) const;
+
+  // Returns true if there is a collision at the given state
+  bool IsInCollision(State s) const;
+  bool IsInCollision(State_c c) const;
 
   inline State_c State2State_c(const State& s) const;
   inline State_c StateID2State_c(StateID sid) const;
@@ -244,6 +273,8 @@ public:
   // following the plan
   void ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const;
 
+  void ConvertToPath(const xythetaPlan& plan, Path& path) const;
+
   // TODO:(bn) move these??
 
   double GetHalfWheelBase_mm() const {return halfWheelBase_mm_;}
@@ -256,7 +287,7 @@ private:
 
   // returns true on success
   bool ReadEnvironment(FILE* fEnv);
-  bool ParseMotionPrims(Json::Value& config);
+  bool ParseMotionPrims(const Json::Value& config);
 
   float resolution_mm_;
   float oneOverResolution_;
@@ -272,7 +303,7 @@ private:
   std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
 
   // Obstacles
-  std::vector<Rectangle*> obstacles_;
+  std::vector<RotatedRectangle*> obstacles_;
 
   // index is actionID
   std::vector<ActionType> actionTypes_;

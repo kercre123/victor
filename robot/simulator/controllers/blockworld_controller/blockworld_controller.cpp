@@ -9,11 +9,14 @@
 #include <cstdio>
 #include <queue>
 #include <unistd.h>
+#include <fstream>
+
 
 #include <webots/Supervisor.hpp>
 #include "basestationKeyboardController.h"
 
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/rotatedRect_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/general.h"
 
@@ -24,8 +27,10 @@
 #include "vizManager.h"
 #include "pathPlanner.h"
 #include "behaviorManager.h"
+#include "anki/common/basestation/jsonTools.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/common/basestation/platformPathManager.h"
 
 #include "anki/cozmo/basestation/tcpComms.h"
 
@@ -53,8 +58,19 @@ int main(int argc, char **argv)
   BlockWorld blockWorld;
   RobotManager robotMgr;
   MessageHandler msgHandler;
-  PathPlanner pathPlanner;
   BehaviorManager behaviorMgr;
+
+  // read planner motion primitives
+  Json::Value mprims;
+  const std::string subPath("coretech/planning/matlab/cozmo_mprim.json");
+  const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+
+  Json::Reader reader;
+  std::ifstream jsonFile(jsonFilename);
+  reader.parse(jsonFile, mprims);
+  jsonFile.close();
+
+  LatticePlanner pathPlanner(&blockWorld, mprims);
   
   // Initialize the modules by telling them about each other:
   msgHandler.Init(&robotComms, &robotMgr, &blockWorld);
@@ -202,12 +218,23 @@ int main(int argc, char **argv)
           // Draw blocks' projected quads on the mat
           {
             using namespace Quad;
-            Quad2f quadOnGround2d = block->GetBoundingQuadXY();
+            // TODO:(bn) ask andrew why its like this
+            // TODO:(bn) real parameters
+            float paddingRadius = 65.0;
+            float blockRadius = 44.0;
+            float paddingFactor = (paddingRadius + blockRadius) / blockRadius;
+            Quad2f quadOnGround2d = block->GetBoundingQuadXY(paddingFactor);
+
+            RotatedRectangle boundingRect;
+            boundingRect.ImportQuad(quadOnGround2d);
+
+            Quad2f rectOnGround2d(boundingRect.GetQuad());
+            // Quad2f rectOnGround2d(quadOnGround2d);
             
-            Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
-                                  Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
-                                  Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
-                                  Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
+            Quad3f quadOnGround3d(Point3f(rectOnGround2d[TopLeft].x(),     rectOnGround2d[TopLeft].y(),     0.5f),
+                                  Point3f(rectOnGround2d[BottomLeft].x(),  rectOnGround2d[BottomLeft].y(),  0.5f),
+                                  Point3f(rectOnGround2d[TopRight].x(),    rectOnGround2d[TopRight].y(),    0.5f),
+                                  Point3f(rectOnGround2d[BottomRight].x(), rectOnGround2d[BottomRight].y(), 0.5f));
             
             VizManager::getInstance()->DrawQuad(block->GetID(), quadOnGround3d, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
           }

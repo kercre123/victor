@@ -16,17 +16,26 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/types.h"
 #include "anki/planning/shared/path.h"
+#include "json/json-forwards.h"
 
 namespace Anki {
   namespace Cozmo {
+
+    class BlockWorld;
     
     class IPathPlanner
     {
     public:
       virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) = 0;
+
+      // Replan if needed because the environment changed. Returns
+      // true if there is a new path, otherwise it doesn't update the
+      // path and returns false. Assumes the goal pose didn't change
+      virtual bool ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) {return false;};
       
     }; // Interface IPathPlanner
-    
+
+    // This is the Dubbins planner
     class PathPlanner : public IPathPlanner
     {
     public:
@@ -38,6 +47,22 @@ namespace Anki {
       
       
     }; // class PathPlanner
+
+    class LatticePlannerImpl;
+
+    class LatticePlanner : public IPathPlanner
+    {
+    public:
+      LatticePlanner(const BlockWorld* blockWorld, const Json::Value& mprims);
+      virtual ~LatticePlanner();
+      
+      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose);
+
+      virtual bool ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose);
+
+    protected:
+      LatticePlannerImpl* impl_;
+    };
     
     class PathPlannerStub : public IPathPlanner
     {

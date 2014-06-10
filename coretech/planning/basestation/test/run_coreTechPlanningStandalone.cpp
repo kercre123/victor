@@ -113,9 +113,11 @@ int main(int argc, char *argv[])
 
     planner.SetGoal(goal);
     planner.SetStart(start);
-    planner.AllowFreeTurnInPlaceAtGoal();
+    // planner.AllowFreeTurnInPlaceAtGoal();
 
     planner.ComputePath();
+
+    assert(planner.PlanIsSafe());
 
     writePath("path.txt", env, planner.GetPlan());
     cout<<"done! check path.txt\n";
