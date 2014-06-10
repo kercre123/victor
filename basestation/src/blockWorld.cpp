@@ -346,7 +346,8 @@ namespace Anki
     {
       for(auto & blocksWithType : existingBlocks_) {
         for(auto & blockAndId : blocksWithType.second) {
-          Block* block = reinterpret_cast<Block*>(blockAndId.second);
+          Block* block = dynamic_cast<Block*>(blockAndId.second);
+          CORETECH_THROW_IF(block == nullptr);
           const f32 blockHeight = block->GetPose().get_translation().z();
           if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) ) {
             rectangles.emplace_back(block->GetBoundingQuadXY(padding));
@@ -521,11 +522,6 @@ namespace Anki
         // Remove used markers from map
         RemoveUsedMarkers(obsMarkersAtTimestamp);
         
-        // Use them to add or update existing blocks in our world
-        // NOTE: we still want to run this even if we didn't see markers because
-      // we want to possibly delete any _unobserved_ objects (e.g. ones behind
-      // whom we saw mat markers)
-        AddAndUpdateObjects(blocksSeen, existingBlocks_);
       }
       
       // Use them to add or update existing blocks in our world
@@ -623,7 +619,9 @@ namespace Anki
         for(auto blockIter = blocksOfType.second.begin();
             blockIter != blocksOfType.second.end(); )
         {
-          Block* block = reinterpret_cast<Block*>(blockIter->second);
+          Block* block = dynamic_cast<Block*>(blockIter->second);
+          CORETECH_THROW_IF(block == nullptr);
+          
           bool didErase = false;
           if(!block->GetWhetherObserved()) {
             
