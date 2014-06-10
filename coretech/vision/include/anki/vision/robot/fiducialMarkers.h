@@ -64,12 +64,19 @@ namespace Anki
     class VisionMarker
     {
     public:
+      
+      enum ValidityCode {
+        VALID,
+        LOW_CONTRAST,
+        UNVERIFIED,
+        UNKNOWN
+      };
 
       //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
       Quadrilateral<f32> corners;
       Vision::MarkerType markerType;
       f32 observedOrientation; //< In degrees. TODO: change to radians or discrete
-      bool isValid;
+      ValidityCode validity;
 
       VisionMarker();
 

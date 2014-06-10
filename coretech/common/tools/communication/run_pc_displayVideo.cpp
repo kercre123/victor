@@ -201,7 +201,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
         // Draw markers
         for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
           cv::Scalar boxColor, topLineColor, textColor;
-          if(visionMarkerList[iMarker].isValid) {
+          if(visionMarkerList[iMarker].validity == VisionMarker::VALID) {
             textColor = cv::Scalar(0,255,0);
             boxColor = cv::Scalar(0,128,0);
           } else {
@@ -418,8 +418,9 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
   } else if(strcmp(newObject.typeName, "VisionMarker") == 0) {
     VisionMarker marker = *reinterpret_cast<VisionMarker*>(newObject.startOfPayload);
 
-    if(!marker.isValid)
+    if(marker.validity != VisionMarker::VALID) {
       return;
+    }
 
     if(!aMessageAlreadyPrinted) {
       time_t rawtime;

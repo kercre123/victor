@@ -193,7 +193,7 @@ namespace Anki
       // Remove invalid markers from the list
       if(!returnInvalidMarkers) {
         for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
-          if(!markers[iQuad].isValid) {
+          if(markers[iQuad].validity != VisionMarker::VALID) {
             for(s32 jQuad=iQuad; jQuad<extractedQuads.get_size(); jQuad++) {
               markers[jQuad] = markers[jQuad+1];
               homographies[jQuad] = homographies[jQuad+1];

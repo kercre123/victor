@@ -3111,7 +3111,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
     // are provided in the auto-generated ground truth file)
     for(s32 iMarkerDet=0; iMarkerDet<markers.get_size(); ++iMarkerDet)
     {
-      ASSERT_TRUE(markers[iMarkerDet].isValid);
+      ASSERT_TRUE(markers[iMarkerDet].validity == VisionMarker::VALID);
 
       s32 iMarkerTrue=0;
       while(markers[iMarkerDet].markerType != markerTypes_groundTruth[iMarkerTrue]) {
