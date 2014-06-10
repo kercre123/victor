@@ -292,19 +292,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 214,
-					"y_imgUpperLeft": 73,
-					"x_imgLowerLeft": 214,
-					"y_imgLowerLeft": 96,
-					"x_imgUpperRight": 238,
-					"y_imgUpperRight": 72,
-					"x_imgLowerRight": 237,
-					"y_imgLowerRight": 96,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 242,
 					"y_imgUpperLeft": 73,
 					"x_imgLowerLeft": 242,
@@ -552,7 +539,7 @@
 					"y_imgLowerLeft": 159.7160537
 				}
 			],
-			"NumMarkers": 40,
+			"NumMarkers": 39,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -830,19 +817,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 214,
-					"y_imgUpperLeft": 73,
-					"x_imgLowerLeft": 214,
-					"y_imgLowerLeft": 96,
-					"x_imgUpperRight": 238,
-					"y_imgUpperRight": 72,
-					"x_imgLowerRight": 237,
-					"y_imgLowerRight": 96,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 242,
 					"y_imgUpperLeft": 73,
 					"x_imgLowerLeft": 242,
@@ -1090,7 +1064,7 @@
 					"y_imgLowerLeft": 159.7160537
 				}
 			],
-			"NumMarkers": 40,
+			"NumMarkers": 39,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1368,19 +1342,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 214,
-					"y_imgUpperLeft": 73,
-					"x_imgLowerLeft": 214,
-					"y_imgLowerLeft": 96,
-					"x_imgUpperRight": 238,
-					"y_imgUpperRight": 72,
-					"x_imgLowerRight": 237,
-					"y_imgLowerRight": 96,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 242,
 					"y_imgUpperLeft": 73,
 					"x_imgLowerLeft": 242,
@@ -1628,7 +1589,7 @@
 					"y_imgLowerLeft": 159.7160537
 				}
 			],
-			"NumMarkers": 40,
+			"NumMarkers": 39,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1906,19 +1867,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 214,
-					"y_imgUpperLeft": 73,
-					"x_imgLowerLeft": 214,
-					"y_imgLowerLeft": 96,
-					"x_imgUpperRight": 238,
-					"y_imgUpperRight": 72,
-					"x_imgLowerRight": 237,
-					"y_imgLowerRight": 96,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 242,
 					"y_imgUpperLeft": 73,
 					"x_imgLowerLeft": 242,
@@ -2166,7 +2114,7 @@
 					"y_imgLowerLeft": 159.7160537
 				}
 			],
-			"NumMarkers": 40,
+			"NumMarkers": 39,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -2444,19 +2392,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 214,
-					"y_imgUpperLeft": 73,
-					"x_imgLowerLeft": 214,
-					"y_imgLowerLeft": 96,
-					"x_imgUpperRight": 238,
-					"y_imgUpperRight": 72,
-					"x_imgLowerRight": 237,
-					"y_imgLowerRight": 96,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 242,
 					"y_imgUpperLeft": 73,
 					"x_imgLowerLeft": 242,
@@ -2704,7 +2639,7 @@
 					"y_imgLowerLeft": 159.7160537
 				}
 			],
-			"NumMarkers": 40,
+			"NumMarkers": 39,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -2982,19 +2917,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 214,
-					"y_imgUpperLeft": 73,
-					"x_imgLowerLeft": 214,
-					"y_imgLowerLeft": 96,
-					"x_imgUpperRight": 238,
-					"y_imgUpperRight": 72,
-					"x_imgLowerRight": 237,
-					"y_imgLowerRight": 96,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 242,
 					"y_imgUpperLeft": 73,
 					"x_imgLowerLeft": 242,
@@ -3242,7 +3164,7 @@
 					"y_imgLowerLeft": 159.7160537
 				}
 			],
-			"NumMarkers": 40,
+			"NumMarkers": 39,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -3520,19 +3442,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 214,
-					"y_imgUpperLeft": 73,
-					"x_imgLowerLeft": 214,
-					"y_imgLowerLeft": 96,
-					"x_imgUpperRight": 238,
-					"y_imgUpperRight": 72,
-					"x_imgLowerRight": 237,
-					"y_imgLowerRight": 96,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 242,
 					"y_imgUpperLeft": 73,
 					"x_imgLowerLeft": 242,
@@ -3780,7 +3689,7 @@
 					"y_imgLowerLeft": 159.7160537
 				}
 			],
-			"NumMarkers": 40,
+			"NumMarkers": 39,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -4058,19 +3967,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 214,
-					"y_imgUpperLeft": 73,
-					"x_imgLowerLeft": 214,
-					"y_imgLowerLeft": 96,
-					"x_imgUpperRight": 238,
-					"y_imgUpperRight": 72,
-					"x_imgLowerRight": 237,
-					"y_imgLowerRight": 96,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 242,
 					"y_imgUpperLeft": 73,
 					"x_imgLowerLeft": 242,
@@ -4318,7 +4214,7 @@
 					"y_imgLowerLeft": 159.7160537
 				}
 			],
-			"NumMarkers": 40,
+			"NumMarkers": 39,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -4596,19 +4492,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 214,
-					"y_imgUpperLeft": 73,
-					"x_imgLowerLeft": 214,
-					"y_imgLowerLeft": 96,
-					"x_imgUpperRight": 238,
-					"y_imgUpperRight": 72,
-					"x_imgLowerRight": 237,
-					"y_imgLowerRight": 96,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 242,
 					"y_imgUpperLeft": 73,
 					"x_imgLowerLeft": 242,
@@ -4856,7 +4739,7 @@
 					"y_imgLowerLeft": 159.7160537
 				}
 			],
-			"NumMarkers": 40,
+			"NumMarkers": 39,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -5134,19 +5017,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 214,
-					"y_imgUpperLeft": 73,
-					"x_imgLowerLeft": 214,
-					"y_imgLowerLeft": 96,
-					"x_imgUpperRight": 238,
-					"y_imgUpperRight": 72,
-					"x_imgLowerRight": 237,
-					"y_imgLowerRight": 96,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 242,
 					"y_imgUpperLeft": 73,
 					"x_imgLowerLeft": 242,
@@ -5394,7 +5264,7 @@
 					"y_imgLowerLeft": 159.7160537
 				}
 			],
-			"NumMarkers": 40,
+			"NumMarkers": 39,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],

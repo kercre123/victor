@@ -97,19 +97,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 256,
-					"y_imgUpperLeft": 43,
-					"x_imgLowerLeft": 256,
-					"y_imgLowerLeft": 78,
-					"x_imgUpperRight": 290,
-					"y_imgUpperRight": 44,
-					"x_imgLowerRight": 291,
-					"y_imgLowerRight": 78,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 41,
 					"y_imgUpperLeft": 88,
 					"x_imgLowerLeft": 40,
@@ -266,7 +253,7 @@
 					"timestamp": 0
 				}
 			],
-			"NumMarkers": 18,
+			"NumMarkers": 17,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -349,19 +336,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 256,
-					"y_imgUpperLeft": 43,
-					"x_imgLowerLeft": 256,
-					"y_imgLowerLeft": 78,
-					"x_imgUpperRight": 290,
-					"y_imgUpperRight": 44,
-					"x_imgLowerRight": 291,
-					"y_imgLowerRight": 78,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 41,
 					"y_imgUpperLeft": 88,
 					"x_imgLowerLeft": 40,
@@ -518,7 +492,7 @@
 					"timestamp": 0
 				}
 			],
-			"NumMarkers": 18,
+			"NumMarkers": 17,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -601,19 +575,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 256,
-					"y_imgUpperLeft": 43,
-					"x_imgLowerLeft": 256,
-					"y_imgLowerLeft": 78,
-					"x_imgUpperRight": 290,
-					"y_imgUpperRight": 44,
-					"x_imgLowerRight": 291,
-					"y_imgLowerRight": 78,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 41,
 					"y_imgUpperLeft": 88,
 					"x_imgLowerLeft": 40,
@@ -770,7 +731,7 @@
 					"timestamp": 0
 				}
 			],
-			"NumMarkers": 18,
+			"NumMarkers": 17,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -853,19 +814,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 256,
-					"y_imgUpperLeft": 43,
-					"x_imgLowerLeft": 256,
-					"y_imgLowerLeft": 78,
-					"x_imgUpperRight": 290,
-					"y_imgUpperRight": 44,
-					"x_imgLowerRight": 291,
-					"y_imgLowerRight": 78,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 41,
 					"y_imgUpperLeft": 88,
 					"x_imgLowerLeft": 40,
@@ -1022,7 +970,7 @@
 					"timestamp": 0
 				}
 			],
-			"NumMarkers": 18,
+			"NumMarkers": 17,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1105,19 +1053,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 256,
-					"y_imgUpperLeft": 43,
-					"x_imgLowerLeft": 256,
-					"y_imgLowerLeft": 78,
-					"x_imgUpperRight": 290,
-					"y_imgUpperRight": 44,
-					"x_imgLowerRight": 291,
-					"y_imgLowerRight": 78,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 41,
 					"y_imgUpperLeft": 88,
 					"x_imgLowerLeft": 40,
@@ -1274,7 +1209,7 @@
 					"timestamp": 0
 				}
 			],
-			"NumMarkers": 18,
+			"NumMarkers": 17,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1357,19 +1292,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 256,
-					"y_imgUpperLeft": 43,
-					"x_imgLowerLeft": 256,
-					"y_imgLowerLeft": 78,
-					"x_imgUpperRight": 290,
-					"y_imgUpperRight": 44,
-					"x_imgLowerRight": 291,
-					"y_imgLowerRight": 78,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 41,
 					"y_imgUpperLeft": 88,
 					"x_imgLowerLeft": 40,
@@ -1526,7 +1448,7 @@
 					"timestamp": 0
 				}
 			],
-			"NumMarkers": 18,
+			"NumMarkers": 17,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1609,19 +1531,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 256,
-					"y_imgUpperLeft": 43,
-					"x_imgLowerLeft": 256,
-					"y_imgLowerLeft": 78,
-					"x_imgUpperRight": 290,
-					"y_imgUpperRight": 44,
-					"x_imgLowerRight": 291,
-					"y_imgLowerRight": 78,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 41,
 					"y_imgUpperLeft": 88,
 					"x_imgLowerLeft": 40,
@@ -1778,7 +1687,7 @@
 					"timestamp": 0
 				}
 			],
-			"NumMarkers": 18,
+			"NumMarkers": 17,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1861,19 +1770,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 256,
-					"y_imgUpperLeft": 43,
-					"x_imgLowerLeft": 256,
-					"y_imgLowerLeft": 78,
-					"x_imgUpperRight": 290,
-					"y_imgUpperRight": 44,
-					"x_imgLowerRight": 291,
-					"y_imgLowerRight": 78,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 41,
 					"y_imgUpperLeft": 88,
 					"x_imgLowerLeft": 40,
@@ -2030,7 +1926,7 @@
 					"timestamp": 0
 				}
 			],
-			"NumMarkers": 18,
+			"NumMarkers": 17,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -2113,19 +2009,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 256,
-					"y_imgUpperLeft": 43,
-					"x_imgLowerLeft": 256,
-					"y_imgLowerLeft": 78,
-					"x_imgUpperRight": 290,
-					"y_imgUpperRight": 44,
-					"x_imgLowerRight": 291,
-					"y_imgLowerRight": 78,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 41,
 					"y_imgUpperLeft": 88,
 					"x_imgLowerLeft": 40,
@@ -2282,7 +2165,7 @@
 					"timestamp": 0
 				}
 			],
-			"NumMarkers": 18,
+			"NumMarkers": 17,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -2365,19 +2248,6 @@
 					"timestamp": 0
 				},
 						{
-					"x_imgUpperLeft": 256,
-					"y_imgUpperLeft": 43,
-					"x_imgLowerLeft": 256,
-					"y_imgLowerLeft": 78,
-					"x_imgUpperRight": 290,
-					"y_imgUpperRight": 44,
-					"x_imgLowerRight": 291,
-					"y_imgLowerRight": 78,
-					"markerType": "MARKER_S",
-					"Name": "MessageVisionMarker",
-					"timestamp": 0
-				},
-						{
 					"x_imgUpperLeft": 41,
 					"y_imgUpperLeft": 88,
 					"x_imgLowerLeft": 40,
@@ -2534,7 +2404,7 @@
 					"timestamp": 0
 				}
 			],
-			"NumMarkers": 18,
+			"NumMarkers": 17,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],

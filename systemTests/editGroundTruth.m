@@ -324,6 +324,8 @@ function markerType_Callback(hObject, ~, ~)
     jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType = get(hObject,'String');
 
     Save()
+    
+    poseChanged(false);
 
 function menu_label_Callback(~, ~, ~)
 
