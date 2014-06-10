@@ -115,33 +115,31 @@ namespace Anki
 
     template<typename Type> const Type* Array<Type>::Pointer(const s32 index0, const s32 index1) const
     {
-      AnkiConditionalWarnAndReturnValue(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1],
-        0, "Array<Type>::Pointer", "Invalid location");
-
-      AnkiConditionalWarnAndReturnValue(this->IsValid(),
-        0, "Array<Type>::Pointer", "Array<Type> is not valid");
+      AnkiAssert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1]);
+      AnkiAssert(this->IsValid());
 
       return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) + index0*stride ) + index1;
     }
 
     template<typename Type> Type* Array<Type>::Pointer(const s32 index0, const s32 index1)
     {
-      AnkiConditionalWarnAndReturnValue(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1],
-        0, "Array<Type>::Pointer", "Invalid location");
-
-      AnkiConditionalWarnAndReturnValue(this->IsValid(),
-        0, "Array<Type>::Pointer", "Array<Type> is not valid");
+      AnkiAssert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1]);
+      AnkiAssert(this->IsValid());
 
       return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) + index0*stride ) + index1;
     }
 
     template<typename Type> inline const Type * Array<Type>::operator[](const s32 index0) const
     {
+      AnkiAssert(index0 >= 0 && index0 < this->size[0]);
+
       return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) + index0*stride );
     }
 
     template<typename Type> inline Type * Array<Type>::operator[](const s32 index0)
     {
+      AnkiAssert(index0 >= 0 && index0 < this->size[0]);
+
       return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) + index0*stride );
     }
 

@@ -24,21 +24,29 @@ namespace Anki
 
     template<typename Type> inline Type* FixedLengthList<Type>::Pointer(const s32 index)
     {
+      AnkiAssert(index >= 0 && index < this->array.get_size(1));
+
       return this->arrayData + index;
     }
 
     template<typename Type> inline const Type* FixedLengthList<Type>::Pointer(const s32 index) const
     {
+      AnkiAssert(index >= 0 && index < this->array.get_size(1));
+
       return this->arrayData + index;
     }
 
     template<typename Type> inline const Type& FixedLengthList<Type>::operator[](const s32 index) const
     {
+      AnkiAssert(index >= 0 && index < this->array.get_size(1));
+
       return *(this->arrayData + index);
     }
 
     template<typename Type> inline Type& FixedLengthList<Type>::operator[](const s32 index)
     {
+      AnkiAssert(index >= 0 && index < this->array.get_size(1));
+
       return *(this->arrayData + index);
     }
 
