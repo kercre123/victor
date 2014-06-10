@@ -157,7 +157,8 @@ namespace Anki {
         static const s32 autoExposure_integerCountsIncrement = 3;
         static const f32 autoExposure_minExposureTime = 0.02f;
         static const f32 autoExposure_maxExposureTime = 0.98f;
-        static const f32 autoExposure_percentileToSaturate = 0.97f;
+        static const u8 autoExposure_highValue = 250;
+        static const f32 autoExposure_percentileToMakeHigh = 0.97f;
         static const s32 autoExposure_adjustEveryNFrames = 1;
 
         // Tracking marker related members
@@ -1564,7 +1565,7 @@ namespace Anki {
             grayscaleImage,
             Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
             autoExposure_integerCountsIncrement,
-            autoExposure_percentileToSaturate,
+            autoExposure_percentileToMakeHigh,
             autoExposure_minExposureTime, autoExposure_maxExposureTime,
             exposureTime,
             VisionMemory::ccmScratch_);
@@ -1708,7 +1709,7 @@ namespace Anki {
             grayscaleImage,
             Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
             autoExposure_integerCountsIncrement,
-            autoExposure_percentileToSaturate,
+            autoExposure_percentileToMakeHigh,
             autoExposure_minExposureTime, autoExposure_maxExposureTime,
             exposureTime,
             VisionMemory::ccmScratch_);
@@ -1852,7 +1853,8 @@ namespace Anki {
               grayscaleImage,
               Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
               autoExposure_integerCountsIncrement,
-              autoExposure_percentileToSaturate,
+              autoExposure_highValue,
+              autoExposure_percentileToMakeHigh,
               autoExposure_minExposureTime, autoExposure_maxExposureTime,
               exposureTime,
               VisionMemory::ccmScratch_);
@@ -1987,7 +1989,7 @@ namespace Anki {
           grayscaleImage,
           Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
           autoExposure_integerCountsIncrement,
-          autoExposure_percentileToSaturate,
+          autoExposure_percentileToMakeHigh,
           autoExposure_minExposureTime, autoExposure_maxExposureTime,
           exposureTime,
           VisionMemory::ccmScratch_);

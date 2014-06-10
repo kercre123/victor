@@ -27,7 +27,8 @@ namespace Anki
       const Array<u8> &image,
       const Rectangle<s32> &imageRegionOfInterest,
       const s32 integerCountsIncrement,
-      const f32 percentileToSaturate,
+      const u8 highValue,
+      const f32 percentileToMakeHigh,
       const f32 minMilliseconds,
       const f32 maxMilliseconds,
       f32 &exposureMilliseconds,
@@ -36,28 +37,34 @@ namespace Anki
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth  = image.get_size(1);
 
-      AnkiConditionalErrorAndReturnValue(integerCountsIncrement > 0 && exposureMilliseconds > 0.0f && percentileToSaturate >= 0.0f && percentileToSaturate <= 1.0f,
+      AnkiConditionalErrorAndReturnValue(integerCountsIncrement > 0 && exposureMilliseconds > 0.0f && percentileToMakeHigh >= 0.0f && percentileToMakeHigh <= 1.0f,
         RESULT_FAIL_INVALID_PARAMETER, "ComputeBestCameraParameters", "Invalid parameters");
 
       IntegerCounts counts(image, imageRegionOfInterest, integerCountsIncrement, integerCountsIncrement, scratch);
 
       const f32 oldExposureMilliseconds = exposureMilliseconds;
 
-      const f32 numElements = static_cast<f32>(counts.get_numElements());
-      const f32 numCurrentlySaturated = static_cast<f32>(counts.get_counts()[255]);
-      const f32 percentCurrentlySaturated = numCurrentlySaturated / numElements;
+      s32 numCurrentlyHighS32 = 0;
 
-      if(percentCurrentlySaturated >= (1.0f - percentileToSaturate)) {
+      for(s32 i=highValue; i<=255; i++) {
+        numCurrentlyHighS32 += counts.get_counts()[i];
+      }
+
+      const f32 numElements = static_cast<f32>(counts.get_numElements());
+      const f32 numCurrentlyHighF32 = static_cast<f32>(numCurrentlyHighS32);
+      const f32 percentCurrentlyHigh = numCurrentlyHighF32 / numElements;
+
+      if(percentCurrentlyHigh >= (1.0f - percentileToMakeHigh)) {
         // If the brightness is too high, we have to guess at the correct brightness
 
         // If we assume a underlying uniform distribution of true irradience,
-        // then the ratio of saturated to unsaturated pixels tells us how to change the threshold
-        exposureMilliseconds = oldExposureMilliseconds * ((1.0f - percentileToSaturate) / percentCurrentlySaturated);
+        // then the ratio of high to low pixels tells us how to change the threshold
+        exposureMilliseconds = oldExposureMilliseconds * ((1.0f - percentileToMakeHigh) / percentCurrentlyHigh);
       } else {
         // If the brightness is too low, compute the new brightness exactly
-        const f32 curBrightPixelValue = static_cast<f32>( MAX(1, counts.ComputePercentile(percentileToSaturate)) );
+        const f32 curBrightPixelValue = static_cast<f32>( MAX(1, counts.ComputePercentile(percentileToMakeHigh)) );
 
-        exposureMilliseconds = oldExposureMilliseconds * (255.0f / curBrightPixelValue);
+        exposureMilliseconds = oldExposureMilliseconds * (static_cast<f32>(highValue) / curBrightPixelValue);
       }
 
       exposureMilliseconds = CLIP(exposureMilliseconds, minMilliseconds, maxMilliseconds);
