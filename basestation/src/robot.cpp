@@ -92,15 +92,19 @@ namespace Anki {
 #pragma mark --- Robot Class Implementations ---
     
     Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner)
-    : ID_(robotID), msgHandler_(msgHandler), world_(world), pathPlanner_(pathPlanner),
-      pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}),
-      frameId_(0),
-      neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
-      headCamPose({0,0,1,  -1,0,0,  0,-1,0},
-                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
-      liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
-      currentHeadAngle(0), currentLiftAngle(0), currPathSegment_(-1),
-      isCarryingBlock_(false), isPickingOrPlacing_(false)
+    : ID_(robotID)
+    , msgHandler_(msgHandler)
+    , world_(world)
+    , pathPlanner_(pathPlanner)
+    , pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
+    , frameId_(0)
+    , neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose)
+    , headCamPose({0,0,1,  -1,0,0,  0,-1,0},
+                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose)
+    , liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose)
+    , currentHeadAngle(0), currentLiftAngle(0), currPathSegment_(-1)
+    , isCarryingBlock_(false)
+    , isPickingOrPlacing_(false)
     {
       this->set_headAngle(currentHeadAngle);
       
