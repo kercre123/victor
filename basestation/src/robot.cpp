@@ -732,10 +732,10 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
     
-    const Quad2f Robot::CanonicalBoundingBoxXY({{-0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE}},
-                                               {{-0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE-ROBOT_BOUNDING_LENGTH}},
-                                               {{ 0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE}},
-                                               {{ 0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE-ROBOT_BOUNDING_LENGTH}});
+    const Quad2f Robot::CanonicalBoundingBoxXY({{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
+                                               {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
+                                               {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y}},
+                                               {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y}});
     
     Quad2f Robot::GetBoundingQuadXY(const f32 paddingScale) const
     {
