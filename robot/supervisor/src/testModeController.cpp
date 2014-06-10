@@ -57,7 +57,9 @@ namespace Anki {
         // 0.4     38      39
         // 0.3     25      25
         // 0.25    -       -
+#if DIRECT_HAL_MOTOR_TEST
         const f32 WHEEL_POWER_CMD = 0.5;
+#endif
         const f32 WHEEL_SPEED_CMD_MMPS = 60;
         ////// End of DriveTest ////////
         

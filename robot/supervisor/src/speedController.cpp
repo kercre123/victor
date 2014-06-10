@@ -251,15 +251,15 @@ namespace Anki {
         //ResetWheelControllerIntegralGainSums();
       }
       
+#if(DEBUG_SPEED_CONTROLLER)
+      PRINT(" SPEED_CTRL: userDesSpeed: %d, userCurrSpeed: %f, measSpeed: %d, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, GetCurrentMeasuredVehicleSpeed(), userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
+#endif
+      
 #else
       // KEVIN 2012_12_18: Disabled integral vehicle controller per Gabe's recommendations.
       // He says increasing Ki of wheel speed controller is sufficient.
       controllerCommandedVehicleSpeed_ = desVehicleSpeed;
-      s32 currerror = 0;
-#endif
-      
-#if(DEBUG_SPEED_CONTROLLER)
-      PRINT(" SPEED_CTRL: userDesSpeed: %d, userCurrSpeed: %f, measSpeed: %d, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, GetCurrentMeasuredVehicleSpeed(), userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
+      //s32 currerror = 0;
 #endif
     }
     
