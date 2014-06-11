@@ -13,6 +13,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     maxMatchDistance_pixels = 5;
     maxMatchDistance_percent = 0.2;
     
+    numComputeThreads = 3;
+    
     showImageDetections = true;
     showImageDetectionWidth = 640;
     showOverallStats = true;
@@ -20,8 +22,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     recompileBasics = true;
     recompilePerTestStats = true;
     
-    basicsFilename = 'basicsResults.mat';
-    perTestStatsFilename = 'perTestStatsResults.mat';
+    basicsFilename = 'basicsResults';
+    perTestStatsFilename = 'perTestStatsResults';
     
     markerDirectoryList = {'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/symbols/withFiducials/', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/letters/withFiducials', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/dice/withFiducials'};
     
@@ -34,7 +36,43 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     end
     
     if recompileBasics
-        [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames] = computeBasics(markerDirectoryList, testJsonPattern);
+        tic
+        
+        partFilenameInput = sprintf('%s_input.mat', basicsFilename);        
+        save(partFilenameInput, 'markerDirectoryList', 'testJsonPattern');
+        
+        % launch threads
+        for iThread = 0:(numComputeThreads-1)
+            partFilename = sprintf('%s_outputPart%d.mat', basicsFilename, iThread);
+            delete(partFilename);
+            commandString = sprintf('matlab -nojvm -noFigureWindows -nosplash -r "load(''%s''); [resultsData_part, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, %d, %d); save(''%s'', ''resultsData_part'', ''testPath'', ''allTestFilenames'', ''testFunctions'', ''testFunctionNames''); exit;"', partFilenameInput, iThread, numComputeThreads, partFilename);
+            system(['start /b ', commandString]);
+        end
+        
+        % wait for threads to complete and compile results                
+        for iThread = 0:(numComputeThreads-1)
+            partFilename = sprintf('%s_outputPart%d.mat', basicsFilename, iThread);
+            
+            while ~exist(partFilename, 'file')
+                pause(.1);
+            end
+            
+            % Wait for the file system to catch up or something?
+            pause(5);
+            
+            load(partFilename)
+            
+            if iThread == 0
+                resultsData = resultsData_part;
+            else
+                for iTest = 1:length(allTestFilenames)
+                    resultsData{iTest}((iThread+1):numComputeThreads:end) = resultsData_part{iTest}((iThread+1):numComputeThreads:end);
+                end
+            end
+        end
+        
+        disp(sprintf('Basic stat computation took %f seconds', toc()));
+                        
         save(basicsFilename, 'resultsData', 'testPath', 'allTestFilenames', 'testFunctions', 'testFunctionNames');
     else
         load(basicsFilename);
@@ -356,228 +394,3 @@ function plotOneMarker(corners, name, showImageDetectionsScale, quadColor, topBa
     midX = (corners(firstCorner,1) + corners(secondCorner,1)) / 2;
     midY = (corners(firstCorner,2) + corners(secondCorner,2)) / 2;
     text(midX*showImageDetectionsScale + 5, midY*showImageDetectionsScale, name, 'Color', quadColor);
-    
-function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames] = computeBasics(markerDirectoryList, testJsonPattern)
-    global rotationList;
-    
-    rotationList = getListOfSymmetricMarkers(markerDirectoryList);
-    
-    % if useUndistortion
-    %     load('Z:\Documents\Box Documents\Cozmo SE\calibCozmoProto1_head.mat');
-    %     cam = Camera('calibration', calibCozmoProto1_head);
-    % end
-    
-    testJsonPattern = strrep(testJsonPattern, '\', '/');
-    slashIndexes = strfind(testJsonPattern, '/');
-    testPath = testJsonPattern(1:(slashIndexes(end)));
-    
-    allTestFilenamesRaw = dir(testJsonPattern);
-    
-    allTestFilenames = cell(length(allTestFilenamesRaw), 1);
-    
-    for i = 1:length(allTestFilenamesRaw)
-        allTestFilenames{i} = [testPath, allTestFilenamesRaw(i).name];
-    end
-    
-    testFunctions = {...
-        @extractMarkers_c_noRefinement,...
-        @extractMarkers_c_withRefinement,...
-        @extractMarkers_matlabOriginal_noRefinement,...
-        @extractMarkers_matlabOriginal_withRefinement,...
-        @extractMarkers_matlabOriginalQuads_cExtraction_noRefinement,...
-        @extractMarkers_matlabOriginalQuads_cExtraction_withRefinement};
-    
-    testFunctionNames = {...
-        '01c-noRef',...
-        '02c-ref',...
-        '03mat-noRef',...
-        '04mat-ref',...
-        '05matQuad-cExt-noRef',...
-        '06matQuad-cExt-ref'};
-    
-    resultsData = cell(length(allTestFilenames), 1);
-    testData = cell(length(allTestFilenames), 1);
-    
-    for iTest = 1:length(allTestFilenames)
-        %     for iTest = length(allTestFilenames)
-        tic;
-        
-        jsonData = loadjson(allTestFilenames{iTest});
-        
-        if ~iscell(jsonData.Poses)
-            jsonData.Poses = { jsonData.Poses };
-        end
-        
-        resultsData{iTest} = cell(length(jsonData.Poses), 1);
-        testData{iTest} = cell(length(jsonData.Poses), 1);
-        
-        for iPose = 1:length(jsonData.Poses)
-            image = imread([testPath, jsonData.Poses{iPose}.ImageFile]);
-            
-            resultsData{iTest}{iPose} = cell(length(testFunctions), 1);
-            
-            if ~isfield(jsonData.Poses{iPose}, 'VisionMarkers')
-                continue;
-            end
-            
-            testData{iTest}{iPose}.Scene = jsonData.Poses{iPose}.Scene;
-            testData{iTest}{iPose}.ImageFile = jsonData.Poses{iPose}.ImageFile;
-            
-            groundTruthQuads = jsonToQuad(jsonData.Poses{iPose}.VisionMarkers);
-            
-            for iTestFunction = 1:length(testFunctions)
-                [detectedQuads, detectedQuadValidity, detectedMarkers] = testFunctions{iTestFunction}(image);
-                
-                %check if the quads are in the right places
-                
-                [justQuads_bestDistances_mean, justQuads_bestDistances_max, justQuads_bestIndexes, ~] = findClosestMatches(groundTruthQuads, detectedQuads, []);
-                
-                [markers_bestDistances_mean, markers_bestDistances_max, markers_bestIndexes, markers_areRotationsCorrect] = findClosestMatches(groundTruthQuads, markersToQuad(detectedMarkers), jsonData.Poses{iPose}.VisionMarkers);
-                
-                markerNames_groundTruth = cell(length(groundTruthQuads), 1);
-                fiducialSizes_groundTruth = zeros(length(groundTruthQuads), 2);
-                
-                for iMarker = 1:length(groundTruthQuads)
-                    markerNames_groundTruth{iMarker,1} = jsonData.Poses{iPose}.VisionMarkers{iMarker}.markerType;
-                    
-                    fiducialSizes_groundTruth(iMarker,:) = [...
-                        max(groundTruthQuads{iMarker}(:,1)) - min(groundTruthQuads{iMarker}(:,1)),...
-                        max(groundTruthQuads{iMarker}(:,2)) - min(groundTruthQuads{iMarker}(:,2))];
-                end
-                
-                markerNames_detected = cell(length(detectedMarkers), 1);
-                for iMarker = 1:length(detectedMarkers)
-                    markerNames_detected{iMarker} = detectedMarkers{iMarker}.name;
-                end
-                
-                %                 % Remove any markers with ground truth label MARKER_IGNORE
-                %                 validInds = [];
-                %                 for iMarker = 1:length(groundTruthQuads)
-                %                     if ~strcmp(markerNames_groundTruth, 'MARKER_IGNORE')
-                %                         validInds = [validInds, iMarker]; %#ok<AGROW>
-                %                     end
-                %                 end
-                
-                resultsData{iTest}{iPose}{iTestFunction}.justQuads_bestDistances_mean = justQuads_bestDistances_mean;
-                resultsData{iTest}{iPose}{iTestFunction}.justQuads_bestDistances_max = justQuads_bestDistances_max;
-                resultsData{iTest}{iPose}{iTestFunction}.justQuads_bestIndexes = justQuads_bestIndexes;
-                resultsData{iTest}{iPose}{iTestFunction}.markers_bestDistances_mean = markers_bestDistances_mean;
-                resultsData{iTest}{iPose}{iTestFunction}.markers_bestDistances_max = markers_bestDistances_max;
-                resultsData{iTest}{iPose}{iTestFunction}.markers_bestIndexes = markers_bestIndexes;
-                resultsData{iTest}{iPose}{iTestFunction}.markers_areRotationsCorrect = markers_areRotationsCorrect;
-                resultsData{iTest}{iPose}{iTestFunction}.fiducialSizes_groundTruth = fiducialSizes_groundTruth;
-                resultsData{iTest}{iPose}{iTestFunction}.markerNames_groundTruth = markerNames_groundTruth;
-                resultsData{iTest}{iPose}{iTestFunction}.markerLocations_groundTruth = groundTruthQuads;
-                
-                resultsData{iTest}{iPose}{iTestFunction}.markerNames_detected = markerNames_detected;
-                resultsData{iTest}{iPose}{iTestFunction}.detectedQuads = detectedQuads;
-                resultsData{iTest}{iPose}{iTestFunction}.detectedQuadValidity = detectedQuadValidity;
-                resultsData{iTest}{iPose}{iTestFunction}.detectedMarkers = detectedMarkers;
-                
-                %             figure(1);
-                %             hold off;
-                %             imshow(image);
-                %             hold on;
-                %             for i = 1:length(detectedQuads)
-                %                 plot(detectedQuads{i}(:,1), detectedQuads{i}(:,2));
-                %                 text(detectedQuads{i}(1,1), detectedQuads{i}(1,2), sprintf('%d', bestIndexes(i)));
-                %             end
-            end
-        end
-        
-        disp(sprintf('Finished test %d/%d in %f seconds', iTest, length(allTestFilenames), toc()));
-    end % for iTest = 1:length(allTestFilenames)
-    
-function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrect] = findClosestMatches(groundTruthQuads, queryQuads, markerNames_groundTruth)
-    global rotationList;
-    
-    bestDistances_mean = Inf * ones(length(groundTruthQuads), 1);
-    bestDistances_max = Inf * ones(length(groundTruthQuads), 3);
-    bestIndexes = -1 * ones(length(groundTruthQuads), 1);
-    areRotationsCorrect = false * ones(length(groundTruthQuads), 1);
-    
-    for iGroundTruth = 1:length(groundTruthQuads)
-        gtQuad = groundTruthQuads{iGroundTruth};
-        
-        if isempty(markerNames_groundTruth)
-            numRotations = 4;
-        else
-            curName = markerNames_groundTruth{iGroundTruth}.markerType(8:end);
-            
-            index = find(strcmp(rotationList(:,1), curName));
-            
-            % TODO: make assert false
-            %             assert(~isempty(index));
-            if isempty(index)
-                numRotations = 4;
-            else
-                numRotations = rotationList{index, 2};
-            end
-            
-            %             disp(sprintf('%s %d', curName, numRotations));
-        end
-        
-        for iQuery = 1:length(queryQuads)
-            queryQuad = queryQuads{iQuery};
-            
-            for iRotation = 0:3
-                distances = sqrt(sum((queryQuad - gtQuad).^2, 2));
-                
-                % Compute the closest match based on the mean distance
-                distance_mean = mean(distances);
-                
-                if distance_mean < bestDistances_mean(iGroundTruth)
-                    bestDistances_mean(iGroundTruth) = distance_mean;
-                    bestDistances_max(iGroundTruth, :) = [max(distances), max(abs(queryQuad - gtQuad))];
-                    bestIndexes(iGroundTruth) = iQuery;
-                    
-                    if numRotations == 4
-                        if iRotation == 0
-                            areRotationsCorrect(iGroundTruth) = true;
-                        else
-                            areRotationsCorrect(iGroundTruth) = false;
-                        end
-                    elseif numRotations == 2
-                        if iRotation == 0 || iRotation == 2
-                            areRotationsCorrect(iGroundTruth) = true;
-                        else
-                            areRotationsCorrect(iGroundTruth) = false;
-                        end
-                    elseif numRotations == 1
-                        areRotationsCorrect(iGroundTruth) = true;
-                    else
-                        assert(false);
-                    end
-                end
-                
-                % rotate the quad
-                queryQuad = queryQuad([3,1,4,2],:);
-            end
-        end
-    end
-    
-function quads = jsonToQuad(jsonQuads)
-    if ~iscell(jsonQuads)
-        jsonQuads = { jsonQuads };
-    end
-    
-    quads = cell(length(jsonQuads), 1);
-    
-    for iQuad = 1:length(jsonQuads)
-        quads{iQuad} = [...
-            jsonQuads{iQuad}.x_imgUpperLeft, jsonQuads{iQuad}.y_imgUpperLeft;
-            jsonQuads{iQuad}.x_imgLowerLeft, jsonQuads{iQuad}.y_imgLowerLeft;
-            jsonQuads{iQuad}.x_imgUpperRight, jsonQuads{iQuad}.y_imgUpperRight;
-            jsonQuads{iQuad}.x_imgLowerRight, jsonQuads{iQuad}.y_imgLowerRight];
-    end
-    
-function quads = markersToQuad(markers)
-    if ~iscell(markers)
-        markers = { markers };
-    end
-    
-    quads = cell(length(markers), 1);
-    
-    for iQuad = 1:length(markers)
-        quads{iQuad} = markers{iQuad}.corners;
-    end
