@@ -65,9 +65,9 @@ namespace Cozmo {
     
     // Returns the number of messages ready for processing in the BLEVehicleMgr.
     // Returns 0 if no messages are available.
-    virtual int GetNumPendingMsgPackets();
+    virtual size_t GetNumPendingMsgPackets();
   
-    virtual int Send(const Comms::MsgPacket &p);
+    virtual size_t Send(const Comms::MsgPacket &p);
 
     virtual bool GetNextMsgPacket(Comms::MsgPacket &p);
     
@@ -90,16 +90,16 @@ namespace Cozmo {
     
     // Connect to all advertising robots.
     // Returns the total number of robots that are connected.
-    int ConnectToAllRobots();
+    size_t ConnectToAllRobots();
     
     // Disconnects from all robots.
     void DisconnectAllRobots();
     
-    int GetNumConnectedRobots() const { return connectedRobots_.size(); }
+    size_t GetNumConnectedRobots() const { return connectedRobots_.size(); }
     
-    int GetNumAdvertisingRobots() const { return advertisingRobots_.size(); }
+    size_t GetNumAdvertisingRobots() const { return advertisingRobots_.size(); }
     
-    int GetAdvertisingRobotIDs(std::vector<int> &robotIDs);
+    size_t GetAdvertisingRobotIDs(std::vector<int> &robotIDs);
     
     // Clears the list of advertising robots.
     void ClearAdvertisingRobots();
@@ -115,17 +115,17 @@ namespace Cozmo {
     void PrintRecvBuf(int robotID);
     
     // Map of advertising robots (key: robot id)
-    typedef std::map<int, RobotConnectionInfo_t>::iterator advertisingRobotsIt_t;
+    using advertisingRobotsIt_t = std::map<int, RobotConnectionInfo_t>::iterator;
     std::map<int, RobotConnectionInfo_t> advertisingRobots_;
     
     // Map of connected robots (key: robot id)
-    typedef std::map<int, ConnectedRobotInfo>::iterator connectedRobotsIt_t;
+    using connectedRobotsIt_t = std::map<int, ConnectedRobotInfo>::iterator;
     std::map<int, ConnectedRobotInfo> connectedRobots_;
     
     // 'Queue' of received messages from all connected robots with their received times.
     //std::multimap<TimeStamp_t, Comms::MsgPacket> recvdMsgPackets_;
     //std::deque<Comms::MsgPacket> recvdMsgPackets_;
-    typedef std::deque< std::pair<f32, Comms::MsgPacket> > PacketQueue_t;
+    using PacketQueue_t = std::deque< std::pair<f32, Comms::MsgPacket> >;
     PacketQueue_t recvdMsgPackets_;
     
 #if(DO_SIM_COMMS_LATENCY)

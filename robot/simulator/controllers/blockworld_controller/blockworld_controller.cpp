@@ -152,7 +152,7 @@ int main(int argc, char **argv)
     {
       // Get selected block of interest from Behavior manager
       static ObjectID_t prev_boi = 0;      // Previous block of interest
-      static u32 prevNumPreDockPoses = 0;  // Previous number of predock poses
+      static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
       
       // Get current block of interest
       const ObjectID_t boi = behaviorMgr.GetBlockOfInterest();
@@ -178,7 +178,7 @@ int main(int argc, char **argv)
             
             // Erase previous predock pose marker for previous block of interest
             if (prev_boi != boi || poses.size() != prevNumPreDockPoses) {
-              PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %d)\n", boi, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
+              PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", boi, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
               VizManager::getInstance()->EraseVizObjectType(VIZ_PREDOCKPOSE);
               prev_boi = boi;
               prevNumPreDockPoses = poses.size();

@@ -495,11 +495,11 @@ namespace Anki {
         
         // Breakup and send in multiple messages if necessary
         Messages::PrintText m;
-        s32 bytesLeftToSend = strlen(text);
+        size_t bytesLeftToSend = strlen(text);
         u8 numMsgs = 0;
         while(bytesLeftToSend > 0) {
           memset(m.text, 0, PRINT_TEXT_MSG_LENGTH);
-          u32 currPacketBytes = MIN(PRINT_TEXT_MSG_LENGTH, bytesLeftToSend);
+          size_t currPacketBytes = MIN(PRINT_TEXT_MSG_LENGTH, bytesLeftToSend);
           memcpy(m.text, text + numMsgs*PRINT_TEXT_MSG_LENGTH, currPacketBytes);
           
           bytesLeftToSend -= PRINT_TEXT_MSG_LENGTH;

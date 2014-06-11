@@ -23,7 +23,7 @@ namespace Anki {
 namespace Cozmo {
   
   const std::string header(RADIO_PACKET_HEADER, RADIO_PACKET_HEADER + sizeof(RADIO_PACKET_HEADER));
-  const int HEADER_AND_TS_SIZE = header.length() + sizeof(TimeStamp_t);
+  const size_t HEADER_AND_TS_SIZE = header.length() + sizeof(TimeStamp_t);
 
   
   TCPComms::TCPComms()
@@ -50,7 +50,7 @@ namespace Cozmo {
     return true;
   }
   
-  int TCPComms::Send(const Comms::MsgPacket &p)
+  size_t TCPComms::Send(const Comms::MsgPacket &p)
   {
     // TODO: Instead of sending immediately, maybe we should queue them and send them all at
     // once to more closely emulate BTLE.
@@ -232,11 +232,11 @@ namespace Cozmo {
           break;
         }
         
-        int n = hPtr - c.recvBuf;
+        size_t n = hPtr - c.recvBuf;
         if (n != 0) {
           // Header was not found at the beginning.
           // Delete everything up until the header.
-          PRINT_NAMED_WARNING("TCPComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding %d bytes\n", n);
+          PRINT_NAMED_WARNING("TCPComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding %zu bytes\n", n);
           c.recvDataSize -= n;
           memcpy(c.recvBuf, hPtr, c.recvDataSize);
         }
@@ -336,7 +336,7 @@ namespace Cozmo {
   }
   
   
-  int TCPComms::ConnectToAllRobots()
+  size_t TCPComms::ConnectToAllRobots()
   {
     for (advertisingRobotsIt_t it = advertisingRobots_.begin(); it != advertisingRobots_.end(); it++)
     {
@@ -346,7 +346,7 @@ namespace Cozmo {
     return connectedRobots_.size();
   }
   
-  int TCPComms::GetAdvertisingRobotIDs(std::vector<int> &robotIDs)
+  size_t TCPComms::GetAdvertisingRobotIDs(std::vector<int> &robotIDs)
   {
     robotIDs.clear();
     for (advertisingRobotsIt_t it = advertisingRobots_.begin(); it != advertisingRobots_.end(); it++)
@@ -393,7 +393,7 @@ namespace Cozmo {
   }
   
   
-  int TCPComms::GetNumPendingMsgPackets()
+  size_t TCPComms::GetNumPendingMsgPackets()
   {
     #if(DO_SIM_COMMS_LATENCY)
     return numRecvRdyMsgs_;

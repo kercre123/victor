@@ -123,7 +123,7 @@ namespace Anki
 
       bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
       
-      uint32_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
+      size_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                   const ObjectsMap_t& objectsExisting,

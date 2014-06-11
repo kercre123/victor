@@ -102,7 +102,9 @@ namespace Anki {
           LCS_SET_CURR_ANGLE
         } LiftCalibState;
         
+#ifndef SIMULATOR
         LiftCalibState calState_ = LCS_IDLE;
+#endif
         bool isCalibrated_ = false;
         bool limitingDetected_ = false;
         bool limitingExpected_ = false;
