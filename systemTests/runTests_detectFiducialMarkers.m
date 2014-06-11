@@ -17,7 +17,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     showImageDetectionWidth = 640;
     showOverallStats = true;
     
-    recompileBasics = false;
+    recompileBasics = true;
     recompilePerTestStats = true;
     
     basicsFilename = 'basicsResults.mat';

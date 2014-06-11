@@ -26,7 +26,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_49_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.1,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -447,7 +447,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_50_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.2,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -868,7 +868,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_51_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.3,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -1289,7 +1289,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_52_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.4,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -1710,7 +1710,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_53_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.5,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -2131,7 +2131,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_54_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.6,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -2552,7 +2552,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_55_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.7,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -2973,7 +2973,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_56_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.8,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -3394,7 +3394,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_57_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.9,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -3815,7 +3815,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_58_frame0.png",
 			"Scene": {
 				"CameraExposure": 1,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
