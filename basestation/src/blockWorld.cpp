@@ -727,7 +727,7 @@ namespace Anki
       Robot* robot = robotMgr_->GetRobotByID(whichRobot);
       if(robot != 0)
       {
-        robot->dockWithBlock(whichBlock);
+        robot->ExecuteDockingSequence(&whichBlock);
         
       } else {
         CoreTechPrint("Invalid robot commanded to Dock.\n");

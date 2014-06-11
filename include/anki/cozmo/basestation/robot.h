@@ -32,14 +32,24 @@ namespace Anki {
     class IMessageHandler;
     class IPathPlanner;
     
+    class BlockDockingSystem
+    {
+    public:
+      
+    protected:
+      
+      
+    }; // class BlockDockingSystem
+    
+    
     class Robot
     {
     public:
-      enum OperationMode {
-        MOVE_LIFT,
-        FOLLOW_PATH,
-        INITIATE_PRE_DOCK,
-        DOCK
+      enum State {
+        IDLE,
+        FOLLOWING_PATH,
+        BEGIN_DOCKING,
+        DOCKING
       };
       
       Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner);
@@ -52,7 +62,6 @@ namespace Anki {
       const Vision::Camera& get_camHead() const;
       Vision::Camera& get_camHead(void);
       
-      OperationMode get_operationMode() const;
       const f32 get_headAngle() const;
       const f32 get_liftAngle() const;
       
@@ -64,6 +73,9 @@ namespace Anki {
       void set_liftAngle(const f32& angle);
       void set_camCalibration(const Vision::CameraCalibration& calib);
       
+      State GetState() const;
+      void  SetState(const State newState);
+      
       void IncrementPoseFrameID() {++frameId_;}
       PoseFrameID_t GetPoseFrameID() const {return frameId_;}
       
@@ -71,10 +83,9 @@ namespace Anki {
       bool hasOutgoingMessages() const;
       void getOutgoingMessage(u8 *msgOut, u8 &msgSize);
       
-      void dockWithBlock(const Block& block);
-      
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
+      Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
       
       // Clears the path that the robot is executing which also stops the robot
       Result ClearPath();
@@ -122,6 +133,7 @@ namespace Anki {
       
       Result StopAllMotors();
       
+      Result ExecuteDockingSequence(const Block* blockToDockWith);
       
       // Sends a message to the robot to dock with the specified block
       // that it should currently be seeing.
@@ -224,8 +236,11 @@ namespace Anki {
       
       s8 currPathSegment_;
       
-      OperationMode mode, nextMode;
-      bool setOperationMode(OperationMode newMode);
+      Pose3d goalPose_;
+      Radians goalHeadAngle_;
+      
+      State state_, nextState_;
+      //bool setOperationMode(OperationMode newMode);
       bool isCarryingBlock_;
       bool isPickingOrPlacing_;
       bool isMoving_;
@@ -243,6 +258,12 @@ namespace Anki {
       typedef std::queue<MessageType> MessageQueue;
       MessageQueue messagesOut;
       
+      // Docking
+      const Block* dockBlock_;
+      const Vision::KnownMarker *dockMarker_;
+      DockAction_t dockAction_;
+      
+      f32 waitUntilTime_;
       
       ///////// Messaging ////////
       
@@ -315,8 +336,11 @@ namespace Anki {
     inline Vision::Camera& Robot::get_camHead(void)
     { return this->camHead; }
     
-    inline Robot::OperationMode Robot::get_operationMode() const
-    { return this->mode; }
+    inline void Robot::SetState(const State newState)
+    { state_ = newState; }
+    
+    inline Robot::State Robot::GetState(void) const
+    { return state_; }
     
     inline void Robot::set_camCalibration(const Vision::CameraCalibration& calib)
     { this->camHead.SetCalibration(calib); }

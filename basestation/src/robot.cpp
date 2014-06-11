@@ -122,42 +122,118 @@ namespace Anki {
     
     void Robot::Update(void)
     {
-      // TODO: State update
-      // ...
-      
-      static bool wasTraversingPath = false;
-      
-      // If the robot is traversing a path, consider replanning it
-      // TODO:(bn) only check this if the blocks have been updated
-      if(IsTraversingPath()) {
-        Planning::Path newPath;
-        if(pathPlanner_->ReplanIfNeeded(newPath, get_pose())) {
-          path_.Clear();
-          VizManager::getInstance()->ErasePath(ID_);
-          wasTraversingPath = false;
+      switch(state_)
+      {
+        case IDLE:
+        {
+          // Nothing to do in IDLE mode?
+          break;
+        } // case IDLE
+          
+        case FOLLOWING_PATH:
+        {
+          static bool wasTraversingPath = false;
+          
+          // If the robot is traversing a path, consider replanning it
+          // TODO:(bn) only check this if the blocks have been updated
+          if(IsTraversingPath()) {
+            Planning::Path newPath;
+            if(pathPlanner_->ReplanIfNeeded(newPath, get_pose())) {
+              path_.Clear();
+              VizManager::getInstance()->ErasePath(ID_);
+              wasTraversingPath = false;
+              
+              PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path");
+              MessageClearPath clearMessage;
+              msgHandler_->SendMessage(ID_, clearMessage);
+              
+              path_ = newPath;
+              PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot");
+              SendExecutePath(path_);
+            }
+          }
+          
+          // Visualize path if robot has just started traversing it.
+          // Clear the path when it has stopped.
+          if (!wasTraversingPath && IsTraversingPath() && path_.GetNumSegments() > 0) {
+            VizManager::getInstance()->DrawPath(ID_,path_,VIZ_COLOR_EXECUTED_PATH);
+            wasTraversingPath = true;
+          } else if (wasTraversingPath && !IsTraversingPath()){
+            path_.Clear();
+            VizManager::getInstance()->ErasePath(ID_);
+            wasTraversingPath = false;
+            
+            SetState(nextState_);
+          }
 
-          PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path");
-          MessageClearPath clearMessage;
-          msgHandler_->SendMessage(ID_, clearMessage);
-
-          path_ = newPath;
-          PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot");
-          SendExecutePath(path_);
-        }
-      }
-     
-      // Visualize path if robot has just started traversing it.
-      // Clear the path when it has stopped.
-      if (!wasTraversingPath && IsTraversingPath() && path_.GetNumSegments() > 0) {
-        VizManager::getInstance()->DrawPath(ID_,path_,VIZ_COLOR_EXECUTED_PATH);
-        wasTraversingPath = true;
-      } else if (wasTraversingPath && !IsTraversingPath()){
-        path_.Clear();
-        VizManager::getInstance()->ErasePath(ID_);
-        wasTraversingPath = false;
-      }
+          break;
+        } // case FOLLOWING_PATH
       
-    } // step()
+        case BEGIN_DOCKING:
+        {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
+            // TODO: Check that the marker was recently seen at roughly the expected image location
+            // ...
+            //const Point2f& imgCorners = dockMarker_->GetImageCorners().computeCentroid();
+            // For now, just docking to the marker no matter where it is in the image.
+            
+            // Get dock action
+            const f32 dockBlockHeight = dockBlock_->GetPose().get_translation().z();
+            dockAction_ = DA_PICKUP_LOW;
+            if (dockBlockHeight > dockBlock_->GetSize().z()) {
+              if(IsCarryingBlock()) {
+                PRINT_INFO("Already carrying block. Can't dock to high block. Aborting.\n");
+                SetState(IDLE);
+                return;
+                
+              } else {
+                dockAction_ = DA_PICKUP_HIGH;
+              }
+            } else if (IsCarryingBlock()) {
+              dockAction_ = DA_PLACE_HIGH;
+            }
+            
+            // Start dock
+            PRINT_INFO("Docking with marker %d (action = %d)\n", dockMarker_->GetCode(), dockAction_);
+            DockWithBlock(dockMarker_->GetCode(),  dockMarker_->GetSize(), dockAction_);
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
+            SetState(DOCKING);
+          }
+          break;
+        } // case BEGIN_DOCKING
+          
+        case DOCKING:
+        {
+          if (!IsPickingOrPlacing() && !IsMoving() &&
+              waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
+          {
+            // Stopped executing docking path. Did it successfully dock?
+            if ((dockAction_ == DA_PICKUP_LOW || dockAction_ == DA_PICKUP_HIGH) && IsCarryingBlock()) {
+              PRINT_INFO("Picked up block successful!\n");
+            } else {
+              
+              if((dockAction_ == DA_PLACE_HIGH) && !IsCarryingBlock()) {
+                PRINT_INFO("Placed block successfully!\n");
+              } else {
+                PRINT_INFO("Dock failed! Aborting\n");
+              }
+            }
+            
+            SetState(IDLE);
+          }
+          break;
+        } // case DOCKING
+          
+        default:
+          PRINT_NAMED_ERROR("Robot::Update", "Transitioned to unknown state %d!", state_);
+          state_ = IDLE;
+          return;
+          
+      } // switch(state_)
+      
+      
+      
+    } // Update()
 
     
     void Robot::getOutgoingMessage(u8 *msgOut, u8 &msgSize)
@@ -215,158 +291,7 @@ namespace Anki {
     {
       currentLiftAngle = angle;
     }
-    
-    
-    void Robot::dockWithBlock(const Block& block)
-    {
-     /*
-      // Compute the necessary head angle and docking target position for
-      // this block
-      
-      // Get the face closest to us
-      const BlockMarker3d* closestFace = NULL;
-      f32 minDistance = 0.f;
-      
-      for(Block::FaceName face=Block::FIRST_FACE; face < Block::NUM_FACES; ++face)
-      {
-        const BlockMarker3d& currentFace = block.get_faceMarker(face);
-        Pose3d facePose = currentFace.get_pose().getWithRespectTo(this->pose.get_parent());
-        f32 thisDistance = computeDistanceBetween(this->pose.get_translation(),
-                                                  facePose.get_translation());
-        if(closestFace==NULL || thisDistance < minDistance) {
-          closestFace = &currentFace;
-          minDistance = thisDistance;
-        }
-      }
-      
-      Quad2f dots2D_goal, searchWin2D;
-      f32 desiredLiftHeight = 0.f;
-      if(this->isCarryingBlock)
-      {
-        fprintf(stdout, "dockWithBlock() not yet implemented when carrying a block.\n");
-        CORETECH_ASSERT(false);
         
-      } else {
-        // We are not carrying a block, so we figure out the lifter height we
-        // need and where the docking face should end up
-        // (This is assuming we are trying to align the origin (center?) of the
-        //  lifter mechanism with the origin (center) of the face.)
-        
-        // Desired lifter height in world coordinates
-        Pose3d face_wrt_world = closestFace->get_pose().getWithRespectTo(Pose3d::World);
-        desiredLiftHeight = face_wrt_world.get_translation().z();
-        
-        // Compute lift angle to achieve that height
-        Radians desiredLiftAngle = asinf((desiredLiftHeight - LIFT_JOINT_HEIGHT) / LIFT_ARM_LENGTH);
-        RotationMatrix3d R(desiredLiftAngle, X_AXIS_3D);
-        Vec3f liftVec(0.f, LIFT_ARM_LENGTH, 0.f);
-        liftVec = R * liftVec;
-      
-        Pose3d desiredLiftPose(0.f, X_AXIS_3D, liftVec, &(this->liftBasePose));
-
-        Pose3d desiredDockingFacePose = desiredLiftPose.getWithRespectTo(&(this->pose));
-      
-        BlockMarker3d virtualBlockFace(closestFace->get_blockType(),
-                                       closestFace->get_faceType(),
-                                       desiredDockingFacePose);
-        
-        bool withinImage = true;
-        do {
-          
-          // Project the virtual docking face's target into our image
-          Quad3f dots3D_goal;
-          virtualBlockFace.getDockingTarget(dots3D_goal, &(this->camHead.get_pose()));
-          
-          this->camHead.Project3dPoints(dots3D_goal, dots2D_goal);
-          
-          if(this->camHead.isBehind(dots2D_goal[Quad::TopLeft]) ||
-             this->camHead.isBehind(dots2D_goal[Quad::TopRight]) ||
-             this->camHead.isBehind(dots2D_goal[Quad::BottomLeft]) ||
-             this->camHead.isBehind(dots2D_goal[Quad::BottomRight]))
-          {
-            fprintf(stdout, "Projected virtual docking dots should not be "
-                    "behind camera!\n");
-            CORETECH_ASSERT(false);
-          }
-          
-          // Tilt head until we find an angle that puts the docking dots well
-          // within the image
-          // TODO: actually do the math and compute this angle directly?
-          
-          // If it's above/below the camera, tilt the head up/down until we can see it
-          const f32 nrows = static_cast<float>(this->camHead.get_calibration().get_nrows());
-          if(dots2D_goal[Quad::BottomLeft].y()  > 0.9f*nrows ||
-             dots2D_goal[Quad::BottomRight].y() > 0.9f*nrows)
-          {
-            fprintf(stdout, "Virtual docking dots too low for current "
-                    "head pose.  Tilting head down...\n");
-            
-            this->set_headAngle(this->currentHeadAngle - 3.f*M_PI/180.f);
-            
-            withinImage = false;
-          }
-          else if(dots2D_goal[Quad::TopLeft].y()  < 0.1f*nrows ||
-                  dots2D_goal[Quad::TopRight].y() < 0.1f*nrows)
-          {
-            fprintf(stdout, "Virtual docking dots too high for current "
-                    "head pose.  Tilting head up...\n");
-            
-            this->set_headAngle(this->currentHeadAngle + 3.f*M_PI/180.f);
-            
-            withinImage = false;
-          } else {
-            withinImage = true;
-          }
-        } while(not withinImage);
-        
-        // At the final head angle, figure out where the closest face's
-        // docking target window will appear so we can tell the robot
-        // to start its search there
-        Quad3f searchWin3D;
-        closestFace->getDockingBoundingBox(searchWin3D,
-                                           &(this->camHead.get_pose()));
-        this->camHead.Project3dPoints(searchWin3D, searchWin2D);
-        
-      } // if carrying a block
-
-      // TODO: Update this
-#if 0
-      // Create a dock initiation message
-      CozmoMsg_InitiateDock msg;
-      msg.size = sizeof(CozmoMsg_InitiateDock);
-      msg.msgID = MSG_B2V_CORE_INITIATE_DOCK;
-      msg.headAngle  = this->currentHeadAngle.ToFloat();
-      msg.liftHeight = desiredLiftHeight;
-      
-      for(Quad::CornerName i_corner=Quad::FirstCorner;
-          i_corner < Quad::NumCorners; ++i_corner)
-      {
-        msg.dotX[i_corner]     = dots2D_goal[i_corner].x();
-        msg.dotY[i_corner]     = dots2D_goal[i_corner].y();
-      }
-      
-      const s16 left  = static_cast<s16>(searchWin2D.get_minX());
-      const s16 right = static_cast<s16>(searchWin2D.get_maxX());
-      const s16 top   = static_cast<s16>(searchWin2D.get_minY());
-      const s16 btm   = static_cast<s16>(searchWin2D.get_maxY());
-      
-      CORETECH_ASSERT(left < right);
-      CORETECH_ASSERT(top < btm);
-      
-      msg.winX = left;
-      msg.winY = top;
-      msg.winWidth = right - left;
-      msg.winHeight = btm - top;
-      
-      // Queue the message for sending to the robot
-      const u8 *msgData = (const u8 *) &msg;
-      messagesOut.emplace(msgData, msgData+sizeof(msg));
-#endif
-      */
-      
-    } // dockWithBlock()
-
-    
     Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
     {
       
@@ -384,9 +309,16 @@ namespace Anki {
     
     Result Robot::ExecutePathToPose(const Pose3d& pose)
     {
+      return ExecutePathToPose(pose, get_headAngle());
+    }
+    
+    Result Robot::ExecutePathToPose(const Pose3d& pose, const Radians headAngle)
+    {
       Planning::Path p;
       if (GetPathToPose(pose, p) == RESULT_OK) {
         path_ = p;
+        goalPose_ = pose;
+        goalHeadAngle_ = headAngle;
         return ExecutePath(p);
       }
         
@@ -443,6 +375,7 @@ namespace Anki {
     // Clears the path that the robot is executing which also stops the robot
     Result Robot::ClearPath()
     {
+      // TODO: SetState(IDLE) ?
       return SendClearPath();
     }
     
@@ -453,8 +386,74 @@ namespace Anki {
       if (ClearPath() == RESULT_FAIL)
         return RESULT_FAIL;
 
+      SetState(FOLLOWING_PATH);
+      
       return SendExecutePath(path);
     }
+    
+    Result Robot::ExecuteDockingSequence(const Block* blockToDockWith)
+    {
+      Result lastResult = RESULT_OK;
+      
+      CORETECH_ASSERT(blockToDockWith != nullptr);
+      
+      dockBlock_ = blockToDockWith;
+      
+      std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
+      dockBlock_->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
+      
+      // Select (closest) predock pose
+      if (!preDockPoseMarkerPairs.empty()) {
+        f32 shortestDist2Pose = -1;
+        for (auto const & poseMarkerPair : preDockPoseMarkerPairs) {
+          
+          PRINT_INFO("Candidate pose: (%f %f %f), (%f %f %f %f)\n",
+                     poseMarkerPair.first.get_translation().x(),
+                     poseMarkerPair.first.get_translation().y(),
+                     poseMarkerPair.first.get_translation().z(),
+                     poseMarkerPair.first.get_rotationAxis().x(),
+                     poseMarkerPair.first.get_rotationAxis().y(),
+                     poseMarkerPair.first.get_rotationAxis().z(),
+                     poseMarkerPair.first.get_rotationAngle().ToFloat() );
+          
+          const f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, pose);
+          if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
+            shortestDist2Pose = dist2Pose;
+            goalPose_   = poseMarkerPair.first;
+            dockMarker_ = &(poseMarkerPair.second);
+          }
+        }
+      } else {
+        PRINT_INFO("No docking pose found\n");
+        SetState(IDLE);
+        return RESULT_FAIL;
+      }
+      
+      // TODO: make these robot members
+      f32 goalDistThresh_ = 10.f;
+      Radians goalAngleThresh_ = DEG_TO_RAD(10);
+      Radians goalHeadAngle_   = DEG_TO_RAD(-15);
+      
+      lastResult = ExecutePathToPose(goalPose_);
+      if(lastResult != RESULT_OK) {
+        return lastResult;
+      }
+      
+      // Make sure head is tilted down so that it can localize well
+      MoveHeadToAngle(goalHeadAngle_.ToFloat(), 5, 10);
+      PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
+                 goalPose_.get_translation().x(),
+                 goalPose_.get_translation().y(),
+                 goalPose_.get_rotationAngle().getDegrees());
+      
+      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+      state_ = FOLLOWING_PATH;
+      nextState_ = BEGIN_DOCKING;
+      
+      return lastResult;
+      
+    } // ExecuteDockingSequence()
+    
     
     // Sends a message to the robot to dock with the specified block
     // that it should currently be seeing.

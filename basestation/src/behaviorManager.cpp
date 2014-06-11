@@ -364,38 +364,21 @@ namespace Anki {
             return;
           }
 
-          const f32 headAngle = -0.26f;
-          nextState_ = BEGIN_DOCKING;
-          problemState_ = WAITING_FOR_DOCK_BLOCK;
-          GoToNearestPreDockPoseHelper(PREDOCK_DISTANCE_MM, headAngle);
+          if(robot_->ExecuteDockingSequence(dockBlock_) != RESULT_OK) {
+            PRINT_INFO("Robot::ExecuteDockingSequence() failed. Aborting.\n");
+            StartMode(BM_None);
+            return;
+          }
           
-          break;
-        }
-        case EXECUTING_PATH_TO_DOCK_POSE:
-        {
-          // Once robot is confirmed at the docking pose, execute docking.
-          FollowPathHelper();
-          break;
-        }
-        case BEGIN_DOCKING:
-        {
-          BeginDockingHelper();
+          state_ = EXECUTING_DOCK;
+          
           break;
         }
         case EXECUTING_DOCK:
         {
-          if (!robot_->IsPickingOrPlacing() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
-            // Stopped executing docking path. Did it successfully dock?
-            if (((dockAction_ == DA_PICKUP_LOW || dockAction_ == DA_PICKUP_HIGH) && robot_->IsCarryingBlock()) ||
-                ((dockAction_ == DA_PLACE_HIGH) && !robot_->IsCarryingBlock()) ) {
-              PRINT_INFO("Docking successful!\n");
-            } else {
-              PRINT_INFO("Dock failed! Aborting\n");
-            }
-            
+          // Wait until robot finishes (goes back to IDLE)
+          if(robot_->GetState() == Robot::IDLE) {
             StartMode(BM_None);
-            return;
-
           }
           break;
         }
@@ -462,7 +445,7 @@ namespace Anki {
           blockToPlaceOn_ = Block::NUMBER6_BLOCK_TYPE;
           state_ = BEGIN_EXPLORING;
           */
-          
+          if(robot_->GetState() == Robot::IDLE) {
           const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingBlocks(Block::DICE_BLOCK_TYPE);
           if(!diceBlocks.empty()) {
             
@@ -591,26 +574,14 @@ namespace Anki {
                 
                 goalPose_ = Pose3d(angle, Z_AXIS_3D, {{position.x(), position.y(), 0.f}});
                 
-                robot_->ExecutePathToPose(goalPose_);
-
-                // Make sure head is tilted down so that it can localize well
-                robot_->MoveHeadToAngle(diceViewingHeadAngle, 5, 10);
-                PRINT_INFO("Executing path to get closer to dice. Goal = (%.2f, %.2f) @ %.1fdeg\n",
-                           goalPose_.get_translation().x(),
-                           goalPose_.get_translation().y(),
-                           goalPose_.get_rotationAngle().getDegrees());
-                
-                waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-                dockMarker_    = nullptr; // not needed for dice
-                state_         = EXECUTING_PATH_TO_DOCK_POSE;
-                nextState_     = WAITING_TO_SEE_DICE;
-                problemState_  = WAITING_TO_SEE_DICE;
+                robot_->ExecutePathToPose(goalPose_, diceViewingHeadAngle);
                                 
               }
               
             } // IF only one dice
             
           } // IF any diceBlocks available
+          } // IF robot is IDLE
           
           break;
         } // case WAITING_FOR_FIRST_DICE
@@ -649,9 +620,9 @@ namespace Anki {
             
             robot_->DriveWheels(0.f, 0.f);
             
-            nextState_ = BEGIN_DOCKING;
-            problemState_ = BEGIN_EXPLORING;
-            GoToNearestPreDockPoseHelper(PREDOCK_DISTANCE_MM, DEG_TO_RAD(-15));
+            robot_->ExecuteDockingSequence(dockBlock_);
+            
+            state_ = EXECUTING_DOCK;
           }
           
           break;
