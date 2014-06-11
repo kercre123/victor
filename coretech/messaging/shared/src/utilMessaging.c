@@ -353,7 +353,7 @@ UtilMsgError UtilMsgPack(void *dst, unsigned int dstBytes, unsigned int *bytesPa
   
   // If they requested the num bytes written, fill it in.
   if ( bytesPacked ) {
-    *bytesPacked = ( temp - (char*)dst );
+    *bytesPacked = (unsigned int)( temp - (char*)dst );
   }
   
   return error;
@@ -556,7 +556,7 @@ UtilMsgError UtilMsgUnpack(const void *src, unsigned int srcBytes, unsigned int 
   
   // Write out the number of bytes we unpacked if it was requested.
   if ( bytesUnpacked ) {
-    *bytesUnpacked = ( temp - (char*)src );
+    *bytesUnpacked = (unsigned int)( temp - (char*)src );
   }
   
   return error;

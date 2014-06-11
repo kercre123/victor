@@ -20,7 +20,7 @@ public:
 
   bool HasClient();
   
-  int GetNumClients() {return client_list.size();}
+  int GetNumClients();
 
   int Send(const char* data, int size);
   int Recv(char* data, int maxSize);
