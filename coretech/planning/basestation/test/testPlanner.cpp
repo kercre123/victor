@@ -49,7 +49,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox)
                 PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
 
 
-  env.AddObstacle(new Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
+  env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
 
   xythetaPlanner planner(env);
 
@@ -84,7 +84,7 @@ GTEST_TEST(TestPlanner, ReplanEasy)
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(planner.PlanIsSafe());
 
-  env.AddObstacle(new Anki::RotatedRectangle(50.0, -100.0, 80.0, -100.0, 20.0));
+  env.AddObstacle(Anki::RotatedRectangle(50.0, -100.0, 80.0, -100.0, 20.0));
 
   EXPECT_TRUE(planner.PlanIsSafe()) << "new obstacle should not interfere with plan";
 
@@ -114,7 +114,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(planner.PlanIsSafe());
 
-  env.AddObstacle(new Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
+  env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
 
   EXPECT_FALSE(planner.PlanIsSafe()) << "new obstacle should block plan!";
 
