@@ -60,20 +60,14 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
   printf("setting up environment...\n");
   unsigned int numAdded = 0;
 
-  for(auto blocksByType : impl_->blockWorld_->GetAllExistingBlocks()) {
-    for(auto blocksByID : blocksByType.second) {
-          
-      const Block* block = dynamic_cast<Block*>(blocksByID.second);
-
-      Quad2f quadOnGround2d = block->GetBoundingQuadXY(ROBOT_BOUNDING_RADIUS);
-
-      // TODO:(bn) who frees this??
-      RotatedRectangle *boundingRect = new RotatedRectangle;
-      boundingRect->ImportQuad(quadOnGround2d);
-
-      impl_->env_.AddObstacle(boundingRect);
-      numAdded++;
-    }
+  std::vector<Quad2f> boundingBoxes;
+  impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
+                                              ROBOT_BOUNDING_RADIUS,
+                                              boundingBoxes);
+  
+  for(auto boundingQuad : boundingBoxes) {
+    impl_->env_.AddObstacle(boundingQuad);
+    ++numAdded;
   }
 
   printf("Added %u blocks\n", numAdded);
@@ -124,19 +118,13 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
 
   assert(impl_->blockWorld_);
 
-  for(auto blocksByType : impl_->blockWorld_->GetAllExistingBlocks()) {
-    for(auto blocksByID : blocksByType.second) {
-          
-      const Block* block = dynamic_cast<Block*>(blocksByID.second);
-
-      Quad2f quadOnGround2d = block->GetBoundingQuadXY(ROBOT_BOUNDING_RADIUS);
-
-      // TODO:(bn) who frees this??
-      RotatedRectangle *boundingRect = new RotatedRectangle;
-      boundingRect->ImportQuad(quadOnGround2d);
-
-      impl_->env_.AddObstacle(boundingRect);
-    }
+  std::vector<Quad2f> boundingBoxes;
+  impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
+                                              ROBOT_BOUNDING_RADIUS,
+                                              boundingBoxes);
+  
+  for(auto boundingQuad : boundingBoxes) {
+    impl_->env_.AddObstacle(boundingQuad);
   }
 
   if(!impl_->planner_.PlanIsSafe()) {

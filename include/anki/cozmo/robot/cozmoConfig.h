@@ -61,6 +61,7 @@ namespace Anki {
     const f32 ROBOT_BOUNDING_X       = 88.f; // including gripper fingers
     const f32 ROBOT_BOUNDING_Y       = 54.2f;
     const f32 ROBOT_BOUNDING_X_FRONT = 32.1f; // distance from robot origin to front of bounding box
+    const f32 ROBOT_BOUNDING_Z       = 67.7f; // from ground to top of head
     const f32 ROBOT_BOUNDING_RADIUS  = sqrtf((0.25f*ROBOT_BOUNDING_X*ROBOT_BOUNDING_X) +
                                              (0.25f*ROBOT_BOUNDING_Y*ROBOT_BOUNDING_Y));
     
