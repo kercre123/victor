@@ -26,15 +26,28 @@ function [allQuads, quadValidity, markers] = extractMarkers_c_total(image, useRe
     end
     
     if useMatlabForQuadExtraction
-        allQuads = simpleDetector(image, 'decodeMarkers', false, 'quadRefinementIterations', 0);
-        quadValidity = 100000 * ones(length(allQuads), 1, 'int32');
+        allQuadsMatlabRaw = simpleDetector(image, 'returnInvalid', true, 'quadRefinementIterations', quadRefinementIterations);
         
-        for i = 1:length(allQuads)
-            allQuads{i} = allQuads{i} - 1;
+%         quadValidity = zeros([length(allQuadsRaw), 1], 'int32');
+
+        allQuadsMatlab = cell(length(allQuadsMatlabRaw), 1);
+        for iQuad = 1:length(allQuadsMatlabRaw)
+            allQuadsMatlab{iQuad} = allQuadsMatlabRaw{iQuad}.corners;
+
+%             if ~allQuadsRaw{iQuad}.isValid
+%                 quadValidity(iQuad) = 9;
+%             end
         end
-                
+        
+        for i = 1:length(allQuadsMatlab)
+            allQuadsMatlab{i} = allQuadsMatlab{i} - 1;
+        end
+        
+        returnInvalidMarkers = 1;
+        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, decode_minContrastRatio, 0, numRefinementSamples, returnInvalidMarkers);
+        
         returnInvalidMarkers = 0;
-        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers_quadInput(image, allQuads, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
+        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, decode_minContrastRatio, 0, numRefinementSamples, returnInvalidMarkers);
     else
         returnInvalidMarkers = 1;
         [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
