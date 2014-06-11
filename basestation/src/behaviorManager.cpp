@@ -503,7 +503,7 @@ namespace Anki {
                 // Don't forget to remove the dice as an ignore type for
                 // planning, since we _do_ want to avoid it as an obstacle
                 // when driving to pick and place blocks
-                robot_->GetPathPlanner()->RemoveIgnoreID(Block::DICE_BLOCK_TYPE);
+                robot_->GetPathPlanner()->RemoveIgnoreType(Block::DICE_BLOCK_TYPE);
                 
                 BlockID_t blockToLookFor = Block::UNKNOWN_BLOCK_TYPE;
                 switch(static_cast<Vision::MarkerType>(topMarker->GetCode()))
@@ -566,9 +566,14 @@ namespace Anki {
                   
                   CoreTechPrint("Set blockToPlaceOn = %s\n",
                                 Block::IDtoStringLUT[blockToPlaceOn_].c_str());
-                  
-                  waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-                  state_ = BEGIN_EXPLORING;
+
+                  // Back away from dice, so we don't bump it when we blindly spin in
+                  // exploring mode and so we aren't within the padded bounding
+                  // box of the dice if/when we start planning a path towards
+                  // the block to pick up.
+                  // TODO: This may not be necessary once we use the planner to explore
+                  robot_->DriveWheels(-20.f, -20.f);
+                  state_ = BACK_AWAY_FROM_DICE;
                 }
                 
               } else {
@@ -579,23 +584,18 @@ namespace Anki {
                 CORETECH_THROW_IF(dockBlock_ == nullptr);
                 
                 // Try driving closer to dice
-                // Compute a pose on the line between robot and dice, half as
-                // far away as we are now, pointed towards the dice.  Since we
-                // are trying to get really close to the dice, ignore it as an
-                // obstacle.
+                // Since we are purposefully trying to get really close to the
+                // dice, ignore it as an obstacle.  We'll consider an obstacle
+                // again later, when we start driving around to pick and place.
                 robot_->GetPathPlanner()->AddIgnoreType(Block::DICE_BLOCK_TYPE);
                 const f32 diceViewingHeadAngle = DEG_TO_RAD(-15);
                 
-                Vec3f position( dockBlock_->GetPose().get_translation() );
-                position -= robot_->GetPose().get_translation();
-                const f32 newDistance = 0.5*position.MakeUnitLength();
-                if(newDistance < 30.f) {
-                  PRINT_INFO("Getting too close to dice and can't see top. Giving up.\n");
-                  StartMode(BM_None);
-                  return;
-                }
-                position *= newDistance;
-                
+                Vec3f position( robot_->GetPose().get_translation() );
+                position -= dockBlock_->GetPose().get_translation();
+                position.MakeUnitLength();
+                position *= ROBOT_BOUNDING_X_FRONT + 0.5f*dockBlock_->GetSize().Length() + 10.f;
+                position += dockBlock_->GetPose().get_translation();
+
                 Radians angle = atan2(position.y(), position.x());
                 
                 goalPose_ = Pose3d(angle, Z_AXIS_3D, {{position.x(), position.y(), 0.f}});
@@ -623,6 +623,26 @@ namespace Anki {
           
           break;
         } // case WAITING_FOR_FIRST_DICE
+          
+        case BACK_AWAY_FROM_DICE:
+        {
+          CORETECH_ASSERT(dockBlock_ != nullptr);
+          
+          const f32 currentDistance = (robot_->GetPose().get_translation() -
+                                       dockBlock_->GetPose().get_translation()).Length();
+          
+          const f32 desiredDistance = (0.5f*dockBlock_->GetSize().Length() +
+                                       ROBOT_BOUNDING_RADIUS + 10.f);
+          
+          if(currentDistance > desiredDistance )
+          {
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+            robot_->DriveWheels(0.f, 0.f);
+            state_ = BEGIN_EXPLORING;
+          }
+          
+          break;
+        } // case BACK_AWAY_FROM_DICE
           
         case BEGIN_EXPLORING:
         {

@@ -381,7 +381,9 @@ namespace Anki {
       //for(auto & canonicalPoint : Block::CanonicalDockingPoints)
       for(FaceName i_face = FIRST_FACE; i_face < NUM_FACES; ++i_face)
       {
-        if(GetPreDockPose(CanonicalDockingPoints[i_face], distance_mm, this->pose_, preDockPose) == true) {
+        const Vision::KnownMarker& faceMarker = GetMarker(i_face);
+        const f32 distanceForThisFace = faceMarker.GetPose().get_translation().Length() + distance_mm;
+        if(GetPreDockPose(CanonicalDockingPoints[i_face], distanceForThisFace, this->pose_, preDockPose) == true) {
           poseMarkerPairs.emplace_back(preDockPose, GetMarker(i_face));
         }
       } // for each canonical docking point

@@ -200,6 +200,7 @@ int main(int argc, char **argv)
                                                 color);
           
           // Draw blocks' projected quads on the mat
+          /*
           {
             using namespace Quad;
 
@@ -218,6 +219,7 @@ int main(int argc, char **argv)
             
             VizManager::getInstance()->DrawQuad(block->GetID(), quadOnGround3d, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
           }
+           */
           
           
         } // FOR each ID of this type

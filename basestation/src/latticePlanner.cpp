@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "pathPlanner.h"
+#include "vizManager.h"
 #include "anki/planning/basestation/xythetaPlanner.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "json/json.h"
@@ -54,6 +55,7 @@ LatticePlanner::~LatticePlanner()
 Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose)
 {
   impl_->env_.ClearObstacles();
+  VizManager::getInstance()->EraseAllQuads(); // TODO: only erase bounding box quads
 
   assert(impl_->blockWorld_);
 
@@ -67,6 +69,10 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
                                               _ignoreTypes, _ignoreIDs);
   
   for(auto boundingQuad : boundingBoxes) {
+    
+    // TODO: manage the quadID better so we don't conflict
+    VizManager::getInstance()->DrawQuad(500+numAdded, boundingQuad, 0.5f, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
+    
     impl_->env_.AddObstacle(boundingQuad);
     ++numAdded;
   }
@@ -116,6 +122,7 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
   // TODO:(bn) don't do this every time! Get an update from BlockWorld
   // if a new block shows up or one moves significantly
   impl_->env_.ClearObstacles();
+  VizManager::getInstance()->EraseAllQuads(); // TODO: only erase bounding box quads
 
   assert(impl_->blockWorld_);
 
@@ -124,8 +131,12 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
                                               ROBOT_BOUNDING_RADIUS,
                                               boundingBoxes,
                                               _ignoreTypes, _ignoreIDs);
-  
+  unsigned int numAdded = 0;
   for(auto boundingQuad : boundingBoxes) {
+    
+    // TODO: manage the quadID better so we don't conflict
+    VizManager::getInstance()->DrawQuad(500 + numAdded++, boundingQuad, 0.5f, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
+   
     impl_->env_.AddObstacle(boundingQuad);
   }
 
