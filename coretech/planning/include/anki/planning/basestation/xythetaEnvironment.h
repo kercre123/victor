@@ -8,6 +8,8 @@
 #include <vector>
 #include "anki/planning/shared/path.h"
 
+#include "anki/common/basestation/math/quad.h"
+
 namespace Anki
 {
 
@@ -163,7 +165,7 @@ private:
   Successor nextSucc_;
 
   const std::vector<MotionPrimitive>& motionPrimitives_;
-  const std::vector<RotatedRectangle*>& obstacles_;
+  const std::vector<RotatedRectangle>& obstacles_;
 };
 
 // TODO:(bn) move some of these to seperate files
@@ -224,7 +226,8 @@ public:
   // Imports motion primitives from the given json file. Returns true if success
   bool ReadMotionPrimitives(const char* mprimFilename);
 
-  void AddObstacle(RotatedRectangle* rect);
+  void AddObstacle(const RotatedRectangle& rect);
+  void AddObstacle(const Quad2f& quad);
   void ClearObstacles();
 
   // Returns an iterator to the successors from state "start". Use
@@ -303,7 +306,7 @@ private:
   std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
 
   // Obstacles
-  std::vector<RotatedRectangle*> obstacles_;
+  std::vector<RotatedRectangle> obstacles_;
 
   // index is actionID
   std::vector<ActionType> actionTypes_;
