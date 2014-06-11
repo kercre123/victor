@@ -139,7 +139,7 @@ namespace Anki {
       }
       else {
         CORETECH_ASSERT(robot != NULL);
-        Vision::Camera camera(robot->get_camHead());
+        Vision::Camera camera(robot->GetCamera());
         
         if(camera.IsCalibrated()) {
           
@@ -171,14 +171,14 @@ namespace Anki {
           
           // Compute pose from robot body to camera
           // Start with canonical (untilted) headPose
-          Pose3d camPose(robot->get_headCamPose());
+          Pose3d camPose(robot->GetHeadCamPose());
 
           // Rotate that by the given angle
           RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D);
           camPose.rotateBy(Rvec);
           
           // Precompute with robot body to neck pose
-          camPose.preComposeWith(robot->get_neckPose());
+          camPose.preComposeWith(robot->GetNeckPose());
           
           // Set parent pose to be the historical robot pose
           camPose.set_parent(&(p->GetPose()));
@@ -216,7 +216,7 @@ namespace Anki {
                                       msg.center_y,
                                       msg.skew);
       
-      robot->set_camCalibration(calib);
+      robot->SetCameraCalibration(calib);
       
       return RESULT_OK;
     }
@@ -239,10 +239,10 @@ namespace Anki {
       */
       
       // Update head angle
-      robot->set_headAngle(msg.headAngle);
+      robot->SetHeadAngle(msg.headAngle);
 
       // Update lift angle
-      robot->set_liftAngle(msg.liftAngle);
+      robot->SetLiftAngle(msg.liftAngle);
       
       /*
       // Update robot pose
@@ -292,11 +292,11 @@ namespace Anki {
         // Text is ready to print
         if (textIdx == 0) {
           // This message is not a part of a longer message. Just print!
-          printf("ROBOT-PRINT (%d): %s", robot->get_ID(), newText);
+          printf("ROBOT-PRINT (%d): %s", robot->GetID(), newText);
         } else {
           // This message is part of a longer message. Copy to local buffer and print.
           memcpy(text + textIdx, newText, strlen(newText)+1);
-          printf("ROBOT-PRINT (%d): %s", robot->get_ID(), text);
+          printf("ROBOT-PRINT (%d): %s", robot->GetID(), text);
           textIdx = 0;
         }
       } else {
@@ -307,7 +307,7 @@ namespace Anki {
         // The message received was too long or garbled (i.e. chunks somehow lost)
         if (textIdx == MAX_PRINT_STRING_LENGTH-1) {
           text[MAX_PRINT_STRING_LENGTH-1] = 0;
-          printf("ROBOT-PRINT-garbled (%d): %s", robot->get_ID(), text);
+          printf("ROBOT-PRINT-garbled (%d): %s", robot->GetID(), text);
           textIdx = 0;
         }
         

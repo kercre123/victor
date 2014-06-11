@@ -130,7 +130,8 @@ int main(int argc, char **argv)
 
     //MessageHandler::getInstance()->ProcessMessages();
     msgHandler.ProcessMessages();
-    
+  
+    /*
     //
     // Check for any outgoing messages from each basestation robot:
     //
@@ -140,7 +141,7 @@ int main(int argc, char **argv)
       while(robot->hasOutgoingMessages())
       {
         Comms::MsgPacket p;
-        p.destId = robot->get_ID();
+        p.destId = robot->GetID();
         robot->getOutgoingMessage(p.data, p.dataLen);
         if (p.dataLen > 0) {
           robotComms.Send(p);
@@ -148,7 +149,8 @@ int main(int argc, char **argv)
       } // while robot i still has outgoing messages to send
       
     } // for each robot
-
+    */
+    
     // Draw observed markers, but only if images are being streamed
     blockWorld.DrawObsMarkers();
     
@@ -250,10 +252,10 @@ int main(int argc, char **argv)
       Robot* robot = robotMgr.GetRobotByID(robotID);
       
       // Triangle pose marker
-      VizManager::getInstance()->DrawRobot(robotID, robot->get_pose());
+      VizManager::getInstance()->DrawRobot(robotID, robot->GetPose());
       
       // Full Webots CozmoBot model
-      VizManager::getInstance()->DrawRobot(robotID, robot->get_pose(), robot->get_headAngle(), robot->get_liftAngle());
+      VizManager::getInstance()->DrawRobot(robotID, robot->GetPose(), robot->GetHeadAngle(), robot->GetLiftAngle());
       
       // Robot bounding box
       using namespace Quad;
@@ -263,7 +265,7 @@ int main(int argc, char **argv)
                             Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
                             Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
 
-      VizManager::getInstance()->DrawQuad(robot->get_ID()+100, quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
+      VizManager::getInstance()->DrawQuad(robot->GetID()+100, quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
     }
 
     /////////// End visualization update ////////////

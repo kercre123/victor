@@ -187,7 +187,7 @@ namespace Anki {
       if(!robot_->IsTraversingPath() && !robot_->IsMoving() &&
          waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
         
-        if (robot_->get_pose().IsSameAs(goalPose_, distThresh_mm_, angThresh_)) {
+        if (robot_->GetPose().IsSameAs(goalPose_, distThresh_mm_, angThresh_)) {
           PRINT_INFO("Dock pose reached\n");
           
           if(dockBlock_ != nullptr) {
@@ -205,7 +205,7 @@ namespace Anki {
           if(dockMarker_ != nullptr) {
             // Need to confirm that expected marker is within view.
             // Move head if necessary based on block height.
-            Pose3d markerPoseWrtNeck = dockMarker_->GetPose().getWithRespectTo(&robot_->get_neckPose());
+            Pose3d markerPoseWrtNeck = dockMarker_->GetPose().getWithRespectTo(&robot_->GetNeckPose());
             const f32 headAngle = atan2(markerPoseWrtNeck.get_translation().z(),
                                         markerPoseWrtNeck.get_translation().x());
             PRINT_INFO("Moving head angle to %f degrees.\n", RAD_TO_DEG(headAngle));
@@ -220,10 +220,10 @@ namespace Anki {
         } else {
           PRINT_INFO("Not at expected position at the end of the path. "
                      "Resetting BehaviorManager. (Robot: (%.2f %.2f %.2f) @ %.1fdeg VS. Goal: (%.2f %.2f %.2f) @ %.1fdeg)\n.",
-                     robot_->get_pose().get_translation().x(),
-                     robot_->get_pose().get_translation().y(),
-                     robot_->get_pose().get_translation().z(),
-                     robot_->get_pose().get_rotationAngle().getDegrees(),
+                     robot_->GetPose().get_translation().x(),
+                     robot_->GetPose().get_translation().y(),
+                     robot_->GetPose().get_translation().z(),
+                     robot_->GetPose().get_rotationAngle().getDegrees(),
                      goalPose_.get_translation().x(),
                      goalPose_.get_translation().y(),
                      goalPose_.get_translation().z(),
@@ -246,7 +246,7 @@ namespace Anki {
       dockBlock_->GetPreDockPoses(preDockDistance, preDockPoseMarkerPairs);
             
       // Select (closest) predock pose
-      const Pose3d& robotPose = robot_->get_pose();
+      const Pose3d& robotPose = robot_->GetPose();
       
       if (!preDockPoseMarkerPairs.empty()) {
         f32 shortestDist2Pose = -1;
@@ -274,7 +274,7 @@ namespace Anki {
         return;
       }
       
-      const bool alreadyThere = robot_->get_pose().IsSameAs(goalPose_, distThresh_mm_, angThresh_);
+      const bool alreadyThere = robot_->GetPose().IsSameAs(goalPose_, distThresh_mm_, angThresh_);
       
       if (alreadyThere || robot_->ExecutePathToPose(goalPose_) == RESULT_OK)
       {
@@ -578,7 +578,7 @@ namespace Anki {
                 const f32 diceViewingHeadAngle = DEG_TO_RAD(-15);
                 
                 Vec3f position( dockBlock_->GetPose().get_translation() );
-                position -= robot_->get_pose().get_translation();
+                position -= robot_->GetPose().get_translation();
                 const f32 newDistance = 0.5*position.MakeUnitLength();
                 if(newDistance < 30.f) {
                   PRINT_INFO("Getting too close to dice and can't see top. Giving up.\n");
