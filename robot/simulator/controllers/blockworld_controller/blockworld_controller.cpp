@@ -130,27 +130,7 @@ int main(int argc, char **argv)
 
     //MessageHandler::getInstance()->ProcessMessages();
     msgHandler.ProcessMessages();
-  
-    /*
-    //
-    // Check for any outgoing messages from each basestation robot:
-    //
-    for(auto robotiD : robotMgr.GetRobotIDList())
-    {
-      Robot* robot = robotMgr.GetRobotByID(robotiD);
-      while(robot->hasOutgoingMessages())
-      {
-        Comms::MsgPacket p;
-        p.destId = robot->GetID();
-        robot->getOutgoingMessage(p.data, p.dataLen);
-        if (p.dataLen > 0) {
-          robotComms.Send(p);
-        }
-      } // while robot i still has outgoing messages to send
       
-    } // for each robot
-    */
-    
     // Draw observed markers, but only if images are being streamed
     blockWorld.DrawObsMarkers();
     

@@ -727,7 +727,8 @@ namespace Anki
       Robot* robot = robotMgr_->GetRobotByID(whichRobot);
       if(robot != 0)
       {
-        robot->dockWithBlock(whichBlock);
+
+        CORETECH_THROW("BlockWorld::CommandRobotToDock() is not yet implemented.\n");
         
       } else {
         CoreTechPrint("Invalid robot commanded to Dock.\n");

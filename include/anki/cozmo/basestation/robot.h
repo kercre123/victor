@@ -66,11 +66,6 @@ namespace Anki {
       void IncrementPoseFrameID() {++_frameId;}
       PoseFrameID_t GetPoseFrameID() const {return _frameId;}
       
-      bool hasOutgoingMessages() const;
-      void getOutgoingMessage(u8 *msgOut, u8 &msgSize);
-      
-      void dockWithBlock(const Block& block);
-      
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
       
@@ -234,13 +229,6 @@ namespace Anki {
       bool _isPickingOrPlacing;
       bool _isMoving;
       
-      //std::vector<BlockMarker3d*>  visibleFaces;
-      //std::vector<Block*>          visibleBlocks;
-      
-      // Message handling
-      //using MessageType = std::vector<u8>;
-      //using MessageQueue = std::queue<MessageType>;
-      //MessageQueue messagesOut;
       
       
       ///////// Messaging ////////
