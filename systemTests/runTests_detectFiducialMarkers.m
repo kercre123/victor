@@ -22,7 +22,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     
     basicsFilename = 'basicsResults.mat';
     perTestStatsFilename = 'perTestStatsResults.mat';
-        
+    
     markerDirectoryList = {'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/symbols/withFiducials/', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/letters/withFiducials', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/dice/withFiducials'};
     
     assert(exist('testJsonPattern', 'var') == 1);
@@ -44,10 +44,10 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
         perTestStats = compilePerTestStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth);
         
         save(perTestStatsFilename, 'perTestStats');
-    else 
+    else
         load(perTestStatsFilename);
     end
-        
+    
     overallStats = compileOverallStats(allTestFilenames, perTestStats, showOverallStats);
     
     save([resultsDirectory, 'allCompiledResults.mat'], 'perTestStats');
@@ -70,8 +70,8 @@ function overallStats = compileOverallStats(allTestFilenames, perTestStats, show
             end
         end
     end
-           
-            
+    
+    
     
 function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth)
     % TODO: At different distances / angles
@@ -112,8 +112,8 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
                     jsonData.Poses{iPose}.Scene.CameraExposure,...
                     jsonData.Poses{iPose}.Scene.light)];
                 
-%                 imwrite(image, outputFilenameImage);
-
+                %                 imwrite(image, outputFilenameImage);
+                
                 slashIndexes = strfind(outputFilenameImage, '/');
                 outputFilenameImageJustName = outputFilenameImage((slashIndexes(end)+1):end);
                 slashIndexes = strfind(imageFilename, '/');
@@ -153,7 +153,7 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
                     hold on;
                 end % if showImageDetections
                 
-                [curCompiled.numQuadsTotal, curCompiled.numQuadsDetected] = compileQuadResults(curResultsData, showImageDetections, showImageDetectionsScale);
+                [curCompiled.numQuadsNotIgnored, curCompiled.numQuadsDetected] = compileQuadResults(curResultsData, showImageDetections, showImageDetectionsScale);
                 
                 [curCompiled.numCorrect_positionLabelRotation, curCompiled.numCorrect_positionLabel, curCompiled.numCorrect_position, curCompiled.numSpurriousDetections, curCompiled.numUndetected] = compileMarkerResults(curResultsData, showImageDetections, showImageDetectionsScale);
                 
@@ -167,7 +167,7 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
                         jsonData.Poses{iPose}.Scene.CameraExposure,...
                         jsonData.Poses{iPose}.Scene.light,...
                         testFunctionNames{iTestFunction},...
-                        curCompiled.numCorrect_positionLabelRotation, curCompiled.numCorrect_positionLabel, curCompiled.numCorrect_position, curCompiled.numQuadsDetected, curCompiled.numQuadsTotal,...
+                        curCompiled.numCorrect_positionLabelRotation, curCompiled.numCorrect_positionLabel, curCompiled.numCorrect_position, curCompiled.numQuadsDetected, curCompiled.numQuadsNotIgnored,...
                         curCompiled.numSpurriousDetections);
                     
                     text(0, size(image,1)*showImageDetectionsScale, resultsText, 'Color', [.95,.95,.95], 'FontSize', 8*showImageDetectionsScale, 'VerticalAlignment', 'top');
@@ -185,8 +185,9 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
                     disp(resultsText);
                     disp(' ');
                     
-                    pause(.03)
-                end % if showImageDetections                
+                    pause(.03);
+%                     pause();
+                end % if showImageDetections
             end % for iTestFunction = 1:length(perTestStats{iTest}{iPose})
         end % for iPose = 1:length(perTestStats{iTest})
     end % for iTest = 1:length(resultsData)
@@ -197,25 +198,30 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
     fprintf(fileId, filenameNameLookup);
     fclose(fileId);
     
-function [numTotal, numGood] = compileQuadResults(curResultsData, showImageDetections, showImageDetectionsScale)
+function [numNotIgnored, numGood] = compileQuadResults(curResultsData, showImageDetections, showImageDetectionsScale)
     global maxMatchDistance_pixels;
     global maxMatchDistance_percent;
     
     numTotal = length(curResultsData.justQuads_bestDistances_max);
+    numNotIgnored = 0;
     numGood = 0;
     
     for iQuad = 1:numTotal
-        curDistance = curResultsData.justQuads_bestDistances_max(iQuad,:);
-        curFiducialSize = curResultsData.fiducialSizes(iQuad,:);
-        
-        % Are all distances small enough?
-        if curDistance(1) <= maxMatchDistance_pixels &&...
-                curDistance(2) <= maxMatchDistance_pixels &&...
-                curDistance(3) <= maxMatchDistance_pixels &&...
-                curDistance(2) <= (curFiducialSize(1) * maxMatchDistance_percent) &&...
-                curDistance(3) <= (curFiducialSize(2) * maxMatchDistance_percent)
+        if ~strcmp(curResultsData.markerNames_groundTruth{iQuad}, 'MARKER_IGNORE')
+            numNotIgnored = numNotIgnored + 1;
             
-            numGood = numGood + 1;
+            curDistance = curResultsData.justQuads_bestDistances_max(iQuad,:);
+            curFiducialSize = curResultsData.fiducialSizes_groundTruth(iQuad,:);
+            
+            % Are all distances small enough?
+            if curDistance(1) <= maxMatchDistance_pixels &&...
+                    curDistance(2) <= maxMatchDistance_pixels &&...
+                    curDistance(3) <= maxMatchDistance_pixels &&...
+                    curDistance(2) <= (curFiducialSize(1) * maxMatchDistance_percent) &&...
+                    curDistance(3) <= (curFiducialSize(2) * maxMatchDistance_percent)
+                
+                numGood = numGood + 1;
+            end
         end
     end % for iQuad = 1:numTotal
     
@@ -224,8 +230,7 @@ function [numTotal, numGood] = compileQuadResults(curResultsData, showImageDetec
             plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [.95,.95,.95], 'LineWidth', 3); % .95 not 1, because printing converts pure white into pure black
             plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [0,0,0], 'LineWidth', 1);
             
-            if curResultsData.detectedQuadValidity(iQuad) > 0 && curResultsData.detectedQuadValidity(iQuad) < 100000
-%             if curResultsData.detectedQuadValidity(iQuad) < 100000
+            if curResultsData.detectedQuadValidity(iQuad) > 0
                 minX = min(curResultsData.detectedQuads{iQuad}(:,1));
                 
                 indsX = find((minX+3) >= curResultsData.detectedQuads{iQuad}(:,1));
@@ -243,10 +248,13 @@ function [numTotal, numGood] = compileQuadResults(curResultsData, showImageDetec
                 
                 minX = minX*showImageDetectionsScale;
                 minY = minY*showImageDetectionsScale;
-                            
+                
                 rectangle('Position', [minX-2, minY-10, 15, 15], 'FaceColor', 'k');
                 
-                text(minX, minY, sprintf('%d', curResultsData.detectedQuadValidity(iQuad)), 'Color', [.95,.95,.95], 'FontSize', 16.0);
+                if curResultsData.detectedQuadValidity(iQuad) < 100000
+                    validText = sprintf('%d', curResultsData.detectedQuadValidity(iQuad));
+                    text(minX, minY, validText, 'Color', [.95,.95,.95], 'FontSize', 16.0);
+                end
             end
         end
     end % if showImageDetections
@@ -260,11 +268,33 @@ function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect
     numCorrect_position = 0;
     numSpurriousDetections = 0;
     numUndetected = 0;
-    
+        
     % Check all ground truth markers
     for iMarker = 1:length(curResultsData.markerNames_groundTruth)
         curDistance = curResultsData.markers_bestDistances_max(iMarker,:);
-        curFiducialSize = curResultsData.fiducialSizes(iMarker,:);
+        curFiducialSize = curResultsData.fiducialSizes_groundTruth(iMarker,:);
+        
+        if strcmp(curResultsData.markerNames_groundTruth{iMarker}, 'MARKER_IGNORE')
+            if showImageDetections
+                if curDistance(1) <= maxMatchDistance_pixels &&...
+                    curDistance(2) <= maxMatchDistance_pixels &&...
+                    curDistance(3) <= maxMatchDistance_pixels &&...
+                    curDistance(2) <= (curFiducialSize(1) * maxMatchDistance_percent) &&...
+                    curDistance(3) <= (curFiducialSize(2) * maxMatchDistance_percent)
+
+                    matchIndex = curResultsData.markers_bestIndexes(iMarker);
+                    corners = curResultsData.detectedMarkers{matchIndex}.corners;
+                    plotText = 'IGNORE';
+                else
+                    corners = curResultsData.markerLocations_groundTruth{iMarker};
+                    plotText = 'REJECT';
+                end
+                
+                plotOneMarker(corners, plotText, showImageDetectionsScale, [.7,.7,.7], 'k');
+            end
+            
+        	continue;
+        end
         
         % Are all distances small enough?
         if curDistance(1) <= maxMatchDistance_pixels &&...
@@ -293,7 +323,7 @@ function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect
                 end
             else
                 numCorrect_position = numCorrect_position + 1;
-                
+                    
                 if showImageDetections
                     plotOneMarker(curResultsData.detectedMarkers{matchIndex}.corners, curResultsData.markerNames_detected{matchIndex}(8:end), showImageDetectionsScale, 'y', 'k');
                 end
@@ -301,7 +331,7 @@ function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect
         else
             numUndetected = numUndetected + 1;
         end
-    end
+    end % for iMarker = 1:length(curResultsData.markerNames_groundTruth)
     
     % Look for spurrious detections
     allDetectedIndexes = unique(curResultsData.markers_bestIndexes);
@@ -321,8 +351,8 @@ function plotOneMarker(corners, name, showImageDetectionsScale, quadColor, topBa
     firstCorner = sortedXValues(1,2);
     secondCorner = sortedXValues(2,2);
     
-    plot(corners([1,2,4,3,1],1)*showImageDetectionsScale, corners([1,2,4,3,1],2)*showImageDetectionsScale, quadColor, 'LineWidth', 3);
-    plot(corners([1,3],1)*showImageDetectionsScale, corners([1,3],2)*showImageDetectionsScale, topBarColor, 'LineWidth', 3);
+    plot(corners([1,2,4,3,1],1)*showImageDetectionsScale, corners([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', quadColor, 'LineWidth', 3);
+    plot(corners([1,3],1)*showImageDetectionsScale, corners([1,3],2)*showImageDetectionsScale, 'Color', topBarColor, 'LineWidth', 3);
     midX = (corners(firstCorner,1) + corners(secondCorner,1)) / 2;
     midY = (corners(firstCorner,2) + corners(secondCorner,2)) / 2;
     text(midX*showImageDetectionsScale + 5, midY*showImageDetectionsScale, name, 'Color', quadColor);
@@ -405,23 +435,28 @@ function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNa
                 [markers_bestDistances_mean, markers_bestDistances_max, markers_bestIndexes, markers_areRotationsCorrect] = findClosestMatches(groundTruthQuads, markersToQuad(detectedMarkers), jsonData.Poses{iPose}.VisionMarkers);
                 
                 markerNames_groundTruth = cell(length(groundTruthQuads), 1);
-                fiducialSizes = zeros(length(groundTruthQuads), 2);
+                fiducialSizes_groundTruth = zeros(length(groundTruthQuads), 2);
                 
                 for iMarker = 1:length(groundTruthQuads)
                     markerNames_groundTruth{iMarker,1} = jsonData.Poses{iPose}.VisionMarkers{iMarker}.markerType;
                     
-                    fiducialSizes(iMarker,:) = [...
+                    fiducialSizes_groundTruth(iMarker,:) = [...
                         max(groundTruthQuads{iMarker}(:,1)) - min(groundTruthQuads{iMarker}(:,1)),...
                         max(groundTruthQuads{iMarker}(:,2)) - min(groundTruthQuads{iMarker}(:,2))];
-                    
-                    %                 markerNames_groundTruth{iMarker,1} = detectedMarkers{markers_bestIndexes(iMarker)}.name;
-                    %                 markerNames_groundTruth{iMarker,2} = jsonData.Poses{iPose}.VisionMarkers{iMarker}.markerType;%
                 end
                 
                 markerNames_detected = cell(length(detectedMarkers), 1);
                 for iMarker = 1:length(detectedMarkers)
                     markerNames_detected{iMarker} = detectedMarkers{iMarker}.name;
                 end
+                
+                %                 % Remove any markers with ground truth label MARKER_IGNORE
+                %                 validInds = [];
+                %                 for iMarker = 1:length(groundTruthQuads)
+                %                     if ~strcmp(markerNames_groundTruth, 'MARKER_IGNORE')
+                %                         validInds = [validInds, iMarker]; %#ok<AGROW>
+                %                     end
+                %                 end
                 
                 resultsData{iTest}{iPose}{iTestFunction}.justQuads_bestDistances_mean = justQuads_bestDistances_mean;
                 resultsData{iTest}{iPose}{iTestFunction}.justQuads_bestDistances_max = justQuads_bestDistances_max;
@@ -430,11 +465,13 @@ function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNa
                 resultsData{iTest}{iPose}{iTestFunction}.markers_bestDistances_max = markers_bestDistances_max;
                 resultsData{iTest}{iPose}{iTestFunction}.markers_bestIndexes = markers_bestIndexes;
                 resultsData{iTest}{iPose}{iTestFunction}.markers_areRotationsCorrect = markers_areRotationsCorrect;
-                resultsData{iTest}{iPose}{iTestFunction}.fiducialSizes = fiducialSizes;
+                resultsData{iTest}{iPose}{iTestFunction}.fiducialSizes_groundTruth = fiducialSizes_groundTruth;
                 resultsData{iTest}{iPose}{iTestFunction}.markerNames_groundTruth = markerNames_groundTruth;
+                resultsData{iTest}{iPose}{iTestFunction}.markerLocations_groundTruth = groundTruthQuads;
+                
                 resultsData{iTest}{iPose}{iTestFunction}.markerNames_detected = markerNames_detected;
                 resultsData{iTest}{iPose}{iTestFunction}.detectedQuads = detectedQuads;
-                resultsData{iTest}{iPose}{iTestFunction}.detectedQuadValidity = detectedQuadValidity;                
+                resultsData{iTest}{iPose}{iTestFunction}.detectedQuadValidity = detectedQuadValidity;
                 resultsData{iTest}{iPose}{iTestFunction}.detectedMarkers = detectedMarkers;
                 
                 %             figure(1);

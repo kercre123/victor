@@ -251,9 +251,22 @@
 					"markerType": "MARKER_DICE1",
 					"Name": "MessageVisionMarker",
 					"timestamp": 0
+				},
+						{
+					"x_imgUpperLeft": 255.3814893,
+					"y_imgUpperLeft": 42.39268501,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 289.4876607,
+					"y_imgUpperRight": 42.6040869,
+					"x_imgLowerRight": 290.4742029,
+					"y_imgLowerRight": 77.55586585,
+					"x_imgLowerLeft": 255.7338258,
+					"y_imgLowerLeft": 77.41493126
 				}
 			],
-			"NumMarkers": 17,
+			"NumMarkers": 18,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -490,9 +503,22 @@
 					"markerType": "MARKER_DICE1",
 					"Name": "MessageVisionMarker",
 					"timestamp": 0
+				},
+						{
+					"x_imgUpperLeft": 255.3814893,
+					"y_imgUpperLeft": 42.39268501,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 289.4876607,
+					"y_imgUpperRight": 42.6040869,
+					"x_imgLowerRight": 290.4742029,
+					"y_imgLowerRight": 77.55586585,
+					"x_imgLowerLeft": 255.7338258,
+					"y_imgLowerLeft": 77.41493126
 				}
 			],
-			"NumMarkers": 17,
+			"NumMarkers": 18,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -729,9 +755,22 @@
 					"markerType": "MARKER_DICE1",
 					"Name": "MessageVisionMarker",
 					"timestamp": 0
+				},
+						{
+					"x_imgUpperLeft": 255.3814893,
+					"y_imgUpperLeft": 42.39268501,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 289.4876607,
+					"y_imgUpperRight": 42.6040869,
+					"x_imgLowerRight": 290.4742029,
+					"y_imgLowerRight": 77.55586585,
+					"x_imgLowerLeft": 255.7338258,
+					"y_imgLowerLeft": 77.41493126
 				}
 			],
-			"NumMarkers": 17,
+			"NumMarkers": 18,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -968,9 +1007,22 @@
 					"markerType": "MARKER_DICE1",
 					"Name": "MessageVisionMarker",
 					"timestamp": 0
+				},
+						{
+					"x_imgUpperLeft": 255.3814893,
+					"y_imgUpperLeft": 42.39268501,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 289.4876607,
+					"y_imgUpperRight": 42.6040869,
+					"x_imgLowerRight": 290.4742029,
+					"y_imgLowerRight": 77.55586585,
+					"x_imgLowerLeft": 255.7338258,
+					"y_imgLowerLeft": 77.41493126
 				}
 			],
-			"NumMarkers": 17,
+			"NumMarkers": 18,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1207,9 +1259,22 @@
 					"markerType": "MARKER_DICE1",
 					"Name": "MessageVisionMarker",
 					"timestamp": 0
+				},
+						{
+					"x_imgUpperLeft": 255.3814893,
+					"y_imgUpperLeft": 42.39268501,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 289.4876607,
+					"y_imgUpperRight": 42.6040869,
+					"x_imgLowerRight": 290.4742029,
+					"y_imgLowerRight": 77.55586585,
+					"x_imgLowerLeft": 255.7338258,
+					"y_imgLowerLeft": 77.41493126
 				}
 			],
-			"NumMarkers": 17,
+			"NumMarkers": 18,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1446,9 +1511,22 @@
 					"markerType": "MARKER_DICE1",
 					"Name": "MessageVisionMarker",
 					"timestamp": 0
+				},
+						{
+					"x_imgUpperLeft": 255.3814893,
+					"y_imgUpperLeft": 42.39268501,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 289.4876607,
+					"y_imgUpperRight": 42.6040869,
+					"x_imgLowerRight": 290.4742029,
+					"y_imgLowerRight": 77.55586585,
+					"x_imgLowerLeft": 255.7338258,
+					"y_imgLowerLeft": 77.41493126
 				}
 			],
-			"NumMarkers": 17,
+			"NumMarkers": 18,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1685,9 +1763,22 @@
 					"markerType": "MARKER_DICE1",
 					"Name": "MessageVisionMarker",
 					"timestamp": 0
+				},
+						{
+					"x_imgUpperLeft": 255.3814893,
+					"y_imgUpperLeft": 42.39268501,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 289.4876607,
+					"y_imgUpperRight": 42.6040869,
+					"x_imgLowerRight": 290.4742029,
+					"y_imgLowerRight": 77.55586585,
+					"x_imgLowerLeft": 255.7338258,
+					"y_imgLowerLeft": 77.41493126
 				}
 			],
-			"NumMarkers": 17,
+			"NumMarkers": 18,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1924,9 +2015,22 @@
 					"markerType": "MARKER_DICE1",
 					"Name": "MessageVisionMarker",
 					"timestamp": 0
+				},
+						{
+					"x_imgUpperLeft": 255.3814893,
+					"y_imgUpperLeft": 42.39268501,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 289.4876607,
+					"y_imgUpperRight": 42.6040869,
+					"x_imgLowerRight": 290.4742029,
+					"y_imgLowerRight": 77.55586585,
+					"x_imgLowerLeft": 255.7338258,
+					"y_imgLowerLeft": 77.41493126
 				}
 			],
-			"NumMarkers": 17,
+			"NumMarkers": 18,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -2163,9 +2267,22 @@
 					"markerType": "MARKER_DICE1",
 					"Name": "MessageVisionMarker",
 					"timestamp": 0
+				},
+						{
+					"x_imgUpperLeft": 255.3814893,
+					"y_imgUpperLeft": 42.39268501,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 289.4876607,
+					"y_imgUpperRight": 42.6040869,
+					"x_imgLowerRight": 290.4742029,
+					"y_imgLowerRight": 77.55586585,
+					"x_imgLowerLeft": 255.7338258,
+					"y_imgLowerLeft": 77.41493126
 				}
 			],
-			"NumMarkers": 17,
+			"NumMarkers": 18,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -2402,9 +2519,22 @@
 					"markerType": "MARKER_DICE1",
 					"Name": "MessageVisionMarker",
 					"timestamp": 0
+				},
+						{
+					"x_imgUpperLeft": 255.3814893,
+					"y_imgUpperLeft": 42.39268501,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 289.4876607,
+					"y_imgUpperRight": 42.6040869,
+					"x_imgLowerRight": 290.4742029,
+					"y_imgLowerRight": 77.55586585,
+					"x_imgLowerLeft": 255.7338258,
+					"y_imgLowerLeft": 77.41493126
 				}
 			],
-			"NumMarkers": 17,
+			"NumMarkers": 18,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
