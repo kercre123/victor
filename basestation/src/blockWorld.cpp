@@ -342,17 +342,29 @@ namespace Anki
     
     void BlockWorld::GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
                                              const f32 padding,
-                                             std::vector<Quad2f>& rectangles) const
+                                             std::vector<Quad2f>& rectangles,
+                                             const std::set<ObjectType_t>& ignoreTypes,
+                                             const std::set<ObjectID_t>& ignoreIDs) const
     {
-      for(auto & blocksWithType : existingBlocks_) {
-        for(auto & blockAndId : blocksWithType.second) {
-          Block* block = dynamic_cast<Block*>(blockAndId.second);
-          CORETECH_THROW_IF(block == nullptr);
-          const f32 blockHeight = block->GetPose().get_translation().z();
-          if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) ) {
-            rectangles.emplace_back(block->GetBoundingQuadXY(padding));
+      for(auto & blocksWithType : existingBlocks_)
+      {
+        const bool useType = ignoreTypes.find(blocksWithType.first) == ignoreTypes.end();
+        if(useType) {
+          for(auto & blockAndId : blocksWithType.second)
+          {
+            Block* block = dynamic_cast<Block*>(blockAndId.second);
+            CORETECH_THROW_IF(block == nullptr);
+            const f32 blockHeight = block->GetPose().get_translation().z();
+            
+            // If this block's ID is not in the ignore list, then we will use it
+            const bool useID = ignoreIDs.find(blockAndId.first) == ignoreIDs.end();
+            
+            if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
+            {
+              rectangles.emplace_back(block->GetBoundingQuadXY(padding));
+            }
           }
-        }
+        } // if(useType)
       }
     } // GetBlockBoundingBoxesXY()
     

@@ -18,6 +18,8 @@
 #include "anki/planning/shared/path.h"
 #include "json/json-forwards.h"
 
+#include <set>
+
 namespace Anki {
   namespace Cozmo {
 
@@ -33,6 +35,19 @@ namespace Anki {
       // path and returns false. Assumes the goal pose didn't change
       virtual bool ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) {return false;};
       
+      void AddIgnoreType(const ObjectType_t objType)    { _ignoreTypes.insert(objType); }
+      void RemoveIgnoreType(const ObjectType_t objType) { _ignoreTypes.erase(objType); }
+      void ClearIgnoreTypes()                           { _ignoreTypes.clear(); }
+      
+      void AddIgnoreID(const ObjectID_t objID)          { _ignoreIDs.insert(objID); }
+      void RemoveIgnoreID(const ObjectID_t objID)       { _ignoreIDs.erase(objID); }
+      void ClearIgnoreIDs()                             { _ignoreIDs.clear(); }
+      
+    protected:
+      
+      std::set<ObjectType_t> _ignoreTypes;
+      std::set<ObjectID_t>   _ignoreIDs;
+      
     }; // Interface IPathPlanner
 
     // This is the Dubbins planner
@@ -41,7 +56,7 @@ namespace Anki {
     public:
       PathPlanner();
       
-      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose);
+      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) override;
       
     protected:
       
@@ -56,7 +71,7 @@ namespace Anki {
       LatticePlanner(const BlockWorld* blockWorld, const Json::Value& mprims);
       virtual ~LatticePlanner();
       
-      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose);
+      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) override;
 
       virtual bool ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose);
 
@@ -69,7 +84,7 @@ namespace Anki {
     public:
       PathPlannerStub() { }
       
-      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) {
+      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) override {
         return RESULT_OK;
       }
       

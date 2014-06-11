@@ -68,6 +68,7 @@ namespace Anki {
       
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
+      IPathPlanner* GetPathPlanner() { return _pathPlanner; }
       
       // Clears the path that the robot is executing which also stops the robot
       Result ClearPath();

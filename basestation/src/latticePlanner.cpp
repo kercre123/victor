@@ -63,7 +63,8 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
   std::vector<Quad2f> boundingBoxes;
   impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
                                               ROBOT_BOUNDING_RADIUS,
-                                              boundingBoxes);
+                                              boundingBoxes,
+                                              _ignoreTypes, _ignoreIDs);
   
   for(auto boundingQuad : boundingBoxes) {
     impl_->env_.AddObstacle(boundingQuad);
@@ -121,7 +122,8 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
   std::vector<Quad2f> boundingBoxes;
   impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
                                               ROBOT_BOUNDING_RADIUS,
-                                              boundingBoxes);
+                                              boundingBoxes,
+                                              _ignoreTypes, _ignoreIDs);
   
   for(auto boundingQuad : boundingBoxes) {
     impl_->env_.AddObstacle(boundingQuad);

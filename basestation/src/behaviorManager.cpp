@@ -499,6 +499,12 @@ namespace Anki {
               if(topMarker != nullptr) {
                 // We found and observed the top marker on the dice. Use it to
                 // set which block we are looking for.
+                
+                // Don't forget to remove the dice as an ignore type for
+                // planning, since we _do_ want to avoid it as an obstacle
+                // when driving to pick and place blocks
+                robot_->GetPathPlanner()->RemoveIgnoreID(Block::DICE_BLOCK_TYPE);
+                
                 BlockID_t blockToLookFor = Block::UNKNOWN_BLOCK_TYPE;
                 switch(static_cast<Vision::MarkerType>(topMarker->GetCode()))
                 {
@@ -574,7 +580,10 @@ namespace Anki {
                 
                 // Try driving closer to dice
                 // Compute a pose on the line between robot and dice, half as
-                // far away as we are now, pointed towards the dice
+                // far away as we are now, pointed towards the dice.  Since we
+                // are trying to get really close to the dice, ignore it as an
+                // obstacle.
+                robot_->GetPathPlanner()->AddIgnoreType(Block::DICE_BLOCK_TYPE);
                 const f32 diceViewingHeadAngle = DEG_TO_RAD(-15);
                 
                 Vec3f position( dockBlock_->GetPose().get_translation() );
