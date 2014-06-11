@@ -28,11 +28,11 @@ using namespace Anki::Embedded;
 
 // image = imresize(rgb2gray(imread('C:\Anki\blockImages\testTrainedCodes.png')), [240,320]);
 
-//imageSize = size(image);
-//scaleImage_thresholdMultiplier = 1.0;
-//scaleImage_numPyramidLevels = 3;
-//component1d_minComponentWidth = 0;
-//component1d_maxSkipDistance = 0;
+// imageSize = size(image);
+// scaleImage_thresholdMultiplier = 1.0;
+// scaleImage_numPyramidLevels = 3;
+// component1d_minComponentWidth = 0;
+// component1d_maxSkipDistance = 0;
 // minSideLength = round(0.03*max(imageSize(1),imageSize(2)));
 // maxSideLength = round(0.97*min(imageSize(1),imageSize(2)));
 // component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));

@@ -1,6 +1,6 @@
 % function [allQuads, markers] = extractMarkers_c_total(image, useRefinement)
 
-function [allQuads, quadValidity, markers] = extractMarkers_c_total(image, useRefinement)
+function [allQuads, quadValidity, markers] = extractMarkers_c_total(image, useRefinement, useMatlabForQuadExtraction)
     imageSize = size(image);
     scaleImage_thresholdMultiplier = 1.0;
     scaleImage_numPyramidLevels = 3;
@@ -18,32 +18,44 @@ function [allQuads, quadValidity, markers] = extractMarkers_c_total(image, useRe
     quads_minDistanceFromImageEdge = 2;
     decode_minContrastRatio = 1.25;
     numRefinementSamples = 100;
-
+    
     if useRefinement
         quadRefinementIterations = 25;
     else
         quadRefinementIterations = 0;
     end
-
-    returnInvalidMarkers = 1;
-    [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
-
-    returnInvalidMarkers = 0;
-    [goodQuads, ~, markerNames] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
-
+    
+    if useMatlabForQuadExtraction
+        allQuads = simpleDetector(image, 'decodeMarkers', false, 'quadRefinementIterations', 0);
+        quadValidity = 100000 * ones(length(allQuads), 1, 'int32');
+        
+        for i = 1:length(allQuads)
+            allQuads{i} = allQuads{i} - 1;
+        end
+                
+        returnInvalidMarkers = 0;
+        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers_quadInput(image, allQuads, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
+    else
+        returnInvalidMarkers = 1;
+        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
+        
+        returnInvalidMarkers = 0;
+        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
+    end
+    
     markers = cell(length(markerNames), 1);
-
+    
     for i = 1:length(markerNames)
         markers{i}.name = markerNames{i};
         markers{i}.corners = goodQuads{i};
     end
-
+    
     % Convert from c to matlab coordinates
     for i = 1:length(allQuads)
         allQuads{i} = allQuads{i} + 1;
     end
-
+    
     for i = 1:length(markers)
         markers{i}.corners = markers{i}.corners + 1;
     end
-
+    

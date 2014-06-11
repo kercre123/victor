@@ -13,12 +13,12 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     maxMatchDistance_pixels = 5;
     maxMatchDistance_percent = 0.2;
     
-    showImageDetections = false;
+    showImageDetections = true;
     showImageDetectionWidth = 640;
     showOverallStats = true;
     
     recompileBasics = false;
-    recompilePerTestStats = false;
+    recompilePerTestStats = true;
     
     basicsFilename = 'basicsResults.mat';
     perTestStatsFilename = 'perTestStatsResults.mat';
@@ -91,6 +91,7 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
     filenameNameLookup = '';
     
     for iTest = 1:length(resultsData)
+%     for iTest = length(resultsData)
         perTestStats{iTest} = cell(length(resultsData{iTest}), 1);
         
         if showImageDetections
@@ -352,13 +353,17 @@ function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNa
         @extractMarkers_c_noRefinement,...
         @extractMarkers_c_withRefinement,...
         @extractMarkers_matlabOriginal_noRefinement,...
-        @extractMarkers_matlabOriginal_withRefinement};
+        @extractMarkers_matlabOriginal_withRefinement,...
+        @extractMarkers_matlabOriginalQuads_cExtraction_noRefinement,...
+        @extractMarkers_matlabOriginalQuads_cExtraction_withRefinement};
     
     testFunctionNames = {...
         'c-noRef',...
         'c-ref',...
-        'matlab-noRef',...
-        'matlab-ref'};
+        'mat-noRef',...
+        'mat-ref',...
+        'matQuad-cExt-noRef',...
+        'matQuad-cExt-ref'};
     
     resultsData = cell(length(allTestFilenames), 1);
     testData = cell(length(allTestFilenames), 1);
