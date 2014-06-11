@@ -44,6 +44,8 @@ namespace Anki {
         webots::GPS* gps_;
         webots::Compass* compass_;
         
+        webots::Node* root_ = nullptr;
+        
       } // private namespace
       
       
@@ -58,6 +60,25 @@ namespace Anki {
         
         gps_->enable(BS_TIME_STEP);
         compass_->enable(BS_TIME_STEP);
+        
+        // Make root point to BlockWorldComms node
+        webots::Field* rootChildren = basestationController.getRoot()->getField("children");
+        int numRootChildren = rootChildren->getCount();
+        for (int n = 0 ; n<numRootChildren; ++n) {
+          webots::Node* nd = rootChildren->getMFNode(n);
+          
+          // Get the node name
+          std::string nodeName = "";
+          webots::Field* nameField = nd->getField("name");
+          if (nameField) {
+            nodeName = nameField->getSFString();
+          }
+          
+          if (nd->getTypeName().find("Supervisor") != std::string::npos &&
+              nodeName.find("BlockWorldComms") != std::string::npos) {
+            root_ = nd;
+          }
+        }
       }
       
       void BSKeyboardController::Enable(void)
@@ -101,6 +122,7 @@ namespace Anki {
         printf("       Clear known blocks:  c\n");
         printf("   Dock to selected block:  p\n");
         printf("Start June 2014 dice demo:  j\n");
+        printf("  Update controller gains:  k\n");
         printf("               Test modes:  Alt + Testmode#\n");
         printf("               Print help:  ?\n");
         printf("\n");
@@ -133,6 +155,7 @@ namespace Anki {
         const s32 CKEY_QUESTION_MARK  = 63; // '/'
         
         const s32 CKEY_START_DICE_DEMO= 74; // 'j' for "June"
+        const s32 CKEY_SET_GAINS   = 75;  // 'k'
 
         // Get robot
         robot_ = NULL;
@@ -352,6 +375,25 @@ namespace Anki {
             case CKEY_START_DICE_DEMO:
             {
               behaviorMgr_->StartMode(BM_June2014DiceDemo);
+              break;
+            }
+            case CKEY_SET_GAINS:
+            {
+              if (root_) {
+                f32 kp = root_->getField("headKp")->getSFFloat();
+                f32 ki = root_->getField("headKi")->getSFFloat();
+                f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
+                printf("New head gains: %f %f %f\n", kp, ki, maxErrorSum);
+                robot_->SendHeadControllerGains(kp, ki, maxErrorSum);
+                
+                kp = root_->getField("liftKp")->getSFFloat();
+                ki = root_->getField("liftKi")->getSFFloat();
+                maxErrorSum = root_->getField("liftMaxErrorSum")->getSFFloat();
+                printf("New lift gains: %f %f %f\n", kp, ki, maxErrorSum);
+                robot_->SendLiftControllerGains(kp, ki, maxErrorSum);
+              } else {
+                printf("No BlockWorldComms was found in world\n");
+              }
               break;
             }
             case CKEY_QUESTION_MARK:

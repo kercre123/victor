@@ -2,12 +2,25 @@ PROTO BlockWorldComms [
   field SFString name "BlockWorldComms"
   field SFVec3f translation 0 0 0.08
   field SFRotation rotation 0 0 1 0
+
+  # Hacky way for me to modify values that I want to send to robot via keyboard controller
+  field SFFloat headKp 0.5
+  field SFFloat headKi 0.003
+  field SFFloat headMaxErrorSum 200
+
+  field SFFloat liftKp 0.5
+  field SFFloat liftKi 0.02
+  field SFFloat liftMaxErrorSum 200
 ]
 {
 Supervisor {
 
   translation IS translation
   rotation IS rotation
+
+  # Need to reference one of fields for some reason
+  # to avoid error messages on startup
+  %{junk = fields.headKp}%
   
   children [
     # For receiving messages from all robots
