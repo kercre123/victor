@@ -488,7 +488,9 @@ namespace Anki {
         
         // Breakup and send in multiple messages if necessary
         Messages::PrintText m;
-        size_t bytesLeftToSend = strlen(text);
+        const size_t tempBytesLeftToSend = strlen(text);
+        AnkiAssert(tempBytesLeftToSend < s32_MAX);
+        s32 bytesLeftToSend = static_cast<s32>(tempBytesLeftToSend);
         u8 numMsgs = 0;
         while(bytesLeftToSend > 0) {
           memset(m.text, 0, PRINT_TEXT_MSG_LENGTH);
