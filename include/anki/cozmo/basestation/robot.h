@@ -56,36 +56,32 @@ namespace Anki {
       
       void Update();
       
-      const RobotID_t get_ID() const;
-      const Pose3d& get_pose() const;
-      const Vision::Camera& get_camDown() const;
-      const Vision::Camera& get_camHead() const;
-      Vision::Camera& get_camHead(void);
+      // Accessors
+      const RobotID_t        GetID()          const;
+      const Pose3d&          GetPose()        const;
+      const Vision::Camera&  GetCamera()      const;
+      Vision::Camera&        GetCamera();
       
-      const f32 get_headAngle() const;
-      const f32 get_liftAngle() const;
+      const f32              GetHeadAngle()   const;
+      const f32              GetLiftAngle()   const;
       
-      const Pose3d& get_neckPose() const {return neckPose;}
-      const Pose3d& get_headCamPose() const {return headCamPose;}
+      const Pose3d&          GetNeckPose()    const {return _neckPose;}
+      const Pose3d&          GetHeadCamPose() const {return _headCamPose;}
+      const State            GetState()       const;
       
-      void set_pose(const Pose3d &newPose);
-      void set_headAngle(const f32& angle);
-      void set_liftAngle(const f32& angle);
-      void set_camCalibration(const Vision::CameraCalibration& calib);
+      void SetState(const State newState);
+      void SetPose(const Pose3d &newPose);
+      void SetHeadAngle(const f32& angle);
+      void SetLiftAngle(const f32& angle);
+      void SetCameraCalibration(const Vision::CameraCalibration& calib);
       
-      State GetState() const;
-      void  SetState(const State newState);
-      
-      void IncrementPoseFrameID() {++frameId_;}
-      PoseFrameID_t GetPoseFrameID() const {return frameId_;}
-      
-      void queueIncomingMessage(const u8 *msg, const u8 msgSize);
-      bool hasOutgoingMessages() const;
-      void getOutgoingMessage(u8 *msgOut, u8 &msgSize);
+      void IncrementPoseFrameID() {++_frameId;}
+      PoseFrameID_t GetPoseFrameID() const {return _frameId;}
       
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
       Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
+      IPathPlanner* GetPathPlanner() { return _pathPlanner; }
       
       // Clears the path that the robot is executing which also stops the robot
       Result ClearPath();
@@ -97,18 +93,18 @@ namespace Anki {
       Result ExecutePath(const Planning::Path& path);
       
       // True if wheel speeds are non-zero in most recent RobotState message
-      bool IsMoving() const {return isMoving_;}
-      void SetIsMoving(bool t) {isMoving_ = t;}
+      bool IsMoving() const {return _isMoving;}
+      void SetIsMoving(bool t) {_isMoving= t;}
       
-      void SetCurrPathSegment(const s8 s) {currPathSegment_ = s;}
-      s8 GetCurrPathSegment() {return currPathSegment_;}
-      bool IsTraversingPath() {return currPathSegment_ >= 0;}
+      void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
+      s8   GetCurrPathSegment() {return _currPathSegment;}
+      bool IsTraversingPath() {return _currPathSegment >= 0;}
 
-      void SetCarryingBlock(bool t) {isCarryingBlock_ = t;}
-      bool IsCarryingBlock() {return isCarryingBlock_;}
+      void SetCarryingBlock(bool t) {_isCarryingBlock = t;}
+      bool IsCarryingBlock() {return _isCarryingBlock;}
 
-      void SetPickingOrPlacing(bool t) {isPickingOrPlacing_ = t;}
-      bool IsPickingOrPlacing() {return isPickingOrPlacing_;}
+      void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
+      bool IsPickingOrPlacing() {return _isPickingOrPlacing;}
       
       ///////// Motor commands  ///////////
       
@@ -183,7 +179,7 @@ namespace Anki {
       
       // =========== Pose history =============
       // Returns ref to robot's pose history
-      const RobotPoseHistory& GetPoseHistory() {return poseHistory_;}
+      const RobotPoseHistory& GetPoseHistory() {return _poseHistory;}
       
       Result AddRawOdomPoseToHistory(const TimeStamp_t t,
                                      const PoseFrameID_t frameID,
@@ -210,60 +206,52 @@ namespace Anki {
       
     protected:
       // The robot's identifier
-      RobotID_t     ID_;
+      RobotID_t        _ID;
       
       // A reference to the MessageHandler that the robot uses for outgoing comms
-      IMessageHandler* msgHandler_;
+      IMessageHandler* _msgHandler;
       
       // A reference to the BlockWorld the robot lives in
-      BlockWorld*   world_;
+      BlockWorld*      _world;
       
-      IPathPlanner* pathPlanner_;
-      Planning::Path path_;
+      // Path Following
+      IPathPlanner*    _pathPlanner;
+      Planning::Path   _path;
+      s8               _currPathSegment;
+      Pose3d           _goalPose;
+      Radians          _goalHeadAngle;
       
-      Pose3d pose;
-      void updatePose();
-      PoseFrameID_t frameId_;
+      Vision::Camera   _camera;
       
-      Vision::Camera camHead;
+      // Geometry / Pose
+      Pose3d           _pose;
+      PoseFrameID_t    _frameId;
+      
+      const Pose3d _neckPose; // joint around which head rotates
+      const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint
+      const Pose3d _liftBasePose; // around which the base rotates/lifts
 
-      const Pose3d neckPose; // joint around which head rotates
-      const Pose3d headCamPose; // in canonical (untilted) position w.r.t. neck joint
-      const Pose3d liftBasePose; // around which the base rotates/lifts
-
-      f32 currentHeadAngle;
-      f32 currentLiftAngle;
+      f32 _currentHeadAngle;
+      f32 _currentLiftAngle;
       
-      s8 currPathSegment_;
-      
-      Pose3d goalPose_;
-      Radians goalHeadAngle_;
-      
-      State state_, nextState_;
-      //bool setOperationMode(OperationMode newMode);
-      bool isCarryingBlock_;
-      bool isPickingOrPlacing_;
-      bool isMoving_;
-      
-      //std::vector<BlockMarker3d*>  visibleFaces;
-      //std::vector<Block*>          visibleBlocks;
-      
-      // Pose history
-      RobotPoseHistory poseHistory_;
-
       static const Quad2f CanonicalBoundingBoxXY;
       
-      // Message handling
-      typedef std::vector<u8> MessageType;
-      typedef std::queue<MessageType> MessageQueue;
-      MessageQueue messagesOut;
+      // Pose history
+      RobotPoseHistory _poseHistory;
+
+      // State
+      bool _isCarryingBlock;
+      bool _isPickingOrPlacing;
+      bool _isMoving;
+      State _state, _nextState;
+      
       
       // Docking
-      const Block* dockBlock_;
-      const Vision::KnownMarker *dockMarker_;
-      DockAction_t dockAction_;
+      const Block* _dockBlock;
+      const Vision::KnownMarker* _dockMarker;
+      DockAction_t _dockAction;
       
-      f32 waitUntilTime_;
+      f32 _waitUntilTime;
       
       ///////// Messaging ////////
       
@@ -324,35 +312,35 @@ namespace Anki {
     //
     // Inline accessors:
     //
-    inline const RobotID_t Robot::get_ID(void) const
-    { return this->ID_; }
+    inline const RobotID_t Robot::GetID(void) const
+    { return _ID; }
     
-    inline const Pose3d& Robot::get_pose(void) const
-    { return this->pose; }
+    inline const Pose3d& Robot::GetPose(void) const
+    { return _pose; }
     
-    inline const Vision::Camera& Robot::get_camHead(void) const
-    { return this->camHead; }
+    inline const Vision::Camera& Robot::GetCamera(void) const
+    { return _camera; }
     
-    inline Vision::Camera& Robot::get_camHead(void)
-    { return this->camHead; }
+    inline Vision::Camera& Robot::GetCamera(void)
+    { return _camera; }
     
-    inline void Robot::SetState(const State newState)
-    { state_ = newState; }
+    inline const Robot::State Robot::GetState() const
+    { return _state; }
     
-    inline Robot::State Robot::GetState(void) const
-    { return state_; }
+    inline void Robot::SetState(const State nextState)
+    { _state = nextState; }
     
-    inline void Robot::set_camCalibration(const Vision::CameraCalibration& calib)
-    { this->camHead.SetCalibration(calib); }
+    inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
+    { _camera.SetCalibration(calib); }
     
-    inline bool Robot::hasOutgoingMessages() const
-    { return not this->messagesOut.empty(); }
+//    inline bool Robot::hasOutgoingMessages() const
+//    { return not this->messagesOut.empty(); }
     
-    inline const f32 Robot::get_headAngle() const
-    { return this->currentHeadAngle; }
+    inline const f32 Robot::GetHeadAngle() const
+    { return _currentHeadAngle; }
     
-    inline const f32 Robot::get_liftAngle() const
-    { return this->currentLiftAngle; }
+    inline const f32 Robot::GetLiftAngle() const
+    { return _currentLiftAngle; }
     
     //
     // RobotManager class for keeping up with available robots, by their ID
@@ -403,12 +391,12 @@ namespace Anki {
       static RobotManager* singletonInstance_;
 #endif
       
-      IMessageHandler* msgHandler_;
-      BlockWorld* blockWorld_;
-      IPathPlanner* pathPlanner_;
+      IMessageHandler* _msgHandler;
+      BlockWorld*      _blockWorld;
+      IPathPlanner*    _pathPlanner;
       
-      std::map<RobotID_t,Robot*> robots_;
-      std::vector<RobotID_t>     ids_;
+      std::map<RobotID_t,Robot*> _robots;
+      std::vector<RobotID_t>     _IDs;
       
     }; // class RobotManager
     

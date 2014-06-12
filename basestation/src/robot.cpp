@@ -42,48 +42,48 @@ namespace Anki {
     
     Result RobotManager::Init(IMessageHandler* msgHandler, BlockWorld* blockWorld, IPathPlanner* pathPlanner)
     {
-      msgHandler_ = msgHandler;
-      blockWorld_ = blockWorld;
-      pathPlanner_ = pathPlanner;
+      _msgHandler  = msgHandler;
+      _blockWorld  = blockWorld;
+      _pathPlanner = pathPlanner;
       
       return RESULT_OK;
     }
     
     void RobotManager::AddRobot(const RobotID_t withID)
     {
-      robots_[withID] = new Robot(withID, msgHandler_, blockWorld_, pathPlanner_);
-      ids_.push_back(withID);
+      _robots[withID] = new Robot(withID, _msgHandler, _blockWorld, _pathPlanner);
+      _IDs.push_back(withID);
     }
     
     std::vector<RobotID_t> const& RobotManager::GetRobotIDList() const
     {
-      return ids_;
+      return _IDs;
     }
     
     // Get a pointer to a robot by ID
     Robot* RobotManager::GetRobotByID(const RobotID_t robotID)
     {
-      if (robots_.find(robotID) != robots_.end()) {
-        return robots_[robotID];
+      if (_robots.find(robotID) != _robots.end()) {
+        return _robots[robotID];
       }
       
-      return NULL;
+      return nullptr;
     }
     
     size_t RobotManager::GetNumRobots() const
     {
-      return robots_.size();
+      return _robots.size();
     }
     
     bool RobotManager::DoesRobotExist(const RobotID_t withID) const
     {
-      return robots_.count(withID) > 0;
+      return _robots.count(withID) > 0;
     }
 
     
     void RobotManager::UpdateAllRobots()
     {
-      for (auto &r : robots_) {
+      for (auto &r : _robots) {
         // Call update
         r.second->Update();
       }
@@ -93,36 +93,30 @@ namespace Anki {
 #pragma mark --- Robot Class Implementations ---
     
     Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner)
-    : ID_(robotID)
-    , msgHandler_(msgHandler)
-    , world_(world)
-    , pathPlanner_(pathPlanner)
-    , pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
-    , frameId_(0)
-    , neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose)
-    , headCamPose({0,0,1,  -1,0,0,  0,-1,0},
-                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose)
-    , liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose)
-    , currentHeadAngle(0), currentLiftAngle(0), currPathSegment_(-1)
-    , isCarryingBlock_(false)
-    , isPickingOrPlacing_(false)
+    : _ID(robotID)
+    , _msgHandler(msgHandler)
+    , _world(world)
+    , _pathPlanner(pathPlanner)
+    , _currPathSegment(-1)
+    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
+    , _frameId(0)
+    , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose)
+    , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
+                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose)
+    , _liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose)
+    , _currentHeadAngle(0)
+    , _currentLiftAngle(0)
+    , _isCarryingBlock(false)
+    , _isPickingOrPlacing(false)
     {
-      this->set_headAngle(currentHeadAngle);
+      SetHeadAngle(_currentHeadAngle);
       
     } // Constructor: Robot
-   
-    
-    void Robot::updatePose()
-    {
-      
-      
-    } // updatePose()
-  
-    
+     
     
     void Robot::Update(void)
     {
-      switch(state_)
+      switch(_state)
       {
         case IDLE:
         {
@@ -138,32 +132,32 @@ namespace Anki {
           // TODO:(bn) only check this if the blocks have been updated
           if(IsTraversingPath()) {
             Planning::Path newPath;
-            if(pathPlanner_->ReplanIfNeeded(newPath, get_pose())) {
-              path_.Clear();
-              VizManager::getInstance()->ErasePath(ID_);
+            if(_pathPlanner->ReplanIfNeeded(newPath, GetPose())) {
+              _path.Clear();
+              VizManager::getInstance()->ErasePath(_ID);
               wasTraversingPath = false;
               
               PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path");
               MessageClearPath clearMessage;
-              msgHandler_->SendMessage(ID_, clearMessage);
+              _msgHandler->SendMessage(_ID, clearMessage);
               
-              path_ = newPath;
+              _path = newPath;
               PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot");
-              SendExecutePath(path_);
+              SendExecutePath(_path);
             }
           }
           
           // Visualize path if robot has just started traversing it.
           // Clear the path when it has stopped.
-          if (!wasTraversingPath && IsTraversingPath() && path_.GetNumSegments() > 0) {
-            VizManager::getInstance()->DrawPath(ID_,path_,VIZ_COLOR_EXECUTED_PATH);
+          if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
+            VizManager::getInstance()->DrawPath(_ID, _path, VIZ_COLOR_EXECUTED_PATH);
             wasTraversingPath = true;
           } else if (wasTraversingPath && !IsTraversingPath()){
-            path_.Clear();
-            VizManager::getInstance()->ErasePath(ID_);
+            _path.Clear();
+            VizManager::getInstance()->ErasePath(_ID);
             wasTraversingPath = false;
             
-            SetState(nextState_);
+            SetState(_nextState);
           }
 
           break;
@@ -171,32 +165,32 @@ namespace Anki {
       
         case BEGIN_DOCKING:
         {
-          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime) {
             // TODO: Check that the marker was recently seen at roughly the expected image location
             // ...
             //const Point2f& imgCorners = dockMarker_->GetImageCorners().computeCentroid();
             // For now, just docking to the marker no matter where it is in the image.
             
             // Get dock action
-            const f32 dockBlockHeight = dockBlock_->GetPose().get_translation().z();
-            dockAction_ = DA_PICKUP_LOW;
-            if (dockBlockHeight > dockBlock_->GetSize().z()) {
+            const f32 dockBlockHeight = _dockBlock->GetPose().get_translation().z();
+            _dockAction = DA_PICKUP_LOW;
+            if (dockBlockHeight > _dockBlock->GetSize().z()) {
               if(IsCarryingBlock()) {
                 PRINT_INFO("Already carrying block. Can't dock to high block. Aborting.\n");
                 SetState(IDLE);
                 return;
                 
               } else {
-                dockAction_ = DA_PICKUP_HIGH;
+                _dockAction = DA_PICKUP_HIGH;
               }
             } else if (IsCarryingBlock()) {
-              dockAction_ = DA_PLACE_HIGH;
+              _dockAction = DA_PLACE_HIGH;
             }
             
             // Start dock
-            PRINT_INFO("Docking with marker %d (action = %d)\n", dockMarker_->GetCode(), dockAction_);
-            DockWithBlock(dockMarker_->GetCode(),  dockMarker_->GetSize(), dockAction_);
-            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
+            PRINT_INFO("Docking with marker %d (action = %d)\n", _dockMarker->GetCode(), _dockAction);
+            DockWithBlock(_dockMarker->GetCode(),  _dockMarker->GetSize(), _dockAction);
+            _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
             SetState(DOCKING);
           }
           break;
@@ -205,14 +199,14 @@ namespace Anki {
         case DOCKING:
         {
           if (!IsPickingOrPlacing() && !IsMoving() &&
-              waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
+              _waitUntilTime < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
           {
             // Stopped executing docking path. Did it successfully dock?
-            if ((dockAction_ == DA_PICKUP_LOW || dockAction_ == DA_PICKUP_HIGH) && IsCarryingBlock()) {
+            if ((_dockAction == DA_PICKUP_LOW || _dockAction == DA_PICKUP_HIGH) && IsCarryingBlock()) {
               PRINT_INFO("Picked up block successful!\n");
             } else {
               
-              if((dockAction_ == DA_PLACE_HIGH) && !IsCarryingBlock()) {
+              if((_dockAction == DA_PLACE_HIGH) && !IsCarryingBlock()) {
                 PRINT_INFO("Placed block successfully!\n");
               } else {
                 PRINT_INFO("Dock failed! Aborting\n");
@@ -225,8 +219,8 @@ namespace Anki {
         } // case DOCKING
           
         default:
-          PRINT_NAMED_ERROR("Robot::Update", "Transitioned to unknown state %d!", state_);
-          state_ = IDLE;
+          PRINT_NAMED_ERROR("Robot::Update", "Transitioned to unknown state %d!", _state);
+          _state = IDLE;
           return;
           
       } // switch(state_)
@@ -235,7 +229,7 @@ namespace Anki {
       
     } // Update()
 
-    
+    /*
     void Robot::getOutgoingMessage(u8 *msgOut, u8 &msgSize)
     {
       MessageType& nextMessage = this->messagesOut.front();
@@ -250,52 +244,53 @@ namespace Anki {
       
       this->messagesOut.pop();
     }
+     */
 
     
-    void Robot::set_pose(const Pose3d &newPose)
+    void Robot::SetPose(const Pose3d &newPose)
     {
       // Update our current pose and let the physical robot know where it is:
-      this->pose = newPose;
+      _pose = newPose;
       
     } // set_pose()
     
-    void Robot::set_headAngle(const f32& angle)
+    void Robot::SetHeadAngle(const f32& angle)
     {
       if(angle < MIN_HEAD_ANGLE) {
         PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too small. Clipping.\n", angle);
-        currentHeadAngle = MIN_HEAD_ANGLE;
+        _currentHeadAngle = MIN_HEAD_ANGLE;
         SendHeadAngleUpdate();
       }
       else if(angle > MAX_HEAD_ANGLE) {
         PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too large. Clipping.\n", angle);
-        currentHeadAngle = MAX_HEAD_ANGLE;
+        _currentHeadAngle = MAX_HEAD_ANGLE;
         SendHeadAngleUpdate();
       }
       else {
-        currentHeadAngle = angle;
+        _currentHeadAngle = angle;
       }
       
       // Start with canonical (untilted) headPose
-      Pose3d newHeadPose(this->headCamPose);
+      Pose3d newHeadPose(_headCamPose);
       
       // Rotate that by the given angle
-      RotationVector3d Rvec(-currentHeadAngle, Y_AXIS_3D);
+      RotationVector3d Rvec(-_currentHeadAngle, Y_AXIS_3D);
       newHeadPose.rotateBy(Rvec);
       
       // Update the head camera's pose
-      this->camHead.SetPose(newHeadPose);
+      _camera.SetPose(newHeadPose);
       
     } // set_headAngle()
 
-    void Robot::set_liftAngle(const f32& angle)
+    void Robot::SetLiftAngle(const f32& angle)
     {
-      currentLiftAngle = angle;
+      _currentLiftAngle = angle;
     }
         
     Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
     {
       
-      Result res = pathPlanner_->GetPlan(path, get_pose(), targetPose);
+      Result res = _pathPlanner->GetPlan(path, GetPose(), targetPose);
       
       // // TODO: Make some sort of ApplySpeedProfile() function.
       // //       Currently, we just set the speed of last segment to something slow.
@@ -309,16 +304,16 @@ namespace Anki {
     
     Result Robot::ExecutePathToPose(const Pose3d& pose)
     {
-      return ExecutePathToPose(pose, get_headAngle());
+      return ExecutePathToPose(pose, GetHeadAngle());
     }
     
     Result Robot::ExecutePathToPose(const Pose3d& pose, const Radians headAngle)
     {
       Planning::Path p;
       if (GetPathToPose(pose, p) == RESULT_OK) {
-        path_ = p;
-        goalPose_ = pose;
-        goalHeadAngle_ = headAngle;
+        _path = p;
+        _goalPose = pose;
+        _goalHeadAngle = headAngle;
         return ExecutePath(p);
       }
         
@@ -397,10 +392,10 @@ namespace Anki {
       
       CORETECH_ASSERT(blockToDockWith != nullptr);
       
-      dockBlock_ = blockToDockWith;
+      _dockBlock = blockToDockWith;
       
       std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      dockBlock_->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
+      _dockBlock->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
       
       // Select (closest) predock pose
       if (!preDockPoseMarkerPairs.empty()) {
@@ -416,11 +411,11 @@ namespace Anki {
                      poseMarkerPair.first.get_rotationAxis().z(),
                      poseMarkerPair.first.get_rotationAngle().ToFloat() );
           
-          const f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, pose);
+          const f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, _pose);
           if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
             shortestDist2Pose = dist2Pose;
-            goalPose_   = poseMarkerPair.first;
-            dockMarker_ = &(poseMarkerPair.second);
+            _goalPose   = poseMarkerPair.first;
+            _dockMarker = &(poseMarkerPair.second);
           }
         }
       } else {
@@ -434,7 +429,7 @@ namespace Anki {
       Radians goalAngleThresh_ = DEG_TO_RAD(10);
       Radians goalHeadAngle_   = DEG_TO_RAD(-15);
       
-      lastResult = ExecutePathToPose(goalPose_);
+      lastResult = ExecutePathToPose(_goalPose);
       if(lastResult != RESULT_OK) {
         return lastResult;
       }
@@ -442,13 +437,13 @@ namespace Anki {
       // Make sure head is tilted down so that it can localize well
       MoveHeadToAngle(goalHeadAngle_.ToFloat(), 5, 10);
       PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
-                 goalPose_.get_translation().x(),
-                 goalPose_.get_translation().y(),
-                 goalPose_.get_rotationAngle().getDegrees());
+                 _goalPose.get_translation().x(),
+                 _goalPose.get_translation().y(),
+                 _goalPose.get_rotationAngle().getDegrees());
       
-      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-      state_ = FOLLOWING_PATH;
-      nextState_ = BEGIN_DOCKING;
+      _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+      _state = FOLLOWING_PATH;
+      _nextState = BEGIN_DOCKING;
       
       return lastResult;
       
@@ -490,10 +485,10 @@ namespace Anki {
     Result Robot::SendInit() const
     {
       MessageRobotInit m;
-      m.robotID  = ID_;
+      m.robotID  = _ID;
       m.syncTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
     
     // Clears the path that the robot is executing which also stops the robot
@@ -502,7 +497,7 @@ namespace Anki {
       MessageClearPath m;
       m.pathID = 0;
       
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
     
     // Removes the specified number of segments from the front and back of the path
@@ -512,7 +507,7 @@ namespace Anki {
       m.numPopFrontSegments = numPopFrontSegments;
       m.numPopBackSegments = numPopBackSegments;
 
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
     
     // Sends a path to the robot to be immediately executed
@@ -538,7 +533,7 @@ namespace Anki {
             m.accel = path.GetSegmentConstRef(i).GetAccel();
             m.decel = path.GetSegmentConstRef(i).GetDecel();
             
-            if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
+            if (_msgHandler->SendMessage(_ID, m) == RESULT_FAIL)
               return RESULT_FAIL;
             break;
           }
@@ -558,7 +553,7 @@ namespace Anki {
             m.accel = path.GetSegmentConstRef(i).GetAccel();
             m.decel = path.GetSegmentConstRef(i).GetDecel();
             
-            if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
+            if (_msgHandler->SendMessage(_ID, m) == RESULT_FAIL)
               return RESULT_FAIL;
             break;
           }
@@ -576,7 +571,7 @@ namespace Anki {
             m.accel = path.GetSegmentConstRef(i).GetAccel();
             m.decel = path.GetSegmentConstRef(i).GetDecel();
 
-            if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
+            if (_msgHandler->SendMessage(_ID, m) == RESULT_FAIL)
               return RESULT_FAIL;
             break;
           }
@@ -590,7 +585,7 @@ namespace Anki {
       // Send start path execution message
       MessageExecutePath m;
       m.pathID = 0;
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
     
     
@@ -614,7 +609,7 @@ namespace Anki {
       m.image_pixel_x = image_pixel_x;
       m.image_pixel_y = image_pixel_y;
       m.pixel_radius = pixel_radius;
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
     
     Result Robot::SendMoveLift(const f32 speed_rad_per_sec) const
@@ -622,7 +617,7 @@ namespace Anki {
       MessageMoveLift m;
       m.speed_rad_per_sec = speed_rad_per_sec;
       
-      return msgHandler_->SendMessage(ID_,m);
+      return _msgHandler->SendMessage(_ID,m);
     }
     
     Result Robot::SendMoveHead(const f32 speed_rad_per_sec) const
@@ -630,7 +625,7 @@ namespace Anki {
       MessageMoveHead m;
       m.speed_rad_per_sec = speed_rad_per_sec;
       
-      return msgHandler_->SendMessage(ID_,m);
+      return _msgHandler->SendMessage(_ID,m);
     }
 
     Result Robot::SendSetLiftHeight(const f32 height_mm,
@@ -642,7 +637,7 @@ namespace Anki {
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
       
-      return msgHandler_->SendMessage(ID_,m);
+      return _msgHandler->SendMessage(_ID,m);
     }
     
     Result Robot::SendSetHeadAngle(const f32 angle_rad,
@@ -654,7 +649,7 @@ namespace Anki {
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
       
-      return msgHandler_->SendMessage(ID_,m);
+      return _msgHandler->SendMessage(_ID,m);
     }
     
     Result Robot::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps) const
@@ -663,13 +658,13 @@ namespace Anki {
       m.lwheel_speed_mmps = lwheel_speed_mmps;
       m.rwheel_speed_mmps = rwheel_speed_mmps;
       
-      return msgHandler_->SendMessage(ID_,m);
+      return _msgHandler->SendMessage(_ID,m);
     }
     
     Result Robot::SendStopAllMotors() const
     {
       MessageStopAllMotors m;
-      return msgHandler_->SendMessage(ID_,m);
+      return _msgHandler->SendMessage(_ID,m);
     }
     
     Result Robot::SendAbsLocalizationUpdate() const
@@ -680,7 +675,7 @@ namespace Anki {
       // Look in history for the last vis pose and send it.
       TimeStamp_t t;
       RobotPoseStamp p;
-      if (poseHistory_.GetLatestVisionOnlyPose(t, p) == RESULT_FAIL) {
+      if (_poseHistory.GetLatestVisionOnlyPose(t, p) == RESULT_FAIL) {
         PRINT_NAMED_WARNING("Robot.SendAbsLocUpdate.NoVizPoseFound", "");
         return RESULT_FAIL;
       }
@@ -694,16 +689,16 @@ namespace Anki {
 
       m.headingAngle = p.GetPose().get_rotationMatrix().GetAngleAroundZaxis().ToFloat();
       
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
     
     Result Robot::SendHeadAngleUpdate() const
     {
       MessageHeadAngleUpdate m;
       
-      m.newAngle = currentHeadAngle;
+      m.newAngle = _currentHeadAngle;
       
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
 
     Result Robot::SendImageRequest(const ImageSendMode_t mode) const
@@ -713,7 +708,7 @@ namespace Anki {
       m.imageSendMode = mode;
       m.resolution = IMG_STREAM_RES;
       
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
     
     Result Robot::SendStartTestMode(const TestMode mode) const
@@ -722,14 +717,14 @@ namespace Anki {
       
       m.mode = mode;
       
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
     
     Result Robot::SendHeadlight(u8 intensity)
     {
       MessageSetHeadlight m;
       m.intensity = intensity;
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
     
     const Quad2f Robot::CanonicalBoundingBoxXY({{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
@@ -739,7 +734,7 @@ namespace Anki {
     
     Quad2f Robot::GetBoundingQuadXY(const f32 padding_mm) const
     {
-      return GetBoundingQuadXY(pose, padding_mm);
+      return GetBoundingQuadXY(_pose, padding_mm);
     }
     
     Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
@@ -778,13 +773,13 @@ namespace Anki {
                                           const f32 pose_angle,
                                           const f32 head_angle)
     {
-      return poseHistory_.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle);
+      return _poseHistory.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle);
     }
     
     Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                              const RobotPoseStamp& p)
     {
-      return poseHistory_.AddVisionOnlyPose(t, p);
+      return _poseHistory.AddVisionOnlyPose(t, p);
     }
 
     Result Robot::ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
@@ -792,31 +787,31 @@ namespace Anki {
                                                   HistPoseKey* key,
                                                   bool withInterpolation)
     {
-      return poseHistory_.ComputeAndInsertPoseAt(t_request, t, p, key, withInterpolation);
+      return _poseHistory.ComputeAndInsertPoseAt(t_request, t, p, key, withInterpolation);
     }
 
     Result Robot::GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
     {
-      return poseHistory_.GetVisionOnlyPoseAt(t_request, p);
+      return _poseHistory.GetVisionOnlyPoseAt(t_request, p);
     }
 
     Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key)
     {
-      return poseHistory_.GetComputedPoseAt(t_request, p, key);
+      return _poseHistory.GetComputedPoseAt(t_request, p, key);
     }
 
     bool Robot::IsValidPoseKey(const HistPoseKey key) const
     {
-      return poseHistory_.IsValidPoseKey(key);
+      return _poseHistory.IsValidPoseKey(key);
     }
     
     void Robot::UpdateCurrPoseFromHistory()
     {
       TimeStamp_t t;
       RobotPoseStamp p;
-      if (poseHistory_.ComputePoseAt(poseHistory_.GetNewestTimeStamp(), t, p) == RESULT_OK) {
+      if (_poseHistory.ComputePoseAt(_poseHistory.GetNewestTimeStamp(), t, p) == RESULT_OK) {
         if (p.GetFrameId() == GetPoseFrameID()) {
-          pose = p.GetPose();
+          _pose = p.GetPose();
         }
       }
     }

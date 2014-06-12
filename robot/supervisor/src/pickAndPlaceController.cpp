@@ -117,6 +117,18 @@ namespace Anki {
       }
       
       
+      Result SendBlockPickUpMessage(const bool success)
+      {
+        Messages::BlockPickUp msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockPickUp), &msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+      
+      
       Result Update()
       {
         Result retVal = RESULT_OK;
@@ -435,12 +447,18 @@ namespace Anki {
             if (LiftController::IsInPosition()) {
               switch(action_) {
                 case DA_PICKUP_LOW:
+                  // TODO: Add visual verification of pickup here?
                   mode_ = IDLE;
                   lastActionSucceeded_ = true;
                   isCarryingBlock_ = true;
+                  SendBlockPickUpMessage(true);
                   break;
+                  
                 case DA_PICKUP_HIGH:
+                  // TODO: Add visual verification of pickup here?
                   isCarryingBlock_ = true;
+                  SendBlockPickUpMessage(true);
+                  // Note this falls through to next case!
                 case DA_PLACE_LOW:
                 case DA_PLACE_HIGH:
                   SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);

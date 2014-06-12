@@ -84,10 +84,14 @@ namespace Anki
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension) and returns a vector of quads
       // of their outlines on the ground plane (z=0).  Can also pad the
-      // bounding boxes by a specified amount.
+      // bounding boxes by a specified amount. If ignoreIDs is not empty, then
+      // bounding boxes of blocks with an ID present in the set will not be
+      // returned. Analogous behavior for ignoreTypes.
       void GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
                                    const f32 padding,
-                                   std::vector<Quad2f>& boundingBoxes) const;
+                                   std::vector<Quad2f>& boundingBoxes,
+                                   const std::set<ObjectType_t>& ignoreTypes = std::set<ObjectType_t>(),
+                                   const std::set<ObjectID_t>& ignoreIDs = std::set<ObjectID_t>()) const;
       
       // Returns true if any blocks were moved, added, or deleted on the
       // last update. Useful, for example, to know whether to update the
@@ -119,7 +123,7 @@ namespace Anki
 
       bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
       
-      uint32_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
+      size_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                   const ObjectsMap_t& objectsExisting,

@@ -173,7 +173,7 @@ namespace Anki
       for(auto robotID : robotMgr->GetRobotIDList()) {
         Robot* robot = robotMgr->GetRobotByID(robotID);
         CORETECH_ASSERT(robot != NULL);
-        Vision::Camera& camera = robot->get_camHead();
+        Vision::Camera& camera = robot->GetCamera();
         camera.ClearOccluders();
       }
     } // ClearAllOcclusionMaps()
@@ -186,7 +186,7 @@ namespace Anki
         Robot* robot = robotMgr->GetRobotByID(robotID);
         CORETECH_ASSERT(robot != NULL);
         
-        Vision::Camera& camera = robot->get_camHead();
+        Vision::Camera& camera = robot->GetCamera();
         
         camera.AddOccluder(*object);
       }
@@ -293,7 +293,7 @@ namespace Anki
           Robot* robot = robotMgr_->GetRobotByID(robotID);
           CORETECH_ASSERT(robot != NULL);
           
-          if(object->IsVisibleFrom(robot->get_camHead(), DEG_TO_RAD(45), 20.f, true))
+          if(object->IsVisibleFrom(robot->GetCamera(), DEG_TO_RAD(45), 20.f, true))
           {
             // We "should" have seen the object! Delete it or mark it somehow
             CoreTechPrint("Removing object %d, which should have been seen, "
@@ -342,17 +342,29 @@ namespace Anki
     
     void BlockWorld::GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
                                              const f32 padding,
-                                             std::vector<Quad2f>& rectangles) const
+                                             std::vector<Quad2f>& rectangles,
+                                             const std::set<ObjectType_t>& ignoreTypes,
+                                             const std::set<ObjectID_t>& ignoreIDs) const
     {
-      for(auto & blocksWithType : existingBlocks_) {
-        for(auto & blockAndId : blocksWithType.second) {
-          Block* block = dynamic_cast<Block*>(blockAndId.second);
-          CORETECH_THROW_IF(block == nullptr);
-          const f32 blockHeight = block->GetPose().get_translation().z();
-          if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) ) {
-            rectangles.emplace_back(block->GetBoundingQuadXY(padding));
+      for(auto & blocksWithType : existingBlocks_)
+      {
+        const bool useType = ignoreTypes.find(blocksWithType.first) == ignoreTypes.end();
+        if(useType) {
+          for(auto & blockAndId : blocksWithType.second)
+          {
+            Block* block = dynamic_cast<Block*>(blockAndId.second);
+            CORETECH_THROW_IF(block == nullptr);
+            const f32 blockHeight = block->GetPose().get_translation().z();
+            
+            // If this block's ID is not in the ignore list, then we will use it
+            const bool useID = ignoreIDs.find(blockAndId.first) == ignoreIDs.end();
+            
+            if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
+            {
+              rectangles.emplace_back(block->GetBoundingQuadXY(padding));
+            }
           }
-        }
+        } // if(useType)
       }
     } // GetBlockBoundingBoxesXY()
     
@@ -373,7 +385,7 @@ namespace Anki
       // Get all mat objects *seen by this robot's camera*
       std::vector<Vision::ObservableObject*> matsSeen;
       matLibrary_.CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
-                                           (robot->get_camHead().GetId()));
+                                           (robot->GetCamera().GetId()));
 
       // Remove used markers from map
       RemoveUsedMarkers(obsMarkersAtTimestamp);
@@ -384,7 +396,7 @@ namespace Anki
           PRINT_NAMED_WARNING("MultipleMatPiecesObserved",
                               "Robot %d observed more than one mat pieces at "
                               "the same time; will only use first for now.",
-                              robot->get_ID());
+                              robot->GetID());
         }
         
         // Add observed mat markers to the occlusion map of the camera that saw
@@ -393,7 +405,7 @@ namespace Anki
         std::vector<const Vision::KnownMarker *> observedMarkers;
         matsSeen[0]->GetObservedMarkers(observedMarkers);
         for(auto obsMarker : observedMarkers) {
-          robot->get_camHead().AddOccluder(*obsMarker);
+          robot->GetCamera().AddOccluder(*obsMarker);
         }
         
        /*
@@ -401,7 +413,7 @@ namespace Anki
         // camera's pose
         const Pose3d* matWrtCamera = &(matsSeen[0]->GetPose());
         CORETECH_ASSERT(matWrtCamera->get_parent() ==
-                        &(robot->get_camHead().get_pose())); // MatPose's parent is camera
+                        &(robot->GetCamera().get_pose())); // MatPose's parent is camera
         */
         
         /*
@@ -432,16 +444,16 @@ namespace Anki
         
         /*
         Pose3d P_diff;
-        CORETECH_ASSERT( newPose.IsSameAs((*(robot->get_camHead().get_pose().get_parent()) *
-                                           robot->get_camHead().get_pose() *
+        CORETECH_ASSERT( newPose.IsSameAs((*(robot->GetCamera().get_pose().get_parent()) *
+                                           robot->GetCamera().get_pose() *
                                            (*matPose)).getInverse(),
                                           5.f, 5*M_PI/180.f, P_diff) );
         */
         
         /*
          Pose3d newPose
-         ( (*(robot->get_camHead().get_pose().get_parent()) *
-         robot->get_camHead().get_pose() *
+         ( (*(robot->GetCamera().get_pose().get_parent()) *
+         robot->GetCamera().get_pose() *
          (*matWrtCamera)).getInverse() );
          */
         newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
@@ -476,14 +488,14 @@ namespace Anki
         wasPoseUpdated = true;
         
         PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
-                   matsSeen[0]->GetID(), robot->get_ID(),
-                   robot->get_pose().get_translation().x(),
-                   robot->get_pose().get_translation().y(),
-                   robot->get_pose().get_translation().z(),
-                   robot->get_pose().get_rotationAngle().getDegrees(),
-                   robot->get_pose().get_rotationAxis().x(),
-                   robot->get_pose().get_rotationAxis().y(),
-                   robot->get_pose().get_rotationAxis().z());
+                   matsSeen[0]->GetID(), robot->GetID(),
+                   robot->GetPose().get_translation().x(),
+                   robot->GetPose().get_translation().y(),
+                   robot->GetPose().get_translation().z(),
+                   robot->GetPose().get_rotationAngle().getDegrees(),
+                   robot->GetPose().get_rotationAxis().x(),
+                   robot->GetPose().get_rotationAxis().y(),
+                   robot->GetPose().get_rotationAxis().z());
         
         // Send the ground truth pose that was computed instead of the new current pose and let the robot deal with
         // updating its current pose based on the history that it keeps.
@@ -502,7 +514,7 @@ namespace Anki
     } // UpdateRobotPose()
     
     
-    uint32_t BlockWorld::UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp)
+    size_t BlockWorld::UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp)
     {
       didBlocksChange_ = false;
       
@@ -580,7 +592,7 @@ namespace Anki
           // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
           // Increasing history time window would fix this, but it's not really a solution.
           for(auto poseKeyMarkerPair = obsMarkersAtTimestamp.begin(); poseKeyMarkerPair != obsMarkersAtTimestamp.end();) {
-            if ((poseKeyMarkerPair->second.GetSeenBy().GetId() == robot->get_camHead().GetId()) &&
+            if ((poseKeyMarkerPair->second.GetSeenBy().GetId() == robot->GetCamera().GetId()) &&
                 !robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
               PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d\n", poseKeyMarkerPair->first);
               poseKeyMarkerPair = obsMarkersAtTimestamp.erase(poseKeyMarkerPair++);
@@ -630,7 +642,7 @@ namespace Anki
 
               if(block->GetBoundingQuadXY().Intersects(robot->GetBoundingQuadXY())) {
                 CoreTechPrint("Removing block %d, which intersects robot %d's bounding quad.\n",
-                              block->GetID(), robot->get_ID());
+                              block->GetID(), robot->GetID());
                 
                 // Erase the vizualized block and its projected quad
                 VizManager::getInstance()->EraseCuboid(block->GetID());

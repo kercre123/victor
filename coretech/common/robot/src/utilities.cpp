@@ -99,7 +99,7 @@ namespace Anki
         }
       }
 
-      const s32 stringLength = strlen(text);
+      const s32 stringLength = static_cast<s32>(strlen(text));
 
       cv::Point curOrg = org;
       for(s32 iChar=0; iChar<stringLength; iChar++) {

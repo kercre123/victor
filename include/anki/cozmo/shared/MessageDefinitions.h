@@ -194,35 +194,6 @@ ADD_MESSAGE_MEMBER(u16, markerType)
 //ADD_MESSAGE_MEMBER_ARRAY(u8, code, VISION_MARKER_CODE_LENGTH)
 END_MESSAGE_DEFINITION(VisionMarker)
 
-// BlockMarkerObserved
-// TODO: this has to be split into two packets for BTLE (size > 20 bytes)
-START_TIMESTAMPED_MESSAGE_DEFINITION(BlockMarkerObserved, 1)
-
-  // TODO: u16 frameNum; // for putting together two halves of a BlockMarker packet
-ADD_MESSAGE_MEMBER(f32, headAngle)  // TODO: should this be it's own message, only when changed?
-// TODO: these need to be fixed-point, probably 16bits
-ADD_MESSAGE_MEMBER(f32, x_imgUpperLeft)
-ADD_MESSAGE_MEMBER(f32, y_imgUpperLeft)
-ADD_MESSAGE_MEMBER(f32, x_imgLowerLeft)
-ADD_MESSAGE_MEMBER(f32, y_imgLowerLeft)
-ADD_MESSAGE_MEMBER(f32, x_imgUpperRight)
-ADD_MESSAGE_MEMBER(f32, y_imgUpperRight)
-ADD_MESSAGE_MEMBER(f32, x_imgLowerRight)
-ADD_MESSAGE_MEMBER(f32, y_imgLowerRight)
-ADD_MESSAGE_MEMBER(u16, blockType)
-ADD_MESSAGE_MEMBER(u8,  faceType)
-ADD_MESSAGE_MEMBER(u8,  upDirection)
-END_MESSAGE_DEFINITION(BlockMarkerObserved)
-
-// MatMarkerObserved
-START_TIMESTAMPED_MESSAGE_DEFINITION(MatMarkerObserved, 1)
-ADD_MESSAGE_MEMBER(f32, x_imgCenter)   // Where in the image we saw it
-ADD_MESSAGE_MEMBER(f32, y_imgCenter)   //    "
-ADD_MESSAGE_MEMBER(f32, angle)         // What angle in the image we saw it
-ADD_MESSAGE_MEMBER(u16, x_MatSquare)   // Which Mat square we saw
-ADD_MESSAGE_MEMBER(u16, y_MatSquare)   //    "
-ADD_MESSAGE_MEMBER(u8,  upDirection)
-END_MESSAGE_DEFINITION(MatMarkerObserved)
 
 // DockingErrorSignal
 START_TIMESTAMPED_MESSAGE_DEFINITION(DockingErrorSignal, 1)
@@ -234,6 +205,11 @@ ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
 ADD_MESSAGE_MEMBER(u8,  isApproximate)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
 
+// BlockPickUp
+START_TIMESTAMPED_MESSAGE_DEFINITION(BlockPickUp, 1)
+ADD_MESSAGE_MEMBER(bool, didSucceed) // true if robot thinks it picked up a block (from low or high position)
+END_MESSAGE_DEFINITION(BlockPickUp)
+
 // AbsLocalizationUpdate
 START_TIMESTAMPED_MESSAGE_DEFINITION(AbsLocalizationUpdate, 1)
 ADD_MESSAGE_MEMBER(f32, pose_frame_id)
@@ -242,26 +218,18 @@ ADD_MESSAGE_MEMBER(f32, yPosition)
 ADD_MESSAGE_MEMBER(f32, headingAngle)
 END_MESSAGE_DEFINITION(AbsLocalizationUpdate)
 
-// Common Camera Calibration Message Members:
+// CameraCalibration
 // TODO: Assume zero skew and remove that member?
-#define ADD_COMMON_CAMERA_CALIBRATION_MEMBERS \
-ADD_MESSAGE_MEMBER(f32, focalLength_x) \
-ADD_MESSAGE_MEMBER(f32, focalLength_y) \
-ADD_MESSAGE_MEMBER(f32, center_x) \
-ADD_MESSAGE_MEMBER(f32, center_y) \
-ADD_MESSAGE_MEMBER(f32, skew) \
-ADD_MESSAGE_MEMBER(u16, nrows) \
+START_MESSAGE_DEFINITION(CameraCalibration, 1)
+ADD_MESSAGE_MEMBER(f32, focalLength_x)
+ADD_MESSAGE_MEMBER(f32, focalLength_y)
+ADD_MESSAGE_MEMBER(f32, center_x)
+ADD_MESSAGE_MEMBER(f32, center_y)
+ADD_MESSAGE_MEMBER(f32, skew)
+ADD_MESSAGE_MEMBER(u16, nrows)
 ADD_MESSAGE_MEMBER(u16, ncols)
+END_MESSAGE_DEFINITION(CameraCalibration)
 
-// HeadCameraCalibration
-START_MESSAGE_DEFINITION(HeadCameraCalibration, 1)
-ADD_COMMON_CAMERA_CALIBRATION_MEMBERS
-END_MESSAGE_DEFINITION(HeadCameraCalibration)
-
-// MatCameraCalibration
-START_MESSAGE_DEFINITION(MatCameraCalibration, 1)
-ADD_COMMON_CAMERA_CALIBRATION_MEMBERS
-END_MESSAGE_DEFINITION(MatCameraCalibration)
 
 // Robot Available
 START_MESSAGE_DEFINITION(RobotAvailable, 1)

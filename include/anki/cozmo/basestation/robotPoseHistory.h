@@ -76,10 +76,10 @@ namespace Anki {
       void Clear();
       
       // Returns the number of poses that were added via AddRawOdomPose() that still remain in history
-      u32 GetNumRawPoses() const {return poses_.size();}
+      size_t GetNumRawPoses() const {return poses_.size();}
       
       // Returns the number of poses that were added via AddVisionOnlyPose() that still remain in history
-      u32 GetNumVisionPoses() const {return visPoses_.size();}
+      size_t GetNumVisionPoses() const {return visPoses_.size();}
       
       // Specify the maximum time span of poses that can be held.
       // Poses that are older than the newest/largest timestamp stored

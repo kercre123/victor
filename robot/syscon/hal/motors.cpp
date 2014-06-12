@@ -425,11 +425,15 @@ void MotorsUpdate()
 
 void MotorsPrintEncodersRaw()
 {
+  UARTPutChar('L');
   UARTPutHex32(m_motors[0].position);
-  UARTPutChar(' ');
+  UARTPutChar('R');
   UARTPutHex32(m_motors[1].position);
-  UARTPutChar(' ');
-  
+  UARTPutChar('A');
+  UARTPutHex32(m_motors[2].position);
+  UARTPutChar('H');
+  UARTPutHex32(m_motors[3].position);
+  UARTPutChar(' ');  
   UARTPutChar('L');
   UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_LEFT_PIN));
   UARTPutChar('R');

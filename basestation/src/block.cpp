@@ -129,17 +129,17 @@ namespace Anki {
         // Start with (zero-centered) canonical corner
         corners[i] = Block::CanonicalCorners[i];
         // Scale to the right size
-        corners[i] *= size_;
+        corners[i] *= _size;
         // Move to block's current pose
         corners[i] = atPose * corners[i];
       }
     }
     
     Block::Block(const ObjectType_t type)
-    : ObservableObject(type),
-      color_(BlockInfoLUT_[type].color),
-      size_(BlockInfoLUT_[type].size),
-      name_(BlockInfoLUT_[type].name)
+    : ObservableObject(type)
+    , _color(BlockInfoLUT_[type].color)
+    , _size(BlockInfoLUT_[type].size)
+    , _name(BlockInfoLUT_[type].name)
     {
       
       //++Block::numBlocks;
@@ -195,7 +195,7 @@ namespace Anki {
       // Compute a single projection and rotation operator
       const Matrix_3x3f PR(planeProjector*R);
       
-      Point3f paddedSize(size_);
+      Point3f paddedSize(_size);
       paddedSize += 2.f*padding_mm;
       
       std::vector<Point3f> points;
@@ -282,7 +282,7 @@ namespace Anki {
     {
       const RotationMatrix3d& R = atPose.get_rotationMatrix();
 
-      Point3f paddedSize(size_);
+      Point3f paddedSize(_size);
       paddedSize += 2.f*padding_mm;
       
       std::vector<Point2f> points;
@@ -381,7 +381,9 @@ namespace Anki {
       //for(auto & canonicalPoint : Block::CanonicalDockingPoints)
       for(FaceName i_face = FIRST_FACE; i_face < NUM_FACES; ++i_face)
       {
-        if(GetPreDockPose(CanonicalDockingPoints[i_face], distance_mm, this->pose_, preDockPose) == true) {
+        const Vision::KnownMarker& faceMarker = GetMarker(i_face);
+        const f32 distanceForThisFace = faceMarker.GetPose().get_translation().Length() + distance_mm;
+        if(GetPreDockPose(CanonicalDockingPoints[i_face], distanceForThisFace, this->pose_, preDockPose) == true) {
           poseMarkerPairs.emplace_back(preDockPose, GetMarker(i_face));
         }
       } // for each canonical docking point
@@ -497,8 +499,8 @@ namespace Anki {
     {
       // The sizes specified by the block definitions should
       // agree with this being a cube (all dimensions the same)
-      CORETECH_ASSERT(size_.x() == size_.y())
-      CORETECH_ASSERT(size_.y() == size_.z())
+      CORETECH_ASSERT(_size.x() == _size.y())
+      CORETECH_ASSERT(_size.y() == _size.z())
     }
     
     

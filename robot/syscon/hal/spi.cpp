@@ -53,10 +53,11 @@ void SPITransmitReceive(u16 length, const u8* dataTX, u8* dataRX)
   // Switch to receive mode and wait for a reply
   nrf_gpio_cfg_input(PIN_TX, NRF_GPIO_PIN_NOPULL);
   NRF_UART0->PSELTXD = 0xFFFFffff;  // Disconnect TX
-  NRF_UART0->PSELRXD = PIN_TX;
 
   // Wait 10uS for turnaround - 80uS on the other side
   MicroWait(10);
+  NRF_UART0->PSELRXD = PIN_TX;
+
   u32 startTime = GetCounter();
   
   NRF_UART0->EVENTS_RXDRDY = 0;   // XXX: Needed?

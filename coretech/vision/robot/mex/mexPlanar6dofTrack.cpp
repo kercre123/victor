@@ -82,7 +82,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       "Image should be UINT8.");
     mxAssert(mxGetNumberOfDimensions(prhs[0]) == 2,
       "Image must be grayscale.");
-    grayscaleImage = Array<u8>(mxGetM(prhs[argIndex]), mxGetN(prhs[argIndex]), onchipMemory);
+    
+    const mwSize nrows = mxGetM(prhs[argIndex]);
+    const mwSize ncols = mxGetN(prhs[argIndex]);
+    
+    mxAssert(nrows < std::numeric_limits<s32>::max() &&
+             ncols < std::numeric_limits<s32>::max(),
+             "Image too large for conversion to Array.");
+    
+    grayscaleImage = Array<u8>(static_cast<s32>(nrows), static_cast<s32>(ncols), onchipMemory);
     mxArrayToArray(prhs[argIndex], grayscaleImage);
     ++argIndex;
 

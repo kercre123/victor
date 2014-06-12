@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "pathPlanner.h"
+#include "vizManager.h"
 #include "anki/planning/basestation/xythetaPlanner.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "json/json.h"
@@ -54,26 +55,26 @@ LatticePlanner::~LatticePlanner()
 Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose)
 {
   impl_->env_.ClearObstacles();
+  VizManager::getInstance()->EraseAllQuads(); // TODO: only erase bounding box quads
 
   assert(impl_->blockWorld_);
 
   printf("setting up environment...\n");
   unsigned int numAdded = 0;
 
-  for(auto blocksByType : impl_->blockWorld_->GetAllExistingBlocks()) {
-    for(auto blocksByID : blocksByType.second) {
-          
-      const Block* block = dynamic_cast<Block*>(blocksByID.second);
-
-      Quad2f quadOnGround2d = block->GetBoundingQuadXY(ROBOT_BOUNDING_RADIUS);
-
-      // TODO:(bn) who frees this??
-      RotatedRectangle *boundingRect = new RotatedRectangle;
-      boundingRect->ImportQuad(quadOnGround2d);
-
-      impl_->env_.AddObstacle(boundingRect);
-      numAdded++;
-    }
+  std::vector<Quad2f> boundingBoxes;
+  impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
+                                              ROBOT_BOUNDING_RADIUS,
+                                              boundingBoxes,
+                                              _ignoreTypes, _ignoreIDs);
+  
+  for(auto boundingQuad : boundingBoxes) {
+    
+    // TODO: manage the quadID better so we don't conflict
+    VizManager::getInstance()->DrawQuad(500+numAdded, boundingQuad, 0.5f, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
+    
+    impl_->env_.AddObstacle(boundingQuad);
+    ++numAdded;
   }
 
   printf("Added %u blocks\n", numAdded);
@@ -121,22 +122,22 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
   // TODO:(bn) don't do this every time! Get an update from BlockWorld
   // if a new block shows up or one moves significantly
   impl_->env_.ClearObstacles();
+  VizManager::getInstance()->EraseAllQuads(); // TODO: only erase bounding box quads
 
   assert(impl_->blockWorld_);
 
-  for(auto blocksByType : impl_->blockWorld_->GetAllExistingBlocks()) {
-    for(auto blocksByID : blocksByType.second) {
-          
-      const Block* block = dynamic_cast<Block*>(blocksByID.second);
-
-      Quad2f quadOnGround2d = block->GetBoundingQuadXY(ROBOT_BOUNDING_RADIUS);
-
-      // TODO:(bn) who frees this??
-      RotatedRectangle *boundingRect = new RotatedRectangle;
-      boundingRect->ImportQuad(quadOnGround2d);
-
-      impl_->env_.AddObstacle(boundingRect);
-    }
+  std::vector<Quad2f> boundingBoxes;
+  impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
+                                              ROBOT_BOUNDING_RADIUS,
+                                              boundingBoxes,
+                                              _ignoreTypes, _ignoreIDs);
+  unsigned int numAdded = 0;
+  for(auto boundingQuad : boundingBoxes) {
+    
+    // TODO: manage the quadID better so we don't conflict
+    VizManager::getInstance()->DrawQuad(500 + numAdded++, boundingQuad, 0.5f, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
+   
+    impl_->env_.AddObstacle(boundingQuad);
   }
 
   if(!impl_->planner_.PlanIsSafe()) {

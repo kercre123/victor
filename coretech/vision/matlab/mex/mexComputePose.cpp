@@ -85,11 +85,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   plhs[1] = mxCreateDoubleMatrix(3, 1, mxREAL);
   double* T = mxGetPr(plhs[1]);
 
-  mwSize index=0;
-  for(mwSize j=0; j<3; ++j) {
+  s32 index=0;
+  for(s32 j=0; j<3; ++j) {
     T[j] = static_cast<double>(pose.get_translation()[j]);
 
-    for(mwSize i=0; i<3; ++i, ++index) {
+    for(s32 i=0; i<3; ++i, ++index) {
       R[index] = static_cast<double>(pose.get_rotationMatrix()(i,j));
     }
   }

@@ -130,25 +130,7 @@ int main(int argc, char **argv)
 
     //MessageHandler::getInstance()->ProcessMessages();
     msgHandler.ProcessMessages();
-    
-    //
-    // Check for any outgoing messages from each basestation robot:
-    //
-    for(auto robotiD : robotMgr.GetRobotIDList())
-    {
-      Robot* robot = robotMgr.GetRobotByID(robotiD);
-      while(robot->hasOutgoingMessages())
-      {
-        Comms::MsgPacket p;
-        p.destId = robot->get_ID();
-        robot->getOutgoingMessage(p.data, p.dataLen);
-        if (p.dataLen > 0) {
-          robotComms.Send(p);
-        }
-      } // while robot i still has outgoing messages to send
       
-    } // for each robot
-
     // Draw observed markers, but only if images are being streamed
     blockWorld.DrawObsMarkers();
     
@@ -170,7 +152,7 @@ int main(int argc, char **argv)
     {
       // Get selected block of interest from Behavior manager
       static ObjectID_t prev_boi = 0;      // Previous block of interest
-      static u32 prevNumPreDockPoses = 0;  // Previous number of predock poses
+      static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
       
       // Get current block of interest
       const ObjectID_t boi = behaviorMgr.GetBlockOfInterest();
@@ -196,7 +178,7 @@ int main(int argc, char **argv)
             
             // Erase previous predock pose marker for previous block of interest
             if (prev_boi != boi || poses.size() != prevNumPreDockPoses) {
-              PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %d)\n", boi, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
+              PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", boi, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
               VizManager::getInstance()->EraseVizObjectType(VIZ_PREDOCKPOSE);
               prev_boi = boi;
               prevNumPreDockPoses = poses.size();
@@ -218,6 +200,7 @@ int main(int argc, char **argv)
                                                 color);
           
           // Draw blocks' projected quads on the mat
+          /*
           {
             using namespace Quad;
 
@@ -236,6 +219,7 @@ int main(int argc, char **argv)
             
             VizManager::getInstance()->DrawQuad(block->GetID(), quadOnGround3d, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
           }
+           */
           
           
         } // FOR each ID of this type
@@ -250,10 +234,10 @@ int main(int argc, char **argv)
       Robot* robot = robotMgr.GetRobotByID(robotID);
       
       // Triangle pose marker
-      VizManager::getInstance()->DrawRobot(robotID, robot->get_pose());
+      VizManager::getInstance()->DrawRobot(robotID, robot->GetPose());
       
       // Full Webots CozmoBot model
-      VizManager::getInstance()->DrawRobot(robotID, robot->get_pose(), robot->get_headAngle(), robot->get_liftAngle());
+      VizManager::getInstance()->DrawRobot(robotID, robot->GetPose(), robot->GetHeadAngle(), robot->GetLiftAngle());
       
       // Robot bounding box
       using namespace Quad;
@@ -263,7 +247,7 @@ int main(int argc, char **argv)
                             Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
                             Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
 
-      VizManager::getInstance()->DrawQuad(robot->get_ID()+100, quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
+      VizManager::getInstance()->DrawQuad(robot->GetID()+100, quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
     }
 
     /////////// End visualization update ////////////

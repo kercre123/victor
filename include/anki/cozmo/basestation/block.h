@@ -188,9 +188,9 @@ namespace Anki {
       
       static const std::array<Point3f,NUM_CORNERS> CanonicalCorners;
       
-      Color       color_;
-      Point3f     size_;
-      std::string name_;
+      Color       _color;
+      Point3f     _size;
+      std::string _name;
       
       //std::vector<Point3f> blockCorners_;
       
@@ -260,16 +260,16 @@ namespace Anki {
     */
     
     inline Point3f const& Block::GetSize() const
-    { return this->size_; }
+    { return _size; }
     
     inline float Block::GetWidth() const
-    { return this->size_.y(); }
+    { return _size.y(); }
     
     inline float Block::GetHeight() const
-    { return this->size_.z(); }
+    { return _size.z(); }
     
     inline float Block::GetDepth() const
-    { return this->size_.x(); }
+    { return _size.x(); }
     
     /*
     inline float Block::GetMinDim() const
@@ -282,19 +282,19 @@ namespace Anki {
                                const float height,
                                const float depth)
     {
-      this->size_ = {width, height, depth};
+      _size = {width, height, depth};
     }
     
     inline void Block::SetColor(const unsigned char red,
                                 const unsigned char green,
                                 const unsigned char blue)
     {
-      this->color_ = {red, green, blue};
+      _color = {red, green, blue};
     }
     
     inline void Block::SetName(const std::string name)
     {
-      this->name_ = name;
+      _name = name;
     }
     
     /*
