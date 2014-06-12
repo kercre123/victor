@@ -195,7 +195,7 @@ namespace Anki {
           PRINT("NULL HeadCamInfo retrieved from HAL.\n");
         }
         else {
-          Messages::HeadCameraCalibration headCalibMsg = {
+          Messages::CameraCalibration headCalibMsg = {
             headCamInfo->focalLength_x,
             headCamInfo->focalLength_y,
             headCamInfo->center_x,
@@ -206,7 +206,7 @@ namespace Anki {
           };
           
           
-          if(!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::HeadCameraCalibration),
+          if(!HAL::RadioSendMessage(CameraCalibration_ID,
                                     &headCalibMsg))
           {
             PRINT("Failed to send camera calibration message.\n");
@@ -408,25 +408,14 @@ namespace Anki {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessMatMarkerObservedMessage(const MatMarkerObserved& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
       void ProcessRobotAvailableMessage(const RobotAvailable& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
       // These need implementations to avoid linker errors, but we don't expect
       // to _receive_ these message types, only to send them.
-      void ProcessMatCameraCalibrationMessage(const MatCameraCalibration& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessHeadCameraCalibrationMessage(const HeadCameraCalibration& msg) {
+
+      void ProcessCameraCalibrationMessage(const CameraCalibration& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
       
