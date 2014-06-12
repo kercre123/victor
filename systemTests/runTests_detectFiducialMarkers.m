@@ -13,19 +13,19 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     maxMatchDistance_pixels = 5;
     maxMatchDistance_percent = 0.2;
     
-    numComputeThreads = 3;
+    numComputeThreads = 3; %#ok<NASGU>
     
     showImageDetections = true;
     showImageDetectionWidth = 640;
     showOverallStats = true;
     
-    recompileBasics = true;
+    recompileBasics = false;
     recompilePerTestStats = true;
     
     basicsFilename = 'basicsResults';
     perTestStatsFilename = 'perTestStatsResults';
     
-    markerDirectoryList = {'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/symbols/withFiducials/', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/letters/withFiducials', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/dice/withFiducials'};
+    markerDirectoryList = {'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/symbols/withFiducials/', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/letters/withFiducials', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/dice/withFiducials'}; %#ok<NASGU>
     
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
@@ -121,7 +121,7 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
     else
         old_useImpixelinfo = -1;
     end
-    
+        
     showImageDetectionsScale = 1;
     
     perTestStats = cell(length(resultsData), 1);
@@ -190,6 +190,8 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
                     
                     hold on;
                 end % if showImageDetections
+                
+                keyboard
                 
                 [curCompiled.numQuadsNotIgnored, curCompiled.numQuadsDetected] = compileQuadResults(curResultsData, showImageDetections, showImageDetectionsScale);
                 
@@ -263,39 +265,39 @@ function [numNotIgnored, numGood] = compileQuadResults(curResultsData, showImage
         end
     end % for iQuad = 1:numTotal
     
-    if showImageDetections
-        for iQuad = 1:length(curResultsData.detectedQuads)
-            plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [.95,.95,.95], 'LineWidth', 3); % .95 not 1, because printing converts pure white into pure black
-            plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [0,0,0], 'LineWidth', 1);
-            
-            if curResultsData.detectedQuadValidity(iQuad) > 0
-                minX = min(curResultsData.detectedQuads{iQuad}(:,1));
-                
-                indsX = find((minX+3) >= curResultsData.detectedQuads{iQuad}(:,1));
-                
-                if length(indsX) == 1
-                    minY = min(curResultsData.detectedQuads{iQuad}(indsX(1),2));
-                else
-                    minY = min(curResultsData.detectedQuads{iQuad}(indsX,2));
-                    
-                    indsY = find(minY == curResultsData.detectedQuads{iQuad}(indsX,2));
-                    
-                    minX = min(curResultsData.detectedQuads{iQuad}(indsX(indsY(1)),1));
-                    minY = min(curResultsData.detectedQuads{iQuad}(indsX(indsY(1)),2));
-                end
-                
-                minX = minX*showImageDetectionsScale;
-                minY = minY*showImageDetectionsScale;
-                
-                rectangle('Position', [minX-2, minY-10, 15, 15], 'FaceColor', 'k');
-                
-                if curResultsData.detectedQuadValidity(iQuad) < 100000
-                    validText = sprintf('%d', curResultsData.detectedQuadValidity(iQuad));
-                    text(minX, minY, validText, 'Color', [.95,.95,.95], 'FontSize', 16.0);
-                end
-            end
-        end
-    end % if showImageDetections
+%     if showImageDetections
+%         for iQuad = 1:length(curResultsData.detectedQuads)
+%             plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [.95,.95,.95], 'LineWidth', 3); % .95 not 1, because printing converts pure white into pure black
+%             plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [0,0,0], 'LineWidth', 1);
+%             
+%             if curResultsData.detectedQuadValidity(iQuad) > 0
+%                 minX = min(curResultsData.detectedQuads{iQuad}(:,1));
+%                 
+%                 indsX = find((minX+3) >= curResultsData.detectedQuads{iQuad}(:,1));
+%                 
+%                 if length(indsX) == 1
+%                     minY = min(curResultsData.detectedQuads{iQuad}(indsX(1),2));
+%                 else
+%                     minY = min(curResultsData.detectedQuads{iQuad}(indsX,2));
+%                     
+%                     indsY = find(minY == curResultsData.detectedQuads{iQuad}(indsX,2));
+%                     
+%                     minX = min(curResultsData.detectedQuads{iQuad}(indsX(indsY(1)),1));
+%                     minY = min(curResultsData.detectedQuads{iQuad}(indsX(indsY(1)),2));
+%                 end
+%                 
+%                 minX = minX*showImageDetectionsScale;
+%                 minY = minY*showImageDetectionsScale;
+%                 
+%                 rectangle('Position', [minX-2, minY-10, 15, 15], 'FaceColor', 'k');
+%                 
+%                 if curResultsData.detectedQuadValidity(iQuad) < 100000
+%                     validText = sprintf('%d', curResultsData.detectedQuadValidity(iQuad));
+%                     text(minX, minY, validText, 'Color', [.95,.95,.95], 'FontSize', 16.0);
+%                 end
+%             end % if curResultsData.detectedQuadValidity(iQuad) > 0
+%         end % for iQuad = 1:length(curResultsData.detectedQuads)
+%     end % if showImageDetections
     
 function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect_position, numSpurriousDetections, numUndetected] = compileMarkerResults(curResultsData, showImageDetections, showImageDetectionsScale)
     global maxMatchDistance_pixels;
@@ -394,3 +396,15 @@ function plotOneMarker(corners, name, showImageDetectionsScale, quadColor, topBa
     midX = (corners(firstCorner,1) + corners(secondCorner,1)) / 2;
     midY = (corners(firstCorner,2) + corners(secondCorner,2)) / 2;
     text(midX*showImageDetectionsScale + 5, midY*showImageDetectionsScale, name, 'Color', quadColor);
+
+function quads = markersToQuad(markers)
+    if ~iscell(markers)
+        markers = { markers };
+    end
+    
+    quads = cell(length(markers), 1);
+    
+    for iQuad = 1:length(markers)
+        quads{iQuad} = markers{iQuad}.corners;
+    end    
+    
