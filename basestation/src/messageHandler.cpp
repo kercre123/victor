@@ -393,6 +393,16 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockPickUp const& msg)
+    {
+      const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
+      PRINT_INFO("Robot %d %s picking up block.\n", robot->GetID(), successStr);
+      
+      // TODO: Tell blockWorld to mark the block the robot was docking to as picked up
+      
+      return RESULT_OK;
+    }
+    
     
     // STUBS:
     Result MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return RESULT_FAIL;}
