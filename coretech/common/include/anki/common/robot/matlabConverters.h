@@ -51,7 +51,7 @@ namespace Anki {
     template<typename Type> mxArray* arrayToMxArray(const Array<Type> &array);
 
     // Convert a raw image data pointer with size to a mxAarray.  Allocate and return the mxArray
-    template<typename Type> mxArray* imageArrayToMxArray(const Type *data, const s32 nrows, const s32 ncols, const s32 nbands);
+    template<typename Type> mxArray* imageArrayToMxArray(const Type *data, const s32 nrows, const s32 ncols, const mwSize nbands);
 
     // Convert a primitive type to a C++ to a Matlab class ID
     // (If we have not defined a specialization for a particular type below,
@@ -235,7 +235,7 @@ namespace Anki {
     } // template<typename Type> mxArray* arrayToMxArray(const Array<Type> &array)
 
     template<typename Type>
-    mxArray * imageArrayToMxArray(const Type *img, const int nrows, const int ncols, const int nbands)
+    mxArray * imageArrayToMxArray(const Type *img, const int nrows, const int ncols, const mwSize nbands)
     {
       // Seems to be faster to copy the data in single precision and
       // transposed and to do the permute and double cast at the end.
