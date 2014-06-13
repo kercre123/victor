@@ -3423,7 +3423,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
 
   components.SortConnectedComponentSegments();
 
-#define DRAW_TraceNextExteriorBoundary
+//#define DRAW_TraceNextExteriorBoundary
 #ifdef DRAW_TraceNextExteriorBoundary
   {
     Array<u8> drawnComponents(480, 640, scratchOffchip);
@@ -3442,7 +3442,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-  extractedBoundary.Print();
+  //extractedBoundary.Print();
 
   for(s32 i=0; i<boundaryLength; i++) {
     ASSERT_TRUE(*extractedBoundary.Pointer(i) == Point<s16>(extractedBoundaryX_groundTruth[i], extractedBoundaryY_groundTruth[i]));
