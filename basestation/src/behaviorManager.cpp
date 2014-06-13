@@ -185,39 +185,59 @@ namespace Anki {
     {
       
       if(!robot_->IsTraversingPath() && !robot_->IsMoving() &&
-         waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+         waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
+      {
         
-        if (robot_->GetPose().IsSameAs(goalPose_, distThresh_mm_, angThresh_)) {
-          PRINT_INFO("Dock pose reached\n");
-          
-          if(dockBlock_ != nullptr) {
-            // Verify that the block we are docking with still exists in case it somehow disappeared while
-            // the robot was travelling to the predock pose.
-            const Vision::ObservableObject* oObject = world_->GetObservableObjectByID(dockBlock_->GetID());
-            if (oObject == nullptr) {
-              PRINT_INFO("Docking block no longer present. Transitioning to %s.\n",
-                         QUOTE(problemState_));
-              state_ = problemState_;
-              return;
-            }
+        const TimeStamp_t currentTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        const TimeStamp_t observationWindow = 500; // half second
+        
+        if(dockBlock_ != nullptr) {
+          // Verify that the block we are docking with still exists in case it somehow disappeared while
+          // the robot was travelling to the predock pose.
+          const Vision::ObservableObject* oObject = world_->GetObservableObjectByID(dockBlock_->GetID());
+          if (oObject == nullptr) {
+            PRINT_INFO("Docking block no longer exists in the world. Transitioning to %s.\n",
+                       QUOTE(problemState_));
+            state_ = problemState_;
+            return;
+          } else if(oObject != dockBlock_) {
+            PRINT_INFO("Docking block no longer pointing to the same object ID as when it was set. Transitioning to %s.\n",
+                       QUOTE(problemState_));
+            state_ = problemState_;
+            return;
           }
           
-          if(dockMarker_ != nullptr) {
-            // Need to confirm that expected marker is within view.
-            // Move head if necessary based on block height.
-            Pose3d markerPoseWrtNeck = dockMarker_->GetPose().getWithRespectTo(&robot_->GetNeckPose());
-            const f32 headAngle = atan2(markerPoseWrtNeck.get_translation().z(),
-                                        markerPoseWrtNeck.get_translation().x());
-            PRINT_INFO("Moving head angle to %f degrees.\n", RAD_TO_DEG(headAngle));
-            robot_->MoveHeadToAngle(headAngle, 1, 1);
+          if(dockBlock_->GetLastObservedTime() < (currentTimeStamp - observationWindow)) {
+            PRINT_INFO("At end of path, but dock block no longer observed. Transitioning to %s.\n",
+                       QUOTE(problemState_));
+            state_ = problemState_;
+            return;
+          }
+        }
+        
+        if(dockMarker_ != nullptr) {
+          
+          // Confirm that expected marker is within view.
+          if(dockMarker_->GetLastObservedTime() < (currentTimeStamp - observationWindow)) {
+            PRINT_INFO("Docking marker not visible from final path position. Transitioning to %s.\n",
+                       QUOTE(problemState_));
+            state_ = problemState_;
+            return;
           }
           
-          // Wait long enough for head to move and a message to the robot to be processed
-          waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
+          // Move head if necessary based on block height.
+          Pose3d markerPoseWrtNeck = dockMarker_->GetPose().getWithRespectTo(&robot_->GetNeckPose());
+          const f32 headAngle = atan2(markerPoseWrtNeck.get_translation().z(),
+                                      markerPoseWrtNeck.get_translation().x());
+          PRINT_INFO("Moving head angle to %f degrees.\n", RAD_TO_DEG(headAngle));
+          robot_->MoveHeadToAngle(headAngle, 1, 1);
           
-          state_ = nextState_;
+        }
+        else if (!robot_->GetPose().IsSameAs(goalPose_, distThresh_mm_, angThresh_))
+        {
+          // If there's no docking marker to confirm we ended where we need to be,
+          // just see if we are "close" to our goalPose
           
-        } else {
           PRINT_INFO("Not at expected position at the end of the path. "
                      "Resetting BehaviorManager. (Robot: (%.2f %.2f %.2f) @ %.1fdeg VS. Goal: (%.2f %.2f %.2f) @ %.1fdeg)\n.",
                      robot_->GetPose().get_translation().x(),
@@ -229,10 +249,19 @@ namespace Anki {
                      goalPose_.get_translation().z(),
                      goalPose_.get_rotationAngle().getDegrees()
                      );
+          
           StartMode(BM_None);
           return;
         }
-      }
+        
+        PRINT_INFO("Dock pose reached\n");
+        
+        // Wait long enough for head to move and a message to the robot to be processed
+        waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1;
+        
+        state_ = nextState_;
+        
+      } // if robot appears to be done with its path
       
     } // FollowPathHelper()
     
@@ -252,14 +281,14 @@ namespace Anki {
         f32 shortestDist2Pose = -1;
         for (auto const & poseMarkerPair : preDockPoseMarkerPairs) {
           
-          PRINT_INFO("Candidate pose: (%f %f %f), (%f %f %f %f)\n",
+          PRINT_INFO("Candidate pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f)\n",
                      poseMarkerPair.first.get_translation().x(),
                      poseMarkerPair.first.get_translation().y(),
                      poseMarkerPair.first.get_translation().z(),
+                     poseMarkerPair.first.get_rotationAngle().getDegrees(),
                      poseMarkerPair.first.get_rotationAxis().x(),
                      poseMarkerPair.first.get_rotationAxis().y(),
-                     poseMarkerPair.first.get_rotationAxis().z(),
-                     poseMarkerPair.first.get_rotationAngle().ToFloat() );
+                     poseMarkerPair.first.get_rotationAxis().z());
           
           f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, robotPose);
           if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
@@ -276,7 +305,8 @@ namespace Anki {
       
       const bool alreadyThere = robot_->GetPose().IsSameAs(goalPose_, distThresh_mm_, angThresh_);
       
-      if (alreadyThere || robot_->ExecutePathToPose(goalPose_) == RESULT_OK)
+      Result execPlanResult = RESULT_OK;
+      if (alreadyThere || (execPlanResult = robot_->ExecutePathToPose(goalPose_)) == RESULT_OK)
       {
         // Make sure head is tilted down so that it can localize well
         robot_->MoveHeadToAngle(desiredHeadAngle, 5, 10);
@@ -287,7 +317,12 @@ namespace Anki {
         waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
         state_ = EXECUTING_PATH_TO_DOCK_POSE;
       }
-
+      else if(execPlanResult != RESULT_OK) {
+        PRINT_INFO("ExecutePathToPose failed. Aborting.\n");
+        StartMode(BM_None);
+        return;
+      }
+      
     } // GoToNearestPreDockPoseHelper()
 
     void BehaviorManager::BeginDockingHelper()
@@ -315,7 +350,7 @@ namespace Anki {
         
         // Start dock
         PRINT_INFO("Docking with marker %d (action = %d)\n", dockMarker_->GetCode(), dockAction_);
-        robot_->DockWithBlock(dockMarker_->GetCode(),  dockMarker_->GetSize(), dockAction_);
+        robot_->DockWithBlock(dockBlock_, dockMarker_, dockAction_);
         waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
         state_ = EXECUTING_DOCK;
       }
@@ -482,9 +517,10 @@ namespace Anki {
               // Get all the observed markers on the dice and look for the one
               // facing up (i.e. the one that is nearly aligned with the z axis)
               // TODO: expose the threshold here?
+              const TimeStamp_t timeWindow = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - 250;
               const f32 dotprodThresh = 1.f - cos(DEG_TO_RAD(20));
               std::vector<const Vision::KnownMarker*> diceMarkers;
-              diceBlock->GetObservedMarkers(diceMarkers);
+              diceBlock->GetObservedMarkers(diceMarkers, timeWindow);
               
               const Vision::KnownMarker* topMarker = nullptr;
               for(auto marker : diceMarkers) {
@@ -632,7 +668,7 @@ namespace Anki {
                                        dockBlock_->GetPose().get_translation()).Length();
           
           const f32 desiredDistance = (0.5f*dockBlock_->GetSize().Length() +
-                                       ROBOT_BOUNDING_RADIUS + 10.f);
+                                       ROBOT_BOUNDING_RADIUS + 20.f);
           
           if(currentDistance > desiredDistance )
           {
@@ -707,8 +743,10 @@ namespace Anki {
           {
             // Stopped executing docking path. Did it successfully dock?
             if ((dockAction_ == DA_PICKUP_LOW || dockAction_ == DA_PICKUP_HIGH) && robot_->IsCarryingBlock()) {
-              PRINT_INFO("Picked up block successful!\n");
-                state_ = BEGIN_EXPLORING;
+              PRINT_INFO("Picked up block successfully!\n");
+              
+              state_ = BEGIN_EXPLORING;
+              
             } else {
               
               if((dockAction_ == DA_PLACE_HIGH) && !robot_->IsCarryingBlock()) {

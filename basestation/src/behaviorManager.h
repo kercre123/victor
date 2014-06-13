@@ -121,7 +121,7 @@ namespace Anki {
       /////// PickAndPlace vars ///////
     
       // Block to dock with
-      const Block* dockBlock_;
+      Block* dockBlock_;
       const Vision::KnownMarker *dockMarker_;
       
       // Goal pose for path planning (e.g. nearest pre-dock pose)
