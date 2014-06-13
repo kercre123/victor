@@ -274,29 +274,54 @@ namespace Anki {
       std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
       dockBlock_->GetPreDockPoses(preDockDistance, preDockPoseMarkerPairs);
             
-      // Select (closest) predock pose
+      // Select (closest) predock pose that is not within an obstacle
       const Pose3d& robotPose = robot_->GetPose();
       
       if (!preDockPoseMarkerPairs.empty()) {
+        std::vector<Quad2f> boundingBoxes;
+        std::set<ObjectID_t> ignoreIDs = {dockBlock_->GetID()};
+        world_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z, ROBOT_BOUNDING_RADIUS,
+                                        boundingBoxes, std::set<ObjectType_t>(), ignoreIDs);
+        
         f32 shortestDist2Pose = -1;
         for (auto const & poseMarkerPair : preDockPoseMarkerPairs) {
           
-          PRINT_INFO("Candidate pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f)\n",
-                     poseMarkerPair.first.get_translation().x(),
-                     poseMarkerPair.first.get_translation().y(),
-                     poseMarkerPair.first.get_translation().z(),
-                     poseMarkerPair.first.get_rotationAngle().getDegrees(),
-                     poseMarkerPair.first.get_rotationAxis().x(),
-                     poseMarkerPair.first.get_rotationAxis().y(),
-                     poseMarkerPair.first.get_rotationAxis().z());
+          Point2f xyPoint(poseMarkerPair.first.get_translation().x(),
+                          poseMarkerPair.first.get_translation().y());
           
-          f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, robotPose);
-          if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
-            shortestDist2Pose = dist2Pose;
-            goalPose_ = poseMarkerPair.first;
-            dockMarker_ = &(poseMarkerPair.second);
+          bool isTooCloseToAnotherBlock = false;
+          for(auto boundingBox : boundingBoxes) {
+            if(boundingBox.Contains(xyPoint)) {
+              isTooCloseToAnotherBlock = true;
+              break;
+            }
           }
+          
+          if(!isTooCloseToAnotherBlock) {
+            PRINT_INFO("Candidate pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f)\n",
+                       poseMarkerPair.first.get_translation().x(),
+                       poseMarkerPair.first.get_translation().y(),
+                       poseMarkerPair.first.get_translation().z(),
+                       poseMarkerPair.first.get_rotationAngle().getDegrees(),
+                       poseMarkerPair.first.get_rotationAxis().x(),
+                       poseMarkerPair.first.get_rotationAxis().y(),
+                       poseMarkerPair.first.get_rotationAxis().z());
+            
+            f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, robotPose);
+            if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
+              shortestDist2Pose = dist2Pose;
+              goalPose_ = poseMarkerPair.first;
+              dockMarker_ = &(poseMarkerPair.second);
+            }
+          } // if !isTooCloseToAnotherBlock
+        } // for each poseMarkerPair
+        
+        if(shortestDist2Pose < 0) {
+          PRINT_INFO("No pre-dock poses found for dock block that are not inside an obstacle! Going back to exploring.\n");
+          state_ = BEGIN_EXPLORING;
+          return;
         }
+        
       } else {
         PRINT_INFO("No docking pose found\n");
         StartMode(BM_None);
@@ -318,8 +343,17 @@ namespace Anki {
         state_ = EXECUTING_PATH_TO_DOCK_POSE;
       }
       else if(execPlanResult != RESULT_OK) {
-        PRINT_INFO("ExecutePathToPose failed. Aborting.\n");
-        StartMode(BM_None);
+        PRINT_INFO("ExecutePathToPose failed. Transitioning to problemState.\n");
+        robot_->DriveWheels(-20.f, -20.f);
+        
+        // backup this distance....
+        desiredBackupDistance_ = 20.f;
+        // ... from this pose
+        goalPose_ = robot_->GetPose();
+        
+        state_ = BACKING_UP;
+        nextState_ = BEGIN_EXPLORING; // when done backing up
+        
         return;
       }
       
@@ -609,7 +643,13 @@ namespace Anki {
                   // the block to pick up.
                   // TODO: This may not be necessary once we use the planner to explore
                   robot_->DriveWheels(-20.f, -20.f);
-                  state_ = BACK_AWAY_FROM_DICE;
+                  
+                  goalPose_ = dockBlock_->GetPose();
+                  desiredBackupDistance_ = (0.5f*dockBlock_->GetSize().Length() +
+                                            ROBOT_BOUNDING_RADIUS + 20.f);
+                  
+                  state_ = BACKING_UP;
+                  nextState_ = BEGIN_EXPLORING; // when done backing up
                 }
                 
               } else {
@@ -660,6 +700,21 @@ namespace Anki {
           break;
         } // case WAITING_FOR_FIRST_DICE
           
+        case BACKING_UP:
+        {
+          const f32 currentDistance = (robot_->GetPose().get_translation() -
+                                       goalPose_.get_translation()).Length();
+          
+          if(currentDistance >= desiredBackupDistance_ )
+          {
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+            robot_->DriveWheels(0.f, 0.f);
+            state_ = nextState_;
+          }
+          
+          break;
+        } // case BACKING_UP
+         /*
         case BACK_AWAY_FROM_DICE:
         {
           CORETECH_ASSERT(dockBlock_ != nullptr);
@@ -679,7 +734,7 @@ namespace Anki {
           
           break;
         } // case BACK_AWAY_FROM_DICE
-          
+          */
         case BEGIN_EXPLORING:
         {
           // For now, "exploration" is just spinning in place to

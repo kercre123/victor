@@ -66,7 +66,7 @@ namespace Anki {
         // June2014DiceDemo
         WAITING_TO_SEE_DICE,
         WAITING_FOR_DICE_TO_DISAPPEAR,
-        BACK_AWAY_FROM_DICE,
+        BACKING_UP,
         BEGIN_EXPLORING,
         EXPLORING
         
@@ -132,6 +132,7 @@ namespace Anki {
 
       DockAction_t dockAction_;
       
+      f32 desiredBackupDistance_;
       
       /////// June2014DiceDemo vars ///////
       const TimeStamp_t TimeBetweenDice_ms = 2000; // 2 sec
