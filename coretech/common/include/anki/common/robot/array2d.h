@@ -153,6 +153,22 @@ namespace Anki
       return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
     }
 
+    template<typename Type> const Type& Array<Type>::Element(const s32 elementIndex) const
+    {
+      const s32 index1 = elementIndex % size[1];
+      const s32 index0 = (elementIndex - index1) / size[1];
+
+      return *Pointer(index0, index1);
+    }
+
+    template<typename Type> Type& Array<Type>::Element(const s32 elementIndex)
+    {
+      const s32 index1 = elementIndex % size[1];
+      const s32 index0 = (elementIndex - index1) / size[1];
+
+      return *Pointer(index0, index1);
+    }
+
     template<typename Type> ArraySlice<Type> Array<Type>::operator() ()
     {
       ArraySlice<Type> slice(*this);
@@ -536,6 +552,11 @@ namespace Anki
     template<typename Type> s32 Array<Type>::get_stride() const
     {
       return stride;
+    }
+
+    template<typename Type> s32 Array<Type>::get_numElements() const
+    {
+      return size[0] * size[1];
     }
 
     template<typename Type> void* Array<Type>::get_buffer()

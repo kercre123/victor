@@ -45,7 +45,11 @@ namespace Anki {
     template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray, MemoryStack &memory);
 
     // This works with cell arrays if every element is the same type
-    template<typename Type> Array<Array<Type> > mxCellArrayToArray(const mxArray * const matlabArray, MemoryStack &memory);
+    template<typename Type> Array<Array<Type> > mxCellArrayToStringArray(const mxArray * const matlabArray, MemoryStack &memory);
+
+    // Convert a cell array of strings to a cell array of const pointers
+    // The strings are allocated from "MemoryStack &memory", so do not need to be freed
+    Array<char *> mxCellArrayToStringArray(const mxArray * const matlabArray, MemoryStack &memory);
 
     // Convert an Anki::Array to a Matlab mxArray. Allocate and return the mxArray
     template<typename Type> mxArray* arrayToMxArray(const Array<Type> &array);
@@ -160,9 +164,6 @@ namespace Anki {
 
     template<typename Type> Array<Array<Type> > mxCellArrayToArray(const mxArray * const matlabArray, MemoryStack &memory)
     {
-      const Type * const matlabMatrixStartPointer = reinterpret_cast<const Type *>( mxGetData(matlabArray) );
-
-      //const mwSize numMatlabElements = mxGetNumberOfElements(matlabArray);
       const mwSize numDimensions = mxGetNumberOfDimensions(matlabArray);
       const mwSize *dimensions = mxGetDimensions(matlabArray);
 
@@ -207,6 +208,66 @@ namespace Anki {
           const mxArray * curMatlabArray = mxGetCell(matlabArray, cellIndex);
 
           pArray[x] = mxArrayToArray<Type>(curMatlabArray, memory);
+        }
+      }
+
+      return array;
+    }
+
+    inline Array<char *> mxCellArrayToStringArray(const mxArray * const matlabArray, MemoryStack &memory)
+    {
+      const mwSize numDimensions = mxGetNumberOfDimensions(matlabArray);
+      const mwSize *dimensions = mxGetDimensions(matlabArray);
+
+      if(numDimensions != 2) {
+        AnkiError("mxCellArrayToStringArray", "mxCellArrayToStringArray - Matlab array must be 2D\n");
+        return Array<char *>();
+      }
+
+      if(!mxIsCell(matlabArray)) {
+        AnkiError("mxCellArrayToStringArray", "Input must be a cell array");
+        return Array<char *>();
+      }
+
+      mxClassID matlabClassId;
+
+      const mxArray * firstElement = mxGetCell(matlabArray, 1);
+      matlabClassId = mxGetClassID(firstElement);
+
+      if(matlabClassId != mxCHAR_CLASS) {
+        AnkiError("mxCellArrayToStringArray", "mxCellArrayToStringArray - Matlab classId does not match with template %d!=%d\n", matlabClassId, mxCHAR_CLASS);
+        return Array<char *>();
+      }
+
+      Array<char *> array(static_cast<s32>(dimensions[0]), static_cast<s32>(dimensions[1]), memory);
+
+      if(!array.IsValid()) {
+        AnkiError("mxCellArrayToStringArray", "mxCellArrayToStringArray - Could not allocate array\n");
+        return Array<char *>();
+      }
+
+      // Allocate the memory for inner objects
+      for(mwSize y=0; y<dimensions[0]; ++y) {
+        char ** pArray = array.Pointer(static_cast<s32>(y), 0);
+
+        for(mwSize x=0; x<dimensions[1]; ++x) {
+          mwIndex subs[2] = {y, x};
+
+          const mwIndex cellIndex = mxCalcSingleSubscript(matlabArray, 2, &subs[0]);
+
+          const mxArray * curMatlabArray = mxGetCell(matlabArray, cellIndex);
+
+          char * curMatlabString = mxArrayToString(curMatlabArray);
+
+          const s32 stringLength = strlen(curMatlabString) + 1;
+
+          char * curCString = reinterpret_cast<char*>(memory.Allocate(stringLength));
+
+          strncpy(curCString, curMatlabString, stringLength);
+
+          pArray[x] = curCString;
+
+          mxFree(curMatlabString);
         }
       }
 
