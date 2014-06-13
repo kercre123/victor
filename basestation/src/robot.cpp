@@ -342,6 +342,12 @@ namespace Anki {
       
     }
     
+    void Robot::AbortCurrentPath()
+    {
+      ClearPath();
+      SetState(IDLE);
+    }
+    
     // =========== Motor commands ============
     
     // Sends message to move lift at specified speed

@@ -100,6 +100,8 @@ namespace Anki {
       Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
 
       IPathPlanner* GetPathPlanner() { return _pathPlanner; }
+
+      void AbortCurrentPath();
       
       // True if wheel speeds are non-zero in most recent RobotState message
       bool IsMoving() const {return _isMoving;}

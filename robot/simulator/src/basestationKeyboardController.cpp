@@ -113,7 +113,7 @@ namespace Anki {
         //Why do some of those not match ASCII codes?
         //Numbers, spacebar etc. work, letters are different, why?
         //a, z, s, x, Space
-        //const s32 CKEY_LIFT_UPUP  = 81;  // q
+        const s32 CKEY_CANCEL_PATH = 81;  // q
         const s32 CKEY_LIFT_UP     = 65;  // a
         const s32 CKEY_LIFT_DOWN   = 90;  // z
         //const s32 CKEY_HEAD_UPUP  = 87;  // w
@@ -352,6 +352,11 @@ namespace Anki {
             case CKEY_START_DICE_DEMO:
             {
               behaviorMgr_->StartMode(BM_June2014DiceDemo);
+              break;
+            }
+            case CKEY_CANCEL_PATH:
+            {
+              robot_->AbortCurrentPath();
               break;
             }
             case CKEY_QUESTION_MARK:
