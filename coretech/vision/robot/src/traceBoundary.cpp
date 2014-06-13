@@ -69,9 +69,9 @@ namespace Anki
         const s16 y = components[i].y;
 
         boundingBox.left = MIN(boundingBox.left, xStart);
-        boundingBox.right = MAX(boundingBox.right, xEnd);
+        boundingBox.right = MAX(boundingBox.right, xEnd+1); // +1, because the coorindate we want is the crack after the right pixel
         boundingBox.top = MIN(boundingBox.top, y);
-        boundingBox.bottom = MAX(boundingBox.bottom, y);
+        boundingBox.bottom = MAX(boundingBox.bottom, y+1); // +1, because the coorindate we want is the crack after the bottom pixel
       }
 
       if(boundingBox.left == s16_MAX || boundingBox.right == s16_MIN || boundingBox.top == s16_MAX || boundingBox.bottom == s16_MIN) {

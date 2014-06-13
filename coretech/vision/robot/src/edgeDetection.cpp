@@ -121,10 +121,6 @@ namespace Anki
 
       const s32 imageStride = image.get_stride();
 
-      //const Rectangle<u32> imageRegionOfInterestU32(imageRegionOfInterest.left, imageRegionOfInterest.right, imageRegionOfInterest.top, imageRegionOfInterest.bottom);
-
-      //const u32 minComponentWidthU32 = minComponentWidth;
-
       s32 xDecreasingSize = edgeLists.xDecreasing.get_size();
       s32 xIncreasingSize = edgeLists.xIncreasing.get_size();
       s32 xMaxSizeM1 = edgeLists.xDecreasing.get_maximumSize() - 1;
@@ -233,7 +229,7 @@ namespace Anki
 
           x++;
         } // if(onWhite) ... else
-      } // for(u32 y=0; y<imageRegionOfInterest.bottom; y++)
+      } // for(s32 y=imageRegionOfInterest.top; y<imageRegionOfInterest.bottom; y+=everyNLines)
 
       edgeLists.xDecreasing.set_size(xDecreasingSize);
       edgeLists.xIncreasing.set_size(xIncreasingSize);
@@ -246,10 +242,6 @@ namespace Anki
       //
 
       const s32 imageStride = image.get_stride();
-
-      //const Rectangle<u32> imageRegionOfInterestU32(imageRegionOfInterest.left, imageRegionOfInterest.right, imageRegionOfInterest.top, imageRegionOfInterest.bottom);
-
-      //const u32 minComponentWidthU32 = minComponentWidth;
 
       s32 yDecreasingSize = edgeLists.yDecreasing.get_size();
       s32 yIncreasingSize = edgeLists.yIncreasing.get_size();
@@ -354,7 +346,7 @@ namespace Anki
           y++;
           pImage += imageStride;
         } // while(y < imageRegionOfInterest.bottom)
-      } // for(u32 x=0; x<imageRegionOfInterest.right; x++)
+      } // for(s32 x=imageRegionOfInterest.left; x<imageRegionOfInterest.right; x+=everyNLines)
 
       edgeLists.yDecreasing.set_size(yDecreasingSize);
       edgeLists.yIncreasing.set_size(yIncreasingSize);
@@ -424,7 +416,7 @@ namespace Anki
 
           x++;
         } // while(x < xEnd)
-      } // for(s32 y=imageRegionOfInterest.top; y<imageRegionOfInterest.bottom; y+=everyNLines)
+      } // for(s32 y=imageRegionOfInterest.top; y<(imageRegionOfInterest.bottom-1); y+=everyNLines)
 
       edgeLists.xDecreasing.set_size(xDecreasingSize);
       edgeLists.xIncreasing.set_size(xIncreasingSize);
@@ -496,7 +488,7 @@ namespace Anki
           y++;
           pImage += imageStride;
         } // while(y < yEnd)
-      } // for(s32 x=imageRegionOfInterest.left; x<imageRegionOfInterest.right; x+=everyNLines)
+      } // for(s32 x=xStart; x<xEnd; x+=everyNLines)
 
       edgeLists.yDecreasing.set_size(yDecreasingSize);
       edgeLists.yIncreasing.set_size(yIncreasingSize);

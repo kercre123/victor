@@ -241,7 +241,7 @@ namespace Anki {
         // Sensor updates
         //////////////////////////////////////////////////////////////
 #if !defined(THIS_IS_PETES_BOARD)
-        //IMUFilter::Update();
+        IMUFilter::Update();
 #endif        
         
         

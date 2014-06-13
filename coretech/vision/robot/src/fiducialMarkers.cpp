@@ -26,6 +26,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #define OUTPUT_FAILED_MARKER_STEPS
 
+#if defined(THIS_IS_PETES_BOARD)
+#undef OUTPUT_FAILED_MARKER_STEPS
+#endif
+
 namespace Anki
 {
   namespace Embedded
