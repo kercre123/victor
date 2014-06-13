@@ -656,15 +656,20 @@ namespace Anki {
       return _poseHistory.IsValidPoseKey(key);
     }
     
-    void Robot::UpdateCurrPoseFromHistory()
+    bool Robot::UpdateCurrPoseFromHistory()
     {
+      bool poseUpdated = false;
+      
       TimeStamp_t t;
       RobotPoseStamp p;
       if (_poseHistory.ComputePoseAt(_poseHistory.GetNewestTimeStamp(), t, p) == RESULT_OK) {
         if (p.GetFrameId() == GetPoseFrameID()) {
           _pose = p.GetPose();
+          poseUpdated = true;
         }
       }
+      
+      return poseUpdated;
     }
     
     

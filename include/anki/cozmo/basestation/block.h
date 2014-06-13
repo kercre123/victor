@@ -102,6 +102,9 @@ namespace Anki {
       void SetColor(const unsigned char red, const unsigned char green, const unsigned char blue);
       void SetName(const std::string name);
       
+      bool GetIsBeingCarried() const;
+      void SetIsBeingCarried(const bool tf);
+      
       void AddFace(const FaceName whichFace,
                    const Vision::Marker::Code& code,
                    const float markerSize_mm);
@@ -191,6 +194,7 @@ namespace Anki {
       Color       _color;
       Point3f     _size;
       std::string _name;
+      bool        _isBeingCarried;
       
       //std::vector<Point3f> blockCorners_;
       
@@ -295,6 +299,14 @@ namespace Anki {
     inline void Block::SetName(const std::string name)
     {
       _name = name;
+    }
+    
+    inline bool Block::GetIsBeingCarried() const {
+      return _isBeingCarried;
+    }
+    
+    inline void Block::SetIsBeingCarried(const bool tf) {
+      _isBeingCarried = tf;
     }
     
     /*

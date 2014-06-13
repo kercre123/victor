@@ -79,6 +79,7 @@ namespace Anki
       const ObjectsMap_t& GetAllExistingBlocks() const {return existingBlocks_;}
       const Vision::ObservableObjectLibrary& GetMatLibrary() const;
       
+      // TODO: this only looks through blocks, so shouldn't it be GetBlockByID()?
       const Vision::ObservableObject* GetObservableObjectByID(const ObjectID_t objectID) const;
       
       // Finds all blocks in the world whose centers are within the specified
@@ -121,9 +122,9 @@ namespace Anki
       
       //BlockWorld(); // protected constructor for singleton
 
-      bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
+      bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
-      size_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
+      size_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                   const ObjectsMap_t& objectsExisting,
@@ -132,7 +133,8 @@ namespace Anki
       
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
-                               ObjectsMap_t& objectsExisting);
+                               ObjectsMap_t& objectsExisting,
+                               const TimeStamp_t atTimestamp);
       
       // Remove all posekey-marker pairs from the map if marker is marked used
       void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);

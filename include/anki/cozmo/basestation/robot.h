@@ -188,7 +188,8 @@ namespace Anki {
       
       // Updates the current pose to the best estimate based on
       // historical poses including vision-based poses.
-      void UpdateCurrPoseFromHistory();
+      // Returns true if the pose is successfully updated, false otherwise.
+      bool UpdateCurrPoseFromHistory();
       
     protected:
       // The robot's identifier
