@@ -196,7 +196,7 @@ int main(int argc, char **argv)
           VizManager::getInstance()->DrawCuboid(block->GetID(),
                                                 //block->GetType(),
                                                 block->GetSize(),
-                                                block->GetPose(),
+                                                block->GetPose().getWithRespectTo(Pose3d::World),
                                                 color);
           
           // Draw blocks' projected quads on the mat

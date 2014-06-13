@@ -140,6 +140,7 @@ namespace Anki {
     , _color(BlockInfoLUT_[type].color)
     , _size(BlockInfoLUT_[type].size)
     , _name(BlockInfoLUT_[type].name)
+    , _isBeingCarried(false)
     {
       
       //++Block::numBlocks;

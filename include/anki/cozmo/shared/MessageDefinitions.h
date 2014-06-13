@@ -205,10 +205,16 @@ ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
 ADD_MESSAGE_MEMBER(u8,  isApproximate)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
 
-// BlockPickUp
-START_TIMESTAMPED_MESSAGE_DEFINITION(BlockPickUp, 1)
+// BlockPickedUp
+START_TIMESTAMPED_MESSAGE_DEFINITION(BlockPickedUp, 1)
 ADD_MESSAGE_MEMBER(bool, didSucceed) // true if robot thinks it picked up a block (from low or high position)
-END_MESSAGE_DEFINITION(BlockPickUp)
+END_MESSAGE_DEFINITION(BlockPickedUp)
+
+// BlockPlaced
+START_TIMESTAMPED_MESSAGE_DEFINITION(BlockPlaced, 1)
+ADD_MESSAGE_MEMBER(bool, didSucceed) // true if robot thinks it placed up a block (from low or high position)
+END_MESSAGE_DEFINITION(BlockPlaced)
+
 
 // AbsLocalizationUpdate
 START_TIMESTAMPED_MESSAGE_DEFINITION(AbsLocalizationUpdate, 1)

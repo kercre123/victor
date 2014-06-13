@@ -67,6 +67,7 @@ namespace Anki {
       
       const Pose3d&          GetNeckPose()    const {return _neckPose;}
       const Pose3d&          GetHeadCamPose() const {return _headCamPose;}
+      const Pose3d&          GetLiftPose()    const {return _liftPose;}  // At current lift position!
       const State            GetState()       const;
       
       void SetState(const State newState);
@@ -98,10 +99,10 @@ namespace Anki {
       
       void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
       s8   GetCurrPathSegment() {return _currPathSegment;}
-      bool IsTraversingPath() {return _currPathSegment >= 0;}
+      bool IsTraversingPath() {return (_currPathSegment >= 0) || _isWaitingForReplan;}
 
-      void SetCarryingBlock(bool t) {_isCarryingBlock = t;}
-      bool IsCarryingBlock() {return _isCarryingBlock;}
+      void SetCarryingBlock(Block* carryBlock) {_carryingBlock = carryBlock;}
+      bool IsCarryingBlock() {return _carryingBlock != nullptr;}
 
       void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
       bool IsPickingOrPlacing() {return _isPickingOrPlacing;}
@@ -129,26 +130,35 @@ namespace Anki {
       
       Result StopAllMotors();
       
-      Result ExecuteDockingSequence(const Block* blockToDockWith);
+      Result ExecuteDockingSequence(Block* blockToDockWith);
       
-      // Sends a message to the robot to dock with the specified block
-      // that it should currently be seeing.
-      Result DockWithBlock(const u8 markerType,
-                           const f32 markerWidth_mm,
+      // Sends a message to the robot to dock with the specified marker of the
+      // specified block that it should currently be seeing.
+      Result DockWithBlock(Block* block,
+                           const Vision::KnownMarker* marker,
                            const DockAction_t dockAction);
       
-      // Sends a message to the robot to dock with the specified block
-      // that it should currently be seeing. If pixel_radius == u8_MAX,
+      // Sends a message to the robot to dock with the specified marker of the
+      // specified block, which it should currently be seeing. If pixel_radius == u8_MAX,
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
-      Result DockWithBlock(const u8 markerType,
-                           const f32 markerWidth_mm,
+      Result DockWithBlock(Block* block,
+                           const Vision::KnownMarker* marker,
                            const DockAction_t dockAction,
                            const u16 image_pixel_x,
                            const u16 image_pixel_y,
                            const u8 pixel_radius);
 
+      // Transitions the block that robot was docking with to the one that it
+      // is carrying, and puts it in the robot's pose chain, attached to the
+      // lift. Returns RESULT_FAIL if the robot wasn't already docking with
+      // a block.
+      Result PickUpDockBlock();
+      
+      // TODO: Implement a method for placing the block we were carrying
+      Result PlaceCarriedBlock(const TimeStamp_t atTime);
+      
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
       
@@ -185,7 +195,8 @@ namespace Anki {
                                      const PoseFrameID_t frameID,
                                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                      const f32 pose_angle,
-                                     const f32 head_angle);
+                                     const f32 head_angle,
+                                     const f32 lift_angle);
       
       Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                         const RobotPoseStamp& p);
@@ -202,7 +213,8 @@ namespace Anki {
       
       // Updates the current pose to the best estimate based on
       // historical poses including vision-based poses.
-      void UpdateCurrPoseFromHistory();
+      // Returns true if the pose is successfully updated, false otherwise.
+      bool UpdateCurrPoseFromHistory();
       
     protected:
       // The robot's identifier
@@ -218,6 +230,7 @@ namespace Anki {
       IPathPlanner*    _pathPlanner;
       Planning::Path   _path;
       s8               _currPathSegment;
+      bool             _isWaitingForReplan;
       Pose3d           _goalPose;
       Radians          _goalHeadAngle;
       
@@ -230,6 +243,7 @@ namespace Anki {
       const Pose3d _neckPose; // joint around which head rotates
       const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint
       const Pose3d _liftBasePose; // around which the base rotates/lifts
+      Pose3d _liftPose;     // current, w.r.t. liftBasePose
 
       f32 _currentHeadAngle;
       f32 _currentLiftAngle;
@@ -242,12 +256,16 @@ namespace Anki {
       // State
       bool _isCarryingBlock;
       bool _isPickingOrPlacing;
+      Block* _carryingBlock;
       bool _isMoving;
       State _state, _nextState;
       
+      // Leaves input liftPose's parent alone and computes its position w.r.t.
+      // liftBasePose, given the angle
+      static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
       
       // Docking
-      const Block* _dockBlock;
+      Block* _dockBlock;
       const Vision::KnownMarker* _dockMarker;
       DockAction_t _dockAction;
       
@@ -287,16 +305,18 @@ namespace Anki {
       
       // Sends a message to the robot to dock with the specified block
       // that it should currently be seeing.
-      Result SendDockWithBlock(const u8 markerType,
+      /*
+      Result SendDockWithBlock(const Vision::Marker::Code& markerType,
                                const f32 markerWidth_mm,
                                const DockAction_t dockAction) const;
+      */
       
       // Sends a message to the robot to dock with the specified block
       // that it should currently be seeing. If pixel_radius == u8_MAX,
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
-      Result SendDockWithBlock(const u8 markerType,
+      Result SendDockWithBlock(const Vision::Marker::Code& markerType,
                                const f32 markerWidth_mm,
                                const DockAction_t dockAction,
                                const u16 image_pixel_x,

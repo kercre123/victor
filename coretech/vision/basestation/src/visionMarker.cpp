@@ -30,7 +30,7 @@ namespace Anki {
     
     
     KnownMarker::KnownMarker(const Code& withCode, const Pose3d& atPose, const f32 size_mm)
-    : Marker(withCode), size_(size_mm), wasObserved_(false)
+    : Marker(withCode), size_(size_mm), lastObservedTime_(0)
     {
       SetPose(atPose);
     }

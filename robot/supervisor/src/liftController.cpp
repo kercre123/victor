@@ -59,6 +59,7 @@ namespace Anki {
 #ifdef SIMULATOR
         // For disengaging gripper once the lift has reached its final position
         bool disengageGripperAtDest_ = false;
+        f32  disengageAtAngle_ = 0.f;
 #endif
         
         // Open loop gain
@@ -124,11 +125,11 @@ namespace Anki {
       // Returns the angle between the shoulder joint and the wrist joint.
       f32 Height2Rad(f32 height_mm) {
         assert(height_mm >= LIFT_HEIGHT_LOWDOCK && height_mm <= LIFT_HEIGHT_CARRY);
-        return asinf((height_mm - LIFT_JOINT_HEIGHT - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
+        return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
       }
       
       f32 Rad2Height(f32 angle) {
-        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_JOINT_HEIGHT + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
+        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
       }
       
       
@@ -365,7 +366,32 @@ namespace Anki {
         if (desiredHeight_ == newDesiredHeight && !inPosition_) {
           return;
         }
-        
+
+#ifdef SIMULATOR
+        if(!HAL::IsGripperEngaged()) {
+          // If the new desired height will make the lift move upward, turn on
+          // the gripper's locking mechanism so that we might pick up a block as
+          // it goes up
+          if(newDesiredHeight > desiredHeight_) {
+            HAL::EngageGripper();
+          }
+        }
+        else {
+          // If we're moving the lift down and the end goal is at low-place or
+          // high-place height, disengage the gripper when we get there
+          if(newDesiredHeight < desiredHeight_ &&
+             (newDesiredHeight == LIFT_HEIGHT_LOWDOCK ||
+              newDesiredHeight == LIFT_HEIGHT_HIGHDOCK))
+          {
+            disengageGripperAtDest_ = true;
+            disengageAtAngle_ = Height2Rad(newDesiredHeight + 3.f*LIFT_FINGER_HEIGHT);
+          }
+          else {
+            disengageGripperAtDest_ = false;
+          }
+        }
+#endif
+           
         desiredHeight_ = newDesiredHeight;
         
         // Convert desired height into the necessary angle:
@@ -373,6 +399,7 @@ namespace Anki {
         PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm)\n", desiredHeight_, GetHeightMM());
 #endif
         
+           /*
 #ifdef SIMULATOR
         // Turning gripper on and off for simulator
         disengageGripperAtDest_ = false;
@@ -390,6 +417,7 @@ namespace Anki {
           }
         }
 #endif
+           */
         
         desiredAngle_ = Height2Rad(desiredHeight_);
         angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
@@ -448,6 +476,13 @@ namespace Anki {
           return RESULT_OK;
         }
         
+#if SIMULATOR
+        if (disengageGripperAtDest_ && currentAngle_.ToFloat() < disengageAtAngle_) {
+          HAL::DisengageGripper();
+          disengageGripperAtDest_ = false;
+        }
+#endif
+        
         if(not inPosition_) {
           
           if (!limitingExpected_) {
@@ -456,6 +491,8 @@ namespace Anki {
             
             // Compute position error
             angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
+            
+
             
             // Open loop value to drive at desired speed
             power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
@@ -513,11 +550,14 @@ namespace Anki {
              || ABS(currentAngle_ - desiredAngle_) < ANGLE_TOLERANCE) {
               power_ = 0.f;
               inPosition_ = true;
+            /*
 #ifdef SIMULATOR
               if (disengageGripperAtDest_) {
                 HAL::DisengageGripper();
+                disengageGripperAtDest_ = false;
               }
 #endif
+             */
               #if(DEBUG_LIFT_CONTROLLER)
               PRINT(" LIFT HEIGHT REACHED (%f mm)\n", GetHeightMM());
               #endif

@@ -73,7 +73,7 @@ namespace Anki {
       
       virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) override;
 
-      virtual bool ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose);
+      virtual bool ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) override;
 
     protected:
       LatticePlannerImpl* impl_;

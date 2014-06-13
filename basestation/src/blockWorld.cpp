@@ -196,7 +196,8 @@ namespace Anki
     
     
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
-                                         ObjectsMap_t& objectsExisting)
+                                         ObjectsMap_t& objectsExisting,
+                                         const TimeStamp_t atTimestamp)
     {
       for(auto objSeen : objectsSeen) {
         
@@ -210,7 +211,6 @@ namespace Anki
           // no existing blocks overlapped with the block we saw, so add it
           // as a new block
           objSeen->SetID(++globalIDCounter);
-          objSeen->SetWhetherObserved(true);
           objectsExisting[objSeen->GetType()][objSeen->GetID()] = objSeen;
           
           fprintf(stdout, "Adding new block with type=%hu and ID=%hu at (%.1f, %.1f, %.1f)\n",
@@ -240,16 +240,9 @@ namespace Anki
           // TODO: better way of merging existing/observed block pose
           overlappingObjects[0]->SetPose( objSeen->GetPose() );
           
-          // Mark the existing object as seen
-          overlappingObjects[0]->SetWhetherObserved(true);
-          
-          // Make sure any markers observed on the seen block are also marked
-          // as seen in the existing block
-          std::vector<const Vision::KnownMarker*> obsMarkers;
-          objSeen->GetObservedMarkers(obsMarkers);
-          for(auto obsMarker : obsMarkers) {
-            overlappingObjects[0]->SetMarkersAsObserved(obsMarker->GetCode());
-          }
+          // Update lastObserved times of this block
+          overlappingObjects[0]->SetLastObservedTime(objSeen->GetLastObservedTime());
+          overlappingObjects[0]->UpdateMarkerObservationTimes(*objSeen);
           
           // Project this existing block into each camera, using its new pose
           AddToOcclusionMaps(overlappingObjects[0], robotMgr_);
@@ -275,7 +268,7 @@ namespace Anki
             objectIter != objectIdMap.end(); ++objectIter)
         {
           Vision::ObservableObject* object = objectIter->second;;
-          if(object->GetWhetherObserved() == false) {
+          if(object->GetLastObservedTime() < atTimestamp) {
             //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
             unobservedObjects.emplace_back(objectTypeIter, objectIter);
           } // if object was not observed
@@ -374,7 +367,7 @@ namespace Anki
     }
     
     
-    bool BlockWorld::UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp)
+    bool BlockWorld::UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp, const TimeStamp_t atTimestamp)
     {
       bool wasPoseUpdated = false;
       
@@ -403,7 +396,7 @@ namespace Anki
         // them, so we can use them to delete objects that should have been
         // seen between that marker and the robot
         std::vector<const Vision::KnownMarker *> observedMarkers;
-        matsSeen[0]->GetObservedMarkers(observedMarkers);
+        matsSeen[0]->GetObservedMarkers(observedMarkers, atTimestamp);
         for(auto obsMarker : observedMarkers) {
           robot->GetCamera().AddOccluder(*obsMarker);
         }
@@ -475,16 +468,21 @@ namespace Anki
         robot->IncrementPoseFrameID();
         
         // Add the new vision-based pose to the robot's history.
-        RobotPoseStamp p(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle());
-        robot->AddVisionOnlyPoseToHistory(matsSeen[0]->GetLastObservedTime(), p);
+        RobotPoseStamp p(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
+        if(robot->AddVisionOnlyPoseToHistory(matsSeen[0]->GetLastObservedTime(), p) != RESULT_OK) {
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.FailedAddingVisionOnlyPoseToHistory", "");
+        }
         
         // Update the computed pose as well so that subsequent block pose updates
         // use obsMarkers whose camera's parent pose is correct
-        posePtr->SetPose(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle());
+        posePtr->SetPose(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
 
         // Compute the new "current" pose from history which uses the
         // past vision-based "ground truth" pose we just computed.
-        robot->UpdateCurrPoseFromHistory();
+        if(!robot->UpdateCurrPoseFromHistory()) {
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.FailedUpdateCurrPoseFromHistory", "");
+          return false;
+        }
         wasPoseUpdated = true;
         
         PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
@@ -514,7 +512,7 @@ namespace Anki
     } // UpdateRobotPose()
     
     
-    size_t BlockWorld::UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp)
+    size_t BlockWorld::UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp, const TimeStamp_t atTimestamp)
     {
       didBlocksChange_ = false;
       
@@ -540,7 +538,7 @@ namespace Anki
       // NOTE: we still want to run this even if we didn't see markers because
       // we want to possibly delete any _unobserved_ objects (e.g. ones behind
       // whom we saw mat markers)
-      AddAndUpdateObjects(blocksSeen, existingBlocks_);
+      AddAndUpdateObjects(blocksSeen, existingBlocks_, atTimestamp);
       
       return blocksSeen.size();
       
@@ -551,24 +549,13 @@ namespace Anki
       CORETECH_ASSERT(isInitialized_);
       CORETECH_ASSERT(robotMgr_ != NULL);
       
-      // Let the robot manager do whatever it's gotta do to update the
-      // robots in the world. Most importantly for us here, that includes
-      // looping over the robots' ObservedMarker messages and queueing them
-      // up for BlockWorld to process.
-      robotMgr_->UpdateAllRobots();
-      
       numBlocksObserved = 0;
       
       // New timestep, new set of occluders.  Get rid of anything registered as
       // an occluder with any robot's camera
       ClearAllOcclusionMaps(robotMgr_);
-      
-      // First, mark all existing blocks as unseen
-      for(auto & objectTypes : existingBlocks_) {
-        for(auto & objectID : objectTypes.second) {
-          objectID.second->SetWhetherObserved(false);
-        }
-      }
+
+      static TimeStamp_t lastObsMarkerTime = 0;
       
       // Now we're going to process all the observed messages, grouped by
       // timestamp
@@ -577,7 +564,10 @@ namespace Anki
           obsMarkerListMapIter != obsMarkers_.end();
           ++obsMarkerListMapIter)
       {
-        PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp = obsMarkerListMapIter->second;
+        PoseKeyObsMarkerMap_t& currentObsMarkers = obsMarkerListMapIter->second;
+        const TimeStamp_t atTimestamp = obsMarkerListMapIter->first;
+        
+        lastObsMarkerTime = std::max(lastObsMarkerTime, atTimestamp);
         
         //
         // Localize robots using mat observations
@@ -591,11 +581,11 @@ namespace Anki
           // Remove observed markers whose historical poses have become invalid.
           // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
           // Increasing history time window would fix this, but it's not really a solution.
-          for(auto poseKeyMarkerPair = obsMarkersAtTimestamp.begin(); poseKeyMarkerPair != obsMarkersAtTimestamp.end();) {
+          for(auto poseKeyMarkerPair = currentObsMarkers.begin(); poseKeyMarkerPair != currentObsMarkers.end();) {
             if ((poseKeyMarkerPair->second.GetSeenBy().GetId() == robot->GetCamera().GetId()) &&
                 !robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
               PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d\n", poseKeyMarkerPair->first);
-              poseKeyMarkerPair = obsMarkersAtTimestamp.erase(poseKeyMarkerPair++);
+              poseKeyMarkerPair = currentObsMarkers.erase(poseKeyMarkerPair++);
             } else {
               ++poseKeyMarkerPair;
             }
@@ -603,7 +593,7 @@ namespace Anki
         
           
           // Note that this removes markers from the list that it uses
-          UpdateRobotPose(robot, obsMarkersAtTimestamp);
+          UpdateRobotPose(robot, currentObsMarkers, atTimestamp);
         
         } // FOR each robotID
       
@@ -612,18 +602,20 @@ namespace Anki
         // Find any observed blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numBlocksObserved += UpdateBlockPoses(obsMarkersAtTimestamp);
+        numBlocksObserved += UpdateBlockPoses(currentObsMarkers, atTimestamp);
      
         // TODO: Deal with unknown markers?
         
         
         // Keep track of how many markers went unused by either robot or block
         // pose updating processes above
-        numUnusedMarkers += obsMarkersAtTimestamp.size();
+        numUnusedMarkers += currentObsMarkers.size();
         
       } // for element in obsMarkers_
       
-      // Check for unobserved blocks that overlap with any robot's position
+      //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks\n", numBlocksObserved);
+      
+      // Check for unobserved, uncarried blocks that overlap with any robot's position
       for(auto & blocksOfType : existingBlocks_) {
         
         for(auto blockIter = blocksOfType.second.begin();
@@ -633,28 +625,57 @@ namespace Anki
           CORETECH_THROW_IF(block == nullptr);
           
           bool didErase = false;
-          if(!block->GetWhetherObserved()) {
+          if(block->GetLastObservedTime() < lastObsMarkerTime && !block->GetIsBeingCarried())
+          {
+            // Check block's bounding box in world coorindates (since a block
+            // could be relative to robot if being carried) to see if it
+            // intersects with any robot bounding box.  Also check to see
+            // block and the robot are at overlapping heights.
+            const Pose3d blockPoseWrtWorld = block->GetPose().getWithRespectTo(Pose3d::World);
+            const Quad2f blockBBox = block->GetBoundingQuadXY(blockPoseWrtWorld);
+            const f32    blockHeight = blockPoseWrtWorld.get_translation().z();
+            const f32    blockSize   = 0.5f*block->GetSize().Length();
+            const f32    blockTop    = blockHeight + blockSize;
+            const f32    blockBottom = blockHeight - blockSize;
             
-            for(auto robotID : robotMgr_->GetRobotIDList()) {
-              
+            for(auto robotID : robotMgr_->GetRobotIDList())
+            {
               Robot* robot = robotMgr_->GetRobotByID(robotID);
               CORETECH_ASSERT(robot != NULL);
 
-              if(block->GetBoundingQuadXY().Intersects(robot->GetBoundingQuadXY())) {
-                CoreTechPrint("Removing block %d, which intersects robot %d's bounding quad.\n",
-                              block->GetID(), robot->GetID());
+              // Don't worry about collision while picking or placing since we
+              // are trying to get close to blocks in these modes.
+              // TODO: specify whether we are picking/placing _this_ block
+              if(!robot->IsPickingOrPlacing())
+              {
+                const f32 robotBottom = robot->GetPose().get_translation().z();
+                const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
                 
-                // Erase the vizualized block and its projected quad
-                VizManager::getInstance()->EraseCuboid(block->GetID());
-                VizManager::getInstance()->EraseQuad(block->GetID());
+                const bool topIntersects    = (((blockTop >= robotBottom) && (blockTop <= robotTop)) ||
+                                               ((robotTop >= blockBottom) && (robotTop <= blockTop)));
                 
-                // Erase the block (with a postfix increment of the iterator)
-                blocksOfType.second.erase(blockIter++);
-                didErase = true;
-                didBlocksChange_ = true;
+                const bool bottomIntersects = (((blockBottom >= robotBottom) && (blockBottom <= robotTop)) ||
+                                               ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
                 
-                break; // no need to check other robots, block already gone
-              } // if quads intersect
+                const bool bboxIntersects   = blockBBox.Intersects(robot->GetBoundingQuadXY());
+                
+                if( (topIntersects || bottomIntersects) && bboxIntersects )
+                {
+                  CoreTechPrint("Removing block %d, which intersects robot %d's bounding quad.\n",
+                                block->GetID(), robot->GetID());
+                  
+                  // Erase the vizualized block and its projected quad
+                  VizManager::getInstance()->EraseCuboid(block->GetID());
+                  VizManager::getInstance()->EraseQuad(block->GetID());
+                  
+                  // Erase the block (with a postfix increment of the iterator)
+                  blocksOfType.second.erase(blockIter++);
+                  didErase = true;
+                  didBlocksChange_ = true;
+                  
+                  break; // no need to check other robots, block already gone
+                } // if quads intersect
+              } // if robot is not picking or placing
             } // for each robot
           } // if block was not observed
           
@@ -673,6 +694,12 @@ namespace Anki
      
       // Toss any remaining markers?
       ClearAllObservedMarkers();
+      
+      
+      // Let the robot manager do whatever it's gotta do to update the
+      // robots in the world.
+      robotMgr_->UpdateAllRobots();
+
       
     } // Update()
     
@@ -734,7 +761,7 @@ namespace Anki
     }
     
     void BlockWorld::CommandRobotToDock(const RobotID_t whichRobot,
-                                        const Block&    whichBlock)
+                                        Block&    whichBlock)
     {
       Robot* robot = robotMgr_->GetRobotByID(whichRobot);
       if(robot != 0)

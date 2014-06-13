@@ -80,15 +80,15 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
   printf("Added %u blocks\n", numAdded);
 
   State_c start(startPose.get_translation().x(),
-                    startPose.get_translation().y(),
-                    startPose.get_rotationAngle().ToFloat());
+                startPose.get_translation().y(),
+                startPose.get_rotationAngle<'Z'>().ToFloat());
 
   if(!impl_->planner_.SetStart(start))
     return RESULT_FAIL_INVALID_PARAMETER;
 
   State_c target(targetPose.get_translation().x(),
                     targetPose.get_translation().y(),
-                    targetPose.get_rotationAngle().ToFloat());
+                    targetPose.get_rotationAngle<'Z'>().ToFloat());
 
   if(!impl_->planner_.SetGoal(target))
     return RESULT_FAIL_INVALID_PARAMETER;
@@ -145,7 +145,7 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
 
     State_c start(startPose.get_translation().x(),
                   startPose.get_translation().y(),
-                  startPose.get_rotationAngle().ToFloat());
+                  startPose.get_rotationAngle<'Z'>().ToFloat());
 
     path.Clear();
 

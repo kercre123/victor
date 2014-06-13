@@ -107,8 +107,8 @@ namespace Anki {
       Vec3f ComputeNormal() const; // at current pose
       Vec3f ComputeNormal(const Pose3d& atPose) const;
       
-      void SetWasObserved(const bool wasObserved);
-      bool GetWasObserved() const;
+      void SetLastObservedTime(const TimeStamp_t atTime);
+      TimeStamp_t GetLastObservedTime() const;
       
     protected:
       static const Quad3f canonicalCorners3d_;
@@ -116,9 +116,11 @@ namespace Anki {
       Pose3d pose_;
       f32    size_; // in mm
       Quad3f corners3d_;
-      bool   wasObserved_;
+      //bool   wasObserved_;
+      TimeStamp_t lastObservedTime_;
 
     }; // class KnownMarker
+    
     
     inline const TimeStamp_t ObservedMarker::GetTimeStamp() const {
       return observationTime_;
@@ -156,12 +158,12 @@ namespace Anki {
       return used_;
     }
     
-    inline void KnownMarker::SetWasObserved(const bool wasObserved) {
-      wasObserved_ = wasObserved;
+    inline void KnownMarker::SetLastObservedTime(const TimeStamp_t atTime) {
+      lastObservedTime_ = atTime;
     }
     
-    inline bool KnownMarker::GetWasObserved() const {
-      return wasObserved_;
+    inline TimeStamp_t KnownMarker::GetLastObservedTime() const {
+      return lastObservedTime_;
     }
 
   } // namespace Vision

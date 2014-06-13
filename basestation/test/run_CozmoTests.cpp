@@ -131,6 +131,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       jsonMsg["markerType"] = Vision::StringToMarkerType.at(jsonMsg["markerType"].asString());
       
       MessageVisionMarker msg(jsonMsg);
+      msg.timestamp = 0;
       
       Quad2f corners;
       corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
@@ -149,7 +150,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       const Vision::Camera& camera = robot.GetCamera();
       Vision::ObservedMarker marker(msg.timestamp, msg.markerType, corners, camera);
       
-      RobotPoseStamp p(robot.GetPoseFrameID(), robot.GetPose(), robot.GetHeadAngle());
+      RobotPoseStamp p(robot.GetPoseFrameID(), robot.GetPose(), robot.GetHeadAngle(), robot.GetLiftAngle());
       robot.AddVisionOnlyPoseToHistory(msg.timestamp, p);
       
       TimeStamp_t t_actual;
