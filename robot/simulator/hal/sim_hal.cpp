@@ -76,8 +76,8 @@ namespace Anki {
       //webots::Camera* matCam_;
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
-      HAL::CameraInfo matCamInfo_;
-      Vision::CameraResolution headCamMode_;
+      //HAL::CameraInfo matCamInfo_;
+      //Vision::CameraResolution headCamMode_;
       // HAL::CameraMode matCamMode_;
       //u8* headCamBuffer_;
       //u8* matCamBuffer_;

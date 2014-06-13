@@ -20,7 +20,7 @@
 namespace Anki {
   
   // Forward declaration
-  template<size_t, typename> class SmallSquareMatrix;
+  template<s32, typename> class SmallSquareMatrix;
   
   namespace Vision {
     

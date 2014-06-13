@@ -28,7 +28,7 @@ namespace Anki {
     Result PathPlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose)
     {
       Vec3f startPt = startPose.get_translation();
-      f32 startAngle = startPose.get_rotationAngle().ToFloat(); // Assuming robot is not tilted
+      f32 startAngle = startPose.get_rotationAngle<'Z'>().ToFloat(); // Assuming robot is not tilted
       
       // Currently, we can only deal with rotations around (0,0,1) or (0,0,-1).
       // If it's something else, then quit.
@@ -50,7 +50,7 @@ namespace Anki {
       
       
       Vec3f targetPt = targetPose.get_translation();
-      f32 targetAngle = targetPose.get_rotationAngle().ToFloat(); // Assuming robot is not tilted
+      f32 targetAngle = targetPose.get_rotationAngle<'Z'>().ToFloat(); // Assuming robot is not tilted
 
       // Currently, we can only deal with rotations around (0,0,1) or (0,0,-1).
       // If it's something else, then quit.

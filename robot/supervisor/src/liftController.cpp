@@ -35,9 +35,11 @@ namespace Anki {
         // to have settled enough for recalibration.
         const u32 LIFT_RELAX_TIME = 200000;
       
+#if RECALIBRATE_AT_LIMITS
         // Power with which to approach limit angle (after the intended velocity profile has been executed)
         // TODO: Shouldn't have to be this strong. Lower when 2.1 version electronics are ready.
         const f32 LIMIT_APPROACH_POWER = 0.4;
+#endif
         
         const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
         
@@ -100,7 +102,9 @@ namespace Anki {
           LCS_SET_CURR_ANGLE
         } LiftCalibState;
         
+#ifndef SIMULATOR
         LiftCalibState calState_ = LCS_IDLE;
+#endif
         bool isCalibrated_ = false;
         bool limitingDetected_ = false;
         bool limitingExpected_ = false;
@@ -120,11 +124,11 @@ namespace Anki {
       // Returns the angle between the shoulder joint and the wrist joint.
       f32 Height2Rad(f32 height_mm) {
         assert(height_mm >= LIFT_HEIGHT_LOWDOCK && height_mm <= LIFT_HEIGHT_CARRY);
-        return asinf((height_mm - LIFT_JOINT_HEIGHT - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
+        return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
       }
       
       f32 Rad2Height(f32 angle) {
-        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_JOINT_HEIGHT + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
+        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
       }
       
       

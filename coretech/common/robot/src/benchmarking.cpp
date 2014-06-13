@@ -164,7 +164,7 @@ namespace Anki
 
       numPrinted += snprintf(buffer, bufferLength, "%s%s%s", prefix, numberBuffer, suffix);
 
-      const s32 numNumberCharactersPrinted = strlen(numberBuffer);
+      const s32 numNumberCharactersPrinted = static_cast<s32>(strlen(numberBuffer));
 
       for(s32 i=numNumberCharactersPrinted;  i<minNumberCharacterToPrint; i++) {
         if(numPrinted < (bufferLength-1)) {
@@ -184,7 +184,7 @@ namespace Anki
       numPrintedTotal += snprintf(buffer + numPrintedTotal, bufferLength - numPrintedTotal, "%s: ", this->name);
 
       if(minCharacterToPrint && minCharacterToPrint->get_size() > 0) {
-        const s32 numPrinted = strlen(buffer);
+        const s32 numPrinted = static_cast<s32>(strlen(buffer));
         for(s32 i=numPrinted;  i<((*minCharacterToPrint)[0]+2); i++) {
           buffer[numPrintedTotal] = ' ';
           numPrintedTotal++;
@@ -522,7 +522,7 @@ namespace Anki
       static bool blinkOn = true;
 
       const s32 blackWidth = 10;
-      const s32 displayGridEveryNMilliseconds = 50;
+      //const s32 displayGridEveryNMilliseconds = 50;
       const s32 blinkerWidth = 7;
 
       const s32 totalTimeIndex = CompileBenchmarkResults::GetNameIndex("TotalTime", results);

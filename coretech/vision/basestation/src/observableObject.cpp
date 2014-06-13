@@ -19,7 +19,7 @@
 #include "anki/vision/basestation/observableObject.h"
 
 #include "anki/common/basestation/exceptions.h"
-
+#include "anki/common/basestation/general.h"
 
 namespace Anki {
   namespace Vision {
@@ -33,16 +33,6 @@ namespace Anki {
     : type_(objType), ID_(0), lastObservedTime_(0), wasObserved_(false)
     {
       //ID_ = ObservableObject::ObjectCounter++;
-    }
-    
-    bool ObservableObject::GetWhetherObserved() const
-    {
-      return wasObserved_;
-    }
-    
-    void ObservableObject::SetWhetherObserved(const bool wasObserved)
-    {
-      wasObserved_ = wasObserved;
     }
     
     bool ObservableObject::IsVisibleFrom(const Camera &camera,
@@ -143,24 +133,57 @@ namespace Anki {
     }
     
     
-    void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const
+    void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
+                                              const TimeStamp_t sinceTime) const
     {
       observedMarkers.clear();
-      for(auto const& marker : this->markers_)
-      {
-        if(marker.GetWasObserved()) {
-          observedMarkers.push_back(&marker);
+      if(sinceTime > 0) {
+        for(auto const& marker : this->markers_)
+        {
+          if(marker.GetLastObservedTime() >= sinceTime) {
+            observedMarkers.push_back(&marker);
+          }
         }
       }
     } // GetObservedMarkers()
     
     
-    void ObservableObject::SetMarkersAsObserved(const Marker::Code& withCode)
+    Result ObservableObject::UpdateMarkerObservationTimes(const ObservableObject& otherObject)
+    {
+      if(otherObject.GetType() != this->GetType()) {
+        PRINT_NAMED_ERROR("ObservableObject.UpdateMarkerObservationTimes.TypeMismatch",
+                          "Tried to update the marker observations between dissimilar object types.\n");
+        return RESULT_FAIL;
+      }
+
+      std::list<KnownMarker> const& otherMarkers = otherObject.GetMarkers();
+
+      // If these objects are the same type they have to have the same number of
+      // markers, by definition.
+      CORETECH_ASSERT(otherMarkers.size() == markers_.size());
+      
+      std::list<KnownMarker>::const_iterator otherMarkerIter = otherMarkers.begin();
+      std::list<KnownMarker>::iterator markerIter = markers_.begin();
+      
+      for(;otherMarkerIter != otherMarkers.end() && markerIter != markers_.end();
+          ++otherMarkerIter, ++markerIter)
+      {
+        markerIter->SetLastObservedTime(std::max(markerIter->GetLastObservedTime(),
+                                                 otherMarkerIter->GetLastObservedTime()));
+      }
+      
+      return RESULT_OK;
+    }
+    
+    
+    void ObservableObject::SetMarkersAsObserved(const Marker::Code& withCode,
+                                                const TimeStamp_t   atTime)
     {
       auto markers = markersWithCode_.find(withCode);
       if(markers != markersWithCode_.end()) {
         for(auto marker : markers->second) {
-          marker->SetWasObserved(true);
+          //marker->SetWasObserved(true);
+          marker->SetLastObservedTime(atTime);
         }
       }
       else {
@@ -335,7 +358,8 @@ namespace Anki {
           // cluster from which it was computed as "observed"
           for(auto & match : poseCluster.GetMatches()) {
             const KnownMarker& marker = match.second;
-            objectsSeen.back()->SetMarkersAsObserved(marker.GetCode());
+            objectsSeen.back()->SetMarkersAsObserved(marker.GetCode(),
+                                                     observedTime);
           }
           
           objectsSeen.back()->SetLastObservedTime(observedTime);

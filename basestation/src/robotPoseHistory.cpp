@@ -24,38 +24,44 @@ namespace Anki {
     RobotPoseStamp::RobotPoseStamp(const PoseFrameID_t frameID,
                                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                    const f32 pose_angle,
-                                   const f32 head_angle)
+                                   const f32 head_angle,
+                                   const f32 lift_angle)
     {
-      SetPose(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle);
+      SetPose(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
     }
 
     RobotPoseStamp::RobotPoseStamp(const PoseFrameID_t frameID,
                                    const Pose3d& pose,
-                                   const f32 head_angle)
+                                   const f32 head_angle,
+                                   const f32 lift_angle)
     {
-      SetPose(frameID, pose, head_angle);
+      SetPose(frameID, pose, head_angle, lift_angle);
     }
     
 
     void RobotPoseStamp::SetPose(const PoseFrameID_t frameID,
                                  const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                  const f32 pose_angle,
-                                 const f32 head_angle)
+                                 const f32 head_angle,
+                                 const f32 lift_angle)
     {
       frame_ = frameID;
       
       pose_.set_rotation(pose_angle, Z_AXIS_3D);
       pose_.set_translation(Vec3f(pose_x, pose_y, pose_z));
       headAngle_ = head_angle;
+      liftAngle_ = lift_angle;
     }
     
     void RobotPoseStamp::SetPose(const PoseFrameID_t frameID,
                                  const Pose3d& pose,
-                                 const f32 head_angle)
+                                 const f32 head_angle,
+                                 const f32 lift_angle)
     {
       frame_ = frameID;
       pose_ = pose;
       headAngle_ = head_angle;
+      liftAngle_ = lift_angle;
     }
     
     void RobotPoseStamp::Print() const
@@ -98,7 +104,8 @@ namespace Anki {
                             p.GetPose().get_translation().y(),
                             p.GetPose().get_translation().z(),
                             p.GetPose().get_rotationMatrix().GetAngleAroundZaxis().ToFloat(),
-                            p.GetHeadAngle());
+                            p.GetHeadAngle(),
+                            p.GetLiftAngle());
     }
 
 
@@ -107,7 +114,8 @@ namespace Anki {
                                             const PoseFrameID_t frameID,
                                             const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                             const f32 pose_angle,
-                                            const f32 head_angle)
+                                            const f32 head_angle,
+                                            const f32 lift_angle)
     {
       // Should the pose be added?
       TimeStamp_t newestTime = poses_.rbegin()->first;
@@ -118,7 +126,7 @@ namespace Anki {
       std::pair<PoseMapIter_t, bool> res;
       res = poses_.emplace(std::piecewise_construct,
                            std::make_tuple(t),
-                           std::make_tuple(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle));
+                           std::make_tuple(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle));
       
       if (!res.second) {
         PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.AddFailed", "Time: %d\n", t);
@@ -135,9 +143,10 @@ namespace Anki {
                                                const PoseFrameID_t frameID,
                                                const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                                const f32 pose_angle,
-                                               const f32 head_angle)
+                                               const f32 head_angle,
+                                               const f32 lift_angle)
     {
-      RobotPoseStamp p(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle);
+      RobotPoseStamp p(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
       return AddVisionOnlyPose(t, p);
     }
     
@@ -156,13 +165,13 @@ namespace Anki {
       // If visPose entry exist at t, then overwrite it
       PoseMapIter_t it = visPoses_.find(t);
       if (it != visPoses_.end()) {
-        it->second.SetPose(p.GetFrameId(), p.GetPose(), p.GetHeadAngle());
+        it->second.SetPose(p.GetFrameId(), p.GetPose(), p.GetHeadAngle(), p.GetLiftAngle());
       } else {
       
         std::pair<PoseMapIter_t, bool> res;
         res = visPoses_.emplace(std::piecewise_construct,
                                 std::make_tuple(t),
-                                std::make_tuple(p.GetFrameId(), p.GetPose(), p.GetHeadAngle()));
+                                std::make_tuple(p.GetFrameId(), p.GetPose(), p.GetHeadAngle(), p.GetLiftAngle()));
       
         if (!res.second) {
           return RESULT_FAIL;
@@ -221,8 +230,11 @@ namespace Anki {
           // Interp head angle
           f32 interpHeadAngle = prev_it->second.GetHeadAngle() + timeScale * (it->second.GetHeadAngle() - prev_it->second.GetHeadAngle());
         
+          // Interp lift angle
+          f32 interpLiftAngle = prev_it->second.GetLiftAngle() + timeScale * (it->second.GetLiftAngle() - prev_it->second.GetLiftAngle());
+          
           t = t_request;
-          p.SetPose(prev_it->second.GetFrameId(), interpTrans.x(), interpTrans.y(), interpTrans.z(), interpRotation.ToFloat(), interpHeadAngle);
+          p.SetPose(prev_it->second.GetFrameId(), interpTrans.x(), interpTrans.y(), interpTrans.z(), interpRotation.ToFloat(), interpHeadAngle, interpLiftAngle);
           
         } else {
           
@@ -364,7 +376,7 @@ namespace Anki {
       #endif
       
       pTransform.preComposeWith(git->second.GetPose());
-      p.SetPose(git->second.GetFrameId(), pTransform, p1.GetHeadAngle());
+      p.SetPose(git->second.GetFrameId(), pTransform, p1.GetHeadAngle(), p1.GetLiftAngle());
       
       return RESULT_OK;
     }
@@ -384,7 +396,7 @@ namespace Anki {
       // If computedPose entry exist at t, then overwrite it
       PoseMapIter_t it = computedPoses_.find(t);
       if (it != computedPoses_.end()) {
-        it->second.SetPose(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle());
+        it->second.SetPose(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle(), ps.GetLiftAngle());
         *p = &(it->second);
         
         if (key) {
@@ -395,7 +407,7 @@ namespace Anki {
         std::pair<PoseMapIter_t, bool> res;
         res = computedPoses_.emplace(std::piecewise_construct,
                                      std::forward_as_tuple(t),
-                                     std::forward_as_tuple(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle()));
+                                     std::forward_as_tuple(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle(), ps.GetLiftAngle()));
         
         if (!res.second) {
           return RESULT_FAIL;

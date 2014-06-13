@@ -61,7 +61,7 @@ namespace Anki
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
-      const s32 imageStride = image.get_stride();
+      //const s32 imageStride = image.get_stride();
 
       edgeLists.imageHeight = imageHeight;
       edgeLists.imageWidth = imageWidth;
@@ -102,7 +102,7 @@ namespace Anki
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
-      const s32 imageStride = image.get_stride();
+      //const s32 imageStride = image.get_stride();
 
       edgeLists.imageHeight = imageHeight;
       edgeLists.imageWidth = imageWidth;
@@ -119,7 +119,7 @@ namespace Anki
       // Detect horizontal positive and negative transitions
       //
 
-      const s32 imageStride = image.get_stride();
+      //const s32 imageStride = image.get_stride();
 
       //const Rectangle<u32> imageRegionOfInterestU32(imageRegionOfInterest.left, imageRegionOfInterest.right, imageRegionOfInterest.top, imageRegionOfInterest.bottom);
 
@@ -366,7 +366,7 @@ namespace Anki
       // Detect horizontal positive and negative transitions
       //
 
-      const s32 imageStride = image.get_stride();
+      //const s32 imageStride = image.get_stride();
 
       s32 xDecreasingSize = edgeLists.xDecreasing.get_size();
       s32 xIncreasingSize = edgeLists.xIncreasing.get_size();
@@ -565,13 +565,15 @@ namespace Anki
       const s32 yDecreasingUsed = this->yDecreasing.get_size();
       const s32 yIncreasingUsed = this->yIncreasing.get_size();
 
-      const s32 numTemplatePixels =
+      const size_t numTemplatePixels =
         RoundUp<size_t>(xDecreasingUsed, MEMORY_ALIGNMENT) +
         RoundUp<size_t>(xIncreasingUsed, MEMORY_ALIGNMENT) +
         RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
         RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
-      const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>) + 14*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      AnkiAssert(numTemplatePixels <= s32_MAX);
+      
+      const s32 requiredBytes = 512 + static_cast<s32>(numTemplatePixels)*sizeof(Point<s16>) + 14*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       return requiredBytes;
     }

@@ -66,6 +66,7 @@ namespace Anki {
         // June2014DiceDemo
         WAITING_TO_SEE_DICE,
         WAITING_FOR_DICE_TO_DISAPPEAR,
+        BACKING_UP,
         BEGIN_EXPLORING,
         EXPLORING
         
@@ -120,17 +121,18 @@ namespace Anki {
       /////// PickAndPlace vars ///////
     
       // Block to dock with
-      const Block* dockBlock_;
+      Block* dockBlock_;
       const Vision::KnownMarker *dockMarker_;
       
-      // Target pose for predock
-      Pose3d nearestPreDockPose_;
+      // Goal pose for path planning (e.g. nearest pre-dock pose)
+      Pose3d goalPose_;
       
       // A general time value for gating state transitions
       double waitUntilTime_;
 
       DockAction_t dockAction_;
       
+      f32 desiredBackupDistance_;
       
       /////// June2014DiceDemo vars ///////
       const TimeStamp_t TimeBetweenDice_ms = 2000; // 2 sec

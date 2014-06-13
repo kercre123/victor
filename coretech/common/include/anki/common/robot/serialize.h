@@ -100,12 +100,12 @@ namespace Anki
       const s32 yStart = ySlice.get_start();
       const s32 yIncrement = ySlice.get_increment();
       const s32 yEnd = ySlice.get_end();
-      const s32 ySize = ySlice.get_size();
+      //const s32 ySize = ySlice.get_size();
 
       const s32 xStart = xSlice.get_start();
       const s32 xIncrement = xSlice.get_increment();
       const s32 xEnd = xSlice.get_end();
-      const s32 xSize = xSlice.get_size();
+      //const s32 xSize = xSlice.get_size();
 
       EncodedArray::Serialize<Type>(false, in.get_array(), buffer, bufferLength);
 

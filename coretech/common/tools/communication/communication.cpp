@@ -283,7 +283,7 @@ Result Socket::Close()
 
 Result Socket::Read(void * buffer, s32 bufferLength, s32 &bytesRead)
 {
-  bytesRead = recv(socketHandle, reinterpret_cast<char*>(buffer), bufferLength, 0);
+  bytesRead = static_cast<s32>(recv(socketHandle, reinterpret_cast<char*>(buffer), bufferLength, 0));
 
   if(bytesRead < 0) {
     fd_set fds;

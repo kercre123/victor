@@ -10,6 +10,7 @@ if(NOT WIN32)
     testPoint.cpp
     testQuad.cpp
     testRotation.cpp
+    testrotatedrectangle.cpp
     testConfigTreeJsonCpp.cpp)
 
   target_link_libraries(run_coreTechCommonTests 

@@ -17,9 +17,11 @@
 
 using namespace Anki::Embedded;
 
+/*
 static void printUsage()
 {
 } // void printUsage()
+*/
 
 int main(int argc, char ** argv)
 {
@@ -73,7 +75,7 @@ int main(int argc, char ** argv)
 
         if(imageRaw->IsValid()) {
           Array<u8> image = *imageRaw;
-          const cv::Mat_<u8> &refMat = image.get_CvMat_();
+          //const cv::Mat_<u8> &refMat = image.get_CvMat_();
           cv::imshow("Robot Image", image.get_CvMat_());
           cv::waitKey(1);
         }

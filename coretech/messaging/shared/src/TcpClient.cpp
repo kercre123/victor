@@ -90,7 +90,7 @@ int TcpClient::Send(const char* data, int size)
 {
   DEBUG_TCP_CLIENT("TcpClient: sending " << size << " bytes: " << data << "\n");
 
-  int bytes_sent = send(socketfd, data, size, 0);
+  ssize_t bytes_sent = send(socketfd, data, size, 0);
   if (bytes_sent <= 0) {
     if (errno != EWOULDBLOCK) {
       DEBUG_TCP_CLIENT("TcpClient: Send error, disconnecting.\n");
@@ -99,32 +99,40 @@ int TcpClient::Send(const char* data, int size)
     }
   }
 
-  return bytes_sent;
+  if(bytes_sent > std::numeric_limits<int>::max()) {
+    DEBUG_TCP_CLIENT("TcpClient: Send warning, num bytes sent > max integer.\n");
+  }
+  
+  return static_cast<int>(bytes_sent);
 }
 
 int TcpClient::Recv(char* data, int maxSize)
 {
-    DEBUG_TCP_CLIENT("TcpClient: Waiting to recieve data...\n");
-
-    assert(data != NULL);
-    ssize_t bytes_received;
-    bytes_received = recv(socketfd, data, maxSize, 0);
-    // If no data arrives, the program will just wait here until some data arrives.
+  DEBUG_TCP_CLIENT("TcpClient: Waiting to recieve data...\n");
   
-    if (bytes_received <= 0) {
-      if (errno != EWOULDBLOCK) {
-        DEBUG_TCP_CLIENT("TcpClient: Receive error, disconnecting.\n");
-        Disconnect();
-        return -1;
-      } else {
-        bytes_received = 0;
-      }
+  assert(data != NULL);
+  ssize_t bytes_received;
+  bytes_received = recv(socketfd, data, maxSize, 0);
+  // If no data arrives, the program will just wait here until some data arrives.
+  
+  if (bytes_received <= 0) {
+    if (errno != EWOULDBLOCK) {
+      DEBUG_TCP_CLIENT("TcpClient: Receive error, disconnecting.\n");
+      Disconnect();
+      return -1;
+    } else {
+      bytes_received = 0;
     }
-    else {
-      DEBUG_TCP_CLIENT("TcpClient: " << bytes_received << " bytes recieved : " << data << "\n");
-    }
-
-    return bytes_received;
+  }
+  else {
+    DEBUG_TCP_CLIENT("TcpClient: " << bytes_received << " bytes recieved : " << data << "\n");
+  }
+  
+  if(bytes_received > std::numeric_limits<int>::max()) {
+    DEBUG_TCP_CLIENT("TcpClient: Receive warning, num bytes received > max integer.\n");
+  }
+  
+  return static_cast<int>(bytes_received);
 }
 
 

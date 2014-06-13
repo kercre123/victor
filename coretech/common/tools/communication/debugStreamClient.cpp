@@ -92,7 +92,7 @@ namespace Anki
     }
 
     DebugStreamClient::Object::Object()
-      : bufferLength(0), buffer(NULL), startOfPayload(NULL)
+      : buffer(NULL), bufferLength(0), startOfPayload(NULL)
     {
     }
 
@@ -313,7 +313,7 @@ namespace Anki
 
       SerializedBufferReconstructingIterator iterator(serializedBuffer);
 
-      bool aMessageAlreadyPrinted = false;
+      //bool aMessageAlreadyPrinted = false;
 
       while(iterator.HasNext()) {
         s32 dataLength;
@@ -611,15 +611,16 @@ namespace Anki
           if(result != RESULT_OK)
             continue;
         } else if(strcmp(typeName, "String") == 0) {
-          const s32 stringLength = strlen(reinterpret_cast<char*>(dataSegment));
-
-          newObject.bufferLength = 32 + stringLength;
+          const size_t stringLength = strlen(reinterpret_cast<char*>(dataSegment));
+          AnkiAssert(stringLength <= s32_MAX);
+          
+          newObject.bufferLength = 32 + static_cast<s32>(stringLength);
           newObject.buffer = malloc(newObject.bufferLength);
 
           if(!newObject.buffer)
             continue;
 
-          reinterpret_cast<s32*>(newObject.buffer)[0] = stringLength;
+          reinterpret_cast<s32*>(newObject.buffer)[0] = static_cast<s32>(stringLength);
 
           newObject.startOfPayload = reinterpret_cast<void*>(&reinterpret_cast<s32*>(newObject.buffer)[1]);
 

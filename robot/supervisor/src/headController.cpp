@@ -15,7 +15,7 @@ namespace Anki {
       const Radians ANGLE_TOLERANCE = DEG_TO_RAD(3.f);
       
       // Head angle on startup
-      const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
+      //const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
       
       // Currently applied power
       f32 power_ = 0;
@@ -56,10 +56,10 @@ namespace Anki {
       VelocityProfileGenerator vpg_;
       
       // Whether or not to recalibrate the motors when they hard limit
-      const bool RECALIBRATE_AT_LIMIT = false;
+      //const bool RECALIBRATE_AT_LIMIT = false;
       
       // If head comes within this distance to limit angle, trigger recalibration.
-      const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
+      //const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
       
       // Calibration parameters
       typedef enum {
@@ -71,7 +71,7 @@ namespace Anki {
       
       HeadCalibState calState_ = HCS_IDLE;
       bool isCalibrated_ = false;
-      bool limitingDetected_ = false;
+      //bool limitingDetected_ = false;
       u32 lastHeadMovedTime_us = 0;
       
       const f32 MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;

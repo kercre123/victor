@@ -842,7 +842,7 @@ namespace Anki
         s32 &numCorrespondences)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -923,7 +923,7 @@ namespace Anki
         s32 &numCorrespondences)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1003,7 +1003,7 @@ namespace Anki
         Array<f32> &Atb_t)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1156,7 +1156,7 @@ namespace Anki
         Array<f32> &Atb_t)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1309,7 +1309,7 @@ namespace Anki
         s32 &numTemplatePixelsMatched)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1383,7 +1383,7 @@ namespace Anki
         s32 &numTemplatePixelsMatched)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1456,7 +1456,7 @@ namespace Anki
         FixedLengthList<IndexCorrespondence> &matchingIndexes)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1547,7 +1547,7 @@ namespace Anki
         FixedLengthList<IndexCorrespondence> &matchingIndexes)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -2441,13 +2441,14 @@ namespace Anki
         const s32 yDecreasingUsed = this->templateEdges.yDecreasing.get_size();
         const s32 yIncreasingUsed = this->templateEdges.yIncreasing.get_size();
 
-        const s32 numTemplatePixels =
+        const size_t numTemplatePixels =
           RoundUp<size_t>(xDecreasingUsed, MEMORY_ALIGNMENT) +
           RoundUp<size_t>(xIncreasingUsed, MEMORY_ALIGNMENT) +
           RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
           RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
-        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>) + Transformations::PlanarTransformation_f32::get_serializationSize() + 16*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+        AnkiAssert(numTemplatePixels < s32_MAX);
+        const s32 requiredBytes = 512 + static_cast<s32>(numTemplatePixels)*sizeof(Point<s16>) + Transformations::PlanarTransformation_f32::get_serializationSize() + 16*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
         return requiredBytes;
       }

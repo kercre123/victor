@@ -111,22 +111,23 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
     {0x80, 0x00, 0x80}  // 15 Purple
   };
 
-  const u8 * const white = htmlColors[0];
-  const u8 * const silver = htmlColors[1];
-  const u8 * const gray = htmlColors[2];
-  const u8 * const black = htmlColors[3];
+  // Uncomment as needed
+  //const u8 * const white = htmlColors[0];
+  //const u8 * const silver = htmlColors[1];
+  //const u8 * const gray = htmlColors[2];
+  //const u8 * const black = htmlColors[3];
   const u8 * const red = htmlColors[4];
   const u8 * const maroon = htmlColors[5];
-  const u8 * const yellow = htmlColors[6];
-  const u8 * const olive = htmlColors[7];
-  const u8 * const lime = htmlColors[8];
+  //const u8 * const yellow = htmlColors[6];
+  //const u8 * const olive = htmlColors[7];
+  //const u8 * const lime = htmlColors[8];
   const u8 * const green = htmlColors[9];
-  const u8 * const aqua = htmlColors[10];
-  const u8 * const teal = htmlColors[11];
+  //const u8 * const aqua = htmlColors[10];
+  //const u8 * const teal = htmlColors[11];
   const u8 * const blue = htmlColors[12];
-  const u8 * const navy = htmlColors[13];
-  const u8 * const fuchsia = htmlColors[14];
-  const u8 * const purple = htmlColors[15];
+  //const u8 * const navy = htmlColors[13];
+  //const u8 * const fuchsia = htmlColors[14];
+  //const u8 * const purple = htmlColors[15];
 
   MemoryStack scratch = MemoryStack(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
@@ -200,7 +201,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
         // Draw markers
         for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
           cv::Scalar boxColor, topLineColor, textColor;
-          if(visionMarkerList[iMarker].isValid) {
+          if(visionMarkerList[iMarker].validity == VisionMarker::VALID) {
             textColor = cv::Scalar(0,255,0);
             boxColor = cv::Scalar(0,128,0);
           } else {
@@ -417,8 +418,9 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
   } else if(strcmp(newObject.typeName, "VisionMarker") == 0) {
     VisionMarker marker = *reinterpret_cast<VisionMarker*>(newObject.startOfPayload);
 
-    if(!marker.isValid)
+    if(marker.validity != VisionMarker::VALID) {
       return;
+    }
 
     if(!aMessageAlreadyPrinted) {
       time_t rawtime;

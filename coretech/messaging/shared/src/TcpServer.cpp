@@ -159,7 +159,13 @@ int TcpServer::Send(const char* data, int size)
 
   DEBUG_TCP_SERVER("TcpServer: sending   " << data);
 
-  return send(client_sd, data, size, 0);
+  const ssize_t bytes_sent = send(client_sd, data, size, 0);
+  
+  if(bytes_sent > std::numeric_limits<int>::max()) {
+    DEBUG_TCP_SERVER("TcpServer: Send warning, num bytes sent > max integer.\n");
+  }
+  
+  return static_cast<int>(bytes_sent);
 }
 
 int TcpServer::Recv(char* data, int maxSize)
@@ -189,7 +195,11 @@ int TcpServer::Recv(char* data, int maxSize)
     DEBUG_TCP_SERVER("TcpServer: " << bytes_received << " bytes received : " << data);
   }
 
-  return bytes_received;
+  if(bytes_received > std::numeric_limits<int>::max()) {
+    DEBUG_TCP_SERVER("TcpServer: Receive warning, num bytes received > max integer.\n");
+  }
+  
+  return static_cast<int>(bytes_received);
 }
 
 
