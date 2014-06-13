@@ -57,18 +57,21 @@ namespace Anki {
       void Update();
       
       // Accessors
-      const RobotID_t        GetID()          const;
-      const Pose3d&          GetPose()        const;
-      const Vision::Camera&  GetCamera()      const;
+      const RobotID_t        GetID()           const;
+      const Pose3d&          GetPose()         const;
+      const Vision::Camera&  GetCamera()       const;
       Vision::Camera&        GetCamera();
       
-      const f32              GetHeadAngle()   const;
-      const f32              GetLiftAngle()   const;
+      const f32              GetHeadAngle()    const;
+      const f32              GetLiftAngle()    const;
       
-      const Pose3d&          GetNeckPose()    const {return _neckPose;}
-      const Pose3d&          GetHeadCamPose() const {return _headCamPose;}
-      const Pose3d&          GetLiftPose()    const {return _liftPose;}  // At current lift position!
-      const State            GetState()       const;
+      const Pose3d&          GetNeckPose()     const {return _neckPose;}
+      const Pose3d&          GetHeadCamPose()  const {return _headCamPose;}
+      const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
+      const State            GetState()        const;
+      
+      const Block*           GetDockBlock()    const {return _dockBlock;}
+      const Block*           GetCarryingBlock()const {return _carryingBlock;}
       
       void SetState(const State newState);
       void SetPose(const Pose3d &newPose);
@@ -79,10 +82,6 @@ namespace Anki {
       void IncrementPoseFrameID() {++_frameId;}
       PoseFrameID_t GetPoseFrameID() const {return _frameId;}
       
-      Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
-      Result ExecutePathToPose(const Pose3d& pose);
-      Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
-      IPathPlanner* GetPathPlanner() { return _pathPlanner; }
       
       // Clears the path that the robot is executing which also stops the robot
       Result ClearPath();
@@ -91,7 +90,16 @@ namespace Anki {
       Result TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments);
       
       // Sends a path to the robot to be immediately executed
+      // Puts Robot in FOLLOWING_PATH state. Will transition to IDLE when path is complete.
       Result ExecutePath(const Planning::Path& path);
+
+      // Compute a path to a pose and execute it
+      // Puts Robot in FOLLOWING_PATH state. Will transition to IDLE when path is complete.
+      Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
+      Result ExecutePathToPose(const Pose3d& pose);
+      Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
+
+      IPathPlanner* GetPathPlanner() { return _pathPlanner; }
       
       // True if wheel speeds are non-zero in most recent RobotState message
       bool IsMoving() const {return _isMoving;}
@@ -130,6 +138,7 @@ namespace Anki {
       
       Result StopAllMotors();
       
+      // 
       Result ExecuteDockingSequence(Block* blockToDockWith);
       
       // Sends a message to the robot to dock with the specified marker of the
@@ -183,8 +192,9 @@ namespace Anki {
       // Run a test mode
       Result SendStartTestMode(const TestMode mode) const;
       
-      Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
-      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f) const;
+      // Get the bounding quad of the robot at its current or a given pose
+      Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const; // at current pose
+      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f) const; // at specific pose
       
       
       // =========== Pose history =============
@@ -233,6 +243,8 @@ namespace Anki {
       bool             _isWaitingForReplan;
       Pose3d           _goalPose;
       Radians          _goalHeadAngle;
+      f32              _goalDistanceThreshold;
+      Radians          _goalAngleThreshold;
       
       Vision::Camera   _camera;
       
@@ -304,14 +316,6 @@ namespace Anki {
       Result SendExecutePath(const Planning::Path& path) const;
       
       // Sends a message to the robot to dock with the specified block
-      // that it should currently be seeing.
-      /*
-      Result SendDockWithBlock(const Vision::Marker::Code& markerType,
-                               const f32 markerWidth_mm,
-                               const DockAction_t dockAction) const;
-      */
-      
-      // Sends a message to the robot to dock with the specified block
       // that it should currently be seeing. If pixel_radius == u8_MAX,
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
@@ -347,14 +351,8 @@ namespace Anki {
     inline const Robot::State Robot::GetState() const
     { return _state; }
     
-    inline void Robot::SetState(const State nextState)
-    { _state = nextState; }
-    
     inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
     { _camera.SetCalibration(calib); }
-    
-//    inline bool Robot::hasOutgoingMessages() const
-//    { return not this->messagesOut.empty(); }
     
     inline const f32 Robot::GetHeadAngle() const
     { return _currentHeadAngle; }

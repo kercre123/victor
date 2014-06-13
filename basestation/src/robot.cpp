@@ -99,6 +99,9 @@ namespace Anki {
     , _pathPlanner(pathPlanner)
     , _currPathSegment(-1)
     , _isWaitingForReplan(false)
+    , _goalHeadAngle(0.f)
+    , _goalDistanceThreshold(10.f)
+    , _goalAngleThreshold(DEG_TO_RAD(10))
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
     , _frameId(0)
     , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose)
@@ -130,43 +133,47 @@ namespace Anki {
           
         case FOLLOWING_PATH:
         {
-         static bool wasTraversingPath = false;
-
-      // If the robot is traversing a path, consider replanning it
-      if(_world->DidBlocksChange() && IsTraversingPath())
-      {
-        Planning::Path newPath;
-        if(_pathPlanner->ReplanIfNeeded(newPath, GetPose())) {
-          // clear path, but flag that we are replanning
-          ClearPath();
-          _isWaitingForReplan = true;
+          static bool wasTraversingPath = false;
           
-          VizManager::getInstance()->ErasePath(_ID);
-          wasTraversingPath = false;
+          // If the robot is traversing a path, consider replanning it
+          if(_world->DidBlocksChange() && IsTraversingPath())
+          {
+            Planning::Path newPath;
+            if(_pathPlanner->ReplanIfNeeded(newPath, GetPose())) {
+              // clear path, but flag that we are replanning
+              ClearPath();
+              _isWaitingForReplan = true;
+              
+              VizManager::getInstance()->ErasePath(_ID);
+              wasTraversingPath = false;
+              
+              PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
+              MessageClearPath clearMessage;
+              _msgHandler->SendMessage(_ID, clearMessage);
+              
+              _path = newPath;
+              PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
+              SendExecutePath(_path);
+            }
+          }
           
-          PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
-          MessageClearPath clearMessage;
-          _msgHandler->SendMessage(_ID, clearMessage);
-          
-          _path = newPath;
-          PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
-          SendExecutePath(_path);
-        }
-      }
-
-      
-      // Visualize path if robot has just started traversing it.
-      // Clear the path when it has stopped.
-      if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
-        VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
-        wasTraversingPath = true;
-        _isWaitingForReplan = false;
-      } else if (wasTraversingPath && !IsTraversingPath()){
-        ClearPath(); // clear path and indicate that we are not replanning
-        _isWaitingForReplan = false;
-        VizManager::getInstance()->ErasePath(_ID);
-        wasTraversingPath = false;
-      }
+          // Visualize path if robot has just started traversing it.
+          // Clear the path when it has stopped.
+          if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
+            VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
+            wasTraversingPath = true;
+            _isWaitingForReplan = false;
+          }
+          else if ((wasTraversingPath && !IsTraversingPath()) ||
+                     _pose.IsSameAs(_goalPose, _goalDistanceThreshold, _goalAngleThreshold))
+          {
+            PRINT_INFO("Robot %d finished following path.\n", _ID);
+            ClearPath(); // clear path and indicate that we are not replanning
+            _isWaitingForReplan = false;
+            VizManager::getInstance()->ErasePath(_ID);
+            wasTraversingPath = false;
+            SetState(_nextState);
+          }
           break;
         } // case FOLLOWING_PATH
       
@@ -236,22 +243,13 @@ namespace Anki {
       
     } // Update()
 
-    /*
-    void Robot::getOutgoingMessage(u8 *msgOut, u8 &msgSize)
+    void Robot::SetState(const State nextState)
     {
-      MessageType& nextMessage = this->messagesOut.front();
-      if(msgSize < nextMessage.size()) {
-        CORETECH_THROW("Next outgoing message too large for given buffer.");
-        msgSize = 0;
-        return;
-      }
-        
-      std::copy(nextMessage.begin(), nextMessage.end(), msgOut);
-      msgSize = nextMessage.size();
+      // TODO: Provide string name lookup for each state
+      PRINT_INFO("Robot %d switching from state %d to state %d.\n", _ID, _state, nextState);
       
-      this->messagesOut.pop();
+      _state = nextState;
     }
-     */
 
     
     void Robot::SetPose(const Pose3d &newPose)
@@ -405,6 +403,7 @@ namespace Anki {
         return RESULT_FAIL;
 
       SetState(FOLLOWING_PATH);
+      _nextState = IDLE; // for when the path is complete
       
       return SendExecutePath(path);
     }
@@ -447,10 +446,9 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      // TODO: make these robot members
-      f32 goalDistThresh_ = 10.f;
-      Radians goalAngleThresh_ = DEG_TO_RAD(10);
-      Radians goalHeadAngle_   = DEG_TO_RAD(-15);
+      _goalDistanceThreshold = 10.f;
+      _goalAngleThreshold    = DEG_TO_RAD(10);
+      _goalHeadAngle         = DEG_TO_RAD(-15);
       
       lastResult = ExecutePathToPose(_goalPose);
       if(lastResult != RESULT_OK) {
@@ -458,7 +456,7 @@ namespace Anki {
       }
       
       // Make sure head is tilted down so that it can localize well
-      MoveHeadToAngle(goalHeadAngle_.ToFloat(), 5, 10);
+      MoveHeadToAngle(_goalHeadAngle.ToFloat(), 5, 10);
       PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
                  _goalPose.get_translation().x(),
                  _goalPose.get_translation().y(),

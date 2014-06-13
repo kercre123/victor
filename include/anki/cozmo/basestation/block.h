@@ -91,10 +91,12 @@ namespace Anki {
       //static unsigned int get_numBlocks();
       
       // Accessors:
-      Point3f const& GetSize() const;
-      float          GetWidth()  const;  // X dimension
-      float          GetHeight() const;  // Z dimension
-      float          GetDepth()  const;  // Y dimension
+      const Point3f&     GetSize()   const;
+      float              GetWidth()  const;  // X dimension
+      float              GetHeight() const;  // Z dimension
+      float              GetDepth()  const;  // Y dimension
+      const std::string& GetName()   const {return _name;}
+      
       //virtual float GetMinDim() const;
       //using Vision::ObservableObjectBase<Block>::GetMinDim;
 
