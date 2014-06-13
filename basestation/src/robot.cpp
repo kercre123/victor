@@ -374,12 +374,12 @@ namespace Anki {
       
       _carryingBlock = _dockBlock;
 
-      // dock marker is in block coordinates.  we want the position of the block
-      // with respect to the marker we docked with, so invert the marker's pose
-      Pose3d newPose = _dockMarker->GetPose().getInverse();
-      
-      // Shift forward to be aligned with the front of the lift
-      newPose.set_translation(newPose.get_translation() + Point3f(LIFT_FRONT_WRT_WRIST_JOINT, 0.f, 0.f));
+      // Base the block's pose relative to the lift on how far away the dock
+      // marker is from the center of the block
+      // TODO: compute the height adjustment per block or at least use values from cozmoConfig.h
+      Pose3d newPose(_dockBlock->GetPose().get_rotationMatrix(),
+                     {{_dockMarker->GetPose().get_translation().Length() +
+                       LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f}});
       
       // make part of the lift's pose chain so the block will now be relative to
       // the lift and move with the robot
