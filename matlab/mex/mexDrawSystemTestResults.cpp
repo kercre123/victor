@@ -73,10 +73,6 @@ void DrawOneMarker(
   const cv::Scalar &quadColor,
   const cv::Scalar &topBarColor)
 {
-  //sortedXValues = sortrows([corners(:,1)'; 1:4]', 1);
-  //firstCorner = sortedXValues(1,2);
-  //secondCorner = sortedXValues(2,2);
-
   // Get the two leftmost points
   Point<f32> minCorners[2] = {Point<f32>(FLT_MAX, FLT_MAX), Point<f32>(FLT_MAX, FLT_MAX)};
   for(s32 iCorner=0; iCorner<4; iCorner++) {
@@ -87,9 +83,6 @@ void DrawOneMarker(
       minCorners[1] = corners.corners[iCorner];
     }
   }
-
-  //plot(corners([1,2,4,3,1],1)*showImageDetectionsScale, corners([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', quadColor, 'LineWidth', 3);
-  //plot(corners([1,3],1)*showImageDetectionsScale, corners([1,3],2)*showImageDetectionsScale, 'Color', topBarColor, 'LineWidth', 3);
 
   DrawOneQuad(drawnImage, corners, quadColor, 3, showImageDetectionsScale);
 

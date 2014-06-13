@@ -13,7 +13,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     maxMatchDistance_pixels = 5;
     maxMatchDistance_percent = 0.2;
     
-    numComputeThreads = 3; %#ok<NASGU>
+    numComputeThreads = 3;
     
     showImageDetections = true;
     showImageDetectionWidth = 640;
@@ -29,11 +29,6 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
-    
-    if showImageDetections
-        figure(1);
-        close 1
-    end
     
     if recompileBasics
         tic
@@ -58,7 +53,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
             end
             
             % Wait for the file system to catch up or something?
-            pause(5);
+            pause(2);
             
             load(partFilename)
             
@@ -74,9 +69,9 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
         disp(sprintf('Basic stat computation took %f seconds', toc()));
         
         save(basicsFilename, 'resultsData', 'testPath', 'allTestFilenames', 'testFunctions', 'testFunctionNames');
-    else
+    else % if recompileBasics
         load(basicsFilename);
-    end
+    end % if recompileBasics ... else
     
     if recompilePerTestStats
         perTestStats = compilePerTestStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth);
@@ -91,7 +86,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     save([resultsDirectory, 'allCompiledResults.mat'], 'perTestStats');
     
     keyboard
-    
+end % runTests_detectFiducialMarkers()
+
 function overallStats = compileOverallStats(allTestFilenames, perTestStats, showOverallStats)
     
     allJsonData = cell(length(resultsData), 1);
@@ -107,10 +103,10 @@ function overallStats = compileOverallStats(allTestFilenames, perTestStats, show
             for iPose = 1:length(perTestStats{iTest})
             end
         end
-    end
-    
-    
-    
+    end 
+end % compileOverallStats()
+
+
 function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth)
     % TODO: At different distances / angles
     
@@ -139,72 +135,41 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
         for iPose = 1:length(perTestStats{iTest})
             perTestStats{iTest}{iPose} = cell(length(resultsData{iTest}{iPose}), 1);
             
-            if showImageDetections
-                imageFilename = [testPath, jsonData.Poses{iPose}.ImageFile];
-                imageFilename = strrep(imageFilename, '//', '/');
-                image = imread(imageFilename);
-                
-                outputFilenameImage = [resultsDirectory, sprintf('detection_dist%d_angle%d_expose%0.1f_light%d.png',...
-                    jsonData.Poses{iPose}.Scene.Distance,...
-                    jsonData.Poses{iPose}.Scene.angle,...
-                    jsonData.Poses{iPose}.Scene.CameraExposure,...
-                    jsonData.Poses{iPose}.Scene.light)];
-                
-                %                 imwrite(image, outputFilenameImage);
-                
-                slashIndexes = strfind(outputFilenameImage, '/');
-                outputFilenameImageJustName = outputFilenameImage((slashIndexes(end)+1):end);
-                slashIndexes = strfind(imageFilename, '/');
-                imageFilenameJustName = imageFilename((slashIndexes(end)+1):end);
-                
-                filenameNameLookup = [filenameNameLookup, sprintf('%d %d \t%s \t%s\n', iTest, iPose, outputFilenameImageJustName, imageFilenameJustName)]; %#ok<AGROW>
-                
-                imageWithBorder = zeros([size(image,1) + 50, size(image,2)], 'uint8');
-                imageWithBorder(1:size(image,1), :) = image;
-                
-                if showImageDetectionWidth(1) ~= size(image,2)
-                    showImageDetectionsScale = showImageDetectionWidth(1) / size(image,2);
-                    imageWithBorder = imresize(imageWithBorder, size(imageWithBorder)*showImageDetectionsScale, 'nearest');
-                else
-                    showImageDetectionsScale = 1;
-                end
-            end % if showImageDetections
+            imageFilename = [testPath, jsonData.Poses{iPose}.ImageFile];
+            imageFilename = strrep(imageFilename, '//', '/');
+            image = imread(imageFilename);
+            
+            outputFilenameImage = [resultsDirectory, sprintf('detection_dist%d_angle%d_expose%0.1f_light%d.png',...
+                jsonData.Poses{iPose}.Scene.Distance,...
+                jsonData.Poses{iPose}.Scene.angle,...
+                jsonData.Poses{iPose}.Scene.CameraExposure,...
+                jsonData.Poses{iPose}.Scene.light)];
+            
+            slashIndexes = strfind(outputFilenameImage, '/');
+            outputFilenameImageJustName = outputFilenameImage((slashIndexes(end)+1):end);
+            slashIndexes = strfind(imageFilename, '/');
+            imageFilenameJustName = imageFilename((slashIndexes(end)+1):end);
+            
+            filenameNameLookup = [filenameNameLookup, sprintf('%d %d \t%s \t%s\n', iTest, iPose, outputFilenameImageJustName, imageFilenameJustName)]; %#ok<AGROW>
+            
+            if showImageDetectionWidth(1) ~= size(image,2)
+                showImageDetectionsScale = showImageDetectionWidth(1) / size(image,2);
+            else
+                showImageDetectionsScale = 1;
+            end
+            
             
             for iTestFunction = 1:length(perTestStats{iTest}{iPose})
                 curResultsData = resultsData{iTest}{iPose}{iTestFunction};
                 
-                %                 if showImageDetections
-                %                     figureHandle = figure(1);
-                %
-                %                     hold off;
-                %
-                %                     useImpixelinfo = false;
-                %
-                %                     imshow(imageWithBorder);
-                %
-                %                     if old_useImpixelinfo ~= -1
-                %                         useImpixelinfo = old_useImpixelinfo;
-                %                     else
-                %                         clear useImpixelinfo;
-                %                     end
-                %
-                %                     hold on;
-                %                 end % if showImageDetections
-                
-%                 if ~(iTest == 6 && iPose == 2 && iTestFunction == 1)
-%                     continue;
-%                 else
-%                     keyboard;
-%                 end
-                
-                [curCompiled.numQuadsNotIgnored, curCompiled.numQuadsDetected] = compileQuadResults(curResultsData, showImageDetections, showImageDetectionsScale);
+                [curCompiled.numQuadsNotIgnored, curCompiled.numQuadsDetected] = compileQuadResults(curResultsData);
                 
                 [curCompiled.numCorrect_positionLabelRotation,...
                     curCompiled.numCorrect_positionLabel,...
                     curCompiled.numCorrect_position,...
                     curCompiled.numSpurriousDetections,...
                     curCompiled.numUndetected,...
-                    markersToDisplay] = compileMarkerResults(curResultsData, showImageDetections, showImageDetectionsScale);
+                    markersToDisplay] = compileMarkerResults(curResultsData);
                 
                 outputFilenameResult = [resultsDirectory, sprintf('result_%03d%03d%03d_dist%d_angle%d_expose%0.1f_light%d_%s.png',...
                     iTest, iPose, iTestFunction,...
@@ -230,9 +195,6 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
                     curCompiled.numQuadsNotIgnored,...
                     curCompiled.numSpurriousDetections};
                 
-                %                 keyboard
-                
-                
                 drawnImage = mexDrawSystemTestResults(uint8(image), curResultsData.detectedQuads, curResultsData.detectedQuadValidity, markersToDisplay(:,1), int32(cell2mat(markersToDisplay(:,2))), markersToDisplay(:,3), showImageDetectionsScale, outputFilenameResult, toShowResults);
                 drawnImage = drawnImage(:,:,[3,2,1]);
                 
@@ -242,29 +204,6 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
                     imshow(drawnImage)
                     pause(.03);
                 end
-                %                 if showImageDetections
-                %                     resultsText = sprintf('Test %d %d %d\nDist:%dmm angle:%d expos:%0.1f light:%d %s\nmarkers:%d/%d/%d/%d/%d\nspurrious:%d',...
-                %                         iTest, iPose, iTestFunction,...
-                %                         jsonData.Poses{iPose}.Scene.Distance,...
-                %                         jsonData.Poses{iPose}.Scene.angle,...
-                %                         jsonData.Poses{iPose}.Scene.CameraExposure,...
-                %                         jsonData.Poses{iPose}.Scene.light,...
-                %                         testFunctionNames{iTestFunction},...
-                %                         curCompiled.numCorrect_positionLabelRotation, curCompiled.numCorrect_positionLabel, curCompiled.numCorrect_position, curCompiled.numQuadsDetected, curCompiled.numQuadsNotIgnored,...
-                %                         curCompiled.numSpurriousDetections);
-                %
-                %                     text(0, size(image,1)*showImageDetectionsScale, resultsText, 'Color', [.95,.95,.95], 'FontSize', 8*showImageDetectionsScale, 'VerticalAlignment', 'top');
-                %
-                %
-                %                     set(figureHandle, 'PaperUnits', 'inches', 'PaperPosition', [0,0,size(imageWithBorder,2)/100,size(imageWithBorder,1)/100])
-                %                     print(figureHandle, '-dpng', '-r100', outputFilenameResult)
-                %
-                %                     disp(resultsText);
-                %                     disp(' ');
-                %
-                %                     pause(.03);
-                %                     %                     pause();
-                %                 end % if showImageDetections
             end % for iTestFunction = 1:length(perTestStats{iTest}{iPose})
         end % for iPose = 1:length(perTestStats{iTest})
     end % for iTest = 1:length(resultsData)
@@ -274,8 +213,9 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
     fileId = fopen(outputFilenameNameLookup, 'w');
     fprintf(fileId, filenameNameLookup);
     fclose(fileId);
-    
-function [numNotIgnored, numGood] = compileQuadResults(curResultsData, showImageDetections, showImageDetectionsScale)
+end % compilePerTestStats()
+
+function [numNotIgnored, numGood] = compileQuadResults(curResultsData)
     global maxMatchDistance_pixels;
     global maxMatchDistance_percent;
     
@@ -301,42 +241,9 @@ function [numNotIgnored, numGood] = compileQuadResults(curResultsData, showImage
             end
         end
     end % for iQuad = 1:numTotal
-    
-    %     if showImageDetections
-    %         for iQuad = 1:length(curResultsData.detectedQuads)
-    %             plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [.95,.95,.95], 'LineWidth', 3); % .95 not 1, because printing converts pure white into pure black
-    %             plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [0,0,0], 'LineWidth', 1);
-    %
-    %             if curResultsData.detectedQuadValidity(iQuad) > 0
-    %                 minX = min(curResultsData.detectedQuads{iQuad}(:,1));
-    %
-    %                 indsX = find((minX+3) >= curResultsData.detectedQuads{iQuad}(:,1));
-    %
-    %                 if length(indsX) == 1
-    %                     minY = min(curResultsData.detectedQuads{iQuad}(indsX(1),2));
-    %                 else
-    %                     minY = min(curResultsData.detectedQuads{iQuad}(indsX,2));
-    %
-    %                     indsY = find(minY == curResultsData.detectedQuads{iQuad}(indsX,2));
-    %
-    %                     minX = min(curResultsData.detectedQuads{iQuad}(indsX(indsY(1)),1));
-    %                     minY = min(curResultsData.detectedQuads{iQuad}(indsX(indsY(1)),2));
-    %                 end
-    %
-    %                 minX = minX*showImageDetectionsScale;
-    %                 minY = minY*showImageDetectionsScale;
-    %
-    %                 rectangle('Position', [minX-2, minY-10, 15, 15], 'FaceColor', 'k');
-    %
-    %                 if curResultsData.detectedQuadValidity(iQuad) < 100000
-    %                     validText = sprintf('%d', curResultsData.detectedQuadValidity(iQuad));
-    %                     text(minX, minY, validText, 'Color', [.95,.95,.95], 'FontSize', 16.0);
-    %                 end
-    %             end % if curResultsData.detectedQuadValidity(iQuad) > 0
-    %         end % for iQuad = 1:length(curResultsData.detectedQuads)
-    %     end % if showImageDetections
-    
-function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect_position, numSpurriousDetections, numUndetected, markersToDisplay] = compileMarkerResults(curResultsData, showImageDetections, showImageDetectionsScale)
+end % compileQuadResults()
+
+function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect_position, numSpurriousDetections, numUndetected, markersToDisplay] = compileMarkerResults(curResultsData)
     global maxMatchDistance_pixels;
     global maxMatchDistance_percent;
     
@@ -346,12 +253,10 @@ function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect
     numSpurriousDetections = 0;
     numUndetected = 0;
     
-%     displayMarkerTypes = zeros([length(curResultsData.detectedMarkers), 1], 'int32');
-    
     matchedIndexes = [];
-
+    
     markersToDisplay = cell(0,3); % {quad, type, name}
-        
+    
     % Check all ground truth markers
     for iMarker = 1:length(curResultsData.markerNames_groundTruth)
         curDistance = curResultsData.markers_bestDistances_max(iMarker,:);
@@ -368,23 +273,11 @@ function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect
                     curDistance(3) <= (curFiducialSize(2) * maxMatchDistance_percent)
                 
                 matchIndex = curResultsData.markers_bestIndexes(iMarker);
-                %                     corners = curResultsData.detectedMarkers{matchIndex}.corners;
-                %                     plotText = 'IGNORE';
-%                 assert(displayMarkerTypes(matchIndex) == 0);
-%                 displayMarkerTypes(matchIndex) = 1;
                 markersToDisplay(end+1,:) = {curResultsData.detectedMarkers{matchIndex}.corners, 1, 'IGNORE'}; %#ok<AGROW>
                 
                 matchedIndexes(end+1) = matchIndex; %#ok<AGROW>
             else
-                %                     corners = curResultsData.markerLocations_groundTruth{iMarker};
-                %                     plotText = 'REJECT';
-%                 assert(displayMarkerTypes(matchIndex) == 0);
-%                 displayMarkerTypes(matchIndex) = 2;
                 markersToDisplay(end+1,:) = {curResultsData.markerLocations_groundTruth{iMarker}, 2, 'REJECT'}; %#ok<AGROW>
-            end
-            
-            if showImageDetections
-                %                 drawOneMarker(corners, plotText, showImageDetectionsScale, [.7,.7,.7], 'k'); % 1
             end
             
             continue;
@@ -406,32 +299,14 @@ function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect
                     numCorrect_positionLabelRotation = numCorrect_positionLabelRotation + 1;
                     numCorrect_positionLabel = numCorrect_positionLabel + 1;
                     numCorrect_position = numCorrect_position + 1;
-                    
-                    %                     if showImageDetections
-                    %                         drawOneMarker(curResultsData.detectedMarkers{matchIndex}.corners, curResultsData.markerNames_detected{matchIndex}(8:end), showImageDetectionsScale, 'g', 'k'); % 3
-                    %                     end
-%                     assert(displayMarkerTypes(matchIndex) == 0);
-%                     displayMarkerTypes(matchIndex) = 3;
                     markersToDisplay(end+1,:) = {curResultsData.detectedMarkers{matchIndex}.corners, 3, curResultsData.markerNames_detected{matchIndex}(8:end)}; %#ok<AGROW>
                 else
                     numCorrect_positionLabel = numCorrect_positionLabel + 1;
                     numCorrect_position = numCorrect_position + 1;
-                    
-                    %                     if showImageDetections
-                    %                         drawOneMarker(curResultsData.detectedMarkers{matchIndex}.corners, curResultsData.markerNames_detected{matchIndex}(8:end), showImageDetectionsScale, 'b', 'k'); % 4
-                    %                     end
-%                     assert(displayMarkerTypes(matchIndex) == 0);
-%                     displayMarkerTypes(matchIndex) = 4;
                     markersToDisplay(end+1,:) = {curResultsData.detectedMarkers{matchIndex}.corners, 4, curResultsData.markerNames_detected{matchIndex}(8:end)}; %#ok<AGROW>
                 end
             else
                 numCorrect_position = numCorrect_position + 1;
-                
-                %                 if showImageDetections
-                %                     drawOneMarker(curResultsData.detectedMarkers{matchIndex}.corners, curResultsData.markerNames_detected{matchIndex}(8:end), showImageDetectionsScale, 'y', 'k'); % 5
-                %                 end
-%                 assert(displayMarkerTypes(matchIndex) == 0);
-%                 displayMarkerTypes(matchIndex) = 5;
                 markersToDisplay(end+1,:) = {curResultsData.detectedMarkers{matchIndex}.corners, 5, curResultsData.markerNames_detected{matchIndex}(8:end)}; %#ok<AGROW>
             end
         else
@@ -442,41 +317,11 @@ function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect
     clear matchIndex;
     
     % Look for spurrious detections
-%     allDetectedIndexes = unique(curResultsData.markers_bestIndexes);
     allDetectedIndexes = unique(matchedIndexes);
     for iMarker = 1:length(curResultsData.markerNames_detected)
         if isempty(find(iMarker == allDetectedIndexes, 1))
             numSpurriousDetections = numSpurriousDetections + 1;
-            
-            %             if showImageDetections
-            %                 drawOneMarker(curResultsData.detectedMarkers{iMarker}.corners, curResultsData.markerNames_detected{iMarker}(8:end), showImageDetectionsScale, 'r', 'k'); % 6
-            %             end
-%             assert(displayMarkerTypes(iMarker) == 0);
-%             displayMarkerTypes(iMarker) = 6;
             markersToDisplay(end+1,:) = {curResultsData.detectedMarkers{iMarker}.corners, 6, curResultsData.markerNames_detected{iMarker}(8:end)}; %#ok<AGROW>
         end
     end
-    
-    % function drawOneMarker(corners, name, showImageDetectionsScale, quadColor, topBarColor)
-    %     sortedXValues = sortrows([corners(:,1)'; 1:4]', 1);
-    %
-    %     firstCorner = sortedXValues(1,2);
-    %     secondCorner = sortedXValues(2,2);
-    %
-    %     plot(corners([1,2,4,3,1],1)*showImageDetectionsScale, corners([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', quadColor, 'LineWidth', 3);
-    %     plot(corners([1,3],1)*showImageDetectionsScale, corners([1,3],2)*showImageDetectionsScale, 'Color', topBarColor, 'LineWidth', 3);
-    %     midX = (corners(firstCorner,1) + corners(secondCorner,1)) / 2;
-    %     midY = (corners(firstCorner,2) + corners(secondCorner,2)) / 2;
-    %     text(midX*showImageDetectionsScale + 5, midY*showImageDetectionsScale, name, 'Color', quadColor);
-    
-function quads = markersToQuad(markers)
-    if ~iscell(markers)
-        markers = { markers };
-    end
-    
-    quads = cell(length(markers),1);
-    
-    for iQuad = 1:length(markers)
-        quads{iQuad} = markers{iQuad}.corners;
-    end
-    
+end % compileMarkerResults()
