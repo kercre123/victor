@@ -253,7 +253,7 @@ namespace Anki {
       
       // Update other state vars
       robot->SetCurrPathSegment( msg.currPathSegment );
-      robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK );
+      //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
       robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
       const f32 WheelSpeedToConsiderStopped = 2.f;
@@ -270,7 +270,8 @@ namespace Anki {
                                          msg.pose_frame_id,
                                          msg.pose_x, msg.pose_y, msg.pose_z,
                                          msg.pose_angle,
-                                         msg.headAngle) == RESULT_FAIL) {
+                                         msg.headAngle,
+                                         msg.liftAngle) == RESULT_FAIL) {
         PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "");
       }
       
@@ -393,14 +394,34 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockPickUp const& msg)
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockPickedUp const& msg)
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
       PRINT_INFO("Robot %d %s picking up block.\n", robot->GetID(), successStr);
+
+      Result lastResult = RESULT_OK;
+      if(msg.didSucceed) {
+        lastResult = robot->PickUpDockBlock();
+      }
+      else {
+        // TODO: what do we do on failure? Need to trigger reattempt?
+      }
       
-      // TODO: Tell blockWorld to mark the block the robot was docking to as picked up
+      return lastResult;
+    }
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockPlaced const& msg)
+    {
+      Result lastResult = RESULT_OK;
+      if(msg.didSucceed) {
+        lastResult = robot->PlaceCarriedBlock(msg.timestamp);
+      }
+      else {
+        PRINT_INFO("Robot %d FAILED placing block.\n", robot->GetID());
+        // TODO: what do we do on failure? Need to trigger reattempt?
+      }
       
-      return RESULT_OK;
+      return lastResult;
     }
     
     

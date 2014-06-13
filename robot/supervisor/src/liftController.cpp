@@ -124,11 +124,11 @@ namespace Anki {
       // Returns the angle between the shoulder joint and the wrist joint.
       f32 Height2Rad(f32 height_mm) {
         assert(height_mm >= LIFT_HEIGHT_LOWDOCK && height_mm <= LIFT_HEIGHT_CARRY);
-        return asinf((height_mm - LIFT_JOINT_HEIGHT - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
+        return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
       }
       
       f32 Rad2Height(f32 angle) {
-        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_JOINT_HEIGHT + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
+        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
       }
       
       

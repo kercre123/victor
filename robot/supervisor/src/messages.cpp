@@ -435,7 +435,11 @@ namespace Anki {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessBlockPickUpMessage(const BlockPickUp& msg) {
+      void ProcessBlockPickedUpMessage(const BlockPickedUp& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
+      
+      void ProcessBlockPlacedMessage(const BlockPlaced& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
     

@@ -131,6 +131,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       jsonMsg["markerType"] = Vision::StringToMarkerType.at(jsonMsg["markerType"].asString());
       
       MessageVisionMarker msg(jsonMsg);
+      msg.timestamp = 0;
       
       Quad2f corners;
       corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
