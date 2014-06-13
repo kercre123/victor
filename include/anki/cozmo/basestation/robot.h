@@ -72,7 +72,7 @@ namespace Anki {
       IPathPlanner* GetPathPlanner() { return _pathPlanner; }
       
       // Clears the path that the robot is executing which also stops the robot
-      Result ClearPath(const bool waitingForReplan = false);
+      Result ClearPath();
 
       // Removes the specified number of segments from the front and back of the path
       Result TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments);
@@ -86,7 +86,7 @@ namespace Anki {
       
       void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
       s8   GetCurrPathSegment() {return _currPathSegment;}
-      bool IsTraversingPath() {return _currPathSegment >= 0 || _isWaitingForReplan;}
+      bool IsTraversingPath() {return (_currPathSegment >= 0) || _isWaitingForReplan;}
 
       void SetCarryingBlock(Block* carryBlock) {_carryingBlock = carryBlock;}
       bool IsCarryingBlock() {return _carryingBlock != nullptr;}

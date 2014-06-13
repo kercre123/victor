@@ -130,7 +130,10 @@ namespace Anki {
       {
         Planning::Path newPath;
         if(_pathPlanner->ReplanIfNeeded(newPath, GetPose())) {
-          ClearPath(true); // clear path, but flag that we are replanning
+          // clear path, but flag that we are replanning
+          ClearPath();
+          _isWaitingForReplan = true;
+          
           VizManager::getInstance()->ErasePath(_ID);
           wasTraversingPath = false;
           
@@ -153,6 +156,7 @@ namespace Anki {
         _isWaitingForReplan = false;
       } else if (wasTraversingPath && !IsTraversingPath()){
         ClearPath(); // clear path and indicate that we are not replanning
+        _isWaitingForReplan = false;
         VizManager::getInstance()->ErasePath(_ID);
         wasTraversingPath = false;
       }
@@ -309,10 +313,8 @@ namespace Anki {
     }
     
     // Clears the path that the robot is executing which also stops the robot
-    Result Robot::ClearPath(const bool waitingForReplan)
+    Result Robot::ClearPath()
     {
-      _isWaitingForReplan = waitingForReplan;
-      
       return SendClearPath();
     }
     
