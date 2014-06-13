@@ -622,9 +622,10 @@ namespace Anki {
                                           const PoseFrameID_t frameID,
                                           const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                           const f32 pose_angle,
-                                          const f32 head_angle)
+                                          const f32 head_angle,
+                                          const f32 lift_angle)
     {
-      return _poseHistory.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle);
+      return _poseHistory.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
     }
     
     Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,

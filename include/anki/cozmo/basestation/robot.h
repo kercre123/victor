@@ -171,7 +171,8 @@ namespace Anki {
                                      const PoseFrameID_t frameID,
                                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                      const f32 pose_angle,
-                                     const f32 head_angle);
+                                     const f32 head_angle,
+                                     const f32 lift_angle);
       
       Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                         const RobotPoseStamp& p);

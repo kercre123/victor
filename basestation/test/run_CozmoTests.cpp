@@ -149,7 +149,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       const Vision::Camera& camera = robot.GetCamera();
       Vision::ObservedMarker marker(msg.timestamp, msg.markerType, corners, camera);
       
-      RobotPoseStamp p(robot.GetPoseFrameID(), robot.GetPose(), robot.GetHeadAngle());
+      RobotPoseStamp p(robot.GetPoseFrameID(), robot.GetPose(), robot.GetHeadAngle(), robot.GetLiftAngle());
       robot.AddVisionOnlyPoseToHistory(msg.timestamp, p);
       
       TimeStamp_t t_actual;
