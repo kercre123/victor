@@ -509,16 +509,19 @@ namespace Anki {
           } else {
             
             if(diceBlocks.size() > 1) {
-              // Multiple dice blocks in the world, just use first for now.
-              // TODO: Issue warning?
-              CoreTechPrint("More than one dice block found, using first!\n");
+              // Multiple dice blocks in the world, keep deleting them all
+              // until we only see one
+              CoreTechPrint("More than one dice block found!\n");
+              
+              for(auto diceBlock : diceBlocks) {
+                world_->ClearBlock(diceBlock.first);
+              }
+            } else {
+              CoreTechPrint("Please move dice away for a moment.\n");
+              const BlockID_t blockID = diceBlocks.begin()->first;
+              world_->ClearBlock(blockID);
+              diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
             }
-            
-            CoreTechPrint("Please move dice away for a moment.\n");
-            const BlockID_t blockID = diceBlocks.begin()->first;
-            world_->ClearBlock(blockID);
-            diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-            
           }
           break;
         }
