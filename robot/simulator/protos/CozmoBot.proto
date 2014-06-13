@@ -839,13 +839,13 @@ Supervisor {
 	# 							} # CALIBRATION_RIG Group        
 								Connector {
 									name "gripperConnector"
-									translation 0.0014 0 -0.006
+									translation 0.0035 0 -0.0145
 									rotation 0 1 0 1.57
 									model "magnetic"
-									distanceTolerance 0.003
+									distanceTolerance 0.0038
 									type "active"
 									isLocked FALSE
-									autoLock FALSE
+									autoLock TRUE
 								}
 
 								] # SmallFingerGripper Children
