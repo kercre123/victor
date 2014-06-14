@@ -31,9 +31,17 @@ namespace Anki {
       virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) = 0;
 
       // Replan if needed because the environment changed. Returns
-      // true if there is a new path, otherwise it doesn't update the
-      // path and returns false. Assumes the goal pose didn't change
-      virtual bool ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) {return false;};
+      // DID_REPLAN if there is a new path and REPLAN_NOT_NEEDED if no replan was
+      // necessary and the path has not changed.  If a new path is needed but
+      // could not be computed a corresponding enum value is returned.
+      // Assumes the goal pose didn't change.
+      enum EReplanStatus {
+        REPLAN_NOT_NEEDED,
+        DID_REPLAN,
+        REPLAN_NEEDED_BUT_START_FAILURE,
+        REPLAN_NEEDED_BUT_GOAL_FAILURE
+      };
+      virtual EReplanStatus ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) {return REPLAN_NOT_NEEDED;};
       
       void AddIgnoreType(const ObjectType_t objType)    { _ignoreTypes.insert(objType); }
       void RemoveIgnoreType(const ObjectType_t objType) { _ignoreTypes.erase(objType); }
@@ -73,7 +81,7 @@ namespace Anki {
       
       virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) override;
 
-      virtual bool ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) override;
+      virtual EReplanStatus ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) override;
 
     protected:
       LatticePlannerImpl* impl_;

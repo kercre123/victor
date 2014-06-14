@@ -167,8 +167,10 @@ namespace Anki {
       // a block.
       Result PickUpDockBlock();
       
-      // TODO: Implement a method for placing the block we were carrying
-      Result PlaceCarriedBlock(const TimeStamp_t atTime);
+      // Places the block that the robot was carrying in its current position
+      // w.r.t. the world, and removes it from the lift pose chain so it is no
+      // longer attached to the robot.  IsCarryingBlock() will now report false.
+      Result PlaceCarriedBlock(); //const TimeStamp_t atTime);
       
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);

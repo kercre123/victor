@@ -116,7 +116,7 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
   return RESULT_OK;
 }
 
-bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) 
+LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose)
 {
 
   // TODO:(bn) don't do this every time! Get an update from BlockWorld
@@ -141,7 +141,7 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
   }
 
   if(!impl_->planner_.PlanIsSafe()) {
-    printf("old plan unsafe! Will replan.\n");
+    printf("Old plan unsafe! Will replan.\n");
 
     State_c start(startPose.get_translation().x(),
                   startPose.get_translation().y(),
@@ -150,10 +150,12 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
     path.Clear();
 
     if(!impl_->planner_.SetStart(start)) {
-      printf("ERROR: ReplanIfNeeded, invalid start!\n");      
+      printf("ERROR: ReplanIfNeeded, invalid start!\n");
+      return REPLAN_NEEDED_BUT_START_FAILURE;
     }
     else if(!impl_->planner_.GoalIsValid()) {
       printf("ERROR: ReplanIfNeeded, invalid goal!\n");
+      return REPLAN_NEEDED_BUT_GOAL_FAILURE;
     }
     else {
       impl_->planner_.SetReplanFromScratch();
@@ -170,10 +172,10 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
       }
     }
 
-    return true;
+    return DID_REPLAN;
   }
 
-  return false;
+  return REPLAN_NOT_NEEDED;
 }
 
 }

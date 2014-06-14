@@ -135,26 +135,64 @@ namespace Anki {
         {
           static bool wasTraversingPath = false;
           
-          // If the robot is traversing a path, consider replanning it
-          if(_world->DidBlocksChange() && IsTraversingPath())
+          if(IsTraversingPath())
           {
-            Planning::Path newPath;
-            if(_pathPlanner->ReplanIfNeeded(newPath, GetPose())) {
-              // clear path, but flag that we are replanning
-              ClearPath();
-              _isWaitingForReplan = true;
-              
-              VizManager::getInstance()->ErasePath(_ID);
-              wasTraversingPath = false;
-              
-              PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
-              MessageClearPath clearMessage;
-              _msgHandler->SendMessage(_ID, clearMessage);
-              
-              _path = newPath;
-              PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
-              SendExecutePath(_path);
-            }
+            // If the robot is traversing a path, consider replanning it
+            if(_world->DidBlocksChange())
+            {
+              Planning::Path newPath;
+              switch(_pathPlanner->ReplanIfNeeded(newPath, GetPose()))
+              {
+                case IPathPlanner::DID_REPLAN:
+                {
+                  // clear path, but flag that we are replanning
+                  ClearPath();
+                  _isWaitingForReplan = true;
+                  wasTraversingPath = false;
+                  
+                  PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
+                  MessageClearPath clearMessage;
+                  _msgHandler->SendMessage(_ID, clearMessage);
+                  
+                  _path = newPath;
+                  PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
+                  SendExecutePath(_path);
+                  break;
+                } // case DID_REPLAN:
+                  
+                case IPathPlanner::REPLAN_NEEDED_BUT_GOAL_FAILURE:
+                {
+                  ClearPath();
+                  if(_nextState == BEGIN_DOCKING) {
+                    PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileDocking",
+                                     "Replan failed during docking due to bad goal. Will try to update goal.");
+                    ExecuteDockingSequence(_dockBlock);
+                  } else {
+                    PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
+                                     "Replan failed due to bad goal. Aborting path.");
+                    SetState(IDLE);
+                  }
+                  break;
+                } // REPLAN_NEEDED_BUT_GOAL_FAILURE:
+                  
+                case IPathPlanner::REPLAN_NEEDED_BUT_START_FAILURE:
+                {
+                  PRINT_NAMED_INFO("Robot.Update.NewStartForReplanNeeded",
+                                   "Replan failed during docking due to bad start. Will try again, and hope robot moves.");
+                  // NOTE: this purposefully falls through to default case
+                }
+                  
+                default:
+                {
+                  // Don't do anything just proceed with the current plan...
+                  break;
+                }
+                  
+              } // switch(ReplanIfNeeded()
+            } // if blocks changed
+          } else { // IsTraversingPath is false?
+            PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
+                             "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
           }
           
           // Visualize path if robot has just started traversing it.
@@ -170,7 +208,6 @@ namespace Anki {
             PRINT_INFO("Robot %d finished following path.\n", _ID);
             ClearPath(); // clear path and indicate that we are not replanning
             _isWaitingForReplan = false;
-            VizManager::getInstance()->ErasePath(_ID);
             wasTraversingPath = false;
             SetState(_nextState);
           }
@@ -398,6 +435,7 @@ namespace Anki {
     Result Robot::ClearPath()
     {
       // TODO: SetState(IDLE) ?
+      VizManager::getInstance()->ErasePath(_ID);
       return SendClearPath();
     }
     
@@ -414,6 +452,7 @@ namespace Anki {
       return SendExecutePath(path);
     }
     
+  
     Result Robot::ExecuteDockingSequence(Block* blockToDockWith)
     {
       Result lastResult = RESULT_OK;
@@ -421,36 +460,67 @@ namespace Anki {
       CORETECH_ASSERT(blockToDockWith != nullptr);
       
       _dockBlock = blockToDockWith;
+      _dockMarker = nullptr; // should get set to a predock pose below
       
       std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
       _dockBlock->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
       
-      // Select (closest) predock pose
-      if (!preDockPoseMarkerPairs.empty()) {
+      // Select (closest) predock pose that is not within an obstacle
+      if (preDockPoseMarkerPairs.empty()) {
+        
+        PRINT_NAMED_INFO("Robot.ExecuteDockingSequence.NoPreDockPoses",
+                         "Dock block did not provide any pre-dock poses!\n");
+        return RESULT_FAIL;
+        
+      } else {
+        std::vector<Quad2f> boundingBoxes;
+        std::set<ObjectID_t> ignoreIDs = {_dockBlock->GetID()};
+        _world->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z, ROBOT_BOUNDING_RADIUS,
+                                        boundingBoxes, std::set<ObjectType_t>(), ignoreIDs);
+        
         f32 shortestDist2Pose = -1;
         for (auto const & poseMarkerPair : preDockPoseMarkerPairs) {
           
-          PRINT_INFO("Candidate pose: (%f %f %f), (%f %f %f %f)\n",
-                     poseMarkerPair.first.get_translation().x(),
-                     poseMarkerPair.first.get_translation().y(),
-                     poseMarkerPair.first.get_translation().z(),
-                     poseMarkerPair.first.get_rotationAxis().x(),
-                     poseMarkerPair.first.get_rotationAxis().y(),
-                     poseMarkerPair.first.get_rotationAxis().z(),
-                     poseMarkerPair.first.get_rotationAngle().ToFloat() );
+          Point2f xyPoint(poseMarkerPair.first.get_translation().x(),
+                          poseMarkerPair.first.get_translation().y());
           
-          const f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, _pose);
-          if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
-            shortestDist2Pose = dist2Pose;
-            _goalPose   = poseMarkerPair.first;
-            _dockMarker = &(poseMarkerPair.second);
+          bool isTooCloseToAnotherBlock = false;
+          for(auto boundingBox : boundingBoxes) {
+            if(boundingBox.Contains(xyPoint)) {
+              isTooCloseToAnotherBlock = true;
+              break;
+            }
           }
+          
+          if(!isTooCloseToAnotherBlock) {
+            PRINT_INFO("Candidate pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f)\n",
+                       poseMarkerPair.first.get_translation().x(),
+                       poseMarkerPair.first.get_translation().y(),
+                       poseMarkerPair.first.get_translation().z(),
+                       poseMarkerPair.first.get_rotationAngle().getDegrees(),
+                       poseMarkerPair.first.get_rotationAxis().x(),
+                       poseMarkerPair.first.get_rotationAxis().y(),
+                       poseMarkerPair.first.get_rotationAxis().z());
+            
+            f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, _pose);
+            if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
+              shortestDist2Pose = dist2Pose;
+              _goalPose = poseMarkerPair.first;
+              _dockMarker = &(poseMarkerPair.second);
+            }
+          } // if !isTooCloseToAnotherBlock
+        } // for each poseMarkerPair
+        
+        if(shortestDist2Pose < 0) {
+          PRINT_NAMED_INFO("Robot.ExecuteDockingSequence.NoAvailablePreDockPoses",
+                           "All pre-dock poses for dock block that are inside an obstacle!\n");
+          return RESULT_FAIL;
         }
-      } else {
-        PRINT_INFO("No docking pose found\n");
-        SetState(IDLE);
-        return RESULT_FAIL;
-      }
+        
+      } // if there are any pre=dock poses
+      
+      // By now dock marker should be set
+      CORETECH_ASSERT(_dockMarker != nullptr);
       
       _goalDistanceThreshold = 10.f;
       _goalAngleThreshold    = DEG_TO_RAD(10);
@@ -547,15 +617,15 @@ namespace Anki {
     } // PickUpDockBlock()
     
     
-    Result Robot::PlaceCarriedBlock(const TimeStamp_t atTime)
+    Result Robot::PlaceCarriedBlock() //const TimeStamp_t atTime)
     {
       if(_carryingBlock == nullptr) {
         PRINT_NAMED_WARNING("Robot.NotCarryingBlockToPlace", "No carrying block set, but told to place one.");
         return RESULT_FAIL;
       }
       
+      /*
       Result lastResult = RESULT_OK;
-      
       
       TimeStamp_t histTime;
       RobotPoseStamp* histPosePtr = nullptr;
@@ -573,12 +643,21 @@ namespace Anki {
       
       Pose3d blockPoseAtTime(_carryingBlock->GetPose());
       blockPoseAtTime.set_parent(&liftPoseAtTime);
-      
+       
       _carryingBlock->SetPose(blockPoseAtTime.getWithRespectTo(Pose3d::World));
-      _carryingBlock = nullptr;
+      */
+      
+      _carryingBlock->SetPose(_carryingBlock->GetPose().getWithRespectTo(Pose3d::World));
       _carryingBlock->SetIsBeingCarried(false);
       
-      PRINT_NAMED_INFO("Robot.PlaceCarriedBlock.BlockPlaced", "Robot %d successfully placed block.\n", _ID);
+      PRINT_NAMED_INFO("Robot.PlaceCarriedBlock.BlockPlaced",
+                       "Robot %d successfully placed block %d at (%.2f, %.2f, %.2f).\n",
+                       _ID, _carryingBlock->GetID(),
+                       _carryingBlock->GetPose().get_translation().x(),
+                       _carryingBlock->GetPose().get_translation().y(),
+                       _carryingBlock->GetPose().get_translation().z());
+
+      _carryingBlock = nullptr;
       
       return RESULT_OK;
       
