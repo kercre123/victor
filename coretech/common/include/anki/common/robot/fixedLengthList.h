@@ -60,7 +60,11 @@ namespace Anki
     template<typename Type> FixedLengthList<Type>::FixedLengthList(s32 maximumSize, void * data, s32 dataLength, const Flags::Buffer flags)
       : ArraySlice<Type>(Array<Type>(1, maximumSize, data, dataLength, flags), LinearSequence<s32>(0,0), LinearSequence<s32>(0,0))
     {
-      this->arrayData = this->array.Pointer(0,0);
+      if(this->array.get_numElements() == 0) {
+        this->arrayData = NULL;
+      } else {
+        this->arrayData = this->array.Pointer(0,0);
+      }
 
       if(flags.get_isFullyAllocated()) {
         this->set_size(maximumSize);
@@ -72,7 +76,11 @@ namespace Anki
     template<typename Type> FixedLengthList<Type>::FixedLengthList(s32 maximumSize, MemoryStack &memory, const Flags::Buffer flags)
       : ArraySlice<Type>(Array<Type>(1, maximumSize, memory, flags), LinearSequence<s32>(0,0), LinearSequence<s32>(0,0))
     {
-      this->arrayData = this->array.Pointer(0,0);
+      if(this->array.get_numElements() == 0) {
+        this->arrayData = NULL;
+      } else {
+        this->arrayData = this->array.Pointer(0,0);
+      }
 
       if(flags.get_isFullyAllocated()) {
         this->set_size(maximumSize);

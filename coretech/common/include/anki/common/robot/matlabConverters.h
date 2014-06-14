@@ -130,7 +130,7 @@ namespace Anki {
 
       if(mxIsCell(matlabArray)) {
         AnkiError("mxCellArrayToArray", "Input can't be a cell array. Use mxCellArrayToArray() instead.");
-        return Array<Type>();
+        return Array<Type>(dimensions[0], dimensions[1], memory);
       }
 
       mxClassID matlabClassId;
@@ -177,10 +177,14 @@ namespace Anki {
         return Array<Array<Type> >();
       }
 
+      if(dimensions[0] == 0 || dimensions[1] == 0) {
+        return Array<Array<Type> >(dimensions[0], dimensions[1], memory);
+      }
+
       mxClassID matlabClassId;
       mxClassID templateClassId;
 
-      const mxArray * firstElement = mxGetCell(matlabArray, 1);
+      const mxArray * firstElement = mxGetCell(matlabArray, 0);
       matlabClassId = mxGetClassID(firstElement);
       templateClassId = getMatlabClassID<Type>();
 
@@ -229,9 +233,13 @@ namespace Anki {
         return Array<char *>();
       }
 
+      if(dimensions[0] == 0 || dimensions[1] == 0) {
+        return Array<char *>();
+      }
+
       mxClassID matlabClassId;
 
-      const mxArray * firstElement = mxGetCell(matlabArray, 1);
+      const mxArray * firstElement = mxGetCell(matlabArray, 0);
       matlabClassId = mxGetClassID(firstElement);
 
       if(matlabClassId != mxCHAR_CLASS) {
