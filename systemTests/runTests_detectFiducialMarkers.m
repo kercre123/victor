@@ -33,35 +33,40 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     if recompileBasics
         tic
         
-        partFilenameInput = sprintf('%s_input.mat', basicsFilename);
-        save(partFilenameInput, 'markerDirectoryList', 'testJsonPattern');
-        
-        % launch threads
-        for iThread = 0:(numComputeThreads-1)
-            partFilename = sprintf('%s_outputPart%d.mat', basicsFilename, iThread);
-            delete(partFilename);
-            commandString = sprintf('matlab -nojvm -noFigureWindows -nosplash -r "load(''%s''); [resultsData_part, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, %d, %d); save(''%s'', ''resultsData_part'', ''testPath'', ''allTestFilenames'', ''testFunctions'', ''testFunctionNames''); exit;"', partFilenameInput, iThread, numComputeThreads, partFilename);
-            system(['start /b ', commandString]);
-        end
-        
-        % wait for threads to complete and compile results
-        for iThread = 0:(numComputeThreads-1)
-            partFilename = sprintf('%s_outputPart%d.mat', basicsFilename, iThread);
-            
-            while ~exist(partFilename, 'file')
-                pause(.1);
+        % If one thread, just compute locally
+        if numComputeThreads == 1
+            [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, 0, 1); %#ok<ASGLU>
+        else
+            partFilenameInput = sprintf('%s_input.mat', basicsFilename);
+            save(partFilenameInput, 'markerDirectoryList', 'testJsonPattern');
+
+            % launch threads
+            for iThread = 0:(numComputeThreads-1)
+                partFilename = sprintf('%s_outputPart%d.mat', basicsFilename, iThread);
+                delete(partFilename);
+                commandString = sprintf('matlab -nojvm -noFigureWindows -nosplash -r "load(''%s''); [resultsData_part, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, %d, %d); save(''%s'', ''resultsData_part'', ''testPath'', ''allTestFilenames'', ''testFunctions'', ''testFunctionNames''); exit;"', partFilenameInput, iThread, numComputeThreads, partFilename);
+                system(['start /b ', commandString]);
             end
-            
-            % Wait for the file system to catch up or something?
-            pause(2);
-            
-            load(partFilename)
-            
-            if iThread == 0
-                resultsData = resultsData_part;
-            else
-                for iTest = 1:length(allTestFilenames)
-                    resultsData{iTest}((iThread+1):numComputeThreads:end) = resultsData_part{iTest}((iThread+1):numComputeThreads:end);
+
+            % wait for threads to complete and compile results
+            for iThread = 0:(numComputeThreads-1)
+                partFilename = sprintf('%s_outputPart%d.mat', basicsFilename, iThread);
+
+                while ~exist(partFilename, 'file')
+                    pause(.1);
+                end
+
+                % Wait for the file system to catch up or something?
+                pause(2);
+
+                load(partFilename)
+
+                if iThread == 0
+                    resultsData = resultsData_part;
+                else
+                    for iTest = 1:length(allTestFilenames)
+                        resultsData{iTest}((iThread+1):numComputeThreads:end) = resultsData_part{iTest}((iThread+1):numComputeThreads:end);
+                    end
                 end
             end
         end
@@ -128,9 +133,7 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
         %     for iTest = length(resultsData)
         perTestStats{iTest} = cell(length(resultsData{iTest}), 1);
         
-        if showImageDetections
-            jsonData = loadjson(allTestFilenames{iTest});
-        end
+        jsonData = loadjson(allTestFilenames{iTest});
         
         for iPose = 1:length(perTestStats{iTest})
             perTestStats{iTest}{iPose} = cell(length(resultsData{iTest}{iPose}), 1);
@@ -219,7 +222,7 @@ function [numNotIgnored, numGood] = compileQuadResults(curResultsData)
     global maxMatchDistance_pixels;
     global maxMatchDistance_percent;
     
-    numTotal = length(curResultsData.justQuads_bestDistances_max);
+    numTotal = length(curResultsData.markerNames_groundTruth);
     numNotIgnored = 0;
     numGood = 0;
     

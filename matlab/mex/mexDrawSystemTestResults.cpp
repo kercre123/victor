@@ -140,6 +140,9 @@ void DrawQuads(
 
   const s32 numQuads = detectedQuads.get_size();
 
+  if(numQuads == 0)
+    return;
+
   const Quadrilateral<f32> * pDetectedQuads = detectedQuads.Pointer(0);
   const s32 * pDetectedQuads_types = detectedQuads_types.Pointer(0);
 
@@ -186,6 +189,9 @@ void DrawMarkers(
   AnkiAssert(detectedMarkers.get_size() == detectedMarkers_types.get_size());
 
   const s32 numMarkers = detectedMarkers.get_size();
+
+  if(numMarkers == 0)
+    return;
 
   for(s32 iMarker=0; iMarker<numMarkers; iMarker++) {
     cv::Scalar quadColor;

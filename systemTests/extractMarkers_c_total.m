@@ -28,15 +28,16 @@ function [allQuads, quadValidity, markers] = extractMarkers_c_total(image, useRe
     if useMatlabForQuadExtraction
         allQuadsMatlabRaw = simpleDetector(image, 'returnInvalid', true, 'quadRefinementIterations', quadRefinementIterations);
         
-%         quadValidity = zeros([length(allQuadsRaw), 1], 'int32');
+        if isempty(allQuadsMatlabRaw)
+            allQuads = {};
+            quadValidity = int32([]);
+            markers = {};
+            return;           
+        end
 
         allQuadsMatlab = cell(length(allQuadsMatlabRaw), 1);
         for iQuad = 1:length(allQuadsMatlabRaw)
             allQuadsMatlab{iQuad} = allQuadsMatlabRaw{iQuad}.corners;
-
-%             if ~allQuadsRaw{iQuad}.isValid
-%                 quadValidity(iQuad) = 9;
-%             end
         end
         
         for i = 1:length(allQuadsMatlab)

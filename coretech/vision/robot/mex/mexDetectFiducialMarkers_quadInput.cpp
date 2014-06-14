@@ -180,7 +180,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
 
     if(nlhs >= 4) {
-      plhs[3] = mxCreateCellArray(markersMatlab_ndim, markersMatlab_dims);
+      plhs[3] = mxCreateNumericArray(2, markersMatlab_dims, mxINT32_CLASS, mxREAL);
     }
   } // if(numMarkers != 0) ... else
 
