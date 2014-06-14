@@ -97,19 +97,23 @@ namespace Anki {
         
         //PRINT_INFO("currType: %d\n", blockType.first);
         auto const & blockMapByID = blockType.second;
-        for (auto const & block : blockMapByID) {
+        for (auto const & object : blockMapByID) {
 
-          //PRINT_INFO("currID: %d\n", block.first);
-          if (currBlockOfInterestFound) {
-            // Current block of interest has been found.
-            // Set the new block of interest to the next block in the list.
-            blockOfInterest_ = block.first;
-            newBlockOfInterestSet = true;
-            //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
-            break;
-          } else if (block.first == blockOfInterest_) {
-            currBlockOfInterestFound = true;
-            //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+          const Block* block = dynamic_cast<Block*>(object.second);
+          if(block != nullptr && !block->GetIsBeingCarried())
+          {
+            //PRINT_INFO("currID: %d\n", block.first);
+            if (currBlockOfInterestFound) {
+              // Current block of interest has been found.
+              // Set the new block of interest to the next block in the list.
+              blockOfInterest_ = block->GetID();
+              newBlockOfInterestSet = true;
+              //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
+              break;
+            } else if (block->GetID() == blockOfInterest_) {
+              currBlockOfInterestFound = true;
+              //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+            }
           }
         }
         if (newBlockOfInterestSet)
@@ -144,7 +148,43 @@ namespace Anki {
       
       PRINT_INFO("Block of interest: id %d  (total objects %d)\n", blockOfInterest_, numTotalObjects);
       
-    }
+      /*
+      // Draw BOI
+      const Block* block = dynamic_cast<Block*>(world_->GetObservableObjectByID(blockOfInterest_));
+      if(block == nullptr) {
+        PRINT_INFO("Failed to find/draw block of interest!\n");
+      } else {
+
+        static ObjectID_t prev_boi = 0;      // Previous block of interest
+        static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
+
+        // Get predock poses
+        std::vector<Block::PoseMarkerPair_t> poses;
+        block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
+        
+        // Erase previous predock pose marker for previous block of interest
+        if (prev_boi != blockOfInterest_ || poses.size() != prevNumPreDockPoses) {
+          PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", blockOfInterest_, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
+          VizManager::getInstance()->EraseVizObjectType(VIZ_PREDOCKPOSE);
+          prev_boi = blockOfInterest_;
+          prevNumPreDockPoses = poses.size();
+        }
+        
+        // Draw predock poses
+        u32 poseID = 0;
+        for(auto pose : poses) {
+          VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose.first, VIZ_COLOR_PREDOCKPOSE);
+          ++poseID;
+        }
+      
+        // Draw cuboid
+        VizManager::getInstance()->DrawCuboid(block->GetID(),
+                                              block->GetSize(),
+                                              block->GetPose().getWithRespectTo(Pose3d::World),
+                                              VIZ_COLOR_SELECTED_OBJECT);
+      }
+       */
+    } // SelectNextBlockOfInterest()
     
     void BehaviorManager::Update()
     {
@@ -168,7 +208,8 @@ namespace Anki {
           break;
       }
 
-    }
+      
+    } // Update()
     
     
     /********************************************************
@@ -288,12 +329,12 @@ namespace Anki {
           
         case WAITING_TO_SEE_DICE:
         {
-          /*
+          
           // DEBUG!!!
           blockToPickUp_ = Block::NUMBER5_BLOCK_TYPE;
           blockToPlaceOn_ = Block::NUMBER6_BLOCK_TYPE;
           state_ = BEGIN_EXPLORING;
-          */
+          break;
           
           // Wait for robot to be IDLE
           if(robot_->GetState() == Robot::IDLE)

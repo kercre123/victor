@@ -17,6 +17,7 @@
 
 #include "anki/common/basestation/math/quad_impl.h"
 
+#include "vizManager.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/imgproc/imgproc.hpp"
@@ -476,6 +477,21 @@ namespace Anki {
       return *markerPtr;
       
     } // Block::GetMarker()
+    
+    
+    void Block::Visualize(const u32 color, const f32 preDockPoseDistance) const
+    {
+      VizManager::getInstance()->DrawCuboid(GetID(), _size, GetPose().getWithRespectTo(Pose3d::World), color);
+      
+      if(preDockPoseDistance > 0.f) {
+        u32 poseID = 0;
+        std::vector<Block::PoseMarkerPair_t> poses;
+        GetPreDockPoses(preDockPoseDistance, poses);
+        for(auto pose : poses) {
+          VizManager::getInstance()->DrawPreDockPose(6*GetID()+poseID++, pose.first, VIZ_COLOR_PREDOCKPOSE);
+        }
+      }
+    }
     
 #pragma mark ---  Block_Cube1x1 Implementation ---
     

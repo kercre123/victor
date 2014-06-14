@@ -272,6 +272,16 @@ namespace Anki
             //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
             unobservedObjects.emplace_back(objectTypeIter, objectIter);
           } // if object was not observed
+          else {
+            // Object was observed, update it's visualization
+
+            // TODO: make this more generic. For now, we are assuming all objects are blocks
+            const Block* block = dynamic_cast<Block*>(object);
+            if(block != nullptr) {
+              // TODO: use the block's color?
+              block->Visualize(VIZ_COLOR_DEFAULT);
+            }
+          }
         } // for object IDs of this type
       } // for each object type
       

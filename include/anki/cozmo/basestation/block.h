@@ -156,6 +156,11 @@ namespace Anki {
       Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const;
       Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding_mm) const;
       
+      // Visualize using VizManager.  If preDockPoseDistance > 0, pre dock poses
+      // will also be drawn
+      // TODO: make generic and put as virtual method in base class
+      void Visualize(const u32 color, const f32 preDockPoseDistance = 0.f) const;
+      
     protected:
       
       static const FaceName OppositeFaceLUT[NUM_FACES];
