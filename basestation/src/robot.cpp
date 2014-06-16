@@ -736,7 +736,7 @@ namespace Anki {
       m.kp = kp;
       m.ki = ki;
       m.maxIntegralError = maxIntegralError;
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
     
     Result Robot::SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
@@ -745,7 +745,7 @@ namespace Anki {
       m.kp = kp;
       m.ki = ki;
       m.maxIntegralError = maxIntegralError;
-      return msgHandler_->SendMessage(ID_, m);
+      return _msgHandler->SendMessage(_ID, m);
     }
 
     
