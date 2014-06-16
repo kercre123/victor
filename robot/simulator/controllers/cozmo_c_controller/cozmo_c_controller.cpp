@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 {
   using namespace Anki::Cozmo;
 
-  if(Robot::Init() == Anki::RESULT_FAIL) {
+  if(Robot::Init() != Anki::RESULT_OK) {
     fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");
     return -1;
   }

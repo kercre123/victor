@@ -96,6 +96,8 @@ namespace Anki {
       
       Result Init(void)
       {
+        Result lastResult = RESULT_OK;
+        
         // Coretech setup
 #ifndef SIMULATOR
 #if(DIVERT_PRINT_TO_RADIO)
@@ -109,28 +111,25 @@ namespace Anki {
         
         // HAL and supervisor init
 #ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
-        if(HAL::Init() == RESULT_FAIL) {
-          PRINT("Hardware Interface initialization failed!\n");
-          return RESULT_FAIL;
-        }
+        lastResult = HAL::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "HAL init failed.\n");
 #endif        
-        
-        if (Localization::Init() == RESULT_FAIL) {
-          PRINT("Localization System init failed.\n");
-          return RESULT_FAIL;
-        }
+
+        lastResult = Localization::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "Localization System init failed.\n");
         
         // TODO: Get VisionSystem to work on robot
-        if(VisionSystem::Init() == RESULT_FAIL)
-        {
-          PRINT("Vision System initialization failed.\n");
-          return RESULT_FAIL;
-        }
+        lastResult = VisionSystem::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "Vision System init failed.\n");
+
         
-        if(PathFollower::Init() == RESULT_FAIL) {
-          PRINT("PathFollower initialization failed.\n");
-          return RESULT_FAIL;
-        }
+        lastResult = PathFollower::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "PathFollower System init failed.\n");
+
         
         // Initialize subsystems if/when available:
         /*
@@ -155,10 +154,15 @@ namespace Anki {
          }
          */
         
-         if(LiftController::Init() == RESULT_FAIL) {
-         PRINT("LiftController initialization failed.\n");
-         return RESULT_FAIL;
-         }
+        // Before liftController?!
+        lastResult = PickAndPlaceController::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "PickAndPlaceController init failed.\n");
+        
+        lastResult = LiftController::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "LiftController init failed.\n");
+        
         
         // Start calibration
         StartMotorCalibrationRoutine();
