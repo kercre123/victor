@@ -126,7 +126,7 @@ namespace Anki {
       static bool wasTraversingPath = false;
 
       // If the robot is traversing a path, consider replanning it
-      if(_world->DidBlocksChange() && IsTraversingPath())
+      if(_world->DidBlocksChange() && IsTraversingPath() && !IsPickingOrPlacing())
       {
         Planning::Path newPath;
         if(_pathPlanner->ReplanIfNeeded(newPath, GetPose())) {
@@ -147,14 +147,16 @@ namespace Anki {
       
       // Visualize path if robot has just started traversing it.
       // Clear the path when it has stopped.
-      if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
-        VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
-        wasTraversingPath = true;
-        _isWaitingForReplan = false;
-      } else if (wasTraversingPath && !IsTraversingPath()){
-        ClearPath(); // clear path and indicate that we are not replanning
-        VizManager::getInstance()->ErasePath(_ID);
-        wasTraversingPath = false;
+      if (!IsPickingOrPlacing()) {
+        if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
+          VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
+          wasTraversingPath = true;
+          _isWaitingForReplan = false;
+        } else if (wasTraversingPath && !IsTraversingPath()){
+          ClearPath(); // clear path and indicate that we are not replanning
+          VizManager::getInstance()->ErasePath(_ID);
+          wasTraversingPath = false;
+        }
       }
 
       
