@@ -33,6 +33,8 @@ public:
   // this is called
   void SetPath(const Planning::Path& path);
 
+  void ClearPath();
+
   // Doles out the path bit by bit to the robot. The argument is the
   // segment the robot is on (relative to the path it has)
   void Update(s8 indexOnRobotPath);
@@ -46,7 +48,6 @@ protected:
   // the robot's index 0 corresponds to this index in our path
   size_t robotIdx_;
 
-  size_t pathSizeOnRobot_;
   size_t pathSizeOnBasestation_;
 
   // A reference to the MessageHandler that the robot uses for outgoing comms

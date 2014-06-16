@@ -38,6 +38,13 @@ void PathDolerOuter::SetPath(const Planning::Path& path)
   Dole(0, MAX_NUM_PATH_SEGMENTS_ROBOT);
 }
 
+void PathDolerOuter::ClearPath()
+{
+  path_.Clear();
+  robotIdx_ = 0;
+  pathSizeOnBasestation_ = 0;
+}
+
 void PathDolerOuter::Dole(size_t validRobotPathLength, size_t numToDole)
 {
   assert(msgHandler_);
@@ -47,7 +54,8 @@ void PathDolerOuter::Dole(size_t validRobotPathLength, size_t numToDole)
     endIdx = pathSizeOnBasestation_;
   for(size_t i = robotIdx_ + validRobotPathLength; i < endIdx; ++i) {
 
-    printf("PathDolerOuter: doling out basestation idx %zu, robotIdx_ = %zu\n", i, robotIdx_);
+    printf("PathDolerOuter: doling out basestation idx %zu, robotIdx_ = %zu :  ", i, robotIdx_);
+    path_.GetSegmentConstRef(i).Print();
 
     switch(path_.GetSegmentConstRef(i).GetType()) {
 

@@ -197,6 +197,8 @@ namespace Anki {
                   
               } // switch(ReplanIfNeeded()
             } // if blocks changed
+
+            pdo_->Update(GetCurrPathSegment());
           } else { // IsTraversingPath is false?
             PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
                              "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
@@ -443,6 +445,7 @@ namespace Anki {
     {
       // TODO: SetState(IDLE) ?
       VizManager::getInstance()->ErasePath(_ID);
+      pdo_->ClearPath();
       return SendClearPath();
     }
     
