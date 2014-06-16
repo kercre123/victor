@@ -13,6 +13,8 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_PLANNER_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_PLANNER_H_
 
+#include <stddef.h>
+
 namespace Anki
 {
 namespace Planning
@@ -52,8 +54,29 @@ public:
   // Returns true if the plan is safe and complete, false
   // otherwise. This should always return true immediately after
   // Replan returns true, but if the environment is updated it can be
-  // useful to re-check the plan
-  bool PlanIsSafe() const;
+  // useful to re-check the plan.
+  // 
+  // First argument is how much of the path has already been
+  // executed. Note that this is different form the robot's
+  // currentPathSegment because our plans are different from robot
+  // paths
+  // 
+  // Second argument value will be set to last valid state along the
+  // path before collision if unsafe (or the goal if safe)
+  // 
+  // Third argument is the valid portion of the plan, up to lastSafeState
+  bool PlanIsSafe(const float maxDistancetoFollowOldPlan_mm, int currentPathIndex = 0) const;
+  bool PlanIsSafe(const float maxDistancetoFollowOldPlan_mm,
+                  int currentPathIndex,
+                  State_c& lastSafeState,
+                  xythetaPlan& validPlan) const;
+
+  // This essentially projects the given pose onto the plan (held in
+  // this member). The projection is just the closest euclidean
+  // distance point on the plan, and the return value is the number of
+  // complete plan actions that are finished by the time you get to
+  // this point
+  size_t FindClosestPlanSegmentToPose(const State_c& state) const;
 
   // Computes a path from start to goal. Returns true if path found,
   // false otherwise. Note that replanning may or may not actually
@@ -65,6 +88,7 @@ public:
   bool ComputePath() {Replan(); return true;}
 
   // must call compute path before getting the plan
+  xythetaPlan& GetPlan();
   const xythetaPlan& GetPlan() const;
 
 private:

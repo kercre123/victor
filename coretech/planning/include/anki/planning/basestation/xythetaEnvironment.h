@@ -68,7 +68,9 @@ public:
   bool operator<(const StateID& rhs) const;
 
   StateID() : theta(0), x(0), y(0) {};
+  StateID(const State& state) { *this = state.GetStateID(); };
 
+  // TODO:(bn) check that these are packed properly
   unsigned int theta : THETA_BITS;
   signed int x : MAX_XY_BITS;
   signed int y : MAX_XY_BITS;
@@ -78,6 +80,7 @@ public:
 // bottom left of the cell // TODO:(bn) think more about that, should probably add half a cell width
 class State_c
 {
+  friend std::ostream& operator<<(std::ostream& out, const State_c& state);
 public:
   State_c() : x_mm(0), y_mm(0), theta(0) {};
   State_c(float x, float y, float theta) : x_mm(x), y_mm(y), theta(theta) {};
@@ -99,7 +102,8 @@ public:
   // returns true if successful
   bool Import(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env);
 
-  void AddSegmentsToPath(State_c start, Path& path) const;
+  // returns the minimum PathSegmentOffset associated with this action
+  u8 AddSegmentsToPath(State_c start, Path& path) const;
 
   // id of this action (unique per starting angle)
   ActionID id;
@@ -172,7 +176,8 @@ class xythetaPlan
 public:
   State start_;
   std::vector<ActionID> actions_;
-  
+
+  size_t Size() const {return actions_.size();}
   void Push(ActionID action) {actions_.push_back(action);}
   void Clear() {actions_.clear();}
 };
@@ -235,7 +240,10 @@ public:
   // is a valid, collision-free action, it updates state to be the
   // successor and returns true, otherwise it returns false and does
   // not change state
-  bool ApplyAction(const ActionID& action, StateID& stateID) const;
+  bool ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions = true) const;
+
+  // returns the raw underlying motion primitive. Note that it is centered at (0,0)
+  const MotionPrimitive& GetRawMotionPrimitive(StateTheta theta, ActionID action) const;
 
   // Returns true if there is a collision at the given state
   bool IsInCollision(State s) const;
@@ -270,10 +278,12 @@ public:
   inline const ActionType& GetActionType(ActionID aid) const { return actionTypes_[aid]; }
 
   // This function fills up the given vector with (x,y,theta) coordinates of
-  // following the plan
+  // following the plan.
   void ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const;
 
-  void ConvertToPath(const xythetaPlan& plan, Path& path) const;
+  // Convert the plan to Planning::PathSegment's and append it to
+  // path. Also updates plan to set the robotPathSegmentIdx_
+  void AppendToPath(xythetaPlan& plan, Path& path) const;
 
   // TODO:(bn) move these??
 
@@ -282,6 +292,8 @@ public:
   double GetMaxReverseVelocity_mmps() const {return maxReverseVelocity_mmps_;}
 
   double GetOneOverMaxVelocity() const {return oneOverMaxVelocity_;}
+
+  float GetResolution_mm() const { return resolution_mm_; }
 
 private:
 

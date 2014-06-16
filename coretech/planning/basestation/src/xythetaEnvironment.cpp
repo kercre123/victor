@@ -109,7 +109,12 @@ bool StateID::operator<(const StateID& rhs) const
 
 std::ostream& operator<<(std::ostream& out, const State& state)
 {
-  return out<<'('<<(int)state.x<<','<<(int)state.y<<','<<(int)state.theta<<')';
+  return out<<'['<<(int)state.x<<','<<(int)state.y<<','<<(int)state.theta<<']';
+}
+
+std::ostream& operator<<(std::ostream& out, const State_c& state)
+{
+  return out<<'('<<state.x_mm<<','<<state.y_mm<<','<<state.theta<<')';
 }
 
 bool State_c::Import(const Json::Value& config)
@@ -141,7 +146,7 @@ bool SuccessorIterator::Done() const
   return nextAction_ > motionPrimitives_.size();
 }
 
-bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID) const
+bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions) const
 {
   State curr(stateID);
   float start_x = GetX_mm(curr.x);
@@ -155,14 +160,16 @@ bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID) c
 
   const MotionPrimitive* prim = & allMotionPrimitives_[curr.theta][action];
 
-  size_t endObs = obstacles_.size();
-  size_t endPoints = prim->intermediatePositions.size();
-  for(size_t point=0; point < endPoints; ++point) {
-    for(size_t obs=0; obs < endObs; ++obs) {
-      float x = start_x + prim->intermediatePositions[point].x_mm;
-      float y = start_y + prim->intermediatePositions[point].y_mm;
-      if(obstacles_[obs]->Contains(x, y)) {
-        return false;
+  if(checkCollisions) {
+    size_t endObs = obstacles_.size();
+    size_t endPoints = prim->intermediatePositions.size();
+    for(size_t point=0; point < endPoints; ++point) {
+      for(size_t obs=0; obs < endObs; ++obs) {
+        float x = start_x + prim->intermediatePositions[point].x_mm;
+        float y = start_y + prim->intermediatePositions[point].y_mm;
+        if(obstacles_[obs]->Contains(x, y)) {
+          return false;
+        }
       }
     }
   }
@@ -174,6 +181,11 @@ bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID) c
 
   stateID = result.GetStateID();
   return true;
+}
+
+const MotionPrimitive& xythetaEnvironment::GetRawMotionPrimitive(StateTheta theta, ActionID action) const
+{
+  return allMotionPrimitives_[theta][action];
 }
 
 void SuccessorIterator::Next()
@@ -550,9 +562,12 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
   return true;
 }
 
-void MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
+u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
 {
   State_c curr(start);
+
+  bool added = false;
+  u8 firstSegment = path.GetNumSegments();
 
   for(const auto& seg : pathSegments_) {
     PathSegment segment(seg);
@@ -604,12 +619,19 @@ void MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
       }
     }
 
-    if(shouldAdd)
+    if(shouldAdd) {
       path.AppendSegment(segment);
+      added = true;
+    }
 
     segment.GetEndPoint(xx,yy);
     // printf("end: (%f, %f)\n", xx, yy);
   }
+
+  if(!added && firstSegment > 0)
+    firstSegment--;
+
+  return firstSegment;
 }
 
 
@@ -655,21 +677,20 @@ SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG)
   return SuccessorIterator(this, startID, currG);
 }
 
-void xythetaEnvironment::ConvertToPath(const xythetaPlan& plan, Path& path) const
+void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path) const
 {
-  path.Clear();
-
   State curr = plan.start_;
+
   for(const auto& actionID : plan.actions_) {
     if(curr.theta >= allMotionPrimitives_.size() || actionID >= allMotionPrimitives_[curr.theta].size()) {
       printf("ERROR: can't look up prim for angle %d and action id %d\n", curr.theta, actionID);
       break;
     }
 
-    printf("%s\n", actionTypes_[actionID].GetName().c_str());
+    printf("(%d) %s\n", curr.theta, actionTypes_[actionID].GetName().c_str());
 
     const MotionPrimitive* prim = &allMotionPrimitives_[curr.theta][actionID];
-    prim->AddSegmentsToPath(State2State_c(curr), path);
+    u8 pathSegmentOffset = prim->AddSegmentsToPath(State2State_c(curr), path);
 
     curr.x += prim->endStateOffset.x;
     curr.y += prim->endStateOffset.y;
