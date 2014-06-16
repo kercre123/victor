@@ -110,7 +110,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
   xythetaPlanner planner(env);
 
   State_c start(0, 0, 0);
-  State_c goal(200, 0, 0);
+  State_c goal(800, 0, 0);
 
   ASSERT_TRUE(planner.SetStart(start));
   ASSERT_TRUE(planner.SetGoal(goal));
@@ -118,9 +118,36 @@ GTEST_TEST(TestPlanner, ReplanHard)
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(planner.PlanIsSafe(0));
 
-  env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
+  // env.PrintPlan(planner.GetPlan());
+
+  env.AddObstacle(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
 
   EXPECT_FALSE(planner.PlanIsSafe(0)) << "new obstacle should block plan!";
+
+  State_c newRobotPos(31.7*5, -1.35, 0.0736);
+  ASSERT_FALSE(env.IsInCollision(newRobotPos)) << "position "<<newRobotPos<<" should be safe";
+  ASSERT_FALSE(env.IsInCollision(env.State_c2State(newRobotPos)));
+
+  State_c lastSafeState;
+  xythetaPlan oldPlan;
+
+  int currentPlanIdx = planner.FindClosestPlanSegmentToPose(newRobotPos);
+  ASSERT_EQ(currentPlanIdx, 3) << "should be at action #3 in the plan (plan should have 1 short, then 3 long straights in a row)";
+
+  ASSERT_FALSE(planner.PlanIsSafe(1000.0, currentPlanIdx, lastSafeState, oldPlan));
+
+  ASSERT_GE(oldPlan.Size(), 1) << "should re-use at least one action from the old plan";
+
+  StateID currID = oldPlan.start_.GetStateID();
+  for(const auto& action : oldPlan.actions_) {
+    ASSERT_TRUE(env.ApplyAction(action, currID, false)) << "couldn't apply action!";
+  }
+
+  ASSERT_EQ(currID, env.State_c2State(lastSafeState).GetStateID()) << "end of validOldPlan should match lastSafeState!";
+  
+  // replan from last safe state
+  ASSERT_TRUE(planner.SetStart(lastSafeState));
+  ASSERT_TRUE(planner.GoalIsValid()) << "goal should still be valid";
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(planner.PlanIsSafe(0));

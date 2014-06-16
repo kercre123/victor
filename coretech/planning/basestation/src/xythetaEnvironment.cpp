@@ -703,6 +703,22 @@ void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path) const
   }
 }
 
+void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
+{
+  State_c curr_c = State2State_c(plan.start_);
+  StateID currID = plan.start_.GetStateID();
+  StateTheta currTheta = plan.start_.theta;
+
+  for(size_t i=0; i<plan.actions_.size(); ++i) {
+    printf("%2lu: (%f, %f, %f [%d]) --> %s\n",
+           i,
+           curr_c.x_mm, curr_c.y_mm, curr_c.theta, currTheta, 
+           actionTypes_[plan.actions_[i]].GetName().c_str());
+    ApplyAction(plan.actions_[i], currID, false);
+    curr_c = State2State_c(State(currID));
+  }
+}
+
 void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const
 {
   continuousPlan.clear();

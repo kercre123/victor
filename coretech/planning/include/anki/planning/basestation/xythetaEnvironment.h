@@ -284,6 +284,8 @@ public:
   // following the plan.
   void ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const;
 
+  void PrintPlan(const xythetaPlan& plan) const;
+
   // Convert the plan to Planning::PathSegment's and append it to
   // path. Also updates plan to set the robotPathSegmentIdx_
   void AppendToPath(xythetaPlan& plan, Path& path) const;
