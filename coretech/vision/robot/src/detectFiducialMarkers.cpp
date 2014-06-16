@@ -95,6 +95,7 @@ namespace Anki
         MemoryStack bigScratch(malloc(1000000), 1000000);
         Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
         Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
+        image.Show("image", false);
         empty.Show("components orig", false);
         free(bigScratch.get_buffer());
       }
@@ -141,6 +142,7 @@ namespace Anki
 
 #ifdef SHOW_DRAWN_COMPONENTS
       {
+        CoreTechPrint("Components\n");
         MemoryStack bigScratch(malloc(1000000), 1000000);
         Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
         Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);

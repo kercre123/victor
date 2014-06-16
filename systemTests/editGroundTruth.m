@@ -250,6 +250,13 @@ function marker_current_Callback(hObject, ~, ~)
     curMarkerIndex = str2double(get(hObject,'String'));
     fixBounds();
     poseChanged(false);
+    
+function marker_rotate_Callback(~, ~, ~)
+    global curPoseIndex;
+    global curMarkerIndex;    
+    rotateMarker(curPoseIndex, curMarkerIndex);    
+    fixBounds();
+    poseChanged(false);
 
 function displayType_previous_Callback(~, ~, ~)
     global curDisplayType;
@@ -386,7 +393,7 @@ function menu_eraseAll_Callback(~, ~, ~)
 
 function menu_eraseAllLabels_Callback(~, ~, ~)
     global jsonTestData;
-    global curPoseIndex;
+%     global curPoseIndex;
 
     disp('Erasing all labels')
 
@@ -483,6 +490,36 @@ function [cornersX, cornersY, whichCorners] = getFiducialCorners(poseIndex, mark
         cornersY(end+1) = curMarkerData.y_imgLowerLeft;
         whichCorners(4) = 1;
     end
+
+function rotateMarker(poseIndex, markerIndex)
+    global jsonTestData;
+
+    if markerIndex > length(jsonTestData.Poses{poseIndex}.VisionMarkers)
+        return;
+    end
+
+    curMarkerData = jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex};
+
+    % If the marker has four corners, rotate it 90 degrees
+    if isfield(curMarkerData, 'x_imgUpperLeft') && isfield(curMarkerData, 'y_imgUpperLeft') &&...
+        isfield(curMarkerData, 'x_imgUpperRight') && isfield(curMarkerData, 'y_imgUpperRight') &&...
+        isfield(curMarkerData, 'x_imgLowerRight') && isfield(curMarkerData, 'y_imgLowerRight') &&...
+        isfield(curMarkerData, 'x_imgLowerLeft') && isfield(curMarkerData, 'y_imgLowerLeft')
+        
+        jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex}.x_imgLowerLeft = curMarkerData.x_imgUpperLeft;
+        jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex}.y_imgLowerLeft = curMarkerData.y_imgUpperLeft;
+    
+        jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex}.x_imgUpperLeft = curMarkerData.x_imgUpperRight;
+        jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex}.y_imgUpperLeft = curMarkerData.y_imgUpperRight;
+        
+        jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex}.x_imgUpperRight = curMarkerData.x_imgLowerRight;
+        jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex}.y_imgUpperRight = curMarkerData.y_imgLowerRight;
+        
+        jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex}.x_imgLowerRight = curMarkerData.x_imgLowerLeft;
+        jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex}.y_imgLowerRight = curMarkerData.y_imgLowerLeft;
+    end
+    
+    Save();
 
 function detectAndAddMarkers()
     global jsonTestData;
@@ -830,10 +867,22 @@ function poseChanged(resetZoom)
 
             % Plot the corners (and if 4 corners exist, the quad as well)
             if length(cornersX) == 4
+%                 plotHandle = plot(...
+%                     xScaleInv*([cornersX(1),cornersX(2),cornersX(3),cornersX(4),cornersX(1)]+0.5),...
+%                     yScaleInv*([cornersY(1),cornersY(2),cornersY(3),cornersY(4),cornersY(1)]+0.5),...
+%                     linePlotType);
+%                 set(plotHandle, 'HitTest', 'off')
+
                 plotHandle = plot(...
-                    xScaleInv*([cornersX(1),cornersX(2),cornersX(3),cornersX(4),cornersX(1)]+0.5),...
-                    yScaleInv*([cornersY(1),cornersY(2),cornersY(3),cornersY(4),cornersY(1)]+0.5),...
-                    linePlotType);
+                    xScaleInv*([cornersX(2),cornersX(3),cornersX(4),cornersX(1)]+0.5),...
+                    yScaleInv*([cornersY(2),cornersY(3),cornersY(4),cornersY(1)]+0.5),...
+                    linePlotType, 'LineWidth', 1);
+                set(plotHandle, 'HitTest', 'off')
+                
+                plotHandle = plot(...
+                    xScaleInv*([cornersX(1),cornersX(2)]+0.5),...
+                    yScaleInv*([cornersY(1),cornersY(2)]+0.5),...
+                    linePlotType, 'LineWidth', 3);
                 set(plotHandle, 'HitTest', 'off')
 
                 markerName = jsonTestData.Poses{curPoseIndex}.VisionMarkers{iMarker}.markerType(8:end);
@@ -988,4 +1037,7 @@ function ButtonClicked(~, ~, ~)
     end
 
     poseChanged(false);
+
+
+
 
