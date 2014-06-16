@@ -65,7 +65,7 @@ namespace Anki
                                //Robot* seenByRobot);
       
       void CommandRobotToDock(const RobotID_t whichRobot,
-                              const Block&    whichBlock);
+                              Block&    whichBlock);
       
       // Clears all existing blocks in the world
       void ClearAllExistingBlocks();
@@ -79,15 +79,20 @@ namespace Anki
       const ObjectsMap_t& GetAllExistingBlocks() const {return existingBlocks_;}
       const Vision::ObservableObjectLibrary& GetMatLibrary() const;
       
-      const Vision::ObservableObject* GetObservableObjectByID(const ObjectID_t objectID) const;
+      // TODO: this only looks through blocks, so shouldn't it be GetBlockByID()?
+      Vision::ObservableObject* GetObservableObjectByID(const ObjectID_t objectID) const;
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension) and returns a vector of quads
       // of their outlines on the ground plane (z=0).  Can also pad the
-      // bounding boxes by a specified amount.
+      // bounding boxes by a specified amount. If ignoreIDs is not empty, then
+      // bounding boxes of blocks with an ID present in the set will not be
+      // returned. Analogous behavior for ignoreTypes.
       void GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
                                    const f32 padding,
-                                   std::vector<Quad2f>& boundingBoxes) const;
+                                   std::vector<Quad2f>& boundingBoxes,
+                                   const std::set<ObjectType_t>& ignoreTypes = std::set<ObjectType_t>(),
+                                   const std::set<ObjectID_t>& ignoreIDs = std::set<ObjectID_t>()) const;
       
       // Returns true if any blocks were moved, added, or deleted on the
       // last update. Useful, for example, to know whether to update the
@@ -117,9 +122,9 @@ namespace Anki
       
       //BlockWorld(); // protected constructor for singleton
 
-      bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
+      bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
-      uint32_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp);
+      size_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                   const ObjectsMap_t& objectsExisting,
@@ -128,7 +133,8 @@ namespace Anki
       
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
-                               ObjectsMap_t& objectsExisting);
+                               ObjectsMap_t& objectsExisting,
+                               const TimeStamp_t atTimestamp);
       
       // Remove all posekey-marker pairs from the map if marker is marked used
       void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);
@@ -204,7 +210,7 @@ namespace Anki
       return matLibrary_;
     }
     
-    inline const Vision::ObservableObject* BlockWorld::GetObservableObjectByID(const ObjectID_t objectID) const
+    inline Vision::ObservableObject* BlockWorld::GetObservableObjectByID(const ObjectID_t objectID) const
     {
       for (auto const & block : existingBlocks_) {
         auto const & objectByIdMap = block.second;

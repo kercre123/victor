@@ -167,7 +167,7 @@ bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, b
       for(size_t obs=0; obs < endObs; ++obs) {
         float x = start_x + prim->intermediatePositions[point].x_mm;
         float y = start_y + prim->intermediatePositions[point].y_mm;
-        if(obstacles_[obs]->Contains(x, y)) {
+        if(obstacles_[obs].Contains(x, y)) {
           return false;
         }
       }
@@ -205,7 +205,7 @@ void SuccessorIterator::Next()
         float x,y;
         x = start_c_.x_mm + prim->intermediatePositions[pointIdx].x_mm;
         y = start_c_.y_mm + prim->intermediatePositions[pointIdx].y_mm;
-        if(obstacles_[obsIdx]->Contains(x, y)) {
+        if(obstacles_[obsIdx].Contains(x, y)) {
           collision = true;
           break;
         }
@@ -234,7 +234,7 @@ bool xythetaEnvironment::IsInCollision(State s) const
 {
   size_t endObs = obstacles_.size();
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstacles_[obsIdx]->Contains(GetX_mm(s.x), GetX_mm(s.y)))
+    if(obstacles_[obsIdx].Contains(GetX_mm(s.x), GetX_mm(s.y)))
       return true;
   }
   return false;
@@ -244,7 +244,7 @@ bool xythetaEnvironment::IsInCollision(State_c c) const
 {
   size_t endObs = obstacles_.size();
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstacles_[obsIdx]->Contains(c.x_mm, c.y_mm))
+    if(obstacles_[obsIdx].Contains(c.x_mm, c.y_mm))
       return true;
   }
   return false;
@@ -275,8 +275,8 @@ bool ActionType::Import(const Json::Value& config)
 
 xythetaEnvironment::~xythetaEnvironment()
 {
-  for(size_t i=0; i<obstacles_.size(); ++i)
-    delete obstacles_[i];
+  //for(size_t i=0; i<obstacles_.size(); ++i)
+  //  delete obstacles_[i];
 }
 
 
@@ -411,15 +411,20 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config)
   return true;
 }
 
-void xythetaEnvironment::AddObstacle(RotatedRectangle* rect)
+void xythetaEnvironment::AddObstacle(const Quad2f& quad)
 {
-  obstacles_.push_back(rect);
+  obstacles_.emplace_back(quad);
+}
+  
+void xythetaEnvironment::AddObstacle(const RotatedRectangle& rect)
+{
+  obstacles_.emplace_back(rect);
 }
 
 void xythetaEnvironment::ClearObstacles()
 {
-  for(size_t i=0; i<obstacles_.size(); ++i)
-    delete obstacles_[i];
+//  for(size_t i=0; i<obstacles_.size(); ++i)
+//    delete obstacles_[i];
   obstacles_.clear();
 }
 
@@ -658,7 +663,7 @@ bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
   float x0,y0,x1,y1,len;
 
   while(fscanf(fEnv, "%f %f %f %f %f", &x0, &y0, &x1, &y1, &len) == 5) {
-    obstacles_.push_back(new RotatedRectangle(x0, y0, x1, y1, len));
+    obstacles_.emplace_back(x0, y0, x1, y1, len);
   }
 
   return true;
@@ -668,7 +673,7 @@ void xythetaEnvironment::WriteEnvironment(const char *filename) const
 {
   ofstream outfile(filename);
   for(const auto& it : obstacles_) {
-    it->Dump(outfile);
+    it.Dump(outfile);
   }
 }
 

@@ -117,6 +117,28 @@ namespace Anki {
       }
       
       
+      Result SendBlockPickUpMessage(const bool success)
+      {
+        Messages::BlockPickedUp msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockPickedUp), &msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+      
+      Result SendBlockPlacedMessage(const bool success)
+      {
+        Messages::BlockPlaced msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockPlaced), &msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+      
       Result Update()
       {
         Result retVal = RESULT_OK;
@@ -435,14 +457,27 @@ namespace Anki {
             if (LiftController::IsInPosition()) {
               switch(action_) {
                 case DA_PICKUP_LOW:
+                  // TODO: Add visual verification of pickup here?
                   mode_ = IDLE;
                   lastActionSucceeded_ = true;
                   isCarryingBlock_ = true;
+                  SendBlockPickUpMessage(true);
                   break;
+                  
                 case DA_PICKUP_HIGH:
+                  // TODO: Add visual verification of pickup here?
                   isCarryingBlock_ = true;
+                  SendBlockPickUpMessage(true);
+                  SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
+                  transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
+                  mode_ = BACKOUT;
+                  break;
+                  
                 case DA_PLACE_LOW:
                 case DA_PLACE_HIGH:
+                  // TODO: Add visual verfication of placement here?
+                  isCarryingBlock_ = false;
+                  SendBlockPlacedMessage(true);
                   SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
                   transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
                   mode_ = BACKOUT;
@@ -450,6 +485,9 @@ namespace Anki {
                   PRINT("PAP: BACKING OUT\n");
 #endif
                   break;
+                  
+                default:
+                  PRINT("ERROR: Reached default switch statement in MOVING_LIFT_POSTDOCK case.\n");
               }
             }
             break;

@@ -35,9 +35,6 @@ namespace Anki {
 #endif
     const f32 LIFT_HEIGHT_CARRY    = 88.f;
     
-    // Height of lift "shoulder" joint where the arm attaches to robot body
-    const f32 LIFT_JOINT_HEIGHT = 41.7f;
-    
     // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
     const f32 LIFT_ARM_LENGTH = 64.f;
     
@@ -46,6 +43,12 @@ namespace Anki {
     
     // The height of the top of the lift crossbar with respect to the wrist joint
     const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -18.f;
+    
+    // The distance along the x axis from the wrist joint to the front of the lifter plate
+    const f32 LIFT_FRONT_WRT_WRIST_JOINT = 3.5f;
+    
+    // The height of the "fingers"
+    const f32 LIFT_FINGER_HEIGHT = 3.8f;
     
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
@@ -61,10 +64,13 @@ namespace Anki {
     const f32 ROBOT_BOUNDING_X       = 88.f; // including gripper fingers
     const f32 ROBOT_BOUNDING_Y       = 54.2f;
     const f32 ROBOT_BOUNDING_X_FRONT = 32.1f; // distance from robot origin to front of bounding box
+    const f32 ROBOT_BOUNDING_Z       = 67.7f; // from ground to top of head
+    const f32 ROBOT_BOUNDING_RADIUS  = sqrtf((0.25f*ROBOT_BOUNDING_X*ROBOT_BOUNDING_X) +
+                                             (0.25f*ROBOT_BOUNDING_Y*ROBOT_BOUNDING_Y));
     
     const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};  // relative to neck joint
     
-    const f32 PREDOCK_DISTANCE_MM = 80.f;
+    const f32 PREDOCK_DISTANCE_MM = ROBOT_BOUNDING_RADIUS + 15.f;
     
     // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
     const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;

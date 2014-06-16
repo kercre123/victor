@@ -91,16 +91,21 @@ namespace Anki {
       //static unsigned int get_numBlocks();
       
       // Accessors:
-      Point3f const& GetSize() const;
-      float          GetWidth()  const;  // X dimension
-      float          GetHeight() const;  // Z dimension
-      float          GetDepth()  const;  // Y dimension
+      const Point3f&     GetSize()   const;
+      float              GetWidth()  const;  // X dimension
+      float              GetHeight() const;  // Z dimension
+      float              GetDepth()  const;  // Y dimension
+      const std::string& GetName()   const {return _name;}
+      
       //virtual float GetMinDim() const;
       //using Vision::ObservableObjectBase<Block>::GetMinDim;
 
       void SetSize(const float width, const float height, const float depth);
       void SetColor(const unsigned char red, const unsigned char green, const unsigned char blue);
       void SetName(const std::string name);
+      
+      bool GetIsBeingCarried() const;
+      void SetIsBeingCarried(const bool tf);
       
       void AddFace(const FaceName whichFace,
                    const Vision::Marker::Code& code,
@@ -140,17 +145,21 @@ namespace Anki {
                            std::vector<PoseMarkerPair_t>& poseMarkerPairs) const;
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
-      // XY plane and returns the corresponding 2D quadrilateral. Scales the
+      // XY plane and returns the corresponding 2D quadrilateral. Pads the
       // quadrilateral (around its center) by the optional padding if desired.
-      // padding if desired.
-      Quad2f GetBoundingQuadXY(const f32 paddingScale = 1.f) const;
-      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 1.f) const;
+      Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
+      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding quadrilateral. Adds optional
       // padding if desired.
-      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding) const;
-      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding) const;
+      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const;
+      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding_mm) const;
+      
+      // Visualize using VizManager.  If preDockPoseDistance > 0, pre dock poses
+      // will also be drawn
+      // TODO: make generic and put as virtual method in base class
+      void Visualize(const u32 color, const f32 preDockPoseDistance = 0.f) const;
       
     protected:
       
@@ -189,9 +198,10 @@ namespace Anki {
       
       static const std::array<Point3f,NUM_CORNERS> CanonicalCorners;
       
-      Color       color_;
-      Point3f     size_;
-      std::string name_;
+      Color       _color;
+      Point3f     _size;
+      std::string _name;
+      bool        _isBeingCarried;
       
       //std::vector<Point3f> blockCorners_;
       
@@ -261,16 +271,16 @@ namespace Anki {
     */
     
     inline Point3f const& Block::GetSize() const
-    { return this->size_; }
+    { return _size; }
     
     inline float Block::GetWidth() const
-    { return this->size_.y(); }
+    { return _size.y(); }
     
     inline float Block::GetHeight() const
-    { return this->size_.z(); }
+    { return _size.z(); }
     
     inline float Block::GetDepth() const
-    { return this->size_.x(); }
+    { return _size.x(); }
     
     /*
     inline float Block::GetMinDim() const
@@ -283,19 +293,27 @@ namespace Anki {
                                const float height,
                                const float depth)
     {
-      this->size_ = {width, height, depth};
+      _size = {width, height, depth};
     }
     
     inline void Block::SetColor(const unsigned char red,
                                 const unsigned char green,
                                 const unsigned char blue)
     {
-      this->color_ = {red, green, blue};
+      _color = {red, green, blue};
     }
     
     inline void Block::SetName(const std::string name)
     {
-      this->name_ = name;
+      _name = name;
+    }
+    
+    inline bool Block::GetIsBeingCarried() const {
+      return _isBeingCarried;
+    }
+    
+    inline void Block::SetIsBeingCarried(const bool tf) {
+      _isBeingCarried = tf;
     }
     
     /*

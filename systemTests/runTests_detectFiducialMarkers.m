@@ -13,15 +13,25 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     maxMatchDistance_pixels = 5;
     maxMatchDistance_percent = 0.2;
     
-    showImageDetections = true;
+    showImageDetections = false;
     showImageDetectionWidth = 640;
+    showOverallStats = true;
     
     recompileBasics = false;
+    recompilePerTestStats = false;
+    
     basicsFilename = 'basicsResults.mat';
+    perTestStatsFilename = 'perTestStatsResults.mat';
+        
     markerDirectoryList = {'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/symbols/withFiducials/', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/letters/withFiducials', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/dice/withFiducials'};
     
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
+    
+    if showImageDetections
+        figure(1);
+        close 1
+    end
     
     if recompileBasics
         [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames] = computeBasics(markerDirectoryList, testJsonPattern);
@@ -30,18 +40,40 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
         load(basicsFilename);
     end
     
-    if showImageDetections
-        figure(1);
-        close 1
+    if recompilePerTestStats
+        perTestStats = compilePerTestStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth);
+        
+        save(perTestStatsFilename, 'perTestStats');
+    else 
+        load(perTestStatsFilename);
     end
+        
+    overallStats = compileOverallStats(allTestFilenames, perTestStats, showOverallStats);
     
-    allCompiledResults = compileStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth);
-    
-    save([resultsDirectory, 'allCompiledResults.mat'], 'allCompiledResults');
+    save([resultsDirectory, 'allCompiledResults.mat'], 'perTestStats');
     
     keyboard
     
-function allCompiledResults = compileStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth)
+function overallStats = compileOverallStats(allTestFilenames, perTestStats, showOverallStats)
+    
+    allJsonData = cell(length(resultsData), 1);
+    
+    for iTest = 1:length(resultsData)
+        allJsonData{iTest} = loadjson(allTestFilenames{iTest});
+    end
+    
+    numTestFunctions = length(perTestStats{1}{1});
+    
+    for iTestFunction = 1:numTestFunctions
+        for iTest = 1:length(perTestStats)
+            for iPose = 1:length(perTestStats{iTest})
+            end
+        end
+    end
+           
+            
+    
+function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth)
     % TODO: At different distances / angles
     
     global useImpixelinfo;
@@ -54,19 +86,19 @@ function allCompiledResults = compileStats(resultsData, testPath, allTestFilenam
     
     showImageDetectionsScale = 1;
     
-    allCompiledResults = cell(length(resultsData), 1);
+    perTestStats = cell(length(resultsData), 1);
     
     filenameNameLookup = '';
     
     for iTest = 1:length(resultsData)
-        allCompiledResults{iTest} = cell(length(resultsData{iTest}), 1);
+        perTestStats{iTest} = cell(length(resultsData{iTest}), 1);
         
         if showImageDetections
             jsonData = loadjson(allTestFilenames{iTest});
         end
         
-        for iPose = 1:length(allCompiledResults{iTest})
-            allCompiledResults{iTest}{iPose} = cell(length(resultsData{iTest}{iPose}), 1);
+        for iPose = 1:length(perTestStats{iTest})
+            perTestStats{iTest}{iPose} = cell(length(resultsData{iTest}{iPose}), 1);
             
             if showImageDetections
                 imageFilename = [testPath, jsonData.Poses{iPose}.ImageFile];
@@ -99,7 +131,7 @@ function allCompiledResults = compileStats(resultsData, testPath, allTestFilenam
                 end
             end % if showImageDetections
             
-            for iTestFunction = 1:length(allCompiledResults{iTest}{iPose})
+            for iTestFunction = 1:length(perTestStats{iTest}{iPose})
                 curResultsData = resultsData{iTest}{iPose}{iTestFunction};
                 
                 if showImageDetections
@@ -124,7 +156,7 @@ function allCompiledResults = compileStats(resultsData, testPath, allTestFilenam
                 
                 [curCompiled.numCorrect_positionLabelRotation, curCompiled.numCorrect_positionLabel, curCompiled.numCorrect_position, curCompiled.numSpurriousDetections, curCompiled.numUndetected] = compileMarkerResults(curResultsData, showImageDetections, showImageDetectionsScale);
                 
-                allCompiledResults{iTest}{iPose}{iTestFunction} = curCompiled;
+                perTestStats{iTest}{iPose}{iTestFunction} = curCompiled;
                 
                 if showImageDetections
                     resultsText = sprintf('Test %d %d %d\nDist:%dmm angle:%d expos:%0.1f light:%d %s\nmarkers:%d/%d/%d/%d/%d spurrious:%d',...
@@ -154,8 +186,8 @@ function allCompiledResults = compileStats(resultsData, testPath, allTestFilenam
                     
                     pause(.03)
                 end % if showImageDetections                
-            end % for iTestFunction = 1:length(allCompiledResults{iTest}{iPose})
-        end % for iPose = 1:length(allCompiledResults{iTest})
+            end % for iTestFunction = 1:length(perTestStats{iTest}{iPose})
+        end % for iPose = 1:length(perTestStats{iTest})
     end % for iTest = 1:length(resultsData)
     
     outputFilenameNameLookup = [resultsDirectory, 'filenameLookup.txt'];

@@ -48,6 +48,11 @@ RotatedRectangle::RotatedRectangle(float x0, float y0, float x1, float y1, float
 {
   InitFromPoints(x0, y0, x1, y1, otherSideLength);
 }
+  
+RotatedRectangle::RotatedRectangle(const Quad2f& quad)
+{
+  ImportQuad(quad);
+}
 
 void RotatedRectangle::InitFromPoints(float x0, float y0, float x1, float y1, float otherSideLength)
 {

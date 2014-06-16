@@ -90,7 +90,7 @@ namespace Anki
 
       EndBenchmark("Canny_init_gradient");
 
-      size_t mapstep = imageWidth + 2;
+      s32 mapstep = imageWidth + 2;
       s32 numBufferBytes;
       u8 * buffer = reinterpret_cast<u8*>( scratch.Allocate((imageWidth+2)*(imageHeight+2) + mapstep * 3 * sizeof(int), false, numBufferBytes) );
 

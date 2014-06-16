@@ -139,7 +139,7 @@ namespace Anki {
       }
       else {
         CORETECH_ASSERT(robot != NULL);
-        Vision::Camera camera(robot->get_camHead());
+        Vision::Camera camera(robot->GetCamera());
         
         if(camera.IsCalibrated()) {
           
@@ -171,14 +171,14 @@ namespace Anki {
           
           // Compute pose from robot body to camera
           // Start with canonical (untilted) headPose
-          Pose3d camPose(robot->get_headCamPose());
+          Pose3d camPose(robot->GetHeadCamPose());
 
           // Rotate that by the given angle
           RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D);
           camPose.rotateBy(Rvec);
           
           // Precompute with robot body to neck pose
-          camPose.preComposeWith(robot->get_neckPose());
+          camPose.preComposeWith(robot->GetNeckPose());
           
           // Set parent pose to be the historical robot pose
           camPose.set_parent(&(p->GetPose()));
@@ -204,7 +204,7 @@ namespace Anki {
     } // ProcessMessage(MessageVisionMarker)
     
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageHeadCameraCalibration const& msg)
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageCameraCalibration const& msg)
     {
       // Convert calibration message into a calibration object to pass to
       // the robot
@@ -216,7 +216,7 @@ namespace Anki {
                                       msg.center_y,
                                       msg.skew);
       
-      robot->set_camCalibration(calib);
+      robot->SetCameraCalibration(calib);
       
       return RESULT_OK;
     }
@@ -239,10 +239,10 @@ namespace Anki {
       */
       
       // Update head angle
-      robot->set_headAngle(msg.headAngle);
+      robot->SetHeadAngle(msg.headAngle);
 
       // Update lift angle
-      robot->set_liftAngle(msg.liftAngle);
+      robot->SetLiftAngle(msg.liftAngle);
       
       /*
       // Update robot pose
@@ -253,7 +253,7 @@ namespace Anki {
       
       // Update other state vars
       robot->SetCurrPathSegment( msg.currPathSegment );
-      robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK );
+      //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
       robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
       const f32 WheelSpeedToConsiderStopped = 2.f;
@@ -270,7 +270,8 @@ namespace Anki {
                                          msg.pose_frame_id,
                                          msg.pose_x, msg.pose_y, msg.pose_z,
                                          msg.pose_angle,
-                                         msg.headAngle) == RESULT_FAIL) {
+                                         msg.headAngle,
+                                         msg.liftAngle) == RESULT_FAIL) {
         PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "");
       }
       
@@ -292,11 +293,11 @@ namespace Anki {
         // Text is ready to print
         if (textIdx == 0) {
           // This message is not a part of a longer message. Just print!
-          printf("ROBOT-PRINT (%d): %s", robot->get_ID(), newText);
+          printf("ROBOT-PRINT (%d): %s", robot->GetID(), newText);
         } else {
           // This message is part of a longer message. Copy to local buffer and print.
           memcpy(text + textIdx, newText, strlen(newText)+1);
-          printf("ROBOT-PRINT (%d): %s", robot->get_ID(), text);
+          printf("ROBOT-PRINT (%d): %s", robot->GetID(), text);
           textIdx = 0;
         }
       } else {
@@ -307,7 +308,7 @@ namespace Anki {
         // The message received was too long or garbled (i.e. chunks somehow lost)
         if (textIdx == MAX_PRINT_STRING_LENGTH-1) {
           text[MAX_PRINT_STRING_LENGTH-1] = 0;
-          printf("ROBOT-PRINT-garbled (%d): %s", robot->get_ID(), text);
+          printf("ROBOT-PRINT-garbled (%d): %s", robot->GetID(), text);
           textIdx = 0;
         }
         
@@ -393,6 +394,36 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockPickedUp const& msg)
+    {
+      const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
+      PRINT_INFO("Robot %d %s picking up block.\n", robot->GetID(), successStr);
+
+      Result lastResult = RESULT_OK;
+      if(msg.didSucceed) {
+        lastResult = robot->PickUpDockBlock();
+      }
+      else {
+        // TODO: what do we do on failure? Need to trigger reattempt?
+      }
+      
+      return lastResult;
+    }
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockPlaced const& msg)
+    {
+      Result lastResult = RESULT_OK;
+      if(msg.didSucceed) {
+        lastResult = robot->PlaceCarriedBlock(); //msg.timestamp);
+      }
+      else {
+        PRINT_INFO("Robot %d FAILED placing block.\n", robot->GetID());
+        // TODO: what do we do on failure? Need to trigger reattempt?
+      }
+      
+      return lastResult;
+    }
+    
     
     // STUBS:
     Result MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return RESULT_FAIL;}
@@ -404,7 +435,6 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadAngle const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageStopAllMotors const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotInit const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentArc const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentPointTurn const&){return RESULT_FAIL;}
@@ -413,8 +443,6 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageDockWithBlock const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessagePlaceBlockOnGround const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageHeadAngleUpdate const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageImageRequest const&){return RESULT_FAIL;}

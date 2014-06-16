@@ -259,7 +259,7 @@ s32 SnprintfCommasS32(char *buffer, const s32 bufferLength, const s32 value)
 
   snprintf(tmpBuffer, 128, "%d", value);
 
-  numberLength = strlen(tmpBuffer);
+  numberLength = (s32)(strlen(tmpBuffer));
 
   if(value < 0)
     numCommas = (numberLength-2) / 3;

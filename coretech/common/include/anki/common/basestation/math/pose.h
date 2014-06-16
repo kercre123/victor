@@ -178,6 +178,13 @@ namespace Anki {
     
     RotationVector3d        get_rotationVector() const;
     Vec3f                   get_rotationAxis()   const;
+
+    // Get the rotation angle, optinally around a specific axis.
+    // By default or when template parameter is anything other than X, Y, or Z,
+    // the rotation angle *around the pose's rotation axis* is returned.
+    // When X, Y, or Z are specified (case insensitive), the rotation angle
+    // around that axis is returned.
+    template<char AXIS = ' '>
     Radians                 get_rotationAngle()  const;
     
     void set_rotation(const RotationMatrix3d &Rmat);
@@ -326,8 +333,59 @@ namespace Anki {
   inline Vec3f Pose3d::get_rotationAxis() const
   { return get_rotationVector().get_axis(); }
   
+  /*
+  template<char AXIS>
   inline Radians Pose3d::get_rotationAngle() const
-  { return get_rotationVector().get_angle(); }
+  {
+    CORETECH_THROW("Invalid template parameter for get_rotationAngle(). "
+                   "Expecting 'X' / 'x', 'Y' / 'y', or 'Z' / 'z'.");
+    return 0.f;
+  }
+   */
+  
+  template<>
+  inline Radians Pose3d::get_rotationAngle<' '>() const
+  {
+    // return the inherient axis of the rotation
+    return get_rotationVector().get_angle();
+  }
+
+  template<>
+  inline Radians Pose3d::get_rotationAngle<'X'>() const
+  {
+    return get_rotationMatrix().GetAngleAroundXaxis();
+  }
+  
+  template<>
+  inline Radians Pose3d::get_rotationAngle<'Y'>() const
+  {
+    return get_rotationMatrix().GetAngleAroundYaxis();
+  }
+  
+  template<>
+  inline Radians Pose3d::get_rotationAngle<'Z'>() const
+  {
+    return get_rotationMatrix().GetAngleAroundZaxis();
+  }
+  
+  template<>
+  inline Radians Pose3d::get_rotationAngle<'x'>() const
+  {
+    return get_rotationMatrix().GetAngleAroundXaxis();
+  }
+  
+  template<>
+  inline Radians Pose3d::get_rotationAngle<'y'>() const
+  {
+    return get_rotationMatrix().GetAngleAroundYaxis();
+  }
+  
+  template<>
+  inline Radians Pose3d::get_rotationAngle<'z'>() const
+  {
+    return get_rotationMatrix().GetAngleAroundZaxis();
+  }
+  
   
   inline void Pose3d::set_rotation(const RotationMatrix3d &Rmat)
   {

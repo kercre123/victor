@@ -29,24 +29,29 @@ namespace Anki {
       RobotPoseStamp(const PoseFrameID_t frameID,
                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
                      const f32 pose_angle,
-                     const f32 head_angle);
+                     const f32 head_angle,
+                     const f32 lift_angle);
       
       RobotPoseStamp(const PoseFrameID_t frameID,
                      const Pose3d& pose,
-                     const f32 head_angle);
+                     const f32 head_angle,
+                     const f32 lift_angle);
       
       void SetPose(const PoseFrameID_t frameID,
                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
                    const f32 pose_angle,
-                   const f32 head_angle);
+                   const f32 head_angle,
+                   const f32 lift_angle);
 
       void SetPose(const PoseFrameID_t frameID,
                    const Pose3d& pose,
-                   const f32 head_angle);
+                   const f32 head_angle,
+                   const f32 lift_angle);
 
       
       const Pose3d& GetPose() const {return pose_;}
       const f32 GetHeadAngle() const {return headAngle_;}
+      const f32 GetLiftAngle() const {return liftAngle_;}
       const PoseFrameID_t GetFrameId() const {return frame_;}
 
       void Print() const;
@@ -55,6 +60,7 @@ namespace Anki {
       PoseFrameID_t frame_;
       Pose3d pose_;  // robot pose
       f32 headAngle_;
+      f32 liftAngle_;
     };
     
     
@@ -76,10 +82,10 @@ namespace Anki {
       void Clear();
       
       // Returns the number of poses that were added via AddRawOdomPose() that still remain in history
-      u32 GetNumRawPoses() const {return poses_.size();}
+      size_t GetNumRawPoses() const {return poses_.size();}
       
       // Returns the number of poses that were added via AddVisionOnlyPose() that still remain in history
-      u32 GetNumVisionPoses() const {return visPoses_.size();}
+      size_t GetNumVisionPoses() const {return visPoses_.size();}
       
       // Specify the maximum time span of poses that can be held.
       // Poses that are older than the newest/largest timestamp stored
@@ -93,7 +99,8 @@ namespace Anki {
                             const PoseFrameID_t frameID,
                             const f32 pose_x, const f32 pose_y, const f32 pose_z,
                             const f32 pose_angle,
-                            const f32 head_angle);
+                            const f32 head_angle,
+                            const f32 lift_angle);
 
       Result AddRawOdomPose(const TimeStamp_t t,
                             const RobotPoseStamp& p);
@@ -102,10 +109,11 @@ namespace Anki {
       // These are used in conjunction with raw odometry poses to compute
       // better estimates of the pose at any point t in the history.
       Result AddVisionOnlyPose(const TimeStamp_t t,
-                                const PoseFrameID_t frameID,
-                                const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                                const f32 pose_angle,
-                                const f32 head_angle);
+                               const PoseFrameID_t frameID,
+                               const f32 pose_x, const f32 pose_y, const f32 pose_z,
+                               const f32 pose_angle,
+                               const f32 head_angle,
+                               const f32 lift_angle);
 
       Result AddVisionOnlyPose(const TimeStamp_t t,
                                const RobotPoseStamp& p);

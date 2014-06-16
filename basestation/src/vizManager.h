@@ -144,7 +144,13 @@ namespace Anki {
       template<typename T> void DrawQuad(const u32 quadID,
                                          const Quadrilateral<3,T>& quad,
                                          const u32 colorID);
-      
+
+      // Draws a 2D quadrilateral in the XY plane at the specified Z height
+      template<typename T> void DrawQuad(const u32 quadID,
+                                         const Quadrilateral<2,T>& quad,
+                                         const T zHeight,
+                                         const u32 colorID);
+
       // Erases the quad corresponding to quadID
       void EraseQuad(const u32 quadID);
       
@@ -210,6 +216,39 @@ namespace Anki {
     
     template<typename T>
     void VizManager::DrawQuad(const u32 quadID,
+                              const Quadrilateral<2,T>& quad,
+                              const T zHeight_mm,
+                              const u32 colorID)
+    {
+      using namespace Quad;
+      VizQuad v;
+      v.quadID = quadID;
+      
+      const f32 zHeight_m = MM_TO_M(static_cast<f32>(zHeight_mm));
+      
+      v.xUpperLeft  = MM_TO_M(static_cast<f32>(quad[TopLeft].x()));
+      v.yUpperLeft  = MM_TO_M(static_cast<f32>(quad[TopLeft].y()));
+      v.zUpperLeft  = zHeight_m;
+      
+      v.xLowerLeft  = MM_TO_M(static_cast<f32>(quad[BottomLeft].x()));
+      v.yLowerLeft  = MM_TO_M(static_cast<f32>(quad[BottomLeft].y()));
+      v.zLowerLeft  = zHeight_m;
+      
+      v.xUpperRight = MM_TO_M(static_cast<f32>(quad[TopRight].x()));
+      v.yUpperRight = MM_TO_M(static_cast<f32>(quad[TopRight].y()));
+      v.zUpperRight = zHeight_m;
+      
+      v.xLowerRight = MM_TO_M(static_cast<f32>(quad[BottomRight].x()));
+      v.yLowerRight = MM_TO_M(static_cast<f32>(quad[BottomRight].y()));
+      v.zLowerRight = zHeight_m;
+      
+      v.color = colorID;
+      
+      SendMessage( GET_MESSAGE_ID(VizQuad), &v );
+    }
+    
+    template<typename T>
+    void VizManager::DrawQuad(const u32 quadID,
                               const Quadrilateral<3,T>& quad,
                               const u32 colorID)
     {
@@ -217,21 +256,21 @@ namespace Anki {
       VizQuad v;
       v.quadID = quadID;
       
-      v.xUpperLeft  = MM_TO_M(static_cast<f32>(quad[Quad::TopLeft].x()));
-      v.yUpperLeft  = MM_TO_M(static_cast<f32>(quad[Quad::TopLeft].y()));
-      v.zUpperLeft  = MM_TO_M(static_cast<f32>(quad[Quad::TopLeft].z()));
+      v.xUpperLeft  = MM_TO_M(static_cast<f32>(quad[TopLeft].x()));
+      v.yUpperLeft  = MM_TO_M(static_cast<f32>(quad[TopLeft].y()));
+      v.zUpperLeft  = MM_TO_M(static_cast<f32>(quad[TopLeft].z()));
       
-      v.xLowerLeft  = MM_TO_M(static_cast<f32>(quad[Quad::BottomLeft].x()));
-      v.yLowerLeft  = MM_TO_M(static_cast<f32>(quad[Quad::BottomLeft].y()));
-      v.zLowerLeft  = MM_TO_M(static_cast<f32>(quad[Quad::BottomLeft].z()));
+      v.xLowerLeft  = MM_TO_M(static_cast<f32>(quad[BottomLeft].x()));
+      v.yLowerLeft  = MM_TO_M(static_cast<f32>(quad[BottomLeft].y()));
+      v.zLowerLeft  = MM_TO_M(static_cast<f32>(quad[BottomLeft].z()));
       
-      v.xUpperRight = MM_TO_M(static_cast<f32>(quad[Quad::TopRight].x()));
-      v.yUpperRight = MM_TO_M(static_cast<f32>(quad[Quad::TopRight].y()));
-      v.zUpperRight = MM_TO_M(static_cast<f32>(quad[Quad::TopRight].z()));
+      v.xUpperRight = MM_TO_M(static_cast<f32>(quad[TopRight].x()));
+      v.yUpperRight = MM_TO_M(static_cast<f32>(quad[TopRight].y()));
+      v.zUpperRight = MM_TO_M(static_cast<f32>(quad[TopRight].z()));
       
-      v.xLowerRight = MM_TO_M(static_cast<f32>(quad[Quad::BottomRight].x()));
-      v.yLowerRight = MM_TO_M(static_cast<f32>(quad[Quad::BottomRight].y()));
-      v.zLowerRight = MM_TO_M(static_cast<f32>(quad[Quad::BottomRight].z()));
+      v.xLowerRight = MM_TO_M(static_cast<f32>(quad[BottomRight].x()));
+      v.yLowerRight = MM_TO_M(static_cast<f32>(quad[BottomRight].y()));
+      v.zLowerRight = MM_TO_M(static_cast<f32>(quad[BottomRight].z()));
       
       v.color = colorID;
       

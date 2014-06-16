@@ -71,7 +71,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
   ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
   Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
-  robot.set_camCalibration(calib);
+  robot.SetCameraCalibration(calib);
   
   bool checkRobotPose;
   ASSERT_TRUE(JsonTools::GetValueOptional(jsonRoot, "CheckRobotPose", checkRobotPose));
@@ -101,7 +101,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     // Put the robot's head at the right angle *before* queueing up the markers
     float headAngle;
     ASSERT_TRUE(JsonTools::GetValueOptional(jsonData["RobotPose"], "HeadAngle", headAngle));
-    robot.set_headAngle(headAngle);
+    robot.SetHeadAngle(headAngle);
     
     Pose3d trueRobotPose;
     ASSERT_TRUE(JsonTools::GetPoseOptional(jsonData, "RobotPose", trueRobotPose));
@@ -109,7 +109,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     // If we're not going to be checking the robot's pose, we need to set it
     // to the ground truth now, *before* queueing up the markers
     if(!checkRobotPose) {
-      robot.set_pose(trueRobotPose);
+      robot.SetPose(trueRobotPose);
     }
 
     int NumMarkers;
@@ -131,6 +131,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       jsonMsg["markerType"] = Vision::StringToMarkerType.at(jsonMsg["markerType"].asString());
       
       MessageVisionMarker msg(jsonMsg);
+      msg.timestamp = 0;
       
       Quad2f corners;
       corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
@@ -146,10 +147,10 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
       
       // TODO: get the camera of the robot corresponding to the one that saw this VisionMarker
-      const Vision::Camera& camera = robot.get_camHead();
+      const Vision::Camera& camera = robot.GetCamera();
       Vision::ObservedMarker marker(msg.timestamp, msg.markerType, corners, camera);
       
-      RobotPoseStamp p(robot.GetPoseFrameID(), robot.get_pose(), robot.get_headAngle());
+      RobotPoseStamp p(robot.GetPoseFrameID(), robot.GetPose(), robot.GetHeadAngle(), robot.GetLiftAngle());
       robot.AddVisionOnlyPoseToHistory(msg.timestamp, p);
       
       TimeStamp_t t_actual;
@@ -172,7 +173,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       
       // Make sure the estimated robot pose matches the ground truth pose
       Pose3d P_diff;
-      const bool robotPoseMatches = trueRobotPose.IsSameAs(robot.get_pose(),
+      const bool robotPoseMatches = trueRobotPose.IsSameAs(robot.GetPose(),
                                                            robotPoseDistThreshold_mm,
                                                            robotPoseAngleThreshold, P_diff);
       
