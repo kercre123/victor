@@ -18,6 +18,7 @@
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "json/json.h"
 
+
 namespace Anki {
 namespace Cozmo {
 
@@ -72,12 +73,12 @@ void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius)
       RotatedRectangle *boundingRect = new RotatedRectangle;
       boundingRect->ImportQuad(quadOnGround2d);
 
-      printf("adding obstacle (%f padding): (%f, %f) width: %f height: %f\n",
-             paddingRadius,
-             boundingRect->GetX(),
-             boundingRect->GetY(),
-             boundingRect->GetWidth(),
-             boundingRect->GetHeight());
+      // printf("adding obstacle (%f padding): (%f, %f) width: %f height: %f\n",
+      //        paddingRadius,
+      //        boundingRect->GetX(),
+      //        boundingRect->GetY(),
+      //        boundingRect->GetWidth(),
+      //        boundingRect->GetHeight());
 
       env_.AddObstacle(boundingRect);
     }
@@ -116,7 +117,8 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
     return RESULT_FAIL;
   }
 
-  impl_->env_.ConvertToPath(impl_->planner_.GetPlan(), path);
+  path.Clear();
+  impl_->env_.AppendToPath(impl_->planner_.GetPlan(), path);
 
   path.PrintPath();
 
@@ -126,7 +128,7 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
   return RESULT_OK;
 }
 
-bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) 
+bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose, const u8 currentPathSegment)
 {
 
   // TODO:(bn) don't do this every time! Get an update from BlockWorld
@@ -138,20 +140,44 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
   // replan if the blocks move very slightly
   impl_->ImportBlockworldObstacles(60.0);
 
-  if(!impl_->planner_.PlanIsSafe()) {
-    printf("old plan unsafe! Will replan.\n");
+  State_c lastSafeState;
+  xythetaPlan validOldPlan;
 
-    State_c start(startPose.get_translation().x(),
-                  startPose.get_translation().y(),
-                  startPose.get_rotationAngle().ToFloat());
+  State_c currentRobotState(startPose.get_translation().x(),
+                            startPose.get_translation().y(),
+                            startPose.get_rotationAngle().ToFloat());
+                    
+
+  // plan Idx is the number of plan actions to execute before getting
+  // to the starting point closest to start
+  size_t planIdx = impl_->planner_.FindClosestPlanSegmentToPose(currentRobotState);
+
+  // TODO:(bn) param
+  const float maxDistancetoFollowOldPlan_mm = 60.0;
+
+  if(!impl_->planner_.PlanIsSafe(maxDistancetoFollowOldPlan_mm, planIdx, lastSafeState, validOldPlan)) {
+    // at this point, we know the plan isn't completely
+    // safe. lastSafeState will be set to the furthest state along the
+    // plan (after planIdx) which is safe. validOldPlan will contain a
+    // partial plan starting at planIdx and ending at lastSafeState
+
+    printf("old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
+           planIdx, validOldPlan.Size());
+
+    if(validOldPlan.Size() == 0) {
+      // if we can't safely complete the action we are currently
+      // executing, then valid old plan will be empty and we will
+      // replan from the current state of the robot
+      lastSafeState = currentRobotState;
+    }
 
     path.Clear();
 
-    if(!impl_->planner_.SetStart(start)) {
+    if(!impl_->planner_.SetStart(lastSafeState)) {
       printf("ERROR: ReplanIfNeeded, invalid start!\n");      
     }
     else if(!impl_->planner_.GoalIsValid()) {
-      printf("ERROR: ReplanIfNeeded, invalid goal!\n");
+      printf("ReplanIfNeeded, invalid goal! Goal may have moved into collision.\n");
     }
     else {
       impl_->planner_.SetReplanFromScratch();
@@ -160,13 +186,24 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
       impl_->ImportBlockworldObstacles(65.0);
 
       printf("(re-)planning from (%f, %f, %f)\n",
-             start.x_mm, start.y_mm, start.theta);
+             lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta);
 
       if(!impl_->planner_.ComputePath()) {
         printf("plan failed during replanning!\n");
       }
       else {
-        impl_->env_.ConvertToPath(impl_->planner_.GetPlan(), path);
+
+        assert(impl_->planner_.GetPlan().Size() == 0 ||
+               impl_->planner_.GetPlan().start_ == impl_->env_.State_c2State(lastSafeState));
+
+        path.Clear();
+
+        impl_->env_.AppendToPath(validOldPlan, path);
+        printf("from old plan:\n");
+        path.PrintPath();
+
+        impl_->env_.AppendToPath(impl_->planner_.GetPlan(), path);
+        printf("total plan:\n");
         path.PrintPath();
       }
     }

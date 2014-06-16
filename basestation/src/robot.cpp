@@ -140,7 +140,7 @@ namespace Anki {
       // TODO:(bn) only check this if the blocks have been updated
       if(IsTraversingPath()) {
         Planning::Path newPath;
-        if(pathPlanner_->ReplanIfNeeded(newPath, get_pose())) {
+        if(pathPlanner_->ReplanIfNeeded(newPath, get_pose(), GetCurrPathSegment())) {
           path_.Clear();
           VizManager::getInstance()->ErasePath(ID_);
           wasTraversingPath = false;
