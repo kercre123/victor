@@ -179,6 +179,9 @@ public:
   State start_;
   std::vector<ActionID> actions_;
 
+  // add the given plan to the end of this plan
+  void Append(const xythetaPlan& other);
+
   size_t Size() const {return actions_.size();}
   void Push(ActionID action) {actions_.push_back(action);}
   void Clear() {actions_.clear();}
@@ -244,6 +247,41 @@ public:
   // successor and returns true, otherwise it returns false and does
   // not change state
   bool ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions = true) const;
+
+  // Returns the state at the end of the given plan (e.g. following
+  // along the plans start and executing every action). No collision
+  // checks are performed
+  State GetPlanFinalState(const xythetaPlan& plan) const;
+
+
+  // This essentially projects the given pose onto the plan (held in
+  // this member). The projection is just the closest euclidean
+  // distance point on the plan, and the return value is the number of
+  // complete plan actions that are finished by the time you get to
+  // this point
+  size_t FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state) const;
+
+  // Returns true if the plan is safe and complete, false
+  // otherwise. This should always return true immediately after
+  // Replan returns true, but if the environment is updated it can be
+  // useful to re-check the plan.
+  // 
+  // second argument is how much of the path has already been
+  // executed. Note that this is different form the robot's
+  // currentPathSegment because our plans are different from robot
+  // paths
+  // 
+  // Second argument value will be set to last valid state along the
+  // path before collision if unsafe (or the goal if safe)
+  // 
+  // Third argument is the valid portion of the plan, up to lastSafeState
+  bool PlanIsSafe(const xythetaPlan& plan, const float maxDistancetoFollowOldPlan_mm, int currentPathIndex = 0) const;
+  bool PlanIsSafe(const xythetaPlan& plan, 
+                  const float maxDistancetoFollowOldPlan_mm,
+                  int currentPathIndex,
+                  State_c& lastSafeState,
+                  xythetaPlan& validPlan) const;
+
 
   // returns the raw underlying motion primitive. Note that it is centered at (0,0)
   const MotionPrimitive& GetRawMotionPrimitive(StateTheta theta, ActionID action) const;

@@ -39,7 +39,7 @@ GTEST_TEST(TestPlanner, PlanOnceEmptyEnv)
   ASSERT_TRUE(planner.SetGoal(goal));
 
   EXPECT_TRUE(planner.Replan());
-  EXPECT_TRUE(planner.PlanIsSafe(0));
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
 }
 
 GTEST_TEST(TestPlanner, PlanAroundBox)
@@ -64,7 +64,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox)
   ASSERT_TRUE(planner.SetGoal(goal));
 
   ASSERT_TRUE(planner.Replan());
-  EXPECT_TRUE(planner.PlanIsSafe(0));
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
 }
 
 GTEST_TEST(TestPlanner, ReplanEasy)
@@ -86,14 +86,14 @@ GTEST_TEST(TestPlanner, ReplanEasy)
   ASSERT_TRUE(planner.SetGoal(goal));
 
   EXPECT_TRUE(planner.Replan());
-  EXPECT_TRUE(planner.PlanIsSafe(0));
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
 
   env.AddObstacle(Anki::RotatedRectangle(50.0, -100.0, 80.0, -100.0, 20.0));
 
-  EXPECT_TRUE(planner.PlanIsSafe(0)) << "new obstacle should not interfere with plan";
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0)) << "new obstacle should not interfere with plan";
 
   EXPECT_TRUE(planner.Replan());
-  EXPECT_TRUE(planner.PlanIsSafe(0));
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
 }
 
 
@@ -116,13 +116,13 @@ GTEST_TEST(TestPlanner, ReplanHard)
   ASSERT_TRUE(planner.SetGoal(goal));
 
   EXPECT_TRUE(planner.Replan());
-  EXPECT_TRUE(planner.PlanIsSafe(0));
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
 
   // env.PrintPlan(planner.GetPlan());
 
   env.AddObstacle(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
 
-  EXPECT_FALSE(planner.PlanIsSafe(0)) << "new obstacle should block plan!";
+  EXPECT_FALSE(env.PlanIsSafe(planner.GetPlan(), 0)) << "new obstacle should block plan!";
 
   State_c newRobotPos(31.7*5, -1.35, 0.0736);
   ASSERT_FALSE(env.IsInCollision(newRobotPos)) << "position "<<newRobotPos<<" should be safe";
@@ -131,10 +131,10 @@ GTEST_TEST(TestPlanner, ReplanHard)
   State_c lastSafeState;
   xythetaPlan oldPlan;
 
-  int currentPlanIdx = planner.FindClosestPlanSegmentToPose(newRobotPos);
+  int currentPlanIdx = env.FindClosestPlanSegmentToPose(planner.GetPlan(), newRobotPos);
   ASSERT_EQ(currentPlanIdx, 3) << "should be at action #3 in the plan (plan should have 1 short, then 3 long straights in a row)";
 
-  ASSERT_FALSE(planner.PlanIsSafe(1000.0, currentPlanIdx, lastSafeState, oldPlan));
+  ASSERT_FALSE(env.PlanIsSafe(planner.GetPlan(), 1000.0, currentPlanIdx, lastSafeState, oldPlan));
 
   ASSERT_GE(oldPlan.Size(), 1) << "should re-use at least one action from the old plan";
 
@@ -150,7 +150,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
   ASSERT_TRUE(planner.GoalIsValid()) << "goal should still be valid";
 
   EXPECT_TRUE(planner.Replan());
-  EXPECT_TRUE(planner.PlanIsSafe(0));
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
 }
 
 
@@ -182,15 +182,15 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_straight)
       expected = 9;
 
     State_c pose(distAlong, 0.0, 0.0);
-    ASSERT_EQ(planner.FindClosestPlanSegmentToPose(pose), expected) 
+    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose), expected) 
       <<"closest path segment doesn't match expectation for state "<<pose;
 
     pose.y_mm = 7.36;
-    ASSERT_EQ(planner.FindClosestPlanSegmentToPose(pose), expected) 
+    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose), expected) 
       <<"closest path segment doesn't match expectation for state "<<pose;
 
     pose.y_mm = -0.3;
-    ASSERT_EQ(planner.FindClosestPlanSegmentToPose(pose), expected) 
+    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose), expected) 
       <<"closest path segment doesn't match expectation for state "<<pose;
   }
 }
@@ -230,7 +230,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
   for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
     const MotionPrimitive& prim(env.GetRawMotionPrimitive(curr.theta, planner._impl->plan_.actions_[planIdx]));
 
-    ASSERT_EQ(planIdx, planner.FindClosestPlanSegmentToPose(env.State2State_c(curr))) << "initial state wrong";
+    ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), env.State2State_c(curr))) << "initial state wrong";
 
     ASSERT_FALSE(prim.intermediatePositions.empty());
 
@@ -240,11 +240,11 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
                    prim.intermediatePositions[intermediateIdx].y_mm + env.GetX_mm(curr.y),
                    prim.intermediatePositions[intermediateIdx].theta);
 
-      ASSERT_EQ(planIdx, planner.FindClosestPlanSegmentToPose(pose)) << "exact intermediate state "<<intermediateIdx<<" wrong";
+      ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose)) << "exact intermediate state "<<intermediateIdx<<" wrong";
 
       pose.x_mm += 0.003;
       pose.y_mm -= 0.006;
-      ASSERT_EQ(planIdx, planner.FindClosestPlanSegmentToPose(pose)) << "offset intermediate state "<<intermediateIdx<<" wrong";
+      ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose)) << "offset intermediate state "<<intermediateIdx<<" wrong";
     }
 
     StateID currID(curr);

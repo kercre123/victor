@@ -183,6 +183,74 @@ bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, b
   return true;
 }
 
+
+bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
+                                    const float maxDistancetoFollowOldPlan_mm,
+                                    int currentPathIndex) const
+{
+  State_c waste1;
+  xythetaPlan waste2;
+  return PlanIsSafe(plan, maxDistancetoFollowOldPlan_mm, currentPathIndex, waste1, waste2);
+}
+
+bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
+                                    const float maxDistancetoFollowOldPlan_mm,
+                                    int currentPathIndex,
+                                    State_c& lastSafeState,
+                                    xythetaPlan& validPlan) const
+{
+  if(plan.actions_.empty())
+    return false;
+
+  validPlan.actions_.clear();
+
+  size_t numActions = plan.actions_.size();
+
+  StateID curr(plan.start_.GetStateID());
+  validPlan.start_ = curr;
+
+  bool useOldPlan = true;
+
+  // first go through all the actions that we are "skipping"
+  for(size_t i=0; i<currentPathIndex; ++i) {
+    // advance without checking collisions
+    ApplyAction(plan.actions_[i], curr, false);
+  }
+
+  State currentRobotState(curr);
+  lastSafeState = State2State_c(curr);
+  validPlan.start_ = curr;
+
+  // now go through the rest of the plan, checking for collisions at each step
+  for(size_t i = currentPathIndex; i < numActions; ++i) {
+
+    // check for collisions and possibly update curr
+    if(!ApplyAction(plan.actions_[i], curr, true)) {
+      printf("Collision along plan action %lu (starting from %d)\n", i, currentPathIndex);
+      // there was a collision trying to follow action i, so we are done
+      return false;
+    }
+
+    // no collision. If we are still within
+    // maxDistancetoFollowOldPlan_mm, update the valid old plan
+    if(useOldPlan) {
+
+      validPlan.Push(plan.actions_[i]);
+      lastSafeState = State2State_c(State(curr));
+
+      // TODO:(bn) this is kind of wrong. It's using euclidean
+      // distance, instead we should add up the lengths of each
+      // action. That will be faster and better
+      if(GetDistanceBetween(lastSafeState, currentRobotState) > maxDistancetoFollowOldPlan_mm) {
+        useOldPlan = false;
+      }
+    }
+  }
+
+  // if we get here, we successfully applied every action in the plan
+  return true;
+}
+
 const MotionPrimitive& xythetaEnvironment::GetRawMotionPrimitive(StateTheta theta, ActionID action) const
 {
   return allMotionPrimitives_[theta][action];
@@ -250,6 +318,10 @@ bool xythetaEnvironment::IsInCollision(State_c c) const
   return false;
 }
 
+void xythetaPlan::Append(const xythetaPlan& other)
+{
+  actions_.insert(actions_.end(), other.actions_.begin(), other.actions_.end());
+}
 
 ActionType::ActionType()
   : extraCostFactor_(0.0)
@@ -718,6 +790,77 @@ void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
     ApplyAction(plan.actions_[i], currID, false);
     curr_c = State2State_c(State(currID));
   }
+}
+
+
+State xythetaEnvironment::GetPlanFinalState(const xythetaPlan& plan) const
+{
+  StateID currID = plan.start_.GetStateID();
+
+  for(const auto& action : plan.actions_) {
+    ApplyAction(action, currID, false);
+  }
+
+  return State(currID);
+}
+
+size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state) const
+{
+  // for now, this is implemented by simply going over every
+  // intermediate pose and finding the closest one
+  float closest = 999999.9;  // TODO:(bn) talk to people about this
+  size_t startPoint = 0;
+
+  State curr = plan.start_;
+
+  using namespace std;
+  // cout<<"Searching for position near "<<state<<" along plan of length "<<plan.Size()<<endl;
+
+  size_t planSize = plan.Size();
+  for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
+    const MotionPrimitive& prim(GetRawMotionPrimitive(curr.theta, plan.actions_[planIdx]));
+
+    // the intermediate position (x,y) coordinates are all centered at
+    // 0. Instead of shifting them over each time, we just shift the
+    // state we are searching for (fewer ops)
+    State_c target(state.x_mm - GetX_mm(curr.x),
+                   state.y_mm - GetY_mm(curr.y),
+                   0.0f);
+
+    // first check the exact state.  // TODO:(bn) no sqrt!
+    float initialDist = sqrt(pow(target.x_mm, 2) + pow(target.y_mm, 2));
+    // cout<<planIdx<<": "<<"iniitial "<<target<<" = "<<initialDist;
+    if(initialDist <= closest + 1e-6) {
+      closest = initialDist;
+      startPoint = planIdx;
+      // cout<<"  closest\n";
+    }
+    else {
+      // cout<<endl;
+    }
+
+    for(const auto& position : prim.intermediatePositions) {
+      // TODO:(bn) get squared distance
+      float dist = GetDistanceBetween(target, position);
+
+      // cout<<planIdx<<": "<<"position "<<position<<" --> "<<target<<" = "<<dist;
+
+      if(dist < closest) {
+        closest = dist;
+        startPoint = planIdx;
+        // cout<<"  closest\n";
+      }
+      else {
+        // cout<<endl;
+      }
+    }
+
+    StateID currID(curr);
+    ApplyAction(plan.actions_[planIdx], currID, false);
+    curr = State(currID);
+  }
+
+  return startPoint;
 }
 
 void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const

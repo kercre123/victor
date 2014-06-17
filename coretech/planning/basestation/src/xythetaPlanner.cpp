@@ -39,26 +39,6 @@ void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
   _impl->freeTurnInPlaceAtGoal_ = allow;
 }
 
-bool xythetaPlanner::PlanIsSafe(const float maxDistancetoFollowOldPlan_mm, int currentPathIndex) const
-{
-  State_c waste1;
-  xythetaPlan waste2;
-  return _impl->PlanIsSafe(maxDistancetoFollowOldPlan_mm, currentPathIndex, waste1, waste2);
-}
-
-bool xythetaPlanner::PlanIsSafe(const float maxDistancetoFollowOldPlan_mm,
-                                int currentPathIndex,
-                                State_c& lastSafeState,
-                                xythetaPlan& validPlan) const
-{
-  return _impl->PlanIsSafe(maxDistancetoFollowOldPlan_mm, currentPathIndex, lastSafeState, validPlan);
-}
-
-size_t xythetaPlanner::FindClosestPlanSegmentToPose(const State_c& state) const
-{
-  return _impl->FindClosestPlanSegmentToPose(state);
-}
-
 bool xythetaPlanner::Replan()
 {
   return _impl->ComputePath();
@@ -177,130 +157,7 @@ bool xythetaPlannerImpl::NeedsReplan() const
   xythetaPlan waste2;
   // TODO:(bn) parameter or at least a comment.
   const float default_maxDistanceToReUse_mm = 60.0;
-  return !PlanIsSafe(default_maxDistanceToReUse_mm, 0, waste1, waste2);
-}
-
-bool xythetaPlannerImpl::PlanIsSafe(const float maxDistancetoFollowOldPlan_mm,
-                                    int currentPathIndex,
-                                    State_c& lastSafeState,
-                                    xythetaPlan& validPlan) const
-{
-  // collision check the old plan. If it starts at 'start' and ends at
-  // 'goal' and doesn't have any collisions, then we are good.
-
-  if(plan_.actions_.empty() || start_ != plan_.start_)
-    return false;
-
-  validPlan.actions_.clear();
-
-  size_t numActions = plan_.actions_.size();
-
-  StateID curr(start_.GetStateID());
-  validPlan.start_ = curr;
-
-  bool useOldPlan = true;
-
-  State currentRobotState(start_);
-
-  // first go through all the actions that we are "skipping"
-  for(size_t i=0; i<currentPathIndex; ++i) {
-    // advance without checking collisions
-    env_.ApplyAction(plan_.actions_[i], curr, false);
-  }
-
-  lastSafeState = env_.State2State_c(curr);
-  validPlan.start_ = curr;
-
-  // now go through the rest of the plan, checking for collisions at each step
-  for(size_t i = currentPathIndex; i < numActions; ++i) {
-
-    // check for collisions and possibly update curr
-    if(!env_.ApplyAction(plan_.actions_[i], curr, true)) {
-      printf("Collision along plan action %lu (starting from %d)\n", i, currentPathIndex);
-      // there was a collision trying to follow action i, so we are done
-      break;
-    }
-
-    // no collision. If we are still within
-    // maxDistancetoFollowOldPlan_mm, update the valid old plan
-    if(useOldPlan) {
-
-      validPlan.Push(plan_.actions_[i]);
-      lastSafeState = env_.State2State_c(State(curr));
-
-      // TODO:(bn) this is kind of wrong. It's using euclidean
-      // distance, instead we should add up the lengths of each
-      // action. That will be faster and better
-      if(env_.GetDistanceBetween(lastSafeState, currentRobotState) > maxDistancetoFollowOldPlan_mm) {
-        useOldPlan = false;
-      }
-    }
-  }
-
-  // if we get here, we either failed to apply an action, or reached
-  // the end of the plan. If we are now at the goal, we don't need to
-  // replan, so return true
-  return curr == goalID_;
-}
-
-
-size_t xythetaPlannerImpl::FindClosestPlanSegmentToPose(const State_c& state) const
-{
-  // for now, this is implemented by simply going over every
-  // intermediate pose and finding the closest one
-  float closest = 999999.9;  // TODO:(bn) talk to people about this
-  size_t startPoint = 0;
-
-  State curr = plan_.start_;
-
-  using namespace std;
-  // cout<<"Searching for position near "<<state<<" along plan of length "<<plan_.Size()<<endl;
-
-  size_t planSize = plan_.Size();
-  for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
-    const MotionPrimitive& prim(env_.GetRawMotionPrimitive(curr.theta, plan_.actions_[planIdx]));
-
-    // the intermediate position (x,y) coordinates are all centered at
-    // 0. Instead of shifting them over each time, we just shift the
-    // state we are searching for (fewer ops)
-    State_c target(state.x_mm - env_.GetX_mm(curr.x),
-                   state.y_mm - env_.GetY_mm(curr.y),
-                   0.0f);
-
-    // first check the exact state.  // TODO:(bn) no sqrt!
-    float initialDist = sqrt(pow(target.x_mm, 2) + pow(target.y_mm, 2));
-    // cout<<planIdx<<": "<<"iniitial "<<target<<" = "<<initialDist;
-    if(initialDist <= closest + 1e-6) {
-      closest = initialDist;
-      startPoint = planIdx;
-      // cout<<"  closest\n";
-    }
-    else {
-      // cout<<endl;
-    }
-
-    for(const auto& position : prim.intermediatePositions) {
-      // TODO:(bn) get squared distance
-      float dist = env_.GetDistanceBetween(target, position);
-
-      // cout<<planIdx<<": "<<"position "<<position<<" --> "<<target<<" = "<<dist;
-
-      if(dist < closest) {
-        closest = dist;
-        startPoint = planIdx;
-        // cout<<"  closest\n";
-      }
-      else {
-        // cout<<endl;
-      }
-    }
-
-    StateID currID(curr);
-    env_.ApplyAction(plan_.actions_[planIdx], currID, false);
-    curr = State(currID);
-  }
-
-  return startPoint;
+  return !env_.PlanIsSafe(plan_, default_maxDistanceToReUse_mm, 0, waste1, waste2);
 }
 
 bool xythetaPlannerImpl::ComputePath()
@@ -363,14 +220,14 @@ bool xythetaPlannerImpl::ComputePath()
     BuildPlan();
   }
   else {
-    printf("no path found!\n");
+    printf("xythetaPlanner: no path found!\n");
   }
 
   if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
     fclose(debugExpPlotFile_);
   }
 
-  printf("finished after %d expansions\n", expansions_);
+  printf("finished after %d expansions. foundGoal = %d\n", expansions_, foundGoal);
 
   return foundGoal;
 }

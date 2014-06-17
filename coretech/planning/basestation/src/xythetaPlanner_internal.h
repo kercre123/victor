@@ -45,13 +45,6 @@ struct xythetaPlannerImpl
   // checks if we need to replan from scratch
   bool NeedsReplan() const;
 
-  bool PlanIsSafe(const float maxDistancetoFollowOldPlan_mm, 
-                  int currentPathIndex,
-                  State_c& lastSafeState,
-                  xythetaPlan& validPlan) const;
-
-  size_t FindClosestPlanSegmentToPose(const State_c& state) const;
-
   StateID goalID_;
   State_c goal_c_;
   State start_;
