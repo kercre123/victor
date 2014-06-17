@@ -9,11 +9,13 @@
 #define DEBUG_PATH 0
 
 #ifdef CORETECH_BASESTATION
+#define DEBUG_PATH_APPEND 0
 #include <stdio.h>
 #include <float.h>
 #define ATAN2_FAST(y,x) atan2(y,x)
 #define ATAN2_ACC(y,x) atan2(y,x)
 #elif defined CORETECH_ROBOT
+#define DEBUG_PATH_APPEND 1
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/trig_fast.h"
 #define ATAN2_FAST(y,x) atan2_fast(y,x)
@@ -246,7 +248,7 @@ namespace Anki
       
 #if(DEBUG_PATH)
       CoreTechPrint("LINE (%f, %f, %f, %f)\n", seg->startPt_x, seg->startPt_y, seg->endPt_x, seg->endPt_y);
-      CoreTechPrint("Robot Pose: x: %f, y: %f ang: %f\n", x,y,angle.ToFloat());
+      CoreTechPrint("Robot Pose: x: %f, y: %f ang: %f\n", x,y,angle);
 #endif
       
       
@@ -318,7 +320,7 @@ namespace Anki
 #if(DEBUG_PATH)
         CoreTechPrint("m: %f, b: %f\n",line_m_,line_b_);
         CoreTechPrint("x_int: %f, y_int: %f, b_inv: %f\n", x_intersect, y_intersect, b_inv);
-        CoreTechPrint("dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath_m);
+        CoreTechPrint("dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath);
         CoreTechPrint("SIGN(dx): %d, dy_sign: %f\n", (SIGN(dx) ? 1 : -1), line_dy_sign_);
         CoreTechPrint("lineTheta: %f\n", line_theta_.ToFloat());
         //PRINT("lineTheta: %f, robotTheta: %f\n", seg->theta.ToFloat(), currPose.get_angle().ToFloat());
@@ -987,6 +989,12 @@ namespace Anki
       
       path_[numPathSegments_].DefineLine(x_start, y_start, x_end, y_end,
                                          targetSpeed, accel, decel);
+
+#if DEBUG_PATH_APPEND
+      CoreTechPrint("INFO (AppendLine): numPathSegments_ = %u :", numPathSegments_);
+      path_[numPathSegments_].Print();
+#endif
+
       numPathSegments_++;
       
       return true;
@@ -997,8 +1005,18 @@ namespace Anki
                       f32 targetSpeed, f32 accel, f32 decel) {
       assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
 
+      if (FLT_NEAR(sweepRad,0)) {
+        CoreTechPrint("ERROR: sweepRad is zero\n");
+      }
+
       path_[numPathSegments_].DefineArc(x_center, y_center, radius, startRad, sweepRad,
                                         targetSpeed, accel, decel);
+
+#if DEBUG_PATH_APPEND
+      CoreTechPrint("INFO (AddArc): numPathSegments_ = %u :", numPathSegments_);
+      path_[numPathSegments_].Print();
+#endif
+
       numPathSegments_++;
     }
   
@@ -1083,12 +1101,13 @@ namespace Anki
       assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
 
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
-        CoreTechPrint("ERROR (AppendArc): Exceeded path size\n");
+        CoreTechPrint("ERROR (AppendPointTurn): Exceeded path size\n");
         return false;
       }
       
       path_[numPathSegments_].DefinePointTurn(x,y,targetAngle,
                                               targetRotSpeed, rotAccel, rotDecel);
+
       numPathSegments_++;
       
       return true;
@@ -1104,6 +1123,12 @@ namespace Anki
       }
 
       path_[numPathSegments_] = segment;
+
+#if DEBUG_PATH_APPEND
+      CoreTechPrint("INFO (AppendSegment): numPathSegments_ = %u :", numPathSegments_);
+      path_[numPathSegments_].Print();
+#endif
+
       numPathSegments_++;
 
       return true;
