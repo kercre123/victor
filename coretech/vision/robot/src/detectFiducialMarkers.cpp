@@ -166,7 +166,8 @@ namespace Anki
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         Array<f32> &currentHomography = homographies[iQuad];
 
-        if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratchOnchip)) != RESULT_OK) {
+        bool numericalFailure;
+        if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, numericalFailure, scratchOnchip)) != RESULT_OK) {
           return lastResult;
         }
 

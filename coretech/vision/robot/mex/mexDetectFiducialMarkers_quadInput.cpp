@@ -88,7 +88,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     Array<f32> &currentHomography = homographies[iQuad];
     const Quadrilateral<s16> &currentQuad = quadsS16[iQuad];
 
-    if((lastResult = Transformations::ComputeHomographyFromQuad(currentQuad, currentHomography, memory)) != Anki::RESULT_OK) {
+    bool numericalFailure;
+    if((lastResult = Transformations::ComputeHomographyFromQuad(currentQuad, currentHomography, numericalFailure, memory)) != Anki::RESULT_OK) {
       return;
     }
 
