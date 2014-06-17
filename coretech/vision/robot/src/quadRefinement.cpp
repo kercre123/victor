@@ -28,6 +28,7 @@ namespace Anki {
       const f32 darkGray,
       const f32 brightGray,
       const s32 numSamples,
+      const f32 maxCornerChange,
       Quadrilateral<f32>& refinedQuad,
       Array<f32>& refinedHomography,
       MemoryStack scratch)
@@ -747,6 +748,28 @@ namespace Anki {
           "     'Tag', 'refinedQuad'); drawnow");
       }
 #endif
+      
+      // Check to make sure the refined quad isn't too different from the intitial one.
+      // If it is, restore the original.
+      {
+        Quadrilateral<f32> initialQuadF32;
+        initialQuadF32.SetCast(initialQuad);
+        
+        bool restoreOriginal = false;
+        for(s32 i=0; i<4; ++i) {
+          const f32 cornerChange = (refinedQuad[i] - initialQuadF32[i]).Length();
+          if(cornerChange > maxCornerChange) {
+            restoreOriginal = true;
+            break;
+          }
+        }
+        
+        if(restoreOriginal) {
+          AnkiWarn("RefineQuadrilateral", "Quad changed too much, restoring original.");
+          refinedQuad = initialQuadF32;
+          refinedHomography = initialHomography;
+        }
+      }
 
       EndBenchmark("vme_quadrefine_finalize");
 

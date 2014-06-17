@@ -46,8 +46,9 @@ using namespace Anki::Embedded;
 // decode_minContrastRatio = 1.25;
 // quadRefinementIterations = 5;
 // numRefinementSamples = 100;
+// quadRefinementMaxCornerChange = 2.f;
 // returnInvalidMarkers = 0;
-// [quads, markerTypes, markerNames] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
+// [quads, markerTypes, markerNames] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, returnInvalidMarkers);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
@@ -57,7 +58,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const u16 maxConnectedComponentSegments = 0xFFFF; // 642*480/2 = 154000
   const s32 bufferSize = 10000000;
 
-  AnkiConditionalErrorAndReturn(nrhs == 17 && (nlhs == 3 || nlhs == 2), "mexDetectFiducialMarkers", "Call this function as following: [quads, markerTypes, <markerNames>] = mexDetectFiducialMarkers(uint8(image), scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);");
+  AnkiConditionalErrorAndReturn(nrhs == 18 && (nlhs == 3 || nlhs == 2), "mexDetectFiducialMarkers", "Call this function as following: [quads, markerTypes, <markerNames>] = mexDetectFiducialMarkers(uint8(image), scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);");
 
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDetectFiducialMarkers", "Memory could not be allocated");
@@ -79,7 +80,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   const s32 quadRefinementIterations           = static_cast<s32>(mxGetScalar(prhs[14]));
   const s32 numRefinementSamples               = static_cast<s32>(mxGetScalar(prhs[15]));
-  const bool returnInvalidMarkers              = static_cast<bool>(Round<s32>(mxGetScalar(prhs[16])));
+  const f32 quadRefinementMaxCornerChange      = static_cast<f32>(mxGetScalar(prhs[16]));
+  const bool returnInvalidMarkers              = static_cast<bool>(Round<s32>(mxGetScalar(prhs[17])));
 
   AnkiConditionalErrorAndReturn(image.IsValid(), "mexDetectFiducialMarkers", "Could not allocate image");
 
@@ -122,6 +124,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       maxExtractedQuads,
       quadRefinementIterations,
       numRefinementSamples,
+      quadRefinementMaxCornerChange,
       returnInvalidMarkers,
       scratch1,
       scratch2,
