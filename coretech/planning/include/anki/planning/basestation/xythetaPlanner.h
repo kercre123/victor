@@ -37,6 +37,7 @@ public:
   // set a goal in meters and radians. Returns true if it is valid,
   // false otherwise
   bool SetGoal(const State_c& goal);
+  State_c GetGoal() const;
 
   // Re-checks the existing goal to see if it is valid
   bool GoalIsValid() const;

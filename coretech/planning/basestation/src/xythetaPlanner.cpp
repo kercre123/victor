@@ -24,6 +24,11 @@ bool xythetaPlanner::SetGoal(const State_c& goal)
   return _impl->SetGoal(goal);
 }
 
+State_c xythetaPlanner::GetGoal() const
+{
+  return _impl->goal_c_;
+}
+
 bool xythetaPlanner::GoalIsValid() const
 {
   return _impl->GoalIsValid();

@@ -320,6 +320,10 @@ bool xythetaEnvironment::IsInCollision(State_c c) const
 
 void xythetaPlan::Append(const xythetaPlan& other)
 {
+  if(actions_.empty()) {
+    start_ = other.start_;
+  }
+
   actions_.insert(actions_.end(), other.actions_.begin(), other.actions_.end());
 }
 
@@ -782,6 +786,8 @@ void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
   State_c curr_c = State2State_c(plan.start_);
   StateID currID = plan.start_.GetStateID();
 
+  cout<<"plan start: "<<plan.start_<<endl;
+
   for(size_t i=0; i<plan.actions_.size(); ++i) {
     printf("%2lu: (%f, %f, %f [%d]) --> %s\n",
            i,
@@ -804,7 +810,7 @@ State xythetaEnvironment::GetPlanFinalState(const xythetaPlan& plan) const
   return State(currID);
 }
 
-size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state) const
+size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state, bool debug) const
 {
   // for now, this is implemented by simply going over every
   // intermediate pose and finding the closest one
@@ -814,7 +820,8 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
   State curr = plan.start_;
 
   using namespace std;
-  // cout<<"Searching for position near "<<state<<" along plan of length "<<plan.Size()<<endl;
+  if(debug)
+    cout<<"Searching for position near "<<state<<" along plan of length "<<plan.Size()<<endl;
 
   size_t planSize = plan.Size();
   for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
@@ -829,29 +836,35 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
 
     // first check the exact state.  // TODO:(bn) no sqrt!
     float initialDist = sqrt(pow(target.x_mm, 2) + pow(target.y_mm, 2));
-    // cout<<planIdx<<": "<<"iniitial "<<target<<" = "<<initialDist;
+    if(debug)
+      cout<<planIdx<<": "<<"iniitial "<<target<<" = "<<initialDist;
     if(initialDist <= closest + 1e-6) {
       closest = initialDist;
       startPoint = planIdx;
-      // cout<<"  closest\n";
+      if(debug)
+        cout<<"  closest\n";
     }
     else {
-      // cout<<endl;
+      if(debug)
+        cout<<endl;
     }
 
     for(const auto& position : prim.intermediatePositions) {
       // TODO:(bn) get squared distance
       float dist = GetDistanceBetween(target, position);
 
-      // cout<<planIdx<<": "<<"position "<<position<<" --> "<<target<<" = "<<dist;
+      if(debug)
+        cout<<planIdx<<": "<<"position "<<position<<" --> "<<target<<" = "<<dist;
 
       if(dist < closest) {
         closest = dist;
         startPoint = planIdx;
-        // cout<<"  closest\n";
+        if(debug)
+          cout<<"  closest\n";
       }
       else {
-        // cout<<endl;
+        if(debug)
+          cout<<endl;
       }
     }
 

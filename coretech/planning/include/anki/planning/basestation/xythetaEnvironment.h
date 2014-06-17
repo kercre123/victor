@@ -259,7 +259,7 @@ public:
   // distance point on the plan, and the return value is the number of
   // complete plan actions that are finished by the time you get to
   // this point
-  size_t FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state) const;
+  size_t FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state, bool debug = false) const;
 
   // Returns true if the plan is safe and complete, false
   // otherwise. This should always return true immediately after
