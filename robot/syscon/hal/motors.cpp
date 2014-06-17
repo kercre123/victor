@@ -12,6 +12,11 @@
 #define FIXED_MUL(x, y) ((s32)(((s64)(x) * (s64)(y)) >> 16))
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
 
+// Early robot #2 had miswired connectors
+// XXX - change battery.c pin 26 too!
+// Note that quadrature encoders are wired properly, it's the motors that are wrong
+// #define EARLY_ROBO2
+
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
@@ -79,23 +84,23 @@ extern GlobalDataToBody g_dataToBody;
   const u8 ENCODER_HEADA_PIN = 16;   // M2/Head on schematic
   const u8 ENCODER_HEADB_PIN = 20;
   
-  // Given a gear ratio of 283.5:1 and 88mm wheel circumference and 2 encoder
-  // ticks per revolution, we compute the meters per tick as (using 2 edges):
-  const Fixed METERS_PER_TICK = TO_FIXED(0.088 / (283.5 * 2.0));
+  // Given a gear ratio of 283.5:1 and 88mm wheel circumference and 4 encoder
+  // ticks per revolution, we compute the meters per tick as:
+  const Fixed METERS_PER_TICK = TO_FIXED(0.088 / (283.5 * 4.0));
   
   // Given a gear ratio of 729:1 and 4 encoder ticks per revolution, we
   // compute the radians per tick on the lift as:
-  const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.5 * 3.14159265359) / 729.0);
+  const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 729.0);
   
   // Given a gear ratio of 108:1 and 8 encoder ticks per revolution, we
   // compute the radians per tick on the head as:
-  const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.25 * 3.14159265359) / 108.0);
-
+  const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 108.0);
+  
   // If no encoder activity for 200ms, we may as well be stopped
-  const u32 ENCODER_TIMEOUT_COUNT = 200000 * US_PER_COUNT;
+  const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 
-  // Set the debounce to reject all noise above it (100 us)
-  const u32 DEBOUNCE_COUNT = 2 * US_PER_COUNT;
+  // Set the debounce to reject all noise above it
+  const u32 DEBOUNCE_COUNT = 511;   // About 60uS?
   
   // NOTE: Do NOT re-order the MotorID enum, because this depends on it
   MotorInfo m_motors[MOTOR_COUNT] =
@@ -104,7 +109,11 @@ extern GlobalDataToBody g_dataToBody;
       LEFT_N1_PIN,
       LEFT_N2_PIN,
       LEFT_P_PIN,
+#ifndef EARLY_ROBO2      
       true,   // Wired backward
+#else      
+      false,
+#endif        
       0,
       ENCODER_LEFT_PIN,
       ENCODER_NONE,
@@ -137,10 +146,14 @@ extern GlobalDataToBody g_dataToBody;
       HEAD_N1_PIN,
       HEAD_N2_PIN,
       HEAD_P_PIN,
+#ifndef EARLY_ROBO2      
       true,   // Wired backward
+#else      
+      false,
+#endif        
       0,
-      ENCODER_HEADB_PIN,  // Invert direction logic on head
       ENCODER_HEADA_PIN,
+      ENCODER_HEADB_PIN,
       RADIANS_PER_HEAD_TICK,
       0, 0, 0, 0, 0, 0
     },
@@ -425,15 +438,7 @@ void MotorsUpdate()
 
 void MotorsPrintEncodersRaw()
 {
-  UARTPutChar('L');
-  UARTPutHex32(m_motors[0].position);
-  UARTPutChar('R');
-  UARTPutHex32(m_motors[1].position);
-  UARTPutChar('A');
-  UARTPutHex32(m_motors[2].position);
-  UARTPutChar('H');
-  UARTPutHex32(m_motors[3].position);
-  UARTPutChar(' ');  
+  UARTPutChar('\n');
   UARTPutChar('L');
   UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_LEFT_PIN));
   UARTPutChar('R');
@@ -444,8 +449,25 @@ void MotorsPrintEncodersRaw()
   UARTPutChar('H');
   UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_HEADA_PIN));
   UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_HEADB_PIN));
+  UARTPutChar(' ');  
+  UARTPutChar('L');
+  UARTPutDec(m_motors[0].position);
+  UARTPutChar('R');
+  UARTPutDec(m_motors[1].position);
+  UARTPutChar('A');
+  UARTPutDec(m_motors[2].position);
+  UARTPutChar('H');
+  UARTPutDec(m_motors[3].position);
   UARTPutChar('\n');
 }
+
+// Encoder code must be optimized for speed - this macro is faster than Nordic's
+#define fast_gpio_cfg_sense_input(pin_number, sense_config) \
+  NRF_GPIO->PIN_CNF[pin_number] = (sense_config << GPIO_PIN_CNF_SENSE_Pos) \
+                                | (GPIO_PIN_CNF_DRIVE_S0S1 << GPIO_PIN_CNF_DRIVE_Pos) \
+                                | (NRF_GPIO_PIN_NOPULL << GPIO_PIN_CNF_PULL_Pos) \
+                                | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos) \
+                                | (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos)
 
 // TODO: This should be optimized
 static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
@@ -463,9 +485,9 @@ static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
     {
       // NOTE: Using this edge because of the orientation of the encoder.
       // If the encoder was rotated 180 degrees, then the other edge should be used.
-      nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_HIGH);
+      fast_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_SENSE_HIGH);
       
-      if ((count - motorInfo->count) > DEBOUNCE_COUNT)
+      if (1) // && (count - motorInfo->count) > DEBOUNCE_COUNT)
       {
         motorInfo->count = count;
         u32 pin2 = motorInfo->encoderPins[1];
@@ -484,27 +506,151 @@ static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
       
     } else {
       // Handle low to high transition
-      nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_LOW);
+      fast_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_SENSE_LOW);
     }
   }
 }
 
+// Apologies for the straight-line code - it's required for performance
+// The encoders literally lose ticks unless this code can finish within ~30uS
 extern "C"
 void GPIOTE_IRQHandler()
 {
-  // Clear the event/interrupt
+  // Clear the event/interrupt - err on the side of too many interrupts - since we can ignore duplicates below
   NRF_GPIOTE->EVENTS_PORT = 0;
-  // Note:  IN could have already changed - but if it did, it would be a glitch anyway
-  // Grab the current state of the input pins
-  u32 state = NRF_GPIO->IN;
-
-  u32 count = GetCounter();
-  
-  for (int i = 0; i < MOTOR_COUNT; i++)
+      
+  // Look at the input pins and see if anything has changed, if so, process all changes and then check again
+  u32 state;
+  while (m_lastState != (state = NRF_GPIO->IN))
   {
-    MotorInfo* motorInfo = &m_motors[i];    
-    HandlePinTransition(motorInfo, state, count);
+    u32 whatChanged = state ^ m_lastState;     
+    m_lastState = state;
+    u32 count = GetCounter();
+    
+    // Head encoder (since it moves fastest)
+    if (whatChanged & (1 << ENCODER_HEADA_PIN))
+    {
+      m_motors[MOTOR_HEAD].count = count;
+      if (!(state & (1 << ENCODER_HEADA_PIN)))  // High to low transition
+      {
+        fast_gpio_cfg_sense_input(ENCODER_HEADA_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
+        if (state & (1 << ENCODER_HEADB_PIN))    // Forward vs backward
+          m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK; // Inverted due to miswiring
+        else
+          m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK;      
+      } else {
+        fast_gpio_cfg_sense_input(ENCODER_HEADA_PIN, NRF_GPIO_PIN_SENSE_LOW);
+        if (state & (1 << ENCODER_HEADB_PIN))   // Forward vs backward
+          m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK; // Inverted due to miswiring
+        else
+          m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK;      
+      }    
+    }           
+    // Lift encoder (next fastest)
+    if (whatChanged & (1 << ENCODER_LIFTA_PIN))
+    {
+      m_motors[MOTOR_LIFT].count = count;
+      if (!(state & (1 << ENCODER_LIFTA_PIN)))  // High to low transition
+      {
+        fast_gpio_cfg_sense_input(ENCODER_LIFTA_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
+        if (state & (1 << ENCODER_LIFTB_PIN))   // Forward vs backward
+          m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;
+        else
+          m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;      
+      } else {
+        fast_gpio_cfg_sense_input(ENCODER_LIFTA_PIN, NRF_GPIO_PIN_SENSE_LOW);
+        if (state & (1 << ENCODER_LIFTB_PIN))   // Forward vs backward
+          m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;
+        else
+          m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;  
+      }    
+    }       
+    // Left wheel
+    if (whatChanged & (1 << ENCODER_LEFT_PIN))
+    {
+      m_motors[MOTOR_LEFT_WHEEL].count = count;
+      m_motors[MOTOR_LEFT_WHEEL].position += m_motors[MOTOR_LEFT_WHEEL].unitsPerTick;
+      if (!(state & (1 << ENCODER_LEFT_PIN)))  // High to low transition
+        fast_gpio_cfg_sense_input(ENCODER_LEFT_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
+      else
+        fast_gpio_cfg_sense_input(ENCODER_LEFT_PIN, NRF_GPIO_PIN_SENSE_LOW);
+    }       
+    // Right wheel
+    if (whatChanged & (1 << ENCODER_RIGHT_PIN))
+    {
+      m_motors[MOTOR_RIGHT_WHEEL].count = count;
+      m_motors[MOTOR_RIGHT_WHEEL].position += m_motors[MOTOR_RIGHT_WHEEL].unitsPerTick;
+      if (!(state & (1 << ENCODER_RIGHT_PIN)))  // High to low transition
+        fast_gpio_cfg_sense_input(ENCODER_RIGHT_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
+      else
+        fast_gpio_cfg_sense_input(ENCODER_RIGHT_PIN, NRF_GPIO_PIN_SENSE_LOW);
+    }       
+  }
+}
+
+// XXX: The below hack job can be deleted once encoders are proven sound
+#if 1
+static u16 m_log[4096];
+void encoderAnalyzer(void)
+{
+  u32 now, start = GetCounter() >> 3;
+  u32 end = start + ((250 * COUNT_PER_MS) >> 3);
+  s16 lastPins = 0xff;
+  s16 logLen = 0;
+  static s32 s_pos = 0;
+  
+  do {
+    now = NRF_RTC1->COUNTER << 5;
+    s16 pins = (NRF_GPIO->IN >> 16) & 0x11;  // Neck encoder pins 16 and 20
+    if (pins != lastPins)
+    {
+      m_log[logLen++] = pins | now;
+      lastPins = pins;
+    }
+  } while (now < end);
+  
+  // Print the log
+  u16 last = start;
+  for (int i = 0; 0 && i < logLen; i++)
+  {
+    UARTPutHex(m_log[i] & 0x11);
+    UARTPutChar(' ');
+    UARTPutDec((u16)((m_log[i] & 0xffe0) - last));
+    last = m_log[i] & 0xffe0;
+    UARTPutString("\n");
+  }
+  // Scan the log to compute how many ticks (up + down)
+  // 00, 01, 11, 10, 00
+  const s8 dir[] = {  0, 1,-1, 0,     // 00 -> 00, 01, 10, 11
+                     -1, 0, 0, 1,     // 01 -> 00, 01, 10, 11
+                      1, 0, 0,-1,     // 10 -> 00, 01, 10, 11
+                      0,-1, 1, 0};    // 11 -> 00, 01, 10, 11               
+  int up = 0, down = 0, error = 0;
+  for (int i = 1; i < logLen; i++)
+  {
+    int fromto = (m_log[i-1] & 1) | ((m_log[i-1] & 0x10) >> 3) |
+                 ((m_log[i] & 1) << 2) | ((m_log[i] & 0x10) >> 1);
+    if (dir[fromto] > 0)
+      down++;
+    else if (dir[fromto] < 0)
+      up++;
+    else
+      error++;
   }
   
-  m_lastState = state;
+  s_pos += (down - up);
+  UARTPutString("\nUp: ");
+  UARTPutDec(up);
+  UARTPutString(" Down: ");
+  UARTPutDec(down);
+  UARTPutString(" Error: ");
+  UARTPutDec(error);
+  UARTPutString(" Entries:  ");
+  UARTPutDec(logLen);
+  UARTPutString(" Pos:  ");
+  UARTPutDec(s_pos);
+  UARTPutString(" IRQ Pos:  ");
+  UARTPutDec(m_motors[3].position);
+  UARTPutString("\n\n");  
 }
+#endif

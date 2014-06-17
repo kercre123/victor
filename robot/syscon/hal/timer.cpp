@@ -60,11 +60,3 @@ loop
     BNE loop
     BX lr
 }
-
-// XXX: We observed the counter jumping back, sometimes.
-u32 GetCounter()
-{
-  // Each tick is 120 ns. However, we can't get that resolution with the RTC.
-  // This value only gets 120*256 ns of resolution: the bottom 8-bits are 0.
-  return NRF_RTC1->COUNTER << 8;
-}

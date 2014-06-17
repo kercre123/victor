@@ -23,6 +23,10 @@ namespace Anki
       static LEDId m_led;
       static LEDColor m_color;
       
+      // Map the natural LED order (as shown in hal.h) to the hardware swizzled order
+      // See schematic if you care about why the LEDs are swizzled
+      static u8 HW_CHANNELS[8] = {5, 1, 2, 0, 6, 7, 3, 4};
+      
       // Initialize LED head/face light hardware
       void LightsInit()
       {
@@ -74,7 +78,8 @@ namespace Anki
           GPIO_RESET(GPIO_EYERST, PIN_EYERST);
           
           // Count up to specified LED number
-          for (int eye = 0; eye < led_id; eye++) {
+          u8 hwChannel = HW_CHANNELS[led_id];
+          for (int eye = 0; eye < hwChannel; eye++) {
             GPIO_SET(GPIO_EYECLK, PIN_EYECLK);
             MicroWait(1);
             GPIO_RESET(GPIO_EYECLK, PIN_EYECLK);
