@@ -119,6 +119,7 @@ namespace Anki {
     , _dockBlock(nullptr)
     , _dockMarker(nullptr)
     , _forceReplanOnNextWorldChange(false)
+    , _state(IDLE)
     {
       SetHeadAngle(_currentHeadAngle);
       pdo_ = new PathDolerOuter(msgHandler, robotID);
@@ -212,7 +213,9 @@ namespace Anki {
             pdo_->Update(GetCurrPathSegment());
           } else { // IsTraversingPath is false?
             PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
-                             "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
+                             "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d, isWaitingForReplan = %d\n",
+                             _currPathSegment,
+                             _isWaitingForReplan);
           }
           
           // Visualize path if robot has just started traversing it.
