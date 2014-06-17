@@ -160,7 +160,7 @@ namespace Anki
           rweights[cls]++;
         }
 
-        if ( levelWeights && weights && !weights->get_size()==0 && !levelWeights->get_size()==0 )
+        if ( levelWeights && weights && weights->get_size()!=0 && levelWeights->get_size()!=0 )
         {
           for(s32 i = 0; i < nlabels; i++ )
           {

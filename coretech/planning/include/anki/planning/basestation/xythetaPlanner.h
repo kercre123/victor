@@ -32,16 +32,37 @@ public:
   xythetaPlanner(const xythetaEnvironment& env);
   ~xythetaPlanner();
 
-  // set a goal in meters and radians
-  void SetGoal(const State_c& goal);
+  // set a goal in meters and radians. Returns true if it is valid,
+  // false otherwise
+  bool SetGoal(const State_c& goal);
 
-  // set the starting state. Will be rounded to the nearest continuous state
-  void SetStart(const State_c& start);
+  // Re-checks the existing goal to see if it is valid
+  bool GoalIsValid() const;
+
+  // set the starting state. Will be rounded to the nearest continuous
+  // state. Returns true if it is valid, false otherwise
+  bool SetStart(const State_c& start);
 
   // Allow (or disallow) free turn-in-place at the goal
   void AllowFreeTurnInPlaceAtGoal(bool allow = true);
 
-  void ComputePath();
+  // Tells the planner to replan from scratch next time
+  void SetReplanFromScratch();
+
+  // Returns true if the plan is safe and complete, false
+  // otherwise. This should always return true immediately after
+  // Replan returns true, but if the environment is updated it can be
+  // useful to re-check the plan
+  bool PlanIsSafe() const;
+
+  // Computes a path from start to goal. Returns true if path found,
+  // false otherwise. Note that replanning may or may not actually
+  // trigger the planner. E.g. if the environment hasn't changed
+  // (much), it may just use the same path
+  bool Replan();  
+
+  // TEMP: for compatibility
+  bool ComputePath() {Replan(); return true;}
 
   // must call compute path before getting the plan
   const xythetaPlan& GetPlan() const;

@@ -116,6 +116,16 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
+  inline Quadrilateral<N,T>&  Quadrilateral<N,T>::operator+=(const T value)
+  {
+    using namespace Quad;
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
+      (*this)[i] += value;
+    }
+    return *this;
+  }
+  
+  template<QuadDimType N, typename T>
   inline Quadrilateral<N,T>&  Quadrilateral<N,T>::operator+=(const Point<N,T> &point)
   {
     using namespace Quad;

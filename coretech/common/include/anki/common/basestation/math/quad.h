@@ -69,7 +69,9 @@ namespace Anki {
     Quadrilateral<N,T>  operator- (const Quadrilateral<N,T> &quad2) const;
     Quadrilateral<N,T>& operator+=(const Quadrilateral<N,T> &quad2);
     Quadrilateral<N,T>& operator-=(const Quadrilateral<N,T> &quad2);
+
     Quadrilateral<N,T>& operator*=(const T value);
+    Quadrilateral<N,T>& operator+=(const T value);
 
     Quadrilateral<N,T>& operator+=(const Point<N,T> &point);
     Quadrilateral<N,T>& operator-=(const Point<N,T> &point);
@@ -89,7 +91,7 @@ namespace Anki {
     
     // Force access by enumerated CornerNames:
     const Point<N,T>& operator[] (const Quad::CornerName whichCorner) const;
-    Point<N,T>&       operator[] (const Quad::CornerName whichCorner);
+    Point<N,T>&       operator[] (const Quad::CornerName whichCorner);    
     
     //const std::vector<Point<N,T> >& get_corners() const;
     

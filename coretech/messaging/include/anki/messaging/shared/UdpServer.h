@@ -20,14 +20,14 @@ public:
 
   bool HasClient();
   
-  int GetNumClients() {return client_list.size();}
+  int GetNumClients();
 
   int Send(const char* data, int size);
   int Recv(char* data, int maxSize);
   //int GetNumBytesAvailable();
   
 private:
-  struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
+  //struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
   struct sockaddr_in cliaddr;
 
   void set_nonblock(int socket);

@@ -34,8 +34,8 @@ namespace Anki
       f32 &exposureMilliseconds,
       MemoryStack scratch)
     {
-      const s32 imageHeight = image.get_size(0);
-      const s32 imageWidth  = image.get_size(1);
+      //const s32 imageHeight = image.get_size(0);
+      //const s32 imageWidth  = image.get_size(1);
 
       AnkiConditionalErrorAndReturnValue(integerCountsIncrement > 0 && exposureMilliseconds > 0.0f && percentileToMakeHigh >= 0.0f && percentileToMakeHigh <= 1.0f,
         RESULT_FAIL_INVALID_PARAMETER, "ComputeBestCameraParameters", "Invalid parameters");
@@ -87,7 +87,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue((imageWidth%4 == 0) && imageWidth >= 4 && (imageHeight%4 == 0) && imageHeight >= 4,
         RESULT_FAIL_INVALID_SIZE, "CorrectVignetting", "Image width and height must be divisible by 4");
 
-      const s32 polynomialDegree = (polynomialParameters.get_size() - 1) / 2;
+      //const s32 polynomialDegree = (polynomialParameters.get_size() - 1) / 2;
 
       const s32 imageWidth4 = imageWidth / 4;
 

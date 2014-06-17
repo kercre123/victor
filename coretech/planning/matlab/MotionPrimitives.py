@@ -72,13 +72,13 @@ class MotionPrimitiveSet:
                 for angleIdx in range(len(self.angles)):
                     oppositeAngle = (angleIdx + (self.numAngles / 2)) % self.numAngles
                     backwardsPrim = copy.deepcopy(self.primitivesPerAngle[oppositeAngle][action.index])
-                    newTheta = fixTheta(angleIdx + backwardsAction.angleOffset, self.numAngles)
+                    newTheta = fixTheta(angleIdx - backwardsAction.angleOffset, self.numAngles)
                     backwardsPrim.endPose = Pose(backwardsPrim.endPose.x, backwardsPrim.endPose.y, newTheta)
                     backwardsPrim.actionIndex = backwardsAction.index
                     backwardsPrim.l *= -1
                     if backwardsPrim.arc:
-                        newStartRad = fixTheta_rads(backwardsPrim.arc.startRad + pi)
-                        newThetaRads = backwardsPrim.arc.sweepRad * -1.0
+                        newStartRad = fixTheta_rads(backwardsPrim.arc.startRad)
+                        newThetaRads = backwardsPrim.arc.sweepRad
                         backwardsPrim.arc = Arc(backwardsPrim.arc.centerPt_x_mm,
                                                 backwardsPrim.arc.centerPt_y_mm,
                                                 backwardsPrim.arc.radius_mm,
@@ -270,7 +270,7 @@ class MotionPrimitiveSet:
         y0 = startPose.y
         x1 = endPose.x
         y1 = endPose.y
-        A = numpy.matrix([[c0, s1 - s0], [s0, c0-c1]])
+        A = numpy.matrix([[c0, s0 - s1], [s0, c1 - c0]])
         B = numpy.matrix([[x1-x0], [y1-y0]])
 
         X = A.I * B
@@ -335,6 +335,11 @@ class MotionPrimitiveSet:
         best = None
         for x in range(startPose.x - 9, startPose.x + 10):
             for y in range(startPose.y - 9, startPose.y + 10):
+
+                # TEMP: testing
+                if abs(x) + abs(y) < 4:
+                    continue
+
                 if self.inQuadrant(x,y,quads):
                     endPose = Pose(x, y, newAngle)
                     turn = self.computeTurn(startPose, endPose)
@@ -356,11 +361,16 @@ class MotionPrimitiveSet:
             theta1 = self.angles[newAngle]
 
             # compute the center of the circle (x_c, y_c), in mm
-            x_c = l*cos(theta0) - r*sin(theta0)
-            y_c = l*sin(theta0) + r*cos(theta0)
+            x_c = l*cos(theta0) + r*sin(theta0)
+            y_c = l*sin(theta0) - r*cos(theta0)
 
             # from the center, comptue the starting angle
-            startRads = theta0 - pi/2
+            startRads = theta0 + pi/2
+
+            # fix radius
+            if r < 0:
+                r = -r
+                startRads = fixTheta_rads(startRads - pi)
 
             # how many radians we move through during the arc (+ is CCW)
             sweepRads = theta1 - theta0
@@ -369,7 +379,6 @@ class MotionPrimitiveSet:
             arc = Arc(x_c, y_c, r, startRads, sweepRads)
 
             return [best[0], best[1], l, arc]
-        return best
         
 
 class DuplicateActionError(Exception):
@@ -487,7 +496,7 @@ def fixPose_mm(oldPose):
 class MotionPrimitive:
     "A primitive for a given starting angle and action"
 
-    def __init__(self, actionIndex, endPose, l):
+    def __init__(self, actionIndex, endPose=None, l=None):
         self.endPose = endPose
         self.l = l # length in mm
         self.intermediatePoses = []
@@ -552,6 +561,8 @@ class MotionPrimitive:
         if self.arc:
             # compute the step size in radians
             radStep = primSet.sampleLength / self.arc.radius_mm
+            if self.arc.sweepRad < 0:
+                radStep = -radStep
 
             for t in numpy.arange(0.0, self.arc.sweepRad, radStep):
                 theta = self.arc.startRad + t

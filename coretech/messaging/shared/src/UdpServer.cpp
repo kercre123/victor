@@ -124,14 +124,18 @@ int UdpServer::Send(const char* data, int size)
 
   DEBUG_UDP_SERVER("UdpServer: sending   " << data);
 
-  int bytes_sent = 0;
+  ssize_t bytes_sent = 0;
   for (client_list_it it = client_list.begin(); it != client_list.end(); it++ ) {
     DEBUG_UDP_SERVER("Sending to client ");
     bytes_sent = sendto(socketfd, data, size, 0, (struct sockaddr *)&(*it), sizeof(*it));
     assert(bytes_sent == size);
   }
 
-  return bytes_sent;
+  if(bytes_sent > std::numeric_limits<int>::max()) {
+    DEBUG_UDP_SERVER("UdpServer warning: bytes sent larger than max int.\n");
+  }
+  
+  return static_cast<int>(bytes_sent);
 }
 
 int UdpServer::Recv(char* data, int maxSize)
@@ -154,7 +158,11 @@ int UdpServer::Recv(char* data, int maxSize)
     AddClient(cliaddr);
   }
 
-  return bytes_received;
+  if(bytes_received > std::numeric_limits<int>::max()) {
+    DEBUG_UDP_SERVER("UdpServer warning: bytes received larger than max int.\n");
+  }
+  
+  return static_cast<int>(bytes_received);
 }
 /*
 int UdpServer::GetNumBytesAvailable()
@@ -183,4 +191,13 @@ bool UdpServer::HasClient()
   return !client_list.empty();
 }
 
-
+int UdpServer::GetNumClients()
+{
+  const ssize_t numClients = client_list.size();
+  
+  if(numClients > std::numeric_limits<int>::max()) {
+    DEBUG_UDP_SERVER("UdpServer warning: number of clients larger than max int.\n");
+  }
+  
+  return static_cast<int>(numClients);
+}

@@ -129,17 +129,18 @@ namespace Anki {
         // Start with (zero-centered) canonical corner
         corners[i] = Block::CanonicalCorners[i];
         // Scale to the right size
-        corners[i] *= size_;
+        corners[i] *= _size;
         // Move to block's current pose
         corners[i] = atPose * corners[i];
       }
     }
     
     Block::Block(const ObjectType_t type)
-    : ObservableObject(type),
-      color_(BlockInfoLUT_[type].color),
-      size_(BlockInfoLUT_[type].size),
-      name_(BlockInfoLUT_[type].name)
+    : ObservableObject(type)
+    , _color(BlockInfoLUT_[type].color)
+    , _size(BlockInfoLUT_[type].size)
+    , _name(BlockInfoLUT_[type].name)
+    , _isBeingCarried(false)
     {
       
       //++Block::numBlocks;
@@ -181,13 +182,13 @@ namespace Anki {
       
     } // Copy Constructor: Block(otherBlock)
     
-    Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding) const
+    Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const
     {
-      return GetBoundingQuadInPlane(planeNormal, pose_, padding);
+      return GetBoundingQuadInPlane(planeNormal, pose_, padding_mm);
     }
     
     
-    Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 paddingScale) const
+    Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding_mm) const
     {
       const RotationMatrix3d& R = atPose.get_rotationMatrix();
       const Matrix_3x3f planeProjector = GetProjectionOperator(planeNormal);
@@ -195,11 +196,14 @@ namespace Anki {
       // Compute a single projection and rotation operator
       const Matrix_3x3f PR(planeProjector*R);
       
+      Point3f paddedSize(_size);
+      paddedSize += 2.f*padding_mm;
+      
       std::vector<Point3f> points;
       points.reserve(8);
       for(auto corner : Block::CanonicalCorners) {
         // Scale to the right block size
-        corner *= size_;
+        corner *= paddedSize;
         
         // Rotate to given pose and project onto the given plane
         points.emplace_back(PR*corner);
@@ -263,33 +267,30 @@ namespace Anki {
       boundingQuad = boundingQuad.SortCornersClockwise(planeNormal);
       */
        
-      // Scale and re-center (Note: we don't need to use Quadrilateral::scale()
-      // here because we know the points are zero-centered and can thus just
-      // multiply them by paddingScale directly.)
-      if(paddingScale != 1.f) {
-        boundingQuad *= paddingScale;
-      }
+      // Re-center
       boundingQuad += atPose.get_translation();
-      
       
       return boundingQuad;
       
     } // GetBoundingBoxInPlane()
     
-    Quad2f Block::GetBoundingQuadXY(const f32 paddingScale) const
+    Quad2f Block::GetBoundingQuadXY(const f32 padding_mm) const
     {
-      return GetBoundingQuadXY(pose_, paddingScale);
+      return GetBoundingQuadXY(pose_, padding_mm);
     }
     
-    Quad2f Block::GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale) const
+    Quad2f Block::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
       const RotationMatrix3d& R = atPose.get_rotationMatrix();
+
+      Point3f paddedSize(_size);
+      paddedSize += 2.f*padding_mm;
       
       std::vector<Point2f> points;
       points.reserve(8);
       for(auto corner : Block::CanonicalCorners) {
-        // Scale canonical point to correct size
-        corner *= size_;
+        // Scale canonical point to correct (padded) size
+        corner *= paddedSize;
         
         // Rotate to given pose
         corner = R*corner;
@@ -300,62 +301,8 @@ namespace Anki {
       
       Quad2f boundingQuad = GetBoundingQuad(points);
       
-      /*
-      // Data structure for helping me sort 3D points by their 2D x-y distance
-      // from center
-      struct xyPoint {
-        
-        xyPoint(const Point3f& pt3d, const RotationMatrix3d& R)
-        {
-          Point3f pt3d_rotated( R*pt3d );
-          pt_.x() = pt3d_rotated.x();
-          pt_.y() = pt3d_rotated.y();
-          length_ = pt_.length();
-        }
-        
-        bool operator<(const xyPoint& other) const {
-          return this->length_ > other.length_; // sort decreasing!
-        }
-        
-        Point2f pt_;
-        f32 length_;
-      }; // struct xyPoint
-      
-      const RotationMatrix3d& R = atPose.get_rotationMatrix();
-      
-      // Choose the 4 points furthest from the center of the block (in the
-      // XY plane)
-      std::vector<xyPoint> xyCorners = {
-        xyPoint(blockCorners_[LEFT_FRONT_TOP], R),
-        xyPoint(blockCorners_[RIGHT_FRONT_TOP], R),
-        xyPoint(blockCorners_[LEFT_FRONT_BOTTOM], R),
-        xyPoint(blockCorners_[RIGHT_FRONT_BOTTOM], R),
-        xyPoint(blockCorners_[LEFT_BACK_TOP], R),
-        xyPoint(blockCorners_[RIGHT_BACK_TOP], R),
-        xyPoint(blockCorners_[LEFT_BACK_BOTTOM], R),
-        xyPoint(blockCorners_[RIGHT_BACK_BOTTOM], R)
-      };
-      
-      // NOTE: Uses xyPoint class's operator<, which sorts in _decreasing_ order
-      // so we get the 4 points the _largest_ distance from the center, after
-      // rotation is applied
-      std::partial_sort(xyCorners.begin(), xyCorners.begin()+4, xyCorners.end());
-      
-      Quad2f boundingQuad(xyCorners[0].pt_,
-                          xyCorners[1].pt_,
-                          xyCorners[2].pt_,
-                          xyCorners[3].pt_);
-      
-      boundingQuad = boundingQuad.SortCornersClockwise();
-      */
-      
-      // scale and re-center (Note: we don't need to use Quadrilateral::scale()
-      // here because we know the points are zero-centered and can thus just
-      // multiply them by padding directly.)
+      // Re-center
       Point2f center(atPose.get_translation().x(), atPose.get_translation().y());
-      if(paddingScale != 1.f) {
-        boundingQuad *= paddingScale;
-      }
       boundingQuad += center;
       
       return boundingQuad;
@@ -435,7 +382,9 @@ namespace Anki {
       //for(auto & canonicalPoint : Block::CanonicalDockingPoints)
       for(FaceName i_face = FIRST_FACE; i_face < NUM_FACES; ++i_face)
       {
-        if(GetPreDockPose(CanonicalDockingPoints[i_face], distance_mm, this->pose_, preDockPose) == true) {
+        const Vision::KnownMarker& faceMarker = GetMarker(i_face);
+        const f32 distanceForThisFace = faceMarker.GetPose().get_translation().Length() + distance_mm;
+        if(GetPreDockPose(CanonicalDockingPoints[i_face], distanceForThisFace, this->pose_, preDockPose) == true) {
           poseMarkerPairs.emplace_back(preDockPose, GetMarker(i_face));
         }
       } // for each canonical docking point
@@ -551,8 +500,8 @@ namespace Anki {
     {
       // The sizes specified by the block definitions should
       // agree with this being a cube (all dimensions the same)
-      CORETECH_ASSERT(size_.x() == size_.y())
-      CORETECH_ASSERT(size_.y() == size_.z())
+      CORETECH_ASSERT(_size.x() == _size.y())
+      CORETECH_ASSERT(_size.y() == _size.z())
     }
     
     

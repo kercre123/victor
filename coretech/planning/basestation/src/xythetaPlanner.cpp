@@ -3,6 +3,7 @@
 #include <iostream>
 #include <assert.h>
 #include "xythetaPlanner_internal.h"
+#include "anki/common/basestation/general.h"
 
 namespace Anki {
 namespace Planning {
@@ -18,14 +19,19 @@ xythetaPlanner::~xythetaPlanner()
   _impl = NULL;
 }
 
-void xythetaPlanner::SetGoal(const State_c& goal)
+bool xythetaPlanner::SetGoal(const State_c& goal)
 {
-  _impl->SetGoal(goal);
+  return _impl->SetGoal(goal);
 }
 
-void xythetaPlanner::SetStart(const State_c& start)
+bool xythetaPlanner::GoalIsValid() const
 {
-  _impl->SetStart(start);
+  return _impl->GoalIsValid();
+}
+
+bool xythetaPlanner::SetStart(const State_c& start)
+{
+  return _impl->SetStart(start);
 }
 
 void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
@@ -33,10 +39,19 @@ void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
   _impl->freeTurnInPlaceAtGoal_ = allow;
 }
 
-
-void xythetaPlanner::ComputePath()
+bool xythetaPlanner::PlanIsSafe() const
 {
-  _impl->ComputePath();
+  return _impl->PlanIsSafe();
+}
+
+bool xythetaPlanner::Replan()
+{
+  return _impl->ComputePath();
+}
+
+void xythetaPlanner::SetReplanFromScratch()
+{
+  _impl->fromScratch_ = true;
 }
 
 const xythetaPlan& xythetaPlanner::GetPlan() const
@@ -51,32 +66,71 @@ const xythetaPlan& xythetaPlanner::GetPlan() const
 #define PLANNER_DEBUG_PLOT_STATES_CONSIDERED 0
 
 xythetaPlannerImpl::xythetaPlannerImpl(const xythetaEnvironment& env)
-  : env_(env),
-    start_(0,0,0),
-    searchNum_(0),
-    freeTurnInPlaceAtGoal_(false)
+  : start_(0,0,0)
+  , env_(env)
+  , goalChanged_(false)
+  , freeTurnInPlaceAtGoal_(false)
+  , searchNum_(0)
 {
   startID_ = start_.GetStateID();
   Reset();
 }
 
-void xythetaPlannerImpl::SetGoal(const State_c& goal_c)
+bool xythetaPlannerImpl::SetGoal(const State_c& goal_c)
 {
-  std::cout<<goal_c.x_mm<<" "<<goal_c.y_mm<<" "<<goal_c.theta<<std::endl;
+  if(env_.IsInCollision(goal_c)) {
+    printf("goal is in collision!\n");
+    return false;
+  }
 
   State goal = env_.State_c2State(goal_c);
+
+  if(env_.IsInCollision(goal)) {
+    printf("looks like goal is in collision but goal_c isn't. This is a failure but will be fixed soon...\n");
+    return false;
+  }
   goalID_ = goal.GetStateID();
 
   std::cout<<goal<<std::endl;
 
   // convert back so this is still lined up perfectly with goalID_
   goal_c_ = env_.State2State_c(goal);
+
+  // TEMP: for now, replan if the goal changes, but this isn't
+  // necessary. Instead, we could just re-order the open list and
+  // continue as usual
+  fromScratch_ = true;
+
+  goalChanged_ = true;
+  return true;
 }
 
-void xythetaPlannerImpl::SetStart(const State_c& start)
+bool xythetaPlannerImpl::GoalIsValid() const
 {
+  return !env_.IsInCollision(goal_c_);
+}
+
+
+bool xythetaPlannerImpl::SetStart(const State_c& start)
+{
+  if(env_.IsInCollision(start)) {
+    printf("start is in collision!\n");
+    return false;
+  }
+
   start_ = env_.State_c2State(start);
+
+  if(env_.IsInCollision(start_)) {
+    printf("rounded start is in collision! This is a failure for now, will be fixed soon.....\n");
+    return false;
+  }
+
   startID_ = start_.GetStateID();
+
+  // if the start changes, can't re-use anything
+  fromScratch_ = true;
+
+  return true;
 }
 
 
@@ -84,17 +138,58 @@ void xythetaPlannerImpl::Reset()
 {
   plan_.Clear();
 
+  // TODO:(bn) shouln't need to clear these if I use searchNum_
+  // properly
+  table_.Clear();
+  open_.clear();
+
   expansions_ = 0;
   considerations_ = 0;
   collisionChecks_ = 0;
+
+  goalChanged_ = false;
+  fromScratch_ = false;
 }
 
-void xythetaPlannerImpl::ComputePath()
+bool xythetaPlannerImpl::NeedsReplan() const
 {
+  return !PlanIsSafe();
+}
 
-  std::cout<<"planning from '"<<start_<<"' to '"<<State(goalID_)<<"'\n";
+bool xythetaPlannerImpl::PlanIsSafe() const
+{
+  // collision check the old plan. If it starts at 'start' and ends at
+  // 'goal' and doesn't have any collisions, then we are good.
 
-  Reset();
+  if(plan_.actions_.empty() || start_ != plan_.start_)
+    return false;
+
+  size_t i=0;
+  size_t numActions = plan_.actions_.size();
+
+  StateID curr(start_.GetStateID());
+
+  BOUNDED_WHILE(1000, i < numActions && env_.ApplyAction(plan_.actions_[i], curr)) {
+    if(curr == goalID_)
+      return true;
+    i++;
+  }
+
+  // if we get here, we either failed to apply an action, or reached
+  // the end of the plan. If we are now at the goal, we don't need to
+  // replan, so return true
+  return curr == goalID_;
+}
+
+bool xythetaPlannerImpl::ComputePath()
+{
+  if(fromScratch_ || NeedsReplan()) {
+    Reset();
+  }
+  else {
+    printf("No replan needed!\n");
+    return true;
+  }
 
   if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
     debugExpPlotFile_ = fopen("expanded.txt", "w");
@@ -153,6 +248,8 @@ void xythetaPlannerImpl::ComputePath()
   }
 
   printf("finished after %d expansions\n", expansions_);
+
+  return foundGoal;
 }
 
 void xythetaPlannerImpl::ExpandState(StateID currID)
@@ -217,8 +314,7 @@ void xythetaPlannerImpl::BuildPlan()
   // until we get to the start id
 
   StateID curr = goalID_;
-  // BOUNDED_WHILE(1000, curr != startID_) { // TODO:(bn) include this
-  while(!(curr == startID_)) {
+  BOUNDED_WHILE(1000, !(curr == startID_)) {
     auto it = table_.find(curr);
 
     assert(it != table_.end());

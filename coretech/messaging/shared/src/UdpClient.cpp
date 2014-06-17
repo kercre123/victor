@@ -88,7 +88,7 @@ int UdpClient::Send(const char* data, int size)
   
   DEBUG_UDP_CLIENT("UdpClient: sending " << size << " bytes: " << data << "\n");
 
-  int bytes_sent = sendto(socketfd, data, size, 0,
+  ssize_t bytes_sent = sendto(socketfd, data, size, 0,
                           (struct sockaddr *)(host_info_list->ai_addr),
                           sizeof(struct sockaddr_in));
 
@@ -99,8 +99,12 @@ int UdpClient::Send(const char* data, int size)
       return -1;
     }
   }
+  
+  if(bytes_sent > std::numeric_limits<int>::max()) {
+    DEBUG_UDP_CLIENT("UdpClient: Send warning, num bytes sent > max integer.\n");
+  }
 
-  return bytes_sent;
+  return static_cast<int>(bytes_sent);
 }
 
 int UdpClient::Recv(char* data, int maxSize)
@@ -130,7 +134,11 @@ int UdpClient::Recv(char* data, int maxSize)
       DEBUG_UDP_CLIENT("UdpClient: " << bytes_received << " bytes recieved : " << data << "\n");
     }
 
-    return bytes_received;
+  if(bytes_received > std::numeric_limits<int>::max()) {
+    DEBUG_UDP_CLIENT("UdpClient: Receive warning, num bytes received > max integer.\n");
+  }
+  
+  return static_cast<int>(bytes_received);
 }
 
 

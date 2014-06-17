@@ -48,6 +48,7 @@ namespace Anki {
     
     using cv::Rect_<T>::area;
     
+    // (x,y) is the top left
     inline T GetX()      const;
     inline T GetY()      const;
     inline T GetWidth()  const;

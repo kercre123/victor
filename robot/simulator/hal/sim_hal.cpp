@@ -68,16 +68,17 @@ namespace Anki {
       
       // Gripper
       webots::Connector* con_;
-      bool gripperEngaged_ = false;
-      s32 unlockhysteresis_ = UNLOCK_HYSTERESIS;
+      //bool gripperEngaged_ = false;
+      bool isGripperEnabled_ = false;
+      //s32 unlockhysteresis_ = UNLOCK_HYSTERESIS;
       
       
       // Cameras / Vision Processing
       //webots::Camera* matCam_;
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
-      HAL::CameraInfo matCamInfo_;
-      Vision::CameraResolution headCamMode_;
+      //HAL::CameraInfo matCamInfo_;
+      //Vision::CameraResolution headCamMode_;
       // HAL::CameraMode matCamMode_;
       //u8* headCamBuffer_;
       //u8* matCamBuffer_;
@@ -187,7 +188,7 @@ namespace Anki {
       liftMotor_  = webotRobot_.getMotor("LiftMotor");
       
       con_ = webotRobot_.getConnector("gripperConnector");
-      con_->enablePresence(TIME_STEP);
+      //con_->enablePresence(TIME_STEP);
       
       //matCam_ = webotRobot_.getCamera("cam_down");
       headCam_ = webotRobot_.getCamera("HeadCamera");
@@ -306,7 +307,7 @@ namespace Anki {
     
     
     bool HAL::IsGripperEngaged() {
-      return gripperEngaged_;
+      return isGripperEnabled_ && con_->getPresence()==1;
     }
     
     void HAL::UpdateDisplay(void)
@@ -438,6 +439,11 @@ namespace Anki {
     
     void HAL::EngageGripper()
     {
+      con_->lock();
+      con_->enablePresence(TIME_STEP);
+      isGripperEnabled_ = true;
+      printf("GRIPPER LOCKED!\n");
+      /*
       //Should we lock to a block which is close to the connector?
       if (!gripperEngaged_ && con_->getPresence() == 1)
       {
@@ -445,22 +451,29 @@ namespace Anki {
         {
           con_->lock();
           gripperEngaged_ = true;
-          //printf("GRIPPER LOCKED!\n");
+          printf("GRIPPER LOCKED!\n");
         }else{
           unlockhysteresis_--;
         }
       }
+       */
     }
     
     void HAL::DisengageGripper()
     {
+      con_->unlock();
+      con_->disablePresence();
+      isGripperEnabled_ = false;
+      printf("GRIPPER UNLOCKED!\n");
+      /*
       if (gripperEngaged_)
       {
         gripperEngaged_ = false;
         unlockhysteresis_ = UNLOCK_HYSTERESIS;
         con_->unlock();
-        //printf("GRIPPER UNLOCKED!\n");
+        printf("GRIPPER UNLOCKED!\n");
       }
+       */
     }
 
     
