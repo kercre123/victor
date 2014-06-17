@@ -121,10 +121,10 @@ namespace Anki {
       /////// PickAndPlace vars ///////
     
       // Block to dock with
-      Block* dockBlock_;
-      const Vision::KnownMarker *dockMarker_;
+      //Block* dockBlock_;
+      //const Vision::KnownMarker *dockMarker_;
       
-      // Goal pose for path planning (e.g. nearest pre-dock pose)
+      // Goal pose for backing up
       Pose3d goalPose_;
       
       // A general time value for gating state transitions

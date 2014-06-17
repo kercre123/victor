@@ -3,8 +3,25 @@
 
 #include "anki/common/types.h"
 
-#define MAX_NUM_PATH_SEGMENTS 100  // TEMP: 
 
+// The robot has limited memory for paths, so hold fewer segments at a
+// time on the robot. The basestation will dole out the path bit by
+// bit
+//NOTE: these need to be even!!
+#define MAX_NUM_PATH_SEGMENTS_ROBOT 10
+#define MAX_NUM_PATH_SEGMENTS_BASESTATION 128
+
+
+#if CORETECH_ROBOT
+  #if defined CORETECH_BASESTATION
+  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
+  #endif
+#define MAX_NUM_PATH_SEGMENTS MAX_NUM_PATH_SEGMENTS_ROBOT
+#elif defined CORETECH_BASESTATION
+#define MAX_NUM_PATH_SEGMENTS MAX_NUM_PATH_SEGMENTS_BASESTATION
+#else
+#error "one of CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
+#endif
 
 namespace Anki
 {
@@ -74,6 +91,7 @@ namespace Anki
                       f32 targetSpeed, f32 accel, f32 decel);
       
       // Defines the path segment as an arc
+      // NOTE: this is not identical to AppendArc because AppendArc may append multiple arcs
       void DefineArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                      f32 targetSpeed, f32 accel, f32 decel);
       
@@ -135,7 +153,11 @@ namespace Anki
 
     public:
       Path();
+      Path(const Path& other);
+      ~Path();
       
+      Path& operator=(const Path& rhs);
+
       void Clear(void);
       u8 GetNumSegments(void) const {return numPathSegments_;};
       
@@ -146,6 +168,8 @@ namespace Anki
       bool AppendLine(u32 matID, f32 x_start, f32 y_start, f32 x_end, f32 y_end,
                       f32 targetSpeed, f32 accel, f32 decel);
       
+      // Add one or more arcs. The arc may get split up into multiple
+      // arcs so the robot can handle them more easily
       bool AppendArc(u32 matID, f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                      f32 targetSpeed, f32 accel, f32 decel);
       
@@ -172,8 +196,25 @@ namespace Anki
       
     private:
       
-      PathSegment path_[MAX_NUM_PATH_SEGMENTS];
+      PathSegment *path_;
+
       u8 numPathSegments_;
+
+      // TODO:(bn) this should be enabled for debug only
+      u8 capacity_;
+
+      // This is a bit of a gigantic hack. I want to re-use this code
+      // on the robot and basestation, but the path sizes are
+      // different. Due to some linker weirdness, I need the object to
+      // be the same size on both platforms, i.e. sizeof(Path) needs
+      // to be constant. I also can't malloc on the robot, so the
+      // solution is to always have a stack-allocated array large
+      // enough for the robot. If I'm running on the robot, path_ will
+      // point to __pathSegmentStackForRobot, otherwise it will be
+      // allocated using "new" to be the correct size for the
+      // basestation
+
+      PathSegment __pathSegmentStackForRobot[MAX_NUM_PATH_SEGMENTS_ROBOT];
 
       bool CheckSegmentContinuity(f32 tolerance_distance_squared, s8 pathSegmentIdx) const;
       

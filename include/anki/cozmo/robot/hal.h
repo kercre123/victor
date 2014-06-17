@@ -358,16 +358,16 @@ namespace Anki
 // #pragma mark --- UI LEDS ---
       /////////////////////////////////////////////////////////////////////
       // UI LEDs
-      //
+      // Updated for "neutral" (non-hardware specific) order in 2.1
       enum LEDId {
-        LED_LEFT_EYE_TOP = 0,
-        LED_LEFT_EYE_LEFT,
+        LED_RIGHT_EYE_TOP = 0,
+        LED_RIGHT_EYE_RIGHT,
+        LED_RIGHT_EYE_BOTTOM,
         LED_RIGHT_EYE_LEFT,
-        LED_RIGHT_EYE_TOP,
+        LED_LEFT_EYE_TOP,
         LED_LEFT_EYE_RIGHT,
         LED_LEFT_EYE_BOTTOM,
-        LED_RIGHT_EYE_BOTTOM,
-        LED_RIGHT_EYE_RIGHT,
+        LED_LEFT_EYE_LEFT,
         NUM_LEDS
       };
 

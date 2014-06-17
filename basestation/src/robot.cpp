@@ -6,7 +6,10 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
+// TODO:(bn) should these be a full path?
 #include "pathPlanner.h"
+#include "pathDolerOuter.h"
+
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
@@ -99,6 +102,9 @@ namespace Anki {
     , _pathPlanner(pathPlanner)
     , _currPathSegment(-1)
     , _isWaitingForReplan(false)
+    , _goalHeadAngle(0.f)
+    , _goalDistanceThreshold(10.f)
+    , _goalAngleThreshold(DEG_TO_RAD(10))
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
     , _frameId(0)
     , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose)
@@ -112,74 +118,212 @@ namespace Anki {
     , _carryingBlock(nullptr)
     , _dockBlock(nullptr)
     , _dockMarker(nullptr)
+    , _forceReplanOnNextWorldChange(false)
+    , _state(IDLE)
     {
       SetHeadAngle(_currentHeadAngle);
-      
+      pdo_ = new PathDolerOuter(msgHandler, robotID);
     } // Constructor: Robot
-     
+
+    Robot::~Robot()
+    {
+      delete pdo_;
+      pdo_ = nullptr;
+    }
     
     void Robot::Update(void)
     {
-      // TODO: State update
-      // ...
-      
-      static bool wasTraversingPath = false;
-
-      // If the robot is traversing a path, consider replanning it
-      if(_world->DidBlocksChange() && IsTraversingPath())
+      switch(_state)
       {
-        Planning::Path newPath;
-        if(_pathPlanner->ReplanIfNeeded(newPath, GetPose())) {
-          // clear path, but flag that we are replanning
-          ClearPath();
-          _isWaitingForReplan = true;
+        case IDLE:
+        {
+          // Nothing to do in IDLE mode?
+          break;
+        } // case IDLE
           
-          VizManager::getInstance()->ErasePath(_ID);
-          wasTraversingPath = false;
+        case FOLLOWING_PATH:
+        {
+          static bool wasTraversingPath = false;
           
-          PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
-          MessageClearPath clearMessage;
-          _msgHandler->SendMessage(_ID, clearMessage);
-          
-          _path = newPath;
-          PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
-          SendExecutePath(_path);
-        }
-      }
+          if(IsTraversingPath())
+          {
+            // If the robot is traversing a path, consider replanning it
+            if(_world->DidBlocksChange())
+            {
+              Planning::Path newPath;
+              switch(_pathPlanner->ReplanIfNeeded(newPath, GetPose(), _forceReplanOnNextWorldChange))
+              {
+                case IPathPlanner::DID_REPLAN:
+                {
+                  // clear path, but flag that we are replanning
+                  ClearPath();
+                  _isWaitingForReplan = true;
+                  wasTraversingPath = false;
+                  _forceReplanOnNextWorldChange = false;
+                  
+                  PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
+                  MessageClearPath clearMessage;
+                  _msgHandler->SendMessage(_ID, clearMessage);
+                  
+                  _path = newPath;
+                  PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
+                  SendExecutePath(_path);
+                  break;
+                } // case DID_REPLAN:
+                  
+                case IPathPlanner::REPLAN_NEEDED_BUT_GOAL_FAILURE:
+                {
+                  ClearPath();
+                  if(_nextState == BEGIN_DOCKING) {
+                    PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileDocking",
+                                     "Replan failed during docking due to bad goal. Will try to update goal.");
+                    ExecuteDockingSequence(_dockBlock);
+                  } else {
+                    PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
+                                     "Replan failed due to bad goal. Aborting path.");
+                    SetState(IDLE);
+                  }
+                  break;
+                } // REPLAN_NEEDED_BUT_GOAL_FAILURE:
+                  
+                case IPathPlanner::REPLAN_NEEDED_BUT_START_FAILURE:
+                {
+                  PRINT_NAMED_INFO("Robot.Update.NewStartForReplanNeeded",
+                                   "Replan failed during docking due to bad start. Will try again, and hope robot moves.");
+                  break;
+                }
 
+                case IPathPlanner::REPLAN_NEEDED_BUT_PLAN_FAILURE:
+                {
+                  PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
+                                   "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.");
+                  _forceReplanOnNextWorldChange = true;
+                  break;
+                }
+                  
+                default:
+                {
+                  // Don't do anything just proceed with the current plan...
+                  break;
+                }
+                  
+              } // switch(ReplanIfNeeded()
+            } // if blocks changed
+
+            pdo_->Update(GetCurrPathSegment());
+          } else { // IsTraversingPath is false?
+            PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
+                             "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d, isWaitingForReplan = %d\n",
+                             _currPathSegment,
+                             _isWaitingForReplan);
+          }
+          
+          // Visualize path if robot has just started traversing it.
+          // Clear the path when it has stopped.
+          if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
+            VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
+            wasTraversingPath = true;
+            _isWaitingForReplan = false;
+          }
+          else if ((wasTraversingPath && !IsTraversingPath()) ||
+                     _pose.IsSameAs(_goalPose, _goalDistanceThreshold, _goalAngleThreshold))
+          {
+            PRINT_INFO("Robot %d finished following path.\n", _ID);
+            ClearPath(); // clear path and indicate that we are not replanning
+            _isWaitingForReplan = false;
+            wasTraversingPath = false;
+            SetState(_nextState);
+          }
+          break;
+        } // case FOLLOWING_PATH
       
-      // Visualize path if robot has just started traversing it.
-      // Clear the path when it has stopped.
-      if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
-        VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
-        wasTraversingPath = true;
-        _isWaitingForReplan = false;
-      } else if (wasTraversingPath && !IsTraversingPath()){
-        ClearPath(); // clear path and indicate that we are not replanning
-        _isWaitingForReplan = false;
-        VizManager::getInstance()->ErasePath(_ID);
-        wasTraversingPath = false;
-      }
-
+        case BEGIN_DOCKING:
+        {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime) {
+            // TODO: Check that the marker was recently seen at roughly the expected image location
+            // ...
+            //const Point2f& imgCorners = dockMarker_->GetImageCorners().computeCentroid();
+            // For now, just docking to the marker no matter where it is in the image.
+            
+            // Get dock action
+            const f32 dockBlockHeight = _dockBlock->GetPose().get_translation().z();
+            _dockAction = DA_PICKUP_LOW;
+            if (dockBlockHeight > _dockBlock->GetSize().z()) {
+              if(IsCarryingBlock()) {
+                PRINT_INFO("Already carrying block. Can't dock to high block. Aborting.\n");
+                SetState(IDLE);
+                return;
+                
+              } else {
+                _dockAction = DA_PICKUP_HIGH;
+              }
+            } else if (IsCarryingBlock()) {
+              _dockAction = DA_PLACE_HIGH;
+            }
+            
+            // Start dock
+            PRINT_INFO("Docking with marker %d (action = %d)\n", _dockMarker->GetCode(), _dockAction);
+            DockWithBlock(_dockBlock, _dockMarker, _dockAction);
+            _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
+            SetState(DOCKING);
+          }
+          break;
+        } // case BEGIN_DOCKING
+          
+        case DOCKING:
+        {
+          if (!IsPickingOrPlacing() && !IsMoving() &&
+              _waitUntilTime < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
+          {
+            // Stopped executing docking path. Did it successfully dock?
+            if ((_dockAction == DA_PICKUP_LOW || _dockAction == DA_PICKUP_HIGH) && IsCarryingBlock()) {
+              PRINT_INFO("Picked up block successful!\n");
+            } else {
+              
+              if((_dockAction == DA_PLACE_HIGH) && !IsCarryingBlock()) {
+                PRINT_INFO("Placed block successfully!\n");
+              } else {
+                PRINT_INFO("Dock failed! Aborting\n");
+              }
+            }
+            
+            SetState(IDLE);
+          }
+          break;
+        } // case DOCKING
+          
+        default:
+          PRINT_NAMED_ERROR("Robot::Update", "Transitioned to unknown state %d!\n", _state);
+          assert(false);
+          _state = IDLE;
+          return;
+          
+      } // switch(state_)
       
-    } // step()
+      
+      
+    } // Update()
 
-    /*
-    void Robot::getOutgoingMessage(u8 *msgOut, u8 &msgSize)
+    void Robot::SetState(const State nextState)
     {
-      MessageType& nextMessage = this->messagesOut.front();
-      if(msgSize < nextMessage.size()) {
-        CORETECH_THROW("Next outgoing message too large for given buffer.");
-        msgSize = 0;
-        return;
+      // TODO: Provide string name lookup for each state
+      PRINT_INFO("Robot %d switching from state %d to state %d.\n", _ID, _state, nextState);
+
+      switch(nextState) {
+        case IDLE:
+        case FOLLOWING_PATH:
+        case BEGIN_DOCKING:
+        case DOCKING:
+          break;
+
+        default:
+          PRINT_NAMED_ERROR("Robot::SetState", "Trying to transition to invalid state %d!\n", nextState);
+          assert(false);
+          return;
       }
-        
-      std::copy(nextMessage.begin(), nextMessage.end(), msgOut);
-      msgSize = nextMessage.size();
-      
-      this->messagesOut.pop();
+
+      _state = nextState;
     }
-     */
 
     
     void Robot::SetPose(const Pose3d &newPose)
@@ -237,8 +381,7 @@ namespace Anki {
 
       CORETECH_ASSERT(_liftPose.get_parent() == &_liftBasePose);
     }
-    
-
+        
     Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
     {
       
@@ -256,14 +399,27 @@ namespace Anki {
     
     Result Robot::ExecutePathToPose(const Pose3d& pose)
     {
+      return ExecutePathToPose(pose, GetHeadAngle());
+    }
+    
+    Result Robot::ExecutePathToPose(const Pose3d& pose, const Radians headAngle)
+    {
       Planning::Path p;
       if (GetPathToPose(pose, p) == RESULT_OK) {
         _path = p;
+        _goalPose = pose;
+        _goalHeadAngle = headAngle;
         return ExecutePath(p);
       }
         
       return RESULT_FAIL;
       
+    }
+    
+    void Robot::AbortCurrentPath()
+    {
+      ClearPath();
+      SetState(IDLE);
     }
     
     // =========== Motor commands ============
@@ -315,6 +471,9 @@ namespace Anki {
     // Clears the path that the robot is executing which also stops the robot
     Result Robot::ClearPath()
     {
+      // TODO: SetState(IDLE) ?
+      VizManager::getInstance()->ErasePath(_ID);
+      pdo_->ClearPath();
       return SendClearPath();
     }
     
@@ -325,8 +484,106 @@ namespace Anki {
       if (ClearPath() == RESULT_FAIL)
         return RESULT_FAIL;
 
+      SetState(FOLLOWING_PATH);
+      _nextState = IDLE; // for when the path is complete
+      
       return SendExecutePath(path);
     }
+    
+  
+    Result Robot::ExecuteDockingSequence(Block* blockToDockWith)
+    {
+      Result lastResult = RESULT_OK;
+      
+      CORETECH_ASSERT(blockToDockWith != nullptr);
+      
+      _dockBlock = blockToDockWith;
+      _dockMarker = nullptr; // should get set to a predock pose below
+      
+      std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
+      _dockBlock->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
+      
+      // Select (closest) predock pose that is not within an obstacle
+      if (preDockPoseMarkerPairs.empty()) {
+        
+        PRINT_NAMED_INFO("Robot.ExecuteDockingSequence.NoPreDockPoses",
+                         "Dock block did not provide any pre-dock poses!\n");
+        return RESULT_FAIL;
+        
+      } else {
+        std::vector<Quad2f> boundingBoxes;
+        std::set<ObjectID_t> ignoreIDs = {_dockBlock->GetID()};
+        _world->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z, ROBOT_BOUNDING_RADIUS,
+                                        boundingBoxes, std::set<ObjectType_t>(), ignoreIDs);
+        
+        f32 shortestDist2Pose = -1;
+        for (auto const & poseMarkerPair : preDockPoseMarkerPairs) {
+          
+          Point2f xyPoint(poseMarkerPair.first.get_translation().x(),
+                          poseMarkerPair.first.get_translation().y());
+          
+          bool isTooCloseToAnotherBlock = false;
+          for(auto boundingBox : boundingBoxes) {
+            if(boundingBox.Contains(xyPoint)) {
+              isTooCloseToAnotherBlock = true;
+              break;
+            }
+          }
+          
+          if(!isTooCloseToAnotherBlock) {
+            PRINT_INFO("Candidate pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f)\n",
+                       poseMarkerPair.first.get_translation().x(),
+                       poseMarkerPair.first.get_translation().y(),
+                       poseMarkerPair.first.get_translation().z(),
+                       poseMarkerPair.first.get_rotationAngle().getDegrees(),
+                       poseMarkerPair.first.get_rotationAxis().x(),
+                       poseMarkerPair.first.get_rotationAxis().y(),
+                       poseMarkerPair.first.get_rotationAxis().z());
+            
+            f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, _pose);
+            if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
+              shortestDist2Pose = dist2Pose;
+              _goalPose = poseMarkerPair.first;
+              _dockMarker = &(poseMarkerPair.second);
+            }
+          } // if !isTooCloseToAnotherBlock
+        } // for each poseMarkerPair
+        
+        if(shortestDist2Pose < 0) {
+          PRINT_NAMED_INFO("Robot.ExecuteDockingSequence.NoAvailablePreDockPoses",
+                           "All pre-dock poses for dock block that are inside an obstacle!\n");
+          return RESULT_FAIL;
+        }
+        
+      } // if there are any pre=dock poses
+      
+      // By now dock marker should be set
+      CORETECH_ASSERT(_dockMarker != nullptr);
+      
+      _goalDistanceThreshold = 10.f;
+      _goalAngleThreshold    = DEG_TO_RAD(10);
+      _goalHeadAngle         = DEG_TO_RAD(-15);
+      
+      lastResult = ExecutePathToPose(_goalPose);
+      if(lastResult != RESULT_OK) {
+        return lastResult;
+      }
+      
+      // Make sure head is tilted down so that it can localize well
+      MoveHeadToAngle(_goalHeadAngle.ToFloat(), 5, 10);
+      PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
+                 _goalPose.get_translation().x(),
+                 _goalPose.get_translation().y(),
+                 _goalPose.get_rotationAngle().getDegrees());
+      
+      _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+      _state = FOLLOWING_PATH;
+      _nextState = BEGIN_DOCKING;
+      
+      return lastResult;
+      
+    } // ExecuteDockingSequence()
+    
     
     // Sends a message to the robot to dock with the specified block
     // that it should currently be seeing.
@@ -398,15 +655,15 @@ namespace Anki {
     } // PickUpDockBlock()
     
     
-    Result Robot::PlaceCarriedBlock(const TimeStamp_t atTime)
+    Result Robot::PlaceCarriedBlock() //const TimeStamp_t atTime)
     {
       if(_carryingBlock == nullptr) {
         PRINT_NAMED_WARNING("Robot.NotCarryingBlockToPlace", "No carrying block set, but told to place one.");
         return RESULT_FAIL;
       }
       
+      /*
       Result lastResult = RESULT_OK;
-      
       
       TimeStamp_t histTime;
       RobotPoseStamp* histPosePtr = nullptr;
@@ -424,12 +681,21 @@ namespace Anki {
       
       Pose3d blockPoseAtTime(_carryingBlock->GetPose());
       blockPoseAtTime.set_parent(&liftPoseAtTime);
-      
+       
       _carryingBlock->SetPose(blockPoseAtTime.getWithRespectTo(Pose3d::World));
-      _carryingBlock = nullptr;
+      */
+      
+      _carryingBlock->SetPose(_carryingBlock->GetPose().getWithRespectTo(Pose3d::World));
       _carryingBlock->SetIsBeingCarried(false);
       
-      PRINT_NAMED_INFO("Robot.PlaceCarriedBlock.BlockPlaced", "Robot %d successfully placed block.\n", _ID);
+      PRINT_NAMED_INFO("Robot.PlaceCarriedBlock.BlockPlaced",
+                       "Robot %d successfully placed block %d at (%.2f, %.2f, %.2f).\n",
+                       _ID, _carryingBlock->GetID(),
+                       _carryingBlock->GetPose().get_translation().x(),
+                       _carryingBlock->GetPose().get_translation().y(),
+                       _carryingBlock->GetPose().get_translation().z());
+
+      _carryingBlock = nullptr;
       
       return RESULT_OK;
       
@@ -476,75 +742,8 @@ namespace Anki {
     // Sends a path to the robot to be immediately executed
     Result Robot::SendExecutePath(const Planning::Path& path) const
     {
-      // Send path segments
-      for (u8 i=0; i<path.GetNumSegments(); i++)
-      {
-        switch (path.GetSegmentConstRef(i).GetType())
-        {
-          case Planning::PST_LINE:
-          {
-            MessageAppendPathSegmentLine m;
-            const Planning::PathSegmentDef::s_line* l = &(path.GetSegmentConstRef(i).GetDef().line);
-            m.x_start_mm = l->startPt_x;
-            m.y_start_mm = l->startPt_y;
-            m.x_end_mm = l->endPt_x;
-            m.y_end_mm = l->endPt_y;
-            m.pathID = 0;
-            m.segmentID = i;
-            
-            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
-            m.accel = path.GetSegmentConstRef(i).GetAccel();
-            m.decel = path.GetSegmentConstRef(i).GetDecel();
-            
-            if (_msgHandler->SendMessage(_ID, m) == RESULT_FAIL)
-              return RESULT_FAIL;
-            break;
-          }
-          case Planning::PST_ARC:
-          {
-            MessageAppendPathSegmentArc m;
-            const Planning::PathSegmentDef::s_arc* a = &(path.GetSegmentConstRef(i).GetDef().arc);
-            m.x_center_mm = a->centerPt_x;
-            m.y_center_mm = a->centerPt_y;
-            m.radius_mm = a->radius;
-            m.startRad = a->startRad;
-            m.sweepRad = a->sweepRad;
-            m.pathID = 0;
-            m.segmentID = i;
-            
-            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
-            m.accel = path.GetSegmentConstRef(i).GetAccel();
-            m.decel = path.GetSegmentConstRef(i).GetDecel();
-            
-            if (_msgHandler->SendMessage(_ID, m) == RESULT_FAIL)
-              return RESULT_FAIL;
-            break;
-          }
-          case Planning::PST_POINT_TURN:
-          {
-            MessageAppendPathSegmentPointTurn m;
-            const Planning::PathSegmentDef::s_turn* t = &(path.GetSegmentConstRef(i).GetDef().turn);
-            m.x_center_mm = t->x;
-            m.y_center_mm = t->y;
-            m.targetRad = t->targetAngle;
-            m.pathID = 0;
-            m.segmentID = i;
-            
-            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
-            m.accel = path.GetSegmentConstRef(i).GetAccel();
-            m.decel = path.GetSegmentConstRef(i).GetDecel();
+      pdo_->SetPath(path);
 
-            if (_msgHandler->SendMessage(_ID, m) == RESULT_FAIL)
-              return RESULT_FAIL;
-            break;
-          }
-          default:
-            PRINT_NAMED_ERROR("Invalid path segment", "Can't send path segment of unknown type");
-            return RESULT_FAIL;
-            
-        }
-      }
-      
       // Send start path execution message
       MessageExecutePath m;
       m.pathID = 0;

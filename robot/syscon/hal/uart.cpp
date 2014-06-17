@@ -72,6 +72,17 @@ void UARTPutHex32(u32 value)
   UARTPutHex(value);
 }
 
+void UARTPutDec(s32 value)
+{
+  if (value < 0) {
+    UARTPutChar('-');
+    value = -value;
+  }
+  if (value > 9)
+    UARTPutDec(value / 10);
+  UARTPutChar((value % 10) + '0');
+}
+
 /*int UARTGetChar(u32 timeout)
 {
   u32 now = GetMicroCounter();

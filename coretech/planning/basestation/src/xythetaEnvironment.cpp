@@ -109,7 +109,12 @@ bool StateID::operator<(const StateID& rhs) const
 
 std::ostream& operator<<(std::ostream& out, const State& state)
 {
-  return out<<'('<<(int)state.x<<','<<(int)state.y<<','<<(int)state.theta<<')';
+  return out<<'['<<(int)state.x<<','<<(int)state.y<<','<<(int)state.theta<<']';
+}
+
+std::ostream& operator<<(std::ostream& out, const State_c& state)
+{
+  return out<<'('<<state.x_mm<<','<<state.y_mm<<','<<state.theta<<')';
 }
 
 bool State_c::Import(const Json::Value& config)
@@ -141,7 +146,7 @@ bool SuccessorIterator::Done() const
   return nextAction_ > motionPrimitives_.size();
 }
 
-bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID) const
+bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions) const
 {
   State curr(stateID);
   float start_x = GetX_mm(curr.x);
@@ -155,14 +160,16 @@ bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID) c
 
   const MotionPrimitive* prim = & allMotionPrimitives_[curr.theta][action];
 
-  size_t endObs = obstacles_.size();
-  size_t endPoints = prim->intermediatePositions.size();
-  for(size_t point=0; point < endPoints; ++point) {
-    for(size_t obs=0; obs < endObs; ++obs) {
-      float x = start_x + prim->intermediatePositions[point].x_mm;
-      float y = start_y + prim->intermediatePositions[point].y_mm;
-      if(obstacles_[obs].Contains(x, y)) {
-        return false;
+  if(checkCollisions) {
+    size_t endObs = obstacles_.size();
+    size_t endPoints = prim->intermediatePositions.size();
+    for(size_t point=0; point < endPoints; ++point) {
+      for(size_t obs=0; obs < endObs; ++obs) {
+        float x = start_x + prim->intermediatePositions[point].x_mm;
+        float y = start_y + prim->intermediatePositions[point].y_mm;
+        if(obstacles_[obs].Contains(x, y)) {
+          return false;
+        }
       }
     }
   }
@@ -174,6 +181,79 @@ bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID) c
 
   stateID = result.GetStateID();
   return true;
+}
+
+
+bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
+                                    const float maxDistancetoFollowOldPlan_mm,
+                                    int currentPathIndex) const
+{
+  State_c waste1;
+  xythetaPlan waste2;
+  return PlanIsSafe(plan, maxDistancetoFollowOldPlan_mm, currentPathIndex, waste1, waste2);
+}
+
+bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
+                                    const float maxDistancetoFollowOldPlan_mm,
+                                    int currentPathIndex,
+                                    State_c& lastSafeState,
+                                    xythetaPlan& validPlan) const
+{
+  if(plan.actions_.empty())
+    return false;
+
+  validPlan.actions_.clear();
+
+  size_t numActions = plan.actions_.size();
+
+  StateID curr(plan.start_.GetStateID());
+  validPlan.start_ = curr;
+
+  bool useOldPlan = true;
+
+  // first go through all the actions that we are "skipping"
+  for(size_t i=0; i<currentPathIndex; ++i) {
+    // advance without checking collisions
+    ApplyAction(plan.actions_[i], curr, false);
+  }
+
+  State currentRobotState(curr);
+  lastSafeState = State2State_c(curr);
+  validPlan.start_ = curr;
+
+  // now go through the rest of the plan, checking for collisions at each step
+  for(size_t i = currentPathIndex; i < numActions; ++i) {
+
+    // check for collisions and possibly update curr
+    if(!ApplyAction(plan.actions_[i], curr, true)) {
+      printf("Collision along plan action %lu (starting from %d)\n", i, currentPathIndex);
+      // there was a collision trying to follow action i, so we are done
+      return false;
+    }
+
+    // no collision. If we are still within
+    // maxDistancetoFollowOldPlan_mm, update the valid old plan
+    if(useOldPlan) {
+
+      validPlan.Push(plan.actions_[i]);
+      lastSafeState = State2State_c(State(curr));
+
+      // TODO:(bn) this is kind of wrong. It's using euclidean
+      // distance, instead we should add up the lengths of each
+      // action. That will be faster and better
+      if(GetDistanceBetween(lastSafeState, currentRobotState) > maxDistancetoFollowOldPlan_mm) {
+        useOldPlan = false;
+      }
+    }
+  }
+
+  // if we get here, we successfully applied every action in the plan
+  return true;
+}
+
+const MotionPrimitive& xythetaEnvironment::GetRawMotionPrimitive(StateTheta theta, ActionID action) const
+{
+  return allMotionPrimitives_[theta][action];
 }
 
 void SuccessorIterator::Next()
@@ -238,6 +318,14 @@ bool xythetaEnvironment::IsInCollision(State_c c) const
   return false;
 }
 
+void xythetaPlan::Append(const xythetaPlan& other)
+{
+  if(actions_.empty()) {
+    start_ = other.start_;
+  }
+
+  actions_.insert(actions_.end(), other.actions_.begin(), other.actions_.end());
+}
 
 ActionType::ActionType()
   : extraCostFactor_(0.0)
@@ -468,17 +556,15 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     cost += length * oneOverLinearSpeed;
 
     float signedLength = config["straight_length_mm"].asFloat();
-
-    PathSegment seg;
-    seg.DefineLine(0.0,
-                       0.0,
-                       signedLength * cos(env.GetTheta_c(startingAngle)),
-                       signedLength * sin(env.GetTheta_c(startingAngle)),
-                       linearSpeed,
-                       LATTICE_PLANNER_ACCEL,
-                       LATTICE_PLANNER_DECEL);
-
-    pathSegments_.push_back(seg);
+    
+    pathSegments_.AppendLine(0,
+                             0.0,
+                             0.0,
+                             signedLength * cos(env.GetTheta_c(startingAngle)),
+                             signedLength * sin(env.GetTheta_c(startingAngle)),
+                             linearSpeed,
+                             LATTICE_PLANNER_ACCEL,
+                             LATTICE_PLANNER_DECEL);
   }
 
   if(config.isMember("arc")) {
@@ -495,16 +581,15 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
     Cost arcSpeed = deltaTheta * turningRadius / arcTime;
 
-    PathSegment seg;
-    seg.DefineArc(config["arc"]["centerPt_x_mm"].asFloat(),
-                      config["arc"]["centerPt_y_mm"].asFloat(),
-                      config["arc"]["radius_mm"].asFloat(),
-                      config["arc"]["startRad"].asFloat(),
-                      config["arc"]["sweepRad"].asFloat(),
-                      arcSpeed,
-                      LATTICE_PLANNER_ACCEL,
-                      LATTICE_PLANNER_DECEL);
-    pathSegments_.push_back(seg);
+    pathSegments_.AppendArc(0,
+                            config["arc"]["centerPt_x_mm"].asFloat(),
+                            config["arc"]["centerPt_y_mm"].asFloat(),
+                            config["arc"]["radius_mm"].asFloat(),
+                            config["arc"]["startRad"].asFloat(),
+                            config["arc"]["sweepRad"].asFloat(),
+                            arcSpeed,
+                            LATTICE_PLANNER_ACCEL,
+                            LATTICE_PLANNER_DECEL);
   }
   else if(config.isMember("turn_in_place_direction")) {
     double direction = config["turn_in_place_direction"].asDouble();
@@ -518,14 +603,13 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
     float rotSpeed = deltaTheta / turnTime;
 
-    PathSegment seg;
-    seg.DefinePointTurn(0.0,
-                            0.0,
-                            env.GetTheta_c(endStateOffset.theta),
-                            rotSpeed,
-                            LATTICE_PLANNER_ROT_ACCEL,
-                            LATTICE_PLANNER_ROT_DECEL);
-    pathSegments_.push_back(seg);
+    pathSegments_.AppendPointTurn(0,
+                                  0.0,
+                                  0.0,
+                                  env.GetTheta_c(endStateOffset.theta),
+                                  rotSpeed,
+                                  LATTICE_PLANNER_ROT_ACCEL,
+                                  LATTICE_PLANNER_ROT_DECEL);
   }
 
   assert(env.GetNumActions() > id);
@@ -555,11 +639,15 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
   return true;
 }
 
-void MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
+u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
 {
   State_c curr(start);
 
-  for(const auto& seg : pathSegments_) {
+  bool added = false;
+  u8 firstSegment = path.GetNumSegments();
+
+  for(u8 pathIdx = 0; pathIdx < pathSegments_.GetNumSegments(); ++pathIdx) {
+    const PathSegment& seg(pathSegments_.GetSegmentConstRef(pathIdx));
     PathSegment segment(seg);
     segment.OffsetStart(curr.x_mm, curr.y_mm);
 
@@ -582,13 +670,18 @@ void MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
         break;
 
       case PST_ARC:
-        if(FLT_NEAR(path[endIdx].GetDef().arc.centerPt_x, segment.GetDef().arc.centerPt_x) &&
-               FLT_NEAR(path[endIdx].GetDef().arc.centerPt_y, segment.GetDef().arc.centerPt_y) &&
-               FLT_NEAR(path[endIdx].GetDef().arc.radius, segment.GetDef().arc.radius)) {
+        // TODO:(bn) had to disable this because it was combing arcs
+        // that the robot was going to split up. This doesn't happen
+        // in the lattice planner anyway (its always line, arc for
+        // each turn action)
 
-          path[endIdx].GetDef().arc.sweepRad += segment.GetDef().arc.sweepRad;
-          shouldAdd = false;
-        }
+        // if(FLT_NEAR(path[endIdx].GetDef().arc.centerPt_x, segment.GetDef().arc.centerPt_x) &&
+        //        FLT_NEAR(path[endIdx].GetDef().arc.centerPt_y, segment.GetDef().arc.centerPt_y) &&
+        //        FLT_NEAR(path[endIdx].GetDef().arc.radius, segment.GetDef().arc.radius)) {
+
+        //   path[endIdx].GetDef().arc.sweepRad += segment.GetDef().arc.sweepRad;
+        //   shouldAdd = false;
+        // }
         break;
 
       case PST_POINT_TURN:
@@ -609,12 +702,19 @@ void MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
       }
     }
 
-    if(shouldAdd)
+    if(shouldAdd) {
       path.AppendSegment(segment);
+      added = true;
+    }
 
     segment.GetEndPoint(xx,yy);
     // printf("end: (%f, %f)\n", xx, yy);
   }
+
+  if(!added && firstSegment > 0)
+    firstSegment--;
+
+  return firstSegment;
 }
 
 
@@ -660,26 +760,120 @@ SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG)
   return SuccessorIterator(this, startID, currG);
 }
 
-void xythetaEnvironment::ConvertToPath(const xythetaPlan& plan, Path& path) const
+void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path) const
 {
-  path.Clear();
-
   State curr = plan.start_;
+
   for(const auto& actionID : plan.actions_) {
     if(curr.theta >= allMotionPrimitives_.size() || actionID >= allMotionPrimitives_[curr.theta].size()) {
       printf("ERROR: can't look up prim for angle %d and action id %d\n", curr.theta, actionID);
       break;
     }
 
-    printf("%s\n", actionTypes_[actionID].GetName().c_str());
+    // printf("(%d) %s\n", curr.theta, actionTypes_[actionID].GetName().c_str());
 
     const MotionPrimitive* prim = &allMotionPrimitives_[curr.theta][actionID];
-    prim->AddSegmentsToPath(State2State_c(curr), path);
+    u8 pathSegmentOffset = prim->AddSegmentsToPath(State2State_c(curr), path);
 
     curr.x += prim->endStateOffset.x;
     curr.y += prim->endStateOffset.y;
     curr.theta = prim->endStateOffset.theta;
   }
+}
+
+void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
+{
+  State_c curr_c = State2State_c(plan.start_);
+  StateID currID = plan.start_.GetStateID();
+
+  cout<<"plan start: "<<plan.start_<<endl;
+
+  for(size_t i=0; i<plan.actions_.size(); ++i) {
+    printf("%2lu: (%f, %f, %f [%d]) --> %s\n",
+           i,
+           curr_c.x_mm, curr_c.y_mm, curr_c.theta, currID.theta, 
+           actionTypes_[plan.actions_[i]].GetName().c_str());
+    ApplyAction(plan.actions_[i], currID, false);
+    curr_c = State2State_c(State(currID));
+  }
+}
+
+
+State xythetaEnvironment::GetPlanFinalState(const xythetaPlan& plan) const
+{
+  StateID currID = plan.start_.GetStateID();
+
+  for(const auto& action : plan.actions_) {
+    ApplyAction(action, currID, false);
+  }
+
+  return State(currID);
+}
+
+size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state, bool debug) const
+{
+  // for now, this is implemented by simply going over every
+  // intermediate pose and finding the closest one
+  float closest = 999999.9;  // TODO:(bn) talk to people about this
+  size_t startPoint = 0;
+
+  State curr = plan.start_;
+
+  using namespace std;
+  if(debug)
+    cout<<"Searching for position near "<<state<<" along plan of length "<<plan.Size()<<endl;
+
+  size_t planSize = plan.Size();
+  for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
+    const MotionPrimitive& prim(GetRawMotionPrimitive(curr.theta, plan.actions_[planIdx]));
+
+    // the intermediate position (x,y) coordinates are all centered at
+    // 0. Instead of shifting them over each time, we just shift the
+    // state we are searching for (fewer ops)
+    State_c target(state.x_mm - GetX_mm(curr.x),
+                   state.y_mm - GetY_mm(curr.y),
+                   0.0f);
+
+    // first check the exact state.  // TODO:(bn) no sqrt!
+    float initialDist = sqrt(pow(target.x_mm, 2) + pow(target.y_mm, 2));
+    if(debug)
+      cout<<planIdx<<": "<<"iniitial "<<target<<" = "<<initialDist;
+    if(initialDist <= closest + 1e-6) {
+      closest = initialDist;
+      startPoint = planIdx;
+      if(debug)
+        cout<<"  closest\n";
+    }
+    else {
+      if(debug)
+        cout<<endl;
+    }
+
+    for(const auto& position : prim.intermediatePositions) {
+      // TODO:(bn) get squared distance
+      float dist = GetDistanceBetween(target, position);
+
+      if(debug)
+        cout<<planIdx<<": "<<"position "<<position<<" --> "<<target<<" = "<<dist;
+
+      if(dist < closest) {
+        closest = dist;
+        startPoint = planIdx;
+        if(debug)
+          cout<<"  closest\n";
+      }
+      else {
+        if(debug)
+          cout<<endl;
+      }
+    }
+
+    StateID currID(curr);
+    ApplyAction(plan.actions_[planIdx], currID, false);
+    curr = State(currID);
+  }
+
+  return startPoint;
 }
 
 void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const

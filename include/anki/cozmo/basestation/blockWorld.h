@@ -65,7 +65,7 @@ namespace Anki
                                //Robot* seenByRobot);
       
       void CommandRobotToDock(const RobotID_t whichRobot,
-                              const Block&    whichBlock);
+                              Block&    whichBlock);
       
       // Clears all existing blocks in the world
       void ClearAllExistingBlocks();
@@ -80,7 +80,7 @@ namespace Anki
       const Vision::ObservableObjectLibrary& GetMatLibrary() const;
       
       // TODO: this only looks through blocks, so shouldn't it be GetBlockByID()?
-      const Vision::ObservableObject* GetObservableObjectByID(const ObjectID_t objectID) const;
+      Vision::ObservableObject* GetObservableObjectByID(const ObjectID_t objectID) const;
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension) and returns a vector of quads
@@ -210,7 +210,7 @@ namespace Anki
       return matLibrary_;
     }
     
-    inline const Vision::ObservableObject* BlockWorld::GetObservableObjectByID(const ObjectID_t objectID) const
+    inline Vision::ObservableObject* BlockWorld::GetObservableObjectByID(const ObjectID_t objectID) const
     {
       for (auto const & block : existingBlocks_) {
         auto const & objectByIdMap = block.second;
