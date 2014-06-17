@@ -546,8 +546,6 @@ namespace Anki
 
         //BeginBenchmark("EstimateHomography_cholesky");
 
-        bool numericalFailure;
-
         const Result choleskyResult = SolveLeastSquaresWithCholesky(AtA, Atbt, false, numericalFailure);
 
         AnkiConditionalErrorAndReturnValue(choleskyResult == RESULT_OK,
