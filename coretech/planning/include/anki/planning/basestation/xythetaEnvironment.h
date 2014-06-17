@@ -416,8 +416,9 @@ StateTheta xythetaEnvironment::GetTheta(float theta_rad) const
     positiveTheta -= 2*M_PI;
   }
   
-  const StateTheta stateTheta = (StateTheta) std::floor(positiveTheta * oneOverRadiansPerAngle_);
+  const StateTheta stateTheta = (StateTheta) std::round(positiveTheta * oneOverRadiansPerAngle_) % numAngles_;
 
+  assert(numAngles_ == angles_.size());
   assert(stateTheta >= 0 && stateTheta < angles_.size());
   
   return stateTheta;
