@@ -127,6 +127,7 @@ LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &pat
                                                              const Pose3d& startPose,
                                                              bool forceReplanFromScratch)
 {
+  using namespace std;
   // first check plan with slightly smaller radius to see if we need to replan
   std::vector<Quad2f> boundingBoxes;
   impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
@@ -134,8 +135,13 @@ LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &pat
                                               boundingBoxes,
                                               _ignoreTypes, _ignoreIDs);
   impl_->env_.ClearObstacles();
+  unsigned int numAdded = 0;
   for(auto boundingQuad : boundingBoxes) {
     impl_->env_.AddObstacle(boundingQuad);
+
+    // TODO: manage the quadID better so we don't conflict
+    // TODO:(bn) custom color for this
+    VizManager::getInstance()->DrawQuad(700 + numAdded++, boundingQuad, 0.5f, VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD);
   }
 
   State_c lastSafeState;
@@ -161,6 +167,9 @@ LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &pat
 
     printf("old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
            planIdx, validOldPlan.Size());
+    cout<<"currentRobotState: "<<currentRobotState<<endl;
+
+    impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState, true);
 
     if(validOldPlan.Size() == 0) {
       // if we can't safely complete the action we are currently
@@ -201,8 +210,9 @@ LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &pat
         impl_->env_.AddObstacle(boundingQuad);
       }
 
-      printf("(re-)planning from (%f, %f, %f)\n",
-             lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta);
+      printf("(re)-planning from (%f, %f, %f) to (%f %f %f)\n",
+             lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,
+             impl_->planner_.GetGoal().x_mm, impl_->planner_.GetGoal().y_mm, impl_->planner_.GetGoal().theta);
 
       if(!impl_->planner_.ComputePath()) {
         printf("plan failed during replanning!\n");
@@ -254,6 +264,18 @@ LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &pat
     }
 
     return DID_REPLAN;
+  }
+  else {
+    using namespace std;
+    if(validOldPlan.Size() > 0) {
+      cout<<"LatticePlanner: safely checked plan from "<<validOldPlan.start_<<" to "
+          <<impl_->env_.GetPlanFinalState(validOldPlan)<< " goal = "<<impl_->planner_.GetGoal()
+          <<" ("<<validOldPlan.Size()
+          <<" actions, totalPlan_.Size = "<<impl_->totalPlan_.Size()<<")\n";
+    }
+    else {
+      printf("LatticePlanner: Plan safe, but validOldPlan is empty\n");
+    }
   }
 
   return REPLAN_NOT_NEEDED;
