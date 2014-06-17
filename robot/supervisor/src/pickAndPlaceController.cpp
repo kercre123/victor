@@ -54,17 +54,23 @@ namespace Anki {
         bool lastActionSucceeded_ = false;
         
         // "Snapshots" for visual verification of a successful block pick up
+        // We'll need two mini-images (or snapshots), along with an associated
+        // memory buffer, to hold low-res views from the camera before and after
+        // trying to pickup (or place) a block.  The ready flag is so the state
+        // machine can wait for the vision system to actually produce the
+        // snapshot, since it's running on a separate (slower) "thread".
         bool isSnapshotReady_ = false;
         Embedded::Array<u8> pickupSnapshotBefore_;
         Embedded::Array<u8> pickupSnapshotAfter_;
-        const s32 SNAPSHOT_SUBSAMPLE = 4;
-        const s32 SNAPSHOT_SIZE = 16;
-        const Embedded::Rectangle<s32> snapShotRoiLow_(128, 191, 88, 151); // 64x64 square in middle
-        const Embedded::Rectangle<s32> snapShotRoiHigh_(128, 191, 88, 151); // 64x64 square in middle
-        const s32 SNAPSHOT_BUFFER_SIZE = 576; // 2X 256-byte (16x16) arrays + overhead
+        const s32 SNAPSHOT_SIZE = 16; // the snapshots will be a 2D array SNAPSHOT_SIZE x SNAPSHOT_SIZE in size
+        const s32 SNAPSHOT_SUBSAMPLE = 8; // this is the spacing between samples taken from the original image resolution
+        const s32 SNAPSHOT_ROI_SIZE = SNAPSHOT_SUBSAMPLE*SNAPSHOT_SIZE; // thus, this is the size of the ROI in the original image
+        const Embedded::Rectangle<s32> snapShotRoiLow_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2-1, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2-1);
+        const Embedded::Rectangle<s32> snapShotRoiHigh_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2-1, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2-1);
+        const s32 SNAPSHOT_BUFFER_SIZE = 2*SNAPSHOT_SIZE*SNAPSHOT_SIZE + 64; // 2X (16x16) arrays + overhead
         u8 snapshotBuffer_[SNAPSHOT_BUFFER_SIZE];
         Embedded::MemoryStack snapshotMemory_;
-        const s32 SNAPSHOT_COMPARE_THRESHOLD = SNAPSHOT_SIZE*SNAPSHOT_SIZE*64*64; // average grayscale difference of 64
+        const s32 SNAPSHOT_COMPARE_THRESHOLD = 64; //SNAPSHOT_SIZE*SNAPSHOT_SIZE*64*64; // average grayscale difference of 64
         
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
@@ -569,7 +575,7 @@ namespace Anki {
                     // Snapshots should differ if we actually lifted the block
                     const s32 SSD = CompareSnapshots();
                     PRINT("PickAndPlaceController: snapshot difference SSD = %d\n", SSD);
-                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD) {
+                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_SIZE*SNAPSHOT_SIZE) {
                       isCarryingBlock_ = true;
                     } else {
                       isCarryingBlock_ = false;
@@ -591,7 +597,7 @@ namespace Anki {
                   if(isSnapshotReady_) {
                     // Snapshots should differ if we actually lifted the block
                     const s32 SSD = CompareSnapshots();
-                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD) {
+                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_SIZE*SNAPSHOT_SIZE) {
                       isCarryingBlock_ = true;
                     } else {
                       isCarryingBlock_ = false;
