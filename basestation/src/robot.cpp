@@ -118,10 +118,12 @@ namespace Anki {
     , _carryingBlock(nullptr)
     , _dockBlock(nullptr)
     , _dockMarker(nullptr)
+    , _forceReplanOnNextWorldChange(false)
     {
       SetHeadAngle(_currentHeadAngle);
       pdo_ = new PathDolerOuter(msgHandler, robotID);
     } // Constructor: Robot
+
     Robot::~Robot()
     {
       delete pdo_;
@@ -148,7 +150,7 @@ namespace Anki {
             if(_world->DidBlocksChange())
             {
               Planning::Path newPath;
-              switch(_pathPlanner->ReplanIfNeeded(newPath, GetPose()))
+              switch(_pathPlanner->ReplanIfNeeded(newPath, GetPose(), _forceReplanOnNextWorldChange))
               {
                 case IPathPlanner::DID_REPLAN:
                 {
@@ -156,6 +158,7 @@ namespace Anki {
                   ClearPath();
                   _isWaitingForReplan = true;
                   wasTraversingPath = false;
+                  _forceReplanOnNextWorldChange = false;
                   
                   PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
                   MessageClearPath clearMessage;
@@ -186,7 +189,15 @@ namespace Anki {
                 {
                   PRINT_NAMED_INFO("Robot.Update.NewStartForReplanNeeded",
                                    "Replan failed during docking due to bad start. Will try again, and hope robot moves.");
-                  // NOTE: this purposefully falls through to default case
+                  break;
+                }
+
+                case IPathPlanner::REPLAN_NEEDED_BUT_PLAN_FAILURE:
+                {
+                  PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
+                                   "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.");
+                  _forceReplanOnNextWorldChange = true;
+                  break;
                 }
                   
                 default:
@@ -279,7 +290,8 @@ namespace Anki {
         } // case DOCKING
           
         default:
-          PRINT_NAMED_ERROR("Robot::Update", "Transitioned to unknown state %d!", _state);
+          PRINT_NAMED_ERROR("Robot::Update", "Transitioned to unknown state %d!\n", _state);
+          assert(false);
           _state = IDLE;
           return;
           
@@ -293,7 +305,20 @@ namespace Anki {
     {
       // TODO: Provide string name lookup for each state
       PRINT_INFO("Robot %d switching from state %d to state %d.\n", _ID, _state, nextState);
-      
+
+      switch(nextState) {
+        case IDLE:
+        case FOLLOWING_PATH:
+        case BEGIN_DOCKING:
+        case DOCKING:
+          break;
+
+        default:
+          PRINT_NAMED_ERROR("Robot::SetState", "Trying to transition to invalid state %d!\n", nextState);
+          assert(false);
+          return;
+      }
+
       _state = nextState;
     }
 

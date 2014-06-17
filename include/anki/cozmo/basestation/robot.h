@@ -254,6 +254,10 @@ namespace Anki {
 
       PathDolerOuter* pdo_;
       
+      // if true and we are traversing a path, then next time the
+      // block world changes, re-plan from scratch
+      bool _forceReplanOnNextWorldChange;
+
       Vision::Camera   _camera;
       
       // Geometry / Pose

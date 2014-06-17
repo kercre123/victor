@@ -31,17 +31,22 @@ namespace Anki {
       virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) = 0;
 
       // Replan if needed because the environment changed. Returns
-      // DID_REPLAN if there is a new path and REPLAN_NOT_NEEDED if no replan was
-      // necessary and the path has not changed.  If a new path is needed but
-      // could not be computed a corresponding enum value is returned.
-      // Assumes the goal pose didn't change.
+      // DID_REPLAN if there is a new path and REPLAN_NOT_NEEDED if no
+      // replan was necessary and the path has not changed.  If a new
+      // path is needed but could not be computed a corresponding enum
+      // value is returned.  Assumes the goal pose didn't change. If
+      // forceReplanFromScratch = true, then definitely do a new plan, from
+      // scratch
       enum EReplanStatus {
         REPLAN_NOT_NEEDED,
         DID_REPLAN,
         REPLAN_NEEDED_BUT_START_FAILURE,
-        REPLAN_NEEDED_BUT_GOAL_FAILURE
+        REPLAN_NEEDED_BUT_GOAL_FAILURE,
+        REPLAN_NEEDED_BUT_PLAN_FAILURE
       };
-      virtual EReplanStatus ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) {return REPLAN_NOT_NEEDED;};
+      virtual EReplanStatus ReplanIfNeeded(Planning::Path &path,
+                                           const Pose3d& startPose,
+                                           bool forceReplanFromScratch = false) {return REPLAN_NOT_NEEDED;};
       
       void AddIgnoreType(const ObjectType_t objType)    { _ignoreTypes.insert(objType); }
       void RemoveIgnoreType(const ObjectType_t objType) { _ignoreTypes.erase(objType); }
@@ -81,7 +86,9 @@ namespace Anki {
       
       virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) override;
 
-      virtual EReplanStatus ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) override;
+      virtual EReplanStatus ReplanIfNeeded(Planning::Path &path,
+                                           const Pose3d& startPose,
+                                           bool forceReplanFromScratch = false) override;
 
     protected:
       LatticePlannerImpl* impl_;

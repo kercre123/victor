@@ -46,6 +46,7 @@ public:
   const BlockWorld* blockWorld_;
   xythetaEnvironment env_;
   xythetaPlanner planner_;
+  xythetaPlan totalPlan_;
 };
 
 LatticePlanner::LatticePlanner(const BlockWorld* blockWorld, const Json::Value& mprims)
@@ -122,7 +123,9 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
   return RESULT_OK;
 }
 
-LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose)
+LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &path,
+                                                             const Pose3d& startPose,
+                                                             bool forceReplanFromScratch)
 {
   // first check plan with slightly smaller radius to see if we need to replan
   std::vector<Quad2f> boundingBoxes;
@@ -130,7 +133,6 @@ LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &pat
                                               LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK,
                                               boundingBoxes,
                                               _ignoreTypes, _ignoreIDs);
-  unsigned int numAdded = 0;
   impl_->env_.ClearObstacles();
   for(auto boundingQuad : boundingBoxes) {
     impl_->env_.AddObstacle(boundingQuad);
@@ -145,12 +147,13 @@ LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &pat
 
   // plan Idx is the number of plan actions to execute before getting
   // to the starting point closest to start
-  size_t planIdx = impl_->planner_.FindClosestPlanSegmentToPose(currentRobotState);
+  size_t planIdx = impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState);
 
   // TODO:(bn) param
-  const float maxDistancetoFollowOldPlan_mm = 60.0;
+  const float maxDistancetoFollowOldPlan_mm = 40.0;
 
-  if(!impl_->planner_.PlanIsSafe(maxDistancetoFollowOldPlan_mm, planIdx, lastSafeState, validOldPlan)) {
+  if(forceReplanFromScratch ||
+     !impl_->env_.PlanIsSafe(impl_->totalPlan_, maxDistancetoFollowOldPlan_mm, planIdx, lastSafeState, validOldPlan)) {
     // at this point, we know the plan isn't completely
     // safe. lastSafeState will be set to the furthest state along the
     // plan (after planIdx) which is safe. validOldPlan will contain a
@@ -166,6 +169,8 @@ LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &pat
       lastSafeState = currentRobotState;
     }
 
+    impl_->totalPlan_ = validOldPlan;
+
     path.Clear();
 
     if(!impl_->planner_.SetStart(lastSafeState)) {
@@ -176,7 +181,9 @@ LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &pat
       return REPLAN_NEEDED_BUT_GOAL_FAILURE;
     }
     else {
-      impl_->planner_.SetReplanFromScratch();
+      if(forceReplanFromScratch) {
+        impl_->planner_.SetReplanFromScratch();
+      }
 
       // use real padding for re-plan
       boundingBoxes.clear();
@@ -199,21 +206,50 @@ LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &pat
 
       if(!impl_->planner_.ComputePath()) {
         printf("plan failed during replanning!\n");
+        return REPLAN_NEEDED_BUT_PLAN_FAILURE; 
       }
       else {
+        if(impl_->planner_.GetPlan().Size() == 0) {
+          impl_->totalPlan_.Clear();
+        }
+        else {
 
-        assert(impl_->planner_.GetPlan().Size() == 0 ||
-               impl_->planner_.GetPlan().start_ == impl_->env_.State_c2State(lastSafeState));
+          assert(impl_->planner_.GetPlan().start_ == impl_->env_.State_c2State(lastSafeState));
 
-        path.Clear();
+          path.Clear();
 
-        impl_->env_.AppendToPath(validOldPlan, path);
-        printf("from old plan:\n");
-        path.PrintPath();
+          // TODO:(bn) hide in #if DEBUG or something like that
+          // verify that the append will be correct
+          if(impl_->totalPlan_.Size() > 0) {
+            State endState = impl_->env_.GetPlanFinalState(impl_->totalPlan_);
+            if(endState != impl_->planner_.GetPlan().start_) {
+              using namespace std;
+              cout<<"ERROR: (LatticePlanner::ReplanIfNeeded) trying to append a plan with a mismatching state!\n";
+              cout<<"endState = "<<endState<<endl;
+              cout<<"next plan start = "<<impl_->planner_.GetPlan().start_<<endl;
 
-        impl_->env_.AppendToPath(impl_->planner_.GetPlan(), path);
-        printf("total plan:\n");
-        path.PrintPath();
+              cout<<"\ntotalPlan_:\n";
+              impl_->env_.PrintPlan(impl_->totalPlan_);
+
+              cout<<"\nnew plan:\n";
+              impl_->env_.PrintPlan(impl_->planner_.GetPlan());
+
+              assert(false);
+            }
+          }
+
+          impl_->totalPlan_.Append(impl_->planner_.GetPlan());
+
+          printf("old plan:\n");
+          impl_->env_.PrintPlan(validOldPlan);
+
+          printf("new plan:\n");
+          impl_->env_.PrintPlan(impl_->planner_.GetPlan());
+
+          impl_->env_.AppendToPath(impl_->totalPlan_, path);
+          printf("total path:\n");
+          path.PrintPath();
+        }
       }
     }
 
