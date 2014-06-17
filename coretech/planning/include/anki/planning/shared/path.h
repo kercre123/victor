@@ -91,6 +91,7 @@ namespace Anki
                       f32 targetSpeed, f32 accel, f32 decel);
       
       // Defines the path segment as an arc
+      // NOTE: this is not identical to AppendArc because AppendArc may append multiple arcs
       void DefineArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                      f32 targetSpeed, f32 accel, f32 decel);
       
@@ -152,6 +153,7 @@ namespace Anki
 
     public:
       Path();
+      Path(const Path& other);
       ~Path();
       
       Path& operator=(const Path& rhs);
@@ -166,6 +168,8 @@ namespace Anki
       bool AppendLine(u32 matID, f32 x_start, f32 y_start, f32 x_end, f32 y_end,
                       f32 targetSpeed, f32 accel, f32 decel);
       
+      // Add one or more arcs. The arc may get split up into multiple
+      // arcs so the robot can handle them more easily
       bool AppendArc(u32 matID, f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                      f32 targetSpeed, f32 accel, f32 decel);
       

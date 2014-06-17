@@ -529,6 +529,11 @@ namespace Anki
       Clear();
     }
 
+    Path::Path(const Path& other) : Path()
+    {
+      *this = other;
+    }
+
     Path::~Path()
     {
 #if CORETECH_BASESTATION
@@ -1050,8 +1055,10 @@ namespace Anki
           sweep = MAX( -ABS((limitAngle - currAngle).ToFloat()), -sweepRadLeft);
         }
         
-        AddArc(x_center, y_center, radius, currAngle.ToFloat(), sweep,
-               targetSpeed, accel, decel);
+        if(!NEAR_ZERO(sweep)) {
+          AddArc(x_center, y_center, radius, currAngle.ToFloat(), sweep,
+                 targetSpeed, accel, decel);
+        }
           
         if (ABS(sweep) == sweepRadLeft) {
           sweepRadLeft = 0;
