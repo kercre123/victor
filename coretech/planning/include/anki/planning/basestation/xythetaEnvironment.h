@@ -127,7 +127,7 @@ public:
   std::vector<State_c> intermediatePositions;
 private:
 
-  std::vector<PathSegment> pathSegments_;
+  Path pathSegments_;
 };
 
 class Successor

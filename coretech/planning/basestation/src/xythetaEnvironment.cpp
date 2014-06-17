@@ -480,17 +480,15 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     cost += length * oneOverLinearSpeed;
 
     float signedLength = config["straight_length_mm"].asFloat();
-
-    PathSegment seg;
-    seg.DefineLine(0.0,
-                       0.0,
-                       signedLength * cos(env.GetTheta_c(startingAngle)),
-                       signedLength * sin(env.GetTheta_c(startingAngle)),
-                       linearSpeed,
-                       LATTICE_PLANNER_ACCEL,
-                       LATTICE_PLANNER_DECEL);
-
-    pathSegments_.push_back(seg);
+    
+    pathSegments_.AppendLine(0,
+                             0.0,
+                             0.0,
+                             signedLength * cos(env.GetTheta_c(startingAngle)),
+                             signedLength * sin(env.GetTheta_c(startingAngle)),
+                             linearSpeed,
+                             LATTICE_PLANNER_ACCEL,
+                             LATTICE_PLANNER_DECEL);
   }
 
   if(config.isMember("arc")) {
@@ -507,16 +505,15 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
     Cost arcSpeed = deltaTheta * turningRadius / arcTime;
 
-    PathSegment seg;
-    seg.DefineArc(config["arc"]["centerPt_x_mm"].asFloat(),
-                      config["arc"]["centerPt_y_mm"].asFloat(),
-                      config["arc"]["radius_mm"].asFloat(),
-                      config["arc"]["startRad"].asFloat(),
-                      config["arc"]["sweepRad"].asFloat(),
-                      arcSpeed,
-                      LATTICE_PLANNER_ACCEL,
-                      LATTICE_PLANNER_DECEL);
-    pathSegments_.push_back(seg);
+    pathSegments_.AppendArc(0,
+                            config["arc"]["centerPt_x_mm"].asFloat(),
+                            config["arc"]["centerPt_y_mm"].asFloat(),
+                            config["arc"]["radius_mm"].asFloat(),
+                            config["arc"]["startRad"].asFloat(),
+                            config["arc"]["sweepRad"].asFloat(),
+                            arcSpeed,
+                            LATTICE_PLANNER_ACCEL,
+                            LATTICE_PLANNER_DECEL);
   }
   else if(config.isMember("turn_in_place_direction")) {
     double direction = config["turn_in_place_direction"].asDouble();
@@ -530,14 +527,13 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
     float rotSpeed = deltaTheta / turnTime;
 
-    PathSegment seg;
-    seg.DefinePointTurn(0.0,
-                            0.0,
-                            env.GetTheta_c(endStateOffset.theta),
-                            rotSpeed,
-                            LATTICE_PLANNER_ROT_ACCEL,
-                            LATTICE_PLANNER_ROT_DECEL);
-    pathSegments_.push_back(seg);
+    pathSegments_.AppendPointTurn(0,
+                                  0.0,
+                                  0.0,
+                                  env.GetTheta_c(endStateOffset.theta),
+                                  rotSpeed,
+                                  LATTICE_PLANNER_ROT_ACCEL,
+                                  LATTICE_PLANNER_ROT_DECEL);
   }
 
   assert(env.GetNumActions() > id);
@@ -574,7 +570,8 @@ u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
   bool added = false;
   u8 firstSegment = path.GetNumSegments();
 
-  for(const auto& seg : pathSegments_) {
+  for(u8 pathIdx = 0; pathIdx < pathSegments_.GetNumSegments(); ++pathIdx) {
+    const PathSegment& seg(pathSegments_.GetSegmentConstRef(pathIdx));
     PathSegment segment(seg);
     segment.OffsetStart(curr.x_mm, curr.y_mm);
 
@@ -597,13 +594,18 @@ u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
         break;
 
       case PST_ARC:
-        if(FLT_NEAR(path[endIdx].GetDef().arc.centerPt_x, segment.GetDef().arc.centerPt_x) &&
-               FLT_NEAR(path[endIdx].GetDef().arc.centerPt_y, segment.GetDef().arc.centerPt_y) &&
-               FLT_NEAR(path[endIdx].GetDef().arc.radius, segment.GetDef().arc.radius)) {
+        // TODO:(bn) had to disable this because it was combing arcs
+        // that the robot was going to split up. This doesn't happen
+        // in the lattice planner anyway (its always line, arc for
+        // each turn action)
 
-          path[endIdx].GetDef().arc.sweepRad += segment.GetDef().arc.sweepRad;
-          shouldAdd = false;
-        }
+        // if(FLT_NEAR(path[endIdx].GetDef().arc.centerPt_x, segment.GetDef().arc.centerPt_x) &&
+        //        FLT_NEAR(path[endIdx].GetDef().arc.centerPt_y, segment.GetDef().arc.centerPt_y) &&
+        //        FLT_NEAR(path[endIdx].GetDef().arc.radius, segment.GetDef().arc.radius)) {
+
+        //   path[endIdx].GetDef().arc.sweepRad += segment.GetDef().arc.sweepRad;
+        //   shouldAdd = false;
+        // }
         break;
 
       case PST_POINT_TURN:
@@ -692,7 +694,7 @@ void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path) const
       break;
     }
 
-    printf("(%d) %s\n", curr.theta, actionTypes_[actionID].GetName().c_str());
+    // printf("(%d) %s\n", curr.theta, actionTypes_[actionID].GetName().c_str());
 
     const MotionPrimitive* prim = &allMotionPrimitives_[curr.theta][actionID];
     u8 pathSegmentOffset = prim->AddSegmentsToPath(State2State_c(curr), path);
@@ -707,12 +709,11 @@ void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
 {
   State_c curr_c = State2State_c(plan.start_);
   StateID currID = plan.start_.GetStateID();
-  StateTheta currTheta = plan.start_.theta;
 
   for(size_t i=0; i<plan.actions_.size(); ++i) {
     printf("%2lu: (%f, %f, %f [%d]) --> %s\n",
            i,
-           curr_c.x_mm, curr_c.y_mm, curr_c.theta, currTheta, 
+           curr_c.x_mm, curr_c.y_mm, curr_c.theta, currID.theta, 
            actionTypes_[plan.actions_[i]].GetName().c_str());
     ApplyAction(plan.actions_[i], currID, false);
     curr_c = State2State_c(State(currID));

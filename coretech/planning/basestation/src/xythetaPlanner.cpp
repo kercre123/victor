@@ -359,8 +359,9 @@ bool xythetaPlannerImpl::ComputePath()
     }
   }
 
-  if(foundGoal)
+  if(foundGoal) {
     BuildPlan();
+  }
   else {
     printf("no path found!\n");
   }
