@@ -1762,5 +1762,7 @@
 				"Translation": [0,0,0]
 			}
 		}
-	]
+	],
+	"NumMarkersWithContext": 12,
+	"NumPartialMarkersWithContext": 6
 }

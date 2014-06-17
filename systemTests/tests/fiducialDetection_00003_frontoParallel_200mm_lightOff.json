@@ -2542,5 +2542,7 @@
 				"Translation": [0,0,0]
 			}
 		}
-	]
+	],
+	"NumMarkersWithContext": 18,
+	"NumPartialMarkersWithContext": 14
 }
