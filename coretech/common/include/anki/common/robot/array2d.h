@@ -189,8 +189,11 @@ namespace Anki
 
     template<typename Type> ArraySlice<Type> Array<Type>::operator() (s32 minY, s32 maxY, s32 minX, s32 maxX)
     {
-      LinearSequence<s32> ySlice = IndexSequence<s32>(minY, 1, maxY, this->size[0]);
-      LinearSequence<s32> xSlice = IndexSequence<s32>(minX, 1, maxX, this->size[1]);
+      const s32 yIncrement = (minY == maxY) ? 0 : 1;
+      const s32 xIncrement = (minX == maxX) ? 0 : 1;
+
+      LinearSequence<s32> ySlice = IndexSequence<s32>(minY, yIncrement, maxY, this->size[0]);
+      LinearSequence<s32> xSlice = IndexSequence<s32>(minX, xIncrement, maxX, this->size[1]);
 
       ArraySlice<Type> slice(*this, ySlice, xSlice);
 
@@ -223,8 +226,11 @@ namespace Anki
 
     template<typename Type> ConstArraySlice<Type> Array<Type>::operator() (s32 minY, s32 maxY, s32 minX, s32 maxX) const
     {
-      LinearSequence<s32> ySlice = IndexSequence(minY, 1, maxY, this->size[0]);
-      LinearSequence<s32> xSlice = IndexSequence(minX, 1, maxX, this->size[1]);
+      const s32 yIncrement = (minY == maxY) ? 0 : 1;
+      const s32 xIncrement = (minX == maxX) ? 0 : 1;
+
+      LinearSequence<s32> ySlice = IndexSequence(minY, yIncrement, maxY, this->size[0]);
+      LinearSequence<s32> xSlice = IndexSequence(minX, xIncrement, maxX, this->size[1]);
 
       ConstArraySlice<Type> slice(*this, ySlice, xSlice);
 
@@ -617,6 +623,12 @@ namespace Anki
 
     template<typename Type> Result Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const Flags::Buffer flags)
     {
+      if(!rawData) {
+        AnkiError("Anki.Array2d.initialize", "input data buffer is NULL");
+        InvalidateArray();
+        return RESULT_FAIL_UNINITIALIZED_MEMORY;
+      }
+
       AnkiConditionalErrorAndReturnValue(numCols >= 0 && numRows >= 0 && dataLength >= MEMORY_ALIGNMENT,
         RESULT_FAIL_INVALID_SIZE, "Array<Type>::InitializeBuffer", "Negative dimension");
 
@@ -635,12 +647,6 @@ namespace Anki
       //  this->data = NULL;
       //  return RESULT_OK;
       //}
-
-      if(!rawData) {
-        AnkiError("Anki.Array2d.initialize", "input data buffer is NULL");
-        InvalidateArray();
-        return RESULT_FAIL_UNINITIALIZED_MEMORY;
-      }
 
       this->data = reinterpret_cast<Type*>(rawData);
 

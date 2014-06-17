@@ -576,7 +576,7 @@ namespace Anki
             point1Warped[0][0] /= point1Warped[2][0];
             point1Warped[1][0] /= point1Warped[2][0];
 
-            const Type distance = sqrtf(powf(transformedPoints[iPoint].x - point1Warped[0][0], 2.0f) + powf(transformedPoints[iPoint].y - point1Warped[1][0], 2.0f));
+            const Type distance = sqrtf(powf(static_cast<f32>(transformedPoints[iPoint].x) - static_cast<f32>(point1Warped[0][0]), 2.0f) + powf(static_cast<f32>(transformedPoints[iPoint].y) - static_cast<f32>(point1Warped[1][0]), 2.0f));
 
             if(distance > MAX_SOLVE_DISTANCE) {
               AnkiWarn("EstimateHomography", "Poor solution precision");
