@@ -49,9 +49,15 @@ void PathDolerOuter::Dole(size_t validRobotPathLength, size_t numToDole)
 {
   assert(msgHandler_);
 
-  size_t endIdx = robotIdx_ + numToDole;
+  size_t endIdx = robotIdx_ + validRobotPathLength + numToDole;
   if(endIdx > pathSizeOnBasestation_)
     endIdx = pathSizeOnBasestation_;
+
+  printf("PathDolerOuter: should dole from %lu to %lu (robotIdx = %lu)\n",
+         robotIdx_ + validRobotPathLength,
+         endIdx,
+         robotIdx_);
+
   for(size_t i = robotIdx_ + validRobotPathLength; i < endIdx; ++i) {
 
     printf("PathDolerOuter: doling out basestation idx %zu, robotIdx_ = %zu :  ", i, robotIdx_);
@@ -134,6 +140,8 @@ void PathDolerOuter::Update(s8 indexOnRobotPath)
 {
   // assumption: MAX_NUM_PATH_SEGMENTS_ROBOT is even
   if(indexOnRobotPath >= MAX_NUM_PATH_SEGMENTS_ROBOT/2) {
+    printf("PDO::Update(%i) trimming path and re-doling\n", indexOnRobotPath);
+
     assert(msgHandler_);
 
     MessageTrimPath msg;
