@@ -58,6 +58,7 @@ namespace Anki
 
       Type get_start() const;
 
+      // NOTE: The increment is meaningless for LinearSequences of size 0 or 1.
       Type get_increment() const;
 
       // Note: End it not computed, as it is tempting to use it as a loop condition, but it is not safe
@@ -85,9 +86,18 @@ namespace Anki
     template<typename Type> LinearSequence<Type> IndexSequence(Type start, Type increment, Type end, s32 arraySize);
     LinearSequence<s32> IndexSequence(s32 arraySize); // Internally, it sets start==0, end=arraySize-1, like the Matlab colon operator array(:,:)
 
-    // Linspace only really works correctly for f32 and f64, because getting the correct start and
-    // end may be impossible for integers.
+    // Linspace only works correctly for f32 and f64. To prevent misusage, trying ints will give a linker error.
     template<typename Type> LinearSequence<Type> Linspace(const Type start, const Type end, const s32 size);
+
+    // These do not link, as they are unsafe
+    template<> LinearSequence<u8> Linspace(const u8 start, const u8 end, const s32 size);
+    template<> LinearSequence<s8> Linspace(const s8 start, const s8 end, const s32 size);
+    template<> LinearSequence<u16> Linspace(const u16 start, const u16 end, const s32 size);
+    template<> LinearSequence<s16> Linspace(const s16 start, const s16 end, const s32 size);
+    template<> LinearSequence<u32> Linspace(const u32 start, const u32 end, const s32 size);
+    template<> LinearSequence<s32> Linspace(const s32 start, const s32 end, const s32 size);
+    template<> LinearSequence<u64> Linspace(const u64 start, const u64 end, const s32 size);
+    template<> LinearSequence<s64> Linspace(const s64 start, const s64 end, const s32 size);
 
     // TODO: Logspace
     //template<typename Type> class Logspace : public Sequence<Type>

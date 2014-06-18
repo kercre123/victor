@@ -106,10 +106,11 @@ namespace Anki
     template<typename Type> s32 LinearSequence<Type>::computeSize(const Type start, const Type increment, const Type end)
     {
       if(start == end) {
-        // NOTE: size is ignored
         return 1;
       } else {
-        AnkiAssert(increment != static_cast<Type>(0));
+        if(ABS(increment) <= Flags::numeric_limits<Type>::epsilon()) {
+          return 0;
+        }
       }
 
       // 10:-1:12
@@ -126,8 +127,11 @@ namespace Anki
       const Type maxLimit = MAX(start, end);
       const Type incrementMagnitude = ABS(increment);
 
-      const Type validRange = maxLimit - minLimit + 1;
-      const s32 size = (validRange+incrementMagnitude-1)/incrementMagnitude;
+      const Type validRange = maxLimit - minLimit;
+      const s32 size = (validRange+incrementMagnitude) / incrementMagnitude;
+
+      AnkiConditionalErrorAndReturnValue(size >= 0,
+        0, "LinearSequence<Type>::computeSize", "size estimation failed");
 
       return size;
     }
@@ -163,15 +167,14 @@ namespace Anki
       LinearSequence<Type> sequence;
 
       if(ABS(end-start) <= Flags::numeric_limits<Type>::epsilon()) {
-        // Note: size is ignored if end == start
         sequence = LinearSequence<Type>(start, 0, end, size);
       } else {
         if(size <= 0) {
           // Empty sequence
-          sequence = LinearSequence<Type>(start, 0, end, 0);
+          sequence = LinearSequence<Type>(start, 1, end, 0);
         } else if(size == 1) {
           // If size == 1, match output with Matlab
-          sequence = LinearSequence<Type>(end, 0, end, size);
+          sequence = LinearSequence<Type>(end, 1, end, size);
         } else {
           increment = (end-start) / (size-1);
           sequence = LinearSequence<Type>(start, increment, end, size);

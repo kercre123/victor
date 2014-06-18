@@ -72,13 +72,11 @@ namespace Anki
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice()
-      //: array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
       : ConstArraySlice<Type>(), arrayData(NULL)
     {
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> array)
-      //: array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
       : ConstArraySlice<Type>(array)
     {
       if(array.get_numElements() == 0) {
@@ -89,7 +87,6 @@ namespace Anki
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
-      //: array(array), ySlice(ySlice), xSlice(xSlice)
       : ConstArraySlice<Type>(array, ySlice, xSlice)
     {
       if(array.get_numElements() == 0) {
