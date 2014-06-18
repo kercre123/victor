@@ -365,10 +365,10 @@ namespace Cozmo {
   
   void TCPComms::DisconnectAllRobots()
   {
-    for(connectedRobotsIt_t it = connectedRobots_.begin(); it != connectedRobots_.end(); it++) {
+    for(connectedRobotsIt_t it = connectedRobots_.begin(); it != connectedRobots_.end();) {
       it->second.client->Disconnect();
       delete it->second.client;
-      connectedRobots_.erase(it);
+      it = connectedRobots_.erase(it);
     }
     
     connectedRobots_.clear();
