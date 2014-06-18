@@ -1578,8 +1578,8 @@ namespace Anki
 
       template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex)
       {
-        const s32 arrHeight = arr.get_size(0);
-        const s32 arrWidth = arr.get_size(1);
+        //const s32 arrHeight = arr.get_size(0);
+        //const s32 arrWidth = arr.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(arr.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");
