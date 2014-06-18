@@ -20,6 +20,10 @@
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "json/json.h"
 
+
+#define LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK ROBOT_BOUNDING_RADIUS
+#define LATTICE_PLANNER_BOUNDING_DISTANCE ROBOT_BOUNDING_RADIUS + 5.0
+
 namespace Anki {
 namespace Cozmo {
 
@@ -36,9 +40,13 @@ public:
       env_.Init(mprims);
     }
 
+  // imports and pads obstacles
+  void ImportBlockworldObstacles(float paddingRadius);
+
   const BlockWorld* blockWorld_;
   xythetaEnvironment env_;
   xythetaPlanner planner_;
+  xythetaPlan totalPlan_;
 };
 
 LatticePlanner::LatticePlanner(const BlockWorld* blockWorld, const Json::Value& mprims)
@@ -57,14 +65,14 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
   impl_->env_.ClearObstacles();
   VizManager::getInstance()->EraseAllQuads(); // TODO: only erase bounding box quads
 
-  assert(impl_->blockWorld_);
+  impl_->env_.ClearObstacles();
 
-  printf("setting up environment...\n");
+  assert(impl_->blockWorld_);
   unsigned int numAdded = 0;
 
   std::vector<Quad2f> boundingBoxes;
   impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
-                                              ROBOT_BOUNDING_RADIUS,
+                                              LATTICE_PLANNER_BOUNDING_DISTANCE,
                                               boundingBoxes,
                                               _ignoreTypes, _ignoreIDs);
   
@@ -76,8 +84,6 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
     impl_->env_.AddObstacle(boundingQuad);
     ++numAdded;
   }
-
-  printf("Added %u blocks\n", numAdded);
 
   State_c start(startPose.get_translation().x(),
                 startPose.get_translation().y(),
@@ -106,7 +112,8 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
     return RESULT_FAIL;
   }
 
-  impl_->env_.ConvertToPath(impl_->planner_.GetPlan(), path);
+  path.Clear();
+  impl_->env_.AppendToPath(impl_->planner_.GetPlan(), path);
 
   path.PrintPath();
 
@@ -116,63 +123,159 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
   return RESULT_OK;
 }
 
-LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose)
+LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &path,
+                                                             const Pose3d& startPose,
+                                                             bool forceReplanFromScratch)
 {
-
-  // TODO:(bn) don't do this every time! Get an update from BlockWorld
-  // if a new block shows up or one moves significantly
-  impl_->env_.ClearObstacles();
-  VizManager::getInstance()->EraseAllQuads(); // TODO: only erase bounding box quads
-
-  assert(impl_->blockWorld_);
-
+  using namespace std;
+  // first check plan with slightly smaller radius to see if we need to replan
   std::vector<Quad2f> boundingBoxes;
   impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
-                                              ROBOT_BOUNDING_RADIUS,
+                                              LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK,
                                               boundingBoxes,
                                               _ignoreTypes, _ignoreIDs);
+  impl_->env_.ClearObstacles();
   unsigned int numAdded = 0;
   for(auto boundingQuad : boundingBoxes) {
-    
-    // TODO: manage the quadID better so we don't conflict
-    VizManager::getInstance()->DrawQuad(500 + numAdded++, boundingQuad, 0.5f, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
-   
     impl_->env_.AddObstacle(boundingQuad);
+
+    // TODO: manage the quadID better so we don't conflict
+    // TODO:(bn) custom color for this
+    VizManager::getInstance()->DrawQuad(700 + numAdded++, boundingQuad, 0.5f, VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD);
   }
 
-  if(!impl_->planner_.PlanIsSafe()) {
-    printf("Old plan unsafe! Will replan.\n");
+  State_c lastSafeState;
+  xythetaPlan validOldPlan;
 
-    State_c start(startPose.get_translation().x(),
-                  startPose.get_translation().y(),
-                  startPose.get_rotationAngle<'Z'>().ToFloat());
+  State_c currentRobotState(startPose.get_translation().x(),
+                            startPose.get_translation().y(),
+                            startPose.get_rotationAngle().ToFloat());
+
+  // plan Idx is the number of plan actions to execute before getting
+  // to the starting point closest to start
+  size_t planIdx = impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState);
+
+  // TODO:(bn) param
+  const float maxDistancetoFollowOldPlan_mm = 40.0;
+
+  if(forceReplanFromScratch ||
+     !impl_->env_.PlanIsSafe(impl_->totalPlan_, maxDistancetoFollowOldPlan_mm, planIdx, lastSafeState, validOldPlan)) {
+    // at this point, we know the plan isn't completely
+    // safe. lastSafeState will be set to the furthest state along the
+    // plan (after planIdx) which is safe. validOldPlan will contain a
+    // partial plan starting at planIdx and ending at lastSafeState
+
+    printf("old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
+           planIdx, validOldPlan.Size());
+    cout<<"currentRobotState: "<<currentRobotState<<endl;
+
+    impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState, true);
+
+    if(validOldPlan.Size() == 0) {
+      // if we can't safely complete the action we are currently
+      // executing, then valid old plan will be empty and we will
+      // replan from the current state of the robot
+      lastSafeState = currentRobotState;
+    }
+
+    impl_->totalPlan_ = validOldPlan;
 
     path.Clear();
 
-    if(!impl_->planner_.SetStart(start)) {
-      printf("ERROR: ReplanIfNeeded, invalid start!\n");
-      return REPLAN_NEEDED_BUT_START_FAILURE;
+    if(!impl_->planner_.SetStart(lastSafeState)) {
+      printf("ERROR: ReplanIfNeeded, invalid start!\n");      
     }
     else if(!impl_->planner_.GoalIsValid()) {
-      printf("ERROR: ReplanIfNeeded, invalid goal!\n");
+      printf("ReplanIfNeeded, invalid goal! Goal may have moved into collision.\n");
       return REPLAN_NEEDED_BUT_GOAL_FAILURE;
     }
     else {
-      impl_->planner_.SetReplanFromScratch();
+      if(forceReplanFromScratch) {
+        impl_->planner_.SetReplanFromScratch();
+      }
 
-      printf("(re-)planning from (%f, %f, %f)\n",
-             start.x_mm, start.y_mm, start.theta);
+      // use real padding for re-plan
+      boundingBoxes.clear();
+      impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
+                                                  LATTICE_PLANNER_BOUNDING_DISTANCE,
+                                                  boundingBoxes,
+                                                  _ignoreTypes, _ignoreIDs);
+      unsigned int numAdded = 0;
+      impl_->env_.ClearObstacles();
+      for(auto boundingQuad : boundingBoxes) {
+
+        // TODO: manage the quadID better so we don't conflict
+        VizManager::getInstance()->DrawQuad(500 + numAdded++, boundingQuad, 0.5f, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
+
+        impl_->env_.AddObstacle(boundingQuad);
+      }
+
+      printf("(re)-planning from (%f, %f, %f) to (%f %f %f)\n",
+             lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,
+             impl_->planner_.GetGoal().x_mm, impl_->planner_.GetGoal().y_mm, impl_->planner_.GetGoal().theta);
 
       if(!impl_->planner_.ComputePath()) {
         printf("plan failed during replanning!\n");
+        return REPLAN_NEEDED_BUT_PLAN_FAILURE; 
       }
       else {
-        impl_->env_.ConvertToPath(impl_->planner_.GetPlan(), path);
-        path.PrintPath();
+        if(impl_->planner_.GetPlan().Size() == 0) {
+          impl_->totalPlan_.Clear();
+        }
+        else {
+
+          assert(impl_->planner_.GetPlan().start_ == impl_->env_.State_c2State(lastSafeState));
+
+          path.Clear();
+
+          // TODO:(bn) hide in #if DEBUG or something like that
+          // verify that the append will be correct
+          if(impl_->totalPlan_.Size() > 0) {
+            State endState = impl_->env_.GetPlanFinalState(impl_->totalPlan_);
+            if(endState != impl_->planner_.GetPlan().start_) {
+              using namespace std;
+              cout<<"ERROR: (LatticePlanner::ReplanIfNeeded) trying to append a plan with a mismatching state!\n";
+              cout<<"endState = "<<endState<<endl;
+              cout<<"next plan start = "<<impl_->planner_.GetPlan().start_<<endl;
+
+              cout<<"\ntotalPlan_:\n";
+              impl_->env_.PrintPlan(impl_->totalPlan_);
+
+              cout<<"\nnew plan:\n";
+              impl_->env_.PrintPlan(impl_->planner_.GetPlan());
+
+              assert(false);
+            }
+          }
+
+          impl_->totalPlan_.Append(impl_->planner_.GetPlan());
+
+          printf("old plan:\n");
+          impl_->env_.PrintPlan(validOldPlan);
+
+          printf("new plan:\n");
+          impl_->env_.PrintPlan(impl_->planner_.GetPlan());
+
+          impl_->env_.AppendToPath(impl_->totalPlan_, path);
+          printf("total path:\n");
+          path.PrintPath();
+        }
       }
     }
 
     return DID_REPLAN;
+  }
+  else {
+    using namespace std;
+    if(validOldPlan.Size() > 0) {
+      cout<<"LatticePlanner: safely checked plan from "<<validOldPlan.start_<<" to "
+          <<impl_->env_.GetPlanFinalState(validOldPlan)<< " goal = "<<impl_->planner_.GetGoal()
+          <<" ("<<validOldPlan.Size()
+          <<" actions, totalPlan_.Size = "<<impl_->totalPlan_.Size()<<")\n";
+    }
+    else {
+      printf("LatticePlanner: Plan safe, but validOldPlan is empty\n");
+    }
   }
 
   return REPLAN_NOT_NEEDED;

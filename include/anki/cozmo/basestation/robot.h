@@ -31,6 +31,7 @@ namespace Anki {
     class BlockWorld;
     class IMessageHandler;
     class IPathPlanner;
+    class PathDolerOuter;
     
     class BlockDockingSystem
     {
@@ -53,6 +54,7 @@ namespace Anki {
       };
       
       Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner);
+      ~Robot();
       
       void Update();
       
@@ -249,7 +251,13 @@ namespace Anki {
       Radians          _goalHeadAngle;
       f32              _goalDistanceThreshold;
       Radians          _goalAngleThreshold;
+
+      PathDolerOuter* pdo_;
       
+      // if true and we are traversing a path, then next time the
+      // block world changes, re-plan from scratch
+      bool _forceReplanOnNextWorldChange;
+
       Vision::Camera   _camera;
       
       // Geometry / Pose

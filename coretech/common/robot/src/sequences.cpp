@@ -16,7 +16,13 @@ namespace Anki
   {
     template<> s32 LinearSequence<u8>::computeSize(const u8 start, const u8 increment, const u8 end)
     {
-      AnkiAssert(increment != static_cast<u8>(0));
+      if(start == end) {
+        // WARNING: size is ignored
+        //AnkiAssert(increment == 0);
+        return 1;
+      } else {
+        AnkiAssert(increment != 0);
+      }
 
       // 12:1:10
       if(increment > 0 && start > end) {
@@ -37,8 +43,14 @@ namespace Anki
     {
       const f32 smallestIncrement = static_cast<f32>(1e-8);
 
-      AnkiConditionalErrorAndReturnValue(ABS(increment) > smallestIncrement,
-        0, "LinearSequence<f32>::computeSize", "increment is too small");
+      if(ABS(end-start) < smallestIncrement) {
+        // WARNING: size is ignored
+        //AnkiAssert(ABS(increment) <= smallestIncrement);
+        return 1;
+      } else {
+        AnkiConditionalErrorAndReturnValue(ABS(increment) > smallestIncrement,
+          0, "LinearSequence<f32>::computeSize", "increment is too small");
+      }
 
       // 10:-1:12
       if(increment < 0.0f && start < end) {
@@ -71,8 +83,14 @@ namespace Anki
     {
       const f64 smallestIncrement = static_cast<f64>(1e-8);
 
-      AnkiConditionalErrorAndReturnValue(ABS(increment) > smallestIncrement,
-        0, "LinearSequence<f64>::computeSize", "increment is too small");
+      if(ABS(end-start) < smallestIncrement) {
+        // WARNING: size is ignored
+        //AnkiAssert(ABS(increment) <= smallestIncrement);
+        return 1;
+      } else {
+        AnkiConditionalErrorAndReturnValue(ABS(increment) > smallestIncrement,
+          0, "LinearSequence<f64>::computeSize", "increment is too small");
+      }
 
       // 10:-1:12
       if(increment < 0.0 && start < end) {

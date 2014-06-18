@@ -11,4 +11,5 @@ set(MEX_LINK_LIBRARIES
 add_definitions(-DOPENCV_ROOT_PATH=${EXTERNAL_DIR}/${OPENCV_DIR})
 
 build_mex(mexFaceDetect.cpp)
+build_mex(mexDrawSystemTestResults.cpp)
 #build_mex(mexTest.cpp)

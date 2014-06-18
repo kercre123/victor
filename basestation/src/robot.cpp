@@ -6,7 +6,10 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
+// TODO:(bn) should these be a full path?
 #include "pathPlanner.h"
+#include "pathDolerOuter.h"
+
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
@@ -115,11 +118,18 @@ namespace Anki {
     , _carryingBlock(nullptr)
     , _dockBlock(nullptr)
     , _dockMarker(nullptr)
+    , _forceReplanOnNextWorldChange(false)
+    , _state(IDLE)
     {
       SetHeadAngle(_currentHeadAngle);
-      
+      pdo_ = new PathDolerOuter(msgHandler, robotID);
     } // Constructor: Robot
-     
+
+    Robot::~Robot()
+    {
+      delete pdo_;
+      pdo_ = nullptr;
+    }
     
     void Robot::Update(void)
     {
@@ -141,7 +151,7 @@ namespace Anki {
             if(_world->DidBlocksChange())
             {
               Planning::Path newPath;
-              switch(_pathPlanner->ReplanIfNeeded(newPath, GetPose()))
+              switch(_pathPlanner->ReplanIfNeeded(newPath, GetPose(), _forceReplanOnNextWorldChange))
               {
                 case IPathPlanner::DID_REPLAN:
                 {
@@ -149,6 +159,7 @@ namespace Anki {
                   ClearPath();
                   _isWaitingForReplan = true;
                   wasTraversingPath = false;
+                  _forceReplanOnNextWorldChange = false;
                   
                   PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
                   MessageClearPath clearMessage;
@@ -179,7 +190,15 @@ namespace Anki {
                 {
                   PRINT_NAMED_INFO("Robot.Update.NewStartForReplanNeeded",
                                    "Replan failed during docking due to bad start. Will try again, and hope robot moves.");
-                  // NOTE: this purposefully falls through to default case
+                  break;
+                }
+
+                case IPathPlanner::REPLAN_NEEDED_BUT_PLAN_FAILURE:
+                {
+                  PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
+                                   "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.");
+                  _forceReplanOnNextWorldChange = true;
+                  break;
                 }
                   
                 default:
@@ -190,9 +209,13 @@ namespace Anki {
                   
               } // switch(ReplanIfNeeded()
             } // if blocks changed
+
+            pdo_->Update(GetCurrPathSegment());
           } else { // IsTraversingPath is false?
             PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
-                             "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
+                             "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d, isWaitingForReplan = %d\n",
+                             _currPathSegment,
+                             _isWaitingForReplan);
           }
           
           // Visualize path if robot has just started traversing it.
@@ -270,7 +293,8 @@ namespace Anki {
         } // case DOCKING
           
         default:
-          PRINT_NAMED_ERROR("Robot::Update", "Transitioned to unknown state %d!", _state);
+          PRINT_NAMED_ERROR("Robot::Update", "Transitioned to unknown state %d!\n", _state);
+          assert(false);
           _state = IDLE;
           return;
           
@@ -284,7 +308,20 @@ namespace Anki {
     {
       // TODO: Provide string name lookup for each state
       PRINT_INFO("Robot %d switching from state %d to state %d.\n", _ID, _state, nextState);
-      
+
+      switch(nextState) {
+        case IDLE:
+        case FOLLOWING_PATH:
+        case BEGIN_DOCKING:
+        case DOCKING:
+          break;
+
+        default:
+          PRINT_NAMED_ERROR("Robot::SetState", "Trying to transition to invalid state %d!\n", nextState);
+          assert(false);
+          return;
+      }
+
       _state = nextState;
     }
 
@@ -436,6 +473,7 @@ namespace Anki {
     {
       // TODO: SetState(IDLE) ?
       VizManager::getInstance()->ErasePath(_ID);
+      pdo_->ClearPath();
       return SendClearPath();
     }
     
@@ -704,75 +742,8 @@ namespace Anki {
     // Sends a path to the robot to be immediately executed
     Result Robot::SendExecutePath(const Planning::Path& path) const
     {
-      // Send path segments
-      for (u8 i=0; i<path.GetNumSegments(); i++)
-      {
-        switch (path.GetSegmentConstRef(i).GetType())
-        {
-          case Planning::PST_LINE:
-          {
-            MessageAppendPathSegmentLine m;
-            const Planning::PathSegmentDef::s_line* l = &(path.GetSegmentConstRef(i).GetDef().line);
-            m.x_start_mm = l->startPt_x;
-            m.y_start_mm = l->startPt_y;
-            m.x_end_mm = l->endPt_x;
-            m.y_end_mm = l->endPt_y;
-            m.pathID = 0;
-            m.segmentID = i;
-            
-            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
-            m.accel = path.GetSegmentConstRef(i).GetAccel();
-            m.decel = path.GetSegmentConstRef(i).GetDecel();
-            
-            if (_msgHandler->SendMessage(_ID, m) == RESULT_FAIL)
-              return RESULT_FAIL;
-            break;
-          }
-          case Planning::PST_ARC:
-          {
-            MessageAppendPathSegmentArc m;
-            const Planning::PathSegmentDef::s_arc* a = &(path.GetSegmentConstRef(i).GetDef().arc);
-            m.x_center_mm = a->centerPt_x;
-            m.y_center_mm = a->centerPt_y;
-            m.radius_mm = a->radius;
-            m.startRad = a->startRad;
-            m.sweepRad = a->sweepRad;
-            m.pathID = 0;
-            m.segmentID = i;
-            
-            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
-            m.accel = path.GetSegmentConstRef(i).GetAccel();
-            m.decel = path.GetSegmentConstRef(i).GetDecel();
-            
-            if (_msgHandler->SendMessage(_ID, m) == RESULT_FAIL)
-              return RESULT_FAIL;
-            break;
-          }
-          case Planning::PST_POINT_TURN:
-          {
-            MessageAppendPathSegmentPointTurn m;
-            const Planning::PathSegmentDef::s_turn* t = &(path.GetSegmentConstRef(i).GetDef().turn);
-            m.x_center_mm = t->x;
-            m.y_center_mm = t->y;
-            m.targetRad = t->targetAngle;
-            m.pathID = 0;
-            m.segmentID = i;
-            
-            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
-            m.accel = path.GetSegmentConstRef(i).GetAccel();
-            m.decel = path.GetSegmentConstRef(i).GetDecel();
+      pdo_->SetPath(path);
 
-            if (_msgHandler->SendMessage(_ID, m) == RESULT_FAIL)
-              return RESULT_FAIL;
-            break;
-          }
-          default:
-            PRINT_NAMED_ERROR("Invalid path segment", "Can't send path segment of unknown type");
-            return RESULT_FAIL;
-            
-        }
-      }
-      
       // Send start path execution message
       MessageExecutePath m;
       m.pathID = 0;

@@ -13,6 +13,8 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_PLANNER_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_PLANNER_H_
 
+#include <stddef.h>
+
 namespace Anki
 {
 namespace Planning
@@ -35,6 +37,7 @@ public:
   // set a goal in meters and radians. Returns true if it is valid,
   // false otherwise
   bool SetGoal(const State_c& goal);
+  State_c GetGoal() const;
 
   // Re-checks the existing goal to see if it is valid
   bool GoalIsValid() const;
@@ -49,12 +52,6 @@ public:
   // Tells the planner to replan from scratch next time
   void SetReplanFromScratch();
 
-  // Returns true if the plan is safe and complete, false
-  // otherwise. This should always return true immediately after
-  // Replan returns true, but if the environment is updated it can be
-  // useful to re-check the plan
-  bool PlanIsSafe() const;
-
   // Computes a path from start to goal. Returns true if path found,
   // false otherwise. Note that replanning may or may not actually
   // trigger the planner. E.g. if the environment hasn't changed
@@ -65,6 +62,7 @@ public:
   bool ComputePath() {Replan(); return true;}
 
   // must call compute path before getting the plan
+  xythetaPlan& GetPlan();
   const xythetaPlan& GetPlan() const;
 
 private:

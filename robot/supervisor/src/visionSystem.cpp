@@ -466,6 +466,7 @@ namespace Anki {
           parameters.maxExtractedQuads,
           parameters.quadRefinementIterations,
           parameters.numRefinementSamples,
+          parameters.quadRefinementMaxCornerChange,
           false,
           ccmScratch, onchipScratch, offchipScratch);
 #endif
@@ -1670,6 +1671,7 @@ namespace Anki {
             grayscaleImage,
             Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
             autoExposure_integerCountsIncrement,
+            autoExposure_highValue,
             autoExposure_percentileToMakeHigh,
             autoExposure_minExposureTime, autoExposure_maxExposureTime,
             exposureTime,
@@ -1814,6 +1816,7 @@ namespace Anki {
             grayscaleImage,
             Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
             autoExposure_integerCountsIncrement,
+            autoExposure_highValue,
             autoExposure_percentileToMakeHigh,
             autoExposure_minExposureTime, autoExposure_maxExposureTime,
             exposureTime,
@@ -2125,6 +2128,7 @@ namespace Anki {
           grayscaleImage,
           Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
           autoExposure_integerCountsIncrement,
+          autoExposure_highValue,
           autoExposure_percentileToMakeHigh,
           autoExposure_minExposureTime, autoExposure_maxExposureTime,
           exposureTime,

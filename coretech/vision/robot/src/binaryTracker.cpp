@@ -157,13 +157,13 @@ namespace Anki
         this->templateImageWidth = templateImage.get_size(1);
 
         // Only a few markers are currently supported
-        
+
         // TODO: Update this now that we've removed the battery marker image
-        
+
         //AnkiConditionalErrorAndReturn(markerType == Anki::Vision::MARKER_BATTERIES,
         //  "BinaryTracker::BinaryTracker", "markerType %d is not supported for header initialization", markerType);
         AnkiError("BinaryTracker::BinaryTracker", "BinaryTracker needs to be updated now that Battery marker has been removed.");
-        
+
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "BinaryTracker::BinaryTracker", "template widths and heights must be greater than zero");
 
@@ -259,7 +259,8 @@ namespace Anki
           templateCorners[3] = templateQuad[3];
 
           Array<f32> binaryTemplateHomography(3, 3, slowMemory);
-          Matrix::EstimateHomography(binaryCorners, templateCorners, binaryTemplateHomography, slowMemory);
+          bool numericalFailure;
+          Matrix::EstimateHomography(binaryCorners, templateCorners, binaryTemplateHomography, numericalFailure, slowMemory);
 
           Transformations::PlanarTransformation_f32 binaryTemplateTransform(
             Transformations::TRANSFORM_PROJECTIVE,
@@ -310,7 +311,7 @@ namespace Anki
             rotatedBinaryCorners[i] = binaryCorners[rotationOrder[i]];
           }
 
-          Matrix::EstimateHomography(rotatedBinaryCorners, templateCorners, binaryTemplateHomography, slowMemory);
+          Matrix::EstimateHomography(rotatedBinaryCorners, templateCorners, binaryTemplateHomography, numericalFailure, slowMemory);
 
           binaryTemplateTransform.set_homography(binaryTemplateHomography);
 
@@ -341,7 +342,8 @@ namespace Anki
 
           if(!useRealTemplateImage) {
             // Just warp the binary header image to the template image
-            Matrix::EstimateHomography(templateCorners, binaryCorners, binaryTemplateHomography, slowMemory);
+            bool numericalFailure;
+            Matrix::EstimateHomography(templateCorners, binaryCorners, binaryTemplateHomography, numericalFailure, slowMemory);
             const Point<f32> centerOffset(0.0f, 0.0f);
             Meshgrid<f32> originalCoordinates( LinearSequence<f32>(0.5f, 1.0f, templateImageWidth-0.5f), LinearSequence<f32>(0.5f, 1.0f, templateImageHeight-0.5f));
 

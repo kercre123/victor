@@ -36,17 +36,17 @@ namespace Anki
       s32 * restrict pCounts = this->counts.Pointer(0);
 
       const Rectangle<s32> imageRegionOfInterestClipped(
-        MAX(0, MIN(imageWidth-1, imageRegionOfInterest.left)),
-        MAX(0, MIN(imageWidth-1, imageRegionOfInterest.right)),
-        MAX(0, MIN(imageHeight-1, imageRegionOfInterest.top)),
-        MAX(0, MIN(imageHeight-1, imageRegionOfInterest.bottom)));
+        MAX(0, MIN(imageWidth, imageRegionOfInterest.left)),
+        MAX(0, MIN(imageWidth, imageRegionOfInterest.right)),
+        MAX(0, MIN(imageHeight, imageRegionOfInterest.top)),
+        MAX(0, MIN(imageHeight, imageRegionOfInterest.bottom)));
 
       this->numElements = 0;
 
-      for(s32 y=imageRegionOfInterestClipped.top; y<=imageRegionOfInterestClipped.bottom; y+=yIncrement) {
+      for(s32 y=imageRegionOfInterestClipped.top; y<=(imageRegionOfInterestClipped.bottom-1); y+=yIncrement) {
         const u8 * restrict pImage = image.Pointer(y,0);
 
-        for(s32 x=imageRegionOfInterestClipped.left; x<=imageRegionOfInterestClipped.right; x+=xIncrement) {
+        for(s32 x=imageRegionOfInterestClipped.left; x<=(imageRegionOfInterestClipped.right-1); x+=xIncrement) {
           const u8 curImage = pImage[x];
           pCounts[curImage]++;
           this->numElements++;

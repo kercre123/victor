@@ -28,6 +28,7 @@ namespace Anki {
       const f32 darkGray,
       const f32 brightGray,
       const s32 numSamples,
+      const f32 maxCornerChange,
       Quadrilateral<f32>& refinedQuad,
       Array<f32>& refinedHomography,
       MemoryStack scratch)
@@ -473,7 +474,9 @@ namespace Anki {
       EndBenchmark("vme_quadrefine_init");
 
       BeginBenchmark("vme_quadrefine_mainLoop");
-      for(s32 iteration=0; iteration<maxIterations; iteration++) {
+      bool restoreOriginal = false;
+      
+      for(s32 iteration=0; iteration<maxIterations && !restoreOriginal; iteration++) {
         //BeginBenchmark("vme_quadrefine_mainLoop_init");
 
         const f32 h00 = refinedHomography[0][0]; const f32 h01 = refinedHomography[0][1]; const f32 h02 = refinedHomography[0][2];
@@ -495,7 +498,7 @@ namespace Anki {
         //EndBenchmark("vme_quadrefine_mainLoop_init");
 
         //BeginBenchmark("vme_quadrefine_mainLoop_samples");
-        for(s32 iSample=0; iSample<actualNumSamples; iSample++) {
+        for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
           //BeginBenchmark("vme_quadrefine_mainLoop_samples1");
 
           const f32 xOriginal = pX[iSample];
@@ -647,14 +650,14 @@ namespace Anki {
         Matrix::MakeSymmetric(AWAt, false);
 
         // Solve for the update
-        bool numericalFailure;
+        bool numericalFailure = false;
         if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false, numericalFailure)) != RESULT_OK) {
           return lastResult;
         }
 
         if(numericalFailure){
-          AnkiWarn("RefineQuadrilateral", "numericalFailure");
-          return RESULT_OK;
+          AnkiWarn("RefineQuadrilateral", "numericalFailure\n");
+          restoreOriginal = true;
         }
 
         // Update the homography
@@ -747,6 +750,27 @@ namespace Anki {
           "     'Tag', 'refinedQuad'); drawnow");
       }
 #endif
+      
+      // Check to make sure the refined quad isn't too different from the intitial one.
+      // If it is, restore the original.
+      Quadrilateral<f32> initialQuadF32;
+      initialQuadF32.SetCast(initialQuad);
+      
+      for(s32 i=0; i<4 && !restoreOriginal; ++i) {
+        const f32 cornerChange = (refinedQuad[i] - initialQuadF32[i]).Length();
+        if(cornerChange > maxCornerChange) {
+          AnkiWarn("RefineQuadrilateral", "Quad changed too much.\n");
+          restoreOriginal = true;
+        }
+      }
+      
+      // If corner change check or numerical failure triggered a restoreOriginal
+      // do so now.
+      if(restoreOriginal) {
+        AnkiWarn("RefineQuadrilateral", "Restoring original quad.\n");
+        refinedQuad = initialQuadF32;
+        refinedHomography = initialHomography;
+      }
 
       EndBenchmark("vme_quadrefine_finalize");
 
