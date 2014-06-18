@@ -17,8 +17,7 @@ namespace Anki
     template<> s32 LinearSequence<u8>::computeSize(const u8 start, const u8 increment, const u8 end)
     {
       if(start == end) {
-        // WARNING: size is ignored
-        //AnkiAssert(increment == 0);
+        // NOTE: size is ignored
         return 1;
       } else {
         AnkiAssert(increment != 0);
@@ -44,8 +43,7 @@ namespace Anki
       const f32 smallestIncrement = static_cast<f32>(1e-8);
 
       if(ABS(end-start) < smallestIncrement) {
-        // WARNING: size is ignored
-        //AnkiAssert(ABS(increment) <= smallestIncrement);
+        // NOTE: size is ignored
         return 1;
       } else {
         AnkiConditionalErrorAndReturnValue(ABS(increment) > smallestIncrement,
@@ -84,8 +82,7 @@ namespace Anki
       const f64 smallestIncrement = static_cast<f64>(1e-8);
 
       if(ABS(end-start) < smallestIncrement) {
-        // WARNING: size is ignored
-        //AnkiAssert(ABS(increment) <= smallestIncrement);
+        // NOTE: size is ignored
         return 1;
       } else {
         AnkiConditionalErrorAndReturnValue(ABS(increment) > smallestIncrement,

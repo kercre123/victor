@@ -92,7 +92,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::EncodedArraySlice::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
+    Result SerializedBuffer::EncodedArraySlice::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_size, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_size, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
     {
       if(bufferLength < SerializedBuffer::EncodedArraySlice::CODE_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
@@ -103,10 +103,10 @@ namespace Anki
 
       ySlice_start = reinterpret_cast<u32*>(*buffer)[6];
       ySlice_increment = reinterpret_cast<u32*>(*buffer)[7];
-      ySlice_end = reinterpret_cast<u32*>(*buffer)[8];
+      ySlice_size = reinterpret_cast<u32*>(*buffer)[8];
       xSlice_start = reinterpret_cast<u32*>(*buffer)[9];
       xSlice_increment = reinterpret_cast<u32*>(*buffer)[10];
-      xSlice_end = reinterpret_cast<u32*>(*buffer)[11];
+      xSlice_size = reinterpret_cast<u32*>(*buffer)[11];
 
       if(updateBufferPointer) {
         *buffer = reinterpret_cast<u8*>(*buffer) + SerializedBuffer::EncodedArraySlice::CODE_LENGTH;

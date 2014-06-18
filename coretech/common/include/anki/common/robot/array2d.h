@@ -189,11 +189,8 @@ namespace Anki
 
     template<typename Type> ArraySlice<Type> Array<Type>::operator() (s32 minY, s32 maxY, s32 minX, s32 maxX)
     {
-      const s32 yIncrement = (minY == maxY) ? 0 : 1;
-      const s32 xIncrement = (minX == maxX) ? 0 : 1;
-
-      LinearSequence<s32> ySlice = IndexSequence<s32>(minY, yIncrement, maxY, this->size[0]);
-      LinearSequence<s32> xSlice = IndexSequence<s32>(minX, xIncrement, maxX, this->size[1]);
+      LinearSequence<s32> ySlice = IndexSequence<s32>(minY, 1, maxY, this->size[0]);
+      LinearSequence<s32> xSlice = IndexSequence<s32>(minX, 1, maxX, this->size[1]);
 
       ArraySlice<Type> slice(*this, ySlice, xSlice);
 
@@ -226,11 +223,8 @@ namespace Anki
 
     template<typename Type> ConstArraySlice<Type> Array<Type>::operator() (s32 minY, s32 maxY, s32 minX, s32 maxX) const
     {
-      const s32 yIncrement = (minY == maxY) ? 0 : 1;
-      const s32 xIncrement = (minX == maxX) ? 0 : 1;
-
-      LinearSequence<s32> ySlice = IndexSequence(minY, yIncrement, maxY, this->size[0]);
-      LinearSequence<s32> xSlice = IndexSequence(minX, xIncrement, maxX, this->size[1]);
+      LinearSequence<s32> ySlice = IndexSequence(minY, 1, maxY, this->size[0]);
+      LinearSequence<s32> xSlice = IndexSequence(minX, 1, maxX, this->size[1]);
 
       ConstArraySlice<Type> slice(*this, ySlice, xSlice);
 

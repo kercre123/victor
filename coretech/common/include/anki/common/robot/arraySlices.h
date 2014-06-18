@@ -187,9 +187,12 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(limits.isValid,
         0, "ArraySlice<Type>::Set", "Limits is not valid");
 
-      for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+      for(s32 iy=0; iy<limits.rawIn1Limits.ySize; iy++) {
+        const s32 y = limits.rawIn1Limits.yStart + iy * limits.rawIn1Limits.yIncrement;
         Type * restrict pMat = array.Pointer(y, 0);
-        for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+
+        for(s32 ix=0; ix<limits.rawIn1Limits.xSize; ix++) {
+          const s32 x = limits.rawIn1Limits.xStart + ix * limits.rawIn1Limits.xIncrement;
           pMat[x] = value;
         }
       }
@@ -235,8 +238,8 @@ namespace Anki
     }
 
     template<typename Type> ArraySliceSimpleLimits<Type>::ArraySliceSimpleLimits(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice)
-      : xStart(in1_xSlice.get_start()), xIncrement(in1_xSlice.get_increment()), xEnd(in1_xSlice.get_end()), xSize(in1_xSlice.get_size()),
-      yStart(in1_ySlice.get_start()), yIncrement(in1_ySlice.get_increment()), yEnd(in1_ySlice.get_end()), ySize(in1_ySlice.get_size())
+      : xStart(in1_xSlice.get_start()), xIncrement(in1_xSlice.get_increment()), xSize(in1_xSlice.get_size()),
+      yStart(in1_ySlice.get_start()), yIncrement(in1_ySlice.get_increment()), ySize(in1_ySlice.get_size())
     {
     }
 

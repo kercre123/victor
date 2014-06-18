@@ -3335,10 +3335,6 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 
   ASSERT_TRUE(slice2.IsValid());
 
-  //CoreTechPrint("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
-  //CoreTechPrint("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));
-  //CoreTechPrint("%d %d %d\n", slice2.get_xSlice().get_start(), slice2.get_xSlice().get_end(), *slice2.get_array().Pointer(0,0));
-
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 

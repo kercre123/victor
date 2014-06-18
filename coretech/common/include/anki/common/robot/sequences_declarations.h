@@ -48,6 +48,10 @@ namespace Anki
       // Matlab equivalent: start:increment:end
       LinearSequence(const Type start, const Type increment, const Type end);
 
+      // No Matlab equivalent
+      // NOTE: end is unused. It is just present to prevent confusion with the other polymorphic constructors
+      LinearSequence(const Type start, const Type increment, const Type end, const s32 size);
+
       // Explicitly evaluate each element of the sequence, and put the results in an Array.
       Array<Type> Evaluate(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
       Result Evaluate(ArraySlice<Type> out) const;
@@ -56,10 +60,8 @@ namespace Anki
 
       Type get_increment() const;
 
-      // WARNING:
-      // The "end" of a LinearSequence is computed automatically, and is less-than-or-equal-to the
-      // requested end.
-      Type get_end() const;
+      // Note: End it not computed, as it is tempting to use it as a loop condition, but it is not safe
+      // Type get_end() const;
 
       // Matlab equivalent: length(start:increment:end)
       s32 get_size() const;
@@ -69,11 +71,10 @@ namespace Anki
       // construct a new LinearSequence every time an element is popped or pushed
       template<typename FixedLengthListType> friend class FixedLengthList;
 
+      s32 size;
+
       Type start;
       Type increment;
-      Type end;
-
-      s32 size;
 
       static s32 computeSize(const Type start, const Type increment, const Type end);
     }; // class LinearSequence

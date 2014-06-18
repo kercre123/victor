@@ -144,12 +144,10 @@ namespace Anki
     public:
       Type xStart;
       Type xIncrement;
-      Type xEnd;
       s32  xSize;
 
       Type yStart;
       Type yIncrement;
-      Type yEnd;
       s32  ySize;
 
       ArraySliceSimpleLimits(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice);
