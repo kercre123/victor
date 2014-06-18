@@ -458,8 +458,8 @@ namespace Anki {
           parameters.maxConnectedComponentSegments,
           parameters.maxExtractedQuads,
           parameters.quadRefinementIterations,
-          parameters.quadRefinementMaxCornerChange,
           parameters.numRefinementSamples,
+          parameters.quadRefinementMaxCornerChange,
           false,
           ccmScratch, onchipScratch, offchipScratch);
 #endif
