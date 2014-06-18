@@ -65,8 +65,8 @@ namespace Anki {
         const s32 SNAPSHOT_SIZE = 16; // the snapshots will be a 2D array SNAPSHOT_SIZE x SNAPSHOT_SIZE in size
         const s32 SNAPSHOT_SUBSAMPLE = 8; // this is the spacing between samples taken from the original image resolution
         const s32 SNAPSHOT_ROI_SIZE = SNAPSHOT_SUBSAMPLE*SNAPSHOT_SIZE; // thus, this is the size of the ROI in the original image
-        const Embedded::Rectangle<s32> snapShotRoiLow_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2-1, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2-1);
-        const Embedded::Rectangle<s32> snapShotRoiHigh_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2-1, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2-1);
+        const Embedded::Rectangle<s32> snapShotRoiLow_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2);
+        const Embedded::Rectangle<s32> snapShotRoiHigh_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2);
         const s32 SNAPSHOT_BUFFER_SIZE = 2*SNAPSHOT_SIZE*SNAPSHOT_SIZE + 64; // 2X (16x16) arrays + overhead
         u8 snapshotBuffer_[SNAPSHOT_BUFFER_SIZE];
         Embedded::MemoryStack snapshotMemory_;
