@@ -105,6 +105,7 @@ namespace Anki {
     , _goalHeadAngle(0.f)
     , _goalDistanceThreshold(10.f)
     , _goalAngleThreshold(DEG_TO_RAD(10))
+    , _forceReplanOnNextWorldChange(false)
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
     , _frameId(0)
     , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose)
@@ -116,10 +117,9 @@ namespace Anki {
     , _currentLiftAngle(0)
     , _isPickingOrPlacing(false)
     , _carryingBlock(nullptr)
+    , _state(IDLE)
     , _dockBlock(nullptr)
     , _dockMarker(nullptr)
-    , _forceReplanOnNextWorldChange(false)
-    , _state(IDLE)
     {
       SetHeadAngle(_currentHeadAngle);
       pdo_ = new PathDolerOuter(msgHandler, robotID);

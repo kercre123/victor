@@ -53,6 +53,25 @@ namespace Anki {
         bool isCarryingBlock_ = false;
         bool lastActionSucceeded_ = false;
         
+        // "Snapshots" for visual verification of a successful block pick up
+        // We'll need two mini-images (or snapshots), along with an associated
+        // memory buffer, to hold low-res views from the camera before and after
+        // trying to pickup (or place) a block.  The ready flag is so the state
+        // machine can wait for the vision system to actually produce the
+        // snapshot, since it's running on a separate (slower) "thread".
+        bool isSnapshotReady_ = false;
+        Embedded::Array<u8> pickupSnapshotBefore_;
+        Embedded::Array<u8> pickupSnapshotAfter_;
+        const s32 SNAPSHOT_SIZE = 16; // the snapshots will be a 2D array SNAPSHOT_SIZE x SNAPSHOT_SIZE in size
+        const s32 SNAPSHOT_SUBSAMPLE = 8; // this is the spacing between samples taken from the original image resolution
+        const s32 SNAPSHOT_ROI_SIZE = SNAPSHOT_SUBSAMPLE*SNAPSHOT_SIZE; // thus, this is the size of the ROI in the original image
+        const Embedded::Rectangle<s32> snapShotRoiLow_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2-1, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2-1);
+        const Embedded::Rectangle<s32> snapShotRoiHigh_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2-1, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2-1);
+        const s32 SNAPSHOT_BUFFER_SIZE = 2*SNAPSHOT_SIZE*SNAPSHOT_SIZE + 64; // 2X (16x16) arrays + overhead
+        u8 snapshotBuffer_[SNAPSHOT_BUFFER_SIZE];
+        Embedded::MemoryStack snapshotMemory_;
+        const s32 SNAPSHOT_COMPARE_THRESHOLD = 64; //SNAPSHOT_SIZE*SNAPSHOT_SIZE*64*64; // average grayscale difference of 64
+        
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
         
@@ -78,10 +97,12 @@ namespace Anki {
         Embedded::Array<f32> rotHighBlockWrtLowBlock;
         Embedded::Point3<f32> transHighBlockWrtLowBlock;
 
+#endif  // #if(ALT_HIGH_BLOCK_DOCK_METHOD)
         
         // WARNING: ResetBuffers should be used with caution
         Result ResetBuffers()
         {
+#if(ALT_HIGH_BLOCK_DOCK_METHOD)
           localScratch_ = Embedded::MemoryStack(localBuffer, LOCAL_BUFFER_SIZE);
           rotHighBlockWrtRobot = Embedded::Array<f32>(3,3, localScratch_);
           rotLowBlockWrtRobot = Embedded::Array<f32>(3,3, localScratch_);
@@ -92,9 +113,27 @@ namespace Anki {
             PRINT("Error: PAP::InitializeScratchBuffers\n");
             return RESULT_FAIL;
           }
-          return RESULT_OK;
-        }
 #endif  // #if(ALT_HIGH_BLOCK_DOCK_METHOD)
+          
+          snapshotMemory_ = Embedded::MemoryStack(snapshotBuffer_, SNAPSHOT_BUFFER_SIZE);
+          AnkiConditionalErrorAndReturnValue(snapshotMemory_.IsValid(),
+                                             RESULT_FAIL_MEMORY,
+                                             "PAP::ResetBuffers()", "Failed to initialize snapshotMemory!\n")
+          
+          pickupSnapshotBefore_ = Embedded::Array<u8>(SNAPSHOT_SIZE, SNAPSHOT_SIZE, snapshotMemory_);
+          AnkiConditionalErrorAndReturnValue(pickupSnapshotBefore_.IsValid(),
+                                             RESULT_FAIL_MEMORY,
+                                             "PAP::ResetBuffers()", "Failed to allocate pickupSnapshotBefore_!\n")
+          
+          pickupSnapshotAfter_ = Embedded::Array<u8>(SNAPSHOT_SIZE, SNAPSHOT_SIZE, snapshotMemory_);
+          AnkiConditionalErrorAndReturnValue(pickupSnapshotAfter_.IsValid(),
+                                             RESULT_FAIL_MEMORY,
+                                             "PAP::ResetBuffers()", "Failed to allocate pickupSnapshotAfter_!\n")
+          
+          return RESULT_OK;
+          
+        } // ResetBuffers()
+
         
       } // "private" namespace
       
@@ -103,12 +142,26 @@ namespace Anki {
         return mode_;
       }
 
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
       Result Init() {
         Reset();
+        
+        AnkiConditionalErrorAndReturnValue(snapShotRoiLow_.get_width()  == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE &&
+                                           snapShotRoiLow_.get_height() == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE,
+                                           RESULT_FAIL_INVALID_SIZE, "PAP::Init()",
+                                           "Snapshot ROI Low not the expected size (%dx%d vs. %dx%d).",
+                                           snapShotRoiLow_.get_width(), snapShotRoiLow_.get_height(),
+                                           SNAPSHOT_SIZE, SNAPSHOT_SIZE);
+        
+        AnkiConditionalErrorAndReturnValue(snapShotRoiHigh_.get_width()  == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE &&
+                                           snapShotRoiHigh_.get_height() == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE,
+                                           RESULT_FAIL_INVALID_SIZE, "PAP::Init()",
+                                           "Snapshot ROI High not the expected size (%dx%d vs. %dx%d).",
+                                           snapShotRoiHigh_.get_width(), snapShotRoiHigh_.get_height(),
+                                           SNAPSHOT_SIZE, SNAPSHOT_SIZE);
+        
         return ResetBuffers();
       }
-#endif // #if(ALT_HIGH_BLOCK_DOCK_METHOD)
+
       
       void Reset()
       {
@@ -138,6 +191,36 @@ namespace Anki {
         }
         return RESULT_FAIL;
       }
+      
+      // Return sum-squared-difference between the before and after snapshots
+      static s32 CompareSnapshots(void)
+      {
+        const s32 nrows = pickupSnapshotBefore_.get_size(0);
+        const s32 ncols = pickupSnapshotBefore_.get_size(1);
+        
+        AnkiAssert(pickupSnapshotAfter_.get_size(0) == nrows &&
+                   pickupSnapshotAfter_.get_size(1) == ncols);
+        
+        s32 ssd = 0;
+        for(s32 i=0; i<nrows; ++i)
+        {
+          const u8 * restrict pBefore = pickupSnapshotBefore_.Pointer(i,0);
+          const u8 * restrict pAfter  = pickupSnapshotAfter_.Pointer(i,0);
+          
+          for(s32 j=0; j<ncols; ++j)
+          {
+            const s32 diff = static_cast<s32>(pAfter[j]) - static_cast<s32>(pBefore[j]);
+            ssd += diff*diff;
+          }
+        }
+        
+        //pickupSnapshotBefore_.Show("Snapshot Before", false);
+        //pickupSnapshotAfter_.Show("Snapshot After", true);
+        
+        return ssd;
+        
+      } // CompareSnapshots()
+
       
       Result Update()
       {
@@ -433,18 +516,44 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
             PRINT("PAP: SETTING LIFT POSTDOCK\n");
 #endif
-            mode_ = MOVING_LIFT_POSTDOCK;
             switch(action_) {
               case DA_PLACE_LOW:
+              {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                mode_ = MOVING_LIFT_POSTDOCK;
                 break;
+              }
               case DA_PICKUP_LOW:
               case DA_PICKUP_HIGH:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+              {
+                // Take a snapshot before we try to pick up. We will compare a
+                // post-pick up snapshot to this one to verify whether we
+                // actually picked up the block
+                if(isSnapshotReady_) {
+                  LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                  isSnapshotReady_ = false;
+                  mode_ = MOVING_LIFT_POSTDOCK;
+                } else {
+                  const Embedded::Rectangle<s32>* roi = &snapShotRoiLow_;
+                  if(action_ == DA_PICKUP_HIGH) {
+                    roi = &snapShotRoiHigh_;
+                  }
+                  Result lastResult = VisionSystem::TakeSnapshot(*roi, SNAPSHOT_SUBSAMPLE, pickupSnapshotBefore_, isSnapshotReady_);
+                  if(lastResult != RESULT_OK) {
+                    PRINT("ERROR: PickAndPlaceController: TakeSnapshot() failed in SET_LIFT_POSTDOCK:DA_PICKUP_LOW/HIGH!\n");
+                    mode_ = IDLE;
+                    return lastResult;
+                  }
+                }
                 break;
+              }
+                
               case DA_PLACE_HIGH:
+              {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+                mode_ = MOVING_LIFT_POSTDOCK;
                 break;
+              }
               default:
                 PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
                 mode_ = IDLE;
@@ -457,20 +566,59 @@ namespace Anki {
             if (LiftController::IsInPosition()) {
               switch(action_) {
                 case DA_PICKUP_LOW:
-                  // TODO: Add visual verification of pickup here?
-                  mode_ = IDLE;
-                  lastActionSucceeded_ = true;
-                  isCarryingBlock_ = true;
-                  SendBlockPickUpMessage(true);
+                  // Wait for visual verification
+                  // TODO: add timeout?
+                  if(isSnapshotReady_) {
+                    mode_ = IDLE;
+                    lastActionSucceeded_ = true;
+                    
+                    // Snapshots should differ if we actually lifted the block
+                    const s32 SSD = CompareSnapshots();
+                    PRINT("PickAndPlaceController: snapshot difference SSD = %d\n", SSD);
+                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_SIZE*SNAPSHOT_SIZE) {
+                      isCarryingBlock_ = true;
+                    } else {
+                      isCarryingBlock_ = false;
+                    }
+                    isSnapshotReady_ = false;
+                    SendBlockPickUpMessage(isCarryingBlock_);
+                  } else {
+                    Result lastResult = VisionSystem::TakeSnapshot(snapShotRoiLow_, SNAPSHOT_SUBSAMPLE, pickupSnapshotAfter_, isSnapshotReady_);
+                    if(lastResult != RESULT_OK) {
+                      PRINT("ERROR: PickAndPlaceController: TakeSnapshot() failed in MOVING_LIFT_POSTDOCK:DA_PICKUP_LOW!\n");
+                      mode_ = IDLE;
+                      return lastResult;
+                    }
+                  }
+                  
                   break;
                   
                 case DA_PICKUP_HIGH:
-                  // TODO: Add visual verification of pickup here?
-                  isCarryingBlock_ = true;
-                  SendBlockPickUpMessage(true);
-                  SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
-                  transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
-                  mode_ = BACKOUT;
+                  if(isSnapshotReady_) {
+                    // Snapshots should differ if we actually lifted the block
+                    const s32 SSD = CompareSnapshots();
+                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_SIZE*SNAPSHOT_SIZE) {
+                      isCarryingBlock_ = true;
+                    } else {
+                      isCarryingBlock_ = false;
+                    }
+                    isSnapshotReady_ = false;
+                    SendBlockPickUpMessage(isCarryingBlock_);
+                    
+                    // For now we backout even if the pickup failed, but maybe
+                    // we wanna do something different
+                    SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
+                    transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
+                    mode_ = BACKOUT;
+                  } else {
+                    Result lastResult = VisionSystem::TakeSnapshot(snapShotRoiHigh_, SNAPSHOT_SUBSAMPLE, pickupSnapshotAfter_, isSnapshotReady_);
+                    if(lastResult != RESULT_OK) {
+                      PRINT("ERROR: PickAndPlaceController: TakeSnapshot() failed in MOVING_LIFT_POSTDOCK:DA_PICKUP_HIGH!\n");
+                      mode_ = IDLE;
+                      return lastResult;
+                    }
+                    
+                  }
                   break;
                   
                 case DA_PLACE_LOW:

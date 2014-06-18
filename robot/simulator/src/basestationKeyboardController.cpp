@@ -101,6 +101,7 @@ namespace Anki {
         printf("       Clear known blocks:  c\n");
         printf("   Dock to selected block:  p\n");
         printf("Start June 2014 dice demo:  j\n");
+        printf("       Abort current path:  q\n");
         printf("               Test modes:  Alt + Testmode#\n");
         printf("               Print help:  ?\n");
         printf("\n");
