@@ -59,8 +59,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       curQuad = &quadsF64[iQuad][0];
     }
 
-    const s32 quadHeight = curQuad->get_size(0);
-    const s32 quadWidth = curQuad->get_size(1);
+    //const s32 quadHeight = curQuad->get_size(0);
+    //const s32 quadWidth = curQuad->get_size(1);
 
     for(s32 iCorner=0; iCorner<4; iCorner++) {
       quadsS16[iQuad].corners[iCorner].x = saturate_cast<s16>((*curQuad)[iCorner][0]);
