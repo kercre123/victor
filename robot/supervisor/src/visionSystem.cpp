@@ -175,6 +175,8 @@ namespace Anki {
         };
 
         static MarkerToTrack markerToTrack_;
+        static MarkerToTrack newMarkerToTrack_;
+        static bool          newMarkerToTrackWasProvided_ = false;
 
         static Quadrilateral<f32>          trackingQuad_;
         static s32                         numTrackFailures_ ;
@@ -326,6 +328,43 @@ namespace Anki {
         yChange = dx*sinAngle + dy*cosAngle;
       } // GetPoseChange()
 
+      
+      // This function actually swaps in the new marker to track, and should
+      // not be made available as part of the public API since it could get
+      // interrupted by main and we want all this stuff updated at once.
+      static Result UpdateMarkerToTrack()
+      {
+        if(newMarkerToTrackWasProvided_) {
+          
+          mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
+          numTrackFailures_      = 0;
+          
+          if(newMarkerToTrack_.IsSpecified()) {
+            
+            AnkiConditionalErrorAndReturnValue(newMarkerToTrack_.width_mm > 0.f,
+                                               RESULT_FAIL_INVALID_PARAMETER,
+                                               "VisionSystem::UpdateMarkerToTrack()",
+                                               "Invalid marker width specified.");
+            
+            markerToTrack_ = newMarkerToTrack_;
+            
+            // Set canonical 3D marker's corner coordinates
+            const P3P_PRECISION markerHalfWidth = markerToTrack_.width_mm * P3P_PRECISION(0.5);
+            canonicalMarker3d_[0] = Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
+            canonicalMarker3d_[1] = Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
+            canonicalMarker3d_[2] = Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
+            canonicalMarker3d_[3] = Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
+          } // if newMarkerToTrack is valid
+          
+          newMarkerToTrack_.Clear();
+          newMarkerToTrackWasProvided_ = false;
+        } // if newMarker provided
+        
+        return RESULT_OK;
+        
+      } // UpdateMarkerToTrack()
+      
+      
       static Radians GetCurrentHeadAngle()
       {
         return robotState_.headAngle;
@@ -1305,6 +1344,10 @@ namespace Anki {
 #endif
 
           RcamWrtRobot_ = Array<f32>(3,3,VisionMemory::onchipScratch_);
+          
+          markerToTrack_.Clear();
+          newMarkerToTrack_.Clear();
+          newMarkerToTrackWasProvided_ = false;
 
           isInitialized_ = true;
         }
@@ -1326,32 +1369,21 @@ namespace Anki {
         const Point2f& atImageCenter,
         const f32 imageSearchRadius)
       {
-        markerToTrack_.type              = markerTypeToTrack;
-        markerToTrack_.width_mm          = markerWidth_mm;
-        markerToTrack_.imageCenter       = atImageCenter;
-        markerToTrack_.imageSearchRadius = imageSearchRadius;
-
-        mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
-        numTrackFailures_      = 0;
-
-        // If the marker type is valid, start looking for it
-        if(markerToTrack_.IsSpecified())
-        {
-          // Set canonical 3D marker's corner coordinates
-          const P3P_PRECISION markerHalfWidth = markerToTrack_.width_mm * P3P_PRECISION(0.5);
-          canonicalMarker3d_[0] = Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
-          canonicalMarker3d_[1] = Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
-          canonicalMarker3d_[2] = Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
-          canonicalMarker3d_[3] = Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
-        }
-
+        newMarkerToTrack_.type              = markerTypeToTrack;
+        newMarkerToTrack_.width_mm          = markerWidth_mm;
+        newMarkerToTrack_.imageCenter       = atImageCenter;
+        newMarkerToTrack_.imageSearchRadius = imageSearchRadius;
+        
+        // Next call to Update(), we will call UpdateMarkerToTrack() and
+        // actually replace the current markerToTrack_ with the one set here.
+        newMarkerToTrackWasProvided_ = true;
+        
         return RESULT_OK;
-      } // SetMarkerToTrack()
-
+      }
+      
       void StopTracking()
       {
-        markerToTrack_.Clear();
-        mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
+        SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f);
       }
 
       const Embedded::FixedLengthList<Embedded::VisionMarker>& GetObservedMarkerList()
@@ -1808,6 +1840,12 @@ namespace Anki {
         Messages::SendRobotStateMsg(&robotState);
         
         UpdateRobotState(robotState);
+        
+        // If SetMarkerToTrack() was called by main() during previous Update(),
+        // actually swap in the new marker now.
+        lastResult = UpdateMarkerToTrack();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "VisionSystem::Update()", "UpdateMarkerToTrack failed.\n");
 
         // Use the timestamp of passed-in robot state as our frame capture's
         // timestamp.  This is not totally correct, since the image will be
