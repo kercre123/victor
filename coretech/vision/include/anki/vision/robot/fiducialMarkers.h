@@ -84,6 +84,7 @@ namespace Anki
                      const Array<f32> &homography, const f32 minContrastRatio,
                      const s32 quadRefinementIterations,
                      const s32 numRefinementSamples,
+                     const f32 quadRefinementMaxCornerChange,
                      MemoryStack scratch);
 
       void Print() const;

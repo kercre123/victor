@@ -44,6 +44,8 @@ namespace Anki {
         webots::GPS* gps_;
         webots::Compass* compass_;
         
+        webots::Node* root_ = nullptr;
+        
       } // private namespace
       
       
@@ -58,6 +60,25 @@ namespace Anki {
         
         gps_->enable(BS_TIME_STEP);
         compass_->enable(BS_TIME_STEP);
+        
+        // Make root point to BlockWorldComms node
+        webots::Field* rootChildren = basestationController.getRoot()->getField("children");
+        int numRootChildren = rootChildren->getCount();
+        for (int n = 0 ; n<numRootChildren; ++n) {
+          webots::Node* nd = rootChildren->getMFNode(n);
+          
+          // Get the node name
+          std::string nodeName = "";
+          webots::Field* nameField = nd->getField("name");
+          if (nameField) {
+            nodeName = nameField->getSFString();
+          }
+          
+          if (nd->getTypeName().find("Supervisor") != std::string::npos &&
+              nodeName.find("BlockWorldComms") != std::string::npos) {
+            root_ = nd;
+          }
+        }
       }
       
       void BSKeyboardController::Enable(void)
@@ -101,6 +122,8 @@ namespace Anki {
         printf("       Clear known blocks:  c\n");
         printf("   Dock to selected block:  p\n");
         printf("Start June 2014 dice demo:  j\n");
+        printf("       Abort current path:  q\n");
+        printf("  Update controller gains:  k\n");
         printf("               Test modes:  Alt + Testmode#\n");
         printf("               Print help:  ?\n");
         printf("\n");
@@ -133,6 +156,7 @@ namespace Anki {
         const s32 CKEY_QUESTION_MARK  = 63; // '/'
         
         const s32 CKEY_START_DICE_DEMO= 74; // 'j' for "June"
+        const s32 CKEY_SET_GAINS   = 75;  // 'k'
 
         // Get robot
         robot_ = NULL;
@@ -155,8 +179,12 @@ namespace Anki {
           
           // Adjust wheel speed appropriately
           f32 wheelSpeed = DRIVE_VELOCITY_FAST;
+          f32 liftSpeed = LIFT_SPEED_RAD_PER_SEC;
+          f32 headSpeed = HEAD_SPEED_RAD_PER_SEC;
           if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
             wheelSpeed = DRIVE_VELOCITY_SLOW;
+            liftSpeed *= 0.25;
+            headSpeed *= 0.25;
           }
           
           // Set key to its modifier-less self
@@ -235,37 +263,37 @@ namespace Anki {
 
             case '1': //set lift to low dock height
             {
-              robot_->MoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '2': //set lift to high dock height
             {
-              robot_->MoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '3': //set lift to carry height
             {
-              robot_->MoveLiftToHeight(LIFT_HEIGHT_CARRY, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_CARRY, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '4': //set head to look all the way down
             {
-              robot_->MoveHeadToAngle(MIN_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(MIN_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
 
             case '5': //set head to straight ahead
             {
-              robot_->MoveHeadToAngle(0, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(0, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '6': //set head to look all the way up
             {
-              robot_->MoveHeadToAngle(MAX_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(MAX_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
 
@@ -357,6 +385,25 @@ namespace Anki {
             case CKEY_CANCEL_PATH:
             {
               robot_->AbortCurrentPath();
+              break;
+            }
+            case CKEY_SET_GAINS:
+            {
+              if (root_) {
+                f32 kp = root_->getField("headKp")->getSFFloat();
+                f32 ki = root_->getField("headKi")->getSFFloat();
+                f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
+                printf("New head gains: %f %f %f\n", kp, ki, maxErrorSum);
+                robot_->SendHeadControllerGains(kp, ki, maxErrorSum);
+                
+                kp = root_->getField("liftKp")->getSFFloat();
+                ki = root_->getField("liftKi")->getSFFloat();
+                maxErrorSum = root_->getField("liftMaxErrorSum")->getSFFloat();
+                printf("New lift gains: %f %f %f\n", kp, ki, maxErrorSum);
+                robot_->SendLiftControllerGains(kp, ki, maxErrorSum);
+              } else {
+                printf("No BlockWorldComms was found in world\n");
+              }
               break;
             }
             case CKEY_QUESTION_MARK:

@@ -105,6 +105,7 @@ namespace Anki {
     , _goalHeadAngle(0.f)
     , _goalDistanceThreshold(10.f)
     , _goalAngleThreshold(DEG_TO_RAD(10))
+    , _forceReplanOnNextWorldChange(false)
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
     , _frameId(0)
     , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose)
@@ -116,10 +117,9 @@ namespace Anki {
     , _currentLiftAngle(0)
     , _isPickingOrPlacing(false)
     , _carryingBlock(nullptr)
+    , _state(IDLE)
     , _dockBlock(nullptr)
     , _dockMarker(nullptr)
-    , _forceReplanOnNextWorldChange(false)
-    , _state(IDLE)
     {
       SetHeadAngle(_currentHeadAngle);
       pdo_ = new PathDolerOuter(msgHandler, robotID);
@@ -133,6 +133,8 @@ namespace Anki {
     
     void Robot::Update(void)
     {
+      static bool wasTraversingPath = false;
+      
       switch(_state)
       {
         case IDLE:
@@ -143,8 +145,6 @@ namespace Anki {
           
         case FOLLOWING_PATH:
         {
-          static bool wasTraversingPath = false;
-          
           if(IsTraversingPath())
           {
             // If the robot is traversing a path, consider replanning it
@@ -301,6 +301,20 @@ namespace Anki {
       } // switch(state_)
       
       
+      // Visualize path if robot has just started traversing it.
+      // Clear the path when it has stopped.
+      if (!IsPickingOrPlacing()) {
+        if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
+          VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
+          wasTraversingPath = true;
+          _isWaitingForReplan = false;
+        } else if (wasTraversingPath && !IsTraversingPath()){
+          ClearPath(); // clear path and indicate that we are not replanning
+          VizManager::getInstance()->ErasePath(_ID);
+          wasTraversingPath = false;
+        }
+      }
+
       
     } // Update()
 
@@ -928,6 +942,25 @@ namespace Anki {
       
     } // GetBoundingBoxXY()
     
+
+    Result Robot::SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    {
+      MessageSetHeadControllerGains m;
+      m.kp = kp;
+      m.ki = ki;
+      m.maxIntegralError = maxIntegralError;
+      return _msgHandler->SendMessage(_ID, m);
+    }
+    
+    Result Robot::SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    {
+      MessageSetLiftControllerGains m;
+      m.kp = kp;
+      m.ki = ki;
+      m.maxIntegralError = maxIntegralError;
+      return _msgHandler->SendMessage(_ID, m);
+    }
+
     
     // ============ Pose history ===============
     

@@ -238,6 +238,8 @@ public:
   void AddObstacle(const Quad2f& quad);
   void ClearObstacles();
 
+  size_t GetNumObstacles() const;
+
   // Returns an iterator to the successors from state "start". Use
   // this one if you want to check each action
   SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;

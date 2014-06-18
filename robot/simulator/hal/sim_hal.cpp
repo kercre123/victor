@@ -442,7 +442,7 @@ namespace Anki {
       con_->lock();
       con_->enablePresence(TIME_STEP);
       isGripperEnabled_ = true;
-      printf("GRIPPER LOCKED!\n");
+      PRINT("GRIPPER LOCKED!\n");
       /*
       //Should we lock to a block which is close to the connector?
       if (!gripperEngaged_ && con_->getPresence() == 1)
@@ -464,7 +464,7 @@ namespace Anki {
       con_->unlock();
       con_->disablePresence();
       isGripperEnabled_ = false;
-      printf("GRIPPER UNLOCKED!\n");
+      PRINT("GRIPPER UNLOCKED!\n");
       /*
       if (gripperEngaged_)
       {

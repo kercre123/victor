@@ -39,6 +39,7 @@ namespace Anki
       const s32 maxExtractedQuads,
       const s32 quadRefinementIterations,
       const s32 numRefinementSamples,
+      const f32 quadRefinementMaxCornerChange,
       const bool returnInvalidMarkers,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
@@ -86,7 +87,9 @@ namespace Anki
     //
     // Uses projective Lucas-Kanade to refine an initial on-pixel quadrilateral
     // to sub-pixel position, using samples along the edges of an implicit model
-    // of a black square fiducial on a white background.
+    // of a black square fiducial on a white background.  If any of the corners
+    // changes its position by more than maxCornerChange, the original quad and
+    // homography are returned.
     //
     Result RefineQuadrilateral(const Quadrilateral<s16>& initialQuad,
       const Array<f32>& initialHomography,
@@ -96,6 +99,7 @@ namespace Anki
       const f32 darkValue,
       const f32 brightValue,
       const s32 numSamples,
+      const f32 maxCornerChange,
       Quadrilateral<f32>& refinedQuad,
       Array<f32>& refinedHomography,
       MemoryStack scratch);

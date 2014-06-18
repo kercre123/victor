@@ -26,14 +26,27 @@ namespace Anki {
     // issue with moving the lift when it is at a limit. The lift arm
     // flies off of the robot and comes back! So for now, we just don't
     // drive the lift down that far. We also skip calibration in sim.
-    const f32 LIFT_HEIGHT_LOWDOCK  = 29.f;
+
 #ifdef SIMULATOR
     // Need a different height in simulation because of the position of the connectors
+    const f32 LIFT_HEIGHT_LOWDOCK  = 29.f;
     const f32 LIFT_HEIGHT_HIGHDOCK = 73.f;
-#else
-    const f32 LIFT_HEIGHT_HIGHDOCK = 69.f;
-#endif
     const f32 LIFT_HEIGHT_CARRY    = 88.f;
+#else
+    // Not the actual heights achieved by the lift, but the heights that would be achieved if there was no backlash.
+    /*
+    // Robot #1
+    const f32 LIFT_HEIGHT_LOWDOCK  = 11.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
+    const f32 LIFT_HEIGHT_CARRY    = 98.f;
+    */
+    
+    // Robot #2
+    const f32 LIFT_HEIGHT_LOWDOCK  = 26.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
+    const f32 LIFT_HEIGHT_CARRY    = 90.5f;
+#endif
+
     
     // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
     const f32 LIFT_ARM_LENGTH = 64.f;
@@ -42,7 +55,7 @@ namespace Anki {
     const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
     
     // The height of the top of the lift crossbar with respect to the wrist joint
-    const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -18.f;
+    const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -22.f;
     
     // The distance along the x axis from the wrist joint to the front of the lifter plate
     const f32 LIFT_FRONT_WRT_WRIST_JOINT = 3.5f;

@@ -44,8 +44,7 @@ namespace Anki {
         LOWER_LIFT
       } Mode;
       
-      // TODO: Add if/when needed?
-      // ReturnCode Init();
+      Result Init();
 
       Result Update();
       

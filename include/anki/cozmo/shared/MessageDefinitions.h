@@ -311,3 +311,19 @@ ADD_MESSAGE_MEMBER(u16, bottomLeft_x)
 ADD_MESSAGE_MEMBER(u16, bottomLeft_y)
 END_MESSAGE_DEFINITION(TrackerQuad)
 
+// SetHeadControllerGains
+START_MESSAGE_DEFINITION(SetHeadControllerGains, 1)
+ADD_MESSAGE_MEMBER(f32, kp)
+ADD_MESSAGE_MEMBER(f32, ki)
+ADD_MESSAGE_MEMBER(f32, maxIntegralError)
+END_MESSAGE_DEFINITION(SetHeadControllerGains)
+
+// SetLiftControllerGains
+START_MESSAGE_DEFINITION(SetLiftControllerGains, 1)
+ADD_MESSAGE_MEMBER(f32, kp)
+ADD_MESSAGE_MEMBER(f32, ki)
+ADD_MESSAGE_MEMBER(f32, maxIntegralError)
+END_MESSAGE_DEFINITION(SetLiftControllerGains)
+
+
+

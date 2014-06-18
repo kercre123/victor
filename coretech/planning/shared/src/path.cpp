@@ -15,7 +15,7 @@
 #define ATAN2_FAST(y,x) atan2(y,x)
 #define ATAN2_ACC(y,x) atan2(y,x)
 #elif defined CORETECH_ROBOT
-#define DEBUG_PATH_APPEND 1
+#define DEBUG_PATH_APPEND 0
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/trig_fast.h"
 #define ATAN2_FAST(y,x) atan2_fast(y,x)
@@ -531,8 +531,23 @@ namespace Anki
       Clear();
     }
 
-    Path::Path(const Path& other) : Path()
+    Path::Path(const Path& other)
     {
+      capacity_ = MAX_NUM_PATH_SEGMENTS;
+
+#if CORETECH_ROBOT
+  #if defined CORETECH_BASESTATION
+  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
+  #endif
+      path_ = __pathSegmentStackForRobot;
+#elif defined CORETECH_BASESTATION
+      path_ = new PathSegment[MAX_NUM_PATH_SEGMENTS];
+#else
+#error "one of CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
+#endif
+
+      Clear();
+
       *this = other;
     }
 

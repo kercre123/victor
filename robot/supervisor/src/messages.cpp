@@ -401,7 +401,14 @@ namespace Anki {
           HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, HAL::LED_OFF);
         }
       }
+ 
+      void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
+        HeadController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+      }
       
+      void ProcessSetLiftControllerGainsMessage(const SetLiftControllerGains& msg) {
+        LiftController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+      }
       
       // TODO: Fill these in once they are needed/used:
       void ProcessVisionMarkerMessage(const VisionMarker& msg) {

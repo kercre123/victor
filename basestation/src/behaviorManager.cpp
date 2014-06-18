@@ -128,9 +128,13 @@ namespace Anki {
         // Find first block
         ObjectID_t firstBlock = u16_MAX;
         for (auto const & blockType : blockMap) {
-          for (auto const & block : blockType.second) {
-            firstBlock = block.first;
-            break;
+          for (auto const & object : blockType.second) {
+            const Block* block = dynamic_cast<Block*>(object.second);
+            if(block != nullptr && !block->GetIsBeingCarried())
+            {
+              firstBlock = object.first;
+              break;
+            }
           }
           if (firstBlock != u16_MAX) {
             break;
@@ -138,7 +142,7 @@ namespace Anki {
         }
 
         
-        if (firstBlock == blockOfInterest_){
+        if (firstBlock == blockOfInterest_ || firstBlock == u16_MAX){
           //PRINT_INFO("Only one block in existence.");
         } else {
           //PRINT_INFO("Setting block of interest to first block\n");
@@ -329,12 +333,13 @@ namespace Anki {
           
         case WAITING_TO_SEE_DICE:
         {
-          
+          /*
           // DEBUG!!!
           blockToPickUp_ = Block::NUMBER5_BLOCK_TYPE;
           blockToPlaceOn_ = Block::NUMBER6_BLOCK_TYPE;
           state_ = BEGIN_EXPLORING;
           break;
+          */
           
           // Wait for robot to be IDLE
           if(robot_->GetState() == Robot::IDLE)

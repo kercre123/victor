@@ -140,6 +140,15 @@ namespace Anki {
       // Send single or continuous images back to basestation at requested resolution.
       // If resolution is not supported, this function does nothing.
       void SetImageSendMode(ImageSendMode_t mode, Vision::CameraResolution res);
+      
+      // Tell the vision system to grab a snapshot on the next call to Update(),
+      // within the specified Region of Interest (roi), subsampled by the
+      // given amount (e.g. every subsample=4 pixels) and put it in the given
+      // snapshot array.  readyFlag will be set to true once this is done.
+      // Calling this multiple times before the snapshot is ready does nothing
+      // extra (internally, the system already knows it is waiting on a snapshot).
+      Result TakeSnapshot(const Embedded::Rectangle<s32> roi, const s32 subsample,
+                          Embedded::Array<u8>& snapshot, bool& readyFlag);
 
       // Returns field of view (radians) of camera
       f32 GetVerticalFOV();

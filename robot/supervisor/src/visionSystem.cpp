@@ -175,6 +175,8 @@ namespace Anki {
         };
 
         static MarkerToTrack markerToTrack_;
+        static MarkerToTrack newMarkerToTrack_;
+        static bool          newMarkerToTrackWasProvided_ = false;
 
         static Quadrilateral<f32>          trackingQuad_;
         static s32                         numTrackFailures_ ;
@@ -196,6 +198,13 @@ namespace Anki {
         static ImageSendMode_t                 imageSendMode_ = ISM_OFF;
         static Vision::CameraResolution        nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
 
+        // For taking snapshots
+        static bool  isWaitingOnSnapshot_;
+        static bool* isSnapshotReady_;
+        Embedded::Rectangle<s32> snapshotROI_;
+        s32 snapshotSubsample_;
+        Embedded::Array<u8>* snapshot_;
+        
         /* Only using static members of SimulatorParameters now
         #ifdef SIMULATOR
         static SimulatorParameters             simulatorParameters_;
@@ -326,6 +335,43 @@ namespace Anki {
         yChange = dx*sinAngle + dy*cosAngle;
       } // GetPoseChange()
 
+      
+      // This function actually swaps in the new marker to track, and should
+      // not be made available as part of the public API since it could get
+      // interrupted by main and we want all this stuff updated at once.
+      static Result UpdateMarkerToTrack()
+      {
+        if(newMarkerToTrackWasProvided_) {
+          
+          mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
+          numTrackFailures_      = 0;
+          
+          markerToTrack_ = newMarkerToTrack_;
+          
+          if(markerToTrack_.IsSpecified()) {
+            
+            AnkiConditionalErrorAndReturnValue(markerToTrack_.width_mm > 0.f,
+                                               RESULT_FAIL_INVALID_PARAMETER,
+                                               "VisionSystem::UpdateMarkerToTrack()",
+                                               "Invalid marker width specified.");
+            
+            // Set canonical 3D marker's corner coordinates
+            const P3P_PRECISION markerHalfWidth = markerToTrack_.width_mm * P3P_PRECISION(0.5);
+            canonicalMarker3d_[0] = Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
+            canonicalMarker3d_[1] = Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
+            canonicalMarker3d_[2] = Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
+            canonicalMarker3d_[3] = Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
+          } // if markerToTrack is valid
+          
+          newMarkerToTrack_.Clear();
+          newMarkerToTrackWasProvided_ = false;
+        } // if newMarker provided
+        
+        return RESULT_OK;
+        
+      } // UpdateMarkerToTrack()
+      
+      
       static Radians GetCurrentHeadAngle()
       {
         return robotState_.headAngle;
@@ -459,6 +505,7 @@ namespace Anki {
           parameters.maxExtractedQuads,
           parameters.quadRefinementIterations,
           parameters.numRefinementSamples,
+          parameters.quadRefinementMaxCornerChange,
           false,
           ccmScratch, onchipScratch, offchipScratch);
 #endif
@@ -536,6 +583,7 @@ namespace Anki {
         MemoryStack &offchipMemory)
       {
         AnkiAssert(parameters.isInitialized);
+        AnkiAssert(markerToTrack_.width_mm > 0);
 
 #if USE_MATLAB_TRACKER
         return MatlabVisionProcessor::InitTemplate(grayscaleImage, trackingQuad, ccmScratch);
@@ -1304,7 +1352,16 @@ namespace Anki {
 #endif
 
           RcamWrtRobot_ = Array<f32>(3,3,VisionMemory::onchipScratch_);
+          
+          markerToTrack_.Clear();
+          newMarkerToTrack_.Clear();
+          newMarkerToTrackWasProvided_ = false;
 
+          isWaitingOnSnapshot_ = false;
+          isSnapshotReady_ = NULL;
+          snapshotROI_ = Rectangle<s32>(-1, -1, -1, -1);
+          snapshot_ = NULL;
+          
           isInitialized_ = true;
         }
 
@@ -1325,32 +1382,21 @@ namespace Anki {
         const Point2f& atImageCenter,
         const f32 imageSearchRadius)
       {
-        markerToTrack_.type              = markerTypeToTrack;
-        markerToTrack_.width_mm          = markerWidth_mm;
-        markerToTrack_.imageCenter       = atImageCenter;
-        markerToTrack_.imageSearchRadius = imageSearchRadius;
-
-        mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
-        numTrackFailures_      = 0;
-
-        // If the marker type is valid, start looking for it
-        if(markerToTrack_.IsSpecified())
-        {
-          // Set canonical 3D marker's corner coordinates
-          const P3P_PRECISION markerHalfWidth = markerToTrack_.width_mm * P3P_PRECISION(0.5);
-          canonicalMarker3d_[0] = Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
-          canonicalMarker3d_[1] = Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
-          canonicalMarker3d_[2] = Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
-          canonicalMarker3d_[3] = Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
-        }
-
+        newMarkerToTrack_.type              = markerTypeToTrack;
+        newMarkerToTrack_.width_mm          = markerWidth_mm;
+        newMarkerToTrack_.imageCenter       = atImageCenter;
+        newMarkerToTrack_.imageSearchRadius = imageSearchRadius;
+        
+        // Next call to Update(), we will call UpdateMarkerToTrack() and
+        // actually replace the current markerToTrack_ with the one set here.
+        newMarkerToTrackWasProvided_ = true;
+        
         return RESULT_OK;
-      } // SetMarkerToTrack()
-
+      }
+      
       void StopTracking()
       {
-        markerToTrack_.Clear();
-        mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
+        SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f);
       }
 
       const Embedded::FixedLengthList<Embedded::VisionMarker>& GetObservedMarkerList()
@@ -1520,6 +1566,99 @@ namespace Anki {
           headCamInfo_->center_x, headCamInfo_->center_y,
           rotation, translation);
       } // GetVisionMarkerPose()
+      
+      
+      Result TakeSnapshot(const Embedded::Rectangle<s32> roi, const s32 subsample,
+                          Embedded::Array<u8>& snapshot, bool& readyFlag)
+      {
+        if(!isWaitingOnSnapshot_)
+        {
+          snapshotROI_ = roi;
+          
+          snapshotSubsample_ = subsample;
+          AnkiConditionalErrorAndReturnValue(snapshotSubsample_ >= 1,
+                                             RESULT_FAIL_INVALID_PARAMETER,
+                                             "VisionSystem::TakeSnapshot()",
+                                             "Subsample must be >= 1. %d was specified!\n", snapshotSubsample_);
+
+          snapshot_ = &snapshot;
+          
+          AnkiConditionalErrorAndReturnValue(snapshot_ != NULL, RESULT_FAIL_INVALID_OBJECT,
+                                             "VisionSystem::TakeSnapshot()", "NULL snapshot pointer!\n");
+          
+          AnkiConditionalErrorAndReturnValue(snapshot_->IsValid(),
+                                             RESULT_FAIL_INVALID_OBJECT,
+                                             "VisionSystem::TakeSnapshot()", "Invalid snapshot array!\n");
+          
+          const s32 nrowsSnap = snapshot_->get_size(0);
+          const s32 ncolsSnap = snapshot_->get_size(1);
+          
+          AnkiConditionalErrorAndReturnValue(nrowsSnap*snapshotSubsample_ == snapshotROI_.get_height() &&
+                                             ncolsSnap*snapshotSubsample_ == snapshotROI_.get_width(),
+                                             RESULT_FAIL_INVALID_SIZE,
+                                             "VisionSystem::TakeSnapshot()",
+                                             "Snapshot ROI size (%dx%d) subsampled by %d doesn't match snapshot array size (%dx%d)!\n",
+                                             snapshotROI_.get_height(), snapshotROI_.get_width(), snapshotSubsample_, nrowsSnap, ncolsSnap);
+          
+          isSnapshotReady_ = &readyFlag;
+          
+          AnkiConditionalErrorAndReturnValue(isSnapshotReady_ != NULL,
+                                             RESULT_FAIL_INVALID_OBJECT,
+                                             "VisionSystem::TakeSnapshot()",
+                                             "NULL isSnapshotReady pointer!\n");
+        
+          isWaitingOnSnapshot_ = true;
+          
+        } // if !isWaitingOnSnapshot_
+        
+        return RESULT_OK;
+      } // TakeSnapshot()
+      
+      
+      static Result TakeSnapshotHelper(const Embedded::Array<u8>& grayscaleImage)
+      {
+        if(isWaitingOnSnapshot_) {
+          
+          const s32 nrowsFull = grayscaleImage.get_size(0);
+          const s32 ncolsFull = grayscaleImage.get_size(1);
+          
+          if(snapshotROI_.top    < 0 || snapshotROI_.top    >= nrowsFull-1 ||
+             snapshotROI_.bottom < 0 || snapshotROI_.bottom >= nrowsFull-1 ||
+             snapshotROI_.left   < 0 || snapshotROI_.left   >= ncolsFull-1 ||
+             snapshotROI_.right  < 0 || snapshotROI_.right  >= ncolsFull-1)
+          {
+            PRINT("VisionSystem::TakeSnapshotHelper(): Snapshot ROI out of bounds!\n");
+            return RESULT_FAIL_INVALID_SIZE;
+          }
+          
+          const s32 nrowsSnap = snapshot_->get_size(0);
+          const s32 ncolsSnap = snapshot_->get_size(1);
+          
+          for(s32 iFull=snapshotROI_.top, iSnap=0;
+              iFull<snapshotROI_.bottom && iSnap<nrowsSnap;
+              iFull+= snapshotSubsample_, ++iSnap)
+          {
+            const u8 * restrict pImageRow = grayscaleImage.Pointer(iFull,0);
+            u8 * restrict pSnapRow = snapshot_->Pointer(iSnap, 0);
+            
+            for(s32 jFull=snapshotROI_.left, jSnap=0;
+                jFull<snapshotROI_.right && jSnap<ncolsSnap;
+                jFull+= snapshotSubsample_, ++jSnap)
+            {
+              pSnapRow[jSnap] = pImageRow[jFull];
+            }
+          }
+            
+          isWaitingOnSnapshot_ = false;
+          *isSnapshotReady_ = true;
+          
+        } // if isWaitingOnSnapshot_
+        
+        return RESULT_OK;
+        
+      } // TakeSnapshotHelper()
+
+
 
 #if defined(SEND_IMAGE_ONLY)
       // In SEND_IMAGE_ONLY mode, just create a special version of update
@@ -1807,6 +1946,12 @@ namespace Anki {
         Messages::SendRobotStateMsg(&robotState);
         
         UpdateRobotState(robotState);
+        
+        // If SetMarkerToTrack() was called by main() during previous Update(),
+        // actually swap in the new marker now.
+        lastResult = UpdateMarkerToTrack();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "VisionSystem::Update()", "UpdateMarkerToTrack failed.\n");
 
         // Use the timestamp of passed-in robot state as our frame capture's
         // timestamp.  This is not totally correct, since the image will be
@@ -1818,7 +1963,24 @@ namespace Anki {
         const TimeStamp_t imageTimeStamp = robotState.timestamp;
 
         if(mode_ == VISION_MODE_IDLE) {
-          // Nothing to do!
+          // Nothing to do, unless a snapshot was requested
+          
+          if(isWaitingOnSnapshot_) {
+            const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+            const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+            
+            Array<u8> grayscaleImage(captureHeight, captureWidth,
+                                     VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
+            
+            HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
+                                captureResolution_, false);
+            
+            if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
+              PRINT("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
+              return lastResult;
+            }
+          }
+          
         }
         else if(mode_ == VISION_MODE_LOOKING_FOR_MARKERS) {
           Simulator::SetDetectionReadyTime(); // no-op on real hardware
@@ -1835,7 +1997,12 @@ namespace Anki {
 
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
             captureResolution_, false);
-
+          
+          if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
+            PRINT("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
+            return lastResult;
+          }
+          
           BeginBenchmark("VisionSystem_CameraImagingPipeline");
 
           if(vignettingCorrection == VignettingCorrection_Software) {
@@ -1970,6 +2137,11 @@ namespace Anki {
 
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
             captureResolution_, false);
+          
+          if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
+            PRINT("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
+            return lastResult;
+          }
 
           BeginBenchmark("VisionSystem_CameraImagingPipeline");
 

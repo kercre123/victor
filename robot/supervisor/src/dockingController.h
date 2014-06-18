@@ -79,10 +79,6 @@ namespace Anki {
       // Required for docking to high blocks.
       void TrackCamWithLift(bool on);
       
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
-      // Get the last observed block marker position
-      const Embedded::Point3<f32>& GetLastGoodMarkerPt();
-#endif
       
     } // namespace DockingController
   } // namespace Cozmo

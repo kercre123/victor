@@ -202,6 +202,9 @@ namespace Anki {
       Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const; // at current pose
       Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f) const; // at specific pose
       
+      // Set controller gains on robot
+      Result SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
+      Result SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       
       // =========== Pose history =============
       // Returns ref to robot's pose history

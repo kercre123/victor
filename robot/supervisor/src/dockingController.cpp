@@ -87,11 +87,6 @@ namespace Anki {
         // Whether or not we're already following the block surface normal as a path
         bool followingBlockNormalPath_ = false;
         
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
-        // Last received good block pose for docking
-        Embedded::Point3<f32> lastGoodMarkerPt;
-#endif
-        
         // The pose of the robot at the start of docking.
         // While block tracking is maintained the robot follows
         // a path from this initial pose to the docking pose.
@@ -120,7 +115,7 @@ namespace Anki {
         
         // If trackCamWithLift_ == true, start actually doing the tracking only when
         // the block is at least START_LIFT_TRACKING_DIST_MM close and START_LIFT_TRACKING_HEIGHT_MM high
-        const f32 START_LIFT_TRACKING_DIST_MM = 50.f;
+        const f32 START_LIFT_TRACKING_DIST_MM = 70.f;
         const f32 START_LIFT_TRACKING_HEIGHT_MM = 44.f;
         
       } // "private" namespace
@@ -150,13 +145,13 @@ namespace Anki {
  
         // Compute the angle of the line extending from the camera that represents
         // the lower bound of its field of view
-        f32 lowerCamFOVangle = angle - 0.5f * VisionSystem::GetVerticalFOV();
+        f32 lowerCamFOVangle = angle - 0.45f * VisionSystem::GetVerticalFOV();
         
         // Compute the lift height required to raise the cross bar to be at
         // the height of that line.
         // TODO: This is really rough computation approximating with a fixed horizontal distance between
         //       the camera and the lift. make better!
-        const f32 liftDistToCam = 25;
+        const f32 liftDistToCam = 26;
         liftH = liftDistToCam * sinf(lowerCamFOVangle) + z;
         liftH -= LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT;
         
@@ -218,13 +213,6 @@ namespace Anki {
             // TODO: Get tracker to detect these situations and not even send the error message here.
             if (dockMsg.x_distErr > 0 && ABS(dockMsg.angleErr) < 0.75*PIDIV2_F) {
              
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
-              // Update last received good marker position
-              lastGoodMarkerPt.x = dockMsg.x_distErr;
-              lastGoodMarkerPt.y = dockMsg.y_horErr;
-              lastGoodMarkerPt.z = dockMsg.z_height;
-#endif  // #if(ALT_HIGH_BLOCK_DOCK_METHOD)
-              
               // Set relative block pose to start/continue docking
               SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
 
@@ -232,14 +220,31 @@ namespace Anki {
               {
                 // If we have the height of the marker for docking, we can also
                 // compute the head angle to keep it centered
-                HeadController::SetDesiredAngle(atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr));
+                HeadController::SetSpeedAndAccel(0.2, 1);
+                //f32 desiredHeadAngle = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
+                
+                // Make sure bottom of camera FOV doesn't tilt below the bottom of the block
+                // or that the camera FOV center doesn't tilt below the marker center.
+                // Otherwise try to maintain the lowest tilt possible
+                f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5*VisionSystem::GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
+                f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
+                f32 desiredHeadAngle = MAX(minDesiredHeadAngle1, minDesiredHeadAngle2);
+                
+                HeadController::SetDesiredAngle(desiredHeadAngle);
+                //PRINT("desHeadAngle %f\n", desiredHeadAngle);
                 
                 // Track camera with lift.
                 // Do it only when it's a high block and we're within a certain distance of it.
+                // Don't lift higher than HIGHDOCK height.
                 if (trackCamWithLift_ &&
                     dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM &&
                     dockMsg.x_distErr < START_LIFT_TRACKING_DIST_MM) {
-                  LiftController::SetDesiredHeight(GetCamFOVLowerHeight());
+                  f32 liftHeight = GetCamFOVLowerHeight();
+                  if (liftHeight > LIFT_HEIGHT_HIGHDOCK) {
+                    liftHeight = LIFT_HEIGHT_HIGHDOCK;
+                  }
+                  //PRINT("TrackLiftHeight: %f\n", liftHeight);
+                  LiftController::SetDesiredHeight(liftHeight);
                 }
               }
               
@@ -545,14 +550,6 @@ namespace Anki {
         success_ = false;
       }
       
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
-      const Embedded::Point3<f32>& GetLastGoodMarkerPt()
-      {
-        return lastGoodMarkerPt;
-      }
-#endif
-      
-
       } // namespace DockingController
     } // namespace Cozmo
   } // namespace Anki

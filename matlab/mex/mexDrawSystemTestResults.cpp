@@ -144,7 +144,7 @@ void DrawQuads(
     return;
 
   const Quadrilateral<f32> * pDetectedQuads = detectedQuads.Pointer(0);
-  const s32 * pDetectedQuads_types = detectedQuads_types.Pointer(0);
+  //const s32 * pDetectedQuads_types = detectedQuads_types.Pointer(0);
 
   for(s32 iQuad=0; iQuad<numQuads; iQuad++) {
     const Quadrilateral<f32> &curQuad = pDetectedQuads[iQuad];

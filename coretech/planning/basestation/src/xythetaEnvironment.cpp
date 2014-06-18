@@ -384,6 +384,11 @@ bool xythetaEnvironment::Init(const Json::Value& mprimJson)
   return ParseMotionPrims(mprimJson);
 }
 
+size_t xythetaEnvironment::GetNumObstacles() const
+{
+  return obstacles_.size();
+}
+
 bool xythetaEnvironment::Init(const char* mprimFilename, const char* mapFile)
 {
   if(ReadMotionPrimitives(mprimFilename)) {

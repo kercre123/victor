@@ -41,9 +41,12 @@ namespace Anki {
         detectionResolution = Vision::CAMERA_RES_QVGA;
         detectionWidth  = CameraModeInfo[detectionResolution].width;
         detectionHeight = CameraModeInfo[detectionResolution].height;
-        
-        // scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+
+#ifdef SIMULATOR
         scaleImage_thresholdMultiplier = 32768; // 0.5*(2^16)=32768
+#else
+        scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+#endif
         scaleImage_numPyramidLevels = 3;
         
         component1d_minComponentWidth = 0;
@@ -73,6 +76,10 @@ namespace Anki {
         
         // TODO: Could this be fewer samples?
         numRefinementSamples = 100;
+        
+        // If quad refinment moves any corner by more than this (in pixels), the
+        // original quad/homography are restored.
+        quadRefinementMaxCornerChange = 2.f;
         
         isInitialized = true;
       } // DetectFiducialMarkersParameters::Initialize()
@@ -172,7 +179,7 @@ namespace Anki {
         
         successTolerance_angle        = DEG_TO_RAD(30);
         successTolerance_distance     = 20.f;
-        successTolerance_matchingPixelsFraction = 0.5f;
+        successTolerance_matchingPixelsFraction = 0.75f;
 #else
         scaleTemplateRegionPercent    = 1.1f;
         convergenceTolerance          = 1.f;

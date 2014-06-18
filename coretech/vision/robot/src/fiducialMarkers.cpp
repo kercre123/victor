@@ -735,6 +735,7 @@ namespace Anki
     Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &initQuad,
       const Array<f32> &initHomography, const f32 minContrastRatio,
       const s32 quadRefinementIterations, const s32 numRefinementSamples,
+      const f32 quadRefinementMaxCornerChange,
       MemoryStack scratch)
     {
       using namespace VisionMarkerDecisionTree;
@@ -769,7 +770,7 @@ namespace Anki
         if(quadRefinementIterations > 0) {
           BeginBenchmark("vme_quadrefine");
 
-          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, quadRefinementIterations, darkValue, brightValue, numRefinementSamples, quad, homography, scratch)) != RESULT_OK)
+          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, quadRefinementIterations, darkValue, brightValue, numRefinementSamples, quadRefinementMaxCornerChange, quad, homography, scratch)) != RESULT_OK)
           {
             // TODO: Don't fail? Just warn and keep original quad?
             AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
