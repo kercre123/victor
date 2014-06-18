@@ -44,9 +44,9 @@ void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
   _impl->freeTurnInPlaceAtGoal_ = allow;
 }
 
-bool xythetaPlanner::Replan()
+bool xythetaPlanner::Replan(unsigned int maxExpansions)
 {
-  return _impl->ComputePath();
+  return _impl->ComputePath(maxExpansions);
 }
 
 void xythetaPlanner::SetReplanFromScratch()
@@ -165,7 +165,7 @@ bool xythetaPlannerImpl::NeedsReplan() const
   return !env_.PlanIsSafe(plan_, default_maxDistanceToReUse_mm, 0, waste1, waste2);
 }
 
-bool xythetaPlannerImpl::ComputePath()
+bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
 {
   if(fromScratch_ || NeedsReplan()) {
     Reset();
@@ -199,6 +199,15 @@ bool xythetaPlannerImpl::ComputePath()
 
     ExpandState(sid);
     expansions_++;
+    if(expansions_ > maxExpansions) {
+      printf("exceeded max expansions of %u!\n", maxExpansions);
+      printf("topF =  %8.5f (%8.5f + %8.5f)\n",
+                 open_.topF(),
+                 table_[open_.top()].g_,
+                 open_.topF() -
+                 table_[open_.top()].g_);
+      return false;
+    }
 
     if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
       State_c c = env_.State2State_c(State(sid));

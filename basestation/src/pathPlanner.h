@@ -28,25 +28,37 @@ namespace Anki {
     class IPathPlanner
     {
     public:
-      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) = 0;
-
       // Replan if needed because the environment changed. Returns
       // DID_REPLAN if there is a new path and REPLAN_NOT_NEEDED if no
       // replan was necessary and the path has not changed.  If a new
       // path is needed but could not be computed a corresponding enum
       // value is returned.  Assumes the goal pose didn't change. If
       // forceReplanFromScratch = true, then definitely do a new plan, from
-      // scratch
-      enum EReplanStatus {
-        REPLAN_NOT_NEEDED,
-        DID_REPLAN,
-        REPLAN_NEEDED_BUT_START_FAILURE,
-        REPLAN_NEEDED_BUT_GOAL_FAILURE,
-        REPLAN_NEEDED_BUT_PLAN_FAILURE
+      // scratch. 
+      // 
+      // If the goal hasn't changed, it is better to call the version
+      // that doesn't specify a goal
+      // 
+      // NOTE: Some planners may never attempt to replan unless you
+      // set forceReplanFromScratch
+      enum EPlanStatus {
+        PLAN_NOT_NEEDED,
+        DID_PLAN,
+        PLAN_NEEDED_BUT_START_FAILURE,
+        PLAN_NEEDED_BUT_GOAL_FAILURE,
+        PLAN_NEEDED_BUT_PLAN_FAILURE
       };
-      virtual EReplanStatus ReplanIfNeeded(Planning::Path &path,
-                                           const Pose3d& startPose,
-                                           bool forceReplanFromScratch = false) {return REPLAN_NOT_NEEDED;};
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                    const Pose3d& startPose,
+                                    bool forceReplanFromScratch = false) {return PLAN_NOT_NEEDED;};
+
+      // A simple planner that doesn't really support replanning can
+      // just implement this function. forceReplanFromScratch is
+      // implied to be true because we are changing both the start and
+      // the goal
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                    const Pose3d& startPose,
+                                    const Pose3d& targetPose) = 0;
       
       void AddIgnoreType(const ObjectType_t objType)    { _ignoreTypes.insert(objType); }
       void RemoveIgnoreType(const ObjectType_t objType) { _ignoreTypes.erase(objType); }
@@ -69,7 +81,9 @@ namespace Anki {
     public:
       PathPlanner();
       
-      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) override;
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                    const Pose3d& startPose,
+                                    const Pose3d& targetPose) override;
       
     protected:
       
@@ -84,11 +98,13 @@ namespace Anki {
       LatticePlanner(const BlockWorld* blockWorld, const Json::Value& mprims);
       virtual ~LatticePlanner();
       
-      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) override;
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                    const Pose3d& startPose,
+                                    bool forceReplanFromScratch = false) override;
 
-      virtual EReplanStatus ReplanIfNeeded(Planning::Path &path,
-                                           const Pose3d& startPose,
-                                           bool forceReplanFromScratch = false) override;
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                    const Pose3d& startPose,
+                                    const Pose3d& targetPose) override;
 
     protected:
       LatticePlannerImpl* impl_;
@@ -98,11 +114,12 @@ namespace Anki {
     {
     public:
       PathPlannerStub() { }
-      
-      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) override {
-        return RESULT_OK;
+
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                    const Pose3d& startPose,
+                                    const Pose3d& targetPose) override {
+        return PLAN_NOT_NEEDED;
       }
-      
     }; // class PathPlannerStub
     
     

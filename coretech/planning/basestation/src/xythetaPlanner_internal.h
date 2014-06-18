@@ -30,7 +30,7 @@ struct xythetaPlannerImpl
 
   bool GoalIsValid() const;
 
-  bool ComputePath();
+  bool ComputePath(unsigned int maxExpansions);
 
   // helper functions
 
