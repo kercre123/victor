@@ -346,14 +346,14 @@ namespace Anki {
           mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
           numTrackFailures_      = 0;
           
-          if(newMarkerToTrack_.IsSpecified()) {
+          markerToTrack_ = newMarkerToTrack_;
+          
+          if(markerToTrack_.IsSpecified()) {
             
-            AnkiConditionalErrorAndReturnValue(newMarkerToTrack_.width_mm > 0.f,
+            AnkiConditionalErrorAndReturnValue(markerToTrack_.width_mm > 0.f,
                                                RESULT_FAIL_INVALID_PARAMETER,
                                                "VisionSystem::UpdateMarkerToTrack()",
                                                "Invalid marker width specified.");
-            
-            markerToTrack_ = newMarkerToTrack_;
             
             // Set canonical 3D marker's corner coordinates
             const P3P_PRECISION markerHalfWidth = markerToTrack_.width_mm * P3P_PRECISION(0.5);
@@ -361,7 +361,7 @@ namespace Anki {
             canonicalMarker3d_[1] = Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
             canonicalMarker3d_[2] = Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
             canonicalMarker3d_[3] = Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
-          } // if newMarkerToTrack is valid
+          } // if markerToTrack is valid
           
           newMarkerToTrack_.Clear();
           newMarkerToTrackWasProvided_ = false;
