@@ -475,7 +475,7 @@ namespace Anki {
 
       BeginBenchmark("vme_quadrefine_mainLoop");
       bool restoreOriginal = false;
-      
+
       for(s32 iteration=0; iteration<maxIterations && !restoreOriginal; iteration++) {
         //BeginBenchmark("vme_quadrefine_mainLoop_init");
 
@@ -750,12 +750,12 @@ namespace Anki {
           "     'Tag', 'refinedQuad'); drawnow");
       }
 #endif
-      
+
       // Check to make sure the refined quad isn't too different from the intitial one.
       // If it is, restore the original.
       Quadrilateral<f32> initialQuadF32;
       initialQuadF32.SetCast(initialQuad);
-      
+
       for(s32 i=0; i<4 && !restoreOriginal; ++i) {
         const f32 cornerChange = (refinedQuad[i] - initialQuadF32[i]).Length();
         if(cornerChange > maxCornerChange) {
@@ -763,7 +763,7 @@ namespace Anki {
           restoreOriginal = true;
         }
       }
-      
+
       // If corner change check or numerical failure triggered a restoreOriginal
       // do so now.
       if(restoreOriginal) {

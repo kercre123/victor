@@ -58,9 +58,12 @@ namespace Anki
           0, "Matrix::Min", "Limits is not valid");
 
         Type minValue = *array.Pointer(limits.rawIn1Limits.yStart, limits.rawIn1Limits.xStart);
-        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+        for(s32 iy=0; iy<limits.rawIn1Limits.ySize; iy++) {
+          const s32 y = limits.rawIn1Limits.yStart + iy * limits.rawIn1Limits.yIncrement;
           const Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+
+          for(s32 ix=0; ix<limits.rawIn1Limits.xSize; ix++) {
+            const s32 x = limits.rawIn1Limits.xStart + ix * limits.rawIn1Limits.xIncrement;
             minValue = MIN(minValue, pMat[x]);
           }
         }
@@ -81,9 +84,12 @@ namespace Anki
           0, "Matrix::Max", "Limits is not valid");
 
         Type maxValue = *array.Pointer(limits.rawIn1Limits.yStart, limits.rawIn1Limits.xStart);
-        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+        for(s32 iy=0; iy<limits.rawIn1Limits.ySize; iy++) {
+          const s32 y = limits.rawIn1Limits.yStart + iy * limits.rawIn1Limits.yIncrement;
           const Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+
+          for(s32 ix=0; ix<limits.rawIn1Limits.xSize; ix++) {
+            const s32 x = limits.rawIn1Limits.xStart + ix * limits.rawIn1Limits.xIncrement;
             maxValue = MAX(maxValue, pMat[x]);
           }
         }
@@ -104,9 +110,12 @@ namespace Anki
           0, "Matrix::Sum", "Limits is not valid");
 
         Accumulator_Type sum = 0;
-        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+        for(s32 iy=0; iy<limits.rawIn1Limits.ySize; iy++) {
+          const s32 y = limits.rawIn1Limits.yStart + iy * limits.rawIn1Limits.yIncrement;
           const Array_Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+
+          for(s32 ix=0; ix<limits.rawIn1Limits.xSize; ix++) {
+            const s32 x = limits.rawIn1Limits.xStart + ix * limits.rawIn1Limits.xIncrement;
             sum += pMat[x];
           }
         }
@@ -140,9 +149,12 @@ namespace Anki
 
         Accumulator_Type sum = 0;
         Accumulator_Type sumSq = 0;
-        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+        for(s32 iy=0; iy<limits.rawIn1Limits.ySize; iy++) {
+          const s32 y = limits.rawIn1Limits.yStart + iy * limits.rawIn1Limits.yIncrement;
           const Array_Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+
+          for(s32 ix=0; ix<limits.rawIn1Limits.xSize; ix++) {
+            const s32 x = limits.rawIn1Limits.xStart + ix * limits.rawIn1Limits.xIncrement;
             const Accumulator_Type val = static_cast<Accumulator_Type>(pMat[x]);
             sum   += val;
             sumSq += val*val;
@@ -1578,8 +1590,8 @@ namespace Anki
 
       template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex)
       {
-        //const s32 arrHeight = arr.get_size(0);
-        //const s32 arrWidth = arr.get_size(1);
+        // const s32 arrHeight = arr.get_size(0);
+        // const s32 arrWidth = arr.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(arr.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");

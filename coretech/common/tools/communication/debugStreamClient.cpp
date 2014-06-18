@@ -496,10 +496,10 @@ namespace Anki
           Flags::Buffer flags;
           s32 ySlice_start;
           s32 ySlice_increment;
-          s32 ySlice_end;
+          s32 ySlice_size;
           s32 xSlice_start;
           s32 xSlice_increment;
-          s32 xSlice_end;
+          s32 xSlice_size;
           u16 basicType_sizeOfType;
           bool basicType_isBasicType;
           bool basicType_isInteger;
@@ -507,7 +507,7 @@ namespace Anki
           bool basicType_isFloat;
           s32 basicType_numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
+          SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
 
           newObject.bufferLength = 512 + stride * height;
           newObject.buffer = malloc(newObject.bufferLength);
@@ -613,7 +613,7 @@ namespace Anki
         } else if(strcmp(typeName, "String") == 0) {
           const size_t stringLength = strlen(reinterpret_cast<char*>(dataSegment));
           AnkiAssert(stringLength <= s32_MAX);
-          
+
           newObject.bufferLength = 32 + static_cast<s32>(stringLength);
           newObject.buffer = malloc(newObject.bufferLength);
 

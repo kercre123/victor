@@ -105,7 +105,7 @@ namespace Anki
       if(resizeResult != RESULT_OK)
         return resizeResult;
 
-      this->xSlice = LinearSequence<s32>(0, MIN(this->xSlice.get_end(), maximumSize-1));
+      this->xSlice = LinearSequence<s32>(0, 1, -1, MIN(this->xSlice.get_size(), maximumSize));
 
       return RESULT_OK;
     }
@@ -121,7 +121,6 @@ namespace Anki
       *this->Pointer(curSize) = value;
 
       this->xSlice.size = curSize+1;
-      this->xSlice.end = curSize;
 
       return RESULT_OK;
     } // Result FixedLengthList<Type>::PushBack(const Type &value)
@@ -136,7 +135,6 @@ namespace Anki
 
       const Type value = *this->Pointer(curSize-1);
       this->xSlice.size = curSize-1;
-      this->xSlice.end = curSize-2;
 
       return value;
     } // Type FixedLengthList<Type>::PopBack()
@@ -167,7 +165,6 @@ namespace Anki
       newSize = MIN(this->get_maximumSize(), MAX(0,newSize));
 
       this->xSlice.size = newSize;
-      this->xSlice.end = newSize-1;
 
       return newSize;
     } // s32 FixedLengthList<Type>::set_size(s32 newSize)

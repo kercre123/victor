@@ -48,18 +48,21 @@ namespace Anki
       // Matlab equivalent: start:increment:end
       LinearSequence(const Type start, const Type increment, const Type end);
 
+      // No Matlab equivalent
+      // NOTE: end is unused. It is just present to prevent confusion with the other polymorphic constructors
+      LinearSequence(const Type start, const Type increment, const Type end, const s32 size);
+
       // Explicitly evaluate each element of the sequence, and put the results in an Array.
       Array<Type> Evaluate(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
       Result Evaluate(ArraySlice<Type> out) const;
 
       Type get_start() const;
 
+      // NOTE: The increment is meaningless for LinearSequences of size 0 or 1.
       Type get_increment() const;
 
-      // WARNING:
-      // The "end" of a LinearSequence is computed automatically, and is less-than-or-equal-to the
-      // requested end.
-      Type get_end() const;
+      // Note: End it not computed, as it is tempting to use it as a loop condition, but it is not safe
+      // Type get_end() const;
 
       // Matlab equivalent: length(start:increment:end)
       s32 get_size() const;
@@ -69,11 +72,10 @@ namespace Anki
       // construct a new LinearSequence every time an element is popped or pushed
       template<typename FixedLengthListType> friend class FixedLengthList;
 
+      s32 size;
+
       Type start;
       Type increment;
-      Type end;
-
-      s32 size;
 
       static s32 computeSize(const Type start, const Type increment, const Type end);
     }; // class LinearSequence
@@ -84,9 +86,18 @@ namespace Anki
     template<typename Type> LinearSequence<Type> IndexSequence(Type start, Type increment, Type end, s32 arraySize);
     LinearSequence<s32> IndexSequence(s32 arraySize); // Internally, it sets start==0, end=arraySize-1, like the Matlab colon operator array(:,:)
 
-    // Linspace only really works correctly for f32 and f64, because getting the correct start and
-    // end may be impossible for integers.
+    // Linspace only works correctly for f32 and f64. To prevent misusage, trying ints will give a linker error.
     template<typename Type> LinearSequence<Type> Linspace(const Type start, const Type end, const s32 size);
+
+    // These do not link, as they are unsafe
+    template<> LinearSequence<u8> Linspace(const u8 start, const u8 end, const s32 size);
+    template<> LinearSequence<s8> Linspace(const s8 start, const s8 end, const s32 size);
+    template<> LinearSequence<u16> Linspace(const u16 start, const u16 end, const s32 size);
+    template<> LinearSequence<s16> Linspace(const s16 start, const s16 end, const s32 size);
+    template<> LinearSequence<u32> Linspace(const u32 start, const u32 end, const s32 size);
+    template<> LinearSequence<s32> Linspace(const s32 start, const s32 end, const s32 size);
+    template<> LinearSequence<u64> Linspace(const u64 start, const u64 end, const s32 size);
+    template<> LinearSequence<s64> Linspace(const s64 start, const s64 end, const s32 size);
 
     // TODO: Logspace
     //template<typename Type> class Logspace : public Sequence<Type>
