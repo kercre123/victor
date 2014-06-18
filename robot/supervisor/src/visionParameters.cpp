@@ -175,7 +175,7 @@ namespace Anki {
         
         successTolerance_angle        = DEG_TO_RAD(30);
         successTolerance_distance     = 20.f;
-        successTolerance_matchingPixelsFraction = 0.5f;
+        successTolerance_matchingPixelsFraction = 0.75f;
 #else
         scaleTemplateRegionPercent    = 1.1f;
         convergenceTolerance          = 1.f;

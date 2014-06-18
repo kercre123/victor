@@ -120,7 +120,7 @@ namespace Anki {
         
         // If trackCamWithLift_ == true, start actually doing the tracking only when
         // the block is at least START_LIFT_TRACKING_DIST_MM close and START_LIFT_TRACKING_HEIGHT_MM high
-        const f32 START_LIFT_TRACKING_DIST_MM = 50.f;
+        const f32 START_LIFT_TRACKING_DIST_MM = 70.f;
         const f32 START_LIFT_TRACKING_HEIGHT_MM = 44.f;
         
       } // "private" namespace
@@ -150,13 +150,13 @@ namespace Anki {
  
         // Compute the angle of the line extending from the camera that represents
         // the lower bound of its field of view
-        f32 lowerCamFOVangle = angle - 0.5f * VisionSystem::GetVerticalFOV();
+        f32 lowerCamFOVangle = angle - 0.45f * VisionSystem::GetVerticalFOV();
         
         // Compute the lift height required to raise the cross bar to be at
         // the height of that line.
         // TODO: This is really rough computation approximating with a fixed horizontal distance between
         //       the camera and the lift. make better!
-        const f32 liftDistToCam = 25;
+        const f32 liftDistToCam = 26;
         liftH = liftDistToCam * sinf(lowerCamFOVangle) + z;
         liftH -= LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT;
         
@@ -232,14 +232,31 @@ namespace Anki {
               {
                 // If we have the height of the marker for docking, we can also
                 // compute the head angle to keep it centered
-                HeadController::SetDesiredAngle(atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr));
+                HeadController::SetSpeedAndAccel(0.2, 1);
+                //f32 desiredHeadAngle = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
+                
+                // Make sure bottom of camera FOV doesn't tilt below the bottom of the block
+                // or that the camera FOV center doesn't tilt below the marker center.
+                // Otherwise try to maintain the lowest tilt possible
+                f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5*VisionSystem::GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
+                f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
+                f32 desiredHeadAngle = MAX(minDesiredHeadAngle1, minDesiredHeadAngle2);
+                
+                HeadController::SetDesiredAngle(desiredHeadAngle);
+                //PRINT("desHeadAngle %f\n", desiredHeadAngle);
                 
                 // Track camera with lift.
                 // Do it only when it's a high block and we're within a certain distance of it.
+                // Don't lift higher than HIGHDOCK height.
                 if (trackCamWithLift_ &&
                     dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM &&
                     dockMsg.x_distErr < START_LIFT_TRACKING_DIST_MM) {
-                  LiftController::SetDesiredHeight(GetCamFOVLowerHeight());
+                  f32 liftHeight = GetCamFOVLowerHeight();
+                  if (liftHeight > LIFT_HEIGHT_HIGHDOCK) {
+                    liftHeight = LIFT_HEIGHT_HIGHDOCK;
+                  }
+                  //PRINT("TrackLiftHeight: %f\n", liftHeight);
+                  LiftController::SetDesiredHeight(liftHeight);
                 }
               }
               

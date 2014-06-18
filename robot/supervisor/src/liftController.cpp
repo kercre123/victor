@@ -28,7 +28,7 @@ namespace Anki {
 #ifdef SIMULATOR
         const u32 LIFT_STOP_TIME = 200000;
 #else
-        const u32 LIFT_STOP_TIME = 1000000;
+        const u32 LIFT_STOP_TIME = 500000;
 #endif
         
         // Amount of time to allow lift to relax with power == 0, before considering it
@@ -38,7 +38,7 @@ namespace Anki {
 #if RECALIBRATE_AT_LIMITS
         // Power with which to approach limit angle (after the intended velocity profile has been executed)
         // TODO: Shouldn't have to be this strong. Lower when 2.1 version electronics are ready.
-        const f32 LIMIT_APPROACH_POWER = 0.4;
+        const f32 LIMIT_APPROACH_POWER = 0.7;
 #endif
         
         const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
@@ -46,10 +46,10 @@ namespace Anki {
         const f32 SPEED_FILTERING_COEFF = 0.9f;
         
         
-        f32 Kp_ = 0.5f; // proportional control constant
-        f32 Ki_ = 0.02f; // integral control constant
+        f32 Kp_ = 20.f; // proportional control constant
+        f32 Ki_ = 0.03f; // integral control constant
         f32 angleErrorSum_ = 0.f;
-        f32 MAX_ERROR_SUM = 200.f;
+        f32 MAX_ERROR_SUM = 10.f;
         
         const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
         f32 LIFT_ANGLE_LOW_LIMIT; // Initialize in Init()
@@ -393,7 +393,15 @@ namespace Anki {
         
         desiredAngle_ = Height2Rad(desiredHeight_);
         angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
-        angleErrorSum_ = 0.f;
+        
+        f32 startRadSpeed = radSpeed_;
+        f32 startRad = currentAngle_.ToFloat();
+        if (!inPosition_) {
+          startRadSpeed = currDesiredRadVel_;
+          startRad = currDesiredAngle_;
+        } else {
+          angleErrorSum_ = 0.f;
+        }
         
         lastLiftMovedTime_us = HAL::GetMicroCounter();
         limitingDetected_ = false;
@@ -416,7 +424,7 @@ namespace Anki {
 #endif
         
         // Start profile of lift trajectory
-        vpg_.StartProfile(radSpeed_, currentAngle_.ToFloat(),
+        vpg_.StartProfile(startRadSpeed, startRad,
                           maxSpeedRad_, accelRad_,
                           approachSpeedRad_, desiredAngle_.ToFloat(),
                           CONTROL_DT);
@@ -426,6 +434,11 @@ namespace Anki {
               radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, accelRad_, approachSpeedRad_, desiredAngle_.ToFloat());
 #endif
         
+      }
+      
+      f32 GetDesiredHeight()
+      {
+        return desiredHeight_;
       }
       
       bool IsInPosition(void) {
@@ -463,8 +476,9 @@ namespace Anki {
             // Compute corrective value
             f32 power_corr = (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
             
-            // Add base power in the direction of corrective value
-            power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+            // Add base power in the direction of the general desired direction
+            //power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+            power_ += power_corr + ((power_ > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
             
             // Update angle error sum
             angleErrorSum_ += angleError_;

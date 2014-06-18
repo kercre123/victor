@@ -536,6 +536,7 @@ namespace Anki {
         MemoryStack &offchipMemory)
       {
         AnkiAssert(parameters.isInitialized);
+        AnkiAssert(markerToTrack_.width_mm > 0);
 
 #if USE_MATLAB_TRACKER
         return MatlabVisionProcessor::InitTemplate(grayscaleImage, trackingQuad, ccmScratch);

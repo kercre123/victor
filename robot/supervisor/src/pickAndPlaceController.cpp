@@ -32,7 +32,7 @@ namespace Anki {
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
         const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 28.f;
-        const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 20.f;
+        const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 19.5f;
         const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 20.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
         Mode mode_ = IDLE;
@@ -154,16 +154,17 @@ namespace Anki {
             PRINT("PAP: SETTING LIFT PREDOCK (action %d)\n", action_);
 #endif
             mode_ = MOVING_LIFT_PREDOCK;
-            HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
             switch(action_) {
               case DA_PICKUP_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
                 break;
               case DA_PICKUP_HIGH:
                 // This action starts by lowering the lift and tracking the high block
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
                 HeadController::SetDesiredAngle(HIGH_DOCKING_HEAD_ANGLE);
+                PRINT("SET_LIFT_PREDOCK: %f\n", HIGH_DOCKING_HEAD_ANGLE);
 #if(ALT_HIGH_BLOCK_DOCK_METHOD)
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_PICKUP_HEAD_LOWERING_DIST_MM;
 #else
@@ -172,9 +173,11 @@ namespace Anki {
                 break;
               case DA_PLACE_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 break;
               case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
                 break;
               default:

@@ -43,6 +43,7 @@ namespace Anki {
       
       // Command the desired height of the lift
       void SetDesiredHeight(f32 height_mm);
+      f32 GetDesiredHeight();
       bool IsInPosition();
 
       // Whether or not the lift is moving.

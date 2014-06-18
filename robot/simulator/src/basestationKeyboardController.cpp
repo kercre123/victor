@@ -178,8 +178,12 @@ namespace Anki {
           
           // Adjust wheel speed appropriately
           f32 wheelSpeed = DRIVE_VELOCITY_FAST;
+          f32 liftSpeed = LIFT_SPEED_RAD_PER_SEC;
+          f32 headSpeed = HEAD_SPEED_RAD_PER_SEC;
           if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
             wheelSpeed = DRIVE_VELOCITY_SLOW;
+            liftSpeed *= 0.25;
+            headSpeed *= 0.25;
           }
           
           // Set key to its modifier-less self
@@ -258,37 +262,37 @@ namespace Anki {
 
             case '1': //set lift to low dock height
             {
-              robot_->MoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '2': //set lift to high dock height
             {
-              robot_->MoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '3': //set lift to carry height
             {
-              robot_->MoveLiftToHeight(LIFT_HEIGHT_CARRY, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_CARRY, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '4': //set head to look all the way down
             {
-              robot_->MoveHeadToAngle(MIN_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(MIN_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
 
             case '5': //set head to straight ahead
             {
-              robot_->MoveHeadToAngle(0, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(0, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '6': //set head to look all the way up
             {
-              robot_->MoveHeadToAngle(MAX_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(MAX_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
 

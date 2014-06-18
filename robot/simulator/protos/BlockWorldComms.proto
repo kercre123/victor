@@ -4,13 +4,13 @@ PROTO BlockWorldComms [
   field SFRotation rotation 0 0 1 0
 
   # Hacky way for me to modify values that I want to send to robot via keyboard controller
-  field SFFloat headKp 0.5
-  field SFFloat headKi 0.003
-  field SFFloat headMaxErrorSum 200
+  field SFFloat headKp 2.0
+  field SFFloat headKi 0.05
+  field SFFloat headMaxErrorSum 2
 
-  field SFFloat liftKp 0.5
-  field SFFloat liftKi 0.02
-  field SFFloat liftMaxErrorSum 200
+  field SFFloat liftKp 20
+  field SFFloat liftKi 0.03
+  field SFFloat liftMaxErrorSum 10
 ]
 {
 Supervisor {
