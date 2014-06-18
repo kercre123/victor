@@ -89,7 +89,7 @@ void BatteryUpdate()
 void PowerInit()
 {
   // Syscon power - this should always be on until battery fail
-  const u8 PIN_VDD_EN = 26;
+  const u8 PIN_VDD_EN = 0;             // 2.1.xx MODLEVEL moved VDD to 0 from 26
   nrf_gpio_pin_set(PIN_VDD_EN);        // On
   nrf_gpio_cfg_output(PIN_VDD_EN);
   
@@ -109,5 +109,5 @@ void PowerInit()
   // Bring up VBATs first, because camera requires 1V8 (via VBATs) before VDDs  
   nrf_gpio_pin_set(PIN_VBATs_EN);     // On
   MicroWait(1000);                    // Long enough for 1V8 to stabilize (datasheet says ~80uS)
-  nrf_gpio_pin_clear(PIN_VDDs_EN);    // On  
+  nrf_gpio_pin_clear(PIN_VDDs_EN);    // On  - XXX: VDDs is a PITA right now due to power sags
 }

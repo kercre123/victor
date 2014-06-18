@@ -414,7 +414,7 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
-        lastResult = robot->PlaceCarriedBlock(msg.timestamp);
+        lastResult = robot->PlaceCarriedBlock(); //msg.timestamp);
       }
       else {
         PRINT_INFO("Robot %d FAILED placing block.\n", robot->GetID());

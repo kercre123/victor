@@ -24,6 +24,11 @@ bool xythetaPlanner::SetGoal(const State_c& goal)
   return _impl->SetGoal(goal);
 }
 
+State_c xythetaPlanner::GetGoal() const
+{
+  return _impl->goal_c_;
+}
+
 bool xythetaPlanner::GoalIsValid() const
 {
   return _impl->GoalIsValid();
@@ -39,11 +44,6 @@ void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
   _impl->freeTurnInPlaceAtGoal_ = allow;
 }
 
-bool xythetaPlanner::PlanIsSafe() const
-{
-  return _impl->PlanIsSafe();
-}
-
 bool xythetaPlanner::Replan()
 {
   return _impl->ComputePath();
@@ -55,6 +55,11 @@ void xythetaPlanner::SetReplanFromScratch()
 }
 
 const xythetaPlan& xythetaPlanner::GetPlan() const
+{
+  return _impl->plan_;
+}
+
+xythetaPlan& xythetaPlanner::GetPlan()
 {
   return _impl->plan_;
 }
@@ -153,32 +158,11 @@ void xythetaPlannerImpl::Reset()
 
 bool xythetaPlannerImpl::NeedsReplan() const
 {
-  return !PlanIsSafe();
-}
-
-bool xythetaPlannerImpl::PlanIsSafe() const
-{
-  // collision check the old plan. If it starts at 'start' and ends at
-  // 'goal' and doesn't have any collisions, then we are good.
-
-  if(plan_.actions_.empty() || start_ != plan_.start_)
-    return false;
-
-  size_t i=0;
-  size_t numActions = plan_.actions_.size();
-
-  StateID curr(start_.GetStateID());
-
-  BOUNDED_WHILE(1000, i < numActions && env_.ApplyAction(plan_.actions_[i], curr)) {
-    if(curr == goalID_)
-      return true;
-    i++;
-  }
-
-  // if we get here, we either failed to apply an action, or reached
-  // the end of the plan. If we are now at the goal, we don't need to
-  // replan, so return true
-  return curr == goalID_;
+  State_c waste1;
+  xythetaPlan waste2;
+  // TODO:(bn) parameter or at least a comment.
+  const float default_maxDistanceToReUse_mm = 60.0;
+  return !env_.PlanIsSafe(plan_, default_maxDistanceToReUse_mm, 0, waste1, waste2);
 }
 
 bool xythetaPlannerImpl::ComputePath()
@@ -237,17 +221,18 @@ bool xythetaPlannerImpl::ComputePath()
     }
   }
 
-  if(foundGoal)
+  if(foundGoal) {
     BuildPlan();
+  }
   else {
-    printf("no path found!\n");
+    printf("xythetaPlanner: no path found!\n");
   }
 
   if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
     fclose(debugExpPlotFile_);
   }
 
-  printf("finished after %d expansions\n", expansions_);
+  printf("finished after %d expansions. foundGoal = %d\n", expansions_, foundGoal);
 
   return foundGoal;
 }

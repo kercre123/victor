@@ -29,12 +29,13 @@ namespace Anki {
       }
     
       // Define colors
-      DefineColor(VIZ_COLOR_EXECUTED_PATH,       1.0, 0.0, 0.0, 1.0);
-      DefineColor(VIZ_COLOR_PREDOCKPOSE,         1.0, 0.0, 0.0, 0.75);
-      DefineColor(VIZ_COLOR_SELECTED_OBJECT,     0.0, 1.0, 0.0, 0.0);
-      DefineColor(VIZ_COLOR_BLOCK_BOUNDING_QUAD, 0.0, 0.0, 1.0, 0.75);
-      DefineColor(VIZ_COLOR_OBSERVED_QUAD,       1.0, 0.0, 0.0, 0.75);
-      DefineColor(VIZ_COLOR_ROBOT_BOUNDING_QUAD, 0.0, 0.8, 0.0, 0.75);
+      DefineColor(VIZ_COLOR_EXECUTED_PATH,              1.0, 0.0, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_PREDOCKPOSE,                1.0, 0.0, 0.0, 0.75);
+      DefineColor(VIZ_COLOR_SELECTED_OBJECT,            0.0, 1.0, 0.0, 0.0);
+      DefineColor(VIZ_COLOR_BLOCK_BOUNDING_QUAD,        0.0, 0.0, 1.0, 0.75);
+      DefineColor(VIZ_COLOR_OBSERVED_QUAD,              1.0, 0.0, 0.0, 0.75);
+      DefineColor(VIZ_COLOR_ROBOT_BOUNDING_QUAD,        0.0, 0.8, 0.0, 0.75);
+      DefineColor(VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD, 1.0, 0.1, 1.0, 0.75);
       
       isInitialized_ = true;
       

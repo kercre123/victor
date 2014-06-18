@@ -77,6 +77,10 @@ namespace Anki {
         // TODO: Could this be fewer samples?
         numRefinementSamples = 100;
         
+        // If quad refinment moves any corner by more than this (in pixels), the
+        // original quad/homography are restored.
+        quadRefinementMaxCornerChange = 2.f;
+        
         isInitialized = true;
       } // DetectFiducialMarkersParameters::Initialize()
 

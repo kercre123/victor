@@ -25,13 +25,23 @@ namespace Anki
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array)
-      : ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1)), array(array), constArrayData(array.Pointer(0,0))
+      : ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1)), array(array)
     {
+      if(array.get_numElements() == 0) {
+        this->constArrayData = NULL;
+      } else {
+        this->constArrayData = array.Pointer(0,0);
+      }
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
-      : ySlice(ySlice), xSlice(xSlice), array(array), constArrayData(array.Pointer(0,0))
+      : ySlice(ySlice), xSlice(xSlice), array(array)
     {
+      if(array.get_numElements() == 0) {
+        this->constArrayData = NULL;
+      } else {
+        this->constArrayData = array.Pointer(0,0);
+      }
     }
 
     template<typename Type> ConstArraySliceExpression<Type> ConstArraySlice<Type>::Transpose() const
@@ -69,14 +79,24 @@ namespace Anki
 
     template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> array)
       //: array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
-      : ConstArraySlice<Type>(array), arrayData(array.Pointer(0,0))
+      : ConstArraySlice<Type>(array)
     {
+      if(array.get_numElements() == 0) {
+        this->arrayData = NULL;
+      } else {
+        this->arrayData = array.Pointer(0,0);
+      }
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
       //: array(array), ySlice(ySlice), xSlice(xSlice)
-      : ConstArraySlice<Type>(array, ySlice, xSlice), arrayData(array.Pointer(0,0))
+      : ConstArraySlice<Type>(array, ySlice, xSlice)
     {
+      if(array.get_numElements() == 0) {
+        this->arrayData = NULL;
+      } else {
+        this->arrayData = array.Pointer(0,0);
+      }
     }
 
     template<typename Type> s32 ArraySlice<Type>::Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose)

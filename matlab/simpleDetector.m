@@ -160,7 +160,9 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_DetectFiduc
         quads_decode, quadTforms, minQuadArea, quadRefinementIterations, ...
         embeddedConversions, showTiming, DEBUG_DISPLAY);
 
-    if ~returnInvalid
+    if returnInvalid
+        validQuads = 1:length(quads);
+    else 
        keep = cellfun(@(m)m.isValid, markers);
        markers = markers(keep);
        validQuads = validQuads(keep);

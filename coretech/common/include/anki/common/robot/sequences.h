@@ -28,10 +28,17 @@ namespace Anki
     }
 
     template<typename Type> LinearSequence<Type>::LinearSequence(const Type start, const Type end)
-      : start(start), increment(static_cast<Type>(1))
+      : start(start)
     {
+      // TODO: make more elegant
+      this->increment = (start == end) ? 0 : 1;
+
       this->size = computeSize(this->start, this->increment, end);
       this->end = this->start + (this->size-1) * this->increment;
+
+      // TODO: make more elegant
+      if(this->increment == 0)
+        this->increment = 1;
     }
 
     template<typename Type> LinearSequence<Type>::LinearSequence(const Type start, const Type increment, const Type end)
@@ -39,6 +46,10 @@ namespace Anki
     {
       this->size = computeSize(this->start, this->increment, end);
       this->end = this->start + (this->size-1) * this->increment;
+
+      // TODO: make more elegant
+      if(this->increment == 0)
+        this->increment = 1;
     }
 
     template<typename Type> Array<Type> LinearSequence<Type>::Evaluate(MemoryStack &memory, const Flags::Buffer flags) const
@@ -105,7 +116,13 @@ namespace Anki
 
     template<typename Type> s32 LinearSequence<Type>::computeSize(const Type start, const Type increment, const Type end)
     {
-      AnkiAssert(increment != static_cast<Type>(0));
+      if(start == end) {
+        // WARNING: size is ignored
+        //AnkiAssert(increment == static_cast<Type>(0));
+        return 1;
+      } else {
+        AnkiAssert(increment != static_cast<Type>(0));
+      }
 
       // 10:-1:12
       if(increment < 0 && start < end) {
@@ -129,16 +146,20 @@ namespace Anki
 
     template<typename Type> LinearSequence<Type> IndexSequence(Type start, Type end, s32 arraySize)
     {
-      return IndexSequence(start, static_cast<Type>(1), end, arraySize);
+      const Type increment = (start == end) ? 0 : 1;
+
+      return IndexSequence(start, increment, end, arraySize);
     }
 
     template<typename Type> LinearSequence<Type> IndexSequence(Type start, Type increment, Type end, s32 arraySize)
     {
+      // A negative value means (end-value)
       if(start < 0)
         start += arraySize;
 
       AnkiAssert(start >=0 && start < arraySize);
 
+      // A negative value means (end-value)
       if(end < 0)
         end += arraySize;
 
@@ -151,7 +172,21 @@ namespace Anki
 
     template<typename Type> LinearSequence<Type> Linspace(const Type start, const Type end, const s32 size)
     {
-      const Type increment = (end-start) / (size-1);
+      Type increment;
+
+      if(start == end) {
+        // WARNING: size is ignored
+
+        // TODO: allow for size != 1
+        //AnkiAssert(size == 1);
+
+        increment = 0;
+      } else {
+        AnkiAssert(size != 1);
+
+        increment = (end-start) / (size-1);
+      }
+
       LinearSequence<Type> sequence(start, increment, end);
 
       // If Type is not a float, and the sequence is the wrong size, just give up

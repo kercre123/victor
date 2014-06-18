@@ -70,7 +70,9 @@ public:
   bool operator<(const StateID& rhs) const;
 
   StateID() : theta(0), x(0), y(0) {};
+  StateID(const State& state) { *this = state.GetStateID(); };
 
+  // TODO:(bn) check that these are packed properly
   unsigned int theta : THETA_BITS;
   signed int x : MAX_XY_BITS;
   signed int y : MAX_XY_BITS;
@@ -80,6 +82,7 @@ public:
 // bottom left of the cell // TODO:(bn) think more about that, should probably add half a cell width
 class State_c
 {
+  friend std::ostream& operator<<(std::ostream& out, const State_c& state);
 public:
   State_c() : x_mm(0), y_mm(0), theta(0) {};
   State_c(float x, float y, float theta) : x_mm(x), y_mm(y), theta(theta) {};
@@ -101,7 +104,8 @@ public:
   // returns true if successful
   bool Import(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env);
 
-  void AddSegmentsToPath(State_c start, Path& path) const;
+  // returns the minimum PathSegmentOffset associated with this action
+  u8 AddSegmentsToPath(State_c start, Path& path) const;
 
   // id of this action (unique per starting angle)
   ActionID id;
@@ -123,7 +127,7 @@ public:
   std::vector<State_c> intermediatePositions;
 private:
 
-  std::vector<PathSegment> pathSegments_;
+  Path pathSegments_;
 };
 
 class Successor
@@ -174,7 +178,11 @@ class xythetaPlan
 public:
   State start_;
   std::vector<ActionID> actions_;
-  
+
+  // add the given plan to the end of this plan
+  void Append(const xythetaPlan& other);
+
+  size_t Size() const {return actions_.size();}
   void Push(ActionID action) {actions_.push_back(action);}
   void Clear() {actions_.clear();}
 };
@@ -238,7 +246,45 @@ public:
   // is a valid, collision-free action, it updates state to be the
   // successor and returns true, otherwise it returns false and does
   // not change state
-  bool ApplyAction(const ActionID& action, StateID& stateID) const;
+  bool ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions = true) const;
+
+  // Returns the state at the end of the given plan (e.g. following
+  // along the plans start and executing every action). No collision
+  // checks are performed
+  State GetPlanFinalState(const xythetaPlan& plan) const;
+
+
+  // This essentially projects the given pose onto the plan (held in
+  // this member). The projection is just the closest euclidean
+  // distance point on the plan, and the return value is the number of
+  // complete plan actions that are finished by the time you get to
+  // this point
+  size_t FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state, bool debug = false) const;
+
+  // Returns true if the plan is safe and complete, false
+  // otherwise. This should always return true immediately after
+  // Replan returns true, but if the environment is updated it can be
+  // useful to re-check the plan.
+  // 
+  // second argument is how much of the path has already been
+  // executed. Note that this is different form the robot's
+  // currentPathSegment because our plans are different from robot
+  // paths
+  // 
+  // Second argument value will be set to last valid state along the
+  // path before collision if unsafe (or the goal if safe)
+  // 
+  // Third argument is the valid portion of the plan, up to lastSafeState
+  bool PlanIsSafe(const xythetaPlan& plan, const float maxDistancetoFollowOldPlan_mm, int currentPathIndex = 0) const;
+  bool PlanIsSafe(const xythetaPlan& plan, 
+                  const float maxDistancetoFollowOldPlan_mm,
+                  int currentPathIndex,
+                  State_c& lastSafeState,
+                  xythetaPlan& validPlan) const;
+
+
+  // returns the raw underlying motion primitive. Note that it is centered at (0,0)
+  const MotionPrimitive& GetRawMotionPrimitive(StateTheta theta, ActionID action) const;
 
   // Returns true if there is a collision at the given state
   bool IsInCollision(State s) const;
@@ -273,10 +319,14 @@ public:
   inline const ActionType& GetActionType(ActionID aid) const { return actionTypes_[aid]; }
 
   // This function fills up the given vector with (x,y,theta) coordinates of
-  // following the plan
+  // following the plan.
   void ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const;
 
-  void ConvertToPath(const xythetaPlan& plan, Path& path) const;
+  void PrintPlan(const xythetaPlan& plan) const;
+
+  // Convert the plan to Planning::PathSegment's and append it to
+  // path. Also updates plan to set the robotPathSegmentIdx_
+  void AppendToPath(xythetaPlan& plan, Path& path) const;
 
   // TODO:(bn) move these??
 
@@ -285,6 +335,8 @@ public:
   double GetMaxReverseVelocity_mmps() const {return maxReverseVelocity_mmps_;}
 
   double GetOneOverMaxVelocity() const {return oneOverMaxVelocity_;}
+
+  float GetResolution_mm() const { return resolution_mm_; }
 
 private:
 
@@ -397,7 +449,17 @@ StateTheta xythetaEnvironment::GetTheta(float theta_rad) const
   while(positiveTheta < 0.0) {
     positiveTheta += 2*M_PI;
   }
-  return (StateTheta) roundf(positiveTheta * oneOverRadiansPerAngle_);
+  
+  while(positiveTheta >= 2*M_PI) {
+    positiveTheta -= 2*M_PI;
+  }
+  
+  const StateTheta stateTheta = (StateTheta) std::round(positiveTheta * oneOverRadiansPerAngle_) % numAngles_;
+
+  assert(numAngles_ == angles_.size());
+  assert(stateTheta >= 0 && stateTheta < angles_.size());
+  
+  return stateTheta;
 }
 
 

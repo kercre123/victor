@@ -60,6 +60,9 @@ namespace Anki {
     // The distance along the x axis from the wrist joint to the front of the lifter plate
     const f32 LIFT_FRONT_WRT_WRIST_JOINT = 3.5f;
     
+    // The height of the "fingers"
+    const f32 LIFT_FINGER_HEIGHT = 3.8f;
+    
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
     const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 35.f);

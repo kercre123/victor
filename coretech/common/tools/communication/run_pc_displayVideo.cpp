@@ -62,9 +62,12 @@ static bool isTracking;
 
 static vector<DebugStreamClient::Object> currentObjects;
 
+/*
 static void printUsage()
 {
+  TODO: Fill in
 } // void printUsage()
+*/
 
 static void InitDisplayDebuggingInfo()
 {
@@ -210,7 +213,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
           }
           topLineColor = cv::Scalar(128,0,0);
 
-          const f32 observedOrientation = visionMarkerList[iMarker].observedOrientation;
+          //const f32 observedOrientation = visionMarkerList[iMarker].observedOrientation;
           const Quadrilateral<f32> orientedCorners = visionMarkerList[iMarker].corners.ComputeRotatedCorners<f32>(0.0f);
 
           const s32 cornerOrder[5] = {
@@ -312,14 +315,14 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
     } else {
       const s32 sizeOfType = reinterpret_cast<s32*>(newObject.buffer)[0];
       const s32 isBasicType = reinterpret_cast<s32*>(newObject.buffer)[1];
-      const s32 isInteger = reinterpret_cast<s32*>(newObject.buffer)[2];
+      //const s32 isInteger = reinterpret_cast<s32*>(newObject.buffer)[2];
       const s32 isSigned = reinterpret_cast<s32*>(newObject.buffer)[3];
       const s32 isFloat = reinterpret_cast<s32*>(newObject.buffer)[4];
       const s32 numElements = reinterpret_cast<s32*>(newObject.buffer)[5];
 
       CoreTechPrint("%s: ", newObject.objectName);
 
-      if(isBasicType)
+      if(isBasicType) {
         if(isFloat) {
           if(sizeOfType == 4) {
             for(s32 i=0; i<numElements; i++) { CoreTechPrint("%0.5f, ", reinterpret_cast<f32*>(newObject.startOfPayload)[i]); }
@@ -350,6 +353,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
           }
         }
         CoreTechPrint("\n");
+      }
     }
   } else if(strcmp(newObject.typeName, "Array") == 0) {
     if (strcmp(newObject.objectName, "Robot Image") == 0) {

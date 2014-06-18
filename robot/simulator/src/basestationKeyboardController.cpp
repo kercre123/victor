@@ -122,6 +122,7 @@ namespace Anki {
         printf("       Clear known blocks:  c\n");
         printf("   Dock to selected block:  p\n");
         printf("Start June 2014 dice demo:  j\n");
+        printf("       Abort current path:  q\n");
         printf("  Update controller gains:  k\n");
         printf("               Test modes:  Alt + Testmode#\n");
         printf("               Print help:  ?\n");
@@ -135,7 +136,7 @@ namespace Anki {
         //Why do some of those not match ASCII codes?
         //Numbers, spacebar etc. work, letters are different, why?
         //a, z, s, x, Space
-        //const s32 CKEY_LIFT_UPUP  = 81;  // q
+        const s32 CKEY_CANCEL_PATH = 81;  // q
         const s32 CKEY_LIFT_UP     = 65;  // a
         const s32 CKEY_LIFT_DOWN   = 90;  // z
         //const s32 CKEY_HEAD_UPUP  = 87;  // w
@@ -379,6 +380,11 @@ namespace Anki {
             case CKEY_START_DICE_DEMO:
             {
               behaviorMgr_->StartMode(BM_June2014DiceDemo);
+              break;
+            }
+            case CKEY_CANCEL_PATH:
+            {
+              robot_->AbortCurrentPath();
               break;
             }
             case CKEY_SET_GAINS:

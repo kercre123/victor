@@ -111,6 +111,12 @@ namespace Anki
       int fontFace, double fontScale, cv::Scalar color,
       int thickness=1, int lineType=8,
       bool bottomLeftOrigin=false);
+
+    void CvPutTextWithBackground(
+      cv::Mat& img, const char * text, cv::Point org,
+      int fontFace, double fontScale, cv::Scalar textColor, cv::Scalar backgroundColor,
+      int thickness=1, int lineType=8,
+      bool orgIsCenter=false);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
     // Returns the index of the first instance of bytePattern in buffer. If the pattern is not found, returns -1

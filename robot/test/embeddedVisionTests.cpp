@@ -3016,6 +3016,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   const s32 quadRefinementIterations = 5;
   const s32 numRefinementSamples = 100;
+  const f32 quadRefinementMaxCornerChange = 2.f;
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -3061,6 +3062,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       maxExtractedQuads,
       quadRefinementIterations,
       numRefinementSamples,
+      quadRefinementMaxCornerChange,
       //true, //< TODO: change back to false
       false,
       scratchCcm,
@@ -3414,8 +3416,8 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   const s32 xStartValues[128] = {102, 104, 102, 108, 102, 100, 100, 104, 100, 100, 103, 100, 103, 100, 103, 100, 103};
   const s32 xEndValues[128] = { 102, 105, 105, 109, 109, 105, 105, 109, 105, 101, 104, 101, 104, 101, 104, 101, 104};
 
-  const s32 componentsX_groundTruth[128] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
-  const s32 componentsY_groundTruth[128] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
+  const s32 extractedBoundaryX_groundTruth[128] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
+  const s32 extractedBoundaryY_groundTruth[128] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
 
   for(s32 i=0; i<numComponents; i++) {
     components.PushBack(ConnectedComponentSegment(xStartValues[i],xEndValues[i],yValues[i],1));
@@ -3423,13 +3425,10 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
 
   components.SortConnectedComponentSegments();
 
-  //#define DRAW_TraceNextExteriorBoundary
+//#define DRAW_TraceNextExteriorBoundary
 #ifdef DRAW_TraceNextExteriorBoundary
   {
-    MemoryStack scratch0(&ddrBuffer[0], OFFCHIP_BUFFER_SIZE);
-    ASSERT_TRUE(scratch0.IsValid());
-
-    Array<u8> drawnComponents(480, 640, scratch0);
+    Array<u8> drawnComponents(480, 640, scratchOffchip);
     DrawComponents<u8>(drawnComponents, components, 64, 255);
 
     matlab.PutArray(drawnComponents, "drawnComponents");
@@ -3448,7 +3447,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   //extractedBoundary.Print();
 
   for(s32 i=0; i<boundaryLength; i++) {
-    ASSERT_TRUE(*extractedBoundary.Pointer(i) == Point<s16>(componentsX_groundTruth[i], componentsY_groundTruth[i]));
+    ASSERT_TRUE(*extractedBoundary.Pointer(i) == Point<s16>(extractedBoundaryX_groundTruth[i], extractedBoundaryY_groundTruth[i]));
   }
 
   GTEST_RETURN_HERE;
@@ -3494,11 +3493,11 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-  ASSERT_TRUE(*componentBoundingBoxes.Pointer(1) == Anki::Embedded::Rectangle<s16>(0,1004,0,2));
-  ASSERT_TRUE(*componentBoundingBoxes.Pointer(2) == Anki::Embedded::Rectangle<s16>(0,4,3,3));
-  ASSERT_TRUE(*componentBoundingBoxes.Pointer(3) == Anki::Embedded::Rectangle<s16>(0,10,4,6));
-  ASSERT_TRUE(*componentBoundingBoxes.Pointer(4) == Anki::Embedded::Rectangle<s16>(0,6,7,8));
-  ASSERT_TRUE(*componentBoundingBoxes.Pointer(5) == Anki::Embedded::Rectangle<s16>(5,1000,9,9));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(1) == Anki::Embedded::Rectangle<s16>(0,1005,0,3));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(2) == Anki::Embedded::Rectangle<s16>(0,5,3,4));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(3) == Anki::Embedded::Rectangle<s16>(0,11,4,7));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(4) == Anki::Embedded::Rectangle<s16>(0,7,7,9));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(5) == Anki::Embedded::Rectangle<s16>(5,1001,9,10));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)

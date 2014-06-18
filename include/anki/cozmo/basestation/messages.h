@@ -15,6 +15,7 @@
 #ifndef COZMO_MESSAGE_BASESTATION_H
 #define COZMO_MESSAGE_BASESTATION_H
 
+#include <array>
 #include "json/json.h"
 
 #include "anki/common/types.h"
