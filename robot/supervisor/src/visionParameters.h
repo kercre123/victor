@@ -95,6 +95,7 @@ namespace Anki {
         u16 maxConnectedComponentSegments;
         s32 quadRefinementIterations; // set to zero to disable
         s32 numRefinementSamples;
+        f32 quadRefinementMaxCornerChange;
         
         // Methods
         DetectFiducialMarkersParameters();

@@ -38,6 +38,7 @@ namespace Anki
       const s32 maxExtractedQuads,
       const s32 quadRefinementIterations,
       const s32 numRefinementSamples,
+      const f32 quadRefinementMaxCornerChange,
       const bool returnInvalidMarkers,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
@@ -187,7 +188,8 @@ namespace Anki
 
         VisionMarker &currentMarker = markers[iQuad];
         if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
-          decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, scratchOnchip)) != RESULT_OK)
+          decode_minContrastRatio, quadRefinementIterations, numRefinementSamples,
+          quadRefinementMaxCornerChange, scratchOnchip)) != RESULT_OK)
         {
           return lastResult;
         }
