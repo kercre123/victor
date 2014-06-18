@@ -788,6 +788,27 @@ namespace Anki
       globalIDCounter = 0;
       didBlocksChange_ = true;
     }
+    
+    void BlockWorld::ClearBlocksByType(const ObjectType_t type)
+    {
+      auto blocksWithType = existingBlocks_.find(type);
+      if(blocksWithType != existingBlocks_.end()) {
+        
+        // Erase all the visualized blocks of this type and their projected quads
+        for(auto & block : blocksWithType->second) {
+        
+          VizManager::getInstance()->EraseCuboid(block.first);
+          VizManager::getInstance()->EraseQuad(block.first);
+        }
+                
+        // Erase this entry in the map of block types
+        existingBlocks_.erase(type);
+        
+        didBlocksChange_ = true;
+      }
+      
+    } // ClearBlocksByType()
+    
 
     bool BlockWorld::ClearBlock(const BlockID_t withID)
     {

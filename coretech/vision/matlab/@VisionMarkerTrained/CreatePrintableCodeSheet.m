@@ -47,7 +47,7 @@ function CreatePrintableCodeSheet(varargin)
 %
 
 
-
+nameFilter = 'images';
 marginSpacing = 12.5;  % in mm
 codeSpacing = 10;     % in mm
 pageHeight = 8.5 * 25.4; % in mm
@@ -75,71 +75,81 @@ if ~iscell(markerImageDir)
 end    
 
 numDirs = length(markerImageDir);
-for i_dir = 1:numDirs
-    fnames = getfnames(fullfile(markerImageDir{i_dir}, upOneDir), 'images', 'useFullPath', true);
-    
-    if isempty(fnames)
-        error('No image files found in directory %s.', markerImageDir{i_dir});
-    end
-    
-    numImages = length(fnames);
-    fprintf('Found %d total images.\n', numImages);
-    
-    numImages = numImages * numPerCode;
-    fnames = repmat(fnames(:), [numPerCode 1]);
-    
-    numRows = floor( (pageHeight - 2*marginSpacing + codeSpacing)/(markerSize + codeSpacing) );
-    numCols = floor( (pageWidth  - 2*marginSpacing + codeSpacing)/(markerSize + codeSpacing) );
-    
-    if numRows*numCols < numImages
-        warning('Too many markers for the page. Will leave off %d.', numImages - numRows*numCols);
-        numImages = numRows*numCols;
-    end
-    
-    namedFigure(sprintf('VisionMarkerTrained CodeSheet %d', i_dir), ...
-        'Color', 'w', 'Units', 'centimeters');
-    
-    clf
-    
-    xcenters = linspace(marginSpacing+markerSize/2, pageWidth-marginSpacing-markerSize/2, numCols)/10;
-    ycenters = linspace(marginSpacing+markerSize/2, pageHeight-marginSpacing-markerSize/2,numRows)/10;
-    
-    [xgrid,ygrid] = meshgrid(xcenters,ycenters);
-    xgrid = xgrid';
-    ygrid = ygrid';
-    
-    h_axes = axes('Units', 'centimeters', 'Position', [0 0 pageWidth/10 pageHeight/10]); %#ok<*LAXES>
-    set(h_axes, 'XLim', [0 pageWidth/10], 'YLim', [0 pageHeight/10], 'Box', 'on');
-    hold(h_axes, 'on')
-    axis(h_axes, 'ij');
-    
-    colormap(h_axes, gray);
-    
-    for iMarker = 1:numImages
-        [img, ~, alpha] = imread(fnames{iMarker});
-        img = mean(im2double(img),3);
-        img(alpha < .5) = 1;
+fnames = cell(1,numDirs);
+for iDir = 1:numDirs
+    fnames{iDir} = getfnames(fullfile(markerImageDir{iDir}, upOneDir), nameFilter, 'useFullPath', true);
+end
+fnames = vertcat(fnames{:});
+
+if isempty(fnames)
+    error('No image files found.');
+end
+
+numImages = length(fnames);
+fprintf('Found %d total images.\n', numImages);
+   
+numImages = numImages * numPerCode;
+fnames = repmat(fnames(:), [numPerCode 1]);
+
+numRows = floor( (pageHeight - 2*marginSpacing + codeSpacing)/(markerSize + codeSpacing) );
+numCols = floor( (pageWidth  - 2*marginSpacing + codeSpacing)/(markerSize + codeSpacing) );
+
+xcenters = linspace(marginSpacing+markerSize/2, pageWidth-marginSpacing-markerSize/2, numCols)/10;
+ycenters = linspace(marginSpacing+markerSize/2, pageHeight-marginSpacing-markerSize/2,numRows)/10;
+
+[xgrid,ygrid] = meshgrid(xcenters,ycenters);
+xgrid = xgrid';
+ygrid = ygrid';
+
+%numFigures = ceil(numImages / (numRows*numCols));
+% if numRows*numCols < numImages
+%     warning('Too many markers for the page. Will leave off %d.', numImages - numRows*numCols);
+%     numImages = numRows*numCols;
+% end
+
+iFigure = 0;
+
+for iFile = 1:numImages 
+
+    if iFile > iFigure*numRows*numCols
+        iFigure = iFigure + 1;
+        namedFigure(sprintf('VisionMarkerTrained CodeSheet %d', iFigure), ...
+            'Color', 'w', 'Units', 'centimeters');
         
-        imagesc(xgrid(iMarker)+markerSize/10*[-.5 .5], ...
-            ygrid(iMarker)+markerSize/10*[-.5 .5], img);
+        clf
+    
+        h_axes = axes('Units', 'centimeters', 'Position', [0 0 pageWidth/10 pageHeight/10]); %#ok<*LAXES>
+        set(h_axes, 'XLim', [0 pageWidth/10], 'YLim', [0 pageHeight/10], 'Box', 'on');
+        hold(h_axes, 'on')
+        axis(h_axes, 'ij');
+        
+        colormap(h_axes, gray);
         
         if outsideBorderWidth > 0
-           rectangle('Position', [xgrid(iMarker)-outsideBorderWidth/20 ....
-               ygrid(iMarker)-outsideBorderWidth/20 outsideBorderWidth/10*[1 1]], ...
-               'Parent', h_axes, 'EdgeColor', [0.8 0.8 0.8], ...
-               'LineWidth', .5, 'LineStyle', ':');
+            borderStr = sprintf('%.1fmm Border, ', outsideBorderWidth);
+        else
+            borderStr = '';
         end
+        text(marginSpacing/10, marginSpacing/20, ...
+            sprintf('VisionMarkers, %.1fmm Width, %s%s', ...
+            markerSize, borderStr, datestr(now, 31)));
     end
+    
+    [img, ~, alpha] = imread(fnames{iFile});
+    img = mean(im2double(img),3);
+    img(alpha < .5) = 1;
+    
+    iPos = mod(iFile-1, numRows*numCols) + 1;
+    imagesc(xgrid(iPos)+markerSize/10*[-.5 .5], ...
+        ygrid(iPos)+markerSize/10*[-.5 .5], img);
     
     if outsideBorderWidth > 0
-        borderStr = sprintf('%.1fmm Border, ', outsideBorderWidth);
-    else
-        borderStr = '';
+        rectangle('Position', [xgrid(iPos)-outsideBorderWidth/20 ....
+            ygrid(iPos)-outsideBorderWidth/20 outsideBorderWidth/10*[1 1]], ...
+            'Parent', h_axes, 'EdgeColor', [0.8 0.8 0.8], ...
+            'LineWidth', .5, 'LineStyle', ':');
     end
-    text(marginSpacing/10, marginSpacing/20, ...
-        sprintf('%s Markers, %.1fmm Width, %s%s', ...
-        markerImageDir{i_dir}, markerSize, borderStr, datestr(now, 31)));
     
-end % FOR each directory
+end % FOR each File
 
 end % FUNCTION CreatePrintableCodeSheet
