@@ -15,7 +15,7 @@
 #define ATAN2_FAST(y,x) atan2(y,x)
 #define ATAN2_ACC(y,x) atan2(y,x)
 #elif defined CORETECH_ROBOT
-#define DEBUG_PATH_APPEND 1
+#define DEBUG_PATH_APPEND 0
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/trig_fast.h"
 #define ATAN2_FAST(y,x) atan2_fast(y,x)
