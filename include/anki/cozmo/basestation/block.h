@@ -91,10 +91,12 @@ namespace Anki {
       //static unsigned int get_numBlocks();
       
       // Accessors:
-      Point3f const& GetSize() const;
-      float          GetWidth()  const;  // X dimension
-      float          GetHeight() const;  // Z dimension
-      float          GetDepth()  const;  // Y dimension
+      const Point3f&     GetSize()   const;
+      float              GetWidth()  const;  // X dimension
+      float              GetHeight() const;  // Z dimension
+      float              GetDepth()  const;  // Y dimension
+      const std::string& GetName()   const {return _name;}
+      
       //virtual float GetMinDim() const;
       //using Vision::ObservableObjectBase<Block>::GetMinDim;
 
@@ -153,6 +155,11 @@ namespace Anki {
       // padding if desired.
       Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const;
       Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding_mm) const;
+      
+      // Visualize using VizManager.  If preDockPoseDistance > 0, pre dock poses
+      // will also be drawn
+      // TODO: make generic and put as virtual method in base class
+      void Visualize(const u32 color, const f32 preDockPoseDistance = 0.f) const;
       
     protected:
       

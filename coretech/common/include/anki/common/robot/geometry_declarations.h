@@ -82,7 +82,7 @@ namespace Anki
     }; // class Point<Type>
 
     typedef Point<float> Point2f;
-    
+
 #if 0
 #pragma mark --- 3D Point Class Declaration ---
 #endif
@@ -149,9 +149,6 @@ namespace Anki
 #endif
 
     // A rectangle is bounded by a left, right, top, and bottom
-    //
-    // WARNING:
-    // The width and height of a floating point Rectangle is different than that of an integer rectangle.
     template<typename Type> class Rectangle
     {
     public:
@@ -162,6 +159,9 @@ namespace Anki
 
       Rectangle();
 
+      // The left, right, top, and bottom coordinates are the coordinates of the cracks between the pixels.
+      // The top-left pixel's center is at (.5, .5)
+      // WARNING: The right value should not be the index of the right pixel, but one more "rightPixelIndex + 1" (i.e. the value of the edge to the right of the pixel). Likewise for the bottom value.
       Rectangle(const Type left, const Type right, const Type top, const Type bottom);
 
       Rectangle(const Rectangle<Type>& rect);
@@ -182,16 +182,12 @@ namespace Anki
 
       inline Rectangle<Type>& operator= (const Rectangle<Type> &rect2);
 
-      // WARNING:
-      // The width and height of a floating point Rectangle is different than that of an integer rectangle.
+      // right - left
       Type get_width() const;
 
-      // WARNING:
-      // The width and height of a floating point Rectangle is different than that of an integer rectangle.
+      // bottom - top
       Type get_height() const;
     }; // class Rectangle<Type>
-
-
 
 #if 0
 #pragma mark --- Pose2d Class Declaration ---
@@ -283,7 +279,7 @@ namespace Anki
       Quadrilateral<Type> operator- (const Quadrilateral<Type> &quad2) const;
 
       inline Quadrilateral<Type>& operator= (const Quadrilateral<Type> &quad2);
-      
+
       // Keeping this explicit to avoid accidental setting of quads of
       // different types
       template<typename InType> void SetCast(const Quadrilateral<InType> &quad2);

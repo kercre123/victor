@@ -10,5 +10,6 @@ void UARTPutChar(u8 c);
 void UARTPutString(const char* s);
 void UARTPutHex(u8 c);
 void UARTPutHex32(u32 value);
+void UARTPutDec(s32 value);
 
 #endif

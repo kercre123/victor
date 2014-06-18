@@ -96,6 +96,7 @@ namespace Anki
         MemoryStack bigScratch(malloc(1000000), 1000000);
         Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
         Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
+        image.Show("image", false);
         empty.Show("components orig", false);
         free(bigScratch.get_buffer());
       }
@@ -142,6 +143,7 @@ namespace Anki
 
 #ifdef SHOW_DRAWN_COMPONENTS
       {
+        CoreTechPrint("Components\n");
         MemoryStack bigScratch(malloc(1000000), 1000000);
         Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
         Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
@@ -160,12 +162,13 @@ namespace Anki
       EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
 
       // 4b. Compute a homography for each extracted quadrilateral
-      Array<f32> refinedHomography(3,3,scratchOnchip);
+      //Array<f32> refinedHomography(3,3,scratchOnchip);
       BeginBenchmark("ComputeHomographyFromQuad");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         Array<f32> &currentHomography = homographies[iQuad];
 
-        if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratchOnchip)) != RESULT_OK) {
+        bool numericalFailure;
+        if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, numericalFailure, scratchOnchip)) != RESULT_OK) {
           return lastResult;
         }
 

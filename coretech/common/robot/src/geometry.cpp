@@ -45,26 +45,6 @@ namespace Anki
       CoreTechPrint("(%f,%f)->(%f,%f) ", this->left, this->top, this->right, this->bottom);
     }
 
-    template<> f32 Rectangle<f32>::get_width() const
-    {
-      return right - left;
-    }
-
-    template<> f64 Rectangle<f64>::get_width() const
-    {
-      return right - left;
-    }
-
-    template<> f32 Rectangle<f32>::get_height() const
-    {
-      return bottom - top;
-    }
-
-    template<> f64 Rectangle<f64>::get_height() const
-    {
-      return bottom - top;
-    }
-
     template<> void Quadrilateral<f32>::Print() const
     {
       CoreTechPrint("{(%f,%f), (%f,%f), (%f,%f), (%f,%f)} ",

@@ -26,7 +26,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_49_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.1,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -433,9 +433,22 @@
 					"y_imgLowerRight": 125.9110989,
 					"x_imgLowerLeft": 122.2855946,
 					"y_imgLowerLeft": 125.7796356
+				},
+						{
+					"x_imgUpperLeft": 227.4446763,
+					"y_imgUpperLeft": 59.70708693,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 256.1013768,
+					"y_imgUpperRight": 59.64195807,
+					"x_imgLowerRight": 255.5803459,
+					"y_imgLowerRight": 88.75456061,
+					"x_imgLowerLeft": 227.4446763,
+					"y_imgLowerLeft": 88.55917401
 				}
 			],
-			"NumMarkers": 31,
+			"NumMarkers": 32,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -447,7 +460,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_50_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.2,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -854,9 +867,22 @@
 					"y_imgLowerRight": 125.9110989,
 					"x_imgLowerLeft": 122.2855946,
 					"y_imgLowerLeft": 125.7796356
+				},
+						{
+					"x_imgUpperLeft": 227.4446763,
+					"y_imgUpperLeft": 59.70708693,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 256.1013768,
+					"y_imgUpperRight": 59.64195807,
+					"x_imgLowerRight": 255.5803459,
+					"y_imgLowerRight": 88.75456061,
+					"x_imgLowerLeft": 227.4446763,
+					"y_imgLowerLeft": 88.55917401
 				}
 			],
-			"NumMarkers": 31,
+			"NumMarkers": 32,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -868,7 +894,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_51_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.3,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -1275,9 +1301,22 @@
 					"y_imgLowerRight": 125.9110989,
 					"x_imgLowerLeft": 122.2855946,
 					"y_imgLowerLeft": 125.7796356
+				},
+						{
+					"x_imgUpperLeft": 227.4446763,
+					"y_imgUpperLeft": 59.70708693,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 256.1013768,
+					"y_imgUpperRight": 59.64195807,
+					"x_imgLowerRight": 255.5803459,
+					"y_imgLowerRight": 88.75456061,
+					"x_imgLowerLeft": 227.4446763,
+					"y_imgLowerLeft": 88.55917401
 				}
 			],
-			"NumMarkers": 31,
+			"NumMarkers": 32,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1289,7 +1328,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_52_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.4,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -1696,9 +1735,22 @@
 					"y_imgLowerRight": 125.9110989,
 					"x_imgLowerLeft": 122.2855946,
 					"y_imgLowerLeft": 125.7796356
+				},
+						{
+					"x_imgUpperLeft": 227.4446763,
+					"y_imgUpperLeft": 59.70708693,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 256.1013768,
+					"y_imgUpperRight": 59.64195807,
+					"x_imgLowerRight": 255.5803459,
+					"y_imgLowerRight": 88.75456061,
+					"x_imgLowerLeft": 227.4446763,
+					"y_imgLowerLeft": 88.55917401
 				}
 			],
-			"NumMarkers": 31,
+			"NumMarkers": 32,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -1710,7 +1762,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_53_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.5,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -2117,9 +2169,22 @@
 					"y_imgLowerRight": 125.9110989,
 					"x_imgLowerLeft": 122.2855946,
 					"y_imgLowerLeft": 125.7796356
+				},
+						{
+					"x_imgUpperLeft": 227.4446763,
+					"y_imgUpperLeft": 59.70708693,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 256.1013768,
+					"y_imgUpperRight": 59.64195807,
+					"x_imgLowerRight": 255.5803459,
+					"y_imgLowerRight": 88.75456061,
+					"x_imgLowerLeft": 227.4446763,
+					"y_imgLowerLeft": 88.55917401
 				}
 			],
-			"NumMarkers": 31,
+			"NumMarkers": 32,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -2131,7 +2196,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_54_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.6,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -2538,9 +2603,22 @@
 					"y_imgLowerRight": 125.9110989,
 					"x_imgLowerLeft": 122.2855946,
 					"y_imgLowerLeft": 125.7796356
+				},
+						{
+					"x_imgUpperLeft": 227.4446763,
+					"y_imgUpperLeft": 59.70708693,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 256.1013768,
+					"y_imgUpperRight": 59.64195807,
+					"x_imgLowerRight": 255.5803459,
+					"y_imgLowerRight": 88.75456061,
+					"x_imgLowerLeft": 227.4446763,
+					"y_imgLowerLeft": 88.55917401
 				}
 			],
-			"NumMarkers": 31,
+			"NumMarkers": 32,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -2552,7 +2630,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_55_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.7,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -2959,9 +3037,22 @@
 					"y_imgLowerRight": 125.9110989,
 					"x_imgLowerLeft": 122.2855946,
 					"y_imgLowerLeft": 125.7796356
+				},
+						{
+					"x_imgUpperLeft": 227.4446763,
+					"y_imgUpperLeft": 59.70708693,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 256.1013768,
+					"y_imgUpperRight": 59.64195807,
+					"x_imgLowerRight": 255.5803459,
+					"y_imgLowerRight": 88.75456061,
+					"x_imgLowerLeft": 227.4446763,
+					"y_imgLowerLeft": 88.55917401
 				}
 			],
-			"NumMarkers": 31,
+			"NumMarkers": 32,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -2973,7 +3064,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_56_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.8,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -3380,9 +3471,22 @@
 					"y_imgLowerRight": 125.9110989,
 					"x_imgLowerLeft": 122.2855946,
 					"y_imgLowerLeft": 125.7796356
+				},
+						{
+					"x_imgUpperLeft": 227.4446763,
+					"y_imgUpperLeft": 59.70708693,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 256.1013768,
+					"y_imgUpperRight": 59.64195807,
+					"x_imgLowerRight": 255.5803459,
+					"y_imgLowerRight": 88.75456061,
+					"x_imgLowerLeft": 227.4446763,
+					"y_imgLowerLeft": 88.55917401
 				}
 			],
-			"NumMarkers": 31,
+			"NumMarkers": 32,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -3394,7 +3498,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_57_frame0.png",
 			"Scene": {
 				"CameraExposure": 0.9,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -3801,9 +3905,22 @@
 					"y_imgLowerRight": 125.9110989,
 					"x_imgLowerLeft": 122.2855946,
 					"y_imgLowerLeft": 125.7796356
+				},
+						{
+					"x_imgUpperLeft": 227.4446763,
+					"y_imgUpperLeft": 59.70708693,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 256.1013768,
+					"y_imgUpperRight": 59.64195807,
+					"x_imgLowerRight": 255.5803459,
+					"y_imgLowerRight": 88.75456061,
+					"x_imgLowerLeft": 227.4446763,
+					"y_imgLowerLeft": 88.55917401
 				}
 			],
-			"NumMarkers": 31,
+			"NumMarkers": 32,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -3815,7 +3932,7 @@
 			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_04_time16_54_58_frame0.png",
 			"Scene": {
 				"CameraExposure": 1,
-				"Distance": 2500,
+				"Distance": 250,
 				"angle": 0,
 				"light": 1
 			},
@@ -4222,9 +4339,22 @@
 					"y_imgLowerRight": 125.9110989,
 					"x_imgLowerLeft": 122.2855946,
 					"y_imgLowerLeft": 125.7796356
+				},
+						{
+					"x_imgUpperLeft": 227.4446763,
+					"y_imgUpperLeft": 59.70708693,
+					"Name": "MessageVisionMarker",
+					"markerType": "MARKER_IGNORE",
+					"timestamp": 0,
+					"x_imgUpperRight": 256.1013768,
+					"y_imgUpperRight": 59.64195807,
+					"x_imgLowerRight": 255.5803459,
+					"y_imgLowerRight": 88.75456061,
+					"x_imgLowerLeft": 227.4446763,
+					"y_imgLowerLeft": 88.55917401
 				}
 			],
-			"NumMarkers": 31,
+			"NumMarkers": 32,
 					"RobotPose": {
 				"Angle": 0,
 				"Axis": [1,0,0],
@@ -4232,5 +4362,7 @@
 				"Translation": [0,0,0]
 			}
 		}
-	]
+	],
+	"NumMarkersWithContext": 32,
+	"NumPartialMarkersWithContext": 8
 }

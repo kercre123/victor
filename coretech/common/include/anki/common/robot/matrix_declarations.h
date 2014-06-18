@@ -117,6 +117,7 @@ namespace Anki
         const FixedLengthList<Point<Type> > &originalPoints,    //!< Four points in the original coordinate system
         const FixedLengthList<Point<Type> > &transformedPoints, //!< Four points in the transformed coordinate system
         Array<Type> &homography, //!< A 3x3 transformation matrix
+        bool &numericalFailure, //!< Did the homography solver fail?
         MemoryStack scratch //!< Scratch memory
         );
 
