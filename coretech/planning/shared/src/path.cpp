@@ -531,8 +531,23 @@ namespace Anki
       Clear();
     }
 
-    Path::Path(const Path& other) : Path()
+    Path::Path(const Path& other)
     {
+      capacity_ = MAX_NUM_PATH_SEGMENTS;
+
+#if CORETECH_ROBOT
+  #if defined CORETECH_BASESTATION
+  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
+  #endif
+      path_ = __pathSegmentStackForRobot;
+#elif defined CORETECH_BASESTATION
+      path_ = new PathSegment[MAX_NUM_PATH_SEGMENTS];
+#else
+#error "one of CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
+#endif
+
+      Clear();
+
       *this = other;
     }
 
