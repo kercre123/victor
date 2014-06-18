@@ -333,12 +333,13 @@ namespace Anki {
           
         case WAITING_TO_SEE_DICE:
         {
-          
+          /*
           // DEBUG!!!
           blockToPickUp_ = Block::NUMBER5_BLOCK_TYPE;
           blockToPlaceOn_ = Block::NUMBER6_BLOCK_TYPE;
           state_ = BEGIN_EXPLORING;
           break;
+          */
           
           // Wait for robot to be IDLE
           if(robot_->GetState() == Robot::IDLE)
