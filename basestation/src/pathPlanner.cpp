@@ -25,7 +25,9 @@ namespace Anki {
     
     PathPlanner::PathPlanner() {}
 
-    Result PathPlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose)
+    IPathPlanner::EPlanStatus PathPlanner::GetPlan(Planning::Path &path,
+                                                   const Pose3d &startPose,
+                                                   const Pose3d &targetPose)
     {
       Vec3f startPt = startPose.get_translation();
       f32 startAngle = startPose.get_rotationAngle<'Z'>().ToFloat(); // Assuming robot is not tilted
@@ -42,7 +44,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_start",
                           "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)\n",
                           rotAxis.x(), rotAxis.y(), rotAxis.z());
-        return RESULT_FAIL;
+        return PLAN_NEEDED_BUT_START_FAILURE;
       }
       if (FLT_NEAR(rotAxis.z(), -1.f)) {
         startAngle *= -1;
@@ -61,7 +63,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_target",
                           "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)\n",
                           rotAxis.x(), rotAxis.y(), rotAxis.z());
-        return RESULT_FAIL;
+        return PLAN_NEEDED_BUT_GOAL_FAILURE;
       }
       if (FLT_NEAR(rotAxis.z(), -1.f)) {
         targetAngle *= -1;
@@ -76,10 +78,10 @@ namespace Anki {
                                        std::min(DUBINS_END_RADIUS_MM, dubinsRadius),
                                        DUBINS_TARGET_SPEED_MMPS, DUBINS_ACCEL_MMPS2, DUBINS_DECEL_MMPS2) == 0) {
         PRINT_NAMED_INFO("GetPlan.NoPathFound", "Could not generate Dubins path (startPose %f %f %f, targetPose %f %f %f)\n", startPt.x(), startPt.y(), startAngle, targetPt.x(), targetPt.y(), targetAngle);
-        return RESULT_FAIL;
+        return PLAN_NEEDED_BUT_PLAN_FAILURE;
       }
 
-      return RESULT_OK;
+      return DID_PLAN;
     }
     
     

@@ -151,9 +151,9 @@ namespace Anki {
             if(_world->DidBlocksChange())
             {
               Planning::Path newPath;
-              switch(_pathPlanner->ReplanIfNeeded(newPath, GetPose(), _forceReplanOnNextWorldChange))
+              switch(_pathPlanner->GetPlan(newPath, GetPose(), _forceReplanOnNextWorldChange))
               {
-                case IPathPlanner::DID_REPLAN:
+                case IPathPlanner::DID_PLAN:
                 {
                   // clear path, but flag that we are replanning
                   ClearPath();
@@ -169,9 +169,9 @@ namespace Anki {
                   PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
                   SendExecutePath(_path);
                   break;
-                } // case DID_REPLAN:
+                } // case DID_PLAN:
                   
-                case IPathPlanner::REPLAN_NEEDED_BUT_GOAL_FAILURE:
+                case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
                 {
                   ClearPath();
                   if(_nextState == BEGIN_DOCKING) {
@@ -184,16 +184,16 @@ namespace Anki {
                     SetState(IDLE);
                   }
                   break;
-                } // REPLAN_NEEDED_BUT_GOAL_FAILURE:
+                } // PLAN_NEEDED_BUT_GOAL_FAILURE:
                   
-                case IPathPlanner::REPLAN_NEEDED_BUT_START_FAILURE:
+                case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
                 {
                   PRINT_NAMED_INFO("Robot.Update.NewStartForReplanNeeded",
                                    "Replan failed during docking due to bad start. Will try again, and hope robot moves.");
                   break;
                 }
 
-                case IPathPlanner::REPLAN_NEEDED_BUT_PLAN_FAILURE:
+                case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
                 {
                   PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
                                    "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.");
@@ -207,7 +207,7 @@ namespace Anki {
                   break;
                 }
                   
-              } // switch(ReplanIfNeeded()
+              } // switch(GetPlan())
             } // if blocks changed
 
             pdo_->Update(GetCurrPathSegment());
@@ -398,17 +398,12 @@ namespace Anki {
         
     Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
     {
-      
-      Result res = _pathPlanner->GetPlan(path, GetPose(), targetPose);
-      
-      // // TODO: Make some sort of ApplySpeedProfile() function.
-      // //       Currently, we just set the speed of last segment to something slow.
-      // if (res == RESULT_OK) {
-      //   path[path.GetNumSegments()-1].SetTargetSpeed(20);
-      //   path[path.GetNumSegments()-1].SetDecel(100);
-      // }
-      
-      return res;
+      IPathPlanner::EPlanStatus status = _pathPlanner->GetPlan(path, GetPose(), targetPose);
+
+      if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
+        return RESULT_OK;
+      else
+        return RESULT_FAIL;
     }
     
     Result Robot::ExecutePathToPose(const Pose3d& pose)
@@ -761,6 +756,7 @@ namespace Anki {
       // Send start path execution message
       MessageExecutePath m;
       m.pathID = 0;
+      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message");
       return _msgHandler->SendMessage(_ID, m);
     }
     
