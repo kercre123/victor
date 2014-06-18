@@ -87,11 +87,6 @@ namespace Anki {
         // Whether or not we're already following the block surface normal as a path
         bool followingBlockNormalPath_ = false;
         
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
-        // Last received good block pose for docking
-        Embedded::Point3<f32> lastGoodMarkerPt;
-#endif
-        
         // The pose of the robot at the start of docking.
         // While block tracking is maintained the robot follows
         // a path from this initial pose to the docking pose.
@@ -218,13 +213,6 @@ namespace Anki {
             // TODO: Get tracker to detect these situations and not even send the error message here.
             if (dockMsg.x_distErr > 0 && ABS(dockMsg.angleErr) < 0.75*PIDIV2_F) {
              
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
-              // Update last received good marker position
-              lastGoodMarkerPt.x = dockMsg.x_distErr;
-              lastGoodMarkerPt.y = dockMsg.y_horErr;
-              lastGoodMarkerPt.z = dockMsg.z_height;
-#endif  // #if(ALT_HIGH_BLOCK_DOCK_METHOD)
-              
               // Set relative block pose to start/continue docking
               SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
 
@@ -562,14 +550,6 @@ namespace Anki {
         success_ = false;
       }
       
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
-      const Embedded::Point3<f32>& GetLastGoodMarkerPt()
-      {
-        return lastGoodMarkerPt;
-      }
-#endif
-      
-
       } // namespace DockingController
     } // namespace Cozmo
   } // namespace Anki
