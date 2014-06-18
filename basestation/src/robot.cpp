@@ -133,6 +133,8 @@ namespace Anki {
     
     void Robot::Update(void)
     {
+      static bool wasTraversingPath = false;
+      
       switch(_state)
       {
         case IDLE:
@@ -143,8 +145,6 @@ namespace Anki {
           
         case FOLLOWING_PATH:
         {
-          static bool wasTraversingPath = false;
-          
           if(IsTraversingPath())
           {
             // If the robot is traversing a path, consider replanning it
