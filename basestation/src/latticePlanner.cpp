@@ -112,6 +112,8 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
     return RESULT_FAIL;
   }
 
+  impl_->totalPlan_ = impl_->planner_.GetPlan();
+
   path.Clear();
   impl_->env_.AppendToPath(impl_->planner_.GetPlan(), path);
 
