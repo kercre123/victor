@@ -26,6 +26,8 @@
 
 #define DEBUG_REPLAN_CHECKS 0
 
+#define LATTICE_PLANNER_MAX_EXPANSIONS 100000
+
 namespace Anki {
 namespace Cozmo {
 
@@ -182,7 +184,7 @@ LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
              lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,
              impl_->planner_.GetGoal().x_mm, impl_->planner_.GetGoal().y_mm, impl_->planner_.GetGoal().theta);
 
-      if(!impl_->planner_.ComputePath()) {
+      if(!impl_->planner_.Replan(LATTICE_PLANNER_MAX_EXPANSIONS)) {
         printf("plan failed during replanning!\n");
         return PLAN_NEEDED_BUT_PLAN_FAILURE; 
       }
