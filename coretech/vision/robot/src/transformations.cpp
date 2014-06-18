@@ -694,7 +694,9 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(AreValid(homography, scratch),
           RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "Invalid objects");
 
-        CoreTechPrint("isConvex: %d\n", quad.IsConvex());
+        if(!quad.IsConvex()) {
+          AnkiWarn("ComputeHomographyFromQuad", "Quad is not convex!\n");
+        }
 
         FixedLengthList<Point<f32> > originalPoints(4, scratch);
         FixedLengthList<Point<f32> > transformedPoints(4, scratch);
