@@ -70,6 +70,9 @@ namespace Anki
       // Clears all existing blocks in the world
       void ClearAllExistingBlocks();
       
+      // Clear all blocks with the specified type
+      void ClearBlocksByType(const ObjectType_t type);
+      
       // Clear a block with a specific ID. Returns true if block with that ID
       // is found and cleared, false otherwise.
       bool ClearBlock(const BlockID_t withID);
