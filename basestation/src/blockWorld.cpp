@@ -800,10 +800,7 @@ namespace Anki
           VizManager::getInstance()->EraseCuboid(block.first);
           VizManager::getInstance()->EraseQuad(block.first);
         }
-        
-        // Clear the entire container of blocks of this type
-        blocksWithType->second.clear();
-        
+                
         // Erase this entry in the map of block types
         existingBlocks_.erase(type);
         
