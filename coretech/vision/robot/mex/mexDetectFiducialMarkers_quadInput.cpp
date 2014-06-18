@@ -25,6 +25,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
+  // TODO: make this a parameter?
+  const f32 quadRefinementMaxCornerChange = 2.f;
   const s32 bufferSize = 10000000;
 
   AnkiConditionalErrorAndReturn(nrhs == 6 && nlhs >= 2 && nlhs <= 4, "mexDetectFiducialMarkers_quadInput", "Call this function as following: [quads, markerTypes, <markerNames>, <markerValidity>] = mexDetectFiducialMarkers_quadInput(uint8(image), quadsCellArray, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);");
@@ -32,11 +34,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDetectFiducialMarkers_quadInput", "Memory could not be allocated");
 
-  Array<u8>  image                   = mxArrayToArray<u8>(prhs[0], memory);
-  Array<Array<f64> > quadsF64        = mxCellArrayToArray<f64>(prhs[1], memory);
-  const f32 decode_minContrastRatio  = static_cast<f32>(mxGetScalar(prhs[2]));
-  const s32 quadRefinementIterations = static_cast<s32>(mxGetScalar(prhs[3]));
-  const s32 numRefinementSamples     = static_cast<s32>(mxGetScalar(prhs[4]));
+  Array<u8>  image                        = mxArrayToArray<u8>(prhs[0], memory);
+  Array<Array<f64> > quadsF64             = mxCellArrayToArray<f64>(prhs[1], memory);
+  const f32 decode_minContrastRatio       = static_cast<f32>(mxGetScalar(prhs[2]));
+  const s32 quadRefinementIterations      = static_cast<s32>(mxGetScalar(prhs[3]));
+  const s32 numRefinementSamples          = static_cast<s32>(mxGetScalar(prhs[4]));
+  //const f32 quadRefinementMaxCornerChange = static_cast<f32>(mxGetScalar(prhs[5]));
   const bool returnInvalidMarkers    = static_cast<bool>(Round<s32>(mxGetScalar(prhs[5])));
 
   AnkiConditionalErrorAndReturn(image.IsValid(), "mexDetectFiducialMarkers_quadInput", "Could not allocate image");
@@ -95,7 +98,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     VisionMarker &currentMarker = markers[iQuad];
     if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
-      decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, memory)) != Anki::RESULT_OK)
+      decode_minContrastRatio, quadRefinementIterations, numRefinementSamples,
+      quadRefinementMaxCornerChange, memory)) != Anki::RESULT_OK)
     {
       return;
     }
