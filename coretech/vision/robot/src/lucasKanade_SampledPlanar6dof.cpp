@@ -558,17 +558,19 @@ namespace Anki
                       "Out of memory allocating magnitudeImageNLMS.\n");
                     magnitudeImageNLMS.SetZero();
                     s32 nonZeroCount = 0;
+#if SAMPLE_TOP_HALF_ONLY
+                    for(s32 i=1; i<(numPointsY/2)-1; ++i) {
+#else
                     for(s32 i=1; i<numPointsY-1; ++i) {
+#endif
                       const f32 * restrict mag_iPrev = magnitudeImage.Pointer(i-1,0); // prev
                       const f32 * restrict mag_i     = magnitudeImage.Pointer(i,0);
                       const f32 * restrict mag_iNext = magnitudeImage.Pointer(i+1,0); // next
 
                       bool * restrict magNLMS_i = magnitudeImageNLMS.Pointer(i,0);
-#if SAMPLE_TOP_HALF_ONLY
-                      for(s32 j=1; j<(numPointsX/2)-1; ++j) {
-#else
+
                       for(s32 j=1; j<numPointsX-1; ++j) {
-#endif
+
                         const f32 mag      = mag_i[j];
                         const f32 magLeft  = mag_i[j-1];
                         const f32 magRight = mag_i[j+1];
@@ -719,21 +721,21 @@ namespace Anki
             // the samples on only one half.
             const f32 outerInc = 0.5f*templateWidth_mm / static_cast<f32>(numFiducialSamplesPerEdge-1);
             const f32 innerInc = 0.5f*innerTemplateWidth / static_cast<f32>(numFiducialSamplesPerEdge-1);
-            
-            // And concentrate twice as many samples on the top line
-            TemplateSample * restrict pOuterTop = this->templateSamplePyramid[iScale].Pointer(0);
-            TemplateSample * restrict pInnerTop = this->templateSamplePyramid[iScale].Pointer(3*numFiducialSamplesPerEdge);
-            //TemplateSample * restrict pInnerBtm = this->templateSamplePyramid[iScale].Pointer(3*numFiducialSamplesPerEdge);
-            //TemplateSample * restrict pOuterBtm = this->templateSamplePyramid[iScale].Pointer(numFiducialSamplesPerEdge);
+
+            // And concentrate twice as many samples on the top line (by
+            // splitting in half and using "top" to point to the left side and
+            // and "bottom" to point to the right)
+            const f32 signFlip = -1.f;
 #else
             const f32 outerInc = templateWidth_mm / static_cast<f32>(numFiducialSamplesPerEdge-1);
             const f32 innerInc = innerTemplateWidth / static_cast<f32>(numFiducialSamplesPerEdge-1);
-            
+            const f32 signFlip = 1.f;
+#endif
             TemplateSample * restrict pOuterTop = this->templateSamplePyramid[iScale].Pointer(0);
+            TemplateSample * restrict pOuterBtm = this->templateSamplePyramid[iScale].Pointer(1*numFiducialSamplesPerEdge);
             TemplateSample * restrict pInnerTop = this->templateSamplePyramid[iScale].Pointer(2*numFiducialSamplesPerEdge);
             TemplateSample * restrict pInnerBtm = this->templateSamplePyramid[iScale].Pointer(3*numFiducialSamplesPerEdge);
-            TemplateSample * restrict pOuterBtm = this->templateSamplePyramid[iScale].Pointer(numFiducialSamplesPerEdge);
-#endif
+
             TemplateSample * restrict pOuterLeft  = this->templateSamplePyramid[iScale].Pointer(4*numFiducialSamplesPerEdge);
             TemplateSample * restrict pOuterRight = this->templateSamplePyramid[iScale].Pointer(5*numFiducialSamplesPerEdge);
             TemplateSample * restrict pInnerLeft  = this->templateSamplePyramid[iScale].Pointer(6*numFiducialSamplesPerEdge);
@@ -753,17 +755,15 @@ namespace Anki
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
 
-#if !SAMPLE_TOP_HALF_ONLY
-            pOuterBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, outer, templateHalfWidth,
-              -derivMagnitude, derivMagnitude,
+            pOuterBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfWidth*signFlip,
+              -derivMagnitude, derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
       
-            pInnerBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, inner, innerTemplateHalfWidth,
-              derivMagnitude, -derivMagnitude,
+            pInnerBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfWidth*signFlip,
+              derivMagnitude, -derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
-#endif
             
             // Left/Right Edges' Top Corners:
             pOuterLeft[0]  = ComputeTemplateSample(fiducialSampleGrayValue, -templateHalfWidth, outer,
@@ -802,19 +802,17 @@ namespace Anki
                 0.f, derivMagnitude,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
-
-#if !SAMPLE_TOP_HALF_ONLY
-              pOuterBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, outer, templateHalfWidth,
-                0.f, derivMagnitude,
-                currentH, dR_dtheta,
-                this->focalLength_x, this->focalLength_y, curAtA);
-
-              pInnerBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, inner, innerTemplateHalfWidth,
-                0.f, -derivMagnitude,
-                currentH, dR_dtheta,
-                this->focalLength_x, this->focalLength_y, curAtA);
-#endif
               
+              pOuterBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfWidth*signFlip,
+                0.f, derivMagnitude*signFlip,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
+
+              pInnerBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfWidth*signFlip,
+                0.f, -derivMagnitude*signFlip,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
+
               // Left / Right Edges
               pOuterLeft[iSample]  = ComputeTemplateSample(fiducialSampleGrayValue, -templateHalfWidth, outer,
                 -derivMagnitude, 0.f,
@@ -838,27 +836,27 @@ namespace Anki
             } // for each interior point
 
             // Top/Bottom Edges' Right Corners:
+
             pInnerTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner, -innerTemplateHalfWidth,
-               -derivMagnitude, -derivMagnitude,
+               -derivMagnitude, derivMagnitude,
                currentH, dR_dtheta,
                this->focalLength_x, this->focalLength_y, curAtA);
 
             pOuterTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer, -templateHalfWidth,
-              derivMagnitude, derivMagnitude,
+              derivMagnitude, -derivMagnitude,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
 
-#if !SAMPLE_TOP_HALF_ONLY
-            pInnerBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner, innerTemplateHalfWidth,
-              -derivMagnitude, -derivMagnitude,
+            pInnerBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfWidth*signFlip,
+              -derivMagnitude, -derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
-
-            pOuterBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer, templateHalfWidth,
-              derivMagnitude, derivMagnitude,
+            
+            pOuterBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfWidth*signFlip,
+              derivMagnitude, derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
-
+      
             // Left / Right Edges' Bottom Corners
             pOuterLeft[numFiducialSamplesPerEdge-1]  = ComputeTemplateSample(fiducialSampleGrayValue, -templateHalfWidth, outer,
               -derivMagnitude, derivMagnitude,
@@ -879,7 +877,6 @@ namespace Anki
               -derivMagnitude, -derivMagnitude,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
-#endif
           } // if(numFiducialSquareSamples > 0)
 
           // All interior and fiducial square samples completed, each of which
