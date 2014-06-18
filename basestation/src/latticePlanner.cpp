@@ -24,6 +24,8 @@
 #define LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK ROBOT_BOUNDING_RADIUS
 #define LATTICE_PLANNER_BOUNDING_DISTANCE ROBOT_BOUNDING_RADIUS + 5.0
 
+#define DEBUG_REPLAN_CHECKS 0
+
 namespace Anki {
 namespace Cozmo {
 
@@ -268,16 +270,19 @@ LatticePlanner::EReplanStatus LatticePlanner::ReplanIfNeeded(Planning::Path &pat
     return DID_REPLAN;
   }
   else {
+#if DEBUG_REPLAN_CHECKS
     using namespace std;
     if(validOldPlan.Size() > 0) {
-      cout<<"LatticePlanner: safely checked plan from "<<validOldPlan.start_<<" to "
+      cout<<"LatticePlanner: safely checked plan starting at action "<<planIdx<<" from "<<validOldPlan.start_<<" to "
           <<impl_->env_.GetPlanFinalState(validOldPlan)<< " goal = "<<impl_->planner_.GetGoal()
           <<" ("<<validOldPlan.Size()
-          <<" actions, totalPlan_.Size = "<<impl_->totalPlan_.Size()<<")\n";
+          <<" valid actions, totalPlan_.Size = "<<impl_->totalPlan_.Size()<<")\n";
+      cout<<"There are "<<impl_->env_.GetNumObstacles()<<" obstacles\n";
     }
     else {
       printf("LatticePlanner: Plan safe, but validOldPlan is empty\n");
     }
+#endif
   }
 
   return REPLAN_NOT_NEEDED;
