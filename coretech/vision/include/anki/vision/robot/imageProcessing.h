@@ -682,7 +682,7 @@ namespace Anki
 
             const s32 filterWidthSimdMax = RoundDown<s32>(filterWidth, 8);
             for(s32 xFilter=0; xFilter<filterWidthSimdMax; xFilter+=8, xImage+=8) {
-#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+              //#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
               const IntermediateType toAdd0 = static_cast<IntermediateType>(pPaddedImage[xImage]   * pFilter[xFilter]);
               const IntermediateType toAdd1 = static_cast<IntermediateType>(pPaddedImage[xImage+1] * pFilter[xFilter+1]);
               const IntermediateType toAdd2 = static_cast<IntermediateType>(pPaddedImage[xImage+2] * pFilter[xFilter+2]);
@@ -693,22 +693,23 @@ namespace Anki
               const IntermediateType toAdd7 = static_cast<IntermediateType>(pPaddedImage[xImage+7] * pFilter[xFilter+7]);
 
               sum += toAdd0 + toAdd1 + toAdd2 + toAdd3 + toAdd4 + toAdd5 + toAdd6 + toAdd7;
-#else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
-              const u32 image01 = *reinterpret_cast<const u32*>(&pPaddedImage[xImage]);
-              const u32 image23 = *reinterpret_cast<const u32*>(&pPaddedImage[xImage + 2]);
-              const u32 image45 = *reinterpret_cast<const u32*>(&pPaddedImage[xImage + 4]);
-              const u32 image67 = *reinterpret_cast<const u32*>(&pPaddedImage[xImage + 6]);
-
-              const u32 filter01 = *reinterpret_cast<const u32*>(&pFilter[xFilter]);
-              const u32 filter23 = *reinterpret_cast<const u32*>(&pFilter[xFilter + 2]);
-              const u32 filter45 = *reinterpret_cast<const u32*>(&pFilter[xFilter + 4]);
-              const u32 filter67 = *reinterpret_cast<const u32*>(&pFilter[xFilter + 6]);
-
-              sum = __SMLAD(image01, filter01, sum);
-              sum = __SMLAD(image23, filter23, sum);
-              sum = __SMLAD(image45, filter45, sum);
-              sum = __SMLAD(image67, filter67, sum);
-#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
+              //#else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+              //              // TODO: make work for any template type, and so Keil doesn't merge loads
+              //              const u32 image01 = *reinterpret_cast<const u32*>(&pPaddedImage[xImage]);
+              //              const u32 image23 = *reinterpret_cast<const u32*>(&pPaddedImage[xImage + 2]);
+              //              const u32 image45 = *reinterpret_cast<const u32*>(&pPaddedImage[xImage + 4]);
+              //              const u32 image67 = *reinterpret_cast<const u32*>(&pPaddedImage[xImage + 6]);
+              //
+              //              const u32 filter01 = *reinterpret_cast<const u32*>(&pFilter[xFilter]);
+              //              const u32 filter23 = *reinterpret_cast<const u32*>(&pFilter[xFilter + 2]);
+              //              const u32 filter45 = *reinterpret_cast<const u32*>(&pFilter[xFilter + 4]);
+              //              const u32 filter67 = *reinterpret_cast<const u32*>(&pFilter[xFilter + 6]);
+              //
+              //              sum = __SMLAD(image01, filter01, sum);
+              //              sum = __SMLAD(image23, filter23, sum);
+              //              sum = __SMLAD(image45, filter45, sum);
+              //              sum = __SMLAD(image67, filter67, sum);
+              //#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
             }
 
             for(s32 xFilter=filterWidthSimdMax; xFilter<filterWidth; xFilter++) {
