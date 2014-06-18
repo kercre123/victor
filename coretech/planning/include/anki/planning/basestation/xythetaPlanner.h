@@ -15,6 +15,8 @@
 
 #include <stddef.h>
 
+#define DEFUALT_MAX_EXPANSIONS 1000000
+
 namespace Anki
 {
 namespace Planning
@@ -56,10 +58,7 @@ public:
   // false otherwise. Note that replanning may or may not actually
   // trigger the planner. E.g. if the environment hasn't changed
   // (much), it may just use the same path
-  bool Replan();  
-
-  // TEMP: for compatibility
-  bool ComputePath() {Replan(); return true;}
+  bool Replan(unsigned int maxExpansions = DEFUALT_MAX_EXPANSIONS);  
 
   // must call compute path before getting the plan
   xythetaPlan& GetPlan();

@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     State_c goal(atof(argv[3]), atof(argv[4]), atof(argv[5]));
 
     planner.SetGoal(goal);
-    planner.ComputePath();
+    planner.Replan();
 
     writePath("path.txt", env, planner.GetPlan());
     cout<<"done! check path.txt\n";
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
     planner.SetStart(start);
     // planner.AllowFreeTurnInPlaceAtGoal();
 
-    planner.ComputePath();
+    planner.Replan();
 
     assert(env.PlanIsSafe(planner.GetPlan(), 0));
 
