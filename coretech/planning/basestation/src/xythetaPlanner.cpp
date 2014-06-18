@@ -64,6 +64,11 @@ xythetaPlan& xythetaPlanner::GetPlan()
   return _impl->plan_;
 }
 
+Cost xythetaPlanner::GetFinalCost() const
+{
+  return _impl->finalCost_;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // implementation functions
 ////////////////////////////////////////////////////////////////////////////////
@@ -163,6 +168,8 @@ void xythetaPlannerImpl::Reset()
 
   goalChanged_ = false;
   fromScratch_ = false;
+
+  finalCost_ = 0.0f;
 }
 
 bool xythetaPlannerImpl::NeedsReplan() const
@@ -202,7 +209,8 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
     StateID sid = open_.pop();
     if(sid == goalID_) {
       foundGoal = true;
-      printf("expanded goal! cost = %f\n", table_[sid].g_);
+      finalCost_ = table_[sid].g_;
+      printf("expanded goal! cost = %f\n", finalCost_);
       break;
     }
 
@@ -261,10 +269,10 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
   
   SuccessorIterator it = env_.GetSuccessors(currID, currG);
 
-  if(!it.Done())
-    it.Next();
+  if(!it.Done(env_))
+    it.Next(env_);
 
-  while(!it.Done()) {
+  while(!it.Done(env_)) {
     considerations_++;
 
     StateID nextID = it.Front().stateID;
@@ -297,7 +305,7 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
       }
     }
 
-    it.Next();    
+    it.Next(env_);    
   }
 
   table_[currID].closedIter_ = searchNum_;

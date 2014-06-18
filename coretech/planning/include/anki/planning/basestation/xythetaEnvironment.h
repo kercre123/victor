@@ -1,14 +1,14 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 
+#include "anki/common/basestation/math/quad.h"
+#include "anki/planning/shared/path.h"
 #include "json/json-forwards.h"
+#include "xythetaPlanner_definitions.h"
 #include <assert.h>
 #include <math.h>
 #include <string>
 #include <vector>
-#include "anki/planning/shared/path.h"
-
-#include "anki/common/basestation/math/quad.h"
 
 namespace Anki
 {
@@ -30,9 +30,11 @@ namespace Planning
 #define MAX_XY_BITS 14
 #define INVALID_ACTION_ID 255
 
+#define MAX_OBSTACLE_COST 1000.0f
+#define FATAL_OBSTACLE_COST (MAX_OBSTACLE_COST + 1.0f)
+
 typedef uint8_t StateTheta;
 typedef int16_t StateXY;
-typedef float Cost;
 typedef uint8_t ActionID;
 
 class xythetaEnvironment;
@@ -150,12 +152,12 @@ public:
   SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG);
 
   // Returns true if there are no more results left
-  bool Done() const;
+  bool Done(const xythetaEnvironment& env) const;
 
   // Returns the next action results pair
   inline const Successor& Front() const {return nextSucc_;}
 
-  void Next();
+  void Next(const xythetaEnvironment& env);
 
 private:
 
@@ -167,9 +169,6 @@ private:
   ActionID nextAction_;
 
   Successor nextSucc_;
-
-  const std::vector<MotionPrimitive>& motionPrimitives_;
-  const std::vector<RotatedRectangle>& obstacles_;
 };
 
 // TODO:(bn) move some of these to seperate files
@@ -234,8 +233,10 @@ public:
   // Imports motion primitives from the given json file. Returns true if success
   bool ReadMotionPrimitives(const char* mprimFilename);
 
-  void AddObstacle(const RotatedRectangle& rect);
-  void AddObstacle(const Quad2f& quad);
+  // defaults to a fatal obstacle
+  void AddObstacle(const RotatedRectangle& rect, Cost cost = FATAL_OBSTACLE_COST);
+  void AddObstacle(const Quad2f& quad, Cost cost = FATAL_OBSTACLE_COST);
+
   void ClearObstacles();
 
   size_t GetNumObstacles() const;
@@ -288,7 +289,7 @@ public:
   // returns the raw underlying motion primitive. Note that it is centered at (0,0)
   const MotionPrimitive& GetRawMotionPrimitive(StateTheta theta, ActionID action) const;
 
-  // Returns true if there is a collision at the given state
+  // Returns true if there is a collision at the given state (hard or soft collision with any penalty)
   bool IsInCollision(State s) const;
   bool IsInCollision(State_c c) const;
 
@@ -365,8 +366,8 @@ private:
   // First index is starting angle, second is prim ID
   std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
 
-  // Obstacles
-  std::vector<RotatedRectangle> obstacles_;
+  // Obstacles. Cost over MAX_OBSTACLE_COST means infinite cost (aka hard obstacle)
+  std::vector< std::pair<const RotatedRectangle, Cost> > obstacles_;
 
   // index is actionID
   std::vector<ActionType> actionTypes_;

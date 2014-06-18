@@ -91,59 +91,59 @@ GTEST_TEST(TestEnvironment, SuccessorsFromZero)
 
   SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), 0.0);
 
-  EXPECT_FALSE(it.Done());
-  it.Next();
+  EXPECT_FALSE(it.Done(env));
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 0);
   EXPECT_EQ(it.Front().stateID.x, 1);
   EXPECT_EQ(it.Front().stateID.y, 0);
   EXPECT_EQ(it.Front().stateID.theta, 0);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 1);
   EXPECT_EQ(it.Front().stateID.x, 5);
   EXPECT_EQ(it.Front().stateID.y, 0);
   EXPECT_EQ(it.Front().stateID.theta, 0);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 2);
   EXPECT_EQ(it.Front().stateID.x, 5);
   EXPECT_EQ(it.Front().stateID.y, 1);
   EXPECT_EQ(it.Front().stateID.theta, 1);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 3);
   EXPECT_EQ(it.Front().stateID.x, 5);
   EXPECT_EQ(it.Front().stateID.y, -1);
   EXPECT_EQ(it.Front().stateID.theta, 15);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 4);
   EXPECT_EQ(it.Front().stateID.x, 0);
   EXPECT_EQ(it.Front().stateID.y, 0);
   EXPECT_EQ(it.Front().stateID.theta, 1);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 5);
   EXPECT_EQ(it.Front().stateID.x, 0);
   EXPECT_EQ(it.Front().stateID.y, 0);
   EXPECT_EQ(it.Front().stateID.theta, 15);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 6);
   EXPECT_EQ(it.Front().stateID.x, -1);
   EXPECT_EQ(it.Front().stateID.y, 0);
   EXPECT_EQ(it.Front().stateID.theta, 0);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_TRUE(it.Done());
+  EXPECT_TRUE(it.Done(env));
 }
 
 GTEST_TEST(TestEnvironment, SuccessorsFromNonzero)
@@ -157,57 +157,57 @@ GTEST_TEST(TestEnvironment, SuccessorsFromNonzero)
 
   SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), 0.0);
 
-  EXPECT_FALSE(it.Done());
-  it.Next();
+  EXPECT_FALSE(it.Done(env));
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 0);
   EXPECT_EQ(it.Front().stateID.x, -12);
   EXPECT_EQ(it.Front().stateID.y, 106);
   EXPECT_EQ(it.Front().stateID.theta, 15);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 1);
   EXPECT_EQ(it.Front().stateID.x, -10);
   EXPECT_EQ(it.Front().stateID.y, 105);
   EXPECT_EQ(it.Front().stateID.theta, 15);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 2);
   EXPECT_EQ(it.Front().stateID.x, -11);
   EXPECT_EQ(it.Front().stateID.y, 106);
   EXPECT_EQ(it.Front().stateID.theta, 0);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 3);
   EXPECT_EQ(it.Front().stateID.x, -11);
   EXPECT_EQ(it.Front().stateID.y, 105);
   EXPECT_EQ(it.Front().stateID.theta, 14);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 4);
   EXPECT_EQ(it.Front().stateID.x, -14);
   EXPECT_EQ(it.Front().stateID.y, 107);
   EXPECT_EQ(it.Front().stateID.theta, 0);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 5);
   EXPECT_EQ(it.Front().stateID.x, -14);
   EXPECT_EQ(it.Front().stateID.y, 107);
   EXPECT_EQ(it.Front().stateID.theta, 14);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_FALSE(it.Done());
+  EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 6);
   EXPECT_EQ(it.Front().stateID.x, -16);
   EXPECT_EQ(it.Front().stateID.y, 108);
   EXPECT_EQ(it.Front().stateID.theta, 15);
-  it.Next();
+  it.Next(env);
 
-  EXPECT_TRUE(it.Done());
+  EXPECT_TRUE(it.Done(env));
 }

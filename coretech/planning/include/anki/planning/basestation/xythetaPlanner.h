@@ -14,6 +14,7 @@
 #define _ANKICORETECH_PLANNING_XYTHETA_PLANNER_H_
 
 #include <stddef.h>
+#include "xythetaPlanner_definitions.h"
 
 #define DEFUALT_MAX_EXPANSIONS 1000000
 
@@ -63,6 +64,8 @@ public:
   // must call compute path before getting the plan
   xythetaPlan& GetPlan();
   const xythetaPlan& GetPlan() const;
+
+  Cost GetFinalCost() const;
 
 private:
   xythetaPlannerImpl* _impl;

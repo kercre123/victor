@@ -67,6 +67,99 @@ GTEST_TEST(TestPlanner, PlanAroundBox)
   EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
 }
 
+GTEST_TEST(TestPlanner, PlanAroundBox_soft)
+{
+  // Assuming this is running from root/build......
+  xythetaEnvironment env;
+
+  // TODO:(bn) open something saved in the test dir isntead, so we
+  // know not to change or remove it
+  EXPECT_TRUE(env.ReadMotionPrimitives(
+                PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
+
+
+  // first add it with a fatal cost (the default)
+  env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
+
+  xythetaPlanner planner(env);
+
+  State_c start(0, 0, 0);
+  State_c goal(200, 0, 0);
+
+  ASSERT_TRUE(planner.SetStart(start));
+  ASSERT_TRUE(planner.SetGoal(goal));
+
+  ASSERT_TRUE(planner.Replan());
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
+
+  bool hasTurn = false;
+  for(const auto& action : planner.GetPlan().actions_) {
+    if(env.GetRawMotionPrimitive(0, action).endStateOffset.theta != 0) {
+      hasTurn = true;
+      break;
+    }
+  }
+  ASSERT_TRUE(hasTurn) << "plan with fatal obstacle should turn";
+
+  Cost fatalCost = planner.GetFinalCost();
+
+  env.ClearObstacles();
+  // now add it with a high cost
+  env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0), 50.0);
+
+  planner.SetReplanFromScratch();
+  ASSERT_TRUE(planner.Replan());
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
+
+  hasTurn = false;
+  for(const auto& action : planner.GetPlan().actions_) {
+    if(env.GetRawMotionPrimitive(0, action).endStateOffset.theta != 0) {
+      hasTurn = true;
+      break;
+    }
+  }
+  ASSERT_TRUE(hasTurn) << "plan with high obstacle cost should turn";
+
+  Cost highCost = planner.GetFinalCost();
+
+  EXPECT_FLOAT_EQ(highCost, fatalCost) << "cost should be the same with fatal or high cost obstacle";
+
+  env.ClearObstacles();
+  // now add it with a very low cost
+  env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0), 1e-4);
+
+  planner.SetReplanFromScratch();
+  ASSERT_TRUE(planner.Replan());
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
+
+  // env.PrintPlan(planner.GetPlan());
+  for(const auto& action : planner.GetPlan().actions_) {
+    ASSERT_EQ(env.GetRawMotionPrimitive(0, action).endStateOffset.theta,0)
+      <<"with low cost, should drive straight through obstacle, but plan has a turn!";
+  }
+
+  Cost lowCost = planner.GetFinalCost();
+
+  EXPECT_LT(lowCost, highCost) << "should be cheaper to drive through obstacle than around it";
+
+  env.ClearObstacles();
+  // this time leave the world empty
+
+  planner.SetReplanFromScratch();
+  ASSERT_TRUE(planner.Replan());
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
+
+  for(const auto& action : planner.GetPlan().actions_) {
+    ASSERT_EQ(env.GetRawMotionPrimitive(0, action).endStateOffset.theta,0)
+      <<"with no obstacle, should drive straight, but plan has a turn!";
+  }
+
+  Cost emptyCost = planner.GetFinalCost();
+  
+  EXPECT_LT(emptyCost, lowCost) << "no obstacle should be cheaper than any obstacle";
+}
+
+
 GTEST_TEST(TestPlanner, ReplanEasy)
 {
   // Assuming this is running from root/build......

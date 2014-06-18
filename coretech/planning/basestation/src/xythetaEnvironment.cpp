@@ -134,16 +134,16 @@ SuccessorIterator::SuccessorIterator(const xythetaEnvironment* env, StateID star
   : start_c_(env->StateID2State_c(startID)),
     start_(startID),
     startG_(startG),
-    nextAction_(0),
-    motionPrimitives_(env->allMotionPrimitives_[xythetaEnvironment::GetThetaFromStateID(startID)]),
-    obstacles_(env->obstacles_)
+    nextAction_(0)
 {
+  // TEMP: 
+  assert(start_.theta == xythetaEnvironment::GetThetaFromStateID(startID));
 }
 
 // TODO:(bn) inline?
-bool SuccessorIterator::Done() const
+bool SuccessorIterator::Done(const xythetaEnvironment& env) const
 {
-  return nextAction_ > motionPrimitives_.size();
+  return nextAction_ > env.allMotionPrimitives_[start_.theta].size();
 }
 
 bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions) const
@@ -167,7 +167,7 @@ bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, b
       for(size_t obs=0; obs < endObs; ++obs) {
         float x = start_x + prim->intermediatePositions[point].x_mm;
         float y = start_y + prim->intermediatePositions[point].y_mm;
-        if(obstacles_[obs].Contains(x, y)) {
+        if(obstacles_[obs].first.Contains(x, y) && obstacles_[obs].second >= MAX_OBSTACLE_COST) {
           return false;
         }
       }
@@ -256,15 +256,18 @@ const MotionPrimitive& xythetaEnvironment::GetRawMotionPrimitive(StateTheta thet
   return allMotionPrimitives_[theta][action];
 }
 
-void SuccessorIterator::Next()
+void SuccessorIterator::Next(const xythetaEnvironment& env)
 {
-  while(nextAction_ < motionPrimitives_.size()) {
-    const MotionPrimitive* prim = &motionPrimitives_[nextAction_];
+  size_t numActions = env.allMotionPrimitives_[start_.theta].size();
+  while(nextAction_ < numActions) {
+    const MotionPrimitive* prim = &env.allMotionPrimitives_[start_.theta][nextAction_];
 
     // collision checking
-    size_t endObs = obstacles_.size();
+    size_t endObs = env.obstacles_.size();
     long endPoints = prim->intermediatePositions.size();
-    bool collision = false;
+    bool collision = false; // fatal collision
+
+    nextSucc_.g = 0;
 
     // iterate first through action, starting at the end because this
     // is more likely to be a collision
@@ -273,9 +276,18 @@ void SuccessorIterator::Next()
         float x,y;
         x = start_c_.x_mm + prim->intermediatePositions[pointIdx].x_mm;
         y = start_c_.y_mm + prim->intermediatePositions[pointIdx].y_mm;
-        if(obstacles_[obsIdx].Contains(x, y)) {
-          collision = true;
-          break;
+        if(env.obstacles_[obsIdx].first.Contains(x, y)) {
+          if(env.obstacles_[obsIdx].second >= MAX_OBSTACLE_COST) {
+            collision = true;
+            break;
+          }
+          else {
+            // apply soft penalty, but allow the action
+
+            // TODO:(bn) this adds cost per sample, but it should probably be per time
+            // TODO:(bn) should be per unit length (or time), not per sample
+            nextSucc_.g += env.obstacles_[obsIdx].second;
+          }
         }
       }
     }
@@ -287,7 +299,7 @@ void SuccessorIterator::Next()
       result.theta = prim->endStateOffset.theta;
 
       nextSucc_.stateID = result.GetStateID();
-      nextSucc_.g = startG_ + prim->cost;
+      nextSucc_.g += startG_ + prim->cost;
       nextSucc_.actionID = nextAction_;
       break;
     }
@@ -300,19 +312,14 @@ void SuccessorIterator::Next()
 
 bool xythetaEnvironment::IsInCollision(State s) const
 {
-  size_t endObs = obstacles_.size();
-  for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstacles_[obsIdx].Contains(GetX_mm(s.x), GetX_mm(s.y)))
-      return true;
-  }
-  return false;
+  return IsInCollision(State2State_c(s));
 }
 
 bool xythetaEnvironment::IsInCollision(State_c c) const
-{
+{  
   size_t endObs = obstacles_.size();
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstacles_[obsIdx].Contains(c.x_mm, c.y_mm))
+    if(obstacles_[obsIdx].first.Contains(c.x_mm, c.y_mm))
       return true;
   }
   return false;
@@ -351,8 +358,6 @@ bool ActionType::Import(const Json::Value& config)
 
 xythetaEnvironment::~xythetaEnvironment()
 {
-  //for(size_t i=0; i<obstacles_.size(); ++i)
-  //  delete obstacles_[i];
 }
 
 
@@ -492,20 +497,18 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config)
   return true;
 }
 
-void xythetaEnvironment::AddObstacle(const Quad2f& quad)
+void xythetaEnvironment::AddObstacle(const Quad2f& quad, Cost cost)
 {
-  obstacles_.emplace_back(quad);
+  obstacles_.emplace_back(std::make_pair(RotatedRectangle{quad}, cost));
 }
   
-void xythetaEnvironment::AddObstacle(const RotatedRectangle& rect)
+void xythetaEnvironment::AddObstacle(const RotatedRectangle& rect, Cost cost)
 {
-  obstacles_.emplace_back(rect);
+  obstacles_.emplace_back(std::make_pair(rect, cost));
 }
 
 void xythetaEnvironment::ClearObstacles()
 {
-//  for(size_t i=0; i<obstacles_.size(); ++i)
-//    delete obstacles_[i];
   obstacles_.clear();
 }
 
@@ -775,7 +778,7 @@ bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
   float x0,y0,x1,y1,len;
 
   while(fscanf(fEnv, "%f %f %f %f %f", &x0, &y0, &x1, &y1, &len) == 5) {
-    obstacles_.emplace_back(x0, y0, x1, y1, len);
+    obstacles_.emplace_back(std::make_pair(RotatedRectangle{x0, y0, x1, y1, len}, FATAL_OBSTACLE_COST));
   }
 
   return true;
@@ -785,7 +788,7 @@ void xythetaEnvironment::WriteEnvironment(const char *filename) const
 {
   ofstream outfile(filename);
   for(const auto& it : obstacles_) {
-    it.Dump(outfile);
+    it.first.Dump(outfile);
   }
 }
 

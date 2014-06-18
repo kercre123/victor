@@ -60,6 +60,8 @@ struct xythetaPlannerImpl
 
   xythetaPlan plan_;
 
+  Cost finalCost_;
+
   unsigned int expansions_;
   unsigned int considerations_;
   unsigned int collisionChecks_;
