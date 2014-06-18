@@ -32,7 +32,13 @@ namespace Anki {
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
         const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 28.f;
+        
+        #ifdef SIMULATOR
+        const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 18.f;
+        #else
         const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 19.5f;
+        #endif
+        
         const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 20.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
         Mode mode_ = IDLE;
@@ -210,7 +216,6 @@ namespace Anki {
                 // This action starts by lowering the lift and tracking the high block
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
                 HeadController::SetDesiredAngle(HIGH_DOCKING_HEAD_ANGLE);
-                PRINT("SET_LIFT_PREDOCK: %f\n", HIGH_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_LIFT_DIST_MM;
                 break;
               case DA_PLACE_LOW:
@@ -489,11 +494,11 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
         PRINT("PAP: DOCK TO BLOCK %d (action %d)\n", blockMarker, action);
 #endif
-				#warning fix me!
-        /*if (action == DA_PLACE_LOW) {
-          PRINT("Invalid action %d for DockToBlock()\n", action);
+
+        if (action == DA_PLACE_LOW) {
+          PRINT("WARNING: Invalid action %d for DockToBlock(). Ignoring.\n", action);
           return;
-        }*/
+        }
         
         action_ = action;
         dockToMarker_ = blockMarker;
