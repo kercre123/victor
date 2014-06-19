@@ -2,6 +2,11 @@
 
 % threadId starts at zero
 
+% if numThreads ~= 1, then there will be no return values, but a results
+% file for each pose for each test
+
+% if threadId < 0, it just returns an resultsData with empty cells
+
 function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, threadId, numThreads)
     global rotationList;
     
@@ -43,9 +48,12 @@ function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNa
     resultsData = cell(length(allTestFilenames), 1);
     testData = cell(length(allTestFilenames), 1);
     
+    if threadId < 0
+        return;
+    end   
+    
     for iTest = 1:length(allTestFilenames)
-%     for iTest = 10
-%     for iTest = 2
+%     for iTest = 4
         tic;
         
         jsonData = loadjson(allTestFilenames{iTest});
@@ -135,7 +143,15 @@ function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNa
                 
                 pause(.01);
             end
-        end
+            
+            outFilename = [allTestFilenames{iTest}, sprintf('_pose%02d.mat', iPose)];
+            
+            curResultsData = resultsData{iTest}{iPose};
+            
+            save(outFilename, 'curResultsData');
+            
+            keyboard
+        end % for iPose = (threadId+1):numThreads:length(jsonData.Poses)
         
         disp(sprintf('Finished test %d/%d in %f seconds', iTest, length(allTestFilenames), toc()));
         pause(.01);

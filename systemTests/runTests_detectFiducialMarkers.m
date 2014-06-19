@@ -36,7 +36,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
         % If one thread, just compute locally
         if numComputeThreads == 1
             [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, 0, 1); %#ok<ASGLU>
-        else
+        else % if numComputeThreads == 1
             partFilenameInput = sprintf('%s_input.mat', basicsFilename);
             save(partFilenameInput, 'markerDirectoryList', 'testJsonPattern');
 
@@ -44,32 +44,36 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
             for iThread = 0:(numComputeThreads-1)
                 partFilename = sprintf('%s_outputPart%d.mat', basicsFilename, iThread);
                 delete(partFilename);
-                commandString = sprintf('matlab -nojvm -noFigureWindows -nosplash -r "load(''%s''); [resultsData_part, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, %d, %d); save(''%s'', ''resultsData_part'', ''testPath'', ''allTestFilenames'', ''testFunctions'', ''testFunctionNames''); exit;"', partFilenameInput, iThread, numComputeThreads, partFilename);
+%                 commandString = sprintf('matlab -nojvm -noFigureWindows -nosplash -r "load(''%s''); [resultsData_part, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, %d, %d); save(''%s'', ''resultsData_part'', ''testPath'', ''allTestFilenames'', ''testFunctions'', ''testFunctionNames''); exit;"', partFilenameInput, iThread, numComputeThreads, partFilename);
+                commandString = sprintf('matlab -nojvm -noFigureWindows -nosplash -r "load(''%s''); runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, %d, %d); exit;"', partFilenameInput, iThread, numComputeThreads);
                 system(['start /b ', commandString]);
             end
 
-            % wait for threads to complete and compile results
-            for iThread = 0:(numComputeThreads-1)
-                partFilename = sprintf('%s_outputPart%d.mat', basicsFilename, iThread);
+            [resultsData, testPath, allTestFilenames, ~, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, -1, -1);   
 
-                while ~exist(partFilename, 'file')
+            for iTest = 1:length(allTestFilenames)
+                tic;
+
+                jsonData = loadjson(allTestFilenames{iTest});
+
+                resultsData{iTest} = cell(length(jsonData.Poses), 1);
+
+                for iPose = 1:length(jsonData.Poses)
+                    inFilename = [allTestFilenames{iTest}, sprintf('_pose%02d.mat', iPose)];
+
+                    % wait for threads to complete and compile results
+                    while ~exist(inFilename, 'file')
                     pause(.1);
                 end
 
-                % Wait for the file system to catch up or something?
-                pause(2);
+                    % TODO: wait for the file to be closed
 
-                load(partFilename)
+                    load(inFilename, 'curResultsData');
 
-                if iThread == 0
-                    resultsData = resultsData_part;
-                else
-                    for iTest = 1:length(allTestFilenames)
-                        resultsData{iTest}((iThread+1):numComputeThreads:end) = resultsData_part{iTest}((iThread+1):numComputeThreads:end);
-                    end
-                end
-            end
-        end
+                    resultsData{iTest}{iPose} = curResultsData;
+                end % for iPose = 1:length(jsonData.Poses)
+            end % for iTest = 1:length(allTestFilenames)
+        end % if numComputeThreads == 1 ... else
         
         disp(sprintf('Basic stat computation took %f seconds', toc()));
         

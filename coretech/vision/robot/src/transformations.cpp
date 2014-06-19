@@ -695,7 +695,16 @@ namespace Anki
           RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "Invalid objects");
 
         if(!quad.IsConvex()) {
-          AnkiWarn("ComputeHomographyFromQuad", "Quad is not convex!\n");
+          AnkiWarn("ComputeHomographyFromQuad", "Quad is not convex");
+
+          homography.SetZero();
+          homography[0][0] = 1;
+          homography[1][1] = 1;
+          homography[2][2] = 1;
+
+          numericalFailure = true;
+
+          return RESULT_OK;
         }
 
         FixedLengthList<Point<f32> > originalPoints(4, scratch);
