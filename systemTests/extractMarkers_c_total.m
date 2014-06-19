@@ -27,7 +27,7 @@ function [allQuads, quadValidity, markers] = extractMarkers_c_total(image, useRe
     end
     
     if useMatlabForQuadExtraction
-        allQuadsMatlabRaw = simpleDetector(image, 'returnInvalid', true, 'quadRefinementIterations', quadRefinementIterations);
+        allQuadsMatlabRaw = simpleDetector(image, 'returnInvalid', true, 'quadRefinementIterations', refine_quadRefinementIterations);
         
         if isempty(allQuadsMatlabRaw)
             allQuads = {};
@@ -46,10 +46,10 @@ function [allQuads, quadValidity, markers] = extractMarkers_c_total(image, useRe
         end
         
         returnInvalidMarkers = 1;
-        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, 0, refine_numRefinementSamples, quadRefinementMaxCornerChange, returnInvalidMarkers);
+        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, 0, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
         
         returnInvalidMarkers = 0;
-        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, 0, refine_numRefinementSamples, quadRefinementMaxCornerChange, returnInvalidMarkers);
+        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, 0, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
     else
         returnInvalidMarkers = 1;
         [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, returnInvalidMarkers);

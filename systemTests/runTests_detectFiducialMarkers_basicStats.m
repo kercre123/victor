@@ -23,6 +23,7 @@ function runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, 
         if curTestId ~= lastTest
             if lastTest ~= -1
                 disp(sprintf('Finished test %d in %f seconds', lastTest, toc()));
+                tic
             end
             
             jsonData = loadjson(curTestFilename);
@@ -93,12 +94,11 @@ function runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, 
             curResultsData{iTestFunction}.detectedQuads = makeCellArray(detectedQuads);
             curResultsData{iTestFunction}.detectedQuadValidity = detectedQuadValidity;
             curResultsData{iTestFunction}.detectedMarkers = makeCellArray(detectedMarkers);
-        end
+            
+            pause(.01);
+        end % for iTestFunction = 1:length(testFunctions)
         
         save(curResultsFilename, 'curResultsData', 'curTestData');
-        
-        pause(.01);
-%         keyboard
     end % for iWork = 1:length(workList)
     
 function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrect] = findClosestMatches(groundTruthQuads, queryQuads, markerNames_groundTruth)

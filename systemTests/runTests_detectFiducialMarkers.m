@@ -13,7 +13,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     maxMatchDistance_pixels = 5;
     maxMatchDistance_percent = 0.2;
     
-    numComputeThreads = 1;
+    numComputeThreads = 3;
     
     showImageDetections = true;
     showImageDetectionWidth = 640;
@@ -76,7 +76,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 
                 slashIndexes = strfind(jsonTestFilename, '/');
                 testPath = jsonTestFilename(1:(slashIndexes(end)));
-                resultsFilename = [testPath, 'results/', jsonTestFilename((slashIndexes(end)+1):end), sprintf('_pose%05d.mat', iPose)];
+                resultsFilename = [testPath, 'intermediate/', jsonTestFilename((slashIndexes(end)+1):end), sprintf('_pose%05d.mat', iPose)];
                 
                 newWorkItem = {iTest, jsonTestFilename, iPose, resultsFilename};
                 
@@ -125,9 +125,9 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 
                 threadCompletionMutexFilenames{iThread+1} = sprintf('%s_mutex%d.mat', basicsFilename, iThread);
                 
-                delete(threadCompletionMutexFilenames{iThread});
+                delete(threadCompletionMutexFilenames{iThread+1});
                 
-                commandString = sprintf('-r "load(''%s''); runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, localWorkList); mut=1; save(%s,''mut''); exit;"', workerInputFilenames{iThread+1}, threadCompletionMutexFilenames{iThread+1});
+                commandString = sprintf('-r "load(''%s''); runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, localWorkList); mut=1; save(''%s'',''mut''); exit;"', workerInputFilenames{iThread+1}, threadCompletionMutexFilenames{iThread+1});
                 system(['start /b ', matlabLaunchCommand, commandString]);
             end
             
@@ -137,21 +137,25 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                     pause(.1);
                 end
                 delete(threadCompletionMutexFilenames{iThread});
-                delete(workerInputFilenames{iThread+1});
+                delete(workerInputFilenames{iThread});
             end
         end
         
+        disp('Computation complete. Merging thread results...');
+        
         resultsData = cell(length(allTestFilenames), 1);
         for iTest = 1:length(allTestFilenames)
+            curTestFilename_imagesOnly = strrep(allTestFilenames{iTest}, '_all.json', '_justFilenames.json');
+            jsonData = loadjson(curTestFilename_imagesOnly);
+            
             jsonTestFilename = allTestFilenames{iTest};
-            jsonData = loadjson(jsonTestFilename);
             
             resultsData{iTest} = cell(length(jsonData.Poses), 1);
             
             for iPose = 1:length(jsonData.Poses)
                 slashIndexes = strfind(jsonTestFilename, '/');
                 testPath = jsonTestFilename(1:(slashIndexes(end)));
-                resultsFilename = [testPath, 'results/', jsonTestFilename((slashIndexes(end)+1):end), sprintf('_pose%05d.mat', iPose)];
+                resultsFilename = [testPath, 'intermediate/', jsonTestFilename((slashIndexes(end)+1):end), sprintf('_pose%05d.mat', iPose)];
                 
                 load(resultsFilename, 'curResultsData');
                 
