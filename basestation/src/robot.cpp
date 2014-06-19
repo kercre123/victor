@@ -222,10 +222,18 @@ namespace Anki {
 
             pdo_->Update(GetCurrPathSegment());
           } else { // IsTraversingPath is false?
-            PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
-                             "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d, isWaitingForReplan = %d\n",
-                             _currPathSegment,
-                             _isWaitingForReplan);
+            
+            // The last path sent was definitely received by the robot
+            // and it is no longer executing it.
+            if (_lastSentPathID == _lastRecvdPathID) {
+              PRINT_NAMED_INFO("Robot.Update.FollowToIdle", "lastPathID %d\n", _lastRecvdPathID);
+              SetState(IDLE);
+            } else {
+              PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
+                               "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d, isWaitingForReplan = %d\n",
+                               _currPathSegment,
+                               _isWaitingForReplan);
+            }
           }
           
           // Visualize path if robot has just started traversing it.
@@ -243,6 +251,7 @@ namespace Anki {
             _isWaitingForReplan = false;
             wasTraversingPath = false;
             SetState(_nextState);
+            VizManager::getInstance()->EraseAllQuads();
           }
           break;
         } // case FOLLOWING_PATH
@@ -294,6 +303,13 @@ namespace Anki {
                 PRINT_INFO("Placed block successfully!\n");
               } else {
                 PRINT_INFO("Dock failed! Aborting\n");
+                
+                if (GetDockBlock()) {
+                  PRINT_INFO("Deleting block that I failed to dock to\n");
+                  _world->ClearBlock(GetDockBlock()->GetID());
+                } else {
+                  PRINT_INFO("DOCK BLOCK IS NULL!!!\n");
+                }
               }
             }
             
@@ -791,7 +807,7 @@ namespace Anki {
       // Send start path execution message
       MessageExecutePath m;
       m.pathID = _lastSentPathID;
-      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message");
+      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message\n");
       return _msgHandler->SendMessage(_ID, m);
     }
     

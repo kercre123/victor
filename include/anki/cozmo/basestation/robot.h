@@ -111,7 +111,7 @@ namespace Anki {
       
       void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
       s8   GetCurrPathSegment() {return _currPathSegment;}
-      bool IsTraversingPath() {return (_currPathSegment >= 0) || _isWaitingForReplan;}
+      bool IsTraversingPath() {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
 
       void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
       u16 GetLastRecvdPathID() {return _lastRecvdPathID;}
