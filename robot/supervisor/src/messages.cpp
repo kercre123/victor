@@ -163,6 +163,8 @@ namespace Anki {
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
 
+        robotState_.lastPathID = PathFollower::GetLastPathID();
+        
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         
         robotState_.status = 0;
@@ -301,7 +303,7 @@ namespace Anki {
       }
       
       void ProcessExecutePathMessage(const ExecutePath& msg) {
-        PathFollower::StartPathTraversal();
+        PathFollower::StartPathTraversal(msg.pathID);
       }
       
       void ProcessDockWithBlockMessage(const DockWithBlock& msg)

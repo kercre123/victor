@@ -54,6 +54,10 @@ namespace Anki
         
         bool pointTurnStarted_ = false;
         
+        // ID of the current path that is being followed
+        // or the last path that was followed if not currently path following
+        u16 lastPathID_ = 0;
+        
       } // Private Members
       
       
@@ -183,7 +187,7 @@ namespace Anki
         }
       }
       
-      bool StartPathTraversal()
+      bool StartPathTraversal(u16 path_id)
       {
         // Set first path segment
         if (path_.GetNumSegments() > 0) {
@@ -228,6 +232,11 @@ namespace Anki
         
         // Visualize path
         SetPathForViz();
+        
+        // Set id of path
+        if (path_id != 0) {
+          lastPathID_ = path_id;
+        }
         
         return TRUE;
       }
@@ -460,6 +469,9 @@ namespace Anki
         path_.PrintSegment(segment);
       }
       
+      u16 GetLastPathID() {
+        return lastPathID_;
+      }
       
     } // namespace PathFollower
   } // namespace Cozmo
