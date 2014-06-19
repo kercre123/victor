@@ -14,20 +14,39 @@ namespace Anki {
 #pragma mark --- Pose2d Implementations ---
   Pose2d* Pose2d::World = NULL;
   
+  Pose2d::Pose2d()
+  : Pose2d(0, {{0.f, 0.f}})
+  {
+    
+  }
+  
   Pose2d::Pose2d(const Radians &theta, const Point2f &t)
-  : translation(t), angle(theta), planeNormal(0.f,0.f,1.f),
-    parent(Pose2d::World)
+  : translation(t)
+  , angle(theta)
+  , planeNormal(Z_AXIS_3D)
+  , parent(Pose2d::World)
   {
     
   }
   
   Pose2d::Pose2d(const Radians &theta, const float x, const float y)
-  : translation(x,y), angle(theta), planeNormal(0.f,0.f,1.f),
-    parent(Pose2d::World)
+  : translation(x,y)
+  , angle(theta)
+  , planeNormal(Z_AXIS_3D)
+  , parent(Pose2d::World)
   {
     
   }
+  
+  Pose2d::Pose2d(const Pose3d& pose3d)
+  : translation(pose3d.get_translation().x(), pose3d.get_translation().y())
+  , angle(pose3d.get_rotationAngle<'Z'>())
+  , planeNormal(Z_AXIS_3D)
+  , parent(Pose2d::World)
+  {
     
+  }
+  
   void Pose2d::operator*=(const Pose2d &other)
   {
     this->angle += other.angle;
@@ -77,7 +96,7 @@ namespace Anki {
   Pose3d* Pose3d::World = NULL;
   
   Pose3d::Pose3d()
-  : translation(0.f, 0.f, 0.f), parent(Pose3d::World)
+  : Pose3d(0, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
   {
     
   } // Constructor: Pose3d()  
