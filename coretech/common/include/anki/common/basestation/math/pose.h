@@ -187,13 +187,12 @@ namespace Anki {
     RotationVector3d        get_rotationVector() const;
     Vec3f                   get_rotationAxis()   const;
 
-    // Get the rotation angle, optinally around a specific axis.
-    // By default or when template parameter is anything other than X, Y, or Z,
-    // the rotation angle *around the pose's rotation axis* is returned.
-    // When X, Y, or Z are specified (case insensitive), the rotation angle
-    // around that axis is returned.
+    // Get the rotation angle, optionally around a specific axis.
+    // By default the rotation angle *around the pose's rotation axis* is
+    // returned. When 'X', 'Y', or 'Z' are specified (case insensitive), the
+    // rotation angle around that axis is returned.
     template<char AXIS = ' '>
-    Radians                 get_rotationAngle()  const;
+    Radians get_rotationAngle() const;
     
     void set_rotation(const RotationMatrix3d &Rmat);
     void set_rotation(const RotationVector3d &Rvec);
