@@ -90,6 +90,22 @@ namespace Anki {
       
     }; // class PathPlanner
 
+    // This make a plan that turns and drives towards the goal you give it
+    class FaceAndApproachPlanner : public IPathPlanner
+    {
+    public:
+
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                  const Pose3d& startPose,
+                                  bool forceReplanFromScratch = false) override;
+
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                  const Pose3d& startPose,
+                                  const Pose3d& targetPose) override;
+    protected:
+      Vec3f _targetVec;
+    };
+
     class LatticePlannerImpl;
 
     class LatticePlanner : public IPathPlanner
