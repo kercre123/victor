@@ -734,8 +734,8 @@ namespace Anki
 
     Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &initQuad,
       const Array<f32> &initHomography, const f32 minContrastRatio,
-      const s32 quadRefinementIterations, const s32 numRefinementSamples,
-      const f32 quadRefinementMaxCornerChange,
+      const s32 refine_quadRefinementIterations, const s32 refine_numRefinementSamples, const f32 refine_quadRefinementMaxCornerChange,
+      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       MemoryStack scratch)
     {
       using namespace VisionMarkerDecisionTree;
@@ -767,15 +767,25 @@ namespace Anki
 
         const u8 meanGrayvalueThreshold = static_cast<u8>(0.5f*(brightValue+darkValue));
 
-        if(quadRefinementIterations > 0) {
+        if(refine_quadRefinementIterations > 0) {
           BeginBenchmark("vme_quadrefine");
 
-          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, quadRefinementIterations, darkValue, brightValue, numRefinementSamples, quadRefinementMaxCornerChange, quad, homography, scratch)) != RESULT_OK)
+          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, refine_quadRefinementIterations, darkValue, brightValue, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, quad, homography, scratch)) != RESULT_OK)
           {
             // TODO: Don't fail? Just warn and keep original quad?
             AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
               "RefineQuadrilateral",
               "RefineQuadrilateral() failed with code %0x.", lastResult);
+          }
+
+          Quadrilateral<s16> quadS16;
+          quadS16.SetCast(quad);
+
+          bool areCornersDisordered;
+          const bool isReasonable = IsQuadrilateralReasonable(quadS16, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, image.get_size(0), image.get_size(1), areCornersDisordered);
+
+          if(!isReasonable) {
+            quad.SetCast(initQuad);
           }
 
           EndBenchmark("vme_quadrefine");
