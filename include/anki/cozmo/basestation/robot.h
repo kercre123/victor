@@ -101,7 +101,7 @@ namespace Anki {
       Result ExecutePathToPose(const Pose3d& pose);
       Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
 
-      IPathPlanner* GetPathPlanner() { return _pathPlanner; }
+      IPathPlanner* GetPathPlanner() { return _longPathPlanner; }
 
       void AbortCurrentPath();
       
@@ -249,8 +249,11 @@ namespace Anki {
       // A reference to the BlockWorld the robot lives in
       BlockWorld*      _world;
       
-      // Path Following
-      IPathPlanner*    _pathPlanner;
+      // Path Following. There are two planners, only one of which can
+      // be selected at a time
+      IPathPlanner*    _selectedPathPlanner;
+      IPathPlanner*    _longPathPlanner;
+      IPathPlanner*    _shortPathPlanner;
       Planning::Path   _path;
       s8               _currPathSegment;
       bool             _isWaitingForReplan;
@@ -260,6 +263,10 @@ namespace Anki {
       Radians          _goalAngleThreshold;
       u16              _lastSentPathID;
       u16              _lastRecvdPathID;
+
+      // This functions sets _selectedPathPlanner to the appropriate
+      // planner
+      void SelectPlanner(const Pose3d& targetPose);
 
       PathDolerOuter* pdo_;
       

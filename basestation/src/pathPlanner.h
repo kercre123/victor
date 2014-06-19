@@ -28,6 +28,9 @@ namespace Anki {
     class IPathPlanner
     {
     public:
+
+      virtual ~IPathPlanner() {}
+
       // Replan if needed because the environment changed. Returns
       // DID_REPLAN if there is a new path and REPLAN_NOT_NEEDED if no
       // replan was necessary and the path has not changed.  If a new
