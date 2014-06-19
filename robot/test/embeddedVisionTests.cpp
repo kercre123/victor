@@ -45,9 +45,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "data/cozmo_date2014_04_04_time17_40_08_frame0.h"
 
 #include "anki/vision/robot/lbpcascade_frontalface.h"
-#endif
 
 #include "data/cozmo_date2014_04_10_time16_15_40_frame0.h"
+#endif
 
 #include "embeddedTests.h"
 
@@ -63,6 +63,7 @@ using namespace Anki::Embedded;
 
 //#define RUN_FACE_DETECTION_GUI
 
+#if !defined(JUST_FIDUCIAL_DETECTION)
 GTEST_TEST(CoreTech_Vision, DistanceTransform)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -499,7 +500,6 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
 //  GTEST_RETURN_HERE;
 //}
 
-#if !defined(JUST_FIDUCIAL_DETECTION)
 GTEST_TEST(CoreTech_Vision, Vignetting)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -3425,7 +3425,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
 
   components.SortConnectedComponentSegments();
 
-//#define DRAW_TraceNextExteriorBoundary
+  //#define DRAW_TraceNextExteriorBoundary
 #ifdef DRAW_TraceNextExteriorBoundary
   {
     Array<u8> drawnComponents(480, 640, scratchOffchip);
