@@ -474,7 +474,7 @@ namespace Anki
         MemoryStack scratch //!< Scratch memory
         )
       {
-        const Type MAX_SOLVE_DISTANCE = static_cast<Type>(0.01);
+        const Type MAX_SOLVE_DISTANCE = static_cast<Type>(0.1);
 
         //BeginBenchmark("EstimateHomography_init");
 

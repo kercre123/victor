@@ -20,16 +20,15 @@ using namespace Anki::Embedded;
 // quadRefinementIterations = 5;
 // numRefinementSamples = 100;
 // returnInvalidMarkers = 0;
-// [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers_quadInput(image, quadsCellArray, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
+// quadRefinementMaxCornerChange = 2;
+// [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers_quadInput(image, quadsCellArray, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, returnInvalidMarkers);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
-  // TODO: make this a parameter?
-  const f32 quadRefinementMaxCornerChange = 2.f;
   const s32 bufferSize = 10000000;
 
-  AnkiConditionalErrorAndReturn(nrhs == 6 && nlhs >= 2 && nlhs <= 4, "mexDetectFiducialMarkers_quadInput", "Call this function as following: [quads, markerTypes, <markerNames>, <markerValidity>] = mexDetectFiducialMarkers_quadInput(uint8(image), quadsCellArray, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);");
+  AnkiConditionalErrorAndReturn(nrhs == 7 && nlhs >= 2 && nlhs <= 4, "mexDetectFiducialMarkers_quadInput", "Call this function as following: [quads, markerTypes, <markerNames>, <markerValidity>] = mexDetectFiducialMarkers_quadInput(uint8(image), quadsCellArray, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, returnInvalidMarkers);");
 
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDetectFiducialMarkers_quadInput", "Memory could not be allocated");
@@ -39,8 +38,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const f32 decode_minContrastRatio       = static_cast<f32>(mxGetScalar(prhs[2]));
   const s32 quadRefinementIterations      = static_cast<s32>(mxGetScalar(prhs[3]));
   const s32 numRefinementSamples          = static_cast<s32>(mxGetScalar(prhs[4]));
-  //const f32 quadRefinementMaxCornerChange = static_cast<f32>(mxGetScalar(prhs[5]));
-  const bool returnInvalidMarkers    = static_cast<bool>(Round<s32>(mxGetScalar(prhs[5])));
+  const f32 quadRefinementMaxCornerChange = static_cast<f32>(mxGetScalar(prhs[5]));
+  const bool returnInvalidMarkers    = static_cast<bool>(Round<s32>(mxGetScalar(prhs[6])));
 
   AnkiConditionalErrorAndReturn(image.IsValid(), "mexDetectFiducialMarkers_quadInput", "Could not allocate image");
 

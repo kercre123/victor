@@ -131,6 +131,9 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
     
     for iTest = 1:length(resultsData)
         %     for iTest = length(resultsData)
+        
+        tic
+        
         perTestStats{iTest} = cell(length(resultsData{iTest}), 1);
         
         jsonData = loadjson(allTestFilenames{iTest});
@@ -209,6 +212,8 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
                 end
             end % for iTestFunction = 1:length(perTestStats{iTest}{iPose})
         end % for iPose = 1:length(perTestStats{iTest})
+        
+        disp(sprintf('Compiled test results %d/%d in %f seconds', iTest, length(resultsData), toc()));
     end % for iTest = 1:length(resultsData)
     
     outputFilenameNameLookup = [resultsDirectory, 'filenameLookup.txt'];
