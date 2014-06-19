@@ -256,7 +256,6 @@ namespace Anki {
       IPathPlanner*    _shortPathPlanner;
       Planning::Path   _path;
       s8               _currPathSegment;
-      bool             _isWaitingForReplan;
       Pose3d           _goalPose;
       Radians          _goalHeadAngle;
       f32              _goalDistanceThreshold;

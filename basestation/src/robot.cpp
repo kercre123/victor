@@ -103,7 +103,6 @@ namespace Anki {
     , _world(world)
     , _longPathPlanner(pathPlanner)
     , _currPathSegment(-1)
-    , _isWaitingForReplan(false)
     , _goalHeadAngle(0.f)
     , _goalDistanceThreshold(10.f)
     , _goalAngleThreshold(DEG_TO_RAD(10))
@@ -167,7 +166,6 @@ namespace Anki {
                 {
                   // clear path, but flag that we are replanning
                   ClearPath();
-                  _isWaitingForReplan = true;
                   wasTraversingPath = false;
                   _forceReplanOnNextWorldChange = false;
                   
@@ -230,9 +228,8 @@ namespace Anki {
               SetState(IDLE);
             } else {
               PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
-                               "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d, isWaitingForReplan = %d\n",
-                               _currPathSegment,
-                               _isWaitingForReplan);
+                               "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d\n",
+                               _currPathSegment);
             }
           }
           
@@ -241,14 +238,12 @@ namespace Anki {
           if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
             VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
             wasTraversingPath = true;
-            _isWaitingForReplan = false;
           }
           else if ((wasTraversingPath && !IsTraversingPath()) ||
                      _pose.IsSameAs(_goalPose, _goalDistanceThreshold, _goalAngleThreshold))
           {
             PRINT_INFO("Robot %d finished following path.\n", _ID);
             ClearPath(); // clear path and indicate that we are not replanning
-            _isWaitingForReplan = false;
             wasTraversingPath = false;
             SetState(_nextState);
             VizManager::getInstance()->EraseAllQuads();
@@ -333,7 +328,6 @@ namespace Anki {
         if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
           VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
           wasTraversingPath = true;
-          _isWaitingForReplan = false;
         } else if (wasTraversingPath && !IsTraversingPath()){
           ClearPath(); // clear path and indicate that we are not replanning
           VizManager::getInstance()->ErasePath(_ID);
