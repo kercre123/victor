@@ -28,11 +28,10 @@ set(DEFAULT_USE_OPENCV 1)
 set(DEFAULT_EMBEDDED_USE_OPENCV 1)
 set(DEFAULT_USE_GTEST 1)
 set(DEFAULT_EMBEDDED_USE_GTEST 1)
-set(DEFAULT_EMBEDDED_USE_HEATSHRINK 0)
 
 set(PKG_OPTIONS
   USE_MATLAB USE_GTEST USE_OPENCV
-  EMBEDDED_USE_MATLAB EMBEDDED_USE_GTEST EMBEDDED_USE_OPENCV EMBEDDED_USE_HEATSHRINK
+  EMBEDDED_USE_MATLAB EMBEDDED_USE_GTEST EMBEDDED_USE_OPENCV
 )
 foreach(PKG ${PKG_OPTIONS})
   if(DEFINED ${PKG})
@@ -66,7 +65,6 @@ endif()
 # lets not have to hardcode them all over the place:
 set(OPENCV_DIR opencv-2.4.8)
 set(GTEST_DIR gtest-1.7.0)
-set(HEATSHRINK_DIR heatshrink)
 
 # I would love to figure out how to get find_package(OpenCV) to work,
 # but so far, no luck.
@@ -195,13 +193,6 @@ if(${ANKICORETECH_EMBEDDED_USE_GTEST})
   set(ALL_EMBEDDED_LIBRARIES ${ALL_EMBEDDED_LIBRARIES} gtest)
 endif()
 
-if(${ANKICORETECH_EMBEDDED_USE_HEATSHRINK})
-  set(ALL_EMBEDDED_LIBRARIES ${ALL_EMBEDDED_LIBRARIES} heatshrink)
-  set(HEATSHRINK_LIBRARY heatshrink)
-else()  
-  set(HEATSHRINK_LIBRARY )
-endif()
-
 set(ALL_EMBEDDED_LIBRARIES ${ALL_EMBEDDED_LIBRARIES} ${NETWORKING_LIBS})
 
 project(${PROJECT_NAME})
@@ -239,7 +230,6 @@ include_directories(
   ${EXTERNAL_DIR}/${OPENCV_DIR}/include
   ${EXTERNAL_DIR}/${GTEST_DIR}/include
   ${EXTERNAL_DIR}/jsoncpp
-  ${EXTERNAL_DIR}/heatshrink
   ${MATLAB_INCLUDE_DIR}
 )
 
@@ -303,11 +293,11 @@ function(fix_opencv_lib_names NAMES)
 
 if(WIN32)
   foreach(NAME IN LISTS ${NAMES})
-    #list(APPEND ${NAMES}_TMP ${NAME}248d)
-    list(APPEND ${NAMES}_TMP ${NAME}248)
+    list(APPEND ${NAMES}_OPTIMIZED_TMP optimized ${NAME}248)
+    list(APPEND ${NAMES}_DEBUG_TMP debug ${NAME}248d)
   endforeach()
 
-  set(${NAMES} "${${NAMES}_TMP}" PARENT_SCOPE)
+  set(${NAMES} "${${NAMES}_OPTIMIZED_TMP}" "${${NAMES}_DEBUG_TMP}" PARENT_SCOPE)
 endif(WIN32)
 
 endfunction(fix_opencv_lib_names)
@@ -372,7 +362,7 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
 
   # Prevent mex outputs from ending up in Debug/Release subdirectories, by
   # moving them up one directory.
-  # (NOTE: it would e better to use the approach commented out in the loop
+  # (NOTE: it would be better to use the approach commented out in the loop
   #  above, which just sets the final build directory directly for each
   #  configuration type, but that is creating crazy/distracting
   #  Xcode warnings -- even though it does actually work.)
@@ -382,16 +372,15 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
   )
 
   if(DEFINED MEX_LINK_LIBRARIES)
-    foreach(LIB ${MEX_LINK_LIBRARIES})
-        target_link_libraries(${OUTPUT_NAME} ${LIB})
-    endforeach()
+    #foreach(LIB ${MEX_LINK_LIBRARIES})
+        #target_link_libraries(${OUTPUT_NAME} ${LIB})
+    #endforeach()
+    #message(${MEX_LINK_LIBRARIES})
+    target_link_libraries(${OUTPUT_NAME} ${MEX_LINK_LIBRARIES})
   endif()
   
   target_link_libraries(${OUTPUT_NAME}
-  #  ${OPENCV_LIBS}
-  #  ${ANKI_LIBRARIES}
     ${ZLIB_LIBRARY}
-    ${HEATSHRINK_LIBRARY}
     jsoncpp
   )
 

@@ -113,6 +113,10 @@ namespace Anki {
       s8   GetCurrPathSegment() {return _currPathSegment;}
       bool IsTraversingPath() {return (_currPathSegment >= 0) || _isWaitingForReplan;}
 
+      void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
+      u16 GetLastRecvdPathID() {return _lastRecvdPathID;}
+      u16 GetLastSentPathID() {return _lastSentPathID;}
+
       void SetCarryingBlock(Block* carryBlock) {_carryingBlock = carryBlock;}
       bool IsCarryingBlock() {return _carryingBlock != nullptr;}
 
@@ -254,6 +258,8 @@ namespace Anki {
       Radians          _goalHeadAngle;
       f32              _goalDistanceThreshold;
       Radians          _goalAngleThreshold;
+      u16              _lastSentPathID;
+      u16              _lastRecvdPathID;
 
       PathDolerOuter* pdo_;
       

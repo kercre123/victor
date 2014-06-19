@@ -50,10 +50,12 @@ namespace Anki {
         case BM_None:
           break;
         case BM_PickAndPlace:
+          printf("Starting PickAndPlace behvior\n");
           nextState_ = WAITING_FOR_DOCK_BLOCK;
           updateFcn_ = &BehaviorManager::Update_PickAndPlaceBlock;
           break;
         case BM_June2014DiceDemo:
+          printf("Starting June demo behvior\n");
           state_     = WAITING_FOR_ROBOT;
           nextState_ = WAITING_TO_SEE_DICE;
           updateFcn_ = &BehaviorManager::Update_June2014DiceDemo;
@@ -312,21 +314,10 @@ namespace Anki {
               state_ = WAITING_TO_SEE_DICE;
             }
           } else {
-            
-            if(diceBlocks.size() > 1) {
-              // Multiple dice blocks in the world, keep deleting them all
-              // until we only see one
-              CoreTechPrint("More than one dice block found!\n");
-              
-              for(auto diceBlock : diceBlocks) {
-                world_->ClearBlock(diceBlock.first);
-              }
-            } else {
-              CoreTechPrint("Please move dice away for a moment.\n");
-              const BlockID_t blockID = diceBlocks.begin()->first;
-              world_->ClearBlock(blockID);
-              diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-            }
+            // Keep clearing blocks until we don't see them anymore
+            CoreTechPrint("Please move first dice away.\n");
+            world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
+            diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
           }
           break;
         }
@@ -351,10 +342,7 @@ namespace Anki {
                 // Multiple dice blocks in the world, keep deleting them all
                 // until we only see one
                 CoreTechPrint("More than one dice block found!\n");
-                
-                for(auto diceBlock : diceBlocks) {
-                  world_->ClearBlock(diceBlock.first);
-                }
+                world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
                 
               } else {
                 
@@ -482,10 +470,10 @@ namespace Anki {
                   Vec3f position( robot_->GetPose().get_translation() );
                   position -= diceBlock->GetPose().get_translation();
                   position.MakeUnitLength();
-                  position *= ROBOT_BOUNDING_X_FRONT + 0.5f*diceBlock->GetSize().Length() + 10.f;
-                  position += diceBlock->GetPose().get_translation();
+                  position *= ROBOT_BOUNDING_X_FRONT + 0.5f*diceBlock->GetSize().Length() + 5.f;
                   
-                  Radians angle = atan2(position.y(), position.x());
+                  Radians angle = atan2(position.y(), position.x()) + PI_F;
+                  position += diceBlock->GetPose().get_translation();
                   
                   goalPose_ = Pose3d(angle, Z_AXIS_3D, {{position.x(), position.y(), 0.f}});
                   

@@ -105,6 +105,8 @@ namespace Anki {
     , _goalHeadAngle(0.f)
     , _goalDistanceThreshold(10.f)
     , _goalAngleThreshold(DEG_TO_RAD(10))
+    , _lastSentPathID(0)
+    , _lastRecvdPathID(0)
     , _forceReplanOnNextWorldChange(false)
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
     , _frameId(0)
@@ -489,12 +491,18 @@ namespace Anki {
     // Sends a path to the robot to be immediately executed
     Result Robot::ExecutePath(const Planning::Path& path)
     {
+      if (path.GetNumSegments() == 0) {
+        PRINT_NAMED_WARNING("Robot.ExecutePath.EmptyPath", "\n");
+        return RESULT_OK;
+      }
+      
       // TODO: Clear currently executing path or write to buffered path?
       if (ClearPath() == RESULT_FAIL)
         return RESULT_FAIL;
 
       SetState(FOLLOWING_PATH);
       _nextState = IDLE; // for when the path is complete
+      ++_lastSentPathID;
       
       return SendExecutePath(path);
     }
@@ -755,7 +763,7 @@ namespace Anki {
 
       // Send start path execution message
       MessageExecutePath m;
-      m.pathID = 0;
+      m.pathID = _lastSentPathID;
       PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message");
       return _msgHandler->SendMessage(_ID, m);
     }
