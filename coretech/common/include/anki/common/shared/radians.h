@@ -95,6 +95,12 @@ public:
   // Does not rescale.
   float angularDistance(const Radians& destAngle, bool clockwise);
 
+  // Returns the shortest angular distance between the two
+  // angles. This is equivalent to the minimum of the absolute value
+  // of angularDistance clockwise and angularDistance
+  // counter-clockwise, but with the sign
+  float minAngularDistance(const Radians& destAngle);
+
 protected:
 
   // Radians value of object (kept within range by rescale function)
