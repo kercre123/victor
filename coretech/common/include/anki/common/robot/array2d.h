@@ -477,7 +477,7 @@ namespace Anki
         Type * restrict pThisData = Pointer(y, 0);
 
         for(s32 x=0; x<size[1]; x++) {
-          pThisData[x] = static_cast<Type>(pIn[x]);
+          pThisData[x] = saturate_cast<Type>(pIn[x]);
         }
       }
 

@@ -715,6 +715,24 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(-10e30))                == -0x8000000000000000LL); ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(10e30))                 == 0x7FFFFFFFFFFFFFFFLL);
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(-10e50))                == -0x8000000000000000LL); ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(10e50))                 == 0x7FFFFFFFFFFFFFFFLL);
 
+  /**/                                                                                  ASSERT_TRUE(saturate_cast<f32>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<u32>(0xFFFFFFFF)) >= 4.0e9f);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<s32>(-0x80000000LL))         <= -2.0e9f);  ASSERT_TRUE(saturate_cast<f32>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<s32>(0x7FFFFFFF)) >= 2.0e9f);
+  /**/                                                                                  ASSERT_TRUE(saturate_cast<f32>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<u64>(0xFFFFFFFFFFFFFFFFULL)) >= 1.0e19f);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(-0x8000000000000000LL)) <= -9.0e18f); ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(0x7FFFFFFFFFFFFFFFULL)) >= 9.0e18f);
+
+  /**/                                                                                  ASSERT_TRUE(saturate_cast<f32>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<u64>(0xFFFFFFFFFFFFFFFFULL)) >= 1.0e19f);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(-0x8000000000000000LL)) <= -9.0e18f); ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(0x7FFFFFFFFFFFFFFFULL)) >= 9.0e18f);
+
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<f64>(FLT_MAX))         == FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<f64>(3.402823467e+38)) == FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<f64>(3.402823466e+39)) == FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<f64>(DBL_MAX))         == FLT_MAX);
+
+  ASSERT_TRUE(saturate_cast<f32>(-static_cast<f64>(FLT_MAX))         == -FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(-static_cast<f64>(3.402823467e+38)) == -FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(-static_cast<f64>(3.402823466e+39)) == -FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(-static_cast<f64>(DBL_MAX))         == -FLT_MAX);
+
   //
   // More tests for floating point saturate_cast<>, for cases with insufficient precision
   //
