@@ -29,6 +29,8 @@
 #include "messageHandler.h"
 #include "vizManager.h"
 
+#define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
+
 namespace Anki {
   namespace Cozmo {
     
@@ -99,12 +101,14 @@ namespace Anki {
     : _ID(robotID)
     , _msgHandler(msgHandler)
     , _world(world)
-    , _pathPlanner(pathPlanner)
+    , _longPathPlanner(pathPlanner)
     , _currPathSegment(-1)
     , _isWaitingForReplan(false)
     , _goalHeadAngle(0.f)
     , _goalDistanceThreshold(10.f)
     , _goalAngleThreshold(DEG_TO_RAD(10))
+    , _lastSentPathID(0)
+    , _lastRecvdPathID(0)
     , _forceReplanOnNextWorldChange(false)
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
     , _frameId(0)
@@ -123,12 +127,18 @@ namespace Anki {
     {
       SetHeadAngle(_currentHeadAngle);
       pdo_ = new PathDolerOuter(msgHandler, robotID);
+      _shortPathPlanner = new FaceAndApproachPlanner;
+      _selectedPathPlanner = _longPathPlanner;
     } // Constructor: Robot
 
     Robot::~Robot()
     {
       delete pdo_;
       pdo_ = nullptr;
+
+      delete _shortPathPlanner;
+      _shortPathPlanner = nullptr;
+      _selectedPathPlanner = nullptr;
     }
     
     void Robot::Update(void)
@@ -151,7 +161,7 @@ namespace Anki {
             if(_world->DidBlocksChange())
             {
               Planning::Path newPath;
-              switch(_pathPlanner->GetPlan(newPath, GetPose(), _forceReplanOnNextWorldChange))
+              switch(_selectedPathPlanner->GetPlan(newPath, GetPose(), _forceReplanOnNextWorldChange))
               {
                 case IPathPlanner::DID_PLAN:
                 {
@@ -398,7 +408,9 @@ namespace Anki {
         
     Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
     {
-      IPathPlanner::EPlanStatus status = _pathPlanner->GetPlan(path, GetPose(), targetPose);
+      SelectPlanner(targetPose);
+
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), targetPose);
 
       if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
         return RESULT_OK;
@@ -411,6 +423,23 @@ namespace Anki {
       return ExecutePathToPose(pose, GetHeadAngle());
     }
     
+    void Robot::SelectPlanner(const Pose3d& targetPose)
+    {
+      Pose2d target2d(targetPose);
+      Pose2d start2d(GetPose());
+
+      float distSquared = pow(target2d.get_x() - start2d.get_x(), 2) + pow(target2d.get_y() - start2d.get_y(), 2);
+
+      if(distSquared < MAX_DISTANCE_FOR_SHORT_PLANNER * MAX_DISTANCE_FOR_SHORT_PLANNER) {
+        PRINT_NAMED_INFO("Robot.SelectPlanner", "distance^2 is %f, selecting short planner\n", distSquared);
+        _selectedPathPlanner = _shortPathPlanner;
+      }
+      else {
+        PRINT_NAMED_INFO("Robot.SelectPlanner", "distance^2 is %f, selecting long planner\n", distSquared);
+        _selectedPathPlanner = _longPathPlanner;
+      }
+    }
+
     Result Robot::ExecutePathToPose(const Pose3d& pose, const Radians headAngle)
     {
       Planning::Path p;
@@ -489,12 +518,18 @@ namespace Anki {
     // Sends a path to the robot to be immediately executed
     Result Robot::ExecutePath(const Planning::Path& path)
     {
+      if (path.GetNumSegments() == 0) {
+        PRINT_NAMED_WARNING("Robot.ExecutePath.EmptyPath", "\n");
+        return RESULT_OK;
+      }
+      
       // TODO: Clear currently executing path or write to buffered path?
       if (ClearPath() == RESULT_FAIL)
         return RESULT_FAIL;
 
       SetState(FOLLOWING_PATH);
       _nextState = IDLE; // for when the path is complete
+      ++_lastSentPathID;
       
       return SendExecutePath(path);
     }
@@ -755,7 +790,7 @@ namespace Anki {
 
       // Send start path execution message
       MessageExecutePath m;
-      m.pathID = 0;
+      m.pathID = _lastSentPathID;
       PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message");
       return _msgHandler->SendMessage(_ID, m);
     }

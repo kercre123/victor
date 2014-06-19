@@ -73,7 +73,6 @@ void PathDolerOuter::Dole(size_t validRobotPathLength, size_t numToDole)
       m.y_start_mm = l->startPt_y;
       m.x_end_mm = l->endPt_x;
       m.y_end_mm = l->endPt_y;
-      m.pathID = 0;
       m.segmentID = i - robotIdx_;
             
       m.targetSpeed = path_.GetSegmentConstRef(i).GetTargetSpeed();
@@ -95,7 +94,6 @@ void PathDolerOuter::Dole(size_t validRobotPathLength, size_t numToDole)
       m.radius_mm = a->radius;
       m.startRad = a->startRad;
       m.sweepRad = a->sweepRad;
-      m.pathID = 0;
       m.segmentID = i - robotIdx_;
             
       m.targetSpeed = path_.GetSegmentConstRef(i).GetTargetSpeed();
@@ -115,7 +113,6 @@ void PathDolerOuter::Dole(size_t validRobotPathLength, size_t numToDole)
       m.x_center_mm = t->x;
       m.y_center_mm = t->y;
       m.targetRad = t->targetAngle;
-      m.pathID = 0;
       m.segmentID = i - robotIdx_;
             
       m.targetSpeed = path_.GetSegmentConstRef(i).GetTargetSpeed();

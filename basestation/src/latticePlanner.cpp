@@ -98,6 +98,8 @@ LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                             startPose.get_translation().y(),
                             startPose.get_rotationAngle().ToFloat());
 
+  VizManager::getInstance()->EraseAllQuads();
+  
   std::vector<Quad2f> boundingBoxes;
 
   if(!forceReplanFromScratch) {
@@ -121,6 +123,7 @@ LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     planIdx = impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState);
   }
   else {
+    impl_->env_.ClearObstacles();
     impl_->totalPlan_.Clear();
   }
 
@@ -153,7 +156,8 @@ LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     path.Clear();
 
     if(!impl_->planner_.SetStart(lastSafeState)) {
-      printf("ERROR: ReplanIfNeeded, invalid start!\n");      
+      printf("ERROR: ReplanIfNeeded, invalid start!\n");
+      return PLAN_NEEDED_BUT_START_FAILURE;
     }
     else if(!impl_->planner_.GoalIsValid()) {
       printf("ReplanIfNeeded, invalid goal! Goal may have moved into collision.\n");

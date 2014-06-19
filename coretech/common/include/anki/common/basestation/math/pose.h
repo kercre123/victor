@@ -48,6 +48,9 @@ namespace Anki {
   //  Then the base class could define the common elements like the parent
   //  pointer, the getTreeDepth() method, and the getWithRespectTo method.
   
+  // Forward declaration of Pose3d so Pose2d can use it
+  class Pose3d;
+  
   //
   // Pose2d Class
   //
@@ -59,8 +62,13 @@ namespace Anki {
     static Pose2d* World;
     
     // Constructors:
+    Pose2d(); 
     Pose2d(const Radians &angle, const Point2f &translation);
     Pose2d(const Radians &angle, const float x, const float y);
+    
+    // Create a 2D pose from a 3D one, by keeping only the translation in the
+    // XY plane and the rotation around the Z axis.
+    Pose2d(const Pose3d& pose3d);
 
     /* TODO: Add constructor to take in covariance
     Pose2d(const float x, const float y, const Radians angle,
@@ -179,13 +187,12 @@ namespace Anki {
     RotationVector3d        get_rotationVector() const;
     Vec3f                   get_rotationAxis()   const;
 
-    // Get the rotation angle, optinally around a specific axis.
-    // By default or when template parameter is anything other than X, Y, or Z,
-    // the rotation angle *around the pose's rotation axis* is returned.
-    // When X, Y, or Z are specified (case insensitive), the rotation angle
-    // around that axis is returned.
+    // Get the rotation angle, optionally around a specific axis.
+    // By default the rotation angle *around the pose's rotation axis* is
+    // returned. When 'X', 'Y', or 'Z' are specified (case insensitive), the
+    // rotation angle around that axis is returned.
     template<char AXIS = ' '>
-    Radians                 get_rotationAngle()  const;
+    Radians get_rotationAngle() const;
     
     void set_rotation(const RotationMatrix3d &Rmat);
     void set_rotation(const RotationVector3d &Rvec);

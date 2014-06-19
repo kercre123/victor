@@ -357,14 +357,16 @@ namespace Anki
           {
             Block* block = dynamic_cast<Block*>(blockAndId.second);
             CORETECH_THROW_IF(block == nullptr);
-            const f32 blockHeight = block->GetPose().get_translation().z();
-            
-            // If this block's ID is not in the ignore list, then we will use it
-            const bool useID = ignoreIDs.find(blockAndId.first) == ignoreIDs.end();
-            
-            if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
-            {
-              rectangles.emplace_back(block->GetBoundingQuadXY(padding));
+            if (!block->GetIsBeingCarried()) {
+              const f32 blockHeight = block->GetPose().get_translation().z();
+              
+              // If this block's ID is not in the ignore list, then we will use it
+              const bool useID = ignoreIDs.find(blockAndId.first) == ignoreIDs.end();
+              
+              if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
+              {
+                rectangles.emplace_back(block->GetBoundingQuadXY(padding));
+              }
             }
           }
         } // if(useType)

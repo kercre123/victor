@@ -91,9 +91,14 @@ bool xythetaPlannerImpl::SetGoal(const State_c& goal_c)
   State goal = env_.State_c2State(goal_c);
 
   if(env_.IsInCollision(goal)) {
-    printf("looks like goal is in collision but goal_c isn't. This is a failure but will be fixed soon...\n");
-    return false;
+    if(!env_.RoundSafe(goal_c, goal)) {
+      printf("all possible discrete states of goal are in collision!\n");
+      return false;
+    }
+
+    assert(!env_.IsInCollision(goal));
   }
+
   goalID_ = goal.GetStateID();
 
   std::cout<<goal<<std::endl;
@@ -116,18 +121,22 @@ bool xythetaPlannerImpl::GoalIsValid() const
 }
 
 
-bool xythetaPlannerImpl::SetStart(const State_c& start)
+bool xythetaPlannerImpl::SetStart(const State_c& start_c)
 {
-  if(env_.IsInCollision(start)) {
+  if(env_.IsInCollision(start_c)) {
     printf("start is in collision!\n");
     return false;
   }
 
-  start_ = env_.State_c2State(start);
+  start_ = env_.State_c2State(start_c);
 
   if(env_.IsInCollision(start_)) {
-    printf("rounded start is in collision! This is a failure for now, will be fixed soon.....\n");
-    return false;
+    if(!env_.RoundSafe(start_c, start_)) {
+      printf("all possible discrete states of start are in collision!\n");
+      return false;
+    }
+
+    assert(!env_.IsInCollision(start_));
   }
 
   startID_ = start_.GetStateID();

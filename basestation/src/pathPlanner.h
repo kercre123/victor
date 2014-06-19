@@ -28,6 +28,9 @@ namespace Anki {
     class IPathPlanner
     {
     public:
+
+      virtual ~IPathPlanner() {}
+
       // Replan if needed because the environment changed. Returns
       // DID_REPLAN if there is a new path and REPLAN_NOT_NEEDED if no
       // replan was necessary and the path has not changed.  If a new
@@ -89,6 +92,22 @@ namespace Anki {
       
       
     }; // class PathPlanner
+
+    // This make a plan that turns and drives towards the goal you give it
+    class FaceAndApproachPlanner : public IPathPlanner
+    {
+    public:
+
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                  const Pose3d& startPose,
+                                  bool forceReplanFromScratch = false) override;
+
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                  const Pose3d& startPose,
+                                  const Pose3d& targetPose) override;
+    protected:
+      Vec3f _targetVec;
+    };
 
     class LatticePlannerImpl;
 

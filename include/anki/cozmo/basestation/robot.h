@@ -101,7 +101,7 @@ namespace Anki {
       Result ExecutePathToPose(const Pose3d& pose);
       Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
 
-      IPathPlanner* GetPathPlanner() { return _pathPlanner; }
+      IPathPlanner* GetPathPlanner() { return _longPathPlanner; }
 
       void AbortCurrentPath();
       
@@ -112,6 +112,10 @@ namespace Anki {
       void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
       s8   GetCurrPathSegment() {return _currPathSegment;}
       bool IsTraversingPath() {return (_currPathSegment >= 0) || _isWaitingForReplan;}
+
+      void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
+      u16 GetLastRecvdPathID() {return _lastRecvdPathID;}
+      u16 GetLastSentPathID() {return _lastSentPathID;}
 
       void SetCarryingBlock(Block* carryBlock) {_carryingBlock = carryBlock;}
       bool IsCarryingBlock() {return _carryingBlock != nullptr;}
@@ -245,8 +249,11 @@ namespace Anki {
       // A reference to the BlockWorld the robot lives in
       BlockWorld*      _world;
       
-      // Path Following
-      IPathPlanner*    _pathPlanner;
+      // Path Following. There are two planners, only one of which can
+      // be selected at a time
+      IPathPlanner*    _selectedPathPlanner;
+      IPathPlanner*    _longPathPlanner;
+      IPathPlanner*    _shortPathPlanner;
       Planning::Path   _path;
       s8               _currPathSegment;
       bool             _isWaitingForReplan;
@@ -254,6 +261,12 @@ namespace Anki {
       Radians          _goalHeadAngle;
       f32              _goalDistanceThreshold;
       Radians          _goalAngleThreshold;
+      u16              _lastSentPathID;
+      u16              _lastRecvdPathID;
+
+      // This functions sets _selectedPathPlanner to the appropriate
+      // planner
+      void SelectPlanner(const Pose3d& targetPose);
 
       PathDolerOuter* pdo_;
       
