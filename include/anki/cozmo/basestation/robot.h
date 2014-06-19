@@ -61,6 +61,7 @@ namespace Anki {
       // Accessors
       const RobotID_t        GetID()           const;
       const Pose3d&          GetPose()         const;
+      bool                   IsLocalized()     const {return _isLocalized;}
       const Vision::Camera&  GetCamera()       const;
       Vision::Camera&        GetCamera();
       
@@ -270,8 +271,11 @@ namespace Anki {
       Vision::Camera   _camera;
       
       // Geometry / Pose
+      Pose3d*          _poseOrigin;
       Pose3d           _pose;
       PoseFrameID_t    _frameId;
+      bool             _isLocalized;
+      
       
       const Pose3d _neckPose; // joint around which head rotates
       const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint

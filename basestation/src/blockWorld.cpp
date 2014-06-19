@@ -6,6 +6,7 @@
 
 #include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
 
@@ -445,7 +446,12 @@ namespace Anki
         }
         
         const Pose3d* matPose = &(matsSeen[0]->GetPose());
-        Pose3d newPose( posePtr->GetPose().getWithRespectTo(matPose) );
+        Pose3d newPose;
+        if(posePtr->GetPose().getWithRespectTo(matPose, newPose) == false) {
+          PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.MatPoseOriginMisMatch",
+                            "Could not get RobotPoseStamp w.r.t. matPose.\n");
+          return false;
+        }
         
         /*
         Pose3d P_diff;
@@ -461,8 +467,9 @@ namespace Anki
          robot->GetCamera().get_pose() *
          (*matWrtCamera)).getInverse() );
          */
-        newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
-        
+        // Leave newPose w.r.t. matPose?
+        //newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
+
         // If there is any significant rotation, make sure that it is roughly
         // around the Z axis
         // TODO: Should grab the actual z-axis rotation here instead of assuming the rotationAngle is good enough.
@@ -639,55 +646,59 @@ namespace Anki
           bool didErase = false;
           if(block->GetLastObservedTime() < lastObsMarkerTime && !block->GetIsBeingCarried())
           {
-            // Check block's bounding box in world coorindates (since a block
-            // could be relative to robot if being carried) to see if it
-            // intersects with any robot bounding box.  Also check to see
-            // block and the robot are at overlapping heights.
-            const Pose3d blockPoseWrtWorld = block->GetPose().getWithRespectTo(Pose3d::World);
-            const Quad2f blockBBox = block->GetBoundingQuadXY(blockPoseWrtWorld);
-            const f32    blockHeight = blockPoseWrtWorld.get_translation().z();
-            const f32    blockSize   = 0.5f*block->GetSize().Length();
-            const f32    blockTop    = blockHeight + blockSize;
-            const f32    blockBottom = blockHeight - blockSize;
-            
             for(auto robotID : robotMgr_->GetRobotIDList())
             {
               Robot* robot = robotMgr_->GetRobotByID(robotID);
               CORETECH_ASSERT(robot != NULL);
-
-              // Don't worry about collision while picking or placing since we
-              // are trying to get close to blocks in these modes.
-              // TODO: specify whether we are picking/placing _this_ block
-              if(!robot->IsPickingOrPlacing())
+              
+              // Check block's bounding box in same coordinates as this robot to
+              // see if it intersects with the robot's bounding box. Also check to see
+              // block and the robot are at overlapping heights.  Skip this check
+              // entirely if the block isn't in the same coordinate tree as the
+              // robot.
+              Pose3d blockPoseWrtRobotOrigin;
+              if(block->GetPose().getWithRespectTo(robot->GetPose().FindOrigin(), blockPoseWrtRobotOrigin) == true)
               {
-                const f32 robotBottom = robot->GetPose().get_translation().z();
-                const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
+                const Quad2f blockBBox = block->GetBoundingQuadXY(blockPoseWrtRobotOrigin);
+                const f32    blockHeight = blockPoseWrtRobotOrigin.get_translation().z();
+                const f32    blockSize   = 0.5f*block->GetSize().Length();
+                const f32    blockTop    = blockHeight + blockSize;
+                const f32    blockBottom = blockHeight - blockSize;
                 
-                const bool topIntersects    = (((blockTop >= robotBottom) && (blockTop <= robotTop)) ||
-                                               ((robotTop >= blockBottom) && (robotTop <= blockTop)));
-                
-                const bool bottomIntersects = (((blockBottom >= robotBottom) && (blockBottom <= robotTop)) ||
-                                               ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
-                
-                const bool bboxIntersects   = blockBBox.Intersects(robot->GetBoundingQuadXY());
-                
-                if( (topIntersects || bottomIntersects) && bboxIntersects )
+                // Don't worry about collision while picking or placing since we
+                // are trying to get close to blocks in these modes.
+                // TODO: specify whether we are picking/placing _this_ block
+                if(!robot->IsPickingOrPlacing())
                 {
-                  CoreTechPrint("Removing block %d, which intersects robot %d's bounding quad.\n",
-                                block->GetID(), robot->GetID());
+                  const f32 robotBottom = robot->GetPose().get_translation().z();
+                  const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
                   
-                  // Erase the vizualized block and its projected quad
-                  VizManager::getInstance()->EraseCuboid(block->GetID());
-                  VizManager::getInstance()->EraseQuad(block->GetID());
+                  const bool topIntersects    = (((blockTop >= robotBottom) && (blockTop <= robotTop)) ||
+                                                 ((robotTop >= blockBottom) && (robotTop <= blockTop)));
                   
-                  // Erase the block (with a postfix increment of the iterator)
-                  blocksOfType.second.erase(blockIter++);
-                  didErase = true;
-                  didBlocksChange_ = true;
+                  const bool bottomIntersects = (((blockBottom >= robotBottom) && (blockBottom <= robotTop)) ||
+                                                 ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
                   
-                  break; // no need to check other robots, block already gone
-                } // if quads intersect
-              } // if robot is not picking or placing
+                  const bool bboxIntersects   = blockBBox.Intersects(robot->GetBoundingQuadXY());
+                  
+                  if( (topIntersects || bottomIntersects) && bboxIntersects )
+                  {
+                    CoreTechPrint("Removing block %d, which intersects robot %d's bounding quad.\n",
+                                  block->GetID(), robot->GetID());
+                    
+                    // Erase the vizualized block and its projected quad
+                    VizManager::getInstance()->EraseCuboid(block->GetID());
+                    VizManager::getInstance()->EraseQuad(block->GetID());
+                    
+                    // Erase the block (with a postfix increment of the iterator)
+                    blocksOfType.second.erase(blockIter++);
+                    didErase = true;
+                    didBlocksChange_ = true;
+                    
+                    break; // no need to check other robots, block already gone
+                  } // if quads intersect
+                } // if robot is not picking or placing
+              } // if we got block pose wrt robot origin
             } // for each robot
           } // if block was not observed
           
@@ -758,8 +769,12 @@ namespace Anki
           for(auto matMarker : matMarkers) {
             Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
                                                                      matMarker->Get3dCorners(canonicalPose));
-            markerPose = markerPose.getWithRespectTo(Pose3d::World);
-            VizManager::getInstance()->DrawQuad(quadID++, matMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+            if(markerPose.getWithRespectTo(Pose3d::World, markerPose) == true) {
+              VizManager::getInstance()->DrawQuad(quadID++, matMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+            } else {
+              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotWorld",
+                                  "Cannot visualize a Mat marker that is not w.r.t. the World Origin.\n");
+            }
           }
         }
         
@@ -802,7 +817,7 @@ namespace Anki
           VizManager::getInstance()->EraseCuboid(block.first);
           VizManager::getInstance()->EraseQuad(block.first);
         }
-                
+        
         // Erase this entry in the map of block types
         existingBlocks_.erase(type);
         

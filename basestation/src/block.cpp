@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 
 #include "vizManager.h"
 
@@ -481,7 +482,14 @@ namespace Anki {
     
     void Block::Visualize(const u32 color, const f32 preDockPoseDistance) const
     {
-      VizManager::getInstance()->DrawCuboid(GetID(), _size, GetPose().getWithRespectTo(Pose3d::World), color);
+      Pose3d vizPose;
+      if(GetPose().getWithRespectTo(Pose3d::World, vizPose) == false) {
+        // This really should not happen, by definition...
+        PRINT_NAMED_ERROR("Block.Visualize.OriginProblem", "Could not get block's pose w.r.t. its own origin (?!?)\n");
+        return;
+      }
+      
+      VizManager::getInstance()->DrawCuboid(GetID(), _size, vizPose, color);
       
       if(preDockPoseDistance > 0.f) {
         u32 poseID = 0;

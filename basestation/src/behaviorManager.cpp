@@ -360,8 +360,13 @@ namespace Anki {
                 const Vision::KnownMarker* topMarker = nullptr;
                 for(auto marker : diceMarkers) {
                   //const f32 dotprod = DotProduct(marker->ComputeNormal(), Z_AXIS_3D);
-                  const Pose3d markerWRTworld(marker->GetPose().getWithRespectTo(Pose3d::World));
-                  const f32 dotprod = marker->ComputeNormal(markerWRTworld).z();
+                  Pose3d markerWrtRobotOrigin;
+                  if(marker->GetPose().getWithRespectTo(robot_->GetPose().FindOrigin(), markerWrtRobotOrigin) == false) {
+                    PRINT_NAMED_ERROR("BehaviorManager.Update_June2014DiceDemo.MarkerOriginNotRobotOrigin",
+                                      "Marker should share the same origin as the robot that observed it.\n");
+                    Reset();
+                  }
+                  const f32 dotprod = marker->ComputeNormal(markerWrtRobotOrigin).z();
                   if(NEAR(dotprod, 1.f, dotprodThresh)) {
                     topMarker = marker;
                   }

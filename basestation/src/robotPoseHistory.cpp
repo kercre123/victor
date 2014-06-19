@@ -10,6 +10,7 @@
 #include "anki/common/basestation/general.h"
 
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 
 #define DEBUG_ROBOT_POSE_HISTORY 0
 
@@ -214,7 +215,12 @@ namespace Anki {
         if (withInterpolation) {
           
           // Get the pose transform between the two poses.
-          Pose3d pTransform = it->second.GetPose().getWithRespectTo(&(prev_it->second.GetPose()));
+          Pose3d pTransform;
+          if(it->second.GetPose().getWithRespectTo(prev_it->second.GetPose(), pTransform) == false) {
+            PRINT_NAMED_ERROR("RobotPoseHistory.GetRawPoseAt.MisMatchedOrigins",
+                              "Could not get the pose transform between the two poses because they don't share the same origin.\n");
+            return RESULT_FAIL;
+          }
           
           // Compute scale factor between time to previous pose and time between previous pose and next pose.
           f32 timeScale = (f32)(t_request - prev_it->first) / (it->first - prev_it->first);
