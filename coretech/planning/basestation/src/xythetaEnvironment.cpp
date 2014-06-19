@@ -723,6 +723,35 @@ u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
 }
 
 
+bool xythetaEnvironment::RoundSafe(const State_c& c, State& rounded) const
+{
+  float bestDist2 = 999999.9;
+
+  // TODO:(bn) smarter rounding for theta?
+  rounded.theta = GetTheta(c.theta);
+
+  StateXY startX = (StateXY) floor(c.x_mm * oneOverResolution_);
+  StateXY endX   = (StateXY)  ceil(c.x_mm * oneOverResolution_);
+  StateXY startY = (StateXY) floor(c.y_mm * oneOverResolution_);
+  StateXY endY   = (StateXY)  ceil(c.y_mm * oneOverResolution_);
+
+  for(StateXY x = startX; x <= endX; ++x) {
+    for(StateXY y = startY; y <= endY; ++y) {
+      State candidate(x, y, rounded.theta);
+      if(!IsInCollision(candidate)) {
+        float dist2 = pow(GetX_mm(x) - c.x_mm, 2) + pow(GetY_mm(y) - c.y_mm, 2);
+        if(dist2 < bestDist2) {
+          bestDist2 = dist2;
+          rounded.x = x;
+          rounded.y = y;
+        }
+      }
+    }
+  }
+
+  return bestDist2 < 999999.8;
+}
+
 float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State& end) const
 {
   float distSq = 

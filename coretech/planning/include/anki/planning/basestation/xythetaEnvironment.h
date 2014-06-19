@@ -295,7 +295,13 @@ public:
   inline State_c State2State_c(const State& s) const;
   inline State_c StateID2State_c(StateID sid) const;
 
+  // round the continuous state to the nearest discrete state, ignoring obstacles
   inline State State_c2State(const State_c& c) const;
+
+  // round the continuous state to the nearest discrete state which is
+  // safe. Return true if success, false if all 4 corners are unsafe
+  // (unlikely but possible)
+  bool RoundSafe(const State_c& c, State& rounded) const;
 
   inline static float GetXFromStateID(StateID sid);
   inline static float GetYFromStateID(StateID sid);
