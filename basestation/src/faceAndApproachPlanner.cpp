@@ -42,6 +42,7 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
                                                           const Pose3d& targetPose)
 {
   _targetVec = targetPose.get_translation();
+  _finalTargetAngle = targetPose.get_rotationAngle<'Z'>().ToFloat();
 
   return GetPlan(path, startPose, true);
 }
@@ -59,7 +60,8 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
   // just constantly send a new plan. Instead if needs to detect if it
   // has veered off the plan somehow
 
-  bool doTurn = false;
+  bool doTurn0 = false;
+  bool doTurn1 = false;
   bool doStraight = false;
 
   Vec3f startVec(startPose.get_translation());
@@ -71,10 +73,17 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
   float deltaTheta = currAngle.minAngularDistance(targetAngle);
 
   if(std::abs(deltaTheta) > FACE_AND_APPROACH_THETA_THRESHOLD) {
-    printf("FaceAndApproachPlanner: doing turn because delta theta of %f > %f\n",
+    printf("FaceAndApproachPlanner: doing initial turn because delta theta of %f > %f\n",
            deltaTheta,
            FACE_AND_APPROACH_THETA_THRESHOLD);
-    doTurn = true;
+    doTurn0 = true;
+  }
+
+  if(std::abs(targetAngle.ToFloat() - _finalTargetAngle) > FACE_AND_APPROACH_THETA_THRESHOLD) {
+    printf("FaceAndApproachPlanner: doing final turn because delta theta of %f > %f\n",
+           deltaTheta,
+           FACE_AND_APPROACH_THETA_THRESHOLD);
+    doTurn1 = true;
   }
 
   Point2f start2d(startVec.x(), startVec.y());
@@ -87,13 +96,13 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
     doStraight = true;
   }
 
-  if(!doTurn && !doStraight) {
+  if(!doTurn0 && !doStraight && !doTurn1) {
     return PLAN_NOT_NEEDED;
   }
 
   path.Clear();
 
-  if(doTurn) { // TEMP: sometimes this is backwards!!!
+  if(doTurn0) {
     path.AppendPointTurn(0,
                          startVec.x(), startVec.y(), targetAngle.ToFloat(),
                          deltaTheta < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
@@ -108,6 +117,15 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
                     FACE_AND_APPROACH_TARGET_SPEED,
                     FACE_AND_APPROACH_PLANNER_ACCEL,
                     FACE_AND_APPROACH_PLANNER_DECEL);
+  }
+
+  if(doTurn1) {
+    float deltaTheta1 = _finalTargetAngle - targetAngle.ToFloat();
+    path.AppendPointTurn(0,
+                         _targetVec.x(), _targetVec.y(), _finalTargetAngle,
+                         deltaTheta1 < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
+                         FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
+                         FACE_AND_APPROACH_PLANNER_ROT_DECEL);
   }
 
   return DID_PLAN;  

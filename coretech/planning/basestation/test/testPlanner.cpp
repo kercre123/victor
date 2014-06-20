@@ -252,3 +252,26 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
     curr = State(currID);
   }
 }
+
+
+GTEST_TEST(TestPlanner, CorrectlyRoundStateNearBox)
+{
+
+  xythetaEnvironment env;
+
+  // TODO:(bn) open something saved in the test dir isntead, so we
+  // know not to change or remove it
+  EXPECT_TRUE(env.ReadMotionPrimitives(
+                PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
+
+  xythetaPlanner planner(env);
+
+  env.AddObstacle(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
+
+  EXPECT_TRUE(planner.SetStart(State_c(0, 0, 0.0))) << "set start at origin should pass";
+
+  EXPECT_FALSE(planner.SetStart(State_c(210.0, -1.7, 2.34))) << "set start in box should fail";
+
+  EXPECT_TRUE(planner.SetStart(State_c(198.7, 0, 0.0))) << "set start near box should pass";
+  
+}
