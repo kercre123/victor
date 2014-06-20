@@ -483,7 +483,7 @@ namespace Anki {
     void Block::Visualize(const u32 color, const f32 preDockPoseDistance) const
     {
       Pose3d vizPose;
-      if(GetPose().getWithRespectTo(Pose3d::World, vizPose) == false) {
+      if(pose_.getWithRespectTo(pose_.FindOrigin(), vizPose) == false) {
         // This really should not happen, by definition...
         PRINT_NAMED_ERROR("Block.Visualize.OriginProblem", "Could not get block's pose w.r.t. its own origin (?!?)\n");
         return;

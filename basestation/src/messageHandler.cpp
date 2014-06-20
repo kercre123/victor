@@ -273,7 +273,8 @@ namespace Anki {
                                          msg.pose_x, msg.pose_y, msg.pose_z,
                                          msg.pose_angle,
                                          msg.headAngle,
-                                         msg.liftAngle) == RESULT_FAIL) {
+                                         msg.liftAngle,
+                                         robot->GetPoseOrigin()) == RESULT_FAIL) {
         PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "");
       }
       

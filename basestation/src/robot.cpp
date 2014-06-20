@@ -18,8 +18,8 @@
 
 #include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/vision/CameraSettings.h"
@@ -985,15 +985,41 @@ namespace Anki {
                                           const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                           const f32 pose_angle,
                                           const f32 head_angle,
-                                          const f32 lift_angle)
+                                          const f32 lift_angle,
+                                          const Pose3d* pose_origin)
     {
-      return _poseHistory.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
+      return _poseHistory.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin);
     }
     
     Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                              const RobotPoseStamp& p)
     {
-      _isLocalized = true;
+      if(!_isLocalized) {
+        // If we aren't localized yet, we are about to be, by virtue of this pose
+        // stamp.  So we need to take the current origin (which may be the
+        // the pose parent of observed objects) and update it
+        
+        // Reverse the connection between origin and robot
+        //CORETECH_ASSERT(p.GetPose().get_parent() == _poseOrigin);
+        *_poseOrigin = _pose.getInverse();
+        _poseOrigin->set_parent(&_pose);
+        
+        // Connect the old origin's pose to the same root the robot now has.
+        // It is no longer the robot's origin, but for any of its children,
+        // it is now in the right coordinates.
+        if(_poseOrigin->getWithRespectTo(p.GetPose().FindOrigin(), *_poseOrigin) == false) {
+          PRINT_NAMED_ERROR("Robot.AddVisionOnlyPoseToHistory.NewLocalizationOriginProblem",
+                            "Could not get pose origin w.r.t. RobotPoseStamp's pose.\n");
+          return RESULT_FAIL;
+        }
+        
+        // Now make the robot's origin point to the robot's pose's parent.
+        // TODO: avoid the icky const cast here...
+        _poseOrigin = const_cast<Pose3d*>(p.GetPose().get_parent());
+        
+        _isLocalized = true;
+      }
+      
       return _poseHistory.AddVisionOnlyPose(t, p);
     }
 
@@ -1028,36 +1054,7 @@ namespace Anki {
       RobotPoseStamp p;
       if (_poseHistory.ComputePoseAt(_poseHistory.GetNewestTimeStamp(), t, p) == RESULT_OK) {
         if (p.GetFrameId() == GetPoseFrameID()) {
-          if(!_isLocalized) {
-            // If we aren't localized yet, we are about to be, by virtue of this pose
-            // stamp.  So we need to take the current origin (which may be the
-            // the pose parent of observed objects) and update it
-            
-            // Reverse the connection between origin and robot
-            CORETECH_ASSERT(_pose.get_parent() == _poseOrigin);
-            *_poseOrigin = _pose.getInverse();
-            _poseOrigin->set_parent(&_pose);
-            
-            // Update the robot's pose with the new one
-            _pose = p.GetPose();
-            
-            // Connect the old origin's pose to the same root the robot now has.
-            // It is no longer the robot's origin, but for any of its children,
-            // it is now in the right coordinates.
-            if(_poseOrigin->getWithRespectTo(_pose.get_parent(), *_poseOrigin) == false) {
-              PRINT_NAMED_ERROR("Robot.UpdateCurrPoseFromHistory.OriginProblem",
-                                "Could not get pose w.r.t. robot pose.\n");
-              return false;
-            }
-
-            // Now make the robot's origin point to the robot's pose's parent.
-            // TODO: avoid the icky const cast here...
-            _poseOrigin = const_cast<Pose3d*>(_pose.get_parent());
-            
-            _isLocalized = true;
-          } else {
-            _pose = p.GetPose();
-          }
+          _pose = p.GetPose();
           poseUpdated = true;
         }
       }

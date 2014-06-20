@@ -61,6 +61,7 @@ namespace Anki {
       // Accessors
       const RobotID_t        GetID()           const;
       const Pose3d&          GetPose()         const;
+      const Pose3d*          GetPoseOrigin()   const {return _poseOrigin;}
       bool                   IsLocalized()     const {return _isLocalized;}
       const Vision::Camera&  GetCamera()       const;
       Vision::Camera&        GetCamera();
@@ -220,7 +221,8 @@ namespace Anki {
                                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                      const f32 pose_angle,
                                      const f32 head_angle,
-                                     const f32 lift_angle);
+                                     const f32 lift_angle,
+                                     const Pose3d* pose_origin);
       
       Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                         const RobotPoseStamp& p);
