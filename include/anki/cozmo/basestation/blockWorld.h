@@ -111,6 +111,8 @@ namespace Anki
       // Visualize markers in image display
       void DrawObsMarkers() const;
       
+      // Call every existing block's Visualize() method
+      void DrawAllBlocks() const;
       
     protected:
       

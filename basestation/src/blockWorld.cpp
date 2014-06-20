@@ -399,6 +399,8 @@ namespace Anki
       // TODO: what to do when a robot sees multiple mat pieces at the same time
       if(not matsSeen.empty()) {
         
+        const bool wasLocalized = robot->IsLocalized();
+        
         if(matsSeen.size() > 1) {
           PRINT_NAMED_WARNING("MultipleMatPiecesObserved",
                               "Robot %d observed more than one mat pieces at "
@@ -406,20 +408,19 @@ namespace Anki
                               robot->GetID());
         }
         
-        MatPiece* firstMatPiece = dynamic_cast<MatPiece*>(matsSeen[0]);
-        CORETECH_ASSERT(firstMatPiece != nullptr);
+        MatPiece* firstSeenMatPiece = dynamic_cast<MatPiece*>(matsSeen[0]);
+        CORETECH_ASSERT(firstSeenMatPiece != nullptr);
         
-       
         // Get computed RobotPoseStamp at the time the mat was observed.
         RobotPoseStamp* posePtr = nullptr;
-        if (robot->GetComputedPoseAt(firstMatPiece->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
+        if (robot->GetComputedPoseAt(firstSeenMatPiece->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotFindHistoricalPose", "Time %d\n", matsSeen[0]->GetLastObservedTime());
           return false;
         }
         
-        // Get the pose of the robot with respect to the observed mat
+        // Get the pose of the robot with respect to the observed mat piece
         Pose3d robotPoseWrtMat;
-        if(posePtr->GetPose().getWithRespectTo(firstMatPiece->GetPose(), robotPoseWrtMat) == false) {
+        if(posePtr->GetPose().getWithRespectTo(firstSeenMatPiece->GetPose(), robotPoseWrtMat) == false) {
           PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.MatPoseOriginMisMatch",
                             "Could not get RobotPoseStamp w.r.t. matPose.\n");
           return false;
@@ -427,7 +428,6 @@ namespace Anki
         
         // If there is any significant rotation, make sure that it is roughly
         // around the Z axis
-        // TODO: Should grab the actual z-axis rotation here instead of assuming the rotationAngle is good enough.
         Radians rotAngle;
         Vec3f rotAxis;
         robotPoseWrtMat.get_rotationVector().get_angleAndAxis(rotAngle, rotAxis);
@@ -439,21 +439,19 @@ namespace Anki
         }
         
         if(existingMatPieces_.empty()) {
-          // Create the first mat piece
+          // We haven't seen the mat yet.  Create the first mat piece in the world.
+          // Not supporting multiple mat pieces, just use the already-seen one from here on.
+          // TODO: Deal with multiple mat pieces and updating their poses w.r.t. one another.
           PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.CreatingMatPiece",
                            "Instantiating one and only mat piece in the world.\n");
           
-          firstMatPiece->SetID(++globalIDCounter);
-          existingMatPieces_[firstMatPiece->GetType()][firstMatPiece->GetID()] = new MatPiece(firstMatPiece->GetType());
-          //firstMatPiece = dynamic_cast<MatPiece*>(existingMatPieces_[firstMatPiece->GetType()][firstMatPiece->GetID()]);
-          //CORETECH_ASSERT(firstMatPiece != nullptr);
-          
+          firstSeenMatPiece->SetID(++globalIDCounter);
+          existingMatPieces_[firstSeenMatPiece->GetType()][firstSeenMatPiece->GetID()] = new MatPiece(firstSeenMatPiece->GetType());
         }
-        
-        // Not supporting multiple mat pieces, just use the already-seen one from here on
-        // TODO: Support multiple mat pieces
-        
-        auto matPiecesByType = existingMatPieces_.find(firstMatPiece->GetType());
+
+        // Grab the existing mat piece that matches the one we saw.  For now,
+        // their should only every be one.
+        auto matPiecesByType = existingMatPieces_.find(firstSeenMatPiece->GetType());
         if(matPiecesByType == existingMatPieces_.end() || matPiecesByType->second.empty()) {
           PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.UnexpectedMatPieceType",
                             "Saw new mat piece type that didn't match the any already in existence.\n");
@@ -462,72 +460,25 @@ namespace Anki
         else if(matPiecesByType->second.size() > 1) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleMatPiecesWithType",
                               "There are more than one mat pieces in existance with type %d.\n",
-                              firstMatPiece->GetType());
+                              firstSeenMatPiece->GetType());
         }
         
         MatPiece* existingMatPiece = dynamic_cast<MatPiece*>(matPiecesByType->second.begin()->second);
         CORETECH_ASSERT(existingMatPiece != nullptr);
         
-        // Update lastObserved times of the mat piece
-        existingMatPiece->SetLastObservedTime(firstMatPiece->GetLastObservedTime());
-        existingMatPiece->UpdateMarkerObservationTimes(*firstMatPiece);
+        // Update lastObserved times of the existing mat piece
+        existingMatPiece->SetLastObservedTime(firstSeenMatPiece->GetLastObservedTime());
+        existingMatPiece->UpdateMarkerObservationTimes(*firstSeenMatPiece);
         
         // Make the computed robot pose use the existing mat piece as its parent
         robotPoseWrtMat.set_parent(&existingMatPiece->GetPose());
-        
-       /*
-        // At this point the mat's pose should be relative to the robot's
-        // camera's pose
-        const Pose3d* matWrtCamera = &(matsSeen[0]->GetPose());
-        CORETECH_ASSERT(matWrtCamera->get_parent() ==
-                        &(robot->GetCamera().get_pose())); // MatPose's parent is camera
-        */
-        
-        /*
-         PRINT_INFO("Observed mat w.r.t. camera is (%f,%f,%f)\n",
-         matWrtCamera->get_translation().x(),
-         matWrtCamera->get_translation().y(),
-         matWrtCamera->get_translation().z());
-         */
-        
-        /*
-        // Now get the pose of the robot relative to the mat, using the pose
-        // tree
-        CORETECH_ASSERT(matWrtCamera->get_parent()->get_parent()->get_parent() ==
-                        &(robot->get_pose())); // Robot pose is just a couple more up the pose chain
-        
-        Pose3d newPose( robot->get_pose().getWithRespectTo(matWrtCamera) );
-        */
-        
-
-        
-
-        
-        /*
-        Pose3d P_diff;
-        CORETECH_ASSERT( newPose.IsSameAs((*(robot->GetCamera().get_pose().get_parent()) *
-                                           robot->GetCamera().get_pose() *
-                                           (*matPose)).getInverse(),
-                                          5.f, 5*M_PI/180.f, P_diff) );
-        */
-        
-        /*
-         Pose3d newPose
-         ( (*(robot->GetCamera().get_pose().get_parent()) *
-         robot->GetCamera().get_pose() *
-         (*matWrtCamera)).getInverse() );
-         */
-        // Leave newPose w.r.t. matPose?
-        //newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
-
-
-
+       
         // We have a new ("ground truth") key frame. Increment the pose frame!
         robot->IncrementPoseFrameID();
         
         // Add the new vision-based pose to the robot's history.
         RobotPoseStamp p(robot->GetPoseFrameID(), robotPoseWrtMat, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
-        if(robot->AddVisionOnlyPoseToHistory(firstMatPiece->GetLastObservedTime(), p) != RESULT_OK) {
+        if(robot->AddVisionOnlyPoseToHistory(firstSeenMatPiece->GetLastObservedTime(), p) != RESULT_OK) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.FailedAddingVisionOnlyPoseToHistory", "");
         }
         
@@ -544,7 +495,7 @@ namespace Anki
         wasPoseUpdated = true;
         
         PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
-                   matsSeen[0]->GetID(), robot->GetID(),
+                   existingMatPiece->GetID(), robot->GetID(),
                    robot->GetPose().get_translation().x(),
                    robot->GetPose().get_translation().y(),
                    robot->GetPose().get_translation().z(),
@@ -553,26 +504,33 @@ namespace Anki
                    robot->GetPose().get_rotationAxis().y(),
                    robot->GetPose().get_rotationAxis().z());
         
-        // Send the ground truth pose that was computed instead of the new current pose and let the robot deal with
-        // updating its current pose based on the history that it keeps.
+        // Send the ground truth pose that was computed instead of the new current
+        // pose and let the robot deal with updating its current pose based on the
+        // history that it keeps.
         robot->SendAbsLocalizationUpdate();
-        
-        
         
         // Add observed mat markers to the occlusion map of the camera that saw
         // them, so we can use them to delete objects that should have been
         // seen between that marker and the robot
         std::vector<const Vision::KnownMarker *> observedMarkers;
-        firstMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
+        existingMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
         for(auto obsMarker : observedMarkers) {
           robot->GetCamera().AddOccluder(*obsMarker);
         }
-
         
         // Done using mat pieces to localize, which were cloned from library
         // mat objects.  Delete them now so we don't leak.
         for(auto matSeen : matsSeen) {
           delete matSeen;
+        }
+        
+        // If the robot just re-localized, trigger a draw of all blocks, since
+        // we may have seen things while de-localized whose locations can now be
+        // snapped into place.
+        if(!wasLocalized && robot->IsLocalized()) {
+          PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.RobotRelocalized",
+                           "Robot %d just localized after being de-localized.\n", robot->GetID());
+          DrawAllBlocks();
         }
         
       } // IF any mat piece was seen
@@ -944,6 +902,17 @@ namespace Anki
       }
     }
     
+    
+    void BlockWorld::DrawAllBlocks() const
+    {
+      for(auto & blocksByType : existingBlocks_) {
+        for(auto & blocksByID : blocksByType.second) {
+          const Block* block = dynamic_cast<Block*>(blocksByID.second);
+          CORETECH_ASSERT(block != nullptr);
+          block->Visualize(VIZ_COLOR_DEFAULT);
+        }
+      }
+    } // DrawAllBlocks()
     
   } // namespace Cozmo
 } // namespace Anki
