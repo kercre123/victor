@@ -352,7 +352,7 @@ namespace Anki {
           // Compute pose wrt camera, or world if no camera specified
           if (seenOnlyBy == ANY_CAMERA) {
             Pose3d newPose;
-            if(poseCluster.GetPose().getWithRespectTo(Pose3d::World, newPose) == true) {
+            if(poseCluster.GetPose().getWithRespectTo(poseCluster.GetPose().FindOrigin(), newPose) == true) {
               objectsSeen.back()->SetPose(newPose);
             } else {
               PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectsFromMarkers.CouldNotFindWorldOrigin",
