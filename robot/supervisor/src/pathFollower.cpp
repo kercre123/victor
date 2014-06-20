@@ -267,8 +267,13 @@ namespace Anki
         
         // Compute lookahead position
         if (LOOK_AHEAD_DIST_MM != 0 && (currType == Planning::PST_LINE || currType == Planning::PST_ARC) ) {
-          lookaheadX += LOOK_AHEAD_DIST_MM * cosf(angle.ToFloat());
-          lookaheadY += LOOK_AHEAD_DIST_MM * sinf(angle.ToFloat());
+          if (path_[currPathSegment_].GetTargetSpeed() > 0) {
+            lookaheadX += LOOK_AHEAD_DIST_MM * cosf(angle.ToFloat());
+            lookaheadY += LOOK_AHEAD_DIST_MM * sinf(angle.ToFloat());
+          } else {
+            lookaheadX -= LOOK_AHEAD_DIST_MM * cosf(angle.ToFloat());
+            lookaheadY -= LOOK_AHEAD_DIST_MM * sinf(angle.ToFloat());
+          }
           checkRobotOriginStatus = true;
         }
         
