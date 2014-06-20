@@ -19,6 +19,8 @@
 #ifndef _ANKICORETECH_MATH_POSEBASE_IMPL_H_
 #define _ANKICORETECH_MATH_POSEBASE_IMPL_H_
 
+#include "anki/common/basestation/general.h"
+
 #include "anki/common/basestation/math/poseBase.h"
 
 namespace Anki {
@@ -69,8 +71,8 @@ namespace Anki {
   const PoseNd& PoseBase<PoseNd>::FindOrigin(const PoseNd& forPose) const
   {
     const PoseNd* originPose = &forPose;
-    while(!originPose->IsOrigin())
-    {
+    BOUNDED_WHILE(1000, (!originPose->IsOrigin()))
+    {  
       // The only way the current originPose's parent is null is if it is an
       // origin, which means we should have already exited the while loop.
       CORETECH_ASSERT(originPose->parent != nullptr);
@@ -145,7 +147,7 @@ namespace Anki {
     
     int depthDiff = getTreeDepth(from) - getTreeDepth(to);
     
-    while(depthDiff > 0)
+    BOUNDED_WHILE(1000, depthDiff > 0)
     {
       CORETECH_ASSERT(from->parent != nullptr);
       
@@ -166,7 +168,7 @@ namespace Anki {
       --depthDiff;
     }
     
-    while(depthDiff < 0)
+    BOUNDED_WHILE(1000, depthDiff < 0)
     {
       CORETECH_ASSERT(to->parent != nullptr);
       
@@ -196,7 +198,7 @@ namespace Anki {
     // Now that we are pointing to the nodes of the same depth, keep moving up
     // until those nodes have the same parent, totalling up the transformations
     // along the way
-    while(to->parent != from->parent)
+    BOUNDED_WHILE(1000, to->parent != from->parent)
     {
       CORETECH_ASSERT(from->parent != nullptr && to->parent != nullptr);
       
