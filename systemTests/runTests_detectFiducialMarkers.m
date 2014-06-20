@@ -62,6 +62,13 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     if recompileBasics
         recompileBasicsTic = tic();
         
+        slashIndexes = strfind(allTestFilenames{1}, '/');
+        testPath = allTestFilenames{1}(1:(slashIndexes(end)));
+        intermediateDirectory = [testPath, 'intermediate/'];
+        if ~exist(intermediateDirectory, 'file')
+            mkdir(intermediateDirectory);
+        end
+        
         % create a list of test-pose work
         workList = {};
         for iTest = 1:length(allTestFilenames)
@@ -76,7 +83,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 
                 slashIndexes = strfind(jsonTestFilename, '/');
                 testPath = jsonTestFilename(1:(slashIndexes(end)));
-                resultsFilename = [testPath, 'intermediate/', jsonTestFilename((slashIndexes(end)+1):end), sprintf('_pose%05d.mat', iPose)];
+                resultsFilename = [intermediateDirectory, jsonTestFilename((slashIndexes(end)+1):end), sprintf('_pose%05d.mat', iPose)];
                 
                 newWorkItem = {iTest, jsonTestFilename, iPose, resultsFilename};
                 
