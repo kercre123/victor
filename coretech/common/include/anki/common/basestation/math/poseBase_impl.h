@@ -35,6 +35,7 @@ namespace Anki {
   PoseNd& PoseBase<PoseNd>::AddOrigin()
   {
     PoseBase<PoseNd>::Origins.emplace_back();
+    PoseBase<PoseNd>::Origins.back().set_parent(nullptr);
     
     // TODO: If this gets too long, trigger cleanup?
     
@@ -44,6 +45,11 @@ namespace Anki {
   template<class PoseNd>
   PoseNd& PoseBase<PoseNd>::AddOrigin(const PoseNd &origin)
   {
+    if(origin.get_parent() != nullptr) {
+      PRINT_NAMED_WARNING("PoseBase.AddOrigin.NonNullParent",
+                          "Adding an origin whose parent is non-NULL. This may be ok, but may be a sign of something wrong.\n");
+    }
+    
     PoseBase<PoseNd>::Origins.emplace_back(origin);
     
     // TODO: If this gets too long, trigger cleanup?
@@ -54,7 +60,7 @@ namespace Anki {
   
   template<class PoseNd>
   PoseBase<PoseNd>::PoseBase()
-  : PoseBase<PoseNd>(nullptr)
+  : PoseBase<PoseNd>(PoseNd::World)
   {
     
   }
