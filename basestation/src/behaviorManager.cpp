@@ -579,17 +579,18 @@ namespace Anki {
               return;
             } // if donePickingUp
             
-            const bool donePlacing = !robot_->IsCarryingBlock() && robot_->GetDockBlock() == nullptr;
+            const bool donePlacing = !robot_->IsCarryingBlock() && robot_->GetDockBlock() && robot_->GetDockBlock()->GetType() == blockToPlaceOn_;
             if(donePlacing) {
               PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
                          blockToPickUp_, blockToPlaceOn_);
-              state_ = WAITING_TO_SEE_DICE;
               
               if (rand() %2) {
                 SoundManager::getInstance()->Play(SOUND_60PERCENT);
               } else {
                 SoundManager::getInstance()->Play(SOUND_TADA);
               }
+              
+              StartMode(BM_June2014DiceDemo);
               
               return;
             } // if donePlacing
