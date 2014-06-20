@@ -60,6 +60,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     
     
     if recompileBasics
+        ignoreModificationTime = false;
+    
         recompileBasicsTic = tic();
         
         slashIndexes = strfind(allTestFilenames{1}, '/');
@@ -72,6 +74,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
         % create a list of test-pose work
         workList = {};
         for iTest = 1:length(allTestFilenames)
+%         for iTest = 3
             modificationTime_test = dir(allTestFilenames{iTest});
             modificationTime_test = modificationTime_test(1).datenum;
             
@@ -79,6 +82,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
             
             jsonData = loadjson(curTestFilename_imagesOnly);
             for iPose = 1:length(jsonData.Poses)               
+%             for iPose = 2
                 jsonTestFilename = allTestFilenames{iTest};
                 
                 slashIndexes = strfind(jsonTestFilename, '/');
@@ -86,6 +90,12 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 resultsFilename = [intermediateDirectory, jsonTestFilename((slashIndexes(end)+1):end), sprintf('_pose%05d.mat', iPose)];
                 
                 newWorkItem = {iTest, jsonTestFilename, iPose, resultsFilename};
+                
+                % If we're ignoring the modification time, add it to the queue
+                if ignoreModificationTime
+                    workList{end+1} = newWorkItem; %#ok<AGROW>
+                    continue;
+                end
                 
                 % If the results don't exist, add it to the queue
                 if ~exist(resultsFilename, 'file')
@@ -120,6 +130,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
             runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, workList);
         else % if numComputeThreads == 1
             matlabLaunchCommand = 'matlab -nojvm -noFigureWindows -nosplash ';
+%             matlabLaunchCommand = 'matlab -noFigureWindows -nosplash ';
             
             threadCompletionMutexFilenames = cell(numComputeThreads, 1);
             workerInputFilenames = cell(numComputeThreads, 1);

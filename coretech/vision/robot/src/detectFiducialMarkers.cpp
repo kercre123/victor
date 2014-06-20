@@ -44,7 +44,7 @@ namespace Anki
       MemoryStack scratchOnchip,
       MemoryStack scratchOffChip)
     {
-      const f32 maxProjectiveTermValue = 1.0f;
+      const f32 maxProjectiveTermValue = 8.0f;
 
       Result lastResult;
 
