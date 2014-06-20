@@ -735,11 +735,73 @@ namespace Anki
       
     } // Update()
     
-    
-    void BlockWorld::QueueObservedMarker(const Vision::ObservedMarker& marker, const HistPoseKey poseKey)
+    Result BlockWorld::QueueObservedMarker(const MessageVisionMarker& msg, Robot& robot)
     {
+      Result lastResult = RESULT_OK;
+      
+      Vision::Camera camera(robot.GetCamera());
+      
+      if(!camera.IsCalibrated()) {
+        PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
+                            "Received VisionMarker message from robot before "
+                            "camera calibration was set on Basestation.");
+        return RESULT_FAIL;
+      }
+      
+      // Get corners
+      Quad2f corners;
+      
+      corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
+      corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
+      
+      corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
+      corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
+      
+      corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
+      corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
+      
+      corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
+      corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
+      
+      
+      // Get historical robot pose at specified timestamp to get
+      // head angle and to attach as parent of the camera pose.
+      TimeStamp_t t;
+      RobotPoseStamp* p = nullptr;
+      HistPoseKey poseKey;
+      lastResult = robot.ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("MessageHandler.ProcessMessageVisionMarker.HistoricalPoseNotFound",
+                            "Time: %d, hist: %d to %d\n",
+                            msg.timestamp, robot.GetPoseHistory().GetOldestTimeStamp(),
+                            robot.GetPoseHistory().GetNewestTimeStamp());
+        return lastResult;
+      }
+      
+      // Compute pose from robot body to camera
+      // Start with canonical (untilted) headPose
+      Pose3d camPose(robot.GetHeadCamPose());
+      
+      // Rotate that by the given angle
+      RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D);
+      camPose.rotateBy(Rvec);
+      
+      // Precompute with robot body to neck pose
+      camPose.preComposeWith(robot.GetNeckPose());
+      
+      // Set parent pose to be the historical robot pose
+      camPose.set_parent(&(p->GetPose()));
+      
+      // Update the head camera's pose
+      camera.SetPose(camPose);
+      
+      // Create observed marker
+      Vision::ObservedMarker marker(t, msg.markerType, corners, camera);
+      
+      // Finally actuall queue the marker
       obsMarkers_[marker.GetTimeStamp()].emplace(poseKey, marker);
-
+      
+      
       // Visualize the marker in 3D
       // TODO: disable this block when not debugging / visualizing
       if(true){
@@ -755,19 +817,19 @@ namespace Anki
         const Pose3d canonicalPose;
         
         /*
-        // Block Markers
-        std::set<const Vision::ObservableObject*> const& blocks = blockLibrary_.GetObjectsWithMarker(marker);
-        for(auto block : blocks) {
-          std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
-
-          for(auto blockMarker : blockMarkers) {
-            
-            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-                                                                     blockMarker->Get3dCorners(canonicalPose));
-            markerPose = markerPose.getWithRespectTo(Pose3d::World);
-            VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
-          }
-        }
+         // Block Markers
+         std::set<const Vision::ObservableObject*> const& blocks = blockLibrary_.GetObjectsWithMarker(marker);
+         for(auto block : blocks) {
+         std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
+         
+         for(auto blockMarker : blockMarkers) {
+         
+         Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+         blockMarker->Get3dCorners(canonicalPose));
+         markerPose = markerPose.getWithRespectTo(Pose3d::World);
+         VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+         }
+         }
          */
         
         // Mat Markers
@@ -788,6 +850,8 @@ namespace Anki
         }
         
       } // 3D marker visualization
+      
+      return lastResult;
       
     } // QueueObservedMarker()
     

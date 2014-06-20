@@ -139,65 +139,7 @@ namespace Anki {
       }
       else {
         CORETECH_ASSERT(robot != NULL);
-        Vision::Camera camera(robot->GetCamera());
-        
-        if(camera.IsCalibrated()) {
-          
-          // Get corners
-          Quad2f corners;
-          
-          corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
-          corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
-          
-          corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
-          corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
-          
-          corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
-          corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
-          
-          corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
-          corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
-          
-          
-          // Get historical robot pose at specified timestamp to get
-          // head angle and to attach as parent of the camera pose.
-          TimeStamp_t t;
-          RobotPoseStamp* p = nullptr;
-          HistPoseKey poseKey;
-          if (robot->ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey) == RESULT_FAIL) {
-            PRINT_NAMED_WARNING("MessageHandler.ProcessMessageVisionMarker.HistoricalPoseNotFound", "Time: %d, hist: %d to %d\n", msg.timestamp, robot->GetPoseHistory().GetOldestTimeStamp(), robot->GetPoseHistory().GetNewestTimeStamp());
-            return RESULT_FAIL;
-          }
-          
-          // Compute pose from robot body to camera
-          // Start with canonical (untilted) headPose
-          Pose3d camPose(robot->GetHeadCamPose());
-
-          // Rotate that by the given angle
-          RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D);
-          camPose.rotateBy(Rvec);
-          
-          // Precompute with robot body to neck pose
-          camPose.preComposeWith(robot->GetNeckPose());
-          
-          // Set parent pose to be the historical robot pose
-          camPose.set_parent(&(p->GetPose()));
-          
-          // Update the head camera's pose
-          camera.SetPose(camPose);
-
-          // Create observed marker
-          Vision::ObservedMarker marker(t, msg.markerType, corners, camera);
-          
-          // Give this vision marker to BlockWorld for processing
-          blockWorld_->QueueObservedMarker(marker, poseKey);
-        }
-        else {
-          PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
-                              "Received VisionMarker message from robot before "
-                              "camera calibration was set on Basestation.");
-        }
-        retVal = RESULT_OK;
+        retVal = blockWorld_->QueueObservedMarker(msg, *robot);
       }
       
       return retVal;

@@ -61,8 +61,7 @@ namespace Anki
       // Empties the queue of all observed markers
       void ClearAllObservedMarkers();
       
-      void QueueObservedMarker(const Vision::ObservedMarker& marker, const HistPoseKey poseKey);
-                               //Robot* seenByRobot);
+      Result QueueObservedMarker(const MessageVisionMarker& msg, Robot& robot);
       
       void CommandRobotToDock(const RobotID_t whichRobot,
                               Block&    whichBlock);
