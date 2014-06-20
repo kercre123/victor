@@ -37,7 +37,8 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   using namespace Cozmo;
   
   // TODO: Tighten/loosen thresholds?
-  const float   blockPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
+  //const float   blockPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
+  const float blockPoseDistThreshold_mm    = 10.f;
   const Radians blockPoseAngleThreshold    = DEG_TO_RAD(15.f); // TODO: make dependent on distance?
   const float   robotPoseDistThreshold_mm  = 10.f;
   const Radians robotPoseAngleThreshold    = DEG_TO_RAD(3.f);
@@ -73,6 +74,30 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
   robot.SetCameraCalibration(calib);
   
+  // Fake a robot state update (i think we have to have received one before
+  // we can start adding vision-based poses to history)
+  MessageRobotState msg;
+  {
+    msg.timestamp = 0;
+    msg.pose_frame_id = 0;
+    msg.pose_x = 0;
+    msg.pose_y = 0;
+    msg.pose_z = 0;
+    msg.pose_angle = 0;
+    msg.headAngle = 0;
+    msg.liftAngle = 0;
+    
+    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp,
+                                            msg.pose_frame_id,
+                                            msg.pose_x, msg.pose_y, msg.pose_z,
+                                            msg.pose_angle,
+                                            msg.headAngle,
+                                            msg.liftAngle,
+                                            robot.GetPoseOrigin()), RESULT_OK);
+    
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
+  }
+  
   bool checkRobotPose;
   ASSERT_TRUE(JsonTools::GetValueOptional(jsonRoot, "CheckRobotPose", checkRobotPose));
 
@@ -96,6 +121,8 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   
   for(int i_pose=0; i_pose<NumPoses; ++i_pose)
   {
+    TimeStamp_t currentTimeStamp = (i_pose+1)*100;
+    
     const Json::Value& jsonData = jsonRoot["Poses"][i_pose];
     
     // Put the robot's head at the right angle *before* queueing up the markers
@@ -106,11 +133,32 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     Pose3d trueRobotPose;
     ASSERT_TRUE(JsonTools::GetPoseOptional(jsonData, "RobotPose", trueRobotPose));
     
+    // Create a fake robot state message to do a fake RawOdometryPose update.
+    // I think we need to make sure we have one for each matPose VisionMarker
+    // message.
+    MessageRobotState msg;
+    msg.timestamp = currentTimeStamp;
+    msg.pose_frame_id = 0;
+    msg.headAngle  = headAngle;
+    msg.liftAngle  = 0;
+    
     // If we're not going to be checking the robot's pose, we need to set it
     // to the ground truth now, *before* queueing up the markers
     if(!checkRobotPose) {
-      robot.SetPose(trueRobotPose);
+      msg.pose_x = trueRobotPose.get_translation().x();
+      msg.pose_y = trueRobotPose.get_translation().y();
+      msg.pose_z = trueRobotPose.get_translation().z();
+      msg.pose_angle = trueRobotPose.get_rotationAngle<'Z'>().ToFloat();
     }
+    
+    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp,
+                                            msg.pose_frame_id,
+                                            msg.pose_x, msg.pose_y, msg.pose_z,
+                                            msg.pose_angle,
+                                            msg.headAngle, msg.liftAngle,
+                                            robot.GetPoseOrigin()), RESULT_OK);
+    
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
 
     int NumMarkers;
     ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "NumMarkers", NumMarkers));
@@ -131,35 +179,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       jsonMsg["markerType"] = Vision::StringToMarkerType.at(jsonMsg["markerType"].asString());
       
       MessageVisionMarker msg(jsonMsg);
-      msg.timestamp = 0;
+      msg.timestamp = currentTimeStamp;
       
-      Quad2f corners;
-      corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
-      corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
-      
-      corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
-      corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
-      
-      corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
-      corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
-      
-      corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
-      corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
-      
-      // TODO: get the camera of the robot corresponding to the one that saw this VisionMarker
-      const Vision::Camera& camera = robot.GetCamera();
-      Vision::ObservedMarker marker(msg.timestamp, msg.markerType, corners, camera);
-      
-      RobotPoseStamp p(robot.GetPoseFrameID(), robot.GetPose(), robot.GetHeadAngle(), robot.GetLiftAngle());
-      robot.AddVisionOnlyPoseToHistory(msg.timestamp, p);
-      
-      TimeStamp_t t_actual;
-      RobotPoseStamp *rps;
-      HistPoseKey poseKey;
-      robot.ComputeAndInsertPoseIntoHistory(msg.timestamp, t_actual, &rps, &poseKey);
-      
-      // Give this vision marker to BlockWorld for processing
-      blockWorld.QueueObservedMarker(marker, poseKey);
+      ASSERT_EQ(blockWorld.QueueObservedMarker(msg, robot), RESULT_OK);
       
     } // for each VisionMarker in the jsonFile
     
@@ -220,7 +242,6 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         Pose3d blockPose;
         ASSERT_TRUE(jsonBlocks[i_block].isMember("BlockPose"));
         ASSERT_TRUE(JsonTools::GetPoseOptional(jsonBlocks[i_block], "BlockPose", blockPose));
-        groundTruthBlock->SetPose(blockPose);
         
         // Make sure this ground truth block was seen and its estimated pose
         // matches the ground truth pose
@@ -228,13 +249,17 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         int matchesFound = 0;
         
         // The threshold will vary with how far away the block actually is
-        const float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
-                                                 (groundTruthBlock->GetPose().get_translation() -
-                                                  trueRobotPose.get_translation()).Length());
+        /*const float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
+                                                 (blockPose.get_translation() -
+                                                  trueRobotPose.get_translation()).Length());*/
         
         for(auto & observedBlock : observedBlocks)
         {
           Pose3d P_diff;
+          
+          blockPose.set_parent(&observedBlock.second->GetPose().FindOrigin());
+          groundTruthBlock->SetPose(blockPose);
+          
           if(groundTruthBlock->IsSameAs(*observedBlock.second,
                                         blockPoseDistThreshold_mm,
                                         blockPoseAngleThreshold, P_diff))
@@ -280,7 +305,25 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
             }
 
             ++matchesFound;
+          } else {
+            fprintf(stdout, "Observed type-%d block %d at (%.2f,%.2f,%.2f) does not match "
+                    "type-%d ground truth at (%.2f,%.2f,%.2f). T_diff = %2fmm (vs. %.2fmm), "
+                    "Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
+                    observedBlock.second->GetType(),
+                    observedBlock.second->GetID(),
+                    observedBlock.second->GetPose().get_translation().x(),
+                    observedBlock.second->GetPose().get_translation().y(),
+                    observedBlock.second->GetPose().get_translation().z(),
+                    groundTruthBlock->GetType(),
+                    groundTruthBlock->GetPose().get_translation().x(),
+                    groundTruthBlock->GetPose().get_translation().y(),
+                    groundTruthBlock->GetPose().get_translation().z(),
+                    P_diff.get_translation().Length(),
+                    blockPoseDistThreshold_mm,
+                    P_diff.get_rotationAngle().getDegrees(),
+                    blockPoseAngleThreshold.getDegrees());
           }
+            
         } // for each observed block
         
         EXPECT_EQ(matchesFound, 1); // Exactly one observed block should match

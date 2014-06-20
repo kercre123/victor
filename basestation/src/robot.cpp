@@ -19,6 +19,7 @@
 #include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/vision/CameraSettings.h"
@@ -109,8 +110,10 @@ namespace Anki {
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
     , _forceReplanOnNextWorldChange(false)
-    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
+    , _poseOrigin(&Pose3d::AddOrigin())
+    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _poseOrigin) // Until this robot is localized be seeing a mat marker, create an origin for it to use as its pose parent
     , _frameId(0)
+    , _isLocalized(false)
     , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose)
     , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose)
@@ -714,7 +717,8 @@ namespace Anki {
     Result Robot::PlaceCarriedBlock() //const TimeStamp_t atTime)
     {
       if(_carryingBlock == nullptr) {
-        PRINT_NAMED_WARNING("Robot.NotCarryingBlockToPlace", "No carrying block set, but told to place one.");
+        PRINT_NAMED_WARNING("Robot.PlaceCarriedBlock.NotCarryingBlockToPlace",
+                            "No carrying block set, but told to place one.");
         return RESULT_FAIL;
       }
       
@@ -741,7 +745,14 @@ namespace Anki {
       _carryingBlock->SetPose(blockPoseAtTime.getWithRespectTo(Pose3d::World));
       */
       
-      _carryingBlock->SetPose(_carryingBlock->GetPose().getWithRespectTo(Pose3d::World));
+      Pose3d placedPose;
+      if(_carryingBlock->GetPose().getWithRespectTo(_pose.FindOrigin(), placedPose) == false) {
+        PRINT_NAMED_ERROR("Robot.PlaceCarriedBlock.OriginMisMatch",
+                          "Could not get carrying block's pose relative to robot's origin.\n");
+        return RESULT_FAIL;
+      }
+      _carryingBlock->SetPose(placedPose);
+      
       _carryingBlock->SetIsBeingCarried(false);
       
       PRINT_NAMED_INFO("Robot.PlaceCarriedBlock.BlockPlaced",
@@ -1012,14 +1023,41 @@ namespace Anki {
                                           const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                           const f32 pose_angle,
                                           const f32 head_angle,
-                                          const f32 lift_angle)
+                                          const f32 lift_angle,
+                                          const Pose3d* pose_origin)
     {
-      return _poseHistory.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
+      return _poseHistory.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin);
     }
     
     Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                              const RobotPoseStamp& p)
     {
+      if(!_isLocalized) {
+        // If we aren't localized yet, we are about to be, by virtue of this pose
+        // stamp.  So we need to take the current origin (which may be the
+        // the pose parent of observed objects) and update it
+        
+        // Reverse the connection between origin and robot
+        //CORETECH_ASSERT(p.GetPose().get_parent() == _poseOrigin);
+        *_poseOrigin = _pose.getInverse();
+        _poseOrigin->set_parent(&p.GetPose());
+        
+        // Connect the old origin's pose to the same root the robot now has.
+        // It is no longer the robot's origin, but for any of its children,
+        // it is now in the right coordinates.
+        if(_poseOrigin->getWithRespectTo(p.GetPose().FindOrigin(), *_poseOrigin) == false) {
+          PRINT_NAMED_ERROR("Robot.AddVisionOnlyPoseToHistory.NewLocalizationOriginProblem",
+                            "Could not get pose origin w.r.t. RobotPoseStamp's pose.\n");
+          return RESULT_FAIL;
+        }
+        
+        // Now make the robot's origin point to the robot's pose's parent.
+        // TODO: avoid the icky const cast here...
+        _poseOrigin = const_cast<Pose3d*>(p.GetPose().get_parent());
+        
+        _isLocalized = true;
+      }
+      
       return _poseHistory.AddVisionOnlyPose(t, p);
     }
 

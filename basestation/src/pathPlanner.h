@@ -114,6 +114,7 @@ namespace Anki {
 
     class LatticePlanner : public IPathPlanner
     {
+      friend LatticePlannerImpl;
     public:
       LatticePlanner(const BlockWorld* blockWorld, const Json::Value& mprims);
       virtual ~LatticePlanner();

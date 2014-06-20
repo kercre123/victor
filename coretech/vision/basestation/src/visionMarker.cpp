@@ -10,6 +10,7 @@
 #include "anki/vision/basestation/visionMarker.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 
 namespace Anki {
   namespace Vision{
@@ -133,7 +134,12 @@ namespace Anki {
       using namespace Quad;
       
       // Get the marker's pose relative to the camera
-      Pose3d markerPoseWrtCamera( pose_.getWithRespectTo(&camera.GetPose()) );
+      Pose3d markerPoseWrtCamera;
+      if(pose_.getWithRespectTo(camera.GetPose(), markerPoseWrtCamera) == false) {
+        PRINT_NAMED_WARNING("KnownMarker.IsVisibleFrom.NotInCameraPoseTree",
+                            "Marker must be in the same pose tree as the camera to check its visibility.\n");
+        return false;
+      }
       
       // Make sure the marker is at least in front of the camera!
       if(markerPoseWrtCamera.get_translation().z() <= 0.f) {

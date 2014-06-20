@@ -3,6 +3,7 @@
 
 #include "anki/common/basestation/math/matrix_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
 #include "anki/common/shared/utilities_shared.h"
@@ -10,9 +11,9 @@
 #include <stdexcept>
 
 namespace Anki {
-    
+
+  
 #pragma mark --- Pose2d Implementations ---
-  Pose2d* Pose2d::World = NULL;
   
   Pose2d::Pose2d()
   : Pose2d(0, {{0.f, 0.f}})
@@ -24,7 +25,6 @@ namespace Anki {
   : translation(t)
   , angle(theta)
   , planeNormal(Z_AXIS_3D)
-  , parent(Pose2d::World)
   {
     
   }
@@ -33,7 +33,6 @@ namespace Anki {
   : translation(x,y)
   , angle(theta)
   , planeNormal(Z_AXIS_3D)
-  , parent(Pose2d::World)
   {
     
   }
@@ -42,7 +41,6 @@ namespace Anki {
   : translation(pose3d.get_translation().x(), pose3d.get_translation().y())
   , angle(pose3d.get_rotationAngle<'Z'>())
   , planeNormal(Z_AXIS_3D)
-  , parent(Pose2d::World)
   {
     
   }
@@ -90,10 +88,9 @@ namespace Anki {
     
     return *this;
   }
+    
   
 #pragma mark --- Pose3d Implementations ---
-  
-  Pose3d* Pose3d::World = NULL;
   
   Pose3d::Pose3d()
   : Pose3d(0, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
@@ -102,9 +99,9 @@ namespace Anki {
   } // Constructor: Pose3d()  
   
   Pose3d::Pose3d(const RotationVector3d &Rvec_in, const Vec3f &T_in, const Pose3d *parentPose)
-  : rotationMatrix(Rvec_in),
-    translation(T_in),
-    parent(parentPose)
+  : PoseBase<Pose3d>(parentPose)
+  , rotationMatrix(Rvec_in)
+  , translation(T_in)
   {
 
   } // Constructor: Pose3d(Rvec, T)
@@ -119,18 +116,18 @@ namespace Anki {
   */
   
   Pose3d::Pose3d(const RotationMatrix3d &Rmat_in, const Vec3f &T_in, const Pose3d *parentPose)
-  : rotationMatrix(Rmat_in),
-    translation(T_in),
-    parent(parentPose)
+  : PoseBase<Pose3d>(parentPose)
+  , rotationMatrix(Rmat_in)
+  , translation(T_in)
   {
 
   } // Constructor: Pose3d(Rmat, T)
   
   Pose3d::Pose3d(const Radians angle, const Vec3f axis,
                  const Vec3f T, const Pose3d *parentPose)
-  : rotationMatrix(angle, axis),
-    translation(T),
-    parent(parentPose)
+  : PoseBase<Pose3d>(parentPose)
+  , rotationMatrix(angle, axis)
+  , translation(T)
   {
     
   } // Constructor: Pose3d(angle, axis, T)
@@ -176,6 +173,7 @@ namespace Anki {
     this->preComposeWith(planePose);
     
   } // Constructor: Pose3d(Pose2d)
+
   
 #pragma mark --- Operator Overloads ---
   // Composition: this = this*other
@@ -263,23 +261,9 @@ namespace Anki {
     this->set_rotation(this->rotationMatrix);
   }
 
-  // Count number of steps to root ("World") node, by walking up
-  // the chain of parents.
-  template<class POSE>
-  unsigned int getTreeDepthHelper(const POSE *P)
-  {
-    unsigned int treeDepth = 1;
-    
-    const POSE* current = P;
-    while(current->parent != POSE::World)
-    {
-      ++treeDepth;
-      current = current->parent;
-    }
-    
-    return treeDepth;
-  }
+
   
+  /*
   unsigned int Pose2d::getTreeDepth(void) const
   {
     return getTreeDepthHelper<Pose2d>(this);
@@ -289,124 +273,11 @@ namespace Anki {
   {
     return getTreeDepthHelper<Pose3d>(this);
   } // getTreeDepth()
+  */
   
-  template<class POSE>
-  POSE getWithRespectToHelper(const POSE *from, const POSE *to)
-  {
-    POSE P_from(*from);
-    
-    POSE *P_wrt_other = NULL;
-    
-    // "to" can get changed below, but we want to set the returned pose's
-    // parent to it, so we keep a copy here.
-    const POSE *newParent = to;
-    
-    if(to == POSE::World) {
-      
-      // Special (but common!) case: get with respect to the
-      // world pose.  Just chain together poses up to the root.
-      
-      while(from->parent != POSE::World) {
-        P_from.preComposeWith( *(from->parent) );
-        from = from->parent;
-      }
-      
-      P_wrt_other = &P_from;
-      
-    } else {
-      
-      POSE P_to(*to);
-      
-      // First make sure we are pointing at two nodes of the same tree depth,
-      // which is the only way they could possibly share the same parent.
-      // Until that's true, walk the deeper node up until it is at the same
-      // depth as the shallower node, keeping track of the total transformation
-      // along the way. (NOTE: Only one of the following two while loops should
-      // run, depending on which node is deeper in the tree)
-      
-      int depthDiff = from->getTreeDepth() - to->getTreeDepth();
-
-      while(depthDiff > 0)
-      {
-        CORETECH_ASSERT(from->parent != NULL);
-        
-        P_from.preComposeWith( *(from->parent) );
-        from = from->parent;
-        
-        if(from->parent == to) {
-          // We bumped into the "to" pose on the way up to the common parent, so
-          // we've got the the chained transform ready to go, and there's no
-          // need to walk past the "to" pose, up to the common parent, and right
-          // back down, which would unnecessarily compose two more poses which
-          // are the inverse of one another by construction.
-          P_from.parent = newParent;
-          return P_from;
-        }
-        
-        --depthDiff;
-      }
-      
-      while(depthDiff < 0)
-      {
-        CORETECH_ASSERT(to->parent != NULL);
-
-        P_to.preComposeWith( *(to->parent) );
-        to = to->parent;
-        
-        if(to->parent == from) {
-          // We bumped into the "from" pose on the way up to the common parent,
-          // so we've got the the (inverse of the) chained transform ready to
-          // go, and there's no need to walk past the "from" pose, up to the
-          // common parent, and right back down, which would unnecessarily
-          // compose two more poses which are the inverse of one another by
-          // construction.
-          P_to.Invert();
-          P_to.parent = newParent;
-          return P_to;
-        }
-        
-        ++depthDiff;
-      }
-      
-      // Treedepths should now match:
-      CORETECH_ASSERT(depthDiff == 0);
-      CORETECH_ASSERT(to->getTreeDepth() == from->getTreeDepth());
-      
-      // Now that we are pointing to the nodes of the same depth, keep moving up
-      // until those nodes have the same parent, totalling up the transformations
-      // along the way
-      while(to->parent != from->parent)
-      {
-        CORETECH_ASSERT(from->parent != NULL && to->parent != NULL);
-        
-        P_from.preComposeWith( *(from->parent) );
-        P_to.preComposeWith( *(to->parent) );
-        
-        to = to->parent;
-        from = from->parent;
-      }
-      
-      // Now compute the total transformation from this pose, up the "from" path
-      // in the tree, to the common ancestor, and back down the "to" side to the
-      // final other pose.
-      //     P_wrt_other = P_to.inv * P_from;
-      P_to.Invert();
-      P_to *= P_from;
-      
-      P_wrt_other = &P_to;
-      
-    } // IF/ELSE other is the World pose
-    
-    // The Pose we are about to return is w.r.t. the "other" pose provided (that
-    // was the whole point of the exercise!), so set its parent accordingly:
-    P_wrt_other->parent = newParent;
-    
-    CORETECH_ASSERT(P_wrt_other != NULL);
-    
-    return *P_wrt_other;
-
-  } // getWithRespectToHelper()
   
+  
+  /*
   Pose2d Pose2d::getWithRespectTo(const Anki::Pose2d *otherPose) const
   {
     return getWithRespectToHelper<Pose2d>(this, otherPose);
@@ -416,6 +287,7 @@ namespace Anki {
   {
     return getWithRespectToHelper<Pose3d>(this, otherPose);
   }
+   */
   
   bool Pose3d::IsSameAs(const Pose3d& P_other,
                         const float distThreshold,
