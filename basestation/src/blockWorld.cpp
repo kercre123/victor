@@ -304,9 +304,8 @@ namespace Anki
             CoreTechPrint("Removing object %d, which should have been seen, "
                           "but wasn't.\n", object->GetID());
             
-            // Erase the vizualized block and its projected quad
+            // Erase the vizualized block
             VizManager::getInstance()->EraseCuboid(object->GetID());
-            VizManager::getInstance()->EraseQuad(object->GetID());
             
             // Actually erase the object from blockWorld's container of
             // existing objects, using the iterator pointing to it
@@ -698,7 +697,6 @@ namespace Anki
                     
                     // Erase the vizualized block and its projected quad
                     VizManager::getInstance()->EraseCuboid(block->GetID());
-                    VizManager::getInstance()->EraseQuad(block->GetID());
                     
                     // Erase the block (with a postfix increment of the iterator)
                     blocksOfType.second.erase(blockIter++);
@@ -842,7 +840,7 @@ namespace Anki
             Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
                                                                      matMarker->Get3dCorners(canonicalPose));
             if(markerPose.getWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              VizManager::getInstance()->DrawQuad(quadID++, matMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+              VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
             } else {
               PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                   "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
@@ -885,11 +883,9 @@ namespace Anki
       auto blocksWithType = existingBlocks_.find(type);
       if(blocksWithType != existingBlocks_.end()) {
         
-        // Erase all the visualized blocks of this type and their projected quads
+        // Erase all the visualized blocks of this type
         for(auto & block : blocksWithType->second) {
-        
           VizManager::getInstance()->EraseCuboid(block.first);
-          VizManager::getInstance()->EraseQuad(block.first);
         }
         
         // Erase this entry in the map of block types
@@ -914,9 +910,8 @@ namespace Anki
             CoreTechPrint("Found multiple blocks with ID=%d in BlockWorld::ClearBlock().\n", withID);
           }
           
-          // Erase the vizualized block and its projected quad
+          // Erase the vizualized block
           VizManager::getInstance()->EraseCuboid(withID);
-          VizManager::getInstance()->EraseQuad(withID);
 
           // Remove the block from the world
           blocksByType.second.erase(blockWithID);
