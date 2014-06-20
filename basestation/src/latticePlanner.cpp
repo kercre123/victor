@@ -26,7 +26,7 @@
 
 #define DEBUG_REPLAN_CHECKS 0
 
-#define LATTICE_PLANNER_MAX_EXPANSIONS 100000
+#define LATTICE_PLANNER_MAX_EXPANSIONS 300000
 
 namespace Anki {
 namespace Cozmo {
