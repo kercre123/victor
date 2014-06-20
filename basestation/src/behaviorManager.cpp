@@ -12,7 +12,7 @@
 #include "behaviorManager.h"
 #include "pathPlanner.h"
 #include "vizManager.h"
-
+#include "soundManager.h"
 
 #include "anki/common/basestation/general.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -59,6 +59,13 @@ namespace Anki {
           state_     = WAITING_FOR_ROBOT;
           nextState_ = WAITING_TO_SEE_DICE;
           updateFcn_ = &BehaviorManager::Update_June2014DiceDemo;
+          
+          if (rand() % 2) {
+            SoundManager::getInstance()->Play(SOUND_INPUT);
+          } else {
+            SoundManager::getInstance()->Play(SOUND_SWEAR);
+          }
+          
           break;
         default:
           PRINT_NAMED_ERROR("BehaviorManager.InvalidMode", "Invalid behavior mode");
@@ -451,6 +458,8 @@ namespace Anki {
                     
                     state_ = BACKING_UP;
                     nextState_ = BEGIN_EXPLORING; // when done backing up
+                    
+                    SoundManager::getInstance()->Play(SOUND_NOPROBLEMO);
                   }
                   
                 } else {
@@ -564,6 +573,9 @@ namespace Anki {
                          robot_->GetCarryingBlock()->GetName().c_str());
               
               state_ = BEGIN_EXPLORING;
+              
+              SoundManager::getInstance()->Play(SOUND_NOTIMPRESSED);
+              
               return;
             } // if donePickingUp
             
@@ -572,6 +584,13 @@ namespace Anki {
               PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
                          blockToPickUp_, blockToPlaceOn_);
               state_ = WAITING_TO_SEE_DICE;
+              
+              if (rand() %2) {
+                SoundManager::getInstance()->Play(SOUND_60PERCENT);
+              } else {
+                SoundManager::getInstance()->Play(SOUND_TADA);
+              }
+              
               return;
             } // if donePlacing
             
@@ -590,6 +609,8 @@ namespace Anki {
             nextState_ = BEGIN_EXPLORING;
             desiredBackupDistance_ = 30;
             goalPose_ = robot_->GetPose();
+            
+            SoundManager::getInstance()->Play(SOUND_STARTOVER);
             
           } // if robot IDLE
           
