@@ -104,7 +104,7 @@ namespace Anki {
     , _longPathPlanner(pathPlanner)
     , _currPathSegment(-1)
     , _goalHeadAngle(0.f)
-    , _goalDistanceThreshold(10.f)
+    , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEG_TO_RAD(10))
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
@@ -614,7 +614,7 @@ namespace Anki {
       // By now dock marker should be set
       CORETECH_ASSERT(_dockMarker != nullptr);
       
-      _goalDistanceThreshold = 10.f;
+      _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
       _goalAngleThreshold    = DEG_TO_RAD(10);
       _goalHeadAngle         = DEG_TO_RAD(-15);
       

@@ -14,13 +14,14 @@
 
 #include "pathPlanner.h"
 #include "anki/common/basestation/general.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
 
 // amount of radians to be off from the desired angle in order to
 // introduce a turn in place action
 #define FACE_AND_APPROACH_THETA_THRESHOLD 0.0872664625997
 
 // distance (in mm) away at which to introduce a straight action
-#define FACE_AND_APPROACH_LENGTH_THRESHOLD 0.5
+#define FACE_AND_APPROACH_LENGTH_THRESHOLD DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM
 
 #define FACE_AND_APPROACH_LENGTH_SQUARED_THRESHOLD FACE_AND_APPROACH_LENGTH_THRESHOLD * FACE_AND_APPROACH_LENGTH_THRESHOLD
 
