@@ -15,6 +15,8 @@ function runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, 
     % the fiducial detection
     tic;
     for iWork = 1:length(workList)
+%         disp(sprintf('iw:%d', iWork))
+        
         curTestId = workList{iWork}{1};
         curTestFilename = workList{iWork}{2};
         curPoseId = workList{iWork}{3};
@@ -51,6 +53,8 @@ function runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, 
         groundTruthQuads = makeCellArray(groundTruthQuads);
         
         for iTestFunction = 1:length(testFunctions)
+%             disp(sprintf('tf:%d', iTestFunction))
+            
             [detectedQuads, detectedQuadValidity, detectedMarkers] = testFunctions{iTestFunction}(image);
             
             %check if the quads are in the right places
