@@ -166,6 +166,7 @@ namespace Anki {
         robotState_.lastPathID = PathFollower::GetLastPathID();
         
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
+        robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
         
         robotState_.status = 0;
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);

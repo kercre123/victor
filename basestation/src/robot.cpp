@@ -218,7 +218,9 @@ namespace Anki {
               } // switch(GetPlan())
             } // if blocks changed
 
-            pdo_->Update(GetCurrPathSegment());
+            if (GetLastRecvdPathID() == GetLastSentPathID()) {
+              pdo_->Update(GetCurrPathSegment(), GetNumFreeSegmentSlots());
+            }
           } else { // IsTraversingPath is false?
             
             // The last path sent was definitely received by the robot

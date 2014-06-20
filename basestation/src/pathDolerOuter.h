@@ -36,20 +36,20 @@ public:
   void ClearPath();
 
   // Doles out the path bit by bit to the robot. The argument is the
-  // segment the robot is on (relative to the path it has)
-  void Update(s8 indexOnRobotPath);
+  // currPathIdx: The current (absolute) segment index that the robot is traversing.
+  // numFreeSlots: The number of path segments slots that the robot reports as being free.
+  void Update(const s8 currPathIdx, const u8 numFreeSlots);
 
 protected:
 
-  void Dole(size_t validRobotPathLength, size_t numToDole);
+  void Dole(size_t numToDole);
 
   Planning::Path path_;
 
-  // the robot's index 0 corresponds to this index in our path
-  size_t robotIdx_;
-
   size_t pathSizeOnBasestation_;
 
+  s16 lastDoledSegmentIdx_;
+  
   // A reference to the MessageHandler that the robot uses for outgoing comms
   IMessageHandler* msgHandler_;
   RobotID_t robotID_;
