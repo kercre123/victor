@@ -44,6 +44,7 @@ namespace Anki {
       VIZ_COLOR_ORANGE,
       VIZ_COLOR_OFFWHITE,
       
+      VIZ_COLOR_NONE,
       VIZ_COLOR_DEFAULT = u32_MAX
     };
     
