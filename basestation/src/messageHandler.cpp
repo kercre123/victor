@@ -197,6 +197,8 @@ namespace Anki {
       
       // Update other state vars
       robot->SetCurrPathSegment( msg.currPathSegment );
+      robot->SetNumFreeSegmentSlots(msg.numFreeSegmentSlots);
+      
       //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
       robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
@@ -217,7 +219,7 @@ namespace Anki {
                                          msg.headAngle,
                                          msg.liftAngle,
                                          robot->GetPoseOrigin()) == RESULT_FAIL) {
-        PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "");
+        PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "t=%d\n", msg.timestamp);
       }
       
       robot->UpdateCurrPoseFromHistory();

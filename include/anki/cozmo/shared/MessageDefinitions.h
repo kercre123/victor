@@ -57,6 +57,7 @@ ADD_MESSAGE_MEMBER(f32, liftAngle)
 ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
 ADD_MESSAGE_MEMBER(u16, lastPathID)
 ADD_MESSAGE_MEMBER(s8, currPathSegment) // -1 if not traversing a path
+ADD_MESSAGE_MEMBER(u8, numFreeSegmentSlots)
 ADD_MESSAGE_MEMBER(u8, status)  // See RobotStatusFlag
 // ...
 END_MESSAGE_DEFINITION(RobotState)
@@ -116,8 +117,7 @@ END_MESSAGE_DEFINITION(ClearPath)
 #define ADD_COMMON_PATH_SEGMENT_MEMBERS \
 ADD_MESSAGE_MEMBER(f32, targetSpeed) \
 ADD_MESSAGE_MEMBER(f32, accel) \
-ADD_MESSAGE_MEMBER(f32, decel) \
-ADD_MESSAGE_MEMBER(s8,  segmentID)
+ADD_MESSAGE_MEMBER(f32, decel)
 
 // AppendPathSegmentLine
 START_MESSAGE_DEFINITION(AppendPathSegmentLine, 1)

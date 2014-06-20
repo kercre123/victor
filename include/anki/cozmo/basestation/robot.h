@@ -115,6 +115,9 @@ namespace Anki {
       s8   GetCurrPathSegment() {return _currPathSegment;}
       bool IsTraversingPath() {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
 
+      void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
+      u8 GetNumFreeSegmentSlots() const {return _numFreeSegmentSlots;}
+      
       void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
       u16 GetLastRecvdPathID() {return _lastRecvdPathID;}
       u16 GetLastSentPathID() {return _lastSentPathID;}
@@ -259,6 +262,7 @@ namespace Anki {
       IPathPlanner*    _shortPathPlanner;
       Planning::Path   _path;
       s8               _currPathSegment;
+      u8               _numFreeSegmentSlots;
       Pose3d           _goalPose;
       Radians          _goalHeadAngle;
       f32              _goalDistanceThreshold;
