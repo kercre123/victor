@@ -96,9 +96,10 @@ namespace Anki {
         isSame = false;
       }
       
-      CORETECH_ASSERT(otherPose.get_parent() == pose_.get_parent());
-      
       if(isSame) {
+        
+        CORETECH_ASSERT(otherPose.get_parent() == pose_.get_parent());
+        
         if(this->GetRotationAmbiguities().empty()) {
           isSame = this->pose_.IsSameAs(otherPose, distThreshold, angleThreshold, P_diff);
         }
