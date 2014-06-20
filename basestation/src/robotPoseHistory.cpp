@@ -342,8 +342,16 @@ namespace Anki {
       }
       #endif
       
-      CORETECH_ASSERT((p1.GetPose().get_parent() == Pose3d::World) &&
-                      (p0_it->second.GetPose().get_parent() == Pose3d::World));
+      // Make sure the two poses we are about to work with share a common
+      // origin and then make p1 relative to p0_it's parent (so they then
+      // share the same parent and the math below holds as we compute the
+      // relative pose between them).
+      CORETECH_ASSERT(p1.GetPose().FindOrigin() == p0_it->second.GetPose().FindOrigin());
+      Pose3d newPose;
+      const bool getWithRespectToResult = p1.GetPose().getWithRespectTo(*p0_it->second.GetPose().get_parent(), newPose);
+      CORETECH_ASSERT(getWithRespectToResult == true);
+      p1.SetPose(p1.GetFrameId(), newPose, p1.GetHeadAngle(), p1.GetLiftAngle());
+      CORETECH_ASSERT(p1.GetPose().get_parent() == p0_it->second.GetPose().get_parent());
       
       // Compute relative pose between p0_it and p1 and append to the vision-based pose.
       // Need to account for intermediate frames between p0 and p1 if any.
