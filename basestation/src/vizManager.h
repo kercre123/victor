@@ -33,6 +33,17 @@ namespace Anki {
       VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD,
       VIZ_COLOR_OBSERVED_QUAD,
       VIZ_COLOR_ROBOT_BOUNDING_QUAD,
+      
+      // Color names
+      VIZ_COLOR_RED,
+      VIZ_COLOR_GREEN,
+      VIZ_COLOR_BLUE,
+      VIZ_COLOR_YELLOW,
+      VIZ_COLOR_DARKGRAY,
+      VIZ_COLOR_DARKGREEN,
+      VIZ_COLOR_ORANGE,
+      VIZ_COLOR_OFFWHITE,
+      
       VIZ_COLOR_DEFAULT = u32_MAX
     };
     

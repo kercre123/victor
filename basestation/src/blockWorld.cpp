@@ -76,6 +76,8 @@ namespace Anki
 
       blockLibrary_.AddObject(new Block_Cube1x1(Block::BANGBANGBANG_BLOCK_TYPE));
       
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::ARROW_BLOCK_TYPE));
+      
       //
       // 2x1
       //
@@ -279,8 +281,7 @@ namespace Anki
             // TODO: make this more generic. For now, we are assuming all objects are blocks
             const Block* block = dynamic_cast<Block*>(object);
             if(block != nullptr) {
-              // TODO: use the block's color?
-              block->Visualize(VIZ_COLOR_DEFAULT);
+              block->Visualize();
             }
           }
         } // for object IDs of this type
@@ -973,7 +974,7 @@ namespace Anki
         for(auto & blocksByID : blocksByType.second) {
           const Block* block = dynamic_cast<Block*>(blocksByID.second);
           CORETECH_ASSERT(block != nullptr);
-          block->Visualize(VIZ_COLOR_DEFAULT);
+          block->Visualize();
         }
       }
     } // DrawAllBlocks()

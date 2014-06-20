@@ -37,6 +37,15 @@ namespace Anki {
       DefineColor(VIZ_COLOR_ROBOT_BOUNDING_QUAD,        0.0, 0.8, 0.0, 0.75);
       DefineColor(VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD, 1.0, 0.1, 1.0, 0.75);
       
+      DefineColor(VIZ_COLOR_RED,       1.0, 0.0, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_GREEN,     0.0, 1.0, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_BLUE,      0.0, 0.0, 1.0, 1.0);
+      DefineColor(VIZ_COLOR_YELLOW,    1.0, 1.0, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_DARKGRAY,  0.3, 0.3, 0.3, 1.0);
+      DefineColor(VIZ_COLOR_DARKGREEN, 0.0, 0.5, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_ORANGE,    1.0, 0.5, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_OFFWHITE,  0.9, 0.8, 0.8, 1.0);
+      
       isInitialized_ = true;
       
       return isInitialized_ ? RESULT_OK : RESULT_FAIL;
