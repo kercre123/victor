@@ -89,13 +89,21 @@ namespace Anki {
       // The two objects can't be the same if they aren't the same type!
       bool isSame = this->type_ == otherObject.type_;
       
+      Pose3d otherPose;
+      if(otherObject.GetPose().getWithRespectTo(*this->pose_.get_parent(), otherPose) == false) {
+        PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
+                            "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
+        isSame = false;
+      }
+      
+      CORETECH_ASSERT(otherPose.get_parent() == pose_.get_parent());
+      
       if(isSame) {
         if(this->GetRotationAmbiguities().empty()) {
-          isSame = this->pose_.IsSameAs(otherObject.GetPose(),
-                                        distThreshold, angleThreshold, P_diff);
+          isSame = this->pose_.IsSameAs(otherPose, distThreshold, angleThreshold, P_diff);
         }
         else {
-          isSame = this->pose_.IsSameAs_WithAmbiguity(otherObject.GetPose(),
+          isSame = this->pose_.IsSameAs_WithAmbiguity(otherPose,
                                                       this->GetRotationAmbiguities(),
                                                       distThreshold, angleThreshold,
                                                       true, P_diff);
