@@ -24,6 +24,9 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/triangle_impl.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp" // for minAreaRect
@@ -65,6 +68,20 @@ namespace Anki {
   : std::array<Point<N,T>,4>(quad)
   {
   
+  }
+
+  template<QuadDimType N, typename T>
+  inline void Quadrilateral<N,T>::Print(void) const
+  {
+    using namespace Quad;
+    CoreTechPrint("Quad: ");
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
+      CoreTechPrint("(");
+      for (u8 p = 0; p < N; ++p) {
+        CoreTechPrint(" %f", (*this)[i][p]);
+      }
+      CoreTechPrint(")\n");
+    }
   }
   
   template<QuadDimType N, typename T>

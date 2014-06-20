@@ -240,6 +240,20 @@ namespace Anki {
     return diff;
   }
 
+  float Radians::minAngularDistance(const Radians& destAngle)
+  {
+    float diffCW = angularDistance(destAngle, true);
+    float diffCCW = angularDistance(destAngle, false);
+
+    assert(diffCW <= 0.0);
+    assert(diffCCW >= 0.0);
+
+    if(-diffCW < diffCCW)
+      return diffCW;
+    else
+      return diffCCW;
+  }
+
   // Rescales the radians value of the object to be within (-PI, PI] range.
   void Radians::rescale()
   {

@@ -12,7 +12,7 @@
 #include "behaviorManager.h"
 #include "pathPlanner.h"
 #include "vizManager.h"
-
+#include "soundManager.h"
 
 #include "anki/common/basestation/general.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -59,6 +59,13 @@ namespace Anki {
           state_     = WAITING_FOR_ROBOT;
           nextState_ = WAITING_TO_SEE_DICE;
           updateFcn_ = &BehaviorManager::Update_June2014DiceDemo;
+          
+          if (rand() % 2) {
+            SoundManager::getInstance()->Play(SOUND_INPUT);
+          } else {
+            SoundManager::getInstance()->Play(SOUND_SWEAR);
+          }
+          
           break;
         default:
           PRINT_NAMED_ERROR("BehaviorManager.InvalidMode", "Invalid behavior mode");
@@ -352,7 +359,7 @@ namespace Anki {
                 // Get all the observed markers on the dice and look for the one
                 // facing up (i.e. the one that is nearly aligned with the z axis)
                 // TODO: expose the threshold here?
-                const TimeStamp_t timeWindow = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - 250;
+                const TimeStamp_t timeWindow = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - 500;
                 const f32 dotprodThresh = 1.f - cos(DEG_TO_RAD(20));
                 std::vector<const Vision::KnownMarker*> diceMarkers;
                 diceBlock->GetObservedMarkers(diceMarkers, timeWindow);
@@ -456,6 +463,8 @@ namespace Anki {
                     
                     state_ = BACKING_UP;
                     nextState_ = BEGIN_EXPLORING; // when done backing up
+                    
+                    SoundManager::getInstance()->Play(SOUND_NOPROBLEMO);
                   }
                   
                 } else {
@@ -474,15 +483,22 @@ namespace Anki {
                   
                   Vec3f position( robot_->GetPose().get_translation() );
                   position -= diceBlock->GetPose().get_translation();
-                  position.MakeUnitLength();
-                  position *= ROBOT_BOUNDING_X_FRONT + 0.5f*diceBlock->GetSize().Length() + 5.f;
+                  f32 actualDistToDice = position.Length();
+                  f32 desiredDistToDice = ROBOT_BOUNDING_X_FRONT + 0.5f*diceBlock->GetSize().Length() + 5.f;
+
+                  if (actualDistToDice > desiredDistToDice + 5) {
+                    position.MakeUnitLength();
+                    position *= desiredDistToDice;
                   
-                  Radians angle = atan2(position.y(), position.x()) + PI_F;
-                  position += diceBlock->GetPose().get_translation();
-                  
-                  goalPose_ = Pose3d(angle, Z_AXIS_3D, {{position.x(), position.y(), 0.f}});
-                  
-                  robot_->ExecutePathToPose(goalPose_, diceViewingHeadAngle);
+                    Radians angle = atan2(position.y(), position.x()) + PI_F;
+                    position += diceBlock->GetPose().get_translation();
+                    
+                    goalPose_ = Pose3d(angle, Z_AXIS_3D, {{position.x(), position.y(), 0.f}});
+                    
+                    robot_->ExecutePathToPose(goalPose_, diceViewingHeadAngle);
+                  } else {
+                    CoreTechPrint("Move dice closer!\n");
+                  }
                   
                 } // IF / ELSE top marker seen
                 
@@ -562,16 +578,46 @@ namespace Anki {
                          robot_->GetCarryingBlock()->GetName().c_str());
               
               state_ = BEGIN_EXPLORING;
+              
+              SoundManager::getInstance()->Play(SOUND_NOTIMPRESSED);
+              
               return;
             } // if donePickingUp
             
-            const bool donePlacing = !robot_->IsCarryingBlock() && robot_->GetDockBlock() == nullptr;
+            const bool donePlacing = !robot_->IsCarryingBlock() && robot_->GetDockBlock() && robot_->GetDockBlock()->GetType() == blockToPlaceOn_;
             if(donePlacing) {
               PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
                          blockToPickUp_, blockToPlaceOn_);
-              state_ = WAITING_TO_SEE_DICE;
+              
+              if (rand() %2) {
+                SoundManager::getInstance()->Play(SOUND_60PERCENT);
+              } else {
+                SoundManager::getInstance()->Play(SOUND_TADA);
+              }
+              
+              StartMode(BM_June2014DiceDemo);
+              
               return;
             } // if donePlacing
+            
+            
+            // Either pickup or placement failed
+            const bool pickupFailed = !robot_->IsCarryingBlock();
+            if (pickupFailed) {
+              PRINT_INFO("Block pickup failed. Retrying...\n");
+            } else {
+              PRINT_INFO("Block placement failed. Retrying...\n");
+            }
+            
+            // Backup to re-explore the block
+            robot_->DriveWheels(-20.f, -20.f);
+            state_ = BACKING_UP;
+            nextState_ = BEGIN_EXPLORING;
+            desiredBackupDistance_ = 30;
+            goalPose_ = robot_->GetPose();
+            
+            SoundManager::getInstance()->Play(SOUND_STARTOVER);
+            
           } // if robot IDLE
           
           break;

@@ -15,12 +15,13 @@ prim.resolution_mm = 10.0
 longLen = 5
 
 # 0.0 to disable
-backwardsFactor = 0.0
+backwardsFactor1 = 2.0
+backwardsFactor2 = 0.0
 
-prim.addAction("short straight", 0, 1, backwardsCostFactor = backwardsFactor)
+prim.addAction("short straight", 0, 1, backwardsCostFactor = backwardsFactor1)
 prim.addAction("long straight", 0, longLen)
-prim.addAction("slight left", 1, longLen, backwardsCostFactor = backwardsFactor)
-prim.addAction("slight right", -1, longLen, backwardsCostFactor = backwardsFactor)
+prim.addAction("slight left", 1, longLen, backwardsCostFactor = backwardsFactor2)
+prim.addAction("slight right", -1, longLen, backwardsCostFactor = backwardsFactor2)
 prim.addAction("hard left", 3, longLen, 1.0)
 prim.addAction("hard right", -3, longLen, 1.0)
 prim.addAction("inplace left", 1, 0, 2.0)

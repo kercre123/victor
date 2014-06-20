@@ -76,7 +76,7 @@ namespace Anki {
         const s32 SNAPSHOT_BUFFER_SIZE = 2*SNAPSHOT_SIZE*SNAPSHOT_SIZE + 64; // 2X (16x16) arrays + overhead
         u8 snapshotBuffer_[SNAPSHOT_BUFFER_SIZE];
         Embedded::MemoryStack snapshotMemory_;
-        const s32 SNAPSHOT_COMPARE_THRESHOLD = 64; //SNAPSHOT_SIZE*SNAPSHOT_SIZE*64*64; // average grayscale difference of 64
+        const s32 SNAPSHOT_COMPARE_THRESHOLD = 32; //SNAPSHOT_SIZE*SNAPSHOT_SIZE*64*64; // average grayscale difference of 64
         
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;

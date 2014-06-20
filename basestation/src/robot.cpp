@@ -30,6 +30,8 @@
 #include "messageHandler.h"
 #include "vizManager.h"
 
+#define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
+
 namespace Anki {
   namespace Cozmo {
     
@@ -100,11 +102,10 @@ namespace Anki {
     : _ID(robotID)
     , _msgHandler(msgHandler)
     , _world(world)
-    , _pathPlanner(pathPlanner)
+    , _longPathPlanner(pathPlanner)
     , _currPathSegment(-1)
-    , _isWaitingForReplan(false)
     , _goalHeadAngle(0.f)
-    , _goalDistanceThreshold(10.f)
+    , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEG_TO_RAD(10))
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
@@ -128,13 +129,18 @@ namespace Anki {
     {
       SetHeadAngle(_currentHeadAngle);
       pdo_ = new PathDolerOuter(msgHandler, robotID);
-      
+      _shortPathPlanner = new FaceAndApproachPlanner;
+      _selectedPathPlanner = _longPathPlanner;
     } // Constructor: Robot
 
     Robot::~Robot()
     {
       delete pdo_;
       pdo_ = nullptr;
+
+      delete _shortPathPlanner;
+      _shortPathPlanner = nullptr;
+      _selectedPathPlanner = nullptr;
     }
     
     void Robot::Update(void)
@@ -157,13 +163,12 @@ namespace Anki {
             if(_world->DidBlocksChange())
             {
               Planning::Path newPath;
-              switch(_pathPlanner->GetPlan(newPath, GetPose(), _forceReplanOnNextWorldChange))
+              switch(_selectedPathPlanner->GetPlan(newPath, GetPose(), _forceReplanOnNextWorldChange))
               {
                 case IPathPlanner::DID_PLAN:
                 {
                   // clear path, but flag that we are replanning
                   ClearPath();
-                  _isWaitingForReplan = true;
                   wasTraversingPath = false;
                   _forceReplanOnNextWorldChange = false;
                   
@@ -218,10 +223,17 @@ namespace Anki {
 
             pdo_->Update(GetCurrPathSegment());
           } else { // IsTraversingPath is false?
-            PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
-                             "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d, isWaitingForReplan = %d\n",
-                             _currPathSegment,
-                             _isWaitingForReplan);
+            
+            // The last path sent was definitely received by the robot
+            // and it is no longer executing it.
+            if (_lastSentPathID == _lastRecvdPathID) {
+              PRINT_NAMED_INFO("Robot.Update.FollowToIdle", "lastPathID %d\n", _lastRecvdPathID);
+              SetState(IDLE);
+            } else {
+              PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
+                               "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d\n",
+                               _currPathSegment);
+            }
           }
           
           // Visualize path if robot has just started traversing it.
@@ -229,16 +241,15 @@ namespace Anki {
           if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
             VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
             wasTraversingPath = true;
-            _isWaitingForReplan = false;
           }
           else if ((wasTraversingPath && !IsTraversingPath()) ||
                      _pose.IsSameAs(_goalPose, _goalDistanceThreshold, _goalAngleThreshold))
           {
             PRINT_INFO("Robot %d finished following path.\n", _ID);
             ClearPath(); // clear path and indicate that we are not replanning
-            _isWaitingForReplan = false;
             wasTraversingPath = false;
             SetState(_nextState);
+            VizManager::getInstance()->EraseAllQuads();
           }
           break;
         } // case FOLLOWING_PATH
@@ -290,6 +301,13 @@ namespace Anki {
                 PRINT_INFO("Placed block successfully!\n");
               } else {
                 PRINT_INFO("Dock failed! Aborting\n");
+                
+                if (GetDockBlock()) {
+                  PRINT_INFO("Deleting block that I failed to dock to\n");
+                  _world->ClearBlock(GetDockBlock()->GetID());
+                } else {
+                  PRINT_INFO("DOCK BLOCK IS NULL!!!\n");
+                }
               }
             }
             
@@ -313,7 +331,6 @@ namespace Anki {
         if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
           VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
           wasTraversingPath = true;
-          _isWaitingForReplan = false;
         } else if (wasTraversingPath && !IsTraversingPath()){
           ClearPath(); // clear path and indicate that we are not replanning
           VizManager::getInstance()->ErasePath(_ID);
@@ -404,7 +421,9 @@ namespace Anki {
         
     Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
     {
-      IPathPlanner::EPlanStatus status = _pathPlanner->GetPlan(path, GetPose(), targetPose);
+      SelectPlanner(targetPose);
+
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), targetPose);
 
       if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
         return RESULT_OK;
@@ -417,6 +436,23 @@ namespace Anki {
       return ExecutePathToPose(pose, GetHeadAngle());
     }
     
+    void Robot::SelectPlanner(const Pose3d& targetPose)
+    {
+      Pose2d target2d(targetPose);
+      Pose2d start2d(GetPose());
+
+      float distSquared = pow(target2d.get_x() - start2d.get_x(), 2) + pow(target2d.get_y() - start2d.get_y(), 2);
+
+      if(distSquared < MAX_DISTANCE_FOR_SHORT_PLANNER * MAX_DISTANCE_FOR_SHORT_PLANNER) {
+        PRINT_NAMED_INFO("Robot.SelectPlanner", "distance^2 is %f, selecting short planner\n", distSquared);
+        _selectedPathPlanner = _shortPathPlanner;
+      }
+      else {
+        PRINT_NAMED_INFO("Robot.SelectPlanner", "distance^2 is %f, selecting long planner\n", distSquared);
+        _selectedPathPlanner = _longPathPlanner;
+      }
+    }
+
     Result Robot::ExecutePathToPose(const Pose3d& pose, const Radians headAngle)
     {
       Planning::Path p;
@@ -581,7 +617,7 @@ namespace Anki {
       // By now dock marker should be set
       CORETECH_ASSERT(_dockMarker != nullptr);
       
-      _goalDistanceThreshold = 10.f;
+      _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
       _goalAngleThreshold    = DEG_TO_RAD(10);
       _goalHeadAngle         = DEG_TO_RAD(-15);
       
@@ -776,7 +812,7 @@ namespace Anki {
       // Send start path execution message
       MessageExecutePath m;
       m.pathID = _lastSentPathID;
-      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message");
+      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message\n");
       return _msgHandler->SendMessage(_ID, m);
     }
     

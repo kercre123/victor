@@ -548,7 +548,8 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
   double linearSpeed = env.GetMaxVelocity_mmps();
   double oneOverLinearSpeed = env.GetOneOverMaxVelocity();
-  if(env.GetActionType(id).IsReverseAction()) {
+  bool isReverse = env.GetActionType(id).IsReverseAction();
+  if(isReverse) {
     linearSpeed = env.GetMaxReverseVelocity_mmps();
     oneOverLinearSpeed = 1.0 / env.GetMaxReverseVelocity_mmps();
   }
@@ -567,7 +568,7 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
                              0.0,
                              signedLength * cos(env.GetTheta_c(startingAngle)),
                              signedLength * sin(env.GetTheta_c(startingAngle)),
-                             linearSpeed,
+                             isReverse ? -linearSpeed : linearSpeed,
                              LATTICE_PLANNER_ACCEL,
                              LATTICE_PLANNER_DECEL);
   }
@@ -586,13 +587,15 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
     Cost arcSpeed = deltaTheta * turningRadius / arcTime;
 
+    // TODO:(bn) these don't work properly backwards at the moment
+
     pathSegments_.AppendArc(0,
                             config["arc"]["centerPt_x_mm"].asFloat(),
                             config["arc"]["centerPt_y_mm"].asFloat(),
                             config["arc"]["radius_mm"].asFloat(),
                             config["arc"]["startRad"].asFloat(),
                             config["arc"]["sweepRad"].asFloat(),
-                            arcSpeed,
+                            isReverse ? -arcSpeed : arcSpeed,
                             LATTICE_PLANNER_ACCEL,
                             LATTICE_PLANNER_DECEL);
   }
@@ -722,6 +725,35 @@ u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
   return firstSegment;
 }
 
+
+bool xythetaEnvironment::RoundSafe(const State_c& c, State& rounded) const
+{
+  float bestDist2 = 999999.9;
+
+  // TODO:(bn) smarter rounding for theta?
+  rounded.theta = GetTheta(c.theta);
+
+  StateXY startX = (StateXY) floor(c.x_mm * oneOverResolution_);
+  StateXY endX   = (StateXY)  ceil(c.x_mm * oneOverResolution_);
+  StateXY startY = (StateXY) floor(c.y_mm * oneOverResolution_);
+  StateXY endY   = (StateXY)  ceil(c.y_mm * oneOverResolution_);
+
+  for(StateXY x = startX; x <= endX; ++x) {
+    for(StateXY y = startY; y <= endY; ++y) {
+      State candidate(x, y, rounded.theta);
+      if(!IsInCollision(candidate)) {
+        float dist2 = pow(GetX_mm(x) - c.x_mm, 2) + pow(GetY_mm(y) - c.y_mm, 2);
+        if(dist2 < bestDist2) {
+          bestDist2 = dist2;
+          rounded.x = x;
+          rounded.y = y;
+        }
+      }
+    }
+  }
+
+  return bestDist2 < 999999.8;
+}
 
 float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State& end) const
 {
