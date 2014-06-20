@@ -107,6 +107,7 @@ namespace Anki {
                                   const Pose3d& targetPose) override;
     protected:
       Vec3f _targetVec;
+      float _finalTargetAngle;
     };
 
     class LatticePlannerImpl;
