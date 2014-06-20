@@ -33,6 +33,8 @@
 #define FACE_AND_APPROACH_PLANNER_ROT_DECEL 100.0f
 #define FACE_AND_APPROACH_TARGET_ROT_SPEED 0.5f
 
+#define FACE_AND_APPRACH_DELTA_THETA_FOR_BACKUP 1.0471975512
+
 
 namespace Anki {
 namespace Cozmo {
@@ -102,7 +104,15 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
 
   path.Clear();
 
+  bool backup = false;
   if(doTurn0) {
+    if(std::abs(deltaTheta) > FACE_AND_APPRACH_DELTA_THETA_FOR_BACKUP) {
+      printf("FaceAndApproachPlanner: deltaTheta of %f above threshold, doing backup!\n", deltaTheta);
+      deltaTheta = (Radians(deltaTheta) + M_PI).ToFloat();
+      targetAngle = targetAngle + M_PI;
+      backup = true;
+    }
+
     path.AppendPointTurn(0,
                          startVec.x(), startVec.y(), targetAngle.ToFloat(),
                          deltaTheta < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
@@ -114,7 +124,7 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
     path.AppendLine(0,
                     startVec.x(), startVec.y(),
                     _targetVec.x(), _targetVec.y(),
-                    FACE_AND_APPROACH_TARGET_SPEED,
+                    backup ? -FACE_AND_APPROACH_TARGET_SPEED : FACE_AND_APPROACH_TARGET_SPEED,
                     FACE_AND_APPROACH_PLANNER_ACCEL,
                     FACE_AND_APPROACH_PLANNER_DECEL);
   }
