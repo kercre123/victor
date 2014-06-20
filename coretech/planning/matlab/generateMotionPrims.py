@@ -15,7 +15,7 @@ prim.resolution_mm = 10.0
 longLen = 5
 
 # 0.0 to disable
-backwardsFactor1 = 1.1
+backwardsFactor1 = 2.0
 backwardsFactor2 = 0.0
 
 prim.addAction("short straight", 0, 1, backwardsCostFactor = backwardsFactor1)
