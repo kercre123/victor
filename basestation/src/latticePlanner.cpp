@@ -77,7 +77,9 @@ void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius, VIZ_COLO
   // TEMP: visualization doesn't work because we keep clearing all
   // quads. Once we fix vis and remove the EraseAllQuads() call, get
   // rid of the "true" so this only runs when it needs to
-  if(true || !FLT_NEAR(paddingRadius, lastPaddingRadius_)) {
+  if(true ||
+     !FLT_NEAR(paddingRadius, lastPaddingRadius_) ||
+     blockWorld_->DidBlocksChange()) {
     lastPaddingRadius_ = paddingRadius;
     std::vector<Quad2f> boundingBoxes;
 
