@@ -37,7 +37,8 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   using namespace Cozmo;
   
   // TODO: Tighten/loosen thresholds?
-  const float   blockPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
+  //const float   blockPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
+  const float blockPoseDistThreshold_mm    = 10.f;
   const Radians blockPoseAngleThreshold    = DEG_TO_RAD(15.f); // TODO: make dependent on distance?
   const float   robotPoseDistThreshold_mm  = 10.f;
   const Radians robotPoseAngleThreshold    = DEG_TO_RAD(3.f);
@@ -248,9 +249,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         int matchesFound = 0;
         
         // The threshold will vary with how far away the block actually is
-        const float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
+        /*const float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
                                                  (blockPose.get_translation() -
-                                                  trueRobotPose.get_translation()).Length());
+                                                  trueRobotPose.get_translation()).Length());*/
         
         for(auto & observedBlock : observedBlocks)
         {
@@ -304,7 +305,25 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
             }
 
             ++matchesFound;
+          } else {
+            fprintf(stdout, "Observed type-%d block %d at (%.2f,%.2f,%.2f) does not match "
+                    "type-%d ground truth at (%.2f,%.2f,%.2f). T_diff = %2fmm (vs. %.2fmm), "
+                    "Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
+                    observedBlock.second->GetType(),
+                    observedBlock.second->GetID(),
+                    observedBlock.second->GetPose().get_translation().x(),
+                    observedBlock.second->GetPose().get_translation().y(),
+                    observedBlock.second->GetPose().get_translation().z(),
+                    groundTruthBlock->GetType(),
+                    groundTruthBlock->GetPose().get_translation().x(),
+                    groundTruthBlock->GetPose().get_translation().y(),
+                    groundTruthBlock->GetPose().get_translation().z(),
+                    P_diff.get_translation().Length(),
+                    blockPoseDistThreshold_mm,
+                    P_diff.get_rotationAngle().getDegrees(),
+                    blockPoseAngleThreshold.getDegrees());
           }
+            
         } // for each observed block
         
         EXPECT_EQ(matchesFound, 1); // Exactly one observed block should match
