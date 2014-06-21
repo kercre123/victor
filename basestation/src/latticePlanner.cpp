@@ -38,16 +38,16 @@ class LatticePlannerImpl
 public:
 
   LatticePlannerImpl(const BlockWorld* blockWorld, const Json::Value& mprims, const LatticePlanner* parent)
-    : blockWorld_(blockWorld)
+    : lastPaddingRadius_(0.0)
+    , blockWorld_(blockWorld)
     , planner_(env_)
-    , lastPaddingRadius_(0.0)
     , _parent(parent)
     {
       env_.Init(mprims);
     }
 
   // imports and pads obstacles
-  void ImportBlockworldObstacles(float paddingRadius, VIZ_COLOR_ID vizColor = VIZ_COLOR_NONE);
+  void ImportBlockworldObstacles(const bool isReplanning, VIZ_COLOR_ID vizColor = VIZ_COLOR_NONE);
   float lastPaddingRadius_;
 
   const BlockWorld* blockWorld_;
@@ -72,8 +72,11 @@ LatticePlanner::~LatticePlanner()
   impl_ = nullptr;
 }
 
-void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius, VIZ_COLOR_ID vizColor)
+void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, VIZ_COLOR_ID vizColor)
 {
+  const float paddingRadius = (isReplanning ? LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK :
+                               LATTICE_PLANNER_BOUNDING_DISTANCE);
+
   // TEMP: visualization doesn't work because we keep clearing all
   // quads. Once we fix vis and remove the EraseAllQuads() call, get
   // rid of the "true" so this only runs when it needs to
@@ -91,10 +94,10 @@ void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius, VIZ_COLO
     env_.ClearObstacles();
     
     // TODO: figure out whether we are in replan mode in some other way (pass in flag?)
-    const bool isReplan = vizColor == VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD;
+    //const bool isReplan = vizColor == VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD;
     
     if(vizColor != VIZ_COLOR_NONE) {
-      VizManager::getInstance()->EraseAllPlannerObstacles(isReplan);
+      VizManager::getInstance()->EraseAllPlannerObstacles(isReplanning);
     }
     unsigned int numAdded = 0;
     for(auto boundingQuad : boundingBoxes) {
@@ -104,7 +107,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius, VIZ_COLO
         // TODO: manage the quadID better so we don't conflict
         // TODO:(bn) custom color for this
         //VizManager::getInstance()->DrawQuad(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
-        VizManager::getInstance()->DrawPlannerObstacle(isReplan, numAdded++, boundingQuad, 0.5f, vizColor);
+        VizManager::getInstance()->DrawPlannerObstacle(isReplanning, numAdded++, boundingQuad, 0.5f, vizColor);
         //(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
       }
     }
@@ -122,8 +125,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                     targetPose.get_translation().y(),
                     targetPose.get_rotationAngle<'Z'>().ToFloat());
 
-  impl_->ImportBlockworldObstacles(LATTICE_PLANNER_BOUNDING_DISTANCE,
-                                   VIZ_COLOR_NONE);
+  impl_->ImportBlockworldObstacles(false, VIZ_COLOR_NONE);
 
   if(!impl_->planner_.SetGoal(target))
     return PLAN_NEEDED_BUT_GOAL_FAILURE;
@@ -192,8 +194,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   //VizManager::getInstance()->EraseAllQuads();
   
   if(!forceReplanFromScratch) {
-    impl_->ImportBlockworldObstacles(LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK,
-                                     VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD);
+    impl_->ImportBlockworldObstacles(true, VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD);
 
     // plan Idx is the number of plan actions to execute before getting
     // to the starting point closest to start
@@ -245,8 +246,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
       }
 
       // use real padding for re-plan
-      impl_->ImportBlockworldObstacles(LATTICE_PLANNER_BOUNDING_DISTANCE,
-                                       VIZ_COLOR_BLOCK_BOUNDING_QUAD);
+      impl_->ImportBlockworldObstacles(false, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
 
       printf("(re)-planning from (%f, %f, %f) to (%f %f %f)\n",
              lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,
