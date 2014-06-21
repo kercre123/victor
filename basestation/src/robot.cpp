@@ -251,7 +251,8 @@ namespace Anki {
             ClearPath(); // clear path and indicate that we are not replanning
             wasTraversingPath = false;
             SetState(_nextState);
-            VizManager::getInstance()->EraseAllQuads();
+            VizManager::getInstance()->EraseAllPlannerObstacles(true);
+            VizManager::getInstance()->EraseAllPlannerObstacles(false);
           }
           break;
         } // case FOLLOWING_PATH

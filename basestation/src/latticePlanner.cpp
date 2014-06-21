@@ -77,9 +77,9 @@ void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius, VIZ_COLO
   // TEMP: visualization doesn't work because we keep clearing all
   // quads. Once we fix vis and remove the EraseAllQuads() call, get
   // rid of the "true" so this only runs when it needs to
-  if(true ||
-     !FLT_NEAR(paddingRadius, lastPaddingRadius_) ||
-     blockWorld_->DidBlocksChange()) {
+  if(!FLT_NEAR(paddingRadius, lastPaddingRadius_) ||
+     blockWorld_->DidBlocksChange())
+  {
     lastPaddingRadius_ = paddingRadius;
     std::vector<Quad2f> boundingBoxes;
 
@@ -89,6 +89,13 @@ void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius, VIZ_COLO
                                          boundingBoxes,
                                          _parent->_ignoreTypes, _parent->_ignoreIDs);
     env_.ClearObstacles();
+    
+    // TODO: figure out whether we are in replan mode in some other way (pass in flag?)
+    const bool isReplan = vizColor == VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD;
+    
+    if(vizColor != VIZ_COLOR_NONE) {
+      VizManager::getInstance()->EraseAllPlannerObstacles(isReplan);
+    }
     unsigned int numAdded = 0;
     for(auto boundingQuad : boundingBoxes) {
       env_.AddObstacle(boundingQuad);
@@ -96,7 +103,9 @@ void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius, VIZ_COLO
       if(vizColor != VIZ_COLOR_NONE) {
         // TODO: manage the quadID better so we don't conflict
         // TODO:(bn) custom color for this
-        VizManager::getInstance()->DrawQuad(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
+        //VizManager::getInstance()->DrawQuad(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
+        VizManager::getInstance()->DrawPlannerObstacle(isReplan, numAdded++, boundingQuad, 0.5f, vizColor);
+        //(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
       }
     }
 
@@ -138,7 +147,7 @@ LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                             startPose.get_translation().y(),
                             startPose.get_rotationAngle().ToFloat());
 
-  VizManager::getInstance()->EraseAllQuads();
+  //VizManager::getInstance()->EraseAllQuads();
   
   if(!forceReplanFromScratch) {
     impl_->ImportBlockworldObstacles(LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK,
