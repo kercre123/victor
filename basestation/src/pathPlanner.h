@@ -63,6 +63,15 @@ namespace Anki {
                                     const Pose3d& startPose,
                                     const Pose3d& targetPose) = 0;
       
+      // This version gets a plan to the closest of the goals you supply. It
+      // is up to the planner implementation to override to choose based on
+      // other criteria. The index of the selected target pose is returned in
+      // selectedIndex.
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                  const Pose3d& startPose,
+                                  const std::vector<Pose3d>& targetPoses,
+                                  size_t& selectedIndex);
+      
       void AddIgnoreType(const ObjectType_t objType)    { _ignoreTypes.insert(objType); }
       void RemoveIgnoreType(const ObjectType_t objType) { _ignoreTypes.erase(objType); }
       void ClearIgnoreTypes()                           { _ignoreTypes.clear(); }
