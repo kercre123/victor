@@ -102,6 +102,11 @@ namespace Anki {
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
       Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
+      
+      // Same as above, but select from a set poses and return the selected index.
+      Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
+      Result ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex);
+      Result ExecutePathToPose(const std::vector<Pose3d>& poses, const Radians headAngle, size_t& selectedIndex);
 
       IPathPlanner* GetPathPlanner() { return _longPathPlanner; }
 
@@ -266,7 +271,6 @@ namespace Anki {
       s8               _currPathSegment;
       u8               _numFreeSegmentSlots;
       Pose3d           _goalPose;
-      Radians          _goalHeadAngle;
       f32              _goalDistanceThreshold;
       Radians          _goalAngleThreshold;
       u16              _lastSentPathID;
@@ -289,7 +293,6 @@ namespace Anki {
       Pose3d           _pose;
       PoseFrameID_t    _frameId;
       bool             _isLocalized;
-      
       
       const Pose3d _neckPose; // joint around which head rotates
       const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint

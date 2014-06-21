@@ -369,7 +369,7 @@ namespace Anki {
             case CKEY_CLEAR_BLOCKS:
             {
               blockWorld_->ClearAllExistingBlocks();
-              VizManager::getInstance()->EraseVizObjectType(VIZ_CUBOID);
+              VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_CUBOID);
               break;
             }
             case CKEY_DOCK_TO_BLOCK:

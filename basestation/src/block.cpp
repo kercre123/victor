@@ -18,7 +18,6 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 
-#include "vizManager.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/imgproc/imgproc.hpp"
@@ -479,8 +478,12 @@ namespace Anki {
       
     } // Block::GetMarker()
     
+    void Block::Visualize(const f32 preDockPoseDistance) const
+    {
+      Visualize(_color, preDockPoseDistance);
+    }
     
-    void Block::Visualize(const u32 color, const f32 preDockPoseDistance) const
+    void Block::Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) const
     {
       Pose3d vizPose;
       if(pose_.getWithRespectTo(pose_.FindOrigin(), vizPose) == false) {

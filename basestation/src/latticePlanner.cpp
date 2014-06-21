@@ -77,9 +77,9 @@ void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius, VIZ_COLO
   // TEMP: visualization doesn't work because we keep clearing all
   // quads. Once we fix vis and remove the EraseAllQuads() call, get
   // rid of the "true" so this only runs when it needs to
-  if(true ||
-     !FLT_NEAR(paddingRadius, lastPaddingRadius_) ||
-     blockWorld_->DidBlocksChange()) {
+  if(!FLT_NEAR(paddingRadius, lastPaddingRadius_) ||
+     blockWorld_->DidBlocksChange())
+  {
     lastPaddingRadius_ = paddingRadius;
     std::vector<Quad2f> boundingBoxes;
 
@@ -89,6 +89,13 @@ void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius, VIZ_COLO
                                          boundingBoxes,
                                          _parent->_ignoreTypes, _parent->_ignoreIDs);
     env_.ClearObstacles();
+    
+    // TODO: figure out whether we are in replan mode in some other way (pass in flag?)
+    const bool isReplan = vizColor == VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD;
+    
+    if(vizColor != VIZ_COLOR_NONE) {
+      VizManager::getInstance()->EraseAllPlannerObstacles(isReplan);
+    }
     unsigned int numAdded = 0;
     for(auto boundingQuad : boundingBoxes) {
       env_.AddObstacle(boundingQuad);
@@ -96,7 +103,9 @@ void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius, VIZ_COLO
       if(vizColor != VIZ_COLOR_NONE) {
         // TODO: manage the quadID better so we don't conflict
         // TODO:(bn) custom color for this
-        VizManager::getInstance()->DrawQuad(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
+        //VizManager::getInstance()->DrawQuad(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
+        VizManager::getInstance()->DrawPlannerObstacle(isReplan, numAdded++, boundingQuad, 0.5f, vizColor);
+        //(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
       }
     }
 
@@ -124,9 +133,51 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   return GetPlan(path, startPose, true);
 }
 
-LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
-                                                    const Pose3d& startPose,
-                                                    bool forceReplanFromScratch)
+IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
+                                                  const Pose3d& startPose,
+                                                  const std::vector<Pose3d>& targetPoses,
+                                                  size_t& selectedIndex)
+{
+  // for now just select the closest non-colliding goal as the true
+  // goal. Eventually I'll implement a real multi-goal planner that
+  // decides on its own which goal it wants
+
+  size_t bestTargetIdx = 0;
+  bool found = false;
+  size_t numTargetPoses = targetPoses.size();
+  float closestDist2 = 0;
+
+  for(size_t i=0; i<numTargetPoses; ++i) {
+    float dist2 = (targetPoses[i].get_translation() - startPose.get_translation()).LengthSq();
+
+    if(!found || dist2 < closestDist2) {
+      State_c target(targetPoses[i].get_translation().x(),
+                     targetPoses[i].get_translation().y(),
+                     targetPoses[i].get_rotationAngle<'Z'>().ToFloat());
+
+      if(!impl_->env_.IsInCollision(target)) {
+        closestDist2 = dist2;
+        bestTargetIdx = i;
+        found = true;
+      }
+    }
+  }
+
+  if(found) {
+    selectedIndex = bestTargetIdx;
+    return GetPlan(path, startPose, targetPoses[bestTargetIdx]);
+  }
+  else {
+    printf("LatticePlanner::GetPlan: could not find valid target out of %lu possible targets\n",
+           numTargetPoses);
+    return PLAN_NEEDED_BUT_GOAL_FAILURE;
+  }
+}
+
+
+IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
+                                                  const Pose3d& startPose,
+                                                  bool forceReplanFromScratch)
 {
   using namespace std;
 
@@ -138,7 +189,7 @@ LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                             startPose.get_translation().y(),
                             startPose.get_rotationAngle().ToFloat());
 
-  VizManager::getInstance()->EraseAllQuads();
+  //VizManager::getInstance()->EraseAllQuads();
   
   if(!forceReplanFromScratch) {
     impl_->ImportBlockworldObstacles(LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK,
