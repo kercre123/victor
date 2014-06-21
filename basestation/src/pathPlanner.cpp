@@ -109,7 +109,7 @@ namespace Anki {
                          targetPose.get_rotationAxis().y(),
                          targetPose.get_rotationAxis().z());
         
-        const f32 distToPose = computeDistanceBetween(targetPose, startPose);
+        const f32 distToPose = (targetPose.get_translation() - startPose.get_translation()).LengthSq();
         if (!foundTarget || distToPose < shortestDistToPose)
         {
           foundTarget = true;

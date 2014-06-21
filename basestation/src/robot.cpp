@@ -104,7 +104,6 @@ namespace Anki {
     , _world(world)
     , _longPathPlanner(pathPlanner)
     , _currPathSegment(-1)
-    , _goalHeadAngle(0.f)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEG_TO_RAD(10))
     , _lastSentPathID(0)
@@ -459,16 +458,72 @@ namespace Anki {
     Result Robot::ExecutePathToPose(const Pose3d& pose, const Radians headAngle)
     {
       Planning::Path p;
-      if (GetPathToPose(pose, p) == RESULT_OK) {
+      Result lastResult = GetPathToPose(pose, p);
+      
+      if(lastResult == RESULT_OK)
+      {
         _path = p;
         _goalPose = pose;
-        _goalHeadAngle = headAngle;
-        return ExecutePath(p);
-      }
-        
-      return RESULT_FAIL;
       
+        MoveHeadToAngle(headAngle.ToFloat(), 5, 10);
+        
+        lastResult = ExecutePath(p);
+      }
+      
+      return lastResult;
     }
+    
+    Result Robot::GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path)
+    {
+      // Let the long path (lattice) planner do its thing and choose a target
+      _selectedPathPlanner = _longPathPlanner;
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), poses, selectedIndex);
+      
+      if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
+      {
+        // See if SelectPlanner selects the long path planner based on the pose it
+        // selected
+        SelectPlanner(poses[selectedIndex]);
+        
+        // If SelectPlanner would rather use the short path planner, let it get a
+        // plan and use that one instead.
+        if(_selectedPathPlanner != _longPathPlanner) {
+          _selectedPathPlanner->GetPlan(path, GetPose(), poses[selectedIndex]);
+        }
+        
+        if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN) {
+          return RESULT_OK;
+        } else {
+          return RESULT_FAIL;
+        }
+      } else {
+        return RESULT_FAIL;
+      }
+      
+    } // GetPathToPose(multiple poses)
+    
+    Result Robot::ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex)
+    {
+      return ExecutePathToPose(poses, GetHeadAngle(), selectedIndex);
+    }
+    
+    Result Robot::ExecutePathToPose(const std::vector<Pose3d>& poses, const Radians headAngle, size_t& selectedIndex)
+    {
+      Planning::Path p;
+      Result lastResult = GetPathToPose(poses, selectedIndex, p);
+      
+      if(lastResult == RESULT_OK) {
+        _path = p;
+        _goalPose = poses[selectedIndex];
+        
+        MoveHeadToAngle(headAngle.ToFloat(), 5, 10);
+        
+        lastResult = ExecutePath(p);
+      }
+      
+      return lastResult;
+    }
+
     
     void Robot::AbortCurrentPath()
     {
@@ -563,74 +618,33 @@ namespace Anki {
       std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
       _dockBlock->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
       
-      // Select (closest) predock pose that is not within an obstacle
       if (preDockPoseMarkerPairs.empty()) {
-        
-        PRINT_NAMED_INFO("Robot.ExecuteDockingSequence.NoPreDockPoses",
-                         "Dock block did not provide any pre-dock poses!\n");
+        PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.NoPreDockPoses",
+                          "Dock block did not provide any pre-dock poses!\n");
         return RESULT_FAIL;
-        
-      } else {
-        std::vector<Quad2f> boundingBoxes;
-        std::set<ObjectID_t> ignoreIDs = {_dockBlock->GetID()};
-        _world->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z, ROBOT_BOUNDING_RADIUS,
-                                        boundingBoxes, std::set<ObjectType_t>(), ignoreIDs);
-        
-        f32 shortestDist2Pose = -1;
-        for (auto const & poseMarkerPair : preDockPoseMarkerPairs) {
-          
-          Point2f xyPoint(poseMarkerPair.first.get_translation().x(),
-                          poseMarkerPair.first.get_translation().y());
-          
-          bool isTooCloseToAnotherBlock = false;
-          for(auto boundingBox : boundingBoxes) {
-            if(boundingBox.Contains(xyPoint)) {
-              isTooCloseToAnotherBlock = true;
-              break;
-            }
-          }
-          
-          if(!isTooCloseToAnotherBlock) {
-            PRINT_INFO("Candidate pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f)\n",
-                       poseMarkerPair.first.get_translation().x(),
-                       poseMarkerPair.first.get_translation().y(),
-                       poseMarkerPair.first.get_translation().z(),
-                       poseMarkerPair.first.get_rotationAngle().getDegrees(),
-                       poseMarkerPair.first.get_rotationAxis().x(),
-                       poseMarkerPair.first.get_rotationAxis().y(),
-                       poseMarkerPair.first.get_rotationAxis().z());
-            
-            f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, _pose);
-            if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
-              shortestDist2Pose = dist2Pose;
-              _goalPose = poseMarkerPair.first;
-              _dockMarker = &(poseMarkerPair.second);
-            }
-          } // if !isTooCloseToAnotherBlock
-        } // for each poseMarkerPair
-        
-        if(shortestDist2Pose < 0) {
-          PRINT_NAMED_INFO("Robot.ExecuteDockingSequence.NoAvailablePreDockPoses",
-                           "All pre-dock poses for dock block that are inside an obstacle!\n");
-          return RESULT_FAIL;
-        }
-        
-      } // if there are any pre=dock poses
+      }
       
-      // By now dock marker should be set
-      CORETECH_ASSERT(_dockMarker != nullptr);
+      // Let the planner choose which pre-dock pose to use. Create a vector of
+      // pose options
+      size_t selectedIndex = preDockPoseMarkerPairs.size();
+      std::vector<Pose3d> preDockPoses;
+      preDockPoses.reserve(preDockPoseMarkerPairs.size());
+      for(auto const& preDockPair : preDockPoseMarkerPairs) {
+        preDockPoses.emplace_back(preDockPair.first);
+      }
       
       _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
       _goalAngleThreshold    = DEG_TO_RAD(10);
-      _goalHeadAngle         = DEG_TO_RAD(-15);
       
-      lastResult = ExecutePathToPose(_goalPose);
+      lastResult = ExecutePathToPose(preDockPoses, DEG_TO_RAD(-15), selectedIndex);
       if(lastResult != RESULT_OK) {
         return lastResult;
       }
       
-      // Make sure head is tilted down so that it can localize well
-      MoveHeadToAngle(_goalHeadAngle.ToFloat(), 5, 10);
+      _goalPose = preDockPoses[selectedIndex];
+      _dockMarker = &(preDockPoseMarkerPairs[selectedIndex].second);
+      
+      
       PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
                  _goalPose.get_translation().x(),
                  _goalPose.get_translation().y(),
