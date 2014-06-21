@@ -1079,6 +1079,11 @@ namespace Anki {
       return _poseHistory.GetComputedPoseAt(t_request, p, key);
     }
 
+    TimeStamp_t Robot::GetLastMsgTimestamp() const
+    {
+      return _poseHistory.GetNewestTimeStamp();
+    }
+    
     bool Robot::IsValidPoseKey(const HistPoseKey key) const
     {
       return _poseHistory.IsValidPoseKey(key);

@@ -238,6 +238,8 @@ namespace Anki {
       Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
       Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
       
+      TimeStamp_t GetLastMsgTimestamp() const;
+      
       bool IsValidPoseKey(const HistPoseKey key) const;
       
       // Updates the current pose to the best estimate based on

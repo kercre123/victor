@@ -359,7 +359,7 @@ namespace Anki {
                 // Get all the observed markers on the dice and look for the one
                 // facing up (i.e. the one that is nearly aligned with the z axis)
                 // TODO: expose the threshold here?
-                const TimeStamp_t timeWindow = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - 500;
+                const TimeStamp_t timeWindow = robot_->GetLastMsgTimestamp() - 500;
                 const f32 dotprodThresh = 1.f - cos(DEG_TO_RAD(20));
                 std::vector<const Vision::KnownMarker*> diceMarkers;
                 diceBlock->GetObservedMarkers(diceMarkers, timeWindow);
