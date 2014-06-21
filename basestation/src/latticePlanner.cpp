@@ -148,10 +148,9 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   float closestDist2 = 0;
 
   for(size_t i=0; i<numTargetPoses; ++i) {
-    float dist2 = pow(targetPoses[i].get_translation().x() - startPose.get_translation().x(), 2) + 
-      pow(targetPoses[i].get_translation().y() - startPose.get_translation().y(), 2);
+    float dist2 = (targetPoses[i].get_translation() - startPose.get_translation()).LengthSq();
 
-    if(dist2 < closestDist2) {
+    if(!found || dist2 < closestDist2) {
       State_c target(targetPoses[i].get_translation().x(),
                      targetPoses[i].get_translation().y(),
                      targetPoses[i].get_rotationAngle<'Z'>().ToFloat());
