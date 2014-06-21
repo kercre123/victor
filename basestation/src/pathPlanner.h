@@ -60,8 +60,21 @@ namespace Anki {
       // implied to be true because we are changing both the start and
       // the goal
       virtual EPlanStatus GetPlan(Planning::Path &path,
-                                    const Pose3d& startPose,
-                                    const Pose3d& targetPose) = 0;
+                                  const Pose3d& startPose,
+                                  const Pose3d& targetPose) = 0;
+
+      // This version gets a plan to any of the goals you supply. It
+      // is up to the planner implementation to decide. The last
+      // argument will be set to the index into targetPoses that was
+      // selected, if the planner succeeded
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                  const Pose3d& startPose,
+                                  const std::vector<Pose3d>& targetPoses,
+                                  size_t& selectedIndex) {
+        // TEMP!
+        selectedIndex = 0;
+        return GetPlan(path, startPose, targetPoses[0]);
+      }
       
       // This version gets a plan to the closest of the goals you supply. It
       // is up to the planner implementation to override to choose based on
@@ -135,6 +148,13 @@ namespace Anki {
       virtual EPlanStatus GetPlan(Planning::Path &path,
                                     const Pose3d& startPose,
                                     const Pose3d& targetPose) override;
+
+      // This version gets a plan to any of the goals you supply. It
+      // is up to the planner implementation to decide 
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                  const Pose3d& startPose,
+                                  const std::vector<Pose3d>& targetPoses,
+                                  size_t& selectedIndex) override;
 
     protected:
       LatticePlannerImpl* impl_;

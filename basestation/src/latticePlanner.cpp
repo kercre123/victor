@@ -133,9 +133,52 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   return GetPlan(path, startPose, true);
 }
 
-LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
-                                                    const Pose3d& startPose,
-                                                    bool forceReplanFromScratch)
+IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
+                                                  const Pose3d& startPose,
+                                                  const std::vector<Pose3d>& targetPoses,
+                                                  size_t& selectedIndex)
+{
+  // for now just select the closest non-colliding goal as the true
+  // goal. Eventually I'll implement a real multi-goal planner that
+  // decides on its own which goal it wants
+
+  size_t bestTargetIdx = 0;
+  bool found = false;
+  size_t numTargetPoses = targetPoses.size();
+  float closestDist2 = 0;
+
+  for(size_t i=0; i<numTargetPoses; ++i) {
+    float dist2 = pow(targetPoses[i].get_translation().x() - startPose.get_translation().x(), 2) + 
+      pow(targetPoses[i].get_translation().y() - startPose.get_translation().y(), 2);
+
+    if(dist2 < closestDist2) {
+      State_c target(targetPoses[i].get_translation().x(),
+                     targetPoses[i].get_translation().y(),
+                     targetPoses[i].get_rotationAngle<'Z'>().ToFloat());
+
+      if(!impl_->env_.IsInCollision(target)) {
+        closestDist2 = dist2;
+        bestTargetIdx = i;
+        found = true;
+      }
+    }
+  }
+
+  if(found) {
+    selectedIndex = bestTargetIdx;
+    return GetPlan(path, startPose, targetPoses[bestTargetIdx]);
+  }
+  else {
+    printf("LatticePlanner::GetPlan: could not find valid target out of %lu possible targets\n",
+           numTargetPoses);
+    return PLAN_NEEDED_BUT_GOAL_FAILURE;
+  }
+}
+
+
+IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
+                                                  const Pose3d& startPose,
+                                                  bool forceReplanFromScratch)
 {
   using namespace std;
 
