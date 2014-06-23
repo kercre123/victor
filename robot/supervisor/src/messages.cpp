@@ -398,11 +398,7 @@ namespace Anki {
       }
       
       void ProcessSetHeadlightMessage(const SetHeadlight& msg) {
-        if (msg.intensity > 0) {
-          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, (HAL::LEDColor)(HAL::LED_RED | HAL::LED_GREEN | HAL::LED_BLUE));
-        } else {
-          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, HAL::LED_OFF);
-        }
+        HAL::SetHeadlights(msg.intensity > 0);
       }
  
       void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {

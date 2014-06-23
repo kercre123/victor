@@ -719,5 +719,11 @@ namespace Anki {
       // TODO: ...
     }
 
+    void HAL::SetHeadlights(bool state)
+    {
+      // TODO: ...
+    }
+    
+    
   } // namespace Cozmo
 } // namespace Anki
