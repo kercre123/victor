@@ -385,9 +385,11 @@ namespace Anki
         LED_WHITE = 0xffffff
       };
       
-      // TEMP: Temporary single LED control with color
-      //       while "real" light functionality is being worked on.
+      // Light up one of the eye LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, LEDColor color);
+      
+      // Turn headlights on (true) and off (false)
+      void SetHeadlights(bool state);
       
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////

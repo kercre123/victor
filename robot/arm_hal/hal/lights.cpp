@@ -14,6 +14,9 @@ namespace Anki
       GPIO_PIN_SOURCE(EYECLK, GPIOA, 7);
       GPIO_PIN_SOURCE(EYERST, GPIOB, 1);
       
+      GPIO_PIN_SOURCE(HEADLIGHT1, GPIOB, 3);
+      GPIO_PIN_SOURCE(HEADLIGHT2, GPIOH, 13);
+ 
       // Map the natural LED order (as shown in hal.h) to the hardware swizzled order
       // See schematic if you care about why the LEDs are swizzled
       static const u8 HW_CHANNELS[8] = {5, 1, 2, 0, 6, 7, 3, 4};
@@ -38,7 +41,7 @@ namespace Anki
         PIN_OD(GPIO_EYERST, SOURCE_EYERST);
         PIN_OUT(GPIO_EYERST, SOURCE_EYERST);
 
-        // Initialize all LED colors to OFF
+        // Initialize all face LED colors to OFF
         // Low side drivers must be open drain to allow voltages > VDD
         GPIO_SET(GPIO_RED, PIN_RED);        
         GPIO_SET(GPIO_GREEN, PIN_GREEN);        
@@ -51,7 +54,17 @@ namespace Anki
         PIN_OD(GPIO_BLUE, SOURCE_BLUE);
         PIN_OUT(GPIO_RED, SOURCE_RED);
         PIN_OUT(GPIO_GREEN, SOURCE_GREEN);        
-        PIN_OUT(GPIO_BLUE, SOURCE_BLUE);        
+        PIN_OUT(GPIO_BLUE, SOURCE_BLUE);     
+
+        // Initialize headlights (2.1)
+        GPIO_SET(GPIO_HEADLIGHT1, PIN_HEADLIGHT1);        
+        PIN_NOPULL(GPIO_HEADLIGHT1, SOURCE_HEADLIGHT1);
+        PIN_OD(GPIO_HEADLIGHT1, SOURCE_HEADLIGHT1);
+        PIN_OUT(GPIO_HEADLIGHT1, SOURCE_HEADLIGHT1);
+        GPIO_SET(GPIO_HEADLIGHT2, PIN_HEADLIGHT2);        
+        PIN_NOPULL(GPIO_HEADLIGHT2, SOURCE_HEADLIGHT2);
+        PIN_OD(GPIO_HEADLIGHT2, SOURCE_HEADLIGHT2);
+        PIN_OUT(GPIO_HEADLIGHT2, SOURCE_HEADLIGHT2);
 
         // Initialize timer to rapidly blink LEDs, simulating dimming
         NVIC_InitTypeDef NVIC_InitStructure;
@@ -77,16 +90,27 @@ namespace Anki
         NVIC_InitStructure.NVIC_IRQChannel = TIM8_TRG_COM_TIM14_IRQn;
         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-        NVIC_Init(&NVIC_InitStructure);        
+        NVIC_Init(&NVIC_InitStructure);      
       }
             
-      // Light up one of the eye LEDs as white as possible
-      // number is 0 thru 7 to select which LED to light
+      // Light up one of the eye LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, LEDColor color)
       {
         if (led_id < NUM_LEDS)  // Unsigned, so always >= 0
           m_channels[HW_CHANNELS[led_id]] = color;
       }      
+      
+      // Turn headlights on (true) and off (false)
+      void SetHeadlights(bool state)
+      {
+        if (state) {
+          GPIO_RESET(GPIO_HEADLIGHT1, PIN_HEADLIGHT1);
+          GPIO_RESET(GPIO_HEADLIGHT2, PIN_HEADLIGHT2);
+        } else {
+          GPIO_SET(GPIO_HEADLIGHT1, PIN_HEADLIGHT1);
+          GPIO_SET(GPIO_HEADLIGHT2, PIN_HEADLIGHT2);
+        }
+      }
     }
   }
 }
