@@ -70,14 +70,23 @@ namespace Anki
       ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratchOffChip);
 
       AnkiConditionalErrorAndReturnValue(extractedComponents.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "DetectFiducialMarkers", "extractedComponents could not be allocated");
+        RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "extractedComponents could not be allocated");
+
+      FixedLengthList<s32> filterHalfWidths(scaleImage_numPyramidLevels+1, scratchOnchip, Flags::Buffer(false, false, true));
+
+      AnkiConditionalErrorAndReturnValue(filterHalfWidths.IsValid(),
+        RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "filterHalfWidths could not be allocated");
+
+      for(s32 i=0; i<=scaleImage_numPyramidLevels; i++) {
+        filterHalfWidths[i] = 1 << (i+1);
+      }
 
       // 1. Compute the Scale image
       // 2. Binarize the Scale image
       // 3. Compute connected components from the binary image
       if((lastResult = ExtractComponentsViaCharacteristicScale(
         image,
-        scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
+        filterHalfWidths, scaleImage_thresholdMultiplier,
         component1d_minComponentWidth, component1d_maxSkipDistance,
         extractedComponents,
         scratchCcm, scratchOnchip)) != RESULT_OK)
