@@ -109,7 +109,7 @@ namespace Anki {
         for (auto const & object : blockMapByID) {
 
           const Block* block = dynamic_cast<Block*>(object.second);
-          if(block != nullptr && !block->GetIsBeingCarried())
+          if(block != nullptr && !block->IsBeingCarried())
           {
             //PRINT_INFO("currID: %d\n", block.first);
             if (currBlockOfInterestFound) {
@@ -139,7 +139,7 @@ namespace Anki {
         for (auto const & blockType : blockMap) {
           for (auto const & object : blockType.second) {
             const Block* block = dynamic_cast<Block*>(object.second);
-            if(block != nullptr && !block->GetIsBeingCarried())
+            if(block != nullptr && !block->IsBeingCarried())
             {
               firstBlock = object.first;
               break;

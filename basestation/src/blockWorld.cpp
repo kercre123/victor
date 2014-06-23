@@ -359,7 +359,7 @@ namespace Anki
           {
             Block* block = dynamic_cast<Block*>(blockAndId.second);
             CORETECH_THROW_IF(block == nullptr);
-            if (ignoreCarriedBlocks && !block->GetIsBeingCarried()) {
+            if (ignoreCarriedBlocks && !block->IsBeingCarried()) {
               const f32 blockHeight = block->GetPose().get_translation().z();
               
               // If this block's ID is not in the ignore list, then we will use it
@@ -654,7 +654,7 @@ namespace Anki
           CORETECH_THROW_IF(block == nullptr);
           
           bool didErase = false;
-          if(block->GetLastObservedTime() < lastObsMarkerTime && !block->GetIsBeingCarried())
+          if(block->GetLastObservedTime() < lastObsMarkerTime && !block->IsBeingCarried())
           {
             for(auto robotID : robotMgr_->GetRobotIDList())
             {
