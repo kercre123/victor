@@ -37,12 +37,15 @@ typedef float    f32;
 typedef double   f64;
 
 typedef u32 RobotID_t;
-typedef u16 BlockID_t;
+//typedef u16 BlockID_t;
 typedef u16 ObjectID_t;
 typedef u16 ObjectType_t;
 typedef u32 CameraID_t;
 
 const CameraID_t ANY_CAMERA = u32_MAX;
+
+const ObjectID_t ANY_OBJECT = u16_MAX;
+
 
 // If we're using c++, Result is in a namespace. In c, it's not.
 #ifdef __cplusplus
