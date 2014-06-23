@@ -531,7 +531,7 @@ namespace Anki {
           // try to locate blocks
           if(!robot_->IsMoving() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
             PRINT_INFO("Beginning exploring\n");
-            robot_->DriveWheels(15.f, -15.f);
+            robot_->DriveWheels(10.f, -10.f);
             robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 1, 1);
             
             if(robot_->IsCarryingBlock()) {
@@ -594,6 +594,9 @@ namespace Anki {
               } else {
                 SoundManager::getInstance()->Play(SOUND_TADA);
               }
+              
+              // Delete known dice
+              world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
               
               StartMode(BM_June2014DiceDemo);
               
