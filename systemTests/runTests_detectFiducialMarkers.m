@@ -30,6 +30,11 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
     
+    try
+        mkdir(resultsDirectory);
+    catch
+    end
+       
     testJsonPattern = strrep(testJsonPattern, '\', '/');
     slashIndexes = strfind(testJsonPattern, '/');
     testPath = testJsonPattern(1:(slashIndexes(end)));
@@ -129,8 +134,9 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
         if numComputeThreads == 1
             runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, workList);
         else % if numComputeThreads == 1
-            matlabLaunchCommand = 'matlab -nojvm -noFigureWindows -nosplash ';
+%             matlabLaunchCommand = 'matlab -nojvm -noFigureWindows -nosplash ';
 %             matlabLaunchCommand = 'matlab -noFigureWindows -nosplash ';
+            matlabLaunchCommand = 'matlab -noFigureWindows -nosplash ';
             
             threadCompletionMutexFilenames = cell(numComputeThreads, 1);
             workerInputFilenames = cell(numComputeThreads, 1);
@@ -143,7 +149,10 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 
                 threadCompletionMutexFilenames{iThread+1} = sprintf('%s_mutex%d.mat', basicsFilename, iThread);
                 
-                delete(threadCompletionMutexFilenames{iThread+1});
+                try
+                    delete(threadCompletionMutexFilenames{iThread+1});
+                catch
+                end
                 
                 commandString = sprintf('-r "load(''%s''); runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, localWorkList); mut=1; save(''%s'',''mut''); exit;"', workerInputFilenames{iThread+1}, threadCompletionMutexFilenames{iThread+1});
                 system(['start /b ', matlabLaunchCommand, commandString]);
@@ -273,7 +282,6 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
             else
                 showImageDetectionsScale = 1;
             end
-            
             
             for iTestFunction = 1:length(perTestStats{iTest}{iPose})
                 curResultsData = resultsData{iTest}{iPose}{iTestFunction};

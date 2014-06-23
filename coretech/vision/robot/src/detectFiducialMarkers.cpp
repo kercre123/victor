@@ -72,13 +72,18 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(extractedComponents.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "extractedComponents could not be allocated");
 
-      FixedLengthList<s32> filterHalfWidths(scaleImage_numPyramidLevels+1, scratchOnchip, Flags::Buffer(false, false, true));
+      FixedLengthList<s32> filterHalfWidths(8, scratchOnchip, Flags::Buffer(false, false, true));
 
       AnkiConditionalErrorAndReturnValue(filterHalfWidths.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "filterHalfWidths could not be allocated");
 
-      for(s32 i=0; i<=scaleImage_numPyramidLevels; i++) {
-        filterHalfWidths[i] = 1 << (i+1);
+      /*for(s32 i=0; i<(scaleImage_numPyramidLevels+2); i++) {
+      filterHalfWidths[i] = 1 << (i);
+      }*/
+
+      const s32 halfWidthData[] = {1,2,3,4,6,8,12,16};
+      for(s32 i=0; i<8; i++) {
+        filterHalfWidths[i] = halfWidthData[i];
       }
 
       // 1. Compute the Scale image
