@@ -89,12 +89,14 @@ namespace Anki
       // of their outlines on the ground plane (z=0).  Can also pad the
       // bounding boxes by a specified amount. If ignoreIDs is not empty, then
       // bounding boxes of blocks with an ID present in the set will not be
-      // returned. Analogous behavior for ignoreTypes.
+      // returned. Analogous behavior for ignoreTypes.  The last flag indicates
+      // whether blocks being carried by any robot are included in the results.
       void GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
                                    const f32 padding,
                                    std::vector<Quad2f>& boundingBoxes,
                                    const std::set<ObjectType_t>& ignoreTypes = std::set<ObjectType_t>(),
-                                   const std::set<ObjectID_t>& ignoreIDs = std::set<ObjectID_t>()) const;
+                                   const std::set<ObjectID_t>& ignoreIDs = std::set<ObjectID_t>(),
+                                   const bool ignoreCarriedBlocks = true) const;
       
       // Returns true if any blocks were moved, added, or deleted on the
       // last update. Useful, for example, to know whether to update the

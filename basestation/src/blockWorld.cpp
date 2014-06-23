@@ -348,7 +348,8 @@ namespace Anki
                                              const f32 padding,
                                              std::vector<Quad2f>& rectangles,
                                              const std::set<ObjectType_t>& ignoreTypes,
-                                             const std::set<ObjectID_t>& ignoreIDs) const
+                                             const std::set<ObjectID_t>& ignoreIDs,
+                                             const bool ignoreCarriedBlocks) const
     {
       for(auto & blocksWithType : existingBlocks_)
       {
@@ -358,7 +359,7 @@ namespace Anki
           {
             Block* block = dynamic_cast<Block*>(blockAndId.second);
             CORETECH_THROW_IF(block == nullptr);
-            if (!block->GetIsBeingCarried()) {
+            if (ignoreCarriedBlocks && !block->GetIsBeingCarried()) {
               const f32 blockHeight = block->GetPose().get_translation().z();
               
               // If this block's ID is not in the ignore list, then we will use it
