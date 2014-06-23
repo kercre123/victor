@@ -2,12 +2,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 
-// Uncomment this if you want the eye LED to flash constantly to show head/body sync
-#define BLINK_ON_SYNC
-
-// Uncomment this if your 2.1 robot has the headlight fix mod (it should by now)
-#define FIXED_HEADLIGHTS
-
 namespace Anki
 {
   namespace Cozmo
@@ -20,12 +14,14 @@ namespace Anki
       GPIO_PIN_SOURCE(EYECLK, GPIOA, 7);
       GPIO_PIN_SOURCE(EYERST, GPIOB, 1);
       
-      static LEDId m_led;
-      static LEDColor m_color;
-      
       // Map the natural LED order (as shown in hal.h) to the hardware swizzled order
       // See schematic if you care about why the LEDs are swizzled
-      static u8 HW_CHANNELS[8] = {5, 1, 2, 0, 6, 7, 3, 4};
+      static const u8 HW_CHANNELS[8] = {5, 1, 2, 0, 6, 7, 3, 4};
+      static u32 m_channels[8];   // The actual RGB color values in use
+      
+      // This is the refresh rate in cycles (2^REFRESH_RATE)
+      // Lowering this value increases CPU but steadies the display
+      static const int REFRESH_RATE = 15;
       
       // Initialize LED head/face light hardware
       void LightsInit()
@@ -56,81 +52,101 @@ namespace Anki
         PIN_OUT(GPIO_RED, SOURCE_RED);
         PIN_OUT(GPIO_GREEN, SOURCE_GREEN);        
         PIN_OUT(GPIO_BLUE, SOURCE_BLUE);        
-      }
-      
-      // Private helper to actually set the hardware color
-      static void SetColor(LEDId led_id, LEDColor color)
-      {              
-        static u8 s_lastLED = 0xff;
-        
-        // Turn off all LEDs
-        GPIO_SET(GPIO_RED, PIN_RED);        
-        GPIO_SET(GPIO_GREEN, PIN_GREEN);        
-        GPIO_SET(GPIO_BLUE, PIN_BLUE);
 
-#ifdef FIXED_HEADLIGHTS
-        // If the requested LED does not match the current LED, select a new LED
-        if (led_id != s_lastLED)
-        {
-          // Reset LED number to first LED
-          GPIO_SET(GPIO_EYERST, PIN_EYERST);
-          MicroWait(1);
-          GPIO_RESET(GPIO_EYERST, PIN_EYERST);
-          
-          // Count up to specified LED number
-          u8 hwChannel = HW_CHANNELS[led_id];
-          for (int eye = 0; eye < hwChannel; eye++) {
-            GPIO_SET(GPIO_EYECLK, PIN_EYECLK);
-            MicroWait(1);
-            GPIO_RESET(GPIO_EYECLK, PIN_EYECLK);
-            MicroWait(1);
-          }
-          
-          s_lastLED = led_id;
-        }
-#endif        
-                        
-        // Turn on the specified LED color
-        if (color & LED_RED)
-          GPIO_RESET(GPIO_RED, PIN_RED);
-        if (color & LED_GREEN)
-          GPIO_RESET(GPIO_GREEN, PIN_GREEN);
-        if (color & LED_BLUE)
-          GPIO_RESET(GPIO_BLUE, PIN_BLUE);
+        // Initialize timer to rapidly blink LEDs, simulating dimming
+        NVIC_InitTypeDef NVIC_InitStructure;
+        TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+
+        RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, ENABLE);
+
+        // Set clock to repeat 
+        TIM_TimeBaseStructure.TIM_Prescaler = 0;
+        TIM_TimeBaseStructure.TIM_Period = 1<<REFRESH_RATE;
+        TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+        TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+        TIM_TimeBaseInit(TIM14, &TIM_TimeBaseStructure);
+
+        // Enable timer and interrupts
+        TIM_SelectOnePulseMode(TIM14, TIM_OPMode_Single);
+        TIM_ITConfig(TIM14, TIM_IT_Update, ENABLE);
+        TIM_Cmd(TIM14, ENABLE);
+        TIM14->CR1 |= TIM_CR1_URS;  // Prevent spurious interrupt when we touch EGR
+
+        // Route interrupt
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_InitStructure.NVIC_IRQChannel = TIM8_TRG_COM_TIM14_IRQn;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_Init(&NVIC_InitStructure);        
       }
-      
-      static u8 m_blanked = 0;
-      
+            
       // Light up one of the eye LEDs as white as possible
       // number is 0 thru 7 to select which LED to light
       void SetLED(LEDId led_id, LEDColor color)
       {
-        if (led_id >= NUM_LEDS) {
-          return;
-        }
-        
-        m_led = led_id;
-        m_color = color;
-        
-        if (!m_blanked)
-          SetColor(m_led, m_color);
-      }
-      
-      // If enabled, this allows head sync to blink the LED
-      void BlinkOnSync(bool blank)
-      {
-#ifdef BLINK_ON_SYNC
-        if (m_blanked == blank)
-          return;
-        
-        if (blank)
-          SetColor(m_led, LED_OFF);
-        else
-          SetColor(m_led, m_color);
-        
-        m_blanked = blank;
-#endif        
-      }
+        if (led_id < NUM_LEDS)  // Unsigned, so always >= 0
+          m_channels[HW_CHANNELS[led_id]] = color;
+      }      
     }
   }
+}
+
+extern "C" void TIM8_TRG_COM_TIM14_IRQHandler(void)
+{
+  // Which channel to light up
+  using namespace Anki::Cozmo::HAL;  
+  static u8 s_which = 0;
+  static u8 s_time = 0;
+  
+  // If this is the end of the last LED, switch to the next LED
+  if (0 == s_time)
+  {
+    // Start with darkness
+    GPIO_SET(GPIO_RED, PIN_RED);        
+    GPIO_SET(GPIO_GREEN, PIN_GREEN);        
+    GPIO_SET(GPIO_BLUE, PIN_BLUE);
+        
+    // Point to the start of the next light
+    s_which++;
+    s_time = 255;
+    
+    // Reset LED number to first LED, or advance to next
+    if (s_which >= sizeof(HW_CHANNELS))
+    {
+      GPIO_SET(GPIO_EYERST, PIN_EYERST);
+      MicroWait(1);
+      GPIO_RESET(GPIO_EYERST, PIN_EYERST);
+      s_which = 0;        
+    } else {
+      GPIO_SET(GPIO_EYECLK, PIN_EYECLK);
+      MicroWait(1);
+      GPIO_RESET(GPIO_EYECLK, PIN_EYECLK);
+    }
+  }
+    
+  // Turn on any LEDs that match this turn-on time
+  u8* color = (u8*)(&m_channels[s_which]);
+  if (s_time == color[0])
+    GPIO_RESET(GPIO_RED, PIN_RED);
+  if (s_time == color[1])
+    GPIO_RESET(GPIO_GREEN, PIN_GREEN);
+  if (s_time == color[2])
+    GPIO_RESET(GPIO_BLUE, PIN_BLUE);
+  
+  // Figure out the next soonest time we need to turn on a light
+  u8 nexttime = 0;
+  for (int i = 0; i < 3; i++)
+    if (color[i] > nexttime && color[i] < s_time) // Soonest time earlier than now
+      nexttime = color[i];
+    
+  // Figure out how many cycles to wait before the next update, based on timing and refresh rate
+  // Gamma correction requires us to use the square of intensity to compute the timing
+  u32 howlong = (((s_time * s_time) - (nexttime * nexttime)) >> (16 - REFRESH_RATE)) + 1;
+  s_time = nexttime;    // Next time we call, it will be s_time
+
+  // Schedule the next timer interrupt
+  TIM14->SR = 0;        // Acknowledge interrupt
+  TIM14->ARR = howlong; // Next time to trigger
+  TIM14->EGR = TIM_PSCReloadMode_Immediate;
+  TIM14->CR1 |= TIM_CR1_CEN;  
 }
