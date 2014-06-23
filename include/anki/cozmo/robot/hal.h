@@ -376,18 +376,20 @@ namespace Anki
       
       enum LEDColor {
         LED_OFF = 0,
-        LED_RED = 1,
-        LED_GREEN = 2,
-        LED_YELLOW = 3,
-        LED_BLUE = 4,
-        LED_PURPLE = 5,
-        LED_CYAN = 6,
-        LED_WHITE = 7
+        LED_RED = 0xff,
+        LED_GREEN = 0xff00,
+        LED_YELLOW = 0xffff,
+        LED_BLUE = 0xff0000,
+        LED_PURPLE = 0xff00ff,
+        LED_CYAN = 0xffff00,
+        LED_WHITE = 0xffffff
       };
       
-      // TEMP: Temporary single LED control with color
-      //       while "real" light functionality is being worked on.
+      // Light up one of the eye LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, LEDColor color);
+      
+      // Turn headlights on (true) and off (false)
+      void SetHeadlights(bool state);
       
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
