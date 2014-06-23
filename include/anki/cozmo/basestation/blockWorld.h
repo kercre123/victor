@@ -74,15 +74,17 @@ namespace Anki
       
       // Clear a block with a specific ID. Returns true if block with that ID
       // is found and cleared, false otherwise.
-      bool ClearBlock(const BlockID_t withID);
+      bool ClearBlock(const ObjectID_t withID);
       
       const Vision::ObservableObjectLibrary& GetBlockLibrary() const;
       const ObjectsMapByID_t& GetExistingBlocks(const ObjectType_t blockType) const;
       const ObjectsMap_t& GetAllExistingBlocks() const {return existingBlocks_;}
       const Vision::ObservableObjectLibrary& GetMatLibrary() const;
       
-      // TODO: this only looks through blocks, so shouldn't it be GetBlockByID()?
-      Vision::ObservableObject* GetObservableObjectByID(const ObjectID_t objectID) const;
+      // Return a pointer to a block with the specified ID. If that block
+      // does not exist, nullptr is returned.  Be sure to ALWAYS check
+      // for the return being null!
+      Block* GetBlockByID(const ObjectID_t objectID) const;
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension) and returns a vector of quads
@@ -216,13 +218,15 @@ namespace Anki
       return matLibrary_;
     }
     
-    inline Vision::ObservableObject* BlockWorld::GetObservableObjectByID(const ObjectID_t objectID) const
+    inline Block* BlockWorld::GetBlockByID(const ObjectID_t objectID) const
     {
       for (auto const & block : existingBlocks_) {
         auto const & objectByIdMap = block.second;
         auto objectIt = objectByIdMap.find(objectID);
         if (objectIt != objectByIdMap.end()) {
-          return objectIt->second;
+          Block* block = dynamic_cast<Block*>(objectIt->second);
+          CORETECH_ASSERT(block != nullptr);
+          return block;
         }
       }
       return nullptr;

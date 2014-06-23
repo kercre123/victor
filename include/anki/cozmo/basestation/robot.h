@@ -74,8 +74,8 @@ namespace Anki {
       const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
       const State            GetState()        const;
       
-      const Block*           GetDockBlock()    const {return _dockBlock;}
-      const Block*           GetCarryingBlock()const {return _carryingBlock;}
+      const ObjectID_t       GetDockBlock()    const {return _dockBlockID;}
+      const ObjectID_t       GetCarryingBlock()const {return _carryingBlockID;}
       
       void SetState(const State newState);
       void SetPose(const Pose3d &newPose);
@@ -127,8 +127,8 @@ namespace Anki {
       u16 GetLastRecvdPathID() {return _lastRecvdPathID;}
       u16 GetLastSentPathID() {return _lastSentPathID;}
 
-      void SetCarryingBlock(Block* carryBlock) {_carryingBlock = carryBlock;}
-      bool IsCarryingBlock() {return _carryingBlock != nullptr;}
+      void SetCarryingBlock(ObjectID_t carryBlockID) {_carryingBlockID = carryBlockID;}
+      bool IsCarryingBlock() {return _carryingBlockID != ANY_OBJECT;}
 
       void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
       bool IsPickingOrPlacing() {return _isPickingOrPlacing;}
@@ -157,11 +157,11 @@ namespace Anki {
       Result StopAllMotors();
       
       // 
-      Result ExecuteDockingSequence(Block* blockToDockWith);
+      Result ExecuteDockingSequence(ObjectID_t blockToDockWith);
       
       // Sends a message to the robot to dock with the specified marker of the
       // specified block that it should currently be seeing.
-      Result DockWithBlock(Block* block,
+      Result DockWithBlock(const ObjectID_t blockID,
                            const Vision::KnownMarker* marker,
                            const DockAction_t dockAction);
       
@@ -170,7 +170,7 @@ namespace Anki {
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
-      Result DockWithBlock(Block* block,
+      Result DockWithBlock(const ObjectID_t blockID,
                            const Vision::KnownMarker* marker,
                            const DockAction_t dockAction,
                            const u16 image_pixel_x,
@@ -308,7 +308,8 @@ namespace Anki {
       // State
       bool _isCarryingBlock;
       bool _isPickingOrPlacing;
-      Block* _carryingBlock;
+      //Block* _carryingBlock;
+      ObjectID_t _carryingBlockID;
       bool _isMoving;
       State _state, _nextState;
       
@@ -317,9 +318,14 @@ namespace Anki {
       static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
       
       // Docking
-      Block* _dockBlock;
-      const Vision::KnownMarker* _dockMarker;
-      DockAction_t _dockAction;
+      // Note that we don't store a pointer to the block because it
+      // could deleted, but it is ok to hang onto a pointer to the
+      // marker on that block, so long as we always verify the block
+      // exists and is still valid (since, therefore, the marker must
+      // be as well)
+      ObjectID_t                  _dockBlockID;
+      const Vision::KnownMarker*  _dockMarker;
+      DockAction_t                _dockAction;
       
       f32 _waitUntilTime;
       

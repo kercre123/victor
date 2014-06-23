@@ -866,7 +866,7 @@ namespace Anki
       Robot* robot = robotMgr_->GetRobotByID(whichRobot);
       if(robot != 0)
       {
-        robot->ExecuteDockingSequence(&whichBlock);
+        robot->ExecuteDockingSequence(whichBlock.GetID());
         
       } else {
         CoreTechPrint("Invalid robot commanded to Dock.\n");
@@ -898,7 +898,7 @@ namespace Anki
     } // ClearBlocksByType()
     
 
-    bool BlockWorld::ClearBlock(const BlockID_t withID)
+    bool BlockWorld::ClearBlock(const ObjectID_t withID)
     {
       bool wasCleared = false;
       

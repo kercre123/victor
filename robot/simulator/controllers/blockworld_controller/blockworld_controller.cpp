@@ -158,7 +158,7 @@ int main(int argc, char **argv)
       // Draw current block of interest
       const ObjectID_t boi = behaviorMgr.GetBlockOfInterest();
       
-      const Block* block = dynamic_cast<Block*>(blockWorld.GetObservableObjectByID(boi));
+      const Block* block = blockWorld.GetBlockByID(boi);
       if(block != nullptr) {
 
         // Get predock poses
@@ -173,7 +173,7 @@ int main(int argc, char **argv)
           // Return previous selected block to original color (necessary in the
           // case that this block isn't currently being observed, meaning its
           // visualization won't have updated))
-          const Block* prevBlock = dynamic_cast<Block*>(blockWorld.GetObservableObjectByID(prev_boi));
+          const Block* prevBlock = blockWorld.GetBlockByID(prev_boi);
           if(prevBlock != nullptr && prevBlock->GetLastObservedTime() < BaseStationTimer::getInstance()->GetCurrentTimeStamp()) {
             prevBlock->Visualize(VIZ_COLOR_DEFAULT);
           }
@@ -215,7 +215,12 @@ int main(int argc, char **argv)
       VizManager::getInstance()->DrawRobotBoundingBox(robot->GetID(), quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
       
       if(robot->IsCarryingBlock()) {
-        robot->GetCarryingBlock()->Visualize(VIZ_COLOR_DEFAULT);
+        Block* carryBlock = blockWorld.GetBlockByID(robot->GetCarryingBlock());
+        if(carryBlock == nullptr) {
+          PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingBlock());
+        } else {
+          carryBlock->Visualize(VIZ_COLOR_DEFAULT);
+        }
       }
     }
 

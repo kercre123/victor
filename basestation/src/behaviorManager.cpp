@@ -252,19 +252,19 @@ namespace Anki {
           
           
           // Get block object
-          Vision::ObservableObject* oObject = world_->GetObservableObjectByID(blockOfInterest_);
-          if (oObject == nullptr) {
+          Block* block = world_->GetBlockByID(blockOfInterest_);
+          if (block == nullptr) {
             break;
           }
           
           // Check that we're not already carrying a block if the block of interest is a high block.
-          if (oObject->GetPose().get_translation().z() > 44.f && robot_->IsCarryingBlock()) {
+          if (block->GetPose().get_translation().z() > 44.f && robot_->IsCarryingBlock()) {
             PRINT_INFO("Already carrying block. Can't dock to high block. Aborting (0).\n");
             StartMode(BM_None);
             return;
           }
 
-          if(robot_->ExecuteDockingSequence(dynamic_cast<Block*>(oObject)) != RESULT_OK) {
+          if(robot_->ExecuteDockingSequence(block->GetID()) != RESULT_OK) {
             PRINT_INFO("Robot::ExecuteDockingSequence() failed. Aborting.\n");
             StartMode(BM_None);
             return;
@@ -388,7 +388,7 @@ namespace Anki {
                   // when driving to pick and place blocks
                   robot_->GetPathPlanner()->RemoveIgnoreType(Block::DICE_BLOCK_TYPE);
                   
-                  BlockID_t blockToLookFor = Block::UNKNOWN_BLOCK_TYPE;
+                  ObjectID_t blockToLookFor = Block::UNKNOWN_BLOCK_TYPE;
                   switch(static_cast<Vision::MarkerType>(topMarker->GetCode()))
                   {
                     case Vision::MARKER_DICE1:
@@ -559,7 +559,7 @@ namespace Anki {
             
             robot_->DriveWheels(0.f, 0.f);
             
-            robot_->ExecuteDockingSequence(dockBlock);
+            robot_->ExecuteDockingSequence(dockBlock->GetID());
             
             state_ = EXECUTING_DOCK;
           }
@@ -572,10 +572,10 @@ namespace Anki {
           // Wait for the robot to go back to IDLE
           if(robot_->GetState() == Robot::IDLE)
           {
-            const bool donePickingUp = robot_->IsCarryingBlock() && robot_->GetCarryingBlock()->GetType() == blockToPickUp_;
+            const bool donePickingUp = robot_->IsCarryingBlock() && robot_->GetCarryingBlock() == blockToPickUp_;
             if(donePickingUp) {
-              PRINT_INFO("Picked up block '%s' successfully! Going back to exploring for block to place on.\n",
-                         robot_->GetCarryingBlock()->GetName().c_str());
+              PRINT_INFO("Picked up block %d successfully! Going back to exploring for block to place on.\n",
+                         robot_->GetCarryingBlock());
               
               state_ = BEGIN_EXPLORING;
               
@@ -584,7 +584,7 @@ namespace Anki {
               return;
             } // if donePickingUp
             
-            const bool donePlacing = !robot_->IsCarryingBlock() && robot_->GetDockBlock() && robot_->GetDockBlock()->GetType() == blockToPlaceOn_;
+            const bool donePlacing = !robot_->IsCarryingBlock() && robot_->GetDockBlock() && robot_->GetDockBlock() == blockToPlaceOn_;
             if(donePlacing) {
               PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
                          blockToPickUp_, blockToPlaceOn_);
