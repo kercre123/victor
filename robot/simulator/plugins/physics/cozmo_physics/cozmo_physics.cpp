@@ -40,8 +40,19 @@ typedef std::map<u32, Anki::Cozmo::VizObject> VizObject_t;
 static VizObject_t objectMap_;
 
 // Static quads
-typedef std::map<int, Anki::Cozmo::VizQuad> VizQuadMap_t;
-static VizQuadMap_t quadMap_;
+typedef std::map<u32, Anki::Cozmo::VizQuad> VizQuadMap_t;
+typedef std::map<u32, VizQuadMap_t> VizQuadTypeMap_t;
+static VizQuadTypeMap_t quadMap_;
+
+/*
+// Mat Markers
+typedef std::map<u32, Anki::Cozmo::VizQuad> VizMatMarkerMap_t;
+static VizMatMarkerMap_t matMarkerMap_;
+
+// Planner Obstacles
+typedef std::map<u32, Anki::Cozmo::VizQuad> VizPlannerObstacleMap_t;
+static VizPlannerObstacleMap_t plannerObstacleMap_;
+*/
 
 // Color map
 typedef std::map<u32, Anki::Cozmo::VizDefineColor> VizColorDef_t;
@@ -109,7 +120,7 @@ namespace Anki {
             msg.xUpperRight, msg.yUpperRight, msg.zUpperRight,
             msg.xLowerRight, msg.yLowerRight, msg.zLowerRight);
       
-      quadMap_[msg.quadID] = msg;
+      quadMap_[msg.quadType][msg.quadID] = msg;
     }
     
     void ProcessVizEraseObjectMessage(const VizEraseObject& msg)
@@ -139,12 +150,21 @@ namespace Anki {
     {
       PRINT("Processing EraseQuad\n");
       
-      if (msg.quadID == ALL_QUAD_IDs) {
+      if(msg.quadType == ALL_QUAD_TYPEs) {
+        // NOTE: ignores quad ID
         quadMap_.clear();
       } else {
-        quadMap_.erase(msg.quadID);
+        auto quadsByType = quadMap_.find(msg.quadType);
+        if(quadsByType != quadMap_.end()) {
+          if (msg.quadID == ALL_QUAD_IDs) {
+            quadsByType->second.clear();
+          } else {
+            quadsByType->second.erase(msg.quadID);
+          }
+        }
       }
     }
+    
     
     void ProcessVizAppendPathSegmentLineMessage(const VizAppendPathSegmentLine &msg)
     {
@@ -547,16 +567,16 @@ void webots_physics_draw(int pass, const char *view) {
       
       // Use objectType-specific drawing functions
       switch(obj->objectTypeID) {
-        case Anki::Cozmo::VIZ_ROBOT:
+        case Anki::Cozmo::VIZ_OBJECT_ROBOT:
           draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_SMALL_TRIANGLE);
           break;
-        case Anki::Cozmo::VIZ_CUBOID:
+        case Anki::Cozmo::VIZ_OBJECT_CUBOID:
           draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
           break;
-        case Anki::Cozmo::VIZ_RAMP:
+        case Anki::Cozmo::VIZ_OBJECT_RAMP:
           draw_ramp();
           break;
-        case Anki::Cozmo::VIZ_PREDOCKPOSE:
+        case Anki::Cozmo::VIZ_OBJECT_PREDOCKPOSE:
           draw_predockpose();
           break;
         default:
@@ -571,26 +591,27 @@ void webots_physics_draw(int pass, const char *view) {
     } // for each object
     
     // Draw quads
-    VizQuadMap_t::iterator quadIt;
-    for (quadIt = quadMap_.begin(); quadIt != quadMap_.end(); ++quadIt) {
-      
-      Anki::Cozmo::VizQuad *quad = &(quadIt->second);
-      
-      // Set color for the block
-      VizColorDef_t::iterator cIt = colorMap_.find(quad->color);
-      if (cIt != colorMap_.end()) {
-        Anki::Cozmo::VizDefineColor *c = &(cIt->second);
-        glColor3f(c->r, c->g, c->b);
-      }
-      
-      draw_quad(quad->xUpperLeft,  quad->yUpperLeft,  quad->zUpperLeft,
-                quad->xLowerLeft,  quad->yLowerLeft,  quad->zLowerLeft,
-                quad->xUpperRight, quad->yUpperRight, quad->zUpperRight,
-                quad->xLowerRight, quad->yLowerRight, quad->zLowerRight);
-      
-      // Restore default color
-      glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
-    } // for each quad
+    for(auto & quadsByType : quadMap_) {
+      for(auto & quadsByID : quadsByType.second) {
+        
+        const Anki::Cozmo::VizQuad& quad = quadsByID.second;
+        
+        // Set color for the block
+        VizColorDef_t::iterator cIt = colorMap_.find(quad.color);
+        if (cIt != colorMap_.end()) {
+          Anki::Cozmo::VizDefineColor *c = &(cIt->second);
+          glColor3f(c->r, c->g, c->b);
+        }
+        
+        draw_quad(quad.xUpperLeft,  quad.yUpperLeft,  quad.zUpperLeft,
+                  quad.xLowerLeft,  quad.yLowerLeft,  quad.zLowerLeft,
+                  quad.xUpperRight, quad.yUpperRight, quad.zUpperRight,
+                  quad.xLowerRight, quad.yLowerRight, quad.zLowerRight);
+        
+        // Restore default color
+        glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
+      } // for each quad
+    } // for each quad type
     
   }
 }

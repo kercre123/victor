@@ -168,7 +168,7 @@ int main(int argc, char **argv)
         // Erase previous predock pose marker for previous block of interest
         if (prev_boi != boi || poses.size() != prevNumPreDockPoses) {
           PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", boi, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
-          VizManager::getInstance()->EraseVizObjectType(VIZ_PREDOCKPOSE);
+          VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
           
           // Return previous selected block to original color (necessary in the
           // case that this block isn't currently being observed, meaning its
@@ -187,7 +187,7 @@ int main(int argc, char **argv)
         
       } else {
         // block == nullptr (no longer exists, delete its predock poses)
-        VizManager::getInstance()->EraseVizObjectType(VIZ_PREDOCKPOSE);
+        VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
       }
       
     } // if blocks were updated
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
                             Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
                             Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
 
-      VizManager::getInstance()->DrawQuad(robot->GetID()+100, quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
+      VizManager::getInstance()->DrawRobotBoundingBox(robot->GetID(), quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
       
       if(robot->IsCarryingBlock()) {
         robot->GetCarryingBlock()->Visualize(VIZ_COLOR_DEFAULT);

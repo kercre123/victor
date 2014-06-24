@@ -37,6 +37,15 @@ namespace Anki {
       DefineColor(VIZ_COLOR_ROBOT_BOUNDING_QUAD,        0.0, 0.8, 0.0, 0.75);
       DefineColor(VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD, 1.0, 0.1, 1.0, 0.75);
       
+      DefineColor(VIZ_COLOR_RED,       1.0, 0.0, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_GREEN,     0.0, 1.0, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_BLUE,      0.0, 0.0, 1.0, 1.0);
+      DefineColor(VIZ_COLOR_YELLOW,    1.0, 1.0, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_DARKGRAY,  0.3, 0.3, 0.3, 1.0);
+      DefineColor(VIZ_COLOR_DARKGREEN, 0.0, 0.5, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_ORANGE,    1.0, 0.5, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_OFFWHITE,  0.9, 0.8, 0.8, 1.0);
+      
       isInitialized_ = true;
       
       return isInitialized_ ? RESULT_OK : RESULT_FAIL;
@@ -110,11 +119,11 @@ namespace Anki {
                                const Pose3d &pose,
                                const u32 colorID)
     {
-      CORETECH_ASSERT(robotID < VizObjectMaxID[VIZ_ROBOT]);
+      CORETECH_ASSERT(robotID < VizObjectMaxID[VIZ_OBJECT_ROBOT]);
       
       Anki::Point3f dims; // junk
-      DrawObject(VizObjectBaseID[VIZ_ROBOT] + robotID,
-                 VIZ_ROBOT,
+      DrawObject(VizObjectBaseID[VIZ_OBJECT_ROBOT] + robotID,
+                 VIZ_OBJECT_ROBOT,
                  dims,
                  pose,
                  colorID);
@@ -125,10 +134,10 @@ namespace Anki {
                                 const Pose3d &pose,
                                 const u32 colorID)
     {
-      CORETECH_ASSERT(blockID < VizObjectMaxID[VIZ_CUBOID]);
+      CORETECH_ASSERT(blockID < VizObjectMaxID[VIZ_OBJECT_CUBOID]);
       
-      DrawObject(VizObjectMaxID[VIZ_CUBOID] + blockID,
-                 VIZ_CUBOID,
+      DrawObject(VizObjectMaxID[VIZ_OBJECT_CUBOID] + blockID,
+                 VIZ_OBJECT_CUBOID,
                  size,
                  pose,
                  colorID);
@@ -138,11 +147,11 @@ namespace Anki {
                                      const Pose3d &pose,
                                      const u32 colorID)
     {
-      CORETECH_ASSERT(preDockPoseID < VizObjectMaxID[VIZ_PREDOCKPOSE]);
+      CORETECH_ASSERT(preDockPoseID < VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]);
       
       Anki::Point3f dims; // junk
-      DrawObject(VizObjectMaxID[VIZ_PREDOCKPOSE] + preDockPoseID,
-                 VIZ_PREDOCKPOSE,
+      DrawObject(VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE] + preDockPoseID,
+                 VIZ_OBJECT_PREDOCKPOSE,
                  dims,
                  pose,
                  colorID);
@@ -152,20 +161,20 @@ namespace Anki {
     
     void VizManager::EraseRobot(const u32 robotID)
     {
-      CORETECH_ASSERT(robotID < VizObjectMaxID[VIZ_ROBOT]);
-      EraseVizObject(VizObjectBaseID[VIZ_ROBOT] + robotID);
+      CORETECH_ASSERT(robotID < VizObjectMaxID[VIZ_OBJECT_ROBOT]);
+      EraseVizObject(VizObjectBaseID[VIZ_OBJECT_ROBOT] + robotID);
     }
     
     void VizManager::EraseCuboid(const u32 blockID)
     {
-      CORETECH_ASSERT(blockID < VizObjectMaxID[VIZ_CUBOID]);
-      EraseVizObject(VizObjectMaxID[VIZ_CUBOID] + blockID);
+      CORETECH_ASSERT(blockID < VizObjectMaxID[VIZ_OBJECT_CUBOID]);
+      EraseVizObject(VizObjectMaxID[VIZ_OBJECT_CUBOID] + blockID);
     }
     
     void VizManager::ErasePreDockPose(const u32 preDockPoseID)
     {
-      CORETECH_ASSERT(preDockPoseID < VizObjectMaxID[VIZ_PREDOCKPOSE]);
-      EraseVizObject(VizObjectBaseID[VIZ_PREDOCKPOSE] + preDockPoseID);
+      CORETECH_ASSERT(preDockPoseID < VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]);
+      EraseVizObject(VizObjectBaseID[VIZ_OBJECT_PREDOCKPOSE] + preDockPoseID);
     }
     
     
@@ -324,17 +333,37 @@ namespace Anki {
     
     // =============== Quad methods ==================
     
-    void VizManager::EraseQuad(const u32 quadID)
+    void VizManager::EraseQuad(const u32 quadType, const u32 quadID)
     {
       VizEraseQuad v;
+      v.quadType = quadType;
       v.quadID = quadID;
       
       SendMessage( GET_MESSAGE_ID(VizEraseQuad), &v );
     }
     
+    void VizManager::EraseAllQuadsWithType(const u32 quadType)
+    {
+      EraseQuad(quadType, ALL_QUAD_IDs);
+    }
+    
     void VizManager::EraseAllQuads()
     {
-      EraseQuad(ALL_QUAD_IDs);
+      EraseQuad(ALL_QUAD_TYPEs, ALL_QUAD_IDs);
+    }
+    
+    void VizManager::EraseAllPlannerObstacles(const bool isReplan)
+    {
+      if(isReplan) {
+        EraseAllQuadsWithType(VIZ_QUAD_PLANNER_OBSTACLE_REPLAN);
+      } else {
+        EraseAllQuadsWithType(VIZ_QUAD_PLANNER_OBSTACLE);
+      }
+    }
+    
+    void VizManager::EraseAllMatMarkers()
+    {
+      EraseAllQuadsWithType(VIZ_QUAD_MAT_MARKER);
     }
 
     

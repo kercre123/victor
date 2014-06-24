@@ -10,6 +10,7 @@
 #include "anki/common/basestation/general.h"
 
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 
 #define DEBUG_ROBOT_POSE_HISTORY 0
 
@@ -25,9 +26,10 @@ namespace Anki {
                                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                    const f32 pose_angle,
                                    const f32 head_angle,
-                                   const f32 lift_angle)
+                                   const f32 lift_angle,
+                                   const Pose3d* pose_origin)
     {
-      SetPose(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
+      SetPose(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin);
     }
 
     RobotPoseStamp::RobotPoseStamp(const PoseFrameID_t frameID,
@@ -43,12 +45,15 @@ namespace Anki {
                                  const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                  const f32 pose_angle,
                                  const f32 head_angle,
-                                 const f32 lift_angle)
+                                 const f32 lift_angle,
+                                 const Pose3d* pose_origin)
     {
       frame_ = frameID;
       
       pose_.set_rotation(pose_angle, Z_AXIS_3D);
       pose_.set_translation(Vec3f(pose_x, pose_y, pose_z));
+      pose_.set_parent(pose_origin);
+      
       headAngle_ = head_angle;
       liftAngle_ = lift_angle;
     }
@@ -105,7 +110,8 @@ namespace Anki {
                             p.GetPose().get_translation().z(),
                             p.GetPose().get_rotationMatrix().GetAngleAroundZaxis().ToFloat(),
                             p.GetHeadAngle(),
-                            p.GetLiftAngle());
+                            p.GetLiftAngle(),
+                            p.GetPose().get_parent());
     }
 
 
@@ -115,7 +121,8 @@ namespace Anki {
                                             const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                             const f32 pose_angle,
                                             const f32 head_angle,
-                                            const f32 lift_angle)
+                                            const f32 lift_angle,
+                                            const Pose3d* pose_origin)
     {
       // Should the pose be added?
       TimeStamp_t newestTime = poses_.rbegin()->first;
@@ -126,7 +133,7 @@ namespace Anki {
       std::pair<PoseMapIter_t, bool> res;
       res = poses_.emplace(std::piecewise_construct,
                            std::make_tuple(t),
-                           std::make_tuple(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle));
+                           std::make_tuple(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin));
       
       if (!res.second) {
         PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.AddFailed", "Time: %d\n", t);
@@ -144,9 +151,10 @@ namespace Anki {
                                                const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                                const f32 pose_angle,
                                                const f32 head_angle,
-                                               const f32 lift_angle)
+                                               const f32 lift_angle,
+                                               const Pose3d* pose_origin)
     {
-      RobotPoseStamp p(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
+      RobotPoseStamp p(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin);
       return AddVisionOnlyPose(t, p);
     }
     
@@ -214,7 +222,12 @@ namespace Anki {
         if (withInterpolation) {
           
           // Get the pose transform between the two poses.
-          Pose3d pTransform = it->second.GetPose().getWithRespectTo(&(prev_it->second.GetPose()));
+          Pose3d pTransform;
+          if(it->second.GetPose().getWithRespectTo(prev_it->second.GetPose(), pTransform) == false) {
+            PRINT_NAMED_ERROR("RobotPoseHistory.GetRawPoseAt.MisMatchedOrigins",
+                              "Could not get the pose transform between the two poses because they don't share the same origin.\n");
+            return RESULT_FAIL;
+          }
           
           // Compute scale factor between time to previous pose and time between previous pose and next pose.
           f32 timeScale = (f32)(t_request - prev_it->first) / (it->first - prev_it->first);
@@ -234,7 +247,7 @@ namespace Anki {
           f32 interpLiftAngle = prev_it->second.GetLiftAngle() + timeScale * (it->second.GetLiftAngle() - prev_it->second.GetLiftAngle());
           
           t = t_request;
-          p.SetPose(prev_it->second.GetFrameId(), interpTrans.x(), interpTrans.y(), interpTrans.z(), interpRotation.ToFloat(), interpHeadAngle, interpLiftAngle);
+          p.SetPose(prev_it->second.GetFrameId(), interpTrans.x(), interpTrans.y(), interpTrans.z(), interpRotation.ToFloat(), interpHeadAngle, interpLiftAngle, prev_it->second.GetPose().get_parent());
           
         } else {
           
@@ -329,8 +342,16 @@ namespace Anki {
       }
       #endif
       
-      CORETECH_ASSERT((p1.GetPose().get_parent() == Pose3d::World) &&
-                      (p0_it->second.GetPose().get_parent() == Pose3d::World));
+      // Make sure the two poses we are about to work with share a common
+      // origin and then make p1 relative to p0_it's parent (so they then
+      // share the same parent and the math below holds as we compute the
+      // relative pose between them).
+      CORETECH_ASSERT(p1.GetPose().FindOrigin() == p0_it->second.GetPose().FindOrigin());
+      Pose3d newPose;
+      const bool getWithRespectToResult = p1.GetPose().getWithRespectTo(*p0_it->second.GetPose().get_parent(), newPose);
+      CORETECH_ASSERT(getWithRespectToResult == true);
+      p1.SetPose(p1.GetFrameId(), newPose, p1.GetHeadAngle(), p1.GetLiftAngle());
+      CORETECH_ASSERT(p1.GetPose().get_parent() == p0_it->second.GetPose().get_parent());
       
       // Compute relative pose between p0_it and p1 and append to the vision-based pose.
       // Need to account for intermediate frames between p0 and p1 if any.

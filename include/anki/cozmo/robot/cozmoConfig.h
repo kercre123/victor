@@ -229,6 +229,17 @@ namespace Anki {
     const u8 IMG_STREAM_SKIP_FRAMES = 2;
 
     
+    /***************************************************************************
+     *
+     *                          Poses and Planner
+     *
+     **************************************************************************/
+    
+    // A common distance threshold for pose equality comparison.
+    // If two poses are this close to each other, they are considered to be equal
+    // (at least in terms of translation).
+    const f32 DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM = 5.0f;
+    
   } // namespace Cozmo
 } // namespace Anki
 

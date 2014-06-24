@@ -33,9 +33,14 @@
 
 #include "anki/common/basestation/math/matrix.h"
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/poseBase.h"
 #include "anki/common/basestation/math/quad.h"
 #include "anki/common/basestation/math/rotation.h"
 #include "anki/common/shared/radians.h"
+
+#include "anki/common/basestation/exceptions.h"
+
+#include <list>
 
 namespace Anki {
 
@@ -44,10 +49,6 @@ namespace Anki {
   //template<typename T> class Matrix;
   
 
-  // TODO: Have Pose2d and Pose3d inherit from an (abstract?) base class?
-  //  Then the base class could define the common elements like the parent
-  //  pointer, the getTreeDepth() method, and the getWithRespectTo method.
-  
   // Forward declaration of Pose3d so Pose2d can use it
   class Pose3d;
   
@@ -56,11 +57,10 @@ namespace Anki {
   //
   // Stores 2d translation and orienation in a plane.
   //
-  class Pose2d
+  class Pose2d : public PoseBase<Pose2d>
   {
   public:
-    static Pose2d* World;
-    
+   
     // Constructors:
     Pose2d(); 
     Pose2d(const Radians &angle, const Point2f &translation);
@@ -74,6 +74,9 @@ namespace Anki {
     Pose2d(const float x, const float y, const Radians angle,
            const Matrix<float> &cov);
      */
+    
+    //bool IsOrigin() const { return parent == nullptr; }
+    //Pose2d* GetOrigin() const;
     
     // Accessors:
     float   get_x()     const;
@@ -91,8 +94,8 @@ namespace Anki {
     // on-the-fly from the Pose's angle.
     RotationMatrix2d get_rotationMatrix() const;
     
-    void set_parent(const Pose2d* otherPose);
-    const Pose2d* get_parent() const;
+    //void set_parent(const Pose2d* otherPose);
+    //const Pose2d* get_parent() const;
     
     // Composition with another Pose2d:
     void   operator*=(const Pose2d &other); // in place
@@ -106,11 +109,14 @@ namespace Anki {
     Pose2d& Invert(void); // in place
     
     // Get this pose with respect to another pose.  Other pose
-    // must be an ancestor of this pose, otherwise an error
-    // will be generated.  Use Pose2d::World to get the pose with
-    // respect to the root / world pose.
-    Pose2d getWithRespectTo(const Pose2d *otherPose) const;
+    // must share the same origin as this pose.  If it does not, false will be
+    // returned to indicate failure.  Otherwise, true is returned and the new
+    // pose is stored in newPoseWrtOtherPose.
+    bool getWithRespectTo(const Pose2d& otherPose,
+                          Pose2d& newPoseWrtOtherPose) const;
 
+    const Pose2d& FindOrigin() const;
+    
   protected:
     Point2f translation;
     Radians angle;
@@ -123,6 +129,7 @@ namespace Anki {
     Matrix<float> covariance;
      */
     
+    /*
     // "Parent" for defining linkages or sequences of poses, so we can get
     // a pose "with respect to" a parent or to root (world) pose.
     const Pose2d *parent;
@@ -130,9 +137,10 @@ namespace Anki {
     
     template<class POSE>
     friend POSE getWithRespectToHelper(const POSE *from, const POSE *to);
-
-    template<class POSE>
-    friend unsigned int getTreeDepthHelper(const POSE *P);
+    */
+    
+    //template<class POSE>
+    //friend unsigned int getTreeDepthHelper(const POSE *P);
     
   }; // class Pose2d
   
@@ -146,11 +154,10 @@ namespace Anki {
   // Stores a 6DOF (Degree Of Freedom) pose: 3D translation plus
   //   3-axis rotation.
   //
-  class Pose3d {
-    
+  class Pose3d : public PoseBase<Pose3d>
+  {
   public:
-    static Pose3d* World;
-        
+    
     // Default pose: no rotation, no translation, world as parent
     Pose3d();
     
@@ -179,6 +186,8 @@ namespace Anki {
     // TODO: Copy constructor?
     Pose3d(const Pose3d &otherPose);
     Pose3d(const Pose3d *otherPose);
+    
+    //bool IsOrigin() const { return parent == nullptr; }
 
     // Accessors:
     const RotationMatrix3d& get_rotationMatrix() const;
@@ -199,8 +208,8 @@ namespace Anki {
     void set_rotation(const Radians angle, const Vec3f &axis);
     void set_translation(const Vec3f &T);
     
-    void set_parent(const Pose3d* parent);
-    const Pose3d* get_parent() const;
+    //void set_parent(const Pose3d* parent);
+    //const Pose3d* get_parent() const { return Pose<3>::get_parent();
     
     // Composition with another Pose
     void   operator*=(const Pose3d &other); // in place
@@ -228,12 +237,15 @@ namespace Anki {
     Pose3d& Invert(void); // in place?
     
     // Get this pose with respect to another pose.  Other pose
-    // must be an ancestor of this pose, otherwise an error
-    // will be generated.  Use Pose3d::World to get the pose with
-    // respect to the root / world pose.
-    Pose3d getWithRespectTo(const Pose3d *otherPose) const;
+    // must share the same origin as this pose.  If it does not, false will be
+    // returned to indicate failure.  Otherwise, true is returned and the new
+    // pose is stored in newPoseWrtOtherPose.
+    bool getWithRespectTo(const Pose3d& otherPose,
+                          Pose3d& newPoseWrtOtherPose) const;
     
-    // Check to see if two poses are the same.  Return true if so.
+    const Pose3d& FindOrigin() const;
+
+        // Check to see if two poses are the same.  Return true if so.
     // If requested, P_diff will contain the transformation from this pose to
     // P_other.
     bool IsSameAs(const Pose3d& P_other,
@@ -269,6 +281,7 @@ namespace Anki {
     Matrix<float> covariance;
      */
     
+    /*
     // "Parent" for defining linkages or sequences of poses, so we can get
     // a pose "with respect to" a parent or to root (world) pose.
     const Pose3d *parent;
@@ -276,9 +289,9 @@ namespace Anki {
     
     template<class POSE>
     friend POSE getWithRespectToHelper(const POSE *from, const POSE *to);
-    
-    template<class POSE>
-    friend unsigned int getTreeDepthHelper(const POSE *P);
+    */
+    //template<class POSE>
+    //friend unsigned int getTreeDepthHelper(const POSE *P);
     
   }; // class Pose3d
   
@@ -319,12 +332,14 @@ namespace Anki {
   inline const Point3f& Pose2d::get_planeOrigin() const
   { return this->planeOrigin; }
   
-  inline void Pose2d::set_parent(const Anki::Pose2d *otherPose)
-  { this->parent = otherPose; }
+  inline bool Pose2d::getWithRespectTo(const Pose2d& otherPose,
+                                       Pose2d& newPoseWrtOtherPose) const {
+    return PoseBase<Pose2d>::getWithRespectTo(*this, otherPose, newPoseWrtOtherPose);
+  }
   
-  inline const Pose2d* Pose2d::get_parent(void) const
-  { return this->parent; }
-  
+  inline const Pose2d& Pose2d::FindOrigin() const {
+    return PoseBase<Pose2d>::FindOrigin(*this);
+  }
   
   // Pose3d
   
@@ -421,11 +436,14 @@ namespace Anki {
     this->translation = T;
   }
   
-  inline void Pose3d::set_parent(const Pose3d* parent)
-  { this->parent = parent; }
+  inline bool Pose3d::getWithRespectTo(const Pose3d& otherPose,
+                                Pose3d& newPoseWrtOtherPose) const {
+    return PoseBase<Pose3d>::getWithRespectTo(*this, otherPose, newPoseWrtOtherPose);
+  }
   
-  inline const Pose3d* Pose3d::get_parent() const
-  { return this->parent; }
+  inline const Pose3d& Pose3d::FindOrigin() const {
+    return PoseBase<Pose3d>::FindOrigin(*this);
+  }
 
   inline bool Pose3d::IsSameAs(const Pose3d& P_other,
                        const float   distThreshold,

@@ -61,6 +61,8 @@ namespace Anki {
       // Accessors
       const RobotID_t        GetID()           const;
       const Pose3d&          GetPose()         const;
+      const Pose3d*          GetPoseOrigin()   const {return _poseOrigin;}
+      bool                   IsLocalized()     const {return _isLocalized;}
       const Vision::Camera&  GetCamera()       const;
       Vision::Camera&        GetCamera();
       
@@ -100,6 +102,11 @@ namespace Anki {
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
       Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
+      
+      // Same as above, but select from a set poses and return the selected index.
+      Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
+      Result ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex);
+      Result ExecutePathToPose(const std::vector<Pose3d>& poses, const Radians headAngle, size_t& selectedIndex);
 
       IPathPlanner* GetPathPlanner() { return _longPathPlanner; }
 
@@ -111,8 +118,11 @@ namespace Anki {
       
       void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
       s8   GetCurrPathSegment() {return _currPathSegment;}
-      bool IsTraversingPath() {return (_currPathSegment >= 0) || _isWaitingForReplan;}
+      bool IsTraversingPath() {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
 
+      void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
+      u8 GetNumFreeSegmentSlots() const {return _numFreeSegmentSlots;}
+      
       void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
       u16 GetLastRecvdPathID() {return _lastRecvdPathID;}
       u16 GetLastSentPathID() {return _lastSentPathID;}
@@ -219,7 +229,8 @@ namespace Anki {
                                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                      const f32 pose_angle,
                                      const f32 head_angle,
-                                     const f32 lift_angle);
+                                     const f32 lift_angle,
+                                     const Pose3d* pose_origin);
       
       Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                         const RobotPoseStamp& p);
@@ -256,9 +267,8 @@ namespace Anki {
       IPathPlanner*    _shortPathPlanner;
       Planning::Path   _path;
       s8               _currPathSegment;
-      bool             _isWaitingForReplan;
+      u8               _numFreeSegmentSlots;
       Pose3d           _goalPose;
-      Radians          _goalHeadAngle;
       f32              _goalDistanceThreshold;
       Radians          _goalAngleThreshold;
       u16              _lastSentPathID;
@@ -277,8 +287,10 @@ namespace Anki {
       Vision::Camera   _camera;
       
       // Geometry / Pose
+      Pose3d*          _poseOrigin;
       Pose3d           _pose;
       PoseFrameID_t    _frameId;
+      bool             _isLocalized;
       
       const Pose3d _neckPose; // joint around which head rotates
       const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint

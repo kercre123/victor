@@ -6,6 +6,7 @@
 
 #include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
 
@@ -74,6 +75,8 @@ namespace Anki
       blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER6_BLOCK_TYPE));
 
       blockLibrary_.AddObject(new Block_Cube1x1(Block::BANGBANGBANG_BLOCK_TYPE));
+      
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::ARROW_BLOCK_TYPE));
       
       //
       // 2x1
@@ -278,8 +281,7 @@ namespace Anki
             // TODO: make this more generic. For now, we are assuming all objects are blocks
             const Block* block = dynamic_cast<Block*>(object);
             if(block != nullptr) {
-              // TODO: use the block's color?
-              block->Visualize(VIZ_COLOR_DEFAULT);
+              block->Visualize();
             }
           }
         } // for object IDs of this type
@@ -302,9 +304,8 @@ namespace Anki
             CoreTechPrint("Removing object %d, which should have been seen, "
                           "but wasn't.\n", object->GetID());
             
-            // Erase the vizualized block and its projected quad
+            // Erase the vizualized block
             VizManager::getInstance()->EraseCuboid(object->GetID());
-            VizManager::getInstance()->EraseQuad(object->GetID());
             
             // Actually erase the object from blockWorld's container of
             // existing objects, using the iterator pointing to it
@@ -397,6 +398,9 @@ namespace Anki
       
       // TODO: what to do when a robot sees multiple mat pieces at the same time
       if(not matsSeen.empty()) {
+        
+        const bool wasLocalized = robot->IsLocalized();
+        
         if(matsSeen.size() > 1) {
           PRINT_NAMED_WARNING("MultipleMatPiecesObserved",
                               "Robot %d observed more than one mat pieces at "
@@ -404,90 +408,83 @@ namespace Anki
                               robot->GetID());
         }
         
-        // Add observed mat markers to the occlusion map of the camera that saw
-        // them, so we can use them to delete objects that should have been
-        // seen between that marker and the robot
-        std::vector<const Vision::KnownMarker *> observedMarkers;
-        matsSeen[0]->GetObservedMarkers(observedMarkers, atTimestamp);
-        for(auto obsMarker : observedMarkers) {
-          robot->GetCamera().AddOccluder(*obsMarker);
-        }
+        MatPiece* firstSeenMatPiece = dynamic_cast<MatPiece*>(matsSeen[0]);
+        CORETECH_ASSERT(firstSeenMatPiece != nullptr);
         
-       /*
-        // At this point the mat's pose should be relative to the robot's
-        // camera's pose
-        const Pose3d* matWrtCamera = &(matsSeen[0]->GetPose());
-        CORETECH_ASSERT(matWrtCamera->get_parent() ==
-                        &(robot->GetCamera().get_pose())); // MatPose's parent is camera
-        */
-        
-        /*
-         PRINT_INFO("Observed mat w.r.t. camera is (%f,%f,%f)\n",
-         matWrtCamera->get_translation().x(),
-         matWrtCamera->get_translation().y(),
-         matWrtCamera->get_translation().z());
-         */
-        
-        /*
-        // Now get the pose of the robot relative to the mat, using the pose
-        // tree
-        CORETECH_ASSERT(matWrtCamera->get_parent()->get_parent()->get_parent() ==
-                        &(robot->get_pose())); // Robot pose is just a couple more up the pose chain
-        
-        Pose3d newPose( robot->get_pose().getWithRespectTo(matWrtCamera) );
-        */
-        
-        // Get computed RobotPoseStamp at the time the object was observed.
+        // Get computed RobotPoseStamp at the time the mat was observed.
         RobotPoseStamp* posePtr = nullptr;
-        if (robot->GetComputedPoseAt(matsSeen[0]->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
+        if (robot->GetComputedPoseAt(firstSeenMatPiece->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotFindHistoricalPose", "Time %d\n", matsSeen[0]->GetLastObservedTime());
           return false;
         }
         
-        const Pose3d* matPose = &(matsSeen[0]->GetPose());
-        Pose3d newPose( posePtr->GetPose().getWithRespectTo(matPose) );
-        
-        /*
-        Pose3d P_diff;
-        CORETECH_ASSERT( newPose.IsSameAs((*(robot->GetCamera().get_pose().get_parent()) *
-                                           robot->GetCamera().get_pose() *
-                                           (*matPose)).getInverse(),
-                                          5.f, 5*M_PI/180.f, P_diff) );
-        */
-        
-        /*
-         Pose3d newPose
-         ( (*(robot->GetCamera().get_pose().get_parent()) *
-         robot->GetCamera().get_pose() *
-         (*matWrtCamera)).getInverse() );
-         */
-        newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
+        // Get the pose of the robot with respect to the observed mat piece
+        Pose3d robotPoseWrtMat;
+        if(posePtr->GetPose().getWithRespectTo(firstSeenMatPiece->GetPose(), robotPoseWrtMat) == false) {
+          PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.MatPoseOriginMisMatch",
+                            "Could not get RobotPoseStamp w.r.t. matPose.\n");
+          return false;
+        }
         
         // If there is any significant rotation, make sure that it is roughly
         // around the Z axis
-        // TODO: Should grab the actual z-axis rotation here instead of assuming the rotationAngle is good enough.
         Radians rotAngle;
         Vec3f rotAxis;
-        newPose.get_rotationVector().get_angleAndAxis(rotAngle, rotAxis);
+        robotPoseWrtMat.get_rotationVector().get_angleAndAxis(rotAngle, rotAxis);
         const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
         const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
         if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane", "");
           return false;
         }
+        
+        if(existingMatPieces_.empty()) {
+          // We haven't seen the mat yet.  Create the first mat piece in the world.
+          // Not supporting multiple mat pieces, just use the already-seen one from here on.
+          // TODO: Deal with multiple mat pieces and updating their poses w.r.t. one another.
+          PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.CreatingMatPiece",
+                           "Instantiating one and only mat piece in the world.\n");
+          
+          firstSeenMatPiece->SetID(++globalIDCounter);
+          existingMatPieces_[firstSeenMatPiece->GetType()][firstSeenMatPiece->GetID()] = new MatPiece(firstSeenMatPiece->GetType());
+        }
 
+        // Grab the existing mat piece that matches the one we saw.  For now,
+        // their should only every be one.
+        auto matPiecesByType = existingMatPieces_.find(firstSeenMatPiece->GetType());
+        if(matPiecesByType == existingMatPieces_.end() || matPiecesByType->second.empty()) {
+          PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.UnexpectedMatPieceType",
+                            "Saw new mat piece type that didn't match the any already in existence.\n");
+          return false;
+        }
+        else if(matPiecesByType->second.size() > 1) {
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleMatPiecesWithType",
+                              "There are more than one mat pieces in existance with type %d.\n",
+                              firstSeenMatPiece->GetType());
+        }
+        
+        MatPiece* existingMatPiece = dynamic_cast<MatPiece*>(matPiecesByType->second.begin()->second);
+        CORETECH_ASSERT(existingMatPiece != nullptr);
+        
+        // Update lastObserved times of the existing mat piece
+        existingMatPiece->SetLastObservedTime(firstSeenMatPiece->GetLastObservedTime());
+        existingMatPiece->UpdateMarkerObservationTimes(*firstSeenMatPiece);
+        
+        // Make the computed robot pose use the existing mat piece as its parent
+        robotPoseWrtMat.set_parent(&existingMatPiece->GetPose());
+       
         // We have a new ("ground truth") key frame. Increment the pose frame!
         robot->IncrementPoseFrameID();
         
         // Add the new vision-based pose to the robot's history.
-        RobotPoseStamp p(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
-        if(robot->AddVisionOnlyPoseToHistory(matsSeen[0]->GetLastObservedTime(), p) != RESULT_OK) {
+        RobotPoseStamp p(robot->GetPoseFrameID(), robotPoseWrtMat, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
+        if(robot->AddVisionOnlyPoseToHistory(firstSeenMatPiece->GetLastObservedTime(), p) != RESULT_OK) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.FailedAddingVisionOnlyPoseToHistory", "");
         }
         
         // Update the computed pose as well so that subsequent block pose updates
         // use obsMarkers whose camera's parent pose is correct
-        posePtr->SetPose(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
+        posePtr->SetPose(robot->GetPoseFrameID(), robotPoseWrtMat, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
 
         // Compute the new "current" pose from history which uses the
         // past vision-based "ground truth" pose we just computed.
@@ -498,7 +495,7 @@ namespace Anki
         wasPoseUpdated = true;
         
         PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
-                   matsSeen[0]->GetID(), robot->GetID(),
+                   existingMatPiece->GetID(), robot->GetID(),
                    robot->GetPose().get_translation().x(),
                    robot->GetPose().get_translation().y(),
                    robot->GetPose().get_translation().z(),
@@ -507,14 +504,33 @@ namespace Anki
                    robot->GetPose().get_rotationAxis().y(),
                    robot->GetPose().get_rotationAxis().z());
         
-        // Send the ground truth pose that was computed instead of the new current pose and let the robot deal with
-        // updating its current pose based on the history that it keeps.
+        // Send the ground truth pose that was computed instead of the new current
+        // pose and let the robot deal with updating its current pose based on the
+        // history that it keeps.
         robot->SendAbsLocalizationUpdate();
+        
+        // Add observed mat markers to the occlusion map of the camera that saw
+        // them, so we can use them to delete objects that should have been
+        // seen between that marker and the robot
+        std::vector<const Vision::KnownMarker *> observedMarkers;
+        existingMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
+        for(auto obsMarker : observedMarkers) {
+          robot->GetCamera().AddOccluder(*obsMarker);
+        }
         
         // Done using mat pieces to localize, which were cloned from library
         // mat objects.  Delete them now so we don't leak.
         for(auto matSeen : matsSeen) {
           delete matSeen;
+        }
+        
+        // If the robot just re-localized, trigger a draw of all blocks, since
+        // we may have seen things while de-localized whose locations can now be
+        // snapped into place.
+        if(!wasLocalized && robot->IsLocalized()) {
+          PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.RobotRelocalized",
+                           "Robot %d just localized after being de-localized.\n", robot->GetID());
+          DrawAllBlocks();
         }
         
       } // IF any mat piece was seen
@@ -639,55 +655,58 @@ namespace Anki
           bool didErase = false;
           if(block->GetLastObservedTime() < lastObsMarkerTime && !block->GetIsBeingCarried())
           {
-            // Check block's bounding box in world coorindates (since a block
-            // could be relative to robot if being carried) to see if it
-            // intersects with any robot bounding box.  Also check to see
-            // block and the robot are at overlapping heights.
-            const Pose3d blockPoseWrtWorld = block->GetPose().getWithRespectTo(Pose3d::World);
-            const Quad2f blockBBox = block->GetBoundingQuadXY(blockPoseWrtWorld);
-            const f32    blockHeight = blockPoseWrtWorld.get_translation().z();
-            const f32    blockSize   = 0.5f*block->GetSize().Length();
-            const f32    blockTop    = blockHeight + blockSize;
-            const f32    blockBottom = blockHeight - blockSize;
-            
             for(auto robotID : robotMgr_->GetRobotIDList())
             {
               Robot* robot = robotMgr_->GetRobotByID(robotID);
               CORETECH_ASSERT(robot != NULL);
-
-              // Don't worry about collision while picking or placing since we
-              // are trying to get close to blocks in these modes.
-              // TODO: specify whether we are picking/placing _this_ block
-              if(!robot->IsPickingOrPlacing())
+              
+              // Check block's bounding box in same coordinates as this robot to
+              // see if it intersects with the robot's bounding box. Also check to see
+              // block and the robot are at overlapping heights.  Skip this check
+              // entirely if the block isn't in the same coordinate tree as the
+              // robot.
+              Pose3d blockPoseWrtRobotOrigin;
+              if(block->GetPose().getWithRespectTo(robot->GetPose().FindOrigin(), blockPoseWrtRobotOrigin) == true)
               {
-                const f32 robotBottom = robot->GetPose().get_translation().z();
-                const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
+                const Quad2f blockBBox = block->GetBoundingQuadXY(blockPoseWrtRobotOrigin);
+                const f32    blockHeight = blockPoseWrtRobotOrigin.get_translation().z();
+                const f32    blockSize   = 0.5f*block->GetSize().Length();
+                const f32    blockTop    = blockHeight + blockSize;
+                const f32    blockBottom = blockHeight - blockSize;
                 
-                const bool topIntersects    = (((blockTop >= robotBottom) && (blockTop <= robotTop)) ||
-                                               ((robotTop >= blockBottom) && (robotTop <= blockTop)));
-                
-                const bool bottomIntersects = (((blockBottom >= robotBottom) && (blockBottom <= robotTop)) ||
-                                               ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
-                
-                const bool bboxIntersects   = blockBBox.Intersects(robot->GetBoundingQuadXY());
-                
-                if( (topIntersects || bottomIntersects) && bboxIntersects )
+                // Don't worry about collision while picking or placing since we
+                // are trying to get close to blocks in these modes.
+                // TODO: specify whether we are picking/placing _this_ block
+                if(!robot->IsPickingOrPlacing())
                 {
-                  CoreTechPrint("Removing block %d, which intersects robot %d's bounding quad.\n",
-                                block->GetID(), robot->GetID());
+                  const f32 robotBottom = robot->GetPose().get_translation().z();
+                  const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
                   
-                  // Erase the vizualized block and its projected quad
-                  VizManager::getInstance()->EraseCuboid(block->GetID());
-                  VizManager::getInstance()->EraseQuad(block->GetID());
+                  const bool topIntersects    = (((blockTop >= robotBottom) && (blockTop <= robotTop)) ||
+                                                 ((robotTop >= blockBottom) && (robotTop <= blockTop)));
                   
-                  // Erase the block (with a postfix increment of the iterator)
-                  blocksOfType.second.erase(blockIter++);
-                  didErase = true;
-                  didBlocksChange_ = true;
+                  const bool bottomIntersects = (((blockBottom >= robotBottom) && (blockBottom <= robotTop)) ||
+                                                 ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
                   
-                  break; // no need to check other robots, block already gone
-                } // if quads intersect
-              } // if robot is not picking or placing
+                  const bool bboxIntersects   = blockBBox.Intersects(robot->GetBoundingQuadXY());
+                  
+                  if( (topIntersects || bottomIntersects) && bboxIntersects )
+                  {
+                    CoreTechPrint("Removing block %d, which intersects robot %d's bounding quad.\n",
+                                  block->GetID(), robot->GetID());
+                    
+                    // Erase the vizualized block and its projected quad
+                    VizManager::getInstance()->EraseCuboid(block->GetID());
+                    
+                    // Erase the block (with a postfix increment of the iterator)
+                    blocksOfType.second.erase(blockIter++);
+                    didErase = true;
+                    didBlocksChange_ = true;
+                    
+                    break; // no need to check other robots, block already gone
+                  } // if quads intersect
+                } // if robot is not picking or placing
+              } // if we got block pose wrt robot origin
             } // for each robot
           } // if block was not observed
           
@@ -715,11 +734,73 @@ namespace Anki
       
     } // Update()
     
-    
-    void BlockWorld::QueueObservedMarker(const Vision::ObservedMarker& marker, const HistPoseKey poseKey)
+    Result BlockWorld::QueueObservedMarker(const MessageVisionMarker& msg, Robot& robot)
     {
+      Result lastResult = RESULT_OK;
+      
+      Vision::Camera camera(robot.GetCamera());
+      
+      if(!camera.IsCalibrated()) {
+        PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
+                            "Received VisionMarker message from robot before "
+                            "camera calibration was set on Basestation.");
+        return RESULT_FAIL;
+      }
+      
+      // Get corners
+      Quad2f corners;
+      
+      corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
+      corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
+      
+      corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
+      corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
+      
+      corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
+      corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
+      
+      corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
+      corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
+      
+      
+      // Get historical robot pose at specified timestamp to get
+      // head angle and to attach as parent of the camera pose.
+      TimeStamp_t t;
+      RobotPoseStamp* p = nullptr;
+      HistPoseKey poseKey;
+      lastResult = robot.ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("MessageHandler.ProcessMessageVisionMarker.HistoricalPoseNotFound",
+                            "Time: %d, hist: %d to %d\n",
+                            msg.timestamp, robot.GetPoseHistory().GetOldestTimeStamp(),
+                            robot.GetPoseHistory().GetNewestTimeStamp());
+        return lastResult;
+      }
+      
+      // Compute pose from robot body to camera
+      // Start with canonical (untilted) headPose
+      Pose3d camPose(robot.GetHeadCamPose());
+      
+      // Rotate that by the given angle
+      RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D);
+      camPose.rotateBy(Rvec);
+      
+      // Precompute with robot body to neck pose
+      camPose.preComposeWith(robot.GetNeckPose());
+      
+      // Set parent pose to be the historical robot pose
+      camPose.set_parent(&(p->GetPose()));
+      
+      // Update the head camera's pose
+      camera.SetPose(camPose);
+      
+      // Create observed marker
+      Vision::ObservedMarker marker(t, msg.markerType, corners, camera);
+      
+      // Finally actuall queue the marker
       obsMarkers_[marker.GetTimeStamp()].emplace(poseKey, marker);
-
+      
+      
       // Visualize the marker in 3D
       // TODO: disable this block when not debugging / visualizing
       if(true){
@@ -735,19 +816,19 @@ namespace Anki
         const Pose3d canonicalPose;
         
         /*
-        // Block Markers
-        std::set<const Vision::ObservableObject*> const& blocks = blockLibrary_.GetObjectsWithMarker(marker);
-        for(auto block : blocks) {
-          std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
-
-          for(auto blockMarker : blockMarkers) {
-            
-            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-                                                                     blockMarker->Get3dCorners(canonicalPose));
-            markerPose = markerPose.getWithRespectTo(Pose3d::World);
-            VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
-          }
-        }
+         // Block Markers
+         std::set<const Vision::ObservableObject*> const& blocks = blockLibrary_.GetObjectsWithMarker(marker);
+         for(auto block : blocks) {
+         std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
+         
+         for(auto blockMarker : blockMarkers) {
+         
+         Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+         blockMarker->Get3dCorners(canonicalPose));
+         markerPose = markerPose.getWithRespectTo(Pose3d::World);
+         VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+         }
+         }
          */
         
         // Mat Markers
@@ -758,12 +839,18 @@ namespace Anki
           for(auto matMarker : matMarkers) {
             Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
                                                                      matMarker->Get3dCorners(canonicalPose));
-            markerPose = markerPose.getWithRespectTo(Pose3d::World);
-            VizManager::getInstance()->DrawQuad(quadID++, matMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+            if(markerPose.getWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+              VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+            } else {
+              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
+                                  "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
+            }
           }
         }
         
       } // 3D marker visualization
+      
+      return lastResult;
       
     } // QueueObservedMarker()
     
@@ -796,13 +883,11 @@ namespace Anki
       auto blocksWithType = existingBlocks_.find(type);
       if(blocksWithType != existingBlocks_.end()) {
         
-        // Erase all the visualized blocks of this type and their projected quads
+        // Erase all the visualized blocks of this type
         for(auto & block : blocksWithType->second) {
-        
           VizManager::getInstance()->EraseCuboid(block.first);
-          VizManager::getInstance()->EraseQuad(block.first);
         }
-                
+        
         // Erase this entry in the map of block types
         existingBlocks_.erase(type);
         
@@ -825,9 +910,8 @@ namespace Anki
             CoreTechPrint("Found multiple blocks with ID=%d in BlockWorld::ClearBlock().\n", withID);
           }
           
-          // Erase the vizualized block and its projected quad
+          // Erase the vizualized block
           VizManager::getInstance()->EraseCuboid(withID);
-          VizManager::getInstance()->EraseQuad(withID);
 
           // Remove the block from the world
           blocksByType.second.erase(blockWithID);
@@ -878,6 +962,17 @@ namespace Anki
       }
     }
     
+    
+    void BlockWorld::DrawAllBlocks() const
+    {
+      for(auto & blocksByType : existingBlocks_) {
+        for(auto & blocksByID : blocksByType.second) {
+          const Block* block = dynamic_cast<Block*>(blocksByID.second);
+          CORETECH_ASSERT(block != nullptr);
+          block->Visualize();
+        }
+      }
+    } // DrawAllBlocks()
     
   } // namespace Cozmo
 } // namespace Anki

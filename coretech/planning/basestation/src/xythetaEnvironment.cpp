@@ -551,7 +551,8 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
   double linearSpeed = env.GetMaxVelocity_mmps();
   double oneOverLinearSpeed = env.GetOneOverMaxVelocity();
-  if(env.GetActionType(id).IsReverseAction()) {
+  bool isReverse = env.GetActionType(id).IsReverseAction();
+  if(isReverse) {
     linearSpeed = env.GetMaxReverseVelocity_mmps();
     oneOverLinearSpeed = 1.0 / env.GetMaxReverseVelocity_mmps();
   }
@@ -570,7 +571,7 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
                              0.0,
                              signedLength * cos(env.GetTheta_c(startingAngle)),
                              signedLength * sin(env.GetTheta_c(startingAngle)),
-                             linearSpeed,
+                             isReverse ? -linearSpeed : linearSpeed,
                              LATTICE_PLANNER_ACCEL,
                              LATTICE_PLANNER_DECEL);
   }
@@ -589,13 +590,15 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
     Cost arcSpeed = deltaTheta * turningRadius / arcTime;
 
+    // TODO:(bn) these don't work properly backwards at the moment
+
     pathSegments_.AppendArc(0,
                             config["arc"]["centerPt_x_mm"].asFloat(),
                             config["arc"]["centerPt_y_mm"].asFloat(),
                             config["arc"]["radius_mm"].asFloat(),
                             config["arc"]["startRad"].asFloat(),
                             config["arc"]["sweepRad"].asFloat(),
-                            arcSpeed,
+                            isReverse ? -arcSpeed : arcSpeed,
                             LATTICE_PLANNER_ACCEL,
                             LATTICE_PLANNER_DECEL);
   }

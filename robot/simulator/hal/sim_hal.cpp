@@ -122,7 +122,12 @@ namespace Anki {
         if (ABS(power) < WheelController::TRANSITION_POWER) {
           speed_mm_per_s = power / WheelController::LOW_OPEN_LOOP_GAIN;
         } else {
-          speed_mm_per_s = CLIP(power, -1.0, 1.0) / WheelController::HIGH_OPEN_LOOP_GAIN;
+          power = CLIP(power, -1.0, 1.0);
+          if (power > 0) {
+            speed_mm_per_s = (power - WheelController::TRANSITION_POWER) / WheelController::HIGH_OPEN_LOOP_GAIN + WheelController::TRANSITION_SPEED;
+          } else {
+            speed_mm_per_s = (power + WheelController::TRANSITION_POWER) / WheelController::HIGH_OPEN_LOOP_GAIN -WheelController::TRANSITION_SPEED;
+          }
         }
         
         // Convert mm/s to rad/s
