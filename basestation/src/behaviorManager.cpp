@@ -22,6 +22,10 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 
+// The angle wrt the mat at which the user is expected to be.
+// For happy head-nodding demo purposes.
+#define USER_LOC_ANGLE_WRT_MAT -1.57
+
 namespace Anki {
   namespace Cozmo {
         
@@ -597,8 +601,13 @@ namespace Anki {
               
               // Delete known dice
               world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
+
               
-              StartMode(BM_June2014DiceDemo);
+              // Compute pose that makes robot face user
+              Pose3d userFacingPose = robot_->GetPose();
+              userFacingPose.set_rotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
+              robot_->ExecutePathToPose(userFacingPose);
+              state_ = FACE_USER;
               
               return;
             } // if donePlacing
@@ -625,7 +634,28 @@ namespace Anki {
           
           break;
         } // case EXECUTING_DOCK
-          
+        case FACE_USER:
+        {
+          // Wait for the robot to go back to IDLE
+          if(robot_->GetState() == Robot::IDLE)
+          {
+            // Start nodding
+            robot_->SendPlayAnimation(ANIM_HEAD_NOD);
+            state_ = HAPPY_NODDING;
+            
+            // Compute time to stop nodding
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
+          }
+          break;
+        } // case FACE_USER
+        case HAPPY_NODDING:
+        {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
+            robot_->SendPlayAnimation(ANIM_IDLE);
+            StartMode(BM_June2014DiceDemo);
+          }
+          break;
+        } // case HAPPY_NODDING
         default:
         {
           PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState",
