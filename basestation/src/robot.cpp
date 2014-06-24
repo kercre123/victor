@@ -1030,6 +1030,12 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
 
+    Result Robot::SendPlayAnimation(AnimationID_t id)
+    {
+      MessagePlayAnimation m;
+      m.animationID = id;
+      return _msgHandler->SendMessage(_ID, m);
+    }
     
     // ============ Pose history ===============
     

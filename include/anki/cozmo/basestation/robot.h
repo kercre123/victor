@@ -64,6 +64,11 @@ namespace Anki {
       const Pose3d*          GetPoseOrigin()   const {return _poseOrigin;}
       bool                   IsLocalized()     const {return _isLocalized;}
       const Vision::Camera&  GetCamera()       const;
+      
+      // Returns true if head_angle is valid.
+      // *valid_head_angle is made to equal the closest valid head angle to head_angle.
+      bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
+      
       Vision::Camera&        GetCamera();
       
       const f32              GetHeadAngle()    const;
@@ -219,6 +224,9 @@ namespace Anki {
       // Set controller gains on robot
       Result SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       Result SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
+      
+      // Play animation
+      Result SendPlayAnimation(AnimationID_t id);      
       
       // =========== Pose history =============
       // Returns ref to robot's pose history

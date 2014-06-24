@@ -12,6 +12,7 @@
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
+#include "animationController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -407,6 +408,10 @@ namespace Anki {
       
       void ProcessSetLiftControllerGainsMessage(const SetLiftControllerGains& msg) {
         LiftController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+      }
+      
+      void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
+        AnimationController::PlayAnimation((AnimationID_t)msg.animationID);
       }
       
       // TODO: Fill these in once they are needed/used:
