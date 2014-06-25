@@ -143,7 +143,7 @@ namespace Anki {
       ObjectType_t blockToPickUp_;
       ObjectType_t blockToPlaceOn_;
       TimeStamp_t  diceDeletionTime_;
-      
+      bool wasCarryingBlockAtDockingStart_;
       
     }; // class BehaviorManager
     

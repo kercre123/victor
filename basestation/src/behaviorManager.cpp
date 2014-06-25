@@ -36,8 +36,8 @@ namespace Anki {
     , world_(nullptr)
     , distThresh_mm_(20.f)
     , angThresh_(DEG_TO_RAD(10))
-    , blockToPickUp_(Vision::MARKER_UNKNOWN)
-    , blockToPlaceOn_(Vision::MARKER_UNKNOWN)
+    , blockToPickUp_(Block::UNKNOWN_BLOCK_TYPE)
+    , blockToPlaceOn_(Block::UNKNOWN_BLOCK_TYPE)
     {
       Reset();
     }
@@ -92,8 +92,8 @@ namespace Anki {
       // Pick and Place
       
       // June2014DiceDemo
-      blockToPickUp_  = Vision::MARKER_UNKNOWN;
-      blockToPlaceOn_ = Vision::MARKER_UNKNOWN;
+      blockToPickUp_  = Block::UNKNOWN_BLOCK_TYPE;
+      blockToPlaceOn_ = Block::UNKNOWN_BLOCK_TYPE;
       
     } // Reset()
     
@@ -439,10 +439,10 @@ namespace Anki {
                   CoreTechPrint("Found top marker on dice: %s!\n",
                                 Vision::MarkerTypeStrings[topMarker->GetCode()]);
                   
-                  if(blockToPickUp_ == Vision::MARKER_UNKNOWN) {
+                  if(blockToPickUp_ ==  Block::UNKNOWN_BLOCK_TYPE) {
                     
                     blockToPickUp_ = blockToLookFor;
-                    blockToPlaceOn_ = Vision::MARKER_UNKNOWN;
+                    blockToPlaceOn_ =  Block::UNKNOWN_BLOCK_TYPE;
                     
                     CoreTechPrint("Set blockToPickUp = %s\n",
                                   Block::IDtoStringLUT[blockToPickUp_].c_str());
@@ -586,6 +586,10 @@ namespace Anki {
             robot_->ExecuteDockingSequence(dockBlock->GetID());
             
             state_ = EXECUTING_DOCK;
+            
+            wasCarryingBlockAtDockingStart_ = robot_->IsCarryingBlock();
+            
+            PRINT_INFO("STARTING DOCKING\n");
           }
           
           break;
@@ -596,7 +600,8 @@ namespace Anki {
           // Wait for the robot to go back to IDLE
           if(robot_->GetState() == Robot::IDLE)
           {
-            const bool donePickingUp = robot_->IsCarryingBlock() && robot_->GetCarryingBlock() == blockToPickUp_;
+            const bool donePickingUp = robot_->IsCarryingBlock() &&
+                                       world_->GetBlockByID(robot_->GetCarryingBlock())->GetType() == blockToPickUp_;
             if(donePickingUp) {
               PRINT_INFO("Picked up block %d successfully! Going back to exploring for block to place on.\n",
                          robot_->GetCarryingBlock());
@@ -608,7 +613,7 @@ namespace Anki {
               return;
             } // if donePickingUp
             
-            const bool donePlacing = !robot_->IsCarryingBlock();// && robot_->GetDockBlock() == blockToPlaceOn_;
+            const bool donePlacing = !robot_->IsCarryingBlock() && wasCarryingBlockAtDockingStart_;
             if(donePlacing) {
               PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
                          blockToPickUp_, blockToPlaceOn_);
