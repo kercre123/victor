@@ -330,7 +330,8 @@ public:
   bool IsInCollision(State_c c) const;
 
   bool IsInSoftCollision(State s) const;
-  
+
+  Cost GetCollisionPenalty(State s) const;
 
   inline State_c State2State_c(const State& s) const;
   inline State_c StateID2State_c(StateID sid) const;

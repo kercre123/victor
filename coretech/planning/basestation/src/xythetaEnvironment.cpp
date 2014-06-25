@@ -374,6 +374,16 @@ bool xythetaEnvironment::IsInSoftCollision(State s) const
   return false;
 }
 
+Cost xythetaEnvironment::GetCollisionPenalty(State s) const
+{
+  size_t endObs = obstacles_.size();
+  for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
+    if(obstacles_[obsIdx].first.Contains(GetX_mm(s.x), GetY_mm(s.y)))
+      return obstacles_[obsIdx].second;
+  }
+  return 0.0f;
+}
+
 void xythetaPlan::Append(const xythetaPlan& other)
 {
   if(actions_.empty()) {
