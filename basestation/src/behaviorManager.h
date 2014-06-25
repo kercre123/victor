@@ -66,6 +66,8 @@ namespace Anki {
         // June2014DiceDemo
         WAITING_TO_SEE_DICE,
         WAITING_FOR_DICE_TO_DISAPPEAR,
+        GOTO_EXPLORATION_POSE,
+        START_EXPLORING_TURN,
         BACKING_UP,
         BEGIN_EXPLORING,
         EXPLORING,

@@ -453,20 +453,8 @@ namespace Anki {
                     
                     CoreTechPrint("Set blockToPlaceOn = %s\n",
                                   Block::IDtoStringLUT[blockToPlaceOn_].c_str());
-                    
-                    // Back away from dice, so we don't bump it when we blindly spin in
-                    // exploring mode and so we aren't within the padded bounding
-                    // box of the dice if/when we start planning a path towards
-                    // the block to pick up.
-                    // TODO: This may not be necessary once we use the planner to explore
-                    robot_->DriveWheels(-20.f, -20.f);
-                    
-                    //goalPose_ = dockBlock_->GetPose();
-                    desiredBackupDistance_ = (0.5f*diceBlock->GetSize().Length() +
-                                              ROBOT_BOUNDING_RADIUS + 20.f);
-                    
-                    state_ = BACKING_UP;
-                    nextState_ = BEGIN_EXPLORING; // when done backing up
+
+                    state_ = BEGIN_EXPLORING;
                     
                     SoundManager::getInstance()->Play(SOUND_NOPROBLEMO);
                   }
@@ -528,15 +516,19 @@ namespace Anki {
           
           break;
         } // case BACKING_UP
-
+        case GOTO_EXPLORATION_POSE:
+        {
+          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingBlocks(blockOfInterest_);
+          if (robot_->GetState() == Robot::IDLE || !blocks.empty()) {
+            state_ = START_EXPLORING_TURN;
+          }
+          break;
+        } // case GOTO_EXPLORATION_POSE
         case BEGIN_EXPLORING:
         {
           // For now, "exploration" is just spinning in place to
           // try to locate blocks
           if(!robot_->IsMoving() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
-            PRINT_INFO("Beginning exploring\n");
-            robot_->DriveWheels(10.f, -10.f);
-            robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 1, 1);
             
             if(robot_->IsCarryingBlock()) {
               blockOfInterest_ = blockToPlaceOn_;
@@ -544,12 +536,38 @@ namespace Anki {
               blockOfInterest_ = blockToPickUp_;
             }
             
-            state_ = EXPLORING;
+            
+            // If we already know where the blockOfInterest is, then go straight to it
+            const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingBlocks(blockOfInterest_);
+            if(blocks.empty()) {
+              // Compute desired pose at mat center
+              Pose3d robotPose = robot_->GetPose();
+              f32 targetAngle = atan2(robotPose.get_translation().y(), robotPose.get_translation().x()) + PI_F;
+              Pose3d targetPose(targetAngle, Z_AXIS_3D, Vec3f(0,0,0));
+              
+              if (computeDistanceBetween(targetPose, robotPose) > 50.f) {
+                PRINT_INFO("Going to mat center for exploration (%f %f %f)\n", targetPose.get_translation().x(), targetPose.get_translation().y(), targetAngle);
+                robot_->GetPathPlanner()->AddIgnoreType(Block::DICE_BLOCK_TYPE);
+                robot_->ExecutePathToPose(targetPose);
+              }
+
+              state_ = GOTO_EXPLORATION_POSE;
+            } else {
+              state_ = EXPLORING;
+            }
           }
           
           break;
         } // case BEGIN_EXPLORING
-          
+        case START_EXPLORING_TURN:
+        {
+          PRINT_INFO("Beginning exploring\n");
+          robot_->GetPathPlanner()->RemoveIgnoreType(Block::DICE_BLOCK_TYPE);
+          robot_->DriveWheels(8.f, -8.f);
+          robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 1, 1);
+          state_ = EXPLORING;
+          break;
+        }
         case EXPLORING:
         {
           // If we've spotted the block we're looking for, stop exploring, and
