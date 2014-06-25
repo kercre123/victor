@@ -26,13 +26,15 @@ namespace Planning
 struct StateEntry
 {
   StateEntry(OpenList::iterator openIt,
-                 StateID backpointer,
-                 ActionID backpointerAction,
-                 Cost g) :
+             StateID backpointer,
+             ActionID backpointerAction,
+             Cost penalty,
+             Cost g) :
     openIt_(openIt),
     closedIter_(-1),
     backpointer_(backpointer),
     backpointerAction_(backpointerAction),
+    penaltyIntoState_(penalty),
     g_(g)
     {
       // printf("running argument constructor\n");
@@ -43,6 +45,7 @@ struct StateEntry
     closedIter_(lval.closedIter_),
     backpointer_(lval.backpointer_),
     backpointerAction_(lval.backpointerAction_),
+    penaltyIntoState_(lval.penaltyIntoState_),
     g_(lval.g_)
     {
       // printf("running lval copy constructor\n");
@@ -53,6 +56,7 @@ struct StateEntry
     closedIter_(rval.closedIter_),
     backpointer_(rval.backpointer_),
     backpointerAction_(rval.backpointerAction_),
+    penaltyIntoState_(rval.penaltyIntoState_),
     g_(rval.g_)
     {
       // printf("running rval copy constructor\n");
@@ -60,6 +64,7 @@ struct StateEntry
 
   StateEntry() :
     closedIter_(-1),
+    penaltyIntoState_(0.0),
     g_(-1.0)
     {
       printf("WARNING: default StateEntry constructor called. This is a performance bug\n");
@@ -74,6 +79,9 @@ struct StateEntry
   // Previous state on the path
   StateID backpointer_;
   ActionID backpointerAction_;
+
+  // the penalty (not the action cost) paid to enter this state
+  Cost penaltyIntoState_;
 
   // TODO:(bn) think hard about if I actually need this or not
   Cost g_;
@@ -97,14 +105,16 @@ public:
   // First argument must be a StateID, followed by all arguments for
   // the StateEntry constructor
   void emplace(StateID sid,
-                   OpenList::iterator openIt,
-                   StateID backpointer,
-                   ActionID backpointerAction,
-                   Cost g);
+               OpenList::iterator openIt,
+               StateID backpointer,
+               ActionID backpointerAction,
+               Cost penalty,
+               Cost g);
 
 private:
   std::map<StateID, StateEntry> table_;
 };
+
 
 
 }

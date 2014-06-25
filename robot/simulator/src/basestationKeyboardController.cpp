@@ -2,6 +2,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/common/basestation/math/point_impl.h"
 #include "vizManager.h"
 #include "behaviorManager.h"
 

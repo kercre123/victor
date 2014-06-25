@@ -23,9 +23,9 @@ namespace Cozmo {
 
 PathDolerOuter::PathDolerOuter(IMessageHandler* msgHandler, RobotID_t robotID)
   : pathSizeOnBasestation_(0)
+  , lastDoledSegmentIdx_(-1)
   , msgHandler_(msgHandler)
   , robotID_(robotID)
-  ,lastDoledSegmentIdx_(-1)
 {
 }
 

@@ -12,6 +12,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 #include "json/json.h"
 #include <vector>

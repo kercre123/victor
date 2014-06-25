@@ -106,7 +106,7 @@ namespace Anki {
       //void SetColor(const unsigned char red, const unsigned char green, const unsigned char blue);
       void SetName(const std::string name);
       
-      bool GetIsBeingCarried() const;
+      bool IsBeingCarried() const;
       void SetIsBeingCarried(const bool tf);
       
       void AddFace(const FaceName whichFace,
@@ -313,7 +313,7 @@ namespace Anki {
       _name = name;
     }
     
-    inline bool Block::GetIsBeingCarried() const {
+    inline bool Block::IsBeingCarried() const {
       return _isBeingCarried;
     }
     

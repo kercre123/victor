@@ -374,14 +374,15 @@ namespace Anki
       // Set the intensity for each LED channel in the range [0, 255]
       void LEDSet(u8 leds[NUM_LEDS]);
       
+      // The color format is identical to HTML Hex Triplets (RGB)
       enum LEDColor {
-        LED_OFF = 0,
-        LED_RED = 0xff,
-        LED_GREEN = 0xff00,
-        LED_YELLOW = 0xffff,
-        LED_BLUE = 0xff0000,
-        LED_PURPLE = 0xff00ff,
-        LED_CYAN = 0xffff00,
+        LED_OFF =   0x000000,
+        LED_RED =   0xff0000,
+        LED_GREEN = 0x00ff00,
+        LED_YELLOW= 0xffff00,
+        LED_BLUE =  0x0000ff,
+        LED_PURPLE= 0xff00ff,
+        LED_CYAN =  0x00ffff,
         LED_WHITE = 0xffffff
       };
       
