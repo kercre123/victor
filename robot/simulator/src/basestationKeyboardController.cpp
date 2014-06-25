@@ -22,7 +22,7 @@ namespace Anki {
       namespace {
         // Constants for Webots:
         const f32 DRIVE_VELOCITY_FAST = 60.f; // mm/s
-        const f32 DRIVE_VELOCITY_SLOW = 20.f; // mm/s
+        const f32 DRIVE_VELOCITY_SLOW = 10.f; // mm/s
         
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
@@ -157,6 +157,7 @@ namespace Anki {
         
         const s32 CKEY_START_DICE_DEMO= 74; // 'j' for "June"
         const s32 CKEY_SET_GAINS   = 75;  // 'k'
+        const s32 CKEY_SET_VISIONSYSTEM_PARAMS = 86;  // v
 
         // Get robot
         robot_ = NULL;
@@ -390,6 +391,7 @@ namespace Anki {
             case CKEY_SET_GAINS:
             {
               if (root_) {
+                // Head and lift gains
                 f32 kp = root_->getField("headKp")->getSFFloat();
                 f32 ki = root_->getField("headKi")->getSFFloat();
                 f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
@@ -403,6 +405,21 @@ namespace Anki {
                 robot_->SendLiftControllerGains(kp, ki, maxErrorSum);
               } else {
                 printf("No BlockWorldComms was found in world\n");
+              }
+              break;
+            }
+            case CKEY_SET_VISIONSYSTEM_PARAMS:
+            {
+              if (root_) {
+                // Vision system params
+                VisionSystemParams_t p;
+                p.integerCountsIncrement = root_->getField("integerCountsIncrement")->getSFInt32();
+                p.minExposureTime = root_->getField("minExposureTime")->getSFFloat();
+                p.maxExposureTime = root_->getField("maxExposureTime")->getSFFloat();
+                p.highValue = root_->getField("highValue")->getSFInt32();
+                p.percentileToMakeHigh = root_->getField("percentileToMakeHigh")->getSFFloat();
+                printf("New VisionSystems params\n");
+                robot_->SendSetVisionSystemParams(p);
               }
               break;
             }

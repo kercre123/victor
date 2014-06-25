@@ -225,6 +225,9 @@ namespace Anki {
       Result SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       Result SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       
+      // Set VisionSystem parameters
+      Result SendSetVisionSystemParams(VisionSystemParams_t p);
+      
       // Play animation
       Result SendPlayAnimation(AnimationID_t id);      
       

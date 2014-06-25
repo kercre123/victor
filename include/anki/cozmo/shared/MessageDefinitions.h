@@ -325,6 +325,15 @@ ADD_MESSAGE_MEMBER(f32, ki)
 ADD_MESSAGE_MEMBER(f32, maxIntegralError)
 END_MESSAGE_DEFINITION(SetLiftControllerGains)
 
+// SetVisionSystemParams
+START_MESSAGE_DEFINITION(SetVisionSystemParams, 1)
+ADD_MESSAGE_MEMBER(s32, integerCountsIncrement)
+ADD_MESSAGE_MEMBER(f32, minExposureTime)
+ADD_MESSAGE_MEMBER(f32, maxExposureTime)
+ADD_MESSAGE_MEMBER(f32, percentileToMakeHigh)
+ADD_MESSAGE_MEMBER(u8, highValue)
+END_MESSAGE_DEFINITION(SetVisionSystemParams)
+
 // PlayAnimation
 START_MESSAGE_DEFINITION(PlayAnimation, 1)
 ADD_MESSAGE_MEMBER(u8, animationID)

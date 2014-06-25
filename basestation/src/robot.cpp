@@ -186,11 +186,11 @@ namespace Anki {
                   ClearPath();
                   if(_nextState == BEGIN_DOCKING) {
                     PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileDocking",
-                                     "Replan failed during docking due to bad goal. Will try to update goal.");
+                                     "Replan failed during docking due to bad goal. Will try to update goal.\n");
                     ExecuteDockingSequence(_dockBlock);
                   } else {
                     PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
-                                     "Replan failed due to bad goal. Aborting path.");
+                                     "Replan failed due to bad goal. Aborting path.\n");
                     SetState(IDLE);
                   }
                   break;
@@ -199,14 +199,14 @@ namespace Anki {
                 case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
                 {
                   PRINT_NAMED_INFO("Robot.Update.NewStartForReplanNeeded",
-                                   "Replan failed during docking due to bad start. Will try again, and hope robot moves.");
+                                   "Replan failed during docking due to bad start. Will try again, and hope robot moves.\n");
                   break;
                 }
 
                 case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
                 {
                   PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
-                                   "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.");
+                                   "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
                   _forceReplanOnNextWorldChange = true;
                   break;
                 }
@@ -701,7 +701,7 @@ namespace Anki {
     Result Robot::PickUpDockBlock()
     {
       if(_dockBlock == nullptr) {
-        PRINT_NAMED_WARNING("Robot.NoDockBlockToPickUp", "No docking block set, but told to pick one up.");
+        PRINT_NAMED_WARNING("Robot.NoDockBlockToPickUp", "No docking block set, but told to pick one up.\n");
         return RESULT_FAIL;
       }
       
@@ -1028,6 +1028,17 @@ namespace Anki {
       m.ki = ki;
       m.maxIntegralError = maxIntegralError;
       return _msgHandler->SendMessage(_ID, m);
+    }
+    
+    Result Robot::SendSetVisionSystemParams(VisionSystemParams_t p)
+    {
+      MessageSetVisionSystemParams m;
+      m.minExposureTime = p.minExposureTime;
+      m.maxExposureTime = p.maxExposureTime;
+      m.percentileToMakeHigh = p.percentileToMakeHigh;
+      m.integerCountsIncrement = p.integerCountsIncrement;
+      m.highValue = p.highValue;
+      return _msgHandler->SendMessage(_ID,m);
     }
 
     Result Robot::SendPlayAnimation(AnimationID_t id)

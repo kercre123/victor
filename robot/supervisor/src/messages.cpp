@@ -410,6 +410,14 @@ namespace Anki {
         LiftController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
       }
       
+      void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
+        VisionSystem::SetParams(msg.integerCountsIncrement,
+                                msg.minExposureTime,
+                                msg.maxExposureTime,
+                                msg.highValue,
+                                msg.percentileToMakeHigh);
+      }
+      
       void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
         AnimationController::PlayAnimation((AnimationID_t)msg.animationID);
       }

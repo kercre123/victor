@@ -93,6 +93,14 @@ namespace Anki {
       ,ANIM_NUM_ANIMATIONS
     } AnimationID_t;
     
+    // For DEV only
+    typedef struct {
+      s32 integerCountsIncrement;
+      f32 minExposureTime;
+      f32 maxExposureTime;
+      f32 percentileToMakeHigh;
+      u8 highValue;
+    } VisionSystemParams_t;
     
   }
 }
