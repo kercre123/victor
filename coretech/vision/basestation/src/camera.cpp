@@ -13,6 +13,8 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/matrix_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"
