@@ -29,8 +29,8 @@
 #define FACE_AND_APPROACH_PLANNER_DECEL 200.0f
 #define FACE_AND_APPROACH_TARGET_SPEED 30.0f
 
-#define FACE_AND_APPROACH_PLANNER_ROT_ACCEL 100.0f
-#define FACE_AND_APPROACH_PLANNER_ROT_DECEL 100.0f
+#define FACE_AND_APPROACH_PLANNER_ROT_ACCEL 10.0f
+#define FACE_AND_APPROACH_PLANNER_ROT_DECEL 10.0f
 #define FACE_AND_APPROACH_TARGET_ROT_SPEED 0.5f
 
 #define FACE_AND_APPRACH_DELTA_THETA_FOR_BACKUP 1.0471975512
@@ -69,24 +69,11 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
   Vec3f startVec(startPose.get_translation());
 
   // check if we need to do each segment
-  Radians targetAngle = atan2(_targetVec.y() - startVec.y(), _targetVec.x() - startVec.x());
   Radians currAngle = startPose.get_rotationAngle<'Z'>();
-
-  float deltaTheta = currAngle.minAngularDistance(targetAngle);
-
-  if(std::abs(deltaTheta) > FACE_AND_APPROACH_THETA_THRESHOLD) {
-    printf("FaceAndApproachPlanner: doing initial turn because delta theta of %f > %f\n",
-           deltaTheta,
-           FACE_AND_APPROACH_THETA_THRESHOLD);
-    doTurn0 = true;
-  }
-
-  if(std::abs(targetAngle.ToFloat() - _finalTargetAngle) > FACE_AND_APPROACH_THETA_THRESHOLD) {
-    printf("FaceAndApproachPlanner: doing final turn because delta theta of %f > %f\n",
-           deltaTheta,
-           FACE_AND_APPROACH_THETA_THRESHOLD);
-    doTurn1 = true;
-  }
+  
+  // The intermediate angle the robot should be in before doing the final turn.
+  // If a straight segment ends up being unnecessary then this is just the start angle.
+  Radians intermediateTargetAngle = currAngle;
 
   Point2f start2d(startVec.x(), startVec.y());
   Point2f target2d(_targetVec.x(), _targetVec.y());
@@ -96,8 +83,27 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
            distSquared,
            FACE_AND_APPROACH_LENGTH_SQUARED_THRESHOLD);
     doStraight = true;
+    
+    // If doing a straight then, the target angle is the approach angle to the target point.
+    intermediateTargetAngle = atan2(_targetVec.y() - startVec.y(), _targetVec.x() - startVec.x());
   }
 
+  float deltaTheta1 = _finalTargetAngle - intermediateTargetAngle.ToFloat();
+  if(std::abs(deltaTheta1) > FACE_AND_APPROACH_THETA_THRESHOLD) {
+    printf("FaceAndApproachPlanner: doing final turn because delta theta of %f > %f\n",
+           deltaTheta1,
+           FACE_AND_APPROACH_THETA_THRESHOLD);
+    doTurn1 = true;
+  }
+
+  float deltaTheta = (intermediateTargetAngle - currAngle).ToFloat();
+  if(doStraight && std::abs(deltaTheta) > FACE_AND_APPROACH_THETA_THRESHOLD) {
+    printf("FaceAndApproachPlanner: doing initial turn because delta theta of %f > %f\n",
+           deltaTheta,
+           FACE_AND_APPROACH_THETA_THRESHOLD);
+    doTurn0 = true;
+  }
+  
   if(!doTurn0 && !doStraight && !doTurn1) {
     return PLAN_NOT_NEEDED;
   }
@@ -109,12 +115,12 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
     if(std::abs(deltaTheta) > FACE_AND_APPRACH_DELTA_THETA_FOR_BACKUP) {
       printf("FaceAndApproachPlanner: deltaTheta of %f above threshold, doing backup!\n", deltaTheta);
       deltaTheta = (Radians(deltaTheta) + M_PI).ToFloat();
-      targetAngle = targetAngle + M_PI;
+      intermediateTargetAngle = intermediateTargetAngle + M_PI;
       backup = true;
     }
 
     path.AppendPointTurn(0,
-                         startVec.x(), startVec.y(), targetAngle.ToFloat(),
+                         startVec.x(), startVec.y(), intermediateTargetAngle.ToFloat(),
                          deltaTheta < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
                          FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
                          FACE_AND_APPROACH_PLANNER_ROT_DECEL);
@@ -130,7 +136,6 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
   }
 
   if(doTurn1) {
-    float deltaTheta1 = _finalTargetAngle - targetAngle.ToFloat();
     path.AppendPointTurn(0,
                          _targetVec.x(), _targetVec.y(), _finalTargetAngle,
                          deltaTheta1 < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
