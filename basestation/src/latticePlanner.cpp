@@ -146,29 +146,42 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                                                   const std::vector<Pose3d>& targetPoses,
                                                   size_t& selectedIndex)
 {
+
+  impl_->ImportBlockworldObstacles(false, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
+
   // for now just select the closest non-colliding goal as the true
   // goal. Eventually I'll implement a real multi-goal planner that
   // decides on its own which goal it wants
 
-  size_t bestTargetIdx = 0;
   bool found = false;
   size_t numTargetPoses = targetPoses.size();
+  size_t bestTargetIdx = 0;
   float closestDist2 = 0;
 
-  for(size_t i=0; i<numTargetPoses; ++i) {
-    float dist2 = (targetPoses[i].get_translation() - startPose.get_translation()).LengthSq();
+  // first try to find a pose with no soft collisions, then try to find one with no fatal collisions
+  for(auto maxPenalty : (float[]){0.01, MAX_OBSTACLE_COST}) {
 
-    if(!found || dist2 < closestDist2) {
-      State_c target(targetPoses[i].get_translation().x(),
-                     targetPoses[i].get_translation().y(),
-                     targetPoses[i].get_rotationAngle<'Z'>().ToFloat());
+    bestTargetIdx = 0;
+    closestDist2 = 0;
+    for(size_t i=0; i<numTargetPoses; ++i) {
+      float dist2 = (targetPoses[i].get_translation() - startPose.get_translation()).LengthSq();
 
-      if(!impl_->env_.IsInCollision(target)) {
-        closestDist2 = dist2;
-        bestTargetIdx = i;
-        found = true;
+      if(!found || dist2 < closestDist2) {
+        State_c target_c(targetPoses[i].get_translation().x(),
+                         targetPoses[i].get_translation().y(),
+                         targetPoses[i].get_rotationAngle<'Z'>().ToFloat());
+        State target(impl_->env_.State_c2State(target_c));
+        
+        if(impl_->env_.GetCollisionPenalty(target) < maxPenalty) {
+          closestDist2 = dist2;
+          bestTargetIdx = i;
+          found = true;
+        }
       }
     }
+
+    if(found)
+      break;
   }
 
   if(found) {
