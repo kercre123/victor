@@ -62,8 +62,13 @@ public:
   std::multimap<float, StateID>::const_iterator begin() const { return fMap_.begin(); };
   std::multimap<float, StateID>::const_iterator end() const { return fMap_.end(); };
 
-  // Returns true if the state is contained in the open list
-  bool contains(StateID id);
+  // Returns true if the state is contained in the open list. warning:
+  // these are both linear time!! don't call these
+  bool contains(StateID id) const;
+
+  // returns very high number if id is not in this list, otherwise
+  // returns the f value. Linear time function!
+  float fVal(StateID id) const;
   
 private:
 
