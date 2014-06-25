@@ -18,6 +18,7 @@
 #include "steeringController.h"
 #include "wheelController.h"
 #include "visionSystem.h"
+#include "animationController.h"
 
 #include "anki/messaging/shared/utilMessaging.h"
 
@@ -253,6 +254,8 @@ namespace Anki {
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
 
+        AnimationController::Update();
+        
         HeadController::Update();
         LiftController::Update();
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
