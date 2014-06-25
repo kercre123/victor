@@ -397,6 +397,7 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadlight const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadControllerGains const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageSetLiftControllerGains const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessagePlayAnimation const&){return RESULT_FAIL;}
     
   } // namespace Cozmo
 } // namespace Anki

@@ -325,5 +325,7 @@ ADD_MESSAGE_MEMBER(f32, ki)
 ADD_MESSAGE_MEMBER(f32, maxIntegralError)
 END_MESSAGE_DEFINITION(SetLiftControllerGains)
 
-
-
+// PlayAnimation
+START_MESSAGE_DEFINITION(PlayAnimation, 1)
+ADD_MESSAGE_MEMBER(u8, animationID)
+END_MESSAGE_DEFINITION(PlayAnimation)

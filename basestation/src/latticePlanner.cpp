@@ -26,7 +26,12 @@
 
 #define DEBUG_REPLAN_CHECKS 0
 
-#define LATTICE_PLANNER_MAX_EXPANSIONS 300000
+#define LATTICE_PLANNER_MAX_EXPANSIONS 300000000  // TEMP: 
+
+// this is in units of seconds per mm, meaning the robot would drive X
+// seconds out of the way to avoid having to drive 1 mm through the
+// penalty
+#define DEFAULT_OBSTACLE_PENALTY 0.1
 
 namespace Anki {
 namespace Cozmo {
@@ -101,7 +106,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, VIZ_
     }
     unsigned int numAdded = 0;
     for(auto boundingQuad : boundingBoxes) {
-      env_.AddObstacle(boundingQuad);
+      env_.AddObstacle(boundingQuad, DEFAULT_OBSTACLE_PENALTY);
 
       if(vizColor != VIZ_COLOR_NONE) {
         // TODO: manage the quadID better so we don't conflict
@@ -214,8 +219,11 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     // plan (after planIdx) which is safe. validOldPlan will contain a
     // partial plan starting at planIdx and ending at lastSafeState
 
-    printf("old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
-           planIdx, validOldPlan.Size());
+    if(!forceReplanFromScratch) {
+      printf("old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
+             planIdx, validOldPlan.Size());
+    }
+
     cout<<"currentRobotState: "<<currentRobotState<<endl;
 
     // uncomment to print debugging info

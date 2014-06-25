@@ -1,14 +1,14 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 
+#include "anki/common/basestation/math/quad.h"
+#include "anki/planning/shared/path.h"
 #include "json/json-forwards.h"
+#include "xythetaPlanner_definitions.h"
 #include <assert.h>
 #include <math.h>
 #include <string>
 #include <vector>
-#include "anki/planning/shared/path.h"
-
-#include "anki/common/basestation/math/quad.h"
 
 namespace Anki
 {
@@ -30,9 +30,11 @@ namespace Planning
 #define MAX_XY_BITS 14
 #define INVALID_ACTION_ID 255
 
+#define MAX_OBSTACLE_COST 1000.0f
+#define FATAL_OBSTACLE_COST (MAX_OBSTACLE_COST + 1.0f)
+
 typedef uint8_t StateTheta;
 typedef int16_t StateXY;
-typedef float Cost;
 typedef uint8_t ActionID;
 
 class xythetaEnvironment;
@@ -95,6 +97,18 @@ public:
   float theta;
 };
 
+struct IntermediatePosition
+{
+  IntermediatePosition(State_c s, float d)
+    : position(s)
+    , oneOverDistanceFromLastPosition(d)
+    {
+    }
+
+  State_c position;
+  float oneOverDistanceFromLastPosition;
+};
+
 class MotionPrimitive
 {
 public:
@@ -124,7 +138,7 @@ public:
 
   // vector containing continuous relative offsets for positions in
   // between (0,0,startTheta) and (end)
-  std::vector<State_c> intermediatePositions;
+  std::vector<IntermediatePosition> intermediatePositions;
 private:
 
   Path pathSegments_;
@@ -139,8 +153,11 @@ public:
   // The action thats takes you to state
   ActionID actionID;
 
-  // Values associated with state
+  // Value associated with state
   Cost g;
+
+  // Penalty paid to transition into state (not counting normal action cost)
+  Cost penalty;
 };
 
 
@@ -150,12 +167,12 @@ public:
   SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG);
 
   // Returns true if there are no more results left
-  bool Done() const;
+  bool Done(const xythetaEnvironment& env) const;
 
   // Returns the next action results pair
   inline const Successor& Front() const {return nextSucc_;}
 
-  void Next();
+  void Next(const xythetaEnvironment& env);
 
 private:
 
@@ -167,9 +184,6 @@ private:
   ActionID nextAction_;
 
   Successor nextSucc_;
-
-  const std::vector<MotionPrimitive>& motionPrimitives_;
-  const std::vector<RotatedRectangle>& obstacles_;
 };
 
 // TODO:(bn) move some of these to seperate files
@@ -178,13 +192,25 @@ class xythetaPlan
 public:
   State start_;
   std::vector<ActionID> actions_;
+  
+  // same size as actions, stores the penalty expected for each
+  // action. This allows replanning if any of these penalties
+  // increase. The sum of this should be the penalty of the entire
+  // plan
+  std::vector<Cost> penalties_;
 
   // add the given plan to the end of this plan
   void Append(const xythetaPlan& other);
 
   size_t Size() const {return actions_.size();}
-  void Push(ActionID action) {actions_.push_back(action);}
-  void Clear() {actions_.clear();}
+  void Push(ActionID action, Cost penalty) {
+    actions_.push_back(action);
+    penalties_.push_back(penalty);
+  }
+  void Clear() {
+    actions_.clear();
+    penalties_.clear();
+  }
 };
 
 // This class contains generic information for a type of action
@@ -234,8 +260,10 @@ public:
   // Imports motion primitives from the given json file. Returns true if success
   bool ReadMotionPrimitives(const char* mprimFilename);
 
-  void AddObstacle(const RotatedRectangle& rect);
-  void AddObstacle(const Quad2f& quad);
+  // defaults to a fatal obstacle
+  void AddObstacle(const RotatedRectangle& rect, Cost cost = FATAL_OBSTACLE_COST);
+  void AddObstacle(const Quad2f& quad, Cost cost = FATAL_OBSTACLE_COST);
+
   void ClearObstacles();
 
   size_t GetNumObstacles() const;
@@ -244,11 +272,11 @@ public:
   // this one if you want to check each action
   SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;
 
-  // This function tries to apply the given action to the state. If it
-  // is a valid, collision-free action, it updates state to be the
-  // successor and returns true, otherwise it returns false and does
-  // not change state
-  bool ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions = true) const;
+  // This function tries to apply the given action to the state. It
+  // returns the penalty of the path (i.e. no cost for actions, just
+  // obstacle penalties). If the action finishes without a fatal
+  // penalty, stateID will be updated to the successor state
+  Cost ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions = true) const;
 
   // Returns the state at the end of the given plan (e.g. following
   // along the plans start and executing every action). No collision
@@ -263,10 +291,11 @@ public:
   // this point
   size_t FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state, bool debug = false) const;
 
-  // Returns true if the plan is safe and complete, false
-  // otherwise. This should always return true immediately after
-  // Replan returns true, but if the environment is updated it can be
-  // useful to re-check the plan.
+  // Returns true if the plan is safe and complete, false otherwise,
+  // including if the penalty increased by too much (see
+  // REPLAN_PENALTY_BUFFER in the cpp file). This should always return
+  // true immediately after Replan returns true, but if the
+  // environment is updated it can be useful to re-check the plan.
   // 
   // second argument is how much of the path has already been
   // executed. Note that this is different form the robot's
@@ -288,7 +317,7 @@ public:
   // returns the raw underlying motion primitive. Note that it is centered at (0,0)
   const MotionPrimitive& GetRawMotionPrimitive(StateTheta theta, ActionID action) const;
 
-  // Returns true if there is a collision at the given state
+  // Returns true if there is a fatal collision at the given state
   bool IsInCollision(State s) const;
   bool IsInCollision(State_c c) const;
 
@@ -365,8 +394,8 @@ private:
   // First index is starting angle, second is prim ID
   std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
 
-  // Obstacles
-  std::vector<RotatedRectangle> obstacles_;
+  // Obstacles. Cost over MAX_OBSTACLE_COST means infinite cost (aka hard obstacle)
+  std::vector< std::pair<const RotatedRectangle, Cost> > obstacles_;
 
   // index is actionID
   std::vector<ActionType> actionTypes_;

@@ -24,7 +24,7 @@ namespace Anki {
         
         // TODO: Need to be able to specify wheel motion by distance
         const u32 BACKOUT_TIME = 1500000;
-        const f32 BACKOUT_SPEED_MMPS = -30;
+        const f32 BACKOUT_SPEED_MMPS = -40;
         
         const f32 LOW_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(-15);
         const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(15);

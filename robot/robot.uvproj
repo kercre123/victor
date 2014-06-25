@@ -758,6 +758,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\imuFilter.cpp</FilePath>
             </File>
+            <File>
+              <FileName>animationController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\animationController.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1952,6 +1957,11 @@
               <FileName>imuFilter.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\imuFilter.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>animationController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\animationController.cpp</FilePath>
             </File>
           </Files>
         </Group>
