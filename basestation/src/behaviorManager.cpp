@@ -588,7 +588,7 @@ namespace Anki {
               return;
             } // if donePickingUp
             
-            const bool donePlacing = !robot_->IsCarryingBlock() && robot_->GetDockBlock() && robot_->GetDockBlock() == blockToPlaceOn_;
+            const bool donePlacing = !robot_->IsCarryingBlock();// && robot_->GetDockBlock() == blockToPlaceOn_;
             if(donePlacing) {
               PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
                          blockToPickUp_, blockToPlaceOn_);

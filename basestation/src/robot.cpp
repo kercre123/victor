@@ -309,16 +309,13 @@ namespace Anki {
               if((_dockAction == DA_PLACE_HIGH) && !IsCarryingBlock()) {
                 PRINT_INFO("Placed block successfully!\n");
               } else {
-                PRINT_INFO("Dock failed! Aborting\n");
-                
-                if (GetDockBlock()) {
-                  PRINT_INFO("Deleting block that I failed to dock to\n");
-                  _world->ClearBlock(_dockBlockID);
-                } else {
-                  PRINT_INFO("DOCK BLOCK IS NULL!!!\n");
-                }
+                PRINT_INFO("Deleting block that I failed to dock to, and aborting.\n");
+                _world->ClearBlock(_dockBlockID);
               }
             }
+            
+            _dockBlockID = ANY_OBJECT;
+            _dockMarker  = nullptr;
             
             SetState(IDLE);
           }
@@ -618,7 +615,15 @@ namespace Anki {
       Result lastResult = RESULT_OK;
       
       Block* block = _world->GetBlockByID(blockToDockWith);
+      if(block == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.DockBlockDoesNotExist",
+                          "Robot %d asked to dock with Block ID=%d, but it does not exist.",
+                          _ID, blockToDockWith);
+
+        return RESULT_FAIL;
+      }
       
+      _dockBlockID = blockToDockWith;
       _dockMarker = nullptr; // should get set to a predock pose below
       
       std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
