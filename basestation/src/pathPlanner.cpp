@@ -104,7 +104,7 @@ namespace Anki {
                          targetPose.get_translation().x(),
                          targetPose.get_translation().y(),
                          targetPose.get_translation().z(),
-                         targetPose.get_rotationAngle().getDegrees(),
+                         targetPose.get_rotationAngle<'Z'>().getDegrees(),
                          targetPose.get_rotationAxis().x(),
                          targetPose.get_rotationAxis().y(),
                          targetPose.get_rotationAxis().z());

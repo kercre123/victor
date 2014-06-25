@@ -125,6 +125,9 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   impl_->ImportBlockworldObstacles(LATTICE_PLANNER_BOUNDING_DISTANCE,
                                    VIZ_COLOR_NONE);
 
+  // Clear plan whenever we attempt to set goal
+  impl_->totalPlan_.Clear();
+  
   if(!impl_->planner_.SetGoal(target))
     return PLAN_NEEDED_BUT_GOAL_FAILURE;
 
@@ -187,7 +190,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
 
   State_c currentRobotState(startPose.get_translation().x(),
                             startPose.get_translation().y(),
-                            startPose.get_rotationAngle().ToFloat());
+                            startPose.get_rotationAngle<'Z'>().ToFloat());
 
   //VizManager::getInstance()->EraseAllQuads();
   
@@ -261,8 +264,6 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
           impl_->totalPlan_.Clear();
         }
         else {
-
-          assert(impl_->planner_.GetPlan().start_ == impl_->env_.State_c2State(lastSafeState));
 
           path.Clear();
 
