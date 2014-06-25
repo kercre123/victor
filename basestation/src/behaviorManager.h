@@ -68,7 +68,9 @@ namespace Anki {
         WAITING_FOR_DICE_TO_DISAPPEAR,
         BACKING_UP,
         BEGIN_EXPLORING,
-        EXPLORING
+        EXPLORING,
+        FACE_USER,
+        HAPPY_NODDING
         
       } BehaviorState;
       

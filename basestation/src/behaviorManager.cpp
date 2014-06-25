@@ -22,6 +22,10 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 
+// The angle wrt the mat at which the user is expected to be.
+// For happy head-nodding demo purposes.
+#define USER_LOC_ANGLE_WRT_MAT -1.57
+
 namespace Anki {
   namespace Cozmo {
         
@@ -359,7 +363,7 @@ namespace Anki {
                 // Get all the observed markers on the dice and look for the one
                 // facing up (i.e. the one that is nearly aligned with the z axis)
                 // TODO: expose the threshold here?
-                const TimeStamp_t timeWindow = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - 500;
+                const TimeStamp_t timeWindow = robot_->GetLastMsgTimestamp() - 500;
                 const f32 dotprodThresh = 1.f - cos(DEG_TO_RAD(20));
                 std::vector<const Vision::KnownMarker*> diceMarkers;
                 diceBlock->GetObservedMarkers(diceMarkers, timeWindow);
@@ -531,7 +535,7 @@ namespace Anki {
           // try to locate blocks
           if(!robot_->IsMoving() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
             PRINT_INFO("Beginning exploring\n");
-            robot_->DriveWheels(15.f, -15.f);
+            robot_->DriveWheels(10.f, -10.f);
             robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 1, 1);
             
             if(robot_->IsCarryingBlock()) {
@@ -595,7 +599,15 @@ namespace Anki {
                 SoundManager::getInstance()->Play(SOUND_TADA);
               }
               
-              StartMode(BM_June2014DiceDemo);
+              // Delete known dice
+              world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
+
+              
+              // Compute pose that makes robot face user
+              Pose3d userFacingPose = robot_->GetPose();
+              userFacingPose.set_rotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
+              robot_->ExecutePathToPose(userFacingPose);
+              state_ = FACE_USER;
               
               return;
             } // if donePlacing
@@ -622,7 +634,28 @@ namespace Anki {
           
           break;
         } // case EXECUTING_DOCK
-          
+        case FACE_USER:
+        {
+          // Wait for the robot to go back to IDLE
+          if(robot_->GetState() == Robot::IDLE)
+          {
+            // Start nodding
+            robot_->SendPlayAnimation(ANIM_HEAD_NOD);
+            state_ = HAPPY_NODDING;
+            
+            // Compute time to stop nodding
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
+          }
+          break;
+        } // case FACE_USER
+        case HAPPY_NODDING:
+        {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
+            robot_->SendPlayAnimation(ANIM_IDLE);
+            StartMode(BM_June2014DiceDemo);
+          }
+          break;
+        } // case HAPPY_NODDING
         default:
         {
           PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState",

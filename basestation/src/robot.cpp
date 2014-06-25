@@ -1030,6 +1030,12 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
 
+    Result Robot::SendPlayAnimation(AnimationID_t id)
+    {
+      MessagePlayAnimation m;
+      m.animationID = id;
+      return _msgHandler->SendMessage(_ID, m);
+    }
     
     // ============ Pose history ===============
     
@@ -1094,6 +1100,11 @@ namespace Anki {
       return _poseHistory.GetComputedPoseAt(t_request, p, key);
     }
 
+    TimeStamp_t Robot::GetLastMsgTimestamp() const
+    {
+      return _poseHistory.GetNewestTimeStamp();
+    }
+    
     bool Robot::IsValidPoseKey(const HistPoseKey key) const
     {
       return _poseHistory.IsValidPoseKey(key);

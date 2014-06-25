@@ -47,6 +47,9 @@ namespace Anki {
       // Prints gyro/accel data
       TM_IMU,
       
+      // Cycles through all known animations
+      TM_ANIMATION,
+      
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
       // Engages and disengages gripper
       TM_GRIPPER,
@@ -78,6 +81,18 @@ namespace Anki {
     // A key associated with each computed pose retrieved from history
     // to be used to check its validity at a later time.
     typedef u32 HistPoseKey;
+
+    
+    // Animation ID
+    // TODO: Eventually, we might want a way of sending animation definitions down from basestation
+    //       but for now they're hard-coded on the robot
+    typedef enum {
+      ANIM_IDLE
+      ,ANIM_HEAD_NOD
+      
+      ,ANIM_NUM_ANIMATIONS
+    } AnimationID_t;
+    
     
   }
 }

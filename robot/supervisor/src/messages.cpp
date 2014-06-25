@@ -12,6 +12,7 @@
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
+#include "animationController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -398,11 +399,7 @@ namespace Anki {
       }
       
       void ProcessSetHeadlightMessage(const SetHeadlight& msg) {
-        if (msg.intensity > 0) {
-          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, (HAL::LEDColor)(HAL::LED_RED | HAL::LED_GREEN | HAL::LED_BLUE));
-        } else {
-          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, HAL::LED_OFF);
-        }
+        HAL::SetHeadlights(msg.intensity > 0);
       }
  
       void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
@@ -411,6 +408,10 @@ namespace Anki {
       
       void ProcessSetLiftControllerGainsMessage(const SetLiftControllerGains& msg) {
         LiftController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+      }
+      
+      void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
+        AnimationController::PlayAnimation((AnimationID_t)msg.animationID);
       }
       
       // TODO: Fill these in once they are needed/used:
