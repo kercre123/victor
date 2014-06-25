@@ -288,16 +288,17 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
     nextSucc_.g = 0;
 
     Cost penalty = 0.0f;
-    // TODO:(bn) optimization: iterate through obstacle in outer loop? same obstacle is likely to collide next time
-    // iterate first through action, starting at the end because this
-    // is more likely to be a collision
-    for(long pointIdx = endPoints-1; pointIdx >= 0 && !collision; --pointIdx) {
-      for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
+
+    for(size_t obsIdx=0; obsIdx<endObs && !collision; ++obsIdx) {
+      for(long pointIdx = endPoints-1; pointIdx >= 0; --pointIdx) {
         float x,y;
         x = start_c_.x_mm + prim->intermediatePositions[pointIdx].position.x_mm;
         y = start_c_.y_mm + prim->intermediatePositions[pointIdx].position.y_mm;
+
+        // TODO:(bn) re-write Contains to take a matrix of points to
+        // check? Store intermediate points in a matrix?
         if(env.obstacles_[obsIdx].first.Contains(x, y)) {
-        if(env.obstacles_[obsIdx].second >= MAX_OBSTACLE_COST) {
+          if(env.obstacles_[obsIdx].second >= MAX_OBSTACLE_COST) {
             collision = true;
             break;
           }
