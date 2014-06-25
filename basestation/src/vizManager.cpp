@@ -14,6 +14,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/common/basestation/general.h"
 #include "anki/common/basestation/exceptions.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 namespace Anki {
   namespace Cozmo {

@@ -11,14 +11,15 @@
  *
  **/
 
+#include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/planning/basestation/xythetaEnvironment.h"
+#include "anki/planning/basestation/xythetaPlanner.h"
+#include "json/json.h"
 #include "pathPlanner.h"
 #include "vizManager.h"
-#include "anki/planning/basestation/xythetaPlanner.h"
-#include "anki/planning/basestation/xythetaEnvironment.h"
-#include "json/json.h"
 
 
 #define LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK ROBOT_BOUNDING_RADIUS

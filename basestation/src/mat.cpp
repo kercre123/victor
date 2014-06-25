@@ -18,6 +18,9 @@
 #include "anki/cozmo/basestation/mat.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
+
 
 namespace Anki {
   namespace Cozmo {
