@@ -46,7 +46,22 @@ void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
 
 bool xythetaPlanner::Replan(unsigned int maxExpansions)
 {
-  return _impl->ComputePath(maxExpansions);
+  using namespace std::chrono;
+
+  high_resolution_clock::time_point start = high_resolution_clock::now();
+  bool ret = _impl->ComputePath(maxExpansions);
+  high_resolution_clock::time_point end = high_resolution_clock::now();
+
+  duration<double> time_d = duration_cast<duration<double>>(end - start);
+  double time = time_d.count();
+
+  printf("planning took %f seconds. (%f exps/sec, %f cons/sec, %f checks/sec)\n",
+         time,
+         ((double)_impl->expansions_) / time,
+         ((double)_impl->considerations_) / time,
+         ((double)_impl->collisionChecks_) / time);
+
+  return ret;
 }
 
 void xythetaPlanner::SetReplanFromScratch()
