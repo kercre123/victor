@@ -38,7 +38,14 @@ struct xythetaPlannerImpl
 
   void ExpandState(StateID sid);
 
+  // this one takes the map an penalties into account
   Cost heur(StateID sid);
+
+  // this one computes jsut based on distance
+  Cost heur_internal(StateID sid);
+
+  // must be called after start and goal are set
+  void InitializeHeuristic();
 
   void BuildPlan();
 
@@ -52,7 +59,7 @@ struct xythetaPlannerImpl
   const xythetaEnvironment& env_;
   OpenList open_;
   StateTable table_;
-
+  
   bool goalChanged_;
   bool fromScratch_;
   
@@ -67,6 +74,14 @@ struct xythetaPlannerImpl
   unsigned int collisionChecks_;
 
   unsigned int searchNum_;
+
+  Cost ExpandStatesForHeur(StateID sid);
+
+  // heuristic pre-computation stuff
+  Cost costOutsideHeurMap_;
+  std::map<StateID, Cost> heurMap_;
+  typedef std::map<StateID, Cost>::iterator HeurMapIter;
+  
 
   // for debugging only
   FILE* debugExpPlotFile_;

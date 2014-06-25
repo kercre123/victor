@@ -363,6 +363,16 @@ bool xythetaEnvironment::IsInCollision(State_c c) const
   return false;
 }
 
+bool xythetaEnvironment::IsInSoftCollision(State s) const
+{
+  size_t endObs = obstacles_.size();
+  for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
+    if(obstacles_[obsIdx].first.Contains(GetX_mm(s.x), GetY_mm(s.y)))
+      return true;
+  }
+  return false;
+}
+
 void xythetaPlan::Append(const xythetaPlan& other)
 {
   if(actions_.empty()) {

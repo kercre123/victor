@@ -181,6 +181,99 @@ bool xythetaPlannerImpl::NeedsReplan() const
   return !env_.PlanIsSafe(plan_, default_maxDistanceToReUse_mm, 0, waste1, waste2);
 }
 
+void xythetaPlannerImpl::InitializeHeuristic()
+{
+  costOutsideHeurMap_ = 0.0f;
+  heurMap_.clear();
+
+  if(env_.IsInSoftCollision(goalID_)) {
+    costOutsideHeurMap_ = ExpandStatesForHeur(goalID_);
+    printf("expanded penalty states near goal. Cost outside map = %f\n",
+           costOutsideHeurMap_);
+  }
+
+  if(env_.IsInSoftCollision(startID_)) {
+    ExpandStatesForHeur(startID_);
+  }
+}
+
+Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
+{
+  // NOTE: this function assumes that forwards and backwards actions
+  // are equivalent. More specifically, it assumes that the min cost
+  // path from A to B is the same cost as the min cost path from B to
+  // A.
+
+  // TODO:(bn) put a limit on how many expansions to do here, in case
+  // the environment is pretty filled with obstacles
+
+  StateID curr(sid);
+  Cost h = heur_internal(curr) + costOutsideHeurMap_;
+
+  heurMap_.insert(std::make_pair(curr, h));
+
+  // use a separate open list to track expansions
+  OpenList q;
+  q.insert(curr, h);
+
+  unsigned int heurExpansions = 0;
+
+  while(!q.empty()) {
+    Cost c = q.topF();
+    curr = q.pop();
+
+    // TODO:(bn) opt: also bail out early if we reach the start / goal
+    // (whichever we didn't start from)
+
+    if(!env_.IsInSoftCollision(curr)) {
+      printf("INFO: expanded %u states for heuristic, reached free space with cost of %f and currently have %lu in the heurMap\n",
+             heurExpansions,
+             c,
+             heurMap_.size());
+      return c;
+    }
+
+    // this logic is almost identical to ExpandState
+    SuccessorIterator it = env_.GetSuccessors(curr, c);
+
+    if(!it.Done(env_))
+      it.Next(env_);
+
+    while(!it.Done(env_)) {
+
+      StateID nextID = it.Front().stateID;
+      float newC = it.Front().g;
+
+      // returns FLT_MAX if nextID isn't present
+      float oldFval = q.fVal(nextID);
+      if(oldFval > newC) {
+        Cost h = heur_internal(nextID) + costOutsideHeurMap_;
+
+        // it is possible that the start and goal obstacles actually
+        // overlap (or are the same obstacle), so there might already
+        // be an entry in heurMap_. We never want to increase the
+        // heuristic, so check first. Since we call this function for
+        // the goal fist, if anything already exist in the heurMap,
+        // don't update it)
+        if(heurMap_.count(nextID) == 0) {
+          heurMap_.insert(std::make_pair(nextID, h));
+        }
+
+        q.insert(nextID, newC);
+      }
+
+      it.Next(env_);
+    }
+
+    heurExpansions++;
+  }
+
+  printf("WARNING: somehow ran out of open list entries during ExpandStatesForHeur after %u exps!\n",
+         heurExpansions);
+  return 0.0;
+}
+
+
 bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
 {
   if(fromScratch_ || NeedsReplan()) {
@@ -190,6 +283,8 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
     printf("No replan needed!\n");
     return true;
   }
+
+  InitializeHeuristic();
 
   if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
     debugExpPlotFile_ = fopen("expanded.txt", "w");
@@ -315,8 +410,22 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
 
 Cost xythetaPlannerImpl::heur(StateID sid)
 {
+  HeurMapIter it = heurMap_.find(sid);
+  if(it != heurMap_.end()) {
+    return it->second;
+  }
+    
+  return heur_internal(sid) + costOutsideHeurMap_;
+}
+
+Cost xythetaPlannerImpl::heur_internal(StateID sid)
+{
   State s(sid);
-  // return euclidean distance in mm
+
+  // TODO:(bn) opt: consider squaring the entire damn thing so we
+  // don't have to sqrt here. I.e. heur() would return squared value,
+  // and then f = g^2 + h. First, do a profile and see if the sqrt is
+  // taking up any significant amount of time
 
   return env_.GetDistanceBetween(goal_c_, s) * env_.GetOneOverMaxVelocity();
 }

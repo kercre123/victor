@@ -16,7 +16,7 @@
 #include <stddef.h>
 #include "xythetaPlanner_definitions.h"
 
-#define DEFUALT_MAX_EXPANSIONS 1000000
+#define DEFUALT_MAX_EXPANSIONS 5000000
 
 namespace Anki
 {

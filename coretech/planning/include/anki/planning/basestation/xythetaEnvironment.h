@@ -41,6 +41,14 @@ class xythetaEnvironment;
 class State;
 class StateID;
 
+struct Point
+{
+  Point(StateXY x, StateXY y) : x(x), y(y) {}
+
+  StateXY x;
+  StateXY y;
+};
+
 class State
 {
   friend std::ostream& operator<<(std::ostream& out, const State& state);
@@ -320,6 +328,9 @@ public:
   // Returns true if there is a fatal collision at the given state
   bool IsInCollision(State s) const;
   bool IsInCollision(State_c c) const;
+
+  bool IsInSoftCollision(State s) const;
+  
 
   inline State_c State2State_c(const State& s) const;
   inline State_c StateID2State_c(StateID sid) const;
