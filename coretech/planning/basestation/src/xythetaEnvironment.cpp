@@ -31,6 +31,8 @@ namespace Planning {
 #define LATTICE_PLANNER_ROT_ACCEL 100
 #define LATTICE_PLANNER_ROT_DECEL 100
 
+#define REPLAN_PENALTY_BUFFER 0.5
+
 State::State(StateID sid)
   :
   x(xythetaEnvironment::GetXFromStateID(sid)),
@@ -146,7 +148,7 @@ bool SuccessorIterator::Done(const xythetaEnvironment& env) const
   return nextAction_ > env.allMotionPrimitives_[start_.theta].size();
 }
 
-bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions) const
+Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions) const
 {
   State curr(stateID);
   float start_x = GetX_mm(curr.x);
@@ -156,19 +158,24 @@ bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, b
   assert(curr.theta < allMotionPrimitives_.size());
 
   if(action >= allMotionPrimitives_[curr.theta].size())
-    return false;
+    return FATAL_OBSTACLE_COST;
 
   const MotionPrimitive* prim = & allMotionPrimitives_[curr.theta][action];
+
+  Cost penalty = 0.0;
 
   if(checkCollisions) {
     size_t endObs = obstacles_.size();
     size_t endPoints = prim->intermediatePositions.size();
     for(size_t point=0; point < endPoints; ++point) {
       for(size_t obs=0; obs < endObs; ++obs) {
-        float x = start_x + prim->intermediatePositions[point].x_mm;
-        float y = start_y + prim->intermediatePositions[point].y_mm;
-        if(obstacles_[obs].first.Contains(x, y) && obstacles_[obs].second >= MAX_OBSTACLE_COST) {
-          return false;
+        float x = start_x + prim->intermediatePositions[point].position.x_mm;
+        float y = start_y + prim->intermediatePositions[point].position.y_mm;
+        if(obstacles_[obs].first.Contains(x, y)) {
+          penalty += obstacles_[obs].second;
+          if( penalty >= MAX_OBSTACLE_COST) {
+            return penalty;
+          }
         }
       }
     }
@@ -180,7 +187,7 @@ bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, b
   result.theta = prim->endStateOffset.theta;
 
   stateID = result.GetStateID();
-  return true;
+  return penalty;
 }
 
 
@@ -221,21 +228,32 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
   lastSafeState = State2State_c(curr);
   validPlan.start_ = curr;
 
+  float totalPenalty = 0.0;
+
   // now go through the rest of the plan, checking for collisions at each step
   for(size_t i = currentPathIndex; i < numActions; ++i) {
 
     // check for collisions and possibly update curr
-    if(!ApplyAction(plan.actions_[i], curr, true)) {
-      printf("Collision along plan action %lu (starting from %d)\n", i, currentPathIndex);
+    Cost actionPenalty = ApplyAction(plan.actions_[i], curr, true);
+    assert(i < plan.penalties_.size());
+
+    if(actionPenalty > plan.penalties_[i] + REPLAN_PENALTY_BUFFER) {
+      printf("Collision along plan action %lu (starting from %d) Penalty increased from %f to %f\n",
+             i,
+             currentPathIndex,
+             plan.penalties_[i],
+             actionPenalty);
       // there was a collision trying to follow action i, so we are done
       return false;
     }
+
+    totalPenalty += actionPenalty;
 
     // no collision. If we are still within
     // maxDistancetoFollowOldPlan_mm, update the valid old plan
     if(useOldPlan) {
 
-      validPlan.Push(plan.actions_[i]);
+      validPlan.Push(plan.actions_[i], plan.penalties_[i]);
       lastSafeState = State2State_c(State(curr));
 
       // TODO:(bn) this is kind of wrong. It's using euclidean
@@ -269,15 +287,17 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
 
     nextSucc_.g = 0;
 
+    Cost penalty = 0.0f;
+    // TODO:(bn) optimization: iterate through obstacle in outer loop? same obstacle is likely to collide next time
     // iterate first through action, starting at the end because this
     // is more likely to be a collision
     for(long pointIdx = endPoints-1; pointIdx >= 0 && !collision; --pointIdx) {
       for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
         float x,y;
-        x = start_c_.x_mm + prim->intermediatePositions[pointIdx].x_mm;
-        y = start_c_.y_mm + prim->intermediatePositions[pointIdx].y_mm;
+        x = start_c_.x_mm + prim->intermediatePositions[pointIdx].position.x_mm;
+        y = start_c_.y_mm + prim->intermediatePositions[pointIdx].position.y_mm;
         if(env.obstacles_[obsIdx].first.Contains(x, y)) {
-          if(env.obstacles_[obsIdx].second >= MAX_OBSTACLE_COST) {
+        if(env.obstacles_[obsIdx].second >= MAX_OBSTACLE_COST) {
             collision = true;
             break;
           }
@@ -286,11 +306,24 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
 
             // TODO:(bn) this adds cost per sample, but it should probably be per time
             // TODO:(bn) should be per unit length (or time), not per sample
-            nextSucc_.g += env.obstacles_[obsIdx].second;
+
+            // TEMP: add a length to each intermediate positions that
+            // tells you how far its been since the last one, and
+            // multiple oneOverLengh by the obstacle penalty here
+            penalty += env.obstacles_[obsIdx].second *
+              prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition;
+
+            assert(!isinf(penalty));
+            assert(!isnan(penalty));
           }
         }
       }
     }
+
+    assert(!isinf(penalty));
+    assert(!isnan(penalty));
+
+    nextSucc_.g += penalty;
 
     if(!collision) {
       State result(start_);
@@ -300,6 +333,11 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
 
       nextSucc_.stateID = result.GetStateID();
       nextSucc_.g += startG_ + prim->cost;
+
+      assert(!isinf(nextSucc_.g));
+      assert(!isnan(nextSucc_.g));
+
+      nextSucc_.penalty = penalty;
       nextSucc_.actionID = nextAction_;
       break;
     }
@@ -319,7 +357,7 @@ bool xythetaEnvironment::IsInCollision(State_c c) const
 {  
   size_t endObs = obstacles_.size();
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstacles_[obsIdx].first.Contains(c.x_mm, c.y_mm))
+    if(obstacles_[obsIdx].first.Contains(c.x_mm, c.y_mm) && obstacles_[obsIdx].second >= MAX_OBSTACLE_COST)
       return true;
   }
   return false;
@@ -332,6 +370,8 @@ void xythetaPlan::Append(const xythetaPlan& other)
   }
 
   actions_.insert(actions_.end(), other.actions_.begin(), other.actions_.end());
+  penalties_.insert(penalties_.end(), other.penalties_.begin(), other.penalties_.end());
+  assert(actions_.size() == penalties_.size());
 }
 
 ActionType::ActionType()
@@ -538,10 +578,23 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     }
 
     State_c old(0, 0, 0);
-    if(!intermediatePositions.empty())
-      old = intermediatePositions.back();
-    
-    intermediatePositions.push_back(s);
+    float penalty = 0.0;
+
+    if(!intermediatePositions.empty()) {
+      old = intermediatePositions.back().position;
+
+      float dist = env.GetDistanceBetween(old, s);
+
+      // TODO:(bn) use actual time / cost computation!
+      float cost = dist;
+
+      Radians deltaTheta = Radians(s.theta) - Radians(old.theta);
+      cost += std::abs(deltaTheta.ToFloat()) * env.GetHalfWheelBase_mm() * env.GetOneOverMaxVelocity();
+
+      penalty = 1.0 / cost;
+    }
+
+    intermediatePositions.emplace_back(s, penalty);
   }
 
   if(config.isMember("extra_cost_factor")) {
@@ -829,10 +882,11 @@ void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
   cout<<"plan start: "<<plan.start_<<endl;
 
   for(size_t i=0; i<plan.actions_.size(); ++i) {
-    printf("%2lu: (%f, %f, %f [%d]) --> %s\n",
+    printf("%2lu: (%f, %f, %f [%d]) --> %s (penalty = %f)\n",
            i,
            curr_c.x_mm, curr_c.y_mm, curr_c.theta, currID.theta, 
-           actionTypes_[plan.actions_[i]].GetName().c_str());
+           actionTypes_[plan.actions_[i]].GetName().c_str(),
+           plan.penalties_[i]);
     ApplyAction(plan.actions_[i], currID, false);
     curr_c = State2State_c(State(currID));
   }
@@ -889,12 +943,12 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
         cout<<endl;
     }
 
-    for(const auto& position : prim.intermediatePositions) {
+    for(const auto& intermediate : prim.intermediatePositions) {
       // TODO:(bn) get squared distance
-      float dist = GetDistanceBetween(target, position);
+      float dist = GetDistanceBetween(target, intermediate.position);
 
       if(debug)
-        cout<<planIdx<<": "<<"position "<<position<<" --> "<<target<<" = "<<dist;
+        cout<<planIdx<<": "<<"position "<<intermediate.position<<" --> "<<target<<" = "<<dist;
 
       if(dist < closest) {
         closest = dist;
@@ -936,9 +990,9 @@ void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<St
 
       const MotionPrimitive* prim = &allMotionPrimitives_[currTheta][plan.actions_[i]];
       for(size_t j=0; j<prim->intermediatePositions.size(); ++j) {
-        float x = curr_c.x_mm + prim->intermediatePositions[j].x_mm;
-        float y = curr_c.y_mm + prim->intermediatePositions[j].y_mm;
-        float theta = prim->intermediatePositions[j].theta;
+        float x = curr_c.x_mm + prim->intermediatePositions[j].position.x_mm;
+        float y = curr_c.y_mm + prim->intermediatePositions[j].position.y_mm;
+        float theta = prim->intermediatePositions[j].position.theta;
 
         // printf("  (%+5f, %+5f, %+5f) -> (%+5f, %+5f, %+5f)\n",
         //            prim->intermediatePositions[j].x_mm,

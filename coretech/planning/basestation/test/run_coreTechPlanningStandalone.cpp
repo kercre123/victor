@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
       cin>>choice;
 
       if(choice >= 0 && results.count(choice) > 0) {
-        plan.Push(choice);
+        plan.Push(choice, 0.0);
         writePath("path.txt", env, plan);
 
         curr = State(results[choice]);

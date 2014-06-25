@@ -199,10 +199,11 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
 
   // push starting state
   table_.emplace(startID, 
-                     open_.insert(startID, 0.0),
-                     startID,
-                     0, // action doesn't matter
-                     0.0);
+                 open_.insert(startID, 0.0),
+                 startID,
+                 0, // action doesn't matter
+                 0.0,
+                 0.0);
 
   bool foundGoal = false;
   while(!open_.empty()) {
@@ -287,10 +288,11 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
       Cost h = heur(nextID);
       Cost f = newG + h;
       table_.emplace(nextID,
-                         open_.insert(nextID, f),
-                         currID,
-                         it.Front().actionID,
-                         newG);
+                     open_.insert(nextID, f),
+                     currID,
+                     it.Front().actionID,
+                     it.Front().penalty,
+                     newG);
     }
     else if(!oldEntry->second.IsClosed(searchNum_)) {
       // only update if g value is lower
@@ -330,11 +332,12 @@ void xythetaPlannerImpl::BuildPlan()
 
     assert(it != table_.end());
 
-    plan_.Push(it->second.backpointerAction_);
+    plan_.Push(it->second.backpointerAction_, it->second.penaltyIntoState_);
     curr = it->second.backpointer_;
   }
 
   std::reverse(plan_.actions_.begin(), plan_.actions_.end());
+  std::reverse(plan_.penalties_.begin(), plan_.penalties_.end());
 
   plan_.start_ = start_;
 

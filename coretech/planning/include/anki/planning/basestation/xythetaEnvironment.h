@@ -97,6 +97,18 @@ public:
   float theta;
 };
 
+struct IntermediatePosition
+{
+  IntermediatePosition(State_c s, float d)
+    : position(s)
+    , oneOverDistanceFromLastPosition(d)
+    {
+    }
+
+  State_c position;
+  float oneOverDistanceFromLastPosition;
+};
+
 class MotionPrimitive
 {
 public:
@@ -126,7 +138,7 @@ public:
 
   // vector containing continuous relative offsets for positions in
   // between (0,0,startTheta) and (end)
-  std::vector<State_c> intermediatePositions;
+  std::vector<IntermediatePosition> intermediatePositions;
 private:
 
   Path pathSegments_;
@@ -141,8 +153,11 @@ public:
   // The action thats takes you to state
   ActionID actionID;
 
-  // Values associated with state
+  // Value associated with state
   Cost g;
+
+  // Penalty paid to transition into state (not counting normal action cost)
+  Cost penalty;
 };
 
 
@@ -177,13 +192,25 @@ class xythetaPlan
 public:
   State start_;
   std::vector<ActionID> actions_;
+  
+  // same size as actions, stores the penalty expected for each
+  // action. This allows replanning if any of these penalties
+  // increase. The sum of this should be the penalty of the entire
+  // plan
+  std::vector<Cost> penalties_;
 
   // add the given plan to the end of this plan
   void Append(const xythetaPlan& other);
 
   size_t Size() const {return actions_.size();}
-  void Push(ActionID action) {actions_.push_back(action);}
-  void Clear() {actions_.clear();}
+  void Push(ActionID action, Cost penalty) {
+    actions_.push_back(action);
+    penalties_.push_back(penalty);
+  }
+  void Clear() {
+    actions_.clear();
+    penalties_.clear();
+  }
 };
 
 // This class contains generic information for a type of action
@@ -245,11 +272,11 @@ public:
   // this one if you want to check each action
   SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;
 
-  // This function tries to apply the given action to the state. If it
-  // is a valid, collision-free action, it updates state to be the
-  // successor and returns true, otherwise it returns false and does
-  // not change state
-  bool ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions = true) const;
+  // This function tries to apply the given action to the state. It
+  // returns the penalty of the path (i.e. no cost for actions, just
+  // obstacle penalties). If the action finishes without a fatal
+  // penalty, stateID will be updated to the successor state
+  Cost ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions = true) const;
 
   // Returns the state at the end of the given plan (e.g. following
   // along the plans start and executing every action). No collision
@@ -264,10 +291,11 @@ public:
   // this point
   size_t FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state, bool debug = false) const;
 
-  // Returns true if the plan is safe and complete, false
-  // otherwise. This should always return true immediately after
-  // Replan returns true, but if the environment is updated it can be
-  // useful to re-check the plan.
+  // Returns true if the plan is safe and complete, false otherwise,
+  // including if the penalty increased by too much (see
+  // REPLAN_PENALTY_BUFFER in the cpp file). This should always return
+  // true immediately after Replan returns true, but if the
+  // environment is updated it can be useful to re-check the plan.
   // 
   // second argument is how much of the path has already been
   // executed. Note that this is different form the robot's
@@ -289,7 +317,7 @@ public:
   // returns the raw underlying motion primitive. Note that it is centered at (0,0)
   const MotionPrimitive& GetRawMotionPrimitive(StateTheta theta, ActionID action) const;
 
-  // Returns true if there is a collision at the given state (hard or soft collision with any penalty)
+  // Returns true if there is a fatal collision at the given state
   bool IsInCollision(State s) const;
   bool IsInCollision(State_c c) const;
 

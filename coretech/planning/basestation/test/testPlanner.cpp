@@ -233,7 +233,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
 
   StateID currID = oldPlan.start_.GetStateID();
   for(const auto& action : oldPlan.actions_) {
-    ASSERT_TRUE(env.ApplyAction(action, currID, false)) << "couldn't apply action!";
+    ASSERT_LT(env.ApplyAction(action, currID, false), 100.0) << "action penalty too high!";
   }
 
   ASSERT_EQ(currID, env.State_c2State(lastSafeState).GetStateID()) << "end of validOldPlan should match lastSafeState!";
@@ -264,7 +264,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_straight)
   ASSERT_EQ(env.GetRawMotionPrimitive(0, 0).endStateOffset.y, 0) << "invalid action";
 
   for(int i=0; i<10; ++i) {
-    planner._impl->plan_.Push(0);
+    planner._impl->plan_.Push(0, 0.0);
   }
 
   // plan now goes form (0,0) to (10,0), any point in between should work
@@ -303,18 +303,18 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
 
   // bunch of random actions, no turn in place
   planner._impl->plan_.start_ = State(0, 0, 6);
-  planner._impl->plan_.Push(0);
-  planner._impl->plan_.Push(2);
-  planner._impl->plan_.Push(2);
-  planner._impl->plan_.Push(0);
-  planner._impl->plan_.Push(1);
-  planner._impl->plan_.Push(2);
-  planner._impl->plan_.Push(2);
-  planner._impl->plan_.Push(0);
-  planner._impl->plan_.Push(1);
-  planner._impl->plan_.Push(3);
-  planner._impl->plan_.Push(3);
-  planner._impl->plan_.Push(0);
+  planner._impl->plan_.Push(0, 0.0);
+  planner._impl->plan_.Push(2, 0.0);
+  planner._impl->plan_.Push(2, 0.0);
+  planner._impl->plan_.Push(0, 0.0);
+  planner._impl->plan_.Push(1, 0.0);
+  planner._impl->plan_.Push(2, 0.0);
+  planner._impl->plan_.Push(2, 0.0);
+  planner._impl->plan_.Push(0, 0.0);
+  planner._impl->plan_.Push(1, 0.0);
+  planner._impl->plan_.Push(3, 0.0);
+  planner._impl->plan_.Push(3, 0.0);
+  planner._impl->plan_.Push(0, 0.0);
 
   // go through each intermediate point, perturb it a bit, and make sure it returns correctly
   State curr = State(0,0,6);
@@ -329,9 +329,9 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
 
     // check everything except the last one (which overlaps with the next segment)
     for(size_t intermediateIdx = 0; intermediateIdx < prim.intermediatePositions.size() - 1; intermediateIdx++) {
-      State_c pose(prim.intermediatePositions[intermediateIdx].x_mm + env.GetX_mm(curr.x),
-                   prim.intermediatePositions[intermediateIdx].y_mm + env.GetX_mm(curr.y),
-                   prim.intermediatePositions[intermediateIdx].theta);
+      State_c pose(prim.intermediatePositions[intermediateIdx].position.x_mm + env.GetX_mm(curr.x),
+                   prim.intermediatePositions[intermediateIdx].position.y_mm + env.GetX_mm(curr.y),
+                   prim.intermediatePositions[intermediateIdx].position.theta);
 
       ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose)) << "exact intermediate state "<<intermediateIdx<<" wrong";
 
