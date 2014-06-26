@@ -567,6 +567,8 @@ namespace Anki {
           robot_->GetPathPlanner()->RemoveIgnoreType(Block::DICE_BLOCK_TYPE);
           robot_->DriveWheels(8.f, -8.f);
           robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 1, 1);
+          explorationStartAngle_ = robot_->GetPose().get_rotationAngle<'Z'>();
+          isTurning_ = true;
           state_ = EXPLORING;
           break;
         }
@@ -590,6 +592,17 @@ namespace Anki {
             wasCarryingBlockAtDockingStart_ = robot_->IsCarryingBlock();
             
             PRINT_INFO("STARTING DOCKING\n");
+          }
+          
+          // Repeat turn-stop behavior for more reliable block detection
+          Radians currAngle = robot_->GetPose().get_rotationAngle<'Z'>();
+          if (isTurning_ && (std::abs((explorationStartAngle_ - currAngle).ToFloat()) > DEG_TO_RAD(40))) {
+            PRINT_INFO("Exploration - pause turning\n");
+            robot_->DriveWheels(0.f,0.f);
+            isTurning_ = false;
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+          } else if (!isTurning_ && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+            state_ = START_EXPLORING_TURN;
           }
           
           break;

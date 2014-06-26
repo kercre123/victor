@@ -144,6 +144,8 @@ namespace Anki {
       ObjectType_t blockToPlaceOn_;
       TimeStamp_t  diceDeletionTime_;
       bool wasCarryingBlockAtDockingStart_;
+      Radians explorationStartAngle_;
+      bool isTurning_;
       
     }; // class BehaviorManager
     
