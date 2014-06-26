@@ -240,19 +240,12 @@ namespace Anki {
           
           // Visualize path if robot has just started traversing it.
           // Clear the path when it has stopped.
-          if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
-            VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
-            wasTraversingPath = true;
-          }
-          else if ((wasTraversingPath && !IsTraversingPath()) ||
-                     _pose.IsSameAs(_goalPose, _goalDistanceThreshold, _goalAngleThreshold))
+          if ((wasTraversingPath && !IsTraversingPath()) ||
+              _pose.IsSameAs(_goalPose, _goalDistanceThreshold, _goalAngleThreshold))
           {
             PRINT_INFO("Robot %d finished following path.\n", _ID);
             ClearPath(); // clear path and indicate that we are not replanning
-            wasTraversingPath = false;
             SetState(_nextState);
-            VizManager::getInstance()->EraseAllPlannerObstacles(true);
-            VizManager::getInstance()->EraseAllPlannerObstacles(false);
           }
           break;
         } // case FOLLOWING_PATH
@@ -364,6 +357,8 @@ namespace Anki {
         } else if (wasTraversingPath && !IsTraversingPath()){
           ClearPath(); // clear path and indicate that we are not replanning
           VizManager::getInstance()->ErasePath(_ID);
+          VizManager::getInstance()->EraseAllPlannerObstacles(true);
+          VizManager::getInstance()->EraseAllPlannerObstacles(false);
           wasTraversingPath = false;
         }
       }
@@ -552,6 +547,13 @@ namespace Anki {
       return lastResult;
     }
 
+    void Robot::ExecuteTestPath()
+    {
+      Planning::Path p;
+      _longPathPlanner->GetTestPath(GetPose(), p);
+      _path = p;
+      ExecutePath(p);
+    }
     
     void Robot::AbortCurrentPath()
     {

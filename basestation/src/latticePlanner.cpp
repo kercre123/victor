@@ -345,5 +345,24 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   return PLAN_NOT_NEEDED;
 }
 
+void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path)
+{
+  State_c currentRobotState(startPose.get_translation().x(),
+                            startPose.get_translation().y(),
+                            startPose.get_rotationAngle<'Z'>().ToFloat());
+
+  impl_->planner_.SetStart(currentRobotState);
+
+  xythetaPlan plan;
+  impl_->planner_.GetTestPlan(plan);
+  printf("test plan:\n");
+  impl_->env_.PrintPlan(plan);
+
+  path.Clear();
+  impl_->env_.AppendToPath(plan, path);
+  printf("test path:\n");
+  path.PrintPath();
+}
+
 }
 }

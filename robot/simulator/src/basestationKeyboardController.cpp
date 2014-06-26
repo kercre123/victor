@@ -126,6 +126,7 @@ namespace Anki {
         printf("       Abort current path:  q\n");
         printf("  Update controller gains:  k\n");
         printf("               Test modes:  Alt + Testmode#\n");
+        printf("         Follow test plan:  t\n");
         printf("               Print help:  ?\n");
         printf("\n");
       }
@@ -134,7 +135,7 @@ namespace Anki {
       void BSKeyboardController::ProcessKeystroke()
       {
         
-        //Why do some of those not match ASCII codes?
+        // these are the ascii codes for the capital letter
         //Numbers, spacebar etc. work, letters are different, why?
         //a, z, s, x, Space
         const s32 CKEY_CANCEL_PATH = 81;  // q
@@ -159,6 +160,8 @@ namespace Anki {
         const s32 CKEY_START_DICE_DEMO= 74; // 'j' for "June"
         const s32 CKEY_SET_GAINS   = 75;  // 'k'
         const s32 CKEY_SET_VISIONSYSTEM_PARAMS = 86;  // v
+
+        const s32 CKEY_TEST_PLAN = (s32)'T';
 
         // Get robot
         robot_ = NULL;
@@ -363,6 +366,13 @@ namespace Anki {
               }
               break;
             }
+
+            case CKEY_TEST_PLAN:
+            {
+              robot_->ExecuteTestPath();
+              break;
+            }
+
             case CKEY_CYCLE_BLOCK_SELECT:
             {
               behaviorMgr_->SelectNextBlockOfInterest();
