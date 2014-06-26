@@ -403,7 +403,7 @@ namespace Anki {
         }
       }
 
-      void DownsampleAndSendImage(Array<u8> &img)
+      void DownsampleAndSendImage(const Array<u8> &img)
       {
         // Only downsample if normal capture res is QVGA
         if (imageSendMode_ != ISM_OFF && captureResolution_ == Vision::CAMERA_RES_QVGA) {

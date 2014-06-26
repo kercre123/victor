@@ -289,7 +289,9 @@ namespace Anki {
       if (msg.resolution != Vision::CAMERA_RES_QVGA &&
           msg.resolution != Vision::CAMERA_RES_QQVGA &&
           msg.resolution != Vision::CAMERA_RES_QQQVGA &&
-          msg.resolution != Vision::CAMERA_RES_QQQQVGA) {
+          msg.resolution != Vision::CAMERA_RES_QQQQVGA &&
+          msg.resolution != Vision::CAMERA_RES_VERIFICATION_SNAPSHOT
+          ) {
         return RESULT_FAIL;
       }
       
@@ -310,7 +312,7 @@ namespace Anki {
       if (dataSize >= totalImgSize) {
 #if(0)
         char imgCaptureFilename[64];
-        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "robot%d_img%d.pgm", robot->get_ID(), imgID);
+        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "robot%d_img%d.pgm", robot->GetID(), imgID);
         PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
         Vision::WritePGM(imgCaptureFilename, data, width, height);
 #endif
