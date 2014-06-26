@@ -211,7 +211,7 @@ public:
   void Append(const xythetaPlan& other);
 
   size_t Size() const {return actions_.size();}
-  void Push(ActionID action, Cost penalty) {
+  void Push(ActionID action, Cost penalty = 0.0) {
     actions_.push_back(action);
     penalties_.push_back(penalty);
   }

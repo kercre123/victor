@@ -52,6 +52,8 @@ struct xythetaPlannerImpl
   // checks if we need to replan from scratch
   bool NeedsReplan() const;
 
+  void GetTestPlan(xythetaPlan& plan);
+
   StateID goalID_;
   State_c goal_c_;
   State start_;
