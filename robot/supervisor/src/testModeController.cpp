@@ -206,7 +206,7 @@ namespace Anki {
         PRINT("TestMode reset\n");
         
         // Stop animations that might be playing
-        AnimationController::PlayAnimation(ANIM_IDLE);
+        AnimationController::PlayAnimation(ANIM_IDLE,0);
         
         // Stop wheels and vision system
         WheelController::Enable();
@@ -721,7 +721,7 @@ namespace Anki {
       {
         PRINT("\n==== Starting AnimationTest =====\n");
         AT_currAnim = ANIM_HEAD_NOD;
-        AnimationController::PlayAnimation(AT_currAnim);
+        AnimationController::PlayAnimation(AT_currAnim, 0);
         ticCnt_ = 0;
         return RESULT_OK;
       }
@@ -737,7 +737,7 @@ namespace Anki {
           }
           
           PRINT("Playing animation %d\n", AT_currAnim);
-          AnimationController::PlayAnimation(AT_currAnim);
+          AnimationController::PlayAnimation(AT_currAnim, 0);
         }
         
         return RESULT_OK;

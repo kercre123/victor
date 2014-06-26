@@ -331,6 +331,7 @@ namespace Anki {
             CoreTechPrint("Please move first dice away.\n");
             world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
             diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+            robot_->SendPlayAnimation(ANIM_HEAD_NOD, 1);
           }
           break;
         }
@@ -691,7 +692,7 @@ namespace Anki {
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
             robot_->SendPlayAnimation(ANIM_IDLE);
-            robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 1, 1);
+            robot_->MoveHeadToAngle(DEG_TO_RAD(-10), 1, 1);
             StartMode(BM_June2014DiceDemo);
           }
           break;

@@ -229,7 +229,8 @@ namespace Anki {
       Result SendSetVisionSystemParams(VisionSystemParams_t p);
       
       // Play animation
-      Result SendPlayAnimation(AnimationID_t id);      
+      // If numLoops == 0, animation repeats forever.
+      Result SendPlayAnimation(const AnimationID_t id, const u32 numLoops = 0);
       
       // =========== Pose history =============
       // Returns ref to robot's pose history

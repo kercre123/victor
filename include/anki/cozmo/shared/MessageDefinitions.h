@@ -336,5 +336,6 @@ END_MESSAGE_DEFINITION(SetVisionSystemParams)
 
 // PlayAnimation
 START_MESSAGE_DEFINITION(PlayAnimation, 1)
+ADD_MESSAGE_MEMBER(u32, numLoops)
 ADD_MESSAGE_MEMBER(u8, animationID)
 END_MESSAGE_DEFINITION(PlayAnimation)

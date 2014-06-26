@@ -25,7 +25,10 @@ namespace Anki {
       
       void Update();
       
-      void PlayAnimation(AnimationID_t anim);
+      // Plays animation numLoops times.
+      // If numLoops == 0, then repeats until Stop() is called.
+      void PlayAnimation(const AnimationID_t anim, const u32 numLoops);
+      void Stop();
       
     } // namespace AnimationController
   } // namespcae Cozmo

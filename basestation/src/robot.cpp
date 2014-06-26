@@ -1098,10 +1098,11 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID,m);
     }
 
-    Result Robot::SendPlayAnimation(AnimationID_t id)
+    Result Robot::SendPlayAnimation(const AnimationID_t id, const u32 numLoops)
     {
       MessagePlayAnimation m;
       m.animationID = id;
+      m.numLoops = numLoops;
       return _msgHandler->SendMessage(_ID, m);
     }
     
