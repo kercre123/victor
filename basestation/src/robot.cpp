@@ -31,6 +31,7 @@
 #include "vizManager.h"
 
 #define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
+#define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
 
 namespace Anki {
   namespace Cozmo {
@@ -263,15 +264,38 @@ namespace Anki {
             // ...
             //const Point2f& imgCorners = dockMarker_->GetImageCorners().computeCentroid();
             // For now, just docking to the marker no matter where it is in the image.
-            
-            // Get dock action
             Block* dockBlock = _world->GetBlockByID(_dockBlockID);
+            // Get dock action
             if(dockBlock == nullptr) {
               PRINT_NAMED_ERROR("Robot.Update.DockBlockGone", "Docking block with ID=%d no longer exists in the world. Returning to IDLE state.\n", _dockBlockID);
               SetState(IDLE);
               return;
             }
-            
+
+            // first, re-compute the pre-dock pose and make sure we
+            // are close enough to the closest one
+            std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
+            dockBlock->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
+
+            float closestDist2 = FLT_MAX;
+            for(auto const& preDockPair : preDockPoseMarkerPairs) {
+              float dist2 = std::pow(preDockPair.first.get_translation().x() - GetPose().get_translation().x(), 2)
+                + std::pow(preDockPair.first.get_translation().y() - GetPose().get_translation().y(), 2);
+              if(dist2 < closestDist2)
+                closestDist2 = dist2;
+            }
+
+            float distanceToGoal = sqrtf(closestDist2);
+            PRINT_NAMED_INFO("Robot.Update.GoalTolerance", "robot is within %f of the nearest pre-dock pose\n",
+                             distanceToGoal);
+
+            if(distanceToGoal > MAX_DISTANCE_TO_PREDOCK_POSE) {
+              PRINT_NAMED_INFO("Robot.Update.ReDock", "robot is too far from pose, re-docking\n");
+              ExecuteDockingSequence(_dockBlockID);
+              break;
+            }
+
+                        
             const f32 dockBlockHeight = dockBlock->GetPose().get_translation().z();
             _dockAction = DA_PICKUP_LOW;
             if (dockBlockHeight > dockBlock->GetSize().z()) {
