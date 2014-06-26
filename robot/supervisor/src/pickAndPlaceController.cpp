@@ -36,9 +36,9 @@ namespace Anki {
         const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 18.f;
         const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
         #else
-        const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 26.f;
+        const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 25.f;
         const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 19.5f;
-        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 18.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
         #endif
         
 

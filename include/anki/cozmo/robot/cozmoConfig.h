@@ -74,16 +74,22 @@ namespace Anki {
     
     const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 29.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
     
-    const f32 ROBOT_BOUNDING_X       = 88.f; // including gripper fingers
+    // Amount to recede the front boundary of the robot when we don't want to include the lift.
+    // TEMP: Applied by default to robot bounding box params below mostly for demo purposes
+    //       so we don't prematurely delete blocks, but we may eventually want to apply it
+    //       conditionally (e.g. when carrying a block)
+    const f32 ROBOT_BOUNDING_X_LIFT  = 10.f;
+    
+    const f32 ROBOT_BOUNDING_X       = 88.f - ROBOT_BOUNDING_X_LIFT; // including gripper fingers
     const f32 ROBOT_BOUNDING_Y       = 54.2f;
-    const f32 ROBOT_BOUNDING_X_FRONT = 32.1f; // distance from robot origin to front of bounding box
+    const f32 ROBOT_BOUNDING_X_FRONT = 32.1f - ROBOT_BOUNDING_X_LIFT; // distance from robot origin to front of bounding box
     const f32 ROBOT_BOUNDING_Z       = 67.7f; // from ground to top of head
     const f32 ROBOT_BOUNDING_RADIUS  = sqrtf((0.25f*ROBOT_BOUNDING_X*ROBOT_BOUNDING_X) +
                                              (0.25f*ROBOT_BOUNDING_Y*ROBOT_BOUNDING_Y));
     
     const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};  // relative to neck joint
     
-    const f32 PREDOCK_DISTANCE_MM = ROBOT_BOUNDING_RADIUS + 15.f;
+    const f32 PREDOCK_DISTANCE_MM = 100;  // ROBOT_BOUNDING_RADIUS + 15.f;
     
     // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
     const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
