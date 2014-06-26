@@ -667,6 +667,7 @@ namespace Anki {
             // Start nodding
             robot_->SendPlayAnimation(ANIM_HEAD_NOD);
             state_ = HAPPY_NODDING;
+            PRINT_INFO("NODDING_HEAD\n");
             
             // Compute time to stop nodding
             waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
@@ -677,6 +678,7 @@ namespace Anki {
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
             robot_->SendPlayAnimation(ANIM_IDLE);
+            robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 1, 1);
             StartMode(BM_June2014DiceDemo);
           }
           break;
