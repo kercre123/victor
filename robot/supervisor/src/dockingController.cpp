@@ -15,6 +15,10 @@
 #include "pathFollower.h"
 #include "messages.h"
 
+// TEMP: Cozmo #2 seems to always dock to the right of the marker by a few mm.
+// There could be any number of factors contributing to this so for now we just adjust the y-offset of the
+// docking error signal by this much.
+#define COZMO_NO2_CAM_HACK 2.f
 
 #define DEBUG_DOCK_CONTROLLER 0
 
@@ -66,7 +70,7 @@ namespace Anki {
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
         
         // Lateral tolerance at dock pose
-        const u16 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = 2;
+        const u16 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = 1;
         
         // Code of the VisionMarker we are trying to dock to
         Vision::MarkerType dockMarker_;
@@ -196,7 +200,7 @@ namespace Anki {
                                                   tempPoint);
               
               dockMsg.x_distErr = tempPoint.x;
-              dockMsg.y_horErr  = tempPoint.y;
+              dockMsg.y_horErr  = tempPoint.y + COZMO_NO2_CAM_HACK;
               dockMsg.z_height  = tempPoint.z;
             }
             
