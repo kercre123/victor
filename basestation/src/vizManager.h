@@ -98,6 +98,7 @@ namespace Anki {
       
       void EraseRobot(const u32 robotID);
       void EraseCuboid(const u32 blockID);
+      void EraseAllCuboids();
       void ErasePreDockPose(const u32 preDockPoseID);
       
       

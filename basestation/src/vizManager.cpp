@@ -171,6 +171,11 @@ namespace Anki {
       CORETECH_ASSERT(blockID < VizObjectMaxID[VIZ_OBJECT_CUBOID]);
       EraseVizObject(VizObjectMaxID[VIZ_OBJECT_CUBOID] + blockID);
     }
+
+    void VizManager::EraseAllCuboids()
+    {
+      EraseVizObjectType(VIZ_OBJECT_CUBOID);
+    }
     
     void VizManager::ErasePreDockPose(const u32 preDockPoseID)
     {

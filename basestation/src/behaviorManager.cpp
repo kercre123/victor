@@ -693,6 +693,7 @@ namespace Anki {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
             robot_->SendPlayAnimation(ANIM_IDLE);
             robot_->MoveHeadToAngle(DEG_TO_RAD(-10), 1, 1);
+            world_->ClearAllExistingBlocks();
             StartMode(BM_June2014DiceDemo);
           }
           break;

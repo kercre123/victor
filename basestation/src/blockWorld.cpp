@@ -877,6 +877,7 @@ namespace Anki
       existingBlocks_.clear();
       globalIDCounter = 0;
       didBlocksChange_ = true;
+      VizManager::getInstance()->EraseAllCuboids();
     }
     
     void BlockWorld::ClearBlocksByType(const ObjectType_t type)
