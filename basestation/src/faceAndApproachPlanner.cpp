@@ -89,7 +89,7 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
     intermediateTargetAngle = atan2(_targetVec.y() - startVec.y(), _targetVec.x() - startVec.x());
   }
 
-  float deltaTheta1 = _finalTargetAngle - intermediateTargetAngle.ToFloat();
+  float deltaTheta1 = -(intermediateTargetAngle - _finalTargetAngle).ToFloat();
   if(std::abs(deltaTheta1) > FACE_AND_APPROACH_THETA_THRESHOLD) {
     printf("FaceAndApproachPlanner: doing final turn because delta theta of %f > %f\n",
            deltaTheta1,
