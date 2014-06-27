@@ -467,6 +467,7 @@ namespace Anki {
                   }
                   
                   SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+                  waitUntilTime_ = 0;
                 
                 } else {
                   
@@ -583,7 +584,7 @@ namespace Anki {
           PRINT_INFO("Beginning exploring\n");
           robot_->GetPathPlanner()->RemoveIgnoreType(Block::DICE_BLOCK_TYPE);
           robot_->DriveWheels(8.f, -8.f);
-          robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 1, 1);
+          robot_->MoveHeadToAngle(DEG_TO_RAD(-10), 1, 1);
           explorationStartAngle_ = robot_->GetPose().get_rotationAngle<'Z'>();
           isTurning_ = true;
           state_ = EXPLORING;
@@ -614,7 +615,7 @@ namespace Anki {
           // Repeat turn-stop behavior for more reliable block detection
           Radians currAngle = robot_->GetPose().get_rotationAngle<'Z'>();
           if (isTurning_ && (std::abs((explorationStartAngle_ - currAngle).ToFloat()) > DEG_TO_RAD(40))) {
-            PRINT_INFO("Exploration - pause turning\n");
+            PRINT_INFO("Exploration - pause turning. Looking for %s\n", Block::IDtoStringLUT[blockOfInterest_].c_str());
             robot_->DriveWheels(0.f,0.f);
             isTurning_ = false;
             waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
@@ -668,6 +669,7 @@ namespace Anki {
             }
             
             // Backup to re-explore the block
+            robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 10, 10);
             robot_->DriveWheels(-20.f, -20.f);
             state_ = BACKING_UP;
             nextState_ = BEGIN_EXPLORING;

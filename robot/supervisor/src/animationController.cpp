@@ -26,7 +26,7 @@ namespace AnimationController {
     
     // ANIM_HEAD_NOD
     const f32 HEAD_NOD_UPPER_ANGLE = DEG_TO_RAD(20);
-    const f32 HEAD_NOD_LOWER_ANGLE = DEG_TO_RAD(-10);
+    const f32 HEAD_NOD_LOWER_ANGLE = DEG_TO_RAD(-20);
     const f32 HEAD_NOD_SPEED_RAD_PER_S = 10;
     const f32 HEAD_NOD_ACCEL_RAD_PER_S2 = 40;
     
