@@ -218,7 +218,7 @@ END_MESSAGE_DEFINITION(BlockPlaced)
 
 // AbsLocalizationUpdate
 START_TIMESTAMPED_MESSAGE_DEFINITION(AbsLocalizationUpdate, 1)
-ADD_MESSAGE_MEMBER(f32, pose_frame_id)
+ADD_MESSAGE_MEMBER(u32, pose_frame_id)
 ADD_MESSAGE_MEMBER(f32, xPosition)
 ADD_MESSAGE_MEMBER(f32, yPosition)
 ADD_MESSAGE_MEMBER(f32, headingAngle)
