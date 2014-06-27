@@ -393,7 +393,11 @@ namespace Anki {
             }
             case CKEY_START_DICE_DEMO:
             {
-              behaviorMgr_->StartMode(BM_June2014DiceDemo);
+              if (behaviorMgr_->GetMode() == BM_None) {
+                behaviorMgr_->StartMode(BM_June2014DiceDemo);
+              } else {
+                behaviorMgr_->StartMode(BM_None);
+              }
               break;
             }
             case CKEY_CANCEL_PATH:

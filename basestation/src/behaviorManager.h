@@ -41,6 +41,7 @@ namespace Anki {
       void Init(RobotManager* robotMgr, BlockWorld* world);
       
       void StartMode(BehaviorMode mode);
+      BehaviorMode GetMode() const;
       
       void Update();
 
@@ -72,7 +73,8 @@ namespace Anki {
         BEGIN_EXPLORING,
         EXPLORING,
         FACE_USER,
-        HAPPY_NODDING
+        HAPPY_NODDING,
+        BACK_AND_FORTH_EXCITED,
         
       } BehaviorState;
       
@@ -81,6 +83,8 @@ namespace Anki {
       
       BehaviorState state_, nextState_, problemState_;
       void (BehaviorManager::*updateFcn_)();
+      
+      BehaviorMode mode_;
       
       Robot* robot_;
 

@@ -34,6 +34,7 @@ namespace Anki {
     BehaviorManager::BehaviorManager()
     : robotMgr_(nullptr)
     , world_(nullptr)
+    , mode_(BM_None)
     , distThresh_mm_(20.f)
     , angThresh_(DEG_TO_RAD(10))
     , blockToPickUp_(Block::UNKNOWN_BLOCK_TYPE)
@@ -51,27 +52,22 @@ namespace Anki {
     void BehaviorManager::StartMode(BehaviorMode mode)
     {
       Reset();
-      
+      mode_ = mode;
       switch(mode) {
         case BM_None:
+          CoreTechPrint("Starting NONE behavior\n");
           break;
         case BM_PickAndPlace:
-          printf("Starting PickAndPlace behvior\n");
+          CoreTechPrint("Starting PickAndPlace behavior\n");
           nextState_ = WAITING_FOR_DOCK_BLOCK;
           updateFcn_ = &BehaviorManager::Update_PickAndPlaceBlock;
           break;
         case BM_June2014DiceDemo:
-          printf("Starting June demo behvior\n");
+          CoreTechPrint("Starting June demo behavior\n");
           state_     = WAITING_FOR_ROBOT;
           nextState_ = WAITING_TO_SEE_DICE;
           updateFcn_ = &BehaviorManager::Update_June2014DiceDemo;
-          
-          if (rand() % 2) {
-            SoundManager::getInstance()->Play(SOUND_INPUT);
-          } else {
-            SoundManager::getInstance()->Play(SOUND_SWEAR);
-          }
-          
+          SoundManager::getInstance()->Play(SOUND_DEMO_START);
           break;
         default:
           PRINT_NAMED_ERROR("BehaviorManager.InvalidMode", "Invalid behavior mode");
@@ -81,6 +77,11 @@ namespace Anki {
       //assert(updateFcn_ != nullptr);
       
     } // StartMode()
+    
+    BehaviorMode BehaviorManager::GetMode() const
+    {
+      return mode_;
+    }
     
     void BehaviorManager::Reset()
     {
@@ -327,11 +328,15 @@ namespace Anki {
               state_ = WAITING_TO_SEE_DICE;
             }
           } else {
-            // Keep clearing blocks until we don't see them anymore
-            CoreTechPrint("Please move first dice away.\n");
             world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
             diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-            robot_->SendPlayAnimation(ANIM_HEAD_NOD, 1);
+            if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+              // Keep clearing blocks until we don't see them anymore
+              CoreTechPrint("Please move first dice away.\n");
+              robot_->SendPlayAnimation(ANIM_HEAD_NOD, 2);
+              waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 5;
+              SoundManager::getInstance()->Play(SOUND_WAITING4DICE2DISAPPEAR);
+            }
           }
           break;
         }
@@ -459,9 +464,10 @@ namespace Anki {
 
                     state_ = BEGIN_EXPLORING;
                     
-                    SoundManager::getInstance()->Play(SOUND_NOPROBLEMO);
                   }
                   
+                  SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+                
                 } else {
                   
                   CoreTechPrint("Found dice, but not its top marker.\n");
@@ -500,6 +506,16 @@ namespace Anki {
               } // IF only one dice
               
             } // IF any diceBlocks available
+            
+            else {
+              // Can't see dice
+              if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+                CoreTechPrint("Show me the dice!\n");
+                robot_->SendPlayAnimation(ANIM_HEAD_NOD, 1);
+                SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 5;
+              }
+            }
           } // IF robot is IDLE
           
           break;
@@ -631,15 +647,6 @@ namespace Anki {
             if(donePlacing) {
               PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
                          blockToPickUp_, blockToPlaceOn_);
-              
-              if (rand() %2) {
-                SoundManager::getInstance()->Play(SOUND_60PERCENT);
-              } else {
-                SoundManager::getInstance()->Play(SOUND_TADA);
-              }
-              
-              // Delete known dice
-              world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
 
               
               // Compute pose that makes robot face user
@@ -682,6 +689,7 @@ namespace Anki {
             robot_->SendPlayAnimation(ANIM_HEAD_NOD);
             state_ = HAPPY_NODDING;
             PRINT_INFO("NODDING_HEAD\n");
+            SoundManager::getInstance()->Play(SOUND_OK_DONE);
             
             // Compute time to stop nodding
             waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
@@ -691,13 +699,24 @@ namespace Anki {
         case HAPPY_NODDING:
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
-            robot_->SendPlayAnimation(ANIM_IDLE);
+            robot_->SendPlayAnimation(ANIM_BACK_AND_FORTH_EXCITED);
             robot_->MoveHeadToAngle(DEG_TO_RAD(-10), 1, 1);
+            
+            // Compute time to stop back and forth
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.5;
+            state_ = BACK_AND_FORTH_EXCITED;
+          }
+          break;
+        } // case HAPPY_NODDING
+        case BACK_AND_FORTH_EXCITED:
+        {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
+            robot_->SendPlayAnimation(ANIM_IDLE);
             world_->ClearAllExistingBlocks();
             StartMode(BM_June2014DiceDemo);
           }
           break;
-        } // case HAPPY_NODDING
+        }
         default:
         {
           PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState",
