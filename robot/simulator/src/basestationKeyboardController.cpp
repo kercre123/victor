@@ -5,6 +5,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "vizManager.h"
 #include "behaviorManager.h"
+#include "soundManager.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -162,6 +163,7 @@ namespace Anki {
         const s32 CKEY_SET_VISIONSYSTEM_PARAMS = 86;  // v
 
         const s32 CKEY_TEST_PLAN = (s32)'T';
+        const s32 CKEY_CYCLE_SOUND_SCHEME = (s32)'M';
 
         // Get robot
         robot_ = NULL;
@@ -432,6 +434,16 @@ namespace Anki {
                 printf("New VisionSystems params\n");
                 robot_->SendSetVisionSystemParams(p);
               }
+              break;
+            }
+            case CKEY_CYCLE_SOUND_SCHEME:
+            {
+              SoundSchemeID_t nextSoundScheme = (SoundSchemeID_t)(SoundManager::getInstance()->GetScheme() + 1);
+              if (nextSoundScheme == NUM_SOUND_SCHEMES) {
+                nextSoundScheme = SOUND_SCHEME_COZMO;
+              }
+              printf("Sound scheme: %d\n", nextSoundScheme);
+              SoundManager::getInstance()->SetScheme(nextSoundScheme);
               break;
             }
             case CKEY_QUESTION_MARK:

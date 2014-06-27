@@ -35,17 +35,45 @@ namespace Anki {
       // Root directory of sounds
       char _rootDir[512];
       
+      SoundSchemeID_t _currScheme = SOUND_SCHEME_COZMO;
+      
       // Table of sound files relative to root dir
-      const std::map<SoundID_t, std::string> _soundTable =
+      const std::map<SoundID_t, std::string> _soundTable[NUM_SOUND_SCHEMES] =
       {
-        {SOUND_TADA, "misc/tada.mp3"}
-        ,{SOUND_NOPROBLEMO, "misc/nproblem.wav"}
-        ,{SOUND_INPUT, "misc/input.wav"}
-        ,{SOUND_SWEAR, "misc/swear.wav"}
-        ,{SOUND_STARTOVER, "anchorman/startover.wav"}
-        ,{SOUND_NOTIMPRESSED, "anchorman/notimpressed.wav"}
-        ,{SOUND_60PERCENT, "anchorman/60percent.wav"}
-        ,{SOUND_DROID, "droid/droid.wav"}
+        {
+          // Cozmo default sound scheme
+          {SOUND_TADA, ""}
+          ,{SOUND_NOPROBLEMO, ""}
+          ,{SOUND_INPUT, ""}
+          ,{SOUND_SWEAR, ""}
+          ,{SOUND_STARTOVER, ""}
+          ,{SOUND_NOTIMPRESSED, ""}
+          ,{SOUND_60PERCENT, ""}
+          ,{SOUND_DROID, ""}
+          
+          ,{SOUND_DEMO_START, ""}
+          ,{SOUND_WAITING4DICE, "demo/WaitingForDice1.wav"}
+          ,{SOUND_WAITING4DICE2DISAPPEAR, "demo/WaitingForDice2.wav"}
+          ,{SOUND_OK_GOT_IT, "demo/OKGotIt.wav"}
+          ,{SOUND_OK_DONE, "demo/OKDone.wav"}
+        }
+        ,{
+          // Movie sound scheme
+          {SOUND_TADA, "misc/tada.mp3"}
+          ,{SOUND_NOPROBLEMO, "misc/nproblem.wav"}
+          ,{SOUND_INPUT, "misc/input.wav"}
+          ,{SOUND_SWEAR, "misc/swear.wav"}
+          ,{SOUND_STARTOVER, "anchorman/startover.wav"}
+          ,{SOUND_NOTIMPRESSED, "anchorman/notimpressed.wav"}
+          ,{SOUND_60PERCENT, "anchorman/60percent.wav"}
+          ,{SOUND_DROID, "droid/droid.wav"}
+          
+          ,{SOUND_DEMO_START, "misc/swear.wav"}
+          ,{SOUND_WAITING4DICE, "misc/input.wav"}
+          ,{SOUND_WAITING4DICE2DISAPPEAR, "misc/input.wav"}
+          ,{SOUND_OK_GOT_IT, "misc/nproblem.wav"}
+          ,{SOUND_OK_DONE, "anchorman/60percent.wav"}
+        }
       };
       
     }
@@ -68,9 +96,11 @@ namespace Anki {
 
     void CmdLinePlay(SoundID_t id)
     {
-      char fullCmd[512];
-      sprintf(fullCmd, "afplay %s/%s", _rootDir, _soundTable.at(id).c_str());
-      system(fullCmd);
+      if( !_soundTable[_currScheme].at(id).empty() ) {
+        char fullCmd[512];
+        sprintf(fullCmd, "afplay %s/%s", _rootDir, _soundTable[_currScheme].at(id).c_str());
+        system(fullCmd);
+      }
       --_numActiveThreads;
     }
 
@@ -96,7 +126,7 @@ namespace Anki {
     }
     
     
-    bool SoundManager::Play(SoundID_t id)
+    bool SoundManager::Play(const SoundID_t id)
     {
       if (_hasCmdProcessor && _hasRootDir) {
         if (_numActiveThreads < MAX_SOUND_THREADS) {
@@ -109,6 +139,14 @@ namespace Anki {
       return false;
     }
     
+    void SoundManager::SetScheme(const SoundSchemeID_t scheme)
+    {
+      _currScheme = scheme;
+    }
     
+    SoundSchemeID_t SoundManager::GetScheme() const
+    {
+      return _currScheme;
+    }
   } // namespace Cozmo
 } // namespace Anki
