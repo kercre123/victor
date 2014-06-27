@@ -647,14 +647,16 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
     float signedLength = config["straight_length_mm"].asFloat();
     
-    pathSegments_.AppendLine(0,
-                             0.0,
-                             0.0,
-                             signedLength * cos(env.GetTheta_c(startingAngle)),
-                             signedLength * sin(env.GetTheta_c(startingAngle)),
-                             isReverse ? -linearSpeed : linearSpeed,
-                             LATTICE_PLANNER_ACCEL,
-                             LATTICE_PLANNER_DECEL);
+    if(abs(signedLength) > 0.001) {
+      pathSegments_.AppendLine(0,
+                               0.0,
+                               0.0,
+                               signedLength * cos(env.GetTheta_c(startingAngle)),
+                               signedLength * sin(env.GetTheta_c(startingAngle)),
+                               isReverse ? -linearSpeed : linearSpeed,
+                               LATTICE_PLANNER_ACCEL,
+                               LATTICE_PLANNER_DECEL);
+    }
   }
 
   if(config.isMember("arc")) {
