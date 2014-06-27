@@ -58,7 +58,7 @@ namespace Anki {
         u32 lastDockingErrorSignalRecvdTime_ = 0;
         
         // If error signal not received in this amount of time, tracking is considered to have failed.
-        const u32 STOPPED_TRACKING_TIMEOUT_US = 400000;
+        const u32 STOPPED_TRACKING_TIMEOUT_US = 500000;
         
         // If an initial track cannot start for this amount of time, block is considered to be out of
         // view and docking is aborted.
