@@ -762,10 +762,16 @@ u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
       switch(segment.GetType()) {
 
       case PST_LINE:
-        path[endIdx].GetDef().line.endPt_x = segment.GetDef().line.endPt_x;
-        path[endIdx].GetDef().line.endPt_y = segment.GetDef().line.endPt_y;
-        shouldAdd = false;
+      {
+        bool oldSign = path[path.GetNumSegments()-1].GetTargetSpeed() > 0;
+        bool newSign = segment.GetTargetSpeed() > 0;
+        if(oldSign == newSign) {
+          path[endIdx].GetDef().line.endPt_x = segment.GetDef().line.endPt_x;
+          path[endIdx].GetDef().line.endPt_y = segment.GetDef().line.endPt_y;
+          shouldAdd = false;
+        }
         break;
+      }
 
       case PST_ARC:
         // TODO:(bn) had to disable this because it was combing arcs
