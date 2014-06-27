@@ -479,45 +479,36 @@ void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
   // this is hardcoded for now!
   assert(env_.GetNumActions() == 9);
 
-  constexpr int numPlans = 3;
-  static int whichPlan = 0;
+  constexpr int numPlans = 4;
+  static int whichPlan = 3;
 
   plan.Clear();
   plan.start_ = start_;
 
   switch(whichPlan) {
   case 0:
-    // this one starts with a straight, does a swerve then incresingly
+    // this one starts with a backup,, does a swerve then incresingly
     // right turns, heads back and does the opposite, and lands
     // exactly where it starts
     plan.Push(1);
     plan.Push(2);
     plan.Push(3);
-    plan.Push(0);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
     plan.Push(3);
     plan.Push(2);
-    plan.Push(0);
-    plan.Push(3);
-    plan.Push(3);
-    plan.Push(5);
-    plan.Push(7);
-    plan.Push(7);
-    plan.Push(7);
-    plan.Push(7);
     plan.Push(1);
-    plan.Push(2);
-    plan.Push(3);
-    plan.Push(0);
-    plan.Push(3);
-    plan.Push(2);
-    plan.Push(0);
-    plan.Push(3);
-    plan.Push(3);
+    plan.Push(5);
     plan.Push(5);
     plan.Push(7);
     plan.Push(7);
     plan.Push(7);
     plan.Push(7);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
     break;
   case 1:
     // start with slight left, T-shaped kind of thing, ends where it starts
@@ -605,9 +596,39 @@ void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
     plan.Push(2);
     plan.Push(2);
     break;
+
+  case 3:
+    // straights and 180 point turns
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    break;
   }
 
-  whichPlan = (whichPlan + 1) % numPlans;
+  // keep executing the same test, for now
+  // whichPlan = (whichPlan + 1) % numPlans;
 
   SetGoal(env_.State2State_c(env_.GetPlanFinalState(plan)));
 }
