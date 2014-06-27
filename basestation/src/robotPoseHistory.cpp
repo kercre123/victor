@@ -127,6 +127,7 @@ namespace Anki {
       // Should the pose be added?
       TimeStamp_t newestTime = poses_.rbegin()->first;
       if (newestTime > windowSize_ && t < newestTime - windowSize_) {
+        PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.TimeTooOld", "newestTime %d, oldestAllowedTime %d, t %d\n", newestTime, newestTime - windowSize_, t);
         return RESULT_FAIL;
       }
       

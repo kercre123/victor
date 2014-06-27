@@ -473,7 +473,14 @@ namespace Anki
         
         // Make the computed robot pose use the existing mat piece as its parent
         robotPoseWrtMat.set_parent(&existingMatPiece->GetPose());
-       
+        
+        // Snap to horizontal
+        Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.get_translation();
+        robotPoseWrtMat_trans.z() = 0;
+        robotPoseWrtMat.set_translation(robotPoseWrtMat_trans);
+        robotPoseWrtMat.set_rotation( robotPoseWrtMat.get_rotationAngle<'Z'>(), Z_AXIS_3D );
+        
+        
         // We have a new ("ground truth") key frame. Increment the pose frame!
         robot->IncrementPoseFrameID();
         
@@ -500,7 +507,7 @@ namespace Anki
                    robot->GetPose().get_translation().x(),
                    robot->GetPose().get_translation().y(),
                    robot->GetPose().get_translation().z(),
-                   robot->GetPose().get_rotationAngle().getDegrees(),
+                   robot->GetPose().get_rotationAngle<'Z'>().getDegrees(),
                    robot->GetPose().get_rotationAxis().x(),
                    robot->GetPose().get_rotationAxis().y(),
                    robot->GetPose().get_rotationAxis().z());
