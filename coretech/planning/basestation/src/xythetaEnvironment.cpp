@@ -33,6 +33,8 @@ namespace Planning {
 
 #define REPLAN_PENALTY_BUFFER 0.5
 
+#define HACK_USE_FIXED_SPEED 20.0
+
 State::State(StateID sid)
   :
   x(xythetaEnvironment::GetXFromStateID(sid)),
@@ -634,6 +636,11 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
   // Compute cost based on the action. Cost is time in seconds
   cost = 0.0;
 
+#ifdef HACK_USE_FIXED_SPEED
+  linearSpeed = HACK_USE_FIXED_SPEED;
+  oneOverLinearSpeed = 1.0 / linearSpeed;
+#endif
+
   double length = std::abs(config["straight_length_mm"].asDouble());
   if(length > 0.0) {
     cost += length * oneOverLinearSpeed;
@@ -665,6 +672,10 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     Cost arcSpeed = deltaTheta * turningRadius / arcTime;
 
     // TODO:(bn) these don't work properly backwards at the moment
+
+#ifdef HACK_USE_FIXED_SPEED
+    arcSpeed = HACK_USE_FIXED_SPEED;
+#endif
 
     pathSegments_.AppendArc(0,
                             config["arc"]["centerPt_x_mm"].asFloat(),

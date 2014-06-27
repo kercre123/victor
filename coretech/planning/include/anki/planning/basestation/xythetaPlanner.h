@@ -48,6 +48,7 @@ public:
   // set the starting state. Will be rounded to the nearest continuous
   // state. Returns true if it is valid, false otherwise
   bool SetStart(const State_c& start);
+  State_c GetStart() const;
 
   // Allow (or disallow) free turn-in-place at the goal
   void AllowFreeTurnInPlaceAtGoal(bool allow = true);
@@ -64,6 +65,8 @@ public:
   // must call compute path before getting the plan
   xythetaPlan& GetPlan();
   const xythetaPlan& GetPlan() const;
+
+  void GetTestPlan(xythetaPlan& plan);
 
   Cost GetFinalCost() const;
 

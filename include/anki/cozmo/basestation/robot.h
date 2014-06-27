@@ -113,6 +113,9 @@ namespace Anki {
       Result ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex);
       Result ExecutePathToPose(const std::vector<Pose3d>& poses, const Radians headAngle, size_t& selectedIndex);
 
+      // executes a test path defined in latticePlanner
+      void ExecuteTestPath();
+
       IPathPlanner* GetPathPlanner() { return _longPathPlanner; }
 
       void AbortCurrentPath();

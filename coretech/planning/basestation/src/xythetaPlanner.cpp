@@ -84,6 +84,12 @@ Cost xythetaPlanner::GetFinalCost() const
   return _impl->finalCost_;
 }
 
+void xythetaPlanner::GetTestPlan(xythetaPlan& plan)
+{
+  _impl->GetTestPlan(plan);
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // implementation functions
 ////////////////////////////////////////////////////////////////////////////////
@@ -468,6 +474,99 @@ void xythetaPlannerImpl::BuildPlan()
   printf("Created plan of length %lu\n", plan_.actions_.size());
 }
 
+void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
+{
+  // this is hardcoded for now!
+  assert(env_.GetNumActions() == 9);
+
+  constexpr int numPlans = 3;
+  static int whichPlan = 0;
+
+  plan.Clear();
+  plan.start_ = start_;
+
+  switch(whichPlan) {
+  case 0:
+    // this one starts with a straight, does a swerve then incresingly
+    // right turns, heads back and does the opposite, and lands
+    // exactly where it starts
+    plan.Push(1);
+    plan.Push(2);
+    plan.Push(3);
+    plan.Push(0);
+    plan.Push(3);
+    plan.Push(2);
+    plan.Push(0);
+    plan.Push(3);
+    plan.Push(5);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(1);
+    plan.Push(2);
+    plan.Push(3);
+    plan.Push(0);
+    plan.Push(3);
+    plan.Push(2);
+    plan.Push(0);
+    plan.Push(3);
+    plan.Push(5);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    break;
+  case 1:
+    // start with slight left, T-shaped kind of thing, ends where it starts
+    plan.Push(2);
+    plan.Push(4);
+    plan.Push(3);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(3);
+    plan.Push(1);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(1);
+    plan.Push(3);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(3);
+    plan.Push(4);
+    plan.Push(2);
+    plan.Push(1);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(1);
+    break;
+  case 2:
+    // funky figure 8, starting with hard right, ends where it starts
+    plan.Push(5);
+    plan.Push(3);
+    plan.Push(5);
+    plan.Push(3);
+    plan.Push(5);
+    plan.Push(3);
+    plan.Push(5);
+    plan.Push(3);
+    plan.Push(4);
+    plan.Push(2);
+    plan.Push(4);
+    plan.Push(2);
+    plan.Push(4);
+    plan.Push(2);
+    plan.Push(4);
+    plan.Push(2);
+    break;
+  }
+
+  whichPlan = (whichPlan + 1) % numPlans;
+
+  SetGoal(env_.State2State_c(env_.GetPlanFinalState(plan)));
+}
 
 }
 }

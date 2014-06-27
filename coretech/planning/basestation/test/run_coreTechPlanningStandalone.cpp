@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
         it.Next(env);
       }
 
-      cout<<"> ";
+      cout<<" -1: exit\n> ";
       cin>>choice;
 
       if(choice >= 0 && results.count(choice) > 0) {
@@ -77,6 +77,16 @@ int main(int argc, char *argv[])
 
         curr = State(results[choice]);
       }
+    }
+
+    printf("complete. Path: \n");
+    env.PrintPlan(plan);
+
+    cout<<"final state: "<<env.State2State_c(env.GetPlanFinalState(plan))<<endl;
+
+    printf("\n\nTestPlan:\n");
+    for(auto action : plan.actions_) {
+      printf("plan.Push(%d);\n", action);
     }
   }
   else if(argc == 7 || argc == 6) {

@@ -71,6 +71,9 @@ namespace Anki {
                                   const Pose3d& startPose,
                                   const std::vector<Pose3d>& targetPoses,
                                   size_t& selectedIndex);
+
+      // return a test path
+      virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) {}
       
       void AddIgnoreType(const ObjectType_t objType)    { _ignoreTypes.insert(objType); }
       void RemoveIgnoreType(const ObjectType_t objType) { _ignoreTypes.erase(objType); }
@@ -142,6 +145,8 @@ namespace Anki {
                                   const Pose3d& startPose,
                                   const std::vector<Pose3d>& targetPoses,
                                   size_t& selectedIndex) override;
+
+      virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path);
 
     protected:
       LatticePlannerImpl* impl_;

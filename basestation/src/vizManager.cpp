@@ -248,6 +248,7 @@ namespace Anki {
                               const u32 colorID)
     {
       ErasePath(pathID);
+      printf("drawing path %u of length %lu\n", pathID, p.GetNumSegments());
       
       for (int s=0; s < p.GetNumSegments(); ++s) {
         const Planning::PathSegmentDef& seg = p.GetSegmentConstRef(s).GetDef();
@@ -310,6 +311,8 @@ namespace Anki {
     {
       VizErasePath v;
       v.pathID = pathID;
+
+      printf("viz: erasing path %u\n", pathID);
       
       SendMessage( GET_MESSAGE_ID(VizErasePath), &v );
     }
@@ -318,6 +321,8 @@ namespace Anki {
     {
       VizErasePath v;
       v.pathID = ALL_PATH_IDs;
+
+      printf("viz: erasing all paths\n");
       
       SendMessage( GET_MESSAGE_ID(VizErasePath), &v );
     }
