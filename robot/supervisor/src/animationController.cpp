@@ -21,11 +21,18 @@ namespace AnimationController {
     AnimationID_t currAnim_ = ANIM_IDLE;
     u32 numDesiredLoops_ = 0;
     u32 numLoops_ = 0;
+    u32 waitUntilTime_us_ = 0;
+    f32 currWheelSpeed_ = 0;
     
+    // ANIM_HEAD_NOD
     const f32 HEAD_NOD_UPPER_ANGLE = DEG_TO_RAD(20);
     const f32 HEAD_NOD_LOWER_ANGLE = DEG_TO_RAD(-10);
     const f32 HEAD_NOD_SPEED_RAD_PER_S = 10;
     const f32 HEAD_NOD_ACCEL_RAD_PER_S2 = 40;
+    
+    // ANIM_BACK_AND_FORTH_EXCITED
+    const f32 BAF_SPEED_MMPS = 30;
+    const u32 BAF_SWITCH_PERIOD_US = 300000;
     
   } // "private" members
 
@@ -48,6 +55,18 @@ namespace AnimationController {
         }
         break;
       }
+      case ANIM_BACK_AND_FORTH_EXCITED:
+      {
+        if (waitUntilTime_us_ < HAL::GetMicroCounter()) {
+          currWheelSpeed_ *= -1;
+          SteeringController::ExecuteDirectDrive(currWheelSpeed_, currWheelSpeed_);
+          waitUntilTime_us_ = HAL::GetMicroCounter() + BAF_SWITCH_PERIOD_US;
+          if (currWheelSpeed_ < 0) {
+            ++numLoops_;
+          }
+        }
+        break;
+      }
       default:
         break;
     }
@@ -63,6 +82,7 @@ namespace AnimationController {
     currAnim_ = anim;
     numDesiredLoops_ = numLoops;
     numLoops_ = 0;
+    waitUntilTime_us_ = 0;
     
     // Initialize the animation
     switch(currAnim_) {
@@ -74,6 +94,7 @@ namespace AnimationController {
         HeadController::Enable();
         HeadController::SetAngularVelocity(0);
 
+        SteeringController::ExecuteDirectDrive(0, 0);
         SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
         break;
       }
@@ -83,6 +104,12 @@ namespace AnimationController {
         HeadController::SetDesiredAngle(HEAD_NOD_UPPER_ANGLE);
         break;
       }
+      case ANIM_BACK_AND_FORTH_EXCITED:
+        currWheelSpeed_ = BAF_SPEED_MMPS;
+        currWheelSpeed_ *= -1;
+        SteeringController::ExecuteDirectDrive(currWheelSpeed_, currWheelSpeed_);
+        waitUntilTime_us_ = HAL::GetMicroCounter() + BAF_SWITCH_PERIOD_US;
+        break;
       default:
         break;
     }
