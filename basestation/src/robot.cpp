@@ -178,7 +178,7 @@ namespace Anki {
                   
                   _path = newPath;
                   PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
-                  SendExecutePath(_path);
+                  ExecutePath(_path);
                   break;
                 } // case DID_PLAN:
                   
@@ -632,6 +632,8 @@ namespace Anki {
       _nextState = IDLE; // for when the path is complete
       ++_lastSentPathID;
       
+      pdo_->SetPath(path);
+
       return SendExecutePath(path);
     }
     
@@ -883,8 +885,6 @@ namespace Anki {
     // Sends a path to the robot to be immediately executed
     Result Robot::SendExecutePath(const Planning::Path& path) const
     {
-      pdo_->SetPath(path);
-
       // Send start path execution message
       MessageExecutePath m;
       m.pathID = _lastSentPathID;
