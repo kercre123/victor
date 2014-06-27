@@ -64,7 +64,7 @@ namespace Anki {
         
         // Pose history
         // Never need to erase elements, just overwrite with new data.
-        const u8 POSE_HISTORY_SIZE = 200;
+        const u8 POSE_HISTORY_SIZE = 300;
         PoseStamp hist_[POSE_HISTORY_SIZE];
         u8 hStart_ = 0;
         u8 hEnd_ = 0;
@@ -136,15 +136,14 @@ namespace Anki {
       
       Result UpdatePoseWithKeyframe(PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle)
       {
+        // Update frameID
+        frameId_ = frameID;
+        
         u8 i;
         if (GetHistIdx(t, i) == RESULT_FAIL) {
           PRINT("ERROR: Couldn't find timestamp %d in history (oldest(%d) %d, newest(%d) %d)\n", t, hStart_, hist_[hStart_].t, hEnd_, hist_[hEnd_].t);
           return RESULT_FAIL;
         }
-        
-        // Update frameID
-        frameId_ = frameID;
-        
         
         
         // TODO: Replace lastKeyFrameUpdate with actually computing
@@ -469,6 +468,12 @@ namespace Anki {
       PoseFrameID_t GetPoseFrameId()
       {
         return frameId_;
+      }
+      
+      void ResetPoseFrame()
+      {
+        frameId_ = 0;
+        ClearHistory();
       }
       
     }

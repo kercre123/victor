@@ -193,6 +193,9 @@ namespace Anki {
         // Poor-man's time sync to basestation, for now.
         HAL::SetTimeStamp(msg.syncTime);
         
+        // Reset pose history and frameID to zero
+        Localization::ResetPoseFrame();
+        
         // Send back camera calibration
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
         if(headCamInfo == NULL) {
@@ -242,9 +245,10 @@ namespace Anki {
         
         
         PRINT("Robot received localization update from "
-              "basestation: (%.3f,%.3f) at %.1f degrees\n",
+              "basestation: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
               currentMatX, currentMatY,
-              currentMatHeading.getDegrees());
+              currentMatHeading.getDegrees(),
+              Localization::GetPoseFrameId());
 #if(USE_OVERLAY_DISPLAY)
         {
           using namespace Sim::OverlayDisplay;
