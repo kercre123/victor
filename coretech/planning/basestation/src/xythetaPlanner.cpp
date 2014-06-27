@@ -480,7 +480,7 @@ void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
   assert(env_.GetNumActions() == 9);
 
   constexpr int numPlans = 4;
-  static int whichPlan = 3;
+  static int whichPlan = 0;
 
   plan.Clear();
   plan.start_ = start_;
@@ -627,8 +627,7 @@ void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
     break;
   }
 
-  // keep executing the same test, for now
-  // whichPlan = (whichPlan + 1) % numPlans;
+  whichPlan = (whichPlan + 1) % numPlans;
 
   SetGoal(env_.State2State_c(env_.GetPlanFinalState(plan)));
 }
