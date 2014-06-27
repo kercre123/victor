@@ -16,7 +16,7 @@ gridSize = 4;
 markerSize_mm = 30;
 matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials';
 fnames = {'A', 'B', 'C', 'D';
-    'E', 'F', 'G', 'J';
+    '7', 'F', 'G', 'J';
     'K', 'L', 'M', 'Q';
     'P', 'R', 'T', 'Y'};
 fnames = cellfun(@(name)fullfile(matMarkerPath, [name '.png']), fnames, 'UniformOutput', false);
