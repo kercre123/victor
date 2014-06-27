@@ -743,7 +743,7 @@ namespace Anki {
     Result Robot::PickUpDockBlock()
     {
       if(_dockBlockID == ANY_OBJECT) {
-        PRINT_NAMED_WARNING("Robot.NoDockBlockIDSet", "No docking block ID set, but told to pick one up.\n");
+        PRINT_NAMED_ERROR("Robot.NoDockBlockIDSet", "No docking block ID set, but told to pick one up.\n");
         return RESULT_FAIL;
       }
       

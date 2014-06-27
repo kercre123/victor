@@ -298,7 +298,8 @@ namespace Anki
           Robot* robot = robotMgr_->GetRobotByID(robotID);
           CORETECH_ASSERT(robot != NULL);
           
-          if(object->IsVisibleFrom(robot->GetCamera(), DEG_TO_RAD(45), 20.f, true))
+          if(object->IsVisibleFrom(robot->GetCamera(), DEG_TO_RAD(45), 20.f, true) &&
+             (robot->GetDockBlock() != unobserved.second->first))  // We expect a docking block to disappear from view!
           {
             // We "should" have seen the object! Delete it or mark it somehow
             CoreTechPrint("Removing object %d, which should have been seen, "
