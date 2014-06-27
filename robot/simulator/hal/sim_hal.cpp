@@ -102,6 +102,7 @@ namespace Anki {
       f32 motorSpeeds_[HAL::MOTOR_COUNT];
       f32 motorSpeedCoeffs_[HAL::MOTOR_COUNT];
 
+      HAL::IDCard idCard_;
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -185,6 +186,14 @@ namespace Anki {
     Result HAL::Init()
     {
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
+      
+      // ID card info
+      idCard_.esn = 0;
+      idCard_.modelNumber = 0;
+      idCard_.lotCode = 0;
+      idCard_.birthday = 0;
+      idCard_.hwVersion = 0;
+
       
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
       rightWheelMotor_ = webotRobot_.getMotor("RightWheelMotor");
@@ -724,6 +733,10 @@ namespace Anki {
       // TODO: ...
     }
     
+    HAL::IDCard* HAL::GetIDCard()
+    {
+      return &idCard_;
+    }
     
   } // namespace Cozmo
 } // namespace Anki

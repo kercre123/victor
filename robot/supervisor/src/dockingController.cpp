@@ -15,10 +15,6 @@
 #include "pathFollower.h"
 #include "messages.h"
 
-// TEMP: Cozmo #2 seems to always dock to the right of the marker by a few mm.
-// There could be any number of factors contributing to this so for now we just adjust the y-offset of the
-// docking error signal by this much.
-#define COZMO_NO2_CAM_HACK 2.f
 
 #define DEBUG_DOCK_CONTROLLER 0
 
@@ -200,7 +196,7 @@ namespace Anki {
                                                   tempPoint);
               
               dockMsg.x_distErr = tempPoint.x;
-              dockMsg.y_horErr  = tempPoint.y + COZMO_NO2_CAM_HACK;
+              dockMsg.y_horErr  = tempPoint.y + ( (HAL::GetIDCard()->esn == 2) ? COZMO2_CAM_LATERAL_POSITION_HACK : 0 );
               dockMsg.z_height  = tempPoint.z;
             }
             

@@ -246,6 +246,18 @@ namespace Anki {
     // (at least in terms of translation).
     const f32 DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM = 5.0f;
     
+    
+    /***************************************************************************
+     *
+     *                  ~ ~ ~ ~ ~ MAGIC NUMBERS ~ ~ ~ ~
+     *
+     ***************************************************************************/
+    // Cozmo #2 seems to always dock to the right of the marker by a few mm.
+    // There could be any number of factors contributing to this so for now we just adjust the y-offset of the
+    // docking error signal by this much.
+    const f32 COZMO2_CAM_LATERAL_POSITION_HACK = 2.f;
+    
+    
   } // namespace Cozmo
 } // namespace Anki
 
