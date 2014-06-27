@@ -443,9 +443,9 @@ namespace Anki
         RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_DCMI, ENABLE);
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);
         
-        // Check that the GPIOs are okay
-        for (u8 i = 1; i; i <<= 1)
-          printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));        
+        // TODO: Check that the GPIOs are okay
+        //for (u8 i = 1; i; i <<= 1)
+        //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));        
         
         // Configure XCLK for 12.85 MHz (evenly divisible by 180 MHz)
         TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
@@ -516,7 +516,7 @@ namespace Anki
         GPIO_InitStructure.GPIO_Pin = PIN_FSIN;
         GPIO_Init(GPIO_FSIN, &GPIO_InitStructure);
 
-// Initialize the I2C pins
+        // Initialize the I2C pins
         GPIO_SET(GPIO_SCL, PIN_SCL);
         GPIO_SET(GPIO_SDA, PIN_SDA);
 

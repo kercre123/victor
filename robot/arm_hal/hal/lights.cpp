@@ -8,9 +8,12 @@ namespace Anki
   {
     namespace HAL
     {			                
-      GPIO_PIN_SOURCE(RED, GPIOH, 11);
-      GPIO_PIN_SOURCE(GREEN, GPIOH, 12);
-      GPIO_PIN_SOURCE(BLUE, GPIOH, 8);
+      // All colors are on the same GPIO in 2.1, which simplifies the timer code
+      #define GPIO_COLORS GPIOH
+      GPIO_PIN_SOURCE(RED, GPIO_COLORS, 11);
+      GPIO_PIN_SOURCE(GREEN, GPIO_COLORS, 12);
+      GPIO_PIN_SOURCE(BLUE, GPIO_COLORS, 8);
+      
       GPIO_PIN_SOURCE(EYECLK, GPIOA, 7);
       GPIO_PIN_SOURCE(EYERST, GPIOB, 1);
       
@@ -19,8 +22,11 @@ namespace Anki
  
       // Map the natural LED order (as shown in hal.h) to the hardware swizzled order
       // See schematic if you care about why the LEDs are swizzled
+      static const u32 CHANNEL_MASK = 7;  // Bitmask for all 8 channels
       static const u8 HW_CHANNELS[8] = {5, 1, 2, 0, 6, 7, 3, 4};
       static u32 m_channels[8];   // The actual RGB color values in use
+      
+      static const int CH_RED = 2, CH_GREEN = 1, CH_BLUE = 0;
       
       // Initialize LED head/face light hardware
       void LightsInit()
@@ -69,7 +75,7 @@ namespace Anki
         RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, ENABLE);
 
         // Set up clock to multiplex the LEDs - must keep above 100Hz to hide flicker
-        // 173Hz = 90MHz/8 eyes/(255^2)/(Prescaler+1)
+        // 173Hz = 90MHz/8 eyes/(255^2)/(Prescaler+1) - about 1600 CPU cycles/Hz (8-32 IRQs)
         TIM_TimeBaseStructure.TIM_Prescaler = 0;
         TIM_TimeBaseStructure.TIM_Period = 1000;  // Take a second before starting
         TIM_TimeBaseStructure.TIM_ClockDivision = 0;
@@ -81,6 +87,7 @@ namespace Anki
         TIM_ITConfig(TIM14, TIM_IT_Update, ENABLE);
         TIM_Cmd(TIM14, ENABLE);
         TIM14->CR1 |= TIM_CR1_URS;  // Prevent spurious interrupt when we touch EGR
+        TIM14->EGR = TIM_PSCReloadMode_Immediate;
 
         // Route interrupt
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -112,67 +119,60 @@ namespace Anki
   }
 }
 
+// This interrupt runs thousands of times a second to create a steady image on the face LEDs
+// It must be high priority - incorrect priorities and disable_irq cause flicker!
+// Please keep this code optimized - avoid function calls and loops 
 extern "C" void TIM8_TRG_COM_TIM14_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;  
+  static u8 s_color[4];     // Cache the current color, since mid-cycle changes cause flicker
   static u8 s_which = 0;    // Which LED to light
-  static u8 s_time = 0;     // The current 'time' in the per-LED PWM cycle (0xff = full bright)
-  static u32 s_color = 0;   // Cache the current color so it doesn't change from underneath is
-  
-  // If this is the end of the last LED, switch to the next LED
-  if (0 == s_time)
-  {
-    // Start with darkness
-    GPIO_SET(GPIO_RED, PIN_RED);        
-    GPIO_SET(GPIO_GREEN, PIN_GREEN);        
-    GPIO_SET(GPIO_BLUE, PIN_BLUE);
-        
-    // Point to the start of the next light
-    s_time = 255;
-    if (++s_which >= sizeof(HW_CHANNELS))
-      s_which = 0;
-    s_color = m_channels[s_which];
+  static u8 s_now = 0;      // The current 'time' in the per-LED PWM cycle (0xff = full bright)
 
-    // Reset LED number to first LED, or advance to next
+  // If this is the end of the last LED, switch to the next LED
+  if (0 == s_now)
+  {
+    // Advance to next LED, or reset to beginning on first LED
+    s_which = (s_which + 1) & CHANNEL_MASK;
     if (0 == s_which)
       GPIO_SET(GPIO_EYERST, PIN_EYERST);
     else
-      GPIO_SET(GPIO_EYECLK, PIN_EYECLK);    
+      GPIO_SET(GPIO_EYECLK, PIN_EYECLK);   
+    
+    // Point to the beginning of the next light with everything turned off
+    GPIO_SET(GPIO_COLORS, PIN_RED | PIN_GREEN | PIN_BLUE);    
+    *((int*)s_color) = m_channels[s_which];   // Cache the new color
+    s_now = 255;
   }
     
-  // Turn on any LEDs that match this turn-on time
-  u8* color = (u8*)(&s_color);
-  if (s_time == color[2])
-    GPIO_RESET(GPIO_RED, PIN_RED);
-  if (s_time == color[1])
-    GPIO_RESET(GPIO_GREEN, PIN_GREEN);
-  if (s_time == color[0])
-    GPIO_RESET(GPIO_BLUE, PIN_BLUE);
-  
-  // Figure out the next soonest time we need to turn on a light
+  // If the LED is due to turn, turn it on - if not, see if it is next to turn on
   u8 nexttime = 0;
-  for (int i = 0; i < 3; i++)
-    if (color[i] > nexttime && color[i] < s_time) // Soonest time earlier than now
-      nexttime = color[i];
+  if (s_now == s_color[CH_BLUE])
+    GPIO_RESET(GPIO_COLORS, PIN_BLUE);
+  else if (s_color[CH_BLUE] < s_now)
+    nexttime = s_color[CH_BLUE];
+  
+  if (s_now == s_color[CH_GREEN])
+    GPIO_RESET(GPIO_COLORS, PIN_GREEN);
+  else if (s_color[CH_GREEN] < s_now && s_color[CH_GREEN] > nexttime)
+    nexttime = s_color[CH_GREEN];
+  
+  if (s_now == s_color[CH_RED])
+    GPIO_RESET(GPIO_COLORS, PIN_RED);
+  else if (s_color[CH_RED] < s_now && s_color[CH_RED] > nexttime)
+    nexttime = s_color[CH_RED];
     
-  // Figure out how many cycles to wait before the next update, based on timing and refresh rate
-  // Gamma correction requires us to use the square of intensity to compute the timing
-  u32 howlong = (s_time * s_time) - (nexttime * nexttime);
+  // Figure out how many cycles to wait before the next color turns on
+  // Gamma correction requires us to use the square of intensity here (linear PWM = RGB^2)
+  int howlong = (s_now * s_now) - (nexttime * nexttime);  // Keep all 16-bits, since 1 is a valid result
+  s_now = nexttime;    // Next time we get an interrupt, now will be nexttime!
 
   // Schedule the next timer interrupt
   TIM14->SR = 0;        // Acknowledge interrupt
   TIM14->ARR = howlong; // Next time to trigger
-  TIM14->EGR = TIM_PSCReloadMode_Immediate;
+  TIM14->CR1 = TIM_CR1_CEN | TIM_CR1_URS | TIM_CR1_OPM; // Fire off one pulse
 
-  // If we just changed LEDs, finish changing
-  if (255 == s_time)
-  {
-    if (0 == s_which)
-      GPIO_RESET(GPIO_EYERST, PIN_EYERST);
-    else
-      GPIO_RESET(GPIO_EYECLK, PIN_EYECLK);
-  }
-  s_time = nexttime;    // Next time we call, it will be s_time
-
-  TIM14->CR1 |= TIM_CR1_CEN;  
+  // In case we just pulsed EYERST or EYECLK, let them low again
+  GPIO_RESET(GPIO_EYERST, PIN_EYERST);
+  GPIO_RESET(GPIO_EYECLK, PIN_EYECLK);
 }

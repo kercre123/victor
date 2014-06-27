@@ -425,7 +425,7 @@ namespace Anki
       void AccelGetXYZ(f32& x, f32& y, f32& z);
 
       // Permanent robot information written at factory
-      struct BirthCertificate
+      struct IDCard
       {
         u32 esn;
         u32 modelNumber;
@@ -434,7 +434,7 @@ namespace Anki
         u32 hwVersion;
       };
 
-      const BirthCertificate& GetBirthCertificate();
+      IDCard* GetIDCard();
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki
