@@ -33,7 +33,7 @@ namespace Planning {
 
 #define REPLAN_PENALTY_BUFFER 0.5
 
-#define HACK_USE_FIXED_SPEED 20.0
+#define HACK_USE_FIXED_SPEED 40.0
 
 State::State(StateID sid)
   :
