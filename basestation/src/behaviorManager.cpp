@@ -324,8 +324,6 @@ namespace Anki {
             // Check to see if the dice block has been gone for long enough
             const TimeStamp_t timeSinceSeenDice_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - diceDeletionTime_;
             if(timeSinceSeenDice_ms > TimeBetweenDice_ms) {
-              
-              // TODO: Do a nod or some kind of acknowledgement we're ready to see next dice
               CoreTechPrint("First dice is gone: ready for next dice!\n");
               state_ = WAITING_TO_SEE_DICE;
             }
@@ -459,20 +457,31 @@ namespace Anki {
                     
                     // Wait for first dice to disappear
                     state_ = WAITING_FOR_DICE_TO_DISAPPEAR;
-                    
-                  } else {
-                    blockToPlaceOn_ = blockToLookFor;
-                    
-                    CoreTechPrint("Set blockToPlaceOn = %s\n",
-                                  Block::IDtoStringLUT[blockToPlaceOn_].c_str());
 
-                    state_ = BEGIN_EXPLORING;
+                    SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
                     
+                    waitUntilTime_ = 0;
+                  } else {
+
+                    if(blockToLookFor == blockToPickUp_) {
+                      CoreTechPrint("Can't put a block on itself!\n");
+                      // TODO:(bn) left and right + sad noise?
+                    }
+                    else {
+
+                      blockToPlaceOn_ = blockToLookFor;
+                    
+                      CoreTechPrint("Set blockToPlaceOn = %s\n",
+                                    Block::IDtoStringLUT[blockToPlaceOn_].c_str());
+
+                      robot_->SendPlayAnimation(ANIM_HEAD_NOD, 2);
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.5;
+
+                      state_ = BEGIN_EXPLORING;
+
+                      SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+                    }
                   }
-                  
-                  SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
-                  waitUntilTime_ = 0;
-                
                 } else {
                   
                   CoreTechPrint("Found dice, but not its top marker.\n");
@@ -515,7 +524,9 @@ namespace Anki {
             
             else {
 
-              constexpr int numIdleForFrustrated = 2;
+              constexpr int numIdleForFrustrated = 3;
+              constexpr float headUpWaitingAngle = DEG_TO_RAD(20);
+              constexpr float headUpWaitingAngleFrustrated = DEG_TO_RAD(25);
 
               // Can't see dice
               switch(idleState_) {
@@ -524,18 +535,22 @@ namespace Anki {
                   // if its been long enough, look up
                   if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
                     if(++timesIdle_ >= numIdleForFrustrated) {
+                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+
                       originalPose_ = robot_->GetPose();
+
                       Pose3d userFacingPose = robot_->GetPose();
-                      
                       userFacingPose.set_rotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
                       robot_->ExecutePathToPose(userFacingPose);
                       CoreTechPrint("idle: facing user\n");
+
                       idleState_ = IDLE_FACING_USER;
                     }
                     else {
                       CoreTechPrint("idle: looking up\n");
-                      robot_->MoveHeadToAngle(DEG_TO_RAD(25), 3.0, 10);
+                      robot_->MoveHeadToAngle(headUpWaitingAngle, 3.0, 10);
                       idleState_ = IDLE_LOOKING_UP;
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.7;
                     }
                   }
                   break;
@@ -544,15 +559,23 @@ namespace Anki {
                 case IDLE_LOOKING_UP:
                 {
                   // once we get to the top, play the sound
-                  if(robot_->GetHeadAngle() > DEG_TO_RAD(20)) {
+                  float targetAngle = headUpWaitingAngle - DEG_TO_RAD(3);
+                  if(timesIdle_ >= numIdleForFrustrated) {
+                    targetAngle = headUpWaitingAngleFrustrated - DEG_TO_RAD(3);
+                  }
+
+                  if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() &&
+                      robot_->GetHeadAngle() > targetAngle) {
                     CoreTechPrint("idle: playing sound\n");
                     SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
                     idleState_ = IDLE_PLAYING_SOUND;
                     if(timesIdle_ >= numIdleForFrustrated) {
-                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 3.0;
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.0;
+                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
                     }
                     else {
-                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.8;
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
                     }
                   }
                   break;
@@ -566,7 +589,7 @@ namespace Anki {
                     robot_->MoveHeadToAngle(diceViewingHeadAngle, 1.5, 10);
                     if(timesIdle_ >= numIdleForFrustrated) {
                       SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
-                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
+                      // waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
                       idleState_ = IDLE_LOOKING_DOWN;
                     }
                     else {
@@ -583,7 +606,7 @@ namespace Anki {
                   if(robot_->GetState() == Robot::IDLE) {
                     SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
                     CoreTechPrint("idle: looking up\n");
-                    robot_->MoveHeadToAngle(DEG_TO_RAD(25), 3.0, 10);
+                    robot_->MoveHeadToAngle(headUpWaitingAngleFrustrated, 3.0, 10);
                     idleState_ = IDLE_LOOKING_UP;
                   }
                   break;
@@ -592,14 +615,15 @@ namespace Anki {
                 case IDLE_LOOKING_DOWN:
                 {
                   // once we are looking back down, turn back to the original pose
-                  if(waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() &&
+                  if(// waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() &&
                      robot_->GetHeadAngle() < diceViewingHeadAngle + DEG_TO_RAD(5) &&
                      robot_->GetState() == Robot::IDLE) {
 
                     CoreTechPrint("idle: turning back\n");
+                    SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
                     robot_->ExecutePathToPose(originalPose_);
                     idleState_ = IDLE_TURNING_BACK;
-                    waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0;
+                    waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.25;
                   }
                   break;
                 }
