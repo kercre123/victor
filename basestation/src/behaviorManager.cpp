@@ -95,6 +95,7 @@ namespace Anki {
       // Pick and Place
       
       // June2014DiceDemo
+      explorationStartAngle_ = 0;
       blockToPickUp_  = Block::UNKNOWN_BLOCK_TYPE;
       blockToPlaceOn_ = Block::UNKNOWN_BLOCK_TYPE;
       
@@ -666,7 +667,13 @@ namespace Anki {
             if(blocks.empty()) {
               // Compute desired pose at mat center
               Pose3d robotPose = robot_->GetPose();
-              f32 targetAngle = atan2(robotPose.get_translation().y(), robotPose.get_translation().x()) + PI_F;
+              f32 targetAngle = explorationStartAngle_.ToFloat();
+              if (explorationStartAngle_ == 0) {
+                // If this is the first time we're exploring, then start exploring at the pose
+                // we expect to be in when we reach the mat center. Other start exploring at the angle
+                // we last stopped exploring.
+                targetAngle = atan2(robotPose.get_translation().y(), robotPose.get_translation().x()) + PI_F;
+              }
               Pose3d targetPose(targetAngle, Z_AXIS_3D, Vec3f(0,0,0));
               
               if (computeDistanceBetween(targetPose, robotPose) > 50.f) {
