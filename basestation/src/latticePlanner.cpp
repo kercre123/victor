@@ -34,6 +34,9 @@
 // penalty
 #define DEFAULT_OBSTACLE_PENALTY 0.1
 
+// how far (in mm) away from the path the robot needs to be before it gives up and plans a new path
+#define PLAN_ERROR_FOR_REPLAN 20.0
+
 namespace Anki {
 namespace Cozmo {
 
@@ -220,7 +223,14 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
 
     // plan Idx is the number of plan actions to execute before getting
     // to the starting point closest to start
-    planIdx = impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState);
+    float offsetFromPlan = 0.0;
+    planIdx = impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState, offsetFromPlan);
+
+    if(offsetFromPlan >= PLAN_ERROR_FOR_REPLAN) {
+      printf("Current state is %f away from the plan, failing\n", offsetFromPlan);
+      impl_->totalPlan_.Clear();
+      return PLAN_NEEDED_BUT_PLAN_FAILURE;
+    }
   }
   else {
     impl_->totalPlan_.Clear();

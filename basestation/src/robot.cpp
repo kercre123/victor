@@ -208,6 +208,8 @@ namespace Anki {
                 {
                   PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
                                    "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
+                  // clear the path, but don't change the state
+                  ClearPath();
                   _forceReplanOnNextWorldChange = true;
                   break;
                 }
