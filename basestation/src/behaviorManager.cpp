@@ -768,6 +768,8 @@ namespace Anki {
             state_ = EXECUTING_DOCK;
             
             wasCarryingBlockAtDockingStart_ = robot_->IsCarryingBlock();
+
+            SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
             
             PRINT_INFO("STARTING DOCKING\n");
             break;
@@ -814,7 +816,6 @@ namespace Anki {
               state_ = CHECK_IT_OUT_UP;
 
               // TODO:(bn) sound: minor success??
-              SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
               
               return;
             } // if donePlacing
