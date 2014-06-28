@@ -267,6 +267,11 @@ namespace Anki {
       // Returns true if the pose is successfully updated, false otherwise.
       bool UpdateCurrPoseFromHistory();
       
+      
+      // ========= Lights ==========
+      void SetDefaultLights(const RobotLEDColor eye_left_color, const RobotLEDColor eye_right_color);
+      
+      
     protected:
       // The robot's identifier
       RobotID_t        _ID;

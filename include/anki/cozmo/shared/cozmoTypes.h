@@ -93,6 +93,19 @@ namespace Anki {
       ,ANIM_NUM_ANIMATIONS
     } AnimationID_t;
     
+    
+    // TEMP: Duplicated HAL::LEDColor here for now. The light stuff is all going to change eventually.
+    enum RobotLEDColor {
+      LED_OFF =   0x000000,
+      LED_RED =   0xff0000,
+      LED_GREEN = 0x00ff00,
+      LED_YELLOW= 0xffff00,
+      LED_BLUE =  0x0000ff,
+      LED_PURPLE= 0xff00ff,
+      LED_CYAN =  0x00ffff,
+      LED_WHITE = 0xffffff
+    };
+    
     // For DEV only
     typedef struct {
       s32 integerCountsIncrement;

@@ -1200,5 +1200,14 @@ namespace Anki {
     }
     
     
+    void Robot::SetDefaultLights(const RobotLEDColor eye_left_color, const RobotLEDColor eye_right_color)
+    {
+      MessageSetDefaultLights m;
+      m.eye_left_color = eye_left_color;
+      m.eye_right_color = eye_right_color;
+      _msgHandler->SendMessage(GetID(), m);
+    }
+    
+    
   } // namespace Cozmo
 } // namespace Anki

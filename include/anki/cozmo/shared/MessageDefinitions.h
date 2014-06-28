@@ -299,6 +299,13 @@ START_MESSAGE_DEFINITION(SetHeadlight, 1)
 ADD_MESSAGE_MEMBER(u8, intensity)
 END_MESSAGE_DEFINITION(SetHeadlight)
 
+// SetDefaultLights
+START_MESSAGE_DEFINITION(SetDefaultLights, 1)
+ADD_MESSAGE_MEMBER(u32, eye_left_color)
+ADD_MESSAGE_MEMBER(u32, eye_right_color)
+END_MESSAGE_DEFINITION(SetDefaultLights)
+
+
 // TrackerQuad
 START_MESSAGE_DEFINITION(TrackerQuad, 1)
 ADD_MESSAGE_MEMBER(u16, topLeft_x)
