@@ -46,8 +46,8 @@ namespace Anki {
           ,{SOUND_NOPROBLEMO, ""}
           ,{SOUND_INPUT, ""}
           ,{SOUND_SWEAR, ""}
-          ,{SOUND_STARTOVER, ""}
-          ,{SOUND_NOTIMPRESSED, ""}
+          ,{SOUND_STARTOVER, "demo/WaitingForDice2.wav"}
+          ,{SOUND_NOTIMPRESSED, "demo/OKGotIt.wav"}
           ,{SOUND_60PERCENT, ""}
           ,{SOUND_DROID, ""}
           

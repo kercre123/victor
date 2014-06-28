@@ -65,6 +65,7 @@ namespace Anki {
         EXECUTING_DOCK,
         
         // June2014DiceDemo
+        DRIVE_TO_START,
         WAITING_TO_SEE_DICE,
         WAITING_FOR_DICE_TO_DISAPPEAR,
         GOTO_EXPLORATION_POSE,
@@ -72,6 +73,8 @@ namespace Anki {
         BACKING_UP,
         BEGIN_EXPLORING,
         EXPLORING,
+        CHECK_IT_OUT_UP,
+        CHECK_IT_OUT_DOWN,
         FACE_USER,
         HAPPY_NODDING,
         BACK_AND_FORTH_EXCITED,

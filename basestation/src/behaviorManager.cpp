@@ -28,6 +28,10 @@
 // For happy head-nodding demo purposes.
 #define USER_LOC_ANGLE_WRT_MAT -1.57
 
+#define JUNE_DEMO_START_X 150.0
+#define JUNE_DEMO_START_Y -120.0
+#define JUNE_DEMO_START_THETA 0.0
+
 namespace Anki {
   namespace Cozmo {
         
@@ -65,7 +69,7 @@ namespace Anki {
         case BM_June2014DiceDemo:
           CoreTechPrint("Starting June demo behavior\n");
           state_     = WAITING_FOR_ROBOT;
-          nextState_ = WAITING_TO_SEE_DICE;
+          nextState_ = DRIVE_TO_START;
           updateFcn_ = &BehaviorManager::Update_June2014DiceDemo;
           idleState_ = IDLE_NONE;
           timesIdle_ = 0;
@@ -314,7 +318,29 @@ namespace Anki {
      ********************************************************/
     void BehaviorManager::Update_June2014DiceDemo()
     {
+
+      constexpr float checkItOutAngleUp = DEG_TO_RAD(15);
+      constexpr float checkItOutAngleDown = DEG_TO_RAD(-10);
+      constexpr float checkItOutSpeed = 0.4;
+
       switch(state_) {
+
+        case DRIVE_TO_START:
+        {
+          // Wait for robot to be IDLE
+          if(robot_->GetState() == Robot::IDLE) {
+            Pose3d startPose(JUNE_DEMO_START_THETA,
+                             Z_AXIS_3D,
+                             {{JUNE_DEMO_START_X, JUNE_DEMO_START_Y, 0.f}});
+            CoreTechPrint("Driving to demo start location\n");
+            robot_->ExecutePathToPose(startPose);
+
+            state_ = WAITING_TO_SEE_DICE;
+
+          }
+
+          break;
+        }
           
         case WAITING_FOR_DICE_TO_DISAPPEAR:
         {
@@ -528,7 +554,6 @@ namespace Anki {
               constexpr int numIdleForFrustrated = 3;
               constexpr float headUpWaitingAngle = DEG_TO_RAD(20);
               constexpr float headUpWaitingAngleFrustrated = DEG_TO_RAD(25);
-
               // Can't see dice
               switch(idleState_) {
                 case IDLE_NONE:
@@ -785,12 +810,11 @@ namespace Anki {
               PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
                          blockToPickUp_, blockToPlaceOn_);
 
-              
-              // Compute pose that makes robot face user
-              Pose3d userFacingPose = robot_->GetPose();
-              userFacingPose.set_rotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
-              robot_->ExecutePathToPose(userFacingPose);
-              state_ = FACE_USER;
+              robot_->MoveHeadToAngle(checkItOutAngleUp, checkItOutSpeed, 10);
+              state_ = CHECK_IT_OUT_UP;
+
+              // TODO:(bn) sound: minor success??
+              SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
               
               return;
             } // if donePlacing
@@ -818,6 +842,37 @@ namespace Anki {
           
           break;
         } // case EXECUTING_DOCK
+
+        case CHECK_IT_OUT_UP:
+        {
+          // Wait for the robot to go back to IDLE
+          if(robot_->GetState() == Robot::IDLE &&
+             robot_->GetHeadAngle() > checkItOutAngleUp - DEG_TO_RAD(2))
+          {
+            // TODO:(bn) small happy chirp sound
+            robot_->MoveHeadToAngle(checkItOutAngleDown, checkItOutSpeed, 10);
+            state_ = CHECK_IT_OUT_DOWN;
+          }
+          break;
+        }
+
+        case CHECK_IT_OUT_DOWN:
+        {
+          // Wait for the robot to go back to IDLE
+          if(robot_->GetState() == Robot::IDLE &&
+             robot_->GetHeadAngle() < checkItOutAngleDown + DEG_TO_RAD(2))
+          {
+            // Compute pose that makes robot face user
+            Pose3d userFacingPose = robot_->GetPose();
+            userFacingPose.set_rotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
+            robot_->ExecutePathToPose(userFacingPose);
+
+            SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+            state_ = FACE_USER;
+          }
+          break;
+        }
+
         case FACE_USER:
         {
           // Wait for the robot to go back to IDLE
