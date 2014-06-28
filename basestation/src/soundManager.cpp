@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define MAX_SOUND_THREADS 2
+#define MAX_SOUND_THREADS 4
 
 
 namespace Anki {
