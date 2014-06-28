@@ -75,6 +75,8 @@ namespace Anki
       {
         path_.Clear();
         currPathSegment_ = -1;
+        pointTurnStarted_ = false;
+        realPathSegment_ = -1;
 #if(ENABLE_PATH_VIZ)
         Viz::ErasePath(0);
 #endif
