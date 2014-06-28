@@ -296,8 +296,11 @@ public:
   // this member). The projection is just the closest euclidean
   // distance point on the plan, and the return value is the number of
   // complete plan actions that are finished by the time you get to
-  // this point
-  size_t FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state, bool debug = false) const;
+  // this point. Returns the best distance in argument
+  size_t FindClosestPlanSegmentToPose(const xythetaPlan& plan,
+                                      const State_c& state,
+                                      float& distanceToPlan,
+                                      bool debug = false) const;
 
   // Returns true if the plan is safe and complete, false otherwise,
   // including if the penalty increased by too much (see

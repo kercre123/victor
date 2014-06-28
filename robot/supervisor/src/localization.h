@@ -22,6 +22,9 @@ namespace Anki {
       // Get the current pose frame ID
       PoseFrameID_t GetPoseFrameId();
       
+      // Clears internal pose history and sets pose frame ID to 0
+      void ResetPoseFrame();
+      
       void Update();
 
       

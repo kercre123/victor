@@ -217,8 +217,7 @@ namespace Anki
           Radians angle;
           Localization::GetCurrentMatPose(x, y, angle);
           
-          //currPathSegment_ = 0;
-          currPathSegment_ = GetClosestSegment(x,y,angle.ToFloat());
+          currPathSegment_ = 0;
           realPathSegment_ = currPathSegment_;
 
           // Set speed

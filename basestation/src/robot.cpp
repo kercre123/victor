@@ -178,7 +178,7 @@ namespace Anki {
                   
                   _path = newPath;
                   PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
-                  SendExecutePath(_path);
+                  ExecutePath(_path);
                   break;
                 } // case DID_PLAN:
                   
@@ -208,6 +208,8 @@ namespace Anki {
                 {
                   PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
                                    "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
+                  // clear the path, but don't change the state
+                  ClearPath();
                   _forceReplanOnNextWorldChange = true;
                   break;
                 }
@@ -632,6 +634,8 @@ namespace Anki {
       _nextState = IDLE; // for when the path is complete
       ++_lastSentPathID;
       
+      pdo_->SetPath(path);
+
       return SendExecutePath(path);
     }
     
@@ -743,7 +747,7 @@ namespace Anki {
     Result Robot::PickUpDockBlock()
     {
       if(_dockBlockID == ANY_OBJECT) {
-        PRINT_NAMED_WARNING("Robot.NoDockBlockIDSet", "No docking block ID set, but told to pick one up.\n");
+        PRINT_NAMED_ERROR("Robot.NoDockBlockIDSet", "No docking block ID set, but told to pick one up.\n");
         return RESULT_FAIL;
       }
       
@@ -883,8 +887,6 @@ namespace Anki {
     // Sends a path to the robot to be immediately executed
     Result Robot::SendExecutePath(const Planning::Path& path) const
     {
-      pdo_->SetPath(path);
-
       // Send start path execution message
       MessageExecutePath m;
       m.pathID = _lastSentPathID;

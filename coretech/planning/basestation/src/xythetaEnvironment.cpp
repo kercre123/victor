@@ -944,7 +944,10 @@ State xythetaEnvironment::GetPlanFinalState(const xythetaPlan& plan) const
   return State(currID);
 }
 
-size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan, const State_c& state, bool debug) const
+size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
+                                                        const State_c& state,
+                                                        float& distanceToPlan,
+                                                        bool debug) const
 {
   // for now, this is implemented by simply going over every
   // intermediate pose and finding the closest one
@@ -1006,6 +1009,8 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
     ApplyAction(plan.actions_[planIdx], currID, false);
     curr = State(currID);
   }
+
+  distanceToPlan = closest;
 
   return startPoint;
 }

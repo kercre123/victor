@@ -255,9 +255,8 @@ namespace Anki {
       
       if (server.HasClient()) {
         const size_t bytesAvailable = RadioGetNumBytesAvailable();
-        if(bytesAvailable > 0) {
-    
-          const u32 headerSize = sizeof(RADIO_PACKET_HEADER);
+        const u32 headerSize = sizeof(RADIO_PACKET_HEADER);
+        if(bytesAvailable >= headerSize) {
           
           // Look for valid header
           std::string strBuf(recvBuf_, recvBuf_ + recvBufSize_);  // TODO: Just make recvBuf a string
