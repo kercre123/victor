@@ -222,7 +222,7 @@ namespace Cozmo {
       
       
       // Look for valid header
-      while (1) {
+      while (c.recvDataSize >= sizeof(RADIO_PACKET_HEADER)) {
         
         char* hPtr = std::strstr(c.recvBuf,(char*)RADIO_PACKET_HEADER);
         if (hPtr == NULL) {

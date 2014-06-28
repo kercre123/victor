@@ -94,10 +94,9 @@ namespace Anki {
 #if(USING_UART_RADIO)      
 //      if (server.HasClient()) {
         const u32 bytesAvailable = RadioGetNumBytesAvailable();
-        if(bytesAvailable > 0) {
+        const int headerSize = sizeof(RADIO_PACKET_HEADER);
+        if(bytesAvailable >= headerSize) {
     
-          const int headerSize = sizeof(RADIO_PACKET_HEADER);
-          
           // Look for valid header
           const char* hPtr = std::strstr((const char*)recvBuf_,(const char*)RADIO_PACKET_HEADER);
           if (hPtr == NULL) {
