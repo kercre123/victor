@@ -11,9 +11,6 @@ namespace Anki
     {
       void Startup()
       {
-        // Set up 4 bits for priority, 0 bits for subpriority
-        NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4); 
-        
         GPIO_PIN_SOURCE(BOARDID, GPIOC, 7);
         
         // Check that we are on the correct board revision

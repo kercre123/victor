@@ -2,7 +2,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "portable.h"
 
-#define BAUDRATE 115200
+#define BAUDRATE 1000000
 
 #define RCC_GPIO        RCC_AHB1Periph_GPIOC
 #define RCC_DMA         RCC_AHB1Periph_DMA1

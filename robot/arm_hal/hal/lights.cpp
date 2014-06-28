@@ -92,8 +92,8 @@ namespace Anki
         // Route interrupt
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_InitStructure.NVIC_IRQChannel = TIM8_TRG_COM_TIM14_IRQn;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
         NVIC_Init(&NVIC_InitStructure);      
       }
             

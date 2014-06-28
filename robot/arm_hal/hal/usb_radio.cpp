@@ -23,9 +23,7 @@
 
 namespace Anki {
   namespace Cozmo {
-    namespace HAL {
-      extern u8 g_halEnterTestMode;   
-    }
+    
     namespace { // "Private members"
       const u16 RECV_BUFFER_SIZE = 1024;
       
@@ -68,7 +66,6 @@ namespace Anki {
     } // RadioSendMessage()
 #endif // #ifndef RUN_EMBEDDED_TESTS
 
-    static u32 m_escapesInARow = 0;
     u32 RadioGetNumBytesAvailable(void)
     {
 #if(USING_UART_RADIO)			
@@ -79,11 +76,6 @@ namespace Anki {
         if (c < 0)    // Nothing more to grab
           return recvBufSize_;
         recvBuf_[recvBufSize_++] = c;
-        // Track how many escapes in a row we have received
-        if (27 == c)
-          m_escapesInARow++;
-        else
-          m_escapesInARow = 0;
       }
 #endif      
       return recvBufSize_;
@@ -102,16 +94,15 @@ namespace Anki {
 #if(USING_UART_RADIO)      
 //      if (server.HasClient()) {
         const u32 bytesAvailable = RadioGetNumBytesAvailable();
-        const int headerSize = sizeof(RADIO_PACKET_HEADER);          
-        if(bytesAvailable >= headerSize) {    
+        if(bytesAvailable > 0) {
+    
+          const int headerSize = sizeof(RADIO_PACKET_HEADER);
+          
           // Look for valid header
           const char* hPtr = std::strstr((const char*)recvBuf_,(const char*)RADIO_PACKET_HEADER);
           if (hPtr == NULL) {
-            // Header not found at all - see if we are receiving ESC characters to enter test mode
-            if (m_escapesInARow > 30)
-              g_halEnterTestMode = 1;
+            // Header not found at all
             // Delete everything
-            // XXX-NDM: This might truncate the first byte of the header due to bad luck..
             recvBufSize_ = 0;
             return retVal;
           }

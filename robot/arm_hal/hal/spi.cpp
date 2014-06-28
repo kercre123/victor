@@ -47,6 +47,17 @@ namespace Anki
       
       GPIO_PIN_SOURCE(TRX, GPIOD, 5);
 
+      void PrintCrap()
+      {
+        printf("\nTX: %d  RX: %d\n", DMA_STREAM_TX->NDTR, DMA_STREAM_RX->NDTR);
+        for (int i = 0; i < sizeof(g_dataToHead); i++)
+        {
+          printf("%02x", ((u8*)(&g_dataToHead))[i]);
+          if ((i & 63) == 63)
+            printf("\n");
+        }
+      }
+
       void SPIInit()
       {
         // Clock configuration
@@ -108,8 +119,8 @@ namespace Anki
         
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannel = DMA_IRQ_RX;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;  // Don't want this to be a very high priority
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  // Don't want this to be a very high priority
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);   
 
@@ -140,8 +151,8 @@ namespace Anki
         DMA_ITConfig(DMA_STREAM_TX, DMA_IT_TC, ENABLE);
         
         NVIC_InitStructure.NVIC_IRQChannel = DMA_IRQ_TX;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;  // Don't want this to be a very high priority
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  // Don't want this to be a very high priority
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure); 
         
