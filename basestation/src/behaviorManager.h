@@ -83,11 +83,27 @@ namespace Anki {
       
       BehaviorState state_, nextState_, problemState_;
       void (BehaviorManager::*updateFcn_)();
-      
+
       BehaviorMode mode_;
       
       Robot* robot_;
 
+      // mini-state machine for the idle animation for June demo
+      typedef enum {
+        IDLE_NONE,
+        IDLE_LOOKING_UP,
+        IDLE_PLAYING_SOUND,
+
+        // used after some number of idle loops
+        IDLE_FACING_USER,
+        IDLE_LOOKING_DOWN,
+        IDLE_TURNING_BACK
+      } IdleAnimationState;
+      
+      IdleAnimationState idleState_;
+      unsigned int timesIdle_;
+      Pose3d originalPose_;
+      
       // Block that the robot is currently travelling to, docking to,
       ObjectID_t blockOfInterest_;
       

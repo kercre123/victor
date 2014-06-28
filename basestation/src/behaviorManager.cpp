@@ -67,6 +67,8 @@ namespace Anki {
           state_     = WAITING_FOR_ROBOT;
           nextState_ = WAITING_TO_SEE_DICE;
           updateFcn_ = &BehaviorManager::Update_June2014DiceDemo;
+          idleState_ = IDLE_NONE;
+          timesIdle_ = 0;
           SoundManager::getInstance()->Play(SOUND_DEMO_START);
           break;
         default:
@@ -351,6 +353,8 @@ namespace Anki {
           break;
           */
           
+          const f32 diceViewingHeadAngle = DEG_TO_RAD(-15);
+
           // Wait for robot to be IDLE
           if(robot_->GetState() == Robot::IDLE)
           {
@@ -481,7 +485,6 @@ namespace Anki {
                   // dice, ignore it as an obstacle.  We'll consider an obstacle
                   // again later, when we start driving around to pick and place.
                   robot_->GetPathPlanner()->AddIgnoreType(Block::DICE_BLOCK_TYPE);
-                  const f32 diceViewingHeadAngle = DEG_TO_RAD(-15);
                   
                   Vec3f position( robot_->GetPose().get_translation() );
                   position -= diceBlock->GetPose().get_translation();
@@ -506,15 +509,116 @@ namespace Anki {
                 
               } // IF only one dice
               
+              timesIdle_ = 0;
+
             } // IF any diceBlocks available
             
             else {
+
+              constexpr int numIdleForFrustrated = 2;
+
               // Can't see dice
-              if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
-                CoreTechPrint("Show me the dice!\n");
-                robot_->SendPlayAnimation(ANIM_HEAD_NOD, 1);
-                SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
-                waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 5;
+              switch(idleState_) {
+                case IDLE_NONE:
+                {
+                  // if its been long enough, look up
+                  if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+                    if(++timesIdle_ >= numIdleForFrustrated) {
+                      originalPose_ = robot_->GetPose();
+                      Pose3d userFacingPose = robot_->GetPose();
+                      
+                      userFacingPose.set_rotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
+                      robot_->ExecutePathToPose(userFacingPose);
+                      CoreTechPrint("idle: facing user\n");
+                      idleState_ = IDLE_FACING_USER;
+                    }
+                    else {
+                      CoreTechPrint("idle: looking up\n");
+                      robot_->MoveHeadToAngle(DEG_TO_RAD(25), 3.0, 10);
+                      idleState_ = IDLE_LOOKING_UP;
+                    }
+                  }
+                  break;
+                }
+
+                case IDLE_LOOKING_UP:
+                {
+                  // once we get to the top, play the sound
+                  if(robot_->GetHeadAngle() > DEG_TO_RAD(20)) {
+                    CoreTechPrint("idle: playing sound\n");
+                    SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                    idleState_ = IDLE_PLAYING_SOUND;
+                    if(timesIdle_ >= numIdleForFrustrated) {
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 3.0;
+                    }
+                    else {
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.8;
+                    }
+                  }
+                  break;
+                }
+
+                case IDLE_PLAYING_SOUND:
+                {
+                  // once the sound is done, look back down
+                  if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+                    CoreTechPrint("idle: looking back down\n");
+                    robot_->MoveHeadToAngle(diceViewingHeadAngle, 1.5, 10);
+                    if(timesIdle_ >= numIdleForFrustrated) {
+                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
+                      idleState_ = IDLE_LOOKING_DOWN;
+                    }
+                    else {
+                      idleState_ = IDLE_NONE;
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 5;
+                    }
+                  }
+                  break;
+                }
+
+                case IDLE_FACING_USER:
+                {
+                  // once we get there, look up
+                  if(robot_->GetState() == Robot::IDLE) {
+                    SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                    CoreTechPrint("idle: looking up\n");
+                    robot_->MoveHeadToAngle(DEG_TO_RAD(25), 3.0, 10);
+                    idleState_ = IDLE_LOOKING_UP;
+                  }
+                  break;
+                }
+
+                case IDLE_LOOKING_DOWN:
+                {
+                  // once we are looking back down, turn back to the original pose
+                  if(waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() &&
+                     robot_->GetHeadAngle() < diceViewingHeadAngle + DEG_TO_RAD(5) &&
+                     robot_->GetState() == Robot::IDLE) {
+
+                    CoreTechPrint("idle: turning back\n");
+                    robot_->ExecutePathToPose(originalPose_);
+                    idleState_ = IDLE_TURNING_BACK;
+                    waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0;
+                  }
+                  break;
+                }
+
+                case IDLE_TURNING_BACK:
+                {
+                  if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+                    if(robot_->GetState() == Robot::IDLE) {
+                      CoreTechPrint("idle: waiting for dice\n");
+                      timesIdle_ = 0;
+                      idleState_ = IDLE_NONE;
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 5;
+                    }
+                  }
+                  break;
+                }
+
+                default:
+                CoreTechPrint("ERROR: invalid idle state %d\n", idleState_);
               }
             }
           } // IF robot is IDLE
