@@ -224,8 +224,11 @@ GTEST_TEST(TestPlanner, ReplanHard)
   State_c lastSafeState;
   xythetaPlan oldPlan;
 
-  int currentPlanIdx = env.FindClosestPlanSegmentToPose(planner.GetPlan(), newRobotPos);
+  float distFromPlan = 9999.0;
+  int currentPlanIdx = env.FindClosestPlanSegmentToPose(planner.GetPlan(), newRobotPos, distFromPlan);
   ASSERT_EQ(currentPlanIdx, 3) << "should be at action #3 in the plan (plan should have 1 short, then 3 long straights in a row)";
+
+  EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";
 
   ASSERT_FALSE(env.PlanIsSafe(planner.GetPlan(), 1000.0, currentPlanIdx, lastSafeState, oldPlan));
 
@@ -267,6 +270,8 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_straight)
     planner._impl->plan_.Push(0, 0.0);
   }
 
+  // env.PrintPlan(planner._impl->plan_);
+
   // plan now goes form (0,0) to (10,0), any point in between should work
 
   for(float distAlong = 0.0f; distAlong < 12.0 * env.GetResolution_mm(); distAlong += 0.7356 * env.GetResolution_mm()) {
@@ -274,17 +279,31 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_straight)
     if(expected >= 10)
       expected = 9;
 
+    float distFromPlan = 9999.0;
+
     State_c pose(distAlong, 0.0, 0.0);
-    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose), expected) 
+    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan), expected) 
       <<"closest path segment doesn't match expectation for state "<<pose;
+
+    if(expected < 9) {
+      EXPECT_LT(distFromPlan, 1.0) << "too far away from plan";
+    }
 
     pose.y_mm = 7.36;
-    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose), expected) 
+    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan), expected) 
       <<"closest path segment doesn't match expectation for state "<<pose;
 
+    if(expected < 9) {
+      EXPECT_LT(distFromPlan, 8.0) << "too far away from plan";
+    }
+
     pose.y_mm = -0.3;
-    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose), expected) 
+    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan), expected) 
       <<"closest path segment doesn't match expectation for state "<<pose;
+
+    if(expected < 9) {
+      EXPECT_LT(distFromPlan, 1.0) << "too far away from plan";
+    }
   }
 }
 
@@ -323,7 +342,11 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
   for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
     const MotionPrimitive& prim(env.GetRawMotionPrimitive(curr.theta, planner._impl->plan_.actions_[planIdx]));
 
-    ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), env.State2State_c(curr))) << "initial state wrong";
+    float distFromPlan = 9999.0;
+
+    ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), env.State2State_c(curr), distFromPlan))
+      << "initial state wrong";
+    EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";
 
     ASSERT_FALSE(prim.intermediatePositions.empty());
 
@@ -333,11 +356,17 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
                    prim.intermediatePositions[intermediateIdx].position.y_mm + env.GetX_mm(curr.y),
                    prim.intermediatePositions[intermediateIdx].position.theta);
 
-      ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose)) << "exact intermediate state "<<intermediateIdx<<" wrong";
+      ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan))
+        << "exact intermediate state "<<intermediateIdx<<" wrong";
+
+      EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";
 
       pose.x_mm += 0.003;
       pose.y_mm -= 0.006;
-      ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose)) << "offset intermediate state "<<intermediateIdx<<" wrong";
+      ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan))
+        << "offset intermediate state "<<intermediateIdx<<" wrong";
+      EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";
+
     }
 
     StateID currID(curr);
