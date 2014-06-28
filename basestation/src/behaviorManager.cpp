@@ -610,6 +610,7 @@ namespace Anki {
             wasCarryingBlockAtDockingStart_ = robot_->IsCarryingBlock();
             
             PRINT_INFO("STARTING DOCKING\n");
+            break;
           }
           
           // Repeat turn-stop behavior for more reliable block detection
