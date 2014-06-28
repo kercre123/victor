@@ -159,7 +159,7 @@ namespace Anki {
       f32 desiredBackupDistance_;
       
       /////// June2014DiceDemo vars ///////
-      const TimeStamp_t TimeBetweenDice_ms = 2000; // 2 sec
+      const TimeStamp_t TimeBetweenDice_ms = 1000; // 1 sec
       ObjectType_t blockToPickUp_;
       ObjectType_t blockToPlaceOn_;
       TimeStamp_t  diceDeletionTime_;
