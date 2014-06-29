@@ -395,6 +395,7 @@ namespace Anki {
             {
               if (behaviorMgr_->GetMode() == BM_None) {
                 behaviorMgr_->StartMode(BM_June2014DiceDemo);
+                robot_->SetDefaultLights(0x008080, 0x008080);
               } else {
                 behaviorMgr_->StartMode(BM_None);
               }

@@ -387,7 +387,7 @@ namespace Anki
       };
       
       // Light up one of the eye LEDs to the specified 24-bit RGB color
-      void SetLED(LEDId led_id, LEDColor color);
+      void SetLED(LEDId led_id, u32 color);
       
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state);
