@@ -269,7 +269,7 @@ namespace Anki {
       
       
       // ========= Lights ==========
-      void SetDefaultLights(const RobotLEDColor eye_left_color, const RobotLEDColor eye_right_color);
+      void SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color);
       
       
     protected:

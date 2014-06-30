@@ -724,7 +724,7 @@ namespace Anki {
       return robotID_;
     }
     
-    void HAL::SetLED(LEDId led_id, LEDColor color) {
+    void HAL::SetLED(LEDId led_id, u32 color) {
       // TODO: ...
     }
 

@@ -2,7 +2,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "portable.h"
 
-#define BAUDRATE 1000000
+#define BAUDRATE 115200
 
 #define RCC_GPIO        RCC_AHB1Periph_GPIOC
 #define RCC_DMA         RCC_AHB1Periph_DMA1
@@ -172,8 +172,8 @@ namespace Anki
         
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannel = DMA_IRQ_TX;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  // Don't want this to be a very high priority
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;  // Don't want this to be a very high priority
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
         

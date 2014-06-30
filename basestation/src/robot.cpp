@@ -1200,7 +1200,7 @@ namespace Anki {
     }
     
     
-    void Robot::SetDefaultLights(const RobotLEDColor eye_left_color, const RobotLEDColor eye_right_color)
+    void Robot::SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color)
     {
       MessageSetDefaultLights m;
       m.eye_left_color = eye_left_color;

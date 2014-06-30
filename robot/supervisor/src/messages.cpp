@@ -407,13 +407,13 @@ namespace Anki {
       }
 
       void ProcessSetDefaultLightsMessage(const SetDefaultLights& msg) {
-        HAL::LEDColor lColor = (HAL::LEDColor)(msg.eye_left_color);
+        u32 lColor = msg.eye_left_color;
         HAL::SetLED(HAL::LED_LEFT_EYE_TOP, lColor);
         HAL::SetLED(HAL::LED_LEFT_EYE_RIGHT, lColor);
         HAL::SetLED(HAL::LED_LEFT_EYE_BOTTOM, lColor);
         HAL::SetLED(HAL::LED_LEFT_EYE_LEFT, lColor);
 
-        HAL::LEDColor rColor = (HAL::LEDColor)(msg.eye_right_color);
+        u32 rColor = msg.eye_right_color;
         HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, rColor);
         HAL::SetLED(HAL::LED_RIGHT_EYE_RIGHT, rColor);
         HAL::SetLED(HAL::LED_RIGHT_EYE_BOTTOM, rColor);
