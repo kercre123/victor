@@ -20,6 +20,9 @@ fnames = {'A', 'B', 'C', 'D';
     'K', 'L', 'M', 'Q';
     'P', 'R', 'T', 'Y'};
 fnames = cellfun(@(name)fullfile(matMarkerPath, [name '.png']), fnames, 'UniformOutput', false);
+% Swap in "?" for D
+fnames{1,4} = '~/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/questionMark.png';
+
 angles = zeros(4);
 fidColors = zeros(1,3);
 
