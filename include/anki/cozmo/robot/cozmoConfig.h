@@ -120,6 +120,7 @@ namespace Anki {
     const u16 HEAD_CAM_CALIB_WIDTH  = 320;
     const u16 HEAD_CAM_CALIB_HEIGHT = 240;
     
+    /*
     // From Calibration on June 3, 2014
     const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 333.6684040730803f;
     const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 335.2799828009748f;
@@ -131,6 +132,20 @@ namespace Anki {
       -0.000994462251660f,
       -0.000805198826767f
     };
+     */
+    
+    // From Calibration on June 28, 2014, Cozmo Proto 2.1, #2
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 328.87251f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 331.17332f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 160.10795f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 117.64527f;
+    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
+      -0.099922561981334f,
+      -0.027386549049312f,
+      -0.003826021624417f,
+       0.000534816869611f
+    };
+    
 #endif // #ifdef SIMULATOR
 
 
