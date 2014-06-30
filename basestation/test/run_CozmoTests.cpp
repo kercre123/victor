@@ -40,7 +40,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   
   // TODO: Tighten/loosen thresholds?
   //const float   blockPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
-  const float blockPoseDistThreshold_mm    = 10.f;
+  const float blockPoseDistThreshold_mm    = 12.f;
   const Radians blockPoseAngleThreshold    = DEG_TO_RAD(15.f); // TODO: make dependent on distance?
   const float   robotPoseDistThreshold_mm  = 10.f;
   const Radians robotPoseAngleThreshold    = DEG_TO_RAD(3.f);
