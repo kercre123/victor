@@ -26,7 +26,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
   // TODO: make this a parameter?
-  const f32 quadRefinementMaxCornerChange = 2.f;
+  const f32 quadRefinementMaxCornerChange = 5.f;
   const s32 bufferSize = 10000000;
 
   AnkiConditionalErrorAndReturn(nrhs == 6 && nlhs >= 2 && nlhs <= 4, "mexDetectFiducialMarkers_quadInput", "Call this function as following: [quads, markerTypes, <markerNames>, <markerValidity>] = mexDetectFiducialMarkers_quadInput(uint8(image), quadsCellArray, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);");

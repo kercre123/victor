@@ -46,7 +46,7 @@ using namespace Anki::Embedded;
 // decode_minContrastRatio = 1.25;
 // quadRefinementIterations = 5;
 // numRefinementSamples = 100;
-// quadRefinementMaxCornerChange = 2.f;
+// quadRefinementMaxCornerChange = 5.f;
 // returnInvalidMarkers = 0;
 // [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, returnInvalidMarkers);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])

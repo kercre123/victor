@@ -80,7 +80,7 @@ namespace Anki {
         
         // If quad refinment moves any corner by more than this (in pixels), the
         // original quad/homography are restored.
-        quadRefinementMaxCornerChange = 2.f;
+        quadRefinementMaxCornerChange = 5.f;
         
         isInitialized = true;
       } // DetectFiducialMarkersParameters::Initialize()
