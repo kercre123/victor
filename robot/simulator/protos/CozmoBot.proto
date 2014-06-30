@@ -252,6 +252,10 @@ Supervisor {
 						fieldOfView IS fieldOfView
 						near 0.018
 						antialiasing TRUE
+						%{ if fields.vizMode then }%
+						pixelSize 0
+						%{ end }%
+
 				  }
 				  Gyro {
 				  	name "gyro"
