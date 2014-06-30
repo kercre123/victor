@@ -23,6 +23,7 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/vision/CameraSettings.h"
+#include "anki/vision/basestation/imageIO.h"
 
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/robot/cozmoConfig.h"
@@ -110,6 +111,7 @@ namespace Anki {
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
     , _forceReplanOnNextWorldChange(false)
+    , _saveImages(false)
     , _poseOrigin(&Pose3d::AddOrigin())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _poseOrigin) // Until this robot is localized be seeing a mat marker, create an origin for it to use as its pose parent
     , _frameId(0)
@@ -1109,6 +1111,66 @@ namespace Anki {
       m.numLoops = numLoops;
       return _msgHandler->SendMessage(_ID, m);
     }
+    
+    Result Robot::ProcessImageChunk(const MessageImageChunk &msg)
+    {
+      static u8 imgID = 0;
+      static u32 totalImgSize = 0;
+      static u8 data[ 320*240 ];
+      static u32 dataSize = 0;
+      static u32 width;
+      static u32 height;
+      
+      //PRINT_INFO("Img %d, chunk %d, size %d, res %d, dataSize %d\n",
+      //           msg.imageId, msg.chunkId, msg.chunkSize, msg.resolution, dataSize);
+      
+      // Check that resolution is supported
+      if (msg.resolution != Vision::CAMERA_RES_QVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQQVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQQQVGA &&
+          msg.resolution != Vision::CAMERA_RES_VERIFICATION_SNAPSHOT
+          ) {
+        return RESULT_FAIL;
+      }
+      
+      // If msgID has changed, then start over.
+      if (msg.imageId != imgID) {
+        imgID = msg.imageId;
+        dataSize = 0;
+        width = Vision::CameraResInfo[msg.resolution].width;
+        height = Vision::CameraResInfo[msg.resolution].height;
+        totalImgSize = width * height;
+      }
+      
+      // Msgs are guaranteed to be received in order so just append data to array
+      memcpy(data + dataSize, msg.data.data(), msg.chunkSize);
+      dataSize += msg.chunkSize;
+      
+      // When dataSize matches the expected size, print to file
+      if (dataSize >= totalImgSize) {
+        if (_saveImages) {
+          char imgCaptureFilename[64];
+          snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "robot%d_img%d.pgm", GetID(), imgID);
+          PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
+          Vision::WritePGM(imgCaptureFilename, data, width, height);
+        }
+        VizManager::getInstance()->SendGreyImage(data, (Vision::CameraResolution)msg.resolution);
+      }
+      
+      return RESULT_OK;
+    }
+    
+    void Robot::SaveImages(bool on)
+    {
+      _saveImages = on;
+    }
+    
+    bool Robot::IsSavingImages() const
+    {
+      return _saveImages;
+    }
+    
     
     // ============ Pose history ===============
     

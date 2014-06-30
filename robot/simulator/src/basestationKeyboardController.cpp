@@ -118,6 +118,7 @@ namespace Anki {
         printf("         Toggle headlight:  h\n");
         printf("            Request image:  i\n");
         printf("      Toggle image stream:  Shift+i\n");
+        printf("       Toggle save images:  e\n");
         printf(" Toggle VizObject display:  d\n");
         printf("   Goto green pose marker:  g\n");
         printf("       Cycle block select:  .\n");
@@ -126,6 +127,7 @@ namespace Anki {
         printf("Start June 2014 dice demo:  j\n");
         printf("       Abort current path:  q\n");
         printf("  Update controller gains:  k\n");
+        printf("      Cycle sound schemes:  m\n");
         printf("               Test modes:  Alt + Testmode#\n");
         printf("         Follow test plan:  t\n");
         printf("               Print help:  ?\n");
@@ -164,6 +166,7 @@ namespace Anki {
 
         const s32 CKEY_TEST_PLAN = (s32)'T';
         const s32 CKEY_CYCLE_SOUND_SCHEME = (s32)'M';
+        const s32 CKEY_EXPORT_IMAGES = (s32)'E';
 
         // Get robot
         robot_ = NULL;
@@ -328,6 +331,14 @@ namespace Anki {
               break;
             }
               
+            case CKEY_EXPORT_IMAGES:
+            {
+              // Toggle saving of images to pgm
+              robot_->SaveImages(!robot_->IsSavingImages());
+              printf("Saving images: %s\n", robot_->IsSavingImages() ? "ON" : "OFF");
+              break;
+            }
+
             case CKEY_DISPLAY_TOGGLE:
             {
               static bool showObjects = false;

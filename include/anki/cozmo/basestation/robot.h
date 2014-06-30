@@ -235,6 +235,15 @@ namespace Anki {
       // If numLoops == 0, animation repeats forever.
       Result SendPlayAnimation(const AnimationID_t id, const u32 numLoops = 0);
       
+      // For processing image chunks arriving from robot.
+      // Sends complete images to VizManager for visualization.
+      // If _saveImages is true, then images are saved as pgm.
+      Result ProcessImageChunk(const MessageImageChunk &msg);
+      
+      // Enable/Disable saving of images constructed from ImageChunk messages as pgm files.
+      void SaveImages(bool on);
+      bool IsSavingImages() const;
+      
       // =========== Pose history =============
       // Returns ref to robot's pose history
       const RobotPoseHistory& GetPoseHistory() {return _poseHistory;}
@@ -305,6 +314,10 @@ namespace Anki {
       // if true and we are traversing a path, then next time the
       // block world changes, re-plan from scratch
       bool _forceReplanOnNextWorldChange;
+
+      // Whether or not images that are construted from incoming ImageChunk messages
+      // should be saved as PGM
+      bool _saveImages;
 
       Vision::Camera   _camera;
       
