@@ -661,8 +661,8 @@ namespace Anki
         
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream7_IRQn;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
         
@@ -682,8 +682,8 @@ namespace Anki
         EXTI->IMR &= ~(PIN_INTERRUPT | PIN_SPI_READY);
         
         NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;  // SPI_READY / INTERRUPT
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
         NVIC_Init(&NVIC_InitStructure);
         
         SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOC, SOURCE_SPI_READY);
