@@ -477,7 +477,7 @@ namespace Anki
         
         // Snap to horizontal
         Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.get_translation();
-        robotPoseWrtMat_trans.z() = 0;
+        robotPoseWrtMat_trans.z() = 0; // TODO: can't do this if we are on top of something!
         robotPoseWrtMat.set_translation(robotPoseWrtMat_trans);
         robotPoseWrtMat.set_rotation( robotPoseWrtMat.get_rotationAngle<'Z'>(), Z_AXIS_3D );
         
