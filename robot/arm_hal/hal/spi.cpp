@@ -108,8 +108,9 @@ namespace Anki
         
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannel = DMA_IRQ_RX;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;  // Don't want this to be a very high priority
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
+        // This must be lower priority, since it contains MainExecution
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);   
 
@@ -140,8 +141,8 @@ namespace Anki
         DMA_ITConfig(DMA_STREAM_TX, DMA_IT_TC, ENABLE);
         
         NVIC_InitStructure.NVIC_IRQChannel = DMA_IRQ_TX;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;  // Don't want this to be a very high priority
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;  // Sync is top priority
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure); 
         
