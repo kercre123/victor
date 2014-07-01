@@ -273,8 +273,6 @@ namespace Anki {
   bool       nearlyEqual (const Point<N,T> &point1, const Point<N,T> &point2,
                           const T eps)
   {
-    CORETECH_ASSERT(N>0);
-    
     // Return true if all elements of data are equal, false otherwise.
     bool retVal = NEAR(point1[0], point2[0], eps);
     PointDimType i = 1;
@@ -305,8 +303,6 @@ namespace Anki {
   template<PointDimType N, typename T>
   T DotProduct(const Point<N,T> &point1, const Point<N,T> &point2)
   {
-    CORETECH_ASSERT(N>0);
-    
     float dotProduct = point1[0]*point2[0];
     for(PointDimType i=1; i<N; ++i) {
       dotProduct += point1[i]*point2[i];
@@ -315,15 +311,20 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
-  T Point<N,T>::Length(void) const
+  T Point<N,T>::LengthSq(void) const
   {
-    CORETECH_ASSERT(N>0);
     T retVal = (*this)[0]*(*this)[0];
     for(PointDimType i=1; i<N; ++i) {
       retVal += (*this)[i]*(*this)[i];
     }
     
-    return std::sqrt(retVal);
+    return retVal;
+  }
+  
+  template<PointDimType N, typename T>
+  T Point<N,T>::Length(void) const
+  {
+    return std::sqrt(LengthSq());
   }
   
   template<PointDimType N, typename T>

@@ -21,6 +21,9 @@
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/general.h"
 
+#include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
+
 namespace Anki {
   namespace Vision {
     
@@ -87,13 +90,22 @@ namespace Anki {
       // The two objects can't be the same if they aren't the same type!
       bool isSame = this->type_ == otherObject.type_;
       
+      Pose3d otherPose;
+      if(otherObject.GetPose().getWithRespectTo(*this->pose_.get_parent(), otherPose) == false) {
+        PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
+                            "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
+        isSame = false;
+      }
+      
       if(isSame) {
+        
+        CORETECH_ASSERT(otherPose.get_parent() == pose_.get_parent());
+        
         if(this->GetRotationAmbiguities().empty()) {
-          isSame = this->pose_.IsSameAs(otherObject.GetPose(),
-                                        distThreshold, angleThreshold, P_diff);
+          isSame = this->pose_.IsSameAs(otherPose, distThreshold, angleThreshold, P_diff);
         }
         else {
-          isSame = this->pose_.IsSameAs_WithAmbiguity(otherObject.GetPose(),
+          isSame = this->pose_.IsSameAs_WithAmbiguity(otherPose,
                                                       this->GetRotationAmbiguities(),
                                                       distThreshold, angleThreshold,
                                                       true, P_diff);
@@ -349,7 +361,17 @@ namespace Anki {
           
           // Compute pose wrt camera, or world if no camera specified
           if (seenOnlyBy == ANY_CAMERA) {
-            objectsSeen.back()->SetPose(poseCluster.GetPose().getWithRespectTo(Pose3d::World));
+            Pose3d newPose;
+            if(poseCluster.GetPose().getWithRespectTo(poseCluster.GetPose().FindOrigin(), newPose) == true) {
+              objectsSeen.back()->SetPose(newPose);
+            } else {
+              PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectsFromMarkers.CouldNotFindWorldOrigin",
+                                "Could not get the pose cluster w.r.t. the world pose.\n");
+              // TODO: this may indicate that we should be getting the pose w.r.t. the origin
+              // of the camera that saw this object.
+              // We are probably not handling the case that two robot's saw the same thing
+              // but are not both localized to the same world frame yet.
+            }
           } else {
             objectsSeen.back()->SetPose(poseCluster.GetPose());
           }
@@ -502,7 +524,10 @@ namespace Anki {
         const Pose3d* originalParent = pose_.get_parent();
         pose_ = camera->ComputeObjectPose(imgPoints, objPoints);
         if(pose_.get_parent() != originalParent) {
-          pose_ = pose_.getWithRespectTo(originalParent);
+          if(pose_.getWithRespectTo(originalParent, pose_) == false) {
+            PRINT_NAMED_ERROR("ObservableObjectLibrary.PoseCluster.RecomputePose.OriginMisMatch",
+                              "Could not get object pose w.r.t. original parent.\n");
+          }
         }
       } // IF more than one member
       

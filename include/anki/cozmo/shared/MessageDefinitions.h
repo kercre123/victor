@@ -57,6 +57,7 @@ ADD_MESSAGE_MEMBER(f32, liftAngle)
 ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
 ADD_MESSAGE_MEMBER(u16, lastPathID)
 ADD_MESSAGE_MEMBER(s8, currPathSegment) // -1 if not traversing a path
+ADD_MESSAGE_MEMBER(u8, numFreeSegmentSlots)
 ADD_MESSAGE_MEMBER(u8, status)  // See RobotStatusFlag
 // ...
 END_MESSAGE_DEFINITION(RobotState)
@@ -116,8 +117,7 @@ END_MESSAGE_DEFINITION(ClearPath)
 #define ADD_COMMON_PATH_SEGMENT_MEMBERS \
 ADD_MESSAGE_MEMBER(f32, targetSpeed) \
 ADD_MESSAGE_MEMBER(f32, accel) \
-ADD_MESSAGE_MEMBER(f32, decel) \
-ADD_MESSAGE_MEMBER(s8,  segmentID)
+ADD_MESSAGE_MEMBER(f32, decel)
 
 // AppendPathSegmentLine
 START_MESSAGE_DEFINITION(AppendPathSegmentLine, 1)
@@ -218,7 +218,7 @@ END_MESSAGE_DEFINITION(BlockPlaced)
 
 // AbsLocalizationUpdate
 START_TIMESTAMPED_MESSAGE_DEFINITION(AbsLocalizationUpdate, 1)
-ADD_MESSAGE_MEMBER(f32, pose_frame_id)
+ADD_MESSAGE_MEMBER(u32, pose_frame_id)
 ADD_MESSAGE_MEMBER(f32, xPosition)
 ADD_MESSAGE_MEMBER(f32, yPosition)
 ADD_MESSAGE_MEMBER(f32, headingAngle)
@@ -299,6 +299,13 @@ START_MESSAGE_DEFINITION(SetHeadlight, 1)
 ADD_MESSAGE_MEMBER(u8, intensity)
 END_MESSAGE_DEFINITION(SetHeadlight)
 
+// SetDefaultLights
+START_MESSAGE_DEFINITION(SetDefaultLights, 1)
+ADD_MESSAGE_MEMBER(u32, eye_left_color)
+ADD_MESSAGE_MEMBER(u32, eye_right_color)
+END_MESSAGE_DEFINITION(SetDefaultLights)
+
+
 // TrackerQuad
 START_MESSAGE_DEFINITION(TrackerQuad, 1)
 ADD_MESSAGE_MEMBER(u16, topLeft_x)
@@ -325,5 +332,25 @@ ADD_MESSAGE_MEMBER(f32, ki)
 ADD_MESSAGE_MEMBER(f32, maxIntegralError)
 END_MESSAGE_DEFINITION(SetLiftControllerGains)
 
+// SetVisionSystemParams
+START_MESSAGE_DEFINITION(SetVisionSystemParams, 1)
+ADD_MESSAGE_MEMBER(s32, integerCountsIncrement)
+ADD_MESSAGE_MEMBER(f32, minExposureTime)
+ADD_MESSAGE_MEMBER(f32, maxExposureTime)
+ADD_MESSAGE_MEMBER(f32, percentileToMakeHigh)
+ADD_MESSAGE_MEMBER(u8, highValue)
+END_MESSAGE_DEFINITION(SetVisionSystemParams)
 
+// PlayAnimation
+START_MESSAGE_DEFINITION(PlayAnimation, 1)
+ADD_MESSAGE_MEMBER(u32, numLoops)
+ADD_MESSAGE_MEMBER(u8, animationID)
+END_MESSAGE_DEFINITION(PlayAnimation)
 
+// MainCycleTimeError
+START_MESSAGE_DEFINITION(MainCycleTimeError, 1)
+ADD_MESSAGE_MEMBER(u32, numMainTooLongErrors)
+ADD_MESSAGE_MEMBER(u32, avgMainTooLateTime)
+ADD_MESSAGE_MEMBER(u32, numMainTooLateErrors)
+ADD_MESSAGE_MEMBER(u32, avgMainTooLongTime)
+END_MESSAGE_DEFINITION(MainCycleTimeError)

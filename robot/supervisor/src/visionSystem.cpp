@@ -154,12 +154,22 @@ namespace Anki {
 
         static s32 frameNumber;
         static const bool autoExposure_enabled = true;
+        
+        // TEMP: Un-const-ing these so that we can adjust them from basestation for dev purposes.
+        /*
         static const s32 autoExposure_integerCountsIncrement = 3;
         static const f32 autoExposure_minExposureTime = 0.02f;
         static const f32 autoExposure_maxExposureTime = 0.98f;
         static const u8 autoExposure_highValue = 250;
         static const f32 autoExposure_percentileToMakeHigh = 0.97f;
         static const s32 autoExposure_adjustEveryNFrames = 1;
+         */
+        static s32 autoExposure_integerCountsIncrement = 3;
+        static f32 autoExposure_minExposureTime = 0.02f;
+        static f32 autoExposure_maxExposureTime = 0.98f;
+        static u8 autoExposure_highValue = 250;
+        static f32 autoExposure_percentileToMakeHigh = 0.97f;
+        static s32 autoExposure_adjustEveryNFrames = 1;
 
         // Tracking marker related members
         struct MarkerToTrack {
@@ -393,7 +403,7 @@ namespace Anki {
         }
       }
 
-      void DownsampleAndSendImage(Array<u8> &img)
+      void DownsampleAndSendImage(const Array<u8> &img)
       {
         // Only downsample if normal capture res is QVGA
         if (imageSendMode_ != ISM_OFF && captureResolution_ == Vision::CAMERA_RES_QVGA) {
@@ -2280,6 +2290,28 @@ namespace Anki {
       } // Update() [Real]
 
 #endif // #ifdef SEND_IMAGE_ONLY
+      
+      
+      void SetParams(const s32 integerCountsIncrement,
+                     const f32 minExposureTime,
+                     const f32 maxExposureTime,
+                     const u8 highValue,
+                     const f32 percentileToMakeHigh)
+      {
+        autoExposure_integerCountsIncrement = integerCountsIncrement;
+        autoExposure_minExposureTime = minExposureTime;
+        autoExposure_maxExposureTime = maxExposureTime;
+        autoExposure_highValue = highValue;
+        autoExposure_percentileToMakeHigh = percentileToMakeHigh;
+        
+        PRINT("Changed VisionSystem params: integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
+              autoExposure_integerCountsIncrement,
+              autoExposure_minExposureTime,
+              autoExposure_maxExposureTime,
+              autoExposure_highValue,
+              autoExposure_percentileToMakeHigh);
+      }
+      
     } // namespace VisionSystem
   } // namespace Cozmo
 } // namespace Anki

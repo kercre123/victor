@@ -10,10 +10,8 @@
 // Set to 1 to enable LED indicator of wifi activity
 #define ENABLE_WIFI_LED 1
 
-#if(ENABLE_WIFI_LED)
-#define WIFI_LED_ID (LED_LEFT_EYE_LEFT)
-#else
-#define WIFI_LED_ID (NUM_LEDS)
+#ifndef ENABLE_WIFI_LED
+#define SetLED(x,y)
 #endif
 
 static const char* ssid = "AnkiRobits";
@@ -663,8 +661,8 @@ namespace Anki
         
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream7_IRQn;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
         
@@ -684,8 +682,8 @@ namespace Anki
         EXTI->IMR &= ~(PIN_INTERRUPT | PIN_SPI_READY);
         
         NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;  // SPI_READY / INTERRUPT
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
         NVIC_Init(&NVIC_InitStructure);
         
         SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOC, SOURCE_SPI_READY);
@@ -807,13 +805,14 @@ namespace Anki
         u8 data[36];
         memset(data, 0, sizeof(data));
         // Copy SSID into the structure for scanning, in order to find the hidden AP
-        strlcpy((char*)&data[4], ssid, sizeof(data) - 4);
+        strlcpy((char*)&data[4], ssid, sizeof(data) - 4);        
         
         // Scan for access points (needs to be done, even though we know which to connect to)
         WifiPutString("Scan for access points...\r\n");
+        SetLED(LED_LEFT_EYE_RIGHT, LED_GREEN);
         if (WifiCommand(WIFI_TX_SCAN, sizeof(data), data) < 0)
-          return -1;
-        
+          return -1;        
+
         // Join the AP
         JoinFrameSend join;
         memset(&join, 0, sizeof(join));
@@ -824,9 +823,10 @@ namespace Anki
         join.ssidLength = strlen(ssid);
         
         WifiPutString("Join hidden AP...\r\n");
+        SetLED(LED_LEFT_EYE_RIGHT, LED_PURPLE);
         if (WifiCommand(WIFI_TX_JOIN, sizeof(join), (u8*)&join) < 0)
-          return -1;
-        
+          return -1;        
+
         // Configure the IP parameters
         const MACIP* macToIP = &g_MACToIP[g_moduleIndex];
         u8 parameters[] = 
@@ -837,13 +837,16 @@ namespace Anki
           192,168,3,1       // Gateway
         };
         WifiPutString("Set up my IP address...\r\n");
+        SetLED(LED_LEFT_EYE_RIGHT, LED_YELLOW);
         if (WifiCommand(WIFI_TX_SET_IP_PARAMETERS, sizeof(parameters), parameters) < 0)
           return -1;
         
         WifiPutString("Open listener...\r\n");
+        SetLED(LED_LEFT_EYE_RIGHT, LED_CYAN);
         if (WifiCreateSocket() < 0)
           return -1;
-        
+
+        SetLED(LED_LEFT_EYE_RIGHT, LED_WHITE);        
         return 0;
       }
       
@@ -881,7 +884,7 @@ namespace Anki
                 m_waitState = WAIT_RX_SPI_READY_0;
                 m_isTransferring = true;
                 
-                SetLED(WIFI_LED_ID, LED_RED);
+                SetLED(LED_LEFT_EYE_LEFT, LED_RED);
                 WifiPutString("v");
                 
               } else if ((UARTGetFreeSpace() < BUFFER_WRITE_SIZE) 
@@ -891,15 +894,15 @@ namespace Anki
                 m_waitState = WAIT_TX_SPI_READY_0;
                 m_isTransferring = true;
                 
-                SetLED(WIFI_LED_ID, LED_RED);
+                SetLED(LED_LEFT_EYE_LEFT, LED_RED);
                 WifiPutString("^");
               } else {
                 // Nothing to do
                 
                 if (m_isClientConnected)
-                  SetLED(WIFI_LED_ID, LED_BLUE);
+                  SetLED(LED_LEFT_EYE_LEFT, LED_BLUE);
                 else
-                  SetLED(WIFI_LED_ID, LED_GREEN);
+                  SetLED(LED_LEFT_EYE_LEFT, LED_GREEN);
 
                 if (UARTGetFreeSpace() < BUFFER_WRITE_SIZE)
                   WifiPutString("o");
@@ -1130,7 +1133,8 @@ namespace Anki
         
         WifiConfigurePins();
         
-        SetLED(WIFI_LED_ID, LED_RED);
+        SetLED(LED_LEFT_EYE_LEFT, LED_RED);
+        SetLED(LED_LEFT_EYE_RIGHT, LED_RED);
         
         WifiPutString("Trying to enter card ready...\r\n");
         if (WifiEnterCardReadyState() < 0)
@@ -1203,7 +1207,8 @@ namespace Anki
         // Enable GPIO interrupts on these pins
         EXTI->IMR |= (PIN_INTERRUPT | PIN_SPI_READY);
         
-        SetLED(WIFI_LED_ID, LED_GREEN);
+        SetLED(LED_LEFT_EYE_LEFT, LED_GREEN);
+        SetLED(LED_LEFT_EYE_RIGHT, LED_OFF);
         
         return 0;
       }

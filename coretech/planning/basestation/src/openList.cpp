@@ -69,15 +69,26 @@ void OpenList::remove(OpenList::iterator it)
 }
 
 
-bool OpenList::contains(StateID id)
+bool OpenList::contains(StateID id) const
 {
-  multimap<float, StateID>::iterator it;
+  multimap<float, StateID>::const_iterator it;
   for(it=fMap_.begin(); it!=fMap_.end(); ++it) {
     if (it->second == id) {
       return true;
     }
   }
   return false;
+}
+
+float OpenList::fVal(StateID id) const
+{
+  multimap<float, StateID>::const_iterator it;
+  for(it=fMap_.begin(); it!=fMap_.end(); ++it) {
+    if (it->second == id) {
+      return it->first;
+    }
+  }
+  return FLT_MAX;
 }
 
 }

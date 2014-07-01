@@ -33,6 +33,18 @@ namespace Anki {
       VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD,
       VIZ_COLOR_OBSERVED_QUAD,
       VIZ_COLOR_ROBOT_BOUNDING_QUAD,
+      
+      // Color names
+      VIZ_COLOR_RED,
+      VIZ_COLOR_GREEN,
+      VIZ_COLOR_BLUE,
+      VIZ_COLOR_YELLOW,
+      VIZ_COLOR_DARKGRAY,
+      VIZ_COLOR_DARKGREEN,
+      VIZ_COLOR_ORANGE,
+      VIZ_COLOR_OFFWHITE,
+      
+      VIZ_COLOR_NONE,
       VIZ_COLOR_DEFAULT = u32_MAX
     };
     
@@ -86,6 +98,7 @@ namespace Anki {
       
       void EraseRobot(const u32 robotID);
       void EraseCuboid(const u32 blockID);
+      void EraseAllCuboids();
       void ErasePreDockPose(const u32 preDockPoseID);
       
       
@@ -140,23 +153,65 @@ namespace Anki {
       void EraseAllPaths();
       
       // ==== Quad functions =====
+    
       
-      // Draws a 3D quadrilateral
-      template<typename T> void DrawQuad(const u32 quadID,
-                                         const Quadrilateral<3,T>& quad,
-                                         const u32 colorID);
+      // Draws a generic 3D quadrilateral
+      template<typename T>
+      void DrawGenericQuad(const u32 quadID,
+                           const Quadrilateral<3,T>& quad,
+                           const u32 colorID);
 
-      // Draws a 2D quadrilateral in the XY plane at the specified Z height
-      template<typename T> void DrawQuad(const u32 quadID,
-                                         const Quadrilateral<2,T>& quad,
-                                         const T zHeight,
-                                         const u32 colorID);
+      // Draws a generic 2D quadrilateral in the XY plane at the specified Z height
+      template<typename T>
+      void DrawGenericQuad(const u32 quadID,
+                           const Quadrilateral<2,T>& quad,
+                           const T zHeight,
+                           const u32 colorID);
+      
+      template<typename T>
+      void DrawMatMarker(const u32 quadID,
+                         const Quadrilateral<3,T>& quad,
+                         const u32 colorID);
+      
+      template<typename T>
+      void DrawRobotBoundingBox(const u32 quadID,
+                                const Quadrilateral<3,T>& quad,
+                                const u32 colorID);
+      
+      template<typename T>
+      void DrawPlannerObstacle(const bool isReplan,
+                               const u32 quadID,
+                               const Quadrilateral<2,T>& quad,
+                               const T zHeight,
+                               const u32 colorID);
 
-      // Erases the quad corresponding to quadID
-      void EraseQuad(const u32 quadID);
+      // Draw quads of a specified type (usually called as a helper by the
+      // above methods for specific types)
+      template<typename T>
+      void DrawQuad(const u32 quadType,
+                    const u32 quadID,
+                    const Quadrilateral<3,T>& quad,
+                    const u32 colorID);
+
+      template<typename T>
+      void DrawQuad(const u32 quadType,
+                    const u32 quadID,
+                    const Quadrilateral<2,T>& quad,
+                    const T zHeight,
+                    const u32 colorID);
+      
+      // Erases the quad with the specified type and ID
+      void EraseQuad(const u32 quadType, const u32 quadID);
+      
+      // Erases all the quads fo the specified type
+      void EraseAllQuadsWithType(const u32 quadType);
       
       // Erases all quads
       void EraseAllQuads();
+      
+      void EraseAllPlannerObstacles(const bool isReplan);
+      
+      void EraseAllMatMarkers();
     
       // ==== Text functions =====
       void SetText(const u32 labelID, const u32 colorID, const char* format, ...);
@@ -215,14 +270,17 @@ namespace Anki {
       return singletonInstance_;
     }
     
+    
     template<typename T>
-    void VizManager::DrawQuad(const u32 quadID,
+    void VizManager::DrawQuad(const u32 quadType,
+                              const u32 quadID,
                               const Quadrilateral<2,T>& quad,
                               const T zHeight_mm,
                               const u32 colorID)
     {
       using namespace Quad;
       VizQuad v;
+      v.quadType = quadType;
       v.quadID = quadID;
       
       const f32 zHeight_m = MM_TO_M(static_cast<f32>(zHeight_mm));
@@ -247,14 +305,16 @@ namespace Anki {
       
       SendMessage( GET_MESSAGE_ID(VizQuad), &v );
     }
-    
+
     template<typename T>
-    void VizManager::DrawQuad(const u32 quadID,
+    void VizManager::DrawQuad(const u32 quadType,
+                              const u32 quadID,
                               const Quadrilateral<3,T>& quad,
                               const u32 colorID)
     {
       using namespace Quad;
       VizQuad v;
+      v.quadType = quadType;
       v.quadID = quadID;
       
       v.xUpperLeft  = MM_TO_M(static_cast<f32>(quad[TopLeft].x()));
@@ -276,6 +336,52 @@ namespace Anki {
       v.color = colorID;
       
       SendMessage( GET_MESSAGE_ID(VizQuad), &v );
+    }
+    
+    
+    template<typename T>
+    void VizManager::DrawGenericQuad(const u32 quadID,
+                                     const Quadrilateral<2,T>& quad,
+                                     const T zHeight_mm,
+                                     const u32 colorID)
+    {
+      DrawQuad(VIZ_QUAD_GENERIC_2D, quadID, quad, zHeight_mm, colorID);
+    }
+    
+    template<typename T>
+    void VizManager::DrawGenericQuad(const u32 quadID,
+                                     const Quadrilateral<3,T>& quad,
+                                     const u32 colorID)
+    {
+      DrawQuad(VIZ_QUAD_GENERIC_3D, quadID, quad, colorID);
+    }
+    
+    template<typename T>
+    void VizManager::DrawMatMarker(const u32 quadID,
+                                   const Quadrilateral<3,T>& quad,
+                                   const u32 colorID)
+    {
+      DrawQuad(VIZ_QUAD_MAT_MARKER, quadID, quad, colorID);
+    }
+    
+    template<typename T>
+    void VizManager::DrawPlannerObstacle(const bool isReplan,
+                                         const u32 quadID,
+                                         const Quadrilateral<2,T>& quad,
+                                         const T zHeight,
+                                         const u32 colorID)
+    {
+      const u32 quadType = (isReplan ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE);
+      
+      DrawQuad(quadType, quadID, quad, zHeight, colorID);
+    }
+    
+    template<typename T>
+    void VizManager::DrawRobotBoundingBox(const u32 quadID,
+                                          const Quadrilateral<3,T>& quad,
+                                          const u32 colorID)
+    {
+      DrawQuad(VIZ_QUAD_ROBOT_BOUNDING_BOX, quadID, quad, colorID);
     }
     
   } // namespace Cozmo

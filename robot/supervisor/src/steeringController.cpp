@@ -61,11 +61,8 @@ namespace Anki {
       f32 maxRotationWheelSpeedDiff = 0.f;
       
       VelocityProfileGenerator vpg_;
-
-      // TODO:(bn) show this to kevin!
-    f32 currDesiredAngle_; // only used in point turn
       
-      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.1f;
+      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.4f;
       
     } // Private namespace
     
@@ -216,12 +213,18 @@ namespace Anki {
       //Get the desired vehicle speed (the one the user commanded to the car)
       s16 desspeed = SpeedController::GetControllerCommandedVehicleSpeed();
       
+      // If moving backwards, modify distance and angular error such that proper curvature
+      // is computed below.
+      if (currspeed < 0) {
+        offsetError_mm *= -1;
+        headingError_rad = -Radians(headingError_rad + PI_F).ToFloat();
+      }
       
       ///////////////////////////////////////////////////////////////////////////////
       
       // Activate steering if: We are moving and the commanded speed is bigger than
       // zero (or bigger than 0+eps)
-      if(SpeedController::IsVehicleStopped() == FALSE && desspeed > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
+      if(SpeedController::IsVehicleStopped() == FALSE && ABS(desspeed) > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
         steering_active = TRUE;
         
       }
@@ -231,7 +234,7 @@ namespace Anki {
       // When it's not following a path, you should be able to push it around freely.
       
       //Deactivate steering if: We are not really moving and the commanded speed is zero (or smaller than 0+eps)
-      if (SpeedController::IsVehicleStopped() == TRUE && desspeed <= SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
+      if (SpeedController::IsVehicleStopped() == TRUE && ABS(desspeed) <= SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
         steering_active = false;
         
         // Set wheel controller coast mode as we finish decelerating to 0
@@ -239,22 +242,15 @@ namespace Anki {
       }
       
       // If we're commanding any non-zero speed, don't coast
-      if(desspeed > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
+      if(ABS(desspeed) > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
         WheelController::SetCoastMode(false);
       }
       
       ///////////////////////////////////////////////////////////////////////////////
       if (steering_active == TRUE)
       {
-        curvature = -K1_ * (atan_fast(K2_ * offsetError_mm / (currspeed + 200)) - headingError_rad);
+        curvature = -K1_ * (atan_fast(K2_ * offsetError_mm / (ABS(currspeed) + 200)) - headingError_rad);
       } else {
-        curvature = 0;
-      }
-      
-      // TODO: Get rid of this??
-      //STOP: This will make us coast when we command 0, good for now,
-      //but we might need to break later
-      if (desspeed < 0) {
         curvature = 0;
       }
       
@@ -409,7 +405,6 @@ namespace Anki {
       
       
       f32 currAngle = Localization::GetCurrentMatOrientation().ToFloat();
-      currDesiredAngle_ = currAngle;
       
       // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
       // which determines the turning direction.
@@ -454,13 +449,13 @@ namespace Anki {
       Radians currAngle = Cozmo::Localization::GetCurrentMatOrientation();
       float angularDistToTarget = currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
       
-      // Update current angular velocity, if we got close to where we should be
-      if (ABS(currDesiredAngle_ - currAngle) < POINT_TURN_TARGET_DIST_STOP_RAD) {
-        vpg_.Step(currAngularVel_, currDesiredAngle_);
+      // Update current angular velocity
+      f32 currDesiredAngle;
+      vpg_.Step(currAngularVel_, currDesiredAngle);
       
-        PRINT("currAngle: %f, targetRad: %f, AngularDist: %f, currAngularVel: %f, currDesiredAngle: %f\n",
-                  currAngle.ToFloat(), targetRad_.ToFloat(), angularDistToTarget, currAngularVel_, currDesiredAngle_);
-      }
+      //PRINT("currAngle: %f, targetRad: %f, AngularDist: %f, currAngularVel: %f, currDesiredAngle: %f\n",
+      //          currAngle.ToFloat(), targetRad_.ToFloat(), angularDistToTarget, currAngularVel_, currDesiredAngle);
+      
       
       // Check for stop condition
       if (ABS(angularDistToTarget) < POINT_TURN_TARGET_DIST_STOP_RAD) {

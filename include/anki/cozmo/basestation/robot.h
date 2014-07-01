@@ -61,7 +61,14 @@ namespace Anki {
       // Accessors
       const RobotID_t        GetID()           const;
       const Pose3d&          GetPose()         const;
+      const Pose3d*          GetPoseOrigin()   const {return _poseOrigin;}
+      bool                   IsLocalized()     const {return _isLocalized;}
       const Vision::Camera&  GetCamera()       const;
+      
+      // Returns true if head_angle is valid.
+      // *valid_head_angle is made to equal the closest valid head angle to head_angle.
+      bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
+      
       Vision::Camera&        GetCamera();
       
       const f32              GetHeadAngle()    const;
@@ -72,8 +79,8 @@ namespace Anki {
       const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
       const State            GetState()        const;
       
-      const Block*           GetDockBlock()    const {return _dockBlock;}
-      const Block*           GetCarryingBlock()const {return _carryingBlock;}
+      const ObjectID_t       GetDockBlock()    const {return _dockBlockID;}
+      const ObjectID_t       GetCarryingBlock()const {return _carryingBlockID;}
       
       void SetState(const State newState);
       void SetPose(const Pose3d &newPose);
@@ -100,6 +107,14 @@ namespace Anki {
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
       Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
+      
+      // Same as above, but select from a set poses and return the selected index.
+      Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
+      Result ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex);
+      Result ExecutePathToPose(const std::vector<Pose3d>& poses, const Radians headAngle, size_t& selectedIndex);
+
+      // executes a test path defined in latticePlanner
+      void ExecuteTestPath();
 
       IPathPlanner* GetPathPlanner() { return _longPathPlanner; }
 
@@ -111,14 +126,17 @@ namespace Anki {
       
       void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
       s8   GetCurrPathSegment() {return _currPathSegment;}
-      bool IsTraversingPath() {return (_currPathSegment >= 0) || _isWaitingForReplan;}
+      bool IsTraversingPath() {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
 
+      void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
+      u8 GetNumFreeSegmentSlots() const {return _numFreeSegmentSlots;}
+      
       void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
       u16 GetLastRecvdPathID() {return _lastRecvdPathID;}
       u16 GetLastSentPathID() {return _lastSentPathID;}
 
-      void SetCarryingBlock(Block* carryBlock) {_carryingBlock = carryBlock;}
-      bool IsCarryingBlock() {return _carryingBlock != nullptr;}
+      void SetCarryingBlock(ObjectID_t carryBlockID) {_carryingBlockID = carryBlockID;}
+      bool IsCarryingBlock() {return _carryingBlockID != ANY_OBJECT;}
 
       void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
       bool IsPickingOrPlacing() {return _isPickingOrPlacing;}
@@ -147,11 +165,11 @@ namespace Anki {
       Result StopAllMotors();
       
       // 
-      Result ExecuteDockingSequence(Block* blockToDockWith);
+      Result ExecuteDockingSequence(ObjectID_t blockToDockWith);
       
       // Sends a message to the robot to dock with the specified marker of the
       // specified block that it should currently be seeing.
-      Result DockWithBlock(Block* block,
+      Result DockWithBlock(const ObjectID_t blockID,
                            const Vision::KnownMarker* marker,
                            const DockAction_t dockAction);
       
@@ -160,7 +178,7 @@ namespace Anki {
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
-      Result DockWithBlock(Block* block,
+      Result DockWithBlock(const ObjectID_t blockID,
                            const Vision::KnownMarker* marker,
                            const DockAction_t dockAction,
                            const u16 image_pixel_x,
@@ -210,6 +228,22 @@ namespace Anki {
       Result SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       Result SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       
+      // Set VisionSystem parameters
+      Result SendSetVisionSystemParams(VisionSystemParams_t p);
+      
+      // Play animation
+      // If numLoops == 0, animation repeats forever.
+      Result SendPlayAnimation(const AnimationID_t id, const u32 numLoops = 0);
+      
+      // For processing image chunks arriving from robot.
+      // Sends complete images to VizManager for visualization.
+      // If _saveImages is true, then images are saved as pgm.
+      Result ProcessImageChunk(const MessageImageChunk &msg);
+      
+      // Enable/Disable saving of images constructed from ImageChunk messages as pgm files.
+      void SaveImages(bool on);
+      bool IsSavingImages() const;
+      
       // =========== Pose history =============
       // Returns ref to robot's pose history
       const RobotPoseHistory& GetPoseHistory() {return _poseHistory;}
@@ -219,7 +253,8 @@ namespace Anki {
                                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                      const f32 pose_angle,
                                      const f32 head_angle,
-                                     const f32 lift_angle);
+                                     const f32 lift_angle,
+                                     const Pose3d* pose_origin);
       
       Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                         const RobotPoseStamp& p);
@@ -232,12 +267,19 @@ namespace Anki {
       Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
       Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
       
+      TimeStamp_t GetLastMsgTimestamp() const;
+      
       bool IsValidPoseKey(const HistPoseKey key) const;
       
       // Updates the current pose to the best estimate based on
       // historical poses including vision-based poses.
       // Returns true if the pose is successfully updated, false otherwise.
       bool UpdateCurrPoseFromHistory();
+      
+      
+      // ========= Lights ==========
+      void SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color);
+      
       
     protected:
       // The robot's identifier
@@ -256,9 +298,8 @@ namespace Anki {
       IPathPlanner*    _shortPathPlanner;
       Planning::Path   _path;
       s8               _currPathSegment;
-      bool             _isWaitingForReplan;
+      u8               _numFreeSegmentSlots;
       Pose3d           _goalPose;
-      Radians          _goalHeadAngle;
       f32              _goalDistanceThreshold;
       Radians          _goalAngleThreshold;
       u16              _lastSentPathID;
@@ -274,11 +315,17 @@ namespace Anki {
       // block world changes, re-plan from scratch
       bool _forceReplanOnNextWorldChange;
 
+      // Whether or not images that are construted from incoming ImageChunk messages
+      // should be saved as PGM
+      bool _saveImages;
+
       Vision::Camera   _camera;
       
       // Geometry / Pose
+      Pose3d*          _poseOrigin;
       Pose3d           _pose;
       PoseFrameID_t    _frameId;
+      bool             _isLocalized;
       
       const Pose3d _neckPose; // joint around which head rotates
       const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint
@@ -296,7 +343,8 @@ namespace Anki {
       // State
       bool _isCarryingBlock;
       bool _isPickingOrPlacing;
-      Block* _carryingBlock;
+      //Block* _carryingBlock;
+      ObjectID_t _carryingBlockID;
       bool _isMoving;
       State _state, _nextState;
       
@@ -305,9 +353,14 @@ namespace Anki {
       static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
       
       // Docking
-      Block* _dockBlock;
-      const Vision::KnownMarker* _dockMarker;
-      DockAction_t _dockAction;
+      // Note that we don't store a pointer to the block because it
+      // could deleted, but it is ok to hang onto a pointer to the
+      // marker on that block, so long as we always verify the block
+      // exists and is still valid (since, therefore, the marker must
+      // be as well)
+      ObjectID_t                  _dockBlockID;
+      const Vision::KnownMarker*  _dockMarker;
+      DockAction_t                _dockAction;
       
       f32 _waitUntilTime;
       

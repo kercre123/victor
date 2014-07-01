@@ -104,7 +104,7 @@ Block1x1 {
   name "Number1"
   translation 0.0823477 0.154984 0.0219935
   rotation 1 -1.28835e-12 -6.88518e-12 3.67408e-06
-  blockColor 0.85 0.5 0.5
+  blockColor 0.2 0.2 0.2
   facemarkerFront [
     "textures/letters/1.png"
   ]
@@ -128,7 +128,7 @@ Block1x1 {
   name "Number2"
   translation 0.252889 0.0290523 0.021993
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.249821 0.85098 0.264027
+  blockColor 0.9 0.9 0.0
   facemarkerFront [
     "textures/letters/2.png"
   ]
@@ -152,7 +152,7 @@ Block1x1 {
   name "Number3"
   translation 0.216778 -0.130033 0.0219925
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.326848 0.541238 0.85098
+  blockColor 0.0 0.0 0.85
   facemarkerFront [
     "textures/letters/3.png"
   ]
@@ -176,7 +176,7 @@ Block1x1 {
   name "Number4"
   translation 0.0149741 -0.182442 0.0219923
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.63505 0.424613 0.85098
+  blockColor 0.9 0.4 0.0 # Orange
   facemarkerFront [
     "textures/letters/4.png"
   ]
@@ -200,7 +200,7 @@ Block1x1 {
   name "Number5"
   translation -0.160499 -0.0780675 0.0219927
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.85098 0.802457 0.50779
+  blockColor 0.0 0.0 0.85
   facemarkerFront [
     "textures/letters/5.png"
   ]
@@ -224,7 +224,7 @@ Block1x1 {
   name "Number6"
   translation -0.157611 0.140151 0.0219935
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.5 0.5 0.85
+  blockColor 0.0 0.0 0.85
   facemarkerFront [
     "textures/letters/6.png"
   ]
@@ -248,7 +248,7 @@ Block1x1 {
   name "Bang"
   translation 0.357611 0.350151 0.0219942
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.85098 0.444236 0.0568704
+  blockColor 0.85 0.0 0.0
   facemarkerFront [
     "textures/symbols/bangBangBang.png"
   ]
@@ -266,6 +266,54 @@ Block1x1 {
   ]
   facemarkerBottom [
     "textures/symbols/bangBangBang.png"
+  ]
+}
+Block1x1 {
+  name "Arrow"
+  translation 0.357611 0.400151 0.0219942
+  rotation 7.34662e-05 -1.83704e-06 1 0.05
+  blockColor 0.9 0.9 0.0
+  facemarkerFront [
+    "textures/symbols/arrow.png"
+  ]
+  facemarkerBack [
+    "textures/symbols/arrow.png"
+  ]
+  facemarkerLeft [
+    "textures/symbols/arrow.png"
+  ]
+  facemarkerRight [
+    "textures/symbols/arrow.png"
+  ]
+  facemarkerTop [
+    "textures/symbols/arrow.png"
+  ]
+  facemarkerBottom [
+    "textures/symbols/arrow.png"
+  ]
+}
+Block1x1 {
+  name "Star"
+  translation 0.310611 0.400151 0.0219942
+  rotation 7.34662e-05 -1.83704e-06 1 0.05
+  blockColor 0.0 0.5 0.0
+  facemarkerFront [
+    "textures/symbols/star5.png"
+  ]
+  facemarkerBack [
+    "textures/symbols/star5.png"
+  ]
+  facemarkerLeft [
+    "textures/symbols/star5.png"
+  ]
+  facemarkerRight [
+    "textures/symbols/star5.png"
+  ]
+  facemarkerTop [
+    "textures/symbols/star5.png"
+  ]
+  facemarkerBottom [
+    "textures/symbols/star5.png"
   ]
 }
 Dice {

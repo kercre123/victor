@@ -12,7 +12,7 @@ namespace Anki {
 
     namespace {
     
-      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(1.f);
+      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(3.f);
       
       // Head angle on startup
       //const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
@@ -31,7 +31,7 @@ namespace Anki {
       f32 prevHalPos_ = 0.f;
       bool inPosition_  = true;
       
-      const f32 SPEED_FILTERING_COEFF = 0.9f;
+      const f32 SPEED_FILTERING_COEFF = 0.5f;
 
       f32 Kp_ = 2.f; // proportional control constant
       f32 Ki_ = 0.05f; // integral control constant
@@ -248,20 +248,20 @@ namespace Anki {
         return;
       }
       
+      desiredAngle_ = angle;
+      angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
+      
 #if(DEBUG_HEAD_CONTROLLER)
       PRINT("HEAD: SetDesiredAngle %f rads\n", desiredAngle_.ToFloat());
 #endif
       
-      desiredAngle_ = angle;
-      angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
-      
       f32 startRadSpeed = radSpeed_;
       f32 startRad = currentAngle_.ToFloat();
       if (!inPosition_) {
-        //angleErrorSum_ = 0.f;
         startRadSpeed = currDesiredRadVel_;
         startRad = currDesiredAngle_;
       } else {
+        startRadSpeed = 0;
         angleErrorSum_ = 0.f;
       }
       
@@ -269,7 +269,9 @@ namespace Anki {
 
       if (FLT_NEAR(angleError_,0.f)) {
         inPosition_ = true;
+        #if(DEBUG_HEAD_CONTROLLER)
         PRINT("Head: Already at desired position\n");
+        #endif
         return;
       }
       
@@ -281,7 +283,7 @@ namespace Anki {
       
 #if(DEBUG_HEAD_CONTROLLER)
       PRINT("HEAD VPG: startVel %f, startPos %f, maxVel %f, endVel %f, endPos %f\n",
-            radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, approachSpeedRad_, desiredAngle_.ToFloat());
+            startRadSpeed, startRad, maxSpeedRad_, approachSpeedRad_, desiredAngle_.ToFloat());
 #endif
 
       
@@ -314,14 +316,15 @@ namespace Anki {
         
         
         // Open loop value to drive at desired speed
-        power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
+        //power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
         
         // Compute corrective value
         f32 power_corr = (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
         
         // Add base power in the direction of the desired general direction
         //power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
-        power_ += power_corr + ((power_ > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+        //power_ += power_corr + ((power_ > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+        power_ = power_corr + ((desiredAngle_.ToFloat() - currentAngle_.ToFloat() > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
         
         // Update angle error sum
         angleErrorSum_ += angleError_;

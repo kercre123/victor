@@ -19,6 +19,8 @@
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
+#include "vizManager.h"
+
 namespace Anki {
   
   // Forward Declarations:
@@ -39,7 +41,7 @@ namespace Anki {
     class Block : public Vision::ObservableObject //Base<Block>
     {
     public:
-      using Color = Point3<u8>;
+      using Color = VIZ_COLOR_ID;
       
 #include "anki/cozmo/basestation/BlockDefinitions.h"
       
@@ -101,10 +103,10 @@ namespace Anki {
       //using Vision::ObservableObjectBase<Block>::GetMinDim;
 
       void SetSize(const float width, const float height, const float depth);
-      void SetColor(const unsigned char red, const unsigned char green, const unsigned char blue);
+      //void SetColor(const unsigned char red, const unsigned char green, const unsigned char blue);
       void SetName(const std::string name);
       
-      bool GetIsBeingCarried() const;
+      bool IsBeingCarried() const;
       void SetIsBeingCarried(const bool tf);
       
       void AddFace(const FaceName whichFace,
@@ -159,7 +161,8 @@ namespace Anki {
       // Visualize using VizManager.  If preDockPoseDistance > 0, pre dock poses
       // will also be drawn
       // TODO: make generic and put as virtual method in base class
-      void Visualize(const u32 color, const f32 preDockPoseDistance = 0.f) const;
+      void Visualize(const f32 preDockPoseDistance = 0.f) const;
+      void Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance = 0.f) const;
       
     protected:
       
@@ -296,19 +299,21 @@ namespace Anki {
       _size = {width, height, depth};
     }
     
+    /*
     inline void Block::SetColor(const unsigned char red,
                                 const unsigned char green,
                                 const unsigned char blue)
     {
       _color = {red, green, blue};
     }
+     */
     
     inline void Block::SetName(const std::string name)
     {
       _name = name;
     }
     
-    inline bool Block::GetIsBeingCarried() const {
+    inline bool Block::IsBeingCarried() const {
       return _isBeingCarried;
     }
     

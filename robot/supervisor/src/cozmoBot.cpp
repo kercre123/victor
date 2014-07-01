@@ -18,6 +18,7 @@
 #include "steeringController.h"
 #include "wheelController.h"
 #include "visionSystem.h"
+#include "animationController.h"
 
 #include "anki/messaging/shared/utilMessaging.h"
 
@@ -48,6 +49,17 @@ namespace Anki {
         // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
         // times through the main loop
         s32 robotStateMessageCounter_ = 0;
+        
+        // Main cycle time errors
+        u32 mainTooLongCnt_ = 0;
+        u32 mainTooLateCnt_ = 0;
+        u32 avgMainTooLongTime_ = 0;
+        u32 avgMainTooLateTime_ = 0;
+        u32 lastCycleStartTime_ = 0;
+        u32 lastMainCycleTimeErrorReportTime_ = 0;
+        const u32 MAIN_TOO_LATE_TIME_THRESH = TIME_STEP * 1000 + 500;  // Normal cycle time plus some margin
+        const u32 MAIN_TOO_LONG_TIME_THRESH = TIME_STEP * 1000 + 500;
+        const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD = 1000000;
 
       } // Robot private namespace
       
@@ -187,6 +199,16 @@ namespace Anki {
       
       Result step_MainExecution()
       {
+        // Detect if it took too long in between mainExecution calls
+        u32 cycleStartTime = HAL::GetMicroCounter();
+        if (lastCycleStartTime_ != 0) {
+          u32 timeBetweenCycles = cycleStartTime - lastCycleStartTime_;
+          if (timeBetweenCycles > MAIN_TOO_LATE_TIME_THRESH) {
+            ++mainTooLateCnt_;
+            avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
+          }
+        }
+        
         // HACK: Manually setting timestamp here in mainExecution until
         // until Nathan implements this the correct way.
         HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
@@ -253,6 +275,8 @@ namespace Anki {
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
 
+        AnimationController::Update();
+        
         HeadController::Update();
         LiftController::Update();
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
@@ -326,6 +350,36 @@ namespace Anki {
 #ifndef ROBOT_HARDWARE
         HAL::UpdateDisplay();
 #endif        
+        
+        
+        // Check if main took too long
+        u32 cycleEndTime = HAL::GetMicroCounter();
+        u32 cycleTime = cycleEndTime - cycleStartTime;
+        if (cycleTime > MAIN_TOO_LONG_TIME_THRESH) {
+          ++mainTooLongCnt_;
+          avgMainTooLongTime_ = (u32)((f32)(avgMainTooLongTime_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
+        }
+        lastCycleStartTime_ = cycleStartTime;
+        
+        
+        // Report main cycle time error
+        if (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD) {
+          Messages::MainCycleTimeError m;
+          m.numMainTooLateErrors = mainTooLateCnt_;
+          m.avgMainTooLateTime = avgMainTooLateTime_;
+          m.numMainTooLongErrors = mainTooLongCnt_;
+          m.avgMainTooLongTime = avgMainTooLongTime_;
+          
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::MainCycleTimeError), &m);
+          
+          mainTooLateCnt_ = 0;
+          avgMainTooLateTime_ = 0;
+          mainTooLongCnt_ = 0;
+          avgMainTooLongTime_ = 0;
+          
+          lastMainCycleTimeErrorReportTime_ = cycleEndTime;
+        }
+        
         
         return RESULT_OK;
         

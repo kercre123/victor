@@ -40,11 +40,23 @@ namespace Anki
       
       //Messages::ID RadioGetNextMessage(u8* buffer){ return (Messages::ID)0; }
       //bool RadioIsConnected(){ return false; }
+      static IDCard m_idCard;
+      IDCard* GetIDCard() { return &m_idCard; }
+
+      static void GetId()
+      {
+        // XXX: Replace with flash identification block
+        printf("My ID: %08x", *(int*)(0x1FFF7A10));
+        m_idCard.esn = 2;
+        if (*(int*)(0x1FFF7A10) == 0x00250031)
+          m_idCard.esn = 1;
+      }
     }
   }
 }
 
-void Wait()
+// Belongs in motortest.cpp
+static void Wait()
 {
   using namespace Anki::Cozmo::HAL;
   
@@ -88,15 +100,17 @@ int main(void)
   // Initialize the hardware
   LightsInit();
   UARTInit();
-
-  UARTPutString("UART!");
+  printf("UART..");
+  GetId();
   
   FrontCameraInit();
+  printf("camera..");
   
   IMUInit();  // The IMU must be configured before spineport  
-  SPIInit();
-  UARTPutString("SPI!\r\n");
-
+  printf("IMU..");
+  SPIInit();  
+  printf("spine..");
+  
 #if 0
   // Motor testing...
   while (1)
@@ -133,6 +147,7 @@ int main(void)
 #ifndef SEND_IMAGE_ONLY_TEST_BASESTATION
   Anki::Cozmo::Robot::Init();
   g_halInitComplete = true;
+  printf("init complete!\r\n");
    
   while (Anki::Cozmo::Robot::step_LongExecution() == Anki::RESULT_OK)
   {

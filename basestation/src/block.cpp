@@ -16,8 +16,8 @@
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 
-#include "vizManager.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/imgproc/imgproc.hpp"
@@ -356,19 +356,36 @@ namespace Anki {
       // TODO: make dot product tolerance in terms of an angle?
       if( NEAR(DotProduct(Z_AXIS_3D, v), 0.f,  distance_mm * DOT_TOLERANCE) ) {
         
+        /*
         // Rotation of block around v should be a multiple of 90 degrees
-        RotationMatrix3d R(0, v);
-        const float angle = std::abs(R.GetAngleDiffFrom(blockPose.get_rotationMatrix()).ToFloat());
+        const float angX = ABS(blockPose.get_rotationAngle<'X'>().ToFloat());
+        const float angY = ABS(blockPose.get_rotationAngle<'Y'>().ToFloat());
         
-        if(NEAR(angle, 0.f,             ANGLE_TOLERANCE) ||
-           NEAR(angle, DEG_TO_RAD(90),  ANGLE_TOLERANCE) ||
-           NEAR(angle, DEG_TO_RAD(180), ANGLE_TOLERANCE) )
+        const bool angX_mult90 = (NEAR(angX, 0.f,             ANGLE_TOLERANCE) ||
+                                  NEAR(angX, DEG_TO_RAD(90),  ANGLE_TOLERANCE) ||
+                                  NEAR(angX, DEG_TO_RAD(180), ANGLE_TOLERANCE) ||
+                                  NEAR(angX, DEG_TO_RAD(360), ANGLE_TOLERANCE));
+        const bool angY_mult90 = (NEAR(angY, 0.f,             ANGLE_TOLERANCE) ||
+                                  NEAR(angY, DEG_TO_RAD(90),  ANGLE_TOLERANCE) ||
+                                  NEAR(angY, DEG_TO_RAD(180), ANGLE_TOLERANCE) ||
+                                  NEAR(angY, DEG_TO_RAD(360), ANGLE_TOLERANCE));
+        
+        if(angX_mult90 && angY_mult90)
         {
           dockingPt.z() = 0.f;  // Project to floor plane
           preDockPose.set_translation(dockingPt);
           preDockPose.set_rotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
           dockingPointFound = true;
         }
+        */
+        
+        // TODO: The commented out logic above appears not to be accounting
+        // for rotation ambiguity of blocks. Just accept this is a valid dock pose for now.
+        dockingPt.z() = 0.f;  // Project to floor plane
+        preDockPose.set_translation(dockingPt);
+        preDockPose.set_rotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
+        dockingPointFound = true;
+
       }
       
       return dockingPointFound;
@@ -478,10 +495,21 @@ namespace Anki {
       
     } // Block::GetMarker()
     
-    
-    void Block::Visualize(const u32 color, const f32 preDockPoseDistance) const
+    void Block::Visualize(const f32 preDockPoseDistance) const
     {
-      VizManager::getInstance()->DrawCuboid(GetID(), _size, GetPose().getWithRespectTo(Pose3d::World), color);
+      Visualize(_color, preDockPoseDistance);
+    }
+    
+    void Block::Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) const
+    {
+      Pose3d vizPose;
+      if(pose_.getWithRespectTo(pose_.FindOrigin(), vizPose) == false) {
+        // This really should not happen, by definition...
+        PRINT_NAMED_ERROR("Block.Visualize.OriginProblem", "Could not get block's pose w.r.t. its own origin (?!?)\n");
+        return;
+      }
+      
+      VizManager::getInstance()->DrawCuboid(GetID(), _size, vizPose, color);
       
       if(preDockPoseDistance > 0.f) {
         u32 poseID = 0;

@@ -60,8 +60,20 @@ namespace Anki {
       // implied to be true because we are changing both the start and
       // the goal
       virtual EPlanStatus GetPlan(Planning::Path &path,
-                                    const Pose3d& startPose,
-                                    const Pose3d& targetPose) = 0;
+                                  const Pose3d& startPose,
+                                  const Pose3d& targetPose) = 0;
+     
+      // This version gets a plan to the closest of the goals you supply. It
+      // is up to the planner implementation to override and choose based on
+      // other criteria. The index of the selected target pose is returned in
+      // the last argument.
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                  const Pose3d& startPose,
+                                  const std::vector<Pose3d>& targetPoses,
+                                  size_t& selectedIndex);
+
+      // return a test path
+      virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) {}
       
       void AddIgnoreType(const ObjectType_t objType)    { _ignoreTypes.insert(objType); }
       void RemoveIgnoreType(const ObjectType_t objType) { _ignoreTypes.erase(objType); }
@@ -107,12 +119,14 @@ namespace Anki {
                                   const Pose3d& targetPose) override;
     protected:
       Vec3f _targetVec;
+      float _finalTargetAngle;
     };
 
     class LatticePlannerImpl;
 
     class LatticePlanner : public IPathPlanner
     {
+      friend LatticePlannerImpl;
     public:
       LatticePlanner(const BlockWorld* blockWorld, const Json::Value& mprims);
       virtual ~LatticePlanner();
@@ -124,6 +138,15 @@ namespace Anki {
       virtual EPlanStatus GetPlan(Planning::Path &path,
                                     const Pose3d& startPose,
                                     const Pose3d& targetPose) override;
+
+      // This version gets a plan to any of the goals you supply. It
+      // is up to the planner implementation to decide 
+      virtual EPlanStatus GetPlan(Planning::Path &path,
+                                  const Pose3d& startPose,
+                                  const std::vector<Pose3d>& targetPoses,
+                                  size_t& selectedIndex) override;
+
+      virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path);
 
     protected:
       LatticePlannerImpl* impl_;

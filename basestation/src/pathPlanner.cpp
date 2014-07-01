@@ -11,6 +11,7 @@
 
 #include "pathPlanner.h"
 #include "anki/common/basestation/general.h"
+#include "anki/common/basestation/math/quad_impl.h"
 //#include "anki/cozmo/robot/cozmoConfig.h"
 
 #define DUBINS_TARGET_SPEED_MMPS 50
@@ -82,6 +83,46 @@ namespace Anki {
       }
 
       return DID_PLAN;
+    }
+    
+    IPathPlanner::EPlanStatus IPathPlanner::GetPlan(Planning::Path &path,
+                                                    const Pose3d& startPose,
+                                                    const std::vector<Pose3d>& targetPoses,
+                                                    size_t& selectedIndex)
+    {
+      // Select the closest
+      const Pose3d* closestPose;
+      
+      selectedIndex = 0;
+      bool foundTarget = false;
+      f32 shortestDistToPose = -1.f;
+      for(size_t i=0; i<targetPoses.size(); ++i)
+      {
+        const Pose3d& targetPose = targetPoses[i];
+        
+        PRINT_NAMED_INFO("IPathPlanner.GetPlan.FindClosestPose",
+                         "Candidate target pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f)\n",
+                         targetPose.get_translation().x(),
+                         targetPose.get_translation().y(),
+                         targetPose.get_translation().z(),
+                         targetPose.get_rotationAngle<'Z'>().getDegrees(),
+                         targetPose.get_rotationAxis().x(),
+                         targetPose.get_rotationAxis().y(),
+                         targetPose.get_rotationAxis().z());
+        
+        const f32 distToPose = (targetPose.get_translation() - startPose.get_translation()).LengthSq();
+        if (!foundTarget || distToPose < shortestDistToPose)
+        {
+          foundTarget = true;
+          shortestDistToPose = distToPose;
+          closestPose = &targetPose;
+          selectedIndex = i;
+        }
+      } // for each targetPose
+    
+      CORETECH_ASSERT(foundTarget);
+      
+      return this->GetPlan(path, startPose, *closestPose);
     }
     
     

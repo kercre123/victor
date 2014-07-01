@@ -2,8 +2,10 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/common/basestation/math/point_impl.h"
 #include "vizManager.h"
 #include "behaviorManager.h"
+#include "soundManager.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -22,7 +24,7 @@ namespace Anki {
       namespace {
         // Constants for Webots:
         const f32 DRIVE_VELOCITY_FAST = 60.f; // mm/s
-        const f32 DRIVE_VELOCITY_SLOW = 20.f; // mm/s
+        const f32 DRIVE_VELOCITY_SLOW = 10.f; // mm/s
         
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
@@ -116,6 +118,7 @@ namespace Anki {
         printf("         Toggle headlight:  h\n");
         printf("            Request image:  i\n");
         printf("      Toggle image stream:  Shift+i\n");
+        printf("       Toggle save images:  e\n");
         printf(" Toggle VizObject display:  d\n");
         printf("   Goto green pose marker:  g\n");
         printf("       Cycle block select:  .\n");
@@ -124,7 +127,9 @@ namespace Anki {
         printf("Start June 2014 dice demo:  j\n");
         printf("       Abort current path:  q\n");
         printf("  Update controller gains:  k\n");
+        printf("      Cycle sound schemes:  m\n");
         printf("               Test modes:  Alt + Testmode#\n");
+        printf("         Follow test plan:  t\n");
         printf("               Print help:  ?\n");
         printf("\n");
       }
@@ -133,7 +138,7 @@ namespace Anki {
       void BSKeyboardController::ProcessKeystroke()
       {
         
-        //Why do some of those not match ASCII codes?
+        // these are the ascii codes for the capital letter
         //Numbers, spacebar etc. work, letters are different, why?
         //a, z, s, x, Space
         const s32 CKEY_CANCEL_PATH = 81;  // q
@@ -157,6 +162,11 @@ namespace Anki {
         
         const s32 CKEY_START_DICE_DEMO= 74; // 'j' for "June"
         const s32 CKEY_SET_GAINS   = 75;  // 'k'
+        const s32 CKEY_SET_VISIONSYSTEM_PARAMS = 86;  // v
+
+        const s32 CKEY_TEST_PLAN = (s32)'T';
+        const s32 CKEY_CYCLE_SOUND_SCHEME = (s32)'M';
+        const s32 CKEY_EXPORT_IMAGES = (s32)'E';
 
         // Get robot
         robot_ = NULL;
@@ -321,6 +331,14 @@ namespace Anki {
               break;
             }
               
+            case CKEY_EXPORT_IMAGES:
+            {
+              // Toggle saving of images to pgm
+              robot_->SaveImages(!robot_->IsSavingImages());
+              printf("Saving images: %s\n", robot_->IsSavingImages() ? "ON" : "OFF");
+              break;
+            }
+
             case CKEY_DISPLAY_TOGGLE:
             {
               static bool showObjects = false;
@@ -361,6 +379,13 @@ namespace Anki {
               }
               break;
             }
+
+            case CKEY_TEST_PLAN:
+            {
+              robot_->ExecuteTestPath();
+              break;
+            }
+
             case CKEY_CYCLE_BLOCK_SELECT:
             {
               behaviorMgr_->SelectNextBlockOfInterest();
@@ -369,7 +394,7 @@ namespace Anki {
             case CKEY_CLEAR_BLOCKS:
             {
               blockWorld_->ClearAllExistingBlocks();
-              VizManager::getInstance()->EraseVizObjectType(VIZ_CUBOID);
+              VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_CUBOID);
               break;
             }
             case CKEY_DOCK_TO_BLOCK:
@@ -379,7 +404,12 @@ namespace Anki {
             }
             case CKEY_START_DICE_DEMO:
             {
-              behaviorMgr_->StartMode(BM_June2014DiceDemo);
+              if (behaviorMgr_->GetMode() == BM_None) {
+                behaviorMgr_->StartMode(BM_June2014DiceDemo);
+                robot_->SetDefaultLights(0x008080, 0x008080);
+              } else {
+                behaviorMgr_->StartMode(BM_None);
+              }
               break;
             }
             case CKEY_CANCEL_PATH:
@@ -390,6 +420,7 @@ namespace Anki {
             case CKEY_SET_GAINS:
             {
               if (root_) {
+                // Head and lift gains
                 f32 kp = root_->getField("headKp")->getSFFloat();
                 f32 ki = root_->getField("headKi")->getSFFloat();
                 f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
@@ -404,6 +435,31 @@ namespace Anki {
               } else {
                 printf("No BlockWorldComms was found in world\n");
               }
+              break;
+            }
+            case CKEY_SET_VISIONSYSTEM_PARAMS:
+            {
+              if (root_) {
+                // Vision system params
+                VisionSystemParams_t p;
+                p.integerCountsIncrement = root_->getField("integerCountsIncrement")->getSFInt32();
+                p.minExposureTime = root_->getField("minExposureTime")->getSFFloat();
+                p.maxExposureTime = root_->getField("maxExposureTime")->getSFFloat();
+                p.highValue = root_->getField("highValue")->getSFInt32();
+                p.percentileToMakeHigh = root_->getField("percentileToMakeHigh")->getSFFloat();
+                printf("New VisionSystems params\n");
+                robot_->SendSetVisionSystemParams(p);
+              }
+              break;
+            }
+            case CKEY_CYCLE_SOUND_SCHEME:
+            {
+              SoundSchemeID_t nextSoundScheme = (SoundSchemeID_t)(SoundManager::getInstance()->GetScheme() + 1);
+              if (nextSoundScheme == NUM_SOUND_SCHEMES) {
+                nextSoundScheme = SOUND_SCHEME_COZMO;
+              }
+              printf("Sound scheme: %d\n", nextSoundScheme);
+              SoundManager::getInstance()->SetScheme(nextSoundScheme);
               break;
             }
             case CKEY_QUESTION_MARK:

@@ -18,6 +18,9 @@
 #include "anki/cozmo/basestation/mat.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
+
 
 namespace Anki {
   namespace Cozmo {
@@ -34,6 +37,11 @@ namespace Anki {
       
       //#include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
 #include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"
+     
+      // Add an origin to use as this mat piece's reference, until such time
+      // that we want to make it relative to another mat piece or some
+      // common origin
+      pose_.set_parent(&Pose3d::AddOrigin());
       
     };
     

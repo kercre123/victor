@@ -61,8 +61,7 @@ namespace Anki
       // Empties the queue of all observed markers
       void ClearAllObservedMarkers();
       
-      void QueueObservedMarker(const Vision::ObservedMarker& marker, const HistPoseKey poseKey);
-                               //Robot* seenByRobot);
+      Result QueueObservedMarker(const MessageVisionMarker& msg, Robot& robot);
       
       void CommandRobotToDock(const RobotID_t whichRobot,
                               Block&    whichBlock);
@@ -75,27 +74,31 @@ namespace Anki
       
       // Clear a block with a specific ID. Returns true if block with that ID
       // is found and cleared, false otherwise.
-      bool ClearBlock(const BlockID_t withID);
+      bool ClearBlock(const ObjectID_t withID);
       
       const Vision::ObservableObjectLibrary& GetBlockLibrary() const;
       const ObjectsMapByID_t& GetExistingBlocks(const ObjectType_t blockType) const;
       const ObjectsMap_t& GetAllExistingBlocks() const {return existingBlocks_;}
       const Vision::ObservableObjectLibrary& GetMatLibrary() const;
       
-      // TODO: this only looks through blocks, so shouldn't it be GetBlockByID()?
-      Vision::ObservableObject* GetObservableObjectByID(const ObjectID_t objectID) const;
+      // Return a pointer to a block with the specified ID. If that block
+      // does not exist, nullptr is returned.  Be sure to ALWAYS check
+      // for the return being null!
+      Block* GetBlockByID(const ObjectID_t objectID) const;
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension) and returns a vector of quads
       // of their outlines on the ground plane (z=0).  Can also pad the
       // bounding boxes by a specified amount. If ignoreIDs is not empty, then
       // bounding boxes of blocks with an ID present in the set will not be
-      // returned. Analogous behavior for ignoreTypes.
+      // returned. Analogous behavior for ignoreTypes.  The last flag indicates
+      // whether blocks being carried by any robot are included in the results.
       void GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
                                    const f32 padding,
                                    std::vector<Quad2f>& boundingBoxes,
                                    const std::set<ObjectType_t>& ignoreTypes = std::set<ObjectType_t>(),
-                                   const std::set<ObjectID_t>& ignoreIDs = std::set<ObjectID_t>()) const;
+                                   const std::set<ObjectID_t>& ignoreIDs = std::set<ObjectID_t>(),
+                                   const bool ignoreCarriedBlocks = true) const;
       
       // Returns true if any blocks were moved, added, or deleted on the
       // last update. Useful, for example, to know whether to update the
@@ -111,6 +114,8 @@ namespace Anki
       // Visualize markers in image display
       void DrawObsMarkers() const;
       
+      // Call every existing block's Visualize() method
+      void DrawAllBlocks() const;
       
     protected:
       
@@ -213,13 +218,15 @@ namespace Anki
       return matLibrary_;
     }
     
-    inline Vision::ObservableObject* BlockWorld::GetObservableObjectByID(const ObjectID_t objectID) const
+    inline Block* BlockWorld::GetBlockByID(const ObjectID_t objectID) const
     {
       for (auto const & block : existingBlocks_) {
         auto const & objectByIdMap = block.second;
         auto objectIt = objectByIdMap.find(objectID);
         if (objectIt != objectByIdMap.end()) {
-          return objectIt->second;
+          Block* block = dynamic_cast<Block*>(objectIt->second);
+          CORETECH_ASSERT(block != nullptr);
+          return block;
         }
       }
       return nullptr;

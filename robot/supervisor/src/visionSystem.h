@@ -154,6 +154,13 @@ namespace Anki {
       f32 GetVerticalFOV();
       f32 GetHorizontalFOV();
       
+      
+      void SetParams(const s32 integerCountsIncrement,
+                     const f32 minExposureTime,
+                     const f32 maxExposureTime,
+                     const u8 highValue,
+                     const f32 percentileToMakeHigh);
+
     } // namespace VisionSystem
     
   } // namespace Cozmo

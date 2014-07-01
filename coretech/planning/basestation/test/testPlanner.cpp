@@ -67,6 +67,99 @@ GTEST_TEST(TestPlanner, PlanAroundBox)
   EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
 }
 
+GTEST_TEST(TestPlanner, PlanAroundBox_soft)
+{
+  // Assuming this is running from root/build......
+  xythetaEnvironment env;
+
+  // TODO:(bn) open something saved in the test dir isntead, so we
+  // know not to change or remove it
+  EXPECT_TRUE(env.ReadMotionPrimitives(
+                PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
+
+
+  // first add it with a fatal cost (the default)
+  env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
+
+  xythetaPlanner planner(env);
+
+  State_c start(0, 0, 0);
+  State_c goal(200, 0, 0);
+
+  ASSERT_TRUE(planner.SetStart(start));
+  ASSERT_TRUE(planner.SetGoal(goal));
+
+  ASSERT_TRUE(planner.Replan());
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
+
+  bool hasTurn = false;
+  for(const auto& action : planner.GetPlan().actions_) {
+    if(env.GetRawMotionPrimitive(0, action).endStateOffset.theta != 0) {
+      hasTurn = true;
+      break;
+    }
+  }
+  ASSERT_TRUE(hasTurn) << "plan with fatal obstacle should turn";
+
+  Cost fatalCost = planner.GetFinalCost();
+
+  env.ClearObstacles();
+  // now add it with a high cost
+  env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0), 50.0);
+
+  planner.SetReplanFromScratch();
+  ASSERT_TRUE(planner.Replan());
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
+
+  hasTurn = false;
+  for(const auto& action : planner.GetPlan().actions_) {
+    if(env.GetRawMotionPrimitive(0, action).endStateOffset.theta != 0) {
+      hasTurn = true;
+      break;
+    }
+  }
+  ASSERT_TRUE(hasTurn) << "plan with high obstacle cost should turn";
+
+  Cost highCost = planner.GetFinalCost();
+
+  EXPECT_FLOAT_EQ(highCost, fatalCost) << "cost should be the same with fatal or high cost obstacle";
+
+  env.ClearObstacles();
+  // now add it with a very low cost
+  env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0), 1e-4);
+
+  planner.SetReplanFromScratch();
+  ASSERT_TRUE(planner.Replan());
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
+
+  // env.PrintPlan(planner.GetPlan());
+  for(const auto& action : planner.GetPlan().actions_) {
+    ASSERT_EQ(env.GetRawMotionPrimitive(0, action).endStateOffset.theta,0)
+      <<"with low cost, should drive straight through obstacle, but plan has a turn!";
+  }
+
+  Cost lowCost = planner.GetFinalCost();
+
+  EXPECT_LT(lowCost, highCost) << "should be cheaper to drive through obstacle than around it";
+
+  env.ClearObstacles();
+  // this time leave the world empty
+
+  planner.SetReplanFromScratch();
+  ASSERT_TRUE(planner.Replan());
+  EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
+
+  for(const auto& action : planner.GetPlan().actions_) {
+    ASSERT_EQ(env.GetRawMotionPrimitive(0, action).endStateOffset.theta,0)
+      <<"with no obstacle, should drive straight, but plan has a turn!";
+  }
+
+  Cost emptyCost = planner.GetFinalCost();
+  
+  EXPECT_LT(emptyCost, lowCost) << "no obstacle should be cheaper than any obstacle";
+}
+
+
 GTEST_TEST(TestPlanner, ReplanEasy)
 {
   // Assuming this is running from root/build......
@@ -131,8 +224,11 @@ GTEST_TEST(TestPlanner, ReplanHard)
   State_c lastSafeState;
   xythetaPlan oldPlan;
 
-  int currentPlanIdx = env.FindClosestPlanSegmentToPose(planner.GetPlan(), newRobotPos);
+  float distFromPlan = 9999.0;
+  int currentPlanIdx = env.FindClosestPlanSegmentToPose(planner.GetPlan(), newRobotPos, distFromPlan);
   ASSERT_EQ(currentPlanIdx, 3) << "should be at action #3 in the plan (plan should have 1 short, then 3 long straights in a row)";
+
+  EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";
 
   ASSERT_FALSE(env.PlanIsSafe(planner.GetPlan(), 1000.0, currentPlanIdx, lastSafeState, oldPlan));
 
@@ -140,7 +236,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
 
   StateID currID = oldPlan.start_.GetStateID();
   for(const auto& action : oldPlan.actions_) {
-    ASSERT_TRUE(env.ApplyAction(action, currID, false)) << "couldn't apply action!";
+    ASSERT_LT(env.ApplyAction(action, currID, false), 100.0) << "action penalty too high!";
   }
 
   ASSERT_EQ(currID, env.State_c2State(lastSafeState).GetStateID()) << "end of validOldPlan should match lastSafeState!";
@@ -171,8 +267,10 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_straight)
   ASSERT_EQ(env.GetRawMotionPrimitive(0, 0).endStateOffset.y, 0) << "invalid action";
 
   for(int i=0; i<10; ++i) {
-    planner._impl->plan_.Push(0);
+    planner._impl->plan_.Push(0, 0.0);
   }
+
+  // env.PrintPlan(planner._impl->plan_);
 
   // plan now goes form (0,0) to (10,0), any point in between should work
 
@@ -181,17 +279,31 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_straight)
     if(expected >= 10)
       expected = 9;
 
+    float distFromPlan = 9999.0;
+
     State_c pose(distAlong, 0.0, 0.0);
-    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose), expected) 
+    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan), expected) 
       <<"closest path segment doesn't match expectation for state "<<pose;
+
+    if(expected < 9) {
+      EXPECT_LT(distFromPlan, 1.0) << "too far away from plan";
+    }
 
     pose.y_mm = 7.36;
-    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose), expected) 
+    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan), expected) 
       <<"closest path segment doesn't match expectation for state "<<pose;
 
+    if(expected < 9) {
+      EXPECT_LT(distFromPlan, 8.0) << "too far away from plan";
+    }
+
     pose.y_mm = -0.3;
-    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose), expected) 
+    ASSERT_EQ(env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan), expected) 
       <<"closest path segment doesn't match expectation for state "<<pose;
+
+    if(expected < 9) {
+      EXPECT_LT(distFromPlan, 1.0) << "too far away from plan";
+    }
   }
 }
 
@@ -210,18 +322,18 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
 
   // bunch of random actions, no turn in place
   planner._impl->plan_.start_ = State(0, 0, 6);
-  planner._impl->plan_.Push(0);
-  planner._impl->plan_.Push(2);
-  planner._impl->plan_.Push(2);
-  planner._impl->plan_.Push(0);
-  planner._impl->plan_.Push(1);
-  planner._impl->plan_.Push(2);
-  planner._impl->plan_.Push(2);
-  planner._impl->plan_.Push(0);
-  planner._impl->plan_.Push(1);
-  planner._impl->plan_.Push(3);
-  planner._impl->plan_.Push(3);
-  planner._impl->plan_.Push(0);
+  planner._impl->plan_.Push(0, 0.0);
+  planner._impl->plan_.Push(2, 0.0);
+  planner._impl->plan_.Push(2, 0.0);
+  planner._impl->plan_.Push(0, 0.0);
+  planner._impl->plan_.Push(1, 0.0);
+  planner._impl->plan_.Push(2, 0.0);
+  planner._impl->plan_.Push(2, 0.0);
+  planner._impl->plan_.Push(0, 0.0);
+  planner._impl->plan_.Push(1, 0.0);
+  planner._impl->plan_.Push(3, 0.0);
+  planner._impl->plan_.Push(3, 0.0);
+  planner._impl->plan_.Push(0, 0.0);
 
   // go through each intermediate point, perturb it a bit, and make sure it returns correctly
   State curr = State(0,0,6);
@@ -230,21 +342,31 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
   for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
     const MotionPrimitive& prim(env.GetRawMotionPrimitive(curr.theta, planner._impl->plan_.actions_[planIdx]));
 
-    ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), env.State2State_c(curr))) << "initial state wrong";
+    float distFromPlan = 9999.0;
+
+    ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), env.State2State_c(curr), distFromPlan))
+      << "initial state wrong";
+    EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";
 
     ASSERT_FALSE(prim.intermediatePositions.empty());
 
     // check everything except the last one (which overlaps with the next segment)
     for(size_t intermediateIdx = 0; intermediateIdx < prim.intermediatePositions.size() - 1; intermediateIdx++) {
-      State_c pose(prim.intermediatePositions[intermediateIdx].x_mm + env.GetX_mm(curr.x),
-                   prim.intermediatePositions[intermediateIdx].y_mm + env.GetX_mm(curr.y),
-                   prim.intermediatePositions[intermediateIdx].theta);
+      State_c pose(prim.intermediatePositions[intermediateIdx].position.x_mm + env.GetX_mm(curr.x),
+                   prim.intermediatePositions[intermediateIdx].position.y_mm + env.GetX_mm(curr.y),
+                   prim.intermediatePositions[intermediateIdx].position.theta);
 
-      ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose)) << "exact intermediate state "<<intermediateIdx<<" wrong";
+      ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan))
+        << "exact intermediate state "<<intermediateIdx<<" wrong";
+
+      EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";
 
       pose.x_mm += 0.003;
       pose.y_mm -= 0.006;
-      ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose)) << "offset intermediate state "<<intermediateIdx<<" wrong";
+      ASSERT_EQ(planIdx, env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan))
+        << "offset intermediate state "<<intermediateIdx<<" wrong";
+      EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";
+
     }
 
     StateID currID(curr);

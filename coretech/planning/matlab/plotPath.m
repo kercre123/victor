@@ -13,7 +13,7 @@ elseif nargin == 2
   state = {};
   color = 'g.-'
 elseif nargin == 3
-  golgor = 'g.-'
+  color = 'g.-';
 end
 
 path = [];

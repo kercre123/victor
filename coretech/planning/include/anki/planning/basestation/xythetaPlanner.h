@@ -14,8 +14,9 @@
 #define _ANKICORETECH_PLANNING_XYTHETA_PLANNER_H_
 
 #include <stddef.h>
+#include "xythetaPlanner_definitions.h"
 
-#define DEFUALT_MAX_EXPANSIONS 1000000
+#define DEFUALT_MAX_EXPANSIONS 5000000
 
 namespace Anki
 {
@@ -47,6 +48,7 @@ public:
   // set the starting state. Will be rounded to the nearest continuous
   // state. Returns true if it is valid, false otherwise
   bool SetStart(const State_c& start);
+  State_c GetStart() const;
 
   // Allow (or disallow) free turn-in-place at the goal
   void AllowFreeTurnInPlaceAtGoal(bool allow = true);
@@ -63,6 +65,10 @@ public:
   // must call compute path before getting the plan
   xythetaPlan& GetPlan();
   const xythetaPlan& GetPlan() const;
+
+  void GetTestPlan(xythetaPlan& plan);
+
+  Cost GetFinalCost() const;
 
 private:
   xythetaPlannerImpl* _impl;

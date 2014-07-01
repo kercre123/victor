@@ -46,7 +46,22 @@ void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
 
 bool xythetaPlanner::Replan(unsigned int maxExpansions)
 {
-  return _impl->ComputePath(maxExpansions);
+  using namespace std::chrono;
+
+  high_resolution_clock::time_point start = high_resolution_clock::now();
+  bool ret = _impl->ComputePath(maxExpansions);
+  high_resolution_clock::time_point end = high_resolution_clock::now();
+
+  duration<double> time_d = duration_cast<duration<double>>(end - start);
+  double time = time_d.count();
+
+  printf("planning took %f seconds. (%f exps/sec, %f cons/sec, %f checks/sec)\n",
+         time,
+         ((double)_impl->expansions_) / time,
+         ((double)_impl->considerations_) / time,
+         ((double)_impl->collisionChecks_) / time);
+
+  return ret;
 }
 
 void xythetaPlanner::SetReplanFromScratch()
@@ -63,6 +78,17 @@ xythetaPlan& xythetaPlanner::GetPlan()
 {
   return _impl->plan_;
 }
+
+Cost xythetaPlanner::GetFinalCost() const
+{
+  return _impl->finalCost_;
+}
+
+void xythetaPlanner::GetTestPlan(xythetaPlan& plan)
+{
+  _impl->GetTestPlan(plan);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // implementation functions
@@ -163,6 +189,8 @@ void xythetaPlannerImpl::Reset()
 
   goalChanged_ = false;
   fromScratch_ = false;
+
+  finalCost_ = 0.0f;
 }
 
 bool xythetaPlannerImpl::NeedsReplan() const
@@ -174,6 +202,99 @@ bool xythetaPlannerImpl::NeedsReplan() const
   return !env_.PlanIsSafe(plan_, default_maxDistanceToReUse_mm, 0, waste1, waste2);
 }
 
+void xythetaPlannerImpl::InitializeHeuristic()
+{
+  costOutsideHeurMap_ = 0.0f;
+  heurMap_.clear();
+
+  if(env_.IsInSoftCollision(goalID_)) {
+    costOutsideHeurMap_ = ExpandStatesForHeur(goalID_);
+    printf("expanded penalty states near goal. Cost outside map = %f\n",
+           costOutsideHeurMap_);
+  }
+
+  if(env_.IsInSoftCollision(startID_)) {
+    ExpandStatesForHeur(startID_);
+  }
+}
+
+Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
+{
+  // NOTE: this function assumes that forwards and backwards actions
+  // are equivalent. More specifically, it assumes that the min cost
+  // path from A to B is the same cost as the min cost path from B to
+  // A.
+
+  // TODO:(bn) put a limit on how many expansions to do here, in case
+  // the environment is pretty filled with obstacles
+
+  StateID curr(sid);
+  Cost h = heur_internal(curr) + costOutsideHeurMap_;
+
+  heurMap_.insert(std::make_pair(curr, h));
+
+  // use a separate open list to track expansions
+  OpenList q;
+  q.insert(curr, h);
+
+  unsigned int heurExpansions = 0;
+
+  while(!q.empty()) {
+    Cost c = q.topF();
+    curr = q.pop();
+
+    // TODO:(bn) opt: also bail out early if we reach the start / goal
+    // (whichever we didn't start from)
+
+    if(!env_.IsInSoftCollision(curr)) {
+      printf("INFO: expanded %u states for heuristic, reached free space with cost of %f and currently have %lu in the heurMap\n",
+             heurExpansions,
+             c,
+             heurMap_.size());
+      return c;
+    }
+
+    // this logic is almost identical to ExpandState
+    SuccessorIterator it = env_.GetSuccessors(curr, c);
+
+    if(!it.Done(env_))
+      it.Next(env_);
+
+    while(!it.Done(env_)) {
+
+      StateID nextID = it.Front().stateID;
+      float newC = it.Front().g;
+
+      // returns FLT_MAX if nextID isn't present
+      float oldFval = q.fVal(nextID);
+      if(oldFval > newC) {
+        Cost h = heur_internal(nextID) + costOutsideHeurMap_;
+
+        // it is possible that the start and goal obstacles actually
+        // overlap (or are the same obstacle), so there might already
+        // be an entry in heurMap_. We never want to increase the
+        // heuristic, so check first. Since we call this function for
+        // the goal fist, if anything already exist in the heurMap,
+        // don't update it)
+        if(heurMap_.count(nextID) == 0) {
+          heurMap_.insert(std::make_pair(nextID, h));
+        }
+
+        q.insert(nextID, newC);
+      }
+
+      it.Next(env_);
+    }
+
+    heurExpansions++;
+  }
+
+  printf("WARNING: somehow ran out of open list entries during ExpandStatesForHeur after %u exps!\n",
+         heurExpansions);
+  return 0.0;
+}
+
+
 bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
 {
   if(fromScratch_ || NeedsReplan()) {
@@ -184,6 +305,8 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
     return true;
   }
 
+  InitializeHeuristic();
+
   if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
     debugExpPlotFile_ = fopen("expanded.txt", "w");
   }
@@ -192,17 +315,19 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
 
   // push starting state
   table_.emplace(startID, 
-                     open_.insert(startID, 0.0),
-                     startID,
-                     0, // action doesn't matter
-                     0.0);
+                 open_.insert(startID, 0.0),
+                 startID,
+                 0, // action doesn't matter
+                 0.0,
+                 0.0);
 
   bool foundGoal = false;
   while(!open_.empty()) {
     StateID sid = open_.pop();
     if(sid == goalID_) {
       foundGoal = true;
-      printf("expanded goal! cost = %f\n", table_[sid].g_);
+      finalCost_ = table_[sid].g_;
+      printf("expanded goal! cost = %f\n", finalCost_);
       break;
     }
 
@@ -261,10 +386,10 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
   
   SuccessorIterator it = env_.GetSuccessors(currID, currG);
 
-  if(!it.Done())
-    it.Next();
+  if(!it.Done(env_))
+    it.Next(env_);
 
-  while(!it.Done()) {
+  while(!it.Done(env_)) {
     considerations_++;
 
     StateID nextID = it.Front().stateID;
@@ -279,10 +404,11 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
       Cost h = heur(nextID);
       Cost f = newG + h;
       table_.emplace(nextID,
-                         open_.insert(nextID, f),
-                         currID,
-                         it.Front().actionID,
-                         newG);
+                     open_.insert(nextID, f),
+                     currID,
+                     it.Front().actionID,
+                     it.Front().penalty,
+                     newG);
     }
     else if(!oldEntry->second.IsClosed(searchNum_)) {
       // only update if g value is lower
@@ -297,7 +423,7 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
       }
     }
 
-    it.Next();    
+    it.Next(env_);    
   }
 
   table_[currID].closedIter_ = searchNum_;
@@ -305,8 +431,22 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
 
 Cost xythetaPlannerImpl::heur(StateID sid)
 {
+  HeurMapIter it = heurMap_.find(sid);
+  if(it != heurMap_.end()) {
+    return it->second;
+  }
+    
+  return heur_internal(sid) + costOutsideHeurMap_;
+}
+
+Cost xythetaPlannerImpl::heur_internal(StateID sid)
+{
   State s(sid);
-  // return euclidean distance in mm
+
+  // TODO:(bn) opt: consider squaring the entire damn thing so we
+  // don't have to sqrt here. I.e. heur() would return squared value,
+  // and then f = g^2 + h. First, do a profile and see if the sqrt is
+  // taking up any significant amount of time
 
   return env_.GetDistanceBetween(goal_c_, s) * env_.GetOneOverMaxVelocity();
 }
@@ -322,17 +462,175 @@ void xythetaPlannerImpl::BuildPlan()
 
     assert(it != table_.end());
 
-    plan_.Push(it->second.backpointerAction_);
+    plan_.Push(it->second.backpointerAction_, it->second.penaltyIntoState_);
     curr = it->second.backpointer_;
   }
 
   std::reverse(plan_.actions_.begin(), plan_.actions_.end());
+  std::reverse(plan_.penalties_.begin(), plan_.penalties_.end());
 
   plan_.start_ = start_;
 
   printf("Created plan of length %lu\n", plan_.actions_.size());
 }
 
+void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
+{
+  // this is hardcoded for now!
+  assert(env_.GetNumActions() == 9);
+
+  constexpr int numPlans = 4;
+  static int whichPlan = 0;
+
+  plan.Clear();
+  plan.start_ = start_;
+
+  switch(whichPlan) {
+  case 0:
+    // this one starts with a backup,, does a swerve then incresingly
+    // right turns, heads back and does the opposite, and lands
+    // exactly where it starts
+    plan.Push(1);
+    plan.Push(2);
+    plan.Push(3);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(3);
+    plan.Push(2);
+    plan.Push(1);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    break;
+  case 1:
+    // start with slight left, T-shaped kind of thing, ends where it starts
+    plan.Push(2);
+    plan.Push(4);
+    plan.Push(2);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(1);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(1);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(2);
+    plan.Push(4);
+    plan.Push(2);
+    plan.Push(0);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(0);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    break;
+  case 2:
+    // funky figure 8, starting with hard right, ends where it starts
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(5);
+    plan.Push(4);
+    plan.Push(4);
+    plan.Push(4);
+    plan.Push(4);
+    plan.Push(4);
+    plan.Push(4);
+    plan.Push(4);
+    plan.Push(4);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(3);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    plan.Push(2);
+    break;
+
+  case 3:
+    // straights and 180 point turns
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(7);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(6);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    break;
+  }
+
+  whichPlan = (whichPlan + 1) % numPlans;
+
+  SetGoal(env_.State2State_c(env_.GetPlanFinalState(plan)));
+}
 
 }
 }

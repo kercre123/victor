@@ -98,7 +98,7 @@ namespace Anki {
       // Tx = Contrast/2 * diagonal*[TxInner TxOuter]';
       // Ty = Contrast/2 * diagonal*[TyInner TyOuter]';
 
-      const f32 contrast = brightGray - darkGray;
+      const f32 contrast = (brightGray - darkGray)/255.f;
       const f32 derivMagnitude = 0.5f * contrast * diagonal;
 
       // N = ceil(NumSamples/8);

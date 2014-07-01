@@ -12,6 +12,7 @@
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
+#include "animationController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -166,6 +167,7 @@ namespace Anki {
         robotState_.lastPathID = PathFollower::GetLastPathID();
         
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
+        robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
         
         robotState_.status = 0;
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
@@ -190,6 +192,9 @@ namespace Anki {
         
         // Poor-man's time sync to basestation, for now.
         HAL::SetTimeStamp(msg.syncTime);
+        
+        // Reset pose history and frameID to zero
+        Localization::ResetPoseFrame();
         
         // Send back camera calibration
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
@@ -240,9 +245,10 @@ namespace Anki {
         
         
         PRINT("Robot received localization update from "
-              "basestation: (%.3f,%.3f) at %.1f degrees\n",
+              "basestation: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
               currentMatX, currentMatY,
-              currentMatHeading.getDegrees());
+              currentMatHeading.getDegrees(),
+              Localization::GetPoseFrameId());
 #if(USE_OVERLAY_DISPLAY)
         {
           using namespace Sim::OverlayDisplay;
@@ -397,19 +403,41 @@ namespace Anki {
       }
       
       void ProcessSetHeadlightMessage(const SetHeadlight& msg) {
-        if (msg.intensity > 0) {
-          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, (HAL::LEDColor)(HAL::LED_RED | HAL::LED_GREEN | HAL::LED_BLUE));
-        } else {
-          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, HAL::LED_OFF);
-        }
+        HAL::SetHeadlights(msg.intensity > 0);
       }
- 
+
+      void ProcessSetDefaultLightsMessage(const SetDefaultLights& msg) {
+        u32 lColor = msg.eye_left_color;
+        HAL::SetLED(HAL::LED_LEFT_EYE_TOP, lColor);
+        HAL::SetLED(HAL::LED_LEFT_EYE_RIGHT, lColor);
+        HAL::SetLED(HAL::LED_LEFT_EYE_BOTTOM, lColor);
+        HAL::SetLED(HAL::LED_LEFT_EYE_LEFT, lColor);
+
+        u32 rColor = msg.eye_right_color;
+        HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, rColor);
+        HAL::SetLED(HAL::LED_RIGHT_EYE_RIGHT, rColor);
+        HAL::SetLED(HAL::LED_RIGHT_EYE_BOTTOM, rColor);
+        HAL::SetLED(HAL::LED_RIGHT_EYE_LEFT, rColor);
+      }
+      
       void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
         HeadController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
       }
       
       void ProcessSetLiftControllerGainsMessage(const SetLiftControllerGains& msg) {
         LiftController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+      }
+      
+      void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
+        VisionSystem::SetParams(msg.integerCountsIncrement,
+                                msg.minExposureTime,
+                                msg.maxExposureTime,
+                                msg.highValue,
+                                msg.percentileToMakeHigh);
+      }
+      
+      void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
+        AnimationController::PlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
       }
       
       // TODO: Fill these in once they are needed/used:
@@ -452,6 +480,9 @@ namespace Anki {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
     
+      void ProcessMainCycleTimeErrorMessage(const MainCycleTimeError& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
 // ----------- Send messages -----------------
       
       

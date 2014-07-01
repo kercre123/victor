@@ -16,29 +16,51 @@ namespace Anki {
 
     const u32 ALL_PATH_IDs   = u32_MAX;
     const u32 ALL_QUAD_IDs   = u32_MAX;
+    const u32 ALL_QUAD_TYPEs = u32_MAX;
     const u32 ALL_OBJECT_IDs = u32_MAX;
     const u32 OBJECT_ID_RANGE = ALL_OBJECT_IDs - 1;
     
     enum VizObjectType {
-      VIZ_ROBOT = 0,
-      VIZ_CUBOID,
-      VIZ_RAMP,
-      VIZ_PREDOCKPOSE,
+      VIZ_OBJECT_ROBOT = 0,
+      VIZ_OBJECT_CUBOID,
+      VIZ_OBJECT_RAMP,
+      VIZ_OBJECT_PREDOCKPOSE,
       
       NUM_VIZ_OBJECT_TYPES
     };
     
     // Base IDs for each VizObject type
     const u32 VizObjectBaseID[NUM_VIZ_OBJECT_TYPES+1] = {
-      0,    // VIZ_ROBOT
-      1000, // VIZ_CUBOID
-      2000, // VIZ_RAMP
-      3000, // VIZ_PREDOCKPOSE
-
+      0,    // VIZ_OJECT_ROBOT
+      1000, // VIZ_OBJECT_CUBOID
+      2000, // VIZ_OBJECT_RAMP
+      3000, // VIZ_OJECT_PREDOCKPOSE
+      
       u32_MAX - 100 // Last valid object ID allowed
     };
-        
     
+    
+    enum VizQuadType {
+      VIZ_QUAD_GENERIC_2D = 0,
+      VIZ_QUAD_GENERIC_3D,
+      VIZ_QUAD_MAT_MARKER,
+      VIZ_QUAD_PLANNER_OBSTACLE,
+      VIZ_QUAD_PLANNER_OBSTACLE_REPLAN,
+      VIZ_QUAD_ROBOT_BOUNDING_BOX,
+      
+      NUM_VIZ_QUAD_TYPES
+    };
+    
+    /*
+    // Base IDs for each VizQuad type
+    const u32 VizQuadBaseID[NUM_VIZ_QUAD_TYPES+1] = {
+      0,    // VIZ_QUAD_MAT_MARKER
+      1000, // VIZ_QUAD_PLANNER_OBSTACLE
+      
+      u32_MAX - 100 // Lass valid quad ID allowed
+    };
+    */
+
     enum VizRobotMarkerType {
       VIZ_ROBOT_MARKER_SMALL_TRIANGLE,
       VIZ_ROBOT_MARKER_BIG_TRIANGLE

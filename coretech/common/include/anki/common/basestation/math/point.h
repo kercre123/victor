@@ -103,8 +103,9 @@ namespace Anki {
     Point<N,T>& operator*= (const Point<N,T> &other);
     Point<N,T>  operator-() const;
     
-    // Return length of the vector from the origin to the point
+    // Return length (squared) of the vector from the origin to the point
     T Length(void) const;
+    T LengthSq(void) const;
     
     // Makes the point into a unit vector from the origin, while
     // returning its original length. IMPORTANT: if the point was

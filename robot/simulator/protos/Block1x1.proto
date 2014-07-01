@@ -7,6 +7,7 @@ PROTO Block1x1 [
   field SFRotation rotation 0 0 1 0
   field SFFloat density 1000
   field SFColor blockColor 1 0 0
+  field SFBool  useWhiteMarkerBackgrounds TRUE
 
   field MFString facemarkerFront  "textures/code1x1.png"
   field MFString facemarkerBack   "textures/code1x1.png"
@@ -87,18 +88,28 @@ Robot {
           rotation 0 0 1 -1.5708
           translation -0.011 0 0
           children [
-
             Shape {
-	  
               appearance Appearance {
                 texture ImageTexture {
                   url IS facemarkerFront
                 }
               }
-              geometry DEF FACE_BOX Box {
+              geometry DEF MARKER_BOX Box {
                 size 0.025 0.0221 0.025
               }
             }
+            %{ if fields.useWhiteMarkerBackgrounds then }%
+            DEF FACE_SHAPE Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor 1 1 1
+                }
+              }
+              geometry Box {
+                size 0.029 0.02205 0.029
+              }
+            }
+            %{ end }%
           ] 
         }
         
@@ -107,16 +118,17 @@ Robot {
           rotation 0 0 1 1.5708
           translation 0.011 0 0
           children [
-
-            Shape {
-	  
+            Shape {	  
               appearance Appearance {
                 texture ImageTexture {
                   url IS facemarkerBack
                 }
               }
-              geometry USE FACE_BOX
+              geometry USE MARKER_BOX
             }
+            %{ if fields.useWhiteMarkerBackgrounds then }%
+            USE FACE_SHAPE
+            %{ end }%
           ] 
         }
         
@@ -125,16 +137,17 @@ Robot {
           rotation 1 0 0 1.5708
           translation 0 0 -0.011
           children [
-
             Shape {
-	  
               appearance Appearance {
                 texture ImageTexture {
                   url IS facemarkerBottom
                 }
               }
-              geometry USE FACE_BOX
+              geometry USE MARKER_BOX
             }
+            %{ if fields.useWhiteMarkerBackgrounds then }%
+            USE FACE_SHAPE
+            %{ end }%
           ] 
         }
         
@@ -143,16 +156,17 @@ Robot {
           rotation 1 0 0 1.5708
           translation 0 0 0.011
           children [
-
-            Shape {
-	  
+            Shape {	  
               appearance Appearance {
                 texture ImageTexture {
                   url IS facemarkerTop
                 }
               }
-              geometry USE FACE_BOX
+              geometry USE MARKER_BOX
             }
+            %{ if fields.useWhiteMarkerBackgrounds then }%
+            USE FACE_SHAPE
+            %{ end }%
           ] 
         }
         
@@ -162,16 +176,17 @@ Robot {
           rotation 0 0 1 3.1415
           translation 0 0.011 0
           children [
-
             Shape {
-	  
               appearance Appearance {
                 texture ImageTexture {
                   url IS facemarkerLeft
                 }
               }
-              geometry USE FACE_BOX
+              geometry USE MARKER_BOX
             }
+            %{ if fields.useWhiteMarkerBackgrounds then }%
+            USE FACE_SHAPE
+            %{ end }%
           ] 
         }
         
@@ -180,16 +195,17 @@ Robot {
           rotation 0 0 1 0
           translation 0 -0.011 0
           children [
-
             Shape {
-	  
               appearance Appearance {
                 texture ImageTexture {
                   url IS facemarkerRight
                 }
               }
-              geometry USE FACE_BOX
+              geometry USE MARKER_BOX
             }
+            %{ if fields.useWhiteMarkerBackgrounds then }%
+            USE FACE_SHAPE
+            %{ end }%
           ] 
         }
 

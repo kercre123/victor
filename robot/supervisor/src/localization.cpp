@@ -64,11 +64,11 @@ namespace Anki {
         
         // Pose history
         // Never need to erase elements, just overwrite with new data.
-        const u8 POSE_HISTORY_SIZE = 200;
+        const u16 POSE_HISTORY_SIZE = 300;
         PoseStamp hist_[POSE_HISTORY_SIZE];
-        u8 hStart_ = 0;
-        u8 hEnd_ = 0;
-        u8 hSize_ = 0;
+        u16 hStart_ = 0;
+        u16 hEnd_ = 0;
+        u16 hSize_ = 0;
         
         // MemoryStack for rotation matrices and operations on them
         const s32 SCRATCH_BUFFER_SIZE = 75*4 + 128;
@@ -105,7 +105,7 @@ namespace Anki {
       }
       
       
-      Result GetHistIdx(TimeStamp_t t, u8& idx)
+      Result GetHistIdx(TimeStamp_t t, u16& idx)
       {
         // TODO: Binary search for timestamp
         //       For now just doing a straight up linear search.
@@ -136,15 +136,14 @@ namespace Anki {
       
       Result UpdatePoseWithKeyframe(PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle)
       {
-        u8 i;
+        // Update frameID
+        frameId_ = frameID;
+        
+        u16 i;
         if (GetHistIdx(t, i) == RESULT_FAIL) {
           PRINT("ERROR: Couldn't find timestamp %d in history (oldest(%d) %d, newest(%d) %d)\n", t, hStart_, hist_[hStart_].t, hEnd_, hist_[hEnd_].t);
           return RESULT_FAIL;
         }
-        
-        // Update frameID
-        frameId_ = frameID;
-        
         
         
         // TODO: Replace lastKeyFrameUpdate with actually computing
@@ -469,6 +468,12 @@ namespace Anki {
       PoseFrameID_t GetPoseFrameId()
       {
         return frameId_;
+      }
+      
+      void ResetPoseFrame()
+      {
+        frameId_ = 0;
+        ClearHistory();
       }
       
     }

@@ -14,6 +14,11 @@
 
 #define DEBUG_PAP_CONTROLLER 0
 
+// If you enable this, make sure image streaming is off
+// and you enable the print-to-file code in the ImageChunk message handler
+// on the basestation.
+#define SEND_PICKUP_VERIFICATION_SNAPSHOTS 0
+
 namespace Anki {
   namespace Cozmo {
     namespace PickAndPlaceController {
@@ -24,22 +29,23 @@ namespace Anki {
         
         // TODO: Need to be able to specify wheel motion by distance
         const u32 BACKOUT_TIME = 1500000;
-        const f32 BACKOUT_SPEED_MMPS = -30;
+        const f32 BACKOUT_SPEED_MMPS = -40;
         
         const f32 LOW_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(-15);
         const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(15);
         
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
-        const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 28.f;
-        
         #ifdef SIMULATOR
+        const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 26.f;
         const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 18.f;
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
         #else
+        const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
         const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 19.5f;
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
         #endif
         
-        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 20.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
         Mode mode_ = IDLE;
         
@@ -69,6 +75,7 @@ namespace Anki {
         Embedded::Array<u8> pickupSnapshotBefore_;
         Embedded::Array<u8> pickupSnapshotAfter_;
         const s32 SNAPSHOT_SIZE = 16; // the snapshots will be a 2D array SNAPSHOT_SIZE x SNAPSHOT_SIZE in size
+                                      // NOTE: Make sure this matches CAMERA_RES_VERIFICATION_SNAPSHOT
         const s32 SNAPSHOT_SUBSAMPLE = 8; // this is the spacing between samples taken from the original image resolution
         const s32 SNAPSHOT_ROI_SIZE = SNAPSHOT_SUBSAMPLE*SNAPSHOT_SIZE; // thus, this is the size of the ROI in the original image
         const Embedded::Rectangle<s32> snapShotRoiLow_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2);
@@ -76,7 +83,8 @@ namespace Anki {
         const s32 SNAPSHOT_BUFFER_SIZE = 2*SNAPSHOT_SIZE*SNAPSHOT_SIZE + 64; // 2X (16x16) arrays + overhead
         u8 snapshotBuffer_[SNAPSHOT_BUFFER_SIZE];
         Embedded::MemoryStack snapshotMemory_;
-        const s32 SNAPSHOT_COMPARE_THRESHOLD = 64; //SNAPSHOT_SIZE*SNAPSHOT_SIZE*64*64; // average grayscale difference of 64
+        const s32 SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD = 100; //SNAPSHOT_SIZE*SNAPSHOT_SIZE*64*64; // average grayscale difference of 64
+        const s32 SNAPSHOT_COMPARE_THRESHOLD = SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD*SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD*SNAPSHOT_SIZE*SNAPSHOT_SIZE;
         
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
@@ -160,6 +168,100 @@ namespace Anki {
         }
         return RESULT_FAIL;
       }
+
+      // Since auto exposure settings may not have stabilized by this point,
+      // just do a software normalize by raising the brightest pixel to 255.
+      // The most typical failure case seems to be that the before image
+      // is darker than than the after since the robot casts a shadow on the
+      // block when it first reaches it.
+      static void NormalizeSnapshots(void)
+      {
+        const s32 nrows = pickupSnapshotBefore_.get_size(0);
+        const s32 ncols = pickupSnapshotBefore_.get_size(1);
+        
+        AnkiAssert(pickupSnapshotAfter_.get_size(0) == nrows &&
+                   pickupSnapshotAfter_.get_size(1) == ncols);
+        
+        #if(SEND_PICKUP_VERIFICATION_SNAPSHOTS)
+        // Send snapshots (for debug)
+        Messages::ImageChunk b[4];
+        Messages::ImageChunk a[4];
+        for(u8 i=0;i<4; ++i) {
+          b[i].resolution = Vision::CAMERA_RES_VERIFICATION_SNAPSHOT;
+          b[i].imageId = 100;
+          b[i].chunkId = i;
+          b[i].chunkSize = MIN(80, (nrows * ncols) - (80*i));
+          
+          a[i].resolution = Vision::CAMERA_RES_VERIFICATION_SNAPSHOT;
+          a[i].imageId = 101;
+          a[i].chunkId = i;
+          a[i].chunkSize = MIN(80, (nrows * ncols) - (80*i));
+        }
+        u8 byteCnt = 0;
+        #endif // SEND_PICKUP_VERIFICATION_SNAPSHOTS
+        
+        u8 maxValBefore = 0;
+        u8 maxValAfter = 0;
+        for(s32 i=0; i<nrows; ++i)
+        {
+          const u8 * restrict pBefore = pickupSnapshotBefore_.Pointer(i,0);
+          const u8 * restrict pAfter  = pickupSnapshotAfter_.Pointer(i,0);
+
+          for(s32 j=0; j<ncols; ++j)
+          {
+            if (pBefore[j] > maxValBefore) {
+              maxValBefore = pBefore[j];
+            }
+            
+            if (pAfter[j] > maxValAfter) {
+              maxValAfter = pAfter[j];
+            }
+            
+            #if(SEND_PICKUP_VERIFICATION_SNAPSHOTS)
+            b[byteCnt / 80].data[byteCnt % 80] = pBefore[j];
+            a[byteCnt / 80].data[byteCnt % 80] = pAfter[j];
+            byteCnt++;
+            #endif // SEND_PICKUP_VERIFICATION_SNAPSHOTS
+            
+          }
+        }
+
+        #if(SEND_PICKUP_VERIFICATION_SNAPSHOTS)
+        for(u8 i=0; i<4; ++i) {
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &b[i]);
+        }
+        for(u8 i=0; i<4; ++i) {
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &a[i]);
+        }
+        #endif //SEND_PICKUP_VERIFICATION_SNAPSHOTS
+
+        
+        if (maxValBefore == 0) {
+          PRINT("WARNING: NormalizeSnapShots Before image is blank!\n");
+          return;
+        }
+        if (maxValAfter == 0) {
+          PRINT("WARNING: NormalizeSnapShots After image is blank!\n");
+          return;
+        }
+        
+        f32 normScaleBefore = 255.f / maxValBefore;
+        f32 normScaleAfter = 255.f / maxValAfter;
+        
+        PRINT("normScaleBefore: %f, normScaleAfter: %f\n", normScaleBefore, normScaleAfter);
+        
+        for(s32 i=0; i<nrows; ++i)
+        {
+          u8 * restrict pBefore = pickupSnapshotBefore_.Pointer(i,0);
+          u8 * restrict pAfter  = pickupSnapshotAfter_.Pointer(i,0);
+          
+          for(s32 j=0; j<ncols; ++j)
+          {
+            pBefore[j] = static_cast<u8>(pBefore[j] * normScaleBefore);
+            pAfter[j] = static_cast<u8>(pAfter[j] * normScaleAfter);
+          }
+        }
+      }
       
       // Return sum-squared-difference between the before and after snapshots
       static s32 CompareSnapshots(void)
@@ -169,6 +271,8 @@ namespace Anki {
         
         AnkiAssert(pickupSnapshotAfter_.get_size(0) == nrows &&
                    pickupSnapshotAfter_.get_size(1) == ncols);
+        
+        NormalizeSnapshots();
         
         s32 ssd = 0;
         for(s32 i=0; i<nrows; ++i)
@@ -362,7 +466,7 @@ namespace Anki {
                     // Snapshots should differ if we actually lifted the block
                     const s32 SSD = CompareSnapshots();
                     PRINT("PickAndPlaceController: snapshot difference SSD = %d\n", SSD);
-                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_SIZE*SNAPSHOT_SIZE) {
+                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD) {
                       isCarryingBlock_ = true;
                     } else {
                       isCarryingBlock_ = false;
@@ -384,7 +488,7 @@ namespace Anki {
                   if(isSnapshotReady_) {
                     // Snapshots should differ if we actually lifted the block
                     const s32 SSD = CompareSnapshots();
-                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_COMPARE_THRESHOLD*SNAPSHOT_SIZE*SNAPSHOT_SIZE) {
+                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD) {
                       isCarryingBlock_ = true;
                     } else {
                       isCarryingBlock_ = false;

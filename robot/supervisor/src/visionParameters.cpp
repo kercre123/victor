@@ -45,7 +45,8 @@ namespace Anki {
 #ifdef SIMULATOR
         scaleImage_thresholdMultiplier = 32768; // 0.5*(2^16)=32768
 #else
-        scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+        //scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+        scaleImage_thresholdMultiplier = 49152; // 0.75*(2^16)=49152
 #endif
         scaleImage_numPyramidLevels = 3;
         
@@ -79,7 +80,7 @@ namespace Anki {
         
         // If quad refinment moves any corner by more than this (in pixels), the
         // original quad/homography are restored.
-        quadRefinementMaxCornerChange = 2.f;
+        quadRefinementMaxCornerChange = 5.f;
         
         isInitialized = true;
       } // DetectFiducialMarkersParameters::Initialize()

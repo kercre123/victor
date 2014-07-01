@@ -16,6 +16,7 @@
 #include "steeringController.h"
 #include "wheelController.h"
 #include "visionSystem.h"
+#include "animationController.h"
 
 #include "anki/common/robot/trig_fast.h"
 
@@ -173,6 +174,10 @@ namespace Anki {
         const f32 IT_ROT_ACCEL = 10.f;
         ///// End of IMUTest /////
         
+        ///////// AnimationTest ////////
+        AnimationID_t AT_currAnim;
+        const u32 AT_periodTics = 2000;
+        
         
         /////// LightTest ////////
         HAL::LEDId ledID = (HAL::LEDId)0;
@@ -199,6 +204,10 @@ namespace Anki {
       Result Reset()
       {
         PRINT("TestMode reset\n");
+        
+        // Stop animations that might be playing
+        AnimationController::PlayAnimation(ANIM_IDLE,0);
+        
         // Stop wheels and vision system
         WheelController::Enable();
         PickAndPlaceController::Reset();
@@ -708,6 +717,31 @@ namespace Anki {
         return RESULT_OK;
       }
       
+      Result AnimTestInit()
+      {
+        PRINT("\n==== Starting AnimationTest =====\n");
+        AT_currAnim = ANIM_HEAD_NOD;
+        AnimationController::PlayAnimation(AT_currAnim, 0);
+        ticCnt_ = 0;
+        return RESULT_OK;
+      }
+      
+      Result AnimTestUpdate()
+      {
+        if (ticCnt_++ > AT_periodTics) {
+          ticCnt_ = 0;
+          
+          AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+          if (AT_currAnim == ANIM_NUM_ANIMATIONS) {
+            AT_currAnim = ANIM_IDLE;
+          }
+          
+          PRINT("Playing animation %d\n", AT_currAnim);
+          AnimationController::PlayAnimation(AT_currAnim, 0);
+        }
+        
+        return RESULT_OK;
+      }
       
       Result GripperTestInit()
       {
@@ -897,6 +931,10 @@ namespace Anki {
           case TM_IMU:
             ret = IMUTestInit();
             updateFunc = IMUTestUpdate;
+            break;
+          case TM_ANIMATION:
+            ret = AnimTestInit();
+            updateFunc = AnimTestUpdate;
             break;
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
           case TM_GRIPPER:

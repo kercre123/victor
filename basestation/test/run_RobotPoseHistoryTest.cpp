@@ -2,6 +2,8 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
@@ -52,7 +54,8 @@ TEST(RobotPoseHistory, AddGetPose)
                       p1.get_translation().x(), p1.get_translation().y(), p1.get_translation().z(),
                       p1.get_rotationAngle().ToFloat(),
                       h1,
-                      l1);
+                      l1,
+                      Pose3d::World);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 1);
   ASSERT_TRUE(hist.ComputePoseAt(t1, t, p) == RESULT_OK);
@@ -67,7 +70,8 @@ TEST(RobotPoseHistory, AddGetPose)
                       p2.get_translation().x(), p2.get_translation().y(), p2.get_translation().z(),
                       p2.get_rotationAngle().ToFloat(),
                       h2,
-                      l2);
+                      l2,
+                      Pose3d::World);
   
   // Request out of range pose
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
@@ -93,7 +97,8 @@ TEST(RobotPoseHistory, AddGetPose)
                       p3.get_translation().x(), p3.get_translation().y(), p3.get_translation().z(),
                       p3.get_rotationAngle().ToFloat(),
                       h3,
-                      l3);
+                      l3,
+                      Pose3d::World);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   
@@ -112,7 +117,8 @@ TEST(RobotPoseHistory, AddGetPose)
                       p1.get_translation().x(), p1.get_translation().y(), p1.get_translation().z(),
                       p1.get_rotationAngle().ToFloat(),
                       h1,
-                      l1);
+                      l1,
+                      Pose3d::World);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   ASSERT_TRUE(hist.GetOldestTimeStamp() == t2);

@@ -374,20 +374,23 @@ namespace Anki
       // Set the intensity for each LED channel in the range [0, 255]
       void LEDSet(u8 leds[NUM_LEDS]);
       
+      // The color format is identical to HTML Hex Triplets (RGB)
       enum LEDColor {
-        LED_OFF = 0,
-        LED_RED = 1,
-        LED_GREEN = 2,
-        LED_YELLOW = 3,
-        LED_BLUE = 4,
-        LED_PURPLE = 5,
-        LED_CYAN = 6,
-        LED_WHITE = 7
+        LED_OFF =   0x000000,
+        LED_RED =   0xff0000,
+        LED_GREEN = 0x00ff00,
+        LED_YELLOW= 0xffff00,
+        LED_BLUE =  0x0000ff,
+        LED_PURPLE= 0xff00ff,
+        LED_CYAN =  0x00ffff,
+        LED_WHITE = 0xffffff
       };
       
-      // TEMP: Temporary single LED control with color
-      //       while "real" light functionality is being worked on.
-      void SetLED(LEDId led_id, LEDColor color);
+      // Light up one of the eye LEDs to the specified 24-bit RGB color
+      void SetLED(LEDId led_id, u32 color);
+      
+      // Turn headlights on (true) and off (false)
+      void SetHeadlights(bool state);
       
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
@@ -422,7 +425,7 @@ namespace Anki
       void AccelGetXYZ(f32& x, f32& y, f32& z);
 
       // Permanent robot information written at factory
-      struct BirthCertificate
+      struct IDCard
       {
         u32 esn;
         u32 modelNumber;
@@ -431,7 +434,7 @@ namespace Anki
         u32 hwVersion;
       };
 
-      const BirthCertificate& GetBirthCertificate();
+      IDCard* GetIDCard();
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki

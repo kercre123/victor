@@ -42,16 +42,16 @@ int main(int argc, char *argv[])
 
       SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), g);
 
-      if(it.Done()) {
+      if(it.Done(env)) {
         cout<<"  no actions!\n";
         break;
       }
 
-      it.Next();
+      it.Next(env);
 
       std::map<ActionID, StateID> results;
 
-      while(!it.Done()) {
+      while(!it.Done(env)) {
         MotionPrimitive prim;
         string name;
         if(!env.GetMotion(curr.theta, it.Front().actionID, prim)) {
@@ -65,18 +65,28 @@ int main(int argc, char *argv[])
             <<State(it.Front().stateID)<<" cost = "
             <<(it.Front().g - g)<<endl;
         results[it.Front().actionID] = it.Front().stateID;
-        it.Next();
+        it.Next(env);
       }
 
-      cout<<"> ";
+      cout<<" -1: exit\n> ";
       cin>>choice;
 
       if(choice >= 0 && results.count(choice) > 0) {
-        plan.Push(choice);
+        plan.Push(choice, 0.0);
         writePath("path.txt", env, plan);
 
         curr = State(results[choice]);
       }
+    }
+
+    printf("complete. Path: \n");
+    env.PrintPlan(plan);
+
+    cout<<"final state: "<<env.State2State_c(env.GetPlanFinalState(plan))<<endl;
+
+    printf("\n\nTestPlan:\n");
+    for(auto action : plan.actions_) {
+      printf("plan.Push(%d);\n", action);
     }
   }
   else if(argc == 7 || argc == 6) {

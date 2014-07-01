@@ -54,7 +54,7 @@ namespace Anki {
         u32 lastDockingErrorSignalRecvdTime_ = 0;
         
         // If error signal not received in this amount of time, tracking is considered to have failed.
-        const u32 STOPPED_TRACKING_TIMEOUT_US = 400000;
+        const u32 STOPPED_TRACKING_TIMEOUT_US = 500000;
         
         // If an initial track cannot start for this amount of time, block is considered to be out of
         // view and docking is aborted.
@@ -66,7 +66,7 @@ namespace Anki {
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
         
         // Lateral tolerance at dock pose
-        const u16 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = 2;
+        const u16 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = 1;
         
         // Code of the VisionMarker we are trying to dock to
         Vision::MarkerType dockMarker_;
@@ -196,7 +196,7 @@ namespace Anki {
                                                   tempPoint);
               
               dockMsg.x_distErr = tempPoint.x;
-              dockMsg.y_horErr  = tempPoint.y;
+              dockMsg.y_horErr  = tempPoint.y + ( (HAL::GetIDCard()->esn == 2) ? COZMO2_CAM_LATERAL_POSITION_HACK : 0 );
               dockMsg.z_height  = tempPoint.z;
             }
             

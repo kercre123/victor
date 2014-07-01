@@ -11,14 +11,15 @@
  *
  **/
 
+#include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/planning/basestation/xythetaEnvironment.h"
+#include "anki/planning/basestation/xythetaPlanner.h"
+#include "json/json.h"
 #include "pathPlanner.h"
 #include "vizManager.h"
-#include "anki/planning/basestation/xythetaPlanner.h"
-#include "anki/planning/basestation/xythetaEnvironment.h"
-#include "json/json.h"
 
 
 #define LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK ROBOT_BOUNDING_RADIUS
@@ -26,7 +27,15 @@
 
 #define DEBUG_REPLAN_CHECKS 0
 
-#define LATTICE_PLANNER_MAX_EXPANSIONS 100000
+#define LATTICE_PLANNER_MAX_EXPANSIONS 300000000  // TEMP: 
+
+// this is in units of seconds per mm, meaning the robot would drive X
+// seconds out of the way to avoid having to drive 1 mm through the
+// penalty
+#define DEFAULT_OBSTACLE_PENALTY 0.1
+
+// how far (in mm) away from the path the robot needs to be before it gives up and plans a new path
+#define PLAN_ERROR_FOR_REPLAN 20.0
 
 namespace Anki {
 namespace Cozmo {
@@ -37,25 +46,30 @@ class LatticePlannerImpl
 {
 public:
 
-  LatticePlannerImpl(const BlockWorld* blockWorld, const Json::Value& mprims)
-    : blockWorld_(blockWorld)
+  LatticePlannerImpl(const BlockWorld* blockWorld, const Json::Value& mprims, const LatticePlanner* parent)
+    : lastPaddingRadius_(0.0)
+    , blockWorld_(blockWorld)
     , planner_(env_)
+    , _parent(parent)
     {
       env_.Init(mprims);
     }
 
   // imports and pads obstacles
-  void ImportBlockworldObstacles(float paddingRadius);
+  void ImportBlockworldObstacles(const bool isReplanning, VIZ_COLOR_ID vizColor = VIZ_COLOR_NONE);
+  float lastPaddingRadius_;
 
   const BlockWorld* blockWorld_;
   xythetaEnvironment env_;
   xythetaPlanner planner_;
   xythetaPlan totalPlan_;
+
+  const LatticePlanner* _parent;
 };
 
 LatticePlanner::LatticePlanner(const BlockWorld* blockWorld, const Json::Value& mprims)
 {
-  impl_ = new LatticePlannerImpl(blockWorld, mprims);
+  impl_ = new LatticePlannerImpl(blockWorld, mprims, this);
 
   // TODO:(bn) param!
   impl_->planner_.AllowFreeTurnInPlaceAtGoal(false);
@@ -66,6 +80,50 @@ LatticePlanner::~LatticePlanner()
   delete impl_;
   impl_ = nullptr;
 }
+
+void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, VIZ_COLOR_ID vizColor)
+{
+  const float paddingRadius = (isReplanning ? LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK :
+                               LATTICE_PLANNER_BOUNDING_DISTANCE);
+
+  // TEMP: visualization doesn't work because we keep clearing all
+  // quads. Once we fix vis and remove the EraseAllQuads() call, get
+  // rid of the "true" so this only runs when it needs to
+  if(!FLT_NEAR(paddingRadius, lastPaddingRadius_) ||
+     blockWorld_->DidBlocksChange())
+  {
+    lastPaddingRadius_ = paddingRadius;
+    std::vector<Quad2f> boundingBoxes;
+
+    // first check plan with slightly smaller radius to see if we need to replan
+    blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
+                                         paddingRadius,
+                                         boundingBoxes,
+                                         _parent->_ignoreTypes, _parent->_ignoreIDs);
+    env_.ClearObstacles();
+    
+    // TODO: figure out whether we are in replan mode in some other way (pass in flag?)
+    //const bool isReplan = vizColor == VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD;
+    
+    if(vizColor != VIZ_COLOR_NONE) {
+      VizManager::getInstance()->EraseAllPlannerObstacles(isReplanning);
+    }
+    unsigned int numAdded = 0;
+    for(auto boundingQuad : boundingBoxes) {
+      env_.AddObstacle(boundingQuad, DEFAULT_OBSTACLE_PENALTY);
+
+      if(vizColor != VIZ_COLOR_NONE) {
+        // TODO: manage the quadID better so we don't conflict
+        // TODO:(bn) custom color for this
+        //VizManager::getInstance()->DrawQuad(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
+        VizManager::getInstance()->DrawPlannerObstacle(isReplanning, numAdded++, boundingQuad, 0.5f, vizColor);
+        //(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
+      }
+    }
+
+  }
+}
+
       
 IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                                                   const Pose3d &startPose,
@@ -76,6 +134,11 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                     targetPose.get_translation().y(),
                     targetPose.get_rotationAngle<'Z'>().ToFloat());
 
+  impl_->ImportBlockworldObstacles(false, VIZ_COLOR_NONE);
+
+  // Clear plan whenever we attempt to set goal
+  impl_->totalPlan_.Clear();
+  
   if(!impl_->planner_.SetGoal(target))
     return PLAN_NEEDED_BUT_GOAL_FAILURE;
 
@@ -84,9 +147,64 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   return GetPlan(path, startPose, true);
 }
 
-LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
-                                                    const Pose3d& startPose,
-                                                    bool forceReplanFromScratch)
+IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
+                                                  const Pose3d& startPose,
+                                                  const std::vector<Pose3d>& targetPoses,
+                                                  size_t& selectedIndex)
+{
+
+  impl_->ImportBlockworldObstacles(false, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
+
+  // for now just select the closest non-colliding goal as the true
+  // goal. Eventually I'll implement a real multi-goal planner that
+  // decides on its own which goal it wants
+
+  bool found = false;
+  size_t numTargetPoses = targetPoses.size();
+  size_t bestTargetIdx = 0;
+  float closestDist2 = 0;
+
+  // first try to find a pose with no soft collisions, then try to find one with no fatal collisions
+  for(auto maxPenalty : (float[]){0.01, MAX_OBSTACLE_COST}) {
+
+    bestTargetIdx = 0;
+    closestDist2 = 0;
+    for(size_t i=0; i<numTargetPoses; ++i) {
+      float dist2 = (targetPoses[i].get_translation() - startPose.get_translation()).LengthSq();
+
+      if(!found || dist2 < closestDist2) {
+        State_c target_c(targetPoses[i].get_translation().x(),
+                         targetPoses[i].get_translation().y(),
+                         targetPoses[i].get_rotationAngle<'Z'>().ToFloat());
+        State target(impl_->env_.State_c2State(target_c));
+        
+        if(impl_->env_.GetCollisionPenalty(target) < maxPenalty) {
+          closestDist2 = dist2;
+          bestTargetIdx = i;
+          found = true;
+        }
+      }
+    }
+
+    if(found)
+      break;
+  }
+
+  if(found) {
+    selectedIndex = bestTargetIdx;
+    return GetPlan(path, startPose, targetPoses[bestTargetIdx]);
+  }
+  else {
+    printf("LatticePlanner::GetPlan: could not find valid target out of %lu possible targets\n",
+           numTargetPoses);
+    return PLAN_NEEDED_BUT_GOAL_FAILURE;
+  }
+}
+
+
+IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
+                                                  const Pose3d& startPose,
+                                                  bool forceReplanFromScratch)
 {
   using namespace std;
 
@@ -96,34 +214,25 @@ LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
 
   State_c currentRobotState(startPose.get_translation().x(),
                             startPose.get_translation().y(),
-                            startPose.get_rotationAngle().ToFloat());
+                            startPose.get_rotationAngle<'Z'>().ToFloat());
 
-  VizManager::getInstance()->EraseAllQuads();
+  //VizManager::getInstance()->EraseAllQuads();
   
-  std::vector<Quad2f> boundingBoxes;
-
   if(!forceReplanFromScratch) {
-    // first check plan with slightly smaller radius to see if we need to replan
-    impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
-                                                LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK,
-                                                boundingBoxes,
-                                                _ignoreTypes, _ignoreIDs);
-    impl_->env_.ClearObstacles();
-    unsigned int numAdded = 0;
-    for(auto boundingQuad : boundingBoxes) {
-      impl_->env_.AddObstacle(boundingQuad);
-
-      // TODO: manage the quadID better so we don't conflict
-      // TODO:(bn) custom color for this
-      VizManager::getInstance()->DrawQuad(700 + numAdded++, boundingQuad, 0.5f, VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD);
-    }
+    impl_->ImportBlockworldObstacles(true, VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD);
 
     // plan Idx is the number of plan actions to execute before getting
     // to the starting point closest to start
-    planIdx = impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState);
+    float offsetFromPlan = 0.0;
+    planIdx = impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState, offsetFromPlan);
+
+    if(offsetFromPlan >= PLAN_ERROR_FOR_REPLAN) {
+      printf("Current state is %f away from the plan, failing\n", offsetFromPlan);
+      impl_->totalPlan_.Clear();
+      return PLAN_NEEDED_BUT_PLAN_FAILURE;
+    }
   }
   else {
-    impl_->env_.ClearObstacles();
     impl_->totalPlan_.Clear();
   }
 
@@ -137,8 +246,11 @@ LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     // plan (after planIdx) which is safe. validOldPlan will contain a
     // partial plan starting at planIdx and ending at lastSafeState
 
-    printf("old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
-           planIdx, validOldPlan.Size());
+    if(!forceReplanFromScratch) {
+      printf("old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
+             planIdx, validOldPlan.Size());
+    }
+
     cout<<"currentRobotState: "<<currentRobotState<<endl;
 
     // uncomment to print debugging info
@@ -169,20 +281,7 @@ LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
       }
 
       // use real padding for re-plan
-      boundingBoxes.clear();
-      impl_->blockWorld_->GetBlockBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
-                                                  LATTICE_PLANNER_BOUNDING_DISTANCE,
-                                                  boundingBoxes,
-                                                  _ignoreTypes, _ignoreIDs);
-      unsigned int numAdded = 0;
-      impl_->env_.ClearObstacles();
-      for(auto boundingQuad : boundingBoxes) {
-
-        // TODO: manage the quadID better so we don't conflict
-        VizManager::getInstance()->DrawQuad(500 + numAdded++, boundingQuad, 0.5f, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
-
-        impl_->env_.AddObstacle(boundingQuad);
-      }
+      impl_->ImportBlockworldObstacles(false, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
 
       printf("(re)-planning from (%f, %f, %f) to (%f %f %f)\n",
              lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,
@@ -197,8 +296,6 @@ LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
           impl_->totalPlan_.Clear();
         }
         else {
-
-          assert(impl_->planner_.GetPlan().start_ == impl_->env_.State_c2State(lastSafeState));
 
           path.Clear();
 
@@ -256,6 +353,25 @@ LatticePlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   }
 
   return PLAN_NOT_NEEDED;
+}
+
+void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path)
+{
+  State_c currentRobotState(startPose.get_translation().x(),
+                            startPose.get_translation().y(),
+                            startPose.get_rotationAngle<'Z'>().ToFloat());
+
+  impl_->planner_.SetStart(currentRobotState);
+
+  xythetaPlan plan;
+  impl_->planner_.GetTestPlan(plan);
+  printf("test plan:\n");
+  impl_->env_.PrintPlan(plan);
+
+  path.Clear();
+  impl_->env_.AppendToPath(plan, path);
+  printf("test path:\n");
+  path.PrintPath();
 }
 
 }

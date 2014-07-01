@@ -11,7 +11,6 @@
  **/
 
 #include "anki/vision/CameraSettings.h"
-#include "anki/vision/basestation/imageIO.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "messageHandler.h"
@@ -139,65 +138,7 @@ namespace Anki {
       }
       else {
         CORETECH_ASSERT(robot != NULL);
-        Vision::Camera camera(robot->GetCamera());
-        
-        if(camera.IsCalibrated()) {
-          
-          // Get corners
-          Quad2f corners;
-          
-          corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
-          corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
-          
-          corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
-          corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
-          
-          corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
-          corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
-          
-          corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
-          corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
-          
-          
-          // Get historical robot pose at specified timestamp to get
-          // head angle and to attach as parent of the camera pose.
-          TimeStamp_t t;
-          RobotPoseStamp* p = nullptr;
-          HistPoseKey poseKey;
-          if (robot->ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey) == RESULT_FAIL) {
-            PRINT_NAMED_WARNING("MessageHandler.ProcessMessageVisionMarker.HistoricalPoseNotFound", "Time: %d, hist: %d to %d\n", msg.timestamp, robot->GetPoseHistory().GetOldestTimeStamp(), robot->GetPoseHistory().GetNewestTimeStamp());
-            return RESULT_FAIL;
-          }
-          
-          // Compute pose from robot body to camera
-          // Start with canonical (untilted) headPose
-          Pose3d camPose(robot->GetHeadCamPose());
-
-          // Rotate that by the given angle
-          RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D);
-          camPose.rotateBy(Rvec);
-          
-          // Precompute with robot body to neck pose
-          camPose.preComposeWith(robot->GetNeckPose());
-          
-          // Set parent pose to be the historical robot pose
-          camPose.set_parent(&(p->GetPose()));
-          
-          // Update the head camera's pose
-          camera.SetPose(camPose);
-
-          // Create observed marker
-          Vision::ObservedMarker marker(t, msg.markerType, corners, camera);
-          
-          // Give this vision marker to BlockWorld for processing
-          blockWorld_->QueueObservedMarker(marker, poseKey);
-        }
-        else {
-          PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
-                              "Received VisionMarker message from robot before "
-                              "camera calibration was set on Basestation.");
-        }
-        retVal = RESULT_OK;
+        retVal = blockWorld_->QueueObservedMarker(msg, *robot);
       }
       
       return retVal;
@@ -255,6 +196,8 @@ namespace Anki {
       
       // Update other state vars
       robot->SetCurrPathSegment( msg.currPathSegment );
+      robot->SetNumFreeSegmentSlots(msg.numFreeSegmentSlots);
+      
       //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
       robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
@@ -273,8 +216,9 @@ namespace Anki {
                                          msg.pose_x, msg.pose_y, msg.pose_z,
                                          msg.pose_angle,
                                          msg.headAngle,
-                                         msg.liftAngle) == RESULT_FAIL) {
-        PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "");
+                                         msg.liftAngle,
+                                         robot->GetPoseOrigin()) == RESULT_FAIL) {
+        PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "t=%d\n", msg.timestamp);
       }
       
       robot->UpdateCurrPoseFromHistory();
@@ -330,50 +274,7 @@ namespace Anki {
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessageImageChunk const& msg)
     {
-      static u8 imgID = 0;
-      static u32 totalImgSize = 0;
-      static u8 data[ 320*240 ];
-      static u32 dataSize = 0;
-      static u32 width;
-      static u32 height;
-
-      //PRINT_INFO("Img %d, chunk %d, size %d, res %d, dataSize %d\n",
-      //           msg.imageId, msg.chunkId, msg.chunkSize, msg.resolution, dataSize);
-      
-      // Check that resolution is supported
-      if (msg.resolution != Vision::CAMERA_RES_QVGA &&
-          msg.resolution != Vision::CAMERA_RES_QQVGA &&
-          msg.resolution != Vision::CAMERA_RES_QQQVGA &&
-          msg.resolution != Vision::CAMERA_RES_QQQQVGA) {
-        return RESULT_FAIL;
-      }
-      
-      // If msgID has changed, then start over.
-      if (msg.imageId != imgID) {
-        imgID = msg.imageId;
-        dataSize = 0;
-        width = Vision::CameraResInfo[msg.resolution].width;
-        height = Vision::CameraResInfo[msg.resolution].height;
-        totalImgSize = width * height;
-      }
-      
-      // Msgs are guaranteed to be received in order so just append data to array
-      memcpy(data + dataSize, msg.data.data(), msg.chunkSize);
-      dataSize += msg.chunkSize;
-        
-      // When dataSize matches the expected size, print to file
-      if (dataSize >= totalImgSize) {
-#if(0)
-        char imgCaptureFilename[64];
-        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "robot%d_img%d.pgm", robot->get_ID(), imgID);
-        PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
-        Vision::WritePGM(imgCaptureFilename, data, width, height);
-#endif
-        VizManager::getInstance()->SendGreyImage(data, (Vision::CameraResolution)msg.resolution);
-      }
-      
-      
-      return RESULT_OK;
+      return robot->ProcessImageChunk(msg);
     }
     
     
@@ -426,6 +327,21 @@ namespace Anki {
       return lastResult;
     }
     
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageMainCycleTimeError const& msg)
+    {
+      Result lastResult = RESULT_OK;
+    
+      if (msg.numMainTooLongErrors > 0) {
+        PRINT_NAMED_WARNING("* * * MainCycleTooLong * * *", "Num errors: %d, Avg time: %d us\n", msg.numMainTooLongErrors, msg.avgMainTooLongTime);
+      }
+      
+      if (msg.numMainTooLateErrors > 0) {
+        PRINT_NAMED_WARNING("* * * MainCycleTooLate * * *", "Num errors: %d, Avg time: %d us\n", msg.numMainTooLateErrors, msg.avgMainTooLateTime);
+      }
+      
+      return lastResult;
+    }
+    
     
     // STUBS:
     Result MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return RESULT_FAIL;}
@@ -450,8 +366,11 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageImageRequest const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageStartTestMode const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadlight const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetDefaultLights const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadControllerGains const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageSetLiftControllerGains const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetVisionSystemParams const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessagePlayAnimation const&){return RESULT_FAIL;}
     
   } // namespace Cozmo
 } // namespace Anki

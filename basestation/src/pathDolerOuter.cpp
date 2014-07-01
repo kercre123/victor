@@ -22,8 +22,8 @@ namespace Anki {
 namespace Cozmo {
 
 PathDolerOuter::PathDolerOuter(IMessageHandler* msgHandler, RobotID_t robotID)
-  : robotIdx_(0)
-  , pathSizeOnBasestation_(0)
+  : pathSizeOnBasestation_(0)
+  , lastDoledSegmentIdx_(-1)
   , msgHandler_(msgHandler)
   , robotID_(robotID)
 {
@@ -32,35 +32,35 @@ PathDolerOuter::PathDolerOuter(IMessageHandler* msgHandler, RobotID_t robotID)
 void PathDolerOuter::SetPath(const Planning::Path& path)
 {
   path_ = path;
-  robotIdx_ = 0;
+  lastDoledSegmentIdx_ = -1;
   pathSizeOnBasestation_ = path.GetNumSegments();
 
-  Dole(0, MAX_NUM_PATH_SEGMENTS_ROBOT);
+  Dole(MAX_NUM_PATH_SEGMENTS_ROBOT);
 }
 
 void PathDolerOuter::ClearPath()
 {
   path_.Clear();
-  robotIdx_ = 0;
   pathSizeOnBasestation_ = 0;
+  lastDoledSegmentIdx_ = -1;
 }
 
-void PathDolerOuter::Dole(size_t validRobotPathLength, size_t numToDole)
+void PathDolerOuter::Dole(size_t numToDole)
 {
   assert(msgHandler_);
 
-  size_t endIdx = robotIdx_ + validRobotPathLength + numToDole;
-  if(endIdx > pathSizeOnBasestation_)
-    endIdx = pathSizeOnBasestation_;
+  size_t endIdx = lastDoledSegmentIdx_ + numToDole;
+  if(endIdx >= pathSizeOnBasestation_)
+    endIdx = pathSizeOnBasestation_ - 1;
 
-  printf("PathDolerOuter: should dole from %lu to %lu (robotIdx = %lu)\n",
-         robotIdx_ + validRobotPathLength,
+  printf("PathDolerOuter: should dole from %d to %lu (totalSegments = %lu)\n",
+         lastDoledSegmentIdx_ + 1,
          endIdx,
-         robotIdx_);
+         pathSizeOnBasestation_);
 
-  for(size_t i = robotIdx_ + validRobotPathLength; i < endIdx; ++i) {
+  for(size_t i = lastDoledSegmentIdx_ + 1; i <= endIdx; ++i) {
 
-    printf("PathDolerOuter: doling out basestation idx %zu, robotIdx_ = %zu :  ", i, robotIdx_);
+    printf("PathDolerOuter: doling out basestation idx %zu :  ", i);
     path_.GetSegmentConstRef(i).Print();
 
     switch(path_.GetSegmentConstRef(i).GetType()) {
@@ -73,7 +73,6 @@ void PathDolerOuter::Dole(size_t validRobotPathLength, size_t numToDole)
       m.y_start_mm = l->startPt_y;
       m.x_end_mm = l->endPt_x;
       m.y_end_mm = l->endPt_y;
-      m.segmentID = i - robotIdx_;
             
       m.targetSpeed = path_.GetSegmentConstRef(i).GetTargetSpeed();
       m.accel = path_.GetSegmentConstRef(i).GetAccel();
@@ -94,7 +93,6 @@ void PathDolerOuter::Dole(size_t validRobotPathLength, size_t numToDole)
       m.radius_mm = a->radius;
       m.startRad = a->startRad;
       m.sweepRad = a->sweepRad;
-      m.segmentID = i - robotIdx_;
             
       m.targetSpeed = path_.GetSegmentConstRef(i).GetTargetSpeed();
       m.accel = path_.GetSegmentConstRef(i).GetAccel();
@@ -113,7 +111,6 @@ void PathDolerOuter::Dole(size_t validRobotPathLength, size_t numToDole)
       m.x_center_mm = t->x;
       m.y_center_mm = t->y;
       m.targetRad = t->targetAngle;
-      m.segmentID = i - robotIdx_;
             
       m.targetSpeed = path_.GetSegmentConstRef(i).GetTargetSpeed();
       m.accel = path_.GetSegmentConstRef(i).GetAccel();
@@ -130,24 +127,22 @@ void PathDolerOuter::Dole(size_t validRobotPathLength, size_t numToDole)
       return;
             
     }
+    
+    lastDoledSegmentIdx_ = i;
   }
+
 }
 
-void PathDolerOuter::Update(s8 indexOnRobotPath)
+void PathDolerOuter::Update(const s8 currPathIdx, const u8 numFreeSlots)
 {
   // assumption: MAX_NUM_PATH_SEGMENTS_ROBOT is even
-  if(indexOnRobotPath >= MAX_NUM_PATH_SEGMENTS_ROBOT/2) {
-    printf("PDO::Update(%i) trimming path and re-doling\n", indexOnRobotPath);
+  const u8 numSegmentsToDole = MAX_NUM_PATH_SEGMENTS_ROBOT/2;
+  if(numFreeSlots >= numSegmentsToDole                     // Are there enough free slots?
+     && (lastDoledSegmentIdx_ < pathSizeOnBasestation_-1)  // Have we already doled out?
+     && ((lastDoledSegmentIdx_ - currPathIdx) <= numSegmentsToDole)) {  // Are there any segments left to dole?
+    printf("PDO::Update(%i) re-doling upto %d path segments\n", currPathIdx, numFreeSlots);
 
-    assert(msgHandler_);
-
-    MessageTrimPath msg;
-    msg.numPopFrontSegments = indexOnRobotPath;
-    msg.numPopBackSegments = 0;
-    msgHandler_->SendMessage(robotID_, msg);
-
-    robotIdx_ += indexOnRobotPath;
-    Dole(MAX_NUM_PATH_SEGMENTS_ROBOT/2, MAX_NUM_PATH_SEGMENTS_ROBOT/2);
+    Dole(numSegmentsToDole);
   }   
 }
 
