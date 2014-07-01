@@ -17,7 +17,6 @@ namespace Anki
     namespace HAL
     {
       extern u8 g_halInitComplete;
-      u8 g_halEnterTestMode = 0;
       
       // Forward declarations
       void Startup();
@@ -27,7 +26,8 @@ namespace Anki
       void FrontCameraInit();
       void IMUInit();
       void LightsInit();
-      void HALTestMode();
+
+      void PrintCrap();
 
       //TimeStamp_t GetTimeStamp(void){ return (TimeStamp_t)0; }
       TimeStamp_t t_;
@@ -71,6 +71,7 @@ static void Wait()
       MotorGetSpeed((MotorID)i));
   }
   printf("\n");
+  PrintCrap();
 }
 
 // Belongs in powerontest.cpp
@@ -149,11 +150,8 @@ int main(void)
   printf("init complete!\r\n");
    
   while (Anki::Cozmo::Robot::step_LongExecution() == Anki::RESULT_OK)
-    if (g_halEnterTestMode) {
-      g_halInitComplete = false;
-      HALTestMode();
-    }
-      
+  {
+  }
 #else
   while(true)
   {
