@@ -346,3 +346,11 @@ START_MESSAGE_DEFINITION(PlayAnimation, 1)
 ADD_MESSAGE_MEMBER(u32, numLoops)
 ADD_MESSAGE_MEMBER(u8, animationID)
 END_MESSAGE_DEFINITION(PlayAnimation)
+
+// MainCycleTimeError
+START_MESSAGE_DEFINITION(MainCycleTimeError, 1)
+ADD_MESSAGE_MEMBER(u32, numMainTooLongErrors)
+ADD_MESSAGE_MEMBER(u32, avgMainTooLateTime)
+ADD_MESSAGE_MEMBER(u32, numMainTooLateErrors)
+ADD_MESSAGE_MEMBER(u32, avgMainTooLongTime)
+END_MESSAGE_DEFINITION(MainCycleTimeError)

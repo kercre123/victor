@@ -480,6 +480,9 @@ namespace Anki {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
     
+      void ProcessMainCycleTimeErrorMessage(const MainCycleTimeError& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
 // ----------- Send messages -----------------
       
       

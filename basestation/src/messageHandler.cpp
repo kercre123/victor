@@ -327,6 +327,21 @@ namespace Anki {
       return lastResult;
     }
     
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageMainCycleTimeError const& msg)
+    {
+      Result lastResult = RESULT_OK;
+    
+      if (msg.numMainTooLongErrors > 0) {
+        PRINT_NAMED_WARNING("* * * MainCycleTooLong * * *", "Num errors: %d, Avg time: %d us\n", msg.numMainTooLongErrors, msg.avgMainTooLongTime);
+      }
+      
+      if (msg.numMainTooLateErrors > 0) {
+        PRINT_NAMED_WARNING("* * * MainCycleTooLate * * *", "Num errors: %d, Avg time: %d us\n", msg.numMainTooLateErrors, msg.avgMainTooLateTime);
+      }
+      
+      return lastResult;
+    }
+    
     
     // STUBS:
     Result MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return RESULT_FAIL;}
