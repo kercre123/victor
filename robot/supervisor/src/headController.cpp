@@ -12,7 +12,7 @@ namespace Anki {
 
     namespace {
     
-      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(1.f);
+      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(3.f);
       
       // Head angle on startup
       //const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
