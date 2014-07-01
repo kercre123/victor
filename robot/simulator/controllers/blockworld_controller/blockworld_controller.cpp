@@ -220,6 +220,7 @@ int main(int argc, char **argv)
         Block* carryBlock = blockWorld.GetBlockByID(robot->GetCarryingBlock());
         if(carryBlock == nullptr) {
           PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingBlock());
+          robot->SetCarryingBlock(ANY_OBJECT);
         } else {
           carryBlock->Visualize(VIZ_COLOR_DEFAULT);
         }
