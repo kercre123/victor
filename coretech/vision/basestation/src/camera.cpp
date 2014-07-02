@@ -37,21 +37,44 @@ namespace Anki {
     Camera::Camera(void)
     : _camID(0)
     , _calibration(nullptr)
+    , _isCalibrationShared(false)
     {
       
     } // Constructor: Camera()
     
-    Camera::Camera(const CameraID_t cam_id,
-                   const CameraCalibration &calibration,
-                   const Pose3d& pose_in)
-    : _camID(cam_id)
-    , _calibration(&calibration)
-    , _pose(pose_in)
+    Camera::Camera(const CameraID_t ID)
+    : _camID(ID)
+    , _calibration(nullptr)
+    , _isCalibrationShared(false)
     {
       
-    } // Constructor: Camera(calibration, pose)
+    }
     
+    Camera::Camera(const Camera& other)
+    : _camID(other._camID)
+    , _isCalibrationShared(other._isCalibrationShared)
+    , _pose(other._pose)
+    , _occluderList(other._occluderList)
+    {
+      if(_isCalibrationShared) {
+        // If we're sharing calibrations, just share the same one as
+        // the Camera we are copying
+        _calibration = other._calibration;
+      } else {
+        // Otherwise create another copy of calibration
+        _calibration = new CameraCalibration(*other._calibration);
+      }
+    }
     
+    Camera::~Camera()
+    {
+      if(this->IsCalibrated() && !_isCalibrationShared) {
+        // If the calibration pointer doesn't point to a shared calibration object
+        // then we must have instantiated a CameraCalibration object with new.
+        // So we must make sure to delete it here.
+        delete _calibration;
+      }
+    }
     
 #if ANKICORETECH_USE_OPENCV
     Pose3d Camera::ComputeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,

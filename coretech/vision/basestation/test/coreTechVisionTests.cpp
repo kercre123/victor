@@ -151,7 +151,12 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
                                   300.f, 300.f,
                                   160.f, 120.f);
   
-  Vision::Camera camera(0, calib, camPose);
+  Vision::Camera camera(57);
+  
+  EXPECT_TRUE(camera.GetID() == 57);
+  
+  camera.SetPose(camPose);
+  camera.SetCalibration(calib);
   
   // Note that object pose is in camera coordinates
   const Pose3d obj1Pose(M_PI_2, X_AXIS_3D, {{0.f, 0.f, 100.f}});

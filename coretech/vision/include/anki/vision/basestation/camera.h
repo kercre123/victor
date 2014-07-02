@@ -28,21 +28,36 @@ namespace Anki {
     class ObservableObject;
     class KnownMarker;
     
+    // For now, this is always assumed to be a calibrated camera.  If we want
+    // a more generic camera that does operations that do not require calibration
+    // we can make a base Camera class and a derived CalibratedCamera class.
     class Camera
     {
     public:
       
       // Constructors:
       Camera();
-      Camera(const CameraID_t cam_id, const CameraCalibration& calib, const Pose3d& pose);
+      Camera(const CameraID_t ID);
+      Camera(const Camera& other);
+      
+      ~Camera();
       
       // Accessors:
-      const CameraID_t          GetId()          const;
+      const CameraID_t          GetID()          const;
       const Pose3d&             GetPose()        const;
       const CameraCalibration&  GetCalibration() const;
-      
+
+      void SetID(const CameraID_t ID);
       void SetPose(const Pose3d& newPose);
+      
+      // Set the calibration of the camera. This will store a copy of this
+      // calibration data inside the camera.
       void SetCalibration(const CameraCalibration& calib);
+      
+      // Set the camera to use shared calibration data. In this case, it simply
+      // references the calibration data but the caller must ensure that the
+      // calibration data persists and is valid for the life of the camera.
+      void SetSharedCalibration(const CameraCalibration* sharedCalib);
       
       bool IsCalibrated() const;
       
@@ -113,6 +128,7 @@ namespace Anki {
     protected:
       CameraID_t               _camID;
       const CameraCalibration* _calibration;
+      bool                     _isCalibrationShared;
       Pose3d                   _pose;
       
       OccluderList             _occluderList;
@@ -132,7 +148,7 @@ namespace Anki {
     }; // class Camera
     
     // Inline accessors:
-    inline const CameraID_t Camera::GetId(void) const
+    inline const CameraID_t Camera::GetID(void) const
     { return _camID; }
     
     inline const Pose3d& Camera::GetPose(void) const
@@ -142,7 +158,19 @@ namespace Anki {
     { return *_calibration; }
     
     inline void Camera::SetCalibration(const CameraCalibration &calib)
-    { _calibration = &calib; } // _isCalibrated = true; }
+    {
+      _isCalibrationShared = false;
+      _calibration = new CameraCalibration(calib);
+    }
+    
+    inline void Camera::SetSharedCalibration(const CameraCalibration* sharedCalib)
+    {
+      _isCalibrationShared = true;
+      _calibration = sharedCalib;
+    }
+    
+    inline void Camera::SetID(const CameraID_t ID)
+    { _camID = ID; }
     
     inline void Camera::SetPose(const Pose3d& newPose)
     { _pose = newPose; }

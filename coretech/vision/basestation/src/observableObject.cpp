@@ -263,7 +263,7 @@ namespace Anki {
         
         // If seenOnlyBy was specified, make sure this marker was seen by that
         // camera
-        if(seenOnlyBy == ANY_CAMERA || marker->GetSeenBy().GetId() == seenOnlyBy)
+        if(seenOnlyBy == ANY_CAMERA || marker->GetSeenBy().GetID() == seenOnlyBy)
         {
           // Find all objects which use this marker...
           std::set<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(*marker);
@@ -496,7 +496,7 @@ namespace Anki {
         {
           const Vision::ObservedMarker* obsMarker = match.first;
           
-          if(obsMarker->GetSeenBy().GetId() == camera->GetId())
+          if(obsMarker->GetSeenBy().GetID() == camera->GetID())
           {
             const Vision::KnownMarker* libMarker = &match.second;
             
