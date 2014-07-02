@@ -129,19 +129,6 @@ namespace Anki {
     Matrix<float> covariance;
      */
     
-    /*
-    // "Parent" for defining linkages or sequences of poses, so we can get
-    // a pose "with respect to" a parent or to root (world) pose.
-    const Pose2d *parent;
-    unsigned int GetTreeDepth(void) const;
-    
-    template<class POSE>
-    friend POSE GetWithRespectToHelper(const POSE *from, const POSE *to);
-    */
-    
-    //template<class POSE>
-    //friend unsigned int getTreeDepthHelper(const POSE *P);
-    
   }; // class Pose2d
   
   
@@ -280,18 +267,6 @@ namespace Anki {
     // vector elements, lower right 3x3 block corresponds to translation)
     Matrix<float> covariance;
      */
-    
-    /*
-    // "Parent" for defining linkages or sequences of poses, so we can get
-    // a pose "with respect to" a parent or to root (world) pose.
-    const Pose3d *parent;
-    unsigned int GetTreeDepth(void) const;
-    
-    template<class POSE>
-    friend POSE GetWithRespectToHelper(const POSE *from, const POSE *to);
-    */
-    //template<class POSE>
-    //friend unsigned int getTreeDepthHelper(const POSE *P);
     
   }; // class Pose3d
   
