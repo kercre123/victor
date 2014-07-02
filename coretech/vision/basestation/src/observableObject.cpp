@@ -62,7 +62,7 @@ namespace Anki {
     {
       // Copy the pose and set this object's pose as its parent
       Pose3d poseCopy(atPose);
-      poseCopy.set_parent(&pose_);
+      poseCopy.SetParent(&pose_);
       
       // Construct a marker at that pose and store it keyed by its code
       markers_.emplace_back(withCode, poseCopy, size_mm);
@@ -91,7 +91,7 @@ namespace Anki {
       bool isSame = this->type_ == otherObject.type_;
       
       Pose3d otherPose;
-      if(otherObject.GetPose().getWithRespectTo(*this->pose_.get_parent(), otherPose) == false) {
+      if(otherObject.GetPose().GetWithRespectTo(*this->pose_.GetParent(), otherPose) == false) {
         PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
                             "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
         isSame = false;
@@ -99,7 +99,7 @@ namespace Anki {
       
       if(isSame) {
         
-        CORETECH_ASSERT(otherPose.get_parent() == pose_.get_parent());
+        CORETECH_ASSERT(otherPose.GetParent() == pose_.GetParent());
         
         if(this->GetRotationAmbiguities().empty()) {
           isSame = this->pose_.IsSameAs(otherPose, distThreshold, angleThreshold, P_diff);
@@ -337,7 +337,7 @@ namespace Anki {
           // observers are possible.  Otherwise they'll be clustered in the
           // coordinate frame of the (single) observer.
           for(auto & poseMatch : possiblePoses) {
-            poseMatch.first = poseMatch.first.getWithRespectTo(Pose3d::World);
+            poseMatch.first = poseMatch.first.GetWithRespectTo(Pose3d::World);
           }
         }
          */
@@ -362,7 +362,7 @@ namespace Anki {
           // Compute pose wrt camera, or world if no camera specified
           if (seenOnlyBy == ANY_CAMERA) {
             Pose3d newPose;
-            if(poseCluster.GetPose().getWithRespectTo(poseCluster.GetPose().FindOrigin(), newPose) == true) {
+            if(poseCluster.GetPose().GetWithRespectTo(poseCluster.GetPose().FindOrigin(), newPose) == true) {
               objectsSeen.back()->SetPose(newPose);
             } else {
               PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectsFromMarkers.CouldNotFindWorldOrigin",
@@ -394,7 +394,7 @@ namespace Anki {
           // all poses in a common World coordinate frame *after* pose clustering,
           // since that process takes the markers' observers into account.
           for(auto & poseMatch : possiblePoses) {
-            poseMatch.first = poseMatch.first.getWithRespectTo(Pose3d::World);
+            poseMatch.first = poseMatch.first.GetWithRespectTo(Pose3d::World);
           }
         }
          */
@@ -465,11 +465,11 @@ namespace Anki {
         // cluster's pose based on all its member matches.
         if(not R_ambiguities.empty()) {
           Pose3d newPose(matches_.back().second.GetPose());
-          newPose.preComposeWith(P_diff);
+          newPose.PreComposeWith(P_diff);
           
           // This should preserve the pose tree (i.e. parent relationship
           // of the KnownMarker to its parent object's pose)
-          //CORETECH_ASSERT(newPose.get_parent() == &libObject->GetPose());
+          //CORETECH_ASSERT(newPose.GetParent() == &libObject->GetPose());
           
           matches_.back().second.SetPose(newPose);
         } // if there were rotation ambiguities
@@ -521,10 +521,10 @@ namespace Anki {
         
         // Compute the object pose from all the corresponding 2d (image)
         // and 3d (object) points
-        const Pose3d* originalParent = pose_.get_parent();
+        const Pose3d* originalParent = pose_.GetParent();
         pose_ = camera->ComputeObjectPose(imgPoints, objPoints);
-        if(pose_.get_parent() != originalParent) {
-          if(pose_.getWithRespectTo(originalParent, pose_) == false) {
+        if(pose_.GetParent() != originalParent) {
+          if(pose_.GetWithRespectTo(originalParent, pose_) == false) {
             PRINT_NAMED_ERROR("ObservableObjectLibrary.PoseCluster.RecomputePose.OriginMisMatch",
                               "Could not get object pose w.r.t. original parent.\n");
           }

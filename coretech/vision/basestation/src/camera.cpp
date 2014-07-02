@@ -212,7 +212,7 @@ namespace Anki {
         {
           // First make sure this solution puts the object in front of the
           // camera (this should be true for two solutions)
-          if(possiblePoses[i_solution].get_translation().z() > 0)
+          if(possiblePoses[i_solution].GetTranslation().z() > 0)
           {
             Point2f projectedPoint;
             this->Project3dPoint(possiblePoses[i_solution]*worldQuad[i_validate], projectedPoint);
@@ -244,7 +244,7 @@ namespace Anki {
       } // for each validation corner
       
       // Make sure to make the returned pose w.r.t. the camera!
-      pose.set_parent(&_pose);
+      pose.SetParent(&_pose);
       
       return pose;
       
@@ -375,7 +375,7 @@ namespace Anki {
     void Camera::AddOccluder(const ObservableObject& object)
     {
       Pose3d objectPoseWrtCamera;
-      if(object.GetPose().getWithRespectTo(_pose, objectPoseWrtCamera) == false) {
+      if(object.GetPose().GetWithRespectTo(_pose, objectPoseWrtCamera) == false) {
         PRINT_NAMED_ERROR("Camera.AddOccluder.ObjectDoesNotShareOrigin",
                           "Object must be in the same pose tree as the camera to add it as an occluder.\n");
       } else {
@@ -387,7 +387,7 @@ namespace Anki {
         object.GetCorners(objectPoseWrtCamera, cornersAtPose);
         Project3dPoints(cornersAtPose, projectedCorners);
         
-        _occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.get_translation().z());
+        _occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.GetTranslation().z());
       }
     } // AddOccluder(ObservableObject)
     
@@ -395,7 +395,7 @@ namespace Anki {
     void Camera::AddOccluder(const KnownMarker& marker)
     {
       Pose3d markerPoseWrtCamera;
-      if(marker.GetPose().getWithRespectTo(&_pose, markerPoseWrtCamera) == false) {
+      if(marker.GetPose().GetWithRespectTo(&_pose, markerPoseWrtCamera) == false) {
         PRINT_NAMED_ERROR("Camera.AddOccluder.MarkerDoesNotShareOrigin",
                           "Marker must be in the same pose tree as the camera to add it as an occluder.\n");
       } else {
