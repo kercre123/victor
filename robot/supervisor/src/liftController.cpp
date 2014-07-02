@@ -261,10 +261,16 @@ namespace Anki {
         return currentAngle_.ToFloat();
       }
       
-      void SetSpeedAndAccel(f32 max_speed_rad_per_sec, f32 accel_rad_per_sec2)
+      void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
       {
         maxSpeedRad_ = max_speed_rad_per_sec;
         accelRad_ = accel_rad_per_sec2;
+      }
+      
+      void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
+      {
+        max_speed_rad_per_sec = maxSpeedRad_;
+        accel_rad_per_sec2 = accelRad_;
       }
       
       

@@ -206,7 +206,7 @@ namespace Anki {
         PRINT("TestMode reset\n");
         
         // Stop animations that might be playing
-        AnimationController::PlayAnimation(ANIM_IDLE,0);
+        AnimationController::Stop();
         
         // Stop wheels and vision system
         WheelController::Enable();
@@ -721,7 +721,7 @@ namespace Anki {
       {
         PRINT("\n==== Starting AnimationTest =====\n");
         AT_currAnim = ANIM_HEAD_NOD;
-        AnimationController::PlayAnimation(AT_currAnim, 0);
+        AnimationController::Play(AT_currAnim, 0);
         ticCnt_ = 0;
         return RESULT_OK;
       }
@@ -737,7 +737,7 @@ namespace Anki {
           }
           
           PRINT("Playing animation %d\n", AT_currAnim);
-          AnimationController::PlayAnimation(AT_currAnim, 0);
+          AnimationController::Play(AT_currAnim, 0);
         }
         
         return RESULT_OK;
@@ -788,7 +788,7 @@ namespace Anki {
       {
         if (ticCnt_++ > 2000 / TIME_STEP) {
           
-          PRINT("LED channel %d, color %d\n", ledID, LEDColorList[ledColorIdx]);
+          PRINT("LED channel %d, color 0x%x\n", ledID, LEDColorList[ledColorIdx]);
           HAL::SetLED(ledID, LEDColorList[ledColorIdx]);
           
           // Increment led

@@ -42,7 +42,8 @@ namespace Anki {
       void SetAngularVelocity(const f32 rad_per_sec);
 
       // Specifies max velocity and acceleration that SetDesiredAngle() uses.
-      void SetSpeedAndAccel(f32 max_speed_rad_per_sec, f32 accel_rad_per_sec2);
+      void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
+      void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
       
       // Set the desired angle of head
       void SetDesiredAngle(f32 angle);
