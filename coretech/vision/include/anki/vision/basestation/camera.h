@@ -112,7 +112,6 @@ namespace Anki {
       
     protected:
       CameraID_t               _camID;
-      bool                     _isCalibrated;
       const CameraCalibration* _calibration;
       Pose3d                   _pose;
       

@@ -36,7 +36,6 @@ namespace Anki {
     
     Camera::Camera(void)
     : _camID(0)
-    , _isCalibrated(false)
     , _calibration(nullptr)
     {
       
@@ -46,7 +45,6 @@ namespace Anki {
                    const CameraCalibration &calibration,
                    const Pose3d& pose_in)
     : _camID(cam_id)
-    , _isCalibrated(true)
     , _calibration(&calibration)
     , _pose(pose_in)
     {
