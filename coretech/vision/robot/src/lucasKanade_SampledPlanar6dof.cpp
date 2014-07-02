@@ -1098,11 +1098,11 @@ namespace Anki
 
       // Fill a rotation matrix according to the current tracker angles
       // R should already be allocated to be 3x3
-      Result LucasKanadeTracker_SampledPlanar6dof::get_rotationMatrix(Array<f32>& R,
+      Result LucasKanadeTracker_SampledPlanar6dof::GetRotationMatrix(Array<f32>& R,
         bool skipLastColumn) const
       {
         AnkiConditionalErrorAndReturnValue(AreEqualSize(3, 3, R), RESULT_FAIL_INVALID_SIZE,
-          "LucasKanadeTracker_SampledPlanar6dof::get_rotationMatrix",
+          "LucasKanadeTracker_SampledPlanar6dof::GetRotationMatrix",
           "R should be a 3x3 matrix.");
 
         const f32 cx = cosf(this->params6DoF.angle_x);
@@ -1126,7 +1126,7 @@ namespace Anki
         }
 
         return RESULT_OK;
-      } // get_rotationMatrix()
+      } // GetRotationMatrix()
 
       // Set the tracker angles by extracting Euler angles from the given
       // rotation matrix
@@ -1139,10 +1139,10 @@ namespace Anki
       } // set_rotationAnglesFromMatrix
 
       // Retrieve/update the current translation estimates of the tracker
-      const Point3<f32>& LucasKanadeTracker_SampledPlanar6dof::get_translation() const
+      const Point3<f32>& LucasKanadeTracker_SampledPlanar6dof::GetTranslation() const
       {
         return this->params6DoF.translation;
-      } // get_translation()
+      } // GetTranslation()
 
       const f32& LucasKanadeTracker_SampledPlanar6dof::get_angleX() const
       {
@@ -1164,7 +1164,7 @@ namespace Anki
         // Compute the new homography from the new 6DoF parameters, and
         // update the transformation object
         Array<f32> newHomography = Array<f32>(3,3,scratch);
-        this->get_rotationMatrix(newHomography, true);
+        this->GetRotationMatrix(newHomography, true);
 
         newHomography[0][0] *= this->focalLength_x;
         newHomography[0][1] *= this->focalLength_x;

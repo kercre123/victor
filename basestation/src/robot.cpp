@@ -112,6 +112,7 @@ namespace Anki {
     , _lastRecvdPathID(0)
     , _forceReplanOnNextWorldChange(false)
     , _saveImages(false)
+    , _camera(robotID)
     , _poseOrigin(&Pose3d::AddOrigin())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _poseOrigin) // Until this robot is localized be seeing a mat marker, create an origin for it to use as its pose parent
     , _frameId(0)
@@ -276,8 +277,8 @@ namespace Anki {
 
             float closestDist2 = FLT_MAX;
             for(auto const& preDockPair : preDockPoseMarkerPairs) {
-              float dist2 = std::pow(preDockPair.first.get_translation().x() - GetPose().get_translation().x(), 2)
-                + std::pow(preDockPair.first.get_translation().y() - GetPose().get_translation().y(), 2);
+              float dist2 = std::pow(preDockPair.first.GetTranslation().x() - GetPose().GetTranslation().x(), 2)
+                + std::pow(preDockPair.first.GetTranslation().y() - GetPose().GetTranslation().y(), 2);
               if(dist2 < closestDist2)
                 closestDist2 = dist2;
             }
@@ -293,7 +294,7 @@ namespace Anki {
             }
 
                         
-            const f32 dockBlockHeight = dockBlock->GetPose().get_translation().z();
+            const f32 dockBlockHeight = dockBlock->GetPose().GetTranslation().z();
             _dockAction = DA_PICKUP_LOW;
             if (dockBlockHeight > dockBlock->GetSize().z()) {
               if(IsCarryingBlock()) {
@@ -420,7 +421,7 @@ namespace Anki {
       
       // Rotate that by the given angle
       RotationVector3d Rvec(-_currentHeadAngle, Y_AXIS_3D);
-      newHeadPose.rotateBy(Rvec);
+      newHeadPose.RotateBy(Rvec);
       
       // Update the head camera's pose
       _camera.SetPose(newHeadPose);
@@ -430,12 +431,12 @@ namespace Anki {
     void Robot::ComputeLiftPose(const f32 atAngle, Pose3d& liftPose)
     {
       // Reset to canonical position
-      liftPose.set_rotation(atAngle, Y_AXIS_3D);
-      liftPose.set_translation({{LIFT_ARM_LENGTH, 0.f, 0.f}});
+      liftPose.SetRotation(atAngle, Y_AXIS_3D);
+      liftPose.SetTranslation({{LIFT_ARM_LENGTH, 0.f, 0.f}});
       
       // Rotate to the given angle
       RotationVector3d Rvec(-atAngle, Y_AXIS_3D);
-      liftPose.rotateBy(Rvec);
+      liftPose.RotateBy(Rvec);
     }
     
     void Robot::SetLiftAngle(const f32& angle)
@@ -445,7 +446,7 @@ namespace Anki {
       
       Robot::ComputeLiftPose(_currentLiftAngle, _liftPose);
 
-      CORETECH_ASSERT(_liftPose.get_parent() == &_liftBasePose);
+      CORETECH_ASSERT(_liftPose.GetParent() == &_liftBasePose);
     }
         
     Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
@@ -470,7 +471,7 @@ namespace Anki {
       Pose2d target2d(targetPose);
       Pose2d start2d(GetPose());
 
-      float distSquared = pow(target2d.get_x() - start2d.get_x(), 2) + pow(target2d.get_y() - start2d.get_y(), 2);
+      float distSquared = pow(target2d.GetX() - start2d.GetX(), 2) + pow(target2d.GetY() - start2d.GetY(), 2);
 
       if(distSquared < MAX_DISTANCE_FOR_SHORT_PLANNER * MAX_DISTANCE_FOR_SHORT_PLANNER) {
         PRINT_NAMED_INFO("Robot.SelectPlanner", "distance^2 is %f, selecting short planner\n", distSquared);
@@ -689,9 +690,9 @@ namespace Anki {
       
       
       PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
-                 _goalPose.get_translation().x(),
-                 _goalPose.get_translation().y(),
-                 _goalPose.get_rotationAngle().getDegrees());
+                 _goalPose.GetTranslation().x(),
+                 _goalPose.GetTranslation().y(),
+                 _goalPose.GetRotationAngle().getDegrees());
       
       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
       _state = FOLLOWING_PATH;
@@ -735,7 +736,7 @@ namespace Anki {
       _dockMarker  = marker;
       
       // Dock marker has to be a child of the dock block
-      if(_dockMarker->GetPose().get_parent() != &block->GetPose()) {
+      if(_dockMarker->GetPose().GetParent() != &block->GetPose()) {
         PRINT_NAMED_ERROR("Robot.DockWithBlock.MarkerNotOnBlock",
                           "Specified dock marker must be a child of the specified dock block.\n");
         return RESULT_FAIL;
@@ -765,13 +766,13 @@ namespace Anki {
       // Base the block's pose relative to the lift on how far away the dock
       // marker is from the center of the block
       // TODO: compute the height adjustment per block or at least use values from cozmoConfig.h
-      Pose3d newPose(block->GetPose().get_rotationMatrix(),
-                     {{_dockMarker->GetPose().get_translation().Length() +
+      Pose3d newPose(block->GetPose().GetRotationMatrix(),
+                     {{_dockMarker->GetPose().GetTranslation().Length() +
                        LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f}});
       
       // make part of the lift's pose chain so the block will now be relative to
       // the lift and move with the robot
-      newPose.set_parent(&_liftPose);
+      newPose.SetParent(&_liftPose);
 
       _dockBlockID = ANY_OBJECT;
       _dockMarker  = nullptr;
@@ -813,20 +814,20 @@ namespace Anki {
       }
       
       Pose3d liftBasePoseAtTime(_liftBasePose);
-      liftBasePoseAtTime.set_parent(&histPosePtr->GetPose());
+      liftBasePoseAtTime.SetParent(&histPosePtr->GetPose());
       
       Pose3d liftPoseAtTime;
       Robot::ComputeLiftPose(histPosePtr->GetLiftAngle(), liftPoseAtTime);
-      liftPoseAtTime.set_parent(&liftBasePoseAtTime);
+      liftPoseAtTime.SetParent(&liftBasePoseAtTime);
       
       Pose3d blockPoseAtTime(_carryingBlock->GetPose());
-      blockPoseAtTime.set_parent(&liftPoseAtTime);
+      blockPoseAtTime.SetParent(&liftPoseAtTime);
        
-      _carryingBlock->SetPose(blockPoseAtTime.getWithRespectTo(Pose3d::World));
+      _carryingBlock->SetPose(blockPoseAtTime.GetWithRespectTo(Pose3d::World));
       */
       
       Pose3d placedPose;
-      if(block->GetPose().getWithRespectTo(_pose.FindOrigin(), placedPose) == false) {
+      if(block->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPose) == false) {
         PRINT_NAMED_ERROR("Robot.PlaceCarriedBlock.OriginMisMatch",
                           "Could not get carrying block's pose relative to robot's origin.\n");
         return RESULT_FAIL;
@@ -838,9 +839,9 @@ namespace Anki {
       PRINT_NAMED_INFO("Robot.PlaceCarriedBlock.BlockPlaced",
                        "Robot %d successfully placed block %d at (%.2f, %.2f, %.2f).\n",
                        _ID, block->GetID(),
-                       block->GetPose().get_translation().x(),
-                       block->GetPose().get_translation().y(),
-                       block->GetPose().get_translation().z());
+                       block->GetPose().GetTranslation().x(),
+                       block->GetPose().GetTranslation().y(),
+                       block->GetPose().GetTranslation().z());
 
       _carryingBlockID = ANY_OBJECT;
       
@@ -994,10 +995,10 @@ namespace Anki {
       
       m.pose_frame_id = p.GetFrameId();
       
-      m.xPosition = p.GetPose().get_translation().x();
-      m.yPosition = p.GetPose().get_translation().y();
+      m.xPosition = p.GetPose().GetTranslation().x();
+      m.yPosition = p.GetPose().GetTranslation().y();
 
-      m.headingAngle = p.GetPose().get_rotationMatrix().GetAngleAroundZaxis().ToFloat();
+      m.headingAngle = p.GetPose().GetRotationMatrix().GetAngleAroundZaxis().ToFloat();
       
       return _msgHandler->SendMessage(_ID, m);
     }
@@ -1049,7 +1050,7 @@ namespace Anki {
     
     Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
-      const RotationMatrix2d R(atPose.get_rotationMatrix().GetAngleAroundZaxis());
+      const RotationMatrix2d R(atPose.GetRotationMatrix().GetAngleAroundZaxis());
       
       Quad2f boundingQuad(Robot::CanonicalBoundingBoxXY);
       if(padding_mm != 0.f) {
@@ -1067,7 +1068,7 @@ namespace Anki {
       }
       
       // Re-center
-      Point2f center(atPose.get_translation().x(), atPose.get_translation().y());
+      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
       boundingQuad += center;
       
       return boundingQuad;
@@ -1194,14 +1195,14 @@ namespace Anki {
         // the pose parent of observed objects) and update it
         
         // Reverse the connection between origin and robot
-        //CORETECH_ASSERT(p.GetPose().get_parent() == _poseOrigin);
-        *_poseOrigin = _pose.getInverse();
-        _poseOrigin->set_parent(&p.GetPose());
+        //CORETECH_ASSERT(p.GetPose().GetParent() == _poseOrigin);
+        *_poseOrigin = _pose.GetInverse();
+        _poseOrigin->SetParent(&p.GetPose());
         
         // Connect the old origin's pose to the same root the robot now has.
         // It is no longer the robot's origin, but for any of its children,
         // it is now in the right coordinates.
-        if(_poseOrigin->getWithRespectTo(p.GetPose().FindOrigin(), *_poseOrigin) == false) {
+        if(_poseOrigin->GetWithRespectTo(p.GetPose().FindOrigin(), *_poseOrigin) == false) {
           PRINT_NAMED_ERROR("Robot.AddVisionOnlyPoseToHistory.NewLocalizationOriginProblem",
                             "Could not get pose origin w.r.t. RobotPoseStamp's pose.\n");
           return RESULT_FAIL;
@@ -1209,7 +1210,7 @@ namespace Anki {
         
         // Now make the robot's origin point to the robot's pose's parent.
         // TODO: avoid the icky const cast here...
-        _poseOrigin = const_cast<Pose3d*>(p.GetPose().get_parent());
+        _poseOrigin = const_cast<Pose3d*>(p.GetPose().GetParent());
         
         _isLocalized = true;
       }

@@ -69,7 +69,9 @@ namespace Anki {
       // *valid_head_angle is made to equal the closest valid head angle to head_angle.
       bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
       
-      Vision::Camera&        GetCamera();
+      Vision::Camera&                   GetCamera();
+      void                              SetCameraCalibration(const Vision::CameraCalibration& calib);
+	    const Vision::CameraCalibration&  GetCameraCalibration() const;
       
       const f32              GetHeadAngle()    const;
       const f32              GetLiftAngle()    const;
@@ -86,7 +88,6 @@ namespace Anki {
       void SetPose(const Pose3d &newPose);
       void SetHeadAngle(const f32& angle);
       void SetLiftAngle(const f32& angle);
-      void SetCameraCalibration(const Vision::CameraCalibration& calib);
       
       void IncrementPoseFrameID() {++_frameId;}
       PoseFrameID_t GetPoseFrameID() const {return _frameId;}
@@ -319,7 +320,11 @@ namespace Anki {
       // should be saved as PGM
       bool _saveImages;
 
-      Vision::Camera   _camera;
+	    // Robot stores the calibration, camera just gets a reference to it
+      // This is so we can share the same calibration data across multiple
+      // cameras (e.g. those stored inside the pose history)
+      Vision::CameraCalibration _cameraCalibration;
+      Vision::Camera            _camera;
       
       // Geometry / Pose
       Pose3d*          _poseOrigin;
@@ -433,7 +438,13 @@ namespace Anki {
     { return _state; }
     
     inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
-    { _camera.SetCalibration(calib); }
+    {
+      _cameraCalibration = calib;
+      _camera.SetSharedCalibration(&_cameraCalibration);
+    }
+
+	inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
+    { return _cameraCalibration; }
     
     inline const f32 Robot::GetHeadAngle() const
     { return _currentHeadAngle; }

@@ -50,9 +50,9 @@ namespace Anki {
     {
       frame_ = frameID;
       
-      pose_.set_rotation(pose_angle, Z_AXIS_3D);
-      pose_.set_translation(Vec3f(pose_x, pose_y, pose_z));
-      pose_.set_parent(pose_origin);
+      pose_.SetRotation(pose_angle, Z_AXIS_3D);
+      pose_.SetTranslation(Vec3f(pose_x, pose_y, pose_z));
+      pose_.SetParent(pose_origin);
       
       headAngle_ = head_angle;
       liftAngle_ = lift_angle;
@@ -105,13 +105,13 @@ namespace Anki {
     {
       return AddRawOdomPose(t,
                             p.GetFrameId(),
-                            p.GetPose().get_translation().x(),
-                            p.GetPose().get_translation().y(),
-                            p.GetPose().get_translation().z(),
-                            p.GetPose().get_rotationMatrix().GetAngleAroundZaxis().ToFloat(),
+                            p.GetPose().GetTranslation().x(),
+                            p.GetPose().GetTranslation().y(),
+                            p.GetPose().GetTranslation().z(),
+                            p.GetPose().GetRotationMatrix().GetAngleAroundZaxis().ToFloat(),
                             p.GetHeadAngle(),
                             p.GetLiftAngle(),
-                            p.GetPose().get_parent());
+                            p.GetPose().GetParent());
     }
 
 
@@ -224,7 +224,7 @@ namespace Anki {
           
           // Get the pose transform between the two poses.
           Pose3d pTransform;
-          if(it->second.GetPose().getWithRespectTo(prev_it->second.GetPose(), pTransform) == false) {
+          if(it->second.GetPose().GetWithRespectTo(prev_it->second.GetPose(), pTransform) == false) {
             PRINT_NAMED_ERROR("RobotPoseHistory.GetRawPoseAt.MisMatchedOrigins",
                               "Could not get the pose transform between the two poses because they don't share the same origin.\n");
             return RESULT_FAIL;
@@ -234,12 +234,12 @@ namespace Anki {
           f32 timeScale = (f32)(t_request - prev_it->first) / (it->first - prev_it->first);
           
           // Compute scaled transform
-          Vec3f interpTrans(prev_it->second.GetPose().get_translation());
-          interpTrans += pTransform.get_translation() * timeScale;
+          Vec3f interpTrans(prev_it->second.GetPose().GetTranslation());
+          interpTrans += pTransform.GetTranslation() * timeScale;
           
           // NOTE: Assuming there is only z-axis rotation!
           // TODO: Make generic?
-          Radians interpRotation = prev_it->second.GetPose().get_rotationAngle() + Radians(pTransform.get_rotationAngle() * timeScale);
+          Radians interpRotation = prev_it->second.GetPose().GetRotationAngle() + Radians(pTransform.GetRotationAngle() * timeScale);
           
           // Interp head angle
           f32 interpHeadAngle = prev_it->second.GetHeadAngle() + timeScale * (it->second.GetHeadAngle() - prev_it->second.GetHeadAngle());
@@ -248,7 +248,7 @@ namespace Anki {
           f32 interpLiftAngle = prev_it->second.GetLiftAngle() + timeScale * (it->second.GetLiftAngle() - prev_it->second.GetLiftAngle());
           
           t = t_request;
-          p.SetPose(prev_it->second.GetFrameId(), interpTrans.x(), interpTrans.y(), interpTrans.z(), interpRotation.ToFloat(), interpHeadAngle, interpLiftAngle, prev_it->second.GetPose().get_parent());
+          p.SetPose(prev_it->second.GetFrameId(), interpTrans.x(), interpTrans.y(), interpTrans.z(), interpRotation.ToFloat(), interpHeadAngle, interpLiftAngle, prev_it->second.GetPose().GetParent());
           
         } else {
           
@@ -349,16 +349,16 @@ namespace Anki {
       // relative pose between them).
       CORETECH_ASSERT(p1.GetPose().FindOrigin() == p0_it->second.GetPose().FindOrigin());
       Pose3d newPose;
-      const bool getWithRespectToResult = p1.GetPose().getWithRespectTo(*p0_it->second.GetPose().get_parent(), newPose);
-      CORETECH_ASSERT(getWithRespectToResult == true);
+      const bool GetWithRespectToResult = p1.GetPose().GetWithRespectTo(*p0_it->second.GetPose().GetParent(), newPose);
+      CORETECH_ASSERT(GetWithRespectToResult == true);
       p1.SetPose(p1.GetFrameId(), newPose, p1.GetHeadAngle(), p1.GetLiftAngle());
-      CORETECH_ASSERT(p1.GetPose().get_parent() == p0_it->second.GetPose().get_parent());
+      CORETECH_ASSERT(p1.GetPose().GetParent() == p0_it->second.GetPose().GetParent());
       
       // Compute relative pose between p0_it and p1 and append to the vision-based pose.
       // Need to account for intermediate frames between p0 and p1 if any.
       // pMid0 and pMid1 are used to denote the start and end poses of
       // every intermediate frame.
-      Pose3d pTransform = p0_it->second.GetPose().getInverse();
+      Pose3d pTransform = p0_it->second.GetPose().GetInverse();
       const_PoseMapIter_t pMid0 = p0_it;
       const_PoseMapIter_t pMid1 = p0_it;
       for (pMid1 = p0_it; pMid1->first != t; ++pMid1) {
@@ -379,7 +379,7 @@ namespace Anki {
           // and multiply the inverse with pTransform to get the first part of the transform
           // for the next frame.
           ++pMid1;
-          pTransform *= pMid1->second.GetPose().getInverse();
+          pTransform *= pMid1->second.GetPose().GetInverse();
           
           pMid0 = pMid1;
         }
@@ -397,7 +397,7 @@ namespace Anki {
       }
       #endif
       
-      pTransform.preComposeWith(git->second.GetPose());
+      pTransform.PreComposeWith(git->second.GetPose());
       p.SetPose(git->second.GetFrameId(), pTransform, p1.GetHeadAngle(), p1.GetLiftAngle());
       
       return RESULT_OK;

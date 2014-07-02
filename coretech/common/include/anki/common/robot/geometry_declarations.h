@@ -203,10 +203,10 @@ namespace Anki
       }
 
       // Accessors:
-      float   get_x()     const {return coord.x;}
-      float   get_y()     const {return coord.y;}
+      float   GetX()     const {return coord.x;}
+      float   GetY()     const {return coord.y;}
       Point2f get_xy()    const {return coord;}
-      Radians get_angle() const {return angle;}
+      Radians GetAngle() const {return angle;}
 
       float& x() {return coord.x;}
       float& y() {return coord.y;}

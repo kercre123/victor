@@ -30,15 +30,15 @@ namespace Anki {
                                                    const Pose3d &startPose,
                                                    const Pose3d &targetPose)
     {
-      Vec3f startPt = startPose.get_translation();
-      f32 startAngle = startPose.get_rotationAngle<'Z'>().ToFloat(); // Assuming robot is not tilted
+      Vec3f startPt = startPose.GetTranslation();
+      f32 startAngle = startPose.GetRotationAngle<'Z'>().ToFloat(); // Assuming robot is not tilted
       
       // Currently, we can only deal with rotations around (0,0,1) or (0,0,-1).
       // If it's something else, then quit.
       // TODO: Something smarter?
       Vec3f rotAxis;
       Radians rotAngle;
-      startPose.get_rotationVector().get_angleAndAxis(rotAngle, rotAxis);
+      startPose.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
       float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
       const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
       if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
@@ -52,13 +52,13 @@ namespace Anki {
       }
       
       
-      Vec3f targetPt = targetPose.get_translation();
-      f32 targetAngle = targetPose.get_rotationAngle<'Z'>().ToFloat(); // Assuming robot is not tilted
+      Vec3f targetPt = targetPose.GetTranslation();
+      f32 targetAngle = targetPose.GetRotationAngle<'Z'>().ToFloat(); // Assuming robot is not tilted
 
       // Currently, we can only deal with rotations around (0,0,1) or (0,0,-1).
       // If it's something else, then quit.
       // TODO: Something smarter?
-      targetPose.get_rotationVector().get_angleAndAxis(rotAngle, rotAxis);
+      targetPose.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
       dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
       if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
         PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_target",
@@ -102,15 +102,15 @@ namespace Anki {
         
         PRINT_NAMED_INFO("IPathPlanner.GetPlan.FindClosestPose",
                          "Candidate target pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f)\n",
-                         targetPose.get_translation().x(),
-                         targetPose.get_translation().y(),
-                         targetPose.get_translation().z(),
-                         targetPose.get_rotationAngle<'Z'>().getDegrees(),
-                         targetPose.get_rotationAxis().x(),
-                         targetPose.get_rotationAxis().y(),
-                         targetPose.get_rotationAxis().z());
+                         targetPose.GetTranslation().x(),
+                         targetPose.GetTranslation().y(),
+                         targetPose.GetTranslation().z(),
+                         targetPose.GetRotationAngle<'Z'>().getDegrees(),
+                         targetPose.GetRotationAxis().x(),
+                         targetPose.GetRotationAxis().y(),
+                         targetPose.GetRotationAxis().z());
         
-        const f32 distToPose = (targetPose.get_translation() - startPose.get_translation()).LengthSq();
+        const f32 distToPose = (targetPose.GetTranslation() - startPose.GetTranslation()).LengthSq();
         if (!foundTarget || distToPose < shortestDistToPose)
         {
           foundTarget = true;

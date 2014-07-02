@@ -31,7 +31,7 @@ namespace Anki {
     /* Moved to Camera class
     void OccluderList::AddOccluder(const Vision::ObservableObject* object, const Vision::Camera& camera)
     {
-      const Pose3d objectPoseWrtCamera(object->GetPose().getWithRespectTo(&camera.get_pose()));
+      const Pose3d objectPoseWrtCamera(object->GetPose().GetWithRespectTo(&camera.get_pose()));
       
       std::vector<Point3f> cornersAtPose;
       std::vector<Point2f> projectedCorners;
@@ -41,7 +41,7 @@ namespace Anki {
       object->GetCorners(cornersAtPose);
       camera.Project3dPoints(cornersAtPose, projectedCorners);
       
-      AddOccluderHelper(projectedCorners, objectPoseWrtCamera.get_translation().z());
+      AddOccluderHelper(projectedCorners, objectPoseWrtCamera.GetTranslation().z());
     }
      */
     

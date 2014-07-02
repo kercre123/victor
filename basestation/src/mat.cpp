@@ -41,7 +41,7 @@ namespace Anki {
       // Add an origin to use as this mat piece's reference, until such time
       // that we want to make it relative to another mat piece or some
       // common origin
-      pose_.set_parent(&Pose3d::AddOrigin());
+      pose_.SetParent(&Pose3d::AddOrigin());
       
     };
     

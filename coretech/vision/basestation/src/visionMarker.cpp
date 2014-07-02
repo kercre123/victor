@@ -90,7 +90,7 @@ namespace Anki {
       corners3dAtPose *= size_;
       
       // Transform the canonical corners to this new pose
-      atPose.applyTo(corners3dAtPose, corners3dAtPose);
+      atPose.ApplyTo(corners3dAtPose, corners3dAtPose);
       
       return corners3dAtPose;
       
@@ -135,14 +135,14 @@ namespace Anki {
       
       // Get the marker's pose relative to the camera
       Pose3d markerPoseWrtCamera;
-      if(pose_.getWithRespectTo(camera.GetPose(), markerPoseWrtCamera) == false) {
+      if(pose_.GetWithRespectTo(camera.GetPose(), markerPoseWrtCamera) == false) {
         PRINT_NAMED_WARNING("KnownMarker.IsVisibleFrom.NotInCameraPoseTree",
                             "Marker must be in the same pose tree as the camera to check its visibility.\n");
         return false;
       }
       
       // Make sure the marker is at least in front of the camera!
-      if(markerPoseWrtCamera.get_translation().z() <= 0.f) {
+      if(markerPoseWrtCamera.GetTranslation().z() <= 0.f) {
         return false;
       }
       

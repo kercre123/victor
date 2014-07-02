@@ -837,7 +837,7 @@ namespace Anki {
         const Radians initAngleX(tracker.get_angleX());
         const Radians initAngleY(tracker.get_angleY());
         const Radians initAngleZ(tracker.get_angleZ());
-        const Point3<f32>& initTranslation = tracker.get_translation();
+        const Point3<f32>& initTranslation = tracker.GetTranslation();
 
         bool converged = false;
         const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
@@ -864,17 +864,17 @@ namespace Anki {
           PRINT("Tracker failed: angle(s) changed too much.\n");
           trackingSucceeded = false;
         }
-        else if(tracker.get_translation().z < TrackerParameters::MIN_TRACKER_DISTANCE)
+        else if(tracker.GetTranslation().z < TrackerParameters::MIN_TRACKER_DISTANCE)
         {
           PRINT("Tracker failed: final distance too close.\n");
           trackingSucceeded = false;
         }
-        else if(tracker.get_translation().z > TrackerParameters::MAX_TRACKER_DISTANCE)
+        else if(tracker.GetTranslation().z > TrackerParameters::MAX_TRACKER_DISTANCE)
         {
           PRINT("Tracker failed: final distance too far away.\n");
           trackingSucceeded = false;
         }
-        else if((initTranslation - tracker.get_translation()).Length() > parameters.successTolerance_distance)
+        else if((initTranslation - tracker.GetTranslation()).Length() > parameters.successTolerance_distance)
         {
           PRINT("Tracker failed: position changed too much.\n");
           trackingSucceeded = false;
@@ -894,7 +894,7 @@ namespace Anki {
           PRINT("Tracker failed: target Z angle too large.\n");
           trackingSucceeded = false;
         }
-        else if(atan_fast(fabs(tracker.get_translation().x) / tracker.get_translation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
+        else if(atan_fast(fabs(tracker.GetTranslation().x) / tracker.GetTranslation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
         {
           PRINT("Tracker failed: FOV angle too large.\n");
           trackingSucceeded = false;
@@ -1036,8 +1036,8 @@ namespace Anki {
           term1*cH2*cR - term4*cH2 - term5*cH2 + term2*sH2 - term3*sH2);
 
         Array<f32> R_blockRelHead = Array<f32>(3,3,scratch);
-        tracker_.get_rotationMatrix(R_blockRelHead);
-        const Point3<f32>& T_blockRelHead = tracker_.get_translation();
+        tracker_.GetRotationMatrix(R_blockRelHead);
+        const Point3<f32>& T_blockRelHead = tracker_.GetTranslation();
 
         Array<f32> R_blockRelHead_new = Array<f32>(3,3,scratch);
         Matrix::Multiply(R_geometry, R_blockRelHead, R_blockRelHead_new);
@@ -1207,9 +1207,9 @@ namespace Anki {
           dockErrMsg.angleErr);
 #else
         // Despite the names, fill the elements of the message with camera-centric coordinates
-        dockErrMsg.x_distErr = tracker_.get_translation().x;
-        dockErrMsg.y_horErr  = tracker_.get_translation().y;
-        dockErrMsg.z_height  = tracker_.get_translation().z;
+        dockErrMsg.x_distErr = tracker_.GetTranslation().x;
+        dockErrMsg.y_horErr  = tracker_.GetTranslation().y;
+        dockErrMsg.z_height  = tracker_.GetTranslation().z;
 
         dockErrMsg.angleErr  = tracker_.get_angleY();
 

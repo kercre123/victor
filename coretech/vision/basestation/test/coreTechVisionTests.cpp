@@ -70,10 +70,10 @@ GTEST_TEST(PoseEstimation, FromQuads)
   
   // Set up the true pose
   Pose3d poseTrue;
-  poseTrue.rotateBy(RotationVector3d(Xangle, X_AXIS_3D));
-  poseTrue.rotateBy(RotationVector3d(Yangle, Y_AXIS_3D));
-  poseTrue.rotateBy(RotationVector3d(Zangle, Z_AXIS_3D));
-  poseTrue.set_translation(translation);
+  poseTrue.RotateBy(RotationVector3d(Xangle, X_AXIS_3D));
+  poseTrue.RotateBy(RotationVector3d(Yangle, Y_AXIS_3D));
+  poseTrue.RotateBy(RotationVector3d(Zangle, Z_AXIS_3D));
+  poseTrue.SetTranslation(translation);
   
   // Create the 3D marker and put it in the specified pose relative to the camera
   Quad3f marker3d(Point3f(-1.f, -1.f, 0.f),
@@ -84,7 +84,7 @@ GTEST_TEST(PoseEstimation, FromQuads)
   marker3d *= markerSize/2.f;
   
   Quad3f marker3d_atPose;
-  poseTrue.applyTo(marker3d, marker3d_atPose);
+  poseTrue.ApplyTo(marker3d, marker3d_atPose);
   
   // Compute the ground truth projection of the marker in the image
   Vision::CameraCalibration calib(camNumRows,    camNumCols,
@@ -120,17 +120,17 @@ GTEST_TEST(PoseEstimation, FromQuads)
   EXPECT_TRUE(poseEst.IsSameAs(poseTrue, distThreshold, angleThreshold, poseDiff));
 
   printf("Angular difference is %f degrees (threshold = %f degrees)\n",
-         poseDiff.get_rotationMatrix().GetAngle().getDegrees(),
+         poseDiff.GetRotationMatrix().GetAngle().getDegrees(),
          angleThreshold.getDegrees());
   
   printf("Translation difference is %f, threshold = %f\n",
-         poseDiff.get_translation().Length(),  distThreshold);
+         poseDiff.GetTranslation().Length(),  distThreshold);
   
   
   // Check if the reprojected points match the originals
   Quad2f reproj;
   Quad3f marker3d_est;
-  poseEst.applyTo(marker3d, marker3d_est);
+  poseEst.ApplyTo(marker3d, marker3d_est);
   camera.Project3dPoints(marker3d_est, reproj);
   for(Quad::CornerName i_corner=Quad::FirstCorner; i_corner<Quad::NumCorners; ++i_corner) {
     EXPECT_NEAR(reproj[i_corner].x(), proj[i_corner].x(), pixelErrThreshold);
@@ -151,7 +151,12 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
                                   300.f, 300.f,
                                   160.f, 120.f);
   
-  Vision::Camera camera(0, calib, camPose);
+  Vision::Camera camera(57);
+  
+  EXPECT_TRUE(camera.GetID() == 57);
+  
+  camera.SetPose(camPose);
+  camera.SetCalibration(calib);
   
   // Note that object pose is in camera coordinates
   const Pose3d obj1Pose(M_PI_2, X_AXIS_3D, {{0.f, 0.f, 100.f}});

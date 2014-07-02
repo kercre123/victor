@@ -89,10 +89,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   s32 index=0;
   for(s32 j=0; j<3; ++j) {
-    T[j] = static_cast<double>(pose.get_translation()[j]);
+    T[j] = static_cast<double>(pose.GetTranslation()[j]);
 
     for(s32 i=0; i<3; ++i, ++index) {
-      R[index] = static_cast<double>(pose.get_rotationMatrix()(i,j));
+      R[index] = static_cast<double>(pose.GetRotationMatrix()(i,j));
     }
   }
 }

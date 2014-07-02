@@ -81,7 +81,7 @@ namespace Anki {
       // Note that it is your responsibility to make sure the new pose has the
       // parent you intend! To preserve an existing parent, you may want to do
       // something like:
-      //   newPose.set_parent(marker.get_parent());
+      //   newPose.SetParent(marker.GetParent());
       //   marker.SetPose(newPose);
       //
       void SetPose(const Pose3d& newPose);

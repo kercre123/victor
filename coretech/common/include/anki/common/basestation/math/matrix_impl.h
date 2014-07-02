@@ -210,7 +210,7 @@ namespace Anki {
     // TODO: Define our own opencv-free transpose?
 #endif
     
-  } // Matrix<T>::getInverse()
+  } // Matrix<T>::GetInverse()
   
                    
   

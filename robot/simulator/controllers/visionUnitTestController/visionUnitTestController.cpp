@@ -254,7 +254,7 @@ int main(int argc, char **argv)
 
     // Store the image from the current position
     std::string imgFilename = outputPath + std::to_string(i_pose) + ".png";
-    headCam_->saveImage(PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, imgFilename), 100);
+    headCam_->saveImage(PlatformPathManager::GetInstance()->PrependPath(PlatformPathManager::Test, imgFilename), 100);
     
     // Store the associated image file
     currentPose["ImageFile"]  = imgFilename;
@@ -276,8 +276,8 @@ int main(int argc, char **argv)
                           "imwrite(img, '%s'); "
                           "markers = simpleDetector(img); "
                           "numMarkers = length(markers);",
-                          PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, imgFilename).c_str(),
-                          PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, imgFilename).c_str());
+                          PlatformPathManager::GetInstance()->PrependPath(PlatformPathManager::Test, imgFilename).c_str(),
+                          PlatformPathManager::GetInstance()->PrependPath(PlatformPathManager::Test, imgFilename).c_str());
 
     const int numMarkers = static_cast<int>(*matlab.Get<double>("numMarkers"));
     fprintf(stdout, "Detected %d markers at pose %d.\n", numMarkers, i_pose);
@@ -395,7 +395,7 @@ int main(int argc, char **argv)
  
   // Actually write the Json to file
   
-  std::string jsonFilename = PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, outputPath) + ".json";
+  std::string jsonFilename = PlatformPathManager::GetInstance()->PrependPath(PlatformPathManager::Test, outputPath) + ".json";
   std::ofstream jsonFile(jsonFilename, std::ofstream::out);
   
   fprintf(stdout, "Writing JSON to file %s.\n", jsonFilename.c_str());
