@@ -15,6 +15,7 @@ PROTO CozmoBot [
   field SFFloat liftAngle 0
   field SFFloat liftAngle_lowLimit  0
   field SFFloat liftAngle_highLimit 1.047  # 60 degrees up
+  #field SFFloat liftAngle_highLimit 0.96  # 55 degrees up
   
   field SFInt32 usbChannel 88
   
@@ -188,60 +189,172 @@ Supervisor {
 						DEF EYES Transform {
 							translation 0.02 0 0.002
 							children [
-								DEF LEFT_EYE Transform {
-									translation 0 0.006 0
-									rotation 0 0 1 1.5708
-									children [
-										DEF EYE_SHAPE Shape {
-										appearance Appearance {
-											material Material {
-												ambientIntensity 0.1
-												diffuseColor 0 0 0
-												emissiveColor 0.1 0.5 1
-											}
-										}
-										geometry Cylinder {
-											height 0.002
-											radius 0.005
-											subdivision 16
-										}
-									}
-								]
-							}
-							DEF RIGHT_EYE Transform {
-								translation 0 -0.006 0
-								rotation 0 0 1 1.5708
+
+							# Create master eye segment since changing the color of the LED of the segment
+							# that the other segments are copied from changes all of them which is not the
+							# behavior we want.
+							DEF MASTER_EYE_SEGMENT Transform {
+								# Hide segment behind face plate
+								translation -0.001 0.006 0.003
 								children [
-									USE EYE_SHAPE
-								]
-							}
-							DEF LEFT_EYE_CENTER Transform {
-								translation 0 0.006 0
-								rotation 0 0 1 1.5708
-								children [
-									DEF EYE_CENTER_SHAPE Shape {
+
+								  DEF EYE_SHAPE Shape {
 									appearance Appearance {
 										material Material {
-										diffuseColor 0.5 0.5 0.5
+											ambientIntensity 0.6
+											diffuseColor 0.5 0.5 0.5
 										}
 									}
-									geometry Cylinder {
-										height 0.0021
-										radius 0.0035
-										subdivision 16
+									geometry IndexedFaceSet {
+										coord Coordinate {
+										  point [ 0 0.004 0.0005, 0 0.0037  0.0015,  0 0.0028 0.0028, 0 0.0015  0.0037,  0 0.0005 0.004,  # Outside arc
+										          0 0.002 0.0005, 0 0.00185 0.00075, 0 0.0014 0.0014, 0 0.00075 0.00185, 0 0.0005 0.002   # Inside arc
+										  ]
+										}
+										coordIndex [ 
+										  0 1 5 -1
+										  5 1 6 -1
+										  6 1 2 -1     
+										  6 2 7 -1
+    										  7 2 8 -1
+										  8 2 3 -1
+										  8 3 4 -1 
+										  9 8 4 -1
+										]
 									}
-									}
+
+
+
+								  }
+
 								]
 							}
-							DEF RIGHT_EYE_CENTER Transform {
-								translation 0 -0.006 0
-								rotation 0 0 1 1.5708
+
+
+							DEF LEFT_EYE_TOP Transform {
+								translation 0.001 0.006 0
+								rotation 1 0 0 0.7854
 								children [
-									USE EYE_CENTER_SHAPE
+								  LED {
+								    name "LeftEyeLED_top"
+                                                                    color []
+								    gradual TRUE
+								    children [
+								      USE EYE_SHAPE
+								    ]
+								  }
 								]
 							}
-						]
-				  }
+
+							
+							DEF LEFT_EYE_LEFT Transform {
+								translation 0.001 0.006 0
+								rotation 1 0 0 -0.7854
+								children [
+								  LED {
+								    name "LeftEyeLED_left"
+								    color []
+								    gradual TRUE
+								    children [
+								      USE EYE_SHAPE
+								    ]
+								  }
+								]
+							}
+
+							DEF LEFT_EYE_BOTTOM Transform {
+								translation 0.001 0.006 0
+								rotation 1 0 0 -2.3562
+								children [
+								  LED {
+								    name "LeftEyeLED_bottom"
+								    color []
+								    gradual TRUE
+								    children [
+								      USE EYE_SHAPE
+								    ]
+								  }
+								]
+							}
+
+							DEF LEFT_EYE_RIGHT Transform {
+								translation 0.001 0.006 0
+								rotation 1 0 0 2.3562
+								children [
+								  LED {
+								    name "LeftEyeLED_right"
+								    color []
+								    gradual TRUE
+								    children [
+								      USE EYE_SHAPE
+								    ]
+								  }
+								]
+							}
+
+							DEF RIGHT_EYE_TOP Transform {
+								translation 0.001 -0.006 0
+								rotation 1 0 0 0.7854
+								children [
+								  LED {
+								    name "RightEyeLED_top"
+								    color []
+								    gradual TRUE
+								    children [
+								      USE EYE_SHAPE
+								    ]
+								  }
+								]
+							}
+						
+							DEF RIGHT_EYE_LEFT Transform {
+								translation 0.001 -0.006 0
+								rotation 1 0 0 -0.7854
+								children [
+								  LED {
+								    name "RightEyeLED_left"
+								    color []
+								    gradual TRUE
+								    children [
+								      USE EYE_SHAPE
+								    ]
+								  }
+								]
+							}
+
+							DEF RIGHT_EYE_BOTTOM Transform {
+								translation 0.001 -0.006 0
+								rotation 1 0 0 -2.3562
+								children [
+								  LED {
+								    name "RightEyeLED_bottom"
+								    color []
+								    gradual TRUE
+								    children [
+								      USE EYE_SHAPE
+								    ]
+								  }
+								]
+							}
+
+							DEF RIGHT_EYE_RIGHT Transform {
+								translation 0.001 -0.006 0
+								rotation 1 0 0 2.3562
+								children [
+								  LED {
+								    name "RightEyeLED_right"
+								    color []
+								    gradual TRUE
+								    children [
+								      USE EYE_SHAPE
+								    ]
+								  }
+								]
+							}
+
+
+							]
+				  		}
 				  Camera {
 						name "HeadCamera"
 						# Note: 8.8mm to lens face, 5.8mm to PCB mount, optical center = ?
