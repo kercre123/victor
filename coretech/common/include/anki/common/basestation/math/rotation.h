@@ -98,12 +98,12 @@ namespace Anki {
     // to request both simultaneously if you need both, because the
     // angle must be computed to get the axis anyway.
     Radians       GetAngle() const;
-    const Vec3f&  get_axis()  const;
-    void          get_angleAndAxis(Radians &angle, Vec3f &axis) const;
+    const Vec3f&  GetAxis()  const;
+    void          GetAngleAndAxis(Radians &angle, Vec3f &axis) const;
     
   private:
-    Radians angle;
-    Vec3f axis; // unit vector
+    Radians _angle;
+    Vec3f   _axis; // unit vector
     
   }; // class RotationVector3d
   
@@ -151,7 +151,7 @@ namespace Anki {
     Rotation3d operator*(const Rotation3d& other) const;
     
   private:
-    UnitQuaternion<float> q;
+    UnitQuaternion<float> _q;
     
   }; // Rotation3d
   
@@ -207,21 +207,19 @@ namespace Anki {
   }
    */
   
-  inline Radians RotationVector3d::GetAngle(void) const
-  {
-    return this->angle;
+  inline Radians RotationVector3d::GetAngle(void) const {
+    return _angle;
   }
   
-  inline const Vec3f& RotationVector3d::get_axis(void) const
-  {
-    return this->axis;
+  inline const Vec3f& RotationVector3d::GetAxis(void) const {
+    return _axis;
   }
   
-  inline void RotationVector3d::get_angleAndAxis(Radians &angle,
-                                                 Vec3f   &axis) const
+  inline void RotationVector3d::GetAngleAndAxis(Radians &angle,
+                                                Vec3f   &axis) const
   {
-    axis = this->axis;
-    angle = this->angle;
+    axis = _axis;
+    angle = _angle;
   }
   
 

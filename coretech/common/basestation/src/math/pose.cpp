@@ -240,7 +240,7 @@ namespace Anki {
   void Pose3d::RotateBy(const Radians& angleIn) {
     // Keep same rotation axis, but add the incoming angle
     RotationVector3d Rvec(_rotationMatrix);
-    RotationMatrix3d Rnew(angleIn, Rvec.get_axis());
+    RotationMatrix3d Rnew(angleIn, Rvec.GetAxis());
     _translation = Rnew * _translation;
     Rnew *= _rotationMatrix;
     SetRotation(Rnew);

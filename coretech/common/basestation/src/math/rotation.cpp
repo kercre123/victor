@@ -201,28 +201,30 @@ namespace Anki {
 #endif
   
   RotationVector3d::RotationVector3d(void)
-  : angle(0.f), axis(X_AXIS_3D)
+  : _angle(0.f)
+  , _axis(X_AXIS_3D)
   {
     
   }
   
   RotationVector3d::RotationVector3d(const Radians angleIn, const Vec3f &axisIn)
-  : angle(angleIn), axis(axisIn)
+  : _angle(angleIn)
+  , _axis(axisIn)
   {
-    f32 axisLength = axis.MakeUnitLength();
+    f32 axisLength = _axis.MakeUnitLength();
     if(axisLength != 1.f) {
       // TODO: Issue a warning that axis provided was not unit length?
     }
   }
   
   RotationVector3d::RotationVector3d(const Vec3f &rvec)
-  : axis(rvec)
+  : _axis(rvec)
   {
-    this->angle = axis.MakeUnitLength();
-    if(this->angle == Radians(0)) {
+    _angle = _axis.MakeUnitLength();
+    if(_angle == Radians(0)) {
       // If the specified vector was all zero, then the axis is ambiguous,
       // so default to the X axis
-      axis = X_AXIS_3D;
+      _axis = X_AXIS_3D;
     }
   }
   
@@ -234,9 +236,9 @@ namespace Anki {
 
   bool RotationVector3d::operator==(const RotationVector3d &other) const
   {
-    return ( (axis == other.axis && angle == other.angle)
-            || (-axis == other.axis && -angle == other.angle)
-            || (angle == other.angle == 0));
+    return ( (_axis == other._axis && _angle == other._angle)
+            || (-_axis == other._axis && -_angle == other._angle)
+            || (_angle == other._angle == 0));
   }
   
   
@@ -454,7 +456,7 @@ namespace Anki {
                  RotationMatrix3d &Rmat_out)
   {
 #if ANKICORETECH_USE_OPENCV
-    cv::Vec3f cvRvec(Rvec_in.get_axis().get_CvPoint3_());
+    cv::Vec3f cvRvec(Rvec_in.GetAxis().get_CvPoint3_());
     cvRvec *= Rvec_in.GetAngle().ToFloat();
     cv::Rodrigues(cvRvec, Rmat_out.get_CvMatx_());    
 #else

@@ -353,7 +353,7 @@ namespace Anki {
   { return _translation; }
   
   inline Vec3f Pose3d::GetRotationAxis() const
-  { return GetRotationVector().get_axis(); }
+  { return GetRotationVector().GetAxis(); }
   
   /*
   template<char AXIS>
