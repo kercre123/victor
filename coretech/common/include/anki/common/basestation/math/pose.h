@@ -105,7 +105,7 @@ namespace Anki {
     // "Apply" Pose to a 2D point (i.e. transform that point by this Pose)
     Point2f operator*(const Point2f &point) const;
     
-    Pose2d  getInverse(void) const; // return new Pose
+    Pose2d  GetInverse(void) const; // return new Pose
     Pose2d& Invert(void); // in place
     
     // Get this pose with respect to another pose.  Other pose
@@ -233,7 +233,7 @@ namespace Anki {
     void ApplyTo(const Quadrilateral<3,T> &quadIn,
                  Quadrilateral<3,T>       &quadOut) const;
     
-    Pose3d  getInverse(void) const;
+    Pose3d  GetInverse(void) const;
     Pose3d& Invert(void); // in place?
     
     // Get this pose with respect to another pose.  Other pose

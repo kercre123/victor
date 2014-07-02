@@ -282,7 +282,7 @@ GTEST_TEST(TestPose, IsSameWithAmbiguity)
   // The IsSameAs_WithAmbiguity functino should see these two poses as the same,
   // though it is our job to factor out the reference pose from each, by post-
   // multiplying by its inverse.
-  EXPECT_TRUE( (P1*P_ref.getInverse()).IsSameAs_WithAmbiguity(P2*P_ref.getInverse(),
+  EXPECT_TRUE( (P1*P_ref.GetInverse()).IsSameAs_WithAmbiguity(P2*P_ref.GetInverse(),
                                                               ambiguities, 5.f,
                                                               5*M_PI/180.f, true, P_diff) );
   

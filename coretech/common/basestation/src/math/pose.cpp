@@ -71,7 +71,7 @@ namespace Anki {
     _translation += other._translation;
   }
   
-  Pose2d Pose2d::getInverse(void) const
+  Pose2d Pose2d::GetInverse(void) const
   {
     Pose2d returnPose(*this);
     returnPose.Invert();
@@ -221,7 +221,7 @@ namespace Anki {
   
   
 #pragma mark --- Member Methods ---
-  Pose3d Pose3d::getInverse(void) const
+  Pose3d Pose3d::GetInverse(void) const
   {
     Pose3d returnPose(*this);
     returnPose.Invert();
@@ -298,7 +298,7 @@ namespace Anki {
     
     // Compute the transformation that takes P1 to P2
     // Pdiff = P_other * inv(P_this)
-    P_diff = this->getInverse();
+    P_diff = this->GetInverse();
     P_diff.PreComposeWith(P_other);
     
     // First, check to see if the translational difference between the two
@@ -346,7 +346,7 @@ namespace Anki {
     // that case, P_diff = [R_amb | 0].  
     //
     
-    P_diff = this->getInverse();
+    P_diff = this->GetInverse();
     P_diff *= P_other;
     
     // First, check to see if the translational difference between the two

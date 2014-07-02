@@ -219,7 +219,7 @@ namespace Anki {
     // in the tree, to the common ancestor, and back down the "to" side to the
     // final other pose.
     //     P_wrt_other = P_to.inv * P_from;
-    P_wrt_other = P_to.getInverse();
+    P_wrt_other = P_to.GetInverse();
     P_wrt_other *= P_from;
     
     // } // IF/ELSE other is the World pose
