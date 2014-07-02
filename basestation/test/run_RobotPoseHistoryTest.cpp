@@ -51,8 +51,8 @@ TEST(RobotPoseHistory, AddGetPose)
   // Add and get one pose
   hist.AddRawOdomPose(t1,
                       frameID,
-                      p1.get_translation().x(), p1.get_translation().y(), p1.get_translation().z(),
-                      p1.get_rotationAngle().ToFloat(),
+                      p1.GetTranslation().x(), p1.GetTranslation().y(), p1.GetTranslation().z(),
+                      p1.GetRotationAngle().ToFloat(),
                       h1,
                       l1,
                       Pose3d::World);
@@ -67,8 +67,8 @@ TEST(RobotPoseHistory, AddGetPose)
   // Add another pose
   hist.AddRawOdomPose(t2,
                       frameID,
-                      p2.get_translation().x(), p2.get_translation().y(), p2.get_translation().z(),
-                      p2.get_rotationAngle().ToFloat(),
+                      p2.GetTranslation().x(), p2.GetTranslation().y(), p2.GetTranslation().z(),
+                      p2.GetRotationAngle().ToFloat(),
                       h2,
                       l2,
                       Pose3d::World);
@@ -94,8 +94,8 @@ TEST(RobotPoseHistory, AddGetPose)
   // Add new pose that should bump off oldest pose
   hist.AddRawOdomPose(t3,
                       frameID,
-                      p3.get_translation().x(), p3.get_translation().y(), p3.get_translation().z(),
-                      p3.get_rotationAngle().ToFloat(),
+                      p3.GetTranslation().x(), p3.GetTranslation().y(), p3.GetTranslation().z(),
+                      p3.GetRotationAngle().ToFloat(),
                       h3,
                       l3,
                       Pose3d::World);
@@ -114,8 +114,8 @@ TEST(RobotPoseHistory, AddGetPose)
   // Add old pose that is out of time window
   hist.AddRawOdomPose(t1,
                       frameID,
-                      p1.get_translation().x(), p1.get_translation().y(), p1.get_translation().z(),
-                      p1.get_rotationAngle().ToFloat(),
+                      p1.GetTranslation().x(), p1.GetTranslation().y(), p1.GetTranslation().z(),
+                      p1.GetRotationAngle().ToFloat(),
                       h1,
                       l1,
                       Pose3d::World);

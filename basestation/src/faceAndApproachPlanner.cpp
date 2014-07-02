@@ -44,8 +44,8 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
                                                           const Pose3d& startPose,
                                                           const Pose3d& targetPose)
 {
-  _targetVec = targetPose.get_translation();
-  _finalTargetAngle = targetPose.get_rotationAngle<'Z'>().ToFloat();
+  _targetVec = targetPose.GetTranslation();
+  _finalTargetAngle = targetPose.GetRotationAngle<'Z'>().ToFloat();
 
   return GetPlan(path, startPose, true);
 }
@@ -67,10 +67,10 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
   bool doTurn1 = false;
   bool doStraight = false;
 
-  Vec3f startVec(startPose.get_translation());
+  Vec3f startVec(startPose.GetTranslation());
 
   // check if we need to do each segment
-  Radians currAngle = startPose.get_rotationAngle<'Z'>();
+  Radians currAngle = startPose.GetRotationAngle<'Z'>();
   
   // The intermediate angle the robot should be in before doing the final turn.
   // If a straight segment ends up being unnecessary then this is just the start angle.

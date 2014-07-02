@@ -130,9 +130,9 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                                                   const Pose3d &targetPose)
 {
 
-  State_c target(targetPose.get_translation().x(),
-                    targetPose.get_translation().y(),
-                    targetPose.get_rotationAngle<'Z'>().ToFloat());
+  State_c target(targetPose.GetTranslation().x(),
+                    targetPose.GetTranslation().y(),
+                    targetPose.GetRotationAngle<'Z'>().ToFloat());
 
   impl_->ImportBlockworldObstacles(false, VIZ_COLOR_NONE);
 
@@ -170,12 +170,12 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     bestTargetIdx = 0;
     closestDist2 = 0;
     for(size_t i=0; i<numTargetPoses; ++i) {
-      float dist2 = (targetPoses[i].get_translation() - startPose.get_translation()).LengthSq();
+      float dist2 = (targetPoses[i].GetTranslation() - startPose.GetTranslation()).LengthSq();
 
       if(!found || dist2 < closestDist2) {
-        State_c target_c(targetPoses[i].get_translation().x(),
-                         targetPoses[i].get_translation().y(),
-                         targetPoses[i].get_rotationAngle<'Z'>().ToFloat());
+        State_c target_c(targetPoses[i].GetTranslation().x(),
+                         targetPoses[i].GetTranslation().y(),
+                         targetPoses[i].GetRotationAngle<'Z'>().ToFloat());
         State target(impl_->env_.State_c2State(target_c));
         
         if(impl_->env_.GetCollisionPenalty(target) < maxPenalty) {
@@ -212,9 +212,9 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   xythetaPlan validOldPlan;
   size_t planIdx = 0;
 
-  State_c currentRobotState(startPose.get_translation().x(),
-                            startPose.get_translation().y(),
-                            startPose.get_rotationAngle<'Z'>().ToFloat());
+  State_c currentRobotState(startPose.GetTranslation().x(),
+                            startPose.GetTranslation().y(),
+                            startPose.GetRotationAngle<'Z'>().ToFloat());
 
   //VizManager::getInstance()->EraseAllQuads();
   
@@ -357,9 +357,9 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
 
 void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path)
 {
-  State_c currentRobotState(startPose.get_translation().x(),
-                            startPose.get_translation().y(),
-                            startPose.get_rotationAngle<'Z'>().ToFloat());
+  State_c currentRobotState(startPose.GetTranslation().x(),
+                            startPose.GetTranslation().y(),
+                            startPose.GetRotationAngle<'Z'>().ToFloat());
 
   impl_->planner_.SetStart(currentRobotState);
 
