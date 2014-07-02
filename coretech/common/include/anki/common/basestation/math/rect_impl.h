@@ -87,7 +87,7 @@ namespace Anki {
   
   template<typename T>
   template<class PointContainer>
-  void Rectangle<T>::initFromPointContainer(const PointContainer& points)
+  void Rectangle<T>::InitFromPointContainer(const PointContainer& points)
   {
     const size_t N = points.size();
     if(N > 0) {
@@ -123,20 +123,20 @@ namespace Anki {
   template<typename T>
   Rectangle<T>::Rectangle(const Quadrilateral<2,T>& quad)
   {
-    initFromPointContainer(quad);
+    InitFromPointContainer(quad);
   }
   
   template<typename T>
   Rectangle<T>::Rectangle(const std::vector<Point<2,T> >& points)
   {
-    initFromPointContainer(points);
+    InitFromPointContainer(points);
   }
   
   template<typename T>
   template<size_t NumPoints>
   Rectangle<T>::Rectangle(const std::array<Point<2,T>,NumPoints>& points)
   {
-    initFromPointContainer<std::array<Point<2,T>,NumPoints> >(points);
+    InitFromPointContainer<std::array<Point<2,T>,NumPoints> >(points);
   }
   
   
