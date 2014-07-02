@@ -104,6 +104,18 @@ namespace Anki {
 
       HAL::IDCard idCard_;
       
+      // Lights
+      webots::LED* leftEyeLED_top_;
+      webots::LED* leftEyeLED_left_;
+      webots::LED* leftEyeLED_right_;
+      webots::LED* leftEyeLED_bottom_;
+
+      webots::LED* rightEyeLED_top_;
+      webots::LED* rightEyeLED_left_;
+      webots::LED* rightEyeLED_right_;
+      webots::LED* rightEyeLED_bottom_;
+      
+      
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
       //void GetGlobalPose(f32 &x, f32 &y, f32& rad);
@@ -279,6 +291,18 @@ namespace Anki {
         PRINT("Failed to initialize Simulated Radio.\n");
         return RESULT_FAIL;
       }
+      
+      // Lights
+      leftEyeLED_top_ = webotRobot_.getLED("LeftEyeLED_top");
+      leftEyeLED_left_ = webotRobot_.getLED("LeftEyeLED_left");
+      leftEyeLED_right_ = webotRobot_.getLED("LeftEyeLED_right");
+      leftEyeLED_bottom_ = webotRobot_.getLED("LeftEyeLED_bottom");
+      
+      rightEyeLED_top_ = webotRobot_.getLED("RightEyeLED_top");
+      rightEyeLED_left_ = webotRobot_.getLED("RightEyeLED_left");
+      rightEyeLED_right_ = webotRobot_.getLED("RightEyeLED_right");
+      rightEyeLED_bottom_ = webotRobot_.getLED("RightEyeLED_bottom");
+      
       
       isInitialized = true;
       return RESULT_OK;
@@ -725,7 +749,35 @@ namespace Anki {
     }
     
     void HAL::SetLED(LEDId led_id, u32 color) {
-      // TODO: ...
+      switch(led_id) {
+        case LED_LEFT_EYE_TOP:
+          leftEyeLED_top_->set(color);
+          break;
+        case LED_LEFT_EYE_LEFT:
+          leftEyeLED_left_->set(color);
+          break;
+        case LED_LEFT_EYE_BOTTOM:
+          leftEyeLED_bottom_->set(color);
+          break;
+        case LED_LEFT_EYE_RIGHT:
+          leftEyeLED_right_->set(color);
+          break;
+        case LED_RIGHT_EYE_TOP:
+          rightEyeLED_top_->set(color);
+          break;
+        case LED_RIGHT_EYE_LEFT:
+          rightEyeLED_left_->set(color);
+          break;
+        case LED_RIGHT_EYE_BOTTOM:
+          rightEyeLED_bottom_->set(color);
+          break;
+        case LED_RIGHT_EYE_RIGHT:
+          rightEyeLED_right_->set(color);
+          break;
+        default:
+          PRINT("Unhandled LED %d\n", led_id);
+          break;
+      }
     }
 
     void HAL::SetHeadlights(bool state)
