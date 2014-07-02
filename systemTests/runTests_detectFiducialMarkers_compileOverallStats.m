@@ -1,0 +1,1 @@
+function runTests_detectFiducialMarkers_compileOverallStats()
