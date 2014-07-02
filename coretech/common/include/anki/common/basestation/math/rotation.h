@@ -97,7 +97,7 @@ namespace Anki {
     // Accessors for angle and axis.  Note that it is more efficient
     // to request both simultaneously if you need both, because the
     // angle must be computed to get the axis anyway.
-    Radians       get_angle() const;
+    Radians       GetAngle() const;
     const Vec3f&  get_axis()  const;
     void          get_angleAndAxis(Radians &angle, Vec3f &axis) const;
     
@@ -196,9 +196,9 @@ namespace Anki {
   
 #pragma mark --- Inline Implementations ---
   /*
-  inline Radians RotationMatrix3d::get_angle(void) const
+  inline Radians RotationMatrix3d::GetAngle(void) const
   {
-    return this->rotationVector.get_angle();
+    return this->rotationVector.GetAngle();
   }
   
   inline Vec3f RotationMatrix3d::get_axis(void) const
@@ -207,7 +207,7 @@ namespace Anki {
   }
    */
   
-  inline Radians RotationVector3d::get_angle(void) const
+  inline Radians RotationVector3d::GetAngle(void) const
   {
     return this->angle;
   }

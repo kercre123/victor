@@ -35,7 +35,7 @@ namespace Anki {
   PoseNd& PoseBase<PoseNd>::AddOrigin()
   {
     PoseBase<PoseNd>::Origins.emplace_back();
-    PoseBase<PoseNd>::Origins.back().set_parent(nullptr);
+    PoseBase<PoseNd>::Origins.back().SetParent(nullptr);
     
     // TODO: If this gets too long, trigger cleanup?
     
@@ -45,9 +45,9 @@ namespace Anki {
   template<class PoseNd>
   PoseNd& PoseBase<PoseNd>::AddOrigin(const PoseNd &origin)
   {
-    if(origin.get_parent() != nullptr) {
-      PRINT_NAMED_WARNING("PoseBase.AddOrigin.NonNullParent",
-                          "Adding an origin whose parent is non-NULL. This may be ok, but may be a sign of something wrong.\n");
+    if(origin.GetParent() != nullptr) {
+      PRINT_NAMED_WARNING("PoseBase.AddOrigin.NonNull_parent",
+                          "Adding an origin whose _parent is non-NULL. This may be ok, but may be a sign of something wrong.\n");
     }
     
     PoseBase<PoseNd>::Origins.emplace_back(origin);
@@ -67,7 +67,7 @@ namespace Anki {
   
   template<class PoseNd>
   PoseBase<PoseNd>::PoseBase(const PoseNd* parentPose)
-  : parent(parentPose)
+  : _parent(parentPose)
   {
     
   }
@@ -79,11 +79,11 @@ namespace Anki {
     const PoseNd* originPose = &forPose;
     BOUNDED_WHILE(1000, (!originPose->IsOrigin()))
     {  
-      // The only way the current originPose's parent is null is if it is an
+      // The only way the current originPose's _parent is null is if it is an
       // origin, which means we should have already exited the while loop.
-      CORETECH_ASSERT(originPose->parent != nullptr);
+      CORETECH_ASSERT(originPose->_parent != nullptr);
       
-      originPose = originPose->parent;
+      originPose = originPose->_parent;
     }
     
     return *originPose;
@@ -92,9 +92,9 @@ namespace Anki {
   
   
   // Count number of steps to an origin node, by walking up
-  // the chain of parents.
+  // the chain of _parents.
   template<class PoseNd>
-  unsigned int PoseBase<PoseNd>::getTreeDepth(const PoseNd* poseNd) const
+  unsigned int PoseBase<PoseNd>::GetTreeDepth(const PoseNd* poseNd) const
   {
     unsigned int treeDepth = 1;
     
@@ -102,14 +102,14 @@ namespace Anki {
     while(!current->IsOrigin())
     {
       ++treeDepth;
-      current = current->get_parent();
+      current = current->GetParent();
     }
     
     return treeDepth;
   }
   
   template<class PoseNd>
-  bool PoseBase<PoseNd>::getWithRespectTo(const PoseNd& fromPose, const PoseNd& toPose,
+  bool PoseBase<PoseNd>::GetWithRespectTo(const PoseNd& fromPose, const PoseNd& toPose,
                                           PoseNd& P_wrt_other) const
   {
     if(&fromPose.FindOrigin() != &toPose.FindOrigin()) {
@@ -124,8 +124,8 @@ namespace Anki {
     PoseNd P_from(fromPose);
     
     // "to" can get changed below, but we want to set the returned pose's
-    // parent to it, so we keep a copy here.
-    const PoseNd *newParent = to;
+    // _parent to it, so we keep a copy here.
+    const PoseNd *new_parent = to;
     
     /*
      if(to == Pose<DIM>::World) {
@@ -133,9 +133,9 @@ namespace Anki {
      // Special (but common!) case: get with respect to the
      // world pose.  Just chain together poses up to the root.
      
-     while(from->parent != POSE::World) {
-     P_from.preComposeWith( *(from->parent) );
-     from = from->parent;
+     while(from->_parent != POSE::World) {
+     P_from.PreComposeWith( *(from->_parent) );
+     from = from->_parent;
      }
      
      P_wrt_other = &P_from;
@@ -145,28 +145,28 @@ namespace Anki {
     PoseNd P_to(toPose);
     
     // First make sure we are pointing at two nodes of the same tree depth,
-    // which is the only way they could possibly share the same parent.
+    // which is the only way they could possibly share the same _parent.
     // Until that's true, walk the deeper node up until it is at the same
     // depth as the shallower node, keeping track of the total transformation
     // along the way. (NOTE: Only one of the following two while loops should
     // run, depending on which node is deeper in the tree)
     
-    int depthDiff = getTreeDepth(from) - getTreeDepth(to);
+    int depthDiff = GetTreeDepth(from) - GetTreeDepth(to);
     
     BOUNDED_WHILE(1000, depthDiff > 0)
     {
-      CORETECH_ASSERT(from->parent != nullptr);
+      CORETECH_ASSERT(from->_parent != nullptr);
       
-      P_from.preComposeWith( *(from->parent) );
-      from = from->parent;
+      P_from.PreComposeWith( *(from->_parent) );
+      from = from->_parent;
       
-      if(from->parent == to) {
-        // We bumped into the "to" pose on the way up to the common parent, so
+      if(from->_parent == to) {
+        // We bumped into the "to" pose on the way up to the common _parent, so
         // we've got the the chained transform ready to go, and there's no
-        // need to walk past the "to" pose, up to the common parent, and right
+        // need to walk past the "to" pose, up to the common _parent, and right
         // back down, which would unnecessarily compose two more poses which
         // are the inverse of one another by construction.
-        P_from.parent = newParent;
+        P_from._parent = new_parent;
         P_wrt_other = P_from;
         return true;
       }
@@ -176,20 +176,20 @@ namespace Anki {
     
     BOUNDED_WHILE(1000, depthDiff < 0)
     {
-      CORETECH_ASSERT(to->parent != nullptr);
+      CORETECH_ASSERT(to->_parent != nullptr);
       
-      P_to.preComposeWith( *(to->parent) );
-      to = to->parent;
+      P_to.PreComposeWith( *(to->_parent) );
+      to = to->_parent;
       
-      if(to->parent == from) {
-        // We bumped into the "from" pose on the way up to the common parent,
+      if(to->_parent == from) {
+        // We bumped into the "from" pose on the way up to the common _parent,
         // so we've got the the (inverse of the) chained transform ready to
         // go, and there's no need to walk past the "from" pose, up to the
-        // common parent, and right back down, which would unnecessarily
+        // common _parent, and right back down, which would unnecessarily
         // compose two more poses which are the inverse of one another by
         // construction.
         P_to.Invert();
-        P_to.parent = newParent;
+        P_to._parent = new_parent;
         P_wrt_other = P_to;
         return true;
       }
@@ -199,20 +199,20 @@ namespace Anki {
     
     // Treedepths should now match:
     CORETECH_ASSERT(depthDiff == 0);
-    CORETECH_ASSERT(getTreeDepth(to) == getTreeDepth(from));
+    CORETECH_ASSERT(GetTreeDepth(to) == GetTreeDepth(from));
     
     // Now that we are pointing to the nodes of the same depth, keep moving up
-    // until those nodes have the same parent, totalling up the transformations
+    // until those nodes have the same _parent, totalling up the transformations
     // along the way
-    BOUNDED_WHILE(1000, to->parent != from->parent)
+    BOUNDED_WHILE(1000, to->_parent != from->_parent)
     {
-      CORETECH_ASSERT(from->parent != nullptr && to->parent != nullptr);
+      CORETECH_ASSERT(from->_parent != nullptr && to->_parent != nullptr);
       
-      P_from.preComposeWith( *(from->parent) );
-      P_to.preComposeWith( *(to->parent) );
+      P_from.PreComposeWith( *(from->_parent) );
+      P_to.PreComposeWith( *(to->_parent) );
       
-      to = to->parent;
-      from = from->parent;
+      to = to->_parent;
+      from = from->_parent;
     }
     
     // Now compute the total transformation from this pose, up the "from" path
@@ -225,12 +225,12 @@ namespace Anki {
     // } // IF/ELSE other is the World pose
     
     // The Pose we are about to return is w.r.t. the "other" pose provided (that
-    // was the whole point of the exercise!), so set its parent accordingly:
-    P_wrt_other.parent = newParent;
+    // was the whole point of the exercise!), so set its _parent accordingly:
+    P_wrt_other._parent = new_parent;
     
     return true;
     
-  } // getWithRespectToHelper()
+  } // GetWithRespectToHelper()
   
   
 } // namespace Anki

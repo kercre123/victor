@@ -93,9 +93,9 @@ namespace JsonTools
          GetPointOptional(child, "Translation", translation))
       {
         const Anki::Radians angle(child["Angle"].asFloat());
-        pose.set_rotation(angle, axis);
+        pose.SetRotation(angle, axis);
         
-        pose.set_translation(translation);
+        pose.SetTranslation(translation);
         
         retVal = true;
       }

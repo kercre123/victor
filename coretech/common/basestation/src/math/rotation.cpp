@@ -455,7 +455,7 @@ namespace Anki {
   {
 #if ANKICORETECH_USE_OPENCV
     cv::Vec3f cvRvec(Rvec_in.get_axis().get_CvPoint3_());
-    cvRvec *= Rvec_in.get_angle().ToFloat();
+    cvRvec *= Rvec_in.GetAngle().ToFloat();
     cv::Rodrigues(cvRvec, Rmat_out.get_CvMatx_());    
 #else
     

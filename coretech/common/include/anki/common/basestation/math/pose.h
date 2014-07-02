@@ -22,7 +22,7 @@
  *               
  *                Each has the ability to represent a kinematic tree using
  *                a "parent" pointer. Thus, a pose "with respect to" another
- *                pose can be requested using the getWithRespectTo() method.
+ *                pose can be requested using the GetWithRespectTo() method.
  *
  * Copyright: Anki, Inc. 2013
  *
@@ -79,28 +79,28 @@ namespace Anki {
     //Pose2d* GetOrigin() const;
     
     // Accessors:
-    float   get_x()     const;
-    float   get_y()     const;
-    Radians get_angle() const;
+    float   GetX()     const;
+    float   GetY()     const;
+    Radians GetAngle() const;
     
-    const Point2f& get_translation() const;
-    const Point3f& get_planeOrigin() const;
-    const Vec3f&   get_planeNormal() const;
+    const Point2f& GetTranslation() const;
+    const Point3f& GetPlaneOrigin() const;
+    const Vec3f&   GetPlaneNormal() const;
 
-    void  set_planeOrigin(const Point3f &origin);
-    void  set_planeNormal(const Vec3f   &normal);
+    void  SetPlaneOrigin(const Point3f &origin);
+    void  SetPlaneNormal(const Vec3f   &normal);
     
     // Note that this Rotation Matrix is not a member but is computed
     // on-the-fly from the Pose's angle.
-    RotationMatrix2d get_rotationMatrix() const;
+    RotationMatrix2d GetRotationMatrix() const;
     
-    //void set_parent(const Pose2d* otherPose);
-    //const Pose2d* get_parent() const;
+    //void SetParent(const Pose2d* otherPose);
+    //const Pose2d* GetParent() const;
     
     // Composition with another Pose2d:
     void   operator*=(const Pose2d &other); // in place
     Pose2d operator* (const Pose2d &other) const;
-    void preComposeWith(const Pose2d &other);
+    void PreComposeWith(const Pose2d &other);
     
     // "Apply" Pose to a 2D point (i.e. transform that point by this Pose)
     Point2f operator*(const Point2f &point) const;
@@ -112,18 +112,18 @@ namespace Anki {
     // must share the same origin as this pose.  If it does not, false will be
     // returned to indicate failure.  Otherwise, true is returned and the new
     // pose is stored in newPoseWrtOtherPose.
-    bool getWithRespectTo(const Pose2d& otherPose,
+    bool GetWithRespectTo(const Pose2d& otherPose,
                           Pose2d& newPoseWrtOtherPose) const;
 
     const Pose2d& FindOrigin() const;
     
   protected:
-    Point2f translation;
-    Radians angle;
+    Point2f _translation;
+    Radians _angle;
     
     // Stores the orientation of this 2D plane in 3D space
-    Point3f planeOrigin;
-    Vec3f   planeNormal;
+    Point3f _planeOrigin;
+    Vec3f   _planeNormal;
     
     /* TODO: Add and use 3DOF covariance
     Matrix<float> covariance;
@@ -133,10 +133,10 @@ namespace Anki {
     // "Parent" for defining linkages or sequences of poses, so we can get
     // a pose "with respect to" a parent or to root (world) pose.
     const Pose2d *parent;
-    unsigned int getTreeDepth(void) const;
+    unsigned int GetTreeDepth(void) const;
     
     template<class POSE>
-    friend POSE getWithRespectToHelper(const POSE *from, const POSE *to);
+    friend POSE GetWithRespectToHelper(const POSE *from, const POSE *to);
     */
     
     //template<class POSE>
@@ -190,47 +190,47 @@ namespace Anki {
     //bool IsOrigin() const { return parent == nullptr; }
 
     // Accessors:
-    const RotationMatrix3d& get_rotationMatrix() const;
-    const Vec3f&            get_translation()    const;
+    const RotationMatrix3d& GetRotationMatrix() const;
+    const Vec3f&            GetTranslation()    const;
     
-    RotationVector3d        get_rotationVector() const;
-    Vec3f                   get_rotationAxis()   const;
+    RotationVector3d        GetRotationVector() const;
+    Vec3f                   GetRotationAxis()   const;
 
     // Get the rotation angle, optionally around a specific axis.
     // By default the rotation angle *around the pose's rotation axis* is
     // returned. When 'X', 'Y', or 'Z' are specified (case insensitive), the
     // rotation angle around that axis is returned.
     template<char AXIS = ' '>
-    Radians get_rotationAngle() const;
+    Radians GetRotationAngle() const;
     
-    void set_rotation(const RotationMatrix3d &Rmat);
-    void set_rotation(const RotationVector3d &Rvec);
-    void set_rotation(const Radians angle, const Vec3f &axis);
-    void set_translation(const Vec3f &T);
+    void SetRotation(const RotationMatrix3d &Rmat);
+    void SetRotation(const RotationVector3d &Rvec);
+    void SetRotation(const Radians angle, const Vec3f &axis);
+    void SetTranslation(const Vec3f &T);
     
-    //void set_parent(const Pose3d* parent);
-    //const Pose3d* get_parent() const { return Pose<3>::get_parent();
+    //void SetParent(const Pose3d* parent);
+    //const Pose3d* GetParent() const { return Pose<3>::GetParent();
     
     // Composition with another Pose
     void   operator*=(const Pose3d &other); // in place
     Pose3d operator*(const Pose3d &other) const;
     bool operator==(const Pose3d &other) const;
-    void preComposeWith(const Pose3d &other);
+    void PreComposeWith(const Pose3d &other);
     
-    void rotateBy(const Radians& angle); // around existing axis
-    void rotateBy(const RotationVector3d& Rvec);
-    void rotateBy(const RotationMatrix3d& Rmat);
+    void RotateBy(const Radians& angle); // around existing axis
+    void RotateBy(const RotationVector3d& Rvec);
+    void RotateBy(const RotationMatrix3d& Rmat);
     
     // "Apply" Pose to 3D point(s) (i.e. transform that point by this Pose)
     template<typename T>
     Point<3,T> operator*(const Point<3,T> &point) const;
     
     template<typename T>
-    void applyTo(const std::vector<Point<3,T> > &pointsIn,
+    void ApplyTo(const std::vector<Point<3,T> > &pointsIn,
                  std::vector<Point<3,T> >       &pointsOut) const;
 
     template<typename T>
-    void applyTo(const Quadrilateral<3,T> &quadIn,
+    void ApplyTo(const Quadrilateral<3,T> &quadIn,
                  Quadrilateral<3,T>       &quadOut) const;
     
     Pose3d  getInverse(void) const;
@@ -240,7 +240,7 @@ namespace Anki {
     // must share the same origin as this pose.  If it does not, false will be
     // returned to indicate failure.  Otherwise, true is returned and the new
     // pose is stored in newPoseWrtOtherPose.
-    bool getWithRespectTo(const Pose3d& otherPose,
+    bool GetWithRespectTo(const Pose3d& otherPose,
                           Pose3d& newPoseWrtOtherPose) const;
     
     const Pose3d& FindOrigin() const;
@@ -272,8 +272,8 @@ namespace Anki {
   protected:
     
     //RotationVector3d  rotationVector;
-    RotationMatrix3d  rotationMatrix;
-    Vec3f             translation;
+    RotationMatrix3d  _rotationMatrix;
+    Vec3f             _translation;
     
     /* TODO: Add and use 6DOF covariance.
     // 6x6 covariance matrix (upper-left 3x3 block corresponds to rotation
@@ -285,10 +285,10 @@ namespace Anki {
     // "Parent" for defining linkages or sequences of poses, so we can get
     // a pose "with respect to" a parent or to root (world) pose.
     const Pose3d *parent;
-    unsigned int getTreeDepth(void) const;
+    unsigned int GetTreeDepth(void) const;
     
     template<class POSE>
-    friend POSE getWithRespectToHelper(const POSE *from, const POSE *to);
+    friend POSE GetWithRespectToHelper(const POSE *from, const POSE *to);
     */
     //template<class POSE>
     //friend unsigned int getTreeDepthHelper(const POSE *P);
@@ -297,7 +297,7 @@ namespace Anki {
   
   // Compute distance between the two poses' translation vectors
   // TODO: take rotation into account?
-  float computeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2);
+  float ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2);
   
   //
   // Inline accessors:
@@ -305,36 +305,36 @@ namespace Anki {
   
   // Pose2d
   
-  inline float Pose2d::get_x(void) const
-  { return this->translation.x(); }
+  inline float Pose2d::GetX(void) const
+  { return _translation.x(); }
   
-  inline float Pose2d::get_y(void) const
-  { return this->translation.y(); }
+  inline float Pose2d::GetY(void) const
+  { return _translation.y(); }
   
-  inline Radians Pose2d::get_angle(void) const
-  { return this->angle; }
+  inline Radians Pose2d::GetAngle(void) const
+  { return _angle; }
   
-  inline RotationMatrix2d Pose2d::get_rotationMatrix(void) const
-  { return RotationMatrix2d(this->angle); }
+  inline RotationMatrix2d Pose2d::GetRotationMatrix(void) const
+  { return RotationMatrix2d(_angle); }
   
-  inline const Point2f& Pose2d::get_translation(void) const
-  { return this->translation; }
+  inline const Point2f& Pose2d::GetTranslation(void) const
+  { return _translation; }
   
-  inline void Pose2d::set_planeNormal(const Vec3f &normal)
+  inline void Pose2d::SetPlaneNormal(const Vec3f &normal)
   {
-    this->planeNormal = normal;
-    this->planeNormal.MakeUnitLength();
+    _planeNormal = normal;
+    _planeNormal.MakeUnitLength();
   }
   
-  inline const Vec3f& Pose2d::get_planeNormal() const
-  { return this->planeNormal; }
+  inline const Vec3f& Pose2d::GetPlaneNormal() const
+  { return _planeNormal; }
   
-  inline const Point3f& Pose2d::get_planeOrigin() const
-  { return this->planeOrigin; }
+  inline const Point3f& Pose2d::GetPlaneOrigin() const
+  { return _planeOrigin; }
   
-  inline bool Pose2d::getWithRespectTo(const Pose2d& otherPose,
+  inline bool Pose2d::GetWithRespectTo(const Pose2d& otherPose,
                                        Pose2d& newPoseWrtOtherPose) const {
-    return PoseBase<Pose2d>::getWithRespectTo(*this, otherPose, newPoseWrtOtherPose);
+    return PoseBase<Pose2d>::GetWithRespectTo(*this, otherPose, newPoseWrtOtherPose);
   }
   
   inline const Pose2d& Pose2d::FindOrigin() const {
@@ -343,102 +343,102 @@ namespace Anki {
   
   // Pose3d
   
-  inline const RotationMatrix3d& Pose3d::get_rotationMatrix() const
-  { return this->rotationMatrix; }
+  inline const RotationMatrix3d& Pose3d::GetRotationMatrix() const
+  { return _rotationMatrix; }
   
-  inline RotationVector3d Pose3d::get_rotationVector() const
-  { return RotationVector3d(this->rotationMatrix); }
+  inline RotationVector3d Pose3d::GetRotationVector() const
+  { return RotationVector3d(_rotationMatrix); }
   
-  inline const Vec3f& Pose3d::get_translation() const
-  { return this->translation; }
+  inline const Vec3f& Pose3d::GetTranslation() const
+  { return _translation; }
   
-  inline Vec3f Pose3d::get_rotationAxis() const
-  { return get_rotationVector().get_axis(); }
+  inline Vec3f Pose3d::GetRotationAxis() const
+  { return GetRotationVector().get_axis(); }
   
   /*
   template<char AXIS>
-  inline Radians Pose3d::get_rotationAngle() const
+  inline Radians Pose3d::GetRotationAngle() const
   {
-    CORETECH_THROW("Invalid template parameter for get_rotationAngle(). "
+    CORETECH_THROW("Invalid template parameter for GetRotationAngle(). "
                    "Expecting 'X' / 'x', 'Y' / 'y', or 'Z' / 'z'.");
     return 0.f;
   }
    */
   
   template<>
-  inline Radians Pose3d::get_rotationAngle<' '>() const
+  inline Radians Pose3d::GetRotationAngle<' '>() const
   {
     // return the inherient axis of the rotation
-    return get_rotationVector().get_angle();
+    return GetRotationVector().GetAngle();
   }
 
   template<>
-  inline Radians Pose3d::get_rotationAngle<'X'>() const
+  inline Radians Pose3d::GetRotationAngle<'X'>() const
   {
-    return get_rotationMatrix().GetAngleAroundXaxis();
+    return GetRotationMatrix().GetAngleAroundXaxis();
   }
   
   template<>
-  inline Radians Pose3d::get_rotationAngle<'Y'>() const
+  inline Radians Pose3d::GetRotationAngle<'Y'>() const
   {
-    return get_rotationMatrix().GetAngleAroundYaxis();
+    return GetRotationMatrix().GetAngleAroundYaxis();
   }
   
   template<>
-  inline Radians Pose3d::get_rotationAngle<'Z'>() const
+  inline Radians Pose3d::GetRotationAngle<'Z'>() const
   {
-    return get_rotationMatrix().GetAngleAroundZaxis();
+    return GetRotationMatrix().GetAngleAroundZaxis();
   }
   
   template<>
-  inline Radians Pose3d::get_rotationAngle<'x'>() const
+  inline Radians Pose3d::GetRotationAngle<'x'>() const
   {
-    return get_rotationMatrix().GetAngleAroundXaxis();
+    return GetRotationMatrix().GetAngleAroundXaxis();
   }
   
   template<>
-  inline Radians Pose3d::get_rotationAngle<'y'>() const
+  inline Radians Pose3d::GetRotationAngle<'y'>() const
   {
-    return get_rotationMatrix().GetAngleAroundYaxis();
+    return GetRotationMatrix().GetAngleAroundYaxis();
   }
   
   template<>
-  inline Radians Pose3d::get_rotationAngle<'z'>() const
+  inline Radians Pose3d::GetRotationAngle<'z'>() const
   {
-    return get_rotationMatrix().GetAngleAroundZaxis();
+    return GetRotationMatrix().GetAngleAroundZaxis();
   }
   
   
-  inline void Pose3d::set_rotation(const RotationMatrix3d &Rmat)
+  inline void Pose3d::SetRotation(const RotationMatrix3d &Rmat)
   {
-    if(&(this->rotationMatrix) != &Rmat) {
-      this->rotationMatrix = Rmat;
+    if(&(_rotationMatrix) != &Rmat) {
+      _rotationMatrix = Rmat;
     }
     //this->rotationVector = RotationVector3d(Rmat);
   }
   
-  inline void Pose3d::set_rotation(const RotationVector3d &Rvec)
+  inline void Pose3d::SetRotation(const RotationVector3d &Rvec)
   {
     //if(&(this->rotationVector) != &Rvec) {
     //  this->rotationVector = Rvec;
     //}
-    this->rotationMatrix = RotationMatrix3d(Rvec);
+    _rotationMatrix = RotationMatrix3d(Rvec);
   }
   
-  inline void Pose3d::set_rotation(const Radians angle, const Vec3f &axis)
+  inline void Pose3d::SetRotation(const Radians angle, const Vec3f &axis)
   {
     //this->rotationVector = RotationVector3d(angle, axis);
-    this->rotationMatrix = RotationMatrix3d(angle, axis);
+    _rotationMatrix = RotationMatrix3d(angle, axis);
   }
   
-  inline void Pose3d::set_translation(const Vec3f &T)
+  inline void Pose3d::SetTranslation(const Vec3f &T)
   {
-    this->translation = T;
+    _translation = T;
   }
   
-  inline bool Pose3d::getWithRespectTo(const Pose3d& otherPose,
+  inline bool Pose3d::GetWithRespectTo(const Pose3d& otherPose,
                                 Pose3d& newPoseWrtOtherPose) const {
-    return PoseBase<Pose3d>::getWithRespectTo(*this, otherPose, newPoseWrtOtherPose);
+    return PoseBase<Pose3d>::GetWithRespectTo(*this, otherPose, newPoseWrtOtherPose);
   }
   
   inline const Pose3d& Pose3d::FindOrigin() const {
@@ -450,21 +450,21 @@ namespace Anki {
                        const Radians angleThreshold) const
   {
     Pose3d P_diff_temp;
-    return this->IsSameAs(P_other, distThreshold, angleThreshold,
+    return IsSameAs(P_other, distThreshold, angleThreshold,
                           P_diff_temp);
   }
   
   template<typename T>
   Point<3,T> Pose3d::operator*(const Point<3,T> &pointIn) const
   {
-    Point3f pointOut( this->rotationMatrix * pointIn );
-    pointOut += this->translation;
+    Point3f pointOut( _rotationMatrix * pointIn );
+    pointOut += _translation;
     
     return pointOut;
   }
   
   template<typename T>
-  void Pose3d::applyTo(const Quadrilateral<3,T> &quadIn,
+  void Pose3d::ApplyTo(const Quadrilateral<3,T> &quadIn,
                        Quadrilateral<3,T>       &quadOut) const
   {
     using namespace Quad;
@@ -475,7 +475,7 @@ namespace Anki {
   }
   
   template<typename T>
-  void Pose3d::applyTo(const std::vector<Point<3,T> > &pointsIn,
+  void Pose3d::ApplyTo(const std::vector<Point<3,T> > &pointsIn,
                        std::vector<Point<3,T> >       &pointsOut) const
   {
     const size_t numPoints = pointsIn.size();
@@ -502,7 +502,7 @@ namespace Anki {
         pointsOut.emplace_back( (*this) * x );
       }
     }
-  } // applyTo()
+  } // ApplyTo()
   
 } // namespace Anki
 

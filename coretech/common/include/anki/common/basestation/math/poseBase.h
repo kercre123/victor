@@ -38,7 +38,7 @@ namespace Anki {
 
   // TODO: Have Pose2d and Pose3d inherit from an (abstract?) base class?
   //  Then the base class could define the common elements like the parent
-  //  pointer, the getTreeDepth() method, and the getWithRespectTo method.
+  //  pointer, the GetTreeDepth() method, and the GetWithRespectTo method.
   template <class PoseNd>
   class PoseBase
   {
@@ -47,10 +47,10 @@ namespace Anki {
     PoseBase();
     PoseBase(const PoseNd* parentPose);
 
-    void set_parent(const PoseNd* otherPose) { parent = otherPose; }
-    const PoseNd* get_parent() const { return parent; }
+    void SetParent(const PoseNd* otherPose) { _parent = otherPose; }
+    const PoseNd* GetParent() const { return _parent; }
     
-    bool IsOrigin() const { return parent == nullptr; }
+    bool IsOrigin() const { return _parent == nullptr; }
     
     const PoseNd& FindOrigin(const PoseNd& forPose) const;
     
@@ -62,10 +62,10 @@ namespace Anki {
 
   protected:
     
-    const PoseNd* parent;
-    unsigned int getTreeDepth(const PoseNd* poseNd) const;
+    const PoseNd* _parent;
+    unsigned int GetTreeDepth(const PoseNd* poseNd) const;
     
-    bool getWithRespectTo(const PoseNd& from, const PoseNd& to,
+    bool GetWithRespectTo(const PoseNd& from, const PoseNd& to,
                           PoseNd& newPose) const;
 
   };
