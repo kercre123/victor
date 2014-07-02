@@ -432,7 +432,7 @@ namespace Anki
         // around the Z axis
         Radians rotAngle;
         Vec3f rotAxis;
-        robotPoseWrtMat.GetRotationVector().get_angleAndAxis(rotAngle, rotAxis);
+        robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
         const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
         const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
         if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
