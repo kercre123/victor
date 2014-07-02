@@ -112,6 +112,7 @@ namespace Anki {
     , _lastRecvdPathID(0)
     , _forceReplanOnNextWorldChange(false)
     , _saveImages(false)
+    , _camera(robotID)
     , _poseOrigin(&Pose3d::AddOrigin())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _poseOrigin) // Until this robot is localized be seeing a mat marker, create an origin for it to use as its pose parent
     , _frameId(0)

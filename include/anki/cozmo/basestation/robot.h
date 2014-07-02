@@ -440,7 +440,7 @@ namespace Anki {
     inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
     {
       _cameraCalibration = calib;
-      _camera.SetCalibration(_cameraCalibration);
+      _camera.SetSharedCalibration(&_cameraCalibration);
     }
 
 	inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const

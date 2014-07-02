@@ -393,7 +393,7 @@ namespace Anki
       // Get all mat objects *seen by this robot's camera*
       std::vector<Vision::ObservableObject*> matsSeen;
       matLibrary_.CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
-                                           (robot->GetCamera().GetId()));
+                                           (robot->GetCamera().GetID()));
 
       // Remove used markers from map
       RemoveUsedMarkers(obsMarkersAtTimestamp);
@@ -619,7 +619,7 @@ namespace Anki
           // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
           // Increasing history time window would fix this, but it's not really a solution.
           for(auto poseKeyMarkerPair = currentObsMarkers.begin(); poseKeyMarkerPair != currentObsMarkers.end();) {
-            if ((poseKeyMarkerPair->second.GetSeenBy().GetId() == robot->GetCamera().GetId()) &&
+            if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == robot->GetCamera().GetID()) &&
                 !robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
               PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d\n", poseKeyMarkerPair->first);
               poseKeyMarkerPair = currentObsMarkers.erase(poseKeyMarkerPair++);
