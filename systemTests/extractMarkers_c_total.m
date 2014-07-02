@@ -17,16 +17,17 @@ function [allQuads, quadValidity, markers] = extractMarkers_c_total(image, useRe
     quads_quadSymmetryThreshold = 2.0;
     quads_minDistanceFromImageEdge = 2;
     decode_minContrastRatio = 1.25;
-    numRefinementSamples = 100;
+    refine_quadRefinementMaxCornerChange = 2;
+    refine_numRefinementSamples = 100;
     
     if useRefinement
-        quadRefinementIterations = 25;
+        refine_quadRefinementIterations = 25;
     else
-        quadRefinementIterations = 0;
+        refine_quadRefinementIterations = 0;
     end
     
     if useMatlabForQuadExtraction
-        allQuadsMatlabRaw = simpleDetector(image, 'returnInvalid', true, 'quadRefinementIterations', quadRefinementIterations);
+        allQuadsMatlabRaw = simpleDetector(image, 'returnInvalid', true, 'quadRefinementIterations', refine_quadRefinementIterations);
         
         if isempty(allQuadsMatlabRaw)
             allQuads = {};
@@ -45,16 +46,16 @@ function [allQuads, quadValidity, markers] = extractMarkers_c_total(image, useRe
         end
         
         returnInvalidMarkers = 1;
-        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, decode_minContrastRatio, 0, numRefinementSamples, returnInvalidMarkers);
+        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, 0, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
         
         returnInvalidMarkers = 0;
-        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, decode_minContrastRatio, 0, numRefinementSamples, returnInvalidMarkers);
+        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, 0, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
     else
         returnInvalidMarkers = 1;
-        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
+        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
         
         returnInvalidMarkers = 0;
-        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
+        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
     end
     
     markers = cell(length(markerNames), 1);

@@ -566,16 +566,16 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
   cv::CascadeClassifier face_cascade;
 
-  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt";
-  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2";
-  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree";
-  const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt.xml";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2.xml";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree.xml";
+  const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml";
 
-  //Classifier::CascadeClassifier cc(face_cascade_name.data(), scratchOffchip);
+  //Classifier::CascadeClassifier cc(face_cascade_name, scratchOffchip);
   //cc.SaveAsHeader("c:/tmp/cascade.h", "lbpcascade_frontalface");
 
   if( !face_cascade.load( face_cascade_name ) ) {
-    CoreTechPrint("Could not load %s\n", face_cascade_name.c_str());
+    CoreTechPrint("Could not load %s\n", face_cascade_name);
     return;
   }
 
@@ -595,7 +595,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
   FixedLengthList<Rectangle<s32> > detectedFaces_anki(MAX_CANDIDATES, scratchOffchip);
 
-  Classifier::CascadeClassifier_LBP cc(face_cascade_name.data(), scratchOffchip);
+  Classifier::CascadeClassifier_LBP cc(face_cascade_name, scratchOffchip);
 
   //s32 curSet = 0;
   while(!faceFilenames.eof()) {
@@ -658,6 +658,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
         minSize.height, minSize.width,
         maxSize.height, maxSize.width,
         detectedFaces_anki,
+        scratchOnchip,
         scratchOffchip);
 
       const f32 t2 = GetTimeF32();
@@ -692,7 +693,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
       const s32 maxChars = 1024;
       char outname[maxChars];
-      snCoreTechPrint(outname, "Detected faces %d", in);
+      snprintf(outname, maxChars, "Detected faces %d", in);
 
       //-- Show what you got
       cv::imshow(outname, toShow);

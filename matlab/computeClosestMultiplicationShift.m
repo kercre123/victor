@@ -1,5 +1,8 @@
+% function [bestShift, bestMultiplier] = computeClosestMultiplicationShift(divisor, maxRightShiftBits, totalBitDepth)
 
-function computeClosestMultiplicationShift(divisor, maxRightShiftBits, totalBitDepth)
+% Computes the closest approximation to a / b, via (a * c) >> d
+
+function [bestShift, bestMultiplier] = computeClosestMultiplicationShift(divisor, maxRightShiftBits, totalBitDepth)
 
 displayAll = false;
 
@@ -35,6 +38,11 @@ for bit = 0:maxRightShiftBits
     end
 end
 
-disp(sprintf('bestShift %d: bestVal: %f bestMultiplier: %d (%f vs %f)', bestOverall.bit, bestOverallVal, bestOverall.multiplier, original, bestOverall.approximation));
+if nargout < 2
+    disp(sprintf('bestShift %d: bestVal: %f bestMultiplier: %d (%f vs %f)', bestOverall.bit, bestOverallVal, bestOverall.multiplier, original, bestOverall.approximation));
+end
+
+bestShift = bestOverall.bit;
+bestMultiplier = bestOverall.multiplier;
 
 % keyboard

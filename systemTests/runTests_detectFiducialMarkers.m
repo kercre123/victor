@@ -1,6 +1,6 @@
 % function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsFilename)
 
-% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo/systemTests/tests/fiducialDetection_*.json', 'C:/Anki/systemTestImages/results/');
+% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo/systemTests/tests/fiducialDetection_*_all.json', 'C:/Anki/systemTestImages/results/');
 
 function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsDirectory)
     
@@ -30,48 +30,167 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
     
+    try
+        mkdir(resultsDirectory);
+    catch
+    end
+       
+    testJsonPattern = strrep(testJsonPattern, '\', '/');
+    slashIndexes = strfind(testJsonPattern, '/');
+    testPath = testJsonPattern(1:(slashIndexes(end)));
+    
+    allTestFilenamesRaw = dir(testJsonPattern);
+    
+    allTestFilenames = cell(length(allTestFilenamesRaw), 1);
+    
+    for i = 1:length(allTestFilenamesRaw)
+        allTestFilenames{i} = [testPath, allTestFilenamesRaw(i).name];
+    end
+    
+    testFunctions = {...
+        @extractMarkers_c_noRefinement,...
+        @extractMarkers_c_withRefinement,...
+        @extractMarkers_matlabOriginal_noRefinement,...
+        @extractMarkers_matlabOriginal_withRefinement,...
+        @extractMarkers_matlabOriginalQuads_cExtraction_noRefinement,...
+        @extractMarkers_matlabOriginalQuads_cExtraction_withRefinement};
+    
+    testFunctionNames = {...
+        'c-noRef',...
+        'c-ref',...
+        'mat-noRef',...
+        'mat-ref',...
+        'matQuad-cExt-noRef',...
+        'matQuad-cExt-ref'};
+    
+    
     if recompileBasics
-        tic
+        ignoreModificationTime = false;
+    
+        recompileBasicsTic = tic();
         
-        % If one thread, just compute locally
-        if numComputeThreads == 1
-            [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, 0, 1); %#ok<ASGLU>
-        else
-            partFilenameInput = sprintf('%s_input.mat', basicsFilename);
-            save(partFilenameInput, 'markerDirectoryList', 'testJsonPattern');
-
-            % launch threads
-            for iThread = 0:(numComputeThreads-1)
-                partFilename = sprintf('%s_outputPart%d.mat', basicsFilename, iThread);
-                delete(partFilename);
-                commandString = sprintf('matlab -nojvm -noFigureWindows -nosplash -r "load(''%s''); [resultsData_part, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, %d, %d); save(''%s'', ''resultsData_part'', ''testPath'', ''allTestFilenames'', ''testFunctions'', ''testFunctionNames''); exit;"', partFilenameInput, iThread, numComputeThreads, partFilename);
-                system(['start /b ', commandString]);
-            end
-
-            % wait for threads to complete and compile results
-            for iThread = 0:(numComputeThreads-1)
-                partFilename = sprintf('%s_outputPart%d.mat', basicsFilename, iThread);
-
-                while ~exist(partFilename, 'file')
-                    pause(.1);
+        slashIndexes = strfind(allTestFilenames{1}, '/');
+        testPath = allTestFilenames{1}(1:(slashIndexes(end)));
+        intermediateDirectory = [testPath, 'intermediate/'];
+        if ~exist(intermediateDirectory, 'file')
+            mkdir(intermediateDirectory);
+        end
+        
+        % create a list of test-pose work
+        workList = {};
+        for iTest = 1:length(allTestFilenames)
+%         for iTest = 3
+            modificationTime_test = dir(allTestFilenames{iTest});
+            modificationTime_test = modificationTime_test(1).datenum;
+            
+            curTestFilename_imagesOnly = strrep(allTestFilenames{iTest}, '_all.json', '_justFilenames.json');
+            
+            jsonData = loadjson(curTestFilename_imagesOnly);
+            for iPose = 1:length(jsonData.Poses)               
+%             for iPose = 2
+                jsonTestFilename = allTestFilenames{iTest};
+                
+                slashIndexes = strfind(jsonTestFilename, '/');
+                testPath = jsonTestFilename(1:(slashIndexes(end)));
+                resultsFilename = [intermediateDirectory, jsonTestFilename((slashIndexes(end)+1):end), sprintf('_pose%05d.mat', iPose)];
+                
+                newWorkItem = {iTest, jsonTestFilename, iPose, resultsFilename};
+                
+                % If we're ignoring the modification time, add it to the queue
+                if ignoreModificationTime
+                    workList{end+1} = newWorkItem; %#ok<AGROW>
+                    continue;
                 end
-
-                % Wait for the file system to catch up or something?
-                pause(2);
-
-                load(partFilename)
-
-                if iThread == 0
-                    resultsData = resultsData_part;
-                else
-                    for iTest = 1:length(allTestFilenames)
-                        resultsData{iTest}((iThread+1):numComputeThreads:end) = resultsData_part{iTest}((iThread+1):numComputeThreads:end);
-                    end
+                
+                % If the results don't exist, add it to the queue
+                if ~exist(resultsFilename, 'file')
+                    workList{end+1} = newWorkItem; %#ok<AGROW>
+                    continue;
+                end
+                
+                % If the results are older than the test json, add it to the queue
+                modificationTime_results = dir(resultsFilename);
+                modificationTime_results = modificationTime_results(1).datenum;
+                if modificationTime_results < modificationTime_test
+                    workList{end+1} = newWorkItem; %#ok<AGROW>
+                    continue;
+                end
+                
+                % If the results are older than the image file, add it to the queue
+                modificationTime_image = dir([testPath, jsonData.Poses{iPose}.ImageFile]);
+                modificationTime_image = modificationTime_image(1).datenum;
+                if modificationTime_results < modificationTime_image
+                    workList{end+1} = newWorkItem; %#ok<AGROW>
+                    continue;
                 end
             end
         end
         
-        disp(sprintf('Basic stat computation took %f seconds', toc()));
+        disp(sprintf('workList has %d elements', length(workList)));
+        
+        rotationList = getListOfSymmetricMarkers(markerDirectoryList);
+        
+        % If one thread, just compute locally
+        if numComputeThreads == 1
+            runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, workList);
+        else % if numComputeThreads == 1
+%             matlabLaunchCommand = 'matlab -nojvm -noFigureWindows -nosplash ';
+%             matlabLaunchCommand = 'matlab -noFigureWindows -nosplash ';
+            matlabLaunchCommand = 'matlab -noFigureWindows -nosplash ';
+            
+            threadCompletionMutexFilenames = cell(numComputeThreads, 1);
+            workerInputFilenames = cell(numComputeThreads, 1);
+            
+            % launch threads
+            for iThread = 0:(numComputeThreads-1)
+                workerInputFilenames{iThread+1} = sprintf('%s_input%d.mat', basicsFilename, iThread);
+                localWorkList = workList((1+iThread):numComputeThreads:end); %#ok<NASGU>
+                save(workerInputFilenames{iThread+1}, 'testFunctions', 'rotationList', 'localWorkList');
+                
+                threadCompletionMutexFilenames{iThread+1} = sprintf('%s_mutex%d.mat', basicsFilename, iThread);
+                
+                try
+                    delete(threadCompletionMutexFilenames{iThread+1});
+                catch
+                end
+                
+                commandString = sprintf('-r "load(''%s''); runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, localWorkList); mut=1; save(''%s'',''mut''); exit;"', workerInputFilenames{iThread+1}, threadCompletionMutexFilenames{iThread+1});
+                system(['start /b ', matlabLaunchCommand, commandString]);
+            end
+            
+            % Wait for thread completion
+            for iThread = 1:length(threadCompletionMutexFilenames)
+                while ~exist(threadCompletionMutexFilenames{iThread}, 'file')
+                    pause(.1);
+                end
+                delete(threadCompletionMutexFilenames{iThread});
+                delete(workerInputFilenames{iThread});
+            end
+        end
+        
+        disp('Computation complete. Merging thread results...');
+        
+        resultsData = cell(length(allTestFilenames), 1);
+        for iTest = 1:length(allTestFilenames)
+            curTestFilename_imagesOnly = strrep(allTestFilenames{iTest}, '_all.json', '_justFilenames.json');
+            jsonData = loadjson(curTestFilename_imagesOnly);
+            
+            jsonTestFilename = allTestFilenames{iTest};
+            
+            resultsData{iTest} = cell(length(jsonData.Poses), 1);
+            
+            for iPose = 1:length(jsonData.Poses)
+                slashIndexes = strfind(jsonTestFilename, '/');
+                testPath = jsonTestFilename(1:(slashIndexes(end)));
+                resultsFilename = [testPath, 'intermediate/', jsonTestFilename((slashIndexes(end)+1):end), sprintf('_pose%05d.mat', iPose)];
+                
+                load(resultsFilename, 'curResultsData');
+                
+                resultsData{iTest}{iPose} = curResultsData;
+            end % for iPose = 1:length(jsonData.Poses)
+        end % for iTest = 1:length(allTestFilenames)
+        
+        disp(sprintf('Basic stat computation took %f seconds', toc(recompileBasicsTic)));
         
         save(basicsFilename, 'resultsData', 'testPath', 'allTestFilenames', 'testFunctions', 'testFunctionNames');
     else % if recompileBasics
@@ -108,7 +227,7 @@ function overallStats = compileOverallStats(allTestFilenames, perTestStats, show
             for iPose = 1:length(perTestStats{iTest})
             end
         end
-    end 
+    end
 end % compileOverallStats()
 
 
@@ -131,6 +250,9 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
     
     for iTest = 1:length(resultsData)
         %     for iTest = length(resultsData)
+        
+        tic
+        
         perTestStats{iTest} = cell(length(resultsData{iTest}), 1);
         
         jsonData = loadjson(allTestFilenames{iTest});
@@ -160,7 +282,6 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
             else
                 showImageDetectionsScale = 1;
             end
-            
             
             for iTestFunction = 1:length(perTestStats{iTest}{iPose})
                 curResultsData = resultsData{iTest}{iPose}{iTestFunction};
@@ -209,6 +330,8 @@ function perTestStats = compilePerTestStats(resultsData, testPath, allTestFilena
                 end
             end % for iTestFunction = 1:length(perTestStats{iTest}{iPose})
         end % for iPose = 1:length(perTestStats{iTest})
+        
+        disp(sprintf('Compiled test results %d/%d in %f seconds', iTest, length(resultsData), toc()));
     end % for iTest = 1:length(resultsData)
     
     outputFilenameNameLookup = [resultsDirectory, 'filenameLookup.txt'];

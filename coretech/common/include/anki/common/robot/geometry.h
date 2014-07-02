@@ -57,8 +57,8 @@ namespace Anki
 
     template<typename Type> template<typename InType> void Point<Type>::SetCast(const Point<InType> &in)
     {
-      this->x = static_cast<Type>(in.x);
-      this->y = static_cast<Type>(in.y);
+      this->x = saturate_cast<Type>(in.x);
+      this->y = saturate_cast<Type>(in.y);
     }
 
     template<typename Type> void Point<Type>::Print() const

@@ -1,148 +1,112 @@
-% function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, threadId, numThreads)
+% function runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, workList)
 
-% threadId starts at zero
+% Don't call this function directly, instead call runTests_detectFiducialMarkers.m
 
-function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames] = runTests_detectFiducialMarkers_basicStats(markerDirectoryList, testJsonPattern, threadId, numThreads)
-    global rotationList;
+% Set rotationList = getListOfSymmetricMarkers(markerDirectoryList);
+
+function runTests_detectFiducialMarkers_basicStats(testFunctions, rotationList, workList)
+    global g_rotationList;
     
-    rotationList = getListOfSymmetricMarkers(markerDirectoryList);
+    g_rotationList = rotationList;
     
-    % if useUndistortion
-    %     load('Z:\Documents\Box Documents\Cozmo SE\calibCozmoProto1_head.mat');
-    %     cam = Camera('calibration', calibCozmoProto1_head);
-    % end
+    lastTest = -1;
     
-    testJsonPattern = strrep(testJsonPattern, '\', '/');
-    slashIndexes = strfind(testJsonPattern, '/');
-    testPath = testJsonPattern(1:(slashIndexes(end)));
-    
-    allTestFilenamesRaw = dir(testJsonPattern);
-    
-    allTestFilenames = cell(length(allTestFilenamesRaw), 1);
-    
-    for i = 1:length(allTestFilenamesRaw)
-        allTestFilenames{i} = [testPath, allTestFilenamesRaw(i).name];
-    end
-    
-    testFunctions = {...
-        @extractMarkers_c_noRefinement,...
-        @extractMarkers_c_withRefinement,...
-        @extractMarkers_matlabOriginal_noRefinement,...
-        @extractMarkers_matlabOriginal_withRefinement,...
-        @extractMarkers_matlabOriginalQuads_cExtraction_noRefinement,...
-        @extractMarkers_matlabOriginalQuads_cExtraction_withRefinement};
-    
-    testFunctionNames = {...
-        'c-noRef',...
-        'c-ref',...
-        'mat-noRef',...
-        'mat-ref',...
-        'matQuad-cExt-noRef',...
-        'matQuad-cExt-ref'};
-    
-    resultsData = cell(length(allTestFilenames), 1);
-    testData = cell(length(allTestFilenames), 1);
-    
-    for iTest = 1:length(allTestFilenames)
-%     for iTest = 10
-%     for iTest = 2
-        tic;
+    % Go through every item in the work list, and compute the accuracy of
+    % the fiducial detection
+    tic;
+    for iWork = 1:length(workList)
+%         disp(sprintf('iw:%d', iWork))
         
-        jsonData = loadjson(allTestFilenames{iTest});
+        curTestId = workList{iWork}{1};
+        curTestFilename = workList{iWork}{2};
+        curPoseId = workList{iWork}{3};
+        curResultsFilename = workList{iWork}{4};
         
-        jsonData.Poses = makeCellArray(jsonData.Poses);
-                
-        resultsData{iTest} = cell(length(jsonData.Poses), 1);
-        testData{iTest} = cell(length(jsonData.Poses), 1);
-        
-        for iPose = (threadId+1):numThreads:length(jsonData.Poses)
-            image = imread([testPath, jsonData.Poses{iPose}.ImageFile]);
-            
-            resultsData{iTest}{iPose} = cell(length(testFunctions), 1);
-            
-            if ~isfield(jsonData.Poses{iPose}, 'VisionMarkers')
-                continue;
+        if curTestId ~= lastTest
+            if lastTest ~= -1
+                disp(sprintf('Finished test %d in %f seconds', lastTest, toc()));
+                tic
             end
             
-            testData{iTest}{iPose}.Scene = jsonData.Poses{iPose}.Scene;
-            testData{iTest}{iPose}.ImageFile = jsonData.Poses{iPose}.ImageFile;
+            jsonData = loadjson(curTestFilename);
+            jsonData.Poses = makeCellArray(jsonData.Poses);
             
-            groundTruthQuads = jsonToQuad(jsonData.Poses{iPose}.VisionMarkers);
+            slashIndexes = strfind(curTestFilename, '/');
+            testPath = curTestFilename(1:(slashIndexes(end)));
             
-            groundTruthQuads = makeCellArray(groundTruthQuads);
-                        
-            for iTestFunction = 1:length(testFunctions)
-                [detectedQuads, detectedQuadValidity, detectedMarkers] = testFunctions{iTestFunction}(image);
-                
-                %check if the quads are in the right places
-                
-                [justQuads_bestDistances_mean, justQuads_bestDistances_max, justQuads_bestIndexes, ~] = findClosestMatches(groundTruthQuads, detectedQuads, []);
-                
-                detectedMarkerQuads = makeCellArray(markersToQuad(detectedMarkers));
-                                
-                visionMarkers_groundTruth = makeCellArray(jsonData.Poses{iPose}.VisionMarkers);
-                                
-                [markers_bestDistances_mean, markers_bestDistances_max, markers_bestIndexes, markers_areRotationsCorrect] = findClosestMatches(groundTruthQuads, detectedMarkerQuads, visionMarkers_groundTruth);
-                
-                markerNames_groundTruth = cell(length(groundTruthQuads), 1);
-                fiducialSizes_groundTruth = zeros(length(groundTruthQuads), 2);
-                
-                for iMarker = 1:length(groundTruthQuads)
-                    markerNames_groundTruth{iMarker,1} = visionMarkers_groundTruth{iMarker}.markerType;
-                    
-                    fiducialSizes_groundTruth(iMarker,:) = [...
-                        max(groundTruthQuads{iMarker}(:,1)) - min(groundTruthQuads{iMarker}(:,1)),...
-                        max(groundTruthQuads{iMarker}(:,2)) - min(groundTruthQuads{iMarker}(:,2))];
-                end
-                
-                markerNames_detected = cell(length(detectedMarkers), 1);
-                for iMarker = 1:length(detectedMarkers)
-                    markerNames_detected{iMarker} = detectedMarkers{iMarker}.name;
-                end
-                
-                %                 % Remove any markers with ground truth label MARKER_IGNORE
-                %                 validInds = [];
-                %                 for iMarker = 1:length(groundTruthQuads)
-                %                     if ~strcmp(markerNames_groundTruth, 'MARKER_IGNORE')
-                %                         validInds = [validInds, iMarker]; %#ok<AGROW>
-                %                     end
-                %                 end
-                
-                resultsData{iTest}{iPose}{iTestFunction}.justQuads_bestDistances_mean = justQuads_bestDistances_mean;
-                resultsData{iTest}{iPose}{iTestFunction}.justQuads_bestDistances_max = justQuads_bestDistances_max;
-                resultsData{iTest}{iPose}{iTestFunction}.justQuads_bestIndexes = justQuads_bestIndexes;
-                resultsData{iTest}{iPose}{iTestFunction}.markers_bestDistances_mean = markers_bestDistances_mean;
-                resultsData{iTest}{iPose}{iTestFunction}.markers_bestDistances_max = markers_bestDistances_max;
-                resultsData{iTest}{iPose}{iTestFunction}.markers_bestIndexes = markers_bestIndexes;
-                resultsData{iTest}{iPose}{iTestFunction}.markers_areRotationsCorrect = markers_areRotationsCorrect;
-                resultsData{iTest}{iPose}{iTestFunction}.fiducialSizes_groundTruth = fiducialSizes_groundTruth;
-                resultsData{iTest}{iPose}{iTestFunction}.markerNames_groundTruth = makeCellArray(markerNames_groundTruth);
-                resultsData{iTest}{iPose}{iTestFunction}.markerLocations_groundTruth = makeCellArray(groundTruthQuads);
-                
-                resultsData{iTest}{iPose}{iTestFunction}.markerNames_detected = makeCellArray(markerNames_detected);
-                resultsData{iTest}{iPose}{iTestFunction}.detectedQuads = makeCellArray(detectedQuads);
-                resultsData{iTest}{iPose}{iTestFunction}.detectedQuadValidity = detectedQuadValidity;
-                resultsData{iTest}{iPose}{iTestFunction}.detectedMarkers = makeCellArray(detectedMarkers);
-                
-                %             figure(1);
-                %             hold off;
-                %             imshow(image);
-                %             hold on;
-                %             for i = 1:length(detectedQuads)
-                %                 plot(detectedQuads{i}(:,1), detectedQuads{i}(:,2));
-                %                 text(detectedQuads{i}(1,1), detectedQuads{i}(1,2), sprintf('%d', bestIndexes(i)));
-                %             end
-                
-                pause(.01);
-            end
+            lastTest = curTestId;
         end
         
-        disp(sprintf('Finished test %d/%d in %f seconds', iTest, length(allTestFilenames), toc()));
-        pause(.01);
-    end % for iTest = 1:length(allTestFilenames)
+        image = imread([testPath, jsonData.Poses{curPoseId}.ImageFile]);
+        
+        if ~isfield(jsonData.Poses{curPoseId}, 'VisionMarkers')
+            continue;
+        end
+        
+        curResultsData = cell(length(testFunctions), 1);
+        
+        curTestData.Scene = jsonData.Poses{curPoseId}.Scene;
+        curTestData.ImageFile = jsonData.Poses{curPoseId}.ImageFile;
+        
+        groundTruthQuads = jsonToQuad(jsonData.Poses{curPoseId}.VisionMarkers);
+        
+        groundTruthQuads = makeCellArray(groundTruthQuads);
+        
+        for iTestFunction = 1:length(testFunctions)
+%             disp(sprintf('tf:%d', iTestFunction))
+            
+            [detectedQuads, detectedQuadValidity, detectedMarkers] = testFunctions{iTestFunction}(image);
+            
+            %check if the quads are in the right places
+            
+            [justQuads_bestDistances_mean, justQuads_bestDistances_max, justQuads_bestIndexes, ~] = findClosestMatches(groundTruthQuads, detectedQuads, []);
+            
+            detectedMarkerQuads = makeCellArray(markersToQuad(detectedMarkers));
+            
+            visionMarkers_groundTruth = makeCellArray(jsonData.Poses{curPoseId}.VisionMarkers);
+            
+            [markers_bestDistances_mean, markers_bestDistances_max, markers_bestIndexes, markers_areRotationsCorrect] = findClosestMatches(groundTruthQuads, detectedMarkerQuads, visionMarkers_groundTruth);
+            
+            markerNames_groundTruth = cell(length(groundTruthQuads), 1);
+            fiducialSizes_groundTruth = zeros(length(groundTruthQuads), 2);
+            
+            for iMarker = 1:length(groundTruthQuads)
+                markerNames_groundTruth{iMarker,1} = visionMarkers_groundTruth{iMarker}.markerType;
+                
+                fiducialSizes_groundTruth(iMarker,:) = [...
+                    max(groundTruthQuads{iMarker}(:,1)) - min(groundTruthQuads{iMarker}(:,1)),...
+                    max(groundTruthQuads{iMarker}(:,2)) - min(groundTruthQuads{iMarker}(:,2))];
+            end
+            
+            markerNames_detected = cell(length(detectedMarkers), 1);
+            for iMarker = 1:length(detectedMarkers)
+                markerNames_detected{iMarker} = detectedMarkers{iMarker}.name;
+            end
+            
+            curResultsData{iTestFunction}.justQuads_bestDistances_mean = justQuads_bestDistances_mean;
+            curResultsData{iTestFunction}.justQuads_bestDistances_max = justQuads_bestDistances_max;
+            curResultsData{iTestFunction}.justQuads_bestIndexes = justQuads_bestIndexes;
+            curResultsData{iTestFunction}.markers_bestDistances_mean = markers_bestDistances_mean;
+            curResultsData{iTestFunction}.markers_bestDistances_max = markers_bestDistances_max;
+            curResultsData{iTestFunction}.markers_bestIndexes = markers_bestIndexes;
+            curResultsData{iTestFunction}.markers_areRotationsCorrect = markers_areRotationsCorrect;
+            curResultsData{iTestFunction}.fiducialSizes_groundTruth = fiducialSizes_groundTruth;
+            curResultsData{iTestFunction}.markerNames_groundTruth = makeCellArray(markerNames_groundTruth);
+            curResultsData{iTestFunction}.markerLocations_groundTruth = makeCellArray(groundTruthQuads);
+            
+            curResultsData{iTestFunction}.markerNames_detected = makeCellArray(markerNames_detected);
+            curResultsData{iTestFunction}.detectedQuads = makeCellArray(detectedQuads);
+            curResultsData{iTestFunction}.detectedQuadValidity = detectedQuadValidity;
+            curResultsData{iTestFunction}.detectedMarkers = makeCellArray(detectedMarkers);
+            
+            pause(.01);
+        end % for iTestFunction = 1:length(testFunctions)
+        
+        save(curResultsFilename, 'curResultsData', 'curTestData');
+    end % for iWork = 1:length(workList)
     
 function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrect] = findClosestMatches(groundTruthQuads, queryQuads, markerNames_groundTruth)
-    global rotationList;
+    global g_rotationList;
     
     bestDistances_mean = Inf * ones(length(groundTruthQuads), 1);
     bestDistances_max = Inf * ones(length(groundTruthQuads), 3);
@@ -157,14 +121,14 @@ function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrec
         else
             curName = markerNames_groundTruth{iGroundTruth}.markerType(8:end);
             
-            index = find(strcmp(rotationList(:,1), curName));
+            index = find(strcmp(g_rotationList(:,1), curName));
             
             % TODO: make assert false
             %             assert(~isempty(index));
             if isempty(index)
                 numRotations = 4;
             else
-                numRotations = rotationList{index, 2};
+                numRotations = g_rotationList{index, 2};
             end
             
             %             disp(sprintf('%s %d', curName, numRotations));
@@ -211,7 +175,7 @@ function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrec
     
 function quads = jsonToQuad(jsonQuads)
     jsonQuads = makeCellArray(jsonQuads);
-        
+    
     quads = cell(length(jsonQuads), 1);
     
     for iQuad = 1:length(jsonQuads)
@@ -224,7 +188,7 @@ function quads = jsonToQuad(jsonQuads)
     
 function quads = markersToQuad(markers)
     markers = makeCellArray(markers);
-        
+    
     quads = cell(length(markers), 1);
     
     for iQuad = 1:length(markers)

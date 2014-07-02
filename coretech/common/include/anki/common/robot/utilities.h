@@ -63,8 +63,7 @@ namespace Anki
       return multiple * (number/multiple);
     }
 #endif
-    
-    
+
     template<typename Type> Type ApproximateExp(const Type exponent, const s32 numTerms)
     {
       AnkiAssert(numTerms > 2);
@@ -247,7 +246,19 @@ namespace Anki
     template<> inline u64 RoundIfInteger(const f64 v) { return static_cast<u64>(Round<u64>(v)); }
     template<> inline s64 RoundIfInteger(const f64 v) { return static_cast<s64>(Round<s64>(v)); }
 
-    // All saturate_cast calls are explicitly specialized
+    // Floats and complex data types aren't specialized
+    template<typename Type> inline Type saturate_cast(const u8  v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type saturate_cast(const s8  v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type saturate_cast(const u16 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type saturate_cast(const s16 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type saturate_cast(const u32 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type saturate_cast(const s32 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type saturate_cast(const u64 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type saturate_cast(const s64 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type saturate_cast(const f32 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type saturate_cast(const f64 v) { return static_cast<Type>(v); }
+
+    // Most saturate_cast calls are explicitly specialized
     template<> inline u8  saturate_cast<u8> (const u8  v) { return v; }
     template<> inline u8  saturate_cast<u8> (const u16 v) { return (u8)             MIN((u32)u8_MAX, (u32)v); }
     template<> inline u8  saturate_cast<u8> (const u32 v) { return (u8)             MIN((u32)u8_MAX, (u32)v); }
@@ -335,6 +346,8 @@ namespace Anki
     template<> inline s64 saturate_cast<s64>(const s64 v) { return v; }
     template<> inline s64 saturate_cast<s64>(const f32 v) { return (s64) (v > (f32)0x7FFFFFBFFFFFFDFFLL) ? 0x7FFFFFFFFFFFFFFFLL : Round<s64>(MAX((f32)s64_MIN, (f32)v)); } // Due to precision issues, this cast is a little wierd
     template<> inline s64 saturate_cast<s64>(const f64 v) { return (s64) (v > (f64)0x7FFFFFFFFFFFFDFFLL) ? 0x7FFFFFFFFFFFFFFFLL : Round<s64>(MAX((f64)s64_MIN, (f64)v)); } // Due to precision issues, this cast is a little wierd
+
+    template<> inline f32 saturate_cast(const f64 v) { return (f32) MIN((f64)FLT_MAX, MAX(-(f64)FLT_MAX, (f64)v)); }
   } // namespace Embedded
 } // namespace Anki
 

@@ -36,14 +36,16 @@ namespace Anki
       const f32 decode_minContrastRatio,
       const u16 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
-      const s32 quadRefinementIterations,
-      const s32 numRefinementSamples,
-      const f32 quadRefinementMaxCornerChange,
+      const s32 refine_quadRefinementIterations,
+      const s32 refine_numRefinementSamples,
+      const f32 refine_quadRefinementMaxCornerChange,
       const bool returnInvalidMarkers,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
       MemoryStack scratchOffChip)
     {
+      const f32 maxProjectiveTermValue = 8.0f;
+
       Result lastResult;
 
       BeginBenchmark("DetectFiducialMarkers");
@@ -68,14 +70,28 @@ namespace Anki
       ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratchOffChip);
 
       AnkiConditionalErrorAndReturnValue(extractedComponents.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "DetectFiducialMarkers", "extractedComponents could not be allocated");
+        RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "extractedComponents could not be allocated");
+
+      FixedLengthList<s32> filterHalfWidths(scaleImage_numPyramidLevels+2, scratchOnchip, Flags::Buffer(false, false, true));
+
+      AnkiConditionalErrorAndReturnValue(filterHalfWidths.IsValid(),
+        RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "filterHalfWidths could not be allocated");
+
+      for(s32 i=0; i<(scaleImage_numPyramidLevels+2); i++) {
+        filterHalfWidths[i] = 1 << (i);
+      }
+
+      //const s32 halfWidthData[] = {1,2,3,4,6,8,12,16};
+      //for(s32 i=0; i<8; i++) {
+      //  filterHalfWidths[i] = halfWidthData[i];
+      //}
 
       // 1. Compute the Scale image
       // 2. Binarize the Scale image
       // 3. Compute connected components from the binary image
       if((lastResult = ExtractComponentsViaCharacteristicScale(
         image,
-        scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
+        filterHalfWidths, scaleImage_thresholdMultiplier,
         component1d_minComponentWidth, component1d_maxSkipDistance,
         extractedComponents,
         scratchCcm, scratchOnchip)) != RESULT_OK)
@@ -159,6 +175,8 @@ namespace Anki
       if((lastResult = ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratchOnchip)) != RESULT_OK)
         return lastResult;
 
+      markers.set_size(extractedQuads.get_size());
+
       EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
 
       // 4b. Compute a homography for each extracted quadrilateral
@@ -166,10 +184,22 @@ namespace Anki
       BeginBenchmark("ComputeHomographyFromQuad");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         Array<f32> &currentHomography = homographies[iQuad];
+        VisionMarker &currentMarker = markers[iQuad];
 
         bool numericalFailure;
         if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, numericalFailure, scratchOnchip)) != RESULT_OK) {
           return lastResult;
+        }
+
+        if(numericalFailure) {
+          currentMarker.validity = VisionMarker::NUMERICAL_FAILURE;
+        } else {
+          if(currentHomography[2][0] > maxProjectiveTermValue || currentHomography[2][1] > maxProjectiveTermValue) {
+            AnkiWarn("DetectFiducialMarkers", "Homography projective terms are unreasonably large");
+            currentMarker.validity = VisionMarker::NUMERICAL_FAILURE;
+          } else {
+            currentMarker.validity = VisionMarker::VALID;
+          }
         }
 
         //currentHomography.Print("currentHomography");
@@ -180,20 +210,23 @@ namespace Anki
 
       BeginBenchmark("ExtractVisionMarker");
 
-      markers.set_size(extractedQuads.get_size());
-
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         const Array<f32> &currentHomography = homographies[iQuad];
         const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
 
         VisionMarker &currentMarker = markers[iQuad];
-        if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
-          decode_minContrastRatio, quadRefinementIterations, numRefinementSamples,
-          quadRefinementMaxCornerChange, scratchOnchip)) != RESULT_OK)
-        {
-          return lastResult;
+
+        if(currentMarker.validity == VisionMarker::VALID) {
+          if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
+            decode_minContrastRatio,
+            refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange,
+            quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+            scratchOnchip)) != RESULT_OK)
+          {
+            return lastResult;
+          }
         }
-      }
+      } // for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++)
 
       // Remove invalid markers from the list
       if(!returnInvalidMarkers) {
@@ -209,7 +242,7 @@ namespace Anki
             iQuad--;
           }
         }
-      }
+      } // if(!returnInvalidMarkers)
 
       EndBenchmark("ExtractVisionMarker");
 
