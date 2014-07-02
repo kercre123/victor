@@ -1195,7 +1195,7 @@ namespace Anki {
         
         // Reverse the connection between origin and robot
         //CORETECH_ASSERT(p.GetPose().GetParent() == _poseOrigin);
-        *_poseOrigin = _pose.getInverse();
+        *_poseOrigin = _pose.GetInverse();
         _poseOrigin->SetParent(&p.GetPose());
         
         // Connect the old origin's pose to the same root the robot now has.

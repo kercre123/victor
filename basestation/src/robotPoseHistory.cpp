@@ -358,7 +358,7 @@ namespace Anki {
       // Need to account for intermediate frames between p0 and p1 if any.
       // pMid0 and pMid1 are used to denote the start and end poses of
       // every intermediate frame.
-      Pose3d pTransform = p0_it->second.GetPose().getInverse();
+      Pose3d pTransform = p0_it->second.GetPose().GetInverse();
       const_PoseMapIter_t pMid0 = p0_it;
       const_PoseMapIter_t pMid1 = p0_it;
       for (pMid1 = p0_it; pMid1->first != t; ++pMid1) {
@@ -379,7 +379,7 @@ namespace Anki {
           // and multiply the inverse with pTransform to get the first part of the transform
           // for the next frame.
           ++pMid1;
-          pTransform *= pMid1->second.GetPose().getInverse();
+          pTransform *= pMid1->second.GetPose().GetInverse();
           
           pMid0 = pMid1;
         }
