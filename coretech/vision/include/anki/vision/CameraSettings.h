@@ -20,6 +20,7 @@ namespace Anki {
       CAMERA_RES_QQVGA,
       CAMERA_RES_QQQVGA,
       CAMERA_RES_QQQQVGA,
+      CAMERA_RES_VERIFICATION_SNAPSHOT,
       CAMERA_RES_COUNT,
       
       CAMERA_RES_NONE = CAMERA_RES_COUNT
@@ -37,7 +38,8 @@ namespace Anki {
       {320, 240},
       {160, 120},
       {80, 60},
-      {40, 30}
+      {40, 30},
+      {16,16}
     };
 
   } // namespace Vision

@@ -82,7 +82,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       "Image should be UINT8.");
     mxAssert(mxGetNumberOfDimensions(prhs[0]) == 2,
       "Image must be grayscale.");
-    grayscaleImage = Array<u8>(mxGetM(prhs[argIndex]), mxGetN(prhs[argIndex]), onchipMemory);
+    
+    const mwSize nrows = mxGetM(prhs[argIndex]);
+    const mwSize ncols = mxGetN(prhs[argIndex]);
+    
+    mxAssert(nrows < std::numeric_limits<s32>::max() &&
+             ncols < std::numeric_limits<s32>::max(),
+             "Image too large for conversion to Array.");
+    
+    grayscaleImage = Array<u8>(static_cast<s32>(nrows), static_cast<s32>(ncols), onchipMemory);
     mxArrayToArray(prhs[argIndex], grayscaleImage);
     ++argIndex;
 
@@ -164,9 +172,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         plhs[2] = mxCreateDoubleScalar(static_cast<double>(tracker.get_angleY()));
         plhs[3] = mxCreateDoubleScalar(static_cast<double>(tracker.get_angleZ()));
 
-        plhs[4] = mxCreateDoubleScalar(static_cast<double>(tracker.get_translation().x));
-        plhs[5] = mxCreateDoubleScalar(static_cast<double>(tracker.get_translation().y));
-        plhs[6] = mxCreateDoubleScalar(static_cast<double>(tracker.get_translation().z));
+        plhs[4] = mxCreateDoubleScalar(static_cast<double>(tracker.GetTranslation().x));
+        plhs[5] = mxCreateDoubleScalar(static_cast<double>(tracker.GetTranslation().y));
+        plhs[6] = mxCreateDoubleScalar(static_cast<double>(tracker.GetTranslation().z));
       }
     }
 
@@ -240,7 +248,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     plhs[argOutIndex++] = mxCreateDoubleScalar(static_cast<double>(tracker.get_angleZ()));
 
     // Return the three translation values
-    const Point3<f32>& translation = tracker.get_translation();
+    const Point3<f32>& translation = tracker.GetTranslation();
     plhs[argOutIndex++] = mxCreateDoubleScalar(static_cast<double>(translation.x));
     plhs[argOutIndex++] = mxCreateDoubleScalar(static_cast<double>(translation.y));
     plhs[argOutIndex++] = mxCreateDoubleScalar(static_cast<double>(translation.z));

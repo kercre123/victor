@@ -25,6 +25,7 @@ namespace Anki
     class ConnectedComponentSegment
     {
     public:
+      // xStart, xEnd, y use array indexes, meaning the first pixel is at (0,0), not (0.5,0.5) like true coordinates
       s16 xStart, xEnd, y;
       u16 id;
 

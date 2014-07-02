@@ -1,7 +1,10 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 
+#include "anki/common/basestation/math/quad.h"
+#include "anki/planning/shared/path.h"
 #include "json/json-forwards.h"
+#include "xythetaPlanner_definitions.h"
 #include <assert.h>
 #include <math.h>
 #include <string>
@@ -9,6 +12,9 @@
 
 namespace Anki
 {
+
+class RotatedRectangle;
+
 namespace Planning
 {
 
@@ -24,15 +30,24 @@ namespace Planning
 #define MAX_XY_BITS 14
 #define INVALID_ACTION_ID 255
 
+#define MAX_OBSTACLE_COST 1000.0f
+#define FATAL_OBSTACLE_COST (MAX_OBSTACLE_COST + 1.0f)
+
 typedef uint8_t StateTheta;
 typedef int16_t StateXY;
-typedef float Cost;
 typedef uint8_t ActionID;
 
-class Rectangle;
 class xythetaEnvironment;
 class State;
 class StateID;
+
+struct Point
+{
+  Point(StateXY x, StateXY y) : x(x), y(y) {}
+
+  StateXY x;
+  StateXY y;
+};
 
 class State
 {
@@ -47,6 +62,7 @@ public:
   bool Import(const Json::Value& config);
 
   bool operator==(const State& other) const;
+  bool operator!=(const State& other) const;
 
   StateID GetStateID() const;
 
@@ -64,7 +80,9 @@ public:
   bool operator<(const StateID& rhs) const;
 
   StateID() : theta(0), x(0), y(0) {};
+  StateID(const State& state) { *this = state.GetStateID(); };
 
+  // TODO:(bn) check that these are packed properly
   unsigned int theta : THETA_BITS;
   signed int x : MAX_XY_BITS;
   signed int y : MAX_XY_BITS;
@@ -74,6 +92,7 @@ public:
 // bottom left of the cell // TODO:(bn) think more about that, should probably add half a cell width
 class State_c
 {
+  friend std::ostream& operator<<(std::ostream& out, const State_c& state);
 public:
   State_c() : x_mm(0), y_mm(0), theta(0) {};
   State_c(float x, float y, float theta) : x_mm(x), y_mm(y), theta(theta) {};
@@ -86,6 +105,18 @@ public:
   float theta;
 };
 
+struct IntermediatePosition
+{
+  IntermediatePosition(State_c s, float d)
+    : position(s)
+    , oneOverDistanceFromLastPosition(d)
+    {
+    }
+
+  State_c position;
+  float oneOverDistanceFromLastPosition;
+};
+
 class MotionPrimitive
 {
 public:
@@ -94,6 +125,9 @@ public:
 
   // returns true if successful
   bool Import(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env);
+
+  // returns the minimum PathSegmentOffset associated with this action
+  u8 AddSegmentsToPath(State_c start, Path& path) const;
 
   // id of this action (unique per starting angle)
   ActionID id;
@@ -112,7 +146,10 @@ public:
 
   // vector containing continuous relative offsets for positions in
   // between (0,0,startTheta) and (end)
-  std::vector<State_c> intermediatePositions;
+  std::vector<IntermediatePosition> intermediatePositions;
+private:
+
+  Path pathSegments_;
 };
 
 class Successor
@@ -124,8 +161,11 @@ public:
   // The action thats takes you to state
   ActionID actionID;
 
-  // Values associated with state
+  // Value associated with state
   Cost g;
+
+  // Penalty paid to transition into state (not counting normal action cost)
+  Cost penalty;
 };
 
 
@@ -135,12 +175,12 @@ public:
   SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG);
 
   // Returns true if there are no more results left
-  bool Done() const;
+  bool Done(const xythetaEnvironment& env) const;
 
   // Returns the next action results pair
   inline const Successor& Front() const {return nextSucc_;}
 
-  void Next();
+  void Next(const xythetaEnvironment& env);
 
 private:
 
@@ -152,9 +192,6 @@ private:
   ActionID nextAction_;
 
   Successor nextSucc_;
-
-  const std::vector<MotionPrimitive>& motionPrimitives_;
-  const std::vector<Rectangle*>& obstacles_;
 };
 
 // TODO:(bn) move some of these to seperate files
@@ -164,8 +201,24 @@ public:
   State start_;
   std::vector<ActionID> actions_;
   
-  void Push(ActionID action) {actions_.push_back(action);}
-  void Clear() {actions_.clear();}
+  // same size as actions, stores the penalty expected for each
+  // action. This allows replanning if any of these penalties
+  // increase. The sum of this should be the penalty of the entire
+  // plan
+  std::vector<Cost> penalties_;
+
+  // add the given plan to the end of this plan
+  void Append(const xythetaPlan& other);
+
+  size_t Size() const {return actions_.size();}
+  void Push(ActionID action, Cost penalty = 0.0) {
+    actions_.push_back(action);
+    penalties_.push_back(penalty);
+  }
+  void Clear() {
+    actions_.clear();
+    penalties_.clear();
+  }
 };
 
 // This class contains generic information for a type of action
@@ -206,16 +259,93 @@ public:
   // returns true if everything worked
   bool Init(const char* mprimFilename, const char* mapFile);
 
+  // inits with motion primitives and an empty environment
+  bool Init(const Json::Value& mprimJson);
+
+  // dumps the obstacles to the given map file
+  void WriteEnvironment(const char* mapFile) const;
+
   // Imports motion primitives from the given json file. Returns true if success
   bool ReadMotionPrimitives(const char* mprimFilename);
 
-  // Returns an iterator to the successors from state "start"
+  // defaults to a fatal obstacle
+  void AddObstacle(const RotatedRectangle& rect, Cost cost = FATAL_OBSTACLE_COST);
+  void AddObstacle(const Quad2f& quad, Cost cost = FATAL_OBSTACLE_COST);
+
+  void ClearObstacles();
+
+  size_t GetNumObstacles() const;
+
+  // Returns an iterator to the successors from state "start". Use
+  // this one if you want to check each action
   SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;
+
+  // This function tries to apply the given action to the state. It
+  // returns the penalty of the path (i.e. no cost for actions, just
+  // obstacle penalties). If the action finishes without a fatal
+  // penalty, stateID will be updated to the successor state
+  Cost ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions = true) const;
+
+  // Returns the state at the end of the given plan (e.g. following
+  // along the plans start and executing every action). No collision
+  // checks are performed
+  State GetPlanFinalState(const xythetaPlan& plan) const;
+
+
+  // This essentially projects the given pose onto the plan (held in
+  // this member). The projection is just the closest euclidean
+  // distance point on the plan, and the return value is the number of
+  // complete plan actions that are finished by the time you get to
+  // this point. Returns the best distance in argument
+  size_t FindClosestPlanSegmentToPose(const xythetaPlan& plan,
+                                      const State_c& state,
+                                      float& distanceToPlan,
+                                      bool debug = false) const;
+
+  // Returns true if the plan is safe and complete, false otherwise,
+  // including if the penalty increased by too much (see
+  // REPLAN_PENALTY_BUFFER in the cpp file). This should always return
+  // true immediately after Replan returns true, but if the
+  // environment is updated it can be useful to re-check the plan.
+  // 
+  // second argument is how much of the path has already been
+  // executed. Note that this is different form the robot's
+  // currentPathSegment because our plans are different from robot
+  // paths
+  // 
+  // Second argument value will be set to last valid state along the
+  // path before collision if unsafe (or the goal if safe)
+  // 
+  // Third argument is the valid portion of the plan, up to lastSafeState
+  bool PlanIsSafe(const xythetaPlan& plan, const float maxDistancetoFollowOldPlan_mm, int currentPathIndex = 0) const;
+  bool PlanIsSafe(const xythetaPlan& plan, 
+                  const float maxDistancetoFollowOldPlan_mm,
+                  int currentPathIndex,
+                  State_c& lastSafeState,
+                  xythetaPlan& validPlan) const;
+
+
+  // returns the raw underlying motion primitive. Note that it is centered at (0,0)
+  const MotionPrimitive& GetRawMotionPrimitive(StateTheta theta, ActionID action) const;
+
+  // Returns true if there is a fatal collision at the given state
+  bool IsInCollision(State s) const;
+  bool IsInCollision(State_c c) const;
+
+  bool IsInSoftCollision(State s) const;
+
+  Cost GetCollisionPenalty(State s) const;
 
   inline State_c State2State_c(const State& s) const;
   inline State_c StateID2State_c(StateID sid) const;
 
+  // round the continuous state to the nearest discrete state, ignoring obstacles
   inline State State_c2State(const State_c& c) const;
+
+  // round the continuous state to the nearest discrete state which is
+  // safe. Return true if success, false if all 4 corners are unsafe
+  // (unlikely but possible)
+  bool RoundSafe(const State_c& c, State& rounded) const;
 
   inline static float GetXFromStateID(StateID sid);
   inline static float GetYFromStateID(StateID sid);
@@ -241,8 +371,14 @@ public:
   inline const ActionType& GetActionType(ActionID aid) const { return actionTypes_[aid]; }
 
   // This function fills up the given vector with (x,y,theta) coordinates of
-  // following the plan
+  // following the plan.
   void ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const;
+
+  void PrintPlan(const xythetaPlan& plan) const;
+
+  // Convert the plan to Planning::PathSegment's and append it to
+  // path. Also updates plan to set the robotPathSegmentIdx_
+  void AppendToPath(xythetaPlan& plan, Path& path) const;
 
   // TODO:(bn) move these??
 
@@ -252,11 +388,13 @@ public:
 
   double GetOneOverMaxVelocity() const {return oneOverMaxVelocity_;}
 
+  float GetResolution_mm() const { return resolution_mm_; }
+
 private:
 
   // returns true on success
   bool ReadEnvironment(FILE* fEnv);
-  bool ParseMotionPrims(Json::Value& config);
+  bool ParseMotionPrims(const Json::Value& config);
 
   float resolution_mm_;
   float oneOverResolution_;
@@ -271,8 +409,8 @@ private:
   // First index is starting angle, second is prim ID
   std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
 
-  // Obstacles
-  std::vector<Rectangle*> obstacles_;
+  // Obstacles. Cost over MAX_OBSTACLE_COST means infinite cost (aka hard obstacle)
+  std::vector< std::pair<const RotatedRectangle, Cost> > obstacles_;
 
   // index is actionID
   std::vector<ActionType> actionTypes_;
@@ -363,7 +501,17 @@ StateTheta xythetaEnvironment::GetTheta(float theta_rad) const
   while(positiveTheta < 0.0) {
     positiveTheta += 2*M_PI;
   }
-  return (StateTheta) roundf(positiveTheta * oneOverRadiansPerAngle_);
+  
+  while(positiveTheta >= 2*M_PI) {
+    positiveTheta -= 2*M_PI;
+  }
+  
+  const StateTheta stateTheta = (StateTheta) std::round(positiveTheta * oneOverRadiansPerAngle_) % numAngles_;
+
+  assert(numAngles_ == angles_.size());
+  assert(stateTheta >= 0 && stateTheta < angles_.size());
+  
+  return stateTheta;
 }
 
 

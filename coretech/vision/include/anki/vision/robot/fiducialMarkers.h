@@ -65,19 +65,32 @@ namespace Anki
     {
     public:
 
+      enum ValidityCode {
+        VALID = 0,
+        LOW_CONTRAST = 1,
+        UNVERIFIED = 2,
+        UNKNOWN = 3,
+        WEIRD_SHAPE = 4,
+        NUMERICAL_FAILURE = 5
+      };
+
       //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
       Quadrilateral<f32> corners;
       Vision::MarkerType markerType;
       f32 observedOrientation; //< In degrees. TODO: change to radians or discrete
-      bool isValid;
+      ValidityCode validity;
 
       VisionMarker();
 
       Result Extract(const Array<u8> &image, const Quadrilateral<s16> &quad,
-                     const Array<f32> &homography, const f32 minContrastRatio,
-                     const s32 quadRefinementIterations,
-                     const s32 numRefinementSamples,
-                     MemoryStack scratch);
+        const Array<f32> &homography, const f32 minContrastRatio,
+        const s32 refine_quadRefinementIterations,
+        const s32 refine_numRefinementSamples,
+        const f32 refine_quadRefinementMaxCornerChange,
+        const s32 quads_minQuadArea,
+        const s32 quads_quadSymmetryThreshold,
+        const s32 quads_minDistanceFromImageEdge,
+        MemoryStack scratch);
 
       void Print() const;
 
@@ -96,13 +109,13 @@ namespace Anki
       //  const f32 minContrastRatio, bool &isHighContrast, u8 &meanGrayvalueThreshold);
 
       Result ComputeBrightDarkValues(const Array <u8> &image, const Array<f32> &homography,
-                                     const f32 minContrastRatio,
-                                     f32& brightValue, f32& darkValue,
-                                     bool& enoughContrast);
-      
+        const f32 minContrastRatio,
+        f32& brightValue, f32& darkValue,
+        bool& enoughContrast);
+
       static bool areTreesInitialized;
       static FiducialMarkerDecisionTree multiClassTree;
-      
+
 #if USE_RED_BLACK_VERIFICATION_TREES
       static FiducialMarkerDecisionTree verifyRedTree, verifyBlackTree;
 #else

@@ -99,7 +99,7 @@ namespace Anki
         }
       }
 
-      const s32 stringLength = strlen(text);
+      const s32 stringLength = static_cast<s32>(strlen(text));
 
       cv::Point curOrg = org;
       for(s32 iChar=0; iChar<stringLength; iChar++) {
@@ -111,6 +111,35 @@ namespace Anki
 
         curOrg.x += maxWidth - 1;
       }
+    }
+
+    void CvPutTextWithBackground(
+      cv::Mat& img, const char * text, cv::Point org,
+      int fontFace, double fontScale, cv::Scalar textColor, cv::Scalar backgroundColor,
+      int thickness, int lineType, bool orgIsCenter)
+    {
+      // Based on example at http://docs.opencv.org/modules/core/doc/drawing_functions.html
+
+      int baseline = 0;
+      const cv::Size textSize = cv::getTextSize(text, fontFace, fontScale, thickness, &baseline);
+      baseline += thickness;
+
+      cv::Point rectanglePoint1  = org;
+      cv::Point rectanglePoint2  = org + cv::Point(textSize.width, textSize.height);
+      cv::Point textPoint = org + cv::Point(0, textSize.height);
+
+      if(orgIsCenter) {
+        const cv::Point textSize2(textSize.width / 2, textSize.height / 2);
+        rectanglePoint1 -= textSize2;
+        rectanglePoint2 -= textSize2;
+        textPoint -= textSize2;
+      }
+
+      // draw the box
+      cv::rectangle(img, rectanglePoint1, rectanglePoint2, backgroundColor, -1);
+
+      // then put the text itself
+      cv::putText(img, text, textPoint, fontFace, fontScale, textColor, thickness, lineType);
     }
 #endif //#if ANKICORETECH_EMBEDDED_USE_OPENCV
 

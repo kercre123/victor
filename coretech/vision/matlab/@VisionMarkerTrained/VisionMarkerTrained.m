@@ -89,7 +89,8 @@ classdef VisionMarkerTrained
             Size = 1;
             UseSortedCorners = false;
             UseSingleProbe = false;
-            CornerRefinementIterations = 10;
+            CornerRefinementIterations = 25;
+            UseMexCornerRefinment = false;
                         
             parseVarargin(varargin{:});
             
@@ -132,9 +133,15 @@ classdef VisionMarkerTrained
                 this.isValid = false;
             else
                 if CornerRefinementIterations > 0
-                    [this.corners, this.H] = this.RefineCorners(img, 'NumSamples', 100, ... 'DebugDisplay', true,  ...
-                        'MaxIterations', CornerRefinementIterations, ...
-                        'DarkValue', dark, 'BrightValue', bright);
+                    if UseMexCornerRefinment
+                        [this.corners, this.H] = mexRefineQuadrilateral(im2uint8(img), int16(this.corners-1), single(this.H), ...
+                            CornerRefinementIterations, VisionMarkerTrained.SquareWidthFraction, dark*255, bright*255, 100, 5);
+                        this.corners = this.corners + 1;
+                    else
+                        [this.corners, this.H] = this.RefineCorners(img, 'NumSamples', 100, ... 'DebugDisplay', true,  ...
+                            'MaxIterations', CornerRefinementIterations, ...
+                            'DarkValue', dark, 'BrightValue', bright);
+                    end
                 end
                 
                 [this.codeName, this.codeID] = TestTree( ...

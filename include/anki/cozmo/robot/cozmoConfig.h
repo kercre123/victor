@@ -26,17 +26,27 @@ namespace Anki {
     // issue with moving the lift when it is at a limit. The lift arm
     // flies off of the robot and comes back! So for now, we just don't
     // drive the lift down that far. We also skip calibration in sim.
-    const f32 LIFT_HEIGHT_LOWDOCK  = 29.f;
+
 #ifdef SIMULATOR
     // Need a different height in simulation because of the position of the connectors
+    const f32 LIFT_HEIGHT_LOWDOCK  = 29.f;
     const f32 LIFT_HEIGHT_HIGHDOCK = 73.f;
-#else
-    const f32 LIFT_HEIGHT_HIGHDOCK = 69.f;
-#endif
     const f32 LIFT_HEIGHT_CARRY    = 88.f;
+#else
+    // Not the actual heights achieved by the lift, but the heights that would be achieved if there was no backlash.
+    /*
+    // Robot #1
+    const f32 LIFT_HEIGHT_LOWDOCK  = 11.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
+    const f32 LIFT_HEIGHT_CARRY    = 98.f;
+    */
     
-    // Height of lift "shoulder" joint where the arm attaches to robot body
-    const f32 LIFT_JOINT_HEIGHT = 41.7f;
+    // Robot #2
+    const f32 LIFT_HEIGHT_LOWDOCK  = 26.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
+    const f32 LIFT_HEIGHT_CARRY    = 90.5f;
+#endif
+
     
     // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
     const f32 LIFT_ARM_LENGTH = 64.f;
@@ -45,7 +55,13 @@ namespace Anki {
     const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
     
     // The height of the top of the lift crossbar with respect to the wrist joint
-    const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -18.f;
+    const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -22.f;
+    
+    // The distance along the x axis from the wrist joint to the front of the lifter plate
+    const f32 LIFT_FRONT_WRT_WRIST_JOINT = 3.5f;
+    
+    // The height of the "fingers"
+    const f32 LIFT_FINGER_HEIGHT = 3.8f;
     
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
@@ -58,13 +74,22 @@ namespace Anki {
     
     const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 29.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
     
-    const f32 ROBOT_BOUNDING_LENGTH = 88.f; // including gripper fingers
-    const f32 ROBOT_BOUNDING_WIDTH  = 54.2f;
-    const f32 ROBOT_BOUNDING_FRONT_DISTANCE = 32.1f; // distance from robot origin to front of bounding box
+    // Amount to recede the front boundary of the robot when we don't want to include the lift.
+    // TEMP: Applied by default to robot bounding box params below mostly for demo purposes
+    //       so we don't prematurely delete blocks, but we may eventually want to apply it
+    //       conditionally (e.g. when carrying a block)
+    const f32 ROBOT_BOUNDING_X_LIFT  = 10.f;
+    
+    const f32 ROBOT_BOUNDING_X       = 88.f - ROBOT_BOUNDING_X_LIFT; // including gripper fingers
+    const f32 ROBOT_BOUNDING_Y       = 54.2f;
+    const f32 ROBOT_BOUNDING_X_FRONT = 32.1f - ROBOT_BOUNDING_X_LIFT; // distance from robot origin to front of bounding box
+    const f32 ROBOT_BOUNDING_Z       = 67.7f; // from ground to top of head
+    const f32 ROBOT_BOUNDING_RADIUS  = sqrtf((0.25f*ROBOT_BOUNDING_X*ROBOT_BOUNDING_X) +
+                                             (0.25f*ROBOT_BOUNDING_Y*ROBOT_BOUNDING_Y));
     
     const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};  // relative to neck joint
     
-    const f32 PREDOCK_DISTANCE_MM = 80.f;
+    const f32 PREDOCK_DISTANCE_MM = 100;  // ROBOT_BOUNDING_RADIUS + 15.f;
     
     // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
     const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
@@ -95,6 +120,7 @@ namespace Anki {
     const u16 HEAD_CAM_CALIB_WIDTH  = 320;
     const u16 HEAD_CAM_CALIB_HEIGHT = 240;
     
+    /*
     // From Calibration on June 3, 2014
     const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 333.6684040730803f;
     const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 335.2799828009748f;
@@ -106,6 +132,20 @@ namespace Anki {
       -0.000994462251660f,
       -0.000805198826767f
     };
+     */
+    
+    // From Calibration on June 28, 2014, Cozmo Proto 2.1, #2
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 328.87251f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 331.17332f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 160.10795f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 117.64527f;
+    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
+      -0.099922561981334f,
+      -0.027386549049312f,
+      -0.003826021624417f,
+       0.000534816869611f
+    };
+    
 #endif // #ifdef SIMULATOR
 
 
@@ -209,6 +249,29 @@ namespace Anki {
     // Number of frames to skip when streaming images to basestation
     const u8 IMG_STREAM_SKIP_FRAMES = 2;
 
+    
+    /***************************************************************************
+     *
+     *                          Poses and Planner
+     *
+     **************************************************************************/
+    
+    // A common distance threshold for pose equality comparison.
+    // If two poses are this close to each other, they are considered to be equal
+    // (at least in terms of translation).
+    const f32 DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM = 5.0f;
+    
+    
+    /***************************************************************************
+     *
+     *                  ~ ~ ~ ~ ~ MAGIC NUMBERS ~ ~ ~ ~
+     *
+     ***************************************************************************/
+    // Cozmo #2 seems to always dock to the right of the marker by a few mm.
+    // There could be any number of factors contributing to this so for now we just adjust the y-offset of the
+    // docking error signal by this much.
+    const f32 COZMO2_CAM_LATERAL_POSITION_HACK = 2.f;
+    
     
   } // namespace Cozmo
 } // namespace Anki

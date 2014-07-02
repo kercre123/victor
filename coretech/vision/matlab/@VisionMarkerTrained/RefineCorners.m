@@ -16,6 +16,7 @@ DebugDisplay = false;
 NumSamples = 500; % divided evenly amongst the 8 square sides
 DarkValue = 0;
 BrightValue = 1;
+MaxCornerChange = 2; % in pixels
 
 parseVarargin(varargin{:});
 
@@ -104,6 +105,12 @@ end
 
 temp = newH*[[0 0 1 1; 0 1 0 1]' ones(4,1)]';
 newCorners = (temp(1:2,:)./temp([3 3],:))';
+
+if any(sqrt(sum((newCorners - this.corners).^2,2)) > MaxCornerChange)
+    % Corners moved too much, restore originals    
+    newCorners = this.corners;
+    newH = this.H;
+end
 
 if nargout == 1
     this.H = newH;

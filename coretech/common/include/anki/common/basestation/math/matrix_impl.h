@@ -210,7 +210,7 @@ namespace Anki {
     // TODO: Define our own opencv-free transpose?
 #endif
     
-  } // Matrix<T>::getInverse()
+  } // Matrix<T>::GetInverse()
   
                    
   
@@ -440,7 +440,7 @@ namespace Anki {
   // Matrix multiplication:
   // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  template<size_t KCOLS, typename T_other, typename T_work>
+  template<MatDimType KCOLS, typename T_other, typename T_work>
   SmallMatrix<NROWS,KCOLS,T_work> SmallMatrix<NROWS,NCOLS,T>::operator* (const SmallMatrix<NCOLS,KCOLS,T_other> &other) const
   {
     SmallMatrix<NROWS,KCOLS,T_work> res;
@@ -477,8 +477,8 @@ namespace Anki {
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::Abs()
   {
-    for(size_t i=0; i<NROWS; ++i) {
-      for(size_t j=0; j<NCOLS; ++j) {
+    for(MatDimType i=0; i<NROWS; ++i) {
+      for(MatDimType j=0; j<NCOLS; ++j) {
         (*this)(i,j) = std::abs((*this)(i,j));
       }
     }

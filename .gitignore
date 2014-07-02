@@ -99,3 +99,10 @@ robot/robot_embedded-tests.dep
 robot/syscon/JLinkLog.txt
 robot/chipSimulator/robot_chipSimulator.uvguix.anki
 cozmo_viz_controller
+matlab/basicsResults.mat
+matlab/basicsResults_input.mat
+matlab/perTestStatsResults.mat
+systemTests/tests/intermediate/
+matlab/basicsResults_input0.mat
+matlab/basicsResults_input1.mat
+matlab/basicsResults_input2.mat

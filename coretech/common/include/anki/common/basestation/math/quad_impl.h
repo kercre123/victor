@@ -24,6 +24,9 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/triangle_impl.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp" // for minAreaRect
@@ -65,6 +68,20 @@ namespace Anki {
   : std::array<Point<N,T>,4>(quad)
   {
   
+  }
+
+  template<QuadDimType N, typename T>
+  inline void Quadrilateral<N,T>::Print(void) const
+  {
+    using namespace Quad;
+    CoreTechPrint("Quad: ");
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
+      CoreTechPrint("(");
+      for (u8 p = 0; p < N; ++p) {
+        CoreTechPrint(" %f", (*this)[i][p]);
+      }
+      CoreTechPrint(")\n");
+    }
   }
   
   template<QuadDimType N, typename T>
@@ -116,6 +133,16 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
+  inline Quadrilateral<N,T>&  Quadrilateral<N,T>::operator+=(const T value)
+  {
+    using namespace Quad;
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
+      (*this)[i] += value;
+    }
+    return *this;
+  }
+  
+  template<QuadDimType N, typename T>
   inline Quadrilateral<N,T>&  Quadrilateral<N,T>::operator+=(const Point<N,T> &point)
   {
     using namespace Quad;
@@ -136,7 +163,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  Quadrilateral<N,T>  Quadrilateral<N,T>::getScaled(const T scaleFactor) const
+  Quadrilateral<N,T>  Quadrilateral<N,T>::GetScaled(const T scaleFactor) const
   {
     Quadrilateral<N,T> scaledQuad(*this);
     scaledQuad *= scaleFactor;
@@ -144,7 +171,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  inline T Quadrilateral<N,T>::get_minX(void) const
+  inline T Quadrilateral<N,T>::GetMinX(void) const
   {
     using namespace Quad;
     return MIN((*this)[TopLeft].x(),
@@ -153,7 +180,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  inline T Quadrilateral<N,T>::get_minY(void) const
+  inline T Quadrilateral<N,T>::GetMinY(void) const
   {
     using namespace Quad;
     return MIN((*this)[TopLeft].y(),
@@ -162,7 +189,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  inline T Quadrilateral<N,T>::get_maxX(void) const
+  inline T Quadrilateral<N,T>::GetMaxX(void) const
   {
     using namespace Quad;
     return MAX((*this)[TopLeft].x(),
@@ -171,7 +198,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  inline T Quadrilateral<N,T>::get_maxY(void) const
+  inline T Quadrilateral<N,T>::GetMaxY(void) const
   {
     using namespace Quad;
     return MAX((*this)[TopLeft].y(),
@@ -180,7 +207,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  Point<N,T> Quadrilateral<N,T>::computeCentroid(void) const
+  Point<N,T> Quadrilateral<N,T>::ComputeCentroid(void) const
   {
     using namespace Quad;
     
@@ -194,7 +221,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  Quadrilateral<N,T>& Quadrilateral<N,T>::scale(const T scaleFactor)
+  Quadrilateral<N,T>& Quadrilateral<N,T>::Scale(const T scaleFactor)
   {
     using namespace Quad;
     
@@ -238,7 +265,7 @@ namespace Anki {
     
     std::array<std::pair<f32,Quad::CornerName>,4> angleIndexPairs;
     
-    Point<N,T> center = this->computeCentroid();
+    Point<N,T> center = this->ComputeCentroid();
     
     for(CornerName i=FirstCorner; i<NumCorners; ++i) {
       Point<N,T> corner((*this)[i]);
@@ -273,7 +300,7 @@ namespace Anki {
     Point<N,T> unitNormal(aroundNormal);
     unitNormal.MakeUnitLength();
 
-    Point<N,T> center = this->computeCentroid();
+    Point<N,T> center = this->ComputeCentroid();
     SmallSquareMatrix<N,T> P = GetProjectionOperator(unitNormal);
     center = P * center;
 

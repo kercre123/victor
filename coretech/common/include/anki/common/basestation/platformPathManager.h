@@ -22,27 +22,27 @@ namespace Anki {
   class SingletonBase
   {
   public:
-    static Derived* getInstance() {
-      if(singletonInstance_ == NULL) {
-        singletonInstance_ = new Derived();
+    static Derived* GetInstance() {
+      if(_singletonInstance == nullptr) {
+        _singletonInstance = new Derived();
       }
-      return singletonInstance_;
+      return _singletonInstance;
     }
     
     // TODO: Add singleton-appropriate destructor
     
   protected:
     SingletonBase() { }
-    static Derived* singletonInstance_;
+    static Derived* _singletonInstance;
     
   }; // class SingletonBase<Derived>
 
   template<class Derived>
-  Derived* SingletonBase<Derived>::singletonInstance_ = NULL;
+  Derived* SingletonBase<Derived>::_singletonInstance = nullptr;
   
   // Macro for convenience
 #define PREPEND_SCOPED_PATH(__SCOPE__, __NAME__) \
-  ::Anki::PlatformPathManager::getInstance()->PrependPath(::Anki::PlatformPathManager::__SCOPE__, __NAME__)
+  ::Anki::PlatformPathManager::GetInstance()->PrependPath(::Anki::PlatformPathManager::__SCOPE__, __NAME__)
   
   class PlatformPathManager : public SingletonBase<PlatformPathManager>
   {
@@ -67,7 +67,7 @@ namespace Anki {
     
   private:
     // TODO: Could also be a std::array<std::string,NumScopes>
-    std::map<Scope, std::string> scopePrefixes_;
+    std::map<Scope, std::string> _scopePrefixes;
     
   }; // class SystemPathManager
   

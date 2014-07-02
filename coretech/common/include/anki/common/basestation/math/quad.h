@@ -69,27 +69,29 @@ namespace Anki {
     Quadrilateral<N,T>  operator- (const Quadrilateral<N,T> &quad2) const;
     Quadrilateral<N,T>& operator+=(const Quadrilateral<N,T> &quad2);
     Quadrilateral<N,T>& operator-=(const Quadrilateral<N,T> &quad2);
+
     Quadrilateral<N,T>& operator*=(const T value);
+    Quadrilateral<N,T>& operator+=(const T value);
 
     Quadrilateral<N,T>& operator+=(const Point<N,T> &point);
     Quadrilateral<N,T>& operator-=(const Point<N,T> &point);
     
     // Scale around centroid:
-    Quadrilateral<N,T>  getScaled(const T scaleFactor) const;
-    Quadrilateral<N,T>& scale(const T scaleFactor); // in place
+    Quadrilateral<N,T>  GetScaled(const T scaleFactor) const;
+    Quadrilateral<N,T>& Scale(const T scaleFactor); // in place
     
     // Compute the centroid of the four points
-    Point<N,T> computeCentroid(void) const;
+    Point<N,T> ComputeCentroid(void) const;
     
     // Get min/max coordinates (e.g. for bounding box)
-    T get_minX(void) const;
-    T get_minY(void) const;
-    T get_maxX(void) const;
-    T get_maxY(void) const;
+    T GetMinX(void) const;
+    T GetMinY(void) const;
+    T GetMaxX(void) const;
+    T GetMaxY(void) const;
     
     // Force access by enumerated CornerNames:
     const Point<N,T>& operator[] (const Quad::CornerName whichCorner) const;
-    Point<N,T>&       operator[] (const Quad::CornerName whichCorner);
+    Point<N,T>&       operator[] (const Quad::CornerName whichCorner);    
     
     //const std::vector<Point<N,T> >& get_corners() const;
     

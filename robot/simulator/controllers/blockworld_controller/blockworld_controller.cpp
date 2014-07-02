@@ -9,13 +9,18 @@
 #include <cstdio>
 #include <queue>
 #include <unistd.h>
+#include <fstream>
+
 
 #include <webots/Supervisor.hpp>
 #include "basestationKeyboardController.h"
 
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/rotatedRect_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/general.h"
+#include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "messageHandler.h"
@@ -24,8 +29,10 @@
 #include "vizManager.h"
 #include "pathPlanner.h"
 #include "behaviorManager.h"
+#include "anki/common/basestation/jsonTools.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/common/basestation/platformPathManager.h"
 
 #include "anki/cozmo/basestation/tcpComms.h"
 
@@ -53,8 +60,19 @@ int main(int argc, char **argv)
   BlockWorld blockWorld;
   RobotManager robotMgr;
   MessageHandler msgHandler;
-  PathPlanner pathPlanner;
   BehaviorManager behaviorMgr;
+
+  // read planner motion primitives
+  Json::Value mprims;
+  const std::string subPath("coretech/planning/matlab/cozmo_mprim.json");
+  const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+
+  Json::Reader reader;
+  std::ifstream jsonFile(jsonFilename);
+  reader.parse(jsonFile, mprims);
+  jsonFile.close();
+
+  LatticePlanner pathPlanner(&blockWorld, mprims);
   
   // Initialize the modules by telling them about each other:
   msgHandler.Init(&robotComms, &robotMgr, &blockWorld);
@@ -114,25 +132,7 @@ int main(int argc, char **argv)
 
     //MessageHandler::getInstance()->ProcessMessages();
     msgHandler.ProcessMessages();
-    
-    //
-    // Check for any outgoing messages from each basestation robot:
-    //
-    for(auto robotiD : robotMgr.GetRobotIDList())
-    {
-      Robot* robot = robotMgr.GetRobotByID(robotiD);
-      while(robot->hasOutgoingMessages())
-      {
-        Comms::MsgPacket p;
-        p.destId = robot->get_ID();
-        robot->getOutgoingMessage(p.data, p.dataLen);
-        if (p.dataLen > 0) {
-          robotComms.Send(p);
-        }
-      } // while robot i still has outgoing messages to send
       
-    } // for each robot
-
     // Draw observed markers, but only if images are being streamed
     blockWorld.DrawObsMarkers();
     
@@ -150,73 +150,49 @@ int main(int argc, char **argv)
     
 
     /////////// Update visualization ////////////
-    if(blockWorld.DidBlocksChange())
-    {
+    { // Update Block-of-Interest display
+      
       // Get selected block of interest from Behavior manager
       static ObjectID_t prev_boi = 0;      // Previous block of interest
-      static u32 prevNumPreDockPoses = 0;  // Previous number of predock poses
+      static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
+      // TODO: store previous block's color and restore it when unselecting
       
-      // Get current block of interest
+      // Draw current block of interest
       const ObjectID_t boi = behaviorMgr.GetBlockOfInterest();
       
-      // Draw all blocks we know about
-      for(auto blocksByType : blockWorld.GetAllExistingBlocks()) {
-        for(auto blocksByID : blocksByType.second) {
+      const Block* block = blockWorld.GetBlockByID(boi);
+      if(block != nullptr) {
+
+        // Get predock poses
+        std::vector<Block::PoseMarkerPair_t> poses;
+        block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
+        
+        // Erase previous predock pose marker for previous block of interest
+        if (prev_boi != boi || poses.size() != prevNumPreDockPoses) {
+          PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", boi, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
+          VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
           
-          const Block* block = dynamic_cast<Block*>(blocksByID.second);
-          
-          u32 color = VIZ_COLOR_DEFAULT;
-          
-          // Special treatment for block of interest
-          if (blocksByID.first == boi) {
-            // Set different color
-            color = VIZ_COLOR_SELECTED_OBJECT;
-            
-            // Get predock poses
-            std::vector<Block::PoseMarkerPair_t> poses;
-            block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
-            
-            // Erase previous predock pose marker for previous block of interest
-            if (prev_boi != boi || poses.size() != prevNumPreDockPoses) {
-              PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %d)\n", boi, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
-              VizManager::getInstance()->EraseVizObjectType(VIZ_PREDOCKPOSE);
-              prev_boi = boi;
-              prevNumPreDockPoses = poses.size();
-            }
-            
-            // Draw predock poses
-            u32 poseID = 0;
-            for(auto pose : poses) {
-              VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose.first, VIZ_COLOR_PREDOCKPOSE);
-              ++poseID;
-            }
+          // Return previous selected block to original color (necessary in the
+          // case that this block isn't currently being observed, meaning its
+          // visualization won't have updated))
+          const Block* prevBlock = blockWorld.GetBlockByID(prev_boi);
+          if(prevBlock != nullptr && prevBlock->GetLastObservedTime() < BaseStationTimer::getInstance()->GetCurrentTimeStamp()) {
+            prevBlock->Visualize(VIZ_COLOR_DEFAULT);
           }
           
-          // Draw cuboid
-          VizManager::getInstance()->DrawCuboid(block->GetID(),
-                                                //block->GetType(),
-                                                block->GetSize(),
-                                                block->GetPose(),
-                                                color);
-          
-          // Draw blocks' projected quads on the mat
-          {
-            using namespace Quad;
-            Quad2f quadOnGround2d = block->GetBoundingQuadXY();
-            
-            Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
-                                  Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
-                                  Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
-                                  Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
-            
-            VizManager::getInstance()->DrawQuad(block->GetID(), quadOnGround3d, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
-          }
-          
-          
-        } // FOR each ID of this type
-      } // FOR each type
+          prev_boi = boi;
+          prevNumPreDockPoses = poses.size();
+        }
+
+        // Draw cuboid for current selection, with predock poses
+        block->Visualize(VIZ_COLOR_SELECTED_OBJECT, PREDOCK_DISTANCE_MM);
+        
+      } else {
+        // block == nullptr (no longer exists, delete its predock poses)
+        VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
+      }
       
-    } // if locks were updated
+    } // if blocks were updated
     
     // Draw all robot poses
     // TODO: Only send when pose has changed?
@@ -225,10 +201,30 @@ int main(int argc, char **argv)
       Robot* robot = robotMgr.GetRobotByID(robotID);
       
       // Triangle pose marker
-      VizManager::getInstance()->DrawRobot(robotID, robot->get_pose());
+      VizManager::getInstance()->DrawRobot(robotID, robot->GetPose());
       
       // Full Webots CozmoBot model
-      VizManager::getInstance()->DrawRobot(robotID, robot->get_pose(), robot->get_headAngle(), robot->get_liftAngle());
+      VizManager::getInstance()->DrawRobot(robotID, robot->GetPose(), robot->GetHeadAngle(), robot->GetLiftAngle());
+      
+      // Robot bounding box
+      using namespace Quad;
+      Quad2f quadOnGround2d = robot->GetBoundingQuadXY();
+      Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
+                            Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
+                            Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
+                            Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
+
+      VizManager::getInstance()->DrawRobotBoundingBox(robot->GetID(), quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
+      
+      if(robot->IsCarryingBlock()) {
+        Block* carryBlock = blockWorld.GetBlockByID(robot->GetCarryingBlock());
+        if(carryBlock == nullptr) {
+          PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingBlock());
+          robot->SetCarryingBlock(ANY_OBJECT);
+        } else {
+          carryBlock->Visualize(VIZ_COLOR_DEFAULT);
+        }
+      }
     }
 
     /////////// End visualization update ////////////

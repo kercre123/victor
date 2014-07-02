@@ -1,0 +1,24 @@
+{
+	"Blocks": {
+		"BlockName": "Block",
+		"BlockPose": {
+			"Angle": 0,
+			"Axis": [0,1,0],
+			"Translation": [0,0,0]
+		},
+		"Type": 5
+	},
+	"CameraCalibration": {
+		"center_x": 0,
+		"center_y": 0,
+		"focalLength_x": 0,
+		"focalLength_y": 0,
+		"ncols": 320,
+		"nrows": 240,
+		"skew": 0
+	},
+	"CheckRobotPose": 0,
+	"CheckBlockPose": 0,
+	"NumBlocks": 1,
+	"WorldTitle": "realWorld"
+}

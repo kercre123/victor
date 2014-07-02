@@ -9,8 +9,12 @@
 #include <algorithm>
 #include <list>
 
+#include "anki/common/basestation/general.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/matrix_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"
@@ -209,7 +213,7 @@ namespace Anki {
         {
           // First make sure this solution puts the object in front of the
           // camera (this should be true for two solutions)
-          if(possiblePoses[i_solution].get_translation().z() > 0)
+          if(possiblePoses[i_solution].GetTranslation().z() > 0)
           {
             Point2f projectedPoint;
             this->Project3dPoint(possiblePoses[i_solution]*worldQuad[i_validate], projectedPoint);
@@ -241,7 +245,7 @@ namespace Anki {
       } // for each validation corner
       
       // Make sure to make the returned pose w.r.t. the camera!
-      pose.set_parent(&_pose);
+      pose.SetParent(&_pose);
       
       return pose;
       
@@ -371,42 +375,50 @@ namespace Anki {
     
     void Camera::AddOccluder(const ObservableObject& object)
     {
-      const Pose3d objectPoseWrtCamera(object.GetPose().getWithRespectTo(&_pose));
-      
-      std::vector<Point3f> cornersAtPose;
-      std::vector<Point2f> projectedCorners;
-      
-      // Project the objects's corners into the image and create an occluding
-      // bounding rectangle from that
-      object.GetCorners(objectPoseWrtCamera, cornersAtPose);
-      Project3dPoints(cornersAtPose, projectedCorners);
-      
-      _occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.get_translation().z());
-      
+      Pose3d objectPoseWrtCamera;
+      if(object.GetPose().GetWithRespectTo(_pose, objectPoseWrtCamera) == false) {
+        PRINT_NAMED_ERROR("Camera.AddOccluder.ObjectDoesNotShareOrigin",
+                          "Object must be in the same pose tree as the camera to add it as an occluder.\n");
+      } else {
+        std::vector<Point3f> cornersAtPose;
+        std::vector<Point2f> projectedCorners;
+        
+        // Project the objects's corners into the image and create an occluding
+        // bounding rectangle from that
+        object.GetCorners(objectPoseWrtCamera, cornersAtPose);
+        Project3dPoints(cornersAtPose, projectedCorners);
+        
+        _occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.GetTranslation().z());
+      }
     } // AddOccluder(ObservableObject)
     
     
     void Camera::AddOccluder(const KnownMarker& marker)
     {
-      const Pose3d markerPoseWrtCamera = marker.GetPose().getWithRespectTo(&_pose);
-      
-      const Quad3f markerCorners = marker.Get3dCorners(markerPoseWrtCamera);
-      
-      Quad2f imgCorners;
-      Project3dPoints(markerCorners, imgCorners);
-
-      // Use closest point as the distance to the quad
-      auto cornerIter = markerCorners.begin();
-      f32 atDistance = cornerIter->z();
-      ++cornerIter;
-      while(cornerIter != markerCorners.end()) {
-        if(cornerIter->z() < atDistance) {
-          atDistance = cornerIter->z();
-        }
+      Pose3d markerPoseWrtCamera;
+      if(marker.GetPose().GetWithRespectTo(&_pose, markerPoseWrtCamera) == false) {
+        PRINT_NAMED_ERROR("Camera.AddOccluder.MarkerDoesNotShareOrigin",
+                          "Marker must be in the same pose tree as the camera to add it as an occluder.\n");
+      } else {
+        
+        const Quad3f markerCorners = marker.Get3dCorners(markerPoseWrtCamera);
+        
+        Quad2f imgCorners;
+        Project3dPoints(markerCorners, imgCorners);
+        
+        // Use closest point as the distance to the quad
+        auto cornerIter = markerCorners.begin();
+        f32 atDistance = cornerIter->z();
         ++cornerIter;
+        while(cornerIter != markerCorners.end()) {
+          if(cornerIter->z() < atDistance) {
+            atDistance = cornerIter->z();
+          }
+          ++cornerIter;
+        }
+        
+        _occluderList.AddOccluder(imgCorners, atDistance);
       }
-      
-      _occluderList.AddOccluder(imgCorners, atDistance);
 
     } // AddOccluder(Quad3f)
     

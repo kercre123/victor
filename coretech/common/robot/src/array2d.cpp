@@ -97,7 +97,7 @@ namespace Anki
 
         if(numValuesThisRow > 0) {
           for(s32 x=0; x<numValuesThisRow; x++) {
-            pThisData[x] = static_cast<u8>( (values+y*size[1])[x] );
+            pThisData[x] = saturate_cast<u8>( (values+y*size[1])[x] );
           }
           numValuesSet += numValuesThisRow;
         }
@@ -124,7 +124,7 @@ namespace Anki
 
         if(numValuesThisRow > 0) {
           for(s32 x=0; x<numValuesThisRow; x++) {
-            pThisData[x] = static_cast<s16>( (values+y*size[1])[x] );
+            pThisData[x] = saturate_cast<s16>( (values+y*size[1])[x] );
           }
           numValuesSet += numValuesThisRow;
         }

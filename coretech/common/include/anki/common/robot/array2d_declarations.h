@@ -104,6 +104,11 @@ namespace Anki
       inline const Type* Pointer(const Point<s16> &point) const;
       inline Type* Pointer(const Point<s16> &point);
 
+      // Get the ith element, like Matlab's 1D indexing of a 2D array.
+      // For example, the 5th element of Arrays of size (1,6) and (6,1) is the same;
+      const Type& Element(const s32 elementIndex) const;
+      Type& Element(const s32 elementIndex);
+
       // Return a slice accessor for this array, like the Matlab expression "array(1:5, 2:3:5)"
       //
       // NOTE:
@@ -193,6 +198,9 @@ namespace Anki
 
       // Get the stride, which is the number of bytes between an element at (n,m) and an element at (n+1,m)
       s32 get_stride() const;
+
+      // just size[0] * size[1]
+      s32 get_numElements() const;
 
       // Return the flags that were used when this object was constructed.
       Flags::Buffer get_flags() const;

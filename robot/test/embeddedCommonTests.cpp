@@ -715,6 +715,24 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(-10e30))                == -0x8000000000000000LL); ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(10e30))                 == 0x7FFFFFFFFFFFFFFFLL);
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(-10e50))                == -0x8000000000000000LL); ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(10e50))                 == 0x7FFFFFFFFFFFFFFFLL);
 
+  /**/                                                                                  ASSERT_TRUE(saturate_cast<f32>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<u32>(0xFFFFFFFF)) >= 4.0e9f);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<s32>(-0x80000000LL))         <= -2.0e9f);  ASSERT_TRUE(saturate_cast<f32>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<s32>(0x7FFFFFFF)) >= 2.0e9f);
+  /**/                                                                                  ASSERT_TRUE(saturate_cast<f32>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<u64>(0xFFFFFFFFFFFFFFFFULL)) >= 1.0e19f);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(-0x8000000000000000LL)) <= -9.0e18f); ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(0x7FFFFFFFFFFFFFFFULL)) >= 9.0e18f);
+
+  /**/                                                                                  ASSERT_TRUE(saturate_cast<f32>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<u64>(0xFFFFFFFFFFFFFFFFULL)) >= 1.0e19f);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(-0x8000000000000000LL)) <= -9.0e18f); ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<f32>(static_cast<s64>(0x7FFFFFFFFFFFFFFFULL)) >= 9.0e18f);
+
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<f64>(FLT_MAX))         == FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<f64>(3.402823467e+38)) == FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<f64>(3.402823466e+39)) == FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(static_cast<f64>(DBL_MAX))         == FLT_MAX);
+
+  ASSERT_TRUE(saturate_cast<f32>(-static_cast<f64>(FLT_MAX))         == -FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(-static_cast<f64>(3.402823467e+38)) == -FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(-static_cast<f64>(3.402823466e+39)) == -FLT_MAX);
+  ASSERT_TRUE(saturate_cast<f32>(-static_cast<f64>(DBL_MAX))         == -FLT_MAX);
+
   //
   // More tests for floating point saturate_cast<>, for cases with insufficient precision
   //
@@ -2443,15 +2461,58 @@ GTEST_TEST(CoreTech_Common, Linspace)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  LinearSequence<f32> sequence1 = Linspace<f32>(0,9,10);
-  LinearSequence<f32> sequence2 = Linspace<f32>(0,9,1<<29);
-  LinearSequence<s32> sequence3 = Linspace<s32>(0,9,10);
-  LinearSequence<s32> sequence4 = Linspace<s32>(0,9,9);
+  const f32 differenceThreshold = 1.0e-10f;
 
-  ASSERT_TRUE(sequence1.get_size() == 10);
-  ASSERT_TRUE(sequence2.get_size() == 536870912);
-  ASSERT_TRUE(sequence3.get_size() == 10);
-  ASSERT_TRUE(sequence4.get_size() == 10);
+  const s32 numTests = 16;
+  const s32 tests[numTests][3] = {
+    {0,9,0},
+    {0,9,1},
+    {0,9,10},
+    {0,9,10000000},
+    {-3,5,0},
+    {-3,5,1},
+    {-3,5,2},
+    {-3,5,3},
+    {5,-3,0},
+    {5,-3,1},
+    {5,-3,2},
+    {5,-3,3},
+    {-3,-3,0},
+    {-3,-3,10},
+    {3,3,0},
+    {3,3,10}};
+
+  const f32 test_increments[numTests] = {
+    1,
+    1,
+    1,
+    9.000000900000090e-07f,
+    1,
+    1,
+    8,
+    4,
+    1,
+    1,
+    -8,
+    -4,
+    0,
+    0,
+    0,
+    0};
+
+  // f32
+  for(s32 iTest=0; iTest<numTests; iTest++) {
+    LinearSequence<f32> sequence = Linspace<f32>(static_cast<f32>(tests[iTest][0]), static_cast<f32>(tests[iTest][1]), tests[iTest][2]);
+    ASSERT_TRUE(sequence.get_size() == tests[iTest][2]);
+    ASSERT_TRUE(ABS(sequence.get_increment() - test_increments[iTest]) < differenceThreshold);
+  }
+
+  // f64
+  for(s32 iTest=0; iTest<numTests; iTest++) {
+    LinearSequence<f64> sequence = Linspace<f64>(static_cast<f64>(tests[iTest][0]), static_cast<f64>(tests[iTest][1]), tests[iTest][2]);
+    ASSERT_TRUE(sequence.get_size() == tests[iTest][2]);
+    ASSERT_TRUE(ABS(sequence.get_increment() - test_increments[iTest]) < differenceThreshold);
+  }
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, Linspace)
@@ -2671,12 +2732,14 @@ GTEST_TEST(CoreTech_Common, ZeroSizedArray)
 
   ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, scratchOnchip) == RESULT_OK);
 
-  ASSERT_TRUE(!yIndexes.IsValid());
-  ASSERT_TRUE(!xIndexes.IsValid());
+  ASSERT_TRUE(yIndexes.IsValid());
+  ASSERT_TRUE(xIndexes.IsValid());
   ASSERT_TRUE(yIndexes.get_size(0) == 1);
   ASSERT_TRUE(yIndexes.get_size(1) == 0);
+  ASSERT_TRUE(yIndexes.get_numElements() == 0);
   ASSERT_TRUE(xIndexes.get_size(0) == 1);
   ASSERT_TRUE(xIndexes.get_size(1) == 0);
+  ASSERT_TRUE(xIndexes.get_numElements() == 0);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, ZeroSizedArray)
@@ -3333,10 +3396,6 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 
   ASSERT_TRUE(slice2.IsValid());
 
-  //CoreTechPrint("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
-  //CoreTechPrint("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));
-  //CoreTechPrint("%d %d %d\n", slice2.get_xSlice().get_start(), slice2.get_xSlice().get_end(), *slice2.get_array().Pointer(0,0));
-
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 
@@ -3451,9 +3510,10 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   // Test s32 sequences
-  const s32 sequenceLimits1[15][3] = {{0,1,1}, {0,2,1}, {-1,1,1}, {-1,2,1}, {-1,3,1},
-  {-50,2,-3}, {-3,3,-50}, {10,-4,1}, {10,3,1}, {-10,3,1},
-  {-7,7,0}, {12,-4,-10}, {100,-1,0}, {0,3,100}, {0,2,10000}};
+  const s32 sequenceLimits1[15][3] = {
+    {0,1,1}, {0,2,1}, {-1,1,1}, {-1,2,1}, {-1,3,1},
+    {-50,2,-3}, {-3,3,-50}, {10,-4,1}, {10,3,1}, {-10,3,1},
+    {-7,7,0}, {12,-4,-10}, {100,-1,0}, {0,3,100}, {0,2,10000}};
 
   // [length(0:1:1), length(0:2:1), length(-1:1:1), length(-1:2:1), length(-1:3:1), length(-50:2:-3), length(-3:3:-50), length(10:-4:1), length(10:3:1), length(-10:3:1), length(-7:7:0), length(12:-4:-10), length(100:-1:0), length(0:3:100), length(0:2:10000)]'
   const s32 length1_groundTruth[15] = {2, 1, 3, 2, 1, 24, 0, 3, 0, 4, 2, 6, 101, 34, 5001};
@@ -3465,11 +3525,12 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
   }
 
   // Tests f32 sequences
-  const f32 sequenceLimits2[25][3] = {{0.0f,1.0f,1.0f}, {0.0f,2.0f,1.0f}, {-1.0f,1.0f,1.0f}, {-1.0f,2.0f,1.0f}, {-1.0f,3.0f,1.0f},
-  {-50.0f,2.0f,-3.0f}, {-3.0f,3.0f,-50.0f}, {10.0f,-4.0f,1.0f}, {10.0f,3.0f,1.0f}, {-10.0f,3.0f,1.0f},
-  {-7.0f,7.0f,0.0f}, {12.0f,-4.0f,-10.0f}, {100.0f,-1.0f,0.0f}, {0.0f,3.0f,100.0f}, {0.0f,2.0f,10000.0f},
-  {0.1f,0.1f,0.1f}, {0.1f,0.11f,0.3f}, {0.1f,0.09f,0.3f}, {-0.5f,0.1f,0.5f}, {0.3f,0.1f,0.2f},
-  {-0.5f,-0.05f,-0.4f}, {-0.5f,0.6f,0.0f}, {-0.5f,0.25f,0.0f}, {-4.0f,0.01f,100.0f}, {0.1f,-0.1f,-0.4f}};
+  const f32 sequenceLimits2[25][3] = {
+    {0.0f,1.0f,1.0f}, {0.0f,2.0f,1.0f}, {-1.0f,1.0f,1.0f}, {-1.0f,2.0f,1.0f}, {-1.0f,3.0f,1.0f},
+    {-50.0f,2.0f,-3.0f}, {-3.0f,3.0f,-50.0f}, {10.0f,-4.0f,1.0f}, {10.0f,3.0f,1.0f}, {-10.0f,3.0f,1.0f},
+    {-7.0f,7.0f,0.0f}, {12.0f,-4.0f,-10.0f}, {100.0f,-1.0f,0.0f}, {0.0f,3.0f,100.0f}, {0.0f,2.0f,10000.0f},
+    {0.1f,0.1f,0.1f}, {0.1f,0.11f,0.3f}, {0.1f,0.09f,0.3f}, {-0.5f,0.1f,0.5f}, {0.3f,0.1f,0.2f},
+    {-0.5f,-0.05f,-0.4f}, {-0.5f,0.6f,0.0f}, {-0.5f,0.25f,0.0f}, {-4.0f,0.01f,100.0f}, {0.1f,-0.1f,-0.4f}};
 
   // [length(0.1:0.1:0.1), length(0.1:0.11:0.3), length(0.1:0.09:0.3), length(-0.5:0.1:0.5), length(0.3:0.1:0.2), length(-0.5:-0.05:-0.4), length(-0.5:0.6:0.0), length(-0.5:0.25:0.0), length(-4.0:0.01:100.0), length(0.1:-0.1:-0.4)]'
   const s32 length2_groundTruth[25] = {2, 1, 3, 2, 1, 24, 0, 3, 0, 4, 2, 6, 101, 34, 5001, 1, 2, 3, 11, 0, 0, 1, 3, 10401, 6};
@@ -3721,9 +3782,11 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   originalPointsList.Print("originalPointsList");
   transformedPointsList.Print("transformedPointsList");
 
-  const Result result = Matrix::EstimateHomography(originalPointsList, transformedPointsList, homography, scratchOnchip);
+  bool numericalFailure;
+  const Result result = Matrix::EstimateHomography(originalPointsList, transformedPointsList, homography, numericalFailure, scratchOnchip);
 
   ASSERT_TRUE(result == RESULT_OK);
+  ASSERT_TRUE(numericalFailure == false);
 
   homography.Print("homography");
 

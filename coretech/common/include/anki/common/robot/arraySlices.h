@@ -25,13 +25,23 @@ namespace Anki
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array)
-      : ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1)), array(array), constArrayData(array.Pointer(0,0))
+      : ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1)), array(array)
     {
+      if(array.get_numElements() == 0) {
+        this->constArrayData = NULL;
+      } else {
+        this->constArrayData = array.Pointer(0,0);
+      }
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
-      : ySlice(ySlice), xSlice(xSlice), array(array), constArrayData(array.Pointer(0,0))
+      : ySlice(ySlice), xSlice(xSlice), array(array)
     {
+      if(array.get_numElements() == 0) {
+        this->constArrayData = NULL;
+      } else {
+        this->constArrayData = array.Pointer(0,0);
+      }
     }
 
     template<typename Type> ConstArraySliceExpression<Type> ConstArraySlice<Type>::Transpose() const
@@ -62,21 +72,28 @@ namespace Anki
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice()
-      //: array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
       : ConstArraySlice<Type>(), arrayData(NULL)
     {
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> array)
-      //: array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
-      : ConstArraySlice<Type>(array), arrayData(array.Pointer(0,0))
+      : ConstArraySlice<Type>(array)
     {
+      if(array.get_numElements() == 0) {
+        this->arrayData = NULL;
+      } else {
+        this->arrayData = array.Pointer(0,0);
+      }
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
-      //: array(array), ySlice(ySlice), xSlice(xSlice)
-      : ConstArraySlice<Type>(array, ySlice, xSlice), arrayData(array.Pointer(0,0))
+      : ConstArraySlice<Type>(array, ySlice, xSlice)
     {
+      if(array.get_numElements() == 0) {
+        this->arrayData = NULL;
+      } else {
+        this->arrayData = array.Pointer(0,0);
+      }
     }
 
     template<typename Type> s32 ArraySlice<Type>::Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose)
@@ -167,9 +184,12 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(limits.isValid,
         0, "ArraySlice<Type>::Set", "Limits is not valid");
 
-      for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+      for(s32 iy=0; iy<limits.rawIn1Limits.ySize; iy++) {
+        const s32 y = limits.rawIn1Limits.yStart + iy * limits.rawIn1Limits.yIncrement;
         Type * restrict pMat = array.Pointer(y, 0);
-        for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+
+        for(s32 ix=0; ix<limits.rawIn1Limits.xSize; ix++) {
+          const s32 x = limits.rawIn1Limits.xStart + ix * limits.rawIn1Limits.xIncrement;
           pMat[x] = value;
         }
       }
@@ -215,8 +235,8 @@ namespace Anki
     }
 
     template<typename Type> ArraySliceSimpleLimits<Type>::ArraySliceSimpleLimits(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice)
-      : xStart(in1_xSlice.get_start()), xIncrement(in1_xSlice.get_increment()), xEnd(in1_xSlice.get_end()), xSize(in1_xSlice.get_size()),
-      yStart(in1_ySlice.get_start()), yIncrement(in1_ySlice.get_increment()), yEnd(in1_ySlice.get_end()), ySize(in1_ySlice.get_size())
+      : xStart(in1_xSlice.get_start()), xIncrement(in1_xSlice.get_increment()), xSize(in1_xSlice.get_size()),
+      yStart(in1_ySlice.get_start()), yIncrement(in1_ySlice.get_increment()), ySize(in1_ySlice.get_size())
     {
     }
 

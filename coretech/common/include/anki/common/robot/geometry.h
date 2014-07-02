@@ -57,8 +57,8 @@ namespace Anki
 
     template<typename Type> template<typename InType> void Point<Type>::SetCast(const Point<InType> &in)
     {
-      this->x = static_cast<Type>(in.x);
-      this->y = static_cast<Type>(in.y);
+      this->x = saturate_cast<Type>(in.x);
+      this->y = saturate_cast<Type>(in.y);
     }
 
     template<typename Type> void Point<Type>::Print() const
@@ -341,8 +341,6 @@ namespace Anki
 
     template<typename Type> template<typename OutType> Rectangle<OutType> Rectangle<Type>::ComputeScaledRectangle(const f32 scalePercent) const
     {
-      // TODO: should be done differently for int vs float?
-
       const f32 width = static_cast<f32>(this->get_width());
       const f32 height = static_cast<f32>(this->get_height());
 
@@ -391,23 +389,17 @@ namespace Anki
 
     template<typename Type> Type Rectangle<Type>::get_width() const
     {
-      return right - left + 1;
+      return right - left;
     }
 
     template<typename Type> Type Rectangle<Type>::get_height() const
     {
-      return bottom - top + 1;
+      return bottom - top;
     }
 
     // #pragma mark --- Rectangle Specializations ---
     template<> void Rectangle<f32>::Print() const;
     template<> void Rectangle<f64>::Print() const;
-
-    template<> f32 Rectangle<f32>::get_width() const;
-    template<> f64 Rectangle<f64>::get_width() const;
-
-    template<> f32 Rectangle<f32>::get_height() const;
-    template<> f64 Rectangle<f64>::get_height() const;
 
     // #pragma mark --- Quadrilateral Definitions ---
 

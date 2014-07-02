@@ -41,6 +41,7 @@ namespace Anki {
       void Init(RobotManager* robotMgr, BlockWorld* world);
       
       void StartMode(BehaviorMode mode);
+      BehaviorMode GetMode() const;
       
       void Update();
 
@@ -64,10 +65,19 @@ namespace Anki {
         EXECUTING_DOCK,
         
         // June2014DiceDemo
+        DRIVE_TO_START,
         WAITING_TO_SEE_DICE,
         WAITING_FOR_DICE_TO_DISAPPEAR,
+        GOTO_EXPLORATION_POSE,
+        START_EXPLORING_TURN,
+        BACKING_UP,
         BEGIN_EXPLORING,
-        EXPLORING
+        EXPLORING,
+        CHECK_IT_OUT_UP,
+        CHECK_IT_OUT_DOWN,
+        FACE_USER,
+        HAPPY_NODDING,
+        BACK_AND_FORTH_EXCITED,
         
       } BehaviorState;
       
@@ -76,9 +86,27 @@ namespace Anki {
       
       BehaviorState state_, nextState_, problemState_;
       void (BehaviorManager::*updateFcn_)();
+
+      BehaviorMode mode_;
       
       Robot* robot_;
 
+      // mini-state machine for the idle animation for June demo
+      typedef enum {
+        IDLE_NONE,
+        IDLE_LOOKING_UP,
+        IDLE_PLAYING_SOUND,
+
+        // used after some number of idle loops
+        IDLE_FACING_USER,
+        IDLE_LOOKING_DOWN,
+        IDLE_TURNING_BACK
+      } IdleAnimationState;
+      
+      IdleAnimationState idleState_;
+      unsigned int timesIdle_;
+      Pose3d originalPose_;
+      
       // Block that the robot is currently travelling to, docking to,
       ObjectID_t blockOfInterest_;
       
@@ -120,24 +148,27 @@ namespace Anki {
       /////// PickAndPlace vars ///////
     
       // Block to dock with
-      const Block* dockBlock_;
-      const Vision::KnownMarker *dockMarker_;
+      //Block* dockBlock_;
+      //const Vision::KnownMarker *dockMarker_;
       
-      // Target pose for predock
-      Pose3d nearestPreDockPose_;
+      // Goal pose for backing up
+      Pose3d goalPose_;
       
       // A general time value for gating state transitions
       double waitUntilTime_;
 
       DockAction_t dockAction_;
       
+      f32 desiredBackupDistance_;
       
       /////// June2014DiceDemo vars ///////
-      const TimeStamp_t TimeBetweenDice_ms = 2000; // 2 sec
+      const TimeStamp_t TimeBetweenDice_ms = 1000; // 1 sec
       ObjectType_t blockToPickUp_;
       ObjectType_t blockToPlaceOn_;
       TimeStamp_t  diceDeletionTime_;
-      
+      bool wasCarryingBlockAtDockingStart_;
+      Radians explorationStartAngle_;
+      bool isTurning_;
       
     }; // class BehaviorManager
     

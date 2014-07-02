@@ -31,9 +31,9 @@ namespace Anki {
     // systemRoot_ = <Get_iOS_BundleRoot()> ??
     //#else
     // Initialize based on environment variables, set by CMAKE
-    scopePrefixes_[Test]     = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
-    scopePrefixes_[Config]   = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
-    scopePrefixes_[Resource] = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
+    _scopePrefixes[Test]     = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
+    _scopePrefixes[Config]   = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
+    _scopePrefixes[Resource] = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
     
     //#endif
   }
@@ -41,12 +41,12 @@ namespace Anki {
   std::string PlatformPathManager::PrependPath(const Scope scope,
                                               const std::string& name) const
   {
-    return scopePrefixes_.at(scope) /*+ this->GetLibraryPath()*/ + name;
+    return _scopePrefixes.at(scope) /*+ this->GetLibraryPath()*/ + name;
   }
   
   void PlatformPathManager::OverridePath(const Scope scope, const std::string& newPath)
   {
-    scopePrefixes_[scope] = newPath;
+    _scopePrefixes[scope] = newPath;
   }
   
   /*

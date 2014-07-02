@@ -1,0 +1,34 @@
+{
+	"Poses": [
+		{
+			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_16_time13_45_05_frame0.png"
+		},
+		{
+			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_16_time13_45_06_frame0.png"
+		},
+		{
+			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_16_time13_45_09_frame0.png"
+		},
+		{
+			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_16_time13_45_09_frame1.png"
+		},
+		{
+			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_16_time13_45_09_frame2.png"
+		},
+		{
+			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_16_time13_45_09_frame3.png"
+		},
+		{
+			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_16_time13_45_09_frame4.png"
+		},
+		{
+			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_16_time13_45_12_frame0.png"
+		},
+		{
+			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_16_time13_45_14_frame0.png"
+		},
+		{
+			"ImageFile": "../../../systemTestImages/cozmo_date2014_06_16_time13_45_16_frame0.png"
+		}
+	]
+}

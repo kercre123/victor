@@ -5,13 +5,14 @@ import numpy
 import json
 import copy
 
+debugAngle = None
+
 class MotionPrimitiveSet:
     "A set of motion primitives for use in the xytheta lattice planner"
 
     def __init__(self):
         self.numAngles = 16
         self.resolution_mm = 1.0
-        self.minRadius = 8.0
 
         # dictionary of properties for each action
         self.actions = {}
@@ -30,7 +31,7 @@ class MotionPrimitiveSet:
 
         self.numActions = 0
 
-    def addAction(self, name, angleOffset, length, costFactor = 1.0, backwardsCostFactor = 0.0):
+    def addAction(self, name, angleOffset, length, targetRadius = None, costFactor = 1.0, backwardsCostFactor = 0.0):
         """Add an action to the primitive set.
         * angleOffset is number of discrete angles to transition (signed int)
         * length is approximate length of the action in number of cells (signed int)
@@ -42,7 +43,7 @@ class MotionPrimitiveSet:
 
         if name in self.actions:
             raise DuplicateActionError(name)
-        self.actions[name] = Action(name, angleOffset, length, self.numActions, costFactor, backwardsCostFactor)
+        self.actions[name] = Action(name, angleOffset, length, targetRadius, self.numActions, costFactor, backwardsCostFactor)
         self.numActions += 1
 
     def createPrimitives(self):
@@ -72,13 +73,13 @@ class MotionPrimitiveSet:
                 for angleIdx in range(len(self.angles)):
                     oppositeAngle = (angleIdx + (self.numAngles / 2)) % self.numAngles
                     backwardsPrim = copy.deepcopy(self.primitivesPerAngle[oppositeAngle][action.index])
-                    newTheta = fixTheta(angleIdx + backwardsAction.angleOffset, self.numAngles)
+                    newTheta = fixTheta(angleIdx - backwardsAction.angleOffset, self.numAngles)
                     backwardsPrim.endPose = Pose(backwardsPrim.endPose.x, backwardsPrim.endPose.y, newTheta)
                     backwardsPrim.actionIndex = backwardsAction.index
                     backwardsPrim.l *= -1
                     if backwardsPrim.arc:
-                        newStartRad = fixTheta_rads(backwardsPrim.arc.startRad + pi)
-                        newThetaRads = backwardsPrim.arc.sweepRad * -1.0
+                        newStartRad = fixTheta_rads(backwardsPrim.arc.startRad)
+                        newThetaRads = backwardsPrim.arc.sweepRad
                         backwardsPrim.arc = Arc(backwardsPrim.arc.centerPt_x_mm,
                                                 backwardsPrim.arc.centerPt_y_mm,
                                                 backwardsPrim.arc.radius_mm,
@@ -270,7 +271,7 @@ class MotionPrimitiveSet:
         y0 = startPose.y
         x1 = endPose.x
         y1 = endPose.y
-        A = numpy.matrix([[c0, s1 - s0], [s0, c0-c1]])
+        A = numpy.matrix([[c0, s0 - s1], [s0, c1 - c0]])
         B = numpy.matrix([[x1-x0], [y1-y0]])
 
         X = A.I * B
@@ -322,7 +323,19 @@ class MotionPrimitiveSet:
         raise RuntimeError("bug!")
 
 
-    def findTurn(self, startPose, deltaTheta):
+    def findTurn(self, startPose, deltaTheta, targetRadius_mm):
+
+        targetRadius = targetRadius_mm / self.resolution_mm
+
+        #TEMP
+        naturalTurn = GetExpectedXY(self.angles[startPose.theta], deltaTheta)
+        naturalRadius = naturalTurn[2]
+        factor = round(targetRadius / naturalRadius)
+        # targetRadius = naturalRadius * factor
+
+        if startPose.theta == debugAngle:
+            print "finding turn from",startPose,"dtheta =",deltaTheta,"targetRad =",targetRadius
+
         newAngle = startPose.theta + deltaTheta
         newAngle = fixTheta(newAngle, self.numAngles) # between 0 and numAngles
 
@@ -331,18 +344,42 @@ class MotionPrimitiveSet:
         quads = self.quadrant(self.angles[startPose.theta])
         quads.union(self.quadrant(self.angles[newAngle]))
         
+        searchSize = 15
+
         bestScore = 99999.9
         best = None
-        for x in range(startPose.x - 9, startPose.x + 10):
-            for y in range(startPose.y - 9, startPose.y + 10):
+        for x in range(startPose.x - searchSize - 1, startPose.x + searchSize):
+            for y in range(startPose.y - searchSize - 1, startPose.y + searchSize):
                 if self.inQuadrant(x,y,quads):
                     endPose = Pose(x, y, newAngle)
                     turn = self.computeTurn(startPose, endPose)
-                    if abs(turn[1]) * self.resolution_mm > self.minRadius and turn[0] >= 0.0:
-                        score = abs(turn[0]) + abs(turn[1])
+                    signCorrect = (deltaTheta > 0) == (turn[1] < 0)
+                    if turn[0] >= -0.1 and turn[0] < 2.5 and abs(turn[1]) > 0.1 and signCorrect:
+
+                        chordLength = sqrt(float(x)**2 + float(y)**2)
+                        # chord length is 2 r sin(theta/2)
+                        deltaTheta_rads = self.angles[endPose.theta] - self.angles[startPose.theta]
+                        effectiveRadius = chordLength / (2*sin(deltaTheta_rads/2))
+
+                        if startPose.theta == debugAngle:
+                            print "     cl = %f, dtheta = %f, effective r = %f, real r = %f" % (
+                                chordLength, deltaTheta_rads, effectiveRadius, turn[1])
+
+                        # score = abs(turn[0]) - abs(turn[1])
+                        # score = abs(abs(turn[1]) - targetRadius) + 0.1*turn[0]
+                        score = abs(abs(effectiveRadius) - targetRadius) + 0.5*turn[0]
+
+                        if startPose.theta == debugAngle:
+                            print "ok : (%3d, %3d): l=%f, r=%f, score=%f" % (
+                                x, y, turn[0], turn[1], score )
+
                         if score < bestScore:
                             bestScore = score
                             best = [x, y, turn]
+                    else:
+                        if startPose.theta == debugAngle:
+                            print "bad: (%3d, %3d): l=%f, r=%f" % (
+                                    x, y, turn[0], turn[1] )
 
         if not best:
             print "failed to find turn to angle",startPose.theta
@@ -356,11 +393,16 @@ class MotionPrimitiveSet:
             theta1 = self.angles[newAngle]
 
             # compute the center of the circle (x_c, y_c), in mm
-            x_c = l*cos(theta0) - r*sin(theta0)
-            y_c = l*sin(theta0) + r*cos(theta0)
+            x_c = l*cos(theta0) + r*sin(theta0)
+            y_c = l*sin(theta0) - r*cos(theta0)
 
             # from the center, comptue the starting angle
-            startRads = theta0 - pi/2
+            startRads = theta0 + pi/2
+
+            # fix radius
+            if r < 0:
+                r = -r
+                startRads = fixTheta_rads(startRads - pi)
 
             # how many radians we move through during the arc (+ is CCW)
             sweepRads = theta1 - theta0
@@ -368,8 +410,11 @@ class MotionPrimitiveSet:
 
             arc = Arc(x_c, y_c, r, startRads, sweepRads)
 
+            if startPose.theta == debugAngle:
+                print "turn found:",best, l, bestScore
+
+
             return [best[0], best[1], l, arc]
-        return best
         
 
 class DuplicateActionError(Exception):
@@ -381,10 +426,11 @@ class DuplicateActionError(Exception):
 class Action:
     "A type of action that will create a primitive from every starting angle."
     
-    def __init__(self, name, angleOffset, length, index, costFactor = 1.0, backwardsCostFactor = 0.0):
+    def __init__(self, name, angleOffset, length, targetRadius, index, costFactor = 1.0, backwardsCostFactor = 0.0):
         self.name = name
         self.length = length # length in cells
         self.angleOffset = angleOffset
+        self.targetRadius = targetRadius
         self.costFactor = costFactor
         self.index = index
         self.backwardsCostFactor = backwardsCostFactor
@@ -440,7 +486,9 @@ class Action:
         else:
             startPose = Pose(0, 0, startingAngle)
             # straight followed by an arc
-            turn = primSet.findTurn(startPose, self.angleOffset)
+            if not self.targetRadius:
+                print "ERROR: no target radius for turn!"
+            turn = primSet.findTurn(startPose, self.angleOffset, self.targetRadius)
             if not turn:
                 print "Error: turn could not be found from angle %d for action '%s'" % (startingAngle, self)
                 return None
@@ -487,7 +535,7 @@ def fixPose_mm(oldPose):
 class MotionPrimitive:
     "A primitive for a given starting angle and action"
 
-    def __init__(self, actionIndex, endPose, l):
+    def __init__(self, actionIndex, endPose=None, l=None):
         self.endPose = endPose
         self.l = l # length in mm
         self.intermediatePoses = []
@@ -528,7 +576,7 @@ class MotionPrimitive:
         "fill in intermediatePoses with samples every sampleLength mm"
 
         # simulate linear portion, if needed
-        if abs(self.l) > 1e-6:
+        if abs(self.l) > 1e-6 or self.arc:
             sampleLen = primSet.sampleLength
             if self.l < 0:
                 sampleLen = -sampleLen
@@ -541,6 +589,10 @@ class MotionPrimitive:
             # simulate turn in place, using a factor of the angular resolution of the map
             endRads = primSet.angles[self.endPose.theta]
             step = self.turnInPlaceDirection * 2*pi / (4*primSet.numAngles)
+            if abs(step) < 1e-8:
+                print "ERROR: step too low! step = %f, turnInPlaceDir = %f, numAngles = %u" % (
+                    step, self.turnInPlaceDirection, primSet.numAngles)
+                raise RuntimeError("bug!")
             theta = startRads
             while abs(endRads - theta) > abs(step):
                 theta = fixTheta_rads(theta + step)
@@ -552,6 +604,8 @@ class MotionPrimitive:
         if self.arc:
             # compute the step size in radians
             radStep = primSet.sampleLength / self.arc.radius_mm
+            if self.arc.sweepRad < 0:
+                radStep = -radStep
 
             for t in numpy.arange(0.0, self.arc.sweepRad, radStep):
                 theta = self.arc.startRad + t
@@ -563,3 +617,34 @@ class MotionPrimitive:
         self.intermediatePoses.append(Pose_mm(self.endPose.x * primSet.resolution_mm,
                                               self.endPose.y * primSet.resolution_mm,
                                               primSet.angles[self.endPose.theta]))
+
+
+# TEMP TODO: this function should actually return a set of radii that
+# get you close to a cell. E.g. the current thing, and then any factor
+# higher up to maybe 3 or 4. these should each be different sets, so
+# you know you'd need a radius near each of those things?
+
+def GetExpectedXY(theta0, deltaTheta):
+    "return the (x,y,radius) that gets you closest to a cell border"
+    theta1 = theta0 + deltaTheta
+    x = sin(theta0) - sin(theta1)
+    y = -cos(theta0) + cos(theta1)
+    #print "raw (%f, %f)" % (x, y)
+
+    if abs(x) < 1e-6:
+        r = 1.0 / abs(y)
+    elif abs(y) < 1e-6:
+        r = 1.0 / abs(x)
+    else:
+        r = 1.0 / min(abs(x), abs(y))
+
+    if deltaTheta > 0:
+        r = -r
+    x = x*r
+    y = y*r
+
+    # print "can get from %f to %f landing on (%f, %f) with a radius of %f" % (
+    #     theta0, theta1, x, y, r)
+
+    return (x,y,r)
+

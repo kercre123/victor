@@ -160,8 +160,13 @@ namespace Anki
       mxArray* mxMatrix = mxCreateNumericArray(2, dims, whichClass, mxREAL);
       Type *data = static_cast<Type*>(mxGetData(mxMatrix));
 
+      AnkiConditionalErrorAndReturnValue(matrixHeight <= s32_MAX,
+                                         RESULT_FAIL_INVALID_SIZE,
+                                         "Anki.PutArray<Type>",
+                                         "Matrix too large to use call to matrix.Pointer()");
+      
       for(mwSize y=0; y<matrixHeight; y++) {
-        memcpy(data, matrix.Pointer(y,0), matrixWidth*sizeof(Type));
+        memcpy(data, matrix.Pointer(static_cast<s32>(y),0), matrixWidth*sizeof(Type));
         data += matrixWidth;
       }
 

@@ -321,7 +321,7 @@ namespace Anki {
               R_float(i,j) = static_cast<float>(R_temp(i,j));
             }
           }
-          poses[i].set_rotation(R_float);
+          poses[i].SetRotation(R_float);
           
           // Assign this solution's translation vector to the output
           POINT translation = -(R_temp * (P1 + Nt*C));
@@ -329,7 +329,7 @@ namespace Anki {
           Point<3,float> t_float(static_cast<float>(translation.x()),
                                  static_cast<float>(translation.y()),
                                  static_cast<float>(translation.z()));
-          poses[i].set_translation(t_float);
+          poses[i].SetTranslation(t_float);
 
         }
         

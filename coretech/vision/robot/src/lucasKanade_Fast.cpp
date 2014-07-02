@@ -212,8 +212,8 @@ namespace Anki
         for(s32 y=0; y<yIterationMax; y++) {
           const u8 * restrict pTemplateImage = this->templateImagePyramid[whichScale].Pointer(y, 0);
 
-          const s16 * restrict pTemplateImageXGradient = this->templateImageXGradientPyramid[whichScale].Pointer(y, 0);
-          const s16 * restrict pTemplateImageYGradient = this->templateImageYGradientPyramid[whichScale].Pointer(y, 0);
+          //const s16 * restrict pTemplateImageXGradient = this->templateImageXGradientPyramid[whichScale].Pointer(y, 0);
+          //const s16 * restrict pTemplateImageYGradient = this->templateImageYGradientPyramid[whichScale].Pointer(y, 0);
 
           f32 xOriginal = xGridStart;
 

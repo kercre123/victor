@@ -57,11 +57,14 @@ namespace Anki {
       inline const Quad2f& GetImageCorners() const;
       inline const Camera& GetSeenBy()       const;
       
+      inline void MarkUsed(bool used);
+      inline bool IsUsed();
     protected:
       TimeStamp_t    observationTime_;
       Quad2f         imgCorners_;
       Camera         seenByCam_;
       
+      bool           used_;
     }; // class ObservedMarker
     
     
@@ -78,7 +81,7 @@ namespace Anki {
       // Note that it is your responsibility to make sure the new pose has the
       // parent you intend! To preserve an existing parent, you may want to do
       // something like:
-      //   newPose.set_parent(marker.get_parent());
+      //   newPose.SetParent(marker.GetParent());
       //   marker.SetPose(newPose);
       //
       void SetPose(const Pose3d& newPose);
@@ -104,8 +107,8 @@ namespace Anki {
       Vec3f ComputeNormal() const; // at current pose
       Vec3f ComputeNormal(const Pose3d& atPose) const;
       
-      void SetWasObserved(const bool wasObserved);
-      bool GetWasObserved() const;
+      void SetLastObservedTime(const TimeStamp_t atTime);
+      TimeStamp_t GetLastObservedTime() const;
       
     protected:
       static const Quad3f canonicalCorners3d_;
@@ -113,9 +116,11 @@ namespace Anki {
       Pose3d pose_;
       f32    size_; // in mm
       Quad3f corners3d_;
-      bool   wasObserved_;
+      //bool   wasObserved_;
+      TimeStamp_t lastObservedTime_;
 
     }; // class KnownMarker
+    
     
     inline const TimeStamp_t ObservedMarker::GetTimeStamp() const {
       return observationTime_;
@@ -145,14 +150,21 @@ namespace Anki {
       return seenByCam_;
     }
     
-    inline void KnownMarker::SetWasObserved(const bool wasObserved) {
-      wasObserved_ = wasObserved;
+    inline void ObservedMarker::MarkUsed(bool used) {
+      used_ = used;
     }
     
-    inline bool KnownMarker::GetWasObserved() const {
-      return wasObserved_;
+    inline bool ObservedMarker::IsUsed() {
+      return used_;
     }
     
+    inline void KnownMarker::SetLastObservedTime(const TimeStamp_t atTime) {
+      lastObservedTime_ = atTime;
+    }
+    
+    inline TimeStamp_t KnownMarker::GetLastObservedTime() const {
+      return lastObservedTime_;
+    }
 
   } // namespace Vision
 } // namespace Anki

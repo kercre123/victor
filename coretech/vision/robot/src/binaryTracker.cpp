@@ -157,13 +157,13 @@ namespace Anki
         this->templateImageWidth = templateImage.get_size(1);
 
         // Only a few markers are currently supported
-        
+
         // TODO: Update this now that we've removed the battery marker image
-        
+
         //AnkiConditionalErrorAndReturn(markerType == Anki::Vision::MARKER_BATTERIES,
         //  "BinaryTracker::BinaryTracker", "markerType %d is not supported for header initialization", markerType);
         AnkiError("BinaryTracker::BinaryTracker", "BinaryTracker needs to be updated now that Battery marker has been removed.");
-        
+
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "BinaryTracker::BinaryTracker", "template widths and heights must be greater than zero");
 
@@ -259,7 +259,8 @@ namespace Anki
           templateCorners[3] = templateQuad[3];
 
           Array<f32> binaryTemplateHomography(3, 3, slowMemory);
-          Matrix::EstimateHomography(binaryCorners, templateCorners, binaryTemplateHomography, slowMemory);
+          bool numericalFailure;
+          Matrix::EstimateHomography(binaryCorners, templateCorners, binaryTemplateHomography, numericalFailure, slowMemory);
 
           Transformations::PlanarTransformation_f32 binaryTemplateTransform(
             Transformations::TRANSFORM_PROJECTIVE,
@@ -310,7 +311,7 @@ namespace Anki
             rotatedBinaryCorners[i] = binaryCorners[rotationOrder[i]];
           }
 
-          Matrix::EstimateHomography(rotatedBinaryCorners, templateCorners, binaryTemplateHomography, slowMemory);
+          Matrix::EstimateHomography(rotatedBinaryCorners, templateCorners, binaryTemplateHomography, numericalFailure, slowMemory);
 
           binaryTemplateTransform.set_homography(binaryTemplateHomography);
 
@@ -341,7 +342,8 @@ namespace Anki
 
           if(!useRealTemplateImage) {
             // Just warp the binary header image to the template image
-            Matrix::EstimateHomography(templateCorners, binaryCorners, binaryTemplateHomography, slowMemory);
+            bool numericalFailure;
+            Matrix::EstimateHomography(templateCorners, binaryCorners, binaryTemplateHomography, numericalFailure, slowMemory);
             const Point<f32> centerOffset(0.0f, 0.0f);
             Meshgrid<f32> originalCoordinates( LinearSequence<f32>(0.5f, 1.0f, templateImageWidth-0.5f), LinearSequence<f32>(0.5f, 1.0f, templateImageHeight-0.5f));
 
@@ -842,7 +844,7 @@ namespace Anki
         s32 &numCorrespondences)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -923,7 +925,7 @@ namespace Anki
         s32 &numCorrespondences)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1003,7 +1005,7 @@ namespace Anki
         Array<f32> &Atb_t)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1156,7 +1158,7 @@ namespace Anki
         Array<f32> &Atb_t)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1309,7 +1311,7 @@ namespace Anki
         s32 &numTemplatePixelsMatched)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1383,7 +1385,7 @@ namespace Anki
         s32 &numTemplatePixelsMatched)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1456,7 +1458,7 @@ namespace Anki
         FixedLengthList<IndexCorrespondence> &matchingIndexes)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -1547,7 +1549,7 @@ namespace Anki
         FixedLengthList<IndexCorrespondence> &matchingIndexes)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
+        //const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
@@ -2441,13 +2443,14 @@ namespace Anki
         const s32 yDecreasingUsed = this->templateEdges.yDecreasing.get_size();
         const s32 yIncreasingUsed = this->templateEdges.yIncreasing.get_size();
 
-        const s32 numTemplatePixels =
+        const size_t numTemplatePixels =
           RoundUp<size_t>(xDecreasingUsed, MEMORY_ALIGNMENT) +
           RoundUp<size_t>(xIncreasingUsed, MEMORY_ALIGNMENT) +
           RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
           RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
-        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>) + Transformations::PlanarTransformation_f32::get_serializationSize() + 16*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+        AnkiAssert(numTemplatePixels < s32_MAX);
+        const s32 requiredBytes = 512 + static_cast<s32>(numTemplatePixels)*sizeof(Point<s16>) + Transformations::PlanarTransformation_f32::get_serializationSize() + 16*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
         return requiredBytes;
       }

@@ -30,6 +30,10 @@ void SystemInit(void)
 
 const u8 PIN_CHGEN = 24;  // 2.1
 
+const u8 PIN_LED1 = 10;
+const u8 PIN_LED2 = 11;
+
+void encoderAnalyzer(void);
 int main(void)
 {
   u32 failedTransferCount = 0;
@@ -42,13 +46,13 @@ int main(void)
   
   UARTPutString("\r\nUnbrick me now...");
   u32 t = GetCounter();
-  while ((GetCounter() - t) < 4333333)  // 0.5 second unbrick time
+  while ((GetCounter() - t) < 500 * COUNT_PER_MS)  // 0.5 second unbrick time
     ;
   UARTPutString("too late!\r\n");
 
   // Finish booting up
   SPIInit();
-  PowerInit();
+  PowerInit();    
 
   g_dataToHead.common.source = SPI_SOURCE_BODY;
   g_dataToHead.tail = 0x84;
@@ -57,33 +61,40 @@ int main(void)
   nrf_gpio_pin_clear(PIN_CHGEN);
   nrf_gpio_cfg_output(PIN_CHGEN);
   
+  // Status LED hack
+  nrf_gpio_cfg_output(PIN_LED1);
+  nrf_gpio_cfg_output(PIN_LED2);
+  // LED1 set means on, LED1 clear means off
+  nrf_gpio_pin_clear(PIN_LED2);
+  nrf_gpio_pin_set(PIN_LED1);    
+
 #if 0
   // Motor testing, loop forever
   while (1)
   {
-    UARTPutString("Forward\n");
+    UARTPutString("\nForward ends with...");
     for (int i = 0; i < 4; i++)
-      MotorsSetPower(i, 0x5fff);   
+      MotorsSetPower(i, 0x3fff);   
     MotorsUpdate();
     MicroWait(5000);
+//    encoderAnalyzer();
     MotorsUpdate();
 
-    u32 t = GetCounter();
-    while ((GetCounter() - t) < 8333333)  // 1 second
-      ;
+    MicroWait(500000);
+//    encoderAnalyzer();
     MotorsPrintEncodersRaw();
     
-    UARTPutString("Backward\n");
+    UARTPutString("\nBackward ends with...");
     
     for (int i = 0; i < 4; i++)    
-      MotorsSetPower(i, -0x5fff);
+      MotorsSetPower(i, -0x3fff);
     MotorsUpdate();
     MicroWait(5000);
+//    encoderAnalyzer();
     MotorsUpdate();
-    
-    t = GetCounter();
-    while ((GetCounter() - t) < 8333333)
-      ;
+
+    MicroWait(500000);
+//    encoderAnalyzer();
     MotorsPrintEncodersRaw();
     
     BatteryUpdate();
@@ -114,6 +125,7 @@ int main(void)
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
+      nrf_gpio_pin_set(PIN_LED1);   // Force LED on to indicate problems
       // TODO: Remove 0. For now, needed to do head debugging
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
@@ -126,11 +138,17 @@ int main(void)
       }
     } else  {
       failedTransferCount = 0;
-      
       // Copy (valid) data to update motors
       for (int i = 0; i < MOTOR_COUNT; i++)
       {
         MotorsSetPower(i, g_dataToBody.motorPWM[i]);
+      }
+      
+      static u8 s_blink = 0;
+      nrf_gpio_pin_clear(PIN_LED1);
+      if (++s_blink > 40) {
+        nrf_gpio_pin_set(PIN_LED1);      
+        s_blink = 0;
       }
     }
          

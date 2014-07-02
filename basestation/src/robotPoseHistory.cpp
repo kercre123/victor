@@ -10,6 +10,7 @@
 #include "anki/common/basestation/general.h"
 
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 
 #define DEBUG_ROBOT_POSE_HISTORY 0
 
@@ -24,38 +25,48 @@ namespace Anki {
     RobotPoseStamp::RobotPoseStamp(const PoseFrameID_t frameID,
                                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                    const f32 pose_angle,
-                                   const f32 head_angle)
+                                   const f32 head_angle,
+                                   const f32 lift_angle,
+                                   const Pose3d* pose_origin)
     {
-      SetPose(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle);
+      SetPose(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin);
     }
 
     RobotPoseStamp::RobotPoseStamp(const PoseFrameID_t frameID,
                                    const Pose3d& pose,
-                                   const f32 head_angle)
+                                   const f32 head_angle,
+                                   const f32 lift_angle)
     {
-      SetPose(frameID, pose, head_angle);
+      SetPose(frameID, pose, head_angle, lift_angle);
     }
     
 
     void RobotPoseStamp::SetPose(const PoseFrameID_t frameID,
                                  const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                  const f32 pose_angle,
-                                 const f32 head_angle)
+                                 const f32 head_angle,
+                                 const f32 lift_angle,
+                                 const Pose3d* pose_origin)
     {
       frame_ = frameID;
       
-      pose_.set_rotation(pose_angle, Z_AXIS_3D);
-      pose_.set_translation(Vec3f(pose_x, pose_y, pose_z));
+      pose_.SetRotation(pose_angle, Z_AXIS_3D);
+      pose_.SetTranslation(Vec3f(pose_x, pose_y, pose_z));
+      pose_.SetParent(pose_origin);
+      
       headAngle_ = head_angle;
+      liftAngle_ = lift_angle;
     }
     
     void RobotPoseStamp::SetPose(const PoseFrameID_t frameID,
                                  const Pose3d& pose,
-                                 const f32 head_angle)
+                                 const f32 head_angle,
+                                 const f32 lift_angle)
     {
       frame_ = frameID;
       pose_ = pose;
       headAngle_ = head_angle;
+      liftAngle_ = lift_angle;
     }
     
     void RobotPoseStamp::Print() const
@@ -66,14 +77,20 @@ namespace Anki {
     
     /////////////////////// RobotPoseHistory /////////////////////////////
     
+    HistPoseKey RobotPoseHistory::currHistPoseKey_ = 0;
+    
     RobotPoseHistory::RobotPoseHistory()
-    : windowSize_(1000)
+    : windowSize_(3000)
     {}
 
     void RobotPoseHistory::Clear()
     {
       poses_.clear();
       visPoses_.clear();
+      computedPoses_.clear();
+      
+      tsByKeyMap_.clear();
+      keyByTsMap_.clear();
     }
     
     void RobotPoseHistory::SetTimeWindow(const u32 windowSize_ms)
@@ -88,11 +105,13 @@ namespace Anki {
     {
       return AddRawOdomPose(t,
                             p.GetFrameId(),
-                            p.GetPose().get_translation().x(),
-                            p.GetPose().get_translation().y(),
-                            p.GetPose().get_translation().z(),
-                            p.GetPose().get_rotationMatrix().GetAngleAroundZaxis().ToFloat(),
-                            p.GetHeadAngle());
+                            p.GetPose().GetTranslation().x(),
+                            p.GetPose().GetTranslation().y(),
+                            p.GetPose().GetTranslation().z(),
+                            p.GetPose().GetRotationMatrix().GetAngleAroundZaxis().ToFloat(),
+                            p.GetHeadAngle(),
+                            p.GetLiftAngle(),
+                            p.GetPose().GetParent());
     }
 
 
@@ -101,18 +120,21 @@ namespace Anki {
                                             const PoseFrameID_t frameID,
                                             const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                             const f32 pose_angle,
-                                            const f32 head_angle)
+                                            const f32 head_angle,
+                                            const f32 lift_angle,
+                                            const Pose3d* pose_origin)
     {
       // Should the pose be added?
       TimeStamp_t newestTime = poses_.rbegin()->first;
       if (newestTime > windowSize_ && t < newestTime - windowSize_) {
+        PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.TimeTooOld", "newestTime %d, oldestAllowedTime %d, t %d\n", newestTime, newestTime - windowSize_, t);
         return RESULT_FAIL;
       }
       
       std::pair<PoseMapIter_t, bool> res;
       res = poses_.emplace(std::piecewise_construct,
                            std::make_tuple(t),
-                           std::make_tuple(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle));
+                           std::make_tuple(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin));
       
       if (!res.second) {
         PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.AddFailed", "Time: %d\n", t);
@@ -129,9 +151,11 @@ namespace Anki {
                                                const PoseFrameID_t frameID,
                                                const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                                const f32 pose_angle,
-                                               const f32 head_angle)
+                                               const f32 head_angle,
+                                               const f32 lift_angle,
+                                               const Pose3d* pose_origin)
     {
-      RobotPoseStamp p(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle);
+      RobotPoseStamp p(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin);
       return AddVisionOnlyPose(t, p);
     }
     
@@ -150,13 +174,13 @@ namespace Anki {
       // If visPose entry exist at t, then overwrite it
       PoseMapIter_t it = visPoses_.find(t);
       if (it != visPoses_.end()) {
-        it->second.SetPose(p.GetFrameId(), p.GetPose(), p.GetHeadAngle());
+        it->second.SetPose(p.GetFrameId(), p.GetPose(), p.GetHeadAngle(), p.GetLiftAngle());
       } else {
       
         std::pair<PoseMapIter_t, bool> res;
         res = visPoses_.emplace(std::piecewise_construct,
                                 std::make_tuple(t),
-                                std::make_tuple(p.GetFrameId(), p.GetPose(), p.GetHeadAngle()));
+                                std::make_tuple(p.GetFrameId(), p.GetPose(), p.GetHeadAngle(), p.GetLiftAngle()));
       
         if (!res.second) {
           return RESULT_FAIL;
@@ -199,24 +223,32 @@ namespace Anki {
         if (withInterpolation) {
           
           // Get the pose transform between the two poses.
-          Pose3d pTransform = it->second.GetPose().getWithRespectTo(&(prev_it->second.GetPose()));
+          Pose3d pTransform;
+          if(it->second.GetPose().GetWithRespectTo(prev_it->second.GetPose(), pTransform) == false) {
+            PRINT_NAMED_ERROR("RobotPoseHistory.GetRawPoseAt.MisMatchedOrigins",
+                              "Could not get the pose transform between the two poses because they don't share the same origin.\n");
+            return RESULT_FAIL;
+          }
           
           // Compute scale factor between time to previous pose and time between previous pose and next pose.
           f32 timeScale = (f32)(t_request - prev_it->first) / (it->first - prev_it->first);
           
           // Compute scaled transform
-          Vec3f interpTrans(prev_it->second.GetPose().get_translation());
-          interpTrans += pTransform.get_translation() * timeScale;
+          Vec3f interpTrans(prev_it->second.GetPose().GetTranslation());
+          interpTrans += pTransform.GetTranslation() * timeScale;
           
           // NOTE: Assuming there is only z-axis rotation!
           // TODO: Make generic?
-          Radians interpRotation = prev_it->second.GetPose().get_rotationAngle() + Radians(pTransform.get_rotationAngle() * timeScale);
+          Radians interpRotation = prev_it->second.GetPose().GetRotationAngle() + Radians(pTransform.GetRotationAngle() * timeScale);
           
           // Interp head angle
           f32 interpHeadAngle = prev_it->second.GetHeadAngle() + timeScale * (it->second.GetHeadAngle() - prev_it->second.GetHeadAngle());
         
+          // Interp lift angle
+          f32 interpLiftAngle = prev_it->second.GetLiftAngle() + timeScale * (it->second.GetLiftAngle() - prev_it->second.GetLiftAngle());
+          
           t = t_request;
-          p.SetPose(prev_it->second.GetFrameId(), interpTrans.x(), interpTrans.y(), interpTrans.z(), interpRotation.ToFloat(), interpHeadAngle);
+          p.SetPose(prev_it->second.GetFrameId(), interpTrans.x(), interpTrans.y(), interpTrans.z(), interpRotation.ToFloat(), interpHeadAngle, interpLiftAngle, prev_it->second.GetPose().GetParent());
           
         } else {
           
@@ -311,14 +343,22 @@ namespace Anki {
       }
       #endif
       
-      CORETECH_ASSERT((p1.GetPose().get_parent() == Pose3d::World) &&
-                      (p0_it->second.GetPose().get_parent() == Pose3d::World));
+      // Make sure the two poses we are about to work with share a common
+      // origin and then make p1 relative to p0_it's parent (so they then
+      // share the same parent and the math below holds as we compute the
+      // relative pose between them).
+      CORETECH_ASSERT(p1.GetPose().FindOrigin() == p0_it->second.GetPose().FindOrigin());
+      Pose3d newPose;
+      const bool GetWithRespectToResult = p1.GetPose().GetWithRespectTo(*p0_it->second.GetPose().GetParent(), newPose);
+      CORETECH_ASSERT(GetWithRespectToResult == true);
+      p1.SetPose(p1.GetFrameId(), newPose, p1.GetHeadAngle(), p1.GetLiftAngle());
+      CORETECH_ASSERT(p1.GetPose().GetParent() == p0_it->second.GetPose().GetParent());
       
       // Compute relative pose between p0_it and p1 and append to the vision-based pose.
       // Need to account for intermediate frames between p0 and p1 if any.
       // pMid0 and pMid1 are used to denote the start and end poses of
       // every intermediate frame.
-      Pose3d pTransform = p0_it->second.GetPose().getInverse();
+      Pose3d pTransform = p0_it->second.GetPose().GetInverse();
       const_PoseMapIter_t pMid0 = p0_it;
       const_PoseMapIter_t pMid1 = p0_it;
       for (pMid1 = p0_it; pMid1->first != t; ++pMid1) {
@@ -339,7 +379,7 @@ namespace Anki {
           // and multiply the inverse with pTransform to get the first part of the transform
           // for the next frame.
           ++pMid1;
-          pTransform *= pMid1->second.GetPose().getInverse();
+          pTransform *= pMid1->second.GetPose().GetInverse();
           
           pMid0 = pMid1;
         }
@@ -357,14 +397,15 @@ namespace Anki {
       }
       #endif
       
-      pTransform.preComposeWith(git->second.GetPose());
-      p.SetPose(git->second.GetFrameId(), pTransform, p1.GetHeadAngle());
+      pTransform.PreComposeWith(git->second.GetPose());
+      p.SetPose(git->second.GetFrameId(), pTransform, p1.GetHeadAngle(), p1.GetLiftAngle());
       
       return RESULT_OK;
     }
     
     Result RobotPoseHistory::ComputeAndInsertPoseAt(const TimeStamp_t t_request,
                                                     TimeStamp_t& t, RobotPoseStamp** p,
+                                                    HistPoseKey* key,
                                                     bool withInterpolation)
     {
       RobotPoseStamp ps;
@@ -377,30 +418,60 @@ namespace Anki {
       // If computedPose entry exist at t, then overwrite it
       PoseMapIter_t it = computedPoses_.find(t);
       if (it != computedPoses_.end()) {
-        it->second.SetPose(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle());
+        it->second.SetPose(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle(), ps.GetLiftAngle());
         *p = &(it->second);
+        
+        if (key) {
+          *key = keyByTsMap_[t];
+        }
       } else {
         
         std::pair<PoseMapIter_t, bool> res;
         res = computedPoses_.emplace(std::piecewise_construct,
                                      std::forward_as_tuple(t),
-                                     std::forward_as_tuple(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle()));
+                                     std::forward_as_tuple(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle(), ps.GetLiftAngle()));
         
         if (!res.second) {
           return RESULT_FAIL;
         }
         
         *p = &(res.first->second);
+        
+        
+        // Create key associated with computed pose
+        ++currHistPoseKey_;
+        tsByKeyMap_.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(currHistPoseKey_),
+                            std::forward_as_tuple(t));
+        keyByTsMap_.emplace(std::piecewise_construct,
+                                  std::forward_as_tuple(t),
+                                  std::forward_as_tuple(currHistPoseKey_));
+        
+        if (key) {
+          *key = currHistPoseKey_;
+        }
+
       }
       
       return RESULT_OK;
     }
     
-    Result RobotPoseHistory::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
+    Result RobotPoseHistory::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key)
     {
       PoseMapIter_t it = computedPoses_.find(t_request);
       if (it != computedPoses_.end()) {
         *p = &(it->second);
+        
+        // Get key for the computed pose
+        if (key){
+          KeyByTimestampMapIter_t kIt = keyByTsMap_.find(it->first);
+          if (kIt == keyByTsMap_.end()) {
+            PRINT_NAMED_WARNING("RobotPoseHistory.GetComputedPoseAt.KeyNotFound","");
+            return RESULT_FAIL;
+          }
+          *key = kIt->second;
+        }
+        
         return RESULT_OK;
       }
       
@@ -448,9 +519,26 @@ namespace Anki {
           visPoses_.erase(visPoses_.begin(), git);
         }
         if (oldestAllowedTime > computedPoses_.begin()->first) {
+
+          // For all computedPoses up until cit, remove their associated keys.
+          for(PoseMapIter_t delIt = computedPoses_.begin(); delIt != cit; ++delIt) {
+            KeyByTimestampMapIter_t kbtIt = keyByTsMap_.find(delIt->first);
+            if (kbtIt == keyByTsMap_.end()) {
+              PRINT_NAMED_WARNING("RobotPoseHistory.CullToWindowSize.KeyNotFound", "");
+              break;
+            }
+            tsByKeyMap_.erase(kbtIt->second);
+            keyByTsMap_.erase(kbtIt);
+          }
+
           computedPoses_.erase(computedPoses_.begin(), cit);
         }
       }
+    }
+    
+    bool RobotPoseHistory::IsValidPoseKey(const HistPoseKey key) const
+    {
+      return (tsByKeyMap_.find(key) != tsByKeyMap_.end());
     }
     
     TimeStamp_t RobotPoseHistory::GetOldestTimeStamp() const

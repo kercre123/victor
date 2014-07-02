@@ -103,8 +103,9 @@ namespace Anki {
     Point<N,T>& operator*= (const Point<N,T> &other);
     Point<N,T>  operator-() const;
     
-    // Return length of the vector from the origin to the point
+    // Return length (squared) of the vector from the origin to the point
     T Length(void) const;
+    T LengthSq(void) const;
     
     // Makes the point into a unit vector from the origin, while
     // returning its original length. IMPORTANT: if the point was
@@ -198,7 +199,7 @@ namespace Anki {
   
   // TODO: should output type always be float/double?
   template<PointDimType N, typename T>
-  T computeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2);
+  T ComputeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2);
   
   
 } // namespace Anki

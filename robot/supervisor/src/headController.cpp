@@ -15,7 +15,7 @@ namespace Anki {
       const Radians ANGLE_TOLERANCE = DEG_TO_RAD(3.f);
       
       // Head angle on startup
-      const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
+      //const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
       
       // Currently applied power
       f32 power_ = 0;
@@ -31,18 +31,18 @@ namespace Anki {
       f32 prevHalPos_ = 0.f;
       bool inPosition_  = true;
       
-      const f32 SPEED_FILTERING_COEFF = 0.9f;
+      const f32 SPEED_FILTERING_COEFF = 0.5f;
 
-      const f32 Kp_ = 0.5f; // proportional control constant
-      const f32 Ki_ = 0.001f; // integral control constant
-      const f32 MAX_ERROR_SUM = 200.f;
+      f32 Kp_ = 2.f; // proportional control constant
+      f32 Ki_ = 0.05f; // integral control constant
+      f32 MAX_ERROR_SUM = 2.f;
      
       // Open loop gain
       // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
       // TODO: Measure this when the head is working! These numbers are completely made up.
-      const f32 SPEED_TO_POWER_OL_GAIN = 0.1;
-      const f32 BASE_POWER_UP = 0.1;
-      const f32 BASE_POWER_DOWN = -0.1;
+      const f32 SPEED_TO_POWER_OL_GAIN = 0.045;
+      const f32 BASE_POWER_UP = 0.2028;
+      const f32 BASE_POWER_DOWN = -0.1793;
       
       // Current speed
       f32 radSpeed_ = 0.f;
@@ -56,10 +56,10 @@ namespace Anki {
       VelocityProfileGenerator vpg_;
       
       // Whether or not to recalibrate the motors when they hard limit
-      const bool RECALIBRATE_AT_LIMIT = false;
+      //const bool RECALIBRATE_AT_LIMIT = false;
       
       // If head comes within this distance to limit angle, trigger recalibration.
-      const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
+      //const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
       
       // Calibration parameters
       typedef enum {
@@ -71,7 +71,7 @@ namespace Anki {
       
       HeadCalibState calState_ = HCS_IDLE;
       bool isCalibrated_ = false;
-      bool limitingDetected_ = false;
+      //bool limitingDetected_ = false;
       u32 lastHeadMovedTime_us = 0;
       
       const f32 MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
@@ -248,31 +248,42 @@ namespace Anki {
         return;
       }
       
+      desiredAngle_ = angle;
+      angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
+      
 #if(DEBUG_HEAD_CONTROLLER)
       PRINT("HEAD: SetDesiredAngle %f rads\n", desiredAngle_.ToFloat());
 #endif
       
-      desiredAngle_ = angle;
-      angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
-      angleErrorSum_ = 0.f;
+      f32 startRadSpeed = radSpeed_;
+      f32 startRad = currentAngle_.ToFloat();
+      if (!inPosition_) {
+        startRadSpeed = currDesiredRadVel_;
+        startRad = currDesiredAngle_;
+      } else {
+        startRadSpeed = 0;
+        angleErrorSum_ = 0.f;
+      }
       
       inPosition_ = false;
 
       if (FLT_NEAR(angleError_,0.f)) {
         inPosition_ = true;
+        #if(DEBUG_HEAD_CONTROLLER)
         PRINT("Head: Already at desired position\n");
+        #endif
         return;
       }
       
       // Start profile of head trajectory
-      vpg_.StartProfile(radSpeed_, currentAngle_.ToFloat(),
+      vpg_.StartProfile(startRadSpeed, startRad,
                         maxSpeedRad_, accelRad_,
                         approachSpeedRad_, desiredAngle_.ToFloat(),
                         CONTROL_DT);
       
 #if(DEBUG_HEAD_CONTROLLER)
       PRINT("HEAD VPG: startVel %f, startPos %f, maxVel %f, endVel %f, endPos %f\n",
-            radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, approachSpeedRad_, desiredAngle_.ToFloat());
+            startRadSpeed, startRad, maxSpeedRad_, approachSpeedRad_, desiredAngle_.ToFloat());
 #endif
 
       
@@ -305,13 +316,15 @@ namespace Anki {
         
         
         // Open loop value to drive at desired speed
-        power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
+        //power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
         
         // Compute corrective value
         f32 power_corr = (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
         
-        // Add base power in the direction of corrective value
-        power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+        // Add base power in the direction of the desired general direction
+        //power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+        //power_ += power_corr + ((power_ > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+        power_ = power_corr + ((desiredAngle_.ToFloat() - currentAngle_.ToFloat() > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
         
         // Update angle error sum
         angleErrorSum_ += angleError_;
@@ -399,6 +412,14 @@ namespace Anki {
       
       return RESULT_OK;
     }
+    
+    void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    {
+      Kp_ = kp;
+      Ki_ = ki;
+      MAX_ERROR_SUM = maxIntegralError;
+    }
+    
   } // namespace HeadController
   } // namespace Cozmo
 } // namespace Anki

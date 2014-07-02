@@ -48,6 +48,7 @@ namespace Anki {
     
     using cv::Rect_<T>::area;
     
+    // (x,y) is the top left
     inline T GetX()      const;
     inline T GetY()      const;
     inline T GetWidth()  const;
@@ -70,7 +71,7 @@ namespace Anki {
   protected:
     
     template<class PointContainer>
-    void initFromPointContainer(const PointContainer& points);
+    void InitFromPointContainer(const PointContainer& points);
     
     using cv::Rect_<T>::x;
     using cv::Rect_<T>::y;

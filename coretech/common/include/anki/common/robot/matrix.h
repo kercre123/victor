@@ -58,9 +58,12 @@ namespace Anki
           0, "Matrix::Min", "Limits is not valid");
 
         Type minValue = *array.Pointer(limits.rawIn1Limits.yStart, limits.rawIn1Limits.xStart);
-        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+        for(s32 iy=0; iy<limits.rawIn1Limits.ySize; iy++) {
+          const s32 y = limits.rawIn1Limits.yStart + iy * limits.rawIn1Limits.yIncrement;
           const Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+
+          for(s32 ix=0; ix<limits.rawIn1Limits.xSize; ix++) {
+            const s32 x = limits.rawIn1Limits.xStart + ix * limits.rawIn1Limits.xIncrement;
             minValue = MIN(minValue, pMat[x]);
           }
         }
@@ -81,9 +84,12 @@ namespace Anki
           0, "Matrix::Max", "Limits is not valid");
 
         Type maxValue = *array.Pointer(limits.rawIn1Limits.yStart, limits.rawIn1Limits.xStart);
-        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+        for(s32 iy=0; iy<limits.rawIn1Limits.ySize; iy++) {
+          const s32 y = limits.rawIn1Limits.yStart + iy * limits.rawIn1Limits.yIncrement;
           const Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+
+          for(s32 ix=0; ix<limits.rawIn1Limits.xSize; ix++) {
+            const s32 x = limits.rawIn1Limits.xStart + ix * limits.rawIn1Limits.xIncrement;
             maxValue = MAX(maxValue, pMat[x]);
           }
         }
@@ -104,9 +110,12 @@ namespace Anki
           0, "Matrix::Sum", "Limits is not valid");
 
         Accumulator_Type sum = 0;
-        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+        for(s32 iy=0; iy<limits.rawIn1Limits.ySize; iy++) {
+          const s32 y = limits.rawIn1Limits.yStart + iy * limits.rawIn1Limits.yIncrement;
           const Array_Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+
+          for(s32 ix=0; ix<limits.rawIn1Limits.xSize; ix++) {
+            const s32 x = limits.rawIn1Limits.xStart + ix * limits.rawIn1Limits.xIncrement;
             sum += pMat[x];
           }
         }
@@ -140,9 +149,12 @@ namespace Anki
 
         Accumulator_Type sum = 0;
         Accumulator_Type sumSq = 0;
-        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+        for(s32 iy=0; iy<limits.rawIn1Limits.ySize; iy++) {
+          const s32 y = limits.rawIn1Limits.yStart + iy * limits.rawIn1Limits.yIncrement;
           const Array_Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+
+          for(s32 ix=0; ix<limits.rawIn1Limits.xSize; ix++) {
+            const s32 x = limits.rawIn1Limits.xStart + ix * limits.rawIn1Limits.xIncrement;
             const Accumulator_Type val = static_cast<Accumulator_Type>(pMat[x]);
             sum   += val;
             sumSq += val*val;
@@ -458,9 +470,12 @@ namespace Anki
         const FixedLengthList<Point<Type> > &originalPoints,    //!< Four points in the original coordinate system
         const FixedLengthList<Point<Type> > &transformedPoints, //!< Four points in the transformed coordinate system
         Array<Type> &homography, //!< A 3x3 transformation matrix
+        bool &numericalFailure, //!< Did the homography solver fail?
         MemoryStack scratch //!< Scratch memory
         )
       {
+        const Type MAX_SOLVE_DISTANCE = static_cast<Type>(0.1);
+
         //BeginBenchmark("EstimateHomography_init");
 
         const s32 numPoints = originalPoints.get_size();
@@ -473,6 +488,11 @@ namespace Anki
 
         AnkiConditionalErrorAndReturnValue(AreEqualSize(3, 3, homography),
           RESULT_FAIL_INVALID_SIZE, "EstimateHomography", "homography must be 3x3");
+
+        homography.SetZero();
+        homography[0][0] = 1;
+        homography[1][1] = 1;
+        homography[2][2] = 1;
 
         Array<Type> A(8, 2*numPoints, scratch);
         Array<Type> bt(1, 2*numPoints, scratch);
@@ -538,8 +558,6 @@ namespace Anki
 
         //BeginBenchmark("EstimateHomography_cholesky");
 
-        bool numericalFailure;
-
         const Result choleskyResult = SolveLeastSquaresWithCholesky(AtA, Atbt, false, numericalFailure);
 
         AnkiConditionalErrorAndReturnValue(choleskyResult == RESULT_OK,
@@ -556,6 +574,36 @@ namespace Anki
         homography[1][0] = pAtbt[3]; homography[1][1] = pAtbt[4]; homography[1][2] = pAtbt[5];
         homography[2][0] = pAtbt[6]; homography[2][1] = pAtbt[7]; homography[2][2] = static_cast<Type>(1);
 
+        // Check that the solution is fairly close
+        // TODO: make work for numPoints != 4
+        if(numPoints == 4) {
+          Array<Type> point1(3,1,scratch);
+          Array<Type> point1Warped(3,1,scratch);
+          for(s32 iPoint=0; iPoint<numPoints; iPoint++) {
+            point1[0][0] = originalPoints[iPoint].x;
+            point1[1][0] = originalPoints[iPoint].y;
+            point1[2][0] = 1;
+
+            Matrix::Multiply(homography, point1, point1Warped);
+            point1Warped[0][0] /= point1Warped[2][0];
+            point1Warped[1][0] /= point1Warped[2][0];
+
+            const Type distance = sqrtf(powf(static_cast<f32>(transformedPoints[iPoint].x) - static_cast<f32>(point1Warped[0][0]), 2.0f) + powf(static_cast<f32>(transformedPoints[iPoint].y) - static_cast<f32>(point1Warped[1][0]), 2.0f));
+
+            if(distance > MAX_SOLVE_DISTANCE) {
+              AnkiWarn("EstimateHomography", "Poor solution precision");
+
+              numericalFailure = true;
+
+              homography.SetZero();
+              homography[0][0] = 1;
+              homography[1][1] = 1;
+              homography[2][2] = 1;
+
+              return RESULT_OK;
+            }
+          }
+        }
         //EndBenchmark("EstimateHomography_cholesky");
 
         return RESULT_OK;
@@ -1542,8 +1590,8 @@ namespace Anki
 
       template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex)
       {
-        const s32 arrHeight = arr.get_size(0);
-        const s32 arrWidth = arr.get_size(1);
+        // const s32 arrHeight = arr.get_size(0);
+        // const s32 arrWidth = arr.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(arr.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");

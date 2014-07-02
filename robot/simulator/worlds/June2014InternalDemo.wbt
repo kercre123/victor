@@ -104,7 +104,7 @@ Block1x1 {
   name "Number1"
   translation 0.0823477 0.154984 0.0219935
   rotation 1 -1.28835e-12 -6.88518e-12 3.67408e-06
-  blockColor 0.85 0.5 0.5
+  blockColor 0.2 0.2 0.2
   facemarkerFront [
     "textures/letters/1.png"
   ]
@@ -128,7 +128,7 @@ Block1x1 {
   name "Number2"
   translation 0.252889 0.0290523 0.021993
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.249821 0.85098 0.264027
+  blockColor 0.9 0.9 0.0
   facemarkerFront [
     "textures/letters/2.png"
   ]
@@ -152,7 +152,7 @@ Block1x1 {
   name "Number3"
   translation 0.216778 -0.130033 0.0219925
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.326848 0.541238 0.85098
+  blockColor 0.0 0.0 0.85
   facemarkerFront [
     "textures/letters/3.png"
   ]
@@ -176,7 +176,7 @@ Block1x1 {
   name "Number4"
   translation 0.0149741 -0.182442 0.0219923
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.63505 0.424613 0.85098
+  blockColor 0.9 0.4 0.0 # Orange
   facemarkerFront [
     "textures/letters/4.png"
   ]
@@ -200,7 +200,7 @@ Block1x1 {
   name "Number5"
   translation -0.160499 -0.0780675 0.0219927
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.85098 0.802457 0.50779
+  blockColor 0.0 0.0 0.85
   facemarkerFront [
     "textures/letters/5.png"
   ]
@@ -224,7 +224,7 @@ Block1x1 {
   name "Number6"
   translation -0.157611 0.140151 0.0219935
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.5 0.5 0.85
+  blockColor 0.0 0.0 0.85
   facemarkerFront [
     "textures/letters/6.png"
   ]
@@ -248,7 +248,7 @@ Block1x1 {
   name "Bang"
   translation 0.357611 0.350151 0.0219942
   rotation 7.34662e-05 -1.83704e-06 1 0.05
-  blockColor 0.85098 0.444236 0.0568704
+  blockColor 0.85 0.0 0.0
   facemarkerFront [
     "textures/symbols/bangBangBang.png"
   ]
@@ -268,49 +268,63 @@ Block1x1 {
     "textures/symbols/bangBangBang.png"
   ]
 }
+Block1x1 {
+  name "Arrow"
+  translation 0.357611 0.400151 0.0219942
+  rotation 7.34662e-05 -1.83704e-06 1 0.05
+  blockColor 0.9 0.9 0.0
+  facemarkerFront [
+    "textures/symbols/arrow.png"
+  ]
+  facemarkerBack [
+    "textures/symbols/arrow.png"
+  ]
+  facemarkerLeft [
+    "textures/symbols/arrow.png"
+  ]
+  facemarkerRight [
+    "textures/symbols/arrow.png"
+  ]
+  facemarkerTop [
+    "textures/symbols/arrow.png"
+  ]
+  facemarkerBottom [
+    "textures/symbols/arrow.png"
+  ]
+}
+Block1x1 {
+  name "Star"
+  translation 0.310611 0.400151 0.0219942
+  rotation 7.34662e-05 -1.83704e-06 1 0.05
+  blockColor 0.0 0.5 0.0
+  facemarkerFront [
+    "textures/symbols/star5.png"
+  ]
+  facemarkerBack [
+    "textures/symbols/star5.png"
+  ]
+  facemarkerLeft [
+    "textures/symbols/star5.png"
+  ]
+  facemarkerRight [
+    "textures/symbols/star5.png"
+  ]
+  facemarkerTop [
+    "textures/symbols/star5.png"
+  ]
+  facemarkerBottom [
+    "textures/symbols/star5.png"
+  ]
+}
 Dice {
   translation 0.087611 0.00262962 0.00799792
   rotation -1 -1.02534e-12 2.74581e-08 -3.67332e-06
   color 0.74522 1 0.958907
 }
 DEF Cozmo_1 CozmoBot {
-  hidden position_0_1 1.53612e-07
-  hidden position_0_2 1.53624e-07
-  hidden position_0_3 -0.0271898
-  hidden position_0_4 -0.0271898
-  hidden linearVelocity_0 -1.17809e-07 -4.10056e-10 -1.69944e-07
-  hidden angularVelocity_0 -4.96789e-08 -9.41759e-05 -7.29831e-11
-  hidden translation_6 1.63422e-10 -2.55851e-14 -5.98882e-09
-  hidden rotation_6 2.00544e-18 1 4.3782e-19 0.388263
-  hidden linearVelocity_6 -4.52399e-06 1.91501e-09 -1.13805e-06
-  hidden angularVelocity_6 -4.96789e-08 -9.41759e-05 -7.29831e-11
-  hidden translation_13 -1.75216e-07 0.02385 6.44203e-06
-  hidden rotation_13 0.99963 0.000116176 0.0271912 1.53612e-07
-  hidden linearVelocity_13 -1.33699e-06 2.32977e-10 -1.15309e-09
-  hidden angularVelocity_13 -4.96684e-08 -9.41759e-05 -8.74369e-11
-  hidden translation_14 -1.75231e-07 -0.02385 6.44255e-06
-  hidden rotation_14 -0.99963 9.74572e-05 -0.0271913 1.53624e-07
-  hidden linearVelocity_14 -1.33697e-06 2.32899e-10 1.16974e-09
-  hidden angularVelocity_14 -4.96739e-08 -9.41759e-05 -5.85279e-11
-  hidden translation_15 1.18113e-10 0.02385 -4.33892e-09
-  hidden rotation_15 3.80498e-09 1 5.18303e-11 -0.0271898
-  hidden linearVelocity_15 -1.4138e-06 2.75651e-10 -2.82541e-06
-  hidden angularVelocity_15 -4.96787e-08 -4.92541e-15 3.25573e-10
-  hidden translation_16 1.18113e-10 -0.02385 -4.33892e-09
-  hidden rotation_16 -3.80498e-09 1 -5.1852e-11 -0.0271898
-  hidden linearVelocity_16 -1.41378e-06 2.75641e-10 -2.82304e-06
-  hidden angularVelocity_16 -4.96787e-08 2.38065e-15 3.25573e-10
-  hidden translation_17 5.59535e-12 -8.72728e-16 -2.05339e-10
-  hidden rotation_17 -1.08081e-10 1 -1.37827e-10 1.00006e-07
-  hidden linearVelocity_17 -3.81712e-06 1.51443e-09 -1.41582e-06
-  hidden angularVelocity_17 -4.96789e-08 -7.41746e-05 1.16601e-11
-  hidden translation_18 0.002 8.73757e-16 6.87575e-09
-  hidden rotation_18 -1.08081e-10 1 -1.37827e-10 -1.00006e-07
-  translation 4.81649e-08 -3.6921e-09 -0.000325316
-  rotation 0.000155635 1 2.0385e-06 0.0271898
+  translation 0 0 0
+  rotation 0 0 1 0
   name "CozmoBot_1"
-  headAngle -0.388263
-  liftAngle -1.00006e-07
   usbChannel 10
 }
 BlockWorldComms {

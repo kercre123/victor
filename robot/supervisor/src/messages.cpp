@@ -12,6 +12,7 @@
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
+#include "animationController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -92,6 +93,11 @@ namespace Anki {
 
         static RobotState robotState_;
         
+        // History of the last 2 RobotState messages that were sent to the basestation.
+        // Used to avoid repeating a send.
+        TimeStamp_t robotStateSendHist_[2];
+        u8 robotStateSendHistIdx_ = 0;
+        
       } // private namespace
       
 
@@ -158,7 +164,10 @@ namespace Anki {
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
 
+        robotState_.lastPathID = PathFollower::GetLastPathID();
+        
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
+        robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
         
         robotState_.status = 0;
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
@@ -184,13 +193,16 @@ namespace Anki {
         // Poor-man's time sync to basestation, for now.
         HAL::SetTimeStamp(msg.syncTime);
         
+        // Reset pose history and frameID to zero
+        Localization::ResetPoseFrame();
+        
         // Send back camera calibration
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
         if(headCamInfo == NULL) {
           PRINT("NULL HeadCamInfo retrieved from HAL.\n");
         }
         else {
-          Messages::HeadCameraCalibration headCalibMsg = {
+          Messages::CameraCalibration headCalibMsg = {
             headCamInfo->focalLength_x,
             headCamInfo->focalLength_y,
             headCamInfo->center_x,
@@ -201,7 +213,7 @@ namespace Anki {
           };
           
           
-          if(!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::HeadCameraCalibration),
+          if(!HAL::RadioSendMessage(CameraCalibration_ID,
                                     &headCalibMsg))
           {
             PRINT("Failed to send camera calibration message.\n");
@@ -233,9 +245,10 @@ namespace Anki {
         
         
         PRINT("Robot received localization update from "
-              "basestation: (%.3f,%.3f) at %.1f degrees\n",
+              "basestation: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
               currentMatX, currentMatY,
-              currentMatHeading.getDegrees());
+              currentMatHeading.getDegrees(),
+              Localization::GetPoseFrameId());
 #if(USE_OVERLAY_DISPLAY)
         {
           using namespace Sim::OverlayDisplay;
@@ -296,7 +309,7 @@ namespace Anki {
       }
       
       void ProcessExecutePathMessage(const ExecutePath& msg) {
-        PathFollower::StartPathTraversal();
+        PathFollower::StartPathTraversal(msg.pathID);
       }
       
       void ProcessDockWithBlockMessage(const DockWithBlock& msg)
@@ -390,24 +403,45 @@ namespace Anki {
       }
       
       void ProcessSetHeadlightMessage(const SetHeadlight& msg) {
-        if (msg.intensity > 0) {
-          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, (HAL::LEDColor)(HAL::LED_RED | HAL::LED_GREEN | HAL::LED_BLUE));
-        } else {
-          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, HAL::LED_OFF);
-        }
+        HAL::SetHeadlights(msg.intensity > 0);
+      }
+
+      void ProcessSetDefaultLightsMessage(const SetDefaultLights& msg) {
+        u32 lColor = msg.eye_left_color;
+        HAL::SetLED(HAL::LED_LEFT_EYE_TOP, lColor);
+        HAL::SetLED(HAL::LED_LEFT_EYE_RIGHT, lColor);
+        HAL::SetLED(HAL::LED_LEFT_EYE_BOTTOM, lColor);
+        HAL::SetLED(HAL::LED_LEFT_EYE_LEFT, lColor);
+
+        u32 rColor = msg.eye_right_color;
+        HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, rColor);
+        HAL::SetLED(HAL::LED_RIGHT_EYE_RIGHT, rColor);
+        HAL::SetLED(HAL::LED_RIGHT_EYE_BOTTOM, rColor);
+        HAL::SetLED(HAL::LED_RIGHT_EYE_LEFT, rColor);
       }
       
+      void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
+        HeadController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+      }
+      
+      void ProcessSetLiftControllerGainsMessage(const SetLiftControllerGains& msg) {
+        LiftController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+      }
+      
+      void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
+        VisionSystem::SetParams(msg.integerCountsIncrement,
+                                msg.minExposureTime,
+                                msg.maxExposureTime,
+                                msg.highValue,
+                                msg.percentileToMakeHigh);
+      }
+      
+      void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
+        AnimationController::PlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
+      }
       
       // TODO: Fill these in once they are needed/used:
       void ProcessVisionMarkerMessage(const VisionMarker& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessMatMarkerObservedMessage(const MatMarkerObserved& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
@@ -417,11 +451,8 @@ namespace Anki {
       
       // These need implementations to avoid linker errors, but we don't expect
       // to _receive_ these message types, only to send them.
-      void ProcessMatCameraCalibrationMessage(const MatCameraCalibration& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessHeadCameraCalibrationMessage(const HeadCameraCalibration& msg) {
+
+      void ProcessCameraCalibrationMessage(const CameraCalibration& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
       
@@ -441,12 +472,38 @@ namespace Anki {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
       
+      void ProcessBlockPickedUpMessage(const BlockPickedUp& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
+      
+      void ProcessBlockPlacedMessage(const BlockPlaced& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
+    
+      void ProcessMainCycleTimeErrorMessage(const MainCycleTimeError& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
 // ----------- Send messages -----------------
       
       
-      Result SendRobotStateMsg()
+      Result SendRobotStateMsg(const RobotState* msg)
       {
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &robotState_) == true) {
+        const RobotState* m = &robotState_;
+        if (msg) {
+          m = msg;
+        }
+        
+        // Check if a state message with this timestamp was already sent
+        for (u8 i=0; i < 2; ++i) {
+          if (robotStateSendHist_[i] == m->timestamp) {
+            return RESULT_FAIL;
+          }
+        }
+        
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), m) == true) {
+          // Update send history
+          robotStateSendHist_[robotStateSendHistIdx_] = m->timestamp;
+          if (++robotStateSendHistIdx_ > 1) robotStateSendHistIdx_ = 0;
           return RESULT_OK;
         } else {
           return RESULT_FAIL;
@@ -475,11 +532,13 @@ namespace Anki {
         
         // Breakup and send in multiple messages if necessary
         Messages::PrintText m;
-        s32 bytesLeftToSend = strlen(text);
+        const size_t tempBytesLeftToSend = strlen(text);
+        AnkiAssert(tempBytesLeftToSend < s32_MAX);
+        s32 bytesLeftToSend = static_cast<s32>(tempBytesLeftToSend);
         u8 numMsgs = 0;
         while(bytesLeftToSend > 0) {
           memset(m.text, 0, PRINT_TEXT_MSG_LENGTH);
-          u32 currPacketBytes = MIN(PRINT_TEXT_MSG_LENGTH, bytesLeftToSend);
+          size_t currPacketBytes = MIN(PRINT_TEXT_MSG_LENGTH, bytesLeftToSend);
           memcpy(m.text, text + numMsgs*PRINT_TEXT_MSG_LENGTH, currPacketBytes);
           
           bytesLeftToSend -= PRINT_TEXT_MSG_LENGTH;

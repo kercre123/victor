@@ -9,11 +9,13 @@
 #define DEBUG_PATH 0
 
 #ifdef CORETECH_BASESTATION
+#define DEBUG_PATH_APPEND 0
 #include <stdio.h>
 #include <float.h>
 #define ATAN2_FAST(y,x) atan2(y,x)
 #define ATAN2_ACC(y,x) atan2(y,x)
 #elif defined CORETECH_ROBOT
+#define DEBUG_PATH_APPEND 0
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/trig_fast.h"
 #define ATAN2_FAST(y,x) atan2_fast(y,x)
@@ -87,7 +89,29 @@ namespace Anki
       return 0;
     }
     
-    
+    void PathSegment::OffsetStart(f32 xOffset, f32 yOffset)
+    {
+      switch(type_) {
+      case PST_LINE:
+        def_.line.startPt_x += xOffset;
+        def_.line.startPt_y += yOffset;
+        def_.line.endPt_x += xOffset;
+        def_.line.endPt_y += yOffset;
+        break;
+      case PST_ARC:
+        def_.arc.centerPt_x += xOffset;
+        def_.arc.centerPt_y += yOffset;
+        break;
+      case PST_POINT_TURN:
+        def_.turn.x += xOffset;
+        def_.turn.y += yOffset;
+        break;
+      default:
+        CoreTechPrint("ERROR (OffsetStart): Undefined segment %d\n", type_);
+        assert(false);
+      }
+    }
+
     void PathSegment::GetStartPoint(f32 &x, f32 &y) const
     {
       switch(type_){
@@ -224,7 +248,7 @@ namespace Anki
       
 #if(DEBUG_PATH)
       CoreTechPrint("LINE (%f, %f, %f, %f)\n", seg->startPt_x, seg->startPt_y, seg->endPt_x, seg->endPt_y);
-      CoreTechPrint("Robot Pose: x: %f, y: %f ang: %f\n", x,y,angle.ToFloat());
+      CoreTechPrint("Robot Pose: x: %f, y: %f ang: %f\n", x,y,angle);
 #endif
       
       
@@ -296,10 +320,10 @@ namespace Anki
 #if(DEBUG_PATH)
         CoreTechPrint("m: %f, b: %f\n",line_m_,line_b_);
         CoreTechPrint("x_int: %f, y_int: %f, b_inv: %f\n", x_intersect, y_intersect, b_inv);
-        CoreTechPrint("dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath_m);
+        CoreTechPrint("dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath);
         CoreTechPrint("SIGN(dx): %d, dy_sign: %f\n", (SIGN(dx) ? 1 : -1), line_dy_sign_);
         CoreTechPrint("lineTheta: %f\n", line_theta_.ToFloat());
-        //PRINT("lineTheta: %f, robotTheta: %f\n", seg->theta.ToFloat(), currPose.get_angle().ToFloat());
+        //PRINT("lineTheta: %f, robotTheta: %f\n", seg->theta.ToFloat(), currPose.GetAngle().ToFloat());
 #endif
         
         // Compute the sign of the error distance
@@ -491,17 +515,72 @@ namespace Anki
 
     Path::Path()
     {
+      capacity_ = MAX_NUM_PATH_SEGMENTS;
+
+#if CORETECH_ROBOT
+  #if defined CORETECH_BASESTATION
+  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
+  #endif
+      path_ = __pathSegmentStackForRobot;
+#elif defined CORETECH_BASESTATION
+      path_ = new PathSegment[MAX_NUM_PATH_SEGMENTS];
+#else
+#error "one of CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
+#endif
+
       Clear();
     }
+
+    Path::Path(const Path& other)
+    {
+      capacity_ = MAX_NUM_PATH_SEGMENTS;
+
+#if CORETECH_ROBOT
+  #if defined CORETECH_BASESTATION
+  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
+  #endif
+      path_ = __pathSegmentStackForRobot;
+#elif defined CORETECH_BASESTATION
+      path_ = new PathSegment[MAX_NUM_PATH_SEGMENTS];
+#else
+#error "one of CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
+#endif
+
+      Clear();
+
+      *this = other;
+    }
+
+    Path::~Path()
+    {
+#if CORETECH_BASESTATION
+      delete [] path_;
+      path_ = nullptr;
+#endif
+    }
     
+    Path& Path::operator=(const Path& rhs)
+    {
+      capacity_ = MAX_NUM_PATH_SEGMENTS;
+      assert(capacity_ == rhs.capacity_);
+
+      numPathSegments_ = rhs.numPathSegments_;
+      memcpy(path_, rhs.path_, numPathSegments_*sizeof(PathSegment));
+      return *this;
+    }
+
     void Path::Clear()
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       numPathSegments_ = 0;
     }
 
     
     void Path::PrintPath() const
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       for(u8 i = 0; i<numPathSegments_; ++i) {
         PrintSegment(i);
       }
@@ -509,6 +588,8 @@ namespace Anki
     
     void Path::PrintSegment(u8 segment) const
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (segment < numPathSegments_) {
         CoreTechPrint("Path segment %d - ", segment);
         path_[segment].Print();
@@ -826,6 +907,8 @@ namespace Anki
   
     bool Path::PopFront(const u8 numSegments)
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (numSegments <= numPathSegments_) {
         numPathSegments_ -= numSegments;
         
@@ -844,6 +927,8 @@ namespace Anki
     
     bool Path::PopBack(const u8 numSegments)
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (numSegments <= numPathSegments_) {
         numPathSegments_ -= numSegments;
         return true;
@@ -863,6 +948,8 @@ namespace Anki
     // at transition points.
     bool Path::CheckSegmentContinuity(f32 tolerance_distance_squared, s8 pathSegmentIdx) const
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       // If checking continuity on non-existent piece
       if (pathSegmentIdx >= numPathSegments_)
         return false;
@@ -886,6 +973,8 @@ namespace Anki
   
     bool Path::CheckContinuity(f32 tolerance_distance_squared, s8 pathSegmentIdx) const
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       // Check entire path?
       if (pathSegmentIdx < 0) {
         for (u8 i=0; i< numPathSegments_; ++i) {
@@ -900,13 +989,14 @@ namespace Anki
       // Just check specified segment
       return CheckSegmentContinuity(tolerance_distance_squared, pathSegmentIdx);
     }
-  
-    
+
     // Add path segment
     // tODO: Change units to meters
     bool Path::AppendLine(u32 matID, f32 x_start, f32 y_start, f32 x_end, f32 y_end,
                           f32 targetSpeed, f32 accel, f32 decel)
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         CoreTechPrint("ERROR (AppendLine): Exceeded path size\n");
         return false;
@@ -914,6 +1004,12 @@ namespace Anki
       
       path_[numPathSegments_].DefineLine(x_start, y_start, x_end, y_end,
                                          targetSpeed, accel, decel);
+
+#if DEBUG_PATH_APPEND
+      CoreTechPrint("INFO (AppendLine): numPathSegments_ = %u :", numPathSegments_);
+      path_[numPathSegments_].Print();
+#endif
+
       numPathSegments_++;
       
       return true;
@@ -922,8 +1018,20 @@ namespace Anki
   
     void Path::AddArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                       f32 targetSpeed, f32 accel, f32 decel) {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
+      if (FLT_NEAR(sweepRad,0)) {
+        CoreTechPrint("ERROR: sweepRad is zero\n");
+      }
+
       path_[numPathSegments_].DefineArc(x_center, y_center, radius, startRad, sweepRad,
                                         targetSpeed, accel, decel);
+
+#if DEBUG_PATH_APPEND
+      CoreTechPrint("INFO (AddArc): numPathSegments_ = %u :", numPathSegments_);
+      path_[numPathSegments_].Print();
+#endif
+
       numPathSegments_++;
     }
   
@@ -931,6 +1039,8 @@ namespace Anki
     bool Path::AppendArc(u32 matID, f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                          f32 targetSpeed, f32 accel, f32 decel)
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         CoreTechPrint("ERROR (AppendArc): Exceeded path size\n");
         return false;
@@ -978,8 +1088,10 @@ namespace Anki
           sweep = MAX( -ABS((limitAngle - currAngle).ToFloat()), -sweepRadLeft);
         }
         
-        AddArc(x_center, y_center, radius, currAngle.ToFloat(), sweep,
-               targetSpeed, accel, decel);
+        if(!NEAR_ZERO(sweep)) {
+          AddArc(x_center, y_center, radius, currAngle.ToFloat(), sweep,
+                 targetSpeed, accel, decel);
+        }
           
         if (ABS(sweep) == sweepRadLeft) {
           sweepRadLeft = 0;
@@ -1001,18 +1113,41 @@ namespace Anki
     bool Path::AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
                                f32 targetRotSpeed, f32 rotAccel, f32 rotDecel)
     {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
-        CoreTechPrint("ERROR (AppendArc): Exceeded path size\n");
+        CoreTechPrint("ERROR (AppendPointTurn): Exceeded path size\n");
         return false;
       }
       
       path_[numPathSegments_].DefinePointTurn(x,y,targetAngle,
                                               targetRotSpeed, rotAccel, rotDecel);
+
       numPathSegments_++;
       
       return true;
     }
-  
+
+    bool Path::AppendSegment(const PathSegment& segment)
+    {
+      assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
+
+      if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
+        CoreTechPrint("ERROR (AppendSegment): Exceeded path size\n");
+        return false;
+      }
+
+      path_[numPathSegments_] = segment;
+
+#if DEBUG_PATH_APPEND
+      CoreTechPrint("INFO (AppendSegment): numPathSegments_ = %u :", numPathSegments_);
+      path_[numPathSegments_].Print();
+#endif
+
+      numPathSegments_++;
+
+      return true;
+    }  
     
 
   } // namespace Cozmo

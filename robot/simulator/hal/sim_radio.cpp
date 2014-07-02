@@ -34,14 +34,14 @@ namespace Anki {
   namespace Cozmo {
     
     namespace { // "Private members"
-      const u16 RECV_BUFFER_SIZE = 1024;
+      const size_t RECV_BUFFER_SIZE = 1024;
       
       // For communications with basestation
       TcpServer server;
       UdpClient advRegClient;
 
       u8 recvBuf_[RECV_BUFFER_SIZE];
-      s32 recvBufSize_ = 0;
+      size_t recvBufSize_ = 0;
       
       RobotAdvertisementRegistration regMsg;
     }
@@ -198,7 +198,7 @@ namespace Anki {
     } // RadioSendMessage()
     
     
-    u32 RadioGetNumBytesAvailable(void)
+    size_t RadioGetNumBytesAvailable(void)
     {
       if (!server.HasClient()) {
         return 0;
@@ -208,7 +208,9 @@ namespace Anki {
       int dataSize;
       
       // Read available data
-      dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], RECV_BUFFER_SIZE - recvBufSize_);
+      const size_t tempSize = RECV_BUFFER_SIZE - recvBufSize_;
+      assert(tempSize < std::numeric_limits<int>::max());
+      dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
       if (dataSize > 0) {
         recvBufSize_ += dataSize;
       } else if (dataSize < 0) {
@@ -252,10 +254,9 @@ namespace Anki {
       Messages::ID retVal = Messages::NO_MESSAGE_ID;
       
       if (server.HasClient()) {
-        const u32 bytesAvailable = RadioGetNumBytesAvailable();
-        if(bytesAvailable > 0) {
-    
-          const u32 headerSize = sizeof(RADIO_PACKET_HEADER);
+        const size_t bytesAvailable = RadioGetNumBytesAvailable();
+        const u32 headerSize = sizeof(RADIO_PACKET_HEADER);
+        if(bytesAvailable >= headerSize) {
           
           // Look for valid header
           std::string strBuf(recvBuf_, recvBuf_ + recvBufSize_);  // TODO: Just make recvBuf a string

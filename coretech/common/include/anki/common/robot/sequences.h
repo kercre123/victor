@@ -14,6 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/sequences_declarations.h"
 #include "anki/common/robot/arraySlices.h"
+#include "anki/common/robot/flags.h"
 
 namespace Anki
 {
@@ -22,23 +23,26 @@ namespace Anki
     // #pragma mark
 
     template<typename Type> LinearSequence<Type>::LinearSequence()
-      : start(-1), increment(static_cast<Type>(-1)), end(-1)
+      : size(-1), start(-1), increment(static_cast<Type>(-1))
     {
       this->size = -1;
     }
 
     template<typename Type> LinearSequence<Type>::LinearSequence(const Type start, const Type end)
-      : start(start), increment(static_cast<Type>(1))
+      : start(start), increment(1)
     {
       this->size = computeSize(this->start, this->increment, end);
-      this->end = this->start + (this->size-1) * this->increment;
     }
 
     template<typename Type> LinearSequence<Type>::LinearSequence(const Type start, const Type increment, const Type end)
       : start(start), increment(increment)
     {
       this->size = computeSize(this->start, this->increment, end);
-      this->end = this->start + (this->size-1) * this->increment;
+    }
+
+    template<typename Type> LinearSequence<Type>::LinearSequence(const Type start, const Type increment, const Type /*end*/, const s32 size)
+      : size(size), start(start), increment(increment)
+    {
     }
 
     template<typename Type> Array<Type> LinearSequence<Type>::Evaluate(MemoryStack &memory, const Flags::Buffer flags) const
@@ -71,11 +75,12 @@ namespace Anki
 
       const s32 xStart = out.get_xSlice().get_start();
       const s32 xIncrement = out.get_xSlice().get_increment();
-      const s32 xEnd = out.get_xSlice().get_end();
+      const s32 xSize = out.get_xSlice().get_size();
 
       Type * pOut = outArray.Pointer(yStart,0);
       Type curSequenceValue = sequenceStartValue;
-      for(s32 x=xStart; x<=xEnd; x+=xIncrement) {
+      for(s32 ix=0; ix<xSize; ix++) {
+        const s32 x = xStart + ix * xIncrement;
         pOut[x] = curSequenceValue;
         curSequenceValue += sequenceIncrement;
       }
@@ -93,11 +98,6 @@ namespace Anki
       return increment;
     }
 
-    template<typename Type> Type LinearSequence<Type>::get_end() const
-    {
-      return end;
-    }
-
     template<typename Type> s32 LinearSequence<Type>::get_size() const
     {
       return size;
@@ -105,7 +105,13 @@ namespace Anki
 
     template<typename Type> s32 LinearSequence<Type>::computeSize(const Type start, const Type increment, const Type end)
     {
-      AnkiAssert(increment != static_cast<Type>(0));
+      if(start == end) {
+        return 1;
+      } else {
+        if(ABS(increment) <= Flags::numeric_limits<Type>::epsilon()) {
+          return 0;
+        }
+      }
 
       // 10:-1:12
       if(increment < 0 && start < end) {
@@ -121,24 +127,29 @@ namespace Anki
       const Type maxLimit = MAX(start, end);
       const Type incrementMagnitude = ABS(increment);
 
-      const Type validRange = maxLimit - minLimit + 1;
-      const s32 size = (validRange+incrementMagnitude-1)/incrementMagnitude;
+      const Type validRange = maxLimit - minLimit;
+      const s32 size = (validRange+incrementMagnitude) / incrementMagnitude;
+
+      AnkiConditionalErrorAndReturnValue(size >= 0,
+        0, "LinearSequence<Type>::computeSize", "size estimation failed");
 
       return size;
     }
 
     template<typename Type> LinearSequence<Type> IndexSequence(Type start, Type end, s32 arraySize)
     {
-      return IndexSequence(start, static_cast<Type>(1), end, arraySize);
+      return IndexSequence(start, 1, end, arraySize);
     }
 
     template<typename Type> LinearSequence<Type> IndexSequence(Type start, Type increment, Type end, s32 arraySize)
     {
+      // A negative value means (end-value)
       if(start < 0)
         start += arraySize;
 
       AnkiAssert(start >=0 && start < arraySize);
 
+      // A negative value means (end-value)
       if(end < 0)
         end += arraySize;
 
@@ -151,38 +162,24 @@ namespace Anki
 
     template<typename Type> LinearSequence<Type> Linspace(const Type start, const Type end, const s32 size)
     {
-      const Type increment = (end-start) / (size-1);
-      LinearSequence<Type> sequence(start, increment, end);
+      Type increment;
 
-      // If Type is not a float, and the sequence is the wrong size, just give up
-      if((sequence.get_size() != size) && static_cast<Type>(1e-5)==0) {
-        AnkiError("Linspace", "Size is incorrect, probably because the Type is an integer type");
-        return sequence;
-      }
+      LinearSequence<Type> sequence;
 
-      // The size of the generated sequence may be incorrect, due to numerical precision. If so, try
-      // to tweak it.
-      // TODO: check if this actually can happen
-      if(sequence.get_size() < size) {
-        for(s32 i=0; i<128; i++) {
-          const Type offset = static_cast<Type>(1e-15) * static_cast<Type>(1 << (i+1));
-          sequence = LinearSequence<Type>(start, increment + offset, end);
-
-          if(sequence.get_size() >= size)
-            break;
-        }
-      } else if(sequence.get_size() > size) {
-        for(s32 i=0; i<128; i++) {
-          const Type offset = static_cast<Type>(1e-15) * static_cast<Type>(1 << (i+1));
-          sequence = LinearSequence<Type>(start, increment - offset, end);
-
-          if(sequence.get_size() <= size)
-            break;
+      if(ABS(end-start) <= Flags::numeric_limits<Type>::epsilon()) {
+        sequence = LinearSequence<Type>(start, 0, end, size);
+      } else {
+        if(size <= 0) {
+          // Empty sequence
+          sequence = LinearSequence<Type>(start, 1, end, 0);
+        } else if(size == 1) {
+          // If size == 1, match output with Matlab
+          sequence = LinearSequence<Type>(end, 1, end, size);
+        } else {
+          increment = (end-start) / (size-1);
+          sequence = LinearSequence<Type>(start, increment, end, size);
         }
       }
-
-      AnkiConditionalErrorAndReturnValue(sequence.get_size() == size,
-        sequence, "Linspace", "Could not set sequence to have the correct size.");
 
       return sequence;
     }

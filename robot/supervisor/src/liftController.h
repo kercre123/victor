@@ -43,6 +43,7 @@ namespace Anki {
       
       // Command the desired height of the lift
       void SetDesiredHeight(f32 height_mm);
+      f32 GetDesiredHeight();
       bool IsInPosition();
 
       // Whether or not the lift is moving.
@@ -67,6 +68,8 @@ namespace Anki {
       f32 GetAngleRad();
       
       Result Update();
+
+      void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       
     } // namespace LiftController
   } // namespcae Cozmo

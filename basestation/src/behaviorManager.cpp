@@ -12,15 +12,25 @@
 #include "behaviorManager.h"
 #include "pathPlanner.h"
 #include "vizManager.h"
-
+#include "soundManager.h"
 
 #include "anki/common/basestation/general.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/shared/utilities_shared.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
+
+// The angle wrt the mat at which the user is expected to be.
+// For happy head-nodding demo purposes.
+#define USER_LOC_ANGLE_WRT_MAT -1.57
+
+#define JUNE_DEMO_START_X 150.0
+#define JUNE_DEMO_START_Y -120.0
+#define JUNE_DEMO_START_THETA 0.0
 
 namespace Anki {
   namespace Cozmo {
@@ -28,12 +38,11 @@ namespace Anki {
     BehaviorManager::BehaviorManager()
     : robotMgr_(nullptr)
     , world_(nullptr)
+    , mode_(BM_None)
     , distThresh_mm_(20.f)
     , angThresh_(DEG_TO_RAD(10))
-    , dockBlock_(nullptr)
-    , dockMarker_(nullptr)
-    , blockToPickUp_(Vision::MARKER_UNKNOWN)
-    , blockToPlaceOn_(Vision::MARKER_UNKNOWN)
+    , blockToPickUp_(Block::UNKNOWN_BLOCK_TYPE)
+    , blockToPlaceOn_(Block::UNKNOWN_BLOCK_TYPE)
     {
       Reset();
     }
@@ -47,19 +56,24 @@ namespace Anki {
     void BehaviorManager::StartMode(BehaviorMode mode)
     {
       Reset();
-      
+      mode_ = mode;
       switch(mode) {
         case BM_None:
+          CoreTechPrint("Starting NONE behavior\n");
           break;
         case BM_PickAndPlace:
-          dockBlock_ = nullptr;
+          CoreTechPrint("Starting PickAndPlace behavior\n");
           nextState_ = WAITING_FOR_DOCK_BLOCK;
           updateFcn_ = &BehaviorManager::Update_PickAndPlaceBlock;
           break;
         case BM_June2014DiceDemo:
+          CoreTechPrint("Starting June demo behavior\n");
           state_     = WAITING_FOR_ROBOT;
-          nextState_ = WAITING_TO_SEE_DICE;
+          nextState_ = DRIVE_TO_START;
           updateFcn_ = &BehaviorManager::Update_June2014DiceDemo;
+          idleState_ = IDLE_NONE;
+          timesIdle_ = 0;
+          SoundManager::getInstance()->Play(SOUND_DEMO_START);
           break;
         default:
           PRINT_NAMED_ERROR("BehaviorManager.InvalidMode", "Invalid behavior mode");
@@ -70,6 +84,11 @@ namespace Anki {
       
     } // StartMode()
     
+    BehaviorMode BehaviorManager::GetMode() const
+    {
+      return mode_;
+    }
+    
     void BehaviorManager::Reset()
     {
       state_ = WAITING_FOR_ROBOT;
@@ -78,12 +97,11 @@ namespace Anki {
       robot_ = nullptr;
       
       // Pick and Place
-      dockBlock_ = nullptr;
-      dockMarker_ = nullptr;
       
       // June2014DiceDemo
-      blockToPickUp_  = Vision::MARKER_UNKNOWN;
-      blockToPlaceOn_ = Vision::MARKER_UNKNOWN;
+      explorationStartAngle_ = 0;
+      blockToPickUp_  = Block::UNKNOWN_BLOCK_TYPE;
+      blockToPlaceOn_ = Block::UNKNOWN_BLOCK_TYPE;
       
     } // Reset()
     
@@ -102,19 +120,23 @@ namespace Anki {
         
         //PRINT_INFO("currType: %d\n", blockType.first);
         auto const & blockMapByID = blockType.second;
-        for (auto const & block : blockMapByID) {
+        for (auto const & object : blockMapByID) {
 
-          //PRINT_INFO("currID: %d\n", block.first);
-          if (currBlockOfInterestFound) {
-            // Current block of interest has been found.
-            // Set the new block of interest to the next block in the list.
-            blockOfInterest_ = block.first;
-            newBlockOfInterestSet = true;
-            //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
-            break;
-          } else if (block.first == blockOfInterest_) {
-            currBlockOfInterestFound = true;
-            //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+          const Block* block = dynamic_cast<Block*>(object.second);
+          if(block != nullptr && !block->IsBeingCarried())
+          {
+            //PRINT_INFO("currID: %d\n", block.first);
+            if (currBlockOfInterestFound) {
+              // Current block of interest has been found.
+              // Set the new block of interest to the next block in the list.
+              blockOfInterest_ = block->GetID();
+              newBlockOfInterestSet = true;
+              //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
+              break;
+            } else if (block->GetID() == blockOfInterest_) {
+              currBlockOfInterestFound = true;
+              //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+            }
           }
         }
         if (newBlockOfInterestSet)
@@ -129,9 +151,13 @@ namespace Anki {
         // Find first block
         ObjectID_t firstBlock = u16_MAX;
         for (auto const & blockType : blockMap) {
-          for (auto const & block : blockType.second) {
-            firstBlock = block.first;
-            break;
+          for (auto const & object : blockType.second) {
+            const Block* block = dynamic_cast<Block*>(object.second);
+            if(block != nullptr && !block->IsBeingCarried())
+            {
+              firstBlock = object.first;
+              break;
+            }
           }
           if (firstBlock != u16_MAX) {
             break;
@@ -139,7 +165,7 @@ namespace Anki {
         }
 
         
-        if (firstBlock == blockOfInterest_){
+        if (firstBlock == blockOfInterest_ || firstBlock == u16_MAX){
           //PRINT_INFO("Only one block in existence.");
         } else {
           //PRINT_INFO("Setting block of interest to first block\n");
@@ -149,7 +175,43 @@ namespace Anki {
       
       PRINT_INFO("Block of interest: id %d  (total objects %d)\n", blockOfInterest_, numTotalObjects);
       
-    }
+      /*
+      // Draw BOI
+      const Block* block = dynamic_cast<Block*>(world_->GetObservableObjectByID(blockOfInterest_));
+      if(block == nullptr) {
+        PRINT_INFO("Failed to find/draw block of interest!\n");
+      } else {
+
+        static ObjectID_t prev_boi = 0;      // Previous block of interest
+        static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
+
+        // Get predock poses
+        std::vector<Block::PoseMarkerPair_t> poses;
+        block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
+        
+        // Erase previous predock pose marker for previous block of interest
+        if (prev_boi != blockOfInterest_ || poses.size() != prevNumPreDockPoses) {
+          PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", blockOfInterest_, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
+          VizManager::getInstance()->EraseVizObjectType(VIZ_PREDOCKPOSE);
+          prev_boi = blockOfInterest_;
+          prevNumPreDockPoses = poses.size();
+        }
+        
+        // Draw predock poses
+        u32 poseID = 0;
+        for(auto pose : poses) {
+          VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose.first, VIZ_COLOR_PREDOCKPOSE);
+          ++poseID;
+        }
+      
+        // Draw cuboid
+        VizManager::getInstance()->DrawCuboid(block->GetID(),
+                                              block->GetSize(),
+                                              block->GetPose().GetWithRespectTo(Pose3d::World),
+                                              VIZ_COLOR_SELECTED_OBJECT);
+      }
+       */
+    } // SelectNextBlockOfInterest()
     
     void BehaviorManager::Update()
     {
@@ -173,150 +235,8 @@ namespace Anki {
           break;
       }
 
-    }
-    
-    
-    // Returns true if successfully found a path to pre-dock pose for specified block.
-    //bool BehaviorManager::GetPathToPreDockPose(const Block& b, Path& p)
-    //{    }
-    
-    
-    void BehaviorManager::FollowPathHelper()
-    {
       
-      if(!robot_->IsTraversingPath() && !robot_->IsMoving() &&
-         waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
-        
-        if (robot_->get_pose().IsSameAs(nearestPreDockPose_, distThresh_mm_, angThresh_)) {
-          PRINT_INFO("Dock pose reached\n");
-          
-          // Verify that the block we are docking with still exists in case it somehow disappeared while
-          // the robot was travelling to the predock pose.
-          const Vision::ObservableObject* oObject = world_->GetObservableObjectByID(dockBlock_->GetID());
-          if (oObject == nullptr) {
-            PRINT_INFO("Docking block no longer present. Transitioning to %s.\n",
-                       QUOTE(problemState_));
-            state_ = problemState_;
-            return;
-          }
-          
-          // Need to confirm that expected marker is within view.
-          // Move head if necessary based on block height.
-          Pose3d markerPoseWrtNeck = dockMarker_->GetPose().getWithRespectTo(&robot_->get_neckPose());
-          const f32 headAngle = atan2(markerPoseWrtNeck.get_translation().z(),
-                                      markerPoseWrtNeck.get_translation().x());
-          PRINT_INFO("Moving head angle to %f degrees.\n", RAD_TO_DEG(headAngle));
-          robot_->MoveHeadToAngle(headAngle, 1, 1);
-          
-          // Wait long enough for head to move and a message to the robot to be processed
-          waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
-          
-          state_ = nextState_;
-          
-        } else {
-          PRINT_INFO("Not at expected position at the end of the path. "
-                     "Resetting BehaviorManager. (Robot: (%.2f %.2f %.2f) @ %.1fdeg VS. Goal: (%.2f %.2f %.2f) @ %.1fdeg)\n.",
-                     robot_->get_pose().get_translation().x(),
-                     robot_->get_pose().get_translation().y(),
-                     robot_->get_pose().get_translation().z(),
-                     robot_->get_pose().get_rotationAngle().getDegrees(),
-                     nearestPreDockPose_.get_translation().x(),
-                     nearestPreDockPose_.get_translation().y(),
-                     nearestPreDockPose_.get_translation().z(),
-                     nearestPreDockPose_.get_rotationAngle().getDegrees()
-                     );
-          StartMode(BM_None);
-          return;
-        }
-      }
-      
-    } // FollowPathHelper()
-    
-    
-    void BehaviorManager::GoToNearestPreDockPoseHelper(const f32 preDockDistance,
-                                                       const f32 desiredHeadAngle)
-    {
-      CORETECH_ASSERT(dockBlock_ != nullptr);
-      
-      std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      dockBlock_->GetPreDockPoses(preDockDistance, preDockPoseMarkerPairs);
-            
-      // Select (closest) predock pose
-      const Pose3d& robotPose = robot_->get_pose();
-      
-      if (!preDockPoseMarkerPairs.empty()) {
-        f32 shortestDist2Pose = -1;
-        for (auto const & poseMarkerPair : preDockPoseMarkerPairs) {
-          
-          PRINT_INFO("Candidate pose: (%f %f %f), (%f %f %f %f)\n",
-                     poseMarkerPair.first.get_translation().x(),
-                     poseMarkerPair.first.get_translation().y(),
-                     poseMarkerPair.first.get_translation().z(),
-                     poseMarkerPair.first.get_rotationAxis().x(),
-                     poseMarkerPair.first.get_rotationAxis().y(),
-                     poseMarkerPair.first.get_rotationAxis().z(),
-                     poseMarkerPair.first.get_rotationAngle().ToFloat() );
-          
-          f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, robotPose);
-          if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
-            shortestDist2Pose = dist2Pose;
-            nearestPreDockPose_ = poseMarkerPair.first;
-            dockMarker_ = &(poseMarkerPair.second);
-          }
-        }
-      } else {
-        PRINT_INFO("No docking pose found\n");
-        StartMode(BM_None);
-        return;
-      }
-      
-      const bool alreadyThere = robot_->get_pose().IsSameAs(nearestPreDockPose_, distThresh_mm_, angThresh_);
-      
-      if (alreadyThere || robot_->ExecutePathToPose(nearestPreDockPose_) == RESULT_OK)
-      {
-        // Make sure head is tilted down so that it can localize well
-        robot_->MoveHeadToAngle(desiredHeadAngle, 5, 10);
-        PRINT_INFO("Executing path to nearest pre-dock pose %f %f %f\n",
-                   nearestPreDockPose_.get_translation().x(),
-                   nearestPreDockPose_.get_translation().y(),
-                   nearestPreDockPose_.get_rotationAngle().ToFloat());
-        waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-        state_ = EXECUTING_PATH_TO_DOCK_POSE;
-      }
-
-    } // GoToNearestPreDockPoseHelper()
-
-    void BehaviorManager::BeginDockingHelper()
-    {
-      if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
-        // TODO: Check that the marker was recently seen at roughly the expected image location
-        // ...
-        //const Point2f& imgCorners = dockMarker_->GetImageCorners().computeCentroid();
-        // For now, just docking to the marker no matter where it is in the image.
-        
-        // Get dock action
-        const f32 dockBlockHeight = dockBlock_->GetPose().get_translation().z();
-        dockAction_ = DA_PICKUP_LOW;
-        if (dockBlockHeight > dockBlock_->GetSize().z()) {
-          if (robot_->IsCarryingBlock()) {
-            PRINT_INFO("Already carrying block. Can't dock to high block. Aborting.\n");
-            StartMode(BM_None);
-            return;
-          } else {
-            dockAction_ = DA_PICKUP_HIGH;
-          }
-        } else if (robot_->IsCarryingBlock()) {
-          dockAction_ = DA_PLACE_HIGH;
-        }
-        
-        // Start dock
-        PRINT_INFO("Docking with marker %d (action = %d)\n", dockMarker_->GetCode(), dockAction_);
-        robot_->DockWithBlock(dockMarker_->GetCode(),  dockMarker_->GetSize(), dockAction_);
-        waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
-        state_ = EXECUTING_DOCK;
-      }
-      
-    } // BeginDockingHelper()
+    } // Update()
     
     
     /********************************************************
@@ -346,52 +266,33 @@ namespace Anki {
           
           
           // Get block object
-          const Vision::ObservableObject* oObject = world_->GetObservableObjectByID(blockOfInterest_);
-          if (oObject == nullptr) {
+          Block* block = world_->GetBlockByID(blockOfInterest_);
+          if (block == nullptr) {
             break;
           }
-          dockBlock_ = (Block*)oObject;
-        
           
           // Check that we're not already carrying a block if the block of interest is a high block.
-          if (dockBlock_->GetPose().get_translation().z() > 44.f && robot_->IsCarryingBlock()) {
+          if (block->GetPose().GetTranslation().z() > 44.f && robot_->IsCarryingBlock()) {
             PRINT_INFO("Already carrying block. Can't dock to high block. Aborting (0).\n");
             StartMode(BM_None);
             return;
           }
 
-          const f32 headAngle = -0.26f;
-          nextState_ = BEGIN_DOCKING;
-          problemState_ = WAITING_FOR_DOCK_BLOCK;
-          GoToNearestPreDockPoseHelper(PREDOCK_DISTANCE_MM, headAngle);
+          if(robot_->ExecuteDockingSequence(block->GetID()) != RESULT_OK) {
+            PRINT_INFO("Robot::ExecuteDockingSequence() failed. Aborting.\n");
+            StartMode(BM_None);
+            return;
+          }
           
-          break;
-        }
-        case EXECUTING_PATH_TO_DOCK_POSE:
-        {
-          // Once robot is confirmed at the docking pose, execute docking.
-          FollowPathHelper();
-          break;
-        }
-        case BEGIN_DOCKING:
-        {
-          BeginDockingHelper();
+          state_ = EXECUTING_DOCK;
+          
           break;
         }
         case EXECUTING_DOCK:
         {
-          if (!robot_->IsPickingOrPlacing() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
-            // Stopped executing docking path. Did it successfully dock?
-            if (((dockAction_ == DA_PICKUP_LOW || dockAction_ == DA_PICKUP_HIGH) && robot_->IsCarryingBlock()) ||
-                ((dockAction_ == DA_PLACE_HIGH) && !robot_->IsCarryingBlock()) ) {
-              PRINT_INFO("Docking successful!\n");
-            } else {
-              PRINT_INFO("Dock failed! Aborting\n");
-            }
-            
+          // Wait until robot finishes (goes back to IDLE)
+          if(robot_->GetState() == Robot::IDLE) {
             StartMode(BM_None);
-            return;
-
           }
           break;
         }
@@ -417,7 +318,29 @@ namespace Anki {
      ********************************************************/
     void BehaviorManager::Update_June2014DiceDemo()
     {
+
+      constexpr float checkItOutAngleUp = DEG_TO_RAD(15);
+      constexpr float checkItOutAngleDown = DEG_TO_RAD(-10);
+      constexpr float checkItOutSpeed = 0.4;
+
       switch(state_) {
+
+        case DRIVE_TO_START:
+        {
+          // Wait for robot to be IDLE
+          if(robot_->GetState() == Robot::IDLE) {
+            Pose3d startPose(JUNE_DEMO_START_THETA,
+                             Z_AXIS_3D,
+                             {{JUNE_DEMO_START_X, JUNE_DEMO_START_Y, 0.f}});
+            CoreTechPrint("Driving to demo start location\n");
+            robot_->ExecutePathToPose(startPose);
+
+            state_ = WAITING_TO_SEE_DICE;
+
+          }
+
+          break;
+        }
           
         case WAITING_FOR_DICE_TO_DISAPPEAR:
         {
@@ -428,24 +351,19 @@ namespace Anki {
             // Check to see if the dice block has been gone for long enough
             const TimeStamp_t timeSinceSeenDice_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - diceDeletionTime_;
             if(timeSinceSeenDice_ms > TimeBetweenDice_ms) {
-              
-              // TODO: Do a nod or some kind of acknowledgement we're ready to see next dice
               CoreTechPrint("First dice is gone: ready for next dice!\n");
               state_ = WAITING_TO_SEE_DICE;
             }
           } else {
-            
-            if(diceBlocks.size() > 1) {
-              // Multiple dice blocks in the world, just use first for now.
-              // TODO: Issue warning?
-              CoreTechPrint("More than one dice block found, using first!\n");
-            }
-            
-            CoreTechPrint("Please move dice away for a moment.\n");
-            const BlockID_t blockID = diceBlocks.begin()->first;
-            world_->ClearBlock(blockID);
+            world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
             diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-            
+            if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+              // Keep clearing blocks until we don't see them anymore
+              CoreTechPrint("Please move first dice away.\n");
+              robot_->SendPlayAnimation(ANIM_HEAD_NOD, 2);
+              waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 5;
+              SoundManager::getInstance()->Play(SOUND_WAITING4DICE2DISAPPEAR);
+            }
           }
           break;
         }
@@ -457,141 +375,339 @@ namespace Anki {
           blockToPickUp_ = Block::NUMBER5_BLOCK_TYPE;
           blockToPlaceOn_ = Block::NUMBER6_BLOCK_TYPE;
           state_ = BEGIN_EXPLORING;
+          break;
           */
           
-          
-          const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingBlocks(Block::DICE_BLOCK_TYPE);
-          if(!diceBlocks.empty()) {
-            
-            if(diceBlocks.size() > 1) {
-              // Multiple dice blocks in the world, keep deleting them all
-              // until we only see one
-              CoreTechPrint("More than one dice block found!\n");
+          const f32 diceViewingHeadAngle = DEG_TO_RAD(-15);
+
+          // Wait for robot to be IDLE
+          if(robot_->GetState() == Robot::IDLE)
+          {
+            const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingBlocks(Block::DICE_BLOCK_TYPE);
+            if(!diceBlocks.empty()) {
               
-              for(auto diceBlock : diceBlocks) {
-                world_->ClearBlock(diceBlock.first);
-              }
-              
-            } else {
-              
-              Vision::ObservableObject* diceBlock = diceBlocks.begin()->second;
-              
-              // Get all the observed markers on the dice and look for the one
-              // facing up (i.e. the one that is nearly aligned with the z axis)
-              const f32 dotprodThresh = 1.f - cos(DEG_TO_RAD(20));
-              std::vector<const Vision::KnownMarker*> diceMarkers;
-              diceBlock->GetObservedMarkers(diceMarkers);
-              
-              const Vision::KnownMarker* topMarker = nullptr;
-              for(auto marker : diceMarkers) {
-                //const f32 dotprod = DotProduct(marker->ComputeNormal(), Z_AXIS_3D);
-                const Pose3d markerWRTworld(marker->GetPose().getWithRespectTo(Pose3d::World));
-                const f32 dotprod = marker->ComputeNormal(markerWRTworld).z();
-                if(NEAR(dotprod, 1.f, dotprodThresh)) {
-                  topMarker = marker;
-                }
-              }
-              
-              if(topMarker != nullptr) {
-                // We found and observed the top marker on the dice. Use it to
-                // set which block we are looking for.
-                BlockID_t blockToLookFor = Block::UNKNOWN_BLOCK_TYPE;
-                switch(static_cast<Vision::MarkerType>(topMarker->GetCode()))
-                {
-                  case Vision::MARKER_DICE1:
-                  {
-                    blockToLookFor = Block::NUMBER1_BLOCK_TYPE;
-                    break;
-                  }
-                  case Vision::MARKER_DICE2:
-                  {
-                    blockToLookFor = Block::NUMBER2_BLOCK_TYPE;
-                    break;
-                  }
-                  case Vision::MARKER_DICE3:
-                  {
-                    blockToLookFor = Block::NUMBER3_BLOCK_TYPE;
-                    break;
-                  }
-                  case Vision::MARKER_DICE4:
-                  {
-                    blockToLookFor = Block::NUMBER4_BLOCK_TYPE;
-                    break;
-                  }
-                  case Vision::MARKER_DICE5:
-                  {
-                    blockToLookFor = Block::NUMBER5_BLOCK_TYPE;
-                    break;
-                  }
-                  case Vision::MARKER_DICE6:
-                  {
-                    blockToLookFor = Block::NUMBER6_BLOCK_TYPE;
-                    break;
-                  }
-                    
-                  default:
-                    PRINT_NAMED_ERROR("BehaviorManager.UnknownDiceMarker",
-                                      "Found unexpected marker on dice: %s!",
-                                      Vision::MarkerTypeStrings[topMarker->GetCode()]);
-                    StartMode(BM_None);
-                    return;
-                } // switch(topMarker->GetCode())
-                
-                CoreTechPrint("Found top marker on dice: %s!\n",
-                              Vision::MarkerTypeStrings[topMarker->GetCode()]);
-                
-                if(blockToPickUp_ == Vision::MARKER_UNKNOWN) {
-                  
-                  blockToPickUp_ = blockToLookFor;
-                  blockToPlaceOn_ = Vision::MARKER_UNKNOWN;
-                  
-                  CoreTechPrint("Set blockToPickUp = %s\n",
-                                Block::IDtoStringLUT[blockToPickUp_].c_str());
-                  
-                  // Wait for first dice to disappear
-                  state_ = WAITING_FOR_DICE_TO_DISAPPEAR;
-                  
-                } else {
-                  blockToPlaceOn_ = blockToLookFor;
-                  
-                  CoreTechPrint("Set blockToPlaceOn = %s\n",
-                                Block::IDtoStringLUT[blockToPlaceOn_].c_str());
-                  
-                  waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-                  state_ = BEGIN_EXPLORING;
-                }
+              if(diceBlocks.size() > 1) {
+                // Multiple dice blocks in the world, keep deleting them all
+                // until we only see one
+                CoreTechPrint("More than one dice block found!\n");
+                world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
                 
               } else {
                 
-                CoreTechPrint("Found dice, but not its top marker.\n");
+                Block* diceBlock = dynamic_cast<Block*>(diceBlocks.begin()->second);
+                CORETECH_ASSERT(diceBlock != nullptr);
                 
-                dockBlock_ = reinterpret_cast<Block*>(diceBlock);
+                // Get all the observed markers on the dice and look for the one
+                // facing up (i.e. the one that is nearly aligned with the z axis)
+                // TODO: expose the threshold here?
+                const TimeStamp_t timeWindow = robot_->GetLastMsgTimestamp() - 500;
+                const f32 dotprodThresh = 1.f - cos(DEG_TO_RAD(20));
+                std::vector<const Vision::KnownMarker*> diceMarkers;
+                diceBlock->GetObservedMarkers(diceMarkers, timeWindow);
                 
-                // Try driving closer to dice
-                const f32 diceViewingDistance_mm = 50.f;
-                const f32 diceViewingHeadAngle = DEG_TO_RAD(-15);
-                nextState_ = WAITING_TO_SEE_DICE;
-                problemState_ = WAITING_TO_SEE_DICE;
-                GoToNearestPreDockPoseHelper(diceViewingDistance_mm,
-                                             diceViewingHeadAngle);
+                const Vision::KnownMarker* topMarker = nullptr;
+                for(auto marker : diceMarkers) {
+                  //const f32 dotprod = DotProduct(marker->ComputeNormal(), Z_AXIS_3D);
+                  Pose3d markerWrtRobotOrigin;
+                  if(marker->GetPose().GetWithRespectTo(robot_->GetPose().FindOrigin(), markerWrtRobotOrigin) == false) {
+                    PRINT_NAMED_ERROR("BehaviorManager.Update_June2014DiceDemo.MarkerOriginNotRobotOrigin",
+                                      "Marker should share the same origin as the robot that observed it.\n");
+                    Reset();
+                  }
+                  const f32 dotprod = marker->ComputeNormal(markerWrtRobotOrigin).z();
+                  if(NEAR(dotprod, 1.f, dotprodThresh)) {
+                    topMarker = marker;
+                  }
+                }
                 
-              }
+                // If dice exists in world but we haven't seen it for a while, delete it.
+                if (diceMarkers.empty()) {
+                  diceBlock->GetObservedMarkers(diceMarkers, robot_->GetLastMsgTimestamp() - 2000);
+                  if (diceMarkers.empty()) {
+                    CoreTechPrint("Haven't see dice marker for a while. Deleting dice.");
+                    world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
+                    break;
+                  }
+                }
+                
+                if(topMarker != nullptr) {
+                  // We found and observed the top marker on the dice. Use it to
+                  // set which block we are looking for.
+                  
+                  // Don't forget to remove the dice as an ignore type for
+                  // planning, since we _do_ want to avoid it as an obstacle
+                  // when driving to pick and place blocks
+                  robot_->GetPathPlanner()->RemoveIgnoreType(Block::DICE_BLOCK_TYPE);
+                  
+                  ObjectID_t blockToLookFor = Block::UNKNOWN_BLOCK_TYPE;
+                  switch(static_cast<Vision::MarkerType>(topMarker->GetCode()))
+                  {
+                    case Vision::MARKER_DICE1:
+                    {
+                      blockToLookFor = Block::NUMBER1_BLOCK_TYPE;
+                      break;
+                    }
+                    case Vision::MARKER_DICE2:
+                    {
+                      blockToLookFor = Block::NUMBER2_BLOCK_TYPE;
+                      break;
+                    }
+                    case Vision::MARKER_DICE3:
+                    {
+                      blockToLookFor = Block::NUMBER3_BLOCK_TYPE;
+                      break;
+                    }
+                    case Vision::MARKER_DICE4:
+                    {
+                      blockToLookFor = Block::NUMBER4_BLOCK_TYPE;
+                      break;
+                    }
+                    case Vision::MARKER_DICE5:
+                    {
+                      blockToLookFor = Block::NUMBER5_BLOCK_TYPE;
+                      break;
+                    }
+                    case Vision::MARKER_DICE6:
+                    {
+                      blockToLookFor = Block::NUMBER6_BLOCK_TYPE;
+                      break;
+                    }
+                      
+                    default:
+                      PRINT_NAMED_ERROR("BehaviorManager.UnknownDiceMarker",
+                                        "Found unexpected marker on dice: %s!",
+                                        Vision::MarkerTypeStrings[topMarker->GetCode()]);
+                      StartMode(BM_None);
+                      return;
+                  } // switch(topMarker->GetCode())
+                  
+                  CoreTechPrint("Found top marker on dice: %s!\n",
+                                Vision::MarkerTypeStrings[topMarker->GetCode()]);
+                  
+                  if(blockToPickUp_ ==  Block::UNKNOWN_BLOCK_TYPE) {
+                    
+                    blockToPickUp_ = blockToLookFor;
+                    blockToPlaceOn_ =  Block::UNKNOWN_BLOCK_TYPE;
+                    
+                    CoreTechPrint("Set blockToPickUp = %s\n",
+                                  Block::IDtoStringLUT[blockToPickUp_].c_str());
+                    
+                    // Wait for first dice to disappear
+                    state_ = WAITING_FOR_DICE_TO_DISAPPEAR;
+
+                    SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+                    
+                    waitUntilTime_ = 0;
+                  } else {
+
+                    if(blockToLookFor == blockToPickUp_) {
+                      CoreTechPrint("Can't put a block on itself!\n");
+                      // TODO:(bn) left and right + sad noise?
+                    }
+                    else {
+
+                      blockToPlaceOn_ = blockToLookFor;
+                    
+                      CoreTechPrint("Set blockToPlaceOn = %s\n",
+                                    Block::IDtoStringLUT[blockToPlaceOn_].c_str());
+
+                      robot_->SendPlayAnimation(ANIM_HEAD_NOD, 2);
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.5;
+
+                      state_ = BEGIN_EXPLORING;
+
+                      SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+                    }
+                  }
+                } else {
+                  
+                  CoreTechPrint("Found dice, but not its top marker.\n");
+                  
+                  //dockBlock_ = dynamic_cast<Block*>(diceBlock);
+                  //CORETECH_THROW_IF(dockBlock_ == nullptr);
+                  
+                  // Try driving closer to dice
+                  // Since we are purposefully trying to get really close to the
+                  // dice, ignore it as an obstacle.  We'll consider an obstacle
+                  // again later, when we start driving around to pick and place.
+                  robot_->GetPathPlanner()->AddIgnoreType(Block::DICE_BLOCK_TYPE);
+                  
+                  Vec3f position( robot_->GetPose().GetTranslation() );
+                  position -= diceBlock->GetPose().GetTranslation();
+                  f32 actualDistToDice = position.Length();
+                  f32 desiredDistToDice = ROBOT_BOUNDING_X_FRONT + 0.5f*diceBlock->GetSize().Length() + 5.f;
+
+                  if (actualDistToDice > desiredDistToDice + 5) {
+                    position.MakeUnitLength();
+                    position *= desiredDistToDice;
+                  
+                    Radians angle = atan2(position.y(), position.x()) + PI_F;
+                    position += diceBlock->GetPose().GetTranslation();
+                    
+                    goalPose_ = Pose3d(angle, Z_AXIS_3D, {{position.x(), position.y(), 0.f}});
+                    
+                    robot_->ExecutePathToPose(goalPose_, diceViewingHeadAngle);
+                  } else {
+                    CoreTechPrint("Move dice closer!\n");
+                  }
+                  
+                } // IF / ELSE top marker seen
+                
+              } // IF only one dice
               
-            } // IF only one dice
+              timesIdle_ = 0;
+
+            } // IF any diceBlocks available
             
-          } // IF any diceBlocks available
+            else {
+
+              constexpr int numIdleForFrustrated = 3;
+              constexpr float headUpWaitingAngle = DEG_TO_RAD(20);
+              constexpr float headUpWaitingAngleFrustrated = DEG_TO_RAD(25);
+              // Can't see dice
+              switch(idleState_) {
+                case IDLE_NONE:
+                {
+                  // if its been long enough, look up
+                  if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+                    if(++timesIdle_ >= numIdleForFrustrated) {
+                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+
+                      originalPose_ = robot_->GetPose();
+
+                      Pose3d userFacingPose = robot_->GetPose();
+                      userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
+                      robot_->ExecutePathToPose(userFacingPose);
+                      CoreTechPrint("idle: facing user\n");
+
+                      idleState_ = IDLE_FACING_USER;
+                    }
+                    else {
+                      CoreTechPrint("idle: looking up\n");
+                      robot_->MoveHeadToAngle(headUpWaitingAngle, 3.0, 10);
+                      idleState_ = IDLE_LOOKING_UP;
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.7;
+                    }
+                  }
+                  break;
+                }
+
+                case IDLE_LOOKING_UP:
+                {
+                  // once we get to the top, play the sound
+
+                  if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+                    CoreTechPrint("idle: playing sound\n");
+                    SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                    idleState_ = IDLE_PLAYING_SOUND;
+                    if(timesIdle_ >= numIdleForFrustrated) {
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.0;
+                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                    }
+                    else {
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
+                    }
+                  }
+                  break;
+                }
+
+                case IDLE_PLAYING_SOUND:
+                {
+                  // once the sound is done, look back down
+                  if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+                    CoreTechPrint("idle: looking back down\n");
+                    robot_->MoveHeadToAngle(diceViewingHeadAngle, 1.5, 10);
+                    if(timesIdle_ >= numIdleForFrustrated) {
+                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
+                      idleState_ = IDLE_LOOKING_DOWN;
+                    }
+                    else {
+                      idleState_ = IDLE_NONE;
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 5;
+                    }
+                  }
+                  break;
+                }
+
+                case IDLE_FACING_USER:
+                {
+                  // once we get there, look up
+                  if(robot_->GetState() == Robot::IDLE) {
+                    SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                    CoreTechPrint("idle: looking up\n");
+                    robot_->MoveHeadToAngle(headUpWaitingAngleFrustrated, 3.0, 10);
+                    idleState_ = IDLE_LOOKING_UP;
+                    waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
+                  }
+                  break;
+                }
+
+                case IDLE_LOOKING_DOWN:
+                {
+                  // once we are looking back down, turn back to the original pose
+                  if(waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() &&
+                     robot_->GetState() == Robot::IDLE) {
+
+                    CoreTechPrint("idle: turning back\n");
+                    SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                    robot_->ExecutePathToPose(originalPose_);
+                    idleState_ = IDLE_TURNING_BACK;
+                    waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.25;
+                  }
+                  break;
+                }
+
+                case IDLE_TURNING_BACK:
+                {
+                  if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+                    if(robot_->GetState() == Robot::IDLE) {
+                      CoreTechPrint("idle: waiting for dice\n");
+                      timesIdle_ = 0;
+                      idleState_ = IDLE_NONE;
+                      waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 5;
+                    }
+                  }
+                  break;
+                }
+
+                default:
+                CoreTechPrint("ERROR: invalid idle state %d\n", idleState_);
+              }
+            }
+          } // IF robot is IDLE
           
           break;
         } // case WAITING_FOR_FIRST_DICE
           
+        case BACKING_UP:
+        {
+          const f32 currentDistance = (robot_->GetPose().GetTranslation() -
+                                       goalPose_.GetTranslation()).Length();
+          
+          if(currentDistance >= desiredBackupDistance_ )
+          {
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+            robot_->DriveWheels(0.f, 0.f);
+            state_ = nextState_;
+          }
+          
+          break;
+        } // case BACKING_UP
+        case GOTO_EXPLORATION_POSE:
+        {
+          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingBlocks(blockOfInterest_);
+          if (robot_->GetState() == Robot::IDLE || !blocks.empty()) {
+            state_ = START_EXPLORING_TURN;
+          }
+          break;
+        } // case GOTO_EXPLORATION_POSE
         case BEGIN_EXPLORING:
         {
           // For now, "exploration" is just spinning in place to
           // try to locate blocks
           if(!robot_->IsMoving() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
-            PRINT_INFO("Beginning exploring\n");
-            robot_->DriveWheels(15.f, -15.f);
-            robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 1, 1);
             
             if(robot_->IsCarryingBlock()) {
               blockOfInterest_ = blockToPlaceOn_;
@@ -599,12 +715,46 @@ namespace Anki {
               blockOfInterest_ = blockToPickUp_;
             }
             
-            state_ = EXPLORING;
+            
+            // If we already know where the blockOfInterest is, then go straight to it
+            const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingBlocks(blockOfInterest_);
+            if(blocks.empty()) {
+              // Compute desired pose at mat center
+              Pose3d robotPose = robot_->GetPose();
+              f32 targetAngle = explorationStartAngle_.ToFloat();
+              if (explorationStartAngle_ == 0) {
+                // If this is the first time we're exploring, then start exploring at the pose
+                // we expect to be in when we reach the mat center. Other start exploring at the angle
+                // we last stopped exploring.
+                targetAngle = atan2(robotPose.GetTranslation().y(), robotPose.GetTranslation().x()) + PI_F;
+              }
+              Pose3d targetPose(targetAngle, Z_AXIS_3D, Vec3f(0,0,0));
+              
+              if (ComputeDistanceBetween(targetPose, robotPose) > 50.f) {
+                PRINT_INFO("Going to mat center for exploration (%f %f %f)\n", targetPose.GetTranslation().x(), targetPose.GetTranslation().y(), targetAngle);
+                robot_->GetPathPlanner()->AddIgnoreType(Block::DICE_BLOCK_TYPE);
+                robot_->ExecutePathToPose(targetPose);
+              }
+
+              state_ = GOTO_EXPLORATION_POSE;
+            } else {
+              state_ = EXPLORING;
+            }
           }
           
           break;
         } // case BEGIN_EXPLORING
-          
+        case START_EXPLORING_TURN:
+        {
+          PRINT_INFO("Beginning exploring\n");
+          robot_->GetPathPlanner()->RemoveIgnoreType(Block::DICE_BLOCK_TYPE);
+          robot_->DriveWheels(8.f, -8.f);
+          robot_->MoveHeadToAngle(DEG_TO_RAD(-10), 1, 1);
+          explorationStartAngle_ = robot_->GetPose().GetRotationAngle<'Z'>();
+          isTurning_ = true;
+          state_ = EXPLORING;
+          break;
+        }
         case EXPLORING:
         {
           // If we've spotted the block we're looking for, stop exploring, and
@@ -613,57 +763,161 @@ namespace Anki {
           if(!blocks.empty()) {
             // Dock with the first block of the right type that we see
             // TODO: choose the closest?
-            dockBlock_ = reinterpret_cast<Block*>(blocks.begin()->second);
+            Block* dockBlock = dynamic_cast<Block*>(blocks.begin()->second);
+            CORETECH_THROW_IF(dockBlock == nullptr);
             
             robot_->DriveWheels(0.f, 0.f);
             
-            nextState_ = BEGIN_DOCKING;
-            problemState_ = BEGIN_EXPLORING;
-            GoToNearestPreDockPoseHelper(PREDOCK_DISTANCE_MM, DEG_TO_RAD(-15));
+            robot_->ExecuteDockingSequence(dockBlock->GetID());
+            
+            state_ = EXECUTING_DOCK;
+            
+            wasCarryingBlockAtDockingStart_ = robot_->IsCarryingBlock();
+
+            SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+            
+            PRINT_INFO("STARTING DOCKING\n");
+            break;
+          }
+          
+          // Repeat turn-stop behavior for more reliable block detection
+          Radians currAngle = robot_->GetPose().GetRotationAngle<'Z'>();
+          if (isTurning_ && (std::abs((explorationStartAngle_ - currAngle).ToFloat()) > DEG_TO_RAD(40))) {
+            PRINT_INFO("Exploration - pause turning. Looking for %s\n", Block::IDtoStringLUT[blockOfInterest_].c_str());
+            robot_->DriveWheels(0.f,0.f);
+            isTurning_ = false;
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+          } else if (!isTurning_ && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+            state_ = START_EXPLORING_TURN;
           }
           
           break;
         } // EXPLORING
-
-        case EXECUTING_PATH_TO_DOCK_POSE:
-        {
-          FollowPathHelper();
-          break;
-        } // EXECUTING_PATH_TO_DOCK_POSE
-          
-        case BEGIN_DOCKING:
-        {
-          // This will transition us to EXECUTING_DOCKING
-          BeginDockingHelper();
-          
-          break;
-        } // case BEGIN_DOCKING
-          
+   
         case EXECUTING_DOCK:
         {
-          if (!robot_->IsPickingOrPlacing() && !robot_->IsMoving() &&
-              waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
+          // Wait for the robot to go back to IDLE
+          if(robot_->GetState() == Robot::IDLE)
           {
-            // Stopped executing docking path. Did it successfully dock?
-            if ((dockAction_ == DA_PICKUP_LOW || dockAction_ == DA_PICKUP_HIGH) && robot_->IsCarryingBlock()) {
-              PRINT_INFO("Picked up block successful!\n");
-                state_ = BEGIN_EXPLORING;
-            } else {
+            const bool donePickingUp = robot_->IsCarryingBlock() &&
+                                       world_->GetBlockByID(robot_->GetCarryingBlock())->GetType() == blockToPickUp_;
+            if(donePickingUp) {
+              PRINT_INFO("Picked up block %d successfully! Going back to exploring for block to place on.\n",
+                         robot_->GetCarryingBlock());
               
-              if((dockAction_ == DA_PLACE_HIGH) && !robot_->IsCarryingBlock()) {
-                PRINT_INFO("Placed block successfully!\n");
-              } else {
-                PRINT_INFO("Dock failed! Aborting\n");
-              }
+              state_ = BEGIN_EXPLORING;
               
-              StartMode(BM_None);
+              SoundManager::getInstance()->Play(SOUND_NOTIMPRESSED);
+              
               return;
+            } // if donePickingUp
+            
+            const bool donePlacing = !robot_->IsCarryingBlock() && wasCarryingBlockAtDockingStart_;
+            if(donePlacing) {
+              PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
+                         blockToPickUp_, blockToPlaceOn_);
+
+              robot_->MoveHeadToAngle(checkItOutAngleUp, checkItOutSpeed, 10);
+              state_ = CHECK_IT_OUT_UP;
+              waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.f;
+
+              // TODO:(bn) sound: minor success??
+              
+              return;
+            } // if donePlacing
+            
+            
+            // Either pickup or placement failed
+            const bool pickupFailed = !robot_->IsCarryingBlock();
+            if (pickupFailed) {
+              PRINT_INFO("Block pickup failed. Retrying...\n");
+            } else {
+              PRINT_INFO("Block placement failed. Retrying...\n");
             }
-          }
+            
+            // Backup to re-explore the block
+            robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 10, 10);
+            robot_->DriveWheels(-20.f, -20.f);
+            state_ = BACKING_UP;
+            nextState_ = BEGIN_EXPLORING;
+            desiredBackupDistance_ = 30;
+            goalPose_ = robot_->GetPose();
+            
+            SoundManager::getInstance()->Play(SOUND_STARTOVER);
+            
+          } // if robot IDLE
           
           break;
         } // case EXECUTING_DOCK
-          
+
+        case CHECK_IT_OUT_UP:
+        {
+          // Wait for the robot to go back to IDLE
+          if(robot_->GetState() == Robot::IDLE &&
+             waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
+          {
+            // TODO:(bn) small happy chirp sound
+            robot_->MoveHeadToAngle(checkItOutAngleDown, checkItOutSpeed, 10);
+            state_ = CHECK_IT_OUT_DOWN;
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.f;
+          }
+          break;
+        }
+
+        case CHECK_IT_OUT_DOWN:
+        {
+          // Wait for the robot to go back to IDLE
+          if(robot_->GetState() == Robot::IDLE &&
+             waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
+          {
+            // Compute pose that makes robot face user
+            Pose3d userFacingPose = robot_->GetPose();
+            userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
+            robot_->ExecutePathToPose(userFacingPose);
+
+            SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+            state_ = FACE_USER;
+          }
+          break;
+        }
+
+        case FACE_USER:
+        {
+          // Wait for the robot to go back to IDLE
+          if(robot_->GetState() == Robot::IDLE)
+          {
+            // Start nodding
+            robot_->SendPlayAnimation(ANIM_HEAD_NOD);
+            state_ = HAPPY_NODDING;
+            PRINT_INFO("NODDING_HEAD\n");
+            SoundManager::getInstance()->Play(SOUND_OK_DONE);
+            
+            // Compute time to stop nodding
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
+          }
+          break;
+        } // case FACE_USER
+        case HAPPY_NODDING:
+        {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
+            robot_->SendPlayAnimation(ANIM_BACK_AND_FORTH_EXCITED);
+            robot_->MoveHeadToAngle(DEG_TO_RAD(-10), 1, 1);
+            
+            // Compute time to stop back and forth
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.5;
+            state_ = BACK_AND_FORTH_EXCITED;
+          }
+          break;
+        } // case HAPPY_NODDING
+        case BACK_AND_FORTH_EXCITED:
+        {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
+            robot_->SendPlayAnimation(ANIM_IDLE);
+            world_->ClearAllExistingBlocks();
+            StartMode(BM_June2014DiceDemo);
+          }
+          break;
+        }
         default:
         {
           PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState",

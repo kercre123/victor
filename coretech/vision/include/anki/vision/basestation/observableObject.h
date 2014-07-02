@@ -63,10 +63,17 @@ namespace Anki {
       std::vector<KnownMarker*> const& GetMarkersWithCode(const Marker::Code& whichCode) const;
       
       // Pupolate a vector of const pointers to all this object's markers that
-      // have been observed.  The vector will be empty if no markers are set as
-      // observed.
-      void GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const;
+      // have been observed since the specified time.  The vector will be empty
+      // if no markers have been observed since then.
+      void GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
+                              const TimeStamp_t sinceTime) const;
 
+      // Updates the observation times of this object's markers with the newer
+      // of the current times and the times of the corresponding markers on the
+      // other object. If the other object is not the same type, RESULT_FAIL
+      // is returned.
+      Result UpdateMarkerObservationTimes(const ObservableObject& otherObject);
+      
       // Add possible poses implied by seeing the observed marker to the list.
       // Each pose will be paired with a pointer to the known marker on this
       // object from which it was computed.
@@ -74,11 +81,11 @@ namespace Anki {
       // list will not be modified.
       void ComputePossiblePoses(const ObservedMarker*     obsMarker,
                                 std::vector<PoseMatchPair>& possiblePoses) const;
-      
-      bool GetWhetherObserved(void) const;
-      void SetWhetherObserved(bool wasObserved);
-      
-      void SetMarkersAsObserved(const Marker::Code& withCode);
+
+      // Sets all markers with the specified code as having been observed
+      // at the given time
+      void SetMarkersAsObserved(const Marker::Code& withCode,
+                                const TimeStamp_t atTime);
       
       // Return true if any of the object's markers is visible from the given
       // camera. See also KnownMarker::IsVisibleFrom().
@@ -246,7 +253,7 @@ namespace Anki {
       // to this library will remain.  If seenOnlyBy is not ANY_CAMERA, only markers
       // seen by that camera will be considered and objectSeen poses will be returned
       // wrt to that camera. If seenOnlyBy is ANY_CAMERA, the poses are returned wrt the world.
-      void CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
+      void CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
                                     std::vector<ObservableObject*>& objectsSeen,
                                     const CameraID_t seenOnlyBy = ANY_CAMERA) const;
       

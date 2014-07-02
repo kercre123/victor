@@ -1,6 +1,6 @@
 # products-cozmo/robot/simulator/controllers/blockworld_controller/CMakeLists.txt
 
-remove_definitions(-DCOZMO_ROBOT)
+remove_definitions(-DCOZMO_ROBOT -DSIMULATOR)
 add_definitions(-DCOZMO_BASESTATION)
 
 # Include paths

@@ -369,7 +369,7 @@ namespace Anki
         
         // Fill a rotation matrix according to the current tracker angles
         // R should already be allocated to be 3x3
-        Result get_rotationMatrix(Array<f32>& R, bool skipLastColumn = false) const;
+        Result GetRotationMatrix(Array<f32>& R, bool skipLastColumn = false) const;
         
         // Set the tracker's angles and translation from the given rotation
         // matrix and translation vector. This will in turn update the
@@ -379,7 +379,7 @@ namespace Anki
                                             MemoryStack scratch);
         
         // Retrieve the current translation estimate of the tracker
-        const Point3<f32>& get_translation() const;
+        const Point3<f32>& GetTranslation() const;
         
         // Retrieve the current angle estimates of the tracker
         const f32& get_angleX() const;

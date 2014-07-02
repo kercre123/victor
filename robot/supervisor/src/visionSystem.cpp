@@ -154,11 +154,22 @@ namespace Anki {
 
         static s32 frameNumber;
         static const bool autoExposure_enabled = true;
+        
+        // TEMP: Un-const-ing these so that we can adjust them from basestation for dev purposes.
+        /*
         static const s32 autoExposure_integerCountsIncrement = 3;
         static const f32 autoExposure_minExposureTime = 0.02f;
         static const f32 autoExposure_maxExposureTime = 0.98f;
-        static const f32 autoExposure_percentileToSaturate = 0.97f;
+        static const u8 autoExposure_highValue = 250;
+        static const f32 autoExposure_percentileToMakeHigh = 0.97f;
         static const s32 autoExposure_adjustEveryNFrames = 1;
+         */
+        static s32 autoExposure_integerCountsIncrement = 3;
+        static f32 autoExposure_minExposureTime = 0.02f;
+        static f32 autoExposure_maxExposureTime = 0.98f;
+        static u8 autoExposure_highValue = 250;
+        static f32 autoExposure_percentileToMakeHigh = 0.97f;
+        static s32 autoExposure_adjustEveryNFrames = 1;
 
         // Tracking marker related members
         struct MarkerToTrack {
@@ -174,6 +185,8 @@ namespace Anki {
         };
 
         static MarkerToTrack markerToTrack_;
+        static MarkerToTrack newMarkerToTrack_;
+        static bool          newMarkerToTrackWasProvided_ = false;
 
         static Quadrilateral<f32>          trackingQuad_;
         static s32                         numTrackFailures_ ;
@@ -195,6 +208,13 @@ namespace Anki {
         static ImageSendMode_t                 imageSendMode_ = ISM_OFF;
         static Vision::CameraResolution        nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
 
+        // For taking snapshots
+        static bool  isWaitingOnSnapshot_;
+        static bool* isSnapshotReady_;
+        Embedded::Rectangle<s32> snapshotROI_;
+        s32 snapshotSubsample_;
+        Embedded::Array<u8>* snapshot_;
+        
         /* Only using static members of SimulatorParameters now
         #ifdef SIMULATOR
         static SimulatorParameters             simulatorParameters_;
@@ -325,6 +345,43 @@ namespace Anki {
         yChange = dx*sinAngle + dy*cosAngle;
       } // GetPoseChange()
 
+      
+      // This function actually swaps in the new marker to track, and should
+      // not be made available as part of the public API since it could get
+      // interrupted by main and we want all this stuff updated at once.
+      static Result UpdateMarkerToTrack()
+      {
+        if(newMarkerToTrackWasProvided_) {
+          
+          mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
+          numTrackFailures_      = 0;
+          
+          markerToTrack_ = newMarkerToTrack_;
+          
+          if(markerToTrack_.IsSpecified()) {
+            
+            AnkiConditionalErrorAndReturnValue(markerToTrack_.width_mm > 0.f,
+                                               RESULT_FAIL_INVALID_PARAMETER,
+                                               "VisionSystem::UpdateMarkerToTrack()",
+                                               "Invalid marker width specified.");
+            
+            // Set canonical 3D marker's corner coordinates
+            const P3P_PRECISION markerHalfWidth = markerToTrack_.width_mm * P3P_PRECISION(0.5);
+            canonicalMarker3d_[0] = Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
+            canonicalMarker3d_[1] = Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
+            canonicalMarker3d_[2] = Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
+            canonicalMarker3d_[3] = Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
+          } // if markerToTrack is valid
+          
+          newMarkerToTrack_.Clear();
+          newMarkerToTrackWasProvided_ = false;
+        } // if newMarker provided
+        
+        return RESULT_OK;
+        
+      } // UpdateMarkerToTrack()
+      
+      
       static Radians GetCurrentHeadAngle()
       {
         return robotState_.headAngle;
@@ -346,7 +403,7 @@ namespace Anki {
         }
       }
 
-      void DownsampleAndSendImage(Array<u8> &img)
+      void DownsampleAndSendImage(const Array<u8> &img)
       {
         // Only downsample if normal capture res is QVGA
         if (imageSendMode_ != ISM_OFF && captureResolution_ == Vision::CAMERA_RES_QVGA) {
@@ -458,6 +515,7 @@ namespace Anki {
           parameters.maxExtractedQuads,
           parameters.quadRefinementIterations,
           parameters.numRefinementSamples,
+          parameters.quadRefinementMaxCornerChange,
           false,
           ccmScratch, onchipScratch, offchipScratch);
 #endif
@@ -535,6 +593,7 @@ namespace Anki {
         MemoryStack &offchipMemory)
       {
         AnkiAssert(parameters.isInitialized);
+        AnkiAssert(markerToTrack_.width_mm > 0);
 
 #if USE_MATLAB_TRACKER
         return MatlabVisionProcessor::InitTemplate(grayscaleImage, trackingQuad, ccmScratch);
@@ -778,7 +837,7 @@ namespace Anki {
         const Radians initAngleX(tracker.get_angleX());
         const Radians initAngleY(tracker.get_angleY());
         const Radians initAngleZ(tracker.get_angleZ());
-        const Point3<f32>& initTranslation = tracker.get_translation();
+        const Point3<f32>& initTranslation = tracker.GetTranslation();
 
         bool converged = false;
         const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
@@ -805,17 +864,17 @@ namespace Anki {
           PRINT("Tracker failed: angle(s) changed too much.\n");
           trackingSucceeded = false;
         }
-        else if(tracker.get_translation().z < TrackerParameters::MIN_TRACKER_DISTANCE)
+        else if(tracker.GetTranslation().z < TrackerParameters::MIN_TRACKER_DISTANCE)
         {
           PRINT("Tracker failed: final distance too close.\n");
           trackingSucceeded = false;
         }
-        else if(tracker.get_translation().z > TrackerParameters::MAX_TRACKER_DISTANCE)
+        else if(tracker.GetTranslation().z > TrackerParameters::MAX_TRACKER_DISTANCE)
         {
           PRINT("Tracker failed: final distance too far away.\n");
           trackingSucceeded = false;
         }
-        else if((initTranslation - tracker.get_translation()).Length() > parameters.successTolerance_distance)
+        else if((initTranslation - tracker.GetTranslation()).Length() > parameters.successTolerance_distance)
         {
           PRINT("Tracker failed: position changed too much.\n");
           trackingSucceeded = false;
@@ -835,7 +894,7 @@ namespace Anki {
           PRINT("Tracker failed: target Z angle too large.\n");
           trackingSucceeded = false;
         }
-        else if(atan_fast(fabs(tracker.get_translation().x) / tracker.get_translation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
+        else if(atan_fast(fabs(tracker.GetTranslation().x) / tracker.GetTranslation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
         {
           PRINT("Tracker failed: FOV angle too large.\n");
           trackingSucceeded = false;
@@ -977,8 +1036,8 @@ namespace Anki {
           term1*cH2*cR - term4*cH2 - term5*cH2 + term2*sH2 - term3*sH2);
 
         Array<f32> R_blockRelHead = Array<f32>(3,3,scratch);
-        tracker_.get_rotationMatrix(R_blockRelHead);
-        const Point3<f32>& T_blockRelHead = tracker_.get_translation();
+        tracker_.GetRotationMatrix(R_blockRelHead);
+        const Point3<f32>& T_blockRelHead = tracker_.GetTranslation();
 
         Array<f32> R_blockRelHead_new = Array<f32>(3,3,scratch);
         Matrix::Multiply(R_geometry, R_blockRelHead, R_blockRelHead_new);
@@ -1148,9 +1207,9 @@ namespace Anki {
           dockErrMsg.angleErr);
 #else
         // Despite the names, fill the elements of the message with camera-centric coordinates
-        dockErrMsg.x_distErr = tracker_.get_translation().x;
-        dockErrMsg.y_horErr  = tracker_.get_translation().y;
-        dockErrMsg.z_height  = tracker_.get_translation().z;
+        dockErrMsg.x_distErr = tracker_.GetTranslation().x;
+        dockErrMsg.y_horErr  = tracker_.GetTranslation().y;
+        dockErrMsg.z_height  = tracker_.GetTranslation().z;
 
         dockErrMsg.angleErr  = tracker_.get_angleY();
 
@@ -1303,7 +1362,16 @@ namespace Anki {
 #endif
 
           RcamWrtRobot_ = Array<f32>(3,3,VisionMemory::onchipScratch_);
+          
+          markerToTrack_.Clear();
+          newMarkerToTrack_.Clear();
+          newMarkerToTrackWasProvided_ = false;
 
+          isWaitingOnSnapshot_ = false;
+          isSnapshotReady_ = NULL;
+          snapshotROI_ = Rectangle<s32>(-1, -1, -1, -1);
+          snapshot_ = NULL;
+          
           isInitialized_ = true;
         }
 
@@ -1324,32 +1392,21 @@ namespace Anki {
         const Point2f& atImageCenter,
         const f32 imageSearchRadius)
       {
-        markerToTrack_.type              = markerTypeToTrack;
-        markerToTrack_.width_mm          = markerWidth_mm;
-        markerToTrack_.imageCenter       = atImageCenter;
-        markerToTrack_.imageSearchRadius = imageSearchRadius;
-
-        mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
-        numTrackFailures_      = 0;
-
-        // If the marker type is valid, start looking for it
-        if(markerToTrack_.IsSpecified())
-        {
-          // Set canonical 3D marker's corner coordinates
-          const P3P_PRECISION markerHalfWidth = markerToTrack_.width_mm * P3P_PRECISION(0.5);
-          canonicalMarker3d_[0] = Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
-          canonicalMarker3d_[1] = Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
-          canonicalMarker3d_[2] = Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
-          canonicalMarker3d_[3] = Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
-        }
-
+        newMarkerToTrack_.type              = markerTypeToTrack;
+        newMarkerToTrack_.width_mm          = markerWidth_mm;
+        newMarkerToTrack_.imageCenter       = atImageCenter;
+        newMarkerToTrack_.imageSearchRadius = imageSearchRadius;
+        
+        // Next call to Update(), we will call UpdateMarkerToTrack() and
+        // actually replace the current markerToTrack_ with the one set here.
+        newMarkerToTrackWasProvided_ = true;
+        
         return RESULT_OK;
-      } // SetMarkerToTrack()
-
+      }
+      
       void StopTracking()
       {
-        markerToTrack_.Clear();
-        mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
+        SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f);
       }
 
       const Embedded::FixedLengthList<Embedded::VisionMarker>& GetObservedMarkerList()
@@ -1519,8 +1576,101 @@ namespace Anki {
           headCamInfo_->center_x, headCamInfo_->center_y,
           rotation, translation);
       } // GetVisionMarkerPose()
+      
+      
+      Result TakeSnapshot(const Embedded::Rectangle<s32> roi, const s32 subsample,
+                          Embedded::Array<u8>& snapshot, bool& readyFlag)
+      {
+        if(!isWaitingOnSnapshot_)
+        {
+          snapshotROI_ = roi;
+          
+          snapshotSubsample_ = subsample;
+          AnkiConditionalErrorAndReturnValue(snapshotSubsample_ >= 1,
+                                             RESULT_FAIL_INVALID_PARAMETER,
+                                             "VisionSystem::TakeSnapshot()",
+                                             "Subsample must be >= 1. %d was specified!\n", snapshotSubsample_);
 
-#ifdef SEND_IMAGE_ONLY
+          snapshot_ = &snapshot;
+          
+          AnkiConditionalErrorAndReturnValue(snapshot_ != NULL, RESULT_FAIL_INVALID_OBJECT,
+                                             "VisionSystem::TakeSnapshot()", "NULL snapshot pointer!\n");
+          
+          AnkiConditionalErrorAndReturnValue(snapshot_->IsValid(),
+                                             RESULT_FAIL_INVALID_OBJECT,
+                                             "VisionSystem::TakeSnapshot()", "Invalid snapshot array!\n");
+          
+          const s32 nrowsSnap = snapshot_->get_size(0);
+          const s32 ncolsSnap = snapshot_->get_size(1);
+          
+          AnkiConditionalErrorAndReturnValue(nrowsSnap*snapshotSubsample_ == snapshotROI_.get_height() &&
+                                             ncolsSnap*snapshotSubsample_ == snapshotROI_.get_width(),
+                                             RESULT_FAIL_INVALID_SIZE,
+                                             "VisionSystem::TakeSnapshot()",
+                                             "Snapshot ROI size (%dx%d) subsampled by %d doesn't match snapshot array size (%dx%d)!\n",
+                                             snapshotROI_.get_height(), snapshotROI_.get_width(), snapshotSubsample_, nrowsSnap, ncolsSnap);
+          
+          isSnapshotReady_ = &readyFlag;
+          
+          AnkiConditionalErrorAndReturnValue(isSnapshotReady_ != NULL,
+                                             RESULT_FAIL_INVALID_OBJECT,
+                                             "VisionSystem::TakeSnapshot()",
+                                             "NULL isSnapshotReady pointer!\n");
+        
+          isWaitingOnSnapshot_ = true;
+          
+        } // if !isWaitingOnSnapshot_
+        
+        return RESULT_OK;
+      } // TakeSnapshot()
+      
+      
+      static Result TakeSnapshotHelper(const Embedded::Array<u8>& grayscaleImage)
+      {
+        if(isWaitingOnSnapshot_) {
+          
+          const s32 nrowsFull = grayscaleImage.get_size(0);
+          const s32 ncolsFull = grayscaleImage.get_size(1);
+          
+          if(snapshotROI_.top    < 0 || snapshotROI_.top    >= nrowsFull-1 ||
+             snapshotROI_.bottom < 0 || snapshotROI_.bottom >= nrowsFull-1 ||
+             snapshotROI_.left   < 0 || snapshotROI_.left   >= ncolsFull-1 ||
+             snapshotROI_.right  < 0 || snapshotROI_.right  >= ncolsFull-1)
+          {
+            PRINT("VisionSystem::TakeSnapshotHelper(): Snapshot ROI out of bounds!\n");
+            return RESULT_FAIL_INVALID_SIZE;
+          }
+          
+          const s32 nrowsSnap = snapshot_->get_size(0);
+          const s32 ncolsSnap = snapshot_->get_size(1);
+          
+          for(s32 iFull=snapshotROI_.top, iSnap=0;
+              iFull<snapshotROI_.bottom && iSnap<nrowsSnap;
+              iFull+= snapshotSubsample_, ++iSnap)
+          {
+            const u8 * restrict pImageRow = grayscaleImage.Pointer(iFull,0);
+            u8 * restrict pSnapRow = snapshot_->Pointer(iSnap, 0);
+            
+            for(s32 jFull=snapshotROI_.left, jSnap=0;
+                jFull<snapshotROI_.right && jSnap<ncolsSnap;
+                jFull+= snapshotSubsample_, ++jSnap)
+            {
+              pSnapRow[jSnap] = pImageRow[jFull];
+            }
+          }
+            
+          isWaitingOnSnapshot_ = false;
+          *isSnapshotReady_ = true;
+          
+        } // if isWaitingOnSnapshot_
+        
+        return RESULT_OK;
+        
+      } // TakeSnapshotHelper()
+
+
+
+#if defined(SEND_IMAGE_ONLY)
       // In SEND_IMAGE_ONLY mode, just create a special version of update
 
       Result Update(const Messages::RobotState robotState)
@@ -1564,7 +1714,8 @@ namespace Anki {
             grayscaleImage,
             Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
             autoExposure_integerCountsIncrement,
-            autoExposure_percentileToSaturate,
+            autoExposure_highValue,
+            autoExposure_percentileToMakeHigh,
             autoExposure_minExposureTime, autoExposure_maxExposureTime,
             exposureTime,
             VisionMemory::ccmScratch_);
@@ -1624,8 +1775,48 @@ namespace Anki {
 
         return RESULT_OK;
       } // Update() [SEND_IMAGE_ONLY]
+#elif defined(RUN_GROUND_TRUTHING_CAPTURE) // #if defined(SEND_IMAGE_ONLY)
+      Result Update(const Messages::RobotState robotState)
+      {
+        // This should be called from elsewhere first, but calling it again won't hurt
+        Init();
 
-#elif defined(RUN_SIMPLE_FACE_DETECTION_TEST) // #ifdef SEND_IMAGE_ONLY
+        VisionMemory::ResetBuffers();
+
+        frameNumber++;
+
+        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+
+        Array<u8> grayscaleImage(captureHeight, captureWidth, VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
+
+        HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), captureResolution_, false);
+
+        if(vignettingCorrection == VignettingCorrection_Software) {
+          MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+          FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+
+          for(s32 i=0; i<5; i++)
+            polynomialParameters[i] = vignettingCorrectionParameters[i];
+
+          CorrectVignetting(grayscaleImage, polynomialParameters);
+        } // if(vignettingCorrection == VignettingCorrection_Software)
+        
+        DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
+        
+        HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+        
+        exposureTime += .1f;
+        
+        if(exposureTime > 1.01f) {
+          exposureTime = 0.0f;
+        }
+        
+        HAL::MicroWait(1000000);
+
+        return RESULT_OK;
+      } // Update() [RUN_GROUND_TRUTHING_CAPTURE]
+#elif defined(RUN_SIMPLE_FACE_DETECTION_TEST) // #elif defined(RUN_GROUND_TRUTHING_CAPTURE)
 
       Result Update(const Messages::RobotState robotState)
       {
@@ -1668,7 +1859,8 @@ namespace Anki {
             grayscaleImage,
             Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
             autoExposure_integerCountsIncrement,
-            autoExposure_percentileToSaturate,
+            autoExposure_highValue,
+            autoExposure_percentileToMakeHigh,
             autoExposure_minExposureTime, autoExposure_maxExposureTime,
             exposureTime,
             VisionMemory::ccmScratch_);
@@ -1742,7 +1934,7 @@ namespace Anki {
         return RESULT_OK;
       } // Update() [SEND_IMAGE_ONLY]
 
-#else // #elseif RUN_SIMPLE_FACE_DETECTION_TEST
+#else // #elif defined(RUN_SIMPLE_FACE_DETECTION_TEST)
 
       // This is the regular Update() call
       Result Update(const Messages::RobotState robotState)
@@ -1758,8 +1950,18 @@ namespace Anki {
         if(!Simulator::IsFrameReady()) {
           return RESULT_OK;
         }
-
+        
+        // Make sure that we send the robot state message associated with the
+        // image we are about to process.
+        Messages::SendRobotStateMsg(&robotState);
+        
         UpdateRobotState(robotState);
+        
+        // If SetMarkerToTrack() was called by main() during previous Update(),
+        // actually swap in the new marker now.
+        lastResult = UpdateMarkerToTrack();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "VisionSystem::Update()", "UpdateMarkerToTrack failed.\n");
 
         // Use the timestamp of passed-in robot state as our frame capture's
         // timestamp.  This is not totally correct, since the image will be
@@ -1771,7 +1973,24 @@ namespace Anki {
         const TimeStamp_t imageTimeStamp = robotState.timestamp;
 
         if(mode_ == VISION_MODE_IDLE) {
-          // Nothing to do!
+          // Nothing to do, unless a snapshot was requested
+          
+          if(isWaitingOnSnapshot_) {
+            const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+            const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+            
+            Array<u8> grayscaleImage(captureHeight, captureWidth,
+                                     VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
+            
+            HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
+                                captureResolution_, false);
+            
+            if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
+              PRINT("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
+              return lastResult;
+            }
+          }
+          
         }
         else if(mode_ == VISION_MODE_LOOKING_FOR_MARKERS) {
           Simulator::SetDetectionReadyTime(); // no-op on real hardware
@@ -1788,7 +2007,12 @@ namespace Anki {
 
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
             captureResolution_, false);
-
+          
+          if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
+            PRINT("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
+            return lastResult;
+          }
+          
           BeginBenchmark("VisionSystem_CameraImagingPipeline");
 
           if(vignettingCorrection == VignettingCorrection_Software) {
@@ -1812,7 +2036,8 @@ namespace Anki {
               grayscaleImage,
               Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
               autoExposure_integerCountsIncrement,
-              autoExposure_percentileToSaturate,
+              autoExposure_highValue,
+              autoExposure_percentileToMakeHigh,
               autoExposure_minExposureTime, autoExposure_maxExposureTime,
               exposureTime,
               VisionMemory::ccmScratch_);
@@ -1922,6 +2147,11 @@ namespace Anki {
 
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
             captureResolution_, false);
+          
+          if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
+            PRINT("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
+            return lastResult;
+          }
 
           BeginBenchmark("VisionSystem_CameraImagingPipeline");
 
@@ -1947,7 +2177,8 @@ namespace Anki {
           grayscaleImage,
           Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
           autoExposure_integerCountsIncrement,
-          autoExposure_percentileToSaturate,
+          autoExposure_highValue,
+          autoExposure_percentileToMakeHigh,
           autoExposure_minExposureTime, autoExposure_maxExposureTime,
           exposureTime,
           VisionMemory::ccmScratch_);
@@ -2059,6 +2290,28 @@ namespace Anki {
       } // Update() [Real]
 
 #endif // #ifdef SEND_IMAGE_ONLY
+      
+      
+      void SetParams(const s32 integerCountsIncrement,
+                     const f32 minExposureTime,
+                     const f32 maxExposureTime,
+                     const u8 highValue,
+                     const f32 percentileToMakeHigh)
+      {
+        autoExposure_integerCountsIncrement = integerCountsIncrement;
+        autoExposure_minExposureTime = minExposureTime;
+        autoExposure_maxExposureTime = maxExposureTime;
+        autoExposure_highValue = highValue;
+        autoExposure_percentileToMakeHigh = percentileToMakeHigh;
+        
+        PRINT("Changed VisionSystem params: integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
+              autoExposure_integerCountsIncrement,
+              autoExposure_minExposureTime,
+              autoExposure_maxExposureTime,
+              autoExposure_highValue,
+              autoExposure_percentileToMakeHigh);
+      }
+      
     } // namespace VisionSystem
   } // namespace Cozmo
 } // namespace Anki

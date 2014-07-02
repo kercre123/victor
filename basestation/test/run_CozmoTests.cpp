@@ -10,6 +10,8 @@
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 
 #include "anki/common/robot/matlabInterface.h"
 
@@ -37,7 +39,8 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   using namespace Cozmo;
   
   // TODO: Tighten/loosen thresholds?
-  const float   blockPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
+  //const float   blockPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
+  const float blockPoseDistThreshold_mm    = 12.f;
   const Radians blockPoseAngleThreshold    = DEG_TO_RAD(15.f); // TODO: make dependent on distance?
   const float   robotPoseDistThreshold_mm  = 10.f;
   const Radians robotPoseAngleThreshold    = DEG_TO_RAD(3.f);
@@ -71,7 +74,31 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
   ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
   Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
-  robot.set_camCalibration(calib);
+  robot.SetCameraCalibration(calib);
+  
+  // Fake a robot state update (i think we have to have received one before
+  // we can start adding vision-based poses to history)
+  MessageRobotState msg;
+  {
+    msg.timestamp = 0;
+    msg.pose_frame_id = 0;
+    msg.pose_x = 0;
+    msg.pose_y = 0;
+    msg.pose_z = 0;
+    msg.pose_angle = 0;
+    msg.headAngle = 0;
+    msg.liftAngle = 0;
+    
+    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp,
+                                            msg.pose_frame_id,
+                                            msg.pose_x, msg.pose_y, msg.pose_z,
+                                            msg.pose_angle,
+                                            msg.headAngle,
+                                            msg.liftAngle,
+                                            robot.GetPoseOrigin()), RESULT_OK);
+    
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
+  }
   
   bool checkRobotPose;
   ASSERT_TRUE(JsonTools::GetValueOptional(jsonRoot, "CheckRobotPose", checkRobotPose));
@@ -96,21 +123,44 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   
   for(int i_pose=0; i_pose<NumPoses; ++i_pose)
   {
+    TimeStamp_t currentTimeStamp = (i_pose+1)*100;
+    
     const Json::Value& jsonData = jsonRoot["Poses"][i_pose];
     
     // Put the robot's head at the right angle *before* queueing up the markers
     float headAngle;
     ASSERT_TRUE(JsonTools::GetValueOptional(jsonData["RobotPose"], "HeadAngle", headAngle));
-    robot.set_headAngle(headAngle);
+    robot.SetHeadAngle(headAngle);
     
     Pose3d trueRobotPose;
     ASSERT_TRUE(JsonTools::GetPoseOptional(jsonData, "RobotPose", trueRobotPose));
     
+    // Create a fake robot state message to do a fake RawOdometryPose update.
+    // I think we need to make sure we have one for each matPose VisionMarker
+    // message.
+    MessageRobotState msg;
+    msg.timestamp = currentTimeStamp;
+    msg.pose_frame_id = 0;
+    msg.headAngle  = headAngle;
+    msg.liftAngle  = 0;
+    
     // If we're not going to be checking the robot's pose, we need to set it
     // to the ground truth now, *before* queueing up the markers
     if(!checkRobotPose) {
-      robot.set_pose(trueRobotPose);
+      msg.pose_x = trueRobotPose.GetTranslation().x();
+      msg.pose_y = trueRobotPose.GetTranslation().y();
+      msg.pose_z = trueRobotPose.GetTranslation().z();
+      msg.pose_angle = trueRobotPose.GetRotationAngle<'Z'>().ToFloat();
     }
+    
+    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp,
+                                            msg.pose_frame_id,
+                                            msg.pose_x, msg.pose_y, msg.pose_z,
+                                            msg.pose_angle,
+                                            msg.headAngle, msg.liftAngle,
+                                            robot.GetPoseOrigin()), RESULT_OK);
+    
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
 
     int NumMarkers;
     ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "NumMarkers", NumMarkers));
@@ -131,33 +181,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       jsonMsg["markerType"] = Vision::StringToMarkerType.at(jsonMsg["markerType"].asString());
       
       MessageVisionMarker msg(jsonMsg);
+      msg.timestamp = currentTimeStamp;
       
-      Quad2f corners;
-      corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
-      corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
-      
-      corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
-      corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
-      
-      corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
-      corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
-      
-      corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
-      corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
-      
-      // TODO: get the camera of the robot corresponding to the one that saw this VisionMarker
-      const Vision::Camera& camera = robot.get_camHead();
-      Vision::ObservedMarker marker(msg.timestamp, msg.markerType, corners, camera);
-      
-      RobotPoseStamp p(robot.GetPoseFrameID(), robot.get_pose(), robot.get_headAngle());
-      robot.AddVisionOnlyPoseToHistory(msg.timestamp, p);
-      
-      TimeStamp_t t_actual;
-      RobotPoseStamp *rps;
-      robot.ComputeAndInsertPoseIntoHistory(msg.timestamp, t_actual, &rps);
-      
-      // Give this vision marker to BlockWorld for processing
-      blockWorld.QueueObservedMarker(marker);
+      ASSERT_EQ(blockWorld.QueueObservedMarker(msg, robot), RESULT_OK);
       
     } // for each VisionMarker in the jsonFile
     
@@ -171,14 +197,14 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       
       // Make sure the estimated robot pose matches the ground truth pose
       Pose3d P_diff;
-      const bool robotPoseMatches = trueRobotPose.IsSameAs(robot.get_pose(),
+      const bool robotPoseMatches = trueRobotPose.IsSameAs(robot.GetPose(),
                                                            robotPoseDistThreshold_mm,
                                                            robotPoseAngleThreshold, P_diff);
       
       fprintf(stdout, "X/Y error in robot pose = %.2fmm, Z error = %.2fmm\n",
-              sqrtf(P_diff.get_translation().x()*P_diff.get_translation().x() +
-                    P_diff.get_translation().y()*P_diff.get_translation().y()),
-              P_diff.get_translation().z());
+              sqrtf(P_diff.GetTranslation().x()*P_diff.GetTranslation().x() +
+                    P_diff.GetTranslation().y()*P_diff.GetTranslation().y()),
+              P_diff.GetTranslation().z());
       
       // If the robot's pose is not correct, we can't continue, because
       // all the blocks' poses will also be incorrect
@@ -218,7 +244,6 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         Pose3d blockPose;
         ASSERT_TRUE(jsonBlocks[i_block].isMember("BlockPose"));
         ASSERT_TRUE(JsonTools::GetPoseOptional(jsonBlocks[i_block], "BlockPose", blockPose));
-        groundTruthBlock->SetPose(blockPose);
         
         // Make sure this ground truth block was seen and its estimated pose
         // matches the ground truth pose
@@ -226,13 +251,17 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         int matchesFound = 0;
         
         // The threshold will vary with how far away the block actually is
-        const float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
-                                                 (groundTruthBlock->GetPose().get_translation() -
-                                                  trueRobotPose.get_translation()).Length());
+        /*const float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
+                                                 (blockPose.GetTranslation() -
+                                                  trueRobotPose.GetTranslation()).Length());*/
         
         for(auto & observedBlock : observedBlocks)
         {
           Pose3d P_diff;
+          
+          blockPose.SetParent(&observedBlock.second->GetPose().FindOrigin());
+          groundTruthBlock->SetPose(blockPose);
+          
           if(groundTruthBlock->IsSameAs(*observedBlock.second,
                                         blockPoseDistThreshold_mm,
                                         blockPoseAngleThreshold, P_diff))
@@ -241,9 +270,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
               // We just found multiple matches for this ground truth block
               fprintf(stdout, "Match #%d found for one ground truth block. "
                       "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
-                      matchesFound+1, P_diff.get_translation().Length(),
+                      matchesFound+1, P_diff.GetTranslation().Length(),
                       blockPoseDistThreshold_mm,
-                      P_diff.get_rotationAngle().getDegrees(),
+                      P_diff.GetRotationAngle().getDegrees(),
                       blockPoseAngleThreshold.getDegrees());
               
               groundTruthBlock->IsSameAs(*observedBlock.second,
@@ -254,31 +283,49 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
             if(matchesFound == 0) {
               fprintf(stdout, "Match found for observed block with "
                       "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs %.1fdeg)\n",
-                      P_diff.get_translation().Length(),
+                      P_diff.GetTranslation().Length(),
                       blockPoseDistThreshold_mm,
-                      P_diff.get_rotationAngle().getDegrees(),
+                      P_diff.GetRotationAngle().getDegrees(),
                       blockPoseAngleThreshold.getDegrees());
 #if DISPLAY_ERRORS
-              const Vec3f& T_true = groundTruthBlock->GetPose().get_translation();
+              const Vec3f& T_true = groundTruthBlock->GetPose().GetTranslation();
               
-              Vec3f T_dir(T_true - trueRobotPose.get_translation());
+              Vec3f T_dir(T_true - trueRobotPose.GetTranslation());
               const float distance = T_dir.makeUnitLength();
               
-              const Vec3f T_error(T_true - observedBlock.second->GetPose().get_translation());
+              const Vec3f T_error(T_true - observedBlock.second->GetPose().GetTranslation());
               /*
                fprintf(stdout, "Block position error = %.1fmm at a distance of %.1fmm\n",
-               (T_true - observedBlock.second->GetPose().get_translation()).length(),
+               (T_true - observedBlock.second->GetPose().GetTranslation()).length(),
                ().length());
                */
               //errorVsDist.push_back(std::make_pair( distance, DotProduct(T_error, T_dir) ));
-              //errorVsDist.push_back(std::make_pair(distance, (T_true - observedBlock.second->GetPose().get_translation()).length()));
-              errorVsDist.emplace_back(trueRobotPose.get_translation(),
-                                       groundTruthBlock->GetPose().get_translation(), observedBlock.second->GetPose().get_translation());
+              //errorVsDist.push_back(std::make_pair(distance, (T_true - observedBlock.second->GetPose().GetTranslation()).length()));
+              errorVsDist.emplace_back(trueRobotPose.GetTranslation(),
+                                       groundTruthBlock->GetPose().GetTranslation(), observedBlock.second->GetPose().GetTranslation());
 #endif
             }
 
             ++matchesFound;
+          } else {
+            fprintf(stdout, "Observed type-%d block %d at (%.2f,%.2f,%.2f) does not match "
+                    "type-%d ground truth at (%.2f,%.2f,%.2f). T_diff = %2fmm (vs. %.2fmm), "
+                    "Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
+                    observedBlock.second->GetType(),
+                    observedBlock.second->GetID(),
+                    observedBlock.second->GetPose().GetTranslation().x(),
+                    observedBlock.second->GetPose().GetTranslation().y(),
+                    observedBlock.second->GetPose().GetTranslation().z(),
+                    groundTruthBlock->GetType(),
+                    groundTruthBlock->GetPose().GetTranslation().x(),
+                    groundTruthBlock->GetPose().GetTranslation().y(),
+                    groundTruthBlock->GetPose().GetTranslation().z(),
+                    P_diff.GetTranslation().Length(),
+                    blockPoseDistThreshold_mm,
+                    P_diff.GetRotationAngle().getDegrees(),
+                    blockPoseAngleThreshold.getDegrees());
           }
+            
         } // for each observed block
         
         EXPECT_EQ(matchesFound, 1); // Exactly one observed block should match

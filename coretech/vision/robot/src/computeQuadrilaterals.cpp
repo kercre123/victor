@@ -15,10 +15,22 @@ namespace Anki
   {
     static bool IsQuadrilateralValidAndUpdateOrdering(const Quadrilateral<s16> &quad, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, Quadrilateral<s16> &quadSwapped)
     {
-      const s32 numFractionalBits = 8;
-
       // Swap the corners, as in the Matlab script
       quadSwapped = Quadrilateral<s16>(quad[0], quad[3], quad[1], quad[2]);
+
+      bool areCornersDisordered;
+      const bool isReasonable = IsQuadrilateralReasonable(quadSwapped, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, imageHeight, imageWidth, areCornersDisordered);
+
+      if(areCornersDisordered) {
+        quadSwapped = Quadrilateral<s16>(quadSwapped[0], quadSwapped[2], quadSwapped[1], quadSwapped[3]);
+      }
+
+      return isReasonable;
+    }
+
+    bool IsQuadrilateralReasonable(const Quadrilateral<s16> &quad, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, bool &areCornersDisordered)
+    {
+      const s32 numFractionalBits = 8;
 
       // Verify corners are in a clockwise direction, so we don't get an accidental projective
       // mirroring when we do the tranformation below to extract the image. Can look whether the z
@@ -27,17 +39,23 @@ namespace Anki
 
       // cross product of vectors anchored at corner 0
       s32 detA = Determinant2x2(
-        quadSwapped[1].x-quadSwapped[0].x, quadSwapped[1].y-quadSwapped[0].y,
-        quadSwapped[2].x-quadSwapped[0].x, quadSwapped[2].y-quadSwapped[0].y);
+        quad[1].x-quad[0].x, quad[1].y-quad[0].y,
+        quad[2].x-quad[0].x, quad[2].y-quad[0].y);
 
       if(ABS(detA) < minQuadArea)
         return false;
 
+      // Swap the corners, as in the Matlab script
+      Quadrilateral<s16> quadSwapped;
+
       if(detA > 0) {
         // corners([2 3],:) = corners([3 2],:);
-        const Quadrilateral<s16> quadSwappedTmp = Quadrilateral<s16>(quadSwapped[0], quadSwapped[2], quadSwapped[1], quadSwapped[3]);
-        quadSwapped = quadSwappedTmp;
+        quadSwapped = Quadrilateral<s16>(quad[0], quad[2], quad[1], quad[3]);
         detA = -detA;
+        areCornersDisordered = true;
+      } else {
+        quadSwapped = quad;
+        areCornersDisordered = false;
       }
 
       // One last check: make sure we've got roughly a symmetric quadrilateral (a parallelogram?) by
@@ -89,12 +107,6 @@ namespace Anki
             return false;
         }
       }
-
-      // Add +1, so it matches the Matlab version
-      //for(s32 i=0; i<4; i++) {
-      //  quadSwapped[i].x++;
-      //  quadSwapped[i].y++;
-      //}
 
       return true;
     }

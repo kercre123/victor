@@ -48,12 +48,20 @@ namespace Anki
       
       void TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments);
       
-      bool StartPathTraversal(void);
+      // path_id is the ID to associate with the path that is being followed.
+      // path_id of 0 is reserved for paths initiated internally by the robot
+      // and does not actually update lastPathID.
+      bool StartPathTraversal(u16 path_id = 0);
       bool IsTraversingPath(void);
+      u16 GetLastPathID();
 
       // Returns the index of the path segment that is currently being traversed.
       // Returns -1 if not traversing a path.
       s8 GetCurrPathSegment(void);
+
+      // Returns the number of available segment slots.
+      // This is how many more path segments can be received by the basestation.
+      u8 GetNumFreeSegmentSlots();
       
       void PrintPath();
       void PrintPathSegment(s16 segment);

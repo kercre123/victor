@@ -10,6 +10,7 @@
 #include "anki/vision/basestation/visionMarker.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
 
 namespace Anki {
   namespace Vision{
@@ -23,14 +24,14 @@ namespace Anki {
     
     
     ObservedMarker::ObservedMarker(const TimeStamp_t t, const Code& withCode, const Quad2f& corners, const Camera& seenBy)
-    : Marker(withCode), observationTime_(t), imgCorners_(corners), seenByCam_(seenBy)
+    : Marker(withCode), observationTime_(t), imgCorners_(corners), seenByCam_(seenBy), used_(false)
     {
 
     }
     
     
     KnownMarker::KnownMarker(const Code& withCode, const Pose3d& atPose, const f32 size_mm)
-    : Marker(withCode), size_(size_mm), wasObserved_(false)
+    : Marker(withCode), size_(size_mm), lastObservedTime_(0)
     {
       SetPose(atPose);
     }
@@ -89,7 +90,7 @@ namespace Anki {
       corners3dAtPose *= size_;
       
       // Transform the canonical corners to this new pose
-      atPose.applyTo(corners3dAtPose, corners3dAtPose);
+      atPose.ApplyTo(corners3dAtPose, corners3dAtPose);
       
       return corners3dAtPose;
       
@@ -133,10 +134,15 @@ namespace Anki {
       using namespace Quad;
       
       // Get the marker's pose relative to the camera
-      Pose3d markerPoseWrtCamera( pose_.getWithRespectTo(&camera.GetPose()) );
+      Pose3d markerPoseWrtCamera;
+      if(pose_.GetWithRespectTo(camera.GetPose(), markerPoseWrtCamera) == false) {
+        PRINT_NAMED_WARNING("KnownMarker.IsVisibleFrom.NotInCameraPoseTree",
+                            "Marker must be in the same pose tree as the camera to check its visibility.\n");
+        return false;
+      }
       
       // Make sure the marker is at least in front of the camera!
-      if(markerPoseWrtCamera.get_translation().z() <= 0.f) {
+      if(markerPoseWrtCamera.GetTranslation().z() <= 0.f) {
         return false;
       }
       

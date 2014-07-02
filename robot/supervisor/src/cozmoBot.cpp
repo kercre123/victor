@@ -18,6 +18,7 @@
 #include "steeringController.h"
 #include "wheelController.h"
 #include "visionSystem.h"
+#include "animationController.h"
 
 #include "anki/messaging/shared/utilMessaging.h"
 
@@ -48,6 +49,17 @@ namespace Anki {
         // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
         // times through the main loop
         s32 robotStateMessageCounter_ = 0;
+        
+        // Main cycle time errors
+        u32 mainTooLongCnt_ = 0;
+        u32 mainTooLateCnt_ = 0;
+        u32 avgMainTooLongTime_ = 0;
+        u32 avgMainTooLateTime_ = 0;
+        u32 lastCycleStartTime_ = 0;
+        u32 lastMainCycleTimeErrorReportTime_ = 0;
+        const u32 MAIN_TOO_LATE_TIME_THRESH = TIME_STEP * 1000 + 500;  // Normal cycle time plus some margin
+        const u32 MAIN_TOO_LONG_TIME_THRESH = TIME_STEP * 1000 + 500;
+        const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD = 1000000;
 
       } // Robot private namespace
       
@@ -96,6 +108,8 @@ namespace Anki {
       
       Result Init(void)
       {
+        Result lastResult = RESULT_OK;
+        
         // Coretech setup
 #ifndef SIMULATOR
 #if(DIVERT_PRINT_TO_RADIO)
@@ -109,28 +123,25 @@ namespace Anki {
         
         // HAL and supervisor init
 #ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
-        if(HAL::Init() == RESULT_FAIL) {
-          PRINT("Hardware Interface initialization failed!\n");
-          return RESULT_FAIL;
-        }
+        lastResult = HAL::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "HAL init failed.\n");
 #endif        
-        
-        if (Localization::Init() == RESULT_FAIL) {
-          PRINT("Localization System init failed.\n");
-          return RESULT_FAIL;
-        }
+
+        lastResult = Localization::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "Localization System init failed.\n");
         
         // TODO: Get VisionSystem to work on robot
-        if(VisionSystem::Init() == RESULT_FAIL)
-        {
-          PRINT("Vision System initialization failed.\n");
-          return RESULT_FAIL;
-        }
+        lastResult = VisionSystem::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "Vision System init failed.\n");
+
         
-        if(PathFollower::Init() == RESULT_FAIL) {
-          PRINT("PathFollower initialization failed.\n");
-          return RESULT_FAIL;
-        }
+        lastResult = PathFollower::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "PathFollower System init failed.\n");
+
         
         // Initialize subsystems if/when available:
         /*
@@ -155,10 +166,15 @@ namespace Anki {
          }
          */
         
-         if(LiftController::Init() == RESULT_FAIL) {
-         PRINT("LiftController initialization failed.\n");
-         return RESULT_FAIL;
-         }
+        // Before liftController?!
+        lastResult = PickAndPlaceController::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "PickAndPlaceController init failed.\n");
+        
+        lastResult = LiftController::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "LiftController init failed.\n");
+        
         
         // Start calibration
         StartMotorCalibrationRoutine();
@@ -183,6 +199,16 @@ namespace Anki {
       
       Result step_MainExecution()
       {
+        // Detect if it took too long in between mainExecution calls
+        u32 cycleStartTime = HAL::GetMicroCounter();
+        if (lastCycleStartTime_ != 0) {
+          u32 timeBetweenCycles = cycleStartTime - lastCycleStartTime_;
+          if (timeBetweenCycles > MAIN_TOO_LATE_TIME_THRESH) {
+            ++mainTooLateCnt_;
+            avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
+          }
+        }
+        
         // HACK: Manually setting timestamp here in mainExecution until
         // until Nathan implements this the correct way.
         HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
@@ -240,13 +266,17 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Sensor updates
         //////////////////////////////////////////////////////////////
+#if !defined(THIS_IS_PETES_BOARD)
         IMUFilter::Update();
+#endif        
         
         
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
 
+        AnimationController::Update();
+        
         HeadController::Update();
         LiftController::Update();
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
@@ -321,6 +351,36 @@ namespace Anki {
         HAL::UpdateDisplay();
 #endif        
         
+        
+        // Check if main took too long
+        u32 cycleEndTime = HAL::GetMicroCounter();
+        u32 cycleTime = cycleEndTime - cycleStartTime;
+        if (cycleTime > MAIN_TOO_LONG_TIME_THRESH) {
+          ++mainTooLongCnt_;
+          avgMainTooLongTime_ = (u32)((f32)(avgMainTooLongTime_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
+        }
+        lastCycleStartTime_ = cycleStartTime;
+        
+        
+        // Report main cycle time error
+        if (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD) {
+          Messages::MainCycleTimeError m;
+          m.numMainTooLateErrors = mainTooLateCnt_;
+          m.avgMainTooLateTime = avgMainTooLateTime_;
+          m.numMainTooLongErrors = mainTooLongCnt_;
+          m.avgMainTooLongTime = avgMainTooLongTime_;
+          
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::MainCycleTimeError), &m);
+          
+          mainTooLateCnt_ = 0;
+          avgMainTooLateTime_ = 0;
+          mainTooLongCnt_ = 0;
+          avgMainTooLongTime_ = 0;
+          
+          lastMainCycleTimeErrorReportTime_ = cycleEndTime;
+        }
+        
+        
         return RESULT_OK;
         
       } // Robot::step_MainExecution()
@@ -331,14 +391,6 @@ namespace Anki {
       Result step_LongExecution()
       {
         Result retVal = RESULT_OK;
-        
-        // Always send a robot state message corresponding to the start of the a
-        // call to step_LongExecution().  We will pass this same state into the
-        // VisionSystem::Update() call below and use its timestamp as the
-        // captured frame's timestamp, and thus any corresponding messages sent
-        // by the Vision System.
-        Messages::UpdateRobotStateMsg();
-        Messages::SendRobotStateMsg();
         
         // IMPORTANT: The static robot state message is being passed in here
         //   *by value*, NOT by reference.  This is because step_LongExecution()

@@ -19,7 +19,10 @@
 #include "anki/vision/basestation/observableObject.h"
 
 #include "anki/common/basestation/exceptions.h"
+#include "anki/common/basestation/general.h"
 
+#include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
 
 namespace Anki {
   namespace Vision {
@@ -33,16 +36,6 @@ namespace Anki {
     : type_(objType), ID_(0), lastObservedTime_(0), wasObserved_(false)
     {
       //ID_ = ObservableObject::ObjectCounter++;
-    }
-    
-    bool ObservableObject::GetWhetherObserved() const
-    {
-      return wasObserved_;
-    }
-    
-    void ObservableObject::SetWhetherObserved(const bool wasObserved)
-    {
-      wasObserved_ = wasObserved;
     }
     
     bool ObservableObject::IsVisibleFrom(const Camera &camera,
@@ -69,7 +62,7 @@ namespace Anki {
     {
       // Copy the pose and set this object's pose as its parent
       Pose3d poseCopy(atPose);
-      poseCopy.set_parent(&pose_);
+      poseCopy.SetParent(&pose_);
       
       // Construct a marker at that pose and store it keyed by its code
       markers_.emplace_back(withCode, poseCopy, size_mm);
@@ -97,13 +90,22 @@ namespace Anki {
       // The two objects can't be the same if they aren't the same type!
       bool isSame = this->type_ == otherObject.type_;
       
+      Pose3d otherPose;
+      if(otherObject.GetPose().GetWithRespectTo(*this->pose_.GetParent(), otherPose) == false) {
+        PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
+                            "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
+        isSame = false;
+      }
+      
       if(isSame) {
+        
+        CORETECH_ASSERT(otherPose.GetParent() == pose_.GetParent());
+        
         if(this->GetRotationAmbiguities().empty()) {
-          isSame = this->pose_.IsSameAs(otherObject.GetPose(),
-                                        distThreshold, angleThreshold, P_diff);
+          isSame = this->pose_.IsSameAs(otherPose, distThreshold, angleThreshold, P_diff);
         }
         else {
-          isSame = this->pose_.IsSameAs_WithAmbiguity(otherObject.GetPose(),
+          isSame = this->pose_.IsSameAs_WithAmbiguity(otherPose,
                                                       this->GetRotationAmbiguities(),
                                                       distThreshold, angleThreshold,
                                                       true, P_diff);
@@ -143,24 +145,57 @@ namespace Anki {
     }
     
     
-    void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const
+    void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
+                                              const TimeStamp_t sinceTime) const
     {
       observedMarkers.clear();
-      for(auto const& marker : this->markers_)
-      {
-        if(marker.GetWasObserved()) {
-          observedMarkers.push_back(&marker);
+      if(sinceTime > 0) {
+        for(auto const& marker : this->markers_)
+        {
+          if(marker.GetLastObservedTime() >= sinceTime) {
+            observedMarkers.push_back(&marker);
+          }
         }
       }
     } // GetObservedMarkers()
     
     
-    void ObservableObject::SetMarkersAsObserved(const Marker::Code& withCode)
+    Result ObservableObject::UpdateMarkerObservationTimes(const ObservableObject& otherObject)
+    {
+      if(otherObject.GetType() != this->GetType()) {
+        PRINT_NAMED_ERROR("ObservableObject.UpdateMarkerObservationTimes.TypeMismatch",
+                          "Tried to update the marker observations between dissimilar object types.\n");
+        return RESULT_FAIL;
+      }
+
+      std::list<KnownMarker> const& otherMarkers = otherObject.GetMarkers();
+
+      // If these objects are the same type they have to have the same number of
+      // markers, by definition.
+      CORETECH_ASSERT(otherMarkers.size() == markers_.size());
+      
+      std::list<KnownMarker>::const_iterator otherMarkerIter = otherMarkers.begin();
+      std::list<KnownMarker>::iterator markerIter = markers_.begin();
+      
+      for(;otherMarkerIter != otherMarkers.end() && markerIter != markers_.end();
+          ++otherMarkerIter, ++markerIter)
+      {
+        markerIter->SetLastObservedTime(std::max(markerIter->GetLastObservedTime(),
+                                                 otherMarkerIter->GetLastObservedTime()));
+      }
+      
+      return RESULT_OK;
+    }
+    
+    
+    void ObservableObject::SetMarkersAsObserved(const Marker::Code& withCode,
+                                                const TimeStamp_t   atTime)
     {
       auto markers = markersWithCode_.find(withCode);
       if(markers != markersWithCode_.end()) {
         for(auto marker : markers->second) {
-          marker->SetWasObserved(true);
+          //marker->SetWasObserved(true);
+          marker->SetLastObservedTime(atTime);
         }
       }
       else {
@@ -215,24 +250,23 @@ namespace Anki {
     
     // Input:   list of observed markers
     // Outputs: the objects seen and the unused markers
-    void ObservableObjectLibrary::CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
+    void ObservableObjectLibrary::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
                                                            std::vector<ObservableObject*>& objectsSeen,
                                                            const CameraID_t seenOnlyBy) const
     {
       // Group the markers by object type
       std::map<ObjectType_t, std::vector<const ObservedMarker*>> markersWithObjectType;
-      std::list<ObservedMarker> markersUnused;
       
-      for(auto & marker : markers) {
+      for(auto marker : markers) {
         
-        bool used = false;
+        marker->MarkUsed(false);
         
         // If seenOnlyBy was specified, make sure this marker was seen by that
         // camera
-        if(seenOnlyBy == ANY_CAMERA || marker.GetSeenBy().GetId() == seenOnlyBy)
+        if(seenOnlyBy == ANY_CAMERA || marker->GetSeenBy().GetId() == seenOnlyBy)
         {
           // Find all objects which use this marker...
-          std::set<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(marker);
+          std::set<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(*marker);
           
           // ...if there are any, add this marker to the list of observed markers
           // that corresponds to this object type.
@@ -247,15 +281,10 @@ namespace Anki {
                }
                */
             }
-            markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(&marker);
-            used = true;
+            markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(marker);
+            marker->MarkUsed(true);
           } // IF objectsWithMarker != NULL
         } // IF seenOnlyBy
-        
-        if(not used) {
-          // Keep track of which markers went unused
-          markersUnused.push_back(marker);
-        }
         
       } // For each marker we saw
       
@@ -308,7 +337,7 @@ namespace Anki {
           // observers are possible.  Otherwise they'll be clustered in the
           // coordinate frame of the (single) observer.
           for(auto & poseMatch : possiblePoses) {
-            poseMatch.first = poseMatch.first.getWithRespectTo(Pose3d::World);
+            poseMatch.first = poseMatch.first.GetWithRespectTo(Pose3d::World);
           }
         }
          */
@@ -332,7 +361,17 @@ namespace Anki {
           
           // Compute pose wrt camera, or world if no camera specified
           if (seenOnlyBy == ANY_CAMERA) {
-            objectsSeen.back()->SetPose(poseCluster.GetPose().getWithRespectTo(Pose3d::World));
+            Pose3d newPose;
+            if(poseCluster.GetPose().GetWithRespectTo(poseCluster.GetPose().FindOrigin(), newPose) == true) {
+              objectsSeen.back()->SetPose(newPose);
+            } else {
+              PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectsFromMarkers.CouldNotFindWorldOrigin",
+                                "Could not get the pose cluster w.r.t. the world pose.\n");
+              // TODO: this may indicate that we should be getting the pose w.r.t. the origin
+              // of the camera that saw this object.
+              // We are probably not handling the case that two robot's saw the same thing
+              // but are not both localized to the same world frame yet.
+            }
           } else {
             objectsSeen.back()->SetPose(poseCluster.GetPose());
           }
@@ -341,7 +380,8 @@ namespace Anki {
           // cluster from which it was computed as "observed"
           for(auto & match : poseCluster.GetMatches()) {
             const KnownMarker& marker = match.second;
-            objectsSeen.back()->SetMarkersAsObserved(marker.GetCode());
+            objectsSeen.back()->SetMarkersAsObserved(marker.GetCode(),
+                                                     observedTime);
           }
           
           objectsSeen.back()->SetLastObservedTime(observedTime);
@@ -354,15 +394,12 @@ namespace Anki {
           // all poses in a common World coordinate frame *after* pose clustering,
           // since that process takes the markers' observers into account.
           for(auto & poseMatch : possiblePoses) {
-            poseMatch.first = poseMatch.first.getWithRespectTo(Pose3d::World);
+            poseMatch.first = poseMatch.first.GetWithRespectTo(Pose3d::World);
           }
         }
          */
         
       } // FOR each objectType
-      
-      // Return the unused markers
-      std::swap(markers, markersUnused);
       
     } // CreateObjectsFromMarkers()
     
@@ -428,11 +465,11 @@ namespace Anki {
         // cluster's pose based on all its member matches.
         if(not R_ambiguities.empty()) {
           Pose3d newPose(matches_.back().second.GetPose());
-          newPose.preComposeWith(P_diff);
+          newPose.PreComposeWith(P_diff);
           
           // This should preserve the pose tree (i.e. parent relationship
           // of the KnownMarker to its parent object's pose)
-          //CORETECH_ASSERT(newPose.get_parent() == &libObject->GetPose());
+          //CORETECH_ASSERT(newPose.GetParent() == &libObject->GetPose());
           
           matches_.back().second.SetPose(newPose);
         } // if there were rotation ambiguities
@@ -484,10 +521,13 @@ namespace Anki {
         
         // Compute the object pose from all the corresponding 2d (image)
         // and 3d (object) points
-        const Pose3d* originalParent = pose_.get_parent();
+        const Pose3d* originalParent = pose_.GetParent();
         pose_ = camera->ComputeObjectPose(imgPoints, objPoints);
-        if(pose_.get_parent() != originalParent) {
-          pose_ = pose_.getWithRespectTo(originalParent);
+        if(pose_.GetParent() != originalParent) {
+          if(pose_.GetWithRespectTo(originalParent, pose_) == false) {
+            PRINT_NAMED_ERROR("ObservableObjectLibrary.PoseCluster.RecomputePose.OriginMisMatch",
+                              "Could not get object pose w.r.t. original parent.\n");
+          }
         }
       } // IF more than one member
       

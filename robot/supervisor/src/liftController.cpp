@@ -28,26 +28,28 @@ namespace Anki {
 #ifdef SIMULATOR
         const u32 LIFT_STOP_TIME = 200000;
 #else
-        const u32 LIFT_STOP_TIME = 1000000;
+        const u32 LIFT_STOP_TIME = 500000;
 #endif
         
         // Amount of time to allow lift to relax with power == 0, before considering it
         // to have settled enough for recalibration.
         const u32 LIFT_RELAX_TIME = 200000;
       
+#if RECALIBRATE_AT_LIMITS
         // Power with which to approach limit angle (after the intended velocity profile has been executed)
         // TODO: Shouldn't have to be this strong. Lower when 2.1 version electronics are ready.
-        const f32 LIMIT_APPROACH_POWER = 0.4;
+        const f32 LIMIT_APPROACH_POWER = 0.7;
+#endif
         
         const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
         
         const f32 SPEED_FILTERING_COEFF = 0.9f;
         
         
-        const f32 Kp_ = 0.5f; // proportional control constant
-        const f32 Ki_ = 0.02f; // integral control constant
+        f32 Kp_ = 20.f; // proportional control constant
+        f32 Ki_ = 0.03f; // integral control constant
         f32 angleErrorSum_ = 0.f;
-        const f32 MAX_ERROR_SUM = 200.f;
+        f32 MAX_ERROR_SUM = 10.f;
         
         const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
         f32 LIFT_ANGLE_LOW_LIMIT; // Initialize in Init()
@@ -57,6 +59,7 @@ namespace Anki {
 #ifdef SIMULATOR
         // For disengaging gripper once the lift has reached its final position
         bool disengageGripperAtDest_ = false;
+        f32  disengageAtAngle_ = 0.f;
 #endif
         
         // Open loop gain
@@ -100,7 +103,9 @@ namespace Anki {
           LCS_SET_CURR_ANGLE
         } LiftCalibState;
         
+#ifndef SIMULATOR
         LiftCalibState calState_ = LCS_IDLE;
+#endif
         bool isCalibrated_ = false;
         bool limitingDetected_ = false;
         bool limitingExpected_ = false;
@@ -120,11 +125,11 @@ namespace Anki {
       // Returns the angle between the shoulder joint and the wrist joint.
       f32 Height2Rad(f32 height_mm) {
         assert(height_mm >= LIFT_HEIGHT_LOWDOCK && height_mm <= LIFT_HEIGHT_CARRY);
-        return asinf((height_mm - LIFT_JOINT_HEIGHT - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
+        return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
       }
       
       f32 Rad2Height(f32 angle) {
-        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_JOINT_HEIGHT + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
+        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
       }
       
       
@@ -361,7 +366,32 @@ namespace Anki {
         if (desiredHeight_ == newDesiredHeight && !inPosition_) {
           return;
         }
-        
+
+#ifdef SIMULATOR
+        if(!HAL::IsGripperEngaged()) {
+          // If the new desired height will make the lift move upward, turn on
+          // the gripper's locking mechanism so that we might pick up a block as
+          // it goes up
+          if(newDesiredHeight > desiredHeight_) {
+            HAL::EngageGripper();
+          }
+        }
+        else {
+          // If we're moving the lift down and the end goal is at low-place or
+          // high-place height, disengage the gripper when we get there
+          if(newDesiredHeight < desiredHeight_ &&
+             (newDesiredHeight == LIFT_HEIGHT_LOWDOCK ||
+              newDesiredHeight == LIFT_HEIGHT_HIGHDOCK))
+          {
+            disengageGripperAtDest_ = true;
+            disengageAtAngle_ = Height2Rad(newDesiredHeight + 3.f*LIFT_FINGER_HEIGHT);
+          }
+          else {
+            disengageGripperAtDest_ = false;
+          }
+        }
+#endif
+           
         desiredHeight_ = newDesiredHeight;
         
         // Convert desired height into the necessary angle:
@@ -369,6 +399,7 @@ namespace Anki {
         PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm)\n", desiredHeight_, GetHeightMM());
 #endif
         
+           /*
 #ifdef SIMULATOR
         // Turning gripper on and off for simulator
         disengageGripperAtDest_ = false;
@@ -386,10 +417,19 @@ namespace Anki {
           }
         }
 #endif
+           */
         
         desiredAngle_ = Height2Rad(desiredHeight_);
         angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
-        angleErrorSum_ = 0.f;
+        
+        f32 startRadSpeed = radSpeed_;
+        f32 startRad = currentAngle_.ToFloat();
+        if (!inPosition_) {
+          startRadSpeed = currDesiredRadVel_;
+          startRad = currDesiredAngle_;
+        } else {
+          angleErrorSum_ = 0.f;
+        }
         
         lastLiftMovedTime_us = HAL::GetMicroCounter();
         limitingDetected_ = false;
@@ -412,7 +452,7 @@ namespace Anki {
 #endif
         
         // Start profile of lift trajectory
-        vpg_.StartProfile(radSpeed_, currentAngle_.ToFloat(),
+        vpg_.StartProfile(startRadSpeed, startRad,
                           maxSpeedRad_, accelRad_,
                           approachSpeedRad_, desiredAngle_.ToFloat(),
                           CONTROL_DT);
@@ -422,6 +462,11 @@ namespace Anki {
               radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, accelRad_, approachSpeedRad_, desiredAngle_.ToFloat());
 #endif
         
+      }
+      
+      f32 GetDesiredHeight()
+      {
+        return desiredHeight_;
       }
       
       bool IsInPosition(void) {
@@ -444,6 +489,13 @@ namespace Anki {
           return RESULT_OK;
         }
         
+#if SIMULATOR
+        if (disengageGripperAtDest_ && currentAngle_.ToFloat() < disengageAtAngle_) {
+          HAL::DisengageGripper();
+          disengageGripperAtDest_ = false;
+        }
+#endif
+        
         if(not inPosition_) {
           
           if (!limitingExpected_) {
@@ -453,14 +505,17 @@ namespace Anki {
             // Compute position error
             angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
             
+
+            
             // Open loop value to drive at desired speed
             power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
             
             // Compute corrective value
             f32 power_corr = (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
             
-            // Add base power in the direction of corrective value
-            power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+            // Add base power in the direction of the general desired direction
+            //power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+            power_ += power_corr + ((power_ > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
             
             // Update angle error sum
             angleErrorSum_ += angleError_;
@@ -509,11 +564,14 @@ namespace Anki {
              || ABS(currentAngle_ - desiredAngle_) < ANGLE_TOLERANCE) {
               power_ = 0.f;
               inPosition_ = true;
+            /*
 #ifdef SIMULATOR
               if (disengageGripperAtDest_) {
                 HAL::DisengageGripper();
+                disengageGripperAtDest_ = false;
               }
 #endif
+             */
               #if(DEBUG_LIFT_CONTROLLER)
               PRINT(" LIFT HEIGHT REACHED (%f mm)\n", GetHeightMM());
               #endif
@@ -550,6 +608,14 @@ namespace Anki {
       
         return RESULT_OK;
       }
+      
+      void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+      {
+        Kp_ = kp;
+        Ki_ = ki;
+        MAX_ERROR_SUM = maxIntegralError;
+      }
+      
     } // namespace LiftController
   } // namespace Cozmo
 } // namespace Anki

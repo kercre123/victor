@@ -24,21 +24,29 @@ namespace Anki
 
     template<typename Type> inline Type* FixedLengthList<Type>::Pointer(const s32 index)
     {
+      AnkiAssert(index >= 0 && index < this->array.get_size(1));
+
       return this->arrayData + index;
     }
 
     template<typename Type> inline const Type* FixedLengthList<Type>::Pointer(const s32 index) const
     {
+      AnkiAssert(index >= 0 && index < this->array.get_size(1));
+
       return this->arrayData + index;
     }
 
     template<typename Type> inline const Type& FixedLengthList<Type>::operator[](const s32 index) const
     {
+      AnkiAssert(index >= 0 && index < this->array.get_size(1));
+
       return *(this->arrayData + index);
     }
 
     template<typename Type> inline Type& FixedLengthList<Type>::operator[](const s32 index)
     {
+      AnkiAssert(index >= 0 && index < this->array.get_size(1));
+
       return *(this->arrayData + index);
     }
 
@@ -52,7 +60,11 @@ namespace Anki
     template<typename Type> FixedLengthList<Type>::FixedLengthList(s32 maximumSize, void * data, s32 dataLength, const Flags::Buffer flags)
       : ArraySlice<Type>(Array<Type>(1, maximumSize, data, dataLength, flags), LinearSequence<s32>(0,0), LinearSequence<s32>(0,0))
     {
-      this->arrayData = this->array.Pointer(0,0);
+      if(this->array.get_numElements() == 0) {
+        this->arrayData = NULL;
+      } else {
+        this->arrayData = this->array.Pointer(0,0);
+      }
 
       if(flags.get_isFullyAllocated()) {
         this->set_size(maximumSize);
@@ -64,7 +76,11 @@ namespace Anki
     template<typename Type> FixedLengthList<Type>::FixedLengthList(s32 maximumSize, MemoryStack &memory, const Flags::Buffer flags)
       : ArraySlice<Type>(Array<Type>(1, maximumSize, memory, flags), LinearSequence<s32>(0,0), LinearSequence<s32>(0,0))
     {
-      this->arrayData = this->array.Pointer(0,0);
+      if(this->array.get_numElements() == 0) {
+        this->arrayData = NULL;
+      } else {
+        this->arrayData = this->array.Pointer(0,0);
+      }
 
       if(flags.get_isFullyAllocated()) {
         this->set_size(maximumSize);
@@ -89,7 +105,7 @@ namespace Anki
       if(resizeResult != RESULT_OK)
         return resizeResult;
 
-      this->xSlice = LinearSequence<s32>(0, MIN(this->xSlice.get_end(), maximumSize-1));
+      this->xSlice = LinearSequence<s32>(0, 1, -1, MIN(this->xSlice.get_size(), maximumSize));
 
       return RESULT_OK;
     }
@@ -105,7 +121,6 @@ namespace Anki
       *this->Pointer(curSize) = value;
 
       this->xSlice.size = curSize+1;
-      this->xSlice.end = curSize;
 
       return RESULT_OK;
     } // Result FixedLengthList<Type>::PushBack(const Type &value)
@@ -120,7 +135,6 @@ namespace Anki
 
       const Type value = *this->Pointer(curSize-1);
       this->xSlice.size = curSize-1;
-      this->xSlice.end = curSize-2;
 
       return value;
     } // Type FixedLengthList<Type>::PopBack()
@@ -151,7 +165,6 @@ namespace Anki
       newSize = MIN(this->get_maximumSize(), MAX(0,newSize));
 
       this->xSlice.size = newSize;
-      this->xSlice.end = newSize-1;
 
       return newSize;
     } // s32 FixedLengthList<Type>::set_size(s32 newSize)

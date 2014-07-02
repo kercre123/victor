@@ -687,16 +687,25 @@ namespace Anki
         return 512 + 16*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
       }
 
-      Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f32> &homography, MemoryStack scratch)
+      Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f32> &homography, bool &numericalFailure, MemoryStack scratch)
       {
         Result lastResult;
 
         AnkiConditionalErrorAndReturnValue(AreValid(homography, scratch),
           RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "Invalid objects");
 
-        // TODO: I got rid of sorting, but now we have an extra copy here that can be removed.
-        //Quadrilateral<s16> sortedQuad = quad.ComputeClockwiseCorners();
-        Quadrilateral<s16> sortedQuad = quad;
+        if(!quad.IsConvex()) {
+          AnkiWarn("ComputeHomographyFromQuad", "Quad is not convex");
+
+          homography.SetZero();
+          homography[0][0] = 1;
+          homography[1][1] = 1;
+          homography[2][2] = 1;
+
+          numericalFailure = true;
+
+          return RESULT_OK;
+        }
 
         FixedLengthList<Point<f32> > originalPoints(4, scratch);
         FixedLengthList<Point<f32> > transformedPoints(4, scratch);
@@ -706,12 +715,12 @@ namespace Anki
         originalPoints.PushBack(Point<f32>(1,0));
         originalPoints.PushBack(Point<f32>(1,1));
 
-        transformedPoints.PushBack(Point<f32>(sortedQuad[0].x, sortedQuad[0].y));
-        transformedPoints.PushBack(Point<f32>(sortedQuad[1].x, sortedQuad[1].y));
-        transformedPoints.PushBack(Point<f32>(sortedQuad[2].x, sortedQuad[2].y));
-        transformedPoints.PushBack(Point<f32>(sortedQuad[3].x, sortedQuad[3].y));
+        transformedPoints.PushBack(Point<f32>(quad[0].x, quad[0].y));
+        transformedPoints.PushBack(Point<f32>(quad[1].x, quad[1].y));
+        transformedPoints.PushBack(Point<f32>(quad[2].x, quad[2].y));
+        transformedPoints.PushBack(Point<f32>(quad[3].x, quad[3].y));
 
-        if((lastResult = Matrix::EstimateHomography(originalPoints, transformedPoints, homography, scratch)) != RESULT_OK)
+        if((lastResult = Matrix::EstimateHomography(originalPoints, transformedPoints, homography, numericalFailure, scratch)) != RESULT_OK)
           return lastResult;
 
         return RESULT_OK;

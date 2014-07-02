@@ -257,6 +257,12 @@ namespace Anki {
       {
         Result retVal = RESULT_OK;
         
+        // Don't do IMU updates until head is calibrated
+        if (!HeadController::IsCalibrated()) {
+          return retVal;
+        }
+        
+        
         // Get IMU data
         HAL::IMU_DataStructure imu_data;
         HAL::IMUReadData(imu_data);

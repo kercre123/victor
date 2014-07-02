@@ -99,23 +99,21 @@ namespace Anki
 
       const s32 yStart = ySlice.get_start();
       const s32 yIncrement = ySlice.get_increment();
-      const s32 yEnd = ySlice.get_end();
       const s32 ySize = ySlice.get_size();
 
       const s32 xStart = xSlice.get_start();
       const s32 xIncrement = xSlice.get_increment();
-      const s32 xEnd = xSlice.get_end();
       const s32 xSize = xSlice.get_size();
 
       EncodedArray::Serialize<Type>(false, in.get_array(), buffer, bufferLength);
 
       reinterpret_cast<u32*>(*buffer)[6] = *reinterpret_cast<const u32*>(&yStart);
       reinterpret_cast<u32*>(*buffer)[7] = *reinterpret_cast<const u32*>(&yIncrement);
-      reinterpret_cast<u32*>(*buffer)[8] = *reinterpret_cast<const u32*>(&yEnd);
+      reinterpret_cast<u32*>(*buffer)[8] = *reinterpret_cast<const u32*>(&ySize);
 
       reinterpret_cast<u32*>(*buffer)[9] = *reinterpret_cast<const u32*>(&xStart);
       reinterpret_cast<u32*>(*buffer)[10] = *reinterpret_cast<const u32*>(&xIncrement);
-      reinterpret_cast<u32*>(*buffer)[11]= *reinterpret_cast<const u32*>(&xEnd);
+      reinterpret_cast<u32*>(*buffer)[11]= *reinterpret_cast<const u32*>(&xSize);
 
       if(updateBufferPointer) {
         *buffer = reinterpret_cast<u8*>(*buffer) + SerializedBuffer::EncodedArraySlice::CODE_LENGTH;
@@ -192,15 +190,18 @@ namespace Anki
 
       const s32 yStart = ySlice.get_start();
       const s32 yIncrement = ySlice.get_increment();
-      const s32 yEnd = ySlice.get_end();
+      const s32 ySize = ySlice.get_size();
 
       const s32 xStart = xSlice.get_start();
       const s32 xIncrement = xSlice.get_increment();
-      const s32 xEnd = xSlice.get_end();
+      const s32 xSize = xSlice.get_size();
 
-      for(s32 y=yStart; y<=yEnd; y+=yIncrement) {
+      for(s32 iy=0; iy<ySize; iy++) {
+        const s32 y = yStart + iy * yIncrement;
         const Type * restrict pInData = in.get_array().Pointer(y, 0);
-        for(s32 x=xStart; x<=xEnd; x+=xIncrement) {
+
+        for(s32 ix=0; ix<xSize; ix++) {
+          const s32 x = xStart + ix * xIncrement;
           pDataType[iData] = pInData[x];
           iData++;
         }
@@ -326,28 +327,24 @@ namespace Anki
       Flags::Buffer flags;
       s32 ySlice_start;
       s32 ySlice_increment;
-      s32 ySlice_end;
+      s32 ySlice_size;
       s32 xSlice_start;
       s32 xSlice_increment;
-      s32 xSlice_end;
+      s32 xSlice_size;
       u16 basicType_sizeOfType;
       bool basicType_isBasicType;
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
       s32 basicType_numElements;
-      EncodedArraySlice::Deserialize(true, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
+      EncodedArraySlice::Deserialize(true, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(
         height > 0 && height < 1000000 &&
         width > 0 && width < 1000000 &&
         stride > 0 && stride < 1000000 &&
-        ySlice_start >= 0 && ySlice_start <= ySlice_end &&
-        ySlice_increment > 0 &&
-        ySlice_end >= 0 &&
-        xSlice_start >= 0 && xSlice_start <= xSlice_end &&
-        xSlice_increment > 0 && xSlice_increment < 1000000 &&
-        xSlice_end >= 0 && xSlice_end < 1000000 &&
+        ySlice_start >= 0 &&  ySlice_increment > 0 &&
+        xSlice_start >= 0 && xSlice_increment > 0 && xSlice_increment < 1000000 &&
         basicType_sizeOfType > 0 && basicType_sizeOfType < 10000 &&
         basicType_numElements > 0 && basicType_numElements < 1000000,
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Unreasonable deserialized values");
@@ -355,8 +352,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Parsed stride is not reasonable");
 
-      const LinearSequence<s32> ySlice(ySlice_start, ySlice_increment, ySlice_end);
-      const LinearSequence<s32> xSlice(xSlice_start, xSlice_increment, xSlice_end);
+      const LinearSequence<s32> ySlice(ySlice_start, ySlice_increment, -1, ySlice_size);
+      const LinearSequence<s32> xSlice(xSlice_start, xSlice_increment, -1, xSlice_size);
 
       AnkiConditionalErrorAndReturnValue(bufferLength >= static_cast<s32>(xSlice.get_size()*ySlice.get_size()*sizeof(Type)),
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Not enought bytes left to set the array");
@@ -371,9 +368,12 @@ namespace Anki
       Type * restrict pDataType = reinterpret_cast<Type*>(*buffer);
       s32 iData = 0;
 
-      for(s32 y=ySlice_start; y<=ySlice_end; y+=ySlice_increment) {
+      for(s32 iy=0; iy<ySlice_size; iy++) {
+        const s32 y = ySlice_start + iy * ySlice_increment;
         Type * restrict pArrayData = array.Pointer(y, 0);
-        for(s32 x=xSlice_start; x<=xSlice_end; x+=xSlice_increment) {
+
+        for(s32 ix=0; ix<xSlice_size; ix++) {
+          const s32 x = xSlice_start + ix * xSlice_increment;
           pArrayData[x] = pDataType[iData];
           iData++;
         }

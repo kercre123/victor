@@ -25,7 +25,6 @@ namespace Anki
     // The primary wrapper function for detecting fiducial markers in an image
     Result DetectFiducialMarkers(
       const Array<u8> &image,
-      //FixedLengthList<BlockMarker> &markers,
       FixedLengthList<VisionMarker> &markers,
       FixedLengthList<Array<f32> > &homographies,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
@@ -37,8 +36,9 @@ namespace Anki
       const f32 decode_minContrastRatio,
       const u16 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
-      const s32 quadRefinementIterations,
-      const s32 numRefinementSamples,
+      const s32 refine_quadRefinementIterations,
+      const s32 refine_numRefinementSamples,
+      const f32 refine_quadRefinementMaxCornerChange,
       const bool returnInvalidMarkers,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
@@ -50,8 +50,10 @@ namespace Anki
     // Warning: fastScratch and slowScratch cannot be the same object pointing to the same memory
     Result ExtractComponentsViaCharacteristicScale(
       const Array<u8> &image,
-      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
-      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      const FixedLengthList<s32> &filterHalfWidths,
+      const s32 scaleImage_thresholdMultiplier,
+      const s16 component1d_minComponentWidth,
+      const s16 component1d_maxSkipDistance,
       ConnectedComponents &components,
       MemoryStack fastScratch,
       MemoryStack slowScratch);
@@ -60,6 +62,16 @@ namespace Anki
     //
     // Extracts quadrilaterals from a list of connected component segments
     Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch);
+
+    // Does the input quad (with corners in canonical order) have a reasonable shape?
+    //
+    // quadSymmetryThreshold is SQ23.8
+    //
+    // Reasonable values for the parameters
+    // minQuadArea = 25;
+    // quadSymmetryThreshold = 2 << 8;
+    // minDistanceFromImageEdge = 2;
+    bool IsQuadrilateralReasonable(const Quadrilateral<s16> &quad, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, bool &areCornersDisordered);
 
     // Used by DetectFiducialMarkers
     //
@@ -86,7 +98,9 @@ namespace Anki
     //
     // Uses projective Lucas-Kanade to refine an initial on-pixel quadrilateral
     // to sub-pixel position, using samples along the edges of an implicit model
-    // of a black square fiducial on a white background.
+    // of a black square fiducial on a white background.  If any of the corners
+    // changes its position by more than maxCornerChange, the original quad and
+    // homography are returned.
     //
     Result RefineQuadrilateral(const Quadrilateral<s16>& initialQuad,
       const Array<f32>& initialHomography,
@@ -96,6 +110,7 @@ namespace Anki
       const f32 darkValue,
       const f32 brightValue,
       const s32 numSamples,
+      const f32 maxCornerChange,
       Quadrilateral<f32>& refinedQuad,
       Array<f32>& refinedHomography,
       MemoryStack scratch);

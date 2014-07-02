@@ -13,6 +13,11 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_PLANNER_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_PLANNER_H_
 
+#include <stddef.h>
+#include "xythetaPlanner_definitions.h"
+
+#define DEFUALT_MAX_EXPANSIONS 5000000
+
 namespace Anki
 {
 namespace Planning
@@ -32,19 +37,38 @@ public:
   xythetaPlanner(const xythetaEnvironment& env);
   ~xythetaPlanner();
 
-  // set a goal in meters and radians
-  void SetGoal(const State_c& goal);
+  // set a goal in meters and radians. Returns true if it is valid,
+  // false otherwise
+  bool SetGoal(const State_c& goal);
+  State_c GetGoal() const;
 
-  // set the starting state. Will be rounded to the nearest continuous state
-  void SetStart(const State_c& start);
+  // Re-checks the existing goal to see if it is valid
+  bool GoalIsValid() const;
+
+  // set the starting state. Will be rounded to the nearest continuous
+  // state. Returns true if it is valid, false otherwise
+  bool SetStart(const State_c& start);
+  State_c GetStart() const;
 
   // Allow (or disallow) free turn-in-place at the goal
   void AllowFreeTurnInPlaceAtGoal(bool allow = true);
 
-  void ComputePath();
+  // Tells the planner to replan from scratch next time
+  void SetReplanFromScratch();
+
+  // Computes a path from start to goal. Returns true if path found,
+  // false otherwise. Note that replanning may or may not actually
+  // trigger the planner. E.g. if the environment hasn't changed
+  // (much), it may just use the same path
+  bool Replan(unsigned int maxExpansions = DEFUALT_MAX_EXPANSIONS);  
 
   // must call compute path before getting the plan
+  xythetaPlan& GetPlan();
   const xythetaPlan& GetPlan() const;
+
+  void GetTestPlan(xythetaPlan& plan);
+
+  Cost GetFinalCost() const;
 
 private:
   xythetaPlannerImpl* _impl;

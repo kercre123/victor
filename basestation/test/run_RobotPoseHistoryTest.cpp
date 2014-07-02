@@ -2,6 +2,8 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
@@ -30,6 +32,9 @@ TEST(RobotPoseHistory, AddGetPose)
   const f32 h1 = 0;
   const f32 h2 = 0.2;
   const f32 h3 = -0.3;
+  const f32 l1 = 0;
+  const f32 l2 = 0.5f;
+  const f32 l3 = 0.7f;
   const TimeStamp_t t1 = 0;
   const TimeStamp_t t2 = 10;
   const TimeStamp_t t3 = 1005;
@@ -46,22 +51,27 @@ TEST(RobotPoseHistory, AddGetPose)
   // Add and get one pose
   hist.AddRawOdomPose(t1,
                       frameID,
-                      p1.get_translation().x(), p1.get_translation().y(), p1.get_translation().z(),
-                      p1.get_rotationAngle().ToFloat(),
-                      h1);
+                      p1.GetTranslation().x(), p1.GetTranslation().y(), p1.GetTranslation().z(),
+                      p1.GetRotationAngle().ToFloat(),
+                      h1,
+                      l1,
+                      Pose3d::World);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 1);
   ASSERT_TRUE(hist.ComputePoseAt(t1, t, p) == RESULT_OK);
   ASSERT_TRUE(t1 == t);
   ASSERT_TRUE(p1 == p.GetPose());
   ASSERT_TRUE(h1 == p.GetHeadAngle());
+  ASSERT_TRUE(l1 == p.GetLiftAngle());
   
   // Add another pose
   hist.AddRawOdomPose(t2,
                       frameID,
-                      p2.get_translation().x(), p2.get_translation().y(), p2.get_translation().z(),
-                      p2.get_rotationAngle().ToFloat(),
-                      h2);
+                      p2.GetTranslation().x(), p2.GetTranslation().y(), p2.GetTranslation().z(),
+                      p2.GetRotationAngle().ToFloat(),
+                      h2,
+                      l2,
+                      Pose3d::World);
   
   // Request out of range pose
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
@@ -84,9 +94,11 @@ TEST(RobotPoseHistory, AddGetPose)
   // Add new pose that should bump off oldest pose
   hist.AddRawOdomPose(t3,
                       frameID,
-                      p3.get_translation().x(), p3.get_translation().y(), p3.get_translation().z(),
-                      p3.get_rotationAngle().ToFloat(),
-                      h3);
+                      p3.GetTranslation().x(), p3.GetTranslation().y(), p3.GetTranslation().z(),
+                      p3.GetRotationAngle().ToFloat(),
+                      h3,
+                      l3,
+                      Pose3d::World);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   
@@ -102,9 +114,11 @@ TEST(RobotPoseHistory, AddGetPose)
   // Add old pose that is out of time window
   hist.AddRawOdomPose(t1,
                       frameID,
-                      p1.get_translation().x(), p1.get_translation().y(), p1.get_translation().z(),
-                      p1.get_rotationAngle().ToFloat(),
-                      h1);
+                      p1.GetTranslation().x(), p1.GetTranslation().y(), p1.GetTranslation().z(),
+                      p1.GetRotationAngle().ToFloat(),
+                      h1,
+                      l1,
+                      Pose3d::World);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   ASSERT_TRUE(hist.GetOldestTimeStamp() == t2);
@@ -139,6 +153,9 @@ TEST(RobotPoseHistory, GroundTruthPose)
   const f32 h1 = 0;
   const f32 h2 = 0.2;
   const f32 h3 = -0.3;
+  const f32 l1 = 0;
+  const f32 l2 = 0.5f;
+  const f32 l3 = 0.7f;
   const TimeStamp_t t1 = 0;
   const TimeStamp_t t2 = 10;
   const TimeStamp_t t3 = 20;
@@ -146,19 +163,19 @@ TEST(RobotPoseHistory, GroundTruthPose)
   hist.SetTimeWindow(1000);
   
   // Add all three poses
-  p.SetPose(frameID, p1, h1);
+  p.SetPose(frameID, p1, h1, l1);
   hist.AddRawOdomPose(t1, p);
 
-  p.SetPose(frameID, p2, h2);
+  p.SetPose(frameID, p2, h2, l2);
   hist.AddRawOdomPose(t2, p);
   
-  p.SetPose(frameID, p3, h3);
+  p.SetPose(frameID, p3, h3, l3);
   hist.AddRawOdomPose(t3, p);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 3);
 
   // 1) Add ground truth pose equivalent to p1 at same time t1
-  p.SetPose(frameID, p1, h1);
+  p.SetPose(frameID, p1, h1, l1);
   ASSERT_TRUE(hist.AddVisionOnlyPose(t1, p) == RESULT_OK);
   ASSERT_TRUE(hist.GetNumVisionPoses() == 1);
  
@@ -175,7 +192,7 @@ TEST(RobotPoseHistory, GroundTruthPose)
 
   
   // 2) Adding ground truth pose equivalent to p1 at time t2
-  p.SetPose(frameID, p1, h1);
+  p.SetPose(frameID, p1, h1, l1);
   hist.AddVisionOnlyPose(t2, p);
   
   // Since the frame ID of the ground truth pose is the same the frame of the
@@ -191,7 +208,7 @@ TEST(RobotPoseHistory, GroundTruthPose)
   ASSERT_TRUE(p.GetPose().IsSameAs(p3, DIST_EQ_THRESH, ANGLE_EQ_THRESH));
   
   // 3) Now inserting the same ground truth pose again but with a higher frame id
-  p.SetPose(frameID+1, p1, h1);
+  p.SetPose(frameID+1, p1, h1, l1);
   hist.AddVisionOnlyPose(t2, p);
 
   // Requested pose at t3 should be pose p1 modified by the pose diff between p2 and p3

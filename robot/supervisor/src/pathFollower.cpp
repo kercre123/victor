@@ -44,7 +44,8 @@ namespace Anki
         const f32 TOO_FAR_FROM_PATH_DIST_MM = 50;
 
         Planning::Path path_;
-        s8 currPathSegment_ = -1;
+        s8 currPathSegment_ = -1;  // Segment index within local path array.
+        s8 realPathSegment_ = -1;  // Segment index of the global path. Reset only on StartPathTraversal().
         
         // Shortest distance to path
         f32 distToPath_mm_ = 0;
@@ -53,6 +54,10 @@ namespace Anki
         f32 radToPath_ = 0;
         
         bool pointTurnStarted_ = false;
+        
+        // ID of the current path that is being followed
+        // or the last path that was followed if not currently path following
+        u16 lastPathID_ = 0;
         
       } // Private Members
       
@@ -70,6 +75,8 @@ namespace Anki
       {
         path_.Clear();
         currPathSegment_ = -1;
+        pointTurnStarted_ = false;
+        realPathSegment_ = -1;
 #if(ENABLE_PATH_VIZ)
         Viz::ErasePath(0);
 #endif
@@ -104,6 +111,12 @@ namespace Anki
 #endif
       }
       
+      // Trims off segments that have already been traversed
+      void TrimPath() {
+        if (currPathSegment_ > 0) {
+          TrimPath(currPathSegment_, 0);
+        }
+      }
       
       
       // Add path segment
@@ -111,6 +124,7 @@ namespace Anki
       bool AppendPathSegment_Line(u32 matID, f32 x_start_mm, f32 y_start_mm, f32 x_end_mm, f32 y_end_mm,
                                   f32 targetSpeed, f32 accel, f32 decel)
       {
+        TrimPath();
         return path_.AppendLine(matID, x_start_mm, y_start_mm, x_end_mm, y_end_mm,
                                 targetSpeed, accel, decel);
       }
@@ -119,6 +133,7 @@ namespace Anki
       bool AppendPathSegment_Arc(u32 matID, f32 x_center_mm, f32 y_center_mm, f32 radius_mm, f32 startRad, f32 sweepRad,
                                  f32 targetSpeed, f32 accel, f32 decel)
       {
+        TrimPath();
         return path_.AppendArc(matID, x_center_mm, y_center_mm, radius_mm, startRad, sweepRad,
                                targetSpeed, accel, decel);
       }
@@ -127,6 +142,7 @@ namespace Anki
       bool AppendPathSegment_PointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
                                        f32 targetRotSpeed, f32 rotAccel, f32 rotDecel)
       {
+        TrimPath();
         return path_.AppendPointTurn(matID, x, y, targetAngle,
                                      targetRotSpeed, rotAccel, rotDecel);
       }
@@ -183,7 +199,7 @@ namespace Anki
         }
       }
       
-      bool StartPathTraversal()
+      bool StartPathTraversal(u16 path_id)
       {
         // Set first path segment
         if (path_.GetNumSegments() > 0) {
@@ -203,8 +219,8 @@ namespace Anki
           Radians angle;
           Localization::GetCurrentMatPose(x, y, angle);
           
-          //currPathSegment_ = 0;
-          currPathSegment_ = GetClosestSegment(x,y,angle.ToFloat());
+          currPathSegment_ = 0;
+          realPathSegment_ = currPathSegment_;
 
           // Set speed
           // (Except for point turns whose speeds are handled at the steering controller level)
@@ -229,6 +245,11 @@ namespace Anki
         // Visualize path
         SetPathForViz();
         
+        // Set id of path
+        if (path_id != 0) {
+          lastPathID_ = path_id;
+        }
+        
         return TRUE;
       }
       
@@ -240,7 +261,12 @@ namespace Anki
       
       s8 GetCurrPathSegment()
       {
-        return currPathSegment_;
+        return realPathSegment_;// currPathSegment_;
+      }
+      
+      u8 GetNumFreeSegmentSlots()
+      {
+        return MAX_NUM_PATH_SEGMENTS - (path_.GetNumSegments() - currPathSegment_ + 1);
       }
       
       Planning::SegmentRangeStatus ProcessPathSegment(f32 &shortestDistanceToPath_mm, f32 &radDiff)
@@ -258,8 +284,13 @@ namespace Anki
         
         // Compute lookahead position
         if (LOOK_AHEAD_DIST_MM != 0 && (currType == Planning::PST_LINE || currType == Planning::PST_ARC) ) {
-          lookaheadX += LOOK_AHEAD_DIST_MM * cosf(angle.ToFloat());
-          lookaheadY += LOOK_AHEAD_DIST_MM * sinf(angle.ToFloat());
+          if (path_[currPathSegment_].GetTargetSpeed() > 0) {
+            lookaheadX += LOOK_AHEAD_DIST_MM * cosf(angle.ToFloat());
+            lookaheadY += LOOK_AHEAD_DIST_MM * sinf(angle.ToFloat());
+          } else {
+            lookaheadX -= LOOK_AHEAD_DIST_MM * cosf(angle.ToFloat());
+            lookaheadY -= LOOK_AHEAD_DIST_MM * sinf(angle.ToFloat());
+          }
           checkRobotOriginStatus = true;
         }
         
@@ -319,6 +350,7 @@ namespace Anki
       {
         pointTurnStarted_ = false;
         currPathSegment_ = -1;
+        realPathSegment_ = -1;
 #if(DEBUG_PATH_FOLLOWER)
         PRINT("*** PATH COMPLETE ***\n");
 #endif
@@ -415,6 +447,7 @@ namespace Anki
             PathComplete();
             return RESULT_OK;
           }
+          ++realPathSegment_;
           
           // Command new speed for segment
           // (Except for point turns whose speeds are handled at the steering controller level)
@@ -439,6 +472,7 @@ namespace Anki
           // TODO: Check for excessive heading error as well?
           if (distToPath_mm_ > TOO_FAR_FROM_PATH_DIST_MM) {
             currPathSegment_ = -1;
+            realPathSegment_ = -1;
 #if(DEBUG_PATH_FOLLOWER)
             PRINT("PATH STARTING ERROR TOO LARGE (%f mm)\n", distToPath_mm_);
 #endif
@@ -460,6 +494,9 @@ namespace Anki
         path_.PrintSegment(segment);
       }
       
+      u16 GetLastPathID() {
+        return lastPathID_;
+      }
       
     } // namespace PathFollower
   } // namespace Cozmo

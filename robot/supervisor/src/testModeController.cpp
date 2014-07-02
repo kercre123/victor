@@ -16,6 +16,7 @@
 #include "steeringController.h"
 #include "wheelController.h"
 #include "visionSystem.h"
+#include "animationController.h"
 
 #include "anki/common/robot/trig_fast.h"
 
@@ -57,7 +58,10 @@ namespace Anki {
         // 0.4     38      39
         // 0.3     25      25
         // 0.25    -       -
-        const f32 WHEEL_POWER_CMD = 0.5;
+#if DIRECT_HAL_MOTOR_TEST
+        f32 wheelPower_ = 0;
+        const f32 WHEEL_POWER_CMD = 0.2;
+#endif
         const f32 WHEEL_SPEED_CMD_MMPS = 60;
         ////// End of DriveTest ////////
         
@@ -170,6 +174,10 @@ namespace Anki {
         const f32 IT_ROT_ACCEL = 10.f;
         ///// End of IMUTest /////
         
+        ///////// AnimationTest ////////
+        AnimationID_t AT_currAnim;
+        const u32 AT_periodTics = 2000;
+        
         
         /////// LightTest ////////
         HAL::LEDId ledID = (HAL::LEDId)0;
@@ -196,6 +204,10 @@ namespace Anki {
       Result Reset()
       {
         PRINT("TestMode reset\n");
+        
+        // Stop animations that might be playing
+        AnimationController::PlayAnimation(ANIM_IDLE,0);
+        
         // Stop wheels and vision system
         WheelController::Enable();
         PickAndPlaceController::Reset();
@@ -214,6 +226,7 @@ namespace Anki {
       {
         PRINT("\n==== Starting PickAndPlaceTest =====\n");
         ticCnt_ = 0;
+        pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
         return RESULT_OK;
       }
       
@@ -233,7 +246,7 @@ namespace Anki {
               if (PickAndPlaceController::DidLastActionSucceed()) {
                 if (PICKUP_ACTION == DA_PICKUP_LOW) {
                   PRINT("PAPT: Placing on other block %d\n", BLOCK_TO_PLACE_ON);
-                  PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
+                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
                 } else {
                   PRINT("PAPT: Placing on ground\n");
                   PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG);
@@ -251,7 +264,7 @@ namespace Anki {
                 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
               } else {
                 if (PICKUP_ACTION == DA_PICKUP_LOW) {
-                  PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
+                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
                   //pickAndPlaceState_ = PAP_PLACING;
                 } else {
                   PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG);
@@ -392,6 +405,9 @@ namespace Anki {
       Result DriveTestInit()
       {
         PRINT("\n=== Starting DirectDriveTest ===\n");
+        #if DIRECT_HAL_MOTOR_TEST
+        wheelPower_ = WHEEL_POWER_CMD;
+        #endif
         ticCnt_ = 0;
         return RESULT_OK;
       }
@@ -426,9 +442,9 @@ namespace Anki {
           fwd = !fwd;
           if (fwd) {
 #if(DIRECT_HAL_MOTOR_TEST)
-            PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_POWER_CMD, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, WHEEL_POWER_CMD);
-            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, WHEEL_POWER_CMD);
+            PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, wheelPower_);
+            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, wheelPower_);
             WheelController::Disable();
 #else
             PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
@@ -436,9 +452,9 @@ namespace Anki {
 #endif
           } else {
 #if(DIRECT_HAL_MOTOR_TEST)
-            PRINT("Going reverse %f power (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_POWER_CMD, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -WHEEL_POWER_CMD);
-            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -WHEEL_POWER_CMD);
+            PRINT("Going reverse %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -wheelPower_);
+            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -wheelPower_);
             WheelController::Disable();
 #else
             PRINT("Going reverse %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
@@ -451,6 +467,17 @@ namespace Anki {
 #if(TOGGLE_DIRECTION_TEST == 0)
           firstSpeedCommanded = true;
 #endif
+
+          #if(DIRECT_HAL_MOTOR_TEST)
+          // Cycle through different power levels
+          if (!fwd) {
+            wheelPower_ += 0.1;
+            if (wheelPower_ >=1.01f) {
+              wheelPower_ = WHEEL_POWER_CMD;
+            }
+          }
+          #endif
+          
        }
 
        return RESULT_OK;
@@ -515,7 +542,7 @@ namespace Anki {
         
 /*
         // Print speed
-        if (ticCnt2_++ >= 40 / TIME_STEP) {
+        if (ticCnt2_++ >= 40) {
           f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
           f32 lSpeed_filt = LiftController::GetAngularVelocity();
           f32 lPos = LiftController::GetAngleRad(); // HAL::MotorGetPosition(HAL::MOTOR_LIFT);
@@ -629,7 +656,7 @@ namespace Anki {
         }
         
         // Print speed
-        if (ticCnt2_++ >= 200 / TIME_STEP) {
+        if (ticCnt2_++ >= 5) {
           f32 hSpeed = HAL::MotorGetSpeed(HAL::MOTOR_HEAD);
           f32 hPos = HeadController::GetAngleRad();
           
@@ -690,6 +717,31 @@ namespace Anki {
         return RESULT_OK;
       }
       
+      Result AnimTestInit()
+      {
+        PRINT("\n==== Starting AnimationTest =====\n");
+        AT_currAnim = ANIM_HEAD_NOD;
+        AnimationController::PlayAnimation(AT_currAnim, 0);
+        ticCnt_ = 0;
+        return RESULT_OK;
+      }
+      
+      Result AnimTestUpdate()
+      {
+        if (ticCnt_++ > AT_periodTics) {
+          ticCnt_ = 0;
+          
+          AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+          if (AT_currAnim == ANIM_NUM_ANIMATIONS) {
+            AT_currAnim = ANIM_IDLE;
+          }
+          
+          PRINT("Playing animation %d\n", AT_currAnim);
+          AnimationController::PlayAnimation(AT_currAnim, 0);
+        }
+        
+        return RESULT_OK;
+      }
       
       Result GripperTestInit()
       {
@@ -879,6 +931,10 @@ namespace Anki {
           case TM_IMU:
             ret = IMUTestInit();
             updateFunc = IMUTestUpdate;
+            break;
+          case TM_ANIMATION:
+            ret = AnimTestInit();
+            updateFunc = AnimTestUpdate;
             break;
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
           case TM_GRIPPER:

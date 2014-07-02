@@ -55,7 +55,9 @@ ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, headAngle)
 ADD_MESSAGE_MEMBER(f32, liftAngle)
 ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
+ADD_MESSAGE_MEMBER(u16, lastPathID)
 ADD_MESSAGE_MEMBER(s8, currPathSegment) // -1 if not traversing a path
+ADD_MESSAGE_MEMBER(u8, numFreeSegmentSlots)
 ADD_MESSAGE_MEMBER(u8, status)  // See RobotStatusFlag
 // ...
 END_MESSAGE_DEFINITION(RobotState)
@@ -115,9 +117,7 @@ END_MESSAGE_DEFINITION(ClearPath)
 #define ADD_COMMON_PATH_SEGMENT_MEMBERS \
 ADD_MESSAGE_MEMBER(f32, targetSpeed) \
 ADD_MESSAGE_MEMBER(f32, accel) \
-ADD_MESSAGE_MEMBER(f32, decel) \
-ADD_MESSAGE_MEMBER(u16, pathID) \
-ADD_MESSAGE_MEMBER(s8,  segmentID)
+ADD_MESSAGE_MEMBER(f32, decel)
 
 // AppendPathSegmentLine
 START_MESSAGE_DEFINITION(AppendPathSegmentLine, 1)
@@ -194,35 +194,6 @@ ADD_MESSAGE_MEMBER(u16, markerType)
 //ADD_MESSAGE_MEMBER_ARRAY(u8, code, VISION_MARKER_CODE_LENGTH)
 END_MESSAGE_DEFINITION(VisionMarker)
 
-// BlockMarkerObserved
-// TODO: this has to be split into two packets for BTLE (size > 20 bytes)
-START_TIMESTAMPED_MESSAGE_DEFINITION(BlockMarkerObserved, 1)
-
-  // TODO: u16 frameNum; // for putting together two halves of a BlockMarker packet
-ADD_MESSAGE_MEMBER(f32, headAngle)  // TODO: should this be it's own message, only when changed?
-// TODO: these need to be fixed-point, probably 16bits
-ADD_MESSAGE_MEMBER(f32, x_imgUpperLeft)
-ADD_MESSAGE_MEMBER(f32, y_imgUpperLeft)
-ADD_MESSAGE_MEMBER(f32, x_imgLowerLeft)
-ADD_MESSAGE_MEMBER(f32, y_imgLowerLeft)
-ADD_MESSAGE_MEMBER(f32, x_imgUpperRight)
-ADD_MESSAGE_MEMBER(f32, y_imgUpperRight)
-ADD_MESSAGE_MEMBER(f32, x_imgLowerRight)
-ADD_MESSAGE_MEMBER(f32, y_imgLowerRight)
-ADD_MESSAGE_MEMBER(u16, blockType)
-ADD_MESSAGE_MEMBER(u8,  faceType)
-ADD_MESSAGE_MEMBER(u8,  upDirection)
-END_MESSAGE_DEFINITION(BlockMarkerObserved)
-
-// MatMarkerObserved
-START_TIMESTAMPED_MESSAGE_DEFINITION(MatMarkerObserved, 1)
-ADD_MESSAGE_MEMBER(f32, x_imgCenter)   // Where in the image we saw it
-ADD_MESSAGE_MEMBER(f32, y_imgCenter)   //    "
-ADD_MESSAGE_MEMBER(f32, angle)         // What angle in the image we saw it
-ADD_MESSAGE_MEMBER(u16, x_MatSquare)   // Which Mat square we saw
-ADD_MESSAGE_MEMBER(u16, y_MatSquare)   //    "
-ADD_MESSAGE_MEMBER(u8,  upDirection)
-END_MESSAGE_DEFINITION(MatMarkerObserved)
 
 // DockingErrorSignal
 START_TIMESTAMPED_MESSAGE_DEFINITION(DockingErrorSignal, 1)
@@ -234,34 +205,37 @@ ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
 ADD_MESSAGE_MEMBER(u8,  isApproximate)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
 
+// BlockPickedUp
+START_TIMESTAMPED_MESSAGE_DEFINITION(BlockPickedUp, 1)
+ADD_MESSAGE_MEMBER(bool, didSucceed) // true if robot thinks it picked up a block (from low or high position)
+END_MESSAGE_DEFINITION(BlockPickedUp)
+
+// BlockPlaced
+START_TIMESTAMPED_MESSAGE_DEFINITION(BlockPlaced, 1)
+ADD_MESSAGE_MEMBER(bool, didSucceed) // true if robot thinks it placed up a block (from low or high position)
+END_MESSAGE_DEFINITION(BlockPlaced)
+
+
 // AbsLocalizationUpdate
 START_TIMESTAMPED_MESSAGE_DEFINITION(AbsLocalizationUpdate, 1)
-ADD_MESSAGE_MEMBER(f32, pose_frame_id)
+ADD_MESSAGE_MEMBER(u32, pose_frame_id)
 ADD_MESSAGE_MEMBER(f32, xPosition)
 ADD_MESSAGE_MEMBER(f32, yPosition)
 ADD_MESSAGE_MEMBER(f32, headingAngle)
 END_MESSAGE_DEFINITION(AbsLocalizationUpdate)
 
-// Common Camera Calibration Message Members:
+// CameraCalibration
 // TODO: Assume zero skew and remove that member?
-#define ADD_COMMON_CAMERA_CALIBRATION_MEMBERS \
-ADD_MESSAGE_MEMBER(f32, focalLength_x) \
-ADD_MESSAGE_MEMBER(f32, focalLength_y) \
-ADD_MESSAGE_MEMBER(f32, center_x) \
-ADD_MESSAGE_MEMBER(f32, center_y) \
-ADD_MESSAGE_MEMBER(f32, skew) \
-ADD_MESSAGE_MEMBER(u16, nrows) \
+START_MESSAGE_DEFINITION(CameraCalibration, 1)
+ADD_MESSAGE_MEMBER(f32, focalLength_x)
+ADD_MESSAGE_MEMBER(f32, focalLength_y)
+ADD_MESSAGE_MEMBER(f32, center_x)
+ADD_MESSAGE_MEMBER(f32, center_y)
+ADD_MESSAGE_MEMBER(f32, skew)
+ADD_MESSAGE_MEMBER(u16, nrows)
 ADD_MESSAGE_MEMBER(u16, ncols)
+END_MESSAGE_DEFINITION(CameraCalibration)
 
-// HeadCameraCalibration
-START_MESSAGE_DEFINITION(HeadCameraCalibration, 1)
-ADD_COMMON_CAMERA_CALIBRATION_MEMBERS
-END_MESSAGE_DEFINITION(HeadCameraCalibration)
-
-// MatCameraCalibration
-START_MESSAGE_DEFINITION(MatCameraCalibration, 1)
-ADD_COMMON_CAMERA_CALIBRATION_MEMBERS
-END_MESSAGE_DEFINITION(MatCameraCalibration)
 
 // Robot Available
 START_MESSAGE_DEFINITION(RobotAvailable, 1)
@@ -325,6 +299,13 @@ START_MESSAGE_DEFINITION(SetHeadlight, 1)
 ADD_MESSAGE_MEMBER(u8, intensity)
 END_MESSAGE_DEFINITION(SetHeadlight)
 
+// SetDefaultLights
+START_MESSAGE_DEFINITION(SetDefaultLights, 1)
+ADD_MESSAGE_MEMBER(u32, eye_left_color)
+ADD_MESSAGE_MEMBER(u32, eye_right_color)
+END_MESSAGE_DEFINITION(SetDefaultLights)
+
+
 // TrackerQuad
 START_MESSAGE_DEFINITION(TrackerQuad, 1)
 ADD_MESSAGE_MEMBER(u16, topLeft_x)
@@ -337,3 +318,39 @@ ADD_MESSAGE_MEMBER(u16, bottomLeft_x)
 ADD_MESSAGE_MEMBER(u16, bottomLeft_y)
 END_MESSAGE_DEFINITION(TrackerQuad)
 
+// SetHeadControllerGains
+START_MESSAGE_DEFINITION(SetHeadControllerGains, 1)
+ADD_MESSAGE_MEMBER(f32, kp)
+ADD_MESSAGE_MEMBER(f32, ki)
+ADD_MESSAGE_MEMBER(f32, maxIntegralError)
+END_MESSAGE_DEFINITION(SetHeadControllerGains)
+
+// SetLiftControllerGains
+START_MESSAGE_DEFINITION(SetLiftControllerGains, 1)
+ADD_MESSAGE_MEMBER(f32, kp)
+ADD_MESSAGE_MEMBER(f32, ki)
+ADD_MESSAGE_MEMBER(f32, maxIntegralError)
+END_MESSAGE_DEFINITION(SetLiftControllerGains)
+
+// SetVisionSystemParams
+START_MESSAGE_DEFINITION(SetVisionSystemParams, 1)
+ADD_MESSAGE_MEMBER(s32, integerCountsIncrement)
+ADD_MESSAGE_MEMBER(f32, minExposureTime)
+ADD_MESSAGE_MEMBER(f32, maxExposureTime)
+ADD_MESSAGE_MEMBER(f32, percentileToMakeHigh)
+ADD_MESSAGE_MEMBER(u8, highValue)
+END_MESSAGE_DEFINITION(SetVisionSystemParams)
+
+// PlayAnimation
+START_MESSAGE_DEFINITION(PlayAnimation, 1)
+ADD_MESSAGE_MEMBER(u32, numLoops)
+ADD_MESSAGE_MEMBER(u8, animationID)
+END_MESSAGE_DEFINITION(PlayAnimation)
+
+// MainCycleTimeError
+START_MESSAGE_DEFINITION(MainCycleTimeError, 1)
+ADD_MESSAGE_MEMBER(u32, numMainTooLongErrors)
+ADD_MESSAGE_MEMBER(u32, avgMainTooLateTime)
+ADD_MESSAGE_MEMBER(u32, numMainTooLateErrors)
+ADD_MESSAGE_MEMBER(u32, avgMainTooLongTime)
+END_MESSAGE_DEFINITION(MainCycleTimeError)

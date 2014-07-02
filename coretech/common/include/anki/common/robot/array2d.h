@@ -36,20 +36,24 @@ namespace Anki
 
     template<typename Type> s32 Array<Type>::ComputeRequiredStride(const s32 numCols, const Flags::Buffer flags)
     {
-      AnkiConditionalErrorAndReturnValue(numCols > 0,
+      AnkiConditionalErrorAndReturnValue(numCols >= 0,
         0, "Array<Type>::ComputeRequiredStride", "Invalid size");
 
-      const s32 bufferRequired = static_cast<s32>(RoundUp<size_t>(sizeof(Type)*numCols, MEMORY_ALIGNMENT));
+      const s32 numColsCapped = MAX(numCols, 1);
+
+      const s32 bufferRequired = static_cast<s32>(RoundUp<size_t>(sizeof(Type)*numColsCapped, MEMORY_ALIGNMENT));
 
       return bufferRequired;
     }
 
     template<typename Type> s32 Array<Type>::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const Flags::Buffer flags)
     {
-      AnkiConditionalErrorAndReturnValue(numCols > 0 && numRows > 0,
+      AnkiConditionalErrorAndReturnValue(numCols >= 0 && numRows >= 0,
         0, "Array<Type>::ComputeMinimumRequiredMemory", "Invalid size");
 
-      return numRows * Array<Type>::ComputeRequiredStride(numCols, flags);
+      const s32 numRowsCapped = MAX(numRows, 1);
+
+      return numRowsCapped * Array<Type>::ComputeRequiredStride(numCols, flags);
     }
 
     template<typename Type> Array<Type>::Array()
@@ -115,33 +119,31 @@ namespace Anki
 
     template<typename Type> const Type* Array<Type>::Pointer(const s32 index0, const s32 index1) const
     {
-      AnkiConditionalWarnAndReturnValue(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1],
-        0, "Array<Type>::Pointer", "Invalid location");
-
-      AnkiConditionalWarnAndReturnValue(this->IsValid(),
-        0, "Array<Type>::Pointer", "Array<Type> is not valid");
+      AnkiAssert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1]);
+      AnkiAssert(this->IsValid());
 
       return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) + index0*stride ) + index1;
     }
 
     template<typename Type> Type* Array<Type>::Pointer(const s32 index0, const s32 index1)
     {
-      AnkiConditionalWarnAndReturnValue(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1],
-        0, "Array<Type>::Pointer", "Invalid location");
-
-      AnkiConditionalWarnAndReturnValue(this->IsValid(),
-        0, "Array<Type>::Pointer", "Array<Type> is not valid");
+      AnkiAssert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1]);
+      AnkiAssert(this->IsValid());
 
       return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) + index0*stride ) + index1;
     }
 
     template<typename Type> inline const Type * Array<Type>::operator[](const s32 index0) const
     {
+      AnkiAssert(index0 >= 0 && index0 < this->size[0]);
+
       return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) + index0*stride );
     }
 
     template<typename Type> inline Type * Array<Type>::operator[](const s32 index0)
     {
+      AnkiAssert(index0 >= 0 && index0 < this->size[0]);
+
       return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) + index0*stride );
     }
 
@@ -153,6 +155,22 @@ namespace Anki
     template<typename Type> Type* Array<Type>::Pointer(const Point<s16> &point)
     {
       return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    template<typename Type> const Type& Array<Type>::Element(const s32 elementIndex) const
+    {
+      const s32 index1 = elementIndex % size[1];
+      const s32 index0 = (elementIndex - index1) / size[1];
+
+      return *Pointer(index0, index1);
+    }
+
+    template<typename Type> Type& Array<Type>::Element(const s32 elementIndex)
+    {
+      const s32 index1 = elementIndex % size[1];
+      const s32 index0 = (elementIndex - index1) / size[1];
+
+      return *Pointer(index0, index1);
     }
 
     template<typename Type> ArraySlice<Type> Array<Type>::operator() ()
@@ -380,7 +398,7 @@ namespace Anki
         return false;
       }
 
-      if(size[0] < 1 || size[1] < 1) {
+      if(size[0] < 0 || size[1] < 0) {
         return false;
       }
 
@@ -459,7 +477,7 @@ namespace Anki
         Type * restrict pThisData = Pointer(y, 0);
 
         for(s32 x=0; x<size[1]; x++) {
-          pThisData[x] = static_cast<Type>(pIn[x]);
+          pThisData[x] = saturate_cast<Type>(pIn[x]);
         }
       }
 
@@ -540,6 +558,15 @@ namespace Anki
       return stride;
     }
 
+    template<typename Type> s32 Array<Type>::get_numElements() const
+    {
+      if(size[0] > 0 && size[1] > 0) {
+        return size[0] * size[1];
+      } else {
+        return 0;
+      }
+    }
+
     template<typename Type> void* Array<Type>::get_buffer()
     {
       return data;
@@ -572,12 +599,14 @@ namespace Anki
 
     template<typename Type> void* Array<Type>::AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const Flags::Buffer flags, bool reAllocate)
     {
-      AnkiConditionalError(numRows > 0 && stride > 0,
+      AnkiConditionalError(numRows >= 0 && stride > 0,
         "Array<Type>::AllocateBufferFromMemoryStack", "Invalid size");
+
+      const s32 numRowsCapped = MAX(numRows, 1);
 
       this->stride = stride;
 
-      const s32 numBytesRequested = numRows * this->stride;
+      const s32 numBytesRequested = numRowsCapped * this->stride;
 
       if(reAllocate) {
         return memory.Reallocate(this->data, numBytesRequested, numBytesAllocated);
@@ -588,7 +617,13 @@ namespace Anki
 
     template<typename Type> Result Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const Flags::Buffer flags)
     {
-      AnkiConditionalErrorAndReturnValue(numCols >= 0 && numRows >= 0 && dataLength >= 0,
+      if(!rawData) {
+        AnkiError("Anki.Array2d.initialize", "input data buffer is NULL");
+        InvalidateArray();
+        return RESULT_FAIL_UNINITIALIZED_MEMORY;
+      }
+
+      AnkiConditionalErrorAndReturnValue(numCols >= 0 && numRows >= 0 && dataLength >= MEMORY_ALIGNMENT,
         RESULT_FAIL_INVALID_SIZE, "Array<Type>::InitializeBuffer", "Negative dimension");
 
       AnkiConditionalErrorAndReturnValue(!flags.get_useBoundaryFillPatterns(),
@@ -598,20 +633,14 @@ namespace Anki
       this->size[0] = numRows;
       this->size[1] = numCols;
 
-      // Initialize an empty array.
-      //
-      // An empty array is invalid, and will return false from
-      // Array::IsValid(), but is a possible return value from some functions
-      if(numCols == 0 || numRows == 0) {
-        this->data = NULL;
-        return RESULT_OK;
-      }
-
-      if(!rawData) {
-        AnkiError("Anki.Array2d.initialize", "input data buffer is NULL");
-        InvalidateArray();
-        return RESULT_FAIL_UNINITIALIZED_MEMORY;
-      }
+      //// Initialize an empty array.
+      ////
+      //// An empty array is invalid, and will return false from
+      //// Array::IsValid(), but is a possible return value from some functions
+      //if(numCols == 0 || numRows == 0) {
+      //  this->data = NULL;
+      //  return RESULT_OK;
+      //}
 
       this->data = reinterpret_cast<Type*>(rawData);
 

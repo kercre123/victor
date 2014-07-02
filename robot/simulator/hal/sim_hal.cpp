@@ -68,16 +68,17 @@ namespace Anki {
       
       // Gripper
       webots::Connector* con_;
-      bool gripperEngaged_ = false;
-      s32 unlockhysteresis_ = UNLOCK_HYSTERESIS;
+      //bool gripperEngaged_ = false;
+      bool isGripperEnabled_ = false;
+      //s32 unlockhysteresis_ = UNLOCK_HYSTERESIS;
       
       
       // Cameras / Vision Processing
       //webots::Camera* matCam_;
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
-      HAL::CameraInfo matCamInfo_;
-      Vision::CameraResolution headCamMode_;
+      //HAL::CameraInfo matCamInfo_;
+      //Vision::CameraResolution headCamMode_;
       // HAL::CameraMode matCamMode_;
       //u8* headCamBuffer_;
       //u8* matCamBuffer_;
@@ -101,6 +102,19 @@ namespace Anki {
       f32 motorSpeeds_[HAL::MOTOR_COUNT];
       f32 motorSpeedCoeffs_[HAL::MOTOR_COUNT];
 
+      HAL::IDCard idCard_;
+      
+      // Lights
+      webots::LED* leftEyeLED_top_;
+      webots::LED* leftEyeLED_left_;
+      webots::LED* leftEyeLED_right_;
+      webots::LED* leftEyeLED_bottom_;
+
+      webots::LED* rightEyeLED_top_;
+      webots::LED* rightEyeLED_left_;
+      webots::LED* rightEyeLED_right_;
+      webots::LED* rightEyeLED_bottom_;
+      
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -121,7 +135,12 @@ namespace Anki {
         if (ABS(power) < WheelController::TRANSITION_POWER) {
           speed_mm_per_s = power / WheelController::LOW_OPEN_LOOP_GAIN;
         } else {
-          speed_mm_per_s = CLIP(power, -1.0, 1.0) / WheelController::HIGH_OPEN_LOOP_GAIN;
+          power = CLIP(power, -1.0, 1.0);
+          if (power > 0) {
+            speed_mm_per_s = (power - WheelController::TRANSITION_POWER) / WheelController::HIGH_OPEN_LOOP_GAIN + WheelController::TRANSITION_SPEED;
+          } else {
+            speed_mm_per_s = (power + WheelController::TRANSITION_POWER) / WheelController::HIGH_OPEN_LOOP_GAIN -WheelController::TRANSITION_SPEED;
+          }
         }
         
         // Convert mm/s to rad/s
@@ -180,6 +199,14 @@ namespace Anki {
     {
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
       
+      // ID card info
+      idCard_.esn = 0;
+      idCard_.modelNumber = 0;
+      idCard_.lotCode = 0;
+      idCard_.birthday = 0;
+      idCard_.hwVersion = 0;
+
+      
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
       rightWheelMotor_ = webotRobot_.getMotor("RightWheelMotor");
       
@@ -187,7 +214,7 @@ namespace Anki {
       liftMotor_  = webotRobot_.getMotor("LiftMotor");
       
       con_ = webotRobot_.getConnector("gripperConnector");
-      con_->enablePresence(TIME_STEP);
+      //con_->enablePresence(TIME_STEP);
       
       //matCam_ = webotRobot_.getCamera("cam_down");
       headCam_ = webotRobot_.getCamera("HeadCamera");
@@ -265,6 +292,18 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
+      // Lights
+      leftEyeLED_top_ = webotRobot_.getLED("LeftEyeLED_top");
+      leftEyeLED_left_ = webotRobot_.getLED("LeftEyeLED_left");
+      leftEyeLED_right_ = webotRobot_.getLED("LeftEyeLED_right");
+      leftEyeLED_bottom_ = webotRobot_.getLED("LeftEyeLED_bottom");
+      
+      rightEyeLED_top_ = webotRobot_.getLED("RightEyeLED_top");
+      rightEyeLED_left_ = webotRobot_.getLED("RightEyeLED_left");
+      rightEyeLED_right_ = webotRobot_.getLED("RightEyeLED_right");
+      rightEyeLED_bottom_ = webotRobot_.getLED("RightEyeLED_bottom");
+      
+      
       isInitialized = true;
       return RESULT_OK;
       
@@ -306,7 +345,7 @@ namespace Anki {
     
     
     bool HAL::IsGripperEngaged() {
-      return gripperEngaged_;
+      return isGripperEnabled_ && con_->getPresence()==1;
     }
     
     void HAL::UpdateDisplay(void)
@@ -438,6 +477,11 @@ namespace Anki {
     
     void HAL::EngageGripper()
     {
+      con_->lock();
+      con_->enablePresence(TIME_STEP);
+      isGripperEnabled_ = true;
+      PRINT("GRIPPER LOCKED!\n");
+      /*
       //Should we lock to a block which is close to the connector?
       if (!gripperEngaged_ && con_->getPresence() == 1)
       {
@@ -445,22 +489,29 @@ namespace Anki {
         {
           con_->lock();
           gripperEngaged_ = true;
-          //printf("GRIPPER LOCKED!\n");
+          printf("GRIPPER LOCKED!\n");
         }else{
           unlockhysteresis_--;
         }
       }
+       */
     }
     
     void HAL::DisengageGripper()
     {
+      con_->unlock();
+      con_->disablePresence();
+      isGripperEnabled_ = false;
+      PRINT("GRIPPER UNLOCKED!\n");
+      /*
       if (gripperEngaged_)
       {
         gripperEngaged_ = false;
         unlockhysteresis_ = UNLOCK_HYSTERESIS;
         con_->unlock();
-        //printf("GRIPPER UNLOCKED!\n");
+        printf("GRIPPER UNLOCKED!\n");
       }
+       */
     }
 
     
@@ -697,9 +748,47 @@ namespace Anki {
       return robotID_;
     }
     
-    void HAL::SetLED(LEDId led_id, LEDColor color) {
-      // TODO: ...
+    void HAL::SetLED(LEDId led_id, u32 color) {
+      switch(led_id) {
+        case LED_LEFT_EYE_TOP:
+          leftEyeLED_top_->set(color);
+          break;
+        case LED_LEFT_EYE_LEFT:
+          leftEyeLED_left_->set(color);
+          break;
+        case LED_LEFT_EYE_BOTTOM:
+          leftEyeLED_bottom_->set(color);
+          break;
+        case LED_LEFT_EYE_RIGHT:
+          leftEyeLED_right_->set(color);
+          break;
+        case LED_RIGHT_EYE_TOP:
+          rightEyeLED_top_->set(color);
+          break;
+        case LED_RIGHT_EYE_LEFT:
+          rightEyeLED_left_->set(color);
+          break;
+        case LED_RIGHT_EYE_BOTTOM:
+          rightEyeLED_bottom_->set(color);
+          break;
+        case LED_RIGHT_EYE_RIGHT:
+          rightEyeLED_right_->set(color);
+          break;
+        default:
+          PRINT("Unhandled LED %d\n", led_id);
+          break;
+      }
     }
 
+    void HAL::SetHeadlights(bool state)
+    {
+      // TODO: ...
+    }
+    
+    HAL::IDCard* HAL::GetIDCard()
+    {
+      return &idCard_;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

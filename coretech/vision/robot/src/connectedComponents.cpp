@@ -537,9 +537,9 @@ namespace Anki
         const s16 y = pConstComponents[iComponent].y;
 
         pComponentBoundingBoxes[id].left = MIN(pComponentBoundingBoxes[id].left, xStart);
-        pComponentBoundingBoxes[id].right = MAX(pComponentBoundingBoxes[id].right, xEnd);
+        pComponentBoundingBoxes[id].right = MAX(pComponentBoundingBoxes[id].right, xEnd+1);
         pComponentBoundingBoxes[id].top = MIN(pComponentBoundingBoxes[id].top, y);
-        pComponentBoundingBoxes[id].bottom = MAX(pComponentBoundingBoxes[id].bottom, y);
+        pComponentBoundingBoxes[id].bottom = MAX(pComponentBoundingBoxes[id].bottom, y+1);
       }
 
       return RESULT_OK;
@@ -748,13 +748,6 @@ namespace Anki
       {
         Rectangle<s16> * restrict pComponentBoundingBoxes = componentBoundingBoxes.Pointer(0);
         for(s32 iComponent=0; iComponent<=maximumId; iComponent++) {
-          // TODO: these appear to be unused.  Remove?
-          /*
-          const s16 left = pComponentBoundingBoxes[iComponent].left;
-          const s16 right = pComponentBoundingBoxes[iComponent].right;
-          const s16 top = pComponentBoundingBoxes[iComponent].top;
-          const s16 bottom = pComponentBoundingBoxes[iComponent].bottom;
-          */
           const s16 boxWidth = pComponentBoundingBoxes[iComponent].get_width();
           const s16 boxHeight = pComponentBoundingBoxes[iComponent].get_height();
 
@@ -794,7 +787,7 @@ namespace Anki
             const s16 top = pConstComponentBoundingBoxes[id].top;
             const s16 bottom = pConstComponentBoundingBoxes[id].bottom;
 
-            if(y > top && y < bottom && xEnd > left && xStart < right) {
+            if(y > top && y < (bottom-1) && xEnd > left && xStart < (right-1)) {
               pValidComponents[id] = false;
             }
           } // if(id > 0)

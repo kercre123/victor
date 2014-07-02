@@ -53,9 +53,9 @@ namespace Anki {
 
       // Returns the number of messages ready for processing in the BLEVehicleMgr. Returns 0 if no
       // messages are available.
-      virtual int GetNumPendingMsgPackets() = 0;
+      virtual size_t GetNumPendingMsgPackets() = 0;
       
-      virtual int Send(const MsgPacket &p) = 0;
+      virtual size_t Send(const MsgPacket &p) = 0;
       
       virtual bool GetNextMsgPacket(MsgPacket &p) = 0;
       

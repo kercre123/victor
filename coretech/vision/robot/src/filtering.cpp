@@ -367,31 +367,32 @@ namespace Anki
 
           s32 x;
 
-#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+          //#if !defined(USE_ARM_ACCELERATION)
           for(x=1; x<(imageWidth-1); x++) {
             pDx[x] = static_cast<s8>( (static_cast<s32>(pIn_y0[x+1]) >> 1) - (static_cast<s32>(pIn_y0[x-1]) >> 1) );
           }
-#else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
-          for(x = 0; x<(imageWidth-7); x+=8) {
-            const u32 inM3210 = *reinterpret_cast<const u32*>(pIn_y0 + x - 1);
-            const u32 inM7654 = *reinterpret_cast<const u32*>(pIn_y0 + x + 3);
-
-            const u32 inP3210 = *reinterpret_cast<const u32*>(pIn_y0 + x + 1);
-            const u32 inP7654 = *reinterpret_cast<const u32*>(pIn_y0 + x + 5);
-
-            const u32 inM3210Half = (inM3210 >> 1) & 0x7f7f7f7f;
-            const u32 inM7654Half = (inM7654 >> 1) & 0x7f7f7f7f;
-
-            const u32 inP3210Half = (inP3210 >> 1) & 0x7f7f7f7f;
-            const u32 inP7654Half = (inP7654 >> 1) & 0x7f7f7f7f;
-
-            const u32 out3210 = __SSUB8(inP3210Half, inM3210Half);
-            const u32 out7654 = __SSUB8(inP7654Half, inM7654Half);
-
-            *reinterpret_cast<u32*>(pDx + x) = out3210;
-            *reinterpret_cast<u32*>(pDx + x + 4) = out7654;
-          }
-#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
+          //#else // #if !defined(USE_ARM_ACCELERATION)
+          //          // TODO: make work so Keil doesn't merge loads
+          //          for(x = 0; x<(imageWidth-7); x+=8) {
+          //            const u32 inM3210 = *reinterpret_cast<const u32*>(pIn_y0 + x - 1);
+          //            const u32 inM7654 = *reinterpret_cast<const u32*>(pIn_y0 + x + 3);
+          //
+          //            const u32 inP3210 = *reinterpret_cast<const u32*>(pIn_y0 + x + 1);
+          //            const u32 inP7654 = *reinterpret_cast<const u32*>(pIn_y0 + x + 5);
+          //
+          //            const u32 inM3210Half = (inM3210 >> 1) & 0x7f7f7f7f;
+          //            const u32 inM7654Half = (inM7654 >> 1) & 0x7f7f7f7f;
+          //
+          //            const u32 inP3210Half = (inP3210 >> 1) & 0x7f7f7f7f;
+          //            const u32 inP7654Half = (inP7654 >> 1) & 0x7f7f7f7f;
+          //
+          //            const u32 out3210 = __SSUB8(inP3210Half, inM3210Half);
+          //            const u32 out7654 = __SSUB8(inP7654Half, inM7654Half);
+          //
+          //            *reinterpret_cast<u32*>(pDx + x) = out3210;
+          //            *reinterpret_cast<u32*>(pDx + x + 4) = out7654;
+          //          }
+          //#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
           pDx[0] = 0;
           pDx[imageWidth-1] = 0;
@@ -401,11 +402,12 @@ namespace Anki
 
           s8 * restrict pDy = dy.Pointer(y,0);
 
-#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+#if !defined(USE_ARM_ACCELERATION)
           for(x=1; x<(imageWidth-1); x++) {
             pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) >> 1) - (static_cast<s32>(pIn_ym1[x]) >> 1) );
           }
-#else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+#else // #if !defined(USE_ARM_ACCELERATION)
+          // pIn_ym1 and pIn_yp1 should always be aligned, so this is okay even with auto-load-merging
           for(x = 0; x<(imageWidth-7); x+=8) {
             const u32 inM3210 = *reinterpret_cast<const u32*>(pIn_ym1 + x);
             const u32 inM7654 = *reinterpret_cast<const u32*>(pIn_ym1 + x + 4);
@@ -425,7 +427,7 @@ namespace Anki
             *reinterpret_cast<u32*>(pDy + x) = out3210;
             *reinterpret_cast<u32*>(pDy + x + 4) = out7654;
           }
-#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
           pDy[0] = 0;
           pDy[imageWidth-1] = 0;

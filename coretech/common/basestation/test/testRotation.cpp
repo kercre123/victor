@@ -262,12 +262,12 @@ GTEST_TEST(TestPose, IsSameWithAmbiguity)
 
   // P2 is P1 adjusted by an "ambiguous" rotation
   Pose3d P2(P1);
-  P2.preComposeWith(Tform_amb);
+  P2.PreComposeWith(Tform_amb);
   
   // Now adjust both P1 and P2 by some arbtrary transformation
   Pose3d Tform(M_PI/3.f, {0.5f*sqrtf(2.f), 0.5f*sqrtf(2.f), 0.f}, {0,0,0});
-  P1.preComposeWith(Tform);
-  P2.preComposeWith(Tform);
+  P1.PreComposeWith(Tform);
+  P2.PreComposeWith(Tform);
   
   // the only difference between P1 and P2 at this point should be Tform_amb
   
@@ -282,20 +282,20 @@ GTEST_TEST(TestPose, IsSameWithAmbiguity)
   // The IsSameAs_WithAmbiguity functino should see these two poses as the same,
   // though it is our job to factor out the reference pose from each, by post-
   // multiplying by its inverse.
-  EXPECT_TRUE( (P1*P_ref.getInverse()).IsSameAs_WithAmbiguity(P2*P_ref.getInverse(),
+  EXPECT_TRUE( (P1*P_ref.GetInverse()).IsSameAs_WithAmbiguity(P2*P_ref.GetInverse(),
                                                               ambiguities, 5.f,
                                                               5*M_PI/180.f, true, P_diff) );
   
   // The returned difference should be the ambiguous rotation we applied to P2
   // above
-  EXPECT_NEAR( R_amb.GetAngleDiffFrom(P_diff.get_rotationMatrix()).ToFloat(), 0.f, 1.f*M_PI/180.f );
+  EXPECT_NEAR( R_amb.GetAngleDiffFrom(P_diff.GetRotationMatrix()).ToFloat(), 0.f, 1.f*M_PI/180.f );
   
   
   // P3 is P1 with a slight perturbation
   Pose3d P3(P1);
   
   Pose3d T_perturb(2.f * M_PI/180.f, Z_AXIS_3D, {1.f, 1.f, 1.f});
-  P3.preComposeWith(T_perturb);
+  P3.PreComposeWith(T_perturb);
   
   // IsSameAs should return true, and the pose difference should be T_perturb
   EXPECT_TRUE(P1.IsSameAs(P3, 5.f, 3.f*M_PI/180.f, P_diff));

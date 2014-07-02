@@ -14,6 +14,11 @@
 
 #define DEBUG_PAP_CONTROLLER 0
 
+// If you enable this, make sure image streaming is off
+// and you enable the print-to-file code in the ImageChunk message handler
+// on the basestation.
+#define SEND_PICKUP_VERIFICATION_SNAPSHOTS 0
+
 namespace Anki {
   namespace Cozmo {
     namespace PickAndPlaceController {
@@ -24,16 +29,23 @@ namespace Anki {
         
         // TODO: Need to be able to specify wheel motion by distance
         const u32 BACKOUT_TIME = 1500000;
-        const f32 BACKOUT_SPEED_MMPS = -30;
+        const f32 BACKOUT_SPEED_MMPS = -40;
         
         const f32 LOW_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(-15);
         const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(15);
         
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
-        const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 28.f;
-        const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 20.f;
-        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 20.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+        #ifdef SIMULATOR
+        const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 26.f;
+        const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 18.f;
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+        #else
+        const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
+        const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 19.5f;
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+        #endif
+        
 
         Mode mode_ = IDLE;
         
@@ -53,48 +65,52 @@ namespace Anki {
         bool isCarryingBlock_ = false;
         bool lastActionSucceeded_ = false;
         
+        // "Snapshots" for visual verification of a successful block pick up
+        // We'll need two mini-images (or snapshots), along with an associated
+        // memory buffer, to hold low-res views from the camera before and after
+        // trying to pickup (or place) a block.  The ready flag is so the state
+        // machine can wait for the vision system to actually produce the
+        // snapshot, since it's running on a separate (slower) "thread".
+        bool isSnapshotReady_ = false;
+        Embedded::Array<u8> pickupSnapshotBefore_;
+        Embedded::Array<u8> pickupSnapshotAfter_;
+        const s32 SNAPSHOT_SIZE = 16; // the snapshots will be a 2D array SNAPSHOT_SIZE x SNAPSHOT_SIZE in size
+                                      // NOTE: Make sure this matches CAMERA_RES_VERIFICATION_SNAPSHOT
+        const s32 SNAPSHOT_SUBSAMPLE = 8; // this is the spacing between samples taken from the original image resolution
+        const s32 SNAPSHOT_ROI_SIZE = SNAPSHOT_SUBSAMPLE*SNAPSHOT_SIZE; // thus, this is the size of the ROI in the original image
+        const Embedded::Rectangle<s32> snapShotRoiLow_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2);
+        const Embedded::Rectangle<s32> snapShotRoiHigh_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2);
+        const s32 SNAPSHOT_BUFFER_SIZE = 2*SNAPSHOT_SIZE*SNAPSHOT_SIZE + 64; // 2X (16x16) arrays + overhead
+        u8 snapshotBuffer_[SNAPSHOT_BUFFER_SIZE];
+        Embedded::MemoryStack snapshotMemory_;
+        const s32 SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD = 100; //SNAPSHOT_SIZE*SNAPSHOT_SIZE*64*64; // average grayscale difference of 64
+        const s32 SNAPSHOT_COMPARE_THRESHOLD = SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD*SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD*SNAPSHOT_SIZE*SNAPSHOT_SIZE;
+        
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
-        
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
-        const f32 ORIGIN_TO_HIGH_PICKUP_HEAD_LOWERING_DIST_MM = 47.f;
-        
-        ///// Memory stuff //////
-        // For computing pose of high block wrt low block
-        const int LOCAL_BUFFER_SIZE = 512;
-        char localBuffer[LOCAL_BUFFER_SIZE];
-        Embedded::MemoryStack localScratch_;
-        
-        // Pose of high block wrt camera
-        Embedded::Array<f32> rotHighBlockWrtRobot;
-        Embedded::Point3<f32> transHighBlockWrtRobot;
-        
-        // Pose of low block wrt camera
-        Embedded::Array<f32> rotLowBlockWrtRobot;
-        Embedded::Point3<f32> transLowBlockWrtRobot;
-        Embedded::Array<f32> rotLowBlockWrtRobot_inv;
-        
-        // Pose of high block wrt low block
-        Embedded::Array<f32> rotHighBlockWrtLowBlock;
-        Embedded::Point3<f32> transHighBlockWrtLowBlock;
-
         
         // WARNING: ResetBuffers should be used with caution
         Result ResetBuffers()
         {
-          localScratch_ = Embedded::MemoryStack(localBuffer, LOCAL_BUFFER_SIZE);
-          rotHighBlockWrtRobot = Embedded::Array<f32>(3,3, localScratch_);
-          rotLowBlockWrtRobot = Embedded::Array<f32>(3,3, localScratch_);
-          rotLowBlockWrtRobot_inv = Embedded::Array<f32>(3,3, localScratch_);
-          rotHighBlockWrtLowBlock = Embedded::Array<f32>(3,3, localScratch_);
+          snapshotMemory_ = Embedded::MemoryStack(snapshotBuffer_, SNAPSHOT_BUFFER_SIZE);
+          AnkiConditionalErrorAndReturnValue(snapshotMemory_.IsValid(),
+                                             RESULT_FAIL_MEMORY,
+                                             "PAP::ResetBuffers()", "Failed to initialize snapshotMemory!\n")
           
-          if(!localScratch_.IsValid()) {
-            PRINT("Error: PAP::InitializeScratchBuffers\n");
-            return RESULT_FAIL;
-          }
+          pickupSnapshotBefore_ = Embedded::Array<u8>(SNAPSHOT_SIZE, SNAPSHOT_SIZE, snapshotMemory_);
+          AnkiConditionalErrorAndReturnValue(pickupSnapshotBefore_.IsValid(),
+                                             RESULT_FAIL_MEMORY,
+                                             "PAP::ResetBuffers()", "Failed to allocate pickupSnapshotBefore_!\n")
+          
+          pickupSnapshotAfter_ = Embedded::Array<u8>(SNAPSHOT_SIZE, SNAPSHOT_SIZE, snapshotMemory_);
+          AnkiConditionalErrorAndReturnValue(pickupSnapshotAfter_.IsValid(),
+                                             RESULT_FAIL_MEMORY,
+                                             "PAP::ResetBuffers()", "Failed to allocate pickupSnapshotAfter_!\n")
+          
           return RESULT_OK;
-        }
-#endif  // #if(ALT_HIGH_BLOCK_DOCK_METHOD)
+          
+        } // ResetBuffers()
+
         
       } // "private" namespace
       
@@ -103,12 +119,26 @@ namespace Anki {
         return mode_;
       }
 
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
       Result Init() {
         Reset();
+        
+        AnkiConditionalErrorAndReturnValue(snapShotRoiLow_.get_width()  == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE &&
+                                           snapShotRoiLow_.get_height() == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE,
+                                           RESULT_FAIL_INVALID_SIZE, "PAP::Init()",
+                                           "Snapshot ROI Low not the expected size (%dx%d vs. %dx%d).",
+                                           snapShotRoiLow_.get_width(), snapShotRoiLow_.get_height(),
+                                           SNAPSHOT_SIZE, SNAPSHOT_SIZE);
+        
+        AnkiConditionalErrorAndReturnValue(snapShotRoiHigh_.get_width()  == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE &&
+                                           snapShotRoiHigh_.get_height() == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE,
+                                           RESULT_FAIL_INVALID_SIZE, "PAP::Init()",
+                                           "Snapshot ROI High not the expected size (%dx%d vs. %dx%d).",
+                                           snapShotRoiHigh_.get_width(), snapShotRoiHigh_.get_height(),
+                                           SNAPSHOT_SIZE, SNAPSHOT_SIZE);
+        
         return ResetBuffers();
       }
-#endif // #if(ALT_HIGH_BLOCK_DOCK_METHOD)
+
       
       void Reset()
       {
@@ -116,6 +146,154 @@ namespace Anki {
         DockingController::ResetDocker();
       }
       
+      
+      Result SendBlockPickUpMessage(const bool success)
+      {
+        Messages::BlockPickedUp msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockPickedUp), &msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+      
+      Result SendBlockPlacedMessage(const bool success)
+      {
+        Messages::BlockPlaced msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockPlaced), &msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+
+      // Since auto exposure settings may not have stabilized by this point,
+      // just do a software normalize by raising the brightest pixel to 255.
+      // The most typical failure case seems to be that the before image
+      // is darker than than the after since the robot casts a shadow on the
+      // block when it first reaches it.
+      static void NormalizeSnapshots(void)
+      {
+        const s32 nrows = pickupSnapshotBefore_.get_size(0);
+        const s32 ncols = pickupSnapshotBefore_.get_size(1);
+        
+        AnkiAssert(pickupSnapshotAfter_.get_size(0) == nrows &&
+                   pickupSnapshotAfter_.get_size(1) == ncols);
+        
+        #if(SEND_PICKUP_VERIFICATION_SNAPSHOTS)
+        // Send snapshots (for debug)
+        Messages::ImageChunk b[4];
+        Messages::ImageChunk a[4];
+        for(u8 i=0;i<4; ++i) {
+          b[i].resolution = Vision::CAMERA_RES_VERIFICATION_SNAPSHOT;
+          b[i].imageId = 100;
+          b[i].chunkId = i;
+          b[i].chunkSize = MIN(80, (nrows * ncols) - (80*i));
+          
+          a[i].resolution = Vision::CAMERA_RES_VERIFICATION_SNAPSHOT;
+          a[i].imageId = 101;
+          a[i].chunkId = i;
+          a[i].chunkSize = MIN(80, (nrows * ncols) - (80*i));
+        }
+        u8 byteCnt = 0;
+        #endif // SEND_PICKUP_VERIFICATION_SNAPSHOTS
+        
+        u8 maxValBefore = 0;
+        u8 maxValAfter = 0;
+        for(s32 i=0; i<nrows; ++i)
+        {
+          const u8 * restrict pBefore = pickupSnapshotBefore_.Pointer(i,0);
+          const u8 * restrict pAfter  = pickupSnapshotAfter_.Pointer(i,0);
+
+          for(s32 j=0; j<ncols; ++j)
+          {
+            if (pBefore[j] > maxValBefore) {
+              maxValBefore = pBefore[j];
+            }
+            
+            if (pAfter[j] > maxValAfter) {
+              maxValAfter = pAfter[j];
+            }
+            
+            #if(SEND_PICKUP_VERIFICATION_SNAPSHOTS)
+            b[byteCnt / 80].data[byteCnt % 80] = pBefore[j];
+            a[byteCnt / 80].data[byteCnt % 80] = pAfter[j];
+            byteCnt++;
+            #endif // SEND_PICKUP_VERIFICATION_SNAPSHOTS
+            
+          }
+        }
+
+        #if(SEND_PICKUP_VERIFICATION_SNAPSHOTS)
+        for(u8 i=0; i<4; ++i) {
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &b[i]);
+        }
+        for(u8 i=0; i<4; ++i) {
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &a[i]);
+        }
+        #endif //SEND_PICKUP_VERIFICATION_SNAPSHOTS
+
+        
+        if (maxValBefore == 0) {
+          PRINT("WARNING: NormalizeSnapShots Before image is blank!\n");
+          return;
+        }
+        if (maxValAfter == 0) {
+          PRINT("WARNING: NormalizeSnapShots After image is blank!\n");
+          return;
+        }
+        
+        f32 normScaleBefore = 255.f / maxValBefore;
+        f32 normScaleAfter = 255.f / maxValAfter;
+        
+        PRINT("normScaleBefore: %f, normScaleAfter: %f\n", normScaleBefore, normScaleAfter);
+        
+        for(s32 i=0; i<nrows; ++i)
+        {
+          u8 * restrict pBefore = pickupSnapshotBefore_.Pointer(i,0);
+          u8 * restrict pAfter  = pickupSnapshotAfter_.Pointer(i,0);
+          
+          for(s32 j=0; j<ncols; ++j)
+          {
+            pBefore[j] = static_cast<u8>(pBefore[j] * normScaleBefore);
+            pAfter[j] = static_cast<u8>(pAfter[j] * normScaleAfter);
+          }
+        }
+      }
+      
+      // Return sum-squared-difference between the before and after snapshots
+      static s32 CompareSnapshots(void)
+      {
+        const s32 nrows = pickupSnapshotBefore_.get_size(0);
+        const s32 ncols = pickupSnapshotBefore_.get_size(1);
+        
+        AnkiAssert(pickupSnapshotAfter_.get_size(0) == nrows &&
+                   pickupSnapshotAfter_.get_size(1) == ncols);
+        
+        NormalizeSnapshots();
+        
+        s32 ssd = 0;
+        for(s32 i=0; i<nrows; ++i)
+        {
+          const u8 * restrict pBefore = pickupSnapshotBefore_.Pointer(i,0);
+          const u8 * restrict pAfter  = pickupSnapshotAfter_.Pointer(i,0);
+          
+          for(s32 j=0; j<ncols; ++j)
+          {
+            const s32 diff = static_cast<s32>(pAfter[j]) - static_cast<s32>(pBefore[j]);
+            ssd += diff*diff;
+          }
+        }
+        
+        //pickupSnapshotBefore_.Show("Snapshot Before", false);
+        //pickupSnapshotAfter_.Show("Snapshot After", true);
+        
+        return ssd;
+        
+      } // CompareSnapshots()
+
       
       Result Update()
       {
@@ -132,27 +310,25 @@ namespace Anki {
             PRINT("PAP: SETTING LIFT PREDOCK (action %d)\n", action_);
 #endif
             mode_ = MOVING_LIFT_PREDOCK;
-            HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
             switch(action_) {
               case DA_PICKUP_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
                 break;
               case DA_PICKUP_HIGH:
                 // This action starts by lowering the lift and tracking the high block
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
                 HeadController::SetDesiredAngle(HIGH_DOCKING_HEAD_ANGLE);
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
-                dockOffsetDistX_ = ORIGIN_TO_HIGH_PICKUP_HEAD_LOWERING_DIST_MM;
-#else
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_LIFT_DIST_MM;
-#endif  //#if(ALT_HIGH_BLOCK_DOCK_METHOD)
                 break;
               case DA_PLACE_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 break;
               case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
                 break;
               default:
@@ -200,113 +376,6 @@ namespace Anki {
               }
             }
             break;
-           
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
-          case MOVING_LIFT_HIGH_PREDOCK:
-          {
-            // Robot has now stopped a short distance away from the high block.
-            // Assess block pose relative to robot.
-            // Move head down and lift up.
-            // Assess pose of low block relative to high block.
-            // Compute appropriate offset docking trajectory.
-            // Follow it.
-            if (LiftController::IsInPosition() && HeadController::IsInPosition()) {
-              
-
-              // Compute docking path relative to low block such that it is aligned with high block.
-              f32 angle_x, angle_y, angle_z;
-              
-              // Get the nearest marker closest to where we expect the bottom block to be.
-              bool markerFound = false;
-              if (VisionSystem::GetVisionMarkerPoseNearestTo(DockingController::GetLastGoodMarkerPt(),
-                                                             dockToMarker_,  // TODO: Does this come from BS?
-                                                             markerWidth_ * 2, // TODO...
-                                                             rotLowBlockWrtRobot,
-                                                             transLowBlockWrtRobot,
-                                                             markerFound
-                                                             ) != RESULT_OK)
-              {
-                PRINT("GetVisionMarkerPoseNearestTo() failed (low)\n");
-                mode_ = IDLE;
-                break;
-              }
-              
-              if (!markerFound){
-                PRINT("Expected low marker not found\n");
-                mode_ = IDLE;
-                break;
-              }
-              
-#if(DEBUG_PAP_CONTROLLER)
-              Embedded::Matrix::GetEulerAngles(rotLowBlockWrtRobot, angle_x, angle_y, angle_z);
-              PRINT("rotLWrtRobot: %f %f %f  transLowWrtRobot: %f %f %f\n",
-                    angle_x, angle_y, angle_z,
-                    transLowBlockWrtRobot.x, transLowBlockWrtRobot.y, transLowBlockWrtRobot.z);
-              rotLowBlockWrtRobot.Print();
-              transLowBlockWrtRobot.Print();
-#endif
-              
-              // Compute pose of high block with respect to low block P_HwrtL
-              // P_HwrtL = (P_LWrtRobot)^-1 * P_HWrtRobot
-              //
-              // P1 = (P_LWrtRobot)^-1 = | R1'   -R1'*t1 |
-              //                       |  0       1    |
-              //
-              // P2 = P_HWrtRobot = | R2  t2 |
-              //                  |  0   1 |
-              //
-              // P_HwrtL = P1 * P2
-              // P_HwrtL = | R1'*R2   R1'*t2 + (-R1'*t1) |
-              //           |   0           1             |
-              //
-
-              Embedded::Matrix::Transpose(rotLowBlockWrtRobot, rotLowBlockWrtRobot_inv);
-              Embedded::Point3<f32> transLowBlockWrtRobot_inv = (rotLowBlockWrtRobot_inv * transLowBlockWrtRobot);
-              transLowBlockWrtRobot_inv *= -1;  // -R1'*t1
-              
-              
-              PRINT("\nPose inv\n");
-              rotLowBlockWrtRobot_inv.Print();
-              transLowBlockWrtRobot_inv.Print();
-              
-              Embedded::Matrix::Multiply(rotLowBlockWrtRobot_inv, rotHighBlockWrtRobot, rotHighBlockWrtLowBlock);
-              transHighBlockWrtLowBlock = (rotLowBlockWrtRobot_inv * transHighBlockWrtRobot) + transLowBlockWrtRobot_inv;
-              
-              PRINT("\nPose H wrt L\n");
-              rotHighBlockWrtLowBlock.Print();
-              transHighBlockWrtLowBlock.Print();
-
-              if (Embedded::Matrix::GetEulerAngles(rotHighBlockWrtLowBlock, angle_x, angle_y, angle_z) != RESULT_OK) {
-                PRINT("GetEulerAngles() failed\n");
-                mode_ = IDLE;
-                break;
-              }
-              
-              PRINT("High wrt Low: rot %f %f %f, trans %f %f %f\n",
-                    angle_x, angle_y, angle_z,
-                    transHighBlockWrtLowBlock.x, transHighBlockWrtLowBlock.y, transHighBlockWrtLowBlock.z);
-
-              // Check that values are sane
-              if (angle_x > 0.2f || angle_y > 0.2f) {
-                PRINT("**** WARNING: block is not level! Aborting dock. *****\n");
-                mode_ = IDLE;
-              }
-              
-              dockOffsetDistX_ = transHighBlockWrtLowBlock.x;
-              dockOffsetDistY_ = transHighBlockWrtLowBlock.y;
-              
-
-              
-              DockingController::StartDocking(dockToMarker_, markerWidth_, dockOffsetDistX_, dockOffsetDistY_, angle_z);
-              mode_ = DOCKING;
-              #if(DEBUG_PAP_CONTROLLER)
-              PRINT("PAP: DOCKING WRT LOW\n");
-              #endif
-            }
-
-            break;
-          }
-#endif // #if(ALT_HIGH_BLOCK_DOCK_METHOD)
             
           case DOCKING:
              
@@ -321,79 +390,6 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
                 PRINT("PAP: SET_LIFT_POSTDOCK\n");
 #endif
-                
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
-                switch(action_) {
-                  case DA_PICKUP_LOW:
-                  case DA_PLACE_HIGH:
-                    // Docking is complete
-                    mode_ = SET_LIFT_POSTDOCK;
-                    #if(DEBUG_PAP_CONTROLLER)
-                    PRINT("PAP: SET_LIFT_POSTDOCK\n");
-                    #endif
-                    break;
-                  case DA_PICKUP_HIGH:
-                  {
-                    // If head is at high dock angle, now we should start the second phase
-                    // of the dock by tracking the lower block. Otherwise, dock approach is
-                    // complete so now lift up the block.
-                    if (LiftController::GetLastCommandedHeightMM() == LIFT_HEIGHT_LOWDOCK) {
-                      
-                      // Get high block pose
-                      
-                      // Get the nearest marker closest to the block we were just docking to, i.e. the high block.
-                      bool markerFound = false;
-                      if (VisionSystem::GetVisionMarkerPoseNearestTo(DockingController::GetLastGoodMarkerPt(),
-                                                                     dockToMarker_,
-                                                                     markerWidth_ * 2, // TODO: Something is wrong with this function! Shouldn't need to do this.
-                                                                     rotHighBlockWrtRobot,
-                                                                     transHighBlockWrtRobot,
-                                                                     markerFound
-                                                                     ) != RESULT_OK)
-                      {
-                        PRINT("GetVisionMarkerPoseNearestTo() failed (high)\n");
-                        mode_ = IDLE;
-                        break;
-                      }
-                      
-                      if (!markerFound){
-                        PRINT("Expected high marker not found\n");
-                        mode_ = IDLE;
-                        break;
-                      }
-                      
-                      
-                      LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
-                      HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
-                      mode_ = MOVING_LIFT_HIGH_PREDOCK;
-                      #if(DEBUG_PAP_CONTROLLER)
-                      f32 ax, ay, az;
-                      Embedded::Matrix::GetEulerAngles(rotHighBlockWrtRobot, ax, ay, az);
-                      PRINT("rotHWrtRobot: %f %f %f  transHighWrtRobot: %f %f %f\n",
-                            ax, ay, az,
-                            transHighBlockWrtRobot.x, transHighBlockWrtRobot.y, transHighBlockWrtRobot.z);
-                      rotHighBlockWrtRobot.Print();
-                      transHighBlockWrtRobot.Print();
-                      
-                      PRINT("PAP: MOVING_LIFT_HIGH_PREDOCK\n");
-                      #endif
-                    } else {
-                      // Docking is complete
-                      mode_ = SET_LIFT_POSTDOCK;
-                      #if(DEBUG_PAP_CONTROLLER)
-                      PRINT("PAP: SET_LIFT_POSTDOCK (%f)\n", HeadController::GetLastCommandedAngle());
-                      #endif
-                      break;
-                    }
-                    break;
-                  }
-                  default:
-                    PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
-                    mode_ = IDLE;
-                    break;
-                }
-#endif // #if(ALT_HIGH_BLOCK_DOCK_METHOD)
-                
               } else {
                 // Block is not being tracked.
                 // Probably not visible.
@@ -411,18 +407,44 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
             PRINT("PAP: SETTING LIFT POSTDOCK\n");
 #endif
-            mode_ = MOVING_LIFT_POSTDOCK;
             switch(action_) {
               case DA_PLACE_LOW:
+              {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                mode_ = MOVING_LIFT_POSTDOCK;
                 break;
+              }
               case DA_PICKUP_LOW:
               case DA_PICKUP_HIGH:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+              {
+                // Take a snapshot before we try to pick up. We will compare a
+                // post-pick up snapshot to this one to verify whether we
+                // actually picked up the block
+                if(isSnapshotReady_) {
+                  LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                  isSnapshotReady_ = false;
+                  mode_ = MOVING_LIFT_POSTDOCK;
+                } else {
+                  const Embedded::Rectangle<s32>* roi = &snapShotRoiLow_;
+                  if(action_ == DA_PICKUP_HIGH) {
+                    roi = &snapShotRoiHigh_;
+                  }
+                  Result lastResult = VisionSystem::TakeSnapshot(*roi, SNAPSHOT_SUBSAMPLE, pickupSnapshotBefore_, isSnapshotReady_);
+                  if(lastResult != RESULT_OK) {
+                    PRINT("ERROR: PickAndPlaceController: TakeSnapshot() failed in SET_LIFT_POSTDOCK:DA_PICKUP_LOW/HIGH!\n");
+                    mode_ = IDLE;
+                    return lastResult;
+                  }
+                }
                 break;
+              }
+                
               case DA_PLACE_HIGH:
+              {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+                mode_ = MOVING_LIFT_POSTDOCK;
                 break;
+              }
               default:
                 PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
                 mode_ = IDLE;
@@ -435,14 +457,66 @@ namespace Anki {
             if (LiftController::IsInPosition()) {
               switch(action_) {
                 case DA_PICKUP_LOW:
-                  mode_ = IDLE;
-                  lastActionSucceeded_ = true;
-                  isCarryingBlock_ = true;
+                  // Wait for visual verification
+                  // TODO: add timeout?
+                  if(isSnapshotReady_) {
+                    mode_ = IDLE;
+                    lastActionSucceeded_ = true;
+                    
+                    // Snapshots should differ if we actually lifted the block
+                    const s32 SSD = CompareSnapshots();
+                    PRINT("PickAndPlaceController: snapshot difference SSD = %d\n", SSD);
+                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD) {
+                      isCarryingBlock_ = true;
+                    } else {
+                      isCarryingBlock_ = false;
+                    }
+                    isSnapshotReady_ = false;
+                    SendBlockPickUpMessage(isCarryingBlock_);
+                  } else {
+                    Result lastResult = VisionSystem::TakeSnapshot(snapShotRoiLow_, SNAPSHOT_SUBSAMPLE, pickupSnapshotAfter_, isSnapshotReady_);
+                    if(lastResult != RESULT_OK) {
+                      PRINT("ERROR: PickAndPlaceController: TakeSnapshot() failed in MOVING_LIFT_POSTDOCK:DA_PICKUP_LOW!\n");
+                      mode_ = IDLE;
+                      return lastResult;
+                    }
+                  }
+                  
                   break;
+                  
                 case DA_PICKUP_HIGH:
-                  isCarryingBlock_ = true;
+                  if(isSnapshotReady_) {
+                    // Snapshots should differ if we actually lifted the block
+                    const s32 SSD = CompareSnapshots();
+                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD) {
+                      isCarryingBlock_ = true;
+                    } else {
+                      isCarryingBlock_ = false;
+                    }
+                    isSnapshotReady_ = false;
+                    SendBlockPickUpMessage(isCarryingBlock_);
+                    
+                    // For now we backout even if the pickup failed, but maybe
+                    // we wanna do something different
+                    SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
+                    transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
+                    mode_ = BACKOUT;
+                  } else {
+                    Result lastResult = VisionSystem::TakeSnapshot(snapShotRoiHigh_, SNAPSHOT_SUBSAMPLE, pickupSnapshotAfter_, isSnapshotReady_);
+                    if(lastResult != RESULT_OK) {
+                      PRINT("ERROR: PickAndPlaceController: TakeSnapshot() failed in MOVING_LIFT_POSTDOCK:DA_PICKUP_HIGH!\n");
+                      mode_ = IDLE;
+                      return lastResult;
+                    }
+                    
+                  }
+                  break;
+                  
                 case DA_PLACE_LOW:
                 case DA_PLACE_HIGH:
+                  // TODO: Add visual verfication of placement here?
+                  isCarryingBlock_ = false;
+                  SendBlockPlacedMessage(true);
                   SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
                   transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
                   mode_ = BACKOUT;
@@ -450,6 +524,9 @@ namespace Anki {
                   PRINT("PAP: BACKING OUT\n");
 #endif
                   break;
+                  
+                default:
+                  PRINT("ERROR: Reached default switch statement in MOVING_LIFT_POSTDOCK case.\n");
               }
             }
             break;
@@ -521,11 +598,11 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
         PRINT("PAP: DOCK TO BLOCK %d (action %d)\n", blockMarker, action);
 #endif
-				#warning fix me!
-        /*if (action == DA_PLACE_LOW) {
-          PRINT("Invalid action %d for DockToBlock()\n", action);
+
+        if (action == DA_PLACE_LOW) {
+          PRINT("WARNING: Invalid action %d for DockToBlock(). Ignoring.\n", action);
           return;
-        }*/
+        }
         
         action_ = action;
         dockToMarker_ = blockMarker;

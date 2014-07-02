@@ -26,6 +26,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #define OUTPUT_FAILED_MARKER_STEPS
 
+#if defined(THIS_IS_PETES_BOARD)
+#undef OUTPUT_FAILED_MARKER_STEPS
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -38,7 +42,7 @@ namespace Anki
 #else
     FiducialMarkerDecisionTree VisionMarker::verificationTrees[VisionMarkerDecisionTree::NUM_MARKER_LABELS_ORIENTED];
 #endif
-    
+
     bool VisionMarker::areTreesInitialized = false;
 
     BlockMarker::BlockMarker()
@@ -542,7 +546,7 @@ namespace Anki
 
       SerializedBuffer::SerializeRawBasicType<Quadrilateral<f32> >("corners", this->corners, buffer, bufferLength);
       SerializedBuffer::SerializeRawBasicType<s32>("markerType", this->markerType, buffer, bufferLength);
-      SerializedBuffer::SerializeRawBasicType<bool>("isValid", this->isValid, buffer, bufferLength);
+      SerializedBuffer::SerializeRawBasicType<ValidityCode>("validity", this->validity, buffer, bufferLength);
       SerializedBuffer::SerializeRawBasicType<f32>("observedOrientation", this->observedOrientation, buffer, bufferLength);
 
       return RESULT_OK;
@@ -556,7 +560,7 @@ namespace Anki
 
       this->corners = SerializedBuffer::DeserializeRawBasicType<Quadrilateral<f32> >(NULL, buffer, bufferLength);
       this->markerType = static_cast<Vision::MarkerType>(SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength));
-      this->isValid = SerializedBuffer::DeserializeRawBasicType<bool>(NULL, buffer, bufferLength);
+      this->validity = SerializedBuffer::DeserializeRawBasicType<ValidityCode>(NULL, buffer, bufferLength);
       this->observedOrientation = SerializedBuffer::DeserializeRawBasicType<f32>(NULL, buffer, bufferLength);
 
       return RESULT_OK;
@@ -577,21 +581,21 @@ namespace Anki
 
 #if USE_RED_BLACK_VERIFICATION_TREES
         VisionMarker::verifyRedTree = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(VerifyRedNodes),
-                                                                 NUM_NODES_VERIFY_RED,
-                                                                 TREE_NUM_FRACTIONAL_BITS,
-                                                                 MAX_DEPTH_VERIFY_RED,
-                                                                 ProbePoints_X, ProbePoints_Y,
-                                                                 NUM_PROBE_POINTS,
-                                                                 VerifyRedLeafLabels, NUM_LEAF_LABELS_RED);
-        
+          NUM_NODES_VERIFY_RED,
+          TREE_NUM_FRACTIONAL_BITS,
+          MAX_DEPTH_VERIFY_RED,
+          ProbePoints_X, ProbePoints_Y,
+          NUM_PROBE_POINTS,
+          VerifyRedLeafLabels, NUM_LEAF_LABELS_RED);
+
         VisionMarker::verifyBlackTree = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(VerifyBlackNodes),
-                                                                 NUM_NODES_VERIFY_BLACK,
-                                                                 TREE_NUM_FRACTIONAL_BITS,
-                                                                 MAX_DEPTH_VERIFY_BLACK,
-                                                                 ProbePoints_X, ProbePoints_Y,
-                                                                 NUM_PROBE_POINTS,
-                                                                 VerifyBlackLeafLabels, NUM_LEAF_LABELS_BLACK);
-        
+          NUM_NODES_VERIFY_BLACK,
+          TREE_NUM_FRACTIONAL_BITS,
+          MAX_DEPTH_VERIFY_BLACK,
+          ProbePoints_X, ProbePoints_Y,
+          NUM_PROBE_POINTS,
+          VerifyBlackLeafLabels, NUM_LEAF_LABELS_BLACK);
+
 #else
         for(s32 i=0; i<NUM_MARKER_LABELS_ORIENTED; ++i)
         {
@@ -647,9 +651,9 @@ namespace Anki
       }
 
       enoughContrast = true;
-      
+
       const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS);
-      
+
       u32 totalDarkAccumulator = 0, totalBrightAccumulator = 0; // for all pairs
       for(s32 i_probe=0; i_probe<NUM_THRESHOLD_PROBES; ++i_probe) {
         const f32 xCenterDark = static_cast<f32>(ThresholdDarkProbe_X[i_probe]) * fixedPointDivider;
@@ -659,7 +663,7 @@ namespace Anki
         const f32 yCenterBright = static_cast<f32>(ThresholdBrightProbe_Y[i_probe]) * fixedPointDivider;
 
         u32 darkAccumulator = 0, brightAccumulator = 0; // for each bright/dark pair
-        
+
         // TODO: Make getting the average value of a probe pattern into a function
         for(s32 i_pt=0; i_pt<NUM_PROBE_POINTS; i_pt++) {
           { // Dark points
@@ -708,7 +712,7 @@ namespace Anki
             brightAccumulator += imageValue;
           }
         } // FOR each probe point
-        
+
         brightValue = static_cast<f32>(brightAccumulator) * divisor;
         darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
         if(brightValue < minContrastRatio * darkValue) {
@@ -716,10 +720,9 @@ namespace Anki
           enoughContrast = false;
           return RESULT_OK;
         }
-        
+
         totalBrightAccumulator += brightAccumulator;
         totalDarkAccumulator   += darkAccumulator;
-        
       } // FOR each probe
 
       const f32 totalDivisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS * NUM_THRESHOLD_PROBES);
@@ -731,13 +734,14 @@ namespace Anki
 
     Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &initQuad,
       const Array<f32> &initHomography, const f32 minContrastRatio,
-      const s32 quadRefinementIterations, const s32 numRefinementSamples,
+      const s32 refine_quadRefinementIterations, const s32 refine_numRefinementSamples, const f32 refine_quadRefinementMaxCornerChange,
+      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       MemoryStack scratch)
     {
       using namespace VisionMarkerDecisionTree;
 
       Result lastResult = RESULT_FAIL;
-      this->isValid = false;
+      this->validity = UNKNOWN;
 
       Initialize();
 
@@ -745,8 +749,8 @@ namespace Anki
       f32 brightValue = 0.f, darkValue = 0.f;
       bool enoughContrast = false;
       if((lastResult = this->ComputeBrightDarkValues(image, initHomography, minContrastRatio,
-                                                     brightValue, darkValue, enoughContrast)) != RESULT_OK) {
-        return lastResult;
+        brightValue, darkValue, enoughContrast)) != RESULT_OK) {
+          return lastResult;
       }
       EndBenchmark("vme_brightdarkvals");
 
@@ -763,15 +767,25 @@ namespace Anki
 
         const u8 meanGrayvalueThreshold = static_cast<u8>(0.5f*(brightValue+darkValue));
 
-        if(quadRefinementIterations > 0) {
+        if(refine_quadRefinementIterations > 0) {
           BeginBenchmark("vme_quadrefine");
 
-          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, quadRefinementIterations, darkValue, brightValue, numRefinementSamples, quad, homography, scratch)) != RESULT_OK)
+          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, refine_quadRefinementIterations, darkValue, brightValue, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, quad, homography, scratch)) != RESULT_OK)
           {
             // TODO: Don't fail? Just warn and keep original quad?
             AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
               "RefineQuadrilateral",
               "RefineQuadrilateral() failed with code %0x.", lastResult);
+          }
+
+          Quadrilateral<s16> quadS16;
+          quadS16.SetCast(quad);
+
+          bool areCornersDisordered;
+          const bool isReasonable = IsQuadrilateralReasonable(quadS16, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, image.get_size(0), image.get_size(1), areCornersDisordered);
+
+          if(!isReasonable) {
+            quad.SetCast(initQuad);
           }
 
           EndBenchmark("vme_quadrefine");
@@ -800,31 +814,31 @@ namespace Anki
           BeginBenchmark("vme_verify");
 #if USE_RED_BLACK_VERIFICATION_TREES
           bool isVerified = false;
-          
+
           if((lastResult = VisionMarker::verifyRedTree.Verify(image, homography, meanGrayvalueThreshold,
-                                                              multiClassLabel, isVerified)) != RESULT_OK) {
-            return lastResult;
+            multiClassLabel, isVerified)) != RESULT_OK) {
+              return lastResult;
           }
-          
+
           if(isVerified) {
             if((lastResult = VisionMarker::verifyBlackTree.Verify(image, homography, meanGrayvalueThreshold,
-                                                                  multiClassLabel, isVerified)) != RESULT_OK) {
-              return lastResult;
+              multiClassLabel, isVerified)) != RESULT_OK) {
+                return lastResult;
             }
           }
-          
+
 #else
           if((lastResult = VisionMarker::verificationTrees[multiClassLabel].Classify(image, homography,
             meanGrayvalueThreshold, tempLabel)) != RESULT_OK)
           {
             return lastResult;
           }
-          
+
           const OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
           const bool isVerified = verifyLabel == multiClassLabel;
 #endif
           EndBenchmark("vme_verify");
-          
+
           if(isVerified)
           {
             // We have a valid, verified classification.
@@ -844,33 +858,32 @@ namespace Anki
 
             // Mark this as a valid marker (note that reaching this point should
             // be the only way isValid is true.
-            this->isValid = true;
+            this->validity = VALID;
           } else {
 #ifdef OUTPUT_FAILED_MARKER_STEPS
-            AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected");
+            AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected\n");
 #endif
+            this->validity = UNVERIFIED;
           } // if(verifyLabel == multiClassLabel)
-
-
         } else {
 #ifdef OUTPUT_FAILED_MARKER_STEPS
-          AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected");
+          AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected\n");
 #endif
         } // if(multiClassLabel != MARKER_UNKNOWN)
       } else {
         // Not enough contrast at bright/dark pairs.
-        this->isValid = false;
-        
+        this->validity = LOW_CONTRAST;
+
         // This is relatively common (and reasonable/expected), so maybe we
         // don't want to print these messages?
         /*
-#ifdef OUTPUT_FAILED_MARKER_STEPS
+        #ifdef OUTPUT_FAILED_MARKER_STEPS
         AnkiWarn("VisionMarker::Extract", "Poor contrast marker detected");
-#endif
-         */
+        #endif
+        */
       } // if contrast is sufficient
 
-      if(!this->isValid) {
+      if(this->validity != VALID) {
         this->markerType = Vision::MARKER_UNKNOWN;
         this->corners.SetCast(initQuad); // Just copy the non-reordered, non-refined corners
       }

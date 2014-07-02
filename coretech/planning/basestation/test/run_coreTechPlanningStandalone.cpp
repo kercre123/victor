@@ -42,16 +42,16 @@ int main(int argc, char *argv[])
 
       SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), g);
 
-      if(it.Done()) {
+      if(it.Done(env)) {
         cout<<"  no actions!\n";
         break;
       }
 
-      it.Next();
+      it.Next(env);
 
       std::map<ActionID, StateID> results;
 
-      while(!it.Done()) {
+      while(!it.Done(env)) {
         MotionPrimitive prim;
         string name;
         if(!env.GetMotion(curr.theta, it.Front().actionID, prim)) {
@@ -65,18 +65,28 @@ int main(int argc, char *argv[])
             <<State(it.Front().stateID)<<" cost = "
             <<(it.Front().g - g)<<endl;
         results[it.Front().actionID] = it.Front().stateID;
-        it.Next();
+        it.Next(env);
       }
 
-      cout<<"> ";
+      cout<<" -1: exit\n> ";
       cin>>choice;
 
       if(choice >= 0 && results.count(choice) > 0) {
-        plan.Push(choice);
+        plan.Push(choice, 0.0);
         writePath("path.txt", env, plan);
 
         curr = State(results[choice]);
       }
+    }
+
+    printf("complete. Path: \n");
+    env.PrintPlan(plan);
+
+    cout<<"final state: "<<env.State2State_c(env.GetPlanFinalState(plan))<<endl;
+
+    printf("\n\nTestPlan:\n");
+    for(auto action : plan.actions_) {
+      printf("plan.Push(%d);\n", action);
     }
   }
   else if(argc == 7 || argc == 6) {
@@ -87,7 +97,7 @@ int main(int argc, char *argv[])
       return -1;
     }
     xythetaPlanner planner(env);
-    float theta = 0.0;
+    //float theta = 0.0;
     if(argc == 7) {
       planner.AllowFreeTurnInPlaceAtGoal();
     }
@@ -95,7 +105,7 @@ int main(int argc, char *argv[])
     State_c goal(atof(argv[3]), atof(argv[4]), atof(argv[5]));
 
     planner.SetGoal(goal);
-    planner.ComputePath();
+    planner.Replan();
 
     writePath("path.txt", env, planner.GetPlan());
     cout<<"done! check path.txt\n";
@@ -106,16 +116,18 @@ int main(int argc, char *argv[])
       return -1;
     }
     xythetaPlanner planner(env);
-    float theta = 0.0;
+    //float theta = 0.0;
 
     State_c goal(atof(argv[3]), atof(argv[4]), atof(argv[5]));
     State_c start(atof(argv[6]), atof(argv[7]), atof(argv[8]));
 
     planner.SetGoal(goal);
     planner.SetStart(start);
-    planner.AllowFreeTurnInPlaceAtGoal();
+    // planner.AllowFreeTurnInPlaceAtGoal();
 
-    planner.ComputePath();
+    planner.Replan();
+
+    assert(env.PlanIsSafe(planner.GetPlan(), 0));
 
     writePath("path.txt", env, planner.GetPlan());
     cout<<"done! check path.txt\n";

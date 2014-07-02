@@ -27,6 +27,7 @@
 
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 
 
 namespace Anki
@@ -60,30 +61,44 @@ namespace Anki
       // Empties the queue of all observed markers
       void ClearAllObservedMarkers();
       
-      void QueueObservedMarker(const Vision::ObservedMarker& marker);
-                               //Robot* seenByRobot);
+      Result QueueObservedMarker(const MessageVisionMarker& msg, Robot& robot);
+      
+      void CommandRobotToDock(const RobotID_t whichRobot,
+                              Block&    whichBlock);
       
       // Clears all existing blocks in the world
       void ClearAllExistingBlocks();
       
+      // Clear all blocks with the specified type
+      void ClearBlocksByType(const ObjectType_t type);
+      
       // Clear a block with a specific ID. Returns true if block with that ID
       // is found and cleared, false otherwise.
-      bool ClearBlock(const BlockID_t withID);
+      bool ClearBlock(const ObjectID_t withID);
       
       const Vision::ObservableObjectLibrary& GetBlockLibrary() const;
       const ObjectsMapByID_t& GetExistingBlocks(const ObjectType_t blockType) const;
       const ObjectsMap_t& GetAllExistingBlocks() const {return existingBlocks_;}
       const Vision::ObservableObjectLibrary& GetMatLibrary() const;
       
-      const Vision::ObservableObject* GetObservableObjectByID(const ObjectID_t objectID) const;
+      // Return a pointer to a block with the specified ID. If that block
+      // does not exist, nullptr is returned.  Be sure to ALWAYS check
+      // for the return being null!
+      Block* GetBlockByID(const ObjectID_t objectID) const;
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension) and returns a vector of quads
       // of their outlines on the ground plane (z=0).  Can also pad the
-      // bounding boxes by a specified amount.
+      // bounding boxes by a specified amount. If ignoreIDs is not empty, then
+      // bounding boxes of blocks with an ID present in the set will not be
+      // returned. Analogous behavior for ignoreTypes.  The last flag indicates
+      // whether blocks being carried by any robot are included in the results.
       void GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
                                    const f32 padding,
-                                   std::vector<Quad2f>& boundingBoxes) const;
+                                   std::vector<Quad2f>& boundingBoxes,
+                                   const std::set<ObjectType_t>& ignoreTypes = std::set<ObjectType_t>(),
+                                   const std::set<ObjectID_t>& ignoreIDs = std::set<ObjectID_t>(),
+                                   const bool ignoreCarriedBlocks = true) const;
       
       // Returns true if any blocks were moved, added, or deleted on the
       // last update. Useful, for example, to know whether to update the
@@ -99,22 +114,25 @@ namespace Anki
       // Visualize markers in image display
       void DrawObsMarkers() const;
       
+      // Call every existing block's Visualize() method
+      void DrawAllBlocks() const;
       
     protected:
       
       // Typedefs / Aliases
       //using ObsMarkerContainer_t = std::multiset<Vision::ObservedMarker, Vision::ObservedMarker::Sorter()>;
-      using ObsMarkerList_t = std::list<Vision::ObservedMarker>;
-      using ObsMarkerListMap_t = std::map<TimeStamp_t, ObsMarkerList_t>;
+      //using ObsMarkerList_t = std::list<Vision::ObservedMarker>;
+      using PoseKeyObsMarkerMap_t = std::multimap<HistPoseKey, Vision::ObservedMarker>;
+      using ObsMarkerListMap_t = std::map<TimeStamp_t, PoseKeyObsMarkerMap_t>;
       
       
       // Methods
       
       //BlockWorld(); // protected constructor for singleton
 
-      bool UpdateRobotPose(Robot* robot, ObsMarkerList_t& obsMarkersAtTimestamp);
+      bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
-      uint32_t UpdateBlockPoses(ObsMarkerList_t& obsMarkersAtTimestamp);
+      size_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                   const ObjectsMap_t& objectsExisting,
@@ -123,8 +141,16 @@ namespace Anki
       
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
-                               ObjectsMap_t& objectsExisting);
+                               ObjectsMap_t& objectsExisting,
+                               const TimeStamp_t atTimestamp);
       
+      // Remove all posekey-marker pairs from the map if marker is marked used
+      void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);
+      
+      // Generates a list of ObservedMarker pointers that reference the actual ObservedMarkers
+      // stored in poseKeyObsMarkerMap
+      void GetObsMarkerList(const PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap,
+                            std::list<Vision::ObservedMarker*>& lst);
       
 
       // Member Variables
@@ -192,13 +218,15 @@ namespace Anki
       return matLibrary_;
     }
     
-    inline const Vision::ObservableObject* BlockWorld::GetObservableObjectByID(const ObjectID_t objectID) const
+    inline Block* BlockWorld::GetBlockByID(const ObjectID_t objectID) const
     {
       for (auto const & block : existingBlocks_) {
         auto const & objectByIdMap = block.second;
         auto objectIt = objectByIdMap.find(objectID);
         if (objectIt != objectByIdMap.end()) {
-          return objectIt->second;
+          Block* block = dynamic_cast<Block*>(objectIt->second);
+          CORETECH_ASSERT(block != nullptr);
+          return block;
         }
       }
       return nullptr;
