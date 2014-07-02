@@ -245,7 +245,7 @@ namespace Anki {
     
     const Pose3d& FindOrigin() const;
 
-        // Check to see if two poses are the same.  Return true if so.
+    // Check to see if two poses are the same.  Return true if so.
     // If requested, P_diff will contain the transformation from this pose to
     // P_other.
     bool IsSameAs(const Pose3d& P_other,
