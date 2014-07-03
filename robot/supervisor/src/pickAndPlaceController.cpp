@@ -14,10 +14,14 @@
 
 #define DEBUG_PAP_CONTROLLER 0
 
+// Whether or not to use "snapshots" for pick and place verification
+#define USE_SNAPSHOT_VERIFICATION 0
+
 // If you enable this, make sure image streaming is off
 // and you enable the print-to-file code in the ImageChunk message handler
 // on the basestation.
 #define SEND_PICKUP_VERIFICATION_SNAPSHOTS 0
+
 
 namespace Anki {
   namespace Cozmo {
@@ -65,6 +69,11 @@ namespace Anki {
         bool isCarryingBlock_ = false;
         bool lastActionSucceeded_ = false;
         
+        // When to transition to the next state. Only some states use this.
+        u32 transitionTime_ = 0;
+        
+        
+#if USE_SNAPSHOT_VERIFICATION
         // "Snapshots" for visual verification of a successful block pick up
         // We'll need two mini-images (or snapshots), along with an associated
         // memory buffer, to hold low-res views from the camera before and after
@@ -85,9 +94,6 @@ namespace Anki {
         Embedded::MemoryStack snapshotMemory_;
         const s32 SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD = 100; //SNAPSHOT_SIZE*SNAPSHOT_SIZE*64*64; // average grayscale difference of 64
         const s32 SNAPSHOT_COMPARE_THRESHOLD = SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD*SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD*SNAPSHOT_SIZE*SNAPSHOT_SIZE;
-        
-        // When to transition to the next state. Only some states use this.
-        u32 transitionTime_ = 0;
         
         // WARNING: ResetBuffers should be used with caution
         Result ResetBuffers()
@@ -110,7 +116,8 @@ namespace Anki {
           return RESULT_OK;
           
         } // ResetBuffers()
-
+        
+#endif // USE_SNAPSHOT_VERIFICATION
         
       } // "private" namespace
       
@@ -121,7 +128,7 @@ namespace Anki {
 
       Result Init() {
         Reset();
-        
+#if USE_SNAPSHOT_VERIFICATION
         AnkiConditionalErrorAndReturnValue(snapShotRoiLow_.get_width()  == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE &&
                                            snapShotRoiLow_.get_height() == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE,
                                            RESULT_FAIL_INVALID_SIZE, "PAP::Init()",
@@ -137,6 +144,10 @@ namespace Anki {
                                            SNAPSHOT_SIZE, SNAPSHOT_SIZE);
         
         return ResetBuffers();
+#else 
+        return RESULT_OK;
+#endif // USE_SNAPSHOT_VERIFICATION
+
       }
 
       
@@ -169,6 +180,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
+#if USE_SNAPSHOT_VERIFICATION
       // Since auto exposure settings may not have stabilized by this point,
       // just do a software normalize by raising the brightest pixel to 255.
       // The most typical failure case seems to be that the before image
@@ -293,7 +305,8 @@ namespace Anki {
         return ssd;
         
       } // CompareSnapshots()
-
+      
+#endif // USE_SNAPSHOT_VERIFICATION
       
       Result Update()
       {
@@ -417,6 +430,7 @@ namespace Anki {
               case DA_PICKUP_LOW:
               case DA_PICKUP_HIGH:
               {
+#if USE_SNAPSHOT_VERIFICATION
                 // Take a snapshot before we try to pick up. We will compare a
                 // post-pick up snapshot to this one to verify whether we
                 // actually picked up the block
@@ -436,6 +450,10 @@ namespace Anki {
                     return lastResult;
                   }
                 }
+#else
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                mode_ = MOVING_LIFT_POSTDOCK;
+#endif // USE_SNAPSHOT_VERIFICATION
                 break;
               }
                 
@@ -455,6 +473,7 @@ namespace Anki {
             
           case MOVING_LIFT_POSTDOCK:
             if (LiftController::IsInPosition()) {
+#if USE_SNAPSHOT_VERIFICATION
               switch(action_) {
                 case DA_PICKUP_LOW:
                   // Wait for visual verification
@@ -528,12 +547,61 @@ namespace Anki {
                 default:
                   PRINT("ERROR: Reached default switch statement in MOVING_LIFT_POSTDOCK case.\n");
               }
-            }
+#else 
+              // If not using snapshots, just backup after picking or placing,
+              // and move the head to a position to admire our work
+              
+              // Set head angle
+              switch(action_)
+              {
+                case DA_PICKUP_HIGH:
+                case DA_PLACE_HIGH:
+                {
+                  HeadController::SetDesiredAngle(DEG_TO_RAD(20));
+                  break;
+                } // HIGH
+                case DA_PICKUP_LOW:
+                case DA_PLACE_LOW:
+                {
+                  HeadController::SetDesiredAngle(DEG_TO_RAD(-5));
+                  break;
+                } // LOW
+                default:
+                  PRINT("ERROR: Reached default switch statement in MOVING_LIFT_POSTDOCK case.\n");
+              } // switch(action_)
+              
+              // Send pickup or place message.  Assume success, let BaseStation
+              // verify once we've backed out.
+              switch(action_)
+              {
+                case DA_PICKUP_LOW:
+                case DA_PICKUP_HIGH:
+                {
+                  SendBlockPickUpMessage(true);
+                  break;
+                } // PICKUP
+
+                case DA_PLACE_LOW:
+                case DA_PLACE_HIGH:
+                {
+                  SendBlockPlacedMessage(true);
+                  break;
+                } // PLACE
+                default:
+                  PRINT("ERROR: Reached default switch statement in MOVING_LIFT_POSTDOCK case.\n");
+              } // switch(action_)
+              
+              SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
+              transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
+              mode_ = BACKOUT;
+              
+#endif // USE_SNAPSHOT_VERIFICATION
+            } // if (LiftController::IsInPosition())
             break;
             
           case BACKOUT:
-            if (HAL::GetMicroCounter() > transitionTime_) {
-
+            if (HAL::GetMicroCounter() > transitionTime_ && HeadController::IsInPosition())
+            {
               SteeringController::ExecuteDirectDrive(0,0);
               
               switch(action_) {
@@ -542,7 +610,7 @@ namespace Anki {
                 case DA_PICKUP_HIGH:
                   mode_ = IDLE;
                   lastActionSucceeded_ = true;
-                  isCarryingBlock_ = true;
+                  //isCarryingBlock_ = true;
                   break;
                 case DA_PLACE_HIGH:
                   LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);

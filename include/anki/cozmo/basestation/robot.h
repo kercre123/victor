@@ -366,6 +366,7 @@ namespace Anki {
       ObjectID_t                  _dockBlockID;
       const Vision::KnownMarker*  _dockMarker;
       DockAction_t                _dockAction;
+      Pose3d                      _dockBlockOrigPose;
       
       f32 _waitUntilTime;
       

@@ -323,21 +323,96 @@ namespace Anki {
           if (!IsPickingOrPlacing() && !IsMoving() &&
               _waitUntilTime < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
           {
-            // Stopped executing docking path. Did it successfully dock?
-            if ((_dockAction == DA_PICKUP_LOW || _dockAction == DA_PICKUP_HIGH) && IsCarryingBlock()) {
-              PRINT_INFO("Picked up block successful!\n");
-            } else {
-              
-              if((_dockAction == DA_PLACE_HIGH) && !IsCarryingBlock()) {
-                PRINT_INFO("Placed block successfully!\n");
-              } else {
-                PRINT_INFO("Deleting block that I failed to dock to, and aborting.\n");
-                _world->ClearBlock(_dockBlockID);
-              }
-            }
-            
-            _dockBlockID = ANY_OBJECT;
-            _dockMarker  = nullptr;
+            // Stopped executing docking path, and should have backed out by now,
+            // and have head pointed at an angle to see where we just placed or
+            // picked up from. So we will check if we see a block with the same
+            // ID as the one we were supposed to be picking or placing, in the
+            // right position.
+            switch(_dockAction)
+            {
+              case DA_PICKUP_LOW:
+              case DA_PICKUP_HIGH:
+              {
+                // In pickup mode, we should _not_ still see a block with the
+                // same type as the one we were supposed to pick up in that
+                // block's original position because we should now be carrying it.
+                Block* carryBlock = _world->GetBlockByID(_carryingBlockID);
+                if(carryBlock == nullptr) {
+                  PRINT_NAMED_ERROR("Robot.Update.CarryBlockNoLongerExists",
+                                    "Block %d we were carrying no longer exists in the world.\n",
+                                    _carryingBlockID);
+                  break;
+                }
+                
+                const BlockWorld::ObjectsMapByID_t& blocksWithType = _world->GetExistingBlocks(carryBlock->GetType());
+                Pose3d P_diff;
+                bool blockInOriginalPoseFound = false;
+                for(auto block : blocksWithType) {
+                  // TODO: Make thresholds parameters
+                  // TODO: is it safe to always have useAbsRotation=true here?
+                  if(block.second->GetPose().IsSameAs_WithAmbiguity(_dockBlockOrigPose, carryBlock->
+                                                                    GetRotationAmbiguities(),
+                                                                    15.f, DEG_TO_RAD(25), true, P_diff))
+                  {
+                    blockInOriginalPoseFound = true;
+                    break;
+                  }
+                }
+                
+                if(blockInOriginalPoseFound)
+                {
+                  // Must not actually be carrying the block I thought I was!
+                  _world->ClearBlock(_carryingBlockID);
+                  _isCarryingBlock = false;
+                  _carryingBlockID = ANY_OBJECT;
+                  PRINT_INFO("Block pick-up FAILED! (Still seeing block in same place.)\n");
+                } else {
+                  _isCarryingBlock = true;
+                  _carryingBlockID = _dockBlockID;
+                  _dockBlockID     = ANY_OBJECT;
+                  _dockMarker      = nullptr;
+                  PRINT_INFO("Block pick-up SUCCEEDED!\n");
+                }
+                break;
+              } // case PICKUP
+                
+              case DA_PLACE_LOW:
+              case DA_PLACE_HIGH:
+              {
+                // In place mode, we _should_ now see a block with the ID of the
+                // one we were carrying, in the place we think we left it when
+                // we placed it.
+                // TODO: check to see it ended up in the right place?
+                Block* block = _world->GetBlockByID(_carryingBlockID);
+                if(block == nullptr) {
+                  PRINT_NAMED_ERROR("Robot.Update.CarryBlockNoLongerExists",
+                                    "Block %d we were carrying no longer exists in the world.\n",
+                                    _carryingBlockID);
+                }
+                else if(block->GetLastObservedTime() > (GetLastMsgTimestamp()-500))
+                {
+                  // We've seen the block in the last half second (which could
+                  // not be true if we were still carrying it)
+                  _isCarryingBlock = false;
+                  _carryingBlockID = ANY_OBJECT;
+                  _dockBlockID     = ANY_OBJECT;
+                  _dockMarker      = nullptr;
+                  PRINT_INFO("Block placement SUCCEEDED!\n");
+                } else {
+                  // TODO: correct to assume we are still carrying the block?
+                  _isCarryingBlock = true;
+                  _dockBlockID     = _carryingBlockID;
+                  PickUpDockBlock(); // re-pickup block to attach it to the lift again
+                  _dockMarker      = nullptr;
+                  PRINT_INFO("Block placement FAILED!\n");
+
+                }
+                break;
+              } // case PLACE
+                
+              default:
+                PRINT_NAMED_ERROR("Robot.Update", "Reached unknown dockAction case.\n");
+            } // switch(_dockAction)
             
             SetState(IDLE);
           }
@@ -735,6 +810,8 @@ namespace Anki {
       _dockBlockID = blockID;
       _dockMarker  = marker;
       
+      _dockBlockOrigPose = block->GetPose();
+      
       // Dock marker has to be a child of the dock block
       if(_dockMarker->GetPose().GetParent() != &block->GetPose()) {
         PRINT_NAMED_ERROR("Robot.DockWithBlock.MarkerNotOnBlock",
@@ -766,18 +843,24 @@ namespace Anki {
       // Base the block's pose relative to the lift on how far away the dock
       // marker is from the center of the block
       // TODO: compute the height adjustment per block or at least use values from cozmoConfig.h
-      Pose3d newPose(block->GetPose().GetRotationMatrix(),
-                     {{_dockMarker->GetPose().GetTranslation().Length() +
-                       LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f}});
+      Pose3d blockPoseWrtLiftPose;
+      if(block->GetPose().GetWithRespectTo(_liftPose, blockPoseWrtLiftPose) == false) {
+        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.BlockAndLiftPoseHaveDifferentOrigins",
+                          "Block robot is picking up and robot's lift must share a common origin.\n");
+        return RESULT_FAIL;
+      }
+      
+      blockPoseWrtLiftPose.SetTranslation({{_dockMarker->GetPose().GetTranslation().Length() +
+        LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f}});
       
       // make part of the lift's pose chain so the block will now be relative to
       // the lift and move with the robot
-      newPose.SetParent(&_liftPose);
+      blockPoseWrtLiftPose.SetParent(&_liftPose);
 
       _dockBlockID = ANY_OBJECT;
       _dockMarker  = nullptr;
       
-      block->SetPose(newPose);
+      block->SetPose(blockPoseWrtLiftPose);
       block->SetIsBeingCarried(true);
       
       return RESULT_OK;
@@ -789,7 +872,7 @@ namespace Anki {
     {
       if(_carryingBlockID == ANY_OBJECT) {
         PRINT_NAMED_WARNING("Robot.PlaceCarriedBlock.CarryingBlockNotSpecified",
-                          "No carrying block set, but told to place one.");
+                          "No carrying block set, but told to place one.\n");
         return RESULT_FAIL;
       }
       
