@@ -1,6 +1,6 @@
-% function runTests_detectFiducialMarkers_compilePerTestStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth)
+% function runTests_detectFiducialMarkers_compilePerTestStats(workList, resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth)
 
-function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth)
+function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(workList, resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth)
     % TODO: At different distances / angles
     
     global useImpixelinfo;
@@ -10,98 +10,103 @@ function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(resul
     else
         old_useImpixelinfo = -1;
     end
-    
-    showImageDetectionsScale = 1;
-    
+        
     perTestStats = cell(length(resultsData), 1);
+    
+    lastTestId = -1;
     
     filenameNameLookup = '';
     
-    for iTest = 1:length(resultsData)
-        %     for iTest = length(resultsData)
+    tic
+    
+    for iWork = 1:length(workList)
+        curTestId = workList{iWork}{1};
+        curPoseId = workList{iWork}{2};
         
-        tic
-        
-        perTestStats{iTest} = cell(length(resultsData{iTest}), 1);
-        
-        jsonData = loadjson(allTestFilenames{iTest});
-        
-        for iPose = 1:length(perTestStats{iTest})
-            perTestStats{iTest}{iPose} = cell(length(resultsData{iTest}{iPose}), 1);
-            
-            imageFilename = [testPath, jsonData.Poses{iPose}.ImageFile];
-            imageFilename = strrep(imageFilename, '//', '/');
-            image = imread(imageFilename);
-            
-            outputFilenameImage = [resultsDirectory, sprintf('detection_dist%d_angle%d_expose%0.1f_light%d.png',...
-                jsonData.Poses{iPose}.Scene.Distance,...
-                jsonData.Poses{iPose}.Scene.angle,...
-                jsonData.Poses{iPose}.Scene.CameraExposure,...
-                jsonData.Poses{iPose}.Scene.light)];
-            
-            slashIndexes = strfind(outputFilenameImage, '/');
-            outputFilenameImageJustName = outputFilenameImage((slashIndexes(end)+1):end);
-            slashIndexes = strfind(imageFilename, '/');
-            imageFilenameJustName = imageFilename((slashIndexes(end)+1):end);
-            
-            filenameNameLookup = [filenameNameLookup, sprintf('%d %d \t%s \t%s\n', iTest, iPose, outputFilenameImageJustName, imageFilenameJustName)]; %#ok<AGROW>
-            
-            if showImageDetectionWidth(1) ~= size(image,2)
-                showImageDetectionsScale = showImageDetectionWidth(1) / size(image,2);
-            else
-                showImageDetectionsScale = 1;
+        if curTestId ~= lastTestId
+            if lastTestId ~= -1
+                disp(sprintf('Compiled test results %d/%d in %f seconds', lastTestId, length(resultsData), toc()));
+                tic
             end
+
+            perTestStats{curTestId} = cell(length(resultsData{curTestId}), 1);
+            jsonData = loadjson(allTestFilenames{curTestId});
             
-            for iTestFunction = 1:length(perTestStats{iTest}{iPose})
-                curResultsData = resultsData{iTest}{iPose}{iTestFunction};
-                
-                [curCompiled.numQuadsNotIgnored, curCompiled.numQuadsDetected] = compileQuadResults(curResultsData);
-                
-                [curCompiled.numCorrect_positionLabelRotation,...
-                    curCompiled.numCorrect_positionLabel,...
-                    curCompiled.numCorrect_position,...
-                    curCompiled.numSpurriousDetections,...
-                    curCompiled.numUndetected,...
-                    markersToDisplay] = compileMarkerResults(curResultsData);
-                
-                outputFilenameResult = [resultsDirectory, sprintf('result_%03d%03d%03d_dist%d_angle%d_expose%0.1f_light%d_%s.png',...
-                    iTest, iPose, iTestFunction,...
-                    jsonData.Poses{iPose}.Scene.Distance,...
-                    jsonData.Poses{iPose}.Scene.angle,...
-                    jsonData.Poses{iPose}.Scene.CameraExposure,...
-                    jsonData.Poses{iPose}.Scene.light,...
-                    testFunctionNames{iTestFunction})];
-                
-                toShowResults = {
-                    iTest,...
-                    iPose,...
-                    iTestFunction,...
-                    jsonData.Poses{iPose}.Scene.Distance,...
-                    jsonData.Poses{iPose}.Scene.angle,...
-                    jsonData.Poses{iPose}.Scene.CameraExposure,...
-                    jsonData.Poses{iPose}.Scene.light,...
-                    testFunctionNames{iTestFunction},...
-                    curCompiled.numCorrect_positionLabelRotation,...
-                    curCompiled.numCorrect_positionLabel,...
-                    curCompiled.numCorrect_position,...
-                    curCompiled.numQuadsDetected,...
-                    curCompiled.numQuadsNotIgnored,...
-                    curCompiled.numSpurriousDetections};
-                
-                drawnImage = mexDrawSystemTestResults(uint8(image), curResultsData.detectedQuads, curResultsData.detectedQuadValidity, markersToDisplay(:,1), int32(cell2mat(markersToDisplay(:,2))), markersToDisplay(:,3), showImageDetectionsScale, outputFilenameResult, toShowResults);
-                drawnImage = drawnImage(:,:,[3,2,1]);
-                
-                perTestStats{iTest}{iPose}{iTestFunction} = curCompiled;
-                
-                if showImageDetections
-                    imshow(drawnImage)
-                    pause(.03);
-                end
-            end % for iTestFunction = 1:length(perTestStats{iTest}{iPose})
-        end % for iPose = 1:length(perTestStats{iTest})
+            lastTestId = curTestId;
+        end
         
-        disp(sprintf('Compiled test results %d/%d in %f seconds', iTest, length(resultsData), toc()));
-    end % for iTest = 1:length(resultsData)
+        perTestStats{curTestId}{curPoseId} = cell(length(resultsData{curTestId}{curPoseId}), 1);
+
+        imageFilename = [testPath, jsonData.Poses{curPoseId}.ImageFile];
+        imageFilename = strrep(imageFilename, '//', '/');
+        image = imread(imageFilename);
+
+        outputFilenameImage = [resultsDirectory, sprintf('detection_dist%d_angle%d_expose%0.1f_light%d.png',...
+            jsonData.Poses{curPoseId}.Scene.Distance,...
+            jsonData.Poses{curPoseId}.Scene.angle,...
+            jsonData.Poses{curPoseId}.Scene.CameraExposure,...
+            jsonData.Poses{curPoseId}.Scene.light)];
+
+        slashIndexes = strfind(outputFilenameImage, '/');
+        outputFilenameImageJustName = outputFilenameImage((slashIndexes(end)+1):end);
+        slashIndexes = strfind(imageFilename, '/');
+        imageFilenameJustName = imageFilename((slashIndexes(end)+1):end);
+
+        filenameNameLookup = [filenameNameLookup, sprintf('%d %d \t%s \t%s\n', curTestId, curPoseId, outputFilenameImageJustName, imageFilenameJustName)]; %#ok<AGROW>
+
+        if showImageDetectionWidth(1) ~= size(image,2)
+            showImageDetectionsScale = showImageDetectionWidth(1) / size(image,2);
+        else
+            showImageDetectionsScale = 1;
+        end
+
+        for iTestFunction = 1:length(perTestStats{curTestId}{curPoseId})
+            curResultsData = resultsData{curTestId}{curPoseId}{iTestFunction};
+
+            [curCompiled.numQuadsNotIgnored, curCompiled.numQuadsDetected] = compileQuadResults(curResultsData);
+
+            [curCompiled.numCorrect_positionLabelRotation,...
+                curCompiled.numCorrect_positionLabel,...
+                curCompiled.numCorrect_position,...
+                curCompiled.numSpurriousDetections,...
+                curCompiled.numUndetected,...
+                markersToDisplay] = compileMarkerResults(curResultsData);
+
+            outputFilenameResult = [resultsDirectory, sprintf('result_%03d%03d%03d_dist%d_angle%d_expose%0.1f_light%d_%s.png',...
+                curTestId, curPoseId, iTestFunction,...
+                jsonData.Poses{curPoseId}.Scene.Distance,...
+                jsonData.Poses{curPoseId}.Scene.angle,...
+                jsonData.Poses{curPoseId}.Scene.CameraExposure,...
+                jsonData.Poses{curPoseId}.Scene.light,...
+                testFunctionNames{iTestFunction})];
+
+            toShowResults = {
+                curTestId,...
+                curPoseId,...
+                iTestFunction,...
+                jsonData.Poses{curPoseId}.Scene.Distance,...
+                jsonData.Poses{curPoseId}.Scene.angle,...
+                jsonData.Poses{curPoseId}.Scene.CameraExposure,...
+                jsonData.Poses{curPoseId}.Scene.light,...
+                testFunctionNames{iTestFunction},...
+                curCompiled.numCorrect_positionLabelRotation,...
+                curCompiled.numCorrect_positionLabel,...
+                curCompiled.numCorrect_position,...
+                curCompiled.numQuadsDetected,...
+                curCompiled.numQuadsNotIgnored,...
+                curCompiled.numSpurriousDetections};
+
+            drawnImage = mexDrawSystemTestResults(uint8(image), curResultsData.detectedQuads, curResultsData.detectedQuadValidity, markersToDisplay(:,1), int32(cell2mat(markersToDisplay(:,2))), markersToDisplay(:,3), showImageDetectionsScale, outputFilenameResult, toShowResults);
+            drawnImage = drawnImage(:,:,[3,2,1]);
+
+            perTestStats{curTestId}{curPoseId}{iTestFunction} = curCompiled;
+
+            if showImageDetections
+                imshow(drawnImage)
+                pause(.03);
+            end
+        end % for iTestFunction = 1:length(perTestStats{iTest}{curPoseId})
+    end % for iWork = 1:length(workList)
     
     outputFilenameNameLookup = [resultsDirectory, 'filenameLookup.txt'];
     

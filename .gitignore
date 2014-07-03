@@ -106,3 +106,4 @@ systemTests/tests/intermediate/
 matlab/basicsResults_input0.mat
 matlab/basicsResults_input1.mat
 matlab/basicsResults_input2.mat
+systemTests/tests/*.mat

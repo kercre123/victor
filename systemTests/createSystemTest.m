@@ -104,16 +104,17 @@ for iIn = startIndex:endIndex
 end
 
 % For speed, also save a copy with just the filenames
-outputFilename_justFilenames = [outputFilename(1:(end-5)), '_justFilenames.json'];
+% outputFilename_justFilenames = [outputFilename(1:(end-5)), '_justFilenames.json'];
 outputFilename_all = [outputFilename(1:(end-5)), '_all.json'];
 
-jsonTestDataFilenamesOnly.Poses = cell(length(jsonTestData.Poses), 1);
-for iPose = 1:length(jsonTestDataFilenamesOnly.Poses)
-    jsonTestDataFilenamesOnly.Poses{iPose}.ImageFile = jsonTestData.Poses{iPose}.ImageFile;
-end
+% jsonTestDataFilenamesOnly.Poses = cell(length(jsonTestData.Poses), 1);
+% for iPose = 1:length(jsonTestDataFilenamesOnly.Poses)
+%     jsonTestDataFilenamesOnly.Poses{iPose}.ImageFile = jsonTestData.Poses{iPose}.ImageFile;
+% end
 
-disp(sprintf('Saving %s and %s...', outputFilename_all, outputFilename_justFilenames));
+disp(sprintf('Saving %s...', outputFilename_all));
+% disp(sprintf('Saving %s and %s...', outputFilename_all, outputFilename_justFilenames));
 savejson('', jsonTestData, outputFilename_all);
-savejson('', jsonTestDataFilenamesOnly, outputFilename_justFilenames);
+% savejson('', jsonTestDataFilenamesOnly, outputFilename_justFilenames);
 
 % keyboard
