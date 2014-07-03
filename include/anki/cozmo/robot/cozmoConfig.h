@@ -41,10 +41,19 @@ namespace Anki {
     const f32 LIFT_HEIGHT_CARRY    = 98.f;
     */
     
-    // Robot #2
+    // Robot #2 (w/ (lightly stripped) clutch arm)
+    /*
     const f32 LIFT_HEIGHT_LOWDOCK  = 26.f;
     const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
     const f32 LIFT_HEIGHT_CARRY    = 90.5f;
+     */
+    
+    // Robot #1 (clutch-less arm)
+    const f32 LIFT_HEIGHT_LOWDOCK  = 23.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
+    const f32 LIFT_HEIGHT_CARRY    = 95.f;
+
+
 #endif
 
     

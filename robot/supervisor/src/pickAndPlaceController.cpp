@@ -39,11 +39,11 @@ namespace Anki {
         #ifdef SIMULATOR
         const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 26.f;
         const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 18.f;
-        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;
         #else
         const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
-        const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 19.5f;
-        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+        const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.5f;
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;
         #endif
         
 
@@ -371,9 +371,9 @@ namespace Anki {
               PRINT("PAP: DOCKING\n");
 #endif
               
-              if (action_ == DA_PICKUP_HIGH) {
-                DockingController::TrackCamWithLift(true);
-              }
+              //if (action_ == DA_PICKUP_HIGH) {
+              //  DockingController::TrackCamWithLift(true);
+              //}
             }
             break;
             
@@ -381,7 +381,7 @@ namespace Anki {
              
             if (!DockingController::IsBusy()) {
 
-              DockingController::TrackCamWithLift(false);
+              //DockingController::TrackCamWithLift(false);
               
               if (DockingController::DidLastDockSucceed()) {
                 
