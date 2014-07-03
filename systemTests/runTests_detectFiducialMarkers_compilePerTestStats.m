@@ -1,17 +1,22 @@
-% function runTests_detectFiducialMarkers_compilePerTestStats(workList, resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth)
+% function runTests_detectFiducialMarkers_compilePerTestStats()
 
-function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(workList, resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth)
+function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(workQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth)
     % TODO: At different distances / angles
     
     global useImpixelinfo;
+    global g_maxMatchDistance_pixels;
+    global g_maxMatchDistance_percent;
     
     if exist('useImpixelinfo', 'var')
         old_useImpixelinfo = useImpixelinfo;
     else
         old_useImpixelinfo = -1;
     end
-        
-    perTestStats = cell(length(resultsData), 1);
+    
+    g_maxMatchDistance_pixels = maxMatchDistance_pixels;
+    g_maxMatchDistance_percent = maxMatchDistance_percent;
+    
+    perTestStats = cell(length(resultsData_basics), 1);
     
     lastTestId = -1;
     
@@ -19,105 +24,104 @@ function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(workL
     
     tic
     
-    for iWork = 1:length(workList)
-        curTestId = workList{iWork}{1};
-        curPoseId = workList{iWork}{2};
-        
-        if curTestId ~= lastTestId
+    for iWork = 1:length(workQueue)        
+        if workQueue{iWork}.iTest ~= lastTestId
             if lastTestId ~= -1
-                disp(sprintf('Compiled test results %d/%d in %f seconds', lastTestId, length(resultsData), toc()));
+                disp(sprintf('Compiled test results %d/%d in %f seconds', lastTestId, length(resultsData_basics), toc()));
                 tic
             end
-
-            perTestStats{curTestId} = cell(length(resultsData{curTestId}), 1);
-            jsonData = loadjson(allTestFilenames{curTestId});
             
-            lastTestId = curTestId;
+            perTestStats{workQueue{iWork}.iTest} = cell(length(resultsData_basics{workQueue{iWork}.iTest}), 1);
+            
+            curTestData = allTestData{workQueue{iWork}.iTest};
+            jsonData = curTestData.jsonData;
+                        
+            lastTestId = workQueue{iWork}.iTest;
         end
         
-        perTestStats{curTestId}{curPoseId} = cell(length(resultsData{curTestId}{curPoseId}), 1);
-
-        imageFilename = [testPath, jsonData.Poses{curPoseId}.ImageFile];
+        perTestStats{workQueue{iWork}.iTest}{workQueue{iWork}.iPose} = cell(length(resultsData_basics{workQueue{iWork}.iTest}{workQueue{iWork}.iPose}), 1);
+        
+        imageFilename = [curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile];
         imageFilename = strrep(imageFilename, '//', '/');
         image = imread(imageFilename);
+        
+%         outputFilenameImage = [resultsDirectory, sprintf('detection_dist%d_angle%d_expose%0.1f_light%d.png',...
+%             jsonData.Poses{workQueue{iWork}.iPose}.Scene.Distance,...
+%             jsonData.Poses{workQueue{iWork}.iPose}.Scene.angle,...
+%             jsonData.Poses{workQueue{iWork}.iPose}.Scene.CameraExposure,...
+%             jsonData.Poses{workQueue{iWork}.iPose}.Scene.light)];
 
-        outputFilenameImage = [resultsDirectory, sprintf('detection_dist%d_angle%d_expose%0.1f_light%d.png',...
-            jsonData.Poses{curPoseId}.Scene.Distance,...
-            jsonData.Poses{curPoseId}.Scene.angle,...
-            jsonData.Poses{curPoseId}.Scene.CameraExposure,...
-            jsonData.Poses{curPoseId}.Scene.light)];
-
-        slashIndexes = strfind(outputFilenameImage, '/');
-        outputFilenameImageJustName = outputFilenameImage((slashIndexes(end)+1):end);
-        slashIndexes = strfind(imageFilename, '/');
-        imageFilenameJustName = imageFilename((slashIndexes(end)+1):end);
-
-        filenameNameLookup = [filenameNameLookup, sprintf('%d %d \t%s \t%s\n', curTestId, curPoseId, outputFilenameImageJustName, imageFilenameJustName)]; %#ok<AGROW>
-
+%         % Create the text lookup between file names
+%         slashIndexes = strfind(workQueue{iWork}.perTestStats_imageFilename, '/');
+%         outputFilenameImageJustName = workQueue{iWork}.perTestStats_imageFilename((slashIndexes(end)+1):end);        
+%         slashIndexes = strfind(jsonData.Poses{workQueue{iWork}.iPose}.ImageFile, '/');
+%         imageFilenameJustName = jsonData.Poses{workQueue{iWork}.iPose}.ImageFile((slashIndexes(end)+1):end);        
+%         filenameNameLookup = [filenameNameLookup, sprintf('%d %d \t%s \t%s\n', workQueue{iWork}.iTest, workQueue{iWork}.iPose, outputFilenameImageJustName, imageFilenameJustName)]; %#ok<AGROW>
+        
         if showImageDetectionWidth(1) ~= size(image,2)
             showImageDetectionsScale = showImageDetectionWidth(1) / size(image,2);
         else
             showImageDetectionsScale = 1;
         end
+        
+        curResultsData = resultsData_basics{workQueue{iWork}.iTest}{workQueue{iWork}.iPose};
 
-        for iTestFunction = 1:length(perTestStats{curTestId}{curPoseId})
-            curResultsData = resultsData{curTestId}{curPoseId}{iTestFunction};
+        [curCompiledData.numQuadsNotIgnored, curCompiledData.numQuadsDetected] = compileQuadResults(curResultsData);
 
-            [curCompiled.numQuadsNotIgnored, curCompiled.numQuadsDetected] = compileQuadResults(curResultsData);
+        [curCompiledData.numCorrect_positionLabelRotation,...
+            curCompiledData.numCorrect_positionLabel,...
+            curCompiledData.numCorrect_position,...
+            curCompiledData.numSpurriousDetections,...
+            curCompiledData.numUndetected,...
+            markersToDisplay] = compileMarkerResults(curResultsData);
 
-            [curCompiled.numCorrect_positionLabelRotation,...
-                curCompiled.numCorrect_positionLabel,...
-                curCompiled.numCorrect_position,...
-                curCompiled.numSpurriousDetections,...
-                curCompiled.numUndetected,...
-                markersToDisplay] = compileMarkerResults(curResultsData);
+%             outputFilenameResult = [resultsDirectory, sprintf('result_%03d%03d%03d_dist%d_angle%d_expose%0.1f_light%d_%s.png',...
+%                 workQueue{iWork}.iTest, workQueue{iWork}.iPose, iTestFunction,...
+%                 jsonData.Poses{workQueue{iWork}.iPose}.Scene.Distance,...
+%                 jsonData.Poses{workQueue{iWork}.iPose}.Scene.angle,...
+%                 jsonData.Poses{workQueue{iWork}.iPose}.Scene.CameraExposure,...
+%                 jsonData.Poses{workQueue{iWork}.iPose}.Scene.light,...
+%                 testFunctionNames{iTestFunction})];
 
-            outputFilenameResult = [resultsDirectory, sprintf('result_%03d%03d%03d_dist%d_angle%d_expose%0.1f_light%d_%s.png',...
-                curTestId, curPoseId, iTestFunction,...
-                jsonData.Poses{curPoseId}.Scene.Distance,...
-                jsonData.Poses{curPoseId}.Scene.angle,...
-                jsonData.Poses{curPoseId}.Scene.CameraExposure,...
-                jsonData.Poses{curPoseId}.Scene.light,...
-                testFunctionNames{iTestFunction})];
+        toShowResults = {
+            workQueue{iWork}.iTest,...
+            workQueue{iWork}.iPose,...
+            0,... % TODO: remove iTestFunction
+            jsonData.Poses{workQueue{iWork}.iPose}.Scene.Distance,...
+            jsonData.Poses{workQueue{iWork}.iPose}.Scene.angle,...
+            jsonData.Poses{workQueue{iWork}.iPose}.Scene.CameraExposure,...
+            jsonData.Poses{workQueue{iWork}.iPose}.Scene.light,...
+            ' ',... % TODO: add the test function name
+            curCompiledData.numCorrect_positionLabelRotation,...
+            curCompiledData.numCorrect_positionLabel,...
+            curCompiledData.numCorrect_position,...
+            curCompiledData.numQuadsDetected,...
+            curCompiledData.numQuadsNotIgnored,...
+            curCompiledData.numSpurriousDetections};
 
-            toShowResults = {
-                curTestId,...
-                curPoseId,...
-                iTestFunction,...
-                jsonData.Poses{curPoseId}.Scene.Distance,...
-                jsonData.Poses{curPoseId}.Scene.angle,...
-                jsonData.Poses{curPoseId}.Scene.CameraExposure,...
-                jsonData.Poses{curPoseId}.Scene.light,...
-                testFunctionNames{iTestFunction},...
-                curCompiled.numCorrect_positionLabelRotation,...
-                curCompiled.numCorrect_positionLabel,...
-                curCompiled.numCorrect_position,...
-                curCompiled.numQuadsDetected,...
-                curCompiled.numQuadsNotIgnored,...
-                curCompiled.numSpurriousDetections};
+        drawnImage = mexDrawSystemTestResults(uint8(image), curResultsData.detectedQuads, curResultsData.detectedQuadValidity, markersToDisplay(:,1), int32(cell2mat(markersToDisplay(:,2))), markersToDisplay(:,3), showImageDetectionsScale, workQueue{iWork}.perTestStats_imageFilename, toShowResults);
+        drawnImage = drawnImage(:,:,[3,2,1]);
 
-            drawnImage = mexDrawSystemTestResults(uint8(image), curResultsData.detectedQuads, curResultsData.detectedQuadValidity, markersToDisplay(:,1), int32(cell2mat(markersToDisplay(:,2))), markersToDisplay(:,3), showImageDetectionsScale, outputFilenameResult, toShowResults);
-            drawnImage = drawnImage(:,:,[3,2,1]);
+        perTestStats{workQueue{iWork}.iTest}{workQueue{iWork}.iPose} = curCompiledData;
+        
+        save(workQueue{iWork}.perTestStats_dataFilename, 'curCompiledData');
 
-            perTestStats{curTestId}{curPoseId}{iTestFunction} = curCompiled;
-
-            if showImageDetections
-                imshow(drawnImage)
-                pause(.03);
-            end
-        end % for iTestFunction = 1:length(perTestStats{iTest}{curPoseId})
-    end % for iWork = 1:length(workList)
+        if showImageDetections
+            imshow(drawnImage)
+            pause(.03);
+        end
+        
+    end % for iWork = 1:length(workQueue)
     
-    outputFilenameNameLookup = [resultsDirectory, 'filenameLookup.txt'];
-    
-    fileId = fopen(outputFilenameNameLookup, 'w');
-    fprintf(fileId, filenameNameLookup);
-    fclose(fileId);
+%     outputFilenameNameLookup = [resultsDirectory, 'filenameLookup.txt'];    
+%     fileId = fopen(outputFilenameNameLookup, 'w');
+%     fprintf(fileId, filenameNameLookup);
+%     fclose(fileId);
 end % runTests_detectFiducialMarkers_compilePerTestStats()
 
 function [numNotIgnored, numGood] = compileQuadResults(curResultsData)
-    global maxMatchDistance_pixels;
-    global maxMatchDistance_percent;
+    global g_maxMatchDistance_pixels;
+    global g_maxMatchDistance_percent;
     
     numTotal = length(curResultsData.markerNames_groundTruth);
     numNotIgnored = 0;
@@ -131,11 +135,11 @@ function [numNotIgnored, numGood] = compileQuadResults(curResultsData)
             curFiducialSize = curResultsData.fiducialSizes_groundTruth(iQuad,:);
             
             % Are all distances small enough?
-            if curDistance(1) <= maxMatchDistance_pixels &&...
-                    curDistance(2) <= maxMatchDistance_pixels &&...
-                    curDistance(3) <= maxMatchDistance_pixels &&...
-                    curDistance(2) <= (curFiducialSize(1) * maxMatchDistance_percent) &&...
-                    curDistance(3) <= (curFiducialSize(2) * maxMatchDistance_percent)
+            if curDistance(1) <= g_maxMatchDistance_pixels &&...
+                    curDistance(2) <= g_maxMatchDistance_pixels &&...
+                    curDistance(3) <= g_maxMatchDistance_pixels &&...
+                    curDistance(2) <= (curFiducialSize(1) * g_maxMatchDistance_percent) &&...
+                    curDistance(3) <= (curFiducialSize(2) * g_maxMatchDistance_percent)
                 
                 numGood = numGood + 1;
             end
@@ -144,8 +148,8 @@ function [numNotIgnored, numGood] = compileQuadResults(curResultsData)
 end % compileQuadResults()
 
 function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect_position, numSpurriousDetections, numUndetected, markersToDisplay] = compileMarkerResults(curResultsData)
-    global maxMatchDistance_pixels;
-    global maxMatchDistance_percent;
+    global g_maxMatchDistance_pixels;
+    global g_maxMatchDistance_percent;
     
     numCorrect_positionLabelRotation = 0;
     numCorrect_positionLabel = 0;
@@ -166,11 +170,11 @@ function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect
         
         if strcmp(curResultsData.markerNames_groundTruth{iMarker}, 'MARKER_IGNORE')
             
-            if curDistance(1) <= maxMatchDistance_pixels &&...
-                    curDistance(2) <= maxMatchDistance_pixels &&...
-                    curDistance(3) <= maxMatchDistance_pixels &&...
-                    curDistance(2) <= (curFiducialSize(1) * maxMatchDistance_percent) &&...
-                    curDistance(3) <= (curFiducialSize(2) * maxMatchDistance_percent)
+            if curDistance(1) <= g_maxMatchDistance_pixels &&...
+                    curDistance(2) <= g_maxMatchDistance_pixels &&...
+                    curDistance(3) <= g_maxMatchDistance_pixels &&...
+                    curDistance(2) <= (curFiducialSize(1) * g_maxMatchDistance_percent) &&...
+                    curDistance(3) <= (curFiducialSize(2) * g_maxMatchDistance_percent)
                 
                 matchIndex = curResultsData.markers_bestIndexes(iMarker);
                 markersToDisplay(end+1,:) = {curResultsData.detectedMarkers{matchIndex}.corners, 1, 'IGNORE'}; %#ok<AGROW>
@@ -184,11 +188,11 @@ function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect
         end
         
         % Are all distances small enough?
-        if curDistance(1) <= maxMatchDistance_pixels &&...
-                curDistance(2) <= maxMatchDistance_pixels &&...
-                curDistance(3) <= maxMatchDistance_pixels &&...
-                curDistance(2) <= (curFiducialSize(1) * maxMatchDistance_percent) &&...
-                curDistance(3) <= (curFiducialSize(2) * maxMatchDistance_percent)
+        if curDistance(1) <= g_maxMatchDistance_pixels &&...
+                curDistance(2) <= g_maxMatchDistance_pixels &&...
+                curDistance(3) <= g_maxMatchDistance_pixels &&...
+                curDistance(2) <= (curFiducialSize(1) * g_maxMatchDistance_percent) &&...
+                curDistance(3) <= (curFiducialSize(2) * g_maxMatchDistance_percent)
             
             matchIndex = curResultsData.markers_bestIndexes(iMarker);
             
@@ -225,4 +229,3 @@ function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect
         end
     end
 end % compileMarkerResults()
-    
