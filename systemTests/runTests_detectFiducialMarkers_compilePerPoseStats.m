@@ -1,6 +1,6 @@
-% function runTests_detectFiducialMarkers_compilePerTestStats()
+% function runTests_detectFiducialMarkers_compilePerPoseStats()
 
-function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(workQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth)
+function perPoseStats = runTests_detectFiducialMarkers_compilePerPoseStats(workQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth)
     % TODO: At different distances / angles
     
     global useImpixelinfo;
@@ -16,7 +16,7 @@ function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(workQ
     g_maxMatchDistance_pixels = maxMatchDistance_pixels;
     g_maxMatchDistance_percent = maxMatchDistance_percent;
     
-    perTestStats = cell(length(resultsData_basics), 1);
+    perPoseStats = cell(length(resultsData_basics), 1);
     
     lastTestId = -1;
     
@@ -31,7 +31,7 @@ function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(workQ
                 tic
             end
             
-            perTestStats{workQueue{iWork}.iTest} = cell(length(resultsData_basics{workQueue{iWork}.iTest}), 1);
+            perPoseStats{workQueue{iWork}.iTest} = cell(length(resultsData_basics{workQueue{iWork}.iTest}), 1);
             
             curTestData = allTestData{workQueue{iWork}.iTest};
             jsonData = curTestData.jsonData;
@@ -39,7 +39,7 @@ function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(workQ
             lastTestId = workQueue{iWork}.iTest;
         end
         
-        perTestStats{workQueue{iWork}.iTest}{workQueue{iWork}.iPose} = cell(length(resultsData_basics{workQueue{iWork}.iTest}{workQueue{iWork}.iPose}), 1);
+        perPoseStats{workQueue{iWork}.iTest}{workQueue{iWork}.iPose} = cell(length(resultsData_basics{workQueue{iWork}.iTest}{workQueue{iWork}.iPose}), 1);
         
         imageFilename = [curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile];
         imageFilename = strrep(imageFilename, '//', '/');
@@ -52,8 +52,8 @@ function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(workQ
 %             jsonData.Poses{workQueue{iWork}.iPose}.Scene.light)];
 
 %         % Create the text lookup between file names
-%         slashIndexes = strfind(workQueue{iWork}.perTestStats_imageFilename, '/');
-%         outputFilenameImageJustName = workQueue{iWork}.perTestStats_imageFilename((slashIndexes(end)+1):end);        
+%         slashIndexes = strfind(workQueue{iWork}.perPoseStats_imageFilename, '/');
+%         outputFilenameImageJustName = workQueue{iWork}.perPoseStats_imageFilename((slashIndexes(end)+1):end);        
 %         slashIndexes = strfind(jsonData.Poses{workQueue{iWork}.iPose}.ImageFile, '/');
 %         imageFilenameJustName = jsonData.Poses{workQueue{iWork}.iPose}.ImageFile((slashIndexes(end)+1):end);        
 %         filenameNameLookup = [filenameNameLookup, sprintf('%d %d \t%s \t%s\n', workQueue{iWork}.iTest, workQueue{iWork}.iPose, outputFilenameImageJustName, imageFilenameJustName)]; %#ok<AGROW>
@@ -99,12 +99,12 @@ function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(workQ
             curCompiledData.numQuadsNotIgnored,...
             curCompiledData.numSpurriousDetections};
 
-        drawnImage = mexDrawSystemTestResults(uint8(image), curResultsData.detectedQuads, curResultsData.detectedQuadValidity, markersToDisplay(:,1), int32(cell2mat(markersToDisplay(:,2))), markersToDisplay(:,3), showImageDetectionsScale, workQueue{iWork}.perTestStats_imageFilename, toShowResults);
+        drawnImage = mexDrawSystemTestResults(uint8(image), curResultsData.detectedQuads, curResultsData.detectedQuadValidity, markersToDisplay(:,1), int32(cell2mat(markersToDisplay(:,2))), markersToDisplay(:,3), showImageDetectionsScale, workQueue{iWork}.perPoseStats_imageFilename, toShowResults);
         drawnImage = drawnImage(:,:,[3,2,1]);
 
-        perTestStats{workQueue{iWork}.iTest}{workQueue{iWork}.iPose} = curCompiledData;
+        perPoseStats{workQueue{iWork}.iTest}{workQueue{iWork}.iPose} = curCompiledData;
         
-        save(workQueue{iWork}.perTestStats_dataFilename, 'curCompiledData');
+        save(workQueue{iWork}.perPoseStats_dataFilename, 'curCompiledData');
 
         if showImageDetections
             imshow(drawnImage)
@@ -117,7 +117,7 @@ function perTestStats = runTests_detectFiducialMarkers_compilePerTestStats(workQ
 %     fileId = fopen(outputFilenameNameLookup, 'w');
 %     fprintf(fileId, filenameNameLookup);
 %     fclose(fileId);
-end % runTests_detectFiducialMarkers_compilePerTestStats()
+end % runTests_detectFiducialMarkers_compileperPoseStats()
 
 function [numNotIgnored, numGood] = compileQuadResults(curResultsData)
     global g_maxMatchDistance_pixels;

@@ -10,7 +10,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     maxMatchDistance_pixels = 5;
     maxMatchDistance_percent = 0.2;
        
-    numComputeThreads = 4;
+    numComputeThreads = 3;
     
     showImageDetections = true;
     showImageDetectionWidth = 640;
@@ -78,6 +78,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParametersN.refine_quadRefinementIterations = 0;
     algorithmParametersN.name = 'c-no-refinement';
     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);
+    
+    allCompiledResults = [];
 end % runTests_detectFiducialMarkers()
 
 function allTestData = getTestData(testJsonPattern)
@@ -107,29 +109,29 @@ function compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, all
     
     rotationList = getListOfSymmetricMarkers(markerDirectoryList);
     
-    [workQueue_basics, workQueue_perTestStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, currentCompileNumber);
+    [workQueue_basics, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, currentCompileNumber);
     
-    disp(sprintf('workQueue_basics has %d elements and workQueue_perTestStats has %d elements', length(workQueue_basics), length(workQueue_perTestStats)));
+    disp(sprintf('workQueue_basics has %d elements and workQueue_perPoseStats has %d elements', length(workQueue_basics), length(workQueue_perPoseStats)));
     
     resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_basics, workQueue_all, allTestData, rotationList, algorithmParameters);
     %         save(basicsFilename, 'resultsData', 'testPath', 'allTestFilenames', 'testFunctions', 'testFunctionNames');
     
-    perTestStats = run_recompilePerTestStats(numComputeThreads, workQueue_perTestStats, workQueue_all, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);    
-    %         save(perTestStatsFilename, 'perTestStats');
+    perPoseStats = run_recompilePerPoseStats(numComputeThreads, workQueue_perPoseStats, workQueue_all, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);    
+    %         save(perPoseStatsFilename, 'perPoseStats');
     
     %     if recompileOverallStats
-    %         overallStats = run_compileOverallStats(numComputeThreads, ignoreModificationTime, allTestFilenames, perTestStats, showOverallStats);
+    %         overallStats = run_compileOverallStats(numComputeThreads, ignoreModificationTime, allTestFilenames, perPoseStats, showOverallStats);
     %         save(overallStatsFilename, 'overallStats');
     %     else
     %         load(overallStatsFilename);
     %     end
     
-    %     save([resultsDirectory, 'allCompiledResults.mat'], 'perTestStats');
+    %     save([resultsDirectory, 'allCompiledResults.mat'], 'perPoseStats');
     
     currentCompileNumber = currentCompileNumber + 1;
 end % compileAll()
 
-function [workQueue_basicStats, workQueue_perTestStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, currentCompileNumber)
+function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, currentCompileNumber)
     
     thisFilename = [mfilename('fullpath'), '.m'];
     thisFileChangeTime = dir(thisFilename);
@@ -144,24 +146,24 @@ function [workQueue_basicStats, workQueue_perTestStats, workQueue_all] = compute
     [~, ~, ~] = mkdir(intermediateDirectory);
     
     workQueue_basicStats = {};
-    workQueue_perTestStats = {};
+    workQueue_perPoseStats = {};
     workQueue_all = {};
     
     for iTest = 1:size(allTestData, 1)
         for iPose = 1:length(allTestData{iTest}.jsonData.Poses)
             basicStats_filename = [intermediateDirectory, allTestData{iTest}.testFilename, sprintf('_basicStats_pose%05d_cn%05d.mat', iPose, currentCompileNumber)];
-            perTestStats_dataFilename = [intermediateDirectory, allTestData{iTest}.testFilename, sprintf('_per_test_pose%05d_cn%05d.mat', iPose, currentCompileNumber)];
-            perTestStats_imageFilename = [resultsDirectory_curTime, allTestData{iTest}.testFilename, sprintf('_pose%05d_cn%05d.png', iPose, currentCompileNumber)];
+            perPoseStats_dataFilename = [intermediateDirectory, allTestData{iTest}.testFilename, sprintf('_perPose_pose%05d_cn%05d.mat', iPose, currentCompileNumber)];
+            perPoseStats_imageFilename = [resultsDirectory_curTime, allTestData{iTest}.testFilename, sprintf('_pose%05d_cn%05d.png', iPose, currentCompileNumber)];
             
             basicStats_filename = strrep(strrep(basicStats_filename, '\', '/'), '//', '/');
-            perTestStats_dataFilename = strrep(strrep(perTestStats_dataFilename, '\', '/'), '//', '/');
-            perTestStats_imageFilename = strrep(strrep(perTestStats_imageFilename, '\', '/'), '//', '/');
+            perPoseStats_dataFilename = strrep(strrep(perPoseStats_dataFilename, '\', '/'), '//', '/');
+            perPoseStats_imageFilename = strrep(strrep(perPoseStats_imageFilename, '\', '/'), '//', '/');
             
             newWorkItem.iTest = iTest;
             newWorkItem.iPose = iPose;
             newWorkItem.basicStats_filename = basicStats_filename;
-            newWorkItem.perTestStats_dataFilename = perTestStats_dataFilename;
-            newWorkItem.perTestStats_imageFilename = perTestStats_imageFilename;
+            newWorkItem.perPoseStats_dataFilename = perPoseStats_dataFilename;
+            newWorkItem.perPoseStats_imageFilename = perPoseStats_imageFilename;
             
             workQueue_all{end+1} = newWorkItem; %#ok<AGROW>
             
@@ -172,7 +174,7 @@ function [workQueue_basicStats, workQueue_perTestStats, workQueue_all] = compute
             % If the basic stats results don't exist
             if ~exist(basicStats_filename, 'file')
                 workQueue_basicStats{end+1} = newWorkItem; %#ok<AGROW>
-                workQueue_perTestStats{end+1} = newWorkItem; %#ok<AGROW>
+                workQueue_perPoseStats{end+1} = newWorkItem; %#ok<AGROW>
                 continue;
             end
             
@@ -183,7 +185,7 @@ function [workQueue_basicStats, workQueue_perTestStats, workQueue_all] = compute
             modificationTime_test = modificationTime_test(1).datenum;
             if modificationTime_basicStatsResults < modificationTime_test
                 workQueue_basicStats{end+1} = newWorkItem; %#ok<AGROW>
-                workQueue_perTestStats{end+1} = newWorkItem; %#ok<AGROW>
+                workQueue_perPoseStats{end+1} = newWorkItem; %#ok<AGROW>
                 continue;
             end
             
@@ -192,27 +194,27 @@ function [workQueue_basicStats, workQueue_perTestStats, workQueue_all] = compute
             modificationTime_inputImage = modificationTime_inputImage(1).datenum;
             if modificationTime_basicStatsResults < modificationTime_inputImage
                 workQueue_basicStats{end+1} = newWorkItem; %#ok<AGROW>
-                workQueue_perTestStats{end+1} = newWorkItem; %#ok<AGROW>
+                workQueue_perPoseStats{end+1} = newWorkItem; %#ok<AGROW>
                 continue;
             end
             
             %
-            % Per-test stats
+            % Per-pose stats
             %
             
-            % If the per-test results don't exist
-            if ~exist(perTestStats_dataFilename, 'file') || ~exist(perTestStats_imageFilename, 'file')
-                workQueue_perTestStats{end+1} = newWorkItem; %#ok<AGROW>
+            % If the per-pose results don't exist
+            if ~exist(perPoseStats_dataFilename, 'file') || ~exist(perPoseStats_imageFilename, 'file')
+                workQueue_perPoseStats{end+1} = newWorkItem; %#ok<AGROW>
                 continue;
             end
             
-            % If the per-test results are older than the basic stats results
-            modificationTime_perTestData = dir(perTestStats_dataFilename);
-            modificationTime_perTestData = modificationTime_perTestData(1).datenum;
-            modificationTime_perTestImage = dir(perTestStats_dataFilename);
-            modificationTime_perTestImage = modificationTime_perTestImage(1).datenum;
-            if modificationTime_perTestImage < modificationTime_basicStatsResults || modificationTime_perTestData < modificationTime_basicStatsResults
-                workQueue_perTestStats{end+1} = newWorkItem; %#ok<AGROW>
+            % If the per-pose results are older than the basic stats results
+            modificationTime_perPoseData = dir(perPoseStats_dataFilename);
+            modificationTime_perPoseData = modificationTime_perPoseData(1).datenum;
+            modificationTime_perPoseImage = dir(perPoseStats_dataFilename);
+            modificationTime_perPoseImage = modificationTime_perPoseImage(1).datenum;
+            if modificationTime_perPoseImage < modificationTime_basicStatsResults || modificationTime_perPoseData < modificationTime_basicStatsResults
+                workQueue_perPoseStats{end+1} = newWorkItem; %#ok<AGROW>
                 continue;
             end
         end % for iPose = 1:length(allTestData{iTest}.Poses)
@@ -285,34 +287,34 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
     disp(sprintf('Basic stat computation took %f seconds', toc(recompileBasicsTic)));
 end % run_recompileBasics()
 
-function resultsData_perTest = run_recompilePerTestStats(numComputeThreads, workQueue_todo, workQueue_all, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth)
-    perTestTic = tic();
+function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, workQueue_todo, workQueue_all, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth)
+    perPoseTic = tic();
     
     if numComputeThreads ~= 1
         showImageDetections = false;
     end
     
-    save('perTestAllInput.mat', 'allTestData', 'resultsData_basics', 'maxMatchDistance_pixels', 'maxMatchDistance_percent', 'showImageDetections', 'showImageDetectionWidth');
+    save('perPoseAllInput.mat', 'allTestData', 'resultsData_basics', 'maxMatchDistance_pixels', 'maxMatchDistance_percent', 'showImageDetections', 'showImageDetectionWidth');
 
-    matlabCommandString = ['load(''perTestAllInput.mat''); ' , 'runTests_detectFiducialMarkers_compilePerTestStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
+    matlabCommandString = ['load(''perPoseAllInput.mat''); ' , 'runTests_detectFiducialMarkers_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
 
     runParallelProcesses(numComputeThreads, workQueue_todo, matlabCommandString);
 
-    delete('perTestAllInput.mat');
+    delete('perPoseAllInput.mat');
     
-    resultsData_perTest = cell(length(allTestData), 1);
+    resultsData_perPose = cell(length(allTestData), 1);
     for iTest = 1:length(allTestData)
-        resultsData_perTest{iTest} = cell(length(allTestData{iTest}.jsonData.Poses), 1);
+        resultsData_perPose{iTest} = cell(length(allTestData{iTest}.jsonData.Poses), 1);
     end
     
     for iWork = 1:length(workQueue_all)
-        load(workQueue_all{iWork}.perTestStats_dataFilename, 'curCompiledData');
-        resultsData_perTest{workQueue_all{iWork}.iTest}{workQueue_all{iWork}.iPose} = curCompiledData;
+        load(workQueue_all{iWork}.perPoseStats_dataFilename, 'curCompiledData');
+        resultsData_perPose{workQueue_all{iWork}.iTest}{workQueue_all{iWork}.iPose} = curCompiledData;
     end % for iWork = 1:length(workQueue_all)
 
-    disp(sprintf('Per-test stat computation took %f seconds', toc(perTestTic)));    
-end % run_recompilePerTestStats()
+    disp(sprintf('Per-pose stat computation took %f seconds', toc(perPoseTic)));    
+end % run_recompileperPoseStats()
 
-% function overallStats = run_compileOverallStats(numComputeThreads, ignoreModificationTime, allTestFilenames, perTestStats, showOverallStats)
-%     overallStats = runTests_detectFiducialMarkers_compileOverallStats(allTestFilenames, perTestStats, showOverallStats);
+% function overallStats = run_compileOverallStats(numComputeThreads, ignoreModificationTime, allTestFilenames, perPoseStats, showOverallStats)
+%     overallStats = runTests_detectFiducialMarkers_compileOverallStats(allTestFilenames, perPoseStats, showOverallStats);
 % end % run_compileOverallStats()
