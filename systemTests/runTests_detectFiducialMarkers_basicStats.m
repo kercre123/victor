@@ -71,23 +71,23 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
             markerNames_detected{iMarker} = detectedMarkers{iMarker}.name;
         end
 
-        curResultsData.justQuads_bestDistances_mean = justQuads_bestDistances_mean;
-        curResultsData.justQuads_bestDistances_max = justQuads_bestDistances_max;
-        curResultsData.justQuads_bestIndexes = justQuads_bestIndexes;
-        curResultsData.markers_bestDistances_mean = markers_bestDistances_mean;
-        curResultsData.markers_bestDistances_max = markers_bestDistances_max;
-        curResultsData.markers_bestIndexes = markers_bestIndexes;
-        curResultsData.markers_areRotationsCorrect = markers_areRotationsCorrect;
-        curResultsData.fiducialSizes_groundTruth = fiducialSizes_groundTruth;
-        curResultsData.markerNames_groundTruth = makeCellArray(markerNames_groundTruth);
-        curResultsData.markerLocations_groundTruth = makeCellArray(groundTruthQuads);
+        curResultsData_basics.justQuads_bestDistances_mean = justQuads_bestDistances_mean;
+        curResultsData_basics.justQuads_bestDistances_max = justQuads_bestDistances_max;
+        curResultsData_basics.justQuads_bestIndexes = justQuads_bestIndexes;
+        curResultsData_basics.markers_bestDistances_mean = markers_bestDistances_mean;
+        curResultsData_basics.markers_bestDistances_max = markers_bestDistances_max;
+        curResultsData_basics.markers_bestIndexes = markers_bestIndexes;
+        curResultsData_basics.markers_areRotationsCorrect = markers_areRotationsCorrect;
+        curResultsData_basics.fiducialSizes_groundTruth = fiducialSizes_groundTruth;
+        curResultsData_basics.markerNames_groundTruth = makeCellArray(markerNames_groundTruth);
+        curResultsData_basics.markerLocations_groundTruth = makeCellArray(groundTruthQuads);
 
-        curResultsData.markerNames_detected = makeCellArray(markerNames_detected);
-        curResultsData.detectedQuads = makeCellArray(detectedQuads);
-        curResultsData.detectedQuadValidity = detectedQuadValidity;
-        curResultsData.detectedMarkers = makeCellArray(detectedMarkers);
+        curResultsData_basics.markerNames_detected = makeCellArray(markerNames_detected);
+        curResultsData_basics.detectedQuads = makeCellArray(detectedQuads);
+        curResultsData_basics.detectedQuadValidity = detectedQuadValidity;
+        curResultsData_basics.detectedMarkers = makeCellArray(detectedMarkers);
             
-        save(workQueue{iWork}.basicStats_filename, 'curResultsData', 'curTestData');
+        save(workQueue{iWork}.basicStats_filename, 'curResultsData_basics', 'curTestData');
         pause(.01);
     end % for iWork = 1:length(workQueue)
     

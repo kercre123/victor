@@ -230,7 +230,7 @@ void DrawTextResults(cv::Mat &drawnImage, const ToShowResults &toShowResults, co
 
   s32 curY = saturate_cast<s32>(250 * showImageDetectionsScale);
 
-  snprintf(resultsText, 1024, "Test %d %d %d", toShowResults.iTest, toShowResults.iPose, toShowResults.iTestFunction);
+  snprintf(resultsText, 1024, "Test %d %d %d %s", toShowResults.iTest, toShowResults.iPose, toShowResults.iTestFunction, toShowResults.testFunctionName);
 
   cv::putText(
     drawnImage,
@@ -244,7 +244,7 @@ void DrawTextResults(cv::Mat &drawnImage, const ToShowResults &toShowResults, co
 
   curY += textHeightInPixels;
 
-  snprintf(resultsText, 1024, "Dist:%dmm angle:%d expos:%0.1f light:%d %s", saturate_cast<s32>(toShowResults.scene_Distance), saturate_cast<s32>(toShowResults.scene_angle), toShowResults.scene_CameraExposure, saturate_cast<s32>(toShowResults.scene_light), toShowResults.testFunctionName);
+  snprintf(resultsText, 1024, "Dist:%dmm angle:%d expos:%0.1f light:%d", saturate_cast<s32>(toShowResults.scene_Distance), saturate_cast<s32>(toShowResults.scene_angle), toShowResults.scene_CameraExposure, saturate_cast<s32>(toShowResults.scene_light));
 
   cv::putText(
     drawnImage,
