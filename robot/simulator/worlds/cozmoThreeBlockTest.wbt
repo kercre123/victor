@@ -135,24 +135,7 @@ Block1x1 {
   name "Bullseye"
   translation -0.183  -0.051  0.0299152
   rotation 1 0 0 0
-  
-  facemarkerFront [
-    "textures/symbols/bullseye2.png"
-  ]
-  facemarkerBack [
-	"textures/symbols/bullseye2.png"  ]
-  facemarkerLeft [
-    "textures/symbols/bullseye2.png"
-  ]
-  facemarkerRight [
-    "textures/symbols/bullseye2.png"
-  ]
-  facemarkerTop [
-    "textures/symbols/bullseye2.png"
-  ]
-  facemarkerBottom [
-    "textures/symbols/bullseye2.png"
-  ]
+  markerImg "symbols/bullseye2.png"
 }
 
 Block1x1 {
@@ -160,99 +143,21 @@ Block1x1 {
   translation 0.2  -0.1  0.0299152
   rotation 0 0 1 0.3927
   blockColor 0 1 0
-  
-  facemarkerFront [
-    #"textures/Block060_Face01.png"
-    "textures/symbols/bangBangBang.png"
-  ]
-  facemarkerBack [
-    #"textures/Block060_Face02.png"
-    "textures/symbols/bangBangBang.png"
-  ]
-  facemarkerLeft [
-    #"textures/Block060_Face03.png"
-    "textures/symbols/bangBangBang.png"
-  ]
-  facemarkerRight [
-    #"textures/Block060_Face04.png"
-    "textures/symbols/bangBangBang.png"
-  ]
-  facemarkerTop [
-    #"textures/Block060_Face05.png"
-    "textures/symbols/bangBangBang.png"
-  ]
-  facemarkerBottom [
-    #"textures/Block060_Face06.png"
-    "textures/symbols/bangBangBang.png"
-  ]
+  markerImg "symbols/bangBangBang.png"
 }
 Block1x1 {
   name "Block065_2"
   translation 0.1  -0.1  0.0299152
   rotation 0 0 1 0.43
   blockColor 0 1 0
-  
- facemarkerFront [
-    #"textures/Block060_Face01.png"
-    "textures/symbols/questionMark.png"
-  ]
-  facemarkerBack [
-    #"textures/Block060_Face02.png"
-    "textures/symbols/questionMark.png"
-  ]
-  facemarkerLeft [
-    #"textures/Block060_Face03.png"
-    "textures/symbols/questionMark.png"
-  ]
-  facemarkerRight [
-    #"textures/Block060_Face04.png"
-    "textures/symbols/questionMark.png"
-  ]
-  facemarkerTop [
-    #"textures/Block060_Face05.png"
-    "textures/symbols/questionMark.png"
-  ]
-  facemarkerBottom [
-    #"textures/Block060_Face06.png"
-    "textures/symbols/questionMark.png"
-  ]
+  markerImg "symbols/questionMark.png"
 }
 Block1x1 {
   name "Block065_3"
   translation 0.3  -0.1  0.0299152
   rotation 0 0 1 1.24
   blockColor 0 1 0
-  
-  facemarkerFront [
-    #"textures/Block060_Face01.png"
-    #"textures/batteryMarker.png"
-    "textures/symbols/star5.png"
-  ]
-  facemarkerBack [
-    #"textures/Block060_Face02.png"
-    #"textures/batteryMarker.png"
-    "textures/symbols/star5.png"
-  ]
-  facemarkerLeft [
-    #"textures/Block060_Face03.png"
-    #"textures/batteryMarker.png"
-    "textures/symbols/star5.png"
-  ]
-  facemarkerRight [
-    #"textures/Block060_Face04.png"
-    #"textures/batteryMarker.png"
-    "textures/symbols/star5.png"
-  ]
-  facemarkerTop [
-    #"textures/Block060_Face05.png"
-    #"textures/batteryMarker.png"
-    "textures/symbols/star5.png"
-  ]
-  facemarkerBottom [
-    #"textures/Block060_Face06.png"
-    #"textures/batteryMarker.png"
-    "textures/symbols/star5.png"
-  ]
+  markerImg "symbols/star5.png"
 }
 
 Block1x1 {
@@ -260,25 +165,7 @@ Block1x1 {
   translation 0.4 0 0.0299152 
   rotation 0 0 1 -0.1309
   blockColor 0 0 1
-  
-  facemarkerFront [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerBack [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerLeft [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerRight [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerTop [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerBottom [
-    "textures/symbols/angryFace.png"
-  ]
+  markerImg "symbols/angryFace.png"
 }
 
 Block2x1 {

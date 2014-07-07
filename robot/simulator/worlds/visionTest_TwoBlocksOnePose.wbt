@@ -118,12 +118,7 @@ Block1x1 {
   type "4"
   translation 0.270000 0.099000 0.022000
   rotation    0.000000 0.000000 -1.000000 1.047198
-  facemarkerFront  ["textures/symbols/angryFace.png"]
-  facemarkerBack   ["textures/symbols/angryFace.png"]
-  facemarkerLeft   ["textures/symbols/angryFace.png"]
-  facemarkerRight  ["textures/symbols/angryFace.png"]
-  facemarkerTop    ["textures/symbols/angryFace.png"]
-  facemarkerBottom ["textures/symbols/angryFace.png"]
+  markerImg "symbols/angryFace.png"
 }
 
 Block1x1 {
@@ -131,11 +126,6 @@ Block1x1 {
   type "1"
   translation 0.270000 0.035000 0.022000
   rotation    0.000000 0.000000 1.000000 1.047198
-  facemarkerFront  ["textures/symbols/bullseye2.png"]
-  facemarkerBack   ["textures/symbols/bullseye2.png"]
-  facemarkerLeft   ["textures/symbols/bullseye2.png"]
-  facemarkerRight  ["textures/symbols/bullseye2.png"]
-  facemarkerTop    ["textures/symbols/bullseye2.png"]
-  facemarkerBottom ["textures/symbols/bullseye2.png"]
+  markerImg "symbols/bullseye2.png"
 }
 
