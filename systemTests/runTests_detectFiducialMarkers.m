@@ -117,7 +117,7 @@ function compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, all
     
     [workQueue_basics, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, algorithmParameters.extractionFunctionName, algorithmParameters.extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime);
     
-    disp(sprintf('workQueue_basics has %d elements and workQueue_perPoseStats has %d elements', length(workQueue_basics), length(workQueue_perPoseStats)));
+    disp(sprintf('%s: workQueue_basics has %d elements and workQueue_perPoseStats has %d elements', algorithmParameters.extractionFunctionName, length(workQueue_basics), length(workQueue_perPoseStats)));
     
     resultsData_basics = run_recompileBasics(numComputeThreads.basics, workQueue_basics, workQueue_all, allTestData, rotationList, algorithmParameters);
     %         save(basicsFilename, 'resultsData', 'testPath', 'allTestFilenames', 'testFunctions', 'testFunctionNames');

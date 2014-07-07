@@ -31,6 +31,10 @@ if usePyramid
         binaryImg = computeBinaryCharacteristicScaleImage_boxFilters(img, numScales, thresholdFraction);
         figure(3); imshow(binaryImg);
         return;
+    elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters_multiple')
+        binaryImg = computeBinaryCharacteristicScaleImage_boxFilters_multiple(img, numScales, thresholdFraction);
+        figure(5); imshow(binaryImg);
+        return;        
     end
     
     if showTiming
