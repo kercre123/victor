@@ -371,9 +371,9 @@ namespace Anki {
               PRINT("PAP: DOCKING\n");
 #endif
               
-              if (action_ == DA_PICKUP_HIGH) {
-                DockingController::TrackCamWithLift(true);
-              }
+              //if (action_ == DA_PICKUP_HIGH) {
+              //  DockingController::TrackCamWithLift(true);
+              //}
             }
             break;
             
@@ -381,7 +381,7 @@ namespace Anki {
              
             if (!DockingController::IsBusy()) {
 
-              DockingController::TrackCamWithLift(false);
+              //DockingController::TrackCamWithLift(false);
               
               if (DockingController::DidLastDockSucceed()) {
                 

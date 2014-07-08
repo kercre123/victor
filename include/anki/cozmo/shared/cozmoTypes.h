@@ -90,6 +90,7 @@ namespace Anki {
       ANIM_IDLE
       ,ANIM_HEAD_NOD
       ,ANIM_BACK_AND_FORTH_EXCITED
+      ,ANIM_WIGGLE
       ,ANIM_NUM_ANIMATIONS
     } AnimationID_t;
     

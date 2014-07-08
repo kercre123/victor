@@ -48,15 +48,22 @@ namespace Anki {
     const f32 LIFT_HEIGHT_CARRY    = 98.f;
     */
     
-    // Robot #2
+    // Robot #2 (w/ (lightly stripped) clutch arm)
+    /*
     const f32 LIFT_HEIGHT_LOWDOCK  = 26.f;
     const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
     const f32 LIFT_HEIGHT_CARRY    = 90.5f;
+     */
+    
+    // Robot #1 (clutch-less arm)
+    const f32 LIFT_HEIGHT_LOWDOCK  = 23.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
+    const f32 LIFT_HEIGHT_CARRY    = 95.f;
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
     const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
-    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 19.5f;
+    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.5f;
     const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
 #endif
