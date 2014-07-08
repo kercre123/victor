@@ -35,21 +35,8 @@ namespace Anki {
         const u32 BACKOUT_TIME = 1500000;
         const f32 BACKOUT_SPEED_MMPS = -40;
         
-        const f32 LOW_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(-15);
+        const f32 LOW_DOCKING_HEAD_ANGLE  = DEG_TO_RAD_F32(-15);
         const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(15);
-        
-        // Distance between the robot origin and the distance along the robot's x-axis
-        // to the lift when it is in the low docking position.
-        #ifdef SIMULATOR
-        const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 26.f;
-        const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 18.f;
-        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
-        #else
-        const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
-        const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 19.5f;
-        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
-        #endif
-        
 
         Mode mode_ = IDLE;
         
