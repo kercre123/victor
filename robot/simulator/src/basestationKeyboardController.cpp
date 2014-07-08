@@ -48,6 +48,13 @@ namespace Anki {
         
         webots::Node* root_ = nullptr;
         
+        u8 poseMarkerMode_ = 0;
+        Anki::Pose3d poseMarkerPose_;
+        webots::Field* poseMarkerDiffuseColor_ = nullptr;
+        double poseMarkerColor_[2][3] = { {0.1, 0.8, 0.1} // Goto pose color
+                                         ,{0.8, 0.1, 0.1} // Place object color
+                                        };
+        
       } // private namespace
       
       
@@ -79,6 +86,9 @@ namespace Anki {
           if (nd->getTypeName().find("Supervisor") != std::string::npos &&
               nodeName.find("BlockWorldComms") != std::string::npos) {
             root_ = nd;
+            
+            // Find pose marker color field
+            poseMarkerDiffuseColor_ = nd->getField("poseMarkerDiffuseColor");
           }
         }
       }
@@ -110,28 +120,65 @@ namespace Anki {
       {
         printf("\nBasestation keyboard control\n");
         printf("===============================\n");
-        printf("                    Drive:  arrows  (Hold shift for slower speeds)\n");
-        printf("        Move lift up/down:  a/z\n");
-        printf("        Move head up/down:  s/x\n");
-        printf("      Lift low/high/carry:  1/2/3\n");
-        printf("     Head down/forward/up:  4/5/6\n");
-        printf("         Toggle headlight:  h\n");
-        printf("            Request image:  i\n");
-        printf("      Toggle image stream:  Shift+i\n");
-        printf("       Toggle save images:  e\n");
-        printf(" Toggle VizObject display:  d\n");
-        printf("   Goto green pose marker:  g\n");
-        printf("       Cycle block select:  .\n");
-        printf("       Clear known blocks:  c\n");
-        printf("   Dock to selected block:  p\n");
-        printf("Start June 2014 dice demo:  j\n");
-        printf("       Abort current path:  q\n");
-        printf("  Update controller gains:  k\n");
-        printf("      Cycle sound schemes:  m\n");
-        printf("               Test modes:  Alt + Testmode#\n");
-        printf("         Follow test plan:  t\n");
-        printf("               Print help:  ?\n");
+        printf("                           Drive:  arrows  (Hold shift for slower speeds)\n");
+        printf("               Move lift up/down:  a/z\n");
+        printf("               Move head up/down:  s/x\n");
+        printf("             Lift low/high/carry:  1/2/3\n");
+        printf("            Head down/forward/up:  4/5/6\n");
+        printf("                Toggle headlight:  h\n");
+        printf("                   Request image:  i\n");
+        printf("             Toggle image stream:  Shift+i\n");
+        printf("              Toggle save images:  e\n");
+        printf("        Toggle VizObject display:  d\n");
+        printf("Goto/place object at pose marker:  g\n");
+        printf("         Toggle pose marker mode:  Shift+g\n");
+        printf("              Cycle block select:  .\n");
+        printf("              Clear known blocks:  c\n");
+        printf("          Dock to selected block:  p\n");
+        printf("       Start June 2014 dice demo:  j\n");
+        printf("              Abort current path:  q\n");
+        printf("         Update controller gains:  k\n");
+        printf("             Cycle sound schemes:  m\n");
+        printf("                      Test modes:  Alt + Testmode#\n");
+        printf("                Follow test plan:  t\n");
+        printf("                      Print help:  ?\n");
         printf("\n");
+      }
+      
+      
+      void BSKeyboardController::Update()
+      {
+        // Update poseMarker pose
+        const double* trans = gps_->getValues();
+        const double* northVec = compass_->getValues();
+        
+        // Convert to mm
+        Vec3f transVec;
+        transVec.x() = trans[0] * 1000;
+        transVec.y() = trans[1] * 1000;
+        transVec.z() = trans[2] * 1000;
+        
+        // Compute orientation from north vector
+        f32 angle = atan2f(-northVec[1], northVec[0]);
+        
+        poseMarkerPose_.SetTranslation(transVec);
+        poseMarkerPose_.SetRotation(angle, Z_AXIS_3D);
+
+        
+        
+        // Update pose marker footprint based on carried object
+        if (poseMarkerMode_ == 0) {
+          // Goto pose mode
+          // ...
+        } else {
+          // Place object mode
+          if (robot_->IsCarryingBlock()) {
+            Quad2f blockFootprint = blockWorld_->GetBlockByID(robot_->GetCarryingBlock())->GetBoundingQuadXY(poseMarkerPose_);
+            VizManager::getInstance()->DrawPoseMarker(0, blockFootprint, VIZ_COLOR_GREEN);
+          }
+        }
+        
+        ProcessKeystroke();
       }
       
       //Check the keyboard keys and issue robot commands
@@ -179,6 +226,14 @@ namespace Anki {
         if (isEnabled_)
         {
           int key = basestationController.keyboardGetKey();
+          
+          static bool keyboardRestart = false;
+          if (keyboardRestart) {
+            basestationController.keyboardDisable();
+            basestationController.keyboardEnable(BS_TIME_STEP);
+            keyboardRestart = false;
+          }
+          
           
           // Skip if same key as before
           if (key == lastKeyAndModPressed_)
@@ -356,26 +411,23 @@ namespace Anki {
             }
             case CKEY_GOTO_POSE:
             {
-              const double* trans = gps_->getValues();
-              const double* northVec = compass_->getValues();
+              if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                poseMarkerMode_ = !poseMarkerMode_;
+                printf("Pose marker mode: %d\n", poseMarkerMode_);
+                VizManager::getInstance()->EraseAllQuadsWithType(VIZ_QUAD_POSE_MARKER);
+                poseMarkerDiffuseColor_->setSFColor(poseMarkerColor_[poseMarkerMode_]);
+                break;
+              }
               
-              // Convert to mm
-              Vec3f transVec;
-              transVec.x() = trans[0] * 1000;
-              transVec.y() = trans[1] * 1000;
-              transVec.z() = trans[2] * 1000;
-              
-              // Compute orientation from north vector
-              f32 angle = atan2f(-northVec[1], northVec[0]);
-              
-              // Generate destination pose
-              Vec3f rotAxis(0,0,1);
-              Anki::Pose3d pose(angle, rotAxis, transVec);
-              
-              // Execute path to pose
-              if (robot_->ExecutePathToPose(pose) == RESULT_OK) {
-                // Make sure head is tilted down so that it can localize well
-                robot_->MoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              if (poseMarkerMode_ == 0) {
+                // Execute path to pose
+                if (robot_->ExecutePathToPose(poseMarkerPose_) == RESULT_OK) {
+                  // Make sure head is tilted down so that it can localize well
+                  robot_->MoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+                }
+              } else {
+                // TODO...
+                printf("PLACE OBJECT ON GROUND NOT YET IMPLEMENTED\n");
               }
               break;
             }

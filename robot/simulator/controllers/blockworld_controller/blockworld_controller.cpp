@@ -232,7 +232,7 @@ int main(int argc, char **argv)
 
     // Process keyboard input
     if (Sim::BSKeyboardController::IsEnabled()) {
-      Sim::BSKeyboardController::ProcessKeystroke();
+      Sim::BSKeyboardController::Update();
     }
     
   } // while still stepping

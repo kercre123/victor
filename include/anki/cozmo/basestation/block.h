@@ -150,7 +150,7 @@ namespace Anki {
       // XY plane and returns the corresponding 2D quadrilateral. Pads the
       // quadrilateral (around its center) by the optional padding if desired.
       Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
-      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
+      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding quadrilateral. Adds optional
@@ -160,8 +160,8 @@ namespace Anki {
       
       // Visualize using VizManager.  If preDockPoseDistance > 0, pre dock poses
       // will also be drawn
-      // TODO: make generic and put as virtual method in base class
-      void Visualize(const f32 preDockPoseDistance = 0.f) const;
+      virtual void Visualize() const;
+      void Visualize(const f32 preDockPoseDistance) const;
       void Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance = 0.f) const;
       
     protected:

@@ -494,6 +494,11 @@ namespace Anki {
       return *markerPtr;
       
     } // Block::GetMarker()
+
+    void Block::Visualize() const
+    {
+      Visualize(0);
+    }
     
     void Block::Visualize(const f32 preDockPoseDistance) const
     {

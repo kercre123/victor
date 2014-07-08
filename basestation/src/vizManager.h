@@ -185,6 +185,12 @@ namespace Anki {
                                const T zHeight,
                                const u32 colorID);
 
+      template<typename T>
+      void DrawPoseMarker(const u32 quadID,
+                          const Quadrilateral<2,T>& quad,
+                          const u32 colorID);
+
+      
       // Draw quads of a specified type (usually called as a helper by the
       // above methods for specific types)
       template<typename T>
@@ -382,6 +388,14 @@ namespace Anki {
                                           const u32 colorID)
     {
       DrawQuad(VIZ_QUAD_ROBOT_BOUNDING_BOX, quadID, quad, colorID);
+    }
+
+    template<typename T>
+    void VizManager::DrawPoseMarker(const u32 quadID,
+                                    const Quadrilateral<2,T>& quad,
+                                    const u32 colorID)
+    {
+      DrawQuad(VIZ_QUAD_POSE_MARKER, quadID, quad, 0.5f, colorID);
     }
     
   } // namespace Cozmo

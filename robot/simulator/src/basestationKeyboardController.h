@@ -14,6 +14,7 @@ namespace Anki {
         void Enable(void);
         void Disable(void);
         bool IsEnabled(void);
+        void Update(void);
         void ProcessKeystroke(void);
         void PrintHelp(void);
         

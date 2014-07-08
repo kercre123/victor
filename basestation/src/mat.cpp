@@ -50,6 +50,16 @@ namespace Anki {
       return MatPiece::rotationAmbiguities_;
     }
     
+    void MatPiece::Visualize() const
+    {
+      // TODO
+    }
+    
+    Quad2f MatPiece::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
+    {
+      // TODO
+    }
+    
   } // namespace Cozmo
   
 } // namespace Anki
