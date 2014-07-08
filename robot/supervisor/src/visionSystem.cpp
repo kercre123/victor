@@ -539,11 +539,76 @@ namespace Anki {
         return RESULT_OK;
       } // LookForMarkers()
 
+      // Divide image by mean of whatever is inside the trackingQuad
+      static Result BrightnessNormalizeImage(Array<u8>& image, const Quadrilateral<f32>& quad)
+      {
+        //Debug: image.Show("OriginalImage", false);
+        
+#define USE_VARIANCE 0
+        
+        // Compute mean of data inside the bounding box of the tracking quad
+        const Rectangle<s32> bbox = quad.ComputeBoundingRectangle<s32>();
+        
+        ConstArraySlice<u8> imageROI = image(bbox.top, bbox.bottom, bbox.left, bbox.right);
+        
+#if USE_VARIANCE
+        // Playing with normalizing using std. deviation as well
+        s32 mean, var;
+        Matrix::MeanAndVar<u8, s32>(imageROI, mean, var);
+        const f32 stddev = sqrt(static_cast<f32>(var));
+        const f32 oneTwentyEightOverStdDev = 128.f / stddev;
+        //PRINT("Initial mean/std = %d / %.2f\n", mean, sqrt(static_cast<f32>(var)));
+#else
+        const u8 mean = Matrix::Mean<u8, u32>(imageROI);
+        //PRINT("Initial mean = %d\n", mean);
+#endif
+        
+        //PRINT("quad mean = %d\n", mean);
+        //const f32 oneOverMean = 1.f / static_cast<f32>(mean);
+        
+        // Remove mean (and variance) from image
+        for(s32 i=0; i<image.get_size(0); ++i)
+        {
+          u8 * restrict img_i = image.Pointer(i, 0);
+          
+          for(s32 j=0; j<image.get_size(1); ++j)
+          {
+            f32 value = static_cast<f32>(img_i[j]);
+            value -= static_cast<f32>(mean);
+#if USE_VARIANCE
+            value *= oneTwentyEightOverStdDev;
+#endif
+            value += 128.f;
+            img_i[j] = saturate_cast<u8>(value) ;
+          }
+        }
+        
+        // Debug:
+        /*
+#if USE_VARIANCE
+        Matrix::MeanAndVar<u8, s32>(imageROI, mean, var);
+        PRINT("Final mean/std = %d / %.2f\n", mean, sqrt(static_cast<f32>(var)));
+#else 
+        PRINT("Final mean = %d\n", Matrix::Mean<u8,u32>(imageROI));
+#endif
+         */
+        
+        //Debug: image.Show("NormalizedImage", true);
+        
+#undef USE_VARIANCE
+        return RESULT_OK;
+        
+      } // BrightnessNormalizeImage()
+      
+      
       static Result BrightnessNormalizeImage(Array<u8>& image, const Quadrilateral<f32>& quad,
         const f32 filterWidthFraction,
         MemoryStack scratch)
       {
         if(filterWidthFraction > 0.f) {
+          //Debug:
+          image.Show("OriginalImage", false);
+          
           // TODO: Add the ability to only normalize within the vicinity of the quad
           // Note that this requires templateQuad to be sorted!
           const s32 filterWidth = static_cast<s32>(filterWidthFraction*((quad[3] - quad[0]).Length()));
@@ -578,6 +643,10 @@ namespace Anki {
           }
 
           image.Set(imageNormalized);
+          
+          //Debug:
+          image.Show("NormalizedImage", true);
+          
         } // if(filterWidthFraction > 0)
 
         return RESULT_OK;
@@ -2104,15 +2173,23 @@ namespace Anki {
               // full detection resolution.
               trackingQuad_ = crntMarker.corners;
 
+              // Normalize the image
               // NOTE: This will change grayscaleImage!
-              // NOTE: This is currently off-chip for memory reasons, so it's slow!
-              if((lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
-                trackerParameters_.normalizationFilterWidthFraction,
-                VisionMemory::offchipScratch_)) != RESULT_OK)
-              {
-                return lastResult;
+              if(trackerParameters_.normalizationFilterWidthFraction < 0.f) {
+                // Faster: normalize using mean of quad
+                lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_);
+              } else {
+                // Slower: normalize using local averages
+                // NOTE: This is currently off-chip for memory reasons, so it's slow!
+                lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
+                                                      trackerParameters_.normalizationFilterWidthFraction,
+                                                      VisionMemory::offchipScratch_);
               }
-
+              
+              AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                                 "VisionSystem::Update::BrightnessNormalizeImage",
+                                                 "BrightnessNormalizeImage failed.\n");
+              
               if((lastResult = InitTemplate(grayscaleImage,
                 trackingQuad_,
                 trackerParameters_,
@@ -2192,14 +2269,22 @@ namespace Anki {
 
           DownsampleAndSendImage(grayscaleImage);
           
+          // Normalize the image
           // NOTE: This will change grayscaleImage!
-          // NOTE: This is currently off-chip for memory reasons, so it's slow!
-          if((lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
-            trackerParameters_.normalizationFilterWidthFraction,
-            VisionMemory::offchipScratch_)) != RESULT_OK)
-          {
-            return lastResult;
+          if(trackerParameters_.normalizationFilterWidthFraction < 0.f) {
+            // Faster: normalize using mean of quad
+            lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_);
+          } else {
+            // Slower: normalize using local averages
+            // NOTE: This is currently off-chip for memory reasons, so it's slow!
+            lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
+                                                  trackerParameters_.normalizationFilterWidthFraction,
+                                                  VisionMemory::offchipScratch_);
           }
+          
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                             "VisionSystem::Update::BrightnessNormalizeImage",
+                                             "BrightnessNormalizeImage failed.\n");
 
           //
           // Tracker Prediction

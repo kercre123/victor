@@ -108,7 +108,12 @@ namespace Anki {
       
       void TrackerParameters::Initialize()
       {
-        normalizationFilterWidthFraction = 0.5f;
+        // This is size of the box filter used to locally normalize the image
+        // as a fraction of the size of the current tracking quad.
+        // Set to zero to disable normalization.
+        // Set to a negative value to simply use (much faster) mean normalization,
+        // which just makes the mean of the pixels within the tracking quad equal 128.
+        normalizationFilterWidthFraction = -1.f; //0.5f;
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         // Binary tracker works at QVGA (unlike LK)
