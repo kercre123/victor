@@ -11,7 +11,7 @@ numScales = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFac
 if usePyramid
     assert(downsampleFactor == 2, ...
         'Using image pyramid for characteristic scale requires downsampleFactor=2.');
-
+    
     if showTiming, t = tic; end
     
     % Note: the default thresholdFraction is different for
@@ -26,7 +26,7 @@ if usePyramid
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_loopsAndFixedPoint_mexFiltering')
         averageImg = double(computeCharacteristicScaleImage_loopsAndFixedPoint(img, numScales, false, true)) / (255 * 2^16);
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'c_fixedPoint')
-        averageImg = double(mexComputeCharacteristicScale(im2uint8(img), numScales)) / (255 * 2^16);        
+        averageImg = double(mexComputeCharacteristicScale(im2uint8(img), numScales)) / (255 * 2^16);
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters')
         binaryImg = computeBinaryCharacteristicScaleImage_boxFilters(img, numScales, thresholdFraction);
         figure(3); imshow(binaryImg);
@@ -34,7 +34,11 @@ if usePyramid
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters_multiple')
         binaryImg = computeBinaryCharacteristicScaleImage_boxFilters_multiple(img, numScales, thresholdFraction);
         figure(5); imshow(binaryImg);
-        return;        
+        return;
+    elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters_small')
+        binaryImg = computeBinaryCharacteristicScaleImage_boxFilters_small(img, numScales, thresholdFraction);
+        figure(6); imshow(binaryImg);
+        return;
     end
     
     if showTiming
@@ -44,11 +48,11 @@ if usePyramid
 else % Use a stack of smoothed images, not a pyramid
     numSigma = 2.5;
     prevSigma = 0.5/numSigma;
-
+    
     G = cell(1,numScales+1);
-
+    
     [xgrid,ygrid] = meshgrid(1:ncols, 1:nrows);
-
+    
     %G{1} = separable_filter(img, gaussian_kernel(prevSigma, numSigma));
     %G{1} = imfilter(img, fspecial('gaussian', round(numSigma*prevSigma), prevSigma));
     
@@ -81,6 +85,8 @@ end % IF usePyramid
 
 % Threshold:
 binaryImg = img < thresholdFraction*averageImg;
+
+figure(2); imshow(binaryImg);
 
 % keyboard
 

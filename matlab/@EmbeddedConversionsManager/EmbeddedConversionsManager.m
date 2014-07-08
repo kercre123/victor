@@ -17,7 +17,7 @@ classdef EmbeddedConversionsManager < handle
             homographyEstimationType_acceptable = {'matlab_original', 'opencv_cp2tform', 'c_float64', 'matlab_inhomogeneous'};
 
             computeCharacteristicScaleImageType = 'matlab_original';
-            computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_boxFilters', 'matlab_boxFilters_multiple', 'matlab_loops', 'matlab_loopsAndFixedPoint', 'matlab_loopsAndFixedPoint_mexFiltering', 'c_fixedPoint'};
+            computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_boxFilters', 'matlab_boxFilters_multiple', 'matlab_boxFilters_small', 'matlab_loops', 'matlab_loopsAndFixedPoint', 'matlab_loopsAndFixedPoint_mexFiltering', 'c_fixedPoint'};
 
             traceBoundaryType = 'matlab_original';
             traceBoundaryType_acceptable = {'matlab_original', 'matlab_loops', 'c_fixedPoint', 'matlab_approximate'};
