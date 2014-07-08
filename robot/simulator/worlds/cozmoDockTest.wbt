@@ -110,24 +110,7 @@ DEF FireBlock Block1x1 {
   rotation 1 1.28832e-12 -1.28131e-11 3.67408e-06
 
   blockColor 0.85 0.5 0.5
-  facemarkerFront [
-    "textures/symbols/fire.png"
-  ]
-  facemarkerBack [
-    "textures/symbols/fire.png"
-  ]
-  facemarkerLeft [
-    "textures/symbols/fire.png"
-  ]
-  facemarkerRight [
-    "textures/symbols/fire.png"
-  ]
-  facemarkerTop [
-    "textures/symbols/fire.png"
-  ]
-  facemarkerBottom [
-    "textures/symbols/fire.png"
-  ]
+  markerImg "symbols/fire.png"
 }
 
 DEF AngryFaceBlock Block1x1 {
@@ -136,24 +119,7 @@ DEF AngryFaceBlock Block1x1 {
   rotation 0 0 1 .05
 
   blockColor 0.5 0.5 0.85
-  facemarkerFront [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerBack [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerLeft [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerRight [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerTop [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerBottom [
-    "textures/symbols/angryFace.png"
-  ]
+  markerImg "symbols/angryFace.png"
 }
 
 
@@ -162,9 +128,6 @@ DEF Cozmo_1 CozmoBot {
   usbChannel 10
 }
 
-#DEF OffboardVision USBConnection {
-#  usbChannel 10
-#}
 
 BlockWorldComms {
 }

@@ -118,6 +118,9 @@ namespace Anki {
         const f32 START_LIFT_TRACKING_DIST_MM = 70.f;
         const f32 START_LIFT_TRACKING_HEIGHT_MM = 44.f;
         
+        // First commanded lift height when START_LIFT_TRACKING_DIST_MM is reached
+        const f32 START_LIFT_HEIGHT_MM = LIFT_HEIGHT_HIGHDOCK - 17.f;
+        
       } // "private" namespace
       
       bool IsBusy()
@@ -168,6 +171,11 @@ namespace Anki {
         Messages::DockingErrorSignal dockMsg;
         while( Messages::CheckMailbox(dockMsg) )
         {
+          
+          // If we're not actually docking, just toss the dockMsg.
+          if (mode_ == IDLE) {
+            break;
+          }
           
 #if(0)
           // Print period of tracker (i.e. messages coming in from tracker)
@@ -246,6 +254,28 @@ namespace Anki {
                   //PRINT("TrackLiftHeight: %f\n", liftHeight);
                   LiftController::SetDesiredHeight(liftHeight);
                 }
+
+                // If docking to a high block, assumes we're trying to pick it up!
+                // Gradually lift block from a height of START_LIFT_HEIGHT_MM to LIFT_HEIGHT_HIGH_DOCK
+                // over the marker distance ranging from START_LIFT_TRACKING_DIST_MM to dockOffsetDistX_.
+                if (dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM &&
+                    dockMsg.x_distErr < START_LIFT_TRACKING_DIST_MM) {
+                  
+                  // Compute desired slope of lift height during approach.
+                  const f32 liftApproachSlope = (LIFT_HEIGHT_HIGHDOCK - START_LIFT_HEIGHT_MM) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
+                  
+                  // Compute current desired lift height based on current distance to block.
+                  f32 liftHeight = START_LIFT_HEIGHT_MM + liftApproachSlope * (START_LIFT_TRACKING_DIST_MM - dockMsg.x_distErr);
+                  
+                  // Capping to highdock lift height
+                  liftHeight = MIN(liftHeight, LIFT_HEIGHT_HIGHDOCK);
+                  
+                  // Adding a little extra height to gain more "hookage" since we're coming in at an angle.
+                  liftHeight += 2;
+                  
+                  LiftController::SetDesiredHeight(liftHeight);
+                }
+                
               }
               
               // Send to basestation for visualization

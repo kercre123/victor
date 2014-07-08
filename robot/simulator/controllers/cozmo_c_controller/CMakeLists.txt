@@ -13,6 +13,7 @@ set(ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
 file(GLOB COZMO_ROBOT_SUPERVISOR_SRC "${ROBOT_SRC_DIR}/*.cpp")
 
 file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/robot/*.h")
+file(GLOB COZMO_ROBOT_PRIV_HEADER_FILES "${ROBOT_SRC_DIR}/*.h")
 
 include_directories( 
   ${ROBOT_SRC_DIR}
@@ -55,20 +56,11 @@ source_group(Simulator  REGULAR_EXPRESSION "${SIMULATOR_HAL_DIR}/.*")
 source_group(Simulator  REGULAR_EXPRESSION "${SIMULATOR_SRC_DIR}/.*")
 
 set(HEADER_FILES
- ${ROBOT_SRC_DIR}/dockingController.h
- ${ROBOT_SRC_DIR}/gripController.h
- ${ROBOT_SRC_DIR}/headController.h
- ${ROBOT_SRC_DIR}/liftController.h
- ${ROBOT_SRC_DIR}/testModeController.h
- ${ROBOT_SRC_DIR}/matlabVisionProcessor.h
- ${ROBOT_SRC_DIR}/matlabVisualization.h
- ${ROBOT_SRC_DIR}/visionParameters.h
- ${ROBOT_SRC_DIR}/visionDebugStream.h
-
  ${SIMULATOR_SRC_DIR}/keyboardController.h
  ${SIMULATOR_SRC_DIR}/sim_viz.h
  ${SIMULATOR_SRC_DIR}/sim_overlayDisplay.h
   
+ ${COZMO_ROBOT_PRIV_HEADER_FILES}
  ${COZMO_ROBOT_HEADER_FILES}
  ${COZMO_INCLUDE_FILES}
 )

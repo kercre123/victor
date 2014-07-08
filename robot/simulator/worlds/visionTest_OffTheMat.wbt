@@ -109,12 +109,6 @@ Block1x1 {
   type "0"
   translation -0.052000 -0.172000 0.022000
   rotation    1.000000 0.000000 0.000000 0.000000
-  facemarkerFront  ["textures/.png"]
-  facemarkerBack   ["textures/.png"]
-  facemarkerLeft   ["textures/.png"]
-  facemarkerRight  ["textures/.png"]
-  facemarkerTop    ["textures/.png"]
-  facemarkerBottom ["textures/.png"]
 }
 
 Block1x1 {
@@ -122,12 +116,6 @@ Block1x1 {
   type "0"
   translation -0.052000 -0.128000 0.022000
   rotation    1.000000 0.000000 0.000000 0.000000
-  facemarkerFront  ["textures/.png"]
-  facemarkerBack   ["textures/.png"]
-  facemarkerLeft   ["textures/.png"]
-  facemarkerRight  ["textures/.png"]
-  facemarkerTop    ["textures/.png"]
-  facemarkerBottom ["textures/.png"]
 }
 
 Block1x1 {
@@ -135,12 +123,6 @@ Block1x1 {
   type "0"
   translation -0.008000 -0.172000 0.022000
   rotation    1.000000 0.000000 0.000000 0.000000
-  facemarkerFront  ["textures/.png"]
-  facemarkerBack   ["textures/.png"]
-  facemarkerLeft   ["textures/.png"]
-  facemarkerRight  ["textures/.png"]
-  facemarkerTop    ["textures/.png"]
-  facemarkerBottom ["textures/.png"]
 }
 
 Block1x1 {
@@ -148,12 +130,6 @@ Block1x1 {
   type "0"
   translation -0.008000 -0.128000 0.022000
   rotation    1.000000 0.000000 0.000000 0.000000
-  facemarkerFront  ["textures/.png"]
-  facemarkerBack   ["textures/.png"]
-  facemarkerLeft   ["textures/.png"]
-  facemarkerRight  ["textures/.png"]
-  facemarkerTop    ["textures/.png"]
-  facemarkerBottom ["textures/.png"]
 }
 
 Block1x1 {
@@ -161,12 +137,7 @@ Block1x1 {
   type "2"
   translation 0.145000 0.060000 0.022000
   rotation    0.000000 0.000000 1.000000 0.785398
-  facemarkerFront  ["textures/symbols/fire.png"]
-  facemarkerBack   ["textures/symbols/fire.png"]
-  facemarkerLeft   ["textures/symbols/fire.png"]
-  facemarkerRight  ["textures/symbols/fire.png"]
-  facemarkerTop    ["textures/symbols/fire.png"]
-  facemarkerBottom ["textures/symbols/fire.png"]
+  markerImg "symbols/fire.png"
 }
 
 DEF Cozmo_1 CozmoBot {

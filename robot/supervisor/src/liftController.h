@@ -34,7 +34,8 @@ namespace Anki {
       bool IsCalibrated();
 
       // Specifies max velocity and acceleration that SetDesiredHeight() uses.
-      void SetSpeedAndAccel(f32 max_speed_rad_per_sec, f32 accel_rad_per_sec2);
+      void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
+      void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
       
       f32 GetAngularVelocity();
       
