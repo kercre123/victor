@@ -168,16 +168,17 @@ namespace Anki {
       PRINT_NAMED_INFO("RobotStateMsgRecvd",
                        "RobotStateMsg received \n"
                        "  ID: %d\n"
-                       "  pose (%f,%f,%f,%f)\n"
+                       "  pose (%f,%f,%f,%f), frame %d\n"
                        "  wheel speeds (l=%f, r=%f)\n"
                        "  headAngle %f\n"
                        "  liftAngle %f\n"
-                       "  liftHeight %f\n",
-                       robot->get_ID(),
-                       msg.pose_x, msg.pose_y, msg.pose_z, msg.pose_angle,
-                       msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
-                       msg.headAngle, msg.liftAngle, msg.liftHeight);
-      */
+                       "  liftHeight %f\n"
+                       ,robot->GetID()
+                       ,msg.pose_x, msg.pose_y, msg.pose_z, msg.pose_angle, msg.pose_frame_id
+                       ,msg.lwheel_speed_mmps, msg.rwheel_speed_mmps
+                       ,msg.headAngle, msg.liftAngle, msg.liftHeight
+                       );
+       */
       
       // Update head angle
       robot->SetHeadAngle(msg.headAngle);
@@ -185,12 +186,6 @@ namespace Anki {
       // Update lift angle
       robot->SetLiftAngle(msg.liftAngle);
       
-      /*
-      // Update robot pose
-      Vec3f axis(0,0,1);
-      Vec3f translation(msg.pose_x, msg.pose_y, msg.pose_z);
-      robot->set_pose(Pose3d(msg.pose_angle, axis, translation));
-      */
       // Get ID of last/current path that the robot executed
       robot->SetLastRecvdPathID(msg.lastPathID);
       
