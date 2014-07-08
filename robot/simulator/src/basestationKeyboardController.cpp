@@ -433,8 +433,10 @@ namespace Anki {
                   robot_->MoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
                 }
               } else {
-                // TODO...
-                printf("PLACE OBJECT ON GROUND NOT YET IMPLEMENTED\n");
+                if (robot_->ExecutePlaceBlockOnGroundSequence(poseMarkerPose_) ) {
+                  // Make sure head is tilted down so that it can localize well
+                  robot_->MoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+                }
               }
               break;
             }
