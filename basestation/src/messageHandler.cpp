@@ -295,7 +295,7 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockPickedUp const& msg)
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
-      PRINT_INFO("Robot %d %s picking up block.\n", robot->GetID(), successStr);
+      PRINT_INFO("Robot %d reported it %s picking up block.\n", robot->GetID(), successStr);
 
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
@@ -310,12 +310,14 @@ namespace Anki {
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockPlaced const& msg)
     {
+      const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
+      PRINT_INFO("Robot %d reported it %s placing block.\n", robot->GetID(), successStr);
+      
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
         lastResult = robot->PlaceCarriedBlock(); //msg.timestamp);
       }
       else {
-        PRINT_INFO("Robot %d FAILED placing block.\n", robot->GetID());
         // TODO: what do we do on failure? Need to trigger reattempt?
       }
       

@@ -906,7 +906,7 @@ void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path) const
     // printf("(%d) %s\n", curr.theta, actionTypes_[actionID].GetName().c_str());
 
     const MotionPrimitive* prim = &allMotionPrimitives_[curr.theta][actionID];
-    u8 pathSegmentOffset = prim->AddSegmentsToPath(State2State_c(curr), path);
+    //u8 pathSegmentOffset = prim->AddSegmentsToPath(State2State_c(curr), path);
 
     curr.x += prim->endStateOffset.x;
     curr.y += prim->endStateOffset.y;

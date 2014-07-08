@@ -253,7 +253,7 @@ namespace Anki {
                               const u32 colorID)
     {
       ErasePath(pathID);
-      printf("drawing path %u of length %lu\n", pathID, p.GetNumSegments());
+      printf("drawing path %u of length %hhu\n", pathID, p.GetNumSegments());
       
       for (int s=0; s < p.GetNumSegments(); ++s) {
         const Planning::PathSegmentDef& seg = p.GetSegmentConstRef(s).GetDef();

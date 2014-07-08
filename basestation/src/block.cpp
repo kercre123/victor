@@ -346,7 +346,6 @@ namespace Anki {
       // Check if it's vertically oriented
       //
       const float DOT_TOLERANCE   = .35f;
-      const float ANGLE_TOLERANCE = DEG_TO_RAD(35);
       
       // Get vector, v, from center of block to this point
       Point3f v(dockingPt);
@@ -358,6 +357,7 @@ namespace Anki {
         
         /*
         // Rotation of block around v should be a multiple of 90 degrees
+        const float ANGLE_TOLERANCE = DEG_TO_RAD(35);
         const float angX = ABS(blockPose.GetRotationAngle<'X'>().ToFloat());
         const float angY = ABS(blockPose.GetRotationAngle<'Y'>().ToFloat());
         

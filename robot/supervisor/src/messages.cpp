@@ -332,6 +332,7 @@ namespace Anki {
       
       void ProcessPlaceBlockOnGroundMessage(const PlaceBlockOnGround& msg)
       {
+        //PRINT("Received PlaceOnGround message.\n");
         PickAndPlaceController::PlaceOnGround(msg.rel_x_mm, msg.rel_y_mm, msg.rel_angle);
       }
 

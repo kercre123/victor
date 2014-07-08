@@ -14,9 +14,10 @@
 
 using namespace Anki;
 
-GTEST_TEST(PoseEstimation, SolveQuartic)
+template<typename PRECISION>
+void SolveQuarticTestHelper(std::array<PRECISION,4>& roots_computed,
+                            const PRECISION tolerance)
 {
-#define PRECISION float
   const std::array<PRECISION,5> factors = {
     {-3593989.0, -33048.973667, 316991.744900, 33048.734165, -235.623396}
   };
@@ -25,14 +26,24 @@ GTEST_TEST(PoseEstimation, SolveQuartic)
     {0.334683441970975, 0.006699578943935, -0.136720934135068, -0.213857711381642}
   };
   
-  std::array<PRECISION,4> roots_computed;
   EXPECT_TRUE(Vision::P3P::solveQuartic(factors, roots_computed) == RESULT_OK);
-  
   for(s32 i=0; i<4; ++i) {
-    EXPECT_NEAR(roots_groundTruth[i], roots_computed[i], 1e-6f);
+    EXPECT_NEAR(roots_groundTruth[i], roots_computed[i], tolerance);
+  }
+}
+
+GTEST_TEST(PoseEstimation, SolveQuartic)
+{
+  { // Single precision
+    std::array<float_t,4> roots_computed;
+    SolveQuarticTestHelper(roots_computed, 1e-6f);
   }
   
-#undef PRECISION
+  { // Double precision
+    std::array<double_t,4> roots_computed;
+    SolveQuarticTestHelper(roots_computed, 1e-12);
+  }
+  
 } // GTEST_TEST(PoseEstimation, SolveQuartic)
 
 GTEST_TEST(PoseEstimation, FromQuads)

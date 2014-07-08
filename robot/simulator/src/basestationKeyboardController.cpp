@@ -328,7 +328,14 @@ namespace Anki {
 
             case '1': //set lift to low dock height
             {
-              robot_->MoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+              if(robot_->IsCarryingBlock()) {
+                // Put the block down right here
+                robot_->ExecutePlaceBlockOnGroundSequence();
+                
+              } else {
+                // Just move the lift down
+                robot_->MoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+              }
               break;
             }
               
