@@ -100,6 +100,15 @@ namespace Anki {
     
 #pragma mark --- Robot Class Implementations ---
     
+    const std::map<Robot::State, std::string> Robot::StateNames = {
+      {IDLE,                  "IDLE"},
+      {FOLLOWING_PATH,        "FOLLOWING_PATH"},
+      {BEGIN_DOCKING,         "BEGIN_DOCKING"},
+      {DOCKING,               "DOCKING"},
+      {PLACE_BLOCK_ON_GROUND, "PLACE_BLOCK_ON_GROUND"}
+    };
+    
+    
     Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner)
     : _ID(robotID)
     , _msgHandler(msgHandler)
@@ -318,6 +327,23 @@ namespace Anki {
           break;
         } // case BEGIN_DOCKING
           
+        case PLACE_BLOCK_ON_GROUND:
+        {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime) {
+            if(IsCarryingBlock() == false) {
+              PRINT_NAMED_ERROR("Robot.Update.NotCarryingBlock",
+                                "Robot %d in PLACE_BLOCK_ON_GROUND state but not carrying block.\n", _ID);
+              break;
+            }
+            
+            _dockAction = DA_PLACE_LOW;
+            _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.5f;
+            SendPlaceBlockOnGround();
+            SetState(DOCKING);
+          }
+          break;
+        } // case PLACE_BLOCK_ON_GROUND
+          
         case DOCKING:
         {
           if (!IsPickingOrPlacing() && !IsMoving() &&
@@ -326,92 +352,41 @@ namespace Anki {
             // Stopped executing docking path, and should have backed out by now,
             // and have head pointed at an angle to see where we just placed or
             // picked up from. So we will check if we see a block with the same
-            // ID as the one we were supposed to be picking or placing, in the
+            // ID/Type as the one we were supposed to be picking or placing, in the
             // right position.
+            
+            Result lastResult = RESULT_OK;
+            
             switch(_dockAction)
             {
               case DA_PICKUP_LOW:
               case DA_PICKUP_HIGH:
               {
-                // In pickup mode, we should _not_ still see a block with the
-                // same type as the one we were supposed to pick up in that
-                // block's original position because we should now be carrying it.
-                Block* carryBlock = _world->GetBlockByID(_carryingBlockID);
-                if(carryBlock == nullptr) {
-                  PRINT_NAMED_ERROR("Robot.Update.CarryBlockNoLongerExists",
-                                    "Block %d we were carrying no longer exists in the world.\n",
-                                    _carryingBlockID);
-                  break;
-                }
-                
-                const BlockWorld::ObjectsMapByID_t& blocksWithType = _world->GetExistingBlocks(carryBlock->GetType());
-                Pose3d P_diff;
-                bool blockInOriginalPoseFound = false;
-                for(auto block : blocksWithType) {
-                  // TODO: Make thresholds parameters
-                  // TODO: is it safe to always have useAbsRotation=true here?
-                  if(block.second->GetPose().IsSameAs_WithAmbiguity(_dockBlockOrigPose, carryBlock->
-                                                                    GetRotationAmbiguities(),
-                                                                    15.f, DEG_TO_RAD(25), true, P_diff))
-                  {
-                    blockInOriginalPoseFound = true;
-                    break;
-                  }
-                }
-                
-                if(blockInOriginalPoseFound)
-                {
-                  // Must not actually be carrying the block I thought I was!
-                  _world->ClearBlock(_carryingBlockID);
-                  _isCarryingBlock = false;
-                  _carryingBlockID = ANY_OBJECT;
-                  PRINT_INFO("Block pick-up FAILED! (Still seeing block in same place.)\n");
-                } else {
-                  _isCarryingBlock = true;
-                  _carryingBlockID = _dockBlockID;
-                  _dockBlockID     = ANY_OBJECT;
-                  _dockMarker      = nullptr;
-                  PRINT_INFO("Block pick-up SUCCEEDED!\n");
+                lastResult = VerifyBlockPickup();
+                if(lastResult != RESULT_OK) {
+                  PRINT_NAMED_ERROR("Robot.Update.VerifyBlockPickupFailed",
+                                    "VerifyBlockPickup returned error code %x.\n",
+                                    lastResult);
                 }
                 break;
               } // case PICKUP
                 
               case DA_PLACE_LOW:
               case DA_PLACE_HIGH:
-              {
-                // In place mode, we _should_ now see a block with the ID of the
-                // one we were carrying, in the place we think we left it when
-                // we placed it.
-                // TODO: check to see it ended up in the right place?
-                Block* block = _world->GetBlockByID(_carryingBlockID);
-                if(block == nullptr) {
-                  PRINT_NAMED_ERROR("Robot.Update.CarryBlockNoLongerExists",
-                                    "Block %d we were carrying no longer exists in the world.\n",
-                                    _carryingBlockID);
-                }
-                else if(block->GetLastObservedTime() > (GetLastMsgTimestamp()-500))
-                {
-                  // We've seen the block in the last half second (which could
-                  // not be true if we were still carrying it)
-                  _isCarryingBlock = false;
-                  _carryingBlockID = ANY_OBJECT;
-                  _dockBlockID     = ANY_OBJECT;
-                  _dockMarker      = nullptr;
-                  PRINT_INFO("Block placement SUCCEEDED!\n");
-                } else {
-                  // TODO: correct to assume we are still carrying the block?
-                  _isCarryingBlock = true;
-                  _dockBlockID     = _carryingBlockID;
-                  PickUpDockBlock(); // re-pickup block to attach it to the lift again
-                  _dockMarker      = nullptr;
-                  PRINT_INFO("Block placement FAILED!\n");
-
+              {                  
+                lastResult = VerifyBlockPlacement();
+                if(lastResult != RESULT_OK) {
+                  PRINT_NAMED_ERROR("Robot.Update.VerifyBlockPlacementFailed",
+                                    "VerifyBlockPlacement returned error code %x.\n",
+                                    lastResult);
                 }
                 break;
               } // case PLACE
                 
               default:
                 PRINT_NAMED_ERROR("Robot.Update", "Reached unknown dockAction case.\n");
+                assert(false);
+                
             } // switch(_dockAction)
             
             SetState(IDLE);
@@ -445,17 +420,21 @@ namespace Anki {
 
       
     } // Update()
+    
 
     void Robot::SetState(const State nextState)
     {
       // TODO: Provide string name lookup for each state
-      PRINT_INFO("Robot %d switching from state %d to state %d.\n", _ID, _state, nextState);
+      PRINT_INFO("Robot %d switching from state %s to state %s.\n", _ID,
+                 Robot::StateNames.at(_state).c_str(),
+                 Robot::StateNames.at(nextState).c_str());
 
       switch(nextState) {
         case IDLE:
         case FOLLOWING_PATH:
         case BEGIN_DOCKING:
         case DOCKING:
+        case PLACE_BLOCK_ON_GROUND:
           break;
 
         default:
@@ -770,8 +749,88 @@ namespace Anki {
                  _goalPose.GetRotationAngle().getDegrees());
       
       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-      _state = FOLLOWING_PATH;
+      SetState(FOLLOWING_PATH);
       _nextState = BEGIN_DOCKING;
+      
+      return lastResult;
+      
+    } // ExecuteDockingSequence()
+    
+    
+    Result Robot::ExecutePlaceBlockOnGroundSequence(const Pose3d& atPose)
+    {
+      Result lastResult = RESULT_OK;
+      
+      if(IsCarryingBlock() == false) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NotCarryingBlock",
+                          "Robot %d was told to place a block on the ground, but "
+                          "it is not carrying a block.\n", _ID);
+        return RESULT_FAIL;
+      }
+      
+      // Grab a pointer to the block we are supposedly carrying
+      Block* carryingBlock = _world->GetBlockByID(_carryingBlockID);
+      if(carryingBlock == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.CarryBlockDoesNotExist",
+                          "Robot %d thinks it is carrying a block with ID=%d, but that "
+                          "block does not exist in the world.\n",
+                          _ID, _carryingBlockID);
+        
+        return RESULT_FAIL;
+      }
+      
+      // Temporarily move the block being carried to the specified pose so we can
+      // get pre-dock poses for it
+      const Pose3d origCarryBlockPose(carryingBlock->GetPose());
+      carryingBlock->SetPose(atPose);
+      
+      // Get "pre-dock" poses, which in this case aren't really for docking but
+      // instead where we want the robot to end up in order for the block to be
+      // at the requested pose.
+      std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
+      carryingBlock->GetPreDockPoses(ORIGIN_TO_LOW_LIFT_DIST_MM, preDockPoseMarkerPairs);
+      
+      if (preDockPoseMarkerPairs.empty()) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NoPreDockPoses",
+                          "Dock block did not provide any pre-dock poses!\n");
+        return RESULT_FAIL;
+      }
+      
+      // Let the planner choose which pre-dock pose to use. Create a vector of
+      // pose options
+      size_t selectedIndex = preDockPoseMarkerPairs.size();
+      std::vector<Pose3d> preDockPoses;
+      preDockPoses.reserve(preDockPoseMarkerPairs.size());
+      for(auto const& preDockPair : preDockPoseMarkerPairs) {
+        preDockPoses.emplace_back(preDockPair.first);
+      }
+      
+      _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
+      _goalAngleThreshold    = DEG_TO_RAD(10);
+      
+      lastResult = ExecutePathToPose(preDockPoses, DEG_TO_RAD(-15), selectedIndex);
+      if(lastResult != RESULT_OK) {
+        return lastResult;
+      }
+      
+      _goalPose = preDockPoses[selectedIndex];
+      
+      // Note that even though we are not docking with a block, we need this
+      // in the case that placement fails and we need to re-pickup the block
+      // we're carrying.
+      _dockMarker = &(preDockPoseMarkerPairs[selectedIndex].second);
+      
+      // Put the carrying block back in its original pose (attached to lift)
+      carryingBlock->SetPose(origCarryBlockPose);
+      
+      PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
+                 _goalPose.GetTranslation().x(),
+                 _goalPose.GetTranslation().y(),
+                 _goalPose.GetRotationAngle().getDegrees());
+      
+      _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+      SetState(FOLLOWING_PATH);
+      _nextState = PLACE_BLOCK_ON_GROUND;
       
       return lastResult;
       
@@ -827,7 +886,20 @@ namespace Anki {
     Result Robot::PickUpDockBlock()
     {
       if(_dockBlockID == ANY_OBJECT) {
-        PRINT_NAMED_ERROR("Robot.NoDockBlockIDSet", "No docking block ID set, but told to pick one up.\n");
+        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.NoDockBlockIDSet",
+                          "No docking block ID set, but told to pick one up.\n");
+        return RESULT_FAIL;
+      }
+      
+      if(_dockMarker == nullptr) {
+        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.NoDockMarkerSet",
+                          "No docking marker set, but told to pick up block.\n");
+        return RESULT_FAIL;
+      }
+      
+      if(IsCarryingBlock()) {
+        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.AlreadyCarryingBlock",
+                          "Already carrying a block, but told to pick one up.\n");
         return RESULT_FAIL;
       }
       
@@ -857,8 +929,9 @@ namespace Anki {
       // the lift and move with the robot
       blockPoseWrtLiftPose.SetParent(&_liftPose);
 
-      _dockBlockID = ANY_OBJECT;
-      _dockMarker  = nullptr;
+      // Don't reset these until we've verified the block was actually picked up
+      //_dockBlockID = ANY_OBJECT;
+      //_dockMarker  = nullptr;
       
       block->SetPose(blockPoseWrtLiftPose);
       block->SetIsBeingCarried(true);
@@ -866,6 +939,52 @@ namespace Anki {
       return RESULT_OK;
       
     } // PickUpDockBlock()
+    
+    
+    Result Robot::VerifyBlockPickup()
+    {
+      // We should _not_ still see a block with the
+      // same type as the one we were supposed to pick up in that
+      // block's original position because we should now be carrying it.
+      Block* carryBlock = _world->GetBlockByID(_carryingBlockID);
+      if(carryBlock == nullptr) {
+        PRINT_NAMED_ERROR("Robot.Update.CarryBlockNoLongerExists",
+                          "Block %d we were carrying no longer exists in the world.\n",
+                          _carryingBlockID);
+        return RESULT_FAIL;
+      }
+      
+      const BlockWorld::ObjectsMapByID_t& blocksWithType = _world->GetExistingBlocks(carryBlock->GetType());
+      Pose3d P_diff;
+      bool blockInOriginalPoseFound = false;
+      for(auto block : blocksWithType) {
+        // TODO: Make thresholds parameters
+        // TODO: is it safe to always have useAbsRotation=true here?
+        if(block.second->GetPose().IsSameAs_WithAmbiguity(_dockBlockOrigPose, carryBlock->
+                                                          GetRotationAmbiguities(),
+                                                          15.f, DEG_TO_RAD(25), true, P_diff))
+        {
+          blockInOriginalPoseFound = true;
+          break;
+        }
+      }
+      
+      if(blockInOriginalPoseFound)
+      {
+        // Must not actually be carrying the block I thought I was!
+        _world->ClearBlock(_carryingBlockID);
+        _carryingBlockID = ANY_OBJECT;
+        PRINT_INFO("Block pick-up FAILED! (Still seeing block in same place.)\n");
+      } else {
+        _carryingBlockID = _dockBlockID;
+        _dockBlockID     = ANY_OBJECT;
+        _dockMarker      = nullptr;
+        PRINT_INFO("Block pick-up SUCCEEDED!\n");
+      }
+      
+      return RESULT_OK;
+      
+    } // VerifyBlockPickup()
     
     
     Result Robot::PlaceCarriedBlock() //const TimeStamp_t atTime)
@@ -926,14 +1045,53 @@ namespace Anki {
                        block->GetPose().GetTranslation().y(),
                        block->GetPose().GetTranslation().z());
 
-      _carryingBlockID = ANY_OBJECT;
+      // Don't reset _carryingBlockID here, because we want to know
+      // the last block we were carrying so we can verify we see it
+      // after placement. Once we *verify* we've placed it, we'll
+      // do this.
+      //_carryingBlockID = ANY_OBJECT;
       
       return RESULT_OK;
       
     } // PlaceCarriedBlock()
     
     
+    Result Robot::VerifyBlockPlacement()
+    {
+      
+      // In place mode, we _should_ now see a block with the ID of the
+      // one we were carrying, in the place we think we left it when
+      // we placed it.
+      // TODO: check to see it ended up in the right place?
+      Block* block = _world->GetBlockByID(_carryingBlockID);
+      if(block == nullptr) {
+        PRINT_NAMED_ERROR("Robot.VerifyBlockPlacement.CarryBlockNoLongerExists",
+                          "Block %d we were carrying no longer exists in the world.\n",
+                          _carryingBlockID);
+        return RESULT_FAIL;
+      }
+      else if(block->GetLastObservedTime() > (GetLastMsgTimestamp()-500))
+      {
+        // We've seen the block in the last half second (which could
+        // not be true if we were still carrying it)
+        _carryingBlockID = ANY_OBJECT;
+        _dockBlockID     = ANY_OBJECT;
+        _dockMarker      = nullptr;
+        PRINT_INFO("Block placement SUCCEEDED!\n");
+      } else {
+        // TODO: correct to assume we are still carrying the block?
+        _dockBlockID     = _carryingBlockID;
+        _carryingBlockID = ANY_OBJECT;
+        PickUpDockBlock(); // re-pickup block to attach it to the lift again
+        PRINT_INFO("Block placement FAILED!\n");
+        
+      }
+      
+      return RESULT_OK;
+      
+    } // VerifyBlockPlacement()
 
+    
     Result Robot::SetHeadlight(u8 intensity)
     {
       return SendHeadlight(intensity);
@@ -1005,6 +1163,17 @@ namespace Anki {
       m.pixel_radius = pixel_radius;
       return _msgHandler->SendMessage(_ID, m);
     }
+    
+    Result Robot::SendPlaceBlockOnGround()
+    {
+      MessagePlaceBlockOnGround m;
+      
+      m.rel_angle = 0.f;
+      m.rel_x_mm  = ORIGIN_TO_LOW_LIFT_DIST_MM;
+      m.rel_y_mm  = 0.f;
+      
+      return _msgHandler->SendMessage(_ID, m);
+    } // SendPlaceBlockOnGround()
     
     Result Robot::SendMoveLift(const f32 speed_rad_per_sec) const
     {

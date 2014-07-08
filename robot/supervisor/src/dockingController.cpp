@@ -531,8 +531,11 @@ namespace Anki {
       {
         mode_ = LOOKING_FOR_BLOCK;
         markerlessDocking_ = true;
-        SetRelDockPose(rel_x, rel_y, rel_angle);
         success_ = false;
+        
+        // NOTE: mode_ must be set to LOOKING_FOR_BLOCK and success_ must be false
+        //       before we call SetRelDockPose()
+        SetRelDockPose(rel_x, rel_y, rel_angle);
       }
 
 

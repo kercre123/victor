@@ -50,8 +50,11 @@ namespace Anki {
         IDLE,
         FOLLOWING_PATH,
         BEGIN_DOCKING,
-        DOCKING
+        DOCKING,
+        PLACE_BLOCK_ON_GROUND
       };
+      
+      static const std::map<State, std::string> StateNames;
       
       Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner);
       ~Robot();
@@ -165,8 +168,13 @@ namespace Anki {
       
       Result StopAllMotors();
       
-      // 
+      // Plan a path to an available docking pose of the specified block, and
+      // then dock with it.
       Result ExecuteDockingSequence(ObjectID_t blockToDockWith);
+      
+      // Plan a path to place the block currently being carried at the specified
+      // pose.
+      Result ExecutePlaceBlockOnGroundSequence(const Pose3d& atPose);
       
       // Sends a message to the robot to dock with the specified marker of the
       // specified block that it should currently be seeing.
@@ -192,10 +200,15 @@ namespace Anki {
       // a block.
       Result PickUpDockBlock();
       
+      Result VerifyBlockPickup();
+      
       // Places the block that the robot was carrying in its current position
       // w.r.t. the world, and removes it from the lift pose chain so it is no
-      // longer attached to the robot.  IsCarryingBlock() will now report false.
+      // longer attached to the robot.  Note that IsCarryingBlock() will still
+      // report true, until it is actually verified that the placement worked.
       Result PlaceCarriedBlock(); //const TimeStamp_t atTime);
+      
+      Result VerifyBlockPlacement();
       
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
@@ -346,7 +359,7 @@ namespace Anki {
       RobotPoseHistory _poseHistory;
 
       // State
-      bool _isCarryingBlock;
+      //bool _isCarryingBlock;
       bool _isPickingOrPlacing;
       //Block* _carryingBlock;
       ObjectID_t _carryingBlockID;
@@ -414,6 +427,8 @@ namespace Anki {
                                const u16 image_pixel_y,
                                const u8 pixel_radius) const;
 
+      Result SendPlaceBlockOnGround();
+      
       // Turn on/off headlight LEDs
       Result SendHeadlight(u8 intensity);
       
