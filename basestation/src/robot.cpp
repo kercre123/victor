@@ -756,7 +756,36 @@ namespace Anki {
       
     } // ExecuteDockingSequence()
     
+    Result Robot::ExecutePlaceBlockOnGroundSequence()
+    {
+      if(IsCarryingBlock() == false) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NotCarryingBlock",
+                          "Robot %d was told to place a block on the ground, but "
+                          "it is not carrying a block.\n", _ID);
+        return RESULT_FAIL;
+      }
+      
+      // Grab a pointer to the block we are supposedly carrying
+      Block* carryingBlock = _world->GetBlockByID(_carryingBlockID);
+      if(carryingBlock == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.CarryBlockDoesNotExist",
+                          "Robot %d thinks it is carrying a block with ID=%d, but that "
+                          "block does not exist in the world.\n",
+                          _ID, _carryingBlockID);
+        
+        return RESULT_FAIL;
+      }
+      
+      SetState(PLACE_BLOCK_ON_GROUND);
+      
+      // TODO: How to correctly set _dockMarker in case of placement failure??
+      _dockMarker = &carryingBlock->GetMarker(Block::FRONT_FACE);
+      
+      return RESULT_OK;
+      
+    } // ExecuteDockingSequence()
     
+  
     Result Robot::ExecutePlaceBlockOnGroundSequence(const Pose3d& atPose)
     {
       Result lastResult = RESULT_OK;

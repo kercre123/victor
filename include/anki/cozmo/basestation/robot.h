@@ -176,6 +176,9 @@ namespace Anki {
       // pose.
       Result ExecutePlaceBlockOnGroundSequence(const Pose3d& atPose);
       
+      // Put the carried block down right where the robot is now
+      Result ExecutePlaceBlockOnGroundSequence();
+      
       // Sends a message to the robot to dock with the specified marker of the
       // specified block that it should currently be seeing.
       Result DockWithBlock(const ObjectID_t blockID,

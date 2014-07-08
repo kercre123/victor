@@ -275,8 +275,8 @@ namespace Anki {
             {
               if(robot_->IsCarryingBlock()) {
                 // Put the block down right here
-                const Pose3d& here = robot_->GetPose();
-                robot_->ExecutePlaceBlockOnGroundSequence(here);
+                robot_->ExecutePlaceBlockOnGroundSequence();
+                
               } else {
                 // Just move the lift down
                 robot_->MoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
