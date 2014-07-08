@@ -38,7 +38,7 @@ namespace Anki {
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
       const s32 UNLOCK_HYSTERESIS = 50;
 #else
-      const s32 UNLOCK_HYSTERESIS = 0;
+      //const s32 UNLOCK_HYSTERESIS = 0;
 #endif
       
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
