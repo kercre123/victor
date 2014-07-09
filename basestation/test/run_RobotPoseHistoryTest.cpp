@@ -55,7 +55,7 @@ TEST(RobotPoseHistory, AddGetPose)
                       p1.GetRotationAngle().ToFloat(),
                       h1,
                       l1,
-                      Pose3d::World);
+                      Pose3d::GetWorldOrigin());
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 1);
   ASSERT_TRUE(hist.ComputePoseAt(t1, t, p) == RESULT_OK);
@@ -71,7 +71,7 @@ TEST(RobotPoseHistory, AddGetPose)
                       p2.GetRotationAngle().ToFloat(),
                       h2,
                       l2,
-                      Pose3d::World);
+                      Pose3d::GetWorldOrigin());
   
   // Request out of range pose
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
@@ -98,7 +98,7 @@ TEST(RobotPoseHistory, AddGetPose)
                       p3.GetRotationAngle().ToFloat(),
                       h3,
                       l3,
-                      Pose3d::World);
+                      Pose3d::GetWorldOrigin());
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   
@@ -118,7 +118,7 @@ TEST(RobotPoseHistory, AddGetPose)
                       p1.GetRotationAngle().ToFloat(),
                       h1,
                       l1,
-                      Pose3d::World);
+                      Pose3d::GetWorldOrigin());
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   ASSERT_TRUE(hist.GetOldestTimeStamp() == t2);

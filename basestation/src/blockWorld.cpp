@@ -449,7 +449,8 @@ namespace Anki
                            "Instantiating one and only mat piece in the world.\n");
           
           firstSeenMatPiece->SetID(++globalIDCounter);
-          existingMatPieces_[firstSeenMatPiece->GetType()][firstSeenMatPiece->GetID()] = new MatPiece(firstSeenMatPiece->GetType());
+          MatPiece* newMatPiece = new MatPiece(firstSeenMatPiece->GetType(), true);
+          existingMatPieces_[firstSeenMatPiece->GetType()][firstSeenMatPiece->GetID()] = newMatPiece;          
         }
 
         // Grab the existing mat piece that matches the one we saw.  For now,

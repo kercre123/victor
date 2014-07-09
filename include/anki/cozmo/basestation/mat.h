@@ -25,7 +25,7 @@ namespace Anki {
     class MatPiece : public Vision::ObservableObject 
     {
     public:
-      MatPiece(ObjectType_t type);
+      MatPiece(ObjectType_t type, bool isFirstPiece = false);
       
       //virtual float GetMinDim() const {return 0;}
       
