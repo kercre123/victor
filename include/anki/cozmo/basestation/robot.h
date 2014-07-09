@@ -384,6 +384,10 @@ namespace Anki {
       DockAction_t                _dockAction;
       Pose3d                      _dockBlockOrigPose;
       
+      // Desired pose of marker (on carried block) wrt world when the block
+      // has been placed on the ground.
+      Pose3d                      _placeOnGroundPose;
+      
       f32 _waitUntilTime;
       
       ///////// Messaging ////////
@@ -430,7 +434,7 @@ namespace Anki {
                                const u16 image_pixel_y,
                                const u8 pixel_radius) const;
 
-      Result SendPlaceBlockOnGround();
+      Result SendPlaceBlockOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle);
       
       // Turn on/off headlight LEDs
       Result SendHeadlight(u8 intensity);

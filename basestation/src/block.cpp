@@ -323,10 +323,14 @@ namespace Anki {
     }
     */
    
+    // These should match the order in which faces are defined! (See Block constructor)
     const std::array<Point3f, 6> Block::CanonicalDockingPoints = {
-      {X_AXIS_3D, -X_AXIS_3D,
-       Y_AXIS_3D, -Y_AXIS_3D,
-       Z_AXIS_3D, -Z_AXIS_3D}
+      {-X_AXIS_3D,
+        Y_AXIS_3D,
+        X_AXIS_3D,
+       -Y_AXIS_3D,
+        Z_AXIS_3D,
+       -Z_AXIS_3D}
     };
     
     bool GetPreDockPose(const Point3f& canonicalPoint,
