@@ -130,21 +130,17 @@ namespace Anki {
       // Get the block's corners at a specified pose
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
       
-      
-      // Get possible poses to start docking/tracking procedure. These will e
+      // Get possible poses to start docking/tracking procedure. These will be
       // a point a given distance away from each vertical face that has the
       // specified code, in the direction orthogonal to that face.  The points
-      // will be in the world frame, with the Z coordinate at the height of the
-      // center of the block.
-      void GetPreDockPoses(const Vision::Marker::Code& code,
-                           const float distance_mm,
-                           std::vector<Pose3d>& poses) const;
-      
-      // Same as above, except no code is specified, and all docking points are
-      // returned.
+      // will be w.r.t. same parent as the block, with the Z coordinate at the
+      // height of the center of the block. The poses will be paired with
+      // references to the corresponding marker. Optionally, only poses/markers
+      // with the specified code can be returned.
       using PoseMarkerPair_t = std::pair<Pose3d,const Vision::KnownMarker&>;
       void GetPreDockPoses(const float distance_mm,
-                           std::vector<PoseMarkerPair_t>& poseMarkerPairs) const;
+                           std::vector<PoseMarkerPair_t>& poseMarkerPairs,
+                           const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const;
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding 2D quadrilateral. Pads the

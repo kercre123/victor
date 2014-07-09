@@ -362,12 +362,12 @@ namespace Anki {
       RobotPoseHistory _poseHistory;
 
       // State
-      //bool _isCarryingBlock;
-      bool _isPickingOrPlacing;
-      //Block* _carryingBlock;
-      ObjectID_t _carryingBlockID;
-      bool _isMoving;
-      State _state, _nextState;
+      bool       _isPickingOrPlacing;
+      bool       _isMoving;
+      State      _state, _nextState;
+      
+      ObjectID_t                 _carryingBlockID;
+      const Vision::KnownMarker* _carryingMarker;
       
       // Leaves input liftPose's parent alone and computes its position w.r.t.
       // liftBasePose, given the angle

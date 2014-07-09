@@ -384,6 +384,7 @@ namespace Anki {
         dockingPt.z() = 0.f;  // Project to floor plane
         preDockPose.SetTranslation(dockingPt);
         preDockPose.SetRotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
+        preDockPose.SetParent(blockPose.GetParent());
         dockingPointFound = true;
 
       }
@@ -393,38 +394,24 @@ namespace Anki {
     
     
     void Block::GetPreDockPoses(const float distance_mm,
-                                std::vector<PoseMarkerPair_t>& poseMarkerPairs) const
+                                std::vector<PoseMarkerPair_t>& poseMarkerPairs,
+                                const Vision::Marker::Code withCode) const
     {
       Pose3d preDockPose;
       
-      //for(auto & canonicalPoint : Block::CanonicalDockingPoints)
       for(FaceName i_face = FIRST_FACE; i_face < NUM_FACES; ++i_face)
       {
-        const Vision::KnownMarker& faceMarker = GetMarker(i_face);
-        const f32 distanceForThisFace = faceMarker.GetPose().GetTranslation().Length() + distance_mm;
-        if(GetPreDockPose(CanonicalDockingPoints[i_face], distanceForThisFace, this->pose_, preDockPose) == true) {
-          poseMarkerPairs.emplace_back(preDockPose, GetMarker(i_face));
+        if(withCode == Vision::Marker::ANY_CODE || GetMarker(i_face).GetCode() == withCode) {
+          const Vision::KnownMarker& faceMarker = GetMarker(i_face);
+          const f32 distanceForThisFace = faceMarker.GetPose().GetTranslation().Length() + distance_mm;
+          if(GetPreDockPose(CanonicalDockingPoints[i_face], distanceForThisFace, this->pose_, preDockPose) == true) {
+            poseMarkerPairs.emplace_back(preDockPose, GetMarker(i_face));
+          }
         }
       } // for each canonical docking point
       
     } // Block::GetDockingPoses()
     
-    
-    void Block::GetPreDockPoses(const Vision::Marker::Code& withCode,
-                                const float distance_mm,
-                                std::vector<Pose3d>& points) const
-    {
-      Pose3d preDockPose;
-      
-      for(FaceName i_face = FIRST_FACE; i_face < NUM_FACES; ++i_face)
-      {
-        if(GetMarker(i_face).GetCode() == withCode) {
-          if(GetPreDockPose(CanonicalDockingPoints[i_face], distance_mm, this->pose_, preDockPose) == true) {
-            points.emplace_back(preDockPose);
-          }
-        }
-      }
-    } // Block::GetDockingPoses()
     
     
     const Block::FaceName Block::OppositeFaceLUT[Block::NUM_FACES] = {

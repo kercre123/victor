@@ -134,8 +134,9 @@ namespace Anki {
     , _currentHeadAngle(0)
     , _currentLiftAngle(0)
     , _isPickingOrPlacing(false)
-    , _carryingBlockID(ANY_OBJECT)
     , _state(IDLE)
+    , _carryingBlockID(ANY_OBJECT)
+    , _carryingMarker(nullptr)
     , _dockBlockID(ANY_OBJECT)
     , _dockMarker(nullptr)
     {
@@ -813,11 +814,13 @@ namespace Anki {
       const Pose3d origCarryBlockPose(carryingBlock->GetPose());
       carryingBlock->SetPose(atPose);
       
-      // Get "pre-dock" poses, which in this case aren't really for docking but
-      // instead where we want the robot to end up in order for the block to be
+      // Get "pre-dock" poses that match the marker that we are docked to,
+      // which in this case aren't really for docking but instead where we
+      // want the robot to end up in order for the block to be
       // at the requested pose.
       std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      carryingBlock->GetPreDockPoses(ORIGIN_TO_LOW_LIFT_DIST_MM, preDockPoseMarkerPairs);
+      carryingBlock->GetPreDockPoses(ORIGIN_TO_LOW_LIFT_DIST_MM, preDockPoseMarkerPairs,
+                                     _carryingMarker->GetCode());
       
       if (preDockPoseMarkerPairs.empty()) {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NoPreDockPoses",
@@ -940,6 +943,7 @@ namespace Anki {
       }
       
       _carryingBlockID = _dockBlockID;
+      _carryingMarker  = _dockMarker;
 
       // Base the block's pose relative to the lift on how far away the dock
       // marker is from the center of the block
@@ -1005,7 +1009,8 @@ namespace Anki {
         _carryingBlockID = ANY_OBJECT;
         PRINT_INFO("Block pick-up FAILED! (Still seeing block in same place.)\n");
       } else {
-        _carryingBlockID = _dockBlockID;
+        _carryingBlockID = _dockBlockID;  // Already set?
+        _carryingMarker  = _dockMarker;   //   "
         _dockBlockID     = ANY_OBJECT;
         _dockMarker      = nullptr;
         PRINT_INFO("Block pick-up SUCCEEDED!\n");
@@ -1079,6 +1084,7 @@ namespace Anki {
       // after placement. Once we *verify* we've placed it, we'll
       // do this.
       //_carryingBlockID = ANY_OBJECT;
+      //_carryingMarker = nullptr;
       
       return RESULT_OK;
       
@@ -1104,6 +1110,7 @@ namespace Anki {
         // We've seen the block in the last half second (which could
         // not be true if we were still carrying it)
         _carryingBlockID = ANY_OBJECT;
+        _carryingMarker  = nullptr;
         _dockBlockID     = ANY_OBJECT;
         _dockMarker      = nullptr;
         PRINT_INFO("Block placement SUCCEEDED!\n");
