@@ -30,7 +30,8 @@ namespace Anki {
     class Marker
     {
     public:
-      typedef u16 Code; // TODO: this should be an Embedded::VisionMarkerType
+      using Code = u16; // TODO: this should be an Embedded::VisionMarkerType
+      static const Code ANY_CODE = u16_MAX;
 
       Marker(const Code& code);
       
