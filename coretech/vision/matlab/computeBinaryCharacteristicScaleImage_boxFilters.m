@@ -48,11 +48,11 @@ function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(image, l
     %     for pyramidLevel = levels
     for iHalfWidth = 1:(length(filterHalfWidths)-1)
         %         halfWidthLarge = 2 ^ pyramidLevel;
-        halfWidthLarge = filterHalfWidths(iHalfWidth);
+        halfWidthLarge = filterHalfWidths(iHalfWidth+1);
         filterAreaLarge = (2*halfWidthLarge+1) ^ 2;
         
         %         halfWidthSmall = 2 ^ (pyramidLevel+1);
-        halfWidthSmall = filterHalfWidths(iHalfWidth+1);
+        halfWidthSmall = filterHalfWidths(iHalfWidth);
         filterAreaSmall = (2*halfWidthSmall+1) ^ 2;
         
         filterL = [-halfWidthLarge, -halfWidthLarge, halfWidthLarge, halfWidthLarge, 1/filterAreaLarge];
@@ -63,7 +63,8 @@ function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(image, l
         
         filteredSmall = filteredSmall(validYIndexes,validXIndexes);
         
-        dog = abs(filteredSmall - filteredLarge(validYIndexes,validXIndexes));
+%         dog = abs(filteredSmall - filteredLarge(validYIndexes,validXIndexes));
+        dog = filteredLarge(validYIndexes,validXIndexes) - filteredSmall;
         
         larger = dog > dog_max;
         if any(larger(:))

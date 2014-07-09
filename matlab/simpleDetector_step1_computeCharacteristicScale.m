@@ -40,7 +40,7 @@ if usePyramid
         binaryImg2 = computeBinaryCharacteristicScaleImage_boxFilters(img, [4,8], thresholdFraction);
         binaryImg = binaryImg1 + binaryImg2;
 %         figure(6); imshow(binaryImg);
-        return;
+            return;
     end
     
     if showTiming
