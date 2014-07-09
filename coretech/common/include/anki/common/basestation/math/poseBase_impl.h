@@ -29,7 +29,7 @@ namespace Anki {
   std::list<PoseNd> PoseBase<PoseNd>::Origins(1);
   
   template<class PoseNd>
-  PoseNd* PoseBase<PoseNd>::World = &PoseBase<PoseNd>::Origins.front();
+  const PoseNd* PoseBase<PoseNd>::_sWorld = &PoseBase<PoseNd>::Origins.front();
   
   template<class PoseNd>
   PoseNd& PoseBase<PoseNd>::AddOrigin()
@@ -60,7 +60,7 @@ namespace Anki {
   
   template<class PoseNd>
   PoseBase<PoseNd>::PoseBase()
-  : PoseBase<PoseNd>(PoseNd::World)
+  : PoseBase<PoseNd>(PoseNd::GetWorldOrigin())
   {
     
   }

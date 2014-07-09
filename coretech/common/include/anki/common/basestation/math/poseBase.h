@@ -55,12 +55,13 @@ namespace Anki {
     const PoseNd& FindOrigin(const PoseNd& forPose) const;
     
     // Origins
-    static PoseNd* World;
-    static std::list<PoseNd> Origins;
+    static const PoseNd* GetWorldOrigin() { return _sWorld; }
     static PoseNd& AddOrigin();
     static PoseNd& AddOrigin(const PoseNd& origin);
 
   protected:
+    static const PoseNd* _sWorld;
+    static std::list<PoseNd> Origins;
     
     const PoseNd* _parent;
     unsigned int GetTreeDepth(const PoseNd* poseNd) const;
