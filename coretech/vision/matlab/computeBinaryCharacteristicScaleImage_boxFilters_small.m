@@ -2,7 +2,7 @@
 
 %  binaryImage = computeBinaryCharacteristicScaleImage_boxFilters_small(im, 5, 0.75);
 
-function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters_small(image, numLevels, thresholdFraction)
+function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters_small(image, numLevels, smallCharacterisicParameter)
     
     if ~exist('thresholdFraction' ,'var')
         thresholdFraction = 0.75;
@@ -55,17 +55,19 @@ function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters_small(im
 %     [dog_max, scaleImage] = computeScale(integralImageWithBorders, filters, dog_max, scaleImage, validYIndexes, validXIndexes);
 %     [~, scaleImage] = computeScale(integralImageWithBorders, filtersT, dog_max, scaleImage, validYIndexes, validXIndexes);
 %     [~, scaleImage] = computeScale(image, dog_max, scaleImage);
-    [~, scaleImage] = computeScale_localMinima(image, dog_max, scaleImage, .85);
+    [~, binaryImage] = computeScale_localMinima(image, dog_max, scaleImage, smallCharacterisicParameter);
     
-    thresholdFraction = 0.99;
+%     thresholdFraction = 0.99;
     
-    binaryImage = image < thresholdFraction*scaleImage;
+%     binaryImage = image < thresholdFraction*scaleImage;
     
-    figure(4); imshow(binaryImage)
+%     imshows(binaryImage,2,'maximize')
     
 end % FUNCTION computeCharacteristicScaleImage()
 
-function [dog_max, scaleImage] = computeScale_localMinima(image, dog_max, scaleImage, threshold)
+function [dog_max, binaryImage] = computeScale_localMinima(image, dog_max, scaleImage, threshold)
+    binaryImage = zeros(size(scaleImage));
+    
     for y = (1+3):(size(image,1)-3)
         for x = (1+3):(size(image,2)-3)
             scale = 0;            
@@ -79,24 +81,8 @@ function [dog_max, scaleImage] = computeScale_localMinima(image, dog_max, scaleI
             scale2y = sum(image(ys2,x)) / length(image(ys2,x));
             scale2x = sum(image(y,xs2)) / length(image(y,xs2));
 
-%             dogY = scale2y - scale1y;
-%             dogX = scale2x - scale1x;
-
-%                 if x == 151 && y == 199
-%                     disp(sprintf('%f %f %f', scale1, scale2, dog));
-% %                     keyboard
-%                 end
-
-%             if dogY > dog_max(y,x)
-%             if scale1y < scale2y
-% %                 dog_max(y,x) = dogY;
-%                 scaleImage(y,x) = 255;
-%             end
-
-%             if dogX > dog_max(y,x)
             if scale1x < (scale2x*threshold) || scale1y < (scale2y*threshold)
-%                 dog_max(y,x) = dogX;
-                scaleImage(y,x) = 255;
+                binaryImage(y,x) = 255;
             end
         end
     end

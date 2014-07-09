@@ -4,7 +4,7 @@
 
 function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsDirectory, boxSyncDirectory)
     % To be a match, all corners of a quad must be within these thresholds
-    maxMatchDistance_pixels = 5;
+    maxMatchDistance_pixels = 10;
     maxMatchDistance_percent = 0.2;
     
     numComputeThreads.basics = 3;
@@ -15,7 +15,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     %     showOverallStats = true;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
-    makeNewResultsDirectory = false;
+    makeNewResultsDirectory = true;
+%     makeNewResultsDirectory = false;
     
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
@@ -49,44 +50,53 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParameters.refine_quadRefinementIterations = 25;
     algorithmParameters.useMatlabForAll = false;
     algorithmParameters.useMatlabForQuadExtraction = false;
+    algorithmParameters.matlab_embeddedConversions = EmbeddedConversionsManager();
+    
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.extractionFunctionName = 'c-with-refinement';
+%     algorithmParametersN.extractionFunctionId = 14;
+%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
+%     
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.refine_quadRefinementIterations = 0;
+%     algorithmParametersN.extractionFunctionName = 'c-no-refinement';
+%     algorithmParametersN.extractionFunctionId = 15;
+%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
+    
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.useMatlabForAll = true;
+%     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement';
+%     algorithmParametersN.extractionFunctionId = 0;
+%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
+    
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.useMatlabForAll = true;
+%     algorithmParametersN.refine_quadRefinementIterations = 0;
+%     algorithmParametersN.extractionFunctionName = 'matlab-no-refinement';
+%     algorithmParametersN.extractionFunctionId = 1;
+%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
+    
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.useMatlabForQuadExtraction = true;
+%     algorithmParametersN.extractionFunctionName = 'matlabQuad-with-refinement';
+%     algorithmParametersN.extractionFunctionId = 2;
+%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
+%     
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.useMatlabForQuadExtraction = true;
+%     algorithmParametersN.refine_quadRefinementIterations = 0;
+%     algorithmParametersN.extractionFunctionName = 'matlabQuad-no-refinement';
+%     algorithmParametersN.extractionFunctionId = 3;
+%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
     
     algorithmParametersN = algorithmParameters;
-    algorithmParametersN.extractionFunctionName = 'c-with-refinement';
+    algorithmParametersN.useMatlabForAll = true;
+    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
     algorithmParametersN.extractionFunctionId = 4;
+    algorithmParametersN.scaleImage_thresholdMultiplier = 0.75;
+    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', 0.9);
     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
-    
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.refine_quadRefinementIterations = 0;
-    algorithmParametersN.extractionFunctionName = 'c-no-refinement';
-    algorithmParametersN.extractionFunctionId = 5;
-    compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
-    
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.useMatlabForAll = true;
-    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement';
-    algorithmParametersN.extractionFunctionId = 0;
-    compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
-    
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.useMatlabForAll = true;
-    algorithmParametersN.refine_quadRefinementIterations = 0;
-    algorithmParametersN.extractionFunctionName = 'matlab-no-refinement';
-    algorithmParametersN.extractionFunctionId = 1;
-    compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
-    
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.useMatlabForQuadExtraction = true;
-    algorithmParametersN.extractionFunctionName = 'matlabQuad-with-refinement';
-    algorithmParametersN.extractionFunctionId = 2;
-    compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
-    
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.useMatlabForQuadExtraction = true;
-    algorithmParametersN.refine_quadRefinementIterations = 0;
-    algorithmParametersN.extractionFunctionName = 'matlabQuad-no-refinement';
-    algorithmParametersN.extractionFunctionId = 3;
-    compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
-    
+
     allCompiledResults = [];
 end % runTests_detectFiducialMarkers()
 

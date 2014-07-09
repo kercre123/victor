@@ -1,10 +1,14 @@
 % function [allQuads, markers] = extractMarkers()
 
-function [allQuads, quadValidity, markers] = extractMarkers(image, algorithmParameters)   
+function [allQuads, quadValidity, markers] = extractMarkers(image, algorithmParameters)
     if algorithmParameters.useMatlabForAll
         convertFromCToMatlab = false;
         
-        allQuadsRaw = simpleDetector(image, 'returnInvalid', true, 'quadRefinementIterations', 25);
+        allQuadsRaw = simpleDetector(image,...
+            'returnInvalid', true,...
+            'quadRefinementIterations', 25,...
+            'thresholdFraction', algorithmParameters.scaleImage_thresholdMultiplier,...
+            'embeddedConversions', algorithmParameters.matlab_embeddedConversions);
         
         quadValidity = zeros([length(allQuadsRaw), 1], 'int32');
         
@@ -23,7 +27,11 @@ function [allQuads, quadValidity, markers] = extractMarkers(image, algorithmPara
     elseif algorithmParameters.useMatlabForQuadExtraction
         convertFromCToMatlab = true;
         
-        allQuadsMatlabRaw = simpleDetector(image, 'returnInvalid', true, 'quadRefinementIterations', algorithmParameters.refine_quadRefinementIterations);
+        allQuadsMatlabRaw = simpleDetector(image,...
+            'returnInvalid', true,...
+            'quadRefinementIterations', algorithmParameters.refine_quadRefinementIterations,...
+            'thresholdFraction', algorithmParameters.scaleImage_thresholdMultiplier,...
+            'embeddedConversions', algorithmParameters.matlab_embeddedConversions);
         
         if isempty(allQuadsMatlabRaw)
             allQuads = {};
@@ -58,14 +66,14 @@ function [allQuads, quadValidity, markers] = extractMarkers(image, algorithmPara
     
     if convertFromCToMatlab
         markers = cell(length(markerNames), 1);
-
+        
         for i = 1:length(markerNames)
             markers{i}.name = markerNames{i};
             markers{i}.corners = goodQuads{i};
         end
-
+        
         % Convert from c to matlab coordinates
-    
+        
         for i = 1:length(allQuads)
             allQuads{i} = allQuads{i} + 1;
         end

@@ -8,6 +8,7 @@ classdef EmbeddedConversionsManager < handle
         connectedComponentsType;
         completeCImplementationType;
         emptyCenterDetection;
+        smallCharacterisicParameter;
     end % PROPERTIES (get-public, set-protected)
 
     methods(Access = 'public')
@@ -31,6 +32,8 @@ classdef EmbeddedConversionsManager < handle
             emptyCenterDetection = 'matlab_original';
             emptyCenterDetection_acceptable = {'matlab_original', 'off'};
 
+            smallCharacterisicParameter = 0.9;
+
             parseVarargin(varargin{:});
 
             isAcceptable(homographyEstimationType_acceptable, homographyEstimationType);
@@ -50,6 +53,8 @@ classdef EmbeddedConversionsManager < handle
 
             isAcceptable(emptyCenterDetection_acceptable, emptyCenterDetection);
             this.emptyCenterDetection = emptyCenterDetection; %#ok<*PROP>
+
+            this.smallCharacterisicParameter = smallCharacterisicParameter; %#ok<*PROP>
         end
     end % METHODS (public)
 end % classdef OptimizationManager < handle

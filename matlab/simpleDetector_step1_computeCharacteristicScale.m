@@ -29,15 +29,17 @@ if usePyramid
         averageImg = double(mexComputeCharacteristicScale(im2uint8(img), numScales)) / (255 * 2^16);
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters')
         binaryImg = computeBinaryCharacteristicScaleImage_boxFilters(img, numScales, thresholdFraction);
-        figure(3); imshow(binaryImg);
+%         figure(3); imshow(binaryImg);
         return;
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters_multiple')
         binaryImg = computeBinaryCharacteristicScaleImage_boxFilters_multiple(img, numScales, thresholdFraction);
-        figure(5); imshow(binaryImg);
+%         figure(5); imshow(binaryImg);
         return;
-    elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters_small')
-        binaryImg = computeBinaryCharacteristicScaleImage_boxFilters_small(img, numScales, thresholdFraction);
-        figure(6); imshow(binaryImg);
+    elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters_small') 
+        binaryImg1 = computeBinaryCharacteristicScaleImage_boxFilters_small(img, numScales, embeddedConversions.smallCharacterisicParameter);
+        binaryImg2 = computeBinaryCharacteristicScaleImage_boxFilters(img, [4,8], thresholdFraction);
+        binaryImg = binaryImg1 + binaryImg2;
+%         figure(6); imshow(binaryImg);
         return;
     end
     
@@ -86,7 +88,7 @@ end % IF usePyramid
 % Threshold:
 binaryImg = img < thresholdFraction*averageImg;
 
-figure(2); imshow(binaryImg);
+% figure(2); imshow(binaryImg);
 
 % keyboard
 

@@ -1,8 +1,9 @@
-% function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(image, numLevels, thresholdFraction)
+% function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(image, levels, thresholdFraction)
 
-%  binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(im, 5, 0.75);
+% binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(im, 5, 0.75);
+% binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(im, {1,2,4,8,16}, 0.75);
 
-function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(image, numLevels, thresholdFraction)
+function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(image, levels, thresholdFraction)
     
     if ~exist('thresholdFraction' ,'var')
         thresholdFraction = 0.75;
@@ -16,11 +17,13 @@ function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(image, n
     scaleImage = image;
     dog_max = zeros(nrows,ncols);
     
-    if nargout > 1 || nargout == 0
-        whichScale = ones(nrows,ncols);
+    if iscell(levels)
+        filterHalfWidths = cell2mat(levels);
+        maxFilterHalfWidth = levels{end};
+    else
+        filterHalfWidths = 2 .^ (1:(levels+1));
+        maxFilterHalfWidth = max(filterHalfWidths);
     end
-    
-    maxFilterHalfWidth = 2 ^ (numLevels+1);
     
     imageWithBorders = zeros([nrows+2*maxFilterHalfWidth+1, ncols+2*maxFilterHalfWidth+1]);
     
@@ -42,11 +45,14 @@ function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(image, n
     imageWithBorders(validYIndexes, validXIndexes) = image;
     integralImageWithBorders = integralimage(imageWithBorders);
     
-    for pyramidLevel = 1:numLevels
-        halfWidthLarge = 2 ^ pyramidLevel;
+    %     for pyramidLevel = levels
+    for iHalfWidth = 1:(length(filterHalfWidths)-1)
+        %         halfWidthLarge = 2 ^ pyramidLevel;
+        halfWidthLarge = filterHalfWidths(iHalfWidth);
         filterAreaLarge = (2*halfWidthLarge+1) ^ 2;
         
-        halfWidthSmall = 2 ^ (pyramidLevel+1);
+        %         halfWidthSmall = 2 ^ (pyramidLevel+1);
+        halfWidthSmall = filterHalfWidths(iHalfWidth+1);
         filterAreaSmall = (2*halfWidthSmall+1) ^ 2;
         
         filterL = [-halfWidthLarge, -halfWidthLarge, halfWidthLarge, halfWidthLarge, 1/filterAreaLarge];
@@ -63,16 +69,6 @@ function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters(image, n
         if any(larger(:))
             dog_max(larger) = dog(larger);
             scaleImage(larger) = filteredSmall(larger);
-            %         if nargout > 1 || nargout == 0
-            %             whichScale(larger) = pyramidLevel;
-            %         end
-        end
-        
-        if DEBUG_DISPLAY
-            %         figureHandle = figure(100+pyramidLevel); subplot(2,4,1); imshow(filteredSmall); subplot(2,4,3); imshow(filteredLarge); subplot(2,4,5); imshow(dog*5); subplot(2,4,7); imshow(scaleImage);
-            %         set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1])
-            %         figureHandle = figure(200+pyramidLevel); imshow(uint8(filteredLarge(validYIndexes,validXIndexes)));
-            %         set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1])
         end
     end
     
