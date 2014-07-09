@@ -87,141 +87,45 @@ Robot {
         }
         
         # Front Face
-        Transform {
+        VisionMarker {
           rotation 0 0 1 -1.5708
-          translation -0.011 0 0
-          children [
-            Shape {
-              appearance Appearance {
-                texture ImageTexture {
-                  %{ if markerURL ~= "" then }%
-                  url [ "%{= markerURL }%" ]
-                  %{ end }%                  
-                }
-              }
-              geometry DEF MARKER_BOX Box {
-                size 0.025 0.0221 0.025
-              }
-            }
-            %{ if fields.useWhiteMarkerBackgrounds then }%
-            DEF FACE_SHAPE Shape {
-              appearance Appearance {
-                material Material {
-                  diffuseColor 1 1 1
-                }
-              }
-              geometry Box {
-                size 0.029 0.02205 0.029
-              }
-            }
-            %{ end }%
-          ] 
+          translation -0.022 0 0
+          image IS markerImg
         }
         
         # Back Face
-        Transform {
+        VisionMarker {
           rotation 0 0 1 1.5708
-          translation 0.011 0 0
-          children [
-            Shape {	  
-              appearance Appearance {
-                texture ImageTexture {
-                  %{ if markerURL ~= "" then }%
-                  url [ "%{= markerURL }%" ]
-                  %{ end }%
-                }
-              }
-              geometry USE MARKER_BOX
-            }
-            %{ if fields.useWhiteMarkerBackgrounds then }%
-            USE FACE_SHAPE
-            %{ end }%
-          ] 
+          translation 0.022 0 0
+          image IS markerImg
         }
         
         # Bottom Face
-        Transform {
+        VisionMarker {
           rotation 1 0 0 1.5708
-          translation 0 0 -0.011
-          children [
-            Shape {
-              appearance Appearance {
-                texture ImageTexture {
-                  %{ if markerURL ~= "" then }%
-                  url [ "%{= markerURL }%" ]
-                  %{ end }%
-                }
-              }
-              geometry USE MARKER_BOX
-            }
-            %{ if fields.useWhiteMarkerBackgrounds then }%
-            USE FACE_SHAPE
-            %{ end }%
-          ] 
+          translation 0 0 -0.022
+          image IS markerImg
         }
         
         # Top Face
-        Transform {
+        VisionMarker {
           rotation 1 0 0 1.5708
-          translation 0 0 0.011
-          children [
-            Shape {	  
-              appearance Appearance {
-                texture ImageTexture {
-                  %{ if markerURL ~= "" then }%
-                  url [ "%{= markerURL }%" ]
-                  %{ end }%
-                }
-              }
-              geometry USE MARKER_BOX
-            }
-            %{ if fields.useWhiteMarkerBackgrounds then }%
-            USE FACE_SHAPE
-            %{ end }%
-          ] 
+          translation 0 0 0.022
+          image IS markerImg
         }
-        
-        
+                
         # Left Face
-        Transform {
+        VisionMarker {
           rotation 0 0 1 3.1415
-          translation 0 0.011 0
-          children [
-            Shape {
-              appearance Appearance {
-                texture ImageTexture {
-                  %{ if markerURL ~= "" then }%
-                  url [ "%{= markerURL }%" ]
-                  %{ end }%
-                }
-              }
-              geometry USE MARKER_BOX
-            }
-            %{ if fields.useWhiteMarkerBackgrounds then }%
-            USE FACE_SHAPE
-            %{ end }%
-          ] 
+          translation 0 0.022 0
+          image IS markerImg
         }
         
-       # Right Face
-       Transform {
+        # Right Face
+        VisionMarker {
           rotation 0 0 1 0
-          translation 0 -0.011 0
-          children [
-            Shape {
-              appearance Appearance {
-                texture ImageTexture {
-                  %{ if markerURL ~= "" then }%
-                  url [ "%{= markerURL }%" ]
-                  %{ end }%                 
-                }
-              }
-              geometry USE MARKER_BOX
-            }
-            %{ if fields.useWhiteMarkerBackgrounds then }%
-            USE FACE_SHAPE
-            %{ end }%
-          ] 
+          translation 0 -0.022 0
+					image IS markerImg
         }
 
       ]
