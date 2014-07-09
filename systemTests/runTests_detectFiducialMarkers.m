@@ -117,7 +117,7 @@ function allTestData = getTestData(testJsonPattern)
     end
 end % getTestFilenames()
 
-function compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime)
+function resultsData_overall = compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime)
     markerDirectoryList = {
         [boxSyncDirectory, '/Cozmo SE/VisionMarkers/symbols/withFiducials/'],...
         [boxSyncDirectory, '/Cozmo SE/VisionMarkers/letters/withFiducials'],...
@@ -130,19 +130,10 @@ function compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, all
     disp(sprintf('%s: workQueue_basics has %d elements and workQueue_perPoseStats has %d elements', algorithmParameters.extractionFunctionName, length(workQueue_basics), length(workQueue_perPoseStats)));
     
     resultsData_basics = run_recompileBasics(numComputeThreads.basics, workQueue_basics, workQueue_all, allTestData, rotationList, algorithmParameters);
-    %         save(basicsFilename, 'resultsData', 'testPath', 'allTestFilenames', 'testFunctions', 'testFunctionNames');
     
-    perPoseStats = run_recompilePerPoseStats(numComputeThreads.perPose, workQueue_perPoseStats, workQueue_all, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);
-    %         save(perPoseStatsFilename, 'perPoseStats');
+    resultsData_perPose = run_recompilePerPoseStats(numComputeThreads.perPose, workQueue_perPoseStats, workQueue_all, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);
     
-    %     if recompileOverallStats
-    %         overallStats = run_compileOverallStats(numComputeThreads, ignoreModificationTime, allTestFilenames, perPoseStats, showOverallStats);
-    %         save(overallStatsFilename, 'overallStats');
-    %     else
-    %         load(overallStatsFilename);
-    %     end
-    
-    %     save([resultsDirectory, 'allCompiledResults.mat'], 'perPoseStats');
+    resultsData_overall = run_compileOverallStats(resultsData_perPose);
 end % compileAll()
 
 function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime)
@@ -361,6 +352,6 @@ function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, work
     disp(sprintf('Per-pose stat computation took %f seconds', toc(perPoseTic)));
 end % run_recompileperPoseStats()
 
-% function overallStats = run_compileOverallStats(numComputeThreads, ignoreModificationTime, allTestFilenames, perPoseStats, showOverallStats)
-%     overallStats = runTests_detectFiducialMarkers_compileOverallStats(allTestFilenames, perPoseStats, showOverallStats);
-% end % run_compileOverallStats()
+function resultsData_overall = run_compileOverallStats(resultsData_perPose)
+    resultsData_overall = runTests_detectFiducialMarkers_compileOverallStats(resultsData_perPose);
+end % run_compileOverallStats()

@@ -1,6 +1,6 @@
 % function runTests_detectFiducialMarkers_compilePerPoseStats()
 
-function perPoseStats = runTests_detectFiducialMarkers_compilePerPoseStats(workQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth)
+function runTests_detectFiducialMarkers_compilePerPoseStats(workQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth)
     % TODO: At different distances / angles
     
     global useImpixelinfo;
@@ -51,6 +51,8 @@ function perPoseStats = runTests_detectFiducialMarkers_compilePerPoseStats(workQ
         
         curResultsData = resultsData_basics{workQueue{iWork}.iTest}{workQueue{iWork}.iPose};
 
+        curResultsData_perPose.Scene = allTestData{workQueue{iWork}.iTest}.jsonData.Poses{workQueue{iWork}.iPose}.Scene;
+        
         [curResultsData_perPose.numQuadsNotIgnored, curResultsData_perPose.numQuadsDetected] = compileQuadResults(curResultsData);
 
         [curResultsData_perPose.numCorrect_positionLabelRotation,...
