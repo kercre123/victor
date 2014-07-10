@@ -32,6 +32,8 @@ namespace Anki {
     //ObjectID_t ObservableObject::ObjectCounter = 0;
     const std::vector<KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
     
+    const std::vector<RotationMatrix3d> ObservableObject::sRotationAmbiguities; // default is empty
+    
     ObservableObject::ObservableObject(ObjectType_t objType)
     : type_(objType), ID_(0), lastObservedTime_(0), wasObserved_(false)
     {
