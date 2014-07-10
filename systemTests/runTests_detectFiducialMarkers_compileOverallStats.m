@@ -3,7 +3,38 @@ function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStat
     
     sceneTypes = getSceneTypes(resultsData_perPose);
     
+    numCameraExposures = length(sceneTypes.cameraExposures);
+    numDistances = length(sceneTypes.distances);
+    numAngles = length(sceneTypes.angles);
+    numLights = length(sceneTypes.lights);
+    
     quadExtraction_events = extractEvents(resultsData_perPose, sceneTypes);
+        
+    for iAngle = 1:numAngles
+        for iLight = 1:numLights
+            
+            dataPoints = zeros(numCameraExposures, numDistances);
+            for iCameraExposure = 1:numCameraExposures
+                for iDistance = 1:numDistances        
+                    quadExtraction_numQuadsDetected = squeeze(quadExtraction_events(iCameraExposure, iDistance, iAngle, iLight, 1));
+                    quadExtraction_numQuadsNotIgnored = squeeze(quadExtraction_events(iCameraExposure, iDistance, iAngle, iLight, 2));
+
+                    dataPoints(iCameraExposure, iDistance) = quadExtraction_numQuadsDetected / quadExtraction_numQuadsNotIgnored;
+                end
+            end
+            
+            figure(iLight);
+            subplot(1,numAngles,iAngle);                    
+            bar(sceneTypes.distances, dataPoints')
+            shading flat
+            a = axis();
+            a(4) = 1.0;
+            axis(a);
+            title(sprintf('Angle:%d Light%d', sceneTypes.angles(iAngle), sceneTypes.lights(iLight)));
+        end
+    end
+    
+    
     
     % 1. Bar of exposure, distance. Graphs for angle and light.
     
