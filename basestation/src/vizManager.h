@@ -93,6 +93,14 @@ namespace Anki {
                            const Pose3d &pose,
                            const u32 colorID = VIZ_COLOR_DEFAULT);
       
+      void DrawRamp(const u32 rampID,
+                   const f32 platformLength,
+                   const f32 slopeLength,
+                   const f32 width,
+                   const f32 height,
+                   const Pose3d& pose,
+                   const u32 colorID = VIZ_COLOR_DEFAULT);
+      
       //void DrawRamp();
       
       
@@ -108,10 +116,13 @@ namespace Anki {
       // type objectTypeID (See VizObjectTypes) located at the specified pose.
       // For parameterized types, like VIZ_CUBOID, size determines the dimensions
       // of the object. For other types, like VIZ_ROBOT, size is ignored.
+      // Up to 4 other parameters can be specified in an array pointed to
+      // by params.
       void DrawObject(const u32 objectID, const u32 objectTypeID,
                       const Point3f &size,
                       const Pose3d &pose,
-                      const u32 colorID = VIZ_COLOR_DEFAULT);
+                      const u32 colorID = VIZ_COLOR_DEFAULT,
+                      const f32* params = nullptr);
       
       // Erases the object corresponding to the objectID
       void EraseVizObject(const u32 objectID);

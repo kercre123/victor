@@ -12,13 +12,13 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/quad.h"
 
-#include "anki/vision/basestation/marker2d.h"
 #include "anki/vision/basestation/observableObject.h"
 
 #include "anki/cozmo/basestation/messages.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
+#include "dockableObject.h"
 #include "vizManager.h"
 
 namespace Anki {
@@ -38,7 +38,7 @@ namespace Anki {
     //
     //   Representation of a physical Block in the world.
     //
-    class Block : public Vision::ObservableObject //Base<Block>
+    class Block : public DockableObject //Base<Block>
     {
     public:
       using Color = VIZ_COLOR_ID;
@@ -106,11 +106,9 @@ namespace Anki {
       //void SetColor(const unsigned char red, const unsigned char green, const unsigned char blue);
       void SetName(const std::string name);
       
-      bool IsBeingCarried() const;
-      void SetIsBeingCarried(const bool tf);
       
       void AddFace(const FaceName whichFace,
-                   const Vision::Marker::Code& code,
+                   const Vision::MarkerType& code,
                    const float markerSize_mm);
       
       static Type GetBlockTypeByName(const std::string& name);
@@ -137,10 +135,9 @@ namespace Anki {
       // height of the center of the block. The poses will be paired with
       // references to the corresponding marker. Optionally, only poses/markers
       // with the specified code can be returned.
-      using PoseMarkerPair_t = std::pair<Pose3d,const Vision::KnownMarker&>;
-      void GetPreDockPoses(const float distance_mm,
-                           std::vector<PoseMarkerPair_t>& poseMarkerPairs,
-                           const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const;
+      virtual void GetPreDockPoses(const float distance_mm,
+                                   std::vector<PoseMarkerPair_t>& poseMarkerPairs,
+                                   const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding 2D quadrilateral. Pads the
@@ -179,7 +176,7 @@ namespace Anki {
       // generated from the BlockDefinitions.h file using macros
       typedef struct {
         FaceName             whichFace;
-        Vision::Marker::Code code;
+        Vision::MarkerType   code;
         f32                  size;
       } BlockFaceDef_t;
       
@@ -200,8 +197,7 @@ namespace Anki {
       Color       _color;
       Point3f     _size;
       std::string _name;
-      bool        _isBeingCarried;
-      
+            
       //std::vector<Point3f> blockCorners_;
       
     }; // class Block
@@ -307,14 +303,6 @@ namespace Anki {
     inline void Block::SetName(const std::string name)
     {
       _name = name;
-    }
-    
-    inline bool Block::IsBeingCarried() const {
-      return _isBeingCarried;
-    }
-    
-    inline void Block::SetIsBeingCarried(const bool tf) {
-      _isBeingCarried = tf;
     }
     
     /*

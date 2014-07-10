@@ -114,8 +114,8 @@ namespace Anki
       // Visualize markers in image display
       void DrawObsMarkers() const;
       
-      // Call every existing block's Visualize() method
-      void DrawAllBlocks() const;
+      // Call every existing object's Visualize() method
+      void DrawAllObjects() const;
       
     protected:
       
@@ -132,7 +132,10 @@ namespace Anki
 
       bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
-      size_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
+      size_t UpdateObjectPoses(const Vision::ObservableObjectLibrary& objectsLibrary,
+                               PoseKeyObsMarkerMap_t& obsMarkers,
+                               ObjectsMap_t& existingObjects,
+                               const TimeStamp_t atTimestamp);
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                   const ObjectsMap_t& objectsExisting,
@@ -170,13 +173,21 @@ namespace Anki
       //Vision::ObservableObjectLibrary objectLibrary_; // not separated by type?
       Vision::ObservableObjectLibrary blockLibrary_;
       Vision::ObservableObjectLibrary matLibrary_;
-      Vision::ObservableObjectLibrary otherObjectsLibrary_;
+      Vision::ObservableObjectLibrary rampLibrary_;
       
       // Store all observed objects, indexed first by Type, then by ID
+      // NOTE: If a new ObjectsMap_t is added here, a pointer to it needs to
+      //   be stored in allExistingObjects_ (below), initialized in the
+      //   BlockWorld cosntructor.
       ObjectsMap_t existingBlocks_;
       ObjectsMap_t existingMatPieces_;
+      ObjectsMap_t existingRamps_;
       
-      bool didBlocksChange_;
+      // An array storing pointers to all the ObjectsMap_t's above so that we
+      // we can easily loop over all types of objects.
+      std::array<ObjectsMap_t*, 3> allExistingObjects_;
+      
+      bool didObjectsChange_;
       
       static const ObjectsMapByID_t EmptyObjectMap;
       
