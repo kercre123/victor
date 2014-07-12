@@ -6,6 +6,8 @@ PROTO VisionMarker [
   
   field SFFloat    markerWidth  0.025
   field SFFloat    padding      0.002
+  
+  field SFBool     isDockable   FALSE
 
   field SFBool     useWhiteBackground TRUE
   field SFString   image              ""  # Image path relative to textures/
@@ -49,7 +51,18 @@ PROTO VisionMarker [
         }
       }
       %{ end }%
-    ] 
+      
+      %{ if fields.isDockable then }%
+      Connector {
+        rotation 1 0 0 1.5708
+        name "%{=fields.translation.x}%  %{=fields.translation.y}% %{=fields.translation.z}%"
+        model "magnetic"
+        type "passive"
+        autoLock TRUE
+      }
+      %{ end }%
+        
+    ] # children
   }
       
 } # PROTO
