@@ -207,6 +207,10 @@ namespace Anki {
     } // SetMarkersAsObserved()
     
     
+    Quad2f ObservableObject::GetBoundingQuadXY(const f32 padding_mm) const
+    {
+      return GetBoundingQuadXY(pose_, padding_mm);
+    }
     
 #pragma mark --- ObservableObjectLibrary Implementations ---
     

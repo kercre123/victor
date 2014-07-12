@@ -127,7 +127,10 @@ namespace Anki {
       virtual void GetCorners(std::vector<Point3f>& corners) const;
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const = 0;
       
-      virtual void Visualize() const = 0;
+      virtual void Visualize() = 0;
+      virtual void EraseVisualization() = 0;
+      
+      Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
       virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const = 0;
       
     protected:
