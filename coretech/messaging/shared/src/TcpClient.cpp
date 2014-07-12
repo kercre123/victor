@@ -93,7 +93,7 @@ int TcpClient::Send(const char* data, int size)
   ssize_t bytes_sent = send(socketfd, data, size, 0);
   if (bytes_sent <= 0) {
     if (errno != EWOULDBLOCK) {
-      DEBUG_TCP_CLIENT("TcpClient: Send error, disconnecting.\n");
+      DEBUG_TCP_CLIENT("TcpClient: Send error (" << errno << "), disconnecting. (bytes_sent = " << bytes_sent << ")\n");
       Disconnect();
       return -1;
     }
@@ -117,7 +117,7 @@ int TcpClient::Recv(char* data, int maxSize)
   
   if (bytes_received <= 0) {
     if (errno != EWOULDBLOCK) {
-      DEBUG_TCP_CLIENT("TcpClient: Receive error, disconnecting.\n");
+      DEBUG_TCP_CLIENT("TcpClient: Receive error (" << errno << "), disconnecting.\n");
       Disconnect();
       return -1;
     } else {
@@ -135,4 +135,7 @@ int TcpClient::Recv(char* data, int maxSize)
   return static_cast<int>(bytes_received);
 }
 
-
+bool TcpClient::IsConnected()
+{
+  return socketfd != -1;
+}
