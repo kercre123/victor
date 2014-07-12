@@ -1,8 +1,8 @@
 # products-cozmo/basestation/src/CMakeLists.txt
 
-file(GLOB SOURCE_FILES "*.cpp")
-file(GLOB PRIVATE_HEADER_FILES "*.h")
-file(GLOB PUBLIC_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/basestation/*.h")
+file(GLOB_RECURSE SOURCE_FILES "*.cpp")
+file(GLOB_RECURSE PRIVATE_HEADER_FILES "*.h")
+file(GLOB_RECURSE PUBLIC_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/basestation/*.h")
 
 include_directories(${PROJECT_SOURCE_DIR}/basestation/src)
 

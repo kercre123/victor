@@ -256,6 +256,9 @@ namespace Anki {
     // loop increments).  So, 6 --> every 30ms, since our loop timestep is 5ms.
     const s32 STATE_MESSAGE_FREQUENCY = 6;
     
+    // Basestation server port which listens for inputController clients
+    const u32 UI_MESSAGE_SERVER_LISTEN_PORT = 5200;
+    
 #if SIMULATOR
     // Channel number used by CozmoWorldComm Webots receiver
     // for robot messages bound for the basestation.

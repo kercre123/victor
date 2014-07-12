@@ -337,6 +337,7 @@ namespace Anki {
 
             state_ = WAITING_TO_SEE_DICE;
 
+            robot_->SetDefaultLights(0x008080, 0x008080);
           }
 
           break;

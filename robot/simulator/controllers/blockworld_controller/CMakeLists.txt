@@ -20,19 +20,13 @@ link_directories( ${WEBOTS_LIB_DIR} )
 # Source files
 set(SOURCE_FILES
   blockworld_controller.cpp
-  ${PROJECT_SOURCE_DIR}/robot/simulator/src/basestationKeyboardController.cpp
   ${COZMO_BASESTATION_SRC}
 #  ${PROJECT_SOURCE_DIR}/basestation/src/messages.cpp
-)
-
-set(HEADER_FILES
-  ${PROJECT_SOURCE_DIR}/robot/simulator/src/basestationKeyboardController.h
 )
 
 if(NOT WIN32)
   add_executable(blockworld_controller 
     ${SOURCE_FILES} 
-    ${HEADER_FILES}
   )
 
   target_link_libraries(blockworld_controller 
