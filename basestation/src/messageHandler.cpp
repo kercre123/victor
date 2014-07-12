@@ -299,7 +299,7 @@ namespace Anki {
 
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
-        lastResult = robot->PickUpDockBlock();
+        lastResult = robot->PickUpDockObject();
       }
       else {
         // TODO: what do we do on failure? Need to trigger reattempt?
@@ -315,7 +315,7 @@ namespace Anki {
       
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
-        lastResult = robot->PlaceCarriedBlock(); //msg.timestamp);
+        lastResult = robot->PlaceCarriedObject(); //msg.timestamp);
       }
       else {
         // TODO: what do we do on failure? Need to trigger reattempt?
@@ -355,8 +355,8 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentPointTurn const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageTrimPath const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageExecutePath const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageDockWithBlock const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessagePlaceBlockOnGround const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageDockWithObject const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessagePlaceObjectOnGround const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageHeadAngleUpdate const&){return RESULT_FAIL;}

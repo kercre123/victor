@@ -160,9 +160,9 @@ END_MESSAGE_DEFINITION(ExecutePath)
 // VisionMarker
 #define VISION_MARKER_CODE_LENGTH 11 // ceil( (9*9 + 4)/8 )
 
-// DockToBlock
-START_MESSAGE_DEFINITION(DockWithBlock, 1)
-ADD_MESSAGE_MEMBER(f32, horizontalOffset_mm)  // Offset wrt to docking block. Don't know if this will work yet.
+// DockWithObject
+START_MESSAGE_DEFINITION(DockWithObject, 1)
+ADD_MESSAGE_MEMBER(f32, horizontalOffset_mm)  // Offset wrt to docking object. Don't know if this will work yet.
 ADD_MESSAGE_MEMBER(f32, markerWidth_mm)
 ADD_MESSAGE_MEMBER(u16, image_pixel_x)
 ADD_MESSAGE_MEMBER(u16, image_pixel_y)
@@ -170,14 +170,14 @@ ADD_MESSAGE_MEMBER(u8, pixel_radius)  // Marker must be found within this many p
                                       // unless pixel_radius == u8_MAX in which case marker may be located anywhere.
 ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
 ADD_MESSAGE_MEMBER(u8, markerType)
-END_MESSAGE_DEFINITION(DockWithBlock)
+END_MESSAGE_DEFINITION(DockWithObject)
 
-// PlaceBlockOnGround
-START_MESSAGE_DEFINITION(PlaceBlockOnGround, 1)
-ADD_MESSAGE_MEMBER(f32, rel_x_mm)    // Distance of block face center in forward axis
-ADD_MESSAGE_MEMBER(f32, rel_y_mm)    // Distance of block face center in horizontal axis. (Left of robot is +ve)
-ADD_MESSAGE_MEMBER(f32, rel_angle)   // Angle between of block face normal and robot. (Block normal pointing right of robot is +ve)
-END_MESSAGE_DEFINITION(PlaceBlockOnGround)
+// PlaceObjectOnGround
+START_MESSAGE_DEFINITION(PlaceObjectOnGround, 1)
+ADD_MESSAGE_MEMBER(f32, rel_x_mm)    // Distance of object face center in forward axis
+ADD_MESSAGE_MEMBER(f32, rel_y_mm)    // Distance of object face center in horizontal axis. (Left of robot is +ve)
+ADD_MESSAGE_MEMBER(f32, rel_angle)   // Angle between of object face normal and robot. (Block normal pointing right of robot is +ve)
+END_MESSAGE_DEFINITION(PlaceObjectOnGround)
 
 
 START_TIMESTAMPED_MESSAGE_DEFINITION(VisionMarker, 1)

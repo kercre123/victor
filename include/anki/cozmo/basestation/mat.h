@@ -50,8 +50,10 @@ namespace Anki {
         corners.resize(0);
       }
       
-      virtual void Visualize() const;
-      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
+      virtual void Visualize() override;
+      virtual void EraseVisualization() override;
+      
+      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
 
     protected:
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;

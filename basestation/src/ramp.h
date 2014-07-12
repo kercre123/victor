@@ -34,12 +34,20 @@ namespace Anki {
     {
     public:
       
+      enum Type {
+        BASIC_RAMP_MODEL,
+      };
+      
       Ramp();
       Ramp(const Ramp& otherRamp);
       
+      virtual ~Ramp();
+      
       virtual Ramp*  Clone() const override;
       virtual void   GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
-      virtual void   Visualize() const override;
+      virtual void   Visualize() override;
+      virtual void   Visualize(VIZ_COLOR_ID color) override;
+      virtual void   EraseVisualization() override;
       virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
       
       virtual void GetPreDockPoses(const float distance_mm,
@@ -58,6 +66,11 @@ namespace Anki {
       constexpr static const f32 MarkerSize     = 25.f;
       
       static const std::array<Point3f, NUM_CORNERS> CanonicalCorners;
+      
+      const Vision::KnownMarker* _leftMarker;
+      const Vision::KnownMarker* _rightMarker;
+      
+      VizManager::Handle_t _vizHandle;
       
     }; // class Ramp
     

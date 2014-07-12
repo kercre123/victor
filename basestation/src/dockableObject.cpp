@@ -88,5 +88,35 @@ namespace Anki {
       return dockingPointFound;
     }  // GetPreDockPose()
     
+    
+    void DockableObject::Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance)
+    {
+      // Draw the main object:
+      Visualize(color);
+      
+      // Draw the pre-dock poses
+      if(preDockPoseDistance > 0.f) {
+        u32 poseID = 0;
+        std::vector<DockableObject::PoseMarkerPair_t> poses;
+        GetPreDockPoses(preDockPoseDistance, poses);
+        for(auto pose : poses) {
+          _vizPreDockPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID, pose.first,
+                                                                                         VIZ_COLOR_PREDOCKPOSE));
+          ++poseID;
+        }
+      }
+    }
+    
+    void DockableObject::EraseVisualization()
+    {
+      for(auto & preDockPoseHandle : _vizPreDockPoseHandles) {
+        if(preDockPoseHandle != VizManager::INVALID_HANDLE) {
+          VizManager::getInstance()->EraseVizObject(preDockPoseHandle);
+        }
+      }
+      _vizPreDockPoseHandles.clear();
+    }
+    
+    
   } // namespace Cozmo
 } // namespace Anki

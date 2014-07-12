@@ -26,7 +26,12 @@ namespace Anki
   namespace Cozmo
   {
     //BlockWorld* BlockWorld::singletonInstance_ = 0;
-    const std::map<ObjectID_t, Vision::ObservableObject*> BlockWorld::EmptyObjectMap;
+    
+    const BlockWorld::ObjectsMapByID_t   BlockWorld::EmptyObjectMapByID;
+    const BlockWorld::ObjectsMapByType_t BlockWorld::EmptyObjectMapByType;
+    
+    const Vision::ObservableObjectLibrary BlockWorld::EmptyObjectLibrary;
+
     
     /*
     BlockWorld::BlockWorld( MessagingInterface* msgInterfaceIn )
@@ -42,7 +47,6 @@ namespace Anki
     BlockWorld::BlockWorld( )
     : isInitialized_(false)
     , robotMgr_(NULL)
-    , allExistingObjects_({{&existingBlocks_, &existingRamps_, &existingMatPieces_}})
     , didObjectsChange_(false)
     , globalIDCounter(0)
     , enableDraw_(false)
@@ -56,30 +60,30 @@ namespace Anki
       //
       //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
       
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::ANGRYFACE_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::ANGRYFACE_BLOCK_TYPE));
 
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::BULLSEYE2_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::BULLSEYE2_BLOCK_TYPE));
       
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::SQTARGET_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::SQTARGET_BLOCK_TYPE));
       
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::FIRE_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::FIRE_BLOCK_TYPE));
       
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::ANKILOGO_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::ANKILOGO_BLOCK_TYPE));
       
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::STAR5_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::STAR5_BLOCK_TYPE));
       
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::DICE_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::DICE_BLOCK_TYPE));
       
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER1_BLOCK_TYPE));
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER2_BLOCK_TYPE));
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER3_BLOCK_TYPE));
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER4_BLOCK_TYPE));
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER5_BLOCK_TYPE));
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER6_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER1_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER2_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER3_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER4_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER5_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER6_BLOCK_TYPE));
 
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::BANGBANGBANG_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::BANGBANGBANG_BLOCK_TYPE));
       
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::ARROW_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::ARROW_BLOCK_TYPE));
       
       //
       // 2x1 Blocks
@@ -108,23 +112,26 @@ namespace Anki
       // Webots mat:
       MatPiece* mat = new MatPiece(++matType);
         
-      matLibrary_.AddObject(mat);
+      _objectLibrary[MAT_FAMILY].AddObject(mat);
       
       //
       // Ramps
       //
-      rampLibrary_.AddObject(new Ramp());
+      _objectLibrary[RAMP_FAMILY].AddObject(new Ramp());
       
     } // BlockWorld() Constructor
     
     BlockWorld::~BlockWorld()
     {
-      for(auto blockTypes : existingBlocks_) {
-        for(auto blockIDs : blockTypes.second) {
-          delete blockIDs.second;
+      
+      for(auto objectFamily : _existingObjects) {
+        for(auto objectTypes : objectFamily.second) {
+          for(auto objectIDs : objectTypes.second) {
+            delete objectIDs.second;
+          }
         }
       }
-        
+      
     } // ~BlockWorld() Destructor
     
     
@@ -138,7 +145,7 @@ namespace Anki
     
     //template<class ObjectType>
     void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
-                                            const ObjectsMap_t& objectsExisting,
+                                            const ObjectsMapByType_t& objectsExisting,
                                             std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const
     {
       // TODO: We should really be taking uncertainty/distance into account
@@ -206,7 +213,7 @@ namespace Anki
     
     
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
-                                         ObjectsMap_t& objectsExisting,
+                                         ObjectsMapByType_t& objectsExisting,
                                          const TimeStamp_t atTimestamp)
     {
       for(auto objSeen : objectsSeen) {
@@ -268,7 +275,7 @@ namespace Anki
       
       // Create a list of unobserved objects for further consideration below.
       // Use pairs of iterators to make deleting blocks below easier.
-      std::vector<std::pair<ObjectsMap_t::iterator, ObjectsMapByID_t::iterator> > unobservedObjects;
+      std::vector<std::pair<ObjectsMapByType_t::iterator, ObjectsMapByID_t::iterator> > unobservedObjects;
       //for(auto & objectTypes : objectsExisting) {
       for(auto objectTypeIter = objectsExisting.begin();
           objectTypeIter != objectsExisting.end(); ++objectTypeIter)
@@ -301,7 +308,7 @@ namespace Anki
           CORETECH_ASSERT(robot != NULL);
           
           if(object->IsVisibleFrom(robot->GetCamera(), DEG_TO_RAD(45), 20.f, true) &&
-             (robot->GetDockBlock() != unobserved.second->first))  // We expect a docking block to disappear from view!
+             (robot->GetDockObject() != unobserved.second->first))  // We expect a docking block to disappear from view!
           {
             // We "should" have seen the object! Delete it or mark it somehow
             CoreTechPrint("Removing object %d, which should have been seen, "
@@ -347,36 +354,44 @@ namespace Anki
 
     
     
-    void BlockWorld::GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
-                                             const f32 padding,
-                                             std::vector<Quad2f>& rectangles,
-                                             const std::set<ObjectType_t>& ignoreTypes,
-                                             const std::set<ObjectID_t>& ignoreIDs,
-                                             const bool ignoreCarriedBlocks) const
+    void BlockWorld::GetObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
+                                              const f32 padding,
+                                              std::vector<Quad2f>& rectangles,
+                                              const std::set<ObjectFamily_t>& ignoreFamiles,
+                                              const std::set<ObjectType_t>& ignoreTypes,
+                                              const std::set<ObjectID_t>& ignoreIDs,
+                                              const bool ignoreCarriedObjects) const
     {
-      for(auto & blocksWithType : existingBlocks_)
+      for(auto & objectsByFamily : _existingObjects)
       {
-        const bool useType = ignoreTypes.find(blocksWithType.first) == ignoreTypes.end();
-        if(useType) {
-          for(auto & blockAndId : blocksWithType.second)
+        const bool useFamily = ignoreFamiles.find(objectsByFamily.first) == ignoreFamiles.end();
+        if(useFamily) {
+          for(auto & objectsByType : objectsByFamily.second)
           {
-            Block* block = dynamic_cast<Block*>(blockAndId.second);
-            CORETECH_THROW_IF(block == nullptr);
-            if (ignoreCarriedBlocks && !block->IsBeingCarried()) {
-              const f32 blockHeight = block->GetPose().GetTranslation().z();
-              
-              // If this block's ID is not in the ignore list, then we will use it
-              const bool useID = ignoreIDs.find(blockAndId.first) == ignoreIDs.end();
-              
-              if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
+            const bool useType = ignoreTypes.find(objectsByType.first) == ignoreTypes.end();
+            if(useType) {
+              for(auto & objectAndId : objectsByType.second)
               {
-                rectangles.emplace_back(block->GetBoundingQuadXY(padding));
+                DockableObject* object = dynamic_cast<DockableObject*>(objectAndId.second);
+                CORETECH_THROW_IF(object == nullptr);
+                if (ignoreCarriedObjects && !object->IsBeingCarried()) {
+                  const f32 blockHeight = object->GetPose().GetTranslation().z();
+                  
+                  // If this block's ID is not in the ignore list, then we will use it
+                  const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
+                  
+                  if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
+                  {
+                    rectangles.emplace_back(object->GetBoundingQuadXY(padding));
+                  }
+                }
               }
-            }
-          }
-        } // if(useType)
-      }
-    } // GetBlockBoundingBoxesXY()
+            } // if(useType)
+          } // for each type
+        } // if useFamily
+      } // for each family
+      
+    } // GetObjectBoundingBoxesXY()
     
     
     bool BlockWorld::DidBlocksChange() const {
@@ -394,8 +409,8 @@ namespace Anki
       
       // Get all mat objects *seen by this robot's camera*
       std::vector<Vision::ObservableObject*> matsSeen;
-      matLibrary_.CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
-                                           (robot->GetCamera().GetID()));
+      _objectLibrary[MAT_FAMILY].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
+                                                          (robot->GetCamera().GetID()));
 
       // Remove used markers from map
       RemoveUsedMarkers(obsMarkersAtTimestamp);
@@ -443,7 +458,9 @@ namespace Anki
           return false;
         }
         
-        if(existingMatPieces_.empty()) {
+        ObjectsMapByType_t& existingMatPieces = _existingObjects[MAT_FAMILY];
+        
+        if(_existingObjects[MAT_FAMILY].empty()) {
           // We haven't seen the mat yet.  Create the first mat piece in the world.
           // Not supporting multiple mat pieces, just use the already-seen one from here on.
           // TODO: Deal with multiple mat pieces and updating their poses w.r.t. one another.
@@ -452,13 +469,13 @@ namespace Anki
           
           firstSeenMatPiece->SetID(++globalIDCounter);
           MatPiece* newMatPiece = new MatPiece(firstSeenMatPiece->GetType(), true);
-          existingMatPieces_[firstSeenMatPiece->GetType()][firstSeenMatPiece->GetID()] = newMatPiece;          
+          existingMatPieces[firstSeenMatPiece->GetType()][firstSeenMatPiece->GetID()] = newMatPiece;
         }
 
         // Grab the existing mat piece that matches the one we saw.  For now,
         // their should only every be one.
-        auto matPiecesByType = existingMatPieces_.find(firstSeenMatPiece->GetType());
-        if(matPiecesByType == existingMatPieces_.end() || matPiecesByType->second.empty()) {
+        auto matPiecesByType = existingMatPieces.find(firstSeenMatPiece->GetType());
+        if(matPiecesByType == existingMatPieces.end() || matPiecesByType->second.empty()) {
           PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.UnexpectedMatPieceType",
                             "Saw new mat piece type that didn't match the any already in existence.\n");
           return false;
@@ -554,7 +571,7 @@ namespace Anki
     
     size_t BlockWorld::UpdateObjectPoses(const Vision::ObservableObjectLibrary& objectLibrary,
                                          PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp,
-                                         ObjectsMap_t& existingObjects,
+                                         ObjectsMapByType_t& existingObjects,
                                          const TimeStamp_t atTimestamp)
     {
       didObjectsChange_ = false;
@@ -646,13 +663,15 @@ namespace Anki
         // Find any observed blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numBlocksObserved += UpdateObjectPoses(blockLibrary_, currentObsMarkers, existingBlocks_, atTimestamp);
+        numBlocksObserved += UpdateObjectPoses(_objectLibrary[BLOCK_FAMILY], currentObsMarkers,
+                                               _existingObjects[BLOCK_FAMILY], atTimestamp);
 
         //
         // Find any observed ramps from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numRampsObserved += UpdateObjectPoses(rampLibrary_, currentObsMarkers, existingRamps_, atTimestamp);
+        numRampsObserved += UpdateObjectPoses(_objectLibrary[RAMP_FAMILY], currentObsMarkers,
+                                              _existingObjects[RAMP_FAMILY], atTimestamp);
 
         
         // TODO: Deal with unknown markers?
@@ -666,80 +685,100 @@ namespace Anki
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks\n", numBlocksObserved);
       
-      // Check for unobserved, uncarried blocks that overlap with any robot's position
-      for(auto & blocksOfType : existingBlocks_) {
-        
-        for(auto blockIter = blocksOfType.second.begin();
-            blockIter != blocksOfType.second.end(); )
+      // Check for unobserved, uncarried objects that overlap with any robot's position
+      // TODO: better way of specifying which objects are obstacles and which are not
+      for(auto & objectsByFamily : _existingObjects)
+      {
+        // For now, look for collision with anything other than Mat objects
+        // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
+        if(objectsByFamily.first != MAT_FAMILY)
         {
-          Block* block = dynamic_cast<Block*>(blockIter->second);
-          CORETECH_THROW_IF(block == nullptr);
-          
-          bool didErase = false;
-          if(block->GetLastObservedTime() < lastObsMarkerTime && !block->IsBeingCarried())
+          for(auto & objectsByType : objectsByFamily.second)
           {
-            for(auto robotID : robotMgr_->GetRobotIDList())
+            
+            //for(auto & objectsByID : objectsByType.second)
+            for(auto objectIter = objectsByType.second.begin();
+                objectIter != objectsByType.second.end(); /* increment based on whether we erase */)
             {
-              Robot* robot = robotMgr_->GetRobotByID(robotID);
-              CORETECH_ASSERT(robot != NULL);
+              DockableObject* object = dynamic_cast<DockableObject*>(objectIter->second);
+              if(object == nullptr) {
+                PRINT_NAMED_ERROR("BlockWorld.Update.ExpectingDockableObject",
+                                  "In robot/object collision check, can currently only handle DockableObjects.\n");
+                continue;
+              }
               
-              // Check block's bounding box in same coordinates as this robot to
-              // see if it intersects with the robot's bounding box. Also check to see
-              // block and the robot are at overlapping heights.  Skip this check
-              // entirely if the block isn't in the same coordinate tree as the
-              // robot.
-              Pose3d blockPoseWrtRobotOrigin;
-              if(block->GetPose().GetWithRespectTo(robot->GetPose().FindOrigin(), blockPoseWrtRobotOrigin) == true)
+              bool didErase = false;
+              if(object->GetLastObservedTime() < lastObsMarkerTime && !object->IsBeingCarried())
               {
-                const Quad2f blockBBox = block->GetBoundingQuadXY(blockPoseWrtRobotOrigin);
-                const f32    blockHeight = blockPoseWrtRobotOrigin.GetTranslation().z();
-                const f32    blockSize   = 0.5f*block->GetSize().Length();
-                const f32    blockTop    = blockHeight + blockSize;
-                const f32    blockBottom = blockHeight - blockSize;
-                
-                // Don't worry about collision while picking or placing since we
-                // are trying to get close to blocks in these modes.
-                // TODO: specify whether we are picking/placing _this_ block
-                if(!robot->IsPickingOrPlacing())
+                for(auto robotID : robotMgr_->GetRobotIDList())
                 {
-                  const f32 robotBottom = robot->GetPose().GetTranslation().z();
-                  const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
+                  Robot* robot = robotMgr_->GetRobotByID(robotID);
+                  CORETECH_ASSERT(robot != NULL);
                   
-                  const bool topIntersects    = (((blockTop >= robotBottom) && (blockTop <= robotTop)) ||
-                                                 ((robotTop >= blockBottom) && (robotTop <= blockTop)));
-                  
-                  const bool bottomIntersects = (((blockBottom >= robotBottom) && (blockBottom <= robotTop)) ||
-                                                 ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
-                  
-                  const bool bboxIntersects   = blockBBox.Intersects(robot->GetBoundingQuadXY());
-                  
-                  if( (topIntersects || bottomIntersects) && bboxIntersects )
+                  // Don't worry about collision while picking or placing since we
+                  // are trying to get close to blocks in these modes.
+                  // TODO: specify whether we are picking/placing _this_ block
+                  if(!robot->IsPickingOrPlacing())
                   {
-                    CoreTechPrint("Removing block %d, which intersects robot %d's bounding quad.\n",
-                                  block->GetID(), robot->GetID());
-                    
-                    // Erase the vizualized block and its projected quad
-                    VizManager::getInstance()->EraseCuboid(block->GetID());
-                    
-                    // Erase the block (with a postfix increment of the iterator)
-                    blocksOfType.second.erase(blockIter++);
-                    didErase = true;
-                    didObjectsChange_ = true;
-                    
-                    break; // no need to check other robots, block already gone
-                  } // if quads intersect
-                } // if robot is not picking or placing
-              } // if we got block pose wrt robot origin
-            } // for each robot
-          } // if block was not observed
-          
-          if(!didErase) {
-            ++blockIter;
-          }
-          
-        } // for each block of this type
-      } // for each block type
-      
+                    // Check block's bounding box in same coordinates as this robot to
+                    // see if it intersects with the robot's bounding box. Also check to see
+                    // block and the robot are at overlapping heights.  Skip this check
+                    // entirely if the block isn't in the same coordinate tree as the
+                    // robot.
+                    Pose3d objectPoseWrtRobotOrigin;
+                    if(object->GetPose().GetWithRespectTo(robot->GetPose().FindOrigin(), objectPoseWrtRobotOrigin) == true)
+                    {
+                      const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
+                      const f32    objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
+                      /*
+                       const f32    blockSize   = 0.5f*object->GetSize().Length();
+                       const f32    blockTop    = objectHeight + blockSize;
+                       const f32    blockBottom = objectHeight - blockSize;
+                       */
+                      const f32 robotBottom = robot->GetPose().GetTranslation().z();
+                      const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
+                      
+                      // TODO: Better check for being in the same plane that takes the
+                      //       vertical extent of the object (in its current pose) into account
+                      const bool inSamePlane = (objectHeight >= robotBottom && objectHeight <= robotTop);
+                      /*
+                       const bool topIntersects    = (((blockTop >= robotBottom) && (blockTop <= robotTop)) ||
+                       ((robotTop >= blockBottom) && (robotTop <= blockTop)));
+                       
+                       const bool bottomIntersects = (((blockBottom >= robotBottom) && (blockBottom <= robotTop)) ||
+                       ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
+                       */
+                      
+                      const bool bboxIntersects   = objectBBox.Intersects(robot->GetBoundingQuadXY());
+                      
+                      if( inSamePlane && bboxIntersects )
+                      {
+                        CoreTechPrint("Removing object %d, which intersects robot %d's bounding quad.\n",
+                                      object->GetID(), robot->GetID());
+                        
+                         // Erase the vizualized block and its projected quad
+                         //VizManager::getInstance()->EraseCuboid(object->GetID());
+                         
+                         // Erase the block (with a postfix increment of the iterator)
+                        delete object;
+                        objectIter = objectsByType.second.erase(objectIter);
+                        didErase = true;
+                        
+                        break; // no need to check other robots, block already gone
+                      } // if quads intersect
+                    } // if we got block pose wrt robot origin
+                  } // if robot is not picking or placing
+                } // for each robot
+              } // if block was not observed
+              
+              if(!didErase) {
+                ++objectIter;
+              }
+              
+            } // for each object of this type
+          } // for each object type
+        } // if not in the Mat family
+      } // for each object family
       
       if(numUnusedMarkers > 0) {
         CoreTechPrint("%u observed markers did not match any known objects and went unused.\n",
@@ -855,7 +894,7 @@ namespace Anki
          */
         
         // Mat Markers
-        std::set<const Vision::ObservableObject*> const& mats = matLibrary_.GetObjectsWithMarker(marker);
+        std::set<const Vision::ObservableObject*> const& mats = _objectLibrary[MAT_FAMILY].GetObjectsWithMarker(marker);
         for(auto mat : mats) {
           std::vector<Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
           
@@ -882,72 +921,71 @@ namespace Anki
       obsMarkers_.clear();
     }
     
-    void BlockWorld::CommandRobotToDock(const RobotID_t whichRobot,
-                                        Block&    whichBlock)
+    void BlockWorld::ClearAllExistingObjects()
     {
-      Robot* robot = robotMgr_->GetRobotByID(whichRobot);
-      if(robot != 0)
-      {
-        robot->ExecuteDockingSequence(whichBlock.GetID());
-        
-      } else {
-        CoreTechPrint("Invalid robot commanded to Dock.\n");
-      }
-    } // commandRobotToDock()
-
-    void BlockWorld::ClearAllExistingBlocks() {
-      existingBlocks_.clear();
       globalIDCounter = 0;
-      didObjectsChange_ = true;
-      VizManager::getInstance()->EraseAllCuboids();
+      
     }
     
-    void BlockWorld::ClearBlocksByType(const ObjectType_t type)
+    void BlockWorld::ClearObjectsByFamily(const ObjectFamily_t family)
     {
-      auto blocksWithType = existingBlocks_.find(type);
-      if(blocksWithType != existingBlocks_.end()) {
-        
-        // Erase all the visualized blocks of this type
-        for(auto & block : blocksWithType->second) {
-          VizManager::getInstance()->EraseCuboid(block.first);
+      ObjectsMapByFamily_t::iterator objectsWithFamily = _existingObjects.find(family);
+      if(objectsWithFamily != _existingObjects.end()) {
+        for(auto objectsByType : objectsWithFamily->second) {
+          for(auto objectsByID : objectsByType.second) {
+            delete objectsByID.second;
+          }
         }
         
-        // Erase this entry in the map of block types
-        existingBlocks_.erase(type);
-        
+        _existingObjects.erase(family);
         didObjectsChange_ = true;
+      }
+    }
+    
+    void BlockWorld::ClearObjectsByType(const ObjectType_t type)
+    {
+      for(auto & objectsByFamily : _existingObjects) {
+        ObjectsMapByType_t::iterator objectsWithType = objectsByFamily.second.find(type);
+        if(objectsWithType != objectsByFamily.second.end()) {
+          for(auto & objectsByID : objectsWithType->second) {
+            delete objectsByID.second;
+          }
+        
+          objectsByFamily.second.erase(objectsWithType);
+          didObjectsChange_ = true;
+          
+          // Types are unique.  No need to keep looking
+          return;
+        }
       }
       
     } // ClearBlocksByType()
     
 
-    bool BlockWorld::ClearBlock(const ObjectID_t withID)
+    bool BlockWorld::ClearObject(const ObjectID_t withID)
     {
-      bool wasCleared = false;
-      
-      for(auto & blocksByType : existingBlocks_) {
-        auto blockWithID = blocksByType.second.find(withID);
-        if(blockWithID != blocksByType.second.end()) {
-          if(wasCleared) {
-            // If wasCleared is already true, there must have been >= 2
-            // with the specified ID, which should not happend
-            CoreTechPrint("Found multiple blocks with ID=%d in BlockWorld::ClearBlock().\n", withID);
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          auto objectWithIdIter = objectsByType.second.find(withID);
+          if(objectWithIdIter != objectsByType.second.end()) {
+            
+            // Remove the object from the world
+            // NOTE: The object should erase its own visualization upon destruction
+            delete objectWithIdIter->second;
+            objectsByType.second.erase(objectWithIdIter);
+            
+            // Flag that we removed an object
+            didObjectsChange_ = true;
+            
+            // IDs are unique, so we can return as soon as the ID is found and cleared
+            return true;
           }
-          
-          // Erase the vizualized block
-          VizManager::getInstance()->EraseCuboid(withID);
-
-          // Remove the block from the world
-          blocksByType.second.erase(blockWithID);
-          
-          // Flag that we removed a block
-          wasCleared = true;
-          didObjectsChange_ = true;
         }
       }
-      
-      return wasCleared;
-    } // ClearBlock()
+     
+      // Never found the specified ID
+      return false;
+    } // ClearObject()
     
     void BlockWorld::EnableDraw(bool on)
     {
@@ -988,9 +1026,8 @@ namespace Anki
     
     void BlockWorld::DrawAllObjects() const
     {
-      for(auto existingObjects : allExistingObjects_) {
-        
-        for(auto & objectsByType : *existingObjects) {
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto & objectsByType : objectsByFamily.second) {
           for(auto & objectsByID : objectsByType.second) {
             Vision::ObservableObject* object = objectsByID.second;
             object->Visualize();

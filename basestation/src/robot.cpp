@@ -105,7 +105,7 @@ namespace Anki {
       {FOLLOWING_PATH,        "FOLLOWING_PATH"},
       {BEGIN_DOCKING,         "BEGIN_DOCKING"},
       {DOCKING,               "DOCKING"},
-      {PLACE_BLOCK_ON_GROUND, "PLACE_BLOCK_ON_GROUND"}
+      {PLACE_OBJECT_ON_GROUND, "PLACE_OBJECT_ON_GROUND"}
     };
     
     
@@ -135,9 +135,9 @@ namespace Anki {
     , _currentLiftAngle(0)
     , _isPickingOrPlacing(false)
     , _state(IDLE)
-    , _carryingBlockID(ANY_OBJECT)
+    , _carryingObjectID(ANY_OBJECT)
     , _carryingMarker(nullptr)
-    , _dockBlockID(ANY_OBJECT)
+    , _dockObjectID(ANY_OBJECT)
     , _dockMarker(nullptr)
     {
       SetHeadAngle(_currentHeadAngle);
@@ -201,7 +201,7 @@ namespace Anki {
                   if(_nextState == BEGIN_DOCKING) {
                     PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileDocking",
                                      "Replan failed during docking due to bad goal. Will try to update goal.\n");
-                    ExecuteDockingSequence(_dockBlockID);
+                    ExecuteDockingSequence(_dockObjectID);
                   } else {
                     PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
                                      "Replan failed due to bad goal. Aborting path.\n");
@@ -272,18 +272,17 @@ namespace Anki {
             // ...
             //const Point2f& imgCorners = dockMarker_->GetImageCorners().computeCentroid();
             // For now, just docking to the marker no matter where it is in the image.
-            Block* dockBlock = _world->GetBlockByID(_dockBlockID);
-            // Get dock action
-            if(dockBlock == nullptr) {
-              PRINT_NAMED_ERROR("Robot.Update.DockBlockGone", "Docking block with ID=%d no longer exists in the world. Returning to IDLE state.\n", _dockBlockID);
+            DockableObject* dockObject = dynamic_cast<DockableObject*>(_world->GetObjectByID(_dockObjectID));
+            if(dockObject == nullptr) {
+              PRINT_NAMED_ERROR("Robot.Update.DockObjectGone", "Docking object with ID=%d no longer exists in the world. Returning to IDLE state.\n", _dockObjectID);
               SetState(IDLE);
               return;
             }
 
             // first, re-compute the pre-dock pose and make sure we
             // are close enough to the closest one
-            std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
-            dockBlock->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
+            std::vector<DockableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
+            dockObject->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
 
             float closestDist2 = FLT_MAX;
             for(auto const& preDockPair : preDockPoseMarkerPairs) {
@@ -299,51 +298,51 @@ namespace Anki {
 
             if(distanceToGoal > MAX_DISTANCE_TO_PREDOCK_POSE) {
               PRINT_NAMED_INFO("Robot.Update.ReDock", "robot is too far from pose, re-docking\n");
-              ExecuteDockingSequence(_dockBlockID);
+              ExecuteDockingSequence(_dockObjectID);
               break;
             }
 
                         
-            const f32 dockBlockHeight = dockBlock->GetPose().GetTranslation().z();
+            const f32 dockBlockHeight = dockObject->GetPose().GetTranslation().z();
             _dockAction = DA_PICKUP_LOW;
-            if (dockBlockHeight > dockBlock->GetSize().z()) {
-              if(IsCarryingBlock()) {
-                PRINT_INFO("Already carrying block. Can't dock to high block. Aborting.\n");
+            if (dockBlockHeight > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
+              if(IsCarryingObject()) {
+                PRINT_INFO("Already carrying object. Can't dock to high object. Aborting.\n");
                 SetState(IDLE);
                 return;
                 
               } else {
                 _dockAction = DA_PICKUP_HIGH;
               }
-            } else if (IsCarryingBlock()) {
+            } else if (IsCarryingObject()) {
               _dockAction = DA_PLACE_HIGH;
             }
             
             // Start dock
             PRINT_INFO("Docking with marker %d (action = %d)\n", _dockMarker->GetCode(), _dockAction);
-            DockWithBlock(_dockBlockID, _dockMarker, _dockAction);
+            DockWithObject(_dockObjectID, _dockMarker, _dockAction);
             _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
             SetState(DOCKING);
           }
           break;
         } // case BEGIN_DOCKING
           
-        case PLACE_BLOCK_ON_GROUND:
+        case PLACE_OBJECT_ON_GROUND:
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime) {
-            if(IsCarryingBlock() == false) {
-              PRINT_NAMED_ERROR("Robot.Update.NotCarryingBlock",
-                                "Robot %d in PLACE_BLOCK_ON_GROUND state but not carrying block.\n", _ID);
+            if(IsCarryingObject() == false) {
+              PRINT_NAMED_ERROR("Robot.Update.NotCarryingObject",
+                                "Robot %d in PLACE_OBJECT_ON_GROUND state but not carrying object.\n", _ID);
               break;
             }
             
             _dockAction = DA_PLACE_LOW;
             _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.5f;
-            SendPlaceBlockOnGround();
+            SendPlaceObjectOnGround();
             SetState(DOCKING);
           }
           break;
-        } // case PLACE_BLOCK_ON_GROUND
+        } // case PLACE_OBJECT_ON_GROUND
           
         case DOCKING:
         {
@@ -363,10 +362,10 @@ namespace Anki {
               case DA_PICKUP_LOW:
               case DA_PICKUP_HIGH:
               {
-                lastResult = VerifyBlockPickup();
+                lastResult = VerifyObjectPickup();
                 if(lastResult != RESULT_OK) {
-                  PRINT_NAMED_ERROR("Robot.Update.VerifyBlockPickupFailed",
-                                    "VerifyBlockPickup returned error code %x.\n",
+                  PRINT_NAMED_ERROR("Robot.Update.VerifyObjectPickupFailed",
+                                    "VerifyObjectPickup returned error code %x.\n",
                                     lastResult);
                 }
                 break;
@@ -375,10 +374,10 @@ namespace Anki {
               case DA_PLACE_LOW:
               case DA_PLACE_HIGH:
               {                  
-                lastResult = VerifyBlockPlacement();
+                lastResult = VerifyObjectPlacement();
                 if(lastResult != RESULT_OK) {
-                  PRINT_NAMED_ERROR("Robot.Update.VerifyBlockPlacementFailed",
-                                    "VerifyBlockPlacement returned error code %x.\n",
+                  PRINT_NAMED_ERROR("Robot.Update.VerifyObjectPlacementFailed",
+                                    "VerifyObjectPlacement returned error code %x.\n",
                                     lastResult);
                 }
                 break;
@@ -435,7 +434,7 @@ namespace Anki {
         case FOLLOWING_PATH:
         case BEGIN_DOCKING:
         case DOCKING:
-        case PLACE_BLOCK_ON_GROUND:
+        case PLACE_OBJECT_ON_GROUND:
           break;
 
         default:
@@ -698,24 +697,24 @@ namespace Anki {
     }
     
   
-    Result Robot::ExecuteDockingSequence(ObjectID_t blockToDockWith)
+    Result Robot::ExecuteDockingSequence(ObjectID_t objectIDtoDockWith)
     {
       Result lastResult = RESULT_OK;
       
-      Block* block = _world->GetBlockByID(blockToDockWith);
-      if(block == nullptr) {
-        PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.DockBlockDoesNotExist",
-                          "Robot %d asked to dock with Block ID=%d, but it does not exist.",
-                          _ID, blockToDockWith);
+      DockableObject* object = dynamic_cast<DockableObject*>(_world->GetObjectByID(objectIDtoDockWith));
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.DockObjectDoesNotExist",
+                          "Robot %d asked to dock with Object ID=%d, but it does not exist.",
+                          _ID, objectIDtoDockWith);
 
         return RESULT_FAIL;
       }
       
-      _dockBlockID = blockToDockWith;
+      _dockObjectID = objectIDtoDockWith;
       _dockMarker = nullptr; // should get set to a predock pose below
       
-      std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      block->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
+      std::vector<DockableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
+      object->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
       
       if (preDockPoseMarkerPairs.empty()) {
         PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.NoPreDockPoses",
@@ -757,69 +756,69 @@ namespace Anki {
       
     } // ExecuteDockingSequence()
     
-    Result Robot::ExecutePlaceBlockOnGroundSequence()
+    Result Robot::ExecutePlaceObjectOnGroundSequence()
     {
-      if(IsCarryingBlock() == false) {
-        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NotCarryingBlock",
+      if(IsCarryingObject() == false) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.NotCarryingObject",
                           "Robot %d was told to place a block on the ground, but "
                           "it is not carrying a block.\n", _ID);
         return RESULT_FAIL;
       }
       
       // Grab a pointer to the block we are supposedly carrying
-      Block* carryingBlock = _world->GetBlockByID(_carryingBlockID);
-      if(carryingBlock == nullptr) {
-        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.CarryBlockDoesNotExist",
+      DockableObject* carryingObject = dynamic_cast<DockableObject*>(_world->GetObjectByID(_carryingObjectID));
+      if(carryingObject == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.CarryObjectDoesNotExist",
                           "Robot %d thinks it is carrying a block with ID=%d, but that "
                           "block does not exist in the world.\n",
-                          _ID, _carryingBlockID);
+                          _ID, _carryingObjectID);
         
         return RESULT_FAIL;
       }
       
-      SetState(PLACE_BLOCK_ON_GROUND);
+      SetState(PLACE_OBJECT_ON_GROUND);
       
       // TODO: How to correctly set _dockMarker in case of placement failure??
-      _dockMarker = &carryingBlock->GetMarker(Block::FRONT_FACE);
+      _dockMarker = &carryingObject->GetMarkers().front(); // GetMarker(Block::FRONT_FACE);
       
       return RESULT_OK;
       
     } // ExecuteDockingSequence()
     
   
-    Result Robot::ExecutePlaceBlockOnGroundSequence(const Pose3d& atPose)
+    Result Robot::ExecutePlaceObjectOnGroundSequence(const Pose3d& atPose)
     {
       Result lastResult = RESULT_OK;
       
-      if(IsCarryingBlock() == false) {
-        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NotCarryingBlock",
-                          "Robot %d was told to place a block on the ground, but "
-                          "it is not carrying a block.\n", _ID);
+      if(IsCarryingObject() == false) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.NotCarryingObject",
+                          "Robot %d was told to place an object on the ground, but "
+                          "it is not carrying a object.\n", _ID);
         return RESULT_FAIL;
       }
       
       // Grab a pointer to the block we are supposedly carrying
-      Block* carryingBlock = _world->GetBlockByID(_carryingBlockID);
-      if(carryingBlock == nullptr) {
-        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.CarryBlockDoesNotExist",
-                          "Robot %d thinks it is carrying a block with ID=%d, but that "
-                          "block does not exist in the world.\n",
-                          _ID, _carryingBlockID);
+      DockableObject* carryingObject = dynamic_cast<DockableObject*>(_world->GetObjectByID(_carryingObjectID));
+      if(carryingObject == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.CarryObjectDoesNotExist",
+                          "Robot %d thinks it is carrying an object with ID=%d, but that "
+                          "object does not exist in the world.\n",
+                          _ID, _carryingObjectID);
         
         return RESULT_FAIL;
       }
       
       // Temporarily move the block being carried to the specified pose so we can
       // get pre-dock poses for it
-      const Pose3d origCarryBlockPose(carryingBlock->GetPose());
-      carryingBlock->SetPose(atPose);
+      const Pose3d origCarryObjectPose(carryingObject->GetPose());
+      carryingObject->SetPose(atPose);
       
       // Get "pre-dock" poses that match the marker that we are docked to,
       // which in this case aren't really for docking but instead where we
       // want the robot to end up in order for the block to be
       // at the requested pose.
       std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      carryingBlock->GetPreDockPoses(ORIGIN_TO_LOW_LIFT_DIST_MM, preDockPoseMarkerPairs,
+      carryingObject->GetPreDockPoses(ORIGIN_TO_LOW_LIFT_DIST_MM, preDockPoseMarkerPairs,
                                      _carryingMarker->GetCode());
       
       if (preDockPoseMarkerPairs.empty()) {
@@ -853,7 +852,7 @@ namespace Anki {
       _dockMarker = &(preDockPoseMarkerPairs[selectedIndex].second);
       
       // Put the carrying block back in its original pose (attached to lift)
-      carryingBlock->SetPose(origCarryBlockPose);
+      carryingObject->SetPose(origCarryObjectPose);
       
       PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
                  _goalPose.GetTranslation().x(),
@@ -862,7 +861,7 @@ namespace Anki {
       
       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
       SetState(FOLLOWING_PATH);
-      _nextState = PLACE_BLOCK_ON_GROUND;
+      _nextState = PLACE_OBJECT_ON_GROUND;
       
       return lastResult;
       
@@ -871,11 +870,11 @@ namespace Anki {
     
     // Sends a message to the robot to dock with the specified block
     // that it should currently be seeing.
-    Result Robot::DockWithBlock(const ObjectID_t blockID,
-                                const Vision::KnownMarker* marker,
-                                const DockAction_t dockAction)
+    Result Robot::DockWithObject(const ObjectID_t objectID,
+                                 const Vision::KnownMarker* marker,
+                                 const DockAction_t dockAction)
     {
-      return DockWithBlock(blockID, marker, dockAction, 0, 0, u8_MAX);
+      return DockWithObject(objectID, marker, dockAction, 0, 0, u8_MAX);
     }
     
     // Sends a message to the robot to dock with the specified block
@@ -883,159 +882,160 @@ namespace Anki {
     // the marker can be seen anywhere in the image (same as above function), otherwise the
     // marker's center must be seen at the specified image coordinates
     // with pixel_radius pixels.
-    Result Robot::DockWithBlock(const ObjectID_t blockID,
-                                const Vision::KnownMarker* marker,
-                                const DockAction_t dockAction,
-                                const u16 image_pixel_x,
-                                const u16 image_pixel_y,
-                                const u8 pixel_radius)
+    Result Robot::DockWithObject(const ObjectID_t objectID,
+                                 const Vision::KnownMarker* marker,
+                                 const DockAction_t dockAction,
+                                 const u16 image_pixel_x,
+                                 const u16 image_pixel_y,
+                                 const u8 pixel_radius)
     {
-      Block* block = _world->GetBlockByID(blockID);
-      if(block == nullptr) {
-        PRINT_NAMED_ERROR("Robot.DockWithBlock.BlockDoesNotExist", "Block with ID=%d no longer exists for docking.\n", blockID);
+      DockableObject* object = dynamic_cast<DockableObject*>(_world->GetObjectByID(objectID));
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.DockWithObject.ObjectDoesNotExist",
+                          "Object with ID=%d no longer exists for docking.\n", objectID);
         return RESULT_FAIL;
       }
 
       CORETECH_ASSERT(marker != nullptr);
       
-      _dockBlockID = blockID;
+      _dockObjectID = objectID;
       _dockMarker  = marker;
       
-      _dockBlockOrigPose = block->GetPose();
+      _dockObjectOrigPose = object->GetPose();
       
       // Dock marker has to be a child of the dock block
-      if(_dockMarker->GetPose().GetParent() != &block->GetPose()) {
-        PRINT_NAMED_ERROR("Robot.DockWithBlock.MarkerNotOnBlock",
-                          "Specified dock marker must be a child of the specified dock block.\n");
+      if(_dockMarker->GetPose().GetParent() != &object->GetPose()) {
+        PRINT_NAMED_ERROR("Robot.DockWithObject.MarkerNotOnObject",
+                          "Specified dock marker must be a child of the specified dock object.\n");
         return RESULT_FAIL;
       }
       
-      return SendDockWithBlock(_dockMarker->GetCode(), _dockMarker->GetSize(), dockAction,
-                               image_pixel_x, image_pixel_y, pixel_radius);
+      return SendDockWithObject(_dockMarker->GetCode(), _dockMarker->GetSize(), dockAction,
+                                image_pixel_x, image_pixel_y, pixel_radius);
     }
     
     
-    Result Robot::PickUpDockBlock()
+    Result Robot::PickUpDockObject()
     {
-      if(_dockBlockID == ANY_OBJECT) {
-        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.NoDockBlockIDSet",
-                          "No docking block ID set, but told to pick one up.\n");
+      if(_dockObjectID == ANY_OBJECT) {
+        PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoDockObjectIDSet",
+                          "No docking object ID set, but told to pick one up.\n");
         return RESULT_FAIL;
       }
       
       if(_dockMarker == nullptr) {
-        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.NoDockMarkerSet",
-                          "No docking marker set, but told to pick up block.\n");
+        PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoDockMarkerSet",
+                          "No docking marker set, but told to pick up object.\n");
         return RESULT_FAIL;
       }
       
-      if(IsCarryingBlock()) {
-        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.AlreadyCarryingBlock",
-                          "Already carrying a block, but told to pick one up.\n");
+      if(IsCarryingObject()) {
+        PRINT_NAMED_ERROR("Robot.PickUpDockObject.AlreadyCarryingObject",
+                          "Already carrying an object, but told to pick one up.\n");
         return RESULT_FAIL;
       }
       
-      Block* block = _world->GetBlockByID(_dockBlockID);
-      if(block == nullptr) {
-        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.BlockDoesNotExist",
-                          "Dock block with ID=%d no longer exists for picking up.\n", _dockBlockID);
+      DockableObject* object = dynamic_cast<DockableObject*>(_world->GetObjectByID(_dockObjectID));
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
+                          "Dock object with ID=%d no longer exists for picking up.\n", _dockObjectID);
         return RESULT_FAIL;
       }
       
-      _carryingBlockID = _dockBlockID;
-      _carryingMarker  = _dockMarker;
+      _carryingObjectID = _dockObjectID;
+      _carryingMarker   = _dockMarker;
 
-      // Base the block's pose relative to the lift on how far away the dock
+      // Base the object's pose relative to the lift on how far away the dock
       // marker is from the center of the block
-      // TODO: compute the height adjustment per block or at least use values from cozmoConfig.h
-      Pose3d blockPoseWrtLiftPose;
-      if(block->GetPose().GetWithRespectTo(_liftPose, blockPoseWrtLiftPose) == false) {
-        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.BlockAndLiftPoseHaveDifferentOrigins",
-                          "Block robot is picking up and robot's lift must share a common origin.\n");
+      // TODO: compute the height adjustment per object or at least use values from cozmoConfig.h
+      Pose3d objectPoseWrtLiftPose;
+      if(object->GetPose().GetWithRespectTo(_liftPose, objectPoseWrtLiftPose) == false) {
+        PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectAndLiftPoseHaveDifferentOrigins",
+                          "Object robot is picking up and robot's lift must share a common origin.\n");
         return RESULT_FAIL;
       }
       
-      blockPoseWrtLiftPose.SetTranslation({{_dockMarker->GetPose().GetTranslation().Length() +
+      objectPoseWrtLiftPose.SetTranslation({{_dockMarker->GetPose().GetTranslation().Length() +
         LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f}});
       
-      // make part of the lift's pose chain so the block will now be relative to
+      // make part of the lift's pose chain so the object will now be relative to
       // the lift and move with the robot
-      blockPoseWrtLiftPose.SetParent(&_liftPose);
+      objectPoseWrtLiftPose.SetParent(&_liftPose);
 
       // Don't reset these until we've verified the block was actually picked up
       //_dockBlockID = ANY_OBJECT;
       //_dockMarker  = nullptr;
       
-      block->SetPose(blockPoseWrtLiftPose);
-      block->SetIsBeingCarried(true);
+      object->SetPose(objectPoseWrtLiftPose);
+      object->SetIsBeingCarried(true);
       
       return RESULT_OK;
       
     } // PickUpDockBlock()
     
     
-    Result Robot::VerifyBlockPickup()
+    Result Robot::VerifyObjectPickup()
     {
-      // We should _not_ still see a block with the
+      // We should _not_ still see a object with the
       // same type as the one we were supposed to pick up in that
       // block's original position because we should now be carrying it.
-      Block* carryBlock = _world->GetBlockByID(_carryingBlockID);
-      if(carryBlock == nullptr) {
-        PRINT_NAMED_ERROR("Robot.Update.CarryBlockNoLongerExists",
-                          "Block %d we were carrying no longer exists in the world.\n",
-                          _carryingBlockID);
+      Vision::ObservableObject* carryObject = _world->GetObjectByID(_carryingObjectID);
+      if(carryObject == nullptr) {
+        PRINT_NAMED_ERROR("Robot.VerifyObjectPickup.CarryObjectNoLongerExists",
+                          "Object %d we were carrying no longer exists in the world.\n",
+                          _carryingObjectID);
         return RESULT_FAIL;
       }
       
-      const BlockWorld::ObjectsMapByID_t& blocksWithType = _world->GetExistingBlocks(carryBlock->GetType());
+      const BlockWorld::ObjectsMapByID_t& objectsWithType = _world->GetExistingObjectsByType(carryObject->GetType());
       Pose3d P_diff;
-      bool blockInOriginalPoseFound = false;
-      for(auto block : blocksWithType) {
+      bool objectInOriginalPoseFound = false;
+      for(auto object : objectsWithType) {
         // TODO: Make thresholds parameters
         // TODO: is it safe to always have useAbsRotation=true here?
-        if(block.second->GetPose().IsSameAs_WithAmbiguity(_dockBlockOrigPose, carryBlock->
-                                                          GetRotationAmbiguities(),
-                                                          15.f, DEG_TO_RAD(25), true, P_diff))
+        if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, carryObject->
+                                                           GetRotationAmbiguities(),
+                                                           15.f, DEG_TO_RAD(25), true, P_diff))
         {
-          blockInOriginalPoseFound = true;
+          objectInOriginalPoseFound = true;
           break;
         }
       }
       
-      if(blockInOriginalPoseFound)
+      if(objectInOriginalPoseFound)
       {
-        // Must not actually be carrying the block I thought I was!
-        _world->ClearBlock(_carryingBlockID);
-        _carryingBlockID = ANY_OBJECT;
-        PRINT_INFO("Block pick-up FAILED! (Still seeing block in same place.)\n");
+        // Must not actually be carrying the object I thought I was!
+        _world->ClearObject(_carryingObjectID);
+        _carryingObjectID = ANY_OBJECT;
+        PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
       } else {
-        _carryingBlockID = _dockBlockID;  // Already set?
-        _carryingMarker  = _dockMarker;   //   "
-        _dockBlockID     = ANY_OBJECT;
-        _dockMarker      = nullptr;
-        PRINT_INFO("Block pick-up SUCCEEDED!\n");
+        _carryingObjectID = _dockObjectID;  // Already set?
+        _carryingMarker   = _dockMarker;   //   "
+        _dockObjectID     = ANY_OBJECT;
+        _dockMarker       = nullptr;
+        PRINT_INFO("Object pick-up SUCCEEDED!\n");
       }
       
       return RESULT_OK;
       
-    } // VerifyBlockPickup()
+    } // VerifyObjectPickup()
     
     
-    Result Robot::PlaceCarriedBlock() //const TimeStamp_t atTime)
+    Result Robot::PlaceCarriedObject() //const TimeStamp_t atTime)
     {
-      if(_carryingBlockID == ANY_OBJECT) {
-        PRINT_NAMED_WARNING("Robot.PlaceCarriedBlock.CarryingBlockNotSpecified",
-                          "No carrying block set, but told to place one.\n");
+      if(_carryingObjectID == ANY_OBJECT) {
+        PRINT_NAMED_WARNING("Robot.PlaceCarriedObject.CarryingObjectNotSpecified",
+                            "No carrying object set, but told to place one.\n");
         return RESULT_FAIL;
       }
       
-      Block* block = _world->GetBlockByID(_carryingBlockID);
+      DockableObject* object = dynamic_cast<DockableObject*>(_world->GetObjectByID(_carryingObjectID));
       
-      if(block == nullptr)
+      if(object == nullptr)
       {
-        // This really should not happen.  How can a block being carried get deleted?
-        PRINT_NAMED_ERROR("Robot.PlaceCarriedBlock.CarryingBlockDoesNotExist",
-                          "Carrying block with ID=%d no longer exists.\n", _carryingBlockID);
+        // This really should not happen.  How can a object being carried get deleted?
+        PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.CarryingObjectDoesNotExist",
+                          "Carrying object with ID=%d no longer exists.\n", _carryingObjectID);
         return RESULT_FAIL;
       }
       
@@ -1063,69 +1063,69 @@ namespace Anki {
       */
       
       Pose3d placedPose;
-      if(block->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPose) == false) {
-        PRINT_NAMED_ERROR("Robot.PlaceCarriedBlock.OriginMisMatch",
-                          "Could not get carrying block's pose relative to robot's origin.\n");
+      if(object->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPose) == false) {
+        PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.OriginMisMatch",
+                          "Could not get carrying object's pose relative to robot's origin.\n");
         return RESULT_FAIL;
       }
-      block->SetPose(placedPose);
+      object->SetPose(placedPose);
       
-      block->SetIsBeingCarried(false);
+      object->SetIsBeingCarried(false);
       
-      PRINT_NAMED_INFO("Robot.PlaceCarriedBlock.BlockPlaced",
-                       "Robot %d successfully placed block %d at (%.2f, %.2f, %.2f).\n",
-                       _ID, block->GetID(),
-                       block->GetPose().GetTranslation().x(),
-                       block->GetPose().GetTranslation().y(),
-                       block->GetPose().GetTranslation().z());
+      PRINT_NAMED_INFO("Robot.PlaceCarriedObject.ObjectPlaced",
+                       "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).\n",
+                       _ID, object->GetID(),
+                       object->GetPose().GetTranslation().x(),
+                       object->GetPose().GetTranslation().y(),
+                       object->GetPose().GetTranslation().z());
 
-      // Don't reset _carryingBlockID here, because we want to know
-      // the last block we were carrying so we can verify we see it
+      // Don't reset _carryingObjectID here, because we want to know
+      // the last object we were carrying so we can verify we see it
       // after placement. Once we *verify* we've placed it, we'll
       // do this.
-      //_carryingBlockID = ANY_OBJECT;
-      //_carryingMarker = nullptr;
+      //_carryingObjectID = ANY_OBJECT;
+      //_carryingMarker   = nullptr;
       
       return RESULT_OK;
       
-    } // PlaceCarriedBlock()
+    } // PlaceCarriedObject()
     
     
-    Result Robot::VerifyBlockPlacement()
+    Result Robot::VerifyObjectPlacement()
     {
       
-      // In place mode, we _should_ now see a block with the ID of the
+      // In place mode, we _should_ now see an object with the ID of the
       // one we were carrying, in the place we think we left it when
       // we placed it.
       // TODO: check to see it ended up in the right place?
-      Block* block = _world->GetBlockByID(_carryingBlockID);
-      if(block == nullptr) {
-        PRINT_NAMED_ERROR("Robot.VerifyBlockPlacement.CarryBlockNoLongerExists",
-                          "Block %d we were carrying no longer exists in the world.\n",
-                          _carryingBlockID);
+      Vision::ObservableObject* object = _world->GetObjectByID(_carryingObjectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.VerifyObjectPlacement.CarryObjectNoLongerExists",
+                          "Object %d we were carrying no longer exists in the world.\n",
+                          _carryingObjectID);
         return RESULT_FAIL;
       }
-      else if(block->GetLastObservedTime() > (GetLastMsgTimestamp()-500))
+      else if(object->GetLastObservedTime() > (GetLastMsgTimestamp()-500))
       {
-        // We've seen the block in the last half second (which could
+        // We've seen the object in the last half second (which could
         // not be true if we were still carrying it)
-        _carryingBlockID = ANY_OBJECT;
-        _carryingMarker  = nullptr;
-        _dockBlockID     = ANY_OBJECT;
-        _dockMarker      = nullptr;
-        PRINT_INFO("Block placement SUCCEEDED!\n");
+        _carryingObjectID = ANY_OBJECT;
+        _carryingMarker   = nullptr;
+        _dockObjectID     = ANY_OBJECT;
+        _dockMarker       = nullptr;
+        PRINT_INFO("Object placement SUCCEEDED!\n");
       } else {
-        // TODO: correct to assume we are still carrying the block?
-        _dockBlockID     = _carryingBlockID;
-        _carryingBlockID = ANY_OBJECT;
-        PickUpDockBlock(); // re-pickup block to attach it to the lift again
-        PRINT_INFO("Block placement FAILED!\n");
+        // TODO: correct to assume we are still carrying the object?
+        _dockObjectID     = _carryingObjectID;
+        _carryingObjectID = ANY_OBJECT;
+        PickUpDockObject(); // re-pickup block to attach it to the lift again
+        PRINT_INFO("Object placement FAILED!\n");
         
       }
       
       return RESULT_OK;
       
-    } // VerifyBlockPlacement()
+    } // VerifyObjectPlacement()
 
     
     Result Robot::SetHeadlight(u8 intensity)
@@ -1182,14 +1182,14 @@ namespace Anki {
      */
 
     
-    Result Robot::SendDockWithBlock(const Vision::Marker::Code& markerType,
-                                    const f32 markerWidth_mm,
-                                    const DockAction_t dockAction,
-                                    const u16 image_pixel_x,
-                                    const u16 image_pixel_y,
-                                    const u8 pixel_radius) const
+    Result Robot::SendDockWithObject(const Vision::Marker::Code& markerType,
+                                     const f32 markerWidth_mm,
+                                     const DockAction_t dockAction,
+                                     const u16 image_pixel_x,
+                                     const u16 image_pixel_y,
+                                     const u8 pixel_radius) const
     {
-      MessageDockWithBlock m;
+      MessageDockWithObject m;
       m.markerWidth_mm = markerWidth_mm;
       CORETECH_ASSERT(markerType <= u8_MAX);
       m.markerType = static_cast<u8>(markerType);
@@ -1200,9 +1200,9 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SendPlaceBlockOnGround()
+    Result Robot::SendPlaceObjectOnGround()
     {
-      MessagePlaceBlockOnGround m;
+      MessagePlaceObjectOnGround m;
       
       m.rel_angle = 0.f;
       m.rel_x_mm  = ORIGIN_TO_LOW_LIFT_DIST_MM;

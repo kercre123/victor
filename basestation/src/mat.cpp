@@ -56,7 +56,12 @@ namespace Anki {
       return MatPiece::rotationAmbiguities_;
     }
     
-    void MatPiece::Visualize() const
+    void MatPiece::Visualize()
+    {
+      // TODO
+    }
+    
+    void MatPiece::EraseVisualization()
     {
       // TODO
     }

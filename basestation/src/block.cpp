@@ -26,15 +26,15 @@
 namespace Anki {
   namespace Cozmo {
     
-    const std::string Block::IDtoStringLUT[NUM_BLOCK_TYPES] = {
-      "UNKNOWN_BLOCK_TYPE",
+    const std::map<ObjectType_t, std::string> Block::IDtoStringLUT = {
+      {UNKNOWN_BLOCK_TYPE, "UNKNOWN_BLOCK_TYPE"},
 #define BLOCK_DEFINITION_MODE BLOCK_ID_TO_STRING_LUT_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
     };
 
     
-    const Block::BlockInfoTableEntry_t Block::BlockInfoLUT_[NUM_BLOCK_TYPES] = {
-      {.name = "UNKNOWN"}
+    const std::map<ObjectType_t, Block::BlockInfoTableEntry_t> Block::BlockInfoLUT_ = {
+      {UNKNOWN_BLOCK_TYPE, {.name = "UNKNOWN"}}
 #define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
     };
@@ -138,13 +138,14 @@ namespace Anki {
     
     Block::Block(const ObjectType_t type)
     : DockableObject(type)
-    , _color(BlockInfoLUT_[type].color)
-    , _size(BlockInfoLUT_[type].size)
-    , _name(BlockInfoLUT_[type].name)
+    , _color(BlockInfoLUT_.at(type).color)
+    , _size(BlockInfoLUT_.at(type).size)
+    , _name(BlockInfoLUT_.at(type).name)
+    , _vizHandle(VizManager::INVALID_HANDLE)
     {
       markersByFace_.fill(NULL);
       
-      for(auto face : BlockInfoLUT_[type_].faces) {
+      for(auto face : BlockInfoLUT_.at(type_).faces) {
         AddFace(face.whichFace, face.code, face.size);
       }
       
@@ -253,11 +254,7 @@ namespace Anki {
       return boundingQuad;
       
     } // GetBoundingBoxInPlane()
-    
-    Quad2f Block::GetBoundingQuadXY(const f32 padding_mm) const
-    {
-      return GetBoundingQuadXY(pose_, padding_mm);
-    }
+
     
     Quad2f Block::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
@@ -293,6 +290,7 @@ namespace Anki {
     Block::~Block(void)
     {
       //--Block::numBlocks;
+      EraseVisualization();
     }
     
      /*
@@ -398,17 +396,12 @@ namespace Anki {
       
     } // Block::GetMarker()
 
-    void Block::Visualize() const
+    void Block::Visualize()
     {
-      Visualize(0);
+      Visualize(_color);
     }
     
-    void Block::Visualize(const f32 preDockPoseDistance) const
-    {
-      Visualize(_color, preDockPoseDistance);
-    }
-    
-    void Block::Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) const
+    void Block::Visualize(VIZ_COLOR_ID color)
     {
       Pose3d vizPose;
       if(pose_.GetWithRespectTo(pose_.FindOrigin(), vizPose) == false) {
@@ -417,16 +410,19 @@ namespace Anki {
         return;
       }
       
-      VizManager::getInstance()->DrawCuboid(GetID(), _size, vizPose, color);
-      
-      if(preDockPoseDistance > 0.f) {
-        u32 poseID = 0;
-        std::vector<Block::PoseMarkerPair_t> poses;
-        GetPreDockPoses(preDockPoseDistance, poses);
-        for(auto pose : poses) {
-          VizManager::getInstance()->DrawPreDockPose(6*GetID()+poseID++, pose.first, VIZ_COLOR_PREDOCKPOSE);
-        }
+      _vizHandle = VizManager::getInstance()->DrawCuboid(GetID(), _size, vizPose, color);
+    }
+    
+    void Block::EraseVisualization()
+    {
+      // Erase the main object
+      if(_vizHandle != VizManager::INVALID_HANDLE) {
+        VizManager::getInstance()->EraseVizObject(_vizHandle);
+        _vizHandle = VizManager::INVALID_HANDLE;
       }
+      
+      // Erase the pre-dock poses
+      DockableObject::EraseVisualization();
     }
     
 #pragma mark ---  Block_Cube1x1 Implementation ---

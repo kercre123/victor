@@ -51,7 +51,7 @@ namespace Anki {
         FOLLOWING_PATH,
         BEGIN_DOCKING,
         DOCKING,
-        PLACE_BLOCK_ON_GROUND
+        PLACE_OBJECT_ON_GROUND
       };
       
       static const std::map<State, std::string> StateNames;
@@ -84,8 +84,8 @@ namespace Anki {
       const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
       const State            GetState()        const;
       
-      const ObjectID_t       GetDockBlock()    const {return _dockBlockID;}
-      const ObjectID_t       GetCarryingBlock()const {return _carryingBlockID;}
+      const ObjectID_t       GetDockObject()     const {return _dockObjectID;}
+      const ObjectID_t       GetCarryingObject() const {return _carryingObjectID;}
       
       void SetState(const State newState);
       void SetPose(const Pose3d &newPose);
@@ -139,8 +139,8 @@ namespace Anki {
       u16 GetLastRecvdPathID() {return _lastRecvdPathID;}
       u16 GetLastSentPathID() {return _lastSentPathID;}
 
-      void SetCarryingBlock(ObjectID_t carryBlockID) {_carryingBlockID = carryBlockID;}
-      bool IsCarryingBlock() {return _carryingBlockID != ANY_OBJECT;}
+      void SetCarryingObject(ObjectID_t carryObjectID) {_carryingObjectID = carryObjectID;}
+      bool IsCarryingObject() {return _carryingObjectID != ANY_OBJECT;}
 
       void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
       bool IsPickingOrPlacing() {return _isPickingOrPlacing;}
@@ -168,50 +168,50 @@ namespace Anki {
       
       Result StopAllMotors();
       
-      // Plan a path to an available docking pose of the specified block, and
+      // Plan a path to an available docking pose of the specified object, and
       // then dock with it.
-      Result ExecuteDockingSequence(ObjectID_t blockToDockWith);
+      Result ExecuteDockingSequence(ObjectID_t objectIDtoDockWith);
       
-      // Plan a path to place the block currently being carried at the specified
+      // Plan a path to place the object currently being carried at the specified
       // pose.
-      Result ExecutePlaceBlockOnGroundSequence(const Pose3d& atPose);
+      Result ExecutePlaceObjectOnGroundSequence(const Pose3d& atPose);
       
-      // Put the carried block down right where the robot is now
-      Result ExecutePlaceBlockOnGroundSequence();
-      
-      // Sends a message to the robot to dock with the specified marker of the
-      // specified block that it should currently be seeing.
-      Result DockWithBlock(const ObjectID_t blockID,
-                           const Vision::KnownMarker* marker,
-                           const DockAction_t dockAction);
+      // Put the carried object down right where the robot is now
+      Result ExecutePlaceObjectOnGroundSequence();
       
       // Sends a message to the robot to dock with the specified marker of the
-      // specified block, which it should currently be seeing. If pixel_radius == u8_MAX,
+      // specified object that it should currently be seeing.
+      Result DockWithObject(const ObjectID_t objectID,
+                            const Vision::KnownMarker* marker,
+                            const DockAction_t dockAction);
+      
+      // Sends a message to the robot to dock with the specified marker of the
+      // specified object, which it should currently be seeing. If pixel_radius == u8_MAX,
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
-      Result DockWithBlock(const ObjectID_t blockID,
-                           const Vision::KnownMarker* marker,
-                           const DockAction_t dockAction,
-                           const u16 image_pixel_x,
-                           const u16 image_pixel_y,
-                           const u8 pixel_radius);
+      Result DockWithObject(const ObjectID_t objectID,
+                            const Vision::KnownMarker* marker,
+                            const DockAction_t dockAction,
+                            const u16 image_pixel_x,
+                            const u16 image_pixel_y,
+                            const u8 pixel_radius);
 
       // Transitions the block that robot was docking with to the one that it
       // is carrying, and puts it in the robot's pose chain, attached to the
       // lift. Returns RESULT_FAIL if the robot wasn't already docking with
       // a block.
-      Result PickUpDockBlock();
+      Result PickUpDockObject();
       
-      Result VerifyBlockPickup();
+      Result VerifyObjectPickup();
       
       // Places the block that the robot was carrying in its current position
       // w.r.t. the world, and removes it from the lift pose chain so it is no
       // longer attached to the robot.  Note that IsCarryingBlock() will still
       // report true, until it is actually verified that the placement worked.
-      Result PlaceCarriedBlock(); //const TimeStamp_t atTime);
+      Result PlaceCarriedObject(); //const TimeStamp_t atTime);
       
-      Result VerifyBlockPlacement();
+      Result VerifyObjectPlacement();
       
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
@@ -366,7 +366,7 @@ namespace Anki {
       bool       _isMoving;
       State      _state, _nextState;
       
-      ObjectID_t                 _carryingBlockID;
+      ObjectID_t                 _carryingObjectID;
       const Vision::KnownMarker* _carryingMarker;
       
       // Leaves input liftPose's parent alone and computes its position w.r.t.
@@ -374,15 +374,15 @@ namespace Anki {
       static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
       
       // Docking
-      // Note that we don't store a pointer to the block because it
+      // Note that we don't store a pointer to the object because it
       // could deleted, but it is ok to hang onto a pointer to the
-      // marker on that block, so long as we always verify the block
+      // marker on that block, so long as we always verify the object
       // exists and is still valid (since, therefore, the marker must
       // be as well)
-      ObjectID_t                  _dockBlockID;
+      ObjectID_t                  _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
       DockAction_t                _dockAction;
-      Pose3d                      _dockBlockOrigPose;
+      Pose3d                      _dockObjectOrigPose;
       
       f32 _waitUntilTime;
       
@@ -418,19 +418,19 @@ namespace Anki {
       // Sends a path to the robot to be immediately executed
       Result SendExecutePath(const Planning::Path& path) const;
       
-      // Sends a message to the robot to dock with the specified block
+      // Sends a message to the robot to dock with the specified object
       // that it should currently be seeing. If pixel_radius == u8_MAX,
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
-      Result SendDockWithBlock(const Vision::Marker::Code& markerType,
-                               const f32 markerWidth_mm,
-                               const DockAction_t dockAction,
-                               const u16 image_pixel_x,
-                               const u16 image_pixel_y,
-                               const u8 pixel_radius) const;
+      Result SendDockWithObject(const Vision::Marker::Code& markerType,
+                                const f32 markerWidth_mm,
+                                const DockAction_t dockAction,
+                                const u16 image_pixel_x,
+                                const u16 image_pixel_y,
+                                const u8 pixel_radius) const;
 
-      Result SendPlaceBlockOnGround();
+      Result SendPlaceObjectOnGround();
       
       // Turn on/off headlight LEDs
       Result SendHeadlight(u8 intensity);

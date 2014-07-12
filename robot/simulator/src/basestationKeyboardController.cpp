@@ -172,9 +172,9 @@ namespace Anki {
           // ...
         } else {
           // Place object mode
-          if (robot_->IsCarryingBlock()) {
-            Quad2f blockFootprint = blockWorld_->GetBlockByID(robot_->GetCarryingBlock())->GetBoundingQuadXY(poseMarkerPose_);
-            VizManager::getInstance()->DrawPoseMarker(0, blockFootprint, VIZ_COLOR_GREEN);
+          if (robot_->IsCarryingObject()) {
+            Quad2f objectFootprint = blockWorld_->GetObjectByID(robot_->GetCarryingObject())->GetBoundingQuadXY(poseMarkerPose_);
+            VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, VIZ_COLOR_GREEN);
           }
         }
         
@@ -328,9 +328,9 @@ namespace Anki {
 
             case '1': //set lift to low dock height
             {
-              if(robot_->IsCarryingBlock()) {
+              if(robot_->IsCarryingObject()) {
                 // Put the block down right here
-                robot_->ExecutePlaceBlockOnGroundSequence();
+                robot_->ExecutePlaceObjectOnGroundSequence();
                 
               } else {
                 // Just move the lift down
@@ -433,7 +433,7 @@ namespace Anki {
                   robot_->MoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
                 }
               } else {
-                if (robot_->ExecutePlaceBlockOnGroundSequence(poseMarkerPose_) ) {
+                if (robot_->ExecutePlaceObjectOnGroundSequence(poseMarkerPose_) ) {
                   // Make sure head is tilted down so that it can localize well
                   robot_->MoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
                 }
@@ -454,7 +454,7 @@ namespace Anki {
             }
             case CKEY_CLEAR_BLOCKS:
             {
-              blockWorld_->ClearAllExistingBlocks();
+              blockWorld_->ClearAllExistingObjects();
               VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_CUBOID);
               break;
             }

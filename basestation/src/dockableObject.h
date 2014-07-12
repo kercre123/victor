@@ -19,6 +19,8 @@
 
 #include "anki/vision/basestation/observableObject.h"
 
+#include "vizManager.h"
+
 namespace Anki {
   namespace Cozmo {
     
@@ -45,6 +47,12 @@ namespace Anki {
       bool IsBeingCarried() const;
       void SetIsBeingCarried(const bool tf);
 
+      // DockableObjects will draw their pre-dock poses
+      virtual void Visualize() = 0;
+      virtual void Visualize(VIZ_COLOR_ID color) = 0;
+      void         Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance);
+      virtual void EraseVisualization() override;
+      
     protected:
       
       bool _isBeingCarried;
@@ -52,6 +60,8 @@ namespace Anki {
       bool GetPreDockPose(const Point3f& canonicalPoint,
                           const float distance_mm,
                           Pose3d& preDockPose) const;
+      
+      std::vector<VizManager::Handle_t> _vizPreDockPoseHandles;
       
     }; // class DockableObject
     

@@ -312,7 +312,7 @@ namespace Anki {
         PathFollower::StartPathTraversal(msg.pathID);
       }
       
-      void ProcessDockWithBlockMessage(const DockWithBlock& msg)
+      void ProcessDockWithObjectMessage(const DockWithObject& msg)
       {
         if (msg.pixel_radius < u8_MAX) {
           Embedded::Point2f markerCenter(static_cast<f32>(msg.image_pixel_x), static_cast<f32>(msg.image_pixel_y));
@@ -330,7 +330,7 @@ namespace Anki {
         }
       }
       
-      void ProcessPlaceBlockOnGroundMessage(const PlaceBlockOnGround& msg)
+      void ProcessPlaceObjectOnGroundMessage(const PlaceObjectOnGround& msg)
       {
         //PRINT("Received PlaceOnGround message.\n");
         PickAndPlaceController::PlaceOnGround(msg.rel_x_mm, msg.rel_y_mm, msg.rel_angle);

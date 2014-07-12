@@ -47,14 +47,13 @@ namespace Anki {
       
       // Enumerated block types
       enum Type {
-        UNKNOWN_BLOCK_TYPE = 0,
+        UNKNOWN_BLOCK_TYPE = BLOCK_STARTING_TYPE_NUMBER,
 #define BLOCK_DEFINITION_MODE BLOCK_ENUM_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
-        NUM_BLOCK_TYPES
       };
       
       // LUT for String Names for each enumerated block ID
-      static const std::string IDtoStringLUT[NUM_BLOCK_TYPES];
+      static const std::map<ObjectType_t, std::string> IDtoStringLUT;
       
       // NOTE: if the ordering of these is modified, you must also update
       //       the static OppositeFaceLUT.
@@ -88,7 +87,7 @@ namespace Anki {
       
       Block(const Block& other); 
       
-      ~Block();
+      virtual ~Block();
       
       //static unsigned int get_numBlocks();
       
@@ -142,8 +141,7 @@ namespace Anki {
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding 2D quadrilateral. Pads the
       // quadrilateral (around its center) by the optional padding if desired.
-      Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
-      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
+      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding quadrilateral. Adds optional
@@ -153,10 +151,10 @@ namespace Anki {
       
       // Visualize using VizManager.  If preDockPoseDistance > 0, pre dock poses
       // will also be drawn
-      virtual void Visualize() const;
-      void Visualize(const f32 preDockPoseDistance) const;
-      void Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance = 0.f) const;
-      
+      virtual void Visualize() override;
+      virtual void Visualize(VIZ_COLOR_ID color) override;
+      virtual void EraseVisualization() override;
+
     protected:
       
       static const FaceName OppositeFaceLUT[NUM_FACES];
@@ -187,8 +185,8 @@ namespace Anki {
         std::vector<BlockFaceDef_t> faces;
       } BlockInfoTableEntry_t;
       
-      static const BlockInfoTableEntry_t BlockInfoLUT_[NUM_BLOCK_TYPES];
-      static const std::map<std::string, Type> BlockNameToTypeMap;
+      static const std::map<ObjectType_t, BlockInfoTableEntry_t> BlockInfoLUT_;
+      static const std::map<std::string, ObjectType_t> BlockNameToTypeMap;
       
       static const std::array<Point3f,NUM_FACES> CanonicalDockingPoints;
       
@@ -197,7 +195,9 @@ namespace Anki {
       Color       _color;
       Point3f     _size;
       std::string _name;
-            
+      
+      VizManager::Handle_t _vizHandle;
+      
       //std::vector<Point3f> blockCorners_;
       
     }; // class Block
