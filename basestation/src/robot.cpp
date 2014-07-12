@@ -329,7 +329,7 @@ namespace Anki {
           
         case PLACE_OBJECT_ON_GROUND:
         {
-          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime) {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime && !IsMoving()) {
             if(IsCarryingObject() == false) {
               PRINT_NAMED_ERROR("Robot.Update.NotCarryingObject",
                                 "Robot %d in PLACE_OBJECT_ON_GROUND state but not carrying object.\n", _ID);
@@ -338,7 +338,19 @@ namespace Anki {
             
             _dockAction = DA_PLACE_LOW;
             _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.5f;
-            SendPlaceObjectOnGround();
+            
+            // Compute pose of placeOnGroundPose (which is the pose of the marker on the carried object
+            // that faces the robot when the object is placed in the desired pose on the ground)
+            // relative to robot to yield the one-time docking error signal for placing the carried object on the ground.
+            Pose3d relPose;
+            if (!_placeOnGroundPose.GetWithRespectTo(_pose, relPose)) {
+              PRINT_NAMED_ERROR("Robot.Update.PlaceObjectOnGroundPoseError", "\n");
+            }
+            
+            PRINT_INFO("dockMarker wrt to robot pose: %f %f %f ang: %f\n", relPose.GetTranslation().x(), relPose.GetTranslation().y(), relPose.GetTranslation().z(), relPose.GetRotationAngle<'Z'>().ToFloat());
+            
+            SendPlaceObjectOnGround(relPose.GetTranslation().x(), relPose.GetTranslation().y(), relPose.GetRotationAngle<'Z'>().ToFloat() );
+
             SetState(DOCKING);
           }
           break;
@@ -781,6 +793,18 @@ namespace Anki {
       // TODO: How to correctly set _dockMarker in case of placement failure??
       _dockMarker = &carryingObject->GetMarkers().front(); // GetMarker(Block::FRONT_FACE);
       
+      
+      // Set desired position of marker (via placeOnGroundPose) to be exactly where robot is now
+      f32 markerAngle = _pose.GetRotationAngle<'Z'>().ToFloat();
+      
+      Vec3f markerPt(_pose.GetTranslation().x() + (ORIGIN_TO_LOW_LIFT_DIST_MM * cosf(markerAngle)),
+                     _pose.GetTranslation().y() + (ORIGIN_TO_LOW_LIFT_DIST_MM * sinf(markerAngle)),
+                     _pose.GetTranslation().z());
+      
+      _placeOnGroundPose.SetTranslation(markerPt);
+      _placeOnGroundPose.SetRotation(_pose.GetRotationMatrix());
+      
+      
       return RESULT_OK;
       
     } // ExecuteDockingSequence()
@@ -818,8 +842,8 @@ namespace Anki {
       // want the robot to end up in order for the block to be
       // at the requested pose.
       std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      carryingObject->GetPreDockPoses(ORIGIN_TO_LOW_LIFT_DIST_MM, preDockPoseMarkerPairs,
-                                     _carryingMarker->GetCode());
+      carryingObject->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs,
+                                      _carryingMarker->GetCode());
       
       if (preDockPoseMarkerPairs.empty()) {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NoPreDockPoses",
@@ -850,6 +874,32 @@ namespace Anki {
       // in the case that placement fails and we need to re-pickup the block
       // we're carrying.
       _dockMarker = &(preDockPoseMarkerPairs[selectedIndex].second);
+
+      
+      // Compute the pose of the marker in world coords
+      if (!_dockMarker->GetPose().GetWithRespectTo(*Pose3d::GetWorldOrigin(), _placeOnGroundPose))
+      {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGround.DockMarkerPoseFail", "\n");
+      } else {
+        // _placeOnGroundPose tranlsation is in world coords.
+        // Now update rotation to reflect absolute angle of the marker's normal in world coords.
+        std::vector<Vec3f> markerNormalVec;
+        std::vector<Vec3f> relMarkerNormalVec;
+        
+        // Vector pointing toward inside of block along the marker normal (i.e. +ve y-axis)
+        relMarkerNormalVec.emplace_back(0,1,0);
+        
+        _placeOnGroundPose.ApplyTo(relMarkerNormalVec, markerNormalVec);
+        
+        //PRINT_INFO("markerNormal: %f %f %f\n", markerNormalVec[0].x(), markerNormalVec[0].y(), markerNormalVec[0].z());
+        
+        Radians markerAbsAngle = atan2(markerNormalVec[0].y() - _placeOnGroundPose.GetTranslation().y(),
+                                       markerNormalVec[0].x() - _placeOnGroundPose.GetTranslation().x());
+        _placeOnGroundPose.SetRotation(markerAbsAngle, Z_AXIS_3D);
+        
+        PRINT_INFO("PlaceOnGroundPose: %f %f %f, ang: %f\n", _placeOnGroundPose.GetTranslation().x(), _placeOnGroundPose.GetTranslation().y(), _placeOnGroundPose.GetTranslation().z(), _placeOnGroundPose.GetRotationAngle<'Z'>().ToFloat());
+      }
+      
       
       // Put the carrying block back in its original pose (attached to lift)
       carryingObject->SetPose(origCarryObjectPose);
@@ -1200,13 +1250,13 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SendPlaceObjectOnGround()
+    Result Robot::SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle)
     {
       MessagePlaceObjectOnGround m;
       
-      m.rel_angle = 0.f;
-      m.rel_x_mm  = ORIGIN_TO_LOW_LIFT_DIST_MM;
-      m.rel_y_mm  = 0.f;
+      m.rel_angle = rel_angle;
+      m.rel_x_mm  = rel_x;
+      m.rel_y_mm  = rel_y;
       
       return _msgHandler->SendMessage(_ID, m);
     } // SendPlaceBlockOnGround()
