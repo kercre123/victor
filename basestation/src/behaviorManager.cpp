@@ -1,3 +1,4 @@
+
 /**
  * File: behaviorManager.cpp
  *
@@ -176,6 +177,10 @@ namespace Anki {
               }
             }
           } // if not MAT
+          
+          if (firstBlock != u16_MAX) {
+            break;
+          }
         } // for each family
 
         
@@ -225,7 +230,7 @@ namespace Anki {
                                               VIZ_COLOR_SELECTED_OBJECT);
       }
        */
-    } // SelectNextBlockOfInterest()
+    } // SelectNextObjectOfInterest()
     
     void BehaviorManager::Update()
     {
