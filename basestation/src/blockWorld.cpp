@@ -314,8 +314,9 @@ namespace Anki
             CoreTechPrint("Removing object %d, which should have been seen, "
                           "but wasn't.\n", object->GetID());
             
-            // Erase the vizualized block
-            VizManager::getInstance()->EraseCuboid(object->GetID());
+            // Delete the object's instantiation (which will also erase its
+            // visualization)
+            delete unobserved.second->second;
             
             // Actually erase the object from blockWorld's container of
             // existing objects, using the iterator pointing to it
