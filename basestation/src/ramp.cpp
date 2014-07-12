@@ -156,7 +156,7 @@ namespace Anki {
       
       if(withCode == Vision::Marker::ANY_CODE || withCode == _leftMarker->GetCode()) {
         const f32 distanceForThisFace = _leftMarker->GetPose().GetTranslation().Length() + distance_mm;
-        if(GetPreDockPose(-X_AXIS_3D, distanceForThisFace, preDockPose) == true) {
+        if(GetPreDockPose(-Y_AXIS_3D, distanceForThisFace, preDockPose) == true) {
           poseMarkerPairs.emplace_back(preDockPose, *_leftMarker);
         }
       }
@@ -164,7 +164,7 @@ namespace Anki {
       
       if(withCode == Vision::Marker::ANY_CODE || withCode == _rightMarker->GetCode()) {
         const f32 distanceForThisFace = _rightMarker->GetPose().GetTranslation().Length() + distance_mm;
-        if(GetPreDockPose( X_AXIS_3D, distanceForThisFace, preDockPose) == true) {
+        if(GetPreDockPose( Y_AXIS_3D, distanceForThisFace, preDockPose) == true) {
           poseMarkerPairs.emplace_back(preDockPose, *_rightMarker);
         }
       }
