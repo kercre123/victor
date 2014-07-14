@@ -63,7 +63,7 @@ namespace Anki
         ,0x3a00,0x7a // AEC CTRL00
         ,0x3a18,0x00 // AEC GAIN CEILING
         ,0x3a19,0x3f // AEC GAIN CEILING
-        ,0x300f,0x88 // PLL1 CTRL00
+        ,0x300f,0x08 // PLL1 CTRL00
         ,0x3011,0x08 // PLL1 CTRL02
         //,0x3011,0x80  // PLL1: disable - 1/4 the framerate
         ,0x4303,0xff // YMAX VALUE (Set Y max clip value[7:0])
@@ -74,11 +74,11 @@ namespace Anki
         ,0x430d,0x00 // VMIN VALUE (Set V min clip value[7:0])
         //,0x5000,0x4f // ISP CTRL00
         //,0x5001,0x47 // ISP CTRL01
-        ,0x4300,0x30 // FORMAT CTRL00 (Output format selection) (YUV422 0x30)
+        ,0x4300,0x08 // FORMAT CTRL00 (Output format selection) (YUV422 0x30)
         ,0x4301,0x80 // undoc (possibly format related?)
-        ,0x501f,0x01 // ISP CTRL1F (ISP raw 0x00) (YUV422 0x01)
+        ,0x501f,0x00 // ISP CTRL1F (ISP raw 0x00) (YUV422 0x01)
         ,0x3800,0x00 // image cropping (horizontal start)
-        ,0x3801,0x6e // image cropping (horizontal start)
+        ,0x3801,0xc8 // image cropping (horizontal start)
         ,0x3804,0x01 // image cropping (horizontal width)
         ,0x3805,0x40 // image cropping (horizontal width)
         ,0x3802,0x00 // image cropping (vertical start)
@@ -95,7 +95,7 @@ namespace Anki
         ,0x380f,0x00 // TIMING VTS
         ,0x3810,0x08 // TIMING HOFFS
         ,0x3811,0x04 // TIMING VOFFS
-        ,0x370d,0x0c // vertical binning
+        ,0x370d,0x4c // vertical binning
         ,0x3622,0x68 // horizontal skip or binning
         ,0x3818,0x81 // mirror vertical/horizontal (plus some undoc bits?)
         ,0x3a08,0x00 // AEC B50 STEP
@@ -115,7 +115,7 @@ namespace Anki
         //,0x3a1e,0x2d // AEC CONTROL 1E
         //,0x3a11,0x90 // AEC CONTROL 11
         //,0x3a1f,0x10 // AEC CONTROL 1F
-        ,0x5000,0x07 // ISP CTRL00
+        ,0x5000,0x06 // ISP CTRL00
         //,0x5481,0x0a // GAMMA YST1
         //,0x5482,0x13 // GAMMA YST2
         //,0x5483,0x23 // GAMMA YST3
@@ -145,7 +145,7 @@ namespace Anki
         //,0x5804,0x42 // LENC CTRL4
         //,0x5805,0x2a // LENC CTRL5
         //,0x5806,0x25 // LENC CTRL6
-        ,0x5001,0x42 // ISP CTRL01
+        ,0x5001,0x40 // ISP CTRL01
         ,0x5580,0x00 // Special digital effects
         //,0x5583,0x40 // Special digital effects
         //,0x5584,0x26 // Special digital effects
@@ -610,7 +610,7 @@ namespace Anki
         u32 ySkip = 240 / yRes;
 
         if(xSkip == 1 && ySkip == 1) {
-          // Fastest (64 -> 32) (two loads and one store per 4 output pixels)
+          /*// Fastest (64 -> 32) (two loads and one store per 4 output pixels)
           const u32 numPixels4 = (320*240) >> 2;
 
           const u64 * restrict pMBufferU64 = reinterpret_cast<u64*>(m_buffer);
@@ -631,6 +631,15 @@ namespace Anki
             pFrameU32[iPixel+1] = out23;
             pFrameU32[iPixel+2] = out45;
             pFrameU32[iPixel+3] = out67;
+          }*/
+          u32 dataY = 0;
+          for (u32 y = 0; y < 240; y += 1, dataY++)
+          {
+            u32 dataX = 0;
+            for (u32 x = 0; x < 320; x += 1, dataX++)
+            {
+              frame[dataY * xRes + dataX] = m_buffer[y * 320 + x];
+            }
           }
         } else {
           u32 dataY = 0;
