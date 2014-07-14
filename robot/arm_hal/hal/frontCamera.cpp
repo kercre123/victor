@@ -59,7 +59,7 @@ namespace Anki
         ,0x401e,0x11 // undoc
         ,0x4702,0x01 // undoc
         ,0x5000,0x0e // ISP CTRL00
-        ,0x5001,0x01 // ISP CTRL01
+        ,0x5001,0x00 // ISP CTRL01
         ,0x3a00,0x7a // AEC CTRL00
         ,0x3a18,0x00 // AEC GAIN CEILING
         ,0x3a19,0x3f // AEC GAIN CEILING
@@ -96,7 +96,7 @@ namespace Anki
         ,0x3810,0x08 // TIMING HOFFS
         ,0x3811,0x04 // TIMING VOFFS
         ,0x370d,0x0c // vertical binning
-        ,0x3622,0x88 // horizontal skip or binning
+        ,0x3622,0x68 // horizontal skip or binning
         ,0x3818,0x81 // mirror vertical/horizontal (plus some undoc bits?)
         ,0x3a08,0x00 // AEC B50 STEP
         ,0x3a09,0x99 // AEC B50 STEP
