@@ -129,3 +129,5 @@ DEF WorldComms BlockWorldComms {
 }
 CozmoVizDisplay{
 }
+WebotsKeyboardController{
+}

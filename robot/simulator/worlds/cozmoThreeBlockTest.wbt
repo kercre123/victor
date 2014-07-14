@@ -193,3 +193,7 @@ Block2x1 {
     "textures/symbols/bullseye2.png"
   ]
 }
+
+WebotsKeyboardController{
+}
+

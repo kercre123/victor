@@ -178,3 +178,5 @@ BlockWorldComms {
 }
 CozmoVizDisplay {
 }
+WebotsKeyboardController{
+}

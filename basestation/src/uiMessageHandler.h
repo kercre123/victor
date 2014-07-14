@@ -1,84 +1,86 @@
 /**
- * File: messageHandler.h
+ * File: uiMessageHandler.h
  *
- * Author: Andrew Stein
- * Date:   1/22/2014
+ * Author: Kevin Yoon
+ * Date:   7/11/2014
  *
- * Description: Defines a singleton MessageHandler object to serve as the 
- *              middle man between a communications object, which provides
- *              raw byte buffers sent over some kind of communications channel,
- *              and robots.  The handler processes all available messages from
- *              the communications channel (without knowing the means of 
- *              transmission), turns the buffers into a Message objects, and 
- *              doles them out to their respective Robot objects.  It also does
- *              the reverse, creating byte buffers from Message objects, and 
- *              passing them along to the communications channel.
- *
+ * Description: Handles messages between UI and basestation just as 
+ *              MessageHandler handles messages between basestation and robot.
  *
  * Copyright: Anki, Inc. 2014
  **/
 
-#ifndef COZMO_MESSAGEHANDLER_H
-#define COZMO_MESSAGEHANDLER_H
+#ifndef COZMO_UI_MESSAGEHANDLER_H
+#define COZMO_UI_MESSAGEHANDLER_H
 
 #include "anki/common/types.h"
+#include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
+#include "anki/cozmo/basestation/uiTcpComms.h"
 
-#include "anki/cozmo/basestation/messages.h"
+// Enable this if you want to receive/send messages via socket connection.
+// Eventually, this should be disabled by default once the UI layer starts
+// handling the comms and communication with the basestation is purely through messageQueue
+// TODO: MessageQueue mode not yet supported!!!
+//       Will do this after messageDefinitions auto-generation tool has been created.
+#define RUN_UI_MESSAGE_TCP_SERVER 1
 
-#include "anki/messaging/basestation/IComms.h"
+
 
 namespace Anki {
   namespace Cozmo {
     
-#define MESSAGE_BASECLASS_NAME Message
-#include "anki/cozmo/shared/MessageDefinitions.h"
+#define MESSAGE_BASECLASS_NAME UiMessage
+#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitions.h"
     
     class Robot;
     class RobotManager;
     class BlockWorld;
+    class BehaviorManager;
     
-    class IMessageHandler
+    class IUiMessageHandler
     {
     public:
       
       // TODO: Change these to interface references so they can be stubbed as well
       virtual Result Init(Comms::IComms* comms,
                           RobotManager*  robotMgr,
-                          BlockWorld*    blockWorld) = 0;
+                          BlockWorld*    blockWorld,
+                          BehaviorManager* behaviorMgr) = 0;
       
       virtual Result ProcessMessages() = 0;
       
-      virtual Result SendMessage(const RobotID_t robotID, const Message& msg) = 0;
+      virtual Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) = 0;
       
     }; // IMessageHandler
     
     
-    class MessageHandler : public IMessageHandler
+    class UiMessageHandler : public IUiMessageHandler
     {
     public:
       
-      MessageHandler(); // Force construction with stuff in Init()?
-
+      UiMessageHandler(); // Force construction with stuff in Init()?
+      
       // Set the message handler's communications manager
       virtual Result Init(Comms::IComms* comms,
-                      RobotManager*  robotMgr,
-                      BlockWorld*    blockWorld);
+                          RobotManager*  robotMgr,
+                          BlockWorld*    blockWorld,
+                          BehaviorManager* behaviorMgr);
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
       virtual Result ProcessMessages();
       
       // Send a message to a specified ID
-      virtual Result SendMessage(const RobotID_t robotID, const Message& msg);
+      Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg);
       
     protected:
       
       Comms::IComms* comms_;
       RobotManager* robotMgr_;
       BlockWorld*   blockWorld_;
+      BehaviorManager* behaviorMgr_;
       
       bool isInitialized_;
-
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot
@@ -86,7 +88,7 @@ namespace Anki {
       
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
 #define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
-#include "anki/cozmo/shared/MessageDefinitions.h"
+#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitions.h"
       
       // Fill in the message information lookup table for getting size and
       // ProcesBufferAs_MessageX function pointers according to enumerated
@@ -94,12 +96,12 @@ namespace Anki {
       struct {
         u8 priority;
         u8 size;
-        Result (MessageHandler::*ProcessPacketAs)(Robot*, const u8*);
-      } lookupTable_[NUM_MSG_IDS+1] = {
+        Result (UiMessageHandler::*ProcessPacketAs)(Robot*, const u8*);
+      } lookupTable_[NUM_UI_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
-#define MESSAGE_HANDLER_CLASSNAME MessageHandler
-#include "anki/cozmo/shared/MessageDefinitions.h"
+#define MESSAGE_HANDLER_CLASSNAME UiMessageHandler
+#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitions.h"
 #undef MESSAGE_HANDLER_CLASSNAME
         {0, 0, 0} // Final dummy entry without comma at end
       };
@@ -107,14 +109,15 @@ namespace Anki {
     }; // class MessageHandler
     
     
-    class MessageHandlerStub : public IMessageHandler
+    class UiMessageHandlerStub : public IUiMessageHandler
     {
     public:
-      MessageHandlerStub() { }
+      UiMessageHandlerStub() { }
       
       Result Init(Comms::IComms* comms,
                   RobotManager*  robotMgr,
-                  BlockWorld*    blockWorld)
+                  BlockWorld*    blockWorld,
+                  BehaviorManager* behaviorMgr)
       {
         return RESULT_OK;
       }
@@ -126,11 +129,12 @@ namespace Anki {
       }
       
       // Send a message to a specified ID
-      Result SendMessage(const RobotID_t robotID, const Message& msg) {
+      Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) {
         return RESULT_OK;
       }
       
     }; // MessageHandlerStub
+    
     
 #undef MESSAGE_BASECLASS_NAME
     

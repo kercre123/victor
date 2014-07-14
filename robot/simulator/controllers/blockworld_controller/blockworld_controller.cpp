@@ -13,7 +13,6 @@
 
 
 #include <webots/Supervisor.hpp>
-#include "basestationKeyboardController.h"
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/rotatedRect_impl.h"
@@ -36,9 +35,8 @@
 
 #include "anki/cozmo/basestation/tcpComms.h"
 
-// Enable this to turn on keyboard control of robot via basestation.
-// If this is enabled, make sure robot-side keyboard control (see ENABLE_KEYBOARD_CONTROL) is disabled!!!
-#define ENABLE_BS_KEYBOARD_CONTROL 1
+#include "anki/cozmo/basestation/uiTcpComms.h"
+#include "uiMessageHandler.h"
 
 
 namespace Anki {
@@ -62,6 +60,9 @@ int main(int argc, char **argv)
   MessageHandler msgHandler;
   BehaviorManager behaviorMgr;
 
+  UiTCPComms uiDevComms;
+  UiMessageHandler uiMsgHandler;
+
   // read planner motion primitives
   Json::Value mprims;
   const std::string subPath("coretech/planning/matlab/cozmo_mprim.json");
@@ -79,6 +80,7 @@ int main(int argc, char **argv)
   robotMgr.Init(&msgHandler, &blockWorld, &pathPlanner);
   blockWorld.Init(&robotMgr);
   behaviorMgr.Init(&robotMgr, &blockWorld);
+  uiMsgHandler.Init(&uiDevComms, &robotMgr, &blockWorld, &behaviorMgr);
   
   
   // Allow webots to step once first to ensure that
@@ -86,11 +88,6 @@ int main(int argc, char **argv)
   // somewhere to go.
   Sim::basestationController.step(BS_TIME_STEP);
   VizManager::getInstance()->Init();
-  
-#if(ENABLE_BS_KEYBOARD_CONTROL)
-  Sim::BSKeyboardController::Init(&robotMgr, &blockWorld, &behaviorMgr);
-  Sim::BSKeyboardController::Enable();
-#endif
   
   //
   // Main Execution loop: step the world forward forever
@@ -103,6 +100,11 @@ int main(int argc, char **argv)
     
     // Read messages from all robots
     robotComms.Update();
+
+    // Read UI messages
+    uiDevComms.Update();
+    uiMsgHandler.ProcessMessages();
+    
     
     // If not already connected to a robot, connect to the
     // first one that becomes available.
@@ -230,11 +232,6 @@ int main(int argc, char **argv)
     /////////// End visualization update ////////////
     
 
-    // Process keyboard input
-    if (Sim::BSKeyboardController::IsEnabled()) {
-      Sim::BSKeyboardController::Update();
-    }
-    
   } // while still stepping
 
   //delete msgInterface;

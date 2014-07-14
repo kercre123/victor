@@ -24,6 +24,8 @@ namespace Anki {
 
   namespace Cozmo {
     
+#define MESSAGE_BASECLASS_NAME Message
+    
     // 1. Initial include just defines the definition modes for use below
 #undef MESSAGE_DEFINITION_MODE
 #include "anki/cozmo/shared/MessageDefinitions.h"
@@ -53,7 +55,8 @@ namespace Anki {
     // 2. Define all the message classes:
 #define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_DEFINITION_MODE
 #include "anki/cozmo/shared/MessageDefinitions.h"
-
+    
+#undef MESSAGE_BASECLASS_NAME
 
   } // namespace Cozmo
 } // namespace Anki
