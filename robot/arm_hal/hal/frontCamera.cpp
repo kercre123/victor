@@ -95,9 +95,9 @@ namespace Anki
         ,0x380f,0x00 // TIMING VTS
         ,0x3810,0x08 // TIMING HOFFS
         ,0x3811,0x04 // TIMING VOFFS
-        ,0x370d,0x4c // vertical binning
-        ,0x3622,0x68 // horizontal skip or binning
-        ,0x3818,0x81 // mirror vertical/horizontal (plus some undoc bits?)
+        ,0x370d,0x0c // vertical binning
+        ,0x3622,0x60 // horizontal skip or binning
+        ,0x3818,0x80 // mirror vertical/horizontal (plus some undoc bits?)
         ,0x3a08,0x00 // AEC B50 STEP
         ,0x3a09,0x99 // AEC B50 STEP
         ,0x3a0a,0x00 // AEC B60 STEP
