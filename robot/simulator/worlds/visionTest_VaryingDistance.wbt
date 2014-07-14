@@ -118,11 +118,6 @@ Block1x1 {
   type "5"
   translation 0.080000 0.000000 0.022000
   rotation    1.000000 0.000000 0.000000 0.000000
-  facemarkerFront  ["textures/symbols/star5.png"]
-  facemarkerBack   ["textures/symbols/star5.png"]
-  facemarkerLeft   ["textures/symbols/star5.png"]
-  facemarkerRight  ["textures/symbols/star5.png"]
-  facemarkerTop    ["textures/symbols/star5.png"]
-  facemarkerBottom ["textures/symbols/star5.png"]
+  markerImg "symbols/star5.png"
 }
 

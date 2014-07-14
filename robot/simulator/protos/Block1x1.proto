@@ -8,14 +8,8 @@ PROTO Block1x1 [
   field SFFloat density 1000
   field SFColor blockColor 1 0 0
   field SFBool  useWhiteMarkerBackgrounds TRUE
+  field SFString markerImg ""  # Image path relative to textures/
 
-  field MFString facemarkerFront  "textures/code1x1.png"
-  field MFString facemarkerBack   "textures/code1x1.png"
-  field MFString facemarkerLeft   "textures/code1x1.png"
-  field MFString facemarkerRight  "textures/code1x1.png"
-  field MFString facemarkerTop    "textures/code1x1.png"
-  field MFString facemarkerBottom "textures/code1x1.png"
-  
   # Observation
   #field SFColor obsColor 1 1 0
   #field SFFloat obsTransparency 1.0 # initially invisible
@@ -24,6 +18,15 @@ PROTO Block1x1 [
 ]
 {
 Robot {
+
+  # Set markerURL
+  %{
+    markerURL = ""
+    if fields.markerImg ~= "" then
+      markerURL = "textures/" .. fields.markerImg
+    end 
+  }%
+
   name IS name
   model IS type
   translation IS translation
@@ -91,7 +94,9 @@ Robot {
             Shape {
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarkerFront
+                  %{ if markerURL ~= "" then }%
+                  url [ "%{= markerURL }%" ]
+                  %{ end }%                  
                 }
               }
               geometry DEF MARKER_BOX Box {
@@ -121,7 +126,9 @@ Robot {
             Shape {	  
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarkerBack
+                  %{ if markerURL ~= "" then }%
+                  url [ "%{= markerURL }%" ]
+                  %{ end }%
                 }
               }
               geometry USE MARKER_BOX
@@ -140,7 +147,9 @@ Robot {
             Shape {
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarkerBottom
+                  %{ if markerURL ~= "" then }%
+                  url [ "%{= markerURL }%" ]
+                  %{ end }%
                 }
               }
               geometry USE MARKER_BOX
@@ -159,7 +168,9 @@ Robot {
             Shape {	  
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarkerTop
+                  %{ if markerURL ~= "" then }%
+                  url [ "%{= markerURL }%" ]
+                  %{ end }%
                 }
               }
               geometry USE MARKER_BOX
@@ -179,7 +190,9 @@ Robot {
             Shape {
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarkerLeft
+                  %{ if markerURL ~= "" then }%
+                  url [ "%{= markerURL }%" ]
+                  %{ end }%
                 }
               }
               geometry USE MARKER_BOX
@@ -198,7 +211,9 @@ Robot {
             Shape {
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarkerRight
+                  %{ if markerURL ~= "" then }%
+                  url [ "%{= markerURL }%" ]
+                  %{ end }%                 
                 }
               }
               geometry USE MARKER_BOX

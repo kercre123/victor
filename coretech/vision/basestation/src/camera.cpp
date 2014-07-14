@@ -36,23 +36,45 @@ namespace Anki {
     
     Camera::Camera(void)
     : _camID(0)
-    , _isCalibrated(false) //, _calibration(nullptr)
+    , _calibration(nullptr)
+    , _isCalibrationShared(false)
     {
       
     } // Constructor: Camera()
     
-    Camera::Camera(const CameraID_t cam_id,
-                   const CameraCalibration &calibration,
-                   const Pose3d& pose_in)
-    : _camID(cam_id)
-    , _isCalibrated(true)
-    , _calibration(calibration)
-    , _pose(pose_in)
+    Camera::Camera(const CameraID_t ID)
+    : _camID(ID)
+    , _calibration(nullptr)
+    , _isCalibrationShared(false)
     {
       
-    } // Constructor: Camera(calibration, pose)
+    }
     
+    Camera::Camera(const Camera& other)
+    : _camID(other._camID)
+    , _isCalibrationShared(other._isCalibrationShared)
+    , _pose(other._pose)
+    , _occluderList(other._occluderList)
+    {
+      if(_isCalibrationShared) {
+        // If we're sharing calibrations, just share the same one as
+        // the Camera we are copying
+        _calibration = other._calibration;
+      } else {
+        // Otherwise create another copy of calibration
+        _calibration = new CameraCalibration(*other._calibration);
+      }
+    }
     
+    Camera::~Camera()
+    {
+      if(this->IsCalibrated() && !_isCalibrationShared) {
+        // If the calibration pointer doesn't point to a shared calibration object
+        // then we must have instantiated a CameraCalibration object with new.
+        // So we must make sure to delete it here.
+        delete _calibration;
+      }
+    }
     
 #if ANKICORETECH_USE_OPENCV
     Pose3d Camera::ComputeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
@@ -62,7 +84,7 @@ namespace Anki {
       
       cv::Vec3d cvRvec, cvTranslation;
       
-      Matrix_3x3f calibMatrix(_calibration.GetCalibrationMatrix());
+      Matrix_3x3f calibMatrix(_calibration->GetCalibrationMatrix());
       
       cv::Mat distortionCoeffs; // TODO: currently empty, use radial distoration?
       cv::solvePnP(cvObjPoints, cvImagePoints,
@@ -212,7 +234,7 @@ namespace Anki {
         {
           // First make sure this solution puts the object in front of the
           // camera (this should be true for two solutions)
-          if(possiblePoses[i_solution].get_translation().z() > 0)
+          if(possiblePoses[i_solution].GetTranslation().z() > 0)
           {
             Point2f projectedPoint;
             this->Project3dPoint(possiblePoses[i_solution]*worldQuad[i_validate], projectedPoint);
@@ -244,7 +266,7 @@ namespace Anki {
       } // for each validation corner
       
       // Make sure to make the returned pose w.r.t. the camera!
-      pose.set_parent(&_pose);
+      pose.SetParent(&_pose);
       
       return pose;
       
@@ -268,8 +290,8 @@ namespace Anki {
       return (not std::isnan(projectedPoint.x()) &&
               not std::isnan(projectedPoint.y()) &&
               projectedPoint.x() >= 0.f && projectedPoint.y() >= 0.f &&
-              projectedPoint.x() < _calibration.GetNcols() &&
-              projectedPoint.y() < _calibration.GetNrows());
+              projectedPoint.x() < _calibration->GetNcols() &&
+              projectedPoint.y() < _calibration->GetNrows());
       
     } // Camera::IsVisible()
 
@@ -296,10 +318,10 @@ namespace Anki {
         // TODO: Add radial distortion here
         //DistortCoordinate(imgPoints[i_corner], imgPoints[i_corner]);
         
-        imgPoint.x() *= _calibration.GetFocalLength_x();
-        imgPoint.y() *= _calibration.GetFocalLength_y();
+        imgPoint.x() *= _calibration->GetFocalLength_x();
+        imgPoint.y() *= _calibration->GetFocalLength_y();
         
-        imgPoint += _calibration.GetCenter();
+        imgPoint += _calibration->GetCenter();
       }
       
     } // Project3dPoint()
@@ -375,7 +397,7 @@ namespace Anki {
     void Camera::AddOccluder(const ObservableObject& object)
     {
       Pose3d objectPoseWrtCamera;
-      if(object.GetPose().getWithRespectTo(_pose, objectPoseWrtCamera) == false) {
+      if(object.GetPose().GetWithRespectTo(_pose, objectPoseWrtCamera) == false) {
         PRINT_NAMED_ERROR("Camera.AddOccluder.ObjectDoesNotShareOrigin",
                           "Object must be in the same pose tree as the camera to add it as an occluder.\n");
       } else {
@@ -387,7 +409,7 @@ namespace Anki {
         object.GetCorners(objectPoseWrtCamera, cornersAtPose);
         Project3dPoints(cornersAtPose, projectedCorners);
         
-        _occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.get_translation().z());
+        _occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.GetTranslation().z());
       }
     } // AddOccluder(ObservableObject)
     
@@ -395,7 +417,7 @@ namespace Anki {
     void Camera::AddOccluder(const KnownMarker& marker)
     {
       Pose3d markerPoseWrtCamera;
-      if(marker.GetPose().getWithRespectTo(&_pose, markerPoseWrtCamera) == false) {
+      if(marker.GetPose().GetWithRespectTo(&_pose, markerPoseWrtCamera) == false) {
         PRINT_NAMED_ERROR("Camera.AddOccluder.MarkerDoesNotShareOrigin",
                           "Marker must be in the same pose tree as the camera to add it as an occluder.\n");
       } else {

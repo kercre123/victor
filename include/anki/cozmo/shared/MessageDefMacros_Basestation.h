@@ -62,6 +62,10 @@
 
 #else // We have a message definition mode set
 
+#ifndef MESSAGE_BASECLASS_NAME
+#error MESSAGE_BASECLASS_NAME must be defined
+#endif
+
 // Helper macros
 #undef GET_MESSAGE_CLASSNAME
 #undef GET_QUOTED_MESSAGE_CLASSNAME
@@ -122,7 +126,7 @@ ADD_MESSAGE_MEMBER(TimeStamp_t, timestamp)
 #endif
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-class GET_MESSAGE_CLASSNAME(__MSG_TYPE__) : public Message \
+class GET_MESSAGE_CLASSNAME(__MSG_TYPE__) : public MESSAGE_BASECLASS_NAME \
 { \
 public: \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)() { } \
@@ -258,11 +262,16 @@ buffer += __LENGTH__*sizeof(__TYPE__);
 //
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_TABLE_DEFINITION_MODE
 
+
+#ifndef MESSAGE_HANDLER_CLASSNAME
+#error Must define a name for the message handling class when in MESSAGE_TABLE_DEFINITION_MODE. (e.g. MessageHandler)
+#endif
+
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
 {__PRIORITY__, //GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetSize(), &MessageHandler::GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) sizeof(__TYPE__) +
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) __LENGTH__*sizeof(__TYPE__) +
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__) 0, &MessageHandler::GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) 0, &MESSAGE_HANDLER_CLASSNAME::GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
 //#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
 //#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
 //#define END_MESSAGE_DEFINITION(__MSG_TYPE__)

@@ -25,6 +25,8 @@
 namespace Anki {
   namespace Cozmo {
     
+#define MESSAGE_BASECLASS_NAME Message
+    
     // Impelement all the message classes' constructors from byte buffers
 #define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_BUFFER_CONSTRUCTOR_MODE
 #include "anki/cozmo/shared/MessageDefinitions.h"
@@ -49,7 +51,7 @@ namespace Anki {
 #define MESSAGE_DEFINITION_MODE MESSAGE_CREATE_JSON_MODE
 #include "anki/cozmo/shared/MessageDefinitions.h"
     
-
+#undef MESSAGE_BASECLASS_NAME
     
     /*
       // THese are dummy placeholders to avoid linker errors for now

@@ -30,6 +30,7 @@
 namespace Anki {
   namespace Cozmo {
     
+#define MESSAGE_BASECLASS_NAME Message
 #include "anki/cozmo/shared/MessageDefinitions.h"
     
     class Robot;
@@ -97,7 +98,9 @@ namespace Anki {
       } lookupTable_[NUM_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
+#define MESSAGE_HANDLER_CLASSNAME MessageHandler
 #include "anki/cozmo/shared/MessageDefinitions.h"
+#undef MESSAGE_HANDLER_CLASSNAME
         {0, 0, 0} // Final dummy entry without comma at end
       };
       
@@ -129,6 +132,7 @@ namespace Anki {
       
     }; // MessageHandlerStub
     
+#undef MESSAGE_BASECLASS_NAME
     
   } // namespace Cozmo
 } // namespace Anki

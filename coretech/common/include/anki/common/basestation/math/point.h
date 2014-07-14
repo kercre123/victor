@@ -199,7 +199,7 @@ namespace Anki {
   
   // TODO: should output type always be float/double?
   template<PointDimType N, typename T>
-  T computeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2);
+  T ComputeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2);
   
   
 } // namespace Anki

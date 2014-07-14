@@ -98,68 +98,17 @@ XYaxesDisplay {
 }
 Block1x1 {
   translation 0.15 0.01 0.072
-  facemarkerFront [
-    "textures/symbols/fire.png"
-  ]
-  facemarkerBack [
-    "textures/symbols/fire.png"
-  ]
-  facemarkerLeft [
-    "textures/symbols/fire.png"
-  ]
-  facemarkerRight [
-    "textures/symbols/fire.png"
-  ]
-  facemarkerTop [
-    "textures/symbols/fire.png"
-  ]
-  facemarkerBottom [
-    "textures/symbols/fire.png"
-  ]
+  markerImg "symbols/fire.png"
 }
 Block1x1 {
   translation 0.15 0.01 0.022
   rotation 0 0 1 0.1
-  facemarkerFront [
-    "textures/symbols/squarePlusCorners.png"
-  ]
-  facemarkerBack [
-    "textures/symbols/squarePlusCorners.png"
-  ]
-  facemarkerLeft [
-    "textures/symbols/squarePlusCorners.png"
-  ]
-  facemarkerRight [
-    "textures/symbols/squarePlusCorners.png"
-  ]
-  facemarkerTop [
-    "textures/symbols/squarePlusCorners.png"
-  ]
-  facemarkerBottom [
-    "textures/symbols/squarePlusCorners.png"
-  ]
+  markerImg "symbols/squarePlusCorners.png"
 }
 Block1x1 {
   translation 0.4 0.4 0.022
   rotation 0 0 1 0.1
-  facemarkerFront [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerBack [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerLeft [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerRight [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerTop [
-    "textures/symbols/angryFace.png"
-  ]
-  facemarkerBottom [
-    "textures/symbols/angryFace.png"
-  ]
+  markerImg "symbols/angryFace.png"
 }
 
 DEF Cozmo_1 CozmoBot {
@@ -179,4 +128,6 @@ RobotAdvertisementService {
 DEF WorldComms BlockWorldComms {
 }
 CozmoVizDisplay{
+}
+WebotsKeyboardController{
 }

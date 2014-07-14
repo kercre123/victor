@@ -175,6 +175,10 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "LiftController init failed.\n");
         
+        lastResult = AnimationController::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "AnimationController init failed.\n");
+
         
         // Start calibration
         StartMotorCalibrationRoutine();

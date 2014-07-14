@@ -191,7 +191,7 @@ namespace Anki {
     
     Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding_mm) const
     {
-      const RotationMatrix3d& R = atPose.get_rotationMatrix();
+      const RotationMatrix3d& R = atPose.GetRotationMatrix();
       const Matrix_3x3f planeProjector = GetProjectionOperator(planeNormal);
       
       // Compute a single projection and rotation operator
@@ -239,7 +239,7 @@ namespace Anki {
         f32 length_;
       }; // struct planePoint
       
-      const RotationMatrix3d& R = atPose.get_rotationMatrix();
+      const RotationMatrix3d& R = atPose.GetRotationMatrix();
       const Matrix_3x3f planeProjector = GetProjectionOperator(planeNormal);
       
       // Choose the 4 points furthest from the center of the block (in the
@@ -269,7 +269,7 @@ namespace Anki {
       */
        
       // Re-center
-      boundingQuad += atPose.get_translation();
+      boundingQuad += atPose.GetTranslation();
       
       return boundingQuad;
       
@@ -282,7 +282,7 @@ namespace Anki {
     
     Quad2f Block::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
-      const RotationMatrix3d& R = atPose.get_rotationMatrix();
+      const RotationMatrix3d& R = atPose.GetRotationMatrix();
 
       Point3f paddedSize(_size);
       paddedSize += 2.f*padding_mm;
@@ -303,7 +303,7 @@ namespace Anki {
       Quad2f boundingQuad = GetBoundingQuad(points);
       
       // Re-center
-      Point2f center(atPose.get_translation().x(), atPose.get_translation().y());
+      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
       boundingQuad += center;
       
       return boundingQuad;
@@ -323,10 +323,14 @@ namespace Anki {
     }
     */
    
+    // These should match the order in which faces are defined! (See Block constructor)
     const std::array<Point3f, 6> Block::CanonicalDockingPoints = {
-      {X_AXIS_3D, -X_AXIS_3D,
-       Y_AXIS_3D, -Y_AXIS_3D,
-       Z_AXIS_3D, -Z_AXIS_3D}
+      {-X_AXIS_3D,
+        Y_AXIS_3D,
+        X_AXIS_3D,
+       -Y_AXIS_3D,
+        Z_AXIS_3D,
+       -Z_AXIS_3D}
     };
     
     bool GetPreDockPose(const Point3f& canonicalPoint,
@@ -346,11 +350,10 @@ namespace Anki {
       // Check if it's vertically oriented
       //
       const float DOT_TOLERANCE   = .35f;
-      const float ANGLE_TOLERANCE = DEG_TO_RAD(35);
       
       // Get vector, v, from center of block to this point
       Point3f v(dockingPt);
-      v -= blockPose.get_translation();
+      v -= blockPose.GetTranslation();
       
       // Dot product of this vector with the z axis should be near zero
       // TODO: make dot product tolerance in terms of an angle?
@@ -358,8 +361,9 @@ namespace Anki {
         
         /*
         // Rotation of block around v should be a multiple of 90 degrees
-        const float angX = ABS(blockPose.get_rotationAngle<'X'>().ToFloat());
-        const float angY = ABS(blockPose.get_rotationAngle<'Y'>().ToFloat());
+        const float ANGLE_TOLERANCE = DEG_TO_RAD(35);
+        const float angX = ABS(blockPose.GetRotationAngle<'X'>().ToFloat());
+        const float angY = ABS(blockPose.GetRotationAngle<'Y'>().ToFloat());
         
         const bool angX_mult90 = (NEAR(angX, 0.f,             ANGLE_TOLERANCE) ||
                                   NEAR(angX, DEG_TO_RAD(90),  ANGLE_TOLERANCE) ||
@@ -373,8 +377,8 @@ namespace Anki {
         if(angX_mult90 && angY_mult90)
         {
           dockingPt.z() = 0.f;  // Project to floor plane
-          preDockPose.set_translation(dockingPt);
-          preDockPose.set_rotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
+          preDockPose.SetTranslation(dockingPt);
+          preDockPose.SetRotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
           dockingPointFound = true;
         }
         */
@@ -382,8 +386,9 @@ namespace Anki {
         // TODO: The commented out logic above appears not to be accounting
         // for rotation ambiguity of blocks. Just accept this is a valid dock pose for now.
         dockingPt.z() = 0.f;  // Project to floor plane
-        preDockPose.set_translation(dockingPt);
-        preDockPose.set_rotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
+        preDockPose.SetTranslation(dockingPt);
+        preDockPose.SetRotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
+        preDockPose.SetParent(blockPose.GetParent());
         dockingPointFound = true;
 
       }
@@ -393,38 +398,24 @@ namespace Anki {
     
     
     void Block::GetPreDockPoses(const float distance_mm,
-                                std::vector<PoseMarkerPair_t>& poseMarkerPairs) const
+                                std::vector<PoseMarkerPair_t>& poseMarkerPairs,
+                                const Vision::Marker::Code withCode) const
     {
       Pose3d preDockPose;
       
-      //for(auto & canonicalPoint : Block::CanonicalDockingPoints)
       for(FaceName i_face = FIRST_FACE; i_face < NUM_FACES; ++i_face)
       {
-        const Vision::KnownMarker& faceMarker = GetMarker(i_face);
-        const f32 distanceForThisFace = faceMarker.GetPose().get_translation().Length() + distance_mm;
-        if(GetPreDockPose(CanonicalDockingPoints[i_face], distanceForThisFace, this->pose_, preDockPose) == true) {
-          poseMarkerPairs.emplace_back(preDockPose, GetMarker(i_face));
+        if(withCode == Vision::Marker::ANY_CODE || GetMarker(i_face).GetCode() == withCode) {
+          const Vision::KnownMarker& faceMarker = GetMarker(i_face);
+          const f32 distanceForThisFace = faceMarker.GetPose().GetTranslation().Length() + distance_mm;
+          if(GetPreDockPose(CanonicalDockingPoints[i_face], distanceForThisFace, this->pose_, preDockPose) == true) {
+            poseMarkerPairs.emplace_back(preDockPose, GetMarker(i_face));
+          }
         }
       } // for each canonical docking point
       
     } // Block::GetDockingPoses()
     
-    
-    void Block::GetPreDockPoses(const Vision::Marker::Code& withCode,
-                                const float distance_mm,
-                                std::vector<Pose3d>& points) const
-    {
-      Pose3d preDockPose;
-      
-      for(FaceName i_face = FIRST_FACE; i_face < NUM_FACES; ++i_face)
-      {
-        if(GetMarker(i_face).GetCode() == withCode) {
-          if(GetPreDockPose(CanonicalDockingPoints[i_face], distance_mm, this->pose_, preDockPose) == true) {
-            points.emplace_back(preDockPose);
-          }
-        }
-      }
-    } // Block::GetDockingPoses()
     
     
     const Block::FaceName Block::OppositeFaceLUT[Block::NUM_FACES] = {
@@ -494,6 +485,11 @@ namespace Anki {
       return *markerPtr;
       
     } // Block::GetMarker()
+
+    void Block::Visualize() const
+    {
+      Visualize(0);
+    }
     
     void Block::Visualize(const f32 preDockPoseDistance) const
     {
@@ -503,7 +499,7 @@ namespace Anki {
     void Block::Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) const
     {
       Pose3d vizPose;
-      if(pose_.getWithRespectTo(pose_.FindOrigin(), vizPose) == false) {
+      if(pose_.GetWithRespectTo(pose_.FindOrigin(), vizPose) == false) {
         // This really should not happen, by definition...
         PRINT_NAMED_ERROR("Block.Visualize.OriginProblem", "Could not get block's pose w.r.t. its own origin (?!?)\n");
         return;

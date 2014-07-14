@@ -130,27 +130,23 @@ namespace Anki {
       // Get the block's corners at a specified pose
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
       
-      
-      // Get possible poses to start docking/tracking procedure. These will e
+      // Get possible poses to start docking/tracking procedure. These will be
       // a point a given distance away from each vertical face that has the
       // specified code, in the direction orthogonal to that face.  The points
-      // will be in the world frame, with the Z coordinate at the height of the
-      // center of the block.
-      void GetPreDockPoses(const Vision::Marker::Code& code,
-                           const float distance_mm,
-                           std::vector<Pose3d>& poses) const;
-      
-      // Same as above, except no code is specified, and all docking points are
-      // returned.
+      // will be w.r.t. same parent as the block, with the Z coordinate at the
+      // height of the center of the block. The poses will be paired with
+      // references to the corresponding marker. Optionally, only poses/markers
+      // with the specified code can be returned.
       using PoseMarkerPair_t = std::pair<Pose3d,const Vision::KnownMarker&>;
       void GetPreDockPoses(const float distance_mm,
-                           std::vector<PoseMarkerPair_t>& poseMarkerPairs) const;
+                           std::vector<PoseMarkerPair_t>& poseMarkerPairs,
+                           const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const;
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding 2D quadrilateral. Pads the
       // quadrilateral (around its center) by the optional padding if desired.
       Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
-      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
+      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding quadrilateral. Adds optional
@@ -160,8 +156,8 @@ namespace Anki {
       
       // Visualize using VizManager.  If preDockPoseDistance > 0, pre dock poses
       // will also be drawn
-      // TODO: make generic and put as virtual method in base class
-      void Visualize(const f32 preDockPoseDistance = 0.f) const;
+      virtual void Visualize() const;
+      void Visualize(const f32 preDockPoseDistance) const;
       void Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance = 0.f) const;
       
     protected:

@@ -441,7 +441,7 @@ GTEST_TEST(TestMatrix, SmallMatrixInverse)
 //                       0, 0, 1, 0};
 //  Matrix_3x4f B(initValsB);
 //  
-//  ASSERT_ANY_THROW(B.getInverse());
+//  ASSERT_ANY_THROW(B.GetInverse());
 //  ASSERT_ANY_THROW(B.Invert());
 
   

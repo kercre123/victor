@@ -15,6 +15,7 @@ public:
   bool Disconnect();
   int Send(const char* data, int size);
   int Recv(char* data, int maxSize);
+  bool IsConnected();
 
 private:
   struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.

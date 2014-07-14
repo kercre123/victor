@@ -98,14 +98,14 @@ namespace Anki {
       
       v.robotID = robotID;
       
-      v.x_trans_m = MM_TO_M(pose.get_translation().x());
-      v.y_trans_m = MM_TO_M(pose.get_translation().y());
-      v.z_trans_m = MM_TO_M(pose.get_translation().z());
+      v.x_trans_m = MM_TO_M(pose.GetTranslation().x());
+      v.y_trans_m = MM_TO_M(pose.GetTranslation().y());
+      v.z_trans_m = MM_TO_M(pose.GetTranslation().z());
       
-      v.rot_rad = pose.get_rotationAngle().ToFloat();
-      v.rot_axis_x = pose.get_rotationAxis().x();
-      v.rot_axis_y = pose.get_rotationAxis().y();
-      v.rot_axis_z = pose.get_rotationAxis().z();
+      v.rot_rad = pose.GetRotationAngle().ToFloat();
+      v.rot_axis_x = pose.GetRotationAxis().x();
+      v.rot_axis_y = pose.GetRotationAxis().y();
+      v.rot_axis_z = pose.GetRotationAxis().z();
 
       v.head_angle = headAngle;
       v.lift_angle = liftAngle;
@@ -201,16 +201,16 @@ namespace Anki {
       v.y_size_m = MM_TO_M(size_mm.y());
       v.z_size_m = MM_TO_M(size_mm.z());
       
-      v.x_trans_m = MM_TO_M(pose.get_translation().x());
-      v.y_trans_m = MM_TO_M(pose.get_translation().y());
-      v.z_trans_m = MM_TO_M(pose.get_translation().z());
+      v.x_trans_m = MM_TO_M(pose.GetTranslation().x());
+      v.y_trans_m = MM_TO_M(pose.GetTranslation().y());
+      v.z_trans_m = MM_TO_M(pose.GetTranslation().z());
       
       
       // TODO: rotation...
-      v.rot_deg = RAD_TO_DEG( pose.get_rotationAngle().ToFloat() );
-      v.rot_axis_x = pose.get_rotationAxis().x();
-      v.rot_axis_y = pose.get_rotationAxis().y();
-      v.rot_axis_z = pose.get_rotationAxis().z();
+      v.rot_deg = RAD_TO_DEG( pose.GetRotationAngle().ToFloat() );
+      v.rot_axis_x = pose.GetRotationAxis().x();
+      v.rot_axis_y = pose.GetRotationAxis().y();
+      v.rot_axis_z = pose.GetRotationAxis().z();
       
       v.color = colorID;
       
@@ -253,7 +253,7 @@ namespace Anki {
                               const u32 colorID)
     {
       ErasePath(pathID);
-      printf("drawing path %u of length %lu\n", pathID, p.GetNumSegments());
+      printf("drawing path %u of length %hhu\n", pathID, p.GetNumSegments());
       
       for (int s=0; s < p.GetNumSegments(); ++s) {
         const Planning::PathSegmentDef& seg = p.GetSegmentConstRef(s).GetDef();

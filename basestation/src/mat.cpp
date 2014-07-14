@@ -29,7 +29,7 @@ namespace Anki {
     // static const here to instatiate an empty list.
     const std::vector<RotationMatrix3d> MatPiece::rotationAmbiguities_;
     
-    MatPiece::MatPiece(ObjectType_t type)
+    MatPiece::MatPiece(ObjectType_t type, bool isFirstPiece)
     : Vision::ObservableObject(type)
     {
       
@@ -38,16 +38,32 @@ namespace Anki {
       //#include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
 #include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"
      
-      // Add an origin to use as this mat piece's reference, until such time
-      // that we want to make it relative to another mat piece or some
-      // common origin
-      pose_.set_parent(&Pose3d::AddOrigin());
+      if(isFirstPiece) {
+        // If this is the first mat piece, we want to use its pose as the world's
+        // origin directly.
+        pose_.SetParent(Pose3d::GetWorldOrigin());
+      } else {
+        // Add an origin to use as this mat piece's reference, until such time
+        // that we want to make it relative to another mat piece or some
+        // common origin
+        pose_.SetParent(&Pose3d::AddOrigin());
+      }
       
     };
     
     std::vector<RotationMatrix3d> const& MatPiece::GetRotationAmbiguities() const
     {
       return MatPiece::rotationAmbiguities_;
+    }
+    
+    void MatPiece::Visualize() const
+    {
+      // TODO
+    }
+    
+    Quad2f MatPiece::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
+    {
+      // TODO
     }
     
   } // namespace Cozmo

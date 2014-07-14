@@ -163,7 +163,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  Quadrilateral<N,T>  Quadrilateral<N,T>::getScaled(const T scaleFactor) const
+  Quadrilateral<N,T>  Quadrilateral<N,T>::GetScaled(const T scaleFactor) const
   {
     Quadrilateral<N,T> scaledQuad(*this);
     scaledQuad *= scaleFactor;
@@ -171,7 +171,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  inline T Quadrilateral<N,T>::get_minX(void) const
+  inline T Quadrilateral<N,T>::GetMinX(void) const
   {
     using namespace Quad;
     return MIN((*this)[TopLeft].x(),
@@ -180,7 +180,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  inline T Quadrilateral<N,T>::get_minY(void) const
+  inline T Quadrilateral<N,T>::GetMinY(void) const
   {
     using namespace Quad;
     return MIN((*this)[TopLeft].y(),
@@ -189,7 +189,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  inline T Quadrilateral<N,T>::get_maxX(void) const
+  inline T Quadrilateral<N,T>::GetMaxX(void) const
   {
     using namespace Quad;
     return MAX((*this)[TopLeft].x(),
@@ -198,7 +198,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  inline T Quadrilateral<N,T>::get_maxY(void) const
+  inline T Quadrilateral<N,T>::GetMaxY(void) const
   {
     using namespace Quad;
     return MAX((*this)[TopLeft].y(),
@@ -207,7 +207,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  Point<N,T> Quadrilateral<N,T>::computeCentroid(void) const
+  Point<N,T> Quadrilateral<N,T>::ComputeCentroid(void) const
   {
     using namespace Quad;
     
@@ -221,7 +221,7 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
-  Quadrilateral<N,T>& Quadrilateral<N,T>::scale(const T scaleFactor)
+  Quadrilateral<N,T>& Quadrilateral<N,T>::Scale(const T scaleFactor)
   {
     using namespace Quad;
     
@@ -265,7 +265,7 @@ namespace Anki {
     
     std::array<std::pair<f32,Quad::CornerName>,4> angleIndexPairs;
     
-    Point<N,T> center = this->computeCentroid();
+    Point<N,T> center = this->ComputeCentroid();
     
     for(CornerName i=FirstCorner; i<NumCorners; ++i) {
       Point<N,T> corner((*this)[i]);
@@ -300,7 +300,7 @@ namespace Anki {
     Point<N,T> unitNormal(aroundNormal);
     unitNormal.MakeUnitLength();
 
-    Point<N,T> center = this->computeCentroid();
+    Point<N,T> center = this->ComputeCentroid();
     SmallSquareMatrix<N,T> P = GetProjectionOperator(unitNormal);
     center = P * center;
 

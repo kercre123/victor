@@ -36,6 +36,7 @@ typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
 
+typedef u32 UserDeviceID_t;
 typedef u32 RobotID_t;
 //typedef u16 BlockID_t;
 typedef u16 ObjectID_t;

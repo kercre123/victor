@@ -100,6 +100,15 @@ namespace Anki {
     
 #pragma mark --- Robot Class Implementations ---
     
+    const std::map<Robot::State, std::string> Robot::StateNames = {
+      {IDLE,                  "IDLE"},
+      {FOLLOWING_PATH,        "FOLLOWING_PATH"},
+      {BEGIN_DOCKING,         "BEGIN_DOCKING"},
+      {DOCKING,               "DOCKING"},
+      {PLACE_BLOCK_ON_GROUND, "PLACE_BLOCK_ON_GROUND"}
+    };
+    
+    
     Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner)
     : _ID(robotID)
     , _msgHandler(msgHandler)
@@ -112,6 +121,7 @@ namespace Anki {
     , _lastRecvdPathID(0)
     , _forceReplanOnNextWorldChange(false)
     , _saveImages(false)
+    , _camera(robotID)
     , _poseOrigin(&Pose3d::AddOrigin())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _poseOrigin) // Until this robot is localized be seeing a mat marker, create an origin for it to use as its pose parent
     , _frameId(0)
@@ -124,8 +134,9 @@ namespace Anki {
     , _currentHeadAngle(0)
     , _currentLiftAngle(0)
     , _isPickingOrPlacing(false)
-    , _carryingBlockID(ANY_OBJECT)
     , _state(IDLE)
+    , _carryingBlockID(ANY_OBJECT)
+    , _carryingMarker(nullptr)
     , _dockBlockID(ANY_OBJECT)
     , _dockMarker(nullptr)
     {
@@ -276,8 +287,8 @@ namespace Anki {
 
             float closestDist2 = FLT_MAX;
             for(auto const& preDockPair : preDockPoseMarkerPairs) {
-              float dist2 = std::pow(preDockPair.first.get_translation().x() - GetPose().get_translation().x(), 2)
-                + std::pow(preDockPair.first.get_translation().y() - GetPose().get_translation().y(), 2);
+              float dist2 = std::pow(preDockPair.first.GetTranslation().x() - GetPose().GetTranslation().x(), 2)
+                + std::pow(preDockPair.first.GetTranslation().y() - GetPose().GetTranslation().y(), 2);
               if(dist2 < closestDist2)
                 closestDist2 = dist2;
             }
@@ -293,7 +304,7 @@ namespace Anki {
             }
 
                         
-            const f32 dockBlockHeight = dockBlock->GetPose().get_translation().z();
+            const f32 dockBlockHeight = dockBlock->GetPose().GetTranslation().z();
             _dockAction = DA_PICKUP_LOW;
             if (dockBlockHeight > dockBlock->GetSize().z()) {
               if(IsCarryingBlock()) {
@@ -317,26 +328,79 @@ namespace Anki {
           break;
         } // case BEGIN_DOCKING
           
+        case PLACE_BLOCK_ON_GROUND:
+        {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime && !IsMoving()) {
+            if(IsCarryingBlock() == false) {
+              PRINT_NAMED_ERROR("Robot.Update.NotCarryingBlock",
+                                "Robot %d in PLACE_BLOCK_ON_GROUND state but not carrying block.\n", _ID);
+              break;
+            }
+            
+            _dockAction = DA_PLACE_LOW;
+            _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.5f;
+            
+            // Compute pose of placeOnGroundPose (which is the pose of the marker on the carried block
+            // that faces the robot when the block is placed in the desired pose on the ground)
+            // relative to robot to yield the one-time docking error signal for placing the carried block on the ground.
+            Pose3d relPose;
+            if (!_placeOnGroundPose.GetWithRespectTo(_pose, relPose)) {
+              PRINT_NAMED_ERROR("Robot.Update.PlaceBlockOnGroundPoseError", "\n");
+            }
+            
+            PRINT_INFO("dockMarker wrt to robot pose: %f %f %f ang: %f\n", relPose.GetTranslation().x(), relPose.GetTranslation().y(), relPose.GetTranslation().z(), relPose.GetRotationAngle<'Z'>().ToFloat());
+            
+            SendPlaceBlockOnGround(relPose.GetTranslation().x(), relPose.GetTranslation().y(), relPose.GetRotationAngle<'Z'>().ToFloat() );
+
+            SetState(DOCKING);
+          }
+          break;
+        } // case PLACE_BLOCK_ON_GROUND
+          
         case DOCKING:
         {
           if (!IsPickingOrPlacing() && !IsMoving() &&
               _waitUntilTime < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
           {
-            // Stopped executing docking path. Did it successfully dock?
-            if ((_dockAction == DA_PICKUP_LOW || _dockAction == DA_PICKUP_HIGH) && IsCarryingBlock()) {
-              PRINT_INFO("Picked up block successful!\n");
-            } else {
-              
-              if((_dockAction == DA_PLACE_HIGH) && !IsCarryingBlock()) {
-                PRINT_INFO("Placed block successfully!\n");
-              } else {
-                PRINT_INFO("Deleting block that I failed to dock to, and aborting.\n");
-                _world->ClearBlock(_dockBlockID);
-              }
-            }
+            // Stopped executing docking path, and should have backed out by now,
+            // and have head pointed at an angle to see where we just placed or
+            // picked up from. So we will check if we see a block with the same
+            // ID/Type as the one we were supposed to be picking or placing, in the
+            // right position.
             
-            _dockBlockID = ANY_OBJECT;
-            _dockMarker  = nullptr;
+            Result lastResult = RESULT_OK;
+            
+            switch(_dockAction)
+            {
+              case DA_PICKUP_LOW:
+              case DA_PICKUP_HIGH:
+              {
+                lastResult = VerifyBlockPickup();
+                if(lastResult != RESULT_OK) {
+                  PRINT_NAMED_ERROR("Robot.Update.VerifyBlockPickupFailed",
+                                    "VerifyBlockPickup returned error code %x.\n",
+                                    lastResult);
+                }
+                break;
+              } // case PICKUP
+                
+              case DA_PLACE_LOW:
+              case DA_PLACE_HIGH:
+              {                  
+                lastResult = VerifyBlockPlacement();
+                if(lastResult != RESULT_OK) {
+                  PRINT_NAMED_ERROR("Robot.Update.VerifyBlockPlacementFailed",
+                                    "VerifyBlockPlacement returned error code %x.\n",
+                                    lastResult);
+                }
+                break;
+              } // case PLACE
+                
+              default:
+                PRINT_NAMED_ERROR("Robot.Update", "Reached unknown dockAction case.\n");
+                assert(false);
+                
+            } // switch(_dockAction)
             
             SetState(IDLE);
           }
@@ -369,17 +433,21 @@ namespace Anki {
 
       
     } // Update()
+    
 
     void Robot::SetState(const State nextState)
     {
       // TODO: Provide string name lookup for each state
-      PRINT_INFO("Robot %d switching from state %d to state %d.\n", _ID, _state, nextState);
+      PRINT_INFO("Robot %d switching from state %s to state %s.\n", _ID,
+                 Robot::StateNames.at(_state).c_str(),
+                 Robot::StateNames.at(nextState).c_str());
 
       switch(nextState) {
         case IDLE:
         case FOLLOWING_PATH:
         case BEGIN_DOCKING:
         case DOCKING:
+        case PLACE_BLOCK_ON_GROUND:
           break;
 
         default:
@@ -420,7 +488,7 @@ namespace Anki {
       
       // Rotate that by the given angle
       RotationVector3d Rvec(-_currentHeadAngle, Y_AXIS_3D);
-      newHeadPose.rotateBy(Rvec);
+      newHeadPose.RotateBy(Rvec);
       
       // Update the head camera's pose
       _camera.SetPose(newHeadPose);
@@ -430,12 +498,12 @@ namespace Anki {
     void Robot::ComputeLiftPose(const f32 atAngle, Pose3d& liftPose)
     {
       // Reset to canonical position
-      liftPose.set_rotation(atAngle, Y_AXIS_3D);
-      liftPose.set_translation({{LIFT_ARM_LENGTH, 0.f, 0.f}});
+      liftPose.SetRotation(atAngle, Y_AXIS_3D);
+      liftPose.SetTranslation({{LIFT_ARM_LENGTH, 0.f, 0.f}});
       
       // Rotate to the given angle
       RotationVector3d Rvec(-atAngle, Y_AXIS_3D);
-      liftPose.rotateBy(Rvec);
+      liftPose.RotateBy(Rvec);
     }
     
     void Robot::SetLiftAngle(const f32& angle)
@@ -445,7 +513,7 @@ namespace Anki {
       
       Robot::ComputeLiftPose(_currentLiftAngle, _liftPose);
 
-      CORETECH_ASSERT(_liftPose.get_parent() == &_liftBasePose);
+      CORETECH_ASSERT(_liftPose.GetParent() == &_liftBasePose);
     }
         
     Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
@@ -470,7 +538,7 @@ namespace Anki {
       Pose2d target2d(targetPose);
       Pose2d start2d(GetPose());
 
-      float distSquared = pow(target2d.get_x() - start2d.get_x(), 2) + pow(target2d.get_y() - start2d.get_y(), 2);
+      float distSquared = pow(target2d.GetX() - start2d.GetX(), 2) + pow(target2d.GetY() - start2d.GetY(), 2);
 
       if(distSquared < MAX_DISTANCE_FOR_SHORT_PLANNER * MAX_DISTANCE_FOR_SHORT_PLANNER) {
         PRINT_NAMED_INFO("Robot.SelectPlanner", "distance^2 is %f, selecting short planner\n", distSquared);
@@ -689,13 +757,162 @@ namespace Anki {
       
       
       PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
-                 _goalPose.get_translation().x(),
-                 _goalPose.get_translation().y(),
-                 _goalPose.get_rotationAngle().getDegrees());
+                 _goalPose.GetTranslation().x(),
+                 _goalPose.GetTranslation().y(),
+                 _goalPose.GetRotationAngle().getDegrees());
       
       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-      _state = FOLLOWING_PATH;
+      SetState(FOLLOWING_PATH);
       _nextState = BEGIN_DOCKING;
+      
+      return lastResult;
+      
+    } // ExecuteDockingSequence()
+    
+    Result Robot::ExecutePlaceBlockOnGroundSequence()
+    {
+      if(IsCarryingBlock() == false) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NotCarryingBlock",
+                          "Robot %d was told to place a block on the ground, but "
+                          "it is not carrying a block.\n", _ID);
+        return RESULT_FAIL;
+      }
+      
+      // Grab a pointer to the block we are supposedly carrying
+      Block* carryingBlock = _world->GetBlockByID(_carryingBlockID);
+      if(carryingBlock == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.CarryBlockDoesNotExist",
+                          "Robot %d thinks it is carrying a block with ID=%d, but that "
+                          "block does not exist in the world.\n",
+                          _ID, _carryingBlockID);
+        
+        return RESULT_FAIL;
+      }
+      
+      SetState(PLACE_BLOCK_ON_GROUND);
+      
+      // TODO: How to correctly set _dockMarker in case of placement failure??
+      _dockMarker = &carryingBlock->GetMarker(Block::FRONT_FACE);
+      
+      
+      // Set desired position of marker (via placeOnGroundPose) to be exactly where robot is now
+      f32 markerAngle = _pose.GetRotationAngle<'Z'>().ToFloat();
+      
+      Vec3f markerPt(_pose.GetTranslation().x() + (ORIGIN_TO_LOW_LIFT_DIST_MM * cosf(markerAngle)),
+                     _pose.GetTranslation().y() + (ORIGIN_TO_LOW_LIFT_DIST_MM * sinf(markerAngle)),
+                     _pose.GetTranslation().z());
+      
+      _placeOnGroundPose.SetTranslation(markerPt);
+      _placeOnGroundPose.SetRotation(_pose.GetRotationMatrix());
+      
+      
+      return RESULT_OK;
+      
+    } // ExecuteDockingSequence()
+    
+  
+    Result Robot::ExecutePlaceBlockOnGroundSequence(const Pose3d& atPose)
+    {
+      Result lastResult = RESULT_OK;
+      
+      if(IsCarryingBlock() == false) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NotCarryingBlock",
+                          "Robot %d was told to place a block on the ground, but "
+                          "it is not carrying a block.\n", _ID);
+        return RESULT_FAIL;
+      }
+      
+      // Grab a pointer to the block we are supposedly carrying
+      Block* carryingBlock = _world->GetBlockByID(_carryingBlockID);
+      if(carryingBlock == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.CarryBlockDoesNotExist",
+                          "Robot %d thinks it is carrying a block with ID=%d, but that "
+                          "block does not exist in the world.\n",
+                          _ID, _carryingBlockID);
+        
+        return RESULT_FAIL;
+      }
+      
+      // Temporarily move the block being carried to the specified pose so we can
+      // get pre-dock poses for it
+      const Pose3d origCarryBlockPose(carryingBlock->GetPose());
+      carryingBlock->SetPose(atPose);
+      
+      // Get "pre-dock" poses that match the marker that we are docked to,
+      // which in this case aren't really for docking but instead where we
+      // want the robot to end up in order for the block to be
+      // at the requested pose.
+      std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
+      carryingBlock->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs,
+                                     _carryingMarker->GetCode());
+      
+      if (preDockPoseMarkerPairs.empty()) {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NoPreDockPoses",
+                          "Dock block did not provide any pre-dock poses!\n");
+        return RESULT_FAIL;
+      }
+      
+      // Let the planner choose which pre-dock pose to use. Create a vector of
+      // pose options
+      size_t selectedIndex = preDockPoseMarkerPairs.size();
+      std::vector<Pose3d> preDockPoses;
+      preDockPoses.reserve(preDockPoseMarkerPairs.size());
+      for(auto const& preDockPair : preDockPoseMarkerPairs) {
+        preDockPoses.emplace_back(preDockPair.first);
+      }
+      
+      _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
+      _goalAngleThreshold    = DEG_TO_RAD(10);
+      
+      lastResult = ExecutePathToPose(preDockPoses, DEG_TO_RAD(-15), selectedIndex);
+      if(lastResult != RESULT_OK) {
+        return lastResult;
+      }
+      
+      _goalPose = preDockPoses[selectedIndex];
+      
+      // Note that even though we are not docking with a block, we need this
+      // in the case that placement fails and we need to re-pickup the block
+      // we're carrying.
+      _dockMarker = &(preDockPoseMarkerPairs[selectedIndex].second);
+
+      
+      // Compute the pose of the marker in world coords
+      if (!_dockMarker->GetPose().GetWithRespectTo(*Pose3d::GetWorldOrigin(), _placeOnGroundPose))
+      {
+        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGround.DockMarkerPoseFail", "\n");
+      } else {
+        // _placeOnGroundPose tranlsation is in world coords.
+        // Now update rotation to reflect absolute angle of the marker's normal in world coords.
+        std::vector<Vec3f> markerNormalVec;
+        std::vector<Vec3f> relMarkerNormalVec;
+        
+        // Vector pointing toward inside of block along the marker normal (i.e. +ve y-axis)
+        relMarkerNormalVec.emplace_back(0,1,0);
+        
+        _placeOnGroundPose.ApplyTo(relMarkerNormalVec, markerNormalVec);
+        
+        //PRINT_INFO("markerNormal: %f %f %f\n", markerNormalVec[0].x(), markerNormalVec[0].y(), markerNormalVec[0].z());
+        
+        Radians markerAbsAngle = atan2(markerNormalVec[0].y() - _placeOnGroundPose.GetTranslation().y(),
+                                       markerNormalVec[0].x() - _placeOnGroundPose.GetTranslation().x());
+        _placeOnGroundPose.SetRotation(markerAbsAngle, Z_AXIS_3D);
+        
+        PRINT_INFO("PlaceOnGroundPose: %f %f %f, ang: %f\n", _placeOnGroundPose.GetTranslation().x(), _placeOnGroundPose.GetTranslation().y(), _placeOnGroundPose.GetTranslation().z(), _placeOnGroundPose.GetRotationAngle<'Z'>().ToFloat());
+      }
+      
+      
+      // Put the carrying block back in its original pose (attached to lift)
+      carryingBlock->SetPose(origCarryBlockPose);
+      
+      PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
+                 _goalPose.GetTranslation().x(),
+                 _goalPose.GetTranslation().y(),
+                 _goalPose.GetRotationAngle().getDegrees());
+      
+      _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+      SetState(FOLLOWING_PATH);
+      _nextState = PLACE_BLOCK_ON_GROUND;
       
       return lastResult;
       
@@ -734,8 +951,10 @@ namespace Anki {
       _dockBlockID = blockID;
       _dockMarker  = marker;
       
+      _dockBlockOrigPose = block->GetPose();
+      
       // Dock marker has to be a child of the dock block
-      if(_dockMarker->GetPose().get_parent() != &block->GetPose()) {
+      if(_dockMarker->GetPose().GetParent() != &block->GetPose()) {
         PRINT_NAMED_ERROR("Robot.DockWithBlock.MarkerNotOnBlock",
                           "Specified dock marker must be a child of the specified dock block.\n");
         return RESULT_FAIL;
@@ -749,7 +968,20 @@ namespace Anki {
     Result Robot::PickUpDockBlock()
     {
       if(_dockBlockID == ANY_OBJECT) {
-        PRINT_NAMED_ERROR("Robot.NoDockBlockIDSet", "No docking block ID set, but told to pick one up.\n");
+        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.NoDockBlockIDSet",
+                          "No docking block ID set, but told to pick one up.\n");
+        return RESULT_FAIL;
+      }
+      
+      if(_dockMarker == nullptr) {
+        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.NoDockMarkerSet",
+                          "No docking marker set, but told to pick up block.\n");
+        return RESULT_FAIL;
+      }
+      
+      if(IsCarryingBlock()) {
+        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.AlreadyCarryingBlock",
+                          "Already carrying a block, but told to pick one up.\n");
         return RESULT_FAIL;
       }
       
@@ -761,22 +993,30 @@ namespace Anki {
       }
       
       _carryingBlockID = _dockBlockID;
+      _carryingMarker  = _dockMarker;
 
       // Base the block's pose relative to the lift on how far away the dock
       // marker is from the center of the block
       // TODO: compute the height adjustment per block or at least use values from cozmoConfig.h
-      Pose3d newPose(block->GetPose().get_rotationMatrix(),
-                     {{_dockMarker->GetPose().get_translation().Length() +
-                       LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f}});
+      Pose3d blockPoseWrtLiftPose;
+      if(block->GetPose().GetWithRespectTo(_liftPose, blockPoseWrtLiftPose) == false) {
+        PRINT_NAMED_ERROR("Robot.PickUpDockBlock.BlockAndLiftPoseHaveDifferentOrigins",
+                          "Block robot is picking up and robot's lift must share a common origin.\n");
+        return RESULT_FAIL;
+      }
+      
+      blockPoseWrtLiftPose.SetTranslation({{_dockMarker->GetPose().GetTranslation().Length() +
+        LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f}});
       
       // make part of the lift's pose chain so the block will now be relative to
       // the lift and move with the robot
-      newPose.set_parent(&_liftPose);
+      blockPoseWrtLiftPose.SetParent(&_liftPose);
 
-      _dockBlockID = ANY_OBJECT;
-      _dockMarker  = nullptr;
+      // Don't reset these until we've verified the block was actually picked up
+      //_dockBlockID = ANY_OBJECT;
+      //_dockMarker  = nullptr;
       
-      block->SetPose(newPose);
+      block->SetPose(blockPoseWrtLiftPose);
       block->SetIsBeingCarried(true);
       
       return RESULT_OK;
@@ -784,11 +1024,58 @@ namespace Anki {
     } // PickUpDockBlock()
     
     
+    Result Robot::VerifyBlockPickup()
+    {
+      // We should _not_ still see a block with the
+      // same type as the one we were supposed to pick up in that
+      // block's original position because we should now be carrying it.
+      Block* carryBlock = _world->GetBlockByID(_carryingBlockID);
+      if(carryBlock == nullptr) {
+        PRINT_NAMED_ERROR("Robot.Update.CarryBlockNoLongerExists",
+                          "Block %d we were carrying no longer exists in the world.\n",
+                          _carryingBlockID);
+        return RESULT_FAIL;
+      }
+      
+      const BlockWorld::ObjectsMapByID_t& blocksWithType = _world->GetExistingBlocks(carryBlock->GetType());
+      Pose3d P_diff;
+      bool blockInOriginalPoseFound = false;
+      for(auto block : blocksWithType) {
+        // TODO: Make thresholds parameters
+        // TODO: is it safe to always have useAbsRotation=true here?
+        if(block.second->GetPose().IsSameAs_WithAmbiguity(_dockBlockOrigPose, carryBlock->
+                                                          GetRotationAmbiguities(),
+                                                          15.f, DEG_TO_RAD(25), true, P_diff))
+        {
+          blockInOriginalPoseFound = true;
+          break;
+        }
+      }
+      
+      if(blockInOriginalPoseFound)
+      {
+        // Must not actually be carrying the block I thought I was!
+        _world->ClearBlock(_carryingBlockID);
+        _carryingBlockID = ANY_OBJECT;
+        PRINT_INFO("Block pick-up FAILED! (Still seeing block in same place.)\n");
+      } else {
+        _carryingBlockID = _dockBlockID;  // Already set?
+        _carryingMarker  = _dockMarker;   //   "
+        _dockBlockID     = ANY_OBJECT;
+        _dockMarker      = nullptr;
+        PRINT_INFO("Block pick-up SUCCEEDED!\n");
+      }
+      
+      return RESULT_OK;
+      
+    } // VerifyBlockPickup()
+    
+    
     Result Robot::PlaceCarriedBlock() //const TimeStamp_t atTime)
     {
       if(_carryingBlockID == ANY_OBJECT) {
         PRINT_NAMED_WARNING("Robot.PlaceCarriedBlock.CarryingBlockNotSpecified",
-                          "No carrying block set, but told to place one.");
+                          "No carrying block set, but told to place one.\n");
         return RESULT_FAIL;
       }
       
@@ -813,20 +1100,20 @@ namespace Anki {
       }
       
       Pose3d liftBasePoseAtTime(_liftBasePose);
-      liftBasePoseAtTime.set_parent(&histPosePtr->GetPose());
+      liftBasePoseAtTime.SetParent(&histPosePtr->GetPose());
       
       Pose3d liftPoseAtTime;
       Robot::ComputeLiftPose(histPosePtr->GetLiftAngle(), liftPoseAtTime);
-      liftPoseAtTime.set_parent(&liftBasePoseAtTime);
+      liftPoseAtTime.SetParent(&liftBasePoseAtTime);
       
       Pose3d blockPoseAtTime(_carryingBlock->GetPose());
-      blockPoseAtTime.set_parent(&liftPoseAtTime);
+      blockPoseAtTime.SetParent(&liftPoseAtTime);
        
-      _carryingBlock->SetPose(blockPoseAtTime.getWithRespectTo(Pose3d::World));
+      _carryingBlock->SetPose(blockPoseAtTime.GetWithRespectTo(Pose3d::World));
       */
       
       Pose3d placedPose;
-      if(block->GetPose().getWithRespectTo(_pose.FindOrigin(), placedPose) == false) {
+      if(block->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPose) == false) {
         PRINT_NAMED_ERROR("Robot.PlaceCarriedBlock.OriginMisMatch",
                           "Could not get carrying block's pose relative to robot's origin.\n");
         return RESULT_FAIL;
@@ -838,18 +1125,59 @@ namespace Anki {
       PRINT_NAMED_INFO("Robot.PlaceCarriedBlock.BlockPlaced",
                        "Robot %d successfully placed block %d at (%.2f, %.2f, %.2f).\n",
                        _ID, block->GetID(),
-                       block->GetPose().get_translation().x(),
-                       block->GetPose().get_translation().y(),
-                       block->GetPose().get_translation().z());
+                       block->GetPose().GetTranslation().x(),
+                       block->GetPose().GetTranslation().y(),
+                       block->GetPose().GetTranslation().z());
 
-      _carryingBlockID = ANY_OBJECT;
+      // Don't reset _carryingBlockID here, because we want to know
+      // the last block we were carrying so we can verify we see it
+      // after placement. Once we *verify* we've placed it, we'll
+      // do this.
+      //_carryingBlockID = ANY_OBJECT;
+      //_carryingMarker = nullptr;
       
       return RESULT_OK;
       
     } // PlaceCarriedBlock()
     
     
+    Result Robot::VerifyBlockPlacement()
+    {
+      
+      // In place mode, we _should_ now see a block with the ID of the
+      // one we were carrying, in the place we think we left it when
+      // we placed it.
+      // TODO: check to see it ended up in the right place?
+      Block* block = _world->GetBlockByID(_carryingBlockID);
+      if(block == nullptr) {
+        PRINT_NAMED_ERROR("Robot.VerifyBlockPlacement.CarryBlockNoLongerExists",
+                          "Block %d we were carrying no longer exists in the world.\n",
+                          _carryingBlockID);
+        return RESULT_FAIL;
+      }
+      else if(block->GetLastObservedTime() > (GetLastMsgTimestamp()-500))
+      {
+        // We've seen the block in the last half second (which could
+        // not be true if we were still carrying it)
+        _carryingBlockID = ANY_OBJECT;
+        _carryingMarker  = nullptr;
+        _dockBlockID     = ANY_OBJECT;
+        _dockMarker      = nullptr;
+        PRINT_INFO("Block placement SUCCEEDED!\n");
+      } else {
+        // TODO: correct to assume we are still carrying the block?
+        _dockBlockID     = _carryingBlockID;
+        _carryingBlockID = ANY_OBJECT;
+        PickUpDockBlock(); // re-pickup block to attach it to the lift again
+        PRINT_INFO("Block placement FAILED!\n");
+        
+      }
+      
+      return RESULT_OK;
+      
+    } // VerifyBlockPlacement()
 
+    
     Result Robot::SetHeadlight(u8 intensity)
     {
       return SendHeadlight(intensity);
@@ -921,6 +1249,17 @@ namespace Anki {
       m.pixel_radius = pixel_radius;
       return _msgHandler->SendMessage(_ID, m);
     }
+    
+    Result Robot::SendPlaceBlockOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle)
+    {
+      MessagePlaceBlockOnGround m;
+      
+      m.rel_angle = rel_angle;
+      m.rel_x_mm  = rel_x;
+      m.rel_y_mm  = rel_y;
+      
+      return _msgHandler->SendMessage(_ID, m);
+    } // SendPlaceBlockOnGround()
     
     Result Robot::SendMoveLift(const f32 speed_rad_per_sec) const
     {
@@ -994,10 +1333,10 @@ namespace Anki {
       
       m.pose_frame_id = p.GetFrameId();
       
-      m.xPosition = p.GetPose().get_translation().x();
-      m.yPosition = p.GetPose().get_translation().y();
+      m.xPosition = p.GetPose().GetTranslation().x();
+      m.yPosition = p.GetPose().GetTranslation().y();
 
-      m.headingAngle = p.GetPose().get_rotationMatrix().GetAngleAroundZaxis().ToFloat();
+      m.headingAngle = p.GetPose().GetRotationMatrix().GetAngleAroundZaxis().ToFloat();
       
       return _msgHandler->SendMessage(_ID, m);
     }
@@ -1049,7 +1388,7 @@ namespace Anki {
     
     Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
-      const RotationMatrix2d R(atPose.get_rotationMatrix().GetAngleAroundZaxis());
+      const RotationMatrix2d R(atPose.GetRotationMatrix().GetAngleAroundZaxis());
       
       Quad2f boundingQuad(Robot::CanonicalBoundingBoxXY);
       if(padding_mm != 0.f) {
@@ -1067,7 +1406,7 @@ namespace Anki {
       }
       
       // Re-center
-      Point2f center(atPose.get_translation().x(), atPose.get_translation().y());
+      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
       boundingQuad += center;
       
       return boundingQuad;
@@ -1194,14 +1533,14 @@ namespace Anki {
         // the pose parent of observed objects) and update it
         
         // Reverse the connection between origin and robot
-        //CORETECH_ASSERT(p.GetPose().get_parent() == _poseOrigin);
-        *_poseOrigin = _pose.getInverse();
-        _poseOrigin->set_parent(&p.GetPose());
+        //CORETECH_ASSERT(p.GetPose().GetParent() == _poseOrigin);
+        *_poseOrigin = _pose.GetInverse();
+        _poseOrigin->SetParent(&p.GetPose());
         
         // Connect the old origin's pose to the same root the robot now has.
         // It is no longer the robot's origin, but for any of its children,
         // it is now in the right coordinates.
-        if(_poseOrigin->getWithRespectTo(p.GetPose().FindOrigin(), *_poseOrigin) == false) {
+        if(_poseOrigin->GetWithRespectTo(p.GetPose().FindOrigin(), *_poseOrigin) == false) {
           PRINT_NAMED_ERROR("Robot.AddVisionOnlyPoseToHistory.NewLocalizationOriginProblem",
                             "Could not get pose origin w.r.t. RobotPoseStamp's pose.\n");
           return RESULT_FAIL;
@@ -1209,7 +1548,7 @@ namespace Anki {
         
         // Now make the robot's origin point to the robot's pose's parent.
         // TODO: avoid the icky const cast here...
-        _poseOrigin = const_cast<Pose3d*>(p.GetPose().get_parent());
+        _poseOrigin = const_cast<Pose3d*>(p.GetPose().GetParent());
         
         _isLocalized = true;
       }

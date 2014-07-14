@@ -7,10 +7,10 @@ loadSavedProbeValues = false;
 markerImageDir = VisionMarkerTrained.TrainingImageDir;
 workingResolution = VisionMarkerTrained.ProbeParameters.GridSize;
 %maxSamples = 100;
-minInfoGain = 0;
-redBlackVerifyDepth = 10;
+%minInfoGain = 0;
+redBlackVerifyDepth = 8;
 %maxDepth = 50;
-addRotations = false;
+%addRotations = false;
 numPerturbations = 100;
 blurSigmas = [0 .01 .02]; % as a fraction of the image diagonal
 perturbSigma = 1;
@@ -27,6 +27,8 @@ DEBUG_DISPLAY = false;
 DrawTrees = false;
 
 parseVarargin(varargin{:});
+
+t_start = tic;
 
 if ~iscell(markerImageDir)
     markerImageDir = {markerImageDir};
@@ -56,7 +58,7 @@ end
 
 if loadSavedProbeValues
     % This load will kill the current pBar, so save that
-    load trainingState.mat
+    load trainingState.mat %#ok<UNRCH>
 
     pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
     pBar.showTimingInfo = true;
@@ -166,7 +168,7 @@ else
     
     probeValues = [probeValues{:}];
     labels = [labels{:}];
-    numLabels = numImages;
+    %numLabels = numImages;
     numImages = length(labels);
         
     if false && DEBUG_DISPLAY
@@ -236,8 +238,9 @@ pBar.set_increment(0.5);
 pBar.set(0);
 
 redMask = false(workingResolution);
-redMask(1:2:end,1:2:end) = true;
-redMask(2:2:end,2:2:end) = true;
+%redMask(1:2:end,1:2:end) = true;
+%redMask(2:2:end,2:2:end) = true;
+redMask(1:round(workingResolution/2),:) = true;
 
 probeTree.verifyTreeRed = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
 probeTree.verifyTreeRed.labels = labelNames;
@@ -250,6 +253,8 @@ probeTree.verifyTreeBlack.labels = labelNames;
 probeTree.verifyTreeBlack = buildTree(probeTree.verifyTreeBlack, blackMask, labels, labelNames, redBlackVerifyDepth);
 pBar.increment();
 
+t_train = toc(t_start);
+t_start = tic;
 
 %% Train one-vs-all trees
 
@@ -381,12 +386,14 @@ pBar.set(0);
 correct = false(1,length(fnames));
 verified = false(1,length(fnames));
 if DEBUG_DISPLAY
-    namedFigure('Original Image Errors'), clf
+    namedFigure('Original Image Errors'), clf %#ok<UNRCH>
     numDisplayRows = floor(sqrt(length(fnames)));
     numDisplayCols = ceil(length(fnames)/numDisplayRows);
 end
 for iImg = 1:length(fnames) 
     if any(strcmp(fnames{iImg}, {'ALLWHITE', 'ALLBLACK'}))
+        correct(iImg)  = true;
+        verified(iImg) = true;
         continue;
     end
     
@@ -422,8 +429,12 @@ for iImg = 1:length(fnames)
     if ischar(result)
         correct(iImg) = strcmp(result, labelNames{labelID});
         
+        if ~correct(iImg)    
+            figure, imagesc(testImg), axis image, title(result)
+        end
+        
         if DEBUG_DISPLAY % && ~correct(i)
-            h_axes = subplot(numDisplayRows,numDisplayCols,iImg);
+            h_axes = subplot(numDisplayRows,numDisplayCols,iImg); %#ok<UNRCH>
             imagesc(testImg, 'Parent', h_axes); hold on
             axis(h_axes, 'image');
             TestTree(probeTree, testImg, tform, 0.5, probePattern, true);
@@ -466,9 +477,13 @@ if sum(verified) ~= length(verified)
     warning('All original images should verify!');
 end
 
-[numMain, numVerify] = VisionMarkerTrained.GetNumTreeNodes();
-fprintf('Training complete. Used %d main tree nodes + %d verification nodes.\n', ...
-    numMain, numVerify);
+t_test = toc(t_start);
+
+%[numMain, numVerify] = VisionMarkerTrained.GetNumTreeNodes(); % Not valid until we clear VisionMarkerTrained and force a tree re-load.
+fprintf('Training completed in %.2f seconds (%.1f minutes), plus %.2f seconds (%.2f minutes) for testing on original images.\n', ...
+    t_train, t_train/60, t_test, t_test/60);
+% Used %d main tree nodes + %d verification nodes.\n', ...
+%    numMain, numVerify);
 
 %% Save Tree
 if saveTree
@@ -481,14 +496,14 @@ end
 
 %% buildTree() Nested Function
 
-    function node = buildTree(node, used, labels, labelNames, maxDepth)
+    function node = buildTree(node, masked, labels, labelNames, maxDepth)
         
         if nargin < 5
             maxDepth = inf;
         end
         
-        if all(used(:))
-            error('All probes used.');
+        if all(masked(:))
+            error('All probes masked.');
         end
         
         %if all(labels(node.remaining)==labels(node.remaining(1)))
@@ -505,7 +520,7 @@ end
             fprintf('MaxDepth LeafNode for labels = {%s\b}\n', sprintf('%s,', node.labelName{:}));
             
         else            
-            unusedProbes = find(~used);
+            unusedProbes = find(~masked);
             
             infoGain = computeInfoGain(labels(node.remaining), length(labelNames), ...
                 probeValues(unusedProbes,node.remaining));
@@ -528,12 +543,12 @@ end
             % are more than one, choose a random one of them
             maxInfoGain = max(infoGain);
             
-            if maxInfoGain < minInfoGain
-                warning('Making too little progress differentiating [%s], giving up on this branch.', ...
-                    sprintf('%s ', labelNames{labels(node.remaining)}));
-                %node = struct('x', -1, 'y', -1, 'whichProbe', -1);
-                return
-            end
+%             if maxInfoGain < minInfoGain
+%                 warning('Making too little progress differentiating [%s], giving up on this branch.', ...
+%                     sprintf('%s ', labelNames{labels(node.remaining)}));
+%                 %node = struct('x', -1, 'y', -1, 'whichProbe', -1);
+%                 return
+%             end
             
             whichUnusedProbe = find(infoGain == maxInfoGain);
             if length(whichUnusedProbe)>1
@@ -555,34 +570,35 @@ end
                 
             if isempty(leftRemaining) || length(leftRemaining) == length(node.remaining)
                 % That split makes no progress.  Try again without
-                % letting us choose this node again
-                used(node.whichProbe) = true;
-                node = buildTree(node, used, labels, labelNames);
-                
-%             elseif node.depth+1 > maxDepth
-%                 error('BuildTree:MaxDepth', ...
-%                         'Reached max depth with [%s\b] remaining.', ...
-%                         sprintf('%s ', labelNames{labels(leftRemaining)}));
+                % letting us choose this node again on this branch of the
+                % tree.  I believe this can happen when the numerically
+                % best info gain corresponds to a position where all the
+                % remaining labels are above or below the fixed 0.5 threshold.
+                % We don't also select the threshold for each node, but the
+                % info gain computation doesn't really take that into
+                % account.  Is there a better way to fix this? 
+                masked(node.whichProbe) = true;
+                node = buildTree(node, masked, labels, labelNames, maxDepth);
                     
             else
                 % Recurse left
-                usedLeft = used;
-                usedLeft(node.whichProbe) = true;
+                %usedLeft = masked;
+                %usedLeft(node.whichProbe) = true;
                 
                 leftChild.remaining = leftRemaining;
                 leftChild.depth = node.depth+1;
-                node.leftChild = buildTree(leftChild, usedLeft, labels, labelNames, maxDepth);
+                node.leftChild = buildTree(leftChild, masked, labels, labelNames, maxDepth);
                 
                 % Recurse right
                 rightRemaining = node.remaining(~goLeft);
                 assert(~isempty(rightRemaining) && length(rightRemaining) < length(node.remaining));
                 
-                usedRight = used;
-                usedRight(node.whichProbe) = true;
+                %usedRight = masked;
+                %usedRight(node.whichProbe) = true;
                 
                 rightChild.remaining = rightRemaining;
                 rightChild.depth = node.depth+1;
-                node.rightChild = buildTree(rightChild, usedRight, labels, labelNames, maxDepth);
+                node.rightChild = buildTree(rightChild, masked, labels, labelNames, maxDepth);
                 
             end
         end
@@ -600,9 +616,14 @@ end % TrainProbes()
 
 function infoGain = computeInfoGain(labels, numLabels, probeValues)
 
-markerProb = max(eps,hist(labels, 1:numLabels));
-markerProb = markerProb/max(eps,sum(markerProb));
-currentEntropy = -sum(markerProb.*log2(markerProb));
+% Since we are just looking for max info gain, we don't actually need to
+% compute the currentEntropy, since it's the same for all probes.  We just
+% need the probe with the lowest conditional entropy, since that will be
+% the one with the highest infoGain
+%markerProb = max(eps,hist(labels, 1:numLabels));
+%markerProb = markerProb/max(eps,sum(markerProb));
+%currentEntropy = -sum(markerProb.*log2(markerProb));
+currentEntropy = 0;
 
 numProbes = size(probeValues,1);
 
@@ -612,17 +633,20 @@ numProbes = size(probeValues,1);
 % edges, which will be gray ("uncertain"), instead of those far
 % from any edge in any image, since those will still be closer
 % to black or white even after blurring.
-probeIsOn = 1 - probeValues;
+
+probeIsOff = probeValues;
+probeIsOn  = 1 - probeValues;
+% probeIsOn  = max(0, 1 - 2*probeValues);
+% probeIsOff = max(0, 2*probeValues - 1);
 
 markerProb_on  = zeros(numProbes,numLabels);
 markerProb_off = zeros(numProbes,numLabels);
 
 for i_probe = 1:numProbes
-    %markerProb_on(i_probe,:) = max(eps,hist(L(probeIsOn(i_probe,:)), 1:numImages));
-    %markerProb_off(i_probe,:) = max(eps,hist(L(~probeIsOn(i_probe,:)), 1:numImages));
-    markerProb_on(i_probe,:) = max(eps, accumarray(labels(:), probeIsOn(i_probe,:)', [numLabels 1])');
-    markerProb_off(i_probe,:) = max(eps, accumarray(labels(:), 1-probeIsOn(i_probe,:)', [numLabels 1])');
+    markerProb_on(i_probe,:)  = max(eps, accumarray(labels(:), probeIsOn(i_probe,:)', [numLabels 1])');
+    markerProb_off(i_probe,:) = max(eps, accumarray(labels(:), probeIsOff(i_probe,:)', [numLabels 1])');
 end
+
 markerProb_on  = markerProb_on  ./ (sum(markerProb_on,2)*ones(1,numLabels));
 markerProb_off = markerProb_off ./ (sum(markerProb_off,2)*ones(1,numLabels));
 

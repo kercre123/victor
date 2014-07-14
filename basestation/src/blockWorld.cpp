@@ -150,8 +150,8 @@ namespace Anki
           // TODO: smarter block pose comparison
           //const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
           
-          //const float distToExist_mm = (objExist.second->GetPose().get_translation() -
-          //                              <robotThatSawMe???>->GetPose().get_translation()).length();
+          //const float distToExist_mm = (objExist.second->GetPose().GetTranslation() -
+          //                              <robotThatSawMe???>->GetPose().GetTranslation()).length();
           
           //const float distThresh_mm = distThresholdFraction * distToExist_mm;
           
@@ -160,7 +160,7 @@ namespace Anki
             overlappingExistingObjects.push_back(objExist.second);
           } /*else {
             fprintf(stdout, "Not merging: Tdiff = %.1fmm, Angle_diff=%.1fdeg\n",
-                    P_diff.get_translation().length(), P_diff.get_rotationAngle().getDegrees());
+                    P_diff.GetTranslation().length(), P_diff.GetRotationAngle().getDegrees());
             objExist.second->IsSameAs(*objectSeen, distThresh_mm, angleThresh, P_diff);
           }*/
           
@@ -218,9 +218,9 @@ namespace Anki
           
           fprintf(stdout, "Adding new block with type=%hu and ID=%hu at (%.1f, %.1f, %.1f)\n",
                   objSeen->GetType(), objSeen->GetID(),
-                  objSeen->GetPose().get_translation().x(),
-                  objSeen->GetPose().get_translation().y(),
-                  objSeen->GetPose().get_translation().z());
+                  objSeen->GetPose().GetTranslation().x(),
+                  objSeen->GetPose().GetTranslation().y(),
+                  objSeen->GetPose().GetTranslation().z());
           
           // Project this new block into each camera
           AddToOcclusionMaps(objSeen, robotMgr_);
@@ -235,9 +235,9 @@ namespace Anki
           /* This is pretty verbose...
           fprintf(stdout, "Merging observation of block type=%hu, ID=%hu at (%.1f, %.1f, %.1f)\n",
                   objSeen->GetType(), objSeen->GetID(),
-                  objSeen->GetPose().get_translation().x(),
-                  objSeen->GetPose().get_translation().y(),
-                  objSeen->GetPose().get_translation().z());
+                  objSeen->GetPose().GetTranslation().x(),
+                  objSeen->GetPose().GetTranslation().y(),
+                  objSeen->GetPose().GetTranslation().z());
           */
           
           // TODO: better way of merging existing/observed block pose
@@ -361,7 +361,7 @@ namespace Anki
             Block* block = dynamic_cast<Block*>(blockAndId.second);
             CORETECH_THROW_IF(block == nullptr);
             if (ignoreCarriedBlocks && !block->IsBeingCarried()) {
-              const f32 blockHeight = block->GetPose().get_translation().z();
+              const f32 blockHeight = block->GetPose().GetTranslation().z();
               
               // If this block's ID is not in the ignore list, then we will use it
               const bool useID = ignoreIDs.find(blockAndId.first) == ignoreIDs.end();
@@ -393,7 +393,7 @@ namespace Anki
       // Get all mat objects *seen by this robot's camera*
       std::vector<Vision::ObservableObject*> matsSeen;
       matLibrary_.CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
-                                           (robot->GetCamera().GetId()));
+                                           (robot->GetCamera().GetID()));
 
       // Remove used markers from map
       RemoveUsedMarkers(obsMarkersAtTimestamp);
@@ -422,7 +422,7 @@ namespace Anki
         
         // Get the pose of the robot with respect to the observed mat piece
         Pose3d robotPoseWrtMat;
-        if(posePtr->GetPose().getWithRespectTo(firstSeenMatPiece->GetPose(), robotPoseWrtMat) == false) {
+        if(posePtr->GetPose().GetWithRespectTo(firstSeenMatPiece->GetPose(), robotPoseWrtMat) == false) {
           PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.MatPoseOriginMisMatch",
                             "Could not get RobotPoseStamp w.r.t. matPose.\n");
           return false;
@@ -432,11 +432,12 @@ namespace Anki
         // around the Z axis
         Radians rotAngle;
         Vec3f rotAxis;
-        robotPoseWrtMat.get_rotationVector().get_angleAndAxis(rotAngle, rotAxis);
+        robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
         const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
         const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
         if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
-          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane", "");
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
+                              "Robot's Z axis is not well aligned with the world Z axis.\n");
           return false;
         }
         
@@ -448,7 +449,8 @@ namespace Anki
                            "Instantiating one and only mat piece in the world.\n");
           
           firstSeenMatPiece->SetID(++globalIDCounter);
-          existingMatPieces_[firstSeenMatPiece->GetType()][firstSeenMatPiece->GetID()] = new MatPiece(firstSeenMatPiece->GetType());
+          MatPiece* newMatPiece = new MatPiece(firstSeenMatPiece->GetType(), true);
+          existingMatPieces_[firstSeenMatPiece->GetType()][firstSeenMatPiece->GetID()] = newMatPiece;          
         }
 
         // Grab the existing mat piece that matches the one we saw.  For now,
@@ -473,13 +475,13 @@ namespace Anki
         existingMatPiece->UpdateMarkerObservationTimes(*firstSeenMatPiece);
         
         // Make the computed robot pose use the existing mat piece as its parent
-        robotPoseWrtMat.set_parent(&existingMatPiece->GetPose());
+        robotPoseWrtMat.SetParent(&existingMatPiece->GetPose());
         
         // Snap to horizontal
-        Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.get_translation();
+        Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
         robotPoseWrtMat_trans.z() = 0; // TODO: can't do this if we are on top of something!
-        robotPoseWrtMat.set_translation(robotPoseWrtMat_trans);
-        robotPoseWrtMat.set_rotation( robotPoseWrtMat.get_rotationAngle<'Z'>(), Z_AXIS_3D );
+        robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
+        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
         
         
         // We have a new ("ground truth") key frame. Increment the pose frame!
@@ -505,13 +507,13 @@ namespace Anki
         
         PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
                    existingMatPiece->GetID(), robot->GetID(),
-                   robot->GetPose().get_translation().x(),
-                   robot->GetPose().get_translation().y(),
-                   robot->GetPose().get_translation().z(),
-                   robot->GetPose().get_rotationAngle<'Z'>().getDegrees(),
-                   robot->GetPose().get_rotationAxis().x(),
-                   robot->GetPose().get_rotationAxis().y(),
-                   robot->GetPose().get_rotationAxis().z());
+                   robot->GetPose().GetTranslation().x(),
+                   robot->GetPose().GetTranslation().y(),
+                   robot->GetPose().GetTranslation().z(),
+                   robot->GetPose().GetRotationAngle<'Z'>().getDegrees(),
+                   robot->GetPose().GetRotationAxis().x(),
+                   robot->GetPose().GetRotationAxis().y(),
+                   robot->GetPose().GetRotationAxis().z());
         
         // Send the ground truth pose that was computed instead of the new current
         // pose and let the robot deal with updating its current pose based on the
@@ -619,7 +621,7 @@ namespace Anki
           // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
           // Increasing history time window would fix this, but it's not really a solution.
           for(auto poseKeyMarkerPair = currentObsMarkers.begin(); poseKeyMarkerPair != currentObsMarkers.end();) {
-            if ((poseKeyMarkerPair->second.GetSeenBy().GetId() == robot->GetCamera().GetId()) &&
+            if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == robot->GetCamera().GetID()) &&
                 !robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
               PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d\n", poseKeyMarkerPair->first);
               poseKeyMarkerPair = currentObsMarkers.erase(poseKeyMarkerPair++);
@@ -675,10 +677,10 @@ namespace Anki
               // entirely if the block isn't in the same coordinate tree as the
               // robot.
               Pose3d blockPoseWrtRobotOrigin;
-              if(block->GetPose().getWithRespectTo(robot->GetPose().FindOrigin(), blockPoseWrtRobotOrigin) == true)
+              if(block->GetPose().GetWithRespectTo(robot->GetPose().FindOrigin(), blockPoseWrtRobotOrigin) == true)
               {
                 const Quad2f blockBBox = block->GetBoundingQuadXY(blockPoseWrtRobotOrigin);
-                const f32    blockHeight = blockPoseWrtRobotOrigin.get_translation().z();
+                const f32    blockHeight = blockPoseWrtRobotOrigin.GetTranslation().z();
                 const f32    blockSize   = 0.5f*block->GetSize().Length();
                 const f32    blockTop    = blockHeight + blockSize;
                 const f32    blockBottom = blockHeight - blockSize;
@@ -688,7 +690,7 @@ namespace Anki
                 // TODO: specify whether we are picking/placing _this_ block
                 if(!robot->IsPickingOrPlacing())
                 {
-                  const f32 robotBottom = robot->GetPose().get_translation().z();
+                  const f32 robotBottom = robot->GetPose().GetTranslation().z();
                   const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
                   
                   const bool topIntersects    = (((blockTop >= robotBottom) && (blockTop <= robotTop)) ||
@@ -792,13 +794,13 @@ namespace Anki
       
       // Rotate that by the given angle
       RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D);
-      camPose.rotateBy(Rvec);
+      camPose.RotateBy(Rvec);
       
       // Precompute with robot body to neck pose
-      camPose.preComposeWith(robot.GetNeckPose());
+      camPose.PreComposeWith(robot.GetNeckPose());
       
       // Set parent pose to be the historical robot pose
-      camPose.set_parent(&(p->GetPose()));
+      camPose.SetParent(&(p->GetPose()));
       
       // Update the head camera's pose
       camera.SetPose(camPose);
@@ -834,7 +836,7 @@ namespace Anki
          
          Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
          blockMarker->Get3dCorners(canonicalPose));
-         markerPose = markerPose.getWithRespectTo(Pose3d::World);
+         markerPose = markerPose.GetWithRespectTo(Pose3d::World);
          VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
          }
          }
@@ -848,7 +850,7 @@ namespace Anki
           for(auto matMarker : matMarkers) {
             Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
                                                                      matMarker->Get3dCorners(canonicalPose));
-            if(markerPose.getWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+            if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
               VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
             } else {
               PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",

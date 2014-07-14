@@ -119,7 +119,8 @@ namespace Anki {
         
         //////// PathFollowTest /////////
         #define PATH_FOLLOW_ALIGNED_START 1
-        const f32 PF_TARGET_SPEED_MMPS = 100;
+        #define PATH_FOLLOW_BACKWARDS 0
+        const f32 PF_TARGET_SPEED_MMPS = 100 * (PATH_FOLLOW_BACKWARDS ? -1 : 1);
         const f32 PF_ACCEL_MMPS2 = 200;
         const f32 PF_DECEL_MMPS2 = 500;
         
@@ -206,7 +207,7 @@ namespace Anki {
         PRINT("TestMode reset\n");
         
         // Stop animations that might be playing
-        AnimationController::PlayAnimation(ANIM_IDLE,0);
+        AnimationController::Stop();
         
         // Stop wheels and vision system
         WheelController::Enable();
@@ -349,7 +350,7 @@ namespace Anki {
           // Create a path and follow it
           PathFollower::ClearPath();
 #if(PATH_FOLLOW_ALIGNED_START)
-          Localization::SetCurrentMatPose(0, 0, -PIDIV2_F);
+          Localization::SetCurrentMatPose(0, 0, PIDIV2_F * (PATH_FOLLOW_BACKWARDS ? 1 : -1));
           
           //PathFollower::AppendPathSegment_PointTurn(0, 0, 0, -PIDIV2_F, -1.5f, 2.f, 2.f);
           
@@ -540,7 +541,7 @@ namespace Anki {
           ticCnt_ = 0;
         }
         
-/*
+
         // Print speed
         if (ticCnt2_++ >= 40) {
           f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
@@ -550,7 +551,7 @@ namespace Anki {
           PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);
           ticCnt2_ = 0;
         }
-*/
+
         
         return RESULT_OK;
       }
@@ -586,7 +587,7 @@ namespace Anki {
           }
         }
 
-        /*
+
         // Print height and speed
         if (ticCnt2_++ >= 200 / TIME_STEP) {
           f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
@@ -595,7 +596,7 @@ namespace Anki {
           PRINT("Lift speed %f rad/s, height %f mm\n", lSpeed, lPos);
           ticCnt2_ = 0;
         }
-         */
+
 
         
         return RESULT_OK;
@@ -721,7 +722,7 @@ namespace Anki {
       {
         PRINT("\n==== Starting AnimationTest =====\n");
         AT_currAnim = ANIM_HEAD_NOD;
-        AnimationController::PlayAnimation(AT_currAnim, 0);
+        AnimationController::Play(AT_currAnim, 0);
         ticCnt_ = 0;
         return RESULT_OK;
       }
@@ -737,7 +738,7 @@ namespace Anki {
           }
           
           PRINT("Playing animation %d\n", AT_currAnim);
-          AnimationController::PlayAnimation(AT_currAnim, 0);
+          AnimationController::Play(AT_currAnim, 0);
         }
         
         return RESULT_OK;
@@ -788,7 +789,7 @@ namespace Anki {
       {
         if (ticCnt_++ > 2000 / TIME_STEP) {
           
-          PRINT("LED channel %d, color %d\n", ledID, LEDColorList[ledColorIdx]);
+          PRINT("LED channel %d, color 0x%x\n", ledID, LEDColorList[ledColorIdx]);
           HAL::SetLED(ledID, LEDColorList[ledColorIdx]);
           
           // Increment led

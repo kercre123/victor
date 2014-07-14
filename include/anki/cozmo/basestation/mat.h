@@ -25,7 +25,7 @@ namespace Anki {
     class MatPiece : public Vision::ObservableObject 
     {
     public:
-      MatPiece(ObjectType_t type);
+      MatPiece(ObjectType_t type, bool isFirstPiece = false);
       
       //virtual float GetMinDim() const {return 0;}
       
@@ -50,6 +50,9 @@ namespace Anki {
         corners.resize(0);
       }
       
+      virtual void Visualize() const;
+      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
+
     protected:
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       

@@ -172,9 +172,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         plhs[2] = mxCreateDoubleScalar(static_cast<double>(tracker.get_angleY()));
         plhs[3] = mxCreateDoubleScalar(static_cast<double>(tracker.get_angleZ()));
 
-        plhs[4] = mxCreateDoubleScalar(static_cast<double>(tracker.get_translation().x));
-        plhs[5] = mxCreateDoubleScalar(static_cast<double>(tracker.get_translation().y));
-        plhs[6] = mxCreateDoubleScalar(static_cast<double>(tracker.get_translation().z));
+        plhs[4] = mxCreateDoubleScalar(static_cast<double>(tracker.GetTranslation().x));
+        plhs[5] = mxCreateDoubleScalar(static_cast<double>(tracker.GetTranslation().y));
+        plhs[6] = mxCreateDoubleScalar(static_cast<double>(tracker.GetTranslation().z));
       }
     }
 
@@ -248,7 +248,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     plhs[argOutIndex++] = mxCreateDoubleScalar(static_cast<double>(tracker.get_angleZ()));
 
     // Return the three translation values
-    const Point3<f32>& translation = tracker.get_translation();
+    const Point3<f32>& translation = tracker.GetTranslation();
     plhs[argOutIndex++] = mxCreateDoubleScalar(static_cast<double>(translation.x));
     plhs[argOutIndex++] = mxCreateDoubleScalar(static_cast<double>(translation.y));
     plhs[argOutIndex++] = mxCreateDoubleScalar(static_cast<double>(translation.z));

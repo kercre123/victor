@@ -38,7 +38,7 @@ namespace Anki {
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
       const s32 UNLOCK_HYSTERESIS = 50;
 #else
-      const s32 UNLOCK_HYSTERESIS = 0;
+      //const s32 UNLOCK_HYSTERESIS = 0;
 #endif
       
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
@@ -103,6 +103,9 @@ namespace Anki {
       f32 motorSpeedCoeffs_[HAL::MOTOR_COUNT];
 
       HAL::IDCard idCard_;
+      
+      // Lights
+      webots::LED* leds_[HAL::NUM_LEDS] = {0};
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -279,6 +282,18 @@ namespace Anki {
         PRINT("Failed to initialize Simulated Radio.\n");
         return RESULT_FAIL;
       }
+      
+      // Lights
+      leds_[HAL::LED_LEFT_EYE_TOP] = webotRobot_.getLED("LeftEyeLED_top");
+      leds_[HAL::LED_LEFT_EYE_LEFT] = webotRobot_.getLED("LeftEyeLED_left");
+      leds_[HAL::LED_LEFT_EYE_RIGHT] = webotRobot_.getLED("LeftEyeLED_right");
+      leds_[HAL::LED_LEFT_EYE_BOTTOM] = webotRobot_.getLED("LeftEyeLED_bottom");
+      
+      leds_[HAL::LED_RIGHT_EYE_TOP] = webotRobot_.getLED("RightEyeLED_top");
+      leds_[HAL::LED_RIGHT_EYE_LEFT] = webotRobot_.getLED("RightEyeLED_left");
+      leds_[HAL::LED_RIGHT_EYE_RIGHT] = webotRobot_.getLED("RightEyeLED_right");
+      leds_[HAL::LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
+      
       
       isInitialized = true;
       return RESULT_OK;
@@ -725,7 +740,11 @@ namespace Anki {
     }
     
     void HAL::SetLED(LEDId led_id, u32 color) {
-      // TODO: ...
+      if (leds_[led_id]) {
+        leds_[led_id]->set(color);
+      } else {
+        PRINT("Unhandled LED %d\n", led_id);
+      }
     }
 
     void HAL::SetHeadlights(bool state)

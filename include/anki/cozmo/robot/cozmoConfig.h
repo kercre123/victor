@@ -32,6 +32,13 @@ namespace Anki {
     const f32 LIFT_HEIGHT_LOWDOCK  = 29.f;
     const f32 LIFT_HEIGHT_HIGHDOCK = 73.f;
     const f32 LIFT_HEIGHT_CARRY    = 88.f;
+    
+    // Distance between the robot origin and the distance along the robot's x-axis
+    // to the lift when it is in the low docking position.
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 25.f;
+    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.5f;
+    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+
 #else
     // Not the actual heights achieved by the lift, but the heights that would be achieved if there was no backlash.
     /*
@@ -41,13 +48,26 @@ namespace Anki {
     const f32 LIFT_HEIGHT_CARRY    = 98.f;
     */
     
-    // Robot #2
+    // Robot #2 (w/ (lightly stripped) clutch arm)
+    /*
     const f32 LIFT_HEIGHT_LOWDOCK  = 26.f;
     const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
     const f32 LIFT_HEIGHT_CARRY    = 90.5f;
-#endif
-
+     */
     
+    // Robot #1 (clutch-less arm)
+    const f32 LIFT_HEIGHT_LOWDOCK  = 23.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
+    const f32 LIFT_HEIGHT_CARRY    = 95.f;
+    
+    // Distance between the robot origin and the distance along the robot's x-axis
+    // to the lift when it is in the low docking position.
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
+    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.5f;
+    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+
+#endif
+        
     // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
     const f32 LIFT_ARM_LENGTH = 64.f;
     
@@ -235,6 +255,9 @@ namespace Anki {
     // How frequently to send robot state messages (in number of main execution
     // loop increments).  So, 6 --> every 30ms, since our loop timestep is 5ms.
     const s32 STATE_MESSAGE_FREQUENCY = 6;
+    
+    // Basestation server port which listens for inputController clients
+    const u32 UI_MESSAGE_SERVER_LISTEN_PORT = 5200;
     
 #if SIMULATOR
     // Channel number used by CozmoWorldComm Webots receiver

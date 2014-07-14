@@ -207,7 +207,7 @@ namespace Anki {
         // Draw cuboid
         VizManager::getInstance()->DrawCuboid(block->GetID(),
                                               block->GetSize(),
-                                              block->GetPose().getWithRespectTo(Pose3d::World),
+                                              block->GetPose().GetWithRespectTo(Pose3d::World),
                                               VIZ_COLOR_SELECTED_OBJECT);
       }
        */
@@ -272,7 +272,7 @@ namespace Anki {
           }
           
           // Check that we're not already carrying a block if the block of interest is a high block.
-          if (block->GetPose().get_translation().z() > 44.f && robot_->IsCarryingBlock()) {
+          if (block->GetPose().GetTranslation().z() > 44.f && robot_->IsCarryingBlock()) {
             PRINT_INFO("Already carrying block. Can't dock to high block. Aborting (0).\n");
             StartMode(BM_None);
             return;
@@ -337,6 +337,7 @@ namespace Anki {
 
             state_ = WAITING_TO_SEE_DICE;
 
+            robot_->SetDefaultLights(0x008080, 0x008080);
           }
 
           break;
@@ -409,7 +410,7 @@ namespace Anki {
                 for(auto marker : diceMarkers) {
                   //const f32 dotprod = DotProduct(marker->ComputeNormal(), Z_AXIS_3D);
                   Pose3d markerWrtRobotOrigin;
-                  if(marker->GetPose().getWithRespectTo(robot_->GetPose().FindOrigin(), markerWrtRobotOrigin) == false) {
+                  if(marker->GetPose().GetWithRespectTo(robot_->GetPose().FindOrigin(), markerWrtRobotOrigin) == false) {
                     PRINT_NAMED_ERROR("BehaviorManager.Update_June2014DiceDemo.MarkerOriginNotRobotOrigin",
                                       "Marker should share the same origin as the robot that observed it.\n");
                     Reset();
@@ -532,8 +533,8 @@ namespace Anki {
                   // again later, when we start driving around to pick and place.
                   robot_->GetPathPlanner()->AddIgnoreType(Block::DICE_BLOCK_TYPE);
                   
-                  Vec3f position( robot_->GetPose().get_translation() );
-                  position -= diceBlock->GetPose().get_translation();
+                  Vec3f position( robot_->GetPose().GetTranslation() );
+                  position -= diceBlock->GetPose().GetTranslation();
                   f32 actualDistToDice = position.Length();
                   f32 desiredDistToDice = ROBOT_BOUNDING_X_FRONT + 0.5f*diceBlock->GetSize().Length() + 5.f;
 
@@ -542,7 +543,7 @@ namespace Anki {
                     position *= desiredDistToDice;
                   
                     Radians angle = atan2(position.y(), position.x()) + PI_F;
-                    position += diceBlock->GetPose().get_translation();
+                    position += diceBlock->GetPose().GetTranslation();
                     
                     goalPose_ = Pose3d(angle, Z_AXIS_3D, {{position.x(), position.y(), 0.f}});
                     
@@ -576,7 +577,7 @@ namespace Anki {
                       originalPose_ = robot_->GetPose();
 
                       Pose3d userFacingPose = robot_->GetPose();
-                      userFacingPose.set_rotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
+                      userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
                       robot_->ExecutePathToPose(userFacingPose);
                       CoreTechPrint("idle: facing user\n");
 
@@ -683,8 +684,8 @@ namespace Anki {
           
         case BACKING_UP:
         {
-          const f32 currentDistance = (robot_->GetPose().get_translation() -
-                                       goalPose_.get_translation()).Length();
+          const f32 currentDistance = (robot_->GetPose().GetTranslation() -
+                                       goalPose_.GetTranslation()).Length();
           
           if(currentDistance >= desiredBackupDistance_ )
           {
@@ -726,12 +727,12 @@ namespace Anki {
                 // If this is the first time we're exploring, then start exploring at the pose
                 // we expect to be in when we reach the mat center. Other start exploring at the angle
                 // we last stopped exploring.
-                targetAngle = atan2(robotPose.get_translation().y(), robotPose.get_translation().x()) + PI_F;
+                targetAngle = atan2(robotPose.GetTranslation().y(), robotPose.GetTranslation().x()) + PI_F;
               }
               Pose3d targetPose(targetAngle, Z_AXIS_3D, Vec3f(0,0,0));
               
-              if (computeDistanceBetween(targetPose, robotPose) > 50.f) {
-                PRINT_INFO("Going to mat center for exploration (%f %f %f)\n", targetPose.get_translation().x(), targetPose.get_translation().y(), targetAngle);
+              if (ComputeDistanceBetween(targetPose, robotPose) > 50.f) {
+                PRINT_INFO("Going to mat center for exploration (%f %f %f)\n", targetPose.GetTranslation().x(), targetPose.GetTranslation().y(), targetAngle);
                 robot_->GetPathPlanner()->AddIgnoreType(Block::DICE_BLOCK_TYPE);
                 robot_->ExecutePathToPose(targetPose);
               }
@@ -750,7 +751,7 @@ namespace Anki {
           robot_->GetPathPlanner()->RemoveIgnoreType(Block::DICE_BLOCK_TYPE);
           robot_->DriveWheels(8.f, -8.f);
           robot_->MoveHeadToAngle(DEG_TO_RAD(-10), 1, 1);
-          explorationStartAngle_ = robot_->GetPose().get_rotationAngle<'Z'>();
+          explorationStartAngle_ = robot_->GetPose().GetRotationAngle<'Z'>();
           isTurning_ = true;
           state_ = EXPLORING;
           break;
@@ -781,7 +782,7 @@ namespace Anki {
           }
           
           // Repeat turn-stop behavior for more reliable block detection
-          Radians currAngle = robot_->GetPose().get_rotationAngle<'Z'>();
+          Radians currAngle = robot_->GetPose().GetRotationAngle<'Z'>();
           if (isTurning_ && (std::abs((explorationStartAngle_ - currAngle).ToFloat()) > DEG_TO_RAD(40))) {
             PRINT_INFO("Exploration - pause turning. Looking for %s\n", Block::IDtoStringLUT[blockOfInterest_].c_str());
             robot_->DriveWheels(0.f,0.f);
@@ -872,7 +873,7 @@ namespace Anki {
           {
             // Compute pose that makes robot face user
             Pose3d userFacingPose = robot_->GetPose();
-            userFacingPose.set_rotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
+            userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
             robot_->ExecutePathToPose(userFacingPose);
 
             SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);

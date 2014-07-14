@@ -1,6 +1,11 @@
 #VRML_SIM V7.3.0 utf8
 
-PROTO CozmoVizDisplay [ ]
+PROTO CozmoVizDisplay 
+[ 
+  # Resolution of incoming camera images.
+  # Set this to match IMG_STREAM_RES in cozmoConfig.h
+  field SFString streamResolution "QQQVGA"
+]
 {
 Supervisor {
   
@@ -49,10 +54,21 @@ Supervisor {
         }
       ]
       name "cozmo_cam_viz_display"
+
+      %{ if fields.streamResolution == "QVGA" then }%
+      width 320
+      height 240
+      pixelSize 1
+      %{ elseif fields.streamResolution == "QQVGA" then }%
+      width 160
+      height 120
+      pixelSize 2
+      %{ elseif fields.streamResolution == "QQQVGA" then }%
       width 80
       height 60
-      windowPosition 1 1
       pixelSize 4
+      %{ end }%
+      windowPosition 1 1
     }
   ]
 

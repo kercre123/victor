@@ -50,8 +50,11 @@ namespace Anki {
         IDLE,
         FOLLOWING_PATH,
         BEGIN_DOCKING,
-        DOCKING
+        DOCKING,
+        PLACE_BLOCK_ON_GROUND
       };
+      
+      static const std::map<State, std::string> StateNames;
       
       Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner);
       ~Robot();
@@ -69,7 +72,9 @@ namespace Anki {
       // *valid_head_angle is made to equal the closest valid head angle to head_angle.
       bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
       
-      Vision::Camera&        GetCamera();
+      Vision::Camera&                   GetCamera();
+      void                              SetCameraCalibration(const Vision::CameraCalibration& calib);
+	    const Vision::CameraCalibration&  GetCameraCalibration() const;
       
       const f32              GetHeadAngle()    const;
       const f32              GetLiftAngle()    const;
@@ -86,7 +91,6 @@ namespace Anki {
       void SetPose(const Pose3d &newPose);
       void SetHeadAngle(const f32& angle);
       void SetLiftAngle(const f32& angle);
-      void SetCameraCalibration(const Vision::CameraCalibration& calib);
       
       void IncrementPoseFrameID() {++_frameId;}
       PoseFrameID_t GetPoseFrameID() const {return _frameId;}
@@ -164,8 +168,16 @@ namespace Anki {
       
       Result StopAllMotors();
       
-      // 
+      // Plan a path to an available docking pose of the specified block, and
+      // then dock with it.
       Result ExecuteDockingSequence(ObjectID_t blockToDockWith);
+      
+      // Plan a path to place the block currently being carried at the specified
+      // pose.
+      Result ExecutePlaceBlockOnGroundSequence(const Pose3d& atPose);
+      
+      // Put the carried block down right where the robot is now
+      Result ExecutePlaceBlockOnGroundSequence();
       
       // Sends a message to the robot to dock with the specified marker of the
       // specified block that it should currently be seeing.
@@ -191,10 +203,15 @@ namespace Anki {
       // a block.
       Result PickUpDockBlock();
       
+      Result VerifyBlockPickup();
+      
       // Places the block that the robot was carrying in its current position
       // w.r.t. the world, and removes it from the lift pose chain so it is no
-      // longer attached to the robot.  IsCarryingBlock() will now report false.
+      // longer attached to the robot.  Note that IsCarryingBlock() will still
+      // report true, until it is actually verified that the placement worked.
       Result PlaceCarriedBlock(); //const TimeStamp_t atTime);
+      
+      Result VerifyBlockPlacement();
       
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
@@ -319,7 +336,11 @@ namespace Anki {
       // should be saved as PGM
       bool _saveImages;
 
-      Vision::Camera   _camera;
+	    // Robot stores the calibration, camera just gets a reference to it
+      // This is so we can share the same calibration data across multiple
+      // cameras (e.g. those stored inside the pose history)
+      Vision::CameraCalibration _cameraCalibration;
+      Vision::Camera            _camera;
       
       // Geometry / Pose
       Pose3d*          _poseOrigin;
@@ -341,12 +362,12 @@ namespace Anki {
       RobotPoseHistory _poseHistory;
 
       // State
-      bool _isCarryingBlock;
-      bool _isPickingOrPlacing;
-      //Block* _carryingBlock;
-      ObjectID_t _carryingBlockID;
-      bool _isMoving;
-      State _state, _nextState;
+      bool       _isPickingOrPlacing;
+      bool       _isMoving;
+      State      _state, _nextState;
+      
+      ObjectID_t                 _carryingBlockID;
+      const Vision::KnownMarker* _carryingMarker;
       
       // Leaves input liftPose's parent alone and computes its position w.r.t.
       // liftBasePose, given the angle
@@ -361,6 +382,11 @@ namespace Anki {
       ObjectID_t                  _dockBlockID;
       const Vision::KnownMarker*  _dockMarker;
       DockAction_t                _dockAction;
+      Pose3d                      _dockBlockOrigPose;
+      
+      // Desired pose of marker (on carried block) wrt world when the block
+      // has been placed on the ground.
+      Pose3d                      _placeOnGroundPose;
       
       f32 _waitUntilTime;
       
@@ -408,6 +434,8 @@ namespace Anki {
                                const u16 image_pixel_y,
                                const u8 pixel_radius) const;
 
+      Result SendPlaceBlockOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle);
+      
       // Turn on/off headlight LEDs
       Result SendHeadlight(u8 intensity);
       
@@ -433,7 +461,13 @@ namespace Anki {
     { return _state; }
     
     inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
-    { _camera.SetCalibration(calib); }
+    {
+      _cameraCalibration = calib;
+      _camera.SetSharedCalibration(&_cameraCalibration);
+    }
+
+	inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
+    { return _cameraCalibration; }
     
     inline const f32 Robot::GetHeadAngle() const
     { return _currentHeadAngle; }

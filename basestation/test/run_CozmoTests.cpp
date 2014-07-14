@@ -147,10 +147,10 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     // If we're not going to be checking the robot's pose, we need to set it
     // to the ground truth now, *before* queueing up the markers
     if(!checkRobotPose) {
-      msg.pose_x = trueRobotPose.get_translation().x();
-      msg.pose_y = trueRobotPose.get_translation().y();
-      msg.pose_z = trueRobotPose.get_translation().z();
-      msg.pose_angle = trueRobotPose.get_rotationAngle<'Z'>().ToFloat();
+      msg.pose_x = trueRobotPose.GetTranslation().x();
+      msg.pose_y = trueRobotPose.GetTranslation().y();
+      msg.pose_z = trueRobotPose.GetTranslation().z();
+      msg.pose_angle = trueRobotPose.GetRotationAngle<'Z'>().ToFloat();
     }
     
     ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp,
@@ -202,9 +202,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                                                            robotPoseAngleThreshold, P_diff);
       
       fprintf(stdout, "X/Y error in robot pose = %.2fmm, Z error = %.2fmm\n",
-              sqrtf(P_diff.get_translation().x()*P_diff.get_translation().x() +
-                    P_diff.get_translation().y()*P_diff.get_translation().y()),
-              P_diff.get_translation().z());
+              sqrtf(P_diff.GetTranslation().x()*P_diff.GetTranslation().x() +
+                    P_diff.GetTranslation().y()*P_diff.GetTranslation().y()),
+              P_diff.GetTranslation().z());
       
       // If the robot's pose is not correct, we can't continue, because
       // all the blocks' poses will also be incorrect
@@ -252,14 +252,14 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         // The threshold will vary with how far away the block actually is
         /*const float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
-                                                 (blockPose.get_translation() -
-                                                  trueRobotPose.get_translation()).Length());*/
+                                                 (blockPose.GetTranslation() -
+                                                  trueRobotPose.GetTranslation()).Length());*/
         
         for(auto & observedBlock : observedBlocks)
         {
           Pose3d P_diff;
           
-          blockPose.set_parent(&observedBlock.second->GetPose().FindOrigin());
+          blockPose.SetParent(&observedBlock.second->GetPose().FindOrigin());
           groundTruthBlock->SetPose(blockPose);
           
           if(groundTruthBlock->IsSameAs(*observedBlock.second,
@@ -270,9 +270,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
               // We just found multiple matches for this ground truth block
               fprintf(stdout, "Match #%d found for one ground truth block. "
                       "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
-                      matchesFound+1, P_diff.get_translation().Length(),
+                      matchesFound+1, P_diff.GetTranslation().Length(),
                       blockPoseDistThreshold_mm,
-                      P_diff.get_rotationAngle().getDegrees(),
+                      P_diff.GetRotationAngle().getDegrees(),
                       blockPoseAngleThreshold.getDegrees());
               
               groundTruthBlock->IsSameAs(*observedBlock.second,
@@ -283,26 +283,26 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
             if(matchesFound == 0) {
               fprintf(stdout, "Match found for observed block with "
                       "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs %.1fdeg)\n",
-                      P_diff.get_translation().Length(),
+                      P_diff.GetTranslation().Length(),
                       blockPoseDistThreshold_mm,
-                      P_diff.get_rotationAngle().getDegrees(),
+                      P_diff.GetRotationAngle().getDegrees(),
                       blockPoseAngleThreshold.getDegrees());
 #if DISPLAY_ERRORS
-              const Vec3f& T_true = groundTruthBlock->GetPose().get_translation();
+              const Vec3f& T_true = groundTruthBlock->GetPose().GetTranslation();
               
-              Vec3f T_dir(T_true - trueRobotPose.get_translation());
+              Vec3f T_dir(T_true - trueRobotPose.GetTranslation());
               const float distance = T_dir.makeUnitLength();
               
-              const Vec3f T_error(T_true - observedBlock.second->GetPose().get_translation());
+              const Vec3f T_error(T_true - observedBlock.second->GetPose().GetTranslation());
               /*
                fprintf(stdout, "Block position error = %.1fmm at a distance of %.1fmm\n",
-               (T_true - observedBlock.second->GetPose().get_translation()).length(),
+               (T_true - observedBlock.second->GetPose().GetTranslation()).length(),
                ().length());
                */
               //errorVsDist.push_back(std::make_pair( distance, DotProduct(T_error, T_dir) ));
-              //errorVsDist.push_back(std::make_pair(distance, (T_true - observedBlock.second->GetPose().get_translation()).length()));
-              errorVsDist.emplace_back(trueRobotPose.get_translation(),
-                                       groundTruthBlock->GetPose().get_translation(), observedBlock.second->GetPose().get_translation());
+              //errorVsDist.push_back(std::make_pair(distance, (T_true - observedBlock.second->GetPose().GetTranslation()).length()));
+              errorVsDist.emplace_back(trueRobotPose.GetTranslation(),
+                                       groundTruthBlock->GetPose().GetTranslation(), observedBlock.second->GetPose().GetTranslation());
 #endif
             }
 
@@ -313,16 +313,16 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                     "Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
                     observedBlock.second->GetType(),
                     observedBlock.second->GetID(),
-                    observedBlock.second->GetPose().get_translation().x(),
-                    observedBlock.second->GetPose().get_translation().y(),
-                    observedBlock.second->GetPose().get_translation().z(),
+                    observedBlock.second->GetPose().GetTranslation().x(),
+                    observedBlock.second->GetPose().GetTranslation().y(),
+                    observedBlock.second->GetPose().GetTranslation().z(),
                     groundTruthBlock->GetType(),
-                    groundTruthBlock->GetPose().get_translation().x(),
-                    groundTruthBlock->GetPose().get_translation().y(),
-                    groundTruthBlock->GetPose().get_translation().z(),
-                    P_diff.get_translation().Length(),
+                    groundTruthBlock->GetPose().GetTranslation().x(),
+                    groundTruthBlock->GetPose().GetTranslation().y(),
+                    groundTruthBlock->GetPose().GetTranslation().z(),
+                    P_diff.GetTranslation().Length(),
                     blockPoseDistThreshold_mm,
-                    P_diff.get_rotationAngle().getDegrees(),
+                    P_diff.GetRotationAngle().getDegrees(),
                     blockPoseAngleThreshold.getDegrees());
           }
             

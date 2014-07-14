@@ -540,11 +540,76 @@ namespace Anki {
         return RESULT_OK;
       } // LookForMarkers()
 
+      // Divide image by mean of whatever is inside the trackingQuad
+      static Result BrightnessNormalizeImage(Array<u8>& image, const Quadrilateral<f32>& quad)
+      {
+        //Debug: image.Show("OriginalImage", false);
+        
+#define USE_VARIANCE 0
+        
+        // Compute mean of data inside the bounding box of the tracking quad
+        const Rectangle<s32> bbox = quad.ComputeBoundingRectangle<s32>();
+        
+        ConstArraySlice<u8> imageROI = image(bbox.top, bbox.bottom, bbox.left, bbox.right);
+        
+#if USE_VARIANCE
+        // Playing with normalizing using std. deviation as well
+        s32 mean, var;
+        Matrix::MeanAndVar<u8, s32>(imageROI, mean, var);
+        const f32 stddev = sqrt(static_cast<f32>(var));
+        const f32 oneTwentyEightOverStdDev = 128.f / stddev;
+        //PRINT("Initial mean/std = %d / %.2f\n", mean, sqrt(static_cast<f32>(var)));
+#else
+        const u8 mean = Matrix::Mean<u8, u32>(imageROI);
+        //PRINT("Initial mean = %d\n", mean);
+#endif
+        
+        //PRINT("quad mean = %d\n", mean);
+        //const f32 oneOverMean = 1.f / static_cast<f32>(mean);
+        
+        // Remove mean (and variance) from image
+        for(s32 i=0; i<image.get_size(0); ++i)
+        {
+          u8 * restrict img_i = image.Pointer(i, 0);
+          
+          for(s32 j=0; j<image.get_size(1); ++j)
+          {
+            f32 value = static_cast<f32>(img_i[j]);
+            value -= static_cast<f32>(mean);
+#if USE_VARIANCE
+            value *= oneTwentyEightOverStdDev;
+#endif
+            value += 128.f;
+            img_i[j] = saturate_cast<u8>(value) ;
+          }
+        }
+        
+        // Debug:
+        /*
+#if USE_VARIANCE
+        Matrix::MeanAndVar<u8, s32>(imageROI, mean, var);
+        PRINT("Final mean/std = %d / %.2f\n", mean, sqrt(static_cast<f32>(var)));
+#else 
+        PRINT("Final mean = %d\n", Matrix::Mean<u8,u32>(imageROI));
+#endif
+         */
+        
+        //Debug: image.Show("NormalizedImage", true);
+        
+#undef USE_VARIANCE
+        return RESULT_OK;
+        
+      } // BrightnessNormalizeImage()
+      
+      
       static Result BrightnessNormalizeImage(Array<u8>& image, const Quadrilateral<f32>& quad,
         const f32 filterWidthFraction,
         MemoryStack scratch)
       {
         if(filterWidthFraction > 0.f) {
+          //Debug:
+          image.Show("OriginalImage", false);
+          
           // TODO: Add the ability to only normalize within the vicinity of the quad
           // Note that this requires templateQuad to be sorted!
           const s32 filterWidth = static_cast<s32>(filterWidthFraction*((quad[3] - quad[0]).Length()));
@@ -579,6 +644,10 @@ namespace Anki {
           }
 
           image.Set(imageNormalized);
+          
+          //Debug:
+          image.Show("NormalizedImage", true);
+          
         } // if(filterWidthFraction > 0)
 
         return RESULT_OK;
@@ -838,7 +907,7 @@ namespace Anki {
         const Radians initAngleX(tracker.get_angleX());
         const Radians initAngleY(tracker.get_angleY());
         const Radians initAngleZ(tracker.get_angleZ());
-        const Point3<f32>& initTranslation = tracker.get_translation();
+        const Point3<f32>& initTranslation = tracker.GetTranslation();
 
         bool converged = false;
         const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
@@ -865,17 +934,17 @@ namespace Anki {
           PRINT("Tracker failed: angle(s) changed too much.\n");
           trackingSucceeded = false;
         }
-        else if(tracker.get_translation().z < TrackerParameters::MIN_TRACKER_DISTANCE)
+        else if(tracker.GetTranslation().z < TrackerParameters::MIN_TRACKER_DISTANCE)
         {
           PRINT("Tracker failed: final distance too close.\n");
           trackingSucceeded = false;
         }
-        else if(tracker.get_translation().z > TrackerParameters::MAX_TRACKER_DISTANCE)
+        else if(tracker.GetTranslation().z > TrackerParameters::MAX_TRACKER_DISTANCE)
         {
           PRINT("Tracker failed: final distance too far away.\n");
           trackingSucceeded = false;
         }
-        else if((initTranslation - tracker.get_translation()).Length() > parameters.successTolerance_distance)
+        else if((initTranslation - tracker.GetTranslation()).Length() > parameters.successTolerance_distance)
         {
           PRINT("Tracker failed: position changed too much.\n");
           trackingSucceeded = false;
@@ -895,7 +964,7 @@ namespace Anki {
           PRINT("Tracker failed: target Z angle too large.\n");
           trackingSucceeded = false;
         }
-        else if(atan_fast(fabs(tracker.get_translation().x) / tracker.get_translation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
+        else if(atan_fast(fabs(tracker.GetTranslation().x) / tracker.GetTranslation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
         {
           PRINT("Tracker failed: FOV angle too large.\n");
           trackingSucceeded = false;
@@ -1037,8 +1106,8 @@ namespace Anki {
           term1*cH2*cR - term4*cH2 - term5*cH2 + term2*sH2 - term3*sH2);
 
         Array<f32> R_blockRelHead = Array<f32>(3,3,scratch);
-        tracker_.get_rotationMatrix(R_blockRelHead);
-        const Point3<f32>& T_blockRelHead = tracker_.get_translation();
+        tracker_.GetRotationMatrix(R_blockRelHead);
+        const Point3<f32>& T_blockRelHead = tracker_.GetTranslation();
 
         Array<f32> R_blockRelHead_new = Array<f32>(3,3,scratch);
         Matrix::Multiply(R_geometry, R_blockRelHead, R_blockRelHead_new);
@@ -1208,9 +1277,9 @@ namespace Anki {
           dockErrMsg.angleErr);
 #else
         // Despite the names, fill the elements of the message with camera-centric coordinates
-        dockErrMsg.x_distErr = tracker_.get_translation().x;
-        dockErrMsg.y_horErr  = tracker_.get_translation().y;
-        dockErrMsg.z_height  = tracker_.get_translation().z;
+        dockErrMsg.x_distErr = tracker_.GetTranslation().x;
+        dockErrMsg.y_horErr  = tracker_.GetTranslation().y;
+        dockErrMsg.z_height  = tracker_.GetTranslation().z;
 
         dockErrMsg.angleErr  = tracker_.get_angleY();
 
@@ -2109,15 +2178,23 @@ namespace Anki {
               // full detection resolution.
               trackingQuad_ = crntMarker.corners;
 
+              // Normalize the image
               // NOTE: This will change grayscaleImage!
-              // NOTE: This is currently off-chip for memory reasons, so it's slow!
-              if((lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
-                trackerParameters_.normalizationFilterWidthFraction,
-                VisionMemory::offchipScratch_)) != RESULT_OK)
-              {
-                return lastResult;
+              if(trackerParameters_.normalizationFilterWidthFraction < 0.f) {
+                // Faster: normalize using mean of quad
+                lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_);
+              } else {
+                // Slower: normalize using local averages
+                // NOTE: This is currently off-chip for memory reasons, so it's slow!
+                lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
+                                                      trackerParameters_.normalizationFilterWidthFraction,
+                                                      VisionMemory::offchipScratch_);
               }
-
+              
+              AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                                 "VisionSystem::Update::BrightnessNormalizeImage",
+                                                 "BrightnessNormalizeImage failed.\n");
+              
               if((lastResult = InitTemplate(grayscaleImage,
                 trackingQuad_,
                 trackerParameters_,
@@ -2198,14 +2275,22 @@ namespace Anki {
 
           DownsampleAndSendImage(grayscaleImage);
           
+          // Normalize the image
           // NOTE: This will change grayscaleImage!
-          // NOTE: This is currently off-chip for memory reasons, so it's slow!
-          if((lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
-            trackerParameters_.normalizationFilterWidthFraction,
-            VisionMemory::offchipScratch_)) != RESULT_OK)
-          {
-            return lastResult;
+          if(trackerParameters_.normalizationFilterWidthFraction < 0.f) {
+            // Faster: normalize using mean of quad
+            lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_);
+          } else {
+            // Slower: normalize using local averages
+            // NOTE: This is currently off-chip for memory reasons, so it's slow!
+            lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
+                                                  trackerParameters_.normalizationFilterWidthFraction,
+                                                  VisionMemory::offchipScratch_);
           }
+          
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                             "VisionSystem::Update::BrightnessNormalizeImage",
+                                             "BrightnessNormalizeImage failed.\n");
 
           //
           // Tracker Prediction

@@ -332,6 +332,7 @@ namespace Anki {
       
       void ProcessPlaceBlockOnGroundMessage(const PlaceBlockOnGround& msg)
       {
+        //PRINT("Received PlaceOnGround message.\n");
         PickAndPlaceController::PlaceOnGround(msg.rel_x_mm, msg.rel_y_mm, msg.rel_angle);
       }
 
@@ -437,7 +438,7 @@ namespace Anki {
       }
       
       void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
-        AnimationController::PlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
+        AnimationController::Play((AnimationID_t)msg.animationID, msg.numLoops);
       }
       
       // TODO: Fill these in once they are needed/used:

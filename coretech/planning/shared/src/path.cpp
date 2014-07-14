@@ -323,7 +323,7 @@ namespace Anki
         CoreTechPrint("dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath);
         CoreTechPrint("SIGN(dx): %d, dy_sign: %f\n", (SIGN(dx) ? 1 : -1), line_dy_sign_);
         CoreTechPrint("lineTheta: %f\n", line_theta_.ToFloat());
-        //PRINT("lineTheta: %f, robotTheta: %f\n", seg->theta.ToFloat(), currPose.get_angle().ToFloat());
+        //PRINT("lineTheta: %f, robotTheta: %f\n", seg->theta.ToFloat(), currPose.GetAngle().ToFloat());
 #endif
         
         // Compute the sign of the error distance

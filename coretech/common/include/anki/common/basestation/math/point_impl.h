@@ -355,7 +355,7 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
-  T computeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2)
+  T ComputeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2)
   {
     Point<N,T> temp(point1);
     temp -= point2;
