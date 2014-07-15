@@ -42,7 +42,7 @@ namespace Anki
       unsigned short m_camScript[] =
         // YUV_QVGA_60fps
         {
-        0x3008,0x82 // SYSTEM CTRL
+         0x3008,0x82 // SYSTEM CTRL
         ,0x3008,0x42 // SYSTEM CTRL
         ,0x3104,0x03 // OTP something
         ,0x3017,0x7f // PAD OEN01 (Output enable: 7f for 2.1  (7e/00 for shorted 2.1 boards))
@@ -63,8 +63,8 @@ namespace Anki
         ,0x3a00,0x7a // AEC CTRL00
         ,0x3a18,0x00 // AEC GAIN CEILING
         ,0x3a19,0x3f // AEC GAIN CEILING
-        ,0x300f,0x08 // PLL1 CTRL00
-        ,0x3011,0x08 // PLL1 CTRL02
+        ,0x300f,0x8a // PLL1 CTRL00
+        ,0x3011,0x02 // PLL1 CTRL02
         //,0x3011,0x80  // PLL1: disable - 1/4 the framerate
         ,0x4303,0xff // YMAX VALUE (Set Y max clip value[7:0])
         ,0x4307,0xff // UMAX VALUE (Set U max clip value[7:0])
@@ -74,30 +74,31 @@ namespace Anki
         ,0x430d,0x00 // VMIN VALUE (Set V min clip value[7:0])
         //,0x5000,0x4f // ISP CTRL00
         //,0x5001,0x47 // ISP CTRL01
+        ,0x503d,0x80
         ,0x4300,0x08 // FORMAT CTRL00 (Output format selection) (YUV422 0x30)
-        ,0x4301,0x80 // undoc (possibly format related?)
+        ,0x4301,0x00 // undoc (possibly format related?)
         ,0x501f,0x00 // ISP CTRL1F (ISP raw 0x00) (YUV422 0x01)
         ,0x3800,0x00 // image cropping (horizontal start)
-        ,0x3801,0xc8 // image cropping (horizontal start)
-        ,0x3804,0x01 // image cropping (horizontal width)
-        ,0x3805,0x40 // image cropping (horizontal width)
+        ,0x3801,0x6e // image cropping (horizontal start)
+        ,0x3804,0x02 // image cropping (horizontal width)
+        ,0x3805,0x80 // image cropping (horizontal width)
         ,0x3802,0x00 // image cropping (vertical start)
-        ,0x3803,0x0e // image cropping (vertical start)
-        ,0x3806,0x00 // image cropping (vertical height)
-        ,0x3807,0xf0 // image cropping (vertical height)
-        ,0x3808,0x01 // TIMING DVPHO
-        ,0x3809,0x40 // TIMING DVPHO
-        ,0x380a,0x00 // TIMING DVPVO
-        ,0x380b,0xf0 // TIMING DVPVO
+        ,0x3803,0x0a // image cropping (vertical start)
+        ,0x3806,0x01 // image cropping (vertical height)
+        ,0x3807,0xe0 // image cropping (vertical height)
+        ,0x3808,0x02 // TIMING DVPHO
+        ,0x3809,0x80 // TIMING DVPHO
+        ,0x380a,0x01 // TIMING DVPVO
+        ,0x380b,0xe0 // TIMING DVPVO
         ,0x380c,0x03 // TIMING HTS
-        ,0x380d,0x10 // TIMING HTS
+        ,0x380d,0x14 // TIMING HTS
         ,0x380e,0x01 // TIMING VTS
-        ,0x380f,0x00 // TIMING VTS
-        ,0x3810,0x08 // TIMING HOFFS
-        ,0x3811,0x04 // TIMING VOFFS
+        ,0x380f,0xfc // TIMING VTS
+        ,0x3810,0x10 // TIMING HOFFS
+        ,0x3811,0x08 // TIMING VOFFS
         ,0x370d,0x0c // vertical binning
         ,0x3622,0x60 // horizontal skip or binning
-        ,0x3818,0x80 // mirror vertical/horizontal (plus some undoc bits?)
+        ,0x3818,0x80 // mirror vertical/horizontal and subsample (plus some undoc bits?)
         ,0x3a08,0x00 // AEC B50 STEP
         ,0x3a09,0x99 // AEC B50 STEP
         ,0x3a0a,0x00 // AEC B60 STEP
@@ -106,8 +107,8 @@ namespace Anki
         ,0x3a0e,0x01 // AEC CTRL0E 
         ,0x3705,0xdc // undoc
         ,0x3a1a,0x05 // NOT USED (But it's set?!)
-        ,0x3008,0x02 // ISP CTRL02 (ISP subsample)
-        ,0x5180,0x02 // SYSTEM CTRL
+        ,0x3008,0x02 // SYSTEM CTRL
+        ,0x5180,0x02 // AWB CTRL00
         //,0x5181,0x02 // AWB CTRL01
         //,0x3a0f,0x35 // AEC CONTROL 0F
         //,0x3a10,0x2c // AEC CONTROL 10
@@ -606,6 +607,16 @@ namespace Anki
         u32 xRes = Vision::CameraResInfo[res].width;
         u32 yRes = Vision::CameraResInfo[res].height;
 
+        for (u32 y = 0; y < 240; y += 1)
+        {
+          for (u32 x = 0; x < 640; x += 1)
+          {
+            frame[y * 640 + x] = m_buffer[y * 640 + x];
+          }
+        }
+        
+        return;
+        
         u32 xSkip = 320 / xRes;
         u32 ySkip = 240 / yRes;
 
@@ -632,15 +643,7 @@ namespace Anki
             pFrameU32[iPixel+2] = out45;
             pFrameU32[iPixel+3] = out67;
           }*/
-          u32 dataY = 0;
-          for (u32 y = 0; y < 240; y += 1, dataY++)
-          {
-            u32 dataX = 0;
-            for (u32 x = 0; x < 320; x += 1, dataX++)
-            {
-              frame[dataY * xRes + dataX] = m_buffer[y * 320 + x];
-            }
-          }
+         
         } else {
           u32 dataY = 0;
           for (u32 y = 0; y < 240; y += ySkip, dataY++)

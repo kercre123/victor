@@ -1856,8 +1856,13 @@ namespace Anki {
 
         frameNumber++;
 
-        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+        //captureResolution_ = Vision::CAMERA_RES_VGA;
+        
+        //const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+        //const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+        
+        const s32 captureHeight = 240;
+        const s32 captureWidth  = 640;
 
         Array<u8> grayscaleImage = Array<u8>(captureHeight, captureWidth, VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
         
@@ -1881,7 +1886,8 @@ namespace Anki {
         
         HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
         
-        exposureTime += .1f;
+        //exposureTime += .1f;
+        exposureTime = 0.4f;
         
         if(exposureTime > 1.01f) {
           exposureTime = 0.0f;
