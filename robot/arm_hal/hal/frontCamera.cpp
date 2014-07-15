@@ -59,7 +59,7 @@ namespace Anki
         ,0x401e,0x11 // undoc
         ,0x4702,0x01 // undoc
         ,0x5000,0x0e // ISP CTRL00
-        ,0x5001,0x00 // ISP CTRL01
+        ,0x5001,0x06 // ISP CTRL01
         ,0x3a00,0x7a // AEC CTRL00
         ,0x3a18,0x00 // AEC GAIN CEILING
         ,0x3a19,0x3f // AEC GAIN CEILING
@@ -74,10 +74,13 @@ namespace Anki
         ,0x430d,0x00 // VMIN VALUE (Set V min clip value[7:0])
         //,0x5000,0x4f // ISP CTRL00
         //,0x5001,0x47 // ISP CTRL01
-        ,0x503d,0x80
+        ,0x503d,0x00
         ,0x4300,0x08 // FORMAT CTRL00 (Output format selection) (YUV422 0x30)
         ,0x4301,0x00 // undoc (possibly format related?)
         ,0x501f,0x00 // ISP CTRL1F (ISP raw 0x00) (YUV422 0x01)
+        ,0x5900,0xf1
+        ,0x5901,0x05
+        ,0x5902,0x01
         ,0x3800,0x00 // image cropping (horizontal start)
         ,0x3801,0x6e // image cropping (horizontal start)
         ,0x3804,0x02 // image cropping (horizontal width)
@@ -86,18 +89,18 @@ namespace Anki
         ,0x3803,0x0a // image cropping (vertical start)
         ,0x3806,0x01 // image cropping (vertical height)
         ,0x3807,0xe0 // image cropping (vertical height)
-        ,0x3808,0x02 // TIMING DVPHO
-        ,0x3809,0x80 // TIMING DVPHO
-        ,0x380a,0x01 // TIMING DVPVO
-        ,0x380b,0xe0 // TIMING DVPVO
+        ,0x3808,0x01 // TIMING DVPHO
+        ,0x3809,0x40 // TIMING DVPHO
+        ,0x380a,0x00 // TIMING DVPVO
+        ,0x380b,0xf0 // TIMING DVPVO
         ,0x380c,0x03 // TIMING HTS
-        ,0x380d,0x14 // TIMING HTS
+        ,0x380d,0x10 // TIMING HTS
         ,0x380e,0x01 // TIMING VTS
-        ,0x380f,0xfc // TIMING VTS
-        ,0x3810,0x10 // TIMING HOFFS
-        ,0x3811,0x08 // TIMING VOFFS
-        ,0x370d,0x0c // vertical binning
-        ,0x3622,0x60 // horizontal skip or binning
+        ,0x380f,0x00 // TIMING VTS
+        ,0x3810,0x08 // TIMING HOFFS
+        ,0x3811,0x04 // TIMING VOFFS
+        ,0x370d,0x4c // vertical binning
+        ,0x3622,0xe8 // horizontal skip or binning
         ,0x3818,0x80 // mirror vertical/horizontal and subsample (plus some undoc bits?)
         ,0x3a08,0x00 // AEC B50 STEP
         ,0x3a09,0x99 // AEC B50 STEP
@@ -609,9 +612,9 @@ namespace Anki
 
         for (u32 y = 0; y < 240; y += 1)
         {
-          for (u32 x = 0; x < 640; x += 1)
+          for (u32 x = 0; x < 320; x += 1)
           {
-            frame[y * 640 + x] = m_buffer[y * 640 + x];
+            frame[y * 320 + x] = m_buffer[y * 320 + x];
           }
         }
         

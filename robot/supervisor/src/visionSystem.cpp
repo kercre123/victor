@@ -1862,7 +1862,7 @@ namespace Anki {
         //const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
         
         const s32 captureHeight = 240;
-        const s32 captureWidth  = 640;
+        const s32 captureWidth  = 320;
 
         Array<u8> grayscaleImage = Array<u8>(captureHeight, captureWidth, VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
         
@@ -1893,8 +1893,8 @@ namespace Anki {
           exposureTime = 0.0f;
         }
         
-        HAL::MicroWait(333333);
-        //HAL::MicroWait(1500000);
+        //HAL::MicroWait(333333);
+        HAL::MicroWait(600000);
 
         return RESULT_OK;
       } // Update() [RUN_GROUND_TRUTHING_CAPTURE]
