@@ -341,6 +341,7 @@ namespace Anki
       s32 integralImageHeight;
 
       for(s32 i=0; i<numFilterHalfWidths; i++) {
+        AnkiAssert(pFilterHalfWidths[i] >= 0);
         AnkiAssert(pFilterHalfWidths[i] <= MAX_FILTER_HALF_WIDTH);
         numBorderPixels = MAX(numBorderPixels, pFilterHalfWidths[i] + 1);
       }

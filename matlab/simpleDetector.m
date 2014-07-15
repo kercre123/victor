@@ -22,8 +22,8 @@ returnInvalid = false;
 parseVarargin(varargin{:});
 
 % Use different defaults for 'matlab_boxFilters'
-if strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters')
-    thresholdFraction = 0.75; % fraction of local mean to use as threshold
+if strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters') || strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters_multiple')
+    thresholdFraction = 1.0; % fraction of local mean to use as threshold
     maxSmoothingFraction = 0.025; % fraction of max dim
     parseVarargin(varargin{:});
 end

@@ -8,6 +8,7 @@ classdef EmbeddedConversionsManager < handle
         connectedComponentsType;
         completeCImplementationType;
         emptyCenterDetection;
+        smallCharacterisicParameter;
     end % PROPERTIES (get-public, set-protected)
 
     methods(Access = 'public')
@@ -17,7 +18,7 @@ classdef EmbeddedConversionsManager < handle
             homographyEstimationType_acceptable = {'matlab_original', 'opencv_cp2tform', 'c_float64', 'matlab_inhomogeneous'};
 
             computeCharacteristicScaleImageType = 'matlab_original';
-            computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_boxFilters', 'matlab_loops', 'matlab_loopsAndFixedPoint', 'matlab_loopsAndFixedPoint_mexFiltering', 'c_fixedPoint'};
+            computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_boxFilters', 'matlab_boxFilters_multiple', 'matlab_boxFilters_small', 'matlab_loops', 'matlab_loopsAndFixedPoint', 'matlab_loopsAndFixedPoint_mexFiltering', 'c_fixedPoint'};
 
             traceBoundaryType = 'matlab_original';
             traceBoundaryType_acceptable = {'matlab_original', 'matlab_loops', 'c_fixedPoint', 'matlab_approximate'};
@@ -30,6 +31,8 @@ classdef EmbeddedConversionsManager < handle
 
             emptyCenterDetection = 'matlab_original';
             emptyCenterDetection_acceptable = {'matlab_original', 'off'};
+
+            smallCharacterisicParameter = 0.9;
 
             parseVarargin(varargin{:});
 
@@ -50,6 +53,8 @@ classdef EmbeddedConversionsManager < handle
 
             isAcceptable(emptyCenterDetection_acceptable, emptyCenterDetection);
             this.emptyCenterDetection = emptyCenterDetection; %#ok<*PROP>
+
+            this.smallCharacterisicParameter = smallCharacterisicParameter; %#ok<*PROP>
         end
     end % METHODS (public)
 end % classdef OptimizationManager < handle

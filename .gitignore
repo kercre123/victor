@@ -107,3 +107,6 @@ matlab/basicsResults_input0.mat
 matlab/basicsResults_input1.mat
 matlab/basicsResults_input2.mat
 webots_keyboard_controller
+systemTests/tests/*.mat
+matlab/recompileBasicsAllInput.mat
+matlab/runParallelProcesses_input*.mat

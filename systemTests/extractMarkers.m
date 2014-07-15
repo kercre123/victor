@@ -1,0 +1,85 @@
+% function [allQuads, markers] = extractMarkers()
+
+function [allQuads, quadValidity, markers] = extractMarkers(image, algorithmParameters)
+    if algorithmParameters.useMatlabForAll
+        convertFromCToMatlab = false;
+        
+        allQuadsRaw = simpleDetector(image,...
+            'returnInvalid', true,...
+            'quadRefinementIterations', 25,...
+            'thresholdFraction', algorithmParameters.scaleImage_thresholdMultiplier,...
+            'embeddedConversions', algorithmParameters.matlab_embeddedConversions);
+        
+        quadValidity = zeros([length(allQuadsRaw), 1], 'int32');
+        
+        allQuads = cell(length(allQuadsRaw), 1);
+        markers = {};
+        for iQuad = 1:length(allQuadsRaw)
+            allQuads{iQuad} = allQuadsRaw{iQuad}.corners;
+            
+            if allQuadsRaw{iQuad}.isValid
+                quadValidity(iQuad) = 0;
+                markers{end+1} = allQuadsRaw{iQuad}; %#ok<AGROW>
+            else
+                quadValidity(iQuad) = 9;
+            end
+        end
+    elseif algorithmParameters.useMatlabForQuadExtraction
+        convertFromCToMatlab = true;
+        
+        allQuadsMatlabRaw = simpleDetector(image,...
+            'returnInvalid', true,...
+            'quadRefinementIterations', algorithmParameters.refine_quadRefinementIterations,...
+            'thresholdFraction', algorithmParameters.scaleImage_thresholdMultiplier,...
+            'embeddedConversions', algorithmParameters.matlab_embeddedConversions);
+        
+        if isempty(allQuadsMatlabRaw)
+            allQuads = {};
+            quadValidity = int32([]);
+            markers = {};
+            return;
+        end
+        
+        allQuadsMatlab = cell(length(allQuadsMatlabRaw), 1);
+        for iQuad = 1:length(allQuadsMatlabRaw)
+            allQuadsMatlab{iQuad} = allQuadsMatlabRaw{iQuad}.corners;
+        end
+        
+        for i = 1:length(allQuadsMatlab)
+            allQuadsMatlab{i} = allQuadsMatlab{i} - 1;
+        end
+        
+        returnInvalidMarkers = 1;
+        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, 0, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
+        
+        returnInvalidMarkers = 0;
+        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, 0, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
+    else
+        convertFromCToMatlab = true;
+        
+        returnInvalidMarkers = 1;
+        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers(image, algorithmParameters.scaleImage_numPyramidLevels, algorithmParameters.scaleImage_thresholdMultiplier, algorithmParameters.component1d_minComponentWidth, algorithmParameters.component1d_maxSkipDistance, algorithmParameters.component_minimumNumPixels, algorithmParameters.component_maximumNumPixels, algorithmParameters.component_sparseMultiplyThreshold, algorithmParameters.component_solidMultiplyThreshold, algorithmParameters.component_minHollowRatio, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, algorithmParameters.refine_quadRefinementIterations, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
+        
+        returnInvalidMarkers = 0;
+        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers(image, algorithmParameters.scaleImage_numPyramidLevels, algorithmParameters.scaleImage_thresholdMultiplier, algorithmParameters.component1d_minComponentWidth, algorithmParameters.component1d_maxSkipDistance, algorithmParameters.component_minimumNumPixels, algorithmParameters.component_maximumNumPixels, algorithmParameters.component_sparseMultiplyThreshold, algorithmParameters.component_solidMultiplyThreshold, algorithmParameters.component_minHollowRatio, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, algorithmParameters.refine_quadRefinementIterations, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
+    end
+    
+    if convertFromCToMatlab
+        markers = cell(length(markerNames), 1);
+        
+        for i = 1:length(markerNames)
+            markers{i}.name = markerNames{i};
+            markers{i}.corners = goodQuads{i};
+        end
+        
+        % Convert from c to matlab coordinates
+        
+        for i = 1:length(allQuads)
+            allQuads{i} = allQuads{i} + 1;
+        end
+        
+        for i = 1:length(markers)
+            markers{i}.corners = markers{i}.corners + 1;
+        end
+    end
+    
