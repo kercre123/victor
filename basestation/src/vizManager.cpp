@@ -11,7 +11,6 @@
  **/
 
 #include "vizManager.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/common/basestation/general.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -19,15 +18,24 @@
 namespace Anki {
   namespace Cozmo {
     
-    VizManager* VizManager::singletonInstance_ = 0;
+    VizManager* VizManager::singletonInstance_ = nullptr;
     
     const VizManager::Handle_t VizManager::INVALID_HANDLE = u32_MAX;
     
-    Result VizManager::Init()
+    void VizManager::removeInstance()
+    {
+      // check if the instance has been created yet
+      if(nullptr != singletonInstance_) {
+        delete singletonInstance_;
+        singletonInstance_ = nullptr;
+      }
+    }
+    
+    Result VizManager::Connect(const char *udp_host_address, const unsigned short port)
     {
       
-      if (!vizClient_.Connect(ROBOT_SIM_WORLD_HOST, VIZ_SERVER_PORT)) {
-        PRINT_INFO("Failed to init VizManager client (%s:%d)\n", ROBOT_SIM_WORLD_HOST, VIZ_SERVER_PORT);
+      if (!vizClient_.Connect(udp_host_address, port)) {
+        PRINT_INFO("Failed to init VizManager client (%s:%d)\n", udp_host_address, port);
         isInitialized_ = false;
       }
     
@@ -52,6 +60,15 @@ namespace Anki {
       isInitialized_ = true;
       
       return isInitialized_ ? RESULT_OK : RESULT_FAIL;
+    }
+    
+    Result VizManager::Disconnect()
+    {
+      if (vizClient_.Disconnect()) {
+        return RESULT_OK;
+      }
+      
+      return RESULT_FAIL;
     }
     
     VizManager::VizManager()

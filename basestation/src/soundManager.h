@@ -48,6 +48,7 @@ namespace Anki {
       
       // Get a pointer to the singleton instance
       inline static SoundManager* getInstance();
+      static void removeInstance();
       
       // Set the root directory of sound files
       bool SetRootDir(const char* dir);

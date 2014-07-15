@@ -7,8 +7,8 @@
  */
 
 #include <fstream>
+#include <exception>
 
-#include "anki/cozmo/basestation/basestation.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/rotatedRect_impl.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -18,16 +18,20 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/platformPathManager.h"
 
+#include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/tcpComms.h"
 #include "anki/cozmo/basestation/uiTcpComms.h"
+#include "anki/cozmo/basestation/utils/exceptions.h"
+
 #include "messageHandler.h"
 #include "uiMessageHandler.h"
 #include "pathPlanner.h"
 #include "behaviorManager.h"
 #include "vizManager.h"
+#include "soundManager.h"
 
 
 namespace Anki {
@@ -50,16 +54,12 @@ public:
   
   BasestationMode GetMode();
   
-  /*
-   // unintializes basestation. needed for lifecycle/memory management.
-   void UnInit();
-  
-   // unintializes basestation. returns BS_END_CLEAN_EXIT if all ok
-   BasestationStatus SafeUnInit();
+  // unintializes basestation. returns BS_END_CLEAN_EXIT if all ok
+  BasestationStatus UnInit();
    
-   // Removes / cleans up all singletons
-   static void RemoveSingletons();
-   */
+  // Removes / cleans up all singletons
+  static void RemoveSingletons();
+  
   // Runs an iteration of the base-station.  Takes an argument for the current
   // system time.
   BasestationStatus Update(BaseStationTime_t currTime);
@@ -149,12 +149,49 @@ BasestationStatus BasestationMainImpl::Init(IComms* comms, BasestationMode mode)
   behaviorMgr_.Init(&robotMgr_, &blockWorld_);
   uiMsgHandler_.Init(&uiDevComms_, &robotMgr_, &blockWorld_, &behaviorMgr_);
   
-  VizManager::getInstance()->Init();
+  VizManager::getInstance()->Connect(ROBOT_SIM_WORLD_HOST, VIZ_SERVER_PORT);
   
   return status;
 }
+  
+BasestationStatus BasestationMainImpl::UnInit()
+{
+  try {
+    
+    // Uninitialization sequence
+    VizManager::getInstance()->Disconnect();
+    RemoveSingletons();
+    
+  }
+  // catch Basestation exceptions
+  catch (ExceptionType& bsException)
+  {
+    PRINT_NAMED_ERROR("Basestation.InternalException", "%s", GetExceptionDefinition(bsException));
+    return BS_END_RUN_EXCEPTION_CAUGHT;
+  }
+  // catch c++ exceptions
+  catch (std::exception& e) {
+    PRINT_NAMED_ERROR("Basestation.UnInit", "%s\n", e.what());
+    return BS_END_UNINIT_EXCEPTION_CAUGHT;
+  }
+  // catch all other issues
+  catch (...)
+  {
+    PRINT_NAMED_ERROR("Basestation.UnInit", "Unknown error\n");
+    return BS_END_UNINIT_EXCEPTION_CAUGHT;
+  }
+  
+  return BS_END_CLEAN_EXIT;
+}
+  
+void BasestationMainImpl::RemoveSingletons()
+{
+  VizManager::removeInstance();
+  SoundManager::removeInstance();
+}
 
-
+  
+  
 BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
 {
   BasestationStatus status = BS_OK;
@@ -323,6 +360,11 @@ BasestationMode BasestationMain::GetMode()
   return impl_->GetMode();
 }
 
+BasestationStatus BasestationMain::UnInit()
+{
+  return impl_->UnInit();
+}
+  
 BasestationStatus BasestationMain::Update(BaseStationTime_t currTime)
 {
   return impl_->Update(currTime);

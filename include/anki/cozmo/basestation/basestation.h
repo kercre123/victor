@@ -68,16 +68,9 @@ public:
 
   BasestationMode GetMode();
 
-/*
-  // unintializes basestation. needed for lifecycle/memory management.
-  void UnInit();
-
   // unintializes basestation. returns BS_END_CLEAN_EXIT if all ok
-  BasestationStatus SafeUnInit();
+  BasestationStatus UnInit();
 
-  // Removes / cleans up all singletons
-  static void RemoveSingletons();
-*/
   // Runs an iteration of the base-station.  Takes an argument for the current
   // system time.
   BasestationStatus Update(BaseStationTime_t currTime);
