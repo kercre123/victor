@@ -32,6 +32,8 @@ namespace Anki {
     //ObjectID_t ObservableObject::ObjectCounter = 0;
     const std::vector<KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
     
+    const std::vector<RotationMatrix3d> ObservableObject::sRotationAmbiguities; // default is empty
+    
     ObservableObject::ObservableObject(ObjectType_t objType)
     : type_(objType), ID_(0), lastObservedTime_(0), wasObserved_(false)
     {
@@ -205,6 +207,10 @@ namespace Anki {
     } // SetMarkersAsObserved()
     
     
+    Quad2f ObservableObject::GetBoundingQuadXY(const f32 padding_mm) const
+    {
+      return GetBoundingQuadXY(pose_, padding_mm);
+    }
     
 #pragma mark --- ObservableObjectLibrary Implementations ---
     

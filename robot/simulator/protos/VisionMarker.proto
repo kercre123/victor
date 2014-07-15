@@ -1,0 +1,68 @@
+#VRML_SIM V7.3.0 utf8
+
+PROTO VisionMarker [
+  field SFVec3f    translation  0 0 0.022
+  field SFRotation rotation     0 0 1 0
+  
+  field SFFloat    markerWidth  0.025
+  field SFFloat    padding      0.002
+  
+  field SFBool     isDockable   FALSE
+
+  field SFBool     useWhiteBackground TRUE
+  field SFString   image              ""  # Image path relative to textures/
+]
+{
+  %{
+    imageURL = ""
+    if fields.markerImg ~= "" then
+      imageURL = "textures/" .. fields.image
+    end 
+    
+    if fields.useWhiteBackground then 
+      whiteFaceSize = fields.markerWidth+2*fields.padding
+    end 
+  }%  
+  
+
+  Transform {
+    rotation IS rotation
+    translation IS translation
+    children [
+      Shape {
+        appearance Appearance {
+          texture ImageTexture {
+            url [ "%{= imageURL }%" ]
+          }
+        }
+        geometry DEF MARKER_BOX Box {
+          size %{= fields.markerWidth }% 0.0001 %{= fields.markerWidth }%
+        }
+      }
+      %{ if fields.useWhiteBackground then }%
+      DEF FACE_SHAPE Shape {
+        appearance Appearance {
+          material Material {
+            diffuseColor 1 1 1
+          }
+        }
+        geometry Box {
+          size %{=whiteFaceSize}% 0.00005 %{=whiteFaceSize}%
+        }
+      }
+      %{ end }%
+      
+      %{ if fields.isDockable then }%
+      Connector {
+        rotation 1 0 0 1.5708
+        name "%{=fields.translation.x}%  %{=fields.translation.y}% %{=fields.translation.z}%"
+        model "magnetic"
+        type "passive"
+        autoLock TRUE
+      }
+      %{ end }%
+        
+    ] # children
+  }
+      
+} # PROTO

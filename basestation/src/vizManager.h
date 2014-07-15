@@ -54,6 +54,9 @@ namespace Anki {
     {
     public:
       
+      using Handle_t = u32;
+      static const Handle_t INVALID_HANDLE;
+      
       Result Init();
       
       // Get a pointer to the singleton instance
@@ -79,19 +82,30 @@ namespace Anki {
       // appropriate objectTypeID as well as by offseting the objectID by
       // some base amount so that the caller need not be concerned with
       // making robot and block object IDs that don't collide with each other.
+      // A "handle" (unique, internal ID) will be returned that can be
+      // used later to reference the visualization, e.g. for a call
+      // to EraseVizObject.
       
-      void DrawRobot(const u32 robotID,
-                     const Pose3d &pose,
-                     const u32 colorID = VIZ_COLOR_DEFAULT);
+      Handle_t DrawRobot(const u32 robotID,
+                         const Pose3d &pose,
+                         const u32 colorID = VIZ_COLOR_DEFAULT);
       
-      void DrawCuboid(const u32 blockID,
-                      const Point3f &size,
-                      const Pose3d &pose,
-                      const u32 colorID = VIZ_COLOR_DEFAULT);
+      Handle_t DrawCuboid(const u32 blockID,
+                          const Point3f &size,
+                          const Pose3d &pose,
+                          const u32 colorID = VIZ_COLOR_DEFAULT);
       
-      void DrawPreDockPose(const u32 preDockPoseID,
-                           const Pose3d &pose,
-                           const u32 colorID = VIZ_COLOR_DEFAULT);
+      Handle_t DrawPreDockPose(const u32 preDockPoseID,
+                               const Pose3d &pose,
+                               const u32 colorID = VIZ_COLOR_DEFAULT);
+      
+      Handle_t DrawRamp(const u32 rampID,
+                        const f32 platformLength,
+                        const f32 slopeLength,
+                        const f32 width,
+                        const f32 height,
+                        const Pose3d& pose,
+                        const u32 colorID = VIZ_COLOR_DEFAULT);
       
       //void DrawRamp();
       
@@ -108,13 +122,16 @@ namespace Anki {
       // type objectTypeID (See VizObjectTypes) located at the specified pose.
       // For parameterized types, like VIZ_CUBOID, size determines the dimensions
       // of the object. For other types, like VIZ_ROBOT, size is ignored.
+      // Up to 4 other parameters can be specified in an array pointed to
+      // by params.
       void DrawObject(const u32 objectID, const u32 objectTypeID,
                       const Point3f &size,
                       const Pose3d &pose,
-                      const u32 colorID = VIZ_COLOR_DEFAULT);
+                      const u32 colorID = VIZ_COLOR_DEFAULT,
+                      const f32* params = nullptr);
       
       // Erases the object corresponding to the objectID
-      void EraseVizObject(const u32 objectID);
+      void EraseVizObject(const Handle_t objectID);
       
       // Erases all objects. (Not paths)
       void EraseAllVizObjects();

@@ -42,9 +42,18 @@ namespace Anki
     class BlockWorld
     {
     public:
+
+      enum ObjectFamily_t {
+        MAT_FAMILY,
+        BLOCK_FAMILY,
+        RAMP_FAMILY,
+        
+        NUM_OBJECT_FAMILIES // Should remain last
+      };
       
-      using ObjectsMapByID_t = std::map<ObjectID_t, Vision::ObservableObject*>;
-      using ObjectsMap_t     = std::map<ObjectType_t, ObjectsMapByID_t >;
+      using ObjectsMapByID_t     = std::map<ObjectID_t, Vision::ObservableObject*>;
+      using ObjectsMapByType_t   = std::map<ObjectType_t, ObjectsMapByID_t >;
+      using ObjectsMapByFamily_t = std::map<ObjectFamily_t, ObjectsMapByType_t>;
       
       //static const unsigned int MaxRobots = 4;
       //static bool ZAxisPointsUp; // normally true, false for Webots
@@ -63,42 +72,49 @@ namespace Anki
       
       Result QueueObservedMarker(const MessageVisionMarker& msg, Robot& robot);
       
-      void CommandRobotToDock(const RobotID_t whichRobot,
-                              Block&    whichBlock);
+      // Clear all existing objects in the world
+      void ClearAllExistingObjects();
       
-      // Clears all existing blocks in the world
-      void ClearAllExistingBlocks();
+      // Clear all objects with the specified family
+      void ClearObjectsByFamily(const ObjectFamily_t family);
       
-      // Clear all blocks with the specified type
-      void ClearBlocksByType(const ObjectType_t type);
+      // Clear all objects with the specified type
+      void ClearObjectsByType(const ObjectType_t type);
       
-      // Clear a block with a specific ID. Returns true if block with that ID
+      // Clear an object with a specific ID. Returns true if object with that ID
       // is found and cleared, false otherwise.
-      bool ClearBlock(const ObjectID_t withID);
+      bool ClearObject(const ObjectID_t withID);
       
-      const Vision::ObservableObjectLibrary& GetBlockLibrary() const;
-      const ObjectsMapByID_t& GetExistingBlocks(const ObjectType_t blockType) const;
-      const ObjectsMap_t& GetAllExistingBlocks() const {return existingBlocks_;}
-      const Vision::ObservableObjectLibrary& GetMatLibrary() const;
+      const Vision::ObservableObjectLibrary& GetObjectLibrary(ObjectFamily_t whichFamily) const;
+
+      const ObjectsMapByFamily_t& GetAllExistingObjects() const;
       
-      // Return a pointer to a block with the specified ID. If that block
+      const ObjectsMapByType_t& GetExistingObjectsByFamily(const ObjectFamily_t whichFamily) const;
+      
+      // NOTE: Like IDs, object types are unique across objects so they can be
+      //       used without specifying which family.
+      const ObjectsMapByID_t& GetExistingObjectsByType(const ObjectType_t whichType) const;
+      
+      // Return a pointer to an object with the specified ID. If that object
       // does not exist, nullptr is returned.  Be sure to ALWAYS check
       // for the return being null!
-      Block* GetBlockByID(const ObjectID_t objectID) const;
+      Vision::ObservableObject* GetObjectByID(const ObjectID_t objectID) const;
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension) and returns a vector of quads
       // of their outlines on the ground plane (z=0).  Can also pad the
       // bounding boxes by a specified amount. If ignoreIDs is not empty, then
       // bounding boxes of blocks with an ID present in the set will not be
-      // returned. Analogous behavior for ignoreTypes.  The last flag indicates
-      // whether blocks being carried by any robot are included in the results.
-      void GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
-                                   const f32 padding,
-                                   std::vector<Quad2f>& boundingBoxes,
-                                   const std::set<ObjectType_t>& ignoreTypes = std::set<ObjectType_t>(),
-                                   const std::set<ObjectID_t>& ignoreIDs = std::set<ObjectID_t>(),
-                                   const bool ignoreCarriedBlocks = true) const;
+      // returned. Analogous behavior for ignoreTypes/ignoreFamilies.
+      // The last flag indicates whether objects being carried by any robot are
+      // included in the results.
+      void GetObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
+                                    const f32 padding,
+                                    std::vector<Quad2f>& boundingBoxes,
+                                    const std::set<ObjectFamily_t>& ignoreFamilies = {MAT_FAMILY},
+                                    const std::set<ObjectType_t>& ignoreTypes = {{}},
+                                    const std::set<ObjectID_t>& ignoreIDs = {{}},
+                                    const bool ignoreCarriedObjects = true) const;
       
       // Returns true if any blocks were moved, added, or deleted on the
       // last update. Useful, for example, to know whether to update the
@@ -114,8 +130,8 @@ namespace Anki
       // Visualize markers in image display
       void DrawObsMarkers() const;
       
-      // Call every existing block's Visualize() method
-      void DrawAllBlocks() const;
+      // Call every existing object's Visualize() method
+      void DrawAllObjects() const;
       
     protected:
       
@@ -125,23 +141,25 @@ namespace Anki
       using PoseKeyObsMarkerMap_t = std::multimap<HistPoseKey, Vision::ObservedMarker>;
       using ObsMarkerListMap_t = std::map<TimeStamp_t, PoseKeyObsMarkerMap_t>;
       
-      
       // Methods
       
       //BlockWorld(); // protected constructor for singleton
 
       bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
-      size_t UpdateBlockPoses(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
+      size_t UpdateObjectPoses(const Vision::ObservableObjectLibrary& objectsLibrary,
+                               PoseKeyObsMarkerMap_t& obsMarkers,
+                               ObjectsMapByType_t& existingObjects,
+                               const TimeStamp_t atTimestamp);
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
-                                  const ObjectsMap_t& objectsExisting,
+                                  const ObjectsMapByType_t& objectsExisting,
                                   std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const;
       
       
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
-                               ObjectsMap_t& objectsExisting,
+                               ObjectsMapByType_t& objectsExisting,
                                const TimeStamp_t atTimestamp);
       
       // Remove all posekey-marker pairs from the map if marker is marked used
@@ -153,6 +171,8 @@ namespace Anki
                             std::list<Vision::ObservedMarker*>& lst);
       
 
+      ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objectIter, ObjectsMapByID_t& inContainer);
+      
       // Member Variables
       
       //static BlockWorld* singletonInstance_;
@@ -165,20 +185,35 @@ namespace Anki
       //std::map<Robot*, std::list<Vision::ObservedMarker*> > obsMarkersByRobot_;
       
       // Store all known observable objects (these are everything we know about,
-      // separated by type of object, not necessarily what we've actually seen
-      // yet)
-      //Vision::ObservableObjectLibrary objectLibrary_; // not separated by type?
-      Vision::ObservableObjectLibrary blockLibrary_;
-      Vision::ObservableObjectLibrary matLibrary_;
-      Vision::ObservableObjectLibrary otherObjectsLibrary_;
+      // separated by class of object, not necessarily what we've actually seen
+      // yet, but what everything we are aware of)
+      std::map<ObjectFamily_t, Vision::ObservableObjectLibrary> _objectLibrary;
+      //Vision::ObservableObjectLibrary blockLibrary_;
+      //Vision::ObservableObjectLibrary matLibrary_;
+      //Vision::ObservableObjectLibrary rampLibrary_;
+      
       
       // Store all observed objects, indexed first by Type, then by ID
-      ObjectsMap_t existingBlocks_;
-      ObjectsMap_t existingMatPieces_;
+      // NOTE: If a new ObjectsMap_t is added here, a pointer to it needs to
+      //   be stored in allExistingObjects_ (below), initialized in the
+      //   BlockWorld cosntructor.
+      ObjectsMapByFamily_t _existingObjects;
+      // ObjectsMapByID_t _existingObjectsByID; TODO: flat list for faster finds?
       
-      bool didBlocksChange_;
+      //ObjectsMap_t existingBlocks_;
+      //ObjectsMap_t existingMatPieces_;
+      //ObjectsMap_t existingRamps_;
       
-      static const ObjectsMapByID_t EmptyObjectMap;
+      // An array storing pointers to all the ObjectsMap_t's above so that we
+      // we can easily loop over all types of objects.
+      //std::array<ObjectsMap_t*, 3> allExistingObjects_;
+      
+      bool didObjectsChange_;
+      
+      static const Vision::ObservableObjectLibrary EmptyObjectLibrary;
+      
+      static const ObjectsMapByID_t    EmptyObjectMapByID;
+      static const ObjectsMapByType_t  EmptyObjectMapByType;
       
       // Global counter for assigning IDs to objects as they are created.
       // This means every object in the world has a unique ObjectID!
@@ -200,35 +235,58 @@ namespace Anki
     }
      */
     
-    inline const BlockWorld::ObjectsMapByID_t& BlockWorld::GetExistingBlocks(const ObjectType_t blockType) const
+    inline const Vision::ObservableObjectLibrary& BlockWorld::GetObjectLibrary(ObjectFamily_t whichFamily) const
     {
-      auto blocksWithID = existingBlocks_.find(blockType);
-      if(blocksWithID != existingBlocks_.end()) {
-        return blocksWithID->second;
+      auto objectsWithFamilyIter = _objectLibrary.find(whichFamily);
+      if(objectsWithFamilyIter != _objectLibrary.end()) {
+        return objectsWithFamilyIter->second;
       } else {
-        return BlockWorld::EmptyObjectMap;
+        return BlockWorld::EmptyObjectLibrary;
       }
     }
     
-    inline const Vision::ObservableObjectLibrary& BlockWorld::GetBlockLibrary() const {
-      return blockLibrary_;
-    }
-    
-    inline const Vision::ObservableObjectLibrary& BlockWorld::GetMatLibrary() const {
-      return matLibrary_;
-    }
-    
-    inline Block* BlockWorld::GetBlockByID(const ObjectID_t objectID) const
+    inline const BlockWorld::ObjectsMapByFamily_t& BlockWorld::GetAllExistingObjects() const
     {
-      for (auto const & block : existingBlocks_) {
-        auto const & objectByIdMap = block.second;
-        auto objectIt = objectByIdMap.find(objectID);
-        if (objectIt != objectByIdMap.end()) {
-          Block* block = dynamic_cast<Block*>(objectIt->second);
-          CORETECH_ASSERT(block != nullptr);
-          return block;
+      return _existingObjects;
+    }
+    
+    inline const BlockWorld::ObjectsMapByType_t& BlockWorld::GetExistingObjectsByFamily(const ObjectFamily_t whichFamily) const
+    {
+      auto objectsWithFamilyIter = _existingObjects.find(whichFamily);
+      if(objectsWithFamilyIter != _existingObjects.end()) {
+        return objectsWithFamilyIter->second;
+      } else {
+        return BlockWorld::EmptyObjectMapByType;
+      }
+    }
+    
+    inline const BlockWorld::ObjectsMapByID_t& BlockWorld::GetExistingObjectsByType(const ObjectType_t whichType) const
+    {
+      for(auto & objectsByFamily : _existingObjects) {
+        auto objectsWithType = objectsByFamily.second.find(whichType);
+        if(objectsWithType != objectsByFamily.second.end()) {
+          return objectsWithType->second;
         }
       }
+      
+      // Type not found!
+      return BlockWorld::EmptyObjectMapByID;
+    }
+    
+    inline Vision::ObservableObject* BlockWorld::GetObjectByID(const ObjectID_t objectID) const
+    {
+      // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
+      
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          auto objectsByIdIter = objectsByType.second.find(objectID);
+          if(objectsByIdIter != objectsByType.second.end()) {
+            return objectsByIdIter->second;
+          }
+        }
+      }
+      
+      // ID not found!
       return nullptr;
     }
     

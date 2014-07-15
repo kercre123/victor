@@ -33,19 +33,19 @@
 
 #define UNWRAP(...) __VA_ARGS__
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) \
-,{.name = QUOTE(__NAME__), .color = __COLOR__, .size = {UNWRAP __SIZE__}, .faces = {
+,{__NAME__##_BLOCK_TYPE, {.name = QUOTE(__NAME__), .color = __COLOR__, .size = {UNWRAP __SIZE__}, .faces = {
 
 #define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__) \
 {.whichFace = __WHICHFACE__, .size = __SIZE__, .code = __CODE__},
 
-#define END_BLOCK_DEFINITION  } }
+#define END_BLOCK_DEFINITION  } } }
 
 //
 // Block ID to String LUT Mode
 //
 #elif BLOCK_DEFINITION_MODE == BLOCK_ID_TO_STRING_LUT_MODE
 
-#define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) QUOTE(__NAME__##_BLOCK_TYPE),
+#define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) {__NAME__##_BLOCK_TYPE, QUOTE(__NAME__##_BLOCK_TYPE)},
 #define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
 #define END_BLOCK_DEFINITION
 

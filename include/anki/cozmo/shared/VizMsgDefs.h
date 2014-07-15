@@ -42,6 +42,7 @@ ADD_MESSAGE_MEMBER(f32, rot_deg)
 ADD_MESSAGE_MEMBER(f32, rot_axis_x)
 ADD_MESSAGE_MEMBER(f32, rot_axis_y)
 ADD_MESSAGE_MEMBER(f32, rot_axis_z)
+ADD_MESSAGE_MEMBER_ARRAY(f32, params, 4) // for object-specific parameters
 END_MESSAGE_DEFINITION(VizObject)
 
 // VizQuad

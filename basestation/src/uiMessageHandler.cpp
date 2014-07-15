@@ -168,9 +168,9 @@ namespace Anki {
     {
       // Special case if commanding low dock height
       if (msg.height_mm == LIFT_HEIGHT_LOWDOCK) {
-        if(robot->IsCarryingBlock()) {
+        if(robot->IsCarryingObject()) {
           // Put the block down right here
-          return robot->ExecutePlaceBlockOnGroundSequence();
+          return robot->ExecutePlaceObjectOnGroundSequence();
         }
       }
       
@@ -215,7 +215,7 @@ namespace Anki {
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlaceBlockOnGround const& msg)
     {
       Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
-      return robot->ExecutePlaceBlockOnGroundSequence(targetPose);
+      return robot->ExecutePlaceObjectOnGroundSequence(targetPose);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ExecuteTestPlan const& msg)
@@ -226,7 +226,7 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ClearAllBlocks const& msg)
     {
-      blockWorld_->ClearAllExistingBlocks();
+      blockWorld_->ClearAllExistingObjects();
       VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_CUBOID);
       return RESULT_OK;
     }
@@ -251,10 +251,10 @@ namespace Anki {
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_DrawPoseMarker const& msg)
     {
-      if (robot->IsCarryingBlock()) {
+      if (robot->IsCarryingObject()) {
         Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
-        Quad2f blockFootprint = blockWorld_->GetBlockByID(robot->GetCarryingBlock())->GetBoundingQuadXY(targetPose);
-        VizManager::getInstance()->DrawPoseMarker(0, blockFootprint, VIZ_COLOR_GREEN);
+        Quad2f objectFootprint = blockWorld_->GetObjectByID(robot->GetCarryingObject())->GetBoundingQuadXY(targetPose);
+        VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, VIZ_COLOR_GREEN);
       }
 
       return RESULT_OK;

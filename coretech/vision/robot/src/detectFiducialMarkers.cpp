@@ -112,8 +112,8 @@ namespace Anki
         MemoryStack bigScratch(malloc(1000000), 1000000);
         Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
         Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
-        image.Show("image", false);
-        empty.Show("components orig", false);
+        image.Show("image", false, false, true);
+        empty.Show("components orig", false, false, true);
         free(bigScratch.get_buffer());
       }
 #endif
@@ -163,7 +163,7 @@ namespace Anki
         MemoryStack bigScratch(malloc(1000000), 1000000);
         Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
         Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
-        empty.Show("components good", true);
+        empty.Show("components good", true, false, true);
         free(bigScratch.get_buffer());
       }
 #endif

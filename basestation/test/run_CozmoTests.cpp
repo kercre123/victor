@@ -234,7 +234,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         ObjectType_t blockType;
         ASSERT_TRUE(JsonTools::GetValueOptional(jsonBlocks[i_block], "Type", blockType));
         
-        const Vision::ObservableObject* block = blockWorld.GetBlockLibrary().GetObjectWithType(blockType);
+        const Vision::ObservableObject* block = blockWorld.GetObjectLibrary(BlockWorld::BLOCK_FAMILY).GetObjectWithType(blockType);
         
         // The ground truth block type should be known to the block world
         ASSERT_TRUE(block != NULL);
@@ -247,7 +247,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         // Make sure this ground truth block was seen and its estimated pose
         // matches the ground truth pose
-        auto observedBlocks = blockWorld.GetExistingBlocks(groundTruthBlock->GetType());
+        auto observedBlocks = blockWorld.GetExistingObjectsByType(groundTruthBlock->GetType());
         int matchesFound = 0;
         
         // The threshold will vary with how far away the block actually is

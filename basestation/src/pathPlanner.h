@@ -18,17 +18,24 @@
 #include "anki/planning/shared/path.h"
 #include "json/json-forwards.h"
 
+#include "anki/cozmo/basestation/blockWorld.h"
+
 #include <set>
 
 namespace Anki {
   namespace Cozmo {
-
-    class BlockWorld;
     
     class IPathPlanner
     {
     public:
 
+      IPathPlanner()
+      : _ignoreFamilies({BlockWorld::MAT_FAMILY})
+      {
+        
+      }
+      
+      
       virtual ~IPathPlanner() {}
 
       // Replan if needed because the environment changed. Returns
@@ -75,6 +82,10 @@ namespace Anki {
       // return a test path
       virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) {}
       
+      void AddIgnoreFamily(const BlockWorld::ObjectFamily_t objFamily)    { _ignoreFamilies.insert(objFamily); }
+      void RemoveIgnoreFamily(const BlockWorld::ObjectFamily_t objFamily) { _ignoreFamilies.erase(objFamily); }
+      void ClearIgnoreFamilies()                                          { _ignoreFamilies.clear(); }
+      
       void AddIgnoreType(const ObjectType_t objType)    { _ignoreTypes.insert(objType); }
       void RemoveIgnoreType(const ObjectType_t objType) { _ignoreTypes.erase(objType); }
       void ClearIgnoreTypes()                           { _ignoreTypes.clear(); }
@@ -85,8 +96,9 @@ namespace Anki {
       
     protected:
       
-      std::set<ObjectType_t> _ignoreTypes;
-      std::set<ObjectID_t>   _ignoreIDs;
+      std::set<BlockWorld::ObjectFamily_t> _ignoreFamilies;
+      std::set<ObjectType_t>               _ignoreTypes;
+      std::set<ObjectID_t>                 _ignoreIDs;
       
     }; // Interface IPathPlanner
 

@@ -47,7 +47,7 @@ namespace Anki {
 
       Robot* GetRobot() const {return robot_;}
       
-      const ObjectID_t GetBlockOfInterest() const {return blockOfInterest_;}
+      const ObjectID_t GetObjectOfInterest() const {return objectIDofInterest_;}
       
       // Select the next object in blockWorld as the block of interest
       void SelectNextBlockOfInterest();
@@ -107,8 +107,8 @@ namespace Anki {
       unsigned int timesIdle_;
       Pose3d originalPose_;
       
-      // Block that the robot is currently travelling to, docking to,
-      ObjectID_t blockOfInterest_;
+      // Object that the robot is currently travelling to, docking to,
+      ObjectID_t objectIDofInterest_;
       
       // Thresholds for knowing we're done with a path traversal
       f32    distThresh_mm_;
@@ -163,8 +163,8 @@ namespace Anki {
       
       /////// June2014DiceDemo vars ///////
       const TimeStamp_t TimeBetweenDice_ms = 1000; // 1 sec
-      ObjectType_t blockToPickUp_;
-      ObjectType_t blockToPlaceOn_;
+      ObjectType_t objectToPickUp_;
+      ObjectType_t objectToPlaceOn_;
       TimeStamp_t  diceDeletionTime_;
       bool wasCarryingBlockAtDockingStart_;
       Radians explorationStartAngle_;

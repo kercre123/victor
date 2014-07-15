@@ -409,9 +409,51 @@ void draw_cuboid(float x_dim, float y_dim, float z_dim)
 }
 
 
-void draw_ramp()
+void draw_ramp(float platformLength, float slopeLength, float width, float height)
 {
-  dWebotsConsolePrintf("!!!! ERROR: draw_ramp() undefined !!!!!!\n");
+  // Webots hack
+  float halfX = platformLength*0.5f;
+  float halfY = width*0.5f;
+  float halfZ = height*0.5f;
+  
+  
+  // TOP
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(  halfX,  halfY,  halfZ );
+  glVertex3f(  halfX, -halfY,  halfZ );
+  glVertex3f( -halfX, -halfY,  halfZ );
+  glVertex3f( -halfX,  halfY,  halfZ );
+  glEnd();
+  
+  // BOTTOM
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(  halfX + slopeLength,  halfY, -halfZ );
+  glVertex3f(  halfX + slopeLength, -halfY, -halfZ );
+  glVertex3f( -halfX, -halfY, -halfZ );
+  glVertex3f( -halfX,  halfY, -halfZ );
+  glEnd();
+  
+  
+  // VERTICAL EDGES
+  glBegin(GL_LINES);
+  
+  glVertex3f(  halfX,  halfY,  halfZ );
+  glVertex3f(  halfX + slopeLength,  halfY,  -halfZ );
+  
+  glVertex3f(  halfX, -halfY,  halfZ );
+  glVertex3f(  halfX + slopeLength, -halfY,  -halfZ );
+  
+  glVertex3f( -halfX,  halfY,  halfZ );
+  glVertex3f( -halfX,  halfY,  -halfZ );
+  
+  glVertex3f( -halfX, -halfY,  halfZ );
+  glVertex3f( -halfX, -halfY,  -halfZ );
+  
+  glEnd();
+  
+  
+  glFlush();
+
 }
 
 
@@ -574,8 +616,11 @@ void webots_physics_draw(int pass, const char *view) {
           draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
           break;
         case Anki::Cozmo::VIZ_OBJECT_RAMP:
-          draw_ramp();
+        {
+          float slopeLength = obj->params[0]*obj->x_size_m;
+          draw_ramp(obj->x_size_m, slopeLength, obj->y_size_m, obj->z_size_m);
           break;
+        }
         case Anki::Cozmo::VIZ_OBJECT_PREDOCKPOSE:
           draw_predockpose();
           break;

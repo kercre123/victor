@@ -21,6 +21,8 @@ namespace Anki {
     
     VizManager* VizManager::singletonInstance_ = 0;
     
+    const VizManager::Handle_t VizManager::INVALID_HANDLE = u32_MAX;
+    
     Result VizManager::Init()
     {
       
@@ -116,48 +118,98 @@ namespace Anki {
     
     // ===== Convenience object draw functions for specific object types ====
     
-    void VizManager::DrawRobot(const u32 robotID,
-                               const Pose3d &pose,
-                               const u32 colorID)
+    VizManager::Handle_t VizManager::DrawRobot(const u32 robotID,
+                                               const Pose3d &pose,
+                                               const u32 colorID)
     {
-      CORETECH_ASSERT(robotID < VizObjectMaxID[VIZ_OBJECT_ROBOT]);
+      if(robotID >= VizObjectMaxID[VIZ_OBJECT_ROBOT]) {
+        PRINT_NAMED_ERROR("VizManager.DrawRobot.IDtooLarge",
+                          "Specified robot ID=%d larger than maxID=%d\n",
+                          robotID, VizObjectMaxID[VIZ_OBJECT_ROBOT]);
+        return INVALID_HANDLE;
+      }
       
+      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_ROBOT] + robotID;
       Anki::Point3f dims; // junk
-      DrawObject(VizObjectBaseID[VIZ_OBJECT_ROBOT] + robotID,
+      DrawObject(vizID,
                  VIZ_OBJECT_ROBOT,
                  dims,
                  pose,
                  colorID);
+      
+      return vizID;
     }
     
-    void VizManager::DrawCuboid(const u32 blockID,
-                                const Point3f &size,
-                                const Pose3d &pose,
-                                const u32 colorID)
+    VizManager::Handle_t VizManager::DrawCuboid(const u32 blockID,
+                                                const Point3f &size,
+                                                const Pose3d &pose,
+                                                const u32 colorID)
     {
-      CORETECH_ASSERT(blockID < VizObjectMaxID[VIZ_OBJECT_CUBOID]);
+      if(blockID >= VizObjectMaxID[VIZ_OBJECT_CUBOID]) {
+        PRINT_NAMED_ERROR("VizManager.DrawCuboid.IDtooLarge",
+                          "Specified block ID=%d larger than maxID=%d\n",
+                          blockID, VizObjectMaxID[VIZ_OBJECT_CUBOID]);
+        return INVALID_HANDLE;
+      }
       
-      DrawObject(VizObjectMaxID[VIZ_OBJECT_CUBOID] + blockID,
+      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_CUBOID] + blockID;
+      DrawObject(vizID,
                  VIZ_OBJECT_CUBOID,
                  size,
                  pose,
                  colorID);
+      return vizID;
     }
     
-    void VizManager::DrawPreDockPose(const u32 preDockPoseID,
-                                     const Pose3d &pose,
-                                     const u32 colorID)
+    VizManager::Handle_t VizManager::DrawPreDockPose(const u32 preDockPoseID,
+                                                     const Pose3d &pose,
+                                                     const u32 colorID)
     {
-      CORETECH_ASSERT(preDockPoseID < VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]);
+      if(preDockPoseID >= VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]) {
+        PRINT_NAMED_ERROR("VizManager.DrawPreDockPose.IDtooLarge",
+                          "Specified robot ID=%d larger than maxID=%d\n",
+                          preDockPoseID, VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]);
+        return INVALID_HANDLE;
+      }
       
+      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_PREDOCKPOSE] + preDockPoseID;
       Anki::Point3f dims; // junk
-      DrawObject(VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE] + preDockPoseID,
+      DrawObject(vizID,
                  VIZ_OBJECT_PREDOCKPOSE,
                  dims,
                  pose,
                  colorID);
+      
+      return vizID;
     }
     
+    VizManager::Handle_t VizManager::DrawRamp(const u32 rampID,
+                                              const f32 platformLength,
+                                              const f32 slopeLength,
+                                              const f32 width,
+                                              const f32 height,
+                                              const Pose3d& pose,
+                                              const u32 colorID)
+    {
+      if(rampID >= VizObjectMaxID[VIZ_OBJECT_RAMP]) {
+        PRINT_NAMED_ERROR("VizManager.DrawRamp.IDtooLarge",
+                          "Specified ramp ID=%d larger than maxID=%d\n",
+                          rampID, VizObjectMaxID[VIZ_OBJECT_RAMP]);
+        return INVALID_HANDLE;
+      }
+      
+      // Ramps use one extra parameter which is the ratio of slopeLength to
+      // platformLength, which is stored as the x size.  So slopeLength
+      // can easily be computed from x size internally (in whatever dimensions
+      // the visuzalization uses).
+      f32 params[4] = {slopeLength/platformLength, 0, 0, 0};
+      
+      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_RAMP] + rampID;
+      DrawObject(vizID, VIZ_OBJECT_RAMP,
+                 {{platformLength, width, height}}, pose, colorID, params);
+      
+      return vizID;
+    }
 
     
     void VizManager::EraseRobot(const u32 robotID)
@@ -191,7 +243,8 @@ namespace Anki {
                                 const u32 objectTypeID,
                                 const Anki::Point3f &size_mm,
                                 const Anki::Pose3d &pose,
-                                const u32 colorID)
+                                const u32 colorID,
+                                const f32* params)
     {
       VizObject v;
       v.objectID = objectID;
@@ -214,11 +267,17 @@ namespace Anki {
       
       v.color = colorID;
       
+      if(params != nullptr) {
+        for(s32 i=0; i<4; ++i) {
+          v.params[i] = params[i];
+        }
+      }
+      
       SendMessage( GET_MESSAGE_ID(VizObject), &v );
     }
     
     
-    void VizManager::EraseVizObject(const u32 objectID)
+    void VizManager::EraseVizObject(const Handle_t objectID)
     {
       VizEraseObject v;
       v.objectID = objectID;

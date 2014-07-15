@@ -166,10 +166,11 @@ namespace Anki {
          */
         static s32 autoExposure_integerCountsIncrement = 3;
         static f32 autoExposure_minExposureTime = 0.02f;
-        static f32 autoExposure_maxExposureTime = 0.98f;
+        static f32 autoExposure_maxExposureTime = 0.50f;
         static u8 autoExposure_highValue = 250;
-        static f32 autoExposure_percentileToMakeHigh = 0.97f;
-        static s32 autoExposure_adjustEveryNFrames = 1;
+        static f32 autoExposure_percentileToMakeHigh = 0.95f;
+        static f32 autoExposure_tooHighPercentMultiplier = 0.7f;
+        static s32 autoExposure_adjustEveryNFrames = 2;
 
         // Tracking marker related members
         struct MarkerToTrack {
@@ -1786,6 +1787,7 @@ namespace Anki {
             autoExposure_highValue,
             autoExposure_percentileToMakeHigh,
             autoExposure_minExposureTime, autoExposure_maxExposureTime,
+            autoExposure_tooHighPercentMultiplier,
             exposureTime,
             VisionMemory::ccmScratch_);
 
@@ -1881,7 +1883,8 @@ namespace Anki {
           exposureTime = 0.0f;
         }
         
-        HAL::MicroWait(1000000);
+        HAL::MicroWait(333333);
+        //HAL::MicroWait(1500000);
 
         return RESULT_OK;
       } // Update() [RUN_GROUND_TRUTHING_CAPTURE]
@@ -1931,6 +1934,7 @@ namespace Anki {
             autoExposure_highValue,
             autoExposure_percentileToMakeHigh,
             autoExposure_minExposureTime, autoExposure_maxExposureTime,
+            autoExposure_tooHighPercentMultiplier
             exposureTime,
             VisionMemory::ccmScratch_);
 
@@ -2108,6 +2112,7 @@ namespace Anki {
               autoExposure_highValue,
               autoExposure_percentileToMakeHigh,
               autoExposure_minExposureTime, autoExposure_maxExposureTime,
+              autoExposure_tooHighPercentMultiplier,
               exposureTime,
               VisionMemory::ccmScratch_);
 
@@ -2257,6 +2262,7 @@ namespace Anki {
           autoExposure_highValue,
           autoExposure_percentileToMakeHigh,
           autoExposure_minExposureTime, autoExposure_maxExposureTime,
+          autoExposure_tooHighPercentMultiplier
           exposureTime,
           VisionMemory::ccmScratch_);
 

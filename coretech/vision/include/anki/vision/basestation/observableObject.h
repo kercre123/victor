@@ -118,7 +118,7 @@ namespace Anki {
                             const float   distThreshold,
                             const Radians angleThreshold) const;
       
-      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const = 0;
+      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
       
       // For creating derived objects from a pointer to this base class, see
       // ObservableObjectBase below
@@ -127,12 +127,15 @@ namespace Anki {
       virtual void GetCorners(std::vector<Point3f>& corners) const;
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const = 0;
       
-      virtual void Visualize() const = 0;
+      virtual void Visualize() = 0;
+      virtual void EraseVisualization() = 0;
+      
+      Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
       virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const = 0;
       
     protected:
       
-      //static const std::vector<RotationMatrix3d> rotationAmbiguities_;
+      static const std::vector<RotationMatrix3d> sRotationAmbiguities;
       static const std::vector<KnownMarker*> sEmptyMarkerVector;
       
       ObjectType_t type_;
@@ -213,6 +216,11 @@ namespace Anki {
       Pose3d P_diff_temp;
       return this->IsSameAs(otherObject, distThreshold, angleThreshold,
                             P_diff_temp);
+    }
+    
+    inline std::vector<RotationMatrix3d> const& ObservableObject::GetRotationAmbiguities() const
+    {
+      return ObservableObject::sRotationAmbiguities;
     }
                                     
     /*

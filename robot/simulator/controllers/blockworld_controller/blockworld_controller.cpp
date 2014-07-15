@@ -160,9 +160,9 @@ int main(int argc, char **argv)
       // TODO: store previous block's color and restore it when unselecting
       
       // Draw current block of interest
-      const ObjectID_t boi = behaviorMgr.GetBlockOfInterest();
+      const ObjectID_t boi = behaviorMgr.GetObjectOfInterest();
       
-      const Block* block = blockWorld.GetBlockByID(boi);
+      DockableObject* block = dynamic_cast<DockableObject*>(blockWorld.GetObjectByID(boi));
       if(block != nullptr) {
 
         // Get predock poses
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
           // Return previous selected block to original color (necessary in the
           // case that this block isn't currently being observed, meaning its
           // visualization won't have updated))
-          const Block* prevBlock = blockWorld.GetBlockByID(prev_boi);
+          DockableObject* prevBlock = dynamic_cast<DockableObject*>(blockWorld.GetObjectByID(prev_boi));
           if(prevBlock != nullptr && prevBlock->GetLastObservedTime() < BaseStationTimer::getInstance()->GetCurrentTimeStamp()) {
             prevBlock->Visualize(VIZ_COLOR_DEFAULT);
           }
@@ -218,11 +218,11 @@ int main(int argc, char **argv)
 
       VizManager::getInstance()->DrawRobotBoundingBox(robot->GetID(), quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
       
-      if(robot->IsCarryingBlock()) {
-        Block* carryBlock = blockWorld.GetBlockByID(robot->GetCarryingBlock());
+      if(robot->IsCarryingObject()) {
+        DockableObject* carryBlock = dynamic_cast<DockableObject*>(blockWorld.GetObjectByID(robot->GetCarryingObject()));
         if(carryBlock == nullptr) {
-          PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingBlock());
-          robot->SetCarryingBlock(ANY_OBJECT);
+          PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingObject());
+          robot->SetCarryingObject(ANY_OBJECT);
         } else {
           carryBlock->Visualize(VIZ_COLOR_DEFAULT);
         }

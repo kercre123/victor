@@ -1,3 +1,4 @@
+
 /**
  * File: behaviorManager.cpp
  *
@@ -41,8 +42,8 @@ namespace Anki {
     , mode_(BM_None)
     , distThresh_mm_(20.f)
     , angThresh_(DEG_TO_RAD(10))
-    , blockToPickUp_(Block::UNKNOWN_BLOCK_TYPE)
-    , blockToPlaceOn_(Block::UNKNOWN_BLOCK_TYPE)
+    , objectToPickUp_(Block::UNKNOWN_BLOCK_TYPE)
+    , objectToPlaceOn_(Block::UNKNOWN_BLOCK_TYPE)
     {
       Reset();
     }
@@ -100,8 +101,8 @@ namespace Anki {
       
       // June2014DiceDemo
       explorationStartAngle_ = 0;
-      blockToPickUp_  = Block::UNKNOWN_BLOCK_TYPE;
-      blockToPlaceOn_ = Block::UNKNOWN_BLOCK_TYPE;
+      objectToPickUp_  = Block::UNKNOWN_BLOCK_TYPE;
+      objectToPlaceOn_ = Block::UNKNOWN_BLOCK_TYPE;
       
     } // Reset()
     
@@ -111,37 +112,47 @@ namespace Anki {
     {
       bool currBlockOfInterestFound = false;
       bool newBlockOfInterestSet = false;
-      u32 numTotalObjects = 0;
       
-      // Iterate through the Object
-      auto const & blockMap = world_->GetAllExistingBlocks();
-      for (auto const & blockType : blockMap) {
-        numTotalObjects += blockType.second.size();
-        
-        //PRINT_INFO("currType: %d\n", blockType.first);
-        auto const & blockMapByID = blockType.second;
-        for (auto const & object : blockMapByID) {
-
-          const Block* block = dynamic_cast<Block*>(object.second);
-          if(block != nullptr && !block->IsBeingCarried())
-          {
-            //PRINT_INFO("currID: %d\n", block.first);
-            if (currBlockOfInterestFound) {
-              // Current block of interest has been found.
-              // Set the new block of interest to the next block in the list.
-              blockOfInterest_ = block->GetID();
-              newBlockOfInterestSet = true;
-              //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
+      // Iterate through all the non-Mat objects
+      auto const & allObjects = world_->GetAllExistingObjects();
+      for(auto const & objectsByFamily : allObjects) {
+        if(objectsByFamily.first != BlockWorld::MAT_FAMILY)
+        {
+          for (auto const & objectsByType : objectsByFamily.second) {
+            
+            //PRINT_INFO("currType: %d\n", blockType.first);
+            for (auto const & objectsByID : objectsByType.second) {
+              
+              const DockableObject* object = dynamic_cast<DockableObject*>(objectsByID.second);
+              if(object != nullptr && !object->IsBeingCarried())
+              {
+                //PRINT_INFO("currID: %d\n", block.first);
+                if (currBlockOfInterestFound) {
+                  // Current block of interest has been found.
+                  // Set the new block of interest to the next block in the list.
+                  objectIDofInterest_ = object->GetID();
+                  newBlockOfInterestSet = true;
+                  //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
+                  break;
+                } else if (object->GetID() == objectIDofInterest_) {
+                  currBlockOfInterestFound = true;
+                  //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+                }
+              }
+            } // for each ID
+            
+            if (newBlockOfInterestSet) {
               break;
-            } else if (block->GetID() == blockOfInterest_) {
-              currBlockOfInterestFound = true;
-              //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
             }
-          }
-        }
-        if (newBlockOfInterestSet)
+            
+          } // for each type
+        } // if non-MAT
+        
+        if(newBlockOfInterestSet) {
           break;
-      }
+        }
+        
+      } // for each family
       
       // If the current block of interest was found, but a new one was not set
       // it must have been the last block in the map. Set the new block of interest
@@ -150,34 +161,42 @@ namespace Anki {
         
         // Find first block
         ObjectID_t firstBlock = u16_MAX;
-        for (auto const & blockType : blockMap) {
-          for (auto const & object : blockType.second) {
-            const Block* block = dynamic_cast<Block*>(object.second);
-            if(block != nullptr && !block->IsBeingCarried())
-            {
-              firstBlock = object.first;
-              break;
+        for(auto const & objectsByFamily : allObjects) {
+          if(objectsByFamily.first != BlockWorld::MAT_FAMILY) {
+            for (auto const & objectsByType : objectsByFamily.second) {
+              for (auto const & objectsByID : objectsByType.second) {
+                const DockableObject* object = dynamic_cast<DockableObject*>(objectsByID.second);
+                if(object != nullptr && !object->IsBeingCarried())
+                {
+                  firstBlock = objectsByID.first;
+                  break;
+                }
+              }
+              if (firstBlock != u16_MAX) {
+                break;
+              }
             }
-          }
+          } // if not MAT
+          
           if (firstBlock != u16_MAX) {
             break;
           }
-        }
+        } // for each family
 
         
-        if (firstBlock == blockOfInterest_ || firstBlock == u16_MAX){
+        if (firstBlock == objectIDofInterest_ || firstBlock == u16_MAX){
           //PRINT_INFO("Only one block in existence.");
         } else {
           //PRINT_INFO("Setting block of interest to first block\n");
-          blockOfInterest_ = firstBlock;
+          objectIDofInterest_ = firstBlock;
         }
       }
       
-      PRINT_INFO("Block of interest: id %d  (total objects %d)\n", blockOfInterest_, numTotalObjects);
+      PRINT_INFO("Block of interest: ID = %d\n", objectIDofInterest_);
       
       /*
       // Draw BOI
-      const Block* block = dynamic_cast<Block*>(world_->GetObservableObjectByID(blockOfInterest_));
+      const Block* block = dynamic_cast<Block*>(world_->GetObservableObjectByID(objectIDofInterest_));
       if(block == nullptr) {
         PRINT_INFO("Failed to find/draw block of interest!\n");
       } else {
@@ -190,10 +209,10 @@ namespace Anki {
         block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
         
         // Erase previous predock pose marker for previous block of interest
-        if (prev_boi != blockOfInterest_ || poses.size() != prevNumPreDockPoses) {
-          PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", blockOfInterest_, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
+        if (prev_boi != objectIDofInterest_ || poses.size() != prevNumPreDockPoses) {
+          PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", objectIDofInterest_, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
           VizManager::getInstance()->EraseVizObjectType(VIZ_PREDOCKPOSE);
-          prev_boi = blockOfInterest_;
+          prev_boi = objectIDofInterest_;
           prevNumPreDockPoses = poses.size();
         }
         
@@ -211,7 +230,7 @@ namespace Anki {
                                               VIZ_COLOR_SELECTED_OBJECT);
       }
        */
-    } // SelectNextBlockOfInterest()
+    } // SelectNextObjectOfInterest()
     
     void BehaviorManager::Update()
     {
@@ -266,19 +285,19 @@ namespace Anki {
           
           
           // Get block object
-          Block* block = world_->GetBlockByID(blockOfInterest_);
-          if (block == nullptr) {
+          DockableObject* object = dynamic_cast<DockableObject*>(world_->GetObjectByID(objectIDofInterest_));
+          if (object == nullptr) {
             break;
           }
           
           // Check that we're not already carrying a block if the block of interest is a high block.
-          if (block->GetPose().GetTranslation().z() > 44.f && robot_->IsCarryingBlock()) {
-            PRINT_INFO("Already carrying block. Can't dock to high block. Aborting (0).\n");
+          if (object->GetPose().GetTranslation().z() > 44.f && robot_->IsCarryingObject()) {
+            PRINT_INFO("Already carrying object. Can't dock to high object. Aborting (0).\n");
             StartMode(BM_None);
             return;
           }
 
-          if(robot_->ExecuteDockingSequence(block->GetID()) != RESULT_OK) {
+          if(robot_->ExecuteDockingSequence(object->GetID()) != RESULT_OK) {
             PRINT_INFO("Robot::ExecuteDockingSequence() failed. Aborting.\n");
             StartMode(BM_None);
             return;
@@ -345,7 +364,7 @@ namespace Anki {
           
         case WAITING_FOR_DICE_TO_DISAPPEAR:
         {
-          const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingBlocks(Block::DICE_BLOCK_TYPE);
+          const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingObjectsByType(Block::DICE_BLOCK_TYPE);
           
           if(diceBlocks.empty()) {
             
@@ -356,7 +375,7 @@ namespace Anki {
               state_ = WAITING_TO_SEE_DICE;
             }
           } else {
-            world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
+            world_->ClearObjectsByType(Block::DICE_BLOCK_TYPE);
             diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
             if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
               // Keep clearing blocks until we don't see them anymore
@@ -373,8 +392,8 @@ namespace Anki {
         {
           /*
           // DEBUG!!!
-          blockToPickUp_ = Block::NUMBER5_BLOCK_TYPE;
-          blockToPlaceOn_ = Block::NUMBER6_BLOCK_TYPE;
+          objectToPickUp_ = Block::NUMBER5_BLOCK_TYPE;
+          objectToPlaceOn_ = Block::NUMBER6_BLOCK_TYPE;
           state_ = BEGIN_EXPLORING;
           break;
           */
@@ -384,14 +403,14 @@ namespace Anki {
           // Wait for robot to be IDLE
           if(robot_->GetState() == Robot::IDLE)
           {
-            const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingBlocks(Block::DICE_BLOCK_TYPE);
+            const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingObjectsByType(Block::DICE_BLOCK_TYPE);
             if(!diceBlocks.empty()) {
               
               if(diceBlocks.size() > 1) {
                 // Multiple dice blocks in the world, keep deleting them all
                 // until we only see one
                 CoreTechPrint("More than one dice block found!\n");
-                world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
+                world_->ClearObjectsByType(Block::DICE_BLOCK_TYPE);
                 
               } else {
                 
@@ -426,7 +445,7 @@ namespace Anki {
                   diceBlock->GetObservedMarkers(diceMarkers, robot_->GetLastMsgTimestamp() - 2000);
                   if (diceMarkers.empty()) {
                     CoreTechPrint("Haven't see dice marker for a while. Deleting dice.");
-                    world_->ClearBlocksByType(Block::DICE_BLOCK_TYPE);
+                    world_->ClearObjectsByType(Block::DICE_BLOCK_TYPE);
                     break;
                   }
                 }
@@ -485,13 +504,13 @@ namespace Anki {
                   CoreTechPrint("Found top marker on dice: %s!\n",
                                 Vision::MarkerTypeStrings[topMarker->GetCode()]);
                   
-                  if(blockToPickUp_ ==  Block::UNKNOWN_BLOCK_TYPE) {
+                  if(objectToPickUp_ ==  Block::UNKNOWN_BLOCK_TYPE) {
                     
-                    blockToPickUp_ = blockToLookFor;
-                    blockToPlaceOn_ =  Block::UNKNOWN_BLOCK_TYPE;
+                    objectToPickUp_ = blockToLookFor;
+                    objectToPlaceOn_ =  Block::UNKNOWN_BLOCK_TYPE;
                     
                     CoreTechPrint("Set blockToPickUp = %s\n",
-                                  Block::IDtoStringLUT[blockToPickUp_].c_str());
+                                  Block::IDtoStringLUT.at(objectToPickUp_).c_str());
                     
                     // Wait for first dice to disappear
                     state_ = WAITING_FOR_DICE_TO_DISAPPEAR;
@@ -501,16 +520,16 @@ namespace Anki {
                     waitUntilTime_ = 0;
                   } else {
 
-                    if(blockToLookFor == blockToPickUp_) {
-                      CoreTechPrint("Can't put a block on itself!\n");
+                    if(blockToLookFor == objectToPickUp_) {
+                      CoreTechPrint("Can't put a object on itself!\n");
                       // TODO:(bn) left and right + sad noise?
                     }
                     else {
 
-                      blockToPlaceOn_ = blockToLookFor;
+                      objectToPlaceOn_ = blockToLookFor;
                     
-                      CoreTechPrint("Set blockToPlaceOn = %s\n",
-                                    Block::IDtoStringLUT[blockToPlaceOn_].c_str());
+                      CoreTechPrint("Set objectToPlaceOn = %s\n",
+                                    Block::IDtoStringLUT.at(objectToPlaceOn_).c_str());
 
                       robot_->SendPlayAnimation(ANIM_HEAD_NOD, 2);
                       waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.5;
@@ -698,7 +717,7 @@ namespace Anki {
         } // case BACKING_UP
         case GOTO_EXPLORATION_POSE:
         {
-          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingBlocks(blockOfInterest_);
+          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectIDofInterest_);
           if (robot_->GetState() == Robot::IDLE || !blocks.empty()) {
             state_ = START_EXPLORING_TURN;
           }
@@ -710,15 +729,15 @@ namespace Anki {
           // try to locate blocks
           if(!robot_->IsMoving() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
             
-            if(robot_->IsCarryingBlock()) {
-              blockOfInterest_ = blockToPlaceOn_;
+            if(robot_->IsCarryingObject()) {
+              objectIDofInterest_ = objectToPlaceOn_;
             } else {
-              blockOfInterest_ = blockToPickUp_;
+              objectIDofInterest_ = objectToPickUp_;
             }
             
             
             // If we already know where the blockOfInterest is, then go straight to it
-            const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingBlocks(blockOfInterest_);
+            const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectIDofInterest_);
             if(blocks.empty()) {
               // Compute desired pose at mat center
               Pose3d robotPose = robot_->GetPose();
@@ -760,7 +779,7 @@ namespace Anki {
         {
           // If we've spotted the block we're looking for, stop exploring, and
           // execute a path to that block
-          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingBlocks(blockOfInterest_);
+          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectIDofInterest_);
           if(!blocks.empty()) {
             // Dock with the first block of the right type that we see
             // TODO: choose the closest?
@@ -773,7 +792,7 @@ namespace Anki {
             
             state_ = EXECUTING_DOCK;
             
-            wasCarryingBlockAtDockingStart_ = robot_->IsCarryingBlock();
+            wasCarryingBlockAtDockingStart_ = robot_->IsCarryingObject();
 
             SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
             
@@ -784,7 +803,7 @@ namespace Anki {
           // Repeat turn-stop behavior for more reliable block detection
           Radians currAngle = robot_->GetPose().GetRotationAngle<'Z'>();
           if (isTurning_ && (std::abs((explorationStartAngle_ - currAngle).ToFloat()) > DEG_TO_RAD(40))) {
-            PRINT_INFO("Exploration - pause turning. Looking for %s\n", Block::IDtoStringLUT[blockOfInterest_].c_str());
+            PRINT_INFO("Exploration - pause turning. Looking for %s\n", Block::IDtoStringLUT.at(objectIDofInterest_).c_str());
             robot_->DriveWheels(0.f,0.f);
             isTurning_ = false;
             waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
@@ -800,11 +819,11 @@ namespace Anki {
           // Wait for the robot to go back to IDLE
           if(robot_->GetState() == Robot::IDLE)
           {
-            const bool donePickingUp = robot_->IsCarryingBlock() &&
-                                       world_->GetBlockByID(robot_->GetCarryingBlock())->GetType() == blockToPickUp_;
+            const bool donePickingUp = robot_->IsCarryingObject() &&
+                                       world_->GetObjectByID(robot_->GetCarryingObject())->GetType() == objectToPickUp_;
             if(donePickingUp) {
               PRINT_INFO("Picked up block %d successfully! Going back to exploring for block to place on.\n",
-                         robot_->GetCarryingBlock());
+                         robot_->GetCarryingObject());
               
               state_ = BEGIN_EXPLORING;
               
@@ -813,10 +832,10 @@ namespace Anki {
               return;
             } // if donePickingUp
             
-            const bool donePlacing = !robot_->IsCarryingBlock() && wasCarryingBlockAtDockingStart_;
+            const bool donePlacing = !robot_->IsCarryingObject() && wasCarryingBlockAtDockingStart_;
             if(donePlacing) {
               PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
-                         blockToPickUp_, blockToPlaceOn_);
+                         objectToPickUp_, objectToPlaceOn_);
 
               robot_->MoveHeadToAngle(checkItOutAngleUp, checkItOutSpeed, 10);
               state_ = CHECK_IT_OUT_UP;
@@ -829,7 +848,7 @@ namespace Anki {
             
             
             // Either pickup or placement failed
-            const bool pickupFailed = !robot_->IsCarryingBlock();
+            const bool pickupFailed = !robot_->IsCarryingObject();
             if (pickupFailed) {
               PRINT_INFO("Block pickup failed. Retrying...\n");
             } else {
@@ -914,7 +933,7 @@ namespace Anki {
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
             robot_->SendPlayAnimation(ANIM_IDLE);
-            world_->ClearAllExistingBlocks();
+            world_->ClearAllExistingObjects();
             StartMode(BM_June2014DiceDemo);
           }
           break;

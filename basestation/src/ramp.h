@@ -1,0 +1,80 @@
+/**
+ * File: ramp.h
+ *
+ * Author: Andrew Stein
+ * Date:   7/9/2014
+ *
+ * Description: Defines a Ramp object, which is a type of DockableObject
+ *
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
+#ifndef ANKI_COZMO_BASESTATION_RAMP_H
+#define ANKI_COZMO_BASESTATION_RAMP_H
+
+#include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/quad.h"
+
+#include "anki/vision/basestation/observableObject.h"
+
+#include "anki/cozmo/basestation/messages.h"
+
+#include "anki/vision/MarkerCodeDefinitions.h"
+
+#include "dockableObject.h"
+#include "vizManager.h"
+
+namespace Anki {
+  
+  namespace Cozmo {
+    
+    
+    class Ramp : public DockableObject
+    {
+    public:
+      
+      enum Type {
+        BASIC_RAMP_MODEL,
+      };
+      
+      Ramp();
+      Ramp(const Ramp& otherRamp);
+      
+      virtual ~Ramp();
+      
+      virtual Ramp*  Clone() const override;
+      virtual void   GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
+      virtual void   Visualize() override;
+      virtual void   Visualize(VIZ_COLOR_ID color) override;
+      virtual void   EraseVisualization() override;
+      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
+      
+      virtual void GetPreDockPoses(const float distance_mm,
+                                   std::vector<PoseMarkerPair_t>& poseMarkerPairs,
+                                   const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
+
+    protected:
+      static const s32 NUM_CORNERS = 8;
+      
+      // Model dimensions in mm (perhaps these should come from a configuration
+      // file instead?)
+      constexpr static const f32 Width          = 60.f;
+      constexpr static const f32 Height         = 44.f;
+      constexpr static const f32 SlopeLength    = 88.f;
+      constexpr static const f32 PlatformLength = 44.f;
+      constexpr static const f32 MarkerSize     = 25.f;
+      
+      static const std::array<Point3f, NUM_CORNERS> CanonicalCorners;
+      
+      const Vision::KnownMarker* _leftMarker;
+      const Vision::KnownMarker* _rightMarker;
+      
+      VizManager::Handle_t _vizHandle;
+      
+    }; // class Ramp
+    
+  } // namespace Cozmo
+} // namespace Anki
+
+#endif // ANKI_COZMO_BASESTATION_RAMP_H

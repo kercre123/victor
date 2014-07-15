@@ -2,15 +2,18 @@ function [imgNew, AlphaChannel] = AddFiducial(img, varargin)
 
 CropImage = true;
 OutputSize = 512;
-PadOutside = true;
+PadOutside = false;
 FiducialColor = [0 0 0];
-TransparentColor = [];
+TransparentColor = [1 1 1];
 TransparencyTolerance = 0.1;
+OutputFile = '';
 
 parseVarargin(varargin{:});
 
 if ischar(img)
     [img, ~, AlphaChannel] = imread(img);
+    img = im2double(img);
+    AlphaChannel = im2double(AlphaChannel);
     if isempty(AlphaChannel) 
         AlphaChannel = ones(size(img,1),size(img,2));
     end
@@ -23,13 +26,13 @@ end
 %img = mean(im2double(img),3);
 
 if CropImage
-    [nrows,ncols,~] = size(img);
+    black = any(img<0.5,3) & AlphaChannel > 0;   
     
-    row = any(any(img<0.5,3),1); 
+    row = any(black,1); 
     xmin = find(row, 1, 'first');
     xmax = find(row, 1, 'last');
     
-    col = any(any(img<0.5,3),2);
+    col = any(black,2);
     ymin = find(col, 1, 'first');
     ymax = find(col, 1, 'last');
     
@@ -96,8 +99,26 @@ else
     end
 end
 
+imgNew = imresize(imgNew, OutputSize*[1 1], 'nearest');
+AlphaChannel = imresize(AlphaChannel, OutputSize*[1 1], 'nearest');
+
+if ~isempty(TransparentColor)
+    transImg = repmat(reshape(TransparentColor, [1 1 3]), OutputSize*[1 1]);
+    AlphaChannel = double(AlphaChannel) .* double(any(abs(imgNew - transImg)>TransparencyTolerance,3));
+end   
+
+imgNew(AlphaChannel(:,:,ones(1,3)) < TransparencyTolerance) = 1;
+
+imgNew = max(0, min(1, imgNew));
+AlphaChannel = max(0, min(1, AlphaChannel));
+
+if ~isempty(OutputFile)
+    imwrite(imgNew, OutputFile, 'Alpha', AlphaChannel);
+end
+
+
 if nargout == 0
-    subplot 131, imagesc(img, 'AlphaData', AlphaChannel), axis image
+    subplot 131, imagesc(max(0,min(1,imresize(img, OutputSize*[1 1]))), 'AlphaData', AlphaChannel), axis image
     
     squareFrac = VisionMarkerTrained.SquareWidthFraction;
     paddingFrac = VisionMarkerTrained.FiducialPaddingFraction;
@@ -129,17 +150,6 @@ if nargout == 0
     end
     
     colormap(gray)
-else
-    imgNew = imresize(imgNew, OutputSize*[1 1]);
-    AlphaChannel = imresize(AlphaChannel, OutputSize*[1 1]);
 end
-
-imgNew = max(0, min(1, imgNew));
-AlphaChannel = max(0, min(1, AlphaChannel));
-
-if ~isempty(TransparentColor)
-    transImg = repmat(reshape(TransparentColor, [1 1 3]), OutputSize*[1 1]);
-    AlphaChannel = double(AlphaChannel) .* double(any(abs(imgNew - transImg)>TransparencyTolerance,3));
-end   
 
 end

@@ -26,15 +26,15 @@
 namespace Anki {
   namespace Cozmo {
     
-    const std::string Block::IDtoStringLUT[NUM_BLOCK_TYPES] = {
-      "UNKNOWN_BLOCK_TYPE",
+    const std::map<ObjectType_t, std::string> Block::IDtoStringLUT = {
+      {UNKNOWN_BLOCK_TYPE, "UNKNOWN_BLOCK_TYPE"},
 #define BLOCK_DEFINITION_MODE BLOCK_ID_TO_STRING_LUT_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
     };
 
     
-    const Block::BlockInfoTableEntry_t Block::BlockInfoLUT_[NUM_BLOCK_TYPES] = {
-      {.name = "UNKNOWN"}
+    const std::map<ObjectType_t, Block::BlockInfoTableEntry_t> Block::BlockInfoLUT_ = {
+      {UNKNOWN_BLOCK_TYPE, {.name = "UNKNOWN"}}
 #define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
     };
@@ -42,7 +42,7 @@ namespace Anki {
 #pragma mark --- Generic Block Implementation ---
     
     void Block::AddFace(const FaceName whichFace,
-                        const Vision::Marker::Code &code,
+                        const Vision::MarkerType &code,
                         const float markerSize_mm)
     {
       /* Still needed??
@@ -137,35 +137,15 @@ namespace Anki {
     }
     
     Block::Block(const ObjectType_t type)
-    : ObservableObject(type)
-    , _color(BlockInfoLUT_[type].color)
-    , _size(BlockInfoLUT_[type].size)
-    , _name(BlockInfoLUT_[type].name)
-    , _isBeingCarried(false)
+    : DockableObject(type)
+    , _color(BlockInfoLUT_.at(type).color)
+    , _size(BlockInfoLUT_.at(type).size)
+    , _name(BlockInfoLUT_.at(type).name)
+    , _vizHandle(VizManager::INVALID_HANDLE)
     {
-      
-      //++Block::numBlocks;
-      /*
-      const float halfWidth  = 0.5f * this->GetWidth();
-      const float halfHeight = 0.5f * this->GetHeight();
-      const float halfDepth  = 0.5f * this->GetDepth();
-      
-      // x, width:  left(-)   / right(+)
-      // y, depth:  front(-)  / back(+)
-      // z, height: bottom(-) / top(+)
-      
-      blockCorners_[LEFT_FRONT_TOP]     = {-halfWidth,-halfDepth, halfHeight};
-      blockCorners_[RIGHT_FRONT_TOP]    = { halfWidth,-halfDepth, halfHeight};
-      blockCorners_[LEFT_FRONT_BOTTOM]  = {-halfWidth,-halfDepth,-halfHeight};
-      blockCorners_[RIGHT_FRONT_BOTTOM] = { halfWidth,-halfDepth,-halfHeight};
-      blockCorners_[LEFT_BACK_TOP]      = {-halfWidth, halfDepth, halfHeight};
-      blockCorners_[RIGHT_BACK_TOP]     = { halfWidth, halfDepth, halfHeight};
-      blockCorners_[LEFT_BACK_BOTTOM]   = {-halfWidth, halfDepth,-halfHeight};
-      blockCorners_[RIGHT_BACK_BOTTOM]  = { halfWidth, halfDepth,-halfHeight};
-      */
       markersByFace_.fill(NULL);
       
-      for(auto face : BlockInfoLUT_[type_].faces) {
+      for(auto face : BlockInfoLUT_.at(type_).faces) {
         AddFace(face.whichFace, face.code, face.size);
       }
       
@@ -274,11 +254,7 @@ namespace Anki {
       return boundingQuad;
       
     } // GetBoundingBoxInPlane()
-    
-    Quad2f Block::GetBoundingQuadXY(const f32 padding_mm) const
-    {
-      return GetBoundingQuadXY(pose_, padding_mm);
-    }
+
     
     Quad2f Block::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
@@ -314,6 +290,7 @@ namespace Anki {
     Block::~Block(void)
     {
       //--Block::numBlocks;
+      EraseVisualization();
     }
     
      /*
@@ -333,69 +310,6 @@ namespace Anki {
        -Z_AXIS_3D}
     };
     
-    bool GetPreDockPose(const Point3f& canonicalPoint,
-                        const float distance_mm,
-                        const Pose3d& blockPose,
-                        Pose3d& preDockPose)
-    {
-      bool dockingPointFound = false;
-      
-      // Compute this point's position at this distance according to this
-      // block's current pose
-      Point3f dockingPt(canonicalPoint);  // start with canonical point
-      dockingPt *= distance_mm;           // scale to specified distance
-      dockingPt =  blockPose * dockingPt; // transform to block's pose
-      
-      //
-      // Check if it's vertically oriented
-      //
-      const float DOT_TOLERANCE   = .35f;
-      
-      // Get vector, v, from center of block to this point
-      Point3f v(dockingPt);
-      v -= blockPose.GetTranslation();
-      
-      // Dot product of this vector with the z axis should be near zero
-      // TODO: make dot product tolerance in terms of an angle?
-      if( NEAR(DotProduct(Z_AXIS_3D, v), 0.f,  distance_mm * DOT_TOLERANCE) ) {
-        
-        /*
-        // Rotation of block around v should be a multiple of 90 degrees
-        const float ANGLE_TOLERANCE = DEG_TO_RAD(35);
-        const float angX = ABS(blockPose.GetRotationAngle<'X'>().ToFloat());
-        const float angY = ABS(blockPose.GetRotationAngle<'Y'>().ToFloat());
-        
-        const bool angX_mult90 = (NEAR(angX, 0.f,             ANGLE_TOLERANCE) ||
-                                  NEAR(angX, DEG_TO_RAD(90),  ANGLE_TOLERANCE) ||
-                                  NEAR(angX, DEG_TO_RAD(180), ANGLE_TOLERANCE) ||
-                                  NEAR(angX, DEG_TO_RAD(360), ANGLE_TOLERANCE));
-        const bool angY_mult90 = (NEAR(angY, 0.f,             ANGLE_TOLERANCE) ||
-                                  NEAR(angY, DEG_TO_RAD(90),  ANGLE_TOLERANCE) ||
-                                  NEAR(angY, DEG_TO_RAD(180), ANGLE_TOLERANCE) ||
-                                  NEAR(angY, DEG_TO_RAD(360), ANGLE_TOLERANCE));
-        
-        if(angX_mult90 && angY_mult90)
-        {
-          dockingPt.z() = 0.f;  // Project to floor plane
-          preDockPose.SetTranslation(dockingPt);
-          preDockPose.SetRotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
-          dockingPointFound = true;
-        }
-        */
-        
-        // TODO: The commented out logic above appears not to be accounting
-        // for rotation ambiguity of blocks. Just accept this is a valid dock pose for now.
-        dockingPt.z() = 0.f;  // Project to floor plane
-        preDockPose.SetTranslation(dockingPt);
-        preDockPose.SetRotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
-        preDockPose.SetParent(blockPose.GetParent());
-        dockingPointFound = true;
-
-      }
-      
-      return dockingPointFound;
-    }  // GetPreDockPose()
-    
     
     void Block::GetPreDockPoses(const float distance_mm,
                                 std::vector<PoseMarkerPair_t>& poseMarkerPairs,
@@ -408,7 +322,7 @@ namespace Anki {
         if(withCode == Vision::Marker::ANY_CODE || GetMarker(i_face).GetCode() == withCode) {
           const Vision::KnownMarker& faceMarker = GetMarker(i_face);
           const f32 distanceForThisFace = faceMarker.GetPose().GetTranslation().Length() + distance_mm;
-          if(GetPreDockPose(CanonicalDockingPoints[i_face], distanceForThisFace, this->pose_, preDockPose) == true) {
+          if(GetPreDockPose(CanonicalDockingPoints[i_face], distanceForThisFace, preDockPose) == true) {
             poseMarkerPairs.emplace_back(preDockPose, GetMarker(i_face));
           }
         }
@@ -486,17 +400,12 @@ namespace Anki {
       
     } // Block::GetMarker()
 
-    void Block::Visualize() const
+    void Block::Visualize()
     {
-      Visualize(0);
+      Visualize(_color);
     }
     
-    void Block::Visualize(const f32 preDockPoseDistance) const
-    {
-      Visualize(_color, preDockPoseDistance);
-    }
-    
-    void Block::Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) const
+    void Block::Visualize(VIZ_COLOR_ID color)
     {
       Pose3d vizPose;
       if(pose_.GetWithRespectTo(pose_.FindOrigin(), vizPose) == false) {
@@ -505,16 +414,19 @@ namespace Anki {
         return;
       }
       
-      VizManager::getInstance()->DrawCuboid(GetID(), _size, vizPose, color);
-      
-      if(preDockPoseDistance > 0.f) {
-        u32 poseID = 0;
-        std::vector<Block::PoseMarkerPair_t> poses;
-        GetPreDockPoses(preDockPoseDistance, poses);
-        for(auto pose : poses) {
-          VizManager::getInstance()->DrawPreDockPose(6*GetID()+poseID++, pose.first, VIZ_COLOR_PREDOCKPOSE);
-        }
+      _vizHandle = VizManager::getInstance()->DrawCuboid(GetID(), _size, vizPose, color);
+    }
+    
+    void Block::EraseVisualization()
+    {
+      // Erase the main object
+      if(_vizHandle != VizManager::INVALID_HANDLE) {
+        VizManager::getInstance()->EraseVizObject(_vizHandle);
+        _vizHandle = VizManager::INVALID_HANDLE;
       }
+      
+      // Erase the pre-dock poses
+      DockableObject::EraseVisualization();
     }
     
 #pragma mark ---  Block_Cube1x1 Implementation ---
