@@ -17,8 +17,6 @@
 #include <stdio.h>
 
 
-#define DEBUG_TCPCOMMS 0
-
 namespace Anki {
 namespace Cozmo {
   
