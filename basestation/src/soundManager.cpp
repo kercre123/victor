@@ -78,7 +78,16 @@ namespace Anki {
       
     }
     
-    SoundManager* SoundManager::singletonInstance_ = 0;
+    SoundManager* SoundManager::singletonInstance_ = nullptr;
+    
+    void SoundManager::removeInstance()
+    {
+      // check if the instance has been created yet
+      if(nullptr != singletonInstance_) {
+        delete singletonInstance_;
+        singletonInstance_ = nullptr;
+      }
+    }
     
     SoundManager::SoundManager()
     {

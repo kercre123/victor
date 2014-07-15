@@ -12,12 +12,14 @@
  **/
 
 #include "anki/cozmo/basestation/tcpComms.h"
-#include "anki/cozmo/basestation/utils/debug.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/common/basestation/utils/timer.h"
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+
+
+#define DEBUG_TCPCOMMS 0
 
 namespace Anki {
 namespace Cozmo {
