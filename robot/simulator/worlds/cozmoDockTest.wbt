@@ -99,6 +99,9 @@ DirectionalLight {
 CozmoMat {
 }
 
+WebotsKeyboardController {
+}
+
 RobotAdvertisementService {
 }
 XYaxesDisplay {
