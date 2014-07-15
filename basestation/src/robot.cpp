@@ -459,6 +459,29 @@ namespace Anki {
       _state = nextState;
     }
 
+    bool Robot::IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle) const {
+      if(head_angle < MIN_HEAD_ANGLE - HEAD_ANGLE_LIMIT_MARGIN) {
+        //PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Head angle (%f rad) too small.\n", head_angle);
+        if (clipped_valid_head_angle) {
+          *clipped_valid_head_angle = MIN_HEAD_ANGLE;
+        }
+        return false;
+      }
+      else if(head_angle > MAX_HEAD_ANGLE + HEAD_ANGLE_LIMIT_MARGIN) {
+        //PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Head angle (%f rad) too large.\n", head_angle);
+        if (clipped_valid_head_angle) {
+          *clipped_valid_head_angle = MAX_HEAD_ANGLE;
+        }
+        return false;
+      }
+      
+      if (clipped_valid_head_angle) {
+        *clipped_valid_head_angle = head_angle;
+      }
+      return true;
+    }
+    
+
     
     void Robot::SetPose(const Pose3d &newPose)
     {
@@ -469,18 +492,8 @@ namespace Anki {
     
     void Robot::SetHeadAngle(const f32& angle)
     {
-      if(angle < MIN_HEAD_ANGLE) {
-        PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too small. Clipping.\n", angle);
-        _currentHeadAngle = MIN_HEAD_ANGLE;
-        SendHeadAngleUpdate();
-      }
-      else if(angle > MAX_HEAD_ANGLE) {
-        PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too large. Clipping.\n", angle);
-        _currentHeadAngle = MAX_HEAD_ANGLE;
-        SendHeadAngleUpdate();
-      }
-      else {
-        _currentHeadAngle = angle;
+      if (!IsValidHeadAngle(angle, &_currentHeadAngle)) {
+        PRINT_NAMED_WARNING("HeadAngleOOB","angle %f  (TODO: Send correction or just recalibrate?)\n", angle);
       }
       
       // Start with canonical (untilted) headPose
