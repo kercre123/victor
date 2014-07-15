@@ -1856,19 +1856,10 @@ namespace Anki {
 
         frameNumber++;
 
-        //captureResolution_ = Vision::CAMERA_RES_VGA;
-        
-        //const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-        //const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
-        
-        const s32 captureHeight = 240;
-        const s32 captureWidth  = 320;
+        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
 
-        Array<u8> grayscaleImage = Array<u8>(captureHeight, captureWidth, VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
-        
-        if(!grayscaleImage.IsValid()) {
-          grayscaleImage = Array<u8>(captureHeight, captureWidth, VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
-        }
+        Array<u8> grayscaleImage(captureHeight, captureWidth, VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
 
         HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), captureResolution_, false);
 
@@ -1886,15 +1877,14 @@ namespace Anki {
         
         HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
         
-        //exposureTime += .1f;
-        exposureTime = 0.4f;
+        exposureTime += .1f;
         
         if(exposureTime > 1.01f) {
           exposureTime = 0.0f;
         }
         
-        //HAL::MicroWait(333333);
-        HAL::MicroWait(600000);
+        HAL::MicroWait(333333);
+        //HAL::MicroWait(1500000);
 
         return RESULT_OK;
       } // Update() [RUN_GROUND_TRUTHING_CAPTURE]
