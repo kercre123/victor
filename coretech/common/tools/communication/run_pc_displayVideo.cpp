@@ -65,7 +65,7 @@ static vector<DebugStreamClient::Object> currentObjects;
 /*
 static void printUsage()
 {
-  TODO: Fill in
+TODO: Fill in
 } // void printUsage()
 */
 
@@ -501,7 +501,7 @@ int main(int argc, char ** argv)
   DebugStreamClient parserThread(ipAddress, port);
 #else
   const s32 comPort = 11;
-  const s32 baudRate = 1000000;
+  const s32 baudRate = 2000000;
   DebugStreamClient parserThread(comPort, baudRate);
 #endif
 
