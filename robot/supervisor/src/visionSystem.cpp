@@ -1859,7 +1859,11 @@ namespace Anki {
         const s32 captureHeight = CameraModeInfo[captureResolution_].height;
         const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
 
-        Array<u8> grayscaleImage(captureHeight, captureWidth, VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
+        Array<u8> grayscaleImage = Array<u8>(captureHeight, captureWidth, VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
+        
+        if(!grayscaleImage.IsValid()) {
+          grayscaleImage = Array<u8>(captureHeight, captureWidth, VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
+        }
 
         HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), captureResolution_, false);
 
