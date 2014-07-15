@@ -1934,7 +1934,7 @@ namespace Anki {
             autoExposure_highValue,
             autoExposure_percentileToMakeHigh,
             autoExposure_minExposureTime, autoExposure_maxExposureTime,
-            autoExposure_tooHighPercentMultiplier
+            autoExposure_tooHighPercentMultiplier,
             exposureTime,
             VisionMemory::ccmScratch_);
 
@@ -2262,7 +2262,7 @@ namespace Anki {
           autoExposure_highValue,
           autoExposure_percentileToMakeHigh,
           autoExposure_minExposureTime, autoExposure_maxExposureTime,
-          autoExposure_tooHighPercentMultiplier
+          autoExposure_tooHighPercentMultiplier,
           exposureTime,
           VisionMemory::ccmScratch_);
 
