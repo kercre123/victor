@@ -1,0 +1,332 @@
+/*
+ * File:          basestation.cpp
+ * Date:
+ * Description:   
+ * Author:        
+ * Modifications: 
+ */
+
+#include <fstream>
+
+#include "anki/cozmo/basestation/basestation.h"
+#include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/rotatedRect_impl.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/platformPathManager.h"
+
+#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/tcpComms.h"
+#include "anki/cozmo/basestation/uiTcpComms.h"
+#include "messageHandler.h"
+#include "uiMessageHandler.h"
+#include "pathPlanner.h"
+#include "behaviorManager.h"
+#include "vizManager.h"
+
+
+namespace Anki {
+namespace Cozmo {
+
+
+class BasestationMainImpl
+{
+public:
+  // Constructor
+  BasestationMainImpl();
+  
+  // Destructor
+  virtual ~BasestationMainImpl();
+  
+  // Initializes components of basestation
+  // RETURNS: BS_OK, or BS_END_INIT_ERROR
+  //BasestationStatus Init(const MetaGame::GameParameters& params, IComms* comms, boost::property_tree::ptree &config, BasestationMode mode);
+  BasestationStatus Init(IComms* comms, BasestationMode mode);
+  
+  BasestationMode GetMode();
+  
+  /*
+   // unintializes basestation. needed for lifecycle/memory management.
+   void UnInit();
+  
+   // unintializes basestation. returns BS_END_CLEAN_EXIT if all ok
+   BasestationStatus SafeUnInit();
+   
+   // Removes / cleans up all singletons
+   static void RemoveSingletons();
+   */
+  // Runs an iteration of the base-station.  Takes an argument for the current
+  // system time.
+  BasestationStatus Update(BaseStationTime_t currTime);
+  /*
+   // Converts recording / playback module status to basestation status.
+   BasestationStatus ConvertStatus(RecordingPlaybackStatus status);
+   
+   // returns true if the basestation is loaded (including possibly planner table computation, etc)
+   bool DoneLoading();
+   
+   // returns the loading progress while the basestation is loading (between 0 and 1)
+   float GetLoadingProgress();
+   
+   
+   // stops game
+   static void StopGame();
+   */
+
+  
+private:
+  // Instantiate all the modules we need
+  TCPComms robotComms_;
+  BlockWorld blockWorld_;
+  RobotManager robotMgr_;
+  MessageHandler msgHandler_;
+  BehaviorManager behaviorMgr_;
+  UiTCPComms uiDevComms_;
+  UiMessageHandler uiMsgHandler_;
+  
+  LatticePlanner *pathPlanner_;
+  
+  /*
+   // process message queue
+   void ProcessUiMessagesInPausedState();
+   
+   // process message queue
+   void ProcessUiMessages();
+   */
+  BasestationMode mode_;
+  
+  /*
+   boost::property_tree::ptree config_;
+   IRecordingPlaybackModule *recordingPlaybackModule_;
+   
+   MetaGame::GameSettings* gameSettings_;
+   */
+  
+};
+ 
+BasestationMainImpl::BasestationMainImpl()
+{
+  
+}
+
+BasestationMainImpl::~BasestationMainImpl()
+{
+  delete pathPlanner_;
+}
+
+  
+BasestationMode BasestationMainImpl::GetMode()
+{
+  return mode_;
+}
+
+
+BasestationStatus BasestationMainImpl::Init(IComms* comms, BasestationMode mode)
+{
+  BasestationStatus status = BS_OK;
+  
+  // read planner motion primitives
+  Json::Value mprims;
+  const std::string subPath("coretech/planning/matlab/cozmo_mprim.json");
+  const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+
+  Json::Reader reader;
+  std::ifstream jsonFile(jsonFilename);
+  reader.parse(jsonFile, mprims);
+  jsonFile.close();
+
+  pathPlanner_ = new LatticePlanner(&blockWorld_, mprims);
+  
+  // Initialize the modules by telling them about each other:
+  msgHandler_.Init(&robotComms_, &robotMgr_, &blockWorld_);
+  robotMgr_.Init(&msgHandler_, &blockWorld_, pathPlanner_);
+  blockWorld_.Init(&robotMgr_);
+  behaviorMgr_.Init(&robotMgr_, &blockWorld_);
+  uiMsgHandler_.Init(&uiDevComms_, &robotMgr_, &blockWorld_, &behaviorMgr_);
+  
+  VizManager::getInstance()->Init();
+  
+  return status;
+}
+
+
+BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
+{
+  BasestationStatus status = BS_OK;
+  
+  // Update time
+  BaseStationTimer::getInstance()->UpdateTime(currTime);
+  
+  // Read messages from all robots
+  robotComms_.Update();
+
+  // Read UI messages
+  uiDevComms_.Update();
+  uiMsgHandler_.ProcessMessages();
+  
+  
+  // If not already connected to a robot, connect to the
+  // first one that becomes available.
+  // TODO: Once we have a UI, we can select the one we want to connect to in a more reasonable way.
+  if (robotComms_.GetNumConnectedRobots() == 0) {
+    std::vector<int> advertisingRobotIDs;
+    if (robotComms_.GetAdvertisingRobotIDs(advertisingRobotIDs) > 0) {
+      for(auto robotID : advertisingRobotIDs) {
+        printf("RobotComms connecting to robot %d.\n", robotID);
+        if (robotComms_.ConnectToRobotByID(robotID)) {
+          printf("Connected to robot %d\n", robotID);
+          robotMgr_.AddRobot(robotID);
+          robotMgr_.GetRobotByID(robotID)->SendInit();
+          break;
+        } else {
+          printf("Failed to connect to robot %d\n", robotID);
+          return BS_END_INIT_ERROR;
+        }
+      }
+    }
+  }
+  
+  // If we still don't have any connected robots, don't proceed
+  if (robotComms_.GetNumConnectedRobots() == 0) {
+    return BS_OK;
+  }
+
+  //MessageHandler::getInstance()->ProcessMessages();
+  msgHandler_.ProcessMessages();
+    
+  // Draw observed markers, but only if images are being streamed
+  blockWorld_.DrawObsMarkers();
+  
+  // Update the world (force robots to process their messages)
+  uint32_t numBlocksObserved = 0;
+  blockWorld_.Update(numBlocksObserved);
+  
+  // Update the behavior manager.
+  // TODO: This object encompasses, for the time-being, what some higher level
+  // module(s) would do.  e.g. Some combination of game state, build planner,
+  // personality planner, etc.
+  behaviorMgr_.Update();
+  
+  
+  
+
+  /////////// Update visualization ////////////
+  { // Update Block-of-Interest display
+    
+    // Get selected block of interest from Behavior manager
+    static ObjectID_t prev_boi = 0;      // Previous block of interest
+    static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
+    // TODO: store previous block's color and restore it when unselecting
+    
+    // Draw current block of interest
+    const ObjectID_t boi = behaviorMgr_.GetObjectOfInterest();
+    
+    DockableObject* block = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(boi));
+    if(block != nullptr) {
+
+      // Get predock poses
+      std::vector<Block::PoseMarkerPair_t> poses;
+      block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
+      
+      // Erase previous predock pose marker for previous block of interest
+      if (prev_boi != boi || poses.size() != prevNumPreDockPoses) {
+        PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", boi, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
+        VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
+        
+        // Return previous selected block to original color (necessary in the
+        // case that this block isn't currently being observed, meaning its
+        // visualization won't have updated))
+        DockableObject* prevBlock = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(prev_boi));
+        if(prevBlock != nullptr && prevBlock->GetLastObservedTime() < BaseStationTimer::getInstance()->GetCurrentTimeStamp()) {
+          prevBlock->Visualize(VIZ_COLOR_DEFAULT);
+        }
+        
+        prev_boi = boi;
+        prevNumPreDockPoses = poses.size();
+      }
+
+      // Draw cuboid for current selection, with predock poses
+      block->Visualize(VIZ_COLOR_SELECTED_OBJECT, PREDOCK_DISTANCE_MM);
+      
+    } else {
+      // block == nullptr (no longer exists, delete its predock poses)
+      VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
+    }
+    
+  } // if blocks were updated
+  
+  // Draw all robot poses
+  // TODO: Only send when pose has changed?
+  for(auto robotID : robotMgr_.GetRobotIDList())
+  {
+    Robot* robot = robotMgr_.GetRobotByID(robotID);
+    
+    // Triangle pose marker
+    VizManager::getInstance()->DrawRobot(robotID, robot->GetPose());
+    
+    // Full Webots CozmoBot model
+    VizManager::getInstance()->DrawRobot(robotID, robot->GetPose(), robot->GetHeadAngle(), robot->GetLiftAngle());
+    
+    // Robot bounding box
+    using namespace Quad;
+    Quad2f quadOnGround2d = robot->GetBoundingQuadXY();
+    Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
+                          Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
+                          Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
+                          Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
+
+    VizManager::getInstance()->DrawRobotBoundingBox(robot->GetID(), quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
+    
+    if(robot->IsCarryingObject()) {
+      DockableObject* carryBlock = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(robot->GetCarryingObject()));
+      if(carryBlock == nullptr) {
+        PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingObject());
+        robot->SetCarryingObject(ANY_OBJECT);
+      } else {
+        carryBlock->Visualize(VIZ_COLOR_DEFAULT);
+      }
+    }
+  }
+
+  /////////// End visualization update ////////////
+
+  
+  return status;
+}
+
+
+// =========== Start BasestationMain forwarding functions =======
+  
+  
+BasestationMain::BasestationMain()
+{
+  impl_ = new BasestationMainImpl();
+}
+
+BasestationMain::~BasestationMain()
+{
+  delete impl_;
+}
+
+BasestationStatus BasestationMain::Init(IComms* comms, BasestationMode mode)
+{
+  return impl_->Init(comms, mode);
+}
+
+BasestationMode BasestationMain::GetMode()
+{
+  return impl_->GetMode();
+}
+
+BasestationStatus BasestationMain::Update(BaseStationTime_t currTime)
+{
+  return impl_->Update(currTime);
+}
+  
+} // namespace Cozmo
+} // namespace Anki
