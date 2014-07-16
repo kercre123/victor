@@ -1,4 +1,4 @@
-function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStats(resultsData_perPose)
+function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStats(resultsData_perPose, showPlots)
     %#ok<*FNDSB>
     
     sceneTypes = getSceneTypes(resultsData_perPose);
@@ -10,29 +10,31 @@ function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStat
     
     quadExtraction_events = extractEvents(resultsData_perPose, sceneTypes);
         
-    for iAngle = 1:numAngles
-        for iLight = 1:numLights
-            
-            dataPoints = zeros(numCameraExposures, numDistances);
-            for iCameraExposure = 1:numCameraExposures
-                for iDistance = 1:numDistances        
-                    quadExtraction_numQuadsDetected = squeeze(quadExtraction_events(iCameraExposure, iDistance, iAngle, iLight, 1));
-                    quadExtraction_numQuadsNotIgnored = squeeze(quadExtraction_events(iCameraExposure, iDistance, iAngle, iLight, 2));
+    if showPlots
+        for iAngle = 1:numAngles
+            for iLight = 1:numLights
 
-                    dataPoints(iCameraExposure, iDistance) = quadExtraction_numQuadsDetected / quadExtraction_numQuadsNotIgnored;
+                dataPoints = zeros(numCameraExposures, numDistances);
+                for iCameraExposure = 1:numCameraExposures
+                    for iDistance = 1:numDistances        
+                        quadExtraction_numQuadsDetected = squeeze(quadExtraction_events(iCameraExposure, iDistance, iAngle, iLight, 1));
+                        quadExtraction_numQuadsNotIgnored = squeeze(quadExtraction_events(iCameraExposure, iDistance, iAngle, iLight, 2));
+
+                        dataPoints(iCameraExposure, iDistance) = quadExtraction_numQuadsDetected / quadExtraction_numQuadsNotIgnored;
+                    end
                 end
+
+                figure(iLight);
+                subplot(1,numAngles,iAngle);                    
+                bar(sceneTypes.distances, dataPoints')
+                shading flat
+                a = axis();
+                a(4) = 1.0;
+                axis(a);
+                title(sprintf('Angle:%d Light%d', sceneTypes.angles(iAngle), sceneTypes.lights(iLight)));
             end
-            
-            figure(iLight);
-            subplot(1,numAngles,iAngle);                    
-            bar(sceneTypes.distances, dataPoints')
-            shading flat
-            a = axis();
-            a(4) = 1.0;
-            axis(a);
-            title(sprintf('Angle:%d Light%d', sceneTypes.angles(iAngle), sceneTypes.lights(iLight)));
         end
-    end
+    end % if showPlots
     
     
     
@@ -42,7 +44,7 @@ function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStat
     
     % 3. Bar of angle, distance.
     
-    
+    resultsData_overall.percentQuadsExtracted = sum(sum(sum(sum(quadExtraction_events(:,:,:,:,1))))) / sum(sum(sum(sum(quadExtraction_events(:,:,:,:,2)))));
     keyboard
 end % runTests_detectFiducialMarkers_compileOverallStats()
 

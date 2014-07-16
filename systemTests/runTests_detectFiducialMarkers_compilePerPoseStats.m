@@ -25,7 +25,7 @@ function runTests_detectFiducialMarkers_compilePerPoseStats(workQueue, allTestDa
     for iWork = 1:length(workQueue)        
         if workQueue{iWork}.iTest ~= lastTestId
             if lastTestId ~= -1
-                disp(sprintf('Compiled test results %d/%d in %f seconds', lastTestId, length(resultsData_basics), toc()));
+%                 disp(sprintf('Compiled test results %d/%d in %f seconds', lastTestId, length(resultsData_basics), toc()));
                 tic
             end
             

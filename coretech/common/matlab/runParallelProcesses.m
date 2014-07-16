@@ -20,6 +20,7 @@ function runParallelProcesses(numComputeThreads, workQueue, matlabCommandString)
             matlabLaunchCommand = 'matlab';
             matlabLaunchParameters = ' -noFigureWindows -nosplash ';
         elseif ismac()
+            asssert(false); % TODO: support this
             matlabLaunchCommand = matlabroot;
             matlabLaunchParameters = ' ';
         else
@@ -67,9 +68,7 @@ function runParallelProcesses(numComputeThreads, workQueue, matlabCommandString)
                 assert(false);
             end
             
-            %commandString = [commandString, matlabLaunchParameters, ' -r "', hideWindowsCommand, '; load(''', workerInputFilenames{iThread+1},'''); ', matlabCommandString, '; mut=1; save(''', threadCompletionMutexFilenames{iThread+1}, ''',''mut''); exit;"'];
-            commandString = [commandString, matlabLaunchParameters, ' -r \\"disp(''toast'');\\"'];
-            % commandString = [commandString, matlabLaunchParameters];
+            commandString = [commandString, matlabLaunchParameters, ' -r "', hideWindowsCommand, '; load(''', workerInputFilenames{iThread+1},'''); ', matlabCommandString, '; mut=1; save(''', threadCompletionMutexFilenames{iThread+1}, ''',''mut''); exit;"'];
             
             system(commandString);
         end
