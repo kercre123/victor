@@ -34,7 +34,7 @@ if(NOT WIN32)
     CoreTech_Common_Basestation
     CoreTech_Vision_Basestation
     CoreTech_Planning_Basestation
-    CoreTech_Messaging_Shared
+    CoreTech_Messaging_Basestation
     CppController # Webots C++ Controller
     jsoncpp
     ${OPENCV_LIBS}

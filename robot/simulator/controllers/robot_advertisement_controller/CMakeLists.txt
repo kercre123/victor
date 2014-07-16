@@ -28,7 +28,7 @@ if(NOT WIN32)
   target_link_libraries(robot_advertisement_controller 
     CppController # Webots C++ Controller
     CoreTech_Common_Robot
-    CoreTech_Messaging_Shared
+    CoreTech_Messaging_Robot
   )
   
   set_target_properties(robot_advertisement_controller PROPERTIES
