@@ -110,3 +110,9 @@ webots_keyboard_controller
 systemTests/tests/*.mat
 matlab/recompileBasicsAllInput.mat
 matlab/runParallelProcesses_input*.mat
+matlab/nohup.out
+systemTests/nohup.out
+systemTests/recompileBasicsAllInput.mat
+systemTests/runParallelProcesses_input0.mat
+systemTests/runParallelProcesses_input1.mat
+systemTests/runParallelProcesses_input2.mat

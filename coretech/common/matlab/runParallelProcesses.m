@@ -15,8 +15,16 @@ function runParallelProcesses(numComputeThreads, workQueue, matlabCommandString)
         eval(matlabCommandString);
     else
         %             matlabLaunchCommand = 'matlab -nojvm -noFigureWindows -nosplash ';
-        %             matlabLaunchCommand = 'matlab -noFigureWindows -nosplash ';
-        matlabLaunchCommand = 'matlab -noFigureWindows -nosplash ';
+        
+        if ispc()
+            matlabLaunchCommand = 'matlab';
+            matlabLaunchParameters = ' -noFigureWindows -nosplash ';
+        elseif ismac()
+            matlabLaunchCommand = matlabroot;
+            matlabLaunchParameters = ' ';
+        else
+            asssert(false); % TODO: support this
+        end
         
         hideWindowsCommand = 'frames = java.awt.Frame.getFrames; for frameIdx = 3:length(frames) try awtinvoke(frames(frameIdx),''setVisible'',0); catch end; end;';
         
@@ -39,7 +47,30 @@ function runParallelProcesses(numComputeThreads, workQueue, matlabCommandString)
             catch
             end
             
-            commandString = ['start /b ', matlabLaunchCommand, ' -r "', hideWindowsCommand, '; load(''', workerInputFilenames{iThread+1},'''); ', matlabCommandString, '; mut=1; save(''', threadCompletionMutexFilenames{iThread+1}, ''',''mut''); exit;"'];
+            if ispc()
+                commandString = ['start /b '];
+            elseif ismac()
+                commandString = ['open -na '];
+            else
+                % TODO: support this
+                assert(false);
+            end
+            
+            commandString = [commandString, matlabLaunchCommand];
+            
+            if ispc()
+                % Do nothing
+            elseif ismac()
+                commandString = [commandString, ' --args'];
+            else
+                % TODO: support this
+                assert(false);
+            end
+            
+            %commandString = [commandString, matlabLaunchParameters, ' -r "', hideWindowsCommand, '; load(''', workerInputFilenames{iThread+1},'''); ', matlabCommandString, '; mut=1; save(''', threadCompletionMutexFilenames{iThread+1}, ''',''mut''); exit;"'];
+            commandString = [commandString, matlabLaunchParameters, ' -r \\"disp(''toast'');\\"'];
+            % commandString = [commandString, matlabLaunchParameters];
+            
             system(commandString);
         end
         
