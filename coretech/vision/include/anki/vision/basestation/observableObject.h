@@ -24,6 +24,8 @@
 
 #include "anki/vision/basestation/visionMarker.h"
 
+#include "anki/common/basestation/strongTypedef.h"
+
 namespace Anki {
   namespace Vision {
     
@@ -43,7 +45,7 @@ namespace Anki {
       // Do we want to be req'd to instantiate with all codes up front?
       ObservableObject(){};
       
-      ObservableObject(ObjectType_t type);
+      ObservableObject(ObjectType type);
       
       //ObservableObject(const std::vector<std::pair<Marker::Code,Pose3d> >& codesAndPoses);
       
@@ -95,12 +97,12 @@ namespace Anki {
                          const bool requireSomethingBehind) const;
       
       // Accessors:
-      ObjectID_t      GetID()     const;
-      ObjectType_t    GetType()   const;
+      ObjectID        GetID()     const;
+      ObjectType      GetType()   const;
       const Pose3d&   GetPose()   const;
       //virtual float GetMinDim() const = 0;
       
-      void SetID(const ObjectID_t newID);
+      void SetID(); //const ObjectID newID);
       void SetPose(const Pose3d& newPose);
       
       void SetLastObservedTime(TimeStamp_t t) {lastObservedTime_ = t;}
@@ -138,8 +140,8 @@ namespace Anki {
       static const std::vector<RotationMatrix3d> sRotationAmbiguities;
       static const std::vector<KnownMarker*> sEmptyMarkerVector;
       
-      ObjectType_t type_;
-      ObjectID_t   ID_;
+      ObjectType   type_;
+      ObjectID     ID_;
       TimeStamp_t  lastObservedTime_;
       
       // Using a list here so that adding new markers does not affect references
@@ -188,11 +190,11 @@ namespace Anki {
     }
      */
     
-    inline ObjectID_t ObservableObject::GetID() const {
+    inline ObjectID ObservableObject::GetID() const {
       return ID_;
     }
     
-    inline ObjectType_t ObservableObject::GetType() const {
+    inline ObjectType ObservableObject::GetType() const {
       return type_;
     }
     
@@ -201,8 +203,9 @@ namespace Anki {
       return pose_;
     }
     
-    inline void ObservableObject::SetID(const ObjectID_t newID) {
-      ID_ = newID;
+    inline void ObservableObject::SetID() { //const ObjectID newID) {
+      ID_.Set();
+      //ID_ = newID;
     }
   
     inline void ObservableObject::SetPose(const Pose3d& newPose) {
@@ -270,7 +273,7 @@ namespace Anki {
       
       // Only one object in a library can have each type. Return a pointer to
       // that object, or NULL if none exists.
-      const ObservableObject* GetObjectWithType(const ObjectType_t type) const;
+      const ObservableObject* GetObjectWithType(const ObjectType type) const;
       
       // Return a pointer to a vector of pointers to known objects with at
       // least one of the specified markers or codes on it. If  there is no
@@ -283,7 +286,7 @@ namespace Anki {
       static const std::set<const ObservableObject*> sEmptyObjectVector;
       
       //std::list<const ObservableObject*> knownObjects_;
-      std::map<ObjectType_t, const ObservableObject*> knownObjects_;
+      std::map<ObjectType, const ObservableObject*> knownObjects_;
       
       // Store a list of pointers to all objects that have at least one marker
       // with that code.  You can then use the objects' GetMarkersWithCode()

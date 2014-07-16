@@ -29,13 +29,13 @@ namespace Anki {
     
 #pragma mark --- ObservableObject Implementations ---
     
-    //ObjectID_t ObservableObject::ObjectCounter = 0;
+    //ObjectID ObservableObject::ObjectCounter = 0;
     const std::vector<KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
     
     const std::vector<RotationMatrix3d> ObservableObject::sRotationAmbiguities; // default is empty
     
-    ObservableObject::ObservableObject(ObjectType_t objType)
-    : type_(objType), ID_(0), lastObservedTime_(0), wasObserved_(false)
+    ObservableObject::ObservableObject(ObjectType objType)
+    : type_(objType), lastObservedTime_(0), wasObserved_(false)
     {
       //ID_ = ObservableObject::ObjectCounter++;
     }
@@ -216,7 +216,7 @@ namespace Anki {
     
     const std::set<const ObservableObject*> ObservableObjectLibrary::sEmptyObjectVector;
     
-    const ObservableObject* ObservableObjectLibrary::GetObjectWithType(const ObjectType_t type) const
+    const ObservableObject* ObservableObjectLibrary::GetObjectWithType(const ObjectType type) const
     {
       auto obj = knownObjects_.find(type);
       if(obj != knownObjects_.end()) {
@@ -261,7 +261,7 @@ namespace Anki {
                                                            const CameraID_t seenOnlyBy) const
     {
       // Group the markers by object type
-      std::map<ObjectType_t, std::vector<const ObservedMarker*>> markersWithObjectType;
+      std::map<ObjectType, std::vector<const ObservedMarker*>> markersWithObjectType;
       
       for(auto marker : markers) {
         
