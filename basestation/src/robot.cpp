@@ -135,9 +135,9 @@ namespace Anki {
     , _currentLiftAngle(0)
     , _isPickingOrPlacing(false)
     , _state(IDLE)
-    , _carryingObjectID(ANY_OBJECT)
+//    , _carryingObjectID(ANY_OBJECT)
     , _carryingMarker(nullptr)
-    , _dockObjectID(ANY_OBJECT)
+ //   , _dockObjectID(ANY_OBJECT)
     , _dockMarker(nullptr)
     {
       SetHeadAngle(_currentHeadAngle);
@@ -274,7 +274,7 @@ namespace Anki {
             // For now, just docking to the marker no matter where it is in the image.
             DockableObject* dockObject = dynamic_cast<DockableObject*>(_world->GetObjectByID(_dockObjectID));
             if(dockObject == nullptr) {
-              PRINT_NAMED_ERROR("Robot.Update.DockObjectGone", "Docking object with ID=%d no longer exists in the world. Returning to IDLE state.\n", _dockObjectID);
+              PRINT_NAMED_ERROR("Robot.Update.DockObjectGone", "Docking object with ID=%d no longer exists in the world. Returning to IDLE state.\n", _dockObjectID.GetValue());
               SetState(IDLE);
               return;
             }
@@ -709,7 +709,7 @@ namespace Anki {
     }
     
   
-    Result Robot::ExecuteDockingSequence(ObjectID_t objectIDtoDockWith)
+    Result Robot::ExecuteDockingSequence(ObjectID objectIDtoDockWith)
     {
       Result lastResult = RESULT_OK;
       
@@ -717,7 +717,7 @@ namespace Anki {
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.DockObjectDoesNotExist",
                           "Robot %d asked to dock with Object ID=%d, but it does not exist.",
-                          _ID, objectIDtoDockWith);
+                          _ID, objectIDtoDockWith.GetValue());
 
         return RESULT_FAIL;
       }
@@ -783,7 +783,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.CarryObjectDoesNotExist",
                           "Robot %d thinks it is carrying a block with ID=%d, but that "
                           "block does not exist in the world.\n",
-                          _ID, _carryingObjectID);
+                          _ID, _carryingObjectID.GetValue());
         
         return RESULT_FAIL;
       }
@@ -827,7 +827,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.CarryObjectDoesNotExist",
                           "Robot %d thinks it is carrying an object with ID=%d, but that "
                           "object does not exist in the world.\n",
-                          _ID, _carryingObjectID);
+                          _ID, _carryingObjectID.GetValue());
         
         return RESULT_FAIL;
       }
@@ -920,7 +920,7 @@ namespace Anki {
     
     // Sends a message to the robot to dock with the specified block
     // that it should currently be seeing.
-    Result Robot::DockWithObject(const ObjectID_t objectID,
+    Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const DockAction_t dockAction)
     {
@@ -932,7 +932,7 @@ namespace Anki {
     // the marker can be seen anywhere in the image (same as above function), otherwise the
     // marker's center must be seen at the specified image coordinates
     // with pixel_radius pixels.
-    Result Robot::DockWithObject(const ObjectID_t objectID,
+    Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const DockAction_t dockAction,
                                  const u16 image_pixel_x,
@@ -942,7 +942,7 @@ namespace Anki {
       DockableObject* object = dynamic_cast<DockableObject*>(_world->GetObjectByID(objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.DockWithObject.ObjectDoesNotExist",
-                          "Object with ID=%d no longer exists for docking.\n", objectID);
+                          "Object with ID=%d no longer exists for docking.\n", objectID.GetValue());
         return RESULT_FAIL;
       }
 
@@ -967,7 +967,7 @@ namespace Anki {
     
     Result Robot::PickUpDockObject()
     {
-      if(_dockObjectID == ANY_OBJECT) {
+      if(!_dockObjectID.IsSet()) {
         PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoDockObjectIDSet",
                           "No docking object ID set, but told to pick one up.\n");
         return RESULT_FAIL;
@@ -988,7 +988,7 @@ namespace Anki {
       DockableObject* object = dynamic_cast<DockableObject*>(_world->GetObjectByID(_dockObjectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
-                          "Dock object with ID=%d no longer exists for picking up.\n", _dockObjectID);
+                          "Dock object with ID=%d no longer exists for picking up.\n", _dockObjectID.GetValue());
         return RESULT_FAIL;
       }
       
@@ -1033,7 +1033,7 @@ namespace Anki {
       if(carryObject == nullptr) {
         PRINT_NAMED_ERROR("Robot.VerifyObjectPickup.CarryObjectNoLongerExists",
                           "Object %d we were carrying no longer exists in the world.\n",
-                          _carryingObjectID);
+                          _carryingObjectID.GetValue());
         return RESULT_FAIL;
       }
       
@@ -1056,12 +1056,12 @@ namespace Anki {
       {
         // Must not actually be carrying the object I thought I was!
         _world->ClearObject(_carryingObjectID);
-        _carryingObjectID = ANY_OBJECT;
+        _carryingObjectID.UnSet();
         PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
       } else {
         _carryingObjectID = _dockObjectID;  // Already set?
         _carryingMarker   = _dockMarker;   //   "
-        _dockObjectID     = ANY_OBJECT;
+        _dockObjectID.UnSet();
         _dockMarker       = nullptr;
         PRINT_INFO("Object pick-up SUCCEEDED!\n");
       }
@@ -1073,7 +1073,7 @@ namespace Anki {
     
     Result Robot::PlaceCarriedObject() //const TimeStamp_t atTime)
     {
-      if(_carryingObjectID == ANY_OBJECT) {
+      if(!_carryingObjectID.IsSet()) {
         PRINT_NAMED_WARNING("Robot.PlaceCarriedObject.CarryingObjectNotSpecified",
                             "No carrying object set, but told to place one.\n");
         return RESULT_FAIL;
@@ -1085,7 +1085,7 @@ namespace Anki {
       {
         // This really should not happen.  How can a object being carried get deleted?
         PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.CarryingObjectDoesNotExist",
-                          "Carrying object with ID=%d no longer exists.\n", _carryingObjectID);
+                          "Carrying object with ID=%d no longer exists.\n", _carryingObjectID.GetValue());
         return RESULT_FAIL;
       }
       
@@ -1124,7 +1124,7 @@ namespace Anki {
       
       PRINT_NAMED_INFO("Robot.PlaceCarriedObject.ObjectPlaced",
                        "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).\n",
-                       _ID, object->GetID(),
+                       _ID, object->GetID().GetValue(),
                        object->GetPose().GetTranslation().x(),
                        object->GetPose().GetTranslation().y(),
                        object->GetPose().GetTranslation().z());
@@ -1152,22 +1152,22 @@ namespace Anki {
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.VerifyObjectPlacement.CarryObjectNoLongerExists",
                           "Object %d we were carrying no longer exists in the world.\n",
-                          _carryingObjectID);
+                          _carryingObjectID.GetValue());
         return RESULT_FAIL;
       }
       else if(object->GetLastObservedTime() > (GetLastMsgTimestamp()-500))
       {
         // We've seen the object in the last half second (which could
         // not be true if we were still carrying it)
-        _carryingObjectID = ANY_OBJECT;
+        _carryingObjectID.UnSet();
         _carryingMarker   = nullptr;
-        _dockObjectID     = ANY_OBJECT;
+        _dockObjectID.UnSet();
         _dockMarker       = nullptr;
         PRINT_INFO("Object placement SUCCEEDED!\n");
       } else {
         // TODO: correct to assume we are still carrying the object?
         _dockObjectID     = _carryingObjectID;
-        _carryingObjectID = ANY_OBJECT;
+        _carryingObjectID.UnSet();
         PickUpDockObject(); // re-pickup block to attach it to the lift again
         PRINT_INFO("Object placement FAILED!\n");
         

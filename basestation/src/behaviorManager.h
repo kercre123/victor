@@ -19,6 +19,8 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 
+#include "anki/common/basestation/strongTypedef.h"
+
 namespace Anki {
   namespace Cozmo {
     
@@ -47,7 +49,7 @@ namespace Anki {
 
       Robot* GetRobot() const {return robot_;}
       
-      const ObjectID_t GetObjectOfInterest() const {return objectIDofInterest_;}
+      const ObjectID GetObjectOfInterest() const {return objectIDofInterest_;}
       
       // Select the next object in blockWorld as the block of interest
       void SelectNextBlockOfInterest();
@@ -107,8 +109,11 @@ namespace Anki {
       unsigned int timesIdle_;
       Pose3d originalPose_;
       
-      // Object that the robot is currently travelling to, docking to,
-      ObjectID_t objectIDofInterest_;
+      // Specific object that the robot is currently travelling to, docking to,
+      ObjectID objectIDofInterest_;
+      
+      // Object _type_ the robot is currently "interested in"
+      ObjectType objectTypeOfInterest_;
       
       // Thresholds for knowing we're done with a path traversal
       f32    distThresh_mm_;
@@ -163,8 +168,8 @@ namespace Anki {
       
       /////// June2014DiceDemo vars ///////
       const TimeStamp_t TimeBetweenDice_ms = 1000; // 1 sec
-      ObjectType_t objectToPickUp_;
-      ObjectType_t objectToPlaceOn_;
+      ObjectType objectToPickUp_;
+      ObjectType objectToPlaceOn_;
       TimeStamp_t  diceDeletionTime_;
       bool wasCarryingBlockAtDockingStart_;
       Radians explorationStartAngle_;

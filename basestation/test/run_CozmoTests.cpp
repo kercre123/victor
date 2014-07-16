@@ -231,8 +231,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       // block
       for(int i_block=0; i_block<numBlocksTrue; ++i_block)
       {
-        ObjectType_t blockType;
-        ASSERT_TRUE(JsonTools::GetValueOptional(jsonBlocks[i_block], "Type", blockType));
+        int blockTypeAsInt;
+        ASSERT_TRUE(JsonTools::GetValueOptional(jsonBlocks[i_block], "Type", blockTypeAsInt));
+        const ObjectType blockType(blockTypeAsInt);
         
         const Vision::ObservableObject* block = blockWorld.GetObjectLibrary(BlockWorld::BLOCK_FAMILY).GetObjectWithType(blockType);
         
@@ -311,12 +312,12 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
             fprintf(stdout, "Observed type-%d block %d at (%.2f,%.2f,%.2f) does not match "
                     "type-%d ground truth at (%.2f,%.2f,%.2f). T_diff = %2fmm (vs. %.2fmm), "
                     "Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
-                    observedBlock.second->GetType(),
-                    observedBlock.second->GetID(),
+                    int(observedBlock.second->GetType()),
+                    int(observedBlock.second->GetID()),
                     observedBlock.second->GetPose().GetTranslation().x(),
                     observedBlock.second->GetPose().GetTranslation().y(),
                     observedBlock.second->GetPose().GetTranslation().z(),
-                    groundTruthBlock->GetType(),
+                    int(groundTruthBlock->GetType()),
                     groundTruthBlock->GetPose().GetTranslation().x(),
                     groundTruthBlock->GetPose().GetTranslation().y(),
                     groundTruthBlock->GetPose().GetTranslation().z(),

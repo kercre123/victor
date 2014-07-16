@@ -19,7 +19,7 @@
 namespace Anki {
   namespace Cozmo {
     
-    DockableObject::DockableObject(ObjectType_t type)
+    DockableObject::DockableObject(ObjectType type)
     : Vision::ObservableObject(type)
     , _isBeingCarried(false)
     {

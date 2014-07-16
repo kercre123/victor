@@ -155,12 +155,12 @@ int main(int argc, char **argv)
     { // Update Block-of-Interest display
       
       // Get selected block of interest from Behavior manager
-      static ObjectID_t prev_boi = 0;      // Previous block of interest
+      static ObjectID prev_boi;      // Previous block of interest
       static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
       // TODO: store previous block's color and restore it when unselecting
       
       // Draw current block of interest
-      const ObjectID_t boi = behaviorMgr.GetObjectOfInterest();
+      const ObjectID boi = behaviorMgr.GetObjectOfInterest();
       
       DockableObject* block = dynamic_cast<DockableObject*>(blockWorld.GetObjectByID(boi));
       if(block != nullptr) {
@@ -221,8 +221,8 @@ int main(int argc, char **argv)
       if(robot->IsCarryingObject()) {
         DockableObject* carryBlock = dynamic_cast<DockableObject*>(blockWorld.GetObjectByID(robot->GetCarryingObject()));
         if(carryBlock == nullptr) {
-          PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingObject());
-          robot->SetCarryingObject(ANY_OBJECT);
+          PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), int(robot->GetCarryingObject()));
+          robot->UnSetCarryingObject();
         } else {
           carryBlock->Visualize(VIZ_COLOR_DEFAULT);
         }

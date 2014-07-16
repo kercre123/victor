@@ -27,7 +27,7 @@ namespace Anki {
   class Camera;
   
   namespace Cozmo {
-    
+   
     // Forward Declarations:
     class Robot;
 
@@ -46,14 +46,15 @@ namespace Anki {
 #include "anki/cozmo/basestation/BlockDefinitions.h"
       
       // Enumerated block types
-      enum Type {
-        UNKNOWN_BLOCK_TYPE = BLOCK_STARTING_TYPE_NUMBER,
+      class Type : public ObjectType {
+        Type() { }
+      public:
 #define BLOCK_DEFINITION_MODE BLOCK_ENUM_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
       };
       
-      // LUT for String Names for each enumerated block ID
-      static const std::map<ObjectType_t, std::string> IDtoStringLUT;
+      // LUT for String Names for each enumerated block Type
+      static const std::map<ObjectType, std::string> TypeToStringLUT;
       
       // NOTE: if the ordering of these is modified, you must also update
       //       the static OppositeFaceLUT.
@@ -83,7 +84,7 @@ namespace Anki {
         NUM_CORNERS       =  8
       };
       
-      Block(const ObjectType_t type);
+      Block(const ObjectType type);
       
       Block(const Block& other); 
       
@@ -159,7 +160,7 @@ namespace Anki {
       
       static const FaceName OppositeFaceLUT[NUM_FACES];
       
-      //static ObjectType_t NumTypes;
+      //static ObjectType NumTypes;
       
       // Make this protected so we have to use public AddFace() method
       using Vision::ObservableObject::AddMarker;
@@ -185,8 +186,8 @@ namespace Anki {
         std::vector<BlockFaceDef_t> faces;
       } BlockInfoTableEntry_t;
       
-      static const std::map<ObjectType_t, BlockInfoTableEntry_t> BlockInfoLUT_;
-      static const std::map<std::string, ObjectType_t> BlockNameToTypeMap;
+      static const std::map<ObjectType, BlockInfoTableEntry_t> BlockInfoLUT_;
+      static const std::map<std::string, ObjectType> BlockNameToTypeMap;
       
       static const std::array<Point3f,NUM_FACES> CanonicalDockingPoints;
       
@@ -227,7 +228,7 @@ namespace Anki {
       }
       
     protected:
-      //static const ObjectType_t BlockType;
+      //static const ObjectType BlockType;
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
     };
@@ -249,7 +250,7 @@ namespace Anki {
       }
       
     protected:
-      //static const ObjectType_t BlockType;
+      //static const ObjectType BlockType;
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
     };

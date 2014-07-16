@@ -28,7 +28,7 @@ namespace Anki {
     {
     public:
       
-      DockableObject(ObjectType_t type);
+      DockableObject(ObjectType type);
       
       // Get possible poses to start docking/tracking procedure. These will be
       // a point a given distance away from each vertical face that has the
