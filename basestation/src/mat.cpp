@@ -25,16 +25,18 @@
 namespace Anki {
   namespace Cozmo {
     
+    const MatPiece::Type MatPiece::Type::LETTERS_4x4;
+    
     // MatPiece has no rotation ambiguities but we still need to define this
     // static const here to instatiate an empty list.
     const std::vector<RotationMatrix3d> MatPiece::rotationAmbiguities_;
     
-    MatPiece::MatPiece(ObjectType_t type, bool isFirstPiece)
+    MatPiece::MatPiece(ObjectType type, bool isFirstPiece)
     : Vision::ObservableObject(type)
     {
       
       // TODO: Use a MatTypeLUT and MatDefinitions file, like we do with blocks
-      
+
       //#include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
 #include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"
      
@@ -69,6 +71,8 @@ namespace Anki {
     Quad2f MatPiece::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
       // TODO
+      Quad2f bbox;
+      return bbox;
     }
     
   } // namespace Cozmo

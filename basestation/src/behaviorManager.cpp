@@ -42,8 +42,8 @@ namespace Anki {
     , mode_(BM_None)
     , distThresh_mm_(20.f)
     , angThresh_(DEG_TO_RAD(10))
-    , objectToPickUp_(Block::UNKNOWN_BLOCK_TYPE)
-    , objectToPlaceOn_(Block::UNKNOWN_BLOCK_TYPE)
+//    , objectToPickUp_(Block::UNKNOWN_BLOCK_TYPE)
+//    , objectToPlaceOn_(Block::UNKNOWN_BLOCK_TYPE)
     {
       Reset();
     }
@@ -101,8 +101,8 @@ namespace Anki {
       
       // June2014DiceDemo
       explorationStartAngle_ = 0;
-      objectToPickUp_  = Block::UNKNOWN_BLOCK_TYPE;
-      objectToPlaceOn_ = Block::UNKNOWN_BLOCK_TYPE;
+      objectToPickUp_.SetToUnknown();
+      objectToPlaceOn_.SetToUnknown();
       
     } // Reset()
     
@@ -160,7 +160,7 @@ namespace Anki {
       if (!currBlockOfInterestFound || !newBlockOfInterestSet) {
         
         // Find first block
-        ObjectID_t firstBlock = u16_MAX;
+        ObjectID firstBlock; // initialized to un-set
         for(auto const & objectsByFamily : allObjects) {
           if(objectsByFamily.first != BlockWorld::MAT_FAMILY) {
             for (auto const & objectsByType : objectsByFamily.second) {
@@ -172,19 +172,19 @@ namespace Anki {
                   break;
                 }
               }
-              if (firstBlock != u16_MAX) {
+              if (firstBlock.IsSet()) {
                 break;
               }
             }
           } // if not MAT
           
-          if (firstBlock != u16_MAX) {
+          if (firstBlock.IsSet()) {
             break;
           }
         } // for each family
 
         
-        if (firstBlock == objectIDofInterest_ || firstBlock == u16_MAX){
+        if (firstBlock == objectIDofInterest_ || !firstBlock.IsSet()){
           //PRINT_INFO("Only one block in existence.");
         } else {
           //PRINT_INFO("Setting block of interest to first block\n");
@@ -192,7 +192,7 @@ namespace Anki {
         }
       }
       
-      PRINT_INFO("Block of interest: ID = %d\n", objectIDofInterest_);
+      PRINT_INFO("Block of interest: ID = %d\n", objectIDofInterest_.GetValue());
       
       /*
       // Draw BOI
@@ -201,7 +201,7 @@ namespace Anki {
         PRINT_INFO("Failed to find/draw block of interest!\n");
       } else {
 
-        static ObjectID_t prev_boi = 0;      // Previous block of interest
+        static ObjectID prev_boi = 0;      // Previous block of interest
         static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
 
         // Get predock poses
@@ -364,7 +364,7 @@ namespace Anki {
           
         case WAITING_FOR_DICE_TO_DISAPPEAR:
         {
-          const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingObjectsByType(Block::DICE_BLOCK_TYPE);
+          const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingObjectsByType(Block::Type::DICE);
           
           if(diceBlocks.empty()) {
             
@@ -375,7 +375,7 @@ namespace Anki {
               state_ = WAITING_TO_SEE_DICE;
             }
           } else {
-            world_->ClearObjectsByType(Block::DICE_BLOCK_TYPE);
+            world_->ClearObjectsByType(Block::Type::DICE);
             diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
             if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
               // Keep clearing blocks until we don't see them anymore
@@ -403,14 +403,14 @@ namespace Anki {
           // Wait for robot to be IDLE
           if(robot_->GetState() == Robot::IDLE)
           {
-            const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingObjectsByType(Block::DICE_BLOCK_TYPE);
+            const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingObjectsByType(Block::Type::DICE);
             if(!diceBlocks.empty()) {
               
               if(diceBlocks.size() > 1) {
                 // Multiple dice blocks in the world, keep deleting them all
                 // until we only see one
                 CoreTechPrint("More than one dice block found!\n");
-                world_->ClearObjectsByType(Block::DICE_BLOCK_TYPE);
+                world_->ClearObjectsByType(Block::Type::DICE);
                 
               } else {
                 
@@ -445,7 +445,7 @@ namespace Anki {
                   diceBlock->GetObservedMarkers(diceMarkers, robot_->GetLastMsgTimestamp() - 2000);
                   if (diceMarkers.empty()) {
                     CoreTechPrint("Haven't see dice marker for a while. Deleting dice.");
-                    world_->ClearObjectsByType(Block::DICE_BLOCK_TYPE);
+                    world_->ClearObjectsByType(Block::Type::DICE);
                     break;
                   }
                 }
@@ -457,39 +457,39 @@ namespace Anki {
                   // Don't forget to remove the dice as an ignore type for
                   // planning, since we _do_ want to avoid it as an obstacle
                   // when driving to pick and place blocks
-                  robot_->GetPathPlanner()->RemoveIgnoreType(Block::DICE_BLOCK_TYPE);
+                  robot_->GetPathPlanner()->RemoveIgnoreType(Block::Type::DICE);
                   
-                  ObjectID_t blockToLookFor = Block::UNKNOWN_BLOCK_TYPE;
+                  ObjectType blockToLookFor;
                   switch(static_cast<Vision::MarkerType>(topMarker->GetCode()))
                   {
                     case Vision::MARKER_DICE1:
                     {
-                      blockToLookFor = Block::NUMBER1_BLOCK_TYPE;
+                      blockToLookFor = Block::Type::NUMBER1;
                       break;
                     }
                     case Vision::MARKER_DICE2:
                     {
-                      blockToLookFor = Block::NUMBER2_BLOCK_TYPE;
+                      blockToLookFor = Block::Type::NUMBER2;
                       break;
                     }
                     case Vision::MARKER_DICE3:
                     {
-                      blockToLookFor = Block::NUMBER3_BLOCK_TYPE;
+                      blockToLookFor = Block::Type::NUMBER3;
                       break;
                     }
                     case Vision::MARKER_DICE4:
                     {
-                      blockToLookFor = Block::NUMBER4_BLOCK_TYPE;
+                      blockToLookFor = Block::Type::NUMBER4;
                       break;
                     }
                     case Vision::MARKER_DICE5:
                     {
-                      blockToLookFor = Block::NUMBER5_BLOCK_TYPE;
+                      blockToLookFor = Block::Type::NUMBER5;
                       break;
                     }
                     case Vision::MARKER_DICE6:
                     {
-                      blockToLookFor = Block::NUMBER6_BLOCK_TYPE;
+                      blockToLookFor = Block::Type::NUMBER6;
                       break;
                     }
                       
@@ -504,13 +504,13 @@ namespace Anki {
                   CoreTechPrint("Found top marker on dice: %s!\n",
                                 Vision::MarkerTypeStrings[topMarker->GetCode()]);
                   
-                  if(objectToPickUp_ ==  Block::UNKNOWN_BLOCK_TYPE) {
+                  if(objectToPickUp_.IsUnknown()) {
                     
                     objectToPickUp_ = blockToLookFor;
-                    objectToPlaceOn_ =  Block::UNKNOWN_BLOCK_TYPE;
+                    objectToPlaceOn_.SetToUnknown();
                     
                     CoreTechPrint("Set blockToPickUp = %s\n",
-                                  Block::IDtoStringLUT.at(objectToPickUp_).c_str());
+                                  Block::TypeToStringLUT.at(objectToPickUp_).c_str());
                     
                     // Wait for first dice to disappear
                     state_ = WAITING_FOR_DICE_TO_DISAPPEAR;
@@ -529,7 +529,7 @@ namespace Anki {
                       objectToPlaceOn_ = blockToLookFor;
                     
                       CoreTechPrint("Set objectToPlaceOn = %s\n",
-                                    Block::IDtoStringLUT.at(objectToPlaceOn_).c_str());
+                                    Block::TypeToStringLUT.at(objectToPlaceOn_).c_str());
 
                       robot_->SendPlayAnimation(ANIM_HEAD_NOD, 2);
                       waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.5;
@@ -550,7 +550,7 @@ namespace Anki {
                   // Since we are purposefully trying to get really close to the
                   // dice, ignore it as an obstacle.  We'll consider an obstacle
                   // again later, when we start driving around to pick and place.
-                  robot_->GetPathPlanner()->AddIgnoreType(Block::DICE_BLOCK_TYPE);
+                  robot_->GetPathPlanner()->AddIgnoreType(Block::Type::DICE);
                   
                   Vec3f position( robot_->GetPose().GetTranslation() );
                   position -= diceBlock->GetPose().GetTranslation();
@@ -717,7 +717,7 @@ namespace Anki {
         } // case BACKING_UP
         case GOTO_EXPLORATION_POSE:
         {
-          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectIDofInterest_);
+          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectTypeOfInterest_);
           if (robot_->GetState() == Robot::IDLE || !blocks.empty()) {
             state_ = START_EXPLORING_TURN;
           }
@@ -730,14 +730,14 @@ namespace Anki {
           if(!robot_->IsMoving() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
             
             if(robot_->IsCarryingObject()) {
-              objectIDofInterest_ = objectToPlaceOn_;
+              objectTypeOfInterest_ = objectToPlaceOn_;
             } else {
-              objectIDofInterest_ = objectToPickUp_;
+              objectTypeOfInterest_ = objectToPickUp_;
             }
             
             
             // If we already know where the blockOfInterest is, then go straight to it
-            const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectIDofInterest_);
+            const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectTypeOfInterest_);
             if(blocks.empty()) {
               // Compute desired pose at mat center
               Pose3d robotPose = robot_->GetPose();
@@ -752,7 +752,7 @@ namespace Anki {
               
               if (ComputeDistanceBetween(targetPose, robotPose) > 50.f) {
                 PRINT_INFO("Going to mat center for exploration (%f %f %f)\n", targetPose.GetTranslation().x(), targetPose.GetTranslation().y(), targetAngle);
-                robot_->GetPathPlanner()->AddIgnoreType(Block::DICE_BLOCK_TYPE);
+                robot_->GetPathPlanner()->AddIgnoreType(Block::Type::DICE);
                 robot_->ExecutePathToPose(targetPose);
               }
 
@@ -767,7 +767,7 @@ namespace Anki {
         case START_EXPLORING_TURN:
         {
           PRINT_INFO("Beginning exploring\n");
-          robot_->GetPathPlanner()->RemoveIgnoreType(Block::DICE_BLOCK_TYPE);
+          robot_->GetPathPlanner()->RemoveIgnoreType(Block::Type::DICE);
           robot_->DriveWheels(8.f, -8.f);
           robot_->MoveHeadToAngle(DEG_TO_RAD(-10), 1, 1);
           explorationStartAngle_ = robot_->GetPose().GetRotationAngle<'Z'>();
@@ -779,7 +779,7 @@ namespace Anki {
         {
           // If we've spotted the block we're looking for, stop exploring, and
           // execute a path to that block
-          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectIDofInterest_);
+          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectTypeOfInterest_);
           if(!blocks.empty()) {
             // Dock with the first block of the right type that we see
             // TODO: choose the closest?
@@ -803,7 +803,7 @@ namespace Anki {
           // Repeat turn-stop behavior for more reliable block detection
           Radians currAngle = robot_->GetPose().GetRotationAngle<'Z'>();
           if (isTurning_ && (std::abs((explorationStartAngle_ - currAngle).ToFloat()) > DEG_TO_RAD(40))) {
-            PRINT_INFO("Exploration - pause turning. Looking for %s\n", Block::IDtoStringLUT.at(objectIDofInterest_).c_str());
+            PRINT_INFO("Exploration - pause turning. Looking for %s\n", Block::TypeToStringLUT.at(objectTypeOfInterest_).c_str());
             robot_->DriveWheels(0.f,0.f);
             isTurning_ = false;
             waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
@@ -823,7 +823,7 @@ namespace Anki {
                                        world_->GetObjectByID(robot_->GetCarryingObject())->GetType() == objectToPickUp_;
             if(donePickingUp) {
               PRINT_INFO("Picked up block %d successfully! Going back to exploring for block to place on.\n",
-                         robot_->GetCarryingObject());
+                         robot_->GetCarryingObject().GetValue());
               
               state_ = BEGIN_EXPLORING;
               
@@ -835,7 +835,7 @@ namespace Anki {
             const bool donePlacing = !robot_->IsCarryingObject() && wasCarryingBlockAtDockingStart_;
             if(donePlacing) {
               PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
-                         objectToPickUp_, objectToPlaceOn_);
+                         objectToPickUp_.GetValue(), objectToPlaceOn_.GetValue());
 
               robot_->MoveHeadToAngle(checkItOutAngleUp, checkItOutSpeed, 10);
               state_ = CHECK_IT_OUT_UP;

@@ -72,7 +72,7 @@ if(NOT WIN32)
     CppController
     CoreTech_Common_Robot
     CoreTech_Vision_Robot
-    CoreTech_Messaging_Shared
+    CoreTech_Messaging_Robot
     CoreTech_Planning_Robot
     # mx 
     # eng

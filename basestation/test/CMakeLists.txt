@@ -11,7 +11,7 @@ if(NOT WIN32)
      Cozmo_Basestation 
      CoreTech_Common_Basestation 
      CoreTech_Vision_Basestation 
-     CoreTech_Messaging_Shared 
+     CoreTech_Messaging_Basestation
      ${OPENCV_LIBS} gtest jsoncpp)
      
   set_target_properties(run_CozmoTests PROPERTIES 

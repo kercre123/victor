@@ -51,8 +51,8 @@ namespace Anki
         NUM_OBJECT_FAMILIES // Should remain last
       };
       
-      using ObjectsMapByID_t     = std::map<ObjectID_t, Vision::ObservableObject*>;
-      using ObjectsMapByType_t   = std::map<ObjectType_t, ObjectsMapByID_t >;
+      using ObjectsMapByID_t     = std::map<ObjectID, Vision::ObservableObject*>;
+      using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
       using ObjectsMapByFamily_t = std::map<ObjectFamily_t, ObjectsMapByType_t>;
       
       //static const unsigned int MaxRobots = 4;
@@ -79,11 +79,11 @@ namespace Anki
       void ClearObjectsByFamily(const ObjectFamily_t family);
       
       // Clear all objects with the specified type
-      void ClearObjectsByType(const ObjectType_t type);
+      void ClearObjectsByType(const ObjectType type);
       
       // Clear an object with a specific ID. Returns true if object with that ID
       // is found and cleared, false otherwise.
-      bool ClearObject(const ObjectID_t withID);
+      bool ClearObject(const ObjectID withID);
       
       const Vision::ObservableObjectLibrary& GetObjectLibrary(ObjectFamily_t whichFamily) const;
 
@@ -93,12 +93,12 @@ namespace Anki
       
       // NOTE: Like IDs, object types are unique across objects so they can be
       //       used without specifying which family.
-      const ObjectsMapByID_t& GetExistingObjectsByType(const ObjectType_t whichType) const;
+      const ObjectsMapByID_t& GetExistingObjectsByType(const ObjectType whichType) const;
       
       // Return a pointer to an object with the specified ID. If that object
       // does not exist, nullptr is returned.  Be sure to ALWAYS check
       // for the return being null!
-      Vision::ObservableObject* GetObjectByID(const ObjectID_t objectID) const;
+      Vision::ObservableObject* GetObjectByID(const ObjectID objectID) const;
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension) and returns a vector of quads
@@ -112,8 +112,8 @@ namespace Anki
                                     const f32 padding,
                                     std::vector<Quad2f>& boundingBoxes,
                                     const std::set<ObjectFamily_t>& ignoreFamilies = {MAT_FAMILY},
-                                    const std::set<ObjectType_t>& ignoreTypes = {{}},
-                                    const std::set<ObjectID_t>& ignoreIDs = {{}},
+                                    const std::set<ObjectType>& ignoreTypes = {{}},
+                                    const std::set<ObjectID>& ignoreIDs = {{}},
                                     const bool ignoreCarriedObjects = true) const;
       
       // Returns true if any blocks were moved, added, or deleted on the
@@ -217,7 +217,7 @@ namespace Anki
       
       // Global counter for assigning IDs to objects as they are created.
       // This means every object in the world has a unique ObjectID!
-      ObjectID_t globalIDCounter;
+      //ObjectID globalIDCounter;
       
       // For allowing the calling of VizManager draw functions
       bool enableDraw_;
@@ -260,7 +260,7 @@ namespace Anki
       }
     }
     
-    inline const BlockWorld::ObjectsMapByID_t& BlockWorld::GetExistingObjectsByType(const ObjectType_t whichType) const
+    inline const BlockWorld::ObjectsMapByID_t& BlockWorld::GetExistingObjectsByType(const ObjectType whichType) const
     {
       for(auto & objectsByFamily : _existingObjects) {
         auto objectsWithType = objectsByFamily.second.find(whichType);
@@ -273,7 +273,7 @@ namespace Anki
       return BlockWorld::EmptyObjectMapByID;
     }
     
-    inline Vision::ObservableObject* BlockWorld::GetObjectByID(const ObjectID_t objectID) const
+    inline Vision::ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) const
     {
       // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
       

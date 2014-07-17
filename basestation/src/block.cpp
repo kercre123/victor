@@ -26,16 +26,23 @@
 namespace Anki {
   namespace Cozmo {
     
-    const std::map<ObjectType_t, std::string> Block::IDtoStringLUT = {
-      {UNKNOWN_BLOCK_TYPE, "UNKNOWN_BLOCK_TYPE"},
-#define BLOCK_DEFINITION_MODE BLOCK_ID_TO_STRING_LUT_MODE
+    const Block::Type Block::Type::INVALID;
+    
+#define BLOCK_DEFINITION_MODE BLOCK_ENUM_VALUE_MODE
+#include "anki/cozmo/basestation/BlockDefinitions.h"
+    
+    const std::map<ObjectType, std::string> Block::TypeToStringLUT = {
+#define BLOCK_DEFINITION_MODE BLOCK_TYPE_TO_STRING_LUT_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
     };
-
     
-    const std::map<ObjectType_t, Block::BlockInfoTableEntry_t> Block::BlockInfoLUT_ = {
-      {UNKNOWN_BLOCK_TYPE, {.name = "UNKNOWN"}}
+    const std::map<ObjectType, Block::BlockInfoTableEntry_t> Block::BlockInfoLUT_ = {
 #define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
+#include "anki/cozmo/basestation/BlockDefinitions.h"
+    };
+    
+    const std::map<std::string, Block::Type> Block::BlockNameToTypeMap = {
+#define BLOCK_DEFINITION_MODE BLOCK_STRING_TO_TYPE_LUT_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
     };
     
@@ -110,7 +117,7 @@ namespace Anki {
     
     //unsigned int Block::numBlocks = 0;
     
-    //ObjectType_t Block::NumTypes = 0;
+    //ObjectType Block::NumTypes = 0;
     
     const std::array<Point3f, Block::NUM_CORNERS> Block::CanonicalCorners = {{
       Point3f(-0.5f, -0.5f,  0.5f),
@@ -136,7 +143,7 @@ namespace Anki {
       }
     }
     
-    Block::Block(const ObjectType_t type)
+    Block::Block(const ObjectType type)
     : DockableObject(type)
     , _color(BlockInfoLUT_.at(type).color)
     , _size(BlockInfoLUT_.at(type).size)
@@ -414,7 +421,7 @@ namespace Anki {
         return;
       }
       
-      _vizHandle = VizManager::getInstance()->DrawCuboid(GetID(), _size, vizPose, color);
+      _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }
     
     void Block::EraseVisualization()
@@ -429,9 +436,20 @@ namespace Anki {
       DockableObject::EraseVisualization();
     }
     
+    
+    Block::Type Block::GetBlockTypeByName(const std::string& name) {
+      auto typeIter = Block::BlockNameToTypeMap.find(name);
+      if(typeIter != Block::BlockNameToTypeMap.end()) {
+        return typeIter->second;
+      } else {
+        return Block::Type::INVALID;
+      }
+    } // GetBlockTypeByName()
+    
+    
 #pragma mark ---  Block_Cube1x1 Implementation ---
     
-    //const ObjectType_t Block_Cube1x1::BlockType = Block::NumTypes++;
+    //const ObjectType Block_Cube1x1::BlockType = Block::NumTypes++;
     
     const std::vector<RotationMatrix3d> Block_Cube1x1::rotationAmbiguities_ = {
       RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
@@ -459,7 +477,7 @@ namespace Anki {
     
 #pragma mark ---  Block_2x1 Implementation ---
     
-    //const ObjectType_t Block_2x1::BlockType = Block::NumTypes++;
+    //const ObjectType Block_2x1::BlockType = Block::NumTypes++;
     
     const std::vector<RotationMatrix3d> Block_2x1::rotationAmbiguities_ = {
       RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),

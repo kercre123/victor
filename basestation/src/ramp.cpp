@@ -18,6 +18,8 @@ namespace Anki {
   
   namespace Cozmo {
     
+    const Ramp::Type Ramp::Type::BASIC_RAMP_MODEL;
+    
     const std::array<Point3f, Ramp::NUM_CORNERS> Ramp::CanonicalCorners = {{
       // Bottom corners
       Point3f(-0.5f*PlatformLength,              -0.5f*Width,  -0.5f*Height),
@@ -33,7 +35,7 @@ namespace Anki {
     
     
     Ramp::Ramp()
-    : DockableObject(0) // TODO: Support multiple ramp types
+    : DockableObject(Type::BASIC_RAMP_MODEL) // TODO: Support multiple ramp types
     , _vizHandle(VizManager::INVALID_HANDLE)
     {
       // Four markers:
@@ -99,7 +101,7 @@ namespace Anki {
         return;
       }
       
-      _vizHandle = VizManager::getInstance()->DrawRamp(GetID(), Ramp::PlatformLength,
+      _vizHandle = VizManager::getInstance()->DrawRamp(GetID().GetValue(), Ramp::PlatformLength,
                                                        Ramp::SlopeLength, Ramp::Width,
                                                        Ramp::Height, vizPose, color);
 

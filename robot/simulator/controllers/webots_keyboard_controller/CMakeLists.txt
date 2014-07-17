@@ -32,7 +32,7 @@ if(NOT WIN32)
   target_link_libraries(webots_keyboard_controller 
     Cozmo_Basestation
     CoreTech_Common_Basestation
-    CoreTech_Messaging_Shared
+    CoreTech_Messaging_Basestation
     CppController # Webots C++ Controller
     jsoncpp
     ${OPENCV_LIBS}

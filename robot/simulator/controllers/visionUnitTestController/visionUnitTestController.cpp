@@ -22,6 +22,7 @@
 #include "json/json.h"
 
 #include "anki/common/types.h"
+#include "anki/common/basestation/objectTypesAndIDs.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/platformPathManager.h"
@@ -158,8 +159,8 @@ int main(int argc, char **argv)
     webots::Field* nameField = child->getField("name");
     if(nameField != NULL && nameField->getSFString().compare(0,5,"Block") == 0)
     {
-      ObjectType_t blockType = std::stoi(child->getField("type")->getSFString());
-      if(blockType > 0)
+      std::string blockType = child->getField("type")->getSFString();
+      if(!blockType.empty())
       {
         Json::Value jsonBlock;
         jsonBlock["Type"] = blockType;

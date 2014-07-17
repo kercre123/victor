@@ -84,8 +84,8 @@ namespace Anki {
       const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
       const State            GetState()        const;
       
-      const ObjectID_t       GetDockObject()     const {return _dockObjectID;}
-      const ObjectID_t       GetCarryingObject() const {return _carryingObjectID;}
+      const ObjectID       GetDockObject()     const {return _dockObjectID;}
+      const ObjectID       GetCarryingObject() const {return _carryingObjectID;}
       
       void SetState(const State newState);
       void SetPose(const Pose3d &newPose);
@@ -139,8 +139,9 @@ namespace Anki {
       u16 GetLastRecvdPathID() {return _lastRecvdPathID;}
       u16 GetLastSentPathID() {return _lastSentPathID;}
 
-      void SetCarryingObject(ObjectID_t carryObjectID) {_carryingObjectID = carryObjectID;}
-      bool IsCarryingObject() {return _carryingObjectID != ANY_OBJECT;}
+      void SetCarryingObject(ObjectID carryObjectID) {_carryingObjectID = carryObjectID;}
+      void UnSetCarryingObject() { _carryingObjectID.UnSet(); }
+      bool IsCarryingObject() {return _carryingObjectID.IsSet(); }
 
       void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
       bool IsPickingOrPlacing() {return _isPickingOrPlacing;}
@@ -170,7 +171,7 @@ namespace Anki {
       
       // Plan a path to an available docking pose of the specified object, and
       // then dock with it.
-      Result ExecuteDockingSequence(ObjectID_t objectIDtoDockWith);
+      Result ExecuteDockingSequence(ObjectID objectIDtoDockWith);
       
       // Plan a path to place the object currently being carried at the specified
       // pose.
@@ -181,7 +182,7 @@ namespace Anki {
       
       // Sends a message to the robot to dock with the specified marker of the
       // specified object that it should currently be seeing.
-      Result DockWithObject(const ObjectID_t objectID,
+      Result DockWithObject(const ObjectID objectID,
                             const Vision::KnownMarker* marker,
                             const DockAction_t dockAction);
       
@@ -190,7 +191,7 @@ namespace Anki {
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
-      Result DockWithObject(const ObjectID_t objectID,
+      Result DockWithObject(const ObjectID objectID,
                             const Vision::KnownMarker* marker,
                             const DockAction_t dockAction,
                             const u16 image_pixel_x,
@@ -366,7 +367,7 @@ namespace Anki {
       bool       _isMoving;
       State      _state, _nextState;
       
-      ObjectID_t                 _carryingObjectID;
+      ObjectID                 _carryingObjectID;
       const Vision::KnownMarker* _carryingMarker;
       
       // Leaves input liftPose's parent alone and computes its position w.r.t.
@@ -379,7 +380,7 @@ namespace Anki {
       // marker on that block, so long as we always verify the object
       // exists and is still valid (since, therefore, the marker must
       // be as well)
-      ObjectID_t                  _dockObjectID;
+      ObjectID                  _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
       DockAction_t                _dockAction;
       Pose3d                      _dockObjectOrigPose;

@@ -43,7 +43,7 @@ add_library(cozmo_physics SHARED ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(cozmo_physics 
   ode 
   ${PHYSICS_O}
-  CoreTech_Messaging_Shared
+  CoreTech_Messaging_Basestation
 )
 
 set_target_properties(

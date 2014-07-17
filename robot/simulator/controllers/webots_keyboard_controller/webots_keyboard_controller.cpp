@@ -570,7 +570,8 @@ namespace Anki {
         msg.GetBytes((u8*)(&sendBuf[sendBufLen]));
         sendBufLen += msg.GetSize();
         
-        int bytes_sent = bsClient.Send(sendBuf, sendBufLen);
+        //int bytes_sent =
+        bsClient.Send(sendBuf, sendBufLen);
         //printf("Sent %d bytes\n", bytes_sent);
       }
       

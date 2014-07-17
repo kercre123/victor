@@ -1,11 +1,16 @@
 function [threshold, brightValue, darkValue] = ComputeThreshold(img, tform)
 
-brightValue = mean(ProbeHelper(img, tform, VisionMarkerTrained.BrightProbes));
-darkValue   = mean(ProbeHelper(img, tform, VisionMarkerTrained.DarkProbes));
+brightValues = ProbeHelper(img, tform, VisionMarkerTrained.BrightProbes);
+darkValues   = ProbeHelper(img, tform, VisionMarkerTrained.DarkProbes);
 
-if brightValue < VisionMarkerTrained.MinContrastRatio*darkValue
+if any(brightValues < VisionMarkerTrained.MinContrastRatio*darkValues)
+    % Make sure every corresponding pair of bright/dark probes has enough
+    % contrast.  
     threshold = -1;
 else
+    % If so, compute the threshold from all of them
+    brightValue = mean(brightValues);
+    darkValue   = mean(darkValues);
     threshold = (brightValue + darkValue)/2;
 end
 

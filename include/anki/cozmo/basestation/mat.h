@@ -21,11 +21,20 @@
 namespace Anki {
   
   namespace Cozmo {
-
+    
     class MatPiece : public Vision::ObservableObject 
     {
     public:
-      MatPiece(ObjectType_t type, bool isFirstPiece = false);
+      
+      // TODO: Use a MatDefinitions file, like with blocks
+      class Type : public ObjectType
+      {
+        Type() { }
+      public:
+        static const Type LETTERS_4x4;
+      };
+      
+      MatPiece(ObjectType type, bool isFirstPiece = false);
       
       //virtual float GetMinDim() const {return 0;}
       

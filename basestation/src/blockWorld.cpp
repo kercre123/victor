@@ -48,7 +48,7 @@ namespace Anki
     : isInitialized_(false)
     , robotMgr_(NULL)
     , didObjectsChange_(false)
-    , globalIDCounter(0)
+//    , globalIDCounter(0)
     , enableDraw_(false)
 //    : robotMgr_(RobotManager::getInstance()),
 //      msgHandler_(MessageHandler::getInstance())
@@ -60,30 +60,30 @@ namespace Anki
       //
       //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::ANGRYFACE_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::ANGRYFACE));
 
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::BULLSEYE2_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::BULLSEYE2));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::SQTARGET_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::SQTARGET));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::FIRE_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::FIRE));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::ANKILOGO_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::ANKILOGO));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::STAR5_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::STAR5));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::DICE_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::DICE));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER1_BLOCK_TYPE));
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER2_BLOCK_TYPE));
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER3_BLOCK_TYPE));
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER4_BLOCK_TYPE));
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER5_BLOCK_TYPE));
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::NUMBER6_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER1));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER2));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER3));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER4));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER5));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER6));
 
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::BANGBANGBANG_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::BANGBANGBANG));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::ARROW_BLOCK_TYPE));
+      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::ARROW));
       
       //
       // 2x1 Blocks
@@ -107,10 +107,9 @@ namespace Anki
       //
       // Mat Pieces
       //
-      ObjectType_t matType=0;
       
       // Webots mat:
-      MatPiece* mat = new MatPiece(++matType);
+      MatPiece* mat = new MatPiece(MatPiece::Type::LETTERS_4x4);
         
       _objectLibrary[MAT_FAMILY].AddObject(mat);
       
@@ -227,11 +226,11 @@ namespace Anki
         if(overlappingObjects.empty()) {
           // no existing objects overlapped with the objects we saw, so add it
           // as a new object
-          objSeen->SetID(++globalIDCounter);
+          objSeen->SetID(); //++globalIDCounter);
           objectsExisting[objSeen->GetType()][objSeen->GetID()] = objSeen;
           
-          fprintf(stdout, "Adding new object with type=%hu and ID=%hu at (%.1f, %.1f, %.1f)\n",
-                  objSeen->GetType(), objSeen->GetID(),
+          fprintf(stdout, "Adding new object with type=%d and ID=%d at (%.1f, %.1f, %.1f)\n",
+                  objSeen->GetType().GetValue(), objSeen->GetID().GetValue(),
                   objSeen->GetPose().GetTranslation().x(),
                   objSeen->GetPose().GetTranslation().y(),
                   objSeen->GetPose().GetTranslation().z());
@@ -359,8 +358,8 @@ namespace Anki
                                               const f32 padding,
                                               std::vector<Quad2f>& rectangles,
                                               const std::set<ObjectFamily_t>& ignoreFamiles,
-                                              const std::set<ObjectType_t>& ignoreTypes,
-                                              const std::set<ObjectID_t>& ignoreIDs,
+                                              const std::set<ObjectType>& ignoreTypes,
+                                              const std::set<ObjectID>& ignoreIDs,
                                               const bool ignoreCarriedObjects) const
     {
       for(auto & objectsByFamily : _existingObjects)
@@ -468,8 +467,8 @@ namespace Anki
           PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.CreatingMatPiece",
                            "Instantiating one and only mat piece in the world.\n");
           
-          firstSeenMatPiece->SetID(++globalIDCounter);
           MatPiece* newMatPiece = new MatPiece(firstSeenMatPiece->GetType(), true);
+          newMatPiece->SetID();
           existingMatPieces[firstSeenMatPiece->GetType()][firstSeenMatPiece->GetID()] = newMatPiece;
         }
 
@@ -484,7 +483,7 @@ namespace Anki
         else if(matPiecesByType->second.size() > 1) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleMatPiecesWithType",
                               "There are more than one mat pieces in existance with type %d.\n",
-                              firstSeenMatPiece->GetType());
+                              firstSeenMatPiece->GetType().GetValue());
         }
         
         MatPiece* existingMatPiece = dynamic_cast<MatPiece*>(matPiecesByType->second.begin()->second);
@@ -526,7 +525,7 @@ namespace Anki
         wasPoseUpdated = true;
         
         PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
-                   existingMatPiece->GetID(), robot->GetID(),
+                   existingMatPiece->GetID().GetValue(), robot->GetID(),
                    robot->GetPose().GetTranslation().x(),
                    robot->GetPose().GetTranslation().y(),
                    robot->GetPose().GetTranslation().z(),
@@ -924,7 +923,8 @@ namespace Anki
     
     void BlockWorld::ClearAllExistingObjects()
     {
-      globalIDCounter = 0;
+      //globalIDCounter = 0;
+      ObjectID::Reset();
       
     }
     
@@ -943,7 +943,7 @@ namespace Anki
       }
     }
     
-    void BlockWorld::ClearObjectsByType(const ObjectType_t type)
+    void BlockWorld::ClearObjectsByType(const ObjectType type)
     {
       for(auto & objectsByFamily : _existingObjects) {
         ObjectsMapByType_t::iterator objectsWithType = objectsByFamily.second.find(type);
@@ -963,7 +963,7 @@ namespace Anki
     } // ClearBlocksByType()
     
 
-    bool BlockWorld::ClearObject(const ObjectID_t withID)
+    bool BlockWorld::ClearObject(const ObjectID withID)
     {
       for(auto & objectsByFamily : _existingObjects) {
         for(auto & objectsByType : objectsByFamily.second) {

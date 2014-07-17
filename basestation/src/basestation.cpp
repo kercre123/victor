@@ -256,12 +256,12 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
   { // Update Block-of-Interest display
     
     // Get selected block of interest from Behavior manager
-    static ObjectID_t prev_boi = 0;      // Previous block of interest
+    static ObjectID prev_boi;      // Previous block of interest
     static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
     // TODO: store previous block's color and restore it when unselecting
     
     // Draw current block of interest
-    const ObjectID_t boi = behaviorMgr_.GetObjectOfInterest();
+    const ObjectID boi = behaviorMgr_.GetObjectOfInterest();
     
     DockableObject* block = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(boi));
     if(block != nullptr) {
@@ -272,7 +272,8 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
       
       // Erase previous predock pose marker for previous block of interest
       if (prev_boi != boi || poses.size() != prevNumPreDockPoses) {
-        PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", boi, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
+        PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n",
+                   boi.GetValue(), prev_boi.GetValue(), (u32)poses.size(), prevNumPreDockPoses);
         VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
         
         // Return previous selected block to original color (necessary in the
@@ -322,8 +323,8 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
     if(robot->IsCarryingObject()) {
       DockableObject* carryBlock = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(robot->GetCarryingObject()));
       if(carryBlock == nullptr) {
-        PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingObject());
-        robot->SetCarryingObject(ANY_OBJECT);
+        PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingObject().GetValue());
+        robot->UnSetCarryingObject();
       } else {
         carryBlock->Visualize(VIZ_COLOR_DEFAULT);
       }

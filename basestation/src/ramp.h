@@ -34,8 +34,10 @@ namespace Anki {
     {
     public:
       
-      enum Type {
-        BASIC_RAMP_MODEL,
+      class Type : public ObjectType {
+        Type() { }
+      public:
+        static const Type BASIC_RAMP_MODEL;
       };
       
       Ramp();
