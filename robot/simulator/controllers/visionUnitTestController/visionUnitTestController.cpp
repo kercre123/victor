@@ -22,7 +22,7 @@
 #include "json/json.h"
 
 #include "anki/common/types.h"
-#include "anki/common/basestation/strongTypedef.h"
+#include "anki/common/basestation/objectTypesAndIDs.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/platformPathManager.h"

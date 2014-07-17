@@ -19,7 +19,7 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 
-#include "anki/common/basestation/strongTypedef.h"
+#include "anki/common/basestation/objectTypesAndIDs.h"
 
 namespace Anki {
   namespace Cozmo {
