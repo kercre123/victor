@@ -148,8 +148,8 @@ int main(int argc, char **argv)
   
   Json::Value root;
   
-  // Store the ground truth block poses and world name
-  int numBlocks = 0;
+  // Store the ground truth objects poses and world name
+  int numObjects = 0;
   webots::Node* rootNode = webotRobot_.getRoot();
   webots::Field* children = rootNode->getField("children");
   const int numNodes = children->getCount();
@@ -157,29 +157,31 @@ int main(int argc, char **argv)
     webots::Node* child = children->getMFNode(i_node);
     
     webots::Field* nameField = child->getField("name");
-    if(nameField != NULL && nameField->getSFString().compare(0,5,"Block") == 0)
+    if(nameField != NULL &&
+       (nameField->getSFString().compare(0,5,"Block") == 0 ||
+        nameField->getSFString().compare(0,4,"Ramp")))
     {
-      std::string blockType = child->getField("type")->getSFString();
-      if(!blockType.empty())
+      std::string objectType = child->getField("type")->getSFString();
+      if(!objectType.empty())
       {
-        Json::Value jsonBlock;
-        jsonBlock["Type"] = blockType;
+        Json::Value jsonObject;
+        jsonObject["Type"] = objectType;
         
-        jsonBlock["BlockName"] = child->getField("name")->getSFString();
+        jsonObject["ObjectName"] = child->getField("name")->getSFString();
         
-        const double *blockTrans_m = child->getField("translation")->getSFVec3f();
-        const double *blockRot   = child->getField("rotation")->getSFRotation();
+        const double *objectTrans_m = child->getField("translation")->getSFVec3f();
+        const double *objectRot     = child->getField("rotation")->getSFRotation();
         for(int i=0; i<3; ++i) {
-          jsonBlock["BlockPose"]["Translation"].append(M_TO_MM(blockTrans_m[i]));
-          jsonBlock["BlockPose"]["Axis"].append(blockRot[i]);
+          jsonObject["ObjectPose"]["Translation"].append(M_TO_MM(objectTrans_m[i]));
+          jsonObject["ObjectPose"]["Axis"].append(objectRot[i]);
         }
-        jsonBlock["BlockPose"]["Angle"] = blockRot[3];
+        jsonObject["ObjectPose"]["Angle"] = objectRot[3];
         
-        root["Blocks"].append(jsonBlock);
-        numBlocks++;
+        root["Objects"].append(jsonObject);
+        numObjects++;
       }
       else {
-        fprintf(stdout, "Skipping unobserved (Type 0) block.\n");
+        fprintf(stdout, "Skipping object with no type.\n");
       }
     } // if this is a block
     else if(child->getType() == webots::Node::WORLD_INFO) {
@@ -199,7 +201,7 @@ int main(int argc, char **argv)
     }
     
   } // for each node
-  root["NumBlocks"] = numBlocks;
+  root["NumObjects"] = numObjects;
   
   // Store the camera calibration
   root["CameraCalibration"] = jsonCalib;

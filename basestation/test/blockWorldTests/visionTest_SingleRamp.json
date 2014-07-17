@@ -1,0 +1,116 @@
+{
+   "CameraCalibration" : {
+      "center_x" : 160.0,
+      "center_y" : 120.0,
+      "focalLength_x" : 338.5799865722656,
+      "focalLength_y" : 338.5799865722656,
+      "ncols" : 320,
+      "nrows" : 240,
+      "skew" : 0.0
+   },
+   "CheckRobotPose" : true,
+   "NumBlocks" : 0,
+   "Poses" : [
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_SingleRamp0.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 3.1415930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.0872660,
+            "Translation" : [ 150.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_RAMPFRONT",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 108.5161972045898,
+               "x_imgLowerRight" : 210.4983825683594,
+               "x_imgUpperLeft" : 119.1747512817383,
+               "x_imgUpperRight" : 199.8558044433594,
+               "y_imgLowerLeft" : 193.4219055175781,
+               "y_imgLowerRight" : 193.4152374267578,
+               "y_imgUpperLeft" : 136.3755187988281,
+               "y_imgUpperRight" : 136.3920593261719
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_SingleRamp1.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 1.5707960,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.0872660,
+            "Translation" : [ 0.0, -150.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_RAMPLEFT",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 153.4642791748047,
+               "x_imgLowerRight" : 217.3766174316406,
+               "x_imgUpperLeft" : 153.2818145751953,
+               "x_imgUpperRight" : 218.7232513427734,
+               "y_imgLowerLeft" : 174.4741363525391,
+               "y_imgLowerRight" : 174.6509704589844,
+               "y_imgUpperLeft" : 110.7799606323242,
+               "y_imgUpperRight" : 110.6564865112305
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_SingleRamp2.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 1.5707960,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.0872660,
+            "Translation" : [ 0.0, 150.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_RAMPRIGHT",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 101.4981079101562,
+               "x_imgLowerRight" : 165.6399230957031,
+               "x_imgUpperLeft" : 100.3815841674805,
+               "x_imgUpperRight" : 165.6446533203125,
+               "y_imgLowerLeft" : 174.6617584228516,
+               "y_imgLowerRight" : 174.4675903320312,
+               "y_imgUpperLeft" : 110.3212814331055,
+               "y_imgUpperRight" : 110.4483489990234
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_SingleRamp3.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 1.0, 0.0, 0.0 ],
+            "HeadAngle" : -0.0872660,
+            "Translation" : [ -150.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_RAMPBACK",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 129.7137756347656,
+               "x_imgLowerRight" : 189.3010864257812,
+               "x_imgUpperLeft" : 128.4514465332031,
+               "x_imgUpperRight" : 190.5579223632812,
+               "y_imgLowerLeft" : 169.4001617431641,
+               "y_imgLowerRight" : 169.3905334472656,
+               "y_imgUpperLeft" : 109.4786911010742,
+               "y_imgUpperRight" : 109.4858856201172
+            }
+         ]
+      }
+   ],
+   "WorldTitle" : "visionTest_SingleRamp"
+}
