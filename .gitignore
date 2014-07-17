@@ -116,3 +116,5 @@ systemTests/recompileBasicsAllInput.mat
 systemTests/runParallelProcesses_input0.mat
 systemTests/runParallelProcesses_input1.mat
 systemTests/runParallelProcesses_input2.mat
+matlab/runParallelProcesses_mutex*.mat
+matlab/perPoseAllInput.mat

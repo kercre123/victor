@@ -40,6 +40,14 @@ if DEBUG_DISPLAY
     title(sprintf('After Area check: %d regions', numRegions))
 end
 
+if isempty(bb)
+   numRegions = 0;
+   indexList = zeros(1,0);
+   centroid = zeros(0,2);
+   components2d = [];
+   return;
+end
+
 bbArea = prod(bb(:,3:4),2);
 tooSolid = area ./ bbArea > solidThreshold;
 tooSparse = area ./ bbArea < sparseThreshold;
