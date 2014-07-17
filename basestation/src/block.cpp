@@ -26,6 +26,8 @@
 namespace Anki {
   namespace Cozmo {
     
+    const Block::Type Block::Type::INVALID;
+    
 #define BLOCK_DEFINITION_MODE BLOCK_ENUM_VALUE_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
     
@@ -33,10 +35,14 @@ namespace Anki {
 #define BLOCK_DEFINITION_MODE BLOCK_TYPE_TO_STRING_LUT_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
     };
-
     
     const std::map<ObjectType, Block::BlockInfoTableEntry_t> Block::BlockInfoLUT_ = {
 #define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
+#include "anki/cozmo/basestation/BlockDefinitions.h"
+    };
+    
+    const std::map<std::string, Block::Type> Block::BlockNameToTypeMap = {
+#define BLOCK_DEFINITION_MODE BLOCK_STRING_TO_TYPE_LUT_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
     };
     
@@ -429,6 +435,17 @@ namespace Anki {
       // Erase the pre-dock poses
       DockableObject::EraseVisualization();
     }
+    
+    
+    Block::Type Block::GetBlockTypeByName(const std::string& name) {
+      auto typeIter = Block::BlockNameToTypeMap.find(name);
+      if(typeIter != Block::BlockNameToTypeMap.end()) {
+        return typeIter->second;
+      } else {
+        return Block::Type::INVALID;
+      }
+    } // GetBlockTypeByName()
+    
     
 #pragma mark ---  Block_Cube1x1 Implementation ---
     

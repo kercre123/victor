@@ -5,6 +5,7 @@
 #define BLOCK_ENUM_VALUE_MODE          1
 #define BLOCK_LUT_MODE                 2
 #define BLOCK_TYPE_TO_STRING_LUT_MODE  3
+#define BLOCK_STRING_TO_TYPE_LUT_MODE  4
 
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__)
 #define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
@@ -55,6 +56,15 @@
 #elif BLOCK_DEFINITION_MODE == BLOCK_TYPE_TO_STRING_LUT_MODE
 
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) {Block::Type::__NAME__, QUOTE(__NAME__)},
+#define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
+#define END_BLOCK_DEFINITION
+
+//
+// Block String Name to Type LUT Mode
+//
+#elif BLOCK_DEFINITION_MODE == BLOCK_STRING_TO_TYPE_LUT_MODE
+
+#define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) {QUOTE(__NAME__), Block::Type::__NAME__},
 #define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
 #define END_BLOCK_DEFINITION
 

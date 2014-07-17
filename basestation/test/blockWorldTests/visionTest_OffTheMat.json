@@ -7,7 +7,7 @@
             "Axis" : [ 0.0, 0.0, 1.0 ],
             "Translation" : [ 145.0, 60.0, 21.754750 ]
          },
-         "Type" : 2
+         "Type" : "FIRE"
       }
    ],
    "CameraCalibration" : {

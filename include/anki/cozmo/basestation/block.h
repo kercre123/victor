@@ -49,6 +49,7 @@ namespace Anki {
       class Type : public ObjectType {
         Type() { }
       public:
+        static const Type INVALID;
 #define BLOCK_DEFINITION_MODE BLOCK_ENUM_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
       };
@@ -187,7 +188,7 @@ namespace Anki {
       } BlockInfoTableEntry_t;
       
       static const std::map<ObjectType, BlockInfoTableEntry_t> BlockInfoLUT_;
-      static const std::map<std::string, ObjectType> BlockNameToTypeMap;
+      static const std::map<std::string, Block::Type> BlockNameToTypeMap;
       
       static const std::array<Point3f,NUM_FACES> CanonicalDockingPoints;
       
