@@ -7,7 +7,7 @@ file(GLOB CORETECH_MESSAGING_INCLUDE_FILES "${CORETECH_MESSAGING_INCLUDE_DIR}/*.
 add_subdirectory(basestation/src)
 #add_subdirectory(basestation/test)
 
-#add_subdirectory(robot/src)
+add_subdirectory(robot/src)
 #add_subdirectory(robot/test) 
 
-add_subdirectory(shared/src)
+#add_subdirectory(shared/src)

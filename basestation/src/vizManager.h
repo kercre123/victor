@@ -57,10 +57,12 @@ namespace Anki {
       using Handle_t = u32;
       static const Handle_t INVALID_HANDLE;
       
-      Result Init();
+      Result Connect(const char *udp_host_address, const unsigned short port);
+      Result Disconnect();
       
       // Get a pointer to the singleton instance
       inline static VizManager* getInstance();
+      static void removeInstance();
       
       // Whether or not to display the viz objects
       void ShowObjects(bool show);

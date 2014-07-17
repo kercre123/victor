@@ -24,7 +24,7 @@ if(NOT WIN32)
   )
 
   target_link_libraries(cozmo_viz_controller 
-    CoreTech_Messaging_Shared
+    CoreTech_Messaging_Basestation
     CppController # Webots C++ Controller
     ${OPENCV_LIBS}
   )

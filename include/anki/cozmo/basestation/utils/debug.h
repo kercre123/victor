@@ -15,8 +15,6 @@
 
 namespace Anki {
   
-// For debugging TcpComms
-#define DEBUG_TCPCOMMS 0
   
 } // namespace Anki
 
