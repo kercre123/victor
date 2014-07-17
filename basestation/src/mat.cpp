@@ -71,6 +71,8 @@ namespace Anki {
     Quad2f MatPiece::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
       // TODO
+      Quad2f bbox;
+      return bbox;
     }
     
   } // namespace Cozmo
