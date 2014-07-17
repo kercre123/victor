@@ -45,7 +45,8 @@ function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStat
     % 3. Bar of angle, distance.
     
     resultsData_overall.percentQuadsExtracted = sum(sum(sum(sum(quadExtraction_events(:,:,:,:,1))))) / sum(sum(sum(sum(quadExtraction_events(:,:,:,:,2)))));
-    keyboard
+    
+%     keyboard
 end % runTests_detectFiducialMarkers_compileOverallStats()
 
 % function [quadExtraction_means, quadExtraction_variances] = computeStatistics(cellOfEvents)
