@@ -6,6 +6,8 @@ darkValues   = ProbeHelper(img, tform, VisionMarkerTrained.DarkProbes);
 if any(brightValues < VisionMarkerTrained.MinContrastRatio*darkValues)
     % Make sure every corresponding pair of bright/dark probes has enough
     % contrast.  
+    brightValue = [];
+    darkValue = [];
     threshold = -1;
 else
     % If so, compute the threshold from all of them
