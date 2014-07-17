@@ -24,7 +24,7 @@
 
 #include "anki/vision/basestation/visionMarker.h"
 
-#include "anki/common/basestation/strongTypedef.h"
+#include "anki/common/basestation/objectTypesAndIDs.h"
 
 namespace Anki {
   namespace Vision {
