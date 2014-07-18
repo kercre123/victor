@@ -1,6 +1,10 @@
 % function allCompiledResults = runTests_detectFiducialMarkers()
 
+% On PC
 % allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*_all.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'Z:/Documents/Box Documents');
+
+% On Mac
+% allCompiledResults = runTests_detectFiducialMarkers('~/Documents/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*_all.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
 
 function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsDirectory, boxSyncDirectory)
     % To be a match, all corners of a quad must be within these thresholds
@@ -21,6 +25,10 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
     assert(exist('boxSyncDirectory', 'var') == 1);
+    
+    testJsonPattern = strrep(testJsonPattern, '~/', [tildeToPath(),'/']);
+    resultsDirectory = strrep(resultsDirectory, '~/', [tildeToPath(),'/']);
+    boxSyncDirectory = strrep(boxSyncDirectory, '~/', [tildeToPath(),'/']);
     
     thisFilename = [mfilename('fullpath'), '.m'];
     thisFileChangeTime = dir(thisFilename);
@@ -147,12 +155,19 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', .9148);
     resultsData_overall_small2_best = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime, false);
     
-    save('c:/tmp/results.mat', '*');
+    save([resultsDirectory,'/latestResults.mat'], '*');
     
     keyboard
     
     allCompiledResults = [];
 end % runTests_detectFiducialMarkers()
+
+function realPath = tildeToPath()
+    oldPath = pwd();
+    cd('~');
+    realPath = pwd();
+    cd(oldPath);
+end
 
 function allTestData = getTestData(testJsonPattern)
     testJsonPattern = strrep(testJsonPattern, '\', '/');
@@ -183,9 +198,13 @@ function resultsData_overall = compileAll(algorithmParameters, boxSyncDirectory,
     
     disp(sprintf('%s: workQueue_basics has %d elements and workQueue_perPoseStats has %d elements', algorithmParameters.extractionFunctionName, length(workQueue_basics), length(workQueue_perPoseStats)));
     
-    resultsData_basics = run_recompileBasics(numComputeThreads.basics, workQueue_basics, workQueue_all, allTestData, rotationList, algorithmParameters);
+    slashIndexes = strfind(workQueue_all{1}.basicStats_filename, '/');
+    lastSlashIndex = slashIndexes(end);
+    temporaryDirectory = workQueue_all{1}.basicStats_filename(1:lastSlashIndex);
     
-    resultsData_perPose = run_recompilePerPoseStats(numComputeThreads.perPose, workQueue_perPoseStats, workQueue_all, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);
+    resultsData_basics = run_recompileBasics(numComputeThreads.basics, workQueue_basics, workQueue_all, temporaryDirectory, allTestData, rotationList, algorithmParameters);
+    
+    resultsData_perPose = run_recompilePerPoseStats(numComputeThreads.perPose, workQueue_perPoseStats, workQueue_all, temporaryDirectory, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);
     
     resultsData_overall = run_compileOverallStats(resultsData_perPose, showPlots);
 end % compileAll()
@@ -339,7 +358,7 @@ function data = convertJsonToMat(jsonFilename)
     data.testFileModificationTime = testFileModificationTime;
 end % convertJsonToMat()
 
-function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_todo, workQueue_all, allTestData, rotationList, algorithmParameters) %#ok<INUSD>
+function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_todo, workQueue_all, temporaryDirectory, allTestData, rotationList, algorithmParameters) %#ok<INUSD>
     recompileBasicsTic = tic();
     
     if isempty(workQueue_todo)
@@ -351,7 +370,7 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
         
         matlabCommandString = ['load(''recompileBasicsAllInput.mat''); ' , 'runTests_detectFiducialMarkers_basicStats(localWorkQueue, allTestData, rotationList, algorithmParameters);'];
         
-        runParallelProcesses(numComputeThreads, workQueue_todo, matlabCommandString);
+        runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString);
         
         delete('recompileBasicsAllInput.mat');
         
@@ -373,7 +392,7 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
     disp(sprintf('Basic stat computation took %f seconds', toc(recompileBasicsTic)));
 end % run_recompileBasics()
 
-function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, workQueue_todo, workQueue_all, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth) %#ok<INUSD>
+function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, workQueue_todo, workQueue_all, temporaryDirectory, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth) %#ok<INUSD>
     perPoseTic = tic();
     
     if isempty(workQueue_todo)
@@ -389,7 +408,7 @@ function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, work
         
         matlabCommandString = ['load(''perPoseAllInput.mat''); ' , 'runTests_detectFiducialMarkers_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
         
-        runParallelProcesses(numComputeThreads, workQueue_todo, matlabCommandString);
+        runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString);
         
         delete('perPoseAllInput.mat');
         

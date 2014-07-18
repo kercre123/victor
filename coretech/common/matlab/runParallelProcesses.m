@@ -9,24 +9,20 @@
 
 % matlabCommandString is the command that is executed in each of the different Matlab processes
 
-function runParallelProcesses(numComputeThreads, workQueue, matlabCommandString)
+function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, matlabCommandString)
     if numComputeThreads == 1 || isempty(workQueue)
         localWorkQueue = workQueue; %#ok<NASGU>
         eval(matlabCommandString);
     else
-        %             matlabLaunchCommand = 'matlab -nojvm -noFigureWindows -nosplash ';
-        
         if ispc()
-            matlabLaunchCommand = 'matlab';
-            matlabLaunchParameters = ' -noFigureWindows -nosplash ';
-        elseif ismac()
-            asssert(false); % TODO: support this
-            matlabLaunchCommand = matlabroot;
-            matlabLaunchParameters = ' ';
+            matlabLaunchCommand = 'matlab';            
+            commandString = 'start /b ';
         else
-            asssert(false); % TODO: support this
-        end
+            matlabLaunchCommand = [matlabroot, '/bin/matlab'];
+            commandString = 'screen -A -m -d ';
+        end 
         
+        matlabLaunchParameters = ' -noFigureWindows -nosplash ';
         hideWindowsCommand = 'frames = java.awt.Frame.getFrames; for frameIdx = 3:length(frames) try awtinvoke(frames(frameIdx),''setVisible'',0); catch end; end;';
         
         threadCompletionMutexFilenames = cell(numComputeThreads, 1);
@@ -34,8 +30,8 @@ function runParallelProcesses(numComputeThreads, workQueue, matlabCommandString)
         
         % launch threads
         for iThread = 0:(numComputeThreads-1)
-            threadCompletionMutexFilenames{iThread+1} = sprintf('runParallelProcesses_mutex%d.mat', iThread);
-            workerInputFilenames{iThread+1} = sprintf('runParallelProcesses_input%d.mat', iThread);
+            threadCompletionMutexFilenames{iThread+1} = [temporaryDirectory, sprintf('runParallelProcesses_mutex%d.mat', iThread)];
+            workerInputFilenames{iThread+1} = [temporaryDirectory, sprintf('runParallelProcesses_input%d.mat', iThread)];
             
             localWorkQueue = workQueue((1+iThread):numComputeThreads:end); %#ok<NASGU>
             save(workerInputFilenames{iThread+1}, 'localWorkQueue');
@@ -48,27 +44,7 @@ function runParallelProcesses(numComputeThreads, workQueue, matlabCommandString)
             catch
             end
             
-            if ispc()
-                commandString = ['start /b '];
-            elseif ismac()
-                commandString = ['open -na '];
-            else
-                % TODO: support this
-                assert(false);
-            end
-            
-            commandString = [commandString, matlabLaunchCommand];
-            
-            if ispc()
-                % Do nothing
-            elseif ismac()
-                commandString = [commandString, ' --args'];
-            else
-                % TODO: support this
-                assert(false);
-            end
-            
-            commandString = [commandString, matlabLaunchParameters, ' -r "', hideWindowsCommand, '; load(''', workerInputFilenames{iThread+1},'''); ', matlabCommandString, '; mut=1; save(''', threadCompletionMutexFilenames{iThread+1}, ''',''mut''); exit;"'];
+            commandString = [commandString, matlabLaunchCommand, matlabLaunchParameters, ' -r "', hideWindowsCommand, '; load(''', workerInputFilenames{iThread+1},'''); ', matlabCommandString, '; mut=1; save(''', threadCompletionMutexFilenames{iThread+1}, ''',''mut''); exit;"'];
             
             system(commandString);
         end
@@ -76,7 +52,7 @@ function runParallelProcesses(numComputeThreads, workQueue, matlabCommandString)
         % Wait for the thread to complete
         for iThread = 1:length(threadCompletionMutexFilenames)
             while ~exist(threadCompletionMutexFilenames{iThread}, 'file')
-                pause(.1);
+                pause(.5);
             end
             delete(threadCompletionMutexFilenames{iThread});
             delete(workerInputFilenames{iThread});
