@@ -75,6 +75,17 @@ namespace Anki {
       return bbox;
     }
     
+    
+    ObjectType MatPiece::GetTypeByName(const std::string& name)
+    {
+      // TODO: Support other types/names
+      if(name == "LETTERS_4x4") {
+        return MatPiece::Type::LETTERS_4x4;
+      } else {
+        assert(false);
+      }
+    }
+    
   } // namespace Cozmo
   
 } // namespace Anki

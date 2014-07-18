@@ -1,15 +1,4 @@
 {
-   "Blocks" : [
-      {
-         "BlockName" : "Block",
-         "BlockPose" : {
-            "Angle" : 0.0,
-            "Axis" : [ 0.0, 1.0, 0.0 ],
-            "Translation" : [ 80.0, 0.0, 21.754750 ]
-         },
-         "Type" : "STAR5"
-      }
-   ],
    "CameraCalibration" : {
       "center_x" : 160.0,
       "center_y" : 120.0,
@@ -20,7 +9,18 @@
       "skew" : 0.0
    },
    "CheckRobotPose" : false,
-   "NumBlocks" : 1,
+   "NumObjects" : 1,
+   "Objects" : [
+      {
+         "ObjectName" : "Block",
+         "ObjectPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 0.0, 1.0, 0.0 ],
+            "Translation" : [ 80.0, 0.0, 21.754750 ]
+         },
+         "Type" : "STAR5"
+      }
+   ],
    "Poses" : [
       {
          "ImageFile" : "basestation/test/blockWorldTests/visionTest_VaryingDistance0.png",

@@ -1,0 +1,140 @@
+{
+   "CameraCalibration" : {
+      "center_x" : 160.0,
+      "center_y" : 120.0,
+      "focalLength_x" : 338.5799865722656,
+      "focalLength_y" : 338.5799865722656,
+      "ncols" : 320,
+      "nrows" : 240,
+      "skew" : 0.0
+   },
+   "CheckRobotPose" : false,
+   "NumObjects" : 1,
+   "Objects" : [
+      {
+         "ObjectName" : "Ramp",
+         "ObjectPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 0.0, 1.0, 0.0 ],
+            "Translation" : [ 0.0, 0.0, 21.754750 ]
+         },
+         "Type" : "BASIC_RAMP"
+      }
+   ],
+   "Poses" : [
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_SingleRamp0.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 3.1415930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.0872660,
+            "Translation" : [ 150.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_RAMPFRONT",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 108.6715774536133,
+               "x_imgLowerRight" : 210.3287353515625,
+               "x_imgUpperLeft" : 119.2928314208984,
+               "x_imgUpperRight" : 199.7050628662109,
+               "y_imgLowerLeft" : 192.4513397216797,
+               "y_imgLowerRight" : 192.4520111083984,
+               "y_imgUpperLeft" : 135.8029022216797,
+               "y_imgUpperRight" : 135.8013763427734
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_SingleRamp1.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 1.5707960,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.0872660,
+            "Translation" : [ 0.0, -150.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_RAMPLEFT",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 153.6086883544922,
+               "x_imgLowerRight" : 217.3672485351562,
+               "x_imgUpperLeft" : 152.7983703613281,
+               "x_imgUpperRight" : 218.2414550781250,
+               "y_imgLowerLeft" : 175.1031188964844,
+               "y_imgLowerRight" : 175.1143646240234,
+               "y_imgUpperLeft" : 110.7438430786133,
+               "y_imgUpperRight" : 110.7475433349609
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_SingleRamp2.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 1.5707960,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.0872660,
+            "Translation" : [ 0.0, 150.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_RAMPRIGHT",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 101.6648406982422,
+               "x_imgLowerRight" : 165.3547821044922,
+               "x_imgUpperLeft" : 100.7483139038086,
+               "x_imgUpperRight" : 166.2947540283203,
+               "y_imgLowerLeft" : 174.5509338378906,
+               "y_imgLowerRight" : 174.5742950439453,
+               "y_imgUpperLeft" : 110.4764862060547,
+               "y_imgUpperRight" : 110.4909591674805
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_F",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 272.0804748535156,
+               "x_imgLowerRight" : 230.6828002929688,
+               "x_imgUpperLeft" : 288.4878234863281,
+               "x_imgUpperRight" : 241.1886291503906,
+               "y_imgLowerLeft" : 149.5552673339844,
+               "y_imgLowerRight" : 149.7445678710938,
+               "y_imgUpperLeft" : 158.3126678466797,
+               "y_imgUpperRight" : 158.5309753417969
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_SingleRamp3.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 1.0, 0.0, 0.0 ],
+            "HeadAngle" : -0.0872660,
+            "Translation" : [ -150.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_RAMPBACK",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 129.7123260498047,
+               "x_imgLowerRight" : 189.2812652587891,
+               "x_imgUpperLeft" : 128.2858734130859,
+               "x_imgUpperRight" : 190.7068023681641,
+               "y_imgLowerLeft" : 169.5910491943359,
+               "y_imgLowerRight" : 169.5977172851562,
+               "y_imgUpperLeft" : 109.4941253662109,
+               "y_imgUpperRight" : 109.4894027709961
+            }
+         ]
+      }
+   ],
+   "WorldTitle" : "visionTest_SingleRamp"
+}

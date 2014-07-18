@@ -41,7 +41,7 @@
 #include "anki/common/robot/matlabInterface.h"
 #else
 #include "visionParameters.h"
-#include "anki/vision/robot/fidcuialDetection.h"
+#include "anki/vision/robot/fiducialDetection.h"
 #endif // #if USE_MATLAB_DETECTION
 
 using namespace Anki;
@@ -148,8 +148,8 @@ int main(int argc, char **argv)
   
   Json::Value root;
   
-  // Store the ground truth block poses and world name
-  int numBlocks = 0;
+  // Store the ground truth objects poses and world name
+  int numObjects = 0;
   webots::Node* rootNode = webotRobot_.getRoot();
   webots::Field* children = rootNode->getField("children");
   const int numNodes = children->getCount();
@@ -157,29 +157,31 @@ int main(int argc, char **argv)
     webots::Node* child = children->getMFNode(i_node);
     
     webots::Field* nameField = child->getField("name");
-    if(nameField != NULL && nameField->getSFString().compare(0,5,"Block") == 0)
+    if(nameField != NULL &&
+       (nameField->getSFString().compare(0,5,"Block") == 0 ||
+        nameField->getSFString().compare(0,4,"Ramp") == 0))
     {
-      std::string blockType = child->getField("type")->getSFString();
-      if(!blockType.empty())
+      std::string objectType = child->getField("type")->getSFString();
+      if(!objectType.empty())
       {
-        Json::Value jsonBlock;
-        jsonBlock["Type"] = blockType;
+        Json::Value jsonObject;
+        jsonObject["Type"] = objectType;
         
-        jsonBlock["BlockName"] = child->getField("name")->getSFString();
+        jsonObject["ObjectName"] = child->getField("name")->getSFString();
         
-        const double *blockTrans_m = child->getField("translation")->getSFVec3f();
-        const double *blockRot   = child->getField("rotation")->getSFRotation();
+        const double *objectTrans_m = child->getField("translation")->getSFVec3f();
+        const double *objectRot     = child->getField("rotation")->getSFRotation();
         for(int i=0; i<3; ++i) {
-          jsonBlock["BlockPose"]["Translation"].append(M_TO_MM(blockTrans_m[i]));
-          jsonBlock["BlockPose"]["Axis"].append(blockRot[i]);
+          jsonObject["ObjectPose"]["Translation"].append(M_TO_MM(objectTrans_m[i]));
+          jsonObject["ObjectPose"]["Axis"].append(objectRot[i]);
         }
-        jsonBlock["BlockPose"]["Angle"] = blockRot[3];
+        jsonObject["ObjectPose"]["Angle"] = objectRot[3];
         
-        root["Blocks"].append(jsonBlock);
-        numBlocks++;
+        root["Objects"].append(jsonObject);
+        numObjects++;
       }
       else {
-        fprintf(stdout, "Skipping unobserved (Type 0) block.\n");
+        fprintf(stdout, "Skipping object with no type.\n");
       }
     } // if this is a block
     else if(child->getType() == webots::Node::WORLD_INFO) {
@@ -199,7 +201,7 @@ int main(int argc, char **argv)
     }
     
   } // for each node
-  root["NumBlocks"] = numBlocks;
+  root["NumObjects"] = numObjects;
   
   // Store the camera calibration
   root["CameraCalibration"] = jsonCalib;
@@ -330,15 +332,17 @@ int main(int argc, char **argv)
 
       AnkiAssert(detectionParams.isInitialized);
       
-      const s32 maxMarkers = markers.get_maximumSize();
+      const s32 maxMarkers = 100;
+      FixedLengthList<VisionMarker> visionMarkers(maxMarkers, scratch);
+      visionMarkers.get_maximumSize();
       
-      FixedLengthList<Array<f32> > homographies(maxMarkers, ccmScratch);
+      FixedLengthList<Array<f32> > homographies(maxMarkers, scratch);
       
-      markers.set_size(maxMarkers);
+      visionMarkers.set_size(maxMarkers);
       homographies.set_size(maxMarkers);
       
       for(s32 i=0; i<maxMarkers; i++) {
-        Array<f32> newArray(3, 3, ccmScratch);
+        Array<f32> newArray(3, 3, scratch);
         homographies[i] = newArray;
       }
       
@@ -360,6 +364,35 @@ int main(int argc, char **argv)
       
       AnkiAssert(result == RESULT_OK);
     }
+    
+    const s32 numMarkers = VisionMemory::markers_.get_size();
+    bool isTrackingMarkerFound = false;
+    for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
+    {
+      const VisionMarker& crntMarker = VisionMemory::markers_[i_marker];
+      
+      // Create a vision marker message and process it (which just queues it
+      // in the mailbox to be picked up and sent out by main execution)
+      {
+        Messages::VisionMarker msg;
+        msg.timestamp  = imageTimeStamp;
+        msg.markerType = crntMarker.markerType;
+        
+        msg.x_imgLowerLeft = crntMarker.corners[Quadrilateral<f32>::BottomLeft].x;
+        msg.y_imgLowerLeft = crntMarker.corners[Quadrilateral<f32>::BottomLeft].y;
+        
+        msg.x_imgUpperLeft = crntMarker.corners[Quadrilateral<f32>::TopLeft].x;
+        msg.y_imgUpperLeft = crntMarker.corners[Quadrilateral<f32>::TopLeft].y;
+        
+        msg.x_imgUpperRight = crntMarker.corners[Quadrilateral<f32>::TopRight].x;
+        msg.y_imgUpperRight = crntMarker.corners[Quadrilateral<f32>::TopRight].y;
+        
+        msg.x_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].x;
+        msg.y_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].y;
+        
+        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker),&msg);
+      }
+
     
 #endif
     
