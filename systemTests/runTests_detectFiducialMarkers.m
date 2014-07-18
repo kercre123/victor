@@ -1,6 +1,6 @@
 % function allCompiledResults = runTests_detectFiducialMarkers()
 
-% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo/systemTests/tests/fiducialDetection_*_all.json', 'C:/Anki/systemTestImages/results/', 'Z:/Documents/Box Documents');
+% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*_all.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'Z:/Documents/Box Documents');
 
 function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsDirectory, boxSyncDirectory)
     % To be a match, all corners of a quad must be within these thresholds
@@ -15,7 +15,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     %     showOverallStats = true;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
-%     makeNewResultsDirectory = true;
+    %     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
     
     assert(exist('testJsonPattern', 'var') == 1);
@@ -98,7 +98,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.useMatlabForAll = true;
     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
-    algorithmParametersN.extractionFunctionId = 10000;    
+    algorithmParametersN.extractionFunctionId = 10000;
     thresholdMultipliers = linspace(0.5,1.0,10);
     smallCharacterisicParameters = linspace(0.7, 1.0, 10);
     resultsData_overall_small = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
@@ -120,7 +120,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.useMatlabForAll = true;
     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
-    algorithmParametersN.extractionFunctionId = 11000;    
+    algorithmParametersN.extractionFunctionId = 11000;
     thresholdMultipliers = linspace(0.8,1.1,10);
     smallCharacterisicParameters = linspace(0.9000, 0.9667, 10);
     resultsData_overall_small2 = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
@@ -138,6 +138,14 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
             disp(sprintf('resultsData_overall for %d %d = %f', iThresholdMultiplier, iSmallCharacterisicParameter, resultsData_overall_small2{iThresholdMultiplier,iSmallCharacterisicParameter}.percentQuadsExtracted));
         end
     end
+    
+    algorithmParametersN = algorithmParameters;
+    algorithmParametersN.useMatlabForAll = true;
+    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
+    algorithmParametersN.extractionFunctionId = 16;
+    algorithmParametersN.scaleImage_thresholdMultiplier = .9333;
+    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', .9148);
+    resultsData_overall_small2_best = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime, false);
     
     save('c:/tmp/results.mat', '*');
     
@@ -185,6 +193,8 @@ end % compileAll()
 function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime)
     thisFileChangeString = ['dateTime_', datestr(thisFileChangeTime(1).datenum, 'yyyy-mm-dd_HH-MM-SS')];
     
+    [~, ~, ~] = mkdir(resultsDirectory);
+    
     if ~makeNewResultsDirectory
         dirs = dir([resultsDirectory, '/dateTime_*']);
         lastTime = 0;
@@ -206,7 +216,6 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = compute
     resultsDirectory_curTime = [resultsDirectory, '/', thisFileChangeString, '/'];
     intermediateDirectory = [resultsDirectory_curTime, 'intermediate/'];
     
-    [~, ~, ~] = mkdir(resultsDirectory);
     [~, ~, ~] = mkdir(resultsDirectory_curTime);
     [~, ~, ~] = mkdir(intermediateDirectory);
     
@@ -336,7 +345,7 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
     if isempty(workQueue_todo)
         load(workQueue_all{1}.basicStats_filename, 'resultsData_basics');
     end
-        
+    
     if ~exist('resultsData_basics', 'var')
         save('recompileBasicsAllInput.mat', 'allTestData', 'rotationList', 'algorithmParameters');
         
