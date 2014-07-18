@@ -33,9 +33,14 @@ quads_minQuadArea = 100 / 4;
 quads_quadSymmetryThreshold = 2.0;
 quads_minDistanceFromImageEdge = 2;
 decode_minContrastRatio = 1.25;
+quadRefinementIterations = 25;
+numRefinementSamples = 100;
+quadRefinementMaxCornerChange = 5;
+quadRefinementMinCornerChange = .005;
+
 returnInvalidMarkers = 0;
 
-[quads, markerTypes, markerNames] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
+[quads, markerTypes, markerNames] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers);
 
 for i = 1:length(quads)
     quads{i} = quads{i} + 1;

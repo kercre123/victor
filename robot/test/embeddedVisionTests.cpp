@@ -3018,6 +3018,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const s32 quadRefinementIterations = 5;
   const s32 numRefinementSamples = 100;
   const f32 quadRefinementMaxCornerChange = 5.f;
+  const f32 quadRefinementMinCornerChange = .005f;
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -3064,6 +3065,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       quadRefinementIterations,
       numRefinementSamples,
       quadRefinementMaxCornerChange,
+      quadRefinementMinCornerChange,
       //true, //< TODO: change back to false
       false,
       scratchCcm,
