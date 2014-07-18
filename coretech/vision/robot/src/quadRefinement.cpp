@@ -20,6 +20,58 @@ static Anki::Embedded::Matlab matlab(false);
 
 namespace Anki {
   namespace Embedded {
+    
+    static f32 MaxCornerChange(const Array<f32>& currentHomography,
+                               Quadrilateral<f32>& currentQuad)
+    {
+      // Compute the current refined corners
+      const f32 h00 = currentHomography[0][0];
+      const f32 h01 = currentHomography[0][1];
+      const f32 h02 = currentHomography[0][2];
+      
+      const f32 h10 = currentHomography[1][0];
+      const f32 h11 = currentHomography[1][1];
+      const f32 h12 = currentHomography[1][2];
+      
+      const f32 h20 = currentHomography[2][0];
+      const f32 h21 = currentHomography[2][1];
+      const f32 h22 = currentHomography[2][2];
+      
+      // Make a copy of the current position before we overwrite it, so we can
+      // compare to it to see how much we changed
+      Quadrilateral<f32> prevQuad = currentQuad;
+      
+      // Homography is always mapping from canonical quad (0,0), (0,1), (1,0), (1,1)
+      f32 normalization = 1.f / h22;
+      currentQuad[0].x = h02 * normalization;
+      currentQuad[0].y = h12 * normalization;
+      
+      normalization = 1.f / (h21 + h22);
+      currentQuad[1].x = (h01 + h02) * normalization;
+      currentQuad[1].y = (h11 + h12) * normalization;
+      
+      normalization = 1.f / (h20 + h22);
+      currentQuad[2].x = (h00 + h02) * normalization;
+      currentQuad[2].y = (h10 + h12) * normalization;
+      
+      normalization = 1.f / (h20 + h21 + h22);
+      currentQuad[3].x = (h00 + h01 + h02) * normalization;
+      currentQuad[3].y = (h10 + h11 + h12) * normalization;
+      
+      // See how different the new corner locations are from the originals we
+      // stored above
+      f32 maxChange = 0.f;
+      for(s32 i=0; i<4; ++i) {
+        const f32 cornerChange = (currentQuad[i] - prevQuad[i]).Length();
+        if(cornerChange > maxChange) {
+          maxChange = cornerChange;
+        }
+      }
+      
+      return maxChange;
+      
+    } // MaxCornerChange()
+    
     Result RefineQuadrilateral(const Quadrilateral<s16>& initialQuad,
       const Array<f32>& initialHomography,
       const Array<u8> &image,
@@ -29,6 +81,7 @@ namespace Anki {
       const f32 brightGray,
       const s32 numSamples,
       const f32 maxCornerChange,
+      const f32 minCornerChange,
       Quadrilateral<f32>& refinedQuad,
       Array<f32>& refinedHomography,
       MemoryStack scratch)
@@ -680,27 +733,18 @@ namespace Anki {
 
         refinedHomography.Set(newHomography);
 
+        const f32 currentCornerChange = MaxCornerChange(refinedHomography, refinedQuad);
+        if(currentCornerChange < minCornerChange) {
+          // Converged!  Stop iterating.
+          //AnkiWarn("QuadRefinement.CornersConverged",
+          //printf("Corner change at iteration %d = %f which is less than "
+          //         "convergence tolerance of %f. Stopping iterations.\n",
+          //         iteration, currentCornerChange, CornerConvergenceTolerance);
+          break;
+        }
+        
 #if VISUALIZE_WITH_MATLAB
         {
-          // Compute the final refined corners
-          const f32 h00 = refinedHomography[0][0]; const f32 h01 = refinedHomography[0][1]; const f32 h02 = refinedHomography[0][2];
-          const f32 h10 = refinedHomography[1][0]; const f32 h11 = refinedHomography[1][1]; const f32 h12 = refinedHomography[1][2];
-          const f32 h20 = refinedHomography[2][0]; const f32 h21 = refinedHomography[2][1]; const f32 h22 = refinedHomography[2][2];
-
-          // Start with canonical corners
-          refinedQuad[0].x = 0.f;  refinedQuad[0].y = 0.f;
-          refinedQuad[1].x = 0.f;  refinedQuad[1].y = 1.f;
-          refinedQuad[2].x = 1.f;  refinedQuad[2].y = 0.f;
-          refinedQuad[3].x = 1.f;  refinedQuad[3].y = 1.f;
-
-          for(s32 i=0; i<4; ++i) {
-            const f32 xOriginal = refinedQuad[i].x;
-            const f32 yOriginal = refinedQuad[i].y;
-            const f32 normalization = 1.f / (h20*xOriginal + h21*yOriginal + h22);
-            refinedQuad[i].x = (h00*xOriginal + h01*yOriginal + h02) * normalization;
-            refinedQuad[i].y = (h10*xOriginal + h11*yOriginal + h12) * normalization;
-          }
-
           matlab.PutQuad(refinedQuad, "refinedQuad");
           matlab.EvalStringEcho("delete(findobj(gcf, 'Tag', 'refinedQuad')); "
             "refinedQuad = double(refinedQuad); "
@@ -718,25 +762,6 @@ namespace Anki {
 
       BeginBenchmark("vme_quadrefine_finalize");
 
-      // Compute the final refined corners
-      const f32 h00 = refinedHomography[0][0]; const f32 h01 = refinedHomography[0][1]; const f32 h02 = refinedHomography[0][2];
-      const f32 h10 = refinedHomography[1][0]; const f32 h11 = refinedHomography[1][1]; const f32 h12 = refinedHomography[1][2];
-      const f32 h20 = refinedHomography[2][0]; const f32 h21 = refinedHomography[2][1]; const f32 h22 = refinedHomography[2][2];
-
-      // Start with canonical corners
-      refinedQuad[0].x = 0.f;  refinedQuad[0].y = 0.f;
-      refinedQuad[1].x = 0.f;  refinedQuad[1].y = 1.f;
-      refinedQuad[2].x = 1.f;  refinedQuad[2].y = 0.f;
-      refinedQuad[3].x = 1.f;  refinedQuad[3].y = 1.f;
-
-      for(s32 i=0; i<4; ++i) {
-        const f32 xOriginal = refinedQuad[i].x;
-        const f32 yOriginal = refinedQuad[i].y;
-        const f32 normalization = 1.f / (h20*xOriginal + h21*yOriginal + h22);
-        refinedQuad[i].x = (h00*xOriginal + h01*yOriginal + h02) * normalization;
-        refinedQuad[i].y = (h10*xOriginal + h11*yOriginal + h12) * normalization;
-      }
-
 #if VISUALIZE_WITH_MATLAB
       CoreTechPrint("Final quad: ");
       refinedQuad.Print();
@@ -751,14 +776,14 @@ namespace Anki {
       }
 #endif
 
-      // Check to make sure the refined quad isn't too different from the intitial one.
-      // If it is, restore the original.
       Quadrilateral<f32> initialQuadF32;
       initialQuadF32.SetCast(initialQuad);
 
-      for(s32 i=0; i<4 && !restoreOriginal; ++i) {
-        const f32 cornerChange = (refinedQuad[i] - initialQuadF32[i]).Length();
-        if(cornerChange > maxCornerChange) {
+      // Check to make sure the refined quad isn't too different from the intitial one.
+      // If it is, restore the original.
+      if(!restoreOriginal) {
+        const f32 finalCornerChange = MaxCornerChange(refinedHomography, initialQuadF32);
+        if(finalCornerChange > maxCornerChange) {
           AnkiWarn("RefineQuadrilateral", "Quad changed too much.\n");
           restoreOriginal = true;
         }

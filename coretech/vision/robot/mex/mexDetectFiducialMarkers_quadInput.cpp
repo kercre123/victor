@@ -21,14 +21,15 @@ using namespace Anki::Embedded;
 // refine_numRefinementSamples = 100;
 // returnInvalidMarkers = 0;
 // refine_quadRefinementMaxCornerChange = 2;
-// [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers_quadInput(image, quadsCellArray, decode_minContrastRatio, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
+// refine_quadRefinementMinCornerChange = 0.005;
+// [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers_quadInput(image, quadsCellArray, decode_minContrastRatio, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange, returnInvalidMarkers);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
   const s32 bufferSize = 10000000;
 
-  AnkiConditionalErrorAndReturn(nrhs == 10 && nlhs >= 2 && nlhs <= 4, "mexDetectFiducialMarkers_quadInput", "Call this function as following: [quads, markerTypes, <markerNames>, <markerValidity>] = mexDetectFiducialMarkers_quadInput(uint8(image), quadsCellArray, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, returnInvalidMarkers);");
+  AnkiConditionalErrorAndReturn(nrhs == 11 && nlhs >= 2 && nlhs <= 4, "mexDetectFiducialMarkers_quadInput", "Call this function as following: [quads, markerTypes, <markerNames>, <markerValidity>] = mexDetectFiducialMarkers_quadInput(uint8(image), quadsCellArray, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange, returnInvalidMarkers);");
 
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDetectFiducialMarkers_quadInput", "Memory could not be allocated");
@@ -42,7 +43,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 refine_quadRefinementIterations      = static_cast<s32>(mxGetScalar(prhs[6]));
   const s32 refine_numRefinementSamples          = static_cast<s32>(mxGetScalar(prhs[7]));
   const f32 refine_quadRefinementMaxCornerChange = static_cast<f32>(mxGetScalar(prhs[8]));
-  const bool returnInvalidMarkers                = static_cast<bool>(Round<s32>(mxGetScalar(prhs[9])));
+  const f32 refine_quadRefinementMinCornerChange = static_cast<f32>(mxGetScalar(prhs[9]));
+  const bool returnInvalidMarkers                = static_cast<bool>(Round<s32>(mxGetScalar(prhs[10])));
 
   AnkiConditionalErrorAndReturn(image.IsValid(), "mexDetectFiducialMarkers_quadInput", "Could not allocate image");
 
@@ -109,7 +111,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
       decode_minContrastRatio,
-      refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange,
+      refine_quadRefinementIterations,
+      refine_numRefinementSamples,
+      refine_quadRefinementMaxCornerChange,
+      refine_quadRefinementMinCornerChange,
       quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
       memory)) != Anki::RESULT_OK)
     {

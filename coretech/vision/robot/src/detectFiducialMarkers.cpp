@@ -39,6 +39,7 @@ namespace Anki
       const s32 refine_quadRefinementIterations,
       const s32 refine_numRefinementSamples,
       const f32 refine_quadRefinementMaxCornerChange,
+      const f32 refine_quadRefinementMinCornerChange,
       const bool returnInvalidMarkers,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
@@ -219,7 +220,7 @@ namespace Anki
         if(currentMarker.validity == VisionMarker::VALID) {
           if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
             decode_minContrastRatio,
-            refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange,
+            refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange,
             quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
             scratchOnchip)) != RESULT_OK)
           {

@@ -7,6 +7,8 @@ if any(brightValues < VisionMarkerTrained.MinContrastRatio*darkValues)
     % Make sure every corresponding pair of bright/dark probes has enough
     % contrast.  
     threshold = -1;
+    brightValue = [];
+    darkValue = [];
 else
     % If so, compute the threshold from all of them
     brightValue = mean(brightValues);

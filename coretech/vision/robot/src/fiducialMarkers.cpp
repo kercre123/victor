@@ -734,7 +734,7 @@ namespace Anki
 
     Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &initQuad,
       const Array<f32> &initHomography, const f32 minContrastRatio,
-      const s32 refine_quadRefinementIterations, const s32 refine_numRefinementSamples, const f32 refine_quadRefinementMaxCornerChange,
+      const s32 refine_quadRefinementIterations, const s32 refine_numRefinementSamples, const f32 refine_quadRefinementMaxCornerChange, const f32 refine_quadRefinementMinCornerChange,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       MemoryStack scratch)
     {
@@ -770,7 +770,8 @@ namespace Anki
         if(refine_quadRefinementIterations > 0) {
           BeginBenchmark("vme_quadrefine");
 
-          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, refine_quadRefinementIterations, darkValue, brightValue, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, quad, homography, scratch)) != RESULT_OK)
+          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, refine_quadRefinementIterations, darkValue, brightValue, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange,
+              quad, homography, scratch)) != RESULT_OK)
           {
             // TODO: Don't fail? Just warn and keep original quad?
             AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
