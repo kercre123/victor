@@ -106,6 +106,8 @@ XYaxesDisplay {
 
 DEF Cozmo_1 CozmoBot {
   name "Cozmo_1"
+  translation  -0.096000 -0.241000 0.000000
+  rotation     0.000000 0.000000 1.000000 0.260000
   usbChannel   10
   cameraWidth  320
   cameraHeight 240

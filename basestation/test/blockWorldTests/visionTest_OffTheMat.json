@@ -1,15 +1,4 @@
 {
-   "Blocks" : [
-      {
-         "BlockName" : "Block",
-         "BlockPose" : {
-            "Angle" : 0.7853979999999999,
-            "Axis" : [ 0.0, 0.0, 1.0 ],
-            "Translation" : [ 145.0, 60.0, 21.754750 ]
-         },
-         "Type" : "FIRE"
-      }
-   ],
    "CameraCalibration" : {
       "center_x" : 160.0,
       "center_y" : 120.0,
@@ -20,7 +9,18 @@
       "skew" : 0.0
    },
    "CheckRobotPose" : true,
-   "NumBlocks" : 1,
+   "NumObjects" : 1,
+   "Objects" : [
+      {
+         "ObjectName" : "Block",
+         "ObjectPose" : {
+            "Angle" : 0.7853979999999999,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "Translation" : [ 145.0, 60.0, 21.754750 ]
+         },
+         "Type" : "FIRE"
+      }
+   ],
    "Poses" : [
       {
          "ImageFile" : "basestation/test/blockWorldTests/visionTest_OffTheMat0.png",
@@ -36,27 +36,27 @@
                "Name" : "MessageVisionMarker",
                "markerType" : "MARKER_FIRE",
                "timestamp" : 0,
-               "x_imgLowerLeft" : 206.5453033447266,
-               "x_imgLowerRight" : 243.1082305908203,
-               "x_imgUpperLeft" : 208.6729583740234,
-               "x_imgUpperRight" : 246.5819244384766,
-               "y_imgLowerLeft" : 97.05812072753906,
-               "y_imgLowerRight" : 100.2965164184570,
-               "y_imgUpperLeft" : 61.96814727783203,
-               "y_imgUpperRight" : 64.23954772949219
+               "x_imgLowerLeft" : 207.2476654052734,
+               "x_imgLowerRight" : 243.3890838623047,
+               "x_imgUpperLeft" : 209.1532745361328,
+               "x_imgUpperRight" : 247.4084930419922,
+               "y_imgLowerLeft" : 96.55878448486328,
+               "y_imgLowerRight" : 99.81330108642578,
+               "y_imgUpperLeft" : 61.50111007690430,
+               "y_imgUpperRight" : 63.72871398925781
             },
             {
                "Name" : "MessageVisionMarker",
                "markerType" : "MARKER_M",
                "timestamp" : 0,
-               "x_imgLowerLeft" : 117.1206359863281,
-               "x_imgLowerRight" : 159.6616516113281,
-               "x_imgUpperLeft" : 100.0736083984375,
-               "x_imgUpperRight" : 138.8758544921875,
-               "y_imgLowerLeft" : 130.0505218505859,
-               "y_imgLowerRight" : 120.8785781860352,
-               "y_imgUpperLeft" : 114.7057647705078,
-               "y_imgUpperRight" : 107.1343994140625
+               "x_imgLowerLeft" : 117.4818038940430,
+               "x_imgLowerRight" : 159.5843048095703,
+               "x_imgUpperLeft" : 100.2993011474609,
+               "x_imgUpperRight" : 139.4050750732422,
+               "y_imgLowerLeft" : 129.7234649658203,
+               "y_imgLowerRight" : 120.3650436401367,
+               "y_imgUpperLeft" : 114.0374526977539,
+               "y_imgUpperRight" : 106.5187683105469
             }
          ]
       }

@@ -18,7 +18,7 @@ namespace Anki {
   
   namespace Cozmo {
     
-    const Ramp::Type Ramp::Type::BASIC_RAMP_MODEL;
+    const Ramp::Type Ramp::Type::BASIC_RAMP;
     
     const std::array<Point3f, Ramp::NUM_CORNERS> Ramp::CanonicalCorners = {{
       // Bottom corners
@@ -35,7 +35,7 @@ namespace Anki {
     
     
     Ramp::Ramp()
-    : DockableObject(Type::BASIC_RAMP_MODEL) // TODO: Support multiple ramp types
+    : DockableObject(Type::BASIC_RAMP) // TODO: Support multiple ramp types
     , _vizHandle(VizManager::INVALID_HANDLE)
     {
       // Four markers:
@@ -172,6 +172,15 @@ namespace Anki {
       }
     } // for each canonical docking point
   
+    ObjectType Ramp::GetTypeByName(const std::string& name)
+    {
+      // TODO: Support other types/names
+      if(name == "BASIC_RAMP") {
+        return Ramp::Type::BASIC_RAMP;
+      } else {
+        assert(false);
+      }
+    }
     
     
   } // namespace Cozmo

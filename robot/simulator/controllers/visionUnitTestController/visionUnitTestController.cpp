@@ -41,7 +41,7 @@
 #include "anki/common/robot/matlabInterface.h"
 #else
 #include "visionParameters.h"
-#include "anki/vision/robot/fidcuialDetection.h"
+#include "anki/vision/robot/fiducialDetection.h"
 #endif // #if USE_MATLAB_DETECTION
 
 using namespace Anki;
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
     webots::Field* nameField = child->getField("name");
     if(nameField != NULL &&
        (nameField->getSFString().compare(0,5,"Block") == 0 ||
-        nameField->getSFString().compare(0,4,"Ramp")))
+        nameField->getSFString().compare(0,4,"Ramp") == 0))
     {
       std::string objectType = child->getField("type")->getSFString();
       if(!objectType.empty())
@@ -332,15 +332,17 @@ int main(int argc, char **argv)
 
       AnkiAssert(detectionParams.isInitialized);
       
-      const s32 maxMarkers = markers.get_maximumSize();
+      const s32 maxMarkers = 100;
+      FixedLengthList<VisionMarker> visionMarkers(maxMarkers, scratch);
+      visionMarkers.get_maximumSize();
       
-      FixedLengthList<Array<f32> > homographies(maxMarkers, ccmScratch);
+      FixedLengthList<Array<f32> > homographies(maxMarkers, scratch);
       
-      markers.set_size(maxMarkers);
+      visionMarkers.set_size(maxMarkers);
       homographies.set_size(maxMarkers);
       
       for(s32 i=0; i<maxMarkers; i++) {
-        Array<f32> newArray(3, 3, ccmScratch);
+        Array<f32> newArray(3, 3, scratch);
         homographies[i] = newArray;
       }
       
@@ -362,6 +364,35 @@ int main(int argc, char **argv)
       
       AnkiAssert(result == RESULT_OK);
     }
+    
+    const s32 numMarkers = VisionMemory::markers_.get_size();
+    bool isTrackingMarkerFound = false;
+    for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
+    {
+      const VisionMarker& crntMarker = VisionMemory::markers_[i_marker];
+      
+      // Create a vision marker message and process it (which just queues it
+      // in the mailbox to be picked up and sent out by main execution)
+      {
+        Messages::VisionMarker msg;
+        msg.timestamp  = imageTimeStamp;
+        msg.markerType = crntMarker.markerType;
+        
+        msg.x_imgLowerLeft = crntMarker.corners[Quadrilateral<f32>::BottomLeft].x;
+        msg.y_imgLowerLeft = crntMarker.corners[Quadrilateral<f32>::BottomLeft].y;
+        
+        msg.x_imgUpperLeft = crntMarker.corners[Quadrilateral<f32>::TopLeft].x;
+        msg.y_imgUpperLeft = crntMarker.corners[Quadrilateral<f32>::TopLeft].y;
+        
+        msg.x_imgUpperRight = crntMarker.corners[Quadrilateral<f32>::TopRight].x;
+        msg.y_imgUpperRight = crntMarker.corners[Quadrilateral<f32>::TopRight].y;
+        
+        msg.x_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].x;
+        msg.y_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].y;
+        
+        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker),&msg);
+      }
+
     
 #endif
     

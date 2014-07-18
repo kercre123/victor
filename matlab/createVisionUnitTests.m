@@ -164,7 +164,8 @@ TestWorld.Run();
 
 worldName = 'SingleRamp';
 TestWorld = CozmoTestWorldCreator('WorldFile', ...
-    fullfile(rootPath, ['visionTest_' worldName '.wbt']));
+    fullfile(rootPath, ['visionTest_' worldName '.wbt']), ...
+    'CheckRobotPose', false);
 
 TestWorld.AddRamp();
 

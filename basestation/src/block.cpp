@@ -437,7 +437,7 @@ namespace Anki {
     }
     
     
-    Block::Type Block::GetBlockTypeByName(const std::string& name) {
+    ObjectType Block::GetTypeByName(const std::string& name) {
       auto typeIter = Block::BlockNameToTypeMap.find(name);
       if(typeIter != Block::BlockNameToTypeMap.end()) {
         return typeIter->second;

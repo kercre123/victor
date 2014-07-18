@@ -604,13 +604,12 @@ namespace Anki
       
     } // UpdateObjectPoses()
     
-    void BlockWorld::Update(uint32_t& numBlocksObserved)
+    void BlockWorld::Update(uint32_t& numObjectsObserved)
     {
       CORETECH_ASSERT(isInitialized_);
       CORETECH_ASSERT(robotMgr_ != NULL);
       
-      numBlocksObserved = 0;
-      s32 numRampsObserved = 0; // TODO: make this an output argument
+      numObjectsObserved = 0;
       
       // New timestep, new set of occluders.  Get rid of anything registered as
       // an occluder with any robot's camera
@@ -663,14 +662,14 @@ namespace Anki
         // Find any observed blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numBlocksObserved += UpdateObjectPoses(_objectLibrary[BLOCK_FAMILY], currentObsMarkers,
+        numObjectsObserved += UpdateObjectPoses(_objectLibrary[BLOCK_FAMILY], currentObsMarkers,
                                                _existingObjects[BLOCK_FAMILY], atTimestamp);
 
         //
         // Find any observed ramps from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numRampsObserved += UpdateObjectPoses(_objectLibrary[RAMP_FAMILY], currentObsMarkers,
+        numObjectsObserved += UpdateObjectPoses(_objectLibrary[RAMP_FAMILY], currentObsMarkers,
                                               _existingObjects[RAMP_FAMILY], atTimestamp);
 
         
