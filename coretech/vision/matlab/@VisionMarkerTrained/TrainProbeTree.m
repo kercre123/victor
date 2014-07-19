@@ -5,11 +5,12 @@ function probeTree = TrainProbeTree(varargin)
 %% Parameters
 loadSavedProbeValues = false;
 markerImageDir = VisionMarkerTrained.TrainingImageDir;
+negativeImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/negativeExamplePatches';
 workingResolution = VisionMarkerTrained.ProbeParameters.GridSize;
 %maxSamples = 100;
 %minInfoGain = 0;
 redBlackVerifyDepth = 8;
-%maxDepth = 50;
+maxDepth = inf;
 %addRotations = false;
 numPerturbations = 100;
 blurSigmas = [0 .01 .02]; % as a fraction of the image diagonal
@@ -86,7 +87,7 @@ else
     fprintf('Found %d total image files to train on.\n', length(fnames));
     
     % Add special all-white and all-black images
-    fnames = [fnames; 'ALLWHITE'; 'ALLBLACK'];
+    %fnames = [fnames; 'ALLWHITE'; 'ALLBLACK'];
     
     %fnames = {'angryFace.png', 'ankiLogo.png', 'batteries3.png', ...
     %    'bullseye2.png', 'fire.png', 'squarePlusCorners.png'};
@@ -130,15 +131,13 @@ else
     pBar.set(0);
     for iImg = 1:numImages
         
-        if strcmp(fnames{iImg}, 'ALLWHITE')
-            img{iImg} = ones(workingResolution);
-        elseif strcmp(fnames{iImg}, 'ALLBLACK')
-            img{iImg} = zeros(workingResolution);
-        else
-            [img{iImg}, ~, alpha] = imread(fnames{iImg});
-            img{iImg} = mean(im2double(img{iImg}),3);
-            img{iImg}(alpha < .5) = 1;
-        end
+%         if strcmp(fnames{iImg}, 'ALLWHITE')
+%             img{iImg} = ones(workingResolution);
+%         elseif strcmp(fnames{iImg}, 'ALLBLACK')
+%             img{iImg} = zeros(workingResolution);
+%         else
+            img{iImg} = imreadAlphaHelper(fnames{iImg});
+%         end
         
         [nrows,ncols,~] = size(img{iImg});
         imageCoordsX = linspace(0, 1, ncols);
@@ -168,6 +167,57 @@ else
     
     probeValues = [probeValues{:}];
     labels = [labels{:}];
+    
+    % Add negative examples
+    fnamesNeg = {'ALLWHITE'; 'ALLBLACK'};
+    if ~isempty(negativeImageDir)
+        fnamesNeg = [fnamesNeg; getfnames(negativeImageDir, 'images', 'useFullPath', true)];
+    end
+    
+    numNeg = length(fnamesNeg);
+    
+    pBar.set_message(sprintf(['Interpolating probe locations ' ...
+        'from %d negative images'], numNeg));
+    pBar.set_increment(1/numNeg);
+    pBar.set(0);
+    
+    probeValuesNeg = zeros(workingResolution^2, numNeg);
+    for iImg = 1:numNeg
+        if strcmp(fnamesNeg{iImg}, 'ALLWHITE')
+            imgNeg = ones(workingResolution);
+        elseif strcmp(fnamesNeg{iImg}, 'ALLBLACK')
+            imgNeg = zeros(workingResolution);
+        else
+            imgNeg = imreadAlphaHelper(fnamesNeg{iImg});
+        end
+        
+        [nrows,ncols,~] = size(imgNeg);
+        imageCoordsX = linspace(0, 1, ncols);
+        imageCoordsY = linspace(0, 1, nrows);
+        
+        probeValuesNeg(:,iImg) = mean(interp2(imageCoordsX, imageCoordsY, imgNeg, ...
+            X, Y, 'linear', 1), 2);
+        
+        pBar.increment();
+    end % for each negative example
+    
+    noInfo = all(probeValuesNeg == 0 | probeValuesNeg == 1, 1);
+    if any(noInfo)
+        fprintf('Ignoring %d negative patches with no valid info.\n', sum(noInfo));
+        numNeg = numNeg - sum(noInfo);
+        probeValuesNeg(:,noInfo) = [];
+        %fnamesNeg(noInfo) = [];
+    end
+    
+    labelNames{end+1} = 'INVALID';
+    labels = [labels length(labelNames)*ones(1,numNeg)];
+    %fnames = [fnames; fnamesNeg];
+    probeValues = [probeValues probeValuesNeg];
+    
+    assert(size(probeValues,2) == length(labels));
+    
+    
+    
     %numLabels = numImages;
     numImages = length(labels);
         
@@ -194,7 +244,8 @@ else
     %         numImages = 4*numImages;
     %     end
 
-    save trainingState.mat
+    % Only save what we need to re-run (not all the settings!)
+    save trainingState.mat probeValues fnames labels labelNames numImages xgrid ygrid
     
 end % if loadSavedProbeValues
 
@@ -206,7 +257,7 @@ probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
 probeTree.labels = labelNames;
 
 try
-    probeTree = buildTree(probeTree, false(workingResolution), labels, labelNames);
+    probeTree = buildTree(probeTree, false(workingResolution), labels, labelNames, maxDepth);
 catch E
     switch(E.identifier)
         case {'BuildTree:MaxDepth', 'BuildTree:UselessSplit'}
@@ -578,6 +629,7 @@ end
                 % info gain computation doesn't really take that into
                 % account.  Is there a better way to fix this? 
                 masked(node.whichProbe) = true;
+                node.depth = node.depth + 1;
                 node = buildTree(node, masked, labels, labelNames, maxDepth);
                     
             else
@@ -660,3 +712,11 @@ infoGain = currentEntropy - conditionalEntropy;
 
 end % computeInfoGain()
 
+
+function img = imreadAlphaHelper(fname)
+
+[img, ~, alpha] = imread(fname);
+img = mean(im2double(img),3);
+img(alpha < .5) = 1;
+
+end % imreadAlphaHelper()

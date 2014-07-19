@@ -811,7 +811,7 @@ namespace Anki
 
         EndBenchmark("vme_classify");
 
-        if(multiClassLabel != MARKER_UNKNOWN) {
+        if(multiClassLabel != MARKER_UNKNOWN && multiClassLabel != MARKER_INVALID_000) {
           BeginBenchmark("vme_verify");
 #if USE_RED_BLACK_VERIFICATION_TREES
           bool isVerified = false;
