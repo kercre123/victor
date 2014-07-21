@@ -1,26 +1,16 @@
 
-% runTests_detectNonMarkers('~/tmp', '~/tmp',...
-%   {'/Users/pbarnum/Documents/datasets/external/KAIST/**/*.jpg',...
-%    '/Users/pbarnum/Documents/datasets/external/chars74k/**/*.jpg',...
-%    '/Users/pbarnum/Documents/datasets/external/icdar2003/**/*.jpg',...
-%    '/Users/pbarnum/Documents/datasets/external/icdar2011/**/*.jpg',...
-%    '/Users/pbarnum/Documents/datasets/external/256_ObjectCategories/**/*.jpg',...
-%    '/Users/pbarnum/Documents/datasets/external/svt1/**/*.jpg',...
-%    '/Users/pbarnum/Documents/datasets/external/IndoorCVPR_09/**/*.jpg',...
-%    '/Users/pbarnum/Documents/datasets/external/W31_Images/**/*.jpg',...
-%    '/Users/pbarnum/Documents/datasets/external/VOCtrainval_11-May-2009/JPEGImages/**/*.jpg',...
-%    '/Users/pbarnum/Documents/datasets/external/egocentric_objects_intel_06_2009/**/*.jpg'});
+% runTests_detectNonMarkers('~/tmp', '~/tmp', {'/Users/pbarnum/Documents/datasets/external/KAIST/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/chars74k/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/icdar2003/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/icdar2011/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/256_ObjectCategories/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/svt1/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/IndoorCVPR_09/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/W31_Images/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/VOCtrainval_11-May-2009/JPEGImages/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/egocentric_objects_intel_06_2009/**/*.jpg'});
 
 function runTests_detectNonMarkers(resultsDirectory, temporaryDirectory, filenamePatterns)
     
     numComputeThreads = 3;
     
-    ignoreModificationTime = true;
-        
+    ignoreModificationTime = false;
+    
     [workQueue_todo, workQueue_all] = computeWorkQueues(filenamePatterns, ignoreModificationTime);
     
     disp(sprintf('workQueue_todo has %d elements', length(workQueue_todo)));
-        
+    
     algorithmParameters.scaleImage_thresholdMultiplier = 1.0;
     algorithmParameters.scaleImage_numPyramidLevels = 3;
     algorithmParameters.component1d_minComponentWidth = 0;
@@ -40,6 +30,8 @@ function runTests_detectNonMarkers(resultsDirectory, temporaryDirectory, filenam
     algorithmParameters.useMatlabForAll = false;
     algorithmParameters.useMatlabForQuadExtraction = false;
     algorithmParameters.matlab_embeddedConversions = EmbeddedConversionsManager();
+    algorithmParameters.drawOutputImage = false;
+    algorithmParameters.showImageDetectionWidth = 640;
     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement';
@@ -47,7 +39,11 @@ function runTests_detectNonMarkers(resultsDirectory, temporaryDirectory, filenam
     algorithmParametersN.useMatlabForAll = true;
     algorithmParametersN.maxDetectionSize = [768, 1024];
     
-    results_detectQuadsAndMarkers = run_detectQuadsAndMarkers(numComputeThreads, workQueue_todo, workQueue_all, temporaryDirectory, algorithmParametersN); %#ok<NASGU>
+    results_detectQuadsAndMarkers = run_detectQuadsAndMarkers(numComputeThreads, workQueue_todo, workQueue_all, temporaryDirectory, algorithmParametersN);
+    
+    save([resultsDirectory,'/latestNonMarkersResults.mat'], '*');
+    
+    [results_quads, results_markers] = run_compileNonMarkers(results_detectQuadsAndMarkers); %#ok<ASGLU,NASGU>
     
     save([resultsDirectory,'/latestNonMarkersResults.mat'], '*');
     
@@ -68,7 +64,7 @@ function [workQueue_todo, workQueue_all] = computeWorkQueues(filenamePatterns, i
             newWorkItem.outputFilename = [newWorkItem.inputFilename, '.mat'];
             
             workQueue_all{end+1} = newWorkItem; %#ok<AGROW>
-
+            
             if ignoreModificationTime
                 workQueue_todo{end+1} = newWorkItem; %#ok<AGROW>
                 continue;
@@ -83,12 +79,21 @@ function [workQueue_todo, workQueue_all] = computeWorkQueues(filenamePatterns, i
     end
 end % computeWorkQueues()
 
+% Call this manually, if you want to delete all .mat files generated for
+% each individual image
+function deleteIntermediateOutputFiles(workQueue_all)
+    for iWork = 1:length(workQueue_all)
+        delete(workQueue_all{iWork}.outputFilename);
+        delete([workQueue_all{iWork}.inputFilename, '_out.png']);
+    end
+end % deleteIntermediateOutputFiles()
+
 function results_detectQuadsAndMarkers = run_detectQuadsAndMarkers(numComputeThreads, workQueue_todo, workQueue_all, temporaryDirectory, algorithmParameters) %#ok<INUSD>
     allInputFilename = [temporaryDirectory, '/detectNonMarkersInput.mat'];
     
     save(allInputFilename, 'algorithmParameters');
     
-    matlabCommandString = ['load(''', allInputFilename, '''); ' , 'runTests_detectNonMarkers_perImage(localWorkQueue, algorithmParameters);'];
+    matlabCommandString = ['dbstop error; load(''', allInputFilename, '''); ' , 'runTests_detectNonMarkers_perImage(localWorkQueue, algorithmParameters);'];
     
     runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString);
     
@@ -103,15 +108,33 @@ function results_detectQuadsAndMarkers = run_detectQuadsAndMarkers(numComputeThr
             results_detectQuadsAndMarkers{workQueue_all{iWork}.iPattern} = cell(0,1);
         end
         
+        newDetection.inputFilename = workQueue_all{iWork}.inputFilename;
+        newDetection.outputFilename = workQueue_all{iWork}.outputFilename;
         newDetection.detectedQuads = detectedQuads;
         newDetection.detectedQuadValidity = detectedQuadValidity;
         newDetection.detectedMarkers = detectedMarkers;
         newDetection.imageSize = imageSize;
         newDetection.scale = scale;
         
-        results_detectQuadsAndMarkers{workQueue_all{iWork}.iPattern}{workQueue_all{iWork}.iFilename} = newDetection;        
+        results_detectQuadsAndMarkers{workQueue_all{iWork}.iPattern}{workQueue_all{iWork}.iFilename} = newDetection;
     end
-end
+end % run_detectQuadsAndMarkers()
 
-
-
+function [results_quads, results_markers] = run_compileNonMarkers(results_detectQuadsAndMarkers)
+    results_quads = {};
+    results_markers = {};
+    
+    for iPattern = 1:length(results_detectQuadsAndMarkers)
+        for iFilename = 1:length(results_detectQuadsAndMarkers{iPattern})
+            curDetection = results_detectQuadsAndMarkers{iPattern}{iFilename};
+            
+            if ~isempty(curDetection.detectedQuads)
+                results_quads{end+1} = curDetection; %#ok<AGROW>
+            end
+            
+            if ~isempty(curDetection.detectedMarkers)
+                results_markers{end+1} = curDetection; %#ok<AGROW>
+            end
+        end
+    end
+end % run_compileNonMarkers
