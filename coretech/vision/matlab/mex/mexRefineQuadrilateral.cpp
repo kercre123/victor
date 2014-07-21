@@ -45,11 +45,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const f32 brightGray          = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
   const s32 numSamples          = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
   const f32 maxCornerChange     = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
+  const f32 minCornerChange     = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
   
   Quadrilateral<f32> refinedQuad;
   Array<f32> refinedHomography(3,3,scratch);
   
-  Anki::Result lastResult = RefineQuadrilateral(initialQuad, initialHomography, image, squareWidthFraction, iterations, darkGray, brightGray, numSamples, maxCornerChange, refinedQuad, refinedHomography, scratch);
+  Anki::Result lastResult = RefineQuadrilateral(initialQuad, initialHomography, image, squareWidthFraction, iterations, darkGray, brightGray, numSamples, maxCornerChange, minCornerChange, refinedQuad, refinedHomography, scratch);
   
   AnkiConditionalErrorAndReturn(lastResult == Anki::RESULT_OK, "mexRefineQuadrilateral", "RefineQuadrilateral failed.");
 

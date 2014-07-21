@@ -82,6 +82,10 @@ namespace Anki {
         // original quad/homography are restored.
         quadRefinementMaxCornerChange = 5.f;
         
+        // If quad refinement moves all corners by less than this (in pixels),
+        // the refinment is considered converged and stops immediately
+        quadRefinementMinCornerChange = 0.005f;
+        
         isInitialized = true;
       } // DetectFiducialMarkersParameters::Initialize()
 

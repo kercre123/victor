@@ -37,7 +37,7 @@ namespace Anki {
       class Type : public ObjectType {
         Type() { }
       public:
-        static const Type BASIC_RAMP_MODEL;
+        static const Type BASIC_RAMP;
       };
       
       Ramp();
@@ -55,6 +55,8 @@ namespace Anki {
       virtual void GetPreDockPoses(const float distance_mm,
                                    std::vector<PoseMarkerPair_t>& poseMarkerPairs,
                                    const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
+      
+      static ObjectType GetTypeByName(const std::string& name);
 
     protected:
       static const s32 NUM_CORNERS = 8;

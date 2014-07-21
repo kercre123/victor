@@ -158,3 +158,28 @@ TestWorld.AddRobot('Name', 'Cozmo_1', ...
     'HeadAngle', -22*pi/180, 'CameraResolution', [320 240]);
 
 TestWorld.Run();
+
+%% SingleRamp
+% Puts a ramp in the world and makes sure we can see it from all sides
+
+worldName = 'SingleRamp';
+TestWorld = CozmoTestWorldCreator('WorldFile', ...
+    fullfile(rootPath, ['visionTest_' worldName '.wbt']), ...
+    'CheckRobotPose', false);
+
+TestWorld.AddRamp();
+
+poses = cell(1,4);
+headAngles = -5*pi/180 * ones(1,4);
+viewingDistance = 150;
+poses{1} = Pose(pi*[0 0 1],      [ viewingDistance   0  0]);
+poses{2} = Pose( pi/2*[0 0 1],   [  0 -viewingDistance  0]);
+poses{3} = Pose(-pi/2*[0 0 1],   [  0  viewingDistance  0]);
+poses{4} = Pose(0*[0 0 1],       [-viewingDistance   0  0]);
+
+TestWorld.AddRobot('Name', 'Cozmo_1', 'RobotPose', poses, ...
+    'HeadAngle', headAngles, 'CameraResolution', [320 240]);
+
+TestWorld.Run();
+
+

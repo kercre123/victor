@@ -39,6 +39,7 @@ namespace Anki
       const s32 refine_quadRefinementIterations,
       const s32 refine_numRefinementSamples,
       const f32 refine_quadRefinementMaxCornerChange,
+      const f32 refine_quadRefinementMinCornerChange,
       const bool returnInvalidMarkers,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
@@ -111,6 +112,7 @@ namespace Anki
       const f32 brightValue,
       const s32 numSamples,
       const f32 maxCornerChange,
+      const f32 minCornerChange,
       Quadrilateral<f32>& refinedQuad,
       Array<f32>& refinedHomography,
       MemoryStack scratch);

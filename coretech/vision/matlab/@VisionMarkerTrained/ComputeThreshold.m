@@ -9,6 +9,8 @@ if any(brightValues < VisionMarkerTrained.MinContrastRatio*darkValues)
     brightValue = [];
     darkValue = [];
     threshold = -1;
+    brightValue = [];
+    darkValue = [];
 else
     % If so, compute the threshold from all of them
     brightValue = mean(brightValues);

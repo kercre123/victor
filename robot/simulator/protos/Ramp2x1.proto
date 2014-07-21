@@ -3,7 +3,7 @@
 PROTO Ramp2x1 [
   field SFString name "Ramp000"
   field SFFloat width .06
-  field SFString type "1" # BlockType
+  field SFString type "1" # RampType
   field SFVec3f translation 0 0 0.022
   field SFRotation rotation 0 0 1 0
   field SFFloat density 250

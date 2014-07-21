@@ -87,6 +87,7 @@ namespace Anki
         const s32 refine_quadRefinementIterations,
         const s32 refine_numRefinementSamples,
         const f32 refine_quadRefinementMaxCornerChange,
+        const f32 refine_quadRefinementMinCornerChange,
         const s32 quads_minQuadArea,
         const s32 quads_quadSymmetryThreshold,
         const s32 quads_minDistanceFromImageEdge,

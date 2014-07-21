@@ -517,6 +517,7 @@ namespace Anki {
           parameters.quadRefinementIterations,
           parameters.numRefinementSamples,
           parameters.quadRefinementMaxCornerChange,
+          parameters.quadRefinementMinCornerChange,
           false,
           ccmScratch, onchipScratch, offchipScratch);
 #endif

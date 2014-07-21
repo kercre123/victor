@@ -284,6 +284,7 @@ classdef VisionMarkerTrained
             
         end
 
+        [probeValues, X, Y] = GetProbeValues(this, img);
         
     end % Public Methods
     

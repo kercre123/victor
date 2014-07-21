@@ -112,7 +112,7 @@ namespace Anki {
                    const Vision::MarkerType& code,
                    const float markerSize_mm);
       
-      static Type GetBlockTypeByName(const std::string& name);
+      static ObjectType GetTypeByName(const std::string& name);
       
       // Return a reference to the marker on a particular face of the block.
       // Symmetry convention: if no marker was set for the requested face, the

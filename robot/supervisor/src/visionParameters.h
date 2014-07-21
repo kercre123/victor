@@ -96,6 +96,7 @@ namespace Anki {
         s32 quadRefinementIterations; // set to zero to disable
         s32 numRefinementSamples;
         f32 quadRefinementMaxCornerChange;
+        f32 quadRefinementMinCornerChange;
         
         // Methods
         DetectFiducialMarkersParameters();
