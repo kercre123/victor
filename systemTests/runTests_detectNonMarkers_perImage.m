@@ -20,9 +20,14 @@ function runTests_detectNonMarkers_perImage(workQueue, algorithmParameters)
         
         imageSize = size(image); %#ok<NASGU>
         
-        [detectedQuads, detectedQuadValidity, detectedMarkers] = extractMarkers(image, algorithmParameters);
+        [detectedQuads, detectedQuadValidity, detectedMarkers, allQuads_pixelValues, markers_pixelValues] = extractMarkers(image, algorithmParameters); %#ok<NASGU,ASGLU>
         
-        save(workQueue{iWork}.outputFilename, 'detectedQuads', 'detectedQuadValidity', 'detectedMarkers', 'imageSize', 'scale');
+        directoryName = strrep(workQueue{iWork}.dataOutputFilename, '\', '/');
+        slashIndexes = strfind(directoryName, '/');
+        directoryName = directoryName(1:(slashIndexes(end)));
+        [~, ~, ~] = mkdir(directoryName);
+        
+        save(workQueue{iWork}.dataOutputFilename, 'detectedQuads', 'detectedQuadValidity', 'detectedMarkers', 'allQuads_pixelValues', 'markers_pixelValues', 'imageSize', 'scale');
         
         if algorithmParameters.drawOutputImage
             if algorithmParameters.showImageDetectionWidth(1) ~= size(image,2)
@@ -55,7 +60,7 @@ function runTests_detectNonMarkers_perImage(workQueue, algorithmParameters)
                 end
             end
 
-            drawnImage = mexDrawSystemTestResults(uint8(image), detectedQuads, detectedQuadValidity, markersToDisplay(:,1), int32(cell2mat(markersToDisplay(:,2))), markersToDisplay(:,3), showImageDetectionsScale, [workQueue{iWork}.inputFilename, '_out.png'], toShowResults);
+            drawnImage = mexDrawSystemTestResults(uint8(image), detectedQuads, detectedQuadValidity, markersToDisplay(:,1), int32(cell2mat(markersToDisplay(:,2))), markersToDisplay(:,3), showImageDetectionsScale, workQueue{iWork}.imageOutputFilename, toShowResults);
             drawnImage = drawnImage(:,:,[3,2,1]);
         end % if algorithmParameters.drawOutputImage
         

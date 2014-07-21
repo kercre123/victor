@@ -1,6 +1,9 @@
 % function [allQuads, markers] = extractMarkers()
 
-function [allQuads, quadValidity, markers] = extractMarkers(image, algorithmParameters)
+function [allQuads, quadValidity, markers, allQuads_pixelValues, markers_pixelValues] = extractMarkers(image, algorithmParameters)
+    allQuads_pixelValues = {};
+    markers_pixelValues = {};
+   
     if algorithmParameters.useMatlabForAll
         convertFromCToMatlab = false;
         
@@ -14,12 +17,17 @@ function [allQuads, quadValidity, markers] = extractMarkers(image, algorithmPara
         
         allQuads = cell(length(allQuadsRaw), 1);
         markers = {};
+        allQuads_pixelValues = cell(length(allQuadsRaw), 1);
+        markers_pixelValues = {};
+        
         for iQuad = 1:length(allQuadsRaw)
             allQuads{iQuad} = allQuadsRaw{iQuad}.corners;
+            [allQuads_pixelValues{iQuad}, ~, ~] = allQuadsRaw{iQuad}.GetProbeValues(image);
             
             if allQuadsRaw{iQuad}.isValid
                 quadValidity(iQuad) = 0;
                 markers{end+1} = allQuadsRaw{iQuad}; %#ok<AGROW>
+                markers_pixelValues{end+1} = allQuads_pixelValues{iQuad}; %#ok<AGROW>
             else
                 quadValidity(iQuad) = 9;
             end

@@ -1,13 +1,14 @@
 
-% runTests_detectNonMarkers('~/tmp', '~/tmp', {'/Users/pbarnum/Documents/datasets/external/KAIST/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/chars74k/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/icdar2003/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/icdar2011/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/256_ObjectCategories/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/svt1/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/IndoorCVPR_09/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/W31_Images/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/VOCtrainval_11-May-2009/JPEGImages/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/egocentric_objects_intel_06_2009/**/*.jpg'});
+% runTests_detectNonMarkers('~/tmp', '~/tmp', {'datasets/external', 'datasets/external/00results'}, {'/Users/pbarnum/Documents/datasets/external/KAIST/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/chars74k/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/icdar2003/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/icdar2011/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/256_ObjectCategories/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/svt1/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/IndoorCVPR_09/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/W31_Images/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/VOCtrainval_11-May-2009/JPEGImages/**/*.jpg', '/Users/pbarnum/Documents/datasets/external/egocentric_objects_intel_06_2009/**/*.jpg'});
+% runTests_detectNonMarkers('~/tmp', '~/tmp', {'datasets/external', 'datasets/external/00results'}, {'/Users/pbarnum/Documents/datasets/external/256_ObjectCategories/177.saturn/*.jpg'});
 
-function runTests_detectNonMarkers(resultsDirectory, temporaryDirectory, filenamePatterns)
+function runTests_detectNonMarkers(resultsDirectory, temporaryDirectory, replaceStringForOutput, filenamePatterns)
     
     numComputeThreads = 3;
     
     ignoreModificationTime = false;
     
-    [workQueue_todo, workQueue_all] = computeWorkQueues(filenamePatterns, ignoreModificationTime);
+    [workQueue_todo, workQueue_all] = computeWorkQueues(filenamePatterns, replaceStringForOutput, ignoreModificationTime);
     
     disp(sprintf('workQueue_todo has %d elements', length(workQueue_todo)));
     
@@ -51,7 +52,7 @@ function runTests_detectNonMarkers(resultsDirectory, temporaryDirectory, filenam
     
 end % runTests_detectNonMarkers()
 
-function [workQueue_todo, workQueue_all] = computeWorkQueues(filenamePatterns, ignoreModificationTime)
+function [workQueue_todo, workQueue_all] = computeWorkQueues(filenamePatterns, replaceStringForOutput, ignoreModificationTime)
     workQueue_todo = {};
     workQueue_all = {};
     
@@ -61,7 +62,8 @@ function [workQueue_todo, workQueue_all] = computeWorkQueues(filenamePatterns, i
             newWorkItem.iPattern = iPattern;
             newWorkItem.iFilename = iFilename;
             newWorkItem.inputFilename = curFilenames(iFilename).name;
-            newWorkItem.outputFilename = [newWorkItem.inputFilename, '.mat'];
+            newWorkItem.dataOutputFilename = strrep([newWorkItem.inputFilename, '.mat'], replaceStringForOutput{1}, replaceStringForOutput{2});
+            newWorkItem.imageOutputFilename = strrep([newWorkItem.inputFilename, '_out.png'], replaceStringForOutput{1}, replaceStringForOutput{2});
             
             workQueue_all{end+1} = newWorkItem; %#ok<AGROW>
             
@@ -71,7 +73,7 @@ function [workQueue_todo, workQueue_all] = computeWorkQueues(filenamePatterns, i
             end
             
             % If the results don't exist
-            if ~exist(newWorkItem.outputFilename, 'file')
+            if ~exist(newWorkItem.dataOutputFilename, 'file')
                 workQueue_todo{end+1} = newWorkItem; %#ok<AGROW>
                 continue;
             end
@@ -83,8 +85,8 @@ end % computeWorkQueues()
 % each individual image
 function deleteIntermediateOutputFiles(workQueue_all)
     for iWork = 1:length(workQueue_all)
-        delete(workQueue_all{iWork}.outputFilename);
-        delete([workQueue_all{iWork}.inputFilename, '_out.png']);
+        delete(workQueue_all{iWork}.dataOutputFilename);
+        delete(workQueue_all{iWork}.imageOutputFilename);
     end
 end % deleteIntermediateOutputFiles()
 
@@ -101,15 +103,25 @@ function results_detectQuadsAndMarkers = run_detectQuadsAndMarkers(numComputeThr
     
     results_detectQuadsAndMarkers = cell(0,1);
     
+%     for iWork = 1:length(workQueue_all)
+%         try
+%             load(workQueue_all{iWork}.dataOutputFilename);
+%         catch
+%             disp(['Deleting ', workQueue_all{iWork}.dataOutputFilename]);
+%             delete(workQueue_all{iWork}.dataOutputFilename)
+%         end
+%     end
+    
     for iWork = 1:length(workQueue_all)
-        load(workQueue_all{iWork}.outputFilename);
+        load(workQueue_all{iWork}.dataOutputFilename);
         
         if length(results_detectQuadsAndMarkers) < workQueue_all{iWork}.iPattern || isempty(results_detectQuadsAndMarkers{workQueue_all{iWork}.iPattern})
             results_detectQuadsAndMarkers{workQueue_all{iWork}.iPattern} = cell(0,1);
         end
         
         newDetection.inputFilename = workQueue_all{iWork}.inputFilename;
-        newDetection.outputFilename = workQueue_all{iWork}.outputFilename;
+        newDetection.dataOutputFilename = workQueue_all{iWork}.dataOutputFilename;
+        newDetection.imageOutputFilename = workQueue_all{iWork}.imageOutputFilename;
         newDetection.detectedQuads = detectedQuads;
         newDetection.detectedQuadValidity = detectedQuadValidity;
         newDetection.detectedMarkers = detectedMarkers;
