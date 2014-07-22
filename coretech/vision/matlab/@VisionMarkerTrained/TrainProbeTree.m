@@ -93,7 +93,7 @@ else
     
     numImages = length(fnames);
     labelNames = cell(1,numImages);
-    img = cell(1, numImages);
+    %img = cell(1, numImages);
     
     corners = [0 0; 0 1; 1 0; 1 1];
     sigma = perturbSigma/workingResolution;
@@ -102,9 +102,9 @@ else
     
     [xgrid,ygrid] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
     %probeValues = zeros(workingResolution^2, numImages);
-    probeValues = cell(numBlurs,numImages);
+    probeValues   = cell(numBlurs,numImages);
     gradMagValues = cell(numBlurs,numImages);
-    labels      = cell(numBlurs,numImages);
+    labels        = cell(numBlurs,numImages);
     
     X = probePattern.x(ones(workingResolution^2,1),:) + xgrid(:)*ones(1,length(probePattern.x));
     Y = probePattern.y(ones(workingResolution^2,1),:) + ygrid(:)*ones(1,length(probePattern.y));
@@ -132,32 +132,33 @@ else
     for iImg = 1:numImages
         
         if strcmp(fnames{iImg}, 'ALLWHITE')
-            img{iImg} = ones(workingResolution);
+            img = ones(workingResolution);
         elseif strcmp(fnames{iImg}, 'ALLBLACK')
-            img{iImg} = zeros(workingResolution);
+            img = zeros(workingResolution);
         else
-            [img{iImg}, ~, alpha] = imread(fnames{iImg});
-            img{iImg} = mean(im2double(img{iImg}),3);
-            img{iImg}(alpha < .5) = 1;
+            [img, ~, alpha] = imread(fnames{iImg});
+            img = mean(im2double(img),3);
+            img(alpha < .5) = 1;
         end
         
-        [nrows,ncols,~] = size(img{iImg});
+        [nrows,ncols,~] = size(img);
         imageCoordsX = linspace(0, 1, ncols);
         imageCoordsY = linspace(0, 1, nrows);
                 
         [~,labelNames{iImg}] = fileparts(fnames{iImg});
         
         for iBlur = 1:numBlurs
-            imgBlur = img{iImg};
+            imgBlur = img;
             if blurSigmas(iBlur) > 0
                 blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
                 imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma));
             end
             
-            imgGradMag = smoothgradient(imgBlur);
+            imgGradMag = single(smoothgradient(imgBlur));
+            imgBlur = single(imgBlur);
             
-            probeValues{iBlur,iImg} = zeros(workingResolution^2, numPerturbations);
-            gradMagValues{iBlur,iImg} = zeros(workingResolution^2, numPerturbations);
+            probeValues{iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
+            gradMagValues{iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
             for iPerturb = 1:numPerturbations
                 probeValues{iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgBlur, ...
                     xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1), 2);
@@ -166,7 +167,7 @@ else
                     xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 0), 2);
             end
             
-            labels{iBlur,iImg} = iImg*ones(1,numPerturbations);
+            labels{iBlur,iImg} = iImg*ones(1,numPerturbations, 'uint32');
             
         end % FOR each blurSigma
         

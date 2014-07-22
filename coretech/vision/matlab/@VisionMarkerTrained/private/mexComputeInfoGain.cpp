@@ -5,12 +5,21 @@ typedef unsigned short char16_t;
 
 #define USE_PERSISTENT_MEMORY 0
 
+#define USE_DOUBLE_PRECISION 0
+
+#if USE_DOUBLE_PRECISION
+typedef double Precision;
+#else
+typedef float Precision;
+#endif
+        
+
 #if USE_PERSISTENT_MEMORY     
-static double* markerProb_on  = NULL;
-static double* markerProb_off = NULL;
-static double* sum_on         = NULL;
-static double* sum_off        = NULL;
-static double* p_on           = NULL;
+static PRECISION* markerProb_on  = NULL;
+static PRECISION* markerProb_off = NULL;
+static PRECISION* sum_on         = NULL;
+static PRECISION* sum_off        = NULL;
+static PRECISION* p_on           = NULL;
 
 static mwSize numProbesCached=0, numExamplesCached=0, numLabelsCached=0;
 
@@ -96,16 +105,25 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
      *
      * infoGain = currentEntropy - conditionalEntropy;
      **/
-    mxAssert(mxGetClassID(prhs[0]) == mxDOUBLE_CLASS, 
-            "labelsArray should be DOUBLE.");
+    if(mxGetClassID(prhs[0]) != mxUINT32_CLASS) {
+        mexErrMsgTxt("labelsArray should be UINT32.");
+    }
     
-    mxAssert(mxGetClassID(prhs[2]) == mxDOUBLE_CLASS, 
-            "probeValues should be DOUBLE.");
+#if USE_DOUBLE_PRECISION
+    if(mxGetClassID(prhs[2]) != mxDOUBLE_CLASS) {
+        mexErrMsgTxt("probeValues should be DOUBLE.");
+    }
+#else
+    if(mxGetClassID(prhs[2]) != mxSINGLE_CLASS) {
+        mexErrMsgTxt("probeValues should be SINGLE.");
+    }
+#endif
     
-    mxAssert(mxGetNumberOfElements(prhs[1]) == 1, 
-            "numLabels should be a scalar.");
+    if(mxGetNumberOfElements(prhs[1]) != 1) {
+        mexErrMsgTxt("numLabels should be a scalar.");
+    }
     
-    const double eps = 1e-9;
+    const Precision eps = 1e-9;
     
     const mxArray* labelsArray = prhs[0];
     const mwSize   numLabels   = static_cast<mwSize>(mxGetScalar(prhs[1]));
@@ -114,11 +132,12 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
     const mwSize numProbes   = mxGetN(probeValues);
     const mwSize numExamples = mxGetM(probeValues);
     
-    const double oneOverNumExamples = 1. / static_cast<double>(numExamples);
+    const Precision oneOverNumExamples = 1. / static_cast<Precision>(numExamples);
     
-    const double* labels = mxGetPr(labelsArray);
-    mxAssert(mxGetNumberOfElements(labelsArray) == numExamples, 
-            "Number of elements in labels should match number of rows in probeValues.");
+    const unsigned int* labels = (unsigned int*) mxGetData(labelsArray);
+    if(mxGetNumberOfElements(labelsArray) != numExamples) {
+        mexErrMsgTxt("Number of elements in labels should match number of rows in probeValues.");
+    }
     
 #if USE_PERSISTENT_MEMORY
     if(numProbes != numProbesCached || numExamples != numExamplesCached || numLabels != numLabelsCached) {
@@ -132,19 +151,19 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
                         
         freeMemory();
         
-        markerProb_on  = (double*) mxMalloc(numLabels*numProbes*sizeof(double));
+        markerProb_on  = (Precision*) mxMalloc(numLabels*numProbes*sizeof(Precision));
         mexMakeMemoryPersistent(markerProb_on);
         
-        markerProb_off = (double*) mxMalloc(numLabels*numProbes*sizeof(double));
+        markerProb_off = (Precision*) mxMalloc(numLabels*numProbes*sizeof(Precision));
         mexMakeMemoryPersistent(markerProb_off);
         
-        sum_on  = (double*) mxMalloc(numProbes*sizeof(double));
+        sum_on  = (Precision*) mxMalloc(numProbes*sizeof(Precision));
         mexMakeMemoryPersistent(sum_on);
         
-        sum_off = (double*) mxMalloc(numProbes*sizeof(double));
+        sum_off = (Precision*) mxMalloc(numProbes*sizeof(Precision));
         mexMakeMemoryPersistent(sum_off);
         
-        p_on = (double*) mxMalloc(numProbes*sizeof(double));
+        p_on = (Precision*) mxMalloc(numProbes*sizeof(Precision));
         mexMakeMemoryPersistent(p_on);
     } else {
         mexPrintf("Re-using existing mexComputeInfoGain allocation.\n");
@@ -156,15 +175,15 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
     }
 #else
     
-    double* markerProb_on  = (double*) mxMalloc(numLabels*numProbes*sizeof(double));
+    Precision* markerProb_on  = (Precision*) mxMalloc(numLabels*numProbes*sizeof(Precision));
         
-    double* markerProb_off = (double*) mxMalloc(numLabels*numProbes*sizeof(double));
+    Precision* markerProb_off = (Precision*) mxMalloc(numLabels*numProbes*sizeof(Precision));
     
-    double* sum_on  = (double*) mxMalloc(numProbes*sizeof(double));
+    Precision* sum_on  = (Precision*) mxMalloc(numProbes*sizeof(Precision));
     
-    double* sum_off = (double*) mxMalloc(numProbes*sizeof(double));
+    Precision* sum_off = (Precision*) mxMalloc(numProbes*sizeof(Precision));
     
-    double* p_on = (double*) mxMalloc(numProbes*sizeof(double));
+    Precision* p_on = (Precision*) mxMalloc(numProbes*sizeof(Precision));
     
 #endif // USE_PERSISTENT_MEMORY
     
@@ -177,10 +196,10 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
     }
     
     for(mwSize iProbe=0; iProbe<numProbes; ++iProbe) {
-        const double * currentProbe  = mxGetPr(probeValues) + iProbe*numExamples;
+        const Precision * currentProbe  = (const Precision*)mxGetData(probeValues) + iProbe*numExamples;
         
-        double * currentMarkerProb_on  = markerProb_on  + iProbe*numLabels;
-        double * currentMarkerProb_off = markerProb_off + iProbe*numLabels;
+        Precision * currentMarkerProb_on  = markerProb_on  + iProbe*numLabels;
+        Precision * currentMarkerProb_off = markerProb_off + iProbe*numLabels;
            
         sum_on[iProbe]  = eps;
         sum_off[iProbe] = eps;
@@ -188,9 +207,9 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
         
         // Accumulate probes into the right place based on each example's label
         for(mwSize iExample=0; iExample<numExamples; ++iExample) {
-            const int label = static_cast<int>(labels[iExample]);      
-            const double probeIsOn  = 1. - currentProbe[iExample];
-            const double probeIsOff = currentProbe[iExample];
+            const unsigned int label = labels[iExample];      
+            const Precision probeIsOn  = Precision(1) - currentProbe[iExample];
+            const Precision probeIsOff = currentProbe[iExample];
             
             p_on[iProbe] += probeIsOn;
             
@@ -209,20 +228,24 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
     // Compute conditional entropy of each probe.  We'll just store infoGain as 
     // negative conditional entropy, since we are ignoring (constant) current
     // entropy.
-    plhs[0] = mxCreateDoubleMatrix(numProbes,1,mxREAL);
-    double* infoGain = mxGetPr(plhs[0]);
+#if USE_DOUBLE_PRECISION
+    plhs[0] = mxCreateNumericMatrix(numProbes, 1, mxDOUBLE_CLASS, mxREAL);
+#else
+    plhs[0] = mxCreateNumericMatrix(numProbes, 1, mxSINGLE_CLASS, mxREAL);
+#endif
+    Precision* infoGain = (Precision*) mxGetData(plhs[0]);
     for(mwSize iProbe=0; iProbe<numProbes; ++iProbe) {        
-        const double * currentMarkerProb_on  = markerProb_on  + iProbe*numLabels;
-        const double * currentMarkerProb_off = markerProb_off + iProbe*numLabels;
+        const Precision * currentMarkerProb_on  = markerProb_on  + iProbe*numLabels;
+        const Precision * currentMarkerProb_off = markerProb_off + iProbe*numLabels;
              
-        const double normalizer_on  = 1. / sum_on[iProbe];
-        const double normalizer_off = 1. / sum_off[iProbe];
+        const Precision normalizer_on  = Precision(1) / sum_on[iProbe];
+        const Precision normalizer_off = Precision(1) / sum_off[iProbe];
         
         // Accumulate probes into the right place based on each example's label
-        double onTerm = eps, offTerm = eps;
+        Precision onTerm = eps, offTerm = eps;
         for(mwSize iLabel=0; iLabel<numLabels; ++iLabel) {
-            const double probOn  = currentMarkerProb_on[iLabel]*normalizer_on;
-            const double probOff = currentMarkerProb_off[iLabel]*normalizer_off;
+            const Precision probOn  = currentMarkerProb_on[iLabel]*normalizer_on;
+            const Precision probOff = currentMarkerProb_off[iLabel]*normalizer_off;
             
             onTerm  += probOn  * log2(probOn);
             offTerm += probOff * log2(probOff);
