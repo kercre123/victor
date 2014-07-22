@@ -1,4 +1,4 @@
-typedef unsigned short char16_t;
+//typedef unsigned short char16_t;
 #include <mex.h>
 
 #include <cmath>
