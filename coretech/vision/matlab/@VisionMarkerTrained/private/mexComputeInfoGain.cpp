@@ -105,7 +105,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
     mxAssert(mxGetNumberOfElements(prhs[1]) == 1, 
             "numLabels should be a scalar.");
     
-    const double eps = 1e-16;
+    const double eps = 1e-9;
     
     const mxArray* labelsArray = prhs[0];
     const mwSize   numLabels   = static_cast<mwSize>(mxGetScalar(prhs[1]));
@@ -219,7 +219,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
         const double normalizer_off = 1. / sum_off[iProbe];
         
         // Accumulate probes into the right place based on each example's label
-        double onTerm = 0.f, offTerm = 0.f;
+        double onTerm = eps, offTerm = eps;
         for(mwSize iLabel=0; iLabel<numLabels; ++iLabel) {
             const double probOn  = currentMarkerProb_on[iLabel]*normalizer_on;
             const double probOff = currentMarkerProb_off[iLabel]*normalizer_off;

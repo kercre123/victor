@@ -12,7 +12,7 @@ redBlackVerifyDepth = 8;
 %maxDepth = 50;
 %addRotations = false;
 numPerturbations = 100;
-blurSigmas = [0 .01 .02]; % as a fraction of the image diagonal
+blurSigmas = [0 .005 .01]; % as a fraction of the image diagonal
 perturbSigma = 1;
 saveTree = true;
 leafNodeFraction = 1;
@@ -663,6 +663,11 @@ function infoGain = computeInfoGain(labels, numLabels, probeValues)
 
 % Use private mex implementation for speed
 infoGain = mexComputeInfoGain(labels, numLabels, probeValues'); % Note the transpose!
+
+if any(isnan(infoGain(:)))
+    warning('mexComputeInfoGain returned NaN values!');
+    keyboard
+end
 
 return
                         
