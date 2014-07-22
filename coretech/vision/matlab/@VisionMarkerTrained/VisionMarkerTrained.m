@@ -148,7 +148,7 @@ classdef VisionMarkerTrained
                     VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
                     VisionMarkerTrained.ProbePattern);
                 
-                if any(strcmp(this.codeName, {'UNKNOWN', 'ALLWHITE', 'ALLBLACK'}))
+                if any(strcmp(this.codeName, {'UNKNOWN', 'INVALID'}))
                     this.isValid = false;
                 else
                     if UseSingleProbe
