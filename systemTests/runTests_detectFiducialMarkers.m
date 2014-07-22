@@ -13,7 +13,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     
     numComputeThreads.basics = 3;
     numComputeThreads.perPose = 3;
-        
+    
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
     %     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
@@ -55,8 +55,9 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParameters.useMatlabForAll = false;
     algorithmParameters.useMatlabForQuadExtraction = false;
     algorithmParameters.matlab_embeddedConversions = EmbeddedConversionsManager();
-    algorithmParameters.drawOutputImage = true;
+    %     algorithmParameters.drawOutputImage = true;
     algorithmParameters.showImageDetectionWidth = 640;
+    algorithmParameters.showImageDetections = false;
     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.extractionFunctionName = 'c-with-refinement';
@@ -108,7 +109,6 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     thresholdMultipliers = linspace(0.5,1.0,10);
     smallCharacterisicParameters = linspace(0.7, 1.0, 10);
     resultsData_overall_small = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
-    
     for iThresholdMultiplier = 1:length(thresholdMultipliers)
         thresholdMultiplier = thresholdMultipliers(iThresholdMultiplier);
         
@@ -130,7 +130,6 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     thresholdMultipliers = linspace(0.8,1.1,10);
     smallCharacterisicParameters = linspace(0.9000, 0.9667, 10);
     resultsData_overall_small2 = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
-    
     for iThresholdMultiplier = 1:length(thresholdMultipliers)
         thresholdMultiplier = thresholdMultipliers(iThresholdMultiplier);
         
