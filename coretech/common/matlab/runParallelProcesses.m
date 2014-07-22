@@ -30,8 +30,8 @@ function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, 
         
         % launch threads
         for iThread = 0:(numComputeThreads-1)
-            threadCompletionMutexFilenames{iThread+1} = [temporaryDirectory, sprintf('runParallelProcesses_mutex%d.mat', iThread)];
-            workerInputFilenames{iThread+1} = [temporaryDirectory, sprintf('runParallelProcesses_input%d.mat', iThread)];
+            threadCompletionMutexFilenames{iThread+1} = [temporaryDirectory, sprintf('/runParallelProcesses_mutex%d.mat', iThread)];
+            workerInputFilenames{iThread+1} = [temporaryDirectory, sprintf('/runParallelProcesses_input%d.mat', iThread)];
             
             localWorkQueue = workQueue((1+iThread):numComputeThreads:end); %#ok<NASGU>
             save(workerInputFilenames{iThread+1}, 'localWorkQueue');

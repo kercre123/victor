@@ -4,7 +4,7 @@
 
 function runTests_detectNonMarkers(resultsDirectory, temporaryDirectory, replaceStringForOutput, filenamePatterns)
     
-    numComputeThreads = 3;
+    numComputeThreads = 1;
     
     ignoreModificationTime = false;
     
@@ -46,7 +46,25 @@ function runTests_detectNonMarkers(resultsDirectory, temporaryDirectory, replace
     
     [results_quads, results_markers] = run_compileNonMarkers(results_detectQuadsAndMarkers); %#ok<ASGLU,NASGU>
     
+    nonMarkerQuads = {}; 
+    for i = 1:length(results_quads)
+        for j = 1:length(results_quads{i}.allQuads_pixelValues)
+            nonMarkerQuads{end+1} = results_quads{i}.allQuads_pixelValues{j}; %#ok<AGROW>
+        end
+    end
+    
+    markerQuads = {};
+    for i = 1:length(results_markers)
+        for j = 1:length(results_markers{i}.markers_pixelValues)
+            markerQuads{end+1} = results_markers{i}.markers_pixelValues{j}; %#ok<AGROW>
+        end
+    end
+    
     save([resultsDirectory,'/latestNonMarkersResults.mat'], '*');
+    save([resultsDirectory,'/latestNonMarkersResults_samplesOnly.mat'], 'nonMarkerQuads', 'markerQuads');
+    
+%     for i = 1:length(nonMarkerQuads) imshow(imresize(nonMarkerQuads{i}/max(nonMarkerQuads{i}(:))*.75, [256,256])); pause(.03); end
+%     for i = 1:length(markerQuads) imshow(imresize(markerQuads{i}/max(markerQuads{i}(:))*.75, [256,256])); pause(); end
     
     keyboard
     
@@ -125,6 +143,8 @@ function results_detectQuadsAndMarkers = run_detectQuadsAndMarkers(numComputeThr
         newDetection.detectedQuads = detectedQuads;
         newDetection.detectedQuadValidity = detectedQuadValidity;
         newDetection.detectedMarkers = detectedMarkers;
+        newDetection.allQuads_pixelValues = allQuads_pixelValues;
+        newDetection.markers_pixelValues = markers_pixelValues;
         newDetection.imageSize = imageSize;
         newDetection.scale = scale;
         
