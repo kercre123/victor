@@ -160,10 +160,14 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
 end % runTests_detectFiducialMarkers()
 
 function realPath = tildeToPath()
-    oldPath = pwd();
-    cd('~');
-    realPath = pwd();
-    cd(oldPath);
+    if ispc()
+        realPath = '';
+    else
+        oldPath = pwd();
+        cd('~');
+        realPath = pwd();
+        cd(oldPath);
+    end
 end
 
 function allTestData = getTestData(testJsonPattern)
