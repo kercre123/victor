@@ -103,6 +103,7 @@ else
     [xgrid,ygrid] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
     %probeValues = zeros(workingResolution^2, numImages);
     probeValues = cell(numBlurs,numImages);
+    gradMagValues = cell(numBlurs,numImages);
     labels      = cell(numBlurs,numImages);
     
     X = probePattern.x(ones(workingResolution^2,1),:) + xgrid(:)*ones(1,length(probePattern.x));
@@ -143,7 +144,7 @@ else
         [nrows,ncols,~] = size(img{iImg});
         imageCoordsX = linspace(0, 1, ncols);
         imageCoordsY = linspace(0, 1, nrows);
-        
+                
         [~,labelNames{iImg}] = fileparts(fnames{iImg});
         
         for iBlur = 1:numBlurs
@@ -153,10 +154,16 @@ else
                 imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma));
             end
             
+            imgGradMag = smoothgradient(imgBlur);
+            
             probeValues{iBlur,iImg} = zeros(workingResolution^2, numPerturbations);
+            gradMagValues{iBlur,iImg} = zeros(workingResolution^2, numPerturbations);
             for iPerturb = 1:numPerturbations
                 probeValues{iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgBlur, ...
                     xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1), 2);
+                
+                gradMagValues{iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
+                    xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 0), 2);
             end
             
             labels{iBlur,iImg} = iImg*ones(1,numPerturbations);
@@ -167,6 +174,8 @@ else
     end
     
     probeValues = [probeValues{:}];
+    gradMagValues = [gradMagValues{:}];
+    
     labels = [labels{:}];
     %numLabels = numImages;
     numImages = length(labels);
@@ -205,20 +214,32 @@ end % if loadSavedProbeValues
 probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
 probeTree.labels = labelNames;
 
-try
+pBar.set_message('Building multiclass tree');
+pBar.set(0);
+totalExamplesToClassify = size(probeValues, 2);
+
+% numLabels = length(labelNames);
+% hCounts = zeros(numLabels,1);
+% namedFigure('Leaves per Label'), hold off
+% for iBar = 1:numLabels
+%     hCounts(iBar) = barh(iBar, 0); hold on
+% end
+% set(get(hCounts(1), 'Parent'), 'YTick', 1:numLabels, 'YTickLabel', labelNames);
+
+% try
     probeTree = buildTree(probeTree, false(workingResolution), labels, labelNames);
-catch E
-    switch(E.identifier)
-        case {'BuildTree:MaxDepth', 'BuildTree:UselessSplit'}
-            fprintf('Unable to build tree. Likely ambiguities: "%s".\n', ...
-                E.message);
-            %probeTree = [];
-            return
-            
-        otherwise
-            rethrow(E);
-    end
-end
+% catch E
+%     switch(E.identifier)
+%         case {'BuildTree:MaxDepth', 'BuildTree:UselessSplit'}
+%             fprintf('Unable to build tree. Likely ambiguities: "%s".\n', ...
+%                 E.message);
+%             %probeTree = [];
+%             return
+%             
+%         otherwise
+%             rethrow(E);
+%     end
+% end
 
 if isempty(probeTree)
     error('Training failed!');
@@ -234,8 +255,8 @@ end
 %% Train Red/Black Verify trees
 
 pBar.set_message('Training red/black verification trees');
-pBar.set_increment(0.5);
 pBar.set(0);
+totalExamplesToClassify = 2*totalExamplesToClassify;
 
 redMask = false(workingResolution);
 %redMask(1:2:end,1:2:end) = true;
@@ -245,13 +266,11 @@ redMask(1:round(workingResolution/2),:) = true;
 probeTree.verifyTreeRed = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
 probeTree.verifyTreeRed.labels = labelNames;
 probeTree.verifyTreeRed = buildTree(probeTree.verifyTreeRed, redMask, labels, labelNames, redBlackVerifyDepth);
-pBar.increment();
 
 blackMask = ~redMask;
 probeTree.verifyTreeBlack = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
 probeTree.verifyTreeBlack.labels = labelNames;
 probeTree.verifyTreeBlack = buildTree(probeTree.verifyTreeBlack, blackMask, labels, labelNames, redBlackVerifyDepth);
-pBar.increment();
 
 t_train = toc(t_start);
 t_start = tic;
@@ -502,10 +521,6 @@ end
             maxDepth = inf;
         end
         
-        if all(masked(:))
-            error('All probes masked.');
-        end
-        
         %if all(labels(node.remaining)==labels(node.remaining(1)))
         counts = hist(labels(node.remaining), 1:length(labelNames));
         [maxCount, maxIndex] = max(counts);
@@ -514,11 +529,23 @@ end
             node.labelName = labelNames{node.labelID};
             fprintf('LeafNode for label = %d, or "%s"\n', node.labelID, node.labelName);
             
-        elseif node.depth == maxDepth
+            pBar.add(length(node.remaining)/totalExamplesToClassify);
+%             for iRemain = 1:length(node.remaining)
+%                 h = hCounts(labels(node.remaining(iRemain)));
+%                 set(h, 'YData', get(h, 'YData')+1);
+%             end
+            
+        elseif node.depth == maxDepth || all(masked(:))
             node.labelID = unique(labels(node.remaining));
             node.labelName = labelNames(node.labelID);
             fprintf('MaxDepth LeafNode for labels = {%s\b}\n', sprintf('%s,', node.labelName{:}));
             
+            pBar.add(length(node.remaining)/totalExamplesToClassify);
+%             for iRemain = 1:length(node.remaining)
+%                 h = hCounts(labels(node.remaining(iRemain)));
+%                 set(h, 'YData', get(h, 'YData')+1);
+%             end
+    
         else            
             unusedProbes = find(~masked);
             
@@ -552,8 +579,25 @@ end
             
             whichUnusedProbe = find(infoGain == maxInfoGain);
             if length(whichUnusedProbe)>1
-                index = randperm(length(whichUnusedProbe));
-                whichUnusedProbe = whichUnusedProbe(index(1));
+                % % Randomly select from those with the max score
+                % index = randperm(length(whichUnusedProbe));
+                % whichUnusedProbe = whichUnusedProbe(index(1));
+                
+                % Choose the one with the lowest edge energy since we don't
+                % want to select probes near edges if we can avoid it
+                gradMag = mean(gradMagValues(unusedProbes(whichUnusedProbe),node.remaining),2);
+                minGradMag = min(gradMag);
+                
+                % If there are more than one with the minimum edge energy,
+                % randomly select one of them
+                minGradMagIndex = find(gradMag == minGradMag);
+                if length(minGradMagIndex) > 1
+                    index = randperm(length(minGradMagIndex));
+                    minGradMagIndex = minGradMagIndex(index(1));
+                end
+                
+                whichUnusedProbe = whichUnusedProbe(minGradMagIndex);
+                    
             end
             
             % Choose the probe location with the highest score
@@ -578,6 +622,7 @@ end
                 % info gain computation doesn't really take that into
                 % account.  Is there a better way to fix this? 
                 masked(node.whichProbe) = true;
+                node.depth = node.depth + 1;
                 node = buildTree(node, masked, labels, labelNames, maxDepth);
                     
             else
@@ -616,6 +661,11 @@ end % TrainProbes()
 
 function infoGain = computeInfoGain(labels, numLabels, probeValues)
 
+% Use private mex implementation for speed
+infoGain = mexComputeInfoGain(labels, numLabels, probeValues'); % Note the transpose!
+
+return
+                        
 % Since we are just looking for max info gain, we don't actually need to
 % compute the currentEntropy, since it's the same for all probes.  We just
 % need the probe with the lowest conditional entropy, since that will be
