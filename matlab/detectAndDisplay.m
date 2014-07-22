@@ -11,9 +11,9 @@ if isempty(img) || any(size(img)==0)
     return
 end
 
-t = tic;
+%t = tic;
 detections = simpleDetector(img);
-fprintf('Detection processing took %.2f seconds.\n', toc(t));
+%fprintf('Detection processing took %.2f seconds.\n', toc(t));
 
 %t = tic;
 numDetections = length(detections);
