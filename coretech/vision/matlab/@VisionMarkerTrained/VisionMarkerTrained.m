@@ -200,6 +200,12 @@ classdef VisionMarkerTrained
                         assert(strcmp(verificationResult, this.codeName));
                         
                         underscoreIndex = find(this.codeName == '_');
+                        if strncmpi(this.codeName, 'inverted_', 9)
+                            % Ignore the first underscore found if this is
+                            % an inverted code name
+                            underscoreIndex(1) = [];
+                        end
+                        
                         if ~isempty(underscoreIndex)
                             assert(length(underscoreIndex) == 1, ...
                                 'There should be no more than 1 underscore in the code name: "%s".', this.codeName);

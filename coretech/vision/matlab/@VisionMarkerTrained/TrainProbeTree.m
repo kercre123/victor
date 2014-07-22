@@ -6,17 +6,19 @@ function probeTree = TrainProbeTree(varargin)
 loadSavedProbeValues = false;
 markerImageDir = VisionMarkerTrained.TrainingImageDir;
 negativeImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/negativeExamplePatches';
+maxNegativeExamples = inf;
 workingResolution = VisionMarkerTrained.ProbeParameters.GridSize;
 %maxSamples = 100;
 %minInfoGain = 0;
 redBlackVerifyDepth = 8;
 maxDepth = inf;
 %addRotations = false;
+addInversions = true;
 numPerturbations = 100;
 blurSigmas = [0 .005 .01]; % as a fraction of the image diagonal
 perturbSigma = 1;
 saveTree = true;
-leafNodeFraction = 1;
+leafNodeFraction = 0.9; % fraction of remaining examples that must have same label to consider node a leaf
 
 probeRegion = VisionMarkerTrained.ProbeRegion; 
 
@@ -56,10 +58,11 @@ if ~saveTree && nargout==0
     end
 end
 
+savedStateFile = fullfile(fileparts(mfilename('fullpath')), 'trainingState.mat');
 
 if loadSavedProbeValues
     % This load will kill the current pBar, so save that
-    load trainingState.mat %#ok<UNRCH>
+    load(savedStateFile); %#ok<UNRCH>
 
     pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
     pBar.showTimingInfo = true;
@@ -184,7 +187,7 @@ else
         fnamesNeg = [fnamesNeg; getfnames(negativeImageDir, 'images', 'useFullPath', true)];
     end
     
-    numNeg = length(fnamesNeg);
+    numNeg = min(length(fnamesNeg), maxNegativeExamples);
     
     pBar.set_message(sprintf(['Interpolating probe locations ' ...
         'from %d negative images'], numNeg));
@@ -229,14 +232,28 @@ else
     end
     
     labelNames{end+1} = 'INVALID';
-    labels = [labels length(labelNames)*ones(1,numNeg)];
+    labels = [labels length(labelNames)*ones(1,numNeg,'uint32')];
     %fnames = [fnames; fnamesNeg];
     probeValues = [probeValues probeValuesNeg];
     gradMagValues = [gradMagValues gradMagValuesNeg];
     
+    if addInversions
+        % Add white-on-black versions of everything
+        labels        = [labels labels+length(labelNames)];
+        labelNames    = [labelNames cellfun(@(name)['INVERTED_' name], labelNames, 'UniformOutput', false)];
+        probeValues   = [probeValues 1-probeValues];
+        gradMagValues = [gradMagValues gradMagValues];
+        
+        % Get rid of INVERTED_INVALID label -- it's just INVALID
+        invertedInvalidLabel = find(strcmp(labelNames, 'INVERTED_INVALID'));
+        assert(invertedInvalidLabel == length(labelNames));
+        labelNames(end) = [];
+        invalidLabel = find(strcmp(labelNames, 'INVALID'));
+        labels(labels == invertedInvalidLabel) = invalidLabel;
+    end
+    
     assert(size(probeValues,2) == length(labels));
-    
-    
+    assert(max(labels) == length(labelNames));
     
     %numLabels = numImages;
     numImages = length(labels);
@@ -265,7 +282,9 @@ else
     %     end
 
     % Only save what we need to re-run (not all the settings!)
-    save trainingState.mat probeValues gradMagValues fnames labels labelNames numImages xgrid ygrid
+    fprintf('Saving state...');
+    save(savedStateFile, 'probeValues', 'gradMagValues', 'fnames', 'labels', 'labelNames', 'numImages', 'xgrid', 'ygrid');
+    fprintf('Done.\n');
     
 end % if loadSavedProbeValues
 
@@ -288,20 +307,20 @@ totalExamplesToClassify = size(probeValues, 2);
 probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
 probeTree.labels = labelNames;
 
-try
+% try
     probeTree = buildTree(probeTree, false(workingResolution), labels, labelNames, maxDepth);
-catch E
-    switch(E.identifier)
-        case {'BuildTree:MaxDepth', 'BuildTree:UselessSplit'}
-            fprintf('Unable to build tree. Likely ambiguities: "%s".\n', ...
-                E.message);
-            %probeTree = [];
-            return
-            
-        otherwise
-            rethrow(E);
-    end
-end
+% catch E
+%     switch(E.identifier)
+%         case {'BuildTree:MaxDepth', 'BuildTree:UselessSplit'}
+%             fprintf('Unable to build tree. Likely ambiguities: "%s".\n', ...
+%                 E.message);
+%             %probeTree = [];
+%             return
+%             
+%         otherwise
+%             rethrow(E);
+%     end
+% end
 
 if isempty(probeTree)
     error('Training failed!');
@@ -459,6 +478,13 @@ t_start = tic;
 
 %% Test on original images
 
+if addInversions
+    invert = [false(size(fnames(:))); true(size(fnames(:)))];
+    fnames = [fnames(:); fnames(:)];
+else
+    invert = false(size(fnames));
+end
+
 fprintf('Testing on %d original images...', length(fnames));
 pBar.set_message(sprintf('Testing on %d original images...', length(fnames)));
 pBar.set_increment(1/length(fnames));
@@ -466,6 +492,7 @@ pBar.set(0);
 
 correct = false(1,length(fnames));
 verified = false(1,length(fnames));
+
 if DEBUG_DISPLAY
     namedFigure('Original Image Errors'), clf %#ok<UNRCH>
     numDisplayRows = floor(sqrt(length(fnames)));
@@ -481,6 +508,10 @@ for iImg = 1:length(fnames)
     [testImg,~,alpha] = imread(fnames{iImg});
     testImg = mean(im2double(testImg),3);
     testImg(alpha < .5) = 1;
+    
+    if invert(iImg)
+       testImg = 1 - testImg; 
+    end
     
     % radius = probeRadius/workingResolution * size(testImg,1);
         
@@ -783,5 +814,8 @@ function img = imreadAlphaHelper(fname)
 [img, ~, alpha] = imread(fname);
 img = mean(im2double(img),3);
 img(alpha < .5) = 1;
+
+threshold = (max(img(:)) + min(img(:)))/2;
+img = double(img > threshold);
 
 end % imreadAlphaHelper()
