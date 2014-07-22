@@ -50,6 +50,8 @@
 % createSystemTest('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_00042_sheet2_72degrees_300mm_lightOff.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/images', 'Z:/Box Sync/Cozmo SE/systemTestImages_all/', {'cozmo_date2014_06_16_time13_47_57_frame0.png','cozmo_date2014_06_16_time13_48_07_frame0.png'}, 300, 72, 0);
 % createSystemTest('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_00043_sheet2_72degrees_300mm_lightOn.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/images', 'Z:/Box Sync/Cozmo SE/systemTestImages_all/', {'cozmo_date2014_06_16_time13_48_20_frame0.png','cozmo_date2014_06_16_time13_48_29_frame0.png'}, 300, 72, 1);
 
+% createSystemTest('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_00044_blurTest.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/images', 'C:/Anki/products-cozmo-large-files/systemTestsData/images/', {'cozmo_date2014_07_21_time17_44_04_frame1.png','cozmo_date2014_07_21_time17_44_33_frame0.png'}, 150, 0, 0);
+
 function createSystemTest(outputFilename, imageCopyPath, inputDirectory, inputFilenameRange, distance, angle, light)
 
 numImagesRequired = 10; % for the .1:.1:1.0 exposures
@@ -58,6 +60,14 @@ fullFilename = strrep(mfilename('fullpath'), '\', '/');
 slashIndexes = strfind(fullFilename, '/');
 fullFilenamePath = fullFilename(1:(slashIndexes(end)));
 templateFilename = [fullFilenamePath, 'testTemplate.json'];
+
+if imageCopyPath(end) ~= '/'
+    imageCopyPath = [imageCopyPath, '/'];
+end
+
+if inputDirectory(end) ~= '/'
+    inputDirectory = [inputDirectory, '/'];
+end
 
 jsonTestData = loadjson(templateFilename);
  
@@ -103,7 +113,9 @@ for iIn = startIndex:endIndex
     jsonTestData.Poses{end+1} = curPose;
     exposure = exposure + 0.1;
     
-    copyfile([inputDirectory,possibleInputFiles(iIn).name], imageCopyPath, 'f');
+    if ~strcmpi(inputDirectory, imageCopyPath)
+        copyfile([inputDirectory,possibleInputFiles(iIn).name], imageCopyPath, 'f');
+    end
 end
 
 % For speed, also save a copy with just the filenames
