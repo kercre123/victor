@@ -33,103 +33,100 @@ Robot {
   rotation IS rotation
   contactMaterial "cmat_block"
   children [
-    DEF Block1x1Texture Transform {
-      children [
-        Connector {
-          name "connector1"
-          translation 0 0 0.022
-          rotation 0 1 0 0
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        Connector {
-          name "connector2"
-          translation 0 0 -0.022
-          rotation 0 1 0 3.14159
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        
-        Connector {
-          name "connector3"
-          translation 0.022 0 0
-          rotation 0 1 0 1.57079
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        Connector {
-          name "connector4"
-          translation -0.022 0 0
-          rotation 0 1 0 -1.57079
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        
-        Connector {
-          name "connector5"
-          translation 0 0.022 0
-          rotation 1 0 0 -1.57079
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        Connector {
-          name "connector6"
-          translation 0 -0.022 0
-          rotation 1 0 0 1.57079
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        
-        # Front Face
-        VisionMarker {
-          rotation 0 0 1 -1.5708
-          translation -0.022 0 0
-          image IS markerImg
-        }
-        
-        # Back Face
-        VisionMarker {
-          rotation 0 0 1 1.5708
-          translation 0.022 0 0
-          image IS markerImg
-        }
-        
-        # Bottom Face
-        VisionMarker {
-          rotation 1 0 0 1.5708
-          translation 0 0 -0.022
-          image IS markerImg
-        }
-        
-        # Top Face
-        VisionMarker {
-          rotation 1 0 0 1.5708
-          translation 0 0 0.022
-          image IS markerImg
-        }
-                
-        # Left Face
-        VisionMarker {
-          rotation 0 0 1 3.1415
-          translation 0 0.022 0
-          image IS markerImg
-        }
-        
-        # Right Face
-        VisionMarker {
-          rotation 0 0 1 0
-          translation 0 -0.022 0
-					image IS markerImg
-        }
 
-      ]
-    }
+		Connector {
+			name "connector1"
+			translation 0 0 0.022
+			rotation 0 1 0 0
+			model "magnetic"
+			type "passive"
+			autoLock TRUE
+		}
+		Connector {
+			name "connector2"
+			translation 0 0 -0.022
+			rotation 0 1 0 3.14159
+			model "magnetic"
+			type "passive"
+			autoLock TRUE
+		}
+		
+		Connector {
+			name "connector3"
+			translation 0.022 0 0
+			rotation 0 1 0 1.57079
+			model "magnetic"
+			type "passive"
+			autoLock TRUE
+		}
+		Connector {
+			name "connector4"
+			translation -0.022 0 0
+			rotation 0 1 0 -1.57079
+			model "magnetic"
+			type "passive"
+			autoLock TRUE
+		}
+		
+		Connector {
+			name "connector5"
+			translation 0 0.022 0
+			rotation 1 0 0 -1.57079
+			model "magnetic"
+			type "passive"
+			autoLock TRUE
+		}
+		Connector {
+			name "connector6"
+			translation 0 -0.022 0
+			rotation 1 0 0 1.57079
+			model "magnetic"
+			type "passive"
+			autoLock TRUE
+		}
+		
+		# Front Face
+		VisionMarker {
+			rotation 0 0 1 -1.5708
+			translation -0.022 0 0
+			image IS markerImg
+		}
+		
+		# Back Face
+		VisionMarker {
+			rotation 0 0 1 1.5708
+			translation 0.022 0 0
+			image IS markerImg
+		}
+		
+		# Bottom Face
+		VisionMarker {
+			rotation 1 0 0 1.5708
+			translation 0 0 -0.022
+			image IS markerImg
+		}
+		
+		# Top Face
+		VisionMarker {
+			rotation 1 0 0 1.5708
+			translation 0 0 0.022
+			image IS markerImg
+		}
+						
+		# Left Face
+		VisionMarker {
+			rotation 0 0 1 3.1415
+			translation 0 0.022 0
+			image IS markerImg
+		}
+		
+		# Right Face
+		VisionMarker {
+			rotation 0 0 1 0
+			translation 0 -0.022 0
+			image IS markerImg
+		}
+
     DEF Block1x1Shape Shape {
       appearance Appearance {
         material Material {
