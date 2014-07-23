@@ -122,10 +122,15 @@ for i_label = 1:numLabels
     enumName_oriented = VisionMarkerTrained.ProbeTree.labels{i_label};
     if any(strcmp(enumName_oriented, {'ALL_WHITE', 'ALL_BLACK'}))
         % special case
-        % TODO: adjust training to change these special labels to ALLWHITE and ALL_BLACK
+        % TODO: adjust training to change these special labels to ALLWHITE and ALLBLACK
         underscoreIndex = [];
     else
         underscoreIndex = find(enumName_oriented == '_');
+        if strncmpi(enumName_oriented, 'inverted_', 9)
+            % Ignore the first underscore found if this is
+            % an inverted code name
+            underscoreIndex(1) = [];
+        end
     end
     if isempty(underscoreIndex) 
        enumName_oriented = [enumName_oriented '_000'];  %#ok<AGROW>

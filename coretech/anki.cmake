@@ -338,12 +338,16 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
 
   get_filename_component(OUTPUT_NAME ${MEX_FILE} NAME_WE)
 
+  if(NOT DEFINED NO_MEX_WRAPPERS)
+    set(MEX_WRAPPER_FILE ${CORETECH_ROOT_DIR}/common/matlab/mex/mexWrappers.cpp)
+  endif(NOT DEFINED NO_MEX_WRAPPERS)
+  
   add_library(${OUTPUT_NAME} SHARED
     ${MEX_FILE}
-    ${CORETECH_ROOT_DIR}/common/matlab/mex/mexWrappers.cpp
+    ${MEX_WRAPPER_FILE}
     ${CORETECH_ROOT_DIR}/common/matlab/mex/mexFunction.def
   )
-
+  
   # Put mex binaries in MEX_OUTPUT_PATH
   foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
     string( TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG )
