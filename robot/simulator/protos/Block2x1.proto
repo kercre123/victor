@@ -40,22 +40,25 @@ Robot {
       type "passive"
       autoLock TRUE
     }
-    Connector {
-      name "connector3"
-      translation 0.044 0 0
-      rotation 0 1 0 1.57079
-      model "magnetic"
-      type "passive"
-      autoLock TRUE
-    }
-    Connector {
-      name "connector4"
-      translation -0.044 0 0
-      rotation 0 1 0 -1.57079
-      model "magnetic"
-      type "passive"
-      autoLock TRUE
-    }
+    
+# The ends are not dockable:    
+#     Connector {
+#       name "connector3"
+#       translation 0.044 0 0
+#       rotation 0 1 0 1.57079
+#       model "magnetic"
+#       type "passive"
+#       autoLock TRUE
+#     }
+#     Connector {
+#       name "connector4"
+#       translation -0.044 0 0
+#       rotation 0 1 0 -1.57079
+#       model "magnetic"
+#       type "passive"
+#       autoLock TRUE
+#     }
+
     Connector {
       name "connector5"
       translation 0 0.022 0
