@@ -43,17 +43,25 @@ namespace Anki
     {
     public:
 
-      enum ObjectFamily_t {
-        MAT_FAMILY,
-        BLOCK_FAMILY,
-        RAMP_FAMILY,
+      
+      class ObjectFamily : public UniqueEnumeratedValue<int>
+      {
+      public:
+        ObjectFamily();
         
-        NUM_OBJECT_FAMILIES // Should remain last
-      };
+        // Define new ObjectFamilies here:
+        // (and be sure to instantiate them in the .cpp file)
+        static const ObjectFamily MATS;
+        static const ObjectFamily RAMPS;
+        static const ObjectFamily BLOCKS;
+        
+      protected:
+        static int UniqueFamilyCounter;
+      }; // class ObjectFamily
       
       using ObjectsMapByID_t     = std::map<ObjectID, Vision::ObservableObject*>;
       using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
-      using ObjectsMapByFamily_t = std::map<ObjectFamily_t, ObjectsMapByType_t>;
+      using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
       
       //static const unsigned int MaxRobots = 4;
       //static bool ZAxisPointsUp; // normally true, false for Webots
@@ -76,7 +84,7 @@ namespace Anki
       void ClearAllExistingObjects();
       
       // Clear all objects with the specified family
-      void ClearObjectsByFamily(const ObjectFamily_t family);
+      void ClearObjectsByFamily(const BlockWorld::ObjectFamily family);
       
       // Clear all objects with the specified type
       void ClearObjectsByType(const ObjectType type);
@@ -85,11 +93,11 @@ namespace Anki
       // is found and cleared, false otherwise.
       bool ClearObject(const ObjectID withID);
       
-      const Vision::ObservableObjectLibrary& GetObjectLibrary(ObjectFamily_t whichFamily) const;
+      const Vision::ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
 
       const ObjectsMapByFamily_t& GetAllExistingObjects() const;
       
-      const ObjectsMapByType_t& GetExistingObjectsByFamily(const ObjectFamily_t whichFamily) const;
+      const ObjectsMapByType_t& GetExistingObjectsByFamily(const ObjectFamily whichFamily) const;
       
       // NOTE: Like IDs, object types are unique across objects so they can be
       //       used without specifying which family.
@@ -111,7 +119,7 @@ namespace Anki
       void GetObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
                                     const f32 padding,
                                     std::vector<Quad2f>& boundingBoxes,
-                                    const std::set<ObjectFamily_t>& ignoreFamilies = {MAT_FAMILY},
+                                    const std::set<ObjectFamily>& ignoreFamilies = {ObjectFamily::MATS},
                                     const std::set<ObjectType>& ignoreTypes = {{}},
                                     const std::set<ObjectID>& ignoreIDs = {{}},
                                     const bool ignoreCarriedObjects = true) const;
@@ -187,7 +195,7 @@ namespace Anki
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
       // yet, but what everything we are aware of)
-      std::map<ObjectFamily_t, Vision::ObservableObjectLibrary> _objectLibrary;
+      std::map<ObjectFamily, Vision::ObservableObjectLibrary> _objectLibrary;
       //Vision::ObservableObjectLibrary blockLibrary_;
       //Vision::ObservableObjectLibrary matLibrary_;
       //Vision::ObservableObjectLibrary rampLibrary_;
@@ -235,7 +243,7 @@ namespace Anki
     }
      */
     
-    inline const Vision::ObservableObjectLibrary& BlockWorld::GetObjectLibrary(ObjectFamily_t whichFamily) const
+    inline const Vision::ObservableObjectLibrary& BlockWorld::GetObjectLibrary(ObjectFamily whichFamily) const
     {
       auto objectsWithFamilyIter = _objectLibrary.find(whichFamily);
       if(objectsWithFamilyIter != _objectLibrary.end()) {
@@ -250,7 +258,7 @@ namespace Anki
       return _existingObjects;
     }
     
-    inline const BlockWorld::ObjectsMapByType_t& BlockWorld::GetExistingObjectsByFamily(const ObjectFamily_t whichFamily) const
+    inline const BlockWorld::ObjectsMapByType_t& BlockWorld::GetExistingObjectsByFamily(const ObjectFamily whichFamily) const
     {
       auto objectsWithFamilyIter = _existingObjects.find(whichFamily);
       if(objectsWithFamilyIter != _existingObjects.end()) {

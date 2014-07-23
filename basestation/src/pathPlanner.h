@@ -30,7 +30,7 @@ namespace Anki {
     public:
 
       IPathPlanner()
-      : _ignoreFamilies({BlockWorld::MAT_FAMILY})
+      : _ignoreFamilies({BlockWorld::ObjectFamily::MATS})
       {
         
       }
@@ -82,8 +82,8 @@ namespace Anki {
       // return a test path
       virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) {}
       
-      void AddIgnoreFamily(const BlockWorld::ObjectFamily_t objFamily)    { _ignoreFamilies.insert(objFamily); }
-      void RemoveIgnoreFamily(const BlockWorld::ObjectFamily_t objFamily) { _ignoreFamilies.erase(objFamily); }
+      void AddIgnoreFamily(const BlockWorld::ObjectFamily objFamily)    { _ignoreFamilies.insert(objFamily); }
+      void RemoveIgnoreFamily(const BlockWorld::ObjectFamily objFamily) { _ignoreFamilies.erase(objFamily); }
       void ClearIgnoreFamilies()                                          { _ignoreFamilies.clear(); }
       
       void AddIgnoreType(const ObjectType objType)    { _ignoreTypes.insert(objType); }
@@ -96,7 +96,7 @@ namespace Anki {
       
     protected:
       
-      std::set<BlockWorld::ObjectFamily_t> _ignoreFamilies;
+      std::set<BlockWorld::ObjectFamily> _ignoreFamilies;
       std::set<ObjectType>               _ignoreTypes;
       std::set<ObjectID>                 _ignoreIDs;
       

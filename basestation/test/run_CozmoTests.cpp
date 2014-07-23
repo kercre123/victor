@@ -192,7 +192,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       msg.timestamp = currentTimeStamp;
       
       // If we are not checking robot pose, don't queue mat markers
-      const bool isMatMarker = !blockWorld.GetObjectLibrary(BlockWorld::MAT_FAMILY).GetObjectsWithCode(msg.markerType).empty();
+      const bool isMatMarker = !blockWorld.GetObjectLibrary(BlockWorld::ObjectFamily::MATS).GetObjectsWithCode(msg.markerType).empty();
       if(!checkRobotPose && isMatMarker) {
         fprintf(stdout, "Skipping mat marker with code = %d ('%s'), since we are not checking robot pose.\n",
                 msg.markerType, Vision::MarkerTypeStrings[msg.markerType]);
@@ -253,13 +253,13 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         // Use the "Name" as the object family in blockworld
         std::string objectFamilyString;
         ASSERT_TRUE(JsonTools::GetValueOptional(jsonObject[i_object], "ObjectName", objectFamilyString));
-        BlockWorld::ObjectFamily_t objectFamily;
+        BlockWorld::ObjectFamily objectFamily;
         if(objectFamilyString == "Block") {
-          objectFamily = BlockWorld::BLOCK_FAMILY;
+          objectFamily = BlockWorld::ObjectFamily::BLOCKS;
           objectType = Block::GetTypeByName(objectTypeString);
           
         } else if(objectFamilyString == "Ramp") {
-          objectFamily = BlockWorld::RAMP_FAMILY;
+          objectFamily = BlockWorld::ObjectFamily::RAMPS;
           objectType = Ramp::GetTypeByName(objectTypeString);
         }
         ASSERT_TRUE(objectType.IsSet());

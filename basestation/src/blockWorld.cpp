@@ -32,6 +32,18 @@ namespace Anki
     
     const Vision::ObservableObjectLibrary BlockWorld::EmptyObjectLibrary;
 
+    int BlockWorld::ObjectFamily::UniqueFamilyCounter = 0;
+    
+    // Instantiate object families here:
+    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MATS;
+    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::RAMPS;
+    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::BLOCKS;
+    
+    // Instantiating an object family increments the unique counter:
+    BlockWorld::ObjectFamily::ObjectFamily() {
+      SetValue(UniqueFamilyCounter++);
+    }
+    
     
     /*
     BlockWorld::BlockWorld( MessagingInterface* msgInterfaceIn )
@@ -60,49 +72,37 @@ namespace Anki
       //
       //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::ANGRYFACE));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ANGRYFACE));
 
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::BULLSEYE2));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BULLSEYE2));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::SQTARGET));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::SQTARGET));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::FIRE));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FIRE));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::ANKILOGO));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ANKILOGO));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::STAR5));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::STAR5));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::DICE));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::DICE));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER1));
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER2));
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER3));
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER4));
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER5));
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::NUMBER6));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER1));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER2));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER3));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER4));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER5));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER6));
 
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::BANGBANGBANG));
+      //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BANGBANGBANG));
       
-      _objectLibrary[BLOCK_FAMILY].AddObject(new Block_Cube1x1(Block::Type::ARROW));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ARROW));
       
       //
       // 2x1 Blocks
       //
       
-      {/*
-        Block_2x1* block = new Block_2x1(++blockID);
-        block->AddFace(Block::FRONT_FACE,
-                       {115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118},
-                       32.f);
-        block->AddFace(Block::LEFT_FACE,
-                       {32, 115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118},
-                       32.f);
-        block->SetColor(0, 0, 0xff);
-        block->SetSize(120.f, 60.f, 60.f);
-        block->SetName("TEMP2x1");
-        blockLibrary_.AddObject(block);
-        */
-      }
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_2x1(Block::Type::BANGBANGBANG));
+      
       
       //
       // Mat Pieces
@@ -111,12 +111,12 @@ namespace Anki
       // Webots mat:
       MatPiece* mat = new MatPiece(MatPiece::Type::LETTERS_4x4);
         
-      _objectLibrary[MAT_FAMILY].AddObject(mat);
+      _objectLibrary[ObjectFamily::MATS].AddObject(mat);
       
       //
       // Ramps
       //
-      _objectLibrary[RAMP_FAMILY].AddObject(new Ramp());
+      _objectLibrary[ObjectFamily::RAMPS].AddObject(new Ramp());
       
     } // BlockWorld() Constructor
     
@@ -357,7 +357,7 @@ namespace Anki
     void BlockWorld::GetObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
                                               const f32 padding,
                                               std::vector<Quad2f>& rectangles,
-                                              const std::set<ObjectFamily_t>& ignoreFamiles,
+                                              const std::set<ObjectFamily>& ignoreFamiles,
                                               const std::set<ObjectType>& ignoreTypes,
                                               const std::set<ObjectID>& ignoreIDs,
                                               const bool ignoreCarriedObjects) const
@@ -409,7 +409,7 @@ namespace Anki
       
       // Get all mat objects *seen by this robot's camera*
       std::vector<Vision::ObservableObject*> matsSeen;
-      _objectLibrary[MAT_FAMILY].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
+      _objectLibrary[ObjectFamily::MATS].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
                                                           (robot->GetCamera().GetID()));
 
       // Remove used markers from map
@@ -458,9 +458,9 @@ namespace Anki
           return false;
         }
         
-        ObjectsMapByType_t& existingMatPieces = _existingObjects[MAT_FAMILY];
+        ObjectsMapByType_t& existingMatPieces = _existingObjects[ObjectFamily::MATS];
         
-        if(_existingObjects[MAT_FAMILY].empty()) {
+        if(_existingObjects[ObjectFamily::MATS].empty()) {
           // We haven't seen the mat yet.  Create the first mat piece in the world.
           // Not supporting multiple mat pieces, just use the already-seen one from here on.
           // TODO: Deal with multiple mat pieces and updating their poses w.r.t. one another.
@@ -662,15 +662,15 @@ namespace Anki
         // Find any observed blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(_objectLibrary[BLOCK_FAMILY], currentObsMarkers,
-                                               _existingObjects[BLOCK_FAMILY], atTimestamp);
+        numObjectsObserved += UpdateObjectPoses(_objectLibrary[ObjectFamily::BLOCKS], currentObsMarkers,
+                                               _existingObjects[ObjectFamily::BLOCKS], atTimestamp);
 
         //
         // Find any observed ramps from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(_objectLibrary[RAMP_FAMILY], currentObsMarkers,
-                                              _existingObjects[RAMP_FAMILY], atTimestamp);
+        numObjectsObserved += UpdateObjectPoses(_objectLibrary[ObjectFamily::RAMPS], currentObsMarkers,
+                                              _existingObjects[ObjectFamily::RAMPS], atTimestamp);
 
         
         // TODO: Deal with unknown markers?
@@ -690,7 +690,7 @@ namespace Anki
       {
         // For now, look for collision with anything other than Mat objects
         // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
-        if(objectsByFamily.first != MAT_FAMILY)
+        if(objectsByFamily.first != ObjectFamily::MATS)
         {
           for(auto & objectsByType : objectsByFamily.second)
           {
@@ -893,7 +893,7 @@ namespace Anki
          */
         
         // Mat Markers
-        std::set<const Vision::ObservableObject*> const& mats = _objectLibrary[MAT_FAMILY].GetObjectsWithMarker(marker);
+        std::set<const Vision::ObservableObject*> const& mats = _objectLibrary[ObjectFamily::MATS].GetObjectsWithMarker(marker);
         for(auto mat : mats) {
           std::vector<Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
           
@@ -927,7 +927,7 @@ namespace Anki
       
     }
     
-    void BlockWorld::ClearObjectsByFamily(const ObjectFamily_t family)
+    void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
     {
       ObjectsMapByFamily_t::iterator objectsWithFamily = _existingObjects.find(family);
       if(objectsWithFamily != _existingObjects.end()) {

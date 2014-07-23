@@ -116,7 +116,7 @@ namespace Anki {
       // Iterate through all the non-Mat objects
       auto const & allObjects = world_->GetAllExistingObjects();
       for(auto const & objectsByFamily : allObjects) {
-        if(objectsByFamily.first != BlockWorld::MAT_FAMILY)
+        if(objectsByFamily.first != BlockWorld::ObjectFamily::MATS)
         {
           for (auto const & objectsByType : objectsByFamily.second) {
             
@@ -162,7 +162,7 @@ namespace Anki {
         // Find first block
         ObjectID firstBlock; // initialized to un-set
         for(auto const & objectsByFamily : allObjects) {
-          if(objectsByFamily.first != BlockWorld::MAT_FAMILY) {
+          if(objectsByFamily.first != BlockWorld::ObjectFamily::MATS) {
             for (auto const & objectsByType : objectsByFamily.second) {
               for (auto const & objectsByID : objectsByType.second) {
                 const DockableObject* object = dynamic_cast<DockableObject*>(objectsByID.second);
