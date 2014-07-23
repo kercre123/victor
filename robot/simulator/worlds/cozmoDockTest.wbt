@@ -125,6 +125,15 @@ DEF AngryFaceBlock Block1x1 {
   markerImg "symbols/angryFace.png"
 }
 
+DEF DoubleBlock Block2x1 {
+  name "DoubleBlock"
+  translation -.22 -.1 .022
+  rotation 0 0 1 .23
+  
+  blockColor 0.5 0.85 0.5
+  longSideMarker "symbols/bangBangBang.png"
+  shortSideMarker "symbols/inverted/bangBangBang.png"  
+}
 
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
