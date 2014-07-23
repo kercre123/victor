@@ -31,8 +31,8 @@ namespace Anki {
     class MsgPacket {
     public:
       MsgPacket(){};
-      MsgPacket(const s32 sourceId, const s32 destId, const u8 dataLen, const u8* data) :
-      dataLen(dataLen), sourceId(sourceId), destId(destId) {
+      MsgPacket(const s32 sourceId, const s32 destId, const u8 dataLen, const u8* data, const BaseStationTime_t timestamp = 0) :
+      dataLen(dataLen), sourceId(sourceId), destId(destId), timeStamp(timestamp) {
         memcpy(this->data, data, dataLen);
       }
       
@@ -41,6 +41,7 @@ namespace Anki {
       u8 dataLen = 0;
       s32 sourceId = -1;
       s32 destId = -1;
+      BaseStationTime_t timeStamp = 0;
     };
       
     class IComms {
@@ -53,7 +54,7 @@ namespace Anki {
 
       // Returns the number of messages ready for processing in the BLEVehicleMgr. Returns 0 if no
       // messages are available.
-      virtual size_t GetNumPendingMsgPackets() = 0;
+      virtual u32 GetNumPendingMsgPackets() = 0;
       
       virtual size_t Send(const MsgPacket &p) = 0;
       

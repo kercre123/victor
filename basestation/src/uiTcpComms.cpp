@@ -194,9 +194,9 @@ namespace Cozmo {
   }
   
   
-  size_t UiTCPComms::GetNumPendingMsgPackets()
+  u32 UiTCPComms::GetNumPendingMsgPackets()
   {
-    return recvdMsgPackets_.size();
+    return (u32)recvdMsgPackets_.size();
   };
   
   void UiTCPComms::ClearMsgPackets()

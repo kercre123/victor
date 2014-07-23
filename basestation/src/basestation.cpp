@@ -50,7 +50,7 @@ public:
   // Initializes components of basestation
   // RETURNS: BS_OK, or BS_END_INIT_ERROR
   //BasestationStatus Init(const MetaGame::GameParameters& params, IComms* comms, boost::property_tree::ptree &config, BasestationMode mode);
-  BasestationStatus Init(IComms* comms, BasestationMode mode);
+  BasestationStatus Init(Comms::IComms* comms, Json::Value& config, BasestationMode mode);
   
   BasestationMode GetMode();
   
@@ -99,6 +99,7 @@ private:
    void ProcessUiMessages();
    */
   BasestationMode mode_;
+  Json::Value config_;
   
   /*
    boost::property_tree::ptree config_;
@@ -126,10 +127,14 @@ BasestationMode BasestationMainImpl::GetMode()
 }
 
 
-BasestationStatus BasestationMainImpl::Init(IComms* comms, BasestationMode mode)
+BasestationStatus BasestationMainImpl::Init(Comms::IComms* comms, Json::Value& config, BasestationMode mode)
 {
   BasestationStatus status = BS_OK;
   
+  // Copy config
+  config_ = config;
+  
+  mode_ = mode;
   // read planner motion primitives
   Json::Value mprims;
   const std::string subPath("coretech/planning/matlab/cozmo_mprim.json");
@@ -351,9 +356,9 @@ BasestationMain::~BasestationMain()
   delete impl_;
 }
 
-BasestationStatus BasestationMain::Init(IComms* comms, BasestationMode mode)
+BasestationStatus BasestationMain::Init(Comms::IComms* comms, Json::Value& config, BasestationMode mode)
 {
-  return impl_->Init(comms, mode);
+  return impl_->Init(comms, config, mode);
 }
 
 BasestationMode BasestationMain::GetMode()

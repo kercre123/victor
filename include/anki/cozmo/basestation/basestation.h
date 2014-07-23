@@ -15,14 +15,16 @@
 
 
 #include <anki/cozmo/basestation/utils/timeType.h>
-
+#include "json/json.h"
 
 namespace Anki {
-namespace Cozmo {
 
 // forward declarations
-class IComms;
-//class IRecordingPlaybackModule;
+  namespace Comms {
+    class IComms;
+  }
+  
+namespace Cozmo {
 
 // Return values for basestation interface
 typedef enum {
@@ -64,7 +66,7 @@ public:
   // Initializes components of basestation
   // RETURNS: BS_OK, or BS_END_INIT_ERROR
   //BasestationStatus Init(const MetaGame::GameParameters& params, IComms* comms, boost::property_tree::ptree &config, BasestationMode mode);
-  BasestationStatus Init(IComms* comms, BasestationMode mode);
+  BasestationStatus Init(Comms::IComms* comms, Json::Value& config, BasestationMode mode);
 
   BasestationMode GetMode();
 

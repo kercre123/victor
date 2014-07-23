@@ -37,7 +37,7 @@ namespace Cozmo {
     virtual bool IsInitialized();
     
     // Returns 0 if no messages are available.
-    virtual size_t GetNumPendingMsgPackets();
+    virtual u32 GetNumPendingMsgPackets();
   
     virtual size_t Send(const Comms::MsgPacket &p);
 
