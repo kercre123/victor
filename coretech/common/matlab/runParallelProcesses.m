@@ -10,7 +10,7 @@
 % matlabCommandString is the command that is executed in each of the different Matlab processes
 
 function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, matlabCommandString)
-    if numComputeThreads == 1 || isempty(workQueue)
+    if numComputeThreads == 1 || (length(workQueue) < 2)
         localWorkQueue = workQueue; %#ok<NASGU>
         eval(matlabCommandString);
     else

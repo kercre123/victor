@@ -15,7 +15,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
-    %     makeNewResultsDirectory = true;
+%     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
     
     assert(exist('testJsonPattern', 'var') == 1);
@@ -102,27 +102,27 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     resultsData_overall_matlabQuadNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     disp(sprintf('resultsData_overall_matlabQuadNoRefinement = %f', resultsData_overall_matlabQuadNoRefinement.percentQuadsExtracted));
     
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.useMatlabForAll = true;
-    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
-    algorithmParametersN.extractionFunctionId = 10000;
-    thresholdMultipliers = linspace(0.5,1.0,10);
-    smallCharacterisicParameters = linspace(0.7, 1.0, 10);
-    resultsData_overall_small = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
-    for iThresholdMultiplier = 1:length(thresholdMultipliers)
-        thresholdMultiplier = thresholdMultipliers(iThresholdMultiplier);
-        
-        for iSmallCharacterisicParameter = 1:length(smallCharacterisicParameters)
-            smallCharacterisicParameter = smallCharacterisicParameters(iSmallCharacterisicParameter);
-            
-            algorithmParametersN.extractionFunctionId = algorithmParametersN.extractionFunctionId + 1;
-            algorithmParametersN.scaleImage_thresholdMultiplier = thresholdMultiplier;
-            algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', smallCharacterisicParameter);
-            resultsData_overall_small{iThresholdMultiplier,iSmallCharacterisicParameter} = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-            disp(sprintf('resultsData_overall for %d %d = %f', iThresholdMultiplier, iSmallCharacterisicParameter, resultsData_overall_small{iThresholdMultiplier,iSmallCharacterisicParameter}.percentQuadsExtracted));
-        end
-    end
-    
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.useMatlabForAll = true;
+%     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
+%     algorithmParametersN.extractionFunctionId = 10000;
+%     thresholdMultipliers = linspace(0.5,1.0,10);
+%     smallCharacterisicParameters = linspace(0.7, 1.0, 10);
+%     resultsData_overall_small = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
+%     for iThresholdMultiplier = 1:length(thresholdMultipliers)
+%         thresholdMultiplier = thresholdMultipliers(iThresholdMultiplier);
+%         
+%         for iSmallCharacterisicParameter = 1:length(smallCharacterisicParameters)
+%             smallCharacterisicParameter = smallCharacterisicParameters(iSmallCharacterisicParameter);
+%             
+%             algorithmParametersN.extractionFunctionId = algorithmParametersN.extractionFunctionId + 1;
+%             algorithmParametersN.scaleImage_thresholdMultiplier = thresholdMultiplier;
+%             algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', smallCharacterisicParameter);
+%             resultsData_overall_small{iThresholdMultiplier,iSmallCharacterisicParameter} = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+%             disp(sprintf('resultsData_overall for %d %d = %f', iThresholdMultiplier, iSmallCharacterisicParameter, resultsData_overall_small{iThresholdMultiplier,iSmallCharacterisicParameter}.percentQuadsExtracted));
+%         end
+%     end
+%     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.useMatlabForAll = true;
     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
@@ -152,7 +152,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', .9148);
     resultsData_overall_small2_best = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     
-    save([resultsDirectory,'/latestResults.mat'], '*');
+    save([resultsDirectory, '/results_', datestr(thisFileChangeTime(1).datenum, 'yyyy-mm-dd_HH-MM-SS'), '.mat'], '*');
     
     keyboard
     
