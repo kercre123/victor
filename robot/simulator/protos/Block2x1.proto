@@ -25,49 +25,6 @@ Robot {
   children [
 
     Connector {
-      name "connector1"
-      translation 0 0 0.022
-      rotation 0 1 0 0
-      model "magnetic"
-      type "passive"
-      autoLock TRUE
-    }
-    Connector {
-      name "connector2"
-      translation 0 0 -0.022
-      rotation 0 1 0 3.14159
-      model "magnetic"
-      type "passive"
-      autoLock TRUE
-    }
-    
-# The ends are not dockable:    
-#     Connector {
-#       name "connector3"
-#       translation 0.044 0 0
-#       rotation 0 1 0 1.57079
-#       model "magnetic"
-#       type "passive"
-#       autoLock TRUE
-#     }
-#     Connector {
-#       name "connector4"
-#       translation -0.044 0 0
-#       rotation 0 1 0 -1.57079
-#       model "magnetic"
-#       type "passive"
-#       autoLock TRUE
-#     }
-
-    Connector {
-      name "connector5"
-      translation 0 0.022 0
-      rotation 1 0 0 -1.57079
-      model "magnetic"
-      type "passive"
-      autoLock TRUE
-    }
-    Connector {
       name "connector6"
       translation 0 -0.022 0
       rotation 1 0 0 1.57079
@@ -81,6 +38,8 @@ Robot {
 			rotation 0 0 1 -1.5708
 			translation -0.044 0 0
 			image IS shortSideMarker
+			# Small ends not dockable			
+			#connectorRotation 0 1 0 -1.57079
 		}
 		
 		# Back Face
@@ -88,6 +47,8 @@ Robot {
 			rotation 0 0 1 1.5708
 			translation 0.044 0 0
 			image IS shortSideMarker
+			# Small ends not dockable
+			#connectorRotation 0 1 0 1.57079
 		}
 		
 		# Bottom Face
@@ -95,6 +56,8 @@ Robot {
 			rotation 1 0 0 1.5708
 			translation 0 0 -0.022
 			image IS longSideMarker
+			connectorName "connectorBottom"
+			connectorRotation 0 1 0 3.14159
 		}
 		
 		# Top Face
@@ -102,6 +65,8 @@ Robot {
 			rotation 1 0 0 1.5708
 			translation 0 0 0.022
 			image IS longSideMarker
+			connectorName "connectorTop"
+			connectorRotation 0 1 0 0
 		}
 						
 		# Left Face
@@ -109,6 +74,8 @@ Robot {
 			rotation 0 0 1 3.1415
 			translation 0 0.022 0
 			image IS longSideMarker
+			connectorName "connectorLeft"
+			connectorRotation 1 0 0 -1.57079
 		}
 		
 		# Right Face
@@ -116,6 +83,8 @@ Robot {
 			rotation 0 0 1 0
 			translation 0 -0.022 0
 			image IS longSideMarker
+			connectorName "connectorRight"
+			connectorRotation 1 0 0 1.57079
 		}
 		
     DEF Block2x1Shape Shape {
