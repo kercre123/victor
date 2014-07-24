@@ -18,14 +18,15 @@ function runTests_detectFiducialMarkers_compilePerPoseStats(workQueue, allTestDa
     
     perPoseStats = cell(length(resultsData_basics), 1);
     
-    lastTestId = -1;    
+    lastTestId = -1;
     
     tic
     
-    for iWork = 1:length(workQueue)        
+    for iWork = 1:length(workQueue)
         if workQueue{iWork}.iTest ~= lastTestId
             if lastTestId ~= -1
-%                 disp(sprintf('Compiled test results %d/%d in %f seconds', lastTestId, length(resultsData_basics), toc()));
+                %                 disp(sprintf('Compiled test results %d/%d in %f seconds', lastTestId, length(resultsData_basics), toc()));
+                disp(sprintf(' Finished in %0.4f seconds', toc()));
                 tic
             end
             
@@ -33,8 +34,10 @@ function runTests_detectFiducialMarkers_compilePerPoseStats(workQueue, allTestDa
             
             curTestData = allTestData{workQueue{iWork}.iTest};
             jsonData = curTestData.jsonData;
-                        
+            
             lastTestId = workQueue{iWork}.iTest;
+            
+            fprintf('Starting test %d ', lastTestId);
         end
         
         perPoseStats{workQueue{iWork}.iTest}{workQueue{iWork}.iPose} = cell(length(resultsData_basics{workQueue{iWork}.iTest}{workQueue{iWork}.iPose}), 1);
@@ -50,18 +53,18 @@ function runTests_detectFiducialMarkers_compilePerPoseStats(workQueue, allTestDa
         end
         
         curResultsData = resultsData_basics{workQueue{iWork}.iTest}{workQueue{iWork}.iPose};
-
+        
         curResultsData_perPose.Scene = allTestData{workQueue{iWork}.iTest}.jsonData.Poses{workQueue{iWork}.iPose}.Scene;
         
         [curResultsData_perPose.numQuadsNotIgnored, curResultsData_perPose.numQuadsDetected] = compileQuadResults(curResultsData);
-
+        
         [curResultsData_perPose.numCorrect_positionLabelRotation,...
             curResultsData_perPose.numCorrect_positionLabel,...
             curResultsData_perPose.numCorrect_position,...
             curResultsData_perPose.numSpurriousDetections,...
             curResultsData_perPose.numUndetected,...
             markersToDisplay] = compileMarkerResults(curResultsData);
-
+        
         toShowResults = {
             workQueue{iWork}.iTest - 1,...
             workQueue{iWork}.iPose - 1,...
@@ -77,19 +80,21 @@ function runTests_detectFiducialMarkers_compilePerPoseStats(workQueue, allTestDa
             curResultsData_perPose.numQuadsDetected,...
             curResultsData_perPose.numQuadsNotIgnored,...
             curResultsData_perPose.numSpurriousDetections};
-
+        
         drawnImage = mexDrawSystemTestResults(uint8(image), curResultsData.detectedQuads, curResultsData.detectedQuadValidity, markersToDisplay(:,1), int32(cell2mat(markersToDisplay(:,2))), markersToDisplay(:,3), showImageDetectionsScale, workQueue{iWork}.perPoseStats_imageFilename, toShowResults);
         drawnImage = drawnImage(:,:,[3,2,1]);
-
+        
         perPoseStats{workQueue{iWork}.iTest}{workQueue{iWork}.iPose} = curResultsData_perPose;
         
         save(workQueue{iWork}.perPoseStats_dataFilename, 'curResultsData_perPose');
-
+        
         if showImageDetections
             imshow(drawnImage)
             pause(.03);
         end
         
+        fprintf('.');
+        pause(.01);        
     end % for iWork = 1:length(workQueue)
 end % runTests_detectFiducialMarkers_compileperPoseStats()
 

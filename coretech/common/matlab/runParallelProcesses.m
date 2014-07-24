@@ -85,7 +85,11 @@ function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, 
                     '" cd ', scriptFilename_directory, '; ', scriptFilename_filename(1:(end-2)), '"']; % TODO: add exit?
             end
             
+            commandString = strrep(commandString, '//', '/');
+            
             system(commandString);
+            
+            pause(1);
         end
         
         % Wait for the thread to complete

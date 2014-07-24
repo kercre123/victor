@@ -17,7 +17,7 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
     for iWork = 1:length(workQueue)
         if workQueue{iWork}.iTest ~= lastTestId
             if lastTestId ~= -1
-                disp(sprintf('Finished test %d in %f seconds', lastTestId, toc()));
+                disp(sprintf(' Finished in %0.4f seconds', toc()));
                 tic
             end
             
@@ -26,6 +26,8 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
             jsonData.Poses = makeCellArray(jsonData.Poses);
             
             lastTestId = workQueue{iWork}.iTest;
+            
+            fprintf('Starting test %d ', lastTestId);
         end
         
         image = imread([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
@@ -88,6 +90,8 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         curResultsData_basics.detectedMarkers = makeCellArray(detectedMarkers);
         
         save(workQueue{iWork}.basicStats_filename, 'curResultsData_basics', 'curTestData');
+        
+        fprintf('.');
         pause(.01);
     end % for iWork = 1:length(workQueue)
     
