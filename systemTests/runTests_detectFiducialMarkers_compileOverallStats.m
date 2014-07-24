@@ -9,23 +9,23 @@ function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStat
     numLights = length(sceneTypes.lights);
     
     quadExtraction_events = extractEvents(resultsData_perPose, sceneTypes);
-        
+    
     if showPlots
         for iAngle = 1:numAngles
             for iLight = 1:numLights
-
+                
                 dataPoints = zeros(numCameraExposures, numDistances);
                 for iCameraExposure = 1:numCameraExposures
-                    for iDistance = 1:numDistances        
+                    for iDistance = 1:numDistances
                         quadExtraction_numQuadsDetected = squeeze(quadExtraction_events(iCameraExposure, iDistance, iAngle, iLight, 1));
                         quadExtraction_numQuadsNotIgnored = squeeze(quadExtraction_events(iCameraExposure, iDistance, iAngle, iLight, 2));
-
+                        
                         dataPoints(iCameraExposure, iDistance) = quadExtraction_numQuadsDetected / quadExtraction_numQuadsNotIgnored;
                     end
                 end
-
+                
                 figure(iLight);
-                subplot(1,numAngles,iAngle);                    
+                subplot(1,numAngles,iAngle);
                 bar(sceneTypes.distances, dataPoints')
                 shading flat
                 a = axis();
@@ -46,7 +46,7 @@ function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStat
     
     resultsData_overall.percentQuadsExtracted = sum(sum(sum(sum(quadExtraction_events(:,:,:,:,1))))) / sum(sum(sum(sum(quadExtraction_events(:,:,:,:,2)))));
     
-%     keyboard
+    %     keyboard
 end % runTests_detectFiducialMarkers_compileOverallStats()
 
 % function [quadExtraction_means, quadExtraction_variances] = computeStatistics(cellOfEvents)
@@ -76,25 +76,31 @@ function quadExtraction_events = extractEvents(resultsData_perPose, sceneTypes)
         for iPose = 1:length(resultsData_perPose{iTest})
             curResult = resultsData_perPose{iTest}{iPose};
             
+            curCameraExposure = curResult.Scene.CameraExposure;
+            curDistance = curResult.Scene.Distance;
+            curAngle = curResult.Scene.angle;
+            curLight = curResult.Scene.light;
+            
             for iCameraExposures = 1:length(sceneTypes.cameraExposures)
-                for iDistances = 1:length(sceneTypes.distances)
-                    for iAngles = 1:length(sceneTypes.angles)
-                        for iLights = 1:length(sceneTypes.lights)
-                            if curResult.Scene.CameraExposure == sceneTypes.cameraExposures(iCameraExposures) &&...
-                                    curResult.Scene.Distance == sceneTypes.distances(iDistances) &&...
-                                    curResult.Scene.angle == sceneTypes.angles(iAngles) &&...
-                                    curResult.Scene.light == sceneTypes.lights(iLights)
-                                
-                                quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 1) = quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 1) + curResult.numQuadsDetected;
-                                quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 2) = quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 2) + curResult.numQuadsNotIgnored;
-                            end
+                if curCameraExposure == sceneTypes.cameraExposures(iCameraExposures)
+                    for iDistances = 1:length(sceneTypes.distances)
+                        if curDistance == sceneTypes.distances(iDistances)
+                            for iAngles = 1:length(sceneTypes.angles)
+                                if curAngle == sceneTypes.angles(iAngles)
+                                    for iLights = 1:length(sceneTypes.lights)
+                                        if curLight == sceneTypes.lights(iLights)                                            
+                                            quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 1) = quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 1) + curResult.numQuadsDetected;
+                                            quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 2) = quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 2) + curResult.numQuadsNotIgnored;
+                                        end
+                                    end % for iLights = 1:length(sceneTypes.lights)
+                                end
+                            end % for iAngles = 1:length(sceneTypes.angles)
                         end
-                    end
+                    end % for iDistances = 1:length(sceneTypes.distances)
                 end
-            end
-        end
-    end
-    
+            end % for iCameraExposures = 1:length(sceneTypes.cameraExposures)
+        end % for iPose = 1:length(resultsData_perPose{iTest})
+    end % for iTest = 1:length(resultsData_perPose)    
 end % computeStatistics()
 
 function sceneTypes = getSceneTypes(resultsData_perPose)

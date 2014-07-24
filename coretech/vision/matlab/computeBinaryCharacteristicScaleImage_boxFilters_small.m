@@ -68,23 +68,40 @@ end % FUNCTION computeCharacteristicScaleImage()
 function [dog_max, binaryImage] = computeScale_localMinima(image, dog_max, scaleImage, threshold)
     binaryImage = zeros(size(scaleImage));
     
-    for y = (1+3):(size(image,1)-3)
-        for x = (1+3):(size(image,2)-3)
-            scale = 0;            
-            ys1 = [y-scale,y+scale];
-            xs1 = [x-scale,x+scale];
-            scale1y = sum(image(ys1,x)) / length(image(ys1,x));
-            scale1x = sum(image(y,xs1)) / length(image(y,xs1));
+    xs = (1+3):(size(image,2)-3);
+    
+    for y = (1+3):(size(image,1)-3)        
+        scale1ys = image(y,xs);
+        scale1xs = image(y,xs);
 
-            ys2 = [y-(scale+1),y+(scale+1)];
-            xs2 = [x-(scale+1),x+(scale+1)];
-            scale2y = sum(image(ys2,x)) / length(image(ys2,x));
-            scale2x = sum(image(y,xs2)) / length(image(y,xs2));
-
-            if scale1x < (scale2x*threshold) || scale1y < (scale2y*threshold)
-                binaryImage(y,x) = 255;
-            end
-        end
+        scale2ys = (image(y-1,xs) + image(y+1,xs)) / 2;
+        scale2xs = (image(y,xs-1) + image(y,xs+1)) / 2;
+            
+        binaryImage(y,xs(scale1xs < (scale2xs*threshold))) = 255;
+        binaryImage(y,xs(scale1ys < (scale2ys*threshold))) = 255;
+        
+%         for ix = 1:length(xs)
+% %             scale = 0;            
+% %             ys1 = [y-scale,y+scale];
+% %             xs1 = [x-scale,x+scale];
+% %             scale1y = sum(image(ys1,x)) / length(image(ys1,x));
+% %             scale1x = sum(image(y,xs1)) / length(image(y,xs1));
+% %             ys2 = [y-1,y+1];
+% %             xs2 = [x-1,x+1];
+% %             scale2y = sum(image(ys2,x)) / length(image(ys2,x));
+% %             scale2x = sum(image(y,xs2)) / length(image(y,xs2));
+% 
+%             
+% 
+% %             ys2 = [y-1,y+1];
+% %             xs2 = [x-1,x+1];
+% %             scale2y = sum(image(ys2,x)) / 2;
+% %             scale2x = sum(image(y,xs2)) / 2;
+% 
+%             if scale1xs(ix) < (scale2xs(ix)*threshold) || scale1ys(ix) < (scale2ys(ix)*threshold)
+%                 binaryImage(y,xs(ix)) = 255;
+%             end
+%         end
     end
 end % computeScale()
 

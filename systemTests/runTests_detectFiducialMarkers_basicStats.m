@@ -128,10 +128,13 @@ function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrec
             queryQuad = queryQuads{iQuery};
             
             for iRotation = 0:3
-                distances = sqrt(sum((queryQuad - gtQuad).^2, 2));
+%                 distances = sqrt(sum((queryQuad - gtQuad).^2, 2));
+                distances = sqrt((queryQuad(:,1) - gtQuad(:,1)).^2 + (queryQuad(:,2) - gtQuad(:,2)).^2);
                 
                 % Compute the closest match based on the mean distance
-                distance_mean = mean(distances);
+                                
+                % distance_mean = mean(distances);
+                distance_mean = (distances(1) + distances(2) + distances(3) + distances(4)) / 4;
                 
                 if distance_mean < bestDistances_mean(iGroundTruth)
                     bestDistances_mean(iGroundTruth) = distance_mean;
@@ -159,9 +162,9 @@ function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrec
                 
                 % rotate the quad
                 queryQuad = queryQuad([3,1,4,2],:);
-            end
-        end
-    end
+            end % for iRotation = 0:3
+        end % for iQuery = 1:length(queryQuads)
+    end % for iGroundTruth = 1:length(groundTruthQuads)
     
 function quads = jsonToQuad(jsonQuads)
     jsonQuads = makeCellArray(jsonQuads);
