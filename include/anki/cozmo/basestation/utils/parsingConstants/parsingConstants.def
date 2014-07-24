@@ -1,0 +1,8 @@
+//path to robot definitions
+STRING_NAMED_CONST(kP_WORK_PATH,"work_path")
+STRING_NAMED_CONST(kP_ROBOT_COMMS_LOG_PATH,"/robot_comms.log")
+STRING_NAMED_CONST(kP_UI_COMMS_LOG_PATH,"/ui_comms.log")
+STRING_NAMED_CONST(kP_CONFIG_JSON_PATH,"/configuration.json")
+
+STRING_NAMED_CONST(kP_CONNECTED_ROBOTS,"connected_robots")
+STRING_NAMED_CONST(kP_BASESTATION_MODE,"basestation_mode")
