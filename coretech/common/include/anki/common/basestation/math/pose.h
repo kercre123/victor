@@ -31,6 +31,7 @@
 #ifndef _ANKICORETECH_MATH_POSE_H_
 #define _ANKICORETECH_MATH_POSE_H_
 
+#include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/matrix.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/poseBase.h"
@@ -114,6 +115,9 @@ namespace Anki {
     // pose is stored in newPoseWrtOtherPose.
     bool GetWithRespectTo(const Pose2d& otherPose,
                           Pose2d& newPoseWrtOtherPose) const;
+    
+    // Get pose with respect to its origin
+    Pose2d GetWithRespectToOrigin() const;
 
     const Pose2d& FindOrigin() const;
     
@@ -230,6 +234,9 @@ namespace Anki {
     bool GetWithRespectTo(const Pose3d& otherPose,
                           Pose3d& newPoseWrtOtherPose) const;
     
+    // Get pose with respect to its origin
+    Pose3d GetWithRespectToOrigin() const;
+    
     const Pose3d& FindOrigin() const;
 
     // Check to see if two poses are the same.  Return true if so.
@@ -311,6 +318,17 @@ namespace Anki {
                                        Pose2d& newPoseWrtOtherPose) const {
     return PoseBase<Pose2d>::GetWithRespectTo(*this, otherPose, newPoseWrtOtherPose);
   }
+  
+  inline Pose2d Pose2d::GetWithRespectToOrigin() const {
+    Pose2d poseWrtOrigin;
+    if(PoseBase<Pose2d>::GetWithRespectTo(*this, this->FindOrigin(), poseWrtOrigin) == false) {
+      PRINT_NAMED_ERROR("Pose2d::GetWithRespectToOriginFailed",
+                        "Could not get pose w.r.t. its own origin. This should never happen.\n");
+      assert(false);
+    }
+    return poseWrtOrigin;
+  }
+
   
   inline const Pose2d& Pose2d::FindOrigin() const {
     return PoseBase<Pose2d>::FindOrigin(*this);
@@ -414,6 +432,16 @@ namespace Anki {
   inline bool Pose3d::GetWithRespectTo(const Pose3d& otherPose,
                                 Pose3d& newPoseWrtOtherPose) const {
     return PoseBase<Pose3d>::GetWithRespectTo(*this, otherPose, newPoseWrtOtherPose);
+  }
+  
+  inline Pose3d Pose3d::GetWithRespectToOrigin() const {
+    Pose3d poseWrtOrigin;
+    if(PoseBase<Pose3d>::GetWithRespectTo(*this, this->FindOrigin(), poseWrtOrigin) == false) {
+      PRINT_NAMED_ERROR("Pose3d::GetWithRespectToOriginFailed",
+                        "Could not get pose w.r.t. its own origin. This should never happen.\n");
+      assert(false); // TODO: Do something more elegant
+    }
+    return poseWrtOrigin;
   }
   
   inline const Pose3d& Pose3d::FindOrigin() const {
