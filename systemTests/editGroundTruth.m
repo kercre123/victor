@@ -783,6 +783,8 @@ function loadTestFile()
     
     poseChanged(true)
     
+    Save();
+    
     return;
     
 function sanitizeJson()
