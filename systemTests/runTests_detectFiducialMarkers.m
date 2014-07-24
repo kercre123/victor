@@ -377,7 +377,7 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
         
         matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_basicStats(localWorkQueue, allTestData, rotationList, algorithmParameters);'];
         
-        runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString);
+        runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
         
         delete(allInputFilename);
         
@@ -417,7 +417,7 @@ function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, work
         
         matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
         
-        runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString);
+        runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
         
         delete(allInputFilename);
         
