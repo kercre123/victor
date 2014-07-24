@@ -27,7 +27,7 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
             
             lastTestId = workQueue{iWork}.iTest;
             
-            fprintf('Starting test %d ', lastTestId);
+            fprintf('Starting basicStats %d ', lastTestId);
         end
         
         image = imread([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
@@ -38,6 +38,7 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         end
         
         curTestData.Scene = jsonData.Poses{workQueue{iWork}.iPose}.Scene;
+        
         curTestData.ImageFile = jsonData.Poses{workQueue{iWork}.iPose}.ImageFile;
         
         groundTruthQuads = jsonToQuad(jsonData.Poses{workQueue{iWork}.iPose}.VisionMarkers);

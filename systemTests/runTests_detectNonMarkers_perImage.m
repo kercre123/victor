@@ -5,11 +5,7 @@ function runTests_detectNonMarkers_perImage(workQueue, algorithmParameters)
 %         disp(workQueue{iWork}.inputFilename)
 %         pause(.1);
         
-        image = imread(workQueue{iWork}.inputFilename);
-        
-        if size(image,3) ~= 1
-            image = rgb2gray(image);
-        end
+        image = rgb2gray2(imread(workQueue{iWork}.inputFilename));
         
         if size(image,1) > algorithmParameters.maxDetectionSize(1) || size(image,2) > algorithmParameters.maxDetectionSize(2)
             scale = min(algorithmParameters.maxDetectionSize./size(image));

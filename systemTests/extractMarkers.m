@@ -3,7 +3,9 @@
 function [allQuads, quadValidity, markers, allQuads_pixelValues, markers_pixelValues] = extractMarkers(image, algorithmParameters)
     allQuads_pixelValues = {};
     markers_pixelValues = {};
-   
+    
+    image = rgb2gray2(image);
+    
     if algorithmParameters.useMatlabForAll
         convertFromCToMatlab = false;
         

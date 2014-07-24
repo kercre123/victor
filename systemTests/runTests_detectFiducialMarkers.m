@@ -1,10 +1,10 @@
 % function allCompiledResults = runTests_detectFiducialMarkers()
 
 % On PC
-% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*_all.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'Z:/Documents/Box Documents');
+% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'Z:/Documents/Box Documents');
 
 % On Mac
-% allCompiledResults = runTests_detectFiducialMarkers('~/Documents/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*_all.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
+% allCompiledResults = runTests_detectFiducialMarkers('~/Documents/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
 
 function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsDirectory, boxSyncDirectory)
     % To be a match, all corners of a quad must be within these thresholds
@@ -63,7 +63,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.extractionFunctionName = 'c-with-refinement';
     algorithmParametersN.extractionFunctionId = '1/1';
-    resultsData_overall_cWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    [resultsData_overall_cWithRefinement, resultsDirectory_curTime] = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     disp(sprintf('resultsData_overall_cWithRefinement = %f', resultsData_overall_cWithRefinement.percentQuadsExtracted));
     
     algorithmParametersN = algorithmParameters;
@@ -152,7 +152,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', .9148);
     resultsData_overall_small2_best = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     
-    save([resultsDirectory, '/results_', datestr(thisFileChangeTime(1).datenum, 'yyyy-mm-dd_HH-MM-SS'), '.mat'], '*');
+    allResultsFilename = [strrep(resultsDirectory_curTime, 'results/dateTime', 'resultsAt'), '.mat'];    
+    save(allResultsFilename, '*');
     
     keyboard
     
@@ -184,10 +185,29 @@ function allTestData = getTestData(testJsonPattern)
         
         % Resave json files to mat files
         allTestData{iTest} = convertJsonToMat(allTestFilename);
+        
+        % Sanitize the json input
+        
+        if ~iscell(allTestData{iTest}.jsonData.Poses)
+            allTestData{iTest}.jsonData.Poses = { allTestData{iTest}.jsonData.Poses };
+        end
+        
+        for iPose = 1:length(allTestData{iTest}.jsonData.Poses)
+            if ~iscell(allTestData{iTest}.jsonData.Poses{iPose}.VisionMarkers)
+                allTestData{iTest}.jsonData.Poses{iPose}.VisionMarkers = { allTestData{iTest}.jsonData.Poses{iPose}.VisionMarkers };
+            end
+            
+             if ~isfield(allTestData{iTest}.jsonData.Poses{iPose}, 'Scene')
+                allTestData{iTest}.jsonData.Poses{iPose}.Scene.Distance = -1;
+                allTestData{iTest}.jsonData.Poses{iPose}.Scene.angle = -1;
+                allTestData{iTest}.jsonData.Poses{iPose}.Scene.CameraExposure = -1;
+                allTestData{iTest}.jsonData.Poses{iPose}.Scene.light = -1;
+            end
+        end
     end
 end % getTestFilenames()
 
-function resultsData_overall = compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, showPlots)
+function [resultsData_overall, resultsDirectory_curTime] = compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, showPlots)
     markerDirectoryList = {
         [boxSyncDirectory, '/Cozmo SE/VisionMarkers/symbols/withFiducials/'],...
         [boxSyncDirectory, '/Cozmo SE/VisionMarkers/letters/withFiducials'],...
@@ -195,7 +215,7 @@ function resultsData_overall = compileAll(algorithmParameters, boxSyncDirectory,
     
     rotationList = getListOfSymmetricMarkers(markerDirectoryList);
     
-    [workQueue_basics, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, algorithmParameters.extractionFunctionName, algorithmParameters.extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime);
+    [workQueue_basics, workQueue_perPoseStats, workQueue_all, resultsDirectory_curTime] = computeWorkQueues(resultsDirectory, allTestData, algorithmParameters.extractionFunctionName, algorithmParameters.extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime);
     
     disp(sprintf('%s: workQueue_basics has %d elements and workQueue_perPoseStats has %d elements', algorithmParameters.extractionFunctionName, length(workQueue_basics), length(workQueue_perPoseStats)));
     
@@ -210,7 +230,7 @@ function resultsData_overall = compileAll(algorithmParameters, boxSyncDirectory,
     resultsData_overall = run_compileOverallStats(resultsData_perPose, showPlots);
 end % compileAll()
 
-function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime)
+function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDirectory_curTime] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime)
     thisFileChangeString = ['dateTime_', datestr(thisFileChangeTime(1).datenum, 'yyyy-mm-dd_HH-MM-SS')];
     
     [~, ~, ~] = mkdir(resultsDirectory);
@@ -234,6 +254,7 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = compute
     end
     
     resultsDirectory_curTime = [resultsDirectory, '/', thisFileChangeString, '/'];
+    resultsDirectory_curTime = strrep(resultsDirectory_curTime, '//', '/');
         
     curExtractFunction_intermediateDirectory = [resultsDirectory_curTime, 'intermediate/', extractionFunctionId, '/'];
     curExtractFunction_dataDirectory = [resultsDirectory_curTime, 'data/', extractionFunctionId, '/'];
@@ -370,7 +391,15 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
         load(workQueue_all{1}.basicStats_filename, 'resultsData_basics');
     end
     
-    if ~exist('resultsData_basics', 'var')  || (length(resultsData_basics) ~= length(workQueue_all) / 10) %#ok<NODEF>
+    numResultsData = 0;
+    
+    if exist('resultsData_basics', 'var')
+        for curResultsData_basics = resultsData_basics %#ok<NODEF>
+            numResultsData = numResultsData + length(curResultsData_basics);
+        end
+    end
+    
+    if numResultsData ~= length(workQueue_all)
         allInputFilename = [temporaryDirectory, '/recompileBasicsAllInput.mat'];
         
         save(allInputFilename, 'allTestData', 'rotationList', 'algorithmParameters');
@@ -406,7 +435,15 @@ function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, work
         load(workQueue_all{1}.perPoseStats_dataFilename, 'resultsData_perPose');
     end
     
-    if ~exist('resultsData_perPose', 'var') || (length(resultsData_perPose) ~= length(workQueue_all) / 10) %#ok<NODEF>
+    numResultsData = 0;
+    
+    if exist('resultsData_perPose', 'var')
+        for curResultsData_perPose = resultsData_perPose %#ok<NODEF>
+            numResultsData = numResultsData + length(curResultsData_perPose);
+        end
+    end
+    
+    if numResultsData ~= length(workQueue_all)
         if numComputeThreads ~= 1
             showImageDetections = false; %#ok<NASGU>
         end
