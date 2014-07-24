@@ -59,7 +59,7 @@ namespace Anki {
     
     StorageType GetValue() const { return _value; }
     
-    operator StorageType() const { return _value; }
+    virtual operator StorageType() const { return _value; }
     
   protected:
     
