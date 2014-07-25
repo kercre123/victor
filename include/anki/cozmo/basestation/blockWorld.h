@@ -164,11 +164,15 @@ namespace Anki
                                   const ObjectsMapByType_t& objectsExisting,
                                   std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const;
       
+      void CheckForUnobservedObjects(TimeStamp_t atTimestamp);
+      
+      bool LocalizeRobotToMat(Robot* robot, const MatPiece* matSeen, MatPiece* existingMat);
       
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                ObjectsMapByType_t& objectsExisting,
-                               const TimeStamp_t atTimestamp);
+                               const TimeStamp_t atTimestamp,
+                               const Pose3d* origin = nullptr);
       
       // Remove all posekey-marker pairs from the map if marker is marked used
       void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);

@@ -125,7 +125,6 @@ namespace Anki {
     , _poseOrigin(&Pose3d::AddOrigin())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _poseOrigin) // Until this robot is localized be seeing a mat marker, create an origin for it to use as its pose parent
     , _frameId(0)
-    , _isLocalized(false)
     , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose)
     , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose)
@@ -1540,7 +1539,8 @@ namespace Anki {
     Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
                                              const RobotPoseStamp& p)
     {
-      if(!_isLocalized) {
+      if(!IsLocalized()) {
+
         // If we aren't localized yet, we are about to be, by virtue of this pose
         // stamp.  So we need to take the current origin (which may be the
         // the pose parent of observed objects) and update it
@@ -1560,10 +1560,8 @@ namespace Anki {
         }
         
         // Now make the robot's origin point to the robot's pose's parent.
-        // TODO: avoid the icky const cast here...
+        // TODO: avoid the icky const_cast here...
         _poseOrigin = const_cast<Pose3d*>(p.GetPose().GetParent());
-        
-        _isLocalized = true;
       }
       
       return _poseHistory.AddVisionOnlyPose(t, p);

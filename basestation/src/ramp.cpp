@@ -94,13 +94,7 @@ namespace Anki {
     
     void Ramp::Visualize(VIZ_COLOR_ID color)
     {
-      Pose3d vizPose;
-      if(pose_.GetWithRespectTo(pose_.FindOrigin(), vizPose) == false) {
-        // This really should not happen, by definition...
-        PRINT_NAMED_ERROR("Ramp.Visualize.OriginProblem", "Could not get ramp's pose w.r.t. its own origin (?!?)\n");
-        return;
-      }
-      
+      Pose3d vizPose = pose_.GetWithRespectToOrigin();
       _vizHandle = VizManager::getInstance()->DrawRamp(GetID().GetValue(), Ramp::PlatformLength,
                                                        Ramp::SlopeLength, Ramp::Width,
                                                        Ramp::Height, vizPose, color);

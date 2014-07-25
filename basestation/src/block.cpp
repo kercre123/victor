@@ -414,13 +414,7 @@ namespace Anki {
     
     void Block::Visualize(VIZ_COLOR_ID color)
     {
-      Pose3d vizPose;
-      if(pose_.GetWithRespectTo(pose_.FindOrigin(), vizPose) == false) {
-        // This really should not happen, by definition...
-        PRINT_NAMED_ERROR("Block.Visualize.OriginProblem", "Could not get block's pose w.r.t. its own origin (?!?)\n");
-        return;
-      }
-      
+      Pose3d vizPose = pose_.GetWithRespectToOrigin();      
       _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }
     

@@ -65,27 +65,30 @@ namespace Anki {
       const RobotID_t        GetID()           const;
       const Pose3d&          GetPose()         const;
       const Pose3d*          GetPoseOrigin()   const {return _poseOrigin;}
-      bool                   IsLocalized()     const {return _isLocalized;}
-      const Vision::Camera&  GetCamera()       const;
+      bool                   IsLocalized()     const {return _localizedToID.IsSet();}
+      const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
+      void                   SetLocalizedTo(const ObjectID& toID);
       
-      // Returns true if head_angle is valid.
-      // *valid_head_angle is made to equal the closest valid head angle to head_angle.
-      bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
-      
+      const Vision::Camera&             GetCamera() const;
       Vision::Camera&                   GetCamera();
       void                              SetCameraCalibration(const Vision::CameraCalibration& calib);
 	    const Vision::CameraCalibration&  GetCameraCalibration() const;
       
       const f32              GetHeadAngle()    const;
       const f32              GetLiftAngle()    const;
+
+      // Returns true if head_angle is valid.
+      // *valid_head_angle is made to equal the closest valid head angle to head_angle.
+      bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
+
       
-      const Pose3d&          GetNeckPose()     const {return _neckPose;}
-      const Pose3d&          GetHeadCamPose()  const {return _headCamPose;}
-      const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
-      const State            GetState()        const;
+      const Pose3d&          GetNeckPose()       const {return _neckPose;}
+      const Pose3d&          GetHeadCamPose()    const {return _headCamPose;}
+      const Pose3d&          GetLiftPose()       const {return _liftPose;}  // At current lift position!
+      const State            GetState()          const;
       
-      const ObjectID       GetDockObject()     const {return _dockObjectID;}
-      const ObjectID       GetCarryingObject() const {return _carryingObjectID;}
+      const ObjectID         GetDockObject()     const {return _dockObjectID;}
+      const ObjectID         GetCarryingObject() const {return _carryingObjectID;}
       
       void SetState(const State newState);
       void SetPose(const Pose3d &newPose);
@@ -347,7 +350,7 @@ namespace Anki {
       Pose3d*          _poseOrigin;
       Pose3d           _pose;
       PoseFrameID_t    _frameId;
-      bool             _isLocalized;
+      ObjectID         _localizedToID;
       
       const Pose3d _neckPose; // joint around which head rotates
       const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint
@@ -461,13 +464,16 @@ namespace Anki {
     inline const Robot::State Robot::GetState() const
     { return _state; }
     
+    inline void Robot::SetLocalizedTo(const ObjectID& toID)
+    { _localizedToID = toID;}
+    
     inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
     {
       _cameraCalibration = calib;
       _camera.SetSharedCalibration(&_cameraCalibration);
     }
 
-	inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
+    inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
     { return _cameraCalibration; }
     
     inline const f32 Robot::GetHeadAngle() const

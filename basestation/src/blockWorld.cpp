@@ -67,9 +67,10 @@ namespace Anki
     {
       // TODO: Create each known block / matpiece from a configuration/definitions file
       
-      //
+      //////////////////////////////////////////////////////////////////////////
       // 1x1 Cubes
       //
+      
       //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ANGRYFACE));
@@ -97,23 +98,25 @@ namespace Anki
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ARROW));
       
-      //
+      //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
       //
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_2x1(Block::Type::BANGBANGBANG));
       
       
-      //
+      //////////////////////////////////////////////////////////////////////////
       // Mat Pieces
       //
       
       // Webots mat:
-      MatPiece* mat = new MatPiece(MatPiece::Type::LETTERS_4x4);
-        
-      _objectLibrary[ObjectFamily::MATS].AddObject(mat);
+      _objectLibrary[ObjectFamily::MATS].AddObject(new MatPiece(MatPiece::Type::LETTERS_4x4));
       
-      //
+      // Platform piece:
+      _objectLibrary[ObjectFamily::MATS].AddObject(new MatPiece(MatPiece::Type::LARGE_PLATFORM));
+      
+      
+      //////////////////////////////////////////////////////////////////////////
       // Ramps
       //
       _objectLibrary[ObjectFamily::RAMPS].AddObject(new Ramp());
@@ -204,6 +207,11 @@ namespace Anki
         
         Vision::Camera& camera = robot->GetCamera();
         
+        PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
+                         "Adding object %d as an occluder for robot %d.\n",
+                         object->GetID().GetValue(),
+                         robot->GetID());
+        
         camera.AddOccluder(*object);
       }
       
@@ -213,15 +221,26 @@ namespace Anki
     
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                          ObjectsMapByType_t& objectsExisting,
-                                         const TimeStamp_t atTimestamp)
+                                         const TimeStamp_t atTimestamp,
+                                         const Pose3d* origin)
     {
       for(auto objSeen : objectsSeen) {
         
         //const float minDimSeen = objSeen->GetMinDim();
         
-        // Store pointers to any existing blocks that overlap with this one
+        // Store pointers to any existing objects that overlap with this one
         std::vector<Vision::ObservableObject*> overlappingObjects;
         FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+        
+        if(origin != nullptr) {
+          Pose3d poseWrtOrigin;
+          if(objSeen->GetPose().GetWithRespectTo(*origin, poseWrtOrigin) == false) {
+            PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.OriginProblem",
+                              "Could not get object seen w.r.t. to the given origin.\n");
+            return;
+          }
+          objSeen->SetPose(poseWrtOrigin);
+        }
         
         if(overlappingObjects.empty()) {
           // no existing objects overlapped with the objects we saw, so add it
@@ -235,7 +254,7 @@ namespace Anki
                   objSeen->GetPose().GetTranslation().y(),
                   objSeen->GetPose().GetTranslation().z());
           
-          // Project this new block into each camera
+          // Project this new object into each camera
           AddToOcclusionMaps(objSeen, robotMgr_);
           
         }
@@ -272,63 +291,88 @@ namespace Anki
         didObjectsChange_ = true;
       } // for each object seen
       
+    } // AddAndUpdateObjects()
+    
+    void BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
+    {
       // Create a list of unobserved objects for further consideration below.
       // Use pairs of iterators to make deleting blocks below easier.
-      std::vector<std::pair<ObjectsMapByType_t::iterator, ObjectsMapByID_t::iterator> > unobservedObjects;
-      //for(auto & objectTypes : objectsExisting) {
-      for(auto objectTypeIter = objectsExisting.begin();
-          objectTypeIter != objectsExisting.end(); ++objectTypeIter)
-      {
-        ObjectsMapByID_t& objectIdMap = objectTypeIter->second;
-        for(auto objectIter = objectIdMap.begin();
-            objectIter != objectIdMap.end(); ++objectIter)
+      //std::vector<std::pair<ObjectsMapByType_t::iterator, ObjectsMapByID_t::iterator> > unobservedObjects;
+      struct UnobservedObjectContainer {
+        //ObjectsMapByFamily_t::iterator family;
+        //ObjectsMapByType_t::iterator   type;
+        //ObjectsMapByID_t::iterator     ID;
+        ObjectFamily family;
+        Vision::ObservableObject*      object;
+        
+        UnobservedObjectContainer(ObjectFamily family_, Vision::ObservableObject* object_)
+        : family(family_), object(object_)
         {
-          Vision::ObservableObject* object = objectIter->second;;
-          if(object->GetLastObservedTime() < atTimestamp) {
-            //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
-            unobservedObjects.emplace_back(objectTypeIter, objectIter);
-          } // if object was not observed
-          else {
-            // Object was observed, update it's visualization
-            object->Visualize();
-          }
-        } // for object IDs of this type
-      } // for each object type
+          
+        }
+      };
+      std::vector<UnobservedObjectContainer> unobservedObjects;
+      
+      //for(auto & objectTypes : objectsExisting) {
+      for(auto objectFamily : _existingObjects) {
+        auto objectsExisting = objectFamily.second;
+        for(auto objectTypeIter = objectsExisting.begin();
+            objectTypeIter != objectsExisting.end(); ++objectTypeIter)
+        {
+          ObjectsMapByID_t& objectIdMap = objectTypeIter->second;
+          for(auto objectIter = objectIdMap.begin();
+              objectIter != objectIdMap.end(); ++objectIter)
+          {
+            Vision::ObservableObject* object = objectIter->second;;
+            if(object->GetLastObservedTime() < atTimestamp) {
+              //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
+              unobservedObjects.emplace_back(objectFamily.first, objectIter->second);
+            } // if object was not observed
+            else {
+              // Object was observed, update it's visualization
+              object->Visualize();
+            }
+          } // for object IDs of this type
+        } // for each object type
+      } // for each object family
       
       // Now that the occlusion maps are complete, check each unobserved object's
       // visibility in each camera
       for(auto unobserved : unobservedObjects) {
-        // NOTE: this is assuming all objects are blocks
-        Vision::ObservableObject* object = unobserved.second->second;
+
+        //Vision::ObservableObject* object = unobserved.ID->second;
         
         for(auto robotID : robotMgr_->GetRobotIDList()) {
           
           Robot* robot = robotMgr_->GetRobotByID(robotID);
           CORETECH_ASSERT(robot != NULL);
           
-          if(object->IsVisibleFrom(robot->GetCamera(), DEG_TO_RAD(45), 20.f, true) &&
-             (robot->GetDockObject() != unobserved.second->first))  // We expect a docking block to disappear from view!
+          if(unobserved.object->IsVisibleFrom(robot->GetCamera(), DEG_TO_RAD(45), 20.f, true) &&
+             (robot->GetDockObject() != unobserved.object->GetID()))  // We expect a docking block to disappear from view!
           {
             // We "should" have seen the object! Delete it or mark it somehow
             CoreTechPrint("Removing object %d, which should have been seen, "
-                          "but wasn't.\n", object->GetID());
+                          "but wasn't.\n", unobserved.object->GetID().GetValue());
+            
+            // Grab the object's type and ID before we delete it
+            ObjectType objType = unobserved.object->GetType();
+            ObjectID   objID   = unobserved.object->GetID();
             
             // Delete the object's instantiation (which will also erase its
             // visualization)
-            delete unobserved.second->second;
+            delete unobserved.object;
             
             // Actually erase the object from blockWorld's container of
-            // existing objects, using the iterator pointing to it
-            unobserved.first->second.erase(unobserved.second);
-            
+            // existing objects
+            _existingObjects[unobserved.family][objType].erase(objID);
+
             didObjectsChange_ = true;
           }
           
         } // for each camera
       } // for each unobserved object
-
       
-    } // AddAndUpdateObjects()
+    } // CheckForUnobservedObjects()
     
     void BlockWorld::GetObsMarkerList(const PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap,
                                       std::list<Vision::ObservedMarker*>& lst)
@@ -399,6 +443,101 @@ namespace Anki
     }
     
     
+    bool BlockWorld::LocalizeRobotToMat(Robot* robot, const MatPiece* matSeen, MatPiece* existingMatPiece)
+    {
+     
+      if(matSeen == nullptr) {
+        PRINT_NAMED_ERROR("BlockWorld.LocalizeRobotToMat.MatSeenNullPointer", "\n");
+        return false;
+      } else if(existingMatPiece == nullptr) {
+        PRINT_NAMED_ERROR("BlockWorld.LocalizeRobotToMat.ExistingMatPieceNullPointer", "\n");
+        return false;
+      }
+      
+      // Get computed RobotPoseStamp at the time the mat was observed.
+      RobotPoseStamp* posePtr = nullptr;
+      if (robot->GetComputedPoseAt(matSeen->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
+        PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.CouldNotFindHistoricalPose", "Time %d\n", matSeen->GetLastObservedTime());
+        return false;
+      }
+      
+      // Get the pose of the robot with respect to the observed mat piece
+      Pose3d robotPoseWrtMat;
+      if(posePtr->GetPose().GetWithRespectTo(matSeen->GetPose(), robotPoseWrtMat) == false) {
+        PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.MatPoseOriginMisMatch",
+                          "Could not get RobotPoseStamp w.r.t. matPose.\n");
+        return false;
+      }
+      
+      // Make the computed robot pose use the existing mat piece as its parent
+      robotPoseWrtMat.SetParent(&existingMatPiece->GetPose());
+      
+      // If there is any significant rotation, make sure that it is roughly
+      // around the Z axis
+      Radians rotAngle;
+      Vec3f rotAxis;
+      robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
+      const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
+      const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
+      if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
+        PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
+                            "Robot's Z axis is not well aligned with the world Z axis.\n");
+        return false;
+      }
+      
+      // Snap to horizontal
+      if(existingMatPiece->IsPoseOn(robotPoseWrtMat, ROBOT_BOUNDING_Z)) { // TODO: get height tol from robot
+        Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
+        robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
+        robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
+      }
+      robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
+
+      // We have a new ("ground truth") key frame. Increment the pose frame!
+      robot->IncrementPoseFrameID();
+      
+      // Add the new vision-based pose to the robot's history.
+      RobotPoseStamp p(robot->GetPoseFrameID(), robotPoseWrtMat, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
+      if(robot->AddVisionOnlyPoseToHistory(existingMatPiece->GetLastObservedTime(), p) != RESULT_OK) {
+        PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.FailedAddingVisionOnlyPoseToHistory", "\n");
+        return false;
+      }
+      
+      // Mark the robot as now being localized to this mat
+      // NOTE: this should be _after_ calling AddVisionOnlyPoseToHistory, since
+      //    that function checks whether the robot is already localized
+      robot->SetLocalizedTo(existingMatPiece->GetID());
+      
+      // Update the computed pose as well so that subsequent block pose updates
+      // use obsMarkers whose camera's parent pose is correct
+      posePtr->SetPose(robot->GetPoseFrameID(), robotPoseWrtMat, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
+      
+      // Compute the new "current" pose from history which uses the
+      // past vision-based "ground truth" pose we just computed.
+      if(!robot->UpdateCurrPoseFromHistory()) {
+        PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.FailedUpdateCurrPoseFromHistory", "\n");
+        return false;
+      }
+      
+      PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
+                 existingMatPiece->GetID().GetValue(), robot->GetID(),
+                 robot->GetPose().GetTranslation().x(),
+                 robot->GetPose().GetTranslation().y(),
+                 robot->GetPose().GetTranslation().z(),
+                 robot->GetPose().GetRotationAngle<'Z'>().getDegrees(),
+                 robot->GetPose().GetRotationAxis().x(),
+                 robot->GetPose().GetRotationAxis().y(),
+                 robot->GetPose().GetRotationAxis().z());
+      
+      // Send the ground truth pose that was computed instead of the new current
+      // pose and let the robot deal with updating its current pose based on the
+      // history that it keeps.
+      robot->SendAbsLocalizationUpdate();
+      
+      return true;
+    } // LocalizeRobotToMat()
+    
+    
     bool BlockWorld::UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp, const TimeStamp_t atTimestamp)
     {
       bool wasPoseUpdated = false;
@@ -410,16 +549,281 @@ namespace Anki
       // Get all mat objects *seen by this robot's camera*
       std::vector<Vision::ObservableObject*> matsSeen;
       _objectLibrary[ObjectFamily::MATS].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
-                                                          (robot->GetCamera().GetID()));
+                                                                  (robot->GetCamera().GetID()));
 
-      // Remove used markers from map
+      // Remove used markers from map container
       RemoveUsedMarkers(obsMarkersAtTimestamp);
       
-      // TODO: what to do when a robot sees multiple mat pieces at the same time
       if(not matsSeen.empty()) {
         
         const bool wasLocalized = robot->IsLocalized();
         
+        // Is the robot "on" any of the mats it sees?
+        // TODO: What to do if robot is "on" more than one mat simultaneously?
+        //ObjectID onObjectID; // initializes to unset
+        MatPiece* onMat = nullptr;
+        for(auto object : matsSeen) {
+          MatPiece* mat = dynamic_cast<MatPiece*>(object);
+          CORETECH_ASSERT(mat != nullptr);
+          
+          if(mat->IsPoseOn(robot->GetPose(), 15.f)) { // TODO: get heightTol from robot
+            if(onMat != nullptr) {
+              PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.OnMultiplMats",
+                                  "Robot is 'on' multiple mats at the same time. Will just use the first for now.\n");
+            } else {
+              onMat = mat;
+            }
+          }
+        }
+        
+        // This will point to the mat we decide to localize to below (or will
+        // remain null if we choose not to localize to any mat we see)
+        MatPiece* matToLocalizeTo = nullptr;
+        
+        if(onMat != nullptr)
+        {
+          PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.OnMatLocalization",
+                           "Robot %d is on a mat and will localize to it.\n",
+                           robot->GetID());
+          
+          // If robot is "on" one of the mats it is currently seeing, localize
+          // the robot to that mat
+          matToLocalizeTo = onMat;
+        }
+        else {
+          // If the robot is NOT "on" any of the mats it is seeing...
+          
+          if(robot->IsLocalized()) {
+            // ... and the robot is already localized, then see if it is
+            // localized to one of the mats it is seeing (but not "on")
+            MatPiece* alreadyLocalizedToMat = nullptr;
+            for(auto mat : matsSeen) {
+              if(mat->GetID() == robot->GetLocalizedTo()) {
+                alreadyLocalizedToMat = dynamic_cast<MatPiece*>(mat);
+                CORETECH_ASSERT(alreadyLocalizedToMat != nullptr);
+                break;
+              }
+            }
+            
+            if(alreadyLocalizedToMat != nullptr) {
+              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
+                               "Robot %d will re-localize to a mat it is not on, but already localized to.\n",
+                               robot->GetID());
+              
+              // The robot is localized to one of the mats it is seeing, even
+              // though it is not _on_ that mat.  Remain localized to that mat
+              // and update any others it is also seeing
+              matToLocalizeTo = alreadyLocalizedToMat;
+            }
+            else {
+              // The robot is localized to a mat it is not seeing (and is not "on"
+              // any of the mats it _is_ seeing.  Just update the poses of the
+              // mats it is seeing, but don't localize to any of them.
+              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.NotOnMatNoLocalize",
+                               "Robot %d is localized to a mat it doesn't see, and will not localize to any of the %lu mats it sees but is not on.\n",
+                               robot->GetID(), matsSeen.size());
+            }
+            
+          } else {
+            // ... and the robot is _not_ localized, choose the observed mat
+            // with the closest observed marker (since that is likely to be the
+            // most accurate) and localize to that one.  Update any others.
+            f32 minDistSq = -1.f;
+            MatPiece* closestMat = nullptr;
+            for(auto mat : matsSeen) {
+              std::vector<const Vision::KnownMarker*> observedMarkers;
+              mat->GetObservedMarkers(observedMarkers, atTimestamp);
+              if(observedMarkers.empty()) {
+                PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObservedMatWithNoObservedMarkers",
+                                  "We saw a mat piece but it is returning no observed markers for "
+                                  "the current timestamp.\n");
+                CORETECH_ASSERT(false); // TODO: handle this situation
+              }
+              
+              Pose3d markerWrtRobot;
+              for(auto obsMarker : observedMarkers) {
+                if(obsMarker->GetPose().GetWithRespectTo(robot->GetPose(), markerWrtRobot) == false) {
+                  PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMisMatch",
+                                    "Could not get the pose of an observed marker w.r.t. the robot that "
+                                    "supposedly observed it.\n");
+                  CORETECH_ASSERT(false); // TODO: handle this situation
+                }
+                
+                const f32 markerDistSq = markerWrtRobot.GetTranslation().LengthSq();
+                if(closestMat == nullptr || markerDistSq < minDistSq) {
+                  closestMat = dynamic_cast<MatPiece*>(mat);
+                  CORETECH_ASSERT(closestMat != nullptr);
+                  minDistSq = markerDistSq;
+                }
+              } // for each observed marker
+            } // for each mat seen
+            
+            PRINT_NAMED_INFO("BLockWorld.UpdateRobotPose.NotOnMatLocalizationToClosest",
+                             "Robot %d is not on a mat but will localize to mat ID=%d, which is the closest.\n",
+                             robot->GetID(), closestMat->GetID().GetValue());
+            
+            matToLocalizeTo = closestMat;
+            
+          } // if/else robot is localized
+        }
+        
+        ObjectsMapByType_t& existingMatPieces = _existingObjects[ObjectFamily::MATS];
+        
+        // Keep track of markers we saw on existing/instantiated mats, to use
+        // for occlusion checking
+        std::vector<const Vision::KnownMarker *> observedMarkers;
+
+        if(matToLocalizeTo != nullptr) {
+          
+          MatPiece* existingMatPiece = nullptr;
+          
+          if(existingMatPieces.empty()) {
+            // If this is the first mat piece, add it to the world using the world
+            // origin as its pose
+            PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
+                             "Instantiating first mat piece in the world.\n");
+            
+            existingMatPiece = new MatPiece(matToLocalizeTo->GetType());
+            existingMatPiece->SetOrigin(Pose3d::GetWorldOrigin());
+            existingMatPiece->SetID();
+            
+            existingMatPieces[matToLocalizeTo->GetType()][matToLocalizeTo->GetID()] = existingMatPiece;
+
+          }
+          else {
+            Vision::ObservableObject* existingObject = GetObjectByID(matToLocalizeTo->GetID());
+          
+            if(existingObject == nullptr)
+            {
+              // If the mat we are about to localize to does not exist yet,
+              // but it's not the first mat piece in the world, add it to the
+              // world, and give it a new origin, relative to the current
+              // world origin.
+              Pose3d poseWrtWorldOrigin;
+              if(matToLocalizeTo->GetPose().GetWithRespectTo(Pose3d::GetWorldOrigin(), poseWrtWorldOrigin) == false) {
+                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotGetPoseWrtWorldOrigin",
+                                    "Could not get the pose of a newly-created (but not initial) mat "
+                                    "w.r.t. the world origin.\n");
+                // TODO: I probably need to handle this situation differently
+                return false;
+              }
+              
+              existingMatPiece = new MatPiece(matToLocalizeTo->GetType());
+              existingMatPiece->SetOrigin(&Pose3d::AddOrigin(poseWrtWorldOrigin));
+              existingMatPiece->SetID();
+              
+              existingMatPieces[existingMatPiece->GetType()][existingMatPiece->GetID()] = existingMatPiece;
+              
+              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
+                               "Robot %d localizing to new mat with ID=%d.\n",
+                               robot->GetID(), existingMatPiece->GetID().GetValue());
+              
+            } else {
+              // We are localizing to an existing mat piece: do not attempt to
+              // update its pose (we can't both update the mat's pose and use it
+              // to update the robot's pose at the same time!)
+              existingMatPiece = dynamic_cast<MatPiece*>(existingObject);
+              CORETECH_ASSERT(existingMatPiece != nullptr);
+              
+              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingToExistingMat",
+                               "Robot %d localizing to existing mat with ID=%d.\n",
+                               robot->GetID(), existingMatPiece->GetID().GetValue());
+            }
+          }
+          
+          existingMatPiece->SetLastObservedTime(matToLocalizeTo->GetLastObservedTime());
+          existingMatPiece->UpdateMarkerObservationTimes(*matToLocalizeTo);
+          
+          existingMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
+          
+          // Now localize to that mat
+          wasPoseUpdated = LocalizeRobotToMat(robot, matToLocalizeTo, existingMatPiece);
+          
+        }
+        
+        // Update poses of any other mats we saw (but did not localize to),
+        // just like they are any "regular" object,
+        std::vector<Vision::ObservableObject*> otherMatsSeen;
+        for(auto matSeen : matsSeen) {
+          if(matSeen != matToLocalizeTo) {
+            
+            // TODO: need to probably pick the origin based on type (fixed: use world, movable: use fixed mat its on?)
+            Pose3d poseWrtOrigin;
+            
+            // Store pointers to any existing objects that overlap with this one
+            std::vector<Vision::ObservableObject*> overlappingObjects;
+            FindOverlappingObjects(matSeen, existingMatPieces, overlappingObjects);
+            
+            if(overlappingObjects.empty()) {
+              // no existing mats overlapped with the mat we saw, so add it
+              // as a new mat piece, relative to the world origin
+              
+              if(matSeen->GetPose().GetWithRespectTo(Pose3d::GetWorldOrigin(), poseWrtOrigin) == false) {
+                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotGetPoseWrtWorldOrigin",
+                                    "Could not get the pose of a newly-created (but non-localizing) mat "
+                                    "w.r.t. the world origin.\n");
+                // TODO: I probably need to handle this situation differently
+                return false;
+              }
+              
+              MatPiece* newMatPiece = new MatPiece(matSeen->GetType());
+              newMatPiece->SetOrigin(&Pose3d::AddOrigin(poseWrtOrigin));
+              newMatPiece->SetID();
+              newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
+              newMatPiece->UpdateMarkerObservationTimes(*matSeen);
+              
+              existingMatPieces[matSeen->GetType()][matSeen->GetID()] = newMatPiece;
+              
+              fprintf(stdout, "Adding new mat with type=%d and ID=%d at (%.1f, %.1f, %.1f)\n",
+                      matSeen->GetType().GetValue(), matSeen->GetID().GetValue(),
+                      matSeen->GetPose().GetTranslation().x(),
+                      matSeen->GetPose().GetTranslation().y(),
+                      matSeen->GetPose().GetTranslation().z());
+              
+              // Add observed mat markers to the occlusion map of the camera that saw
+              // them, so we can use them to delete objects that should have been
+              // seen between that marker and the robot
+              newMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
+            }
+            else {
+              if(overlappingObjects.size() > 1) {
+                fprintf(stdout, "More than one overlapping mat found -- will use first.\n");
+                // TODO: do something smarter here?
+              }
+              
+              if(matSeen->GetPose().GetWithRespectTo(Pose3d::GetWorldOrigin(), poseWrtOrigin) == false) {
+                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotGetPoseWrtWorldOrigin",
+                                    "Could not get the pose of an existing mat "
+                                    "w.r.t. the world origin.\n");
+                // TODO: I probably need to handle this situation differently
+                return false;
+              }
+              
+              // TODO: better way of merging existing/observed object pose
+              overlappingObjects[0]->SetPose( poseWrtOrigin );
+              overlappingObjects[0]->SetLastObservedTime(matSeen->GetLastObservedTime());
+              overlappingObjects[0]->UpdateMarkerObservationTimes(*matSeen);
+              
+              overlappingObjects[0]->GetObservedMarkers(observedMarkers, atTimestamp);
+              
+            } // if/else overlapping existing mats found
+          } // if matSeen != matToLocalizeTo
+          
+          delete matSeen;
+        }
+        
+        // Add observed mat markers to the occlusion map of the camera that saw
+        // them, so we can use them to delete objects that should have been
+        // seen between that marker and the robot
+        for(auto obsMarker : observedMarkers) {
+          PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.AddingMatMarkerOccluder",
+                           "Adding mat marker '%s' as an occluder for robot %d.\n",
+                           Vision::MarkerTypeStrings[obsMarker->GetCode()],
+                           robot->GetID());
+          robot->GetCamera().AddOccluder(*obsMarker);
+        }
+        
+        /*
         if(matsSeen.size() > 1) {
           PRINT_NAMED_WARNING("MultipleMatPiecesObserved",
                               "Robot %d observed more than one mat pieces at "
@@ -461,7 +865,7 @@ namespace Anki
         ObjectsMapByType_t& existingMatPieces = _existingObjects[ObjectFamily::MATS];
         
         if(_existingObjects[ObjectFamily::MATS].empty()) {
-          // We haven't seen the mat yet.  Create the first mat piece in the world.
+          // We haven't seen a mat yet.  Create the first mat piece in the world.
           // Not supporting multiple mat pieces, just use the already-seen one from here on.
           // TODO: Deal with multiple mat pieces and updating their poses w.r.t. one another.
           PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.CreatingMatPiece",
@@ -482,7 +886,7 @@ namespace Anki
         }
         else if(matPiecesByType->second.size() > 1) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleMatPiecesWithType",
-                              "There are more than one mat pieces in existance with type %d.\n",
+                              "There is more than one mat piece in existance with type %d.\n",
                               firstSeenMatPiece->GetType().GetValue());
         }
         
@@ -497,11 +901,15 @@ namespace Anki
         robotPoseWrtMat.SetParent(&existingMatPiece->GetPose());
         
         // Snap to horizontal
-        Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
-        robotPoseWrtMat_trans.z() = 0; // TODO: can't do this if we are on top of something!
-        robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
+        if(existingMatPiece->IsPoseOn(robotPoseWrtMat, ROBOT_BOUNDING_Z)) { // TODO: get height tol from robot
+          Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
+          robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
+          robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
+        }
         robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
         
+        // Draw the mat piece
+        existingMatPiece->Visualize();
         
         // We have a new ("ground truth") key frame. Increment the pose frame!
         robot->IncrementPoseFrameID();
@@ -538,7 +946,10 @@ namespace Anki
         // pose and let the robot deal with updating its current pose based on the
         // history that it keeps.
         robot->SendAbsLocalizationUpdate();
+        */
         
+        /* Now done by AddAndUpdateObjects()
+         
         // Add observed mat markers to the occlusion map of the camera that saw
         // them, so we can use them to delete objects that should have been
         // seen between that marker and the robot
@@ -547,14 +958,17 @@ namespace Anki
         for(auto obsMarker : observedMarkers) {
           robot->GetCamera().AddOccluder(*obsMarker);
         }
-        
+         */
+
+        /* Now done by AddAndUpdateObjects()
         // Done using mat pieces to localize, which were cloned from library
         // mat objects.  Delete them now so we don't leak.
         for(auto matSeen : matsSeen) {
           delete matSeen;
         }
+         */
         
-        // If the robot just re-localized, trigger a draw of all blocks, since
+        // If the robot just re-localized, trigger a draw of all objects, since
         // we may have seen things while de-localized whose locations can now be
         // snapped into place.
         if(!wasLocalized && robot->IsLocalized()) {
@@ -599,7 +1013,7 @@ namespace Anki
       // we want to possibly delete any _unobserved_ objects (e.g. ones behind
       // whom we saw mat markers)
       AddAndUpdateObjects(objectsSeen, existingObjects, atTimestamp);
-      
+    
       return objectsSeen.size();
       
     } // UpdateObjectPoses()
@@ -680,6 +1094,10 @@ namespace Anki
         // pose updating processes above
         numUnusedMarkers += currentObsMarkers.size();
         
+        // Delete any objects that should have been observed but weren't,
+        // visualize objects that were observed:
+        CheckForUnobservedObjects(atTimestamp);
+        
       } // for element in obsMarkers_
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks\n", numBlocksObserved);
@@ -690,6 +1108,7 @@ namespace Anki
       {
         // For now, look for collision with anything other than Mat objects
         // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
+        // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
         if(objectsByFamily.first != ObjectFamily::MATS)
         {
           for(auto & objectsByType : objectsByFamily.second)
@@ -753,7 +1172,7 @@ namespace Anki
                       if( inSamePlane && bboxIntersects )
                       {
                         CoreTechPrint("Removing object %d, which intersects robot %d's bounding quad.\n",
-                                      object->GetID(), robot->GetID());
+                                      object->GetID().GetValue(), robot->GetID());
                         
                          // Erase the vizualized block and its projected quad
                          //VizManager::getInstance()->EraseCuboid(object->GetID());
