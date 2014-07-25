@@ -35,6 +35,11 @@ int getTimeInMilliSeconds();
 // Returns current time in seconds (used for debug when BaseStation is not running)
 float getTimeInSeconds();
   
+  
+// Get current date/time, format is YYYY-MM-DD_HH-mm-ss
+const std::string GetCurrentDateTime();
+  
+  
 /*
  * Keep track of system time. Provides easy way to get time since the start of program.
  */
