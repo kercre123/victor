@@ -138,12 +138,6 @@ namespace Anki {
     
   }
   
-  Pose3d::Pose3d(const Pose3d *otherPose)
-  : Pose3d(*otherPose)
-  {
-    
-  }
-  
   Pose3d::Pose3d(const Pose2d &pose2d)
   : Pose3d(pose2d.GetAngle(), {{0.f, 0.f, 0.f}},
            {{pose2d.GetX(), pose2d.GetY(), 0.f}})

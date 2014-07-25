@@ -176,7 +176,6 @@ namespace Anki {
     
     // TODO: Copy constructor?
     Pose3d(const Pose3d &otherPose);
-    Pose3d(const Pose3d *otherPose);
     
     //bool IsOrigin() const { return parent == nullptr; }
 
@@ -430,7 +429,7 @@ namespace Anki {
   }
   
   inline bool Pose3d::GetWithRespectTo(const Pose3d& otherPose,
-                                Pose3d& newPoseWrtOtherPose) const {
+                                       Pose3d& newPoseWrtOtherPose) const {
     return PoseBase<Pose3d>::GetWithRespectTo(*this, otherPose, newPoseWrtOtherPose);
   }
   
