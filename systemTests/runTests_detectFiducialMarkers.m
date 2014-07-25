@@ -29,7 +29,9 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     thisFilename = [mfilename('fullpath'), '.m'];
     thisFileChangeTime = dir(thisFilename);
     
+    fprintf('Loading json test data...');
     allTestData = getTestData(testJsonPattern);
+    fprintf('Loaded\n');
     
     % Compute the accuracy for each test type (matlab-with-refinement, c-with-matlab-quads, etc.), and each set of parameters
     imageSize = [240,320];
@@ -152,7 +154,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', .9148);
     resultsData_overall_small2_best = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     
-    allResultsFilename = [strrep(resultsDirectory_curTime, 'results/dateTime', 'resultsAt'), '.mat'];    
+    allResultsFilename = strrep(resultsDirectory_curTime, 'results/dateTime', 'resultsAt');
+    allResultsFilename = [allResultsFilename(1:(end-1)), '.mat'];
     save(allResultsFilename, '*');
     
     keyboard
@@ -208,6 +211,8 @@ function allTestData = getTestData(testJsonPattern)
 end % getTestFilenames()
 
 function [resultsData_overall, resultsDirectory_curTime] = compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, showPlots)
+    compileAllTic = tic();
+    
     markerDirectoryList = {
         [boxSyncDirectory, '/Cozmo SE/VisionMarkers/symbols/withFiducials/'],...
         [boxSyncDirectory, '/Cozmo SE/VisionMarkers/letters/withFiducials'],...
@@ -228,6 +233,8 @@ function [resultsData_overall, resultsDirectory_curTime] = compileAll(algorithmP
     resultsData_perPose = run_recompilePerPoseStats(numComputeThreads.perPose, workQueue_perPoseStats, workQueue_all, temporaryDirectory, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, algorithmParameters.showImageDetections, algorithmParameters.showImageDetectionWidth);
     
     resultsData_overall = run_compileOverallStats(resultsData_perPose, showPlots);
+    
+    disp(sprintf('Compile all took %f seconds', toc(compileAllTic)));
 end % compileAll()
 
 function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDirectory_curTime] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime)
@@ -394,21 +401,23 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
     numResultsData = 0;
     
     if exist('resultsData_basics', 'var')
-        for curResultsData_basics = resultsData_basics %#ok<NODEF>
-            numResultsData = numResultsData + length(curResultsData_basics);
+        for i = 1:length(resultsData_basics) %#ok<NODEF>
+            numResultsData = numResultsData + length(resultsData_basics{i});
         end
     end
     
     if numResultsData ~= length(workQueue_all)
-        allInputFilename = [temporaryDirectory, '/recompileBasicsAllInput.mat'];
-        
-        save(allInputFilename, 'allTestData', 'rotationList', 'algorithmParameters');
-        
-        matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_basicStats(localWorkQueue, allTestData, rotationList, algorithmParameters);'];
-        
-        runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
-        
-        delete(allInputFilename);
+        if ~isempty(workQueue_todo)
+            allInputFilename = [temporaryDirectory, '/recompileBasicsAllInput.mat'];
+
+            save(allInputFilename, 'allTestData', 'rotationList', 'algorithmParameters');
+
+            matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_basicStats(localWorkQueue, allTestData, rotationList, algorithmParameters);'];
+
+            runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
+
+            delete(allInputFilename);
+        end
         
         resultsData_basics = cell(length(allTestData), 1);
         for iTest = 1:length(allTestData)
@@ -438,25 +447,27 @@ function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, work
     numResultsData = 0;
     
     if exist('resultsData_perPose', 'var')
-        for curResultsData_perPose = resultsData_perPose %#ok<NODEF>
-            numResultsData = numResultsData + length(curResultsData_perPose);
+        for i = 1:length(resultsData_perPose) %#ok<NODEF>
+            numResultsData = numResultsData + length(resultsData_perPose{i});
         end
     end
     
     if numResultsData ~= length(workQueue_all)
-        if numComputeThreads ~= 1
-            showImageDetections = false; %#ok<NASGU>
-        end
-        
-        allInputFilename = [temporaryDirectory, '/perPoseAllInput.mat'];
-        
-        save(allInputFilename, 'allTestData', 'resultsData_basics', 'maxMatchDistance_pixels', 'maxMatchDistance_percent', 'showImageDetections', 'showImageDetectionWidth');
-        
-        matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
-        
-        runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
-        
-        delete(allInputFilename);
+        if ~isempty(workQueue_todo)
+            if numComputeThreads ~= 1
+                showImageDetections = false; %#ok<NASGU>
+            end
+
+            allInputFilename = [temporaryDirectory, '/perPoseAllInput.mat'];
+
+            save(allInputFilename, 'allTestData', 'resultsData_basics', 'maxMatchDistance_pixels', 'maxMatchDistance_percent', 'showImageDetections', 'showImageDetectionWidth');
+
+            matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
+
+            runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
+
+            delete(allInputFilename);
+        end % if ~isempty(workQueue_todo)
         
         resultsData_perPose = cell(length(allTestData), 1);
         for iTest = 1:length(allTestData)
