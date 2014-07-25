@@ -12,8 +12,13 @@
  **/
 
 #include "anki/cozmo/basestation/tcpComms.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+
+#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/common/basestation/utils/timer.h"
+
+#include "anki/cozmo/robot/cozmoConfig.h"
+
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>

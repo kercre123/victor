@@ -14,7 +14,7 @@
 #define BASESTATION_H_
 
 
-#include <anki/cozmo/basestation/utils/timeType.h>
+#include "anki/common/types.h"
 #include "json/json.h"
 
 namespace Anki {

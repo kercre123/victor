@@ -14,6 +14,7 @@
 
 #include <assert.h>
 
+#include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/cozmo/basestation/messages.h"
 #include "messageHandler.h"
 #include "pathDolerOuter.h"

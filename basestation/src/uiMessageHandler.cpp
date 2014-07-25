@@ -16,7 +16,7 @@
 #include "uiMessageHandler.h"
 #include "vizManager.h"
 #include "soundManager.h"
-#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/utils/logging/logging.h"
 
 
 #if(RUN_UI_MESSAGE_TCP_SERVER)

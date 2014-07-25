@@ -13,7 +13,7 @@
 #include "anki/common/basestation/math/rotatedRect_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/utils/fileManagement.h"
-#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/jsonTools.h"

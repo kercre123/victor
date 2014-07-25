@@ -10,8 +10,11 @@
  * Copyright: Anki, Inc. 2014
  *
  **/
-
 #include "anki/cozmo/basestation/uiTcpComms.h"
+
+#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/common/basestation/utils/helpers/printByteArray.h"
+
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include <unistd.h>
 #include <stdio.h>

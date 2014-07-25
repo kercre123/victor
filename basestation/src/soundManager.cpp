@@ -10,7 +10,7 @@
  **/
 
 #include "soundManager.h"
-#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/exceptions.h"
 
 #include <thread>
