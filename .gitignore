@@ -103,9 +103,7 @@ matlab/basicsResults.mat
 matlab/basicsResults_input.mat
 matlab/perTestStatsResults.mat
 systemTests/tests/intermediate/
-matlab/basicsResults_input0.mat
-matlab/basicsResults_input1.mat
-matlab/basicsResults_input2.mat
+matlab/basicsResults_input*.mat
 webots_keyboard_controller
 systemTests/tests/*.mat
 matlab/recompileBasicsAllInput.mat
@@ -113,9 +111,8 @@ matlab/runParallelProcesses_input*.mat
 matlab/nohup.out
 systemTests/nohup.out
 systemTests/recompileBasicsAllInput.mat
-systemTests/runParallelProcesses_input0.mat
-systemTests/runParallelProcesses_input1.mat
-systemTests/runParallelProcesses_input2.mat
+systemTests/runParallelProcesses_input*.mat
 matlab/runParallelProcesses_mutex*.mat
 matlab/perPoseAllInput.mat
 out.txt
+trainingState.mat

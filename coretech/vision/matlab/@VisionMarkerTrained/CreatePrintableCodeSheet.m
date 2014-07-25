@@ -42,6 +42,10 @@ function CreatePrintableCodeSheet(varargin)
 %    Add a light gray, dotted border of this size around each code. If
 %    empty, the border will not be printed.
 %
+% Example Usage:
+%
+% Windows: VisionMarkerTrained.CreatePrintableCodeSheet('markerImageDir', {'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/', 'Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials', 'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials', }, 'outsideBorderWidth', [], 'codeSpacing', 5, 'numPerCode', 2);
+%
 % ------------
 % Andrew Stein
 %

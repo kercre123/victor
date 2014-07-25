@@ -50,7 +50,7 @@ function editGroundTruth_OpeningFcn(hObject, ~, handles, varargin)
     markerClipboard = [];
     
     setFromSavedDisplayParameters();
-        
+    
     imageFigureHandle = figure(100);
     set(imageFigureHandle, 'OuterPosition', [455, 1, 1366, 1080]);
     
@@ -172,14 +172,14 @@ function testJsonFilename1_Callback(~, ~, ~)
     
 function testJsonFilename2_Callback(~, ~, ~)
     loadTestFile()
-
+    
 function test_numMarkersWithContext_Callback(hObject, ~, ~)
-    global jsonTestData;    
+    global jsonTestData;
     jsonTestData.NumMarkersWithContext = str2double(get(hObject,'String'));
     Save();
     
 function test_numPartialMarkersWithContext_Callback(hObject, ~, ~)
-    global jsonTestData;    
+    global jsonTestData;
     jsonTestData.NumPartialMarkersWithContext = str2double(get(hObject,'String'));
     Save();
     
@@ -188,6 +188,10 @@ function test_previous1_Callback(~, ~, ~)
     
     testDirectory = strrep(get(allHandles.testJsonFilename1, 'String'), '\', '/');
     testFilename = strrep(get(allHandles.testJsonFilename2, 'String'), '\', '/');
+    
+    if ~strcmp(testFilename((end-4):end), '.json')
+        testFilename = [testFilename, '.json'];
+    end
     
     files = dir([testDirectory,'/*.json']);
     
@@ -209,6 +213,10 @@ function test_next1_Callback(~, ~, ~)
     
     testDirectory = strrep(get(allHandles.testJsonFilename1, 'String'), '\', '/');
     testFilename = strrep(get(allHandles.testJsonFilename2, 'String'), '\', '/');
+    
+    if ~strcmp(testFilename((end-4):end), '.json')
+        testFilename = [testFilename, '.json'];
+    end
     
     files = dir([testDirectory,'/*.json']);
     
@@ -330,7 +338,7 @@ function marker_copy_Callback(~, ~, ~)
     
     markerClipboard.NumMarkers = jsonTestData.Poses{curPoseIndex}.NumMarkers;
     markerClipboard.VisionMarkers = jsonTestData.Poses{curPoseIndex}.VisionMarkers;
-
+    
 function marker_paste_Callback(~, ~, ~)
     global jsonTestData;
     global curPoseIndex;
@@ -341,9 +349,9 @@ function marker_paste_Callback(~, ~, ~)
     if ~isempty(markerClipboard)
         jsonTestData.Poses{curPoseIndex}.NumMarkers = markerClipboard.NumMarkers;
         jsonTestData.Poses{curPoseIndex}.VisionMarkers = markerClipboard.VisionMarkers;
-
+        
         Save();
-
+        
         poseChanged(true);
     end
     
@@ -417,9 +425,17 @@ function markerType_Callback(hObject, ~, ~)
     global curPoseIndex;
     global curMarkerIndex;
     
-    jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType = get(hObject,'String');
+    curName = get(hObject,'String');
     
-    Save()
+    if length(curName) < 8 ||...
+            ~strcmp(curName(1:8), 'MARKER_')
+        
+        curName = ['MARKER_', curName];
+    end
+    
+    jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType = curName;
+    
+    Save();
     
     poseChanged(false);
     
@@ -554,31 +570,70 @@ function [cornersX, cornersY, whichCorners] = getFiducialCorners(poseIndex, mark
         return;
     end
     
-    curMarkerData = jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex};
-    
-    if isfield(curMarkerData, 'x_imgUpperLeft') && isfield(curMarkerData, 'y_imgUpperLeft')
-        cornersX(end+1) = curMarkerData.x_imgUpperLeft;
-        cornersY(end+1) = curMarkerData.y_imgUpperLeft;
-        whichCorners(1) = 1;
-    end
-    
-    if isfield(curMarkerData, 'x_imgUpperRight') && isfield(curMarkerData, 'y_imgUpperRight')
-        cornersX(end+1) = curMarkerData.x_imgUpperRight;
-        cornersY(end+1) = curMarkerData.y_imgUpperRight;
-        whichCorners(2) = 1;
-    end
-    
-    if isfield(curMarkerData, 'x_imgLowerRight') && isfield(curMarkerData, 'y_imgLowerRight')
-        cornersX(end+1) = curMarkerData.x_imgLowerRight;
-        cornersY(end+1) = curMarkerData.y_imgLowerRight;
-        whichCorners(3) = 1;
-    end
-    
-    if isfield(curMarkerData, 'x_imgLowerLeft') && isfield(curMarkerData, 'y_imgLowerLeft')
-        cornersX(end+1) = curMarkerData.x_imgLowerLeft;
-        cornersY(end+1) = curMarkerData.y_imgLowerLeft;
-        whichCorners(4) = 1;
-    end
+    % If markerIndex is empty, return all corners for all complete quads
+        
+    if isempty(markerIndex)
+        cornersX = zeros(4,0);
+        cornersY = zeros(4,0);
+        whichCorners = zeros(4,0);
+        
+        for iMarker = 1:length(jsonTestData.Poses{poseIndex}.VisionMarkers)
+            curMarkerData = jsonTestData.Poses{poseIndex}.VisionMarkers{iMarker};
+            
+            if isfield(curMarkerData, 'x_imgUpperLeft') && isfield(curMarkerData, 'y_imgUpperLeft') &&...
+                    isfield(curMarkerData, 'x_imgUpperRight') && isfield(curMarkerData, 'y_imgUpperRight') && ...
+                    isfield(curMarkerData, 'x_imgLowerRight') && isfield(curMarkerData, 'y_imgLowerRight') && ...
+                    isfield(curMarkerData, 'x_imgLowerLeft') && isfield(curMarkerData, 'y_imgLowerLeft')
+                
+                newCornersX = zeros(4,1);
+                newCornersY = zeros(4,1);
+                newWhichCorners = ones(4,1);
+                
+                newCornersX(1) = curMarkerData.x_imgUpperLeft;
+                newCornersY(1) = curMarkerData.y_imgUpperLeft;
+                newCornersX(2) = curMarkerData.x_imgUpperRight;
+                newCornersY(2) = curMarkerData.y_imgUpperRight;
+                newCornersX(3) = curMarkerData.x_imgLowerRight;
+                newCornersY(3) = curMarkerData.y_imgLowerRight;
+                newCornersX(4) = curMarkerData.x_imgLowerLeft;
+                newCornersY(4) = curMarkerData.y_imgLowerLeft;
+                
+                cornersX(:, end+1) = newCornersX; %#ok<AGROW>
+                cornersY(:, end+1) = newCornersY; %#ok<AGROW>
+                whichCorners(:, end+1) = newWhichCorners; %#ok<AGROW>                
+            end            
+        end % for iMarker = 1:length(jsonTestData.Poses{poseIndex}.VisionMarkers)        
+    else % if isempty(poseIndex)
+        cornersX = [];
+        cornersY = [];
+        whichCorners = zeros(4,1);
+        
+        curMarkerData = jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex};
+        
+        if isfield(curMarkerData, 'x_imgUpperLeft') && isfield(curMarkerData, 'y_imgUpperLeft')
+            cornersX(end+1) = curMarkerData.x_imgUpperLeft;
+            cornersY(end+1) = curMarkerData.y_imgUpperLeft;
+            whichCorners(1) = 1;
+        end
+        
+        if isfield(curMarkerData, 'x_imgUpperRight') && isfield(curMarkerData, 'y_imgUpperRight')
+            cornersX(end+1) = curMarkerData.x_imgUpperRight;
+            cornersY(end+1) = curMarkerData.y_imgUpperRight;
+            whichCorners(2) = 1;
+        end
+        
+        if isfield(curMarkerData, 'x_imgLowerRight') && isfield(curMarkerData, 'y_imgLowerRight')
+            cornersX(end+1) = curMarkerData.x_imgLowerRight;
+            cornersY(end+1) = curMarkerData.y_imgLowerRight;
+            whichCorners(3) = 1;
+        end
+        
+        if isfield(curMarkerData, 'x_imgLowerLeft') && isfield(curMarkerData, 'y_imgLowerLeft')
+            cornersX(end+1) = curMarkerData.x_imgLowerLeft;
+            cornersY(end+1) = curMarkerData.y_imgLowerLeft;
+            whichCorners(4) = 1;
+        end
+    end % if isempty(poseIndex) ... else
     
 function rotateMarker(poseIndex, markerIndex)
     global jsonTestData;
@@ -697,7 +752,7 @@ function loadTestFile()
     image = rand([240,320]);
     
     imageFigureHandle = figure(100);
-        
+    
     pointsType = 'fiducialMarker';
     
     N = nan;
@@ -728,6 +783,8 @@ function loadTestFile()
     
     poseChanged(true)
     
+    Save();
+    
     return;
     
 function sanitizeJson()
@@ -746,11 +803,11 @@ function sanitizeJson()
     if ~isfield(jsonTestData, 'NumMarkersWithContext')
         jsonTestData.NumMarkersWithContext = 0;
     end
-
+    
     if ~isfield(jsonTestData, 'NumPartialMarkersWithContext')
         jsonTestData.NumPartialMarkersWithContext = 0;
     end
-
+    
     for iPose = 1:length(jsonTestData.Poses)
         if ~isfield(jsonTestData.Poses{iPose}, 'VisionMarkers')
             jsonTestData.Poses{iPose}.VisionMarkers = [];
@@ -767,7 +824,7 @@ function sanitizeJson()
         if isfield(jsonTestData.Poses{iPose}, 'NumMarkersWithContext')
             jsonTestData.Poses{iPose} = rmfield(jsonTestData.Poses{iPose}, 'NumMarkersWithContext');
         end
-
+        
         if isfield(jsonTestData.Poses{iPose}, 'NumPartialMarkersWithContext')
             jsonTestData.Poses{iPose} = rmfield(jsonTestData.Poses{iPose}, 'NumPartialMarkersWithContext');
         end
@@ -855,8 +912,8 @@ function poseChanged(resetZoom)
         return;
     end
     
-%     slashIndexes = strfind(curImageFilename, '/');
-%     curImageFilenameWithoutPath = curImageFilename((slashIndexes(end)+1):end);
+    %     slashIndexes = strfind(curImageFilename, '/');
+    %     curImageFilenameWithoutPath = curImageFilename((slashIndexes(end)+1):end);
     set(allHandles.pose_current, 'String', num2str(curPoseIndex));
     set(allHandles.pose_max, 'String', num2str(length(jsonTestData.Poses)));
     set(allHandles.test_numMarkersWithContext, 'String', num2str(jsonTestData.NumMarkersWithContext));
@@ -873,7 +930,7 @@ function poseChanged(resetZoom)
     set(allHandles.marker_max, 'String', num2str(length(jsonTestData.Poses{curPoseIndex}.VisionMarkers)));
     
     if isfield(jsonTestData.Poses{curPoseIndex}, 'VisionMarkers') && length(jsonTestData.Poses{curPoseIndex}.VisionMarkers) >= curMarkerIndex
-        set(allHandles.markerType, 'String', jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType);
+        set(allHandles.markerType, 'String', jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType(8:end));
     else
         set(allHandles.markerType, 'String', 'NO MARKER');
     end
@@ -1140,11 +1197,44 @@ function ButtonClicked(~, ~, ~)
                 
                 Save();
             end
-        end
+        end % elseif strcmp(pointsType, 'fiducialMarker')
+    elseif strcmp(buttonType, 'extend') % shift + left click
+        [cornersX, cornersY, ~] = getFiducialCorners(curPoseIndex, []);
+        
+        xScaleInv = resolutionHorizontal / size(image,2);
+        yScaleInv = resolutionVertical / size(image,1);
+        
+        minDist = Inf;
+        minInd = -1;
+        
+        if strcmp(pointsType, 'template')
+            % TODO: implement
+            assert(false);
+        elseif strcmp(pointsType, 'fiducialMarker')
+            ci = 0;
+
+            for iMarker = 1:size(cornersX,2)
+                ci = ci + 1;
+                
+                meanCornersX = mean(cornersX(:,iMarker));
+                meanCornersY = mean(cornersY(:,iMarker));
+                
+                dist = sqrt((meanCornersX*xScaleInv - imPosition(1))^2 + (meanCornersY*yScaleInv - imPosition(2))^2);
+                if dist < minDist
+                    minDist = dist;
+                    minInd = iMarker;
+                end
+            end % for i = 1:size(cornersX,2)
+            
+            if minInd ~= -1
+                curMarkerIndex = minInd;
+                fixBounds();
+            end
+        end % elseif strcmp(pointsType, 'fiducialMarker')
     end
     
     poseChanged(false);
     
     
     
-
+    

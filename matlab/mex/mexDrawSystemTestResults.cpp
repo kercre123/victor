@@ -23,7 +23,7 @@ typedef struct ToShowResults
 {
   s32 iTest;
   s32 iPose;
-  s32 iTestFunction;
+  char * extractionFunctionId;
   f64 scene_Distance;
   f64 scene_angle;
   f64 scene_CameraExposure;
@@ -230,7 +230,7 @@ void DrawTextResults(cv::Mat &drawnImage, const ToShowResults &toShowResults, co
 
   s32 curY = saturate_cast<s32>(250 * showImageDetectionsScale);
 
-  snprintf(resultsText, 1024, "Test %d %d %d %s", toShowResults.iTest, toShowResults.iPose, toShowResults.iTestFunction, toShowResults.testFunctionName);
+  snprintf(resultsText, 1024, "Test %d %d %s %s", toShowResults.iTest, toShowResults.iPose, toShowResults.extractionFunctionId, toShowResults.testFunctionName);
 
   cv::putText(
     drawnImage,
@@ -363,12 +363,12 @@ ToShowResults ParseToShowResults(const mxArray * in)
 
   results.iTest = saturate_cast<s32>( mxGetScalar(GetCell(in, 0)) );
   results.iPose = saturate_cast<s32>( mxGetScalar(GetCell(in, 1)) );
-  results.iTestFunction = saturate_cast<s32>( mxGetScalar(GetCell(in, 2)) );
-  results.scene_Distance = mxGetScalar(GetCell(in, 3) );
-  results.scene_angle = mxGetScalar(GetCell(in, 4) );
-  results.scene_CameraExposure = mxGetScalar(GetCell(in, 5) );
-  results.scene_light = mxGetScalar(GetCell(in, 6) );
-  results.testFunctionName = mxArrayToString(GetCell(in, 7) );
+  results.extractionFunctionId = mxArrayToString(GetCell(in, 2));
+  results.scene_Distance = mxGetScalar(GetCell(in, 3));
+  results.scene_angle = mxGetScalar(GetCell(in, 4));
+  results.scene_CameraExposure = mxGetScalar(GetCell(in, 5));
+  results.scene_light = mxGetScalar(GetCell(in, 6));
+  results.testFunctionName = mxArrayToString(GetCell(in, 7));
   results.numCorrect_positionLabelRotation = saturate_cast<s32>( mxGetScalar(GetCell(in, 8)) );
   results.numCorrect_positionLabel = saturate_cast<s32>( mxGetScalar(GetCell(in, 9)) );
   results.numCorrect_position = saturate_cast<s32>( mxGetScalar(GetCell(in, 10)) );
@@ -387,7 +387,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   AnkiConditionalErrorAndReturn(nrhs == 9 && nlhs >= 0 && nlhs <= 1,
     "mexDrawSystemTestResults",
-    "Call this function as following:"
+    "Call this function as follows:"
     "<drawnImage> = mexDrawSystemTestResults(uint8(detectedQuads), detectedQuads_types, detectedMarkers, detectedMarkers_types, detectedMarkers_names, showImageDetectionsScale, outputFilenameImage, toShowResults);");
 
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
@@ -466,6 +466,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   mxFree(memory.get_buffer());
   mxFree(toShowResults.testFunctionName);
+  mxFree(toShowResults.extractionFunctionId);
 
   return;
 }

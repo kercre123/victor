@@ -9,14 +9,23 @@
 
 % matlabCommandString is the command that is executed in each of the different Matlab processes
 
-function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, matlabCommandString)
-    if numComputeThreads == 1 || isempty(workQueue)
+function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, matlabCommandString, splitFinely)
+    if ~exist('splitFinely', 'var')
+        splitFinely = true;
+    end
+    
+    if numComputeThreads == 1 || (length(workQueue) < 2)
         localWorkQueue = workQueue; %#ok<NASGU>
         eval(matlabCommandString);
     else
         threadCompletionMutexFilenames = cell(numComputeThreads, 1);
         workerInputFilenames = cell(numComputeThreads, 1);
         scriptFilenames = cell(numComputeThreads, 1);
+        
+        if ~splitFinely
+            iWorkQueue = 1;
+            localWorkSize = ceil(length(workQueue) / numComputeThreads);
+        end
         
         % launch threads
         for iThread = 0:(numComputeThreads-1)
@@ -27,7 +36,13 @@ function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, 
             scriptFilename_filename = sprintf('runParallelProcesses_input%d.m', iThread);
             scriptFilenames{iThread+1} = [scriptFilename_directory, scriptFilename_filename];
             
-            localWorkQueue = workQueue((1+iThread):numComputeThreads:end); %#ok<NASGU>
+            if splitFinely
+                localWorkQueue = workQueue((1+iThread):numComputeThreads:end); %#ok<NASGU>
+            else                
+                localWorkQueue = workQueue(iWorkQueue:min(iWorkQueue+localWorkSize-1, length(workQueue))); %#ok<NASGU>
+                iWorkQueue = iWorkQueue + localWorkSize;
+            end
+            
             save(workerInputFilenames{iThread+1}, 'localWorkQueue');
             
             try
@@ -85,7 +100,11 @@ function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, 
                     '" cd ', scriptFilename_directory, '; ', scriptFilename_filename(1:(end-2)), '"']; % TODO: add exit?
             end
             
+            commandString = strrep(commandString, '//', '/');
+            
             system(commandString);
+            
+            pause(1);
         end
         
         % Wait for the thread to complete

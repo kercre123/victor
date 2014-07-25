@@ -1,6 +1,7 @@
 function [imgNew, AlphaChannel] = AddFiducial(img, varargin)
 
 CropImage = true;
+InvertImage = false;
 OutputSize = 512;
 PadOutside = false;
 FiducialColor = [0 0 0];
@@ -13,6 +14,7 @@ parseVarargin(varargin{:});
 if ischar(img)
     [img, ~, AlphaChannel] = imread(img);
     img = im2double(img);
+    
     AlphaChannel = im2double(AlphaChannel);
     if isempty(AlphaChannel) 
         AlphaChannel = ones(size(img,1),size(img,2));
@@ -111,6 +113,13 @@ imgNew(AlphaChannel(:,:,ones(1,3)) < TransparencyTolerance) = 1;
 
 imgNew = max(0, min(1, imgNew));
 AlphaChannel = max(0, min(1, AlphaChannel));
+
+if InvertImage
+    [squareWidth_pix, padding_pix] = VisionMarkerTrained.GetFiducialPixelSize(OutputSize, 'WithUnpaddedFiducial');
+    interiorRegion = round(padding_pix*.75 + squareWidth_pix):round(OutputSize - (padding_pix*.75 + squareWidth_pix));
+    imgNew(interiorRegion,interiorRegion,:) = 1 - imgNew(interiorRegion,interiorRegion,:);
+    AlphaChannel(interiorRegion,interiorRegion) = 1 - AlphaChannel(interiorRegion,interiorRegion);
+end
 
 if ~isempty(OutputFile)
     imwrite(imgNew, OutputFile, 'Alpha', AlphaChannel);

@@ -12,3 +12,5 @@ add_subdirectory(robot/mex)
 
 add_subdirectory(matlab/mex)
 add_subdirectory(matlab/CameraCapture)
+
+add_subdirectory(matlab/\@VisionMarkerTrained/private)
