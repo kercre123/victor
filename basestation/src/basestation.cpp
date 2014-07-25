@@ -36,8 +36,6 @@
 #include "vizManager.h"
 #include "soundManager.h"
 
-#include <sys/stat.h>  // For mkdir
-
 
 namespace Anki {
 namespace Cozmo {
@@ -148,7 +146,7 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
       // Create folder for all recorded logs
       std::string rootLogFolderName = AnkiUtil::kP_GAME_LOG_ROOT_DIR;
       if (!DirExists(rootLogFolderName.c_str())) {
-        if(mkdir(rootLogFolderName.c_str(), S_IRWXU) != 0) {
+        if(!MakeDir(rootLogFolderName.c_str())) {
           PRINT_NAMED_WARNING("Basestation.Init.RootLogDirCreateFailed", "Failed to create folder %s\n", rootLogFolderName.c_str());
           return BS_END_INIT_ERROR;
         }
@@ -157,7 +155,7 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
       
       // Create folder for log
       std::string logFolderName = rootLogFolderName + "/" + GetCurrentDateTime() + "/";
-      if(mkdir(logFolderName.c_str(), S_IRWXU) != 0) {
+      if(!MakeDir(logFolderName.c_str())) {
         PRINT_NAMED_WARNING("Basestation.Init.LogDirCreateFailed", "Failed to create folder %s\n", logFolderName.c_str());
         return BS_END_INIT_ERROR;
       }
