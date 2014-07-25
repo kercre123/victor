@@ -26,5 +26,13 @@ namespace Anki {
     return true;
   }
 
+  bool MakeDir(const char* dir) {
+    if(mkdir(dir, S_IRWXU) != 0) {
+      return false;
+    }
+    return true;
+  }
+
+  
 } // namespace Anki
 
