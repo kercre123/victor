@@ -529,7 +529,7 @@ namespace Anki {
         const Pose3d* originalParent = pose_.GetParent();
         pose_ = camera->ComputeObjectPose(imgPoints, objPoints);
         if(pose_.GetParent() != originalParent) {
-          if(pose_.GetWithRespectTo(originalParent, pose_) == false) {
+          if(pose_.GetWithRespectTo(*originalParent, pose_) == false) {
             PRINT_NAMED_ERROR("ObservableObjectLibrary.PoseCluster.RecomputePose.OriginMisMatch",
                               "Could not get object pose w.r.t. original parent.\n");
           }
