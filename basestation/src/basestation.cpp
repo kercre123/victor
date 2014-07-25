@@ -152,6 +152,13 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
         return BS_END_INIT_ERROR;
       }
       
+      // Save config to log folder
+      Json::StyledStreamWriter writer;
+      std::ofstream jsonFile(logFolderName + AnkiUtil::kP_CONFIG_JSON_FILE);
+      writer.write(jsonFile, config);
+      jsonFile.close();
+
+      
       // Setup recording modules
       Comms::IComms *replacementComms = NULL;
       recordingPlaybackModule_ = new Recording();
@@ -179,6 +186,13 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
         PRINT_NAMED_ERROR("Basestation.Init.PlaybackDirNotFound", "%s\n", logFolderName.c_str());
         return BS_END_INIT_ERROR;
       }
+
+      // Load configuration json from playback log folder
+      Json::Reader reader;
+      std::ifstream jsonFile(logFolderName + AnkiUtil::kP_CONFIG_JSON_FILE);
+      reader.parse(jsonFile, config_);
+      jsonFile.close();
+
       
       // Setup playback modules
       Comms::IComms *replacementComms = NULL;
@@ -220,7 +234,7 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
 
   
   // Instantiate and init connected robots
-  for (auto robotIDVal : config[AnkiUtil::kP_CONNECTED_ROBOTS]) {
+  for (auto robotIDVal : config_[AnkiUtil::kP_CONNECTED_ROBOTS]) {
     RobotID_t robotID = (RobotID_t)robotIDVal.asInt();
     robotMgr_.AddRobot(robotID);
     robotMgr_.GetRobotByID(robotID)->SendInit();

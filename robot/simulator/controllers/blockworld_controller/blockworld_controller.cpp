@@ -84,13 +84,7 @@ int main(int argc, char **argv)
       }
     }
   } // if (bm != BM_PLAYBACK_SESSION)
-  else {
-    // HACK!!!
-    // How do we properly determine what robots to instantiate when playing a log?
-    // Just hard-coding robotID for now.
-
-    config[AnkiUtil::kP_CONNECTED_ROBOTS].append(1);
-  }
+  
   
   basestationController.step(BS_TIME_STEP);
   
