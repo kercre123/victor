@@ -88,6 +88,7 @@ bool CommsRecorder::GetNextMsgPacket(Comms::MsgPacket &msg)
 
     outStream.write((const char*)header, bytesPacked);
     outStream.write((const char*)msg.data, msg.dataLen);
+    outStream.flush();
     
     delete[] header;
     return true;

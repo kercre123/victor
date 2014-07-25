@@ -58,7 +58,7 @@ Playback::~Playback()
 }
 
 // initializes the module and sets up comms and config pointers if needed
-RecordingPlaybackStatus Playback::Init(Comms::IComms *realComms, Comms::IComms ** replacementComms, Json::Value *config)
+RecordingPlaybackStatus Playback::Init(Comms::IComms *realComms, Comms::IComms ** replacementComms, Json::Value *config, string commsLogFile)
 {
 /*
   // prepare for recording comms messages
@@ -69,7 +69,7 @@ RecordingPlaybackStatus Playback::Init(Comms::IComms *realComms, Comms::IComms *
   PRINT_NAMED_INFO("Playback.Init", "obtained log path at %s", workPath_.c_str());
   string commsLogFile = workPath_ + AnkiUtil::kP_COMMS_LOG_PATH;
 */
-  string commsLogFile = "robot_comms.log";
+  //string commsLogFile = "robot_comms.log";
   *replacementComms = new CommsPlayback(commsLogFile, realComms);
   replacementComms_ = *replacementComms;
   ((CommsRecorder*)replacementComms_)->PrepareLogFile();

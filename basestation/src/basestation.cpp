@@ -12,6 +12,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/rotatedRect_impl.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -35,6 +36,8 @@
 #include "vizManager.h"
 #include "soundManager.h"
 
+#include <sys/stat.h>  // For mkdir
+
 
 namespace Anki {
 namespace Cozmo {
@@ -52,7 +55,7 @@ public:
   // Initializes components of basestation
   // RETURNS: BS_OK, or BS_END_INIT_ERROR
   //BasestationStatus Init(const MetaGame::GameParameters& params, IComms* comms, boost::property_tree::ptree &config, BasestationMode mode);
-  BasestationStatus Init(Comms::IComms* comms, Json::Value& config, BasestationMode mode);
+  BasestationStatus Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config, BasestationMode mode);
   
   BasestationMode GetMode();
   
@@ -87,7 +90,6 @@ private:
   RobotManager robotMgr_;
   MessageHandler msgHandler_;
   BehaviorManager behaviorMgr_;
-  UiTCPComms uiDevComms_;
   UiMessageHandler uiMsgHandler_;
   
   LatticePlanner *pathPlanner_;
@@ -102,6 +104,7 @@ private:
   BasestationMode mode_;
   Json::Value config_;
   IRecordingPlaybackModule *recordingPlaybackModule_;
+  IRecordingPlaybackModule *uiRecordingPlaybackModule_;
   
   /*
    boost::property_tree::ptree config_;
@@ -129,7 +132,7 @@ BasestationMode BasestationMainImpl::GetMode()
 }
 
 
-BasestationStatus BasestationMainImpl::Init(Comms::IComms* comms, Json::Value& config, BasestationMode mode)
+BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config, BasestationMode mode)
 {
   BasestationStatus status = BS_OK;
   
@@ -142,19 +145,50 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* comms, Json::Value& c
   {
     case BM_RECORD_SESSION:
     {
+      // Create folder for log
+      std::string logFolderName = GetCurrentDateTime() + "/";
+      if(mkdir(logFolderName.c_str(), S_IRWXU) != 0) {
+        PRINT_NAMED_WARNING("Basestation.Init.LogDirCreateFailed", "Failed to create folder %s\n", logFolderName.c_str());
+        return BS_END_INIT_ERROR;
+      }
+      
+      // Setup recording modules
       Comms::IComms *replacementComms = NULL;
       recordingPlaybackModule_ = new Recording();
-      status = ConvertStatus(recordingPlaybackModule_->Init(comms, &replacementComms, &config_));
-      comms = replacementComms;
+      status = ConvertStatus(recordingPlaybackModule_->Init(robot_comms, &replacementComms, &config_, logFolderName + AnkiUtil::kP_ROBOT_COMMS_LOG_FILE));
+      robot_comms = replacementComms;
+      
+      uiRecordingPlaybackModule_ = new Recording();
+      status = ConvertStatus(uiRecordingPlaybackModule_->Init(ui_comms, &replacementComms, &config_, logFolderName + AnkiUtil::kP_UI_COMMS_LOG_FILE));
+      ui_comms = replacementComms;
       break;
     }
       
     case BM_PLAYBACK_SESSION:
     {
+      // Get log folder from config
+      std::string logFolderName;
+      if (!JsonTools::GetValueOptional(config, AnkiUtil::kP_PLAYBACK_LOG_FOLDER, logFolderName)) {
+        PRINT_NAMED_ERROR("Basestation.Init.PlaybackDirNotSpecified", "\n");
+        return BS_END_INIT_ERROR;
+      }
+      logFolderName += "/";
+      
+      // Check if folder exists
+      if (!DirExists(logFolderName.c_str())) {
+        PRINT_NAMED_ERROR("Basestation.Init.PlaybackDirNotFound", "%s\n", logFolderName.c_str());
+        return BS_END_INIT_ERROR;
+      }
+      
+      // Setup playback modules
       Comms::IComms *replacementComms = NULL;
       recordingPlaybackModule_ = new Playback();
-      status = ConvertStatus(recordingPlaybackModule_->Init(comms, &replacementComms, &config_));
-      comms = replacementComms;
+      status = ConvertStatus(recordingPlaybackModule_->Init(robot_comms, &replacementComms, &config_, logFolderName + AnkiUtil::kP_ROBOT_COMMS_LOG_FILE));
+      robot_comms = replacementComms;
+      
+      uiRecordingPlaybackModule_ = new Playback();
+      status = ConvertStatus(uiRecordingPlaybackModule_->Init(ui_comms, &replacementComms, &config_, logFolderName + AnkiUtil::kP_UI_COMMS_LOG_FILE));
+      ui_comms = replacementComms;
       break;
     }
       
@@ -176,11 +210,11 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* comms, Json::Value& c
   pathPlanner_ = new LatticePlanner(&blockWorld_, mprims);
   
   // Initialize the modules by telling them about each other:
-  msgHandler_.Init(comms, &robotMgr_, &blockWorld_);
+  msgHandler_.Init(robot_comms, &robotMgr_, &blockWorld_);
   robotMgr_.Init(&msgHandler_, &blockWorld_, pathPlanner_);
   blockWorld_.Init(&robotMgr_);
   behaviorMgr_.Init(&robotMgr_, &blockWorld_);
-  uiMsgHandler_.Init(&uiDevComms_, &robotMgr_, &blockWorld_, &behaviorMgr_);
+  uiMsgHandler_.Init(ui_comms, &robotMgr_, &blockWorld_, &behaviorMgr_);
   
   VizManager::getInstance()->Connect(ROBOT_SIM_WORLD_HOST, VIZ_SERVER_PORT);
 
@@ -242,7 +276,6 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
   BaseStationTimer::getInstance()->UpdateTime(currTime);
   
   // Read UI messages
-  uiDevComms_.Update();
   uiMsgHandler_.ProcessMessages();
   
   msgHandler_.ProcessMessages();
@@ -385,9 +418,9 @@ BasestationMain::~BasestationMain()
   delete impl_;
 }
 
-BasestationStatus BasestationMain::Init(Comms::IComms* comms, Json::Value& config, BasestationMode mode)
+BasestationStatus BasestationMain::Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config, BasestationMode mode)
 {
-  return impl_->Init(comms, config, mode);
+  return impl_->Init(robot_comms, ui_comms, config, mode);
 }
 
 BasestationMode BasestationMain::GetMode()

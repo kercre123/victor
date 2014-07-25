@@ -66,7 +66,7 @@ public:
   // Initializes components of basestation
   // RETURNS: BS_OK, or BS_END_INIT_ERROR
   //BasestationStatus Init(const MetaGame::GameParameters& params, IComms* comms, boost::property_tree::ptree &config, BasestationMode mode);
-  BasestationStatus Init(Comms::IComms* comms, Json::Value& config, BasestationMode mode);
+  BasestationStatus Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config, BasestationMode mode);
 
   BasestationMode GetMode();
 
@@ -77,9 +77,6 @@ public:
   // system time.
   BasestationStatus Update(BaseStationTime_t currTime);
 /*
-  // Converts recording / playback module status to basestation status.
-  BasestationStatus ConvertStatus(RecordingPlaybackStatus status);
-
   // returns true if the basestation is loaded (including possibly planner table computation, etc)
   bool DoneLoading();
 

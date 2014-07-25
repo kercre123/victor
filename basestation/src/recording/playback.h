@@ -46,7 +46,7 @@ public:
   ~Playback();
 
   // initializeReplaymodule and sets up comms and config pointers if needed
-  RecordingPlaybackStatus Init(Comms::IComms *realComms, Comms::IComms ** replacementComms, Json::Value *config);
+  RecordingPlaybackStatus Init(Comms::IComms *realComms, Comms::IComms ** replacementComms, Json::Value *config, string commsLogFile);
 
   // planner is created, initialized and set up for recording and playback all in one call..
   //void InitializePlanner(IPathPlanner *plannerManager);

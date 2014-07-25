@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/basestation/tcpComms.h"
+#include "anki/cozmo/basestation/uiTcpComms.h"
 #include "json/json.h"
 
 #include "anki/common/basestation/jsonTools.h"
@@ -29,7 +30,7 @@ int main(int argc, char **argv)
 {
   // Get configuration JSON
   Json::Value config;
-  const std::string subPath(std::string("basestation/config") + std::string(AnkiUtil::kP_CONFIG_JSON_PATH));
+  const std::string subPath(std::string("basestation/config/") + std::string(AnkiUtil::kP_CONFIG_JSON_FILE));
   const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
   
   Json::Reader reader;
@@ -47,6 +48,7 @@ int main(int argc, char **argv)
   // Connect to robot.
   // UI-layer should handle this (whether the connection is TCP or BTLE).
   // Start basestation only when connections have been established.
+  UiTCPComms uiComms;
   TCPComms robotComms;
   if (bm != BM_PLAYBACK_SESSION) {
     
@@ -90,12 +92,14 @@ int main(int argc, char **argv)
     config[AnkiUtil::kP_CONNECTED_ROBOTS].append(1);
   }
   
+  basestationController.step(BS_TIME_STEP);
   
   // We have connected robots. Start the basestation loop!
   BasestationMain bs;
-  BasestationStatus status = bs.Init(&robotComms, config, bm);
+  BasestationStatus status = bs.Init(&robotComms, &uiComms, config, bm);
   if (status != BS_OK) {
     PRINT_NAMED_ERROR("Basestation.Init.Fail","status %d\n", status);
+    return -1;
   }
   
   //
@@ -103,6 +107,9 @@ int main(int argc, char **argv)
   //
   while (basestationController.step(BS_TIME_STEP) != -1)
   {
+    // Read all UI messages
+    uiComms.Update();
+    
     // Read messages from all robots
     robotComms.Update();
     
