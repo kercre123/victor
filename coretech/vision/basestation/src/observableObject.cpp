@@ -365,7 +365,7 @@ namespace Anki {
           objectsSeen.push_back(libObject->Clone());
           
           // Compute pose wrt camera, or world if no camera specified
-          if (seenOnlyBy == ANY_CAMERA) {
+          //if (seenOnlyBy == ANY_CAMERA) {
             Pose3d newPose;
             if(poseCluster.GetPose().GetWithRespectTo(poseCluster.GetPose().FindOrigin(), newPose) == true) {
               objectsSeen.back()->SetPose(newPose);
@@ -377,9 +377,9 @@ namespace Anki {
               // We are probably not handling the case that two robot's saw the same thing
               // but are not both localized to the same world frame yet.
             }
-          } else {
-            objectsSeen.back()->SetPose(poseCluster.GetPose());
-          }
+          //} else {
+          //  objectsSeen.back()->SetPose(poseCluster.GetPose());
+          //}
           
           // Set the markers in the object corresponding to those from the pose
           // cluster from which it was computed as "observed"
