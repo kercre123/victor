@@ -18,12 +18,11 @@
 #include "anki/common/basestation/math/quad.h"
 
 #include "anki/common/basestation/exceptions.h"
-#include "anki/common/basestation/general.h"
 
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/triangle_impl.h"
-
+#include "anki/common/basestation/utils/helpers/compareFcns.h"
 #include "anki/common/shared/utilities_shared.h"
 
 

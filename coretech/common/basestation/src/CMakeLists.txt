@@ -3,20 +3,23 @@
 if(NOT WIN32)
   add_definitions(-DCORETECH_BASESTATION)
 
-  file(GLOB SOURCE_FILES *.cpp math/*.cpp utils/*.cpp ../../shared/src/*.cpp)
+  file(GLOB_RECURSE SOURCE_FILES *.cpp)
+  file(GLOB SHARED_SOURCE_FILES ../../shared/src/*.cpp)
 
-  file(GLOB HEADER_FILES 
-    *.h 
-    math/*.h 
+  file(GLOB_RECURSE PRIVATE_HEADER_FILES *.h)
+  file(GLOB_RECURSE HEADER_FILES ${CORETECH_COMMON_INCLUDE_DIR}/basestation/ *.h)
+
+  file(GLOB SHARED_HEADER_FILES 
     ../../shared/src/*.h
-    ${CORETECH_COMMON_INCLUDE_DIR}/basestation/*.h
-    ${CORETECH_COMMON_INCLUDE_DIR}/basestation/math/*.h
     ${CORETECH_COMMON_INCLUDE_DIR}/shared/*.h
   )
 
   add_library(CoreTech_Common_Basestation
     ${SOURCE_FILES}
+    ${SHARED_SOURCE_FILES}
     ${HEADER_FILES}
+    ${PRIVATE_HEADER_FILES}
+    ${SHARED_HEADER_FILES}
     ${CORETECH_COMMON_INCLUDE_FILES}
   )
     

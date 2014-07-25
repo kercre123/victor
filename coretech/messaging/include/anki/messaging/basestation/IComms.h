@@ -9,8 +9,8 @@
 #ifndef __IComms__
 #define __IComms__
 
+#include <string.h>
 #include "anki/common/types.h"
-#include "anki/common/basestation/general.h"
 
 namespace Anki {
   namespace Comms {
