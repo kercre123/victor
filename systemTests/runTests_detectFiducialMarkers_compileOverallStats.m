@@ -3,10 +3,10 @@ function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStat
     
     sceneTypes = getSceneTypes(resultsData_perPose);
     
-    numCameraExposures = length(sceneTypes.cameraExposures);
-    numDistances = length(sceneTypes.distances);
-    numAngles = length(sceneTypes.angles);
-    numLights = length(sceneTypes.lights);
+    numCameraExposures = length(sceneTypes.CameraExposures);
+    numDistances = length(sceneTypes.Distances);
+    numAngles = length(sceneTypes.Angles);
+    numLights = length(sceneTypes.Lights);
     
     quadExtraction_events = extractEvents(resultsData_perPose, sceneTypes);
     
@@ -26,12 +26,12 @@ function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStat
                 
                 figure(iLight);
                 subplot(1,numAngles,iAngle);
-                bar(sceneTypes.distances, dataPoints')
+                bar(sceneTypes.Distances, dataPoints')
                 shading flat
                 a = axis();
                 a(4) = 1.0;
                 axis(a);
-                title(sprintf('Angle:%d Light%d', sceneTypes.angles(iAngle), sceneTypes.lights(iLight)));
+                title(sprintf('Angle:%d Light%d', sceneTypes.Angles(iAngle), sceneTypes.Lights(iLight)));
             end
         end
     end % if showPlots
@@ -70,7 +70,7 @@ end % runTests_detectFiducialMarkers_compileOverallStats()
 % end % computeStatistics()
 
 function quadExtraction_events = extractEvents(resultsData_perPose, sceneTypes)
-    quadExtraction_events = zeros(length(sceneTypes.cameraExposures), length(sceneTypes.distances), length(sceneTypes.angles), length(sceneTypes.lights), 2);
+    quadExtraction_events = zeros(length(sceneTypes.CameraExposures), length(sceneTypes.Distances), length(sceneTypes.Angles), length(sceneTypes.Lights), 2);
     
     for iTest = 1:length(resultsData_perPose)
         for iPose = 1:length(resultsData_perPose{iTest})
@@ -78,60 +78,60 @@ function quadExtraction_events = extractEvents(resultsData_perPose, sceneTypes)
             
             curCameraExposure = curResult.Scene.CameraExposure;
             curDistance = curResult.Scene.Distance;
-            curAngle = curResult.Scene.angle;
-            curLight = curResult.Scene.light;
+            curAngle = curResult.Scene.Angle;
+            curLight = curResult.Scene.Light;
             
-            for iCameraExposures = 1:length(sceneTypes.cameraExposures)
-                if curCameraExposure == sceneTypes.cameraExposures(iCameraExposures)
-                    for iDistances = 1:length(sceneTypes.distances)
-                        if curDistance == sceneTypes.distances(iDistances)
-                            for iAngles = 1:length(sceneTypes.angles)
-                                if curAngle == sceneTypes.angles(iAngles)
-                                    for iLights = 1:length(sceneTypes.lights)
-                                        if curLight == sceneTypes.lights(iLights)                                            
+            for iCameraExposures = 1:length(sceneTypes.CameraExposures)
+                if curCameraExposure == sceneTypes.CameraExposures(iCameraExposures)
+                    for iDistances = 1:length(sceneTypes.Distances)
+                        if curDistance == sceneTypes.Distances(iDistances)
+                            for iAngles = 1:length(sceneTypes.Angles)
+                                if curAngle == sceneTypes.Angles(iAngles)
+                                    for iLights = 1:length(sceneTypes.Lights)
+                                        if curLight == sceneTypes.Lights(iLights)                                            
                                             quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 1) = quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 1) + curResult.numQuadsDetected;
                                             quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 2) = quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 2) + curResult.numQuadsNotIgnored;
                                         end
-                                    end % for iLights = 1:length(sceneTypes.lights)
+                                    end % for iLights = 1:length(sceneTypes.Lights)
                                 end
-                            end % for iAngles = 1:length(sceneTypes.angles)
+                            end % for iAngles = 1:length(sceneTypes.Angles)
                         end
-                    end % for iDistances = 1:length(sceneTypes.distances)
+                    end % for iDistances = 1:length(sceneTypes.Distances)
                 end
-            end % for iCameraExposures = 1:length(sceneTypes.cameraExposures)
+            end % for iCameraExposures = 1:length(sceneTypes.CameraExposures)
         end % for iPose = 1:length(resultsData_perPose{iTest})
     end % for iTest = 1:length(resultsData_perPose)    
 end % computeStatistics()
 
 function sceneTypes = getSceneTypes(resultsData_perPose)
-    sceneTypes.cameraExposures = [];
-    sceneTypes.distances = [];
-    sceneTypes.angles = [];
-    sceneTypes.lights = [];
+    sceneTypes.CameraExposures = [];
+    sceneTypes.Distances = [];
+    sceneTypes.Angles = [];
+    sceneTypes.Lights = [];
     
     for iTest = 1:length(resultsData_perPose)
         for iPose = 1:length(resultsData_perPose{iTest})
             curScene = resultsData_perPose{iTest}{iPose}.Scene;
-            if isempty(find(sceneTypes.cameraExposures == curScene.CameraExposure, 1))
-                sceneTypes.cameraExposures(end+1) = curScene.CameraExposure;
+            if isempty(find(sceneTypes.CameraExposures == curScene.CameraExposure, 1))
+                sceneTypes.CameraExposures(end+1) = curScene.CameraExposure;
             end
             
-            if isempty(find(sceneTypes.distances == curScene.Distance, 1))
-                sceneTypes.distances(end+1) = curScene.Distance;
+            if isempty(find(sceneTypes.Distances == curScene.Distance, 1))
+                sceneTypes.Distances(end+1) = curScene.Distance;
             end
             
-            if isempty(find(sceneTypes.angles == curScene.angle, 1))
-                sceneTypes.angles(end+1) = curScene.angle;
+            if isempty(find(sceneTypes.Angles == curScene.Angle, 1))
+                sceneTypes.Angles(end+1) = curScene.Angle;
             end
             
-            if isempty(find(sceneTypes.lights == curScene.light, 1))
-                sceneTypes.lights(end+1) = curScene.light;
+            if isempty(find(sceneTypes.Lights == curScene.Light, 1))
+                sceneTypes.Lights(end+1) = curScene.Light;
             end
         end
     end
     
-    sceneTypes.cameraExposures = sort(sceneTypes.cameraExposures);
-    sceneTypes.distances = sort(sceneTypes.distances);
-    sceneTypes.angles = sort(sceneTypes.angles);
-    sceneTypes.lights = sort(sceneTypes.lights);
+    sceneTypes.CameraExposures = sort(sceneTypes.CameraExposures);
+    sceneTypes.Distances = sort(sceneTypes.Distances);
+    sceneTypes.Angles = sort(sceneTypes.Angles);
+    sceneTypes.Lights = sort(sceneTypes.Lights);
 end % getSceneTypes()

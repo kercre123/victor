@@ -166,8 +166,8 @@ for iIn = startIndex:endIndex
     curPose.ImageFile = ['../images/', possibleInputFiles(iIn).name];
     curPose.Scene.CameraExposure = exposure;
     curPose.Scene.Distance = distance;
-    curPose.Scene.angle = angle;    
-    curPose.Scene.light = light;
+    curPose.Scene.Angle = angle;    
+    curPose.Scene.Light = light;
     jsonTestData.Poses{end+1} = curPose;
     exposure = exposure + 0.1;
     

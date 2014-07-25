@@ -199,9 +199,9 @@ function allTestData = getTestData(testJsonPattern)
             
              if ~isfield(allTestData{iTest}.jsonData.Poses{iPose}, 'Scene')
                 allTestData{iTest}.jsonData.Poses{iPose}.Scene.Distance = -1;
-                allTestData{iTest}.jsonData.Poses{iPose}.Scene.angle = -1;
+                allTestData{iTest}.jsonData.Poses{iPose}.Scene.Angle = -1;
                 allTestData{iTest}.jsonData.Poses{iPose}.Scene.CameraExposure = -1;
-                allTestData{iTest}.jsonData.Poses{iPose}.Scene.light = -1;
+                allTestData{iTest}.jsonData.Poses{iPose}.Scene.Light = -1;
             end
         end
     end
