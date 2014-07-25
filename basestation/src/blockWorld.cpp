@@ -700,7 +700,7 @@ namespace Anki
               // world, and give it a new origin, relative to the current
               // world origin.
               Pose3d poseWrtWorldOrigin;
-              if(matToLocalizeTo->GetPose().GetWithRespectTo(Pose3d::GetWorldOrigin(), poseWrtWorldOrigin) == false) {
+              if(matToLocalizeTo->GetPose().GetWithRespectTo(*Pose3d::GetWorldOrigin(), poseWrtWorldOrigin) == false) {
                 PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotGetPoseWrtWorldOrigin",
                                     "Could not get the pose of a newly-created (but not initial) mat "
                                     "w.r.t. the world origin.\n");
@@ -758,32 +758,31 @@ namespace Anki
               // no existing mats overlapped with the mat we saw, so add it
               // as a new mat piece, relative to the world origin
               
-              if(matSeen->GetPose().GetWithRespectTo(Pose3d::GetWorldOrigin(), poseWrtOrigin) == false) {
+              if(matSeen->GetPose().GetWithRespectTo(*Pose3d::GetWorldOrigin(), poseWrtOrigin) == false) {
                 PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotGetPoseWrtWorldOrigin",
                                     "Could not get the pose of a newly-created (but non-localizing) mat "
                                     "w.r.t. the world origin.\n");
                 // TODO: I probably need to handle this situation differently
-                return false;
+              } else {
+                MatPiece* newMatPiece = new MatPiece(matSeen->GetType());
+                newMatPiece->SetOrigin(&Pose3d::AddOrigin(poseWrtOrigin));
+                newMatPiece->SetID();
+                newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
+                newMatPiece->UpdateMarkerObservationTimes(*matSeen);
+                
+                existingMatPieces[matSeen->GetType()][matSeen->GetID()] = newMatPiece;
+                
+                fprintf(stdout, "Adding new mat with type=%d and ID=%d at (%.1f, %.1f, %.1f)\n",
+                        matSeen->GetType().GetValue(), matSeen->GetID().GetValue(),
+                        matSeen->GetPose().GetTranslation().x(),
+                        matSeen->GetPose().GetTranslation().y(),
+                        matSeen->GetPose().GetTranslation().z());
+                
+                // Add observed mat markers to the occlusion map of the camera that saw
+                // them, so we can use them to delete objects that should have been
+                // seen between that marker and the robot
+                newMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
               }
-              
-              MatPiece* newMatPiece = new MatPiece(matSeen->GetType());
-              newMatPiece->SetOrigin(&Pose3d::AddOrigin(poseWrtOrigin));
-              newMatPiece->SetID();
-              newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
-              newMatPiece->UpdateMarkerObservationTimes(*matSeen);
-              
-              existingMatPieces[matSeen->GetType()][matSeen->GetID()] = newMatPiece;
-              
-              fprintf(stdout, "Adding new mat with type=%d and ID=%d at (%.1f, %.1f, %.1f)\n",
-                      matSeen->GetType().GetValue(), matSeen->GetID().GetValue(),
-                      matSeen->GetPose().GetTranslation().x(),
-                      matSeen->GetPose().GetTranslation().y(),
-                      matSeen->GetPose().GetTranslation().z());
-              
-              // Add observed mat markers to the occlusion map of the camera that saw
-              // them, so we can use them to delete objects that should have been
-              // seen between that marker and the robot
-              newMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
             }
             else {
               if(overlappingObjects.size() > 1) {
@@ -791,21 +790,19 @@ namespace Anki
                 // TODO: do something smarter here?
               }
               
-              if(matSeen->GetPose().GetWithRespectTo(Pose3d::GetWorldOrigin(), poseWrtOrigin) == false) {
+              if(matSeen->GetPose().GetWithRespectTo(*Pose3d::GetWorldOrigin(), poseWrtOrigin) == false) {
                 PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotGetPoseWrtWorldOrigin",
                                     "Could not get the pose of an existing mat "
                                     "w.r.t. the world origin.\n");
                 // TODO: I probably need to handle this situation differently
-                return false;
+              } else {
+                // TODO: better way of merging existing/observed object pose
+                overlappingObjects[0]->SetPose( poseWrtOrigin );
+                overlappingObjects[0]->SetLastObservedTime(matSeen->GetLastObservedTime());
+                overlappingObjects[0]->UpdateMarkerObservationTimes(*matSeen);
+                
+                overlappingObjects[0]->GetObservedMarkers(observedMarkers, atTimestamp);
               }
-              
-              // TODO: better way of merging existing/observed object pose
-              overlappingObjects[0]->SetPose( poseWrtOrigin );
-              overlappingObjects[0]->SetLastObservedTime(matSeen->GetLastObservedTime());
-              overlappingObjects[0]->UpdateMarkerObservationTimes(*matSeen);
-              
-              overlappingObjects[0]->GetObservedMarkers(observedMarkers, atTimestamp);
-              
             } // if/else overlapping existing mats found
           } // if matSeen != matToLocalizeTo
           
