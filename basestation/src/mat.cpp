@@ -74,12 +74,12 @@ namespace Anki {
         
         // Front Face
         AddMarker(Vision::MARKER_INVERTED_RAMPFRONT,
-                  Pose3d(M_PI_2, Z_AXIS_3D, {-length*.5f, 0.f, 0.f}),
+                  Pose3d(M_PI_2, Z_AXIS_3D, {length*.5f, 0.f, 0.f}),
                   markerSize_sides);
         
         // Back Face
         AddMarker(Vision::MARKER_INVERTED_RAMPBACK,
-                  Pose3d(-M_PI_2, Z_AXIS_3D, {length*.5f, 0.f, 0.f}),
+                  Pose3d(-M_PI_2, Z_AXIS_3D, {-length*.5f, 0.f, 0.f}),
                   markerSize_sides);
 
         // Right Face

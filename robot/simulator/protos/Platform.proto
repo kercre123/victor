@@ -34,14 +34,14 @@ Solid {
     # Front Face
     VisionMarker {
       rotation 0 0 1 1.5708
-      translation %{=-fields.length/2}% 0 0
+      translation %{=fields.length/2}% 0 0
       image "symbols/inverted/rampFront.png"
     }
     
     # Back Face
     VisionMarker { 
       rotation 0 0 1 -1.5708
-      translation %{=fields.length/2}% 0 0
+      translation %{=-fields.length/2}% 0 0
       image "symbols/inverted/rampBack.png"
     }
           
