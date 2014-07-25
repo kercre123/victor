@@ -496,7 +496,7 @@ int main(int argc, char ** argv)
 
 #ifdef USE_SOCKET
   // TCP
-  const char * ipAddress = "192.168.3.33";
+  const char * ipAddress = "192.168.3.30";
   const s32 port = 5551;
   DebugStreamClient parserThread(ipAddress, port);
 #else
@@ -523,7 +523,7 @@ int main(int argc, char ** argv)
     //  free(newObject.buffer);
     //  newObject.buffer = NULL;
     //}
-  }
+  } // while(true)
 
   return 0;
 } // int main()
