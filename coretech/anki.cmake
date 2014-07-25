@@ -132,9 +132,15 @@ if(NOT MATLAB_FOUND)
     set(ZLIB_LIBRARY )
     set(CMD_COMMAND cmd /c)
   else()
-    if(NOT DEFINED MATLAB_ROOT_DIR)
+    if(NOT DEFINED MATLAB_ROOT_DIR)   
       # Use default matlab root path
-      set(MATLAB_ROOT /Applications/MATLAB_R2013a.app)
+      if(IS_DIRECTORY /Applications/MATLAB_R2014a.app)
+        set(MATLAB_ROOT /Applications/MATLAB_R2014a.app)
+      elseif(IS_DIRECTORY /Applications/MATLAB_R2013a.app)
+        set(MATLAB_ROOT /Applications/MATLAB_R2013a.app)
+      else()
+        set(MATLAB_ROOT "")
+      endif()
     else()
       set(MATLAB_ROOT ${MATLAB_ROOT_DIR})
       message(STATUS "Using given MATLAB_ROOT ${MATLAB_ROOT}.")
@@ -338,12 +344,16 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
 
   get_filename_component(OUTPUT_NAME ${MEX_FILE} NAME_WE)
 
+  if(NOT DEFINED NO_MEX_WRAPPERS)
+    set(MEX_WRAPPER_FILE ${CORETECH_ROOT_DIR}/common/matlab/mex/mexWrappers.cpp)
+  endif(NOT DEFINED NO_MEX_WRAPPERS)
+  
   add_library(${OUTPUT_NAME} SHARED
     ${MEX_FILE}
-    ${CORETECH_ROOT_DIR}/common/matlab/mex/mexWrappers.cpp
+    ${MEX_WRAPPER_FILE}
     ${CORETECH_ROOT_DIR}/common/matlab/mex/mexFunction.def
   )
-
+  
   # Put mex binaries in MEX_OUTPUT_PATH
   foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
     string( TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG )

@@ -8,8 +8,8 @@ classdef VisionMarkerTrained
         TrainingImageDir = { ...
             '~/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated', ... '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded/rotated', ...
             '~/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rotated', ...
-            '~/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated'}; %, ...
-%             '~/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/rotated'};
+            '~/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated', ...}; %, ...
+            '~/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/rotated'};
         
         ProbeParameters = struct( ...
             'GridSize', 32, ...            %'Radius', 0.02, ...  % As a fraction of a canonical unit square 
@@ -118,9 +118,23 @@ classdef VisionMarkerTrained
                 
                 sortedCorners = Corners(sortedIndexes,:);
                 
-                tform = cp2tform([0 0 1 1; 0 1 1 0]', sortedCorners, 'projective');
+                try
+                    tform = cp2tform([0 0 1 1; 0 1 1 0]', sortedCorners, 'projective');
+                catch
+                    disp('Some points are co-linear');
+                    this.isValid = false;
+                    this.H = eye(3);
+                    return;
+                end
             else
-                tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+                try
+                    tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+                catch                    
+                    disp('Some points are co-linear');
+                    this.isValid = false;
+                    this.H = eye(3);
+                    return;
+                end
             end            
             
             this.H = tform.tdata.T';
@@ -148,7 +162,7 @@ classdef VisionMarkerTrained
                     VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
                     VisionMarkerTrained.ProbePattern);
                 
-                if any(strcmp(this.codeName, {'UNKNOWN', 'ALLWHITE', 'ALLBLACK'}))
+                if any(strcmp(this.codeName, {'UNKNOWN', 'INVALID'}))
                     this.isValid = false;
                 else
                     if UseSingleProbe
@@ -200,6 +214,12 @@ classdef VisionMarkerTrained
                         assert(strcmp(verificationResult, this.codeName));
                         
                         underscoreIndex = find(this.codeName == '_');
+                        if strncmpi(this.codeName, 'inverted_', 9)
+                            % Ignore the first underscore found if this is
+                            % an inverted code name
+                            underscoreIndex(1) = [];
+                        end
+                        
                         if ~isempty(underscoreIndex)
                             assert(length(underscoreIndex) == 1, ...
                                 'There should be no more than 1 underscore in the code name: "%s".', this.codeName);

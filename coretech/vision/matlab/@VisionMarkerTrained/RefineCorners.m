@@ -91,7 +91,20 @@ while iteration < MaxIterations
     %imgi = interp2(img, xi, yi, 'linear');
     %inBounds = ~isnan(imgi);
     
-    [imgi, outOfBounds] = mexInterp2(img, xi, yi);
+    if ~isempty(find(isnan(xi), 1)) || ~isempty(find(isnan(xi), 2))
+        newCorners = nan * ones([length(xi),2]);
+        newH = eye(3);
+        return;
+    else
+        try        
+            [imgi, outOfBounds] = mexInterp2(img, xi, yi);
+        catch
+            newCorners = nan * ones([length(xi),2]);
+            newH = eye(3);
+            return;
+        end
+    end
+    
     inBounds = ~outOfBounds;
     
     It = imgi(:) - template;

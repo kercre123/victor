@@ -14,10 +14,10 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
     % Go through every item in the work list, and compute the accuracy of
     % the fiducial detection
     tic;
-    for iWork = 1:length(workQueue)              
+    for iWork = 1:length(workQueue)
         if workQueue{iWork}.iTest ~= lastTestId
             if lastTestId ~= -1
-                disp(sprintf('Finished test %d in %f seconds', lastTestId, toc()));
+                disp(sprintf(' Finished in %0.4f seconds', toc()));
                 tic
             end
             
@@ -26,6 +26,8 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
             jsonData.Poses = makeCellArray(jsonData.Poses);
             
             lastTestId = workQueue{iWork}.iTest;
+            
+            fprintf('Starting basicStats %d ', lastTestId);
         end
         
         image = imread([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
@@ -36,6 +38,7 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         end
         
         curTestData.Scene = jsonData.Poses{workQueue{iWork}.iPose}.Scene;
+        
         curTestData.ImageFile = jsonData.Poses{workQueue{iWork}.iPose}.ImageFile;
         
         groundTruthQuads = jsonToQuad(jsonData.Poses{workQueue{iWork}.iPose}.VisionMarkers);
@@ -44,33 +47,33 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         
         % Detect the markers
         [detectedQuads, detectedQuadValidity, detectedMarkers] = extractMarkers(image, algorithmParameters);
-
+        
         %check if the quads are in the right places
-
+        
         [justQuads_bestDistances_mean, justQuads_bestDistances_max, justQuads_bestIndexes, ~] = findClosestMatches(groundTruthQuads, detectedQuads, []);
-
+        
         detectedMarkerQuads = makeCellArray(markersToQuad(detectedMarkers));
-
+        
         visionMarkers_groundTruth = makeCellArray(jsonData.Poses{workQueue{iWork}.iPose}.VisionMarkers);
-
+        
         [markers_bestDistances_mean, markers_bestDistances_max, markers_bestIndexes, markers_areRotationsCorrect] = findClosestMatches(groundTruthQuads, detectedMarkerQuads, visionMarkers_groundTruth);
-
+        
         markerNames_groundTruth = cell(length(groundTruthQuads), 1);
         fiducialSizes_groundTruth = zeros(length(groundTruthQuads), 2);
-
+        
         for iMarker = 1:length(groundTruthQuads)
             markerNames_groundTruth{iMarker,1} = visionMarkers_groundTruth{iMarker}.markerType;
-
+            
             fiducialSizes_groundTruth(iMarker,:) = [...
                 max(groundTruthQuads{iMarker}(:,1)) - min(groundTruthQuads{iMarker}(:,1)),...
                 max(groundTruthQuads{iMarker}(:,2)) - min(groundTruthQuads{iMarker}(:,2))];
         end
-
+        
         markerNames_detected = cell(length(detectedMarkers), 1);
         for iMarker = 1:length(detectedMarkers)
             markerNames_detected{iMarker} = detectedMarkers{iMarker}.name;
         end
-
+        
         curResultsData_basics.justQuads_bestDistances_mean = justQuads_bestDistances_mean;
         curResultsData_basics.justQuads_bestDistances_max = justQuads_bestDistances_max;
         curResultsData_basics.justQuads_bestIndexes = justQuads_bestIndexes;
@@ -81,13 +84,15 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         curResultsData_basics.fiducialSizes_groundTruth = fiducialSizes_groundTruth;
         curResultsData_basics.markerNames_groundTruth = makeCellArray(markerNames_groundTruth);
         curResultsData_basics.markerLocations_groundTruth = makeCellArray(groundTruthQuads);
-
+        
         curResultsData_basics.markerNames_detected = makeCellArray(markerNames_detected);
         curResultsData_basics.detectedQuads = makeCellArray(detectedQuads);
         curResultsData_basics.detectedQuadValidity = detectedQuadValidity;
         curResultsData_basics.detectedMarkers = makeCellArray(detectedMarkers);
-            
+        
         save(workQueue{iWork}.basicStats_filename, 'curResultsData_basics', 'curTestData');
+        
+        fprintf('.');
         pause(.01);
     end % for iWork = 1:length(workQueue)
     
@@ -124,10 +129,13 @@ function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrec
             queryQuad = queryQuads{iQuery};
             
             for iRotation = 0:3
-                distances = sqrt(sum((queryQuad - gtQuad).^2, 2));
+%                 distances = sqrt(sum((queryQuad - gtQuad).^2, 2));
+                distances = sqrt((queryQuad(:,1) - gtQuad(:,1)).^2 + (queryQuad(:,2) - gtQuad(:,2)).^2);
                 
                 % Compute the closest match based on the mean distance
-                distance_mean = mean(distances);
+                                
+                % distance_mean = mean(distances);
+                distance_mean = (distances(1) + distances(2) + distances(3) + distances(4)) / 4;
                 
                 if distance_mean < bestDistances_mean(iGroundTruth)
                     bestDistances_mean(iGroundTruth) = distance_mean;
@@ -155,9 +163,9 @@ function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrec
                 
                 % rotate the quad
                 queryQuad = queryQuad([3,1,4,2],:);
-            end
-        end
-    end
+            end % for iRotation = 0:3
+        end % for iQuery = 1:length(queryQuads)
+    end % for iGroundTruth = 1:length(groundTruthQuads)
     
 function quads = jsonToQuad(jsonQuads)
     jsonQuads = makeCellArray(jsonQuads);
