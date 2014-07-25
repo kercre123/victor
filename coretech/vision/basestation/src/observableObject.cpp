@@ -150,7 +150,6 @@ namespace Anki {
     void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
                                               const TimeStamp_t sinceTime) const
     {
-      observedMarkers.clear();
       if(sinceTime > 0) {
         for(auto const& marker : this->markers_)
         {

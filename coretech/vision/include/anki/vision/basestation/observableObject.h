@@ -64,9 +64,12 @@ namespace Anki {
       // with that code.
       std::vector<KnownMarker*> const& GetMarkersWithCode(const Marker::Code& whichCode) const;
       
-      // Pupolate a vector of const pointers to all this object's markers that
-      // have been observed since the specified time.  The vector will be empty
-      // if no markers have been observed since then.
+      // Populate a vector of const pointers to all this object's markers that
+      // have been observed since the specified time. The vector will be unchanged
+      // if no markers have been observed since then. Note that the vector is
+      // not cleared internally, so this method _adds_ markers to existing
+      // container. It is the caller's responsibility to clear the vector if
+      // desired.
       void GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
                               const TimeStamp_t sinceTime) const;
 
