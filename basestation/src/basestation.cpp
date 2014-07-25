@@ -145,8 +145,18 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
   {
     case BM_RECORD_SESSION:
     {
+      // Create folder for all recorded logs
+      std::string rootLogFolderName = AnkiUtil::kP_GAME_LOG_ROOT_DIR;
+      if (!DirExists(rootLogFolderName.c_str())) {
+        if(mkdir(rootLogFolderName.c_str(), S_IRWXU) != 0) {
+          PRINT_NAMED_WARNING("Basestation.Init.RootLogDirCreateFailed", "Failed to create folder %s\n", rootLogFolderName.c_str());
+          return BS_END_INIT_ERROR;
+        }
+        
+      }
+      
       // Create folder for log
-      std::string logFolderName = GetCurrentDateTime() + "/";
+      std::string logFolderName = rootLogFolderName + "/" + GetCurrentDateTime() + "/";
       if(mkdir(logFolderName.c_str(), S_IRWXU) != 0) {
         PRINT_NAMED_WARNING("Basestation.Init.LogDirCreateFailed", "Failed to create folder %s\n", logFolderName.c_str());
         return BS_END_INIT_ERROR;
@@ -179,7 +189,8 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
         PRINT_NAMED_ERROR("Basestation.Init.PlaybackDirNotSpecified", "\n");
         return BS_END_INIT_ERROR;
       }
-      logFolderName += "/";
+      logFolderName = AnkiUtil::kP_GAME_LOG_ROOT_DIR + string("/") + logFolderName + "/";
+      
       
       // Check if folder exists
       if (!DirExists(logFolderName.c_str())) {
