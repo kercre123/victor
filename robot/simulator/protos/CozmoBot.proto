@@ -44,7 +44,7 @@ Supervisor {
   
   %{ if not fields.vizMode then }%
   physics Physics {
-    density 5000
+    density 0.1
     #mass 0.17 # about 6 ounces
   }
   %{ end }%
@@ -140,7 +140,7 @@ Supervisor {
 		  %{ if not fields.vizMode then }%
 		  boundingObject USE BODY_SHAPE
 		  physics Physics {
-			 density 1500
+			 density 3000
 		  }
 		  %{ end }%
 		} # BODY Solid
@@ -487,7 +487,7 @@ Supervisor {
 		  %{ if not fields.vizMode then }%
 	          boundingObject USE BACKPACK_GROUP
 		  physics Physics {
-			density 2000
+			density 300
 		  }
 		  %{ end }%
 		} # BACKPACK Solid
@@ -581,8 +581,8 @@ Supervisor {
 
 			%{ if not fields.vizMode then }%
 			boundingObject USE DRIVE_TIRE
-			physics DEF WHEEL_PHYSICS Physics {
-			  density 1000
+			physics DEF FRONT_WHEEL_PHYSICS Physics {
+			  density 5000 # Make heavier than rear wheels to simulate weights in front
 			}
 			%{ end }%
 		  }
@@ -611,7 +611,7 @@ Supervisor {
 
 				%{ if not fields.vizMode then }%
 				boundingObject USE DRIVE_TIRE
-				physics USE WHEEL_PHYSICS
+				physics USE FRONT_WHEEL_PHYSICS
 				%{ end }%
 		  }
 		}
@@ -657,7 +657,9 @@ Supervisor {
 
 						%{ if not fields.vizMode then }%
 						boundingObject USE REAR_TIRE
-						physics USE WHEEL_PHYSICS
+						physics DEF REAR_WHEEL_PHYSICS Physics {
+						  density 10
+						}
 						%{ end }%
 			  	} # endPoint Solit
 				}
@@ -680,7 +682,7 @@ Supervisor {
 
 						%{ if not fields.vizMode then }%
 						boundingObject USE REAR_TIRE
-						physics USE WHEEL_PHYSICS
+						physics USE REAR_WHEEL_PHYSICS
 						%{ end }%
 					}
 				}
