@@ -184,7 +184,19 @@ else
     % Add negative examples
     fnamesNeg = {'ALLWHITE'; 'ALLBLACK'};
     if ~isempty(negativeImageDir)
+        fprintf('Reading negative image data...');
         fnamesNeg = [fnamesNeg; getfnames(negativeImageDir, 'images', 'useFullPath', true)];
+        subDirs = getdirnames(negativeImageDir, 'chunk*');
+        numSubDirs = length(subDirs);
+        if numSubDirs > 0
+            fnamesSubDirs = cell(numSubDirs,1);
+            for iSubDir = 1:length(subDirs)
+                fnamesSubDirs{iSubDir} = getfnames(fullfile(negativeImageDir, subDirs{iSubDir}), 'images', 'useFullPath', true);
+            end
+            fnamesNeg = [fnamesNeg; vertcat(fnamesSubDirs{:})];
+            clear fnamesSubDirs
+        end
+        fprintf('Done. (Found %d negative examples.)\n', length(fnamesNeg));
     end
     
     numNeg = min(length(fnamesNeg), maxNegativeExamples);
