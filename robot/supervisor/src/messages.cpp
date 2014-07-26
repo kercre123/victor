@@ -31,7 +31,10 @@ namespace Anki {
         const TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
           {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
-#include "anki/cozmo/shared/MessageDefinitions.h"
+#include "anki/cozmo/shared/MessageDefinitionsB2R.h"
+          
+#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
+#include "anki/cozmo/shared/MessageDefinitionsR2B.h"
           {0, 0, 0} // Final dummy entry without comma at end
         };
         
@@ -440,50 +443,7 @@ namespace Anki {
       void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
         AnimationController::Play((AnimationID_t)msg.animationID, msg.numLoops);
       }
-      
-      // TODO: Fill these in once they are needed/used:
-      void ProcessVisionMarkerMessage(const VisionMarker& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessRobotAvailableMessage(const RobotAvailable& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      // These need implementations to avoid linker errors, but we don't expect
-      // to _receive_ these message types, only to send them.
 
-      void ProcessCameraCalibrationMessage(const CameraCalibration& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessRobotStateMessage(const RobotState& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-
-      void ProcessPrintTextMessage(const PrintText& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessImageChunkMessage(const ImageChunk& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-
-      void ProcessTrackerQuadMessage(const TrackerQuad& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessBlockPickedUpMessage(const BlockPickedUp& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessBlockPlacedMessage(const BlockPlaced& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-    
-      void ProcessMainCycleTimeErrorMessage(const MainCycleTimeError& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
 // ----------- Send messages -----------------
       
       
