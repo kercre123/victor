@@ -59,9 +59,6 @@ namespace Anki {
      
       }
       else if(Type::LARGE_PLATFORM == type) {
-        AddMarker(Vision::MARKER_A,
-                  Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {-200.000000,-200.000000,0.000000}),
-                  30.000000);
         
         _size = {240.f, 240.f, 44.f};
         
@@ -94,16 +91,16 @@ namespace Anki {
         
         // Top Faces:
         AddMarker(Vision::MARKER_INVERTED_A,
-                  Pose3d(M_PI_2, X_AXIS_3D, {-length*.25f, -width*.25f, height*.5f}),
+                  Pose3d(-M_PI_2, X_AXIS_3D, {-length*.25f, -width*.25f, height*.5f}),
                   markerSize_top);
         AddMarker(Vision::MARKER_INVERTED_B,
-                  Pose3d(M_PI_2, X_AXIS_3D, {-length*.25f,  width*.25f, height*.5f}),
+                  Pose3d(-M_PI_2, X_AXIS_3D, {-length*.25f,  width*.25f, height*.5f}),
                   markerSize_top);
         AddMarker(Vision::MARKER_INVERTED_C,
-                  Pose3d(M_PI_2, X_AXIS_3D, { length*.25f, -width*.25f, height*.5f}),
+                  Pose3d(-M_PI_2, X_AXIS_3D, { length*.25f, -width*.25f, height*.5f}),
                   markerSize_top);
         AddMarker(Vision::MARKER_INVERTED_D,
-                  Pose3d(M_PI_2, X_AXIS_3D, { length*.25f,  width*.25f, height*.5f}),
+                  Pose3d(-M_PI_2, X_AXIS_3D, { length*.25f,  width*.25f, height*.5f}),
                   markerSize_top);
       }
       else {
