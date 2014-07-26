@@ -36,6 +36,7 @@ function editGroundTruth_OpeningFcn(hObject, ~, handles, varargin)
     global curPoseIndex;
     global allHandles;
     global markerClipboard;
+    global pointsType;
     
     curPoseIndex = 1;
     curMarkerIndex = 1;
@@ -48,6 +49,7 @@ function editGroundTruth_OpeningFcn(hObject, ~, handles, varargin)
     resolutionVertical = 240;
     allHandles = handles;
     markerClipboard = [];
+    pointsType = 'fiducialMarker';
     
     setFromSavedDisplayParameters();
     
@@ -512,14 +514,18 @@ function menu_eraseAllLabels_Callback(~, ~, ~)
     
     Save();
     
-function labelingTypePanel_SelectionChangeFcn(~, ~, ~)
+function labelingTypePanel_SelectionChangeFcn(~, eventdata, ~)
     global pointsType;
+    global allHandles;
     
-    if eventdata.NewValue == handles.templatePoints
+    if eventdata.NewValue == allHandles.templatePoints
         pointsType = 'template';
         poseChanged(false);
-    elseif eventdata.NewValue == handles.fiducialMarkerPoints
+    elseif eventdata.NewValue == allHandles.fiducialMarkerPoints
         pointsType = 'fiducialMarker';
+        poseChanged(false);
+    elseif eventdata.NewValue == allHandles.noPoints
+        pointsType = 'none';
         poseChanged(false);
     else
         assert(false);
@@ -571,7 +577,7 @@ function [cornersX, cornersY, whichCorners] = getFiducialCorners(poseIndex, mark
     end
     
     % If markerIndex is empty, return all corners for all complete quads
-        
+    
     if isempty(markerIndex)
         cornersX = zeros(4,0);
         cornersY = zeros(4,0);
@@ -600,9 +606,9 @@ function [cornersX, cornersY, whichCorners] = getFiducialCorners(poseIndex, mark
                 
                 cornersX(:, end+1) = newCornersX; %#ok<AGROW>
                 cornersY(:, end+1) = newCornersY; %#ok<AGROW>
-                whichCorners(:, end+1) = newWhichCorners; %#ok<AGROW>                
-            end            
-        end % for iMarker = 1:length(jsonTestData.Poses{poseIndex}.VisionMarkers)        
+                whichCorners(:, end+1) = newWhichCorners; %#ok<AGROW>
+            end
+        end % for iMarker = 1:length(jsonTestData.Poses{poseIndex}.VisionMarkers)
     else % if isempty(poseIndex)
         cornersX = [];
         cornersY = [];
@@ -716,7 +722,6 @@ function loadTestFile()
     global allHandles;
     global image;
     global imageFigureHandle;
-    global pointsType;
     global curPoseIndex;
     global curMarkerIndex;
     
@@ -752,8 +757,6 @@ function loadTestFile()
     image = rand([240,320]);
     
     imageFigureHandle = figure(100);
-    
-    pointsType = 'fiducialMarker';
     
     N = nan;
     
@@ -942,9 +945,15 @@ function poseChanged(resetZoom)
     if strcmp(pointsType, 'template')
         set(allHandles.templatePoints, 'Value', 1);
         set(allHandles.fiducialMarkerPoints, 'Value', 0);
+        set(allHandles.noPoints, 'Value', 0);
     elseif strcmp(pointsType, 'fiducialMarker')
         set(allHandles.templatePoints, 'Value', 0);
         set(allHandles.fiducialMarkerPoints, 'Value', 1);
+        set(allHandles.noPoints, 'Value', 0);
+    elseif strcmp(pointsType, 'none')
+        set(allHandles.templatePoints, 'Value', 0);
+        set(allHandles.fiducialMarkerPoints, 'Value', 0);
+        set(allHandles.noPoints, 'Value', 1);
     else
         assert(false);
     end
@@ -1059,6 +1068,8 @@ function poseChanged(resetZoom)
                 set(scatterHandle, 'HitTest', 'off')
             end
         end % for iMarker = 1:length(jsonTestData.Poses{curPoseIndex}.VisionMarkers)
+    elseif strcmp(pointsType, 'none')
+        % do nothing
     else
         assert(false);
     end
@@ -1212,7 +1223,7 @@ function ButtonClicked(~, ~, ~)
             assert(false);
         elseif strcmp(pointsType, 'fiducialMarker')
             ci = 0;
-
+            
             for iMarker = 1:size(cornersX,2)
                 ci = ci + 1;
                 
@@ -1234,7 +1245,5 @@ function ButtonClicked(~, ~, ~)
     end
     
     poseChanged(false);
-    
-    
     
     
