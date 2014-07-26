@@ -214,8 +214,8 @@ namespace Anki {
       const Point2f pt(poseWrtMat.GetTranslation().x(), poseWrtMat.GetTranslation().y());
       const bool withinBBox   = GetBoundingQuadXY(Pose3d()).Contains(pt);
       
-      const bool withinHeight = (poseWrtMat.GetTranslation().z() >= _size.z() - heightTol &&
-                                 poseWrtMat.GetTranslation().z() <= _size.z() + heightTol);
+      const bool withinHeight = (poseWrtMat.GetTranslation().z() >= _size.z()*.5f - heightTol &&
+                                 poseWrtMat.GetTranslation().z() <= _size.z()*.5f + heightTol);
       
       // Make sure the given pose's rotation axis is well aligned with the mat's Z axis
       // TODO: make alignment a parameter?
