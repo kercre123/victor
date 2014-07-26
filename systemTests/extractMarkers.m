@@ -1,6 +1,11 @@
 % function [allQuads, markers] = extractMarkers()
 
-function [allQuads, quadValidity, markers] = extractMarkers(image, algorithmParameters)
+function [allQuads, quadValidity, markers, allQuads_pixelValues, markers_pixelValues] = extractMarkers(image, algorithmParameters)
+    allQuads_pixelValues = {};
+    markers_pixelValues = {};
+    
+    image = rgb2gray2(image);
+    
     if algorithmParameters.useMatlabForAll
         convertFromCToMatlab = false;
         
@@ -14,12 +19,17 @@ function [allQuads, quadValidity, markers] = extractMarkers(image, algorithmPara
         
         allQuads = cell(length(allQuadsRaw), 1);
         markers = {};
+        allQuads_pixelValues = cell(length(allQuadsRaw), 1);
+        markers_pixelValues = {};
+        
         for iQuad = 1:length(allQuadsRaw)
             allQuads{iQuad} = allQuadsRaw{iQuad}.corners;
+            [allQuads_pixelValues{iQuad}, ~, ~] = allQuadsRaw{iQuad}.GetProbeValues(image);
             
             if allQuadsRaw{iQuad}.isValid
                 quadValidity(iQuad) = 0;
                 markers{end+1} = allQuadsRaw{iQuad}; %#ok<AGROW>
+                markers_pixelValues{end+1} = allQuads_pixelValues{iQuad}; %#ok<AGROW>
             else
                 quadValidity(iQuad) = 9;
             end
@@ -50,18 +60,18 @@ function [allQuads, quadValidity, markers] = extractMarkers(image, algorithmPara
         end
         
         returnInvalidMarkers = 1;
-        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, 0, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
+        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, 0, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, algorithmParameters.refine_quadRefinementMinCornerChange, returnInvalidMarkers);
         
         returnInvalidMarkers = 0;
-        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, 0, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
+        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers_quadInput(image, allQuadsMatlab, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, 0, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, algorithmParameters.refine_quadRefinementMinCornerChange, returnInvalidMarkers);
     else
         convertFromCToMatlab = true;
         
         returnInvalidMarkers = 1;
-        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers(image, algorithmParameters.scaleImage_numPyramidLevels, algorithmParameters.scaleImage_thresholdMultiplier, algorithmParameters.component1d_minComponentWidth, algorithmParameters.component1d_maxSkipDistance, algorithmParameters.component_minimumNumPixels, algorithmParameters.component_maximumNumPixels, algorithmParameters.component_sparseMultiplyThreshold, algorithmParameters.component_solidMultiplyThreshold, algorithmParameters.component_minHollowRatio, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, algorithmParameters.refine_quadRefinementIterations, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
+        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers(image, algorithmParameters.scaleImage_numPyramidLevels, algorithmParameters.scaleImage_thresholdMultiplier, algorithmParameters.component1d_minComponentWidth, algorithmParameters.component1d_maxSkipDistance, algorithmParameters.component_minimumNumPixels, algorithmParameters.component_maximumNumPixels, algorithmParameters.component_sparseMultiplyThreshold, algorithmParameters.component_solidMultiplyThreshold, algorithmParameters.component_minHollowRatio, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, algorithmParameters.refine_quadRefinementIterations, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, algorithmParameters.refine_quadRefinementMinCornerChange, returnInvalidMarkers);
         
         returnInvalidMarkers = 0;
-        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers(image, algorithmParameters.scaleImage_numPyramidLevels, algorithmParameters.scaleImage_thresholdMultiplier, algorithmParameters.component1d_minComponentWidth, algorithmParameters.component1d_maxSkipDistance, algorithmParameters.component_minimumNumPixels, algorithmParameters.component_maximumNumPixels, algorithmParameters.component_sparseMultiplyThreshold, algorithmParameters.component_solidMultiplyThreshold, algorithmParameters.component_minHollowRatio, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, algorithmParameters.refine_quadRefinementIterations, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, returnInvalidMarkers);
+        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers(image, algorithmParameters.scaleImage_numPyramidLevels, algorithmParameters.scaleImage_thresholdMultiplier, algorithmParameters.component1d_minComponentWidth, algorithmParameters.component1d_maxSkipDistance, algorithmParameters.component_minimumNumPixels, algorithmParameters.component_maximumNumPixels, algorithmParameters.component_sparseMultiplyThreshold, algorithmParameters.component_solidMultiplyThreshold, algorithmParameters.component_minHollowRatio, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, algorithmParameters.refine_quadRefinementIterations, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, algorithmParameters.refine_quadRefinementMinCornerChange, returnInvalidMarkers);
     end
     
     if convertFromCToMatlab

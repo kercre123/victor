@@ -6,8 +6,6 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#include "anki/common/basestation/general.h"
-
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
 
 #include "anki/vision/basestation/camera.h"

@@ -1,10 +1,7 @@
 #include "gtest/gtest.h"
 
-#include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/rotation.h"
-
 #include "anki/common/basestation/math/pose.h"
-
 #include "anki/common/basestation/math/matrix_impl.h"
 
 #include <iostream>

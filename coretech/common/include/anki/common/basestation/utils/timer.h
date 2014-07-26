@@ -21,12 +21,12 @@
 
 //#include <queue>
 //#include <unistd.h>
+#include <string>
 #include <time.h>
+#include <sys/time.h>
 
-#include "anki/common/basestation/general.h"
 #include "anki/common/types.h"
 
-#include <sys/time.h>
 
 namespace Anki {
 
@@ -34,6 +34,11 @@ namespace Anki {
 int getTimeInMilliSeconds();
 // Returns current time in seconds (used for debug when BaseStation is not running)
 float getTimeInSeconds();
+  
+  
+// Get current date/time, format is YYYY-MM-DD_HH-mm-ss
+const std::string GetCurrentDateTime();
+  
   
 /*
  * Keep track of system time. Provides easy way to get time since the start of program.

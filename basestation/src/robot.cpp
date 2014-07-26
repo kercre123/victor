@@ -14,13 +14,13 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
-
-#include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/utils/fileManagement.h"
 
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/imageIO.h"
@@ -1501,8 +1501,17 @@ namespace Anki {
       // When dataSize matches the expected size, print to file
       if (dataSize >= totalImgSize) {
         if (_saveImages) {
+          
+          // Make sure image capture folder exists
+          if (!DirExists(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
+            if (!MakeDir(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
+              PRINT_NAMED_WARNING("Robot.ProcessImageChunk.CreateDirFailed","\n");
+            }
+          }
+          
+          // Create image file
           char imgCaptureFilename[64];
-          snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "robot%d_img%d.pgm", GetID(), imgID);
+          snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img%d.pgm", AnkiUtil::kP_IMG_CAPTURE_DIR, GetID(), imgID);
           PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
           Vision::WritePGM(imgCaptureFilename, data, width, height);
         }

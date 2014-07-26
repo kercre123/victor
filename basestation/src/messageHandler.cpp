@@ -10,6 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/vision/CameraSettings.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"

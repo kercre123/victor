@@ -37,12 +37,12 @@ int main(int argc, char ** argv)
 
 #ifdef USE_SOCKET
   // TCP
-  const char * ipAddress = "192.168.3.33";
+  const char * ipAddress = "192.168.3.30";
   const s32 port = 5551;
   DebugStreamClient parserThread(ipAddress, port);
 #else
   const s32 comPort = 11;
-  const s32 baudRate = 1000000;
+  const s32 baudRate = 2000000;
   DebugStreamClient parserThread(comPort, baudRate);
 #endif
 
@@ -116,10 +116,54 @@ int main(int argc, char ** argv)
 
         parserThread.SaveObject(newObject, outputFilename);
 
-        cv::waitKey(10);
+        cv::waitKey(1);
+      }
+    } else if(strcmp(newObject.typeName, "String") == 0) {
+      CoreTechPrint("Board>> %s\n", reinterpret_cast<const char*>(newObject.startOfPayload));
+    } else if(strcmp(newObject.typeName, "Basic Type Buffer") == 0) {
+      const s32 sizeOfType = reinterpret_cast<s32*>(newObject.buffer)[0];
+      const s32 isBasicType = reinterpret_cast<s32*>(newObject.buffer)[1];
+      //const s32 isInteger = reinterpret_cast<s32*>(newObject.buffer)[2];
+      const s32 isSigned = reinterpret_cast<s32*>(newObject.buffer)[3];
+      const s32 isFloat = reinterpret_cast<s32*>(newObject.buffer)[4];
+      const s32 numElements = reinterpret_cast<s32*>(newObject.buffer)[5];
+
+      CoreTechPrint("%s: ", newObject.objectName);
+
+      if(isBasicType) {
+        if(isFloat) {
+          if(sizeOfType == 4) {
+            for(s32 i=0; i<numElements; i++) { CoreTechPrint("%0.5f, ", reinterpret_cast<f32*>(newObject.startOfPayload)[i]); }
+          } else if(sizeOfType == 8) {
+            for(s32 i=0; i<numElements; i++) { CoreTechPrint("%0.5f, ", reinterpret_cast<f64*>(newObject.startOfPayload)[i]); }
+          }
+        } else {
+          if(isSigned) {
+            if(sizeOfType == 1) {
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%d, ", reinterpret_cast<s8*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 2) {
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%d, ", reinterpret_cast<s16*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 4) {
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%d, ", reinterpret_cast<s32*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 8) {
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%lld, ", reinterpret_cast<s64*>(newObject.startOfPayload)[i]); }
+            }
+          } else {
+            if(sizeOfType == 1) {
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%d, ", reinterpret_cast<u8*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 2) {
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%d, ", reinterpret_cast<u16*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 4) {
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%u, ", reinterpret_cast<u32*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 8) {
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%llu, ", reinterpret_cast<u64*>(newObject.startOfPayload)[i]); }
+            }
+          }
+        }
+        CoreTechPrint("\n");
       }
     }
-  }
+  } // while(true)
 
   return 0;
 } // int main()

@@ -10,8 +10,11 @@
  * Copyright: Anki, Inc. 2014
  *
  **/
-
 #include "anki/cozmo/basestation/uiTcpComms.h"
+
+#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/common/basestation/utils/helpers/printByteArray.h"
+
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include <unistd.h>
 #include <stdio.h>
@@ -194,9 +197,9 @@ namespace Cozmo {
   }
   
   
-  size_t UiTCPComms::GetNumPendingMsgPackets()
+  u32 UiTCPComms::GetNumPendingMsgPackets()
   {
-    return recvdMsgPackets_.size();
+    return (u32)recvdMsgPackets_.size();
   };
   
   void UiTCPComms::ClearMsgPackets()

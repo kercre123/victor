@@ -1,6 +1,10 @@
 % function allCompiledResults = runTests_detectFiducialMarkers()
 
-% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo/systemTests/tests/fiducialDetection_*_all.json', 'C:/Anki/systemTestImages/results/', 'Z:/Documents/Box Documents');
+% On PC
+% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'Z:/Documents/Box Documents');
+
+% On Mac
+% allCompiledResults = runTests_detectFiducialMarkers('~/Documents/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
 
 function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsDirectory, boxSyncDirectory)
     % To be a match, all corners of a quad must be within these thresholds
@@ -8,24 +12,26 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     maxMatchDistance_percent = 0.2;
     
     numComputeThreads.basics = 3;
-    numComputeThreads.perPose = 1;
-    
-    showImageDetections = false;
-    showImageDetectionWidth = 640;
-    %     showOverallStats = true;
+    numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
-    makeNewResultsDirectory = true;
-%     makeNewResultsDirectory = false;
+    %     makeNewResultsDirectory = true;
+    makeNewResultsDirectory = false;
     
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
     assert(exist('boxSyncDirectory', 'var') == 1);
     
+    testJsonPattern = strrep(testJsonPattern, '~/', [tildeToPath(),'/']);
+    resultsDirectory = strrep(resultsDirectory, '~/', [tildeToPath(),'/']);
+    boxSyncDirectory = strrep(boxSyncDirectory, '~/', [tildeToPath(),'/']);
+    
     thisFilename = [mfilename('fullpath'), '.m'];
     thisFileChangeTime = dir(thisFilename);
     
+    fprintf('Loading json test data...');
     allTestData = getTestData(testJsonPattern);
+    fprintf('Loaded\n');
     
     % Compute the accuracy for each test type (matlab-with-refinement, c-with-matlab-quads, etc.), and each set of parameters
     imageSize = [240,320];
@@ -45,60 +51,128 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParameters.quads_quadSymmetryThreshold = 2.0;
     algorithmParameters.quads_minDistanceFromImageEdge = 2;
     algorithmParameters.decode_minContrastRatio = 1.25;
+    algorithmParameters.refine_quadRefinementMinCornerChange = 0.005;
     algorithmParameters.refine_quadRefinementMaxCornerChange = 2;
     algorithmParameters.refine_numRefinementSamples = 100;
     algorithmParameters.refine_quadRefinementIterations = 25;
     algorithmParameters.useMatlabForAll = false;
     algorithmParameters.useMatlabForQuadExtraction = false;
     algorithmParameters.matlab_embeddedConversions = EmbeddedConversionsManager();
+    %     algorithmParameters.drawOutputImage = true;
+    algorithmParameters.showImageDetectionWidth = 640;
+    algorithmParameters.showImageDetections = false;
     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.extractionFunctionName = 'c-with-refinement';
-%     algorithmParametersN.extractionFunctionId = 14;
-%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
-%     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.refine_quadRefinementIterations = 0;
-%     algorithmParametersN.extractionFunctionName = 'c-no-refinement';
-%     algorithmParametersN.extractionFunctionId = 15;
-%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
+    algorithmParametersN = algorithmParameters;
+    algorithmParametersN.extractionFunctionName = 'c-with-refinement';
+    algorithmParametersN.extractionFunctionId = '1/1';
+    [resultsData_overall_cWithRefinement, resultsDirectory_curTime] = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    disp(sprintf('resultsData_overall_cWithRefinement = %f', resultsData_overall_cWithRefinement.percentQuadsExtracted));
     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForAll = true;
-%     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement';
-%     algorithmParametersN.extractionFunctionId = 0;
-%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
+    algorithmParametersN = algorithmParameters;
+    algorithmParametersN.refine_quadRefinementIterations = 0;
+    algorithmParametersN.extractionFunctionName = 'c-no-refinement';
+    algorithmParametersN.extractionFunctionId = '2/1';
+    resultsData_overall_cNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    disp(sprintf('resultsData_overall_cNoRefinement = %f', resultsData_overall_cNoRefinement.percentQuadsExtracted));
     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForAll = true;
-%     algorithmParametersN.refine_quadRefinementIterations = 0;
-%     algorithmParametersN.extractionFunctionName = 'matlab-no-refinement';
-%     algorithmParametersN.extractionFunctionId = 1;
-%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
+    algorithmParametersN = algorithmParameters;
+    algorithmParametersN.useMatlabForAll = true;
+    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement';
+    algorithmParametersN.extractionFunctionId = '3/1';
+    resultsData_overall_matlabWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    disp(sprintf('resultsData_overall_matlabWithRefinement = %f', resultsData_overall_matlabWithRefinement.percentQuadsExtracted));
     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForQuadExtraction = true;
-%     algorithmParametersN.extractionFunctionName = 'matlabQuad-with-refinement';
-%     algorithmParametersN.extractionFunctionId = 2;
-%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
-%     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForQuadExtraction = true;
-%     algorithmParametersN.refine_quadRefinementIterations = 0;
-%     algorithmParametersN.extractionFunctionName = 'matlabQuad-no-refinement';
-%     algorithmParametersN.extractionFunctionId = 3;
-%     compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
+    algorithmParametersN = algorithmParameters;
+    algorithmParametersN.useMatlabForAll = true;
+    algorithmParametersN.refine_quadRefinementIterations = 0;
+    algorithmParametersN.extractionFunctionName = 'matlab-no-refinement';
+    algorithmParametersN.extractionFunctionId = '4/1';
+    resultsData_overall_matlabNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    disp(sprintf('resultsData_overall_matlabNoRefinement = %f', resultsData_overall_matlabNoRefinement.percentQuadsExtracted));
+    
+    algorithmParametersN = algorithmParameters;
+    algorithmParametersN.useMatlabForQuadExtraction = true;
+    algorithmParametersN.extractionFunctionName = 'matlabQuad-with-refinement';
+    algorithmParametersN.extractionFunctionId = '5/1';
+    resultsData_overall_matlabQuadWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    disp(sprintf('resultsData_overall_matlabQuadWithRefinement = %f', resultsData_overall_matlabQuadWithRefinement.percentQuadsExtracted));
+    
+    algorithmParametersN = algorithmParameters;
+    algorithmParametersN.useMatlabForQuadExtraction = true;
+    algorithmParametersN.refine_quadRefinementIterations = 0;
+    algorithmParametersN.extractionFunctionName = 'matlabQuad-no-refinement';
+    algorithmParametersN.extractionFunctionId = '6/1';
+    resultsData_overall_matlabQuadNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    disp(sprintf('resultsData_overall_matlabQuadNoRefinement = %f', resultsData_overall_matlabQuadNoRefinement.percentQuadsExtracted));
+    
+    %     algorithmParametersN = algorithmParameters;
+    %     algorithmParametersN.useMatlabForAll = true;
+    %     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
+    %     thresholdMultipliers = linspace(0.5,1.0,10);
+    %     smallCharacterisicParameters = linspace(0.7, 1.0, 10);
+    %     resultsData_overall_small = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
+    %     for iThresholdMultiplier = 1:length(thresholdMultipliers)
+    %         thresholdMultiplier = thresholdMultipliers(iThresholdMultiplier);
+    %
+    %         for iSmallCharacterisicParameter = 1:length(smallCharacterisicParameters)
+    %             smallCharacterisicParameter = smallCharacterisicParameters(iSmallCharacterisicParameter);
+    %
+    %             algorithmParametersN.extractionFunctionId = sprintf('7/%d/%d', iThresholdMultiplier, iSmallCharacterisicParameter);
+    %             algorithmParametersN.scaleImage_thresholdMultiplier = thresholdMultiplier;
+    %             algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', smallCharacterisicParameter);
+    %             resultsData_overall_small{iThresholdMultiplier,iSmallCharacterisicParameter} = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    %             disp(sprintf('resultsData_overall for %d %d = %f', iThresholdMultiplier, iSmallCharacterisicParameter, resultsData_overall_small{iThresholdMultiplier,iSmallCharacterisicParameter}.percentQuadsExtracted));
+    %         end
+    %     end
     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.useMatlabForAll = true;
     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
-    algorithmParametersN.extractionFunctionId = 4;
-    algorithmParametersN.scaleImage_thresholdMultiplier = 0.75;
-    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', 0.9);
-    compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime);
-
+    thresholdMultipliers = linspace(0.8,1.1,10);
+    smallCharacterisicParameters = linspace(0.9000, 0.9667, 10);
+    resultsData_overall_small2 = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
+    for iThresholdMultiplier = 1:length(thresholdMultipliers)
+        thresholdMultiplier = thresholdMultipliers(iThresholdMultiplier);
+        
+        for iSmallCharacterisicParameter = 1:length(smallCharacterisicParameters)
+            smallCharacterisicParameter = smallCharacterisicParameters(iSmallCharacterisicParameter);
+            
+            algorithmParametersN.extractionFunctionId = sprintf('8/%d/%d', iThresholdMultiplier, iSmallCharacterisicParameter);
+            algorithmParametersN.scaleImage_thresholdMultiplier = thresholdMultiplier;
+            algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', smallCharacterisicParameter);
+            
+            resultsData_overall_small2{iThresholdMultiplier,iSmallCharacterisicParameter} = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+            disp(sprintf('resultsData_overall for %d %d = %f', iThresholdMultiplier, iSmallCharacterisicParameter, resultsData_overall_small2{iThresholdMultiplier,iSmallCharacterisicParameter}.percentQuadsExtracted));
+        end
+    end
+    
+    algorithmParametersN = algorithmParameters;
+    algorithmParametersN.useMatlabForAll = true;
+    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
+    algorithmParametersN.extractionFunctionId = '9/1';
+    algorithmParametersN.scaleImage_thresholdMultiplier = .9333;
+    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', .9148);
+    resultsData_overall_small2_best = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    
+    allResultsFilename = strrep(resultsDirectory_curTime, 'results/dateTime', 'resultsAt');
+    allResultsFilename = [allResultsFilename(1:(end-1)), '.mat'];
+    save(allResultsFilename, '*');
+    
+    keyboard
+    
     allCompiledResults = [];
 end % runTests_detectFiducialMarkers()
+
+function realPath = tildeToPath()
+    if ispc()
+        realPath = '';
+    else
+        oldPath = pwd();
+        cd('~');
+        realPath = pwd();
+        cd(oldPath);
+    end
+end
 
 function allTestData = getTestData(testJsonPattern)
     testJsonPattern = strrep(testJsonPattern, '\', '/');
@@ -114,10 +188,31 @@ function allTestData = getTestData(testJsonPattern)
         
         % Resave json files to mat files
         allTestData{iTest} = convertJsonToMat(allTestFilename);
+        
+        % Sanitize the json input
+        
+        if ~iscell(allTestData{iTest}.jsonData.Poses)
+            allTestData{iTest}.jsonData.Poses = { allTestData{iTest}.jsonData.Poses };
+        end
+        
+        for iPose = 1:length(allTestData{iTest}.jsonData.Poses)
+            if ~iscell(allTestData{iTest}.jsonData.Poses{iPose}.VisionMarkers)
+                allTestData{iTest}.jsonData.Poses{iPose}.VisionMarkers = { allTestData{iTest}.jsonData.Poses{iPose}.VisionMarkers };
+            end
+            
+             if ~isfield(allTestData{iTest}.jsonData.Poses{iPose}, 'Scene')
+                allTestData{iTest}.jsonData.Poses{iPose}.Scene.Distance = -1;
+                allTestData{iTest}.jsonData.Poses{iPose}.Scene.Angle = -1;
+                allTestData{iTest}.jsonData.Poses{iPose}.Scene.CameraExposure = -1;
+                allTestData{iTest}.jsonData.Poses{iPose}.Scene.Light = -1;
+            end
+        end
     end
 end % getTestFilenames()
 
-function resultsData_overall = compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth, makeNewResultsDirectory, thisFileChangeTime)
+function [resultsData_overall, resultsDirectory_curTime] = compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, showPlots)
+    compileAllTic = tic();
+    
     markerDirectoryList = {
         [boxSyncDirectory, '/Cozmo SE/VisionMarkers/symbols/withFiducials/'],...
         [boxSyncDirectory, '/Cozmo SE/VisionMarkers/letters/withFiducials'],...
@@ -125,19 +220,27 @@ function resultsData_overall = compileAll(algorithmParameters, boxSyncDirectory,
     
     rotationList = getListOfSymmetricMarkers(markerDirectoryList);
     
-    [workQueue_basics, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, algorithmParameters.extractionFunctionName, algorithmParameters.extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime);
+    [workQueue_basics, workQueue_perPoseStats, workQueue_all, resultsDirectory_curTime] = computeWorkQueues(resultsDirectory, allTestData, algorithmParameters.extractionFunctionName, algorithmParameters.extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime);
     
     disp(sprintf('%s: workQueue_basics has %d elements and workQueue_perPoseStats has %d elements', algorithmParameters.extractionFunctionName, length(workQueue_basics), length(workQueue_perPoseStats)));
     
-    resultsData_basics = run_recompileBasics(numComputeThreads.basics, workQueue_basics, workQueue_all, allTestData, rotationList, algorithmParameters);
+    slashIndexes = strfind(workQueue_all{1}.basicStats_filename, '/');
+    lastSlashIndex = slashIndexes(end);
+    temporaryDirectory = workQueue_all{1}.basicStats_filename(1:lastSlashIndex);
     
-    resultsData_perPose = run_recompilePerPoseStats(numComputeThreads.perPose, workQueue_perPoseStats, workQueue_all, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);
+    resultsData_basics = run_recompileBasics(numComputeThreads.basics, workQueue_basics, workQueue_all, temporaryDirectory, allTestData, rotationList, algorithmParameters);
     
-    resultsData_overall = run_compileOverallStats(resultsData_perPose);
+    resultsData_perPose = run_recompilePerPoseStats(numComputeThreads.perPose, workQueue_perPoseStats, workQueue_all, temporaryDirectory, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, algorithmParameters.showImageDetections, algorithmParameters.showImageDetectionWidth);
+    
+    resultsData_overall = run_compileOverallStats(resultsData_perPose, showPlots);
+    
+    disp(sprintf('Compile all took %f seconds', toc(compileAllTic)));
 end % compileAll()
 
-function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime)
+function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDirectory_curTime] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime)
     thisFileChangeString = ['dateTime_', datestr(thisFileChangeTime(1).datenum, 'yyyy-mm-dd_HH-MM-SS')];
+    
+    [~, ~, ~] = mkdir(resultsDirectory);
     
     if ~makeNewResultsDirectory
         dirs = dir([resultsDirectory, '/dateTime_*']);
@@ -158,11 +261,15 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = compute
     end
     
     resultsDirectory_curTime = [resultsDirectory, '/', thisFileChangeString, '/'];
-    intermediateDirectory = [resultsDirectory_curTime, 'intermediate/'];
+    resultsDirectory_curTime = strrep(resultsDirectory_curTime, '//', '/');
+        
+    curExtractFunction_intermediateDirectory = [resultsDirectory_curTime, 'intermediate/', extractionFunctionId, '/'];
+    curExtractFunction_dataDirectory = [resultsDirectory_curTime, 'data/', extractionFunctionId, '/'];
+    curExtractFunction_imageDirectory = [resultsDirectory_curTime, 'images/', extractionFunctionId, '/'];
     
-    [~, ~, ~] = mkdir(resultsDirectory);
-    [~, ~, ~] = mkdir(resultsDirectory_curTime);
-    [~, ~, ~] = mkdir(intermediateDirectory);
+    [~, ~, ~] = mkdir(curExtractFunction_intermediateDirectory);
+    [~, ~, ~] = mkdir(curExtractFunction_dataDirectory);
+    [~, ~, ~] = mkdir(curExtractFunction_imageDirectory);
     
     workQueue_basicStats = {};
     workQueue_perPoseStats = {};
@@ -170,9 +277,9 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = compute
     
     for iTest = 1:size(allTestData, 1)
         for iPose = 1:length(allTestData{iTest}.jsonData.Poses)
-            basicStats_filename = [intermediateDirectory, allTestData{iTest}.testFilename, sprintf('_basicStats_pose%05d_fid%05d.mat', iPose - 1, extractionFunctionId)];
-            perPoseStats_dataFilename = [intermediateDirectory, allTestData{iTest}.testFilename, sprintf('_perPose_pose%05d_fid%05d.mat', iPose - 1, extractionFunctionId)];
-            perPoseStats_imageFilename = [resultsDirectory_curTime, allTestData{iTest}.testFilename, sprintf('_pose%05d_fid%05d.png', iPose - 1, extractionFunctionId)];
+            basicStats_filename = [curExtractFunction_intermediateDirectory, allTestData{iTest}.testFilename, sprintf('_basicStats_pose%05d_eid%s.mat', iPose - 1, strrep(extractionFunctionId, '/', '_'))];
+            perPoseStats_dataFilename = [curExtractFunction_dataDirectory, allTestData{iTest}.testFilename, sprintf('_perPose_pose%05d_eid%s.mat', iPose - 1, strrep(extractionFunctionId, '/', '_'))];
+            perPoseStats_imageFilename = [curExtractFunction_imageDirectory, allTestData{iTest}.testFilename, sprintf('_pose%05d_eid%s.png', iPose - 1, strrep(extractionFunctionId, '/', '_'))];
             
             basicStats_filename = strrep(strrep(basicStats_filename, '\', '/'), '//', '/');
             perPoseStats_dataFilename = strrep(strrep(perPoseStats_dataFilename, '\', '/'), '//', '/');
@@ -284,17 +391,33 @@ function data = convertJsonToMat(jsonFilename)
     data.testFileModificationTime = testFileModificationTime;
 end % convertJsonToMat()
 
-function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_todo, workQueue_all, allTestData, rotationList, algorithmParameters) %#ok<INUSD>
+function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_todo, workQueue_all, temporaryDirectory, allTestData, rotationList, algorithmParameters) %#ok<INUSD>
     recompileBasicsTic = tic();
     
-    if ~isempty(workQueue_todo)
-        save('recompileBasicsAllInput.mat', 'allTestData', 'rotationList', 'algorithmParameters');
-        
-        matlabCommandString = ['load(''recompileBasicsAllInput.mat''); ' , 'runTests_detectFiducialMarkers_basicStats(localWorkQueue, allTestData, rotationList, algorithmParameters);'];
-        
-        runParallelProcesses(numComputeThreads, workQueue_todo, matlabCommandString);
-        
-        delete('recompileBasicsAllInput.mat');
+    if isempty(workQueue_todo)
+        load(workQueue_all{1}.basicStats_filename, 'resultsData_basics');
+    end
+    
+    numResultsData = 0;
+    
+    if exist('resultsData_basics', 'var')
+        for i = 1:length(resultsData_basics) %#ok<NODEF>
+            numResultsData = numResultsData + length(resultsData_basics{i});
+        end
+    end
+    
+    if numResultsData ~= length(workQueue_all)
+        if ~isempty(workQueue_todo)
+            allInputFilename = [temporaryDirectory, '/recompileBasicsAllInput.mat'];
+
+            save(allInputFilename, 'allTestData', 'rotationList', 'algorithmParameters');
+
+            matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_basicStats(localWorkQueue, allTestData, rotationList, algorithmParameters);'];
+
+            runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
+
+            delete(allInputFilename);
+        end
         
         resultsData_basics = cell(length(allTestData), 1);
         for iTest = 1:length(allTestData)
@@ -309,28 +432,42 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
         % resave all results in the data for the first work element
         load(workQueue_all{1}.basicStats_filename, 'curResultsData_basics');
         save(workQueue_all{1}.basicStats_filename, 'curResultsData_basics', 'resultsData_basics');
-    else
-        load(workQueue_all{1}.basicStats_filename, 'resultsData_basics');
     end
     
     disp(sprintf('Basic stat computation took %f seconds', toc(recompileBasicsTic)));
 end % run_recompileBasics()
 
-function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, workQueue_todo, workQueue_all, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth) %#ok<INUSD>
+function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, workQueue_todo, workQueue_all, temporaryDirectory, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth) %#ok<INUSD>
     perPoseTic = tic();
     
-    if ~isempty(workQueue_todo)
-        if numComputeThreads ~= 1
-            showImageDetections = false; %#ok<NASGU>
+    if isempty(workQueue_todo)
+        load(workQueue_all{1}.perPoseStats_dataFilename, 'resultsData_perPose');
+    end
+    
+    numResultsData = 0;
+    
+    if exist('resultsData_perPose', 'var')
+        for i = 1:length(resultsData_perPose) %#ok<NODEF>
+            numResultsData = numResultsData + length(resultsData_perPose{i});
         end
-        
-        save('perPoseAllInput.mat', 'allTestData', 'resultsData_basics', 'maxMatchDistance_pixels', 'maxMatchDistance_percent', 'showImageDetections', 'showImageDetectionWidth');
-        
-        matlabCommandString = ['load(''perPoseAllInput.mat''); ' , 'runTests_detectFiducialMarkers_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
-        
-        runParallelProcesses(numComputeThreads, workQueue_todo, matlabCommandString);
-        
-        delete('perPoseAllInput.mat');
+    end
+    
+    if numResultsData ~= length(workQueue_all)
+        if ~isempty(workQueue_todo)
+            if numComputeThreads ~= 1
+                showImageDetections = false; %#ok<NASGU>
+            end
+
+            allInputFilename = [temporaryDirectory, '/perPoseAllInput.mat'];
+
+            save(allInputFilename, 'allTestData', 'resultsData_basics', 'maxMatchDistance_pixels', 'maxMatchDistance_percent', 'showImageDetections', 'showImageDetectionWidth');
+
+            matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
+
+            runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
+
+            delete(allInputFilename);
+        end % if ~isempty(workQueue_todo)
         
         resultsData_perPose = cell(length(allTestData), 1);
         for iTest = 1:length(allTestData)
@@ -345,13 +482,11 @@ function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, work
         % resave all results in the data for the first work element
         load(workQueue_all{1}.perPoseStats_dataFilename, 'curResultsData_perPose');
         save(workQueue_all{1}.perPoseStats_dataFilename, 'curResultsData_perPose', 'resultsData_perPose');
-    else
-        load(workQueue_all{1}.perPoseStats_dataFilename, 'resultsData_perPose');
     end
     
     disp(sprintf('Per-pose stat computation took %f seconds', toc(perPoseTic)));
 end % run_recompileperPoseStats()
 
-function resultsData_overall = run_compileOverallStats(resultsData_perPose)
-    resultsData_overall = runTests_detectFiducialMarkers_compileOverallStats(resultsData_perPose);
+function resultsData_overall = run_compileOverallStats(resultsData_perPose, showPlots)
+    resultsData_overall = runTests_detectFiducialMarkers_compileOverallStats(resultsData_perPose, showPlots);
 end % run_compileOverallStats()

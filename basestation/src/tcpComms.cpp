@@ -12,8 +12,13 @@
  **/
 
 #include "anki/cozmo/basestation/tcpComms.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+
+#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/common/basestation/utils/timer.h"
+
+#include "anki/cozmo/robot/cozmoConfig.h"
+
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -69,7 +74,7 @@ namespace Cozmo {
                                  std::forward_as_tuple(p));
     
     // Fake the number of bytes sent
-    int numBytesSent = sizeof(RADIO_PACKET_HEADER) + p.dataLen + sizeof(RADIO_PACKET_FOOTER);
+    size_t numBytesSent = sizeof(RADIO_PACKET_HEADER) + sizeof(u32) + p.dataLen;
     return numBytesSent;
   }
   
@@ -280,7 +285,8 @@ namespace Cozmo {
                                           std::forward_as_tuple((s32)(it->first),
                                                                 (s32)-1,
                                                                 dataLen,
-                                                                (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE+4]))
+                                                                (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE+4]),
+                                                                BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds())
                                           );
             
             // Shift recvBuf contents down
@@ -338,17 +344,17 @@ namespace Cozmo {
   }
   
   
-  size_t TCPComms::ConnectToAllRobots()
+  u32 TCPComms::ConnectToAllRobots()
   {
     for (advertisingRobotsIt_t it = advertisingRobots_.begin(); it != advertisingRobots_.end(); it++)
     {
       ConnectToRobotByID(it->first);
     }
     
-    return connectedRobots_.size();
+    return (u32)connectedRobots_.size();
   }
   
-  size_t TCPComms::GetAdvertisingRobotIDs(std::vector<int> &robotIDs)
+  u32 TCPComms::GetAdvertisingRobotIDs(std::vector<int> &robotIDs)
   {
     robotIDs.clear();
     for (advertisingRobotsIt_t it = advertisingRobots_.begin(); it != advertisingRobots_.end(); it++)
@@ -356,7 +362,7 @@ namespace Cozmo {
       robotIDs.push_back(it->first);
     }
     
-    return robotIDs.size();
+    return (u32)robotIDs.size();
   }
   
   
@@ -395,12 +401,12 @@ namespace Cozmo {
   }
   
   
-  size_t TCPComms::GetNumPendingMsgPackets()
+  u32 TCPComms::GetNumPendingMsgPackets()
   {
     #if(DO_SIM_COMMS_LATENCY)
     return numRecvRdyMsgs_;
     #else
-    return recvdMsgPackets_.size();
+    return (u32)recvdMsgPackets_.size();
     #endif
   };
   

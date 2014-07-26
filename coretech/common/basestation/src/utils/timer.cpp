@@ -54,6 +54,20 @@ float getTimeInSeconds()
 }
   */
   
+  
+
+const std::string GetCurrentDateTime() {
+  time_t     now = time(0);
+  struct tm  tstruct;
+  char       buf[80];
+  tstruct = *localtime(&now);
+  strftime(buf, sizeof(buf), "%F_%H-%M-%S", &tstruct);
+  
+  return buf;
+}
+  
+  
+  
 // Definition of static field
 BaseStationTimer* BaseStationTimer::_instance = 0;
 

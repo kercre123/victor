@@ -118,9 +118,23 @@ classdef VisionMarkerTrained
                 
                 sortedCorners = Corners(sortedIndexes,:);
                 
-                tform = cp2tform([0 0 1 1; 0 1 1 0]', sortedCorners, 'projective');
+                try
+                    tform = cp2tform([0 0 1 1; 0 1 1 0]', sortedCorners, 'projective');
+                catch
+                    disp('Some points are co-linear');
+                    this.isValid = false;
+                    this.H = eye(3);
+                    return;
+                end
             else
-                tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+                try
+                    tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+                catch                    
+                    disp('Some points are co-linear');
+                    this.isValid = false;
+                    this.H = eye(3);
+                    return;
+                end
             end            
             
             this.H = tform.tdata.T';
