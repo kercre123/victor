@@ -481,8 +481,9 @@ namespace Anki
       const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
       if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
         PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
-                            "Robot's Z axis is not well aligned with the world Z axis.\n");
-        return false;
+                            "Robot's Z axis is not well aligned with the world Z axis. "
+                            "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
+                            rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
       }
       
       // Snap to horizontal
@@ -691,7 +692,24 @@ namespace Anki
 
           }
           else {
-            Vision::ObservableObject* existingObject = GetObjectByID(matToLocalizeTo->GetID());
+            // We can't look up the existing piece by ID because the matToLocalizeTo
+            // is just a mat we _saw_, not one we've instantiated.  So look for
+            // one in approximately the same position, of those with the same
+            // type:
+            //Vision::ObservableObject* existingObject = GetObjectByID(matToLocalizeTo->GetID());
+            Vision::ObservableObject* existingObject = nullptr;
+            auto existingObjectsOfType = _existingObjects[ObjectFamily::MATS].find(matToLocalizeTo->GetType());
+            if(existingObjectsOfType != _existingObjects[ObjectFamily::MATS].end())
+            {
+              for(auto existingObjectsByID : existingObjectsOfType->second)
+              {
+                Vision::ObservableObject* candidateObject = existingObjectsByID.second;
+                if(matToLocalizeTo->IsSameAs(*candidateObject, 20.f, DEG_TO_RAD(20))) {
+                  // Found a match!
+                  existingObject = candidateObject;
+                }
+              }
+            }
           
             if(existingObject == nullptr)
             {
@@ -773,10 +791,10 @@ namespace Anki
                 existingMatPieces[matSeen->GetType()][matSeen->GetID()] = newMatPiece;
                 
                 fprintf(stdout, "Adding new mat with type=%d and ID=%d at (%.1f, %.1f, %.1f)\n",
-                        matSeen->GetType().GetValue(), matSeen->GetID().GetValue(),
-                        matSeen->GetPose().GetTranslation().x(),
-                        matSeen->GetPose().GetTranslation().y(),
-                        matSeen->GetPose().GetTranslation().z());
+                        newMatPiece->GetType().GetValue(), newMatPiece->GetID().GetValue(),
+                        newMatPiece->GetPose().GetTranslation().x(),
+                        newMatPiece->GetPose().GetTranslation().y(),
+                        newMatPiece->GetPose().GetTranslation().z());
                 
                 // Add observed mat markers to the occlusion map of the camera that saw
                 // them, so we can use them to delete objects that should have been
