@@ -99,6 +99,10 @@ DirectionalLight {
 CozmoMat {
 }
 
+Ramp2x1 {
+  translation 0.0575008 0.268306 0.022
+  rotation 0 0 1 3.14159
+}
 WebotsKeyboardController {
 }
 
