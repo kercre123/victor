@@ -37,24 +37,26 @@ function editGroundTruth_OpeningFcn(hObject, ~, handles, varargin)
     global allHandles;
     global markerClipboard;
     global pointsType;
+    global setFigurePosition;
     
     curPoseIndex = 1;
     curMarkerIndex = 1;
     curDisplayType = 1;
-    maxDisplayType = 1;
+    maxDisplayType = 2;
     displayParameters = cell(maxDisplayType,1);
     savedDisplayParameters = cell(maxDisplayType,1);
     savedDisplayParameters{1} = zeros(4,1);
+    savedDisplayParameters{2} = [0.1, 0.1, 0, 0];
     resolutionHorizontal = 320;
     resolutionVertical = 240;
     allHandles = handles;
     markerClipboard = [];
     pointsType = 'fiducialMarker';
+    setFigurePosition = false;
     
     setFromSavedDisplayParameters();
     
-    imageFigureHandle = figure(100);
-    set(imageFigureHandle, 'OuterPosition', [455, 1, 1366, 1080]);
+    figure(100);
     
     % Choose default command line output for editGroundTruth
     handles.output = hObject;
@@ -904,6 +906,7 @@ function poseChanged(resetZoom)
     global resolutionHorizontal;
     global resolutionVertical;
     global allHandles;
+    global setFigurePosition;
     
     fixBounds();
     
@@ -967,12 +970,6 @@ function poseChanged(resetZoom)
     originalXlim = xlim();
     originalYlim = ylim();
     
-    if resolutionHorizontal ~= size(image,2) || resolutionVertical ~= size(image,1)
-        imageResized = imresize(image, [resolutionVertical,resolutionHorizontal], 'nearest');
-    else
-        imageResized = image;
-    end
-    
     if curDisplayType == 1
         % original image
         set(allHandles.panelDisplayType, 'Title', 'Display Type: Original')
@@ -980,9 +977,29 @@ function poseChanged(resetZoom)
         set(allHandles.textDisplayParameter2, 'String', 'NULL')
         set(allHandles.textDisplayParameter3, 'String', 'NULL')
         set(allHandles.textDisplayParameter4, 'String', 'NULL')
+        processedImage = image;
+    elseif curDisplayType == 2
+        set(allHandles.panelDisplayType, 'Title', 'Display Type: Canny')
+        set(allHandles.textDisplayParameter1, 'String', 'thresh')
+        set(allHandles.textDisplayParameter2, 'String', 'sigma')
+        set(allHandles.textDisplayParameter3, 'String', 'NULL')
+        set(allHandles.textDisplayParameter4, 'String', 'NULL')   
+        processedImage = edge(rgb2gray2(image), 'canny', displayParameters{1}, displayParameters{2});
     end
     
-    imageHandle = imshow(imageResized);
+    if resolutionHorizontal ~= size(image,2) || resolutionVertical ~= size(image,1)
+        imageResized = imresize(processedImage, [resolutionVertical,resolutionHorizontal], 'nearest');
+    else
+        imageResized = processedImage;
+    end
+    
+    imageHandle = imshow(imageResized, 'Border', 'tight');
+    
+    % One time, move the image figure
+    if ~setFigurePosition
+        set(imageFigureHandle, 'OuterPosition', [455, 1, 1366, 1080]);
+        setFigurePosition = true;
+    end
     
     if ~resetZoom
         xlim(originalXlim);
