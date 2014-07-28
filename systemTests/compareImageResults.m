@@ -41,6 +41,8 @@ function compareImageResults(filenamePatterns)
             figure(200);
             subplot(numRows, numCols, iPattern);
             imshow(images{iPattern});
+            slashIndex = find(filenames{iPattern}{iFile} == '/');
+            title(filenames{iPattern}{iFile}((slashIndex(end)+1):end))
         end
         [~,~,c] = ginput(1);
         

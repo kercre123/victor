@@ -16,13 +16,17 @@ function imshows(varargin)
             if strcmpi(varargin{i}, 'maximize')
                 maximizeWindows = true;
             end
-        elseif min(size(varargin{i}) == [1,1]) == 1
-            figNums = figNums - 1 + varargin{i};
+        else
+            isImage = (ndims(varargin{i}) == 2 && min(size(varargin{i}) == [1,1]) == 1) || (ndims(varargin{i}) == 3 && min(size(varargin{i}) == [1,1,1]) == 1);
+            if isImage
+                figNums = figNums - 1 + varargin{i};
+            end
         end
     end
     
     for i = 1:length(varargin)
-        if ischar(varargin{i}) || min(size(varargin{i}) == [1,1]) == 1 || isempty(varargin{i})
+        isImage = (ndims(varargin{i}) == 2 && min(size(varargin{i}) == [1,1]) == 1) || (ndims(varargin{i}) == 3 && min(size(varargin{i}) == [1,1,1]) == 1);
+        if ischar(varargin{i}) || isImage || isempty(varargin{i})
             continue;
         end
         
