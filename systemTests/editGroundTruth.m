@@ -867,9 +867,14 @@ function boundsFixed = fixBounds()
     
     curPoseIndexOriginal = curPoseIndex;
     
-    curPoseIndex = max(1, min(length(jsonTestData.Poses), curPoseIndex));
-    curDisplayType = max(1, min(maxDisplayType, curDisplayType));
+    curPoseIndex = max(1, min(length(jsonTestData.Poses), curPoseIndex));    
     curMarkerIndex = max(1, min(curMarkerIndex, getMaxMarkerIndex(curPoseIndex)));
+    
+    if curDisplayType > maxDisplayType
+        curDisplayType = 1;
+    elseif curDisplayType < 1
+         curDisplayType = maxDisplayType;
+    end
     
     if curPoseIndexOriginal ~= curPoseIndex || curDisplayType ~= maxDisplayType
         boundsFixed = true;
