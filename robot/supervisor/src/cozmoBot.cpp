@@ -48,7 +48,7 @@ namespace Anki {
         
         // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
         // times through the main loop
-        s32 robotStateMessageCounter_ = 0;
+        u32 robotStateMessageCounter_ = 0;
         
         // Main cycle time errors
         u32 mainTooLongCnt_ = 0;
@@ -344,7 +344,7 @@ namespace Anki {
         Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)
         ++robotStateMessageCounter_;
-        if(robotStateMessageCounter_ == STATE_MESSAGE_FREQUENCY) {
+        if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY) {
           Messages::SendRobotStateMsg();
           robotStateMessageCounter_ = 0;
         }
@@ -367,7 +367,8 @@ namespace Anki {
         
         
         // Report main cycle time error
-        if (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD) {
+        if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
+            (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD)) {
           Messages::MainCycleTimeError m;
           m.numMainTooLateErrors = mainTooLateCnt_;
           m.avgMainTooLateTime = avgMainTooLateTime_;
