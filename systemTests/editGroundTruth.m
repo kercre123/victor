@@ -82,6 +82,10 @@ function pose_current_CreateFcn(hObject, ~, ~)
     setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(curPoseIndex));
     
+function test_current_CreateFcn(hObject, ~, ~)
+    setDefaultGuiObjectColor(hObject);
+    set(hObject,'String',num2str(1));
+    
 function marker_current_CreateFcn(hObject, ~, ~)
     global curMarkerIndex;
     setDefaultGuiObjectColor(hObject);
@@ -99,6 +103,9 @@ function displayType_current_CreateFcn(hObject, ~, ~)
     set(hObject,'String',num2str(curDisplayType));
     
 function pose_max_CreateFcn(hObject, ~, ~)
+    set(hObject,'String',num2str(1));
+    
+function test_max_CreateFcn(hObject, ~, ~)
     set(hObject,'String',num2str(1));
     
 function marker_max_CreateFcn(~, ~, ~)
@@ -179,68 +186,67 @@ function testJsonFilename2_Callback(~, ~, ~)
     
 function test_numMarkersWithContext_Callback(hObject, ~, ~)
     global jsonTestData;
+    
+    NumMarkersWithContext_previous = jsonTestData.NumMarkersWithContext;
+    
     jsonTestData.NumMarkersWithContext = str2double(get(hObject,'String'));
-    Save();
+    
+    if NumMarkersWithContext_previous ~= jsonTestData.NumMarkersWithContext
+        Save();
+    end
     
 function test_numPartialMarkersWithContext_Callback(hObject, ~, ~)
     global jsonTestData;
+    
+    NumPartialMarkersWithContext_previous = jsonTestData.NumPartialMarkersWithContext;
+    
     jsonTestData.NumPartialMarkersWithContext = str2double(get(hObject,'String'));
-    Save();
+    
+    if NumPartialMarkersWithContext_previous ~= jsonTestData.NumPartialMarkersWithContext
+        Save();
+    end
     
 function test_previous1_Callback(~, ~, ~)
     global allHandles;
-    
-    testDirectory = strrep(get(allHandles.testJsonFilename1, 'String'), '\', '/');
-    testFilename = strrep(get(allHandles.testJsonFilename2, 'String'), '\', '/');
-    
-    if ~strcmp(testFilename((end-4):end), '.json')
-        testFilename = [testFilename, '.json'];
-    end
-    
-    files = dir([testDirectory,'/*.json']);
-    
-    foundIndex = -Inf;
-    for i = 1:length(files)
-        if strcmp(testFilename, files(i).name)
-            foundIndex = i;
-        end
-    end
-    
-    newIndex = max(1, min(length(files), foundIndex-1));
-    
-    set(allHandles.testJsonFilename2, 'String', files(newIndex).name);
-    
+    [allTestNames, newIndex] = getTestNamesFromDirectory();
+    newIndex = max(1, min(length(allTestNames), newIndex-1));
+    set(allHandles.testJsonFilename2, 'String', allTestNames{newIndex});
     loadTestFile()
     
 function test_next1_Callback(~, ~, ~)
     global allHandles;
-    
-    testDirectory = strrep(get(allHandles.testJsonFilename1, 'String'), '\', '/');
-    testFilename = strrep(get(allHandles.testJsonFilename2, 'String'), '\', '/');
-    
-    if ~strcmp(testFilename((end-4):end), '.json')
-        testFilename = [testFilename, '.json'];
-    end
-    
-    files = dir([testDirectory,'/*.json']);
-    
-    foundIndex = -Inf;
-    for i = 1:length(files)
-        if strcmp(testFilename, files(i).name)
-            foundIndex = i;
-        end
-    end
-    
-    newIndex = max(1, min(length(files), foundIndex+1));
-    
-    set(allHandles.testJsonFilename2, 'String', files(newIndex).name);
-    
+    [allTestNames, newIndex] = getTestNamesFromDirectory();
+    newIndex = max(1, min(length(allTestNames), newIndex+1));
+    set(allHandles.testJsonFilename2, 'String', allTestNames{newIndex});
     loadTestFile()
     
-function setDefaultGuiObjectColor(hObject)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
+function test_previous2_Callback(~, ~, ~)
+    global allHandles;
+    [allTestNames, newIndex] = getTestNamesFromDirectory();
+    newIndex = max(1, min(length(allTestNames), newIndex-10));
+    set(allHandles.testJsonFilename2, 'String', allTestNames{newIndex});
+    loadTestFile()
+    
+function test_next2_Callback(~, ~, ~)
+    global allHandles;
+    [allTestNames, newIndex] = getTestNamesFromDirectory();
+    newIndex = max(1, min(length(allTestNames), newIndex+10));
+    set(allHandles.testJsonFilename2, 'String', allTestNames{newIndex});
+    loadTestFile()
+    
+function test_previous3_Callback(~, ~, ~)
+    global allHandles;
+    [allTestNames, newIndex] = getTestNamesFromDirectory();
+    newIndex = max(1, min(length(allTestNames), newIndex-100));
+    set(allHandles.testJsonFilename2, 'String', allTestNames{newIndex});
+    loadTestFile()
+    
+function test_next3_Callback(~, ~, ~)
+    global allHandles;
+    [allTestNames, newIndex] = getTestNamesFromDirectory();
+    newIndex = max(1, min(length(allTestNames), newIndex+100));
+    set(allHandles.testJsonFilename2, 'String', allTestNames{newIndex});
+    loadTestFile()
     
 function pose_previous1_Callback(~, ~, ~)
     global curPoseIndex;
@@ -283,6 +289,14 @@ function pose_current_Callback(hObject, ~, ~)
     curPoseIndex = str2double(get(hObject,'String'));
     fixBounds();
     poseChanged(true);
+    
+function test_current_Callback(hObject, ~, ~)
+    global allHandles;
+    [allTestNames, ~] = getTestNamesFromDirectory();
+    newIndex = str2double(get(hObject,'String'));
+    newIndex = max(1, min(length(allTestNames), newIndex));
+    set(allHandles.testJsonFilename2, 'String', allTestNames{newIndex});
+    loadTestFile()
     
 function marker_next1_Callback(~, ~, ~)
     global curMarkerIndex;
@@ -437,11 +451,14 @@ function markerType_Callback(hObject, ~, ~)
         curName = ['MARKER_', curName];
     end
     
+    markerType_previous = jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType;
+    
     jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType = curName;
     
-    Save();
-    
-    poseChanged(false);
+    if ~strcmp(markerType_previous, jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType)
+        Save();
+        poseChanged(false);
+    end
     
 function menu_label_Callback(~, ~, ~)
     
@@ -516,6 +533,21 @@ function menu_eraseAllLabels_Callback(~, ~, ~)
     
     Save();
     
+function menu_cache_Callback(~, ~, ~)
+    
+function menu_cacheAllTests_Callback(~, ~, ~)
+    global allHandles;
+    
+    testDirectory = strrep(get(allHandles.testJsonFilename1, 'String'), '\', '/');
+    
+    files = dir([testDirectory,'/*.json']);
+    
+    for iFile = 1:length(files)
+        tic
+        loadJsonTestFile([testDirectory, '/', files(iFile).name]);
+        disp(sprintf('Cached %d/%d %s in %f seconds', iFile, length(files), files(iFile).name, toc()));
+    end
+    
 function labelingTypePanel_SelectionChangeFcn(~, eventdata, ~)
     global pointsType;
     global allHandles;
@@ -548,6 +580,34 @@ function pose_filename_ButtonDownFcn(~, ~, ~)
     %
     % End Callback Functions
     %
+    
+function [allTestNames, curTestIndex] = getTestNamesFromDirectory()
+    global allHandles;
+    
+    testDirectory = strrep(get(allHandles.testJsonFilename1, 'String'), '\', '/');
+    testFilename = strrep(get(allHandles.testJsonFilename2, 'String'), '\', '/');
+    
+    if length(testFilename) > 5 && ~strcmp(testFilename((end-4):end), '.json')
+        testFilename = [testFilename, '.json'];
+    end
+    
+    files = dir([testDirectory,'/*.json']);
+    allTestNames = cell(length(files), 1);
+    
+    curTestIndex = 1;
+    for i = 1:length(files)
+        %         allTestNames{i} = [testDirectory, '/', files(i).name];
+        allTestNames{i} = files(i).name;
+        
+        if strcmp(testFilename, files(i).name)
+            curTestIndex = i;
+        end
+    end
+    
+function setDefaultGuiObjectColor(hObject)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
     
 function setToSavedDisplayParameters()
     global curDisplayType;
@@ -669,9 +729,9 @@ function rotateMarker(poseIndex, markerIndex)
         
         jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex}.x_imgLowerRight = curMarkerData.x_imgLowerLeft;
         jsonTestData.Poses{poseIndex}.VisionMarkers{markerIndex}.y_imgLowerRight = curMarkerData.y_imgLowerLeft;
+        
+        Save();
     end
-    
-    Save();
     
 function detectAndAddMarkers()
     global jsonTestData;
@@ -736,7 +796,8 @@ function loadTestFile()
     
     loadSucceeded = false;
     try
-        jsonTestData = loadjson(jsonTestFilename);
+        jsonTestData = loadJsonTestFile(jsonTestFilename);
+        jsonTestData = jsonTestData.jsonData;
         loadSucceeded = true;
     catch
     end
@@ -745,7 +806,8 @@ function loadTestFile()
         jsonTestFilename = [jsonTestFilename, '.json'];
         
         try
-            jsonTestData = loadjson(jsonTestFilename);
+            jsonTestData = loadJsonTestFile(jsonTestFilename);
+            jsonTestData = jsonTestData.jsonData;
             loadSucceeded = true;
         catch
         end
@@ -788,87 +850,9 @@ function loadTestFile()
     
     poseChanged(true)
     
-    Save();
+    %     Save();
     
     return;
-    
-function sanitizeJson()
-    % Don't call this function directly, call fixBounds() instead
-    
-    global jsonTestData;
-    
-    if ~isfield(jsonTestData, 'Poses')
-        assert(false);
-    end
-    
-    if isstruct(jsonTestData.Poses)
-        jsonTestData.Poses = {jsonTestData.Poses};
-    end
-    
-    if ~isfield(jsonTestData, 'NumMarkersWithContext')
-        jsonTestData.NumMarkersWithContext = 0;
-    end
-    
-    if ~isfield(jsonTestData, 'NumPartialMarkersWithContext')
-        jsonTestData.NumPartialMarkersWithContext = 0;
-    end
-    
-    for iPose = 1:length(jsonTestData.Poses)
-        if ~isfield(jsonTestData.Poses{iPose}, 'VisionMarkers')
-            jsonTestData.Poses{iPose}.VisionMarkers = [];
-        end
-        
-        if ~isfield(jsonTestData.Poses{iPose}, 'ImageFile')
-            assert(false);
-        end
-        
-        if ~isfield(jsonTestData.Poses{iPose}, 'NumMarkers')
-            jsonTestData.Poses{iPose}.NumMarkers = 0;
-        end
-        
-        if isfield(jsonTestData.Poses{iPose}, 'NumMarkersWithContext')
-            jsonTestData.Poses{iPose} = rmfield(jsonTestData.Poses{iPose}, 'NumMarkersWithContext');
-        end
-        
-        if isfield(jsonTestData.Poses{iPose}, 'NumPartialMarkersWithContext')
-            jsonTestData.Poses{iPose} = rmfield(jsonTestData.Poses{iPose}, 'NumPartialMarkersWithContext');
-        end
-        
-        if ~isfield(jsonTestData.Poses{iPose}, 'RobotPose')
-            jsonTestData.Poses{iPose}.RobotPose.Angle = 0;
-            jsonTestData.Poses{iPose}.RobotPose.Axis = [1,0,0];
-            jsonTestData.Poses{iPose}.RobotPose.HeadAngle = 0;
-            jsonTestData.Poses{iPose}.RobotPose.Translation = [0,0,0];
-        end
-        
-        if isstruct(jsonTestData.Poses{iPose}.VisionMarkers)
-            jsonTestData.Poses{iPose}.VisionMarkers = {jsonTestData.Poses{iPose}.VisionMarkers};
-        end
-        
-        maxMarkerIndex = length(jsonTestData.Poses{iPose}.VisionMarkers);
-        
-        if length(jsonTestData.Poses{iPose}.VisionMarkers) < maxMarkerIndex
-            jsonTestData.Poses{iPose}.VisionMarkers{end+1} = [];
-        end
-        
-        for iMarker = 1:maxMarkerIndex
-            if ~isfield(jsonTestData.Poses{iPose}.VisionMarkers{iMarker}, 'Name')
-                jsonTestData.Poses{iPose}.VisionMarkers{iMarker}.Name = 'MessageVisionMarker';
-            end
-            
-            if ~isfield(jsonTestData.Poses{iPose}.VisionMarkers{iMarker}, 'markerType')
-                jsonTestData.Poses{iPose}.VisionMarkers{iMarker}.markerType = 'MARKER_UNKNOWN';
-            end
-            
-            if ~isfield(jsonTestData.Poses{iPose}.VisionMarkers{iMarker}, 'timestamp')
-                jsonTestData.Poses{iPose}.VisionMarkers{iMarker}.timestamp = 0;
-            end
-        end
-        
-        if isstruct(jsonTestData.Poses{iPose}.RobotPose)
-            jsonTestData.Poses{iPose}.RobotPose = {jsonTestData.Poses{iPose}.RobotPose};
-        end
-    end
     
 function boundsFixed = fixBounds()
     global jsonTestData;
@@ -879,7 +863,7 @@ function boundsFixed = fixBounds()
     
     boundsFixed = false;
     
-    sanitizeJson();
+    jsonTestData = sanitizeJsonTest(jsonTestData);
     
     curPoseIndexOriginal = curPoseIndex;
     
@@ -918,10 +902,12 @@ function poseChanged(resetZoom)
         return;
     end
     
-    %     slashIndexes = strfind(curImageFilename, '/');
-    %     curImageFilenameWithoutPath = curImageFilename((slashIndexes(end)+1):end);
+    [allTestNames, curTestIndex] = getTestNamesFromDirectory();
+    
     set(allHandles.pose_current, 'String', num2str(curPoseIndex));
     set(allHandles.pose_max, 'String', num2str(length(jsonTestData.Poses)));
+    set(allHandles.test_current, 'String', num2str(curTestIndex));
+    set(allHandles.test_max, 'String', num2str(length(allTestNames)));
     set(allHandles.test_numMarkersWithContext, 'String', num2str(jsonTestData.NumMarkersWithContext));
     set(allHandles.test_numPartialMarkersWithContext, 'String', num2str(jsonTestData.NumPartialMarkersWithContext));
     set(allHandles.marker_current, 'String', num2str(curMarkerIndex));
@@ -983,7 +969,7 @@ function poseChanged(resetZoom)
         set(allHandles.textDisplayParameter1, 'String', 'thresh')
         set(allHandles.textDisplayParameter2, 'String', 'sigma')
         set(allHandles.textDisplayParameter3, 'String', 'NULL')
-        set(allHandles.textDisplayParameter4, 'String', 'NULL')   
+        set(allHandles.textDisplayParameter4, 'String', 'NULL')
         processedImage = edge(rgb2gray2(image), 'canny', displayParameters{1}, displayParameters{2});
     end
     
@@ -1013,38 +999,7 @@ function poseChanged(resetZoom)
     yScaleInv = resolutionVertical / size(image,1);
     
     if strcmp(pointsType, 'template')
-        %             allCorners = jsonTestData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners;
-        %
-        %             if length(allCorners) == 4
-        %                 % first, sort the corners
-        %                 cornersX = [allCorners{1}.x, allCorners{2}.x, allCorners{3}.x, allCorners{4}.x];
-        %                 cornersY = [allCorners{1}.y, allCorners{2}.y, allCorners{3}.y, allCorners{4}.y];
-        %
-        %                 centerX = mean(cornersX);
-        %                 centerY = mean(cornersY);
-        %
-        %                 [thetas,~] = cart2pol(cornersX-centerX, cornersY-centerY);
-        %                 [~,sortedIndexes] = sort(thetas);
-        %
-        %                 for i = 1:4
-        %                     jsonTestData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners{i}.x = cornersX(sortedIndexes(i));
-        %                     jsonTestData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners{i}.y = cornersY(sortedIndexes(i));
-        %                 end
-        %
-        %                 allCorners = jsonTestData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners;
-        %
-        %                 % second, plot the sorted corners
-        %                 plotHandle = plot(...
-        %                     xScaleInv*([allCorners{1}.x,allCorners{2}.x,allCorners{3}.x,allCorners{4}.x,allCorners{1}.x]+0.5),...
-        %                     yScaleInv*([allCorners{1}.y,allCorners{2}.y,allCorners{3}.y,allCorners{4}.y,allCorners{1}.y]+0.5),...
-        %                     'b');
-        %                 set(plotHandle, 'HitTest', 'off')
-        %             end
-        %
-        %             for i = 1:length(allCorners)
-        %                 scatterHandle = scatter(xScaleInv*(allCorners{i}.x+0.5), yScaleInv*(allCorners{i}.y+0.5), 'b+');
-        %                 set(scatterHandle, 'HitTest', 'off')
-        %             end
+        % TODO: template
     elseif strcmp(pointsType, 'fiducialMarker')
         for iMarker = 1:length(jsonTestData.Poses{curPoseIndex}.VisionMarkers)
             if iMarker == curMarkerIndex
@@ -1122,14 +1077,15 @@ function ButtonClicked(~, ~, ~)
     global curPoseIndex;
     global curMarkerIndex;
     global image;
-    %     global allHandles;
     global imageFigureHandle;
     global imageHandle;
     global pointsType;
     global resolutionHorizontal;
     global resolutionVertical;
     
-    axesHandle  = get(imageHandle,'Parent');
+    changed = false;
+    
+    axesHandle  = get(imageHandle, 'Parent');
     imPosition = get(axesHandle, 'CurrentPoint') - 0.5;
     
     imPosition = imPosition(1,1:2);
@@ -1142,7 +1098,7 @@ function ButtonClicked(~, ~, ~)
     
     [cornersX, cornersY, whichCorners] = getFiducialCorners(curPoseIndex, curMarkerIndex);
     
-    buttonType = get(imageFigureHandle,'selectionType');
+    buttonType = get(imageFigureHandle, 'selectionType');
     if strcmp(buttonType, 'normal') % left click
         xScale = size(image,2) / resolutionHorizontal;
         yScale = size(image,1) / resolutionVertical;
@@ -1170,12 +1126,12 @@ function ButtonClicked(~, ~, ~)
                 else
                     assert(false);
                 end
+                
+                changed = true;
             else
                 disp('Cannot add point, because only 4 fiduciual marker corners are allowed');
             end
         end
-        
-        Save();
     elseif strcmp(buttonType, 'alt') % right click
         xScaleInv = resolutionHorizontal / size(image,2);
         yScaleInv = resolutionVertical / size(image,1);
@@ -1222,8 +1178,7 @@ function ButtonClicked(~, ~, ~)
                 end
                 
                 jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex} = newMarkerData;
-                
-                Save();
+                changed = true;
             end
         end % elseif strcmp(pointsType, 'fiducialMarker')
     elseif strcmp(buttonType, 'extend') % shift + left click
@@ -1259,6 +1214,10 @@ function ButtonClicked(~, ~, ~)
                 fixBounds();
             end
         end % elseif strcmp(pointsType, 'fiducialMarker')
+    end
+    
+    if changed
+        Save();
     end
     
     poseChanged(false);

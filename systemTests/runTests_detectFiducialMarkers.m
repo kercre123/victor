@@ -186,27 +186,8 @@ function allTestData = getTestData(testJsonPattern)
     for iTest = 1:length(allTestFilenamesRaw)
         allTestFilename = [testPath, allTestFilenamesRaw(iTest).name];
         
-        % Resave json files to mat files
-        allTestData{iTest} = convertJsonToMat(allTestFilename);
-        
-        % Sanitize the json input
-        
-        if ~iscell(allTestData{iTest}.jsonData.Poses)
-            allTestData{iTest}.jsonData.Poses = { allTestData{iTest}.jsonData.Poses };
-        end
-        
-        for iPose = 1:length(allTestData{iTest}.jsonData.Poses)
-            if ~iscell(allTestData{iTest}.jsonData.Poses{iPose}.VisionMarkers)
-                allTestData{iTest}.jsonData.Poses{iPose}.VisionMarkers = { allTestData{iTest}.jsonData.Poses{iPose}.VisionMarkers };
-            end
-            
-             if ~isfield(allTestData{iTest}.jsonData.Poses{iPose}, 'Scene')
-                allTestData{iTest}.jsonData.Poses{iPose}.Scene.Distance = -1;
-                allTestData{iTest}.jsonData.Poses{iPose}.Scene.Angle = -1;
-                allTestData{iTest}.jsonData.Poses{iPose}.Scene.CameraExposure = -1;
-                allTestData{iTest}.jsonData.Poses{iPose}.Scene.Light = -1;
-            end
-        end
+        % Load json file
+        allTestData{iTest} = loadTestFile(allTestFilename);
     end
 end % getTestFilenames()
 
@@ -262,7 +243,7 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDi
     
     resultsDirectory_curTime = [resultsDirectory, '/', thisFileChangeString, '/'];
     resultsDirectory_curTime = strrep(resultsDirectory_curTime, '//', '/');
-        
+    
     curExtractFunction_intermediateDirectory = [resultsDirectory_curTime, 'intermediate/', extractionFunctionId, '/'];
     curExtractFunction_dataDirectory = [resultsDirectory_curTime, 'data/', extractionFunctionId, '/'];
     curExtractFunction_imageDirectory = [resultsDirectory_curTime, 'images/', extractionFunctionId, '/'];
@@ -349,48 +330,6 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDi
     end % for iTest = 1:size(allTestData, 1)
 end % computeWorkQueues
 
-function data = convertJsonToMat(jsonFilename)
-    jsonFilename = strrep(strrep(jsonFilename, '\', '/'), '//', '/');
-    matFilename = strrep(jsonFilename, '.json', '.mat');
-    
-    doConversion = false;
-    
-    % If the results don't exist
-    if ~exist(matFilename, 'file')
-        doConversion = true;
-    else
-        modificationTime_mat = dir(matFilename);
-        modificationTime_mat = modificationTime_mat(1).datenum;
-        
-        modificationTime_json = dir(jsonFilename);
-        modificationTime_json = modificationTime_json(1).datenum;
-        
-        if modificationTime_mat < modificationTime_json
-            doConversion = true;
-        end
-    end
-    
-    if doConversion
-        jsonData = loadjson(jsonFilename);
-        save(matFilename, 'jsonData');
-    else
-        load(matFilename);
-    end
-    
-    testFileModificationTime = dir(jsonFilename);
-    testFileModificationTime = testFileModificationTime(1).datenum;
-    
-    slashIndexes = strfind(jsonFilename, '/');
-    lastSlashIndex = slashIndexes(end);
-    testPath = jsonFilename(1:lastSlashIndex);
-    testFilename = jsonFilename((lastSlashIndex+1):end);
-    
-    data.jsonData = jsonData;
-    data.testFilename = testFilename;
-    data.testPath = testPath;
-    data.testFileModificationTime = testFileModificationTime;
-end % convertJsonToMat()
-
 function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_todo, workQueue_all, temporaryDirectory, allTestData, rotationList, algorithmParameters) %#ok<INUSD>
     recompileBasicsTic = tic();
     
@@ -409,13 +348,13 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
     if numResultsData ~= length(workQueue_all)
         if ~isempty(workQueue_todo)
             allInputFilename = [temporaryDirectory, '/recompileBasicsAllInput.mat'];
-
+            
             save(allInputFilename, 'allTestData', 'rotationList', 'algorithmParameters');
-
+            
             matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_basicStats(localWorkQueue, allTestData, rotationList, algorithmParameters);'];
-
+            
             runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
-
+            
             delete(allInputFilename);
         end
         
@@ -457,15 +396,15 @@ function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, work
             if numComputeThreads ~= 1
                 showImageDetections = false; %#ok<NASGU>
             end
-
+            
             allInputFilename = [temporaryDirectory, '/perPoseAllInput.mat'];
-
+            
             save(allInputFilename, 'allTestData', 'resultsData_basics', 'maxMatchDistance_pixels', 'maxMatchDistance_percent', 'showImageDetections', 'showImageDetectionWidth');
-
+            
             matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
-
+            
             runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
-
+            
             delete(allInputFilename);
         end % if ~isempty(workQueue_todo)
         
