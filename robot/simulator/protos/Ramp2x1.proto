@@ -9,6 +9,7 @@ PROTO Ramp2x1 [
   field SFFloat rampLength .110
   field SFFloat height .044
   field SFFloat trackWidth .01
+  field SFFloat frontMarkerDistance .050
   
   field SFString type "1" # RampType
   field SFVec3f translation 0 0 0.022
@@ -32,7 +33,7 @@ Solid {
     # Front Face
     Transform {
       rotation 0 1 0 %{=-math.atan(fields.rampLength/fields.height)}% 
-      translation %{=(fields.rampLength/2) + (fields.platformLength/2) + .0001}% 0 0
+      translation %{=fields.rampLength + (fields.platformLength/2) - fields.frontMarkerDistance + .0001}% 0 %{=-fields.height/2+fields.height*fields.frontMarkerDistance/fields.rampLength}%
       children [
         VisionMarker {
           rotation 0 0 1 1.5708      
