@@ -1,3 +1,7 @@
+% function markers = simpleDetector(img, varargin)
+
+% markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_edges', 'componentRejectionTestsType', 'off', 'emptyCenterDetection', 'off', 'connectedComponentsType', 'matlab_original', 'traceBoundaryType', 'matlab_approximate'));
+
 function markers = simpleDetector(img, varargin)
 
 downsampleFactor = 2;
@@ -86,7 +90,9 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_DetectFiduc
         return;
     end
 
-    [numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY);
+    if strcmp(embeddedConversions.componentRejectionTestsType, 'matlab_original') 
+        [numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY);
+    end
 
     if showTiming
         fprintf('Binary region detection took %.2f seconds.\n', toc(t_binaryRegions));

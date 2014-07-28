@@ -1,3 +1,7 @@
+#if !defined(__APPLE_CC__)
+#error This file only builds in XCode
+#endif
+
 //typedef unsigned short char16_t;
 #include <mex.h>
 
