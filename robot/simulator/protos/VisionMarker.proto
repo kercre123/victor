@@ -1,7 +1,7 @@
 #VRML_SIM V7.3.0 utf8
 
 PROTO VisionMarker [
-  field SFVec3f    translation  0 0 0.022
+  field SFVec3f    translation  0 0 0
   field SFRotation rotation     0 0 1 0
   
   field SFFloat    markerWidth  0.025
