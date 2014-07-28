@@ -20,6 +20,8 @@ namespace Anki {
     
     const Ramp::Type Ramp::Type::BASIC_RAMP;
     
+    const f32 Ramp::Angle = atan(Height/SlopeLength);
+    
     const std::array<Point3f, Ramp::NUM_CORNERS> Ramp::CanonicalCorners = {{
       // Bottom corners
       Point3f(-0.5f*PlatformLength,              -0.5f*Width,  -0.5f*Height),
@@ -36,12 +38,13 @@ namespace Anki {
     
     Ramp::Ramp()
     : DockableObject(Type::BASIC_RAMP) // TODO: Support multiple ramp types
-    , _vizHandle(VizManager::INVALID_HANDLE)
     {
-      // Four markers:
-      const Pose3d frontPose(1.8508, {{-0.4653f, -0.4653f, 0.7530f}},
-                             {{0.5f*(Ramp::PlatformLength+Ramp::SlopeLength), 0, 0}});
-      AddMarker(Vision::MARKER_RAMPFRONT, frontPose, Ramp::MarkerSize);
+      // Five markers:
+      Pose3d frontPose(-atan(Ramp::SlopeLength/Ramp::Height), Y_AXIS_3D,
+                       {{Ramp::SlopeLength+Ramp::PlatformLength*.5f-Ramp::FrontMarkerDistance,
+                         0, -Ramp::Height*.5f + Ramp::Height*Ramp::FrontMarkerDistance/Ramp::SlopeLength}});
+      frontPose.RotateBy(RotationVector3d(M_PI_2, Z_AXIS_3D));
+      _frontMarker = &AddMarker(Vision::MARKER_RAMPFRONT, frontPose, Ramp::MarkerSize);
       
       const Pose3d backPose(-M_PI_2, Z_AXIS_3D, {{-0.5f*PlatformLength, 0, 0}});
       AddMarker(Vision::MARKER_RAMPBACK, backPose, Ramp::MarkerSize);
@@ -51,6 +54,12 @@ namespace Anki {
       
       const Pose3d rightPose(M_PI, Z_AXIS_3D, {{10.f,  0.5f*Ramp::Width, 0.f}});
       _rightMarker = &AddMarker(Vision::MARKER_RAMPRIGHT, rightPose, Ramp::MarkerSize);
+      
+      const Pose3d topPose(2.0944, {{-0.5774f, 0.5774f, -0.5774f}},
+                           {{0, 0, Ramp::Height*.5f}});
+      _topMarker = &AddMarker(Vision::MARKER_INVERTED_RAMPFRONT, topPose, Ramp::MarkerSize);
+      
+      _vizHandle.fill(VizManager::INVALID_HANDLE);
       
     } // Ramp() Constructor
     
@@ -64,6 +73,25 @@ namespace Anki {
     {
       EraseVisualization();
     }
+    
+    Pose3d Ramp::GetPreAscentPose(const float distance) const
+    {
+      Pose3d pose(M_PI, Z_AXIS_3D,
+                  {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + distance, 0, 0}});
+      
+      pose.PreComposeWith(GetPose());
+      
+      return pose;
+    } // GetPreAscentPose()
+    
+    Pose3d Ramp::GetPreDescentPose(const float distance) const
+    {
+      Pose3d pose(0, Z_AXIS_3D,
+                  {{-(.5f*Ramp::PlatformLength+distance), 0, Ramp::Height}});
+      pose.PreComposeWith(GetPose());
+      
+      return pose;
+    } // GetPreDescentPose()
     
 #if 0
 #pragma mark --- Virtual Method Implementations ---
@@ -95,18 +123,29 @@ namespace Anki {
     void Ramp::Visualize(VIZ_COLOR_ID color)
     {
       Pose3d vizPose = pose_.GetWithRespectToOrigin();
-      _vizHandle = VizManager::getInstance()->DrawRamp(GetID().GetValue(), Ramp::PlatformLength,
+      _vizHandle[0] = VizManager::getInstance()->DrawRamp(GetID().GetValue(), Ramp::PlatformLength,
                                                        Ramp::SlopeLength, Ramp::Width,
                                                        Ramp::Height, vizPose, color);
-
     } // Visualize()
+    
+    void Ramp::Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance)
+    {
+      DockableObject::Visualize(color, preDockPoseDistance);
+      
+      Pose3d ascentPose(GetPreAscentPose(preDockPoseDistance));
+      Pose3d descentPose(GetPreDescentPose(preDockPoseDistance));
+      _vizHandle[1] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue(), ascentPose);
+      _vizHandle[2] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue()+1, descentPose);
+    }
     
     void Ramp::EraseVisualization()
     {
-      // Draw the ramp
-      if(_vizHandle != VizManager::INVALID_HANDLE) {
-        VizManager::getInstance()->EraseVizObject(_vizHandle);
-        _vizHandle = VizManager::INVALID_HANDLE;
+      // Erase the ramp and pre-ascent/descent poses
+      for(auto handle : _vizHandle) {
+        if(handle != VizManager::INVALID_HANDLE) {
+          VizManager::getInstance()->EraseVizObject(handle);
+          handle = VizManager::INVALID_HANDLE;
+        }
       }
       
       // Erase the pre-dock poses

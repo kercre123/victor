@@ -50,7 +50,7 @@ namespace Anki {
       // DockableObjects will draw their pre-dock poses
       virtual void Visualize() = 0;
       virtual void Visualize(VIZ_COLOR_ID color) = 0;
-      void         Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance);
+      virtual void Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance);
       virtual void EraseVisualization() override;
       
     protected:

@@ -29,6 +29,18 @@ namespace Anki {
   
   namespace Cozmo {
     
+    // Note that a ramp's origin (o) is the center of the "block" that makes up
+    // its platform portion.
+    //
+    //   +------------+
+    //   |              .
+    //   |                .
+    //   |     o            .
+    //   |                    .
+    //   |                      .
+    //   *------------------------+
+    //   <= Platform =><= Slope ==>
+    //
     
     class Ramp : public DockableObject
     {
@@ -43,12 +55,22 @@ namespace Anki {
       Ramp();
       Ramp(const Ramp& otherRamp);
       
+      // Return start poses (at Ramp's current position) for going up or down
+      // the ramp. The distance for ascent is from the tip of the slope.  The
+      // distance for descent is from the opposite edge of the ramp.
+      Pose3d GetPreAscentPose(const float distance) const;
+      Pose3d GetPreDescentPose(const float distance) const;
+      
+      //
+      // Inherited Virtual Methods
+      //
       virtual ~Ramp();
       
       virtual Ramp*  Clone() const override;
       virtual void   GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
       virtual void   Visualize() override;
       virtual void   Visualize(VIZ_COLOR_ID color) override;
+      virtual void   Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) override;
       virtual void   EraseVisualization() override;
       virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
       
@@ -56,7 +78,9 @@ namespace Anki {
                                    std::vector<PoseMarkerPair_t>& poseMarkerPairs,
                                    const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
       
+      
       static ObjectType GetTypeByName(const std::string& name);
+
 
     protected:
       static const s32 NUM_CORNERS = 8;
@@ -68,13 +92,17 @@ namespace Anki {
       constexpr static const f32 SlopeLength    = 88.f;
       constexpr static const f32 PlatformLength = 44.f;
       constexpr static const f32 MarkerSize     = 25.f;
-      
+      constexpr static const f32 FrontMarkerDistance = 50.f;
+      static const f32 Angle;
+        
       static const std::array<Point3f, NUM_CORNERS> CanonicalCorners;
       
       const Vision::KnownMarker* _leftMarker;
       const Vision::KnownMarker* _rightMarker;
+      const Vision::KnownMarker* _frontMarker;
+      const Vision::KnownMarker* _topMarker;
       
-      VizManager::Handle_t _vizHandle;
+      std::array<VizManager::Handle_t,3> _vizHandle;
       
     }; // class Ramp
     
