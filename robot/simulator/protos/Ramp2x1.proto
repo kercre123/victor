@@ -2,7 +2,13 @@
 
 PROTO Ramp2x1 [
   field SFString name "Ramp000"
+  
+  # Dimensions
   field SFFloat width .06
+  field SFFloat platformLength .044
+  field SFFloat rampLength .110
+  field SFFloat height .044
+  
   field SFString type "1" # RampType
   field SFVec3f translation 0 0 0.022
   field SFRotation rotation 0 0 1 0
@@ -35,45 +41,44 @@ Robot {
   contactMaterial "cmat_ramp"
   
   children [
-    DEF Block1x1Texture Transform {
+        
+    # Front Face
+    Transform {
+      rotation 0 1 0 %{=-math.atan(fields.rampLength/fields.height)}% 
+      translation %{=(fields.rampLength/2) + (fields.platformLength/2) + .0001}% 0 0
       children [
-        
-        # Front Face
         VisionMarker {
-          rotation -0.4653 -0.4653 0.7530 1.8508
-          translation 0.0661 0 0
+          rotation 0 0 1 1.5708      
           image "symbols/rampFront.png"
-          isDockable FALSE
         }
-        
-        # Back Face
-        VisionMarker { 
-          rotation 0 0 1 -1.5708
-          translation -0.022 0 0
-          image "symbols/rampBack.png"
-          isDockable FALSE
-        }
-              
-        # Right Face
-        VisionMarker {
-          rotation 0 0 1 3.1415
-          translation 0.01 %{=fields.width/2}% 0
-          image "symbols/rampRight.png"
-          connectorName "rightConnector"
-          connectorRotation 1 0 0 -1.57079
-        }
-        
-        # Left Face
-        VisionMarker {
-          rotation 0 0 1 0
-          translation 0.01 %{=-fields.width/2}% 0
-          image "symbols/rampLeft.png"
-          connectorName "leftConnector"
-          connectorRotation 1 0 0 1.57079
-        }
-
       ]
     }
+    
+    # Back Face
+    VisionMarker { 
+      rotation 0 0 1 -1.5708
+      translation %{=-fields.platformLength/2}% 0 0
+      image "symbols/rampBack.png"
+    }
+          
+    # Right Face
+    VisionMarker {
+      rotation 0 0 1 3.1415
+      translation 0.01 %{=fields.width/2}% 0
+      image "symbols/rampRight.png"
+      connectorName "rightConnector"
+      connectorRotation 1 0 0 -1.57079
+    }
+    
+    # Left Face
+    VisionMarker {
+      rotation 0 0 1 0
+      translation 0.01 %{=-fields.width/2}% 0
+      image "symbols/rampLeft.png"
+      connectorName "leftConnector"
+      connectorRotation 1 0 0 1.57079
+    }
+
     DEF RampShape Group {
       children [
         Shape {
@@ -83,7 +88,7 @@ Robot {
             }
           }
           geometry Box {
-            size 0.044 %{=fields.width}% 0.044
+            size %{=fields.platformLength}% %{=fields.width}% %{=fields.height}%
           }
         }
         Shape {
@@ -95,12 +100,12 @@ Robot {
           geometry IndexedFaceSet {
             coord Coordinate {
               point [
-                0.022 %{=-fields.width/2}% -.022
-                0.110 %{=-fields.width/2}% -.022
-                0.110 %{= fields.width/2}% -.022
-                0.022 %{= fields.width/2}% -.022
-                0.022 %{=-fields.width/2}%  .022
-                0.022 %{= fields.width/2}%  .022
+                %{=fields.platformLength/2}%  %{=-fields.width/2}%  %{=-fields.height/2}%
+                %{=fields.rampLength + fields.platformLength/2}%    %{=-fields.width/2}%  %{=-fields.height/2}%
+                %{=fields.rampLength + fields.platformLength/2}%    %{= fields.width/2}%  %{=-fields.height/2}%
+                %{=fields.platformLength/2}%  %{= fields.width/2}%  %{=-fields.height/2}%
+                %{=fields.platformLength/2}%  %{=-fields.width/2}%  %{=fields.height/2}%
+                %{=fields.platformLength/2}%  %{= fields.width/2}%  %{=fields.height/2}%
               ]
             }
             coordIndex [
