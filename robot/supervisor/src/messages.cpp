@@ -101,6 +101,9 @@ namespace Anki {
         TimeStamp_t robotStateSendHist_[2];
         u8 robotStateSendHistIdx_ = 0;
         
+        // Flag for receipt of Init message
+        bool initReceived_ = false;
+        
       } // private namespace
       
 
@@ -190,6 +193,8 @@ namespace Anki {
    
         PRINT("Robot received init message from basestation with ID=%d and syncTime=%d.\n",
               msg.robotID, msg.syncTime);
+        
+        initReceived_ = true;
         
         // TODO: Compare message ID to robot ID as a handshake?
         
@@ -449,6 +454,13 @@ namespace Anki {
       
       Result SendRobotStateMsg(const RobotState* msg)
       {
+        
+        // Don't send robot state updates unless the init message was received
+        if (!initReceived_) {
+          return RESULT_FAIL;
+        }
+        
+        
         const RobotState* m = &robotState_;
         if (msg) {
           m = msg;
@@ -606,6 +618,17 @@ namespace Anki {
         }
       }
 
+      
+      bool ReceivedInit()
+      {
+        return initReceived_;
+      }
+      
+
+      void ResetInit()
+      {
+        initReceived_ = false;
+      }
       
     } // namespace Messages
   } // namespace Cozmo

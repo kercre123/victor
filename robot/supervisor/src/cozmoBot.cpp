@@ -246,6 +246,7 @@ namespace Anki {
           wasConnected_ = true;
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
+          Messages::ResetInit();
           wasConnected_ = false;
         }
 

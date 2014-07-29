@@ -92,6 +92,13 @@ namespace Anki {
       bool CheckMailbox(DockingErrorSignal&  msg);
       bool CheckMailbox(ImageChunk&          msg);
       
+      
+      // Returns whether or not init message was received from basestation
+      bool ReceivedInit();
+      
+      // Resets the receipt of init message
+      void ResetInit();
+      
     } // namespace Messages
   } // namespace Cozmo
 } // namespace Anki

@@ -36,10 +36,15 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    namespace HAL {
+      extern bool WifiHasClient();
+    }
     bool HAL::RadioIsConnected(void)
     {
       // Always assumes radio is connected
-      return true;
+      //return true;
+      
+      return HAL::WifiHasClient();
     }
 
     void DisconnectRadio(void)
