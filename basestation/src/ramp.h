@@ -55,6 +55,11 @@ namespace Anki {
       Ramp();
       Ramp(const Ramp& otherRamp);
       
+      f32 GetHeight() const { return Height; }
+      
+      const Vision::KnownMarker* GetFrontMarker() const { return _frontMarker; }
+      const Vision::KnownMarker* GetTopMarker()   const { return _topMarker;   }
+      
       // Return start poses (at Ramp's current position) for going up or down
       // the ramp. The distance for ascent is from the tip of the slope.  The
       // distance for descent is from the opposite edge of the ramp.
@@ -89,7 +94,7 @@ namespace Anki {
       // file instead?)
       constexpr static const f32 Width          = 60.f;
       constexpr static const f32 Height         = 44.f;
-      constexpr static const f32 SlopeLength    = 88.f;
+      constexpr static const f32 SlopeLength    = 110.f;
       constexpr static const f32 PlatformLength = 44.f;
       constexpr static const f32 MarkerSize     = 25.f;
       constexpr static const f32 FrontMarkerDistance = 50.f;

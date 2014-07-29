@@ -289,6 +289,10 @@ namespace Anki {
     // (at least in terms of translation).
     const f32 DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM = 5.0f;
     
+    // A common angle threshold for pose equality comparison
+    // If two poses are this close in terms of angle, they are considered equal.
+    const f32 DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD = DEG_TO_RAD(10);
+    
     
     /***************************************************************************
      *

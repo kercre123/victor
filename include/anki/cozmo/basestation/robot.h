@@ -33,23 +33,17 @@ namespace Anki {
     class IPathPlanner;
     class PathDolerOuter;
     
-    class BlockDockingSystem
-    {
-    public:
-      
-    protected:
-      
-      
-    }; // class BlockDockingSystem
-    
     
     class Robot
     {
     public:
+      // Any state added here, must also be added to the static StateNames map,
+      // and to the list of valid states in the switch statement inside SetState().
       enum State {
         IDLE,
         FOLLOWING_PATH,
         BEGIN_DOCKING,
+        BEGIN_RAMPING,
         DOCKING,
         PLACE_OBJECT_ON_GROUND
       };
@@ -90,7 +84,8 @@ namespace Anki {
       const ObjectID         GetDockObject()     const {return _dockObjectID;}
       const ObjectID         GetCarryingObject() const {return _carryingObjectID;}
       
-      void SetState(const State newState);
+      Result SetState(const State newState);
+      
       void SetPose(const Pose3d &newPose);
       void SetHeadAngle(const f32& angle);
       void SetLiftAngle(const f32& angle);
@@ -175,6 +170,10 @@ namespace Anki {
       // Plan a path to an available docking pose of the specified object, and
       // then dock with it.
       Result ExecuteDockingSequence(ObjectID objectIDtoDockWith);
+      
+      // Plan a path to the pre-ascent/descent pose (chosen based on robot's current
+      // height) and then proceed to drive up/down the ramp.
+      Result ExecuteRampingSequence(ObjectID rampID);
       
       // Plan a path to place the object currently being carried at the specified
       // pose.

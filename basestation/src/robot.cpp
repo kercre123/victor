@@ -29,6 +29,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 #include "messageHandler.h"
+#include "ramp.h"
 #include "vizManager.h"
 
 #define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
@@ -104,6 +105,7 @@ namespace Anki {
       {IDLE,                  "IDLE"},
       {FOLLOWING_PATH,        "FOLLOWING_PATH"},
       {BEGIN_DOCKING,         "BEGIN_DOCKING"},
+      {BEGIN_RAMPING,         "BEGIN_RAMPING"},
       {DOCKING,               "DOCKING"},
       {PLACE_OBJECT_ON_GROUND, "PLACE_OBJECT_ON_GROUND"}
     };
@@ -201,6 +203,11 @@ namespace Anki {
                     PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileDocking",
                                      "Replan failed during docking due to bad goal. Will try to update goal.\n");
                     ExecuteDockingSequence(_dockObjectID);
+                  }
+                  else if(_nextState == BEGIN_RAMPING) {
+                    PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileRamping",
+                                     "Replan failed during ramping due to bad goal. Will try to update goal.\n");
+                    ExecuteRampingSequence(_dockObjectID);
                   } else {
                     PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
                                      "Replan failed due to bad goal. Aborting path.\n");
@@ -265,6 +272,7 @@ namespace Anki {
         } // case FOLLOWING_PATH
       
         case BEGIN_DOCKING:
+        case BEGIN_RAMPING:
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime) {
             // TODO: Check that the marker was recently seen at roughly the expected image location
@@ -297,24 +305,17 @@ namespace Anki {
 
             if(distanceToGoal > MAX_DISTANCE_TO_PREDOCK_POSE) {
               PRINT_NAMED_INFO("Robot.Update.ReDock", "robot is too far from pose, re-docking\n");
-              ExecuteDockingSequence(_dockObjectID);
-              break;
-            }
-
-                        
-            const f32 dockBlockHeight = dockObject->GetPose().GetTranslation().z();
-            _dockAction = DA_PICKUP_LOW;
-            if (dockBlockHeight > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
-              if(IsCarryingObject()) {
-                PRINT_INFO("Already carrying object. Can't dock to high object. Aborting.\n");
-                SetState(IDLE);
-                return;
-                
-              } else {
-                _dockAction = DA_PICKUP_HIGH;
+              switch(_state) {
+                case BEGIN_DOCKING:
+                  ExecuteDockingSequence(_dockObjectID);
+                  break;
+                case BEGIN_RAMPING:
+                  ExecuteRampingSequence(_dockObjectID);
+                  break;
+                default:
+                  PRINT_NAMED_ERROR("Robot.Update.UnexpectedState", "Only BEGIN_RAMPING / BEGIN_DOCKING should be possible states here. Got %d.\n", _state);
               }
-            } else if (IsCarryingObject()) {
-              _dockAction = DA_PLACE_HIGH;
+              break;
             }
             
             // Start dock
@@ -324,7 +325,7 @@ namespace Anki {
             SetState(DOCKING);
           }
           break;
-        } // case BEGIN_DOCKING
+        } // case BEGIN_DOCKING / BEGIN_RAMPING
           
         case PLACE_OBJECT_ON_GROUND:
         {
@@ -433,28 +434,30 @@ namespace Anki {
     } // Update()
     
 
-    void Robot::SetState(const State nextState)
+    Result Robot::SetState(const State nextState)
     {
-      // TODO: Provide string name lookup for each state
-      PRINT_INFO("Robot %d switching from state %s to state %s.\n", _ID,
-                 Robot::StateNames.at(_state).c_str(),
-                 Robot::StateNames.at(nextState).c_str());
-
+      Result result;
+      
       switch(nextState) {
         case IDLE:
         case FOLLOWING_PATH:
         case BEGIN_DOCKING:
+        case BEGIN_RAMPING:
         case DOCKING:
         case PLACE_OBJECT_ON_GROUND:
+          PRINT_INFO("Robot %d switching from state %s to state %s.\n", _ID,
+                     Robot::StateNames.at(_state).c_str(),
+                     Robot::StateNames.at(nextState).c_str());
+          _state = nextState;
+          result = RESULT_OK;
           break;
 
         default:
           PRINT_NAMED_ERROR("Robot::SetState", "Trying to transition to invalid state %d!\n", nextState);
-          assert(false);
-          return;
+          result = RESULT_FAIL;
       }
 
-      _state = nextState;
+      return result;
     }
 
     bool Robot::IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle) const {
@@ -720,6 +723,54 @@ namespace Anki {
       return SendExecutePath(path);
     }
     
+    
+    Result Robot::ExecuteRampingSequence(ObjectID rampID)
+    {
+      Ramp* ramp = dynamic_cast<Ramp*>(_world->GetObjectByIDandFamily(rampID, BlockWorld::ObjectFamily::RAMPS));
+      if(ramp == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.RampObjectDoesNotExist",
+                          "Robot %d asked to use ramp with ID=%d, but it does not exist.",
+                          _ID, rampID.GetValue());
+        
+        return RESULT_FAIL;
+      }
+      
+      //
+      // Other checks? Do we have to be carrying a block or have lift up?
+      //
+      
+      _dockObjectID = rampID;
+      
+      // Choose ascent or descent
+      // TODO: Better selection criteria for ascent vs. descent?
+      if(GetPose().GetTranslation().z() < ramp->GetPose().GetTranslation().z()) {
+        _goalPose   = ramp->GetPreAscentPose(PREDOCK_DISTANCE_MM);
+        _dockMarker = ramp->GetFrontMarker();
+        _dockAction = DA_RAMP_ASCEND;
+      } else {
+        _goalPose   = ramp->GetPreDescentPose(PREDOCK_DISTANCE_MM);
+        _dockMarker = ramp->GetTopMarker();
+        _dockAction = DA_RAMP_DESCEND;
+      }
+      
+      _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
+      _goalAngleThreshold    = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
+      
+      Result lastResult = ExecutePathToPose(_goalPose, DEG_TO_RAD(-15));
+      if(lastResult != RESULT_OK) {
+        return lastResult;
+      }
+      
+      _dockAction = DA_RAMP_ASCEND;
+      
+      _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+      SetState(FOLLOWING_PATH);
+      _nextState = BEGIN_RAMPING;
+      
+      return RESULT_OK;
+      
+    } // ExecuteRampingSequence()
+    
   
     Result Robot::ExecuteDockingSequence(ObjectID objectIDtoDockWith)
     {
@@ -732,6 +783,22 @@ namespace Anki {
                           _ID, objectIDtoDockWith.GetValue());
 
         return RESULT_FAIL;
+      }
+      
+      // Choose docking action based on block's position and whether we are
+      // carrying a block
+      const f32 dockBlockHeight = object->GetPose().GetTranslation().z();
+      _dockAction = DA_PICKUP_LOW;
+      if (dockBlockHeight > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
+        if(IsCarryingObject()) {
+          PRINT_INFO("Already carrying object. Can't dock to high object. Aborting.\n");
+          return RESULT_FAIL;
+          
+        } else {
+          _dockAction = DA_PICKUP_HIGH;
+        }
+      } else if (IsCarryingObject()) {
+        _dockAction = DA_PLACE_HIGH;
       }
       
       _dockObjectID = objectIDtoDockWith;
@@ -756,7 +823,7 @@ namespace Anki {
       }
       
       _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
-      _goalAngleThreshold    = DEG_TO_RAD(10);
+      _goalAngleThreshold    = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD; 
       
       lastResult = ExecutePathToPose(preDockPoses, DEG_TO_RAD(-15), selectedIndex);
       if(lastResult != RESULT_OK) {
@@ -819,7 +886,7 @@ namespace Anki {
       
       return RESULT_OK;
       
-    } // ExecuteDockingSequence()
+    } // ExecutePlaceObjectOnGroundSequence()
     
   
     Result Robot::ExecutePlaceObjectOnGroundSequence(const Pose3d& atPose)
@@ -927,7 +994,7 @@ namespace Anki {
       
       return lastResult;
       
-    } // ExecuteDockingSequence()
+    } // ExecutePlaceObjectOnGroundSequence(atPose)
     
     
     // Sends a message to the robot to dock with the specified block

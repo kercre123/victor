@@ -43,7 +43,7 @@ namespace Anki {
       Pose3d frontPose(-atan(Ramp::SlopeLength/Ramp::Height), Y_AXIS_3D,
                        {{Ramp::SlopeLength+Ramp::PlatformLength*.5f-Ramp::FrontMarkerDistance,
                          0, -Ramp::Height*.5f + Ramp::Height*Ramp::FrontMarkerDistance/Ramp::SlopeLength}});
-      frontPose.RotateBy(RotationVector3d(M_PI_2, Z_AXIS_3D));
+      frontPose *= Pose3d(M_PI_2, Z_AXIS_3D, {{0,0,0}});
       _frontMarker = &AddMarker(Vision::MARKER_RAMPFRONT, frontPose, Ramp::MarkerSize);
       
       const Pose3d backPose(-M_PI_2, Z_AXIS_3D, {{-0.5f*PlatformLength, 0, 0}});
@@ -134,8 +134,8 @@ namespace Anki {
       
       Pose3d ascentPose(GetPreAscentPose(preDockPoseDistance));
       Pose3d descentPose(GetPreDescentPose(preDockPoseDistance));
-      _vizHandle[1] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue(), ascentPose);
-      _vizHandle[2] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue()+1, descentPose);
+      _vizHandle[1] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue(), ascentPose, VIZ_COLOR_PRERAMPPOSE);
+      _vizHandle[2] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue()+1, descentPose, VIZ_COLOR_PRERAMPPOSE);
     }
     
     void Ramp::EraseVisualization()

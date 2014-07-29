@@ -32,7 +32,8 @@ namespace Anki {
     typedef enum {
       BM_None,
       BM_PickAndPlace,
-      BM_June2014DiceDemo
+      BM_June2014DiceDemo,
+      BM_TraverseRamp
     } BehaviorMode;
     
     class BehaviorManager
@@ -126,6 +127,7 @@ namespace Anki {
       // Behavior state machines
       void Update_PickAndPlaceBlock();
       void Update_June2014DiceDemo();
+      void Update_TraverseRamp();
       
       // Waits until the current path is complete / timeout occurs.
       // If the blockOfInterest_ is no longer present in the

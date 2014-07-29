@@ -108,6 +108,9 @@ namespace Anki
       // for the return being null!
       Vision::ObservableObject* GetObjectByID(const ObjectID objectID) const;
       
+      // Same as above, but only searches a given family of objects
+      Vision::ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
+            
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension) and returns a vector of quads
       // of their outlines on the ground plane (z=0).  Can also pad the
@@ -295,6 +298,21 @@ namespace Anki
           if(objectsByIdIter != objectsByType.second.end()) {
             return objectsByIdIter->second;
           }
+        }
+      }
+      
+      // ID not found!
+      return nullptr;
+    }
+    
+    inline Vision::ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const
+    {
+      // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
+      
+      for(auto & objectsByType : GetExistingObjectsByFamily(inFamily)) {
+        auto objectsByIdIter = objectsByType.second.find(objectID);
+        if(objectsByIdIter != objectsByType.second.end()) {
+          return objectsByIdIter->second;
         }
       }
       

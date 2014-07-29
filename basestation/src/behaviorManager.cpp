@@ -75,6 +75,11 @@ namespace Anki {
           timesIdle_ = 0;
           SoundManager::getInstance()->Play(SOUND_DEMO_START);
           break;
+        case BM_TraverseRamp:
+          CoreTechPrint("Starting TraverseRamp behavior\n");
+          nextState_ = WAITING_FOR_DOCK_BLOCK;
+          updateFcn_ = &BehaviorManager::Update_TraverseRamp;
+          break;
         default:
           PRINT_NAMED_ERROR("BehaviorManager.InvalidMode", "Invalid behavior mode");
           return;
@@ -267,10 +272,15 @@ namespace Anki {
      * 3) Places it on any other block in the world
      *
      ********************************************************/
+    
     void BehaviorManager::Update_PickAndPlaceBlock()
     {
       // Params for determining whether the predock pose has been reached
       
+      robot_->ExecuteDockingSequence(objectIDofInterest_);
+      StartMode(BM_None);
+      
+      /*
       switch(state_) {
         case WAITING_FOR_DOCK_BLOCK:
         {
@@ -321,9 +331,15 @@ namespace Anki {
           return;
         }
       }
+       */
       
     } // Update_PickAndPlaceBlock()
     
+    void BehaviorManager::Update_TraverseRamp()
+    {
+      robot_->ExecuteRampingSequence(objectIDofInterest_);
+      StartMode(BM_None);
+    }
     
     /********************************************************
      * June2014DiceDemo
