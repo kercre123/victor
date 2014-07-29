@@ -64,6 +64,69 @@ using namespace Anki::Embedded;
 //#define RUN_FACE_DETECTION_GUI
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
+
+GTEST_TEST(CoreTech_Vision, IntegerCounts_Quadrilateral)
+{
+  const Quadrilateral<f32> quad(Point<f32>(1, 5), Point<f32>(6, 6), Point<f32>(7, 11), Point<f32>(0, 11));
+
+  const s32 arrayHeight = 15;
+  const s32 arrayWidth = 15;
+
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> image(arrayHeight, arrayWidth, scratchCcm);
+
+  s32 color = 0;
+  for(s32 y=0; y<arrayHeight; y++) {
+    for(s32 x=0; x<arrayWidth; x++) {
+      image[y][x] = color;
+      color++;
+    }
+  }
+
+  //image.Print("image");
+
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    const IntegerCounts countsSkip2(image, quad, 2, 1, scratchCcm);
+
+    ASSERT_TRUE(countsSkip2.IsValid());
+
+    //countsSkip2.get_counts().Print("countsSkip2");
+
+    // counts = zeros(256,1); counts(1+(76:78))=1; counts(1+(106:110))=1;counts(1+(135:141))=1; toArray(counts')
+    const s32 countsSkip2_groundTruthData[256] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    for(s32 i=0; i<256; i++) {
+      //printf("%d) %d %d\n", i, countsSkip2.get_counts()[i], countsSkip2_groundTruthData[i]);
+      ASSERT_TRUE(countsSkip2.get_counts()[i] == countsSkip2_groundTruthData[i]);
+    }
+  }
+
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    const IntegerCounts countsSkip1(image, quad, 1, 1, scratchCcm);
+
+    ASSERT_TRUE(countsSkip1.IsValid());
+
+    //countsSkip1.get_counts().Print("countsSkip1");
+
+    // counts = zeros(256,1); counts(1+(76:78))=1; counts(1+(91:95))=1; counts(1+(106:110))=1; counts(1+(120:126))=1; counts(1+(135:141))=1; counts(1+(150:156))=1; toArray(counts')
+    const s32 countsSkip1_groundTruthData[256] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    for(s32 i=0; i<256; i++) {
+      //printf("%d) %d %d\n", i, countsSkip1.get_counts()[i], countsSkip1_groundTruthData[i]);
+      ASSERT_TRUE(countsSkip1.get_counts()[i] == countsSkip1_groundTruthData[i]);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, IntegerCounts_Quadrilateral)
+
 GTEST_TEST(CoreTech_Vision, DistanceTransform)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);

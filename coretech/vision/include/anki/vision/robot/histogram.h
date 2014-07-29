@@ -40,6 +40,7 @@ namespace Anki
 
       // Counts the number of pixels for each 0-255 grayvalue
       IntegerCounts(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, MemoryStack &memory);
+      IntegerCounts(const Array<u8> &image, const Quadrilateral<f32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, MemoryStack &memory);
 
       // What is the bin index of a percentile [0,1]?
       // For example, the .1 percentile is the value where 10% of the histogram energy is less than the value

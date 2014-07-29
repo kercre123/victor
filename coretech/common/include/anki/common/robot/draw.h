@@ -79,13 +79,11 @@ namespace Anki
       const s32 imageWidth = image.get_size(1);
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "DrawRectangle", "image is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "DrawFilledConvexQuadrilateral", "image is not valid");
 
       const Rectangle<f32> boundingRect = quad.ComputeBoundingRectangle<f32>();
       const Quadrilateral<f32> sortedQuad = quad.ComputeClockwiseCorners<f32>();
 
-      // rect_y0 = min(quad(:,2));
-      // rect_y1 = max(quad(:,2));
       const f32 rect_y0 = boundingRect.top;
       const f32 rect_y1 = boundingRect.bottom;
 
@@ -96,9 +94,6 @@ namespace Anki
       }
       corners[4] = sortedQuad[0];
 
-      // minY = ceil(rect_y0 - 0.5) + 0.5;
-      // maxY = floor(rect_y1 + 0.5) - 0.5;
-      // ys = minY:maxY;
       const s32 minYS32 = MAX(0,             Round<s32>(ceilf(rect_y0 - 0.5f)));
       const s32 maxYS32 = MIN(imageHeight-1, Round<s32>(floorf(rect_y1 - 0.5f)));
       const f32 minYF32 = minYS32 + 0.5f;
