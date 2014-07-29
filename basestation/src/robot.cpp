@@ -705,22 +705,28 @@ namespace Anki {
     // Sends a path to the robot to be immediately executed
     Result Robot::ExecutePath(const Planning::Path& path)
     {
+      Result lastResult = RESULT_FAIL;
+      
       if (path.GetNumSegments() == 0) {
         PRINT_NAMED_WARNING("Robot.ExecutePath.EmptyPath", "\n");
-        return RESULT_OK;
+        lastResult = RESULT_OK;
+      } else {
+        
+        // TODO: Clear currently executing path or write to buffered path?
+        lastResult = ClearPath();
+        if(lastResult == RESULT_OK) {
+          ++_lastSentPathID;
+          pdo_->SetPath(path);
+          lastResult = SendExecutePath(path);
+        }
       }
-      
-      // TODO: Clear currently executing path or write to buffered path?
-      if (ClearPath() == RESULT_FAIL)
-        return RESULT_FAIL;
 
       SetState(FOLLOWING_PATH);
-      _nextState = IDLE; // for when the path is complete
-      ++_lastSentPathID;
       
-      pdo_->SetPath(path);
-
-      return SendExecutePath(path);
+      // for when the path is complete, can be overridden by caller if needed
+      _nextState = IDLE;
+      
+      return lastResult;
     }
     
     
@@ -729,7 +735,7 @@ namespace Anki {
       Ramp* ramp = dynamic_cast<Ramp*>(_world->GetObjectByIDandFamily(rampID, BlockWorld::ObjectFamily::RAMPS));
       if(ramp == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.RampObjectDoesNotExist",
-                          "Robot %d asked to use ramp with ID=%d, but it does not exist.",
+                          "Robot %d asked to use ramp with ID=%d, but it does not exist.\n",
                           _ID, rampID.GetValue());
         
         return RESULT_FAIL;
@@ -764,7 +770,8 @@ namespace Anki {
       _dockAction = DA_RAMP_ASCEND;
       
       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-      SetState(FOLLOWING_PATH);
+      //SetState(FOLLOWING_PATH); // This should be done by ExecutePathToPose
+      assert(_state == FOLLOWING_PATH);
       _nextState = BEGIN_RAMPING;
       
       return RESULT_OK;
@@ -840,7 +847,8 @@ namespace Anki {
                  _goalPose.GetRotationAngle().getDegrees());
       
       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-      SetState(FOLLOWING_PATH);
+      //SetState(FOLLOWING_PATH); // This should be done by ExecutePathToPose above
+      assert(_state == FOLLOWING_PATH);
       _nextState = BEGIN_DOCKING;
       
       return lastResult;
@@ -989,7 +997,8 @@ namespace Anki {
                  _goalPose.GetRotationAngle().getDegrees());
       
       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-      SetState(FOLLOWING_PATH);
+      //SetState(FOLLOWING_PATH); // This should be done by ExecutePathToPose above
+      assert(_state == FOLLOWING_PATH);
       _nextState = PLACE_OBJECT_ON_GROUND;
       
       return lastResult;
