@@ -341,34 +341,10 @@ namespace Anki {
     }
     
     
-    // STUBS:
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheels const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheelsCurvature const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageMoveLift const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageMoveHead const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetLiftHeight const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadAngle const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageStopAllMotors const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotInit const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentArc const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentPointTurn const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageTrimPath const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageExecutePath const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageDockWithObject const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessagePlaceObjectOnGround const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageHeadAngleUpdate const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageImageRequest const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageStartTestMode const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadlight const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetDefaultLights const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadControllerGains const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetLiftControllerGains const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetVisionSystemParams const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessagePlayAnimation const&){return RESULT_FAIL;}
-    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&)
+    {
+      return RESULT_OK;
+    }
+
   } // namespace Cozmo
 } // namespace Anki

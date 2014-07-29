@@ -1236,6 +1236,11 @@ namespace Anki
           return false;
 #endif        
       }
+      
+      bool WifiHasClient()
+      {
+        return m_isClientConnected;
+      }
     }
   }
 }

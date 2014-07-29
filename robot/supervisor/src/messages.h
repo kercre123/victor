@@ -53,10 +53,15 @@ namespace Anki {
       // Create all the dispatch function prototypes (all implemented
       // manually in messages.cpp).  
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
-#include "anki/cozmo/shared/MessageDefinitions.h"
+#include "anki/cozmo/shared/MessageDefinitionsB2R.h"
       
       void ProcessBTLEMessages();
       void ProcessUARTMessages();
+      
+      // This message is special because it's not only sent to the basestation, but it's also
+      // "received" by the robot from visionSystem. It's defined as a R2B message
+      // so its declaration is not automatically generated.
+      void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg);
       
       void ProcessMessage(const ID msgID, const u8* buffer);
       
@@ -86,6 +91,13 @@ namespace Anki {
       bool CheckMailbox(VisionMarker&        msg);
       bool CheckMailbox(DockingErrorSignal&  msg);
       bool CheckMailbox(ImageChunk&          msg);
+      
+      
+      // Returns whether or not init message was received from basestation
+      bool ReceivedInit();
+      
+      // Resets the receipt of init message
+      void ResetInit();
       
     } // namespace Messages
   } // namespace Cozmo
