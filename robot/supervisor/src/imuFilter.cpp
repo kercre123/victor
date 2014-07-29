@@ -311,8 +311,8 @@ namespace Anki {
         accel_filt[0] = imu_data.acc_x * ACCEL_FILT_COEFF + accel_filt[0] * (1.f-ACCEL_FILT_COEFF);
         accel_filt[1] = imu_data.acc_y * ACCEL_FILT_COEFF + accel_filt[1] * (1.f-ACCEL_FILT_COEFF);
         accel_filt[2] = imu_data.acc_z * ACCEL_FILT_COEFF + accel_filt[2] * (1.f-ACCEL_FILT_COEFF);
-        
-        pitch_ = atan2(accel_filt[0], accel_filt[2]);
+        //printf("accel: %f %f %f\n", accel_filt[0], accel_filt[1], accel_filt[2]);
+        pitch_ = atan2(accel_filt[0], accel_filt[2]) - HeadController::GetAngleRad();
         
         //PERIODIC_PRINT(50, "Pitch %f\n", RAD_TO_DEG_F32(pitch_));
 

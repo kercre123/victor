@@ -9,6 +9,7 @@
 #include "wheelController.h"
 #include "liftController.h"
 #include "headController.h"
+#include "imuFilter.h"
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
@@ -163,6 +164,7 @@ namespace Anki {
         Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
         robotState_.pose_z = 0;
         robotState_.pose_angle = poseAngle.ToFloat();
+        robotState_.pose_pitch_angle = IMUFilter::GetPitch();
         
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
         
