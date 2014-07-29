@@ -33,11 +33,59 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/serialize.h"
 #include "anki/common/robot/compress.h"
 #include "anki/common/robot/hostIntrinsics_m4.h"
+#include "anki/common/robot/draw.h"
 
 #include "embeddedTests.h"
 
 using namespace Anki;
 using namespace Anki::Embedded;
+
+GTEST_TEST(CoreTech_Common, DrawQuadrilateral)
+{
+  const Quadrilateral<f32> quad(Point<f32>(1, 5), Point<f32>(6, 6), Point<f32>(7, 11), Point<f32>(0, 11));
+
+  const s32 arrayHeight = 15;
+  const s32 arrayWidth = 15;
+
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> image(arrayHeight, arrayWidth, scratchCcm);
+
+  const Result result = DrawFilledConvexQuadrilateral<u8>(image, quad, 255);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //image.Print("image");
+  //image.Show("image", true, false, false);
+
+  const u8 image_groundTruthData[arrayHeight*arrayWidth] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
+    255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
+    255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  Array<u8> image_groundTruth(arrayHeight, arrayWidth, scratchCcm);
+  image_groundTruth.Set(image_groundTruthData, arrayHeight*arrayWidth);
+
+  ASSERT_TRUE(AreElementwiseEqual<u8>(image, image_groundTruth));
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, DrawQuadrilateral)
 
 #define PRINT_INTRINSICS_GROUND_TRUTH_V(intrinsic, numValues)\
 {\
