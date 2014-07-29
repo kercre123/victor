@@ -205,11 +205,12 @@ namespace Anki
         
         Vision::Camera& camera = robot->GetCamera();
         
+        /*
         PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
                          "Adding object %d as an occluder for robot %d.\n",
                          object->GetID().GetValue(),
                          robot->GetID());
-        
+        */
         camera.AddOccluder(*object);
       }
       
@@ -829,10 +830,12 @@ namespace Anki
         // them, so we can use them to delete objects that should have been
         // seen between that marker and the robot
         for(auto obsMarker : observedMarkers) {
+          /*
           PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.AddingMatMarkerOccluder",
                            "Adding mat marker '%s' as an occluder for robot %d.\n",
                            Vision::MarkerTypeStrings[obsMarker->GetCode()],
                            robot->GetID());
+           */
           robot->GetCamera().AddOccluder(*obsMarker);
         }
         
