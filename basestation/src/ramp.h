@@ -47,7 +47,7 @@ namespace Anki {
     public:
       
       class Type : public ObjectType {
-        Type() { }
+        Type(const std::string& name) : ObjectType(name) { }
       public:
         static const Type BASIC_RAMP;
       };

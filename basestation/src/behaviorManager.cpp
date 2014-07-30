@@ -524,8 +524,7 @@ namespace Anki {
                     objectToPickUp_ = blockToLookFor;
                     objectToPlaceOn_.SetToUnknown();
                     
-                    CoreTechPrint("Set blockToPickUp = %s\n",
-                                  Block::TypeToStringLUT.at(objectToPickUp_).c_str());
+                    CoreTechPrint("Set blockToPickUp = %s\n", objectToPickUp_.GetName().c_str());
                     
                     // Wait for first dice to disappear
                     state_ = WAITING_FOR_DICE_TO_DISAPPEAR;
@@ -543,8 +542,7 @@ namespace Anki {
 
                       objectToPlaceOn_ = blockToLookFor;
                     
-                      CoreTechPrint("Set objectToPlaceOn = %s\n",
-                                    Block::TypeToStringLUT.at(objectToPlaceOn_).c_str());
+                      CoreTechPrint("Set objectToPlaceOn = %s\n", objectToPlaceOn_.GetName().c_str());
 
                       robot_->SendPlayAnimation(ANIM_HEAD_NOD, 2);
                       waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.5;
@@ -818,7 +816,7 @@ namespace Anki {
           // Repeat turn-stop behavior for more reliable block detection
           Radians currAngle = robot_->GetPose().GetRotationAngle<'Z'>();
           if (isTurning_ && (std::abs((explorationStartAngle_ - currAngle).ToFloat()) > DEG_TO_RAD(40))) {
-            PRINT_INFO("Exploration - pause turning. Looking for %s\n", Block::TypeToStringLUT.at(objectTypeOfInterest_).c_str());
+            PRINT_INFO("Exploration - pause turning. Looking for %s\n", objectTypeOfInterest_.GetName().c_str());
             robot_->DriveWheels(0.f,0.f);
             isTurning_ = false;
             waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;

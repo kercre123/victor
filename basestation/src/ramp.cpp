@@ -18,7 +18,7 @@ namespace Anki {
   
   namespace Cozmo {
     
-    const Ramp::Type Ramp::Type::BASIC_RAMP;
+    const Ramp::Type Ramp::Type::BASIC_RAMP("BASIC_RAMP");
     
     const f32 Ramp::Angle = atan(Height/SlopeLength);
     

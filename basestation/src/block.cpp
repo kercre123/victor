@@ -24,16 +24,11 @@
 namespace Anki {
   namespace Cozmo {
     
-    const Block::Type Block::Type::INVALID;
+    const Block::Type Block::Type::INVALID("INVALID");
     
 #define BLOCK_DEFINITION_MODE BLOCK_ENUM_VALUE_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
-    
-    const std::map<ObjectType, std::string> Block::TypeToStringLUT = {
-#define BLOCK_DEFINITION_MODE BLOCK_TYPE_TO_STRING_LUT_MODE
-#include "anki/cozmo/basestation/BlockDefinitions.h"
-    };
-    
+        
     const std::map<ObjectType, Block::BlockInfoTableEntry_t> Block::BlockInfoLUT_ = {
 #define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"

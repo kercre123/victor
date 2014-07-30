@@ -47,15 +47,12 @@ namespace Anki {
       
       // Enumerated block types
       class Type : public ObjectType {
-        Type() { }
+        Type(const std::string& name) : ObjectType(name) { }
       public:
         static const Type INVALID;
 #define BLOCK_DEFINITION_MODE BLOCK_ENUM_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
       };
-      
-      // LUT for String Names for each enumerated block Type
-      static const std::map<ObjectType, std::string> TypeToStringLUT;
       
       // NOTE: if the ordering of these is modified, you must also update
       //       the static OppositeFaceLUT.
