@@ -38,13 +38,20 @@ namespace Anki {
   ObjectID::StorageType ObjectID::UniqueIDCounter = 0;
   
   
-  ObjectType::ObjectType() {
+  ObjectType::ObjectType(const std::string& name)
+  : _name(name)
+  {
     const int newType = UniqueTypeCounter++;
     SetValue(newType);
     //printf("Adding new type %d (set size = %lu)\n", newType, GetValidTypes().size());
     GetValidTypes().insert(newType);
   }
-  
+
+  ObjectType::ObjectType()
+  : ObjectType("")
+  {
+
+  }
   
   ObjectType::ObjectType(int value)
   {
