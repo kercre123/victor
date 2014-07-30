@@ -53,6 +53,7 @@ namespace Anki {
       if(Type::LETTERS_4x4 == type) {
         
         _size = {1000.f, 1000.f, 2.5f};
+        _isMoveable = false;
         
         //#include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
 #       include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"
@@ -61,6 +62,7 @@ namespace Anki {
       else if(Type::LARGE_PLATFORM == type) {
         
         _size = {240.f, 240.f, 44.f};
+        _isMoveable = true;
         
         const f32& length = _size.x();
         const f32& width  = _size.y();

@@ -77,6 +77,8 @@ namespace Anki {
       
       void SetOrigin(const Pose3d* newOrigin);
       
+      bool IsMoveable() const { return _isMoveable; }
+      
     protected:
       static const std::vector<RotationMatrix3d> _rotationAmbiguities;
       static const s32 NUM_CORNERS = 8;
@@ -84,6 +86,8 @@ namespace Anki {
       
       // x = length, y = width, z = height
       Point3f _size;
+      
+      bool _isMoveable;
       
       VizManager::Handle_t _vizHandle;
     };
