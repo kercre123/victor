@@ -220,8 +220,7 @@ namespace Anki
     
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                          ObjectsMapByType_t& objectsExisting,
-                                         const TimeStamp_t atTimestamp,
-                                         const Pose3d* origin)
+                                         const TimeStamp_t atTimestamp)
     {
       for(auto objSeen : objectsSeen) {
         
@@ -230,16 +229,6 @@ namespace Anki
         // Store pointers to any existing objects that overlap with this one
         std::vector<Vision::ObservableObject*> overlappingObjects;
         FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
-        
-        if(origin != nullptr) {
-          Pose3d poseWrtOrigin;
-          if(objSeen->GetPose().GetWithRespectTo(*origin, poseWrtOrigin) == false) {
-            PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.OriginProblem",
-                              "Could not get object seen w.r.t. to the given origin.\n");
-            return;
-          }
-          objSeen->SetPose(poseWrtOrigin);
-        }
         
         if(overlappingObjects.empty()) {
           // no existing objects overlapped with the objects we saw, so add it

@@ -174,8 +174,7 @@ namespace Anki
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                ObjectsMapByType_t& objectsExisting,
-                               const TimeStamp_t atTimestamp,
-                               const Pose3d* origin = nullptr);
+                               const TimeStamp_t atTimestamp);
       
       // Remove all posekey-marker pairs from the map if marker is marked used
       void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);
