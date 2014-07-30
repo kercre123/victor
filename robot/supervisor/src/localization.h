@@ -38,6 +38,15 @@ namespace Anki {
       // by the pose-diff between the historical at time t and the current pose.
       // Also updates the current pose frame ID.
       Result UpdatePoseWithKeyframe(PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle);
+
+      // Enables/disables the OnRamp state of the robot.
+      // This should only be called from the controller that executes ramp traversal actions
+      Result SetOnRamp(bool onRamp);
+      
+      // Returns true if robot is detected to be on a ramp.
+      // This only works if the ramp is traversed using the controller.
+      // i.e. Can't detect when manually driving up ramp.
+      bool IsOnRamp();
       
     } // Localization
   } // Cozmo
