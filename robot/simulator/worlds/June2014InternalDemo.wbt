@@ -42,7 +42,7 @@ WorldInfo {
     DEF RAMP_REARWHEEL ContactProperties {
       material1 "cmat_ramp"
       material2 "nofriction"
-      coulombFriction 0.0001
+      coulombFriction 5
       bounce 0.001
     }
     DEF FLOOR_BLOCK ContactProperties {
