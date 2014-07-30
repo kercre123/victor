@@ -10,7 +10,7 @@ classdef VisionMarkerTrained
             '~/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rotated', ...
             '~/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated', ...}; %, ...
             '~/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/rotated'};
-        
+                
         ProbeParameters = struct( ...
             'GridSize', 32, ...            %'Radius', 0.02, ...  % As a fraction of a canonical unit square 
             'NumAngles', 8, ...       % How many samples around ring to sample
@@ -27,6 +27,8 @@ classdef VisionMarkerTrained
         ProbePattern = VisionMarkerTrained.CreateProbePattern();
         
         ProbeTree = VisionMarkerTrained.LoadProbeTree();
+        
+        AllMarkerImages = VisionMarkerTrained.LoadAllMarkerImages(VisionMarkerTrained.TrainingImageDir);
         
         DarkProbes   = VisionMarkerTrained.CreateProbes('dark'); 
         BrightProbes = VisionMarkerTrained.CreateProbes('bright');
@@ -60,6 +62,8 @@ classdef VisionMarkerTrained
         
         tree = LoadProbeTree();
         
+        markerImages = LoadAllMarkerImages(TrainingImageDir);
+        
         probes = CreateProbes(probeType); 
         
     end % Protected Static Methods
@@ -78,6 +82,8 @@ classdef VisionMarkerTrained
         
         isValid;
         
+        matchDistance;
+        
     end % Properties
                 
     methods 
@@ -91,10 +97,13 @@ classdef VisionMarkerTrained
             UseSingleProbe = false;
             CornerRefinementIterations = 25;
             UseMexCornerRefinment = false;
+            UseExhaustiveSearch = false;
+            exhaustiveSearchThreshold = 0.1;
                         
             parseVarargin(varargin{:});
             
             assert(~isempty(VisionMarkerTrained.ProbeTree), 'No probe tree loaded.');
+            assert(exist('img', 'var') == true);
             
             if ischar(img)
                 [img, ~, alpha] = imread(img);
@@ -158,57 +167,71 @@ classdef VisionMarkerTrained
                     end
                 end
                 
-                [this.codeName, this.codeID] = TestTree( ...
-                    VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
-                    VisionMarkerTrained.ProbePattern);
+                if UseExhaustiveSearch
+                    [this.codeName, this.codeID, this.matchDistance] = TestExhaustiveSearch( ...
+                        VisionMarkerTrained.AllMarkerImages, img, this.corners);
+                    
+                    verificationResult = this.codeName;
+                    
+                    if this.matchDistance < exhaustiveSearchThreshold
+                        this.isValid = true;
+                    else 
+                        this.isValid = false;
+                    end
+                else
+                    [this.codeName, this.codeID] = TestTree( ...
+                        VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
+                        VisionMarkerTrained.ProbePattern);
+                end
                 
                 if any(strcmp(this.codeName, {'UNKNOWN', 'INVALID'}))
                     this.isValid = false;
                 else
-                    if UseSingleProbe
-                        oneProbe.x = 0;
-                        oneProbe.y = 0;
-                        [verificationResult, verifiedID] = TestTree( ...
-                            VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
-                            img, tform, threshold, oneProbe);
-                        
-                        this.isValid = verifiedID ~= 1;
-                    else 
-                        if all(isfield(VisionMarkerTrained.ProbeTree, ...
-                                {'verifyTreeRed', 'verifyTreeBlack'}))
-                            
-                            verificationResult = this.codeName;
-                            this.isValid = false;
-                            
-                            [redResult, redLabelID] = TestTree( ...
-                                VisionMarkerTrained.ProbeTree.verifyTreeRed, ...
-                                img, tform, threshold, VisionMarkerTrained.ProbePattern);
-                            
-                            if any(this.codeID == redLabelID)
-                                assert(any(strcmp(this.codeName, redResult)));
-                                
-                                [blackResult, blackLabelID] = TestTree(...
-                                    VisionMarkerTrained.ProbeTree.verifyTreeBlack, ...
-                                    img, tform, threshold, VisionMarkerTrained.ProbePattern);
-                            
-                                if any(this.codeID == blackLabelID)
-                                    assert(any(strcmp(this.codeName, blackResult)));
-                                    
-                                    this.isValid = true;
-                                end
-                            end
-                            
-                        else
-                            assert(isfield(VisionMarkerTrained.ProbeTree, 'verifiers'));
-                            
+                    if ~UseExhaustiveSearch
+                        if UseSingleProbe
+                            oneProbe.x = 0;
+                            oneProbe.y = 0;
                             [verificationResult, verifiedID] = TestTree( ...
                                 VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
-                                img, tform, threshold, VisionMarkerTrained.ProbePattern);
-                            
+                                img, tform, threshold, oneProbe);
+
                             this.isValid = verifiedID ~= 1;
+                        else 
+                            if all(isfield(VisionMarkerTrained.ProbeTree, ...
+                                    {'verifyTreeRed', 'verifyTreeBlack'}))
+
+                                verificationResult = this.codeName;
+                                this.isValid = false;
+
+                                [redResult, redLabelID] = TestTree( ...
+                                    VisionMarkerTrained.ProbeTree.verifyTreeRed, ...
+                                    img, tform, threshold, VisionMarkerTrained.ProbePattern);
+
+                                if any(this.codeID == redLabelID)
+                                    assert(any(strcmp(this.codeName, redResult)));
+
+                                    [blackResult, blackLabelID] = TestTree(...
+                                        VisionMarkerTrained.ProbeTree.verifyTreeBlack, ...
+                                        img, tform, threshold, VisionMarkerTrained.ProbePattern);
+
+                                    if any(this.codeID == blackLabelID)
+                                        assert(any(strcmp(this.codeName, blackResult)));
+
+                                        this.isValid = true;
+                                    end
+                                end
+
+                            else
+                                assert(isfield(VisionMarkerTrained.ProbeTree, 'verifiers'));
+
+                                [verificationResult, verifiedID] = TestTree( ...
+                                    VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
+                                    img, tform, threshold, VisionMarkerTrained.ProbePattern);
+
+                                this.isValid = verifiedID ~= 1;
+                            end
                         end
-                    end
-                    
+                    end % if ~UseExhaustiveSearch ... else                    
                     
                     if this.isValid
                         assert(strcmp(verificationResult, this.codeName));

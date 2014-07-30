@@ -1,7 +1,7 @@
 % function [labelName, labelID] = TestTree(node, img, tform, threshold, pattern, drawProbes)
 
 % load('C:\Anki\products-cozmo\coretech\vision\matlab\@VisionMarkerTrained\probeTree.mat')
-% image = double(imresize(rgb2gray(imread('C:\Anki\blockImages\testTrainedCodes.png')), [240,320]));
+% image = double(imresize(rgb2gray(imread('Z:\Box Sync\Cozmo SE\blockImages\testTrainedCodes.png')), [240,320]));
 % tform = maketform('projective', inv([-12.000646 -77.999832 217.999969; 78.999649 -11.999959 21.999990; -0.0 0.0 1.0])');
 % [labelName, labelID] = TestTree(probeTree, image, tform, 128, [], true)
 

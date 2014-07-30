@@ -11,6 +11,11 @@
 
 function counts = integerCounts(image, imageRegionOfInterest)
     assert(ndims(image) == 2);
+    
+    if ~exist('imageRegionOfInterest', 'var')
+        imageRegionOfInterest = [-1,-1; size(image,2)+1,-1; size(image,2)+1,size(image,1)+1; -1,size(image,1)+1];
+    end
+    
     assert(min(size(imageRegionOfInterest)==[4,2]) == 1);
     
     mask = roipoly(image, imageRegionOfInterest(:,1), imageRegionOfInterest(:,2));

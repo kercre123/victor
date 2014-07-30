@@ -13,7 +13,7 @@
 % Simple case
 % result = lucasKande_warpGroundTruth(ones(60,80), [cos(.1), -sin(.1), 20; sin(.1), cos(.1), 20; 0,0,1], 2*[60,80]);
 
-% Add a horiztonal box as a regionOfInterest
+% Add a horizontal box as a regionOfInterest
 % result = lucasKande_warpGroundTruth(ones(60,80), [cos(.1), -sin(.1), 20; sin(.1), cos(.1), 20; 0,0,1], 2*[60,80], [30,30;60,30;60,40;30,40]);
 
 function [result, mask, warpedMask] = lucasKande_warpGroundTruth(image, H, outputImageSize, regionOfInterestQuad, interpMethod)

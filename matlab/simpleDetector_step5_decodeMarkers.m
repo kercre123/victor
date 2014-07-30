@@ -51,13 +51,15 @@ if ~isempty(quads)
 %         if marker.isValid
 %             markers{end+1} = marker; %#ok<AGROW>
 %         end
-        
-%marker = VisionMarker(img, 'Corners', corners); 
-markers{end+1} = VisionMarkerTrained(img, 'Corners', corners, ...
-    'CornerRefinementIterations', quadRefinementIterations);  %#ok<AGROW>
-%if marker.isValid
-%    markers{end+1} = marker; %#ok<AGROW>
-%end
+
+        %marker = VisionMarker(img, 'Corners', corners);
+        if strcmp(embeddedConversions.extractFiducialMethod, 'matlab_original')
+            markers{end+1} = VisionMarkerTrained(img, 'Corners', corners, ...
+                'CornerRefinementIterations', quadRefinementIterations);  %#ok<AGROW>
+        elseif strcmp(embeddedConversions.extractFiducialMethod, 'matlab_exhaustive')
+            markers{end+1} = VisionMarkerTrained(img, 'Corners', corners, ...
+                'CornerRefinementIterations', quadRefinementIterations, 'UseExhaustiveSearch', true);  %#ok<AGROW>
+        end
 
         if DEBUG_DISPLAY
             if markers{end}.isValid

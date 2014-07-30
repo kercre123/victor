@@ -1,7 +1,7 @@
 % function allCompiledResults = runTests_detectFiducialMarkers()
 
 % On PC
-% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'Z:/Documents/Box Documents');
+% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'z:/Box Sync');
 
 % On Mac
 % allCompiledResults = runTests_detectFiducialMarkers('~/Documents/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
@@ -196,8 +196,8 @@ function [resultsData_overall, resultsDirectory_curTime] = compileAll(algorithmP
     
     markerDirectoryList = {
         [boxSyncDirectory, '/Cozmo SE/VisionMarkers/symbols/withFiducials/'],...
-        [boxSyncDirectory, '/Cozmo SE/VisionMarkers/letters/withFiducials'],...
-        [boxSyncDirectory, '/Cozmo SE/VisionMarkers/dice/withFiducials']};
+        [boxSyncDirectory, '/Cozmo SE/VisionMarkers/letters/withFiducials/'],...
+        [boxSyncDirectory, '/Cozmo SE/VisionMarkers/dice/withFiducials/']};
     
     rotationList = getListOfSymmetricMarkers(markerDirectoryList);
     

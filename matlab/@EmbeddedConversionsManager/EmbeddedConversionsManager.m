@@ -10,6 +10,7 @@ classdef EmbeddedConversionsManager < handle
         completeCImplementationType;
         emptyCenterDetection;
         smallCharacterisicParameter;
+        extractFiducialMethod;
     end % PROPERTIES (get-public, set-protected)
 
     methods(Access = 'public')
@@ -35,6 +36,9 @@ classdef EmbeddedConversionsManager < handle
 
             emptyCenterDetection = 'matlab_original';
             emptyCenterDetection_acceptable = {'matlab_original', 'off'};
+            
+            extractFiducialMethod = 'matlab_original';
+            extractFiducialMethod_acceptable = {'matlab_original', 'matlab_exhaustive'};
 
             smallCharacterisicParameter = 0.9;
 
@@ -62,6 +66,9 @@ classdef EmbeddedConversionsManager < handle
             this.emptyCenterDetection = emptyCenterDetection; %#ok<*PROP>
 
             this.smallCharacterisicParameter = smallCharacterisicParameter; %#ok<*PROP>
+            
+            isAcceptable(extractFiducialMethod_acceptable, extractFiducialMethod);
+            this.extractFiducialMethod = extractFiducialMethod;
         end
     end % METHODS (public)
 end % classdef OptimizationManager < handle
