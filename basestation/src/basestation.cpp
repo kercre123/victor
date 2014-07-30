@@ -380,10 +380,11 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
     // Robot bounding box
     using namespace Quad;
     Quad2f quadOnGround2d = robot->GetBoundingQuadXY();
-    Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
-                          Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
-                          Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
-                          Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
+    const f32 zHeight = robot->GetPose().GetTranslation().z() + 0.5f;
+    Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     zHeight),
+                          Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  zHeight),
+                          Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    zHeight),
+                          Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), zHeight));
 
     VizManager::getInstance()->DrawRobotBoundingBox(robot->GetID(), quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
     

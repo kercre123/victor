@@ -93,6 +93,22 @@ namespace Anki {
       return pose;
     } // GetPreDescentPose()
     
+    Pose3d Ramp::GetPostAscentPose(const float wheelBase) const
+    {
+      Pose3d pose(0, Z_AXIS_3D,
+                  {{Ramp::PlatformLength*.5f - wheelBase, 0, Ramp::Height*.5f}});
+      pose.PreComposeWith(GetPose());
+      return pose;
+    } // GetPostAscentPose()
+    
+    Pose3d Ramp::GetPostDescentPose(const float wheelBase) const
+    {
+      Pose3d pose(0, Z_AXIS_3D,
+                  {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + wheelBase, 0, -Ramp::Height*.5f}});
+      pose.PreComposeWith(GetPose());
+      return pose;
+    } // GetPostDescentPose()
+    
 #if 0
 #pragma mark --- Virtual Method Implementations ---
 #endif

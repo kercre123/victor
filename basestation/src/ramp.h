@@ -55,7 +55,8 @@ namespace Anki {
       Ramp();
       Ramp(const Ramp& otherRamp);
       
-      f32 GetHeight() const { return Height; }
+      f32     GetHeight() const { return Height; }
+      Radians GetAngle()  const { return Angle;  }
       
       const Vision::KnownMarker* GetFrontMarker() const { return _frontMarker; }
       const Vision::KnownMarker* GetTopMarker()   const { return _topMarker;   }
@@ -65,6 +66,14 @@ namespace Anki {
       // distance for descent is from the opposite edge of the ramp.
       Pose3d GetPreAscentPose(const float distance) const;
       Pose3d GetPreDescentPose(const float distance) const;
+      
+      // Return final poses (at Ramp's current position) for a robot after it
+      // has finished going up or down the ramp. Takes the robot's wheel base
+      // as input since the assumption is that the robot will be level when its
+      // back wheels have left the slope, meaning the robot's origin (between
+      // its front two wheels) is wheel base away.
+      Pose3d GetPostAscentPose(const float wheelBase) const;
+      Pose3d GetPostDescentPose(const float wheelBase) const;
       
       //
       // Inherited Virtual Methods

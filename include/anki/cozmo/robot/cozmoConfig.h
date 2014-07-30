@@ -20,6 +20,8 @@ namespace Anki {
     const f32 WHEEL_RAD_TO_MM    = WHEEL_DIAMETER_MM / 2.f;  // or HALF_WHEEL_CIRCUM / PI;
     const f32 WHEEL_DIST_MM      = 47.7f; // distance b/w the front wheels
     const f32 WHEEL_DIST_HALF_MM = WHEEL_DIST_MM / 2.f;
+    const f32 WHEEL_BASE_MM      = 30.f;
+    
     
     // The height of the lift at various configurations
     // Actual limit in proto is closer to 20.4mm, but there is a weird

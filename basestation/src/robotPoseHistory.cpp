@@ -551,6 +551,11 @@ namespace Anki {
       return (poses_.empty() ? 0 : poses_.rbegin()->first);
     }
     
+    PoseFrameID_t RobotPoseHistory::GetNewestPoseFrameID() const
+    {
+      return (poses_.empty() ? 0 : poses_.rbegin()->second.GetFrameId());
+    }
+    
     void RobotPoseHistory::Print() const
     {
       // Create merged map of all poses

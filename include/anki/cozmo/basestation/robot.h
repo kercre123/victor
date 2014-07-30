@@ -74,7 +74,6 @@ namespace Anki {
       // Returns true if head_angle is valid.
       // *valid_head_angle is made to equal the closest valid head angle to head_angle.
       bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
-
       
       const Pose3d&          GetNeckPose()       const {return _neckPose;}
       const Pose3d&          GetHeadCamPose()    const {return _headCamPose;}
@@ -124,22 +123,21 @@ namespace Anki {
       
       // True if wheel speeds are non-zero in most recent RobotState message
       bool IsMoving() const {return _isMoving;}
-      void SetIsMoving(bool t) {_isMoving= t;}
       
       // True if we are on the sloped part of a ramp
-      bool IsOnRamp() const { return _onRamp; }
-      void SetOnRamp(bool t) { _onRamp = t; }
+      bool   IsOnRamp() const { return _onRamp; }
+      Result SetOnRamp(bool t);
       
       void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
       s8   GetCurrPathSegment() {return _currPathSegment;}
       bool IsTraversingPath() {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
 
       void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
-      u8 GetNumFreeSegmentSlots() const {return _numFreeSegmentSlots;}
+      u8   GetNumFreeSegmentSlots() const {return _numFreeSegmentSlots;}
       
       void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
-      u16 GetLastRecvdPathID() {return _lastRecvdPathID;}
-      u16 GetLastSentPathID() {return _lastSentPathID;}
+      u16  GetLastRecvdPathID() {return _lastRecvdPathID;}
+      u16  GetLastSentPathID() {return _lastSentPathID;}
 
       void SetCarryingObject(ObjectID carryObjectID) {_carryingObjectID = carryObjectID;}
       void UnSetCarryingObject() { _carryingObjectID.UnSet(); }
@@ -300,6 +298,7 @@ namespace Anki {
       // Returns true if the pose is successfully updated, false otherwise.
       bool UpdateCurrPoseFromHistory();
       
+      Result UpdateFullRobotState(const MessageRobotState& msg);
       
       // ========= Lights ==========
       void SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color);
@@ -354,7 +353,10 @@ namespace Anki {
       Pose3d           _pose;
       PoseFrameID_t    _frameId;
       ObjectID         _localizedToID;
+      
       bool             _onRamp;
+      Point2f          _rampStartPosition;
+      f32              _rampStartHeight;
       
       const Pose3d _neckPose; // joint around which head rotates
       const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint
@@ -387,7 +389,7 @@ namespace Anki {
       // marker on that block, so long as we always verify the object
       // exists and is still valid (since, therefore, the marker must
       // be as well)
-      ObjectID                  _dockObjectID;
+      ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
       DockAction_t                _dockAction;
       Pose3d                      _dockObjectOrigPose;
@@ -399,6 +401,10 @@ namespace Anki {
       f32 _waitUntilTime;
       
       ///////// Messaging ////////
+      
+      Result SendAbsLocalizationUpdate(const Pose3d&        pose,
+                                       const TimeStamp_t&   t,
+                                       const PoseFrameID_t& frameId) const;
       
       // Sends message to move lift at specified speed
       Result SendMoveLift(const f32 speed_rad_per_sec) const;

@@ -124,8 +124,8 @@ namespace Anki {
     , _forceReplanOnNextWorldChange(false)
     , _saveImages(false)
     , _camera(robotID)
-    , _poseOrigin(&Pose3d::AddOrigin())
-    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _poseOrigin) // Until this robot is localized be seeing a mat marker, create an origin for it to use as its pose parent
+    , _poseOrigin(&Pose3d::AddOrigin()) // Until this robot is localized be seeing a mat marker, create an origin for it to use as its pose parent
+    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _poseOrigin)
     , _frameId(0)
     , _onRamp(false)
     , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose)
@@ -137,9 +137,7 @@ namespace Anki {
     , _currentLiftAngle(0)
     , _isPickingOrPlacing(false)
     , _state(IDLE)
-//    , _carryingObjectID(ANY_OBJECT)
     , _carryingMarker(nullptr)
- //   , _dockObjectID(ANY_OBJECT)
     , _dockMarker(nullptr)
     {
       SetHeadAngle(_currentHeadAngle);
@@ -157,6 +155,110 @@ namespace Anki {
       _shortPathPlanner = nullptr;
       _selectedPathPlanner = nullptr;
     }
+    
+    Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
+    {
+      Result lastResult = RESULT_OK;
+      
+      // Update head angle
+      SetHeadAngle(msg.headAngle);
+      
+      // Update lift angle
+      SetLiftAngle(msg.liftAngle);
+      
+      // Get ID of last/current path that the robot executed
+      SetLastRecvdPathID(msg.lastPathID);
+      
+      // Update other state vars
+      SetCurrPathSegment( msg.currPathSegment );
+      SetNumFreeSegmentSlots(msg.numFreeSegmentSlots);
+      
+      //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
+      SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
+      
+      
+      // TODO: Make this a parameters somewhere?
+      const f32 WheelSpeedToConsiderStopped = 2.f;
+      if(std::abs(msg.lwheel_speed_mmps) < WheelSpeedToConsiderStopped &&
+         std::abs(msg.rwheel_speed_mmps) < WheelSpeedToConsiderStopped)
+      {
+        _isMoving = false;
+      } else {
+        _isMoving = true;
+      }
+      
+      if(IsOnRamp()) {
+        // Don't update pose history while on a ramp.
+        // Instead, just compute how far the robot thinks it has gone (in the plane)
+        // and compare that to where it was when it started traversing the ramp.
+        // Adjust according to the angle of the ramp we know it's on.
+        
+        const f32 distanceTraveled = (Point2f(msg.pose_x, msg.pose_y) - _rampStartPosition).Length();
+        
+        Ramp* ramp = dynamic_cast<Ramp*>(_world->GetObjectByIDandFamily(_dockObjectID, BlockWorld::ObjectFamily::RAMPS));
+        if(ramp == nullptr) {
+          PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
+                            "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.\n",
+                            _ID, _dockObjectID.GetValue());
+          return RESULT_FAIL;
+        }
+        
+        // Progress must be along ramp's direction (init assuming ascent)
+        Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>() + M_PI;
+        
+        // Initialize height adjustment and tilt angle assuming we are ascending
+        f32 heightAdjust  = distanceTraveled*sin(ramp->GetAngle().ToFloat());
+        Radians tiltAngle = -ramp->GetAngle();
+        
+        if(_dockAction == DA_RAMP_DESCEND) {
+          // Negate height adj and tilt angle if we are descending
+          heightAdjust *= -1.f;
+          tiltAngle    *= -1.f;
+          headingAngle -= M_PI;
+        }
+        else if(_dockAction != DA_RAMP_ASCEND) {
+            PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDockActaion",
+                              "Robot is on a ramp, expecting the dock action to be either "
+                              "RAMP_ASCEND or RAMP_DESCEND, not %d.\n", _dockAction);
+            return RESULT_FAIL;
+        }
+
+        const Point3f newTranslation(_rampStartPosition.x() + distanceTraveled*cos(headingAngle.ToFloat()),
+                                     _rampStartPosition.y() + distanceTraveled*sin(headingAngle.ToFloat()),
+                                     _rampStartHeight + heightAdjust);
+        
+        const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D);
+        const RotationMatrix3d R_tilt(ramp->GetAngle(), Y_AXIS_3D);
+        
+        SetPose(Pose3d(R_tilt*R_heading, newTranslation));
+
+      } else {
+        // This is "normal" mode, where we udpate pose history based on the
+        // reported odometry from the physical robot
+        
+        // Add to history
+        lastResult = AddRawOdomPoseToHistory(msg.timestamp,
+                                             msg.pose_frame_id,
+                                             msg.pose_x, msg.pose_y, /* ignore physical robot's notion of z? msg.pose_z*/ GetPose().GetTranslation().z(),
+                                             msg.pose_angle,
+                                             msg.headAngle,
+                                             msg.liftAngle,
+                                             GetPoseOrigin());
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.AddPoseError",
+                              "AddRawOdomPoseToHistory failed for timestamp=%d\n", msg.timestamp);
+          return lastResult;
+        }
+        
+        if(UpdateCurrPoseFromHistory() == false) {
+          lastResult = RESULT_FAIL;
+        }
+        
+      } // if/else on ramp
+      
+      return lastResult;
+      
+    } // UpdateFullRobotState()
     
     Result Robot::Update(void)
     {
@@ -827,6 +929,80 @@ namespace Anki {
       
     } // ExecuteRampingSequence()
     
+
+    
+    Result Robot::SetOnRamp(bool t)
+    {
+      if(t == _onRamp) {
+        // Nothing to do
+        return RESULT_OK;
+      }
+      
+      // We are either transition onto or off of a ramp
+      
+      Ramp* ramp = dynamic_cast<Ramp*>(_world->GetObjectByIDandFamily(_dockObjectID, BlockWorld::ObjectFamily::RAMPS));
+      if(ramp == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SetOnRamp.NoRampWithID",
+                          "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world.\n",
+                          _ID, _dockObjectID.GetValue());
+        return RESULT_FAIL;
+      }
+      
+      const bool transitioningOnto = (t == true);
+      
+      if(transitioningOnto) {
+        // Record start (x,y) position coming from robot so basestation can
+        // compute actual (x,y,z) position from upcoming odometry updates
+        // coming from robot (which do not take slope of ramp into account)
+        _rampStartPosition = {{_pose.GetTranslation().x(), _pose.GetTranslation().y()}};
+        _rampStartHeight   = _pose.GetTranslation().z();
+        
+        PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOntoRamp",
+                         "Robot %d transitioning onto ramp %d, using start (%.1f,%.1f,%.1f)\n",
+                         _ID, _rampStartPosition.x(), _rampStartPosition.y(), _rampStartHeight);
+        
+      } else {
+        // Just do an absolute pose update, setting the robot's position to
+        // where we "know" he should be when he finishes ascending or
+        // descending the ramp
+        switch(_dockAction)
+        {
+          case DA_RAMP_ASCEND:
+            _pose = ramp->GetPostAscentPose(WHEEL_BASE_MM);
+            break;
+            
+          case DA_RAMP_DESCEND:
+            _pose = ramp->GetPostDescentPose(WHEEL_BASE_MM);
+            break;
+            
+          default:
+            PRINT_NAMED_ERROR("Robot.SetOnRamp.UnexpectedRampDockActaion",
+                              "When transitioning on/off ramp, expecting the dock action to be either "
+                              "RAMP_ASCEND or RAMP_DESCEND, not %d.\n", _dockAction);
+            return RESULT_FAIL;
+        }
+        
+        PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOffRamp",
+                         "Robot %d transitioning off of ramp %d, at (%.1f,%.1f,%.1f) @ %.1fdeg\n",
+                         _ID, _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
+                         _pose.GetRotationAngle<'Z'>().getDegrees());
+        
+        Result lastResult = SendAbsLocalizationUpdate(_pose,
+                                                      _poseHistory.GetNewestTimeStamp(),
+                                                      _poseHistory.GetNewestPoseFrameID());
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_ERROR("Robot.SetOnRamp.SendAbsLocUpdateFailed",
+                            "Robot %d failed to send absolute localization update.\n", _ID);
+          return lastResult;
+        }
+
+      } // if/else transitioning onto ramp
+      
+      _onRamp = t;
+      
+      return RESULT_OK;
+      
+    } // SetOnPose()
   
     Result Robot::ExecuteDockingSequence(ObjectID objectIDtoDockWith)
     {
@@ -1454,11 +1630,27 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID,m);
     }
     
-    Result Robot::SendAbsLocalizationUpdate() const
+    Result Robot::SendAbsLocalizationUpdate(const Pose3d&        pose,
+                                            const TimeStamp_t&   t,
+                                            const PoseFrameID_t& frameId) const
     {
       // TODO: Add z?
       MessageAbsLocalizationUpdate m;
       
+      m.timestamp = t;
+      
+      m.pose_frame_id = frameId;
+      
+      m.xPosition = pose.GetTranslation().x();
+      m.yPosition = pose.GetTranslation().y();
+      
+      m.headingAngle = pose.GetRotationMatrix().GetAngleAroundZaxis().ToFloat();
+      
+      return _msgHandler->SendMessage(_ID, m);
+    }
+    
+    Result Robot::SendAbsLocalizationUpdate() const
+    {
       // Look in history for the last vis pose and send it.
       TimeStamp_t t;
       RobotPoseStamp p;
@@ -1467,16 +1659,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      m.timestamp = t;
-      
-      m.pose_frame_id = p.GetFrameId();
-      
-      m.xPosition = p.GetPose().GetTranslation().x();
-      m.yPosition = p.GetPose().GetTranslation().y();
-
-      m.headingAngle = p.GetPose().GetRotationMatrix().GetAngleAroundZaxis().ToFloat();
-      
-      return _msgHandler->SendMessage(_ID, m);
+      return SendAbsLocalizationUpdate(p.GetPose(), t, p.GetFrameId());
     }
     
     Result Robot::SendHeadAngleUpdate() const

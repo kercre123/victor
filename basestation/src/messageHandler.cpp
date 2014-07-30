@@ -181,45 +181,7 @@ namespace Anki {
                        );
        */
       
-      // Update head angle
-      robot->SetHeadAngle(msg.headAngle);
-
-      // Update lift angle
-      robot->SetLiftAngle(msg.liftAngle);
-      
-      // Get ID of last/current path that the robot executed
-      robot->SetLastRecvdPathID(msg.lastPathID);
-      
-      // Update other state vars
-      robot->SetCurrPathSegment( msg.currPathSegment );
-      robot->SetNumFreeSegmentSlots(msg.numFreeSegmentSlots);
-      
-      //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
-      robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
-      
-      const f32 WheelSpeedToConsiderStopped = 2.f;
-      if(std::abs(msg.lwheel_speed_mmps) < WheelSpeedToConsiderStopped &&
-         std::abs(msg.rwheel_speed_mmps) < WheelSpeedToConsiderStopped)
-      {
-        robot->SetIsMoving(false);
-      } else {
-        robot->SetIsMoving(true);
-      }
-      
-      // Add to history
-      if (robot->AddRawOdomPoseToHistory(msg.timestamp,
-                                         msg.pose_frame_id,
-                                         msg.pose_x, msg.pose_y, msg.pose_z,
-                                         msg.pose_angle,
-                                         msg.headAngle,
-                                         msg.liftAngle,
-                                         robot->GetPoseOrigin()) == RESULT_FAIL) {
-        PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "t=%d\n", msg.timestamp);
-      }
-      
-      robot->UpdateCurrPoseFromHistory();
-      
-      return RESULT_OK;
+      return robot->UpdateFullRobotState(msg);
     }
 
     Result MessageHandler::ProcessMessage(Robot* robot, MessagePrintText const& msg)

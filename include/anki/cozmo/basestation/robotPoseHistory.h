@@ -161,6 +161,8 @@ namespace Anki {
       
       TimeStamp_t GetOldestTimeStamp() const;
       TimeStamp_t GetNewestTimeStamp() const;
+      
+      PoseFrameID_t GetNewestPoseFrameID() const;
 
       // Prints the entire history
       void Print() const;

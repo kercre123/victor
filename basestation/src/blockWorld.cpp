@@ -471,7 +471,8 @@ namespace Anki
       // Make the computed robot pose use the existing mat piece as its parent
       robotPoseWrtMat.SetParent(&existingMatPiece->GetPose());
       
-      // Don't snap to horzontal or discrete Z levels while on a ramp
+      // Don't snap to horizontal or discrete Z levels when we see a mat marker
+      // while on a ramp
       if(robot->IsOnRamp() == false)
       {
         // If there is any significant rotation, make sure that it is roughly
@@ -495,7 +496,8 @@ namespace Anki
           robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
         }
         robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
-      }
+        
+      } // if robot is on ramp
       
       // We have a new ("ground truth") key frame. Increment the pose frame!
       robot->IncrementPoseFrameID();
@@ -1088,9 +1090,11 @@ namespace Anki
             }
           }
         
-          
-          // Note that this removes markers from the list that it uses
-          UpdateRobotPose(robot, currentObsMarkers, atTimestamp);
+          // Only update robot's poses using VisionMarkers while not on a ramp
+          if(!robot->IsOnRamp()) {
+            // Note that this removes markers from the list that it uses
+            UpdateRobotPose(robot, currentObsMarkers, atTimestamp);
+          }
         
         } // FOR each robotID
       
