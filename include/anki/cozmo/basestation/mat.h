@@ -31,7 +31,7 @@ namespace Anki {
       // TODO: Use a MatDefinitions file, like with blocks
       class Type : public ObjectType
       {
-        Type() { }
+        Type(const std::string& name) : ObjectType(name) { }
       public:
         // Define new mat piece types here, as static const Type:
         // (Note: don't forget to instantiate each in the .cpp file)

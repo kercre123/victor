@@ -523,7 +523,8 @@ namespace Anki
         return false;
       }
       
-      PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
+      PRINT_INFO("Using %s mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
+                 existingMatPiece->GetType().GetName().c_str(),
                  existingMatPiece->GetID().GetValue(), robot->GetID(),
                  robot->GetPose().GetTranslation().x(),
                  robot->GetPose().GetTranslation().y(),
@@ -587,8 +588,8 @@ namespace Anki
         if(onMat != nullptr)
         {
           PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.OnMatLocalization",
-                           "Robot %d is on a mat and will localize to it.\n",
-                           robot->GetID());
+                           "Robot %d is on a %s mat and will localize to it.\n",
+                           robot->GetID(), onMat->GetType().GetName().c_str());
           
           // If robot is "on" one of the mats it is currently seeing, localize
           // the robot to that mat
@@ -611,8 +612,8 @@ namespace Anki
             
             if(alreadyLocalizedToMat != nullptr) {
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
-                               "Robot %d will re-localize to a mat it is not on, but already localized to.\n",
-                               robot->GetID());
+                               "Robot %d will re-localize to the %s mat it is not on, but already localized to.\n",
+                               robot->GetID(), alreadyLocalizedToMat->GetType().GetName().c_str());
               
               // The robot is localized to one of the mats it is seeing, even
               // though it is not _on_ that mat.  Remain localized to that mat
@@ -663,8 +664,8 @@ namespace Anki
             } // for each mat seen
             
             PRINT_NAMED_INFO("BLockWorld.UpdateRobotPose.NotOnMatLocalizationToClosest",
-                             "Robot %d is not on a mat but will localize to mat ID=%d, which is the closest.\n",
-                             robot->GetID(), closestMat->GetID().GetValue());
+                             "Robot %d is not on a mat but will localize to %s mat ID=%d, which is the closest.\n",
+                             robot->GetID(), closestMat->GetType().GetName().c_str(), closestMat->GetID().GetValue());
             
             matToLocalizeTo = closestMat;
             
@@ -736,8 +737,9 @@ namespace Anki
               existingMatPieces[existingMatPiece->GetType()][existingMatPiece->GetID()] = existingMatPiece;
               
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
-                               "Robot %d localizing to new mat with ID=%d.\n",
-                               robot->GetID(), existingMatPiece->GetID().GetValue());
+                               "Robot %d localizing to new %s mat with ID=%d.\n",
+                               robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
+                               existingMatPiece->GetID().GetValue());
               
             } else {
               // We are localizing to an existing mat piece: do not attempt to
@@ -747,8 +749,9 @@ namespace Anki
               CORETECH_ASSERT(existingMatPiece != nullptr);
               
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingToExistingMat",
-                               "Robot %d localizing to existing mat with ID=%d.\n",
-                               robot->GetID(), existingMatPiece->GetID().GetValue());
+                               "Robot %d localizing to existing %s mat with ID=%d.\n",
+                               robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
+                               existingMatPiece->GetID().GetValue());
             }
           }
           

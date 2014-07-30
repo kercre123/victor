@@ -25,9 +25,9 @@ namespace Anki {
   namespace Cozmo {
     
     // Instantiate static const MatPiece types here:
-    const MatPiece::Type MatPiece::Type::INVALID;
-    const MatPiece::Type MatPiece::Type::LETTERS_4x4;
-    const MatPiece::Type MatPiece::Type::LARGE_PLATFORM;
+    const MatPiece::Type MatPiece::Type::INVALID("INVALID");
+    const MatPiece::Type MatPiece::Type::LETTERS_4x4("LETTERS_4x4");
+    const MatPiece::Type MatPiece::Type::LARGE_PLATFORM("LARGE_PLATFORM");
     
     // MatPiece has no rotation ambiguities but we still need to define this
     // static const here to instatiate an empty list.
