@@ -42,7 +42,8 @@ namespace Anki {
         MOVING_LIFT_POSTDOCK,
         BACKOUT,
         LOWER_LIFT,
-        TRAVERSE_RAMP
+        TRAVERSE_RAMP,
+        TRAVERSE_RAMP_DOWN
       } Mode;
       
       Result Init();

@@ -31,7 +31,7 @@ namespace Anki {
         f32 accel_filt[3];
         f32 accel_robot_frame_filt[3];
         f32 prev_accel_robot_frame_filt[3] = {0,0,0};
-        const f32 ACCEL_FILT_COEFF = 0.4f;
+        const f32 ACCEL_FILT_COEFF = 0.02f;
         
         u32 lastMotionDetectedTime_us = 0;
         const u32 MOTION_DETECT_TIMEOUT_US = 1000000;
@@ -385,8 +385,10 @@ namespace Anki {
           rot_ += dAngle;
         }
         
+        // XXX: DEBUG!
+        //UpdateEventDetection();
         
-        UpdateEventDetection();
+        //PRINT("IMFILTER: pitch = %f (%fdeg)\n", pitch_, RAD_TO_DEG(pitch_));
         
         return retVal;
         

@@ -53,7 +53,7 @@ namespace Anki {
       Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner);
       ~Robot();
       
-      void Update();
+      Result Update();
       
       // Accessors
       const RobotID_t        GetID()           const;

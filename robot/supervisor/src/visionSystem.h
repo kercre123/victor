@@ -78,8 +78,11 @@ namespace Anki {
       // Next time the vision system sees a block of this type while looking
       // for blocks, it will initialize a template tracker and switch to
       // docking mode.
+      // If checkAngleX is true, then tracking will be considered as a failure if
+      // the X angle is greater than TrackerParameters::MAX_BLOCK_DOCKING_ANGLE.
       Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
-                              const f32                  markerWidth_mm);
+                              const f32                  markerWidth_mm,
+                              const bool                 checkAngleX);
       
       // Same as above, except the robot will only start tracking the marker
       // if its observed centroid is within the specified radius (in pixels)
@@ -87,7 +90,8 @@ namespace Anki {
       Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
                               const f32                  markerWidth_mm,
                               const Embedded::Point2f&   imageCenter,
-                              const f32                  radius);
+                              const f32                  radius,
+                              const bool                 checkAngleX);
       
       u32 DownsampleHelper(const Embedded::Array<u8>& imageIn,
                            Embedded::Array<u8>&       imageOut,

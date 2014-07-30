@@ -105,8 +105,8 @@ namespace Anki {
       
       // June2014DiceDemo
       explorationStartAngle_ = 0;
-      objectToPickUp_.SetToUnknown();
-      objectToPlaceOn_.SetToUnknown();
+      objectToPickUp_.UnSet();
+      objectToPlaceOn_.UnSet();
       
     } // Reset()
     

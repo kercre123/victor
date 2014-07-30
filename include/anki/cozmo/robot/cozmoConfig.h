@@ -113,9 +113,7 @@ namespace Anki {
                                              (0.25f*ROBOT_BOUNDING_Y*ROBOT_BOUNDING_Y));
     
     const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};  // relative to neck joint
-    
-    const f32 PREDOCK_DISTANCE_MM = 100;  // ROBOT_BOUNDING_RADIUS + 15.f;
-    
+  
     // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
     const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
     

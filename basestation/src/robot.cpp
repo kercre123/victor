@@ -157,7 +157,7 @@ namespace Anki {
       _selectedPathPlanner = nullptr;
     }
     
-    void Robot::Update(void)
+    Result Robot::Update(void)
     {
       static bool wasTraversingPath = false;
       
@@ -171,6 +171,7 @@ namespace Anki {
           
         case FOLLOWING_PATH:
         {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime) {
           if(IsTraversingPath())
           {
             // If the robot is traversing a path, consider replanning it
@@ -250,8 +251,8 @@ namespace Anki {
             // The last path sent was definitely received by the robot
             // and it is no longer executing it.
             if (_lastSentPathID == _lastRecvdPathID) {
-              PRINT_NAMED_INFO("Robot.Update.FollowToIdle", "lastPathID %d\n", _lastRecvdPathID);
-              SetState(IDLE);
+              PRINT_NAMED_INFO("Robot.Update.FollowToNextState", "lastPathID %d\n", _lastRecvdPathID);
+              SetState(_nextState);
             } else {
               PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
                                "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d\n",
@@ -268,6 +269,7 @@ namespace Anki {
             ClearPath(); // clear path and indicate that we are not replanning
             SetState(_nextState);
           }
+          } // if waitUntilTime has passed
           break;
         } // case FOLLOWING_PATH
       
@@ -283,39 +285,72 @@ namespace Anki {
             if(dockObject == nullptr) {
               PRINT_NAMED_ERROR("Robot.Update.DockObjectGone", "Docking object with ID=%d no longer exists in the world. Returning to IDLE state.\n", _dockObjectID.GetValue());
               SetState(IDLE);
-              return;
+              return RESULT_OK; // Robot updated successfully, so not FAIL?
             }
 
-            // first, re-compute the pre-dock pose and make sure we
-            // are close enough to the closest one
-            std::vector<DockableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
-            dockObject->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
-
-            float closestDist2 = FLT_MAX;
-            for(auto const& preDockPair : preDockPoseMarkerPairs) {
-              float dist2 = std::pow(preDockPair.first.GetTranslation().x() - GetPose().GetTranslation().x(), 2)
-                + std::pow(preDockPair.first.GetTranslation().y() - GetPose().GetTranslation().y(), 2);
-              if(dist2 < closestDist2)
-                closestDist2 = dist2;
-            }
-
-            float distanceToGoal = sqrtf(closestDist2);
-            PRINT_NAMED_INFO("Robot.Update.GoalTolerance", "robot is within %f of the nearest pre-dock pose\n",
-                             distanceToGoal);
-
-            if(distanceToGoal > MAX_DISTANCE_TO_PREDOCK_POSE) {
-              PRINT_NAMED_INFO("Robot.Update.ReDock", "robot is too far from pose, re-docking\n");
-              switch(_state) {
-                case BEGIN_DOCKING:
+            // First, re-compute the pre-dock or pre-ramp pose and make sure we
+            // are close enough to the desired position, given that the object's
+            // pose may have updated while we were approaching it (meaning the
+            // original "goal pose" may be a bit off now)
+            switch(_state) {
+              case BEGIN_DOCKING:
+              {
+                std::vector<DockableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
+                dockObject->GetPreDockPoses(dockObject->GetDefaultPreDockDistance(), preDockPoseMarkerPairs);
+                
+                float closestDistSq = std::numeric_limits<float>::max();
+                for(auto const& preDockPair : preDockPoseMarkerPairs) {
+                  const float distSq = (preDockPair.first.GetTranslation() - GetPose().GetTranslation()).LengthSq();
+                  if(distSq < closestDistSq)
+                    closestDistSq = distSq;
+                }
+                
+                const float distanceToGoal = sqrtf(closestDistSq);
+                if(distanceToGoal > MAX_DISTANCE_TO_PREDOCK_POSE) {
+                  PRINT_NAMED_INFO("Robot.Update.ReDock", "Robot is too far from pre-dock pose (%.1fmm), re-docking\n", distanceToGoal);
                   ExecuteDockingSequence(_dockObjectID);
-                  break;
-                case BEGIN_RAMPING:
-                  ExecuteRampingSequence(_dockObjectID);
-                  break;
-                default:
-                  PRINT_NAMED_ERROR("Robot.Update.UnexpectedState", "Only BEGIN_RAMPING / BEGIN_DOCKING should be possible states here. Got %d.\n", _state);
-              }
-              break;
+                } else {
+                  PRINT_NAMED_INFO("Robot.Update.GoalTolerance", "Robot is within %.1fmm of the nearest pre-dock pose.\n", distanceToGoal);
+                }
+                
+                break;
+              } // case BEGIN_DOCKING
+                
+              case BEGIN_RAMPING:
+              {
+                Pose3d checkPose;
+                Ramp* ramp = dynamic_cast<Ramp*>(dockObject);
+                assert(ramp != nullptr);
+                
+                switch(_dockAction)
+                {
+                  case DA_RAMP_ASCEND:
+                    checkPose = ramp->GetPreAscentPose(ramp->GetDefaultPreDockDistance());
+                    break;
+                    
+                  case DA_RAMP_DESCEND:
+                    checkPose = ramp->GetPreDescentPose(ramp->GetDefaultPreDockDistance());
+                    break;
+                    
+                  default:
+                    PRINT_NAMED_ERROR("Robot.Update.UnexpectedActionState",
+                                      "Only DA_RAMP_ASCEND / DA_RAMP_DESCEND should be possible action states here. Got %d.\n", _dockAction);
+                    assert(false);
+                    return RESULT_FAIL;
+                }
+                
+                const float distanceToGoal = (GetPose().GetTranslation() - checkPose.GetTranslation()).Length();
+                if(distanceToGoal > MAX_DISTANCE_TO_PREDOCK_POSE) {
+                  PRINT_NAMED_INFO("Robot.Update.RampRealign", "Robot is too far from pre-ascent/descent pose (%.1fmm), re-aligning.\n", distanceToGoal);
+                      ExecuteRampingSequence(_dockObjectID);
+                }
+                break;
+              } // case BEGIN_RAMPING
+                
+              default:
+                PRINT_NAMED_ERROR("Robot.Update.UnexpectedState", "Only BEGIN_RAMPING / BEGIN_DOCKING should be possible states here. Got %d.\n", _state);
+                assert(false);
+                return RESULT_FAIL;
             }
             
             // Start dock
@@ -395,9 +430,19 @@ namespace Anki {
                 break;
               } // case PLACE
                 
+              case DA_RAMP_ASCEND:
+              case DA_RAMP_DESCEND:
+              {
+                // TODO: Need to do some kind of verification here?
+                PRINT_NAMED_INFO("Robot.Update.RampAscentOrDescentComplete",
+                                 "Robot has completed going up/down ramp.\n");
+                break;
+              } // case RAMP
+                
               default:
                 PRINT_NAMED_ERROR("Robot.Update", "Reached unknown dockAction case.\n");
                 assert(false);
+                return RESULT_FAIL;
                 
             } // switch(_dockAction)
             
@@ -410,7 +455,7 @@ namespace Anki {
           PRINT_NAMED_ERROR("Robot::Update", "Transitioned to unknown state %d!\n", _state);
           assert(false);
           _state = IDLE;
-          return;
+          return RESULT_FAIL;
           
       } // switch(state_)
       
@@ -430,6 +475,7 @@ namespace Anki {
         }
       }
 
+      return RESULT_OK;
       
     } // Update()
     
@@ -749,25 +795,26 @@ namespace Anki {
       
       // Choose ascent or descent
       // TODO: Better selection criteria for ascent vs. descent?
+      f32 headAngle = 0.f;
       if(GetPose().GetTranslation().z() < ramp->GetPose().GetTranslation().z()) {
-        _goalPose   = ramp->GetPreAscentPose(PREDOCK_DISTANCE_MM);
+        _goalPose   = ramp->GetPreAscentPose(ramp->GetDefaultPreDockDistance());
         _dockMarker = ramp->GetFrontMarker();
         _dockAction = DA_RAMP_ASCEND;
+        headAngle   = DEG_TO_RAD(-10);
       } else {
-        _goalPose   = ramp->GetPreDescentPose(PREDOCK_DISTANCE_MM);
+        _goalPose   = ramp->GetPreDescentPose(ramp->GetDefaultPreDockDistance());
         _dockMarker = ramp->GetTopMarker();
         _dockAction = DA_RAMP_DESCEND;
+        headAngle   = MIN_HEAD_ANGLE;
       }
       
       _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
       _goalAngleThreshold    = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
       
-      Result lastResult = ExecutePathToPose(_goalPose, DEG_TO_RAD(-15));
+      Result lastResult = ExecutePathToPose(_goalPose, headAngle);
       if(lastResult != RESULT_OK) {
         return lastResult;
       }
-      
-      _dockAction = DA_RAMP_ASCEND;
       
       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
       //SetState(FOLLOWING_PATH); // This should be done by ExecutePathToPose
@@ -812,7 +859,7 @@ namespace Anki {
       _dockMarker = nullptr; // should get set to a predock pose below
       
       std::vector<DockableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      object->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
+      object->GetPreDockPoses(object->GetDefaultPreDockDistance(), preDockPoseMarkerPairs);
       
       if (preDockPoseMarkerPairs.empty()) {
         PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.NoPreDockPoses",
@@ -929,7 +976,8 @@ namespace Anki {
       // want the robot to end up in order for the block to be
       // at the requested pose.
       std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      carryingObject->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs,
+      carryingObject->GetPreDockPoses(carryingObject->GetDefaultPreDockDistance(),
+                                      preDockPoseMarkerPairs,
                                       _carryingMarker->GetCode());
       
       if (preDockPoseMarkerPairs.empty()) {

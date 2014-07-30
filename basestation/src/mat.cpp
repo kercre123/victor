@@ -70,7 +70,7 @@ namespace Anki {
         const f32 markerSize_top   = 25.f;
         
         // Front Face
-        AddMarker(Vision::MARKER_INVERTED_RAMPFRONT,
+        AddMarker(Vision::MARKER_INVERTED_E,
                   Pose3d(M_PI_2, Z_AXIS_3D, {length*.5f, 0.f, 0.f}),
                   markerSize_sides);
         

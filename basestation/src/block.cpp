@@ -305,6 +305,12 @@ namespace Anki {
     }
     */
    
+    
+    f32 Block::GetDefaultPreDockDistance() const
+    {
+      return Block::PreDockDistance;
+    }    
+    
     // These should match the order in which faces are defined! (See Block constructor)
     const std::array<Point3f, 6> Block::CanonicalDockingPoints = {
       {-X_AXIS_3D,

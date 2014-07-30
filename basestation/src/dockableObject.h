@@ -52,6 +52,7 @@ namespace Anki {
       virtual void Visualize(VIZ_COLOR_ID color) = 0;
       virtual void Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance);
       virtual void EraseVisualization() override;
+      virtual f32  GetDefaultPreDockDistance() const = 0;
       
     protected:
       

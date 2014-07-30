@@ -338,13 +338,13 @@ namespace Anki {
                 break;
               case DA_RAMP_ASCEND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                HeadController::SetDesiredAngle(0);
+                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = 0;
                 break;
               case DA_RAMP_DESCEND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
-                dockOffsetDistX_ = 0;
+                HeadController::SetDesiredAngle(MIN_HEAD_ANGLE);
+                dockOffsetDistX_ = 30; // can't wait until we are actually on top of the marker to say we're done!
                 break;
               default:
                 PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
@@ -365,12 +365,18 @@ namespace Anki {
                                                          dockOffsetDistY_,
                                                          dockOffsetAng_);
               } else {
+                // When we are "docking" with a ramp, we don't want to worry about
+                // the X angle being large (since we _expect_ it to be large, since
+                // the markers are facing upward).
+                const bool checkAngleX = (action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND) ? false : true;
+                
                 if (pixelSearchRadius_ < 0) {
                   DockingController::StartDocking(dockToMarker_,
                                                   markerWidth_,
                                                   dockOffsetDistX_,
                                                   dockOffsetDistY_,
-                                                  dockOffsetAng_);
+                                                  dockOffsetAng_,
+                                                  checkAngleX);
                 } else {
                   DockingController::StartDocking(dockToMarker_,
                                                   markerWidth_,
@@ -378,7 +384,8 @@ namespace Anki {
                                                   pixelSearchRadius_,
                                                   dockOffsetDistX_,
                                                   dockOffsetDistY_,
-                                                  dockOffsetAng_);
+                                                  dockOffsetAng_,
+                                                  checkAngleX);
                 }
               }
               mode_ = DOCKING;
@@ -401,14 +408,20 @@ namespace Anki {
               if (DockingController::DidLastDockSucceed()) {
                 
                 // Docking is complete
-                mode_ = SET_LIFT_POSTDOCK;
+                
+                if(action_ == DA_RAMP_DESCEND) {
 #if(DEBUG_PAP_CONTROLLER)
-                PRINT("PAP: SET_LIFT_POSTDOCK\n");
+                  PRINT("PAP: TRAVERSE_RAMP_DOWN\n");
 #endif
-              } else if ((action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND) && (ABS(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) ) {
-                SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
-                mode_ = TRAVERSE_RAMP;
-              
+                  // Start driving forward (blindly) -- wheel guides!
+                  SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
+                  mode_ = TRAVERSE_RAMP_DOWN;
+                } else {
+#if(DEBUG_PAP_CONTROLLER)
+                  PRINT("PAP: SET_LIFT_POSTDOCK\n");
+#endif
+                  mode_ = SET_LIFT_POSTDOCK;
+                }
               } else {
                 // Block is not being tracked.
                 // Probably not visible.
@@ -418,6 +431,12 @@ namespace Anki {
                 // TODO: Send BTLE message notifying failure
                 mode_ = IDLE;
               }
+            }
+            else if (action_ == DA_RAMP_ASCEND && (ABS(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) )
+            {
+              DockingController::ResetDocker();
+              SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
+              mode_ = TRAVERSE_RAMP;
             }
             break;
 
@@ -643,6 +662,14 @@ namespace Anki {
             }
             break;
             
+          case TRAVERSE_RAMP_DOWN:
+            if(IMUFilter::GetPitch() < -ON_RAMP_ANGLE_THRESH) {
+#if(DEBUG_PAP_CONTROLLER)
+              PRINT("PAP: Switching out of TRAVERSE_RAMP_DOWN to TRAVERSE_RAMP (angle = %f)\n", IMUFilter::GetPitch());
+#endif
+              mode_ = TRAVERSE_RAMP;
+            }
+            break;
           case TRAVERSE_RAMP:
             if ( ABS(IMUFilter::GetPitch()) < OFF_RAMP_ANGLE_THRESH ) {
               SteeringController::ExecuteDirectDrive(0, 0);

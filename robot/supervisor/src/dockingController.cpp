@@ -530,15 +530,15 @@ namespace Anki {
       
       void StartDocking(const Vision::MarkerType& dockingMarker,
                         const f32 markerWidth_mm,
-                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle)
+                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle, const bool checkAngleX)
       {
-        StartDocking(dockingMarker, markerWidth_mm, Embedded::Point2f(-1,-1), u8_MAX, dockOffsetDistX, dockOffsetDistY, dockOffsetAngle);
+        StartDocking(dockingMarker, markerWidth_mm, Embedded::Point2f(-1,-1), u8_MAX, dockOffsetDistX, dockOffsetDistY, dockOffsetAngle, checkAngleX);
       }
 
       void StartDocking(const Vision::MarkerType& dockingMarker,
                         const f32 markerWidth_mm,
                         const Embedded::Point2f &markerCenter, const u8 pixel_radius,
-                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle)
+                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle, const bool checkAngleX)
       {
         AnkiAssert(markerWidth_mm > 0.f);
         
@@ -546,9 +546,9 @@ namespace Anki {
         dockOffsetDistX_ = dockOffsetDistX;
         
         if (pixel_radius == u8_MAX) {
-          VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm);
+          VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm, checkAngleX);
         } else {
-          VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm, markerCenter, static_cast<f32>(pixel_radius));
+          VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm, markerCenter, static_cast<f32>(pixel_radius), checkAngleX);
         }
         
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();

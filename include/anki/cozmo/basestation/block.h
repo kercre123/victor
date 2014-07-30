@@ -140,6 +140,9 @@ namespace Anki {
                                    std::vector<PoseMarkerPair_t>& poseMarkerPairs,
                                    const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
       
+      // Return the default distance from which to start docking
+      virtual f32  GetDefaultPreDockDistance() const override;
+      
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding 2D quadrilateral. Pads the
       // quadrilateral (around its center) by the optional padding if desired.
@@ -193,6 +196,8 @@ namespace Anki {
       static const std::array<Point3f,NUM_FACES> CanonicalDockingPoints;
       
       static const std::array<Point3f,NUM_CORNERS> CanonicalCorners;
+      
+      constexpr static const f32 PreDockDistance = 100.f;
       
       Color       _color;
       Point3f     _size;

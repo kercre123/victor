@@ -56,7 +56,7 @@ namespace Anki {
       _rightMarker = &AddMarker(Vision::MARKER_RAMPRIGHT, rightPose, Ramp::MarkerSize);
       
       const Pose3d topPose(2.0944, {{-0.5774f, 0.5774f, -0.5774f}},
-                           {{0, 0, Ramp::Height*.5f}});
+                           {{Ramp::PlatformLength*.5f - Ramp::MarkerSize*.5f, 0, Ramp::Height*.5f}});
       _topMarker = &AddMarker(Vision::MARKER_INVERTED_RAMPFRONT, topPose, Ramp::MarkerSize);
       
       _vizHandle.fill(VizManager::INVALID_HANDLE);
@@ -205,6 +205,12 @@ namespace Anki {
       }
     } // for each canonical docking point
   
+    
+    f32 Ramp::GetDefaultPreDockDistance() const
+    {
+      return Ramp::PreDockDistance;
+    }
+    
     ObjectType Ramp::GetTypeByName(const std::string& name)
     {
       // TODO: Support other types/names

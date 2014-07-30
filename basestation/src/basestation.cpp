@@ -330,12 +330,12 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
     // Draw current block of interest
     const ObjectID boi = behaviorMgr_.GetObjectOfInterest();
     
-    DockableObject* block = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(boi));
-    if(block != nullptr) {
+    DockableObject* dockObject = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(boi));
+    if(dockObject != nullptr) {
 
       // Get predock poses
       std::vector<Block::PoseMarkerPair_t> poses;
-      block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
+      dockObject->GetPreDockPoses(dockObject->GetDefaultPreDockDistance(), poses);
       
       // Erase previous predock pose marker for previous block of interest
       if (prev_boi != boi || poses.size() != prevNumPreDockPoses) {
@@ -356,7 +356,7 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
       }
 
       // Draw cuboid for current selection, with predock poses
-      block->Visualize(VIZ_COLOR_SELECTED_OBJECT, PREDOCK_DISTANCE_MM);
+      dockObject->Visualize(VIZ_COLOR_SELECTED_OBJECT, dockObject->GetDefaultPreDockDistance());
       
     } else {
       // block == nullptr (no longer exists, delete its predock poses)

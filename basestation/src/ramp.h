@@ -83,6 +83,7 @@ namespace Anki {
                                    std::vector<PoseMarkerPair_t>& poseMarkerPairs,
                                    const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
       
+      virtual f32  GetDefaultPreDockDistance() const override;
       
       static ObjectType GetTypeByName(const std::string& name);
 
@@ -98,6 +99,8 @@ namespace Anki {
       constexpr static const f32 PlatformLength = 44.f;
       constexpr static const f32 MarkerSize     = 25.f;
       constexpr static const f32 FrontMarkerDistance = 50.f;
+      constexpr static const f32 PreDockDistance = 30.f;
+      
       static const f32 Angle;
         
       static const std::array<Point3f, NUM_CORNERS> CanonicalCorners;

@@ -35,7 +35,8 @@ Solid {
     VisionMarker {
       rotation 0 0 1 1.5708
       translation %{=fields.length/2}% 0 0
-      image "symbols/inverted/rampFront.png"
+      #image "symbols/inverted/rampFront.png"
+      image "letters/inverted/E.png"
     }
     
     # Back Face
