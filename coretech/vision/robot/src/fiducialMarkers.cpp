@@ -897,5 +897,69 @@ namespace Anki
       // TODO: make the correct length
       return 96 + 10*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
     }
+
+    Anki::Vision::MarkerType LookupMarkerType(const char * name)
+    {
+      const s32 MAX_NAME_LENGTH = 1024;
+      s32 nameLength = strlen(name);
+
+      // Remove the start "marker_" if it is present
+      if(nameLength >= 7) {
+        const char *markerString = "MARKER_";
+
+        bool startIsMarker = true;
+        for(s32 i=0; i<7; i++) {
+          if(toupper(name[i]) != markerString[i]) {
+            startIsMarker = false;
+            break;
+          }
+        }
+
+        if(startIsMarker) {
+          name += 7;
+          nameLength -= 7;
+        }
+      }
+
+      // Remove anything before "/" or "\"
+      s32 lastSlashLocation = -1;
+      for(s32 i=0; i<nameLength; i++) {
+        if(name[i] == '\\' || name[i] == '/') {
+          lastSlashLocation = i;
+        }
+      }
+
+      name += lastSlashLocation + 1;
+      nameLength -= lastSlashLocation + 1;
+
+      // Remove anything after a "."
+      for(s32 i=0; i<nameLength; i++) {
+        if(name[i] == '.') {
+          nameLength = i;
+          break;
+        }
+      }
+
+      // If the name is too long, return invalid
+      if(nameLength >= MAX_NAME_LENGTH) {
+        return Anki::Vision::MARKER_UNKNOWN;
+      }
+
+      // Convert the input to upper case
+      char upperCaseName[MAX_NAME_LENGTH];
+      for(s32 i=0; i<nameLength; i++) {
+        upperCaseName[i] = toupper(name[i]);
+      }
+      upperCaseName[nameLength] = '\0';
+
+      for(s32 i=0; i<Anki::Vision::NUM_MARKER_TYPES; i++) {
+        const char * withoutPrefixName = Anki::Vision::MarkerTypeStrings[i] + 7;
+        if(strcmp(withoutPrefixName, upperCaseName) == 0) {
+          return static_cast<Anki::Vision::MarkerType>(i);
+        }
+      }
+
+      return Anki::Vision::MARKER_UNKNOWN;
+    }
   } // namespace Embedded
 } // namespace Anki

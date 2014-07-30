@@ -67,31 +67,43 @@ using namespace Anki::Embedded;
 
 GTEST_TEST(CoreTech_Vision, LookupMarkerType)
 {
-  const s32 numNames = 16;
+  const s32 numNames = 24;
 
   const char *inputNames[numNames] = {
     "MARKER_0",
     "marker_0",
     "mARKER_0",
     "0",
+    "c:\\path\\0.png",
+    "~/path/0.png",
     "MARKER_INVERTED_ANKILOGOWITHBITS005",
     "INVERTED_ANKILOGOWITHBITS005",
     "inverted_ankilogowithbits005",
     "INVeRTed_ANkiLOGOWITHBITS005",
+    "c:\\INVeRTed_ANkiLOGOWITHBITS005",
+    "~/INVeRTed_ANkiLOGOWITHBITS005",
     "MARKER_Y",
     "MarKER_Y",
     "Y",
     "y",
+    "c:\\y.png.out.mat.toast",
+    "/home/users\\crazy\\/y.hello",
     "MARKER_UNKNOWN",
     "UNKNOWN",
     "unknown",
-    "UNknoOWN"};
+    "UNknoOWN",
+    "\\unknown",
+    "//unknown"};
 
   const Anki::Vision::MarkerType inputTypes[numNames] = {
     Anki::Vision::MARKER_0,
     Anki::Vision::MARKER_0,
     Anki::Vision::MARKER_0,
     Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
     Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
     Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
     Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
@@ -100,6 +112,10 @@ GTEST_TEST(CoreTech_Vision, LookupMarkerType)
     Anki::Vision::MARKER_Y,
     Anki::Vision::MARKER_Y,
     Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_UNKNOWN,
+    Anki::Vision::MARKER_UNKNOWN,
     Anki::Vision::MARKER_UNKNOWN,
     Anki::Vision::MARKER_UNKNOWN,
     Anki::Vision::MARKER_UNKNOWN,
