@@ -83,17 +83,20 @@ namespace Anki
       f32 observedOrientation; //< In degrees. TODO: change to radians or discrete
       ValidityCode validity;
 
-      VisionMarker();
+      VisionMarker(const Quadrilateral<s16> &corners, const ValidityCode validity);
 
-      Result Extract(const Array<u8> &image, const Quadrilateral<s16> &quad,
-        const Array<f32> &homography, const f32 minContrastRatio,
-        const s32 refine_quadRefinementIterations,
-        const s32 refine_numRefinementSamples,
-        const f32 refine_quadRefinementMaxCornerChange,
-        const f32 refine_quadRefinementMinCornerChange,
-        const s32 quads_minQuadArea,
-        const s32 quads_quadSymmetryThreshold,
-        const s32 quads_minDistanceFromImageEdge,
+      Result RefineCorners(
+        const Array<u8> &image,
+        const Array<f32> &initHomography, const f32 minContrastRatio,
+        const s32 refine_quadRefinementIterations, const s32 refine_numRefinementSamples, const f32 refine_quadRefinementMaxCornerChange, const f32 refine_quadRefinementMinCornerChange,
+        const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
+        Array<f32> &refinedHomography, u8 &meanGrayvalueThreshold, //< Computed for Extract()
+        MemoryStack scratch);
+
+      Result Extract(
+        const Array<u8> &image,
+        const Array<f32> &homography, const u8 meanGrayvalueThreshold, //< Computed by RefineCorners()
+        const f32 minContrastRatio,
         MemoryStack scratch);
 
       void Print() const;
@@ -217,6 +220,7 @@ namespace Anki
     }; // class FiducialMarkerParser
 
     // Ignores case, and ignore any "MARKER_" prefix
+    // Also ignores anything before a "/" or "\", and anything after a ".", so you can pass in a filename
     Anki::Vision::MarkerType LookupMarkerType(const char * name);
   } // namespace Embedded
 } // namespace Anki

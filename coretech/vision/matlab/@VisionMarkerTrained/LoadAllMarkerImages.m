@@ -22,6 +22,6 @@ function AllMarkerImages = LoadAllMarkerImages(TrainingImageDirs)
             img(img>0) = 1;
             
             AllMarkerImages{end+1} = {img, filenames(iFile).name(1:(end-4))}; %#ok<AGROW>
-        end        
+        end
     end
     

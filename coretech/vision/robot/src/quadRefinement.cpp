@@ -20,44 +20,43 @@ static Anki::Embedded::Matlab matlab(false);
 
 namespace Anki {
   namespace Embedded {
-    
     static f32 MaxCornerChange(const Array<f32>& currentHomography,
-                               Quadrilateral<f32>& currentQuad)
+      Quadrilateral<f32>& currentQuad)
     {
       // Compute the current refined corners
       const f32 h00 = currentHomography[0][0];
       const f32 h01 = currentHomography[0][1];
       const f32 h02 = currentHomography[0][2];
-      
+
       const f32 h10 = currentHomography[1][0];
       const f32 h11 = currentHomography[1][1];
       const f32 h12 = currentHomography[1][2];
-      
+
       const f32 h20 = currentHomography[2][0];
       const f32 h21 = currentHomography[2][1];
       const f32 h22 = currentHomography[2][2];
-      
+
       // Make a copy of the current position before we overwrite it, so we can
       // compare to it to see how much we changed
       Quadrilateral<f32> prevQuad = currentQuad;
-      
+
       // Homography is always mapping from canonical quad (0,0), (0,1), (1,0), (1,1)
       f32 normalization = 1.f / h22;
       currentQuad[0].x = h02 * normalization;
       currentQuad[0].y = h12 * normalization;
-      
+
       normalization = 1.f / (h21 + h22);
       currentQuad[1].x = (h01 + h02) * normalization;
       currentQuad[1].y = (h11 + h12) * normalization;
-      
+
       normalization = 1.f / (h20 + h22);
       currentQuad[2].x = (h00 + h02) * normalization;
       currentQuad[2].y = (h10 + h12) * normalization;
-      
+
       normalization = 1.f / (h20 + h21 + h22);
       currentQuad[3].x = (h00 + h01 + h02) * normalization;
       currentQuad[3].y = (h10 + h11 + h12) * normalization;
-      
+
       // See how different the new corner locations are from the originals we
       // stored above
       f32 maxChange = 0.f;
@@ -67,12 +66,12 @@ namespace Anki {
           maxChange = cornerChange;
         }
       }
-      
+
       return maxChange;
-      
     } // MaxCornerChange()
-    
-    Result RefineQuadrilateral(const Quadrilateral<s16>& initialQuad,
+
+    Result RefineQuadrilateral(
+      const Quadrilateral<f32>& initialQuad,
       const Array<f32>& initialHomography,
       const Array<u8> &image,
       const f32 squareWidthFraction,
@@ -90,15 +89,13 @@ namespace Anki {
 
       Result lastResult = RESULT_OK;
 
-      AnkiConditionalErrorAndReturnValue(AreEqualSize(3, 3, refinedHomography),
+      AnkiConditionalErrorAndReturnValue(AreEqualSize(3, 3, refinedHomography, initialHomography),
         RESULT_FAIL_INVALID_SIZE,
         "RefineQuadrilateral",
-        "Output refined homography array must be valid and 3x3.");
+        "Input and Output refined homography array must be valid and 3x3.");
 
-      AnkiConditionalErrorAndReturnValue(AreEqualSize(3, 3, initialHomography),
-        RESULT_FAIL_INVALID_SIZE,
-        "RefineQuadrilateral",
-        "Input initial homography array must be valid and 3x3.");
+      AnkiConditionalErrorAndReturnValue(NotAliased(initialHomography, refinedHomography),
+        RESULT_FAIL_ALIASED_MEMORY, "RefineQuadrilateral", "initialHomography and refinedHomography are aliased");
 
 #if VISUALIZE_WITH_MATLAB
       CoreTechPrint("Initial quad: ");
@@ -121,8 +118,8 @@ namespace Anki {
       //
       //diagonal = sqrt(max( sum((this.corners(1,:)-this.corners(4,:)).^2), ...
       //    sum((this.corners(2,:)-this.corners(3,:)).^2))) / sqrt(2);
-      const Point<s16> diff03 = initialQuad[0] - initialQuad[3];
-      const Point<s16> diff12 = initialQuad[1] - initialQuad[2];
+      const Point<f32> diff03 = initialQuad[0] - initialQuad[3];
+      const Point<f32> diff12 = initialQuad[1] - initialQuad[2];
       const f32 diagonal = MAX(diff03.Length(), diff12.Length()) / sqrtf(2.f);
 
       // Set up the coordinate samples for the inner and outer squares:
@@ -742,7 +739,7 @@ namespace Anki {
           //         iteration, currentCornerChange, CornerConvergenceTolerance);
           break;
         }
-        
+
 #if VISUALIZE_WITH_MATLAB
         {
           matlab.PutQuad(refinedQuad, "refinedQuad");
@@ -794,7 +791,7 @@ namespace Anki {
       if(restoreOriginal) {
         AnkiWarn("RefineQuadrilateral", "Restoring original quad.\n");
         refinedQuad = initialQuadF32;
-        refinedHomography = initialHomography;
+        refinedHomography.Set(initialHomography);
       }
 
       EndBenchmark("vme_quadrefine_finalize");

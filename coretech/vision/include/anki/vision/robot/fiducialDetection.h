@@ -103,7 +103,8 @@ namespace Anki
     // changes its position by more than maxCornerChange, the original quad and
     // homography are returned.
     //
-    Result RefineQuadrilateral(const Quadrilateral<s16>& initialQuad,
+    Result RefineQuadrilateral(
+      const Quadrilateral<f32>& initialQuad,
       const Array<f32>& initialHomography,
       const Array<u8> &image,
       const f32 squareWidthFraction,

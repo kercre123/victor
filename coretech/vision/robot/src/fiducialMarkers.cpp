@@ -506,8 +506,11 @@ namespace Anki
       return true;
     }
 
-    VisionMarker::VisionMarker()
+    VisionMarker::VisionMarker(const Quadrilateral<s16> &corners, const ValidityCode validity)
     {
+      this->corners.SetCast<s16>(corners);
+      this->validity = validity;
+
       Initialize();
     } // VisionMarker::VisionMarker()
 
@@ -732,145 +735,68 @@ namespace Anki
       return lastResult;
     }
 
-    Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &initQuad,
+    Result VisionMarker::RefineCorners(
+      const Array<u8> &image,
       const Array<f32> &initHomography, const f32 minContrastRatio,
       const s32 refine_quadRefinementIterations, const s32 refine_numRefinementSamples, const f32 refine_quadRefinementMaxCornerChange, const f32 refine_quadRefinementMinCornerChange,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
+      Array<f32> &refinedHomography, u8 &meanGrayvalueThreshold,
       MemoryStack scratch)
     {
-      using namespace VisionMarkerDecisionTree;
-
       Result lastResult = RESULT_FAIL;
+
       this->validity = UNKNOWN;
 
-      Initialize();
-
-      BeginBenchmark("vme_brightdarkvals");
+      BeginBenchmark("vmrc_brightdarkvals");
       f32 brightValue = 0.f, darkValue = 0.f;
       bool enoughContrast = false;
-      if((lastResult = this->ComputeBrightDarkValues(image, initHomography, minContrastRatio,
-        brightValue, darkValue, enoughContrast)) != RESULT_OK) {
-          return lastResult;
+      if((lastResult = this->ComputeBrightDarkValues(image, initHomography, minContrastRatio, brightValue, darkValue, enoughContrast)) != RESULT_OK) {
+        return lastResult;
       }
-      EndBenchmark("vme_brightdarkvals");
+      EndBenchmark("vmrc_brightdarkvals");
 
-      if(enoughContrast)
-      {
+      if(enoughContrast) {
         // If the contrast is sufficient, compute the threshold and parse the marker
 
-        Quadrilateral<f32> quad;
-        Array<f32> homography(3,3,scratch);
-        AnkiConditionalErrorAndReturnValue(homography.IsValid(),
-          RESULT_FAIL_OUT_OF_MEMORY,
-          "VisionMarker::Extract",
-          "Failed to allocate homography Array.");
+        const Quadrilateral<f32> initQuad = this->corners;
 
         const u8 meanGrayvalueThreshold = static_cast<u8>(0.5f*(brightValue+darkValue));
 
         if(refine_quadRefinementIterations > 0) {
-          BeginBenchmark("vme_quadrefine");
+          BeginBenchmark("vmrc_quadrefine");
 
-          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, refine_quadRefinementIterations, darkValue, brightValue, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange,
-              quad, homography, scratch)) != RESULT_OK)
+          if((lastResult = RefineQuadrilateral(
+            initQuad,
+            initHomography,
+            image,
+            FIDUCIAL_SQUARE_WIDTH_FRACTION,
+            refine_quadRefinementIterations,
+            darkValue,
+            brightValue,
+            refine_numRefinementSamples,
+            refine_quadRefinementMaxCornerChange,
+            refine_quadRefinementMinCornerChange,
+            this->corners,
+            refinedHomography,
+            scratch)) != RESULT_OK)
           {
             // TODO: Don't fail? Just warn and keep original quad?
-            AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-              "RefineQuadrilateral",
-              "RefineQuadrilateral() failed with code %0x.", lastResult);
+            AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+              lastResult, "RefineQuadrilateral", "RefineQuadrilateral() failed with code %0x.", lastResult);
           }
 
-          Quadrilateral<s16> quadS16;
-          quadS16.SetCast(quad);
+          Quadrilateral<s16> refinedQuadS16;
+          refinedQuadS16.SetCast(this->corners);
 
           bool areCornersDisordered;
-          const bool isReasonable = IsQuadrilateralReasonable(quadS16, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, image.get_size(0), image.get_size(1), areCornersDisordered);
+          const bool isReasonable = IsQuadrilateralReasonable(refinedQuadS16, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, image.get_size(0), image.get_size(1), areCornersDisordered);
 
           if(!isReasonable) {
-            quad.SetCast(initQuad);
+            this->corners = initQuad;
           }
 
-          EndBenchmark("vme_quadrefine");
-        } else {
-          // No refinement, just cast initial quad to f32 and keep initial
-          // homography
-          quad.SetCast(initQuad);
-          homography.Set(initHomography);
-        }// if(refineQuads)
-
-        BeginBenchmark("vme_classify");
-
-        //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
-
-        s32 tempLabel;
-        if((lastResult = VisionMarker::multiClassTree.Classify(image, homography,
-          meanGrayvalueThreshold, tempLabel)) != RESULT_OK) {
-            return lastResult;
+          EndBenchmark("vmrc_quadrefine");
         }
-
-        const OrientedMarkerLabel multiClassLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-
-        EndBenchmark("vme_classify");
-
-        if(multiClassLabel != MARKER_UNKNOWN && multiClassLabel != MARKER_INVALID_000) {
-          BeginBenchmark("vme_verify");
-#if USE_RED_BLACK_VERIFICATION_TREES
-          bool isVerified = false;
-
-          if((lastResult = VisionMarker::verifyRedTree.Verify(image, homography, meanGrayvalueThreshold,
-            multiClassLabel, isVerified)) != RESULT_OK) {
-              return lastResult;
-          }
-
-          if(isVerified) {
-            if((lastResult = VisionMarker::verifyBlackTree.Verify(image, homography, meanGrayvalueThreshold,
-              multiClassLabel, isVerified)) != RESULT_OK) {
-                return lastResult;
-            }
-          }
-
-#else
-          if((lastResult = VisionMarker::verificationTrees[multiClassLabel].Classify(image, homography,
-            meanGrayvalueThreshold, tempLabel)) != RESULT_OK)
-          {
-            return lastResult;
-          }
-
-          const OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-          const bool isVerified = verifyLabel == multiClassLabel;
-#endif
-          EndBenchmark("vme_verify");
-
-          if(isVerified)
-          {
-            // We have a valid, verified classification.
-
-            // 1. Get the unoriented type
-            this->markerType = RemoveOrientationLUT[multiClassLabel];
-
-            // 2. Reorder the original detected corners to the canonical ordering for
-            // this type
-            for(s32 i_corner=0; i_corner<4; ++i_corner)
-            {
-              this->corners[i_corner] = quad[CornerReorderLUT[multiClassLabel][i_corner]];
-            }
-
-            // 3. Keep track of what the original orientation was
-            this->observedOrientation = ObservedOrientationLUT[multiClassLabel];
-
-            // Mark this as a valid marker (note that reaching this point should
-            // be the only way isValid is true.
-            this->validity = VALID;
-          } else {
-#ifdef OUTPUT_FAILED_MARKER_STEPS
-            AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected\n");
-#endif
-            this->validity = UNVERIFIED;
-          } // if(verifyLabel == multiClassLabel)
-        } else {
-#ifdef OUTPUT_FAILED_MARKER_STEPS
-          AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected\n");
-#endif
-        } // if(multiClassLabel != MARKER_UNKNOWN)
       } else {
         // Not enough contrast at bright/dark pairs.
         this->validity = LOW_CONTRAST;
@@ -884,9 +810,101 @@ namespace Anki
         */
       } // if contrast is sufficient
 
+      return lastResult;
+    } // RefineCorners()
+
+    Result VisionMarker::Extract(
+      const Array<u8> &image,
+      const Array<f32> &homography, const u8 meanGrayvalueThreshold,
+      const f32 minContrastRatio,
+      MemoryStack scratch)
+    {
+      using namespace VisionMarkerDecisionTree;
+
+      Result lastResult = RESULT_FAIL;
+
+      //AnkiConditionalErrorAndReturnValue(this->validity == VisionMarker::UNKNOWN,
+      //  RESULT_FAIL, "VisionMarker::Extract", "Marker is not initialized. Perhaps RefineCorners() was not called, or Extract() was called twice.");
+
+      const Quadrilateral<f32> initQuad = this->corners;
+
+      Initialize();
+
+      BeginBenchmark("vme_classify");
+
+      //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
+
+      s32 tempLabel;
+      if((lastResult = VisionMarker::multiClassTree.Classify(image, homography, meanGrayvalueThreshold, tempLabel)) != RESULT_OK) {
+        return lastResult;
+      }
+
+      const OrientedMarkerLabel multiClassLabel = static_cast<OrientedMarkerLabel>(tempLabel);
+
+      EndBenchmark("vme_classify");
+
+      if(multiClassLabel != MARKER_UNKNOWN && multiClassLabel != MARKER_INVALID_000) {
+        BeginBenchmark("vme_verify");
+#if USE_RED_BLACK_VERIFICATION_TREES
+        bool isVerified = false;
+
+        if((lastResult = VisionMarker::verifyRedTree.Verify(image, homography, meanGrayvalueThreshold, multiClassLabel, isVerified)) != RESULT_OK) {
+          return lastResult;
+        }
+
+        if(isVerified) {
+          if((lastResult = VisionMarker::verifyBlackTree.Verify(image, homography, meanGrayvalueThreshold, multiClassLabel, isVerified)) != RESULT_OK) {
+            return lastResult;
+          }
+        }
+
+#else
+        if((lastResult = VisionMarker::verificationTrees[multiClassLabel].Classify(image, homography, meanGrayvalueThreshold, tempLabel)) != RESULT_OK)
+        {
+          return lastResult;
+        }
+
+        const OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
+        const bool isVerified = verifyLabel == multiClassLabel;
+#endif
+        EndBenchmark("vme_verify");
+
+        if(isVerified)
+        {
+          // We have a valid, verified classification.
+
+          // 1. Get the unoriented type
+          this->markerType = RemoveOrientationLUT[multiClassLabel];
+
+          // 2. Reorder the original detected corners to the canonical ordering for
+          // this type
+          const Quadrilateral<f32> initQuad = this->corners;
+          for(s32 i_corner=0; i_corner<4; ++i_corner)
+          {
+            this->corners[i_corner] = initQuad[CornerReorderLUT[multiClassLabel][i_corner]];
+          }
+
+          // 3. Keep track of what the original orientation was
+          this->observedOrientation = ObservedOrientationLUT[multiClassLabel];
+
+          // Mark this as a valid marker (note that reaching this point should
+          // be the only way isValid is true.
+          this->validity = VALID;
+        } else {
+#ifdef OUTPUT_FAILED_MARKER_STEPS
+          AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected\n");
+#endif
+          this->validity = UNVERIFIED;
+        } // if(verifyLabel == multiClassLabel)
+      } else {
+#ifdef OUTPUT_FAILED_MARKER_STEPS
+        AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected\n");
+#endif
+      } // if(multiClassLabel != MARKER_UNKNOWN)
+
       if(this->validity != VALID) {
         this->markerType = Vision::MARKER_UNKNOWN;
-        this->corners.SetCast(initQuad); // Just copy the non-reordered, non-refined corners
+        this->corners = initQuad; // Just copy the non-reordered corners
       }
 
       return lastResult;
