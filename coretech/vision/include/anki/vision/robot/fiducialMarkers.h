@@ -20,6 +20,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/decisionTree_vision.h"
 
 #include "anki/vision/robot/visionMarkerDecisionTrees.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 // For old QR-style BlockMarkers
 #define MAX_FIDUCIAL_MARKER_BITS 25
@@ -37,6 +38,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    class VisionMarker;
+
     // A BlockMarker is a location Quadrilateral, with a given blockType and faceType.
     // The blockType and faceType can be computed by a FiducialMarkerParser
     class BlockMarker
@@ -212,6 +215,9 @@ namespace Anki
       // Returns -1 if the type wasn't found
       s32 FindFirstBitOfType(const FiducialMarkerParserBit::Type type, const s32 startIndex) const;
     }; // class FiducialMarkerParser
+
+    // Ignores case, and ignore any "MARKER_" prefix
+    Anki::Vision::MarkerType LookupMarkerType(const char * name);
   } // namespace Embedded
 } // namespace Anki
 

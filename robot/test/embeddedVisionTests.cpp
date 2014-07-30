@@ -65,6 +65,54 @@ using namespace Anki::Embedded;
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
 
+GTEST_TEST(CoreTech_Vision, LookupMarkerType)
+{
+  const s32 numNames = 16;
+
+  const char *inputNames[numNames] = {
+    "MARKER_0",
+    "marker_0",
+    "mARKER_0",
+    "0",
+    "MARKER_INVERTED_ANKILOGOWITHBITS005",
+    "INVERTED_ANKILOGOWITHBITS005",
+    "inverted_ankilogowithbits005",
+    "INVeRTed_ANkiLOGOWITHBITS005",
+    "MARKER_Y",
+    "MarKER_Y",
+    "Y",
+    "y",
+    "MARKER_UNKNOWN",
+    "UNKNOWN",
+    "unknown",
+    "UNknoOWN"};
+
+  const Anki::Vision::MarkerType inputTypes[numNames] = {
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_UNKNOWN,
+    Anki::Vision::MARKER_UNKNOWN,
+    Anki::Vision::MARKER_UNKNOWN,
+    Anki::Vision::MARKER_UNKNOWN};
+
+  for(s32 i=0; i<numNames; i++) {
+    const Anki::Vision::MarkerType lookedUp = LookupMarkerType(inputNames[i]);
+    ASSERT_TRUE(lookedUp == inputTypes[i]);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, LookupMarkerType)
+
 GTEST_TEST(CoreTech_Vision, IntegerCounts_Quadrilateral)
 {
   const Quadrilateral<f32> quad(Point<f32>(1, 5), Point<f32>(6, 6), Point<f32>(7, 11), Point<f32>(0, 11));
