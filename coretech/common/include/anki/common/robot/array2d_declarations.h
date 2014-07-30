@@ -249,6 +249,9 @@ namespace Anki
 
       // If this object's Type is a basic type, this method prints out this object.
       Result PrintBasicType(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+
+      // If this object's Type is a string, this method prints out this object.
+      Result PrintString(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     }; // class Array
 
     // #pragma mark --- FixedPointArray Class Declaration ---

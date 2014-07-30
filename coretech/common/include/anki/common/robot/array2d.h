@@ -714,6 +714,35 @@ namespace Anki
       return RESULT_OK;
     }
 
+    template<typename Type> Result Array<Type>::PrintString(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "Array<Type>::PrintString", "Array<Type> is not valid");
+
+      const s32 realMinX = MAX(0,minX);
+      const s32 realMaxX = MIN(maxX+1,size[1]);
+      const s32 realMinY = MAX(0,minY);
+      const s32 realMaxY = MIN(maxY+1,size[0]);
+
+      CoreTechPrint("%s:\n", variableName);
+
+      for(s32 y=realMinY; y<realMaxY; y++) {
+        const char * const * pThisData = this->Pointer(y, 0);
+        for(s32 x=realMinX; x<realMaxX; x++) {
+          const char * curString = pThisData[x];
+          if(!curString) {
+            CoreTechPrint("NULL, ");
+          } else {
+            CoreTechPrint("\"%s\", ", curString);
+          }
+        }
+        CoreTechPrint("\n");
+      }
+      CoreTechPrint("\n");
+
+      return RESULT_OK;
+    }
+
     // #pragma mark --- FixedPointArray Definitions ---
 
     template<typename Type> FixedPointArray<Type>::FixedPointArray()
@@ -751,6 +780,8 @@ namespace Anki
     template<> Result Array<s64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<const char *>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<char *>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
 
     template<> Result Array<f32>::PrintAlternate(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f64>::PrintAlternate(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;

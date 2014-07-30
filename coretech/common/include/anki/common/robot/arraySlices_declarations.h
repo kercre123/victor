@@ -99,6 +99,11 @@ namespace Anki
       // Matlab's "array(1:end, 2:5) = 5;"
       s32 Set(const Type value);
 
+      // Copy values to this ArraySlice.
+      // numValues must be equal to the number of values in this slice
+      // Returns the number of values set
+      s32 Set(const Type * const values, const s32 numValues);
+
       // Get the raw Array from the Slice. This is mainly useful for interfacing with functions that
       // don't support the full ArraySlice type, and should be used with caution.
       Array<Type>& get_array();

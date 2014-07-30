@@ -73,6 +73,16 @@ namespace Anki
       return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
+    template<> Result Array<char *>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    {
+      return PrintString(variableName, 1, minY, maxY, minX, maxX);
+    }
+
+    template<> Result Array<const char *>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    {
+      return PrintString(variableName, 1, minY, maxY, minX, maxX);
+    }
+
     template<> Result Array<f32>::PrintAlternate(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       return PrintBasicType(variableName, version, minY, maxY, minX, maxX);
