@@ -471,28 +471,32 @@ namespace Anki
       // Make the computed robot pose use the existing mat piece as its parent
       robotPoseWrtMat.SetParent(&existingMatPiece->GetPose());
       
-      // If there is any significant rotation, make sure that it is roughly
-      // around the Z axis
-      Radians rotAngle;
-      Vec3f rotAxis;
-      robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-      const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
-      const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
-      if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
-        PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
-                            "Robot's Z axis is not well aligned with the world Z axis. "
-                            "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
-                            rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
+      // Don't snap to horzontal or discrete Z levels while on a ramp
+      if(robot->IsOnRamp() == false)
+      {
+        // If there is any significant rotation, make sure that it is roughly
+        // around the Z axis
+        Radians rotAngle;
+        Vec3f rotAxis;
+        robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
+        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
+        const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
+        if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
+                              "Robot's Z axis is not well aligned with the world Z axis. "
+                              "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
+                              rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
+        }
+        
+        // Snap to horizontal
+        if(existingMatPiece->IsPoseOn(robotPoseWrtMat, ROBOT_BOUNDING_Z)) { // TODO: get height tol from robot
+          Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
+          robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
+          robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
+        }
+        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
       }
       
-      // Snap to horizontal
-      if(existingMatPiece->IsPoseOn(robotPoseWrtMat, ROBOT_BOUNDING_Z)) { // TODO: get height tol from robot
-        Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
-        robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
-        robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
-      }
-      robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
-
       // We have a new ("ground truth") key frame. Increment the pose frame!
       robot->IncrementPoseFrameID();
       

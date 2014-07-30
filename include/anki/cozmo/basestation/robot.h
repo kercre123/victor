@@ -126,6 +126,10 @@ namespace Anki {
       bool IsMoving() const {return _isMoving;}
       void SetIsMoving(bool t) {_isMoving= t;}
       
+      // True if we are on the sloped part of a ramp
+      bool IsOnRamp() const { return _onRamp; }
+      void SetOnRamp(bool t) { _onRamp = t; }
+      
       void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
       s8   GetCurrPathSegment() {return _currPathSegment;}
       bool IsTraversingPath() {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
@@ -350,6 +354,7 @@ namespace Anki {
       Pose3d           _pose;
       PoseFrameID_t    _frameId;
       ObjectID         _localizedToID;
+      bool             _onRamp;
       
       const Pose3d _neckPose; // joint around which head rotates
       const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint

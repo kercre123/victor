@@ -325,6 +325,24 @@ namespace Anki {
       return lastResult;
     }
     
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseStart const& msg)
+    {
+      PRINT_INFO("Robot %d reported it started traversing a ramp.\n", robot->GetID());
+
+      robot->SetOnRamp(true);
+      
+      return RESULT_OK;
+    }
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseComplete const& msg)
+    {
+      PRINT_INFO("Robot %d reported it completed traversing a ramp.\n", robot->GetID());
+
+      robot->SetOnRamp(false);
+      
+      return RESULT_OK;
+    }
+    
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMainCycleTimeError const& msg)
     {
       Result lastResult = RESULT_OK;

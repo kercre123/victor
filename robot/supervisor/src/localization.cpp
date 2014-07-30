@@ -48,6 +48,7 @@ namespace Anki {
         // Localization:
         f32 currentMatX_=0.f, currentMatY_=0.f;  // mm
         Radians currentMatHeading_(0.f);
+        bool onRamp_ = false;
        
 #if(USE_OVERLAY_DISPLAY)
         f32 xTrue_, yTrue_, angleTrue_;
@@ -263,6 +264,8 @@ namespace Anki {
       Result Init() {
         SetCurrentMatPose(0,0,0);
         
+        onRamp_ = false;
+        
         prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
         prevRightWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
 
@@ -278,6 +281,57 @@ namespace Anki {
         return currMatPose;
       }
 */
+      
+      Result SendRampTraverseStartMessage()
+      {
+        Messages::RampTraverseStart msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseStart), &msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+      
+      Result SendRampTraverseComplete(const bool success)
+      {
+        Messages::RampTraverseComplete msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseComplete), &msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+
+      Result SetOnRamp(bool onRamp)
+      {
+        Result lastResult = RESULT_OK;
+        if(onRamp == true && onRamp_ == false) {
+          // We weren't on a ramp but now we are
+          Messages::RampTraverseStart msg;
+          msg.timestamp = HAL::GetTimeStamp();
+          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseStart), &msg) == false) {
+            lastResult = RESULT_FAIL;
+          }
+        }
+        else if(onRamp == false && onRamp_ == true) {
+          // We were on a ramp and now we're not
+          Messages::RampTraverseComplete msg;
+          msg.timestamp = HAL::GetTimeStamp();
+          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseComplete), &msg) == false) {
+            lastResult = RESULT_FAIL;
+          }
+        }
+        
+        onRamp_ = onRamp;
+        
+        return lastResult;
+      }
+      
+      bool GetOnRamp() {
+        return onRamp_;
+      }
+      
       void Update()
       {
 

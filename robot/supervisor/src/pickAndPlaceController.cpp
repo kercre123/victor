@@ -3,6 +3,7 @@
 #include "dockingController.h"
 #include "headController.h"
 #include "liftController.h"
+#include "localization.h"
 #include "imuFilter.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
@@ -437,6 +438,7 @@ namespace Anki {
               DockingController::ResetDocker();
               SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
               mode_ = TRAVERSE_RAMP;
+              Localization::SetOnRamp(true);
             }
             break;
 
@@ -667,9 +669,11 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
               PRINT("PAP: Switching out of TRAVERSE_RAMP_DOWN to TRAVERSE_RAMP (angle = %f)\n", IMUFilter::GetPitch());
 #endif
+              Localization::SetOnRamp(true);
               mode_ = TRAVERSE_RAMP;
             }
             break;
+            
           case TRAVERSE_RAMP:
             if ( ABS(IMUFilter::GetPitch()) < OFF_RAMP_ANGLE_THRESH ) {
               SteeringController::ExecuteDirectDrive(0, 0);
@@ -678,8 +682,10 @@ namespace Anki {
               #endif
               mode_ = IDLE;
               lastActionSucceeded_ = true;
+              Localization::SetOnRamp(false);
             }
             break;
+            
           default:
             mode_ = IDLE;
             PRINT("Reached default case in DockingController "

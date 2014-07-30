@@ -127,6 +127,7 @@ namespace Anki {
     , _poseOrigin(&Pose3d::AddOrigin())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _poseOrigin) // Until this robot is localized be seeing a mat marker, create an origin for it to use as its pose parent
     , _frameId(0)
+    , _onRamp(false)
     , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose)
     , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose)
@@ -171,104 +172,105 @@ namespace Anki {
           
         case FOLLOWING_PATH:
         {
-          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime) {
-          if(IsTraversingPath())
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime)
           {
-            // If the robot is traversing a path, consider replanning it
-            if(_world->DidBlocksChange())
+            if(IsTraversingPath())
             {
-              Planning::Path newPath;
-              switch(_selectedPathPlanner->GetPlan(newPath, GetPose(), _forceReplanOnNextWorldChange))
+              // If the robot is traversing a path, consider replanning it
+              if(_world->DidBlocksChange())
               {
-                case IPathPlanner::DID_PLAN:
+                Planning::Path newPath;
+                switch(_selectedPathPlanner->GetPlan(newPath, GetPose(), _forceReplanOnNextWorldChange))
                 {
-                  // clear path, but flag that we are replanning
-                  ClearPath();
-                  wasTraversingPath = false;
-                  _forceReplanOnNextWorldChange = false;
-                  
-                  PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
-                  MessageClearPath clearMessage;
-                  _msgHandler->SendMessage(_ID, clearMessage);
-                  
-                  _path = newPath;
-                  PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
-                  ExecutePath(_path);
-                  break;
-                } // case DID_PLAN:
-                  
-                case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
-                {
-                  ClearPath();
-                  if(_nextState == BEGIN_DOCKING) {
-                    PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileDocking",
-                                     "Replan failed during docking due to bad goal. Will try to update goal.\n");
-                    ExecuteDockingSequence(_dockObjectID);
+                  case IPathPlanner::DID_PLAN:
+                  {
+                    // clear path, but flag that we are replanning
+                    ClearPath();
+                    wasTraversingPath = false;
+                    _forceReplanOnNextWorldChange = false;
+                    
+                    PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
+                    MessageClearPath clearMessage;
+                    _msgHandler->SendMessage(_ID, clearMessage);
+                    
+                    _path = newPath;
+                    PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
+                    ExecutePath(_path);
+                    break;
+                  } // case DID_PLAN:
+                    
+                  case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
+                  {
+                    ClearPath();
+                    if(_nextState == BEGIN_DOCKING) {
+                      PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileDocking",
+                                       "Replan failed during docking due to bad goal. Will try to update goal.\n");
+                      ExecuteDockingSequence(_dockObjectID);
+                    }
+                    else if(_nextState == BEGIN_RAMPING) {
+                      PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileRamping",
+                                       "Replan failed during ramping due to bad goal. Will try to update goal.\n");
+                      ExecuteRampingSequence(_dockObjectID);
+                    } else {
+                      PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
+                                       "Replan failed due to bad goal. Aborting path.\n");
+                      SetState(IDLE);
+                    }
+                    break;
+                  } // PLAN_NEEDED_BUT_GOAL_FAILURE:
+                    
+                  case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
+                  {
+                    PRINT_NAMED_INFO("Robot.Update.NewStartForReplanNeeded",
+                                     "Replan failed during docking due to bad start. Will try again, and hope robot moves.\n");
+                    break;
                   }
-                  else if(_nextState == BEGIN_RAMPING) {
-                    PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileRamping",
-                                     "Replan failed during ramping due to bad goal. Will try to update goal.\n");
-                    ExecuteRampingSequence(_dockObjectID);
-                  } else {
-                    PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
-                                     "Replan failed due to bad goal. Aborting path.\n");
-                    SetState(IDLE);
+                    
+                  case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
+                  {
+                    PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
+                                     "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
+                    // clear the path, but don't change the state
+                    ClearPath();
+                    _forceReplanOnNextWorldChange = true;
+                    break;
                   }
-                  break;
-                } // PLAN_NEEDED_BUT_GOAL_FAILURE:
-                  
-                case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
-                {
-                  PRINT_NAMED_INFO("Robot.Update.NewStartForReplanNeeded",
-                                   "Replan failed during docking due to bad start. Will try again, and hope robot moves.\n");
-                  break;
-                }
-
-                case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
-                {
-                  PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
-                                   "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
-                  // clear the path, but don't change the state
-                  ClearPath();
-                  _forceReplanOnNextWorldChange = true;
-                  break;
-                }
-                  
-                default:
-                {
-                  // Don't do anything just proceed with the current plan...
-                  break;
-                }
-                  
-              } // switch(GetPlan())
-            } // if blocks changed
-
-            if (GetLastRecvdPathID() == GetLastSentPathID()) {
-              pdo_->Update(GetCurrPathSegment(), GetNumFreeSegmentSlots());
+                    
+                  default:
+                  {
+                    // Don't do anything just proceed with the current plan...
+                    break;
+                  }
+                    
+                } // switch(GetPlan())
+              } // if blocks changed
+              
+              if (GetLastRecvdPathID() == GetLastSentPathID()) {
+                pdo_->Update(GetCurrPathSegment(), GetNumFreeSegmentSlots());
+              }
+            } else { // IsTraversingPath is false?
+              
+              // The last path sent was definitely received by the robot
+              // and it is no longer executing it.
+              if (_lastSentPathID == _lastRecvdPathID) {
+                PRINT_NAMED_INFO("Robot.Update.FollowToNextState", "lastPathID %d\n", _lastRecvdPathID);
+                SetState(_nextState);
+              } else {
+                PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
+                                 "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d\n",
+                                 _currPathSegment);
+              }
             }
-          } else { // IsTraversingPath is false?
             
-            // The last path sent was definitely received by the robot
-            // and it is no longer executing it.
-            if (_lastSentPathID == _lastRecvdPathID) {
-              PRINT_NAMED_INFO("Robot.Update.FollowToNextState", "lastPathID %d\n", _lastRecvdPathID);
+            // Visualize path if robot has just started traversing it.
+            // Clear the path when it has stopped.
+            if ((wasTraversingPath && !IsTraversingPath()) ||
+                _pose.IsSameAs(_goalPose, _goalDistanceThreshold, _goalAngleThreshold))
+            {
+              PRINT_INFO("Robot %d finished following path.\n", _ID);
+              ClearPath(); // clear path and indicate that we are not replanning
               SetState(_nextState);
-            } else {
-              PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
-                               "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d\n",
-                               _currPathSegment);
             }
-          }
-          
-          // Visualize path if robot has just started traversing it.
-          // Clear the path when it has stopped.
-          if ((wasTraversingPath && !IsTraversingPath()) ||
-              _pose.IsSameAs(_goalPose, _goalDistanceThreshold, _goalAngleThreshold))
-          {
-            PRINT_INFO("Robot %d finished following path.\n", _ID);
-            ClearPath(); // clear path and indicate that we are not replanning
-            SetState(_nextState);
-          }
           } // if waitUntilTime has passed
           break;
         } // case FOLLOWING_PATH

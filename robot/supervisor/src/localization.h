@@ -26,7 +26,11 @@ namespace Anki {
       void ResetPoseFrame();
       
       void Update();
-
+      
+      // Sets whether robot is on a ramp or not (the actual sloped portion),
+      // and notifies the basestation when there is a change in ramp state.
+      Result SetOnRamp(bool onRamp);
+      bool GetOnRamp();
       
       // Uses the keyframe ("ground truth") pose at some past time as given
       // by the basestation after it has processed a mat marker to
