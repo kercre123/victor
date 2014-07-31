@@ -1022,23 +1022,41 @@ namespace Anki
       : isValid(false)
     {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-      const s32 numImages = imageFilenames.get_size();
+      this->numDatabaseImages = imageFilenames.get_size();
 
-      images = FixedLengthList<Array<u8>>(numImages, memory, Flags::Buffer(false, false, true));
-      labelIndexes = FixedLengthList<Anki::Vision::MarkerType>(numImages, memory, Flags::Buffer(false, false, true));
+      {
+        const cv::Mat image = cv::imread(imageFilenames[0], CV_LOAD_IMAGE_UNCHANGED);
+        this->databaseImageHeight = image.rows;
+        this->databaseImageWidth = image.cols;
 
-      for(s32 iFile=0; iFile<numImages; iFile++) {
+        AnkiConditionalErrorAndReturn(databaseImageWidth == databaseImageHeight,
+          "VisionMarkerImages::VisionMarkerImages", "All images must be equal size and square");
+      }
+
+      /*images = FixedLengthList<Array<u8>>(numImages, memory, Flags::Buffer(false, false, true));*/
+      databaseImages = Array<u8>(databaseImageHeight, databaseImageWidth*numDatabaseImages, memory, Flags::Buffer(true, false, true));
+      databaseLabelIndexes = FixedLengthList<Anki::Vision::MarkerType>(numDatabaseImages, memory, Flags::Buffer(false, false, true));
+
+      for(s32 iFile=0; iFile<numDatabaseImages; iFile++) {
+        // Parse the image name, to fill in labels and indexes
+        databaseLabelIndexes[iFile] = LookupMarkerType(imageFilenames[iFile]);
+
         // Load the image
         cv::Mat image = cv::imread(imageFilenames[iFile], CV_LOAD_IMAGE_UNCHANGED);
 
-        Array<u8> imageArray(image.rows, image.cols, memory);
+        AnkiConditionalErrorAndReturn(image.rows == databaseImageHeight && image.rows == databaseImageWidth,
+          "VisionMarkerImages::VisionMarkerImages", "All images must be equal size and square");
+
+        //Array<u8> imageArray(image.rows, image.cols, memory);
 
         for(s32 y=0; y<image.rows; y++) {
           const u8 * restrict pImage = image.data + y*image.step.buf[0];
-          u8 * restrict pImageArray = imageArray[y];
+          u8 * restrict pImageArray = databaseImages[y];
 
           if(image.step.buf[1] == 1) {
+            AnkiAssert(false); // TODO: implement
           } else if(image.step.buf[1] == 3) {
+            AnkiAssert(false); // TODO: implement
           } else if(image.step.buf[1] == 4) {
             for(s32 x=0; x<image.cols; x++) {
               const u8 b = pImage[4*x];
@@ -1047,40 +1065,20 @@ namespace Anki
               const u8 a = pImage[4*x + 3];
 
               if(a < 128) {
-                pImageArray[x] = 255;
+                pImageArray[x*numDatabaseImages + iFile] = 255;
               } else {
                 const s32 grayValue = (r + g + b) / 3;
                 if(grayValue > 128) {
-                  pImageArray[x] = 255;
+                  pImageArray[x*numDatabaseImages + iFile] = 255;
                 } else {
-                  pImageArray[x] = 0;
+                  pImageArray[x*numDatabaseImages + iFile] = 0;
                 }
               }
             }
           }
-        }
-        /*
-        cv::Mat grayImage = image;
-        if(grayImage.channels() > 1) {
-        cv::Mat temp;
-        cvtColor(grayImage, temp, CV_BGR2GRAY);
-        grayImage = temp;
-        }
+        } // for(s32 y=0; y<image.rows; y++)
+      } // for(s32 iFile=0; iFile<numDatabaseImages; iFile++)
 
-        imageArray.Set(grayImage);*/
-
-        images[iFile] = imageArray;
-
-        // Parse the image name, to fill in labels and indexes
-        labelIndexes[iFile] = LookupMarkerType(imageFilenames[iFile]);
-      } // for(s32 iFile=0; iFile<numImages; iFile++)
-
-      AnkiConditionalErrorAndReturn(images[0].get_size(0) == images[0].get_size(1),
-        "VisionMarkerImages::VisionMarkerImages", "All images must be equal size and square");
-
-      for(s32 iFile=1; iFile<numImages; iFile++) {
-        AnkiConditionalErrorAndReturn(AreEqualSize(images[0], images[iFile]), "VisionMarkerImages::VisionMarkerImages", "All images must be equal size and square");
-      } // for(s32 iFile=0; iFile<numImages; iFile++)
 #else
       AnkiError("VisionMarkerImages::VisionMarkerImages", "OpenCV is required to load files");
 #endif // #if ANKI_EMBEDDED_USE_OPENCV ... #else
@@ -1091,15 +1089,14 @@ namespace Anki
     Result VisionMarkerImages::Show(const s32 pauseMilliseconds) const
     {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-      //char name[128];
+      // TODO: implement for striped
 
-      for(s32 i=0; i<images.get_size(); i++) {
-        //snprintf(name, 128, "Number %d", labelIndexes[i]);
+      //for(s32 i=0; i<databaseImages.get_size(); i++) {
+      //  //snprintf(name, 128, "Number %d", databaseLabelIndexes[i]);
 
-        images[i].Show("Fiducial", false, false, false);
-        cv::waitKey(pauseMilliseconds);
-      }
-
+      //  databaseImages[i].Show("Fiducial", false, false, false);
+      //  cv::waitKey(pauseMilliseconds);
+      //}
 #endif
 
       return RESULT_OK;
@@ -1113,15 +1110,10 @@ namespace Anki
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
-      const s32 databaseImageHeight = this->images[0].get_size(0);
-      const s32 databaseImageWidth = this->images[0].get_size(1);
-
       AnkiAssert(databaseImageWidth == databaseImageHeight);
 
       AnkiConditionalErrorAndReturnValue(NotAliased(fastScratch, slowScratch),
         RESULT_FAIL_ALIASED_MEMORY, "VisionMarkerImages::MatchExhaustive", "fastScratch and slowScratch must be different");
-
-      const s32 numDatabaseImages = this->images.get_size();
 
       // 1. Compute the transformation from the quad to the known marker images
       //allImagesCorners = [0 0 allImageSize(2) allImageSize(2); 0 allImageSize(1) 0 allImageSize(1)]';
@@ -1171,13 +1163,15 @@ namespace Anki
       const u8 imageThreshold = Round<s32>(imageCountsStatistics.mean);
 
 #ifdef SHOW_EXHAUSTIVE_STEPS
-      Array<u8> toShowImage0(imageHeight, imageWidth, slowScratch);
-      Array<u8> toShowImage90(imageHeight, imageWidth, slowScratch);
-      Array<u8> toShowImage180(imageHeight, imageWidth, slowScratch);
-      Array<u8> toShowImage270(imageHeight, imageWidth, slowScratch);
-
-      AnkiConditionalErrorAndReturnValue(AreValid(toShowImage0, toShowImage90, toShowImage180, toShowImage270),
+      FixedLengthList<Array<u8>> toShowImages(4, slowScratch);
+      AnkiConditionalErrorAndReturnValue(toShowImages.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
+
+      for(s32 iRotation=0; iRotation<4; iRotation++) {
+        toShowImages[iRotation] = Array<u8>(imageHeight, imageWidth, slowScratch);
+        AnkiConditionalErrorAndReturnValue(toShowImages[iRotation].IsValid(),
+          RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
+      }
 #endif
 
       // Four rotations for each image
@@ -1187,23 +1181,18 @@ namespace Anki
 
       AnkiAssert(totalDifferences != NULL);
 
-      const u8 * restrict * restrict pDatabaseImages = reinterpret_cast<const u8**>(fastScratch.Allocate(sizeof(u8*)*numDatabaseImages,true,numBytesAllocated));
+      //const u8 * restrict * restrict pDatabaseImages = reinterpret_cast<const u8**>(fastScratch.Allocate(sizeof(u8*)*numDatabaseImages,true,numBytesAllocated));
       //u8 ** pDatabaseImages = reinterpret_cast<u8**>(fastScratch.Allocate(sizeof(u8*)*numDatabaseImages,true,numBytesAllocated));
 
       // TODO: is memory being overwritten!!!??
 
-      AnkiAssert(pDatabaseImages != NULL);
+      //AnkiAssert(pDatabaseImages != NULL);
 
-      for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
-        pDatabaseImages[iDatabase] = this->images[iDatabase].Pointer(0,0);
-      }
+      //for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+      //  pDatabaseImages[iDatabase] = this->databaseImages[iDatabase].Pointer(0,0);
+      //}
 
-#ifdef SHOW_EXHAUSTIVE_STEPS
-      toShowImage0.SetZero();
-      toShowImage90.SetZero();
-      toShowImage180.SetZero();
-      toShowImage270.SetZero();
-#endif
+      const u8 * restrict pDatabaseImages_start = this->databaseImages.Pointer(0,0);
 
       f32 yF32 = ys.get_start();
       for(s32 iy=0; iy<numYs; iy+=yIncrement) {
@@ -1241,70 +1230,46 @@ namespace Anki
 
           const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
 
-          const s32 xTransformed = Round<s32>(xTransformedRaw / normalization);
-          const s32 yTransformed = Round<s32>(yTransformedRaw / normalization);
+          const s32 xTransformed0 = Round<s32>(xTransformedRaw / normalization);
+          const s32 yTransformed0 = Round<s32>(yTransformedRaw / normalization);
 
           // If out of bounds, continue
-          if(xTransformed < 0 || xTransformed >= databaseImageWidth || yTransformed < 0 || yTransformed >= databaseImageWidth) {
+          if(xTransformed0 < 0 || xTransformed0 >= databaseImageWidth || yTransformed0 < 0 || yTransformed0 >= databaseImageWidth) {
             continue;
           }
 
-          const s32 curImage = (pImage[x] > imageThreshold) ? 255 : 0;
+          const s32 curImageValue = (pImage[x] > imageThreshold) ? 255 : 0;
 
-          const s32 xTransformed90 = databaseImageWidth - yTransformed - 1;
-          const s32 yTransformed90 = xTransformed;
+          const s32 xTransformed90 = databaseImageWidth - yTransformed0 - 1;
+          const s32 yTransformed90 = xTransformed0;
 
-          const s32 xTransformed180 = databaseImageWidth - xTransformed - 1;
-          const s32 yTransformed180 = databaseImageHeight - yTransformed - 1;
+          const s32 xTransformed180 = databaseImageWidth - xTransformed0 - 1;
+          const s32 yTransformed180 = databaseImageHeight - yTransformed0 - 1;
 
-          const s32 xTransformed270 = yTransformed;
-          const s32 yTransformed270 = databaseImageHeight - xTransformed - 1;
+          const s32 xTransformed270 = yTransformed0;
+          const s32 yTransformed270 = databaseImageHeight - xTransformed0 - 1;
 
           numInBounds++;
 
-          const Array<u8> * pDatabaseImage = this->images.Pointer(0);
+          const s32 xTransformed[4] = {xTransformed0, xTransformed90, xTransformed180, xTransformed270};
+          const s32 yTransformed[4] = {yTransformed0, yTransformed90, yTransformed180, yTransformed270};
 
-          for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
-            // The four rotation (0, 90, 180, 270)
-            //   0: x = x         and y = y
-            //  90: x = width-y-1 and y = x
-            // 180: x = width-x-1 and y = height-y-1
-            // 270: x = y         and y = height-x-1
+          // The four rotation (0, 90, 180, 270)
+          //   0: x = x         and y = y
+          //  90: x = width-y-1 and y = x
+          // 180: x = width-x-1 and y = height-y-1
+          // 270: x = y         and y = height-x-1
 
-            // Slow version (With possible bounds checking)
-            //const s32 databaseImage0 = *this->images[iDatabase].Pointer(yTransformed, xTransformed);
-            //const s32 databaseImage90 = *this->images[iDatabase].Pointer(yTransformed90, xTransformed90);
-            //const s32 databaseImage180 = *this->images[iDatabase].Pointer(yTransformed180, xTransformed180);
-            //const s32 databaseImage270 = *this->images[iDatabase].Pointer(yTransformed270, xTransformed270);
+          for(s32 iRotation=0; iRotation<4; iRotation++) {
+            const u8 * restrict pDatabaseImages = pDatabaseImages_start + numDatabaseImages*(yTransformed[iRotation]*databaseImageWidth + xTransformed[iRotation]);
 
-            // Fast version
-            const s32 databaseImage0 = pDatabaseImages[iDatabase][yTransformed*databaseImageWidth + xTransformed];
-            const s32 databaseImage90 = pDatabaseImages[iDatabase][yTransformed90*databaseImageWidth + xTransformed90];
-            const s32 databaseImage180 = pDatabaseImages[iDatabase][yTransformed180*databaseImageWidth + xTransformed180];
-            const s32 databaseImage270 = pDatabaseImages[iDatabase][yTransformed270*databaseImageWidth + xTransformed270];
-
-#ifdef SHOW_EXHAUSTIVE_STEPS
-            *toShowImage0.Pointer(yS32, x) = databaseImage0;
-            *toShowImage90.Pointer(yS32, x) = databaseImage90;
-            *toShowImage180.Pointer(yS32, x) = databaseImage180;
-            *toShowImage270.Pointer(yS32, x) = databaseImage270;
-#endif
-
-            totalDifferences[4*iDatabase] += ABS(curImage - databaseImage0);
-            totalDifferences[4*iDatabase + 1] += ABS(curImage - databaseImage90);
-            totalDifferences[4*iDatabase + 2] += ABS(curImage - databaseImage180);
-            totalDifferences[4*iDatabase + 3] += ABS(curImage - databaseImage270);
-          } // for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++)
+            for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+              const s32 databaseImageValue = pDatabaseImages[iDatabase];
+              totalDifferences[numDatabaseImages*iRotation + iDatabase] += ABS(curImageValue - databaseImageValue);
+            } // for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++)
+          } // for(s32 iRotation=0; iRotation<4; iRotation++)
         } // for(s32 x=minXS32; x<=maxXS32; x+=xIncrement)
 
-#ifdef SHOW_EXHAUSTIVE_STEPS
-        image.Show("image", false, false, true);
-        toShowImage0.Show("toShowImage0", false, false, true);
-        toShowImage90.Show("toShowImage90", false, false, true);
-        toShowImage180.Show("toShowImage180", false, false, true);
-        toShowImage270.Show("toShowImage270", false, false, true);
-        cv::waitKey();
-#endif
         yF32 += static_cast<f32>(yIncrement);
       } // for(s32 iy=0; iy<numYs; iy++)
 
@@ -1314,9 +1279,9 @@ namespace Anki
       s32 bestDatabaseRotation = -1;
       s32 bestDatabaseDifference = s32_MAX;
 
-      for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
-        for(s32 iRotation=0; iRotation<4; iRotation++) {
-          const s32 curTotalDifference = totalDifferences[4*iDatabase + iRotation];
+      for(s32 iRotation=0; iRotation<4; iRotation++) {
+        for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+          const s32 curTotalDifference = totalDifferences[numDatabaseImages*iRotation + iDatabase];
 
           if(curTotalDifference < bestDatabaseDifference) {
             bestDatabaseDifference = curTotalDifference;
@@ -1327,7 +1292,7 @@ namespace Anki
       } // for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++)
 
       extractedMarker = VisionMarker(quad, VisionMarker::VALID);
-      extractedMarker.markerType = this->labelIndexes[bestDatabaseImage];
+      extractedMarker.markerType = this->databaseLabelIndexes[bestDatabaseImage];
 
       if(bestDatabaseRotation == 0) {
         extractedMarker.observedOrientation = 0.0f;
@@ -1349,10 +1314,10 @@ namespace Anki
 
     bool VisionMarkerImages::IsValid()
     {
-      if(!images.IsValid())
+      if(!databaseImages.IsValid())
         return false;
 
-      if(!labelIndexes.IsValid())
+      if(!databaseLabelIndexes.IsValid())
         return false;
 
       return this->isValid;

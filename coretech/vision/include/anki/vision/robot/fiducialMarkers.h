@@ -76,8 +76,13 @@ namespace Anki
       bool IsValid();
 
     protected:
-      FixedLengthList<Array<u8>> images;
-      FixedLengthList<Anki::Vision::MarkerType> labelIndexes; // (aka name, aka codeName)
+      s32 numDatabaseImages;
+      s32 databaseImageHeight;
+      s32 databaseImageWidth;
+
+      Array<u8> databaseImages; //< Striped, so for a given pixel, all images data is consecutive. (e.g. the first N bytes are the pixel (0,0) for all images)
+
+      FixedLengthList<Anki::Vision::MarkerType> databaseLabelIndexes; // (aka name, aka codeName)
 
       bool isValid;
     };
