@@ -155,9 +155,10 @@ namespace Anki {
       // code.
       std::map<Marker::Code, std::vector<KnownMarker*> > markersWithCode_;
       
-      Pose3d pose_;
-      
       bool wasObserved_;
+      
+      // For subclasses can get a modifiable pose reference
+      Pose3d& GetNonConstPose() { return pose_; }
       
       /*
       // Canonical pose used as the parent pose for the object's markers so
@@ -177,6 +178,9 @@ namespace Anki {
       std::list<Pose3d> possiblePoses_;
       */
     private:
+      // Force setting of pose through SetPose() to keep pose name updated
+      Pose3d pose_;
+      
       // Don't allow a copy constuctor, because it won't handle fixing the
       // marker pointers and pose parents
       ObservableObject(const ObservableObject& other);
@@ -213,6 +217,13 @@ namespace Anki {
   
     inline void ObservableObject::SetPose(const Pose3d& newPose) {
       pose_ = newPose;
+      
+      std::string poseName(GetType().GetName());
+      if(poseName.empty()) {
+        poseName = "Object";
+      }
+      poseName += "_" + std::to_string(GetID().GetValue());
+      pose_.SetName(poseName);
     }
     
     inline bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
