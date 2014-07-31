@@ -117,6 +117,38 @@ namespace Anki
         flags);
     }
 
+    template<typename Type> Array<Type>::Array(const char * filename, MemoryStack &memory)
+    {
+      InvalidateArray();
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+      const cv::Mat cvImage = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+
+      AnkiConditionalErrorAndReturn(cvImage.cols >= 0 && cvImage.rows >= 0,
+        "Array<Type>::Array", "Invalid size");
+
+      s32 numBytesAllocated = 0;
+
+      void * allocatedBuffer = AllocateBufferFromMemoryStack(cvImage.rows, ComputeRequiredStride(cvImage.cols, flags), memory, numBytesAllocated, flags, false);
+
+      if(InitializeBuffer(cvImage.rows, cvImage.cols, reinterpret_cast<Type*>(allocatedBuffer), numBytesAllocated, flags) == RESULT_OK) {
+        const u8 * restrict pCvImage = cvImage.data;
+
+        for(s32 y=0; y<cvImage.rows; y++) {
+          Type * restrict pThisData = Pointer(y, 0);
+
+          for(s32 x=0; x<cvImage.cols; x++) {
+            pThisData[x] = static_cast<Type>(pCvImage[x]);
+          }
+
+          pCvImage += cvImage.step.buf[0];
+        }
+      }
+#else
+      AnkiError("Array<Type>::Array", "OpenCV is required to load an image from file");
+#endif
+    }
+
     template<typename Type> const Type* Array<Type>::Pointer(const s32 index0, const s32 index1) const
     {
       AnkiAssert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1]);
