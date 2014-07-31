@@ -101,9 +101,27 @@ GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
   VisionMarkerImages vmi(imageFilenames, scratchHuge);
   const f64 t1 = GetTimeF64();
 
-  printf("Images loaded in %f seconds\n", t1-t0);
+  
+  //vmi.Show(50);
 
-  vmi.Show(50);
+  const char * queryImageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
+  Array<u8> queryImage(queryImageFilename, scratchHuge);
+  //queryImage.Show("queryImage", true);
+
+  Quadrilateral<f32> quad(
+    Point<f32>(64.1757f, 46.0676f),
+    Point<f32>(61.9054f, 114.8243f),
+    Point<f32>(134.8784f, 44.7703f),
+    Point<f32>(133.9054f, 115.1486f));
+
+  VisionMarker extractedMarker;
+  f32 matchQuality;
+
+  const f64 t2 = GetTimeF64();
+  vmi.MatchExhaustive(queryImage, quad, extractedMarker, matchQuality, scratchOffchip, scratchHuge);
+  const f64 t3 = GetTimeF64();
+
+  printf("Database loaded in %f seconds and quad matched in %f seconds\n", t1-t0, t3-t2);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, VisionMarkerImages)

@@ -71,7 +71,7 @@ namespace Anki
 
       Result Show(const s32 pauseMilliseconds) const;
 
-      Result MatchExhaustive(const Array<u8> &image, const Quadrilateral<f32> &quad, VisionMarker &extractedMarker, f32 &matchQuality, MemoryStack scratch) const;
+      Result MatchExhaustive(const Array<u8> &image, const Quadrilateral<f32> &quad, VisionMarker &extractedMarker, f32 &matchQuality, MemoryStack fastScratch, MemoryStack slowScratch) const;
 
       bool IsValid();
 
@@ -104,6 +104,7 @@ namespace Anki
 
       VisionMarker();
       VisionMarker(const Quadrilateral<s16> &corners, const ValidityCode validity);
+      VisionMarker(const Quadrilateral<f32> &corners, const ValidityCode validity);
 
       Result RefineCorners(
         const Array<u8> &image,
@@ -122,7 +123,8 @@ namespace Anki
       Result ExtractExhaustive(
         const VisionMarkerImages &allMarkerImages,
         const Array<u8> &image,
-        MemoryStack scratch);
+        MemoryStack fastScratch,
+        MemoryStack slowScratch);
 
       void Print() const;
 

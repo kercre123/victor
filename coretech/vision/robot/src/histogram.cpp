@@ -102,17 +102,17 @@ namespace Anki
       const LinearSequence<f32> ys(minYF32, maxYF32);
       const s32 numYs = ys.get_size();
 
-      f32 y = ys.get_start();
+      f32 yF32 = ys.get_start();
       for(s32 iy=0; iy<numYs; iy+=yIncrement) {
         // Compute all intersections
         f32 minXF32 = FLT_MAX;
         f32 maxXF32 = FLT_MIN;
         for(s32 iCorner=0; iCorner<4; iCorner++) {
-          if( (corners[iCorner].y < y && corners[iCorner+1].y >= y) || (corners[iCorner+1].y < y && corners[iCorner].y >= y) ) {
+          if( (corners[iCorner].y < yF32 && corners[iCorner+1].y >= yF32) || (corners[iCorner+1].y < yF32 && corners[iCorner].y >= yF32) ) {
             const f32 dy = corners[iCorner+1].y - corners[iCorner].y;
             const f32 dx = corners[iCorner+1].x - corners[iCorner].x;
 
-            const f32 alpha = (y - corners[iCorner].y) / dy;
+            const f32 alpha = (yF32 - corners[iCorner].y) / dy;
 
             const f32 xIntercept = corners[iCorner].x + alpha * dx;
 
@@ -132,7 +132,7 @@ namespace Anki
           this->numElements++;
         }
 
-        y += static_cast<f32>(yIncrement);
+        yF32 += static_cast<f32>(yIncrement);
       } // for(s32 iy=0; iy<numYs; iy++)
     } // IntegerCounts::IntegerCounts(const Array<u8> &image, const Quadrilateral<f32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, MemoryStack &memory)
 

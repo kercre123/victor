@@ -32,6 +32,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 #undef OUTPUT_FAILED_MARKER_STEPS
 #endif
 
+//#define SHOW_EXHAUSTIVE_STEPS
+
+#if !ANKICORETECH_EMBEDDED_USE_OPENCV
+#undef SHOW_EXHAUSTIVE_STEPS
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -524,6 +530,14 @@ namespace Anki
       Initialize();
     } // VisionMarker::VisionMarker()
 
+    VisionMarker::VisionMarker(const Quadrilateral<f32> &corners, const ValidityCode validity)
+    {
+      this->corners = corners;
+      this->validity = validity;
+
+      Initialize();
+    }
+
     void VisionMarker::Print() const
     {
       const char * typeString = "??";
@@ -923,12 +937,13 @@ namespace Anki
     Result VisionMarker::ExtractExhaustive(
       const VisionMarkerImages &allMarkerImages,
       const Array<u8> &image,
-      MemoryStack scratch)
+      MemoryStack fastScratch,
+      MemoryStack slowScratch)
     {
       VisionMarker matchedMarker;
       f32 matchQuality;
 
-      allMarkerImages.MatchExhaustive(image, this->corners, matchedMarker, matchQuality, scratch);
+      allMarkerImages.MatchExhaustive(image, this->corners, matchedMarker, matchQuality, fastScratch, slowScratch);
 
       return RESULT_OK;
     }
@@ -1090,7 +1105,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result VisionMarkerImages::MatchExhaustive(const Array<u8> &image, const Quadrilateral<f32> &quad, VisionMarker &extractedMarker, f32 &matchQuality, MemoryStack scratch) const
+    Result VisionMarkerImages::MatchExhaustive(const Array<u8> &image, const Quadrilateral<f32> &quad, VisionMarker &extractedMarker, f32 &matchQuality, MemoryStack fastScratch, MemoryStack slowScratch) const
     {
       const s32 yIncrement = 1;
       const s32 xIncrement = 1;
@@ -1103,23 +1118,26 @@ namespace Anki
 
       AnkiAssert(databaseImageWidth == databaseImageHeight);
 
+      AnkiConditionalErrorAndReturnValue(NotAliased(fastScratch, slowScratch),
+        RESULT_FAIL_ALIASED_MEMORY, "VisionMarkerImages::MatchExhaustive", "fastScratch and slowScratch must be different");
+
       const s32 numDatabaseImages = this->images.get_size();
 
       // 1. Compute the transformation from the quad to the known marker images
       //allImagesCorners = [0 0 allImageSize(2) allImageSize(2); 0 allImageSize(1) 0 allImageSize(1)]';
       Quadrilateral<f32> databaseImagesCorners(
-        Point<f32>(0,0),
-        Point<f32>(0,databaseImageHeight),
-        Point<f32>(databaseImageWidth,0),
-        Point<f32>(databaseImageWidth,databaseImageHeight));
+        Point<f32>(0.0f,0.0f),
+        Point<f32>(0.0f,static_cast<f32>(databaseImageHeight)),
+        Point<f32>(static_cast<f32>(databaseImageWidth),0.0f),
+        Point<f32>(static_cast<f32>(databaseImageWidth),static_cast<f32>(databaseImageHeight)));
 
-      Array<f32> homography(3, 3, scratch);
+      Array<f32> homography(3, 3, fastScratch);
 
       AnkiConditionalErrorAndReturnValue(homography.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
 
       bool numericalFailure;
-      const Result result = Transformations::ComputeHomographyFromQuads(quad, databaseImagesCorners, homography, numericalFailure, scratch);
+      const Result result = Transformations::ComputeHomographyFromQuads(quad, databaseImagesCorners, homography, numericalFailure, fastScratch);
 
       // 2. For each pixel in the quad in the input image, compute the mean-absolute difference with each known marker image
       // Based off DrawFilledConvexQuadrilateral()
@@ -1148,9 +1166,23 @@ namespace Anki
       const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
       const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; //const f32 h22 = 1.0f;
 
+      const IntegerCounts imageCounts(image, quad, 1, 1, fastScratch);
+      IntegerCounts::Statistics imageCountsStatistics = imageCounts.ComputeStatistics();
+      const u8 imageThreshold = Round<s32>(imageCountsStatistics.mean);
+
       s32 bestDatabaseImage = -1;
       s32 bestDatabaseRotation = -1;
       f32 bestDatabaseDifference = FLT_MAX;
+
+#ifdef SHOW_EXHAUSTIVE_STEPS
+      Array<u8> toShowImage0(imageHeight, imageWidth, slowScratch);
+      Array<u8> toShowImage90(imageHeight, imageWidth, slowScratch);
+      Array<u8> toShowImage180(imageHeight, imageWidth, slowScratch);
+      Array<u8> toShowImage270(imageHeight, imageWidth, slowScratch);
+
+      AnkiConditionalErrorAndReturnValue(AreValid(toShowImage0, toShowImage90, toShowImage180, toShowImage270),
+        RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
+#endif
 
       for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
         // Four rotations
@@ -1158,17 +1190,24 @@ namespace Anki
 
         s32 numInBounds= 0;
 
-        f32 y = ys.get_start();
+#ifdef SHOW_EXHAUSTIVE_STEPS
+        toShowImage0.SetZero();
+        toShowImage90.SetZero();
+        toShowImage180.SetZero();
+        toShowImage270.SetZero();
+#endif
+
+        f32 yF32 = ys.get_start();
         for(s32 iy=0; iy<numYs; iy+=yIncrement) {
           // Compute all intersections
           f32 minXF32 = FLT_MAX;
           f32 maxXF32 = FLT_MIN;
           for(s32 iCorner=0; iCorner<4; iCorner++) {
-            if( (corners[iCorner].y < y && corners[iCorner+1].y >= y) || (corners[iCorner+1].y < y && corners[iCorner].y >= y) ) {
+            if( (corners[iCorner].y < yF32 && corners[iCorner+1].y >= yF32) || (corners[iCorner+1].y < yF32 && corners[iCorner].y >= yF32) ) {
               const f32 dy = corners[iCorner+1].y - corners[iCorner].y;
               const f32 dx = corners[iCorner+1].x - corners[iCorner].x;
 
-              const f32 alpha = (y - corners[iCorner].y) / dy;
+              const f32 alpha = (yF32 - corners[iCorner].y) / dy;
 
               const f32 xIntercept = corners[iCorner].x + alpha * dx;
 
@@ -1185,8 +1224,8 @@ namespace Anki
           for(s32 x=minXS32; x<=maxXS32; x+=xIncrement) {
             // Do nearest-neighbor lookup from the query image to the image in the dataset
 
-            const f32 yOriginal = y;
-            const f32 xOriginal = x;
+            const f32 yOriginal = yF32;
+            const f32 xOriginal = static_cast<f32>(x);
 
             // TODO: These two could be strength reduced
             const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
@@ -1202,10 +1241,7 @@ namespace Anki
               continue;
             }
 
-            const s32 curImage = pImage[x];
-
-            //s32 numInBounds[4] = {0, 0, 0, 0};
-            //s32 totalDifference[4] = {0, 0, 0, 0};
+            const s32 curImage = (pImage[x] > imageThreshold) ? 255 : 0;
 
             // The four rotation (0, 90, 180, 270)
             //   0: x = x         and y = y
@@ -1227,6 +1263,13 @@ namespace Anki
             const s32 databaseImage180 = *this->images[iDatabase].Pointer(yTransformed180, xTransformed180);
             const s32 databaseImage270 = *this->images[iDatabase].Pointer(yTransformed270, xTransformed270);
 
+#ifdef SHOW_EXHAUSTIVE_STEPS
+            *toShowImage0.Pointer(yS32, x) = databaseImage0;
+            *toShowImage90.Pointer(yS32, x) = databaseImage90;
+            *toShowImage180.Pointer(yS32, x) = databaseImage180;
+            *toShowImage270.Pointer(yS32, x) = databaseImage270;
+#endif
+
             totalDifference[0] += ABS(curImage - databaseImage0);
             totalDifference[1] += ABS(curImage - databaseImage90);
             totalDifference[2] += ABS(curImage - databaseImage180);
@@ -1235,8 +1278,17 @@ namespace Anki
             numInBounds++;
           }
 
-          y += static_cast<f32>(yIncrement);
+          yF32 += static_cast<f32>(yIncrement);
         } // for(s32 iy=0; iy<numYs; iy++)
+
+#ifdef SHOW_EXHAUSTIVE_STEPS
+        image.Show("image", false, false, true);
+        toShowImage0.Show("toShowImage0", false, false, true);
+        toShowImage90.Show("toShowImage90", false, false, true);
+        toShowImage180.Show("toShowImage180", false, false, true);
+        toShowImage270.Show("toShowImage270", false, false, true);
+        cv::waitKey();
+#endif
 
         // TODO: best difference among the means, and store it
 
@@ -1252,11 +1304,26 @@ namespace Anki
         const f32 curMeanDifference = static_cast<f32>(totalDifference[0]) / static_cast<f32>(numInBounds);
 
         if(curMeanDifference < bestDatabaseDifference) {
-          s32 bestDatabaseImage = -1;
-          s32 bestDatabaseRotation = -1;
-          f32 bestDatabaseDifference = FLT_MAX;
+          bestDatabaseImage = iDatabase;
+          bestDatabaseRotation = curMinLocalIndex;
+          bestDatabaseDifference = curMeanDifference;
         }
       } // for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++)
+
+      extractedMarker = VisionMarker(quad, VisionMarker::VALID);
+      extractedMarker.markerType = this->labelIndexes[bestDatabaseImage];
+
+      if(bestDatabaseRotation == 0) {
+        extractedMarker.observedOrientation = 0.0f;
+      } else if(bestDatabaseRotation == 1) {
+        extractedMarker.observedOrientation = 90.0f;
+      } else if(bestDatabaseRotation == 2) {
+        extractedMarker.observedOrientation = 180.0f;
+      } else if(bestDatabaseRotation == 3) {
+        extractedMarker.observedOrientation = 270.0f;
+      }
+
+      matchQuality = bestDatabaseDifference / 255.0f;
 
       return RESULT_OK;
     }
