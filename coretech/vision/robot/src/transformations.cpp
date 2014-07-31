@@ -689,13 +689,32 @@ namespace Anki
 
       Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f32> &homography, bool &numericalFailure, MemoryStack scratch)
       {
+        Quadrilateral<f32> quadF32;
+        quadF32.SetCast<s16>(quad);
+
+        return ComputeHomographyFromQuad(quadF32, homography, numericalFailure, scratch);
+      }
+
+      Result ComputeHomographyFromQuad(const Quadrilateral<f32> &quad, Array<f32> &homography, bool &numericalFailure, MemoryStack scratch)
+      {
+        Quadrilateral<f32> originalQuad(
+          Point<f32>(0,0),
+          Point<f32>(0,1),
+          Point<f32>(1,0),
+          Point<f32>(1,1));
+
+        return ComputeHomographyFromQuads(originalQuad, quad, homography, numericalFailure, scratch);
+      }
+
+      Result ComputeHomographyFromQuads(const Quadrilateral<f32> &originalQuad, const Quadrilateral<f32> &transformedQuad, Array<f32> &homography, bool &numericalFailure, MemoryStack scratch)
+      {
         Result lastResult;
 
         AnkiConditionalErrorAndReturnValue(AreValid(homography, scratch),
-          RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "Invalid objects");
+          RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuads", "Invalid objects");
 
-        if(!quad.IsConvex()) {
-          AnkiWarn("ComputeHomographyFromQuad", "Quad is not convex");
+        if(!originalQuad.IsConvex() || !transformedQuad.IsConvex()) {
+          AnkiWarn("ComputeHomographyFromQuads", "Quad is not convex");
 
           homography.SetZero();
           homography[0][0] = 1;
@@ -710,15 +729,10 @@ namespace Anki
         FixedLengthList<Point<f32> > originalPoints(4, scratch);
         FixedLengthList<Point<f32> > transformedPoints(4, scratch);
 
-        originalPoints.PushBack(Point<f32>(0,0));
-        originalPoints.PushBack(Point<f32>(0,1));
-        originalPoints.PushBack(Point<f32>(1,0));
-        originalPoints.PushBack(Point<f32>(1,1));
-
-        transformedPoints.PushBack(Point<f32>(quad[0].x, quad[0].y));
-        transformedPoints.PushBack(Point<f32>(quad[1].x, quad[1].y));
-        transformedPoints.PushBack(Point<f32>(quad[2].x, quad[2].y));
-        transformedPoints.PushBack(Point<f32>(quad[3].x, quad[3].y));
+        for(s32 i=0; i<4; i++) {
+          originalPoints.PushBack(originalQuad[i]);
+          transformedPoints.PushBack(transformedQuad[i]);
+        }
 
         if((lastResult = Matrix::EstimateHomography(originalPoints, transformedPoints, homography, numericalFailure, scratch)) != RESULT_OK)
           return lastResult;

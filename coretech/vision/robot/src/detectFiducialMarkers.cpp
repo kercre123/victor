@@ -182,7 +182,6 @@ namespace Anki
         EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
 
         // 4b. Compute a homography for each extracted quadrilateral
-        //Array<f32> refinedHomography(3,3,scratchOnchip);
         BeginBenchmark("ComputeHomographyFromQuad");
         for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
           Array<f32> &currentHomography = homographies[iQuad];
@@ -235,13 +234,15 @@ namespace Anki
             return lastResult;
           }
 
-          if((lastResult = currentMarker.Extract(
-            image,
-            refinedHomography, meanGrayvalueThreshold,
-            decode_minContrastRatio,
-            scratchOnchip)) != RESULT_OK)
-          {
-            return lastResult;
+          if(currentMarker.validity != VisionMarker::LOW_CONTRAST) {
+            if((lastResult = currentMarker.Extract(
+              image,
+              refinedHomography, meanGrayvalueThreshold,
+              decode_minContrastRatio,
+              scratchOnchip)) != RESULT_OK)
+            {
+              return lastResult;
+            }
           }
         } // if(currentMarker.validity == VisionMarker::UNKNOWN)
       } // for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++)

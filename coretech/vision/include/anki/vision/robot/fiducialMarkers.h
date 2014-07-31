@@ -63,6 +63,25 @@ namespace Anki
       void Print() const;
     }; // class BlockMarker
 
+    class VisionMarkerImages
+    {
+    public:
+      // Load the images from disk (requires OpenCV)
+      VisionMarkerImages(const FixedLengthList<const char*> &imageFilenames, MemoryStack &memory);
+
+      Result Show(const s32 pauseMilliseconds) const;
+
+      Result MatchExhaustive(const Array<u8> &image, const Quadrilateral<f32> &quad, VisionMarker &extractedMarker, f32 &matchQuality, MemoryStack scratch) const;
+
+      bool IsValid();
+
+    protected:
+      FixedLengthList<Array<u8>> images;
+      FixedLengthList<Anki::Vision::MarkerType> labelIndexes; // (aka name, aka codeName)
+
+      bool isValid;
+    };
+
     // A VisionMarker is a location Quadrilateral, with a markerType.
     class VisionMarker
     {
@@ -83,6 +102,7 @@ namespace Anki
       f32 observedOrientation; //< In degrees. TODO: change to radians or discrete
       ValidityCode validity;
 
+      VisionMarker();
       VisionMarker(const Quadrilateral<s16> &corners, const ValidityCode validity);
 
       Result RefineCorners(
@@ -97,6 +117,11 @@ namespace Anki
         const Array<u8> &image,
         const Array<f32> &homography, const u8 meanGrayvalueThreshold, //< Computed by RefineCorners()
         const f32 minContrastRatio,
+        MemoryStack scratch);
+
+      Result ExtractExhaustive(
+        const VisionMarkerImages &allMarkerImages,
+        const Array<u8> &image,
         MemoryStack scratch);
 
       void Print() const;

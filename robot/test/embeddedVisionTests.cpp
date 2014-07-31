@@ -61,9 +61,53 @@ For internal use only. No part of this code may be used without a signed non-dis
 using namespace Anki;
 using namespace Anki::Embedded;
 
+#ifdef RUN_PC_ONLY_TESTS
+#define HUGE_BUFFER_SIZE 100000000
+static char hugeBuffer[HUGE_BUFFER_SIZE];
+#endif
+
 //#define RUN_FACE_DETECTION_GUI
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
+
+#ifdef RUN_PC_ONLY_TESTS
+GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  // Generate the list of filenames in Matlab:
+  // patterns = {'Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/*.png'};
+  // allFiles = {};
+  // for iPattern = 1:length(patterns)
+  //   files = dir(patterns{iPattern});
+  //   for iFile = 1:length(files)
+  //     allFiles{end+1} = [strrep(patterns{iPattern}, '*.png', ''), files(iFile).name];
+  //   end
+  // end
+  // fprintf('const char * allFilenames[%d] = {', length(allFiles)); for i=1:length(allFiles) fprintf('"%s", ', allFiles{i}); end; disp('};');
+
+  const char * allFilenames[113] = {"Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits001.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits002.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits003.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits004.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits005.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits006.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits007.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits008.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits009.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits010.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits011.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits012.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits013.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits014.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits015.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits016.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits017.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits018.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits019.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits020.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits021.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits022.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits023.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits024.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits025.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits026.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits027.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits028.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits029.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits030.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits031.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits032.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits033.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits034.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits035.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits036.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits037.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits038.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits039.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits040.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits041.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits042.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits043.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits044.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits045.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits046.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits047.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits048.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits049.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits050.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits051.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits052.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits053.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits054.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits055.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits056.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits057.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits058.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits059.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits060.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits061.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits062.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits063.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits064.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice1.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice2.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice3.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice4.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice5.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice6.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/0.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/1.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/2.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/3.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/4.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/5.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/6.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/7.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/8.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/A.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/B.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/C.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/D.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/E.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/F.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/G.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/H.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/J.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/K.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/L.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/M.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/N.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/P.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/Q.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/R.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/T.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/X.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/Y.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/angryFace.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/ankiLogo.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/arrow.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/bangBangBang.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/bullseye2.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/circularArrow.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/fire.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/questionMark.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rampBack.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rampFront.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rampLeft.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rampRight.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/squarePlusCorners.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/star5.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/stopWithHand.png", };
+
+  FixedLengthList<const char*> imageFilenames(113, scratchOffchip, Flags::Buffer(true, false, true));
+  imageFilenames.Set(allFilenames, 113);
+  //imageFilenames.Print("imageFilenames");
+
+  const f64 t0 = GetTimeF64();
+  VisionMarkerImages vmi(imageFilenames, scratchHuge);
+  const f64 t1 = GetTimeF64();
+
+  printf("Images loaded in %f seconds\n", t1-t0);
+
+  vmi.Show(50);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
+#endif // #ifdef RUN_PC_ONLY_TESTS
 
 GTEST_TEST(CoreTech_Vision, LookupMarkerType)
 {

@@ -16,6 +16,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/draw_vision.h"
 
+#include "anki/vision/robot/transformations.h"
+
 #include "fiducialMarkerDefinitionType0.h"
 
 #include <assert.h>
@@ -506,6 +508,14 @@ namespace Anki
       return true;
     }
 
+    VisionMarker::VisionMarker()
+    {
+      this->corners = Quadrilateral<f32>(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f));
+      this->validity = UNKNOWN;
+
+      Initialize();
+    }
+
     VisionMarker::VisionMarker(const Quadrilateral<s16> &corners, const ValidityCode validity)
     {
       this->corners.SetCast<s16>(corners);
@@ -910,6 +920,19 @@ namespace Anki
       return lastResult;
     } // VisionMarker::Extract()
 
+    Result VisionMarker::ExtractExhaustive(
+      const VisionMarkerImages &allMarkerImages,
+      const Array<u8> &image,
+      MemoryStack scratch)
+    {
+      VisionMarker matchedMarker;
+      f32 matchQuality;
+
+      allMarkerImages.MatchExhaustive(image, this->corners, matchedMarker, matchQuality, scratch);
+
+      return RESULT_OK;
+    }
+
     s32 VisionMarker::get_serializationSize() const
     {
       // TODO: make the correct length
@@ -978,6 +1001,275 @@ namespace Anki
       }
 
       return Anki::Vision::MARKER_UNKNOWN;
+    }
+
+    VisionMarkerImages::VisionMarkerImages(const FixedLengthList<const char*> &imageFilenames, MemoryStack &memory)
+      : isValid(false)
+    {
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+      const s32 numImages = imageFilenames.get_size();
+
+      images = FixedLengthList<Array<u8>>(numImages, memory, Flags::Buffer(false, false, true));
+      labelIndexes = FixedLengthList<Anki::Vision::MarkerType>(numImages, memory, Flags::Buffer(false, false, true));
+
+      for(s32 iFile=0; iFile<numImages; iFile++) {
+        // Load the image
+        cv::Mat image = cv::imread(imageFilenames[iFile], CV_LOAD_IMAGE_UNCHANGED);
+
+        Array<u8> imageArray(image.rows, image.cols, memory);
+
+        for(s32 y=0; y<image.rows; y++) {
+          const u8 * restrict pImage = image.data + y*image.step.buf[0];
+          u8 * restrict pImageArray = imageArray[y];
+
+          if(image.step.buf[1] == 1) {
+          } else if(image.step.buf[1] == 3) {
+          } else if(image.step.buf[1] == 4) {
+            for(s32 x=0; x<image.cols; x++) {
+              const u8 b = pImage[4*x];
+              const u8 g = pImage[4*x + 1];
+              const u8 r = pImage[4*x + 2];
+              const u8 a = pImage[4*x + 3];
+
+              if(a < 128) {
+                pImageArray[x] = 255;
+              } else {
+                const s32 grayValue = (r + g + b) / 3;
+                if(grayValue > 128) {
+                  pImageArray[x] = 255;
+                } else {
+                  pImageArray[x] = 0;
+                }
+              }
+            }
+          }
+        }
+        /*
+        cv::Mat grayImage = image;
+        if(grayImage.channels() > 1) {
+        cv::Mat temp;
+        cvtColor(grayImage, temp, CV_BGR2GRAY);
+        grayImage = temp;
+        }
+
+        imageArray.Set(grayImage);*/
+
+        images[iFile] = imageArray;
+
+        // Parse the image name, to fill in labels and indexes
+        labelIndexes[iFile] = LookupMarkerType(imageFilenames[iFile]);
+      } // for(s32 iFile=0; iFile<numImages; iFile++)
+
+      AnkiConditionalErrorAndReturn(images[0].get_size(0) == images[0].get_size(1),
+        "VisionMarkerImages::VisionMarkerImages", "All images must be equal size and square");
+
+      for(s32 iFile=1; iFile<numImages; iFile++) {
+        AnkiConditionalErrorAndReturn(AreEqualSize(images[0], images[iFile]), "VisionMarkerImages::VisionMarkerImages", "All images must be equal size and square");
+      } // for(s32 iFile=0; iFile<numImages; iFile++)
+#else
+      AnkiError("VisionMarkerImages::VisionMarkerImages", "OpenCV is required to load files");
+#endif // #if ANKI_EMBEDDED_USE_OPENCV ... #else
+
+      this->isValid = true;
+    }
+
+    Result VisionMarkerImages::Show(const s32 pauseMilliseconds) const
+    {
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+      //char name[128];
+
+      for(s32 i=0; i<images.get_size(); i++) {
+        //snprintf(name, 128, "Number %d", labelIndexes[i]);
+
+        images[i].Show("Fiducial", false, false, false);
+        cv::waitKey(pauseMilliseconds);
+      }
+
+#endif
+
+      return RESULT_OK;
+    }
+
+    Result VisionMarkerImages::MatchExhaustive(const Array<u8> &image, const Quadrilateral<f32> &quad, VisionMarker &extractedMarker, f32 &matchQuality, MemoryStack scratch) const
+    {
+      const s32 yIncrement = 1;
+      const s32 xIncrement = 1;
+
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
+      const s32 databaseImageHeight = this->images[0].get_size(0);
+      const s32 databaseImageWidth = this->images[0].get_size(1);
+
+      AnkiAssert(databaseImageWidth == databaseImageHeight);
+
+      const s32 numDatabaseImages = this->images.get_size();
+
+      // 1. Compute the transformation from the quad to the known marker images
+      //allImagesCorners = [0 0 allImageSize(2) allImageSize(2); 0 allImageSize(1) 0 allImageSize(1)]';
+      Quadrilateral<f32> databaseImagesCorners(
+        Point<f32>(0,0),
+        Point<f32>(0,databaseImageHeight),
+        Point<f32>(databaseImageWidth,0),
+        Point<f32>(databaseImageWidth,databaseImageHeight));
+
+      Array<f32> homography(3, 3, scratch);
+
+      AnkiConditionalErrorAndReturnValue(homography.IsValid(),
+        RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
+
+      bool numericalFailure;
+      const Result result = Transformations::ComputeHomographyFromQuads(quad, databaseImagesCorners, homography, numericalFailure, scratch);
+
+      // 2. For each pixel in the quad in the input image, compute the mean-absolute difference with each known marker image
+      // Based off DrawFilledConvexQuadrilateral()
+
+      const Rectangle<f32> boundingRect = quad.ComputeBoundingRectangle<f32>();
+      const Quadrilateral<f32> sortedQuad = quad.ComputeClockwiseCorners<f32>();
+
+      const f32 rect_y0 = boundingRect.top;
+      const f32 rect_y1 = boundingRect.bottom;
+
+      // For circular indexing
+      Point<f32> corners[5];
+      for(s32 i=0; i<4; i++) {
+        corners[i] = sortedQuad[i];
+      }
+      corners[4] = sortedQuad[0];
+
+      const s32 minYS32 = MAX(0,             Round<s32>(ceilf(rect_y0 - 0.5f)));
+      const s32 maxYS32 = MIN(imageHeight-1, Round<s32>(floorf(rect_y1 - 0.5f)));
+      const f32 minYF32 = minYS32 + 0.5f;
+      const f32 maxYF32 = maxYS32 + 0.5f;
+      const LinearSequence<f32> ys(minYF32, maxYF32);
+      const s32 numYs = ys.get_size();
+
+      const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+      const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+      const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; //const f32 h22 = 1.0f;
+
+      s32 bestDatabaseImage = -1;
+      s32 bestDatabaseRotation = -1;
+      f32 bestDatabaseDifference = FLT_MAX;
+
+      for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+        // Four rotations
+        s32 totalDifference[4] = {0, 0, 0, 0};
+
+        s32 numInBounds= 0;
+
+        f32 y = ys.get_start();
+        for(s32 iy=0; iy<numYs; iy+=yIncrement) {
+          // Compute all intersections
+          f32 minXF32 = FLT_MAX;
+          f32 maxXF32 = FLT_MIN;
+          for(s32 iCorner=0; iCorner<4; iCorner++) {
+            if( (corners[iCorner].y < y && corners[iCorner+1].y >= y) || (corners[iCorner+1].y < y && corners[iCorner].y >= y) ) {
+              const f32 dy = corners[iCorner+1].y - corners[iCorner].y;
+              const f32 dx = corners[iCorner+1].x - corners[iCorner].x;
+
+              const f32 alpha = (y - corners[iCorner].y) / dy;
+
+              const f32 xIntercept = corners[iCorner].x + alpha * dx;
+
+              minXF32 = MIN(minXF32, xIntercept);
+              maxXF32 = MAX(maxXF32, xIntercept);
+            }
+          } // for(s32 iCorner=0; iCorner<4; iCorner++)
+
+          const s32 minXS32 = MAX(0,            Round<s32>(floorf(minXF32+0.5f)));
+          const s32 maxXS32 = MIN(imageWidth-1, Round<s32>(floorf(maxXF32-0.5f)));
+
+          const s32 yS32 = minYS32 + iy;
+          const u8 * restrict pImage = image.Pointer(yS32, 0);
+          for(s32 x=minXS32; x<=maxXS32; x+=xIncrement) {
+            // Do nearest-neighbor lookup from the query image to the image in the dataset
+
+            const f32 yOriginal = y;
+            const f32 xOriginal = x;
+
+            // TODO: These two could be strength reduced
+            const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
+            const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
+
+            const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
+
+            const s32 xTransformed = Round<s32>(xTransformedRaw / normalization);
+            const s32 yTransformed = Round<s32>(yTransformedRaw / normalization);
+
+            // If out of bounds, continue
+            if(xTransformed < 0 || xTransformed >= databaseImageWidth || yTransformed < 0 || yTransformed >= databaseImageWidth) {
+              continue;
+            }
+
+            const s32 curImage = pImage[x];
+
+            //s32 numInBounds[4] = {0, 0, 0, 0};
+            //s32 totalDifference[4] = {0, 0, 0, 0};
+
+            // The four rotation (0, 90, 180, 270)
+            //   0: x = x         and y = y
+            //  90: x = width-y-1 and y = x
+            // 180: x = width-x-1 and y = height-y-1
+            // 270: x = y         and y = height-x-1
+
+            const s32 xTransformed90 = databaseImageWidth - yTransformed - 1;
+            const s32 yTransformed90 = xTransformed;
+
+            const s32 xTransformed180 = databaseImageWidth - xTransformed - 1;
+            const s32 yTransformed180 = databaseImageHeight - yTransformed - 1;
+
+            const s32 xTransformed270 = yTransformed;
+            const s32 yTransformed270 = databaseImageHeight - xTransformed - 1;
+
+            const s32 databaseImage0 = *this->images[iDatabase].Pointer(yTransformed, xTransformed);
+            const s32 databaseImage90 = *this->images[iDatabase].Pointer(yTransformed90, xTransformed90);
+            const s32 databaseImage180 = *this->images[iDatabase].Pointer(yTransformed180, xTransformed180);
+            const s32 databaseImage270 = *this->images[iDatabase].Pointer(yTransformed270, xTransformed270);
+
+            totalDifference[0] += ABS(curImage - databaseImage0);
+            totalDifference[1] += ABS(curImage - databaseImage90);
+            totalDifference[2] += ABS(curImage - databaseImage180);
+            totalDifference[3] += ABS(curImage - databaseImage270);
+
+            numInBounds++;
+          }
+
+          y += static_cast<f32>(yIncrement);
+        } // for(s32 iy=0; iy<numYs; iy++)
+
+        // TODO: best difference among the means, and store it
+
+        s32 curMinLocalDifference = s32_MAX;
+        s32 curMinLocalIndex = -1;
+        for(s32 i=0; i<4; i++) {
+          if(totalDifference[i] < curMinLocalDifference) {
+            curMinLocalDifference = totalDifference[i];
+            curMinLocalIndex = i;
+          }
+        }
+
+        const f32 curMeanDifference = static_cast<f32>(totalDifference[0]) / static_cast<f32>(numInBounds);
+
+        if(curMeanDifference < bestDatabaseDifference) {
+          s32 bestDatabaseImage = -1;
+          s32 bestDatabaseRotation = -1;
+          f32 bestDatabaseDifference = FLT_MAX;
+        }
+      } // for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++)
+
+      return RESULT_OK;
+    }
+
+    bool VisionMarkerImages::IsValid()
+    {
+      if(!images.IsValid())
+        return false;
+
+      if(!labelIndexes.IsValid())
+        return false;
+
+      return this->isValid;
     }
   } // namespace Embedded
 } // namespace Anki
