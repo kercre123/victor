@@ -1170,10 +1170,6 @@ namespace Anki
       IntegerCounts::Statistics imageCountsStatistics = imageCounts.ComputeStatistics();
       const u8 imageThreshold = Round<s32>(imageCountsStatistics.mean);
 
-      s32 bestDatabaseImage = -1;
-      s32 bestDatabaseRotation = -1;
-      f32 bestDatabaseDifference = FLT_MAX;
-
 #ifdef SHOW_EXHAUSTIVE_STEPS
       Array<u8> toShowImage0(imageHeight, imageWidth, slowScratch);
       Array<u8> toShowImage90(imageHeight, imageWidth, slowScratch);
@@ -1184,84 +1180,108 @@ namespace Anki
         RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
 #endif
 
-      for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
-        // Four rotations
-        s32 totalDifference[4] = {0, 0, 0, 0};
+      // Four rotations for each image
+      s32 numBytesAllocated;
+      s32 * totalDifferences = reinterpret_cast<s32*>(fastScratch.Allocate(4*sizeof(s32)*numDatabaseImages,true,numBytesAllocated));
+      s32 numInBounds = 0;
 
-        s32 numInBounds= 0;
+      AnkiAssert(totalDifferences != NULL);
+
+      const u8 * restrict * restrict pDatabaseImages = reinterpret_cast<const u8**>(fastScratch.Allocate(sizeof(u8*)*numDatabaseImages,true,numBytesAllocated));
+      //u8 ** pDatabaseImages = reinterpret_cast<u8**>(fastScratch.Allocate(sizeof(u8*)*numDatabaseImages,true,numBytesAllocated));
+
+      // TODO: is memory being overwritten!!!??
+
+      AnkiAssert(pDatabaseImages != NULL);
+
+      for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+        pDatabaseImages[iDatabase] = this->images[iDatabase].Pointer(0,0);
+      }
 
 #ifdef SHOW_EXHAUSTIVE_STEPS
-        toShowImage0.SetZero();
-        toShowImage90.SetZero();
-        toShowImage180.SetZero();
-        toShowImage270.SetZero();
+      toShowImage0.SetZero();
+      toShowImage90.SetZero();
+      toShowImage180.SetZero();
+      toShowImage270.SetZero();
 #endif
 
-        f32 yF32 = ys.get_start();
-        for(s32 iy=0; iy<numYs; iy+=yIncrement) {
-          // Compute all intersections
-          f32 minXF32 = FLT_MAX;
-          f32 maxXF32 = FLT_MIN;
-          for(s32 iCorner=0; iCorner<4; iCorner++) {
-            if( (corners[iCorner].y < yF32 && corners[iCorner+1].y >= yF32) || (corners[iCorner+1].y < yF32 && corners[iCorner].y >= yF32) ) {
-              const f32 dy = corners[iCorner+1].y - corners[iCorner].y;
-              const f32 dx = corners[iCorner+1].x - corners[iCorner].x;
+      f32 yF32 = ys.get_start();
+      for(s32 iy=0; iy<numYs; iy+=yIncrement) {
+        // Compute all intersections
+        f32 minXF32 = FLT_MAX;
+        f32 maxXF32 = FLT_MIN;
+        for(s32 iCorner=0; iCorner<4; iCorner++) {
+          if( (corners[iCorner].y < yF32 && corners[iCorner+1].y >= yF32) || (corners[iCorner+1].y < yF32 && corners[iCorner].y >= yF32) ) {
+            const f32 dy = corners[iCorner+1].y - corners[iCorner].y;
+            const f32 dx = corners[iCorner+1].x - corners[iCorner].x;
 
-              const f32 alpha = (yF32 - corners[iCorner].y) / dy;
+            const f32 alpha = (yF32 - corners[iCorner].y) / dy;
 
-              const f32 xIntercept = corners[iCorner].x + alpha * dx;
+            const f32 xIntercept = corners[iCorner].x + alpha * dx;
 
-              minXF32 = MIN(minXF32, xIntercept);
-              maxXF32 = MAX(maxXF32, xIntercept);
-            }
-          } // for(s32 iCorner=0; iCorner<4; iCorner++)
+            minXF32 = MIN(minXF32, xIntercept);
+            maxXF32 = MAX(maxXF32, xIntercept);
+          }
+        } // for(s32 iCorner=0; iCorner<4; iCorner++)
 
-          const s32 minXS32 = MAX(0,            Round<s32>(floorf(minXF32+0.5f)));
-          const s32 maxXS32 = MIN(imageWidth-1, Round<s32>(floorf(maxXF32-0.5f)));
+        const s32 minXS32 = MAX(0,            Round<s32>(floorf(minXF32+0.5f)));
+        const s32 maxXS32 = MIN(imageWidth-1, Round<s32>(floorf(maxXF32-0.5f)));
 
-          const s32 yS32 = minYS32 + iy;
-          const u8 * restrict pImage = image.Pointer(yS32, 0);
-          for(s32 x=minXS32; x<=maxXS32; x+=xIncrement) {
-            // Do nearest-neighbor lookup from the query image to the image in the dataset
+        const s32 yS32 = minYS32 + iy;
+        const u8 * restrict pImage = image.Pointer(yS32, 0);
+        for(s32 x=minXS32; x<=maxXS32; x+=xIncrement) {
+          // Do nearest-neighbor lookup from the query image to the image in the dataset
 
-            const f32 yOriginal = yF32;
-            const f32 xOriginal = static_cast<f32>(x);
+          const f32 yOriginal = yF32;
+          const f32 xOriginal = static_cast<f32>(x);
 
-            // TODO: These two could be strength reduced
-            const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
-            const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
+          // TODO: These two could be strength reduced
+          const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
+          const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
 
-            const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
+          const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
 
-            const s32 xTransformed = Round<s32>(xTransformedRaw / normalization);
-            const s32 yTransformed = Round<s32>(yTransformedRaw / normalization);
+          const s32 xTransformed = Round<s32>(xTransformedRaw / normalization);
+          const s32 yTransformed = Round<s32>(yTransformedRaw / normalization);
 
-            // If out of bounds, continue
-            if(xTransformed < 0 || xTransformed >= databaseImageWidth || yTransformed < 0 || yTransformed >= databaseImageWidth) {
-              continue;
-            }
+          // If out of bounds, continue
+          if(xTransformed < 0 || xTransformed >= databaseImageWidth || yTransformed < 0 || yTransformed >= databaseImageWidth) {
+            continue;
+          }
 
-            const s32 curImage = (pImage[x] > imageThreshold) ? 255 : 0;
+          const s32 curImage = (pImage[x] > imageThreshold) ? 255 : 0;
 
+          const s32 xTransformed90 = databaseImageWidth - yTransformed - 1;
+          const s32 yTransformed90 = xTransformed;
+
+          const s32 xTransformed180 = databaseImageWidth - xTransformed - 1;
+          const s32 yTransformed180 = databaseImageHeight - yTransformed - 1;
+
+          const s32 xTransformed270 = yTransformed;
+          const s32 yTransformed270 = databaseImageHeight - xTransformed - 1;
+
+          numInBounds++;
+
+          const Array<u8> * pDatabaseImage = this->images.Pointer(0);
+
+          for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
             // The four rotation (0, 90, 180, 270)
             //   0: x = x         and y = y
             //  90: x = width-y-1 and y = x
             // 180: x = width-x-1 and y = height-y-1
             // 270: x = y         and y = height-x-1
 
-            const s32 xTransformed90 = databaseImageWidth - yTransformed - 1;
-            const s32 yTransformed90 = xTransformed;
+            // Slow version (With possible bounds checking)
+            //const s32 databaseImage0 = *this->images[iDatabase].Pointer(yTransformed, xTransformed);
+            //const s32 databaseImage90 = *this->images[iDatabase].Pointer(yTransformed90, xTransformed90);
+            //const s32 databaseImage180 = *this->images[iDatabase].Pointer(yTransformed180, xTransformed180);
+            //const s32 databaseImage270 = *this->images[iDatabase].Pointer(yTransformed270, xTransformed270);
 
-            const s32 xTransformed180 = databaseImageWidth - xTransformed - 1;
-            const s32 yTransformed180 = databaseImageHeight - yTransformed - 1;
-
-            const s32 xTransformed270 = yTransformed;
-            const s32 yTransformed270 = databaseImageHeight - xTransformed - 1;
-
-            const s32 databaseImage0 = *this->images[iDatabase].Pointer(yTransformed, xTransformed);
-            const s32 databaseImage90 = *this->images[iDatabase].Pointer(yTransformed90, xTransformed90);
-            const s32 databaseImage180 = *this->images[iDatabase].Pointer(yTransformed180, xTransformed180);
-            const s32 databaseImage270 = *this->images[iDatabase].Pointer(yTransformed270, xTransformed270);
+            // Fast version
+            const s32 databaseImage0 = pDatabaseImages[iDatabase][yTransformed*databaseImageWidth + xTransformed];
+            const s32 databaseImage90 = pDatabaseImages[iDatabase][yTransformed90*databaseImageWidth + xTransformed90];
+            const s32 databaseImage180 = pDatabaseImages[iDatabase][yTransformed180*databaseImageWidth + xTransformed180];
+            const s32 databaseImage270 = pDatabaseImages[iDatabase][yTransformed270*databaseImageWidth + xTransformed270];
 
 #ifdef SHOW_EXHAUSTIVE_STEPS
             *toShowImage0.Pointer(yS32, x) = databaseImage0;
@@ -1270,16 +1290,12 @@ namespace Anki
             *toShowImage270.Pointer(yS32, x) = databaseImage270;
 #endif
 
-            totalDifference[0] += ABS(curImage - databaseImage0);
-            totalDifference[1] += ABS(curImage - databaseImage90);
-            totalDifference[2] += ABS(curImage - databaseImage180);
-            totalDifference[3] += ABS(curImage - databaseImage270);
-
-            numInBounds++;
-          }
-
-          yF32 += static_cast<f32>(yIncrement);
-        } // for(s32 iy=0; iy<numYs; iy++)
+            totalDifferences[4*iDatabase] += ABS(curImage - databaseImage0);
+            totalDifferences[4*iDatabase + 1] += ABS(curImage - databaseImage90);
+            totalDifferences[4*iDatabase + 2] += ABS(curImage - databaseImage180);
+            totalDifferences[4*iDatabase + 3] += ABS(curImage - databaseImage270);
+          } // for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++)
+        } // for(s32 x=minXS32; x<=maxXS32; x+=xIncrement)
 
 #ifdef SHOW_EXHAUSTIVE_STEPS
         image.Show("image", false, false, true);
@@ -1289,24 +1305,24 @@ namespace Anki
         toShowImage270.Show("toShowImage270", false, false, true);
         cv::waitKey();
 #endif
+        yF32 += static_cast<f32>(yIncrement);
+      } // for(s32 iy=0; iy<numYs; iy++)
 
-        // TODO: best difference among the means, and store it
+      // TODO: best difference among the means, and store it
 
-        s32 curMinLocalDifference = s32_MAX;
-        s32 curMinLocalIndex = -1;
-        for(s32 i=0; i<4; i++) {
-          if(totalDifference[i] < curMinLocalDifference) {
-            curMinLocalDifference = totalDifference[i];
-            curMinLocalIndex = i;
+      s32 bestDatabaseImage = -1;
+      s32 bestDatabaseRotation = -1;
+      s32 bestDatabaseDifference = s32_MAX;
+
+      for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+        for(s32 iRotation=0; iRotation<4; iRotation++) {
+          const s32 curTotalDifference = totalDifferences[4*iDatabase + iRotation];
+
+          if(curTotalDifference < bestDatabaseDifference) {
+            bestDatabaseDifference = curTotalDifference;
+            bestDatabaseRotation = iRotation;
+            bestDatabaseImage = iDatabase;
           }
-        }
-
-        const f32 curMeanDifference = static_cast<f32>(totalDifference[0]) / static_cast<f32>(numInBounds);
-
-        if(curMeanDifference < bestDatabaseDifference) {
-          bestDatabaseImage = iDatabase;
-          bestDatabaseRotation = curMinLocalIndex;
-          bestDatabaseDifference = curMeanDifference;
         }
       } // for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++)
 
@@ -1323,7 +1339,10 @@ namespace Anki
         extractedMarker.observedOrientation = 270.0f;
       }
 
-      matchQuality = bestDatabaseDifference / 255.0f;
+      matchQuality = bestDatabaseDifference / (255.0f * static_cast<f32>(numInBounds));
+
+      // Check if there was any nonsense in the loop
+      AnkiAssert(fastScratch.IsValid());
 
       return RESULT_OK;
     }
