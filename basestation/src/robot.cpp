@@ -206,13 +206,10 @@ namespace Anki {
         // Progress must be along ramp's direction (init assuming ascent)
         Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>() + M_PI;
         
-        // Initialize height adjustment and tilt angle assuming we are ascending
-        f32 heightAdjust  = distanceTraveled*sin(ramp->GetAngle().ToFloat());
-        Radians tiltAngle = -ramp->GetAngle();
+        // Initialize tilt angle assuming we are ascending
+        Radians tiltAngle = ramp->GetAngle();
         
         if(_dockAction == DA_RAMP_DESCEND) {
-          // Negate height adj and tilt angle if we are descending
-          heightAdjust *= -1.f;
           tiltAngle    *= -1.f;
           headingAngle -= M_PI;
         }
@@ -223,12 +220,13 @@ namespace Anki {
             return RESULT_FAIL;
         }
 
+        const f32 heightAdjust = distanceTraveled*sin(tiltAngle.ToFloat());
         const Point3f newTranslation(_rampStartPosition.x() + distanceTraveled*cos(headingAngle.ToFloat()),
                                      _rampStartPosition.y() + distanceTraveled*sin(headingAngle.ToFloat()),
                                      _rampStartHeight + heightAdjust);
         
         const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D);
-        const RotationMatrix3d R_tilt(ramp->GetAngle(), Y_AXIS_3D);
+        const RotationMatrix3d R_tilt(-tiltAngle, Y_AXIS_3D);
         
         SetPose(Pose3d(R_tilt*R_heading, newTranslation));
 
