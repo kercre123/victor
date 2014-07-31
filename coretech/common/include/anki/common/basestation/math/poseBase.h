@@ -28,6 +28,7 @@
 #include "anki/common/basestation/exceptions.h"
 
 #include <list>
+#include <string>
 
 namespace Anki {
 
@@ -45,7 +46,7 @@ namespace Anki {
   public:
  
     PoseBase();
-    PoseBase(const PoseNd* parentPose);
+    PoseBase(const PoseNd* parentPose, const std::string& name);
 
     void SetParent(const PoseNd* otherPose) { _parent = otherPose; }
     const PoseNd* GetParent() const { return _parent; }
@@ -59,15 +60,23 @@ namespace Anki {
     static PoseNd& AddOrigin();
     static PoseNd& AddOrigin(const PoseNd& origin);
 
+    void SetName(const std::string& newName) { _name = newName; }
+    const std::string& GetName() const { return _name; }
+    
   protected:
     static const PoseNd* _sWorld;
     static std::list<PoseNd> Origins;
     
     const PoseNd* _parent;
+    std::string   _name;
+    
     unsigned int GetTreeDepth(const PoseNd* poseNd) const;
     
     bool GetWithRespectTo(const PoseNd& from, const PoseNd& to,
                           PoseNd& newPose) const;
+    
+    static std::string GetNamedPathToOrigin(const PoseNd& startPose, bool showTranslations);
+    static void        PrintNamedPathToOrigin(const PoseNd& startPose, bool showTranslations);
 
   };
   

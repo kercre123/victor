@@ -98,8 +98,8 @@ namespace Anki {
     
   } // Constructor: Pose3d()  
   
-  Pose3d::Pose3d(const RotationVector3d &Rvec_in, const Vec3f &T_in, const Pose3d *parentPose)
-  : PoseBase<Pose3d>(parentPose)
+  Pose3d::Pose3d(const RotationVector3d &Rvec_in, const Vec3f &T_in, const Pose3d *parentPose, const std::string& name)
+  : PoseBase<Pose3d>(parentPose, name)
   , _rotationMatrix(Rvec_in)
   , _translation(T_in)
   {
@@ -115,8 +115,8 @@ namespace Anki {
   } // Constructor: Pose3d(Rvec, T, cov)
   */
   
-  Pose3d::Pose3d(const RotationMatrix3d &Rmat_in, const Vec3f &T_in, const Pose3d *parentPose)
-  : PoseBase<Pose3d>(parentPose)
+  Pose3d::Pose3d(const RotationMatrix3d &Rmat_in, const Vec3f &T_in, const Pose3d *parentPose, const std::string& name)
+  : PoseBase<Pose3d>(parentPose, name)
   , _rotationMatrix(Rmat_in)
   , _translation(T_in)
   {
@@ -124,8 +124,8 @@ namespace Anki {
   } // Constructor: Pose3d(Rmat, T)
   
   Pose3d::Pose3d(const Radians angle, const Vec3f axis,
-                 const Vec3f T, const Pose3d *parentPose)
-  : PoseBase<Pose3d>(parentPose)
+                 const Vec3f T, const Pose3d *parentPose, const std::string& name)
+  : PoseBase<Pose3d>(parentPose, name)
   , _rotationMatrix(angle, axis)
   , _translation(T)
   {
@@ -133,7 +133,7 @@ namespace Anki {
   } // Constructor: Pose3d(angle, axis, T)
   
   Pose3d::Pose3d(const Pose3d &otherPose)
-  : Pose3d(otherPose._rotationMatrix, otherPose._translation, otherPose._parent)
+  : Pose3d(otherPose._rotationMatrix, otherPose._translation, otherPose._parent, otherPose._name)
   {
     
   }
@@ -379,14 +379,26 @@ namespace Anki {
   } // IsSameAs_WithAmbiguity()
   
   
+  std::string Pose3d::GetNamedPathToOrigin(bool showTranslations) const
+  {
+    return PoseBase<Pose3d>::GetNamedPathToOrigin(*this, showTranslations);
+  }
+  
+  void Pose3d::PrintNamedPathToOrigin(bool showTranslations) const
+  {
+    PoseBase<Pose3d>::PrintNamedPathToOrigin(*this, showTranslations);
+  }
+  
   
   void Pose3d::Print() const
   {
-    CoreTechPrint("Point (%f, %f %f), RotVec (%f %f %f), RotAng %f rad, parent 0x%x\n",
+    CoreTechPrint("Pose%s%s: Translation=(%f, %f %f), RotVec=(%f, %f, %f), RotAng=%frad (%.1fdeg), parent 0x%x;%s\n",
+                  GetName().empty() ? "" : " ", GetName().c_str(),
                   _translation.x(), _translation.y(), _translation.z(),
                   GetRotationAxis().x(), GetRotationAxis().y(), GetRotationAxis().z(),
                   GetRotationAngle().ToFloat(),
-                  _parent
+                  _parent,
+                  _parent != nullptr ? _parent->GetName().c_str() : "NULL"
                   );
   }
   

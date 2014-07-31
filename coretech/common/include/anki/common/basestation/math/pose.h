@@ -155,7 +155,8 @@ namespace Anki {
     
     // Construct from rotation vector and translation vector
     Pose3d(const RotationVector3d &Rvec, const Vec3f &T,
-           const Pose3d *parentPose = Pose3d::GetWorldOrigin());
+           const Pose3d *parentPose = Pose3d::GetWorldOrigin(),
+           const std::string& name = "");
     
     /* TODO: Add constructor that takes in covariance
     Pose3d(const RotationVector3d &Rvec, const Vec3f &T, const Matrix<float> &cov,
@@ -165,12 +166,14 @@ namespace Anki {
     // Construct from rotation matrix and translation vector
     // TODO: do we want a version that takes in covariance too?
     Pose3d(const RotationMatrix3d &Rmat, const Vec3f &T,
-           const Pose3d *parentPose = Pose3d::GetWorldOrigin());
+           const Pose3d *parentPose = Pose3d::GetWorldOrigin(),
+           const std::string& name = "");
     
     // Construct from an angle, axis, and translation vector
     Pose3d(const Radians angle, const Vec3f axis,
            const Vec3f translation,
-           const Pose3d *parentPose = Pose3d::GetWorldOrigin());
+           const Pose3d *parentPose = Pose3d::GetWorldOrigin(),
+           const std::string& name = "");
     
     // Construct a Pose3d from a Pose2d (using the plane information)
     Pose3d(const Pose2d &pose2d);
@@ -262,6 +265,9 @@ namespace Anki {
                                 Pose3d& P_diff) const;
 
     void Print() const;
+    
+    std::string GetNamedPathToOrigin(bool showTranslations)   const;
+    void        PrintNamedPathToOrigin(bool showTranslations) const;
     
   protected:
     

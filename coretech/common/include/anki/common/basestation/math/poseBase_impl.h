@@ -60,14 +60,14 @@ namespace Anki {
   
   template<class PoseNd>
   PoseBase<PoseNd>::PoseBase()
-  : PoseBase<PoseNd>(PoseNd::GetWorldOrigin())
+  : PoseBase<PoseNd>(PoseNd::GetWorldOrigin(), "")
   {
     
   }
   
   template<class PoseNd>
-  PoseBase<PoseNd>::PoseBase(const PoseNd* parentPose)
-  : _parent(parentPose)
+  PoseBase<PoseNd>::PoseBase(const PoseNd* parentPose, const std::string& name)
+  : _parent(parentPose), _name(name)
   {
     
   }
@@ -90,6 +90,44 @@ namespace Anki {
     
   } // FindOrigin()
   
+  template<class PoseNd>
+  void PoseBase<PoseNd>::PrintNamedPathToOrigin(const PoseNd& startPose, bool showTranslations)
+  {
+    std::string str = GetNamedPathToOrigin(startPose, showTranslations);
+    fprintf(stdout, "%s\n", str.c_str());
+  }
+  
+  template<class PoseNd>
+  std::string PoseBase<PoseNd>::GetNamedPathToOrigin(const PoseNd& startPose, bool showTranslations)
+  {
+    std::string str("Path to origin: ");
+
+    const PoseNd* current = &startPose;
+    BOUNDED_WHILE(1000, (!current->IsOrigin()))
+    {
+      const std::string& name = current->GetName();
+      if(name.empty()) {
+        str += "(UNNAMED)";
+      } else {
+        str += name;
+      }
+      
+      if(showTranslations) {
+        const Vec3f& T = current->GetTranslation();
+        str += "(" + std::to_string(T.x()) + "," + std::to_string(T.y()) + "," + std::to_string(T.z()) + ")";
+      }
+      
+      str += " -> ";
+      
+      current = current->GetParent();
+    }
+    
+    str += "ORIGIN";
+    
+    return str;
+    
+  } // PrintPathToOrigin()
+  
   
   // Count number of steps to an origin node, by walking up
   // the chain of _parents.
@@ -99,7 +137,7 @@ namespace Anki {
     unsigned int treeDepth = 1;
     
     const PoseNd* current = poseNd;
-    while(!current->IsOrigin())
+    BOUNDED_WHILE(1000, (!current->IsOrigin()))
     {
       ++treeDepth;
       current = current->GetParent();
