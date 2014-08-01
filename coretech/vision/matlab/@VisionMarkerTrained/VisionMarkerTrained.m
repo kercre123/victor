@@ -97,7 +97,7 @@ classdef VisionMarkerTrained
             UseSingleProbe = false;
             CornerRefinementIterations = 25;
             UseMexCornerRefinment = false;
-            exhaustiveSearchMethod = 0;
+            exhaustiveSearchMethod = {0,''};
             exhaustiveSearchThreshold = 0.1;
                         
             parseVarargin(varargin{:});
@@ -167,14 +167,11 @@ classdef VisionMarkerTrained
                     end
                 end
                 
-                if exhaustiveSearchMethod ~= 0
-                    
-                    if exhaustiveSearchMethod == 1
+                if exhaustiveSearchMethod{1} ~= 0                    
+                    if exhaustiveSearchMethod{1} == 1
                         [this.codeName, this.codeID, this.matchDistance] = TestExhaustiveSearch( ...
-                            VisionMarkerTrained.AllMarkerImages, img, this.corners);
+                            VisionMarkerTrained.AllMarkerImages, img, this.corners, exhaustiveSearchMethod{2});
                     else
-%                         [this.codeName, this.codeID, this.matchDistance] = TestExhaustiveSearch( ...
-%                             VisionMarkerTrained.AllMarkerImages, img, this.corners);
                         persistent numDatabaseImages databaseImageHeight databaseImageWidth databaseImages databaseLabelIndexes; %#ok<TLEV>
                         
                         if isempty(numDatabaseImages)
@@ -228,7 +225,7 @@ classdef VisionMarkerTrained
                 if any(strcmp(this.codeName, {'UNKNOWN', 'INVALID'}))
                     this.isValid = false;
                 else
-                    if exhaustiveSearchMethod == 0
+                    if exhaustiveSearchMethod{1} == 0
                         if UseSingleProbe
                             oneProbe.x = 0;
                             oneProbe.y = 0;

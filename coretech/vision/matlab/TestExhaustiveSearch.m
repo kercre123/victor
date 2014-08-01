@@ -12,10 +12,10 @@ function [labelName, labelID, minDifference] = TestExhaustiveSearch(allImages, i
     tforms = cell(4,1);
     warpedImages = cell(4,1);
     
-    img = double(img);
+    img = im2double(img);
     
     imgMask = roipoly(img, corners([1,2,4,3],1), corners([1,2,4,3],2));
-        
+    
     % TODO: is width and height swapped?
     allImagesCorners = [0 0 allImageSize(2) allImageSize(2); 0 allImageSize(1) 0 allImageSize(1)]';
     
@@ -55,9 +55,54 @@ function [labelName, labelID, minDifference] = TestExhaustiveSearch(allImages, i
             
             [warpedImages{iRotation}, ~, ~] = lucasKande_warpGroundTruth(img, tforms{iRotation}.tdata.Tinv', size(allImages{1}{1}));
             
-            meanValue = mean(warpedImages{iRotation}(:));
-            warpedImages{iRotation}(warpedImages{iRotation} < meanValue) = 0;
-            warpedImages{iRotation}(warpedImages{iRotation} > 0) = 1;
+            allImagesCorners = allImagesCorners([3,1,4,2],:);
+        end
+        
+        for iImage = 1:length(allImages)
+            databaseImage = allImages{iImage}{1};
+            databaseImage(isnan(databaseImage)) = 0;
+            databaseImage(databaseImage < 0.5) = 0;
+            databaseImage(databaseImage > 0) = 1;
+            
+            for iRotation = 1:4
+                warpedBinary = warpedImages{iRotation}(:);
+                
+                meanValue = mean(warpedBinary);
+                
+                warpedBinary(warpedBinary < meanValue) = 0;
+                warpedBinary(warpedBinary > 0) = 1;
+                
+                diff = mean(abs(databaseImage(:) - warpedBinary));
+                
+                diffs(iImage, iRotation) = diff;
+            end
+        end
+    elseif strcmpi(matchType, 'backward_noEdges')
+        warpedInds = cell(4,1);
+        
+        imgU8 = im2uint8(img);
+        
+        lt = 0.2;
+        ht = 0.8;
+        h = hist(imgU8(imgMask), 0:255);
+        c = cumsum(h);
+        c = c/max(c);
+        
+        low = find(c<=lt);
+        low = low(end);
+        
+        high = find(c>=ht);
+        high = high(1);
+        
+        imgNoEdges = nan * zeros(size(img));
+        imgNoEdges(imgU8 <= low) = 0;
+        imgNoEdges(imgU8 >= high) = 1;
+        
+        for iRotation = 1:4
+            tforms{iRotation} = cp2tform(allImagesCorners, corners, 'projective');
+            
+            [warpedImages{iRotation}, ~, ~] = lucasKande_warpGroundTruth(imgNoEdges, tforms{iRotation}.tdata.Tinv', size(allImages{1}{1}), [], 'nearest');
+            warpedInds{iRotation} = find(~isnan(warpedImages{iRotation}));
             
             allImagesCorners = allImagesCorners([3,1,4,2],:);
         end
@@ -69,11 +114,16 @@ function [labelName, labelID, minDifference] = TestExhaustiveSearch(allImages, i
             databaseImage(databaseImage > 0) = 1;
             
             for iRotation = 1:4
-                diff = mean(abs(databaseImage(:) - warpedImages{iRotation}(:)));
+                databaseSelected = databaseImage(warpedInds{iRotation});
+                warpedSelected = warpedImages{iRotation}(warpedInds{iRotation});
+                
+                diff = mean(abs(databaseSelected - warpedSelected));
                 
                 diffs(iImage, iRotation) = diff;
             end
         end
+    else
+        assert(false);
     end
     
     minDifference = min(diffs(:));
@@ -93,6 +143,6 @@ function [labelName, labelID, minDifference] = TestExhaustiveSearch(allImages, i
     labelName = [allImages{iy}{2}, rotationSuffix];
     labelID = 1;
     
-    imshows(allImages{iy}{1}, warpedImages{ix})
+    %     imshows(allImages{iy}{1}, warpedImages{ix})
     
     
