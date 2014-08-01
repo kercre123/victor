@@ -97,7 +97,7 @@ classdef VisionMarkerTrained
             UseSingleProbe = false;
             CornerRefinementIterations = 25;
             UseMexCornerRefinment = false;
-            UseExhaustiveSearch = false;
+            exhaustiveSearchMethod = 0;
             exhaustiveSearchThreshold = 0.1;
                         
             parseVarargin(varargin{:});
@@ -167,9 +167,50 @@ classdef VisionMarkerTrained
                     end
                 end
                 
-                if UseExhaustiveSearch
-                    [this.codeName, this.codeID, this.matchDistance] = TestExhaustiveSearch( ...
-                        VisionMarkerTrained.AllMarkerImages, img, this.corners);
+                if exhaustiveSearchMethod ~= 0
+                    
+                    if exhaustiveSearchMethod == 1
+                        [this.codeName, this.codeID, this.matchDistance] = TestExhaustiveSearch( ...
+                            VisionMarkerTrained.AllMarkerImages, img, this.corners);
+                    else
+%                         [this.codeName, this.codeID, this.matchDistance] = TestExhaustiveSearch( ...
+%                             VisionMarkerTrained.AllMarkerImages, img, this.corners);
+                        persistent numDatabaseImages databaseImageHeight databaseImageWidth databaseImages databaseLabelIndexes; %#ok<TLEV>
+                        
+                        if isempty(numDatabaseImages)
+                            % TODO: get paths from the right place
+                            patterns = {'Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/*.png'};
+                            
+                            if ~ispc()
+                                for i = 1:length(patterns)
+                                    patterns{i} = strrep('Z:/', '~/');
+                                end
+                            end
+                            
+                            imageFilenames = {};
+                            for iPattern = 1:length(patterns)
+                                files = dir(patterns{iPattern});
+                                for iFile = 1:length(files)
+                                    imageFilenames{end+1} = [strrep(patterns{iPattern}, '*.png', ''), files(iFile).name]; %#ok<AGROW>
+                                end
+                            end
+                            [numDatabaseImages, databaseImageHeight, databaseImageWidth, databaseImages, databaseLabelIndexes] = mexLoadExhaustiveMatchDatabase(imageFilenames);
+                        end
+                        
+                        [markerName, orientation, this.matchDistance] = mexExhaustiveMatchFiducialMarker(uint8(img*255), this.corners, numDatabaseImages, databaseImageHeight, databaseImageWidth, databaseImages, databaseLabelIndexes);
+                        
+                        if orientation == 0
+                            this.codeName = [markerName(8:end), '_000'];
+                        elseif orientation == 90
+                            this.codeName = [markerName(8:end), '_090'];
+                        elseif orientation == 180
+                            this.codeName = [markerName(8:end), '_180'];
+                        elseif orientation == 270
+                            this.codeName = [markerName(8:end), '_270'];
+                        end
+                            
+                        this.codeID = []; % TODO: must this be set?
+                    end
                     
                     verificationResult = this.codeName;
                     
@@ -187,7 +228,7 @@ classdef VisionMarkerTrained
                 if any(strcmp(this.codeName, {'UNKNOWN', 'INVALID'}))
                     this.isValid = false;
                 else
-                    if ~UseExhaustiveSearch
+                    if exhaustiveSearchMethod == 0
                         if UseSingleProbe
                             oneProbe.x = 0;
                             oneProbe.y = 0;

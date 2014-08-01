@@ -38,7 +38,7 @@ classdef EmbeddedConversionsManager < handle
             emptyCenterDetection_acceptable = {'matlab_original', 'off'};
             
             extractFiducialMethod = 'matlab_original';
-            extractFiducialMethod_acceptable = {'matlab_original', 'matlab_exhaustive'};
+            extractFiducialMethod_acceptable = {'matlab_original', 'matlab_exhaustive', 'c_exhaustive'};
 
             smallCharacterisicParameter = 0.9;
 

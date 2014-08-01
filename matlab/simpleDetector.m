@@ -1,7 +1,7 @@
 % function markers = simpleDetector(img, varargin)
 
 % markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_edges', 'componentRejectionTestsType', 'off', 'emptyCenterDetection', 'off', 'connectedComponentsType', 'matlab_original', 'traceBoundaryType', 'matlab_approximate'));
-% markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('extractFiducialMethod', 'matlab_exhaustive'));
+% markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('extractFiducialMethod', 'c_exhaustive'));
 
 function markers = simpleDetector(img, varargin)
 

@@ -58,7 +58,10 @@ if ~isempty(quads)
                 'CornerRefinementIterations', quadRefinementIterations);  %#ok<AGROW>
         elseif strcmp(embeddedConversions.extractFiducialMethod, 'matlab_exhaustive')
             markers{end+1} = VisionMarkerTrained(img, 'Corners', corners, ...
-                'CornerRefinementIterations', quadRefinementIterations, 'UseExhaustiveSearch', true);  %#ok<AGROW>
+                'CornerRefinementIterations', quadRefinementIterations, 'exhaustiveSearchMethod', 1);  %#ok<AGROW>
+        elseif strcmp(embeddedConversions.extractFiducialMethod, 'c_exhaustive')
+            markers{end+1} = VisionMarkerTrained(img, 'Corners', corners, ...
+                'CornerRefinementIterations', quadRefinementIterations, 'exhaustiveSearchMethod', 2);  %#ok<AGROW>            
         end
 
         if DEBUG_DISPLAY
