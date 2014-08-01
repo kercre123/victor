@@ -86,7 +86,7 @@ namespace Anki
       return *components.Pointer(index);
     }
 
-    template<typename Type> Result ConnectedComponentsTemplate<Type>::Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment<Type>> &components)
+    template<typename Type> Result ConnectedComponentsTemplate<Type>::Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment<Type> > &components)
     {
       bool onComponent;
       s16 componentStart;
@@ -434,7 +434,7 @@ namespace Anki
       }
 
       // NOTE: this could use a lot of space numValidComponentSegments*sizeof(ConnectedComponentSegment<Type>) = numValidComponentSegments*8
-      FixedLengthList<ConnectedComponentSegment<Type>> componentsTmp(numValidComponentSegments, scratch);
+      FixedLengthList<ConnectedComponentSegment<Type> > componentsTmp(numValidComponentSegments, scratch);
 
       // Could fail if we don't have enough scratch space
       if(!componentsTmp.IsValid())
