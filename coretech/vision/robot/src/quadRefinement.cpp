@@ -563,21 +563,9 @@ namespace Anki {
         EndBenchmark("vme_quadrefine_mainLoop_init");
 
         BeginBenchmark("vme_quadrefine_mainLoop_samples");
-        
-/*        f32 * restrict xTransformeds = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
-        f32 * restrict yTransformeds = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
-        f32 * restrict x0s = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
-        f32 * restrict y0s = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );*/
-
-/*        f32 * restrict alphaXs = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
-        f32 * restrict alphaYs = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
-        s32 * restrict y0S32s = reinterpret_cast<s32*>( scratch.Allocate(actualNumSamples * sizeof(s32)) );
-        s32 * restrict x0S32s = reinterpret_cast<s32*>( scratch.Allocate(actualNumSamples * sizeof(s32)) );*/
-
-        f32 * restrict tGradientValues = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
-
-        BeginBenchmark("vme_quadrefine_mainLoop_samples1");
         for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
+          //BeginBenchmark("vme_quadrefine_mainLoop_samples1");
+
           const f32 xOriginal = pX[iSample];
           const f32 yOriginal = pY[iSample];
 
@@ -590,214 +578,127 @@ namespace Anki {
           const f32 xTransformed = (xTransformedRaw * normalization);
           const f32 yTransformed = (yTransformedRaw * normalization);
 
+          // DEBUG!
+          //xTransformedArray[0][iSample] = xTransformed;
+          //yTransformedArray[0][iSample] = yTransformed;
+
           const f32 x0 = FLT_FLOOR(xTransformed);
-          const f32 x1 = x0 + 1.0f;
+          const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
           const f32 y0 = FLT_FLOOR(yTransformed);
-          const f32 y1 = y0 + 1.0f;
-
-          const f32 alphaX = xTransformed - x0;
-          const f32 alphaY = yTransformed - y0;
-
-          const s32 y0S32 = Round<s32>(y0);
-          const s32 x0S32 = Round<s32>(x0);
+          const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
 
           // If out of bounds, continue
-          if(x0 < 0 || x1 > (imageWidth-1) || y0 < 0 || y1 > (imageHeight-1)) {
-            restoreOriginal = true;
-            break;
+          if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
+            //EndBenchmark("vme_quadrefine_mainLoop_samples1");
+            continue;
           }
 
+          //EndBenchmark("vme_quadrefine_mainLoop_samples1");
+
+          //BeginBenchmark("vme_quadrefine_mainLoop_samples2");
+
+          numInBounds++;
+
+          const f32 alphaX = xTransformed - x0;
           const f32 alphaXinverse = 1.0f - alphaX;
+
+          const f32 alphaY = yTransformed - y0;
           const f32 alphaYinverse = 1.0f - alphaY;
 
-          const s32 y1S32 = y0S32 + 1;
+          const s32 y0S32 = Round<s32>(y0);
+          const s32 y1S32 = Round<s32>(y1);
+          const s32 x0S32 = Round<s32>(x0);
 
           const u8 * restrict pReference_y0 = image.Pointer(y0S32, x0S32);
           const u8 * restrict pReference_y1 = image.Pointer(y1S32, x0S32);
-         
+
           const f32 pixelTL = *pReference_y0;
           const f32 pixelTR = *(pReference_y0+1);
           const f32 pixelBL = *pReference_y1;
           const f32 pixelBR = *(pReference_y1+1);
 
-          const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+          const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR,
+            alphaY, alphaYinverse, alphaX, alphaXinverse);
 
           const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
 
-          tGradientValues[iSample] = tGradientValue;
-          
-          numInBounds++;
-        }//         for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
-        EndBenchmark("vme_quadrefine_mainLoop_samples1");
+          //EndBenchmark("vme_quadrefine_mainLoop_samples2");
 
-        BeginBenchmark("vme_quadrefine_mainLoop_samples2");
-        if(!restoreOriginal) {
-          s32 iSample=0;
-
-#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
-#if 0
-          for(; iSample<(actualNumSamples-3); iSample+=4) {
-            const float32x4_t tGradientValue_10 = vld1q_f32(&tGradientValues[iSample]);
-            const float32x2_t tGradientValue_1 = vget_high_f32(tGradientValue_10);
-            const float32x2_t tGradientValue_0 = vget_low_f32(tGradientValue_10);
-
-            const float32x4_t a0 = vld1q_f32(&Arow[0][iSample]);
-            const float32x4_t a1 = vld1q_f32(&Arow[1][iSample]);
-            const float32x4_t a2 = vld1q_f32(&Arow[2][iSample]);
-            const float32x4_t a3 = vld1q_f32(&Arow[3][iSample]);
-            const float32x4_t a4 = vld1q_f32(&Arow[4][iSample]);
-            const float32x4_t a5 = vld1q_f32(&Arow[5][iSample]);
-            const float32x4_t a6 = vld1q_f32(&Arow[6][iSample]);
-            const float32x4_t a7 = vld1q_f32(&Arow[7][iSample]);
-
-            const float32x2_t a0_1 = vget_high_f32(a0);
-            const float32x2_t a0_0 = vget_low_f32(a0);
-            const float32x2_t a1_1 = vget_high_f32(a1);
-            const float32x2_t a1_0 = vget_low_f32(a1);
-            const float32x2_t a2_1 = vget_high_f32(a2);
-            const float32x2_t a2_0 = vget_low_f32(a2);
-            const float32x2_t a3_1 = vget_high_f32(a3);
-            const float32x2_t a3_0 = vget_low_f32(a3);
-            const float32x2_t a4_1 = vget_high_f32(a4);
-            const float32x2_t a4_0 = vget_low_f32(a4);
-            const float32x2_t a5_1 = vget_high_f32(a5);
-            const float32x2_t a5_0 = vget_low_f32(a5);
-            const float32x2_t a6_1 = vget_high_f32(a6);
-            const float32x2_t a6_0 = vget_low_f32(a6);
-            const float32x2_t a7_1 = vget_high_f32(a7);
-            const float32x2_t a7_0 = vget_low_f32(a7);
-
-            { const float32x4_t squared = a0 * a0; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][0] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
-            { const float32x4_t squared = a0 * a1; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][1] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
-            { const float32x4_t squared = a0 * a2; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][2] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
-            { const float32x4_t squared = a0 * a3; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][3] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
-            { const float32x4_t squared = a0 * a4; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][4] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
-            { const float32x4_t squared = a0 * a5; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][5] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
-            { const float32x4_t squared = a0 * a6; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][6] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
-            { const float32x4_t squared = a0 * a7; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][7] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
-            { const float32x2_t squared = vpadd_f32(a0_0 * tGradientValue_0, a0_1 * tGradientValue_1); b_raw[0] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-
-            { const float32x2_t squared = vpadd_f32(a1_0 * a1_0, a1_1 * a1_1); AWAt_raw[1][1] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a1_0 * a2_0, a1_1 * a2_1); AWAt_raw[1][2] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a1_0 * a3_0, a1_1 * a3_1); AWAt_raw[1][3] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a1_0 * a4_0, a1_1 * a4_1); AWAt_raw[1][4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a1_0 * a5_0, a1_1 * a5_1); AWAt_raw[1][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a1_0 * a6_0, a1_1 * a6_1); AWAt_raw[1][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a1_0 * a7_0, a1_1 * a7_1); AWAt_raw[1][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a1_0 * tGradientValue_0, a1_1 * tGradientValue_1); b_raw[1] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-
-            { const float32x2_t squared = vpadd_f32(a2_0 * a2_0, a2_1 * a2_1); AWAt_raw[2][2] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a2_0 * a3_0, a2_1 * a3_1); AWAt_raw[2][3] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a2_0 * a4_0, a2_1 * a4_1); AWAt_raw[2][4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a2_0 * a5_0, a2_1 * a5_1); AWAt_raw[2][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a2_0 * a6_0, a2_1 * a6_1); AWAt_raw[2][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a2_0 * a7_0, a2_1 * a7_1); AWAt_raw[2][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a2_0 * tGradientValue_0, a2_1 * tGradientValue_1); b_raw[2] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-
-            { const float32x2_t squared = vpadd_f32(a3_0 * a3_0, a3_1 * a3_1); AWAt_raw[3][3] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a3_0 * a4_0, a3_1 * a4_1); AWAt_raw[3][4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a3_0 * a5_0, a3_1 * a5_1); AWAt_raw[3][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a3_0 * a6_0, a3_1 * a6_1); AWAt_raw[3][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a3_0 * a7_0, a3_1 * a7_1); AWAt_raw[3][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a3_0 * tGradientValue_0, a3_1 * tGradientValue_1); b_raw[3] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-
-            { const float32x2_t squared = vpadd_f32(a4_0 * a4_0, a4_1 * a4_1); AWAt_raw[4][4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a4_0 * a5_0, a4_1 * a5_1); AWAt_raw[4][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a4_0 * a6_0, a4_1 * a6_1); AWAt_raw[4][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a4_0 * a7_0, a4_1 * a7_1); AWAt_raw[4][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a4_0 * tGradientValue_0, a4_1 * tGradientValue_1); b_raw[4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            
-            { const float32x2_t squared = vpadd_f32(a5_0 * a5_0, a5_1 * a5_1); AWAt_raw[5][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a5_0 * a6_0, a5_1 * a6_1); AWAt_raw[5][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a5_0 * a7_0, a5_1 * a7_1); AWAt_raw[5][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a5_0 * tGradientValue_0, a5_1 * tGradientValue_1); b_raw[5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            
-            { const float32x2_t squared = vpadd_f32(a6_0 * a6_0, a6_1 * a6_1); AWAt_raw[6][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a6_0 * a7_0, a6_1 * a7_1); AWAt_raw[6][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a6_0 * tGradientValue_0, a6_1 * tGradientValue_1); b_raw[6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            
-            { const float32x2_t squared = vpadd_f32(a7_0 * a7_0, a7_1 * a7_1); AWAt_raw[7][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a7_0 * tGradientValue_0, a7_1 * tGradientValue_1); b_raw[7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-          } // for(s32 iSample=0; iSample<actualNumSamples; iSample++)
-#endif
-#endif // #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
-
-          for(; iSample<actualNumSamples; iSample++) {
-            const f32 tGradientValue = tGradientValues[iSample];
+          //BeginBenchmark("vme_quadrefine_mainLoop_samples3");
 
 #if ACCELERATION_TYPE == ACCELERATION_NONE
-            for(s32 ia=0; ia<8; ia++) {
-              for(s32 ja=ia; ja<8; ja++) {
-                AWAt_raw[ia][ja] += Arow[ia][iSample] * Arow[ja][iSample];
-              }
-              b_raw[ia] += Arow[ia][iSample] * tGradientValue;
+          for(s32 ia=0; ia<8; ia++) {
+            for(s32 ja=ia; ja<8; ja++) {
+              AWAt_raw[ia][ja] += Arow[ia][iSample] * Arow[ja][iSample];
             }
-#else
-            const f32 a0 = Arow[0][iSample];
-            const f32 a1 = Arow[1][iSample];
-            const f32 a2 = Arow[2][iSample];
-            const f32 a3 = Arow[3][iSample];
-            const f32 a4 = Arow[4][iSample];
-            const f32 a5 = Arow[5][iSample];
-            const f32 a6 = Arow[6][iSample];
-            const f32 a7 = Arow[7][iSample];
+            b_raw[ia] += Arow[ia][iSample] * tGradientValue;
+          }
+#else // #if ACCELERATION_TYPE == ACCELERATION_NONE
+          const f32 a0 = Arow[0][iSample];
+          const f32 a1 = Arow[1][iSample];
+          const f32 a2 = Arow[2][iSample];
+          const f32 a3 = Arow[3][iSample];
+          const f32 a4 = Arow[4][iSample];
+          const f32 a5 = Arow[5][iSample];
+          const f32 a6 = Arow[6][iSample];
+          const f32 a7 = Arow[7][iSample];
 
-            AWAt_raw[0][0] += a0 * a0;
-            AWAt_raw[0][1] += a0 * a1;
-            AWAt_raw[0][2] += a0 * a2;
-            AWAt_raw[0][3] += a0 * a3;
-            AWAt_raw[0][4] += a0 * a4;
-            AWAt_raw[0][5] += a0 * a5;
-            AWAt_raw[0][6] += a0 * a6;
-            AWAt_raw[0][7] += a0 * a7;
-            b_raw[0] += a0 * tGradientValue;
+          AWAt_raw[0][0] += a0 * a0;
+          AWAt_raw[0][1] += a0 * a1;
+          AWAt_raw[0][2] += a0 * a2;
+          AWAt_raw[0][3] += a0 * a3;
+          AWAt_raw[0][4] += a0 * a4;
+          AWAt_raw[0][5] += a0 * a5;
+          AWAt_raw[0][6] += a0 * a6;
+          AWAt_raw[0][7] += a0 * a7;
+          b_raw[0] += a0 * tGradientValue;
 
-            AWAt_raw[1][1] += a1 * a1;
-            AWAt_raw[1][2] += a1 * a2;
-            AWAt_raw[1][3] += a1 * a3;
-            AWAt_raw[1][4] += a1 * a4;
-            AWAt_raw[1][5] += a1 * a5;
-            AWAt_raw[1][6] += a1 * a6;
-            AWAt_raw[1][7] += a1 * a7;
-            b_raw[1] += a1 * tGradientValue;
+          AWAt_raw[1][1] += a1 * a1;
+          AWAt_raw[1][2] += a1 * a2;
+          AWAt_raw[1][3] += a1 * a3;
+          AWAt_raw[1][4] += a1 * a4;
+          AWAt_raw[1][5] += a1 * a5;
+          AWAt_raw[1][6] += a1 * a6;
+          AWAt_raw[1][7] += a1 * a7;
+          b_raw[1] += a1 * tGradientValue;
 
-            AWAt_raw[2][2] += a2 * a2;
-            AWAt_raw[2][3] += a2 * a3;
-            AWAt_raw[2][4] += a2 * a4;
-            AWAt_raw[2][5] += a2 * a5;
-            AWAt_raw[2][6] += a2 * a6;
-            AWAt_raw[2][7] += a2 * a7;
-            b_raw[2] += a2 * tGradientValue;
+          AWAt_raw[2][2] += a2 * a2;
+          AWAt_raw[2][3] += a2 * a3;
+          AWAt_raw[2][4] += a2 * a4;
+          AWAt_raw[2][5] += a2 * a5;
+          AWAt_raw[2][6] += a2 * a6;
+          AWAt_raw[2][7] += a2 * a7;
+          b_raw[2] += a2 * tGradientValue;
 
-            AWAt_raw[3][3] += a3 * a3;
-            AWAt_raw[3][4] += a3 * a4;
-            AWAt_raw[3][5] += a3 * a5;
-            AWAt_raw[3][6] += a3 * a6;
-            AWAt_raw[3][7] += a3 * a7;
-            b_raw[3] += a3 * tGradientValue;
+          AWAt_raw[3][3] += a3 * a3;
+          AWAt_raw[3][4] += a3 * a4;
+          AWAt_raw[3][5] += a3 * a5;
+          AWAt_raw[3][6] += a3 * a6;
+          AWAt_raw[3][7] += a3 * a7;
+          b_raw[3] += a3 * tGradientValue;
 
-            AWAt_raw[4][4] += a4 * a4;
-            AWAt_raw[4][5] += a4 * a5;
-            AWAt_raw[4][6] += a4 * a6;
-            AWAt_raw[4][7] += a4 * a7;
-            b_raw[4] += a4 * tGradientValue;
+          AWAt_raw[4][4] += a4 * a4;
+          AWAt_raw[4][5] += a4 * a5;
+          AWAt_raw[4][6] += a4 * a6;
+          AWAt_raw[4][7] += a4 * a7;
+          b_raw[4] += a4 * tGradientValue;
 
-            AWAt_raw[5][5] += a5 * a5;
-            AWAt_raw[5][6] += a5 * a6;
-            AWAt_raw[5][7] += a5 * a7;
-            b_raw[5] += a5 * tGradientValue;
+          AWAt_raw[5][5] += a5 * a5;
+          AWAt_raw[5][6] += a5 * a6;
+          AWAt_raw[5][7] += a5 * a7;
+          b_raw[5] += a5 * tGradientValue;
 
-            AWAt_raw[6][6] += a6 * a6;
-            AWAt_raw[6][7] += a6 * a7;
-            b_raw[6] += a6 * tGradientValue;
+          AWAt_raw[6][6] += a6 * a6;
+          AWAt_raw[6][7] += a6 * a7;
+          b_raw[6] += a6 * tGradientValue;
 
-            AWAt_raw[7][7] += a7 * a7;
-            b_raw[7] += a7 * tGradientValue;
+          AWAt_raw[7][7] += a7 * a7;
+          b_raw[7] += a7 * tGradientValue;
 #endif // #if ACCELERATION_TYPE == ACCELERATION_NONE ... #else
-          } // for(s32 iSample=0; iSample<actualNumSamples; iSample++)
-        } // if(!restoreOriginal)
-        EndBenchmark("vme_quadrefine_mainLoop_samples2");
+
+          //EndBenchmark("vme_quadrefine_mainLoop_samples3");
+        } // for each sample
 
         EndBenchmark("vme_quadrefine_mainLoop_samples");
 
