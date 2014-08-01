@@ -34,7 +34,7 @@ function imshows(varargin)
         curIms = varargin{i};
         if iscell(curIms)
             for j = 1:length(curIms)
-                subplot(1,length(curIms),j); imshow(curIms{j});
+                subplot(1,length(curIms),j); imshow(curIms{j}, 'Border', 'tight');
                 if maximizeWindows
                     set(figureHandle, 'units','normalized','outerposition',[0 0 1 1]);
                 end

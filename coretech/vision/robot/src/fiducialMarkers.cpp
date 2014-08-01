@@ -1171,14 +1171,22 @@ namespace Anki
       const u8 imageThreshold = Round<s32>(imageCountsStatistics.mean);
 
 #ifdef SHOW_EXHAUSTIVE_STEPS
-      FixedLengthList<Array<u8>> toShowImages(4, slowScratch);
+      Array<u8> originalImageBinarized(imageHeight, imageWidth, slowScratch);
+      originalImageBinarized.Set(64);
+
+      Array<Array<u8>> toShowImages(4, numDatabaseImages, slowScratch);
       AnkiConditionalErrorAndReturnValue(toShowImages.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
 
       for(s32 iRotation=0; iRotation<4; iRotation++) {
-        toShowImages[iRotation] = Array<u8>(imageHeight, imageWidth, slowScratch);
-        AnkiConditionalErrorAndReturnValue(toShowImages[iRotation].IsValid(),
-          RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
+        for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+          toShowImages[iRotation][iDatabase] = Array<u8>(imageHeight, imageWidth, slowScratch);
+
+          AnkiConditionalErrorAndReturnValue(toShowImages[iRotation][iDatabase].IsValid(),
+            RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
+
+          toShowImages[iRotation][iDatabase].Set(64);
+        }
       }
 #endif
 
@@ -1268,12 +1276,19 @@ namespace Anki
           // 180: x = width-x-1 and y = height-y-1
           // 270: x = y         and y = height-x-1
 
+#ifdef SHOW_EXHAUSTIVE_STEPS
+          originalImageBinarized[yS32][x] = curImageValue;
+#endif
+
           for(s32 iRotation=0; iRotation<4; iRotation++) {
             const u8 * restrict pDatabaseImages = pDatabaseImages_start + numDatabaseImages*(yTransformed[iRotation]*databaseImageWidth + xTransformed[iRotation]);
 
             for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
               const s32 databaseImageValue = pDatabaseImages[iDatabase];
               totalDifferences[numDatabaseImages*iRotation + iDatabase] += ABS(curImageValue - databaseImageValue);
+#ifdef SHOW_EXHAUSTIVE_STEPS
+              toShowImages[iRotation][iDatabase][yS32][x] = databaseImageValue;
+#endif
             } // for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++)
           } // for(s32 iRotation=0; iRotation<4; iRotation++)
         } // for(s32 x=minXS32; x<=maxXS32; x+=xIncrement)
@@ -1287,9 +1302,23 @@ namespace Anki
       s32 bestDatabaseRotation = -1;
       s32 bestDatabaseDifference = s32_MAX;
 
+#ifdef SHOW_EXHAUSTIVE_STEPS
+      image.Show("image", false, false, true);
+      originalImageBinarized.Show("originalImageBinarized", true, false, true);
+#endif
+
       for(s32 iRotation=0; iRotation<4; iRotation++) {
+        //for(s32 iRotation=0; iRotation<1; iRotation++) {
         for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+          //for(s32 iDatabase=60; iDatabase<90; iDatabase++) {
           const s32 curTotalDifference = totalDifferences[numDatabaseImages*iRotation + iDatabase];
+
+          //CoreTechPrint("(%d,%d) curTotalDifference = %f\n", iRotation, iDatabase, curTotalDifference / (255.0f * static_cast<f32>(numInBounds)));
+
+#ifdef SHOW_EXHAUSTIVE_STEPS
+          toShowImages[iRotation][iDatabase].Show("database", false, false, true);
+          cv::waitKey();
+#endif
 
           if(curTotalDifference < bestDatabaseDifference) {
             bestDatabaseDifference = curTotalDifference;

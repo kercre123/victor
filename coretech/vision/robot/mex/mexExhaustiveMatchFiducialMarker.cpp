@@ -26,7 +26,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
-  const s32 bufferSize = 100000000;
+  //const s32 bufferSize = 100000000;
+  const s32 bufferSize = 1000000;
 
   AnkiConditionalErrorAndReturn(nrhs == 7 && nlhs == 3, "mexExhaustiveMatchFiducialMarker", "Call this function as following: [markerName, orientation, matchQuality] = mexExhaustiveMatchFiducialMarker(uint8(image), quad, numDatabaseImages, databaseImageHeight, databaseImageWidth, databaseImages, databaseLabelIndexes);");
 
