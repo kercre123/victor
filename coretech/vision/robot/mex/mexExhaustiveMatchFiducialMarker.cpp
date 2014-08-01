@@ -17,6 +17,11 @@ using namespace Anki::Embedded;
 
 // [markerName, orientation, matchQuality] = mexExhaustiveMatchFiducialMarker(uint8(image), quad, numDatabaseImages, databaseImageHeight, databaseImageWidth, databaseImages, databaseLabelIndexes);
 
+// Example:
+// im = imread('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/../images/cozmo_date2014_06_04_time16_52_38_frame0.png');
+// quad = [64.1757,  46.0676; 61.9054,  114.8243; 134.8784, 44.7703; 133.9054, 115.1486];
+// [markerName, orientation, matchQuality] = mexExhaustiveMatchFiducialMarker(uint8(im), quad, numDatabaseImages, databaseImageHeight, databaseImageWidth, databaseImages, databaseLabelIndexes)
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
@@ -29,15 +34,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   MemoryStack memory2(mxMalloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(AreValid(memory1, memory2), "mexExhaustiveMatchFiducialMarker", "Memory could not be allocated");
 
-  Array<u8> image                       = mxArrayToArray<u8>(prhs[0], memory1);
-  Array<f64> quadF64                    = mxArrayToArray<f64>(prhs[1], memory1);
-  const s32 numDatabaseImages           = saturate_cast<s32>(mxGetScalar(prhs[2]));
-  const s32 databaseImageHeight         = saturate_cast<s32>(mxGetScalar(prhs[3]));
-  const s32 databaseImageWidth          = saturate_cast<s32>(mxGetScalar(prhs[4]));
-  const Array<u8> databaseImages        = mxArrayToArray<u8>(prhs[5], memory1);
-  const Array<s32> databaseLabelIndexes = mxArrayToArray<s32>(prhs[6], memory1);
+  Array<u8> image               = mxArrayToArray<u8>(prhs[0], memory1);
+  Array<f64> quadF64            = mxArrayToArray<f64>(prhs[1], memory1);
+  const s32 numDatabaseImages   = saturate_cast<s32>(mxGetScalar(prhs[2]));
+  const s32 databaseImageHeight = saturate_cast<s32>(mxGetScalar(prhs[3]));
+  const s32 databaseImageWidth  = saturate_cast<s32>(mxGetScalar(prhs[4]));
+  u8 * const pDatabaseImages    = reinterpret_cast<u8 *>( mxGetData(prhs[5]) );
+  Anki::Vision::MarkerType * const pDatabaseLabelIndexes = reinterpret_cast<Anki::Vision::MarkerType *>( mxGetData(prhs[6]) );
 
-  AnkiConditionalErrorAndReturn(AreValid(image, databaseImages, databaseLabelIndexes), "mexExhaustiveMatchFiducialMarker", "Could not allocate inputs");
+  AnkiConditionalErrorAndReturn(AreValid(image) && pDatabaseImages && pDatabaseLabelIndexes, "mexExhaustiveMatchFiducialMarker", "Could not allocate inputs");
 
   AnkiConditionalErrorAndReturn(AreEqualSize(4, 2, quadF64), "mexExhaustiveMatchFiducialMarker", "quad must be 4x2");
 
@@ -50,8 +55,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     numDatabaseImages,
     databaseImageHeight,
     databaseImageWidth,
-    const_cast<u8*>(reinterpret_cast<const u8*>(databaseImages.get_buffer())),
-    const_cast<Anki::Vision::MarkerType*>(reinterpret_cast<const Anki::Vision::MarkerType*>(databaseLabelIndexes.get_buffer())));
+    pDatabaseImages,
+    pDatabaseLabelIndexes);
 
   VisionMarker extractedMarker;
   f32 matchQuality;

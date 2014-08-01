@@ -45,7 +45,7 @@ namespace Anki {
     template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray, MemoryStack &memory);
 
     // This works with cell arrays if every element is the same type
-    template<typename Type> Array<Array<Type> > mxCellArrayToStringArray(const mxArray * const matlabArray, MemoryStack &memory);
+    template<typename Type> Array<Array<Type> > mxCellArrayToArray(const mxArray * const matlabArray, MemoryStack &memory);
 
     // Convert a cell array of strings to a cell array of const pointers
     // The strings are allocated from "MemoryStack &memory", so do not need to be freed
@@ -129,7 +129,7 @@ namespace Anki {
       }
 
       if(mxIsCell(matlabArray)) {
-        AnkiError("mxCellArrayToArray", "Input can't be a cell array. Use mxCellArrayToArray() instead.");
+        AnkiError("mxArrayToArray", "Input can't be a cell array. Use mxCellArrayToArray() instead.");
         return Array<Type>(dimensions[0], dimensions[1], memory);
       }
 

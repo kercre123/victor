@@ -63,7 +63,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   *oneOutput.Pointer(0,0) = vmi.get_databaseImageWidth();
   plhs[2] = arrayToMxArray(oneOutput);
 
-  plhs[3] = arrayToMxArray(vmi.get_databaseImages());
+  const Array<u8> databaseImages = vmi.get_databaseImages();
+  Array<u8> databaseImagesTransposed(databaseImages.get_size(1), databaseImages.get_size(0), memory);
+  Matrix::Transpose(databaseImages, databaseImagesTransposed);
+
+  plhs[3] = arrayToMxArray(databaseImagesTransposed);
 
   FixedLengthList<Anki::Vision::MarkerType> databaseLabelIndexesList = vmi.get_databaseLabelIndexes();
   const Array<Anki::Vision::MarkerType> databaseLabelIndexesArray = databaseLabelIndexesList.get_array();
