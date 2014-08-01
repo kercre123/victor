@@ -1086,6 +1086,14 @@ namespace Anki
       this->isValid = true;
     }
 
+    VisionMarkerImages::VisionMarkerImages(const s32 numDatabaseImages, const s32 databaseImageHeight, const s32 databaseImageWidth, u8 * pDatabaseImages, Anki::Vision::MarkerType * pDatabaseLabelIndexes)
+      : numDatabaseImages(numDatabaseImages), databaseImageHeight(databaseImageHeight), databaseImageWidth(databaseImageWidth), isValid(true)
+    {
+      // Note the 2* lie about the size of the buffer
+      this->databaseImages = Array<u8>(databaseImageHeight, numDatabaseImages*databaseImageWidth, pDatabaseImages, 2*databaseImageHeight*numDatabaseImages*databaseImageWidth, Flags::Buffer(false, false, true));
+      this->databaseLabelIndexes = FixedLengthList<Anki::Vision::MarkerType>(numDatabaseImages, pDatabaseLabelIndexes, 2*numDatabaseImages*sizeof(Anki::Vision::MarkerType), Flags::Buffer(false, false, true));
+    }
+
     Result VisionMarkerImages::Show(const s32 pauseMilliseconds) const
     {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
@@ -1312,7 +1320,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    bool VisionMarkerImages::IsValid()
+    bool VisionMarkerImages::IsValid() const
     {
       if(!databaseImages.IsValid())
         return false;
@@ -1321,6 +1329,31 @@ namespace Anki
         return false;
 
       return this->isValid;
+    }
+
+    s32 VisionMarkerImages::get_numDatabaseImages() const
+    {
+      return numDatabaseImages;
+    }
+
+    s32 VisionMarkerImages::get_databaseImageHeight() const
+    {
+      return databaseImageHeight;
+    }
+
+    s32 VisionMarkerImages::get_databaseImageWidth() const
+    {
+      return databaseImageWidth;
+    }
+
+    const Array<u8>& VisionMarkerImages::get_databaseImages() const
+    {
+      return databaseImages;
+    }
+
+    const FixedLengthList<Anki::Vision::MarkerType>& VisionMarkerImages::get_databaseLabelIndexes()
+    {
+      return databaseLabelIndexes;
     }
   } // namespace Embedded
 } // namespace Anki

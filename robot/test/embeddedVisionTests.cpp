@@ -101,7 +101,6 @@ GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
   VisionMarkerImages vmi(imageFilenames, scratchHuge);
   const f64 t1 = GetTimeF64();
 
-  
   //vmi.Show(50);
 
   const char * queryImageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";

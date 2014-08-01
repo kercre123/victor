@@ -69,11 +69,24 @@ namespace Anki
       // Load the images from disk (requires OpenCV)
       VisionMarkerImages(const FixedLengthList<const char*> &imageFilenames, MemoryStack &memory);
 
+      // Makes a shallow copy, based on the pointers
+      VisionMarkerImages(const s32 numDatabaseImages, const s32 databaseImageHeight, const s32 databaseImageWidth, u8 * pDatabaseImages, Anki::Vision::MarkerType * pDatabaseLabelIndexes);
+
       Result Show(const s32 pauseMilliseconds) const;
 
       Result MatchExhaustive(const Array<u8> &image, const Quadrilateral<f32> &quad, VisionMarker &extractedMarker, f32 &matchQuality, MemoryStack fastScratch, MemoryStack slowScratch) const;
 
-      bool IsValid();
+      bool IsValid() const;
+
+      s32 get_numDatabaseImages() const;
+
+      s32 get_databaseImageHeight() const;
+
+      s32 get_databaseImageWidth() const;
+
+      const Array<u8>& get_databaseImages() const;
+
+      const FixedLengthList<Anki::Vision::MarkerType>& get_databaseLabelIndexes();
 
     protected:
       s32 numDatabaseImages;
