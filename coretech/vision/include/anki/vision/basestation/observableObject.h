@@ -105,8 +105,9 @@ namespace Anki {
       const Pose3d&   GetPose()   const;
       //virtual float GetMinDim() const = 0;
       
-      void SetID(); //const ObjectID newID);
+      void SetID();
       void SetPose(const Pose3d& newPose);
+      void SetPoseParent(const Pose3d* newParent);
       
       void SetLastObservedTime(TimeStamp_t t) {lastObservedTime_ = t;}
       const TimeStamp_t GetLastObservedTime() const {return lastObservedTime_;}
@@ -224,6 +225,10 @@ namespace Anki {
       }
       poseName += "_" + std::to_string(GetID().GetValue());
       pose_.SetName(poseName);
+    }
+    
+    inline void ObservableObject::SetPoseParent(const Pose3d* newParent) {
+      pose_.SetParent(newParent);
     }
     
     inline bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
