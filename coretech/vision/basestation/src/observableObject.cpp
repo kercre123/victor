@@ -92,7 +92,9 @@ namespace Anki {
       bool isSame = this->type_ == otherObject.type_;
       
       Pose3d otherPose;
-      if(otherObject.GetPose().GetWithRespectTo(*this->pose_.GetParent(), otherPose) == false) {
+      if(&otherObject.GetPose() == this->pose_.GetParent()) {
+        otherPose.SetParent(&otherObject.GetPose());
+      } else if(otherObject.GetPose().GetWithRespectTo(*this->pose_.GetParent(), otherPose) == false) {
         PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
                             "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
         isSame = false;
@@ -365,17 +367,18 @@ namespace Anki {
           
           // Compute pose wrt camera, or world if no camera specified
           //if (seenOnlyBy == ANY_CAMERA) {
-            Pose3d newPose;
-            if(poseCluster.GetPose().GetWithRespectTo(poseCluster.GetPose().FindOrigin(), newPose) == true) {
+            Pose3d newPose = poseCluster.GetPose().GetWithRespectToOrigin();
+          
+            //if(poseCluster.GetPose().GetWithRespectTo(poseCluster.GetPose().FindOrigin(), newPose) == true) {
               objectsSeen.back()->SetPose(newPose);
-            } else {
-              PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectsFromMarkers.CouldNotFindWorldOrigin",
-                                "Could not get the pose cluster w.r.t. the world pose.\n");
+            //} else {
+            //  PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectsFromMarkers.CouldNotFindWorldOrigin",
+            //                    "Could not get the pose cluster w.r.t. the world pose.\n");
               // TODO: this may indicate that we should be getting the pose w.r.t. the origin
               // of the camera that saw this object.
               // We are probably not handling the case that two robot's saw the same thing
               // but are not both localized to the same world frame yet.
-            }
+            //}
           //} else {
           //  objectsSeen.back()->SetPose(poseCluster.GetPose());
           //}
