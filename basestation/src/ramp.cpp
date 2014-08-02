@@ -96,7 +96,8 @@ namespace Anki {
     Pose3d Ramp::GetPostAscentPose(const float wheelBase) const
     {
       Pose3d pose(0, Z_AXIS_3D,
-                  {{Ramp::PlatformLength*.5f - wheelBase, 0, Ramp::Height*.5f}});
+                  {{Ramp::PlatformLength*.5f - wheelBase, 0, Ramp::Height*.5f}},
+                  this->GetPose().GetParent());
       pose.PreComposeWith(GetPose());
       return pose;
     } // GetPostAscentPose()
@@ -138,7 +139,7 @@ namespace Anki {
     
     void Ramp::Visualize(VIZ_COLOR_ID color)
     {
-      Pose3d vizPose = pose_.GetWithRespectToOrigin();
+      Pose3d vizPose = GetPose().GetWithRespectToOrigin();
       _vizHandle[0] = VizManager::getInstance()->DrawRamp(GetID().GetValue(), Ramp::PlatformLength,
                                                        Ramp::SlopeLength, Ramp::Width,
                                                        Ramp::Height, vizPose, color);

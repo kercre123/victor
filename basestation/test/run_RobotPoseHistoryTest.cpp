@@ -54,8 +54,7 @@ TEST(RobotPoseHistory, AddGetPose)
                       p1.GetTranslation().x(), p1.GetTranslation().y(), p1.GetTranslation().z(),
                       p1.GetRotationAngle().ToFloat(),
                       h1,
-                      l1,
-                      Pose3d::GetWorldOrigin());
+                      l1);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 1);
   ASSERT_TRUE(hist.ComputePoseAt(t1, t, p) == RESULT_OK);
@@ -70,8 +69,7 @@ TEST(RobotPoseHistory, AddGetPose)
                       p2.GetTranslation().x(), p2.GetTranslation().y(), p2.GetTranslation().z(),
                       p2.GetRotationAngle().ToFloat(),
                       h2,
-                      l2,
-                      Pose3d::GetWorldOrigin());
+                      l2);
   
   // Request out of range pose
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
@@ -97,8 +95,7 @@ TEST(RobotPoseHistory, AddGetPose)
                       p3.GetTranslation().x(), p3.GetTranslation().y(), p3.GetTranslation().z(),
                       p3.GetRotationAngle().ToFloat(),
                       h3,
-                      l3,
-                      Pose3d::GetWorldOrigin());
+                      l3);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   
@@ -117,8 +114,7 @@ TEST(RobotPoseHistory, AddGetPose)
                       p1.GetTranslation().x(), p1.GetTranslation().y(), p1.GetTranslation().z(),
                       p1.GetRotationAngle().ToFloat(),
                       h1,
-                      l1,
-                      Pose3d::GetWorldOrigin());
+                      l1);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   ASSERT_TRUE(hist.GetOldestTimeStamp() == t2);

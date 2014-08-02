@@ -124,15 +124,16 @@ namespace Anki {
     , _forceReplanOnNextWorldChange(false)
     , _saveImages(false)
     , _camera(robotID)
-    , _poseOrigin(&Pose3d::AddOrigin()) // Until this robot is localized be seeing a mat marker, create an origin for it to use as its pose parent
-    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _poseOrigin)
+    , _poseOrigins(1)
+    , _worldOrigin(&_poseOrigins.front())
+    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
     , _onRamp(false)
-    , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose)
+    , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
-                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose)
-    , _liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose)
-    , _liftPose(0.f, Y_AXIS_3D, {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose)
+                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
+    , _liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
+    , _liftPose(0.f, Y_AXIS_3D, {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(0)
     , _currentLiftAngle(0)
     , _isPickingOrPlacing(false)
@@ -144,6 +145,9 @@ namespace Anki {
       pdo_ = new PathDolerOuter(msgHandler, robotID);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
+      
+      _poseOrigins.front().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin0");
+      
     } // Constructor: Robot
 
     Robot::~Robot()
@@ -228,29 +232,49 @@ namespace Anki {
         const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D);
         const RotationMatrix3d R_tilt(-tiltAngle, Y_AXIS_3D);
         
-        SetPose(Pose3d(R_tilt*R_heading, newTranslation));
-
+        SetPose(Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent()));
+        
       } else {
         // This is "normal" mode, where we udpate pose history based on the
         // reported odometry from the physical robot
         
+        // Ignore physical robot's notion of z from the message? (msg.pose_z)
+        const f32 pose_z = GetPose().GetWithRespectToOrigin().GetTranslation().z();
+        
+        // Need to put the odometry update in terms of the current robot origin
+        Pose3d newPose(msg.pose_angle, Z_AXIS_3D, {{msg.pose_x, msg.pose_y, pose_z}}, _worldOrigin);
+        newPose = newPose.GetWithRespectToOrigin();
+        
         // Add to history
         lastResult = AddRawOdomPoseToHistory(msg.timestamp,
                                              msg.pose_frame_id,
-                                             msg.pose_x, msg.pose_y, /* ignore physical robot's notion of z? msg.pose_z*/ GetPose().GetTranslation().z(),
+                                             newPose.GetTranslation().x(),
+                                             newPose.GetTranslation().y(),
+                                             newPose.GetTranslation().z(),
+                                             newPose.GetRotationAngle<'Z'>().ToFloat(),
+                                             /*
+                                             msg.pose_x, msg.pose_y, pose_z,
                                              msg.pose_angle,
+                                              */
                                              msg.headAngle,
-                                             msg.liftAngle,
-                                             GetPoseOrigin());
+                                             msg.liftAngle);
         if(lastResult != RESULT_OK) {
           PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.AddPoseError",
                               "AddRawOdomPoseToHistory failed for timestamp=%d\n", msg.timestamp);
           return lastResult;
         }
         
-        if(UpdateCurrPoseFromHistory() == false) {
+        if(UpdateCurrPoseFromHistory(*_worldOrigin) == false) {
           lastResult = RESULT_FAIL;
         }
+        
+        PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
+                         "Robot %d's pose updated to (%.3f, %.3f, %.3f) @ %.1fdeg based on "
+                         "msg at time=%d, frame=%d saying (%.3f, %.3f) @ %.1fdeg\n",
+                         _ID, _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
+                         _pose.GetRotationAngle<'Z'>().getDegrees(),
+                         msg.timestamp, msg.pose_frame_id,
+                         msg.pose_x, msg.pose_y, msg.pose_angle*180.f/M_PI);
         
       } // if/else on ramp
       
@@ -456,7 +480,7 @@ namespace Anki {
             }
             
             // Start dock
-            PRINT_INFO("Docking with marker %d (action = %d)\n", _dockMarker->GetCode(), _dockAction);
+            PRINT_INFO("Docking with marker %d = %s (action = %d)\n", _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
             DockWithObject(_dockObjectID, _dockMarker, _dockAction);
             _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
             SetState(DOCKING);
@@ -634,10 +658,12 @@ namespace Anki {
     
     void Robot::SetPose(const Pose3d &newPose)
     {
-      // Update our current pose and let the physical robot know where it is:
+      // Update our current pose and keep the name consistent
+      const std::string name = _pose.GetName();
       _pose = newPose;
+      _pose.SetName(name);
       
-    } // set_pose()
+    } // SetPose()
     
     void Robot::SetHeadAngle(const f32& angle)
     {
@@ -651,6 +677,7 @@ namespace Anki {
       // Rotate that by the given angle
       RotationVector3d Rvec(-_currentHeadAngle, Y_AXIS_3D);
       newHeadPose.RotateBy(Rvec);
+      newHeadPose.SetName("Camera");
       
       // Update the head camera's pose
       _camera.SetPose(newHeadPose);
@@ -957,7 +984,7 @@ namespace Anki {
         
         PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOntoRamp",
                          "Robot %d transitioning onto ramp %d, using start (%.1f,%.1f,%.1f)\n",
-                         _ID, _rampStartPosition.x(), _rampStartPosition.y(), _rampStartHeight);
+                         _ID, ramp->GetID().GetValue(), _rampStartPosition.x(), _rampStartPosition.y(), _rampStartHeight);
         
       } else {
         // Just do an absolute pose update, setting the robot's position to
@@ -966,11 +993,11 @@ namespace Anki {
         switch(_dockAction)
         {
           case DA_RAMP_ASCEND:
-            _pose = ramp->GetPostAscentPose(WHEEL_BASE_MM);
+            SetPose(ramp->GetPostAscentPose(WHEEL_BASE_MM));
             break;
             
           case DA_RAMP_DESCEND:
-            _pose = ramp->GetPostDescentPose(WHEEL_BASE_MM);
+            SetPose(ramp->GetPostDescentPose(WHEEL_BASE_MM));
             break;
             
           default:
@@ -982,12 +1009,16 @@ namespace Anki {
         
         PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOffRamp",
                          "Robot %d transitioning off of ramp %d, at (%.1f,%.1f,%.1f) @ %.1fdeg\n",
-                         _ID, _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
+                         _ID, ramp->GetID().GetValue(),
+                         _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
                          _pose.GetRotationAngle<'Z'>().getDegrees());
         
+        // We are creating a new pose frame at the top of the ramp
+        //IncrementPoseFrameID();
+        ++_frameId;
         Result lastResult = SendAbsLocalizationUpdate(_pose,
                                                       _poseHistory.GetNewestTimeStamp(),
-                                                      _poseHistory.GetNewestPoseFrameID());
+                                                      _frameId);
         if(lastResult != RESULT_OK) {
           PRINT_NAMED_ERROR("Robot.SetOnRamp.SendAbsLocUpdateFailed",
                             "Robot %d failed to send absolute localization update.\n", _ID);
@@ -1188,7 +1219,7 @@ namespace Anki {
 
       
       // Compute the pose of the marker in world coords
-      if (!_dockMarker->GetPose().GetWithRespectTo(*Pose3d::GetWorldOrigin(), _placeOnGroundPose))
+      if (!_dockMarker->GetPose().GetWithRespectTo(*_worldOrigin, _placeOnGroundPose))
       {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGround.DockMarkerPoseFail", "\n");
       } else {
@@ -1657,7 +1688,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      return SendAbsLocalizationUpdate(p.GetPose(), t, p.GetFrameId());
+      return SendAbsLocalizationUpdate(p.GetPose().GetWithRespectToOrigin(), t, p.GetFrameId());
     }
     
     Result Robot::SendHeadAngleUpdate() const
@@ -1846,15 +1877,51 @@ namespace Anki {
                                           const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                           const f32 pose_angle,
                                           const f32 head_angle,
-                                          const f32 lift_angle,
-                                          const Pose3d* pose_origin)
+                                          const f32 lift_angle)
     {
-      return _poseHistory.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin);
+      return _poseHistory.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
     }
     
-    Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
-                                             const RobotPoseStamp& p)
+    Result Robot::SetPoseOrigin(const Pose3d& newPoseOrigin)
     {
+      // Reverse the connection between origin and robot, and connect the new
+      // reversed connection
+      //CORETECH_ASSERT(p.GetPose().GetParent() == _poseOrigin);
+      //Pose3d originWrtRobot = _pose.GetInverse();
+      //originWrtRobot.SetParent(&newPoseOrigin);
+      
+      // TODO: We should only be doing this (modifying what _worldOrigin points to) when it is one of the placeHolder poseOrigins, not if it is a mat!
+      /*
+      *_worldOrigin = _pose.GetInverse();
+      _worldOrigin->SetParent(&newPoseOrigin);
+      */
+      
+      /*
+      // Connect the old origin's pose to the same root the robot now has.
+      // It is no longer the robot's origin, but for any of its children,
+      // it is now in the right coordinates.
+      if(_worldOrigin->GetWithRespectTo(newPoseOrigin.FindOrigin(), *_worldOrigin) == false) {
+        PRINT_NAMED_ERROR("Robot.UpdatePoseOrigin.NewLocalizationOriginProblem",
+                          "Could not get pose origin w.r.t. new origin pose.\n");
+        return RESULT_FAIL;
+      }
+       */
+      
+      // Now make the robot's origin point to the new origin
+      // TODO: avoid the icky const_cast here...
+      _worldOrigin = const_cast<Pose3d*>(&newPoseOrigin);
+      
+      return RESULT_OK;
+      
+    } // UpdatePoseOrigin()
+    
+    Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
+                                             const f32 pose_x, const f32 pose_y, const f32 pose_z,
+                                             const f32 pose_angle,
+                                             const f32 head_angle,
+                                             const f32 lift_angle)
+    {
+      /*
       if(!IsLocalized()) {
 
         // If we aren't localized yet, we are about to be, by virtue of this pose
@@ -1879,8 +1946,17 @@ namespace Anki {
         // TODO: avoid the icky const_cast here...
         _poseOrigin = const_cast<Pose3d*>(p.GetPose().GetParent());
       }
+      */
       
-      return _poseHistory.AddVisionOnlyPose(t, p);
+      // We have a new ("ground truth") key frame. Increment the pose frame!
+      //IncrementPoseFrameID();
+      ++_frameId;
+      
+      return _poseHistory.AddVisionOnlyPose(t, _frameId,
+                                            pose_x, pose_y, pose_z,
+                                            pose_angle,
+                                            head_angle,
+                                            lift_angle);
     }
 
     Result Robot::ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
@@ -1896,6 +1972,20 @@ namespace Anki {
       return _poseHistory.GetVisionOnlyPoseAt(t_request, p);
     }
 
+    Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose)
+    {
+      RobotPoseStamp* poseStamp;
+      Result lastResult = GetComputedPoseAt(t_request, &poseStamp);
+      if(lastResult == RESULT_OK) {
+        // Grab the pose stored in the pose stamp we just found, and hook up
+        // its parent to the robot's current world origin (since pose history
+        // doesn't keep track of pose parent chains)
+        pose = poseStamp->GetPose();
+        pose.SetParent(_worldOrigin);
+      }
+      return lastResult;
+    }
+    
     Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key)
     {
       return _poseHistory.GetComputedPoseAt(t_request, p, key);
@@ -1911,7 +2001,7 @@ namespace Anki {
       return _poseHistory.IsValidPoseKey(key);
     }
     
-    bool Robot::UpdateCurrPoseFromHistory()
+    bool Robot::UpdateCurrPoseFromHistory(const Pose3d& wrtParent)
     {
       bool poseUpdated = false;
       
@@ -1919,8 +2009,26 @@ namespace Anki {
       RobotPoseStamp p;
       if (_poseHistory.ComputePoseAt(_poseHistory.GetNewestTimeStamp(), t, p) == RESULT_OK) {
         if (p.GetFrameId() == GetPoseFrameID()) {
-          _pose = p.GetPose();
-          poseUpdated = true;
+          
+          // Grab a copy of the pose from history, which has been flattened (i.e.,
+          // made with respect to whatever its origin was when it was stored).
+          // We just assume for now that is the same as the _current_ world origin
+          // (bad assumption? or will differing frame IDs help us?), and make that
+          // chaining connection so that we can get the pose w.r.t. the requested
+          // parent.
+          Pose3d histPoseWrtCurrentWorld(p.GetPose());
+          histPoseWrtCurrentWorld.SetParent(&wrtParent.FindOrigin());
+          
+          Pose3d newPose;
+          if((histPoseWrtCurrentWorld.GetWithRespectTo(wrtParent, newPose))==false) {
+            PRINT_NAMED_ERROR("Robot.UpdateCurrPoseFromHistory.GetWrtParentFailed",
+                              "Could not update robot %d's current pose from history w.r.t. specified pose %s.",
+                              _ID, wrtParent.GetName().c_str());
+          } else {
+            SetPose(newPose);
+            poseUpdated = true;
+          }
+           
         }
       }
       

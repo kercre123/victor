@@ -158,7 +158,8 @@ namespace Anki
 
       bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
-      size_t UpdateObjectPoses(const Vision::ObservableObjectLibrary& objectsLibrary,
+      size_t UpdateObjectPoses(const Robot* seenByRobot,
+                               const Vision::ObservableObjectLibrary& objectsLibrary,
                                PoseKeyObsMarkerMap_t& obsMarkers,
                                ObjectsMapByType_t& existingObjects,
                                const TimeStamp_t atTimestamp);

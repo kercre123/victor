@@ -66,32 +66,32 @@ namespace Anki {
       switch(whichFace)
       {
         case FRONT_FACE:
-          facePose = Pose3d(-M_PI_2, Z_AXIS_3D, {{-halfDepth, 0.f, 0.f}},  &pose_);
+          facePose = Pose3d(-M_PI_2, Z_AXIS_3D, {{-halfDepth, 0.f, 0.f}},  &GetPose());
           //facePose = Pose3d(0,       Z_AXIS_3D, {{-halfDepth, 0.f, 0.f}},  &pose_);
           break;
           
         case LEFT_FACE:
-          facePose = Pose3d(M_PI, Z_AXIS_3D, {{0.f, halfWidth, 0.f}},  &pose_);
+          facePose = Pose3d(M_PI, Z_AXIS_3D, {{0.f, halfWidth, 0.f}},  &GetPose());
           //facePose = Pose3d(-M_PI_2, Z_AXIS_3D, {{0.f, -halfWidth, 0.f}},  &pose_);
           break;
           
         case BACK_FACE:
-          facePose = Pose3d(M_PI_2,    Z_AXIS_3D, {{halfDepth, 0.f, 0.f}},   &pose_);
+          facePose = Pose3d(M_PI_2,    Z_AXIS_3D, {{halfDepth, 0.f, 0.f}},   &GetPose());
           //facePose = Pose3d(0,    Z_AXIS_3D, {{halfDepth, 0.f, 0.f}},   &pose_);
           break;
           
         case RIGHT_FACE:
-          facePose = Pose3d(0,  Z_AXIS_3D, {{0.f, -halfWidth, 0.f}},   &pose_);
+          facePose = Pose3d(0,  Z_AXIS_3D, {{0.f, -halfWidth, 0.f}},   &GetPose());
           //facePose = Pose3d(M_PI_2,  Z_AXIS_3D, {{0.f, halfWidth, 0.f}},   &pose_);
           break;
           
         case TOP_FACE:
-          facePose = Pose3d(-M_PI_2,  X_AXIS_3D, {{0.f, 0.f, halfHeight}},  &pose_);
+          facePose = Pose3d(-M_PI_2,  X_AXIS_3D, {{0.f, 0.f, halfHeight}},  &GetPose());
           //facePose = Pose3d(M_PI_2,  Y_AXIS_3D, {{0.f, 0.f, halfHeight}},  &pose_);
           break;
           
         case BOTTOM_FACE:
-          facePose = Pose3d(M_PI_2, X_AXIS_3D, {{0.f, 0.f, -halfHeight}}, &pose_);
+          facePose = Pose3d(M_PI_2, X_AXIS_3D, {{0.f, 0.f, -halfHeight}}, &GetPose());
           //facePose = Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -halfHeight}}, &pose_);
           break;
           
@@ -165,7 +165,7 @@ namespace Anki {
     
     Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const
     {
-      return GetBoundingQuadInPlane(planeNormal, pose_, padding_mm);
+      return GetBoundingQuadInPlane(planeNormal, GetPose(), padding_mm);
     }
     
     
@@ -413,7 +413,7 @@ namespace Anki {
     
     void Block::Visualize(VIZ_COLOR_ID color)
     {
-      Pose3d vizPose = pose_.GetWithRespectToOrigin();      
+      Pose3d vizPose = GetPose().GetWithRespectToOrigin();
       _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }
     

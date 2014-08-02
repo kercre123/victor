@@ -58,7 +58,7 @@ namespace Anki {
       // Accessors
       const RobotID_t        GetID()           const;
       const Pose3d&          GetPose()         const;
-      const Pose3d*          GetPoseOrigin()   const {return _poseOrigin;}
+      //const Pose3d*          GetPoseOrigin()   const {return _poseOrigin;}
       bool                   IsLocalized()     const {return _localizedToID.IsSet();}
       const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
       void                   SetLocalizedTo(const ObjectID& toID);
@@ -86,10 +86,13 @@ namespace Anki {
       Result SetState(const State newState);
       
       void SetPose(const Pose3d &newPose);
+      Result SetPoseOrigin(const Pose3d& newPoseOrigin);
+      const Pose3d* GetWorldOrigin() const { return _worldOrigin; }
+      
       void SetHeadAngle(const f32& angle);
       void SetLiftAngle(const f32& angle);
       
-      void IncrementPoseFrameID() {++_frameId;}
+      //void IncrementPoseFrameID() {++_frameId;}
       PoseFrameID_t GetPoseFrameID() const {return _frameId;}
       
       
@@ -275,11 +278,13 @@ namespace Anki {
                                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                      const f32 pose_angle,
                                      const f32 head_angle,
-                                     const f32 lift_angle,
-                                     const Pose3d* pose_origin);
+                                     const f32 lift_angle);
       
       Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
-                                        const RobotPoseStamp& p);
+                                        const f32 pose_x, const f32 pose_y, const f32 pose_z,
+                                        const f32 pose_angle,
+                                        const f32 head_angle,
+                                        const f32 lift_angle);
 
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                              TimeStamp_t& t, RobotPoseStamp** p,
@@ -288,15 +293,17 @@ namespace Anki {
 
       Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
       Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
+      Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose);
       
       TimeStamp_t GetLastMsgTimestamp() const;
       
       bool IsValidPoseKey(const HistPoseKey key) const;
       
       // Updates the current pose to the best estimate based on
-      // historical poses including vision-based poses.
+      // historical poses including vision-based poses. Will use the specified
+      // parent pose to store the pose.
       // Returns true if the pose is successfully updated, false otherwise.
-      bool UpdateCurrPoseFromHistory();
+      bool UpdateCurrPoseFromHistory(const Pose3d& wrtParent);
       
       Result UpdateFullRobotState(const MessageRobotState& msg);
       
@@ -349,7 +356,8 @@ namespace Anki {
       Vision::Camera            _camera;
       
       // Geometry / Pose
-      Pose3d*          _poseOrigin;
+      std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
+      Pose3d*          _worldOrigin;
       Pose3d           _pose;
       PoseFrameID_t    _frameId;
       ObjectID         _localizedToID;

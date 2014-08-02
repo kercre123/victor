@@ -371,16 +371,19 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
   {
     Robot* robot = robotMgr_.GetRobotByID(robotID);
     
+    // Always draw robot w.r.t. the origin, not in its current frame
+    Pose3d robotPoseWrtOrigin = robot->GetPose().GetWithRespectToOrigin();
+    
     // Triangle pose marker
-    VizManager::getInstance()->DrawRobot(robotID, robot->GetPose());
+    VizManager::getInstance()->DrawRobot(robotID, robotPoseWrtOrigin);
     
     // Full Webots CozmoBot model
-    VizManager::getInstance()->DrawRobot(robotID, robot->GetPose(), robot->GetHeadAngle(), robot->GetLiftAngle());
+    VizManager::getInstance()->DrawRobot(robotID, robotPoseWrtOrigin, robot->GetHeadAngle(), robot->GetLiftAngle());
     
     // Robot bounding box
     using namespace Quad;
-    Quad2f quadOnGround2d = robot->GetBoundingQuadXY();
-    const f32 zHeight = robot->GetPose().GetTranslation().z() + 0.5f;
+    Quad2f quadOnGround2d = robot->GetBoundingQuadXY(robotPoseWrtOrigin);
+    const f32 zHeight = robotPoseWrtOrigin.GetTranslation().z() + 0.5f;
     Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     zHeight),
                           Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  zHeight),
                           Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    zHeight),

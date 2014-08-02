@@ -67,15 +67,18 @@ namespace Anki {
       //
 
       // Return true if given pose shares a common origin and is "on" this
-      // MatPiece; i.e., within its bounding box, within the specified height
+      // MatPiece; i.e., is within its bounding box, within the specified height
       // tolerance from the top surface, and with Z axis aligned to the mat's
       // z axis.
-      bool IsPoseOn(const Pose3d& pose, const f32 heightTol) const;
+      bool IsPoseOn(const Pose3d& pose, const f32 heightOffset, const f32 heightTol) const;
+      
+      // Same as above, but also returns the pose w.r.t. the mat.
+      bool IsPoseOn(const Pose3d& pose, const f32 heightOffset, const f32 heightTol, Pose3d& poseWrtMat) const;
       
       // Returns top surface height w.r.t. the mat's current pose origin
       f32 GetDrivingSurfaceHeight() const;
       
-      void SetOrigin(const Pose3d* newOrigin);
+      //void SetOrigin(const Pose3d* newOrigin);
       
       bool IsMoveable() const { return _isMoveable; }
       

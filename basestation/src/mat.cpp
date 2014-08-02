@@ -124,11 +124,13 @@ namespace Anki {
        */
       
     };
-    
+
+    /*
     void MatPiece::SetOrigin(const Pose3d* origin)
     {
-      pose_.SetParent(origin);
+      GetNonConstPose().SetParent(origin);
     }
+     */
     
     std::vector<RotationMatrix3d> const& MatPiece::GetRotationAmbiguities() const
     {
@@ -137,7 +139,7 @@ namespace Anki {
     
     void MatPiece::Visualize()
     {
-      Pose3d vizPose = pose_.GetWithRespectToOrigin();
+      Pose3d vizPose = GetPose().GetWithRespectToOrigin();
       _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, VIZ_COLOR_DEFAULT);
     }
     
@@ -203,18 +205,23 @@ namespace Anki {
       }
     }
     
-    bool MatPiece::IsPoseOn(const Anki::Pose3d &pose, const f32 heightTol) const
+    
+    bool MatPiece::IsPoseOn(const Anki::Pose3d &pose, const f32 heightOffset, const f32 heightTol) const
     {
       Pose3d poseWrtMat;
-      if(pose.GetWithRespectTo(pose_, poseWrtMat) == false) {
+      return IsPoseOn(pose, heightOffset, heightTol, poseWrtMat);
+    }
+    
+    bool MatPiece::IsPoseOn(const Anki::Pose3d &pose, const f32 heightOffset, const f32 heightTol, Pose3d& poseWrtMat) const
+    {
+      if(pose.GetWithRespectTo(GetPose(), poseWrtMat) == false) {
         return false;
       }
       
       const Point2f pt(poseWrtMat.GetTranslation().x(), poseWrtMat.GetTranslation().y());
       const bool withinBBox   = GetBoundingQuadXY(Pose3d()).Contains(pt);
       
-      const bool withinHeight = (poseWrtMat.GetTranslation().z() >= _size.z()*.5f - heightTol &&
-                                 poseWrtMat.GetTranslation().z() <= _size.z()*.5f + heightTol);
+      const bool withinHeight = NEAR(poseWrtMat.GetTranslation().z(), _size.z()*.5f + heightOffset, heightTol);
       
       // Make sure the given pose's rotation axis is well aligned with the mat's Z axis
       // TODO: make alignment a parameter?
@@ -227,7 +234,7 @@ namespace Anki {
     
     f32 MatPiece::GetDrivingSurfaceHeight() const
     {
-      Pose3d poseWrtOrigin = pose_.GetWithRespectToOrigin();
+      Pose3d poseWrtOrigin = GetPose().GetWithRespectToOrigin();
       return _size.z()*.5f + poseWrtOrigin.GetTranslation().z();
     } // GetDrivingSurfaceHeight()
     

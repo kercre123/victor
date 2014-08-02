@@ -102,10 +102,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                                             msg.pose_x, msg.pose_y, msg.pose_z,
                                             msg.pose_angle,
                                             msg.headAngle,
-                                            msg.liftAngle,
-                                            robot.GetPoseOrigin()), RESULT_OK);
+                                            msg.liftAngle), RESULT_OK);
     
-    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
   }
   
   bool checkRobotPose;
@@ -165,10 +164,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                                             msg.pose_frame_id,
                                             msg.pose_x, msg.pose_y, msg.pose_z,
                                             msg.pose_angle,
-                                            msg.headAngle, msg.liftAngle,
-                                            robot.GetPoseOrigin()), RESULT_OK);
+                                            msg.headAngle, msg.liftAngle), RESULT_OK);
     
-    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
 
     int NumMarkers;
     ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "NumMarkers", NumMarkers));
