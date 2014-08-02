@@ -14,6 +14,13 @@ namespace Anki {
 
   
 #pragma mark --- Pose2d Implementations ---
+  /*
+  template<>
+  std::list<Pose2d> PoseBase<Pose2d>::Origins(1); // TODO: Name it "WorldOrigin2D"
+
+  template<class PoseNd>
+  const Pose3d* PoseBase<PoseNd>::_sWorld = &PoseBase<PoseNd>::Origins.front();
+  */
   
   Pose2d::Pose2d()
   : Pose2d(0, {{0.f, 0.f}})
@@ -92,6 +99,14 @@ namespace Anki {
   
 #pragma mark --- Pose3d Implementations ---
   
+  /*
+  template<>
+  std::list<Pose3d> PoseBase<Pose3d>::Origins = {{Pose3d(0, Z_AXIS_3D, {{0,0,0}}, nullptr, "WorldOrigin3D")}};
+  
+  template<>
+  const Pose3d* PoseBase<Pose3d>::_sWorld = &PoseBase<Pose3d>::Origins.front();
+  */
+  
   Pose3d::Pose3d()
   : Pose3d(0, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
   {
@@ -133,7 +148,7 @@ namespace Anki {
   } // Constructor: Pose3d(angle, axis, T)
   
   Pose3d::Pose3d(const Pose3d &otherPose)
-  : Pose3d(otherPose._rotationMatrix, otherPose._translation, otherPose._parent, otherPose._name)
+  : Pose3d(otherPose._rotationMatrix, otherPose._translation, otherPose._parent) // NOTE: *not* copying name
   {
     
   }
@@ -227,6 +242,7 @@ namespace Anki {
     _rotationMatrix.Transpose();
     _translation *= -1.f;
     _translation = _rotationMatrix * _translation;
+    _parent = nullptr;
     
     return *this;
   }

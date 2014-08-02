@@ -155,7 +155,7 @@ namespace Anki {
     
     // Construct from rotation vector and translation vector
     Pose3d(const RotationVector3d &Rvec, const Vec3f &T,
-           const Pose3d *parentPose = Pose3d::GetWorldOrigin(),
+           const Pose3d *parentPose = nullptr,
            const std::string& name = "");
     
     /* TODO: Add constructor that takes in covariance
@@ -166,13 +166,13 @@ namespace Anki {
     // Construct from rotation matrix and translation vector
     // TODO: do we want a version that takes in covariance too?
     Pose3d(const RotationMatrix3d &Rmat, const Vec3f &T,
-           const Pose3d *parentPose = Pose3d::GetWorldOrigin(),
+           const Pose3d *parentPose = nullptr,
            const std::string& name = "");
     
     // Construct from an angle, axis, and translation vector
     Pose3d(const Radians angle, const Vec3f axis,
            const Vec3f translation,
-           const Pose3d *parentPose = Pose3d::GetWorldOrigin(),
+           const Pose3d *parentPose = nullptr,
            const std::string& name = "");
     
     // Construct a Pose3d from a Pose2d (using the plane information)
@@ -327,7 +327,9 @@ namespace Anki {
   
   inline Pose2d Pose2d::GetWithRespectToOrigin() const {
     Pose2d poseWrtOrigin;
-    if(PoseBase<Pose2d>::GetWithRespectTo(*this, this->FindOrigin(), poseWrtOrigin) == false) {
+    if(this->IsOrigin()) {
+      poseWrtOrigin = *this;
+    } else if(PoseBase<Pose2d>::GetWithRespectTo(*this, this->FindOrigin(), poseWrtOrigin) == false) {
       PRINT_NAMED_ERROR("Pose2d::GetWithRespectToOriginFailed",
                         "Could not get pose w.r.t. its own origin. This should never happen.\n");
       assert(false);
@@ -442,11 +444,14 @@ namespace Anki {
   
   inline Pose3d Pose3d::GetWithRespectToOrigin() const {
     Pose3d poseWrtOrigin;
-    if(PoseBase<Pose3d>::GetWithRespectTo(*this, this->FindOrigin(), poseWrtOrigin) == false) {
+    if(this->IsOrigin()) {
+      poseWrtOrigin = *this;
+    } else if(PoseBase<Pose3d>::GetWithRespectTo(*this, this->FindOrigin(), poseWrtOrigin) == false) {
       PRINT_NAMED_ERROR("Pose3d::GetWithRespectToOriginFailed",
                         "Could not get pose w.r.t. its own origin. This should never happen.\n");
       assert(false); // TODO: Do something more elegant
     }
+    
     return poseWrtOrigin;
   }
   

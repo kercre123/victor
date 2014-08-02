@@ -30,8 +30,7 @@ namespace Anki {
                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
                      const f32 pose_angle,
                      const f32 head_angle,
-                     const f32 lift_angle,
-                     const Pose3d* pose_origin);
+                     const f32 lift_angle);
       
       RobotPoseStamp(const PoseFrameID_t frameID,
                      const Pose3d& pose,
@@ -42,8 +41,7 @@ namespace Anki {
                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
                    const f32 pose_angle,
                    const f32 head_angle,
-                   const f32 lift_angle,
-                   const Pose3d* pose_origin);
+                   const f32 lift_angle);
 
       void SetPose(const PoseFrameID_t frameID,
                    const Pose3d& pose,
@@ -102,8 +100,7 @@ namespace Anki {
                             const f32 pose_x, const f32 pose_y, const f32 pose_z,
                             const f32 pose_angle,
                             const f32 head_angle,
-                            const f32 lift_angle,
-                            const Pose3d* pose_origin);
+                            const f32 lift_angle);
 
       Result AddRawOdomPose(const TimeStamp_t t,
                             const RobotPoseStamp& p);
@@ -116,8 +113,7 @@ namespace Anki {
                                const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                const f32 pose_angle,
                                const f32 head_angle,
-                               const f32 lift_angle,
-                               const Pose3d* pose_origin);
+                               const f32 lift_angle);
 
       Result AddVisionOnlyPose(const TimeStamp_t t,
                                const RobotPoseStamp& p);
