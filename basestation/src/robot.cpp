@@ -1882,7 +1882,7 @@ namespace Anki {
       return _poseHistory.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
     }
     
-    Result Robot::SetPoseOrigin(const Pose3d& newPoseOrigin)
+    Result Robot::SetPoseOrigin(const Pose3d& newPoseWrtNewOrigin)
     {
       // Reverse the connection between origin and robot, and connect the new
       // reversed connection
@@ -1891,25 +1891,25 @@ namespace Anki {
       //originWrtRobot.SetParent(&newPoseOrigin);
       
       // TODO: We should only be doing this (modifying what _worldOrigin points to) when it is one of the placeHolder poseOrigins, not if it is a mat!
-      /*
+      std::string origName(_worldOrigin->GetName());
       *_worldOrigin = _pose.GetInverse();
-      _worldOrigin->SetParent(&newPoseOrigin);
-      */
+      _worldOrigin->SetParent(&newPoseWrtNewOrigin);
       
-      /*
+      
       // Connect the old origin's pose to the same root the robot now has.
       // It is no longer the robot's origin, but for any of its children,
       // it is now in the right coordinates.
-      if(_worldOrigin->GetWithRespectTo(newPoseOrigin.FindOrigin(), *_worldOrigin) == false) {
+      if(_worldOrigin->GetWithRespectTo(newPoseWrtNewOrigin.FindOrigin(), *_worldOrigin) == false) {
         PRINT_NAMED_ERROR("Robot.UpdatePoseOrigin.NewLocalizationOriginProblem",
                           "Could not get pose origin w.r.t. new origin pose.\n");
         return RESULT_FAIL;
       }
-       */
+      
+      _worldOrigin->SetName(origName);
       
       // Now make the robot's origin point to the new origin
       // TODO: avoid the icky const_cast here...
-      _worldOrigin = const_cast<Pose3d*>(&newPoseOrigin);
+      _worldOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
       
       return RESULT_OK;
       

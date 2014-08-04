@@ -539,6 +539,7 @@ namespace Anki
       } // if robot is on ramp
       
       
+      
       // TODO: Move this static to a member of BlockWorld
       static bool localizedToFixedMat = false;
       if(!localizedToFixedMat && !existingMatPiece->IsMoveable()) {
@@ -548,7 +549,7 @@ namespace Anki
                          "Localizing robot %d to fixed %s mat for the first time.\n",
                          robot->GetID(), existingMatPiece->GetType().GetName().c_str());
         
-        if(robot->SetPoseOrigin(existingMatPiece->GetPose()) != RESULT_OK) {
+        if(robot->SetPoseOrigin(robotPoseWrtMat) != RESULT_OK) {
           PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.SetPoseOriginFailure",
                             "Failed to update robot %d's pose origin when (re-)localizing it.\n", robot->GetID());
           return false;
@@ -564,7 +565,7 @@ namespace Anki
                          "Localizing robot %d for the first time (to %s mat).\n",
                          robot->GetID(), existingMatPiece->GetType().GetName().c_str());
         
-        if(robot->SetPoseOrigin(existingMatPiece->GetPose()) != RESULT_OK) {
+        if(robot->SetPoseOrigin(robotPoseWrtMat) != RESULT_OK) {
           PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.SetPoseOriginFailure",
                             "Failed to update robot %d's pose origin when (re-)localizing it.\n", robot->GetID());
           return false;
@@ -576,8 +577,10 @@ namespace Anki
           localizedToFixedMat = true;
         }
       }
-            
-      // Add the new vision-based pose to the robot's history.
+      
+      
+      // Add the new vision-based pose to the robot's history. Note that we use
+      // the pose w.r.t. the origin for storing poses in history.
       //RobotPoseStamp p(robot->GetPoseFrameID(), robotPoseWrtMat.GetWithRespectToOrigin(), posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
       Pose3d robotPoseWrtOrigin = robotPoseWrtMat.GetWithRespectToOrigin();
       if(robot->AddVisionOnlyPoseToHistory(existingMatPiece->GetLastObservedTime(),
@@ -592,14 +595,10 @@ namespace Anki
         return false;
       }
       
-      // Mark the robot as now being localized to this mat
-      // NOTE: this should be _after_ calling AddVisionOnlyPoseToHistory, since
-      //    that function checks whether the robot is already localized
-      robot->SetLocalizedTo(existingMatPiece->GetID());
       
-      // Update the computed pose as well so that subsequent block pose updates
-      // use obsMarkers whose camera's parent pose is correct. Note that we
-      // store the pose w.r.t. the origin in history
+      // Update the computed historical pose as well so that subsequent block
+      // pose updates use obsMarkers whose camera's parent pose is correct.
+      // Note again that we store the pose w.r.t. the origin in history.
       // TODO: Should SetPose() do the flattening w.r.t. origin?
       posePtr->SetPose(robot->GetPoseFrameID(), robotPoseWrtOrigin, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
       
@@ -610,6 +609,11 @@ namespace Anki
         return false;
       }
       
+      // Mark the robot as now being localized to this mat
+      // NOTE: this should be _after_ calling AddVisionOnlyPoseToHistory, since
+      //    that function checks whether the robot is already localized
+      robot->SetLocalizedTo(existingMatPiece->GetID());
+
       
       
       PRINT_INFO("Using %s mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
