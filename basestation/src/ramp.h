@@ -64,7 +64,7 @@ namespace Anki {
       // Return start poses (at Ramp's current position) for going up or down
       // the ramp. The distance for ascent is from the tip of the slope.  The
       // distance for descent is from the opposite edge of the ramp.
-      Pose3d GetPreAscentPose() const;
+      Pose3d GetPreAscentPose()  const;
       Pose3d GetPreDescentPose() const;
       
       // Return final poses (at Ramp's current position) for a robot after it
@@ -72,7 +72,7 @@ namespace Anki {
       // as input since the assumption is that the robot will be level when its
       // back wheels have left the slope, meaning the robot's origin (between
       // its front two wheels) is wheel base away.
-      Pose3d GetPostAscentPose(const float wheelBase) const;
+      Pose3d GetPostAscentPose(const float wheelBase)  const;
       Pose3d GetPostDescentPose(const float wheelBase) const;
       
       //
@@ -80,32 +80,31 @@ namespace Anki {
       //
       virtual ~Ramp();
       
-      virtual Ramp*  Clone() const override;
-      virtual void   GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
-      virtual void   Visualize() override;
-      virtual void   Visualize(VIZ_COLOR_ID color) override;
-      virtual void   Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) override;
-      virtual void   EraseVisualization() override;
-      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
+      virtual Ramp*   Clone() const override;
+      virtual void    GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
+      virtual void    Visualize() override;
+      virtual void    Visualize(VIZ_COLOR_ID color) override;
+      virtual void    Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) override;
+      virtual void    EraseVisualization() override;
+      virtual Quad2f  GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
       
-      virtual void GetPreDockPoses(const float distance_mm,
-                                   std::vector<PoseMarkerPair_t>& poseMarkerPairs,
-                                   const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
+      virtual void    GetPreDockPoses(const float distance_mm,
+                                      std::vector<PoseMarkerPair_t>& poseMarkerPairs,
+                                      const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
       
-      virtual f32  GetDefaultPreDockDistance() const override;
+      virtual f32     GetDefaultPreDockDistance() const override;
+      virtual Point3f GetSameDistanceTolerance()  const override;
+      virtual Radians GetSameAngleTolerance()     const override;
       
-      virtual Point3f GetSameDistanceTolerance() const override;
-      virtual Radians GetSameAngleTolerance() const override;
       
       static ObjectType GetTypeByName(const std::string& name);
-
 
     protected:
       static const s32 NUM_CORNERS = 8;
       
       // Model dimensions in mm (perhaps these should come from a configuration
       // file instead?)
-      constexpr static const f32 Width          = 60.f;
+      constexpr static const f32 Width          = 62.f;
       constexpr static const f32 Height         = 44.f;
       constexpr static const f32 SlopeLength    = 110.f;
       constexpr static const f32 PlatformLength = 44.f;

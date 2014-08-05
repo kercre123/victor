@@ -4,11 +4,13 @@ PROTO Ramp2x1 [
   field SFString name "Ramp000"
   
   # Dimensions
-  field SFFloat width .06
+  field SFFloat width .062
   field SFFloat platformLength .044
   field SFFloat rampLength .110
   field SFFloat height .044
   field SFFloat trackWidth .01
+  field SFFloat guideWidth .002
+  field SFFloat guideHeight .008
   field SFFloat frontMarkerDistance .050
   field SFFloat markerWidth .025
   
@@ -106,7 +108,7 @@ Solid {
       
         # Left Side      
         Transform {
-          translation 0 %{=-fields.width/2+fields.trackWidth/2}% 0 
+          translation 0 %{=-fields.width/2+fields.trackWidth/2+fields.guideWidth}% 0 
           children [
             DEF RampSide Shape {
               appearance Appearance {
@@ -143,12 +145,62 @@ Solid {
     
         # Right side
         Transform { 
-          translation 0 %{=fields.width/2-fields.trackWidth/2}% 0
+          translation 0 %{=fields.width/2-fields.trackWidth/2-fields.guideWidth}% 0
           children [
             USE RampSide
           ]
         } # Right Side Transform
     
+        # Left Guide
+        Transform {
+          translation 0 %{=-fields.width/2+fields.guideWidth/2}% 0
+          children [
+            DEF WheelGuide Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor IS color
+                }
+              }
+              geometry IndexedFaceSet {
+                coord Coordinate {
+                  point [
+                    %{=-fields.platformLength/2}%                        %{=-fields.guideWidth/2}%  %{=-fields.height/2}%
+                    %{= fields.rampLength + fields.platformLength/2}%    %{=-fields.guideWidth/2}%  %{=-fields.height/2}%
+                    %{= fields.rampLength + fields.platformLength/2}%    %{= fields.guideWidth/2}%  %{=-fields.height/2}%
+                    %{=-fields.platformLength/2}%                        %{= fields.guideWidth/2}%  %{=-fields.height/2}%
+                    %{= fields.rampLength + fields.platformLength/2}%    %{=-fields.guideWidth/2}%  %{=-fields.height/2+fields.guideHeight}%
+                    %{= fields.rampLength + fields.platformLength/2}%    %{= fields.guideWidth/2}%  %{=-fields.height/2+fields.guideHeight}%
+                    %{= fields.platformLength/2}%                        %{=-fields.guideWidth/2}%  %{= fields.height/2+fields.guideHeight}%
+                    %{= fields.platformLength/2}%                        %{= fields.guideWidth/2}%  %{= fields.height/2+fields.guideHeight}%
+                    %{=-fields.platformLength/2}%                        %{=-fields.guideWidth/2}%  %{= fields.height/2+fields.guideHeight}%
+                    %{=-fields.platformLength/2}%                        %{= fields.guideWidth/2}%  %{= fields.height/2+fields.guideHeight}%
+                  ]
+                }
+                coordIndex [
+                  0, 1, 4, -1, 
+                  0, 4, 6, 8, -1,
+                  1, 2, 5, 4, -1,
+                  2, 3, 5, -1, 
+                  5, 3, 9, 7, -1, 
+                  0, 8, 9, 3, -1, 
+                  3, 2, 1, 0, -1, 
+                  4, 5, 7, 6, -1, 
+                  6, 7, 9, 8                  
+                ]
+              }
+            } # WheelGuide Shape
+          ] # Transform Children
+        } # Left Guide Transform
+        
+        
+        # Right Guide
+        Transform {
+          translation 0 %{=fields.width/2-fields.guideWidth/2}% 0
+          children [
+            USE WheelGuide
+          ] # Transform Children
+        } # Right Guide Transform
+        
       ] # RampShape Group Children
     } # RampShape Group
     
