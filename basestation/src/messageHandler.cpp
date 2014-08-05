@@ -196,6 +196,7 @@ namespace Anki {
       
       //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
       robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
+      robot->SetPickedUp( msg.status & IS_PICKED_UP );
       
       const f32 WheelSpeedToConsiderStopped = 2.f;
       if(std::abs(msg.lwheel_speed_mmps) < WheelSpeedToConsiderStopped &&
@@ -338,6 +339,13 @@ namespace Anki {
       }
       
       return lastResult;
+    }
+
+    
+
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageIMUDataChunk const& msg)
+    {
+      return robot->ProcessIMUDataChunk(msg);
     }
     
     

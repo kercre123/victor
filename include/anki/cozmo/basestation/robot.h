@@ -146,6 +146,9 @@ namespace Anki {
       void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
       bool IsPickingOrPlacing() {return _isPickingOrPlacing;}
       
+      void SetPickedUp(bool t) {_isPickedUp = t;}
+      bool IsPickedUp() {return _isPickedUp;}
+      
       ///////// Motor commands  ///////////
       
       // Sends message to move lift at specified speed
@@ -235,6 +238,9 @@ namespace Anki {
       // Request camera snapshot from robot
       Result SendImageRequest(const ImageSendMode_t mode) const;
 
+      // Request imu log from robot
+      Result SendIMURequest(const u32 length_ms) const;
+      
       // Run a test mode
       Result SendStartTestMode(const TestMode mode) const;
       
@@ -257,6 +263,12 @@ namespace Anki {
       // Sends complete images to VizManager for visualization.
       // If _saveImages is true, then images are saved as pgm.
       Result ProcessImageChunk(const MessageImageChunk &msg);
+      
+      // For processing imu data chunks arriving from robot.
+      // Writes the entire log of 3-axis accelerometer and 3-axis
+      // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
+      // can be read in from Matlab. (See robot/util/imuLogsTool.m)
+      Result ProcessIMUDataChunk(MessageIMUDataChunk const& msg);
       
       // Enable/Disable saving of images constructed from ImageChunk messages as pgm files.
       void SaveImages(bool on);
@@ -364,6 +376,7 @@ namespace Anki {
 
       // State
       bool       _isPickingOrPlacing;
+      bool       _isPickedUp;
       bool       _isMoving;
       State      _state, _nextState;
       

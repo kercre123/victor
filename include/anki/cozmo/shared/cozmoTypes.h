@@ -76,7 +76,8 @@ namespace Anki {
     typedef enum {
       //IS_TRAVERSING_PATH    = 1,
       IS_CARRYING_BLOCK     = 2,
-      IS_PICKING_OR_PLACING = 4
+      IS_PICKING_OR_PLACING = 4,
+      IS_PICKED_UP          = 8
     } RobotStatusFlag;
     
     

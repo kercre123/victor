@@ -180,6 +180,7 @@ namespace Anki {
         robotState_.status = 0;
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
+        robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
       }
       
       RobotState const& GetRobotStateMsg() {
@@ -451,6 +452,10 @@ namespace Anki {
         AnimationController::Play((AnimationID_t)msg.animationID, msg.numLoops);
       }
 
+      void ProcessIMURequestMessage(const IMURequest& msg) {
+        IMUFilter::RecordAndSend(msg.length_ms);
+      }
+      
 // ----------- Send messages -----------------
       
       

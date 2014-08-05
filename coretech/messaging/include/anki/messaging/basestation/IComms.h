@@ -36,8 +36,7 @@ namespace Anki {
         memcpy(this->data, data, dataLen);
       }
       
-      static const u8 MAX_DATA_LEN = 128;
-      u8 data[MAX_DATA_LEN];
+      u8 data[256];
       u8 dataLen = 0;
       s32 sourceId = -1;
       s32 destId = -1;

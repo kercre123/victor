@@ -291,6 +291,11 @@ namespace Anki {
     {
       return robot->SendStartTestMode((TestMode)msg.mode);
     }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_IMURequest const& msg)
+    {
+      return robot->SendIMURequest(msg.length_ms);
+    }
   
   } // namespace Cozmo
 } // namespace Anki
