@@ -48,6 +48,8 @@ namespace Anki {
     Point(const Point<N,T_other>& pt);
     //Point(const std::array<T,N>& array); // Creates ambiguity with opencv Point3_ constructor below
     
+    // Populate all dimensions with the same scalar value
+    Point(const T scalar);
 
 #if __cplusplus == 201103L
     // Point(T x1, T x2, ..., T xN);
@@ -97,11 +99,18 @@ namespace Anki {
     Point<N,T>& operator-= (const T value);
     Point<N,T>& operator*= (const T value);
     Point<N,T>& operator/= (const T value);
-    Point<N,T> operator* (const T value) const;
+    Point<N,T>  operator*  (const T value) const;
     Point<N,T>& operator+= (const Point<N,T> &other);
     Point<N,T>& operator-= (const Point<N,T> &other);
     Point<N,T>& operator*= (const Point<N,T> &other);
     Point<N,T>  operator-() const;
+    
+    // Comparison
+    bool operator< (const Point<N,T>& other) const; // all elements less than
+    
+    // Absolute value of each element
+    Point<N,T>  GetAbs() const;
+    Point<N,T>& Abs(); // in place
     
     // Return length (squared) of the vector from the origin to the point
     T Length(void) const;

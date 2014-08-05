@@ -52,8 +52,18 @@ namespace Anki {
    std::copy(this->data, this->data+N, array.begin());
    }
    */
+
+  template<PointDimType N, typename T>
+  Point<N,T>::Point(const T value)
+  {
+    // TODO: force this to unroll?
+    for(PointDimType i=0; i<N; ++i) {
+      this->data[i] = value;
+    }
+  }
   
 #if __cplusplus < 201103L
+
   template<PointDimType N, typename T>
   Point<N,T>::Point(const T x, const T y)
   {
@@ -254,6 +264,20 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
+  bool Point<N,T>::operator< (const Point<N,T>& other) const
+  {
+    CORETECH_ASSERT(N>0);
+    bool retVal = this->data[0] < other[0];
+    PointDimType i = 1;
+    while(retVal && i<N) {
+      retVal = this->data[i] < other[i];
+      ++i;
+    }
+    
+    return retVal;
+  }
+  
+  template<PointDimType N, typename T>
   bool operator== (const Point<N,T> &point1, const Point<N,T> &point2)
   {
     CORETECH_ASSERT(N>0);
@@ -308,6 +332,22 @@ namespace Anki {
       dotProduct += point1[i]*point2[i];
     }
     return dotProduct;
+  }
+  
+  template<PointDimType N, typename T>
+  Point<N,T> Point<N,T>::GetAbs() const
+  {
+    Point<N,T> copy(*this);
+    return copy.Abs();
+  }
+  
+  template<PointDimType N, typename T>
+  Point<N,T>& Point<N,T>::Abs()
+  {
+    for(PointDimType i=0; i<N; ++i) {
+      this->data[i] = std::abs(this->data[i]);
+    }
+    return *this;
   }
   
   template<PointDimType N, typename T>

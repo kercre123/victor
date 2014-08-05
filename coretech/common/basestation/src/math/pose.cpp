@@ -299,13 +299,13 @@ namespace Anki {
   }
    */
   
-  bool Pose3d::IsSameAs(const Pose3d& P_other,
-                        const float distThreshold,
-                        const Radians angleThreshold,
+  bool Pose3d::IsSameAs(const Pose3d&  P_other,
+                        const Point3f& distThreshold,
+                        const Radians& angleThreshold,
                         Pose3d& P_diff) const
   {
     bool isSame = false;
-    
+        
     // Compute the transformation that takes P1 to P2
     // Pdiff = P_other * inv(P_this)
     P_diff = this->GetInverse();
@@ -313,7 +313,8 @@ namespace Anki {
     
     // First, check to see if the translational difference between the two
     // poses is small enough to call them a match
-    if(P_diff.GetTranslation().Length() < distThreshold) {
+    //if(P_diff.GetTranslation().Length() < distThreshold) {
+    if(P_diff.GetTranslation().GetAbs() < distThreshold) {
       
       // Next check to see if the rotational difference is small
       RotationVector3d Rvec(P_diff.GetRotationMatrix());
@@ -330,9 +331,9 @@ namespace Anki {
   
   bool Pose3d::IsSameAs_WithAmbiguity(const Pose3d& P_other,
                                       const std::vector<RotationMatrix3d>& R_ambiguities,
-                                      const float   distThreshold,
-                                      const Radians angleThreshold,
-                                      const bool    useAbsRotation,
+                                      const Point3f&   distThreshold,
+                                      const Radians&   angleThreshold,
+                                      const bool       useAbsRotation,
                                       Pose3d& P_diff) const
   {
     bool isSame = false;
@@ -361,7 +362,7 @@ namespace Anki {
     
     // First, check to see if the translational difference between the two
     // poses is small enough to call them a match
-    if(P_diff.GetTranslation().Length() < distThreshold) {
+    if(P_diff.GetTranslation().GetAbs() < distThreshold) {
       
       // Next check to see if the rotational difference is small
       RotationVector3d Rvec(P_diff.GetRotationMatrix());
@@ -412,7 +413,7 @@ namespace Anki {
                   GetName().empty() ? "" : " ", GetName().c_str(),
                   _translation.x(), _translation.y(), _translation.z(),
                   GetRotationAxis().x(), GetRotationAxis().y(), GetRotationAxis().z(),
-                  GetRotationAngle().ToFloat(),
+                  GetRotationAngle().ToFloat(), GetRotationAngle().getDegrees(),
                   _parent,
                   _parent != nullptr ? _parent->GetName().c_str() : "NULL"
                   );

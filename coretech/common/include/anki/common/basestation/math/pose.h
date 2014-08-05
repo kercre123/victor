@@ -245,13 +245,13 @@ namespace Anki {
     // Check to see if two poses are the same.  Return true if so.
     // If requested, P_diff will contain the transformation from this pose to
     // P_other.
-    bool IsSameAs(const Pose3d& P_other,
-                  const float   distThreshold,
-                  const Radians angleThreshold) const;
+    bool IsSameAs(const Pose3d&  P_other,
+                  const Point3f& distThreshold,
+                  const Radians& angleThreshold) const;
     
-    bool IsSameAs(const Pose3d& P_other,
-                  const float   distThreshold,
-                  const Radians angleThreshold,
+    bool IsSameAs(const Pose3d&  P_other,
+                  const Point3f& distThreshold,
+                  const Radians& angleThreshold,
                   Pose3d& P_diff) const;
     
     // Same as above, but with a list of rotational ambiguities to ignore.
@@ -259,9 +259,9 @@ namespace Anki {
     // one of the given rotations.
     bool IsSameAs_WithAmbiguity(const Pose3d& P_other,
                                 const std::vector<RotationMatrix3d>& R_ambiguities,
-                                const float   distThreshold,
-                                const Radians angleThreshold,
-                                const bool    useAbsRotation,
+                                const Point3f&   distThreshold,
+                                const Radians&   angleThreshold,
+                                const bool       useAbsRotation,
                                 Pose3d& P_diff) const;
 
     void Print() const;
@@ -459,13 +459,13 @@ namespace Anki {
     return PoseBase<Pose3d>::FindOrigin(*this);
   }
 
-  inline bool Pose3d::IsSameAs(const Pose3d& P_other,
-                       const float   distThreshold,
-                       const Radians angleThreshold) const
+  inline bool Pose3d::IsSameAs(const Pose3d&  P_other,
+                               const Point3f& distThreshold,
+                               const Radians& angleThreshold) const
   {
     Pose3d P_diff_temp;
     return IsSameAs(P_other, distThreshold, angleThreshold,
-                          P_diff_temp);
+                    P_diff_temp);
   }
   
   template<typename T>
