@@ -84,36 +84,59 @@ namespace Anki {
     } // ObservableObject::GetMarkersWithCode()
     
     bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
-                                    const float              distThreshold,
-                                    const Radians            angleThreshold,
+                                    const Point3f&           distThreshold,
+                                    const Radians&           angleThreshold,
                                     Pose3d&                  P_diff) const
     {
       // The two objects can't be the same if they aren't the same type!
       bool isSame = this->type_ == otherObject.type_;
       
-      Pose3d otherPose;
-      if(&otherObject.GetPose() == this->pose_.GetParent()) {
-        otherPose.SetParent(&otherObject.GetPose());
-      } else if(otherObject.GetPose().GetWithRespectTo(*this->pose_.GetParent(), otherPose) == false) {
-        PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
-                            "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
-        isSame = false;
-      }
-      
       if(isSame) {
+        Pose3d otherPose;
         
-        CORETECH_ASSERT(otherPose.GetParent() == pose_.GetParent());
-        
-        if(this->GetRotationAmbiguities().empty()) {
-          isSame = this->pose_.IsSameAs(otherPose, distThreshold, angleThreshold, P_diff);
+        // Other object is this object's parent, leave otherPose as default
+        // identity transformation and hook up parent connection.
+        if(&otherObject.GetPose() == this->pose_.GetParent()) {
+          otherPose.SetParent(&otherObject.GetPose());
         }
-        else {
-          isSame = this->pose_.IsSameAs_WithAmbiguity(otherPose,
-                                                      this->GetRotationAmbiguities(),
-                                                      distThreshold, angleThreshold,
-                                                      true, P_diff);
-        } // if/else there are ambiguities
-      }
+        
+        else if(this->pose_.IsOrigin()) {
+          // This object is an origin, GetParent() will be null, so we can't
+          // dereference it below to make them have the same parent.  So try
+          // to get other pose w.r.t. this origin.  If the other object is the
+          // same as an origin pose (which itself is an identity transformation)
+          // then the remaining transformation should be the identity.
+          if(otherObject.GetPose().GetWithRespectTo(this->pose_, otherPose) == false) {
+            PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
+                                "Could not get other object w.r.t. this origin object. Returning isSame == false.\n");
+            isSame = false;
+          }
+        }
+        
+        // Otherwise, attempt to make the two poses have the same parent so they
+        // are comparable
+        else if(otherObject.GetPose().GetWithRespectTo(*this->pose_.GetParent(), otherPose) == false) {
+          PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
+                              "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
+          isSame = false;
+        }
+        
+        if(isSame) {
+          
+          CORETECH_ASSERT(otherPose.GetParent() == pose_.GetParent() ||
+                          (pose_.IsOrigin() && otherPose.GetParent() == &pose_));
+          
+          if(this->GetRotationAmbiguities().empty()) {
+            isSame = this->pose_.IsSameAs(otherPose, distThreshold, angleThreshold, P_diff);
+          }
+          else {
+            isSame = this->pose_.IsSameAs_WithAmbiguity(otherPose,
+                                                        this->GetRotationAmbiguities(),
+                                                        distThreshold, angleThreshold,
+                                                        true, P_diff);
+          } // if/else there are ambiguities
+        } // if(isSame) [inner]
+      } // if(isSame) [outer]
       
       return isSame;
       
