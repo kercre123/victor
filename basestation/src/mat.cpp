@@ -110,27 +110,28 @@ namespace Anki {
                           "Trying to instantiate a MatPiece with an unknown Type = %d.\n", int(type));
       }
       
-      /*
-      if(isFirstPiece) {
-        // If this is the first mat piece, we want to use its pose as the world's
-        // origin directly.
-        pose_.SetParent(Pose3d::GetWorldOrigin());
-      } else {
-        // Add an origin to use as this mat piece's reference, until such time
-        // that we want to make it relative to another mat piece or some
-        // common origin
-        pose_.SetParent(&Pose3d::AddOrigin());
-      }
-       */
       
-    };
-
-    /*
-    void MatPiece::SetOrigin(const Pose3d* origin)
+    } // MatPiece() Constructor
+    
+    Point3f MatPiece::GetSameDistanceTolerance() const
     {
-      GetNonConstPose().SetParent(origin);
+       if(Type::LETTERS_4x4 == GetType()) {
+         // Thin mat: don't use half the thickness as the height tolerance (too strict)
+         return Point3f(_size.x()*.5f, _size.y()*.5f, 15.f);
+       }
+       else if(Type::LARGE_PLATFORM == GetType()) {
+         return _size*.5f;
+       } else {
+         PRINT_NAMED_ERROR("MatPiece.GetSameDistanceTolerance.UnrecognizedType",
+                           "Trying to get same-distance tolerance for a MatPiece with an unknown Type = %d.\n", int(GetType()));
+         return Point3f();
+       }
     }
-     */
+    
+    Radians MatPiece::GetSameAngleTolerance() const {
+      return DEG_TO_RAD(45); // TODO: too loose?
+    }
+
     
     std::vector<RotationMatrix3d> const& MatPiece::GetRotationAmbiguities() const
     {

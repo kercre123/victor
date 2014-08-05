@@ -31,6 +31,7 @@ namespace Anki {
     class BlockWorld;
     class IMessageHandler;
     class IPathPlanner;
+    class MatPiece;
     class PathDolerOuter;
     
     
@@ -59,6 +60,7 @@ namespace Anki {
       const RobotID_t        GetID()           const;
       const Pose3d&          GetPose()         const;
       //const Pose3d*          GetPoseOrigin()   const {return _poseOrigin;}
+      
       bool                   IsLocalized()     const {return _localizedToID.IsSet();}
       const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
       void                   SetLocalizedTo(const ObjectID& toID);
@@ -86,8 +88,8 @@ namespace Anki {
       Result SetState(const State newState);
       
       void SetPose(const Pose3d &newPose);
-      Result SetPoseOrigin(const Pose3d& newPoseOrigin);
-      const Pose3d* GetWorldOrigin() const { return _worldOrigin; }
+      //Result SetPoseOrigin(const Pose3d& newPoseOrigin);
+      const Pose3d* GetWorldOrigin() const { return _worldOrigin; } // TODO: Needed publicly?
       
       void SetHeadAngle(const f32& angle);
       void SetLiftAngle(const f32& angle);
@@ -95,6 +97,7 @@ namespace Anki {
       //void IncrementPoseFrameID() {++_frameId;}
       PoseFrameID_t GetPoseFrameID() const {return _frameId;}
       
+      Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existinMatPiece);
       
       // Clears the path that the robot is executing which also stops the robot
       Result ClearPath();
@@ -361,6 +364,9 @@ namespace Anki {
       Pose3d           _pose;
       PoseFrameID_t    _frameId;
       ObjectID         _localizedToID;
+      bool             _localizedToFixedMat; // false until robot sees a _fixed_ mat
+      
+      Result UpdateWorldOrigin(const Pose3d& newPoseWrtNewOrigin);
       
       bool             _onRamp;
       Point2f          _rampStartPosition;

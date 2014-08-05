@@ -100,7 +100,8 @@ namespace Anki {
         std::vector<DockableObject::PoseMarkerPair_t> poses;
         GetPreDockPoses(preDockPoseDistance, poses);
         for(auto pose : poses) {
-          _vizPreDockPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID, pose.first,
+          _vizPreDockPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID,
+                                                                                         pose.first.GetWithRespectToOrigin(),
                                                                                          VIZ_COLOR_PREDOCKPOSE));
           ++poseID;
         }

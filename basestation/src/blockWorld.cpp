@@ -147,15 +147,7 @@ namespace Anki
     void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                             const ObjectsMapByType_t& objectsExisting,
                                             std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const
-    {
-      // TODO: We should really be taking uncertainty/distance into account
-      //const float distThresholdFraction = 0.05f;
-      const float   distThresh_mm = 20.f; // large to handle higher error at a distance
-      const Radians angleThresh( DEG_TO_RAD(45.f) );
-      
-      // TODO: make angle threshold also vary with distance?
-      // TODO: make these parameters/arguments
-      
+    {      
       auto objectsExistingIter = objectsExisting.find(objectSeen->GetType());
       if(objectsExistingIter != objectsExisting.end())
       {
@@ -170,7 +162,7 @@ namespace Anki
           //const float distThresh_mm = distThresholdFraction * distToExist_mm;
           
           Pose3d P_diff;
-          if( objExist.second->IsSameAs(*objectSeen, distThresh_mm, angleThresh, P_diff) ) {
+          if( objExist.second->IsSameAs(*objectSeen, P_diff) ) {
             overlappingExistingObjects.push_back(objExist.second);
           } /*else {
             fprintf(stdout, "Not merging: Tdiff = %.1fmm, Angle_diff=%.1fdeg\n",
@@ -431,7 +423,8 @@ namespace Anki
                 DockableObject* object = dynamic_cast<DockableObject*>(objectAndId.second);
                 CORETECH_THROW_IF(object == nullptr);
                 if (ignoreCarriedObjects && !object->IsBeingCarried()) {
-                  const f32 blockHeight = object->GetPose().GetTranslation().z();
+                  // TODO: If we are planning in the frame of the robot's current mat, this should not be GetWithRespectToOrigin()
+                  const f32 blockHeight = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
                   
                   // If this block's ID is not in the ignore list, then we will use it
                   const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
@@ -453,188 +446,7 @@ namespace Anki
     bool BlockWorld::DidBlocksChange() const {
       return didObjectsChange_;
     }
-    
-    
-    bool BlockWorld::LocalizeRobotToMat(Robot* robot, const MatPiece* matSeen, MatPiece* existingMatPiece)
-    {
-     
-      if(matSeen == nullptr) {
-        PRINT_NAMED_ERROR("BlockWorld.LocalizeRobotToMat.MatSeenNullPointer", "\n");
-        return false;
-      } else if(existingMatPiece == nullptr) {
-        PRINT_NAMED_ERROR("BlockWorld.LocalizeRobotToMat.ExistingMatPieceNullPointer", "\n");
-        return false;
-      }
-      
-      PRINT_NAMED_INFO("BlockWorld.LocalizeRobotToMat.MatSeenChain",
-                       "%s\n", matSeen->GetPose().GetNamedPathToOrigin(true).c_str());
-      
-      PRINT_NAMED_INFO("BlockWorld.LocalizeRobotToMat.ExistingMatChain",
-                       "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
-      
-      
-      // Get computed RobotPoseStamp at the time the mat was observed.
-      RobotPoseStamp* posePtr = nullptr;
-      if (robot->GetComputedPoseAt(matSeen->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.CouldNotFindHistoricalPose", "Time %d\n", matSeen->GetLastObservedTime());
-        return false;
-      }
-      
-      
-      // The computed historical pose is always stored w.r.t. the robot's world
-      // origin and parent chains are lost. Re-connect here so that GetWithRespectTo
-      // will work correctly
-      // TODO: Feels like this should be done by the robot
-      Pose3d robotPoseAtObsTime = posePtr->GetPose();
-      robotPoseAtObsTime.SetParent(robot->GetWorldOrigin());
 
-      /*
-      // Get computed Robot pose at the time the mat was observed (note that this
-      // also makes the pose have the robot's current world origin as its parent
-      Pose3d robotPoseAtObsTime;
-      if(robot->GetComputedPoseAt(matSeen->GetLastObservedTime(), robotPoseAtObsTime) != RESULT_OK) {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.CouldNotComputeHistoricalPose", "Time %d\n", matSeen->GetLastObservedTime());
-        return false;
-      }
-       */
-      
-      // Get the pose of the robot with respect to the observed mat piece
-      Pose3d robotPoseWrtMat;
-      if(robotPoseAtObsTime.GetWithRespectTo(matSeen->GetPose(), robotPoseWrtMat) == false) {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.MatPoseOriginMisMatch",
-                          "Could not get RobotPoseStamp w.r.t. matPose.\n");
-        return false;
-      }
-      
-      // Make the computed robot pose use the existing mat piece as its parent
-      robotPoseWrtMat.SetParent(&existingMatPiece->GetPose());
-      //robotPoseWrtMat.SetName(std::string("Robot_") + std::to_string(robot->GetID()));
-      
-      // Don't snap to horizontal or discrete Z levels when we see a mat marker
-      // while on a ramp
-      if(robot->IsOnRamp() == false)
-      {
-        // If there is any significant rotation, make sure that it is roughly
-        // around the Z axis
-        Radians rotAngle;
-        Vec3f rotAxis;
-        robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
-        const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
-        if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
-          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
-                              "Robot's Z axis is not well aligned with the world Z axis. "
-                              "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
-                              rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
-        }
-  /*
-        // Snap to horizontal
-        if(existingMatPiece->IsPoseOn(robotPoseWrtMat, 0, 10.f)) { 
-          Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
-          robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
-          robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
-        }
-        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
-    */
-      } // if robot is on ramp
-      
-      
-      
-      // TODO: Move this static to a member of BlockWorld
-      static bool localizedToFixedMat = false;
-      if(!localizedToFixedMat && !existingMatPiece->IsMoveable()) {
-        // If we have not yet seen a fixed mat, and this is a fixed mat, rejigger
-        // the origins so that we use it as the world origin
-        PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingToFixedMat",
-                         "Localizing robot %d to fixed %s mat for the first time.\n",
-                         robot->GetID(), existingMatPiece->GetType().GetName().c_str());
-        
-        if(robot->SetPoseOrigin(robotPoseWrtMat) != RESULT_OK) {
-          PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.SetPoseOriginFailure",
-                            "Failed to update robot %d's pose origin when (re-)localizing it.\n", robot->GetID());
-          return false;
-        }
-        
-        localizedToFixedMat = true;
-      }
-      else if(!robot->IsLocalized()) {
-        // If the robot is not yet localized, it is about to be, so we need to
-        // update pose origins so that anything it has seen so far becomes rooted
-        // to this mat's origin (whether mat is fixed or not)
-        PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingRobotFirstTime",
-                         "Localizing robot %d for the first time (to %s mat).\n",
-                         robot->GetID(), existingMatPiece->GetType().GetName().c_str());
-        
-        if(robot->SetPoseOrigin(robotPoseWrtMat) != RESULT_OK) {
-          PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.SetPoseOriginFailure",
-                            "Failed to update robot %d's pose origin when (re-)localizing it.\n", robot->GetID());
-          return false;
-        }
-        
-        if(!existingMatPiece->IsMoveable()) {
-          // If this also happens to be a fixed mat, then we have now localized
-          // to a fixed mat
-          localizedToFixedMat = true;
-        }
-      }
-      
-      
-      // Add the new vision-based pose to the robot's history. Note that we use
-      // the pose w.r.t. the origin for storing poses in history.
-      //RobotPoseStamp p(robot->GetPoseFrameID(), robotPoseWrtMat.GetWithRespectToOrigin(), posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
-      Pose3d robotPoseWrtOrigin = robotPoseWrtMat.GetWithRespectToOrigin();
-      if(robot->AddVisionOnlyPoseToHistory(existingMatPiece->GetLastObservedTime(),
-                                           robotPoseWrtOrigin.GetTranslation().x(),
-                                           robotPoseWrtOrigin.GetTranslation().y(),
-                                           robotPoseWrtOrigin.GetTranslation().z(),
-                                           robotPoseWrtOrigin.GetRotationAngle<'Z'>().ToFloat(),
-                                           posePtr->GetHeadAngle(),
-                                           posePtr->GetLiftAngle()) != RESULT_OK)
-      {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.FailedAddingVisionOnlyPoseToHistory", "\n");
-        return false;
-      }
-      
-      
-      // Update the computed historical pose as well so that subsequent block
-      // pose updates use obsMarkers whose camera's parent pose is correct.
-      // Note again that we store the pose w.r.t. the origin in history.
-      // TODO: Should SetPose() do the flattening w.r.t. origin?
-      posePtr->SetPose(robot->GetPoseFrameID(), robotPoseWrtOrigin, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
-      
-      // Compute the new "current" pose from history which uses the
-      // past vision-based "ground truth" pose we just computed.
-      if(!robot->UpdateCurrPoseFromHistory(existingMatPiece->GetPose())) {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.FailedUpdateCurrPoseFromHistory", "\n");
-        return false;
-      }
-      
-      // Mark the robot as now being localized to this mat
-      // NOTE: this should be _after_ calling AddVisionOnlyPoseToHistory, since
-      //    that function checks whether the robot is already localized
-      robot->SetLocalizedTo(existingMatPiece->GetID());
-
-      
-      
-      PRINT_INFO("Using %s mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
-                 existingMatPiece->GetType().GetName().c_str(),
-                 existingMatPiece->GetID().GetValue(), robot->GetID(),
-                 robot->GetPose().GetTranslation().x(),
-                 robot->GetPose().GetTranslation().y(),
-                 robot->GetPose().GetTranslation().z(),
-                 robot->GetPose().GetRotationAngle<'Z'>().getDegrees(),
-                 robot->GetPose().GetRotationAxis().x(),
-                 robot->GetPose().GetRotationAxis().y(),
-                 robot->GetPose().GetRotationAxis().z());
-      
-      // Send the ground truth pose that was computed instead of the new current
-      // pose and let the robot deal with updating its current pose based on the
-      // history that it keeps.
-      robot->SendAbsLocalizationUpdate();
-      
-      return true;
-    } // LocalizeRobotToMat()
-    
     
     bool BlockWorld::UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp, const TimeStamp_t atTimestamp)
     {
@@ -658,7 +470,6 @@ namespace Anki
         
         // Is the robot "on" any of the mats it sees?
         // TODO: What to do if robot is "on" more than one mat simultaneously?
-        //ObjectID onObjectID; // initializes to unset
         MatPiece* onMat = nullptr;
         for(auto object : matsSeen) {
           
@@ -770,7 +581,7 @@ namespace Anki
             matToLocalizeTo = closestMat;
             
           } // if/else robot is localized
-        }
+        } // if/else (onMat != nullptr)
         
         ObjectsMapByType_t& existingMatPieces = _existingObjects[ObjectFamily::MATS];
         
@@ -778,9 +589,9 @@ namespace Anki
         // for occlusion checking
         std::vector<const Vision::KnownMarker *> observedMarkers;
 
+        MatPiece* existingMatPiece = nullptr;
+        
         if(matToLocalizeTo != nullptr) {
-          
-          MatPiece* existingMatPiece = nullptr;
           
           if(existingMatPieces.empty()) {
             // If this is the first mat piece, add it to the world using the world
@@ -789,7 +600,6 @@ namespace Anki
                              "Instantiating first mat piece in the world.\n");
             
             existingMatPiece = new MatPiece(matToLocalizeTo->GetType());
-            //existingMatPiece->SetOrigin(Pose3d::GetWorldOrigin());
             existingMatPiece->SetID();
             existingMatPiece->SetPose( Pose3d() ); // Not really necessary, but ensures the ID makes it into the pose name
             assert(existingMatPiece->GetPose().GetParent() == nullptr);
@@ -803,8 +613,10 @@ namespace Anki
             // one in approximately the same position, of those with the same
             // type:
             //Vision::ObservableObject* existingObject = GetObjectByID(matToLocalizeTo->GetID());
-            Vision::ObservableObject* existingObject = nullptr;
-            auto existingObjectsOfType = _existingObjects[ObjectFamily::MATS].find(matToLocalizeTo->GetType());
+            std::vector<Vision::ObservableObject*> existingObjects;
+            FindOverlappingObjects(matToLocalizeTo, _existingObjects[ObjectFamily::MATS], existingObjects);
+
+            /*auto existingObjectsOfType = _existingObjects[ObjectFamily::MATS].find(matToLocalizeTo->GetType());
             if(existingObjectsOfType != _existingObjects[ObjectFamily::MATS].end())
             {
               for(auto existingObjectsByID : existingObjectsOfType->second)
@@ -815,29 +627,19 @@ namespace Anki
                   existingObject = candidateObject;
                 }
               }
-            }
+            }*/
           
-            if(existingObject == nullptr)
+            if(existingObjects.empty())
             {
               // If the mat we are about to localize to does not exist yet,
               // but it's not the first mat piece in the world, add it to the
               // world, and give it a new origin, relative to the current
               // world origin.
               Pose3d poseWrtWorldOrigin = matToLocalizeTo->GetPose().GetWithRespectToOrigin();
-              /*
-              if(matToLocalizeTo->GetPose().GetWithRespectTo(*Pose3d::GetWorldOrigin(), poseWrtWorldOrigin) == false) {
-                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotGetPoseWrtWorldOrigin",
-                                    "Could not get the pose of a newly-created (but not initial) mat "
-                                    "w.r.t. the world origin.\n");
-                // TODO: I probably need to handle this situation differently
-                return false;
-              }
-               */
               
               existingMatPiece = new MatPiece(matToLocalizeTo->GetType());
               existingMatPiece->SetID();
               existingMatPiece->SetPose(poseWrtWorldOrigin);
-              //existingMatPiece->SetOrigin(&Pose3d::AddOrigin(poseWrtWorldOrigin));
 
               existingMatPieces[existingMatPiece->GetType()][existingMatPiece->GetID()] = existingMatPiece;
               
@@ -847,10 +649,16 @@ namespace Anki
                                existingMatPiece->GetID().GetValue());
               
             } else {
+              if(existingObjects.size() > 1) {
+                PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.MultipleExistingObjectMatches",
+                                 "Robot %d found multiple existing mats matching the one it "
+                                 "will localize to - using first.\n", robot->GetID());
+              }
+              
               // We are localizing to an existing mat piece: do not attempt to
               // update its pose (we can't both update the mat's pose and use it
               // to update the robot's pose at the same time!)
-              existingMatPiece = dynamic_cast<MatPiece*>(existingObject);
+              existingMatPiece = dynamic_cast<MatPiece*>(existingObjects.front());
               CORETECH_ASSERT(existingMatPiece != nullptr);
               
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingToExistingMat",
@@ -858,26 +666,29 @@ namespace Anki
                                robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
                                existingMatPiece->GetID().GetValue());
             }
-          }
+          } // if/else (existingMatPieces.empty())
           
           existingMatPiece->SetLastObservedTime(matToLocalizeTo->GetLastObservedTime());
           existingMatPiece->UpdateMarkerObservationTimes(*matToLocalizeTo);
-          
           existingMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
           
           // Now localize to that mat
-          wasPoseUpdated = LocalizeRobotToMat(robot, matToLocalizeTo, existingMatPiece);
+          //wasPoseUpdated = LocalizeRobotToMat(robot, matToLocalizeTo, existingMatPiece);
+          if(robot->LocalizeToMat(matToLocalizeTo, existingMatPiece) == RESULT_OK) {
+            wasPoseUpdated = true;
+          }
           
-        }
+        } // if(matToLocalizeTo != nullptr)
         
         // Update poses of any other mats we saw (but did not localize to),
-        // just like they are any "regular" object,
-        std::vector<Vision::ObservableObject*> otherMatsSeen;
+        // just like they are any "regular" object, unless that mat is the
+        // robot's current "world" origin, in which case we will update the pose
+        // of the mat we are on w.r.t. that world.
         for(auto matSeen : matsSeen) {
           if(matSeen != matToLocalizeTo) {
             
-            // TODO: need to probably pick the origin based on type (fixed: use world, movable: use fixed mat its on?)
-            //Pose3d poseWrtOrigin;
+            // TODO: Make this w.r.t. whatever the robot is currently localized to?
+            Pose3d poseWrtOrigin = matSeen->GetPose().GetWithRespectToOrigin();
             
             // Store pointers to any existing objects that overlap with this one
             std::vector<Vision::ObservableObject*> overlappingObjects;
@@ -887,35 +698,25 @@ namespace Anki
               // no existing mats overlapped with the mat we saw, so add it
               // as a new mat piece, relative to the world origin
               
-              Pose3d poseWrtOrigin = matSeen->GetPose().GetWithRespectToOrigin();
-              /*
-              if(matSeen->GetPose().GetWithRespectTo(*Pose3d::GetWorldOrigin(), poseWrtOrigin) == false) {
-                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotGetPoseWrtWorldOrigin",
-                                    "Could not get the pose of a newly-created (but non-localizing) mat "
-                                    "w.r.t. the world origin.\n");
-                // TODO: I probably need to handle this situation differently
-              } else {
-               */
-                MatPiece* newMatPiece = new MatPiece(matSeen->GetType());
-                //newMatPiece->SetOrigin(&Pose3d::AddOrigin(poseWrtOrigin));
-                newMatPiece->SetID();
-                newMatPiece->SetPose(poseWrtOrigin);
-                newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
-                newMatPiece->UpdateMarkerObservationTimes(*matSeen);
-                
-                existingMatPieces[matSeen->GetType()][matSeen->GetID()] = newMatPiece;
-                
-                fprintf(stdout, "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)\n",
-                        newMatPiece->GetType().GetName().c_str(), newMatPiece->GetID().GetValue(),
-                        newMatPiece->GetPose().GetTranslation().x(),
-                        newMatPiece->GetPose().GetTranslation().y(),
-                        newMatPiece->GetPose().GetTranslation().z());
-                
-                // Add observed mat markers to the occlusion map of the camera that saw
-                // them, so we can use them to delete objects that should have been
-                // seen between that marker and the robot
-                newMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
-              //}
+              MatPiece* newMatPiece = new MatPiece(matSeen->GetType());
+              newMatPiece->SetID();
+              newMatPiece->SetPose(poseWrtOrigin);
+              newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
+              newMatPiece->UpdateMarkerObservationTimes(*matSeen);
+              
+              existingMatPieces[matSeen->GetType()][matSeen->GetID()] = newMatPiece;
+              
+              fprintf(stdout, "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)\n",
+                      newMatPiece->GetType().GetName().c_str(), newMatPiece->GetID().GetValue(),
+                      newMatPiece->GetPose().GetTranslation().x(),
+                      newMatPiece->GetPose().GetTranslation().y(),
+                      newMatPiece->GetPose().GetTranslation().z());
+              
+              // Add observed mat markers to the occlusion map of the camera that saw
+              // them, so we can use them to delete objects that should have been
+              // seen between that marker and the robot
+              newMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
+
             }
             else {
               if(overlappingObjects.size() > 1) {
@@ -923,21 +724,49 @@ namespace Anki
                 // TODO: do something smarter here?
               }
               
-              Pose3d poseWrtOrigin = matSeen->GetPose().GetWithRespectToOrigin();
-              /*if(matSeen->GetPose().GetWithRespectTo(*Pose3d::GetWorldOrigin(), poseWrtOrigin) == false) {
-                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotGetPoseWrtWorldOrigin",
-                                    "Could not get the pose of an existing mat "
-                                    "w.r.t. the world origin.\n");
-                // TODO: I probably need to handle this situation differently
-              } else {
-               */
+              if(&(overlappingObjects[0]->GetPose()) != robot->GetWorldOrigin()) {
+                // The overlapping mat object is NOT the world origin mat.
+                // Update existing observed mat we saw but are not on w.r.t.
+                // the robot's current world origin
+                
                 // TODO: better way of merging existing/observed object pose
                 overlappingObjects[0]->SetPose( poseWrtOrigin );
-                overlappingObjects[0]->SetLastObservedTime(matSeen->GetLastObservedTime());
-                overlappingObjects[0]->UpdateMarkerObservationTimes(*matSeen);
                 
-                overlappingObjects[0]->GetObservedMarkers(observedMarkers, atTimestamp);
-              //}
+              } else {
+                /* PUNT - not sure we want to bother with this...
+                CORETECH_ASSERT(robot->IsLocalized());
+                
+                // Find the mat the robot is currently localized to
+                MatPiece* localizedToMat = nullptr;
+                for(auto & objectsByType : existingMatPieces) {
+                  auto objectsByIdIter = objectsByType.second.find(robot->GetLocalizedTo());
+                  if(objectsByIdIter != objectsByType.second.end()) {
+                    localizedToMat = dynamic_cast<MatPiece*>(objectsByIdIter->second);
+                  }
+                }
+
+                CORETECH_ASSERT(localizedToMat != nullptr);
+                
+                // Update the mat we are localized to (but may not have seen) w.r.t. the existing
+                // observed world origin mat we did see from it.  This should in turn
+                // update the pose of everything on that mat.
+                Pose3d newPose;
+                if(localizedToMat->GetPose().GetWithRespectTo(matSeen->GetPose(), newPose) == false) {
+                  PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.FailedToUpdateWrtObservedOrigin",
+                                    "Robot %d failed to get pose of existing %s mat it is on w.r.t. observed world origin mat.\n",
+                                    robot->GetID(), existingMatPiece->GetType().GetName().c_str());
+                }
+                newPose.SetParent(robot->GetWorldOrigin());
+                // TODO: Switch new pose to be w.r.t. whatever robot is localized to??
+                localizedToMat->SetPose(newPose);
+                 */
+              }
+              
+              overlappingObjects[0]->SetLastObservedTime(matSeen->GetLastObservedTime());
+              overlappingObjects[0]->UpdateMarkerObservationTimes(*matSeen);
+              overlappingObjects[0]->GetObservedMarkers(observedMarkers, atTimestamp);
+                
+
             } // if/else overlapping existing mats found
           } // if matSeen != matToLocalizeTo
           

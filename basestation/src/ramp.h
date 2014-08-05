@@ -64,8 +64,8 @@ namespace Anki {
       // Return start poses (at Ramp's current position) for going up or down
       // the ramp. The distance for ascent is from the tip of the slope.  The
       // distance for descent is from the opposite edge of the ramp.
-      Pose3d GetPreAscentPose(const float distance) const;
-      Pose3d GetPreDescentPose(const float distance) const;
+      Pose3d GetPreAscentPose() const;
+      Pose3d GetPreDescentPose() const;
       
       // Return final poses (at Ramp's current position) for a robot after it
       // has finished going up or down the ramp. Takes the robot's wheel base
@@ -94,6 +94,9 @@ namespace Anki {
       
       virtual f32  GetDefaultPreDockDistance() const override;
       
+      virtual Point3f GetSameDistanceTolerance() const override;
+      virtual Radians GetSameAngleTolerance() const override;
+      
       static ObjectType GetTypeByName(const std::string& name);
 
 
@@ -108,7 +111,9 @@ namespace Anki {
       constexpr static const f32 PlatformLength = 44.f;
       constexpr static const f32 MarkerSize     = 25.f;
       constexpr static const f32 FrontMarkerDistance = 50.f;
-      constexpr static const f32 PreDockDistance = 30.f;
+      constexpr static const f32 PreDockDistance    = 90.f;
+      constexpr static const f32 PreAscentDistance  = 40.f;
+      constexpr static const f32 PreDescentDistance = 30.f;
       
       static const f32 Angle;
         

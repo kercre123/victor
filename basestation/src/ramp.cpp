@@ -74,39 +74,51 @@ namespace Anki {
       EraseVisualization();
     }
     
-    Pose3d Ramp::GetPreAscentPose(const float distance) const
+    Pose3d Ramp::GetPreAscentPose() const
     {
       Pose3d pose(M_PI, Z_AXIS_3D,
-                  {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + distance, 0, 0}});
+                  {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + Ramp::PreAscentDistance, 0, -.5f*Ramp::Height}},
+                  &GetPose());
       
-      pose.PreComposeWith(GetPose());
+      //pose.PreComposeWith(GetPose());
+      pose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreAscentPose");
       
       return pose;
     } // GetPreAscentPose()
     
-    Pose3d Ramp::GetPreDescentPose(const float distance) const
+    Pose3d Ramp::GetPreDescentPose() const
     {
       Pose3d pose(0, Z_AXIS_3D,
-                  {{-(.5f*Ramp::PlatformLength+distance), 0, Ramp::Height}});
-      pose.PreComposeWith(GetPose());
+                  {{-(.5f*Ramp::PlatformLength+Ramp::PreDescentDistance), 0, 0.5f*Ramp::Height}},
+                  &GetPose());
+      
+      //pose.PreComposeWith(GetPose());
+      pose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreDescentPose");
       
       return pose;
     } // GetPreDescentPose()
     
     Pose3d Ramp::GetPostAscentPose(const float wheelBase) const
     {
-      Pose3d pose(0, Z_AXIS_3D,
+      Pose3d pose(M_PI, Z_AXIS_3D,
                   {{Ramp::PlatformLength*.5f - wheelBase, 0, Ramp::Height*.5f}},
-                  this->GetPose().GetParent());
-      pose.PreComposeWith(GetPose());
+                  &GetPose());
+      
+      //pose.PreComposeWith(GetPose());
+      pose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PostAscentPose");
+      
       return pose;
     } // GetPostAscentPose()
     
     Pose3d Ramp::GetPostDescentPose(const float wheelBase) const
     {
       Pose3d pose(0, Z_AXIS_3D,
-                  {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + wheelBase, 0, -Ramp::Height*.5f}});
-      pose.PreComposeWith(GetPose());
+                  {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + wheelBase, 0, -Ramp::Height*.5f}},
+                  &GetPose());
+      
+      //pose.PreComposeWith(GetPose());
+      pose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PostDescentPose");
+      
       return pose;
     } // GetPostDescentPose()
     
@@ -149,10 +161,10 @@ namespace Anki {
     {
       DockableObject::Visualize(color, preDockPoseDistance);
       
-      Pose3d ascentPose(GetPreAscentPose(preDockPoseDistance));
-      Pose3d descentPose(GetPreDescentPose(preDockPoseDistance));
-      _vizHandle[1] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue(), ascentPose, VIZ_COLOR_PRERAMPPOSE);
-      _vizHandle[2] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue()+1, descentPose, VIZ_COLOR_PRERAMPPOSE);
+      Pose3d ascentPose(GetPreAscentPose());
+      Pose3d descentPose(GetPreDescentPose());
+      _vizHandle[1] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue(),   ascentPose.GetWithRespectToOrigin(),  VIZ_COLOR_PRERAMPPOSE);
+      _vizHandle[2] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue()+1, descentPose.GetWithRespectToOrigin(), VIZ_COLOR_PRERAMPPOSE);
     }
     
     void Ramp::EraseVisualization()
@@ -209,14 +221,15 @@ namespace Anki {
       if(withCode == Vision::Marker::ANY_CODE || withCode == _leftMarker->GetCode()) {
         const f32 distanceForThisFace = _leftMarker->GetPose().GetTranslation().Length() + distance_mm;
         if(GetPreDockPose(-Y_AXIS_3D, distanceForThisFace, preDockPose) == true) {
+          preDockPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "LeftPreDockPose");
           poseMarkerPairs.emplace_back(preDockPose, *_leftMarker);
         }
       }
       
-      
       if(withCode == Vision::Marker::ANY_CODE || withCode == _rightMarker->GetCode()) {
         const f32 distanceForThisFace = _rightMarker->GetPose().GetTranslation().Length() + distance_mm;
         if(GetPreDockPose( Y_AXIS_3D, distanceForThisFace, preDockPose) == true) {
+          preDockPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "RightPreDockPose");
           poseMarkerPairs.emplace_back(preDockPose, *_rightMarker);
         }
       }
@@ -227,6 +240,16 @@ namespace Anki {
     {
       return Ramp::PreDockDistance;
     }
+    
+    // TODO: Make these dependent on ramp type/size?
+    Point3f Ramp::GetSameDistanceTolerance() const {
+      return Point3f((SlopeLength + PlatformLength)*.5f, Width*.5f, Height*.5f);
+    }
+    
+    Radians Ramp::GetSameAngleTolerance() const {
+      return DEG_TO_RAD(45);
+    }
+
     
     ObjectType Ramp::GetTypeByName(const std::string& name)
     {

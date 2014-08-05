@@ -62,6 +62,9 @@ namespace Anki {
       
       static ObjectType GetTypeByName(const std::string& name);
       
+      virtual Point3f GetSameDistanceTolerance() const override;
+      virtual Radians GetSameAngleTolerance() const override;
+      
       //
       // MatPiece Methods
       //
