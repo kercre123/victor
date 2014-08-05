@@ -363,7 +363,13 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
       VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
     }
     
-  } // if blocks were updated
+  } // Update Block-of-Interest display
+  
+  { // Draw All Objects
+    
+    blockWorld_.DrawAllObjects();
+    
+  } // Draw All Objects
   
   // Draw all robot poses
   // TODO: Only send when pose has changed?

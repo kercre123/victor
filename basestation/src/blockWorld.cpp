@@ -222,32 +222,29 @@ namespace Anki
         std::vector<Vision::ObservableObject*> overlappingObjects;
         FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
         
+        // As of now the object will be w.r.t. the robot's origin.  If we
+        // observed it to be on a mat, however, make it relative to that mat.
+        const f32 objectDiagonal = objSeen->GetSameDistanceTolerance().Length();
+        Vision::ObservableObject* parentMat = nullptr;
+
+        for(auto objectsByType : _existingObjects[ObjectFamily::MATS]) {
+          for(auto objectsByID : objectsByType.second) {
+            MatPiece* mat = dynamic_cast<MatPiece*>(objectsByID.second);
+            assert(mat != nullptr);
+            Pose3d newPoseWrtMat;
+            // TODO: Better height tolerance approach
+            if(mat->IsPoseOn(objSeen->GetPose(), objectDiagonal*.5f, objectDiagonal*.5f, newPoseWrtMat)) {
+              objSeen->SetPose(newPoseWrtMat);
+              parentMat = mat;
+            }
+          }
+        }
+        
         if(overlappingObjects.empty()) {
           // no existing objects overlapped with the objects we saw, so add it
           // as a new object
           objSeen->SetID();
           objectsExisting[objSeen->GetType()][objSeen->GetID()] = objSeen;
-          
-          Vision::ObservableObject* parentMat = nullptr;
-          /*
-          for(auto objectsByType : _existingObjects[ObjectFamily::MATS]) {
-            for(auto objectsByID : objectsByType.second) {
-              Vision::ObservableObject* mat = objectsByID.second;
-              
-              Pose3d newPoseWrtMat;
-              if(objSeen->GetPose().GetWithRespectTo(mat->GetPose(), newPoseWrtMat) == true) {
-                if(parentMat != nullptr) {
-                  PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.ObjectOnMultipleMats",
-                                      "New %s object, ID=%d, appears to be 'on' multiple mats simultaneously. Using first as parent.\n",
-                                      objSeen->GetType().GetName().c_str(), objSeen->GetID().GetValue());
-                } else {
-                  objSeen->SetPose(newPoseWrtMat);
-                  parentMat = mat;
-                }
-              }
-            }
-          }
-           */
           
           PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.AddNewObject",
                            "Adding new %s object and ID=%d at (%.1f, %.1f, %.1f), relative to %s mat.\n",
@@ -287,6 +284,7 @@ namespace Anki
             overlappingObjects[0]->SetPose( newPoseWrtOldPoseParent );
           }
            */
+          
           overlappingObjects[0]->SetPose( objSeen->GetPose() );
           
           // Update lastObserved times of this object
@@ -335,8 +333,10 @@ namespace Anki
               unobservedObjects.emplace_back(objectFamily.first, objectIter->second);
             } // if object was not observed
             else {
+              /* Always re-drawing everything now
               // Object was observed, update it's visualization
               object->Visualize();
+               */
             }
           } // for object IDs of this type
         } // for each object type
@@ -725,7 +725,8 @@ namespace Anki
               }
               
               if(&(overlappingObjects[0]->GetPose()) != robot->GetWorldOrigin()) {
-                // The overlapping mat object is NOT the world origin mat.
+                // The overlapping mat object is NOT the world origin mat, whose
+                // pose we don't want to update.
                 // Update existing observed mat we saw but are not on w.r.t.
                 // the robot's current world origin
                 
@@ -733,7 +734,7 @@ namespace Anki
                 overlappingObjects[0]->SetPose( poseWrtOrigin );
                 
               } else {
-                /* PUNT - not sure we want to bother with this...
+                /* PUNT - not sure this is workign, nor we want to bother with this for now...
                 CORETECH_ASSERT(robot->IsLocalized());
                 
                 // Find the mat the robot is currently localized to
@@ -765,8 +766,7 @@ namespace Anki
               overlappingObjects[0]->SetLastObservedTime(matSeen->GetLastObservedTime());
               overlappingObjects[0]->UpdateMarkerObservationTimes(*matSeen);
               overlappingObjects[0]->GetObservedMarkers(observedMarkers, atTimestamp);
-                
-
+              
             } // if/else overlapping existing mats found
           } // if matSeen != matToLocalizeTo
           
@@ -786,6 +786,7 @@ namespace Anki
           robot->GetCamera().AddOccluder(*obsMarker);
         }
         
+        /* Always re-drawing everything now
         // If the robot just re-localized, trigger a draw of all objects, since
         // we may have seen things while de-localized whose locations can now be
         // snapped into place.
@@ -794,7 +795,7 @@ namespace Anki
                            "Robot %d just localized after being de-localized.\n", robot->GetID());
           DrawAllObjects();
         }
-        
+        */
       } // IF any mat piece was seen
 
       if(wasPoseUpdated) {

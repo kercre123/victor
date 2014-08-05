@@ -10,7 +10,7 @@ PROTO Ramp2x1 [
   field SFFloat height .044
   field SFFloat trackWidth .01
   field SFFloat guideWidth .002
-  field SFFloat guideHeight .008
+  field SFFloat guideHeight .01
   field SFFloat frontMarkerDistance .050
   field SFFloat markerWidth .025
   
