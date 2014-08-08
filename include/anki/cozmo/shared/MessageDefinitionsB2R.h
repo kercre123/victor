@@ -149,6 +149,7 @@ ADD_MESSAGE_MEMBER(u8, pixel_radius)  // Marker must be found within this many p
                                       // unless pixel_radius == u8_MAX in which case marker may be located anywhere.
 ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
 ADD_MESSAGE_MEMBER(u8, markerType)
+ADD_MESSAGE_MEMBER(u8, markerType2) // End marker (for bridge crossing only)
 END_MESSAGE_DEFINITION(DockWithObject)
 
 // PlaceObjectOnGround

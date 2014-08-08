@@ -121,6 +121,12 @@ namespace Anki {
         // First commanded lift height when START_LIFT_TRACKING_DIST_MM is reached
         const f32 START_LIFT_HEIGHT_MM = LIFT_HEIGHT_HIGHDOCK - 17.f;
         
+        // Indicates when we're only tracking a marker but not trying to dock to it
+        bool trackingOnly_ = false;
+        f32 lastMarkerDistX_ = 0.f;
+        f32 lastMarkerDistY_ = 0.f;
+        f32 lastMarkerAng_ = 0.f;
+        
       } // "private" namespace
       
       bool IsBusy()
@@ -208,6 +214,11 @@ namespace Anki {
               dockMsg.z_height  = tempPoint.z;
             }
             
+            // Update last observed marker pose
+            lastMarkerDistX_ = dockMsg.x_distErr;
+            lastMarkerDistY_ = dockMsg.y_horErr;
+            lastMarkerAng_ = dockMsg.angleErr;
+            
 #if(DEBUG_DOCK_CONTROLLER)
             PRINT("Received%sdocking error signal: x_distErr=%f, y_horErr=%f, "
                   "z_height=%f, angleErr=%fdeg\n",
@@ -221,6 +232,14 @@ namespace Anki {
             // TODO: Get tracker to detect these situations and not even send the error message here.
             if (dockMsg.x_distErr > 0 && ABS(dockMsg.angleErr) < 0.75*PIDIV2_F) {
              
+              // Update time that last good error signal was received
+              lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
+              
+              // No more to do if we're just tracking a marker, but not docking to it.
+              if (trackingOnly_) {
+                continue;
+              }
+              
               // Set relative block pose to start/continue docking
               SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
 
@@ -285,15 +304,14 @@ namespace Anki {
 
           }  // IF tracking succeeded
           
-          SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-          //PathFollower::ClearPath();
-          SteeringController::ExecuteDirectDrive(0,0);
-          if (mode_ != IDLE) {
-            mode_ = LOOKING_FOR_BLOCK;
+          if (!trackingOnly_) {
+            SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+            //PathFollower::ClearPath();
+            SteeringController::ExecuteDirectDrive(0,0);
+            if (mode_ != IDLE) {
+              mode_ = LOOKING_FOR_BLOCK;
+            }
           }
-
-            
-          
           
         } // while dockErrSignalMailbox has mail
 
@@ -364,9 +382,6 @@ namespace Anki {
           PRINT("WARN: Ignoring out of range docking error signal (%f, %f, %f)\n", rel_x, rel_y, rel_rad);
           return;
         }
-      
-        
-        lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         
         if (mode_ == IDLE || success_) {
           // We already accomplished the dock. We're done!
@@ -559,6 +574,7 @@ namespace Anki {
       
       void StartDockingToRelPose(const f32 rel_x, const f32 rel_y, const f32 rel_angle)
       {
+        lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         mode_ = LOOKING_FOR_BLOCK;
         markerlessDocking_ = true;
         success_ = false;
@@ -568,19 +584,52 @@ namespace Anki {
         SetRelDockPose(rel_x, rel_y, rel_angle);
       }
 
-
       void ResetDocker() {
         
-        SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-        PathFollower::ClearPath();
-        SteeringController::ExecuteDirectDrive(0,0);
+        if (!trackingOnly_) {
+          SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+          PathFollower::ClearPath();
+          SteeringController::ExecuteDirectDrive(0,0);
+        }
         mode_ = IDLE;
+        
+        // Reset trackingOnly vars
+        trackingOnly_ = false;
+        lastMarkerDistX_ = 0.f;
+        lastMarkerDistY_ = 0.f;
+        lastMarkerAng_ = 0.f;
         
         // Command VisionSystem to stop processing images
         VisionSystem::StopTracking();
 
         markerlessDocking_ = false;
         success_ = false;
+      }
+      
+      
+      void StartTrackingOnly(const Vision::MarkerType& trackingMarker,
+                             const f32 markerWidth_mm)
+      {
+        dockMarker_ = trackingMarker;
+        VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm, false);
+        trackingOnly_ = true;
+        lastMarkerDistX_ = 0.f;
+        lastMarkerDistY_ = 0.f;
+        lastMarkerAng_ = 0.f;
+        
+        lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
+        mode_ = LOOKING_FOR_BLOCK;
+      }
+      
+      bool GetLastMarkerPose(f32 &x, f32 &y, f32 &angle)
+      {
+        if (lastMarkerDistX_ > 0.f) {
+          x = lastMarkerDistX_;
+          y = lastMarkerDistY_;
+          angle = lastMarkerAng_;
+          return true;
+        }
+        return false;
       }
       
       } // namespace DockingController

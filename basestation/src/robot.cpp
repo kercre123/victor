@@ -490,7 +490,9 @@ namespace Anki {
             
             // Start dock
             PRINT_INFO("Docking with marker %d = %s (action = %d)\n", _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
-            DockWithObject(_dockObjectID, _dockMarker, _dockAction);
+            
+            // TODO: Need to pass in appropriate dockMarker2 when we add a bridge crossing state
+            DockWithObject(_dockObjectID, _dockMarker, _dockMarker, _dockAction);
             _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
             SetState(DOCKING);
           }
@@ -1472,9 +1474,10 @@ namespace Anki {
     // that it should currently be seeing.
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
+                                 const Vision::KnownMarker* marker2,
                                  const DockAction_t dockAction)
     {
-      return DockWithObject(objectID, marker, dockAction, 0, 0, u8_MAX);
+      return DockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX);
     }
     
     // Sends a message to the robot to dock with the specified block
@@ -1484,6 +1487,7 @@ namespace Anki {
     // with pixel_radius pixels.
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
+                                 const Vision::KnownMarker* marker2,
                                  const DockAction_t dockAction,
                                  const u16 image_pixel_x,
                                  const u16 image_pixel_y,
@@ -1510,7 +1514,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      return SendDockWithObject(_dockMarker->GetCode(), _dockMarker->GetSize(), dockAction,
+      return SendDockWithObject(_dockMarker->GetCode(), marker2->GetCode(), _dockMarker->GetSize(), dockAction,
                                 image_pixel_x, image_pixel_y, pixel_radius);
     }
     
@@ -1783,6 +1787,7 @@ namespace Anki {
 
     
     Result Robot::SendDockWithObject(const Vision::Marker::Code& markerType,
+                                     const Vision::Marker::Code& markerType2,
                                      const f32 markerWidth_mm,
                                      const DockAction_t dockAction,
                                      const u16 image_pixel_x,
@@ -1793,6 +1798,7 @@ namespace Anki {
       m.markerWidth_mm = markerWidth_mm;
       CORETECH_ASSERT(markerType <= u8_MAX);
       m.markerType = static_cast<u8>(markerType);
+      m.markerType2 = static_cast<u8>(markerType2);
       m.dockAction = dockAction;
       m.image_pixel_x = image_pixel_x;
       m.image_pixel_y = image_pixel_y;

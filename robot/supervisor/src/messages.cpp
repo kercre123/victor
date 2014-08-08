@@ -328,6 +328,7 @@ namespace Anki {
           Embedded::Point2f markerCenter(static_cast<f32>(msg.image_pixel_x), static_cast<f32>(msg.image_pixel_y));
           
           PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
+                                              static_cast<Vision::MarkerType>(msg.markerType2),
                                               msg.markerWidth_mm,
                                               markerCenter,
                                               msg.pixel_radius,
@@ -335,6 +336,7 @@ namespace Anki {
         } else {
           
           PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
+                                              static_cast<Vision::MarkerType>(msg.markerType2),
                                               msg.markerWidth_mm,
                                               static_cast<DockAction_t>(msg.dockAction));
         }

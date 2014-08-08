@@ -18,7 +18,8 @@ namespace Anki {
       DA_PLACE_HIGH,      // Placing block atop another block at level 0
       DA_PLACE_LOW,       // Placing block on level 0
       DA_RAMP_ASCEND,     // Going up a ramp
-      DA_RAMP_DESCEND     // Going down a ramp
+      DA_RAMP_DESCEND,    // Going down a ramp
+      DA_CROSS_BRIDGE
     } DockAction_t;
 
     

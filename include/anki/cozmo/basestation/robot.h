@@ -194,6 +194,7 @@ namespace Anki {
       // specified object that it should currently be seeing.
       Result DockWithObject(const ObjectID objectID,
                             const Vision::KnownMarker* marker,
+                            const Vision::KnownMarker* marker2,
                             const DockAction_t dockAction);
       
       // Sends a message to the robot to dock with the specified marker of the
@@ -201,8 +202,11 @@ namespace Anki {
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
+      // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indiciate
+      // the expected marker on the end of the bridge. Otherwise, it is ignored.
       Result DockWithObject(const ObjectID objectID,
                             const Vision::KnownMarker* marker,
+                            const Vision::KnownMarker* marker2,
                             const DockAction_t dockAction,
                             const u16 image_pixel_x,
                             const u16 image_pixel_y,
@@ -456,6 +460,7 @@ namespace Anki {
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
       Result SendDockWithObject(const Vision::Marker::Code& markerType,
+                                const Vision::Marker::Code& markerType2,
                                 const f32 markerWidth_mm,
                                 const DockAction_t dockAction,
                                 const u16 image_pixel_x,

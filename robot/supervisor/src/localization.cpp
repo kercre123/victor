@@ -549,6 +549,11 @@ namespace Anki {
         ClearHistory();
       }
 
+      f32 GetDistTo(const f32 x, const f32 y)
+      {
+        return sqrtf((x_-x)*(x_-x) + (y_-y)*(y_-y));
+      }
+      
     }
   }
 }

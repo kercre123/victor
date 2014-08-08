@@ -238,7 +238,7 @@ namespace Anki {
           case PAP_WAITING_FOR_PICKUP_BLOCK:
           {
             PRINT("PAPT: Docking to block %d\n", BLOCK_TO_PICK_UP);
-            PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, PICKUP_ACTION);
+            PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, PICKUP_ACTION);
             pickAndPlaceState_ = PAP_DOCKING;
             break;
           }
@@ -247,7 +247,7 @@ namespace Anki {
               if (PickAndPlaceController::DidLastActionSucceed()) {
                 if (PICKUP_ACTION == DA_PICKUP_LOW) {
                   PRINT("PAPT: Placing on other block %d\n", BLOCK_TO_PLACE_ON);
-                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
+                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
                 } else {
                   PRINT("PAPT: Placing on ground\n");
                   PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG);
@@ -265,7 +265,7 @@ namespace Anki {
                 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
               } else {
                 if (PICKUP_ACTION == DA_PICKUP_LOW) {
-                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
+                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
                   //pickAndPlaceState_ = PAP_PLACING;
                 } else {
                   PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG);
