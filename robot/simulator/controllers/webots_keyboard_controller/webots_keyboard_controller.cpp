@@ -95,6 +95,7 @@ namespace Anki {
       void SendSelectNextSoundScheme();
       void SendStartTestMode(TestMode mode);
       void SendIMURequest(u32 length_ms);
+      void SendAnimation(AnimationID_t animId, u32 numLoops, SoundID_t soundId);
       
       void Init()
       {
@@ -197,6 +198,8 @@ namespace Anki {
         const s32 CKEY_EXPORT_IMAGES = (s32)'E';
         const s32 CKEY_IMU_REQUEST = (s32)'O';
         
+        const s32 CKEY_ANIMATION_NOD = (s32)'!';
+        const s32 CKEY_ANIMATION_BACK_AND_FORTH = (s32)'@';
         
         int key = inputController.keyboardGetKey();
         
@@ -487,6 +490,19 @@ namespace Anki {
               SendIMURequest(2000);
               break;
             }
+              
+            // Animations
+            case CKEY_ANIMATION_NOD:
+            {
+              SendAnimation(ANIM_HEAD_NOD, 2, SOUND_OK_GOT_IT);
+              break;
+            }
+            case CKEY_ANIMATION_BACK_AND_FORTH:
+            {
+              SendAnimation(ANIM_BACK_AND_FORTH_EXCITED, 3, SOUND_OK_DONE);
+              break;
+            }
+              
             case CKEY_QUESTION_MARK:
             {
               PrintHelp();
@@ -759,6 +775,15 @@ namespace Anki {
       {
         MessageU2G_IMURequest m;
         m.length_ms = length_ms;
+        SendMessage(m);
+      }
+      
+      void SendAnimation(AnimationID_t animId, u32 numLoops, SoundID_t soundId)
+      {
+        MessageU2G_PlayAnimation m;
+        m.animationID = animId;
+        m.numLoops = numLoops;
+        m.soundID = soundId;
         SendMessage(m);
       }
       

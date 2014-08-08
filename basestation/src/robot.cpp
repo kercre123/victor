@@ -1470,10 +1470,13 @@ namespace Anki {
 
     Result Robot::SendPlayAnimation(const AnimationID_t id, const u32 numLoops)
     {
-      MessagePlayAnimation m;
-      m.animationID = id;
-      m.numLoops = numLoops;
-      return _msgHandler->SendMessage(_ID, m);
+      if (id < ANIM_NUM_ANIMATIONS) {
+        MessagePlayAnimation m;
+        m.animationID = id;
+        m.numLoops = numLoops;
+        return _msgHandler->SendMessage(_ID, m);
+      }
+      return RESULT_FAIL;
     }
     
     Result Robot::ProcessImageChunk(const MessageImageChunk &msg)

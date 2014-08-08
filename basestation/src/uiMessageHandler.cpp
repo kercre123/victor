@@ -296,6 +296,12 @@ namespace Anki {
     {
       return robot->SendIMURequest(msg.length_ms);
     }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlayAnimation const& msg)
+    {
+      SoundManager::getInstance()->Play((SoundID_t)msg.soundID);
+      return robot->SendPlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
+    }
   
   } // namespace Cozmo
 } // namespace Anki
