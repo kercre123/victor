@@ -35,6 +35,12 @@ namespace Anki {
     return ValidTypes;
   }
   
+  ObjectType ObjectType::GetInvalidType()
+  {
+    static const ObjectType INVALID("INVALID");
+    return INVALID;
+  }
+  
   ObjectID::StorageType ObjectID::UniqueIDCounter = 0;
   
   

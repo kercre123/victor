@@ -89,6 +89,8 @@ namespace Anki {
     
     static int GetNumTypes();
     
+    static ObjectType GetInvalidType();
+    
   protected:
     
     static StorageType UniqueTypeCounter;
