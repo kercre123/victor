@@ -9,14 +9,22 @@ function AddFiducialBatch(inputDir, outputDir, varargin)
 % Andrew Stein
 %
 
+InputFilePattern = 'images';
+
+addFiducialArgs = parseVarargin(varargin{:});
+
+if isempty(outputDir)
+    outputDir = fullfile(inputDir, 'withFiducials');
+end
+
 if ~isdir(outputDir)
     mkdir(outputDir);
 end
 
-fnames = getfnames(inputDir, 'images');
+fnames = getfnames(inputDir, InputFilePattern);
 for i = 1:length(fnames)
    fprintf('Adding fiducial to "%s"\n', fnames{i});
-   [imgNew, alpha] = VisionMarkerTrained.AddFiducial(fullfile(inputDir, fnames{i}), varargin{:});
+   [imgNew, alpha] = VisionMarkerTrained.AddFiducial(fullfile(inputDir, fnames{i}), addFiducialArgs{:});
    imwrite(imgNew, fullfile(outputDir, fnames{i}), 'Alpha', alpha);
 end
 
