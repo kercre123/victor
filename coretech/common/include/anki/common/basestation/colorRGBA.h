@@ -56,20 +56,6 @@ namespace Anki {
     // Pack into a 32-bit integer [R G B A]
     operator u32() const;
     
-    // Named Colors:
-    // (Add others here and instantiate with actual r,g,b,a values in .cpp file)
-    static const ColorRGBA RED;
-    static const ColorRGBA GREEN;
-    static const ColorRGBA BLUE;
-    static const ColorRGBA YELLOW;
-    static const ColorRGBA ORANGE;
-    static const ColorRGBA WHITE;
-    static const ColorRGBA BLACK;
-    static const ColorRGBA DARKGRAY;
-    static const ColorRGBA DARKGREEN;
-    static const ColorRGBA OFFWHITE;
-    static const ColorRGBA DEFAULT;
-    
   protected:
     static constexpr f32 oneOver255 = 1.f / 255.f;
     
@@ -80,16 +66,32 @@ namespace Anki {
     
   }; // class ColorRGBA
   
+  namespace NamedColors {
+    // Named Colors:
+    // (Add others here and instantiate with actual r,g,b,a values in .cpp file)
+    extern const ColorRGBA RED;
+    extern const ColorRGBA GREEN;
+    extern const ColorRGBA BLUE;
+    extern const ColorRGBA YELLOW;
+    extern const ColorRGBA ORANGE;
+    extern const ColorRGBA WHITE;
+    extern const ColorRGBA BLACK;
+    extern const ColorRGBA DARKGRAY;
+    extern const ColorRGBA DARKGREEN;
+    extern const ColorRGBA OFFWHITE;
+    extern const ColorRGBA DEFAULT;
+  } // namespace NamedColors
+  
   
   inline u8 ColorRGBA::r() const { return _color[0]; }
   inline u8 ColorRGBA::g() const { return _color[1]; }
   inline u8 ColorRGBA::b() const { return _color[2]; }
-  inline u8 ColorRGBA::alpha() const { return _color[4]; }
+  inline u8 ColorRGBA::alpha() const { return _color[3]; }
   
   inline u8& ColorRGBA::r() { return _color[0]; }
   inline u8& ColorRGBA::g() { return _color[1]; }
   inline u8& ColorRGBA::b() { return _color[2]; }
-  inline u8& ColorRGBA::alpha() { return _color[4]; }
+  inline u8& ColorRGBA::alpha() { return _color[3]; }
   
   // Accessors for f32 channels (computed):
   inline f32 ColorRGBA::GetF32(const u8 value)
