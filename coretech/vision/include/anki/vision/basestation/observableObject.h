@@ -26,6 +26,8 @@
 
 #include "anki/common/basestation/objectTypesAndIDs.h"
 
+#include "anki/common/basestation/colorRGBA.h"
+
 namespace Anki {
   namespace Vision {
     
@@ -43,9 +45,7 @@ namespace Anki {
     {
     public:
       // Do we want to be req'd to instantiate with all codes up front?
-      ObservableObject(){};
-      
-      ObservableObject(ObjectType type);
+      ObservableObject();
       
       //ObservableObject(const std::vector<std::pair<Marker::Code,Pose3d> >& codesAndPoses);
       
@@ -100,12 +100,14 @@ namespace Anki {
                          const bool requireSomethingBehind) const;
       
       // Accessors:
-      ObjectID        GetID()     const;
-      ObjectType      GetType()   const;
-      const Pose3d&   GetPose()   const;
+      ObjectID           GetID()     const;
+      virtual ObjectType GetType()   const = 0;
+      const Pose3d&      GetPose()   const;
+      const ColorRGBA&   GetColor()  const;
       //virtual float GetMinDim() const = 0;
       
       void SetID();
+      void SetColor(const ColorRGBA& color);
       void SetPose(const Pose3d& newPose);
       void SetPoseParent(const Pose3d* newParent);
       
@@ -143,7 +145,8 @@ namespace Anki {
       virtual void GetCorners(std::vector<Point3f>& corners) const;
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const = 0;
       
-      virtual void Visualize() = 0;
+      virtual void Visualize(); // using internal ColorRGBA
+      virtual void Visualize(const ColorRGBA& color) = 0; // using specified color
       virtual void EraseVisualization() = 0;
       
       Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
@@ -154,9 +157,26 @@ namespace Anki {
       static const std::vector<RotationMatrix3d> sRotationAmbiguities;
       static const std::vector<KnownMarker*> sEmptyMarkerVector;
       
-      ObjectType   type_;
+      // Helper method for subclasses to use for creating bounding quads
+      template<size_t NUM_CORNERS>
+      static Quad2f GetBoundingQuadXY_Helper(const Pose3d& atPose,
+                                             const Point3f& paddedSize,
+                                             const std::array<Point3f,NUM_CORNERS>& canonicalCorners);
+      
+      // Helper method for subclasses to use for getting corners at a pose
+      template<size_t NUM_CORNERS>
+      static void GetCorners_Helper(const Pose3d& atPose,
+                                    const std::array<Point3f,NUM_CORNERS>& canonicalCorners,
+                                    std::vector<Point3f>& corners);
+
+      
+      //virtual const std::vector<Point3f>& GetCanonicalCorners() const = 0;
+      
+      //ObjectType   type_;
       ObjectID     ID_;
       TimeStamp_t  lastObservedTime_;
+      
+      ColorRGBA color_;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers
@@ -203,7 +223,7 @@ namespace Anki {
     // Inline accessors
     //
     /*
-    inline std::set<const Camera*> const& ObservableObject::GetObserver() const {
+    inline std::set<const Camera*> const&de ObservableObject::GetObserver() const {
       return observers_;
     }
      */
@@ -212,9 +232,15 @@ namespace Anki {
       return ID_;
     }
     
+    inline const ColorRGBA& ObservableObject::GetColor() const {
+      return color_;
+    }
+    
+    /*
     inline ObjectType ObservableObject::GetType() const {
       return type_;
     }
+     */
     
     //virtual float GetMinDim() const = 0;
     inline const Pose3d& ObservableObject::GetPose() const {
@@ -261,6 +287,59 @@ namespace Anki {
     
     inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject) const {
       return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance());
+    }
+    
+    // Templated methods
+    template<size_t NUM_CORNERS>
+    Quad2f ObservableObject::GetBoundingQuadXY_Helper(const Pose3d& atPose,
+                                                      const Point3f& paddedSize,
+                                                      const std::array<Point3f,NUM_CORNERS>& canonicalCorners)
+    {
+      const RotationMatrix3d& R = atPose.GetRotationMatrix();
+      
+      std::vector<Point2f> points;
+      points.reserve(NUM_CORNERS);
+      for(auto corner : canonicalCorners) {
+        // Scale canonical point to correct (padded) size
+        corner *= paddedSize;
+        
+        // Rotate to given pose
+        corner = R*corner;
+        
+        // Project onto XY plane, i.e. just drop the Z coordinate
+        points.emplace_back(corner.x(), corner.y());
+      }
+      
+      Quad2f boundingQuad = GetBoundingQuad(points);
+      
+      // Re-center
+      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
+      boundingQuad += center;
+      
+      return boundingQuad;
+    }
+    
+    template<size_t NUM_CORNERS>
+    void ObservableObject::GetCorners_Helper(const Pose3d& atPose,
+                                             const std::array<Point3f,NUM_CORNERS>& canonicalCorners,
+                                             std::vector<Point3f>& corners)
+    {
+      corners.resize(NUM_CORNERS);
+      for(s32 i=0; i<NUM_CORNERS; ++i) {
+        // Start with canonical corner
+        corners[i] = canonicalCorners[i];
+        
+        // Move to given pose
+        corners[i] = atPose * corners[i];
+      }
+    } // GetCorners()
+    
+    inline void ObservableObject::SetColor(const Anki::ColorRGBA &color) {
+      color_ = color;
+    }
+    
+    inline void ObservableObject::Visualize() {
+      Visualize(color_);
     }
     
     /*

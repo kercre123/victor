@@ -33,8 +33,8 @@ namespace Anki {
     
     const std::vector<RotationMatrix3d> ObservableObject::sRotationAmbiguities; // default is empty
     
-    ObservableObject::ObservableObject(ObjectType objType)
-    : type_(objType), lastObservedTime_(0), wasObserved_(false)
+    ObservableObject::ObservableObject()
+    : lastObservedTime_(0), wasObserved_(false)
     {
       //ID_ = ObservableObject::ObjectCounter++;
     }
@@ -89,7 +89,7 @@ namespace Anki {
                                     Pose3d&                  P_diff) const
     {
       // The two objects can't be the same if they aren't the same type!
-      bool isSame = this->type_ == otherObject.type_;
+      bool isSame = this->GetType() == otherObject.GetType();
       
       if(isSame) {
         Pose3d otherPose;
@@ -169,8 +169,11 @@ namespace Anki {
     {
       this->GetCorners(pose_, corners);
     }
-    
-    
+/*
+    void ObservableObject::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const {
+      atPose.ApplyTo(GetCanonicalCorners(), corners);
+    }
+  */
     void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
                                               const TimeStamp_t sinceTime) const
     {
@@ -235,6 +238,37 @@ namespace Anki {
       return GetBoundingQuadXY(pose_, padding_mm);
     }
     
+    /*
+    Quad2f ObservableObject::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
+    {
+      const RotationMatrix3d& R = atPose.GetRotationMatrix();
+      
+      const std::vector<Point3f>& corners = GetCanonicalCorners();
+      std::vector<Point2f> points;
+      points.reserve(corners.size());
+      for(auto corner : corners) {
+        
+        // Move canonical point to correct (padded) size
+        corner.x() += (signbit(corner.x()) ? -padding_mm : padding_mm);
+        corner.y() += (signbit(corner.y()) ? -padding_mm : padding_mm);
+        corner.z() += (signbit(corner.z()) ? -padding_mm : padding_mm);
+        
+        // Rotate to given pose
+        corner = R*corner;
+        
+        // Project onto XY plane, i.e. just drop the Z coordinate
+        points.emplace_back(corner.x(), corner.y());
+      }
+      
+      Quad2f boundingQuad = GetBoundingQuad(points);
+      
+      // Re-center
+      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
+      boundingQuad += center;
+      
+      return boundingQuad;
+    } // GetBoundingQuadXY()
+    */
 #pragma mark --- ObservableObjectLibrary Implementations ---
     
     const std::set<const ObservableObject*> ObservableObjectLibrary::sEmptyObjectVector;
