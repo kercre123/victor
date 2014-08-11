@@ -13,27 +13,26 @@
  **/
 
 #if 0
-
 #ifndef ANKI_COZMO_BASESTATION_BRIDGE_H
 #define ANKI_COZMO_BASESTATION_BRIDGE_H
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/quad.h"
 
-#include "anki/vision/basestation/observableObject.h"
-
 #include "anki/cozmo/basestation/messages.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "anki/cozmo/basestation/mat.h"
+
+#include "actionableObject.h"
 #include "vizManager.h"
 
 namespace Anki {
   
   namespace Cozmo {
 
-    class Bridge : public Vision::ObservableObject
+    class Bridge : public ActionableObject
     {
     public:
       
@@ -76,7 +75,7 @@ namespace Anki {
       virtual Bridge* Clone() const override;
       
       virtual void    GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
-      virtual void    Visualize() override;
+      virtual void    Visualize(const ColorRGBA& color) override;
       virtual void    EraseVisualization() override;
       virtual Quad2f  GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
       
@@ -94,9 +93,13 @@ namespace Anki {
       const Vision::KnownMarker* _rightEndMarker;
       const Vision::KnownMarker* _middleMarker;
       
-      std::array<VizManager::Handle_t,3> _vizHandle;
+      Pose3d _preCrossingPoseLeft;
+      Pose3d _preCrossingPoseRight;
+      
+      VizManager::Handle_t _vizHandle;
       
     }; // class Bridge
+    
     
     class BridgeShort : public Bridge
     {
@@ -105,7 +108,7 @@ namespace Anki {
     protected:
       static const ObjectType Type;
     }; // class BridgeShort
-
+    
     
     class BridgeLong : public Bridge
     {
@@ -114,11 +117,24 @@ namespace Anki {
     protected:
       static const ObjectType Type;
     }; // class BridgeShort
+    
+    
 
     
+    
+#if 0
+#pragma mark --- Inline Implementations ---
+#endif
+
     inline ObjectType Bridge::GetType() const {
       return _type;
     }
+
+    inline void Bridge::GetPreCrossingPoses(Anki::Pose3d& leftStart, Anki::Pose3d& rightStart) const {
+      leftStart  = _preCrossingPoseLeft;
+      rightStart = _preCrossingPoseRight;
+    }
+    
     
     
   } // namespace Cozmo

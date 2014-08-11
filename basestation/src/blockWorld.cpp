@@ -113,6 +113,13 @@ namespace Anki
       // Platform piece:
       _objectLibrary[ObjectFamily::MATS].AddObject(new MatPiece(MatPiece::Type::LARGE_PLATFORM));
       
+      // Long Bridge
+      _objectLibrary[ObjectFamily::MATS].AddObject(new MatPiece(MatPiece::Type::LONG_BRIDGE));
+      
+      // Short Bridge
+      // TODO: Need to update short bridge markers so they don't look so similar to long bridge at oblique viewing angle
+      // _objectLibrary[ObjectFamily::MATS].AddObject(new MatPiece(MatPiece::Type::SHORT_BRIDGE));
+      
       
       //////////////////////////////////////////////////////////////////////////
       // Ramps
@@ -706,7 +713,7 @@ namespace Anki
               newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
               newMatPiece->UpdateMarkerObservationTimes(*matSeen);
               
-              existingMatPieces[matSeen->GetType()][matSeen->GetID()] = newMatPiece;
+              existingMatPieces[newMatPiece->GetType()][newMatPiece->GetID()] = newMatPiece;
               
               fprintf(stdout, "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)\n",
                       newMatPiece->GetType().GetName().c_str(), newMatPiece->GetID().GetValue(),

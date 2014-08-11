@@ -37,7 +37,14 @@ namespace Anki {
     
     
     Ramp::Ramp()
-    : _vizHandle(VizManager::INVALID_HANDLE)
+    : _preAscentPose(M_PI, Z_AXIS_3D,
+                     {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + Ramp::PreAscentDistance, 0, -.5f*Ramp::Height}},
+                     &GetPose())
+    , _preDescentPose(0, Z_AXIS_3D,
+                      {{-(.5f*Ramp::PlatformLength+Ramp::PreDescentDistance), 0, 0.5f*Ramp::Height}},
+                      &GetPose())
+    , _vizHandle(VizManager::INVALID_HANDLE)
+    
     {
       // TODO: Support multiple ramp types
       
@@ -49,13 +56,11 @@ namespace Anki {
       frontPose *= Pose3d(M_PI_2, Z_AXIS_3D, {{0,0,0}});
       _frontMarker = &AddMarker(Vision::MARKER_RAMPFRONT, frontPose, Ramp::MarkerSize);
       
-      Pose3d preAscentPose(M_PI, Z_AXIS_3D,
-                  {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + Ramp::PreAscentDistance, 0, -.5f*Ramp::Height}},
-                  &GetPose());
-      if(preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), preAscentPose) == false) {
+      if(_preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), _preAscentPose) == false) {
         PRINT_NAMED_ERROR("Ramp.PreAscentPoseError", "Could not get preAscentPose w.r.t. front ramp marker.\n");
       }
-      AddPreActionPose(PreActionPose::ENTRY, _frontMarker, preAscentPose);
+      _preAscentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreAscentPose");
+      AddPreActionPose(PreActionPose::ENTRY, _frontMarker, _preAscentPose);
       
       const Pose3d backPose(-M_PI_2, Z_AXIS_3D, {{-0.5f*PlatformLength, 0, 0}});
       AddMarker(Vision::MARKER_RAMPBACK, backPose, Ramp::MarkerSize);
@@ -72,15 +77,15 @@ namespace Anki {
                            {{Ramp::PlatformLength*.5f - Ramp::MarkerSize*.5f, 0, Ramp::Height*.5f}});
       _topMarker = &AddMarker(Vision::MARKER_INVERTED_RAMPFRONT, topPose, Ramp::MarkerSize);
       
-      Pose3d preDescentPose(0, Z_AXIS_3D,
-                            {{-(.5f*Ramp::PlatformLength+Ramp::PreDescentDistance), 0, 0.5f*Ramp::Height}},
-                            &GetPose());
-      if(preDescentPose.GetWithRespectTo(_topMarker->GetPose(), preDescentPose) == false) {
+      
+      if(_preDescentPose.GetWithRespectTo(_topMarker->GetPose(), _preDescentPose) == false) {
         PRINT_NAMED_ERROR("Ramp.PreDescentPoseError", "Could not get preDescentPose w.r.t. top ramp marker.\n");
       }
-      AddPreActionPose(PreActionPose::ENTRY, _topMarker, preDescentPose);
+      _preDescentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreDescentPose");
+      AddPreActionPose(PreActionPose::ENTRY, _topMarker, _preDescentPose);
       
     } // Ramp() Constructor
+    
     
     Ramp::Ramp(const Ramp& otherRamp)
     : Ramp()
@@ -88,35 +93,11 @@ namespace Anki {
       SetPose(otherRamp.GetPose());
     } // Ramp() Copy Constructor
     
+    
     Ramp::~Ramp()
     {
       EraseVisualization();
     }
-    
-    Pose3d Ramp::GetPreAscentPose() const
-    {
-      
-      Pose3d pose(M_PI, Z_AXIS_3D,
-                  {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + Ramp::PreAscentDistance, 0, -.5f*Ramp::Height}},
-                  &GetPose());
-      
-      //pose.PreComposeWith(GetPose());
-      pose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreAscentPose");
-      
-      return pose;
-    } // GetPreAscentPose()
-    
-    Pose3d Ramp::GetPreDescentPose() const
-    {
-      Pose3d pose(0, Z_AXIS_3D,
-                  {{-(.5f*Ramp::PlatformLength+Ramp::PreDescentDistance), 0, 0.5f*Ramp::Height}},
-                  &GetPose());
-      
-      //pose.PreComposeWith(GetPose());
-      pose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreDescentPose");
-      
-      return pose;
-    } // GetPreDescentPose()
     
     Pose3d Ramp::GetPostAscentPose(const float wheelBase) const
     {

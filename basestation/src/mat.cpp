@@ -108,36 +108,67 @@ namespace Anki {
                   Pose3d(-M_PI_2, X_AXIS_3D, { length*.25f,  width*.25f, height*.5f}),
                   markerSize_top);
       }
-      else if(Type::LONG_BRIDGE == _type) {
-        _size = {300.f, 62.f, 3.f};
+      else if(Type::LONG_BRIDGE == _type || Type::SHORT_BRIDGE == _type) {
         
-        const f32 markerSize = 25.f;
+        _isMoveable = true;
         
-        // Add markers on either end with ENTRY actions
-        const Vision::KnownMarker* marker = nullptr;
-        marker  = &AddMarker(Vision::MARKER_BRIDGESUNLEFT,   {-_size.x()*.5f+markerSize, 0.f, _size.z()}, markerSize);
-        AddPreActionPose(PreActionPose::ENTRY, marker, Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -100.f}}));
+        Vision::MarkerType leftMarkerType, rightMarkerType, middleMarkerType;
+        f32 markerSize = 0.f;
+        f32 length = 0.f;
         
-        marker = &AddMarker(Vision::MARKER_BRIDGESUNRIGHT,  { _size.x()*.5f-markerSize, 0.f, _size.z()}, markerSize);
-        AddPreActionPose(PreActionPose::ENTRY, marker, Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -100.f}}));
+        if(Type::LONG_BRIDGE == _type) {
+          length = 300.f;
+          markerSize = 25.f;
+          
+          leftMarkerType   = Vision::MARKER_BRIDGESUNLEFT;
+          rightMarkerType  = Vision::MARKER_BRIDGESUNRIGHT;
+          middleMarkerType = Vision::MARKER_BRIDGESUNMIDDLE;
+        }
+        else if(Type::SHORT_BRIDGE == _type) {
+          length = 200.f;          
+          markerSize = 25.f;
+          
+          leftMarkerType   = Vision::MARKER_BRIDGEMOONLEFT;
+          rightMarkerType  = Vision::MARKER_BRIDGEMOONRIGHT;
+          middleMarkerType = Vision::MARKER_BRIDGEMOONMIDDLE;
+        }
+        else {
+          PRINT_NAMED_ERROR("MatPiece.BridgeUnexpectedElse", "Should not get to else in if ladder constructing bridge-type mat.\n");
+          return;
+        }
         
-        AddMarker(Vision::MARKER_BRIDGESUNMIDDLE, {0.f, 0.f, _size.z()}, markerSize);
-      }
-      else if(Type::SHORT_BRIDGE == _type) {
-        _size = {200.f, 62.f, 3.f};
+        _size = {length, 62.f, 2.f};
         
-        const f32 markerSize = 25.f;
+        Pose3d preCrossingPoseLeft(0, Z_AXIS_3D, {-_size.x()*.5f-30.f, 0.f, _size.z()}, &GetPose());
+        Pose3d preCrossingPoseRight(M_PI, Z_AXIS_3D, {_size.x()*.5f+30.f, 0.f, _size.z()}, &GetPose());
+
+        //Pose3d leftMarkerPose(-M_PI_2, Z_AXIS_3D, {-_size.x()*.5f+markerSize, 0.f, _size.z()});
+        //leftMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, 0.f});
+        Pose3d leftMarkerPose(-M_PI_2, X_AXIS_3D, {-_size.x()*.5f+markerSize, 0.f, _size.z()});
         
-        // Add markers on either end with ENTRY actions
-        const Vision::KnownMarker* marker = nullptr;
-        marker = &AddMarker(Vision::MARKER_BRIDGEMOONLEFT,   {-_size.x()*.5f+markerSize, 0.f, _size.z()}, markerSize);
-        AddPreActionPose(PreActionPose::ENTRY, marker, Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -100.f}}));
+        //Pose3d rightMarkerPose(M_PI_2, Z_AXIS_3D, { _size.x()*.5f-markerSize, 0.f, _size.z()});
+        //rightMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, 0.f});
+        Pose3d rightMarkerPose(-M_PI_2, X_AXIS_3D, { _size.x()*.5f-markerSize, 0.f, _size.z()});
         
-        marker = &AddMarker(Vision::MARKER_BRIDGEMOONRIGHT,  { _size.x()*.5f-markerSize, 0.f, _size.z()}, markerSize);
-        AddPreActionPose(PreActionPose::ENTRY, marker, Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -100.f}}));
+        const Vision::KnownMarker* leftMarker  = &AddMarker(leftMarkerType,  leftMarkerPose,  markerSize);
+        const Vision::KnownMarker* rightMarker = &AddMarker(rightMarkerType, rightMarkerPose, markerSize);
+        AddMarker(middleMarkerType, Pose3d(M_PI_2, X_AXIS_3D, {0.f, 0.f, _size.z()}), markerSize);
         
-        AddMarker(Vision::MARKER_BRIDGEMOONMIDDLE, {0.f, 0.f, _size.z()}, markerSize);
-      }
+        CORETECH_ASSERT(leftMarker != nullptr);
+        CORETECH_ASSERT(rightMarker != nullptr);
+        
+        if(preCrossingPoseLeft.GetWithRespectTo(leftMarker->GetPose(), preCrossingPoseLeft) == false) {
+          PRINT_NAMED_ERROR("MatPiece.PreCrossingPoseLeftError", "Could not get preCrossingLeftPose w.r.t. left bridge marker.\n");
+        }
+        AddPreActionPose(PreActionPose::ENTRY, leftMarker, preCrossingPoseLeft);
+        
+        if(preCrossingPoseRight.GetWithRespectTo(rightMarker->GetPose(), preCrossingPoseRight) == false) {
+          PRINT_NAMED_ERROR("MatPiece.PreCrossingPoseRightError", "Could not get preCrossingRightPose w.r.t. right bridge marker.\n");
+        }
+        AddPreActionPose(PreActionPose::ENTRY, rightMarker, preCrossingPoseRight);
+
+        
+      } // bridge types
       else {
         PRINT_NAMED_ERROR("MatPiece.UnrecognizedType",
                           "Trying to instantiate a MatPiece with an unknown Type = %d.\n", int(type));
@@ -148,9 +179,12 @@ namespace Anki {
     
     Point3f MatPiece::GetSameDistanceTolerance() const
     {
-       if(Type::LETTERS_4x4 == GetType()) {
-         // Thin mat: don't use half the thickness as the height tolerance (too strict)
-         return Point3f(_size.x()*.5f, _size.y()*.5f, 15.f);
+       if(Type::LETTERS_4x4  == GetType() ||
+          Type::LONG_BRIDGE  == GetType() ||
+          Type::SHORT_BRIDGE == GetType())
+       {
+         // "Thin" mats: don't use half the thickness as the height tolerance (too strict)
+         return Point3f(_size.x()*.5f, _size.y()*.5f, 25.f);
        }
        else if(Type::LARGE_PLATFORM == GetType()) {
          return _size*.5f;

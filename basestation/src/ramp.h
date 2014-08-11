@@ -60,8 +60,8 @@ namespace Anki {
       // Return start poses (at Ramp's current position) for going up or down
       // the ramp. The distance for ascent is from the tip of the slope.  The
       // distance for descent is from the opposite edge of the ramp.
-      Pose3d GetPreAscentPose()  const;
-      Pose3d GetPreDescentPose() const;
+      const Pose3d& GetPreAscentPose()  const;
+      const Pose3d& GetPreDescentPose() const;
       
       // Return final poses (at Ramp's current position) for a robot after it
       // has finished going up or down the ramp. Takes the robot's wheel base
@@ -121,10 +121,21 @@ namespace Anki {
       const Vision::KnownMarker* _frontMarker;
       const Vision::KnownMarker* _topMarker;
       
+      Pose3d _preAscentPose;
+      Pose3d _preDescentPose;
+      
       VizManager::Handle_t _vizHandle;
       //std::array<VizManager::Handle_t,3> _vizHandle;
       
     }; // class Ramp
+    
+    inline const Pose3d& Ramp::GetPreAscentPose() const {
+      return _preAscentPose;
+    }
+    
+    inline const Pose3d& Ramp::GetPreDescentPose() const {
+      return _preDescentPose;
+    }
     
   } // namespace Cozmo
 } // namespace Anki
