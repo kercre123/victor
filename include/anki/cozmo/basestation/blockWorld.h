@@ -25,6 +25,8 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/exceptions.h"
 
+#include "anki/vision/basestation/observableObjectLibrary.h"
+
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
