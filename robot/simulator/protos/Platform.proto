@@ -35,29 +35,28 @@ Solid {
     VisionMarker {
       rotation 0 0 1 1.5708
       translation %{=fields.length/2}% 0 0
-      #image "symbols/inverted/rampFront.png"
-      image "letters/inverted/E.png"
+      image "symbols/platformNorth.png"
     }
     
     # Back Face
     VisionMarker { 
       rotation 0 0 1 -1.5708
       translation %{=-fields.length/2}% 0 0
-      image "symbols/inverted/rampBack.png"
+      image "symbols/platformSouth.png"
     }
           
     # Right Face
     VisionMarker {
       rotation 0 0 1 3.1415
       translation 0 %{=fields.width/2}% 0
-      image "symbols/inverted/rampRight.png"
+      image "symbols/platformEast.png"
     }
     
     # Left Face
     VisionMarker {
       rotation 0 0 1 0
       translation 0 %{=-fields.width/2}% 0
-      image "symbols/inverted/rampLeft.png"
+      image "symbols/platformWest.png"
     }
     
     # Top Face(s)

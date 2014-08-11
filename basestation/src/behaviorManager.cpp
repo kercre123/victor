@@ -112,91 +112,99 @@ namespace Anki {
     
     
     // TODO: Make this a blockWorld function?
-    void BehaviorManager::SelectNextBlockOfInterest()
+    void BehaviorManager::SelectNextObjectOfInterest()
     {
-      bool currBlockOfInterestFound = false;
-      bool newBlockOfInterestSet = false;
+      // Unselect current object of interest, if it still exists (Note that it may just get
+      // reselected here, but I don't think we care.)
+      // Mark new object of interest as selected so it will draw differently
+      ActionableObject* object = dynamic_cast<ActionableObject*>(world_->GetObjectByID(objectIDofInterest_));
+      if(object != nullptr) {
+        object->SetSelected(false);
+      }
+
+      bool currObjectOfInterestFound = false;
+      bool newObjectOfInterestSet = false;
       
-      // Iterate through all the non-Mat objects
+      // Iterate through all the objects
       auto const & allObjects = world_->GetAllExistingObjects();
       for(auto const & objectsByFamily : allObjects) {
-        if(objectsByFamily.first != BlockWorld::ObjectFamily::MATS)
-        {
           for (auto const & objectsByType : objectsByFamily.second) {
             
             //PRINT_INFO("currType: %d\n", blockType.first);
             for (auto const & objectsByID : objectsByType.second) {
               
-              const DockableObject* object = dynamic_cast<DockableObject*>(objectsByID.second);
-              if(object != nullptr && !object->IsBeingCarried())
+              ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
+              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
               {
                 //PRINT_INFO("currID: %d\n", block.first);
-                if (currBlockOfInterestFound) {
+                if (currObjectOfInterestFound) {
                   // Current block of interest has been found.
                   // Set the new block of interest to the next block in the list.
                   objectIDofInterest_ = object->GetID();
-                  newBlockOfInterestSet = true;
+                  newObjectOfInterestSet = true;
                   //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
                   break;
                 } else if (object->GetID() == objectIDofInterest_) {
-                  currBlockOfInterestFound = true;
+                  currObjectOfInterestFound = true;
                   //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
                 }
               }
             } // for each ID
             
-            if (newBlockOfInterestSet) {
+            if (newObjectOfInterestSet) {
               break;
             }
             
           } // for each type
-        } // if non-MAT
         
-        if(newBlockOfInterestSet) {
+        if(newObjectOfInterestSet) {
           break;
         }
         
       } // for each family
       
-      // If the current block of interest was found, but a new one was not set
-      // it must have been the last block in the map. Set the new block of interest
-      // to the first block in the map as long as it's not the same block.
-      if (!currBlockOfInterestFound || !newBlockOfInterestSet) {
+      // If the current object of interest was found, but a new one was not set
+      // it must have been the last block in the map. Set the new object of interest
+      // to the first object in the map as long as it's not the same object.
+      if (!currObjectOfInterestFound || !newObjectOfInterestSet) {
         
-        // Find first block
-        ObjectID firstBlock; // initialized to un-set
+        // Find first object
+        ObjectID firstObject; // initialized to un-set
         for(auto const & objectsByFamily : allObjects) {
-          if(objectsByFamily.first != BlockWorld::ObjectFamily::MATS) {
-            for (auto const & objectsByType : objectsByFamily.second) {
-              for (auto const & objectsByID : objectsByType.second) {
-                const DockableObject* object = dynamic_cast<DockableObject*>(objectsByID.second);
-                if(object != nullptr && !object->IsBeingCarried())
-                {
-                  firstBlock = objectsByID.first;
-                  break;
-                }
-              }
-              if (firstBlock.IsSet()) {
+          for (auto const & objectsByType : objectsByFamily.second) {
+            for (auto const & objectsByID : objectsByType.second) {
+              const ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
+              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
+              {
+                firstObject = objectsByID.first;
                 break;
               }
             }
-          } // if not MAT
+            if (firstObject.IsSet()) {
+              break;
+            }
+          }
           
-          if (firstBlock.IsSet()) {
+          if (firstObject.IsSet()) {
             break;
           }
         } // for each family
 
         
-        if (firstBlock == objectIDofInterest_ || !firstBlock.IsSet()){
-          //PRINT_INFO("Only one block in existence.");
+        if (firstObject == objectIDofInterest_ || !firstObject.IsSet()){
+          //PRINT_INFO("Only one object in existence.");
         } else {
-          //PRINT_INFO("Setting block of interest to first block\n");
-          objectIDofInterest_ = firstBlock;
+          //PRINT_INFO("Setting object of interest to first block\n");
+          objectIDofInterest_ = firstObject;
         }
       }
       
-      PRINT_INFO("Block of interest: ID = %d\n", objectIDofInterest_.GetValue());
+      // Mark new object of interest as selected so it will draw differently
+      object = dynamic_cast<ActionableObject*>(world_->GetObjectByID(objectIDofInterest_));
+      CORETECH_ASSERT(object != nullptr); // object should still exist!
+      object->SetSelected(true);
+      
+      PRINT_INFO("Object of interest: ID = %d\n", objectIDofInterest_.GetValue());
       
       /*
       // Draw BOI

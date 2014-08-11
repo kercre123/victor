@@ -410,7 +410,7 @@ namespace Anki {
             // ...
             //const Point2f& imgCorners = dockMarker_->GetImageCorners().computeCentroid();
             // For now, just docking to the marker no matter where it is in the image.
-            DockableObject* dockObject = dynamic_cast<DockableObject*>(_world->GetObjectByID(_dockObjectID));
+            ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_dockObjectID));
             if(dockObject == nullptr) {
               PRINT_NAMED_ERROR("Robot.Update.DockObjectGone", "Docking object with ID=%d no longer exists in the world. Returning to IDLE state.\n", _dockObjectID.GetValue());
               SetState(IDLE);
@@ -424,8 +424,9 @@ namespace Anki {
             switch(_state) {
               case BEGIN_DOCKING:
               {
-                std::vector<DockableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
-                dockObject->GetPreDockPoses(dockObject->GetDefaultPreDockDistance(), preDockPoseMarkerPairs);
+                std::vector<ActionableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
+                //dockObject->GetPreDockPoses(dockObject->GetDefaultPreDockDistance(), preDockPoseMarkerPairs);
+                dockObject->GetCurrentPreActionPoses(preDockPoseMarkerPairs, {PreActionPose::DOCKING});
                 
                 float closestDistSq = std::numeric_limits<float>::max();
                 for(auto const& preDockPair : preDockPoseMarkerPairs) {
@@ -950,15 +951,15 @@ namespace Anki {
                               "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
                               rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
         }
-        /*
-         // Snap to horizontal
-         if(existingMatPiece->IsPoseOn(robotPoseWrtMat, 0, 10.f)) {
-         Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
-         robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
-         robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
-         }
-         robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
-         */
+        
+        // Snap to purely horizontal rotation and surface of the mat
+        if(existingMatPiece->IsPoseOn(robotPoseWrtMat, 0, 10.f)) {
+          Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
+          robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
+          robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
+        }
+        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
+        
       } // if robot is on ramp
       
       if(!_localizedToFixedMat && !existingMatPiece->IsMoveable()) {
@@ -1236,7 +1237,7 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      DockableObject* object = dynamic_cast<DockableObject*>(_world->GetObjectByID(objectIDtoDockWith));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_world->GetObjectByID(objectIDtoDockWith));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.DockObjectDoesNotExist",
                           "Robot %d asked to dock with Object ID=%d, but it does not exist.",
@@ -1264,8 +1265,9 @@ namespace Anki {
       _dockObjectID = objectIDtoDockWith;
       _dockMarker = nullptr; // should get set to a predock pose below
       
-      std::vector<DockableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      object->GetPreDockPoses(object->GetDefaultPreDockDistance(), preDockPoseMarkerPairs);
+      std::vector<ActionableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
+      //object->GetPreDockPoses(object->GetDefaultPreDockDistance(), preDockPoseMarkerPairs);
+      object->GetCurrentPreActionPoses(preDockPoseMarkerPairs, {PreActionPose::DOCKING});
       
       if (preDockPoseMarkerPairs.empty()) {
         PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.NoPreDockPoses",
@@ -1326,7 +1328,7 @@ namespace Anki {
       }
       
       // Grab a pointer to the block we are supposedly carrying
-      DockableObject* carryingObject = dynamic_cast<DockableObject*>(_world->GetObjectByID(_carryingObjectID));
+      ActionableObject* carryingObject = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_carryingObjectID));
       if(carryingObject == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.CarryObjectDoesNotExist",
                           "Robot %d thinks it is carrying a block with ID=%d, but that "
@@ -1370,7 +1372,7 @@ namespace Anki {
       }
       
       // Grab a pointer to the block we are supposedly carrying
-      DockableObject* carryingObject = dynamic_cast<DockableObject*>(_world->GetObjectByID(_carryingObjectID));
+      ActionableObject* carryingObject = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_carryingObjectID));
       if(carryingObject == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.CarryObjectDoesNotExist",
                           "Robot %d thinks it is carrying an object with ID=%d, but that "
@@ -1390,9 +1392,9 @@ namespace Anki {
       // want the robot to end up in order for the block to be
       // at the requested pose.
       std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      carryingObject->GetPreDockPoses(carryingObject->GetDefaultPreDockDistance(),
-                                      preDockPoseMarkerPairs,
-                                      _carryingMarker->GetCode());
+      carryingObject->GetCurrentPreActionPoses(preDockPoseMarkerPairs,
+                                               {PreActionPose::DOCKING},
+                                               {_carryingMarker->GetCode()});
       
       if (preDockPoseMarkerPairs.empty()) {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NoPreDockPoses",
@@ -1489,7 +1491,7 @@ namespace Anki {
                                  const u16 image_pixel_y,
                                  const u8 pixel_radius)
     {
-      DockableObject* object = dynamic_cast<DockableObject*>(_world->GetObjectByID(objectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_world->GetObjectByID(objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.DockWithObject.ObjectDoesNotExist",
                           "Object with ID=%d no longer exists for docking.\n", objectID.GetValue());
@@ -1535,7 +1537,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      DockableObject* object = dynamic_cast<DockableObject*>(_world->GetObjectByID(_dockObjectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_dockObjectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
                           "Dock object with ID=%d no longer exists for picking up.\n", _dockObjectID.GetValue());
@@ -1629,7 +1631,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      DockableObject* object = dynamic_cast<DockableObject*>(_world->GetObjectByID(_carryingObjectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_carryingObjectID));
       
       if(object == nullptr)
       {

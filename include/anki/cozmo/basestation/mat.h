@@ -16,7 +16,7 @@
 #ifndef __Products_Cozmo__Mat__
 #define __Products_Cozmo__Mat__
 
-#include "anki/vision/basestation/observableObject.h"
+#include "dockableObject.h"
 
 #include "vizManager.h"
 
@@ -24,7 +24,7 @@ namespace Anki {
   
   namespace Cozmo {
     
-    class MatPiece : public Vision::ObservableObject 
+    class MatPiece : public ActionableObject
     {
     public:
       
@@ -35,18 +35,21 @@ namespace Anki {
       public:
         // Define new mat piece types here, as static const Type:
         // (Note: don't forget to instantiate each in the .cpp file)
-        static const Type INVALID;
         static const Type LETTERS_4x4;
         static const Type LARGE_PLATFORM;
+        static const Type LONG_BRIDGE;
+        static const Type SHORT_BRIDGE;
       };
       
       // Constructor, based on Type
-      MatPiece(ObjectType type, bool isFirstPiece = false);
-
+      MatPiece(Type type);
+      
       //
       // Inherited Virtual Methods
       //
       
+      virtual ObjectType GetType() const override { return _type; }
+    
       //virtual float GetMinDim() const {return 0;}
       
       virtual MatPiece* Clone() const;
@@ -54,8 +57,8 @@ namespace Anki {
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
       
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
-      
-      virtual void Visualize() override;
+    
+      virtual void Visualize(const ColorRGBA& color) override;
       virtual void EraseVisualization() override;
       
       virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
@@ -90,6 +93,8 @@ namespace Anki {
       static const s32 NUM_CORNERS = 8;
       static const std::array<Point3f, MatPiece::NUM_CORNERS> _canonicalCorners;
       
+      const Type _type;
+      
       // x = length, y = width, z = height
       Point3f _size;
       
@@ -103,7 +108,7 @@ namespace Anki {
     {
       // Create an all-new mat piece of this type, to keep all the
       // bookkeeping and pointers (e.g. the pose tree) kosher.
-      MatPiece* clone = new MatPiece(this->GetType());
+      MatPiece* clone = new MatPiece(_type);
       
       // Move the clone to this mat piece's pose
       clone->SetPose(this->GetPose());

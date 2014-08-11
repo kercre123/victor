@@ -233,7 +233,7 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SelectNextBlock const& msg)
     {
-      behaviorMgr_->SelectNextBlockOfInterest();
+      behaviorMgr_->SelectNextObjectOfInterest();
       return RESULT_OK;
     }
     

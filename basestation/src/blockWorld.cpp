@@ -420,7 +420,7 @@ namespace Anki
             if(useType) {
               for(auto & objectAndId : objectsByType.second)
               {
-                DockableObject* object = dynamic_cast<DockableObject*>(objectAndId.second);
+                ActionableObject* object = dynamic_cast<ActionableObject*>(objectAndId.second);
                 CORETECH_THROW_IF(object == nullptr);
                 if (ignoreCarriedObjects && !object->IsBeingCarried()) {
                   // TODO: If we are planning in the frame of the robot's current mat, this should not be GetWithRespectToOrigin()
@@ -599,7 +599,7 @@ namespace Anki
             PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
                              "Instantiating first mat piece in the world.\n");
             
-            existingMatPiece = new MatPiece(matToLocalizeTo->GetType());
+            existingMatPiece = matToLocalizeTo->Clone();
             existingMatPiece->SetID();
             existingMatPiece->SetPose( Pose3d() ); // Not really necessary, but ensures the ID makes it into the pose name
             assert(existingMatPiece->GetPose().GetParent() == nullptr);
@@ -637,7 +637,7 @@ namespace Anki
               // world origin.
               Pose3d poseWrtWorldOrigin = matToLocalizeTo->GetPose().GetWithRespectToOrigin();
               
-              existingMatPiece = new MatPiece(matToLocalizeTo->GetType());
+              existingMatPiece = matToLocalizeTo->Clone();
               existingMatPiece->SetID();
               existingMatPiece->SetPose(poseWrtWorldOrigin);
 
@@ -698,7 +698,9 @@ namespace Anki
               // no existing mats overlapped with the mat we saw, so add it
               // as a new mat piece, relative to the world origin
               
-              MatPiece* newMatPiece = new MatPiece(matSeen->GetType());
+              MatPiece* matSeenTemp = dynamic_cast<MatPiece*>(matSeen);
+              CORETECH_ASSERT(matSeenTemp != nullptr);
+              MatPiece* newMatPiece = matSeenTemp->Clone();
               newMatPiece->SetID();
               newMatPiece->SetPose(poseWrtOrigin);
               newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
@@ -954,7 +956,7 @@ namespace Anki
             for(auto objectIter = objectsByType.second.begin();
                 objectIter != objectsByType.second.end(); /* increment based on whether we erase */)
             {
-              DockableObject* object = dynamic_cast<DockableObject*>(objectIter->second);
+              ActionableObject* object = dynamic_cast<ActionableObject*>(objectIter->second);
               if(object == nullptr) {
                 PRINT_NAMED_ERROR("BlockWorld.Update.ExpectingDockableObject",
                                   "In robot/object collision check, can currently only handle DockableObjects.\n");

@@ -320,7 +320,8 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
   
 
   /////////// Update visualization ////////////
-  { // Update Block-of-Interest display
+  /*
+  { // Update object-of-Interest display
     
     // Get selected block of interest from Behavior manager
     static ObjectID prev_boi;      // Previous block of interest
@@ -330,33 +331,35 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
     // Draw current block of interest
     const ObjectID boi = behaviorMgr_.GetObjectOfInterest();
     
-    DockableObject* dockObject = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(boi));
-    if(dockObject != nullptr) {
+    ActionableObject* actionObject = dynamic_cast<ActionableObject*>(blockWorld_.GetObjectByID(boi));
+    if(actionObject != nullptr) {
 
       // Get predock poses
-      std::vector<Block::PoseMarkerPair_t> poses;
-      dockObject->GetPreDockPoses(dockObject->GetDefaultPreDockDistance(), poses);
-      
-      // Erase previous predock pose marker for previous block of interest
-      if (prev_boi != boi || poses.size() != prevNumPreDockPoses) {
-        PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n",
-                   boi.GetValue(), prev_boi.GetValue(), (u32)poses.size(), prevNumPreDockPoses);
-        VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
-        
-        // Return previous selected block to original color (necessary in the
-        // case that this block isn't currently being observed, meaning its
-        // visualization won't have updated))
-        DockableObject* prevBlock = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(prev_boi));
-        if(prevBlock != nullptr && prevBlock->GetLastObservedTime() < BaseStationTimer::getInstance()->GetCurrentTimeStamp()) {
-          prevBlock->Visualize(VIZ_COLOR_DEFAULT);
+      std::vector<Block::PoseMarkerPair_t> actionPoses;
+      actionObject->GetCurrentPreActionPoses(actionPoses);
+      if(!actionPoses.empty())
+      {
+        // Erase previous predock pose marker for previous object of interest
+        if (prev_boi != boi || actionPoses.size() != prevNumPreDockPoses) {
+          PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n",
+                     boi.GetValue(), prev_boi.GetValue(), (u32)actionPoses.size(), prevNumPreDockPoses);
+          VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
+          
+          // Return previous selected block to original color (necessary in the
+          // case that this block isn't currently being observed, meaning its
+          // visualization won't have updated))
+          ActionableObject* prevBlock = dynamic_cast<ActionableObject*>(blockWorld_.GetObjectByID(prev_boi));
+          if(prevBlock != nullptr && prevBlock->GetLastObservedTime() < BaseStationTimer::getInstance()->GetCurrentTimeStamp()) {
+            prevBlock->Visualize();
+          }
+          
+          prev_boi = boi;
+          prevNumPreDockPoses = actionPoses.size();
         }
         
-        prev_boi = boi;
-        prevNumPreDockPoses = poses.size();
-      }
-
-      // Draw cuboid for current selection, with predock poses
-      dockObject->Visualize(VIZ_COLOR_SELECTED_OBJECT, dockObject->GetDefaultPreDockDistance());
+        // Draw cuboid for current selection, with predock poses
+        actionObject->VisualizeWithPreActionPoses();
+      } // if there are any action poses
       
     } else {
       // block == nullptr (no longer exists, delete its predock poses)
@@ -364,6 +367,7 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
     }
     
   } // Update Block-of-Interest display
+   */
   
   { // Draw All Objects
     
@@ -395,15 +399,16 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
                           Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    zHeight),
                           Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), zHeight));
 
-    VizManager::getInstance()->DrawRobotBoundingBox(robot->GetID(), quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
+    static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
+    VizManager::getInstance()->DrawRobotBoundingBox(robot->GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
     
     if(robot->IsCarryingObject()) {
-      DockableObject* carryBlock = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(robot->GetCarryingObject()));
+      ActionableObject* carryBlock = dynamic_cast<ActionableObject*>(blockWorld_.GetObjectByID(robot->GetCarryingObject()));
       if(carryBlock == nullptr) {
         PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingObject().GetValue());
         robot->UnSetCarryingObject();
       } else {
-        carryBlock->Visualize(VIZ_COLOR_DEFAULT);
+        carryBlock->Visualize();
       }
     }
   }

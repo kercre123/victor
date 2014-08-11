@@ -42,18 +42,14 @@ namespace Anki {
     //   <= Platform =><= Slope ==>
     //
     
-    class Ramp : public DockableObject
+    class Ramp : public ActionableObject
     {
     public:
       
-      class Type : public ObjectType {
-        Type(const std::string& name) : ObjectType(name) { }
-      public:
-        static const Type BASIC_RAMP;
-      };
-      
       Ramp();
       Ramp(const Ramp& otherRamp);
+      
+      virtual ObjectType GetType() const override { return Ramp::Type; }
       
       f32     GetHeight() const { return Height; }
       Radians GetAngle()  const { return Angle;  }
@@ -82,17 +78,17 @@ namespace Anki {
       
       virtual Ramp*   Clone() const override;
       virtual void    GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
-      virtual void    Visualize() override;
-      virtual void    Visualize(VIZ_COLOR_ID color) override;
-      virtual void    Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) override;
+      virtual void    Visualize(const ColorRGBA& color) override;
+      //virtual void    Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) override;
       virtual void    EraseVisualization() override;
       virtual Quad2f  GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
       
+      /*
       virtual void    GetPreDockPoses(const float distance_mm,
                                       std::vector<PoseMarkerPair_t>& poseMarkerPairs,
                                       const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
-      
-      virtual f32     GetDefaultPreDockDistance() const override;
+      */
+      //virtual f32     GetDefaultPreDockDistance() const override;
       virtual Point3f GetSameDistanceTolerance()  const override;
       virtual Radians GetSameAngleTolerance()     const override;
       
@@ -101,6 +97,8 @@ namespace Anki {
 
     protected:
       static const s32 NUM_CORNERS = 8;
+      
+      static const ObjectType Type;
       
       // Model dimensions in mm (perhaps these should come from a configuration
       // file instead?)
@@ -123,7 +121,8 @@ namespace Anki {
       const Vision::KnownMarker* _frontMarker;
       const Vision::KnownMarker* _topMarker;
       
-      std::array<VizManager::Handle_t,3> _vizHandle;
+      VizManager::Handle_t _vizHandle;
+      //std::array<VizManager::Handle_t,3> _vizHandle;
       
     }; // class Ramp
     

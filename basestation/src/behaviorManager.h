@@ -53,7 +53,7 @@ namespace Anki {
       const ObjectID GetObjectOfInterest() const {return objectIDofInterest_;}
       
       // Select the next object in blockWorld as the block of interest
-      void SelectNextBlockOfInterest();
+      void SelectNextObjectOfInterest();
       
     protected:
       

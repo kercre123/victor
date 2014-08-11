@@ -18,7 +18,7 @@ namespace Anki {
   
   namespace Cozmo {
     
-    const Ramp::Type Ramp::Type::BASIC_RAMP("BASIC_RAMP");
+    const ObjectType Ramp::Type("BASIC_RAMP");
     
     const f32 Ramp::Angle = atan(Height/SlopeLength);
     
@@ -37,29 +37,48 @@ namespace Anki {
     
     
     Ramp::Ramp()
-    : DockableObject(Type::BASIC_RAMP) // TODO: Support multiple ramp types
+    : _vizHandle(VizManager::INVALID_HANDLE)
     {
+      // TODO: Support multiple ramp types
+      
       // Five markers:
-      Pose3d frontPose(-atan(Ramp::SlopeLength/Ramp::Height), Y_AXIS_3D,
+      const f32 angle = -atan(Ramp::SlopeLength/Ramp::Height);
+      Pose3d frontPose(angle, Y_AXIS_3D,
                        {{Ramp::SlopeLength+Ramp::PlatformLength*.5f-Ramp::FrontMarkerDistance,
                          0, -Ramp::Height*.5f + Ramp::Height*Ramp::FrontMarkerDistance/Ramp::SlopeLength}});
       frontPose *= Pose3d(M_PI_2, Z_AXIS_3D, {{0,0,0}});
       _frontMarker = &AddMarker(Vision::MARKER_RAMPFRONT, frontPose, Ramp::MarkerSize);
+      
+      Pose3d preAscentPose(M_PI, Z_AXIS_3D,
+                  {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + Ramp::PreAscentDistance, 0, -.5f*Ramp::Height}},
+                  &GetPose());
+      if(preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), preAscentPose) == false) {
+        PRINT_NAMED_ERROR("Ramp.PreAscentPoseError", "Could not get preAscentPose w.r.t. front ramp marker.\n");
+      }
+      AddPreActionPose(PreActionPose::ENTRY, _frontMarker, preAscentPose);
       
       const Pose3d backPose(-M_PI_2, Z_AXIS_3D, {{-0.5f*PlatformLength, 0, 0}});
       AddMarker(Vision::MARKER_RAMPBACK, backPose, Ramp::MarkerSize);
       
       const Pose3d leftPose(0.f, Z_AXIS_3D, {{10.f, -0.5f*Ramp::Width, 0.f}});
       _leftMarker = &AddMarker(Vision::MARKER_RAMPLEFT, leftPose, Ramp::MarkerSize);
+      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, 100.f);
       
       const Pose3d rightPose(M_PI, Z_AXIS_3D, {{10.f,  0.5f*Ramp::Width, 0.f}});
       _rightMarker = &AddMarker(Vision::MARKER_RAMPRIGHT, rightPose, Ramp::MarkerSize);
+      AddPreActionPose(PreActionPose::DOCKING, _rightMarker, 100.f);
       
       const Pose3d topPose(2.0944, {{-0.5774f, 0.5774f, -0.5774f}},
                            {{Ramp::PlatformLength*.5f - Ramp::MarkerSize*.5f, 0, Ramp::Height*.5f}});
       _topMarker = &AddMarker(Vision::MARKER_INVERTED_RAMPFRONT, topPose, Ramp::MarkerSize);
       
-      _vizHandle.fill(VizManager::INVALID_HANDLE);
+      Pose3d preDescentPose(0, Z_AXIS_3D,
+                            {{-(.5f*Ramp::PlatformLength+Ramp::PreDescentDistance), 0, 0.5f*Ramp::Height}},
+                            &GetPose());
+      if(preDescentPose.GetWithRespectTo(_topMarker->GetPose(), preDescentPose) == false) {
+        PRINT_NAMED_ERROR("Ramp.PreDescentPoseError", "Could not get preDescentPose w.r.t. top ramp marker.\n");
+      }
+      AddPreActionPose(PreActionPose::ENTRY, _topMarker, preDescentPose);
       
     } // Ramp() Constructor
     
@@ -76,6 +95,7 @@ namespace Anki {
     
     Pose3d Ramp::GetPreAscentPose() const
     {
+      
       Pose3d pose(M_PI, Z_AXIS_3D,
                   {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + Ramp::PreAscentDistance, 0, -.5f*Ramp::Height}},
                   &GetPose());
@@ -143,42 +163,37 @@ namespace Anki {
       // Call the copy constructor
       return new Ramp(*this);
     }
-
-    void Ramp::Visualize()
-    {
-      Visualize(VIZ_COLOR_DARKGRAY);
-    }
     
-    void Ramp::Visualize(VIZ_COLOR_ID color)
+    void Ramp::Visualize(const ColorRGBA& color)
     {
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();
-      _vizHandle[0] = VizManager::getInstance()->DrawRamp(GetID().GetValue(), Ramp::PlatformLength,
-                                                       Ramp::SlopeLength, Ramp::Width,
-                                                       Ramp::Height, vizPose, color);
+      _vizHandle = VizManager::getInstance()->DrawRamp(GetID().GetValue(), Ramp::PlatformLength,
+                                                          Ramp::SlopeLength, Ramp::Width,
+                                                          Ramp::Height, vizPose, color);
     } // Visualize()
     
+    /*
     void Ramp::Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance)
     {
-      DockableObject::Visualize(color, preDockPoseDistance);
+      //DockableObject::Visualize(color, preDockPoseDistance);
       
       Pose3d ascentPose(GetPreAscentPose());
       Pose3d descentPose(GetPreDescentPose());
       _vizHandle[1] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue(),   ascentPose.GetWithRespectToOrigin(),  VIZ_COLOR_PRERAMPPOSE);
       _vizHandle[2] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue()+1, descentPose.GetWithRespectToOrigin(), VIZ_COLOR_PRERAMPPOSE);
     }
+     */
     
     void Ramp::EraseVisualization()
     {
-      // Erase the ramp and pre-ascent/descent poses
-      for(auto handle : _vizHandle) {
-        if(handle != VizManager::INVALID_HANDLE) {
-          VizManager::getInstance()->EraseVizObject(handle);
-          handle = VizManager::INVALID_HANDLE;
-        }
+      // Erase the ramp
+      if(_vizHandle != VizManager::INVALID_HANDLE) {
+        VizManager::getInstance()->EraseVizObject(_vizHandle);
+        _vizHandle = VizManager::INVALID_HANDLE;
       }
       
-      // Erase the pre-dock poses
-      DockableObject::EraseVisualization();
+      // Erase the pre-action poses
+      ActionableObject::EraseVisualization();
     }
     
     
@@ -211,7 +226,7 @@ namespace Anki {
       return boundingQuad;
     } // GetBoundingQuadXY()
     
-   
+   /*
     void Ramp::GetPreDockPoses(const float distance_mm,
                                std::vector<PoseMarkerPair_t>& poseMarkerPairs,
                                const Vision::Marker::Code withCode) const
@@ -240,6 +255,7 @@ namespace Anki {
     {
       return Ramp::PreDockDistance;
     }
+    */
     
     // TODO: Make these dependent on ramp type/size?
     Point3f Ramp::GetSameDistanceTolerance() const {
@@ -254,8 +270,8 @@ namespace Anki {
     ObjectType Ramp::GetTypeByName(const std::string& name)
     {
       // TODO: Support other types/names
-      if(name == "BASIC_RAMP") {
-        return Ramp::Type::BASIC_RAMP;
+      if(name == Ramp::Type.GetName()) {
+        return Ramp::Type;
       } else {
         assert(false);
       }

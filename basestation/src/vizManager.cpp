@@ -39,6 +39,7 @@ namespace Anki {
         isInitialized_ = false;
       }
     
+      /*
       // Define colors
       DefineColor(VIZ_COLOR_EXECUTED_PATH,              1.0, 0.0, 0.0, 1.0);
       DefineColor(VIZ_COLOR_PREDOCKPOSE,                1.0, 0.0, 0.0, 0.75);
@@ -57,6 +58,7 @@ namespace Anki {
       DefineColor(VIZ_COLOR_DARKGREEN, 0.0, 0.5, 0.0, 1.0);
       DefineColor(VIZ_COLOR_ORANGE,    1.0, 0.5, 0.0, 1.0);
       DefineColor(VIZ_COLOR_OFFWHITE,  0.9, 0.8, 0.8, 1.0);
+      */
       
       isInitialized_ = true;
       
@@ -138,7 +140,7 @@ namespace Anki {
     
     VizManager::Handle_t VizManager::DrawRobot(const u32 robotID,
                                                const Pose3d &pose,
-                                               const u32 colorID)
+                                               const ColorRGBA& color)
     {
       if(robotID >= VizObjectMaxID[VIZ_OBJECT_ROBOT]) {
         PRINT_NAMED_ERROR("VizManager.DrawRobot.IDtooLarge",
@@ -153,7 +155,7 @@ namespace Anki {
                  VIZ_OBJECT_ROBOT,
                  dims,
                  pose,
-                 colorID);
+                 color);
       
       return vizID;
     }
@@ -161,7 +163,7 @@ namespace Anki {
     VizManager::Handle_t VizManager::DrawCuboid(const u32 blockID,
                                                 const Point3f &size,
                                                 const Pose3d &pose,
-                                                const u32 colorID)
+                                                const ColorRGBA& color)
     {
       if(blockID >= VizObjectMaxID[VIZ_OBJECT_CUBOID]) {
         PRINT_NAMED_ERROR("VizManager.DrawCuboid.IDtooLarge",
@@ -175,13 +177,13 @@ namespace Anki {
                  VIZ_OBJECT_CUBOID,
                  size,
                  pose,
-                 colorID);
+                 color);
       return vizID;
     }
     
     VizManager::Handle_t VizManager::DrawPreDockPose(const u32 preDockPoseID,
                                                      const Pose3d &pose,
-                                                     const u32 colorID)
+                                                     const ColorRGBA& color)
     {
       if(preDockPoseID >= VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]) {
         PRINT_NAMED_ERROR("VizManager.DrawPreDockPose.IDtooLarge",
@@ -196,7 +198,7 @@ namespace Anki {
                  VIZ_OBJECT_PREDOCKPOSE,
                  dims,
                  pose,
-                 colorID);
+                 color);
       
       return vizID;
     }
@@ -207,7 +209,7 @@ namespace Anki {
                                               const f32 width,
                                               const f32 height,
                                               const Pose3d& pose,
-                                              const u32 colorID)
+                                              const ColorRGBA& color)
     {
       if(rampID >= VizObjectMaxID[VIZ_OBJECT_RAMP]) {
         PRINT_NAMED_ERROR("VizManager.DrawRamp.IDtooLarge",
@@ -224,7 +226,7 @@ namespace Anki {
       
       const u32 vizID = VizObjectBaseID[VIZ_OBJECT_RAMP] + rampID;
       DrawObject(vizID, VIZ_OBJECT_RAMP,
-                 {{platformLength, width, height}}, pose, colorID, params);
+                 {{platformLength, width, height}}, pose, color, params);
       
       return vizID;
     }
@@ -261,7 +263,7 @@ namespace Anki {
                                 const u32 objectTypeID,
                                 const Anki::Point3f &size_mm,
                                 const Anki::Pose3d &pose,
-                                const u32 colorID,
+                                const ColorRGBA& color,
                                 const f32* params)
     {
       VizObject v;
@@ -283,7 +285,7 @@ namespace Anki {
       v.rot_axis_y = pose.GetRotationAxis().y();
       v.rot_axis_z = pose.GetRotationAxis().z();
       
-      v.color = colorID;
+      v.color = u32(color);
       
       if(params != nullptr) {
         for(s32 i=0; i<4; ++i) {
@@ -327,7 +329,7 @@ namespace Anki {
     
     void VizManager::DrawPath(const u32 pathID,
                               const Planning::Path& p,
-                              const u32 colorID)
+                              const ColorRGBA& color)
     {
       ErasePath(pathID);
       printf("drawing path %u of length %hhu\n", pathID, p.GetNumSegments());
@@ -352,7 +354,7 @@ namespace Anki {
         }
       }
       
-      SetPathColor(pathID, colorID);
+      SetPathColor(pathID, color);
     }
     
     
@@ -409,11 +411,11 @@ namespace Anki {
       SendMessage( GET_MESSAGE_ID(VizErasePath), &v );
     }
     
-    void VizManager::SetPathColor(const u32 pathID, const u32 colorID)
+    void VizManager::SetPathColor(const u32 pathID, const ColorRGBA& color)
     {
       VizSetPathColor v;
       v.pathID = pathID;
-      v.colorID = colorID;
+      v.colorID = u32(color);
       
       SendMessage( GET_MESSAGE_ID(VizSetPathColor), &v );
     }
@@ -457,11 +459,11 @@ namespace Anki {
     
     // =============== Text methods ==================
 
-    void VizManager::SetText(const u32 labelID, const u32 colorID, const char* format, ...)
+    void VizManager::SetText(const u32 labelID, const ColorRGBA& color, const char* format, ...)
     {
       VizSetLabel v;
       v.labelID = labelID;
-      v.colorID = colorID;
+      v.colorID = u32(color);
       
       va_list argptr;
       va_start(argptr, format);
@@ -473,7 +475,7 @@ namespace Anki {
     
     
     // ================== Color methods ====================
-    
+    /*
     // Sets the index colorID to correspond to the specified color vector
     void VizManager::DefineColor(const u32 colorID,
                                  const f32 red, const f32 green, const f32 blue,
@@ -488,7 +490,7 @@ namespace Anki {
       
       SendMessage( GET_MESSAGE_ID(VizDefineColor), &v );
     }
-    
+    */
     
     // ============== Misc. Debug methods =================
     void VizManager::SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle)

@@ -1,0 +1,130 @@
+#VRML_SIM V7.3.0 utf8
+
+PROTO Bridge [
+  field SFString name "Bridge"
+  field SFFloat width  .062
+  field SFFloat height .005
+  field SFString type "Long" 
+  field SFFloat guideHeight .01
+  field SFFloat guideWidth .002
+  field SFFloat markerSize .025
+  field SFVec3f translation 0 0 0
+  field SFRotation rotation 0 0 1 0
+  
+  field SFFloat density 250
+  field SFColor color .2 .2 .2
+  field SFBool  useWhiteMarkerBackgrounds TRUE
+]
+{
+Solid {
+
+  # Set up fields based on Long or Short type bridge
+  %{    
+    if fields.type == "Long" then
+      length = 0.300 
+      markerURL = "symbols/bridgeSun"
+    elseif fields.type == "Short" then
+      length = 0.200 
+      markerURL = "symbols/bridgeSun"
+    else 
+      error("Bridge type must be Long or Short.")
+    end
+    
+    leftMarkerURL   = markerURL .. "Left.png"
+    rightMarkerURL  = markerURL .. "Right.png"
+    middleMarkerURL = markerURL .. "Middle.png"
+  }%
+
+  name IS name
+  model IS type
+  translation IS translation
+  rotation IS rotation
+  contactMaterial "cmat_floor"
+  children [
+        
+    Transform {
+      rotation 0 0 1 -1.5708
+      translation %{=-length/2 + fields.markerSize}% 0 %{=fields.height}%
+      children [
+        VisionMarker {
+          rotation 1 0 0 1.5708
+          image "%{=leftMarkerURL}%"
+        }
+      ]
+    }
+    
+    Transform {
+      rotation 0 0 1 1.5708
+      translation %{=length/2 - fields.markerSize}% 0 %{=fields.height}%
+      children [
+        VisionMarker {
+          rotation 1 0 0 1.5708      
+          image "%{=rightMarkerURL}%"
+        }
+      ]
+    }
+    
+    VisionMarker {
+      rotation 1 0 0 1.5708
+      translation 0 0 %{=fields.height}%
+      image "%{=middleMarkerURL}%"
+    }
+    
+    DEF BridgeShape Group {
+      children [
+        Transform {
+          translation 0 0 %{=fields.height/2}%
+          children [
+            Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor IS color
+                }
+              }
+              geometry Box {
+                size %{=length}% %{=fields.width}% %{=fields.height}%
+              }
+            }
+          ]
+        }
+                
+        Transform {
+          translation 0 %{=-fields.width/2 + fields.guideWidth/2}% %{=fields.guideHeight/2 + fields.height}%
+          children [
+            DEF WheelGuide Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor IS color
+                }
+              }
+              geometry Box {
+                size %{=length}%   %{=fields.guideWidth}%  %{=fields.guideHeight}%
+              }
+            }
+          ]
+        }
+        
+        Transform {
+          translation 0 %{=fields.width/2 - fields.guideWidth/2}% %{=fields.guideHeight/2 + fields.height}%
+          children [
+            USE WheelGuide
+          ]
+        }
+        
+      ] # BridgeShape Children
+    } # BridgeShape Group
+    
+
+  ] # Block Children
+  
+  boundingObject USE BridgeShape
+  
+  physics Physics {
+    density IS density
+  }
+} # Solid (the actual bridge)
+
+  
+} # PROTO
+
+

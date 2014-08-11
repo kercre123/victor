@@ -25,9 +25,11 @@ namespace Anki {
   namespace Cozmo {
     
     // Instantiate static const MatPiece types here:
-    const MatPiece::Type MatPiece::Type::INVALID("INVALID");
     const MatPiece::Type MatPiece::Type::LETTERS_4x4("LETTERS_4x4");
     const MatPiece::Type MatPiece::Type::LARGE_PLATFORM("LARGE_PLATFORM");
+    const MatPiece::Type MatPiece::Type::LONG_BRIDGE("LONG_BRIDGE");
+    const MatPiece::Type MatPiece::Type::SHORT_BRIDGE("SHORT_BRIDGE");
+    
     
     // MatPiece has no rotation ambiguities but we still need to define this
     // static const here to instatiate an empty list.
@@ -45,12 +47,12 @@ namespace Anki {
     }};
     
     
-    MatPiece::MatPiece(ObjectType type, bool isFirstPiece)
-    : Vision::ObservableObject(type)
+    MatPiece::MatPiece(Type type)
+    : _type(type)
     {
       
       // TODO: Use a MatTypeLUT and MatDefinitions file, like we do with blocks
-      if(Type::LETTERS_4x4 == type) {
+      if(Type::LETTERS_4x4 == _type) {
         
         _size = {1000.f, 1000.f, 2.5f};
         _isMoveable = false;
@@ -59,7 +61,7 @@ namespace Anki {
 #       include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"
      
       }
-      else if(Type::LARGE_PLATFORM == type) {
+      else if(Type::LARGE_PLATFORM == _type) {
         
         _size = {240.f, 240.f, 44.f};
         _isMoveable = true;
@@ -105,6 +107,36 @@ namespace Anki {
                   Pose3d(-M_PI_2, X_AXIS_3D, { length*.25f,  width*.25f, height*.5f}),
                   markerSize_top);
       }
+      else if(Type::LONG_BRIDGE == _type) {
+        _size = {300.f, 62.f, 3.f};
+        
+        const f32 markerSize = 25.f;
+        
+        // Add markers on either end with ENTRY actions
+        const Vision::KnownMarker* marker = nullptr;
+        marker  = &AddMarker(Vision::MARKER_BRIDGESUNLEFT,   {-_size.x()*.5f+markerSize, 0.f, _size.z()}, markerSize);
+        AddPreActionPose(PreActionPose::ENTRY, marker, Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -100.f}}));
+        
+        marker = &AddMarker(Vision::MARKER_BRIDGESUNRIGHT,  { _size.x()*.5f-markerSize, 0.f, _size.z()}, markerSize);
+        AddPreActionPose(PreActionPose::ENTRY, marker, Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -100.f}}));
+        
+        AddMarker(Vision::MARKER_BRIDGESUNMIDDLE, {0.f, 0.f, _size.z()}, markerSize);
+      }
+      else if(Type::SHORT_BRIDGE == _type) {
+        _size = {200.f, 62.f, 3.f};
+        
+        const f32 markerSize = 25.f;
+        
+        // Add markers on either end with ENTRY actions
+        const Vision::KnownMarker* marker = nullptr;
+        marker = &AddMarker(Vision::MARKER_BRIDGEMOONLEFT,   {-_size.x()*.5f+markerSize, 0.f, _size.z()}, markerSize);
+        AddPreActionPose(PreActionPose::ENTRY, marker, Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -100.f}}));
+        
+        marker = &AddMarker(Vision::MARKER_BRIDGEMOONRIGHT,  { _size.x()*.5f-markerSize, 0.f, _size.z()}, markerSize);
+        AddPreActionPose(PreActionPose::ENTRY, marker, Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -100.f}}));
+        
+        AddMarker(Vision::MARKER_BRIDGEMOONMIDDLE, {0.f, 0.f, _size.z()}, markerSize);
+      }
       else {
         PRINT_NAMED_ERROR("MatPiece.UnrecognizedType",
                           "Trying to instantiate a MatPiece with an unknown Type = %d.\n", int(type));
@@ -138,10 +170,10 @@ namespace Anki {
       return MatPiece::_rotationAmbiguities;
     }
     
-    void MatPiece::Visualize()
+    void MatPiece::Visualize(const ColorRGBA& color)
     {
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();
-      _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, VIZ_COLOR_DEFAULT);
+      _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }
     
     void MatPiece::EraseVisualization()
@@ -155,31 +187,10 @@ namespace Anki {
     
     Quad2f MatPiece::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
-      const RotationMatrix3d& R = atPose.GetRotationMatrix();
-      
       Point3f paddedSize(_size);
       paddedSize += 2.f*padding_mm;
-      
-      std::vector<Point2f> points;
-      points.reserve(MatPiece::NUM_CORNERS);
-      for(auto corner : MatPiece::_canonicalCorners) {
-        // Scale canonical point to correct (padded) size
-        corner *= paddedSize;
-        
-        // Rotate to given pose
-        corner = R*corner;
-        
-        // Project onto XY plane, i.e. just drop the Z coordinate
-        points.emplace_back(corner.x(), corner.y());
-      }
-      
-      Quad2f boundingQuad = GetBoundingQuad(points);
-      
-      // Re-center
-      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
-      boundingQuad += center;
-      
-      return boundingQuad;
+     
+      return ObservableObject::GetBoundingQuadXY_Helper(atPose, paddedSize, MatPiece::_canonicalCorners);
     }
     
     
@@ -193,7 +204,7 @@ namespace Anki {
       } else {
         PRINT_NAMED_ERROR("MatPiece.NoTypeForName",
                           "No MatPiece Type registered for name '%s'.\n", name.c_str());
-        return MatPiece::Type::INVALID;
+        return ObjectType::GetInvalidType();
       }
     }
     
@@ -235,8 +246,8 @@ namespace Anki {
     
     f32 MatPiece::GetDrivingSurfaceHeight() const
     {
-      Pose3d poseWrtOrigin = GetPose().GetWithRespectToOrigin();
-      return _size.z()*.5f + poseWrtOrigin.GetTranslation().z();
+      //Pose3d poseWrtOrigin = GetPose().GetWithRespectToOrigin();
+      return _size.z()*.5f;// + poseWrtOrigin.GetTranslation().z();
     } // GetDrivingSurfaceHeight()
     
   } // namespace Cozmo

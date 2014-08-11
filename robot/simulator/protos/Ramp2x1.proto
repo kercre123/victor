@@ -214,14 +214,14 @@ Solid {
       geometry IndexedFaceSet {
         coord Coordinate {
           point [
-            %{=-fields.platformLength/2+fields.trackWidth}%     %{=-fields.width/2+fields.trackWidth}%  %{=-fields.height/2}%
-            %{= fields.rampLength + fields.platformLength/2}%   %{=-fields.width/2+fields.trackWidth}%  %{=-fields.height/2}%
-            %{= fields.rampLength + fields.platformLength/2}%   %{= fields.width/2-fields.trackWidth}%  %{=-fields.height/2}%
-            %{=-fields.platformLength/2+fields.trackWidth}%     %{= fields.width/2-fields.trackWidth}%  %{=-fields.height/2}%
-            %{= fields.platformLength/2}%                       %{=-fields.width/2+fields.trackWidth}%  %{= fields.height/2}%
-            %{= fields.platformLength/2}%                       %{= fields.width/2-fields.trackWidth}%  %{= fields.height/2}%
-            %{=-fields.platformLength/2+fields.trackWidth}%     %{=-fields.width/2+fields.trackWidth}%  %{= fields.height/2}%
-            %{=-fields.platformLength/2+fields.trackWidth}%     %{= fields.width/2-fields.trackWidth}%  %{= fields.height/2}%
+            %{=-fields.platformLength/2+fields.trackWidth}%     %{=-fields.width/2+fields.trackWidth+fields.guideWidth}%  %{=-fields.height/2}%
+            %{= fields.rampLength + fields.platformLength/2}%   %{=-fields.width/2+fields.trackWidth+fields.guideWidth}%  %{=-fields.height/2}%
+            %{= fields.rampLength + fields.platformLength/2}%   %{= fields.width/2-fields.trackWidth-fields.guideWidth}%  %{=-fields.height/2}%
+            %{=-fields.platformLength/2+fields.trackWidth}%     %{= fields.width/2-fields.trackWidth-fields.guideWidth}%  %{=-fields.height/2}%
+            %{= fields.platformLength/2}%                       %{=-fields.width/2+fields.trackWidth+fields.guideWidth}%  %{= fields.height/2}%
+            %{= fields.platformLength/2}%                       %{= fields.width/2-fields.trackWidth-fields.guideWidth}%  %{= fields.height/2}%
+            %{=-fields.platformLength/2+fields.trackWidth}%     %{=-fields.width/2+fields.trackWidth+fields.guideWidth}%  %{= fields.height/2}%
+            %{=-fields.platformLength/2+fields.trackWidth}%     %{= fields.width/2-fields.trackWidth-fields.guideWidth}%  %{= fields.height/2}%
           ]
         }
         coordIndex [
