@@ -43,7 +43,10 @@ namespace Anki {
         BACKOUT,
         LOWER_LIFT,
         TRAVERSE_RAMP,
-        TRAVERSE_RAMP_DOWN
+        TRAVERSE_RAMP_DOWN,
+        ENTER_BRIDGE,
+        TRAVERSE_BRIDGE,
+        LEAVE_BRIDGE
       } Mode;
       
       Result Init();
@@ -59,13 +62,15 @@ namespace Anki {
       
       // Picks up the specified block, or places the block in hand on top of the specified block
       // depending on the specified action.
-      void DockToBlock(const Vision::MarkerType blockID,
+      void DockToBlock(const Vision::MarkerType markerType,
+                       const Vision::MarkerType markerType2,
                        const f32 markerWidth_mm,
                        const DockAction_t action);
       
       // Same as above except docking will only occur if the specified marker is found
       // at the specified image coordinates within pixelSearchRadius
-      void DockToBlock(const Vision::MarkerType blockMarker,
+      void DockToBlock(const Vision::MarkerType markerType,
+                       const Vision::MarkerType markerType2,
                        const f32 markerWidth_mm,
                        const Embedded::Point2f& markerCenter,
                        const f32 pixelSearchRadius,

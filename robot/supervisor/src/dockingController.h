@@ -78,7 +78,14 @@ namespace Anki {
       // Keep lift crossbar just below the camera's field of view.
       // Required for docking to high blocks.
       void TrackCamWithLift(bool on);
-      
+
+      // Start tracking the specified marker but don't try to dock with it
+      void StartTrackingOnly(const Vision::MarkerType& trackingMarker,
+                             const f32 markerWidth_mm);
+
+      // If a marker pose was received from VisionSystem,
+      // returns true along with that pose.
+      bool GetLastMarkerPose(f32 &x, f32 &y, f32 &angle);
       
     } // namespace DockingController
   } // namespace Cozmo

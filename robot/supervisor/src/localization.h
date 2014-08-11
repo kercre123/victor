@@ -48,6 +48,9 @@ namespace Anki {
       // i.e. Can't detect when manually driving up ramp.
       bool IsOnRamp();
       
+      // Returns distance between the current pose and the given xy coordinates
+      f32 GetDistTo(const f32 x, const f32 y);
+      
     } // Localization
   } // Cozmo
 } // Anki

@@ -41,18 +41,27 @@ namespace Anki {
         const f32 ON_RAMP_ANGLE_THRESH = 0.15;
         const f32 OFF_RAMP_ANGLE_THRESH = 0.05;
         
+        const f32 BRIDGE_TRAVERSE_SPEED_MMPS = 40;
+        
         const f32 LOW_DOCKING_HEAD_ANGLE  = DEG_TO_RAD_F32(-15);
         const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(15);
 
         Mode mode_ = IDLE;
         
         DockAction_t action_ = DA_PICKUP_LOW;
+
+        Embedded::Point2f ptStamp_;
+        Radians angleStamp_;
         
         Vision::MarkerType dockToMarker_;
+        Vision::MarkerType dockToMarker2_;  // 2nd marker used for bridge crossing only
         f32 markerWidth_ = 0;
         f32 dockOffsetDistX_ = 0;
         f32 dockOffsetDistY_ = 0;
         f32 dockOffsetAng_ = 0;
+        
+        // Last seen marker pose used for bridge crossing
+        f32 relMarkerX_, relMarkerY_, relMarkerAng_;
         
         // Expected location of the desired dock marker in the image.
         // If not specified, marker may be located anywhere in the image.
@@ -149,7 +158,11 @@ namespace Anki {
         mode_ = IDLE;
         DockingController::ResetDocker();
       }
-      
+
+      void UpdatePoseSnapshot()
+      {
+        Localization::GetCurrentMatPose(ptStamp_.x, ptStamp_.y, angleStamp_);
+      }
       
       Result SendBlockPickUpMessage(const bool success)
       {
@@ -347,6 +360,10 @@ namespace Anki {
                 HeadController::SetDesiredAngle(MIN_HEAD_ANGLE);
                 dockOffsetDistX_ = 30; // can't wait until we are actually on top of the marker to say we're done!
                 break;
+              case DA_CROSS_BRIDGE:
+                HeadController::SetDesiredAngle(MIN_HEAD_ANGLE);
+                dockOffsetDistX_ = BRIDGE_ALIGNED_MARKER_DISTANCE;
+                break;
               default:
                 PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
                 mode_ = IDLE;
@@ -369,7 +386,7 @@ namespace Anki {
                 // When we are "docking" with a ramp, we don't want to worry about
                 // the X angle being large (since we _expect_ it to be large, since
                 // the markers are facing upward).
-                const bool checkAngleX = (action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND) ? false : true;
+                const bool checkAngleX = !(action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND || action_ == DA_CROSS_BRIDGE);
                 
                 if (pixelSearchRadius_ < 0) {
                   DockingController::StartDocking(dockToMarker_,
@@ -410,25 +427,35 @@ namespace Anki {
                 
                 // Docking is complete
                 
+                // Take snapshot of pose
+                UpdatePoseSnapshot();
+                
                 if(action_ == DA_RAMP_DESCEND) {
-#if(DEBUG_PAP_CONTROLLER)
+                  #if(DEBUG_PAP_CONTROLLER)
                   PRINT("PAP: TRAVERSE_RAMP_DOWN\n");
-#endif
+                  #endif
                   // Start driving forward (blindly) -- wheel guides!
                   SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
                   mode_ = TRAVERSE_RAMP_DOWN;
+                } else if (action_ == DA_CROSS_BRIDGE) {
+                  #if(DEBUG_PAP_CONTROLLER)
+                  PRINT("PAP: ENTER_BRIDGE\n");
+                  #endif
+                  // Start driving forward (blindly) -- wheel guides!
+                  SteeringController::ExecuteDirectDrive(BRIDGE_TRAVERSE_SPEED_MMPS, BRIDGE_TRAVERSE_SPEED_MMPS);
+                  mode_ = ENTER_BRIDGE;
                 } else {
-#if(DEBUG_PAP_CONTROLLER)
+                  #if(DEBUG_PAP_CONTROLLER)
                   PRINT("PAP: SET_LIFT_POSTDOCK\n");
-#endif
+                  #endif
                   mode_ = SET_LIFT_POSTDOCK;
                 }
               } else {
                 // Block is not being tracked.
                 // Probably not visible.
-#if(DEBUG_PAP_CONTROLLER)
+                #if(DEBUG_PAP_CONTROLLER)
                 PRINT("WARN (PickAndPlaceController): Could not track block's marker\n");
-#endif
+                #endif
                 // TODO: Send BTLE message notifying failure
                 mode_ = IDLE;
               }
@@ -686,6 +713,49 @@ namespace Anki {
             }
             break;
             
+          case ENTER_BRIDGE:
+            // Keep driving until the marker on the other side of the bridge is seen.
+            if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > BRIDGE_ALIGNED_MARKER_DISTANCE) {
+              // Set vision marker to look for marker
+              DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
+              UpdatePoseSnapshot();
+              mode_ = TRAVERSE_BRIDGE;
+              #if(DEBUG_PAP_CONTROLLER)
+              PRINT("TRAVERSE_BRIDGE\n");
+              #endif
+            }
+            break;
+          case TRAVERSE_BRIDGE:
+            if (DockingController::IsBusy()) {
+              if (DockingController::GetLastMarkerPose(relMarkerX_, relMarkerY_, relMarkerAng_) && relMarkerX_ < 100.f) {
+                // We're tracking the end marker.
+                // Keep driving until we're off.
+                UpdatePoseSnapshot();
+                mode_ = LEAVE_BRIDGE;
+                #if(DEBUG_PAP_CONTROLLER)
+                PRINT("LEAVING_BRIDGE: relMarkerX = %f\n", relMarkerX_);
+                #endif
+              }
+            } else {
+              // Marker tracking timedout. Start it again.
+              DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
+              #if(DEBUG_PAP_CONTROLLER)
+              PRINT("TRAVERSE_BRIDGE: Restarting tracking\n");
+              #endif
+            }
+            break;
+          case LEAVE_BRIDGE:
+            if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > relMarkerX_ + MARKER_TO_OFF_BRIDGE_POSE_DIST) {
+              SteeringController::ExecuteDirectDrive(0, 0);
+              #if(DEBUG_PAP_CONTROLLER)
+              PRINT("PAP: IDLE (from TRAVERSE_BRIDGE)\n");
+              #endif
+              mode_ = IDLE;
+              lastActionSucceeded_ = true;
+              Localization::SetOnRamp(false);
+            }
+            break;
+            
           default:
             mode_ = IDLE;
             PRINT("Reached default case in DockingController "
@@ -712,12 +782,13 @@ namespace Anki {
       }
       
       
-      void DockToBlock(const Vision::MarkerType blockMarker,
+      void DockToBlock(const Vision::MarkerType markerType,
+                       const Vision::MarkerType markerType2,
                        const f32 markerWidth_mm,
                        const DockAction_t action)
       {
 #if(DEBUG_PAP_CONTROLLER)
-        PRINT("PAP: DOCK TO BLOCK %d (action %d)\n", blockMarker, action);
+        PRINT("PAP: DOCK TO BLOCK %d (action %d)\n", markerType, action);
 #endif
 
         if (action == DA_PLACE_LOW) {
@@ -726,7 +797,8 @@ namespace Anki {
         }
         
         action_ = action;
-        dockToMarker_ = blockMarker;
+        dockToMarker_ = markerType;
+        dockToMarker2_ = markerType2;
         markerWidth_  = markerWidth_mm;
         
         markerCenter_.x = -1.f;
@@ -741,13 +813,14 @@ namespace Anki {
         lastActionSucceeded_ = false;
       }
       
-      void DockToBlock(const Vision::MarkerType blockMarker,
+      void DockToBlock(const Vision::MarkerType markerType,
+                       const Vision::MarkerType markerType2,
                        const f32 markerWidth_mm,
                        const Embedded::Point2f& markerCenter,
                        const f32 pixelSearchRadius,
                        const DockAction_t action)
       {
-        DockToBlock(blockMarker, markerWidth_mm, action);
+        DockToBlock(markerType, markerType2, markerWidth_mm, action);
         
         markerCenter_ = markerCenter;
         pixelSearchRadius_ = pixelSearchRadius;
