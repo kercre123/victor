@@ -320,60 +320,10 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
   
 
   /////////// Update visualization ////////////
-  /*
-  { // Update object-of-Interest display
-    
-    // Get selected block of interest from Behavior manager
-    static ObjectID prev_boi;      // Previous block of interest
-    static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
-    // TODO: store previous block's color and restore it when unselecting
-    
-    // Draw current block of interest
-    const ObjectID boi = behaviorMgr_.GetObjectOfInterest();
-    
-    ActionableObject* actionObject = dynamic_cast<ActionableObject*>(blockWorld_.GetObjectByID(boi));
-    if(actionObject != nullptr) {
-
-      // Get predock poses
-      std::vector<Block::PoseMarkerPair_t> actionPoses;
-      actionObject->GetCurrentPreActionPoses(actionPoses);
-      if(!actionPoses.empty())
-      {
-        // Erase previous predock pose marker for previous object of interest
-        if (prev_boi != boi || actionPoses.size() != prevNumPreDockPoses) {
-          PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n",
-                     boi.GetValue(), prev_boi.GetValue(), (u32)actionPoses.size(), prevNumPreDockPoses);
-          VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
-          
-          // Return previous selected block to original color (necessary in the
-          // case that this block isn't currently being observed, meaning its
-          // visualization won't have updated))
-          ActionableObject* prevBlock = dynamic_cast<ActionableObject*>(blockWorld_.GetObjectByID(prev_boi));
-          if(prevBlock != nullptr && prevBlock->GetLastObservedTime() < BaseStationTimer::getInstance()->GetCurrentTimeStamp()) {
-            prevBlock->Visualize();
-          }
-          
-          prev_boi = boi;
-          prevNumPreDockPoses = actionPoses.size();
-        }
-        
-        // Draw cuboid for current selection, with predock poses
-        actionObject->VisualizeWithPreActionPoses();
-      } // if there are any action poses
-      
-    } else {
-      // block == nullptr (no longer exists, delete its predock poses)
-      VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
-    }
-    
-  } // Update Block-of-Interest display
-   */
   
-  { // Draw All Objects
+  // Draw All Objects by calling their Visualize() methods.
+  blockWorld_.DrawAllObjects();
     
-    blockWorld_.DrawAllObjects();
-    
-  } // Draw All Objects
   
   // Draw all robot poses
   // TODO: Only send when pose has changed?

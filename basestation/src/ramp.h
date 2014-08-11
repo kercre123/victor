@@ -22,7 +22,7 @@
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
-#include "dockableObject.h"
+#include "actionableObject.h"
 #include "vizManager.h"
 
 namespace Anki {

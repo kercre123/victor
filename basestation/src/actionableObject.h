@@ -1,21 +1,21 @@
 /**
- * File: dockableObject.h
+ * File: actionableObject.h
  *
  * Author: Andrew Stein
  * Date:   7/9/2014
  *
- * Description: Defines a "Dockable" Object, which is a subclass of an 
- *              ObservableObject that can also be docked with.
+ * Description: Defines an "Actionable" Object, which is a subclass of an
+ *              ObservableObject that can also be interacted with or acted upon.
  *              It extends the (coretech) ObservableObject to have a notion of
- *              docking for Cozmo's purposes, by offering, for example, the 
- *              ability to request pre-dock poses.
+ *              docking and entry points, for example, useful for Cozmo's.
+ *              These are represented by different types of "pre-action" poses.
  *
  *
  * Copyright: Anki, Inc. 2014
  **/
 
-#ifndef ANKI_COZMO_BASESTATION_DOCKABLE_OBJECT_H
-#define ANKI_COZMO_BASESTATION_DOCKABLE_OBJECT_H
+#ifndef ANKI_COZMO_BASESTATION_ACTIONABLE_OBJECT_H
+#define ANKI_COZMO_BASESTATION_ACTIONABLE_OBJECT_H
 
 #include "anki/vision/basestation/observableObject.h"
 
@@ -103,14 +103,15 @@ namespace Anki {
                                     const std::set<PreActionPose::ActionType>& withAction = std::set<PreActionPose::ActionType>(),
                                     const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>());
       
-      // If the object is selected, draws it using the "selected" color.
-      // Otherwise draws it in the object's defined color.
+      // If the object is selected, draws it using the "selected" color, and
+      // draws the pre-action poses as well (using method below).
+      // Otherwise draws it in the object's defined color, with no pre-action poses.
       virtual void Visualize() override;
       virtual void Visualize(const ColorRGBA& color) = 0; 
       
-      // Calls object's (virtual) Visualize() function to draw the main object
-      // and then draws pre-action poses as well.
-      void VisualizeWithPreActionPoses();
+      // Draws just the pre-action poses. Called automatically by Visualize()
+      // when the object is marked as selected. (See methods above.)
+      void VisualizePreActionPoses();
       
       // Just erases pre-action poses (if any were drawn). Subclasses should
       // call this from their virtual EraseVisualization() implementations.
@@ -145,6 +146,11 @@ namespace Anki {
       
     }; // class ActionableObject
     
+    
+#if 0
+#pragma mark --- Inline Implementations ---
+#endif
+    
     inline bool ActionableObject::HasPreActionPoses() const {
       return !_preActionPoses.empty();
     }
@@ -165,63 +171,9 @@ namespace Anki {
       _isSelected = tf;
     }
     
-    //////////
-
-#if 0
-    class DockableObject : public Vision::ObservableObject
-    {
-    public:
-      
-      DockableObject();
-      
-      // Get possible poses to start docking/tracking procedure. These will be
-      // a point a given distance away from each vertical face that has the
-      // specified code, in the direction orthogonal to that face.  The points
-      // will be w.r.t. same parent as the object, with the Z coordinate at the
-      // height of the center of the object. The poses will be paired with
-      // references to the corresponding marker. Optionally, only poses/markers
-      // with the specified code can be returned.
-      using PoseMarkerPair_t = std::pair<Pose3d,const Vision::KnownMarker&>;
-      virtual void GetPreDockPoses(const float distance_mm,
-                                   std::vector<PoseMarkerPair_t>& poseMarkerPairs,
-                                   const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const = 0;
-      
-      // Keep track of whether this object (has been docked with and) is being
-      // carried
-      bool IsBeingCarried() const;
-      void SetIsBeingCarried(const bool tf);
-
-      // DockableObjects will draw their pre-dock poses
-      virtual void Visualize() = 0;
-      virtual void Visualize(VIZ_COLOR_ID color) = 0;
-      virtual void Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance);
-      virtual void EraseVisualization() override;
-      virtual f32  GetDefaultPreDockDistance() const = 0;
-      
-    protected:
-      
-      bool _isBeingCarried;
-      
-      bool GetPreDockPose(const Point3f& canonicalPoint,
-                          const float distance_mm,
-                          Pose3d& preDockPose) const;
-      
-      std::vector<VizManager::Handle_t> _vizPreDockPoseHandles;
-      
-    }; // class DockableObject
-    
-    
-    
-    inline bool DockableObject::IsBeingCarried() const {
-      return _isBeingCarried;
-    }
-    
-    inline void DockableObject::SetIsBeingCarried(const bool tf) {
-      _isBeingCarried = tf;
-    }
-#endif
+  
     
   } // namespace Cozmo
 } // namespace Anki
 
-#endif // ANKI_COZMO_BASESTATION_DOCKABLE_OBJECT_H
+#endif // ANKI_COZMO_BASESTATION_ACTIONABLE_OBJECT_H

@@ -18,7 +18,7 @@
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
-#include "dockableObject.h"
+#include "actionableObject.h"
 #include "vizManager.h"
 
 namespace Anki {
@@ -38,7 +38,7 @@ namespace Anki {
     //
     //   Representation of a physical Block in the world.
     //
-    class Block : public ActionableObject //Base<Block>
+    class Block : public ActionableObject 
     {
     public:
       

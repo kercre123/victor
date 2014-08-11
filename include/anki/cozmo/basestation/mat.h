@@ -7,7 +7,8 @@
  * Description: Defines a MatPiece object, which is a "mat" that Cozmo drives 
  *              around on with VisionMarkers at known locations for localization.
  *
- *              MatPiece inherits from the generic Vision::ObservableObject.
+ *              MatPiece inherits from ActionableObject since mats may have
+ *              action poses for "entering" the mat, for example.
  *
  *
  * Copyright: Anki, Inc. 2014
@@ -16,7 +17,7 @@
 #ifndef __Products_Cozmo__Mat__
 #define __Products_Cozmo__Mat__
 
-#include "dockableObject.h"
+#include "actionableObject.h"
 
 #include "vizManager.h"
 
