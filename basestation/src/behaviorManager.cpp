@@ -75,10 +75,10 @@ namespace Anki {
           timesIdle_ = 0;
           SoundManager::getInstance()->Play(SOUND_DEMO_START);
           break;
-        case BM_TraverseRamp:
-          CoreTechPrint("Starting TraverseRamp behavior\n");
+        case BM_TraverseObject:
+          CoreTechPrint("Starting TraverseObject behavior\n");
           nextState_ = WAITING_FOR_DOCK_BLOCK;
-          updateFcn_ = &BehaviorManager::Update_TraverseRamp;
+          updateFcn_ = &BehaviorManager::Update_TraverseObject;
           break;
         default:
           PRINT_NAMED_ERROR("BehaviorManager.InvalidMode", "Invalid behavior mode");
@@ -343,9 +343,9 @@ namespace Anki {
       
     } // Update_PickAndPlaceBlock()
     
-    void BehaviorManager::Update_TraverseRamp()
+    void BehaviorManager::Update_TraverseObject()
     {
-      robot_->ExecuteRampingSequence(objectIDofInterest_);
+      robot_->ExecuteTraversalSequence(objectIDofInterest_);
       StartMode(BM_None);
     }
     

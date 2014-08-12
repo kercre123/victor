@@ -33,7 +33,7 @@ namespace Anki {
       BM_None,
       BM_PickAndPlace,
       BM_June2014DiceDemo,
-      BM_TraverseRamp
+      BM_TraverseObject // for ramps or bridges
     } BehaviorMode;
     
     class BehaviorManager
@@ -127,7 +127,7 @@ namespace Anki {
       // Behavior state machines
       void Update_PickAndPlaceBlock();
       void Update_June2014DiceDemo();
-      void Update_TraverseRamp();
+      void Update_TraverseObject();
       
       // Waits until the current path is complete / timeout occurs.
       // If the blockOfInterest_ is no longer present in the

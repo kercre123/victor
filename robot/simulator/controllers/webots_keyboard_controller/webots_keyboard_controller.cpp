@@ -426,7 +426,7 @@ namespace Anki {
             }
             case CKEY_USE_RAMP:
             {
-              SendExecuteBehavior(BM_TraverseRamp);
+              SendExecuteBehavior(BM_TraverseObject);
               break;
             }
             case CKEY_START_DICE_DEMO:

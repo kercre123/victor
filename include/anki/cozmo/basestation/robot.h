@@ -33,6 +33,7 @@ namespace Anki {
     class IPathPlanner;
     class MatPiece;
     class PathDolerOuter;
+    class Ramp;
     
     
     class Robot
@@ -45,6 +46,7 @@ namespace Anki {
         FOLLOWING_PATH,
         BEGIN_DOCKING,
         BEGIN_RAMPING,
+        BEGIN_BRIDGING,
         DOCKING,
         PLACE_OBJECT_ON_GROUND
       };
@@ -179,9 +181,10 @@ namespace Anki {
       // then dock with it.
       Result ExecuteDockingSequence(ObjectID objectIDtoDockWith);
       
-      // Plan a path to the pre-ascent/descent pose (chosen based on robot's current
-      // height) and then proceed to drive up/down the ramp.
-      Result ExecuteRampingSequence(ObjectID rampID);
+      // Plan a path to the pre-entry pose of an object and then proceed to
+      // "traverse" it, depending on its type. Supports, for example, Ramp and
+      // Bridge objects.
+      Result ExecuteTraversalSequence(ObjectID objectID);
       
       // Plan a path to place the object currently being carried at the specified
       // pose.
@@ -409,6 +412,7 @@ namespace Anki {
       // be as well)
       ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
+      const Vision::KnownMarker*  _dockMarker2;
       DockAction_t                _dockAction;
       Pose3d                      _dockObjectOrigPose;
       
@@ -417,6 +421,20 @@ namespace Anki {
       Pose3d                      _placeOnGroundPose;
       
       f32 _waitUntilTime;
+
+      // Plan a path to the pre-ascent/descent pose (depending on current
+      // height of the robot) and then go up or down the ramp.
+      Result ExecuteRampingSequence(Ramp* ramp);
+      
+      // Plan a path to the nearest (?) pre-crossing pose of the specified bridge
+      // object, then cross it.
+      Result ExecuteBridgeCrossingSequence(ActionableObject* object);
+
+      // What function to run when "Executing" a "Sequence" fails, and what
+      // type of PreActionPose to look for to check for success at the end
+      // of path planning
+      std::function<Result()>    _reExecSequenceFcn;
+      PreActionPose::ActionType  _goalPoseActionType;
       
       ///////// Messaging ////////
       

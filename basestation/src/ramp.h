@@ -49,6 +49,8 @@ namespace Anki {
       Ramp();
       Ramp(const Ramp& otherRamp);
       
+      static const ObjectType Type;
+      
       virtual ObjectType GetType() const override { return Ramp::Type; }
       
       f32     GetHeight() const { return Height; }
@@ -97,8 +99,6 @@ namespace Anki {
 
     protected:
       static const s32 NUM_CORNERS = 8;
-      
-      static const ObjectType Type;
       
       // Model dimensions in mm (perhaps these should come from a configuration
       // file instead?)

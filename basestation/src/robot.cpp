@@ -141,6 +141,7 @@ namespace Anki {
     , _state(IDLE)
     , _carryingMarker(nullptr)
     , _dockMarker(nullptr)
+    , _dockMarker2(nullptr)
     {
       SetHeadAngle(_currentHeadAngle);
       pdo_ = new PathDolerOuter(msgHandler, robotID);
@@ -329,18 +330,16 @@ namespace Anki {
                   case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
                   {
                     ClearPath();
-                    if(_nextState == BEGIN_DOCKING) {
-                      PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileDocking",
-                                       "Replan failed during docking due to bad goal. Will try to update goal.\n");
-                      ExecuteDockingSequence(_dockObjectID);
-                    }
-                    else if(_nextState == BEGIN_RAMPING) {
-                      PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeededWhileRamping",
-                                       "Replan failed during ramping due to bad goal. Will try to update goal.\n");
-                      ExecuteRampingSequence(_dockObjectID);
+                    
+                    PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
+                                     "Replan failed due to bad goal.\n");
+                    
+                    if(_reExecSequenceFcn) {
+                      PRINT_NAMED_INFO("Robot.Update.Retrying",
+                                       "Retrying previous ExecuteSequence call.\n");
+                      _reExecSequenceFcn();
                     } else {
-                      PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
-                                       "Replan failed due to bad goal. Aborting path.\n");
+                      PRINT_NAMED_INFO("Robot.Update.NoReExecFcn", "Aborting path.\n");
                       SetState(IDLE);
                     }
                     break;
@@ -404,6 +403,7 @@ namespace Anki {
       
         case BEGIN_DOCKING:
         case BEGIN_RAMPING:
+        case BEGIN_BRIDGING:
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime) {
             // TODO: Check that the marker was recently seen at roughly the expected image location
@@ -412,11 +412,63 @@ namespace Anki {
             // For now, just docking to the marker no matter where it is in the image.
             ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_dockObjectID));
             if(dockObject == nullptr) {
-              PRINT_NAMED_ERROR("Robot.Update.DockObjectGone", "Docking object with ID=%d no longer exists in the world. Returning to IDLE state.\n", _dockObjectID.GetValue());
+              PRINT_NAMED_ERROR("Robot.Update.ActionObjectNotFound",
+                                "Action object with ID=%d no longer exists in the world. Returning to IDLE state.\n",
+                                _dockObjectID.GetValue());
               SetState(IDLE);
               return RESULT_OK; // Robot updated successfully, so not FAIL?
             }
-
+            
+            std::vector<ActionableObject::PoseMarkerPair_t> preActionPoseMarkerPairs;
+            dockObject->GetCurrentPreActionPoses(preActionPoseMarkerPairs, {_goalPoseActionType});
+            
+            const Point2f currentXY(GetPose().GetTranslation().x(),
+                                    GetPose().GetTranslation().y());
+            
+            float closestDistSq = std::numeric_limits<float>::max();
+            for(auto const& preActionPair : preActionPoseMarkerPairs) {
+              const Point2f preActionXY(preActionPair.first.GetTranslation().x(),
+                                        preActionPair.first.GetTranslation().y());
+              const float distSq = (currentXY - preActionXY).LengthSq();
+              if(distSq < closestDistSq)
+                closestDistSq = distSq;
+            }
+            
+            const float distanceToGoal = sqrtf(closestDistSq);
+            if(distanceToGoal > MAX_DISTANCE_TO_PREDOCK_POSE) {
+              PRINT_NAMED_INFO("Robot.Update.TooFarFromGoal", "Robot is too far from pre-action pose (%.1fmm), re-docking\n", distanceToGoal);
+              _reExecSequenceFcn();
+            } else {
+              PRINT_NAMED_INFO("Robot.Update.GoalTolerance", "Robot is within %.1fmm of the nearest pre-action pose.\n", distanceToGoal);
+            
+            
+            /*
+            bool atPreActionPose = false;
+            Pose3d P_diff;
+            for(auto const& preActionPair : preActionPoseMarkerPairs) {
+              
+              if(preActionPair.first.IsSameAs(GetPose(), MAX_DISTANCE_TO_PREDOCK_POSE, DEG_TO_RAD(20), P_diff)) {
+                atPreActionPose = true;
+              }
+            }
+            
+            if(!atPreActionPose) {
+              PRINT_NAMED_INFO("Robot.Update.ReDock", "Robot is too far from pre-action pose (%.1fmm), re-trying.\n",
+                               P_diff.GetTranslation().Length());
+              _reExecSequenceFcn();
+            } else {
+             */
+              // In place, start dock
+              PRINT_INFO("Docking with marker %d = %s (action = %d)\n",
+                         _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
+            
+              DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
+              _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
+              SetState(DOCKING);
+            }
+          } // if _waitUntilTime has passed
+          
+            /*
             // First, re-compute the pre-dock or pre-ramp pose and make sure we
             // are close enough to the desired position, given that the object's
             // pose may have updated while we were approaching it (meaning the
@@ -425,7 +477,6 @@ namespace Anki {
               case BEGIN_DOCKING:
               {
                 std::vector<ActionableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
-                //dockObject->GetPreDockPoses(dockObject->GetDefaultPreDockDistance(), preDockPoseMarkerPairs);
                 dockObject->GetCurrentPreActionPoses(preDockPoseMarkerPairs, {PreActionPose::DOCKING});
                 
                 float closestDistSq = std::numeric_limits<float>::max();
@@ -483,6 +534,12 @@ namespace Anki {
                 break;
               } // case BEGIN_RAMPING
                 
+              case BEGIN_BRIDGING:
+              {
+                
+                break;
+              } // case BEGIN_BRIDGING
+                
               default:
                 PRINT_NAMED_ERROR("Robot.Update.UnexpectedState", "Only BEGIN_RAMPING / BEGIN_DOCKING should be possible states here. Got %d.\n", _state);
                 assert(false);
@@ -497,6 +554,8 @@ namespace Anki {
             _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
             SetState(DOCKING);
           }
+             */
+            
           break;
         } // case BEGIN_DOCKING / BEGIN_RAMPING
           
@@ -576,6 +635,14 @@ namespace Anki {
                                  "Robot has completed going up/down ramp.\n");
                 break;
               } // case RAMP
+                
+              case DA_CROSS_BRIDGE:
+              {
+                // TODO: Need some kind of verificaiton here?
+                PRINT_NAMED_INFO("Robot.Update.BridgeCrossingComplete",
+                                 "Robot has completed crossing a bridge.\n");
+                break;
+              }
                 
               default:
                 PRINT_NAMED_ERROR("Robot.Update", "Reached unknown dockAction case.\n");
@@ -1096,14 +1163,11 @@ namespace Anki {
     }
     
     
-    Result Robot::ExecuteRampingSequence(ObjectID rampID)
+    Result Robot::ExecuteRampingSequence(Ramp* ramp)
     {
-      Ramp* ramp = dynamic_cast<Ramp*>(_world->GetObjectByIDandFamily(rampID, BlockWorld::ObjectFamily::RAMPS));
       if(ramp == nullptr) {
-        PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.RampObjectDoesNotExist",
-                          "Robot %d asked to use ramp with ID=%d, but it does not exist.\n",
-                          _ID, rampID.GetValue());
-        
+        PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.NullPointer",
+                          "Given ramp object pointer is null.\n");
         return RESULT_FAIL;
       }
       
@@ -1111,7 +1175,7 @@ namespace Anki {
       // Other checks? Do we have to be carrying a block or have lift up?
       //
       
-      _dockObjectID = rampID;
+      _dockObjectID = ramp->GetID();
       
       // Choose ascent or descent
       // TODO: Better selection criteria for ascent vs. descent?
@@ -1127,6 +1191,9 @@ namespace Anki {
         _dockAction = DA_RAMP_DESCEND;
         headAngle   = MIN_HEAD_ANGLE;
       }
+      
+      // Unused for ramping:
+      _dockMarker2 = nullptr;
       
       // Make the goal pose be w.r.t. the robot's current origin
       if(_goalPose.GetWithRespectTo(GetPose().FindOrigin(), _goalPose) == false) {
@@ -1148,6 +1215,10 @@ namespace Anki {
       //SetState(FOLLOWING_PATH); // This should be done by ExecutePathToPose
       assert(_state == FOLLOWING_PATH);
       _nextState = BEGIN_RAMPING;
+      
+      // So we know how to check for success and what to do in case of failure:
+      _goalPoseActionType = PreActionPose::ENTRY;
+      _reExecSequenceFcn  = [this]() { return this->ExecuteTraversalSequence(this->_dockObjectID); };
       
       return RESULT_OK;
       
@@ -1234,6 +1305,111 @@ namespace Anki {
       return RESULT_OK;
       
     } // SetOnPose()
+    
+    
+    Result Robot::ExecuteTraversalSequence(ObjectID objectID)
+    {
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_world->GetObjectByID(objectID));
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecuteTraversalSequence.ObjectNotFound",
+                          "Could not get object with ID = %d from world.\n", objectID.GetValue());
+        return RESULT_FAIL;
+      }
+      
+      if(object->GetType() == MatPiece::Type::LONG_BRIDGE ||
+         object->GetType() == MatPiece::Type::SHORT_BRIDGE)
+      {
+        return ExecuteBridgeCrossingSequence(object);
+      }
+      else if(object->GetType() == Ramp::Type) {
+        Ramp* ramp = dynamic_cast<Ramp*>(object);
+        assert(ramp != nullptr);
+        return ExecuteRampingSequence(ramp);
+      }
+      else {
+        PRINT_NAMED_WARNING("Robot.ExecuteTraversalSequence.CannoTraverseObjectType",
+                            "Robot %d was asked to traverse object ID=%d of type %s, but "
+                            "that is not defined.\n", _ID,
+                            object->GetID().GetValue(), object->GetType().GetName().c_str());
+        return RESULT_OK;
+      }
+    } // ExecuteTraversalSequence()
+    
+    
+    Result Robot::ExecuteBridgeCrossingSequence(ActionableObject *bridge)
+    {
+      if(bridge == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecuteBridgeCrossingSequence.NullPointer",
+                          "Given bridge object pointer is null.\n");
+        return RESULT_FAIL;
+      }
+      
+      std::vector<ActionableObject::PoseMarkerPair_t> preCrossingPosePoseMarkerPairs;
+      bridge->GetCurrentPreActionPoses(preCrossingPosePoseMarkerPairs, {PreActionPose::ENTRY});
+      
+      if(preCrossingPosePoseMarkerPairs.empty()) {
+        PRINT_NAMED_ERROR("Robot.ExecuteBridgeCrossingSequence.NoPreCrossingPoses",
+                          "Bridge did not provide any pre-crossing poses!\n");
+        return RESULT_FAIL;
+      }
+      
+      // Let the planner choose which pre-crossing pose to use. Create a vector of
+      // pose options
+      size_t selectedIndex = preCrossingPosePoseMarkerPairs.size();
+      std::vector<Pose3d> preCrossingPoses;
+      preCrossingPoses.reserve(preCrossingPosePoseMarkerPairs.size());
+      for(auto const& preCrossingPair : preCrossingPosePoseMarkerPairs) {
+        preCrossingPoses.emplace_back(preCrossingPair.first);
+        
+        // Make the pre-crossing poses be w.r.t. the robot's current origin
+        if(preCrossingPoses.back().GetWithRespectTo(GetPose().FindOrigin(), preCrossingPoses.back()) == false) {
+          PRINT_NAMED_ERROR("Robot.ExecutePreCrossingSequence.PreCrossingPoseHasWrongOrigin",
+                            "Pre-crossing pose does not share Robot %d's origin.\n", _ID);
+          return RESULT_FAIL;
+        }
+      }
+      
+      Result lastResult = ExecutePathToPose(preCrossingPoses, DEG_TO_RAD(-15), selectedIndex);
+      if(lastResult != RESULT_OK) {
+        return lastResult;
+      }
+      
+      assert(selectedIndex < preCrossingPoses.size());
+      
+      _dockAction = DA_CROSS_BRIDGE;
+      _dockObjectID = bridge->GetID();
+
+      _goalPose = preCrossingPoses[selectedIndex];
+      _dockMarker = &(preCrossingPosePoseMarkerPairs[selectedIndex].second);
+      
+      // Use the unchosen pre-crossing pose marker (the one at the other end of
+      // the bridge) as dockMarker2
+      assert(preCrossingPoses.size() == 2);
+      size_t indexForOtherEnd = 1 - selectedIndex;
+      assert(indexForOtherEnd == 0 || indexForOtherEnd == 1);
+      _dockMarker2 = &(preCrossingPosePoseMarkerPairs[indexForOtherEnd].second);
+      
+      _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
+      _goalAngleThreshold    = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
+      
+      PRINT_INFO("Executing path to nearest pre-crossing pose for selected bridge: (%.2f, %.2f) @ %.1fdeg\n",
+                 _goalPose.GetTranslation().x(),
+                 _goalPose.GetTranslation().y(),
+                 _goalPose.GetRotationAngle<'Z'>().getDegrees());
+      
+      _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
+      assert(_state == FOLLOWING_PATH);
+      _nextState = BEGIN_DOCKING;
+      
+      // So we know how to check for success and what to do in case of failure:
+      _goalPoseActionType = PreActionPose::ENTRY;
+      _reExecSequenceFcn  = [this]() { return this->ExecuteTraversalSequence(this->_dockObjectID); };
+      
+      return lastResult;
+      
+    } // ExecuteBridgeCrossingSequence()
+    
+    
   
     Result Robot::ExecuteDockingSequence(ObjectID objectIDtoDockWith)
     {
@@ -1266,6 +1442,7 @@ namespace Anki {
       
       _dockObjectID = objectIDtoDockWith;
       _dockMarker = nullptr; // should get set to a predock pose below
+      _dockMarker2 = nullptr; // unused for regular object docking
       
       std::vector<ActionableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
       //object->GetPreDockPoses(object->GetDefaultPreDockDistance(), preDockPoseMarkerPairs);
@@ -1315,6 +1492,10 @@ namespace Anki {
       //SetState(FOLLOWING_PATH); // This should be done by ExecutePathToPose above
       assert(_state == FOLLOWING_PATH);
       _nextState = BEGIN_DOCKING;
+      
+      // So we know how to check for success and what to do in case of failure:
+      _goalPoseActionType = PreActionPose::DOCKING;
+      _reExecSequenceFcn  = [this]() { return this->ExecuteDockingSequence(this->_dockObjectID); };
       
       return lastResult;
       
@@ -1506,6 +1687,10 @@ namespace Anki {
       
       _dockObjectID = objectID;
       _dockMarker  = marker;
+      
+      if(_dockMarker2 == nullptr) {
+        marker2 = _dockMarker;
+      }
       
       _dockObjectOrigPose = object->GetPose();
       
