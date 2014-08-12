@@ -3,7 +3,7 @@
 PROTO Bridge [
   field SFString name "Bridge"
   field SFFloat width  .062
-  field SFFloat height .002
+  field SFFloat height .001
   field SFString type "Long" 
   field SFFloat guideHeight .01
   field SFFloat guideWidth .002

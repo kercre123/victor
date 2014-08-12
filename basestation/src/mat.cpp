@@ -137,7 +137,7 @@ namespace Anki {
           return;
         }
         
-        _size = {length, 62.f, 2.f};
+        _size = {length, 62.f, 1.f};
         
         Pose3d preCrossingPoseLeft(0, Z_AXIS_3D, {-_size.x()*.5f-30.f, 0.f, _size.z()}, &GetPose());
         Pose3d preCrossingPoseRight(M_PI, Z_AXIS_3D, {_size.x()*.5f+30.f, 0.f, _size.z()}, &GetPose());
