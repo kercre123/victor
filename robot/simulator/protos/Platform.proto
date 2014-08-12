@@ -64,21 +64,25 @@ Solid {
 			rotation 1 0 0 1.5708
 			translation %{=-fields.length/4}% %{=-fields.width/4}% %{=fields.height/2}% 
 			image "letters/inverted/A.png"
+			#image "ankiLogoWithBits/ankiLogoWithBits001.png"
 		}
 		VisionMarker {
 			rotation 1 0 0 1.5708
 			translation %{=-fields.length/4}% %{=fields.width/4}% %{=fields.height/2}% 
 			image "letters/inverted/B.png"
+			#image "ankiLogoWithBits/ankiLogoWithBits010.png"
 		}
 		VisionMarker {
 			rotation 1 0 0 1.5708
 			translation %{=fields.length/4}% %{=-fields.width/4}% %{=fields.height/2}% 
 			image "letters/inverted/C.png"
+			#image "ankiLogoWithBits/ankiLogoWithBits020.png"
 		}
 		VisionMarker {
 			rotation 1 0 0 1.5708
 			translation %{=fields.length/4}% %{=fields.width/4}% %{=fields.height/2}% 
 			image "letters/inverted/D.png"
+			#image "ankiLogoWithBits/ankiLogoWithBits030.png"
 		}
 
     DEF PlatformShape Group {
