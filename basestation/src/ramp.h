@@ -106,9 +106,9 @@ namespace Anki {
       constexpr static const f32 PlatformLength = 44.f;
       constexpr static const f32 MarkerSize     = 25.f;
       constexpr static const f32 FrontMarkerDistance = 50.f;
-      constexpr static const f32 PreDockDistance    = 90.f;
-      constexpr static const f32 PreAscentDistance  = 40.f;
-      constexpr static const f32 PreDescentDistance = 30.f;
+      constexpr static const f32 PreDockDistance    = 90.f; // for picking up from sides
+      constexpr static const f32 PreAscentDistance  = 50.f; // for ascending from bottom
+      constexpr static const f32 PreDescentDistance = 30.f; // for descending from top
       
       static const f32 Angle;
         
