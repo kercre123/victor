@@ -206,42 +206,6 @@ namespace Anki {
       
       PRINT_INFO("Object of interest: ID = %d\n", objectIDofInterest_.GetValue());
       
-      /*
-      // Draw BOI
-      const Block* block = dynamic_cast<Block*>(world_->GetObservableObjectByID(objectIDofInterest_));
-      if(block == nullptr) {
-        PRINT_INFO("Failed to find/draw block of interest!\n");
-      } else {
-
-        static ObjectID prev_boi = 0;      // Previous block of interest
-        static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
-
-        // Get predock poses
-        std::vector<Block::PoseMarkerPair_t> poses;
-        block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
-        
-        // Erase previous predock pose marker for previous block of interest
-        if (prev_boi != objectIDofInterest_ || poses.size() != prevNumPreDockPoses) {
-          PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", objectIDofInterest_, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
-          VizManager::getInstance()->EraseVizObjectType(VIZ_PREDOCKPOSE);
-          prev_boi = objectIDofInterest_;
-          prevNumPreDockPoses = poses.size();
-        }
-        
-        // Draw predock poses
-        u32 poseID = 0;
-        for(auto pose : poses) {
-          VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose.first, VIZ_COLOR_PREDOCKPOSE);
-          ++poseID;
-        }
-      
-        // Draw cuboid
-        VizManager::getInstance()->DrawCuboid(block->GetID(),
-                                              block->GetSize(),
-                                              block->GetPose().GetWithRespectTo(Pose3d::World),
-                                              VIZ_COLOR_SELECTED_OBJECT);
-      }
-       */
     } // SelectNextObjectOfInterest()
     
     void BehaviorManager::Update()

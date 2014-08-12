@@ -56,7 +56,7 @@ public:
     }
 
   // imports and pads obstacles
-  void ImportBlockworldObstacles(const bool isReplanning, VIZ_COLOR_ID vizColor = VIZ_COLOR_NONE);
+  void ImportBlockworldObstacles(const bool isReplanning, const ColorRGBA* vizColor = nullptr);
   float lastPaddingRadius_;
 
   const BlockWorld* blockWorld_;
@@ -81,7 +81,7 @@ LatticePlanner::~LatticePlanner()
   impl_ = nullptr;
 }
 
-void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, VIZ_COLOR_ID vizColor)
+void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, const ColorRGBA* vizColor)
 {
   const float paddingRadius = (isReplanning ? LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK :
                                LATTICE_PLANNER_BOUNDING_DISTANCE);
@@ -104,21 +104,18 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, VIZ_
                                           _parent->_ignoreIDs);
     env_.ClearObstacles();
     
-    // TODO: figure out whether we are in replan mode in some other way (pass in flag?)
-    //const bool isReplan = vizColor == VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD;
-    
-    if(vizColor != VIZ_COLOR_NONE) {
+    if(vizColor != nullptr) {
       VizManager::getInstance()->EraseAllPlannerObstacles(isReplanning);
     }
     unsigned int numAdded = 0;
     for(auto boundingQuad : boundingBoxes) {
       env_.AddObstacle(boundingQuad, DEFAULT_OBSTACLE_PENALTY);
 
-      if(vizColor != VIZ_COLOR_NONE) {
+      if(vizColor != nullptr) {
         // TODO: manage the quadID better so we don't conflict
         // TODO:(bn) custom color for this
         //VizManager::getInstance()->DrawQuad(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
-        VizManager::getInstance()->DrawPlannerObstacle(isReplanning, numAdded++, boundingQuad, 0.5f, vizColor);
+        VizManager::getInstance()->DrawPlannerObstacle(isReplanning, numAdded++, boundingQuad, 0.5f, *vizColor);
         //(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
       }
     }
@@ -136,7 +133,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                     targetPose.GetTranslation().y(),
                     targetPose.GetRotationAngle<'Z'>().ToFloat());
 
-  impl_->ImportBlockworldObstacles(false, VIZ_COLOR_NONE);
+  impl_->ImportBlockworldObstacles(false);
 
   // Clear plan whenever we attempt to set goal
   impl_->totalPlan_.Clear();
@@ -155,7 +152,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                                                   size_t& selectedIndex)
 {
 
-  impl_->ImportBlockworldObstacles(false, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
+  impl_->ImportBlockworldObstacles(false, &NamedColors::BLOCK_BOUNDING_QUAD);
 
   // for now just select the closest non-colliding goal as the true
   // goal. Eventually I'll implement a real multi-goal planner that
@@ -221,7 +218,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   //VizManager::getInstance()->EraseAllQuads();
   
   if(!forceReplanFromScratch) {
-    impl_->ImportBlockworldObstacles(true, VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD);
+    impl_->ImportBlockworldObstacles(true, &NamedColors::REPLAN_BLOCK_BOUNDING_QUAD);
 
     // plan Idx is the number of plan actions to execute before getting
     // to the starting point closest to start
@@ -283,7 +280,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
       }
 
       // use real padding for re-plan
-      impl_->ImportBlockworldObstacles(false, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
+      impl_->ImportBlockworldObstacles(false, &NamedColors::BLOCK_BOUNDING_QUAD);
 
       printf("(re)-planning from (%f, %f, %f) to (%f %f %f)\n",
              lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,

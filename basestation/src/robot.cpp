@@ -43,10 +43,7 @@ namespace Anki {
     
 #pragma mark --- RobotManager Class Implementations ---
 
-#if USE_SINGLETON_ROBOT_MANAGER
-    RobotManager* RobotManager::singletonInstance_ = 0;
-#endif
-    
+   
     RobotManager::RobotManager()
     {
       
@@ -569,7 +566,7 @@ namespace Anki {
       // Clear the path when it has stopped.
       if (!IsPickingOrPlacing()) {
         if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
-          VizManager::getInstance()->DrawPath(_ID,_path,VIZ_COLOR_EXECUTED_PATH);
+          VizManager::getInstance()->DrawPath(_ID,_path,NamedColors::EXECUTED_PATH);
           wasTraversingPath = true;
         } else if (wasTraversingPath && !IsTraversingPath()){
           ClearPath(); // clear path and indicate that we are not replanning

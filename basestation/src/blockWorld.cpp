@@ -23,7 +23,6 @@ namespace Anki
 {
   namespace Cozmo
   {
-    //BlockWorld* BlockWorld::singletonInstance_ = 0;
     
     const BlockWorld::ObjectsMapByID_t   BlockWorld::EmptyObjectMapByID;
     const BlockWorld::ObjectsMapByType_t BlockWorld::EmptyObjectMapByType;
@@ -42,26 +41,23 @@ namespace Anki
       SetValue(UniqueFamilyCounter++);
     }
     
-    
-    /*
-    BlockWorld::BlockWorld( MessagingInterface* msgInterfaceIn )
-    : msgInterface(msgInterfaceIn), blocks(MaxBlockTypes), zAxisPointsUp(true)
-    {
-      
+    namespace NamedColors {
+      // Add some BlockWorld-specific named colors:
+      const ColorRGBA EXECUTED_PATH              (1.f, 0.0f, 0.0f, 1.0f);
+      const ColorRGBA PREDOCKPOSE                (1.f, 0.0f, 0.0f, 0.75f);
+      const ColorRGBA PRERAMPPOSE                (0.f, 0.0f, 1.0f, 0.75f);
+      const ColorRGBA SELECTED_OBJECT            (0.f, 1.0f, 0.0f, 0.0f);
+      const ColorRGBA BLOCK_BOUNDING_QUAD        (0.f, 0.0f, 1.0f, 0.75f);
+      const ColorRGBA OBSERVED_QUAD              (1.f, 0.0f, 0.0f, 0.75f);
+      const ColorRGBA ROBOT_BOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
+      const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD (1.f, 0.1f, 1.0f, 0.75f);
     }
-     */
-    
-    //bool BlockWorld::ZAxisPointsUp = true;
-    
     
     BlockWorld::BlockWorld( )
     : isInitialized_(false)
     , robotMgr_(NULL)
     , didObjectsChange_(false)
-//    , globalIDCounter(0)
     , enableDraw_(false)
-//    : robotMgr_(RobotManager::getInstance()),
-//      msgHandler_(MessageHandler::getInstance())
     {
       // TODO: Create each known block / matpiece from a configuration/definitions file
       
@@ -1149,7 +1145,7 @@ namespace Anki
          Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
          blockMarker->Get3dCorners(canonicalPose));
          markerPose = markerPose.GetWithRespectTo(Pose3d::World);
-         VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+         VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
          }
          }
          */
@@ -1163,7 +1159,7 @@ namespace Anki
             Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
                                                                      matMarker->Get3dCorners(canonicalPose));
             if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+              VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), ::Anki::NamedColors::RED);
             } else {
               PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                   "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");

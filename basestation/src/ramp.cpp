@@ -144,17 +144,6 @@ namespace Anki {
                                                           Ramp::Height, vizPose, color);
     } // Visualize()
     
-    /*
-    void Ramp::Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance)
-    {
-      //DockableObject::Visualize(color, preDockPoseDistance);
-      
-      Pose3d ascentPose(GetPreAscentPose());
-      Pose3d descentPose(GetPreDescentPose());
-      _vizHandle[1] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue(),   ascentPose.GetWithRespectToOrigin(),  VIZ_COLOR_PRERAMPPOSE);
-      _vizHandle[2] = VizManager::getInstance()->DrawPreDockPose(GetID().GetValue()+1, descentPose.GetWithRespectToOrigin(), VIZ_COLOR_PRERAMPPOSE);
-    }
-     */
     
     void Ramp::EraseVisualization()
     {

@@ -15,8 +15,8 @@
  *
  **/
 
-#ifndef __Products_Cozmo__blockWorld__
-#define __Products_Cozmo__blockWorld__
+#ifndef ANKI_COZMO_BLOCKWORLD_H
+#define ANKI_COZMO_BLOCKWORLD_H
 
 #include <queue>
 #include <map>
@@ -40,6 +40,18 @@ namespace Anki
     class Robot;
     class RobotManager;
     class MessageHandler;
+    
+    namespace NamedColors {
+      // Add some BlockWorld-specific named colors:
+      extern const ColorRGBA EXECUTED_PATH              ;
+      extern const ColorRGBA PREDOCKPOSE                ;
+      extern const ColorRGBA PRERAMPPOSE                ;
+      extern const ColorRGBA SELECTED_OBJECT            ;
+      extern const ColorRGBA BLOCK_BOUNDING_QUAD        ;
+      extern const ColorRGBA OBSERVED_QUAD              ;
+      extern const ColorRGBA ROBOT_BOUNDING_QUAD        ;
+      extern const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD ;
+    }
     
     class BlockWorld
     {
@@ -154,10 +166,10 @@ namespace Anki
       using PoseKeyObsMarkerMap_t = std::multimap<HistPoseKey, Vision::ObservedMarker>;
       using ObsMarkerListMap_t = std::map<TimeStamp_t, PoseKeyObsMarkerMap_t>;
       
-      // Methods
+      //
+      // Member Methods
+      //
       
-      //BlockWorld(); // protected constructor for singleton
-
       bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
       size_t UpdateObjectPoses(const Robot* seenByRobot,
@@ -195,9 +207,9 @@ namespace Anki
 
       ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objectIter, ObjectsMapByID_t& inContainer);
       
+      //
       // Member Variables
-      
-      //static BlockWorld* singletonInstance_;
+      //
       
       bool             isInitialized_;
       RobotManager*    robotMgr_;
@@ -246,16 +258,6 @@ namespace Anki
       
     }; // class BlockWorld
 
-    /*
-    inline BlockWorld* BlockWorld::getInstance()
-    {
-      // Instantiate singleton instance if not done already
-      if(singletonInstance_ == 0) {
-        singletonInstance_ = new BlockWorld();
-      }
-      return singletonInstance_;
-    }
-     */
     
     inline const Vision::ObservableObjectLibrary& BlockWorld::GetObjectLibrary(ObjectFamily whichFamily) const
     {
@@ -347,4 +349,4 @@ namespace Anki
 
 
 
-#endif // __Products_Cozmo__blockWorld__
+#endif // ANKI_COZMO_BLOCKWORLD_H

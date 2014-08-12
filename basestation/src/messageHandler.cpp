@@ -19,10 +19,6 @@
 
 namespace Anki {
   namespace Cozmo {
-
-#if USE_SINGLETON_MESSAGE_HANDLER
-    MessageHandler* MessageHandler::singletonInstance_ = 0;
-#endif
     
     MessageHandler::MessageHandler()
     : comms_(NULL), robotMgr_(NULL), blockWorld_(NULL)

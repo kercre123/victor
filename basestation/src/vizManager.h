@@ -25,32 +25,6 @@
 namespace Anki {
   namespace Cozmo {
     
-    // List of color IDs
-    enum VIZ_COLOR_ID {
-      VIZ_COLOR_EXECUTED_PATH,
-      VIZ_COLOR_PREDOCKPOSE,
-      VIZ_COLOR_PRERAMPPOSE,
-      VIZ_COLOR_SELECTED_OBJECT,
-      VIZ_COLOR_BLOCK_BOUNDING_QUAD,
-      VIZ_COLOR_REPLAN_BLOCK_BOUNDING_QUAD,
-      VIZ_COLOR_OBSERVED_QUAD,
-      VIZ_COLOR_ROBOT_BOUNDING_QUAD,
-      
-      // Color names
-      VIZ_COLOR_RED,
-      VIZ_COLOR_GREEN,
-      VIZ_COLOR_BLUE,
-      VIZ_COLOR_YELLOW,
-      VIZ_COLOR_DARKGRAY,
-      VIZ_COLOR_DARKGREEN,
-      VIZ_COLOR_ORANGE,
-      VIZ_COLOR_OFFWHITE,
-      
-      VIZ_COLOR_NONE,
-      VIZ_COLOR_DEFAULT = u32_MAX
-    };
-    
-    
     // NOTE: this is a singleton class
     class VizManager
     {

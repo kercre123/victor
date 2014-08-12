@@ -80,7 +80,6 @@ namespace Anki {
       virtual Ramp*   CloneType() const override;
       virtual void    GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
       virtual void    Visualize(const ColorRGBA& color) override;
-      //virtual void    Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) override;
       virtual void    EraseVisualization() override;
       virtual Quad2f  GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
       

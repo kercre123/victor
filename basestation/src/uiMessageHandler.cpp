@@ -254,7 +254,7 @@ namespace Anki {
       if (robot->IsCarryingObject()) {
         Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
         Quad2f objectFootprint = blockWorld_->GetObjectByID(robot->GetCarryingObject())->GetBoundingQuadXY(targetPose);
-        VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, VIZ_COLOR_GREEN);
+        VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
       }
 
       return RESULT_OK;

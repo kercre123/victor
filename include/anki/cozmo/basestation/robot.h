@@ -6,8 +6,8 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#ifndef __Products_Cozmo__robot__
-#define __Products_Cozmo__robot__
+#ifndef ANKI_COZMO_BASESTATION_ROBOT_H
+#define ANKI_COZMO_BASESTATION_ROBOT_H
 
 #include <queue>
 
@@ -541,19 +541,12 @@ namespace Anki {
     //
     // RobotManager class for keeping up with available robots, by their ID
     //
-    // TODO: Singleton or not?
-#define USE_SINGLETON_ROBOT_MANAGER 0
     
     class RobotManager
     {
     public:
     
-#if USE_SINGLETON_ROBOT_MANAGER
-      // Return singleton instance
-      static RobotManager* getInstance();
-#else
       RobotManager();
-#endif
 
       // Sets pointers to other managers
       // TODO: Change these to interface pointers so they can't be NULL
@@ -581,12 +574,6 @@ namespace Anki {
       
     protected:
       
-#if USE_SINGLETON_ROBOT_MANAGER
-      RobotManager(); // protected constructor for singleton class
-      
-      static RobotManager* singletonInstance_;
-#endif
-      
       IMessageHandler* _msgHandler;
       BlockWorld*      _blockWorld;
       IPathPlanner*    _pathPlanner;
@@ -596,17 +583,8 @@ namespace Anki {
       
     }; // class RobotManager
     
-#if USE_SINGLETON_ROBOT_MANAGER
-    inline RobotManager* RobotManager::getInstance()
-    {
-      if(0 == singletonInstance_) {
-        singletonInstance_ = new RobotManager();
-      }
-      return singletonInstance_;
-    }
-#endif
     
   } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Products_Cozmo__robot__
+#endif // ANKI_COZMO_BASESTATION_ROBOT_H
