@@ -152,7 +152,7 @@ namespace Anki {
         
         const Vision::KnownMarker* leftMarker  = &AddMarker(leftMarkerType,  leftMarkerPose,  markerSize);
         const Vision::KnownMarker* rightMarker = &AddMarker(rightMarkerType, rightMarkerPose, markerSize);
-        AddMarker(middleMarkerType, Pose3d(M_PI_2, X_AXIS_3D, {0.f, 0.f, _size.z()}), markerSize);
+        AddMarker(middleMarkerType, Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, _size.z()}), markerSize);
         
         CORETECH_ASSERT(leftMarker != nullptr);
         CORETECH_ASSERT(rightMarker != nullptr);
