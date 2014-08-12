@@ -42,6 +42,8 @@ namespace Anki {
       
       virtual u8 GetSize() const = 0;
       
+      virtual ~UiMessage() { }
+      
     }; // class UiMessage
     
     
