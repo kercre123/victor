@@ -34,9 +34,9 @@ namespace Anki {
     ObservableObject::ObservableObject()
     : lastObservedTime_(0), wasObserved_(false)
     {
-      //ID_ = ObservableObject::ObjectCounter++;
+      
     }
-    
+        
     bool ObservableObject::IsVisibleFrom(const Camera &camera,
                                          const f32 maxFaceNormalAngle,
                                          const f32 minMarkerImageSize,

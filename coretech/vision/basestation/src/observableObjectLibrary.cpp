@@ -170,7 +170,7 @@ namespace Anki {
           poseCluster.RecomputePose();
           
           // Add to list of objects seen -- using pose in World frame
-          objectsSeen.push_back(libObject->Clone());
+          objectsSeen.push_back(libObject->CloneType());
           
           // Compute pose wrt camera, or world if no camera specified
           //if (seenOnlyBy == ANY_CAMERA) {

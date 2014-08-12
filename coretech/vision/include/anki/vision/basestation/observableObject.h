@@ -45,7 +45,10 @@ namespace Anki {
       // Do we want to be req'd to instantiate with all codes up front?
       ObservableObject();
       
-      //ObservableObject(const std::vector<std::pair<Marker::Code,Pose3d> >& codesAndPoses);
+      // For creating a fresh new derived object from a pointer to this base class.
+      // NOTE: This just creates a fresh object, and does not copy the original
+      //  object's pose, ID, or other state.
+      virtual ObservableObject* CloneType() const = 0;
       
       virtual ~ObservableObject(){};
       
@@ -133,12 +136,7 @@ namespace Anki {
       virtual Point3f GetSameDistanceTolerance() const = 0;
       virtual Radians GetSameAngleTolerance() const = 0;
       
-      
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
-      
-      // For creating derived objects from a pointer to this base class, see
-      // ObservableObjectBase below
-      virtual ObservableObject* Clone() const = 0;
       
       virtual void GetCorners(std::vector<Point3f>& corners) const;
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const = 0;
@@ -212,7 +210,7 @@ namespace Anki {
       
       // Don't allow a copy constuctor, because it won't handle fixing the
       // marker pointers and pose parents
-      ObservableObject(const ObservableObject& other);
+      //ObservableObject(const ObservableObject& other);
       
     };
   
