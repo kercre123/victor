@@ -174,6 +174,11 @@ namespace Anki
       
       bool LocalizeRobotToMat(Robot* robot, const MatPiece* matSeen, MatPiece* existingMat);
       
+      // Helpers for actually inserting a new object into a new family using
+      // its type and ID. Object's ID will be set if it isn't already.
+      void AddNewObject(const ObjectFamily toFamily, Vision::ObservableObject* object);
+      void AddNewObject(ObjectsMapByType_t& existingFamily, Vision::ObservableObject* object);
+      
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                ObjectsMapByType_t& objectsExisting,
@@ -321,6 +326,21 @@ namespace Anki
       // ID not found!
       return nullptr;
     }
+    
+    inline void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, Vision::ObservableObject* object)
+    {
+      if(!object->GetID().IsSet()) {
+        object->SetID();
+      }
+      
+      existingFamily[object->GetType()][object->GetID()] = object;
+    }
+    
+    inline void BlockWorld::AddNewObject(const ObjectFamily toFamily, Vision::ObservableObject* object)
+    {
+      AddNewObject(_existingObjects[toFamily], object);
+    }
+
     
   } // namespace Cozmo
 } // namespace Anki

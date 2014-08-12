@@ -47,7 +47,6 @@ namespace Anki {
     public:
       
       Ramp();
-      Ramp(const Ramp& otherRamp);
       
       static const ObjectType Type;
       
@@ -78,7 +77,7 @@ namespace Anki {
       //
       virtual ~Ramp();
       
-      virtual Ramp*   Clone() const override;
+      virtual Ramp*   CloneType() const override;
       virtual void    GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
       virtual void    Visualize(const ColorRGBA& color) override;
       //virtual void    Visualize(const VIZ_COLOR_ID color, const f32 preDockPoseDistance) override;

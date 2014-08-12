@@ -81,10 +81,6 @@ namespace Anki {
         NUM_CORNERS       =  8
       };
       
-      Block(const ObjectType type);
-      
-      Block(const Block& other); 
-      
       virtual ~Block();
       
       //static unsigned int get_numBlocks();
@@ -165,7 +161,7 @@ namespace Anki {
       
       static const FaceName OppositeFaceLUT[NUM_FACES];
       
-      //static ObjectType NumTypes;
+      Block(const ObjectType type);
       
       // Make this protected so we have to use public AddFace() method
       using Vision::ObservableObject::AddMarker;
@@ -225,17 +221,26 @@ namespace Anki {
     {
     public:
       
-      Block_Cube1x1(Type type);
+      Block_Cube1x1(Type type) : Block_Cube1x1(static_cast<ObjectType>(type)) { }
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
       
-      virtual Block_Cube1x1* Clone() const override
+      virtual Block_Cube1x1* CloneType() const override
       {
-        // Call the copy constructor
-        return new Block_Cube1x1(*this);
+        return new Block_Cube1x1(this->_type);
       }
       
     protected:
+      
+      Block_Cube1x1(ObjectType type)
+      : Block(type)
+      {
+        // The sizes specified by the block definitions should
+        // agree with this being a cube (all dimensions the same)
+        CORETECH_ASSERT(_size.x() == _size.y())
+        CORETECH_ASSERT(_size.y() == _size.z())
+      }
+      
       //static const ObjectType BlockType;
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
@@ -262,17 +267,24 @@ namespace Anki {
     class Block_2x1 : public Block
     {
     public:
-      Block_2x1(Type type);
+      // Public constructor forcing caller to use valid Block::Type
+      Block_2x1(Type type) : Block_2x1(static_cast<ObjectType>(type)) { }
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
       
-      virtual Block_2x1* Clone() const override
+      virtual Block_2x1* CloneType() const override
       {
-        // Call the copy constructor
-        return new Block_2x1(*this);
+        return new Block_2x1(this->_type);
       }
       
     protected:
+      // Protected constructor using generic ObjectType
+      Block_2x1(ObjectType type)
+      : Block(type)
+      {
+
+      }
+      
       //static const ObjectType BlockType;
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       

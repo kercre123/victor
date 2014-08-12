@@ -100,6 +100,7 @@ namespace Anki {
     
     ActionableObject::ActionableObject()
     : _isBeingCarried(false)
+    , _isSelected(false)
     {
       
     }

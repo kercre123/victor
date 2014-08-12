@@ -53,7 +53,7 @@ namespace Anki {
     
       //virtual float GetMinDim() const {return 0;}
       
-      virtual MatPiece* Clone() const;
+      virtual MatPiece* CloneType() const;
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
       
@@ -105,16 +105,10 @@ namespace Anki {
     };
     
     
-    inline MatPiece* MatPiece::Clone() const
+    inline MatPiece* MatPiece::CloneType() const
     {
-      // Create an all-new mat piece of this type, to keep all the
-      // bookkeeping and pointers (e.g. the pose tree) kosher.
-      MatPiece* clone = new MatPiece(_type);
-      
-      // Move the clone to this mat piece's pose
-      clone->SetPose(this->GetPose());
-      
-      return clone;
+      // Call the copy constructor
+      return new MatPiece(this->_type);
     }
     
   } // namespace Cozmo

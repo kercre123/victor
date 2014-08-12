@@ -216,7 +216,6 @@ namespace Anki
     } // AddToOcclusionMaps()
     
     
-    
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                          ObjectsMapByType_t& objectsExisting,
                                          const TimeStamp_t atTimestamp)
@@ -250,8 +249,7 @@ namespace Anki
         if(overlappingObjects.empty()) {
           // no existing objects overlapped with the objects we saw, so add it
           // as a new object
-          objSeen->SetID();
-          objectsExisting[objSeen->GetType()][objSeen->GetID()] = objSeen;
+          AddNewObject(objectsExisting, objSeen);
           
           PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.AddNewObject",
                            "Adding new %s object and ID=%d at (%.1f, %.1f, %.1f), relative to %s mat.\n",
@@ -311,6 +309,7 @@ namespace Anki
       } // for each object seen
       
     } // AddAndUpdateObjects()
+    
     
     void BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
     {
@@ -473,8 +472,6 @@ namespace Anki
       
       if(not matsSeen.empty()) {
         
-        const bool wasLocalized = robot->IsLocalized();
-        
         // Is the robot "on" any of the mats it sees?
         // TODO: What to do if robot is "on" more than one mat simultaneously?
         MatPiece* onMat = nullptr;
@@ -489,7 +486,7 @@ namespace Anki
           MatPiece* mat = dynamic_cast<MatPiece*>(object);
           CORETECH_ASSERT(mat != nullptr);
           
-          if(mat->IsPoseOn(robot->GetPose(), 0, 10.f)) { // TODO: get heightTol from robot
+          if(mat->IsPoseOn(robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
             if(onMat != nullptr) {
               PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.OnMultiplMats",
                                   "Robot is 'on' multiple mats at the same time. Will just use the first for now.\n");
@@ -606,13 +603,12 @@ namespace Anki
             PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
                              "Instantiating first mat piece in the world.\n");
             
-            existingMatPiece = matToLocalizeTo->Clone();
-            existingMatPiece->SetID();
-            existingMatPiece->SetPose( Pose3d() ); // Not really necessary, but ensures the ID makes it into the pose name
+            existingMatPiece = matToLocalizeTo->CloneType();
+            AddNewObject(existingMatPieces, existingMatPiece);
+            
+            existingMatPiece->SetPose( Pose3d() ); // Not really necessary, but ensures the ID makes it into the pose name, which is helpful for debugging
             assert(existingMatPiece->GetPose().GetParent() == nullptr);
             
-            existingMatPieces[matToLocalizeTo->GetType()][matToLocalizeTo->GetID()] = existingMatPiece;
-
           }
           else {
             // We can't look up the existing piece by ID because the matToLocalizeTo
@@ -644,11 +640,9 @@ namespace Anki
               // world origin.
               Pose3d poseWrtWorldOrigin = matToLocalizeTo->GetPose().GetWithRespectToOrigin();
               
-              existingMatPiece = matToLocalizeTo->Clone();
-              existingMatPiece->SetID();
-              existingMatPiece->SetPose(poseWrtWorldOrigin);
-
-              existingMatPieces[existingMatPiece->GetType()][existingMatPiece->GetID()] = existingMatPiece;
+              existingMatPiece = matToLocalizeTo->CloneType();
+              AddNewObject(existingMatPieces, existingMatPiece);
+              existingMatPiece->SetPose(poseWrtWorldOrigin); // Do after AddNewObject, once ID is set
               
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
                                "Robot %d localizing to new %s mat with ID=%d.\n",
@@ -689,7 +683,7 @@ namespace Anki
         
         // Update poses of any other mats we saw (but did not localize to),
         // just like they are any "regular" object, unless that mat is the
-        // robot's current "world" origin, in which case we will update the pose
+        // robot's current "world" origin, [TODO:] in which case we will update the pose
         // of the mat we are on w.r.t. that world.
         for(auto matSeen : matsSeen) {
           if(matSeen != matToLocalizeTo) {
@@ -707,9 +701,11 @@ namespace Anki
               
               MatPiece* matSeenTemp = dynamic_cast<MatPiece*>(matSeen);
               CORETECH_ASSERT(matSeenTemp != nullptr);
-              MatPiece* newMatPiece = matSeenTemp->Clone();
-              newMatPiece->SetID();
-              newMatPiece->SetPose(poseWrtOrigin);
+              MatPiece* newMatPiece = matSeenTemp->CloneType();
+              AddNewObject(existingMatPieces, newMatPiece);
+              newMatPiece->SetPose(poseWrtOrigin); // do after AddNewObject, once ID is set
+              
+              // TODO: Make clone copy the observation times
               newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
               newMatPiece->UpdateMarkerObservationTimes(*matSeen);
               

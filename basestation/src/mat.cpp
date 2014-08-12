@@ -175,7 +175,8 @@ namespace Anki {
       }
       
       
-    } // MatPiece() Constructor
+    } // MatPiece(type) Constructor
+    
     
     Point3f MatPiece::GetSameDistanceTolerance() const
     {
@@ -194,6 +195,7 @@ namespace Anki {
          return Point3f();
        }
     }
+    
     
     Radians MatPiece::GetSameAngleTolerance() const {
       return DEG_TO_RAD(45); // TODO: too loose?

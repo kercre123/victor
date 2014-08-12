@@ -86,14 +86,6 @@ namespace Anki {
       
     } // Ramp() Constructor
     
-    
-    Ramp::Ramp(const Ramp& otherRamp)
-    : Ramp()
-    {
-      SetPose(otherRamp.GetPose());
-    } // Ramp() Copy Constructor
-    
-    
     Ramp::~Ramp()
     {
       EraseVisualization();
@@ -139,10 +131,9 @@ namespace Anki {
       }
     } // GetCorners()
     
-    Ramp* Ramp::Clone() const
+    Ramp* Ramp::CloneType() const
     {
-      // Call the copy constructor
-      return new Ramp(*this);
+      return new Ramp();
     }
     
     void Ramp::Visualize(const ColorRGBA& color)

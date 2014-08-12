@@ -272,7 +272,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         // The ground truth block type should be known to the block world
         ASSERT_TRUE(libObject != NULL);
-        Vision::ObservableObject* groundTruthObject = libObject->Clone();
+        Vision::ObservableObject* groundTruthObject = libObject->CloneType();
         
         // Set its pose to what is listed in the json file
         Pose3d objectPose;

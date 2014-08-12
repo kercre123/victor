@@ -161,14 +161,6 @@ namespace Anki {
     } // Constructor: Block(type)
     
     
-    Block::Block(const Block& otherBlock)
-    : Block(otherBlock.GetType()) // just create an all-new block of the same type
-    {
-      // Put this new block at the new at the same pose as the other block
-      SetPose(otherBlock.GetPose());
-      
-    } // Copy Constructor: Block(otherBlock)
-    
     Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const
     {
       return GetBoundingQuadInPlane(planeNormal, GetPose(), padding_mm);
@@ -477,16 +469,6 @@ namespace Anki {
       return Block_Cube1x1::rotationAmbiguities_;
     }
     
-    Block_Cube1x1::Block_Cube1x1(Block::Type type)
-    : Block(type)
-    {
-      // The sizes specified by the block definitions should
-      // agree with this being a cube (all dimensions the same)
-      CORETECH_ASSERT(_size.x() == _size.y())
-      CORETECH_ASSERT(_size.y() == _size.z())
-    }
-    
-    
 #pragma mark ---  Block_2x1 Implementation ---
     
     //const ObjectType Block_2x1::BlockType = Block::NumTypes++;
@@ -499,12 +481,6 @@ namespace Anki {
     std::vector<RotationMatrix3d> const& Block_2x1::GetRotationAmbiguities() const
     {
       return Block_2x1::rotationAmbiguities_;
-    }
-    
-    Block_2x1::Block_2x1(Block::Type type)
-    : Block(type)
-    {
-      
     }
 
     
