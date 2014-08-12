@@ -2149,7 +2149,7 @@ namespace Anki {
           {
             const VisionMarker& crntMarker = VisionMemory::markers_[i_marker];
 
-            if (!IMUFilter::IsPickedUp() && !IMUFilter::IsPickedUp()) {
+            if (!Localization::IsOnRamp() && !IMUFilter::IsPickedUp()) {
               // Create a vision marker message and process it (which just queues it
               // in the mailbox to be picked up and sent out by main execution)
               {
