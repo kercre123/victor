@@ -1,6 +1,7 @@
 #include "anki/common/robot/trig_fast.h"
 #include "imuFilter.h"
 #include "headController.h"
+#include "liftController.h"
 #include "wheelController.h"
 #include "anki/cozmo/robot/hal.h"
 
@@ -31,13 +32,49 @@ namespace Anki {
         f32 accel_filt[3];
         f32 accel_robot_frame_filt[3];
         f32 prev_accel_robot_frame_filt[3] = {0,0,0};
-        const f32 ACCEL_FILT_COEFF = 0.02f;
+        const f32 ACCEL_FILT_COEFF = 0.1f;
+        
+        // ==== Pickup detection ===
+        bool pickedUp_ = false;
+        
+        // Filter coefficient on z-axis accelerometer
+        const f32 ACCEL_PICKUP_FILT_COEFF = 0.1f;
+        
+        // Minimum delta in filtered data required to be considering trending up/down
+        const f32 PD_ACCEL_MIN_DELTA = 5.f;
+        
+        // Minimum length of trend (in tics) required for pickup detection.
+        const u32 PD_MIN_TREND_LENGTH = 20;
+        
+        // A trend that spans this difference in accelerometer readings (mm/s2) can be considered
+        // a pickup even if the head was moving.
+        const f32 PD_SUFFICIENT_TREND_DIFF = 4200;
+
+        f32 pdFiltAccX_aligned_ = 0;
+        f32 pdFiltAccY_aligned_ = 0;
+        f32 pdFiltAccZ_aligned_ = 0;
+        f32 pdFiltAccX_ = 0.f;
+        f32 pdFiltAccY_ = 0.f;
+        f32 pdFiltAccZ_ = 9800.f;
+        f32 pdTrendStartVal_ = 0;
+        u8 pdRiseCnt_ = 0;
+        u8 pdFallCnt_ = 0;
+        u8 pdLastHeadMoveCnt_ = 0;
+        u8 pdUnexpectedMotionCnt_ = 0;
+        // === End of Pickup detection ===
+
         
         u32 lastMotionDetectedTime_us = 0;
-        const u32 MOTION_DETECT_TIMEOUT_US = 1000000;
+        const u32 MOTION_DETECT_TIMEOUT_US = 750000;
         const f32 ACCEL_MOTION_THRESHOLD = 60.f;
-        const f32 GYRO_MOTION_THRESHOLD = 0.22f;
+        const f32 GYRO_MOTION_THRESHOLD = 0.24f;
         
+        
+        // Recorded buffer
+        bool isRecording_ = false;
+        u8 recordDataIdx_ = 0;
+        Messages::IMUDataChunk imuChunkMsg_;
+
         
         // ====== Event detection vars ======
         enum IMUEvent {
@@ -125,7 +162,20 @@ namespace Anki {
       }
       
       //===== End of event callbacks ====
-      
+      void SetPickupDetect(bool pickupDetected)
+      {
+        // TEST WITH LIGHT
+        if (pickupDetected) {
+          HAL::SetLED(INDICATOR_LED_ID, HAL::LED_RED);
+        } else {
+          HAL::SetLED(INDICATOR_LED_ID, HAL::LED_OFF);
+        }
+        
+        pickedUp_ = pickupDetected;
+        pdFallCnt_ = 0;
+        pdRiseCnt_ = 0;
+        pdLastHeadMoveCnt_ = 0;
+      }
       
       void Reset()
       {
@@ -164,6 +214,141 @@ namespace Anki {
       }
       
       
+      bool MotionDetected() {
+        return (lastMotionDetectedTime_us + MOTION_DETECT_TIMEOUT_US) > HAL::GetMicroCounter();
+      }
+      
+      // Robot pickup detector
+      //
+      // Pickup detection occurs when the z-axis accelerometer reading is detected to be trending
+      // up or down. When the robot moves under it's own power the accelerometer readings tend to be
+      // much more noisy than when it is held by a person. The trend must satisfy one of two cases to
+      // be considered a pickup detection:
+      //
+      // 1) Be trending for at least PD_MIN_TREND_LENGTH tics without any head motion.
+      //    (Head motion is sometimes smooth enough to look like a pickup.)
+      //
+      // 2) Be trending for at least PD_MIN_TREND_LENGTH and have spanned a delta of
+      //    PD_SUFFICIENT_TREND_DIFF mm/s^2. In this case head motion is allowed.
+      //    This is so we can at least have a less sensitive detector if the robot
+      //    is engaged is some never-ending head motions.
+      void DetectPickup()
+      {
+        
+        // Compute the acceleration componenet aligned with the z-axis of the robot
+        const f32 xzAccelMagnitude = sqrtf(pdFiltAccX_*pdFiltAccX_ + pdFiltAccZ_*pdFiltAccZ_);
+        const f32 accel_angle_imu_frame = atan2_fast(pdFiltAccZ_, pdFiltAccX_);
+        const f32 accel_angle_robot_frame = accel_angle_imu_frame + HeadController::GetAngleRad();
+        
+        f32 pdFiltPrevVal = pdFiltAccZ_aligned_;
+        
+        pdFiltAccX_aligned_ = xzAccelMagnitude * cosf(accel_angle_robot_frame);
+        pdFiltAccY_aligned_ = pdFiltAccY_;
+        pdFiltAccZ_aligned_ = xzAccelMagnitude * sinf(accel_angle_robot_frame);
+
+        
+        
+        if (IsPickedUp()) {
+          
+          // Picked up flag is reset only when the robot has stopped moving
+          // and it has been set upright.
+          if (!MotionDetected() && accel_robot_frame_filt[2] > NSIDE_DOWN_THRESH_MMPS2) {
+            SetPickupDetect(false);
+          }
+            
+        } else {
+
+          // Do simple check first.
+          // If wheels aren't moving, any motion is because a person was messing with it!
+          if (!WheelController::AreWheelsPowered() && !HeadController::IsMoving() && !LiftController::IsMoving()) {
+            if (ABS(pdFiltAccX_aligned_) > 1000 ||
+                ABS(pdFiltAccY_aligned_) > 1000 ||
+                ABS(pdFiltAccZ_aligned_) > 11000 ||
+                ABS(gyro_robot_frame_filt[0]) > 1.f ||
+                ABS(gyro_robot_frame_filt[1]) > 1.f ||
+                ABS(gyro_robot_frame_filt[2]) > 1.f) {
+              if (++pdUnexpectedMotionCnt_ > 40) {
+                SetPickupDetect(true);
+              }
+            }
+          } else {
+            pdUnexpectedMotionCnt_ = 0;
+          }
+
+          
+          // If rise detected this tic...
+          if (pdFiltAccZ_aligned_ > pdFiltPrevVal + PD_ACCEL_MIN_DELTA) {
+            if (pdFallCnt_ > 0) {
+              // If we've been trending down, check if the trend
+              // meets pickup detection conditions. Otherwise,
+              // reset vars for upwards trend.
+              if ((pdFallCnt_ - pdLastHeadMoveCnt_ > PD_MIN_TREND_LENGTH)
+                  || (pdFallCnt_ > PD_MIN_TREND_LENGTH && (pdTrendStartVal_ - pdFiltAccZ_aligned_) > PD_SUFFICIENT_TREND_DIFF)) {
+                PRINT("PDFall: %d, lastHead: %d, val %f, startVal %f\n", pdFallCnt_, pdLastHeadMoveCnt_, pdFiltAccZ_, pdTrendStartVal_);
+                SetPickupDetect(true);
+              } else {
+                pdFallCnt_ = 0;
+                pdLastHeadMoveCnt_ = 0;
+                pdTrendStartVal_ = pdFiltAccZ_aligned_;
+                ++pdRiseCnt_;
+              }
+            } else {
+              ++pdRiseCnt_;
+
+              if (pdRiseCnt_ == 1) {
+                pdTrendStartVal_ = pdFiltAccZ_aligned_;
+              }
+              
+              if (HeadController::IsMoving()) {
+                pdLastHeadMoveCnt_ = pdRiseCnt_;
+              }
+              
+            }
+            
+          // If fall detected this tic...
+          } else if (pdFiltAccZ_aligned_ < pdFiltPrevVal - PD_ACCEL_MIN_DELTA) {
+            if (pdRiseCnt_ > 0) {
+              // If we've been trending up, check if the trend
+              // meets pickup detection conditions. Otherwise,
+              // reset vars for downwards trend.
+              if ((pdRiseCnt_ - pdLastHeadMoveCnt_> PD_MIN_TREND_LENGTH)
+                  || (pdRiseCnt_ > PD_MIN_TREND_LENGTH && (pdFiltAccZ_aligned_ - pdTrendStartVal_) > PD_SUFFICIENT_TREND_DIFF)) {
+                PRINT("PDRise: %d, lastHead: %d, val %f, startVal %f\n", pdRiseCnt_, pdLastHeadMoveCnt_, pdFiltAccZ_, pdTrendStartVal_);
+                SetPickupDetect(true);
+              } else {
+                pdRiseCnt_ = 0;
+                pdLastHeadMoveCnt_ = 0;
+                ++pdFallCnt_;
+                pdTrendStartVal_ = pdFiltAccZ_aligned_;
+              }
+            } else {
+              ++pdFallCnt_;
+              
+              if (pdFallCnt_ == 1) {
+                pdTrendStartVal_ = pdFiltAccZ_aligned_;
+              }
+              
+              if (HeadController::IsMoving()) {
+                pdLastHeadMoveCnt_ = pdFallCnt_;
+              }
+
+            }
+          } else {
+            
+            // Trend is flat. Decrement counter values.
+            if (pdRiseCnt_ > 0) {
+              --pdRiseCnt_;
+            }
+            if (pdFallCnt_ > 0) {
+              --pdFallCnt_;
+            }
+            if (pdLastHeadMoveCnt_ > 0) {
+              --pdLastHeadMoveCnt_;
+            }
+            
+          }
+        }
+      }
       
       void UpdateEventDetection()
       {
@@ -312,7 +497,7 @@ namespace Anki {
         accel_filt[1] = imu_data.acc_y * ACCEL_FILT_COEFF + accel_filt[1] * (1.f-ACCEL_FILT_COEFF);
         accel_filt[2] = imu_data.acc_z * ACCEL_FILT_COEFF + accel_filt[2] * (1.f-ACCEL_FILT_COEFF);
         //printf("accel: %f %f %f\n", accel_filt[0], accel_filt[1], accel_filt[2]);
-        pitch_ = atan2(accel_filt[0], accel_filt[2]) - HeadController::GetAngleRad();
+        pitch_ = atan2(accel_filt[0], accel_filt[2]) - headAngle;
         
         //PERIODIC_PRINT(50, "Pitch %f\n", RAD_TO_DEG_F32(pitch_));
 
@@ -380,7 +565,7 @@ namespace Anki {
         rotSpeed_ = gyro_robot_frame_filt[2];
         
         // Update orientation if motion detected or expected
-        if ((lastMotionDetectedTime_us + MOTION_DETECT_TIMEOUT_US) > HAL::GetMicroCounter()) {
+        if (MotionDetected()) {
           f32 dAngle = rotSpeed_ * CONTROL_DT;
           rot_ += dAngle;
         }
@@ -388,7 +573,48 @@ namespace Anki {
         // XXX: DEBUG!
         //UpdateEventDetection();
         
-        //PRINT("IMFILTER: pitch = %f (%fdeg)\n", pitch_, RAD_TO_DEG(pitch_));
+        // Pickup detection
+        pdFiltAccX_ = imu_data.acc_x * ACCEL_PICKUP_FILT_COEFF + pdFiltAccX_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
+        pdFiltAccY_ = imu_data.acc_y * ACCEL_PICKUP_FILT_COEFF + pdFiltAccY_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
+        pdFiltAccZ_ = imu_data.acc_z * ACCEL_PICKUP_FILT_COEFF + pdFiltAccZ_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
+        DetectPickup();
+        
+        //UpdateEventDetection();
+        
+        
+        // Recording IMU data for sending to basestation
+        if (isRecording_) {
+          
+          // Scale accel range of -20000 to +20000mm/s2 (roughly -2g to +2g) to be between -127 and +127
+          const f32 accScaleFactor = 127.f/20000.f;
+          /*
+          imuChunkMsg_.aX[recordDataIdx_] = (accel_robot_frame_filt[0] * accScaleFactor);
+          imuChunkMsg_.aY[recordDataIdx_] = (accel_robot_frame_filt[1] * accScaleFactor);
+          imuChunkMsg_.aZ[recordDataIdx_] = (accel_robot_frame_filt[2] * accScaleFactor);
+           */
+          imuChunkMsg_.aX[recordDataIdx_] = (pdFiltAccX_aligned_ * accScaleFactor);
+          imuChunkMsg_.aY[recordDataIdx_] = (pdFiltAccY_aligned_ * accScaleFactor);
+          imuChunkMsg_.aZ[recordDataIdx_] = (pdFiltAccZ_aligned_ * accScaleFactor);
+          
+          // Scale gyro range of -2pi to +2pi rad/s to be between -127 and +127
+          const f32 gyroScaleFactor = 127.f/(2.f*PI_F);
+          imuChunkMsg_.gX[recordDataIdx_] = (gyro_robot_frame_filt[0] * gyroScaleFactor);
+          imuChunkMsg_.gY[recordDataIdx_] = (gyro_robot_frame_filt[1] * gyroScaleFactor);
+          imuChunkMsg_.gZ[recordDataIdx_] = (gyro_robot_frame_filt[2] * gyroScaleFactor);
+
+          // Send message when it's full
+          if (++recordDataIdx_ == IMU_CHUNK_SIZE) {
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::IMUDataChunk), &imuChunkMsg_);
+            recordDataIdx_ = 0;
+            ++imuChunkMsg_.chunkId;
+            
+            if (imuChunkMsg_.chunkId == imuChunkMsg_.totalNumChunks) {
+              PRINT("IMU RECORDING COMPLETE (time %dms)\n", HAL::GetTimeStamp());
+              isRecording_ = false;
+            }
+          }
+        }
+        
         
         return retVal;
         
@@ -410,7 +636,22 @@ namespace Anki {
         return pitch_;
       }
       
-
+      bool IsPickedUp()
+      {
+        return pickedUp_;
+      }
+      
+      
+      void RecordAndSend(const u32 length_ms)
+      {
+        PRINT("STARTING IMU RECORDING (time = %dms)\n", HAL::GetTimeStamp());
+        isRecording_ = true;
+        recordDataIdx_ = 0;
+        imuChunkMsg_.seqId++;
+        imuChunkMsg_.chunkId=0;
+        imuChunkMsg_.totalNumChunks = length_ms / (TIME_STEP * IMU_CHUNK_SIZE);
+      }
+      
     } // namespace IMUFilter
   } // namespace Cozmo
 } // namespace Anki

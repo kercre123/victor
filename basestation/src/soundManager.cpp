@@ -137,7 +137,7 @@ namespace Anki {
     
     bool SoundManager::Play(const SoundID_t id)
     {
-      if (_hasCmdProcessor && _hasRootDir) {
+      if (_hasCmdProcessor && _hasRootDir && id < NUM_SOUNDS) {
         if (_numActiveThreads < MAX_SOUND_THREADS) {
           ++_numActiveThreads;
           std::thread soundThread(CmdLinePlay, id);

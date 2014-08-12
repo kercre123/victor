@@ -32,6 +32,9 @@
 #include "ramp.h"
 #include "vizManager.h"
 
+#include <fstream>
+
+
 #define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
 
@@ -138,6 +141,7 @@ namespace Anki {
     , _currentHeadAngle(0)
     , _currentLiftAngle(0)
     , _isPickingOrPlacing(false)
+    , _isPickedUp(false)
     , _state(IDLE)
     , _carryingMarker(nullptr)
     , _dockMarker(nullptr)
@@ -182,6 +186,7 @@ namespace Anki {
       //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
       SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
+      SetPickedUp( msg.status & IS_PICKED_UP );
       
       // TODO: Make this a parameters somewhere?
       const f32 WheelSpeedToConsiderStopped = 2.f;
@@ -2109,6 +2114,14 @@ namespace Anki {
       
       return _msgHandler->SendMessage(_ID, m);
     }
+
+    Result Robot::SendIMURequest(const u32 length_ms) const
+    {
+      MessageIMURequest m;
+      m.length_ms = length_ms;
+      
+      return _msgHandler->SendMessage(_ID, m);
+    }
     
     Result Robot::SendStartTestMode(const TestMode mode) const
     {
@@ -2195,10 +2208,13 @@ namespace Anki {
 
     Result Robot::SendPlayAnimation(const AnimationID_t id, const u32 numLoops)
     {
-      MessagePlayAnimation m;
-      m.animationID = id;
-      m.numLoops = numLoops;
-      return _msgHandler->SendMessage(_ID, m);
+      if (id < ANIM_NUM_ANIMATIONS) {
+        MessagePlayAnimation m;
+        m.animationID = id;
+        m.numLoops = numLoops;
+        return _msgHandler->SendMessage(_ID, m);
+      }
+      return RESULT_FAIL;
     }
     
     Result Robot::ProcessImageChunk(const MessageImageChunk &msg)
@@ -2258,6 +2274,60 @@ namespace Anki {
       
       return RESULT_OK;
     }
+    
+    Result Robot::ProcessIMUDataChunk(MessageIMUDataChunk const& msg)
+    {
+      static u8 imuSeqID = 0;
+      static u32 dataSize = 0;
+      static s8 imuData[6][1024];  // first ax, ay, az, gx, gy, gz
+      
+      // If seqID has changed, then start over.
+      if (msg.seqId != imuSeqID) {
+        imuSeqID = msg.seqId;
+        dataSize = 0;
+      }
+      
+      // Msgs are guaranteed to be received in order so just append data to array
+      memcpy(imuData[0] + dataSize, msg.aX.data(), IMU_CHUNK_SIZE);
+      memcpy(imuData[1] + dataSize, msg.aY.data(), IMU_CHUNK_SIZE);
+      memcpy(imuData[2] + dataSize, msg.aZ.data(), IMU_CHUNK_SIZE);
+      
+      memcpy(imuData[3] + dataSize, msg.gX.data(), IMU_CHUNK_SIZE);
+      memcpy(imuData[4] + dataSize, msg.gY.data(), IMU_CHUNK_SIZE);
+      memcpy(imuData[5] + dataSize, msg.gZ.data(), IMU_CHUNK_SIZE);
+      
+      dataSize += IMU_CHUNK_SIZE;
+      
+      // When dataSize matches the expected size, print to file
+      if (msg.chunkId == msg.totalNumChunks - 1) {
+        
+        // Make sure image capture folder exists
+        if (!Anki::DirExists(AnkiUtil::kP_IMU_LOGS_DIR)) {
+          if (!MakeDir(AnkiUtil::kP_IMU_LOGS_DIR)) {
+            PRINT_NAMED_WARNING("Robot.ProcessIMUDataChunk.CreateDirFailed","\n");
+          }
+        }
+        
+        // Create image file
+        char logFilename[64];
+        snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.m", AnkiUtil::kP_IMU_LOGS_DIR, GetID(), imuSeqID);
+        PRINT_INFO("Printing imu log to %s (dataSize = %d)\n", logFilename, dataSize);
+        
+        std::ofstream oFile(logFilename);
+        for (u32 axis = 0; axis < 6; ++axis) {
+          oFile << "imuData" << axis << " = [";
+          for (u32 i=0; i<dataSize; ++i) {
+            oFile << (s32)(imuData[axis][i]) << " ";
+          }
+          oFile << "];\n\n";
+        }
+        oFile.close();
+      }
+      
+      return RESULT_OK;
+    }
+
+    
     
     void Robot::SaveImages(bool on)
     {

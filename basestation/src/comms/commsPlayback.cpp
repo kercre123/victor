@@ -67,20 +67,26 @@ u32 CommsPlayback::GetNumPendingMsgPackets()
 
 bool CommsPlayback::GetNextMsgPacket(Comms::MsgPacket &msg)
 {
-#ifdef DEBUG_RECORDING_PLAYBACK
-  printf("SENDING %d ", nextValue);
-  dataFromFile[nextValue].Print();
-#endif
-  msg.sourceId = dataFromFile[nextValue].sourceVehicleId;
-  msg.dataLen = dataFromFile[nextValue].bufferSize;
-  msg.timeStamp = dataFromFile[nextValue].timeStamp;
-  memset(msg.data, 0, MAX_BLE_MSG_SIZE);
-  memcpy(msg.data, dataFromFile[nextValue].buffer, msg.dataLen);
-#ifdef DEBUG_RECORDING_PLAYBACK
-  PrintfCharArray(bleBuffer, MAX_BLE_MSG_SIZE);
-  printf("\n\n");
-#endif
-  nextValue++;
+  if (GetNumPendingMsgPackets() > 0) {
+  
+    #ifdef DEBUG_RECORDING_PLAYBACK
+    printf("SENDING %d ", nextValue);
+    dataFromFile[nextValue].Print();
+    #endif
+    msg.sourceId = dataFromFile[nextValue].sourceVehicleId;
+    msg.dataLen = dataFromFile[nextValue].bufferSize;
+    msg.timeStamp = dataFromFile[nextValue].timeStamp;
+    memset(msg.data, 0, MAX_BLE_MSG_SIZE);
+    memcpy(msg.data, dataFromFile[nextValue].buffer, msg.dataLen);
+    #ifdef DEBUG_RECORDING_PLAYBACK
+    PrintfCharArray(bleBuffer, MAX_BLE_MSG_SIZE);
+    printf("\n\n");
+    #endif
+    nextValue++;
+    return true;
+  }
+  
+  return false;
 }
 
 size_t CommsPlayback::Send(const Comms::MsgPacket &msg)

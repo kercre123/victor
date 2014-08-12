@@ -208,7 +208,7 @@ namespace Cozmo {
       
       ConnectedRobotInfo &c = it->second;
       
-      int bytes_recvd = c.client->Recv(c.recvBuf + c.recvDataSize,
+      int bytes_recvd = c.client->Recv((char*)c.recvBuf + c.recvDataSize,
                                        ConnectedRobotInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
       if (bytes_recvd == 0) {
         it++;
@@ -231,7 +231,7 @@ namespace Cozmo {
       // Look for valid header
       while (c.recvDataSize >= sizeof(RADIO_PACKET_HEADER)) {
         
-        char* hPtr = std::strstr(c.recvBuf,(char*)RADIO_PACKET_HEADER);
+        char* hPtr = std::strstr((char*)c.recvBuf,(char*)RADIO_PACKET_HEADER);
         if (hPtr == NULL) {
           // Header not found at all
           // Delete everything
@@ -239,7 +239,7 @@ namespace Cozmo {
           break;
         }
         
-        size_t n = hPtr - c.recvBuf;
+        size_t n = hPtr - (char*)c.recvBuf;
         if (n != 0) {
           // Header was not found at the beginning.
           // Delete everything up until the header.
@@ -256,7 +256,7 @@ namespace Cozmo {
                               (c.recvBuf[HEADER_AND_TS_SIZE + 3] << 24);
           
           if (dataLen > 255) {
-            PRINT_NAMED_WARNING("TCPComms.MsgTooBig", "Can't handle messages larger than 255\n");
+            PRINT_NAMED_WARNING("TCPComms.MsgTooBig", "Can't handle messages larger than 255 (dataLen = %d)\n", dataLen);
             dataLen = 255;
           }
           

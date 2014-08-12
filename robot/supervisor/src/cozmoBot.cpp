@@ -46,6 +46,8 @@ namespace Anki {
         Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
         bool wasConnected_ = false;
         
+        bool wasPickedUp_ = false;
+        
         // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
         // times through the main loop
         u32 robotStateMessageCounter_ = 0;
@@ -337,6 +339,18 @@ namespace Anki {
         SteeringController::Manage();
         WheelController::Manage();
         
+        
+        //////////////////////////////////////////////////////////////
+        // Pickup reaction
+        //////////////////////////////////////////////////////////////
+        if (IMUFilter::IsPickedUp() && !wasPickedUp_) {
+          // Stop wheels
+          PathFollower::ClearPath();
+          SteeringController::ExecuteDirectDrive(0, 0);
+          SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
+        }
+        wasPickedUp_ = IMUFilter::IsPickedUp();
+
         
         //////////////////////////////////////////////////////////////
         // Feedback / Display

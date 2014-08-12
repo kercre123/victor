@@ -1,6 +1,8 @@
 #ifndef COZMO_TYPES_H
 #define COZMO_TYPES_H
 
+#include "anki/common/types.h"
+
 // Shared types between basestation and robot
 
 namespace Anki {
@@ -77,7 +79,8 @@ namespace Anki {
     typedef enum {
       //IS_TRAVERSING_PATH    = 1,
       IS_CARRYING_BLOCK     = 2,
-      IS_PICKING_OR_PLACING = 4
+      IS_PICKING_OR_PLACING = 4,
+      IS_PICKED_UP          = 8
     } RobotStatusFlag;
     
     
@@ -96,6 +99,31 @@ namespace Anki {
       ,ANIM_WIGGLE
       ,ANIM_NUM_ANIMATIONS
     } AnimationID_t;
+    
+    // List of sound schemes
+    typedef enum {
+      SOUND_SCHEME_COZMO
+      ,SOUND_SCHEME_MOVIE
+      ,NUM_SOUND_SCHEMES
+    } SoundSchemeID_t;
+    
+    // List of sound IDs
+    typedef enum {
+      SOUND_TADA
+      ,SOUND_NOPROBLEMO
+      ,SOUND_INPUT
+      ,SOUND_SWEAR
+      ,SOUND_STARTOVER
+      ,SOUND_NOTIMPRESSED
+      ,SOUND_60PERCENT
+      ,SOUND_DROID
+      ,SOUND_DEMO_START
+      ,SOUND_WAITING4DICE
+      ,SOUND_WAITING4DICE2DISAPPEAR
+      ,SOUND_OK_GOT_IT
+      ,SOUND_OK_DONE
+      ,NUM_SOUNDS
+    } SoundID_t;
     
     
     // For DEV only

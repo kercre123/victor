@@ -34,6 +34,7 @@
 
 // Local Cozmo Includes
 #include "headController.h"
+#include "imuFilter.h"
 #include "matlabVisualization.h"
 #include "messages.h"
 #include "localization.h"
@@ -2148,7 +2149,7 @@ namespace Anki {
           {
             const VisionMarker& crntMarker = VisionMemory::markers_[i_marker];
 
-            if (!Localization::IsOnRamp()) {
+            if (!IMUFilter::IsPickedUp() && !IMUFilter::IsPickedUp()) {
               // Create a vision marker message and process it (which just queues it
               // in the mailbox to be picked up and sent out by main execution)
               {

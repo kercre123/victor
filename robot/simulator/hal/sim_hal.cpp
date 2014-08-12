@@ -74,17 +74,8 @@ namespace Anki {
       
       
       // Cameras / Vision Processing
-      //webots::Camera* matCam_;
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
-      //HAL::CameraInfo matCamInfo_;
-      //Vision::CameraResolution headCamMode_;
-      // HAL::CameraMode matCamMode_;
-      //u8* headCamBuffer_;
-      //u8* matCamBuffer_;
-      
-      //HAL::CameraUpdateMode headCamUpdateMode_;
-      //HAL::CameraUpdateMode matCamUpdateMode_;
       
       // For pose information
       webots::GPS* gps_;
@@ -95,6 +86,11 @@ namespace Anki {
       // IMU
       webots::Gyro* gyro_;
       webots::Accelerometer* accel_;
+      
+      // Prox sensors
+      webots::DistanceSensor *proxLeft_;
+      webots::DistanceSensor *proxCenter_;
+      webots::DistanceSensor *proxRight_;
       
       // For tracking wheel distance travelled
       f32 motorPositions_[HAL::MOTOR_COUNT];
@@ -277,6 +273,14 @@ namespace Anki {
       // Accelerometer
       accel_ = webotRobot_.getAccelerometer("accel");
       accel_->enable(TIME_STEP);
+      
+      // Proximity sensors
+      proxLeft_ = webotRobot_.getDistanceSensor("proxSensorLeft");
+      proxCenter_ = webotRobot_.getDistanceSensor("proxSensorCenter");
+      proxRight_ = webotRobot_.getDistanceSensor("proxSensorRight");
+      proxLeft_->enable(TIME_STEP);
+      proxCenter_->enable(TIME_STEP);
+      proxRight_->enable(TIME_STEP);
       
       if(InitSimRadio(robotID_) == RESULT_FAIL) {
         PRINT("Failed to initialize Simulated Radio.\n");

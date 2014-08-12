@@ -339,6 +339,13 @@ namespace Anki {
       
       return lastResult;
     }
+
+    
+
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageIMUDataChunk const& msg)
+    {
+      return robot->ProcessIMUDataChunk(msg);
+    }
     
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&)

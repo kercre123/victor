@@ -94,6 +94,8 @@ namespace Anki {
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
       void SendSelectNextSoundScheme();
       void SendStartTestMode(TestMode mode);
+      void SendIMURequest(u32 length_ms);
+      void SendAnimation(AnimationID_t animId, u32 numLoops, SoundID_t soundId);
       
       void Init()
       {
@@ -154,6 +156,7 @@ namespace Anki {
         printf("              Abort current path:  q\n");
         printf("         Update controller gains:  k\n");
         printf("             Cycle sound schemes:  m\n");
+        printf("                 Request IMU log:  o\n");
         printf("                      Test modes:  Alt + Testmode#\n");
         printf("                Follow test plan:  t\n");
         printf("                      Print help:  ?\n");
@@ -195,7 +198,10 @@ namespace Anki {
         const s32 CKEY_TEST_PLAN = (s32)'T';
         const s32 CKEY_CYCLE_SOUND_SCHEME = (s32)'M';
         const s32 CKEY_EXPORT_IMAGES = (s32)'E';
+        const s32 CKEY_IMU_REQUEST = (s32)'O';
         
+        const s32 CKEY_ANIMATION_NOD = (s32)'!';
+        const s32 CKEY_ANIMATION_BACK_AND_FORTH = (s32)'@';
         
         int key = inputController.keyboardGetKey();
         
@@ -486,6 +492,24 @@ namespace Anki {
               SendSelectNextSoundScheme();
               break;
             }
+            case CKEY_IMU_REQUEST:
+            {
+              SendIMURequest(2000);
+              break;
+            }
+              
+            // Animations
+            case CKEY_ANIMATION_NOD:
+            {
+              SendAnimation(ANIM_HEAD_NOD, 2, SOUND_OK_GOT_IT);
+              break;
+            }
+            case CKEY_ANIMATION_BACK_AND_FORTH:
+            {
+              SendAnimation(ANIM_BACK_AND_FORTH_EXCITED, 3, SOUND_OK_DONE);
+              break;
+            }
+              
             case CKEY_QUESTION_MARK:
             {
               PrintHelp();
@@ -751,6 +775,22 @@ namespace Anki {
       {
         MessageU2G_StartTestMode m;
         m.mode = mode;
+        SendMessage(m);
+      }
+      
+      void SendIMURequest(u32 length_ms)
+      {
+        MessageU2G_IMURequest m;
+        m.length_ms = length_ms;
+        SendMessage(m);
+      }
+      
+      void SendAnimation(AnimationID_t animId, u32 numLoops, SoundID_t soundId)
+      {
+        MessageU2G_PlayAnimation m;
+        m.animationID = animId;
+        m.numLoops = numLoops;
+        m.soundID = soundId;
         SendMessage(m);
       }
       

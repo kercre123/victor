@@ -73,9 +73,10 @@ RecordingPlaybackStatus Playback::Init(Comms::IComms *realComms, Comms::IComms *
   *replacementComms = new CommsPlayback(commsLogFile, realComms);
   replacementComms_ = *replacementComms;
   ((CommsRecorder*)replacementComms_)->PrepareLogFile();
+  
+/*
   BaseStationTime_t commsLastMessageTime = ((CommsPlayback*)replacementComms_)->GetTimeLastMessageRecorded();
 
-/*
   // save some params from current config
   boost::optional<string> baseConfigPath = config->get_optional<string>(AnkiUtil::kP_BASE_CONFIG_PATH);
   if (!baseConfigPath)
