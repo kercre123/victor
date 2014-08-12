@@ -383,9 +383,9 @@ namespace Anki {
                                                          dockOffsetDistY_,
                                                          dockOffsetAng_);
               } else {
-                // When we are "docking" with a ramp, we don't want to worry about
-                // the X angle being large (since we _expect_ it to be large, since
-                // the markers are facing upward).
+                // When we are "docking" with a ramp or crossing a bridge, we
+                // don't want to worry about the X angle being large (since we
+                // _expect_ it to be large, since the markers are facing upward).
                 const bool checkAngleX = !(action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND || action_ == DA_CROSS_BRIDGE);
                 
                 if (pixelSearchRadius_ < 0) {
@@ -723,6 +723,7 @@ namespace Anki {
               #if(DEBUG_PAP_CONTROLLER)
               PRINT("TRAVERSE_BRIDGE\n");
               #endif
+              Localization::SetOnBridge(true);
             }
             break;
           case TRAVERSE_BRIDGE:
@@ -752,7 +753,7 @@ namespace Anki {
               #endif
               mode_ = IDLE;
               lastActionSucceeded_ = true;
-              Localization::SetOnRamp(false);
+              Localization::SetOnBridge(false);
             }
             break;
             

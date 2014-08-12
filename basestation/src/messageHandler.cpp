@@ -305,6 +305,26 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseStart const& msg)
+    {
+      PRINT_INFO("Robot %d reported it started traversing a bridge.\n", robot->GetID());
+      
+      // TODO: What does this message trigger?
+      //robot->SetOnBridge(true);
+      
+      return RESULT_OK;
+    }
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseComplete const& msg)
+    {
+      PRINT_INFO("Robot %d reported it completed traversing a bridge.\n", robot->GetID());
+      
+      // TODO: What does this message trigger?
+      //robot->SetOnBridge(false);
+      
+      return RESULT_OK;
+    }
+    
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMainCycleTimeError const& msg)
     {
       Result lastResult = RESULT_OK;

@@ -49,6 +49,7 @@ namespace Anki {
         f32 x_=0.f, y_=0.f;  // mm
         Radians orientation_(0.f);
         bool onRamp_ = false;
+        bool onBridge_ = false;
        
 #if(USE_OVERLAY_DISPLAY)
         f32 xTrue_, yTrue_, angleTrue_;
@@ -330,6 +331,34 @@ namespace Anki {
       
       bool IsOnRamp() {
         return onRamp_;
+      }
+      
+      
+      Result SetOnBridge(bool onBridge)
+      {
+        Result lastResult = RESULT_OK;
+        
+        if(onBridge == true && onBridge_ == false) {
+          // We weren't on a bridge but now we are
+          Messages::BridgeTraverseStart msg;
+          msg.timestamp = HAL::GetTimeStamp();
+          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BridgeTraverseStart), &msg) == false) {
+            lastResult = RESULT_FAIL;
+          }
+        }
+        else if(onBridge == false && onBridge_ == true) {
+          // We were on a bridge and no we're not
+          Messages::BridgeTraverseComplete msg;
+          msg.timestamp = HAL::GetTimeStamp();
+          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BridgeTraverseComplete), &msg) == false) {
+            lastResult = RESULT_FAIL;
+          }
+        }
+        return lastResult;
+      }
+      
+      bool IsOnBridge() {
+        return onBridge_;
       }
       
       void Update()

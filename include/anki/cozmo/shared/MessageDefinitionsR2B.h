@@ -110,6 +110,15 @@ START_TIMESTAMPED_MESSAGE_DEFINITION(RampTraverseComplete, 1)
 ADD_MESSAGE_MEMBER(bool, didSucceed) // true if robot thinks it finished traversing (the sloped part of) a ramp
 END_MESSAGE_DEFINITION(RampTraverseComplete)
 
+// BridgeTraverseStart
+START_TIMESTAMPED_MESSAGE_DEFINITION(BridgeTraverseStart, 1)
+END_MESSAGE_DEFINITION(BridgeTraverseStart)
+
+// BridgeTraverseComplete
+START_TIMESTAMPED_MESSAGE_DEFINITION(BridgeTraverseComplete, 1)
+ADD_MESSAGE_MEMBER(bool, didSucceed) // true if robot thinks it finished traversing the bridge
+END_MESSAGE_DEFINITION(BridgeTraverseComplete)
+
 // CameraCalibration
 // TODO: Assume zero skew and remove that member?
 START_MESSAGE_DEFINITION(CameraCalibration, 1)
