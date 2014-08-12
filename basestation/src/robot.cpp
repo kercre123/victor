@@ -108,7 +108,6 @@ namespace Anki {
       {IDLE,                  "IDLE"},
       {FOLLOWING_PATH,        "FOLLOWING_PATH"},
       {BEGIN_DOCKING,         "BEGIN_DOCKING"},
-      {BEGIN_RAMPING,         "BEGIN_RAMPING"},
       {DOCKING,               "DOCKING"},
       {PLACE_OBJECT_ON_GROUND, "PLACE_OBJECT_ON_GROUND"}
     };
@@ -407,14 +406,14 @@ namespace Anki {
         } // case FOLLOWING_PATH
       
         case BEGIN_DOCKING:
-        case BEGIN_RAMPING:
-        case BEGIN_BRIDGING:
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime) {
             // TODO: Check that the marker was recently seen at roughly the expected image location
             // ...
             //const Point2f& imgCorners = dockMarker_->GetImageCorners().computeCentroid();
             // For now, just docking to the marker no matter where it is in the image.
+            
+            // Make sure the object we were docking with still exists in the world
             ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_dockObjectID));
             if(dockObject == nullptr) {
               PRINT_NAMED_ERROR("Robot.Update.ActionObjectNotFound",
@@ -424,6 +423,7 @@ namespace Anki {
               return RESULT_OK; // Robot updated successfully, so not FAIL?
             }
             
+            // Verify that we ended up near enough a PreActionPose of the right type
             std::vector<ActionableObject::PoseMarkerPair_t> preActionPoseMarkerPairs;
             dockObject->GetCurrentPreActionPoses(preActionPoseMarkerPairs, {_goalPoseActionType});
             
@@ -444,125 +444,20 @@ namespace Anki {
               PRINT_NAMED_INFO("Robot.Update.TooFarFromGoal", "Robot is too far from pre-action pose (%.1fmm), re-docking\n", distanceToGoal);
               _reExecSequenceFcn();
             } else {
-              PRINT_NAMED_INFO("Robot.Update.GoalTolerance", "Robot is within %.1fmm of the nearest pre-action pose.\n", distanceToGoal);
-            
-            
-            /*
-            bool atPreActionPose = false;
-            Pose3d P_diff;
-            for(auto const& preActionPair : preActionPoseMarkerPairs) {
+              PRINT_NAMED_INFO("Robot.Update.BeginDocking",
+                               "Robot is within %.1fmm of the nearest pre-action pose, "
+                               "docking with marker %d = %s (action = %d).\n",
+                               distanceToGoal, _dockMarker->GetCode(),
+                               Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
               
-              if(preActionPair.first.IsSameAs(GetPose(), MAX_DISTANCE_TO_PREDOCK_POSE, DEG_TO_RAD(20), P_diff)) {
-                atPreActionPose = true;
-              }
-            }
-            
-            if(!atPreActionPose) {
-              PRINT_NAMED_INFO("Robot.Update.ReDock", "Robot is too far from pre-action pose (%.1fmm), re-trying.\n",
-                               P_diff.GetTranslation().Length());
-              _reExecSequenceFcn();
-            } else {
-             */
-              // In place, start dock
-              PRINT_INFO("Docking with marker %d = %s (action = %d)\n",
-                         _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
-            
               DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
               _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
               SetState(DOCKING);
             }
           } // if _waitUntilTime has passed
           
-            /*
-            // First, re-compute the pre-dock or pre-ramp pose and make sure we
-            // are close enough to the desired position, given that the object's
-            // pose may have updated while we were approaching it (meaning the
-            // original "goal pose" may be a bit off now)
-            switch(_state) {
-              case BEGIN_DOCKING:
-              {
-                std::vector<ActionableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
-                dockObject->GetCurrentPreActionPoses(preDockPoseMarkerPairs, {PreActionPose::DOCKING});
-                
-                float closestDistSq = std::numeric_limits<float>::max();
-                for(auto const& preDockPair : preDockPoseMarkerPairs) {
-                  const float distSq = (preDockPair.first.GetTranslation() - GetPose().GetTranslation()).LengthSq();
-                  if(distSq < closestDistSq)
-                    closestDistSq = distSq;
-                }
-                
-                const float distanceToGoal = sqrtf(closestDistSq);
-                if(distanceToGoal > MAX_DISTANCE_TO_PREDOCK_POSE) {
-                  PRINT_NAMED_INFO("Robot.Update.ReDock", "Robot is too far from pre-dock pose (%.1fmm), re-docking\n", distanceToGoal);
-                  ExecuteDockingSequence(_dockObjectID);
-                } else {
-                  PRINT_NAMED_INFO("Robot.Update.GoalTolerance", "Robot is within %.1fmm of the nearest pre-dock pose.\n", distanceToGoal);
-                }
-                
-                break;
-              } // case BEGIN_DOCKING
-                
-              case BEGIN_RAMPING:
-              {
-                Pose3d checkPose;
-                Ramp* ramp = dynamic_cast<Ramp*>(dockObject);
-                assert(ramp != nullptr);
-                
-                switch(_dockAction)
-                {
-                  case DA_RAMP_ASCEND:
-                    checkPose = ramp->GetPreAscentPose();
-                    break;
-                    
-                  case DA_RAMP_DESCEND:
-                    checkPose = ramp->GetPreDescentPose();
-                    break;
-                    
-                  default:
-                    PRINT_NAMED_ERROR("Robot.Update.UnexpectedActionState",
-                                      "Only DA_RAMP_ASCEND / DA_RAMP_DESCEND should be possible action states here. Got %d.\n", _dockAction);
-                    assert(false);
-                    return RESULT_FAIL;
-                }
-                
-                if(checkPose.GetWithRespectTo(*GetPose().GetParent(), checkPose) == false) {
-                  PRINT_NAMED_ERROR("Robot.Update.RampCheckPoseOriginProblem",
-                                    "Could not get get ramp check pose w.r.t. robot's parent.\n");
-                  return RESULT_FAIL;
-                }
-                
-                const float distanceToGoal = (GetPose().GetTranslation() - checkPose.GetTranslation()).Length();
-                if(distanceToGoal > MAX_DISTANCE_TO_PREDOCK_POSE) {
-                  PRINT_NAMED_INFO("Robot.Update.RampRealign", "Robot is too far from pre-ascent/descent pose (%.1fmm), re-aligning.\n", distanceToGoal);
-                      ExecuteRampingSequence(_dockObjectID);
-                }
-                break;
-              } // case BEGIN_RAMPING
-                
-              case BEGIN_BRIDGING:
-              {
-                
-                break;
-              } // case BEGIN_BRIDGING
-                
-              default:
-                PRINT_NAMED_ERROR("Robot.Update.UnexpectedState", "Only BEGIN_RAMPING / BEGIN_DOCKING should be possible states here. Got %d.\n", _state);
-                assert(false);
-                return RESULT_FAIL;
-            }
-            
-            // Start dock
-            PRINT_INFO("Docking with marker %d = %s (action = %d)\n", _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
-            
-            // TODO: Need to pass in appropriate dockMarker2 when we add a bridge crossing state
-            DockWithObject(_dockObjectID, _dockMarker, _dockMarker, _dockAction);
-            _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
-            SetState(DOCKING);
-          }
-             */
-            
           break;
-        } // case BEGIN_DOCKING / BEGIN_RAMPING
+        } // case BEGIN_DOCKING
           
         case PLACE_OBJECT_ON_GROUND:
         {
@@ -698,7 +593,6 @@ namespace Anki {
         case IDLE:
         case FOLLOWING_PATH:
         case BEGIN_DOCKING:
-        case BEGIN_RAMPING:
         case DOCKING:
         case PLACE_OBJECT_ON_GROUND:
           PRINT_INFO("Robot %d switching from state %s to state %s.\n", _ID,
@@ -1219,7 +1113,7 @@ namespace Anki {
       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
       //SetState(FOLLOWING_PATH); // This should be done by ExecutePathToPose
       assert(_state == FOLLOWING_PATH);
-      _nextState = BEGIN_RAMPING;
+      _nextState = BEGIN_DOCKING;
       
       // So we know how to check for success and what to do in case of failure:
       _goalPoseActionType = PreActionPose::ENTRY;

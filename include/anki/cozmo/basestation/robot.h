@@ -44,9 +44,7 @@ namespace Anki {
       enum State {
         IDLE,
         FOLLOWING_PATH,
-        BEGIN_DOCKING,
-        BEGIN_RAMPING,
-        BEGIN_BRIDGING,
+        BEGIN_DOCKING, // also used for ascending/descending ramps, and crossing bridges
         DOCKING,
         PLACE_OBJECT_ON_GROUND
       };
@@ -61,7 +59,6 @@ namespace Anki {
       // Accessors
       const RobotID_t        GetID()           const;
       const Pose3d&          GetPose()         const;
-      //const Pose3d*          GetPoseOrigin()   const {return _poseOrigin;}
       
       bool                   IsLocalized()     const {return _localizedToID.IsSet();}
       const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
@@ -90,8 +87,7 @@ namespace Anki {
       Result SetState(const State newState);
       
       void SetPose(const Pose3d &newPose);
-      //Result SetPoseOrigin(const Pose3d& newPoseOrigin);
-      const Pose3d* GetWorldOrigin() const { return _worldOrigin; } // TODO: Needed publicly?
+      const Pose3d* GetWorldOrigin() const { return _worldOrigin; }
       
       void SetHeadAngle(const f32& angle);
       void SetLiftAngle(const f32& angle);
