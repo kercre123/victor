@@ -73,7 +73,7 @@ WorldInfo {
     }
     DEF FLOOR_RAMP ContactProperties {
       material1 "cmat_ramp"
-      material2 "cmat_block"
+      material2 "cmat_floor"
       coulombFriction 5000
       bounce 0.001
     }
@@ -107,8 +107,26 @@ Ramp2x1 {
 
 Platform {
   translation 0.200146 0.253706 0.0219602
-  rotation 0.640175 -1.41101e-06 0.768229 5.73815e-06
+  rotation 0 0 1 0
 }
+
+
+Ramp2x1 {
+  translation 0.0581132 -0.267427 0.0219986
+  rotation 0 0 1 3.14159
+}
+
+Platform {
+  translation 0.200146 -0.253706 0.0219602
+  rotation 0 0 1 0
+}
+
+Bridge {
+  type "Long"
+  translation 0.2 0 0.044
+  rotation 0 0 1 1.5708
+}
+
 
 WebotsKeyboardController {
 }
