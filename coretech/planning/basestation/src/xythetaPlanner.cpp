@@ -3,7 +3,7 @@
 #include <iostream>
 #include <assert.h>
 #include "xythetaPlanner_internal.h"
-#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
 namespace Anki {
 namespace Planning {

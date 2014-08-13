@@ -152,7 +152,7 @@ namespace Anki {
         const u8 HEADER_LENGTH = 11;
         u8 header[HEADER_LENGTH];
         const u8 size = Messages::GetSize(msgID);
-        UtilMsgError packRes = UtilMsgPack(header, HEADER_LENGTH, NULL, "cciic",
+        UtilMsgError packRes = SafeUtilMsgPack(header, HEADER_LENGTH, NULL, "cciic",
                     RADIO_PACKET_HEADER[0],
                     RADIO_PACKET_HEADER[1],
                     ts,

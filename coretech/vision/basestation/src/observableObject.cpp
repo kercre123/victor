@@ -19,7 +19,6 @@
 #include "anki/vision/basestation/observableObject.h"
 
 #include "anki/common/basestation/exceptions.h"
-#include "anki/common/basestation/general.h"
 
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"

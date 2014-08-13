@@ -38,6 +38,7 @@
 #undef MESSAGE_CLASS_GETSIZE_MODE
 #undef MESSAGE_CLASS_GETBYTES_MODE
 #undef MESSAGE_TABLE_DEFINITION_MODE
+#undef MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
 #undef MESSAGE_ENUM_DEFINITION_MODE
 #undef MESSAGE_PROCESS_METHODS_MODE
 #undef MESSAGE_CREATE_JSON_MODE
@@ -49,10 +50,11 @@
 #define MESSAGE_CLASS_GETSIZE_MODE            3
 #define MESSAGE_CLASS_GETBYTES_MODE           4
 #define MESSAGE_TABLE_DEFINITION_MODE         5
-#define MESSAGE_ENUM_DEFINITION_MODE          6
-#define MESSAGE_PROCESS_METHODS_MODE          7
-#define MESSAGE_CREATE_JSON_MODE              8
-#define MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE   9
+#define MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE 6
+#define MESSAGE_ENUM_DEFINITION_MODE          7
+#define MESSAGE_PROCESS_METHODS_MODE          8
+#define MESSAGE_CREATE_JSON_MODE              9
+#define MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE   10
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
 #define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
@@ -276,6 +278,18 @@ buffer += __LENGTH__*sizeof(__TYPE__);
 //#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
 //#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
 
+
+//
+// Define entry in LookupTable without message handler function pointer
+//
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
+
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) {__PRIORITY__,
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) sizeof(__TYPE__) +
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) __LENGTH__*sizeof(__TYPE__) +
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) 0, 0},
+
+
 //
 // Define enumerated message ID
 //
@@ -423,6 +437,8 @@ if(not JsonTools::GetArrayOptional(root, QUOTE(__NAME__), this->__NAME__)) { \
 #endif
 
 // Leave definition mode undefined for next include of MessageDefinitions.h
+#ifndef SKIP_MESSAGE_DEFINITION_MODE_UNDEF
 #undef MESSAGE_DEFINITION_MODE
+#endif
 
 #endif // #ifndef MESSAGE_DEFINITION_MODE

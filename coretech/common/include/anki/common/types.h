@@ -46,6 +46,7 @@ const CameraID_t ANY_CAMERA = u32_MAX;
 
 //const ObjectID ANY_OBJECT = u16_MAX;
 
+typedef unsigned long long int BaseStationTime_t;
 
 // If we're using c++, Result is in a namespace. In c, it's not.
 #ifdef __cplusplus

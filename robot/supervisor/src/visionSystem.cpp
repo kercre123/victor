@@ -34,6 +34,7 @@
 
 // Local Cozmo Includes
 #include "headController.h"
+#include "imuFilter.h"
 #include "matlabVisualization.h"
 #include "messages.h"
 #include "visionSystem.h"
@@ -2142,26 +2143,28 @@ namespace Anki {
           {
             const VisionMarker& crntMarker = VisionMemory::markers_[i_marker];
 
-            // Create a vision marker message and process it (which just queues it
-            // in the mailbox to be picked up and sent out by main execution)
-            {
-              Messages::VisionMarker msg;
-              msg.timestamp  = imageTimeStamp;
-              msg.markerType = crntMarker.markerType;
+            if (!IMUFilter::IsPickedUp()) {
+              // Create a vision marker message and process it (which just queues it
+              // in the mailbox to be picked up and sent out by main execution)
+              {
+                Messages::VisionMarker msg;
+                msg.timestamp  = imageTimeStamp;
+                msg.markerType = crntMarker.markerType;
 
-              msg.x_imgLowerLeft = crntMarker.corners[Quadrilateral<f32>::BottomLeft].x;
-              msg.y_imgLowerLeft = crntMarker.corners[Quadrilateral<f32>::BottomLeft].y;
+                msg.x_imgLowerLeft = crntMarker.corners[Quadrilateral<f32>::BottomLeft].x;
+                msg.y_imgLowerLeft = crntMarker.corners[Quadrilateral<f32>::BottomLeft].y;
 
-              msg.x_imgUpperLeft = crntMarker.corners[Quadrilateral<f32>::TopLeft].x;
-              msg.y_imgUpperLeft = crntMarker.corners[Quadrilateral<f32>::TopLeft].y;
+                msg.x_imgUpperLeft = crntMarker.corners[Quadrilateral<f32>::TopLeft].x;
+                msg.y_imgUpperLeft = crntMarker.corners[Quadrilateral<f32>::TopLeft].y;
 
-              msg.x_imgUpperRight = crntMarker.corners[Quadrilateral<f32>::TopRight].x;
-              msg.y_imgUpperRight = crntMarker.corners[Quadrilateral<f32>::TopRight].y;
+                msg.x_imgUpperRight = crntMarker.corners[Quadrilateral<f32>::TopRight].x;
+                msg.y_imgUpperRight = crntMarker.corners[Quadrilateral<f32>::TopRight].y;
 
-              msg.x_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].x;
-              msg.y_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].y;
+                msg.x_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].x;
+                msg.y_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].y;
 
-              HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker),&msg);
+                HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker),&msg);
+              }
             }
 
             // Was the desired marker found? If so, start tracking it.

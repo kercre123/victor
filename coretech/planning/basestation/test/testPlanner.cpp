@@ -5,7 +5,6 @@
 #define private public
 #define protected public
 
-#include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/basestation/platformPathManager.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"

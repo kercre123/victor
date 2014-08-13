@@ -3,6 +3,7 @@
 #include "dockingController.h"
 #include "headController.h"
 #include "liftController.h"
+#include "imuFilter.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
@@ -34,6 +35,10 @@ namespace Anki {
         // TODO: Need to be able to specify wheel motion by distance
         const u32 BACKOUT_TIME = 1500000;
         const f32 BACKOUT_SPEED_MMPS = -40;
+        
+        const f32 RAMP_TRAVERSE_SPEED_MMPS = 40;
+        const f32 ON_RAMP_ANGLE_THRESH = 0.15;
+        const f32 OFF_RAMP_ANGLE_THRESH = 0.05;
         
         const f32 LOW_DOCKING_HEAD_ANGLE  = DEG_TO_RAD_F32(-15);
         const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(15);
@@ -331,6 +336,16 @@ namespace Anki {
                 HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
                 break;
+              case DA_RAMP_ASCEND:
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                HeadController::SetDesiredAngle(0);
+                dockOffsetDistX_ = 0;
+                break;
+              case DA_RAMP_DESCEND:
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
+                dockOffsetDistX_ = 0;
+                break;
               default:
                 PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
                 mode_ = IDLE;
@@ -390,6 +405,10 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
                 PRINT("PAP: SET_LIFT_POSTDOCK\n");
 #endif
+              } else if ((action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND) && (ABS(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) ) {
+                SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
+                mode_ = TRAVERSE_RAMP;
+              
               } else {
                 // Block is not being tracked.
                 // Probably not visible.
@@ -606,6 +625,10 @@ namespace Anki {
                   PRINT("PAP: LOWERING LIFT\n");
                   #endif
                   break;
+                default:
+                  PRINT("ERROR: Reached BACKUP unexpectedly (action = %d)\n", action_);
+                  mode_ = IDLE;
+                  break;
               }
             }
             break;
@@ -620,6 +643,16 @@ namespace Anki {
             }
             break;
             
+          case TRAVERSE_RAMP:
+            if ( ABS(IMUFilter::GetPitch()) < OFF_RAMP_ANGLE_THRESH ) {
+              SteeringController::ExecuteDirectDrive(0, 0);
+              #if(DEBUG_PAP_CONTROLLER)
+              PRINT("PAP: IDLE (from TRAVERSE_RAMP)\n");
+              #endif
+              mode_ = IDLE;
+              lastActionSucceeded_ = true;
+            }
+            break;
           default:
             mode_ = IDLE;
             PRINT("Reached default case in DockingController "

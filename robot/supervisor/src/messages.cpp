@@ -9,6 +9,7 @@
 #include "wheelController.h"
 #include "liftController.h"
 #include "headController.h"
+#include "imuFilter.h"
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
@@ -31,7 +32,10 @@ namespace Anki {
         const TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
           {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
-#include "anki/cozmo/shared/MessageDefinitions.h"
+#include "anki/cozmo/shared/MessageDefinitionsB2R.h"
+          
+#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
+#include "anki/cozmo/shared/MessageDefinitionsR2B.h"
           {0, 0, 0} // Final dummy entry without comma at end
         };
         
@@ -98,6 +102,9 @@ namespace Anki {
         TimeStamp_t robotStateSendHist_[2];
         u8 robotStateSendHistIdx_ = 0;
         
+        // Flag for receipt of Init message
+        bool initReceived_ = false;
+        
       } // private namespace
       
 
@@ -157,6 +164,7 @@ namespace Anki {
         Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
         robotState_.pose_z = 0;
         robotState_.pose_angle = poseAngle.ToFloat();
+        robotState_.pose_pitch_angle = IMUFilter::GetPitch();
         
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
         
@@ -172,6 +180,7 @@ namespace Anki {
         robotState_.status = 0;
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
+        robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
       }
       
       RobotState const& GetRobotStateMsg() {
@@ -187,6 +196,8 @@ namespace Anki {
    
         PRINT("Robot received init message from basestation with ID=%d and syncTime=%d.\n",
               msg.robotID, msg.syncTime);
+        
+        initReceived_ = true;
         
         // TODO: Compare message ID to robot ID as a handshake?
         
@@ -440,55 +451,23 @@ namespace Anki {
       void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
         AnimationController::Play((AnimationID_t)msg.animationID, msg.numLoops);
       }
-      
-      // TODO: Fill these in once they are needed/used:
-      void ProcessVisionMarkerMessage(const VisionMarker& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessRobotAvailableMessage(const RobotAvailable& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      // These need implementations to avoid linker errors, but we don't expect
-      // to _receive_ these message types, only to send them.
 
-      void ProcessCameraCalibrationMessage(const CameraCalibration& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      void ProcessIMURequestMessage(const IMURequest& msg) {
+        IMUFilter::RecordAndSend(msg.length_ms);
       }
       
-      void ProcessRobotStateMessage(const RobotState& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-
-      void ProcessPrintTextMessage(const PrintText& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessImageChunkMessage(const ImageChunk& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-
-      void ProcessTrackerQuadMessage(const TrackerQuad& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessBlockPickedUpMessage(const BlockPickedUp& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessBlockPlacedMessage(const BlockPlaced& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
-    
-      void ProcessMainCycleTimeErrorMessage(const MainCycleTimeError& msg) {
-        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
-      }
 // ----------- Send messages -----------------
       
       
       Result SendRobotStateMsg(const RobotState* msg)
       {
+        
+        // Don't send robot state updates unless the init message was received
+        if (!initReceived_) {
+          return RESULT_FAIL;
+        }
+        
+        
         const RobotState* m = &robotState_;
         if (msg) {
           m = msg;
@@ -646,6 +625,17 @@ namespace Anki {
         }
       }
 
+      
+      bool ReceivedInit()
+      {
+        return initReceived_;
+      }
+      
+
+      void ResetInit()
+      {
+        initReceived_ = false;
+      }
       
     } // namespace Messages
   } // namespace Cozmo

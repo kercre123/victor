@@ -16,7 +16,7 @@ PROTO CozmoBot [
   field SFFloat liftAngle_lowLimit  0
   field SFFloat liftAngle_highLimit 1.047  # 60 degrees up
   #field SFFloat liftAngle_highLimit 0.96  # 55 degrees up
-  
+
   field SFInt32 usbChannel 88
   
   field SFString controller "cozmo_c_controller"
@@ -383,6 +383,35 @@ Supervisor {
 
 						# +/-2g (+/- 19.62m/s^2) range expressed by 12-bits
 						# resolution 0.00958
+				  }
+				  DistanceSensor {
+						name "proxSensorCenter"
+						translation 0.022 0 0
+						type "infra-red"
+						lookupTable [ 0   1000  0,
+						              0.1   10  0   ]
+						numberOfRays 1
+						aperture 0.1
+				  }
+				  DistanceSensor {
+						name "proxSensorLeft"
+						translation 0.022 0.01 0
+						rotation 0 0 1 0.3
+						type "infra-red"
+						lookupTable [ 0   1000  0,
+						              0.1   10  0   ]
+						numberOfRays 1
+						aperture 0.1
+				  }
+				  DistanceSensor {
+						name "proxSensorRight"
+						translation 0.022 -0.01 0
+						rotation 0 0 1 -0.3
+						type "infra-red"
+						lookupTable [ 0   1000  0,
+						              0.1   10  0   ]
+						numberOfRays 1
+						aperture 0.1
 				  }
 				  DEF FACE Transform {
 						translation 0.016 0 0

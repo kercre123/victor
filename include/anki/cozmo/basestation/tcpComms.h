@@ -45,7 +45,7 @@ namespace Cozmo {
   public:
     static const int MAX_RECV_BUF_SIZE = 1920000;
     TcpClient* client;
-    char recvBuf[MAX_RECV_BUF_SIZE];
+    u8 recvBuf[MAX_RECV_BUF_SIZE];
     int recvDataSize = 0;
   };
   
@@ -65,7 +65,7 @@ namespace Cozmo {
     
     // Returns the number of messages ready for processing in the BLEVehicleMgr.
     // Returns 0 if no messages are available.
-    virtual size_t GetNumPendingMsgPackets();
+    virtual u32 GetNumPendingMsgPackets();
   
     virtual size_t Send(const Comms::MsgPacket &p);
 
@@ -90,16 +90,16 @@ namespace Cozmo {
     
     // Connect to all advertising robots.
     // Returns the total number of robots that are connected.
-    size_t ConnectToAllRobots();
+    u32 ConnectToAllRobots();
     
     // Disconnects from all robots.
     void DisconnectAllRobots();
     
-    size_t GetNumConnectedRobots() const { return connectedRobots_.size(); }
+    u32 GetNumConnectedRobots() const { return (u32)connectedRobots_.size(); }
     
-    size_t GetNumAdvertisingRobots() const { return advertisingRobots_.size(); }
+    u32 GetNumAdvertisingRobots() const { return (u32)advertisingRobots_.size(); }
     
-    size_t GetAdvertisingRobotIDs(std::vector<int> &robotIDs);
+    u32 GetAdvertisingRobotIDs(std::vector<int> &robotIDs);
     
     // Clears the list of advertising robots.
     void ClearAdvertisingRobots();
@@ -131,7 +131,7 @@ namespace Cozmo {
 #if(DO_SIM_COMMS_LATENCY)
     // The number of messages that have been in recvdMsgPackets for at least
     // SIM_RECV_LATENCY_SEC and are now available for reading.
-    s32 numRecvRdyMsgs_;
+    u32 numRecvRdyMsgs_;
     
     // Queue of messages to be sent with the times they should be sent at
     PacketQueue_t sendMsgPackets_;

@@ -7,8 +7,8 @@
 //
 
 #include "anki/cozmo/basestation/robotPoseHistory.h"
-#include "anki/common/basestation/general.h"
 
+#include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 

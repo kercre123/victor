@@ -52,42 +52,7 @@ namespace Anki {
 #include "anki/cozmo/shared/MessageDefinitions.h"
     
 #undef MESSAGE_BASECLASS_NAME
-    
-    /*
-      // THese are dummy placeholders to avoid linker errors for now
-      
-      void ProcessClearPathMessage(const ClearPath&) {}
-      
-      void ProcessSetMotionMessage(const SetMotion&) {}
-      
-      void ProcessRobotAvailableMessage(const RobotAvailable&) {}
-      
-      void ProcessVisionMarkerMessage(const VisionMarker&) {}
-      
-      void ProcessMatMarkerObservedMessage(const MatMarkerObserved&) {}
-      
-      void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld&) {}
-      
-      void ProcessSetPathSegmentArcMessage(const SetPathSegmentArc&) {}
-      
-      void ProcessDockingErrorSignalMessage(const DockingErrorSignal&) {}
-      
-      void ProcessSetPathSegmentLineMessage(const SetPathSegmentLine&) {}
-      
-      void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved&) {}
-      
-      void ProcessTemplateInitializedMessage(const TemplateInitialized&) {}
-      
-      void ProcessTotalVisionMarkersSeenMessage(const TotalVisionMarkersSeen&) {}
-      
-      void ProcessMatCameraCalibrationMessage(const MatCameraCalibration&) {}
-      
-      void ProcessAbsLocalizationUpdateMessage(const AbsLocalizationUpdate&) {}
-      
-      void ProcessHeadCameraCalibrationMessage(const HeadCameraCalibration&) {}
-      
-      void ProcessRobotStateMessage(const RobotState& msg) {}
-      */
+
 
   } // namespace Cozmo
 } // namespace Anki

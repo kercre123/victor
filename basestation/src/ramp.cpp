@@ -12,7 +12,7 @@
 
 #include "ramp.h"
 
-#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/utils/logging/logging.h"
 
 namespace Anki {
   

@@ -16,7 +16,7 @@
 #include "uiMessageHandler.h"
 #include "vizManager.h"
 #include "soundManager.h"
-#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/utils/logging/logging.h"
 
 
 #if(RUN_UI_MESSAGE_TCP_SERVER)
@@ -290,6 +290,17 @@ namespace Anki {
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartTestMode const& msg)
     {
       return robot->SendStartTestMode((TestMode)msg.mode);
+    }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_IMURequest const& msg)
+    {
+      return robot->SendIMURequest(msg.length_ms);
+    }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlayAnimation const& msg)
+    {
+      SoundManager::getInstance()->Play((SoundID_t)msg.soundID);
+      return robot->SendPlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
     }
   
   } // namespace Cozmo

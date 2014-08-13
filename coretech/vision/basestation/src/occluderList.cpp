@@ -6,7 +6,6 @@
 //  Copyright (c) 2014 Anki, Inc. All rights reserved.
 //
 
-#include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"
 

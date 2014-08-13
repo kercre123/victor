@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 
-#include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
 #include <iostream>

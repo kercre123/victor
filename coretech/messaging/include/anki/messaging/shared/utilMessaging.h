@@ -18,6 +18,20 @@
 #include <string.h>
 #endif
 
+#define __STDC_LIMIT_MACROS
+#include <stdint.h>
+#undef __STDC_LIMIT_MACROS
+
+#ifndef USING_SAFE_UTILMSGPACK
+#define USING_SAFE_UTILMSGPACK 1
+#endif // USING_SAFE_UTILMSGPACK
+
+#if defined(UINT32_MAX)
+#define MSGPACK_SIZE_MAX UINT32_MAX
+#else
+#define MSGPACK_SIZE_MAX 4294967295U
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -33,7 +47,7 @@ extern "C"
   
   // Writes a uint64 to the dest buffer. Does not convert to network byte order.
   // Returns the pointer incremented by the number of bytes written.
-  void *WriteU64(void* dest, unsigned long long src);
+  void *WriteU64(void* dest, uint64_t src);
   
   // Writes a uint32 to the dest buffer after converting to network byte order.
   // Returns the pointer incremented by the number of bytes written.
@@ -41,7 +55,7 @@ extern "C"
   
   // Writes a uint32 to the dest buffer. Does not convert to network byte order.
   // Returns the pointer incremented by the number of bytes written.
-  void * WriteU32(void *dest, unsigned int src);
+  void * WriteU32(void *dest, uint32_t src);
   
   // Writes a uint16 to the dest buffer after converting to network byte order.
   // Returns the pointer incremented by the number of bytes written.
@@ -49,11 +63,11 @@ extern "C"
   
   // Writes a uint16 to the dest buffer. Does not convert to network byte order.
   // Returns the pointer incremented by the number of bytes written.
-  void * WriteU16(void *dest, unsigned short src);
+  void * WriteU16(void *dest, uint16_t src);
   
   // Writes a char to the dest buffer. Returns the pointer incremented
   // by the number of bytes written.
-  void * WriteChar(void *dest, unsigned char src);
+  void * WriteChar(void *dest, uint8_t src);
   
   // Do not marshal the float values into htonl. Floats are defined by IEEE
   // standard and have the same byte order regardless of endianness of machine
@@ -68,7 +82,7 @@ extern "C"
   
   // Reads a uint64 to the dest buffer. Does not convert to network byte order.
   // Returns the src pointer incremented by the number of bytes written.
-  void * ReadU64(unsigned long long *dest, void *src);
+  void * ReadU64(uint64_t *dest, void *src);
   
   // Reads a uint32 to the dest buffer after converting to network byte order.
   // Returns the src pointer incremented by the number of bytes written.
@@ -76,7 +90,7 @@ extern "C"
   
   // Reads a uint32 to the dest buffer. Does not convert to network byte order.
   // Returns the src pointer incremented by the number of bytes written.
-  void * ReadU32(unsigned int *dest, void *src);
+  void * ReadU32(uint32_t *dest, void *src);
   
   // Reads a uint16 to the dest buffer after converting to network byte order.
   // Returns the src pointer incremented by the number of bytes written.
@@ -84,11 +98,11 @@ extern "C"
   
   // Reads a uint16 to the dest buffer. Does not convert to network byte order.
   // Returns the src pointer incremented by the number of bytes written.
-  void * ReadU16(unsigned short *dest, void *src);
+  void * ReadU16(uint16_t *dest, void *src);
   
   // Reads a char to the dest buffer. Returns the src pointer incremented
   // by the number of bytes written.
-  void * ReadChar(unsigned char *dest, void *src);
+  void * ReadChar(uint8_t *dest, void *src);
   
   // Reads a 4 byte float to the dest buffer. Returns the src pointer incremented
   // by the number of bytes written.
@@ -109,7 +123,7 @@ extern "C"
   // corresponding to the 'a' to use an integer to specify the number of elements.
   // For example, to pack two chars, a float, an array of shorts, and two ints use
   // "ccfahii" as the packStr.
-  UtilMsgError UtilMsgPack(void *dst, unsigned int dstBytes, unsigned int *bytesPacked, const char *packStr, ...);
+  UtilMsgError SafeUtilMsgPack(void *dst, uint32_t dstBytesLen, uint32_t *oNumBytesPacked, const char *packStr, ...);
   
   // Unpacks a list of variables from the 'src' byte array. You must
   // pass a 'packStr' to inform the function what the type of the
@@ -121,7 +135,7 @@ extern "C"
   // packStr. Suppose you have char c1,c2 and float f, and int i1,i2.
   // Then you would unpack by passing the pointers
   // UtilMsgUnpack(src, "ccfii", &c1, &c2, &f, &i1, &i2)
-  UtilMsgError UtilMsgUnpack(const void *src, unsigned int srcBytes, unsigned int *bytesUnpacked, const char *packStr, ...);
+  UtilMsgError SafeUtilMsgUnpack(const void *src, uint32_t srcBytesLen, uint32_t *oNumBytesUnpacked, const char *packStr, ...);
   
 #ifdef __cplusplus
 } // extern "C"

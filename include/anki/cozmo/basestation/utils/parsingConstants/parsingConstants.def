@@ -1,0 +1,13 @@
+//path to robot definitions
+STRING_NAMED_CONST(kP_WORK_PATH,"work_path")
+STRING_NAMED_CONST(kP_GAME_LOG_ROOT_DIR,"cozmo_game_logs")
+STRING_NAMED_CONST(kP_ROBOT_COMMS_LOG_FILE,"robot_comms.log")
+STRING_NAMED_CONST(kP_UI_COMMS_LOG_FILE,"ui_comms.log")
+STRING_NAMED_CONST(kP_CONFIG_JSON_FILE,"configuration.json")
+
+STRING_NAMED_CONST(kP_IMG_CAPTURE_DIR,"image_captures")
+STRING_NAMED_CONST(kP_IMU_LOGS_DIR,"imu_logs");
+
+STRING_NAMED_CONST(kP_CONNECTED_ROBOTS,"connected_robots")
+STRING_NAMED_CONST(kP_BASESTATION_MODE,"basestation_mode")
+STRING_NAMED_CONST(kP_PLAYBACK_LOG_FOLDER, "playback_log_folder")
