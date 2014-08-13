@@ -184,8 +184,6 @@ namespace Anki
       
       void CheckForUnobservedObjects(TimeStamp_t atTimestamp);
       
-      bool LocalizeRobotToMat(Robot* robot, const MatPiece* matSeen, MatPiece* existingMat);
-      
       // Helpers for actually inserting a new object into a new family using
       // its type and ID. Object's ID will be set if it isn't already.
       void AddNewObject(const ObjectFamily toFamily, Vision::ObservableObject* object);

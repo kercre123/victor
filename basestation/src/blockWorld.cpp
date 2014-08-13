@@ -705,8 +705,6 @@ namespace Anki
               newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
               newMatPiece->UpdateMarkerObservationTimes(*matSeen);
               
-              existingMatPieces[newMatPiece->GetType()][newMatPiece->GetID()] = newMatPiece;
-              
               fprintf(stdout, "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)\n",
                       newMatPiece->GetType().GetName().c_str(), newMatPiece->GetID().GetValue(),
                       newMatPiece->GetPose().GetTranslation().x(),
