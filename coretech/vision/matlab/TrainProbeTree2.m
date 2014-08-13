@@ -1,7 +1,10 @@
-function probeTree = TrainProbeTree(varargin)
+% function probeTree = TrainProbeTree2(varargin)
+%
+% Based off of VisionMarkerTrained.TrainProbeTree, but split into a
+% separate function, to prevent too much messing around with the
+% VisionMarkerTrained class hierarchy
 
-% TODO: Use parameters from a derived class below, instead of VisionMarkerTrained.*
-
+function probeTree = TrainProbeTree2(varargin)
 %% Parameters
 loadSavedProbeValues = false;
 markerImageDir = VisionMarkerTrained.TrainingImageDir;
