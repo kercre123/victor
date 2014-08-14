@@ -1,13 +1,18 @@
-% function fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesList, varargin)
+% function [labels, probeValues] = TrainProbeTree2_loadImages(fiducialClassesList, varargin)
 
 % Load the images specified by the fiducialClassesList, and generate the
 % probe images
 
-% example:
-% fiducialClassesList = TrainProbeTree2_createFiducialClassesList();
-% fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesList);
+% Simple Example:
+% clear fiducialClassesList; fiducialClassesList(1).labelName = '0_000'; fiducialClassesList(1).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_000.png'}; fiducialClassesList(2).labelName = '0_090'; fiducialClassesList(2).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_090.png'};
+% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = TrainProbeTree2_loadImages(fiducialClassesList, 'numPerturbations', 1, 'maxPerturbPercent', 0, 'blurSigmas', [0]);
 
-function fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesList, varargin)
+% Example:
+% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = TrainProbeTree2_loadImages(fiducialClassesList);
+
+
+
+function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = TrainProbeTree2_loadImages(fiducialClassesList, varargin)
     %#ok<*CCAT>
     
     blurSigmas = [0 .005 .01]; % as a fraction of the image diagonal
@@ -15,14 +20,6 @@ function fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesL
     numPerturbations = 100;
     probeLocationsX = linspace(0, 1, 30);
     probeLocationsY = linspace(0, 1, 30);
-     
-    % TODO: add nonMarkers
-%     nonMarkerFilenamePatterns = {};
-
-%     markerFilenamePatterns = {'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/*.png'};
-    
-    % TODO: add back
-    % leafNodeFraction = 0.9; % fraction of remaining examples that must have same label to consider node a leaf
     
     parseVarargin(varargin{:});
     
@@ -33,7 +30,7 @@ function fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesL
     corners = [0 0; 0 1; 1 0; 1 1];
     
     numBlurs = length(blurSigmas);
- 
+    
     numImages = 0;
     for iClass = 1:length(fiducialClassesList)
         numImages = numImages + length(fiducialClassesList(iClass).filenames);
@@ -41,10 +38,14 @@ function fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesL
     
     % TODO: add non-marker images
     
-    [xgrid,ygrid] = meshgrid(probeLocationsX, probeLocationsY);
+    [probeLocationsXGrid,probeLocationsYGrid] = meshgrid(probeLocationsX, probeLocationsY);
+    probeLocationsXGrid = probeLocationsXGrid(:);
+    probeLocationsYGrid = probeLocationsYGrid(:);
+    
     %     probeValues   = zeros(numBlurs*numImages*numPerturbations, length(probeLocationsX)*length(probeLocationsY), 'uint8');
-    probeValues   = cell(length(probeLocationsX)*length(probeLocationsY), 1);
-    labels        = zeros(numBlurs*numImages*numPerturbations, 1, 'uint32');
+    labelNames  = cell(length(fiducialClassesList), 1);
+    probeValues = cell(length(probeLocationsXGrid), 1);
+    labels      = zeros(numBlurs*numImages*numPerturbations, 1, 'uint32');
     
     for iProbe = 1:length(probeValues)
         probeValues{iProbe} = zeros(numBlurs*numImages*numPerturbations, 1, 'uint8');
@@ -57,14 +58,12 @@ function fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesL
         perturbation = (2*rand(4,2) - 1) * maxPerturbPercent;
         corners_i = corners + perturbation;
         T = cp2tform(corners_i, corners, 'projective');
-        [xPerturb{iPerturb}, yPerturb{iPerturb}] = tforminv(T, xgrid, ygrid);
+        [xPerturb{iPerturb}, yPerturb{iPerturb}] = tforminv(T, probeLocationsXGrid, probeLocationsYGrid);
         xPerturb{iPerturb} = xPerturb{iPerturb}(:);
         yPerturb{iPerturb} = yPerturb{iPerturb}(:);
     end
     
     % Compute the perturbed probe values
-    
-    fiducialClassesWithProbes = cell(length(fiducialClassesList), 1);
     
     pBar.set_message(sprintf('Computing %d perturbed probe locations', numPerturbations));
     pBar.set_increment(1/numImages);
@@ -72,6 +71,7 @@ function fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesL
     
     cLabel = 1;
     for iClass = 1:length(fiducialClassesList)
+        labelNames{iClass} = fiducialClassesList(iClass).labelName;
         for iFile = 1:length(fiducialClassesList(iClass).filenames)
             img = imreadAlphaHelper(fiducialClassesList(iClass).filenames{iFile});
             
@@ -87,7 +87,7 @@ function fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesL
                     blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
                     imgBlur = separable_filter(img, gaussian_kernel(blurSigma));
                 end
-                                
+                
                 for iPerturb = 1:numPerturbations
                     tmpValues = uint8(255*interp2(imageCoordsX, imageCoordsY, imgBlur, xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1));
                     
@@ -105,7 +105,7 @@ function fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesL
         end % for iFile = 1:length(fiducialClassesList(iClass).filenames)
     end % for iClass = 1:length(fiducialClassesList)
     
-%     keyboard
+    %     keyboard
 end % TrainProbeTree2_loadImages()
 
 function img = imreadAlphaHelper(fname)
@@ -116,7 +116,7 @@ function img = imreadAlphaHelper(fname)
     
     threshold = (max(img(:)) + min(img(:)))/2;
     %     img = bwpack(img > threshold);
-%     img = uint8(img > threshold);
+    %     img = uint8(img > threshold);
     img = single(img > threshold);
     
 end % imreadAlphaHelper()

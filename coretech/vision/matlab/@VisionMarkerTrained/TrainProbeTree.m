@@ -749,7 +749,7 @@ end
 
 
 
-end % TrainProbes()
+end % TrainProbeTree()
 
 
 function infoGain = computeInfoGain(labels, numLabels, probeValues)
