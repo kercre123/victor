@@ -84,8 +84,11 @@ bool TcpServer::StartListening(const unsigned short port)
 
     //status = setsockopt(socketfd, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int));  // For auto-detecting disconnected clients.
     set_nonblock(socketfd);
+    if (status == -1) {
+      DEBUG_TCP_SERVER("TcpServer: Failed to set socket options (status=" << status << ")");
+    }
 
-    
+  
     status = bind(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
     if (status == -1) {
       std::cout << "bind error\n";

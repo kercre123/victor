@@ -80,7 +80,9 @@ bool UdpServer::StartListening(const unsigned short port)
     // by a previous execution of our code. (see man page for more information)
     int yes = 1;
     status = setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-
+    if (status == -1) {
+      DEBUG_UDP_SERVER("UdpServer: Failed to set socket options (status=" << status << ")");
+    }
 
     set_nonblock(socketfd);
 
