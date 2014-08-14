@@ -124,6 +124,9 @@ namespace Anki {
 
       void AbortCurrentPath();
       
+      // TODO: Get rid of these Set...() functions below once the processing of
+      // RobotState msg is moved into the Robot class.
+      
       // True if wheel speeds are non-zero in most recent RobotState message
       bool IsMoving() const {return _isMoving;}
       void SetIsMoving(bool t) {_isMoving= t;}
@@ -148,6 +151,15 @@ namespace Anki {
       
       void SetPickedUp(bool t) {_isPickedUp = t;}
       bool IsPickedUp() {return _isPickedUp;}
+      
+      void SetProxSensorData(const u8 left, const u8 forward, const u8 right,
+                             bool leftBlocked, bool fwdBlocked, bool rightBlocked) {_proxLeft=left; _proxFwd=forward; _proxRight=right; _proxLeftBlocked = leftBlocked; _proxFwdBlocked = fwdBlocked; _proxRightBlocked = rightBlocked;}
+      u8 GetProxLeft() {return _proxLeft;}
+      u8 GetProxForward() {return _proxFwd;}
+      u8 GetProxRight() {return _proxRight;}
+      bool IsProxLeftBlocked() {return _proxLeftBlocked;}
+      bool IsProxForwardBlocked() {return _proxFwdBlocked;}
+      bool IsProxRightBlocked() {return _proxRightBlocked;}
       
       ///////// Motor commands  ///////////
       
@@ -354,6 +366,10 @@ namespace Anki {
       // cameras (e.g. those stored inside the pose history)
       Vision::CameraCalibration _cameraCalibration;
       Vision::Camera            _camera;
+      
+      // Proximity sensors
+      u8 _proxLeft, _proxFwd, _proxRight;
+      bool _proxLeftBlocked, _proxFwdBlocked, _proxRightBlocked;
       
       // Geometry / Pose
       Pose3d*          _poseOrigin;

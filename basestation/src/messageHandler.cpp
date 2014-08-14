@@ -187,6 +187,10 @@ namespace Anki {
       // Update lift angle
       robot->SetLiftAngle(msg.liftAngle);
       
+      // Update proximity sensor values
+      robot->SetProxSensorData(msg.proxLeft, msg.proxForward, msg.proxRight,
+                               msg.status & IS_PROX_LEFT_BLOCKED, msg.status & IS_PROX_FORWARD_BLOCKED, msg.status & IS_PROX_RIGHT_BLOCKED);
+      
       // Get ID of last/current path that the robot executed
       robot->SetLastRecvdPathID(msg.lastPathID);
       
