@@ -26,6 +26,7 @@ namespace Anki
       void FrontCameraInit();
       void IMUInit();
       void LightsInit();
+      void SharpInit();
 
       void PrintCrap();
 
@@ -110,6 +111,9 @@ int main(void)
   printf("IMU..");
   SPIInit();  
   printf("spine..");
+  
+  SharpInit();
+  printf("sharp..");
   
 #if 0
   // Motor testing...

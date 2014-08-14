@@ -341,6 +341,21 @@ namespace Anki
       // Get the number of lines received so far for the specified camera
       //u32 CameraGetReceivedLines(CameraID cameraID);
 
+      
+      /////////////////////////////////////////////////////////////////////
+      // PROXIMITY SENSORS
+      //
+
+      typedef struct
+      {
+        u16    left;
+        u16    right;
+        u16    forward;
+      } ProximityValues;
+      
+      void GetProximity(ProximityValues *prox);
+
+      
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
       // BATTERY

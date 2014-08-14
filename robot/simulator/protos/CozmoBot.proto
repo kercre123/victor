@@ -386,30 +386,52 @@ Supervisor {
 				  }
 				  DistanceSensor {
 						name "proxSensorCenter"
-						translation 0.022 0 0
+						translation 0.022 0 0.015
+						rotation 0 1 0 -0.3
 						type "infra-red"
-						lookupTable [ 0   1000  0,
-						              0.1   10  0   ]
+						lookupTable [ 0.0   255   0,
+						              0.01   200  0.1,
+						              0.02   60   0.1,
+						              0.03   20   0.1,
+						              0.04   12   0.1,   
+						              0.06   3    0.1,   
+						              0.08   2    0.1,   
+						              0.1    1    0.1,
+						              0.12   0    0.1]
 						numberOfRays 1
 						aperture 0.1
 				  }
 				  DistanceSensor {
 						name "proxSensorLeft"
-						translation 0.022 0.01 0
-						rotation 0 0 1 0.3
+						translation 0.022 0.013 0.008
+						rotation -0.1 -0.4 1 0.3
 						type "infra-red"
-						lookupTable [ 0   1000  0,
-						              0.1   10  0   ]
+						lookupTable [ 0.0   255   0,
+						              0.01   200  0.1,
+						              0.02   60   0.1,
+						              0.03   20   0.1,
+						              0.04   12   0.1,   
+						              0.06   3    0.1,   
+						              0.08   2    0.1,   
+						              0.1    1    0.1,
+						              0.12   0    0.1]
 						numberOfRays 1
 						aperture 0.1
 				  }
 				  DistanceSensor {
 						name "proxSensorRight"
-						translation 0.022 -0.01 0
-						rotation 0 0 1 -0.3
+						translation 0.022 -0.013 0.008
+						rotation -0.1 0.4 1 -0.3
 						type "infra-red"
-						lookupTable [ 0   1000  0,
-						              0.1   10  0   ]
+						lookupTable [ 0.0   255   0,
+						              0.01   200  0.1,
+						              0.02   60   0.1,
+						              0.03   20   0.1,
+						              0.04   12   0.1,   
+						              0.06   3    0.1,   
+						              0.08   2    0.1,   
+						              0.1    1    0.1,
+						              0.12   0    0.1]
 						numberOfRays 1
 						aperture 0.1
 				  }
