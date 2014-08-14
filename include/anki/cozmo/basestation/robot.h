@@ -134,30 +134,22 @@ namespace Anki {
       // True if we are on the sloped part of a ramp
       bool   IsOnRamp() const { return _onRamp; }
       Result SetOnRamp(bool t);
-      
-      void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
+
       s8   GetCurrPathSegment() {return _currPathSegment;}
       bool IsTraversingPath() {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
 
-      void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
       u8   GetNumFreeSegmentSlots() const {return _numFreeSegmentSlots;}
       
-      void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
       u16  GetLastRecvdPathID() {return _lastRecvdPathID;}
       u16  GetLastSentPathID() {return _lastSentPathID;}
 
       void SetCarryingObject(ObjectID carryObjectID) {_carryingObjectID = carryObjectID;}
       void UnSetCarryingObject() { _carryingObjectID.UnSet(); }
       bool IsCarryingObject() {return _carryingObjectID.IsSet(); }
-
-      void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
+      
       bool IsPickingOrPlacing() {return _isPickingOrPlacing;}
-      
-      void SetPickedUp(bool t) {_isPickedUp = t;}
       bool IsPickedUp() {return _isPickedUp;}
-      
-      void SetProxSensorData(const u8 left, const u8 forward, const u8 right,
-                             bool leftBlocked, bool fwdBlocked, bool rightBlocked) {_proxLeft=left; _proxFwd=forward; _proxRight=right; _proxLeftBlocked = leftBlocked; _proxFwdBlocked = fwdBlocked; _proxRightBlocked = rightBlocked;}
+
       u8 GetProxLeft() {return _proxLeft;}
       u8 GetProxForward() {return _proxFwd;}
       u8 GetProxRight() {return _proxRight;}
@@ -460,6 +452,18 @@ namespace Anki {
       // of path planning
       std::function<Result()>    _reExecSequenceFcn;
       PreActionPose::ActionType  _goalPoseActionType;
+      
+      
+      ///////// Modifiers ////////
+      
+      void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
+      void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
+      void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
+      void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
+      void SetPickedUp(bool t) {_isPickedUp = t;}
+      void SetProxSensorData(const u8 left, const u8 forward, const u8 right,
+                             bool leftBlocked, bool fwdBlocked, bool rightBlocked) {_proxLeft=left; _proxFwd=forward; _proxRight=right; _proxLeftBlocked = leftBlocked; _proxFwdBlocked = fwdBlocked; _proxRightBlocked = rightBlocked;}
+
       
       ///////// Messaging ////////
       
