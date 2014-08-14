@@ -35,7 +35,7 @@ namespace Anki {
 
       f32 Kp_ = 2.f; // proportional control constant
       f32 Ki_ = 0.05f; // integral control constant
-      f32 MAX_ERROR_SUM = 2.f;
+      f32 MAX_ERROR_SUM = 4.f; // 2.f;
      
       // Open loop gain
       // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
