@@ -226,6 +226,7 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ClearAllBlocks const& msg)
     {
+      VizManager::getInstance()->EraseAllVizObjects();
       blockWorld_->ClearObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
       blockWorld_->ClearObjectsByFamily(BlockWorld::ObjectFamily::RAMPS);
       return RESULT_OK;
