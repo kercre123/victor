@@ -219,7 +219,6 @@ namespace Anki {
       //dWebotsConsolePrintf("***** ARC rad %f (%f to %f), radius %f\n", currRad, startRad, endRad, radius);
       
       while (currRad*dir < endRad*dir) {
-        cosCurrRad = cos(currRad);
         dx = cos(currRad) * radius;
         dy = sin(currRad) * radius;
         PathVertex_t pt = {center_x + dx, center_y + dy, center_z};
