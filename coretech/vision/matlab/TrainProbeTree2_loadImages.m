@@ -1,48 +1,54 @@
+% function fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesList, varargin)
 
-%#ok<*CCAT>
+% Load the images specified by the fiducialClassesList, and generate the
+% probe images
 
-function fiducialClassesWithProbes = TrainProbeTree2_loadImages(varargin)
+% example:
+% fiducialClassesList = TrainProbeTree2_createFiducialClassesList();
+% fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesList);
+
+function fiducialClassesWithProbes = TrainProbeTree2_loadImages(fiducialClassesList, varargin)
+    %#ok<*CCAT>
+    
     blurSigmas = [0 .005 .01]; % as a fraction of the image diagonal
     maxPerturbPercent = 0.05;
     numPerturbations = 100;
     probeLocationsX = linspace(0, 1, 30);
     probeLocationsY = linspace(0, 1, 30);
+     
+    % TODO: add nonMarkers
+%     nonMarkerFilenamePatterns = {};
+
+%     markerFilenamePatterns = {'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/*.png'};
     
     % TODO: add back
     % leafNodeFraction = 0.9; % fraction of remaining examples that must have same label to consider node a leaf
     
     parseVarargin(varargin{:});
     
+    pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
+    pBar.showTimingInfo = true;
+    pBarCleanup = onCleanup(@()delete(pBar));
+    
     corners = [0 0; 0 1; 1 0; 1 1];
     
     numBlurs = length(blurSigmas);
-    
-    % Find all the names of fiducial images
-    files = rdir('Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/*.png', [], true);
-    
-%     newFiles = rdir('Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rotated/*.png', [], true);
-%     files = {files{:}, newFiles{:}};
-%     
-%     newFiles = rdir('Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated/*.png', [], true);
-%     files = {files{:}, newFiles{:}};
-%     
-%     newFiles = rdir('Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/rotated/*.png', [], true);
-%     files = {files{:}, newFiles{:}};
-    
+ 
     numImages = 0;
-    
-    % Convert each cell to format {className, filename}
-    fiducialClasses = cell(length(files), 1);
-    for i = 1:length(files)
-        slashInds = find(files{i} == '/');
-        dotInds = find(files{i} == '.');
-        fiducialClasses{i} = {files{i}((slashInds(end)+1):(dotInds(end)-1)), {files{i}}};
-        numImages = numImages + length(files{i});
+    for iClass = 1:length(fiducialClassesList)
+        numImages = numImages + length(fiducialClassesList(iClass).filenames);
     end
     
+    % TODO: add non-marker images
+    
     [xgrid,ygrid] = meshgrid(probeLocationsX, probeLocationsY);
-    probeValues   = zeros(numBlurs*numImages*numPerturbations, length(probeLocationsX)*length(probeLocationsY), 'uint8');
+    %     probeValues   = zeros(numBlurs*numImages*numPerturbations, length(probeLocationsX)*length(probeLocationsY), 'uint8');
+    probeValues   = cell(length(probeLocationsX)*length(probeLocationsY), 1);
     labels        = zeros(numBlurs*numImages*numPerturbations, 1, 'uint32');
+    
+    for iProbe = 1:length(probeValues)
+        probeValues{iProbe} = zeros(numBlurs*numImages*numPerturbations, 1, 'uint8');
+    end
     
     % Precompute all the perturbed probe locations once
     xPerturb = cell(1, numPerturbations);
@@ -58,19 +64,22 @@ function fiducialClassesWithProbes = TrainProbeTree2_loadImages(varargin)
     
     % Compute the perturbed probe values
     
-    fiducialClassesWithProbes = cell(length(fiducialClasses), 1);
+    fiducialClassesWithProbes = cell(length(fiducialClassesList), 1);
+    
+    pBar.set_message(sprintf('Computing %d perturbed probe locations', numPerturbations));
+    pBar.set_increment(1/numImages);
+    pBar.set(0);
     
     cLabel = 1;
-    for iClass = 1:length(fiducialClasses)
-        for iFile = 1:length(fiducialClasses{iClass}{2})
-            %             fiducialClassesWithImages{iClass}{2}{iFile} = {fiducialClasses{iClass}{2}{iFile}, imreadAlphaHelper(fiducialClasses{iClass}{2}{iFile})};
-            img = imreadAlphaHelper(fiducialClasses{iClass}{2}{iFile});
+    for iClass = 1:length(fiducialClassesList)
+        for iFile = 1:length(fiducialClassesList(iClass).filenames)
+            img = imreadAlphaHelper(fiducialClassesList(iClass).filenames{iFile});
             
             [nrows,ncols,~] = size(img);
-    
+            
             imageCoordsX = linspace(0, 1, ncols);
             imageCoordsY = linspace(0, 1, nrows);
-    
+            
             for iBlur = 1:numBlurs
                 imgBlur = img;
                 
@@ -78,65 +87,25 @@ function fiducialClassesWithProbes = TrainProbeTree2_loadImages(varargin)
                     blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
                     imgBlur = separable_filter(img, gaussian_kernel(blurSigma));
                 end
-
-                imgBlur = double(imgBlur);
-                
+                                
                 for iPerturb = 1:numPerturbations
-                    probeValues(cLabel, :) = 255*uint8(interp2(imageCoordsX, imageCoordsY, imgBlur, xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1));
+                    tmpValues = uint8(255*interp2(imageCoordsX, imageCoordsY, imgBlur, xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1));
+                    
+                    % Stripe the data per-probe location
+                    for iProbe = 1:length(probeValues)
+                        probeValues{iProbe}(cLabel) = tmpValues(iProbe);
+                    end
                     
                     labels(cLabel) = iClass;
                     cLabel = cLabel + 1;
-                end
+                end % for iPerturb = 1:numPerturbations
             end % for iBlur = 1:numBlurs
             
-        end % for iFile = 1:length(fiducialClasses{iClass}{2})
-    end % for iClass = 1:length(fiducialClasses)
+            pBar.increment();
+        end % for iFile = 1:length(fiducialClassesList(iClass).filenames)
+    end % for iClass = 1:length(fiducialClassesList)
     
-    keyboard
-    
-    %     for iImg = 1:numImages
-    %
-    %         %         if strcmp(fnames{iImg}, 'ALLWHITE')
-    %         %             img{iImg} = ones(workingResolution);
-    %         %         elseif strcmp(fnames{iImg}, 'ALLBLACK')
-    %         %             img{iImg} = zeros(workingResolution);
-    %         %         else
-    %         img = imreadAlphaHelper(fnames{iImg});
-    %         %         end
-    %
-    %         [nrows,ncols,~] = size(img);
-    %         imageCoordsX = linspace(0, 1, ncols);
-    %         imageCoordsY = linspace(0, 1, nrows);
-    %
-    %         [~,labelNames{iImg}] = fileparts(fnames{iImg});
-    %
-    %         for iBlur = 1:numBlurs
-    %             imgBlur = img;
-    %             if blurSigmas(iBlur) > 0
-    %                 blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
-    %                 imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma));
-    %             end
-    %
-    %             imgGradMag = single(smoothgradient(imgBlur));
-    %             imgBlur = single(imgBlur);
-    %
-    %             probeValues{iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
-    %             gradMagValues{iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
-    %             for iPerturb = 1:numPerturbations
-    %                 probeValues{iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgBlur, ...
-    %                     xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1), 2);
-    %
-    %                 gradMagValues{iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
-    %                     xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 0), 2);
-    %             end
-    %
-    %             labels{iBlur,iImg} = iImg*ones(1,numPerturbations, 'uint32');
-    %
-    %         end % FOR each blurSigma
-    %
-    %         pBar.increment();
-    %     end
-    
+%     keyboard
 end % TrainProbeTree2_loadImages()
 
 function img = imreadAlphaHelper(fname)
@@ -147,6 +116,7 @@ function img = imreadAlphaHelper(fname)
     
     threshold = (max(img(:)) + min(img(:)))/2;
     %     img = bwpack(img > threshold);
-    img = uint8(img > threshold);
+%     img = uint8(img > threshold);
+    img = single(img > threshold);
     
 end % imreadAlphaHelper()
