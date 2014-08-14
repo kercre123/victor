@@ -163,17 +163,6 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     allCompiledResults = [];
 end % runTests_detectFiducialMarkers()
 
-function realPath = tildeToPath()
-    if ispc()
-        realPath = '';
-    else
-        oldPath = pwd();
-        cd('~');
-        realPath = pwd();
-        cd(oldPath);
-    end
-end
-
 function allTestData = getTestData(testJsonPattern)
     testJsonPattern = strrep(testJsonPattern, '\', '/');
     slashIndexes = strfind(testJsonPattern, '/');
