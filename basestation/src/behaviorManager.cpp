@@ -201,10 +201,12 @@ namespace Anki {
       
       // Mark new object of interest as selected so it will draw differently
       object = dynamic_cast<ActionableObject*>(world_->GetObjectByID(objectIDofInterest_));
-      CORETECH_ASSERT(object != nullptr); // object should still exist!
+      if (object != nullptr) {
       object->SetSelected(true);
-      
       PRINT_INFO("Object of interest: ID = %d\n", objectIDofInterest_.GetValue());
+      } else {
+        PRINT_INFO("No object of interest found\n");
+      }
       
     } // SelectNextObjectOfInterest()
     
