@@ -58,10 +58,12 @@ ADD_MESSAGE_MEMBER(f32, headAngle)
 ADD_MESSAGE_MEMBER(f32, liftAngle)
 ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
 ADD_MESSAGE_MEMBER(u16, lastPathID)
+ADD_MESSAGE_MEMBER(u8, proxLeft)
+ADD_MESSAGE_MEMBER(u8, proxForward)
+ADD_MESSAGE_MEMBER(u8, proxRight)
 ADD_MESSAGE_MEMBER(s8, currPathSegment) // -1 if not traversing a path
 ADD_MESSAGE_MEMBER(u8, numFreeSegmentSlots)
 ADD_MESSAGE_MEMBER(u8, status)  // See RobotStatusFlag
-// ...
 END_MESSAGE_DEFINITION(RobotState)
 
 

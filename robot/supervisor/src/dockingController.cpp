@@ -230,7 +230,7 @@ namespace Anki {
             // Check that error signal is plausible
             // If not, treat as if tracking failed.
             // TODO: Get tracker to detect these situations and not even send the error message here.
-            if (dockMsg.x_distErr > 0 && ABS(dockMsg.angleErr) < 0.75*PIDIV2_F) {
+            if (dockMsg.x_distErr > 0.f && ABS(dockMsg.angleErr) < 0.75f*PIDIV2_F) {
              
               // Update time that last good error signal was received
               lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
@@ -253,7 +253,7 @@ namespace Anki {
                 // Make sure bottom of camera FOV doesn't tilt below the bottom of the block
                 // or that the camera FOV center doesn't tilt below the marker center.
                 // Otherwise try to maintain the lowest tilt possible
-                f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5*VisionSystem::GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
+                f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*VisionSystem::GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
                 f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
                 f32 desiredHeadAngle = MAX(minDesiredHeadAngle1, minDesiredHeadAngle2);
                 
@@ -377,7 +377,7 @@ namespace Anki {
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad)
       {
         // Check for readings that we do not expect to get
-        if (rel_x < 0 || ABS(rel_rad) > 0.75*PIDIV2_F
+        if (rel_x < 0.f || ABS(rel_rad) > 0.75f*PIDIV2_F
             ) {
           PRINT("WARN: Ignoring out of range docking error signal (%f, %f, %f)\n", rel_x, rel_y, rel_rad);
           return;

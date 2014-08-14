@@ -124,6 +124,8 @@ namespace Anki {
     , _saveImages(false)
     , _camera(robotID)
     , _poseOrigins(1)
+    , _proxLeft(0), _proxFwd(0), _proxRight(0)
+    , _proxLeftBlocked(false), _proxFwdBlocked(false), _proxRightBlocked(false)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
@@ -171,6 +173,12 @@ namespace Anki {
       
       // Update lift angle
       SetLiftAngle(msg.liftAngle);
+
+      // Update proximity sensor values
+      SetProxSensorData(msg.proxLeft, msg.proxForward, msg.proxRight,
+                        msg.status & IS_PROX_LEFT_BLOCKED,
+                        msg.status & IS_PROX_FORWARD_BLOCKED,
+                        msg.status & IS_PROX_RIGHT_BLOCKED);
       
       // Get ID of last/current path that the robot executed
       SetLastRecvdPathID(msg.lastPathID);
@@ -193,6 +201,7 @@ namespace Anki {
       } else {
         _isMoving = true;
       }
+      
       
       Pose3d newPose;
       
