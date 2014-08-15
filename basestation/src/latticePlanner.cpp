@@ -13,6 +13,7 @@
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
+#include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
@@ -89,8 +90,9 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
   // TEMP: visualization doesn't work because we keep clearing all
   // quads. Once we fix vis and remove the EraseAllQuads() call, get
   // rid of the "true" so this only runs when it needs to
+  bool didBlocksChange = blockWorld_->DidBlocksChange();
   if(!FLT_NEAR(paddingRadius, lastPaddingRadius_) ||
-     blockWorld_->DidBlocksChange())
+     didBlocksChange)
   {
     lastPaddingRadius_ = paddingRadius;
     std::vector<Quad2f> boundingBoxes;
@@ -118,8 +120,20 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
         VizManager::getInstance()->DrawPlannerObstacle(isReplanning, numAdded++, boundingQuad, 0.5f, *vizColor);
         //(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
       }
+      else {
+        numAdded++;
+      }
     }
-
+    PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstacles.ImportedObstacles",
+                     "imported %d obstacles form blockworld",
+                     numAdded);
+  }
+  else {
+    PRINT_NAMED_INFO("LatticePlanner.ImportBlockworldObstacles.NoUpdateNeeded",
+                     "radius %f (last = %f), didBlocksChange %d",
+                     paddingRadius,
+                     lastPaddingRadius_,
+                     didBlocksChange);
   }
 }
 
@@ -194,8 +208,8 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     return GetPlan(path, startPose, targetPoses[bestTargetIdx]);
   }
   else {
-    printf("LatticePlanner::GetPlan: could not find valid target out of %lu possible targets\n",
-           numTargetPoses);
+    PRINT_NAMED_INFO("LatticePlanner.GetPlan.NoValidTarget", "could not find valid target out of %lu possible targets\n",
+                     numTargetPoses);
     return PLAN_NEEDED_BUT_GOAL_FAILURE;
   }
 }
@@ -226,7 +240,9 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     planIdx = impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState, offsetFromPlan);
 
     if(offsetFromPlan >= PLAN_ERROR_FOR_REPLAN) {
-      printf("Current state is %f away from the plan, failing\n", offsetFromPlan);
+      PRINT_NAMED_INFO("LatticePlanner.GetPlanFailed",
+                       "Current state is %f away from the plan, failing\n",
+                       offsetFromPlan);
       impl_->totalPlan_.Clear();
       return PLAN_NEEDED_BUT_PLAN_FAILURE;
     }
@@ -246,8 +262,9 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     // partial plan starting at planIdx and ending at lastSafeState
 
     if(!forceReplanFromScratch) {
-      printf("old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
-             planIdx, validOldPlan.Size());
+      PRINT_NAMED_INFO("LatticePlanner.GetPlan.OldPlanUnsafe",
+                       "old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
+                       planIdx, validOldPlan.Size());
     }
 
     cout<<"currentRobotState: "<<currentRobotState<<endl;
@@ -267,11 +284,11 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     path.Clear();
 
     if(!impl_->planner_.SetStart(lastSafeState)) {
-      printf("ERROR: ReplanIfNeeded, invalid start!\n");
+      PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.InvalidStart", "could not set start\n");
       return PLAN_NEEDED_BUT_START_FAILURE;
     }
     else if(!impl_->planner_.GoalIsValid()) {
-      printf("ReplanIfNeeded, invalid goal! Goal may have moved into collision.\n");
+      PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.InvalidGoal", "Goal may have moved into collision.\n");
       return PLAN_NEEDED_BUT_GOAL_FAILURE;
     }
     else {
@@ -282,12 +299,13 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
       // use real padding for re-plan
       impl_->ImportBlockworldObstacles(false, &NamedColors::BLOCK_BOUNDING_QUAD);
 
-      printf("(re)-planning from (%f, %f, %f) to (%f %f %f)\n",
-             lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,
-             impl_->planner_.GetGoal().x_mm, impl_->planner_.GetGoal().y_mm, impl_->planner_.GetGoal().theta);
+      PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.Replanning",
+                       "from (%f, %f, %f) to (%f %f %f)\n",
+                       lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,
+                       impl_->planner_.GetGoal().x_mm, impl_->planner_.GetGoal().y_mm, impl_->planner_.GetGoal().theta);
 
       if(!impl_->planner_.Replan(LATTICE_PLANNER_MAX_EXPANSIONS)) {
-        printf("plan failed during replanning!\n");
+        PRINT_NAMED_WARNING("LatticePlanner.ReplanIfNeeded.PlannerFailed", "plan failed during replanning!\n");
         return PLAN_NEEDED_BUT_PLAN_FAILURE; 
       }
       else {
