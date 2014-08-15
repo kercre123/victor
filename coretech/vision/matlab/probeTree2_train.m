@@ -67,6 +67,14 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeLocationsXG
     
     numTotal = length(labels);
     
+    pBar = ProgressBar('probeTree2_train testOnTrainingData', 'CancelButton', true);
+    pBar.showTimingInfo = true;
+    pBarCleanup = onCleanup(@()delete(pBar));
+    
+    pBar.set_message(sprintf('Testing %d inputs', numImages));    
+    pBar.set_increment(100/numImages);
+    pBar.set(0);
+    
     numCorrect = 0;
     for iImage = 1:numImages
         curImage = zeros(numProbes, 1, 'uint8');
@@ -82,6 +90,9 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeLocationsXG
         
         if labelID == labels(iImage);
             numCorrect = numCorrect + 1;
+        end
+        if mod(iImage, 100) == 0
+            pBar.increment();
         end
     end
 end % testOnTrainingData()
@@ -229,8 +240,6 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
         end
 
         grayvalueThresholds = (uniqueGrayvalues(2:end) + uniqueGrayvalues(1:(end-1))) / 2;
-        
-%         keyboard
         
         if useMex
             [curBestEntropy, curBestGrayvalueThreshold] = mexComputeInfoGain2_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel);

@@ -26,7 +26,7 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     
     parseVarargin(varargin{:});
     
-    pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
+    pBar = ProgressBar('probeTree2_loadImages', 'CancelButton', true);
     pBar.showTimingInfo = true;
     pBarCleanup = onCleanup(@()delete(pBar));
     

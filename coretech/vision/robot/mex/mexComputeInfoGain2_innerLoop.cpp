@@ -73,6 +73,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // [valuesGreaterThan, countsGreaterThan] = count_unique(labelsGreaterThan);
     //totalNumLessThan = sum(countsLessThan);
     //totalNumGreaterThan = sum(countsGreaterThan);
+
     for(s32 iItem=0; iItem<numItems; iItem++) {
       const s32 curLabel = pCurLabels[iItem];
       
@@ -84,6 +85,94 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         pNumGreaterThan[curLabel]++;
       }
     }
+    
+/*    const s32 numItems8 = 8*(numItems / 8);
+    for(s32 iItem=0; iItem<numItems8; iItem+=8) {
+      const s32 curLabel0 = pCurLabels[iItem];
+      const s32 curLabel1 = pCurLabels[iItem+1];
+      const s32 curLabel2 = pCurLabels[iItem+2];
+      const s32 curLabel3 = pCurLabels[iItem+3];
+      const s32 curLabel4 = pCurLabels[iItem+4];
+      const s32 curLabel5 = pCurLabels[iItem+5];
+      const s32 curLabel6 = pCurLabels[iItem+6];
+      const s32 curLabel7 = pCurLabels[iItem+7];
+      
+      if(pCurProbeValues[iItem] < curGrayvalueThreshold) {
+        totalNumLessThan++;
+        pNumLessThan[curLabel0]++;
+      } else {
+        totalNumGreaterThan++;
+        pNumGreaterThan[curLabel0]++;
+      }
+      
+      if(pCurProbeValues[iItem+1] < curGrayvalueThreshold) {
+        totalNumLessThan++;
+        pNumLessThan[curLabel1]++;
+      } else {
+        totalNumGreaterThan++;
+        pNumGreaterThan[curLabel1]++;
+      }
+      
+      if(pCurProbeValues[iItem+2] < curGrayvalueThreshold) {
+        totalNumLessThan++;
+        pNumLessThan[curLabel2]++;
+      } else {
+        totalNumGreaterThan++;
+        pNumGreaterThan[curLabel2]++;
+      }
+      
+      if(pCurProbeValues[iItem+3] < curGrayvalueThreshold) {
+        totalNumLessThan++;
+        pNumLessThan[curLabel3]++;
+      } else {
+        totalNumGreaterThan++;
+        pNumGreaterThan[curLabel3]++;
+      }
+      
+      if(pCurProbeValues[iItem+4] < curGrayvalueThreshold) {
+        totalNumLessThan++;
+        pNumLessThan[curLabel4]++;
+      } else {
+        totalNumGreaterThan++;
+        pNumGreaterThan[curLabel4]++;
+      }
+      
+      if(pCurProbeValues[iItem+5] < curGrayvalueThreshold) {
+        totalNumLessThan++;
+        pNumLessThan[curLabel5]++;
+      } else {
+        totalNumGreaterThan++;
+        pNumGreaterThan[curLabel5]++;
+      }
+      
+      if(pCurProbeValues[iItem+6] < curGrayvalueThreshold) {
+        totalNumLessThan++;
+        pNumLessThan[curLabel6]++;
+      } else {
+        totalNumGreaterThan++;
+        pNumGreaterThan[curLabel6]++;
+      }
+      
+      if(pCurProbeValues[iItem+7] < curGrayvalueThreshold) {
+        totalNumLessThan++;
+        pNumLessThan[curLabel7]++;
+      } else {
+        totalNumGreaterThan++;
+        pNumGreaterThan[curLabel7]++;
+      }
+    }
+    
+    for(s32 iItem=numItems8; iItem<numItems; iItem++) {
+      const s32 curLabel = pCurLabels[iItem];
+      
+      if(pCurProbeValues[iItem] < curGrayvalueThreshold) {
+        totalNumLessThan++;
+        pNumLessThan[curLabel]++;
+      } else {
+        totalNumGreaterThan++;
+        pNumGreaterThan[curLabel]++;
+      }
+    }*/
     
 //    mexPrintf("%d %d\n", totalNumLessThan, totalNumGreaterThan);
     
