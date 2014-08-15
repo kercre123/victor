@@ -15,12 +15,14 @@
 function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, varargin)
     %#ok<*CCAT>
     
-    blurSigmas = [0 .005 .01]; % as a fraction of the image diagonal
+    blurSigmas = [0, .005, .01, .02]; % as a fraction of the image diagonal
     maxPerturbPercent = 0.05;
     numPerturbations = 100;
-    probeLocationsX = ((1:30) - .5) / 30;
+    probeLocationsX = ((1:30) - .5) / 30; % Probe location assume the left edge of the image is 0 and the right edge is 1
     probeLocationsY = ((1:30) - .5) / 30;
     probeResolutions = [512,128,32];
+    numPadPixels = 100;
+    showProbePermutations = false;
     
     parseVarargin(varargin{:});
     
@@ -59,6 +61,7 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     for iPerturb = 1:numPerturbations
         perturbation = (2*rand(4,2) - 1) * maxPerturbPercent;
         corners_i = corners + perturbation;
+%         corners_i = corners;
         T = cp2tform(corners_i, corners, 'projective');
         [xPerturb{iPerturb}, yPerturb{iPerturb}] = tforminv(T, probeLocationsXGrid, probeLocationsYGrid);
         xPerturb{iPerturb} = xPerturb{iPerturb}(:);
@@ -77,30 +80,47 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
         for iFile = 1:length(fiducialClassesList(iClass).filenames)
             img = imreadAlphaHelper(fiducialClassesList(iClass).filenames{iFile});
             
+            imgPadded = padarray(img, [numPadPixels,numPadPixels], 1);
+            
             [nrows,ncols,~] = size(img);
             
-            imageCoordsX = linspace(0, 1, ncols);
-            imageCoordsY = linspace(0, 1, nrows);
-            
             for iBlur = 1:numBlurs
-                imgBlur = img;
+                imgPaddedAndBlurred = imgPadded;
                 
                 if blurSigmas(iBlur) > 0
                     blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
-                    imgBlur = separable_filter(img, gaussian_kernel(blurSigma));
+                    imgPaddedAndBlurred = separable_filter(imgPadded, gaussian_kernel(blurSigma));
                 end
                 
-                figure(); imshow(imgBlur)
-                
                 for iResolution = 1:numResolutions
-                    imgBlurResized = imresize(imresize(imgBlur, [probeResolutions(iResolution),probeResolutions(iResolution)]), size(imgBlur), 'nearest');
+                    imgPaddedAndBlurredResized = imresize(imresize(imgPaddedAndBlurred, [probeResolutions(iResolution),probeResolutions(iResolution)]), size(imgPaddedAndBlurred), 'nearest');
                     
                     for iPerturb = 1:numPerturbations                    
-                        tmpValues = uint8(255*interp2(imageCoordsX, imageCoordsY, imgBlurResized, xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1));
+                        % Probe location assume the left edge of the image is 0 and the right edge is 1
+                        imageCoordsX = round(xPerturb{iPerturb} * ncols + 0.5 + numPadPixels);
+                        imageCoordsY = round(yPerturb{iPerturb} * nrows + 0.5 + numPadPixels);
+
+                        inds = find(imageCoordsX >= 1 & imageCoordsX <= (ncols+2*numPadPixels) & imageCoordsY >= 1 & imageCoordsY <= (nrows+2*numPadPixels));
+                        
+                        % If the perturbations are too large relative to
+                        % the padding, some indexes will be out of bounds.
+                        % The solution is to increase the padding.
+                        assert(length(inds) == length(imageCoordsX));
+                        
+                        tmpValues = zeros(length(imageCoordsY), 1); 
+                        
+                        for iPixel = 1:length(imageCoordsY)
+                            tmpValues(iPixel) = imgPaddedAndBlurredResized(imageCoordsY(iPixel), imageCoordsX(iPixel));
+                        end
                         
                         % Stripe the data per-probe location
                         for iProbe = 1:length(probeValues)
                             probeValues{iProbe}(cLabel) = tmpValues(iProbe);
+                        end
+                        
+                        if showProbePermutations
+                            imshows({imgPaddedAndBlurredResized((1+numPadPixels):(end-numPadPixels), (1+numPadPixels):(end-numPadPixels)), imresize(reshape(tmpValues, [length(probeLocationsY), length(probeLocationsX)]), size(img), 'nearest')});
+                            pause(0.05);
                         end
                         
                         labels(cLabel) = iClass;
