@@ -1,18 +1,18 @@
-% function [labels, probeValues] = TrainProbeTree2_loadImages(fiducialClassesList, varargin)
+% function [labels, probeValues] = probeTree2_loadImages(fiducialClassesList, varargin)
 
 % Load the images specified by the fiducialClassesList, and generate the
 % probe images
 
 % Simple Example:
 % clear fiducialClassesList; fiducialClassesList(1).labelName = '0_000'; fiducialClassesList(1).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_000.png'}; fiducialClassesList(2).labelName = '0_090'; fiducialClassesList(2).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_090.png'};
-% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = TrainProbeTree2_loadImages(fiducialClassesList, 'numPerturbations', 1, 'maxPerturbPercent', 0, 'blurSigmas', [0]);
+% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, 'numPerturbations', 1, 'maxPerturbPercent', 0, 'blurSigmas', [0]);
+
+% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, 'numPerturbations', 100);
 
 % Example:
-% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = TrainProbeTree2_loadImages(fiducialClassesList);
+% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList);
 
-
-
-function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = TrainProbeTree2_loadImages(fiducialClassesList, varargin)
+function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, varargin)
     %#ok<*CCAT>
     
     blurSigmas = [0 .005 .01]; % as a fraction of the image diagonal
@@ -45,7 +45,7 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     %     probeValues   = zeros(numBlurs*numImages*numPerturbations, length(probeLocationsX)*length(probeLocationsY), 'uint8');
     labelNames  = cell(length(fiducialClassesList), 1);
     probeValues = cell(length(probeLocationsXGrid), 1);
-    labels      = zeros(numBlurs*numImages*numPerturbations, 1, 'uint32');
+    labels      = zeros(numBlurs*numImages*numPerturbations, 1, 'int32');
     
     for iProbe = 1:length(probeValues)
         probeValues{iProbe} = zeros(numBlurs*numImages*numPerturbations, 1, 'uint8');
@@ -106,7 +106,7 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     end % for iClass = 1:length(fiducialClassesList)
     
     %     keyboard
-end % TrainProbeTree2_loadImages()
+end % probeTree2_loadImages()
 
 function img = imreadAlphaHelper(fname)
     

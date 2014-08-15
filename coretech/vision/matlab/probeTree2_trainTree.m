@@ -1,13 +1,13 @@
-% function probeTree = TrainProbeTree2(varargin)
+% function probeTree = probeTree2_trainTree(varargin)
 %
 % Based off of VisionMarkerTrained.TrainProbeTree, but split into a
 % separate function, to prevent too much messing around with the
 % VisionMarkerTrained class hierarchy
 
 % Example:
-% probeTree = TrainProbeTree2_trainTree(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid);
+% probeTree = probeTree2_trainTree(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid);
 
-function probeTree = TrainProbeTree2_trainTree(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, varargin)
+function probeTree = probeTree2_trainTree(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, varargin)
     t_start = tic();
     
     for iProbe = 1:length(probeValues)
@@ -25,7 +25,9 @@ function probeTree = TrainProbeTree2_trainTree(labelNames, labels, probeValues, 
         
     probeTree = buildTree(probeTree, false(length(probeValues), 1), labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction);
     
-    keyboard
+%     drawTree(probeTree)
+    
+%     keyboard
     
     if isempty(probeTree)
         error('Training failed!');
@@ -37,7 +39,7 @@ function probeTree = TrainProbeTree2_trainTree(labelNames, labels, probeValues, 
 %     fprintf('Training completed in %.2f seconds (%.1f minutes), plus %.2f seconds (%.2f minutes) for testing on original images.\n', ...
 %         t_train, t_train/60, t_test, t_test/60);
     
-end % TrainProbeTree2_trainTree()
+end % probeTree2_trainTree()
 
 function node = buildTree(node, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction)
     maxDepth = inf;
@@ -187,60 +189,4 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
     else    
         load tmp.mat bestEntropy bestProbeIndex bestGrayvalueThreshold probesUsed
     end
-    
-%     keyboard
-    
-    %
-    %     % Use private mex implementation for speed
-    %     infoGain = mexComputeInfoGain(labels, numLabels, probeValues'); % Note the transpose!
-    %
-    %     if any(isnan(infoGain(:)))
-    %         warning('mexComputeInfoGain returned NaN values!');
-    %         keyboard
-    %     end
-    %
-    %     return
-    %
-    %     % Since we are just looking for max info gain, we don't actually need to
-    %     % compute the currentEntropy, since it's the same for all probes.  We just
-    %     % need the probe with the lowest conditional entropy, since that will be
-    %     % the one with the highest infoGain
-    %     %markerProb = max(eps,hist(labels, 1:numLabels));
-    %     %markerProb = markerProb/max(eps,sum(markerProb));
-    %     %currentEntropy = -sum(markerProb.*log2(markerProb));
-    %     currentEntropy = 0;
-    %
-    %     numProbes = size(probeValues,1);
-    %
-    %     % Use the (blurred) image values directly as indications of the
-    %     % probability a probe is "on" or "off" instead of thresholding.
-    %     % The hope is that this discourages selecting probes near
-    %     % edges, which will be gray ("uncertain"), instead of those far
-    %     % from any edge in any image, since those will still be closer
-    %     % to black or white even after blurring.
-    %
-    %     probeIsOff = probeValues;
-    %     probeIsOn  = 1 - probeValues;
-    %     % probeIsOn  = max(0, 1 - 2*probeValues);
-    %     % probeIsOff = max(0, 2*probeValues - 1);
-    %
-    %     markerProb_on  = zeros(numProbes,numLabels);
-    %     markerProb_off = zeros(numProbes,numLabels);
-    %
-    %     for i_probe = 1:numProbes
-    %         markerProb_on(i_probe,:)  = max(eps, accumarray(labels(:), probeIsOn(i_probe,:)', [numLabels 1])');
-    %         markerProb_off(i_probe,:) = max(eps, accumarray(labels(:), probeIsOff(i_probe,:)', [numLabels 1])');
-    %     end
-    %
-    %     markerProb_on  = markerProb_on  ./ (sum(markerProb_on,2)*ones(1,numLabels));
-    %     markerProb_off = markerProb_off ./ (sum(markerProb_off,2)*ones(1,numLabels));
-    %
-    %     p_on = sum(probeIsOn,2)/size(probeIsOn,2);
-    %     p_off = 1 - p_on;
-    %
-    %     conditionalEntropy = - (p_on.*sum(markerProb_on.*log2(max(eps,markerProb_on)), 2) + ...
-    %         p_off.*sum(markerProb_off.*log2(max(eps,markerProb_off)), 2));
-    %
-    %     infoGain = currentEntropy - conditionalEntropy;
-    
 end % computeInfoGain()

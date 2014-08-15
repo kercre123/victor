@@ -1,15 +1,15 @@
-% function fiducialClassesList = TrainProbeTree2_createFiducialClassesList(varargin)
+% function fiducialClassesList = probeTree2_createFiducialClassesList(varargin)
 
 % Generate a fiducialClassesList, with one class for each fiducial code
 % type
 
 % Simple Example:
-% fiducialClassesList = TrainProbeTree2_createFiducialClassesList('markerFilenamePatterns', {'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated/*.png'});
+% fiducialClassesList = probeTree2_createFiducialClassesList('markerFilenamePatterns', {'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated/*.png'});
 
 % Example:
-% fiducialClassesList = TrainProbeTree2_createFiducialClassesList();
+% fiducialClassesList = probeTree2_createFiducialClassesList();
 
-function fiducialClassesList = TrainProbeTree2_createFiducialClassesList(varargin)
+function fiducialClassesList = probeTree2_createFiducialClassesList(varargin)
     %#ok<*CCAT1>
     %#ok<*CCAT>
     
