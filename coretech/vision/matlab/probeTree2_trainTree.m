@@ -22,12 +22,12 @@ function probeTree = probeTree2_trainTree(labelNames, labels, probeValues, probe
     
     probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
     probeTree.labels = labelNames;
-        
+    
     probeTree = buildTree(probeTree, false(length(probeValues), 1), labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction);
     
-%     drawTree(probeTree)
+    %     drawTree(probeTree)
     
-%     keyboard
+    %     keyboard
     
     if isempty(probeTree)
         error('Training failed!');
@@ -36,8 +36,8 @@ function probeTree = probeTree2_trainTree(labelNames, labels, probeValues, probe
     t_train = toc(t_start);
     
     %[numMain, numVerify] = VisionMarkerTrained.GetNumTreeNodes(); % Not valid until we clear VisionMarkerTrained and force a tree re-load.
-%     fprintf('Training completed in %.2f seconds (%.1f minutes), plus %.2f seconds (%.2f minutes) for testing on original images.\n', ...
-%         t_train, t_train/60, t_test, t_test/60);
+    %     fprintf('Training completed in %.2f seconds (%.1f minutes), plus %.2f seconds (%.2f minutes) for testing on original images.\n', ...
+    %         t_train, t_train/60, t_test, t_test/60);
     
 end % probeTree2_trainTree()
 
@@ -68,7 +68,7 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         [node.infoGain, node.whichProbe, node.grayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, node.remaining);
         
         node.x = probeLocationsXGrid(node.whichProbe);
-        node.y = probeLocationsYGrid(node.whichProbe);         
+        node.y = probeLocationsYGrid(node.whichProbe);
         node.remainingLabels = sprintf('%s ', labelNames{unique(labels(node.remaining))});
         
         % Recurse left and right from this node
@@ -89,7 +89,7 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
             
             probesUsed(node.whichProbe) = true;
             node.depth = node.depth + 1;
-            node = buildTree(node, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction);           
+            node = buildTree(node, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction);
         else
             % Recurse left
             leftChild.remaining = leftRemaining;
@@ -111,82 +111,76 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
 end % buildTree()
 
 function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, remainingImages)
+    totalTic = tic();
     
-    recompute = true; % TODO: remove
+    unusedProbeIndexes = find(~probesUsed);
     
-    if recompute
-        unusedProbeIndexes = find(~probesUsed);
-
-        %     numProbesTotal = length(probeValues);
-        numProbesUnused = length(unusedProbeIndexes);
-
-        bestEntropy = Inf;
-        bestProbeIndex = -1;
-        bestGrayvalueThreshold = -1;
-
-        curLabels = labels(remainingImages);
-        uniqueLabels = unique(curLabels);
-        maxLabel = max(uniqueLabels);
-
-        for iUnusedProbe = 1:numProbesUnused
-            tic
-
-            curProbeIndex = unusedProbeIndexes(iUnusedProbe);
-            curProbeValues = probeValues{curProbeIndex}(remainingImages);            
-
-            uniqueGrayvalues = unique(curProbeValues);
-
-            if length(uniqueGrayvalues) == 1
-%                 disp(sprintf('%d/%d skipped in %f seconds', iUnusedProbe, numProbesUnused, toc()));
-%                 pause(.001);
-                probesUsed(curProbeIndex) = true;
-                continue;
-            end
-
-            grayvalueThresholds = (uniqueGrayvalues(2:end) + uniqueGrayvalues(1:(end-1))) / 2;
-
-            for iGrayvalueThreshold = 1:length(grayvalueThresholds)
-                labelsLessThan = curLabels(curProbeValues < grayvalueThresholds(iGrayvalueThreshold));
-                labelsGreaterThan = curLabels(curProbeValues >= grayvalueThresholds(iGrayvalueThreshold));
-
-                if isempty(labelsLessThan) || isempty(labelsGreaterThan)                    
-                    continue
-                end
-
-                [valuesLessThan, countsLessThan] = count_unique(labelsLessThan);
-                [valuesGreaterThan, countsGreaterThan] = count_unique(labelsGreaterThan);
-
-                numLessThan = sum(countsLessThan);
-                numGreaterThan = sum(countsGreaterThan);
-
-                allValuesLessThan = zeros(maxLabel, 1);
-                allValuesGreaterThan = zeros(maxLabel, 1);
-
-                allValuesLessThan(valuesLessThan) = countsLessThan;
-                allValuesGreaterThan(valuesGreaterThan) = countsGreaterThan;
-
-                probabilitiesLessThan = allValuesLessThan / sum(allValuesLessThan);
-                probabilitiesGreaterThan = allValuesGreaterThan / sum(allValuesGreaterThan);
-
-                entropyLessThan = -sum(probabilitiesLessThan .* log2(max(eps, probabilitiesLessThan)));
-                entropyGreaterThan = -sum(probabilitiesGreaterThan .* log2(max(eps, probabilitiesGreaterThan)));
-
-                weightedAverageEntropy = ...
-                    numLessThan    / (numLessThan + numGreaterThan) * entropyLessThan +...
-                    numGreaterThan / (numLessThan + numGreaterThan) * entropyGreaterThan;
-
-                if weightedAverageEntropy < bestEntropy
-                    bestEntropy = weightedAverageEntropy;
-                    bestProbeIndex = curProbeIndex;
-                    bestGrayvalueThreshold = grayvalueThresholds(iGrayvalueThreshold);
-                end
-            end % for iGrayvalueThreshold = 1:length(grayvalueThresholds)
-%             disp(sprintf('%d/%d in %f seconds', iUnusedProbe, numProbesUnused, toc()));
-%             pause(.001);
-        end % for iUnusedProbe = 1:numProbesUnused
+    %     numProbesTotal = length(probeValues);
+    numProbesUnused = length(unusedProbeIndexes);
+    
+    bestEntropy = Inf;
+    bestProbeIndex = -1;
+    bestGrayvalueThreshold = -1;
+    
+    curLabels = labels(remainingImages);
+    uniqueLabels = unique(curLabels);
+    maxLabel = max(uniqueLabels);
+    
+    for iUnusedProbe = 1:numProbesUnused
+        curProbeIndex = unusedProbeIndexes(iUnusedProbe);
+        curProbeValues = probeValues{curProbeIndex}(remainingImages);
         
-        save tmp.mat *
-    else    
-        load tmp.mat bestEntropy bestProbeIndex bestGrayvalueThreshold probesUsed
-    end
+        uniqueGrayvalues = unique(curProbeValues);
+        
+        if length(uniqueGrayvalues) == 1
+            %                 disp(sprintf('%d/%d skipped in %f seconds', iUnusedProbe, numProbesUnused, toc()));
+            %                 pause(.001);
+            probesUsed(curProbeIndex) = true;
+            continue;
+        end
+        
+        grayvalueThresholds = (uniqueGrayvalues(2:end) + uniqueGrayvalues(1:(end-1))) / 2;
+        
+        for iGrayvalueThreshold = 1:length(grayvalueThresholds)
+            labelsLessThan = curLabels(curProbeValues < grayvalueThresholds(iGrayvalueThreshold));
+            labelsGreaterThan = curLabels(curProbeValues >= grayvalueThresholds(iGrayvalueThreshold));
+            
+            if isempty(labelsLessThan) || isempty(labelsGreaterThan)
+                continue
+            end
+            
+            [valuesLessThan, countsLessThan] = count_unique(labelsLessThan);
+            [valuesGreaterThan, countsGreaterThan] = count_unique(labelsGreaterThan);
+            
+            numLessThan = sum(countsLessThan);
+            numGreaterThan = sum(countsGreaterThan);
+            
+            allValuesLessThan = zeros(maxLabel, 1);
+            allValuesGreaterThan = zeros(maxLabel, 1);
+            
+            allValuesLessThan(valuesLessThan) = countsLessThan;
+            allValuesGreaterThan(valuesGreaterThan) = countsGreaterThan;
+            
+            probabilitiesLessThan = allValuesLessThan / sum(allValuesLessThan);
+            probabilitiesGreaterThan = allValuesGreaterThan / sum(allValuesGreaterThan);
+            
+            entropyLessThan = -sum(probabilitiesLessThan .* log2(max(eps, probabilitiesLessThan)));
+            entropyGreaterThan = -sum(probabilitiesGreaterThan .* log2(max(eps, probabilitiesGreaterThan)));
+            
+            weightedAverageEntropy = ...
+                numLessThan    / (numLessThan + numGreaterThan) * entropyLessThan +...
+                numGreaterThan / (numLessThan + numGreaterThan) * entropyGreaterThan;
+            
+            if weightedAverageEntropy < bestEntropy
+                bestEntropy = weightedAverageEntropy;
+                bestProbeIndex = curProbeIndex;
+                bestGrayvalueThreshold = grayvalueThresholds(iGrayvalueThreshold);
+            end
+        end % for iGrayvalueThreshold = 1:length(grayvalueThresholds)
+        %             disp(sprintf('%d/%d in %f seconds', iUnusedProbe, numProbesUnused, toc()));
+        %             pause(.001);
+    end % for iUnusedProbe = 1:numProbesUnused
+    
+    disp(sprintf('Best entropy is %f in %f seconds', bestEntropy, toc(totalTic)))
+    
 end % computeInfoGain()

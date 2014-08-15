@@ -18,8 +18,9 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     blurSigmas = [0 .005 .01]; % as a fraction of the image diagonal
     maxPerturbPercent = 0.05;
     numPerturbations = 100;
-    probeLocationsX = linspace(0, 1, 30);
-    probeLocationsY = linspace(0, 1, 30);
+    probeLocationsX = ((1:30) - .5) / 30;
+    probeLocationsY = ((1:30) - .5) / 30;
+    probeResolutions = [512,128,32];
     
     parseVarargin(varargin{:});
     
@@ -30,6 +31,7 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     corners = [0 0; 0 1; 1 0; 1 1];
     
     numBlurs = length(blurSigmas);
+    numResolutions = length(probeResolutions);
     
     numImages = 0;
     for iClass = 1:length(fiducialClassesList)
@@ -45,10 +47,10 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     %     probeValues   = zeros(numBlurs*numImages*numPerturbations, length(probeLocationsX)*length(probeLocationsY), 'uint8');
     labelNames  = cell(length(fiducialClassesList), 1);
     probeValues = cell(length(probeLocationsXGrid), 1);
-    labels      = zeros(numBlurs*numImages*numPerturbations, 1, 'int32');
+    labels      = zeros(numBlurs*numImages*numPerturbations*numResolutions, 1, 'int32');
     
     for iProbe = 1:length(probeValues)
-        probeValues{iProbe} = zeros(numBlurs*numImages*numPerturbations, 1, 'uint8');
+        probeValues{iProbe} = zeros(numBlurs*numImages*numPerturbations*numResolutions, 1, 'uint8');
     end
     
     % Precompute all the perturbed probe locations once
@@ -88,17 +90,23 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
                     imgBlur = separable_filter(img, gaussian_kernel(blurSigma));
                 end
                 
-                for iPerturb = 1:numPerturbations
-                    tmpValues = uint8(255*interp2(imageCoordsX, imageCoordsY, imgBlur, xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1));
+                figure(); imshow(imgBlur)
+                
+                for iResolution = 1:numResolutions
+                    imgBlurResized = imresize(imresize(imgBlur, [probeResolutions(iResolution),probeResolutions(iResolution)]), size(imgBlur), 'nearest');
                     
-                    % Stripe the data per-probe location
-                    for iProbe = 1:length(probeValues)
-                        probeValues{iProbe}(cLabel) = tmpValues(iProbe);
-                    end
-                    
-                    labels(cLabel) = iClass;
-                    cLabel = cLabel + 1;
-                end % for iPerturb = 1:numPerturbations
+                    for iPerturb = 1:numPerturbations                    
+                        tmpValues = uint8(255*interp2(imageCoordsX, imageCoordsY, imgBlurResized, xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1));
+                        
+                        % Stripe the data per-probe location
+                        for iProbe = 1:length(probeValues)
+                            probeValues{iProbe}(cLabel) = tmpValues(iProbe);
+                        end
+                        
+                        labels(cLabel) = iClass;
+                        cLabel = cLabel + 1;
+                    end % for iPerturb = 1:numPerturbations
+                end % for iResolution = 1:length(numResolutions)                
             end % for iBlur = 1:numBlurs
             
             pBar.increment();
