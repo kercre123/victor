@@ -34,9 +34,11 @@
 
 #include <fstream>
 
-
 #define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
+
+#define DISPLAY_PROX_OVERLAY 1
+
 
 namespace Anki {
   namespace Cozmo {
@@ -179,6 +181,22 @@ namespace Anki {
                         msg.status & IS_PROX_LEFT_BLOCKED,
                         msg.status & IS_PROX_FORWARD_BLOCKED,
                         msg.status & IS_PROX_RIGHT_BLOCKED);
+
+      if(DISPLAY_PROX_OVERLAY) {
+        // printf("displaying: prox L,F,R (%2u, %2u, %2u), blocked: (%d,%d,%d)\n",
+        //        msg.proxLeft, msg.proxForward, msg.proxRight,
+        //        msg.status & IS_PROX_LEFT_BLOCKED,
+        //        msg.status & IS_PROX_FORWARD_BLOCKED,
+        //        msg.status & IS_PROX_RIGHT_BLOCKED);
+
+        VizManager::getInstance()->SetText(0,   // TODO:(bn) id??
+                                           Anki::NamedColors::GREEN,
+                                           "prox: (%2u, %2u, %2u) %d%d%d",
+                                           msg.proxLeft, msg.proxForward, msg.proxRight,
+                                           (bool) msg.status & IS_PROX_LEFT_BLOCKED,
+                                           (bool) msg.status & IS_PROX_FORWARD_BLOCKED,
+                                           (bool) msg.status & IS_PROX_RIGHT_BLOCKED);
+      }
       
       // Get ID of last/current path that the robot executed
       SetLastRecvdPathID(msg.lastPathID);
