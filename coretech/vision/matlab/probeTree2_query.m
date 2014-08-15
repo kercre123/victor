@@ -15,13 +15,12 @@ function [labelName, labelID] = probeTree2_query(probeTree, probeLocationsXGrid,
         labelID   = probeTree.labelID;
     else
         img = rgb2gray2(img);
-    
-%         probeTree
         
+        % TODO: does this have the correct 0.5 bias?
         [xp, yp] = tforminv(tform, probeTree.x, probeTree.y);
-
+        
         curPixel = img(round(yp),round(xp));
-    
+        
         if curPixel < probeTree.grayvalueThreshold
             [labelName, labelID] = probeTree2_query(probeTree.leftChild, probeLocationsXGrid, probeLocationsYGrid, img, tform);
         else
@@ -29,4 +28,3 @@ function [labelName, labelID] = probeTree2_query(probeTree, probeLocationsXGrid,
         end
     end
     
-%     keyboard

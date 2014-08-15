@@ -61,7 +61,6 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     for iPerturb = 1:numPerturbations
         perturbation = (2*rand(4,2) - 1) * maxPerturbPercent;
         corners_i = corners + perturbation;
-%         corners_i = corners;
         T = cp2tform(corners_i, corners, 'projective');
         [xPerturb{iPerturb}, yPerturb{iPerturb}] = tforminv(T, probeLocationsXGrid, probeLocationsYGrid);
         xPerturb{iPerturb} = xPerturb{iPerturb}(:);
@@ -70,7 +69,8 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     
     % Compute the perturbed probe values
     
-    pBar.set_message(sprintf('Computing %d perturbed probe locations', numPerturbations));
+    pBar.set_message(sprintf('Computing %d perturbs, %d blurs, and %d resolutions', numPerturbations, length(blurSigmas), length(probeResolutions)));
+    
     pBar.set_increment(1/numImages);
     pBar.set(0);
     
@@ -80,7 +80,7 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
         for iFile = 1:length(fiducialClassesList(iClass).filenames)
             img = imreadAlphaHelper(fiducialClassesList(iClass).filenames{iFile});
             
-            imgPadded = padarray(img, [numPadPixels,numPadPixels], 1);
+            imgPadded = padarray(img, [numPadPixels,numPadPixels], 255);
             
             [nrows,ncols,~] = size(img);
             
@@ -95,11 +95,11 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
                 for iResolution = 1:numResolutions
                     imgPaddedAndBlurredResized = imresize(imresize(imgPaddedAndBlurred, [probeResolutions(iResolution),probeResolutions(iResolution)]), size(imgPaddedAndBlurred), 'nearest');
                     
-                    for iPerturb = 1:numPerturbations                    
+                    for iPerturb = 1:numPerturbations
                         % Probe location assume the left edge of the image is 0 and the right edge is 1
                         imageCoordsX = round(xPerturb{iPerturb} * ncols + 0.5 + numPadPixels);
                         imageCoordsY = round(yPerturb{iPerturb} * nrows + 0.5 + numPadPixels);
-
+                        
                         inds = find(imageCoordsX >= 1 & imageCoordsX <= (ncols+2*numPadPixels) & imageCoordsY >= 1 & imageCoordsY <= (nrows+2*numPadPixels));
                         
                         % If the perturbations are too large relative to
@@ -107,7 +107,7 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
                         % The solution is to increase the padding.
                         assert(length(inds) == length(imageCoordsX));
                         
-                        tmpValues = zeros(length(imageCoordsY), 1); 
+                        tmpValues = zeros(length(imageCoordsY), 1, 'uint8');
                         
                         for iPixel = 1:length(imageCoordsY)
                             tmpValues(iPixel) = imgPaddedAndBlurredResized(imageCoordsY(iPixel), imageCoordsX(iPixel));
@@ -126,7 +126,7 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
                         labels(cLabel) = iClass;
                         cLabel = cLabel + 1;
                     end % for iPerturb = 1:numPerturbations
-                end % for iResolution = 1:length(numResolutions)                
+                end % for iResolution = 1:length(numResolutions)
             end % for iBlur = 1:numBlurs
             
             pBar.increment();
@@ -144,7 +144,7 @@ function img = imreadAlphaHelper(fname)
     
     threshold = (max(img(:)) + min(img(:)))/2;
     %     img = bwpack(img > threshold);
-    %     img = uint8(img > threshold);
-    img = single(img > threshold);
+    img = 255*uint8(img > threshold);
+    % img = single(img > threshold);
     
 end % imreadAlphaHelper()

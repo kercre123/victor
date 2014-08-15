@@ -1,20 +1,20 @@
-% function probeTree = probeTree2_trainTree(varargin)
+% function probeTree = probeTree2_train(varargin)
 %
 % Based off of VisionMarkerTrained.TrainProbeTree, but split into a
 % separate function, to prevent too much messing around with the
 % VisionMarkerTrained class hierarchy
 
 % Example:
-% probeTree = probeTree2_trainTree(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid);
+% probeTree = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid);
 
-function probeTree = probeTree2_trainTree(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, varargin)
+function probeTree = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, varargin)
     t_start = tic();
     
     for iProbe = 1:length(probeValues)
         assert(min(size(labels) == size(probeValues{iProbe})) == 1);
     end
     
-    leafNodeFraction = 0.99;
+    leafNodeFraction = 0.999;
     
     parseVarargin(varargin{:});
     
@@ -27,19 +27,64 @@ function probeTree = probeTree2_trainTree(labelNames, labels, probeValues, probe
     
     %     drawTree(probeTree)
     
-    %     keyboard
-    
     if isempty(probeTree)
         error('Training failed!');
     end
     
     t_train = toc(t_start);
     
-    %[numMain, numVerify] = VisionMarkerTrained.GetNumTreeNodes(); % Not valid until we clear VisionMarkerTrained and force a tree re-load.
-    %     fprintf('Training completed in %.2f seconds (%.1f minutes), plus %.2f seconds (%.2f minutes) for testing on original images.\n', ...
-    %         t_train, t_train/60, t_test, t_test/60);
+    numNodes = countNumNodes(probeTree);
     
-end % probeTree2_trainTree()
+    disp(sprintf('Training completed in %f seconds. Tree has %d nodes.', t_train, numNodes));
+    
+    t_test = tic();
+    
+    [numCorrect, numTotal] = testOnTrainingData(probeTree, probeLocationsXGrid, probeLocationsYGrid, probeValues, labels);
+    
+    t_test = toc(t_test);
+    
+    disp(sprintf('Tested tree on training set in %f seconds. Training accuracy: %d/%d = %0.2f%%', t_test, numCorrect, numTotal, 100*numCorrect/numTotal));
+    
+    %     keyboard
+end % probeTree2_train()
+
+function numNodes = countNumNodes(probeTree)
+    if isfield(probeTree, 'labelName')
+        numNodes = 1;
+    else
+        numNodes = countNumNodes(probeTree.leftChild) + countNumNodes(probeTree.rightChild);
+    end
+end % countNumNodes()
+
+function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeLocationsXGrid, probeLocationsYGrid, probeValues, labels)
+    numImages = length(probeValues{1});
+    numProbes = length(probeLocationsXGrid);
+    probeImageWidth = sqrt(numProbes);
+    
+    assert(length(labels) == numImages);
+    
+    tform = cp2tform(probeImageWidth*[0 0; 0 1; 1 0; 1 1], [0 0; 0 1; 1 0; 1 1], 'projective');
+    
+    numTotal = length(labels);
+    
+    numCorrect = 0;
+    for iImage = 1:numImages
+        curImage = zeros(numProbes, 1, 'uint8');
+        
+        % reshape the probeValues
+        for iProbe = 1:numProbes
+            curImage(iProbe) = probeValues{iProbe}(iImage);
+        end
+        
+        curImage = reshape(curImage, [probeImageWidth,probeImageWidth]);
+        
+        [labelName, labelID] = probeTree2_query(probeTree, probeLocationsXGrid, probeLocationsYGrid, curImage, tform);
+        
+        if labelID == labels(iImage);
+            numCorrect = numCorrect + 1;
+        end
+    end
+end % testOnTrainingData()
 
 function node = buildTree(node, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction)
     maxDepth = inf;
