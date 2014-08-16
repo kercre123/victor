@@ -226,6 +226,7 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
     uniqueLabels = unique(curLabels);
     maxLabel = max(uniqueLabels);
     
+    fprintf('Testing %d probes on %d images ', numProbesUnused, length(remainingImages));
     for iUnusedProbe = 1:numProbesUnused
         curProbeIndex = unusedProbeIndexes(iUnusedProbe);
         curProbeValues = probeValues{curProbeIndex}(remainingImages);
@@ -254,10 +255,18 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
             bestGrayvalueThreshold = curBestGrayvalueThreshold;
         end
         
+        if mod(iUnusedProbe,100) == 0
+            fprintf('%d',iUnusedProbe);
+            pause(.001);
+        elseif mod(iUnusedProbe,25) == 0
+            fprintf('.');
+            pause(.001);
+        end
+        
         %             disp(sprintf('%d/%d in %f seconds', iUnusedProbe, numProbesUnused, toc()));
         %             pause(.001);
     end % for iUnusedProbe = 1:numProbesUnused
     
-    disp(sprintf('Best entropy is %f in %f seconds', bestEntropy, toc(totalTic)))
+    fprintf(' Best entropy is %f in %f seconds\n', bestEntropy, toc(totalTic))
     
 end % computeInfoGain()
