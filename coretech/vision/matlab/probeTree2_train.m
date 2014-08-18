@@ -252,6 +252,8 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
     uniqueLabels = mexUnique(curLabels);
     maxLabel = max(uniqueLabels);
     
+    numWorkItems = length(remainingImages) * numProbesUnused;
+    
     fprintf('Testing %d probes on %d images ', numProbesUnused, length(remainingImages));
     for iUnusedProbe = 1:numProbesUnused
         curProbeIndex = unusedProbeIndexes(iUnusedProbe);
@@ -259,23 +261,23 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
 
         uniqueGrayvalues = mexUnique(curProbeValues);
         
-        if mod(iUnusedProbe,100) == 0
-            fprintf('%d',iUnusedProbe);
-            pause(.001);
-        elseif mod(iUnusedProbe,25) == 0
-            fprintf('.');
-            pause(.001);
+        if numWorkItems > 10000
+            if mod(iUnusedProbe,100) == 0
+                fprintf('%d',iUnusedProbe);
+                pause(.001);
+            elseif mod(iUnusedProbe,25) == 0
+                fprintf('.');
+                pause(.001);
+            end
         end
                
         if length(uniqueGrayvalues) == 1
-            %                 disp(sprintf('%d/%d skipped in %f seconds', iUnusedProbe, numProbesUnused, toc()));
-            %                 pause(.001);
             probesUsed(curProbeIndex) = true;
             continue;
         end
 
         grayvalueThresholds = (uniqueGrayvalues(2:end) + uniqueGrayvalues(1:(end-1))) / 2;
-                
+                  
         if useMex
             [curBestEntropy, curBestGrayvalueThreshold] = mexComputeInfoGain2_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel, numThreads);
         else
@@ -287,9 +289,6 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
             bestProbeIndex = curProbeIndex;
             bestGrayvalueThreshold = curBestGrayvalueThreshold;
         end
-        
-        %             disp(sprintf('%d/%d in %f seconds', iUnusedProbe, numProbesUnused, toc()));
-        %             pause(.001);
     end % for iUnusedProbe = 1:numProbesUnused
     
     probesUsed(bestProbeIndex) = true;
