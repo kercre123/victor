@@ -14,6 +14,8 @@
 
 #define VERBOSITY 0
 
+#if(0) // TODO: PEte! Fix this if you want!
+
 using namespace Anki::Embedded;
 
 // decode_minContrastRatio = 1.25;
@@ -110,14 +112,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
 
     if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
-      decode_minContrastRatio,
-      refine_quadRefinementIterations,
-      refine_numRefinementSamples,
-      refine_quadRefinementMaxCornerChange,
-      refine_quadRefinementMinCornerChange,
-      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
-      memory)) != Anki::RESULT_OK)
-    {
+                                             decode_minContrastRatio,
+                                             refine_quadRefinementIterations,
+                                             refine_numRefinementSamples,
+                                             refine_quadRefinementMaxCornerChange,
+                                             refine_quadRefinementMinCornerChange,
+                                             quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+                                             memory)) != Anki::RESULT_OK)
+      {
       return;
     }
   }
@@ -208,3 +210,5 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   mxFree(memory.get_buffer());
 }
+
+#endif
