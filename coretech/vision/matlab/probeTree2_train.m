@@ -121,14 +121,14 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         
         node.labelID = maxIndex;
         node.labelName = labelNames{node.labelID};
-        fprintf('LeafNode for label = %d, or "%s"\n', node.labelID, node.labelName);
+        fprintf('LeafNode for label = %d, or "%s" at depth %d\n', node.labelID, node.labelName, node.depth);
     elseif node.depth == maxDepth || all(probesUsed(:))
         % Have we reached the max depth, or have we used all probes? If so,
         % we're done.
         
-        node.labelID = unique(labels(node.remaining));
+        node.labelID = mexUnique(labels(node.remaining));
         node.labelName = labelNames(node.labelID);
-        fprintf('MaxDepth LeafNode for labels = {%s\b}\n', sprintf('%s,', node.labelName{:}));
+        fprintf('MaxDepth LeafNode for labels = {%s\b} at depth %d\n', sprintf('%s,', node.labelName{:}), node.depth);
     else
         % We have unused probe location. So find the best one to split on
         
@@ -138,11 +138,16 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         
         node.x = probeLocationsXGrid(node.whichProbe);
         node.y = probeLocationsYGrid(node.whichProbe);
-        node.remainingLabels = sprintf('%s ', labelNames{unique(labels(node.remaining))});
+        node.remainingLabels = sprintf('%s ', labelNames{mexUnique(labels(node.remaining))});
         
         % If the entropy is incredibly large, there was no valid split
         if node.infoGain > 100000.0 
-            trainingFailures(end+1) = node;
+            if isempty(trainingFailures)
+                trainingFailures = node;
+            else
+                trainingFailures(end+1) = node;
+            end
+            
             disp('Training failed for node %d with labels %s', node.nodeId, node.remainingLabels);
             keyboard
         end
@@ -243,7 +248,7 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
     bestGrayvalueThreshold = -1;
     
     curLabels = labels(remainingImages);
-    uniqueLabels = unique(curLabels);
+    uniqueLabels = mexUnique(curLabels);
     maxLabel = max(uniqueLabels);
     
     fprintf('Testing %d probes on %d images ', numProbesUnused, length(remainingImages));
@@ -251,7 +256,7 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
         curProbeIndex = unusedProbeIndexes(iUnusedProbe);
         curProbeValues = probeValues{curProbeIndex}(remainingImages);
 
-        uniqueGrayvalues = unique(curProbeValues);
+        uniqueGrayvalues = mexUnique(curProbeValues);
         
         if mod(iUnusedProbe,100) == 0
             fprintf('%d',iUnusedProbe);
@@ -285,6 +290,8 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
         %             disp(sprintf('%d/%d in %f seconds', iUnusedProbe, numProbesUnused, toc()));
         %             pause(.001);
     end % for iUnusedProbe = 1:numProbesUnused
+    
+    probesUsed(bestProbeIndex) = true;
     
     fprintf(' Best entropy is %f in %f seconds\n', bestEntropy, toc(totalTic))
     
