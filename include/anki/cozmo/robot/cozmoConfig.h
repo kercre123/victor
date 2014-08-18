@@ -98,7 +98,7 @@ namespace Anki {
     
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
-    const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 35.f);
+    const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 40.f);
     
     // Head angle may exceed limits by this amount before
     // it is considered to be out of calibration.
