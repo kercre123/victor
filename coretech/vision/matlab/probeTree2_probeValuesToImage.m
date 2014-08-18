@@ -1,3 +1,5 @@
+% function image = probeTree2_probeValuesToImage(probeValues, imageIndex)
+
 function image = probeTree2_probeValuesToImage(probeValues, imageIndex)
     numProbes = length(probeValues);
     probeImageWidth = sqrt(numProbes);

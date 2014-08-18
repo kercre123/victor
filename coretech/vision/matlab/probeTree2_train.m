@@ -11,7 +11,6 @@ function probeTree = probeTree2_train(labelNames, labels, probeValues, probeLoca
     global trainingFailures;
     global nodeId;
     
-    trainingFailures = [];
     nodeId = 1;
     
     t_start = tic();
