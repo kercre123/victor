@@ -133,8 +133,9 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         % We have unused probe location. So find the best one to split on
         
         useMex = true;
+        numThreads = 1;
         
-        [node.infoGain, node.whichProbe, node.grayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, node.remaining, useMex);
+        [node.infoGain, node.whichProbe, node.grayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, node.remaining, useMex, numThreads);
         
         node.x = probeLocationsXGrid(node.whichProbe);
         node.y = probeLocationsYGrid(node.whichProbe);
@@ -235,7 +236,7 @@ function [bestEntropy, bestGrayvalueThreshold] = computeInfoGain_innerLoop(curLa
     end % for iGrayvalueThreshold = 1:length(grayvalueThresholds)
 end % computeInfoGain_innerLoop()
 
-function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, remainingImages, useMex)
+function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, remainingImages, useMex, numThreads)
     totalTic = tic();
     
     unusedProbeIndexes = find(~probesUsed);
@@ -274,13 +275,13 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
         end
 
         grayvalueThresholds = (uniqueGrayvalues(2:end) + uniqueGrayvalues(1:(end-1))) / 2;
-        
+                
         if useMex
-            [curBestEntropy, curBestGrayvalueThreshold] = mexComputeInfoGain2_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel);
+            [curBestEntropy, curBestGrayvalueThreshold] = mexComputeInfoGain2_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel, numThreads);
         else
             [curBestEntropy, curBestGrayvalueThreshold] = computeInfoGain_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel);
         end
-        
+                
         if curBestEntropy < bestEntropy
             bestEntropy = curBestEntropy;
             bestProbeIndex = curProbeIndex;
