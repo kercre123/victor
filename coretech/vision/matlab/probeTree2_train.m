@@ -8,6 +8,12 @@
 % probeTree = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid);
 
 function probeTree = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, varargin)
+    global trainingFailures;
+    global nodeId;
+    
+    trainingFailures = [];
+    nodeId = 1;
+    
     t_start = tic();
     
     for iProbe = 1:length(probeValues)
@@ -98,11 +104,17 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeLocationsXG
 end % testOnTrainingData()
 
 function node = buildTree(node, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction)
+    global trainingFailures;
+    global nodeId;
+    
     maxDepth = inf;
     
     %if all(labels(node.remaining)==labels(node.remaining(1)))
     counts = hist(labels(node.remaining), 1:length(labelNames));
     [maxCount, maxIndex] = max(counts);
+    
+    node.nodeId = nodeId;
+    nodeId = nodeId + 1;
     
     if maxCount >= leafNodeFraction*length(node.remaining)
         % Are more than leafNodeFraction percent of the remaining labels the
@@ -121,17 +133,28 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
     else
         % We have unused probe location. So find the best one to split on
         
-        [node.infoGain, node.whichProbe, node.grayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, node.remaining);
+        useMex = true;
+        
+        [node.infoGain, node.whichProbe, node.grayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, node.remaining, useMex);
         
         node.x = probeLocationsXGrid(node.whichProbe);
         node.y = probeLocationsYGrid(node.whichProbe);
         node.remainingLabels = sprintf('%s ', labelNames{unique(labels(node.remaining))});
+        
+        % If the entropy is incredibly large, there was no valid split
+        if node.infoGain > 100000.0 
+            trainingFailures(end+1) = node;
+            disp('Training failed for node %d with labels %s', node.nodeId, node.remainingLabels);
+            keyboard
+        end
         
         % Recurse left and right from this node
         goLeft = probeValues{node.whichProbe}(node.remaining) < node.grayvalueThreshold;
         leftRemaining = node.remaining(goLeft);
         
         if isempty(leftRemaining) || length(leftRemaining) == length(node.remaining)
+            % PB: Is this still a reasonable thing to happen?
+            
             % That split makes no progress.  Try again without
             % letting us choose this node again on this branch of the
             % tree.  I believe this can happen when the numerically
@@ -208,10 +231,8 @@ function [bestEntropy, bestGrayvalueThreshold] = computeInfoGain_innerLoop(curLa
     end % for iGrayvalueThreshold = 1:length(grayvalueThresholds)
 end % computeInfoGain_innerLoop()
 
-function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, remainingImages)
+function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, remainingImages, useMex)
     totalTic = tic();
-    
-    useMex = true;
     
     unusedProbeIndexes = find(~probesUsed);
     
@@ -232,7 +253,15 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
         curProbeValues = probeValues{curProbeIndex}(remainingImages);
 
         uniqueGrayvalues = unique(curProbeValues);
-
+        
+        if mod(iUnusedProbe,100) == 0
+            fprintf('%d',iUnusedProbe);
+            pause(.001);
+        elseif mod(iUnusedProbe,25) == 0
+            fprintf('.');
+            pause(.001);
+        end
+               
         if length(uniqueGrayvalues) == 1
             %                 disp(sprintf('%d/%d skipped in %f seconds', iUnusedProbe, numProbesUnused, toc()));
             %                 pause(.001);
@@ -250,17 +279,8 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
         
         if curBestEntropy < bestEntropy
             bestEntropy = curBestEntropy;
-%             keyboard
             bestProbeIndex = curProbeIndex;
             bestGrayvalueThreshold = curBestGrayvalueThreshold;
-        end
-        
-        if mod(iUnusedProbe,100) == 0
-            fprintf('%d',iUnusedProbe);
-            pause(.001);
-        elseif mod(iUnusedProbe,25) == 0
-            fprintf('.');
-            pause(.001);
         end
         
         %             disp(sprintf('%d/%d in %f seconds', iUnusedProbe, numProbesUnused, toc()));
