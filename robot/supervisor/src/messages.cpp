@@ -14,6 +14,7 @@
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
 #include "animationController.h"
+#include "proxSensors.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -172,6 +173,8 @@ namespace Anki {
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
 
+        ProxSensors::GetValues(robotState_.proxLeft, robotState_.proxForward, robotState_.proxRight);
+        
         robotState_.lastPathID = PathFollower::GetLastPathID();
         
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
@@ -181,6 +184,9 @@ namespace Anki {
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
+        robotState_.status |= (ProxSensors::IsLeftBlocked() ? IS_PROX_LEFT_BLOCKED : 0);
+        robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
+        robotState_.status |= (ProxSensors::IsRightBlocked() ? IS_PROX_RIGHT_BLOCKED : 0);
       }
       
       RobotState const& GetRobotStateMsg() {
@@ -329,6 +335,7 @@ namespace Anki {
           Embedded::Point2f markerCenter(static_cast<f32>(msg.image_pixel_x), static_cast<f32>(msg.image_pixel_y));
           
           PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
+                                              static_cast<Vision::MarkerType>(msg.markerType2),
                                               msg.markerWidth_mm,
                                               markerCenter,
                                               msg.pixel_radius,
@@ -336,6 +343,7 @@ namespace Anki {
         } else {
           
           PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
+                                              static_cast<Vision::MarkerType>(msg.markerType2),
                                               msg.markerWidth_mm,
                                               static_cast<DockAction_t>(msg.dockAction));
         }

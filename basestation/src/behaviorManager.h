@@ -32,7 +32,8 @@ namespace Anki {
     typedef enum {
       BM_None,
       BM_PickAndPlace,
-      BM_June2014DiceDemo
+      BM_June2014DiceDemo,
+      BM_TraverseObject // for ramps or bridges
     } BehaviorMode;
     
     class BehaviorManager
@@ -52,7 +53,7 @@ namespace Anki {
       const ObjectID GetObjectOfInterest() const {return objectIDofInterest_;}
       
       // Select the next object in blockWorld as the block of interest
-      void SelectNextBlockOfInterest();
+      void SelectNextObjectOfInterest();
       
     protected:
       
@@ -126,6 +127,7 @@ namespace Anki {
       // Behavior state machines
       void Update_PickAndPlaceBlock();
       void Update_June2014DiceDemo();
+      void Update_TraverseObject();
       
       // Waits until the current path is complete / timeout occurs.
       // If the blockOfInterest_ is no longer present in the

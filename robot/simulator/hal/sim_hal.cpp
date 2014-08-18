@@ -761,5 +761,12 @@ namespace Anki {
       return &idCard_;
     }
     
+    void HAL::GetProximity(ProximityValues *prox)
+    {
+      prox->left = proxLeft_->getValue();
+      prox->forward = proxCenter_->getValue();
+      prox->right = proxRight_->getValue();
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

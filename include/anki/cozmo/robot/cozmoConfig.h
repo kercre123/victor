@@ -20,6 +20,8 @@ namespace Anki {
     const f32 WHEEL_RAD_TO_MM    = WHEEL_DIAMETER_MM / 2.f;  // or HALF_WHEEL_CIRCUM / PI;
     const f32 WHEEL_DIST_MM      = 47.7f; // distance b/w the front wheels
     const f32 WHEEL_DIST_HALF_MM = WHEEL_DIST_MM / 2.f;
+    const f32 WHEEL_BASE_MM      = 30.f;
+    
     
     // The height of the lift at various configurations
     // Actual limit in proto is closer to 20.4mm, but there is a weird
@@ -35,7 +37,7 @@ namespace Anki {
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 25.f;
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
     const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.5f;
     const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
@@ -67,7 +69,18 @@ namespace Anki {
     const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
 #endif
-        
+    
+    // The distance to the bridge ground marker that the robot must
+    // achieve before we can consider it aligned with the bridge enough
+    // to start driving straight. This should be the minimum distance that
+    // the robot can reliably "dock" to the marker.
+    const f32 BRIDGE_ALIGNED_MARKER_DISTANCE = 60.f;
+    
+    // Distance between the marker at the end of the bridge
+    // and the desired pose of the robot when it is considered
+    // to be off the bridge.
+    const f32 MARKER_TO_OFF_BRIDGE_POSE_DIST = 80.f;
+    
     // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
     const f32 LIFT_ARM_LENGTH = 64.f;
     
@@ -113,9 +126,7 @@ namespace Anki {
                                              (0.25f*ROBOT_BOUNDING_Y*ROBOT_BOUNDING_Y));
     
     const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};  // relative to neck joint
-    
-    const f32 PREDOCK_DISTANCE_MM = 100;  // ROBOT_BOUNDING_RADIUS + 15.f;
-    
+  
     // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
     const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
     
@@ -288,6 +299,10 @@ namespace Anki {
     // If two poses are this close to each other, they are considered to be equal
     // (at least in terms of translation).
     const f32 DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM = 5.0f;
+    
+    // A common angle threshold for pose equality comparison
+    // If two poses are this close in terms of angle, they are considered equal.
+    const f32 DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD = DEG_TO_RAD(10);
     
     
     /***************************************************************************

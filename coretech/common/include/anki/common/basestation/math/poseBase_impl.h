@@ -25,17 +25,19 @@
 
 namespace Anki {
 
-  template<class PoseNd>
-  std::list<PoseNd> PoseBase<PoseNd>::Origins(1);
+  //template<class PoseNd>
+  //std::list<PoseNd> PoseBase<PoseNd>::Origins = {{PoseNd(
   
-  template<class PoseNd>
-  const PoseNd* PoseBase<PoseNd>::_sWorld = &PoseBase<PoseNd>::Origins.front();
+  //template<class PoseNd>
+  //const PoseNd* PoseBase<PoseNd>::_sWorld = &PoseBase<PoseNd>::Origins.front();
   
+  /*
   template<class PoseNd>
   PoseNd& PoseBase<PoseNd>::AddOrigin()
   {
     PoseBase<PoseNd>::Origins.emplace_back();
     PoseBase<PoseNd>::Origins.back().SetParent(nullptr);
+    PoseBase<PoseNd>::Origins.back().SetName("Origin_" + std::to_string(PoseBase<PoseNd>::Origins.size()));
     
     // TODO: If this gets too long, trigger cleanup?
     
@@ -46,28 +48,29 @@ namespace Anki {
   PoseNd& PoseBase<PoseNd>::AddOrigin(const PoseNd &origin)
   {
     if(origin.GetParent() != nullptr) {
-      PRINT_NAMED_WARNING("PoseBase.AddOrigin.NonNull_parent",
-                          "Adding an origin whose _parent is non-NULL. This may be ok, but may be a sign of something wrong.\n");
+      PRINT_NAMED_WARNING("PoseBase.AddOrigin.NonNullParent",
+                          "Adding an origin whose parent is non-NULL. This may be ok, but may be a sign of something wrong.\n");
     }
     
     PoseBase<PoseNd>::Origins.emplace_back(origin);
+    PoseBase<PoseNd>::Origins.back().SetName("Origin" + std::to_string(PoseBase<PoseNd>::Origins.size()));
     
     // TODO: If this gets too long, trigger cleanup?
     
     return PoseBase<PoseNd>::Origins.back();
   }
-  
+  */
   
   template<class PoseNd>
   PoseBase<PoseNd>::PoseBase()
-  : PoseBase<PoseNd>(PoseNd::GetWorldOrigin())
+  : PoseBase<PoseNd>(nullptr, "")
   {
     
   }
   
   template<class PoseNd>
-  PoseBase<PoseNd>::PoseBase(const PoseNd* parentPose)
-  : _parent(parentPose)
+  PoseBase<PoseNd>::PoseBase(const PoseNd* parentPose, const std::string& name)
+  : _parent(parentPose), _name(name)
   {
     
   }
@@ -90,6 +93,44 @@ namespace Anki {
     
   } // FindOrigin()
   
+  template<class PoseNd>
+  void PoseBase<PoseNd>::PrintNamedPathToOrigin(const PoseNd& startPose, bool showTranslations)
+  {
+    std::string str = GetNamedPathToOrigin(startPose, showTranslations);
+    fprintf(stdout, "%s\n", str.c_str());
+  }
+  
+  template<class PoseNd>
+  std::string PoseBase<PoseNd>::GetNamedPathToOrigin(const PoseNd& startPose, bool showTranslations)
+  {
+    std::string str("Path to origin: ");
+
+    const PoseNd* current = &startPose;
+    BOUNDED_WHILE(1000, (!current->IsOrigin()))
+    {
+      const std::string& name = current->GetName();
+      if(name.empty()) {
+        str += "(UNNAMED)";
+      } else {
+        str += name;
+      }
+      
+      if(showTranslations) {
+        const Vec3f& T = current->GetTranslation();
+        str += "(" + std::to_string(T.x()) + "," + std::to_string(T.y()) + "," + std::to_string(T.z()) + ")";
+      }
+      
+      str += " -> ";
+      
+      current = current->GetParent();
+    }
+    
+    str += current->GetName();
+    
+    return str;
+    
+  } // PrintPathToOrigin()
+  
   
   // Count number of steps to an origin node, by walking up
   // the chain of _parents.
@@ -99,7 +140,7 @@ namespace Anki {
     unsigned int treeDepth = 1;
     
     const PoseNd* current = poseNd;
-    while(!current->IsOrigin())
+    BOUNDED_WHILE(1000, (!current->IsOrigin()))
     {
       ++treeDepth;
       current = current->GetParent();
@@ -112,6 +153,14 @@ namespace Anki {
   bool PoseBase<PoseNd>::GetWithRespectTo(const PoseNd& fromPose, const PoseNd& toPose,
                                           PoseNd& P_wrt_other) const
   {
+    if(&fromPose == &toPose) {
+      // Asked for pose w.r.t. itself. Just return fromPose
+      PRINT_NAMED_WARNING("PoseBase.GetWithRespectTo.FromEqualsTo", "Pose w.r.t. itself requested.\n");
+      P_wrt_other = fromPose;
+      P_wrt_other.SetParent(&toPose);
+      return true;
+    }
+    
     if(&fromPose.FindOrigin() != &toPose.FindOrigin()) {
       // We can get the transformation between two poses that are not WRT the
       // same origin!

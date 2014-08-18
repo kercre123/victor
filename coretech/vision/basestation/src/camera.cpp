@@ -416,7 +416,7 @@ namespace Anki {
     void Camera::AddOccluder(const KnownMarker& marker)
     {
       Pose3d markerPoseWrtCamera;
-      if(marker.GetPose().GetWithRespectTo(&_pose, markerPoseWrtCamera) == false) {
+      if(marker.GetPose().GetWithRespectTo(_pose, markerPoseWrtCamera) == false) {
         PRINT_NAMED_ERROR("Camera.AddOccluder.MarkerDoesNotShareOrigin",
                           "Marker must be in the same pose tree as the camera to add it as an occluder.\n");
       } else {

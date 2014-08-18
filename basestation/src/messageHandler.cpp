@@ -19,10 +19,6 @@
 
 namespace Anki {
   namespace Cozmo {
-
-#if USE_SINGLETON_MESSAGE_HANDLER
-    MessageHandler* MessageHandler::singletonInstance_ = 0;
-#endif
     
     MessageHandler::MessageHandler()
     : comms_(NULL), robotMgr_(NULL), blockWorld_(NULL)
@@ -181,46 +177,7 @@ namespace Anki {
                        );
        */
       
-      // Update head angle
-      robot->SetHeadAngle(msg.headAngle);
-
-      // Update lift angle
-      robot->SetLiftAngle(msg.liftAngle);
-      
-      // Get ID of last/current path that the robot executed
-      robot->SetLastRecvdPathID(msg.lastPathID);
-      
-      // Update other state vars
-      robot->SetCurrPathSegment( msg.currPathSegment );
-      robot->SetNumFreeSegmentSlots(msg.numFreeSegmentSlots);
-      
-      //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
-      robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
-      robot->SetPickedUp( msg.status & IS_PICKED_UP );
-      
-      const f32 WheelSpeedToConsiderStopped = 2.f;
-      if(std::abs(msg.lwheel_speed_mmps) < WheelSpeedToConsiderStopped &&
-         std::abs(msg.rwheel_speed_mmps) < WheelSpeedToConsiderStopped)
-      {
-        robot->SetIsMoving(false);
-      } else {
-        robot->SetIsMoving(true);
-      }
-      
-      // Add to history
-      if (robot->AddRawOdomPoseToHistory(msg.timestamp,
-                                         msg.pose_frame_id,
-                                         msg.pose_x, msg.pose_y, msg.pose_z,
-                                         msg.pose_angle,
-                                         msg.headAngle,
-                                         msg.liftAngle,
-                                         robot->GetPoseOrigin()) == RESULT_FAIL) {
-        PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "t=%d\n", msg.timestamp);
-      }
-      
-      robot->UpdateCurrPoseFromHistory();
-      
-      return RESULT_OK;
+      return robot->UpdateFullRobotState(msg);
     }
 
     Result MessageHandler::ProcessMessage(Robot* robot, MessagePrintText const& msg)
@@ -324,6 +281,44 @@ namespace Anki {
       }
       
       return lastResult;
+    }
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseStart const& msg)
+    {
+      PRINT_INFO("Robot %d reported it started traversing a ramp.\n", robot->GetID());
+
+      robot->SetOnRamp(true);
+      
+      return RESULT_OK;
+    }
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseComplete const& msg)
+    {
+      PRINT_INFO("Robot %d reported it completed traversing a ramp.\n", robot->GetID());
+
+      robot->SetOnRamp(false);
+      
+      return RESULT_OK;
+    }
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseStart const& msg)
+    {
+      PRINT_INFO("Robot %d reported it started traversing a bridge.\n", robot->GetID());
+      
+      // TODO: What does this message trigger?
+      //robot->SetOnBridge(true);
+      
+      return RESULT_OK;
+    }
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseComplete const& msg)
+    {
+      PRINT_INFO("Robot %d reported it completed traversing a bridge.\n", robot->GetID());
+      
+      // TODO: What does this message trigger?
+      //robot->SetOnBridge(false);
+      
+      return RESULT_OK;
     }
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMainCycleTimeError const& msg)

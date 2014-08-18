@@ -102,10 +102,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                                             msg.pose_x, msg.pose_y, msg.pose_z,
                                             msg.pose_angle,
                                             msg.headAngle,
-                                            msg.liftAngle,
-                                            robot.GetPoseOrigin()), RESULT_OK);
+                                            msg.liftAngle), RESULT_OK);
     
-    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
   }
   
   bool checkRobotPose;
@@ -165,10 +164,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                                             msg.pose_frame_id,
                                             msg.pose_x, msg.pose_y, msg.pose_z,
                                             msg.pose_angle,
-                                            msg.headAngle, msg.liftAngle,
-                                            robot.GetPoseOrigin()), RESULT_OK);
+                                            msg.headAngle, msg.liftAngle), RESULT_OK);
     
-    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
 
     int NumMarkers;
     ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "NumMarkers", NumMarkers));
@@ -192,7 +190,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       msg.timestamp = currentTimeStamp;
       
       // If we are not checking robot pose, don't queue mat markers
-      const bool isMatMarker = !blockWorld.GetObjectLibrary(BlockWorld::MAT_FAMILY).GetObjectsWithCode(msg.markerType).empty();
+      const bool isMatMarker = !blockWorld.GetObjectLibrary(BlockWorld::ObjectFamily::MATS).GetObjectsWithCode(msg.markerType).empty();
       if(!checkRobotPose && isMatMarker) {
         fprintf(stdout, "Skipping mat marker with code = %d ('%s'), since we are not checking robot pose.\n",
                 msg.markerType, Vision::MarkerTypeStrings[msg.markerType]);
@@ -253,13 +251,13 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         // Use the "Name" as the object family in blockworld
         std::string objectFamilyString;
         ASSERT_TRUE(JsonTools::GetValueOptional(jsonObject[i_object], "ObjectName", objectFamilyString));
-        BlockWorld::ObjectFamily_t objectFamily;
+        BlockWorld::ObjectFamily objectFamily;
         if(objectFamilyString == "Block") {
-          objectFamily = BlockWorld::BLOCK_FAMILY;
+          objectFamily = BlockWorld::ObjectFamily::BLOCKS;
           objectType = Block::GetTypeByName(objectTypeString);
           
         } else if(objectFamilyString == "Ramp") {
-          objectFamily = BlockWorld::RAMP_FAMILY;
+          objectFamily = BlockWorld::ObjectFamily::RAMPS;
           objectType = Ramp::GetTypeByName(objectTypeString);
         }
         ASSERT_TRUE(objectType.IsSet());
@@ -274,7 +272,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         // The ground truth block type should be known to the block world
         ASSERT_TRUE(libObject != NULL);
-        Vision::ObservableObject* groundTruthObject = libObject->Clone();
+        Vision::ObservableObject* groundTruthObject = libObject->CloneType();
         
         // Set its pose to what is listed in the json file
         Pose3d objectPose;

@@ -81,7 +81,9 @@ namespace Anki {
     
     RobotPoseHistory::RobotPoseHistory()
     : windowSize_(3000)
-    {}
+    {
+      poseOrigin_.SetName("RobotPoseHistoryOrigin");
+    }
 
     void RobotPoseHistory::Clear()
     {
@@ -101,8 +103,14 @@ namespace Anki {
     
     
     Result RobotPoseHistory::AddRawOdomPose(const TimeStamp_t t,
-                                     const RobotPoseStamp& p)
+                                            const RobotPoseStamp& p)
     {
+      if(p.GetPose().GetParent() != nullptr && !p.GetPose().GetParent()->IsOrigin()) {
+        PRINT_NAMED_ERROR("RobotPoseHistory.AddRawOdomPose.NonFlattenedPose",
+                          "Pose object inside pose stamp should be flattened (%s).\n",
+                          p.GetPose().GetNamedPathToOrigin(false).c_str());
+        return RESULT_FAIL;
+      }
       return AddRawOdomPose(t,
                             p.GetFrameId(),
                             p.GetPose().GetTranslation().x(),
@@ -110,8 +118,7 @@ namespace Anki {
                             p.GetPose().GetTranslation().z(),
                             p.GetPose().GetRotationMatrix().GetAngleAroundZaxis().ToFloat(),
                             p.GetHeadAngle(),
-                            p.GetLiftAngle(),
-                            p.GetPose().GetParent());
+                            p.GetLiftAngle());
     }
 
 
@@ -121,10 +128,20 @@ namespace Anki {
                                             const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                             const f32 pose_angle,
                                             const f32 head_angle,
-                                            const f32 lift_angle,
-                                            const Pose3d* pose_origin)
+                                            const f32 lift_angle)
     {
       // Should the pose be added?
+      
+      /*
+      // Only add flattened poses
+      if(pose_origin != &poseOrigin_) { //!pose_origin->IsOrigin()) {
+        PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.OriginProblem",
+                            "Pose history should store flattened poses, but pose_origin seems to have a parent (%s).\n",
+                            pose_origin->GetNamedPathToOrigin(false).c_str());
+        return RESULT_FAIL;
+      }
+       */
+
       TimeStamp_t newestTime = poses_.rbegin()->first;
       if (newestTime > windowSize_ && t < newestTime - windowSize_) {
         PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.TimeTooOld", "newestTime %d, oldestAllowedTime %d, t %d\n", newestTime, newestTime - windowSize_, t);
@@ -134,7 +151,7 @@ namespace Anki {
       std::pair<PoseMapIter_t, bool> res;
       res = poses_.emplace(std::piecewise_construct,
                            std::make_tuple(t),
-                           std::make_tuple(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin));
+                           std::make_tuple(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, &poseOrigin_));
       
       if (!res.second) {
         PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.AddFailed", "Time: %d\n", t);
@@ -146,23 +163,47 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    Result RobotPoseHistory::AddVisionOnlyPose(const TimeStamp_t t,
+                                               const RobotPoseStamp& p)
+    {
+      if(p.GetPose().GetParent() != nullptr && !p.GetPose().GetParent()->IsOrigin()) {
+        PRINT_NAMED_ERROR("RobotPoseHistory.AddVisionOnlyPose.NonFlattenedPose",
+                          "Pose object inside pose stamp should be flattened (%s).\n",
+                          p.GetPose().GetNamedPathToOrigin(false).c_str());
+        return RESULT_FAIL;
+      }
+      return AddVisionOnlyPose(t,
+                               p.GetFrameId(),
+                               p.GetPose().GetTranslation().x(),
+                               p.GetPose().GetTranslation().y(),
+                               p.GetPose().GetTranslation().z(),
+                               p.GetPose().GetRotationMatrix().GetAngleAroundZaxis().ToFloat(),
+                               p.GetHeadAngle(),
+                               p.GetLiftAngle());
+    }
+
     
     Result RobotPoseHistory::AddVisionOnlyPose(const TimeStamp_t t,
                                                const PoseFrameID_t frameID,
                                                const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                                const f32 pose_angle,
                                                const f32 head_angle,
-                                               const f32 lift_angle,
-                                               const Pose3d* pose_origin)
+                                               const f32 lift_angle)
     {
-      RobotPoseStamp p(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin);
-      return AddVisionOnlyPose(t, p);
-    }
-    
-    Result RobotPoseHistory::AddVisionOnlyPose(const TimeStamp_t t,
-                                               const RobotPoseStamp& p)
-    {
+      RobotPoseStamp p(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, &poseOrigin_);
+      
       // Should the pose be added?
+      
+      /*
+      // Only add flattened poses
+      if(p.GetPose().GetParent() != nullptr) { //!p.GetPose().GetParent()->IsOrigin()) {
+        PRINT_NAMED_WARNING("RobotPoseHistory.AddVisionOnlyPose.OriginProblem",
+                            "Pose history should store flattened poses, but poseStamp's pose's is not an origin. (%s).\n",
+                            p.GetPose().GetNamedPathToOrigin(false).c_str());
+        return RESULT_FAIL;
+      }
+      */
+      
       // Check if the pose's timestamp is too old.
       if (!poses_.empty()) {
         TimeStamp_t newestTime = poses_.rbegin()->first;

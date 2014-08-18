@@ -143,7 +143,7 @@ namespace Anki
     {
 
       I2CInterface IRLeft, IRForward, IRRight;
-      const u32 I2C_WAIT = 8;   // 8uS between clock edges - or 62.5KHz I2C
+      const u32 I2C_WAIT = 1;   // 8uS between clock edges - or 62.5KHz I2C
 
       // Soft I2C stack, borrowed from Arduino (BSD license)
       static void DriveSCL(u8 bit, I2CInterface *iface)
@@ -301,7 +301,7 @@ namespace Anki
       static void SensorInit(I2CInterface *iface)
       {
         data_write(iface, 0x01, PRST_4 | RES_A_14BIT | RANGE_A_X8);
-        data_write(iface, 0x02, INTTYPE_LEVEL | RES_P_14BIT | RANGE_P_X8);
+        data_write(iface, 0x02, INTTYPE_LEVEL | RES_P_10BIT | RANGE_P_X8);
         data_write(iface, 0x03, INTVAL_0 | IS_130MA | PIN_PROX );
         data_write(iface, PL_LOW, 0x0F); // Set proximity sensor low threshold
         data_write(iface, PL_HIGH, 0x00);
@@ -381,6 +381,12 @@ namespace Anki
             prox->left = (data_read(&IRLeft, D2_HIGH) & 0xFF) << 8 | (data_read(&IRLeft, D2_LOW) & 0xFF);
             prox->forward = (data_read(&IRForward, D2_HIGH) & 0xFF) << 8 | (data_read(&IRForward, D2_LOW) & 0xFF);
             prox->right = (data_read(&IRRight, D2_HIGH) & 0xFF) << 8 | (data_read(&IRRight, D2_LOW) & 0xFF);
+        
+        // TEMP: Rewiring for prototype
+        u16 temp = prox->left;
+        prox->left = prox->right;
+        prox->right = prox->forward;
+        prox->forward = temp;
       }
       
     }

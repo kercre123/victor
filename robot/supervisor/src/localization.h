@@ -26,7 +26,6 @@ namespace Anki {
       void ResetPoseFrame();
       
       void Update();
-
       
       // Uses the keyframe ("ground truth") pose at some past time as given
       // by the basestation after it has processed a mat marker to
@@ -34,6 +33,27 @@ namespace Anki {
       // by the pose-diff between the historical at time t and the current pose.
       // Also updates the current pose frame ID.
       Result UpdatePoseWithKeyframe(PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle);
+
+      // Sets whether robot is on a ramp or not (the actual sloped portion),
+      // and notifies the basestation when there is a change in ramp state.
+      Result SetOnRamp(bool onRamp);
+      
+      // Sets whether robot is on a bridge or not, and notifies the
+      // basestation when there is a change in bridge state.
+      Result SetOnBridge(bool onBridge);
+      
+      // Returns true if robot is detected to be on a ramp.
+      // This only works if the ramp is traversed using the controller.
+      // i.e. Can't detect when manually driving up ramp.
+      bool IsOnRamp();
+      
+      // Returns true if robot is detected to be on a bridge.
+      // This only works if the bridge is traversed using the controller.
+      // i.e. Can't detect when manually driving over a bridge.
+      bool IsOnBridge();
+      
+      // Returns distance between the current pose and the given xy coordinates
+      f32 GetDistTo(const f32 x, const f32 y);
       
     } // Localization
   } // Cozmo

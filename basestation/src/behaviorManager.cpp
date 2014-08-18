@@ -75,6 +75,11 @@ namespace Anki {
           timesIdle_ = 0;
           SoundManager::getInstance()->Play(SOUND_DEMO_START);
           break;
+        case BM_TraverseObject:
+          CoreTechPrint("Starting TraverseObject behavior\n");
+          nextState_ = WAITING_FOR_DOCK_BLOCK;
+          updateFcn_ = &BehaviorManager::Update_TraverseObject;
+          break;
         default:
           PRINT_NAMED_ERROR("BehaviorManager.InvalidMode", "Invalid behavior mode");
           return;
@@ -100,135 +105,109 @@ namespace Anki {
       
       // June2014DiceDemo
       explorationStartAngle_ = 0;
-      objectToPickUp_.SetToUnknown();
-      objectToPlaceOn_.SetToUnknown();
+      objectToPickUp_.UnSet();
+      objectToPlaceOn_.UnSet();
       
     } // Reset()
     
     
     // TODO: Make this a blockWorld function?
-    void BehaviorManager::SelectNextBlockOfInterest()
+    void BehaviorManager::SelectNextObjectOfInterest()
     {
-      bool currBlockOfInterestFound = false;
-      bool newBlockOfInterestSet = false;
+      // Unselect current object of interest, if it still exists (Note that it may just get
+      // reselected here, but I don't think we care.)
+      // Mark new object of interest as selected so it will draw differently
+      ActionableObject* object = dynamic_cast<ActionableObject*>(world_->GetObjectByID(objectIDofInterest_));
+      if(object != nullptr) {
+        object->SetSelected(false);
+      }
+
+      bool currObjectOfInterestFound = false;
+      bool newObjectOfInterestSet = false;
       
-      // Iterate through all the non-Mat objects
+      // Iterate through all the objects
       auto const & allObjects = world_->GetAllExistingObjects();
       for(auto const & objectsByFamily : allObjects) {
-        if(objectsByFamily.first != BlockWorld::MAT_FAMILY)
-        {
           for (auto const & objectsByType : objectsByFamily.second) {
             
             //PRINT_INFO("currType: %d\n", blockType.first);
             for (auto const & objectsByID : objectsByType.second) {
               
-              const DockableObject* object = dynamic_cast<DockableObject*>(objectsByID.second);
-              if(object != nullptr && !object->IsBeingCarried())
+              ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
+              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
               {
                 //PRINT_INFO("currID: %d\n", block.first);
-                if (currBlockOfInterestFound) {
+                if (currObjectOfInterestFound) {
                   // Current block of interest has been found.
                   // Set the new block of interest to the next block in the list.
                   objectIDofInterest_ = object->GetID();
-                  newBlockOfInterestSet = true;
+                  newObjectOfInterestSet = true;
                   //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
                   break;
                 } else if (object->GetID() == objectIDofInterest_) {
-                  currBlockOfInterestFound = true;
+                  currObjectOfInterestFound = true;
                   //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
                 }
               }
             } // for each ID
             
-            if (newBlockOfInterestSet) {
+            if (newObjectOfInterestSet) {
               break;
             }
             
           } // for each type
-        } // if non-MAT
         
-        if(newBlockOfInterestSet) {
+        if(newObjectOfInterestSet) {
           break;
         }
         
       } // for each family
       
-      // If the current block of interest was found, but a new one was not set
-      // it must have been the last block in the map. Set the new block of interest
-      // to the first block in the map as long as it's not the same block.
-      if (!currBlockOfInterestFound || !newBlockOfInterestSet) {
+      // If the current object of interest was found, but a new one was not set
+      // it must have been the last block in the map. Set the new object of interest
+      // to the first object in the map as long as it's not the same object.
+      if (!currObjectOfInterestFound || !newObjectOfInterestSet) {
         
-        // Find first block
-        ObjectID firstBlock; // initialized to un-set
+        // Find first object
+        ObjectID firstObject; // initialized to un-set
         for(auto const & objectsByFamily : allObjects) {
-          if(objectsByFamily.first != BlockWorld::MAT_FAMILY) {
-            for (auto const & objectsByType : objectsByFamily.second) {
-              for (auto const & objectsByID : objectsByType.second) {
-                const DockableObject* object = dynamic_cast<DockableObject*>(objectsByID.second);
-                if(object != nullptr && !object->IsBeingCarried())
-                {
-                  firstBlock = objectsByID.first;
-                  break;
-                }
-              }
-              if (firstBlock.IsSet()) {
+          for (auto const & objectsByType : objectsByFamily.second) {
+            for (auto const & objectsByID : objectsByType.second) {
+              const ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
+              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
+              {
+                firstObject = objectsByID.first;
                 break;
               }
             }
-          } // if not MAT
+            if (firstObject.IsSet()) {
+              break;
+            }
+          }
           
-          if (firstBlock.IsSet()) {
+          if (firstObject.IsSet()) {
             break;
           }
         } // for each family
 
         
-        if (firstBlock == objectIDofInterest_ || !firstBlock.IsSet()){
-          //PRINT_INFO("Only one block in existence.");
+        if (firstObject == objectIDofInterest_ || !firstObject.IsSet()){
+          //PRINT_INFO("Only one object in existence.");
         } else {
-          //PRINT_INFO("Setting block of interest to first block\n");
-          objectIDofInterest_ = firstBlock;
+          //PRINT_INFO("Setting object of interest to first block\n");
+          objectIDofInterest_ = firstObject;
         }
       }
       
-      PRINT_INFO("Block of interest: ID = %d\n", objectIDofInterest_.GetValue());
-      
-      /*
-      // Draw BOI
-      const Block* block = dynamic_cast<Block*>(world_->GetObservableObjectByID(objectIDofInterest_));
-      if(block == nullptr) {
-        PRINT_INFO("Failed to find/draw block of interest!\n");
+      // Mark new object of interest as selected so it will draw differently
+      object = dynamic_cast<ActionableObject*>(world_->GetObjectByID(objectIDofInterest_));
+      if (object != nullptr) {
+      object->SetSelected(true);
+      PRINT_INFO("Object of interest: ID = %d\n", objectIDofInterest_.GetValue());
       } else {
-
-        static ObjectID prev_boi = 0;      // Previous block of interest
-        static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
-
-        // Get predock poses
-        std::vector<Block::PoseMarkerPair_t> poses;
-        block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
-        
-        // Erase previous predock pose marker for previous block of interest
-        if (prev_boi != objectIDofInterest_ || poses.size() != prevNumPreDockPoses) {
-          PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n", objectIDofInterest_, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
-          VizManager::getInstance()->EraseVizObjectType(VIZ_PREDOCKPOSE);
-          prev_boi = objectIDofInterest_;
-          prevNumPreDockPoses = poses.size();
-        }
-        
-        // Draw predock poses
-        u32 poseID = 0;
-        for(auto pose : poses) {
-          VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose.first, VIZ_COLOR_PREDOCKPOSE);
-          ++poseID;
-        }
-      
-        // Draw cuboid
-        VizManager::getInstance()->DrawCuboid(block->GetID(),
-                                              block->GetSize(),
-                                              block->GetPose().GetWithRespectTo(Pose3d::World),
-                                              VIZ_COLOR_SELECTED_OBJECT);
+        PRINT_INFO("No object of interest found\n");
       }
-       */
+      
     } // SelectNextObjectOfInterest()
     
     void BehaviorManager::Update()
@@ -267,10 +246,15 @@ namespace Anki {
      * 3) Places it on any other block in the world
      *
      ********************************************************/
+    
     void BehaviorManager::Update_PickAndPlaceBlock()
     {
       // Params for determining whether the predock pose has been reached
       
+      robot_->ExecuteDockingSequence(objectIDofInterest_);
+      StartMode(BM_None);
+      
+      /*
       switch(state_) {
         case WAITING_FOR_DOCK_BLOCK:
         {
@@ -321,9 +305,15 @@ namespace Anki {
           return;
         }
       }
+       */
       
     } // Update_PickAndPlaceBlock()
     
+    void BehaviorManager::Update_TraverseObject()
+    {
+      robot_->ExecuteTraversalSequence(objectIDofInterest_);
+      StartMode(BM_None);
+    }
     
     /********************************************************
      * June2014DiceDemo
@@ -508,8 +498,7 @@ namespace Anki {
                     objectToPickUp_ = blockToLookFor;
                     objectToPlaceOn_.SetToUnknown();
                     
-                    CoreTechPrint("Set blockToPickUp = %s\n",
-                                  Block::TypeToStringLUT.at(objectToPickUp_).c_str());
+                    CoreTechPrint("Set blockToPickUp = %s\n", objectToPickUp_.GetName().c_str());
                     
                     // Wait for first dice to disappear
                     state_ = WAITING_FOR_DICE_TO_DISAPPEAR;
@@ -527,8 +516,7 @@ namespace Anki {
 
                       objectToPlaceOn_ = blockToLookFor;
                     
-                      CoreTechPrint("Set objectToPlaceOn = %s\n",
-                                    Block::TypeToStringLUT.at(objectToPlaceOn_).c_str());
+                      CoreTechPrint("Set objectToPlaceOn = %s\n", objectToPlaceOn_.GetName().c_str());
 
                       robot_->SendPlayAnimation(ANIM_HEAD_NOD, 2);
                       waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.5;
@@ -802,7 +790,7 @@ namespace Anki {
           // Repeat turn-stop behavior for more reliable block detection
           Radians currAngle = robot_->GetPose().GetRotationAngle<'Z'>();
           if (isTurning_ && (std::abs((explorationStartAngle_ - currAngle).ToFloat()) > DEG_TO_RAD(40))) {
-            PRINT_INFO("Exploration - pause turning. Looking for %s\n", Block::TypeToStringLUT.at(objectTypeOfInterest_).c_str());
+            PRINT_INFO("Exploration - pause turning. Looking for %s\n", objectTypeOfInterest_.GetName().c_str());
             robot_->DriveWheels(0.f,0.f);
             isTurning_ = false;
             waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;

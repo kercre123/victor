@@ -46,8 +46,10 @@ namespace Anki {
         
         
         // Localization:
-        f32 currentMatX_=0.f, currentMatY_=0.f;  // mm
-        Radians currentMatHeading_(0.f);
+        f32 x_=0.f, y_=0.f;  // mm
+        Radians orientation_(0.f);
+        bool onRamp_ = false;
+        bool onBridge_ = false;
        
 #if(USE_OVERLAY_DISPLAY)
         f32 xTrue_, yTrue_, angleTrue_;
@@ -174,12 +176,12 @@ namespace Anki {
         p0Rot[2][0] =  0;    p0Rot[2][1] =   0;    p0Rot[2][2] = 1;
         
         // Current pose
-        currPoseTrans.x = currentMatX_;
-        currPoseTrans.y = currentMatY_;
+        currPoseTrans.x = x_;
+        currPoseTrans.y = y_;
         currPoseTrans.z = 0;
         
-        f32 s1 = sinf(currentMatHeading_.ToFloat());
-        f32 c1 = cosf(currentMatHeading_.ToFloat());
+        f32 s1 = sinf(orientation_.ToFloat());
+        f32 c1 = cosf(orientation_.ToFloat());
         currPoseRot[0][0] = c1;    currPoseRot[0][1] = -s1;    currPoseRot[0][2] = 0;
         currPoseRot[1][0] = s1;    currPoseRot[1][1] =  c1;    currPoseRot[1][2] = 0;
         currPoseRot[2][0] =  0;    currPoseRot[2][1] =   0;    currPoseRot[2][2] = 1;
@@ -203,7 +205,7 @@ namespace Anki {
 
         #if(DEBUG_POSE_HISTORY)
         PRINT("pHist: %f %f %f (frame %d, curFrame %d)\n", hist_[i].x, hist_[i].y, hist_[i].angle, hist_[i].frame, frameId_);
-        PRINT("pCurr: %f %f %f\n", currPoseTrans.x, currPoseTrans.y, currentMatHeading_.ToFloat());
+        PRINT("pCurr: %f %f %f\n", currPoseTrans.x, currPoseTrans.y, orientation_.ToFloat());
         PRINT("pKey: %f %f %f\n", x, y, angle);
         #endif
         
@@ -227,7 +229,7 @@ namespace Anki {
           pDiffAngle *= -1;
         }
         PRINT("pDiff: %f %f %f\n", pDiffTrans.x, pDiffTrans.y, pDiffAngle);
-        PRINT("pCurrNew: %f %f %f\n", currentMatX_, currentMatY_, currentMatHeading_.ToFloat());
+        PRINT("pCurrNew: %f %f %f\n", x_, y_, orientation_.ToFloat());
         #endif
         
         lastKeyframeUpdate_ = HAL::GetTimeStamp();
@@ -250,9 +252,9 @@ namespace Anki {
         }
         
         hist_[hEnd_].t = HAL::GetTimeStamp();
-        hist_[hEnd_].x = currentMatX_;
-        hist_[hEnd_].y = currentMatY_;
-        hist_[hEnd_].angle = currentMatHeading_.ToFloat();
+        hist_[hEnd_].x = x_;
+        hist_[hEnd_].y = y_;
+        hist_[hEnd_].angle = orientation_.ToFloat();
         hist_[hEnd_].frame = frameId_;
       }
       
@@ -262,6 +264,8 @@ namespace Anki {
 
       Result Init() {
         SetCurrentMatPose(0,0,0);
+        
+        onRamp_ = false;
         
         prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
         prevRightWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
@@ -278,19 +282,98 @@ namespace Anki {
         return currMatPose;
       }
 */
+      
+      Result SendRampTraverseStartMessage()
+      {
+        Messages::RampTraverseStart msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseStart), &msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+      
+      Result SendRampTraverseComplete(const bool success)
+      {
+        Messages::RampTraverseComplete msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseComplete), &msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+
+      Result SetOnRamp(bool onRamp)
+      {
+        Result lastResult = RESULT_OK;
+        if(onRamp == true && onRamp_ == false) {
+          // We weren't on a ramp but now we are
+          Messages::RampTraverseStart msg;
+          msg.timestamp = HAL::GetTimeStamp();
+          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseStart), &msg) == false) {
+            lastResult = RESULT_FAIL;
+          }
+        }
+        else if(onRamp == false && onRamp_ == true) {
+          // We were on a ramp and now we're not
+          Messages::RampTraverseComplete msg;
+          msg.timestamp = HAL::GetTimeStamp();
+          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseComplete), &msg) == false) {
+            lastResult = RESULT_FAIL;
+          }
+        }
+        
+        onRamp_ = onRamp;
+        
+        return lastResult;
+      }
+      
+      bool IsOnRamp() {
+        return onRamp_;
+      }
+      
+      
+      Result SetOnBridge(bool onBridge)
+      {
+        Result lastResult = RESULT_OK;
+        
+        if(onBridge == true && onBridge_ == false) {
+          // We weren't on a bridge but now we are
+          Messages::BridgeTraverseStart msg;
+          msg.timestamp = HAL::GetTimeStamp();
+          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BridgeTraverseStart), &msg) == false) {
+            lastResult = RESULT_FAIL;
+          }
+        }
+        else if(onBridge == false && onBridge_ == true) {
+          // We were on a bridge and no we're not
+          Messages::BridgeTraverseComplete msg;
+          msg.timestamp = HAL::GetTimeStamp();
+          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BridgeTraverseComplete), &msg) == false) {
+            lastResult = RESULT_FAIL;
+          }
+        }
+        return lastResult;
+      }
+      
+      bool IsOnBridge() {
+        return onBridge_;
+      }
+      
       void Update()
       {
 
 #if(USE_SIM_GROUND_TRUTH_POSE)
         // For initial testing only
         float angle;
-        HAL::GetGroundTruthPose(currentMatX_,currentMatY_,angle);
+        HAL::GetGroundTruthPose(x_,y_,angle);
         
         // Convert to mm
-        currentMatX_ *= 1000;
-        currentMatY_ *= 1000;
+        x_ *= 1000;
+        y_ *= 1000;
         
-        currentMatHeading_ = angle;
+        orientation_ = angle;
 #else
      
         bool movement = false;
@@ -355,14 +438,33 @@ namespace Anki {
           PRINT("lRadius %f, rRadius %f, lDist %f, rDist %f, cTheta %f, cDist %f, cRadius %f\n",
                 lRadius, rRadius, lDist, rDist, cTheta, cDist, cRadius);
           
-          PRINT("oldPose: %f %f %f\n", currentMatX_, currentMatY_, currentMatHeading_.ToFloat());
+          PRINT("oldPose: %f %f %f\n", x_, y_, orientation_.ToFloat());
 #endif
           
           if (ABS(cRadius) >= BIG_RADIUS) {
-            currentMatX_ += cDist * cosf(currentMatHeading_.ToFloat());
-            currentMatY_ += cDist * sinf(currentMatHeading_.ToFloat());
+
+            x_ += cDist * cosf(orientation_.ToFloat());
+            y_ += cDist * sinf(orientation_.ToFloat());
+
+            /*
+            f32 dx = cDist * cosf(orientation_.ToFloat());
+            f32 dy = cDist * sinf(orientation_.ToFloat());
             
+            // Only update z position when moving straight
+            if (onRamp_) {
+              f32 pitch = IMUFilter::GetPitch();
+              f32 cosp = cosf(pitch);
+              x_ += dx * cosp;
+              y_ += dy * cosp;
+              z_ += cDist * tanf(pitch);
+              PRINT("dx %f, dy %f, pitch %f  (z %f)\n", dx, dy, pitch, z_);
+            } else {
+              x_ += dx;
+              y_ += dy;
+            }
+            */
           } else {
+            
             
 #if(1)
             // Compute distance traveled relative to previous position.
@@ -376,19 +478,19 @@ namespace Anki {
             f32 chord_length = ABS(2 * cRadius * sinf(alpha));
             
             // The new pose is then
-            currentMatX_ += (cDist > 0 ? 1 : -1) * chord_length * cosf(currentMatHeading_.ToFloat() + alpha);
-            currentMatY_ += (cDist > 0 ? 1 : -1) * chord_length * sinf(currentMatHeading_.ToFloat() + alpha);
-            currentMatHeading_ += cTheta;
+            x_ += (cDist > 0 ? 1 : -1) * chord_length * cosf(orientation_.ToFloat() + alpha);
+            y_ += (cDist > 0 ? 1 : -1) * chord_length * sinf(orientation_.ToFloat() + alpha);
+            orientation_ += cTheta;
 #else
             // Naive approximation, but seems to work nearly as well as non-naive with one less sin() call.
-            currentMatX_ += cDist * cosf(currentMatHeading_.ToFloat());
-            currentMatY_ += cDist * sinf(currentMatHeading_.ToFloat());
-            currentMatHeading_ += cTheta;            
+            x_ += cDist * cosf(orientation_.ToFloat());
+            y_ += cDist * sinf(orientation_.ToFloat());
+            orientation_ += cTheta;
 #endif
           }
           
 #if(DEBUG_LOCALIZATION)
-          PRINT("newPose: %f %f %f\n", currentMatX_, currentMatY_, currentMatHeading_.ToFloat());
+          PRINT("newPose: %f %f %f\n", x_, y_, orientation_.ToFloat());
 #endif
        
         }
@@ -396,7 +498,7 @@ namespace Anki {
         
 #if(USE_GYRO_ORIENTATION)
         // Set orientation according to gyro
-        currentMatHeading_ = IMUFilter::GetRotation() + gyroRotOffset_;
+        orientation_ = IMUFilter::GetRotation() + gyroRotOffset_;
 #endif
         
         prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
@@ -408,11 +510,11 @@ namespace Anki {
         {
           using namespace Sim::OverlayDisplay;
           SetText(CURR_EST_POSE, "Est. Pose: (x,y)=(%.4f, %.4f) at deg=%.1f",
-                  currentMatX_, currentMatY_,
-                  currentMatHeading_.getDegrees());
+                  x_, y_,
+                  orientation_.getDegrees());
           //PRINT("Est. Pose: (x,y)=(%.4f, %.4f) at deg=%.1f\n",
-          //      currentMatX_, currentMatY_,
-          //      currentMatHeading_.getDegrees());
+          //      x_, y_,
+          //      orientation_.getDegrees());
           
           HAL::GetGroundTruthPose(xTrue_, yTrue_, angleTrue_);
           Radians angleRad(angleTrue_);
@@ -427,7 +529,7 @@ namespace Anki {
           prev_yTrue_ = yTrue_;
           prev_angleTrue_ = angleTrue_;
           
-          UpdateEstimatedPose(currentMatX_, currentMatY_, currentMatHeading_.ToFloat());
+          UpdateEstimatedPose(x_, y_, orientation_.ToFloat());
         }
 #endif
 
@@ -440,29 +542,29 @@ namespace Anki {
         AddPoseToHist();
         
 #if(DEBUG_LOCALIZATION)
-        PRINT("LOC: %f, %f, %f\n", currentMatX_, currentMatY_, currentMatHeading_.getDegrees());
+        PRINT("LOC: %f, %f, %f\n", x_, y_, orientation_.getDegrees());
 #endif
       }
 
       void SetCurrentMatPose(f32  x, f32  y, Radians  angle)
       {
-        currentMatX_ = x;
-        currentMatY_ = y;
-        currentMatHeading_ = angle;
+        x_ = x;
+        y_ = y;
+        orientation_ = angle;
         gyroRotOffset_ = angle.ToFloat() - IMUFilter::GetRotation();
       } // SetCurrentMatPose()
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle)
       {
-        x = currentMatX_;
-        y = currentMatY_;
-        angle = currentMatHeading_;
+        x = x_;
+        y = y_;
+        angle = orientation_;
       } // GetCurrentMatPose()
       
   
       Radians GetCurrentMatOrientation()
       {
-        return currentMatHeading_;
+        return orientation_;
       }
 
       PoseFrameID_t GetPoseFrameId()
@@ -474,6 +576,11 @@ namespace Anki {
       {
         frameId_ = 0;
         ClearHistory();
+      }
+
+      f32 GetDistTo(const f32 x, const f32 y)
+      {
+        return sqrtf((x_-x)*(x_-x) + (y_-y)*(y_-y));
       }
       
     }

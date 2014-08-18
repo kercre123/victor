@@ -151,6 +151,7 @@ namespace Anki {
         printf("              Cycle block select:  .\n");
         printf("              Clear known blocks:  c\n");
         printf("          Dock to selected block:  p\n");
+        printf("    Travel up/down selected ramp:  r\n");
         printf("       Start June 2014 dice demo:  j\n");
         printf("              Abort current path:  q\n");
         printf("         Update controller gains:  k\n");
@@ -187,6 +188,7 @@ namespace Anki {
         //const s32 CKEY_FWDSLASH    = 47; // '/'
         //const s32 CKEY_BACKSLASH   = 92 // '\'
         const s32 CKEY_DOCK_TO_BLOCK  = 80;  // p
+        const s32 CKEY_USE_RAMP = 82; // r
         const s32 CKEY_QUESTION_MARK  = 63; // '/'
         
         const s32 CKEY_START_DICE_DEMO= 74; // 'j' for "June"
@@ -426,6 +428,11 @@ namespace Anki {
             case CKEY_DOCK_TO_BLOCK:
             {
               SendExecuteBehavior(BM_PickAndPlace);
+              break;
+            }
+            case CKEY_USE_RAMP:
+            {
+              SendExecuteBehavior(BM_TraverseObject);
               break;
             }
             case CKEY_START_DICE_DEMO:

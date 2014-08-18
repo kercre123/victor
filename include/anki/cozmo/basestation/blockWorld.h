@@ -15,8 +15,8 @@
  *
  **/
 
-#ifndef __Products_Cozmo__blockWorld__
-#define __Products_Cozmo__blockWorld__
+#ifndef ANKI_COZMO_BLOCKWORLD_H
+#define ANKI_COZMO_BLOCKWORLD_H
 
 #include <queue>
 #include <map>
@@ -24,6 +24,8 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/exceptions.h"
+
+#include "anki/vision/basestation/observableObjectLibrary.h"
 
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
@@ -39,21 +41,41 @@ namespace Anki
     class RobotManager;
     class MessageHandler;
     
+    namespace NamedColors {
+      // Add some BlockWorld-specific named colors:
+      extern const ColorRGBA EXECUTED_PATH              ;
+      extern const ColorRGBA PREDOCKPOSE                ;
+      extern const ColorRGBA PRERAMPPOSE                ;
+      extern const ColorRGBA SELECTED_OBJECT            ;
+      extern const ColorRGBA BLOCK_BOUNDING_QUAD        ;
+      extern const ColorRGBA OBSERVED_QUAD              ;
+      extern const ColorRGBA ROBOT_BOUNDING_QUAD        ;
+      extern const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD ;
+    }
+    
     class BlockWorld
     {
     public:
 
-      enum ObjectFamily_t {
-        MAT_FAMILY,
-        BLOCK_FAMILY,
-        RAMP_FAMILY,
+      
+      class ObjectFamily : public UniqueEnumeratedValue<int>
+      {
+      public:
+        ObjectFamily();
         
-        NUM_OBJECT_FAMILIES // Should remain last
-      };
+        // Define new ObjectFamilies here:
+        // (and be sure to instantiate them in the .cpp file)
+        static const ObjectFamily MATS;
+        static const ObjectFamily RAMPS;
+        static const ObjectFamily BLOCKS;
+        
+      protected:
+        static int UniqueFamilyCounter;
+      }; // class ObjectFamily
       
       using ObjectsMapByID_t     = std::map<ObjectID, Vision::ObservableObject*>;
       using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
-      using ObjectsMapByFamily_t = std::map<ObjectFamily_t, ObjectsMapByType_t>;
+      using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
       
       //static const unsigned int MaxRobots = 4;
       //static bool ZAxisPointsUp; // normally true, false for Webots
@@ -76,7 +98,7 @@ namespace Anki
       void ClearAllExistingObjects();
       
       // Clear all objects with the specified family
-      void ClearObjectsByFamily(const ObjectFamily_t family);
+      void ClearObjectsByFamily(const BlockWorld::ObjectFamily family);
       
       // Clear all objects with the specified type
       void ClearObjectsByType(const ObjectType type);
@@ -85,11 +107,11 @@ namespace Anki
       // is found and cleared, false otherwise.
       bool ClearObject(const ObjectID withID);
       
-      const Vision::ObservableObjectLibrary& GetObjectLibrary(ObjectFamily_t whichFamily) const;
+      const Vision::ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
 
       const ObjectsMapByFamily_t& GetAllExistingObjects() const;
       
-      const ObjectsMapByType_t& GetExistingObjectsByFamily(const ObjectFamily_t whichFamily) const;
+      const ObjectsMapByType_t& GetExistingObjectsByFamily(const ObjectFamily whichFamily) const;
       
       // NOTE: Like IDs, object types are unique across objects so they can be
       //       used without specifying which family.
@@ -100,6 +122,9 @@ namespace Anki
       // for the return being null!
       Vision::ObservableObject* GetObjectByID(const ObjectID objectID) const;
       
+      // Same as above, but only searches a given family of objects
+      Vision::ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
+            
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension) and returns a vector of quads
       // of their outlines on the ground plane (z=0).  Can also pad the
@@ -111,7 +136,7 @@ namespace Anki
       void GetObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
                                     const f32 padding,
                                     std::vector<Quad2f>& boundingBoxes,
-                                    const std::set<ObjectFamily_t>& ignoreFamilies = {MAT_FAMILY},
+                                    const std::set<ObjectFamily>& ignoreFamilies = {ObjectFamily::MATS},
                                     const std::set<ObjectType>& ignoreTypes = {{}},
                                     const std::set<ObjectID>& ignoreIDs = {{}},
                                     const bool ignoreCarriedObjects = true) const;
@@ -141,13 +166,14 @@ namespace Anki
       using PoseKeyObsMarkerMap_t = std::multimap<HistPoseKey, Vision::ObservedMarker>;
       using ObsMarkerListMap_t = std::map<TimeStamp_t, PoseKeyObsMarkerMap_t>;
       
-      // Methods
+      //
+      // Member Methods
+      //
       
-      //BlockWorld(); // protected constructor for singleton
-
       bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
-      size_t UpdateObjectPoses(const Vision::ObservableObjectLibrary& objectsLibrary,
+      size_t UpdateObjectPoses(const Robot* seenByRobot,
+                               const Vision::ObservableObjectLibrary& objectsLibrary,
                                PoseKeyObsMarkerMap_t& obsMarkers,
                                ObjectsMapByType_t& existingObjects,
                                const TimeStamp_t atTimestamp);
@@ -156,6 +182,12 @@ namespace Anki
                                   const ObjectsMapByType_t& objectsExisting,
                                   std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const;
       
+      void CheckForUnobservedObjects(TimeStamp_t atTimestamp);
+      
+      // Helpers for actually inserting a new object into a new family using
+      // its type and ID. Object's ID will be set if it isn't already.
+      void AddNewObject(const ObjectFamily toFamily, Vision::ObservableObject* object);
+      void AddNewObject(ObjectsMapByType_t& existingFamily, Vision::ObservableObject* object);
       
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
@@ -173,9 +205,9 @@ namespace Anki
 
       ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objectIter, ObjectsMapByID_t& inContainer);
       
+      //
       // Member Variables
-      
-      //static BlockWorld* singletonInstance_;
+      //
       
       bool             isInitialized_;
       RobotManager*    robotMgr_;
@@ -187,7 +219,7 @@ namespace Anki
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
       // yet, but what everything we are aware of)
-      std::map<ObjectFamily_t, Vision::ObservableObjectLibrary> _objectLibrary;
+      std::map<ObjectFamily, Vision::ObservableObjectLibrary> _objectLibrary;
       //Vision::ObservableObjectLibrary blockLibrary_;
       //Vision::ObservableObjectLibrary matLibrary_;
       //Vision::ObservableObjectLibrary rampLibrary_;
@@ -224,18 +256,8 @@ namespace Anki
       
     }; // class BlockWorld
 
-    /*
-    inline BlockWorld* BlockWorld::getInstance()
-    {
-      // Instantiate singleton instance if not done already
-      if(singletonInstance_ == 0) {
-        singletonInstance_ = new BlockWorld();
-      }
-      return singletonInstance_;
-    }
-     */
     
-    inline const Vision::ObservableObjectLibrary& BlockWorld::GetObjectLibrary(ObjectFamily_t whichFamily) const
+    inline const Vision::ObservableObjectLibrary& BlockWorld::GetObjectLibrary(ObjectFamily whichFamily) const
     {
       auto objectsWithFamilyIter = _objectLibrary.find(whichFamily);
       if(objectsWithFamilyIter != _objectLibrary.end()) {
@@ -250,7 +272,7 @@ namespace Anki
       return _existingObjects;
     }
     
-    inline const BlockWorld::ObjectsMapByType_t& BlockWorld::GetExistingObjectsByFamily(const ObjectFamily_t whichFamily) const
+    inline const BlockWorld::ObjectsMapByType_t& BlockWorld::GetExistingObjectsByFamily(const ObjectFamily whichFamily) const
     {
       auto objectsWithFamilyIter = _existingObjects.find(whichFamily);
       if(objectsWithFamilyIter != _existingObjects.end()) {
@@ -290,9 +312,39 @@ namespace Anki
       return nullptr;
     }
     
+    inline Vision::ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const
+    {
+      // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
+      
+      for(auto & objectsByType : GetExistingObjectsByFamily(inFamily)) {
+        auto objectsByIdIter = objectsByType.second.find(objectID);
+        if(objectsByIdIter != objectsByType.second.end()) {
+          return objectsByIdIter->second;
+        }
+      }
+      
+      // ID not found!
+      return nullptr;
+    }
+    
+    inline void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, Vision::ObservableObject* object)
+    {
+      if(!object->GetID().IsSet()) {
+        object->SetID();
+      }
+      
+      existingFamily[object->GetType()][object->GetID()] = object;
+    }
+    
+    inline void BlockWorld::AddNewObject(const ObjectFamily toFamily, Vision::ObservableObject* object)
+    {
+      AddNewObject(_existingObjects[toFamily], object);
+    }
+
+    
   } // namespace Cozmo
 } // namespace Anki
 
 
 
-#endif // __Products_Cozmo__blockWorld__
+#endif // ANKI_COZMO_BLOCKWORLD_H

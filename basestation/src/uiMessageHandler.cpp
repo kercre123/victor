@@ -226,14 +226,15 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ClearAllBlocks const& msg)
     {
-      blockWorld_->ClearAllExistingObjects();
-      VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_CUBOID);
+      VizManager::getInstance()->EraseAllVizObjects();
+      blockWorld_->ClearObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
+      blockWorld_->ClearObjectsByFamily(BlockWorld::ObjectFamily::RAMPS);
       return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SelectNextBlock const& msg)
     {
-      behaviorMgr_->SelectNextBlockOfInterest();
+      behaviorMgr_->SelectNextObjectOfInterest();
       return RESULT_OK;
     }
     
@@ -254,7 +255,7 @@ namespace Anki {
       if (robot->IsCarryingObject()) {
         Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
         Quad2f objectFootprint = blockWorld_->GetObjectByID(robot->GetCarryingObject())->GetBoundingQuadXY(targetPose);
-        VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, VIZ_COLOR_GREEN);
+        VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
       }
 
       return RESULT_OK;

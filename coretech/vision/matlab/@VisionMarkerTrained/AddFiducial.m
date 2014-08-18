@@ -11,14 +11,16 @@ OutputFile = '';
 
 parseVarargin(varargin{:});
 
+AlphaChannel = [];
 if ischar(img)
     [img, ~, AlphaChannel] = imread(img);
     img = im2double(img);
     
     AlphaChannel = im2double(AlphaChannel);
-    if isempty(AlphaChannel) 
-        AlphaChannel = ones(size(img,1),size(img,2));
-    end
+end
+
+if isempty(AlphaChannel)
+    AlphaChannel = ones(size(img,1),size(img,2));
 end
 
 img = im2double(img);

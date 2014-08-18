@@ -20,6 +20,8 @@
 #include "anki/cozmo/shared/VizStructs.h"
 #include "anki/messaging/shared/UdpServer.h"
 
+#include "anki/common/basestation/colorRGBA.h"
+
 
 #define DEBUG_COZMO_PHYSICS 0
 
@@ -59,7 +61,7 @@ typedef std::map<u32, Anki::Cozmo::VizDefineColor> VizColorDef_t;
 static VizColorDef_t colorMap_;
 
 // Default color for all objects and paths
-static const f32 DEFAULT_COLOR[3] = {1.0, 0.8, 0.0};
+//static const f32 DEFAULT_COLOR[3] = {1.0, 0.8, 0.0};
 
 // Server that listens for visualization messages from basestation's VizManger
 static UdpServer server;
@@ -219,7 +221,6 @@ namespace Anki {
       //dWebotsConsolePrintf("***** ARC rad %f (%f to %f), radius %f\n", currRad, startRad, endRad, radius);
       
       while (currRad*dir < endRad*dir) {
-        cosCurrRad = cos(currRad);
         dx = cos(currRad) * radius;
         dy = sin(currRad) * radius;
         PathVertex_t pt = {center_x + dx, center_y + dy, center_z};
@@ -557,7 +558,11 @@ void webots_physics_draw(int pass, const char *view) {
     glLineWidth(2);
 
     // Set default color
-    glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
+    //glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
+    glColor4ub(Anki::NamedColors::DEFAULT.r(),
+               Anki::NamedColors::DEFAULT.g(),
+               Anki::NamedColors::DEFAULT.b(),
+               Anki::NamedColors::DEFAULT.alpha());
     
     // Draw path
     PathMap_t::iterator pathMapIt;
@@ -566,12 +571,18 @@ void webots_physics_draw(int pass, const char *view) {
       int pathID = pathMapIt->first;
       
       // Set path color
+      
       if (pathColorMap_.find(pathID) != pathColorMap_.end()) {
+        Anki::ColorRGBA pathColor(pathColorMap_[pathID]);
+        glColor4ub(pathColor.r(), pathColor.g(), pathColor.b(), pathColor.alpha());
+        /*
         VizColorDef_t::iterator cIt = colorMap_.find(pathColorMap_[pathID]);
         if (cIt != colorMap_.end()) {
           Anki::Cozmo::VizDefineColor *c = &(cIt->second);
           glColor3f(c->r, c->g, c->b);
+          
         }
+         */
       }
       
       // Draw the path
@@ -583,7 +594,11 @@ void webots_physics_draw(int pass, const char *view) {
       glEnd();
 
       // Restore default color
-      glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
+      //glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
+      glColor4ub(Anki::NamedColors::DEFAULT.r(),
+                 Anki::NamedColors::DEFAULT.g(),
+                 Anki::NamedColors::DEFAULT.b(),
+                 Anki::NamedColors::DEFAULT.alpha());
     }
     
     
@@ -594,11 +609,15 @@ void webots_physics_draw(int pass, const char *view) {
       Anki::Cozmo::VizObject *obj = &(objIt->second);
       
       // Set color for the block
+      Anki::ColorRGBA objColor(obj->color);
+      glColor4ub(objColor.r(), objColor.g(), objColor.b(), objColor.alpha());
+      /*
       VizColorDef_t::iterator cIt = colorMap_.find(obj->color);
       if (cIt != colorMap_.end()) {
         Anki::Cozmo::VizDefineColor *c = &(cIt->second);
         glColor3f(c->r, c->g, c->b);
       }
+       */
       
       // Set pose
       glPushMatrix();
@@ -632,7 +651,12 @@ void webots_physics_draw(int pass, const char *view) {
       glPopMatrix();
       
       // Restore default color
-      glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
+      //glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
+      glColor4ub(Anki::NamedColors::DEFAULT.r(),
+                 Anki::NamedColors::DEFAULT.g(),
+                 Anki::NamedColors::DEFAULT.b(),
+                 Anki::NamedColors::DEFAULT.alpha());
+      
     } // for each object
     
     // Draw quads
@@ -641,12 +665,16 @@ void webots_physics_draw(int pass, const char *view) {
         
         const Anki::Cozmo::VizQuad& quad = quadsByID.second;
         
-        // Set color for the block
+        // Set color for the quad
+        Anki::ColorRGBA quadColor(quad.color);
+        glColor4ub(quadColor.r(), quadColor.g(), quadColor.b(), quadColor.alpha());
+        /*
         VizColorDef_t::iterator cIt = colorMap_.find(quad.color);
         if (cIt != colorMap_.end()) {
           Anki::Cozmo::VizDefineColor *c = &(cIt->second);
           glColor3f(c->r, c->g, c->b);
         }
+         */
         
         draw_quad(quad.xUpperLeft,  quad.yUpperLeft,  quad.zUpperLeft,
                   quad.xLowerLeft,  quad.yLowerLeft,  quad.zLowerLeft,
@@ -654,7 +682,11 @@ void webots_physics_draw(int pass, const char *view) {
                   quad.xLowerRight, quad.yLowerRight, quad.zLowerRight);
         
         // Restore default color
-        glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
+        //glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
+        glColor4ub(Anki::NamedColors::DEFAULT.r(),
+                   Anki::NamedColors::DEFAULT.g(),
+                   Anki::NamedColors::DEFAULT.b(),
+                   Anki::NamedColors::DEFAULT.alpha());
       } // for each quad
     } // for each quad type
     

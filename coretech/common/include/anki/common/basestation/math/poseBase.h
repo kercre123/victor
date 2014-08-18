@@ -28,6 +28,7 @@
 #include "anki/common/basestation/exceptions.h"
 
 #include <list>
+#include <string>
 
 namespace Anki {
 
@@ -36,18 +37,18 @@ namespace Anki {
   //template<typename T> class Matrix;
   
 
-  // TODO: Have Pose2d and Pose3d inherit from an (abstract?) base class?
-  //  Then the base class could define the common elements like the parent
-  //  pointer, the GetTreeDepth() method, and the GetWithRespectTo method.
+  // Pose2d and Pose3d inherit from this base class, which defines the common
+  // elements like the parent pointer, the GetTreeDepth() method, and the
+  // GetWithRespectTo method.
   template <class PoseNd>
   class PoseBase
   {
   public:
  
     PoseBase();
-    PoseBase(const PoseNd* parentPose);
+    PoseBase(const PoseNd* parentPose, const std::string& name);
 
-    void SetParent(const PoseNd* otherPose) { _parent = otherPose; }
+    void SetParent(const PoseNd* otherPose) { CORETECH_ASSERT(otherPose != this); _parent = otherPose; }
     const PoseNd* GetParent() const { return _parent; }
     
     bool IsOrigin() const { return _parent == nullptr; }
@@ -55,19 +56,27 @@ namespace Anki {
     const PoseNd& FindOrigin(const PoseNd& forPose) const;
     
     // Origins
-    static const PoseNd* GetWorldOrigin() { return _sWorld; }
-    static PoseNd& AddOrigin();
-    static PoseNd& AddOrigin(const PoseNd& origin);
+    //static const PoseNd* GetWorldOrigin() { return _sWorld; }
+    //static PoseNd& AddOrigin();
+    //static PoseNd& AddOrigin(const PoseNd& origin);
 
+    void SetName(const std::string& newName) { _name = newName; }
+    const std::string& GetName() const { return _name; }
+    
   protected:
-    static const PoseNd* _sWorld;
-    static std::list<PoseNd> Origins;
+    //static const PoseNd* _sWorld;
+    //static std::list<PoseNd> Origins;
     
     const PoseNd* _parent;
+    std::string   _name;
+    
     unsigned int GetTreeDepth(const PoseNd* poseNd) const;
     
     bool GetWithRespectTo(const PoseNd& from, const PoseNd& to,
                           PoseNd& newPose) const;
+    
+    static std::string GetNamedPathToOrigin(const PoseNd& startPose, bool showTranslations);
+    static void        PrintNamedPathToOrigin(const PoseNd& startPose, bool showTranslations);
 
   };
   

@@ -4,8 +4,7 @@
 #define BLOCK_ENUM_MODE                0
 #define BLOCK_ENUM_VALUE_MODE          1
 #define BLOCK_LUT_MODE                 2
-#define BLOCK_TYPE_TO_STRING_LUT_MODE  3
-#define BLOCK_STRING_TO_TYPE_LUT_MODE  4
+#define BLOCK_STRING_TO_TYPE_LUT_MODE  3
 
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__)
 #define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
@@ -32,7 +31,7 @@
 #elif BLOCK_DEFINITION_MODE == BLOCK_ENUM_VALUE_MODE
 
 //#define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) __NAME__##_BLOCK_TYPE,
-#define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) const Block::Type Block::Type::__NAME__;
+#define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) const Block::Type Block::Type::__NAME__(QUOTE(__NAME__));
 #define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
 #define END_BLOCK_DEFINITION
 
@@ -43,21 +42,12 @@
 
 #define UNWRAP(...) __VA_ARGS__
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) \
-{Block::Type::__NAME__, {.name = QUOTE(__NAME__), .color = __COLOR__, .size = {UNWRAP __SIZE__}, .faces = {
+{Block::Type::__NAME__, {.name = QUOTE(__NAME__), .color = NamedColors::__COLOR__, .size = {UNWRAP __SIZE__}, .faces = {
 
 #define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__) \
 {.whichFace = __WHICHFACE__, .size = __SIZE__, .code = __CODE__},
 
 #define END_BLOCK_DEFINITION  } } },
-
-//
-// Block ID to String LUT Mode
-//
-#elif BLOCK_DEFINITION_MODE == BLOCK_TYPE_TO_STRING_LUT_MODE
-
-#define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) {Block::Type::__NAME__, QUOTE(__NAME__)},
-#define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
-#define END_BLOCK_DEFINITION
 
 //
 // Block String Name to Type LUT Mode

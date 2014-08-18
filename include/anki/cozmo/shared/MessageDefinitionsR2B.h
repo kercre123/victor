@@ -58,16 +58,17 @@ ADD_MESSAGE_MEMBER(f32, headAngle)
 ADD_MESSAGE_MEMBER(f32, liftAngle)
 ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
 ADD_MESSAGE_MEMBER(u16, lastPathID)
+ADD_MESSAGE_MEMBER(u8, proxLeft)
+ADD_MESSAGE_MEMBER(u8, proxForward)
+ADD_MESSAGE_MEMBER(u8, proxRight)
 ADD_MESSAGE_MEMBER(s8, currPathSegment) // -1 if not traversing a path
 ADD_MESSAGE_MEMBER(u8, numFreeSegmentSlots)
 ADD_MESSAGE_MEMBER(u8, status)  // See RobotStatusFlag
-// ...
 END_MESSAGE_DEFINITION(RobotState)
 
 
 // VisionMarker
-#define VISION_MARKER_CODE_LENGTH 11 // ceil( (9*9 + 4)/8 )
-
+//#define VISION_MARKER_CODE_LENGTH 11 // ceil( (9*9 + 4)/8 )
 START_TIMESTAMPED_MESSAGE_DEFINITION(VisionMarker, 1)
 // TODO: make the corner coordinates fixed point
 ADD_MESSAGE_MEMBER(f32, x_imgUpperLeft)
@@ -102,6 +103,23 @@ START_TIMESTAMPED_MESSAGE_DEFINITION(BlockPlaced, 1)
 ADD_MESSAGE_MEMBER(bool, didSucceed) // true if robot thinks it placed up a block (from low or high position)
 END_MESSAGE_DEFINITION(BlockPlaced)
 
+// RampTraverseStart
+START_TIMESTAMPED_MESSAGE_DEFINITION(RampTraverseStart, 1)
+END_MESSAGE_DEFINITION(RampTraverseStart)
+
+// RampTraverseComplete
+START_TIMESTAMPED_MESSAGE_DEFINITION(RampTraverseComplete, 1)
+ADD_MESSAGE_MEMBER(bool, didSucceed) // true if robot thinks it finished traversing (the sloped part of) a ramp
+END_MESSAGE_DEFINITION(RampTraverseComplete)
+
+// BridgeTraverseStart
+START_TIMESTAMPED_MESSAGE_DEFINITION(BridgeTraverseStart, 1)
+END_MESSAGE_DEFINITION(BridgeTraverseStart)
+
+// BridgeTraverseComplete
+START_TIMESTAMPED_MESSAGE_DEFINITION(BridgeTraverseComplete, 1)
+ADD_MESSAGE_MEMBER(bool, didSucceed) // true if robot thinks it finished traversing the bridge
+END_MESSAGE_DEFINITION(BridgeTraverseComplete)
 
 // CameraCalibration
 // TODO: Assume zero skew and remove that member?

@@ -19,8 +19,9 @@ namespace Anki {
       DA_PICKUP_HIGH,     // Docking to block at level 1
       DA_PLACE_HIGH,      // Placing block atop another block at level 0
       DA_PLACE_LOW,       // Placing block on level 0
-      DA_RAMP_ASCEND,     // Go up ramp
-      DA_RAMP_DESCEND     // Go down ramp
+      DA_RAMP_ASCEND,     // Going up a ramp
+      DA_RAMP_DESCEND,    // Going down a ramp
+      DA_CROSS_BRIDGE
     } DockAction_t;
 
     
@@ -77,9 +78,12 @@ namespace Anki {
     // Bit flags for RobotState message
     typedef enum {
       //IS_TRAVERSING_PATH    = 1,
-      IS_CARRYING_BLOCK     = 2,
-      IS_PICKING_OR_PLACING = 4,
-      IS_PICKED_UP          = 8
+      IS_CARRYING_BLOCK     = 0x2,
+      IS_PICKING_OR_PLACING = 0x4,
+      IS_PICKED_UP          = 0x8,
+      IS_PROX_LEFT_BLOCKED  = 0x10,
+      IS_PROX_FORWARD_BLOCKED   = 0x20,
+      IS_PROX_RIGHT_BLOCKED = 0x40
     } RobotStatusFlag;
     
     

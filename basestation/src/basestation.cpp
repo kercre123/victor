@@ -320,50 +320,10 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
   
 
   /////////// Update visualization ////////////
-  { // Update Block-of-Interest display
+  
+  // Draw All Objects by calling their Visualize() methods.
+  blockWorld_.DrawAllObjects();
     
-    // Get selected block of interest from Behavior manager
-    static ObjectID prev_boi;      // Previous block of interest
-    static size_t prevNumPreDockPoses = 0;  // Previous number of predock poses
-    // TODO: store previous block's color and restore it when unselecting
-    
-    // Draw current block of interest
-    const ObjectID boi = behaviorMgr_.GetObjectOfInterest();
-    
-    DockableObject* block = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(boi));
-    if(block != nullptr) {
-
-      // Get predock poses
-      std::vector<Block::PoseMarkerPair_t> poses;
-      block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
-      
-      // Erase previous predock pose marker for previous block of interest
-      if (prev_boi != boi || poses.size() != prevNumPreDockPoses) {
-        PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %zu)\n",
-                   boi.GetValue(), prev_boi.GetValue(), (u32)poses.size(), prevNumPreDockPoses);
-        VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
-        
-        // Return previous selected block to original color (necessary in the
-        // case that this block isn't currently being observed, meaning its
-        // visualization won't have updated))
-        DockableObject* prevBlock = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(prev_boi));
-        if(prevBlock != nullptr && prevBlock->GetLastObservedTime() < BaseStationTimer::getInstance()->GetCurrentTimeStamp()) {
-          prevBlock->Visualize(VIZ_COLOR_DEFAULT);
-        }
-        
-        prev_boi = boi;
-        prevNumPreDockPoses = poses.size();
-      }
-
-      // Draw cuboid for current selection, with predock poses
-      block->Visualize(VIZ_COLOR_SELECTED_OBJECT, PREDOCK_DISTANCE_MM);
-      
-    } else {
-      // block == nullptr (no longer exists, delete its predock poses)
-      VizManager::getInstance()->EraseVizObjectType(VIZ_OBJECT_PREDOCKPOSE);
-    }
-    
-  } // if blocks were updated
   
   // Draw all robot poses
   // TODO: Only send when pose has changed?
@@ -371,29 +331,34 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
   {
     Robot* robot = robotMgr_.GetRobotByID(robotID);
     
+    // Always draw robot w.r.t. the origin, not in its current frame
+    Pose3d robotPoseWrtOrigin = robot->GetPose().GetWithRespectToOrigin();
+    
     // Triangle pose marker
-    VizManager::getInstance()->DrawRobot(robotID, robot->GetPose());
+    VizManager::getInstance()->DrawRobot(robotID, robotPoseWrtOrigin);
     
     // Full Webots CozmoBot model
-    VizManager::getInstance()->DrawRobot(robotID, robot->GetPose(), robot->GetHeadAngle(), robot->GetLiftAngle());
+    VizManager::getInstance()->DrawRobot(robotID, robotPoseWrtOrigin, robot->GetHeadAngle(), robot->GetLiftAngle());
     
     // Robot bounding box
     using namespace Quad;
-    Quad2f quadOnGround2d = robot->GetBoundingQuadXY();
-    Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
-                          Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
-                          Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
-                          Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
+    Quad2f quadOnGround2d = robot->GetBoundingQuadXY(robotPoseWrtOrigin);
+    const f32 zHeight = robotPoseWrtOrigin.GetTranslation().z() + 0.5f;
+    Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     zHeight),
+                          Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  zHeight),
+                          Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    zHeight),
+                          Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), zHeight));
 
-    VizManager::getInstance()->DrawRobotBoundingBox(robot->GetID(), quadOnGround3d, VIZ_COLOR_ROBOT_BOUNDING_QUAD);
+    static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
+    VizManager::getInstance()->DrawRobotBoundingBox(robot->GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
     
     if(robot->IsCarryingObject()) {
-      DockableObject* carryBlock = dynamic_cast<DockableObject*>(blockWorld_.GetObjectByID(robot->GetCarryingObject()));
+      ActionableObject* carryBlock = dynamic_cast<ActionableObject*>(blockWorld_.GetObjectByID(robot->GetCarryingObject()));
       if(carryBlock == nullptr) {
         PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingObject().GetValue());
         robot->UnSetCarryingObject();
       } else {
-        carryBlock->Visualize(VIZ_COLOR_DEFAULT);
+        carryBlock->Visualize();
       }
     }
   }

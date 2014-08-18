@@ -102,8 +102,7 @@ namespace Anki {
                             const f32 pose_x, const f32 pose_y, const f32 pose_z,
                             const f32 pose_angle,
                             const f32 head_angle,
-                            const f32 lift_angle,
-                            const Pose3d* pose_origin);
+                            const f32 lift_angle);
 
       Result AddRawOdomPose(const TimeStamp_t t,
                             const RobotPoseStamp& p);
@@ -116,9 +115,8 @@ namespace Anki {
                                const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                const f32 pose_angle,
                                const f32 head_angle,
-                               const f32 lift_angle,
-                               const Pose3d* pose_origin);
-
+                               const f32 lift_angle);
+      
       Result AddVisionOnlyPose(const TimeStamp_t t,
                                const RobotPoseStamp& p);
       
@@ -161,13 +159,16 @@ namespace Anki {
       
       TimeStamp_t GetOldestTimeStamp() const;
       TimeStamp_t GetNewestTimeStamp() const;
-
+      
       // Prints the entire history
       void Print() const;
       
     private:
       
       void CullToWindowSize();
+      
+      // All poses should be flattened and will use the same "world" origin
+      Pose3d poseOrigin_;
       
       // Pose history as reported by robot
       typedef std::map<TimeStamp_t, RobotPoseStamp> PoseMap_t;

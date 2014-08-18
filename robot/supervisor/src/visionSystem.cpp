@@ -37,6 +37,7 @@
 #include "imuFilter.h"
 #include "matlabVisualization.h"
 #include "messages.h"
+#include "localization.h"
 #include "visionSystem.h"
 #include "visionDebugStream.h"
 
@@ -179,6 +180,7 @@ namespace Anki {
           f32                       width_mm;
           Point2f                   imageCenter;
           f32                       imageSearchRadius;
+          bool                      checkAngleX;
 
           MarkerToTrack();
           bool IsSpecified() const;
@@ -241,6 +243,7 @@ namespace Anki {
           width_mm    = 0;
           imageCenter = Point2f(-1.f, -1.f);
           imageSearchRadius = -1.f;
+          checkAngleX = true;
         }
 
         bool MarkerToTrack::Matches(const VisionMarker& marker) const
@@ -951,7 +954,7 @@ namespace Anki {
           PRINT("Tracker failed: position changed too much.\n");
           trackingSucceeded = false;
         }
-        else if(fabs(tracker.get_angleX()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
+        else if(markerToTrack_.checkAngleX && fabs(tracker.get_angleX()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
         {
           PRINT("Tracker failed: target X angle too large.\n");
           trackingSucceeded = false;
@@ -1451,23 +1454,26 @@ namespace Anki {
       }
 
       Result SetMarkerToTrack(const Vision::MarkerType& markerTypeToTrack,
-        const f32 markerWidth_mm)
+                              const f32 markerWidth_mm,
+                              const bool checkAngleX)
       {
         const Point2f imageCenter(-1.f, -1.f);
         const f32     searchRadius = -1.f;
         return SetMarkerToTrack(markerTypeToTrack, markerWidth_mm,
-          imageCenter, searchRadius);
+          imageCenter, searchRadius, checkAngleX);
       }
 
       Result SetMarkerToTrack(const Vision::MarkerType& markerTypeToTrack,
-        const f32 markerWidth_mm,
-        const Point2f& atImageCenter,
-        const f32 imageSearchRadius)
+                              const f32 markerWidth_mm,
+                              const Point2f& atImageCenter,
+                              const f32 imageSearchRadius,
+                              const bool checkAngleX)
       {
         newMarkerToTrack_.type              = markerTypeToTrack;
         newMarkerToTrack_.width_mm          = markerWidth_mm;
         newMarkerToTrack_.imageCenter       = atImageCenter;
         newMarkerToTrack_.imageSearchRadius = imageSearchRadius;
+        newMarkerToTrack_.checkAngleX       = checkAngleX;
         
         // Next call to Update(), we will call UpdateMarkerToTrack() and
         // actually replace the current markerToTrack_ with the one set here.
@@ -1478,7 +1484,7 @@ namespace Anki {
       
       void StopTracking()
       {
-        SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f);
+        SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f, true);
       }
 
       const Embedded::FixedLengthList<Embedded::VisionMarker>& GetObservedMarkerList()
@@ -2143,7 +2149,7 @@ namespace Anki {
           {
             const VisionMarker& crntMarker = VisionMemory::markers_[i_marker];
 
-            if (!IMUFilter::IsPickedUp()) {
+            if (!Localization::IsOnRamp() && !IMUFilter::IsPickedUp()) {
               // Create a vision marker message and process it (which just queues it
               // in the mailbox to be picked up and sent out by main execution)
               {
@@ -2371,7 +2377,8 @@ namespace Anki {
               SetMarkerToTrack(markerToTrack_.type,
                 markerToTrack_.width_mm,
                 markerToTrack_.imageCenter,
-                markerToTrack_.imageSearchRadius);
+                markerToTrack_.imageSearchRadius,
+                markerToTrack_.checkAngleX);
             }
           }
 

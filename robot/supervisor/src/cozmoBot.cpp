@@ -19,6 +19,7 @@
 #include "wheelController.h"
 #include "visionSystem.h"
 #include "animationController.h"
+#include "proxSensors.h"
 
 #include "anki/messaging/shared/utilMessaging.h"
 
@@ -277,6 +278,7 @@ namespace Anki {
         IMUFilter::Update();
 #endif        
         
+        ProxSensors::Update();
         
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates

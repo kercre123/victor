@@ -468,6 +468,11 @@
               <FileType>1</FileType>
               <FilePath>.\arm_hal\hal\system_stm32f4xx.c</FilePath>
             </File>
+            <File>
+              <FileName>sharp.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\sharp.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -762,6 +767,11 @@
               <FileName>animationController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\animationController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>proxSensors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1611,6 +1621,11 @@
               <FileType>1</FileType>
               <FilePath>.\arm_hal\hal\system_stm32f4xx.c</FilePath>
             </File>
+            <File>
+              <FileName>sharp.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\sharp.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1962,6 +1977,11 @@
               <FileName>animationController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\animationController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>proxSensors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
             </File>
           </Files>
         </Group>

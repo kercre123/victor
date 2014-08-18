@@ -14,8 +14,6 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-// TODO: Separate ObservableObjectLibrary into its own h/cpp files
-
 #ifndef ANKI_VISION_OBSERVABLE_OBJECT_H
 #define ANKI_VISION_OBSERVABLE_OBJECT_H
 
@@ -25,6 +23,8 @@
 #include "anki/vision/basestation/visionMarker.h"
 
 #include "anki/common/basestation/objectTypesAndIDs.h"
+
+#include "anki/common/basestation/colorRGBA.h"
 
 namespace Anki {
   namespace Vision {
@@ -43,11 +43,12 @@ namespace Anki {
     {
     public:
       // Do we want to be req'd to instantiate with all codes up front?
-      ObservableObject(){};
+      ObservableObject();
       
-      ObservableObject(ObjectType type);
-      
-      //ObservableObject(const std::vector<std::pair<Marker::Code,Pose3d> >& codesAndPoses);
+      // For creating a fresh new derived object from a pointer to this base class.
+      // NOTE: This just creates a fresh object, and does not copy the original
+      //  object's pose, ID, or other state.
+      virtual ObservableObject* CloneType() const = 0;
       
       virtual ~ObservableObject(){};
       
@@ -64,9 +65,12 @@ namespace Anki {
       // with that code.
       std::vector<KnownMarker*> const& GetMarkersWithCode(const Marker::Code& whichCode) const;
       
-      // Pupolate a vector of const pointers to all this object's markers that
-      // have been observed since the specified time.  The vector will be empty
-      // if no markers have been observed since then.
+      // Populate a vector of const pointers to all this object's markers that
+      // have been observed since the specified time. The vector will be unchanged
+      // if no markers have been observed since then. Note that the vector is
+      // not cleared internally, so this method _adds_ markers to existing
+      // container. It is the caller's responsibility to clear the vector if
+      // desired.
       void GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
                               const TimeStamp_t sinceTime) const;
 
@@ -97,13 +101,16 @@ namespace Anki {
                          const bool requireSomethingBehind) const;
       
       // Accessors:
-      ObjectID        GetID()     const;
-      ObjectType      GetType()   const;
-      const Pose3d&   GetPose()   const;
+      ObjectID           GetID()     const;
+      virtual ObjectType GetType()   const = 0;
+      const Pose3d&      GetPose()   const;
+      const ColorRGBA&   GetColor()  const;
       //virtual float GetMinDim() const = 0;
       
-      void SetID(); //const ObjectID newID);
+      void SetID();
+      void SetColor(const ColorRGBA& color);
       void SetPose(const Pose3d& newPose);
+      void SetPoseParent(const Pose3d* newParent);
       
       void SetLastObservedTime(TimeStamp_t t) {lastObservedTime_ = t;}
       const TimeStamp_t GetLastObservedTime() const {return lastObservedTime_;}
@@ -112,24 +119,30 @@ namespace Anki {
       // overload this function to provide for rotational ambiguity when
       // comparing, e.g. for cubes or other blocks.
       virtual bool IsSameAs(const ObservableObject&  otherObject,
-                            const float   distThreshold,
-                            const Radians angleThreshold,
+                            const Point3f&  distThreshold,
+                            const Radians&  angleThreshold,
                             Pose3d& P_diff) const;
       
       virtual bool IsSameAs(const ObservableObject&  otherObject,
-                            const float   distThreshold,
-                            const Radians angleThreshold) const;
+                            const Point3f& distThreshold,
+                            const Radians& angleThreshold) const;
+      
+      // Same as other IsSameAs() calls above, except the tolerance thresholds
+      // given by the virtual members below are used (so that per-object-class
+      // thresholds can be defined)
+      bool IsSameAs(const ObservableObject& otherObject) const;
+      bool IsSameAs(const ObservableObject& otherObject, Pose3d& P_diff) const;
+      
+      virtual Point3f GetSameDistanceTolerance() const = 0;
+      virtual Radians GetSameAngleTolerance() const = 0;
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
-      
-      // For creating derived objects from a pointer to this base class, see
-      // ObservableObjectBase below
-      virtual ObservableObject* Clone() const = 0;
       
       virtual void GetCorners(std::vector<Point3f>& corners) const;
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const = 0;
       
-      virtual void Visualize() = 0;
+      virtual void Visualize(); // using internal ColorRGBA
+      virtual void Visualize(const ColorRGBA& color) = 0; // using specified color
       virtual void EraseVisualization() = 0;
       
       Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
@@ -140,9 +153,26 @@ namespace Anki {
       static const std::vector<RotationMatrix3d> sRotationAmbiguities;
       static const std::vector<KnownMarker*> sEmptyMarkerVector;
       
-      ObjectType   type_;
+      // Helper method for subclasses to use for creating bounding quads
+      template<size_t NUM_CORNERS>
+      static Quad2f GetBoundingQuadXY_Helper(const Pose3d& atPose,
+                                             const Point3f& paddedSize,
+                                             const std::array<Point3f,NUM_CORNERS>& canonicalCorners);
+      
+      // Helper method for subclasses to use for getting corners at a pose
+      template<size_t NUM_CORNERS>
+      static void GetCorners_Helper(const Pose3d& atPose,
+                                    const std::array<Point3f,NUM_CORNERS>& canonicalCorners,
+                                    std::vector<Point3f>& corners);
+
+      
+      //virtual const std::vector<Point3f>& GetCanonicalCorners() const = 0;
+      
+      //ObjectType   type_;
       ObjectID     ID_;
       TimeStamp_t  lastObservedTime_;
+      
+      ColorRGBA color_;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers
@@ -152,9 +182,10 @@ namespace Anki {
       // code.
       std::map<Marker::Code, std::vector<KnownMarker*> > markersWithCode_;
       
-      Pose3d pose_;
-      
       bool wasObserved_;
+      
+      // For subclasses can get a modifiable pose reference
+      Pose3d& GetNonConstPose() { return pose_; }
       
       /*
       // Canonical pose used as the parent pose for the object's markers so
@@ -174,9 +205,12 @@ namespace Anki {
       std::list<Pose3d> possiblePoses_;
       */
     private:
+      // Force setting of pose through SetPose() to keep pose name updated
+      Pose3d pose_;
+      
       // Don't allow a copy constuctor, because it won't handle fixing the
       // marker pointers and pose parents
-      ObservableObject(const ObservableObject& other);
+      //ObservableObject(const ObservableObject& other);
       
     };
   
@@ -185,7 +219,7 @@ namespace Anki {
     // Inline accessors
     //
     /*
-    inline std::set<const Camera*> const& ObservableObject::GetObserver() const {
+    inline std::set<const Camera*> const&de ObservableObject::GetObserver() const {
       return observers_;
     }
      */
@@ -194,9 +228,15 @@ namespace Anki {
       return ID_;
     }
     
+    inline const ColorRGBA& ObservableObject::GetColor() const {
+      return color_;
+    }
+    
+    /*
     inline ObjectType ObservableObject::GetType() const {
       return type_;
     }
+     */
     
     //virtual float GetMinDim() const = 0;
     inline const Pose3d& ObservableObject::GetPose() const {
@@ -210,11 +250,22 @@ namespace Anki {
   
     inline void ObservableObject::SetPose(const Pose3d& newPose) {
       pose_ = newPose;
+      
+      std::string poseName(GetType().GetName());
+      if(poseName.empty()) {
+        poseName = "Object";
+      }
+      poseName += "_" + std::to_string(GetID().GetValue());
+      pose_.SetName(poseName);
+    }
+    
+    inline void ObservableObject::SetPoseParent(const Pose3d* newParent) {
+      pose_.SetParent(newParent);
     }
     
     inline bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
-                                           const float              distThreshold,
-                                           const Radians            angleThreshold) const
+                                           const Point3f&           distThreshold,
+                                           const Radians&           angleThreshold) const
     {
       Pose3d P_diff_temp;
       return this->IsSameAs(otherObject, distThreshold, angleThreshold,
@@ -225,7 +276,68 @@ namespace Anki {
     {
       return ObservableObject::sRotationAmbiguities;
     }
-                                    
+    
+    inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject, Pose3d& P_diff) const {
+      return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance(), P_diff);
+    }
+    
+    inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject) const {
+      return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance());
+    }
+    
+    // Templated methods
+    template<size_t NUM_CORNERS>
+    Quad2f ObservableObject::GetBoundingQuadXY_Helper(const Pose3d& atPose,
+                                                      const Point3f& paddedSize,
+                                                      const std::array<Point3f,NUM_CORNERS>& canonicalCorners)
+    {
+      const RotationMatrix3d& R = atPose.GetRotationMatrix();
+      
+      std::vector<Point2f> points;
+      points.reserve(NUM_CORNERS);
+      for(auto corner : canonicalCorners) {
+        // Scale canonical point to correct (padded) size
+        corner *= paddedSize;
+        
+        // Rotate to given pose
+        corner = R*corner;
+        
+        // Project onto XY plane, i.e. just drop the Z coordinate
+        points.emplace_back(corner.x(), corner.y());
+      }
+      
+      Quad2f boundingQuad = GetBoundingQuad(points);
+      
+      // Re-center
+      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
+      boundingQuad += center;
+      
+      return boundingQuad;
+    }
+    
+    template<size_t NUM_CORNERS>
+    void ObservableObject::GetCorners_Helper(const Pose3d& atPose,
+                                             const std::array<Point3f,NUM_CORNERS>& canonicalCorners,
+                                             std::vector<Point3f>& corners)
+    {
+      corners.resize(NUM_CORNERS);
+      for(s32 i=0; i<NUM_CORNERS; ++i) {
+        // Start with canonical corner
+        corners[i] = canonicalCorners[i];
+        
+        // Move to given pose
+        corners[i] = atPose * corners[i];
+      }
+    } // GetCorners()
+    
+    inline void ObservableObject::SetColor(const Anki::ColorRGBA &color) {
+      color_ = color;
+    }
+    
+    inline void ObservableObject::Visualize() {
+      Visualize(color_);
+    }
+    
     /*
     // Derive specific observable objects from this class to get a clone method,
     // without having to specifically write one in each derived class.
@@ -246,93 +358,6 @@ namespace Anki {
       }
     };
     */
-    
-    class ObservableObjectLibrary
-    {
-    public:
-      
-      ObservableObjectLibrary(){};
-      
-      u32 GetNumObjects() const;
-      
-      //bool IsInitialized() const;
-      
-      // Add an object to the known list. Note that this permits addition of
-      // objects at run time.
-      void AddObject(const ObservableObject* object);
-      
-      // Groups markers referring to the same type, and clusters them into
-      // observed objects, returned in objectsSeen.  Used markers will be
-      // removed from the input list, so markers referring to objects unknown
-      // to this library will remain.  If seenOnlyBy is not ANY_CAMERA, only markers
-      // seen by that camera will be considered and objectSeen poses will be returned
-      // wrt to that camera. If seenOnlyBy is ANY_CAMERA, the poses are returned wrt the world.
-      void CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
-                                    std::vector<ObservableObject*>& objectsSeen,
-                                    const CameraID_t seenOnlyBy = ANY_CAMERA) const;
-      
-      // Only one object in a library can have each type. Return a pointer to
-      // that object, or NULL if none exists.
-      const ObservableObject* GetObjectWithType(const ObjectType type) const;
-      
-      // Return a pointer to a vector of pointers to known objects with at
-      // least one of the specified markers or codes on it. If  there is no
-      // object with that marker/code, a NULL pointer is returned.
-      std::set<const ObservableObject*> const& GetObjectsWithMarker(const Marker& marker) const;
-      std::set<const ObservableObject*> const& GetObjectsWithCode(const Marker::Code& code) const;
-      
-    protected:
-      
-      static const std::set<const ObservableObject*> sEmptyObjectVector;
-      
-      //std::list<const ObservableObject*> knownObjects_;
-      std::map<ObjectType, const ObservableObject*> knownObjects_;
-      
-      // Store a list of pointers to all objects that have at least one marker
-      // with that code.  You can then use the objects' GetMarkersWithCode()
-      // method to get the list of markers on each object.
-      //std::map<Marker::Code, std::vector<const ObservableObject*> > objectsWithCode_;
-      std::map<Marker::Code, std::set<const ObservableObject*> > objectsWithCode_;
-      
-      // A PoseCluster is a pairing of a single pose and all the marker matches
-      // that imply that pose
-      class PoseCluster
-      {
-      public:
-        using MatchList = std::list<std::pair<const ObservedMarker*, KnownMarker> >;
-        
-        PoseCluster(const PoseMatchPair& match);
-        
-        // Returns true if match was added
-        bool TryToAddMatch(const PoseMatchPair& match,
-                           const float distThreshold, const Radians angleThreshold,
-                           const std::vector<RotationMatrix3d>& R_ambiguities);
-        
-        const Pose3d& GetPose() const { return pose_; }
-        const size_t  GetSize() const { return matches_.size(); }
-        
-        const MatchList& GetMatches() const { return matches_; }
-        
-        // Updates pose based on all member matches. Does nothing if there is
-        // only one member.
-        void RecomputePose();
-        
-      protected:
-        Pose3d pose_;
-        
-        MatchList matches_;
-        
-        std::set<const ObservedMarker*> obsMarkerSet_;
-        
-      }; // class PoseCluster
-      
-      void ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
-                              const ObservableObject*         libObject,
-                              const float distThreshold, const Radians angleThreshold,
-                              std::vector<PoseCluster>& poseClusters) const;
-
-    }; // class ObservableObjectLibrary
-    
     
   } // namespace Vision
 } // namespace Anki

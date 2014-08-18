@@ -24,25 +24,21 @@
 namespace Anki {
   namespace Cozmo {
     
-    const Block::Type Block::Type::INVALID;
+    const Block::Type Block::Type::INVALID("INVALID");
     
 #define BLOCK_DEFINITION_MODE BLOCK_ENUM_VALUE_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
     
-    const std::map<ObjectType, std::string> Block::TypeToStringLUT = {
-#define BLOCK_DEFINITION_MODE BLOCK_TYPE_TO_STRING_LUT_MODE
-#include "anki/cozmo/basestation/BlockDefinitions.h"
+    // Static helper for looking up block properties by type
+    const Block::BlockInfoTableEntry_t& Block::LookupBlockInfo(const ObjectType type)
+    {
+      static const std::map<ObjectType, Block::BlockInfoTableEntry_t> BlockInfoLUT = {
+#       define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
+#       include "anki/cozmo/basestation/BlockDefinitions.h"
     };
-    
-    const std::map<ObjectType, Block::BlockInfoTableEntry_t> Block::BlockInfoLUT_ = {
-#define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
-#include "anki/cozmo/basestation/BlockDefinitions.h"
-    };
-    
-    const std::map<std::string, Block::Type> Block::BlockNameToTypeMap = {
-#define BLOCK_DEFINITION_MODE BLOCK_STRING_TO_TYPE_LUT_MODE
-#include "anki/cozmo/basestation/BlockDefinitions.h"
-    };
+      return BlockInfoLUT.at(type);
+    }
+
     
 #pragma mark --- Generic Block Implementation ---
     
@@ -71,32 +67,32 @@ namespace Anki {
       switch(whichFace)
       {
         case FRONT_FACE:
-          facePose = Pose3d(-M_PI_2, Z_AXIS_3D, {{-halfDepth, 0.f, 0.f}},  &pose_);
+          facePose = Pose3d(-M_PI_2, Z_AXIS_3D, {{-halfDepth, 0.f, 0.f}},  &GetPose());
           //facePose = Pose3d(0,       Z_AXIS_3D, {{-halfDepth, 0.f, 0.f}},  &pose_);
           break;
           
         case LEFT_FACE:
-          facePose = Pose3d(M_PI, Z_AXIS_3D, {{0.f, halfWidth, 0.f}},  &pose_);
+          facePose = Pose3d(M_PI, Z_AXIS_3D, {{0.f, halfWidth, 0.f}},  &GetPose());
           //facePose = Pose3d(-M_PI_2, Z_AXIS_3D, {{0.f, -halfWidth, 0.f}},  &pose_);
           break;
           
         case BACK_FACE:
-          facePose = Pose3d(M_PI_2,    Z_AXIS_3D, {{halfDepth, 0.f, 0.f}},   &pose_);
+          facePose = Pose3d(M_PI_2,    Z_AXIS_3D, {{halfDepth, 0.f, 0.f}},   &GetPose());
           //facePose = Pose3d(0,    Z_AXIS_3D, {{halfDepth, 0.f, 0.f}},   &pose_);
           break;
           
         case RIGHT_FACE:
-          facePose = Pose3d(0,  Z_AXIS_3D, {{0.f, -halfWidth, 0.f}},   &pose_);
+          facePose = Pose3d(0,  Z_AXIS_3D, {{0.f, -halfWidth, 0.f}},   &GetPose());
           //facePose = Pose3d(M_PI_2,  Z_AXIS_3D, {{0.f, halfWidth, 0.f}},   &pose_);
           break;
           
         case TOP_FACE:
-          facePose = Pose3d(-M_PI_2,  X_AXIS_3D, {{0.f, 0.f, halfHeight}},  &pose_);
+          facePose = Pose3d(-M_PI_2,  X_AXIS_3D, {{0.f, 0.f, halfHeight}},  &GetPose());
           //facePose = Pose3d(M_PI_2,  Y_AXIS_3D, {{0.f, 0.f, halfHeight}},  &pose_);
           break;
           
         case BOTTOM_FACE:
-          facePose = Pose3d(M_PI_2, X_AXIS_3D, {{0.f, 0.f, -halfHeight}}, &pose_);
+          facePose = Pose3d(M_PI_2, X_AXIS_3D, {{0.f, 0.f, -halfHeight}}, &GetPose());
           //facePose = Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -halfHeight}}, &pose_);
           break;
           
@@ -104,10 +100,14 @@ namespace Anki {
           CORETECH_THROW("Unknown block face.\n");
       }
       
-      Vision::KnownMarker const& marker = AddMarker(code, facePose, markerSize_mm);
+      const Vision::KnownMarker* marker = &AddMarker(code, facePose, markerSize_mm);
+      
+      // Add a pre-dock pose to each face, at fixed distance normal to the face:
+      const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
+      AddPreActionPose(PreActionPose::DOCKING, marker, DefaultPreDockPoseDistance);
       
       // Store a pointer to the marker on each face:
-      markersByFace_[whichFace] = &marker;
+      markersByFace_[whichFace] = marker;
       
       //facesWithMarkerCode_[marker.GetCode()].push_back(whichFace);
       
@@ -142,15 +142,16 @@ namespace Anki {
     }
     
     Block::Block(const ObjectType type)
-    : DockableObject(type)
-    , _color(BlockInfoLUT_.at(type).color)
-    , _size(BlockInfoLUT_.at(type).size)
-    , _name(BlockInfoLUT_.at(type).name)
+    : _type(type)
+    , _size(LookupBlockInfo(_type).size)
+    , _name(LookupBlockInfo(_type).name)
     , _vizHandle(VizManager::INVALID_HANDLE)
     {
+      SetColor(LookupBlockInfo(_type).color);
+               
       markersByFace_.fill(NULL);
       
-      for(auto face : BlockInfoLUT_.at(type_).faces) {
+      for(auto face : LookupBlockInfo(_type).faces) {
         AddFace(face.whichFace, face.code, face.size);
       }
       
@@ -160,17 +161,9 @@ namespace Anki {
     } // Constructor: Block(type)
     
     
-    Block::Block(const Block& otherBlock)
-    : Block(otherBlock.GetType()) // just create an all-new block of the same type
-    {
-      // Put this new block at the new at the same pose as the other block
-      SetPose(otherBlock.GetPose());
-      
-    } // Copy Constructor: Block(otherBlock)
-    
     Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const
     {
-      return GetBoundingQuadInPlane(planeNormal, pose_, padding_mm);
+      return GetBoundingQuadInPlane(planeNormal, GetPose(), padding_mm);
     }
     
     
@@ -305,6 +298,22 @@ namespace Anki {
     }
     */
    
+    /*
+    f32 Block::GetDefaultPreDockDistance() const
+    {
+      return Block::PreDockDistance;
+    } 
+     */
+    
+    Point3f Block::GetSameDistanceTolerance() const {
+      return _size*.5f;
+    }
+    
+    Radians Block::GetSameAngleTolerance() const {
+      return DEG_TO_RAD(45.f); // TODO: too loose?
+    }
+    
+    
     // These should match the order in which faces are defined! (See Block constructor)
     const std::array<Point3f, 6> Block::CanonicalDockingPoints = {
       {-X_AXIS_3D,
@@ -315,7 +324,7 @@ namespace Anki {
        -Z_AXIS_3D}
     };
     
-    
+    /*
     void Block::GetPreDockPoses(const float distance_mm,
                                 std::vector<PoseMarkerPair_t>& poseMarkerPairs,
                                 const Vision::Marker::Code withCode) const
@@ -334,7 +343,7 @@ namespace Anki {
       } // for each canonical docking point
       
     } // Block::GetDockingPoses()
-    
+    */
     
     
     const Block::FaceName Block::OppositeFaceLUT[Block::NUM_FACES] = {
@@ -404,21 +413,10 @@ namespace Anki {
       return *markerPtr;
       
     } // Block::GetMarker()
-
-    void Block::Visualize()
-    {
-      Visualize(_color);
-    }
     
-    void Block::Visualize(VIZ_COLOR_ID color)
+    void Block::Visualize(const ColorRGBA& color)
     {
-      Pose3d vizPose;
-      if(pose_.GetWithRespectTo(pose_.FindOrigin(), vizPose) == false) {
-        // This really should not happen, by definition...
-        PRINT_NAMED_ERROR("Block.Visualize.OriginProblem", "Could not get block's pose w.r.t. its own origin (?!?)\n");
-        return;
-      }
-      
+      Pose3d vizPose = GetPose().GetWithRespectToOrigin();
       _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }
     
@@ -431,13 +429,21 @@ namespace Anki {
       }
       
       // Erase the pre-dock poses
-      DockableObject::EraseVisualization();
+      //DockableObject::EraseVisualization();
+      ActionableObject::EraseVisualization();
     }
     
     
-    ObjectType Block::GetTypeByName(const std::string& name) {
-      auto typeIter = Block::BlockNameToTypeMap.find(name);
-      if(typeIter != Block::BlockNameToTypeMap.end()) {
+    ObjectType Block::GetTypeByName(const std::string& name)
+    {
+      static const std::map<std::string, Block::Type> BlockNameToTypeMap =
+      {
+#       define BLOCK_DEFINITION_MODE BLOCK_STRING_TO_TYPE_LUT_MODE
+#       include "anki/cozmo/basestation/BlockDefinitions.h"
+      };
+      
+      auto typeIter = BlockNameToTypeMap.find(name);
+      if(typeIter != BlockNameToTypeMap.end()) {
         return typeIter->second;
       } else {
         return Block::Type::INVALID;
@@ -463,16 +469,6 @@ namespace Anki {
       return Block_Cube1x1::rotationAmbiguities_;
     }
     
-    Block_Cube1x1::Block_Cube1x1(Block::Type type)
-    : Block(type)
-    {
-      // The sizes specified by the block definitions should
-      // agree with this being a cube (all dimensions the same)
-      CORETECH_ASSERT(_size.x() == _size.y())
-      CORETECH_ASSERT(_size.y() == _size.z())
-    }
-    
-    
 #pragma mark ---  Block_2x1 Implementation ---
     
     //const ObjectType Block_2x1::BlockType = Block::NumTypes++;
@@ -485,12 +481,6 @@ namespace Anki {
     std::vector<RotationMatrix3d> const& Block_2x1::GetRotationAmbiguities() const
     {
       return Block_2x1::rotationAmbiguities_;
-    }
-    
-    Block_2x1::Block_2x1(Block::Type type)
-    : Block(type)
-    {
-      
     }
 
     

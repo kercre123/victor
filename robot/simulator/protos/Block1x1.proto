@@ -9,12 +9,6 @@ PROTO Block1x1 [
   field SFColor blockColor 1 0 0
   field SFBool  useWhiteMarkerBackgrounds TRUE
   field SFString markerImg ""  # Image path relative to textures/
-
-  # Observation
-  #field SFColor obsColor 1 1 0
-  #field SFFloat obsTransparency 1.0 # initially invisible
-  #field SFVec3f obsTranslation 0 0 0
-  #field SFRotation obsRotation 0  0 1 0 
 ]
 {
 Robot {
@@ -33,103 +27,61 @@ Robot {
   rotation IS rotation
   contactMaterial "cmat_block"
   children [
-    DEF Block1x1Texture Transform {
-      children [
-        Connector {
-          name "connector1"
-          translation 0 0 0.022
-          rotation 0 1 0 0
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        Connector {
-          name "connector2"
-          translation 0 0 -0.022
-          rotation 0 1 0 3.14159
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        
-        Connector {
-          name "connector3"
-          translation 0.022 0 0
-          rotation 0 1 0 1.57079
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        Connector {
-          name "connector4"
-          translation -0.022 0 0
-          rotation 0 1 0 -1.57079
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        
-        Connector {
-          name "connector5"
-          translation 0 0.022 0
-          rotation 1 0 0 -1.57079
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        Connector {
-          name "connector6"
-          translation 0 -0.022 0
-          rotation 1 0 0 1.57079
-          model "magnetic"
-          type "passive"
-          autoLock TRUE
-        }
-        
-        # Front Face
-        VisionMarker {
-          rotation 0 0 1 -1.5708
-          translation -0.022 0 0
-          image IS markerImg
-        }
-        
-        # Back Face
-        VisionMarker {
-          rotation 0 0 1 1.5708
-          translation 0.022 0 0
-          image IS markerImg
-        }
-        
-        # Bottom Face
-        VisionMarker {
-          rotation 1 0 0 1.5708
-          translation 0 0 -0.022
-          image IS markerImg
-        }
-        
-        # Top Face
-        VisionMarker {
-          rotation 1 0 0 1.5708
-          translation 0 0 0.022
-          image IS markerImg
-        }
-                
-        # Left Face
-        VisionMarker {
-          rotation 0 0 1 3.1415
-          translation 0 0.022 0
-          image IS markerImg
-        }
-        
-        # Right Face
-        VisionMarker {
-          rotation 0 0 1 0
-          translation 0 -0.022 0
-					image IS markerImg
-        }
+		
+		# Front Face
+		VisionMarker {
+			rotation 0 0 1 -1.5708
+			translation -0.022 0 0
+			image IS markerImg
+			connectorName "connectorFront"
+			connectorRotation 0 1 0 -1.57079
+		}
+		
+		# Back Face
+		VisionMarker {
+			rotation 0 0 1 1.5708
+			translation 0.022 0 0
+			image IS markerImg
+			connectorName "connectorBack"
+			connectorRotation 0 1 0 1.57079
+		}
+		
+		# Bottom Face
+		VisionMarker {
+			rotation 1 0 0 1.5708
+			translation 0 0 -0.022
+			image IS markerImg
+			connectorName "connectorBottom"
+			connectorRotation 0 1 0 3.14159
+		}
+		
+		# Top Face
+		VisionMarker {
+			rotation 1 0 0 1.5708
+			translation 0 0 0.022
+			image IS markerImg
+			connectorName "connectorTop"
+			connectorRotation 0 1 0 0
+		}
+						
+		# Left Face
+		VisionMarker {
+			rotation 0 0 1 3.1415
+			translation 0 0.022 0
+			image IS markerImg
+			connectorName "connectorLeft"
+			connectorRotation 1 0 0 -1.57079
+		}
+		
+		# Right Face
+		VisionMarker {
+			rotation 0 0 1 0
+			translation 0 -0.022 0
+			image IS markerImg
+			connectorName "connectorRight"
+			connectorRotation 1 0 0 1.57079
+		}
 
-      ]
-    }
     DEF Block1x1Shape Shape {
       appearance Appearance {
         material Material {

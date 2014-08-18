@@ -130,7 +130,7 @@ namespace Anki {
 
       if(mxIsCell(matlabArray)) {
         AnkiError("mxArrayToArray", "Input can't be a cell array. Use mxCellArrayToArray() instead.");
-        return Array<Type>(dimensions[0], dimensions[1], memory);
+        return Array<Type>(static_cast<s32>(dimensions[0]), static_cast<s32>(dimensions[1]), memory);
       }
 
       mxClassID matlabClassId;
@@ -178,7 +178,7 @@ namespace Anki {
       }
 
       if(dimensions[0] == 0 || dimensions[1] == 0) {
-        return Array<Array<Type> >(dimensions[0], dimensions[1], memory);
+        return Array<Array<Type> >(static_cast<s32>(dimensions[0]), static_cast<s32>(dimensions[1]), memory);
       }
 
       mxClassID matlabClassId;
@@ -267,7 +267,7 @@ namespace Anki {
 
           char * curMatlabString = mxArrayToString(curMatlabArray);
 
-          const s32 stringLength = strlen(curMatlabString) + 1;
+          const s32 stringLength = static_cast<s32>(strlen(curMatlabString)) + 1;
 
           char * curCString = reinterpret_cast<char*>(memory.Allocate(stringLength));
 

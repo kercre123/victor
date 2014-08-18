@@ -18,7 +18,7 @@
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
-#include "dockableObject.h"
+#include "actionableObject.h"
 #include "vizManager.h"
 
 namespace Anki {
@@ -38,24 +38,20 @@ namespace Anki {
     //
     //   Representation of a physical Block in the world.
     //
-    class Block : public DockableObject //Base<Block>
+    class Block : public ActionableObject 
     {
     public:
-      using Color = VIZ_COLOR_ID;
       
 #include "anki/cozmo/basestation/BlockDefinitions.h"
       
       // Enumerated block types
       class Type : public ObjectType {
-        Type() { }
+        Type(const std::string& name) : ObjectType(name) { }
       public:
         static const Type INVALID;
 #define BLOCK_DEFINITION_MODE BLOCK_ENUM_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
       };
-      
-      // LUT for String Names for each enumerated block Type
-      static const std::map<ObjectType, std::string> TypeToStringLUT;
       
       // NOTE: if the ordering of these is modified, you must also update
       //       the static OppositeFaceLUT.
@@ -84,10 +80,6 @@ namespace Anki {
         RIGHT_BACK_BOTTOM =  7,
         NUM_CORNERS       =  8
       };
-      
-      Block(const ObjectType type);
-      
-      Block(const Block& other); 
       
       virtual ~Block();
       
@@ -129,6 +121,10 @@ namespace Anki {
       // Get the block's corners at a specified pose
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
       
+      virtual Point3f GetSameDistanceTolerance() const override;
+      virtual Radians GetSameAngleTolerance() const override;
+      
+      /*
       // Get possible poses to start docking/tracking procedure. These will be
       // a point a given distance away from each vertical face that has the
       // specified code, in the direction orthogonal to that face.  The points
@@ -139,6 +135,10 @@ namespace Anki {
       virtual void GetPreDockPoses(const float distance_mm,
                                    std::vector<PoseMarkerPair_t>& poseMarkerPairs,
                                    const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
+      
+      // Return the default distance from which to start docking
+      virtual f32  GetDefaultPreDockDistance() const override;
+      */
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding 2D quadrilateral. Pads the
@@ -151,20 +151,22 @@ namespace Anki {
       Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const;
       Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding_mm) const;
       
-      // Visualize using VizManager.  If preDockPoseDistance > 0, pre dock poses
-      // will also be drawn
-      virtual void Visualize() override;
-      virtual void Visualize(VIZ_COLOR_ID color) override;
+      // Visualize using VizManager.
+      virtual void Visualize(const ColorRGBA& color) override;
       virtual void EraseVisualization() override;
+      
+      virtual ObjectType GetType() const override { return _type; }
 
     protected:
       
       static const FaceName OppositeFaceLUT[NUM_FACES];
       
-      //static ObjectType NumTypes;
+      Block(const ObjectType type);
       
       // Make this protected so we have to use public AddFace() method
       using Vision::ObservableObject::AddMarker;
+      
+      const ObjectType _type;
       
       //std::map<Vision::Marker::Code, std::vector<FaceName> > facesWithCode;
       
@@ -182,19 +184,20 @@ namespace Anki {
       
       typedef struct {
         std::string          name;
-        Block::Color         color;
+        ColorRGBA            color;
         Point3f              size;
         std::vector<BlockFaceDef_t> faces;
       } BlockInfoTableEntry_t;
       
-      static const std::map<ObjectType, BlockInfoTableEntry_t> BlockInfoLUT_;
-      static const std::map<std::string, Block::Type> BlockNameToTypeMap;
-      
+      //static const std::map<ObjectType, BlockInfoTableEntry_t> BlockInfoLUT_;
+      static const BlockInfoTableEntry_t& LookupBlockInfo(const ObjectType type);
+            
       static const std::array<Point3f,NUM_FACES> CanonicalDockingPoints;
       
       static const std::array<Point3f,NUM_CORNERS> CanonicalCorners;
       
-      Color       _color;
+      constexpr static const f32 PreDockDistance = 100.f;
+      
       Point3f     _size;
       std::string _name;
       
@@ -218,21 +221,45 @@ namespace Anki {
     {
     public:
       
-      Block_Cube1x1(Type type);
+      Block_Cube1x1(Type type) : Block_Cube1x1(static_cast<ObjectType>(type)) { }
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
       
-      virtual Block_Cube1x1* Clone() const override
+      virtual Block_Cube1x1* CloneType() const override
       {
-        // Call the copy constructor
-        return new Block_Cube1x1(*this);
+        return new Block_Cube1x1(this->_type);
       }
       
     protected:
+      
+      Block_Cube1x1(ObjectType type)
+      : Block(type)
+      {
+        // The sizes specified by the block definitions should
+        // agree with this being a cube (all dimensions the same)
+        CORETECH_ASSERT(_size.x() == _size.y())
+        CORETECH_ASSERT(_size.y() == _size.z())
+      }
+      
       //static const ObjectType BlockType;
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
     };
+    
+    /*
+#   define MAKE_BLOCK_CLASS(__BLOCK_NAME__) \
+    class __BLOCK_NAME__ : public Block_Cube1x1 { \
+      public: \
+      virtual __BLOCK_NAME__* Clone() const override { \
+        return new __BLOCK_NAME__(*this); \
+      } \
+      virtual ObjectType GetType() const override { \
+        static const ObjectType type(QUOTE(__BLOCK_NAME__)); \
+        return type; \
+    };
+    
+    MAKE_BLOCK_CLASS(Block_Cube1x1_AngryFace)
+    */
     
     // Long dimension is along the x axis (so one unique face has x axis
     // sticking out of it, the other unique face type has y and z axes sticking
@@ -240,17 +267,24 @@ namespace Anki {
     class Block_2x1 : public Block
     {
     public:
-      Block_2x1(Type type);
+      // Public constructor forcing caller to use valid Block::Type
+      Block_2x1(Type type) : Block_2x1(static_cast<ObjectType>(type)) { }
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
       
-      virtual Block_2x1* Clone() const override
+      virtual Block_2x1* CloneType() const override
       {
-        // Call the copy constructor
-        return new Block_2x1(*this);
+        return new Block_2x1(this->_type);
       }
       
     protected:
+      // Protected constructor using generic ObjectType
+      Block_2x1(ObjectType type)
+      : Block(type)
+      {
+
+      }
+      
       //static const ObjectType BlockType;
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       

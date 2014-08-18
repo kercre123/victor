@@ -31,6 +31,8 @@
 #ifndef _ANKICORETECH_MATH_POSE_H_
 #define _ANKICORETECH_MATH_POSE_H_
 
+#include "anki/common/basestation/utils/logging/logging.h"
+
 #include "anki/common/basestation/math/matrix.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/poseBase.h"
@@ -114,6 +116,9 @@ namespace Anki {
     // pose is stored in newPoseWrtOtherPose.
     bool GetWithRespectTo(const Pose2d& otherPose,
                           Pose2d& newPoseWrtOtherPose) const;
+    
+    // Get pose with respect to its origin
+    Pose2d GetWithRespectToOrigin() const;
 
     const Pose2d& FindOrigin() const;
     
@@ -150,7 +155,8 @@ namespace Anki {
     
     // Construct from rotation vector and translation vector
     Pose3d(const RotationVector3d &Rvec, const Vec3f &T,
-           const Pose3d *parentPose = Pose3d::GetWorldOrigin());
+           const Pose3d *parentPose = nullptr,
+           const std::string& name = "");
     
     /* TODO: Add constructor that takes in covariance
     Pose3d(const RotationVector3d &Rvec, const Vec3f &T, const Matrix<float> &cov,
@@ -160,19 +166,20 @@ namespace Anki {
     // Construct from rotation matrix and translation vector
     // TODO: do we want a version that takes in covariance too?
     Pose3d(const RotationMatrix3d &Rmat, const Vec3f &T,
-           const Pose3d *parentPose = Pose3d::GetWorldOrigin());
+           const Pose3d *parentPose = nullptr,
+           const std::string& name = "");
     
     // Construct from an angle, axis, and translation vector
     Pose3d(const Radians angle, const Vec3f axis,
            const Vec3f translation,
-           const Pose3d *parentPose = Pose3d::GetWorldOrigin());
+           const Pose3d *parentPose = nullptr,
+           const std::string& name = "");
     
     // Construct a Pose3d from a Pose2d (using the plane information)
     Pose3d(const Pose2d &pose2d);
     
     // TODO: Copy constructor?
     Pose3d(const Pose3d &otherPose);
-    Pose3d(const Pose3d *otherPose);
     
     //bool IsOrigin() const { return parent == nullptr; }
 
@@ -230,18 +237,21 @@ namespace Anki {
     bool GetWithRespectTo(const Pose3d& otherPose,
                           Pose3d& newPoseWrtOtherPose) const;
     
+    // Get pose with respect to its origin
+    Pose3d GetWithRespectToOrigin() const;
+    
     const Pose3d& FindOrigin() const;
 
     // Check to see if two poses are the same.  Return true if so.
     // If requested, P_diff will contain the transformation from this pose to
     // P_other.
-    bool IsSameAs(const Pose3d& P_other,
-                  const float   distThreshold,
-                  const Radians angleThreshold) const;
+    bool IsSameAs(const Pose3d&  P_other,
+                  const Point3f& distThreshold,
+                  const Radians& angleThreshold) const;
     
-    bool IsSameAs(const Pose3d& P_other,
-                  const float   distThreshold,
-                  const Radians angleThreshold,
+    bool IsSameAs(const Pose3d&  P_other,
+                  const Point3f& distThreshold,
+                  const Radians& angleThreshold,
                   Pose3d& P_diff) const;
     
     // Same as above, but with a list of rotational ambiguities to ignore.
@@ -249,12 +259,15 @@ namespace Anki {
     // one of the given rotations.
     bool IsSameAs_WithAmbiguity(const Pose3d& P_other,
                                 const std::vector<RotationMatrix3d>& R_ambiguities,
-                                const float   distThreshold,
-                                const Radians angleThreshold,
-                                const bool    useAbsRotation,
+                                const Point3f&   distThreshold,
+                                const Radians&   angleThreshold,
+                                const bool       useAbsRotation,
                                 Pose3d& P_diff) const;
 
     void Print() const;
+    
+    std::string GetNamedPathToOrigin(bool showTranslations)   const;
+    void        PrintNamedPathToOrigin(bool showTranslations) const;
     
   protected:
     
@@ -311,6 +324,19 @@ namespace Anki {
                                        Pose2d& newPoseWrtOtherPose) const {
     return PoseBase<Pose2d>::GetWithRespectTo(*this, otherPose, newPoseWrtOtherPose);
   }
+  
+  inline Pose2d Pose2d::GetWithRespectToOrigin() const {
+    Pose2d poseWrtOrigin;
+    if(this->IsOrigin()) {
+      poseWrtOrigin = *this;
+    } else if(PoseBase<Pose2d>::GetWithRespectTo(*this, this->FindOrigin(), poseWrtOrigin) == false) {
+      PRINT_NAMED_ERROR("Pose2d::GetWithRespectToOriginFailed",
+                        "Could not get pose w.r.t. its own origin. This should never happen.\n");
+      assert(false);
+    }
+    return poseWrtOrigin;
+  }
+
   
   inline const Pose2d& Pose2d::FindOrigin() const {
     return PoseBase<Pose2d>::FindOrigin(*this);
@@ -412,21 +438,34 @@ namespace Anki {
   }
   
   inline bool Pose3d::GetWithRespectTo(const Pose3d& otherPose,
-                                Pose3d& newPoseWrtOtherPose) const {
+                                       Pose3d& newPoseWrtOtherPose) const {
     return PoseBase<Pose3d>::GetWithRespectTo(*this, otherPose, newPoseWrtOtherPose);
+  }
+  
+  inline Pose3d Pose3d::GetWithRespectToOrigin() const {
+    Pose3d poseWrtOrigin;
+    if(this->IsOrigin()) {
+      poseWrtOrigin = *this;
+    } else if(PoseBase<Pose3d>::GetWithRespectTo(*this, this->FindOrigin(), poseWrtOrigin) == false) {
+      PRINT_NAMED_ERROR("Pose3d::GetWithRespectToOriginFailed",
+                        "Could not get pose w.r.t. its own origin. This should never happen.\n");
+      assert(false); // TODO: Do something more elegant
+    }
+    
+    return poseWrtOrigin;
   }
   
   inline const Pose3d& Pose3d::FindOrigin() const {
     return PoseBase<Pose3d>::FindOrigin(*this);
   }
 
-  inline bool Pose3d::IsSameAs(const Pose3d& P_other,
-                       const float   distThreshold,
-                       const Radians angleThreshold) const
+  inline bool Pose3d::IsSameAs(const Pose3d&  P_other,
+                               const Point3f& distThreshold,
+                               const Radians& angleThreshold) const
   {
     Pose3d P_diff_temp;
     return IsSameAs(P_other, distThreshold, angleThreshold,
-                          P_diff_temp);
+                    P_diff_temp);
   }
   
   template<typename T>

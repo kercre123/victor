@@ -26,6 +26,7 @@
 
 #include <limits>
 #include <set>
+#include <string>
 
 namespace Anki {
   
@@ -59,7 +60,7 @@ namespace Anki {
     
     StorageType GetValue() const { return _value; }
     
-    operator StorageType() const { return _value; }
+    virtual operator StorageType() const { return _value; }
     
   protected:
     
@@ -81,9 +82,14 @@ namespace Anki {
     using StorageType = int;
     
     ObjectType();
+    ObjectType(const std::string& name);
     ObjectType(int value);
     
+    const std::string& GetName() const { return _name; }
+    
     static int GetNumTypes();
+    
+    static ObjectType GetInvalidType();
     
   protected:
     
@@ -93,6 +99,8 @@ namespace Anki {
     // set gets instantiated when needed instead of dangerously relying on static
     // initialization order.
     static std::set<int>& GetValidTypes();
+    
+    std::string _name;
     
     // Note: No Set() for ObjectType
     

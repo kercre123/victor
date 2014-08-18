@@ -6,8 +6,8 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#ifndef __Products_Cozmo__robot__
-#define __Products_Cozmo__robot__
+#ifndef ANKI_COZMO_BASESTATION_ROBOT_H
+#define ANKI_COZMO_BASESTATION_ROBOT_H
 
 #include <queue>
 
@@ -31,25 +31,20 @@ namespace Anki {
     class BlockWorld;
     class IMessageHandler;
     class IPathPlanner;
+    class MatPiece;
     class PathDolerOuter;
-    
-    class BlockDockingSystem
-    {
-    public:
-      
-    protected:
-      
-      
-    }; // class BlockDockingSystem
+    class Ramp;
     
     
     class Robot
     {
     public:
+      // Any state added here, must also be added to the static StateNames map,
+      // and to the list of valid states in the switch statement inside SetState().
       enum State {
         IDLE,
         FOLLOWING_PATH,
-        BEGIN_DOCKING,
+        BEGIN_DOCKING, // also used for ascending/descending ramps, and crossing bridges
         DOCKING,
         PLACE_OBJECT_ON_GROUND
       };
@@ -59,42 +54,48 @@ namespace Anki {
       Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner);
       ~Robot();
       
-      void Update();
+      Result Update();
       
       // Accessors
       const RobotID_t        GetID()           const;
       const Pose3d&          GetPose()         const;
-      const Pose3d*          GetPoseOrigin()   const {return _poseOrigin;}
-      bool                   IsLocalized()     const {return _isLocalized;}
-      const Vision::Camera&  GetCamera()       const;
       
-      // Returns true if head_angle is valid.
-      // *valid_head_angle is made to equal the closest valid head angle to head_angle.
-      bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
+      bool                   IsLocalized()     const {return _localizedToID.IsSet();}
+      const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
+      void                   SetLocalizedTo(const ObjectID& toID);
       
+      const Vision::Camera&             GetCamera() const;
       Vision::Camera&                   GetCamera();
       void                              SetCameraCalibration(const Vision::CameraCalibration& calib);
 	    const Vision::CameraCalibration&  GetCameraCalibration() const;
       
       const f32              GetHeadAngle()    const;
       const f32              GetLiftAngle()    const;
+
+      // Returns true if head_angle is valid.
+      // *valid_head_angle is made to equal the closest valid head angle to head_angle.
+      bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
       
-      const Pose3d&          GetNeckPose()     const {return _neckPose;}
-      const Pose3d&          GetHeadCamPose()  const {return _headCamPose;}
-      const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
-      const State            GetState()        const;
+      const Pose3d&          GetNeckPose()       const {return _neckPose;}
+      const Pose3d&          GetHeadCamPose()    const {return _headCamPose;}
+      const Pose3d&          GetLiftPose()       const {return _liftPose;}  // At current lift position!
+      const State            GetState()          const;
       
-      const ObjectID       GetDockObject()     const {return _dockObjectID;}
-      const ObjectID       GetCarryingObject() const {return _carryingObjectID;}
+      const ObjectID         GetDockObject()     const {return _dockObjectID;}
+      const ObjectID         GetCarryingObject() const {return _carryingObjectID;}
       
-      void SetState(const State newState);
+      Result SetState(const State newState);
+      
       void SetPose(const Pose3d &newPose);
+      const Pose3d* GetWorldOrigin() const { return _worldOrigin; }
+      
       void SetHeadAngle(const f32& angle);
       void SetLiftAngle(const f32& angle);
       
-      void IncrementPoseFrameID() {++_frameId;}
+      //void IncrementPoseFrameID() {++_frameId;}
       PoseFrameID_t GetPoseFrameID() const {return _frameId;}
       
+      Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existinMatPiece);
       
       // Clears the path that the robot is executing which also stops the robot
       Result ClearPath();
@@ -124,30 +125,37 @@ namespace Anki {
 
       void AbortCurrentPath();
       
+      // TODO: Get rid of these Set...() functions below once the processing of
+      // RobotState msg is moved into the Robot class.
+      
       // True if wheel speeds are non-zero in most recent RobotState message
       bool IsMoving() const {return _isMoving;}
-      void SetIsMoving(bool t) {_isMoving= t;}
       
-      void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
+      // True if we are on the sloped part of a ramp
+      bool   IsOnRamp() const { return _onRamp; }
+      Result SetOnRamp(bool t);
+
       s8   GetCurrPathSegment() {return _currPathSegment;}
       bool IsTraversingPath() {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
 
-      void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
-      u8 GetNumFreeSegmentSlots() const {return _numFreeSegmentSlots;}
+      u8   GetNumFreeSegmentSlots() const {return _numFreeSegmentSlots;}
       
-      void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
-      u16 GetLastRecvdPathID() {return _lastRecvdPathID;}
-      u16 GetLastSentPathID() {return _lastSentPathID;}
+      u16  GetLastRecvdPathID() {return _lastRecvdPathID;}
+      u16  GetLastSentPathID() {return _lastSentPathID;}
 
       void SetCarryingObject(ObjectID carryObjectID) {_carryingObjectID = carryObjectID;}
       void UnSetCarryingObject() { _carryingObjectID.UnSet(); }
       bool IsCarryingObject() {return _carryingObjectID.IsSet(); }
-
-      void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
-      bool IsPickingOrPlacing() {return _isPickingOrPlacing;}
       
-      void SetPickedUp(bool t) {_isPickedUp = t;}
+      bool IsPickingOrPlacing() {return _isPickingOrPlacing;}
       bool IsPickedUp() {return _isPickedUp;}
+
+      u8 GetProxLeft() {return _proxLeft;}
+      u8 GetProxForward() {return _proxFwd;}
+      u8 GetProxRight() {return _proxRight;}
+      bool IsProxLeftBlocked() {return _proxLeftBlocked;}
+      bool IsProxForwardBlocked() {return _proxFwdBlocked;}
+      bool IsProxRightBlocked() {return _proxRightBlocked;}
       
       ///////// Motor commands  ///////////
       
@@ -176,6 +184,11 @@ namespace Anki {
       // then dock with it.
       Result ExecuteDockingSequence(ObjectID objectIDtoDockWith);
       
+      // Plan a path to the pre-entry pose of an object and then proceed to
+      // "traverse" it, depending on its type. Supports, for example, Ramp and
+      // Bridge objects.
+      Result ExecuteTraversalSequence(ObjectID objectID);
+      
       // Plan a path to place the object currently being carried at the specified
       // pose.
       Result ExecutePlaceObjectOnGroundSequence(const Pose3d& atPose);
@@ -187,6 +200,7 @@ namespace Anki {
       // specified object that it should currently be seeing.
       Result DockWithObject(const ObjectID objectID,
                             const Vision::KnownMarker* marker,
+                            const Vision::KnownMarker* marker2,
                             const DockAction_t dockAction);
       
       // Sends a message to the robot to dock with the specified marker of the
@@ -194,8 +208,11 @@ namespace Anki {
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
+      // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indiciate
+      // the expected marker on the end of the bridge. Otherwise, it is ignored.
       Result DockWithObject(const ObjectID objectID,
                             const Vision::KnownMarker* marker,
+                            const Vision::KnownMarker* marker2,
                             const DockAction_t dockAction,
                             const u16 image_pixel_x,
                             const u16 image_pixel_y,
@@ -283,11 +300,13 @@ namespace Anki {
                                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                      const f32 pose_angle,
                                      const f32 head_angle,
-                                     const f32 lift_angle,
-                                     const Pose3d* pose_origin);
+                                     const f32 lift_angle);
       
       Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
-                                        const RobotPoseStamp& p);
+                                        const f32 pose_x, const f32 pose_y, const f32 pose_z,
+                                        const f32 pose_angle,
+                                        const f32 head_angle,
+                                        const f32 lift_angle);
 
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                              TimeStamp_t& t, RobotPoseStamp** p,
@@ -296,16 +315,19 @@ namespace Anki {
 
       Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
       Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
+      Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose);
       
       TimeStamp_t GetLastMsgTimestamp() const;
       
       bool IsValidPoseKey(const HistPoseKey key) const;
       
       // Updates the current pose to the best estimate based on
-      // historical poses including vision-based poses.
+      // historical poses including vision-based poses. Will use the specified
+      // parent pose to store the pose.
       // Returns true if the pose is successfully updated, false otherwise.
-      bool UpdateCurrPoseFromHistory();
+      bool UpdateCurrPoseFromHistory(const Pose3d& wrtParent);
       
+      Result UpdateFullRobotState(const MessageRobotState& msg);
       
       // ========= Lights ==========
       void SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color);
@@ -355,11 +377,23 @@ namespace Anki {
       Vision::CameraCalibration _cameraCalibration;
       Vision::Camera            _camera;
       
+      // Proximity sensors
+      u8 _proxLeft, _proxFwd, _proxRight;
+      bool _proxLeftBlocked, _proxFwdBlocked, _proxRightBlocked;
+      
       // Geometry / Pose
-      Pose3d*          _poseOrigin;
+      std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
+      Pose3d*          _worldOrigin;
       Pose3d           _pose;
       PoseFrameID_t    _frameId;
-      bool             _isLocalized;
+      ObjectID         _localizedToID;
+      bool             _localizedToFixedMat; // false until robot sees a _fixed_ mat
+      
+      Result UpdateWorldOrigin(const Pose3d& newPoseWrtNewOrigin);
+      
+      bool             _onRamp;
+      Point2f          _rampStartPosition;
+      f32              _rampStartHeight;
       
       const Pose3d _neckPose; // joint around which head rotates
       const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint
@@ -393,8 +427,9 @@ namespace Anki {
       // marker on that block, so long as we always verify the object
       // exists and is still valid (since, therefore, the marker must
       // be as well)
-      ObjectID                  _dockObjectID;
+      ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
+      const Vision::KnownMarker*  _dockMarker2;
       DockAction_t                _dockAction;
       Pose3d                      _dockObjectOrigPose;
       
@@ -403,8 +438,38 @@ namespace Anki {
       Pose3d                      _placeOnGroundPose;
       
       f32 _waitUntilTime;
+
+      // Plan a path to the pre-ascent/descent pose (depending on current
+      // height of the robot) and then go up or down the ramp.
+      Result ExecuteRampingSequence(Ramp* ramp);
+      
+      // Plan a path to the nearest (?) pre-crossing pose of the specified bridge
+      // object, then cross it.
+      Result ExecuteBridgeCrossingSequence(ActionableObject* object);
+
+      // What function to run when "Executing" a "Sequence" fails, and what
+      // type of PreActionPose to look for to check for success at the end
+      // of path planning
+      std::function<Result()>    _reExecSequenceFcn;
+      PreActionPose::ActionType  _goalPoseActionType;
+      
+      
+      ///////// Modifiers ////////
+      
+      void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
+      void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
+      void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
+      void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
+      void SetPickedUp(bool t) {_isPickedUp = t;}
+      void SetProxSensorData(const u8 left, const u8 forward, const u8 right,
+                             bool leftBlocked, bool fwdBlocked, bool rightBlocked) {_proxLeft=left; _proxFwd=forward; _proxRight=right; _proxLeftBlocked = leftBlocked; _proxFwdBlocked = fwdBlocked; _proxRightBlocked = rightBlocked;}
+
       
       ///////// Messaging ////////
+      
+      Result SendAbsLocalizationUpdate(const Pose3d&        pose,
+                                       const TimeStamp_t&   t,
+                                       const PoseFrameID_t& frameId) const;
       
       // Sends message to move lift at specified speed
       Result SendMoveLift(const f32 speed_rad_per_sec) const;
@@ -442,6 +507,7 @@ namespace Anki {
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
       Result SendDockWithObject(const Vision::Marker::Code& markerType,
+                                const Vision::Marker::Code& markerType2,
                                 const f32 markerWidth_mm,
                                 const DockAction_t dockAction,
                                 const u16 image_pixel_x,
@@ -474,13 +540,16 @@ namespace Anki {
     inline const Robot::State Robot::GetState() const
     { return _state; }
     
+    inline void Robot::SetLocalizedTo(const ObjectID& toID)
+    { _localizedToID = toID;}
+    
     inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
     {
       _cameraCalibration = calib;
       _camera.SetSharedCalibration(&_cameraCalibration);
     }
 
-	inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
+    inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
     { return _cameraCalibration; }
     
     inline const f32 Robot::GetHeadAngle() const
@@ -492,19 +561,12 @@ namespace Anki {
     //
     // RobotManager class for keeping up with available robots, by their ID
     //
-    // TODO: Singleton or not?
-#define USE_SINGLETON_ROBOT_MANAGER 0
     
     class RobotManager
     {
     public:
     
-#if USE_SINGLETON_ROBOT_MANAGER
-      // Return singleton instance
-      static RobotManager* getInstance();
-#else
       RobotManager();
-#endif
 
       // Sets pointers to other managers
       // TODO: Change these to interface pointers so they can't be NULL
@@ -532,12 +594,6 @@ namespace Anki {
       
     protected:
       
-#if USE_SINGLETON_ROBOT_MANAGER
-      RobotManager(); // protected constructor for singleton class
-      
-      static RobotManager* singletonInstance_;
-#endif
-      
       IMessageHandler* _msgHandler;
       BlockWorld*      _blockWorld;
       IPathPlanner*    _pathPlanner;
@@ -547,17 +603,8 @@ namespace Anki {
       
     }; // class RobotManager
     
-#if USE_SINGLETON_ROBOT_MANAGER
-    inline RobotManager* RobotManager::getInstance()
-    {
-      if(0 == singletonInstance_) {
-        singletonInstance_ = new RobotManager();
-      }
-      return singletonInstance_;
-    }
-#endif
     
   } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Products_Cozmo__robot__
+#endif // ANKI_COZMO_BASESTATION_ROBOT_H

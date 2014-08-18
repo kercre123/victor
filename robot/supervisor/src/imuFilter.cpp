@@ -570,6 +570,8 @@ namespace Anki {
           rot_ += dAngle;
         }
         
+        // XXX: DEBUG!
+        //UpdateEventDetection();
         
         // Pickup detection
         pdFiltAccX_ = imu_data.acc_x * ACCEL_PICKUP_FILT_COEFF + pdFiltAccX_ * (1.f - ACCEL_PICKUP_FILT_COEFF);

@@ -44,6 +44,7 @@ target_link_libraries(cozmo_physics
   ode 
   ${PHYSICS_O}
   CoreTech_Messaging_Basestation
+  CoreTech_Common_Basestation
 )
 
 set_target_properties(
