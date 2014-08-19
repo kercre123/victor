@@ -264,7 +264,7 @@ function [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain
         curProbeValues = probeValues{curProbeIndex}(remainingImages);
         
         uniqueGrayvalues = mexUnique(curProbeValues);
-        
+                
         if numWorkItems > 10000000 % 10,000,000 takes about 3 seconds
             if mod(iUnusedProbe,100) == 0
                 fprintf('%d',iUnusedProbe);
@@ -287,7 +287,7 @@ function [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain
         grayvalueThresholdCounts = zeros([256,1], 'int32');
         grayvalueThresholdCounts(grayvalueThresholds + 1) = int32(1);
         grayvalueThresholdCounts(unusedGrayvaluesThresholds + 1) = grayvalueThresholdCounts(unusedGrayvaluesThresholds + 1) + int32(1);
-        grayvalueThresholds = find(grayvalueThresholdCounts == int32(2)) - 1;
+        grayvalueThresholds = uint8(find(grayvalueThresholdCounts == int32(2)) - 1);
         
         if isempty(grayvalueThresholds)
             continue;

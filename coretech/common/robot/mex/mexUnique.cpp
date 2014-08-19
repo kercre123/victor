@@ -35,6 +35,7 @@ template<typename Type> void maxAndMin(const mxArray *array, Type &minValue, Typ
 
 // Count the numbers of each unique value for the integer Matlab array, then allocate and return a Matlab array with the unique values
 // TODO: return the counts too?
+// TODO: currently only works up to s32 precision (no u32, s64, u64)
 template<typename Type> mxArray* findUnique(const mxArray *array, const Type minValue, const Type maxValue)
 {
   const s32 numElements = mxGetNumberOfElements(array);
@@ -63,7 +64,7 @@ template<typename Type> mxArray* findUnique(const mxArray *array, const Type min
   const mxClassID matlabClassId = Matlab::GetMatlabClassID<Type>();
   mxArray* toReturn = mxCreateNumericArray(2, outputDims, matlabClassId, mxREAL);
   Type * restrict pToReturn = reinterpret_cast<Type *>( mxGetData(toReturn) );
-  
+
   s32 cToReturn = 0;
   for(s32 i=0; i<countsLength; i++) {
     if(counts[i] > 0) {

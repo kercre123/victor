@@ -174,6 +174,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   AnkiConditionalErrorAndReturn(mxGetM(prhs[0]) == mxGetM(prhs[1]), "mexComputeInfoGain2_innerLoop", "Incorrect input size");
   
   AnkiConditionalErrorAndReturn(mxGetM(prhs[0]) > 0 && mxGetM(prhs[2]) > 0, "mexComputeInfoGain2_innerLoop", "Incorrect input size");
+  
+  AnkiConditionalErrorAndReturn(mxGetClassID(prhs[0])==mxINT32_CLASS &&
+                                mxGetClassID(prhs[1])==mxUINT8_CLASS &&
+                                mxGetClassID(prhs[2])==mxUINT8_CLASS, "mexComputeInfoGain2_innerLoop", "Incorrect input types");
 
   const s32 numItems = mxGetM(prhs[0]);
   const s32 numGrayvalueThresholds = mxGetM(prhs[2]);
