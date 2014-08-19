@@ -294,17 +294,27 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
             end
         end
         
-        if length(uniqueGrayvalues) == 1
-            probesUsed(curProbeIndex) = true;
+        if length(uniqueGrayvalues) <= 1
             continue;
         end
         
         grayvalueThresholds = (int32(uniqueGrayvalues(2:end)) + int32(uniqueGrayvalues(1:(end-1)))) / 2;
         
         unusedGrayvaluesThresholds = find(~probesUsed(iUnusedProbe, :)) - 1;
-        
-        grayvalueThresholds = intersect(grayvalueThresholds, unusedGrayvaluesThresholds);
-        
+
+        % Intersect is extremely slow
+%         tic
+%         grayvalueThresholds = intersect(grayvalueThresholds, unusedGrayvaluesThresholds);
+%         toc
+
+        % Faster version
+%         tic
+        grayvalueThresholdCounts = zeros([256,1], 'int32');    
+        grayvalueThresholdCounts(grayvalueThresholds + 1) = int32(1);
+        grayvalueThresholdCounts(unusedGrayvaluesThresholds + 1) = grayvalueThresholdCounts(unusedGrayvaluesThresholds + 1) + int32(1);
+        grayvalueThresholds = find(grayvalueThresholdCounts == int32(2)) - 1;
+%         toc
+
         if isempty(grayvalueThresholds)
             continue;
         end

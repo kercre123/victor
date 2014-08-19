@@ -102,6 +102,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       
       plhs[0] = findUnique<s32>(prhs[0], minValue, maxValue);
     }
+  } else if(mxGetClassID(prhs[0]) == mxUINT8_CLASS) {
+    s32 minValue = 0, maxValue = 255;
+    
+    const s32 numPossibleUnique = maxValue - minValue + 1;
+    
+    // If there's too many possible unique elements, this method isn't efficient, so just call the normal Matlab unique.m
+    if((numPossibleUnique < mxGetNumberOfElements(prhs[0])) &&
+       numPossibleUnique < MAX_POSSIBLE_UNIQUES) {
+      
+      useMatlabDefault = false;
+      
+      plhs[0] = findUnique<u8>(prhs[0], minValue, maxValue);
+    }
   }
 
   // If the class type is not supported, or the statistics are non-ideal, just call Matlab's unique.m
