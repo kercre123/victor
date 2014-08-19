@@ -1,15 +1,20 @@
-% function probeTree = probeTree2_train(varargin)
+% function probeTree = probeTree2_train()
 %
 % Based off of VisionMarkerTrained.TrainProbeTree, but split into a
 % separate function, to prevent too much messing around with the
 % VisionMarkerTrained class hierarchy
 
 % Example:
-% probeTree = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid);
+% [probeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid);
 
-function probeTree = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, varargin)
-    global trainingFailures;
+function [probeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, varargin)
+    global g_trainingFailures;
     global nodeId;
+    global pBar;
+    
+    pBar = ProgressBar('probeTree2_train', 'CancelButton', true);
+    pBar.showTimingInfo = true;
+    pBarCleanup = onCleanup(@()delete(pBar));
     
     nodeId = 1;
     
@@ -20,7 +25,8 @@ function probeTree = probeTree2_train(labelNames, labels, probeValues, probeLoca
     end
     
     leafNodeFraction = 0.999; % What percent of the labels must be the same for it to be considered a leaf node?
-    minGrayvalueDistance = 20; % How close can the grayvalue of two probes in the same location be?
+    leafNodeNumItems = 1; % If a node has less-than-or-equal-to this number of items, it is a leaf no matter what
+    minGrayvalueDistance = 20; % How close can the grayvalue of two probes in the same location be? Set to 1000 to disallow probes in the same location.
     
     parseVarargin(varargin{:});
     
@@ -29,7 +35,7 @@ function probeTree = probeTree2_train(labelNames, labels, probeValues, probeLoca
     probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
     probeTree.labels = labelNames;
     
-    probeTree = buildTree(probeTree, false(length(probeValues), 256), labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, minGrayvalueDistance);
+    probeTree = buildTree(probeTree, false(length(probeValues), 256), labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance);
     
     %     drawTree(probeTree)
     
@@ -50,6 +56,8 @@ function probeTree = probeTree2_train(labelNames, labels, probeValues, probeLoca
     t_test = toc(t_test);
     
     disp(sprintf('Tested tree on training set in %f seconds. Training accuracy: %d/%d = %0.2f%%', t_test, numCorrect, numTotal, 100*numCorrect/numTotal));
+    
+    trainingFailures = g_trainingFailures;
     
     %     keyboard
 end % probeTree2_train()
@@ -77,7 +85,7 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeLocationsXG
     pBar.showTimingInfo = true;
     pBarCleanup = onCleanup(@()delete(pBar));
     
-    pBar.set_message(sprintf('Testing %d inputs', numImages));    
+    pBar.set_message(sprintf('Testing %d inputs', numImages));
     pBar.set_increment(100/numImages);
     pBar.set(0);
     
@@ -103,9 +111,10 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeLocationsXG
     end
 end % testOnTrainingData()
 
-function node = buildTree(node, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, minGrayvalueDistance)
-    global trainingFailures;
+function node = buildTree(node, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance)
+    global g_trainingFailures;
     global nodeId;
+    global pBar;
     
     maxDepth = inf;
     
@@ -116,22 +125,29 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
     node.nodeId = nodeId;
     nodeId = nodeId + 1;
     
-    if maxCount >= leafNodeFraction*length(node.remaining)
-        % Are more than leafNodeFraction percent of the remaining labels the
-        % same? If so, we're done.
+    if (maxCount >= leafNodeFraction*length(node.remaining)) || (length(node.remaining) < leafNodeNumItems)
+        % Are more than leafNodeFraction percent of the remaining labels the same? If so, we're done.
         
-        node.labelID = maxIndex;
+        node.labelID = maxIndex(1);
         node.labelName = labelNames{node.labelID};
         fprintf('LeafNode for label = %d, or "%s" at depth %d\n', node.labelID, node.labelName, node.depth);
+        pBar.add(length(node.remaining) / length(labels));
     elseif node.depth == maxDepth || all(probesUsed(:))
-        % Have we reached the max depth, or have we used all probes? If so,
-        % we're done.
+        % Have we reached the max depth, or have we used all probes? If so, we're done.
         
         node.labelID = mexUnique(labels(node.remaining));
         node.labelName = labelNames(node.labelID);
+        
+        if isempty(g_trainingFailures)
+            g_trainingFailures = node;
+        else
+            g_trainingFailures(end+1) = node;
+        end
+        
         fprintf('MaxDepth LeafNode for labels = {%s\b} at depth %d\n', sprintf('%s,', node.labelName{:}), node.depth);
+        pBar.add(length(node.remaining) / length(labels));
     else
-        % We have unused probe location. So find the best one to split on
+        % We have unused probe location. So find the best one to split on.
         
         useMex = true;
         numThreads = 16;
@@ -143,15 +159,22 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         node.remainingLabels = sprintf('%s ', labelNames{mexUnique(labels(node.remaining))});
         
         % If the entropy is incredibly large, there was no valid split
-        if node.infoGain > 100000.0 
-            if isempty(trainingFailures)
-                trainingFailures = node;
+        if node.infoGain > 100000.0
+            % PB: Is this still a reasonable thing to happen? I think no.
+            
+            node.labelID = mexUnique(labels(node.remaining));
+            node.labelName = labelNames(node.labelID);
+            
+            if isempty(g_trainingFailures)
+                g_trainingFailures = node;
             else
-                trainingFailures(end+1) = node;
+                g_trainingFailures(end+1) = node;
             end
             
-            disp('Training failed for node %d with labels %s', node.nodeId, node.remainingLabels);
-            keyboard
+            fprintf('Could not split LeafNode for labels = {%s\b} at depth %d\n', sprintf('%s,', node.labelName{:}), node.depth);
+            pBar.add(length(node.remaining) / length(labels));
+            
+            return;
         end
         
         % Recurse left and right from this node
@@ -159,7 +182,9 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         leftRemaining = node.remaining(goLeft);
         
         if isempty(leftRemaining) || length(leftRemaining) == length(node.remaining)
-            % PB: Is this still a reasonable thing to happen?
+            % PB: Is this still a reasonable thing to happen? I think no.
+            
+            keyboard
             
             % That split makes no progress.  Try again without
             % letting us choose this node again on this branch of the
@@ -170,16 +195,14 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
             % info gain computation doesn't really take that into
             % account.  Is there a better way to fix this?
             
-            keyboard
-            
-%             probesUsed(node.whichProbe) = true;
-%             node.depth = node.depth + 1;
-%             node = buildTree(node, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction);
+            %             probesUsed(node.whichProbe) = true;
+            %             node.depth = node.depth + 1;
+            %             node = buildTree(node, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction);
         else
             % Recurse left
             leftChild.remaining = leftRemaining;
             leftChild.depth = node.depth+1;
-            node.leftChild = buildTree(leftChild, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, minGrayvalueDistance);
+            node.leftChild = buildTree(leftChild, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance);
             
             % Recurse right
             rightRemaining = node.remaining(~goLeft);
@@ -189,8 +212,7 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
             
             rightChild.remaining = rightRemaining;
             rightChild.depth = node.depth + 1;
-            node.rightChild = buildTree(rightChild, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, minGrayvalueDistance);
-            
+            node.rightChild = buildTree(rightChild, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance);            
         end
     end % end We have unused probe location. So find the best one to split on
 end % buildTree()
@@ -213,12 +235,12 @@ function [bestEntropy, bestGrayvalueThreshold] = computeInfoGain_innerLoop(curLa
         numLessThan = sum(countsLessThan);
         numGreaterThan = sum(countsGreaterThan);
         
-%         allValuesLessThan = zeros(maxLabel, 1);
-%         allValuesGreaterThan = zeros(maxLabel, 1);
+        %         allValuesLessThan = zeros(maxLabel, 1);
+        %         allValuesGreaterThan = zeros(maxLabel, 1);
         
-%         allValuesLessThan(valuesLessThan) = countsLessThan;
-%         allValuesGreaterThan(valuesGreaterThan) = countsGreaterThan;
-
+        %         allValuesLessThan(valuesLessThan) = countsLessThan;
+        %         allValuesGreaterThan(valuesGreaterThan) = countsGreaterThan;
+        
         probabilitiesLessThan = countsLessThan / sum(countsLessThan);
         probabilitiesGreaterThan = countsGreaterThan / sum(countsGreaterThan);
         
@@ -230,8 +252,8 @@ function [bestEntropy, bestGrayvalueThreshold] = computeInfoGain_innerLoop(curLa
             numGreaterThan / (numLessThan + numGreaterThan) * entropyGreaterThan;
         
         if weightedAverageEntropy < bestEntropy
-%             disp(sprintf('%d %f %f', iGrayvalueThreshold, weightedAverageEntropy, bestEntropy));
-            bestEntropy = weightedAverageEntropy;            
+            %             disp(sprintf('%d %f %f', iGrayvalueThreshold, weightedAverageEntropy, bestEntropy));
+            bestEntropy = weightedAverageEntropy;
             bestGrayvalueThreshold = grayvalueThresholds(iGrayvalueThreshold);
         end
     end % for iGrayvalueThreshold = 1:length(grayvalueThresholds)
@@ -259,7 +281,7 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
     for iUnusedProbe = 1:numProbesUnused
         curProbeIndex = unusedProbeIndexes(iUnusedProbe);
         curProbeValues = probeValues{curProbeIndex}(remainingImages);
-
+        
         uniqueGrayvalues = mexUnique(curProbeValues);
         
         if numWorkItems > 10000000 % 10,000,000 takes about 3 seconds
@@ -271,18 +293,18 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
                 pause(.001);
             end
         end
-               
+        
         if length(uniqueGrayvalues) == 1
             probesUsed(curProbeIndex) = true;
             continue;
         end
-
+        
         grayvalueThresholds = (int32(uniqueGrayvalues(2:end)) + int32(uniqueGrayvalues(1:(end-1)))) / 2;
         
         unusedGrayvaluesThresholds = find(~probesUsed(iUnusedProbe, :)) - 1;
         
         grayvalueThresholds = intersect(grayvalueThresholds, unusedGrayvaluesThresholds);
-                  
+        
         if isempty(grayvalueThresholds)
             continue;
         end
@@ -292,7 +314,7 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
         else
             [curBestEntropy, curBestGrayvalueThreshold] = computeInfoGain_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel);
         end
-                
+        
         if curBestEntropy < bestEntropy
             bestEntropy = curBestEntropy;
             bestProbeIndex = curProbeIndex;
@@ -303,6 +325,9 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
     grayvaluesToMask = max(1, min(256, (1 + ((bestGrayvalueThreshold-minGrayvalueDistance):(bestGrayvalueThreshold+minGrayvalueDistance)))));
     
     probesUsed(bestProbeIndex, grayvaluesToMask) = true;
+    
+    % Uncomment to mask all grayvalues for the current location, instead of just the ones near the selected grayvalue threshold
+    %     probesUsed(bestProbeIndex, :) = true;
     
     fprintf(' Best entropy is %f in %f seconds\n', bestEntropy, toc(totalTic))
     

@@ -7,7 +7,7 @@
 % clear fiducialClassesList; fiducialClassesList(1).labelName = '0_000'; fiducialClassesList(1).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_000.png'}; fiducialClassesList(2).labelName = '0_090'; fiducialClassesList(2).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_090.png'};
 % [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, 'numPerturbations', 1, 'maxPerturbPercent', 0, 'blurSigmas', [0]);
 
-% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, 'numPerturbations', 100);
+% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, 'blurSigmas', [0, .01], 'numPerturbations', 10, 'probeResolutions', [512,32]);
 
 % Example:
 % [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList);

@@ -24,7 +24,6 @@ function fiducialClassesList = probeTree2_createFiducialClassesList(varargin)
     
     parseVarargin(varargin{:});
     
-    
     % Find all the names of fiducial images
     files = {};
     for iPattern = 1:length(markerFilenamePatterns)
