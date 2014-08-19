@@ -109,7 +109,7 @@ namespace Anki
 
       MatlabVariableType GetType(const std::string name);
 
-      template<typename Type>  mxClassID GetMatlabClassID();
+      template<typename Type> static mxClassID GetMatlabClassID();
 
       //Check if the variable exists on the workspace
       bool DoesVariableExist(const std::string name);

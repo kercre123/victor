@@ -60,13 +60,14 @@ template<typename Type> mxArray* findUnique(const mxArray *array, const Type min
   }
   
   const mwSize outputDims[2] = {numUnique, 1};
-  mxArray* toReturn = mxCreateNumericArray(2, outputDims, mxINT32_CLASS, mxREAL);
+  const mxClassID matlabClassId = Matlab::GetMatlabClassID<Type>();
+  mxArray* toReturn = mxCreateNumericArray(2, outputDims, matlabClassId, mxREAL);
   Type * restrict pToReturn = reinterpret_cast<Type *>( mxGetData(toReturn) );
   
   s32 cToReturn = 0;
   for(s32 i=0; i<countsLength; i++) {
     if(counts[i] > 0) {
-      pToReturn[cToReturn] = i + minValue;
+      pToReturn[cToReturn] = static_cast<Type>(i + minValue);
       cToReturn++;
     }
   }

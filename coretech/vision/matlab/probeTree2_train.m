@@ -152,7 +152,7 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         useMex = true;
         numThreads = 16;
         
-        [node.infoGain, node.whichProbe, node.grayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, node.remaining, minGrayvalueDistance, useMex, numThreads);
+        [node.infoGain, node.whichProbe, node.grayvalueThreshold, updatedProbesUsed] = computeInfoGain(labels, probeValues, probesUsed, node.remaining, minGrayvalueDistance, useMex, numThreads);
         
         node.x = probeLocationsXGrid(node.whichProbe);
         node.y = probeLocationsYGrid(node.whichProbe);
@@ -176,6 +176,8 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
             
             return;
         end
+        
+        probesUsed = updatedProbesUsed;
         
         % Recurse left and right from this node
         goLeft = probeValues{node.whichProbe}(node.remaining) < node.grayvalueThreshold;
@@ -294,7 +296,7 @@ function [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain
         if useMex
             [curBestEntropy, curBestGrayvalueThreshold] = mexComputeInfoGain2_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel, numThreads);
         else
-            [curBestEntropy, curBestGrayvalueThreshold] = computeInfoGain_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel);
+            [curBestEntropy, curBestGrayvalueThreshold] = computeInfoGain_innerLoop(curLabels, curProbeValues, grayvalueThresholds);
         end
         
         if curBestEntropy < bestEntropy

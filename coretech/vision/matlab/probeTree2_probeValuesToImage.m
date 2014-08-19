@@ -1,13 +1,25 @@
-% function image = probeTree2_probeValuesToImage(probeValues, imageIndex)
+% function images = probeTree2_probeValuesToImage(probeValues, imageIndexes)
 
-function image = probeTree2_probeValuesToImage(probeValues, imageIndex)
+function images = probeTree2_probeValuesToImage(probeValues, imageIndexes)
     numProbes = length(probeValues);
     probeImageWidth = sqrt(numProbes);
     
-    image = zeros(numProbes, 1, 'uint8');
+    images = cell(length(imageIndexes), 1); 
     
-    for i = 1:numProbes
-        image(i) = probeValues{i}(imageIndex);
+    if iscell(imageIndexes)
+        imageIndexes = cell2mat(imageIndexes);
     end
     
-    image = reshape(image, [probeImageWidth, probeImageWidth]);
+    for iImage = 1:length(imageIndexes)
+        image = zeros(numProbes, 1, 'uint8');
+        
+        for i = 1:numProbes
+            image(i) = probeValues{i}(imageIndexes(iImage));
+        end
+        
+        image = reshape(image, [probeImageWidth, probeImageWidth]);
+        
+        images{iImage} = image;
+    end
+    
+    
