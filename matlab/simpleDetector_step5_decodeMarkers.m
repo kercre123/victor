@@ -7,6 +7,11 @@ validQuads = false(size(quads));
 % subplot(2,2,4)
 % imshow(label2rgb(regionImg, 'jet', 'k', 'shuffle'))
 
+persistent allMarkerImages; %#ok<TLEV>
+if strcmp(embeddedConversions.extractFiducialMethod, 'matlab_exhaustive') || strcmp(embeddedConversions.extractFiducialMethod, 'c_exhaustive')
+    allMarkerImages = visionMarker_exhaustiveMatch_loadallMarkerImages(VisionMarkerTrained.TrainingImageDir);
+end
+
 if ~isempty(quads)
     if showTiming, t_quads = tic; end
     
@@ -57,11 +62,64 @@ if ~isempty(quads)
             markers{end+1} = VisionMarkerTrained(img, 'Corners', corners, ...
                 'CornerRefinementIterations', quadRefinementIterations);  %#ok<AGROW>
         elseif strcmp(embeddedConversions.extractFiducialMethod, 'matlab_exhaustive')
-            markers{end+1} = VisionMarkerTrained(img, 'Corners', corners, ...
-                'CornerRefinementIterations', quadRefinementIterations, 'exhaustiveSearchMethod', {1, embeddedConversions.extractFiducialMethodType});  %#ok<AGROW>
+            markerTmp = VisionMarkerTrained([], 'Corners', corners, 'Initialize', false);
+            
+            tform = cp2tform([0 0 1 1; 0 1 0 1]', corners, 'projective');
+            
+            markerTmp.H = tform.tdata.T';
+            
+            [~, bright, dark] = VisionMarkerTrained.ComputeThreshold(img, tform);
+            
+            if isempty(bright) || isempty(dark) 
+                continue;
+            end
+            
+            [newCorners, ~] = markerTmp.RefineCorners(...
+                img, 'NumSamples', 100, ...
+                'MaxIterations', quadRefinementIterations, ...
+                'DarkValue', dark, 'BrightValue', bright);
+            
+            markers{end+1} = visionMarker_exhaustiveMatch(...
+                allMarkerImages,...
+                {1, embeddedConversions.extractFiducialMethodParameters.exhaustiveMethod},...
+                img,...
+                newCorners); %#ok<AGROW>
         elseif strcmp(embeddedConversions.extractFiducialMethod, 'c_exhaustive')
+            markerTmp = VisionMarkerTrained([], 'Corners', corners, 'Initialize', false);
+            
+            tform = cp2tform([0 0 1 1; 0 1 0 1]', corners, 'projective');
+            
+            markerTmp.H = tform.tdata.T';
+            
+            [~, bright, dark] = VisionMarkerTrained.ComputeThreshold(img, tform);
+                      
+            if isempty(bright) || isempty(dark) 
+                continue;
+            end
+            
+            [newCorners, ~] = markerTmp.RefineCorners(...
+                img, 'NumSamples', 100, ...
+                'MaxIterations', quadRefinementIterations, ...
+                'DarkValue', dark, 'BrightValue', bright);
+            
+            markers{end+1} = visionMarker_exhaustiveMatch(...
+                allMarkerImages,...
+                {2, ''},...
+                img,...
+                newCorners); %#ok<AGROW>
+        elseif strcmp(embeddedConversions.extractFiducialMethod, 'matlab_alternateTree')
+            persistent minimalProbeTree;
+            
+            if isempty(minimalProbeTree)
+                load(embeddedConversions.extractFiducialMethodParameters.treeFilename, 'minimalProbeTree');
+            end
+            
+            tform = cp2tform([0 0 1 1; 0 1 0 1]', corners, 'projective');
+            
+            [labelName, labelID] = probeTree2_query(minimalProbeTree, img, tform);
+            
             markers{end+1} = VisionMarkerTrained(img, 'Corners', corners, ...
-                'CornerRefinementIterations', quadRefinementIterations, 'exhaustiveSearchMethod', {2, ''});  %#ok<AGROW>            
+                'CornerRefinementIterations', quadRefinementIterations);  %#ok<AGROW>            
         end
 
         if DEBUG_DISPLAY

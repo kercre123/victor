@@ -176,7 +176,7 @@ function allTestData = getTestData(testJsonPattern)
         allTestFilename = [testPath, allTestFilenamesRaw(iTest).name];
         
         % Load json file
-        allTestData{iTest} = loadTestFile(allTestFilename);
+        allTestData{iTest} = loadJsonTestFile(allTestFilename);
     end
 end % getTestFilenames()
 
