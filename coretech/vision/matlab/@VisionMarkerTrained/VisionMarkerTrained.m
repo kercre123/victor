@@ -93,8 +93,6 @@ classdef VisionMarkerTrained
             UseSingleProbe = false;
             CornerRefinementIterations = 25;
             UseMexCornerRefinment = false;
-            CodeName = [];
-            CodeID = [];
             VerifyLabel = true;
             Initialize = true;
                         
@@ -132,11 +130,7 @@ classdef VisionMarkerTrained
             
             this.H = tform.tdata.T';
     
-            if isempty(CodeName) && isempty(CodeID)
-                [threshold, bright, dark] = VisionMarkerTrained.ComputeThreshold(img, tform);
-            else
-                threshold = Inf;
-            end
+            [threshold, bright, dark] = VisionMarkerTrained.ComputeThreshold(img, tform);
             
             if threshold < 0
                 %warning('VisionMarkerTrained:TooLittleContrast', ...
@@ -155,14 +149,9 @@ classdef VisionMarkerTrained
                     end
                 end
                 
-                if isempty(CodeName) && isempty(CodeID)
-                    [this.codeName, this.codeID] = TestTree( ...
-                        VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
-                        VisionMarkerTrained.ProbePattern);
-                else
-                    this.codeName = CodeName;
-                    this.codeID = CodeID;
-                end
+                [this.codeName, this.codeID] = TestTree( ...
+                    VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
+                    VisionMarkerTrained.ProbePattern);                
                                 
                 if any(strcmp(this.codeName, {'UNKNOWN', 'INVALID'}))
                     this.isValid = false;
