@@ -105,7 +105,9 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeLocationsXG
         if labelID == labels(iImage);
             numCorrect = numCorrect + 1;
         end
+        
         if mod(iImage, 100) == 0
+            pBar.set_message(sprintf('Testing %d inputs. Current accuracy %d/%d=%f', numImages, numCorrect, iImage, numCorrect/iImage));
             pBar.increment();
         end
     end
@@ -130,8 +132,11 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         
         node.labelID = maxIndex(1);
         node.labelName = labelNames{node.labelID};
+        
+        % Comment or uncomment the next line as desired 
         fprintf('LeafNode for label = %d, or "%s" at depth %d\n', node.labelID, node.labelName, node.depth);
-        pBar.add(length(node.remaining) / length(labels));
+        
+        pBar.add(length(node.remaining) / length(labels));        
     elseif node.depth == maxDepth || all(probesUsed(:))
         % Have we reached the max depth, or have we used all probes? If so, we're done.
         
@@ -173,6 +178,11 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
             
             fprintf('Could not split LeafNode for labels = {%s\b} {%s\b} at depth %d\n', sprintf('%s,', node.labelName{:}), sprintf('%d,', node.remaining), node.depth);
             pBar.add(length(node.remaining) / length(labels));
+            
+            %debugging stuff            
+            images = probeTree2_probeValuesToImage(probeValues, node.remaining);            
+            imshows(images);
+            keyboard
             
             return;
         end
@@ -254,7 +264,7 @@ function [bestEntropy, bestGrayvalueThreshold] = computeInfoGain_innerLoop(curLa
     end % for iGrayvalueThreshold = 1:length(grayvalueThresholds)
 end % computeInfoGain_innerLoop()
 
-function [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain_outerLoop(probeValues, probesUsed, unusedProbeIndexes, numProbesUnused, remainingImages, curLabels, maxLabel, numWorkItems, useMex, numThreads)
+function [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain_outerLoop(probeValues, probesUsed, unusedProbeIndexes, numProbesUnused, remainingImages, curLabels, maxLabel, numWorkItems, useMex, numThreads)  
     bestEntropy = Inf;
     bestProbeIndex = -1;
     bestGrayvalueThreshold = -1;
