@@ -426,7 +426,7 @@ namespace Anki
 
     template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const Array<Type> &in)
     {
-      s32 totalDataLength = in.get_stride() * in.get_size(1) + SerializedBuffer::EncodedArray::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      s32 totalDataLength = in.get_stride() * in.get_size(0) + SerializedBuffer::EncodedArray::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       void * const segmentStart = Allocate("Array", objectName, totalDataLength);
       void * segment = segmentStart;

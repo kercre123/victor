@@ -47,6 +47,10 @@ namespace Anki {
     // This works with cell arrays if every element is the same type
     template<typename Type> Array<Array<Type> > mxCellArrayToArray(const mxArray * const matlabArray, MemoryStack &memory);
 
+    // Copy a string to a null-terminated string, allocated from the MemoryStack
+    // Overloaded version of Matlab's mxArrayToString() that uses a MemoryStack instead of the heap
+    char* mxArrayToString(const mxArray * const matlabArray, MemoryStack &memory);
+
     // Convert a cell array of strings to a cell array of const pointers
     // The strings are allocated from "MemoryStack &memory", so do not need to be freed
     Array<char *> mxCellArrayToStringArray(const mxArray * const matlabArray, MemoryStack &memory);
@@ -218,6 +222,32 @@ namespace Anki {
       return array;
     }
 
+    inline char* mxArrayToString(const mxArray * const matlabArray, MemoryStack &memory)
+    {
+      const mxClassID matlabClassId = mxGetClassID(matlabArray);
+
+      AnkiConditionalErrorAndReturnValue(matlabClassId == mxCHAR_CLASS,
+        NULL, "mxArrayToString", "Matlab classId is not char %d!=%d\n", matlabClassId, mxCHAR_CLASS);
+
+      char * curMatlabString = mxArrayToString(matlabArray);
+
+      AnkiConditionalErrorAndReturnValue(curMatlabString,
+        NULL, "mxArrayToString", "Could not convert string");
+
+      const s32 stringLength = static_cast<s32>(strlen(curMatlabString)) + 1;
+
+      char * curCString = reinterpret_cast<char*>(memory.Allocate(stringLength));
+
+      AnkiConditionalErrorAndReturnValue(curCString,
+        NULL, "mxArrayToString", "Could not allocate string");
+
+      strncpy(curCString, curMatlabString, stringLength);
+
+      mxFree(curMatlabString);
+
+      return curCString;
+    }
+
     inline Array<char *> mxCellArrayToStringArray(const mxArray * const matlabArray, MemoryStack &memory)
     {
       const mwSize numDimensions = mxGetNumberOfDimensions(matlabArray);
@@ -265,17 +295,9 @@ namespace Anki {
 
           const mxArray * curMatlabArray = mxGetCell(matlabArray, cellIndex);
 
-          char * curMatlabString = mxArrayToString(curMatlabArray);
-
-          const s32 stringLength = static_cast<s32>(strlen(curMatlabString)) + 1;
-
-          char * curCString = reinterpret_cast<char*>(memory.Allocate(stringLength));
-
-          strncpy(curCString, curMatlabString, stringLength);
+          char * curCString = mxArrayToString(curMatlabArray, memory);
 
           pArray[x] = curCString;
-
-          mxFree(curMatlabString);
         }
       }
 
