@@ -117,37 +117,79 @@ namespace Anki
         flags);
     }
 
-    template<typename Type> Array<Type>::Array(const char * filename, MemoryStack &memory)
+    template<typename Type> Array<Type> Array<Type>::LoadImage(const char * filename, MemoryStack &memory)
     {
-      InvalidateArray();
+      Array<Type> newArray = Array<Type>();
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       const cv::Mat cvImage = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
 
-      AnkiConditionalErrorAndReturn(cvImage.cols >= 0 && cvImage.rows >= 0,
-        "Array<Type>::Array", "Invalid size");
+      AnkiConditionalErrorAndReturnValue(cvImage.cols >= 0 && cvImage.rows >= 0,
+        newArray, "Array<Type>::LoadImage", "Invalid size");
+
+      newArray = Array<Type>(cvImage.rows, cvImage,cols, memory);
+
+      AnkiConditionalErrorAndReturnValue(newArray.IsValid(),
+        newArray, "Array<Type>::LoadImage", "Invalid size");
 
       s32 numBytesAllocated = 0;
 
-      void * allocatedBuffer = AllocateBufferFromMemoryStack(cvImage.rows, ComputeRequiredStride(cvImage.cols, flags), memory, numBytesAllocated, flags, false);
+      const u8 * restrict pCvImage = cvImage.data;
 
-      if(InitializeBuffer(cvImage.rows, cvImage.cols, reinterpret_cast<Type*>(allocatedBuffer), numBytesAllocated, flags) == RESULT_OK) {
-        const u8 * restrict pCvImage = cvImage.data;
+      for(s32 y=0; y<cvImage.rows; y++) {
+        Type * restrict pNewArray = newArray.Pointer(y, 0);
 
-        for(s32 y=0; y<cvImage.rows; y++) {
-          Type * restrict pThisData = Pointer(y, 0);
-
-          for(s32 x=0; x<cvImage.cols; x++) {
-            pThisData[x] = static_cast<Type>(pCvImage[x]);
-          }
-
-          pCvImage += cvImage.step.buf[0];
+        for(s32 x=0; x<cvImage.cols; x++) {
+          pNewArray[x] = static_cast<Type>(pCvImage[x]);
         }
+
+        pCvImage += cvImage.step.buf[0];
       }
 #else
-      AnkiError("Array<Type>::Array", "OpenCV is required to load an image from file");
+      AnkiError("Array<Type>::Array", "OpenCV is required to load an image from an image file");
 #endif
-    }
+
+      return newArray;
+    } // Array<Type>::LoadImage(const char * filename, MemoryStack &memory)
+
+    template<typename Type> Array<Type> Array<Type>::LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory)
+    {
+      Array<Type> newArray = Array<Type>();
+
+      AnkiConditionalErrorAndReturnValue(NotAliased(scratch, memory),
+        newArray, "Array<Type>::LoadBinary", "scratch and memory must be different");
+
+      AnkiConditionalErrorAndReturnValue(filename && AreValid(scratch, memory),
+        newArray, "Array<Type>::LoadBinary", "Invalid inputs");
+
+      FILE *fp = fopen(filename, "rb");
+      fseek(fp, 0, SEEK_END);
+      s32 bufferLength = ftell(fp);
+      fseek(fp, 0, SEEK_SET);
+
+      void * buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(bufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
+
+      fread(buffer, bufferLength, 1, fp);
+
+      fclose(fp);
+
+      SerializedBuffer serializedBuffer(buffer, bufferLength, Anki::Embedded::Flags::Buffer(false, true, true));
+
+      SerializedBufferReconstructingIterator iterator(serializedBuffer);
+
+      const char * typeName = NULL;
+      const char * objectName = NULL;
+      s32 dataLength;
+      bool isReportedSegmentLengthCorrect;
+      void * nextItem = iterator.GetNext(&typeName, &objectName, dataLength, isReportedSegmentLengthCorrect);
+
+      AnkiConditionalErrorAndReturnValue(nextItem && strcmp(typeName, "Array") == 0,
+        newArray, "Array<Type>::LoadBinary", "Could not parse data");
+
+      newArray = SerializedBuffer::DeserializeRawArray<Type>(NULL, &buffer, bufferLength, memory);
+
+      return newArray;
+    } // Array<Type>::LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory)
 
     template<typename Type> const Type* Array<Type>::Pointer(const s32 index0, const s32 index1) const
     {

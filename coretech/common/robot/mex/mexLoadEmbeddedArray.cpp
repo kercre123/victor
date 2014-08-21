@@ -15,51 +15,15 @@
 using namespace Anki;
 using namespace Anki::Embedded;
 
-template<typename Type> Array<Type> Load(const char *filename, MemoryStack scratch, MemoryStack &memory)
-{
-  Array<Type> arr = Array<Type>();
-
-  AnkiConditionalErrorAndReturnValue(NotAliased(scratch, memory),
-    arr, "Load", "scratch and memory must be different");
-
-  FILE *fp = fopen(filename, "rb");
-  fseek(fp, 0L, SEEK_END);
-  s32 bufferLength = ftell(fp);
-  fseek(fp, 0L, SEEK_SET);
-
-  void * buffer = scratch.Allocate(bufferLength);
-
-  fread(buffer, bufferLength, 1, fp);
-
-  fclose(fp);
-
-  SerializedBuffer serializedBuffer(buffer, bufferLength, Anki::Embedded::Flags::Buffer(false, true, true));
-
-  SerializedBufferReconstructingIterator iterator(serializedBuffer);
-
-  const char * typeName = NULL;
-  const char * objectName = NULL;
-  s32 dataLength;
-  bool isReportedSegmentLengthCorrect;
-  void * nextItem = iterator.GetNext(&typeName, &objectName, dataLength, isReportedSegmentLengthCorrect);
-
-  if(!nextItem) {
-    return arr;
-  }
-
-  if(strcmp(typeName, "Array") == 0) {
-    arr = SerializedBuffer::DeserializeRawArray<Type>(NULL, &buffer, bufferLength, memory);
-  }
-
-  return arr;
-}
-
 mxArray* Load(const char *filename, MemoryStack scratch)
 {
+  AnkiConditionalErrorAndReturnValue(filename && scratch.IsValid(),
+    NULL, "Load", "Invalid inputs");
+
   FILE *fp = fopen(filename, "rb");
-  fseek(fp, 0L, SEEK_END);
+  fseek(fp, 0, SEEK_END);
   s32 bufferLength = ftell(fp);
-  fseek(fp, 0L, SEEK_SET);
+  fseek(fp, 0, SEEK_SET);
 
   void * buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(bufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 

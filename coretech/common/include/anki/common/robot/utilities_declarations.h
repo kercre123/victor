@@ -29,6 +29,10 @@ namespace Anki
 
     template<typename Type> inline Type RoundUp(const Type number, const Type multiple);
 
+    // void* and size_t is a special case, good for aligning pointers
+    const void* RoundUp(const void* number, const size_t multiple);
+    void* RoundUp(void* number, const size_t multiple);
+
     template<typename Type> inline Type RoundDown(const Type number, const Type multiple);
 
     // Only s32, u32, f32, and f64 outputs are supported. If you need something else, also do a saturate_cast
