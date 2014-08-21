@@ -81,6 +81,10 @@ function runTests_detectFiducialMarkers_compilePerPoseStats(workQueue, allTestDa
             curResultsData_perPose.numQuadsNotIgnored,...
             curResultsData_perPose.numSpurriousDetections};
         
+        for iMarker = 1:length(markersToDisplay(:,3))
+            assert(~iscell(markersToDisplay{iMarker,3}));
+        end
+        
         drawnImage = mexDrawSystemTestResults(uint8(image), curResultsData.detectedQuads, curResultsData.detectedQuadValidity, markersToDisplay(:,1), int32(cell2mat(markersToDisplay(:,2))), markersToDisplay(:,3), showImageDetectionsScale, workQueue{iWork}.perPoseStats_imageFilename, toShowResults);
         drawnImage = drawnImage(:,:,[3,2,1]);
         
@@ -203,7 +207,9 @@ function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect
     allDetectedIndexes = unique(matchedIndexes);
     for iMarker = 1:length(curResultsData.markerNames_detected)
         if isempty(find(iMarker == allDetectedIndexes, 1))
-            numSpurriousDetections = numSpurriousDetections + 1;
+            assert(~iscell(curResultsData.markerNames_detected{iMarker}));
+            
+            numSpurriousDetections = numSpurriousDetections + 1;            
             markersToDisplay(end+1,:) = {curResultsData.detectedMarkers{iMarker}.corners, 6, curResultsData.markerNames_detected{iMarker}(8:end)}; %#ok<AGROW>
         end
     end

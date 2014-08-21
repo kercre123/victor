@@ -223,47 +223,58 @@ classdef VisionMarkerTrained
 %         h = Draw(this, varargin);
         
         function this = ReorderCorners(this, varargin)
-            underscoreIndex = find(this.codeName == '_');
-            if strncmpi(this.codeName, 'inverted_', 9)
-                % Ignore the first underscore found if this is
-                % an inverted code name
-                underscoreIndex(1) = [];
+            if ~iscell(this.codeName)
+                this.codeName = {this.codeName};
             end
-
-            if ~isempty(underscoreIndex)
-                assert(length(underscoreIndex) == 1, ...
-                    'There should be no more than 1 underscore in the code name: "%s".', this.codeName);
-
-                angleStr = this.codeName((underscoreIndex+1):end);
-                this.codeName = this.codeName(1:(underscoreIndex-1));
-
-                % Reorient the corners if there's an angle in
-                % the name.  After this the line between the 
-                % first and third corner will be the top side.
-                reorder = [1 3; 2 4]; % canonical corner ordering
-                switch(angleStr)
-                    case '000'
-                        % nothing to do
-                    case '090'
-                        reorder = rot90(rot90(rot90(reorder)));
-                        %reorder = rot90(reorder);
-                    case '180'
-                        reorder = rot90(rot90(reorder));
-                    case '270'
-                        %reorder = rot90(rot90(rot90(reorder)));
-                        reorder = rot90(reorder);
-                    otherwise                                    
-                        error('Unrecognized angle string "%s"', angleStr);
+            
+            for iName = 1:length(this.codeName)
+                underscoreIndex = find(this.codeName{iName} == '_');
+                if strncmpi(this.codeName{iName}, 'inverted_', 9)
+                    % Ignore the first underscore found if this is
+                    % an inverted code name
+                    underscoreIndex(1) = [];
                 end
 
-                this.corners = this.corners(reorder(:),:);
+                if ~isempty(underscoreIndex)
+                    assert(length(underscoreIndex) == 1, ...
+                        'There should be no more than 1 underscore in the code name: "%s".', this.codeName{iName});
 
-            end % if ~isempty(underscoreIndex)
+                    angleStr = this.codeName{iName}((underscoreIndex+1):end);
+                    this.codeName{iName} = this.codeName{iName}(1:(underscoreIndex-1));
 
-            % Use code names that match what gets put into
-            % the C++ enums by auto code generation after
-            % training
-            this.codeName = sprintf('MARKER_%s', upper(this.codeName));
+                    % Reorient the corners if there's an angle in
+                    % the name.  After this the line between the 
+                    % first and third corner will be the top side.
+                    reorder = [1 3; 2 4]; % canonical corner ordering
+                    switch(angleStr)
+                        case '000'
+                            % nothing to do
+                        case '090'
+                            reorder = rot90(rot90(rot90(reorder)));
+                            %reorder = rot90(reorder);
+                        case '180'
+                            reorder = rot90(rot90(reorder));
+                        case '270'
+                            %reorder = rot90(rot90(rot90(reorder)));
+                            reorder = rot90(reorder);
+                        otherwise                                    
+                            error('Unrecognized angle string "%s"', angleStr);
+                    end
+
+                    this.corners = this.corners(reorder(:),:);
+
+                end % if ~isempty(underscoreIndex)
+
+                % Use code names that match what gets put into
+                % the C++ enums by auto code generation after
+                % training
+                this.codeName{iName} = sprintf('MARKER_%s', upper(this.codeName{iName}));
+            end
+            
+            if length(this.codeName) == 1
+                this.codeName = this.codeName{1};
+            end
+            
             this.name = this.codeName;
         end
         
