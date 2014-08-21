@@ -9,8 +9,12 @@ validQuads = false(size(quads));
 
 persistent allMarkerImages;
 persistent minimalProbeTree;
+persistent minimalProbeTreeFilename;
+
 if strcmp(embeddedConversions.extractFiducialMethod, 'matlab_exhaustive') || strcmp(embeddedConversions.extractFiducialMethod, 'c_exhaustive')
-    allMarkerImages = visionMarker_exhaustiveMatch_loadallMarkerImages(VisionMarkerTrained.TrainingImageDir);
+    if isempty(allMarkerImages)
+        allMarkerImages = visionMarker_exhaustiveMatch_loadallMarkerImages(VisionMarkerTrained.TrainingImageDir);
+    end
 end
 
 if ~isempty(quads)
@@ -117,7 +121,8 @@ if ~isempty(quads)
             
             markers{end+1} = newMarker; %#ok<AGROW>
         elseif strcmp(embeddedConversions.extractFiducialMethod, 'matlab_alternateTree')
-            if isempty(minimalProbeTree)
+            if isempty(minimalProbeTree) || ~strcmp(minimalProbeTreeFilename, embeddedConversions.extractFiducialMethodParameters.treeFilename)
+                minimalProbeTreeFilename = embeddedConversions.extractFiducialMethodParameters.treeFilename;
                 load(embeddedConversions.extractFiducialMethodParameters.treeFilename, 'minimalProbeTree');
 %                 load(embeddedConversions.extractFiducialMethodParameters.treeFilename, 'probeTree');
             end

@@ -63,7 +63,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.useMatlabForAll = true;
-    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree''extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-08-19_noGrayvalues_fullTree.mat'));
+    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-08-19_noGrayvalues_fullTree.mat'));
     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-altTree';
     algorithmParametersN.extractionFunctionId = '0101/1';
     resultsData_overall_matlabWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
