@@ -234,7 +234,9 @@ namespace Anki
             return lastResult;
           }
 
-          if(currentMarker.validity != VisionMarker::LOW_CONTRAST) {
+          if(currentMarker.validity == VisionMarker::LOW_CONTRAST) {
+            currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
+          } else {
             if((lastResult = currentMarker.Extract(
               image,
               refinedHomography, meanGrayvalueThreshold,

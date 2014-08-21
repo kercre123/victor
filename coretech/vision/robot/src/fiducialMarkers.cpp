@@ -518,6 +518,8 @@ namespace Anki
     {
       this->corners = Quadrilateral<f32>(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f));
       this->validity = UNKNOWN;
+      this->markerType = Anki::Vision::MARKER_UNKNOWN;
+      this->observedOrientation = 0;
 
       Initialize();
     }
@@ -526,6 +528,8 @@ namespace Anki
     {
       this->corners.SetCast<s16>(corners);
       this->validity = validity;
+      this->markerType = Anki::Vision::MARKER_UNKNOWN;
+      this->observedOrientation = 0;
 
       Initialize();
     } // VisionMarker::VisionMarker()
@@ -534,6 +538,8 @@ namespace Anki
     {
       this->corners = corners;
       this->validity = validity;
+      this->markerType = Anki::Vision::MARKER_UNKNOWN;
+      this->observedOrientation = 0;
 
       Initialize();
     }
@@ -784,7 +790,7 @@ namespace Anki
 
         const Quadrilateral<f32> initQuad = this->corners;
 
-        const u8 meanGrayvalueThreshold = static_cast<u8>(0.5f*(brightValue+darkValue));
+        meanGrayvalueThreshold = static_cast<u8>(0.5f*(brightValue+darkValue));
 
         if(refine_quadRefinementIterations > 0) {
           BeginBenchmark("vmrc_quadrefine");
