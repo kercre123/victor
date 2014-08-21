@@ -90,7 +90,7 @@ if ~isempty(quads)
                 img,...
                 newCorners);
             
-            newMarker.ReorderCorners();
+            newMarker = newMarker.ReorderCorners();
             
             markers{end+1} = newMarker; %#ok<AGROW>
         elseif strcmp(embeddedConversions.extractFiducialMethod, 'c_exhaustive')
@@ -117,7 +117,7 @@ if ~isempty(quads)
                 img,...
                 newCorners);
             
-            newMarker.ReorderCorners();
+            newMarker = newMarker.ReorderCorners();
             
             markers{end+1} = newMarker; %#ok<AGROW>
         elseif strcmp(embeddedConversions.extractFiducialMethod, 'matlab_alternateTree')
@@ -141,20 +141,22 @@ if ~isempty(quads)
             [labelName, labelID] = probeTree2_query(minimalProbeTree, imgU8, tform, blackValue, whiteValue);
 %             [labelName, labelID] = probeTree2_query(probeTree, imgU8, tform, blackValue, whiteValue);
             
-            newVisionMarker = VisionMarkerTrained([], 'Initialize', false);
+            newMarker = VisionMarkerTrained([], 'Initialize', false);
             
-            newVisionMarker.codeID = labelID;
-            newVisionMarker.codeName = labelName;
-            newVisionMarker.corners = corners;
-            newVisionMarker.name = labelName;
-            newVisionMarker.fiducialSize = 1;
-            newVisionMarker.isValid = true;
-            % newVisionMarker.matchDistance = matchDistance;
+            newMarker.codeID = labelID;
+            newMarker.codeName = labelName;
+            newMarker.corners = corners;
+            newMarker.name = labelName;
+            newMarker.fiducialSize = 1;
+            newMarker.isValid = true;
+            % newMarker.matchDistance = matchDistance;
             
             tform = cp2tform([0 0 1 1; 0 1 0 1]', corners, 'projective');
-            newVisionMarker.H = tform.tdata.T';
+            newMarker.H = tform.tdata.T';
             
-            markers{end+1} = newVisionMarker;  %#ok<AGROW>
+            newMarker = newMarker.ReorderCorners();
+            
+            markers{end+1} = newMarker;  %#ok<AGROW>
         end
 
         if DEBUG_DISPLAY

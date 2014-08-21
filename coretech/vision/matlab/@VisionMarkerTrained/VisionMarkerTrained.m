@@ -209,7 +209,7 @@ classdef VisionMarkerTrained
                 if this.isValid
                     assert(strcmp(verificationResult, this.codeName));
 
-                    this.ReorderCorners();
+                    this = this.ReorderCorners();
                 end
             end % IF threshold < 0
             
@@ -219,9 +219,10 @@ classdef VisionMarkerTrained
             
         end % Constructor VisionMarkerTrained()
        
-        h = Draw(this, varargin);
+        % TODO: why was this line here?
+%         h = Draw(this, varargin);
         
-        function ReorderCorners(this)
+        function this = ReorderCorners(this, varargin)
             underscoreIndex = find(this.codeName == '_');
             if strncmpi(this.codeName, 'inverted_', 9)
                 % Ignore the first underscore found if this is
@@ -263,6 +264,7 @@ classdef VisionMarkerTrained
             % the C++ enums by auto code generation after
             % training
             this.codeName = sprintf('MARKER_%s', upper(this.codeName));
+            this.name = this.codeName;
         end
         
         % For backwards compatibility to lowercase "draw" in Marker2D

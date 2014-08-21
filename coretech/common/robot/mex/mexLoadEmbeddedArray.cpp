@@ -29,7 +29,7 @@ template<typename Type> Array<Type> Load(const char *filename, MemoryStack scrat
 
   void * buffer = scratch.Allocate(bufferLength);
 
-  fread(buffer, fileSize, 1, fp);
+  fread(buffer, bufferLength, 1, fp);
 
   fclose(fp);
 
