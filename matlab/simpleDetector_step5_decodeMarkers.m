@@ -7,7 +7,8 @@ validQuads = false(size(quads));
 % subplot(2,2,4)
 % imshow(label2rgb(regionImg, 'jet', 'k', 'shuffle'))
 
-persistent allMarkerImages; %#ok<TLEV>
+persistent allMarkerImages;
+persistent minimalProbeTree;
 if strcmp(embeddedConversions.extractFiducialMethod, 'matlab_exhaustive') || strcmp(embeddedConversions.extractFiducialMethod, 'c_exhaustive')
     allMarkerImages = visionMarker_exhaustiveMatch_loadallMarkerImages(VisionMarkerTrained.TrainingImageDir);
 end
@@ -70,7 +71,7 @@ if ~isempty(quads)
             
             [~, bright, dark] = VisionMarkerTrained.ComputeThreshold(img, tform);
             
-            if isempty(bright) || isempty(dark) 
+            if isempty(bright) || isempty(dark)
                 continue;
             end
             
@@ -87,7 +88,7 @@ if ~isempty(quads)
             
             newMarker.ReorderCorners();
             
-            markers{end+1} = newMarker; %#ok<AGROW>          
+            markers{end+1} = newMarker; %#ok<AGROW>
         elseif strcmp(embeddedConversions.extractFiducialMethod, 'c_exhaustive')
             markerTmp = VisionMarkerTrained([], 'Corners', corners, 'Initialize', false);
             
@@ -96,8 +97,8 @@ if ~isempty(quads)
             markerTmp.H = tform.tdata.T';
             
             [~, bright, dark] = VisionMarkerTrained.ComputeThreshold(img, tform);
-                      
-            if isempty(bright) || isempty(dark) 
+            
+            if isempty(bright) || isempty(dark)
                 continue;
             end
             
@@ -114,20 +115,41 @@ if ~isempty(quads)
             
             newMarker.ReorderCorners();
             
-            markers{end+1} = newMarker; %#ok<AGROW>            
+            markers{end+1} = newMarker; %#ok<AGROW>
         elseif strcmp(embeddedConversions.extractFiducialMethod, 'matlab_alternateTree')
-            persistent minimalProbeTree;
-            
             if isempty(minimalProbeTree)
                 load(embeddedConversions.extractFiducialMethodParameters.treeFilename, 'minimalProbeTree');
+%                 load(embeddedConversions.extractFiducialMethodParameters.treeFilename, 'probeTree');
             end
             
+            imgU8 = im2uint8(img);
+            
+            counts = integerCounts(imgU8, corners);
+            
+            countsSum = cumsum(counts); 
+            countsSum = countsSum / max(countsSum);
+            blackValue = find(countsSum >= 0.01, 1) - 1;
+            whiteValue = find(countsSum >= 0.99, 1) - 1;
+            
+            tform = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
+            
+            [labelName, labelID] = probeTree2_query(minimalProbeTree, imgU8, tform, blackValue, whiteValue);
+%             [labelName, labelID] = probeTree2_query(probeTree, imgU8, tform, blackValue, whiteValue);
+            
+            newVisionMarker = VisionMarkerTrained([], 'Initialize', false);
+            
+            newVisionMarker.codeID = labelID;
+            newVisionMarker.codeName = labelName;
+            newVisionMarker.corners = corners;
+            newVisionMarker.name = labelName;
+            newVisionMarker.fiducialSize = 1;
+            newVisionMarker.isValid = true;
+            % newVisionMarker.matchDistance = matchDistance;
+            
             tform = cp2tform([0 0 1 1; 0 1 0 1]', corners, 'projective');
+            newVisionMarker.H = tform.tdata.T';
             
-            [labelName, labelID] = probeTree2_query(minimalProbeTree, img, tform);
-            
-            markers{end+1} = VisionMarkerTrained(img, 'Corners', corners, ...
-                'CornerRefinementIterations', quadRefinementIterations);  %#ok<AGROW>            
+            markers{end+1} = newVisionMarker;  %#ok<AGROW>
         end
 
         if DEBUG_DISPLAY
