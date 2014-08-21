@@ -826,6 +826,9 @@ namespace Anki
           }
 
           EndBenchmark("vmrc_quadrefine");
+        } else {
+          // If we're not refining, the refined homography is the same as the initial one
+          refinedHomography.Set(initHomography);
         }
       } else {
         // Not enough contrast at bright/dark pairs.
