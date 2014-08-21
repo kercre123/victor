@@ -186,10 +186,49 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(nextItem && strcmp(typeName, "Array") == 0,
         newArray, "Array<Type>::LoadBinary", "Could not parse data");
 
-      newArray = SerializedBuffer::DeserializeRawArray<Type>(NULL, &buffer, bufferLength, memory);
+      char arrayName[128];
+      newArray = SerializedBuffer::DeserializeRawArray<Type>(&arrayName[0], &nextItem, dataLength, memory);
 
       return newArray;
     } // Array<Type>::LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory)
+
+    template<typename Type> Result Array<Type>::SaveBinary(const char * filename, MemoryStack scratch)
+    {
+      AnkiConditionalErrorAndReturnValue(AreValid(*this, scratch),
+        RESULT_FAIL_INVALID_OBJECT, "Array<Type>::SaveBinary", "Invalid inputs");
+
+      const s32 serializedBufferLength = 4096 + this->get_size(0) * this->get_stride();
+      void *buffer = scratch.Allocate(serializedBufferLength);
+
+      AnkiConditionalErrorAndReturnValue(buffer,
+        RESULT_FAIL_OUT_OF_MEMORY, "Array<Type>::SaveBinary", "Memory could not be allocated");
+
+      SerializedBuffer toSave(buffer, serializedBufferLength);
+
+      toSave.PushBack<Type>("Array", *this);
+
+      s32 startIndex;
+      u8 * bufferStart = reinterpret_cast<u8*>(toSave.get_memoryStack().get_validBufferStart(startIndex));
+      const s32 validUsedBytes = toSave.get_memoryStack().get_usedBytes() - startIndex;
+
+      const s32 startDiff = static_cast<s32>( reinterpret_cast<size_t>(bufferStart) - reinterpret_cast<size_t>(toSave.get_memoryStack().get_buffer()) );
+      const s32 endDiff = toSave.get_memoryStack().get_totalBytes() - toSave.get_memoryStack().get_usedBytes();
+
+      FILE *fp = fopen(filename, "wb");
+
+      AnkiConditionalErrorAndReturnValue(fp,
+        RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Could not open file");
+
+      const size_t bytesWrittenForHeader = fwrite(&SERIALIZED_BUFFER_HEADER[0], SERIALIZED_BUFFER_HEADER_LENGTH, 1, fp);
+
+      const size_t bytesWritten = fwrite(bufferStart, validUsedBytes, 1, fp);
+
+      const size_t bytesWrittenForFooter = fwrite(&SERIALIZED_BUFFER_FOOTER[0], SERIALIZED_BUFFER_FOOTER_LENGTH, 1, fp);
+
+      fclose(fp);
+
+      return RESULT_OK;
+    } // Array<Type>::SaveBinary(const char * filename, MemoryStack scratch)
 
     template<typename Type> const Type* Array<Type>::Pointer(const s32 index0, const s32 index1) const
     {
