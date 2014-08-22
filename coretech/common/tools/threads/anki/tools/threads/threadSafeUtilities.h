@@ -35,7 +35,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 namespace Anki
 {
-  inline void WaitForSimpleMutex(SimpleMutex mutex)
+  inline void LockSimpleMutex(SimpleMutex mutex)
   {
 #ifdef _MSC_VER
     WaitForSingleObject(mutex, INFINITE);
@@ -44,7 +44,7 @@ namespace Anki
 #endif
   }
 
-  inline void ReleaseSimpleMutex(SimpleMutex mutex)
+  inline void UnlockSimpleMutex(SimpleMutex mutex)
   {
 #ifdef _MSC_VER
     ReleaseMutex(mutex);

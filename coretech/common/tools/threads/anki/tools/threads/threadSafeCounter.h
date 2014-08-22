@@ -25,7 +25,7 @@ namespace Anki
     // Returns the updated value
     Type Increment(const Type delta);
 
-    // Returns the updated value
+    // Returns the updated value (should always be the same as the input)
     Type Set(const Type value);
 
     // Returns the current value
@@ -52,12 +52,12 @@ namespace Anki
   {
     Type localValue;
 
-    WaitForSimpleMutex(mutex);
+    LockSimpleMutex(mutex);
 
     this->value += delta;
     localValue = this->value;
 
-    ReleaseSimpleMutex(mutex);
+    UnlockSimpleMutex(mutex);
 
     return localValue;
   } // Increment()
@@ -66,12 +66,12 @@ namespace Anki
   {
     Type localValue;
 
-    WaitForSimpleMutex(mutex);
+    LockSimpleMutex(mutex);
 
     this->value = value;
     localValue = value;
 
-    ReleaseSimpleMutex(mutex);
+    UnlockSimpleMutex(mutex);
 
     return localValue;
   } // Set()
@@ -80,11 +80,11 @@ namespace Anki
   {
     Type localValue;
 
-    WaitForSimpleMutex(mutex);
+    LockSimpleMutex(mutex);
 
     localValue = this->value;
 
-    ReleaseSimpleMutex(mutex);
+    UnlockSimpleMutex(mutex);
 
     return localValue;
   } // Set()

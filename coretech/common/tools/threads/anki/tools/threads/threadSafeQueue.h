@@ -50,7 +50,7 @@ namespace Anki
   {
     Type value;
 
-    WaitForSimpleMutex(mutex);
+    LockSimpleMutex(mutex);
 
     if(buffers.empty()) {
       if(popSuccessful)
@@ -63,25 +63,25 @@ namespace Anki
         *popSuccessful = true;
     }
 
-    ReleaseSimpleMutex(mutex);
+    UnlockSimpleMutex(mutex);
 
     return value;
   } // template<typename Type> ThreadSafeQueue::Type Pop()
 
   template<typename Type> void ThreadSafeQueue<Type>::Push(Type newString)
   {
-    WaitForSimpleMutex(mutex);
+    LockSimpleMutex(mutex);
 
     buffers.push(newString);
 
-    ReleaseSimpleMutex(mutex);
+    UnlockSimpleMutex(mutex);
   } // template<typename Type> ThreadSafeQueue::void Push(Type newString)
 
   template<typename Type> bool ThreadSafeQueue<Type>::IsEmpty() const
   {
     bool isEmpty;
 
-    WaitForSimpleMutex(mutex);
+    LockSimpleMutex(mutex);
 
     if(buffers.empty()) {
       isEmpty = true;
@@ -89,7 +89,7 @@ namespace Anki
       isEmpty = false;
     }
 
-    ReleaseSimpleMutex(mutex);
+    UnlockSimpleMutex(mutex);
 
     return isEmpty;
   } // template<typename Type> bool ThreadSafeQueue::IsEmpty()
