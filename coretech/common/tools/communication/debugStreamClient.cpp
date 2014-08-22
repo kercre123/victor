@@ -141,18 +141,21 @@ namespace Anki
       this->isValid = false;
 
       // Clean up allocated memory
-      while(!rawMessageQueue.IsEmpty()) {
-        DebugStreamClient::RawBuffer object = rawMessageQueue.Pop();
+      while(!rawMessageQueue.Empty()) {
+        DebugStreamClient::RawBuffer object = rawMessageQueue.Front();
+        rawMessageQueue.Pop();
         free(object.data);
       }
 
-      while(!parsedObjectQueue.IsEmpty()) {
-        DebugStreamClient::Object object = parsedObjectQueue.Pop();
+      while(!parsedObjectQueue.Empty()) {
+        DebugStreamClient::Object object = parsedObjectQueue.Front();
+        parsedObjectQueue.Pop();
         free(object.buffer);
       }
 
-      while(!saveObjectQueue.IsEmpty()) {
-        DebugStreamClient::ObjectToSave object = saveObjectQueue.Pop();
+      while(!saveObjectQueue.Empty()) {
+        DebugStreamClient::ObjectToSave object = saveObjectQueue.Front();
+        saveObjectQueue.Pop();
         free(object.buffer);
       }
 
@@ -248,7 +251,7 @@ namespace Anki
 
       bool foundObject = true;
       s32 attempts = 0;
-      while(parsedObjectQueue.IsEmpty()) {
+      while(parsedObjectQueue.Empty()) {
 #ifdef _MSC_VER
         Sleep(10);
 #else
@@ -262,7 +265,8 @@ namespace Anki
       }
 
       if(foundObject) {
-        newObject = parsedObjectQueue.Pop();
+        newObject = parsedObjectQueue.Front();
+        parsedObjectQueue.Pop();
       } else {
         newObject = DebugStreamClient::Object();
       }
@@ -864,7 +868,7 @@ namespace Anki
       ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue = callingObject->parsedObjectQueue;
 
       while(true) {
-        while(rawMessageQueue.IsEmpty() && callingObject->get_isRunning()) {
+        while(rawMessageQueue.Empty() && callingObject->get_isRunning()) {
 #ifdef _MSC_VER
           Sleep(1);
 #else
@@ -875,7 +879,8 @@ namespace Anki
         if(!callingObject->get_isRunning())
           break;
 
-        DebugStreamClient::RawBuffer nextRawBuffer = rawMessageQueue.Pop();
+        DebugStreamClient::RawBuffer nextRawBuffer = rawMessageQueue.Front();
+        rawMessageQueue.Pop();
 
         ProcessRawBuffer(nextRawBuffer, parsedObjectQueue, false);
       } // while(true)
@@ -896,7 +901,7 @@ namespace Anki
       ThreadSafeQueue<DebugStreamClient::ObjectToSave> &saveObjectQueue = callingObject->saveObjectQueue;
 
       while(true) {
-        while(saveObjectQueue.IsEmpty() && callingObject->get_isRunning()) {
+        while(saveObjectQueue.Empty() && callingObject->get_isRunning()) {
 #ifdef _MSC_VER
           Sleep(10);
 #else
@@ -907,7 +912,8 @@ namespace Anki
         if(!callingObject->get_isRunning())
           break;
 
-        const DebugStreamClient::ObjectToSave nextObject = saveObjectQueue.Pop();
+        const DebugStreamClient::ObjectToSave nextObject = saveObjectQueue.Front();
+        saveObjectQueue.Pop();
 
         // TODO: save things other than images
         Array<u8> image = *(reinterpret_cast<Array<u8>*>(nextObject.startOfPayload));

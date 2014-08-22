@@ -23,11 +23,13 @@ namespace Anki
   public:
     ThreadSafeQueue();
 
-    Type Pop(bool * popSuccessful = NULL);
+    Type Front() const;
 
-    void Push(Type newString);
+    void Pop();
 
-    bool IsEmpty() const;
+    void Push(const Type &newValue);
+
+    bool Empty() const;
 
   protected:
     mutable SimpleMutex mutex;
@@ -46,38 +48,38 @@ namespace Anki
     buffers = std::queue<Type>();
   } // template<typename Type> ThreadSafeQueue::ThreadSafeQueue()
 
-  template<typename Type> Type ThreadSafeQueue<Type>::Pop(bool * popSuccessful)
+  template<typename Type> Type ThreadSafeQueue<Type>::Front() const
   {
     Type value;
 
     LockSimpleMutex(mutex);
 
-    if(buffers.empty()) {
-      if(popSuccessful)
-        *popSuccessful = false;
-    } else {
-      value = buffers.front();
-      buffers.pop();
-
-      if(popSuccessful)
-        *popSuccessful = true;
-    }
+    value = buffers.front();
 
     UnlockSimpleMutex(mutex);
 
     return value;
   } // template<typename Type> ThreadSafeQueue::Type Pop()
 
-  template<typename Type> void ThreadSafeQueue<Type>::Push(Type newString)
+  template<typename Type> void ThreadSafeQueue<Type>::Pop()
   {
     LockSimpleMutex(mutex);
 
-    buffers.push(newString);
+    buffers.pop();
 
     UnlockSimpleMutex(mutex);
-  } // template<typename Type> ThreadSafeQueue::void Push(Type newString)
+  } // template<typename Type> ThreadSafeQueue::Type Pop()
 
-  template<typename Type> bool ThreadSafeQueue<Type>::IsEmpty() const
+  template<typename Type> void ThreadSafeQueue<Type>::Push(const Type &newValue)
+  {
+    LockSimpleMutex(mutex);
+
+    buffers.push(newValue);
+
+    UnlockSimpleMutex(mutex);
+  } // template<typename Type> ThreadSafeQueue::void Push(Type newValue)
+
+  template<typename Type> bool ThreadSafeQueue<Type>::Empty() const
   {
     bool isEmpty;
 
