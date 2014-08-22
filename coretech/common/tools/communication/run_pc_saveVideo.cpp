@@ -3,7 +3,7 @@
 #define COZMO_ROBOT
 
 #include "communication.h"
-#include "threadSafeQueue.h"
+#include "anki/tools/threads/threadSafeQueue.h"
 #include "debugStreamClient.h"
 
 #include "anki/common/robot/config.h"
