@@ -153,6 +153,15 @@ namespace Anki
       static Result DeserializeOneDescriptionString(    char *description, void ** buffer, s32 &bufferLength);
     }; // class SerializedBuffer
 
+    // Special cases for strings (just put all the null-terminated string after the array)
+    template<> static Result SerializedBuffer::SerializeRawArray<const char*>(const char *objectName, const Array<const char*> &in, void ** buffer, s32 &bufferLength);
+    template<> static Result SerializedBuffer::SerializeRawArray<char*>(const char *objectName, const Array<char*> &in, void ** buffer, s32 &bufferLength);
+    template<> static Array<const char *> SerializedBuffer::DeserializeRawArray<const char*>(char *objectName, void ** buffer, s32 &bufferLength, MemoryStack &memory);
+    template<> static Array<char *> SerializedBuffer::DeserializeRawArray<char*>(char *objectName, void ** buffer, s32 &bufferLength, MemoryStack &memory);
+
+    template<> void* SerializedBuffer::PushBack<const char*>(const char *objectName, const Array<const char*> &in);
+    template<> void* SerializedBuffer::PushBack<char*>(const char *objectName, const Array<char*> &in);
+
     class SerializedBufferConstIterator : public MemoryStackConstIterator
     {
     public:

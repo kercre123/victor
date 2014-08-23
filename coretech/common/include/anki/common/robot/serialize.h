@@ -156,6 +156,11 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(in.IsValid(),
         RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "in ArraySlice is not Valid");
 
+      const s32 numRequiredBytes = in.get_size(0)*in.get_stride() + SerializedBuffer::EncodedArray::CODE_LENGTH;
+
+      AnkiConditionalErrorAndReturnValue(bufferLength >= numRequiredBytes,
+        RESULT_FAIL_OUT_OF_MEMORY, "SerializedBuffer::SerializeRawArray", "buffer needs at least %d bytes", numRequiredBytes);
+
       if(SerializeDescriptionStrings("Array", objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
@@ -185,7 +190,7 @@ namespace Anki
       const s32 numRequiredBytes = height*stride + SerializedBuffer::EncodedArraySlice::CODE_LENGTH;
 
       AnkiConditionalErrorAndReturnValue(bufferLength >= numRequiredBytes,
-        RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "buffer needs at least %d bytes", numRequiredBytes);
+        RESULT_FAIL_OUT_OF_MEMORY, "SerializedBuffer::SerializeRawArraySlice", "buffer needs at least %d bytes", numRequiredBytes);
 
       SerializedBuffer::EncodedArraySlice::Serialize<Type>(true, in, buffer, bufferLength);
 

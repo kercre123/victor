@@ -54,6 +54,11 @@ namespace Anki
         isSigned = false;
 
       if(reinterpret_cast<u32*>(*buffer)[0] & (1<<3))
+        isFloat = true;
+      else
+        isFloat = false;
+
+      if(reinterpret_cast<u32*>(*buffer)[0] & (1<<4))
         isString = true;
       else
         isString = false;
@@ -421,6 +426,183 @@ namespace Anki
       void * segment = const_cast<void*>(SerializedBufferReconstructingConstIterator::GetNext(typeName, objectName, dataLength, isReportedSegmentLengthCorrect));
 
       return segment;
+    }
+
+    template<> Result SerializedBuffer::SerializeRawArray<const char*>(const char *objectName, const Array<const char *> &in, void ** buffer, s32 &bufferLength)
+    {
+      AnkiConditionalErrorAndReturnValue(in.IsValid(),
+        RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "in ArraySlice is not Valid");
+
+      const s32 inHeight = in.get_size(0);
+      const s32 inWidth = in.get_size(1);
+      s32 numRequiredBytes = in.get_size(0)*in.get_stride() + SerializedBuffer::EncodedArray::CODE_LENGTH;
+
+      // Add the sizes of the null terminated strings
+      s32 stringsLength = 0;
+      for(s32 y=0; y<inHeight; y++) {
+        char const * const * restrict pIn = in.Pointer(y,0);
+        for(s32 x=0; x<inWidth; x++) {
+          stringsLength += strlen(pIn[x]) + 1;
+        }
+      }
+
+      numRequiredBytes += stringsLength + sizeof(u32);
+
+      AnkiConditionalErrorAndReturnValue(bufferLength >= numRequiredBytes,
+        RESULT_FAIL_OUT_OF_MEMORY, "SerializedBuffer::SerializeRawArray", "buffer needs at least %d bytes", numRequiredBytes);
+
+      if(SerializeDescriptionStrings("Array", objectName, buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
+
+      SerializedBuffer::EncodedArray::Serialize<const char *>(true, in, buffer, bufferLength);
+
+      memcpy(*buffer, in.Pointer(0,0), in.get_stride()*in.get_size(0));
+
+      *buffer = reinterpret_cast<u8*>(*buffer) + in.get_stride()*in.get_size(0);
+      bufferLength -= in.get_stride()*in.get_size(0);
+
+      // Copy the null terminated strings to the end
+
+      reinterpret_cast<u32*>(*buffer)[0] = stringsLength;
+      *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(u32);
+      bufferLength -= sizeof(u32);
+
+      for(s32 y=0; y<inHeight; y++) {
+        char const * const * restrict pIn = in.Pointer(y,0);
+        for(s32 x=0; x<inWidth; x++) {
+          const s32 curStringLength = strlen(pIn[x]) + 1;
+
+          memcpy(*buffer, pIn[x], curStringLength);
+
+          *buffer = reinterpret_cast<u8*>(*buffer) + curStringLength;
+          bufferLength -= curStringLength;
+        }
+      }
+
+      return RESULT_OK;
+    } // template<> Result SerializedBuffer::SerializeRawArray(const char *objectName, const Array<const char *> &in, void ** buffer, s32 &bufferLength)
+
+    template<> static Result SerializedBuffer::SerializeRawArray<char*>(const char *objectName, const Array<char*> &in, void ** buffer, s32 &bufferLength)
+    {
+      // Just cast the "char *" as "const char *", and serialize
+      const Array<const char*> constIn = *reinterpret_cast<const Array<const char*> *>(&in);
+      return SerializedBuffer::SerializeRawArray(objectName, constIn, buffer, bufferLength);
+    }
+
+    template<> static Array<char *> SerializedBuffer::DeserializeRawArray<char*>(char *objectName, void ** buffer, s32 &bufferLength, MemoryStack &memory)
+    {
+      // TODO: check if description is valid
+      DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength);
+
+      // TODO: check if encoded type is valid
+      s32 height;
+      s32 width;
+      s32 stride;
+      Flags::Buffer flags;
+      u16 basicType_sizeOfType;
+      bool basicType_isBasicType;
+      bool basicType_isInteger;
+      bool basicType_isSigned;
+      bool basicType_isFloat;
+      bool basicType_isString;
+      s32 basicType_numElements;
+      EncodedArray::Deserialize(true, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, buffer, bufferLength);
+
+      AnkiConditionalErrorAndReturnValue(
+        height > 0 && height < 1000000 &&
+        width > 0 && width < 1000000 &&
+        stride > 0 && stride < 1000000 &&
+        basicType_sizeOfType > 0 && basicType_sizeOfType < 10000 &&
+        basicType_numElements > 0 && basicType_numElements < 1000000,
+        Array<char*>(), "SerializedBuffer::DeserializeRawArray", "Unreasonable deserialized values");
+
+      AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(char*), MEMORY_ALIGNMENT),
+        Array<char*>(), "SerializedBuffer::DeserializeRawArray", "Parsed stride is not reasonable");
+
+      AnkiConditionalErrorAndReturnValue(bufferLength >= (height*stride),
+        Array<char*>(), "SerializedBuffer::DeserializeRawArray", "Not enought bytes left to set the array");
+
+      Array<char*> out = Array<char*>(height, width, memory);
+
+      memcpy(out.Pointer(0,0), *buffer, height*stride);
+
+      *buffer = reinterpret_cast<u8*>(*buffer) + height*stride;
+      bufferLength -= height*stride;
+
+      // Copy the null terminated strings from the end
+
+      const u32 stringsLength = reinterpret_cast<u32*>(*buffer)[0];
+      *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(u32);
+      bufferLength -= sizeof(u32);
+
+      char * stringBuffer = reinterpret_cast<char*>( memory.Allocate(stringsLength) );
+
+      s32 stringsLengthLeft = stringsLength;
+
+      const s32 outHeight = out.get_size(0);
+      const s32 outWidth = out.get_size(1);
+      for(s32 y=0; y<outHeight; y++) {
+        char ** restrict pOut = out.Pointer(y,0);
+        for(s32 x=0; x<outWidth; x++) {
+          const s32 curStringLength = strlen(reinterpret_cast<const char*>(*buffer)) + 1;
+
+          AnkiConditionalErrorAndReturnValue(curStringLength <= stringsLengthLeft,
+            Array<char*>(), "SerializedBuffer::DeserializeRawArray", "Not enought bytes left to set the array");
+
+          pOut[x] = stringBuffer;
+          memcpy(stringBuffer, *buffer, curStringLength);
+          stringBuffer += curStringLength;
+
+          *buffer = reinterpret_cast<u8*>(*buffer) + curStringLength;
+          bufferLength -= curStringLength;
+          stringsLengthLeft -= curStringLength;
+        }
+      }
+
+      return out;
+    }
+
+    template<> static Array<const char *> SerializedBuffer::DeserializeRawArray<const char*>(char *objectName, void ** buffer, s32 &bufferLength, MemoryStack &memory)
+    {
+      // Just cast the "char *" as "const char *", and deserialize
+      Array<char *> newArray = SerializedBuffer::DeserializeRawArray<char*>(objectName, buffer, bufferLength, memory);
+      Array<const char*> constOut = *reinterpret_cast<const Array<const char*> *>(&newArray);
+      return constOut;
+    }
+
+    template<> void* SerializedBuffer::PushBack<const char*>(const char *objectName, const Array<const char*> &in)
+    {
+      s32 totalDataLength = in.get_stride() * in.get_size(0) + SerializedBuffer::EncodedArray::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+
+      // Add the sizes of the null terminated strings
+      const s32 inHeight = in.get_size(0);
+      const s32 inWidth = in.get_size(1);
+      s32 stringsLength = 0;
+      for(s32 y=0; y<inHeight; y++) {
+        char const * const * restrict pIn = in.Pointer(y,0);
+        for(s32 x=0; x<inWidth; x++) {
+          stringsLength += strlen(pIn[x]) + 1;
+        }
+      }
+
+      totalDataLength += stringsLength + sizeof(u32);
+
+      void * const segmentStart = Allocate("Array", objectName, totalDataLength);
+      void * segment = segmentStart;
+
+      AnkiConditionalErrorAndReturnValue(segment != NULL,
+        NULL, "SerializedBuffer::PushBack", "Could not add data");
+
+      SerializeRawArray<const char*>(objectName, in, &segment, totalDataLength);
+
+      return segmentStart;
+    }
+
+    template<> void* SerializedBuffer::PushBack<char*>(const char *objectName, const Array<char*> &in)
+    {
+      // Just cast the "char *" as "const char *", and serialize
+      const Array<const char*> constIn = *reinterpret_cast<const Array<const char*> *>(&in);
+      return SerializedBuffer::PushBack(objectName, constIn);
     }
   } // namespace Embedded
 } // namespace Anki
