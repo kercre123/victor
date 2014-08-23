@@ -50,7 +50,7 @@ namespace Anki
         //u32 code[EncodedBasicTypeBuffer::CODE_SIZE];
 
         template<typename Type> static Result Serialize(const bool updateBufferPointer, const s32 numElements, void ** buffer, s32 &bufferLength); // Updates the buffer pointer and length before returning
-        static Result Deserialize(const bool updateBufferPointer, u16 &sizeOfType, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements, void** buffer, s32 &bufferLength); // Updates the buffer pointer and length before returning
+        static Result Deserialize(const bool updateBufferPointer, u16 &sizeOfType, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, bool &isString, s32 &numElements, void** buffer, s32 &bufferLength); // Updates the buffer pointer and length before returning
       };
 
       // Stores the forty-byte code for an Array
@@ -61,7 +61,7 @@ namespace Anki
         //u32 code[EncodedArray::CODE_SIZE];
 
         template<typename Type> static Result Serialize(const bool updateBufferPointer, const Array<Type> &in, void ** buffer, s32 &bufferLength); // Updates the buffer pointer and length before returning
-        static Result Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength); // Updates the buffer pointer and length before returning
+        static Result Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, bool &basicType_isString, s32 &basicType_numElements, void** buffer, s32 &bufferLength); // Updates the buffer pointer and length before returning
       };
 
       // Stores the ??-byte code for an ArraySlice
@@ -72,7 +72,7 @@ namespace Anki
         //u32 code[EncodedArraySlice::CODE_SIZE];
 
         template<typename Type> static Result Serialize(const bool updateBufferPointer, const ConstArraySlice<Type> &in, void ** buffer, s32 &bufferLength); // Updates the buffer pointer and length before returning
-        static Result Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_size, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_size, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength); // Updates the buffer pointer and length before returning
+        static Result Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_size, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_size, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, bool &basicType_isString, s32 &basicType_numElements, void** buffer, s32 &bufferLength); // Updates the buffer pointer and length before returning
       };
 
       //

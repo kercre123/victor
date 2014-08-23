@@ -32,7 +32,7 @@ namespace Anki
       this->memoryStack = MemoryStack(buffer, bufferLength, flags);
     }
 
-    Result SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(const bool updateBufferPointer, u16 &sizeOfType, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements, void** buffer, s32 &bufferLength)
+    Result SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(const bool updateBufferPointer, u16 &sizeOfType, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, bool &isString, s32 &numElements, void** buffer, s32 &bufferLength)
     {
       if(bufferLength < SerializedBuffer::EncodedBasicTypeBuffer::CODE_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
@@ -43,20 +43,20 @@ namespace Anki
       else
         isBasicType = false;
 
-      if(reinterpret_cast<u32*>(*buffer)[0] & 2)
+      if(reinterpret_cast<u32*>(*buffer)[0] & (1<<1))
         isInteger = true;
       else
         isInteger = false;
 
-      if(reinterpret_cast<u32*>(*buffer)[0] & 4)
+      if(reinterpret_cast<u32*>(*buffer)[0] & (1<<2))
         isSigned = true;
       else
         isSigned = false;
 
-      if(reinterpret_cast<u32*>(*buffer)[0] & 8)
-        isFloat = true;
+      if(reinterpret_cast<u32*>(*buffer)[0] & (1<<3))
+        isString = true;
       else
-        isFloat = false;
+        isString = false;
 
       sizeOfType = (reinterpret_cast<u32*>(*buffer)[0] & 0xFFFF0000) >> 16;
 
@@ -70,13 +70,13 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::EncodedArray::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
+    Result SerializedBuffer::EncodedArray::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, bool &basicType_isString, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
     {
       if(bufferLength < SerializedBuffer::EncodedArray::CODE_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
-      if(SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength) != RESULT_OK)
+      if(SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
       height = reinterpret_cast<u32*>(*buffer)[2];
@@ -92,13 +92,13 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::EncodedArraySlice::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_size, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_size, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
+    Result SerializedBuffer::EncodedArraySlice::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_size, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_size, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, bool &basicType_isString, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
     {
       if(bufferLength < SerializedBuffer::EncodedArraySlice::CODE_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
-      if(SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength) != RESULT_OK)
+      if(SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
       ySlice_start = reinterpret_cast<u32*>(*buffer)[6];

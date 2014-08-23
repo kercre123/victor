@@ -35,18 +35,26 @@ namespace Anki
       }
 
       if(Flags::TypeCharacteristics<Type>::isInteger) {
-        firstElement |= 2;
+        firstElement |= (1<<1);
       }
 
       if(Flags::TypeCharacteristics<Type>::isSigned) {
-        firstElement |= 4;
+        firstElement |= (1<<2);
       }
 
       if(Flags::TypeCharacteristics<Type>::isFloat) {
-        firstElement |= 8;
+        firstElement |= (1<<3);
       }
 
-      firstElement |= sizeof(Type) << 16;
+      if(Flags::TypeCharacteristics<Type>::isString) {
+        firstElement |= (1<<4);
+      }
+
+      // TODO: there's room in the firstElement for additional flags
+
+      AnkiAssert(sizeof(Type) <= 0xFFFF);
+
+      firstElement |= (sizeof(Type) & 0xFFFF) << 16;
 
       reinterpret_cast<u32*>(*buffer)[0] = firstElement;
       reinterpret_cast<u32*>(*buffer)[1] = numElements;
@@ -231,8 +239,9 @@ namespace Anki
       bool isInteger;
       bool isSigned;
       bool isFloat;
+      bool isString;
       s32 numElements;
-      EncodedBasicTypeBuffer::Deserialize(true, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
+      EncodedBasicTypeBuffer::Deserialize(true, sizeOfType, isBasicType, isInteger, isSigned, isFloat, isString, numElements, buffer, bufferLength);
 
       const Type var = *reinterpret_cast<Type*>(*buffer);
 
@@ -256,8 +265,9 @@ namespace Anki
       bool isInteger;
       bool isSigned;
       bool isFloat;
+      bool isString;
       s32 numElements;
-      EncodedBasicTypeBuffer::Deserialize(true, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
+      EncodedBasicTypeBuffer::Deserialize(true, sizeOfType, isBasicType, isInteger, isSigned, isFloat, isString, numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(sizeOfType < 10000 && numElements > 0 && numElements < 1000000,
         NULL, "SerializedBuffer::DeserializeRawBasicType", "Unreasonable deserialized values");
@@ -288,8 +298,9 @@ namespace Anki
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
+      bool basicType_isString;
       s32 basicType_numElements;
-      EncodedArray::Deserialize(true, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
+      EncodedArray::Deserialize(true, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(
         height > 0 && height < 1000000 &&
@@ -336,8 +347,9 @@ namespace Anki
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
+      bool basicType_isString;
       s32 basicType_numElements;
-      EncodedArraySlice::Deserialize(true, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
+      EncodedArraySlice::Deserialize(true, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(
         height > 0 && height < 1000000 &&

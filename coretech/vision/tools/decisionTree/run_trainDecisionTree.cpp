@@ -11,7 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 int main(int argc, const char* argv[])
 {
-  Array<u8> probesUsed;
+  Anki::Embedded::Array<u8> probesUsed;
 
   //Result BuildTree(
   //    const vector<GrayvalueBool> &probesUsed, //< numProbes x 256

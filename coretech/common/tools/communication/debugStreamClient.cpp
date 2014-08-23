@@ -352,10 +352,11 @@ namespace Anki
           bool isInteger;
           bool isSigned;
           bool isFloat;
+          bool isString;
           s32 numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
           s32 tmpDataLength = dataLength - 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, &tmpDataSegment, tmpDataLength);
+          SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, sizeOfType, isBasicType, isInteger, isSigned, isFloat, isString, numElements, &tmpDataSegment, tmpDataLength);
 
           //CoreTechPrint("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, sizeOfType, isInteger, isSigned, isFloat, numElements);
 
@@ -387,10 +388,11 @@ namespace Anki
           bool basicType_isInteger;
           bool basicType_isSigned;
           bool basicType_isFloat;
+          bool basicType_isString;
           s32 basicType_numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
           s32 tmpDataLength = dataLength - 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, tmpDataLength);
+          SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, &tmpDataSegment, tmpDataLength);
 
           newObject.bufferLength = 512 + stride * height;
           newObject.buffer = malloc(newObject.bufferLength);
@@ -509,9 +511,10 @@ namespace Anki
           bool basicType_isInteger;
           bool basicType_isSigned;
           bool basicType_isFloat;
+          bool basicType_isString;
           s32 basicType_numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
+          SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, &tmpDataSegment, dataLength);
 
           newObject.bufferLength = 512 + stride * height;
           newObject.buffer = malloc(newObject.bufferLength);
