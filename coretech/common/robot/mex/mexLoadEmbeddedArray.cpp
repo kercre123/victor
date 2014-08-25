@@ -27,6 +27,12 @@ mxArray* Load(const char *filename, MemoryStack scratch)
 
   void * buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(bufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
+  // First, read the text header
+  fread(buffer, Anki::Embedded::ARRAY_FILE_HEADER_LENGTH, 1, fp);
+
+  AnkiConditionalErrorAndReturnValue(strcmp(reinterpret_cast<const char*>(buffer), Anki::Embedded::ARRAY_FILE_HEADER) == 0,
+    NULL, "Array<Type>::LoadBinary", "File is not an Anki Embedded Array");
+
   fread(buffer, bufferLength, 1, fp);
 
   fclose(fp);

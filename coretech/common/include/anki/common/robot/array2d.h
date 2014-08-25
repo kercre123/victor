@@ -164,11 +164,18 @@ namespace Anki
 
       FILE *fp = fopen(filename, "rb");
       fseek(fp, 0, SEEK_END);
-      s32 bufferLength = ftell(fp);
+      s32 bufferLength = ftell(fp) - FILE_HEADER_LENGTH;
       fseek(fp, 0, SEEK_SET);
 
       void * buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(bufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
+      // First, read the text header
+      fread(buffer, ARRAY_FILE_HEADER_LENGTH, 1, fp);
+
+      AnkiConditionalErrorAndReturnValue(strcmp(buffer, ARRAY_FILE_HEADER) == 0,
+        newArray, "Array<Type>::LoadBinary", "File is not an Anki Embedded Array");
+
+      // Next, read the actual payload
       fread(buffer, bufferLength, 1, fp);
 
       fclose(fp);
@@ -200,7 +207,7 @@ namespace Anki
       // If this is a string array, add the sizes of the null terminated strings (or zero otherwise)
       const s32 stringsLength = TotalArrayStringLengths<Type>(*this);
 
-      const s32 serializedBufferLength = 4096 + this->get_size(0) * this->get_stride() + stringsLength;
+      const s32 serializedBufferLength = 4096 + ARRAY_FILE_HEADER_LENGTH + this->get_size(0) * this->get_stride() + stringsLength;
       void *buffer = scratch.Allocate(serializedBufferLength);
 
       AnkiConditionalErrorAndReturnValue(buffer,
@@ -221,6 +228,8 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(fp,
         RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Could not open file");
+
+      const size_t bytesWrittenForTextHeader = fwrite(&ARRAY_FILE_HEADER[0], ARRAY_FILE_HEADER_LENGTH, 1, fp);
 
       const size_t bytesWrittenForHeader = fwrite(&SERIALIZED_BUFFER_HEADER[0], SERIALIZED_BUFFER_HEADER_LENGTH, 1, fp);
 

@@ -35,13 +35,15 @@ namespace Anki
     template<typename Type> class ConstArraySlice;
     template<typename Type> class ConstArraySliceExpression;
 
-    //template<typename Type1, typename Type2> class Find;
+    const s32 ARRAY_FILE_HEADER_LENGTH = 32;
+    const char ARRAY_FILE_HEADER[ARRAY_FILE_HEADER_LENGTH+1] = "\x89" "AnkiEmbeddedArray1.0           ";
 
     // #pragma mark --- Array Class Declaration ---
 
     template<typename Type> class Array
     {
     public:
+
       // The stride is the "numCols*sizeof(Type)" rounded up by 16, plus any boundary padding
       static s32 ComputeRequiredStride(const s32 numCols, const Flags::Buffer flags);
 
