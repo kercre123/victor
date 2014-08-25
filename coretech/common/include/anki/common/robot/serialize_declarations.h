@@ -201,6 +201,14 @@ namespace Anki
 
       void * GetNext(const char ** typeName, const char ** objectName, s32 &dataLength, bool &isReportedSegmentLengthCorrect);
     };
+
+    // Returns the total number of bytes in all null-terminated strings (including the null termination character), plus 4 bytes.
+    // Returns 0 if not a string array.
+    template<typename Type> s32 TotalArrayStringLengths(const Array<Type> &in);
+
+    // Copies all null-terminated strings from the input Array to the buffer
+    // Does nothing if not a string array
+    template<typename Type> void CopyArrayStringsToBuffer(const Array<Type> &in, void ** buffer, s32 &bufferLength);
   } // namespace Embedded
 } //namespace Anki
 

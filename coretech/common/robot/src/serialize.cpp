@@ -438,13 +438,7 @@ namespace Anki
       s32 numRequiredBytes = in.get_size(0)*in.get_stride() + SerializedBuffer::EncodedArray::CODE_LENGTH;
 
       // Add the sizes of the null terminated strings
-      s32 stringsLength = 0;
-      for(s32 y=0; y<inHeight; y++) {
-        char const * const * restrict pIn = in.Pointer(y,0);
-        for(s32 x=0; x<inWidth; x++) {
-          stringsLength += strlen(pIn[x]) + 1;
-        }
-      }
+      const s32 stringsLength = TotalArrayStringLengths(in);
 
       numRequiredBytes += stringsLength + sizeof(u32);
 
@@ -462,22 +456,7 @@ namespace Anki
       bufferLength -= in.get_stride()*in.get_size(0);
 
       // Copy the null terminated strings to the end
-
-      reinterpret_cast<u32*>(*buffer)[0] = stringsLength;
-      *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(u32);
-      bufferLength -= sizeof(u32);
-
-      for(s32 y=0; y<inHeight; y++) {
-        char const * const * restrict pIn = in.Pointer(y,0);
-        for(s32 x=0; x<inWidth; x++) {
-          const s32 curStringLength = strlen(pIn[x]) + 1;
-
-          memcpy(*buffer, pIn[x], curStringLength);
-
-          *buffer = reinterpret_cast<u8*>(*buffer) + curStringLength;
-          bufferLength -= curStringLength;
-        }
-      }
+      CopyArrayStringsToBuffer<const char*>(in, buffer, bufferLength);
 
       return RESULT_OK;
     } // template<> Result SerializedBuffer::SerializeRawArray(const char *objectName, const Array<const char *> &in, void ** buffer, s32 &bufferLength)
@@ -575,15 +554,7 @@ namespace Anki
       s32 totalDataLength = in.get_stride() * in.get_size(0) + SerializedBuffer::EncodedArray::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       // Add the sizes of the null terminated strings
-      const s32 inHeight = in.get_size(0);
-      const s32 inWidth = in.get_size(1);
-      s32 stringsLength = 0;
-      for(s32 y=0; y<inHeight; y++) {
-        char const * const * restrict pIn = in.Pointer(y,0);
-        for(s32 x=0; x<inWidth; x++) {
-          stringsLength += strlen(pIn[x]) + 1;
-        }
-      }
+      const s32 stringsLength = TotalArrayStringLengths(in);
 
       totalDataLength += stringsLength + sizeof(u32);
 
@@ -602,7 +573,65 @@ namespace Anki
     {
       // Just cast the "char *" as "const char *", and serialize
       const Array<const char*> constIn = *reinterpret_cast<const Array<const char*> *>(&in);
-      return SerializedBuffer::PushBack(objectName, constIn);
+      return SerializedBuffer::PushBack<const char*>(objectName, constIn);
+    }
+
+    template<> s32 TotalArrayStringLengths<const char*>(const Array<const char*> &in)
+    {
+      const s32 inHeight = in.get_size(0);
+      const s32 inWidth = in.get_size(1);
+
+      s32 stringsLength = sizeof(s32);
+      for(s32 y=0; y<inHeight; y++) {
+        char const * const * restrict pIn = in.Pointer(y,0);
+        for(s32 x=0; x<inWidth; x++) {
+          stringsLength += strlen(pIn[x]) + 1;
+        }
+      }
+
+      return stringsLength;
+    }
+
+    template<> s32 TotalArrayStringLengths<char*>(const Array<char*> &in)
+    {
+      // Add const qualifier and call the const version
+      const Array<const char*> constIn = *reinterpret_cast<const Array<const char*>*>(&in);
+      return TotalArrayStringLengths(constIn);
+    }
+
+    template<> void CopyArrayStringsToBuffer<const char*>(const Array<const char*> &in, void ** buffer, s32 &bufferLength)
+    {
+      const s32 inHeight = in.get_size(0);
+      const s32 inWidth = in.get_size(1);
+
+      const s32 stringsLength = TotalArrayStringLengths(in);
+
+      // Copy the null terminated strings to the end
+
+      // First copy the total size of the strings
+      reinterpret_cast<u32*>(*buffer)[0] = stringsLength;
+      *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(u32);
+      bufferLength -= sizeof(u32);
+
+      // Then copy the strings
+      for(s32 y=0; y<inHeight; y++) {
+        char const * const * restrict pIn = in.Pointer(y,0);
+        for(s32 x=0; x<inWidth; x++) {
+          const s32 curStringLength = strlen(pIn[x]) + 1;
+
+          memcpy(*buffer, pIn[x], curStringLength);
+
+          *buffer = reinterpret_cast<u8*>(*buffer) + curStringLength;
+          bufferLength -= curStringLength;
+        }
+      }
+    }
+
+    template<> void CopyArrayStringsToBuffer<char*>(const Array<char*> &in, void ** buffer, s32 &bufferLength)
+    {
+      // Just cast the "char *" as "const char *", and serialize
+      const Array<const char*> constIn = *reinterpret_cast<const Array<const char*> *>(&in);
+      return CopyArrayStringsToBuffer<const char*>(constIn, buffer, bufferLength);
     }
   } // namespace Embedded
 } // namespace Anki
