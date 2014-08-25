@@ -87,7 +87,11 @@ GTEST_TEST(CoreTech_Common, SerializeStrings)
     char const * const * restrict pStrings = strings.Pointer(y,0);
     char const * const * restrict pStringsOut = stringsOut.Pointer(y,0);
     for(s32 x=0; x<arrayWidth; x++) {
+      // Are the string the same?
       ASSERT_TRUE(strcmp(pStrings[x], pStringsOut[x]) == 0);
+
+      // Are the pointer locations different?
+      ASSERT_TRUE(reinterpret_cast<size_t>(pStrings[x]) != reinterpret_cast<size_t>(pStringsOut[x]));
     }
   }
 

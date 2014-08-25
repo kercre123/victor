@@ -156,7 +156,10 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(in.IsValid(),
         RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "in ArraySlice is not Valid");
 
-      const s32 numRequiredBytes = in.get_size(0)*in.get_stride() + SerializedBuffer::EncodedArray::CODE_LENGTH;
+      // If this is a string array, add the sizes of the null terminated strings (or zero otherwise)
+      const s32 stringsLength = TotalArrayStringLengths<Type>(in);
+
+      const s32 numRequiredBytes = in.get_size(0)*in.get_stride() + SerializedBuffer::EncodedArray::CODE_LENGTH + stringsLength;
 
       AnkiConditionalErrorAndReturnValue(bufferLength >= numRequiredBytes,
         RESULT_FAIL_OUT_OF_MEMORY, "SerializedBuffer::SerializeRawArray", "buffer needs at least %d bytes", numRequiredBytes);
@@ -173,6 +176,9 @@ namespace Anki
 
         *buffer = reinterpret_cast<u8*>(*buffer) + in.get_stride()*in.get_size(0);
         bufferLength -= in.get_stride()*in.get_size(0);
+
+        // If this is a string array, copy the null terminated strings to the end (or do nothing otherwise)
+        CopyArrayStringsToBuffer<Type>(in, buffer, bufferLength);
       }
 
       return RESULT_OK;
@@ -334,6 +340,12 @@ namespace Anki
 
         *buffer = reinterpret_cast<u8*>(*buffer) + height*stride;
         bufferLength -= height*stride;
+
+        const Result stringCopyResult = CopyArrayStringsFromBuffer<Type>(out, buffer, bufferLength, memory);
+
+        if(stringCopyResult != RESULT_OK) {
+          return Array<Type>();
+        }
       }
 
       return out;
@@ -499,6 +511,12 @@ namespace Anki
       // Do nothing, since it's not a string array
     }
 
+    template<typename Type> Result CopyArrayStringsFromBuffer(Array<Type> &out, void ** buffer, s32 &bufferLength, MemoryStack &memory)
+    {
+      // Do nothing, since it's not a string array
+      return RESULT_OK;
+    }
+
     // #pragma mark --- Array Specializations ---
 
     template<> s32 TotalArrayStringLengths<char*>(const Array<char*> &in);
@@ -506,6 +524,9 @@ namespace Anki
 
     template<> void CopyArrayStringsToBuffer<char*>(const Array<char*> &in, void ** buffer, s32 &bufferLength);
     template<> void CopyArrayStringsToBuffer<const char*>(const Array<const char*> &in, void ** buffer, s32 &bufferLength);
+
+    template<> Result CopyArrayStringsFromBuffer<char*>(Array<char*> &out, void ** buffer, s32 &bufferLength, MemoryStack &memory);
+    template<> Result CopyArrayStringsFromBuffer<const char*>(Array<const char*> &out, void ** buffer, s32 &bufferLength, MemoryStack &memory);
   } // namespace Embedded
 } //namespace Anki
 

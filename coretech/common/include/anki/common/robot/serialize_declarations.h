@@ -154,11 +154,6 @@ namespace Anki
     }; // class SerializedBuffer
 
     // Special cases for strings (just put all the null-terminated string after the array)
-    template<> static Result SerializedBuffer::SerializeRawArray<const char*>(const char *objectName, const Array<const char*> &in, void ** buffer, s32 &bufferLength);
-    template<> static Result SerializedBuffer::SerializeRawArray<char*>(const char *objectName, const Array<char*> &in, void ** buffer, s32 &bufferLength);
-    template<> static Array<const char *> SerializedBuffer::DeserializeRawArray<const char*>(char *objectName, void ** buffer, s32 &bufferLength, MemoryStack &memory);
-    template<> static Array<char *> SerializedBuffer::DeserializeRawArray<char*>(char *objectName, void ** buffer, s32 &bufferLength, MemoryStack &memory);
-
     template<> void* SerializedBuffer::PushBack<const char*>(const char *objectName, const Array<const char*> &in);
     template<> void* SerializedBuffer::PushBack<char*>(const char *objectName, const Array<char*> &in);
 
@@ -206,9 +201,14 @@ namespace Anki
     // Returns 0 if not a string array.
     template<typename Type> s32 TotalArrayStringLengths(const Array<Type> &in);
 
-    // Copies all null-terminated strings from the input Array to the buffer
+    // Serialize strings
+    // Copy all null-terminated strings from the input Array to the buffer
     // Does nothing if not a string array
     template<typename Type> void CopyArrayStringsToBuffer(const Array<Type> &in, void ** buffer, s32 &bufferLength);
+
+    // Deserialize strings
+    // Does nothing if not a string array
+    template<typename Type> Result CopyArrayStringsFromBuffer(Array<Type> &out, void ** buffer, s32 &bufferLength, MemoryStack &memory);
   } // namespace Embedded
 } //namespace Anki
 
