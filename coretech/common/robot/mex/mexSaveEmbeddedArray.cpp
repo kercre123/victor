@@ -15,76 +15,92 @@
 using namespace Anki;
 using namespace Anki::Embedded;
 
-template<typename Type> Result Save(const Array<Type> &array, const char *filename, MemoryStack scratch)
-{
-  const s32 serializedBufferLength = 4096 + array.get_size(0) * array.get_stride();
-  void *buffer = scratch.Allocate(serializedBufferLength);
-
-  AnkiConditionalErrorAndReturnValue(buffer,
-    RESULT_FAIL_OUT_OF_MEMORY, "Save", "Memory could not be allocated");
-
-  SerializedBuffer toSave(buffer, serializedBufferLength);
-
-  toSave.PushBack<Type>("Array", array);
-
-  s32 startIndex;
-  u8 * bufferStart = reinterpret_cast<u8*>(toSave.get_memoryStack().get_validBufferStart(startIndex));
-  const s32 validUsedBytes = toSave.get_memoryStack().get_usedBytes() - startIndex;
-
-  const s32 startDiff = static_cast<s32>( reinterpret_cast<size_t>(bufferStart) - reinterpret_cast<size_t>(toSave.get_memoryStack().get_buffer()) );
-  const s32 endDiff = toSave.get_memoryStack().get_totalBytes() - toSave.get_memoryStack().get_usedBytes();
-
-  FILE *fp = fopen(filename, "wb");
-
-  AnkiConditionalErrorAndReturnValue(fp,
-    RESULT_FAIL_IO, "Save", "Could not open file");
-
-  const size_t bytesWrittenForHeader = fwrite(&SERIALIZED_BUFFER_HEADER[0], SERIALIZED_BUFFER_HEADER_LENGTH, 1, fp);
-
-  const size_t bytesWritten = fwrite(bufferStart, validUsedBytes, 1, fp);
-
-  const size_t bytesWrittenForFooter = fwrite(&SERIALIZED_BUFFER_FOOTER[0], SERIALIZED_BUFFER_FOOTER_LENGTH, 1, fp);
-
-  fclose(fp);
-
-  return RESULT_OK;
-}
+template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const char *filename, MemoryStack scratch);
+template<typename Type> Result AllocateAndSaveCell(const mxArray *matlabArray, const char *filename, MemoryStack scratch);
+template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const char *filename, MemoryStack scratch);
 
 template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const char *filename, MemoryStack scratch)
 {
+  AnkiAssert(!mxIsCell(matlabArray));
+
   Array<Type> ankiArray = mxArrayToArray<Type>(matlabArray, scratch);
 
   if(!ankiArray.IsValid())
     return RESULT_FAIL;
 
-  return Save<Type>(ankiArray, filename, scratch);
+  return ankiArray.SaveBinary(filename, scratch);
+}
+
+template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const char *filename, MemoryStack scratch)
+{
+  AnkiAssert(mxIsCell(matlabArray));
+
+  Array<char *> ankiArray = mxCellArrayToStringArray(matlabArray, scratch);
+
+  if(!ankiArray.IsValid())
+    return RESULT_FAIL;
+
+  return ankiArray.SaveBinary(filename, scratch);
 }
 
 Result Save(const mxArray *matlabArray, const char *filename, MemoryStack scratch)
 {
   const mxClassID matlabClassId = mxGetClassID(matlabArray);
 
-  if(matlabClassId == mxDOUBLE_CLASS) {
-    return AllocateAndSave<f64>(matlabArray, filename, scratch);
-  } else if(matlabClassId == mxSINGLE_CLASS) {
-    return AllocateAndSave<f32>(matlabArray, filename, scratch);
-  } else if(matlabClassId == mxINT8_CLASS) {
-    return AllocateAndSave<s8>(matlabArray, filename, scratch);
-  } else if(matlabClassId == mxUINT8_CLASS) {
-    return AllocateAndSave<u8>(matlabArray, filename, scratch);
-  } else if(matlabClassId == mxINT16_CLASS) {
-    return AllocateAndSave<s16>(matlabArray, filename, scratch);
-  } else if(matlabClassId == mxUINT16_CLASS) {
-    return AllocateAndSave<u16>(matlabArray, filename, scratch);
-  } else if(matlabClassId == mxINT32_CLASS) {
-    return AllocateAndSave<s32>(matlabArray, filename, scratch);
-  } else if(matlabClassId == mxUINT32_CLASS) {
-    return AllocateAndSave<u32>(matlabArray, filename, scratch);
-  } else if(matlabClassId == mxINT64_CLASS) {
-    return AllocateAndSave<s64>(matlabArray, filename, scratch);
-  } else if(matlabClassId == mxUINT64_CLASS) {
-    return AllocateAndSave<u64>(matlabArray, filename, scratch);
-  }
+  if(mxIsCell(matlabArray)) {
+    const mxArray * firstElement = mxGetCell(matlabArray, 0);
+    const mxClassID matlabCellClassId = mxGetClassID(firstElement);
+    //if(matlabCellClassId == mxDOUBLE_CLASS) {
+    //  return AllocateAndSaveCell<f64>(matlabArray, filename, scratch);
+    //} else if(matlabCellClassId == mxSINGLE_CLASS) {
+    //  return AllocateAndSaveCell<f32>(matlabArray, filename, scratch);
+    //} else if(matlabCellClassId == mxINT8_CLASS) {
+    //  return AllocateAndSaveCell<s8>(matlabArray, filename, scratch);
+    //} else if(matlabCellClassId == mxUINT8_CLASS) {
+    //  return AllocateAndSaveCell<u8>(matlabArray, filename, scratch);
+    //} else if(matlabCellClassId == mxINT16_CLASS) {
+    //  return AllocateAndSaveCell<s16>(matlabArray, filename, scratch);
+    //} else if(matlabCellClassId == mxUINT16_CLASS) {
+    //  return AllocateAndSaveCell<u16>(matlabArray, filename, scratch);
+    //} else if(matlabCellClassId == mxINT32_CLASS) {
+    //  return AllocateAndSaveCell<s32>(matlabArray, filename, scratch);
+    //} else if(matlabCellClassId == mxUINT32_CLASS) {
+    //  return AllocateAndSaveCell<u32>(matlabArray, filename, scratch);
+    //} else if(matlabCellClassId == mxINT64_CLASS) {
+    //  return AllocateAndSaveCell<s64>(matlabArray, filename, scratch);
+    //} else if(matlabCellClassId == mxUINT64_CLASS) {
+    //  return AllocateAndSaveCell<u64>(matlabArray, filename, scratch);
+    //} else
+    if(matlabCellClassId == mxCHAR_CLASS) {
+      return AllocateAndSaveCell<char *>(matlabArray, filename, scratch);
+    } else {
+      AnkiAssert(false);
+    }
+  } else { // if(mxIsCell(matlabArray))
+    if(matlabClassId == mxDOUBLE_CLASS) {
+      return AllocateAndSave<f64>(matlabArray, filename, scratch);
+    } else if(matlabClassId == mxSINGLE_CLASS) {
+      return AllocateAndSave<f32>(matlabArray, filename, scratch);
+    } else if(matlabClassId == mxINT8_CLASS) {
+      return AllocateAndSave<s8>(matlabArray, filename, scratch);
+    } else if(matlabClassId == mxUINT8_CLASS) {
+      return AllocateAndSave<u8>(matlabArray, filename, scratch);
+    } else if(matlabClassId == mxINT16_CLASS) {
+      return AllocateAndSave<s16>(matlabArray, filename, scratch);
+    } else if(matlabClassId == mxUINT16_CLASS) {
+      return AllocateAndSave<u16>(matlabArray, filename, scratch);
+    } else if(matlabClassId == mxINT32_CLASS) {
+      return AllocateAndSave<s32>(matlabArray, filename, scratch);
+    } else if(matlabClassId == mxUINT32_CLASS) {
+      return AllocateAndSave<u32>(matlabArray, filename, scratch);
+    } else if(matlabClassId == mxINT64_CLASS) {
+      return AllocateAndSave<s64>(matlabArray, filename, scratch);
+    } else if(matlabClassId == mxUINT64_CLASS) {
+      return AllocateAndSave<u64>(matlabArray, filename, scratch);
+    } else {
+      AnkiAssert(false);
+    }
+  } // if(mxIsCell(matlabArray)) ... else
 
   return RESULT_FAIL;
 }

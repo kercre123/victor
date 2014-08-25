@@ -53,6 +53,7 @@ mxArray* Load(const char *filename, MemoryStack scratch)
   bool basicType_isInteger;
   bool basicType_isSigned;
   bool basicType_isFloat;
+  bool basicType_isString;
 
   {
     void * nextItemTmp = nextItem;
@@ -65,61 +66,66 @@ mxArray* Load(const char *filename, MemoryStack scratch)
     Flags::Buffer flags;
 
     s32 basicType_numElements;
-    SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &nextItemTmp, dataLengthTmp);
+    SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, &nextItemTmp, dataLengthTmp);
   }
 
-  AnkiConditionalErrorAndReturnValue(basicType_isBasicType,
-    NULL, "Load", "can only load a basic type");
+  AnkiConditionalErrorAndReturnValue(basicType_isBasicType || basicType_isString,
+    NULL, "Load", "can only load a basic type or string");
 
   mxArray * toReturn = NULL;
-  if(basicType_isFloat) {
-    if(basicType_sizeOfType == 4) {
-      Array<f32> array = SerializedBuffer::DeserializeRawArray<f32>(NULL, &nextItem, dataLength, scratch);
-      toReturn = arrayToMxArray(array);
-    } else if(basicType_sizeOfType == 8) {
-      Array<f64> array = SerializedBuffer::DeserializeRawArray<f64>(NULL, &nextItem, dataLength, scratch);
-      toReturn = arrayToMxArray(array);
-    } else {
-      AnkiError("Load", "can only load a basic type");
-      return NULL;
-    }
-  } else {
-    if(basicType_isSigned) {
-      if(basicType_sizeOfType == 1) {
-        Array<s8> array = SerializedBuffer::DeserializeRawArray<s8>(NULL, &nextItem, dataLength, scratch);
-        toReturn = arrayToMxArray(array);
-      } else if(basicType_sizeOfType == 2) {
-        Array<s16> array = SerializedBuffer::DeserializeRawArray<s16>(NULL, &nextItem, dataLength, scratch);
-        toReturn = arrayToMxArray(array);
-      } else if(basicType_sizeOfType == 4) {
-        Array<s32> array = SerializedBuffer::DeserializeRawArray<s32>(NULL, &nextItem, dataLength, scratch);
+  if(basicType_isString) {
+    Array<const char *> array = SerializedBuffer::DeserializeRawArray<const char *>(NULL, &nextItem, dataLength, scratch);
+    toReturn = stringArrayToMxCellArray(array);
+  } else { // if(basicType_isString)
+    if(basicType_isFloat) {
+      if(basicType_sizeOfType == 4) {
+        Array<f32> array = SerializedBuffer::DeserializeRawArray<f32>(NULL, &nextItem, dataLength, scratch);
         toReturn = arrayToMxArray(array);
       } else if(basicType_sizeOfType == 8) {
-        Array<s64> array = SerializedBuffer::DeserializeRawArray<s64>(NULL, &nextItem, dataLength, scratch);
+        Array<f64> array = SerializedBuffer::DeserializeRawArray<f64>(NULL, &nextItem, dataLength, scratch);
         toReturn = arrayToMxArray(array);
       } else {
         AnkiError("Load", "can only load a basic type");
         return NULL;
       }
-    } else {
-      if(basicType_sizeOfType == 1) {
-        Array<u8> array = SerializedBuffer::DeserializeRawArray<u8>(NULL, &nextItem, dataLength, scratch);
-        toReturn = arrayToMxArray(array);
-      } else if(basicType_sizeOfType == 2) {
-        Array<u16> array = SerializedBuffer::DeserializeRawArray<u16>(NULL, &nextItem, dataLength, scratch);
-        toReturn = arrayToMxArray(array);
-      } else if(basicType_sizeOfType == 4) {
-        Array<u32> array = SerializedBuffer::DeserializeRawArray<u32>(NULL, &nextItem, dataLength, scratch);
-        toReturn = arrayToMxArray(array);
-      } else if(basicType_sizeOfType == 8) {
-        Array<u64> array = SerializedBuffer::DeserializeRawArray<u64>(NULL, &nextItem, dataLength, scratch);
-        toReturn = arrayToMxArray(array);
-      } else {
-        AnkiError("Load", "can only load a basic type");
-        return NULL;
-      }
-    }
-  } // if(basicType_isFloat)
+    } else { // if(basicType_isFloat)
+      if(basicType_isSigned) {
+        if(basicType_sizeOfType == 1) {
+          Array<s8> array = SerializedBuffer::DeserializeRawArray<s8>(NULL, &nextItem, dataLength, scratch);
+          toReturn = arrayToMxArray(array);
+        } else if(basicType_sizeOfType == 2) {
+          Array<s16> array = SerializedBuffer::DeserializeRawArray<s16>(NULL, &nextItem, dataLength, scratch);
+          toReturn = arrayToMxArray(array);
+        } else if(basicType_sizeOfType == 4) {
+          Array<s32> array = SerializedBuffer::DeserializeRawArray<s32>(NULL, &nextItem, dataLength, scratch);
+          toReturn = arrayToMxArray(array);
+        } else if(basicType_sizeOfType == 8) {
+          Array<s64> array = SerializedBuffer::DeserializeRawArray<s64>(NULL, &nextItem, dataLength, scratch);
+          toReturn = arrayToMxArray(array);
+        } else {
+          AnkiError("Load", "can only load a basic type");
+          return NULL;
+        }
+      } else { // if(basicType_isSigned)
+        if(basicType_sizeOfType == 1) {
+          Array<u8> array = SerializedBuffer::DeserializeRawArray<u8>(NULL, &nextItem, dataLength, scratch);
+          toReturn = arrayToMxArray(array);
+        } else if(basicType_sizeOfType == 2) {
+          Array<u16> array = SerializedBuffer::DeserializeRawArray<u16>(NULL, &nextItem, dataLength, scratch);
+          toReturn = arrayToMxArray(array);
+        } else if(basicType_sizeOfType == 4) {
+          Array<u32> array = SerializedBuffer::DeserializeRawArray<u32>(NULL, &nextItem, dataLength, scratch);
+          toReturn = arrayToMxArray(array);
+        } else if(basicType_sizeOfType == 8) {
+          Array<u64> array = SerializedBuffer::DeserializeRawArray<u64>(NULL, &nextItem, dataLength, scratch);
+          toReturn = arrayToMxArray(array);
+        } else {
+          AnkiError("Load", "can only load a basic type");
+          return NULL;
+        }
+      } // if(basicType_isSigned) ... else
+    } // if(basicType_isFloat) ... else
+  } // if(basicType_isString) ... else
 
   return toReturn;
 }
