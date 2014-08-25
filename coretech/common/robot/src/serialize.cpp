@@ -428,33 +428,6 @@ namespace Anki
       return segment;
     }
 
-    template<> void* SerializedBuffer::PushBack<const char*>(const char *objectName, const Array<const char*> &in)
-    {
-      s32 totalDataLength = in.get_stride() * in.get_size(0) + SerializedBuffer::EncodedArray::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-
-      // Add the sizes of the null terminated strings
-      const s32 stringsLength = TotalArrayStringLengths(in);
-
-      totalDataLength += stringsLength + sizeof(u32);
-
-      void * const segmentStart = Allocate("Array", objectName, totalDataLength);
-      void * segment = segmentStart;
-
-      AnkiConditionalErrorAndReturnValue(segment != NULL,
-        NULL, "SerializedBuffer::PushBack", "Could not add data");
-
-      SerializeRawArray<const char*>(objectName, in, &segment, totalDataLength);
-
-      return segmentStart;
-    }
-
-    template<> void* SerializedBuffer::PushBack<char*>(const char *objectName, const Array<char*> &in)
-    {
-      // Just cast the "char *" as "const char *", and serialize
-      const Array<const char*> constIn = *reinterpret_cast<const Array<const char*> *>(&in);
-      return SerializedBuffer::PushBack<const char*>(objectName, constIn);
-    }
-
     template<> s32 TotalArrayStringLengths<const char*>(const Array<const char*> &in)
     {
       const s32 inHeight = in.get_size(0);

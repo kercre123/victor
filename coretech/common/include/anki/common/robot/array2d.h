@@ -197,7 +197,10 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(AreValid(*this, scratch),
         RESULT_FAIL_INVALID_OBJECT, "Array<Type>::SaveBinary", "Invalid inputs");
 
-      const s32 serializedBufferLength = 4096 + this->get_size(0) * this->get_stride();
+      // If this is a string array, add the sizes of the null terminated strings (or zero otherwise)
+      const s32 stringsLength = TotalArrayStringLengths<Type>(*this);
+
+      const s32 serializedBufferLength = 4096 + this->get_size(0) * this->get_stride() + stringsLength;
       void *buffer = scratch.Allocate(serializedBufferLength);
 
       AnkiConditionalErrorAndReturnValue(buffer,
