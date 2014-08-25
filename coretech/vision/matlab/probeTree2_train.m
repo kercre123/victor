@@ -378,7 +378,10 @@ function [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain
             [curBestEntropy, curBestGrayvalueThreshold] = computeInfoGain_innerLoop(curLabels, curProbeValues, grayvalueThresholds);
         end
         
-        if curBestEntropy < bestEntropy
+%         disp(sprintf('entropy is %f for probe %d and grayvalue %d', curBestEntropy, curProbeIndex, curBestGrayvalueThreshold));
+        
+        % The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
+        if curBestEntropy < (bestEntropy - 1e-5)
             bestEntropy = curBestEntropy;
             bestProbeIndex = curProbeIndex;
             bestGrayvalueThreshold = curBestGrayvalueThreshold;

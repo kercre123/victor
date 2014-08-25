@@ -176,7 +176,7 @@ namespace Anki
           for(s32 i=0; i<256; i++) {
             if(counts.counts[i] > 0) {
               if(previousValue > 0) {
-                grayvalueThresholds[numGrayvalueThresholds] = (i + previousValue) / 2;
+                grayvalueThresholds[numGrayvalueThresholds] = (i + previousValue + 1) / 2; // The +1 is so it rounds up, like matlab
                 numGrayvalueThresholds++;
                 previousValue = i;
               } else {
@@ -216,7 +216,8 @@ namespace Anki
             totalNumLessThan, totalNumGreaterThan,
             maxLabel);
 
-          if(entropy < parameters->bestEntropy) {
+          // The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
+          if(entropy < (parameters->bestEntropy - 1e-5)) {
             parameters->bestEntropy = static_cast<f32>(entropy);
             parameters->bestProbeIndex = iProbe;
             parameters->bestGrayvalueThreshold = curGrayvalueThreshold;
