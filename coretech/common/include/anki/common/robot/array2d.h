@@ -24,6 +24,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/shared/utilities_shared.h"
 
+#include "anki/common/robot/serialize_declarations.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -164,7 +166,7 @@ namespace Anki
 
       FILE *fp = fopen(filename, "rb");
       fseek(fp, 0, SEEK_END);
-      s32 bufferLength = ftell(fp) - FILE_HEADER_LENGTH;
+      s32 bufferLength = ftell(fp) - ARRAY_FILE_HEADER_LENGTH;
       fseek(fp, 0, SEEK_SET);
 
       void * buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(bufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
@@ -172,7 +174,7 @@ namespace Anki
       // First, read the text header
       fread(buffer, ARRAY_FILE_HEADER_LENGTH, 1, fp);
 
-      AnkiConditionalErrorAndReturnValue(strcmp(buffer, ARRAY_FILE_HEADER) == 0,
+      AnkiConditionalErrorAndReturnValue(strcmp(reinterpret_cast<const char*>(buffer), ARRAY_FILE_HEADER) == 0,
         newArray, "Array<Type>::LoadBinary", "File is not an Anki Embedded Array");
 
       // Next, read the actual payload
@@ -758,14 +760,7 @@ namespace Anki
       this->size[0] = numRows;
       this->size[1] = numCols;
 
-      //// Initialize an empty array.
-      ////
-      //// An empty array is invalid, and will return false from
-      //// Array::IsValid(), but is a possible return value from some functions
-      //if(numCols == 0 || numRows == 0) {
-      //  this->data = NULL;
-      //  return RESULT_OK;
-      //}
+      // Initialize an empty array.
 
       this->data = reinterpret_cast<Type*>(rawData);
 

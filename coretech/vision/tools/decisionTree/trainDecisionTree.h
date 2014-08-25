@@ -105,11 +105,12 @@ namespace Anki
       const FixedLengthList<const FixedLengthList<u8> > &probeValues, //< For every probe, the value for the probe every item to train on (outer is small, inner is very large)
       const FixedLengthList<f32> &probeLocationsXGrid, //< Lookup table between probe index and probe x location
       const FixedLengthList<f32> &probeLocationsYGrid, //< Lookup table between probe index and probe y location
-      const f32 leafNodeFraction,
-      const s32 leafNodeNumItems,
-      const s32 minGrayvalueDistance,
-      const FixedLengthList<u8> &grayvalueThresholdsToUse,
-      std::vector<DecisionTreeNode> &decisionTree);
+      const f32 leafNodeFraction, //< What percent of the items in a node have to be the same for it to be considered a leaf node? From [0.0, 1.0], where 1.0 is a good value.
+      const s32 leafNodeNumItems, //< If the number of items in a node is equal or below this, it is a leaf. 1 is a good value.
+      const s32 minGrayvalueDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
+      const FixedLengthList<u8> &grayvalueThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
+      std::vector<DecisionTreeNode> &decisionTree //< The output decision tree
+      );
   } // namespace Embedded
 } // namespace Anki
 

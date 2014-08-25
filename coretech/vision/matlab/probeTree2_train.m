@@ -5,12 +5,15 @@
 % VisionMarkerTrained class hierarchy
 
 % Example:
-% [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid);
+% [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, false);
 
 % Example using only 128 as the grayvalue threshold
-% [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, 'minGrayvalueDistance', 1000, 'grayvalueThresholdsToUse', 128);
+% [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, false, 'minGrayvalueDistance', 1000, 'grayvalueThresholdsToUse', 128);
 
-function [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, varargin)
+% To train with the completely C version of this method, use useCVersion = true, and it will save the files to disk and launch the C training
+% [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, true);
+
+function [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, useCVersion, varargin)
     global g_trainingFailures;
     global nodeId;
     global pBar;
@@ -31,20 +34,28 @@ function [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labe
     leafNodeNumItems = 1; % If a node has less-than-or-equal-to this number of items, it is a leaf no matter what
     minGrayvalueDistance = 20; % How close can the grayvalue of two probes in the same location be? Set to 1000 to disallow probes in the same location.
     grayvalueThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
+    probesUsed = zeros(length(probeValues), 256, 'uint8'); % If you don't want to train on some of the probes or grayvalue thresholds, set some of the probesUsed to true
+    baseCFilename = 'c:/tmp/treeTraining_'; % Temporarly location for when useCVersion = true
     
     parseVarargin(varargin{:});
     
     grayvalueThresholdsToUse = uint8(grayvalueThresholdsToUse);
     
+    if ~ispc()
+        baseCFilename = strrep(baseCFilename, 'c:', '~');
+    end
+    
     % Train the decision tree
-    
-    probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
-    probeTree.labels = labelNames;
-    
-    probeTree = buildTree(probeTree, false(length(probeValues), 256), labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, grayvalueThresholdsToUse);
-    
-    %     drawTree(probeTree)
-    
+    if useCVersion
+        probeTree2_saveInputs(baseCFilename, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse);
+        keyboard
+    else
+        probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
+        probeTree.labels = labelNames;
+
+        probeTree = buildTree(probeTree, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, grayvalueThresholdsToUse);
+    end
+        
     if isempty(probeTree)
         error('Training failed!');
     end
@@ -69,6 +80,39 @@ function [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labe
     
     %     keyboard
 end % probeTree2_train()
+
+% Save the inputs to file, for running the complete C version of the training
+% baseFilename should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
+function probeTree2_saveInputs(baseFilename, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse)
+    global pBar;
+    
+    pBar.set_message('Saving inputs for C training');
+    pBar.set_increment(1/(length(probeValues)+6));
+    pBar.set(0);
+        
+    mexSaveEmbeddedArray(uint8(probesUsed), [baseFilename, 'probesUsed.array']); % const std::vector<GrayvalueBool> &probesUsed, //< numProbes x 256    
+    pBar.increment();
+    
+    mexSaveEmbeddedArray(labelNames, [baseFilename, 'labelNames.array']); % const FixedLengthList<const char *> &labelNames, //< Lookup table between index and string name
+    pBar.increment();
+    
+    mexSaveEmbeddedArray(int32(labels), [baseFilename, 'labels.array']); % const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
+    pBar.increment();
+    
+    mexSaveEmbeddedArray(single(probeLocationsXGrid), [baseFilename, 'probeLocationsXGrid.array']);
+    pBar.increment();
+    
+    mexSaveEmbeddedArray(single(probeLocationsYGrid), [baseFilename, 'probeLocationsYGrid.array']);
+    pBar.increment();
+    
+    mexSaveEmbeddedArray(uint8(grayvalueThresholdsToUse), [baseFilename, 'grayvalueThresholdsToUse.array']);
+    pBar.increment();
+
+    for iProbe = 1:length(probeValues)
+        mexSaveEmbeddedArray(uint8(probeValues{iProbe}), [baseFilename, sprintf('probeValues%d.array', iProbe-1)]);     % const FixedLengthList<const FixedLengthList<u8> > &probeValues, //< For every probe, the value for the probe every item to train on (outer is small, inner is very large)
+        pBar.increment();
+    end
+end % probeTree2_saveInputs()
 
 function numNodes = countNumNodes(probeTree)
     if isfield(probeTree, 'labelName')

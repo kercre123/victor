@@ -121,116 +121,122 @@ template<typename Type> static Type WeightedAverageEntropy(
   return weightedAverageEntropy;
 }
 
-ThreadResult ComputeInfoGain(void *computeInfoGainParameters)
+namespace Anki
 {
-  const f64 time0 = GetTimeF64();
+  namespace Embedded
+  {
+    ThreadResult ComputeInfoGain(void *computeInfoGainParameters)
+    {
+      const f64 time0 = GetTimeF64();
 
-  ComputeInfoGainParameters * restrict parameters = reinterpret_cast<ComputeInfoGainParameters*>(computeInfoGainParameters);
+      ComputeInfoGainParameters * restrict parameters = reinterpret_cast<ComputeInfoGainParameters*>(computeInfoGainParameters);
 
-  parameters->bestEntropy = FLT_MAX;
-  parameters->bestProbeIndex = -1;
-  parameters->bestGrayvalueThreshold = -1;
+      parameters->bestEntropy = FLT_MAX;
+      parameters->bestProbeIndex = -1;
+      parameters->bestGrayvalueThreshold = -1;
 
-  u8 grayvalueThresholds[256];
-  s32 numGrayvalueThresholds;
+      u8 grayvalueThresholds[256];
+      s32 numGrayvalueThresholds;
 
-  // If grayvalueThresholdsToUse has been passed in, don't compute the grayvalueThresholds
-  if(parameters->grayvalueThresholdsToUse.get_size() != 0) {
-    numGrayvalueThresholds = parameters->grayvalueThresholdsToUse.get_size();
-    for(s32 i=0; i<numGrayvalueThresholds; i++) {
-      grayvalueThresholds[i] = parameters->grayvalueThresholdsToUse[i];
-    }
-  }
-
-  const s32 numImages = parameters->probeValues[0].get_size();
-  const s32 numRemaining = parameters->remaining.size();
-  const s32 numProbesLocationsToCheck = parameters->probesLocationsToCheck.size();
-
-  const s32 maxLabel = FindMaxLabel(parameters->labels, parameters->remaining);
-
-  const s32 * restrict pLabels = parameters->labels.Pointer(0);
-  const s32 * restrict pRemaining = parameters->remaining.data();
-  const s32 * restrict pProbesLocationsToCheck = parameters->probesLocationsToCheck.data();
-
-  //
-  // For each probe location and grayvalue threshold, find the best entropy
-  //
-
-  for(s32 iProbeToCheck=0; iProbeToCheck<numProbesLocationsToCheck; iProbeToCheck++) {
-    const s32 iProbe = pProbesLocationsToCheck[iProbeToCheck];
-    const u8 * restrict pProbeValues = parameters->probeValues[iProbe].Pointer(0);
-
-    // If the grayvalueThresholdsToUse haven't been specified, compute them from the data
-    if(parameters->grayvalueThresholdsToUse.get_size() == 0) {
-      // What are the unique grayvalues for this probe?
-      GrayvalueCounts counts;
-      CountValues_u8(pProbeValues, parameters->remaining, counts);
-
-      // Compute the grayvalue thresholds (just halfway between each pair of detected grayvalues
-      numGrayvalueThresholds = 0;
-      s32 previousValue = -1;
-      for(s32 i=0; i<256; i++) {
-        if(counts.counts[i] > 0) {
-          if(previousValue > 0) {
-            grayvalueThresholds[numGrayvalueThresholds] = (i + previousValue) / 2;
-            numGrayvalueThresholds++;
-            previousValue = i;
-          } else {
-            previousValue = i;
-          }
+      // If grayvalueThresholdsToUse has been passed in, don't compute the grayvalueThresholds
+      if(parameters->grayvalueThresholdsToUse.get_size() != 0) {
+        numGrayvalueThresholds = parameters->grayvalueThresholdsToUse.get_size();
+        for(s32 i=0; i<numGrayvalueThresholds; i++) {
+          grayvalueThresholds[i] = parameters->grayvalueThresholdsToUse[i];
         }
       }
-    } // if(parameters->grayvalueThresholdsToUse.empty())
 
-    GrayvalueBool &pProbesUsed = parameters->probesUsed[iProbe];
+      const s32 numImages = parameters->probeValues[0].get_size();
+      const s32 numRemaining = parameters->remaining.size();
+      const s32 numProbesLocationsToCheck = parameters->probesLocationsToCheck.size();
 
-    for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++) {
-      const u8 curGrayvalueThreshold = grayvalueThresholds[iGrayvalueThreshold];
+      const s32 maxLabel = FindMaxLabel(parameters->labels, parameters->remaining);
 
-      if(pProbesUsed.values[curGrayvalueThreshold]) {
-        continue;
+      const s32 * restrict pLabels = parameters->labels.Pointer(0);
+      const s32 * restrict pRemaining = parameters->remaining.data();
+      const s32 * restrict pProbesLocationsToCheck = parameters->probesLocationsToCheck.data();
+
+      //
+      // For each probe location and grayvalue threshold, find the best entropy
+      //
+
+      for(s32 iProbeToCheck=0; iProbeToCheck<numProbesLocationsToCheck; iProbeToCheck++) {
+        const s32 iProbe = pProbesLocationsToCheck[iProbeToCheck];
+        const u8 * restrict pProbeValues = parameters->probeValues[iProbe].Pointer(0);
+
+        // If the grayvalueThresholdsToUse haven't been specified, compute them from the data
+        if(parameters->grayvalueThresholdsToUse.get_size() == 0) {
+          // What are the unique grayvalues for this probe?
+          GrayvalueCounts counts;
+          CountValues_u8(pProbeValues, parameters->remaining, counts);
+
+          // Compute the grayvalue thresholds (just halfway between each pair of detected grayvalues
+          numGrayvalueThresholds = 0;
+          s32 previousValue = -1;
+          for(s32 i=0; i<256; i++) {
+            if(counts.counts[i] > 0) {
+              if(previousValue > 0) {
+                grayvalueThresholds[numGrayvalueThresholds] = (i + previousValue) / 2;
+                numGrayvalueThresholds++;
+                previousValue = i;
+              } else {
+                previousValue = i;
+              }
+            }
+          }
+        } // if(parameters->grayvalueThresholdsToUse.empty())
+
+        GrayvalueBool &pProbesUsed = parameters->probesUsed[iProbe];
+
+        for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++) {
+          const u8 curGrayvalueThreshold = grayvalueThresholds[iGrayvalueThreshold];
+
+          if(pProbesUsed.values[curGrayvalueThreshold]) {
+            continue;
+          }
+
+          s32 totalNumLessThan = 0;
+          s32 totalNumGreaterThan = 0;
+
+          ComputeNumAboveThreshold(
+            pProbeValues,
+            pLabels, maxLabel,
+            pRemaining, numRemaining,
+            curGrayvalueThreshold,
+            parameters->pNumLessThan, parameters->pNumGreaterThan,
+            totalNumLessThan, totalNumGreaterThan);
+
+          if(totalNumLessThan == 0 || totalNumGreaterThan == 0) {
+            pProbesUsed.values[curGrayvalueThreshold] = true;
+            continue;
+          }
+
+          const PRECISION entropy = WeightedAverageEntropy<PRECISION>(
+            parameters->pNumLessThan, parameters->pNumGreaterThan,
+            totalNumLessThan, totalNumGreaterThan,
+            maxLabel);
+
+          if(entropy < parameters->bestEntropy) {
+            parameters->bestEntropy = static_cast<f32>(entropy);
+            parameters->bestProbeIndex = iProbe;
+            parameters->bestGrayvalueThreshold = curGrayvalueThreshold;
+          }
+        } // for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++)
+      } // for(s32 iProbeToCheck=0; iProbeToCheck<numProbesLocationsToCheck; iProbeToCheck++)
+
+      // Mask out the grayvalues that are near to the chosen threshold
+      const s32 minGray = MAX(0,   parameters->bestGrayvalueThreshold - parameters->minGrayvalueDistance);
+      const s32 maxGray = MIN(255, parameters->bestGrayvalueThreshold + parameters->minGrayvalueDistance);
+      for(s32 iGray=minGray; iGray<=maxGray; iGray++) {
+        GrayvalueBool &pProbesUsed = parameters->probesUsed[parameters->bestProbeIndex];
+        pProbesUsed.values[iGray] = true;
       }
 
-      s32 totalNumLessThan = 0;
-      s32 totalNumGreaterThan = 0;
+      const f64 time1 = GetTimeF64();
 
-      ComputeNumAboveThreshold(
-        pProbeValues,
-        pLabels, maxLabel,
-        pRemaining, numRemaining,
-        curGrayvalueThreshold,
-        parameters->pNumLessThan, parameters->pNumGreaterThan,
-        totalNumLessThan, totalNumGreaterThan);
+      printf(" Best entropy is %f in %f seconds\n", parameters->bestEntropy, time1-time0);
 
-      if(totalNumLessThan == 0 || totalNumGreaterThan == 0) {
-        pProbesUsed.values[curGrayvalueThreshold] = true;
-        continue;
-      }
-
-      const PRECISION entropy = WeightedAverageEntropy<PRECISION>(
-        parameters->pNumLessThan, parameters->pNumGreaterThan,
-        totalNumLessThan, totalNumGreaterThan,
-        maxLabel);
-
-      if(entropy < parameters->bestEntropy) {
-        parameters->bestEntropy = static_cast<f32>(entropy);
-        parameters->bestProbeIndex = iProbe;
-        parameters->bestGrayvalueThreshold = curGrayvalueThreshold;
-      }
-    } // for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++)
-  } // for(s32 iProbeToCheck=0; iProbeToCheck<numProbesLocationsToCheck; iProbeToCheck++)
-
-  // Mask out the grayvalues that are near to the chosen threshold
-  const s32 minGray = MAX(0,   parameters->bestGrayvalueThreshold - parameters->minGrayvalueDistance);
-  const s32 maxGray = MIN(255, parameters->bestGrayvalueThreshold + parameters->minGrayvalueDistance);
-  for(s32 iGray=minGray; iGray<=maxGray; iGray++) {
-    GrayvalueBool &pProbesUsed = parameters->probesUsed[parameters->bestProbeIndex];
-    pProbesUsed.values[iGray] = true;
-  }
-
-  const f64 time1 = GetTimeF64();
-
-  printf(" Best entropy is %f in %f seconds\n", parameters->bestEntropy, time1-time0);
-
-  return 0;
-}
+      return 0;
+    } // ThreadResult ComputeInfoGain(void *computeInfoGainParameters)
+  } // namespace Embedded
+} // namespace Anki
