@@ -148,20 +148,17 @@ namespace Anki
 
       const s32 numImages = parameters->featureValues[0].get_size();
       const s32 numRemaining = parameters->remaining.size();
-      const s32 numFeaturesLocationsToCheck = parameters->featuresToCheck.size();
 
       const s32 maxLabel = FindMaxLabel(parameters->labels, parameters->remaining);
 
       const s32 * restrict pLabels = parameters->labels.Pointer(0);
       const s32 * restrict pRemaining = parameters->remaining.data();
-      const s32 * restrict pFeaturesToCheck = parameters->featuresToCheck.data();
 
       //
       // For each feature location and grayvalue threshold, find the best entropy
       //
 
-      for(s32 iFeatureToCheck=0; iFeatureToCheck<numFeaturesLocationsToCheck; iFeatureToCheck++) {
-        const s32 iFeature = pFeaturesToCheck[iFeatureToCheck];
+      for(s32 iFeature=parameters->minFeatureToCheck; iFeature<=parameters->maxFeatureToCheck; iFeature++) {
         const u8 * restrict pFeatureValues = parameters->featureValues[iFeature].Pointer(0);
 
         // If the u8ThresholdsToUse haven't been specified, compute them from the data
@@ -223,7 +220,7 @@ namespace Anki
             parameters->bestU8Threshold = curGrayvalueThreshold;
           }
         } // for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++)
-      } // for(s32 iFeatureToCheck=0; iFeatureToCheck<numFeaturesLocationsToCheck; iFeatureToCheck++)
+      } // for(s32 iFeature=0; iFeature<numFeaturesLocationsToCheck; iFeature++)
 
       const f64 time1 = GetTimeF64();
 

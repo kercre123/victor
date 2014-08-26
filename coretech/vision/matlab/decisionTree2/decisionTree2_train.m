@@ -40,7 +40,9 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     u8ThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
     featuresUsed = zeros(length(featureValues), 256, 'uint8'); % If you don't want to train on some of the features or u8 thresholds, set some of the featuresUsed to true
     cFilenamePrefix = 'c:/tmp/treeTraining_'; % Temporarly location for when useCVersion = true
-    cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/Debug/run_trainDecisionTree.exe';
+    cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/RelWithDebInfo/run_trainDecisionTree.exe';
+    maxPrimaryThreads = 1;
+    maxSecondaryThreads = 1;
     
     parseVarargin(varargin{:});
     
@@ -54,7 +56,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     % Train the decision tree
     if useCVersion
         decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse);
-        tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid);
+        tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxPrimaryThreads, maxSecondaryThreads);
     else
         tree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
         tree.remainingLabels = labelNames;
@@ -114,10 +116,10 @@ function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureVa
     end
 end % decisionTree2_saveInputs()
 
-function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid)
+function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxPrimaryThreads, maxSecondaryThreads)
     % First, run the training
     trainingTic = tic();
-    command = sprintf('"%s" "%s" %d %f %d %d', cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance);
+    command = sprintf('"%s" "%s" %d %f %d %d %d %d', cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, maxPrimaryThreads, maxSecondaryThreads);
     disp(['Starting C training: ', command]);
     result = system(command);
     disp(sprintf('C training finished in %f seconds', toc(trainingTic)));
@@ -133,7 +135,7 @@ function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, 
     disp('Loading and converting c tree to matlab format')
     
     depths = mexLoadEmbeddedArray([cFilenamePrefix, 'out_depths.array']);
-    infoGains = mexLoadEmbeddedArray([cFilenamePrefix, 'out_infoGains.array']);
+    infoGains = mexLoadEmbeddedArray([cFilenamePrefix, 'out_bestEntropys.array']);
     whichFeatures = mexLoadEmbeddedArray([cFilenamePrefix, 'out_whichFeatures.array']);
     u8Thresholds = mexLoadEmbeddedArray([cFilenamePrefix, 'out_u8Thresholds.array']);
     leftChildIndexs = mexLoadEmbeddedArray([cFilenamePrefix, 'out_leftChildIndexs.array']);

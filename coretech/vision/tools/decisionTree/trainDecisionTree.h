@@ -32,18 +32,18 @@ namespace Anki
     typedef struct DecisionTreeNode
     {
       s32 depth;
-      f32 infoGain;
+      f32 bestEntropy;
       s32 whichFeature;
       u8  u8Threshold;
       s32 leftChildIndex; //< Right child index is leftChildIndex + 1
 
       DecisionTreeNode(
         s32 depth,
-        f32 infoGain,
+        f32 bestEntropy,
         s32 whichFeature,
         u8  u8Threshold,
         s32 leftChildIndex)  //< Right child index is leftChildIndex + 1. If leftChildIndex <= -1000000, this is a leaf, with the label as the negative of leftChildIndex.
-        : depth(depth), infoGain(infoGain), whichFeature(whichFeature), u8Threshold(u8Threshold), leftChildIndex(leftChildIndex)
+        : depth(depth), bestEntropy(bestEntropy), whichFeature(whichFeature), u8Threshold(u8Threshold), leftChildIndex(leftChildIndex)
       {
       }
     } DecisionTreeNode;
@@ -58,10 +58,11 @@ namespace Anki
 
       // Thread-specific input
       const std::vector<s32> &remaining; //< The indexes of the remaining images
-      const std::vector<s32> featuresToCheck; //< Which of the features is this thread responsible for?
+      const s32 minFeatureToCheck; //< Which of the features is this thread responsible for?
+      const s32 maxFeatureToCheck; //< Which of the features is this thread responsible for?
 
       // Thread-specific input/output
-      std::vector<U8Bool> featuresUsed; //< Which features and u8 thresholds have been used?
+      std::vector<U8Bool> &featuresUsed; //< Which features and u8 thresholds have been used?
 
       // Thread-specific scratch
       s32 * restrict pNumLessThan; //< Must be allocated before calling the thread, and manually freed after the thread is complete
@@ -78,14 +79,15 @@ namespace Anki
         const FixedLengthList<u8> &u8ThresholdsToUse,
         const s32 u8MinDistance,
         const std::vector<s32> &remaining,
-        std::vector<s32> featuresToCheck,
-        std::vector<U8Bool> featuresUsed,
+        const s32 minFeatureToCheck,
+        const s32 maxFeatureToCheck,
+        std::vector<U8Bool> &featuresUsed,
         s32 * restrict pNumLessThan,
         s32 * restrict pNumGreaterThan,
         f32 bestEntropy,
         s32 bestFeatureIndex,
         s32 bestU8Threshold)
-        : featureValues(featureValues), labels(labels), u8ThresholdsToUse(u8ThresholdsToUse), u8MinDistance(u8MinDistance), remaining(remaining), featuresToCheck(featuresToCheck), featuresUsed(featuresUsed), pNumLessThan(pNumLessThan), pNumGreaterThan(pNumGreaterThan), bestEntropy(bestEntropy), bestFeatureIndex(bestFeatureIndex), bestU8Threshold(bestU8Threshold)
+        : featureValues(featureValues), labels(labels), u8ThresholdsToUse(u8ThresholdsToUse), u8MinDistance(u8MinDistance), remaining(remaining), minFeatureToCheck(minFeatureToCheck), maxFeatureToCheck(maxFeatureToCheck), featuresUsed(featuresUsed), pNumLessThan(pNumLessThan), pNumGreaterThan(pNumGreaterThan), bestEntropy(bestEntropy), bestFeatureIndex(bestFeatureIndex), bestU8Threshold(bestU8Threshold)
       {
       }
     } ComputeInfoGainParameters;
@@ -103,6 +105,8 @@ namespace Anki
       const s32 leafNodeNumItems, //< If the number of items in a node is equal or below this, it is a leaf. 1 is a good value.
       const s32 u8MinDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
       const FixedLengthList<u8> &u8ThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
+      const s32 maxPrimaryThreads, //< If we are building the end of the tree, use maxPrimaryThreads threads (one for each node), and on thread to compute the information fain
+      const s32 maxSecondaryThreads, //< If we are building the start of the tree, use one primary thread, and maxSecondaryThreads threads to compute the information fain
       std::vector<DecisionTreeNode> &decisionTree //< The output decision tree
       );
   } // namespace Embedded

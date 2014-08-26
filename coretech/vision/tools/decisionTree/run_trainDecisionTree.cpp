@@ -110,13 +110,13 @@ template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const c
 void PrintUsage()
 {
   printf(
-    "Usage: run_trainDecisionTree <filenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistance>\n"
-    "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20");
+    "Usage: run_trainDecisionTree <filenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistance> <maxPrimaryThreads> <maxSecondaryThreads>\n"
+    "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20 8 8");
 }
 
 int main(int argc, const char* argv[])
 {
-  if(argc != 6) {
+  if(argc != 8) {
     PrintUsage();
     return -10;
   }
@@ -126,6 +126,8 @@ int main(int argc, const char* argv[])
   const f32 leafNodeFraction = static_cast<f32>(atof(argv[3]));
   const s32 leafNodeNumItems = atol(argv[4]);
   const s32 u8MinDistance = atol(argv[5]);
+  const s32 maxPrimaryThreads = atol(argv[6]);
+  const s32 maxSecondaryThreads = atol(argv[7]);
 
   const s32 bufferSize = 50000000;
   MemoryStack memory(malloc(bufferSize), bufferSize);
@@ -181,6 +183,7 @@ int main(int argc, const char* argv[])
     featureValuesConst,
     leafNodeFraction, leafNodeNumItems, u8MinDistance,
     u8ThresholdsToUse,
+    maxPrimaryThreads, maxSecondaryThreads,
     decisionTree);
 
   // We're done with this memory once BuildTree returns
@@ -194,26 +197,26 @@ int main(int argc, const char* argv[])
     MemoryStack scratch(malloc(saveBufferSize), saveBufferSize);
 
     FixedLengthList<s32> depths(numNodes, scratch);
-    FixedLengthList<f32> infoGains(numNodes, scratch);
+    FixedLengthList<f32> bestEntropys(numNodes, scratch);
     FixedLengthList<s32> whichFeatures(numNodes, scratch);
     FixedLengthList<u8>  u8Thresholds(numNodes, scratch);
     FixedLengthList<s32> leftChildIndexs(numNodes, scratch);
 
-    AnkiConditionalErrorAndReturnValue(AreValid(depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs),
+    AnkiConditionalErrorAndReturnValue(AreValid(depths, bestEntropys, whichFeatures, u8Thresholds, leftChildIndexs),
       -7, "run_trainDecisionTree", "Out of memory for saving");
 
     for(s32 iNode=0; iNode<numNodes; iNode++) {
       const DecisionTreeNode &curNode = decisionTree[iNode];
 
       depths[iNode] = curNode.depth;
-      infoGains[iNode] = curNode.infoGain;
+      bestEntropys[iNode] = curNode.bestEntropy;
       whichFeatures[iNode] = curNode.whichFeature;
       u8Thresholds[iNode] = curNode.u8Threshold;
       leftChildIndexs[iNode] = curNode.leftChildIndex;
     } // for(s32 iNode=0; iNode<numNodes; iNode++)
 
     SaveList(depths, filenamePrefix, "out_depths.array", scratch);
-    SaveList(infoGains, filenamePrefix, "out_infoGains.array", scratch);
+    SaveList(bestEntropys, filenamePrefix, "out_bestEntropys.array", scratch);
     SaveList(whichFeatures, filenamePrefix, "out_whichFeatures.array", scratch);
     SaveList(u8Thresholds, filenamePrefix, "out_u8Thresholds.array", scratch);
     SaveList(leftChildIndexs, filenamePrefix, "out_leftChildIndexs.array", scratch);

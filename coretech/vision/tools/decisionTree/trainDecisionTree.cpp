@@ -34,8 +34,6 @@ typedef struct TrainingFailure
 
 template<typename Type> void maxAndMin(const Type * restrict pArray, const s32 * restrict pRemaining, const s32 numRemaining, Type &minValue, Type &maxValue);
 
-//template<typename Type> vector<Type> findUnique(const Type * restrict pArray, const s32 * restrict pRemaining, const s32 numRemaining, const Type minValue, const Type maxValue);
-
 vector<UniqueCount> findUnique(const s32 * restrict pArray, const s32 * restrict pRemaining, const s32 numRemaining, const s32 minValue, const s32 maxValue);
 
 template<typename Type> void maxAndMin(const Type * restrict pArray, const s32 * restrict pRemaining, const s32 numRemaining, Type &minValue, Type &maxValue)
@@ -48,42 +46,6 @@ template<typename Type> void maxAndMin(const Type * restrict pArray, const s32 *
     maxValue = MAX(maxValue, pArray[pRemaining[i]]);
   }
 }
-
-//template<typename Type> vector<Type> findUnique(const Type * restrict pArray, const s32 * restrict pRemaining, const s32 numRemaining, const Type minValue, const Type maxValue)
-//{
-//  const s32 countsLength = maxValue - minValue + 1;
-//
-//  s32 * counts = reinterpret_cast<s32*>( malloc(countsLength*sizeof(s32)) );
-//
-//  memset(counts, 0, countsLength*sizeof(s32));
-//
-//  for(s32 i=0; i<numRemaining; i++) {
-//    const Type curValue = pArray[pRemaining[i]] - minValue;
-//    counts[curValue]++;
-//  }
-//
-//  s32 numUnique = 0;
-//
-//  for(s32 i=0; i<countsLength; i++) {
-//    if(counts[i] > 0)
-//      numUnique++;
-//  }
-//
-//  vector<Type> uniques;
-//  uniques.resize(numUnique);
-//
-//  s32 cUnique = 0;
-//  for(s32 i=0; i<countsLength; i++) {
-//    if(counts[i] > 0) {
-//      uniques[cUnique] = static_cast<Type>(i + minValue);
-//      cUnique++;
-//    }
-//  }
-//
-//  free(counts);
-//
-//  return uniques;
-//}
 
 vector<UniqueCount> findUnique(const s32 * restrict pArray, const s32 * restrict pRemaining, const s32 numRemaining, const s32 minValue, const s32 maxValue)
 {
@@ -129,10 +91,10 @@ namespace Anki
     typedef struct DecisionTreeWorkItem
     {
       s32 treeIndex;
-      const vector<s32> remaining; // remaining: [1x552000 int32];
+      vector<s32> remaining; // remaining: [1x552000 int32];
       vector<U8Bool> featuresUsed;
 
-      DecisionTreeWorkItem(s32 treeIndex, const vector<s32> &remaining, const vector<U8Bool> &featuresUsed)
+      DecisionTreeWorkItem(s32 treeIndex, vector<s32> &remaining, const vector<U8Bool> &featuresUsed)
         : treeIndex(treeIndex), remaining(remaining), featuresUsed(featuresUsed)
       {
       }
@@ -162,6 +124,8 @@ namespace Anki
       const s32 leafNodeNumItems, //< If the number of items in a node is equal or below this, it is a leaf. 1 is a good value.
       const s32 u8MinDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
       const FixedLengthList<u8> &u8ThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
+      const s32 maxPrimaryThreads, //< If we are building the end of the tree, use maxPrimaryThreads threads (one for each node), and on thread to compute the information fain
+      const s32 maxSecondaryThreads, //< If we are building the start of the tree, use one primary thread, and maxSecondaryThreads threads to compute the information fain
       std::vector<DecisionTreeNode> &decisionTree //< The output decision tree
       )
     {
@@ -227,10 +191,8 @@ namespace Anki
       // TODO: add ability to launch threads when the work items are far down in the tree
 
       while(workQueue.size() > 0) {
-        const DecisionTreeWorkItem workItem = workQueue.front();
+        DecisionTreeWorkItem workItem = workQueue.front();
         workQueue.pop();
-
-        // vector<UniqueCount> findUnique(const s32 * restrict pArray, const s32 * restrict pRemaining, const s32 numRemaining, const s32 minValue, const s32 maxValue)
 
         AnkiAssert(workItem.remaining.size() > 0);
 
@@ -244,23 +206,25 @@ namespace Anki
 
         vector<UniqueCount> uniqueLabelCounts = findUnique(labels.Pointer(0), workItem.remaining.data(), workItem.remaining.size(), minLabel, maxLabel);
 
-        s32 maxUniqueCount = 0;
-        s32 maxUniqueCountId = -1;
+        s32 mostCommonLabel_count = 0;
+        s32 mostCommonLabel = -1;
 
+        // Find the most common label
         {
           const s32 numuniqueLabelCounts = uniqueLabelCounts.size();
-          const UniqueCount * restrict puniqueLabelCounts = uniqueLabelCounts.data();
+          const UniqueCount * restrict pUniqueLabelCounts = uniqueLabelCounts.data();
 
           for(s32 i=0; i<numuniqueLabelCounts; i++) {
-            if(puniqueLabelCounts[i].count > maxUniqueCount) {
-              maxUniqueCount = puniqueLabelCounts[i].count;
-              maxUniqueCountId = puniqueLabelCounts[i].value;
+            if(pUniqueLabelCounts[i].count > mostCommonLabel_count) {
+              mostCommonLabel_count = pUniqueLabelCounts[i].count;
+              mostCommonLabel = pUniqueLabelCounts[i].value;
             }
           }
         }
 
         bool unusedFeaturesFound = false;
 
+        // Check if all the features have been used
         {
           const s32 numGrayvalueThresholdsToUse = u8ThresholdsToUse.get_size();
 
@@ -290,21 +254,21 @@ namespace Anki
           }
         }
 
-        if((maxUniqueCount >= saturate_cast<s32>(leafNodeFraction * workItem.remaining.size())) || (static_cast<s32>(workItem.remaining.size()) < leafNodeNumItems)) {
+        if((mostCommonLabel_count >= saturate_cast<s32>(leafNodeFraction * workItem.remaining.size())) || (static_cast<s32>(workItem.remaining.size()) < leafNodeNumItems)) {
           // Are more than leafNodeFraction percent of the remaining labels the same? If so, we're done.
-          decisionTree[workItem.treeIndex].leftChildIndex = -maxUniqueCountId - 1000000;
+          decisionTree[workItem.treeIndex].leftChildIndex = -mostCommonLabel - 1000000;
 
           // Comment or uncomment the next line as desired
-          printf("LeafNode for label = %d, or \"%s\" at depth %d\n", maxUniqueCountId, labelNames[maxUniqueCountId], decisionTree[workItem.treeIndex].depth);
+          printf("LeafNode for label = %d, or \"%s\" at depth %d\n", mostCommonLabel, labelNames[mostCommonLabel], decisionTree[workItem.treeIndex].depth);
 
           continue;
         } else if(!unusedFeaturesFound) {
           // Have we used all features? If so, we're done.
 
-          decisionTree[workItem.treeIndex].leftChildIndex = -maxUniqueCountId - 1000000;
+          decisionTree[workItem.treeIndex].leftChildIndex = -mostCommonLabel - 1000000;
 
           // Comment or uncomment the next line as desired
-          printf("MaxDepth LeafNode for label = %d, or \"%s\" at depth %d\n", maxUniqueCountId, labelNames[maxUniqueCountId], decisionTree[workItem.treeIndex].depth);
+          printf("MaxDepth LeafNode for label = %d, or \"%s\" at depth %d\n", mostCommonLabel, labelNames[mostCommonLabel], decisionTree[workItem.treeIndex].depth);
 
           continue;
         }
@@ -312,33 +276,43 @@ namespace Anki
         //
         // If this isn't a leaf, find the best split
         //
+        s32 numSecondaryThreadsToUse = maxSecondaryThreads;
 
-        ComputeInfoGainParameters newParameters(
-          featureValues, labels, u8ThresholdsToUse,
-          u8MinDistance,
-          workItem.remaining,
-          featuresToCheck,
-          workItem.featuresUsed,
-          pNumLessThan,
-          pNumGreaterThan,
-          0,
-          0,
-          0);
+        if(workItem.remaining.size() < 5) {
+          numSecondaryThreadsToUse = 1;
+        }
 
-        //const f64 t0 = GetTimeF64();
+        if(numSecondaryThreadsToUse == 1) {
+          const s32 minFeatureToCheck = 0;
+          const s32 maxFeatureToCheck = numFeatures - 1;
 
-        const ThreadResult result = ComputeInfoGain(reinterpret_cast<void*>(&newParameters));
+          ComputeInfoGainParameters newParameters(
+            featureValues, labels, u8ThresholdsToUse,
+            u8MinDistance,
+            workItem.remaining,
+            minFeatureToCheck, maxFeatureToCheck,
+            workItem.featuresUsed,
+            pNumLessThan,
+            pNumGreaterThan,
+            0,
+            0,
+            0);
 
-        //const f64 t1 = GetTimeF64();
+          const ThreadResult result = ComputeInfoGain(reinterpret_cast<void*>(&newParameters));
 
-        //printf("Time %f\n", t1-t0);
+          decisionTree[workItem.treeIndex].bestEntropy = newParameters.bestEntropy;
+          decisionTree[workItem.treeIndex].whichFeature = newParameters.bestFeatureIndex;
+          decisionTree[workItem.treeIndex].u8Threshold = newParameters.bestU8Threshold;
+        } else {
+          // TODO: spawn and wait for the threads
 
-        decisionTree[workItem.treeIndex].infoGain = newParameters.bestEntropy;
-        decisionTree[workItem.treeIndex].whichFeature = newParameters.bestFeatureIndex;
-        decisionTree[workItem.treeIndex].u8Threshold = newParameters.bestU8Threshold;
+          // TODO: merge the best entropy
+
+          // TODO: merge the used probes?
+        }
 
         // If bestEntropy is too large, it means we could not split the data
-        if(newParameters.bestEntropy > 100000.0 || decisionTree[workItem.treeIndex].whichFeature < 0) {
+        if(decisionTree[workItem.treeIndex].bestEntropy > 100000.0 || decisionTree[workItem.treeIndex].whichFeature < 0) {
           // TODO: there are probably very few labels, so this is an inefficent way to compute which are unique
 
           decisionTree[workItem.treeIndex].leftChildIndex = -1;
@@ -410,15 +384,15 @@ namespace Anki
         rightRemaining.resize(cRight);
 
         // Mask out the grayvalues that are near to the chosen threshold
-        const s32 minGray = MAX(0,   newParameters.bestU8Threshold - newParameters.u8MinDistance);
-        const s32 maxGray = MIN(255, newParameters.bestU8Threshold + newParameters.u8MinDistance);
+        const s32 minGray = MAX(0,   decisionTree[workItem.treeIndex].u8Threshold - u8MinDistance);
+        const s32 maxGray = MIN(255, decisionTree[workItem.treeIndex].u8Threshold + u8MinDistance);
         for(s32 iGray=minGray; iGray<=maxGray; iGray++) {
-          U8Bool &pFeaturesUsed = newParameters.featuresUsed[newParameters.bestFeatureIndex];
+          U8Bool &pFeaturesUsed = workItem.featuresUsed[decisionTree[workItem.treeIndex].whichFeature];
           pFeaturesUsed.values[iGray] = true;
         }
 
-        workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 2, leftRemaining, newParameters.featuresUsed));
-        workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 1, rightRemaining, newParameters.featuresUsed));
+        workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 2, leftRemaining, workItem.featuresUsed));
+        workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 1, rightRemaining, workItem.featuresUsed));
       } // while(workQueue.size() > 0)
 
       free(pNumLessThan); pNumLessThan = NULL;
