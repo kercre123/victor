@@ -18,6 +18,8 @@ function [labelName, labelID] = probeTree2_query(probeTree, img, tform, blackVal
         
         % TODO: does this have the correct 0.5 bias?
         [xp, yp] = tforminv(tform, probeTree.x, probeTree.y);
+        xp = xp + 0.5;
+        yp = yp + 0.5;
         
         minSubtractedValue = int32(img(round(yp),round(xp))) - blackValue;
         curPixel = (minSubtractedValue * 255) / (whiteValue - blackValue);

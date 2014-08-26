@@ -50,7 +50,6 @@ function [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labe
     if useCVersion
         %         probeTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse);
         probeTree = probeTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(probeValues), leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, labelNames);
-        keyboard
     else
         probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
         probeTree.labels = labelNames;
@@ -161,7 +160,7 @@ function probeTree = convertCTree(curIndex, depths, infoGains, whichProbes, gray
         probeTree = struct(...
             'depth', depths(curIndex),...
             'infoGain', infoGains(curIndex),...
-            'whichProbe', whichProbes(curIndex),...
+            'whichProbe', whichProbes(curIndex) + 1,...
             'grayvalueThreshold', grayvalueThresholds(curIndex),...
             'x', double(xs(curIndex)),...
             'y', double(ys(curIndex)));
@@ -213,6 +212,8 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeValues, lab
         
         if labelID == labels(iImage);
             numCorrect = numCorrect + 1;
+        else
+            keyboard
         end
         
         if mod(iImage, 100) == 0
