@@ -165,6 +165,10 @@ namespace Anki
         newArray, "Array<Type>::LoadBinary", "Invalid inputs");
 
       FILE *fp = fopen(filename, "rb");
+
+      AnkiConditionalErrorAndReturnValue(fp,
+        newArray, "Array<Type>::LoadBinary", "Could not open file %s", filename);
+
       fseek(fp, 0, SEEK_END);
       s32 bufferLength = ftell(fp) - ARRAY_FILE_HEADER_LENGTH;
       fseek(fp, 0, SEEK_SET);
@@ -229,7 +233,7 @@ namespace Anki
       FILE *fp = fopen(filename, "wb");
 
       AnkiConditionalErrorAndReturnValue(fp,
-        RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Could not open file");
+        RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Could not open file %s", filename);
 
       const size_t bytesWrittenForTextHeader = fwrite(&ARRAY_FILE_HEADER[0], ARRAY_FILE_HEADER_LENGTH, 1, fp);
 

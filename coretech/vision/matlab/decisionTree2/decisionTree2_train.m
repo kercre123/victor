@@ -54,7 +54,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     % Train the decision tree
     if useCVersion
         decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse);
-        tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames);
+        tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     else
         tree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
         tree.remainingLabels = labelNames;
@@ -114,7 +114,7 @@ function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureVa
     end
 end % decisionTree2_saveInputs()
 
-function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames)
+function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid)
     % First, run the training
     trainingTic = tic();
     command = sprintf('"%s" "%s" %d %f %d %d', cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance);
@@ -130,22 +130,20 @@ function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, 
     % Next, load and convert the tree into the matlab format
     convertingTic = tic();
     
-    disp(['Loading and converting c tree to matlab format'])
+    disp('Loading and converting c tree to matlab format')
     
     depths = mexLoadEmbeddedArray([cFilenamePrefix, 'out_depths.array']);
     infoGains = mexLoadEmbeddedArray([cFilenamePrefix, 'out_infoGains.array']);
     whichFeatures = mexLoadEmbeddedArray([cFilenamePrefix, 'out_whichFeatures.array']);
     u8Thresholds = mexLoadEmbeddedArray([cFilenamePrefix, 'out_u8Thresholds.array']);
-    xs = mexLoadEmbeddedArray([cFilenamePrefix, 'out_xs.array']);
-    ys = mexLoadEmbeddedArray([cFilenamePrefix, 'out_ys.array']);
     leftChildIndexs = mexLoadEmbeddedArray([cFilenamePrefix, 'out_leftChildIndexs.array']);
     
-    disp(sprintf('Conversion done in %f seconds', toc(convertingTic)));
+    tree = convertCTree(1, depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     
-    tree = convertCTree(1, depths, infoGains, whichFeatures, u8Thresholds, xs, ys, leftChildIndexs, labelNames);
+    disp(sprintf('Conversion done in %f seconds', toc(convertingTic)));    
 end
 
-function tree = convertCTree(curIndex, depths, infoGains, whichFeatures, u8Thresholds, xs, ys, leftChildIndexs, labelNames)
+function tree = convertCTree(curIndex, depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid)
     
     if leftChildIndexs(curIndex) < 0
         if leftChildIndexs(curIndex) == -1
@@ -166,11 +164,11 @@ function tree = convertCTree(curIndex, depths, infoGains, whichFeatures, u8Thres
             'infoGain', infoGains(curIndex),...
             'whichFeature', whichFeatures(curIndex) + 1,...
             'u8Threshold', u8Thresholds(curIndex),...
-            'x', double(xs(curIndex)),...
-            'y', double(ys(curIndex)));
+            'x', double(probeLocationsXGrid(whichFeatures(curIndex) + 1)),...
+            'y', double(probeLocationsYGrid(whichFeatures(curIndex) + 1)));
         
-        tree.leftChild = convertCTree(leftChildIndexs(curIndex) + 1, depths, infoGains, whichFeatures, u8Thresholds, xs, ys, leftChildIndexs, labelNames);
-        tree.rightChild = convertCTree(leftChildIndexs(curIndex) + 2, depths, infoGains, whichFeatures, u8Thresholds, xs, ys, leftChildIndexs, labelNames);
+        tree.leftChild = convertCTree(leftChildIndexs(curIndex) + 1, depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
+        tree.rightChild = convertCTree(leftChildIndexs(curIndex) + 2, depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     end
 end
 

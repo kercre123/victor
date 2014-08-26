@@ -37,7 +37,7 @@ typedef struct {
   s32 counts[256];
 } GrayvalueCounts;
 
-static void CountValues_u8(const u8 * restrict pProbeValues, const vector<s32> &remaining, GrayvalueCounts &counts)
+static void CountValues_u8(const u8 * restrict pFeatureValues, const vector<s32> &remaining, GrayvalueCounts &counts)
 {
   memset(&counts.counts[0], 0, 256*sizeof(s32));
 
@@ -45,12 +45,12 @@ static void CountValues_u8(const u8 * restrict pProbeValues, const vector<s32> &
   const s32 * restrict pRemaining = remaining.data();
 
   for(s32 i=0; i<numRemaining; i++) {
-    counts.counts[pProbeValues[pRemaining[i]]]++;
+    counts.counts[pFeatureValues[pRemaining[i]]]++;
   }
 } // CountUnique_u8()
 
 static void ComputeNumAboveThreshold(
-  const u8 * restrict pProbeValues,
+  const u8 * restrict pFeatureValues,
   const s32 * restrict pLabels,
   const s32 maxLabel,
   const s32 * restrict pRemaining,
@@ -71,9 +71,9 @@ static void ComputeNumAboveThreshold(
     const s32 iImage = pRemaining[iRemain];
 
     const s32 curLabel = pLabels[iImage];
-    const u8 curProbeValue = pProbeValues[iImage];
+    const u8 curFeatureValue = pFeatureValues[iImage];
 
-    if(curProbeValue < curGrayvalueThreshold) {
+    if(curFeatureValue < curGrayvalueThreshold) {
       totalNumLessThan++;
       pNumLessThan[curLabel]++;
     } else {
@@ -132,43 +132,43 @@ namespace Anki
       ComputeInfoGainParameters * restrict parameters = reinterpret_cast<ComputeInfoGainParameters*>(computeInfoGainParameters);
 
       parameters->bestEntropy = FLT_MAX;
-      parameters->bestProbeIndex = -1;
-      parameters->bestGrayvalueThreshold = -1;
+      parameters->bestFeatureIndex = -1;
+      parameters->bestU8Threshold = -1;
 
-      u8 grayvalueThresholds[256];
+      u8 u8Thresholds[256];
       s32 numGrayvalueThresholds;
 
-      // If grayvalueThresholdsToUse has been passed in, don't compute the grayvalueThresholds
-      if(parameters->grayvalueThresholdsToUse.get_size() != 0) {
-        numGrayvalueThresholds = parameters->grayvalueThresholdsToUse.get_size();
+      // If u8ThresholdsToUse has been passed in, don't compute the u8Thresholds
+      if(parameters->u8ThresholdsToUse.get_size() != 0) {
+        numGrayvalueThresholds = parameters->u8ThresholdsToUse.get_size();
         for(s32 i=0; i<numGrayvalueThresholds; i++) {
-          grayvalueThresholds[i] = parameters->grayvalueThresholdsToUse[i];
+          u8Thresholds[i] = parameters->u8ThresholdsToUse[i];
         }
       }
 
-      const s32 numImages = parameters->probeValues[0].get_size();
+      const s32 numImages = parameters->featureValues[0].get_size();
       const s32 numRemaining = parameters->remaining.size();
-      const s32 numProbesLocationsToCheck = parameters->probesLocationsToCheck.size();
+      const s32 numFeaturesLocationsToCheck = parameters->featuresToCheck.size();
 
       const s32 maxLabel = FindMaxLabel(parameters->labels, parameters->remaining);
 
       const s32 * restrict pLabels = parameters->labels.Pointer(0);
       const s32 * restrict pRemaining = parameters->remaining.data();
-      const s32 * restrict pProbesLocationsToCheck = parameters->probesLocationsToCheck.data();
+      const s32 * restrict pFeaturesToCheck = parameters->featuresToCheck.data();
 
       //
-      // For each probe location and grayvalue threshold, find the best entropy
+      // For each feature location and grayvalue threshold, find the best entropy
       //
 
-      for(s32 iProbeToCheck=0; iProbeToCheck<numProbesLocationsToCheck; iProbeToCheck++) {
-        const s32 iProbe = pProbesLocationsToCheck[iProbeToCheck];
-        const u8 * restrict pProbeValues = parameters->probeValues[iProbe].Pointer(0);
+      for(s32 iFeatureToCheck=0; iFeatureToCheck<numFeaturesLocationsToCheck; iFeatureToCheck++) {
+        const s32 iFeature = pFeaturesToCheck[iFeatureToCheck];
+        const u8 * restrict pFeatureValues = parameters->featureValues[iFeature].Pointer(0);
 
-        // If the grayvalueThresholdsToUse haven't been specified, compute them from the data
-        if(parameters->grayvalueThresholdsToUse.get_size() == 0) {
-          // What are the unique grayvalues for this probe?
+        // If the u8ThresholdsToUse haven't been specified, compute them from the data
+        if(parameters->u8ThresholdsToUse.get_size() == 0) {
+          // What are the unique grayvalues for this feature?
           GrayvalueCounts counts;
-          CountValues_u8(pProbeValues, parameters->remaining, counts);
+          CountValues_u8(pFeatureValues, parameters->remaining, counts);
 
           // Compute the grayvalue thresholds (just halfway between each pair of detected grayvalues
           numGrayvalueThresholds = 0;
@@ -176,7 +176,7 @@ namespace Anki
           for(s32 i=0; i<256; i++) {
             if(counts.counts[i] > 0) {
               if(previousValue > 0) {
-                grayvalueThresholds[numGrayvalueThresholds] = (i + previousValue + 1) / 2; // The +1 is so it rounds up, like matlab
+                u8Thresholds[numGrayvalueThresholds] = (i + previousValue + 1) / 2; // The +1 is so it rounds up, like matlab
                 numGrayvalueThresholds++;
                 previousValue = i;
               } else {
@@ -184,14 +184,14 @@ namespace Anki
               }
             }
           }
-        } // if(parameters->grayvalueThresholdsToUse.empty())
+        } // if(parameters->u8ThresholdsToUse.empty())
 
-        GrayvalueBool &pProbesUsed = parameters->probesUsed[iProbe];
+        U8Bool &pFeaturesUsed = parameters->featuresUsed[iFeature];
 
         for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++) {
-          const u8 curGrayvalueThreshold = grayvalueThresholds[iGrayvalueThreshold];
+          const u8 curGrayvalueThreshold = u8Thresholds[iGrayvalueThreshold];
 
-          if(pProbesUsed.values[curGrayvalueThreshold]) {
+          if(pFeaturesUsed.values[curGrayvalueThreshold]) {
             continue;
           }
 
@@ -199,7 +199,7 @@ namespace Anki
           s32 totalNumGreaterThan = 0;
 
           ComputeNumAboveThreshold(
-            pProbeValues,
+            pFeatureValues,
             pLabels, maxLabel,
             pRemaining, numRemaining,
             curGrayvalueThreshold,
@@ -207,7 +207,7 @@ namespace Anki
             totalNumLessThan, totalNumGreaterThan);
 
           if(totalNumLessThan == 0 || totalNumGreaterThan == 0) {
-            pProbesUsed.values[curGrayvalueThreshold] = true;
+            pFeaturesUsed.values[curGrayvalueThreshold] = true;
             continue;
           }
 
@@ -219,11 +219,11 @@ namespace Anki
           // The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
           if(entropy < (parameters->bestEntropy - 1e-5)) {
             parameters->bestEntropy = static_cast<f32>(entropy);
-            parameters->bestProbeIndex = iProbe;
-            parameters->bestGrayvalueThreshold = curGrayvalueThreshold;
+            parameters->bestFeatureIndex = iFeature;
+            parameters->bestU8Threshold = curGrayvalueThreshold;
           }
         } // for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++)
-      } // for(s32 iProbeToCheck=0; iProbeToCheck<numProbesLocationsToCheck; iProbeToCheck++)
+      } // for(s32 iFeatureToCheck=0; iFeatureToCheck<numFeaturesLocationsToCheck; iFeatureToCheck++)
 
       const f64 time1 = GetTimeF64();
 

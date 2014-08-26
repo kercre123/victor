@@ -15,7 +15,7 @@ using namespace Anki;
 using namespace Anki::Embedded;
 
 template<typename Type> FixedLengthList<Type> LoadIntoList_temporaryBuffer(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2, MemoryStack &memory);
-std::vector<GrayvalueBool> LoadIntoList_grayvalueBool(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2);
+std::vector<U8Bool> LoadIntoList_grayvalueBool(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2);
 template<typename Type> FixedLengthList<Type> LoadIntoList_permanentBuffer(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch, MemoryStack &memory);
 template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch);
 
@@ -42,12 +42,12 @@ template<typename Type> FixedLengthList<Type> LoadIntoList_temporaryBuffer(const
   return out;
 }
 
-std::vector<GrayvalueBool> LoadIntoList_grayvalueBool(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2)
+std::vector<U8Bool> LoadIntoList_grayvalueBool(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2)
 {
   const s32 filenameBufferLength = 1024;
   char filenameBuffer[filenameBufferLength];
 
-  std::vector<GrayvalueBool> out;
+  std::vector<U8Bool> out;
 
   snprintf(filenameBuffer, filenameBufferLength, "%s%s", filenamePrefix, filenameSuffix);
 
@@ -110,7 +110,7 @@ template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const c
 void PrintUsage()
 {
   printf(
-    "Usage: run_trainDecisionTree <filenamePrefix> <numProbes> <leafNodeFraction> <leafNodeNumItems> <minGrayvalueDistance>\n"
+    "Usage: run_trainDecisionTree <filenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistance>\n"
     "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20");
 }
 
@@ -122,23 +122,21 @@ int main(int argc, const char* argv[])
   }
 
   const char * filenamePrefix = argv[1];
-  const s32 numProbes = atol(argv[2]);
+  const s32 numFeatures = atol(argv[2]);
   const f32 leafNodeFraction = static_cast<f32>(atof(argv[3]));
   const s32 leafNodeNumItems = atol(argv[4]);
-  const s32 minGrayvalueDistance = atol(argv[5]);
+  const s32 u8MinDistance = atol(argv[5]);
 
   const s32 bufferSize = 50000000;
   MemoryStack memory(malloc(bufferSize), bufferSize);
 
-  std::vector<GrayvalueBool> probesUsed;
+  std::vector<U8Bool> featuresUsed;
   FixedLengthList<const char *> labelNames;
   FixedLengthList<s32> labels;
-  FixedLengthList<FixedLengthList<u8> > probeValues(numProbes, memory, Flags::Buffer(true, false, true));
-  FixedLengthList<f32> probeLocationsXGrid;
-  FixedLengthList<f32> probeLocationsYGrid;
-  FixedLengthList<u8> grayvalueThresholdsToUse;
+  FixedLengthList<FixedLengthList<u8> > featureValues(numFeatures, memory, Flags::Buffer(true, false, true));
+  FixedLengthList<u8> u8ThresholdsToUse;
 
-  AnkiConditionalErrorAndReturnValue(AreValid(probeValues),
+  AnkiConditionalErrorAndReturnValue(AreValid(featureValues),
     -5, "run_trainDecisionTree", "Invalid input");
 
   // Load all inputs
@@ -146,18 +144,16 @@ int main(int argc, const char* argv[])
     MemoryStack scratch1(malloc(bufferSize), bufferSize);
     MemoryStack scratch2(malloc(bufferSize), bufferSize);
 
-    probesUsed = LoadIntoList_grayvalueBool(filenamePrefix, "probesUsed.array", scratch1, scratch2);
+    featuresUsed = LoadIntoList_grayvalueBool(filenamePrefix, "featuresUsed.array", scratch1, scratch2);
     labelNames = LoadIntoList_permanentBuffer<const char *>(filenamePrefix, "labelNames.array", scratch1, memory);
     labels = LoadIntoList_temporaryBuffer<s32>(filenamePrefix, "labels.array", scratch1, scratch2, memory);
-    probeLocationsXGrid = LoadIntoList_temporaryBuffer<f32>(filenamePrefix, "probeLocationsXGrid.array", scratch1, scratch2, memory);
-    probeLocationsYGrid = LoadIntoList_temporaryBuffer<f32>(filenamePrefix, "probeLocationsYGrid.array", scratch1, scratch2, memory);
-    grayvalueThresholdsToUse = LoadIntoList_temporaryBuffer<u8>(filenamePrefix, "grayvalueThresholdsToUse.array", scratch1, scratch2, memory);
+    u8ThresholdsToUse = LoadIntoList_temporaryBuffer<u8>(filenamePrefix, "u8ThresholdsToUse.array", scratch1, scratch2, memory);
 
-    for(s32 iProbe=0; iProbe<numProbes; iProbe++) {
+    for(s32 iFeature=0; iFeature<numFeatures; iFeature++) {
       const s32 filenameBufferLength = 1024;
       char filenameBuffer[filenameBufferLength];
-      snprintf(filenameBuffer, filenameBufferLength, "probeValues%d.array", iProbe);
-      probeValues[iProbe] = LoadIntoList_temporaryBuffer<u8>(filenamePrefix, filenameBuffer, scratch1, scratch2, memory);
+      snprintf(filenameBuffer, filenameBufferLength, "featureValues%d.array", iFeature);
+      featureValues[iFeature] = LoadIntoList_temporaryBuffer<u8>(filenamePrefix, filenameBuffer, scratch1, scratch2, memory);
     }
 
     free(scratch1.get_buffer());
@@ -165,29 +161,26 @@ int main(int argc, const char* argv[])
   } // Load all inputs
 
   AnkiConditionalErrorAndReturnValue(
-    AreValid(labelNames, labels, probeLocationsXGrid, probeLocationsYGrid, grayvalueThresholdsToUse)  &&
-    probesUsed.size() == numProbes &&
-    probeValues.get_size() == numProbes &&
-    probeLocationsXGrid.get_size() == numProbes &&
-    probeLocationsYGrid.get_size() == numProbes,
+    AreValid(labelNames, labels, u8ThresholdsToUse)  &&
+    featuresUsed.size() == numFeatures &&
+    featureValues.get_size() == numFeatures,
     -1, "run_trainDecisionTree", "Invalid input");
 
-  for(s32 i=0; i<numProbes; i++) {
-    AnkiConditionalErrorAndReturnValue(labels.get_size() == probeValues[i].get_size(),
+  for(s32 i=0; i<numFeatures; i++) {
+    AnkiConditionalErrorAndReturnValue(labels.get_size() == featureValues[i].get_size(),
       -2, "run_trainDecisionTree", "Invalid input");
   }
 
   // Add a const qualifier
-  FixedLengthList<const FixedLengthList<u8> > probeValuesConst = *reinterpret_cast<FixedLengthList<const FixedLengthList<u8> >* >(&probeValues);
+  FixedLengthList<const FixedLengthList<u8> > featureValuesConst = *reinterpret_cast<FixedLengthList<const FixedLengthList<u8> >* >(&featureValues);
 
   std::vector<DecisionTreeNode> decisionTree;
   const Result result = BuildTree(
-    probesUsed,
+    featuresUsed,
     labelNames, labels,
-    probeValuesConst,
-    probeLocationsXGrid, probeLocationsYGrid,
-    leafNodeFraction, leafNodeNumItems, minGrayvalueDistance,
-    grayvalueThresholdsToUse,
+    featureValuesConst,
+    leafNodeFraction, leafNodeNumItems, u8MinDistance,
+    u8ThresholdsToUse,
     decisionTree);
 
   // We're done with this memory once BuildTree returns
@@ -202,13 +195,11 @@ int main(int argc, const char* argv[])
 
     FixedLengthList<s32> depths(numNodes, scratch);
     FixedLengthList<f32> infoGains(numNodes, scratch);
-    FixedLengthList<s32> whichProbes(numNodes, scratch);
-    FixedLengthList<u8>  grayvalueThresholds(numNodes, scratch);
-    FixedLengthList<f32> xs(numNodes, scratch);
-    FixedLengthList<f32> ys(numNodes, scratch);
+    FixedLengthList<s32> whichFeatures(numNodes, scratch);
+    FixedLengthList<u8>  u8Thresholds(numNodes, scratch);
     FixedLengthList<s32> leftChildIndexs(numNodes, scratch);
 
-    AnkiConditionalErrorAndReturnValue(AreValid(depths, infoGains, whichProbes, grayvalueThresholds, xs, ys, leftChildIndexs),
+    AnkiConditionalErrorAndReturnValue(AreValid(depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs),
       -7, "run_trainDecisionTree", "Out of memory for saving");
 
     for(s32 iNode=0; iNode<numNodes; iNode++) {
@@ -216,19 +207,15 @@ int main(int argc, const char* argv[])
 
       depths[iNode] = curNode.depth;
       infoGains[iNode] = curNode.infoGain;
-      whichProbes[iNode] = curNode.whichProbe;
-      grayvalueThresholds[iNode] = curNode.grayvalueThreshold;
-      xs[iNode] = curNode.x;
-      ys[iNode] = curNode.y;
+      whichFeatures[iNode] = curNode.whichFeature;
+      u8Thresholds[iNode] = curNode.u8Threshold;
       leftChildIndexs[iNode] = curNode.leftChildIndex;
     } // for(s32 iNode=0; iNode<numNodes; iNode++)
 
     SaveList(depths, filenamePrefix, "out_depths.array", scratch);
     SaveList(infoGains, filenamePrefix, "out_infoGains.array", scratch);
-    SaveList(whichProbes, filenamePrefix, "out_whichProbes.array", scratch);
-    SaveList(grayvalueThresholds, filenamePrefix, "out_grayvalueThresholds.array", scratch);
-    SaveList(xs, filenamePrefix, "out_xs.array", scratch);
-    SaveList(ys, filenamePrefix, "out_ys.array", scratch);
+    SaveList(whichFeatures, filenamePrefix, "out_whichFeatures.array", scratch);
+    SaveList(u8Thresholds, filenamePrefix, "out_u8Thresholds.array", scratch);
     SaveList(leftChildIndexs, filenamePrefix, "out_leftChildIndexs.array", scratch);
 
     free(scratch.get_buffer());

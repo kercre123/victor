@@ -130,10 +130,10 @@ namespace Anki
     {
       s32 treeIndex;
       const vector<s32> remaining; // remaining: [1x552000 int32];
-      vector<GrayvalueBool> probesUsed;
+      vector<U8Bool> featuresUsed;
 
-      DecisionTreeWorkItem(s32 treeIndex, const vector<s32> &remaining, const vector<GrayvalueBool> &probesUsed)
-        : treeIndex(treeIndex), remaining(remaining), probesUsed(probesUsed)
+      DecisionTreeWorkItem(s32 treeIndex, const vector<s32> &remaining, const vector<U8Bool> &featuresUsed)
+        : treeIndex(treeIndex), remaining(remaining), featuresUsed(featuresUsed)
       {
       }
     } DecisionTreeWorkItem;
@@ -154,16 +154,14 @@ namespace Anki
     }
 
     Result BuildTree(
-      const vector<GrayvalueBool> &probesUsed, //< numProbes x 256
+      const vector<U8Bool> &featuresUsed, //< numFeatures x 256
       const FixedLengthList<const char *> &labelNames, //< Lookup table between index and string name
       const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
-      const FixedLengthList<const FixedLengthList<u8> > &probeValues, //< For every probe, the value for the probe every item to train on (outer is small, inner is very large)
-      const FixedLengthList<f32> &probeLocationsXGrid, //< Lookup table between probe index and probe x location
-      const FixedLengthList<f32> &probeLocationsYGrid, //< Lookup table between probe index and probe y location
+      const FixedLengthList<const FixedLengthList<u8> > &featureValues, //< For every feature, the value for the feature every item to train on (outer is small, inner is very large)
       const f32 leafNodeFraction, //< What percent of the items in a node have to be the same for it to be considered a leaf node? From [0.0, 1.0], where 1.0 is a good value.
       const s32 leafNodeNumItems, //< If the number of items in a node is equal or below this, it is a leaf. 1 is a good value.
-      const s32 minGrayvalueDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
-      const FixedLengthList<u8> &grayvalueThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
+      const s32 u8MinDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
+      const FixedLengthList<u8> &u8ThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
       std::vector<DecisionTreeNode> &decisionTree //< The output decision tree
       )
     {
@@ -171,21 +169,19 @@ namespace Anki
       // Check if inputs are valid
       //
 
-      AnkiConditionalErrorAndReturnValue(AreValid(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, grayvalueThresholdsToUse),
+      AnkiConditionalErrorAndReturnValue(AreValid(labelNames, labels, featureValues, u8ThresholdsToUse),
         RESULT_FAIL_INVALID_OBJECT, "BuildTree", "Invalid inputs");
 
-      const s32 numProbes = probesUsed.size();
+      const s32 numFeatures = featuresUsed.size();
       const s32 numItems = labels.get_size();
 
       AnkiConditionalErrorAndReturnValue(
-        probeValues.get_size() == numProbes &&
-        probeLocationsXGrid.get_size() == numProbes &&
-        probeLocationsYGrid.get_size() == numProbes,
+        featureValues.get_size() == numFeatures,
         RESULT_FAIL_INVALID_SIZE, "BuildTree", "Incorrect input size");
 
-      for(s32 i=0; i<numProbes; i++) {
+      for(s32 i=0; i<numFeatures; i++) {
         AnkiConditionalErrorAndReturnValue(
-          probeValues[i].get_size() == numItems,
+          featureValues[i].get_size() == numItems,
           RESULT_FAIL_INVALID_SIZE, "BuildTree", "Incorrect input size");
       }
 
@@ -193,7 +189,7 @@ namespace Anki
       // Setup the decision tree and work queue with the root node
       //
 
-      DecisionTreeNode rootNode(0, FLT_MAX, -1, 0, 0, 0, -1);
+      DecisionTreeNode rootNode(0, FLT_MAX, -1, 0, -1);
 
       decisionTree.emplace_back(rootNode);
 
@@ -205,7 +201,7 @@ namespace Anki
         pRemaining[i] = i;
       }
 
-      DecisionTreeWorkItem firstWorkItem(0, remaining, probesUsed);
+      DecisionTreeWorkItem firstWorkItem(0, remaining, featuresUsed);
 
       queue<DecisionTreeWorkItem> workQueue;
       workQueue.emplace(firstWorkItem);
@@ -215,11 +211,11 @@ namespace Anki
       s32 * restrict pNumLessThan = reinterpret_cast<s32*>( malloc((maxLabel+1)*sizeof(s32)) );
       s32 * restrict pNumGreaterThan = reinterpret_cast<s32*>( malloc((maxLabel+1)*sizeof(s32)) );
 
-      std::vector<s32> probesLocationsToCheck;
-      probesLocationsToCheck.resize(numProbes);
-      s32 * restrict pProbesLocationsToCheck = probesLocationsToCheck.data();
-      for(s32 i=0; i<numProbes; i++) {
-        pProbesLocationsToCheck[i] = i;
+      std::vector<s32> featuresToCheck;
+      featuresToCheck.resize(numFeatures);
+      s32 * restrict pFeaturesToCheck = featuresToCheck.data();
+      for(s32 i=0; i<numFeatures; i++) {
+        pFeaturesToCheck[i] = i;
       }
 
       ThreadSafeQueue<TrainingFailure> trainingFailues = ThreadSafeQueue<TrainingFailure>();
@@ -227,9 +223,6 @@ namespace Anki
       //
       // Keep popping items from the work queue, until the queue is empty.
       //
-
-      const f32 * restrict pProbeLocationsXGrid = probeLocationsXGrid.Pointer(0);
-      const f32 * restrict pProbeLocationsYGrid = probeLocationsYGrid.Pointer(0);
 
       // TODO: add ability to launch threads when the work items are far down in the tree
 
@@ -266,30 +259,30 @@ namespace Anki
           }
         }
 
-        bool unusedProbeLocationFound = false;
+        bool unusedFeaturesFound = false;
 
         {
-          const s32 numGrayvalueThresholdsToUse = grayvalueThresholdsToUse.get_size();
+          const s32 numGrayvalueThresholdsToUse = u8ThresholdsToUse.get_size();
 
-          const GrayvalueBool * restrict pProbesUsed = workItem.probesUsed.data();
-          for(s32 iProbe=0; iProbe<numProbes; iProbe++) {
-            if(unusedProbeLocationFound) {
+          const U8Bool * restrict pFeaturesUsed = workItem.featuresUsed.data();
+          for(s32 iFeature=0; iFeature<numFeatures; iFeature++) {
+            if(unusedFeaturesFound) {
               break;
             }
 
             if(numGrayvalueThresholdsToUse > 0) {
-              const u8 * restrict pGrayvalueThresholdsToUse = grayvalueThresholdsToUse.Pointer(0);
+              const u8 * restrict pGrayvalueThresholdsToUse = u8ThresholdsToUse.Pointer(0);
 
               for(s32 iGray=0; iGray<numGrayvalueThresholdsToUse; iGray++) {
-                if(pProbesUsed[iProbe].values[pGrayvalueThresholdsToUse[iGray]] == 0) {
-                  unusedProbeLocationFound = true;
+                if(pFeaturesUsed[iFeature].values[pGrayvalueThresholdsToUse[iGray]] == 0) {
+                  unusedFeaturesFound = true;
                   break;
                 }
               }
             } else {
               for(s32 iGray=0; iGray<256; iGray++) {
-                if(pProbesUsed[iProbe].values[iGray] == 0) {
-                  unusedProbeLocationFound = true;
+                if(pFeaturesUsed[iFeature].values[iGray] == 0) {
+                  unusedFeaturesFound = true;
                   break;
                 }
               }
@@ -305,8 +298,8 @@ namespace Anki
           printf("LeafNode for label = %d, or \"%s\" at depth %d\n", maxUniqueCountId, labelNames[maxUniqueCountId], decisionTree[workItem.treeIndex].depth);
 
           continue;
-        } else if(!unusedProbeLocationFound) {
-          // Have we used all probes? If so, we're done.
+        } else if(!unusedFeaturesFound) {
+          // Have we used all features? If so, we're done.
 
           decisionTree[workItem.treeIndex].leftChildIndex = -maxUniqueCountId - 1000000;
 
@@ -321,11 +314,11 @@ namespace Anki
         //
 
         ComputeInfoGainParameters newParameters(
-          probeValues, labels, grayvalueThresholdsToUse,
-          minGrayvalueDistance,
+          featureValues, labels, u8ThresholdsToUse,
+          u8MinDistance,
           workItem.remaining,
-          probesLocationsToCheck,
-          workItem.probesUsed,
+          featuresToCheck,
+          workItem.featuresUsed,
           pNumLessThan,
           pNumGreaterThan,
           0,
@@ -341,11 +334,11 @@ namespace Anki
         //printf("Time %f\n", t1-t0);
 
         decisionTree[workItem.treeIndex].infoGain = newParameters.bestEntropy;
-        decisionTree[workItem.treeIndex].whichProbe = newParameters.bestProbeIndex;
-        decisionTree[workItem.treeIndex].grayvalueThreshold = newParameters.bestGrayvalueThreshold;
+        decisionTree[workItem.treeIndex].whichFeature = newParameters.bestFeatureIndex;
+        decisionTree[workItem.treeIndex].u8Threshold = newParameters.bestU8Threshold;
 
         // If bestEntropy is too large, it means we could not split the data
-        if(newParameters.bestEntropy > 100000.0 || decisionTree[workItem.treeIndex].whichProbe < 0) {
+        if(newParameters.bestEntropy > 100000.0 || decisionTree[workItem.treeIndex].whichFeature < 0) {
           // TODO: there are probably very few labels, so this is an inefficent way to compute which are unique
 
           decisionTree[workItem.treeIndex].leftChildIndex = -1;
@@ -371,12 +364,10 @@ namespace Anki
           continue;
         } // if(newParameters.bestEntropy > 100000.0)
 
-        decisionTree[workItem.treeIndex].x = pProbeLocationsXGrid[newParameters.bestProbeIndex];
-        decisionTree[workItem.treeIndex].y = pProbeLocationsYGrid[newParameters.bestProbeIndex];
         decisionTree[workItem.treeIndex].leftChildIndex = decisionTree.size();
 
-        DecisionTreeNode leftNode = DecisionTreeNode(decisionTree[workItem.treeIndex].depth + 1, FLT_MAX, -1, 0, 0, 0, -1);
-        DecisionTreeNode rightNode = DecisionTreeNode(decisionTree[workItem.treeIndex].depth + 1, FLT_MAX, -1, 0, 0, 0, -1);
+        DecisionTreeNode leftNode = DecisionTreeNode(decisionTree[workItem.treeIndex].depth + 1, FLT_MAX, -1, 0, -1);
+        DecisionTreeNode rightNode = DecisionTreeNode(decisionTree[workItem.treeIndex].depth + 1, FLT_MAX, -1, 0, -1);
 
         decisionTree.emplace_back(leftNode);
         decisionTree.emplace_back(rightNode);
@@ -393,7 +384,7 @@ namespace Anki
         leftRemaining.resize(numRemaining);
         rightRemaining.resize(numRemaining);
 
-        const u8 * restrict pProbeValues = probeValues[decisionTree[workItem.treeIndex].whichProbe].Pointer(0);
+        const u8 * restrict pFeatureValues = featureValues[decisionTree[workItem.treeIndex].whichFeature].Pointer(0);
 
         const s32 * restrict pRemaining = workItem.remaining.data();
         s32 * restrict pLeftRemaining = leftRemaining.data();
@@ -402,9 +393,9 @@ namespace Anki
         s32 cLeft = 0, cRight = 0;
         for(s32 iRemain=0; iRemain<numRemaining; iRemain++) {
           const s32 curRemaining = pRemaining[iRemain];
-          const u8 curProbeValue = pProbeValues[curRemaining];
+          const u8 curFeatureValue = pFeatureValues[curRemaining];
 
-          if(curProbeValue < decisionTree[workItem.treeIndex].grayvalueThreshold) {
+          if(curFeatureValue < decisionTree[workItem.treeIndex].u8Threshold) {
             pLeftRemaining[cLeft] = curRemaining;
             cLeft++;
           } else {
@@ -419,15 +410,15 @@ namespace Anki
         rightRemaining.resize(cRight);
 
         // Mask out the grayvalues that are near to the chosen threshold
-        const s32 minGray = MAX(0,   newParameters.bestGrayvalueThreshold - newParameters.minGrayvalueDistance);
-        const s32 maxGray = MIN(255, newParameters.bestGrayvalueThreshold + newParameters.minGrayvalueDistance);
+        const s32 minGray = MAX(0,   newParameters.bestU8Threshold - newParameters.u8MinDistance);
+        const s32 maxGray = MIN(255, newParameters.bestU8Threshold + newParameters.u8MinDistance);
         for(s32 iGray=minGray; iGray<=maxGray; iGray++) {
-          GrayvalueBool &pProbesUsed = newParameters.probesUsed[newParameters.bestProbeIndex];
-          pProbesUsed.values[iGray] = true;
+          U8Bool &pFeaturesUsed = newParameters.featuresUsed[newParameters.bestFeatureIndex];
+          pFeaturesUsed.values[iGray] = true;
         }
 
-        workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 2, leftRemaining, newParameters.probesUsed));
-        workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 1, rightRemaining, newParameters.probesUsed));
+        workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 2, leftRemaining, newParameters.featuresUsed));
+        workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 1, rightRemaining, newParameters.featuresUsed));
       } // while(workQueue.size() > 0)
 
       free(pNumLessThan); pNumLessThan = NULL;

@@ -27,27 +27,23 @@ namespace Anki
   {
     typedef struct {
       bool values[256];
-    } GrayvalueBool;
+    } U8Bool;
 
     typedef struct DecisionTreeNode
     {
       s32 depth;
       f32 infoGain;
-      s32 whichProbe;
-      u8 grayvalueThreshold;
-      f32 x;
-      f32 y;
+      s32 whichFeature;
+      u8  u8Threshold;
       s32 leftChildIndex; //< Right child index is leftChildIndex + 1
 
       DecisionTreeNode(
         s32 depth,
         f32 infoGain,
-        s32 whichProbe,
-        u8 grayvalueThreshold,
-        f32 x,
-        f32 y,
+        s32 whichFeature,
+        u8  u8Threshold,
         s32 leftChildIndex)  //< Right child index is leftChildIndex + 1. If leftChildIndex <= -1000000, this is a leaf, with the label as the negative of leftChildIndex.
-        : depth(depth), infoGain(infoGain), whichProbe(whichProbe), grayvalueThreshold(grayvalueThreshold), x(x), y(y), leftChildIndex(leftChildIndex)
+        : depth(depth), infoGain(infoGain), whichFeature(whichFeature), u8Threshold(u8Threshold), leftChildIndex(leftChildIndex)
       {
       }
     } DecisionTreeNode;
@@ -55,17 +51,17 @@ namespace Anki
     typedef struct ComputeInfoGainParameters
     {
       // Thread-independent input
-      const FixedLengthList<const FixedLengthList<u8> > &probeValues; // For each probe location and for each image, what is the grayvalue?
-      const FixedLengthList<s32> &labels; // For each image, what is it's ground truth label
-      const FixedLengthList<u8> &grayvalueThresholdsToUse; //< If not empty, use these grayvalue thresholds instead of computing them
-      const s32 minGrayvalueDistance; //< For a given probe location, how close can two grayvalue thresholds be?
+      const FixedLengthList<const FixedLengthList<u8> > &featureValues; // For each feature and for each image, what is the value?
+      const FixedLengthList<s32> &labels; // What is the ground truth label for each image?
+      const FixedLengthList<u8> &u8ThresholdsToUse; //< If not empty, use these u8 thresholds instead of computing them
+      const s32 u8MinDistance; //< How close can the value for splitting on two values of one feature? Set to 255 to disallow splitting more than once per feature (e.g. multiple splits for one probe in the same location).
 
       // Thread-specific input
       const std::vector<s32> &remaining; //< The indexes of the remaining images
-      const std::vector<s32> probesLocationsToCheck; //< Which of the probe locations is this thread responsible for?
+      const std::vector<s32> featuresToCheck; //< Which of the features is this thread responsible for?
 
       // Thread-specific input/output
-      std::vector<GrayvalueBool> probesUsed; //< Which probes locations and grayvalues have been used?
+      std::vector<U8Bool> featuresUsed; //< Which features and u8 thresholds have been used?
 
       // Thread-specific scratch
       s32 * restrict pNumLessThan; //< Must be allocated before calling the thread, and manually freed after the thread is complete
@@ -73,23 +69,23 @@ namespace Anki
 
       // Thread-specific Output
       f32 bestEntropy; //< What is the best entropy that has been computed?
-      s32 bestProbeIndex; //< What is the probe index corresponding to the best entropy?
-      s32 bestGrayvalueThreshold; //< What is the grayvalue threshold corresponding to the best entropy?
+      s32 bestFeatureIndex; //< What is the feature index corresponding to the best entropy?
+      s32 bestU8Threshold; //< What is the grayvalue threshold corresponding to the best entropy?
 
       ComputeInfoGainParameters(
-        const FixedLengthList<const FixedLengthList<u8> > &probeValues,
+        const FixedLengthList<const FixedLengthList<u8> > &featureValues,
         const FixedLengthList<s32> &labels,
-        const FixedLengthList<u8> &grayvalueThresholdsToUse,
-        const s32 minGrayvalueDistance,
+        const FixedLengthList<u8> &u8ThresholdsToUse,
+        const s32 u8MinDistance,
         const std::vector<s32> &remaining,
-        std::vector<s32> probesLocationsToCheck,
-        std::vector<GrayvalueBool> probesUsed,
+        std::vector<s32> featuresToCheck,
+        std::vector<U8Bool> featuresUsed,
         s32 * restrict pNumLessThan,
         s32 * restrict pNumGreaterThan,
         f32 bestEntropy,
-        s32 bestProbeIndex,
-        s32 bestGrayvalueThreshold)
-        : probeValues(probeValues), labels(labels), grayvalueThresholdsToUse(grayvalueThresholdsToUse), minGrayvalueDistance(minGrayvalueDistance), remaining(remaining), probesLocationsToCheck(probesLocationsToCheck), probesUsed(probesUsed), pNumLessThan(pNumLessThan), pNumGreaterThan(pNumGreaterThan), bestEntropy(bestEntropy), bestProbeIndex(bestProbeIndex), bestGrayvalueThreshold(bestGrayvalueThreshold)
+        s32 bestFeatureIndex,
+        s32 bestU8Threshold)
+        : featureValues(featureValues), labels(labels), u8ThresholdsToUse(u8ThresholdsToUse), u8MinDistance(u8MinDistance), remaining(remaining), featuresToCheck(featuresToCheck), featuresUsed(featuresUsed), pNumLessThan(pNumLessThan), pNumGreaterThan(pNumGreaterThan), bestEntropy(bestEntropy), bestFeatureIndex(bestFeatureIndex), bestU8Threshold(bestU8Threshold)
       {
       }
     } ComputeInfoGainParameters;
@@ -99,16 +95,14 @@ namespace Anki
     s32 FindMaxLabel(const FixedLengthList<s32> &labels, const std::vector<s32> &remaining);
 
     Result BuildTree(
-      const std::vector<GrayvalueBool> &probesUsed, //< numProbes x 256
+      const std::vector<U8Bool> &featuresUsed, //< numFeatures x 256
       const FixedLengthList<const char *> &labelNames, //< Lookup table between index and string name
       const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
-      const FixedLengthList<const FixedLengthList<u8> > &probeValues, //< For every probe, the value for the probe every item to train on (outer is small, inner is very large)
-      const FixedLengthList<f32> &probeLocationsXGrid, //< Lookup table between probe index and probe x location
-      const FixedLengthList<f32> &probeLocationsYGrid, //< Lookup table between probe index and probe y location
+      const FixedLengthList<const FixedLengthList<u8> > &featureValues, //< For every feature, the value for the feature for every image (outer is small, inner is very large)
       const f32 leafNodeFraction, //< What percent of the items in a node have to be the same for it to be considered a leaf node? From [0.0, 1.0], where 1.0 is a good value.
       const s32 leafNodeNumItems, //< If the number of items in a node is equal or below this, it is a leaf. 1 is a good value.
-      const s32 minGrayvalueDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
-      const FixedLengthList<u8> &grayvalueThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
+      const s32 u8MinDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
+      const FixedLengthList<u8> &u8ThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
       std::vector<DecisionTreeNode> &decisionTree //< The output decision tree
       );
   } // namespace Embedded
