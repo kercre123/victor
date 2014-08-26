@@ -1,18 +1,18 @@
-% function [labels, probeValues] = probeTree2_loadImages(fiducialClassesList, varargin)
+% function [labels, probeValues] = decisionTree2_loadImages(fiducialClassesList, varargin)
 
 % Load the images specified by the fiducialClassesList, and generate the
 % probe images
 
 % Simple Example:
 % clear fiducialClassesList; fiducialClassesList(1).labelName = '0_000'; fiducialClassesList(1).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_000.png'}; fiducialClassesList(2).labelName = '0_090'; fiducialClassesList(2).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_090.png'};
-% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, 'numPerturbations', 1, 'maxPerturbPercent', 0, 'blurSigmas', [0]);
+% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(fiducialClassesList, 'numPerturbations', 1, 'maxPerturbPercent', 0, 'blurSigmas', [0]);
 
-% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, 'blurSigmas', [0, .01], 'numPerturbations', 10, 'probeResolutions', [512,32]);
+% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(fiducialClassesList, 'blurSigmas', [0, .01], 'numPerturbations', 10, 'probeResolutions', [512,32]);
 
 % Example:
-% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList);
+% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(fiducialClassesList);
 
-function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, varargin)
+function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(fiducialClassesList, varargin)
     %#ok<*CCAT>
     
     blurSigmas = [0, .005, .01, .02]; % as a fraction of the image diagonal
@@ -26,7 +26,7 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     
     parseVarargin(varargin{:});
     
-    pBar = ProgressBar('probeTree2_loadImages', 'CancelButton', true);
+    pBar = ProgressBar('decisionTree2_loadImages', 'CancelButton', true);
     pBar.showTimingInfo = true;
     pBarCleanup = onCleanup(@()delete(pBar));
     
@@ -134,7 +134,7 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     end % for iClass = 1:length(fiducialClassesList)
     
     %     keyboard
-end % probeTree2_loadImages()
+end % decisionTree2_loadImages()
 
 function img = imreadAlphaHelper(fname)
     

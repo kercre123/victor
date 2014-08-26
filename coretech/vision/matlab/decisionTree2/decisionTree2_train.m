@@ -1,24 +1,24 @@
-% function probeTree = probeTree2_train()
+% function probeTree = decisionTree2_train()
 %
 % Based off of VisionMarkerTrained.TrainProbeTree, but split into a
 % separate function, to prevent too much messing around with the
 % VisionMarkerTrained class hierarchy
 
 % Example:
-% [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, false);
+% [probeTree, minimalProbeTree, trainingFailures] = decisionTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, false);
 
 % Example using only 128 as the grayvalue threshold
-% [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, false, 'minGrayvalueDistance', 1000, 'grayvalueThresholdsToUse', 128);
+% [probeTree, minimalProbeTree, trainingFailures] = decisionTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, false, 'minGrayvalueDistance', 1000, 'grayvalueThresholdsToUse', 128);
 
 % To train with the completely C version of this method, use useCVersion = true, and it will save the files to disk and launch the C training
-% [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, true);
+% [probeTree, minimalProbeTree, trainingFailures] = decisionTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, true);
 
-function [probeTree, minimalProbeTree, trainingFailures, testOnTrain_numCorrect, testOnTrain_numTotal] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, useCVersion, varargin)
+function [probeTree, minimalProbeTree, trainingFailures, testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, useCVersion, varargin)
     global g_trainingFailures;
     global nodeId;
     global pBar;
     
-    pBar = ProgressBar('probeTree2_train', 'CancelButton', true);
+    pBar = ProgressBar('decisionTree2_train', 'CancelButton', true);
     pBar.showTimingInfo = true;
     pBarCleanup = onCleanup(@()delete(pBar));
     
@@ -48,8 +48,8 @@ function [probeTree, minimalProbeTree, trainingFailures, testOnTrain_numCorrect,
     
     % Train the decision tree
     if useCVersion
-        probeTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse);
-        probeTree = probeTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(probeValues), leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, labelNames);
+        decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse);
+        probeTree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(probeValues), leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, labelNames);
     else
         probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
         probeTree.remainingLabels = labelNames;
@@ -67,7 +67,7 @@ function [probeTree, minimalProbeTree, trainingFailures, testOnTrain_numCorrect,
     
     disp(sprintf('Training completed in %f seconds. Tree has %d nodes.', t_train, numNodes));
     
-    minimalProbeTree = probeTree2_stripProbeTree(probeTree);
+    minimalProbeTree = decisionTree2_stripProbeTree(probeTree);
     
     t_test = tic();
     
@@ -80,11 +80,11 @@ function [probeTree, minimalProbeTree, trainingFailures, testOnTrain_numCorrect,
     trainingFailures = g_trainingFailures;
     
     %     keyboard
-end % probeTree2_train()
+end % decisionTree2_train()
 
 % Save the inputs to file, for running the complete C version of the training
 % cFilenamePrefix should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
-function probeTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse)
+function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse)
     global pBar;
     
     pBar.set_message('Saving inputs for C training');
@@ -113,9 +113,9 @@ function probeTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues,
         mexSaveEmbeddedArray(uint8(probeValues{iProbe}), [cFilenamePrefix, sprintf('probeValues%d.array', iProbe-1)]);     % const FixedLengthList<const FixedLengthList<u8> > &probeValues, //< For every probe, the value for the probe every item to train on (outer is small, inner is very large)
         pBar.increment();
     end
-end % probeTree2_saveInputs()
+end % decisionTree2_saveInputs()
 
-function probeTree = probeTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numProbes, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, labelNames)
+function probeTree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numProbes, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, labelNames)
     % First, run the training
     trainingTic = tic();
     command = sprintf('"%s" "%s" %d %f %d %d', cTrainingExecutable, cFilenamePrefix, numProbes, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance);
@@ -194,7 +194,7 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeValues, lab
     
     numTotal = length(labels);
     
-    pBar = ProgressBar('probeTree2_train testOnTrainingData', 'CancelButton', true);
+    pBar = ProgressBar('decisionTree2_train testOnTrainingData', 'CancelButton', true);
     pBar.showTimingInfo = true;
     pBarCleanup = onCleanup(@()delete(pBar));
     
@@ -213,7 +213,7 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeValues, lab
         
         curImage = reshape(curImage, [probeImageWidth,probeImageWidth]);
         
-        [~, labelID] = probeTree2_query(probeTree, curImage, tform, 0, 255);
+        [~, labelID] = decisionTree2_query(probeTree, curImage, tform, 0, 255);
         
         if labelID == labels(iImage);
             numCorrect = numCorrect + 1;
@@ -296,7 +296,7 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
             pBar.add(length(node.remaining) / length(labels));
             
             %debugging stuff
-            images = probeTree2_probeValuesToImage(probeValues, node.remaining);
+            images = decisionTree2_probeValuesToImage(probeValues, node.remaining);
             imshows(images);
             title(sprintf('Could not split:\n\n%s', sprintf('%s\n', node.labelName{:})));
             pause(.01);

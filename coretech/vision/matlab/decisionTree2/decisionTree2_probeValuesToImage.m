@@ -1,6 +1,6 @@
-% function images = probeTree2_probeValuesToImage(probeValues, imageIndexes)
+% function images = decisionTree2_probeValuesToImage(probeValues, imageIndexes)
 
-function images = probeTree2_probeValuesToImage(probeValues, imageIndexes)
+function images = decisionTree2_probeValuesToImage(probeValues, imageIndexes)
     numProbes = length(probeValues);
     probeImageWidth = sqrt(numProbes);
     

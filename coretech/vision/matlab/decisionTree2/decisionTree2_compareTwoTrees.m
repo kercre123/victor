@@ -1,11 +1,11 @@
-% function areTheSame = probeTree2_compareTwoTrees(probeTree1, probeTree2)
+% function areTheSame = decisionTree2_compareTwoTrees(probeTree1, probeTree2)
 
 % Check if two probe trees are the same. Optionally, check only the leaves.
 
 % Example:
-% areTheSame = probeTree2_compareTwoTrees(probeTree1, probeTree2, false, false)
+% areTheSame = decisionTree2_compareTwoTrees(probeTree1, probeTree2, false, false)
 
-function areTheSame = probeTree2_compareTwoTrees(probeTree1, probeTree2, checkOnlyLeaves, ignoreMultipleLabels)
+function areTheSame = decisionTree2_compareTwoTrees(probeTree1, probeTree2, checkOnlyLeaves, ignoreMultipleLabels)
     areTheSame = true;
     
     % If only one is a leaf, they don't match
@@ -46,8 +46,8 @@ function areTheSame = probeTree2_compareTwoTrees(probeTree1, probeTree2, checkOn
             end
         end
         
-        leftSame = probeTree2_compareTwoTrees(probeTree1.leftChild, probeTree2.leftChild, checkOnlyLeaves, ignoreMultipleLabels);
-        rightSame = probeTree2_compareTwoTrees(probeTree1.rightChild, probeTree2.rightChild, checkOnlyLeaves, ignoreMultipleLabels);
+        leftSame = decisionTree2_compareTwoTrees(probeTree1.leftChild, probeTree2.leftChild, checkOnlyLeaves, ignoreMultipleLabels);
+        rightSame = decisionTree2_compareTwoTrees(probeTree1.rightChild, probeTree2.rightChild, checkOnlyLeaves, ignoreMultipleLabels);
         
         areTheSame = min([areTheSame, leftSame, rightSame]);
         

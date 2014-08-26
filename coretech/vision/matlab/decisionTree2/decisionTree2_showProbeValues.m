@@ -1,6 +1,6 @@
-% function probeTree2_showProbeValues(probeValues, probeTree)
+% function decisionTree2_showProbeValues(probeValues, probeTree)
 
-function probeTree2_showProbeValues(probeValues, probeTree)
+function decisionTree2_showProbeValues(probeValues, probeTree)
     
     squareWidth = sqrt(length(probeValues));
     
@@ -25,4 +25,4 @@ function probeTree2_showProbeValues(probeValues, probeTree)
     end
     
     keyboard
-end  % probeTree2_showProbeValues()
+end  % decisionTree2_showProbeValues()

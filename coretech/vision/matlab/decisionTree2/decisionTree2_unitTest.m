@@ -1,8 +1,8 @@
-% function probeTree2_unitTest()
+% function decisionTree2_unitTest()
 
 % Run some wierd cases for the probe tree
 
-function probeTree2_unitTest()
+function decisionTree2_unitTest()
     
 labelNames = {'category1', 'category2', 'category3'};
 probeLocationsX = ((1:2) - .5) / 2;;
@@ -22,15 +22,15 @@ assert(min(passed) == 1)
 
 keyboard
 
-end % probeTree2_unitTest()
+end % decisionTree2_unitTest()
 
 function passed = testOnBoth(labelNames, labels1, probeValues1, probeLocationsXGrid, probeLocationsYGrid, ignoreMultipleLabels)
-    [probeTree1m, ~, ~, testOnTrain_numCorrect1m, testOnTrain_numTotal1c] = probeTree2_train(labelNames, labels1, probeValues1, probeLocationsXGrid, probeLocationsYGrid, false);
-    [probeTree1c, ~, ~, testOnTrain_numCorrect1c, testOnTrain_numTotal1m] = probeTree2_train(labelNames, labels1, probeValues1, probeLocationsXGrid, probeLocationsYGrid, true);
+    [probeTree1m, ~, ~, testOnTrain_numCorrect1m, testOnTrain_numTotal1c] = decisionTree2_train(labelNames, labels1, probeValues1, probeLocationsXGrid, probeLocationsYGrid, false);
+    [probeTree1c, ~, ~, testOnTrain_numCorrect1c, testOnTrain_numTotal1m] = decisionTree2_train(labelNames, labels1, probeValues1, probeLocationsXGrid, probeLocationsYGrid, true);
 
     passed = true;
     
-    if ~probeTree2_compareTwoTrees(probeTree1m, probeTree1c, false, ignoreMultipleLabels)
+    if ~decisionTree2_compareTwoTrees(probeTree1m, probeTree1c, false, ignoreMultipleLabels)
         passed = false;
     end
     
