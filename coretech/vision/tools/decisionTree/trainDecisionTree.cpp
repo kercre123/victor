@@ -420,6 +420,8 @@ namespace Anki
 
         vector<GrayvalueBool> probesUsed;
 
+        // TODO: mask out used probe locations
+
         workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 2, leftRemaining, newParameters.probesUsed));
         workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 1, rightRemaining, newParameters.probesUsed));
       } // while(workQueue.size() > 0)

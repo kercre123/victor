@@ -35,27 +35,29 @@ function [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labe
     minGrayvalueDistance = 20; % How close can the grayvalue of two probes in the same location be? Set to 1000 to disallow probes in the same location.
     grayvalueThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
     probesUsed = zeros(length(probeValues), 256, 'uint8'); % If you don't want to train on some of the probes or grayvalue thresholds, set some of the probesUsed to true
-    baseCFilename = 'c:/tmp/treeTraining_'; % Temporarly location for when useCVersion = true
+    cFilenamePrefix = 'c:/tmp/treeTraining_'; % Temporarly location for when useCVersion = true
+    cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/Debug/run_trainDecisionTree.exe';
     
     parseVarargin(varargin{:});
     
     grayvalueThresholdsToUse = uint8(grayvalueThresholdsToUse);
     
     if ~ispc()
-        baseCFilename = strrep(baseCFilename, 'c:', '~');
+        baseCFilename = strrep(cFilenamePrefix, 'c:', '~');
     end
     
     % Train the decision tree
     if useCVersion
-        probeTree2_saveInputs(baseCFilename, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse);
+        %         probeTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse);
+        probeTree = probeTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(probeValues), leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, labelNames);
         keyboard
     else
         probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
         probeTree.labels = labelNames;
-
+        
         probeTree = buildTree(probeTree, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, grayvalueThresholdsToUse);
     end
-        
+    
     if isempty(probeTree)
         error('Training failed!');
     end
@@ -70,7 +72,7 @@ function [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labe
     
     t_test = tic();
     
-    [numCorrect, numTotal] = testOnTrainingData(minimalProbeTree, probeLocationsXGrid, probeLocationsYGrid, probeValues, labels);
+    [numCorrect, numTotal] = testOnTrainingData(minimalProbeTree, probeValues, labels);
     
     t_test = toc(t_test);
     
@@ -82,37 +84,92 @@ function [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labe
 end % probeTree2_train()
 
 % Save the inputs to file, for running the complete C version of the training
-% baseFilename should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
-function probeTree2_saveInputs(baseFilename, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse)
+% cFilenamePrefix should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
+function probeTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse)
     global pBar;
     
     pBar.set_message('Saving inputs for C training');
     pBar.set_increment(1/(length(probeValues)+6));
     pBar.set(0);
-        
-    mexSaveEmbeddedArray(uint8(probesUsed), [baseFilename, 'probesUsed.array']); % const std::vector<GrayvalueBool> &probesUsed, //< numProbes x 256    
+    
+    mexSaveEmbeddedArray(uint8(probesUsed), [cFilenamePrefix, 'probesUsed.array']); % const std::vector<GrayvalueBool> &probesUsed, //< numProbes x 256
     pBar.increment();
     
-    mexSaveEmbeddedArray(labelNames, [baseFilename, 'labelNames.array']); % const FixedLengthList<const char *> &labelNames, //< Lookup table between index and string name
+    mexSaveEmbeddedArray(labelNames, [cFilenamePrefix, 'labelNames.array']); % const FixedLengthList<const char *> &labelNames, //< Lookup table between index and string name
     pBar.increment();
     
-    mexSaveEmbeddedArray(int32(labels) - 1, [baseFilename, 'labels.array']); % const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
+    mexSaveEmbeddedArray(int32(labels) - 1, [cFilenamePrefix, 'labels.array']); % const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
     pBar.increment();
     
-    mexSaveEmbeddedArray(single(probeLocationsXGrid), [baseFilename, 'probeLocationsXGrid.array']);
+    mexSaveEmbeddedArray(single(probeLocationsXGrid), [cFilenamePrefix, 'probeLocationsXGrid.array']);
     pBar.increment();
     
-    mexSaveEmbeddedArray(single(probeLocationsYGrid), [baseFilename, 'probeLocationsYGrid.array']);
+    mexSaveEmbeddedArray(single(probeLocationsYGrid), [cFilenamePrefix, 'probeLocationsYGrid.array']);
     pBar.increment();
     
-    mexSaveEmbeddedArray(uint8(grayvalueThresholdsToUse), [baseFilename, 'grayvalueThresholdsToUse.array']);
+    mexSaveEmbeddedArray(uint8(grayvalueThresholdsToUse), [cFilenamePrefix, 'grayvalueThresholdsToUse.array']);
     pBar.increment();
-
+    
     for iProbe = 1:length(probeValues)
-        mexSaveEmbeddedArray(uint8(probeValues{iProbe}), [baseFilename, sprintf('probeValues%d.array', iProbe-1)]);     % const FixedLengthList<const FixedLengthList<u8> > &probeValues, //< For every probe, the value for the probe every item to train on (outer is small, inner is very large)
+        mexSaveEmbeddedArray(uint8(probeValues{iProbe}), [cFilenamePrefix, sprintf('probeValues%d.array', iProbe-1)]);     % const FixedLengthList<const FixedLengthList<u8> > &probeValues, //< For every probe, the value for the probe every item to train on (outer is small, inner is very large)
         pBar.increment();
     end
 end % probeTree2_saveInputs()
+
+function probeTree = probeTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numProbes, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, labelNames)
+    % First, run the training
+    trainingTic = tic();
+    command = sprintf('"%s" "%s" %d %f %d %d', cTrainingExecutable, cFilenamePrefix, numProbes, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance);
+    disp(['Starting C training: ', command]);
+    result = system(command);
+    disp(sprintf('C training finished in %f seconds', toc(trainingTic)));
+    
+    if result ~= 0
+        probeTree = [];
+        return;
+    end
+    
+    % Next, load and convert the tree into the matlab format
+    convertingTic = tic();
+    
+    disp(['Loading and converting c tree to matlab format'])
+    
+    depths = mexLoadEmbeddedArray([cFilenamePrefix, 'out_depths.array']);
+    infoGains = mexLoadEmbeddedArray([cFilenamePrefix, 'out_infoGains.array']);
+    whichProbes = mexLoadEmbeddedArray([cFilenamePrefix, 'out_whichProbes.array']);
+    grayvalueThresholds = mexLoadEmbeddedArray([cFilenamePrefix, 'out_grayvalueThresholds.array']);
+    xs = mexLoadEmbeddedArray([cFilenamePrefix, 'out_xs.array']);
+    ys = mexLoadEmbeddedArray([cFilenamePrefix, 'out_ys.array']);
+    leftChildIndexs = mexLoadEmbeddedArray([cFilenamePrefix, 'out_leftChildIndexs.array']);
+    
+    disp(sprintf('Conversion done in %f seconds', toc(convertingTic)));
+    
+    probeTree = convertCTree(1, depths, infoGains, whichProbes, grayvalueThresholds, xs, ys, leftChildIndexs, labelNames);
+end
+
+function probeTree = convertCTree(curIndex, depths, infoGains, whichProbes, grayvalueThresholds, xs, ys, leftChildIndexs, labelNames)
+    
+    if leftChildIndexs(curIndex) < 0
+        labelId = (-leftChildIndexs(curIndex)) - 1000000 + 1;
+        labelName = labelNames(labelId);
+        
+        probeTree = struct(...
+            'depth', depths(curIndex),...
+            'labelName', labelName,...
+            'labelID', labelId);
+    else
+        probeTree = struct(...
+            'depth', depths(curIndex),...
+            'infoGain', infoGains(curIndex),...
+            'whichProbe', whichProbes(curIndex),...
+            'grayvalueThreshold', grayvalueThresholds(curIndex),...
+            'x', double(xs(curIndex)),...
+            'y', double(ys(curIndex)));
+        
+        probeTree.leftChild = convertCTree(leftChildIndexs(curIndex) + 1, depths, infoGains, whichProbes, grayvalueThresholds, xs, ys, leftChildIndexs, labelNames);
+        probeTree.rightChild = convertCTree(leftChildIndexs(curIndex) + 2, depths, infoGains, whichProbes, grayvalueThresholds, xs, ys, leftChildIndexs, labelNames);
+    end
+end
 
 function numNodes = countNumNodes(probeTree)
     if isfield(probeTree, 'labelName')
@@ -122,9 +179,9 @@ function numNodes = countNumNodes(probeTree)
     end
 end % countNumNodes()
 
-function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeLocationsXGrid, probeLocationsYGrid, probeValues, labels)
+function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeValues, labels)
     numImages = length(probeValues{1});
-    numProbes = length(probeLocationsXGrid);
+    numProbes = length(probeValues);
     probeImageWidth = sqrt(numProbes);
     
     assert(length(labels) == numImages);
@@ -189,10 +246,10 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         node.labelID = maxIndex(1);
         node.labelName = labelNames{node.labelID};
         
-        % Comment or uncomment the next line as desired 
+        % Comment or uncomment the next line as desired
         fprintf('LeafNode for label = %d, or "%s" at depth %d\n', node.labelID, node.labelName, node.depth);
         
-        pBar.add(length(node.remaining) / length(labels));        
+        pBar.add(length(node.remaining) / length(labels));
     elseif node.depth == maxDepth || all(probesUsed(:))
         % Have we reached the max depth, or have we used all probes? If so, we're done.
         
@@ -235,12 +292,12 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
             fprintf('Could not split LeafNode for labels = {%s\b} {%s\b} at depth %d\n', sprintf('%s,', node.labelName{:}), sprintf('%d,', node.remaining), node.depth);
             pBar.add(length(node.remaining) / length(labels));
             
-            %debugging stuff            
-            images = probeTree2_probeValuesToImage(probeValues, node.remaining);            
+            %debugging stuff
+            images = probeTree2_probeValuesToImage(probeValues, node.remaining);
             imshows(images);
             title(sprintf('Could not split:\n\n{%s\b}', sprintf('%s\n', node.labelName{:})));
             pause(.01);
-%             keyboard
+            %             keyboard
             
             return;
         end
@@ -343,21 +400,21 @@ function [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain
         
         if isempty(grayvalueThresholdsToUse)
             uniqueGrayvalues = mexUnique(curProbeValues);
-        
+            
             if length(uniqueGrayvalues) <= 1
                 continue;
             end
-
+            
             grayvalueThresholds = (int32(uniqueGrayvalues(2:end)) + int32(uniqueGrayvalues(1:(end-1)))) / 2;
-
+            
             unusedGrayvaluesThresholds = find(~probesUsed(iUnusedProbe, :)) - 1;
-
+            
             % Compute the intersection between the grayvalue thresholds and the thresholds not used
             grayvalueThresholdCounts = zeros([256,1], 'int32');
             grayvalueThresholdCounts(grayvalueThresholds + 1) = int32(1);
             grayvalueThresholdCounts(unusedGrayvaluesThresholds + 1) = grayvalueThresholdCounts(unusedGrayvaluesThresholds + 1) + int32(1);
             grayvalueThresholds = uint8(find(grayvalueThresholdCounts == int32(2)) - 1);
-
+            
         else
             grayvalueThresholds = zeros(0,1,'uint8');
             
@@ -378,7 +435,7 @@ function [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain
             [curBestEntropy, curBestGrayvalueThreshold] = computeInfoGain_innerLoop(curLabels, curProbeValues, grayvalueThresholds);
         end
         
-%         disp(sprintf('entropy is %f for probe %d and grayvalue %d', curBestEntropy, curProbeIndex, curBestGrayvalueThreshold));
+        %         disp(sprintf('entropy is %f for probe %d and grayvalue %d', curBestEntropy, curProbeIndex, curBestGrayvalueThreshold));
         
         % The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
         if curBestEntropy < (bestEntropy - 1e-5)
@@ -405,7 +462,7 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
     fprintf('Testing %d probes on %d images ', numProbesUnused, length(remainingImages));
     
     [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain_outerLoop(probeValues, probesUsed, unusedProbeIndexes, numProbesUnused, remainingImages, curLabels, maxLabel, grayvalueThresholdsToUse, numWorkItems, useMex, numThreads);
-        
+    
     grayvaluesToMask = max(1, min(256, (1 + ((bestGrayvalueThreshold-minGrayvalueDistance):(bestGrayvalueThreshold+minGrayvalueDistance)))));
     
     probesUsed(bestProbeIndex, grayvaluesToMask) = true;

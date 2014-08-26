@@ -201,7 +201,7 @@ namespace Anki
       return newArray;
     } // Array<Type>::LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory)
 
-    template<typename Type> Result Array<Type>::SaveBinary(const char * filename, MemoryStack scratch)
+    template<typename Type> Result Array<Type>::SaveBinary(const char * filename, MemoryStack scratch) const
     {
       AnkiConditionalErrorAndReturnValue(AreValid(*this, scratch),
         RESULT_FAIL_INVALID_OBJECT, "Array<Type>::SaveBinary", "Invalid inputs");

@@ -17,6 +17,7 @@ using namespace Anki::Embedded;
 template<typename Type> FixedLengthList<Type> LoadIntoList_temporaryBuffer(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2, MemoryStack &memory);
 std::vector<GrayvalueBool> LoadIntoList_grayvalueBool(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2);
 template<typename Type> FixedLengthList<Type> LoadIntoList_permanentBuffer(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch, MemoryStack &memory);
+template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch);
 
 template<typename Type> FixedLengthList<Type> LoadIntoList_temporaryBuffer(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2, MemoryStack &memory)
 {
@@ -94,6 +95,18 @@ template<typename Type> FixedLengthList<Type> LoadIntoList_permanentBuffer(const
   return out;
 }
 
+template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch)
+{
+  const s32 filenameBufferLength = 1024;
+  char filenameBuffer[filenameBufferLength];
+
+  snprintf(filenameBuffer, filenameBufferLength, "%s%s", filenamePrefix, filenameSuffix);
+
+  const ConstArraySlice<Type> arr = in;
+
+  return arr.get_array().SaveBinary(filenameBuffer, scratch);
+}
+
 void PrintUsage()
 {
   printf(
@@ -105,6 +118,7 @@ int main(int argc, const char* argv[])
 {
   if(argc != 6) {
     PrintUsage();
+    return -10;
   }
 
   const char * filenamePrefix = argv[1];
@@ -176,7 +190,49 @@ int main(int argc, const char* argv[])
     grayvalueThresholdsToUse,
     decisionTree);
 
+  // We're done with this memory once BuildTree returns
   free(memory.get_buffer());
+
+  // Save the output
+  {
+    const s32 numNodes = decisionTree.size();
+    const s32 saveBufferSize = 10000000 + 3 * numNodes * sizeof(DecisionTreeNode);
+
+    MemoryStack scratch(malloc(saveBufferSize), saveBufferSize);
+
+    FixedLengthList<s32> depths(numNodes, scratch);
+    FixedLengthList<f32> infoGains(numNodes, scratch);
+    FixedLengthList<s32> whichProbes(numNodes, scratch);
+    FixedLengthList<u8>  grayvalueThresholds(numNodes, scratch);
+    FixedLengthList<f32> xs(numNodes, scratch);
+    FixedLengthList<f32> ys(numNodes, scratch);
+    FixedLengthList<s32> leftChildIndexs(numNodes, scratch);
+
+    AnkiConditionalErrorAndReturnValue(AreValid(depths, infoGains, whichProbes, grayvalueThresholds, xs, ys, leftChildIndexs),
+      -7, "run_trainDecisionTree", "Out of memory for saving");
+
+    for(s32 iNode=0; iNode<numNodes; iNode++) {
+      const DecisionTreeNode &curNode = decisionTree[iNode];
+
+      depths[iNode] = curNode.depth;
+      infoGains[iNode] = curNode.infoGain;
+      whichProbes[iNode] = curNode.whichProbe;
+      grayvalueThresholds[iNode] = curNode.grayvalueThreshold;
+      xs[iNode] = curNode.x;
+      ys[iNode] = curNode.y;
+      leftChildIndexs[iNode] = curNode.leftChildIndex;
+    } // for(s32 iNode=0; iNode<numNodes; iNode++)
+
+    SaveList(depths, filenamePrefix, "out_depths.array", scratch);
+    SaveList(infoGains, filenamePrefix, "out_infoGains.array", scratch);
+    SaveList(whichProbes, filenamePrefix, "out_whichProbes.array", scratch);
+    SaveList(grayvalueThresholds, filenamePrefix, "out_grayvalueThresholds.array", scratch);
+    SaveList(xs, filenamePrefix, "out_xs.array", scratch);
+    SaveList(ys, filenamePrefix, "out_ys.array", scratch);
+    SaveList(leftChildIndexs, filenamePrefix, "out_leftChildIndexs.array", scratch);
+
+    free(scratch.get_buffer());
+  } // Save the output
 
   return 0;
 }

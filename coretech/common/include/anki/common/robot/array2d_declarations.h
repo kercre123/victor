@@ -78,7 +78,7 @@ namespace Anki
 
       // Load or save an array saved as a debugStream.
       static Array<Type> LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory);
-      Result SaveBinary(const char * filename, MemoryStack scratch);
+      Result SaveBinary(const char * filename, MemoryStack scratch) const;
 
       // Pointer to the data, at a given (y,x) location
       //
