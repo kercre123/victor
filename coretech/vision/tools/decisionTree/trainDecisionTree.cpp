@@ -418,9 +418,13 @@ namespace Anki
         leftRemaining.resize(cLeft);
         rightRemaining.resize(cRight);
 
-        vector<GrayvalueBool> probesUsed;
-
-        // TODO: mask out used probe locations
+        // Mask out the grayvalues that are near to the chosen threshold
+        const s32 minGray = MAX(0,   newParameters.bestGrayvalueThreshold - newParameters.minGrayvalueDistance);
+        const s32 maxGray = MIN(255, newParameters.bestGrayvalueThreshold + newParameters.minGrayvalueDistance);
+        for(s32 iGray=minGray; iGray<=maxGray; iGray++) {
+          GrayvalueBool &pProbesUsed = newParameters.probesUsed[newParameters.bestProbeIndex];
+          pProbesUsed.values[iGray] = true;
+        }
 
         workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 2, leftRemaining, newParameters.probesUsed));
         workQueue.push(DecisionTreeWorkItem(decisionTree.size() - 1, rightRemaining, newParameters.probesUsed));

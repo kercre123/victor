@@ -225,14 +225,6 @@ namespace Anki
         } // for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++)
       } // for(s32 iProbeToCheck=0; iProbeToCheck<numProbesLocationsToCheck; iProbeToCheck++)
 
-      // Mask out the grayvalues that are near to the chosen threshold
-      const s32 minGray = MAX(0,   parameters->bestGrayvalueThreshold - parameters->minGrayvalueDistance);
-      const s32 maxGray = MIN(255, parameters->bestGrayvalueThreshold + parameters->minGrayvalueDistance);
-      for(s32 iGray=minGray; iGray<=maxGray; iGray++) {
-        GrayvalueBool &pProbesUsed = parameters->probesUsed[parameters->bestProbeIndex];
-        pProbesUsed.values[iGray] = true;
-      }
-
       const f64 time1 = GetTimeF64();
 
       printf(" Best entropy is %f in %f seconds\n", parameters->bestEntropy, time1-time0);
