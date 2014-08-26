@@ -40,8 +40,8 @@ vector<UniqueCount> findUnique(const s32 * restrict pArray, const s32 * restrict
 
 template<typename Type> void maxAndMin(const Type * restrict pArray, const s32 * restrict pRemaining, const s32 numRemaining, Type &minValue, Type &maxValue)
 {
-  minValue = pArray[0];
-  maxValue = pArray[0];
+  minValue = pArray[pRemaining[0]];
+  maxValue = pArray[pRemaining[0]];
 
   for(s32 i=1; i<numRemaining; i++) {
     minValue = MIN(minValue, pArray[pRemaining[i]]);
@@ -340,14 +340,12 @@ namespace Anki
 
         //printf("Time %f\n", t1-t0);
 
-        decisionTree[workItem.treeIndex].x = pProbeLocationsXGrid[newParameters.bestProbeIndex];
-        decisionTree[workItem.treeIndex].y = pProbeLocationsYGrid[newParameters.bestProbeIndex];
         decisionTree[workItem.treeIndex].infoGain = newParameters.bestEntropy;
         decisionTree[workItem.treeIndex].whichProbe = newParameters.bestProbeIndex;
         decisionTree[workItem.treeIndex].grayvalueThreshold = newParameters.bestGrayvalueThreshold;
 
         // If bestEntropy is too large, it means we could not split the data
-        if(newParameters.bestEntropy > 100000.0) {
+        if(newParameters.bestEntropy > 100000.0 || decisionTree[workItem.treeIndex].whichProbe < 0) {
           // TODO: there are probably very few labels, so this is an inefficent way to compute which are unique
 
           decisionTree[workItem.treeIndex].leftChildIndex = -1;
@@ -363,7 +361,7 @@ namespace Anki
 
           const s32 numLabels = failure.labels.size();
           for(s32 i=0; i<numLabels; i++) {
-            printf("(%d, %s), ", failure.labels[i], labelNames[failure.labels[i].value]);
+            printf("(%d, %s), ", failure.labels[i].value, labelNames[failure.labels[i].value]);
           }
 
           printf("} at depth %d\n", decisionTree[workItem.treeIndex].depth);
@@ -373,6 +371,8 @@ namespace Anki
           continue;
         } // if(newParameters.bestEntropy > 100000.0)
 
+        decisionTree[workItem.treeIndex].x = pProbeLocationsXGrid[newParameters.bestProbeIndex];
+        decisionTree[workItem.treeIndex].y = pProbeLocationsYGrid[newParameters.bestProbeIndex];
         decisionTree[workItem.treeIndex].leftChildIndex = decisionTree.size();
 
         DecisionTreeNode leftNode = DecisionTreeNode(decisionTree[workItem.treeIndex].depth + 1, FLT_MAX, -1, 0, 0, 0, -1);
@@ -413,7 +413,7 @@ namespace Anki
           }
         }
 
-        AnkiAssert(cLeft > 0 && cRight > 0);
+        AnkiAssert(cLeft > 0 && cLeft <= numRemaining && cRight > 0 && cRight <= numRemaining );
 
         leftRemaining.resize(cLeft);
         rightRemaining.resize(cRight);

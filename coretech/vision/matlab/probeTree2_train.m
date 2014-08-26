@@ -13,7 +13,7 @@
 % To train with the completely C version of this method, use useCVersion = true, and it will save the files to disk and launch the C training
 % [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, true);
 
-function [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, useCVersion, varargin)
+function [probeTree, minimalProbeTree, trainingFailures, testOnTrain_numCorrect, testOnTrain_numTotal] = probeTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, useCVersion, varargin)
     global g_trainingFailures;
     global nodeId;
     global pBar;
@@ -48,7 +48,7 @@ function [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labe
     
     % Train the decision tree
     if useCVersion
-        %         probeTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse);
+        probeTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse);
         probeTree = probeTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(probeValues), leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, labelNames);
     else
         probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
@@ -71,11 +71,11 @@ function [probeTree, minimalProbeTree, trainingFailures] = probeTree2_train(labe
     
     t_test = tic();
     
-    [numCorrect, numTotal] = testOnTrainingData(minimalProbeTree, probeValues, labels);
+    [testOnTrain_numCorrect, testOnTrain_numTotal] = testOnTrainingData(minimalProbeTree, probeValues, labels);
     
     t_test = toc(t_test);
     
-    disp(sprintf('Tested tree on training set in %f seconds. Training accuracy: %d/%d = %0.2f%%', t_test, numCorrect, numTotal, 100*numCorrect/numTotal));
+    disp(sprintf('Tested tree on training set in %f seconds. Training accuracy: %d/%d = %0.2f%%', t_test, testOnTrain_numCorrect, testOnTrain_numTotal, 100*testOnTrain_numCorrect/testOnTrain_numTotal));
     
     trainingFailures = g_trainingFailures;
     
@@ -149,8 +149,13 @@ end
 function probeTree = convertCTree(curIndex, depths, infoGains, whichProbes, grayvalueThresholds, xs, ys, leftChildIndexs, labelNames)
     
     if leftChildIndexs(curIndex) < 0
-        labelId = (-leftChildIndexs(curIndex)) - 1000000 + 1;
-        labelName = labelNames(labelId);
+        if leftChildIndexs(curIndex) == -1
+            labelId = length(labelNames) + 1;
+            labelName = 'MARKER_UNKNOWN';
+        else
+            labelId = (-leftChildIndexs(curIndex)) - 1000000 + 1;
+            labelName = labelNames(labelId);
+        end
         
         probeTree = struct(...
             'depth', depths(curIndex),...
@@ -212,8 +217,6 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeValues, lab
         
         if labelID == labels(iImage);
             numCorrect = numCorrect + 1;
-        else
-            keyboard
         end
         
         if mod(iImage, 100) == 0
@@ -269,16 +272,15 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         % We have unused probe location. So find the best one to split on.
         
         useMex = true;
+%         useMex = false;
         numThreads = 16;
         
         [node.infoGain, node.whichProbe, node.grayvalueThreshold, updatedProbesUsed] = computeInfoGain(labels, probeValues, probesUsed, node.remaining, minGrayvalueDistance, grayvalueThresholdsToUse, useMex, numThreads);
         
-        node.x = probeLocationsXGrid(node.whichProbe);
-        node.y = probeLocationsYGrid(node.whichProbe);
         node.remainingLabels = sprintf('%s ', labelNames{mexUnique(labels(node.remaining))});
         
         % If the entropy is incredibly large, there was no valid split
-        if node.infoGain > 100000.0
+        if node.infoGain > 100000.0 || node.whichProbe < 1
             % PB: Is this still a reasonable thing to happen? I think no.
             
             node.labelID = mexUnique(labels(node.remaining));
@@ -296,12 +298,15 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
             %debugging stuff
             images = probeTree2_probeValuesToImage(probeValues, node.remaining);
             imshows(images);
-            title(sprintf('Could not split:\n\n{%s\b}', sprintf('%s\n', node.labelName{:})));
+            title(sprintf('Could not split:\n\n%s', sprintf('%s\n', node.labelName{:})));
             pause(.01);
             %             keyboard
             
             return;
         end
+        
+        node.x = probeLocationsXGrid(node.whichProbe);
+        node.y = probeLocationsYGrid(node.whichProbe);
         
         probesUsed = updatedProbesUsed;
         
@@ -429,8 +434,8 @@ function [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain
         if isempty(grayvalueThresholds)
             continue;
         end
-        
-        if useMex
+                
+        if useMex            
             [curBestEntropy, curBestGrayvalueThreshold] = mexComputeInfoGain2_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel, numThreads);
         else
             [curBestEntropy, curBestGrayvalueThreshold] = computeInfoGain_innerLoop(curLabels, curProbeValues, grayvalueThresholds);
@@ -466,7 +471,9 @@ function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = com
     
     grayvaluesToMask = max(1, min(256, (1 + ((bestGrayvalueThreshold-minGrayvalueDistance):(bestGrayvalueThreshold+minGrayvalueDistance)))));
     
-    probesUsed(bestProbeIndex, grayvaluesToMask) = true;
+    if bestProbeIndex > 0
+        probesUsed(bestProbeIndex, grayvaluesToMask) = true;
+    end
     
     fprintf(' Best entropy is %f in %f seconds\n', bestEntropy, toc(totalTic))
     

@@ -3,9 +3,9 @@
 % Check if two probe trees are the same. Optionally, check only the leaves.
 
 % Example:
-% areTheSame = probeTree2_compareTwoTrees(probeTree1, probeTree2, false)
+% areTheSame = probeTree2_compareTwoTrees(probeTree1, probeTree2, false, false)
 
-function areTheSame = probeTree2_compareTwoTrees(probeTree1, probeTree2, checkOnlyLeaves)
+function areTheSame = probeTree2_compareTwoTrees(probeTree1, probeTree2, checkOnlyLeaves, ignoreMultipleLabels)
     areTheSame = true;
     
     % If only one is a leaf, they don't match
@@ -18,7 +18,17 @@ function areTheSame = probeTree2_compareTwoTrees(probeTree1, probeTree2, checkOn
     end
     
     if isfield(probeTree1, 'labelName')
-        if ~strcmp(probeTree1.labelName, probeTree2.labelName) || probeTree1.labelID ~= probeTree2.labelID
+        if (length(probeTree1.labelName) ~= length(probeTree2.labelName) || length(probeTree1.labelID) ~= length(probeTree2.labelID))
+            if ignoreMultipleLabels 
+                return;
+            else
+                areTheSame = false;
+                keyboard
+                return;
+            end
+        end
+        
+        if ~min(strcmp(probeTree1.labelName, probeTree2.labelName)) || min(probeTree1.labelID ~= probeTree2.labelID)
             areTheSame = false;
             keyboard
         end
@@ -36,8 +46,8 @@ function areTheSame = probeTree2_compareTwoTrees(probeTree1, probeTree2, checkOn
             end
         end
         
-        leftSame = probeTree2_compareTwoTrees(probeTree1.leftChild, probeTree2.leftChild, checkOnlyLeaves);
-        rightSame = probeTree2_compareTwoTrees(probeTree1.rightChild, probeTree2.rightChild, checkOnlyLeaves);
+        leftSame = probeTree2_compareTwoTrees(probeTree1.leftChild, probeTree2.leftChild, checkOnlyLeaves, ignoreMultipleLabels);
+        rightSame = probeTree2_compareTwoTrees(probeTree1.rightChild, probeTree2.rightChild, checkOnlyLeaves, ignoreMultipleLabels);
         
         areTheSame = min([areTheSame, leftSame, rightSame]);
         
