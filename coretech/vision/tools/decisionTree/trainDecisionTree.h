@@ -46,7 +46,7 @@ namespace Anki
         u8 grayvalueThreshold,
         f32 x,
         f32 y,
-        s32 leftChildIndex)  //< Right child index is leftChildIndex + 1
+        s32 leftChildIndex)  //< Right child index is leftChildIndex + 1. If leftChildIndex <= -1000000, this is a leaf, with the label as the negative of leftChildIndex.
         : depth(depth), infoGain(infoGain), whichProbe(whichProbe), grayvalueThreshold(grayvalueThreshold), x(x), y(y), leftChildIndex(leftChildIndex)
       {
       }

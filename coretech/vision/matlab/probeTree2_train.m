@@ -96,7 +96,7 @@ function probeTree2_saveInputs(baseFilename, labelNames, labels, probeValues, pr
     mexSaveEmbeddedArray(labelNames, [baseFilename, 'labelNames.array']); % const FixedLengthList<const char *> &labelNames, //< Lookup table between index and string name
     pBar.increment();
     
-    mexSaveEmbeddedArray(int32(labels), [baseFilename, 'labels.array']); % const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
+    mexSaveEmbeddedArray(int32(labels) - 1, [baseFilename, 'labels.array']); % const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
     pBar.increment();
     
     mexSaveEmbeddedArray(single(probeLocationsXGrid), [baseFilename, 'probeLocationsXGrid.array']);
