@@ -14,8 +14,11 @@ probeLocationsYGrid = probeLocationsYGrid(:);
 passed(1) = test1(labelNames, probeLocationsXGrid, probeLocationsYGrid);
 passed(2) = test2(labelNames, probeLocationsXGrid, probeLocationsYGrid);
 passed(3) = test3(labelNames, probeLocationsXGrid, probeLocationsYGrid);
+passed(4) = test4(labelNames, probeLocationsXGrid, probeLocationsYGrid);
 
 passed
+
+assert(min(passed) == 1)
 
 keyboard
 
@@ -78,4 +81,17 @@ function passed = test3(labelNames, probeLocationsXGrid, probeLocationsYGrid)
   
   passed = testOnBoth(labelNames, labels1, probeValues1, probeLocationsXGrid, probeLocationsYGrid, true);
 end % test3()
+
+% Cannot split, because there's no information gain
+function passed = test4(labelNames, probeLocationsXGrid, probeLocationsYGrid)
+    labels1 = int32([1, 1, 1, 2, 2, 2, 3, 3, 3])';
+    probeValues1 = {...
+        uint8([1, 1, 1, 1, 1, 1, 1, 1, 1])',...
+        uint8([1, 1, 1, 1, 1, 1, 1, 1, 1])',...
+        uint8([1, 1, 1, 1, 1, 1, 1, 1, 1])',...
+        uint8([1, 1, 1, 1, 1, 1, 1, 1, 1])',...
+      };
+  
+  passed = testOnBoth(labelNames, labels1, probeValues1, probeLocationsXGrid, probeLocationsYGrid, true);
+end % test4()
 

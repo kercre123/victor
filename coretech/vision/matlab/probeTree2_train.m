@@ -52,7 +52,7 @@ function [probeTree, minimalProbeTree, trainingFailures, testOnTrain_numCorrect,
         probeTree = probeTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(probeValues), leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, labelNames);
     else
         probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
-        probeTree.labels = labelNames;
+        probeTree.remainingLabels = labelNames;
         
         probeTree = buildTree(probeTree, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, grayvalueThresholdsToUse);
     end
@@ -289,7 +289,7 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
             if isempty(g_trainingFailures)
                 g_trainingFailures = node;
             else
-                g_trainingFailures(end+1) = node;
+                g_trainingFailures = [g_trainingFailures, node];
             end
             
             fprintf('Could not split LeafNode for labels = {%s\b} {%s\b} at depth %d\n', sprintf('%s,', node.labelName{:}), sprintf('%d,', node.remaining), node.depth);
