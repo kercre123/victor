@@ -1,23 +1,23 @@
 % function tree = decisionTree2_train()
 %
-% Based off of VisionMarkerTrained.TrainTree, but split into a
+% Based off of VisionMarkerTrained.TrainProbeTree, but split into a
 % separate function, to prevent too much messing around with the
 % VisionMarkerTrained class hierarchy
 
 % As input, this function needs a list of labels and featureValues. Start with the following two lines for any example:
 % fiducialClassesList = decisionTree2_createClassesList();
-% [labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid] = decisionTree2_loadImages(fiducialClassesList);
+% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(fiducialClassesList);
 
 % Example:
-% [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, false);
+% [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, false);
 
 % Example using only 128 as the grayvalue threshold
-% [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, false, 'u8MinDistance', 255, 'u8ThresholdsToUse', 128);
+% [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, false, 'u8MinDistance', 255, 'u8ThresholdsToUse', 128);
 
 % To train with the completely C version of this method, use useCVersion = true, and it will save the files to disk and launch the C training
-% [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, true);
+% [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, true);
 
-function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_train(labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, useCVersion, varargin)
+function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_train(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, useCVersion, varargin)
     global g_trainingFailures;
     global nodeId;
     global pBar;
@@ -59,7 +59,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
         tree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
         tree.remainingLabels = labelNames;
         
-        tree = buildTree(tree, featuresUsed, labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
+        tree = buildTree(tree, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
     end
     
     if isempty(tree)
@@ -89,7 +89,7 @@ end % decisionTree2_train()
 
 % Save the inputs to file, for running the complete C version of the training
 % cFilenamePrefix should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
-function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, featuresUsed, u8ThresholdsToUse)
+function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse)
     global pBar;
     
     pBar.set_message('Saving inputs for C training');
@@ -229,7 +229,7 @@ function [numCorrect, numTotal] = testOnTrainingData(tree, featureValues, labels
     end
 end % testOnTrainingData()
 
-function node = buildTree(node, featuresUsed, labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse)
+function node = buildTree(node, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse)
     global g_trainingFailures;
     global nodeId;
     global pBar;
@@ -304,8 +304,8 @@ function node = buildTree(node, featuresUsed, labelNames, labels, featureValues,
             return;
         end
         
-        node.x = trobeLocationsXGrid(node.whichFeature);
-        node.y = trobeLocationsYGrid(node.whichFeature);
+        node.x = probeLocationsXGrid(node.whichFeature);
+        node.y = probeLocationsYGrid(node.whichFeature);
         
         featuresUsed = updatedFeaturesUsed;
         
@@ -319,7 +319,7 @@ function node = buildTree(node, featuresUsed, labelNames, labels, featureValues,
         % Recurse left
         leftChild.remaining = leftRemaining;
         leftChild.depth = node.depth+1;
-        node.leftChild = buildTree(leftChild, featuresUsed, labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
+        node.leftChild = buildTree(leftChild, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
 
         % Recurse right
         rightRemaining = node.remaining(~goLeft);
@@ -329,7 +329,7 @@ function node = buildTree(node, featuresUsed, labelNames, labels, featureValues,
 
         rightChild.remaining = rightRemaining;
         rightChild.depth = node.depth + 1;
-        node.rightChild = buildTree(rightChild, featuresUsed, labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
+        node.rightChild = buildTree(rightChild, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
     end % end We have unused features. So find the best one to split on
 end % buildTree()
 

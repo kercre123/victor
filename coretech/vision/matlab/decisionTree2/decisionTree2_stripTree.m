@@ -1,21 +1,21 @@
-% function minimalProbeTree = decisionTree2_stripTree(probeTree)
+% function minimalTree = decisionTree2_stripTree(tree)
 
-% Strip the parts of the probeTree that are not needed for querying
+% Strip the parts of the tree that are not needed for querying
 
-% minimalProbeTree = decisionTree2_stripTree(probeTree);
+% minimalTree = decisionTree2_stripTree(tree);
 
-function minimalProbeTree = decisionTree2_stripTree(probeTree)
+function minimalTree = decisionTree2_stripTree(tree)
     
-    if isfield(probeTree, 'labelName')
-        minimalProbeTree.labelID = probeTree.labelID;
-        minimalProbeTree.labelName = probeTree.labelName;
+    if isfield(tree, 'labelName')
+        minimalTree.labelID = tree.labelID;
+        minimalTree.labelName = tree.labelName;
     else
-        minimalProbeTree.whichProbe = probeTree.whichProbe;
-        minimalProbeTree.grayvalueThreshold = probeTree.grayvalueThreshold;
-        minimalProbeTree.x = probeTree.x;
-        minimalProbeTree.y = probeTree.y;
-        minimalProbeTree.leftChild = decisionTree2_stripTree(probeTree.leftChild);
-        minimalProbeTree.rightChild = decisionTree2_stripTree(probeTree.rightChild);
+        minimalTree.whichFeature = tree.whichFeature;
+        minimalTree.u8Threshold = tree.u8Threshold;
+        minimalTree.x = tree.x;
+        minimalTree.y = tree.y;
+        minimalTree.leftChild = decisionTree2_stripTree(tree.leftChild);
+        minimalTree.rightChild = decisionTree2_stripTree(tree.rightChild);
     end
 end % decisionTree2_stripTree()
 
