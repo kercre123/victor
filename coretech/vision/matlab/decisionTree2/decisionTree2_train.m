@@ -1,19 +1,23 @@
-% function probeTree = decisionTree2_train()
+% function tree = decisionTree2_train()
 %
-% Based off of VisionMarkerTrained.TrainProbeTree, but split into a
+% Based off of VisionMarkerTrained.TrainTree, but split into a
 % separate function, to prevent too much messing around with the
 % VisionMarkerTrained class hierarchy
 
+% As input, this function needs a list of labels and featureValues. Start with the following two lines for any example:
+% fiducialClassesList = decisionTree2_createClassesList();
+% [labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid] = decisionTree2_loadImages(fiducialClassesList);
+
 % Example:
-% [probeTree, minimalProbeTree, trainingFailures] = decisionTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, false);
+% [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, false);
 
 % Example using only 128 as the grayvalue threshold
-% [probeTree, minimalProbeTree, trainingFailures] = decisionTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, false, 'minGrayvalueDistance', 1000, 'grayvalueThresholdsToUse', 128);
+% [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, false, 'u8MinDistance', 255, 'u8ThresholdsToUse', 128);
 
 % To train with the completely C version of this method, use useCVersion = true, and it will save the files to disk and launch the C training
-% [probeTree, minimalProbeTree, trainingFailures] = decisionTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, true);
+% [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, true);
 
-function [probeTree, minimalProbeTree, trainingFailures, testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_train(labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, useCVersion, varargin)
+function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_train(labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, useCVersion, varargin)
     global g_trainingFailures;
     global nodeId;
     global pBar;
@@ -26,52 +30,53 @@ function [probeTree, minimalProbeTree, trainingFailures, testOnTrain_numCorrect,
     
     t_start = tic();
     
-    for iProbe = 1:length(probeValues)
-        assert(min(size(labels) == size(probeValues{iProbe})) == 1);
+    for iFeature = 1:length(featureValues)
+        assert(min(size(labels) == size(featureValues{iFeature})) == 1);
     end
     
     leafNodeFraction = 1.0; % What percent of the labels must be the same for it to be considered a leaf node?
     leafNodeNumItems = 1; % If a node has less-than-or-equal-to this number of items, it is a leaf no matter what
-    minGrayvalueDistance = 20; % How close can the grayvalue of two probes in the same location be? Set to 1000 to disallow probes in the same location.
-    grayvalueThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
-    probesUsed = zeros(length(probeValues), 256, 'uint8'); % If you don't want to train on some of the probes or grayvalue thresholds, set some of the probesUsed to true
+    u8MinDistance = 20; % How close can the value for splitting on two values of one feature? Set to 255 to disallow splitting more than once per feature (e.g. multiple splits for one probe in the same location).
+    u8ThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
+    featuresUsed = zeros(length(featureValues), 256, 'uint8'); % If you don't want to train on some of the features or u8 thresholds, set some of the featuresUsed to true
     cFilenamePrefix = 'c:/tmp/treeTraining_'; % Temporarly location for when useCVersion = true
     cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/Debug/run_trainDecisionTree.exe';
     
     parseVarargin(varargin{:});
     
-    grayvalueThresholdsToUse = uint8(grayvalueThresholdsToUse);
+    u8ThresholdsToUse = uint8(u8ThresholdsToUse);
     
     if ~ispc()
-        baseCFilename = strrep(cFilenamePrefix, 'c:', '~');
+        cFilenamePrefix = strrep(cFilenamePrefix, 'c:', '~');
+        assert(isempty(strfind(cTrainingExecutable, 'C:/Anki/products-cozmo'))); % You have to set the correct path
     end
     
     % Train the decision tree
     if useCVersion
-        decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse);
-        probeTree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(probeValues), leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, labelNames);
+        decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse);
+        tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames);
     else
-        probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
-        probeTree.remainingLabels = labelNames;
+        tree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
+        tree.remainingLabels = labelNames;
         
-        probeTree = buildTree(probeTree, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, grayvalueThresholdsToUse);
+        tree = buildTree(tree, featuresUsed, labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
     end
     
-    if isempty(probeTree)
+    if isempty(tree)
         error('Training failed!');
     end
     
     t_train = toc(t_start);
     
-    numNodes = countNumNodes(probeTree);
+    numNodes = countNumNodes(tree);
     
     disp(sprintf('Training completed in %f seconds. Tree has %d nodes.', t_train, numNodes));
     
-    minimalProbeTree = decisionTree2_stripProbeTree(probeTree);
+    minimalTree = decisionTree2_stripTree(tree);
     
     t_test = tic();
     
-    [testOnTrain_numCorrect, testOnTrain_numTotal] = testOnTrainingData(minimalProbeTree, probeValues, labels);
+    [testOnTrain_numCorrect, testOnTrain_numTotal] = testOnTrainingData(minimalTree, featureValues, labels);
     
     t_test = toc(t_test);
     
@@ -84,14 +89,14 @@ end % decisionTree2_train()
 
 % Save the inputs to file, for running the complete C version of the training
 % cFilenamePrefix should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
-function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, probesUsed, grayvalueThresholdsToUse)
+function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, featuresUsed, u8ThresholdsToUse)
     global pBar;
     
     pBar.set_message('Saving inputs for C training');
-    pBar.set_increment(1/(length(probeValues)+6));
+    pBar.set_increment(1/(length(featureValues)+4));
     pBar.set(0);
     
-    mexSaveEmbeddedArray(uint8(probesUsed), [cFilenamePrefix, 'probesUsed.array']); % const std::vector<GrayvalueBool> &probesUsed, //< numProbes x 256
+    mexSaveEmbeddedArray(uint8(featuresUsed), [cFilenamePrefix, 'featuresUsed.array']); % const std::vector<GrayvalueBool> &featuresUsed, //< numFeatures x 256
     pBar.increment();
     
     mexSaveEmbeddedArray(labelNames, [cFilenamePrefix, 'labelNames.array']); % const FixedLengthList<const char *> &labelNames, //< Lookup table between index and string name
@@ -99,32 +104,26 @@ function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, probeValu
     
     mexSaveEmbeddedArray(int32(labels) - 1, [cFilenamePrefix, 'labels.array']); % const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
     pBar.increment();
-    
-    mexSaveEmbeddedArray(single(probeLocationsXGrid), [cFilenamePrefix, 'probeLocationsXGrid.array']);
+        
+    mexSaveEmbeddedArray(uint8(u8ThresholdsToUse), [cFilenamePrefix, 'u8ThresholdsToUse.array']);
     pBar.increment();
     
-    mexSaveEmbeddedArray(single(probeLocationsYGrid), [cFilenamePrefix, 'probeLocationsYGrid.array']);
-    pBar.increment();
-    
-    mexSaveEmbeddedArray(uint8(grayvalueThresholdsToUse), [cFilenamePrefix, 'grayvalueThresholdsToUse.array']);
-    pBar.increment();
-    
-    for iProbe = 1:length(probeValues)
-        mexSaveEmbeddedArray(uint8(probeValues{iProbe}), [cFilenamePrefix, sprintf('probeValues%d.array', iProbe-1)]);     % const FixedLengthList<const FixedLengthList<u8> > &probeValues, //< For every probe, the value for the probe every item to train on (outer is small, inner is very large)
+    for iFeature = 1:length(featureValues)
+        mexSaveEmbeddedArray(uint8(featureValues{iFeature}), [cFilenamePrefix, sprintf('featureValues%d.array', iFeature-1)]);     % const FixedLengthList<const FixedLengthList<u8> > &featureValues, //< For every feature, the value for the feature every item to train on (outer is small, inner is very large)
         pBar.increment();
     end
 end % decisionTree2_saveInputs()
 
-function probeTree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numProbes, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, labelNames)
+function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames)
     % First, run the training
     trainingTic = tic();
-    command = sprintf('"%s" "%s" %d %f %d %d', cTrainingExecutable, cFilenamePrefix, numProbes, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance);
+    command = sprintf('"%s" "%s" %d %f %d %d', cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance);
     disp(['Starting C training: ', command]);
     result = system(command);
     disp(sprintf('C training finished in %f seconds', toc(trainingTic)));
     
     if result ~= 0
-        probeTree = [];
+        tree = [];
         return;
     end
     
@@ -135,18 +134,18 @@ function probeTree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePre
     
     depths = mexLoadEmbeddedArray([cFilenamePrefix, 'out_depths.array']);
     infoGains = mexLoadEmbeddedArray([cFilenamePrefix, 'out_infoGains.array']);
-    whichProbes = mexLoadEmbeddedArray([cFilenamePrefix, 'out_whichProbes.array']);
-    grayvalueThresholds = mexLoadEmbeddedArray([cFilenamePrefix, 'out_grayvalueThresholds.array']);
+    whichFeatures = mexLoadEmbeddedArray([cFilenamePrefix, 'out_whichFeatures.array']);
+    u8Thresholds = mexLoadEmbeddedArray([cFilenamePrefix, 'out_u8Thresholds.array']);
     xs = mexLoadEmbeddedArray([cFilenamePrefix, 'out_xs.array']);
     ys = mexLoadEmbeddedArray([cFilenamePrefix, 'out_ys.array']);
     leftChildIndexs = mexLoadEmbeddedArray([cFilenamePrefix, 'out_leftChildIndexs.array']);
     
     disp(sprintf('Conversion done in %f seconds', toc(convertingTic)));
     
-    probeTree = convertCTree(1, depths, infoGains, whichProbes, grayvalueThresholds, xs, ys, leftChildIndexs, labelNames);
+    tree = convertCTree(1, depths, infoGains, whichFeatures, u8Thresholds, xs, ys, leftChildIndexs, labelNames);
 end
 
-function probeTree = convertCTree(curIndex, depths, infoGains, whichProbes, grayvalueThresholds, xs, ys, leftChildIndexs, labelNames)
+function tree = convertCTree(curIndex, depths, infoGains, whichFeatures, u8Thresholds, xs, ys, leftChildIndexs, labelNames)
     
     if leftChildIndexs(curIndex) < 0
         if leftChildIndexs(curIndex) == -1
@@ -157,40 +156,40 @@ function probeTree = convertCTree(curIndex, depths, infoGains, whichProbes, gray
             labelName = labelNames(labelId);
         end
         
-        probeTree = struct(...
+        tree = struct(...
             'depth', depths(curIndex),...
             'labelName', labelName,...
             'labelID', labelId);
     else
-        probeTree = struct(...
+        tree = struct(...
             'depth', depths(curIndex),...
             'infoGain', infoGains(curIndex),...
-            'whichProbe', whichProbes(curIndex) + 1,...
-            'grayvalueThreshold', grayvalueThresholds(curIndex),...
+            'whichFeature', whichFeatures(curIndex) + 1,...
+            'u8Threshold', u8Thresholds(curIndex),...
             'x', double(xs(curIndex)),...
             'y', double(ys(curIndex)));
         
-        probeTree.leftChild = convertCTree(leftChildIndexs(curIndex) + 1, depths, infoGains, whichProbes, grayvalueThresholds, xs, ys, leftChildIndexs, labelNames);
-        probeTree.rightChild = convertCTree(leftChildIndexs(curIndex) + 2, depths, infoGains, whichProbes, grayvalueThresholds, xs, ys, leftChildIndexs, labelNames);
+        tree.leftChild = convertCTree(leftChildIndexs(curIndex) + 1, depths, infoGains, whichFeatures, u8Thresholds, xs, ys, leftChildIndexs, labelNames);
+        tree.rightChild = convertCTree(leftChildIndexs(curIndex) + 2, depths, infoGains, whichFeatures, u8Thresholds, xs, ys, leftChildIndexs, labelNames);
     end
 end
 
-function numNodes = countNumNodes(probeTree)
-    if isfield(probeTree, 'labelName')
+function numNodes = countNumNodes(tree)
+    if isfield(tree, 'labelName')
         numNodes = 1;
     else
-        numNodes = countNumNodes(probeTree.leftChild) + countNumNodes(probeTree.rightChild);
+        numNodes = countNumNodes(tree.leftChild) + countNumNodes(tree.rightChild);
     end
 end % countNumNodes()
 
-function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeValues, labels)
-    numImages = length(probeValues{1});
-    numProbes = length(probeValues);
-    probeImageWidth = sqrt(numProbes);
+function [numCorrect, numTotal] = testOnTrainingData(tree, featureValues, labels)
+    numImages = length(featureValues{1});
+    numFeatures = length(featureValues);
+    featureImageWidth = sqrt(numFeatures);
     
     assert(length(labels) == numImages);
     
-    tform = cp2tform(probeImageWidth*[0 0; 0 1; 1 0; 1 1], [0 0; 0 1; 1 0; 1 1], 'projective');
+    tform = cp2tform(featureImageWidth*[0 0; 0 1; 1 0; 1 1], [0 0; 0 1; 1 0; 1 1], 'projective');
     
     numTotal = length(labels);
     
@@ -204,16 +203,16 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeValues, lab
     
     numCorrect = 0;
     for iImage = 1:numImages
-        curImage = zeros(numProbes, 1, 'uint8');
+        curImage = zeros(numFeatures, 1, 'uint8');
         
-        % reshape the probeValues
-        for iProbe = 1:numProbes
-            curImage(iProbe) = probeValues{iProbe}(iImage);
+        % reshape the featureValues
+        for iFeature = 1:numFeatures
+            curImage(iFeature) = featureValues{iFeature}(iImage);
         end
         
-        curImage = reshape(curImage, [probeImageWidth,probeImageWidth]);
+        curImage = reshape(curImage, [featureImageWidth,featureImageWidth]);
         
-        [~, labelID] = decisionTree2_query(probeTree, curImage, tform, 0, 255);
+        [~, labelID] = decisionTree2_query(tree, curImage, tform, 0, 255);
         
         if labelID == labels(iImage);
             numCorrect = numCorrect + 1;
@@ -230,7 +229,7 @@ function [numCorrect, numTotal] = testOnTrainingData(probeTree, probeValues, lab
     end
 end % testOnTrainingData()
 
-function node = buildTree(node, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, grayvalueThresholdsToUse)
+function node = buildTree(node, featuresUsed, labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse)
     global g_trainingFailures;
     global nodeId;
     global pBar;
@@ -254,8 +253,8 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         fprintf('LeafNode for label = %d, or "%s" at depth %d\n', node.labelID, node.labelName, node.depth);
         
         pBar.add(length(node.remaining) / length(labels));
-    elseif node.depth == maxDepth || all(probesUsed(:))
-        % Have we reached the max depth, or have we used all probes? If so, we're done.
+    elseif node.depth == maxDepth || all(featuresUsed(:))
+        % Have we reached the max depth, or have we used all features? If so, we're done.
         
         node.labelID = mexUnique(labels(node.remaining));
         node.labelName = labelNames(node.labelID);
@@ -269,18 +268,18 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
         fprintf('MaxDepth LeafNode for labels = {%s\b}  {%s\b} at depth %d\n', sprintf('%s,', node.labelName{:}), sprintf('%d,', node.remaining), node.depth);
         pBar.add(length(node.remaining) / length(labels));
     else
-        % We have unused probe location. So find the best one to split on.
+        % We have unused features. So find the best one to split on.
         
         useMex = true;
 %         useMex = false;
         numThreads = 16;
         
-        [node.infoGain, node.whichProbe, node.grayvalueThreshold, updatedProbesUsed] = computeInfoGain(labels, probeValues, probesUsed, node.remaining, minGrayvalueDistance, grayvalueThresholdsToUse, useMex, numThreads);
+        [node.infoGain, node.whichFeature, node.u8Threshold, updatedFeaturesUsed] = computeInfoGain(labels, featureValues, featuresUsed, node.remaining, u8MinDistance, u8ThresholdsToUse, useMex, numThreads);
         
         node.remainingLabels = sprintf('%s ', labelNames{mexUnique(labels(node.remaining))});
         
         % If the entropy is incredibly large, there was no valid split
-        if node.infoGain > 100000.0 || node.whichProbe < 1
+        if node.infoGain > 100000.0 || node.whichFeature < 1
             % PB: Is this still a reasonable thing to happen? I think no.
             
             node.labelID = mexUnique(labels(node.remaining));
@@ -296,7 +295,7 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
             pBar.add(length(node.remaining) / length(labels));
             
             %debugging stuff
-            images = decisionTree2_probeValuesToImage(probeValues, node.remaining);
+            images = decisionTree2_featureValuesToImage(featureValues, node.remaining);
             imshows(images);
             title(sprintf('Could not split:\n\n%s', sprintf('%s\n', node.labelName{:})));
             pause(.01);
@@ -305,58 +304,42 @@ function node = buildTree(node, probesUsed, labelNames, labels, probeValues, pro
             return;
         end
         
-        node.x = probeLocationsXGrid(node.whichProbe);
-        node.y = probeLocationsYGrid(node.whichProbe);
+        node.x = trobeLocationsXGrid(node.whichFeature);
+        node.y = trobeLocationsYGrid(node.whichFeature);
         
-        probesUsed = updatedProbesUsed;
+        featuresUsed = updatedFeaturesUsed;
         
         % Recurse left and right from this node
-        goLeft = probeValues{node.whichProbe}(node.remaining) < node.grayvalueThreshold;
+        goLeft = featureValues{node.whichFeature}(node.remaining) < node.u8Threshold;
         leftRemaining = node.remaining(goLeft);
         
-        if isempty(leftRemaining) || length(leftRemaining) == length(node.remaining)
-            % PB: Is this still a reasonable thing to happen? I think this is a bug now.
+        % PB: Is this still ever a reasonable thing to happen? I think this would be from a bug now.
+        assert(~(isempty(leftRemaining) || length(leftRemaining) == length(node.remaining)));
             
-            keyboard
-            
-            % That split makes no progress.  Try again without
-            % letting us choose this node again on this branch of the
-            % tree.  I believe this can happen when the numerically
-            % best info gain corresponds to a position where all the
-            % remaining labels are above or below the fixed 0.5 threshold.
-            % We don't also select the threshold for each node, but the
-            % info gain computation doesn't really take that into
-            % account.  Is there a better way to fix this?
-            
-            %             probesUsed(node.whichProbe) = true;
-            %             node.depth = node.depth + 1;
-            %             node = buildTree(node, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction);
-        else
-            % Recurse left
-            leftChild.remaining = leftRemaining;
-            leftChild.depth = node.depth+1;
-            node.leftChild = buildTree(leftChild, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, grayvalueThresholdsToUse);
-            
-            % Recurse right
-            rightRemaining = node.remaining(~goLeft);
-            
-            % TODO: is this ever possible?
-            assert(~isempty(rightRemaining) && length(rightRemaining) < length(node.remaining));
-            
-            rightChild.remaining = rightRemaining;
-            rightChild.depth = node.depth + 1;
-            node.rightChild = buildTree(rightChild, probesUsed, labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, minGrayvalueDistance, grayvalueThresholdsToUse);
-        end
-    end % end We have unused probe location. So find the best one to split on
+        % Recurse left
+        leftChild.remaining = leftRemaining;
+        leftChild.depth = node.depth+1;
+        node.leftChild = buildTree(leftChild, featuresUsed, labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
+
+        % Recurse right
+        rightRemaining = node.remaining(~goLeft);
+
+        % TODO: is this ever possible?
+        assert(~isempty(rightRemaining) && length(rightRemaining) < length(node.remaining));
+
+        rightChild.remaining = rightRemaining;
+        rightChild.depth = node.depth + 1;
+        node.rightChild = buildTree(rightChild, featuresUsed, labelNames, labels, featureValues, trobeLocationsXGrid, trobeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
+    end % end We have unused features. So find the best one to split on
 end % buildTree()
 
-function [bestEntropy, bestGrayvalueThreshold] = computeInfoGain_innerLoop(curLabels, curProbeValues, grayvalueThresholds)
+function [bestEntropy, bestU8Threshold] = computeInfoGain_innerLoop(curLabels, curFeatureValues, u8Thresholds)
     bestEntropy = Inf;
-    bestGrayvalueThreshold = -1;
+    bestU8Threshold = -1;
     
-    for iGrayvalueThreshold = 1:length(grayvalueThresholds)
-        labelsLessThan = curLabels(curProbeValues < grayvalueThresholds(iGrayvalueThreshold));
-        labelsGreaterThan = curLabels(curProbeValues >= grayvalueThresholds(iGrayvalueThreshold));
+    for iU8Threshold = 1:length(u8Thresholds)
+        labelsLessThan = curLabels(curFeatureValues < u8Thresholds(iU8Threshold));
+        labelsGreaterThan = curLabels(curFeatureValues >= u8Thresholds(iU8Threshold));
         
         if isempty(labelsLessThan) || isempty(labelsGreaterThan)
             continue
@@ -380,99 +363,97 @@ function [bestEntropy, bestGrayvalueThreshold] = computeInfoGain_innerLoop(curLa
         
         if weightedAverageEntropy < bestEntropy
             bestEntropy = weightedAverageEntropy;
-            bestGrayvalueThreshold = grayvalueThresholds(iGrayvalueThreshold);
+            bestU8Threshold = u8Thresholds(iU8Threshold);
         end
-    end % for iGrayvalueThreshold = 1:length(grayvalueThresholds)
+    end % for iU8Threshold = 1:length(u8Thresholds)
 end % computeInfoGain_innerLoop()
 
-function [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain_outerLoop(probeValues, probesUsed, unusedProbeIndexes, numProbesUnused, remainingImages, curLabels, maxLabel, grayvalueThresholdsToUse, numWorkItems, useMex, numThreads)
+function [bestEntropy, bestU8Threshold, bestFeatureIndex] = computeInfoGain_outerLoop(featureValues, featuresUsed, unusedFeatures, numFeaturesUnused, remainingImages, curLabels, maxLabel, u8ThresholdsToUse, numWorkItems, useMex, numThreads)
     bestEntropy = Inf;
-    bestProbeIndex = -1;
-    bestGrayvalueThreshold = -1;
+    bestFeatureIndex = -1;
+    bestU8Threshold = -1;
     
-    for iUnusedProbe = 1:numProbesUnused
-        curProbeIndex = unusedProbeIndexes(iUnusedProbe);
-        curProbeValues = probeValues{curProbeIndex}(remainingImages);
+    for iUnusedFeature = 1:numFeaturesUnused
+        curFeatureIndex = unusedFeatures(iUnusedFeature);
+        curFeatureValues = featureValues{curFeatureIndex}(remainingImages);
         
         if numWorkItems > 10000000 % 10,000,000 takes about 3 seconds
-            if mod(iUnusedProbe,100) == 0
-                fprintf('%d',iUnusedProbe);
+            if mod(iUnusedFeature,100) == 0
+                fprintf('%d',iUnusedFeature);
                 pause(.001);
-            elseif mod(iUnusedProbe,25) == 0
+            elseif mod(iUnusedFeature,25) == 0
                 fprintf('.');
                 pause(.001);
             end
         end
         
-        if isempty(grayvalueThresholdsToUse)
-            uniqueGrayvalues = mexUnique(curProbeValues);
+        if isempty(u8ThresholdsToUse)
+            uniqueU8Thresholds = mexUnique(curFeatureValues);
             
-            if length(uniqueGrayvalues) <= 1
+            if length(uniqueU8Thresholds) <= 1
                 continue;
             end
             
-            grayvalueThresholds = (int32(uniqueGrayvalues(2:end)) + int32(uniqueGrayvalues(1:(end-1)))) / 2;
+            u8Thresholds = (int32(uniqueU8Thresholds(2:end)) + int32(uniqueU8Thresholds(1:(end-1)))) / 2;
             
-            unusedGrayvaluesThresholds = find(~probesUsed(iUnusedProbe, :)) - 1;
+            unusedU8Thresholds = find(~featuresUsed(iUnusedFeature, :)) - 1;
             
-            % Compute the intersection between the grayvalue thresholds and the thresholds not used
-            grayvalueThresholdCounts = zeros([256,1], 'int32');
-            grayvalueThresholdCounts(grayvalueThresholds + 1) = int32(1);
-            grayvalueThresholdCounts(unusedGrayvaluesThresholds + 1) = grayvalueThresholdCounts(unusedGrayvaluesThresholds + 1) + int32(1);
-            grayvalueThresholds = uint8(find(grayvalueThresholdCounts == int32(2)) - 1);
+            % Compute the intersection between the u8 thresholds and the thresholds not used
+            u8ThresholdCounts = zeros([256,1], 'int32');
+            u8ThresholdCounts(u8Thresholds + 1) = int32(1);
+            u8ThresholdCounts(unusedU8Thresholds + 1) = u8ThresholdCounts(unusedU8Thresholds + 1) + int32(1);
+            u8Thresholds = uint8(find(u8ThresholdCounts == int32(2)) - 1);
             
         else
-            grayvalueThresholds = zeros(0,1,'uint8');
+            u8Thresholds = zeros(0,1,'uint8');
             
-            for i = 1:length(grayvalueThresholdsToUse)
-                if ~probesUsed(iUnusedProbe, grayvalueThresholdsToUse(i)+1)
-                    grayvalueThresholds(end+1) = uint8(grayvalueThresholdsToUse(i)); %#ok<AGROW>
+            for i = 1:length(u8ThresholdsToUse)
+                if ~featuresUsed(iUnusedFeature, u8ThresholdsToUse(i)+1)
+                    u8Thresholds(end+1) = uint8(u8ThresholdsToUse(i)); %#ok<AGROW>
                 end
             end
         end
         
-        if isempty(grayvalueThresholds)
+        if isempty(u8Thresholds)
             continue;
         end
                 
         if useMex            
-            [curBestEntropy, curBestGrayvalueThreshold] = mexComputeInfoGain2_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel, numThreads);
+            [curBestEntropy, curbestU8Threshold] = mexComputeInfoGain2_innerLoop(curLabels, curFeatureValues, u8Thresholds, maxLabel, numThreads);
         else
-            [curBestEntropy, curBestGrayvalueThreshold] = computeInfoGain_innerLoop(curLabels, curProbeValues, grayvalueThresholds);
+            [curBestEntropy, curbestU8Threshold] = computeInfoGain_innerLoop(curLabels, curFeatureValues, u8Thresholds);
         end
-        
-        %         disp(sprintf('entropy is %f for probe %d and grayvalue %d', curBestEntropy, curProbeIndex, curBestGrayvalueThreshold));
-        
+                
         % The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
         if curBestEntropy < (bestEntropy - 1e-5)
             bestEntropy = curBestEntropy;
-            bestProbeIndex = curProbeIndex;
-            bestGrayvalueThreshold = curBestGrayvalueThreshold;
+            bestFeatureIndex = curFeatureIndex;
+            bestU8Threshold = curbestU8Threshold;
         end
-    end % for iUnusedProbe = 1:numProbesUnused
+    end % for iUnusedFeature = 1:numFeaturesUnused
 end % computeInfoGain_outerLoop()
 
-function [bestEntropy, bestProbeIndex, bestGrayvalueThreshold, probesUsed] = computeInfoGain(labels, probeValues, probesUsed, remainingImages, minGrayvalueDistance, grayvalueThresholdsToUse, useMex, numThreads)
+function [bestEntropy, bestFeatureIndex, bestU8Threshold, featuresUsed] = computeInfoGain(labels, featureValues, featuresUsed, remainingImages, u8MinDistance, u8ThresholdsToUse, useMex, numThreads)
     totalTic = tic();
     
-    unusedProbeIndexes = find(~min(probesUsed,[],2));
+    unusedFeatures = find(~min(featuresUsed,[],2));
     
-    numProbesUnused = length(unusedProbeIndexes);
+    numFeaturesUnused = length(unusedFeatures);
     
     curLabels = labels(remainingImages);
     uniqueLabels = mexUnique(curLabels);
     maxLabel = max(uniqueLabels);
     
-    numWorkItems = length(remainingImages) * numProbesUnused;
+    numWorkItems = length(remainingImages) * numFeaturesUnused;
     
-    fprintf('Testing %d probes on %d images ', numProbesUnused, length(remainingImages));
+    fprintf('Testing %d features on %d images ', numFeaturesUnused, length(remainingImages));
     
-    [bestEntropy, bestGrayvalueThreshold, bestProbeIndex] = computeInfoGain_outerLoop(probeValues, probesUsed, unusedProbeIndexes, numProbesUnused, remainingImages, curLabels, maxLabel, grayvalueThresholdsToUse, numWorkItems, useMex, numThreads);
+    [bestEntropy, bestU8Threshold, bestFeatureIndex] = computeInfoGain_outerLoop(featureValues, featuresUsed, unusedFeatures, numFeaturesUnused, remainingImages, curLabels, maxLabel, u8ThresholdsToUse, numWorkItems, useMex, numThreads);
     
-    grayvaluesToMask = max(1, min(256, (1 + ((bestGrayvalueThreshold-minGrayvalueDistance):(bestGrayvalueThreshold+minGrayvalueDistance)))));
+    u8ThresholdsToMask = max(1, min(256, (1 + ((bestU8Threshold-u8MinDistance):(bestU8Threshold+u8MinDistance)))));
     
-    if bestProbeIndex > 0
-        probesUsed(bestProbeIndex, grayvaluesToMask) = true;
+    if bestFeatureIndex > 0
+        featuresUsed(bestFeatureIndex, u8ThresholdsToMask) = true;
     end
     
     fprintf(' Best entropy is %f in %f seconds\n', bestEntropy, toc(totalTic))

@@ -1,10 +1,10 @@
-% function minimalProbeTree = decisionTree2_stripProbeTree(probeTree)
+% function minimalProbeTree = decisionTree2_stripTree(probeTree)
 
 % Strip the parts of the probeTree that are not needed for querying
 
-% minimalProbeTree = decisionTree2_stripProbeTree(probeTree);
+% minimalProbeTree = decisionTree2_stripTree(probeTree);
 
-function minimalProbeTree = decisionTree2_stripProbeTree(probeTree)
+function minimalProbeTree = decisionTree2_stripTree(probeTree)
     
     if isfield(probeTree, 'labelName')
         minimalProbeTree.labelID = probeTree.labelID;
@@ -14,10 +14,10 @@ function minimalProbeTree = decisionTree2_stripProbeTree(probeTree)
         minimalProbeTree.grayvalueThreshold = probeTree.grayvalueThreshold;
         minimalProbeTree.x = probeTree.x;
         minimalProbeTree.y = probeTree.y;
-        minimalProbeTree.leftChild = decisionTree2_stripProbeTree(probeTree.leftChild);
-        minimalProbeTree.rightChild = decisionTree2_stripProbeTree(probeTree.rightChild);
+        minimalProbeTree.leftChild = decisionTree2_stripTree(probeTree.leftChild);
+        minimalProbeTree.rightChild = decisionTree2_stripTree(probeTree.rightChild);
     end
-end % decisionTree2_stripProbeTree()
+end % decisionTree2_stripTree()
 
 
     

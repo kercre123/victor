@@ -5,7 +5,7 @@
 function decisionTree2_unitTest()
     
 labelNames = {'category1', 'category2', 'category3'};
-probeLocationsX = ((1:2) - .5) / 2;;
+probeLocationsX = ((1:2) - .5) / 2;
 probeLocationsY = ((1:2) - .5) / 2;
 [probeLocationsXGrid,probeLocationsYGrid] = meshgrid(probeLocationsX, probeLocationsY);
 probeLocationsXGrid = probeLocationsXGrid(:);
@@ -20,7 +20,7 @@ passed
 
 assert(min(passed) == 1)
 
-keyboard
+% keyboard
 
 end % decisionTree2_unitTest()
 
