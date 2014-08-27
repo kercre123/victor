@@ -23,7 +23,6 @@ typedef struct ToShowResults
 {
   s32 iTest;
   s32 iPose;
-  char * extractionFunctionId;
   f64 scene_Distance;
   f64 scene_angle;
   f64 scene_CameraExposure;
@@ -230,7 +229,7 @@ void DrawTextResults(cv::Mat &drawnImage, const ToShowResults &toShowResults, co
 
   s32 curY = saturate_cast<s32>(250 * showImageDetectionsScale);
 
-  snprintf(resultsText, 1024, "Test %d %d %s %s", toShowResults.iTest, toShowResults.iPose, toShowResults.extractionFunctionId, toShowResults.testFunctionName);
+  snprintf(resultsText, 1024, "Test %d %d %s", toShowResults.iTest, toShowResults.iPose, toShowResults.testFunctionName);
 
   cv::putText(
     drawnImage,
@@ -363,18 +362,17 @@ ToShowResults ParseToShowResults(const mxArray * in)
 
   results.iTest = saturate_cast<s32>( mxGetScalar(GetCell(in, 0)) );
   results.iPose = saturate_cast<s32>( mxGetScalar(GetCell(in, 1)) );
-  results.extractionFunctionId = mxArrayToString(GetCell(in, 2));
-  results.scene_Distance = mxGetScalar(GetCell(in, 3));
-  results.scene_angle = mxGetScalar(GetCell(in, 4));
-  results.scene_CameraExposure = mxGetScalar(GetCell(in, 5));
-  results.scene_light = mxGetScalar(GetCell(in, 6));
-  results.testFunctionName = mxArrayToString(GetCell(in, 7));
-  results.numCorrect_positionLabelRotation = saturate_cast<s32>( mxGetScalar(GetCell(in, 8)) );
-  results.numCorrect_positionLabel = saturate_cast<s32>( mxGetScalar(GetCell(in, 9)) );
-  results.numCorrect_position = saturate_cast<s32>( mxGetScalar(GetCell(in, 10)) );
-  results.numQuadsDetected = saturate_cast<s32>( mxGetScalar(GetCell(in, 11)) );
-  results.numQuadsNotIgnored = saturate_cast<s32>( mxGetScalar(GetCell(in, 12)) );
-  results.numSpurriousDetections = saturate_cast<s32>( mxGetScalar(GetCell(in, 13)) );
+  results.scene_Distance = mxGetScalar(GetCell(in, 2));
+  results.scene_angle = mxGetScalar(GetCell(in, 3));
+  results.scene_CameraExposure = mxGetScalar(GetCell(in, 4));
+  results.scene_light = mxGetScalar(GetCell(in, 5));
+  results.testFunctionName = mxArrayToString(GetCell(in, 6));
+  results.numCorrect_positionLabelRotation = saturate_cast<s32>( mxGetScalar(GetCell(in, 7)) );
+  results.numCorrect_positionLabel = saturate_cast<s32>( mxGetScalar(GetCell(in, 8)) );
+  results.numCorrect_position = saturate_cast<s32>( mxGetScalar(GetCell(in, 9)) );
+  results.numQuadsDetected = saturate_cast<s32>( mxGetScalar(GetCell(in, 10)) );
+  results.numQuadsNotIgnored = saturate_cast<s32>( mxGetScalar(GetCell(in, 11)) );
+  results.numSpurriousDetections = saturate_cast<s32>( mxGetScalar(GetCell(in, 11)) );
 
   return results;
 }
@@ -466,7 +464,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   mxFree(memory.get_buffer());
   mxFree(toShowResults.testFunctionName);
-  mxFree(toShowResults.extractionFunctionId);
 
   return;
 }

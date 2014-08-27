@@ -10,6 +10,7 @@ include_directories(
   vision/include
   planning/include
   messaging/include
+  common/tools/threads
 )
  
 add_subdirectory(common)

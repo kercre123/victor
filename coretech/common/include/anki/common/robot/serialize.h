@@ -35,18 +35,26 @@ namespace Anki
       }
 
       if(Flags::TypeCharacteristics<Type>::isInteger) {
-        firstElement |= 2;
+        firstElement |= (1<<1);
       }
 
       if(Flags::TypeCharacteristics<Type>::isSigned) {
-        firstElement |= 4;
+        firstElement |= (1<<2);
       }
 
       if(Flags::TypeCharacteristics<Type>::isFloat) {
-        firstElement |= 8;
+        firstElement |= (1<<3);
       }
 
-      firstElement |= sizeof(Type) << 16;
+      if(Flags::TypeCharacteristics<Type>::isString) {
+        firstElement |= (1<<4);
+      }
+
+      // TODO: there's room in the firstElement for additional flags
+
+      AnkiAssert(sizeof(Type) <= 0xFFFF);
+
+      firstElement |= (sizeof(Type) & 0xFFFF) << 16;
 
       reinterpret_cast<u32*>(*buffer)[0] = firstElement;
       reinterpret_cast<u32*>(*buffer)[1] = numElements;
@@ -148,15 +156,30 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(in.IsValid(),
         RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "in ArraySlice is not Valid");
 
+      // If this is a string array, add the sizes of the null terminated strings (or zero otherwise)
+      const s32 stringsLength = TotalArrayStringLengths<Type>(in);
+
+      const s32 numRequiredBytes = in.get_size(0)*in.get_stride() + SerializedBuffer::EncodedArray::CODE_LENGTH + stringsLength;
+
+      AnkiConditionalErrorAndReturnValue(bufferLength >= numRequiredBytes,
+        RESULT_FAIL_OUT_OF_MEMORY, "SerializedBuffer::SerializeRawArray", "buffer needs at least %d bytes", numRequiredBytes);
+
       if(SerializeDescriptionStrings("Array", objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
       SerializedBuffer::EncodedArray::Serialize<Type>(true, in, buffer, bufferLength);
 
-      memcpy(*buffer, in.Pointer(0,0), in.get_stride()*in.get_size(0));
+      const s32 numElements = in.get_size(0) * in.get_size(1);
 
-      *buffer = reinterpret_cast<u8*>(*buffer) + in.get_stride()*in.get_size(0);
-      bufferLength -= in.get_stride()*in.get_size(0);
+      if(numElements > 0) {
+        memcpy(*buffer, in.Pointer(0,0), in.get_stride()*in.get_size(0));
+
+        *buffer = reinterpret_cast<u8*>(*buffer) + in.get_stride()*in.get_size(0);
+        bufferLength -= in.get_stride()*in.get_size(0);
+
+        // If this is a string array, copy the null terminated strings to the end (or do nothing otherwise)
+        CopyArrayStringsToBuffer<Type>(in, buffer, bufferLength);
+      }
 
       return RESULT_OK;
     }
@@ -177,7 +200,7 @@ namespace Anki
       const s32 numRequiredBytes = height*stride + SerializedBuffer::EncodedArraySlice::CODE_LENGTH;
 
       AnkiConditionalErrorAndReturnValue(bufferLength >= numRequiredBytes,
-        RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "buffer needs at least %d bytes", numRequiredBytes);
+        RESULT_FAIL_OUT_OF_MEMORY, "SerializedBuffer::SerializeRawArraySlice", "buffer needs at least %d bytes", numRequiredBytes);
 
       SerializedBuffer::EncodedArraySlice::Serialize<Type>(true, in, buffer, bufferLength);
 
@@ -231,8 +254,9 @@ namespace Anki
       bool isInteger;
       bool isSigned;
       bool isFloat;
+      bool isString;
       s32 numElements;
-      EncodedBasicTypeBuffer::Deserialize(true, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
+      EncodedBasicTypeBuffer::Deserialize(true, sizeOfType, isBasicType, isInteger, isSigned, isFloat, isString, numElements, buffer, bufferLength);
 
       const Type var = *reinterpret_cast<Type*>(*buffer);
 
@@ -256,8 +280,9 @@ namespace Anki
       bool isInteger;
       bool isSigned;
       bool isFloat;
+      bool isString;
       s32 numElements;
-      EncodedBasicTypeBuffer::Deserialize(true, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
+      EncodedBasicTypeBuffer::Deserialize(true, sizeOfType, isBasicType, isInteger, isSigned, isFloat, isString, numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(sizeOfType < 10000 && numElements > 0 && numElements < 1000000,
         NULL, "SerializedBuffer::DeserializeRawBasicType", "Unreasonable deserialized values");
@@ -288,29 +313,42 @@ namespace Anki
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
+      bool basicType_isString;
       s32 basicType_numElements;
-      EncodedArray::Deserialize(true, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
+      EncodedArray::Deserialize(true, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(
-        height > 0 && height < 1000000 &&
-        width > 0 && width < 1000000 &&
+        height >= 0 && height < 1000000 &&
+        width >= 0 && width < 1000000 &&
         stride > 0 && stride < 1000000 &&
         basicType_sizeOfType > 0 && basicType_sizeOfType < 10000 &&
-        basicType_numElements > 0 && basicType_numElements < 1000000,
+        basicType_numElements >= 0 && basicType_numElements < 1000000,
         Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Unreasonable deserialized values");
 
-      AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
-        Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Parsed stride is not reasonable");
+      if(width > 0) {
+        AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
+          Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Parsed stride is not reasonable");
+      }
 
       AnkiConditionalErrorAndReturnValue(bufferLength >= (height*stride),
         Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Not enought bytes left to set the array");
 
       Array<Type> out = Array<Type>(height, width, memory);
 
-      memcpy(out.Pointer(0,0), *buffer, height*stride);
+      const s32 numElements = out.get_size(0) * out.get_size(1);
 
-      *buffer = reinterpret_cast<u8*>(*buffer) + height*stride;
-      bufferLength -= height*stride;
+      if(numElements > 0) {
+        memcpy(out.Pointer(0,0), *buffer, height*stride);
+
+        *buffer = reinterpret_cast<u8*>(*buffer) + height*stride;
+        bufferLength -= height*stride;
+
+        const Result stringCopyResult = CopyArrayStringsFromBuffer<Type>(out, buffer, bufferLength, memory);
+
+        if(stringCopyResult != RESULT_OK) {
+          return Array<Type>();
+        }
+      }
 
       return out;
     }
@@ -336,21 +374,24 @@ namespace Anki
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
+      bool basicType_isString;
       s32 basicType_numElements;
-      EncodedArraySlice::Deserialize(true, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
+      EncodedArraySlice::Deserialize(true, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(
-        height > 0 && height < 1000000 &&
-        width > 0 && width < 1000000 &&
+        height >= 0 && height < 1000000 &&
+        width >= 0 && width < 1000000 &&
         stride > 0 && stride < 1000000 &&
         ySlice_start >= 0 &&  ySlice_increment > 0 &&
         xSlice_start >= 0 && xSlice_increment > 0 && xSlice_increment < 1000000 &&
         basicType_sizeOfType > 0 && basicType_sizeOfType < 10000 &&
-        basicType_numElements > 0 && basicType_numElements < 1000000,
+        basicType_numElements >= 0 && basicType_numElements < 1000000,
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Unreasonable deserialized values");
 
-      AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
-        ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Parsed stride is not reasonable");
+      if(width > 0) {
+        AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
+          ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Parsed stride is not reasonable");
+      }
 
       const LinearSequence<s32> ySlice(ySlice_start, ySlice_increment, -1, ySlice_size);
       const LinearSequence<s32> xSlice(xSlice_start, xSlice_increment, -1, xSlice_size);
@@ -426,7 +467,10 @@ namespace Anki
 
     template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const Array<Type> &in)
     {
-      s32 totalDataLength = in.get_stride() * in.get_size(0) + SerializedBuffer::EncodedArray::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      // If this is a string array, add the sizes of the null terminated strings (or zero otherwise)
+      const s32 stringsLength = TotalArrayStringLengths<Type>(in);
+
+      s32 totalDataLength = in.get_stride() * in.get_size(0) + SerializedBuffer::EncodedArray::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH + stringsLength;
 
       void * const segmentStart = Allocate("Array", objectName, totalDataLength);
       void * segment = segmentStart;
@@ -462,6 +506,34 @@ namespace Anki
     {
       return PushBack(objectName, *static_cast<const ArraySlice<Type>*>(&in));
     }
+
+    template<typename Type> s32 TotalArrayStringLengths(const Array<Type> &in)
+    {
+      // Return nothing, since it's not a string array
+      return 0;
+    }
+
+    template<typename Type> void CopyArrayStringsToBuffer(const Array<Type> &in, void ** buffer, s32 &bufferLength)
+    {
+      // Do nothing, since it's not a string array
+    }
+
+    template<typename Type> Result CopyArrayStringsFromBuffer(Array<Type> &out, void ** buffer, s32 &bufferLength, MemoryStack &memory)
+    {
+      // Do nothing, since it's not a string array
+      return RESULT_OK;
+    }
+
+    // #pragma mark --- Array Specializations ---
+
+    template<> s32 TotalArrayStringLengths<char*>(const Array<char*> &in);
+    template<> s32 TotalArrayStringLengths<const char*>(const Array<const char*> &in);
+
+    template<> void CopyArrayStringsToBuffer<char*>(const Array<char*> &in, void ** buffer, s32 &bufferLength);
+    template<> void CopyArrayStringsToBuffer<const char*>(const Array<const char*> &in, void ** buffer, s32 &bufferLength);
+
+    template<> Result CopyArrayStringsFromBuffer<char*>(Array<char*> &out, void ** buffer, s32 &bufferLength, MemoryStack &memory);
+    template<> Result CopyArrayStringsFromBuffer<const char*>(Array<const char*> &out, void ** buffer, s32 &bufferLength, MemoryStack &memory);
   } // namespace Embedded
 } //namespace Anki
 

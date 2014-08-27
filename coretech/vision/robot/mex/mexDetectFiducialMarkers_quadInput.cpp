@@ -1,3 +1,6 @@
+// TODO: update this mex file to the new API
+#if 0
+
 #include "mex.h"
 
 #include "anki/common/robot/matlabInterface.h"
@@ -226,3 +229,4 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   mxFree(memory.get_buffer());
 }
+#endif // TODO: update this mex file to the new API

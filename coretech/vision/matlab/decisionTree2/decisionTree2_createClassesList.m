@@ -1,15 +1,15 @@
-% function fiducialClassesList = probeTree2_createFiducialClassesList(varargin)
+% function classesList = decisionTree2_createClassesList(varargin)
 
-% Generate a fiducialClassesList, with one class for each fiducial code
+% Generate a classesList, with one class for each fiducial code
 % type
 
 % Simple Example:
-% fiducialClassesList = probeTree2_createFiducialClassesList('markerFilenamePatterns', {'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated/*.png'});
+% classesList = decisionTree2_createClassesList('markerFilenamePatterns', {'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated/*.png'});
 
 % Example:
-% fiducialClassesList = probeTree2_createFiducialClassesList();
+% classesList = decisionTree2_createClassesList();
 
-function fiducialClassesList = probeTree2_createFiducialClassesList(varargin)
+function classesList = decisionTree2_createClassesList(varargin)
     %#ok<*CCAT1>
     %#ok<*CCAT>
     
@@ -48,8 +48,8 @@ function fiducialClassesList = probeTree2_createFiducialClassesList(varargin)
         slashInds = find(files{i} == '/');
         dotInds = find(files{i} == '.');
         
-        fiducialClassesList(i).labelName = files{i}((slashInds(end)+1):(dotInds(end)-1)); %#ok<AGROW>
-        fiducialClassesList(i).filenames = {files{i}};  %#ok<AGROW>
+        classesList(i).labelName = files{i}((slashInds(end)+1):(dotInds(end)-1)); %#ok<AGROW>
+        classesList(i).filenames = {files{i}};  %#ok<AGROW>
     end
     
     

@@ -1,5 +1,5 @@
 // Example:
-// [bestEntropy, bestGrayvalueThreshold] = mexComputeInfoGain2_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel, 1)
+// [bestEntropy, bestU8Threshold] = mexComputeInfoGain2_innerLoop(curLabels, curFeatureValues, u8Thresholds, maxLabel, 1)
 
 #include "mex.h"
 
@@ -58,7 +58,7 @@ typedef struct
   const u8 * restrict pGrayvalueThresholds;
   s32 numItems;
   const s32 * restrict pCurLabels;
-  const u8 * restrict pCurProbeValues;
+  const u8 * restrict pCurFeatureValues;
 
   // Thread-specific inputs
   s32 minGrayvalueThresholdIndex;
@@ -68,7 +68,7 @@ typedef struct
 
   // Outputs
   PRECISION bestEntropy;
-  u8 bestGrayvalueThreshold;
+  u8 bestU8Threshold;
 } MainLoopParameters;
 
 static ThreadResult MainLoop(void *threadParameter)
@@ -76,7 +76,7 @@ static ThreadResult MainLoop(void *threadParameter)
   MainLoopParameters * restrict parameters = (MainLoopParameters*) threadParameter;
 
   parameters->bestEntropy = FLT_MAX;
-  parameters->bestGrayvalueThreshold = 0;
+  parameters->bestU8Threshold = 0;
 
   for(s32 iGrayvalueThreshold=parameters->minGrayvalueThresholdIndex; iGrayvalueThreshold<=parameters->maxGrayvalueThresholdIndex; iGrayvalueThreshold++) {
     const u8 curGrayvalueThreshold = parameters->pGrayvalueThresholds[iGrayvalueThreshold];
@@ -87,8 +87,8 @@ static ThreadResult MainLoop(void *threadParameter)
     s32 totalNumLessThan = 0;
     s32 totalNumGreaterThan = 0;
 
-    //labelsLessThan = curLabels(curProbeValues < grayvalueThresholds(iGrayvalueThreshold));
-    //labelsGreaterThan = curLabels(curProbeValues >= grayvalueThresholds(iGrayvalueThreshold));
+    //labelsLessThan = curLabels(curFeatureValues < u8Thresholds(iGrayvalueThreshold));
+    //labelsGreaterThan = curLabels(curFeatureValues >= u8Thresholds(iGrayvalueThreshold));
     // [valuesLessThan, countsLessThan] = count_unique(labelsLessThan);
     // [valuesGreaterThan, countsGreaterThan] = count_unique(labelsGreaterThan);
     //totalNumLessThan = sum(countsLessThan);
@@ -97,7 +97,7 @@ static ThreadResult MainLoop(void *threadParameter)
     for(s32 iItem=0; iItem<parameters->numItems; iItem++) {
       const s32 curLabel = parameters->pCurLabels[iItem];
 
-      if(parameters->pCurProbeValues[iItem] < curGrayvalueThreshold) {
+      if(parameters->pCurFeatureValues[iItem] < curGrayvalueThreshold) {
         totalNumLessThan++;
         parameters->pNumLessThan[curLabel]++;
       } else {
@@ -148,7 +148,7 @@ static ThreadResult MainLoop(void *threadParameter)
 
     if(weightedAverageEntropy < parameters->bestEntropy) {
       parameters->bestEntropy = weightedAverageEntropy;
-      parameters->bestGrayvalueThreshold = curGrayvalueThreshold;
+      parameters->bestU8Threshold = curGrayvalueThreshold;
     }
   } // for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++)
 
@@ -161,10 +161,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
-  AnkiConditionalErrorAndReturn(nrhs == 5 && nlhs == 2, "mexComputeInfoGain2_innerLoop", "Call this function as follows: [bestEntropy, bestGrayvalueThreshold] = mexComputeInfoGain2_innerLoop(curLabels, curProbeValues, grayvalueThresholds, maxLabel, numThreads);");
+  AnkiConditionalErrorAndReturn(nrhs == 5 && nlhs == 2, "mexComputeInfoGain2_innerLoop", "Call this function as follows: [bestEntropy, bestU8Threshold] = mexComputeInfoGain2_innerLoop(curLabels, curFeatureValues, u8Thresholds, maxLabel, numThreads);");
 
   const s32 * restrict pCurLabels = reinterpret_cast<s32 *>( mxGetData(prhs[0]) );
-  const u8 * restrict pCurProbeValues = reinterpret_cast<u8 *>( mxGetData(prhs[1]) );
+  const u8 * restrict pCurFeatureValues = reinterpret_cast<u8 *>( mxGetData(prhs[1]) );
   const u8 * restrict pGrayvalueThresholds = reinterpret_cast<u8 *>( mxGetData(prhs[2]) );
   const s32 maxLabel = saturate_cast<s32>(mxGetScalar(prhs[3]));
   s32 numThreads = saturate_cast<s32>(mxGetScalar(prhs[4]));
@@ -172,12 +172,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   AnkiConditionalErrorAndReturn(mxGetN(prhs[0]) == 1 && mxGetN(prhs[1]) == 1 && mxGetN(prhs[2]) == 1, "mexComputeInfoGain2_innerLoop", "Incorrect input size");
 
   AnkiConditionalErrorAndReturn(mxGetM(prhs[0]) == mxGetM(prhs[1]), "mexComputeInfoGain2_innerLoop", "Incorrect input size");
-  
+
   AnkiConditionalErrorAndReturn(mxGetM(prhs[0]) > 0 && mxGetM(prhs[2]) > 0, "mexComputeInfoGain2_innerLoop", "Incorrect input size");
-  
+
   AnkiConditionalErrorAndReturn(mxGetClassID(prhs[0])==mxINT32_CLASS &&
-                                mxGetClassID(prhs[1])==mxUINT8_CLASS &&
-                                mxGetClassID(prhs[2])==mxUINT8_CLASS, "mexComputeInfoGain2_innerLoop", "Incorrect input types");
+    mxGetClassID(prhs[1])==mxUINT8_CLASS &&
+    mxGetClassID(prhs[2])==mxUINT8_CLASS, "mexComputeInfoGain2_innerLoop", "Incorrect input types");
 
   const s32 numItems = mxGetM(prhs[0]);
   const s32 numGrayvalueThresholds = mxGetM(prhs[2]);
@@ -194,7 +194,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   numThreads = MIN(numThreads, numGrayvalueThresholds);
 
   PRECISION bestEntropy = FLT_MAX;
-  u8 bestGrayvalueThreshold = 0;
+  u8 bestU8Threshold = 0;
 
   if(numThreads == 1) {
     MainLoopParameters parameters;
@@ -203,7 +203,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     parameters.pGrayvalueThresholds = pGrayvalueThresholds;
     parameters.numItems = numItems;
     parameters.pCurLabels = pCurLabels;
-    parameters.pCurProbeValues = pCurProbeValues;
+    parameters.pCurFeatureValues = pCurFeatureValues;
 
     parameters.minGrayvalueThresholdIndex = 0;
     parameters.maxGrayvalueThresholdIndex = numGrayvalueThresholds-1;
@@ -214,7 +214,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     MainLoop(&parameters);
 
     bestEntropy = parameters.bestEntropy;
-    bestGrayvalueThreshold = parameters.bestGrayvalueThreshold;
+    bestU8Threshold = parameters.bestU8Threshold;
 
     mxFree(parameters.pNumLessThan);
     mxFree(parameters.pNumGreaterThan);
@@ -230,7 +230,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       parameters[iThread].pGrayvalueThresholds = pGrayvalueThresholds;
       parameters[iThread].numItems = numItems;
       parameters[iThread].pCurLabels = pCurLabels;
-      parameters[iThread].pCurProbeValues = pCurProbeValues;
+      parameters[iThread].pCurFeatureValues = pCurFeatureValues;
 
       parameters[iThread].minGrayvalueThresholdIndex = iThread * numGrayvalueThresholdsPerThread;
       parameters[iThread].maxGrayvalueThresholdIndex = MIN(numGrayvalueThresholds - 1, (iThread+1) * numGrayvalueThresholdsPerThread - 1);
@@ -265,7 +265,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
       if(parameters[iThread].bestEntropy < bestEntropy) {
         bestEntropy = parameters[iThread].bestEntropy;
-        bestGrayvalueThreshold = parameters[iThread].bestGrayvalueThreshold;
+        bestU8Threshold = parameters[iThread].bestU8Threshold;
       }
 
       mxFree(parameters[iThread].pNumLessThan);
@@ -284,6 +284,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const mwSize outputDims[2] = {1, 1};
     plhs[1] = mxCreateNumericArray(2, outputDims, mxUINT8_CLASS, mxREAL);
     u8 * const matlabMatrixStartPointer = (u8 *) mxGetData(plhs[1]);
-    matlabMatrixStartPointer[0] = bestGrayvalueThreshold;
+    matlabMatrixStartPointer[0] = bestU8Threshold;
   }
 } // mexFunction()

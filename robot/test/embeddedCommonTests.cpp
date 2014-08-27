@@ -40,6 +40,66 @@ For internal use only. No part of this code may be used without a signed non-dis
 using namespace Anki;
 using namespace Anki::Embedded;
 
+GTEST_TEST(CoreTech_Common, SerializeStrings)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  const s32 arrayHeight = 3;
+  const s32 arrayWidth = 2;
+
+  Array<const char*> strings(arrayHeight,arrayWidth,scratchOffchip);
+  strings[0][0] = "Hello"; strings[0][1] = "World";
+  strings[1][0] = "What's"; strings[1][1] = "up";
+  strings[2][0] = "Doc"; strings[2][1] = "??? (Also including a quite long string here, in case there is some overflow somewhere. Possible? Likely? Hard to say. Stream of consciousness...)";
+
+  SerializedBuffer serialized(offchipBuffer+5000, 6000);
+  ASSERT_TRUE(serialized.IsValid());
+
+  serialized.PushBack("My String Array", strings);
+
+  SerializedBufferReconstructingIterator iterator(serialized);
+
+  ASSERT_TRUE(iterator.HasNext());
+
+  s32 dataLength;
+  const char * typeName = NULL;
+  const char * objectName = NULL;
+  bool isReportedSegmentLengthCorrect;
+  void * dataSegment = reinterpret_cast<u8*>(iterator.GetNext(&typeName, &objectName, dataLength, isReportedSegmentLengthCorrect));
+
+  ASSERT_TRUE(dataSegment);
+  ASSERT_TRUE(strcmp(typeName, "Array") == 0);
+  ASSERT_TRUE(strcmp(objectName, "My String Array") == 0);
+
+  char innerObjectName[128];
+  Array<char*> stringsOut = SerializedBuffer::DeserializeRawArray<char*>(&innerObjectName[0], &dataSegment, dataLength, scratchOffchip);
+
+  //strings.Print("strings");
+  //stringsOut.Print("stringsOut");
+
+  ASSERT_TRUE(AreEqualSize(strings, stringsOut));
+
+  for(s32 y=0; y<arrayHeight; y++) {
+    char const * const * restrict pStrings = strings.Pointer(y,0);
+    char const * const * restrict pStringsOut = stringsOut.Pointer(y,0);
+    for(s32 x=0; x<arrayWidth; x++) {
+      // Are the string the same?
+      ASSERT_TRUE(strcmp(pStrings[x], pStringsOut[x]) == 0);
+
+      // Are the pointer locations different?
+      ASSERT_TRUE(reinterpret_cast<size_t>(pStrings[x]) != reinterpret_cast<size_t>(pStringsOut[x]));
+    }
+  }
+
+  ASSERT_FALSE(iterator.HasNext());
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, SerializeStrings)
+
 GTEST_TEST(CoreTech_Common, DrawQuadrilateral)
 {
   const Quadrilateral<f32> quad(Point<f32>(1, 5), Point<f32>(6, 6), Point<f32>(7, 11), Point<f32>(0, 11));
@@ -4299,6 +4359,8 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, SerializeStrings);
+  CALL_GTEST_TEST(CoreTech_Common, DrawQuadrilateral);
   CALL_GTEST_TEST(CoreTech_Common, HostIntrinsics_m4);
   CALL_GTEST_TEST(CoreTech_Common, VectorTypes);
   CALL_GTEST_TEST(CoreTech_Common, RoundUpAndDown);
