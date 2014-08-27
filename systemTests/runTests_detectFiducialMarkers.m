@@ -15,8 +15,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
-%     makeNewResultsDirectory = true;
-    makeNewResultsDirectory = false;
+    makeNewResultsDirectory = true;
+%     makeNewResultsDirectory = false;
     
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
@@ -63,7 +63,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.extractionFunctionName = 'c-with-refinement';
-    resultsData_overall_cWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    [resultsData_overall_cWithRefinement, resultsDirectory_curTime] = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     disp(sprintf('resultsData_overall_cWithRefinement = %f', resultsData_overall_cWithRefinement.percentQuadsExtracted));
     
     algorithmParametersN = algorithmParameters;
@@ -152,17 +152,17 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
 %             disp(sprintf('resultsData_overall for %d %d = %f', iThresholdMultiplier, iSmallCharacterisicParameter, resultsData_overall_small2{iThresholdMultiplier,iSmallCharacterisicParameter}.percentQuadsExtracted));
 %         end
 %     end
-%     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForAll = true;
-%     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small-best';
-%     algorithmParametersN.scaleImage_thresholdMultiplier = .9333;
-%     algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', .9148);
-%     resultsData_overall_small2_best = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-%     
-%     allResultsFilename = strrep(resultsDirectory_curTime, 'results/dateTime', 'resultsAt');
-%     allResultsFilename = [allResultsFilename(1:(end-1)), '.mat'];
-%     save(allResultsFilename, '*');
+    
+    algorithmParametersN = algorithmParameters;
+    algorithmParametersN.useMatlabForAll = true;
+    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small-best';
+    algorithmParametersN.scaleImage_thresholdMultiplier = .9333;
+    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', .9148);
+    resultsData_overall_small2_best = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    
+    allResultsFilename = strrep(resultsDirectory_curTime, 'results/dateTime', 'resultsAt');
+    allResultsFilename = [allResultsFilename(1:(end-1)), '.mat'];
+    save(allResultsFilename, '*');
     
     keyboard
     
