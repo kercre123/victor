@@ -32,7 +32,7 @@ namespace Anki
       this->memoryStack = MemoryStack(buffer, bufferLength, flags);
     }
 
-    Result SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(const bool updateBufferPointer, u16 &sizeOfType, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements, void** buffer, s32 &bufferLength)
+    Result SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(const bool updateBufferPointer, u16 &sizeOfType, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, bool &isString, s32 &numElements, void** buffer, s32 &bufferLength)
     {
       if(bufferLength < SerializedBuffer::EncodedBasicTypeBuffer::CODE_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
@@ -43,20 +43,25 @@ namespace Anki
       else
         isBasicType = false;
 
-      if(reinterpret_cast<u32*>(*buffer)[0] & 2)
+      if(reinterpret_cast<u32*>(*buffer)[0] & (1<<1))
         isInteger = true;
       else
         isInteger = false;
 
-      if(reinterpret_cast<u32*>(*buffer)[0] & 4)
+      if(reinterpret_cast<u32*>(*buffer)[0] & (1<<2))
         isSigned = true;
       else
         isSigned = false;
 
-      if(reinterpret_cast<u32*>(*buffer)[0] & 8)
+      if(reinterpret_cast<u32*>(*buffer)[0] & (1<<3))
         isFloat = true;
       else
         isFloat = false;
+
+      if(reinterpret_cast<u32*>(*buffer)[0] & (1<<4))
+        isString = true;
+      else
+        isString = false;
 
       sizeOfType = (reinterpret_cast<u32*>(*buffer)[0] & 0xFFFF0000) >> 16;
 
@@ -70,13 +75,13 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::EncodedArray::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
+    Result SerializedBuffer::EncodedArray::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, bool &basicType_isString, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
     {
       if(bufferLength < SerializedBuffer::EncodedArray::CODE_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
-      if(SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength) != RESULT_OK)
+      if(SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
       height = reinterpret_cast<u32*>(*buffer)[2];
@@ -92,13 +97,13 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::EncodedArraySlice::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_size, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_size, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
+    Result SerializedBuffer::EncodedArraySlice::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_size, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_size, u16 &basicType_sizeOfType, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, bool &basicType_isString, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
     {
       if(bufferLength < SerializedBuffer::EncodedArraySlice::CODE_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
-      if(SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength) != RESULT_OK)
+      if(SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
       ySlice_start = reinterpret_cast<u32*>(*buffer)[6];
@@ -421,6 +426,112 @@ namespace Anki
       void * segment = const_cast<void*>(SerializedBufferReconstructingConstIterator::GetNext(typeName, objectName, dataLength, isReportedSegmentLengthCorrect));
 
       return segment;
+    }
+
+    template<> s32 TotalArrayStringLengths<const char*>(const Array<const char*> &in)
+    {
+      const s32 inHeight = in.get_size(0);
+      const s32 inWidth = in.get_size(1);
+
+      s32 stringsLength = sizeof(s32);
+      for(s32 y=0; y<inHeight; y++) {
+        char const * const * restrict pIn = in.Pointer(y,0);
+        for(s32 x=0; x<inWidth; x++) {
+          stringsLength += strlen(pIn[x]) + 1;
+        }
+      }
+
+      return stringsLength;
+    }
+
+    template<> s32 TotalArrayStringLengths<char*>(const Array<char*> &in)
+    {
+      // Add const qualifier and call the const version
+      const Array<const char*> constIn = *reinterpret_cast<const Array<const char*>*>(&in);
+      return TotalArrayStringLengths(constIn);
+    }
+
+    template<> void CopyArrayStringsToBuffer<const char*>(const Array<const char*> &in, void ** buffer, s32 &bufferLength)
+    {
+      const s32 inHeight = in.get_size(0);
+      const s32 inWidth = in.get_size(1);
+
+      const s32 stringsLength = TotalArrayStringLengths(in);
+
+      // Copy the null terminated strings to the end
+
+      // First copy the total size of the strings
+      reinterpret_cast<u32*>(*buffer)[0] = stringsLength;
+      *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(u32);
+      bufferLength -= sizeof(u32);
+
+      // Then copy the strings
+      for(s32 y=0; y<inHeight; y++) {
+        char const * const * restrict pIn = in.Pointer(y,0);
+        for(s32 x=0; x<inWidth; x++) {
+          const s32 curStringLength = strlen(pIn[x]) + 1;
+
+          memcpy(*buffer, pIn[x], curStringLength);
+
+          *buffer = reinterpret_cast<u8*>(*buffer) + curStringLength;
+          bufferLength -= curStringLength;
+        }
+      }
+    }
+
+    template<> void CopyArrayStringsToBuffer<char*>(const Array<char*> &in, void ** buffer, s32 &bufferLength)
+    {
+      // Just cast the "char *" as "const char *", and serialize
+      const Array<const char*> constIn = *reinterpret_cast<const Array<const char*> *>(&in);
+      return CopyArrayStringsToBuffer<const char*>(constIn, buffer, bufferLength);
+    }
+
+    template<> Result CopyArrayStringsFromBuffer<char*>(Array<char*> &out, void ** buffer, s32 &bufferLength, MemoryStack &memory)
+    {
+      // Copy the null terminated strings from the end
+
+      // First, get the total size of the strings
+      const u32 stringsLength = reinterpret_cast<u32*>(*buffer)[0];
+      *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(u32);
+      bufferLength -= sizeof(u32);
+
+      // Allocate the space for all strings
+      char * stringBuffer = reinterpret_cast<char*>( memory.Allocate(stringsLength) );
+
+      AnkiConditionalErrorAndReturnValue(stringBuffer,
+        RESULT_FAIL_OUT_OF_MEMORY, "SerializedBuffer::DeserializeRawArray", "Out of memory");
+
+      s32 stringsLengthLeft = stringsLength;
+
+      // Copy each string and set the pointer for Array out
+      const s32 outHeight = out.get_size(0);
+      const s32 outWidth = out.get_size(1);
+      for(s32 y=0; y<outHeight; y++) {
+        char ** restrict pOut = out.Pointer(y,0);
+        for(s32 x=0; x<outWidth; x++) {
+          const s32 curStringLength = strlen(reinterpret_cast<const char*>(*buffer)) + 1;
+
+          AnkiConditionalErrorAndReturnValue(curStringLength <= stringsLengthLeft,
+            RESULT_FAIL, "SerializedBuffer::DeserializeRawArray", "Not enought bytes left to set the array");
+
+          pOut[x] = stringBuffer;
+          memcpy(stringBuffer, *buffer, curStringLength);
+          stringBuffer += curStringLength;
+
+          *buffer = reinterpret_cast<u8*>(*buffer) + curStringLength;
+          bufferLength -= curStringLength;
+          stringsLengthLeft -= curStringLength;
+        }
+      }
+
+      return RESULT_OK;
+    }
+
+    template<> Result CopyArrayStringsFromBuffer<const char*>(Array<const char*> &out, void ** buffer, s32 &bufferLength, MemoryStack &memory)
+    {
+      // Just cast the "const char *" as "char *", and deserialize
+      Array<char*> nonConstIn = *reinterpret_cast<Array<char*> *>(&out);
+      return CopyArrayStringsFromBuffer<char*>(nonConstIn, buffer, bufferLength, memory);
     }
   } // namespace Embedded
 } // namespace Anki

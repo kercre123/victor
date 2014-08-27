@@ -1,18 +1,18 @@
-% function [labels, probeValues] = probeTree2_loadImages(fiducialClassesList, varargin)
+% function [labels, featureValues] = decisionTree2_loadImages(classesList, varargin)
 
-% Load the images specified by the fiducialClassesList, and generate the
+% Load the images specified by the classesList, and generate the
 % probe images
 
 % Simple Example:
-% clear fiducialClassesList; fiducialClassesList(1).labelName = '0_000'; fiducialClassesList(1).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_000.png'}; fiducialClassesList(2).labelName = '0_090'; fiducialClassesList(2).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_090.png'};
-% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, 'numPerturbations', 1, 'maxPerturbPercent', 0, 'blurSigmas', [0]);
+% clear classesList; classesList(1).labelName = '0_000'; classesList(1).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_000.png'}; classesList(2).labelName = '0_090'; classesList(2).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_090.png'};
+% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(classesList, 'numPerturbations', 1, 'maxPerturbPercent', 0, 'blurSigmas', [0]);
 
-% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, 'blurSigmas', [0, .01], 'numPerturbations', 10, 'probeResolutions', [512,32]);
+% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(classesList, 'blurSigmas', [0, .01], 'numPerturbations', 10, 'probeResolutions', [512,32]);
 
 % Example:
-% [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList);
+% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(classesList);
 
-function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYGrid] = probeTree2_loadImages(fiducialClassesList, varargin)
+function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(classesList, varargin)
     %#ok<*CCAT>
     
     blurSigmas = [0, .005, .01, .02]; % as a fraction of the image diagonal
@@ -26,7 +26,7 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     
     parseVarargin(varargin{:});
     
-    pBar = ProgressBar('probeTree2_loadImages', 'CancelButton', true);
+    pBar = ProgressBar('decisionTree2_loadImages', 'CancelButton', true);
     pBar.showTimingInfo = true;
     pBarCleanup = onCleanup(@()delete(pBar));
     
@@ -36,8 +36,8 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     numResolutions = length(probeResolutions);
     
     numImages = 0;
-    for iClass = 1:length(fiducialClassesList)
-        numImages = numImages + length(fiducialClassesList(iClass).filenames);
+    for iClass = 1:length(classesList)
+        numImages = numImages + length(classesList(iClass).filenames);
     end
     
     % TODO: add non-marker images
@@ -46,13 +46,13 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     probeLocationsXGrid = probeLocationsXGrid(:);
     probeLocationsYGrid = probeLocationsYGrid(:);
     
-    %     probeValues   = zeros(numBlurs*numImages*numPerturbations, length(probeLocationsX)*length(probeLocationsY), 'uint8');
-    labelNames  = cell(length(fiducialClassesList), 1);
-    probeValues = cell(length(probeLocationsXGrid), 1);
+    %     featureValues   = zeros(numBlurs*numImages*numPerturbations, length(probeLocationsX)*length(probeLocationsY), 'uint8');
+    labelNames  = cell(length(classesList), 1);
+    featureValues = cell(length(probeLocationsXGrid), 1);
     labels      = zeros(numBlurs*numImages*numPerturbations*numResolutions, 1, 'int32');
     
-    for iProbe = 1:length(probeValues)
-        probeValues{iProbe} = zeros(numBlurs*numImages*numPerturbations*numResolutions, 1, 'uint8');
+    for iProbe = 1:length(featureValues)
+        featureValues{iProbe} = zeros(numBlurs*numImages*numPerturbations*numResolutions, 1, 'uint8');
     end
     
     % Precompute all the perturbed probe locations once
@@ -75,10 +75,10 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
     pBar.set(0);
     
     cLabel = 1;
-    for iClass = 1:length(fiducialClassesList)
-        labelNames{iClass} = fiducialClassesList(iClass).labelName;
-        for iFile = 1:length(fiducialClassesList(iClass).filenames)
-            img = imreadAlphaHelper(fiducialClassesList(iClass).filenames{iFile});
+    for iClass = 1:length(classesList)
+        labelNames{iClass} = classesList(iClass).labelName;
+        for iFile = 1:length(classesList(iClass).filenames)
+            img = imreadAlphaHelper(classesList(iClass).filenames{iFile});
             
             imgPadded = padarray(img, [numPadPixels,numPadPixels], 255);
             
@@ -114,8 +114,8 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
                         end
                         
                         % Stripe the data per-probe location
-                        for iProbe = 1:length(probeValues)
-                            probeValues{iProbe}(cLabel) = tmpValues(iProbe);
+                        for iProbe = 1:length(featureValues)
+                            featureValues{iProbe}(cLabel) = tmpValues(iProbe);
                         end
                         
                         if showProbePermutations
@@ -130,11 +130,11 @@ function [labelNames, labels, probeValues, probeLocationsXGrid, probeLocationsYG
             end % for iBlur = 1:numBlurs
             
             pBar.increment();
-        end % for iFile = 1:length(fiducialClassesList(iClass).filenames)
-    end % for iClass = 1:length(fiducialClassesList)
+        end % for iFile = 1:length(classesList(iClass).filenames)
+    end % for iClass = 1:length(classesList)
     
     %     keyboard
-end % probeTree2_loadImages()
+end % decisionTree2_loadImages()
 
 function img = imreadAlphaHelper(fname)
     

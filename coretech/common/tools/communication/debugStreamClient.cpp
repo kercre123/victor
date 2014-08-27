@@ -141,18 +141,21 @@ namespace Anki
       this->isValid = false;
 
       // Clean up allocated memory
-      while(!rawMessageQueue.IsEmpty()) {
-        DebugStreamClient::RawBuffer object = rawMessageQueue.Pop();
+      while(!rawMessageQueue.Empty()) {
+        DebugStreamClient::RawBuffer object = rawMessageQueue.Front();
+        rawMessageQueue.Pop();
         free(object.data);
       }
 
-      while(!parsedObjectQueue.IsEmpty()) {
-        DebugStreamClient::Object object = parsedObjectQueue.Pop();
+      while(!parsedObjectQueue.Empty()) {
+        DebugStreamClient::Object object = parsedObjectQueue.Front();
+        parsedObjectQueue.Pop();
         free(object.buffer);
       }
 
-      while(!saveObjectQueue.IsEmpty()) {
-        DebugStreamClient::ObjectToSave object = saveObjectQueue.Pop();
+      while(!saveObjectQueue.Empty()) {
+        DebugStreamClient::ObjectToSave object = saveObjectQueue.Front();
+        saveObjectQueue.Pop();
         free(object.buffer);
       }
 
@@ -248,7 +251,7 @@ namespace Anki
 
       bool foundObject = true;
       s32 attempts = 0;
-      while(parsedObjectQueue.IsEmpty()) {
+      while(parsedObjectQueue.Empty()) {
 #ifdef _MSC_VER
         Sleep(10);
 #else
@@ -262,7 +265,8 @@ namespace Anki
       }
 
       if(foundObject) {
-        newObject = parsedObjectQueue.Pop();
+        newObject = parsedObjectQueue.Front();
+        parsedObjectQueue.Pop();
       } else {
         newObject = DebugStreamClient::Object();
       }
@@ -348,10 +352,11 @@ namespace Anki
           bool isInteger;
           bool isSigned;
           bool isFloat;
+          bool isString;
           s32 numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
           s32 tmpDataLength = dataLength - 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, &tmpDataSegment, tmpDataLength);
+          SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, sizeOfType, isBasicType, isInteger, isSigned, isFloat, isString, numElements, &tmpDataSegment, tmpDataLength);
 
           //CoreTechPrint("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, sizeOfType, isInteger, isSigned, isFloat, numElements);
 
@@ -383,10 +388,11 @@ namespace Anki
           bool basicType_isInteger;
           bool basicType_isSigned;
           bool basicType_isFloat;
+          bool basicType_isString;
           s32 basicType_numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
           s32 tmpDataLength = dataLength - 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, tmpDataLength);
+          SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, &tmpDataSegment, tmpDataLength);
 
           newObject.bufferLength = 512 + stride * height;
           newObject.buffer = malloc(newObject.bufferLength);
@@ -505,9 +511,10 @@ namespace Anki
           bool basicType_isInteger;
           bool basicType_isSigned;
           bool basicType_isFloat;
+          bool basicType_isString;
           s32 basicType_numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
+          SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, &tmpDataSegment, dataLength);
 
           newObject.bufferLength = 512 + stride * height;
           newObject.buffer = malloc(newObject.bufferLength);
@@ -864,7 +871,7 @@ namespace Anki
       ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue = callingObject->parsedObjectQueue;
 
       while(true) {
-        while(rawMessageQueue.IsEmpty() && callingObject->get_isRunning()) {
+        while(rawMessageQueue.Empty() && callingObject->get_isRunning()) {
 #ifdef _MSC_VER
           Sleep(1);
 #else
@@ -875,7 +882,8 @@ namespace Anki
         if(!callingObject->get_isRunning())
           break;
 
-        DebugStreamClient::RawBuffer nextRawBuffer = rawMessageQueue.Pop();
+        DebugStreamClient::RawBuffer nextRawBuffer = rawMessageQueue.Front();
+        rawMessageQueue.Pop();
 
         ProcessRawBuffer(nextRawBuffer, parsedObjectQueue, false);
       } // while(true)
@@ -896,7 +904,7 @@ namespace Anki
       ThreadSafeQueue<DebugStreamClient::ObjectToSave> &saveObjectQueue = callingObject->saveObjectQueue;
 
       while(true) {
-        while(saveObjectQueue.IsEmpty() && callingObject->get_isRunning()) {
+        while(saveObjectQueue.Empty() && callingObject->get_isRunning()) {
 #ifdef _MSC_VER
           Sleep(10);
 #else
@@ -907,7 +915,8 @@ namespace Anki
         if(!callingObject->get_isRunning())
           break;
 
-        const DebugStreamClient::ObjectToSave nextObject = saveObjectQueue.Pop();
+        const DebugStreamClient::ObjectToSave nextObject = saveObjectQueue.Front();
+        saveObjectQueue.Pop();
 
         // TODO: save things other than images
         Array<u8> image = *(reinterpret_cast<Array<u8>*>(nextObject.startOfPayload));

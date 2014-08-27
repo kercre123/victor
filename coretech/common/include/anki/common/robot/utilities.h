@@ -22,6 +22,20 @@ namespace Anki
   namespace Embedded
   {
     //template<typename Type> inline Type RoundUp(const Type number, const Type multiple)
+
+    // void* and size_t is a special case, good for aligning pointers
+    inline const void* RoundUp(const void* number, const size_t multiple)
+    {
+      const size_t numberT = reinterpret_cast<size_t>(number);
+      return reinterpret_cast<void*>( (numberT + (multiple-1)) & ~(multiple-1) );
+    }
+
+    inline void* RoundUp(void* number, const size_t multiple)
+    {
+      const size_t numberT = reinterpret_cast<size_t>(number);
+      return reinterpret_cast<void*>( (numberT + (multiple-1)) & ~(multiple-1) );
+    }
+
     template<> inline u32 RoundUp(const u32 number, const u32 multiple)
     {
       return (number + (multiple-1)) & ~(multiple-1);

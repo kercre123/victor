@@ -17,7 +17,8 @@ file(GLOB SOURCE_FILES_DEBUG_STREAM_PARSER
 
 file(GLOB HEADER_FILES
   communication.h
-  threadSafeQueue.h
+  ../threads/anki/tools/threads/threadSafeUtilities.h
+  ../threads/anki/tools/threads/threadSafeQueue.h
   debugStreamClient.h
   C:/Anki/products-cozmo/basestation/src/messageDefMacros.h
 )
