@@ -171,8 +171,8 @@ TestWorld.AddRamp();
 
 poses = cell(1,4);
 headAngles = -5*pi/180 * ones(1,4);
-viewingDistance = 150;
-poses{1} = Pose(pi*[0 0 1],      [ viewingDistance   0  0]);
+viewingDistance = 100;
+poses{1} = Pose(pi*[0 0 1],      [ 100+viewingDistance   0  0]);
 poses{2} = Pose( pi/2*[0 0 1],   [  0 -viewingDistance  0]);
 poses{3} = Pose(-pi/2*[0 0 1],   [  0  viewingDistance  0]);
 poses{4} = Pose(0*[0 0 1],       [-viewingDistance   0  0]);
