@@ -9,6 +9,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "trainDecisionTree.h"
 #include "anki/tools/threads/threadSafeQueue.h"
+#include "anki/tools/threads/threadSafeCounter.h"
 
 #include <vector>
 #include <queue>
@@ -17,6 +18,7 @@ using namespace std;
 using namespace Anki::Embedded;
 
 const s32 MAX_THREADS = 64; // Max threads for either primary or secondary. The total max of both types is double this.
+const s32 MAX_THREADS_MULTIPLIER = 4; // Don't spawn more primary threads, until there are enough work units. At least this number times numPrimaryThreads
 
 typedef struct
 {
@@ -62,8 +64,13 @@ typedef struct BuildTreeThreadParameters
   const std::vector<s32*> &pNumGreaterThans; //< One allocated buffer for each maxSecondaryThreads. Must be allocated before calling the thread, and manually freed after the thread is complete
   const s32 maxLabel; //< What is the max label in labels?
   queue<DecisionTreeWorkItem> workQueue; //< What work needs to be done by this thread (probably just a single node)
-  queue<TrainingFailure> trainingFailures; //< Which nodes could not be trained?
-  std::vector<DecisionTreeNode> &decisionTree; //< The output decision tree
+  queue<TrainingFailure> localTrainingFailures; //< Which nodes could not be trained?
+  std::vector<DecisionTreeNode> &localDecisionTree; //< The output decision tree
+  const s32 globalDecisionTreeIndex; //< What is the index of the root node of localDecisionTree in the main decision tree?
+  s32 numNodesToProcess; //< Set to -1 to run until the work queue is empty
+  s32 threadId; //< The ID of this thread
+  Anki::ThreadSafeQueue<s32> &finishedThreads; //< When this thread finishes, it adds itself to the queue of finished threads
+  Anki::ThreadSafeCounter<s32> &threadCount; //< Counter for the number of running threads
 
   BuildTreeThreadParameters(
     const vector<U8Bool> &featuresUsed,
@@ -79,9 +86,14 @@ typedef struct BuildTreeThreadParameters
     const std::vector<s32*> &pNumGreaterThans,
     const s32 maxLabel,
     queue<DecisionTreeWorkItem> workQueue,
-    queue<TrainingFailure> trainingFailures,
-    std::vector<DecisionTreeNode> &decisionTree)
-    : featuresUsed(featuresUsed), labelNames(labelNames), labels(labels), featureValues(featureValues), leafNodeFraction(leafNodeFraction), leafNodeNumItems(leafNodeNumItems), u8MinDistance(u8MinDistance), u8ThresholdsToUse(u8ThresholdsToUse), maxSecondaryThreads(maxSecondaryThreads), pNumLessThans(pNumLessThans), pNumGreaterThans(pNumGreaterThans), maxLabel(maxLabel), workQueue(workQueue), trainingFailures(trainingFailures), decisionTree(decisionTree)
+    queue<TrainingFailure> localTrainingFailures,
+    std::vector<DecisionTreeNode> &localDecisionTree,
+    const s32 globalDecisionTreeIndex,
+    const s32 numNodesToProcess,
+    s32 threadId,
+    Anki::ThreadSafeQueue<s32> &finishedThreads,
+    Anki::ThreadSafeCounter<s32> &threadCount)
+    : featuresUsed(featuresUsed), labelNames(labelNames), labels(labels), featureValues(featureValues), leafNodeFraction(leafNodeFraction), leafNodeNumItems(leafNodeNumItems), u8MinDistance(u8MinDistance), u8ThresholdsToUse(u8ThresholdsToUse), maxSecondaryThreads(maxSecondaryThreads), pNumLessThans(pNumLessThans), pNumGreaterThans(pNumGreaterThans), maxLabel(maxLabel), workQueue(workQueue), localTrainingFailures(localTrainingFailures), localDecisionTree(localDecisionTree), globalDecisionTreeIndex(globalDecisionTreeIndex), numNodesToProcess(numNodesToProcess), threadId(threadId), finishedThreads(finishedThreads), threadCount(threadCount)
   {
   }
 } BuildTreeThreadParameters;
@@ -152,7 +164,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
   DecisionTreeNode rootNode(0, FLT_MAX, -1, 0, -1);
 
-  buildTreeParams->decisionTree.emplace_back(rootNode);
+  buildTreeParams->localDecisionTree.emplace_back(rootNode);
 
   std::vector<s32> featuresToCheck;
   featuresToCheck.resize(numFeatures);
@@ -171,6 +183,13 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
   // TODO: add ability to launch threads when the work items are far down in the tree
 
   while(buildTreeParams->workQueue.size() > 0) {
+    // If numNodesToProcess is negative, run until the work queue is empty
+    if(buildTreeParams->numNodesToProcess == 0) {
+      break;
+    } else if(buildTreeParams->numNodesToProcess > 0) {
+      buildTreeParams->numNodesToProcess--;
+    }
+
     DecisionTreeWorkItem workItem = buildTreeParams->workQueue.front();
     buildTreeParams->workQueue.pop();
 
@@ -236,19 +255,19 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
     if((mostCommonLabel_count >= saturate_cast<s32>(buildTreeParams->leafNodeFraction * workItem.remaining.size())) || (static_cast<s32>(workItem.remaining.size()) < buildTreeParams->leafNodeNumItems)) {
       // Are more than leafNodeFraction percent of the remaining labels the same? If so, we're done.
-      buildTreeParams->decisionTree[workItem.treeIndex].leftChildIndex = -mostCommonLabel - 1000000;
+      buildTreeParams->localDecisionTree[workItem.treeIndex].leftChildIndex = -mostCommonLabel - 1000000;
 
       // Comment or uncomment the next line as desired
-      printf("LeafNode for label = %d, or \"%s\" at depth %d\n", mostCommonLabel, buildTreeParams->labelNames[mostCommonLabel], buildTreeParams->decisionTree[workItem.treeIndex].depth);
+      printf("LeafNode for label = %d, or \"%s\" at depth %d\n", mostCommonLabel, buildTreeParams->labelNames[mostCommonLabel], buildTreeParams->localDecisionTree[workItem.treeIndex].depth);
 
       continue;
     } else if(!unusedFeaturesFound) {
       // Have we used all features? If so, we're done.
 
-      buildTreeParams->decisionTree[workItem.treeIndex].leftChildIndex = -mostCommonLabel - 1000000;
+      buildTreeParams->localDecisionTree[workItem.treeIndex].leftChildIndex = -mostCommonLabel - 1000000;
 
       // Comment or uncomment the next line as desired
-      printf("MaxDepth LeafNode for label = %d, or \"%s\" at depth %d\n", mostCommonLabel, buildTreeParams->labelNames[mostCommonLabel], buildTreeParams->decisionTree[workItem.treeIndex].depth);
+      printf("MaxDepth LeafNode for label = %d, or \"%s\" at depth %d\n", mostCommonLabel, buildTreeParams->labelNames[mostCommonLabel], buildTreeParams->localDecisionTree[workItem.treeIndex].depth);
 
       continue;
     }
@@ -278,11 +297,13 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
       const ThreadResult result = ComputeInfoGain(reinterpret_cast<void*>(&newParameters));
 
-      buildTreeParams->decisionTree[workItem.treeIndex].bestEntropy = newParameters.bestEntropy;
-      buildTreeParams->decisionTree[workItem.treeIndex].whichFeature = newParameters.bestFeatureIndex;
-      buildTreeParams->decisionTree[workItem.treeIndex].u8Threshold = newParameters.bestU8Threshold;
+      buildTreeParams->localDecisionTree[workItem.treeIndex].bestEntropy = newParameters.bestEntropy;
+      buildTreeParams->localDecisionTree[workItem.treeIndex].whichFeature = newParameters.bestFeatureIndex;
+      buildTreeParams->localDecisionTree[workItem.treeIndex].u8Threshold = newParameters.bestU8Threshold;
     } else {
       const s32 numFeaturesPerThread = (numFeatures + numSecondaryThreadsToUse - 1) / numSecondaryThreadsToUse;
+
+      buildTreeParams->threadCount.Increment(numSecondaryThreadsToUse - 1); // -1, because this thread goes idle while the other run
 
       for(s32 iThread=0; iThread<numSecondaryThreadsToUse; iThread++) {
         computeInfoGainParams[iThread] = new ComputeInfoGainParameters(
@@ -320,28 +341,30 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
         pthread_join(threadHandles[iThread], NULL);
 #endif
 
-        if(computeInfoGainParams[iThread]->bestEntropy < buildTreeParams->decisionTree[workItem.treeIndex].bestEntropy) {
-          buildTreeParams->decisionTree[workItem.treeIndex].bestEntropy = computeInfoGainParams[iThread]->bestEntropy;
-          buildTreeParams->decisionTree[workItem.treeIndex].whichFeature = computeInfoGainParams[iThread]->bestFeatureIndex;
-          buildTreeParams->decisionTree[workItem.treeIndex].u8Threshold = computeInfoGainParams[iThread]->bestU8Threshold;
+        if(computeInfoGainParams[iThread]->bestEntropy < buildTreeParams->localDecisionTree[workItem.treeIndex].bestEntropy) {
+          buildTreeParams->localDecisionTree[workItem.treeIndex].bestEntropy = computeInfoGainParams[iThread]->bestEntropy;
+          buildTreeParams->localDecisionTree[workItem.treeIndex].whichFeature = computeInfoGainParams[iThread]->bestFeatureIndex;
+          buildTreeParams->localDecisionTree[workItem.treeIndex].u8Threshold = computeInfoGainParams[iThread]->bestU8Threshold;
         }
 
         delete(computeInfoGainParams[iThread]);
       }
+
+      buildTreeParams->threadCount.Increment(-numSecondaryThreadsToUse + 1);
     }
 
     // If bestEntropy is too large, it means we could not split the data
-    if(buildTreeParams->decisionTree[workItem.treeIndex].bestEntropy > 100000.0 || buildTreeParams->decisionTree[workItem.treeIndex].whichFeature < 0) {
+    if(buildTreeParams->localDecisionTree[workItem.treeIndex].bestEntropy > 100000.0 || buildTreeParams->localDecisionTree[workItem.treeIndex].whichFeature < 0) {
       // TODO: there are probably very few labels, so this is an inefficent way to compute which are unique
 
-      buildTreeParams->decisionTree[workItem.treeIndex].leftChildIndex = -1;
+      buildTreeParams->localDecisionTree[workItem.treeIndex].leftChildIndex = -1;
 
       TrainingFailure failure;
 
       failure.nodeIndex = workItem.treeIndex;
       failure.labels = uniqueLabelCounts;
 
-      buildTreeParams->trainingFailures.push(failure);
+      buildTreeParams->localTrainingFailures.push(failure);
 
       printf("Could not split LeafNode for labels = {");
 
@@ -350,20 +373,20 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
         printf("(%d, %s), ", failure.labels[i].value, buildTreeParams->labelNames[failure.labels[i].value]);
       }
 
-      printf("} at depth %d\n", buildTreeParams->decisionTree[workItem.treeIndex].depth);
+      printf("} at depth %d\n", buildTreeParams->localDecisionTree[workItem.treeIndex].depth);
 
       // TODO: show images?
 
       continue;
     } // if(newParameters.bestEntropy > 100000.0)
 
-    buildTreeParams->decisionTree[workItem.treeIndex].leftChildIndex = buildTreeParams->decisionTree.size();
+    buildTreeParams->localDecisionTree[workItem.treeIndex].leftChildIndex = buildTreeParams->localDecisionTree.size();
 
-    DecisionTreeNode leftNode = DecisionTreeNode(buildTreeParams->decisionTree[workItem.treeIndex].depth + 1, FLT_MAX, -1, 0, -1);
-    DecisionTreeNode rightNode = DecisionTreeNode(buildTreeParams->decisionTree[workItem.treeIndex].depth + 1, FLT_MAX, -1, 0, -1);
+    DecisionTreeNode leftNode = DecisionTreeNode(buildTreeParams->localDecisionTree[workItem.treeIndex].depth + 1, FLT_MAX, -1, 0, -1);
+    DecisionTreeNode rightNode = DecisionTreeNode(buildTreeParams->localDecisionTree[workItem.treeIndex].depth + 1, FLT_MAX, -1, 0, -1);
 
-    buildTreeParams->decisionTree.emplace_back(leftNode);
-    buildTreeParams->decisionTree.emplace_back(rightNode);
+    buildTreeParams->localDecisionTree.emplace_back(leftNode);
+    buildTreeParams->localDecisionTree.emplace_back(rightNode);
 
     const s32 numRemaining = workItem.remaining.size();
 
@@ -377,7 +400,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
     leftRemaining.resize(numRemaining);
     rightRemaining.resize(numRemaining);
 
-    const u8 * restrict pFeatureValues = buildTreeParams->featureValues[buildTreeParams->decisionTree[workItem.treeIndex].whichFeature].Pointer(0);
+    const u8 * restrict pFeatureValues = buildTreeParams->featureValues[buildTreeParams->localDecisionTree[workItem.treeIndex].whichFeature].Pointer(0);
 
     const s32 * restrict pRemaining = workItem.remaining.data();
     s32 * restrict pLeftRemaining = leftRemaining.data();
@@ -388,7 +411,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
       const s32 curRemaining = pRemaining[iRemain];
       const u8 curFeatureValue = pFeatureValues[curRemaining];
 
-      if(curFeatureValue < buildTreeParams->decisionTree[workItem.treeIndex].u8Threshold) {
+      if(curFeatureValue < buildTreeParams->localDecisionTree[workItem.treeIndex].u8Threshold) {
         pLeftRemaining[cLeft] = curRemaining;
         cLeft++;
       } else {
@@ -403,16 +426,18 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
     rightRemaining.resize(cRight);
 
     // Mask out the grayvalues that are near to the chosen threshold
-    const s32 minGray = MAX(0,   buildTreeParams->decisionTree[workItem.treeIndex].u8Threshold - buildTreeParams->u8MinDistance);
-    const s32 maxGray = MIN(255, buildTreeParams->decisionTree[workItem.treeIndex].u8Threshold + buildTreeParams->u8MinDistance);
+    const s32 minGray = MAX(0,   buildTreeParams->localDecisionTree[workItem.treeIndex].u8Threshold - buildTreeParams->u8MinDistance);
+    const s32 maxGray = MIN(255, buildTreeParams->localDecisionTree[workItem.treeIndex].u8Threshold + buildTreeParams->u8MinDistance);
     for(s32 iGray=minGray; iGray<=maxGray; iGray++) {
-      U8Bool &pFeaturesUsed = workItem.featuresUsed[buildTreeParams->decisionTree[workItem.treeIndex].whichFeature];
+      U8Bool &pFeaturesUsed = workItem.featuresUsed[buildTreeParams->localDecisionTree[workItem.treeIndex].whichFeature];
       pFeaturesUsed.values[iGray] = true;
     }
 
-    buildTreeParams->workQueue.push(DecisionTreeWorkItem(buildTreeParams->decisionTree.size() - 2, leftRemaining, workItem.featuresUsed));
-    buildTreeParams->workQueue.push(DecisionTreeWorkItem(buildTreeParams->decisionTree.size() - 1, rightRemaining, workItem.featuresUsed));
+    buildTreeParams->workQueue.push(DecisionTreeWorkItem(buildTreeParams->localDecisionTree.size() - 2, leftRemaining, workItem.featuresUsed));
+    buildTreeParams->workQueue.push(DecisionTreeWorkItem(buildTreeParams->localDecisionTree.size() - 1, rightRemaining, workItem.featuresUsed));
   } // while(workQueue.size() > 0)
+
+  buildTreeParams->threadCount.Increment(-1);
 
   return 0;
 } // ThreadResult BuildTreeThread(void *voidParameters)
@@ -461,6 +486,11 @@ namespace Anki
       const s32 numItems = labels.get_size();
 
       AnkiConditionalErrorAndReturnValue(
+        maxPrimaryThreads > 0 && maxPrimaryThreads <= MAX_THREADS &&
+        maxSecondaryThreads > 0 && maxSecondaryThreads <= MAX_THREADS,
+        RESULT_FAIL_INVALID_PARAMETER, "BuildTree", "Max threads %d", MAX_THREADS);
+
+      AnkiConditionalErrorAndReturnValue(
         featureValues.get_size() == numFeatures,
         RESULT_FAIL_INVALID_SIZE, "BuildTree", "Incorrect input size");
 
@@ -480,67 +510,211 @@ namespace Anki
 
       const s32 maxLabel = FindMaxLabel(labels, remaining);
 
-      s32 numPrimaryThreadsToUse = maxPrimaryThreads;
+      // When we reach this depth in the tree, split (assuming numPrimaryThreadsToUse > 1)
+      const s32 primaryTreeDepthSplit = saturate_cast<s32>(floor( log2(static_cast<f64>(maxPrimaryThreads*MAX_THREADS_MULTIPLIER)) ));
 
-      // TODO: add back?
-      //if(workItem.remaining.size() < 5) {
-      //  numSecondaryThreadsToUse = 1;
-      //}
+      std::vector<std::vector<s32*>> pNumLessThans;
+      std::vector<std::vector<s32*>> pNumGreaterThans;
+      std::vector<DecisionTreeNode> localDecisionTrees;
+      std::vector<FixedLengthList<u8>> localU8ThresholdsToUse;
 
-      // TODO: remove
-      numPrimaryThreadsToUse = 1;
+      pNumLessThans.resize(maxPrimaryThreads);
+      pNumGreaterThans.resize(maxPrimaryThreads);
+      localDecisionTrees.resize(maxPrimaryThreads);
+      localU8ThresholdsToUse.resize(maxPrimaryThreads);
 
-      if(numPrimaryThreadsToUse == 1) {
-        const s32 minFeatureToCheck = 0;
-        const s32 maxFeatureToCheck = numFeatures - 1;
+      for(s32 iPrimary=0; iPrimary<maxPrimaryThreads; iPrimary++) {
+        pNumLessThans[iPrimary].resize(maxSecondaryThreads);
+        pNumGreaterThans[iPrimary].resize(maxSecondaryThreads);
 
-        std::vector<s32*> pNumLessThans;
-        std::vector<s32*> pNumGreaterThans;
-
-        pNumLessThans.resize(maxSecondaryThreads);
-        pNumGreaterThans.resize(maxSecondaryThreads);
-
-        for(s32 i=0; i<maxSecondaryThreads; i++) {
-          pNumLessThans[i] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
-          pNumGreaterThans[i] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
+        // Malloc all the memory up front, so the threads don't have to call allocate memory as much
+        for(s32 iSecondary=0; iSecondary<maxSecondaryThreads; iSecondary++) {
+          pNumLessThans[iPrimary][iSecondary] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
+          pNumGreaterThans[iPrimary][iSecondary] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
         }
-
-        DecisionTreeWorkItem firstWorkItem(0, remaining, featuresUsed);
-
-        queue<DecisionTreeWorkItem> workQueue;
-        workQueue.emplace(firstWorkItem);
-
-        queue<TrainingFailure> trainingFailures;
-
-        BuildTreeThreadParameters newParameters(
-          featuresUsed,
-          labelNames,
-          labels,
-          featureValues,
-          leafNodeFraction,
-          leafNodeNumItems,
-          u8MinDistance,
-          u8ThresholdsToUse,
-          maxSecondaryThreads,
-          pNumLessThans,
-          pNumGreaterThans,
-          maxLabel,
-          workQueue,
-          trainingFailures,
-          decisionTree);
-
-        const ThreadResult result = BuildTreeThread(reinterpret_cast<void*>(&newParameters));
-
-        // Since it's only one thread, we've directly built the decision tree and are done
-
-        for(s32 i=0; i<maxSecondaryThreads; i++) {
-          free(pNumLessThans[i]);
-          free(pNumGreaterThans[i]);
-        }
-      } else {
-        // TODO: implement
-        AnkiAssert(false);
       }
+
+      DecisionTreeWorkItem firstWorkItem(0, remaining, featuresUsed);
+
+      queue<DecisionTreeWorkItem> workQueue;
+      workQueue.emplace(firstWorkItem);
+
+      queue<TrainingFailure> trainingFailures;
+
+      bool runMultiplePrimaryThreads = false;
+
+      Anki::ThreadSafeQueue<s32> finishedThreads;
+
+      ThreadSafeCounter<s32> threadCount(0);
+
+      BuildTreeThreadParameters * buildThreadParameters[MAX_THREADS];
+
+      buildThreadParameters[0] = new BuildTreeThreadParameters(
+        featuresUsed,
+        labelNames,
+        labels,
+        featureValues,
+        leafNodeFraction,
+        leafNodeNumItems,
+        u8MinDistance,
+        u8ThresholdsToUse,
+        maxSecondaryThreads,
+        pNumLessThans[0],
+        pNumGreaterThans[0],
+        maxLabel,
+        workQueue,
+        trainingFailures,
+        decisionTree,
+        0,
+        1,
+        0,
+        finishedThreads,
+        threadCount);
+
+      for(s32 iThread=1; iThread<maxPrimaryThreads; iThread++) {
+        buildThreadParameters[iThread] = NULL;
+      }
+
+      // First, run until we reach depth == primaryTreeDepthSplit
+      // If we're still high in the tree, run a single primary thread and multiple secondary threads
+      while(workQueue.size() > 0) {
+        if(maxPrimaryThreads > 1 && decisionTree[workQueue.front().treeIndex].depth >= primaryTreeDepthSplit) {
+          break;
+        }
+
+        threadCount.Increment(1);
+
+        const ThreadResult result = BuildTreeThread(reinterpret_cast<void*>(&buildThreadParameters[0]));
+      }
+
+      free(buildThreadParameters[0]);
+      buildThreadParameters[0] = NULL;
+
+      // Second, spawn all the primary threads
+      // If we're low in the tree, run multiple primary threads, each with a single secondary thread
+
+      threadCount.Set(0);
+
+      while(workQueue.size() > 0) {
+        // Wait for some threads to finish
+        while(threadCount.Get() >= maxPrimaryThreads) {
+#ifdef _MSC_VER
+          Sleep(10);
+#else
+          usleep(10000);
+#endif
+        }
+
+        queue<s32> threadIdsToReuse;
+
+        // Merge the results for the threads that have finished
+        while(!finishedThreads.Empty()) {
+          const s32 curThread = finishedThreads.Front();
+          finishedThreads.Pop();
+
+          BuildTreeThreadParameters &curParameters = *buildThreadParameters[curThread];
+
+          //
+          // Add the nodes of the subtree to the main tree
+          //
+
+          const s32 indexOffset = decisionTree.size() - 1;
+
+          for(s32 iNode=0; iNode<curParameters.localDecisionTree.size(); iNode++) {
+            if(curParameters.localDecisionTree[iNode].leftChildIndex >= 0) {
+              curParameters.localDecisionTree[iNode].leftChildIndex += indexOffset;
+            }
+          }
+
+          decisionTree[curParameters.globalDecisionTreeIndex] = curParameters.localDecisionTree[0];
+
+          for(s32 iNode=1; iNode<curParameters.localDecisionTree.size(); iNode++) {
+            decisionTree.push_back(curParameters.localDecisionTree[iNode]);
+          }
+
+          //
+          // Add the local training failures to the main list
+          //
+
+          while(!curParameters.localTrainingFailures.empty()) {
+            const TrainingFailure curFailure = curParameters.localTrainingFailures.front();
+            curParameters.localTrainingFailures.pop();
+            trainingFailures.push(curFailure);
+          }
+
+          delete(buildThreadParameters[curThread]);
+          buildThreadParameters[curThread] = NULL;
+
+          threadIdsToReuse.push(curThread);
+        } // while(!finishedThreads.Empty())
+
+        // Launch at most one thread before continuing the "while(workQueue.size() > 0)" loop
+        if(threadIdsToReuse.empty()) {
+          const s32 curThread = threadIdsToReuse.front();
+          threadIdsToReuse.pop();
+
+          const DecisionTreeWorkItem workQueueItem = workQueue.front();
+          workQueue.pop();
+
+          buildThreadParameters[curThread] = new BuildTreeThreadParameters(
+            featuresUsed,
+            labelNames,
+            labels,
+            featureValues,
+            leafNodeFraction,
+            leafNodeNumItems,
+            u8MinDistance,
+            u8ThresholdsToUse,
+            maxSecondaryThreads,
+            pNumLessThans[curThread],
+            pNumGreaterThans[curThread],
+            maxLabel,
+            workQueue,
+            trainingFailures,
+            decisionTree,
+            workQueueItem.treeIndex,
+            -1,
+            curThread,
+            finishedThreads,
+            threadCount);
+
+          const vector<U8Bool> &featuresUsed,
+            const FixedLengthList<const char *> &labelNames,
+            const FixedLengthList<s32> &labels,
+            const FixedLengthList<const FixedLengthList<u8> > &featureValues,
+            const f32 leafNodeFraction,
+            const s32 leafNodeNumItems,
+            const s32 u8MinDistance,
+            const FixedLengthList<u8> &u8ThresholdsToUse,
+            const s32 maxSecondaryThreads,
+            const std::vector<s32*> &pNumLessThans,
+            const std::vector<s32*> &pNumGreaterThans,
+            const s32 maxLabel,
+            queue<DecisionTreeWorkItem> workQueue,
+            queue<TrainingFailure> localTrainingFailures,
+            std::vector<DecisionTreeNode> &localDecisionTree,
+            const s32 globalDecisionTreeIndex,
+            const s32 numNodesToProcess,
+            s32 threadId,
+            Anki::ThreadSafeQueue<s32> &finishedThreads,
+            Anki::ThreadSafeCounter<s32> &threadCount)
+        } // if(threadIdsToReuse.empty())
+      } // while(workQueue.size() > 0)
+
+      for(s32 iPrimary=0; iPrimary<maxPrimaryThreads; iPrimary++) {
+        for(s32 iSecondary=0; iSecondary<maxSecondaryThreads; iSecondary++) {
+          free(pNumLessThans[iPrimary][iSecondary]);
+          free(pNumGreaterThans[iPrimary][iSecondary]);
+        }
+      }
+
+      for(s32 iThread=0; iThread<maxPrimaryThreads; iThread++) {
+        if(buildThreadParameters[iThread]) {
+          delete(buildThreadParameters[iThread]);
+        }
+      }
+
+      return RESULT_OK;
     } // Result BuildTree()
   } // namespace Embedded
 } // namespace Anki
