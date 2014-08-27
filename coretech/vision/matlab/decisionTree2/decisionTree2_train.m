@@ -40,7 +40,8 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     u8ThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
     featuresUsed = zeros(length(featureValues), 256, 'uint8'); % If you don't want to train on some of the features or u8 thresholds, set some of the featuresUsed to true
     cFilenamePrefix = 'c:/tmp/treeTraining_'; % Temporarly location for when useCVersion = true
-    cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/RelWithDebInfo/run_trainDecisionTree.exe';
+    %cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/RelWithDebInfo/run_trainDecisionTree.exe';
+    cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/Debug/run_trainDecisionTree.exe';
     maxPrimaryThreads = 1;
     maxSecondaryThreads = 1;
     

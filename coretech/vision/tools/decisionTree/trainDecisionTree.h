@@ -62,7 +62,7 @@ namespace Anki
       const s32 maxFeatureToCheck; //< Which of the features is this thread responsible for?
 
       // Thread-specific input/output
-      std::vector<U8Bool> &featuresUsed; //< Which features and u8 thresholds have been used?
+      std::vector<U8Bool> &featuresUsed; //< Which features and u8 thresholds have been used? Note: All threads share one copy, because they shouldn't read or modify the same pieces.
 
       // Thread-specific scratch
       s32 * restrict pNumLessThan; //< Must be allocated before calling the thread, and manually freed after the thread is complete
@@ -83,11 +83,8 @@ namespace Anki
         const s32 maxFeatureToCheck,
         std::vector<U8Bool> &featuresUsed,
         s32 * restrict pNumLessThan,
-        s32 * restrict pNumGreaterThan,
-        f32 bestEntropy,
-        s32 bestFeatureIndex,
-        s32 bestU8Threshold)
-        : featureValues(featureValues), labels(labels), u8ThresholdsToUse(u8ThresholdsToUse), u8MinDistance(u8MinDistance), remaining(remaining), minFeatureToCheck(minFeatureToCheck), maxFeatureToCheck(maxFeatureToCheck), featuresUsed(featuresUsed), pNumLessThan(pNumLessThan), pNumGreaterThan(pNumGreaterThan), bestEntropy(bestEntropy), bestFeatureIndex(bestFeatureIndex), bestU8Threshold(bestU8Threshold)
+        s32 * restrict pNumGreaterThan)
+        : featureValues(featureValues), labels(labels), u8ThresholdsToUse(u8ThresholdsToUse), u8MinDistance(u8MinDistance), remaining(remaining), minFeatureToCheck(minFeatureToCheck), maxFeatureToCheck(maxFeatureToCheck), featuresUsed(featuresUsed), pNumLessThan(pNumLessThan), pNumGreaterThan(pNumGreaterThan), bestEntropy(-1), bestFeatureIndex(-1), bestU8Threshold(0)
       {
       }
     } ComputeInfoGainParameters;

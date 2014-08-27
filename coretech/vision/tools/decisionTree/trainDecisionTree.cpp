@@ -15,6 +15,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace std;
 
+const s32 MAX_THREADS = 64; // Max threads for either primary or secondary. The total max of both types is double this.
+
 typedef struct
 {
   s32 value;
@@ -278,25 +280,23 @@ namespace Anki
         //
         s32 numSecondaryThreadsToUse = maxSecondaryThreads;
 
-        if(workItem.remaining.size() < 5) {
-          numSecondaryThreadsToUse = 1;
-        }
+        // TODO: add back?
+        //if(workItem.remaining.size() < 5) {
+        //  numSecondaryThreadsToUse = 1;
+        //}
 
         if(numSecondaryThreadsToUse == 1) {
           const s32 minFeatureToCheck = 0;
           const s32 maxFeatureToCheck = numFeatures - 1;
 
           ComputeInfoGainParameters newParameters(
-            featureValues, labels, u8ThresholdsToUse,
-            u8MinDistance,
+            featureValues, labels, u8ThresholdsToUse, u8MinDistance,
             workItem.remaining,
-            minFeatureToCheck, maxFeatureToCheck,
+            minFeatureToCheck,
+            maxFeatureToCheck,
             workItem.featuresUsed,
             pNumLessThan,
-            pNumGreaterThan,
-            0,
-            0,
-            0);
+            pNumGreaterThan);
 
           const ThreadResult result = ComputeInfoGain(reinterpret_cast<void*>(&newParameters));
 
@@ -306,9 +306,64 @@ namespace Anki
         } else {
           // TODO: spawn and wait for the threads
 
+          const s32 numFeaturesPerThread = (numFeatures + numSecondaryThreadsToUse - 1) / numSecondaryThreadsToUse;
+
+          ComputeInfoGainParameters **parameters = reinterpret_cast<ComputeInfoGainParameters **>( calloc(MAX_THREADS, sizeof(ComputeInfoGainParameters*)) );
+          ThreadHandle threadHandles[MAX_THREADS];
+
+          for(s32 iThread=0; iThread<numSecondaryThreadsToUse; iThread++) {
+            parameters[iThread] = new ComputeInfoGainParameters(
+              featureValues, labels, u8ThresholdsToUse, u8MinDistance,
+              workItem.remaining,
+              iThread * numFeaturesPerThread,
+              MIN(numFeatures - 1, (iThread+1) * numFeaturesPerThread - 1),
+              workItem.featuresUsed,
+              reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32))),
+              reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32))));
+
+#ifdef _MSC_VER
+            DWORD threadId = -1;
+            threadHandles[iThread] = CreateThread(
+              NULL,        // default security attributes
+              0,           // use default stack size
+              ComputeInfoGain, // thread function name
+              parameters[iThread],    // argument to thread function
+              0,           // use default creation flags
+              &threadId);  // returns the thread identifier
+#else
+            pthread_attr_t connectionAttr;
+            pthread_attr_init(&connectionAttr);
+
+            pthread_create(&(threadHandles[iThread]), &connectionAttr, ComputeInfoGain, (void *)(parameters[iThread]));
+#endif
+          }
+
+          for(s32 iThread=0; iThread<numSecondaryThreadsToUse; iThread++) {
+            // Wait for the threads to complete and combine the results
+
+#ifdef _MSC_VER
+            WaitForSingleObject(threadHandles[iThread], INFINITE);
+#else
+            pthread_join(threadHandles[iThread], NULL);
+#endif
+
+            if(parameters[iThread]->bestEntropy < decisionTree[workItem.treeIndex].bestEntropy) {
+              decisionTree[workItem.treeIndex].bestEntropy = parameters[iThread]->bestEntropy;
+              decisionTree[workItem.treeIndex].whichFeature = parameters[iThread]->bestFeatureIndex;
+              decisionTree[workItem.treeIndex].u8Threshold = parameters[iThread]->bestU8Threshold;
+            }
+
+            free(parameters[iThread]->pNumGreaterThan);
+            free(parameters[iThread]->pNumLessThan);
+
+            delete(parameters[iThread]);
+          }
+
           // TODO: merge the best entropy
 
           // TODO: merge the used probes?
+
+          free(parameters);
         }
 
         // If bestEntropy is too large, it means we could not split the data
