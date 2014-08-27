@@ -203,6 +203,7 @@ namespace Anki
                             std::list<Vision::ObservedMarker*>& lst);
       
 
+      void ClearObjectHelper(Vision::ObservableObject* object);
       ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objectIter, ObjectsMapByID_t& inContainer);
       
       //

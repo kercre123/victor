@@ -63,6 +63,7 @@ namespace Anki {
       bool                   IsLocalized()     const {return _localizedToID.IsSet();}
       const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
       void                   SetLocalizedTo(const ObjectID& toID);
+      void                   Delocalize();
       
       const Vision::Camera&             GetCamera() const;
       Vision::Camera&                   GetCamera();
@@ -460,7 +461,7 @@ namespace Anki {
       void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
       void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
       void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
-      void SetPickedUp(bool t) {_isPickedUp = t;}
+      void SetPickedUp(bool t);
       void SetProxSensorData(const u8 left, const u8 forward, const u8 right,
                              bool leftBlocked, bool fwdBlocked, bool rightBlocked) {_proxLeft=left; _proxFwd=forward; _proxRight=right; _proxLeftBlocked = leftBlocked; _proxFwdBlocked = fwdBlocked; _proxRightBlocked = rightBlocked;}
 
@@ -557,6 +558,7 @@ namespace Anki {
     
     inline const f32 Robot::GetLiftAngle() const
     { return _currentLiftAngle; }
+    
     
     //
     // RobotManager class for keeping up with available robots, by their ID

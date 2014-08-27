@@ -125,13 +125,9 @@ namespace Anki {
     , _forceReplanOnNextWorldChange(false)
     , _saveImages(false)
     , _camera(robotID)
-    , _poseOrigins(1)
     , _proxLeft(0), _proxFwd(0), _proxRight(0)
     , _proxLeftBlocked(false), _proxFwdBlocked(false), _proxRightBlocked(false)
-    , _worldOrigin(&_poseOrigins.front())
-    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
-    , _localizedToFixedMat(false)
     , _onRamp(false)
     , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
@@ -147,12 +143,15 @@ namespace Anki {
     , _dockMarker(nullptr)
     , _dockMarker2(nullptr)
     {
+      _pose.SetName("Robot_" + std::to_string(_ID));
+      
+      // Initializes _poseOrigins and _worlOrigin:
+      Delocalize();
+      
       SetHeadAngle(_currentHeadAngle);
       pdo_ = new PathDolerOuter(msgHandler, robotID);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
-      
-      _poseOrigins.front().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin0");
       
     } // Constructor: Robot
 
@@ -165,6 +164,34 @@ namespace Anki {
       _shortPathPlanner = nullptr;
       _selectedPathPlanner = nullptr;
     }
+    
+    void Robot::SetPickedUp(bool t)
+    {
+      if(_isPickedUp == false && t == true) {
+        // Robot is being picked up: de-localize it
+        Delocalize();
+      }
+      _isPickedUp = t;
+    } //
+    
+    void Robot::Delocalize()
+    {
+      _localizedToID.UnSet();
+      _localizedToFixedMat = false;
+      
+      // Add a new pose origin to use until the robot gets localized again
+      _poseOrigins.emplace_back();
+      _poseOrigins.back().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(_poseOrigins.size() - 1));
+      _worldOrigin = &_poseOrigins.back();
+      
+      _pose.SetRotation(-M_PI_2, Z_AXIS_3D);
+      _pose.SetTranslation({{0.f, 0.f, 0.f}});
+      _pose.SetParent(_worldOrigin);
+      
+      _poseHistory.Clear();
+      ++_frameId;
+    }
+
     
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
     {

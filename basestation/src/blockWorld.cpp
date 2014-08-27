@@ -1178,23 +1178,57 @@ namespace Anki
     
     void BlockWorld::ClearAllExistingObjects()
     {
-      //globalIDCounter = 0;
-      ObjectID::Reset();
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto objectsByType : objectsByFamily.second) {
+          for(auto objectsByID : objectsByType.second) {
+            ClearObjectHelper(objectsByID.second);
+          }
+        }
+      }
       
+      _existingObjects.clear();
+
+      ObjectID::Reset();
+    }
+    
+    void BlockWorld::ClearObjectHelper(Vision::ObservableObject* object)
+    {
+      if(object == nullptr) {
+        PRINT_NAMED_WARNING("BlockWorld.ClearObjectHelper.NullObjectPointer", "BlockWorld asked to clear a null object pointer.\n");
+      } else {
+        // Check to see if this object is the object any robot is localized to.
+        // If so, that robot needs to be delocalized:
+        for(auto & robotID : robotMgr_->GetRobotIDList()) {
+          Robot* robot = robotMgr_->GetRobotByID(robotID);
+          CORETECH_ASSERT(robot != nullptr);
+          if(robot->GetLocalizedTo() == object->GetID()) {
+            PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.DelocalizingRobot",
+                             "Delocalizing robot %d, which is currently localized to %s "
+                             "object with ID=%d, which is about to be deleted.\n",
+                             robot->GetID(), object->GetType().GetName().c_str(), object->GetID().GetValue());
+            robot->Delocalize();
+          }
+        }
+        
+        // NOTE: The object should erase its own visualization upon destruction
+        delete object;
+        
+        // Flag that we removed an object
+        didObjectsChange_ = true;
+      }
     }
     
     void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
     {
       ObjectsMapByFamily_t::iterator objectsWithFamily = _existingObjects.find(family);
       if(objectsWithFamily != _existingObjects.end()) {
-        for(auto objectsByType : objectsWithFamily->second) {
-          for(auto objectsByID : objectsByType.second) {
-            delete objectsByID.second;
+        for(auto & objectsByType : objectsWithFamily->second) {
+          for(auto & objectsByID : objectsByType.second) {
+            ClearObjectHelper(objectsByID.second);
           }
         }
         
         _existingObjects.erase(family);
-        didObjectsChange_ = true;
       }
     }
     
@@ -1204,11 +1238,10 @@ namespace Anki
         ObjectsMapByType_t::iterator objectsWithType = objectsByFamily.second.find(type);
         if(objectsWithType != objectsByFamily.second.end()) {
           for(auto & objectsByID : objectsWithType->second) {
-            delete objectsByID.second;
+            ClearObjectHelper(objectsByID.second);
           }
         
           objectsByFamily.second.erase(objectsWithType);
-          didObjectsChange_ = true;
           
           // Types are unique.  No need to keep looking
           return;
@@ -1226,12 +1259,8 @@ namespace Anki
           if(objectWithIdIter != objectsByType.second.end()) {
             
             // Remove the object from the world
-            // NOTE: The object should erase its own visualization upon destruction
-            delete objectWithIdIter->second;
+            ClearObjectHelper(objectWithIdIter->second);
             objectsByType.second.erase(objectWithIdIter);
-            
-            // Flag that we removed an object
-            didObjectsChange_ = true;
             
             // IDs are unique, so we can return as soon as the ID is found and cleared
             return true;
