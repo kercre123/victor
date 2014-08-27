@@ -21,6 +21,21 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <vector>
 
+// Visual c++ is missing log2
+#if defined(_MSC_VER)
+const f32 log2DivisorF32 = 1.0f / log(2.0f);
+static inline f32 log2(const f32 x)
+{
+  return log(x) * log2DivisorF32;
+}
+
+const f64 log2DivisorF64 = 1.0 / log(2.0);
+static inline f64 log2(const f64 x)
+{
+  return log(x) * log2DivisorF64;
+}
+#endif
+
 namespace Anki
 {
   namespace Embedded

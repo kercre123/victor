@@ -19,7 +19,7 @@ namespace Anki
   template<typename Type> class ThreadSafeCounter
   {
   public:
-    ThreadSafeCounter();
+    ThreadSafeCounter(Type initialValue);
 
     // If delta is negative, it decrements
     // Returns the updated value
@@ -37,7 +37,7 @@ namespace Anki
     Type value;
   }; // class ThreadSafeCounter
 
-  template<typename Type> ThreadSafeCounter<Type>::ThreadSafeCounter()
+  template<typename Type> ThreadSafeCounter<Type>::ThreadSafeCounter(Type initialValue)
   {
 #ifdef _MSC_VER
     mutex = CreateMutex(NULL, FALSE, NULL);
@@ -45,7 +45,7 @@ namespace Anki
     pthread_mutex_init(&mutex, NULL);
 #endif
 
-    value = 0;
+    value = initialValue;
   } // template<typename Type> ThreadSafeCounter::ThreadSafeCounter()
 
   template<typename Type> Type ThreadSafeCounter<Type>::Increment(const Type delta)
