@@ -11,8 +11,10 @@ namespace Anki {
     namespace ProxSensors {
       
       namespace {
-        HAL::ProximityValues _proxVals;
+        f32 _proxLeft, _proxFwd, _proxRight;
         bool _blockedLeft, _blockedFwd, _blockedRight;
+        
+        const f32 FILT_COEFF = 0.1f;
         
       } // "private" namespace
       
@@ -21,10 +23,13 @@ namespace Anki {
       {
         Result retVal = RESULT_OK;
         
-        HAL::GetProximity(&_proxVals);
-        //PERIODIC_PRINT(200, "PROX: %d  %d  %d\n",
-        //               _proxVals.left, _proxVals.forward, _proxVals.right);
+        // Get current readings and filter
+        HAL::ProximityValues currProxVals;
+        HAL::GetProximity(&currProxVals);
         
+        _proxLeft = (FILT_COEFF * currProxVals.left) + ((1.f - FILT_COEFF) * _proxLeft);
+        _proxFwd = (FILT_COEFF * currProxVals.forward) + ((1.f - FILT_COEFF) * _proxFwd);
+        _proxRight = (FILT_COEFF * currProxVals.right) + ((1.f - FILT_COEFF) * _proxRight);
         
         
         // TODO: Logic for when proximity sensors are blocked by the lift.
@@ -71,9 +76,12 @@ namespace Anki {
       // Returns the proximity sensor values
       void GetValues(u8 &left, u8 &forward, u8 &right)
       {
-        left = MIN(_proxVals.left, u8_MAX);
-        forward = MIN(_proxVals.forward, u8_MAX);
-        right = MIN(_proxVals.right, u8_MAX);
+        left = MIN(static_cast<u8>(FLT_ROUND(_proxLeft)), u8_MAX);
+        forward = MIN(static_cast<u8>(FLT_ROUND(_proxFwd)), u8_MAX);
+        right = MIN(static_cast<u8>(FLT_ROUND(_proxRight)), u8_MAX);
+        
+        //PERIODIC_PRINT(200, "PROX: %f  %f  %f (%d %d %d)\n",
+        //               _proxLeft, _proxFwd, _proxRight, left, forward, right);
       }
 
 
