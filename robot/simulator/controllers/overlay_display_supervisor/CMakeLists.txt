@@ -16,15 +16,14 @@ link_directories( ${WEBOTS_LIB_DIR} )
 set(SOURCE_FILES
   overlay_display_supervisor.c
 )
-if(NOT WIN32)
-  add_executable(overlay_display_supervisor ${SOURCE_FILES} )
 
-  target_link_libraries(overlay_display_supervisor Controller)
+add_executable(overlay_display_supervisor ${SOURCE_FILES} )
+
+target_link_libraries(overlay_display_supervisor Controller)
   
-  set_target_properties(overlay_display_supervisor PROPERTIES     
-    FOLDER "Webots Controllers"
-  )
-endif()
+set_target_properties(overlay_display_supervisor PROPERTIES     
+  FOLDER "Webots Controllers"
+)
   
 # Make sure a copy of the target exists     in cozmo_c_controller/
 # no matter where the target is   actually built.
