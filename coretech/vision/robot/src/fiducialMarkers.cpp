@@ -956,6 +956,7 @@ namespace Anki
 
     Anki::Vision::MarkerType LookupMarkerType(const char * name)
     {
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
       const s32 MAX_NAME_LENGTH = 1024;
       s32 nameLength = strlen(name);
 
@@ -1014,7 +1015,7 @@ namespace Anki
           return static_cast<Anki::Vision::MarkerType>(i);
         }
       }
-
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
       return Anki::Vision::MARKER_UNKNOWN;
     }
 
