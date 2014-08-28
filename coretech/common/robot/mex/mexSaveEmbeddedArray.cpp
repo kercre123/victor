@@ -118,7 +118,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   char* filename = mxArrayToString(prhs[1]);
 
-  const Result result = Save(prhs[0], filename, memory);
+  Save(prhs[0], filename, memory);
 
   mxFree(memory.get_buffer());
   mxFree(filename);

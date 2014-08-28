@@ -135,7 +135,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(newArray.IsValid(),
         newArray, "Array<Type>::LoadImage", "Invalid size");
 
-      s32 numBytesAllocated = 0;
+      //s32 numBytesAllocated = 0;
 
       const u8 * restrict pCvImage = cvImage.data;
 
@@ -230,7 +230,8 @@ namespace Anki
 
       const s32 startDiff = static_cast<s32>( reinterpret_cast<size_t>(bufferStart) - reinterpret_cast<size_t>(toSave.get_memoryStack().get_buffer()) );
       const s32 endDiff = toSave.get_memoryStack().get_totalBytes() - toSave.get_memoryStack().get_usedBytes();
-
+#pragma unused (startDiff, endDiff)
+      
       FILE *fp = fopen(filename, "wb");
 
       AnkiConditionalErrorAndReturnValue(fp,
@@ -244,6 +245,9 @@ namespace Anki
 
       const size_t bytesWrittenForFooter = fwrite(&SERIALIZED_BUFFER_FOOTER[0], SERIALIZED_BUFFER_FOOTER_LENGTH, 1, fp);
 
+      // Suppress unused variable warnings:
+#pragma unused (bytesWrittenForTextHeader, bytesWrittenForHeader, bytesWritten, bytesWrittenForFooter)
+      
       fclose(fp);
 
       return RESULT_OK;
