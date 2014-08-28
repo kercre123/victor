@@ -212,14 +212,9 @@ namespace Anki
       // Member Variables
       //
       
-      //bool             isInitialized_;
-      //RobotManager*    robotMgr_;
-      //MessageHandler*  msgHandler_;
-      
       Robot*             robot_;
       
       ObsMarkerListMap_t obsMarkers_;
-      //std::map<Robot*, std::list<Vision::ObservedMarker*> > obsMarkersByRobot_;
       
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
@@ -251,11 +246,7 @@ namespace Anki
       
       static const ObjectsMapByID_t    EmptyObjectMapByID;
       static const ObjectsMapByType_t  EmptyObjectMapByType;
-      
-      // Global counter for assigning IDs to objects as they are created.
-      // This means every object in the world has a unique ObjectID!
-      //ObjectID globalIDCounter;
-      
+            
       // For allowing the calling of VizManager draw functions
       bool enableDraw_;
       
