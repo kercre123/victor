@@ -125,9 +125,9 @@ namespace Anki {
     , _forceReplanOnNextWorldChange(false)
     , _saveImages(false)
     , _camera(robotID)
-    , _poseOrigins(1)
     , _proxLeft(0), _proxFwd(0), _proxRight(0)
-    , _proxLeftBlocked(false), _proxFwdBlocked(false), _proxRightBlocked(false)
+    , _proxFwdBlocked(false), _proxSidesBlocked(false)
+    , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
@@ -178,24 +178,23 @@ namespace Anki {
 
       // Update proximity sensor values
       SetProxSensorData(msg.proxLeft, msg.proxForward, msg.proxRight,
-                        msg.status & IS_PROX_LEFT_BLOCKED,
                         msg.status & IS_PROX_FORWARD_BLOCKED,
-                        msg.status & IS_PROX_RIGHT_BLOCKED);
+                        msg.status & IS_PROX_SIDE_BLOCKED);
 
       if(DISPLAY_PROX_OVERLAY) {
         // printf("displaying: prox L,F,R (%2u, %2u, %2u), blocked: (%d,%d,%d)\n",
         //        msg.proxLeft, msg.proxForward, msg.proxRight,
-        //        msg.status & IS_PROX_LEFT_BLOCKED,
+        //        msg.status & IS_PROX_SIDE_BLOCKED,
         //        msg.status & IS_PROX_FORWARD_BLOCKED,
-        //        msg.status & IS_PROX_RIGHT_BLOCKED);
+        //        msg.status & IS_PROX_SIDE_BLOCKED);
 
         VizManager::getInstance()->SetText(0,   // TODO:(bn) id??
                                            Anki::NamedColors::GREEN,
                                            "prox: (%2u, %2u, %2u) %d%d%d",
-                                           msg.proxLeft, msg.proxForward, msg.proxRight,
-                                           (bool) msg.status & IS_PROX_LEFT_BLOCKED,
-                                           (bool) msg.status & IS_PROX_FORWARD_BLOCKED,
-                                           (bool) msg.status & IS_PROX_RIGHT_BLOCKED);
+                                           _proxLeft, _proxFwd, _proxRight,
+                                           IsProxSidesBlocked(),
+                                           IsProxForwardBlocked(),
+                                           IsProxSidesBlocked());
       }
       
       // Get ID of last/current path that the robot executed

@@ -153,9 +153,8 @@ namespace Anki {
       u8 GetProxLeft() {return _proxLeft;}
       u8 GetProxForward() {return _proxFwd;}
       u8 GetProxRight() {return _proxRight;}
-      bool IsProxLeftBlocked() {return _proxLeftBlocked;}
+      bool IsProxSidesBlocked() {return _proxSidesBlocked;}
       bool IsProxForwardBlocked() {return _proxFwdBlocked;}
-      bool IsProxRightBlocked() {return _proxRightBlocked;}
       
       ///////// Motor commands  ///////////
       
@@ -379,7 +378,7 @@ namespace Anki {
       
       // Proximity sensors
       u8 _proxLeft, _proxFwd, _proxRight;
-      bool _proxLeftBlocked, _proxFwdBlocked, _proxRightBlocked;
+      bool _proxFwdBlocked, _proxSidesBlocked;
       
       // Geometry / Pose
       std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
@@ -462,7 +461,7 @@ namespace Anki {
       void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
       void SetPickedUp(bool t) {_isPickedUp = t;}
       void SetProxSensorData(const u8 left, const u8 forward, const u8 right,
-                             bool leftBlocked, bool fwdBlocked, bool rightBlocked) {_proxLeft=left; _proxFwd=forward; _proxRight=right; _proxLeftBlocked = leftBlocked; _proxFwdBlocked = fwdBlocked; _proxRightBlocked = rightBlocked;}
+                             bool fwdBlocked, bool sidesBlocked) {_proxLeft=left; _proxFwd=forward; _proxRight=right; _proxFwdBlocked = fwdBlocked; _proxSidesBlocked = sidesBlocked;}
 
       
       ///////// Messaging ////////
