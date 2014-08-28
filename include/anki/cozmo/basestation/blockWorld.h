@@ -34,6 +34,19 @@
 
 namespace Anki
 {
+  
+  namespace NamedColors {
+    // Add some BlockWorld-specific named colors:
+    extern const ColorRGBA EXECUTED_PATH              ;
+    extern const ColorRGBA PREDOCKPOSE                ;
+    extern const ColorRGBA PRERAMPPOSE                ;
+    extern const ColorRGBA SELECTED_OBJECT            ;
+    extern const ColorRGBA BLOCK_BOUNDING_QUAD        ;
+    extern const ColorRGBA OBSERVED_QUAD              ;
+    extern const ColorRGBA ROBOT_BOUNDING_QUAD        ;
+    extern const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD ;
+  }
+  
   namespace Cozmo
   {
     // Forward declarations:
@@ -41,23 +54,10 @@ namespace Anki
     class RobotManager;
     class MessageHandler;
     
-    namespace NamedColors {
-      // Add some BlockWorld-specific named colors:
-      extern const ColorRGBA EXECUTED_PATH              ;
-      extern const ColorRGBA PREDOCKPOSE                ;
-      extern const ColorRGBA PRERAMPPOSE                ;
-      extern const ColorRGBA SELECTED_OBJECT            ;
-      extern const ColorRGBA BLOCK_BOUNDING_QUAD        ;
-      extern const ColorRGBA OBSERVED_QUAD              ;
-      extern const ColorRGBA ROBOT_BOUNDING_QUAD        ;
-      extern const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD ;
-    }
-    
     class BlockWorld
     {
     public:
-
-      
+     
       class ObjectFamily : public UniqueEnumeratedValue<int>
       {
       public:
@@ -80,10 +80,8 @@ namespace Anki
       //static const unsigned int MaxRobots = 4;
       //static bool ZAxisPointsUp; // normally true, false for Webots
 
-      BlockWorld();
+      BlockWorld(Robot* robot);
       //static BlockWorld* getInstance();
-      
-      void Init(RobotManager* robotMgr);
       
       // Update the BlockWorld's state by processing all queued ObservedMarkers
       // and updating robots' poses and blocks' poses from them.
@@ -214,9 +212,11 @@ namespace Anki
       // Member Variables
       //
       
-      bool             isInitialized_;
-      RobotManager*    robotMgr_;
+      //bool             isInitialized_;
+      //RobotManager*    robotMgr_;
       //MessageHandler*  msgHandler_;
+      
+      Robot*             robot_;
       
       ObsMarkerListMap_t obsMarkers_;
       //std::map<Robot*, std::list<Vision::ObservedMarker*> > obsMarkersByRobot_;

@@ -21,20 +21,18 @@ namespace Anki {
   namespace Cozmo {
     
     MessageHandler::MessageHandler()
-    : comms_(NULL), robotMgr_(NULL), blockWorld_(NULL)
+    : comms_(NULL), robotMgr_(NULL)
     {
       
     }
     Result MessageHandler::Init(Comms::IComms* comms,
-                                    RobotManager*  robotMgr,
-                                    BlockWorld*    blockWorld)
+                                    RobotManager*  robotMgr)
     {
       Result retVal = RESULT_FAIL;
       
       //TODO: PRINT_NAMED_DEBUG("MessageHandler", "Initializing comms");
       comms_ = comms;
       robotMgr_ = robotMgr;
-      blockWorld_ = blockWorld;
       
       if(comms_) {
         isInitialized_ = comms_->IsInitialized();
@@ -129,14 +127,10 @@ namespace Anki {
     {
       Result retVal = RESULT_FAIL;
       
-      if(blockWorld_ == NULL) {
-        PRINT_NAMED_ERROR("MessageHandler:NullBlockWorld",
-                          "BlockWorld NULL when MessageHandler::ProcessMessage(VisionMarker) called.");
-      }
-      else {
-        CORETECH_ASSERT(robot != NULL);
-        retVal = blockWorld_->QueueObservedMarker(msg, *robot);
-      }
+      CORETECH_ASSERT(robot != NULL);
+      
+      // TODO: Add QueueObservedMarker to Robot class to avoid GetBlockWorld() call
+      retVal = robot->GetBlockWorld().QueueObservedMarker(msg, *robot);
       
       return retVal;
     } // ProcessMessage(MessageVisionMarker)

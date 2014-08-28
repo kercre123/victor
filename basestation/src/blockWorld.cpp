@@ -21,6 +21,18 @@
 
 namespace Anki
 {
+  namespace NamedColors {
+    // Add some BlockWorld-specific named colors:
+    const ColorRGBA EXECUTED_PATH              (1.f, 0.0f, 0.0f, 1.0f);
+    const ColorRGBA PREDOCKPOSE                (1.f, 0.0f, 0.0f, 0.75f);
+    const ColorRGBA PRERAMPPOSE                (0.f, 0.0f, 1.0f, 0.75f);
+    const ColorRGBA SELECTED_OBJECT            (0.f, 1.0f, 0.0f, 0.0f);
+    const ColorRGBA BLOCK_BOUNDING_QUAD        (0.f, 0.0f, 1.0f, 0.75f);
+    const ColorRGBA OBSERVED_QUAD              (1.f, 0.0f, 0.0f, 0.75f);
+    const ColorRGBA ROBOT_BOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
+    const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD (1.f, 0.1f, 1.0f, 0.75f);
+  }
+  
   namespace Cozmo
   {
     
@@ -41,24 +53,13 @@ namespace Anki
       SetValue(UniqueFamilyCounter++);
     }
     
-    namespace NamedColors {
-      // Add some BlockWorld-specific named colors:
-      const ColorRGBA EXECUTED_PATH              (1.f, 0.0f, 0.0f, 1.0f);
-      const ColorRGBA PREDOCKPOSE                (1.f, 0.0f, 0.0f, 0.75f);
-      const ColorRGBA PRERAMPPOSE                (0.f, 0.0f, 1.0f, 0.75f);
-      const ColorRGBA SELECTED_OBJECT            (0.f, 1.0f, 0.0f, 0.0f);
-      const ColorRGBA BLOCK_BOUNDING_QUAD        (0.f, 0.0f, 1.0f, 0.75f);
-      const ColorRGBA OBSERVED_QUAD              (1.f, 0.0f, 0.0f, 0.75f);
-      const ColorRGBA ROBOT_BOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
-      const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD (1.f, 0.1f, 1.0f, 0.75f);
-    }
-    
-    BlockWorld::BlockWorld( )
-    : isInitialized_(false)
-    , robotMgr_(NULL)
+    BlockWorld::BlockWorld(Robot* robot)
+    : robot_(robot)
     , didObjectsChange_(false)
     , enableDraw_(false)
     {
+      CORETECH_ASSERT(robot_ != nullptr);
+      
       // TODO: Create each known block / matpiece from a configuration/definitions file
       
       //////////////////////////////////////////////////////////////////////////
@@ -138,13 +139,6 @@ namespace Anki
     } // ~BlockWorld() Destructor
     
     
-    void BlockWorld::Init(RobotManager* robotMgr)
-    {
-      robotMgr_ = robotMgr;
-      
-      isInitialized_ = true;
-    }
-    
     void CheckForOverlapHelper(const Vision::ObservableObject* objectToMatch,
                                Vision::ObservableObject* objectToCheck,
                                std::vector<Vision::ObservableObject*>& overlappingObjects)
@@ -194,7 +188,7 @@ namespace Anki
     }
     
     
-    
+    /*
     void ClearAllOcclusionMaps(RobotManager* robotMgr)
     {
       for(auto robotID : robotMgr->GetRobotIDList()) {
@@ -204,7 +198,9 @@ namespace Anki
         camera.ClearOccluders();
       }
     } // ClearAllOcclusionMaps()
-
+    */
+    
+    /*
     void AddToOcclusionMaps(const Vision::ObservableObject* object,
                             RobotManager* robotMgr)
     {
@@ -215,17 +211,16 @@ namespace Anki
         
         Vision::Camera& camera = robot->GetCamera();
         
-        /*
-        PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
-                         "Adding object %d as an occluder for robot %d.\n",
-                         object->GetID().GetValue(),
-                         robot->GetID());
-        */
+        //PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
+        //                 "Adding object %d as an occluder for robot %d.\n",
+        //                 object->GetID().GetValue(),
+        //                 robot->GetID());
+        
         camera.AddOccluder(*object);
       }
       
     } // AddToOcclusionMaps()
-    
+    */
     
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                          ObjectsMapByType_t& objectsExisting,
@@ -272,7 +267,18 @@ namespace Anki
                            parentMat==nullptr ? "NO" : parentMat->GetType().GetName().c_str());
           
           // Project this new object into each camera
-          AddToOcclusionMaps(objSeen, robotMgr_);
+          //AddToOcclusionMaps(objSeen, robotMgr_);
+          
+          // Project this new object into the robot's camera:
+          robot_->GetCamera().AddOccluder(*objSeen);
+          /*
+           PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
+           "Adding object %d as an occluder for robot %d.\n",
+           object->GetID().GetValue(),
+           robot->GetID());
+           */
+
+
           
         }
         else {
@@ -308,7 +314,8 @@ namespace Anki
           overlappingObjects[0]->UpdateMarkerObservationTimes(*objSeen);
           
           // Project this existing object into each camera, using its new pose
-          AddToOcclusionMaps(overlappingObjects[0], robotMgr_);
+          //AddToOcclusionMaps(overlappingObjects[0], robotMgr_);
+          robot_->GetCamera().AddOccluder(*overlappingObjects[0]);
           
           // Now that we've merged in objSeen, we can delete it because we
           // will no longer be using it.  Otherwise, we'd leak.
@@ -363,13 +370,13 @@ namespace Anki
       // visibility in each camera
       for(auto unobserved : unobservedObjects) {
 
-        for(auto robotID : robotMgr_->GetRobotIDList()) {
+        //for(auto robotID : robotMgr_->GetRobotIDList()) {
           
-          Robot* robot = robotMgr_->GetRobotByID(robotID);
-          CORETECH_ASSERT(robot != NULL);
+          //Robot* robot = robotMgr_->GetRobotByID(robotID);
+          //CORETECH_ASSERT(robot != NULL);
           
-          if(unobserved.object->IsVisibleFrom(robot->GetCamera(), DEG_TO_RAD(45), 20.f, true) &&
-             (robot->GetDockObject() != unobserved.object->GetID()))  // We expect a docking block to disappear from view!
+          if(unobserved.object->IsVisibleFrom(robot_->GetCamera(), DEG_TO_RAD(45), 20.f, true) &&
+             (robot_->GetDockObject() != unobserved.object->GetID()))  // We expect a docking block to disappear from view!
           {
             // We "should" have seen the object! Delete it or mark it somehow
             CoreTechPrint("Removing object %d, which should have been seen, "
@@ -390,7 +397,7 @@ namespace Anki
             didObjectsChange_ = true;
           }
           
-        } // for each camera
+        //} // for each camera
       } // for each unobserved object
       
     } // CheckForUnobservedObjects()
@@ -866,14 +873,17 @@ namespace Anki
     
     void BlockWorld::Update(uint32_t& numObjectsObserved)
     {
-      CORETECH_ASSERT(isInitialized_);
-      CORETECH_ASSERT(robotMgr_ != NULL);
+      //CORETECH_ASSERT(isInitialized_);
+      //CORETECH_ASSERT(robotMgr_ != NULL);
       
       numObjectsObserved = 0;
       
       // New timestep, new set of occluders.  Get rid of anything registered as
       // an occluder with any robot's camera
-      ClearAllOcclusionMaps(robotMgr_);
+      //ClearAllOcclusionMaps(robotMgr_);
+
+      robot_->GetCamera().ClearOccluders();
+
 
       static TimeStamp_t lastObsMarkerTime = 0;
       
@@ -892,18 +902,18 @@ namespace Anki
         //
         // Localize robots using mat observations
         //
-        for(auto robotID : robotMgr_->GetRobotIDList())
-        {
-          Robot* robot = robotMgr_->GetRobotByID(robotID);
-          
-          CORETECH_ASSERT(robot != NULL);
+        //for(auto robotID : robotMgr_->GetRobotIDList())
+        //{
+        //  Robot* robot = robotMgr_->GetRobotByID(robotID);
+        //
+        //  CORETECH_ASSERT(robot != NULL);
       
           // Remove observed markers whose historical poses have become invalid.
           // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
           // Increasing history time window would fix this, but it's not really a solution.
           for(auto poseKeyMarkerPair = currentObsMarkers.begin(); poseKeyMarkerPair != currentObsMarkers.end();) {
-            if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == robot->GetCamera().GetID()) &&
-                !robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
+            if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == robot_->GetCamera().GetID()) &&
+                !robot_->IsValidPoseKey(poseKeyMarkerPair->first)) {
               PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d\n", poseKeyMarkerPair->first);
               poseKeyMarkerPair = currentObsMarkers.erase(poseKeyMarkerPair++);
             } else {
@@ -912,9 +922,9 @@ namespace Anki
           }
         
           // Only update robot's poses using VisionMarkers while not on a ramp
-          if(!robot->IsOnRamp()) {
+          if(!robot_->IsOnRamp()) {
             // Note that this removes markers from the list that it uses
-            UpdateRobotPose(robot, currentObsMarkers, atTimestamp);
+            UpdateRobotPose(robot_, currentObsMarkers, atTimestamp);
           }
         
 
@@ -923,7 +933,7 @@ namespace Anki
           // Find any observed blocks from the remaining markers
           //
           // Note that this removes markers from the list that it uses
-          numObjectsObserved += UpdateObjectPoses(robot,
+          numObjectsObserved += UpdateObjectPoses(robot_,
                                                   _objectLibrary[ObjectFamily::BLOCKS], currentObsMarkers,
                                                   _existingObjects[ObjectFamily::BLOCKS], atTimestamp);
           
@@ -931,12 +941,12 @@ namespace Anki
           // Find any observed ramps from the remaining markers
           //
           // Note that this removes markers from the list that it uses
-          numObjectsObserved += UpdateObjectPoses(robot,
+          numObjectsObserved += UpdateObjectPoses(robot_,
                                                   _objectLibrary[ObjectFamily::RAMPS], currentObsMarkers,
                                                   _existingObjects[ObjectFamily::RAMPS], atTimestamp);
           
           
-        } // FOR each robotID
+        //} // FOR each robotID
         
 
         
@@ -981,15 +991,15 @@ namespace Anki
               bool didErase = false;
               if(object->GetLastObservedTime() < lastObsMarkerTime && !object->IsBeingCarried())
               {
-                for(auto robotID : robotMgr_->GetRobotIDList())
-                {
-                  Robot* robot = robotMgr_->GetRobotByID(robotID);
-                  CORETECH_ASSERT(robot != NULL);
+                //for(auto robotID : robotMgr_->GetRobotIDList())
+                //{
+                //  Robot* robot = robotMgr_->GetRobotByID(robotID);
+                //  CORETECH_ASSERT(robot != NULL);
                   
                   // Don't worry about collision while picking or placing since we
                   // are trying to get close to blocks in these modes.
                   // TODO: specify whether we are picking/placing _this_ block
-                  if(!robot->IsPickingOrPlacing())
+                  if(!robot_->IsPickingOrPlacing())
                   {
                     // Check block's bounding box in same coordinates as this robot to
                     // see if it intersects with the robot's bounding box. Also check to see
@@ -997,7 +1007,7 @@ namespace Anki
                     // entirely if the block isn't in the same coordinate tree as the
                     // robot.
                     Pose3d objectPoseWrtRobotOrigin;
-                    if(object->GetPose().GetWithRespectTo(robot->GetPose().FindOrigin(), objectPoseWrtRobotOrigin) == true)
+                    if(object->GetPose().GetWithRespectTo(robot_->GetPose().FindOrigin(), objectPoseWrtRobotOrigin) == true)
                     {
                       const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
                       const f32    objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
@@ -1006,7 +1016,7 @@ namespace Anki
                        const f32    blockTop    = objectHeight + blockSize;
                        const f32    blockBottom = objectHeight - blockSize;
                        */
-                      const f32 robotBottom = robot->GetPose().GetTranslation().z();
+                      const f32 robotBottom = robot_->GetPose().GetTranslation().z();
                       const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
                       
                       // TODO: Better check for being in the same plane that takes the
@@ -1020,12 +1030,12 @@ namespace Anki
                        ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
                        */
                       
-                      const bool bboxIntersects   = objectBBox.Intersects(robot->GetBoundingQuadXY());
+                      const bool bboxIntersects   = objectBBox.Intersects(robot_->GetBoundingQuadXY());
                       
                       if( inSamePlane && bboxIntersects )
                       {
                         CoreTechPrint("Removing object %d, which intersects robot %d's bounding quad.\n",
-                                      object->GetID().GetValue(), robot->GetID());
+                                      object->GetID().GetValue(), robot_->GetID());
                         
                          // Erase the vizualized block and its projected quad
                          //VizManager::getInstance()->EraseCuboid(object->GetID());
@@ -1039,7 +1049,7 @@ namespace Anki
                       } // if quads intersect
                     } // if we got block pose wrt robot origin
                   } // if robot is not picking or placing
-                } // for each robot
+                //} // for each robot
               } // if block was not observed
               
               if(!didErase) {
@@ -1058,12 +1068,6 @@ namespace Anki
      
       // Toss any remaining markers?
       ClearAllObservedMarkers();
-      
-      
-      // Let the robot manager do whatever it's gotta do to update the
-      // robots in the world.
-      robotMgr_->UpdateAllRobots();
-
       
     } // Update()
     
@@ -1216,17 +1220,17 @@ namespace Anki
       } else {
         // Check to see if this object is the object any robot is localized to.
         // If so, that robot needs to be delocalized:
-        for(auto & robotID : robotMgr_->GetRobotIDList()) {
-          Robot* robot = robotMgr_->GetRobotByID(robotID);
-          CORETECH_ASSERT(robot != nullptr);
-          if(robot->GetLocalizedTo() == object->GetID()) {
+        //for(auto & robotID : robotMgr_->GetRobotIDList()) {
+        //  Robot* robot = robotMgr_->GetRobotByID(robotID);
+        //  CORETECH_ASSERT(robot != nullptr);
+          if(robot_->GetLocalizedTo() == object->GetID()) {
             PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.DelocalizingRobot",
                              "Delocalizing robot %d, which is currently localized to %s "
                              "object with ID=%d, which is about to be deleted.\n",
-                             robot->GetID(), object->GetType().GetName().c_str(), object->GetID().GetValue());
-            robot->Delocalize();
+                             robot_->GetID(), object->GetType().GetName().c_str(), object->GetID().GetValue());
+            robot_->Delocalize();
           }
-        }
+        //}
         
         // NOTE: The object should erase its own visualization upon destruction
         delete object;

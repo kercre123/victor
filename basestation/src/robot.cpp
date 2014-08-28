@@ -19,6 +19,7 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/utils/fileManagement.h"
 
@@ -51,18 +52,17 @@ namespace Anki {
       
     }
     
-    Result RobotManager::Init(IMessageHandler* msgHandler, BlockWorld* blockWorld, IPathPlanner* pathPlanner)
+    Result RobotManager::Init(IMessageHandler* msgHandler)
     {
       _msgHandler  = msgHandler;
-      _blockWorld  = blockWorld;
-      _pathPlanner = pathPlanner;
+      //_pathPlanner = pathPlanner;
       
       return RESULT_OK;
     }
     
     void RobotManager::AddRobot(const RobotID_t withID)
     {
-      _robots[withID] = new Robot(withID, _msgHandler, _blockWorld, _pathPlanner);
+      _robots[withID] = new Robot(withID, _msgHandler);
       _IDs.push_back(withID);
     }
     
@@ -112,11 +112,11 @@ namespace Anki {
     };
     
     
-    Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner)
+    Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler)
     : _ID(robotID)
     , _msgHandler(msgHandler)
-    , _world(world)
-    , _longPathPlanner(pathPlanner)
+    , _blockWorld(this)
+    , _behaviorMgr(this)
     , _currPathSegment(-1)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEG_TO_RAD(10))
@@ -152,8 +152,20 @@ namespace Anki {
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
       
+      // Read planner motion primitives
+      // TODO: Use different motions primitives depending on the type/personality of this robot
+      Json::Value mprims;
+      const std::string subPath("coretech/planning/matlab/cozmo_mprim.json");
+      const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+      
+      Json::Reader reader;
+      std::ifstream jsonFile(jsonFilename);
+      reader.parse(jsonFile, mprims);
+      jsonFile.close();
+      
       SetHeadAngle(_currentHeadAngle);
       pdo_ = new PathDolerOuter(msgHandler, robotID);
+      _longPathPlanner  = new LatticePlanner(&_blockWorld, mprims);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
       
@@ -164,8 +176,12 @@ namespace Anki {
       delete pdo_;
       pdo_ = nullptr;
 
+      delete _longPathPlanner;
+      _longPathPlanner = nullptr;
+      
       delete _shortPathPlanner;
       _shortPathPlanner = nullptr;
+      
       _selectedPathPlanner = nullptr;
     }
     
@@ -261,7 +277,7 @@ namespace Anki {
         
         const f32 distanceTraveled = (Point2f(msg.pose_x, msg.pose_y) - _rampStartPosition).Length();
         
-        Ramp* ramp = dynamic_cast<Ramp*>(_world->GetObjectByIDandFamily(_dockObjectID, BlockWorld::ObjectFamily::RAMPS));
+        Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_dockObjectID, BlockWorld::ObjectFamily::RAMPS));
         if(ramp == nullptr) {
           PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
                             "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.\n",
@@ -360,6 +376,22 @@ namespace Anki {
     
     Result Robot::Update(void)
     {
+      ////////// Update the robot's blockworld //////////
+      
+      // Update the world (force robots to process their messages)
+      uint32_t numBlocksObserved = 0;
+      _blockWorld.Update(numBlocksObserved);
+      
+      // Update the behavior manager.
+      // TODO: This object encompasses, for the time-being, what some higher level
+      // module(s) would do.  e.g. Some combination of game state, build planner,
+      // personality planner, etc.
+      _behaviorMgr.Update();
+      
+      
+      
+      //////// Update Robot's State Machine /////////////
+      
       static bool wasTraversingPath = false;
       
       switch(_state)
@@ -377,7 +409,7 @@ namespace Anki {
             if(IsTraversingPath())
             {
               // If the robot is traversing a path, consider replanning it
-              if(_world->DidBlocksChange())
+              if(_blockWorld.DidBlocksChange())
               {
                 Planning::Path newPath;
                 switch(_selectedPathPlanner->GetPlan(newPath, GetPose(), _forceReplanOnNextWorldChange))
@@ -482,7 +514,7 @@ namespace Anki {
             // For now, just docking to the marker no matter where it is in the image.
             
             // Make sure the object we were docking with still exists in the world
-            ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_dockObjectID));
+            ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_dockObjectID));
             if(dockObject == nullptr) {
               PRINT_NAMED_ERROR("Robot.Update.ActionObjectNotFound",
                                 "Action object with ID=%d no longer exists in the world. Returning to IDLE state.\n",
@@ -632,6 +664,48 @@ namespace Anki {
           
       } // switch(state_)
       
+      
+      
+      /////////// Update visualization ////////////
+      
+      // Draw observed markers, but only if images are being streamed
+      _blockWorld.DrawObsMarkers();
+      
+      // Draw All Objects by calling their Visualize() methods.
+      _blockWorld.DrawAllObjects();
+      
+      // Always draw robot w.r.t. the origin, not in its current frame
+      Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToOrigin();
+      
+      // Triangle pose marker
+      VizManager::getInstance()->DrawRobot(GetID(), robotPoseWrtOrigin);
+      
+      // Full Webots CozmoBot model
+      VizManager::getInstance()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
+      
+      // Robot bounding box
+      using namespace Quad;
+      Quad2f quadOnGround2d = GetBoundingQuadXY(robotPoseWrtOrigin);
+      const f32 zHeight = robotPoseWrtOrigin.GetTranslation().z() + 0.5f;
+      Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     zHeight),
+                            Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  zHeight),
+                            Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    zHeight),
+                            Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), zHeight));
+      
+      static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
+      VizManager::getInstance()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
+      
+      if(IsCarryingObject()) {
+        ActionableObject* carryBlock = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(GetCarryingObject()));
+        if(carryBlock == nullptr) {
+          PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist",
+                            "Robot %d is marked as carrying block %d but that block no longer exists.\n",
+                            GetID(), GetCarryingObject().GetValue());
+          UnSetCarryingObject();
+        } else {
+          carryBlock->Visualize();
+        }
+      }
       
       // Visualize path if robot has just started traversing it.
       // Clear the path when it has stopped.
@@ -1203,7 +1277,7 @@ namespace Anki {
       
       // We are either transition onto or off of a ramp
       
-      Ramp* ramp = dynamic_cast<Ramp*>(_world->GetObjectByIDandFamily(_dockObjectID, BlockWorld::ObjectFamily::RAMPS));
+      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_dockObjectID, BlockWorld::ObjectFamily::RAMPS));
       if(ramp == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetOnRamp.NoRampWithID",
                           "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world.\n",
@@ -1277,7 +1351,7 @@ namespace Anki {
     
     Result Robot::ExecuteTraversalSequence(ObjectID objectID)
     {
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_world->GetObjectByID(objectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecuteTraversalSequence.ObjectNotFound",
                           "Could not get object with ID = %d from world.\n", objectID.GetValue());
@@ -1383,7 +1457,7 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_world->GetObjectByID(objectIDtoDockWith));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectIDtoDockWith));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.DockObjectDoesNotExist",
                           "Robot %d asked to dock with Object ID=%d, but it does not exist.",
@@ -1479,7 +1553,7 @@ namespace Anki {
       }
       
       // Grab a pointer to the block we are supposedly carrying
-      ActionableObject* carryingObject = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_carryingObjectID));
+      ActionableObject* carryingObject = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_carryingObjectID));
       if(carryingObject == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.CarryObjectDoesNotExist",
                           "Robot %d thinks it is carrying a block with ID=%d, but that "
@@ -1523,7 +1597,7 @@ namespace Anki {
       }
       
       // Grab a pointer to the block we are supposedly carrying
-      ActionableObject* carryingObject = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_carryingObjectID));
+      ActionableObject* carryingObject = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_carryingObjectID));
       if(carryingObject == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.CarryObjectDoesNotExist",
                           "Robot %d thinks it is carrying an object with ID=%d, but that "
@@ -1644,7 +1718,7 @@ namespace Anki {
                                  const u16 image_pixel_y,
                                  const u8 pixel_radius)
     {
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_world->GetObjectByID(objectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.DockWithObject.ObjectDoesNotExist",
                           "Object with ID=%d no longer exists for docking.\n", objectID.GetValue());
@@ -1694,7 +1768,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_dockObjectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_dockObjectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
                           "Dock object with ID=%d no longer exists for picking up.\n", _dockObjectID.GetValue());
@@ -1738,7 +1812,7 @@ namespace Anki {
       // We should _not_ still see a object with the
       // same type as the one we were supposed to pick up in that
       // block's original position because we should now be carrying it.
-      Vision::ObservableObject* carryObject = _world->GetObjectByID(_carryingObjectID);
+      Vision::ObservableObject* carryObject = _blockWorld.GetObjectByID(_carryingObjectID);
       if(carryObject == nullptr) {
         PRINT_NAMED_ERROR("Robot.VerifyObjectPickup.CarryObjectNoLongerExists",
                           "Object %d we were carrying no longer exists in the world.\n",
@@ -1746,7 +1820,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      const BlockWorld::ObjectsMapByID_t& objectsWithType = _world->GetExistingObjectsByType(carryObject->GetType());
+      const BlockWorld::ObjectsMapByID_t& objectsWithType = _blockWorld.GetExistingObjectsByType(carryObject->GetType());
       Pose3d P_diff;
       bool objectInOriginalPoseFound = false;
       for(auto object : objectsWithType) {
@@ -1764,7 +1838,7 @@ namespace Anki {
       if(objectInOriginalPoseFound)
       {
         // Must not actually be carrying the object I thought I was!
-        _world->ClearObject(_carryingObjectID);
+        _blockWorld.ClearObject(_carryingObjectID);
         _carryingObjectID.UnSet();
         PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
       } else {
@@ -1788,7 +1862,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_world->GetObjectByID(_carryingObjectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_carryingObjectID));
       
       if(object == nullptr)
       {
@@ -1857,7 +1931,7 @@ namespace Anki {
       // one we were carrying, in the place we think we left it when
       // we placed it.
       // TODO: check to see it ended up in the right place?
-      Vision::ObservableObject* object = _world->GetObjectByID(_carryingObjectID);
+      Vision::ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.VerifyObjectPlacement.CarryObjectNoLongerExists",
                           "Object %d we were carrying no longer exists in the world.\n",
@@ -1890,6 +1964,18 @@ namespace Anki {
     Result Robot::SetHeadlight(u8 intensity)
     {
       return SendHeadlight(intensity);
+    }
+    
+    
+    void Robot::StartBehaviorMode(BehaviorManager::Mode mode)
+    {
+      _behaviorMgr.StartMode(mode);
+    }
+    
+    
+    void Robot::SelectNextObjectOfInterest()
+    {
+      _behaviorMgr.SelectNextObjectOfInterest();
     }
     
     // ============ Messaging ================

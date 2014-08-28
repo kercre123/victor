@@ -21,14 +21,16 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
+
+#include "behaviorManager.h"
 
 namespace Anki {
   namespace Cozmo {
     
     // Forward declarations:
-    class BlockWorld;
     class IMessageHandler;
     class IPathPlanner;
     class MatPiece;
@@ -51,7 +53,7 @@ namespace Anki {
       
       static const std::map<State, std::string> StateNames;
       
-      Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner);
+      Robot(const RobotID_t robotID, IMessageHandler* msgHandler);
       ~Robot();
       
       Result Update();
@@ -59,6 +61,8 @@ namespace Anki {
       // Accessors
       const RobotID_t        GetID()           const;
       const Pose3d&          GetPose()         const;
+      
+      BlockWorld&            GetBlockWorld()   {return _blockWorld;}
       
       bool                   IsLocalized()     const {return _localizedToID.IsSet();}
       const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
@@ -237,6 +241,12 @@ namespace Anki {
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
       
+      // Start a Behavior in BehaviorManager
+      void StartBehaviorMode(BehaviorManager::Mode mode);
+      
+      // Select next object of interst for the behavior manager
+      void SelectNextObjectOfInterest();
+      
       ///////// Messaging ////////
       // TODO: Most of these send functions should be private and wrapped in
       // relevant state modifying functions. e.g. SendStopAllMotors() should be
@@ -341,7 +351,10 @@ namespace Anki {
       IMessageHandler* _msgHandler;
       
       // A reference to the BlockWorld the robot lives in
-      BlockWorld*      _world;
+      //BlockWorld*      _world;
+      BlockWorld       _blockWorld;
+      
+      BehaviorManager  _behaviorMgr;
       
       // Path Following. There are two planners, only one of which can
       // be selected at a time
@@ -571,7 +584,7 @@ namespace Anki {
 
       // Sets pointers to other managers
       // TODO: Change these to interface pointers so they can't be NULL
-      Result Init(IMessageHandler* msgHandler, BlockWorld* blockWorld, IPathPlanner* pathPlanner);
+      Result Init(IMessageHandler* msgHandler);
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -596,8 +609,8 @@ namespace Anki {
     protected:
       
       IMessageHandler* _msgHandler;
-      BlockWorld*      _blockWorld;
-      IPathPlanner*    _pathPlanner;
+      //BlockWorld*      _blockWorld;
+      //IPathPlanner*    _pathPlanner;
       
       std::map<RobotID_t,Robot*> _robots;
       std::vector<RobotID_t>     _IDs;

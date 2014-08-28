@@ -29,21 +29,17 @@ namespace Anki {
   namespace Cozmo {
 
     UiMessageHandler::UiMessageHandler()
-    : comms_(NULL), robotMgr_(NULL), blockWorld_(NULL), isInitialized_(false)
+    : comms_(NULL), robotMgr_(NULL), isInitialized_(false)
     {
       
     }
     Result UiMessageHandler::Init(Comms::IComms*   comms,
-                                  RobotManager*    robotMgr,
-                                  BlockWorld*      blockWorld,
-                                  BehaviorManager* behaviorMgr)
+                                  RobotManager*    robotMgr)
     {
       Result retVal = RESULT_FAIL;
       
       comms_ = comms;
       robotMgr_ = robotMgr;
-      blockWorld_ = blockWorld;
-      behaviorMgr_ = behaviorMgr;
       
       isInitialized_ = true;
       retVal = RESULT_OK;
@@ -180,9 +176,9 @@ namespace Anki {
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ImageRequest const& msg)
     {
       if (msg.mode == ISM_OFF) {
-        blockWorld_->EnableDraw(false);
+        robot->GetBlockWorld().EnableDraw(false);
       } else if (msg.mode == ISM_STREAM) {
-        blockWorld_->EnableDraw(true);
+        robot->GetBlockWorld().EnableDraw(true);
       }
 
       return robot->SendImageRequest((ImageSendMode_t)msg.mode);
@@ -227,20 +223,20 @@ namespace Anki {
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ClearAllBlocks const& msg)
     {
       VizManager::getInstance()->EraseAllVizObjects();
-      blockWorld_->ClearObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
-      blockWorld_->ClearObjectsByFamily(BlockWorld::ObjectFamily::RAMPS);
+      robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
+      robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::RAMPS);
       return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SelectNextBlock const& msg)
     {
-      behaviorMgr_->SelectNextObjectOfInterest();
+      robot->SelectNextObjectOfInterest();
       return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ExecuteBehavior const& msg)
     {
-      behaviorMgr_->StartMode((BehaviorMode)msg.behaviorMode);
+      robot->StartBehaviorMode(static_cast<BehaviorManager::Mode>(msg.behaviorMode));
       return RESULT_OK;
     }
 
@@ -254,7 +250,7 @@ namespace Anki {
     {
       if (robot->IsCarryingObject()) {
         Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
-        Quad2f objectFootprint = blockWorld_->GetObjectByID(robot->GetCarryingObject())->GetBoundingQuadXY(targetPose);
+        Quad2f objectFootprint = robot->GetBlockWorld().GetObjectByID(robot->GetCarryingObject())->GetBoundingQuadXY(targetPose);
         VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
       }
 

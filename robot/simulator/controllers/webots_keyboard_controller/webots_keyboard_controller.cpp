@@ -59,7 +59,7 @@ namespace Anki {
           ,{0.8, 0.1, 0.1} // Place object color
         };
         
-        BehaviorMode behaviorMode_ = BM_None;
+        BehaviorManager::Mode behaviorMode_ = BehaviorManager::None;
         
         // Socket connection to basestation
         TcpClient bsClient;
@@ -86,7 +86,7 @@ namespace Anki {
       void SendExecuteTestPlan();
       void SendClearAllBlocks();
       void SendSelectNextBlock();
-      void SendExecuteBehavior(BehaviorMode mode);
+      void SendExecuteBehavior(BehaviorManager::Mode mode);
       void SendAbortPath();
       void SendDrawPoseMarker(const Pose3d& p);
       void SendErasePoseMarker();
@@ -427,20 +427,20 @@ namespace Anki {
             }
             case CKEY_DOCK_TO_BLOCK:
             {
-              SendExecuteBehavior(BM_PickAndPlace);
+              SendExecuteBehavior(BehaviorManager::PickAndPlace);
               break;
             }
             case CKEY_USE_RAMP:
             {
-              SendExecuteBehavior(BM_TraverseObject);
+              SendExecuteBehavior(BehaviorManager::TraverseObject);
               break;
             }
             case CKEY_START_DICE_DEMO:
             {
-              if (behaviorMode_ == BM_June2014DiceDemo) {
-                SendExecuteBehavior(BM_None);
+              if (behaviorMode_ == BehaviorManager::June2014DiceDemo) {
+                SendExecuteBehavior(BehaviorManager::None);
               } else {
-                SendExecuteBehavior(BM_June2014DiceDemo);
+                SendExecuteBehavior(BehaviorManager::June2014DiceDemo);
               }
               break;
             }
@@ -718,7 +718,7 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendExecuteBehavior(BehaviorMode mode)
+      void SendExecuteBehavior(BehaviorManager::Mode mode)
       {
         MessageU2G_ExecuteBehavior m;
         m.behaviorMode = mode;

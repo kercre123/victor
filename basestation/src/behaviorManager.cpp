@@ -35,10 +35,9 @@
 namespace Anki {
   namespace Cozmo {
         
-    BehaviorManager::BehaviorManager()
-    : robotMgr_(nullptr)
-    , world_(nullptr)
-    , mode_(BM_None)
+    BehaviorManager::BehaviorManager(Robot* robot)
+    : mode_(None)
+    , robot_(robot)
     , distThresh_mm_(20.f)
     , angThresh_(DEG_TO_RAD(10))
 //    , objectToPickUp_(Block::UNKNOWN_BLOCK_TYPE)
@@ -47,26 +46,20 @@ namespace Anki {
       Reset();
     }
 
-    void BehaviorManager::Init(RobotManager* robotMgr, BlockWorld* world)
-    {
-      robotMgr_ = robotMgr;
-      world_ = world;
-    }
-    
-    void BehaviorManager::StartMode(BehaviorMode mode)
+    void BehaviorManager::StartMode(Mode mode)
     {
       Reset();
       mode_ = mode;
       switch(mode) {
-        case BM_None:
+        case None:
           CoreTechPrint("Starting NONE behavior\n");
           break;
-        case BM_PickAndPlace:
+        case PickAndPlace:
           CoreTechPrint("Starting PickAndPlace behavior\n");
           nextState_ = WAITING_FOR_DOCK_BLOCK;
           updateFcn_ = &BehaviorManager::Update_PickAndPlaceBlock;
           break;
-        case BM_June2014DiceDemo:
+        case June2014DiceDemo:
           CoreTechPrint("Starting June demo behavior\n");
           state_     = WAITING_FOR_ROBOT;
           nextState_ = DRIVE_TO_START;
@@ -75,7 +68,7 @@ namespace Anki {
           timesIdle_ = 0;
           SoundManager::getInstance()->Play(SOUND_DEMO_START);
           break;
-        case BM_TraverseObject:
+        case TraverseObject:
           CoreTechPrint("Starting TraverseObject behavior\n");
           nextState_ = WAITING_FOR_DOCK_BLOCK;
           updateFcn_ = &BehaviorManager::Update_TraverseObject;
@@ -89,7 +82,7 @@ namespace Anki {
       
     } // StartMode()
     
-    BehaviorMode BehaviorManager::GetMode() const
+    BehaviorManager::Mode BehaviorManager::GetMode() const
     {
       return mode_;
     }
@@ -117,7 +110,7 @@ namespace Anki {
       // Unselect current object of interest, if it still exists (Note that it may just get
       // reselected here, but I don't think we care.)
       // Mark new object of interest as selected so it will draw differently
-      ActionableObject* object = dynamic_cast<ActionableObject*>(world_->GetObjectByID(objectIDofInterest_));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(robot_->GetBlockWorld().GetObjectByID(objectIDofInterest_));
       if(object != nullptr) {
         object->SetSelected(false);
       }
@@ -126,7 +119,7 @@ namespace Anki {
       bool newObjectOfInterestSet = false;
       
       // Iterate through all the objects
-      auto const & allObjects = world_->GetAllExistingObjects();
+      auto const & allObjects = robot_->GetBlockWorld().GetAllExistingObjects();
       for(auto const & objectsByFamily : allObjects) {
           for (auto const & objectsByType : objectsByFamily.second) {
             
@@ -200,7 +193,7 @@ namespace Anki {
       }
       
       // Mark new object of interest as selected so it will draw differently
-      object = dynamic_cast<ActionableObject*>(world_->GetObjectByID(objectIDofInterest_));
+      object = dynamic_cast<ActionableObject*>(robot_->GetBlockWorld().GetObjectByID(objectIDofInterest_));
       if (object != nullptr) {
       object->SetSelected(true);
       PRINT_INFO("Object of interest: ID = %d\n", objectIDofInterest_.GetValue());
@@ -216,11 +209,9 @@ namespace Anki {
       switch(state_) {
         case WAITING_FOR_ROBOT:
         {
-          const std::vector<RobotID_t> &robotList = robotMgr_->GetRobotIDList();
-          if (!robotList.empty()) {
-            robot_ = robotMgr_->GetRobotByID(robotList[0]);
-            state_ = nextState_;
-          }
+          // Nothing to do here anymore: we should not be "waiting" on a robot
+          // because BehaviorManager is now part of a robot!
+          state_ = nextState_;
           break;
         }
         default:
@@ -252,7 +243,7 @@ namespace Anki {
       // Params for determining whether the predock pose has been reached
       
       robot_->ExecuteDockingSequence(objectIDofInterest_);
-      StartMode(BM_None);
+      StartMode(None);
       
       /*
       switch(state_) {
@@ -268,7 +259,7 @@ namespace Anki {
           
           
           // Get block object
-          DockableObject* object = dynamic_cast<DockableObject*>(world_->GetObjectByID(objectIDofInterest_));
+          DockableObject* object = dynamic_cast<DockableObject*>(robot_->GetBlockWorld().GetObjectByID(objectIDofInterest_));
           if (object == nullptr) {
             break;
           }
@@ -312,7 +303,7 @@ namespace Anki {
     void BehaviorManager::Update_TraverseObject()
     {
       robot_->ExecuteTraversalSequence(objectIDofInterest_);
-      StartMode(BM_None);
+      StartMode(None);
     }
     
     /********************************************************
@@ -353,7 +344,7 @@ namespace Anki {
           
         case WAITING_FOR_DICE_TO_DISAPPEAR:
         {
-          const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingObjectsByType(Block::Type::DICE);
+          const BlockWorld::ObjectsMapByID_t& diceBlocks = robot_->GetBlockWorld().GetExistingObjectsByType(Block::Type::DICE);
           
           if(diceBlocks.empty()) {
             
@@ -364,7 +355,7 @@ namespace Anki {
               state_ = WAITING_TO_SEE_DICE;
             }
           } else {
-            world_->ClearObjectsByType(Block::Type::DICE);
+            robot_->GetBlockWorld().ClearObjectsByType(Block::Type::DICE);
             diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
             if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
               // Keep clearing blocks until we don't see them anymore
@@ -392,14 +383,14 @@ namespace Anki {
           // Wait for robot to be IDLE
           if(robot_->GetState() == Robot::IDLE)
           {
-            const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingObjectsByType(Block::Type::DICE);
+            const BlockWorld::ObjectsMapByID_t& diceBlocks = robot_->GetBlockWorld().GetExistingObjectsByType(Block::Type::DICE);
             if(!diceBlocks.empty()) {
               
               if(diceBlocks.size() > 1) {
                 // Multiple dice blocks in the world, keep deleting them all
                 // until we only see one
                 CoreTechPrint("More than one dice block found!\n");
-                world_->ClearObjectsByType(Block::Type::DICE);
+                robot_->GetBlockWorld().ClearObjectsByType(Block::Type::DICE);
                 
               } else {
                 
@@ -434,7 +425,7 @@ namespace Anki {
                   diceBlock->GetObservedMarkers(diceMarkers, robot_->GetLastMsgTimestamp() - 2000);
                   if (diceMarkers.empty()) {
                     CoreTechPrint("Haven't see dice marker for a while. Deleting dice.");
-                    world_->ClearObjectsByType(Block::Type::DICE);
+                    robot_->GetBlockWorld().ClearObjectsByType(Block::Type::DICE);
                     break;
                   }
                 }
@@ -486,7 +477,7 @@ namespace Anki {
                       PRINT_NAMED_ERROR("BehaviorManager.UnknownDiceMarker",
                                         "Found unexpected marker on dice: %s!",
                                         Vision::MarkerTypeStrings[topMarker->GetCode()]);
-                      StartMode(BM_None);
+                      StartMode(None);
                       return;
                   } // switch(topMarker->GetCode())
                   
@@ -704,7 +695,7 @@ namespace Anki {
         } // case BACKING_UP
         case GOTO_EXPLORATION_POSE:
         {
-          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectTypeOfInterest_);
+          const BlockWorld::ObjectsMapByID_t& blocks = robot_->GetBlockWorld().GetExistingObjectsByType(objectTypeOfInterest_);
           if (robot_->GetState() == Robot::IDLE || !blocks.empty()) {
             state_ = START_EXPLORING_TURN;
           }
@@ -724,7 +715,7 @@ namespace Anki {
             
             
             // If we already know where the blockOfInterest is, then go straight to it
-            const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectTypeOfInterest_);
+            const BlockWorld::ObjectsMapByID_t& blocks = robot_->GetBlockWorld().GetExistingObjectsByType(objectTypeOfInterest_);
             if(blocks.empty()) {
               // Compute desired pose at mat center
               Pose3d robotPose = robot_->GetPose();
@@ -766,7 +757,7 @@ namespace Anki {
         {
           // If we've spotted the block we're looking for, stop exploring, and
           // execute a path to that block
-          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectTypeOfInterest_);
+          const BlockWorld::ObjectsMapByID_t& blocks = robot_->GetBlockWorld().GetExistingObjectsByType(objectTypeOfInterest_);
           if(!blocks.empty()) {
             // Dock with the first block of the right type that we see
             // TODO: choose the closest?
@@ -807,7 +798,7 @@ namespace Anki {
           if(robot_->GetState() == Robot::IDLE)
           {
             const bool donePickingUp = robot_->IsCarryingObject() &&
-                                       world_->GetObjectByID(robot_->GetCarryingObject())->GetType() == objectToPickUp_;
+                                       robot_->GetBlockWorld().GetObjectByID(robot_->GetCarryingObject())->GetType() == objectToPickUp_;
             if(donePickingUp) {
               PRINT_INFO("Picked up block %d successfully! Going back to exploring for block to place on.\n",
                          robot_->GetCarryingObject().GetValue());
@@ -920,8 +911,8 @@ namespace Anki {
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
             robot_->SendPlayAnimation(ANIM_IDLE);
-            world_->ClearAllExistingObjects();
-            StartMode(BM_June2014DiceDemo);
+            robot_->GetBlockWorld().ClearAllExistingObjects();
+            StartMode(June2014DiceDemo);
           }
           break;
         }
@@ -929,7 +920,7 @@ namespace Anki {
         {
           PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState",
                             "Transitioned to unknown state %d!\n", state_);
-          StartMode(BM_None);
+          StartMode(None);
           return;
         }
       } // switch(state_)

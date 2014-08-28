@@ -29,22 +29,22 @@ namespace Anki {
     class Robot;
     class Block;
     
-    typedef enum {
-      BM_None,
-      BM_PickAndPlace,
-      BM_June2014DiceDemo,
-      BM_TraverseObject // for ramps or bridges
-    } BehaviorMode;
     
     class BehaviorManager
     {
     public:
-      BehaviorManager();
       
-      void Init(RobotManager* robotMgr, BlockWorld* world);
+      typedef enum {
+        None,
+        PickAndPlace,
+        June2014DiceDemo,
+        TraverseObject // for ramps or bridges
+      } Mode;
       
-      void StartMode(BehaviorMode mode);
-      BehaviorMode GetMode() const;
+      BehaviorManager(Robot* robot);
+      
+      void StartMode(Mode mode);
+      Mode GetMode() const;
       
       void Update();
 
@@ -84,13 +84,10 @@ namespace Anki {
         
       } BehaviorState;
       
-      RobotManager* robotMgr_;
-      BlockWorld* world_;
-      
       BehaviorState state_, nextState_, problemState_;
       void (BehaviorManager::*updateFcn_)();
 
-      BehaviorMode mode_;
+      Mode mode_;
       
       Robot* robot_;
 
