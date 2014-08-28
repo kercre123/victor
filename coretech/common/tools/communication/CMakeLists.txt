@@ -1,75 +1,79 @@
 # coretech/common/robot/tools/CMakeLists.txt
 
-# save buffered video
+if(LINUX==0)
 
-file(GLOB SOURCE_FILES_SAVE_VIDEO
-  run_pc_saveVideo.cpp
-)
+  # save buffered video
 
-file(GLOB SOURCE_FILES_DISPLAY_VIDEO
-  run_pc_displayVideo.cpp
-)
+  file(GLOB SOURCE_FILES_SAVE_VIDEO
+    run_pc_saveVideo.cpp
+  )
 
-file(GLOB SOURCE_FILES_DEBUG_STREAM_PARSER
-  communication.cpp
-  debugStreamClient.cpp
-)
+  file(GLOB SOURCE_FILES_DISPLAY_VIDEO
+    run_pc_displayVideo.cpp
+  )
 
-file(GLOB HEADER_FILES
-  communication.h
-  ../threads/anki/tools/threads/threadSafeUtilities.h
-  ../threads/anki/tools/threads/threadSafeQueue.h
-  debugStreamClient.h
-  C:/Anki/products-cozmo/basestation/src/messageDefMacros.h
-)
+  file(GLOB SOURCE_FILES_DEBUG_STREAM_PARSER
+    communication.cpp
+    debugStreamClient.cpp
+  )
 
-#
-# run_pc_saveVideo
-#
+  file(GLOB HEADER_FILES
+    communication.h
+    ../threads/anki/tools/threads/threadSafeUtilities.h
+    ../threads/anki/tools/threads/threadSafeQueue.h
+    debugStreamClient.h
+    C:/Anki/products-cozmo/basestation/src/messageDefMacros.h
+  )
 
-add_executable(run_pc_saveVideo
-  ${SOURCE_FILES_SAVE_VIDEO}
-  ${HEADER_FILES})
+  #
+  # run_pc_saveVideo
+  #
 
-target_link_libraries(run_pc_saveVideo
-  CoreTech_Common_Robot
-  CoreTech_Vision_Robot
-  DebugStreamClient
-  ${ALL_EMBEDDED_LIBRARIES})
+  add_executable(run_pc_saveVideo
+    ${SOURCE_FILES_SAVE_VIDEO}
+    ${HEADER_FILES})
 
-set_target_properties(run_pc_saveVideo PROPERTIES
-  FOLDER "Tools"
-)
+  target_link_libraries(run_pc_saveVideo
+    CoreTech_Common_Robot
+    CoreTech_Vision_Robot
+    DebugStreamClient
+    ${ALL_EMBEDDED_LIBRARIES})
 
-#
-# run_pc_displayVideo
-#
+  set_target_properties(run_pc_saveVideo PROPERTIES
+    FOLDER "Tools"
+  )
 
-add_executable(run_pc_displayVideo
-  ${SOURCE_FILES_DISPLAY_VIDEO}
-  ${HEADER_FILES})
+  #
+  # run_pc_displayVideo
+  #
 
-target_link_libraries(run_pc_displayVideo
-  CoreTech_Common_Robot
-  CoreTech_Vision_Robot
-  DebugStreamClient
-  ${ALL_EMBEDDED_LIBRARIES})
+  add_executable(run_pc_displayVideo
+    ${SOURCE_FILES_DISPLAY_VIDEO}
+    ${HEADER_FILES})
 
-set_target_properties(run_pc_displayVideo PROPERTIES
-  FOLDER "Tools"
-)
+  target_link_libraries(run_pc_displayVideo
+    CoreTech_Common_Robot
+    CoreTech_Vision_Robot
+    DebugStreamClient
+    ${ALL_EMBEDDED_LIBRARIES})
 
-#
-# DebugStreamClient
-#
+  set_target_properties(run_pc_displayVideo PROPERTIES
+    FOLDER "Tools"
+  )
 
-add_definitions(-DCORETECH_ROBOT)
+  #
+  # DebugStreamClient
+  #
 
-add_library(DebugStreamClient
-  ${SOURCE_FILES_DEBUG_STREAM_PARSER}
-  ${HEADER_FILES}
-)
+  add_definitions(-DCORETECH_ROBOT)
 
-set_target_properties(DebugStreamClient PROPERTIES
-  FOLDER "Tools"
-)
+  add_library(DebugStreamClient
+    ${SOURCE_FILES_DEBUG_STREAM_PARSER}
+    ${HEADER_FILES}
+  )
+
+  set_target_properties(DebugStreamClient PROPERTIES
+    FOLDER "Tools"
+  )
+
+endif()

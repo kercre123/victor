@@ -541,6 +541,8 @@ namespace Anki
         // TODO: implement
         AnkiAssert(false);
       }
+      
+      return RESULT_OK;
     } // Result BuildTree()
   } // namespace Embedded
 } // namespace Anki
