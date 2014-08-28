@@ -21,6 +21,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/sequences.h"
 #include "anki/common/robot/matrix.h"
+#include "anki/common/robot/comparisons.h"
 
 #include "anki/common/shared/utilities_shared.h"
 
@@ -129,7 +130,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(cvImage.cols >= 0 && cvImage.rows >= 0,
         newArray, "Array<Type>::LoadImage", "Invalid size");
 
-      newArray = Array<Type>(cvImage.rows, cvImage,cols, memory);
+      newArray = Array<Type>(cvImage.rows, cvImage.cols, memory);
 
       AnkiConditionalErrorAndReturnValue(newArray.IsValid(),
         newArray, "Array<Type>::LoadImage", "Invalid size");
