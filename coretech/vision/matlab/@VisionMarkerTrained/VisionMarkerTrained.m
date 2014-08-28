@@ -27,9 +27,7 @@ classdef VisionMarkerTrained
         ProbePattern = VisionMarkerTrained.CreateProbePattern();
         
         ProbeTree = VisionMarkerTrained.LoadProbeTree();
-        
-        AllMarkerImages = VisionMarkerTrained.LoadAllMarkerImages(VisionMarkerTrained.TrainingImageDir);
-        
+                
         DarkProbes   = VisionMarkerTrained.CreateProbes('dark'); 
         BrightProbes = VisionMarkerTrained.CreateProbes('bright');
         
@@ -61,14 +59,13 @@ classdef VisionMarkerTrained
         pattern = CreateProbePattern();
         
         tree = LoadProbeTree();
-        
-        markerImages = LoadAllMarkerImages(TrainingImageDir);
-        
+                
         probes = CreateProbes(probeType); 
         
     end % Protected Static Methods
     
-    properties(SetAccess = 'protected')
+    % TODO: change back to protected, with proper accessor methods
+    properties(SetAccess = 'public')
      
         codeID;
         codeName;
@@ -93,14 +90,18 @@ classdef VisionMarkerTrained
             Corners = [];
             Pose = [];
             Size = 1;
-            UseSortedCorners = false;
             UseSingleProbe = false;
             CornerRefinementIterations = 25;
             UseMexCornerRefinment = false;
-            exhaustiveSearchMethod = {0,''};
-            exhaustiveSearchThreshold = 0.1;
+            VerifyLabel = true;
+            Initialize = true;
                         
             parseVarargin(varargin{:});
+            
+            if ~Initialize
+                this.corners = Corners;
+                return;
+            end
             
             assert(~isempty(VisionMarkerTrained.ProbeTree), 'No probe tree loaded.');
             assert(exist('img', 'var') == true);
@@ -118,33 +119,14 @@ classdef VisionMarkerTrained
                         
             this.corners = Corners;
             
-            if UseSortedCorners
-                centerX = mean(Corners(:,1));
-                centerY = mean(Corners(:,2));
-
-                [thetas,~] = cart2pol(Corners(:,1)-centerX, Corners(:,2)-centerY);
-                [~,sortedIndexes] = sort(thetas);
-                
-                sortedCorners = Corners(sortedIndexes,:);
-                
-                try
-                    tform = cp2tform([0 0 1 1; 0 1 1 0]', sortedCorners, 'projective');
-                catch
-                    disp('Some points are co-linear');
-                    this.isValid = false;
-                    this.H = eye(3);
-                    return;
-                end
-            else
-                try
-                    tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
-                catch                    
-                    disp('Some points are co-linear');
-                    this.isValid = false;
-                    this.H = eye(3);
-                    return;
-                end
-            end            
+            try
+                tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+            catch                    
+                disp('Some points are co-linear');
+                this.isValid = false;
+                this.H = eye(3);
+                return;
+            end
             
             this.H = tform.tdata.T';
     
@@ -167,65 +149,14 @@ classdef VisionMarkerTrained
                     end
                 end
                 
-                if exhaustiveSearchMethod{1} ~= 0                    
-                    if exhaustiveSearchMethod{1} == 1
-                        [this.codeName, this.codeID, this.matchDistance] = TestExhaustiveSearch( ...
-                            VisionMarkerTrained.AllMarkerImages, img, this.corners, exhaustiveSearchMethod{2});
-                    else
-                        persistent numDatabaseImages databaseImageHeight databaseImageWidth databaseImages databaseLabelIndexes; %#ok<TLEV>
-                        
-                        if isempty(numDatabaseImages)
-                            % TODO: get paths from the right place
-                            patterns = {'Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/*.png'};
-                            
-                            if ~ispc()
-                                for i = 1:length(patterns)
-                                    patterns{i} = strrep('Z:/', '~/');
-                                end
-                            end
-                            
-                            imageFilenames = {};
-                            for iPattern = 1:length(patterns)
-                                files = dir(patterns{iPattern});
-                                for iFile = 1:length(files)
-                                    imageFilenames{end+1} = [strrep(patterns{iPattern}, '*.png', ''), files(iFile).name]; %#ok<AGROW>
-                                end
-                            end
-                            [numDatabaseImages, databaseImageHeight, databaseImageWidth, databaseImages, databaseLabelIndexes] = mexLoadExhaustiveMatchDatabase(imageFilenames);
-                        end
-                        
-                        [markerName, orientation, this.matchDistance] = mexExhaustiveMatchFiducialMarker(uint8(img*255), this.corners, numDatabaseImages, databaseImageHeight, databaseImageWidth, databaseImages, databaseLabelIndexes);
-                        
-                        if orientation == 0
-                            this.codeName = [markerName(8:end), '_000'];
-                        elseif orientation == 90
-                            this.codeName = [markerName(8:end), '_090'];
-                        elseif orientation == 180
-                            this.codeName = [markerName(8:end), '_180'];
-                        elseif orientation == 270
-                            this.codeName = [markerName(8:end), '_270'];
-                        end
-                            
-                        this.codeID = []; % TODO: must this be set?
-                    end
-                    
-                    verificationResult = this.codeName;
-                    
-                    if this.matchDistance < exhaustiveSearchThreshold
-                        this.isValid = true;
-                    else 
-                        this.isValid = false;
-                    end
-                else
-                    [this.codeName, this.codeID] = TestTree( ...
-                        VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
-                        VisionMarkerTrained.ProbePattern);
-                end
-                
+                [this.codeName, this.codeID] = TestTree( ...
+                    VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
+                    VisionMarkerTrained.ProbePattern);                
+                                
                 if any(strcmp(this.codeName, {'UNKNOWN', 'INVALID'}))
                     this.isValid = false;
                 else
-                    if exhaustiveSearchMethod{1} == 0
+                    if VerifyLabel
                         if UseSingleProbe
                             oneProbe.x = 0;
                             oneProbe.y = 0;
@@ -234,7 +165,7 @@ classdef VisionMarkerTrained
                                 img, tform, threshold, oneProbe);
 
                             this.isValid = verifiedID ~= 1;
-                        else 
+                        else
                             if all(isfield(VisionMarkerTrained.ProbeTree, ...
                                     {'verifyTreeRed', 'verifyTreeBlack'}))
 
@@ -269,53 +200,16 @@ classdef VisionMarkerTrained
                                 this.isValid = verifiedID ~= 1;
                             end
                         end
-                    end % if ~UseExhaustiveSearch ... else                    
-                    
-                    if this.isValid
-                        assert(strcmp(verificationResult, this.codeName));
-                        
-                        underscoreIndex = find(this.codeName == '_');
-                        if strncmpi(this.codeName, 'inverted_', 9)
-                            % Ignore the first underscore found if this is
-                            % an inverted code name
-                            underscoreIndex(1) = [];
-                        end
-                        
-                        if ~isempty(underscoreIndex)
-                            assert(length(underscoreIndex) == 1, ...
-                                'There should be no more than 1 underscore in the code name: "%s".', this.codeName);
-                            
-                            angleStr = this.codeName((underscoreIndex+1):end);
-                            this.codeName = this.codeName(1:(underscoreIndex-1));
-                            
-                            % Reorient the corners if there's an angle in
-                            % the name.  After this the line between the 
-                            % first and third corner will be the top side.
-                            reorder = [1 3; 2 4]; % canonical corner ordering
-                            switch(angleStr)
-                                case '000'
-                                    % nothing to do
-                                case '090'
-                                    reorder = rot90(rot90(rot90(reorder)));
-                                    %reorder = rot90(reorder);
-                                case '180'
-                                    reorder = rot90(rot90(reorder));
-                                case '270'
-                                    %reorder = rot90(rot90(rot90(reorder)));
-                                    reorder = rot90(reorder);
-                                otherwise                                    
-                                    error('Unrecognized angle string "%s"', angleStr);
-                            end
-                            
-                            this.corners = this.corners(reorder(:),:);
-                            
-                        end % if ~isempty(underscoreIndex)
-                        
-                        % Use code names that match what gets put into
-                        % the C++ enums by auto code generation after
-                        % training
-                        this.codeName = sprintf('MARKER_%s', upper(this.codeName));
+                    else % if VerifyLabel
+                        verificationResult = this.codeName;
+                        verifiedID = this.codeID;
                     end
+                end
+
+                if this.isValid
+                    assert(strcmp(verificationResult, this.codeName));
+
+                    this = this.ReorderCorners();
                 end
             end % IF threshold < 0
             
@@ -325,7 +219,64 @@ classdef VisionMarkerTrained
             
         end % Constructor VisionMarkerTrained()
        
-        h = Draw(this, varargin);
+        % TODO: why was this line here?
+%         h = Draw(this, varargin);
+        
+        function this = ReorderCorners(this, varargin)
+            if ~iscell(this.codeName)
+                this.codeName = {this.codeName};
+            end
+            
+            for iName = 1:length(this.codeName)
+                underscoreIndex = find(this.codeName{iName} == '_');
+                if strncmpi(this.codeName{iName}, 'inverted_', 9)
+                    % Ignore the first underscore found if this is
+                    % an inverted code name
+                    underscoreIndex(1) = [];
+                end
+
+                if ~isempty(underscoreIndex)
+                    assert(length(underscoreIndex) == 1, ...
+                        'There should be no more than 1 underscore in the code name: "%s".', this.codeName{iName});
+
+                    angleStr = this.codeName{iName}((underscoreIndex+1):end);
+                    this.codeName{iName} = this.codeName{iName}(1:(underscoreIndex-1));
+
+                    % Reorient the corners if there's an angle in
+                    % the name.  After this the line between the 
+                    % first and third corner will be the top side.
+                    reorder = [1 3; 2 4]; % canonical corner ordering
+                    switch(angleStr)
+                        case '000'
+                            % nothing to do
+                        case '090'
+                            reorder = rot90(rot90(rot90(reorder)));
+                            %reorder = rot90(reorder);
+                        case '180'
+                            reorder = rot90(rot90(reorder));
+                        case '270'
+                            %reorder = rot90(rot90(rot90(reorder)));
+                            reorder = rot90(reorder);
+                        otherwise                                    
+                            error('Unrecognized angle string "%s"', angleStr);
+                    end
+
+                    this.corners = this.corners(reorder(:),:);
+
+                end % if ~isempty(underscoreIndex)
+
+                % Use code names that match what gets put into
+                % the C++ enums by auto code generation after
+                % training
+                this.codeName{iName} = sprintf('MARKER_%s', upper(this.codeName{iName}));
+            end
+            
+            if length(this.codeName) == 1
+                this.codeName = this.codeName{1};
+            end
+            
+            this.name = this.codeName;
+        end
         
         % For backwards compatibility to lowercase "draw" in Marker2D
         function h = draw(this, varargin)

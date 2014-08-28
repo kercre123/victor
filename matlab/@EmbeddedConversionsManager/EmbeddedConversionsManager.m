@@ -11,7 +11,7 @@ classdef EmbeddedConversionsManager < handle
         emptyCenterDetection;
         smallCharacterisicParameter;
         extractFiducialMethod;
-        extractFiducialMethodType;
+        extractFiducialMethodParameters;
     end % PROPERTIES (get-public, set-protected)
 
     methods(Access = 'public')
@@ -39,10 +39,10 @@ classdef EmbeddedConversionsManager < handle
             emptyCenterDetection_acceptable = {'matlab_original', 'off'};
             
             extractFiducialMethod = 'matlab_original';
-            extractFiducialMethod_acceptable = {'matlab_original', 'matlab_exhaustive', 'c_exhaustive'};
+            extractFiducialMethod_acceptable = {'matlab_original', 'matlab_exhaustive', 'c_exhaustive', 'matlab_alternateTree'};
             
-            extractFiducialMethodType = 'backward';
-            extractFiducialMethodType_acceptable = {'forward', 'backward', 'backward_noEdges'};
+            extractFiducialMethodParameters.exhaustiveMethod = 'backward';
+            extractFiducialMethodParameters.treeFilename = '';
 
             smallCharacterisicParameter = 0.9;
 
@@ -74,8 +74,7 @@ classdef EmbeddedConversionsManager < handle
             isAcceptable(extractFiducialMethod_acceptable, extractFiducialMethod);
             this.extractFiducialMethod = extractFiducialMethod;
             
-            isAcceptable(extractFiducialMethodType_acceptable, extractFiducialMethodType);
-            this.extractFiducialMethodType = extractFiducialMethodType;
+            this.extractFiducialMethodParameters = extractFiducialMethodParameters;
         end
     end % METHODS (public)
 end % classdef OptimizationManager < handle

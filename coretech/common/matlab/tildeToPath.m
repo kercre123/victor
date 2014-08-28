@@ -1,3 +1,7 @@
+% function realPath = tildeToPath()
+
+% Returns the string equivalent of '~'
+
 function realPath = tildeToPath()
     if ispc()
         realPath = '';

@@ -1,3 +1,6 @@
+// TODO: update this mex file to the new API
+#if 0
+
 #include "mex.h"
 
 #include "anki/common/robot/matlabInterface.h"
@@ -176,6 +179,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if(nlhs >= 3) {
       mxArray* markerNamesMatlab = mxCreateCellArray(markersMatlab_ndim, markersMatlab_dims);
       for(s32 i=0; i<numMarkers; ++i) {
+        AnkiAssert(markers[i].markerType >= 0 && markers[i].markerType <= Anki::Vision::NUM_MARKER_TYPES);
         mxSetCell(markerNamesMatlab, i, mxCreateString(Anki::Vision::MarkerTypeStrings[markers[i].markerType]));
       }
       plhs[2] = markerNamesMatlab;
@@ -211,4 +215,4 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   mxFree(memory.get_buffer());
 }
 
-#endif
+#endif // TODO: update this mex file to the new API

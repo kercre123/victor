@@ -117,3 +117,5 @@ matlab/perPoseAllInput.mat
 out.txt
 trainingState.mat
 tmp.mat
+tmp_allImages.mat
+training.mat

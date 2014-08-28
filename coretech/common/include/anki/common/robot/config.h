@@ -164,7 +164,7 @@ extern "C" {
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1
 #define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
-// To support 128-bit SIMD loads and stores
+// To support 128-bit SIMD loads and stores. This should always be 16.
 #define MEMORY_ALIGNMENT_RAW 16 // Sometimes the preprocesor can't handle the safer version MEMORY_ALIGNMENT
 #define MEMORY_ALIGNMENT ( (size_t)(MEMORY_ALIGNMENT_RAW) )
 

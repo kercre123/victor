@@ -15,8 +15,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
-    %     makeNewResultsDirectory = true;
-    makeNewResultsDirectory = false;
+    makeNewResultsDirectory = true;
+%     makeNewResultsDirectory = false;
     
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
@@ -58,27 +58,39 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParameters.useMatlabForAll = false;
     algorithmParameters.useMatlabForQuadExtraction = false;
     algorithmParameters.matlab_embeddedConversions = EmbeddedConversionsManager();
-    %     algorithmParameters.drawOutputImage = true;
     algorithmParameters.showImageDetectionWidth = 640;
     algorithmParameters.showImageDetections = false;
     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.extractionFunctionName = 'c-with-refinement';
-    algorithmParametersN.extractionFunctionId = '1/1';
     [resultsData_overall_cWithRefinement, resultsDirectory_curTime] = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     disp(sprintf('resultsData_overall_cWithRefinement = %f', resultsData_overall_cWithRefinement.percentQuadsExtracted));
     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.refine_quadRefinementIterations = 0;
     algorithmParametersN.extractionFunctionName = 'c-no-refinement';
-    algorithmParametersN.extractionFunctionId = '2/1';
     resultsData_overall_cNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     disp(sprintf('resultsData_overall_cNoRefinement = %f', resultsData_overall_cNoRefinement.percentQuadsExtracted));
     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.useMatlabForAll = true;
+    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-08-19_noGrayvalues_fullTree.mat'));
+    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-altTree';
+    resultsData_overall_matlabWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    disp(sprintf('resultsData_overall_matlabWithRefinement = %f', resultsData_overall_matlabWithRefinement.percentQuadsExtracted));
+    
+    algorithmParametersN = algorithmParameters;
+    algorithmParametersN.useMatlabForAll = true;
+      
+    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-08-19_noGrayvalues_fullTree.mat'));
+    algorithmParametersN.refine_quadRefinementIterations = 0;
+    algorithmParametersN.extractionFunctionName = 'matlab-no-refinement-altTree';
+    resultsData_overall_matlabNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    disp(sprintf('resultsData_overall_matlabNoRefinement = %f', resultsData_overall_matlabNoRefinement.percentQuadsExtracted));
+
+    algorithmParametersN = algorithmParameters;
+    algorithmParametersN.useMatlabForAll = true;
     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement';
-    algorithmParametersN.extractionFunctionId = '3/1';
     resultsData_overall_matlabWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     disp(sprintf('resultsData_overall_matlabWithRefinement = %f', resultsData_overall_matlabWithRefinement.percentQuadsExtracted));
     
@@ -86,28 +98,24 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParametersN.useMatlabForAll = true;
     algorithmParametersN.refine_quadRefinementIterations = 0;
     algorithmParametersN.extractionFunctionName = 'matlab-no-refinement';
-    algorithmParametersN.extractionFunctionId = '4/1';
     resultsData_overall_matlabNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     disp(sprintf('resultsData_overall_matlabNoRefinement = %f', resultsData_overall_matlabNoRefinement.percentQuadsExtracted));
     
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.useMatlabForQuadExtraction = true;
-    algorithmParametersN.extractionFunctionName = 'matlabQuad-with-refinement';
-    algorithmParametersN.extractionFunctionId = '5/1';
-    resultsData_overall_matlabQuadWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-    disp(sprintf('resultsData_overall_matlabQuadWithRefinement = %f', resultsData_overall_matlabQuadWithRefinement.percentQuadsExtracted));
-    
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.useMatlabForQuadExtraction = true;
-    algorithmParametersN.refine_quadRefinementIterations = 0;
-    algorithmParametersN.extractionFunctionName = 'matlabQuad-no-refinement';
-    algorithmParametersN.extractionFunctionId = '6/1';
-    resultsData_overall_matlabQuadNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-    disp(sprintf('resultsData_overall_matlabQuadNoRefinement = %f', resultsData_overall_matlabQuadNoRefinement.percentQuadsExtracted));
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.useMatlabForQuadExtraction = true;
+%     algorithmParametersN.extractionFunctionName = 'matlabQuad-with-refinement';
+%     resultsData_overall_matlabQuadWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+%     disp(sprintf('resultsData_overall_matlabQuadWithRefinement = %f', resultsData_overall_matlabQuadWithRefinement.percentQuadsExtracted));
+%     
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.useMatlabForQuadExtraction = true;
+%     algorithmParametersN.refine_quadRefinementIterations = 0;
+%     algorithmParametersN.extractionFunctionName = 'matlabQuad-no-refinement';
+%     resultsData_overall_matlabQuadNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+%     disp(sprintf('resultsData_overall_matlabQuadNoRefinement = %f', resultsData_overall_matlabQuadNoRefinement.percentQuadsExtracted));
     
     %     algorithmParametersN = algorithmParameters;
     %     algorithmParametersN.useMatlabForAll = true;
-    %     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
     %     thresholdMultipliers = linspace(0.5,1.0,10);
     %     smallCharacterisicParameters = linspace(0.7, 1.0, 10);
     %     resultsData_overall_small = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
@@ -117,39 +125,37 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     %         for iSmallCharacterisicParameter = 1:length(smallCharacterisicParameters)
     %             smallCharacterisicParameter = smallCharacterisicParameters(iSmallCharacterisicParameter);
     %
-    %             algorithmParametersN.extractionFunctionId = sprintf('7/%d/%d', iThresholdMultiplier, iSmallCharacterisicParameter);
+    %             algorithmParametersN.extractionFunctionName = sprintf('matlab-with-refinement-small-all/%d/%d', iThresholdMultiplier, iSmallCharacterisicParameter);
     %             algorithmParametersN.scaleImage_thresholdMultiplier = thresholdMultiplier;
     %             algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', smallCharacterisicParameter);
     %             resultsData_overall_small{iThresholdMultiplier,iSmallCharacterisicParameter} = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     %             disp(sprintf('resultsData_overall for %d %d = %f', iThresholdMultiplier, iSmallCharacterisicParameter, resultsData_overall_small{iThresholdMultiplier,iSmallCharacterisicParameter}.percentQuadsExtracted));
     %         end
     %     end
+%     
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.useMatlabForAll = true;
+%     thresholdMultipliers = linspace(0.8,1.1,10);
+%     smallCharacterisicParameters = linspace(0.9000, 0.9667, 10);
+%     resultsData_overall_small2 = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
+%     for iThresholdMultiplier = 1:length(thresholdMultipliers)
+%         thresholdMultiplier = thresholdMultipliers(iThresholdMultiplier);
+%         
+%         for iSmallCharacterisicParameter = 1:length(smallCharacterisicParameters)
+%             smallCharacterisicParameter = smallCharacterisicParameters(iSmallCharacterisicParameter);
+%             
+%             algorithmParametersN.extractionFunctionName = sprintf('matlab-with-refinement-small/%d/%d', iThresholdMultiplier, iSmallCharacterisicParameter);
+%             algorithmParametersN.scaleImage_thresholdMultiplier = thresholdMultiplier;
+%             algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', smallCharacterisicParameter);
+%             
+%             resultsData_overall_small2{iThresholdMultiplier,iSmallCharacterisicParameter} = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+%             disp(sprintf('resultsData_overall for %d %d = %f', iThresholdMultiplier, iSmallCharacterisicParameter, resultsData_overall_small2{iThresholdMultiplier,iSmallCharacterisicParameter}.percentQuadsExtracted));
+%         end
+%     end
     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.useMatlabForAll = true;
-    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
-    thresholdMultipliers = linspace(0.8,1.1,10);
-    smallCharacterisicParameters = linspace(0.9000, 0.9667, 10);
-    resultsData_overall_small2 = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
-    for iThresholdMultiplier = 1:length(thresholdMultipliers)
-        thresholdMultiplier = thresholdMultipliers(iThresholdMultiplier);
-        
-        for iSmallCharacterisicParameter = 1:length(smallCharacterisicParameters)
-            smallCharacterisicParameter = smallCharacterisicParameters(iSmallCharacterisicParameter);
-            
-            algorithmParametersN.extractionFunctionId = sprintf('8/%d/%d', iThresholdMultiplier, iSmallCharacterisicParameter);
-            algorithmParametersN.scaleImage_thresholdMultiplier = thresholdMultiplier;
-            algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', smallCharacterisicParameter);
-            
-            resultsData_overall_small2{iThresholdMultiplier,iSmallCharacterisicParameter} = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-            disp(sprintf('resultsData_overall for %d %d = %f', iThresholdMultiplier, iSmallCharacterisicParameter, resultsData_overall_small2{iThresholdMultiplier,iSmallCharacterisicParameter}.percentQuadsExtracted));
-        end
-    end
-    
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.useMatlabForAll = true;
-    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small';
-    algorithmParametersN.extractionFunctionId = '9/1';
+    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small-best';
     algorithmParametersN.scaleImage_thresholdMultiplier = .9333;
     algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', .9148);
     resultsData_overall_small2_best = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
@@ -176,7 +182,7 @@ function allTestData = getTestData(testJsonPattern)
         allTestFilename = [testPath, allTestFilenamesRaw(iTest).name];
         
         % Load json file
-        allTestData{iTest} = loadTestFile(allTestFilename);
+        allTestData{iTest} = loadJsonTestFile(allTestFilename);
     end
 end % getTestFilenames()
 
@@ -190,7 +196,7 @@ function [resultsData_overall, resultsDirectory_curTime] = compileAll(algorithmP
     
     rotationList = getListOfSymmetricMarkers(markerDirectoryList);
     
-    [workQueue_basics, workQueue_perPoseStats, workQueue_all, resultsDirectory_curTime] = computeWorkQueues(resultsDirectory, allTestData, algorithmParameters.extractionFunctionName, algorithmParameters.extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime);
+    [workQueue_basics, workQueue_perPoseStats, workQueue_all, resultsDirectory_curTime] = computeWorkQueues(resultsDirectory, allTestData, algorithmParameters.extractionFunctionName, makeNewResultsDirectory, thisFileChangeTime);
     
     disp(sprintf('%s: workQueue_basics has %d elements and workQueue_perPoseStats has %d elements', algorithmParameters.extractionFunctionName, length(workQueue_basics), length(workQueue_perPoseStats)));
     
@@ -207,7 +213,7 @@ function [resultsData_overall, resultsDirectory_curTime] = compileAll(algorithmP
     disp(sprintf('Compile all took %f seconds', toc(compileAllTic)));
 end % compileAll()
 
-function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDirectory_curTime] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, extractionFunctionId, makeNewResultsDirectory, thisFileChangeTime)
+function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDirectory_curTime] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, makeNewResultsDirectory, thisFileChangeTime)
     thisFileChangeString = ['dateTime_', datestr(thisFileChangeTime(1).datenum, 'yyyy-mm-dd_HH-MM-SS')];
     
     [~, ~, ~] = mkdir(resultsDirectory);
@@ -233,9 +239,9 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDi
     resultsDirectory_curTime = [resultsDirectory, '/', thisFileChangeString, '/'];
     resultsDirectory_curTime = strrep(resultsDirectory_curTime, '//', '/');
     
-    curExtractFunction_intermediateDirectory = [resultsDirectory_curTime, 'intermediate/', extractionFunctionId, '/'];
-    curExtractFunction_dataDirectory = [resultsDirectory_curTime, 'data/', extractionFunctionId, '/'];
-    curExtractFunction_imageDirectory = [resultsDirectory_curTime, 'images/', extractionFunctionId, '/'];
+    curExtractFunction_intermediateDirectory = [resultsDirectory_curTime, 'intermediate/', extractionFunctionName, '/'];
+    curExtractFunction_dataDirectory = [resultsDirectory_curTime, 'data/', extractionFunctionName, '/'];
+    curExtractFunction_imageDirectory = [resultsDirectory_curTime, 'images/', extractionFunctionName, '/'];
     
     [~, ~, ~] = mkdir(curExtractFunction_intermediateDirectory);
     [~, ~, ~] = mkdir(curExtractFunction_dataDirectory);
@@ -247,9 +253,9 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDi
     
     for iTest = 1:size(allTestData, 1)
         for iPose = 1:length(allTestData{iTest}.jsonData.Poses)
-            basicStats_filename = [curExtractFunction_intermediateDirectory, allTestData{iTest}.testFilename, sprintf('_basicStats_pose%05d_eid%s.mat', iPose - 1, strrep(extractionFunctionId, '/', '_'))];
-            perPoseStats_dataFilename = [curExtractFunction_dataDirectory, allTestData{iTest}.testFilename, sprintf('_perPose_pose%05d_eid%s.mat', iPose - 1, strrep(extractionFunctionId, '/', '_'))];
-            perPoseStats_imageFilename = [curExtractFunction_imageDirectory, allTestData{iTest}.testFilename, sprintf('_pose%05d_eid%s.png', iPose - 1, strrep(extractionFunctionId, '/', '_'))];
+            basicStats_filename = [curExtractFunction_intermediateDirectory, allTestData{iTest}.testFilename, sprintf('_basicStats_pose%05d_%s.mat', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
+            perPoseStats_dataFilename = [curExtractFunction_dataDirectory, allTestData{iTest}.testFilename, sprintf('_perPose_pose%05d_%s.mat', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
+            perPoseStats_imageFilename = [curExtractFunction_imageDirectory, allTestData{iTest}.testFilename, sprintf('_pose%05d_%s.png', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
             
             basicStats_filename = strrep(strrep(basicStats_filename, '\', '/'), '//', '/');
             perPoseStats_dataFilename = strrep(strrep(perPoseStats_dataFilename, '\', '/'), '//', '/');
@@ -261,7 +267,6 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDi
             newWorkItem.perPoseStats_dataFilename = perPoseStats_dataFilename;
             newWorkItem.perPoseStats_imageFilename = perPoseStats_imageFilename;
             newWorkItem.extractionFunctionName = extractionFunctionName;
-            newWorkItem.extractionFunctionId = extractionFunctionId;
             
             workQueue_all{end+1} = newWorkItem; %#ok<AGROW>
             

@@ -9,6 +9,11 @@
 % imageRegionOfInterest = 1 + [1, 5; 6, 6; 7, 11; 0, 11];
 % counts = integerCounts(image, imageRegionOfInterest);
 
+% Usage example: Compute the bottom 1%
+% countsSum = cumsum(counts); 
+% countsSum = countsSum / max(countsSum);
+% grayvalue = find(countsSum >= 0.01, 1) - 1;
+
 function counts = integerCounts(image, imageRegionOfInterest)
     assert(ndims(image) == 2);
     

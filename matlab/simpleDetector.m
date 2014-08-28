@@ -1,5 +1,6 @@
 % function markers = simpleDetector(img, varargin)
 
+% Examples:
 % markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_edges', 'componentRejectionTestsType', 'off', 'emptyCenterDetection', 'off', 'connectedComponentsType', 'matlab_original', 'traceBoundaryType', 'matlab_approximate'));
 % markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('extractFiducialMethod', 'c_exhaustive'));
 
@@ -16,7 +17,7 @@ cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPe
 decodeDownsampleFactor = 1; % use lower resolution image for decoding
 minDistanceFromImageEdge = 2; % if a quad has an corner that is too close to the edge, reject it
 DEBUG_DISPLAY = nargout==0;
-embeddedConversions = EmbeddedConversionsManager; % 1-cp2tform, 2-opencv_cp2tform
+embeddedConversions = EmbeddedConversionsManager;
 showTiming = false;
 thresholdFraction = 1; % fraction of local mean to use as threshold
 maxSmoothingFraction = 0.025; % fraction of max dim

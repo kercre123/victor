@@ -1,12 +1,12 @@
-% function [labelName, labelID, minDifference] = TestExhaustiveSearch(allImages, img, tform, threshold)
+% function [labelName, labelID, minDifference] = visionMarker_exhaustiveMatch_search(allImages, img, tform, threshold)
 
 % AllMarkerImages = VisionMarkerTrained.LoadAllMarkerImages(VisionMarkerTrained.TrainingImageDir);
 
 % im = im2double(imread('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/../images/cozmo_date2014_06_04_time16_55_15_frame0.png'));
 % corners = [43.7794,10.0951; 43.0506, 33.4150; 67.0992, 10.3381; 66.1275, 33.4150];
-% [labelName, labelID, minDifference] = TestExhaustiveSearch(VisionMarkerTrained.AllMarkerImages, im, corners, 'forward')
+% [labelName, labelID, minDifference] = visionMarker_exhaustiveMatch_search(VisionMarkerTrained.AllMarkerImages, im, corners, 'forward')
 
-function [labelName, labelID, minDifference] = TestExhaustiveSearch(allImages, img, corners, matchType)
+function [labelName, labelID, minDifference] = visionMarker_exhaustiveMatch_search(allImages, img, corners, matchType)
     allImageSize = size(allImages{1}{1});
     
     tforms = cell(4,1);
