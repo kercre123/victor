@@ -61,7 +61,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   VisionMarker extractedMarker;
   f32 matchQuality;
-  const Anki::Result result = allMarkerImages.MatchExhaustive(image, quad, extractedMarker, matchQuality, memory1, memory2);
+  allMarkerImages.MatchExhaustive(image, quad, extractedMarker, matchQuality, memory1, memory2);
 
   plhs[0] = mxCreateString(Anki::Vision::MarkerTypeStrings[extractedMarker.markerType]);
 

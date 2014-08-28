@@ -177,7 +177,7 @@ int main(int argc, const char* argv[])
   FixedLengthList<const FixedLengthList<u8> > featureValuesConst = *reinterpret_cast<FixedLengthList<const FixedLengthList<u8> >* >(&featureValues);
 
   std::vector<DecisionTreeNode> decisionTree;
-  const Result result = BuildTree(
+  BuildTree(
     featuresUsed,
     labelNames, labels,
     featureValuesConst,
