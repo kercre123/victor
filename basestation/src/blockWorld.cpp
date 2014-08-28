@@ -145,38 +145,53 @@ namespace Anki
       isInitialized_ = true;
     }
     
+    void CheckForOverlapHelper(const Vision::ObservableObject* objectToMatch,
+                               Vision::ObservableObject* objectToCheck,
+                               std::vector<Vision::ObservableObject*>& overlappingObjects)
+    {
+      
+      // TODO: smarter block pose comparison
+      //const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
+      
+      //const float distToExist_mm = (objExist.second->GetPose().GetTranslation() -
+      //                              <robotThatSawMe???>->GetPose().GetTranslation()).length();
+      
+      //const float distThresh_mm = distThresholdFraction * distToExist_mm;
+      
+      Pose3d P_diff;
+      if( objectToCheck->IsSameAs(*objectToMatch, P_diff) ) {
+        overlappingObjects.push_back(objectToCheck);
+      } /*else {
+         fprintf(stdout, "Not merging: Tdiff = %.1fmm, Angle_diff=%.1fdeg\n",
+         P_diff.GetTranslation().length(), P_diff.GetRotationAngle().getDegrees());
+         objExist.second->IsSameAs(*objectSeen, distThresh_mm, angleThresh, P_diff);
+         }*/
+      
+    } // CheckForOverlapHelper()
+  
     
-    //template<class ObjectType>
     void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                             const ObjectsMapByType_t& objectsExisting,
                                             std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const
     {      
       auto objectsExistingIter = objectsExisting.find(objectSeen->GetType());
-      if(objectsExistingIter != objectsExisting.end())
-      {
-        for(auto objExist : objectsExistingIter->second)
-        {
-          // TODO: smarter block pose comparison
-          //const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
-          
-          //const float distToExist_mm = (objExist.second->GetPose().GetTranslation() -
-          //                              <robotThatSawMe???>->GetPose().GetTranslation()).length();
-          
-          //const float distThresh_mm = distThresholdFraction * distToExist_mm;
-          
-          Pose3d P_diff;
-          if( objExist.second->IsSameAs(*objectSeen, P_diff) ) {
-            overlappingExistingObjects.push_back(objExist.second);
-          } /*else {
-            fprintf(stdout, "Not merging: Tdiff = %.1fmm, Angle_diff=%.1fdeg\n",
-                    P_diff.GetTranslation().length(), P_diff.GetRotationAngle().getDegrees());
-            objExist.second->IsSameAs(*objectSeen, distThresh_mm, angleThresh, P_diff);
-          }*/
-          
-        } // for each existing object of this type
+      if(objectsExistingIter != objectsExisting.end()) {
+        for(auto objectToCheck : objectsExistingIter->second) {
+          CheckForOverlapHelper(objectSeen, objectToCheck.second, overlappingExistingObjects);
+        }
       }
       
     } // FindOverlappingObjects()
+    
+    
+    void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
+                                const std::vector<Vision::ObservableObject*>& objectsSeen,
+                                std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const
+    {
+      for(auto objectToCheck : objectsSeen) {
+        CheckForOverlapHelper(objectExisting, objectToCheck, overlappingSeenObjects);
+      }
+    }
     
     
     

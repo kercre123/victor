@@ -182,6 +182,10 @@ namespace Anki
                                   const ObjectsMapByType_t& objectsExisting,
                                   std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const;
       
+      void FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
+                                  const std::vector<Vision::ObservableObject*>& objectsSeen,
+                                  std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const;
+      
       void CheckForUnobservedObjects(TimeStamp_t atTimestamp);
       
       // Helpers for actually inserting a new object into a new family using
