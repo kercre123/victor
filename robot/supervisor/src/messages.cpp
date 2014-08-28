@@ -184,9 +184,8 @@ namespace Anki {
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
-        robotState_.status |= (ProxSensors::IsLeftBlocked() ? IS_PROX_LEFT_BLOCKED : 0);
         robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
-        robotState_.status |= (ProxSensors::IsRightBlocked() ? IS_PROX_RIGHT_BLOCKED : 0);
+        robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);        
       }
       
       RobotState const& GetRobotStateMsg() {

@@ -229,4 +229,5 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   mxFree(memory.get_buffer());
 }
+
 #endif // TODO: update this mex file to the new API
