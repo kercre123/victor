@@ -17,8 +17,6 @@
 
 #define VERBOSITY 0
 
-#if(0) // TODO: PEte! Fix this if you want!
-
 using namespace Anki::Embedded;
 
 // decode_minContrastRatio = 1.25;
