@@ -103,6 +103,28 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #endif // #if defined(__APPLE_CC__)
 
+#if defined(__GNUC__) // GCC
+
+#ifndef restrict
+#define restrict __restrict
+#endif
+
+#ifndef staticInline
+#define staticInline static __inline
+#endif
+
+#ifndef NO_INLINE
+#define NO_INLINE __attribute__ ((noinline))
+#endif
+
+#ifndef USE_M4_HOST_INTRINSICS
+#define USE_M4_HOST_INTRINSICS 1
+#endif
+
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
+
+#endif // #if defined(__GNUC__) // GCC
+
 // WARNING: Visual Studio also defines __EDG__
 #if defined(__EDG__)  // MDK-ARM
 

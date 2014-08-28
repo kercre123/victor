@@ -230,7 +230,7 @@ namespace Anki
       const f32 timeInSeconds = Anki::Cozmo::HAL::GetMicroCounter() / 1000000.0f;
 #else // Generic Unix
       timespec ts;
-      clock_GetTimeF32(CLOCK_MONOTONIC, &ts);
+      clock_gettime(CLOCK_MONOTONIC, &ts);
       const f32 timeInSeconds = (f32)(ts.tv_sec) + (f32)(ts.tv_nsec)/1000000000.0f;
 #endif
 
@@ -276,7 +276,7 @@ namespace Anki
       const f64 timeInSeconds = Anki::Cozmo::HAL::GetMicroCounter() / 1000000.0;
 #else // Generic Unix
       timespec ts;
-      clock_GetTime(CLOCK_MONOTONIC, &ts);
+      clock_gettime(CLOCK_MONOTONIC, &ts);
       const f64 timeInSeconds = (f64)(ts.tv_sec) + (f64)(ts.tv_nsec)/1000000000.0;
 #endif
 

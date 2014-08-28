@@ -50,7 +50,7 @@ namespace Anki
       }
     }
 
-#if defined(__APPLE_CC__) // Apple Xcode
+#if defined(__APPLE_CC__) || defined(__GNUC__)
     template<> inline unsigned long RoundUp(const unsigned long number, const unsigned long multiple)
     {
       return (number + (multiple-1)) & ~(multiple-1);
@@ -71,7 +71,7 @@ namespace Anki
       }
     }
 
-#if defined(__APPLE_CC__) // Apple Xcode
+#if defined(__APPLE_CC__) || defined(__GNUC__)
     template<> inline unsigned long RoundDown(const unsigned long number, const unsigned long multiple)
     {
       return multiple * (number/multiple);
