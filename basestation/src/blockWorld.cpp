@@ -527,26 +527,22 @@ namespace Anki
           if(robot->IsLocalized()) {
             // ... and the robot is already localized, then see if it is
             // localized to one of the mats it is seeing (but not "on")
-            MatPiece* alreadyLocalizedToMat = nullptr;
-            for(auto mat : matsSeen) {
-              if(mat->GetID() == robot->GetLocalizedTo()) {
-                alreadyLocalizedToMat = dynamic_cast<MatPiece*>(mat);
-                CORETECH_ASSERT(alreadyLocalizedToMat != nullptr);
-                break;
-              }
+            // Note that we must match seen and existing objects by their pose
+            // here, and not by ID, because "seen" objects have not ID assigned
+            // yet.
+
+            Vision::ObservableObject* existingMatLocalizedTo = GetObjectByID(robot->GetLocalizedTo());
+            if(existingMatLocalizedTo == nullptr) {
+              PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ExistingMatLocalizedToNull",
+                                "Robot %d is localized to mat with ID=%d, but that mat does not exist in the world.\n",
+                                robot->GetID(), robot->GetLocalizedTo().GetValue());
+              return false;
             }
             
-            if(alreadyLocalizedToMat != nullptr) {
-              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
-                               "Robot %d will re-localize to the %s mat it is not on, but already localized to.\n",
-                               robot->GetID(), alreadyLocalizedToMat->GetType().GetName().c_str());
-              
-              // The robot is localized to one of the mats it is seeing, even
-              // though it is not _on_ that mat.  Remain localized to that mat
-              // and update any others it is also seeing
-              matToLocalizeTo = alreadyLocalizedToMat;
-            }
-            else {
+            std::vector<Vision::ObservableObject*> overlappingMatsSeen;
+            FindOverlappingObjects(existingMatLocalizedTo, matsSeen, overlappingMatsSeen);
+            
+            if(overlappingMatsSeen.empty()) {
               // The robot is localized to a mat it is not seeing (and is not "on"
               // any of the mats it _is_ seeing.  Just update the poses of the
               // mats it is seeing, but don't localize to any of them.
@@ -554,11 +550,30 @@ namespace Anki
                                "Robot %d is localized to a mat it doesn't see, and will not localize to any of the %lu mats it sees but is not on.\n",
                                robot->GetID(), matsSeen.size());
             }
+            else {
+              if(overlappingMatsSeen.size() > 1) {
+                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleOverlappingMats",
+                                    "Robot %d is seeing %d (i.e. more than one) mats "
+                                    "overlapping with the existing mat it is localized to. "
+                                    "Will use first.\n", robot->GetID(), overlappingMatsSeen.size());
+              }
+              
+              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
+                               "Robot %d will re-localize to the %s mat it is not on, but already localized to.\n",
+                               robot->GetID(), overlappingMatsSeen[0]->GetType().GetName().c_str());
+              
+              // The robot is localized to one of the mats it is seeing, even
+              // though it is not _on_ that mat.  Remain localized to that mat
+              // and update any others it is also seeing
+              matToLocalizeTo = dynamic_cast<MatPiece*>(overlappingMatsSeen[0]);
+              CORETECH_ASSERT(matToLocalizeTo != nullptr);
+            }
+            
             
           } else {
             // ... and the robot is _not_ localized, choose the observed mat
             // with the closest observed marker (since that is likely to be the
-            // most accurate) and localize to that one.  Update any others.
+            // most accurate) and localize to that one.
             f32 minDistSq = -1.f;
             MatPiece* closestMat = nullptr;
             for(auto mat : matsSeen) {
@@ -629,19 +644,6 @@ namespace Anki
             //Vision::ObservableObject* existingObject = GetObjectByID(matToLocalizeTo->GetID());
             std::vector<Vision::ObservableObject*> existingObjects;
             FindOverlappingObjects(matToLocalizeTo, _existingObjects[ObjectFamily::MATS], existingObjects);
-
-            /*auto existingObjectsOfType = _existingObjects[ObjectFamily::MATS].find(matToLocalizeTo->GetType());
-            if(existingObjectsOfType != _existingObjects[ObjectFamily::MATS].end())
-            {
-              for(auto existingObjectsByID : existingObjectsOfType->second)
-              {
-                Vision::ObservableObject* candidateObject = existingObjectsByID.second;
-                if(matToLocalizeTo->IsSameAs(*candidateObject, 20.f, DEG_TO_RAD(20))) {
-                  // Found a match!
-                  existingObject = candidateObject;
-                }
-              }
-            }*/
           
             if(existingObjects.empty())
             {
@@ -820,6 +822,7 @@ namespace Anki
       return wasPoseUpdated;
       
     } // UpdateRobotPose()
+    
     
     size_t BlockWorld::UpdateObjectPoses(const Robot* robot,
                                          const Vision::ObservableObjectLibrary& objectLibrary,

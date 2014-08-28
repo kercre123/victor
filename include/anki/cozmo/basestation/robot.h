@@ -390,7 +390,7 @@ namespace Anki {
       ObjectID         _localizedToID;
       bool             _localizedToFixedMat; // false until robot sees a _fixed_ mat
       
-      Result UpdateWorldOrigin(const Pose3d& newPoseWrtNewOrigin);
+      Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
       
       bool             _onRamp;
       Point2f          _rampStartPosition;
