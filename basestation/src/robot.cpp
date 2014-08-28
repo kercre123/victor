@@ -2489,5 +2489,25 @@ namespace Anki {
     }
     
     
+    Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
+    {
+      _reactionCallbacks[code].push_front(callback);
+      
+      return _reactionCallbacks[code].cbegin();
+      
+    } // AddReactionCallback()
+    
+    
+    // Remove a preivously-added callback using the iterator returned by
+    // AddReactionCallback above.
+    void Robot::RemoveReactionCallback(const Vision::Marker::Code code, ReactionCallbackIter callbackToRemove)
+    {
+      _reactionCallbacks[code].erase(callbackToRemove);
+      if(_reactionCallbacks[code].empty()) {
+        _reactionCallbacks.erase(code);
+      }
+    } // RemoveReactionCallback()
+    
+    
   } // namespace Cozmo
 } // namespace Anki

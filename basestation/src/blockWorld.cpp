@@ -1132,9 +1132,9 @@ namespace Anki
       // Create observed marker
       Vision::ObservedMarker marker(t, msg.markerType, corners, camera);
       
-      // Finally actuall queue the marker
+      // Finally actually queue the marker
       obsMarkers_[marker.GetTimeStamp()].emplace(poseKey, marker);
-      
+            
       
       // Visualize the marker in 3D
       // TODO: disable this block when not debugging / visualizing
