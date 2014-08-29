@@ -443,6 +443,19 @@ namespace Anki {
       // Queue the marker for processing by the blockWorld
       _blockWorld.QueueObservedMarker(poseKey, marker);
       
+      // React to the marker if there is a callback for it
+      auto reactionIter = _reactionCallbacks.find(marker.GetCode());
+      if(reactionIter != _reactionCallbacks.end()) {
+        // Run each reaction for this code, in order:
+        for(auto & reactionCallback : reactionIter->second) {
+          lastResult = reactionCallback(this, &marker);
+          if(lastResult != RESULT_OK) {
+            PRINT_NAMED_WARNING("Robot.Update.ReactionCallbackFailed",
+                                "Reaction callback failed for robot %d observing marker with code %d.\n",
+                                GetID(), marker.GetCode());
+          }
+        }
+      }
       
       // Visualize the marker in 3D
       // TODO: disable this block when not debugging / visualizing
@@ -2697,6 +2710,28 @@ namespace Anki {
       m.eye_right_color = eye_right_color;
       _msgHandler->SendMessage(GetID(), m);
     }
+    
+    
+    Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
+    {
+      //CoreTechPrint("_reactionCallbacks size = %lu\n", _reactionCallbacks.size());
+      
+      _reactionCallbacks[code].emplace_front(callback);
+      
+      return _reactionCallbacks[code].cbegin();
+      
+    } // AddReactionCallback()
+    
+    
+    // Remove a preivously-added callback using the iterator returned by
+    // AddReactionCallback above.
+    void Robot::RemoveReactionCallback(const Vision::Marker::Code code, ReactionCallbackIter callbackToRemove)
+    {
+      _reactionCallbacks[code].erase(callbackToRemove);
+      if(_reactionCallbacks[code].empty()) {
+        _reactionCallbacks.erase(code);
+      }
+    } // RemoveReactionCallback()
     
     
   } // namespace Cozmo

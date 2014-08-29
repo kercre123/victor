@@ -232,6 +232,10 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
     RobotID_t robotID = (RobotID_t)robotIDVal.asInt();
     robotMgr_.AddRobot(robotID);
     robotMgr_.GetRobotByID(robotID)->SendInit();
+    
+    // Uncomment to Test "reactions":
+    // TODO: Make a keypress for switching to this behavior mode
+    //robotMgr_.GetRobotByID(robotID)->StartBehaviorMode(BehaviorManager::ReactToMarkers);
   }
 
   

@@ -34,7 +34,112 @@
 
 namespace Anki {
   namespace Cozmo {
+    
+    static Result TestCallback(Robot* robot, Vision::ObservedMarker* marker)
+    {
+      PRINT_INFO("TestCallback!!!\n");
+      return RESULT_OK;
+    }
+    
+    static bool IsMarkerCloseEnoughAndCentered(const Vision::ObservedMarker* marker, const u16 ncols)
+    {
+      bool result = false;
+      
+      // Parameters:
+      const f32 minDiagSize       = 50.f;
+      const f32 maxDistFromCenter = 35.f;
+      
+      const f32 diag1 = (marker->GetImageCorners()[Quad::TopLeft]  - marker->GetImageCorners()[Quad::BottomRight]).Length();
+      const f32 diag2 = (marker->GetImageCorners()[Quad::TopRight] - marker->GetImageCorners()[Quad::BottomLeft]).Length();
+      
+      // If the marker is large enough in our field of view (this is a proxy for
+      // "close enough" without needing to compute actual pose)
+      if(diag1 >= minDiagSize && diag2 >= minDiagSize) {
+        // If the marker is centered in the field of view (this is a proxy for
+        // "robot is facing the marker")
+        const Point2f centroid = marker->GetImageCorners().ComputeCentroid();
+        if(std::abs(centroid.x() - static_cast<f32>(ncols/2)) < maxDistFromCenter) {
+          result = true;
+        }
+      }
+      
+      return result;
+    }
+    
+    static Result ArrowCallback(Robot* robot, Vision::ObservedMarker* marker)
+    {
+      Result lastResult = RESULT_OK;
+      
+      // Parameters (pass in?)
+      const f32 driveSpeed = 30.f;
+      
+      if(IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
         
+        Vec2f upVector = marker->GetImageCorners()[Quad::TopLeft] - marker->GetImageCorners()[Quad::BottomLeft];
+
+        // Decide what to do based on the orientation of the arrow
+        // NOTE: Remember that Y axis points down in image coordinates.
+        
+        const f32 angle = atan2(upVector.y(), upVector.x());
+        
+        if(angle >= -3.f*M_PI_4 && angle < -M_PI_4) { // UP
+          PRINT_INFO("UP Arrow!\n");
+          lastResult = robot->DriveWheels(driveSpeed, driveSpeed);
+        }
+        else if(angle >= -M_PI_4 && angle < M_PI_4) { // RIGHT
+          PRINT_INFO("RIGHT Arrow!\n");
+          Pose3d rotatedPose(robot->GetPose());
+          rotatedPose.RotateBy(RotationVector3d(-M_PI_2, Z_AXIS_3D));
+          lastResult = robot->ExecutePathToPose(rotatedPose);
+        }
+        else if(angle >= M_PI_4 && angle < 3*M_PI_4) { // DOWN
+          PRINT_INFO("DOWN Arrow!\n");
+          lastResult = robot->DriveWheels(-driveSpeed, -driveSpeed);
+        }
+        else if(angle >= 3*M_PI_4 || angle < -3*M_PI_4) { // LEFT
+          PRINT_INFO("LEFT Arrow!\n");
+          Pose3d rotatedPose(robot->GetPose());
+          rotatedPose.RotateBy(RotationVector3d(M_PI_2, Z_AXIS_3D));
+          lastResult = robot->ExecutePathToPose(rotatedPose);
+        }
+        else {
+          PRINT_NAMED_ERROR("TurnCallback.UnexpectedAngle",
+                            "Unexpected angle for arrow marker: %.3f radians (%.1f degrees)\n",
+                            angle, angle*180.f/M_PI);
+          lastResult = RESULT_FAIL;
+        }
+      } // IfMarkerIsCloseEnoughAndCentered()
+      
+      return lastResult;
+      
+    } // ArrowCallback()
+    
+    static Result TurnAroundCallback(Robot* robot, Vision::ObservedMarker* marker)
+    {
+      Result lastResult = RESULT_OK;
+      
+      if(IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
+        PRINT_INFO("TURNAROUND Arrow!\n");
+        Pose3d rotatedPose(robot->GetPose());
+        rotatedPose.RotateBy(RotationVector3d(-M_PI, Z_AXIS_3D));
+        lastResult = robot->ExecutePathToPose(rotatedPose);
+      } // IfMarkerIsCloseEnoughAndCentered()
+      
+      return lastResult;
+    } // TurnAroundCallback()
+    
+    static Result StopCallback(Robot* robot, Vision::ObservedMarker* marker)
+    {
+      Result lastResult = RESULT_OK;
+
+      if(IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
+        lastResult = robot->StopAllMotors();
+      }
+      
+      return lastResult;
+    }
+    
+    
     BehaviorManager::BehaviorManager(Robot* robot)
     : mode_(None)
     , robot_(robot)
@@ -44,6 +149,11 @@ namespace Anki {
 //    , objectToPlaceOn_(Block::UNKNOWN_BLOCK_TYPE)
     {
       Reset();
+      
+      // NOTE: Do not _use_ the robot_ pointer in this constructor because
+      //  this constructor is being called from Robot's constructor.
+      
+      CORETECH_ASSERT(robot_ != nullptr);
     }
 
     void BehaviorManager::StartMode(Mode mode)
@@ -73,6 +183,18 @@ namespace Anki {
           nextState_ = WAITING_FOR_DOCK_BLOCK;
           updateFcn_ = &BehaviorManager::Update_TraverseObject;
           break;
+        case ReactToMarkers:
+          CoreTechPrint("Starting ReactToMarkers behavior\n");
+          
+          // Testing Reactions:
+          robot_->AddReactionCallback(Vision::MARKER_ANGRYFACE,     &TestCallback);
+          robot_->AddReactionCallback(Vision::MARKER_ARROW,         &ArrowCallback);
+          robot_->AddReactionCallback(Vision::MARKER_STOPWITHHAND,  &StopCallback);
+          robot_->AddReactionCallback(Vision::MARKER_CIRCULARARROW, &TurnAroundCallback);
+          
+          // Once the callbacks are added
+          StartMode(None);
+          
         default:
           PRINT_NAMED_ERROR("BehaviorManager.InvalidMode", "Invalid behavior mode");
           return;
@@ -92,7 +214,6 @@ namespace Anki {
       state_ = WAITING_FOR_ROBOT;
       nextState_ = state_;
       updateFcn_ = nullptr;
-      robot_ = nullptr;
       
       // Pick and Place
       

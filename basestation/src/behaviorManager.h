@@ -38,7 +38,8 @@ namespace Anki {
         None,
         PickAndPlace,
         June2014DiceDemo,
-        TraverseObject // for ramps or bridges
+        TraverseObject, // for ramps or bridges
+        ReactToMarkers
       } Mode;
       
       BehaviorManager(Robot* robot);

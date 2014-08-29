@@ -328,6 +328,20 @@ namespace Anki {
       
       Result UpdateFullRobotState(const MessageRobotState& msg);
       
+      
+      // ============= Reactions =============
+      using ReactionCallback = std::function<Result(Robot*,Vision::ObservedMarker*)>;
+      using ReactionCallbackIter = std::list<ReactionCallback>::const_iterator;
+      
+      // Add a callback function to be run as a "reaction" when the robot
+      // sees the specified VisionMarker. The returned iterator can be
+      // used to remove the callback via the method below.
+      ReactionCallbackIter AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback);
+      
+      // Remove a preivously-added callback using the iterator returned by
+      // AddReactionCallback above.
+      void RemoveReactionCallback(const Vision::Marker::Code code, ReactionCallbackIter callbackToRemove);
+      
       // ========= Lights ==========
       void SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color);
       
@@ -464,6 +478,10 @@ namespace Anki {
       // of path planning
       std::function<Result()>    _reExecSequenceFcn;
       PreActionPose::ActionType  _goalPoseActionType;
+      
+      // A place to store reaction callback functions, indexed by the type of
+      // vision marker that triggers them
+      std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
       
       
       ///////// Modifiers ////////

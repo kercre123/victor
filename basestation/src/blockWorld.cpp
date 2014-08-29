@@ -1013,8 +1013,9 @@ namespace Anki
     {
       Result lastResult = RESULT_OK;
       
-      // Finally actuall queue the marker
+      // Finally actually queue the marker
       obsMarkers_[marker.GetTimeStamp()].emplace(poseKey, marker);
+            
       
       return lastResult;
       
