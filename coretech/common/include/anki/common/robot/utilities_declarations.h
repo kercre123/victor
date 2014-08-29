@@ -17,7 +17,19 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities_c.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-#include "opencv2/core/core.hpp"
+namespace cv {
+  class Mat;
+  template<typename Type> class Mat_;
+
+  template<typename Type> class Point_;
+  template<typename Type> class Point3_;
+
+  typedef Point_<int> Point2i;
+  typedef Point2i Point;
+
+  template<typename Type> class Scalar_;
+  typedef Scalar_<double> Scalar;
+}
 #endif
 
 namespace Anki
@@ -103,8 +115,6 @@ namespace Anki
     template<typename Type> inline Type saturate_cast(const f64 v);
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-#include "opencv2/core/core.hpp"
-
     // Converts from typeid names to openCV types
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth);
 

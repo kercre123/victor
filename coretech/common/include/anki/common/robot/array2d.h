@@ -27,6 +27,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/serialize_declarations.h"
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/objdetect/objdetect.hpp"
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -177,13 +184,16 @@ namespace Anki
       void * buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(bufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
       // First, read the text header
-      fread(buffer, ARRAY_FILE_HEADER_LENGTH, 1, fp);
+      const size_t bytesRead1 = fread(buffer, ARRAY_FILE_HEADER_LENGTH, 1, fp);
 
-      AnkiConditionalErrorAndReturnValue(strcmp(reinterpret_cast<const char*>(buffer), ARRAY_FILE_HEADER) == 0,
+      AnkiConditionalErrorAndReturnValue(bytesRead1 == ARRAY_FILE_HEADER_LENGTH && strcmp(reinterpret_cast<const char*>(buffer), ARRAY_FILE_HEADER) == 0,
         newArray, "Array<Type>::LoadBinary", "File is not an Anki Embedded Array");
 
       // Next, read the actual payload
-      fread(buffer, bufferLength, 1, fp);
+      const size_t bytesRead2 = fread(buffer, bufferLength, 1, fp);
+
+      AnkiConditionalErrorAndReturnValue(bytesRead2 > 0,
+        newArray, "Array<Type>::LoadBinary", "File is not an Anki Embedded Array");
 
       fclose(fp);
 

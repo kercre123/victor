@@ -17,6 +17,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/trig_fast.h"
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#include "opencv2/core/core.hpp"
+#endif
+
 namespace Anki
 {
   namespace Embedded

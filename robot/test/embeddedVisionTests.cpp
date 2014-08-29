@@ -53,7 +53,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <cmath>
 
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include <iostream>
 #include <fstream>
 #endif

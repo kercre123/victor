@@ -323,7 +323,7 @@ namespace Anki
         return true;
       } // bool CascadeClassifier::IsValid() const
 
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
       CascadeClassifier_LBP::CascadeClassifier_LBP(const char * filename, MemoryStack &memory)
       {
         this->isValid = false;

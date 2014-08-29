@@ -1,10 +1,10 @@
 # coretech/vision/matlab/mex/CMakeLists.txt
 
 set(MEX_LINK_LIBRARIES 
-  CoreTech_Common_Basestation
   CoreTech_Vision_Basestation
-  CoreTech_Common_Robot
+  CoreTech_Common_Basestation
   CoreTech_Vision_Robot
+  CoreTech_Common_Robot
   ${OPENCV_LIBS}
 )
 

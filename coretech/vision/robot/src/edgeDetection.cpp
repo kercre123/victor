@@ -570,7 +570,7 @@ namespace Anki
       return requiredBytes;
     }
 
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
     cv::Mat EdgeLists::DrawIndexes(const f32 scale) const
     {
       AnkiConditionalErrorAndReturnValue(this->imageHeight > 16 && this->imageHeight < 2000 && this->imageWidth > 16 && this->imageWidth < 2000,
@@ -656,7 +656,7 @@ namespace Anki
       return totalImage;
     }
 
-#endif // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
     u8 ComputeGrayvalueThreshold(
       const IntegerCounts &integerCounts,
