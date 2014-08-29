@@ -66,6 +66,13 @@ namespace Anki {
       return result;
     }
     
+    static Pose3d RotateInPlaceAroundZ(const Pose3d& pose, f32 rotationAngle)
+    {
+      const Point3f translation(pose.GetTranslation());
+      const Radians heading = pose.GetRotationAngle<'Z'>();
+      return Pose3d(heading + rotationAngle, Z_AXIS_3D, translation);
+    }
+    
     static Result ArrowCallback(Robot* robot, Vision::ObservedMarker* marker)
     {
       Result lastResult = RESULT_OK;
@@ -90,7 +97,7 @@ namespace Anki {
           PRINT_INFO("RIGHT Arrow!\n");
           Pose3d rotatedPose(robot->GetPose());
           rotatedPose.RotateBy(RotationVector3d(-M_PI_2, Z_AXIS_3D));
-          lastResult = robot->ExecutePathToPose(rotatedPose);
+          lastResult = robot->ExecutePathToPose(RotateInPlaceAroundZ(robot->GetPose(), -M_PI_2));
         }
         else if(angle >= M_PI_4 && angle < 3*M_PI_4) { // DOWN
           PRINT_INFO("DOWN Arrow!\n");
@@ -98,9 +105,7 @@ namespace Anki {
         }
         else if(angle >= 3*M_PI_4 || angle < -3*M_PI_4) { // LEFT
           PRINT_INFO("LEFT Arrow!\n");
-          Pose3d rotatedPose(robot->GetPose());
-          rotatedPose.RotateBy(RotationVector3d(M_PI_2, Z_AXIS_3D));
-          lastResult = robot->ExecutePathToPose(rotatedPose);
+          lastResult = robot->ExecutePathToPose(RotateInPlaceAroundZ(robot->GetPose(), M_PI_2));
         }
         else {
           PRINT_NAMED_ERROR("TurnCallback.UnexpectedAngle",
@@ -120,9 +125,7 @@ namespace Anki {
       
       if(IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
         PRINT_INFO("TURNAROUND Arrow!\n");
-        Pose3d rotatedPose(robot->GetPose());
-        rotatedPose.RotateBy(RotationVector3d(-M_PI, Z_AXIS_3D));
-        lastResult = robot->ExecutePathToPose(rotatedPose);
+        lastResult = robot->ExecutePathToPose(RotateInPlaceAroundZ(robot->GetPose(), M_PI));
       } // IfMarkerIsCloseEnoughAndCentered()
       
       return lastResult;
