@@ -213,7 +213,7 @@ namespace Anki
 
       Result LucasKanadeTracker_SampledProjective::ShowTemplate(const char * windowName, const bool waitForKeypress, const bool fitImageToWindow) const
       {
-#if !ANKICORETECH_EMBEDDED_USE_OPENCV
+#if !ANKICORETECH_EMBEDDED_USE_OPENCV || !ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
         return RESULT_FAIL;
 #else
         //if(!this->IsValid())

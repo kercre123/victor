@@ -232,7 +232,7 @@ namespace Anki
 
       Type * data;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
       // WARNING:
       // If the OpenCV API changes, this could cause OpenCV errors even where no OpenCV is used.
       // This will probably be easily fixable, but be aware.

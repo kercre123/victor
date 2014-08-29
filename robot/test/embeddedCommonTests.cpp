@@ -858,7 +858,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<u64>(static_cast<f32>(0XFFFFFF7FFFFFFC00ULL)) == 0xFFFFFF0000000000ULL);
 
   const u64 a = saturate_cast<u64>(static_cast<f32>(0XFFFFFF7FFFFFFFFFULL));
-#if defined(__EDG__) || defined(__APPLE_CC__)
+#if defined(__EDG__) || defined(__APPLE_CC__) || defined(__GNUC__)
   ASSERT_TRUE(a == 0xFFFFFF0000000000ULL);
 #else
   ASSERT_TRUE(a == 0xFFFFFFFFFFFFFFFFULL);
@@ -909,7 +909,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(0x7FFFFFBFFFFFFE00LL)) == 0x7FFFFF8000000000LL);
 
   const s64 c = saturate_cast<s64>(static_cast<f32>(0x7FFFFFBFFFFFFE01LL));
-#if defined(__EDG__) || defined(__APPLE_CC__)
+#if defined(__EDG__) || defined(__APPLE_CC__) || defined(__GNUC__)
   ASSERT_TRUE(c == 0x7FFFFF8000000000LL);
 #else
   ASSERT_TRUE(c == 0x7FFFFFFFFFFFFFFFLL);
@@ -919,7 +919,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(0x7FFFFFFFFFFFFDFFLL)) == 0x7FFFFFFFFFFFFC00LL);
 
   const s64 d = saturate_cast<s64>(static_cast<f64>(0x7FFFFFFFFFFFFE00LL));
-#if defined(__EDG__) || defined(__APPLE_CC__)
+#if defined(__EDG__) || defined(__APPLE_CC__) || defined(__GNUC__)
   ASSERT_TRUE(d == 0x7FFFFFFFFFFFFFFFLL);
 #else
   ASSERT_TRUE(d == 0x7FFFFFFFFFFFFC00LL);
@@ -4084,7 +4084,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   matlab.PutArray<s16>(simpleArray, "simpleArray");
 #endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
   // Check that the templated OpenCV matrix works
   {
     cv::Mat_<s16> &simpleArray_cvMat = simpleArray.get_CvMat_();

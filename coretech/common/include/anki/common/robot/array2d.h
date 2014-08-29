@@ -391,7 +391,7 @@ namespace Anki
       return expression;
     }
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
     template<typename Type> cv::Mat_<Type>& Array<Type>::get_CvMat_()
     {
       AnkiConditionalError(this->IsValid(), "Array<Type>::get_CvMat_", "Array<Type> is not valid");
@@ -677,7 +677,7 @@ namespace Anki
       this->flags = rightHandSide.flags;
       this->data = rightHandSide.data;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
       this->UpdateCvMatMirror(rightHandSide);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
@@ -724,7 +724,7 @@ namespace Anki
       return flags;
     }
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
     template<typename Type> void Array<Type>::UpdateCvMatMirror(const Array<Type> &in) const
     {
       //memset(&this->cvMatMirror, 0, sizeof(this->cvMatMirror));
@@ -805,7 +805,7 @@ namespace Anki
       this->stride = -1;
       this->data = NULL;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
       this->cvMatMirror.step.p = this->cvMatMirror.step.buf;
       this->cvMatMirror.size = &this->cvMatMirror.rows;
       this->cvMatMirror.data = NULL;
