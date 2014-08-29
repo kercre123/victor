@@ -81,8 +81,6 @@ namespace Anki {
       // *valid_head_angle is made to equal the closest valid head angle to head_angle.
       bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
       
-      const Pose3d&          GetNeckPose()       const {return _neckPose;}
-      const Pose3d&          GetHeadCamPose()    const {return _headCamPose;}
       const Pose3d&          GetLiftPose()       const {return _liftPose;}  // At current lift position!
       const State            GetState()          const;
       
@@ -160,6 +158,8 @@ namespace Anki {
       u8 GetProxRight() {return _proxRight;}
       bool IsProxSidesBlocked() {return _proxSidesBlocked;}
       bool IsProxForwardBlocked() {return _proxFwdBlocked;}
+      
+      Result QueueObservedMarker(const MessageVisionMarker& msg);
       
       ///////// Motor commands  ///////////
       
@@ -302,8 +302,6 @@ namespace Anki {
       bool IsSavingImages() const;
       
       // =========== Pose history =============
-      // Returns ref to robot's pose history
-      const RobotPoseHistory& GetPoseHistory() {return _poseHistory;}
       
       Result AddRawOdomPoseToHistory(const TimeStamp_t t,
                                      const PoseFrameID_t frameID,
@@ -318,15 +316,6 @@ namespace Anki {
                                         const f32 head_angle,
                                         const f32 lift_angle);
 
-      Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
-                                             TimeStamp_t& t, RobotPoseStamp** p,
-                                             HistPoseKey* key = nullptr,
-                                             bool withInterpolation = false);
-
-      Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
-      Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
-      Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose);
-      
       TimeStamp_t GetLastMsgTimestamp() const;
       
       bool IsValidPoseKey(const HistPoseKey key) const;
@@ -419,6 +408,16 @@ namespace Anki {
       static const Quad2f CanonicalBoundingBoxXY;
       
       // Pose history
+      
+      Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
+                                             TimeStamp_t& t, RobotPoseStamp** p,
+                                             HistPoseKey* key = nullptr,
+                                             bool withInterpolation = false);
+      
+      Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
+      Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
+      Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose);
+      
       RobotPoseHistory _poseHistory;
 
       // State

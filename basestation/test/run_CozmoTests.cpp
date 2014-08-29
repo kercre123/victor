@@ -182,7 +182,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         fprintf(stdout, "Skipping mat marker with code = %d ('%s'), since we are not checking robot pose.\n",
                 msg.markerType, Vision::MarkerTypeStrings[msg.markerType]);
       } else {
-        ASSERT_EQ(robot.GetBlockWorld().QueueObservedMarker(msg, robot), RESULT_OK);
+        ASSERT_EQ(robot.QueueObservedMarker(msg), RESULT_OK);
       }
       
     } // for each VisionMarker in the jsonFile

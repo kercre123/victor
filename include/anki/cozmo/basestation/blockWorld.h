@@ -90,7 +90,7 @@ namespace Anki
       // Empties the queue of all observed markers
       void ClearAllObservedMarkers();
       
-      Result QueueObservedMarker(const MessageVisionMarker& msg, Robot& robot);
+      Result QueueObservedMarker(HistPoseKey& poseKey, Vision::ObservedMarker& marker);
       
       // Clear all existing objects in the world
       void ClearAllExistingObjects();

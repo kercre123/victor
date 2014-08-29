@@ -129,8 +129,7 @@ namespace Anki {
       
       CORETECH_ASSERT(robot != NULL);
       
-      // TODO: Add QueueObservedMarker to Robot class to avoid GetBlockWorld() call
-      retVal = robot->GetBlockWorld().QueueObservedMarker(msg, *robot);
+      retVal = robot->QueueObservedMarker(msg);
       
       return retVal;
     } // ProcessMessage(MessageVisionMarker)
