@@ -63,6 +63,7 @@ namespace Anki {
       bool                   IsLocalized()     const {return _localizedToID.IsSet();}
       const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
       void                   SetLocalizedTo(const ObjectID& toID);
+      void                   Delocalize();
       
       const Vision::Camera&             GetCamera() const;
       Vision::Camera&                   GetCamera();
@@ -153,9 +154,8 @@ namespace Anki {
       u8 GetProxLeft() {return _proxLeft;}
       u8 GetProxForward() {return _proxFwd;}
       u8 GetProxRight() {return _proxRight;}
-      bool IsProxLeftBlocked() {return _proxLeftBlocked;}
+      bool IsProxSidesBlocked() {return _proxSidesBlocked;}
       bool IsProxForwardBlocked() {return _proxFwdBlocked;}
-      bool IsProxRightBlocked() {return _proxRightBlocked;}
       
       ///////// Motor commands  ///////////
       
@@ -379,7 +379,7 @@ namespace Anki {
       
       // Proximity sensors
       u8 _proxLeft, _proxFwd, _proxRight;
-      bool _proxLeftBlocked, _proxFwdBlocked, _proxRightBlocked;
+      bool _proxFwdBlocked, _proxSidesBlocked;
       
       // Geometry / Pose
       std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
@@ -389,7 +389,7 @@ namespace Anki {
       ObjectID         _localizedToID;
       bool             _localizedToFixedMat; // false until robot sees a _fixed_ mat
       
-      Result UpdateWorldOrigin(const Pose3d& newPoseWrtNewOrigin);
+      Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
       
       bool             _onRamp;
       Point2f          _rampStartPosition;
@@ -460,9 +460,9 @@ namespace Anki {
       void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
       void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
       void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
-      void SetPickedUp(bool t) {_isPickedUp = t;}
+      void SetPickedUp(bool t);
       void SetProxSensorData(const u8 left, const u8 forward, const u8 right,
-                             bool leftBlocked, bool fwdBlocked, bool rightBlocked) {_proxLeft=left; _proxFwd=forward; _proxRight=right; _proxLeftBlocked = leftBlocked; _proxFwdBlocked = fwdBlocked; _proxRightBlocked = rightBlocked;}
+                             bool fwdBlocked, bool sidesBlocked) {_proxLeft=left; _proxFwd=forward; _proxRight=right; _proxFwdBlocked = fwdBlocked; _proxSidesBlocked = sidesBlocked;}
 
       
       ///////// Messaging ////////
@@ -557,6 +557,7 @@ namespace Anki {
     
     inline const f32 Robot::GetLiftAngle() const
     { return _currentLiftAngle; }
+    
     
     //
     // RobotManager class for keeping up with available robots, by their ID

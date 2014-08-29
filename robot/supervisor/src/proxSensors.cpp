@@ -11,8 +11,18 @@ namespace Anki {
     namespace ProxSensors {
       
       namespace {
-        HAL::ProximityValues _proxVals;
-        bool _blockedLeft, _blockedFwd, _blockedRight;
+        f32 _proxLeft, _proxFwd, _proxRight;
+        bool _prevBlockedSides = true, _prevBlockedFwd = false;
+        bool _blockedSides, _blockedFwd;
+        
+        const f32 FILT_COEFF = 0.05f;
+        
+        // The amount of time to consider a sensor blocked or unblocked
+        // after it has moved into a blocked region. This delay is to
+        // account for filtering time.
+        const TimeStamp_t BLOCKED_TIMEOUT = 1000; //ms
+        TimeStamp_t _fwdBlockedTransitionTime = 0;
+        TimeStamp_t _sidesBlockedTransitionTime = 0;
         
       } // "private" namespace
       
@@ -21,10 +31,13 @@ namespace Anki {
       {
         Result retVal = RESULT_OK;
         
-        HAL::GetProximity(&_proxVals);
-        //PERIODIC_PRINT(200, "PROX: %d  %d  %d\n",
-        //               _proxVals.left, _proxVals.forward, _proxVals.right);
+        // Get current readings and filter
+        HAL::ProximityValues currProxVals;
+        HAL::GetProximity(&currProxVals);
         
+        _proxLeft = (FILT_COEFF * currProxVals.left) + ((1.f - FILT_COEFF) * _proxLeft);
+        _proxFwd = (FILT_COEFF * currProxVals.forward) + ((1.f - FILT_COEFF) * _proxFwd);
+        _proxRight = (FILT_COEFF * currProxVals.right) + ((1.f - FILT_COEFF) * _proxRight);
         
         
         // TODO: Logic for when proximity sensors are blocked by the lift.
@@ -36,30 +49,66 @@ namespace Anki {
         // If lift is in carry position, assume readings below a certain
         // head angle are valid.
         // If lift is any other position, assume all readings are invalid.
+
+        f32 headAngle = HeadController::GetAngleRad();
+        TimeStamp_t currTime = HAL::GetTimeStamp();
+        bool currBlockedFwd = false, currBlockedSides = false;
         
         if (LiftController::GetDesiredHeight() == LIFT_HEIGHT_LOWDOCK) {
-          _blockedLeft = _blockedFwd = _blockedRight = false;
+          
+          if (headAngle > -0.3f) {
+            currBlockedSides = false;
+          } else {
+            currBlockedSides = true;
+          }
+          currBlockedFwd = false;
+          
         } else if (LiftController::GetDesiredHeight() == LIFT_HEIGHT_CARRY) {
           
-          f32 headAngle = HeadController::GetAngleRad();
-          
-          // Check when forward sensor is valid
-          if (headAngle < 0.1f || headAngle > 0.5f) {
-            _blockedFwd = false;
+          if (headAngle < 0.1f) {
+            currBlockedFwd = false;
+            currBlockedSides = false;
+          } else if (headAngle > 0.65f) {
+            currBlockedFwd = false;
+            currBlockedSides = true;
           } else {
-            _blockedFwd = true;
-          }
-          
-          // Check when side sensors are valid
-          if (headAngle < 0.3f) {
-            _blockedLeft = _blockedRight = false;
-          } else {
-            _blockedLeft = _blockedRight = true;
+            currBlockedFwd = true;
+            currBlockedSides = true;
           }
           
         } else {
-          _blockedLeft = _blockedFwd = _blockedRight = true;
+          currBlockedSides = currBlockedFwd = true;
         }
+        
+        
+        // Update blocked state transition time
+        if (currBlockedFwd != _prevBlockedFwd) {
+          _fwdBlockedTransitionTime = currTime;
+        }
+        if (currBlockedSides != _prevBlockedSides) {
+          _sidesBlockedTransitionTime = currTime;
+        }
+        
+        // Transitions to blocked state is immediate. (Sensors can be occluded as the lift is moving)
+        // Transitions to unblocked state is subject to a delay. (We don't want to immediately validate sensors readings off the lift as it just starts to move out of view.)
+        if (currBlockedFwd) {
+          _blockedFwd = true;
+        }
+        if (currBlockedSides) {
+          _blockedSides = true;
+        }
+        
+        // Set blocked state based on timeout
+        if (currTime - _fwdBlockedTransitionTime > BLOCKED_TIMEOUT) {
+          _blockedFwd = currBlockedFwd;
+        }
+        if (currTime - _sidesBlockedTransitionTime > BLOCKED_TIMEOUT) {
+          _blockedSides = currBlockedSides;
+        }
+
+        // Update prevBlocked state
+        _prevBlockedFwd = currBlockedFwd;
+        _prevBlockedSides = currBlockedSides;
 
         
         return retVal;
@@ -71,15 +120,19 @@ namespace Anki {
       // Returns the proximity sensor values
       void GetValues(u8 &left, u8 &forward, u8 &right)
       {
-        left = MIN(_proxVals.left, u8_MAX);
-        forward = MIN(_proxVals.forward, u8_MAX);
-        right = MIN(_proxVals.right, u8_MAX);
+        left = MIN(static_cast<u8>(FLT_ROUND(_proxLeft)), u8_MAX);
+        forward = MIN(static_cast<u8>(FLT_ROUND(_proxFwd)), u8_MAX);
+        right = MIN(static_cast<u8>(FLT_ROUND(_proxRight)), u8_MAX);
+        
+        //PERIODIC_PRINT(200, "PROX: %f  %f  %f (%d %d %d) (%d %d %d)\n",
+        //               _proxLeft, _proxFwd, _proxRight,
+        //               left, forward, right,
+        //               _blockedSides, _blockedFwd, _blockedSides);
       }
 
 
-      bool IsLeftBlocked() {return _blockedLeft;}
+      bool IsSideBlocked() {return _blockedSides;}
       bool IsForwardBlocked() {return _blockedFwd;}
-      bool IsRightBlocked() {return _blockedRight;}
       
       
     } // namespace ProxSensors

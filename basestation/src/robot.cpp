@@ -125,13 +125,9 @@ namespace Anki {
     , _forceReplanOnNextWorldChange(false)
     , _saveImages(false)
     , _camera(robotID)
-    , _poseOrigins(1)
     , _proxLeft(0), _proxFwd(0), _proxRight(0)
-    , _proxLeftBlocked(false), _proxFwdBlocked(false), _proxRightBlocked(false)
-    , _worldOrigin(&_poseOrigins.front())
-    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
+    , _proxFwdBlocked(false), _proxSidesBlocked(false)
     , _frameId(0)
-    , _localizedToFixedMat(false)
     , _onRamp(false)
     , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
@@ -147,12 +143,19 @@ namespace Anki {
     , _dockMarker(nullptr)
     , _dockMarker2(nullptr)
     {
+      _pose.SetName("Robot_" + std::to_string(_ID));
+      
+      // Initializes _pose, _poseOrigins, and _worldOrigin:
+      Delocalize();
+      
+      // The call to Delocalize() will increment frameID, but we want it to be
+      // initialzied to 0, to match the physical robot's initialization
+      _frameId = 0;
+      
       SetHeadAngle(_currentHeadAngle);
       pdo_ = new PathDolerOuter(msgHandler, robotID);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
-      
-      _poseOrigins.front().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin0");
       
     } // Constructor: Robot
 
@@ -166,6 +169,34 @@ namespace Anki {
       _selectedPathPlanner = nullptr;
     }
     
+    void Robot::SetPickedUp(bool t)
+    {
+      if(_isPickedUp == false && t == true) {
+        // Robot is being picked up: de-localize it
+        Delocalize();
+      }
+      _isPickedUp = t;
+    }
+    
+    void Robot::Delocalize()
+    {
+      _localizedToID.UnSet();
+      _localizedToFixedMat = false;
+      
+      // Add a new pose origin to use until the robot gets localized again
+      _poseOrigins.emplace_back();
+      _poseOrigins.back().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(_poseOrigins.size() - 1));
+      _worldOrigin = &_poseOrigins.back();
+      
+      _pose.SetRotation(0, Z_AXIS_3D);
+      _pose.SetTranslation({{0.f, 0.f, 0.f}});
+      _pose.SetParent(_worldOrigin);
+      
+      _poseHistory.Clear();
+      ++_frameId;
+    }
+
+    
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
     {
       Result lastResult = RESULT_OK;
@@ -178,24 +209,23 @@ namespace Anki {
 
       // Update proximity sensor values
       SetProxSensorData(msg.proxLeft, msg.proxForward, msg.proxRight,
-                        msg.status & IS_PROX_LEFT_BLOCKED,
                         msg.status & IS_PROX_FORWARD_BLOCKED,
-                        msg.status & IS_PROX_RIGHT_BLOCKED);
+                        msg.status & IS_PROX_SIDE_BLOCKED);
 
       if(DISPLAY_PROX_OVERLAY) {
         // printf("displaying: prox L,F,R (%2u, %2u, %2u), blocked: (%d,%d,%d)\n",
         //        msg.proxLeft, msg.proxForward, msg.proxRight,
-        //        msg.status & IS_PROX_LEFT_BLOCKED,
+        //        msg.status & IS_PROX_SIDE_BLOCKED,
         //        msg.status & IS_PROX_FORWARD_BLOCKED,
-        //        msg.status & IS_PROX_RIGHT_BLOCKED);
+        //        msg.status & IS_PROX_SIDE_BLOCKED);
 
         VizManager::getInstance()->SetText(0,   // TODO:(bn) id??
                                            Anki::NamedColors::GREEN,
                                            "prox: (%2u, %2u, %2u) %d%d%d",
-                                           msg.proxLeft, msg.proxForward, msg.proxRight,
-                                           (bool) msg.status & IS_PROX_LEFT_BLOCKED,
-                                           (bool) msg.status & IS_PROX_FORWARD_BLOCKED,
-                                           (bool) msg.status & IS_PROX_RIGHT_BLOCKED);
+                                           _proxLeft, _proxFwd, _proxRight,
+                                           IsProxSidesBlocked(),
+                                           IsProxForwardBlocked(),
+                                           IsProxSidesBlocked());
       }
       
       // Get ID of last/current path that the robot executed
@@ -272,14 +302,27 @@ namespace Anki {
         // reported odometry from the physical robot
         
         // Ignore physical robot's notion of z from the message? (msg.pose_z)
-        const f32 pose_z = GetPose().GetWithRespectToOrigin().GetTranslation().z();
+        f32 pose_z = GetPose().GetTranslation().z();
+
+        if(msg.pose_frame_id != GetPoseFrameID()) {
+          // This is an old odometry update from a previous pose frame ID. We
+          // need to look up the correct Z value to use for putting this
+          // message's (x,y) odometry info into history.
+          RobotPoseStamp p;
+          lastResult = _poseHistory.GetLastPoseWithFrameID(msg.pose_frame_id, p);
+          if(lastResult != RESULT_OK) {
+            PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
+                              "Failed to get last pose from history with frame ID=%d.\n", msg.pose_frame_id);
+            return lastResult;
+          }
+          pose_z = p.GetPose().GetTranslation().z();
+        }
         
         // Need to put the odometry update in terms of the current robot origin
         newPose = Pose3d(msg.pose_angle, Z_AXIS_3D, {{msg.pose_x, msg.pose_y, pose_z}}, _worldOrigin);
         newPose = newPose.GetWithRespectToOrigin();
         
       } // if/else on ramp
-      
       
       // Add to history
       lastResult = AddRawOdomPoseToHistory(msg.timestamp,
@@ -290,6 +333,7 @@ namespace Anki {
                                            newPose.GetRotationAngle<'Z'>().ToFloat(),
                                            msg.headAngle,
                                            msg.liftAngle);
+      
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.AddPoseError",
                             "AddRawOdomPoseToHistory failed for timestamp=%d\n", msg.timestamp);
@@ -926,38 +970,10 @@ namespace Anki {
       robotPoseWrtMat.SetParent(&existingMatPiece->GetPose());
       //robotPoseWrtMat.SetName(std::string("Robot_") + std::to_string(robot->GetID()));
       
-      // Don't snap to horizontal or discrete Z levels when we see a mat marker
-      // while on a ramp
-      if(IsOnRamp() == false)
-      {
-        // If there is any significant rotation, make sure that it is roughly
-        // around the Z axis
-        Radians rotAngle;
-        Vec3f rotAxis;
-        robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
-        const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
-        if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
-          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
-                              "Robot's Z axis is not well aligned with the world Z axis. "
-                              "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
-                              rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
-        }
-        
-        // Snap to purely horizontal rotation and surface of the mat
-        if(existingMatPiece->IsPoseOn(robotPoseWrtMat, 0, 10.f)) {
-          Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
-          robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
-          robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
-        }
-        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
-        
-      } // if robot is on ramp
-      
       if(!_localizedToFixedMat && !existingMatPiece->IsMoveable()) {
         // If we have not yet seen a fixed mat, and this is a fixed mat, rejigger
         // the origins so that we use it as the world origin
-        PRINT_NAMED_INFO("Robot.LocalizeToMat.LocalizingToFixedMat",
+        PRINT_NAMED_INFO("Robot.LocalizeToMat.LocalizingToFirstFixedMat",
                          "Localizing robot %d to fixed %s mat for the first time.\n",
                          GetID(), existingMatPiece->GetType().GetName().c_str());
         
@@ -989,6 +1005,35 @@ namespace Anki {
           _localizedToFixedMat = true;
         }
       }
+      
+      
+      // Don't snap to horizontal or discrete Z levels when we see a mat marker
+      // while on a ramp
+      if(IsOnRamp() == false)
+      {
+        // If there is any significant rotation, make sure that it is roughly
+        // around the Z axis
+        Radians rotAngle;
+        Vec3f rotAxis;
+        robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
+        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
+        const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
+        if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
+                              "Robot's Z axis is not well aligned with the world Z axis. "
+                              "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
+                              rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
+        }
+        
+        // Snap to purely horizontal rotation and surface of the mat
+        if(existingMatPiece->IsPoseOn(robotPoseWrtMat, 0, 10.f)) {
+          Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
+          robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
+          robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
+        }
+        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
+        
+      } // if robot is on ramp
       
       
       // Add the new vision-based pose to the robot's history. Note that we use
@@ -2271,7 +2316,7 @@ namespace Anki {
     }
     
     
-    Result Robot::UpdateWorldOrigin(const Pose3d& newPoseWrtNewOrigin)
+    Result Robot::UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin)
     {
       // Reverse the connection between origin and robot, and connect the new
       // reversed connection
@@ -2279,26 +2324,35 @@ namespace Anki {
       //Pose3d originWrtRobot = _pose.GetInverse();
       //originWrtRobot.SetParent(&newPoseOrigin);
       
+      // TODO: get rid of nasty const_cast somehow
+      Pose3d* newOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
+      newOrigin->SetParent(nullptr);
+      
       // TODO: We should only be doing this (modifying what _worldOrigin points to) when it is one of the placeHolder poseOrigins, not if it is a mat!
       std::string origName(_worldOrigin->GetName());
       *_worldOrigin = _pose.GetInverse();
       _worldOrigin->SetParent(&newPoseWrtNewOrigin);
       
-      
       // Connect the old origin's pose to the same root the robot now has.
       // It is no longer the robot's origin, but for any of its children,
       // it is now in the right coordinates.
-      if(_worldOrigin->GetWithRespectTo(newPoseWrtNewOrigin.FindOrigin(), *_worldOrigin) == false) {
+      if(_worldOrigin->GetWithRespectTo(*newOrigin, *_worldOrigin) == false) {
         PRINT_NAMED_ERROR("Robot.UpdateWorldOrigin.NewLocalizationOriginProblem",
                           "Could not get pose origin w.r.t. new origin pose.\n");
         return RESULT_FAIL;
       }
       
+      //_worldOrigin->PreComposeWith(*newOrigin);
+      
+      // Preserve the old world origin's name, despite updates above
       _worldOrigin->SetName(origName);
       
-      // Now make the robot's origin point to the new origin
-      // TODO: avoid the icky const_cast here...
-      _worldOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
+      // Now make the robot's world origin point to the new origin
+      _worldOrigin = newOrigin;
+      
+      newOrigin->SetRotation(0, Z_AXIS_3D);
+      newOrigin->SetTranslation({{0,0,0}});
+      
       
       return RESULT_OK;
       
