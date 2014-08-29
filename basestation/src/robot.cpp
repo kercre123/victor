@@ -29,6 +29,7 @@
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/robot/cozmoConfig.h"
 
+#include "actionQueue.h"
 #include "messageHandler.h"
 #include "ramp.h"
 #include "vizManager.h"
@@ -528,6 +529,46 @@ namespace Anki {
       
       
       //////// Update Robot's State Machine /////////////
+      if(!_actionQueue.empty()) {
+        IAction* currentAction = _actionQueue.front();
+        
+        const IAction::ActionResult result = currentAction->Update();
+        switch(result)
+        {
+          case IAction::SUCCESS:
+            PRINT_NAMED_INFO("Robot.Update.CurrentActionSucceeded",
+                             "Robot %d succeeded running action %s. Popping it off queue.\n",
+                             GetID(), currentAction->GetName().c_str());
+            _actionQueue.pop();
+            break;
+            
+          case IAction::RUNNING:
+            // Nothing to do?  Still running...
+            break;
+            
+          case IAction::FAILURE_PROCEED:
+            PRINT_NAMED_INFO("Robot.Update.CurrentActionFailedProceeding",
+                             "Robot %d failed running action %s. Popping it off queue and proceeding.\n",
+                             GetID(), currentAction->GetName().c_str());
+
+            _actionQueue.pop();
+            break;
+            
+          case IAction::FAILURE_ABORT:
+            PRINT_NAMED_INFO("Robot.Update.CurrentActionFailedProceeding",
+                             "Robot %d failed running action %s. Clearing remainder of action queue.\n",
+                             GetID(), currentAction->GetName().c_str());
+            
+            _actionQueue = {}; // clear the queue
+            break;
+            
+          default:
+            PRINT_NAMED_ERROR("Robot.Update.InvalidActionResultCase",
+                              "Reached unexpected default case for ActionResult.\n");
+            return RESULT_FAIL;
+            
+        } // switch(result)
+      } // if actionQueue not empty
       
       static bool wasTraversingPath = false;
       

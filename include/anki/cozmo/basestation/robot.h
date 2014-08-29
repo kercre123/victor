@@ -33,10 +33,10 @@ namespace Anki {
     // Forward declarations:
     class IMessageHandler;
     class IPathPlanner;
+    class IAction;
     class MatPiece;
     class PathDolerOuter;
-    class Ramp;
-    
+    class Ramp;    
     
     class Robot
     {
@@ -358,6 +358,8 @@ namespace Anki {
       BlockWorld       _blockWorld;
       
       BehaviorManager  _behaviorMgr;
+      
+      std::queue<IAction*> _actionQueue;
       
       // Path Following. There are two planners, only one of which can
       // be selected at a time
