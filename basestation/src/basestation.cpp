@@ -235,7 +235,7 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
     
     // Uncomment to Test "reactions":
     // TODO: Make a keypress for switching to this behavior mode
-    //robotMgr_.GetRobotByID(robotID)->StartBehaviorMode(BehaviorManager::ReactToMarkers);
+    robotMgr_.GetRobotByID(robotID)->StartBehaviorMode(BehaviorManager::ReactToMarkers);
   }
 
   
