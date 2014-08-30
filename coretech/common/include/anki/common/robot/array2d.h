@@ -521,7 +521,7 @@ namespace Anki
 
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
     template<typename Type> s32 Array<Type>::Set(const cv::Mat_<Type> &in)
     {
       const s32 inHeight = in.rows;

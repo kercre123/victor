@@ -140,7 +140,7 @@ namespace Anki
       // like Matrix::Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out) for example.
       ConstArraySliceExpression<Type> Transpose() const;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
       // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data should be copied (though with OpenCV, it's hard to tell).
       cv::Mat_<Type>& get_CvMat_();
       const cv::Mat_<Type>& get_CvMat_() const;
