@@ -1532,7 +1532,7 @@ namespace Anki {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecuteTraversalSequence.ObjectNotFound",
-                          "Could not get object with ID = %d from world.\n", objectID.GetValue());
+                          "Could not get actionable object with ID = %d from world.\n", objectID.GetValue());
         return RESULT_FAIL;
       }
       
