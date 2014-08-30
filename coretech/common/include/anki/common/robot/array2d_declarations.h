@@ -21,7 +21,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/sequences_declarations.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-namespace cv 
+namespace cv
 {
   class Mat;
   template<typename Type> class Mat_;
@@ -37,7 +37,8 @@ namespace Anki
     template<typename Type> class ConstArraySliceExpression;
 
     const s32 ARRAY_FILE_HEADER_LENGTH = 32;
-    const char ARRAY_FILE_HEADER[ARRAY_FILE_HEADER_LENGTH+1] = "\x89" "AnkiEmbeddedArray1.0           ";
+    const s32 ARRAY_FILE_HEADER_VALID_LENGTH = 21; //< How many characters are not spaces
+    const char ARRAY_FILE_HEADER[ARRAY_FILE_HEADER_LENGTH+1] = "\x89" "AnkiEmbeddedArray1.1           ";
 
     // #pragma mark --- Array Class Declaration ---
 
@@ -78,8 +79,9 @@ namespace Anki
       static Array<Type> LoadImage(const char * filename, MemoryStack &memory);
 
       // Load or save an array saved as a debugStream.
+      // compressionLevel can be from 0 (uncompressed) to 9 (most compressed). If OpenCV is not used, it must be zero.
       static Array<Type> LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory);
-      Result SaveBinary(const char * filename, MemoryStack scratch) const;
+      Result SaveBinary(const char * filename, const s32 compressionLevel, MemoryStack scratch) const;
 
       // Pointer to the data, at a given (y,x) location
       //

@@ -124,7 +124,7 @@ if(NOT MATLAB_FOUND)
       elseif(IS_DIRECTORY "C:/Program Files/MATLAB/R2014a")
         set(MATLAB_ROOT "C:/Program Files/MATLAB/R2014a")
       elseif(IS_DIRECTORY "C:/Program Files (x86)/MATLAB/R2014a")
-        set(MATLAB_ROOT "C:/Program Files (x86)/MATLAB/R2014a")        
+        set(MATLAB_ROOT "C:/Program Files (x86)/MATLAB/R2014a")
       else()
         set(MATLAB_ROOT "")
       endif()
@@ -142,18 +142,18 @@ if(NOT MATLAB_FOUND)
     set(MATLAB_MX_LIBRARY libmx)
     set(MATLAB_MEX_LIBRARY libmex)
 #    set(ANKI_LIBRARIES CoreTech_Common_Embedded)
-    set(ZLIB_LIBRARY )
+    set(ZLIB_LIBRARY zlib)
     set(CMD_COMMAND cmd /c)
     set(ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS 1)
   elseif(LINUX)
     set(MATLAB_ROOT "")
     set(MATLAB_INCLUDE_DIR "")
     set(MATLAB_LIBRARIES)
-    set(ZLIB_LIBRARY z pthread m)
+    set(ZLIB_LIBRARY zlib pthread m)
     set(CMD_COMMAND)
     set(ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS 0)
   else()
-    if(NOT DEFINED MATLAB_ROOT_DIR)   
+    if(NOT DEFINED MATLAB_ROOT_DIR)
       # Use default matlab root path
       if(IS_DIRECTORY /Applications/MATLAB_R2014a.app)
         set(MATLAB_ROOT /Applications/MATLAB_R2014a.app)
@@ -177,7 +177,7 @@ if(NOT MATLAB_FOUND)
     set(MATLAB_MEX_LIBRARY mex)
 #    set(ANKI_LIBRARIES CoreTech_Common CoreTech_Common_Embedded)
     set(CMD_COMMAND)
-    set(ZLIB_LIBRARY z)
+    set(ZLIB_LIBRARY zlib)
     set(CMD_COMMAND)
     set(ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS 1)
   endif(WIN32)
@@ -189,7 +189,7 @@ endif(NOT MATLAB_FOUND)
 
 if(MATLAB_FOUND)
   # set(MEX_COMPILER ${MATLAB_ROOT_DIR}/bin/mex)
-    
+
   set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "${MATLAB_ENG_LIBRARY_PATH}")
 
   # Set the mex extension using Matlab's "mexext" script:
@@ -262,6 +262,8 @@ endif(NOT DEFINED EXTERNAL_DIR)
 set(OPENCV_MODULES_DIR ${EXTERNAL_DIR}/${OPENCV_DIR}/modules)
 include_directories(
   ${EXTERNAL_DIR}/${OPENCV_DIR}/include
+  ${EXTERNAL_DIR}/${OPENCV_DIR}/3rdparty/zlib
+  ${EXTERNAL_DIR}/build/${OPENCV_DIR}/3rdparty/zlib
   ${EXTERNAL_DIR}/${GTEST_DIR}/include
   ${EXTERNAL_DIR}/jsoncpp
   ${MATLAB_INCLUDE_DIR}
@@ -313,8 +315,11 @@ endif()
 if(WIN32)
   link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/Debug)
   link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/RelWithDebInfo)
+  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/3rdparty/lib/Debug)
+  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/3rdparty/lib/RelWithDebInfo)
 else()
   link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib)
+  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/3rdparty/lib)
 endif(WIN32)
 
 
@@ -369,13 +374,13 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
   if(NOT DEFINED NO_MEX_WRAPPERS)
     set(MEX_WRAPPER_FILE ${CORETECH_ROOT_DIR}/common/matlab/mex/mexWrappers.cpp)
   endif(NOT DEFINED NO_MEX_WRAPPERS)
-  
+
   add_library(${OUTPUT_NAME} SHARED
     ${MEX_FILE}
     ${MEX_WRAPPER_FILE}
     ${CORETECH_ROOT_DIR}/common/matlab/mex/mexFunction.def
   )
-  
+
   # Put mex binaries in MEX_OUTPUT_PATH
   foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
     string( TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG )
@@ -416,7 +421,7 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
     #message(${MEX_LINK_LIBRARIES})
     target_link_libraries(${OUTPUT_NAME} ${MEX_LINK_LIBRARIES})
   endif()
-  
+
   target_link_libraries(${OUTPUT_NAME}
     ${ZLIB_LIBRARY}
     jsoncpp

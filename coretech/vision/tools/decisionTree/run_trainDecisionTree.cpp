@@ -11,6 +11,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/serialize.h"
 
+#define COMPRESSION_LEVEL 9
+
 using namespace Anki;
 using namespace Anki::Embedded;
 
@@ -104,7 +106,7 @@ template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const c
 
   const ConstArraySlice<Type> arr = in;
 
-  return arr.get_array().SaveBinary(filenameBuffer, scratch);
+  return arr.get_array().SaveBinary(filenameBuffer, COMPRESSION_LEVEL, scratch);
 }
 
 void PrintUsage()

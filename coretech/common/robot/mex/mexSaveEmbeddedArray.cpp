@@ -15,11 +15,11 @@
 using namespace Anki;
 using namespace Anki::Embedded;
 
-template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const char *filename, MemoryStack scratch);
-template<typename Type> Result AllocateAndSaveCell(const mxArray *matlabArray, const char *filename, MemoryStack scratch);
-template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const char *filename, MemoryStack scratch);
+template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch);
+template<typename Type> Result AllocateAndSaveCell(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch);
+template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch);
 
-template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const char *filename, MemoryStack scratch)
+template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch)
 {
   AnkiAssert(!mxIsCell(matlabArray));
 
@@ -28,10 +28,10 @@ template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const
   if(!ankiArray.IsValid())
     return RESULT_FAIL;
 
-  return ankiArray.SaveBinary(filename, scratch);
+  return ankiArray.SaveBinary(filename, compressionLevel, scratch);
 }
 
-template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const char *filename, MemoryStack scratch)
+template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch)
 {
   AnkiAssert(mxIsCell(matlabArray));
 
@@ -40,10 +40,10 @@ template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const c
   if(!ankiArray.IsValid())
     return RESULT_FAIL;
 
-  return ankiArray.SaveBinary(filename, scratch);
+  return ankiArray.SaveBinary(filename, compressionLevel, scratch);
 }
 
-Result Save(const mxArray *matlabArray, const char *filename, MemoryStack scratch)
+Result Save(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch)
 {
   const mxClassID matlabClassId = mxGetClassID(matlabArray);
 
@@ -72,31 +72,31 @@ Result Save(const mxArray *matlabArray, const char *filename, MemoryStack scratc
     //  return AllocateAndSaveCell<u64>(matlabArray, filename, scratch);
     //} else
     if(matlabCellClassId == mxCHAR_CLASS) {
-      return AllocateAndSaveCell<char *>(matlabArray, filename, scratch);
+      return AllocateAndSaveCell<char *>(matlabArray, filename, compressionLevel, scratch);
     } else {
       AnkiAssert(false);
     }
   } else { // if(mxIsCell(matlabArray))
     if(matlabClassId == mxDOUBLE_CLASS) {
-      return AllocateAndSave<f64>(matlabArray, filename, scratch);
+      return AllocateAndSave<f64>(matlabArray, filename, compressionLevel, scratch);
     } else if(matlabClassId == mxSINGLE_CLASS) {
-      return AllocateAndSave<f32>(matlabArray, filename, scratch);
+      return AllocateAndSave<f32>(matlabArray, filename, compressionLevel, scratch);
     } else if(matlabClassId == mxINT8_CLASS) {
-      return AllocateAndSave<s8>(matlabArray, filename, scratch);
+      return AllocateAndSave<s8>(matlabArray, filename, compressionLevel, scratch);
     } else if(matlabClassId == mxUINT8_CLASS) {
-      return AllocateAndSave<u8>(matlabArray, filename, scratch);
+      return AllocateAndSave<u8>(matlabArray, filename, compressionLevel, scratch);
     } else if(matlabClassId == mxINT16_CLASS) {
-      return AllocateAndSave<s16>(matlabArray, filename, scratch);
+      return AllocateAndSave<s16>(matlabArray, filename, compressionLevel, scratch);
     } else if(matlabClassId == mxUINT16_CLASS) {
-      return AllocateAndSave<u16>(matlabArray, filename, scratch);
+      return AllocateAndSave<u16>(matlabArray, filename, compressionLevel, scratch);
     } else if(matlabClassId == mxINT32_CLASS) {
-      return AllocateAndSave<s32>(matlabArray, filename, scratch);
+      return AllocateAndSave<s32>(matlabArray, filename, compressionLevel, scratch);
     } else if(matlabClassId == mxUINT32_CLASS) {
-      return AllocateAndSave<u32>(matlabArray, filename, scratch);
+      return AllocateAndSave<u32>(matlabArray, filename, compressionLevel, scratch);
     } else if(matlabClassId == mxINT64_CLASS) {
-      return AllocateAndSave<s64>(matlabArray, filename, scratch);
+      return AllocateAndSave<s64>(matlabArray, filename, compressionLevel, scratch);
     } else if(matlabClassId == mxUINT64_CLASS) {
-      return AllocateAndSave<u64>(matlabArray, filename, scratch);
+      return AllocateAndSave<u64>(matlabArray, filename, compressionLevel, scratch);
     } else {
       AnkiAssert(false);
     }
@@ -107,6 +107,7 @@ Result Save(const mxArray *matlabArray, const char *filename, MemoryStack scratc
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  const s32 compressionLevel = 9;
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
   AnkiConditionalErrorAndReturn(nrhs == 2 && nlhs == 0, "mexSaveEmbeddedArray", "Call this function as follows: mexSaveEmbeddedArray(array, filename);");
@@ -118,7 +119,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   char* filename = mxArrayToString(prhs[1]);
 
-  const Result result = Save(prhs[0], filename, memory);
+  const Result result = Save(prhs[0], filename, compressionLevel, memory);
 
   mxFree(memory.get_buffer());
   mxFree(filename);
