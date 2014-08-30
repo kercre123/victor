@@ -1,7 +1,6 @@
 # coretech/common/robot/tools/CMakeLists.txt
 
-if(LINUX==0)
-
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   # save buffered video
 
   file(GLOB SOURCE_FILES_SAVE_VIDEO
