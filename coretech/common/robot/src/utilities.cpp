@@ -23,6 +23,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/cozmo/robot/hal.h"
 #else
 #include <sys/time.h>
+#include <sys/resource.h>
 #endif
 
 #define PrintfOneArray_FORMAT_STRING_2 "%d %d "
@@ -320,7 +321,7 @@ namespace Anki
 
 #if defined(_MSC_VER)
     // returns secondTime - firstTime
-    static unsigned long long FiletimeDelta(const FILETIME &secondTime, const FILETIME &firstTime)
+    static u64 FiletimeDelta(const FILETIME &secondTime, const FILETIME &firstTime)
     {
       LARGE_INTEGER firstTimeI;
       LARGE_INTEGER secondTimeI;
@@ -339,9 +340,9 @@ namespace Anki
     {
       static bool firstCall = true;
 
-#if defined(_MSC_VER)
+      f64 percentUsage;
 
-      f32 percentUsage;
+#if defined(_MSC_VER)
 
       FILETIME idleTime;
       FILETIME kernelTime;
@@ -361,32 +362,54 @@ namespace Anki
         percentUsage = 0;
         firstCall = false;
       } else {
-        const unsigned long long idleDelta = FiletimeDelta(idleTime, lastIdleTime);
-        const unsigned long long kernelDelta = FiletimeDelta(kernelTime, lastKernelTime);
-        const unsigned long long userDelta = FiletimeDelta(userTime, lastUserTime);
+        const u64 idleDelta = FiletimeDelta(idleTime, lastIdleTime);
+        const u64 kernelDelta = FiletimeDelta(kernelTime, lastKernelTime);
+        const u64 userDelta = FiletimeDelta(userTime, lastUserTime);
 
-        const unsigned long long totalSystemDelta = kernelDelta + userDelta;
+        const u64 totalSystemDelta = kernelDelta + userDelta;
 
         //percentUsage = 100.0f * static_cast<f32>(numCpus) * static_cast<f32>(totalSystemDelta - idleDelta) / static_cast<f32>(totalSystemDelta);
-        percentUsage = 100.0f * static_cast<f32>(totalSystemDelta - idleDelta) / static_cast<f32>(totalSystemDelta);
+        percentUsage = 100.0 * static_cast<f64>(totalSystemDelta - idleDelta) / static_cast<f64>(totalSystemDelta);
       }
 
       lastIdleTime = idleTime;
       lastKernelTime = kernelTime;
       lastUserTime = userTime;
 
-#elif defined(__APPLE_CC__)
-      // TODO: implement
-      const f32 percentUsage = 0;
 #elif defined(__EDG__)  // ARM-MDK
       // Cannot query on the M4
-      const f32 percentUsage = 0;
-#else // Generic Unix
-      // TODO: implement
-      const f32 percentUsage = 0;
+      percentUsage = 0;
+#else // Generic Unix or OSX
+
+      f64 curCpuTime;
+      f64 curTime;
+
+      static f64 lastCpuTime;
+      static f64 lastTime;
+
+      struct rusage usage;
+      getrusage(RUSAGE_SELF, &usage);
+
+      curTime = GetTimeF64();
+
+      // User + system (kernel) time
+      cpuTime =
+        static_cast<f64>(usage.ru_utime.tv_sec) + static_cast<f64>(usage.ru_utime.tv_usec) / 1000000.0 +
+        static_cast<f64>(usage.ru_stime.tv_sec) + static_cast<f64>(usage.ru_stime.tv_usec) / 1000000.0;
+
+      if(firstCall) {
+        percentUsage = 0;
+        firstCall = false;
+      } else {
+        // TODO: Check that everything works, with the number of cores and everything
+        percentUsage = 100.0 * (curCpuTime - lastCpuTime) / (curTime - lastTime);
+      }
+
+      lastCpuTime = cpuTime;
+      lastTime = curTime;
 #endif
 
-      return percentUsage;
+      return static_cast<f32>(percentUsage);
     } // f32 GetCpuUsage()
   } // namespace Embedded
 } // namespace Anki
