@@ -235,7 +235,7 @@ namespace Anki
 #endif
 
       return timeInSeconds;
-    }
+    } // f32 GetTimeF32()
 
     f64 GetTimeF64()
     {
@@ -281,7 +281,7 @@ namespace Anki
 #endif
 
       return timeInSeconds;
-    }
+    } // f64 GetTimeF64()
 
     u32 GetTimeU32()
     {
@@ -316,6 +316,77 @@ namespace Anki
       clock_gettime(CLOCK_MONOTONIC, &ts);
       return (u32)ts.tv_sec * 1000000 + (u32)(ts.tv_nsec/1000);
 #endif
+    } // u32 GetTimeU32()
+
+#if defined(_MSC_VER)
+    // returns secondTime - firstTime
+    static unsigned long long FiletimeDelta(const FILETIME &secondTime, const FILETIME &firstTime)
+    {
+      LARGE_INTEGER firstTimeI;
+      LARGE_INTEGER secondTimeI;
+
+      firstTimeI.LowPart = firstTime.dwLowDateTime;
+      firstTimeI.HighPart = firstTime.dwHighDateTime;
+
+      secondTimeI.LowPart = secondTime.dwLowDateTime;
+      secondTimeI.HighPart = secondTime.dwHighDateTime;
+
+      return secondTimeI.QuadPart - firstTimeI.QuadPart;
     }
+#endif
+
+    f32 GetCpuUsage()
+    {
+      static bool firstCall = true;
+
+#if defined(_MSC_VER)
+
+      f32 percentUsage;
+
+      FILETIME idleTime;
+      FILETIME kernelTime;
+      FILETIME userTime;
+      GetSystemTimes(&idleTime, &kernelTime, &userTime);
+
+      static FILETIME lastIdleTime;
+      static FILETIME lastKernelTime;
+      static FILETIME lastUserTime;
+      // static s32 numCpus;
+
+      if(firstCall) {
+        // SYSTEM_INFO sysinfo;
+        // GetSystemInfo( &sysinfo );
+        // numCpus = sysinfo.dwNumberOfProcessors;
+
+        percentUsage = 0;
+        firstCall = false;
+      } else {
+        const unsigned long long idleDelta = FiletimeDelta(idleTime, lastIdleTime);
+        const unsigned long long kernelDelta = FiletimeDelta(kernelTime, lastKernelTime);
+        const unsigned long long userDelta = FiletimeDelta(userTime, lastUserTime);
+
+        const unsigned long long totalSystemDelta = kernelDelta + userDelta;
+
+        //percentUsage = 100.0f * static_cast<f32>(numCpus) * static_cast<f32>(totalSystemDelta - idleDelta) / static_cast<f32>(totalSystemDelta);
+        percentUsage = 100.0f * static_cast<f32>(totalSystemDelta - idleDelta) / static_cast<f32>(totalSystemDelta);
+      }
+
+      lastIdleTime = idleTime;
+      lastKernelTime = kernelTime;
+      lastUserTime = userTime;
+
+#elif defined(__APPLE_CC__)
+      // TODO: implement
+      const f32 percentUsage = 0;
+#elif defined(__EDG__)  // ARM-MDK
+      // Cannot query on the M4
+      const f32 percentUsage = 0;
+#else // Generic Unix
+      // TODO: implement
+      const f32 percentUsage = 0;
+#endif
+
+      return percentUsage;
+    } // f32 GetCpuUsage()
   } // namespace Embedded
 } // namespace Anki

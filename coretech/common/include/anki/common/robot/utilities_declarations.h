@@ -145,6 +145,13 @@ namespace Anki
     f32 GetTimeF32(); // In seconds
     f64 GetTimeF64(); // In seconds
     u32 GetTimeU32(); // In microseconds
+
+    // Returns the percentage of cpu usage for this process, since the last call (100% is for the total maximum of all cores, including virtual Hyperthreaded cores).
+    // NOTE: The first call will return zero.
+    // NOTE: Only works on systems with an operating system.
+    // WARNING: The more often this function is called, the less accurate it will be. Once a second should be plenty.
+    // WARNING: Not multi-thread safe (though it should give the correct answer when called from one thread at a time)
+    f32 GetCpuUsage();
   } // namespace Embedded
 } // namespace Anki
 
