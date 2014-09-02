@@ -393,7 +393,7 @@ namespace Anki
       curTime = GetTimeF64();
 
       // User + system (kernel) time
-      cpuTime =
+      curCpuTime =
         static_cast<f64>(usage.ru_utime.tv_sec) + static_cast<f64>(usage.ru_utime.tv_usec) / 1000000.0 +
         static_cast<f64>(usage.ru_stime.tv_sec) + static_cast<f64>(usage.ru_stime.tv_usec) / 1000000.0;
 
@@ -405,7 +405,7 @@ namespace Anki
         percentUsage = 100.0 * (curCpuTime - lastCpuTime) / (curTime - lastTime);
       }
 
-      lastCpuTime = cpuTime;
+      lastCpuTime = curCpuTime;
       lastTime = curTime;
 #endif
 
