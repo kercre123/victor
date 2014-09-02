@@ -381,6 +381,8 @@ namespace Anki
       percentUsage = 0;
 #else // Generic Unix or OSX
 
+      const f64 numCpus = sysconf( _SC_NPROCESSORS_ONLN );
+      
       f64 curCpuTime;
       f64 curTime;
 
@@ -402,7 +404,7 @@ namespace Anki
         firstCall = false;
       } else {
         // TODO: Check that everything works, with the number of cores and everything
-        percentUsage = 100.0 * (curCpuTime - lastCpuTime) / (curTime - lastTime);
+        percentUsage = 100.0 * (curCpuTime - lastCpuTime) / (curTime - lastTime) / numCpus;
       }
 
       lastCpuTime = curCpuTime;
