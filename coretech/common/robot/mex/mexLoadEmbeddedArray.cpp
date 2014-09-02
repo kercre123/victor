@@ -17,28 +17,29 @@ using namespace Anki::Embedded;
 
 mxArray* Load(const char *filename, MemoryStack scratch)
 {
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+  void * uncompressed1Buffer = NULL;
+  void * uncompressed2BufferStart = NULL;
+#endif
+
   AnkiConditionalErrorAndReturnValue(filename && scratch.IsValid(),
     NULL, "Load", "Invalid inputs");
 
   FILE *fp = fopen(filename, "rb");
   fseek(fp, 0, SEEK_END);
-  s32 bufferLength = ftell(fp);
+  s32 loadBufferLength = ftell(fp);
   fseek(fp, 0, SEEK_SET);
 
-  void * buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(bufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-  void * allocatedBufferStart = NULL;
-#endif
+  void * loadBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(loadBufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
   // First, read the text header
-  fread(buffer, Anki::Embedded::ARRAY_FILE_HEADER_LENGTH, 1, fp);
+  fread(loadBuffer, Anki::Embedded::ARRAY_FILE_HEADER_LENGTH, 1, fp);
 
-  AnkiConditionalErrorAndReturnValue(strncmp(reinterpret_cast<const char*>(buffer), ARRAY_FILE_HEADER, ARRAY_FILE_HEADER_VALID_LENGTH) == 0,
+  AnkiConditionalErrorAndReturnValue(strncmp(reinterpret_cast<const char*>(loadBuffer), ARRAY_FILE_HEADER, ARRAY_FILE_HEADER_VALID_LENGTH) == 0,
     NULL, "Array<Type>::LoadBinary", "File is not an Anki Embedded Array");
 
   bool isCompressed = false;
-  if(reinterpret_cast<const char*>(buffer)[ARRAY_FILE_HEADER_VALID_LENGTH+1] == 'z') {
+  if(reinterpret_cast<const char*>(loadBuffer)[ARRAY_FILE_HEADER_VALID_LENGTH+1] == 'z') {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
     isCompressed = true;
 #else
@@ -47,27 +48,30 @@ mxArray* Load(const char *filename, MemoryStack scratch)
 #endif
   }
 
-  fread(buffer, bufferLength, 1, fp);
+  fread(loadBuffer, loadBufferLength, 1, fp);
 
   fclose(fp);
 
   // Decompress the payload, if it is compressed
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
   if(isCompressed) {
-    uLongf originalLength = static_cast<uLongf>( reinterpret_cast<s32*>(buffer)[0] );
-    const s32 compressedLength = reinterpret_cast<s32*>(buffer)[1];
+    uLongf originalLength = static_cast<uLongf>( reinterpret_cast<s32*>(loadBuffer)[0] );
+    uLongf compressed1Length = static_cast<uLongf>( reinterpret_cast<s32*>(loadBuffer)[1] );
+    uLongf compressed2Length = static_cast<uLongf>( reinterpret_cast<s32*>(loadBuffer)[2] );
 
-    allocatedBufferStart = mxMalloc(originalLength + MEMORY_ALIGNMENT + 64);
-    void * uncompressedBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(allocatedBufferStart) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
+    uncompressed1Buffer = mxMalloc(compressed1Length + MEMORY_ALIGNMENT + 64);
+    uncompressed2BufferStart = mxMalloc(originalLength + MEMORY_ALIGNMENT + 64);
+    void * uncompressed2Buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(uncompressed2BufferStart) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
-    const s32 compressionResult = uncompress(reinterpret_cast<Bytef*>(uncompressedBuffer), &originalLength, reinterpret_cast<Bytef*>(buffer) + 2*sizeof(s32), compressedLength);
+    s32 compressionResult = uncompress(reinterpret_cast<Bytef*>(uncompressed1Buffer), &compressed1Length, reinterpret_cast<Bytef*>(loadBuffer) + 3*sizeof(s32), compressed2Length);
+    compressionResult = uncompress(reinterpret_cast<Bytef*>(uncompressed2Buffer), &originalLength, reinterpret_cast<Bytef*>(uncompressed1Buffer), compressed1Length);
 
-    buffer = uncompressedBuffer;
-    bufferLength = originalLength;
+    loadBuffer = uncompressed2Buffer;
+    loadBufferLength = originalLength;
   }
 #endif
 
-  SerializedBuffer serializedBuffer(buffer, bufferLength, Anki::Embedded::Flags::Buffer(false, true, true));
+  SerializedBuffer serializedBuffer(loadBuffer, loadBufferLength, Anki::Embedded::Flags::Buffer(false, true, true));
 
   SerializedBufferReconstructingIterator iterator(serializedBuffer);
 
@@ -106,8 +110,8 @@ mxArray* Load(const char *filename, MemoryStack scratch)
   }
 
   if(!(basicType_isBasicType || basicType_isString)) {
-    if(allocatedBufferStart)
-      mxFree(allocatedBufferStart);
+    if(uncompressed1Buffer) mxFree(uncompressed1Buffer);
+    if(uncompressed2BufferStart) mxFree(uncompressed2BufferStart);
 
     AnkiError("Load", "can only load a basic type or string");
     return NULL;
@@ -126,8 +130,8 @@ mxArray* Load(const char *filename, MemoryStack scratch)
         Array<f64> array = SerializedBuffer::DeserializeRawArray<f64>(NULL, &nextItem, dataLength, scratch);
         toReturn = arrayToMxArray(array);
       } else {
-        if(allocatedBufferStart)
-          mxFree(allocatedBufferStart);
+        if(uncompressed1Buffer) mxFree(uncompressed1Buffer);
+        if(uncompressed2BufferStart) mxFree(uncompressed2BufferStart);
 
         AnkiError("Load", "can only load a basic type");
         return NULL;
@@ -147,8 +151,8 @@ mxArray* Load(const char *filename, MemoryStack scratch)
           Array<s64> array = SerializedBuffer::DeserializeRawArray<s64>(NULL, &nextItem, dataLength, scratch);
           toReturn = arrayToMxArray(array);
         } else {
-          if(allocatedBufferStart)
-            mxFree(allocatedBufferStart);
+          if(uncompressed1Buffer) mxFree(uncompressed1Buffer);
+          if(uncompressed2BufferStart) mxFree(uncompressed2BufferStart);
 
           AnkiError("Load", "can only load a basic type");
           return NULL;
@@ -167,8 +171,8 @@ mxArray* Load(const char *filename, MemoryStack scratch)
           Array<u64> array = SerializedBuffer::DeserializeRawArray<u64>(NULL, &nextItem, dataLength, scratch);
           toReturn = arrayToMxArray(array);
         } else {
-          if(allocatedBufferStart)
-            mxFree(allocatedBufferStart);
+          if(uncompressed1Buffer) mxFree(uncompressed1Buffer);
+          if(uncompressed2BufferStart) mxFree(uncompressed2BufferStart);
 
           AnkiError("Load", "can only load a basic type");
           return NULL;
@@ -177,8 +181,8 @@ mxArray* Load(const char *filename, MemoryStack scratch)
     } // if(basicType_isFloat) ... else
   } // if(basicType_isString) ... else
 
-  if(allocatedBufferStart)
-    mxFree(allocatedBufferStart);
+  if(uncompressed1Buffer) mxFree(uncompressed1Buffer);
+  if(uncompressed2BufferStart) mxFree(uncompressed2BufferStart);
 
   return toReturn;
 }
@@ -189,7 +193,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   AnkiConditionalErrorAndReturn(nrhs == 1 && nlhs == 1, "mexLoadEmbeddedArray", "Call this function as follows: array = mexLoadEmbeddedArray(filename);");
 
-  const s32 bufferSize = 200000000;
+  const s32 bufferSize = 100000000;
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexLoadEmbeddedArray", "Memory could not be allocated");
 
