@@ -37,8 +37,8 @@ namespace Anki
     template<typename Type> class ConstArraySliceExpression;
 
     const s32 ARRAY_FILE_HEADER_LENGTH = 32;
-    const s32 ARRAY_FILE_HEADER_VALID_LENGTH = 21; //< How many characters are not spaces
-    const char ARRAY_FILE_HEADER[ARRAY_FILE_HEADER_LENGTH+1] = "\x89" "AnkiEmbeddedArray1.1           ";
+    const s32 ARRAY_FILE_HEADER_VALID_LENGTH = 14; //< How many characters are not spaces
+    const char ARRAY_FILE_HEADER[ARRAY_FILE_HEADER_LENGTH+1] = "\x89" "AnkiEArray1.2                  ";
 
     // #pragma mark --- Array Class Declaration ---
 
