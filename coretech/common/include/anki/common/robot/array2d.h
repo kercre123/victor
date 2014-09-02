@@ -332,7 +332,12 @@ namespace Anki
         const s32 compressionResult = compress2(reinterpret_cast<Bytef*>(compressed) + 2*sizeof(s32), &compressedLength, reinterpret_cast<Bytef*>(uncompressed), originalLength, compressionLevel);
 
         if(compressionResult != Z_OK) {
-          free(compressed);
+          if(uncompressed)
+            free(uncompressed);
+
+          if(compressed)
+            free(compressed);
+
           AnkiError("Array<Type>::SaveBinary", "Zlib error");
           return RESULT_FAIL_IO;
         }
@@ -344,8 +349,11 @@ namespace Anki
 
         const size_t bytesWritten = fwrite(compressed, 1, compressedLength + 2*sizeof(s32), fp);
 
-        free(compressed);
-        compressed = NULL;
+        if(uncompressed)
+          free(uncompressed);
+
+        if(compressed)
+          free(compressed);
 
 #else
         AnkiError("Array<Type>::SaveBinary", "Saving with compression requires OpenCV");

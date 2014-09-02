@@ -189,7 +189,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   AnkiConditionalErrorAndReturn(nrhs == 1 && nlhs == 1, "mexLoadEmbeddedArray", "Call this function as follows: array = mexLoadEmbeddedArray(filename);");
 
-  const s32 bufferSize = 100000000;
+  const s32 bufferSize = 200000000;
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexLoadEmbeddedArray", "Memory could not be allocated");
 

@@ -107,17 +107,21 @@ Result Save(const mxArray *matlabArray, const char *filename, const s32 compress
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  const s32 compressionLevel = 9;
+  s32 compressionLevel = 3;
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
-  AnkiConditionalErrorAndReturn(nrhs == 2 && nlhs == 0, "mexSaveEmbeddedArray", "Call this function as follows: mexSaveEmbeddedArray(array, filename);");
+  AnkiConditionalErrorAndReturn((nrhs >= 2 && nrhs <= 3) && nlhs == 0, "mexSaveEmbeddedArray", "Call this function as follows: mexSaveEmbeddedArray(array, filename, <compressionLeve>);");
 
   //const s32 bufferSize = 8192 + mxGetM(prhs[0])*mxGetN(prhs[0])*8; // The 8 is for the maximum datatype size
-  const s32 bufferSize = 10000000;
+  const s32 bufferSize = 200000000;
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexSaveEmbeddedArray", "Memory could not be allocated");
 
   char* filename = mxArrayToString(prhs[1]);
+
+  if(nrhs == 3) {
+    compressionLevel = MAX(0, MIN(9, saturate_cast<s32>(mxGetScalar(prhs[2]))));
+  }
 
   const Result result = Save(prhs[0], filename, compressionLevel, memory);
 
