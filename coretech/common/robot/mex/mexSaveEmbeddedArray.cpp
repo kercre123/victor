@@ -113,7 +113,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   AnkiConditionalErrorAndReturn((nrhs >= 2 && nrhs <= 3) && nlhs == 0, "mexSaveEmbeddedArray", "Call this function as follows: mexSaveEmbeddedArray(array, filename, <compressionLeve>);");
 
   //const s32 bufferSize = 8192 + mxGetM(prhs[0])*mxGetN(prhs[0])*8; // The 8 is for the maximum datatype size
-  const s32 bufferSize = 100000000;
+  const s32 bufferSize = 200000000;
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexSaveEmbeddedArray", "Memory could not be allocated");
 

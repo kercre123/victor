@@ -179,24 +179,23 @@ namespace Anki
         newArray, "Array<Type>::LoadBinary", "Could not open file %s", filename);
 
       fseek(fp, 0, SEEK_END);
-      s32 loadBufferLength = ftell(fp) - ARRAY_FILE_HEADER_LENGTH;
+      s32 bufferLength = ftell(fp) - ARRAY_FILE_HEADER_LENGTH;
       fseek(fp, 0, SEEK_SET);
 
-      void * loadBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(loadBufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
+      void * buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(bufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-      void * uncompressed1Buffer = NULL;
-      void * uncompressed2BufferStart = NULL;
+      void * allocatedBufferStart = NULL;
 #endif
 
       // First, read the text header
-      const size_t bytesRead1 = fread(loadBuffer, 1, ARRAY_FILE_HEADER_LENGTH, fp);
+      const size_t bytesRead1 = fread(buffer, 1, ARRAY_FILE_HEADER_LENGTH, fp);
 
-      AnkiConditionalErrorAndReturnValue(bytesRead1 == ARRAY_FILE_HEADER_LENGTH && strncmp(reinterpret_cast<const char*>(loadBuffer), ARRAY_FILE_HEADER, ARRAY_FILE_HEADER_VALID_LENGTH) == 0,
+      AnkiConditionalErrorAndReturnValue(bytesRead1 == ARRAY_FILE_HEADER_LENGTH && strncmp(reinterpret_cast<const char*>(buffer), ARRAY_FILE_HEADER, ARRAY_FILE_HEADER_VALID_LENGTH) == 0,
         newArray, "Array<Type>::LoadBinary", "File is not an Anki Embedded Array");
 
       bool isCompressed = false;
-      if(reinterpret_cast<const char*>(loadBuffer)[ARRAY_FILE_HEADER_VALID_LENGTH+1] == 'z') {
+      if(reinterpret_cast<const char*>(buffer)[ARRAY_FILE_HEADER_VALID_LENGTH+1] == 'z') {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
         isCompressed = true;
 #else
@@ -206,7 +205,7 @@ namespace Anki
       }
 
       // Next, read the actual payload
-      const size_t bytesRead2 = fread(loadBuffer, 1, loadBufferLength, fp);
+      const size_t bytesRead2 = fread(buffer, 1, bufferLength, fp);
 
       AnkiConditionalErrorAndReturnValue(bytesRead2 > 0,
         newArray, "Array<Type>::LoadBinary", "File is not an Anki Embedded Array");
@@ -216,24 +215,20 @@ namespace Anki
       // Decompress the payload, if it is compressed
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       if(isCompressed) {
-        uLongf originalLength = static_cast<uLongf>( reinterpret_cast<s32*>(loadBuffer)[0] );
-        uLongf compressed1Length = static_cast<uLongf>( reinterpret_cast<s32*>(loadBuffer)[1] );
-        uLongf compressed2Length = static_cast<uLongf>( reinterpret_cast<s32*>(loadBuffer)[2] );
+        uLongf originalLength = static_cast<uLongf>( reinterpret_cast<s32*>(buffer)[0] );
+        const s32 compressedLength = reinterpret_cast<s32*>(buffer)[1];
 
-        uncompressed1Buffer = calloc(compressed1Length + MEMORY_ALIGNMENT + 64, 1);
-        uncompressed2BufferStart = calloc(originalLength + MEMORY_ALIGNMENT + 64, 1);
+        allocatedBufferStart = calloc(originalLength + MEMORY_ALIGNMENT + 64, 1);
+        void * uncompressedBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(allocatedBufferStart) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
-        void * uncompressed2Buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(uncompressed2BufferStart) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
+        const s32 compressionResult = uncompress(reinterpret_cast<Bytef*>(uncompressedBuffer), &originalLength, reinterpret_cast<Bytef*>(buffer) + 2*sizeof(s32), compressedLength);
 
-        const s32 compressionResult = uncompress(reinterpret_cast<Bytef*>(uncompressed1Buffer), &compressed1Length, reinterpret_cast<Bytef*>(loadBuffer) + 3*sizeof(s32), compressed2Length);
-        const s32 compressionResult = uncompress(reinterpret_cast<Bytef*>(uncompressed2Buffer), &originalLength, reinterpret_cast<Bytef*>(uncompressed1Buffer), compressed1Length);
-
-        loadBuffer = uncompressed2Buffer;
-        loadBufferLength = originalLength;
+        buffer = uncompressedBuffer;
+        bufferLength = originalLength;
       }
 #endif
 
-      SerializedBuffer serializedBuffer(loadBuffer, loadBufferLength, Anki::Embedded::Flags::Buffer(false, true, true));
+      SerializedBuffer serializedBuffer(buffer, bufferLength, Anki::Embedded::Flags::Buffer(false, true, true));
 
       SerializedBufferReconstructingIterator iterator(serializedBuffer);
 
@@ -246,8 +241,7 @@ namespace Anki
       if(!nextItem && strcmp(typeName, "Array") != 0) {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
         if(isCompressed) {
-          free(uncompressed1Buffer);
-          free(uncompressed2BufferStart);
+          free(allocatedBufferStart);
         }
 #endif
 
@@ -260,7 +254,7 @@ namespace Anki
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       if(isCompressed) {
-        free(uncompressed2BufferStart);
+        free(allocatedBufferStart);
       }
 #endif
 
@@ -305,17 +299,17 @@ namespace Anki
 
         const s32 originalLength = validUsedBytes + SERIALIZED_BUFFER_HEADER_LENGTH + SERIALIZED_BUFFER_FOOTER_LENGTH;
 
-        uLongf compressed1Length = 128 + saturate_cast<s32>(1.1 * originalLength);
-        uLongf compressed2Length = 128 + saturate_cast<s32>(1.1 * originalLength);
+        uLongf compressedLength = 128 + saturate_cast<s32>(1.1 * originalLength);
 
         void * uncompressed = malloc(originalLength);
-        void * compressed1 = malloc(compressed1Length + 3*sizeof(s32));
-        void * compressed2 = malloc(compressed2Length + 3*sizeof(s32));
+        void * compressed = malloc(compressedLength + 2*sizeof(s32));
 
-        if(!uncompressed || !compressed1 || !compressed2) {
-          if(uncompressed) free(uncompressed);
-          if(compressed1) free(compressed1);
-          if(compressed2) free(compressed2);
+        if(!uncompressed || !compressed) {
+          if(uncompressed)
+            free(uncompressed);
+
+          if(compressed)
+            free(compressed);
 
           AnkiError("Array<Type>::SaveBinary", "Out of memory");
 
@@ -335,30 +329,31 @@ namespace Anki
           memcpy(pUncompressed, &SERIALIZED_BUFFER_FOOTER[0], SERIALIZED_BUFFER_FOOTER_LENGTH);
         }
 
-        s32 compressionResult = compress2(reinterpret_cast<Bytef*>(compressed1), &compressed1Length, reinterpret_cast<Bytef*>(uncompressed), originalLength, compressionLevel);
-
-        compressionResult = compress2(reinterpret_cast<Bytef*>(compressed2) + 3*sizeof(s32), &compressed2Length, reinterpret_cast<Bytef*>(compressed1), compressed1Length, compressionLevel);
+        const s32 compressionResult = compress2(reinterpret_cast<Bytef*>(compressed) + 2*sizeof(s32), &compressedLength, reinterpret_cast<Bytef*>(uncompressed), originalLength, compressionLevel);
 
         if(compressionResult != Z_OK) {
-          if(uncompressed) free(uncompressed);
-          if(compressed1) free(compressed1);
-          if(compressed2) free(compressed2);
+          if(uncompressed)
+            free(uncompressed);
+
+          if(compressed)
+            free(compressed);
 
           AnkiError("Array<Type>::SaveBinary", "Zlib error");
           return RESULT_FAIL_IO;
         }
 
-        reinterpret_cast<s32*>(compressed2)[0] = static_cast<s32>(originalLength);
-        reinterpret_cast<s32*>(compressed2)[1] = static_cast<s32>(compressed1Length);
-        reinterpret_cast<s32*>(compressed2)[2] = static_cast<s32>(compressed2Length);
+        reinterpret_cast<s32*>(compressed)[0] = static_cast<s32>(originalLength);
+        reinterpret_cast<s32*>(compressed)[1] = static_cast<s32>(compressedLength);
 
         const size_t bytesWrittenForTextHeader = fwrite(tmpTextHeader, 1, ARRAY_FILE_HEADER_LENGTH, fp);
 
-        const size_t bytesWritten = fwrite(compressed2, 1, compressed2Length + 3*sizeof(s32), fp);
+        const size_t bytesWritten = fwrite(compressed, 1, compressedLength + 2*sizeof(s32), fp);
 
-        if(uncompressed) free(uncompressed);
-        if(compressed1) free(compressed1);
-        if(compressed2) free(compressed2);
+        if(uncompressed)
+          free(uncompressed);
+
+        if(compressed)
+          free(compressed);
 
 #else
         AnkiError("Array<Type>::SaveBinary", "Saving with compression requires OpenCV");
