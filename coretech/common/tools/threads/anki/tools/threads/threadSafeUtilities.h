@@ -22,6 +22,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ThreadHandle HANDLE
 #define ThreadResult DWORD WINAPI
 
+#define usleep Sleep
+
 #else
 
 #include <unistd.h>

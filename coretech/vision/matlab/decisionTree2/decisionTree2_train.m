@@ -42,8 +42,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     cFilenamePrefix = 'c:/tmp/treeTraining_'; % Temporarly location for when useCVersion = true
     %cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/RelWithDebInfo/run_trainDecisionTree.exe';
     cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/Debug/run_trainDecisionTree.exe';
-    maxPrimaryThreads = 1;
-    maxSecondaryThreads = 1;
+    maxThreads = 1;
     
     parseVarargin(varargin{:});
     
@@ -56,8 +55,8 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     % Train the decision tree
     if useCVersion
-        decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse);
-        tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxPrimaryThreads, maxSecondaryThreads);
+        %         decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse);
+        tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
     else
         tree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
         tree.remainingLabels = labelNames;
@@ -107,7 +106,7 @@ function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureVa
     
     mexSaveEmbeddedArray(int32(labels) - 1, [cFilenamePrefix, 'labels.array']); % const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
     pBar.increment();
-        
+    
     mexSaveEmbeddedArray(uint8(u8ThresholdsToUse), [cFilenamePrefix, 'u8ThresholdsToUse.array']);
     pBar.increment();
     
@@ -117,10 +116,10 @@ function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureVa
     end
 end % decisionTree2_saveInputs()
 
-function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxPrimaryThreads, maxSecondaryThreads)
+function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads)
     % First, run the training
     trainingTic = tic();
-    command = sprintf('"%s" "%s" %d %f %d %d %d %d', cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, maxPrimaryThreads, maxSecondaryThreads);
+    command = sprintf('"%s" "%s" %d %f %d %d %d %d', cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, maxThreads);
     disp(['Starting C training: ', command]);
     result = system(command);
     disp(sprintf('C training finished in %f seconds', toc(trainingTic)));
@@ -140,10 +139,13 @@ function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, 
     whichFeatures = mexLoadEmbeddedArray([cFilenamePrefix, 'out_whichFeatures.array']);
     u8Thresholds = mexLoadEmbeddedArray([cFilenamePrefix, 'out_u8Thresholds.array']);
     leftChildIndexs = mexLoadEmbeddedArray([cFilenamePrefix, 'out_leftChildIndexs.array']);
+    cpuUsageSamples = mexLoadEmbeddedArray([cFilenamePrefix, 'out_cpuUsageSamples.array']);
     
     tree = convertCTree(1, depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     
-    disp(sprintf('Conversion done in %f seconds', toc(convertingTic)));    
+    figure(50); plot(cpuUsageSamples);
+    
+    disp(sprintf('Conversion done in %f seconds (average CPU usage %f%%)', toc(convertingTic), mean(cpuUsageSamples)));
 end
 
 function tree = convertCTree(curIndex, depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid)
@@ -272,7 +274,7 @@ function node = buildTree(node, featuresUsed, labelNames, labels, featureValues,
         % We have unused features. So find the best one to split on.
         
         useMex = true;
-%         useMex = false;
+        %         useMex = false;
         numThreads = 16;
         
         [node.infoGain, node.whichFeature, node.u8Threshold, updatedFeaturesUsed] = computeInfoGain(labels, featureValues, featuresUsed, node.remaining, u8MinDistance, u8ThresholdsToUse, useMex, numThreads);
@@ -316,18 +318,18 @@ function node = buildTree(node, featuresUsed, labelNames, labels, featureValues,
         
         % PB: Is this still ever a reasonable thing to happen? I think this would be from a bug now.
         assert(~(isempty(leftRemaining) || length(leftRemaining) == length(node.remaining)));
-            
+        
         % Recurse left
         leftChild.remaining = leftRemaining;
         leftChild.depth = node.depth+1;
         node.leftChild = buildTree(leftChild, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
-
+        
         % Recurse right
         rightRemaining = node.remaining(~goLeft);
-
+        
         % TODO: is this ever possible?
         assert(~isempty(rightRemaining) && length(rightRemaining) < length(node.remaining));
-
+        
         rightChild.remaining = rightRemaining;
         rightChild.depth = node.depth + 1;
         node.rightChild = buildTree(rightChild, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
@@ -418,13 +420,13 @@ function [bestEntropy, bestU8Threshold, bestFeatureIndex] = computeInfoGain_oute
         if isempty(u8Thresholds)
             continue;
         end
-                
-        if useMex            
+        
+        if useMex
             [curBestEntropy, curbestU8Threshold] = mexComputeInfoGain2_innerLoop(curLabels, curFeatureValues, u8Thresholds, maxLabel, numThreads);
         else
             [curBestEntropy, curbestU8Threshold] = computeInfoGain_innerLoop(curLabels, curFeatureValues, u8Thresholds);
         end
-                
+        
         % The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
         if curBestEntropy < (bestEntropy - 1e-5)
             bestEntropy = curBestEntropy;

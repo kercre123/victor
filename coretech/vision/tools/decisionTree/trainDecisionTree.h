@@ -104,6 +104,23 @@ namespace Anki
       }
     } ComputeInfoGainParameters;
 
+    typedef struct BenchmarkingParameters
+    {
+      volatile bool * isRunning;
+      f64 sampleEveryNSeconds;
+      std::vector<f32> &cpuUsage;
+
+      BenchmarkingParameters(
+        volatile bool * isRunning,
+        f64 sampleEveryNSeconds,
+        std::vector<f32> &cpuUsage)
+        : isRunning(isRunning), sampleEveryNSeconds(sampleEveryNSeconds), cpuUsage(cpuUsage)
+      {
+      }
+    } BenchmarkingParameters;
+
+    ThreadResult BenchmarkingThread(void * voidBenchmarkingParams);
+
     ThreadResult ComputeInfoGain(void *computeInfoGainParameters);
 
     s32 FindMaxLabel(const FixedLengthList<s32> &labels, const std::vector<s32> &remaining);
@@ -117,8 +134,7 @@ namespace Anki
       const s32 leafNodeNumItems, //< If the number of items in a node is equal or below this, it is a leaf. 1 is a good value.
       const s32 u8MinDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
       const FixedLengthList<u8> &u8ThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
-      const s32 maxPrimaryThreads, //< If we are building the end of the tree, use maxPrimaryThreads threads (one for each node), and on thread to compute the information fain
-      const s32 maxSecondaryThreads, //< If we are building the start of the tree, use one primary thread, and maxSecondaryThreads threads to compute the information fain
+      const s32 maxThreads, //< Max threads to use (should be at least the number of cores)
       std::vector<DecisionTreeNode> &decisionTree //< The output decision tree
       );
   } // namespace Embedded

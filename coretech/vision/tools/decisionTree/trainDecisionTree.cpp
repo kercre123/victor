@@ -16,7 +16,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 using namespace std;
 using namespace Anki::Embedded;
 
-const s32 MAX_THREADS = 64; // Max threads for either primary or secondary. The total max of both types is double this.
+const s32 MAX_THREADS = 128; // Max threads
 
 typedef struct
 {
@@ -436,17 +436,41 @@ namespace Anki
       return maxLabel;
     }
 
+    ThreadResult BenchmarkingThread(void * voidBenchmarkingParams)
+    {
+      BenchmarkingParameters * restrict benchmarkingParams = reinterpret_cast<BenchmarkingParameters*>(voidBenchmarkingParams);
+
+      AnkiAssert(benchmarkingParams->sampleEveryNSeconds >= 0.1);
+
+      // First call returns zero
+      GetCpuUsage();
+
+      f64 lastTime = GetTimeF64();
+
+      while(*(benchmarkingParams->isRunning)) {
+        // Busy-wait to sleep
+        while((GetTimeF64() - lastTime) < benchmarkingParams->sampleEveryNSeconds) {
+          usleep(10);
+        }
+
+        lastTime = GetTimeF64();
+
+        benchmarkingParams->cpuUsage.push_back(GetCpuUsage());
+      } // while(*isRunning)
+
+      return 0;
+    }
+
     Result BuildTree(
-      const vector<U8Bool> &featuresUsed, //< numFeatures x 256
+      const std::vector<U8Bool> &featuresUsed, //< numFeatures x 256
       const FixedLengthList<const char *> &labelNames, //< Lookup table between index and string name
       const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
-      const FixedLengthList<const FixedLengthList<u8> > &featureValues, //< For every feature, the value for the feature every item to train on (outer is small, inner is very large)
+      const FixedLengthList<const FixedLengthList<u8> > &featureValues, //< For every feature, the value for the feature for every image (outer is small, inner is very large)
       const f32 leafNodeFraction, //< What percent of the items in a node have to be the same for it to be considered a leaf node? From [0.0, 1.0], where 1.0 is a good value.
       const s32 leafNodeNumItems, //< If the number of items in a node is equal or below this, it is a leaf. 1 is a good value.
       const s32 u8MinDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
       const FixedLengthList<u8> &u8ThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
-      const s32 maxPrimaryThreads, //< If we are building the end of the tree, use maxPrimaryThreads threads (one for each node), and on thread to compute the information fain
-      const s32 maxSecondaryThreads, //< If we are building the start of the tree, use one primary thread, and maxSecondaryThreads threads to compute the information fain
+      const s32 maxThreads, //< Max threads to use (should be at least the number of cores)
       std::vector<DecisionTreeNode> &decisionTree //< The output decision tree
       )
     {
@@ -459,6 +483,13 @@ namespace Anki
 
       const s32 numFeatures = featuresUsed.size();
       const s32 numItems = labels.get_size();
+
+      AnkiConditionalErrorAndReturnValue(
+        leafNodeFraction > 0.01 && leafNodeFraction <= 1.0 &&
+        leafNodeNumItems >= 1 &&
+        u8MinDistance >= 0 &&
+        maxThreads <= MAX_THREADS,
+        RESULT_FAIL_INVALID_PARAMETER, "BuildTree", "Invalid parameter");
 
       AnkiConditionalErrorAndReturnValue(
         featureValues.get_size() == numFeatures,
@@ -480,68 +511,58 @@ namespace Anki
 
       const s32 maxLabel = FindMaxLabel(labels, remaining);
 
-      s32 numPrimaryThreadsToUse = maxPrimaryThreads;
+      //if(numPrimaryThreadsToUse == 1) {
+      const s32 minFeatureToCheck = 0;
+      const s32 maxFeatureToCheck = numFeatures - 1;
 
-      // TODO: add back?
-      //if(workItem.remaining.size() < 5) {
-      //  numSecondaryThreadsToUse = 1;
+      std::vector<s32*> pNumLessThans;
+      std::vector<s32*> pNumGreaterThans;
+
+      pNumLessThans.resize(maxThreads);
+      pNumGreaterThans.resize(maxThreads);
+
+      for(s32 i=0; i<maxThreads; i++) {
+        pNumLessThans[i] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
+        pNumGreaterThans[i] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
+      }
+
+      DecisionTreeWorkItem firstWorkItem(0, remaining, featuresUsed);
+
+      queue<DecisionTreeWorkItem> workQueue;
+      workQueue.emplace(firstWorkItem);
+
+      queue<TrainingFailure> trainingFailures;
+
+      BuildTreeThreadParameters newParameters(
+        featuresUsed,
+        labelNames,
+        labels,
+        featureValues,
+        leafNodeFraction,
+        leafNodeNumItems,
+        u8MinDistance,
+        u8ThresholdsToUse,
+        maxThreads,
+        pNumLessThans,
+        pNumGreaterThans,
+        maxLabel,
+        workQueue,
+        trainingFailures,
+        decisionTree);
+
+      const ThreadResult result = BuildTreeThread(reinterpret_cast<void*>(&newParameters));
+
+      // Since it's only one thread, we've directly built the decision tree and are done
+
+      for(s32 i=0; i<maxThreads; i++) {
+        free(pNumLessThans[i]);
+        free(pNumGreaterThans[i]);
+      }
+      //} else {
+      //  // TODO: implement
+      //  AnkiAssert(false);
       //}
 
-      // TODO: remove
-      numPrimaryThreadsToUse = 1;
-
-      if(numPrimaryThreadsToUse == 1) {
-        const s32 minFeatureToCheck = 0;
-        const s32 maxFeatureToCheck = numFeatures - 1;
-
-        std::vector<s32*> pNumLessThans;
-        std::vector<s32*> pNumGreaterThans;
-
-        pNumLessThans.resize(maxSecondaryThreads);
-        pNumGreaterThans.resize(maxSecondaryThreads);
-
-        for(s32 i=0; i<maxSecondaryThreads; i++) {
-          pNumLessThans[i] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
-          pNumGreaterThans[i] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
-        }
-
-        DecisionTreeWorkItem firstWorkItem(0, remaining, featuresUsed);
-
-        queue<DecisionTreeWorkItem> workQueue;
-        workQueue.emplace(firstWorkItem);
-
-        queue<TrainingFailure> trainingFailures;
-
-        BuildTreeThreadParameters newParameters(
-          featuresUsed,
-          labelNames,
-          labels,
-          featureValues,
-          leafNodeFraction,
-          leafNodeNumItems,
-          u8MinDistance,
-          u8ThresholdsToUse,
-          maxSecondaryThreads,
-          pNumLessThans,
-          pNumGreaterThans,
-          maxLabel,
-          workQueue,
-          trainingFailures,
-          decisionTree);
-
-        const ThreadResult result = BuildTreeThread(reinterpret_cast<void*>(&newParameters));
-
-        // Since it's only one thread, we've directly built the decision tree and are done
-
-        for(s32 i=0; i<maxSecondaryThreads; i++) {
-          free(pNumLessThans[i]);
-          free(pNumGreaterThans[i]);
-        }
-      } else {
-        // TODO: implement
-        AnkiAssert(false);
-      }
-      
       return RESULT_OK;
     } // Result BuildTree()
   } // namespace Embedded

@@ -112,13 +112,15 @@ template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const c
 void PrintUsage()
 {
   printf(
-    "Usage: run_trainDecisionTree <filenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistance> <maxPrimaryThreads> <maxSecondaryThreads>\n"
-    "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20 8 8");
+    "Usage: run_trainDecisionTree <filenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistance> <maxThreads>\n"
+    "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20 8");
 }
 
 int main(int argc, const char* argv[])
 {
-  if(argc != 8) {
+  const f64 benchmarkSampleEveryNSeconds = 60.0;
+
+  if(argc != 7) {
     PrintUsage();
     return -10;
   }
@@ -128,8 +130,7 @@ int main(int argc, const char* argv[])
   const f32 leafNodeFraction = static_cast<f32>(atof(argv[3]));
   const s32 leafNodeNumItems = atol(argv[4]);
   const s32 u8MinDistance = atol(argv[5]);
-  const s32 maxPrimaryThreads = atol(argv[6]);
-  const s32 maxSecondaryThreads = atol(argv[7]);
+  const s32 maxThreads = atol(argv[6]);
 
   const s32 bufferSize = 50000000;
   MemoryStack memory(malloc(bufferSize), bufferSize);
@@ -179,14 +180,40 @@ int main(int argc, const char* argv[])
   FixedLengthList<const FixedLengthList<u8> > featureValuesConst = *reinterpret_cast<FixedLengthList<const FixedLengthList<u8> >* >(&featureValues);
 
   std::vector<DecisionTreeNode> decisionTree;
+  std::vector<f32> cpuUsage;
+
+  volatile bool isBenchmarkingRunning = true;
+
+  BenchmarkingParameters benchmarkingParams(&isBenchmarkingRunning, benchmarkSampleEveryNSeconds, cpuUsage);
+
+  ThreadHandle benchmarkingThreadHandle;
+
+#ifdef _MSC_VER
+  DWORD threadId = -1;
+  benchmarkingThreadHandle = CreateThread(
+    NULL,        // default security attributes
+    0,           // use default stack size
+    BenchmarkingThread, // thread function name
+    reinterpret_cast<void*>(&benchmarkingParams),    // argument to thread function
+    0,           // use default creation flags
+    &threadId);  // returns the thread identifier
+#else
+  pthread_attr_t connectionAttr;
+  pthread_attr_init(&connectionAttr);
+
+  pthread_create(&benchmarkingThreadHandle, &connectionAttr, BenchmarkingThread, reinterpret_cast<void*>(&benchmarkingParams));
+#endif
+
   const Result result = BuildTree(
     featuresUsed,
     labelNames, labels,
     featureValuesConst,
     leafNodeFraction, leafNodeNumItems, u8MinDistance,
     u8ThresholdsToUse,
-    maxPrimaryThreads, maxSecondaryThreads,
+    maxThreads,
     decisionTree);
+
+  *(benchmarkingParams.isRunning) = false;
 
   // We're done with this memory once BuildTree returns
   free(memory.get_buffer());
@@ -198,11 +225,11 @@ int main(int argc, const char* argv[])
 
     MemoryStack scratch(malloc(saveBufferSize), saveBufferSize);
 
-    FixedLengthList<s32> depths(numNodes, scratch);
-    FixedLengthList<f32> bestEntropys(numNodes, scratch);
-    FixedLengthList<s32> whichFeatures(numNodes, scratch);
-    FixedLengthList<u8>  u8Thresholds(numNodes, scratch);
-    FixedLengthList<s32> leftChildIndexs(numNodes, scratch);
+    FixedLengthList<s32> depths(numNodes, scratch, Flags::Buffer(true, false, true));
+    FixedLengthList<f32> bestEntropys(numNodes, scratch, Flags::Buffer(true, false, true));
+    FixedLengthList<s32> whichFeatures(numNodes, scratch, Flags::Buffer(true, false, true));
+    FixedLengthList<u8>  u8Thresholds(numNodes, scratch, Flags::Buffer(true, false, true));
+    FixedLengthList<s32> leftChildIndexs(numNodes, scratch, Flags::Buffer(true, false, true));
 
     AnkiConditionalErrorAndReturnValue(AreValid(depths, bestEntropys, whichFeatures, u8Thresholds, leftChildIndexs),
       -7, "run_trainDecisionTree", "Out of memory for saving");
@@ -222,6 +249,25 @@ int main(int argc, const char* argv[])
     SaveList(whichFeatures, filenamePrefix, "out_whichFeatures.array", scratch);
     SaveList(u8Thresholds, filenamePrefix, "out_u8Thresholds.array", scratch);
     SaveList(leftChildIndexs, filenamePrefix, "out_leftChildIndexs.array", scratch);
+
+    // The cpu usage thread should have finished by now
+
+#ifdef _MSC_VER
+    WaitForSingleObject(benchmarkingThreadHandle, INFINITE);
+#else
+    pthread_join(benchmarkingThreadHandle, NULL);
+#endif
+
+    FixedLengthList<f32> cpuUsageSamples(cpuUsage.size(), scratch, Flags::Buffer(true, false, true));
+
+    AnkiConditionalErrorAndReturnValue(cpuUsageSamples.IsValid(),
+      -7, "run_trainDecisionTree", "Out of memory for saving");
+
+    for(u32 iSample=0; iSample<cpuUsage.size(); iSample++) {
+      cpuUsageSamples[iSample] = cpuUsage[iSample];
+    } // for(s32 iNode=0; iNode<numNodes; iNode++)
+
+    SaveList(cpuUsageSamples, filenamePrefix, "out_cpuUsageSamples.array", scratch);
 
     free(scratch.get_buffer());
   } // Save the output
