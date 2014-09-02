@@ -185,7 +185,7 @@ namespace Anki
       void * buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(bufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-      void * allocatedBufferStart = NULL;
+      void * uncompressedBufferStart = NULL;
 #endif
 
       // First, read the text header
@@ -218,8 +218,8 @@ namespace Anki
         uLongf originalLength = static_cast<uLongf>( reinterpret_cast<s32*>(buffer)[0] );
         const s32 compressedLength = reinterpret_cast<s32*>(buffer)[1];
 
-        allocatedBufferStart = calloc(originalLength + MEMORY_ALIGNMENT + 64, 1);
-        void * uncompressedBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(allocatedBufferStart) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
+        uncompressedBufferStart = calloc(originalLength + MEMORY_ALIGNMENT + 64, 1);
+        void * uncompressedBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(uncompressedBufferStart) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
         const s32 compressionResult = uncompress(reinterpret_cast<Bytef*>(uncompressedBuffer), &originalLength, reinterpret_cast<Bytef*>(buffer) + 2*sizeof(s32), compressedLength);
 
@@ -241,7 +241,7 @@ namespace Anki
       if(!nextItem && strcmp(typeName, "Array") != 0) {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
         if(isCompressed) {
-          free(allocatedBufferStart);
+          free(uncompressedBufferStart);
         }
 #endif
 
@@ -254,7 +254,7 @@ namespace Anki
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       if(isCompressed) {
-        free(allocatedBufferStart);
+        free(uncompressedBufferStart);
       }
 #endif
 

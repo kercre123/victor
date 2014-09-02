@@ -107,7 +107,7 @@ Result Save(const mxArray *matlabArray, const char *filename, const s32 compress
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  s32 compressionLevel = 3;
+  s32 compressionLevel = 6;
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
   AnkiConditionalErrorAndReturn((nrhs >= 2 && nrhs <= 3) && nlhs == 0, "mexSaveEmbeddedArray", "Call this function as follows: mexSaveEmbeddedArray(array, filename, <compressionLeve>);");
