@@ -13,8 +13,10 @@ file(GLOB SOURCE_FILES_LIB_TRAIN_DECISION_TREE
 
 file(GLOB HEADER_FILES
   ../../../common/tools/threads/anki/tools/threads/threadSafeCounter.h
+  ../../../common/tools/threads/anki/tools/threads/threadSafeFixedLengthList.h
   ../../../common/tools/threads/anki/tools/threads/threadSafeQueue.h
   ../../../common/tools/threads/anki/tools/threads/threadSafeUtilities.h
+  ../../../common/tools/threads/anki/tools/threads/threadSafeVector.h
   trainDecisionTree.h
 )
 
