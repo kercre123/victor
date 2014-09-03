@@ -75,6 +75,9 @@ namespace Anki {
       // Runs the retry function if one was specified.
       Result Retry();
       
+      // Get last status message
+      const std::string& GetStatus() const { return _statusMsg; }
+      
     protected:
       
       Robot&        _robot;
@@ -82,6 +85,9 @@ namespace Anki {
       // Derived Actions should implement these:
       virtual ActionResult  CheckPreconditions() { return SUCCESS; } // Optional: default is no preconditions to meet
       virtual ActionResult  CheckIfDone() = 0;
+      
+      // Derived actions can use this to set custom status messages here.
+      void SetStatus(const std::string& msg);
       
       //
       // Timing delays:
@@ -102,6 +108,8 @@ namespace Anki {
       bool          _preconditionsMet;
       f32           _waitUntilTime;
       f32           _timeoutTime;
+      
+      std::string   _statusMsg;
       
       std::function<Result(Robot&)> _retryFcn;
       

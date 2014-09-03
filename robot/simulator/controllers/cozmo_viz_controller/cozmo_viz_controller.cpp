@@ -186,7 +186,7 @@ namespace Anki {
                    msg.head_angle, msg.lift_angle);
     }
     
-    void DrawText(u32 labelID, const char* text)
+    void DrawText(u32 labelID, u32 color, const char* text)
     {
       const int baseXOffset = 8;
       const int baseYOffset = 8;
@@ -197,13 +197,18 @@ namespace Anki {
       disp->fillRectangle(0, baseYOffset + yLabelStep * labelID, disp->getWidth(), 8);
       
       // Draw text
-      disp->setColor(0xffffff);
+      disp->setColor(color >> 8);
+      disp->setAlpha(static_cast<double>(0xff & color)/255.);
       disp->drawText(std::string(text), baseXOffset, baseYOffset + yLabelStep * labelID);
+    }
+    
+    void DrawText(u32 labelID, const char* text) {
+      DrawText(labelID, 0xffffff, text);
     }
     
     void ProcessVizSetLabelMessage(const VizSetLabel& msg)
     {
-      DrawText(msg.labelID, (char*)msg.text);
+      DrawText(msg.labelID, msg.colorID, (char*)msg.text);
     }
     
     void ProcessVizDockingErrorSignalMessage(const VizDockingErrorSignal& msg)
@@ -222,7 +227,7 @@ namespace Anki {
       // Print values
       char text[111];
       sprintf(text, "ErrSig x: %.1f, y: %.1f, ang: %.2f\n", msg.x_dist, msg.y_dist, msg.angle);
-      DrawText(3, text);
+      DrawText(msg.textLabelID, text);
       
       
       // Clear the space

@@ -438,10 +438,10 @@ namespace Anki {
     
     // =============== Text methods ==================
 
-    void VizManager::SetText(const u32 labelID, const ColorRGBA& color, const char* format, ...)
+    void VizManager::SetText(const TextLabelType& labelType, const ColorRGBA& color, const char* format, ...)
     {
       VizSetLabel v;
-      v.labelID = labelID;
+      v.labelID = labelType;
       v.colorID = u32(color);
       
       va_list argptr;
@@ -478,6 +478,7 @@ namespace Anki {
       v.x_dist = x_dist;
       v.y_dist = y_dist;
       v.angle = angle;
+      v.textLabelID = TextLabelType::ERROR_SIGNAL;
       
       SendMessage( GET_MESSAGE_ID(VizDockingErrorSignal), &v );
     }

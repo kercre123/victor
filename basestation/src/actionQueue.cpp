@@ -37,6 +37,7 @@ namespace Anki {
     IAction::ActionResult  IAction::Update()
     {
       ActionResult result = RUNNING;
+      SetStatus(GetName());
       
       // On first call to Update(), figure out the waitUntilTime
       const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -60,7 +61,8 @@ namespace Anki {
       {
         
         if(!_preconditionsMet) {
-          PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking preconditions.\n", GetName().c_str());
+          //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking preconditions.\n", GetName().c_str());
+          SetStatus(GetName() + ": check preconditions");
           
           // Note that derived classes will define what to do when pre-conditions
           // are not met: if they return RUNNING, then the action will effectively
@@ -84,7 +86,8 @@ namespace Anki {
           }
           
         } else {
-          PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking if done.\n", GetName().c_str());
+          //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking if done.\n", GetName().c_str());
+          SetStatus(GetName() + ": check if done");
           
           // Pre-conditions already met, just run until done
           result = CheckIfDone();
@@ -97,6 +100,11 @@ namespace Anki {
     const std::string& IAction::GetName() const {
       static const std::string name("UnnamedAction");
       return name;
+    }
+    
+    void IAction::SetStatus(const std::string& msg)
+    {
+      _statusMsg = msg;
     }
     
     void IAction::SetRetryFunction(std::function<Result(Robot&)> retryFcn)

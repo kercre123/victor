@@ -30,6 +30,12 @@ namespace Anki {
     {
     public:
       
+      typedef enum : u8 {
+        ACTION,
+        PROX_SENSORS,
+        ERROR_SIGNAL
+      } TextLabelType;
+      
       using Handle_t = u32;
       static const Handle_t INVALID_HANDLE;
       
@@ -215,7 +221,7 @@ namespace Anki {
       void EraseAllMatMarkers();
     
       // ==== Text functions =====
-      void SetText(const u32 labelID, const ColorRGBA& color, const char* format, ...);
+      void SetText(const TextLabelType& labelType, const ColorRGBA& color, const char* format, ...);
       
       
       // ==== Color functions =====

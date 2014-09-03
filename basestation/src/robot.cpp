@@ -235,7 +235,7 @@ namespace Anki {
         //        msg.status & IS_PROX_FORWARD_BLOCKED,
         //        msg.status & IS_PROX_SIDE_BLOCKED);
 
-        VizManager::getInstance()->SetText(0,   // TODO:(bn) id??
+        VizManager::getInstance()->SetText(VizManager::TextLabelType::PROX_SENSORS,
                                            Anki::NamedColors::GREEN,
                                            "prox: (%2u, %2u, %2u) %d%d%d",
                                            _proxLeft, _proxFwd, _proxRight,
@@ -524,7 +524,7 @@ namespace Anki {
     {
       ////////// Update the robot's blockworld //////////
       
-            uint32_t numBlocksObserved = 0;
+      uint32_t numBlocksObserved = 0;
       _blockWorld.Update(numBlocksObserved);
       
       
@@ -541,9 +541,17 @@ namespace Anki {
       //////// Update Robot's State Machine /////////////
       
       IAction* currentAction = _actionQueue.GetCurrentAction();
-      if(currentAction != nullptr)
-      {
+      if(currentAction == nullptr) {
+        
+        VizManager::getInstance()->SetText(VizManager::TextLabelType::ACTION, NamedColors::RED, "<No Current Action>");
+        
+      } else {
+        
         const IAction::ActionResult result = currentAction->Update();
+        
+        VizManager::getInstance()->SetText(VizManager::TextLabelType::ACTION, NamedColors::RED,
+                                           currentAction->GetStatus().c_str());
+        
         switch(result)
         {
           case IAction::SUCCESS:
@@ -588,7 +596,7 @@ namespace Anki {
             return RESULT_FAIL;
             
         } // switch(result)
-      } // if actionQueue not empty
+      } // if/else actionQueue not empty
       
       
       
