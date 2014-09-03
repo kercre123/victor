@@ -104,7 +104,7 @@ namespace Anki {
       
       // Add a pre-dock pose to each face, at fixed distance normal to the face:
       const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
-      AddPreActionPose(PreActionPose::DOCKING, marker, DefaultPreDockPoseDistance);
+      AddPreActionPose(PreActionPose::DOCKING, marker, DefaultPreDockPoseDistance, DEG_TO_RAD(-15));
       
       // Store a pointer to the marker on each face:
       markersByFace_[whichFace] = marker;

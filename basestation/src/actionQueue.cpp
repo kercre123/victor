@@ -11,6 +11,7 @@
  **/
 
 #include "actionQueue.h"
+#include "ramp.h"
 
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -36,6 +37,8 @@ namespace Anki {
     IAction::ActionResult  IAction::Update()
     {
       ActionResult result = RUNNING;
+      
+      PRINT_NAMED_INFO("IAction.Update", "Updating %s.\n", GetName().c_str());
       
       // On first call to Update(), figure out the waitUntilTime
       const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -68,21 +71,12 @@ namespace Anki {
             PRINT_NAMED_INFO("IAction.Update.PrecondtionsMet",
                              "Preconditions for %s successfully met.\n", GetName().c_str());
             _preconditionsMet = true;
+            result = RUNNING;
           }
           
         } else {
           // Pre-conditions already met, just run until done
           result = CheckIfDone();
-          if(result == FAILURE_RETRY) {
-            if(_retryFcn != nullptr) {
-              _retryFcn(_robot);
-            } else {
-              PRINT_NAMED_WARNING("IAction.Update.NoRetryFunction",
-                                  "CheckIfDone() for %s returned FAILURE_RETRY, but no retry function is available.\n",
-                                  GetName().c_str());
-            }
-          }
-          
         }
       } // if(currentTimeInSeconds > _waitUntilTime)
       
@@ -93,7 +87,94 @@ namespace Anki {
       static const std::string name("UnnamedAction");
       return name;
     }
+    
+    void IAction::SetRetryFunction(std::function<Result(Robot&)> retryFcn)
+    {
+      _retryFcn = retryFcn;
+    }
   
+    Result IAction::Retry()
+    {
+      if(_retryFcn != nullptr) {
+        return _retryFcn(_robot);
+      } else {
+        PRINT_NAMED_WARNING("IAction.Update.NoRetryFunction",
+                            "CheckIfDone() for %s returned FAILURE_RETRY, but no retry function is available.\n",
+                            GetName().c_str());
+        return RESULT_FAIL;
+      }
+    } // Retry()
+    
+#pragma mark ---- ActionQueue ----
+    
+    ActionQueue::ActionQueue()
+    {
+      
+    }
+    
+    ActionQueue::~ActionQueue()
+    {
+      Clear();
+    }
+    
+    void ActionQueue::Clear()
+    {
+      while(!_queue.empty()) {
+        IAction* action = _queue.front();
+        CORETECH_ASSERT(action != nullptr);
+        delete action;
+        _queue.pop_front();
+      }
+    }
+    
+    Result ActionQueue::QueueAtEnd(IAction *action)
+    {
+      _queue.push_back(action);
+      return RESULT_OK;
+    }
+    
+    Result ActionQueue::QueueNext(Anki::Cozmo::IAction *action)
+    {
+      if(_queue.empty()) {
+        return QueueAtEnd(action);
+      }
+      
+      std::list<IAction*>::iterator queueIter = _queue.begin();
+      ++queueIter;
+      _queue.insert(queueIter, action);
+      
+      return RESULT_OK;
+    }
+    
+    IAction* ActionQueue::GetCurrentAction()
+    {
+      if(_queue.empty()) {
+        return nullptr;
+      }
+      
+      return _queue.front();
+    }
+    
+    void ActionQueue::PopCurrentAction()
+    {
+      if(!IsEmpty()) {
+        _queue.pop_front();
+      }
+    }
+    
+    void ActionQueue::Print() const
+    {
+      
+      if(IsEmpty()) {
+        PRINT_INFO("ActionQueue is empty.\n");
+      } else {
+        for(auto action : _queue) {
+          PRINT_INFO("%s, ", action->GetName().c_str());
+        }
+        PRINT_INFO("\n");
+      }
+      
+    } // Print()
     
 #pragma mark ---- CheckForPathDoneHelper ----
     
@@ -136,16 +217,34 @@ namespace Anki {
     
 #pragma mark ---- DriveToPoseAction ----
     
-    DriveToPoseAction::DriveToPoseAction(Robot& robot, const Pose3d& pose, const Radians& headAngle)
+    DriveToPoseAction::DriveToPoseAction(Robot& robot) //, const Pose3d& pose)
     : IAction(robot)
-    , _goalPose(pose)
-    , _goalHeadAngle(headAngle)
+    , _isGoalSet(false)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     {
       
     }
     
+    DriveToPoseAction::DriveToPoseAction(Robot& robot, const Pose3d& pose)
+    : DriveToPoseAction(robot)
+    {
+      SetGoal(pose);
+    }
+    
+    Result DriveToPoseAction::SetGoal(const Anki::Pose3d& pose)
+    {
+      if(pose.GetWithRespectTo(*_robot.GetWorldOrigin(), _goalPose) == false) {
+        PRINT_NAMED_ERROR("DriveToPoseAction.SetGoal.OriginMisMatch",
+                          "Could not get specified pose w.r.t. robot %d's origin.\n", _robot.GetID());
+        return RESULT_FAIL;
+      }
+      _isGoalSet = true;
+      
+      return RESULT_OK;
+    }
+    
+    /*
     DriveToPoseAction::DriveToPoseAction(Robot& robot, const Pose3d& pose)
     : DriveToPoseAction(robot, pose, robot.GetHeadAngle())
     {
@@ -167,6 +266,7 @@ namespace Anki {
     {
       
     }
+     */
     
     const std::string& DriveToPoseAction::GetName() const
     {
@@ -178,17 +278,13 @@ namespace Anki {
     {
       ActionResult result = SUCCESS;
       
-      if(_possibleGoalPoses.empty()) {
-        if(_robot.ExecutePathToPose(_goalPose, _goalHeadAngle) != RESULT_OK) {
-          result = FAILURE_ABORT;
-        }
-      } else {
-        size_t selectedIndex = 0;
-        if(_robot.ExecutePathToPose(_possibleGoalPoses, _goalHeadAngle, selectedIndex) != RESULT_OK) {
-          result = FAILURE_ABORT;
-        } else {
-          _goalPose = _possibleGoalPoses[selectedIndex];
-        }
+      if(!_isGoalSet) {
+        PRINT_NAMED_ERROR("DriveToPoseAction.CheckPreconditions.NoGoalSet",
+                          "Goal must be set before running this action.\n");
+        result = FAILURE_ABORT;
+      }
+      else if(_robot.ExecutePathToPose(_goalPose) != RESULT_OK) {
+        result = FAILURE_ABORT;
       }
       
       return result;
@@ -199,8 +295,73 @@ namespace Anki {
       return CheckForPathDoneHelper(_robot, _goalPose, _goalDistanceThreshold, _goalDistanceThreshold);
     } // CheckIfDone()
     
+#pragma mark ---- DriveToObjectAction ----
+    
+    DriveToObjectAction::DriveToObjectAction(Robot& robot, const ObjectID& objectID, const PreActionPose::ActionType& actionType)
+    : DriveToPoseAction(robot)
+    , _objectID(objectID)
+    , _actionType(actionType)
+    {
+      // NOTE: _goalPose will be set later, when we check preconditions
+    }
+    
+    const std::string& DriveToObjectAction::GetName() const
+    {
+      static const std::string name("DriveToObjectAction");
+      return name;
+    }
+    
+    IAction::ActionResult DriveToObjectAction::CheckPreconditions()
+    {
+      ActionResult result = SUCCESS;
+      
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
+                          "Robot %d's block world does not have an ActionableObject with ID=%d.\n",
+                          _robot.GetID(), _objectID.GetValue());
+        
+        result = FAILURE_ABORT;
+      } else {
+      
+        std::vector<PreActionPose> possiblePreActionPoses;
+        object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType});
+        
+        if(possiblePreActionPoses.empty()) {
+          PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPossiblePoses",
+                            "ActionableObject %d did not return any pre-action poses with action type %d.\n",
+                            _objectID.GetValue(), _actionType);
+          
+          result = FAILURE_ABORT;
+          
+        } else {
+          size_t selectedIndex = 0;
+          
+          // Make a vector of just poses (not preaction poses) for call to
+          // Robot::ExecutePathToPose() below
+          // TODO: Prettier way to handle this?
+          std::vector<Pose3d> possiblePoses;
+          possiblePoses.reserve(possiblePreActionPoses.size());
+          for(auto & preActionPose : possiblePreActionPoses) {
+            possiblePoses.emplace_back(preActionPose.GetPose());
+          }
+          
+          if(_robot.ExecutePathToPose(possiblePoses, selectedIndex) != RESULT_OK) {
+            result = FAILURE_ABORT;
+          } else {
+            _robot.MoveHeadToAngle(possiblePreActionPoses[selectedIndex].GetHeadAngle().ToFloat(), 5, 10);
+            SetGoal(possiblePreActionPoses[selectedIndex].GetPose());
+          }
+        }
+      }
+      
+      return result;
+    }
     
     
+    
+    
+
 #pragma mark ---- TurnInPlaceAction ----
     
     TurnInPlaceAction::TurnInPlaceAction(Robot& robot, const Radians& angle)
@@ -250,6 +411,8 @@ namespace Anki {
     IDockAction::IDockAction(Robot& robot, ObjectID objectID)
     : IAction(robot)
     , _dockObjectID(objectID)
+    , _dockMarker(nullptr)
+    , _dockMarker2(nullptr)
     {
       
     }
@@ -267,10 +430,10 @@ namespace Anki {
       }
       
       // Verify that we ended up near enough a PreActionPose of the right type
-      std::vector<ActionableObject::PoseMarkerPair_t> preActionPoseMarkerPairs;
-      dockObject->GetCurrentPreActionPoses(preActionPoseMarkerPairs, {GetPreActionType()});
+      std::vector<PreActionPose> preActionPoses;
+      dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()});
       
-      if(preActionPoseMarkerPairs.empty()) {
+      if(preActionPoses.empty()) {
         PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.NoPreActionPoses",
                           "Action object with ID=%d returned no pre-action poses of the given type.\n",
                           _dockObjectID.GetValue());
@@ -282,14 +445,14 @@ namespace Anki {
                               _robot.GetPose().GetTranslation().y());
       
       float closestDistSq = std::numeric_limits<float>::max();
-      size_t closestIndex = preActionPoseMarkerPairs.size();
+      size_t closestIndex = preActionPoses.size();
       
       //for(auto const& preActionPair : preActionPoseMarkerPairs) {
-      for(size_t index=0; index < preActionPoseMarkerPairs.size(); ++index) {
-        const ActionableObject::PoseMarkerPair_t& preActionPair = preActionPoseMarkerPairs[index];
+      for(size_t index=0; index < preActionPoses.size(); ++index) {
+        const PreActionPose& preActionPose = preActionPoses[index];
         
-        const Point2f preActionXY(preActionPair.first.GetTranslation().x(),
-                                  preActionPair.first.GetTranslation().y());
+        const Point2f preActionXY(preActionPose.GetPose().GetTranslation().x(),
+                                  preActionPose.GetPose().GetTranslation().y());
         const float distSq = (currentXY - preActionXY).LengthSq();
         if(distSq < closestDistSq) {
           closestDistSq = distSq;
@@ -313,11 +476,9 @@ namespace Anki {
         
         PRINT_NAMED_INFO("IDockAction.CheckPreconditions.BeginDocking",
                          "Robot is within %.1fmm of the nearest pre-action pose, "
-                         "docking with marker %d = %s (action = %d).\n",
-                         closestDist, _dockMarker->GetCode(),
-                         Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
+                         "proceeding with docking.\n", closestDist);
       
-        if(DockWithObjectHelper(preActionPoseMarkerPairs, closestIndex) == RESULT_OK) {
+        if(DockWithObjectHelper(preActionPoses, closestIndex) == RESULT_OK) {
           return SUCCESS;
         } else {
           return FAILURE_ABORT;
@@ -341,6 +502,7 @@ namespace Anki {
         
         Result lastResult = RESULT_OK;
         
+        // TODO: should these be moved to virtual "Verify" methods implemented by derived classes?
         switch(_dockAction)
         {
           case DA_PICKUP_LOW:
@@ -404,11 +566,17 @@ namespace Anki {
     } // CheckIfDone()
     
     
-    Result IDockAction::DockWithObjectHelper(const std::vector<ActionableObject::PoseMarkerPair_t>& preActionPoseMarkerPairs,
+    Result IDockAction::DockWithObjectHelper(const std::vector<PreActionPose>& preActionPoses,
                                              const size_t closestIndex)
     {
-      _dockMarker  = &preActionPoseMarkerPairs[closestIndex].second;
+      _dockMarker  = preActionPoses[closestIndex].GetMarker();
       _dockMarker2 = nullptr;
+      
+      PRINT_NAMED_INFO("IDockAction.DockWithObjectHelper.BeginDocking",
+                       "Docking with marker %d (%s) using action %d.\n",
+                       _dockMarker->GetCode(),
+                       Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
+
       
       return _robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
     }
@@ -420,6 +588,12 @@ namespace Anki {
     : IDockAction(robot, objectID)
     {
       
+    }
+    
+    const std::string& PickUpObjectAction::GetName() const
+    {
+      static const std::string name("PickUpObjectAction");
+      return name;
     }
     
     Result PickUpObjectAction::SelectDockAction(ActionableObject* object)
@@ -448,18 +622,41 @@ namespace Anki {
     
 #pragma mark ---- CrossBridgeAction ----
     
-    Result CrossBridgeAction::DockWithObjectHelper(const std::vector<ActionableObject::PoseMarkerPair_t>& preActionPoseMarkerPairs,
-                                        const size_t closestIndex)
+    CrossBridgeAction::CrossBridgeAction(Robot& robot, ObjectID bridgeID)
+    : IDockAction(robot, bridgeID)
     {
-      _dockMarker = &preActionPoseMarkerPairs[closestIndex].second;
+      
+    }
+    
+    const std::string& CrossBridgeAction::GetName() const
+    {
+      static const std::string name("CrossBridgeAction");
+      return name;
+    }
+    
+    Result CrossBridgeAction::DockWithObjectHelper(const std::vector<PreActionPose>& preActionPoses,
+                                                   const size_t closestIndex)
+    {
+      _dockMarker = preActionPoses[closestIndex].GetMarker();
       
       // Use the unchosen pre-crossing pose marker (the one at the other end of
       // the bridge) as dockMarker2
-      assert(preActionPoseMarkerPairs.size() == 2);
+      assert(preActionPoses.size() == 2);
       size_t indexForOtherEnd = 1 - closestIndex;
       assert(indexForOtherEnd == 0 || indexForOtherEnd == 1);
-      _dockMarker2 = &(preActionPoseMarkerPairs[indexForOtherEnd].second);
+      _dockMarker2 = preActionPoses[indexForOtherEnd].GetMarker();
  
+      assert(_dockMarker != nullptr);
+      assert(_dockMarker2 != nullptr);
+      
+      PRINT_NAMED_INFO("CrossBridgeAction.DockWithObjectHelper.BeginDocking",
+                       "Crossing bridge using markers %d (%s) and %d (%s) using action %d.\n",
+                       _dockMarker->GetCode(),
+                       Vision::MarkerTypeStrings[_dockMarker->GetCode()],
+                       _dockMarker2->GetCode(),
+                       Vision::MarkerTypeStrings[_dockMarker2->GetCode()],
+                       _dockAction);
+      
       return _robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
     }
     
@@ -469,14 +666,66 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    void Test(void)
+    
+#pragma mark ---- AscendOrDescendRampAction ----
+    
+    AscendOrDescendRampAction::AscendOrDescendRampAction(Robot& robot, ObjectID rampID)
+    : IDockAction(robot, rampID)
+    {
+      
+    }
+    
+    const std::string& AscendOrDescendRampAction::GetName() const
+    {
+      static const std::string name("AscendOrDescendRampAction");
+      return name;
+    }
+    
+    Result AscendOrDescendRampAction::SelectDockAction(ActionableObject* object)
+    {
+      Ramp* ramp = dynamic_cast<Ramp*>(object);
+      if(ramp == nullptr) {
+        PRINT_NAMED_ERROR("AscendOrDescendRampAction.SelectDockAction.NotRampObject",
+                          "Could not cast generic ActionableObject into Ramp object.\n");
+        return RESULT_FAIL;
+      }
+      
+      Result result = RESULT_OK;
+      
+      // Choose ascent or descent
+      const Ramp::TraversalDirection direction = ramp->IsAscendingOrDescending(_robot.GetPose());
+      switch(direction)
+      {
+        case Ramp::ASCENDING:
+          _dockAction = DA_RAMP_ASCEND;
+          break;
+          
+        case Ramp::DESCENDING:
+          _dockAction = DA_RAMP_DESCEND;
+          break;
+          
+        case Ramp::UNKNOWN:
+        default:
+          result = RESULT_FAIL;
+      }
+    
+      _robot.SetRampDirection(direction);
+      
+      return result;
+      
+    } // SelectDockAction()
+    
+    /*
+    static void TestInstantiation(void)
     {
       Robot robot(7, nullptr);
       ObjectID id;
       id.Set();
       
       PickUpObjectAction action(robot, id);
+      AscendOrDescendRampAction action2(robot, id);
+      CrossBridgeAction action3(robot, id);
     }
-    
+    */
   } // namespace Cozmo
 } // namespace Anki

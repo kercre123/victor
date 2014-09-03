@@ -35,13 +35,18 @@ namespace Anki {
       // Simple case: pose is along the normal to the marker, at the given distance
       PreActionPose(ActionType type,
                     const Vision::KnownMarker* marker,
-                    f32 distance);
+                    const f32 distance,
+                    const Radians& headAngle);
       
       // Specify arbitrary position relative to marker
       // poseWrtMarker's parent should be the marker's pose.
       PreActionPose(ActionType type,
                     const Vision::KnownMarker* marker,
-                    const Pose3d& poseWrtMarker);
+                    const Pose3d&  poseWrtMarker,
+                    const Radians& headAngle);
+      
+      PreActionPose(const PreActionPose& canonicalPose,
+                    const Pose3d& markerParentPose);
       
       // Get the type of action associated with this PreActionPose
       ActionType GetActionType() const;
@@ -50,31 +55,38 @@ namespace Anki {
       const Vision::KnownMarker* GetMarker() const;
       
       // Get the current PreActionPose, given the current pose of the
-      // its marker's parent. Returns true if a valid pose is found (meaning
-      // the pose is aligned with the ground plane), false otherwise.
-      bool GetCurrentPose(const Pose3d& markerParentPose,
-                          Pose3d& currentPose) const;
+      // its marker's parent.
+      //Result GetCurrentPose(const Pose3d& markerParentPose,
+      //                    Pose3d& currentPose) const;
       
+      // Get the head angle associated with this pre-action pair
+      const Radians& GetHeadAngle() const;
+      
+      // Returns true if the marker is correctly oriented for its action type.
+      // FOr example, DOCKING poses must have the marker vertical to be docked with.
+      bool IsOrientedForAction(const Pose3d& markerParentPose) const;
       
       // Get the Code of the Marker this PreActionPose is "attached" to.
       //const Vision::Marker::Code& GetMarkerCode() const;
       
-      // Get PreActionPose w.r.t. the marker it is "attached" to. It is
+      // Get PreActionPose w.r.t. the parent of marker it is "attached" to. It is
       // the caller's responsibility to make it w.r.t. the world origin
       // (or other pose) if desired.
-      //const Pose3d& GetPose() const; // w.r.t. marker!
+      const Pose3d& GetPose() const; // w.r.t. marker's parent!
       
       static const ColorRGBA& GetVisualizeColor(ActionType type);
       
     protected:
       
-      ActionType _type;
+      ActionType   _type;
       
       const Vision::KnownMarker* _marker;
       
       Pose3d _poseWrtMarkerParent;
       
-    }; // class DockingPose
+      Radians _headAngle;
+      
+    }; // class PreActionPose
     
     
     inline PreActionPose::ActionType PreActionPose::GetActionType() const {
@@ -85,6 +97,13 @@ namespace Anki {
       return _marker;
     }
     
+    inline const Radians& PreActionPose::GetHeadAngle() const {
+      return _headAngle;
+    }
+    
+    inline const Pose3d& PreActionPose::GetPose() const {
+      return _poseWrtMarkerParent;
+    }
     
     
     class ActionableObject : public Vision::ObservableObject
@@ -98,8 +117,7 @@ namespace Anki {
       // Return only those pre-action poses that are roughly aligned with the
       // ground plane, given their parent marker's current orientation.
       // Optionally, you may filter based on ActionType and Marker Code as well.
-      using PoseMarkerPair_t = std::pair<Pose3d,const Vision::KnownMarker&>;
-      void GetCurrentPreActionPoses(std::vector<PoseMarkerPair_t>& poseMarkerPairs,
+      void GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
                                     const std::set<PreActionPose::ActionType>& withAction = std::set<PreActionPose::ActionType>(),
                                     const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>());
       
@@ -130,13 +148,16 @@ namespace Anki {
     protected:
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker* marker,
-                            f32 distance);
+                            const f32 distance,
+                            const Radians& headAngle);
       
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker* marker,
-                            const Pose3d& poseWrtMarker);
+                            const Pose3d& poseWrtMarker,
+                            const Radians& headAngle);
       
     private:
+      
       std::vector<PreActionPose> _preActionPoses;
       
       std::vector<VizManager::Handle_t> _vizPreActionPoseHandles;

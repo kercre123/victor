@@ -668,7 +668,7 @@ namespace Anki {
                     
                     goalPose_ = Pose3d(angle, Z_AXIS_3D, {{position.x(), position.y(), 0.f}});
                     
-                    robot_->ExecutePathToPose(goalPose_, diceViewingHeadAngle);
+                    robot_->ExecutePathToPose(goalPose_); //, diceViewingHeadAngle);
                   } else {
                     CoreTechPrint("Move dice closer!\n");
                   }

@@ -34,10 +34,12 @@ namespace Anki {
     
     PreActionPose::PreActionPose(ActionType type,
                                  const Vision::KnownMarker* marker,
-                                 f32 distance)
+                                 const f32 distance,
+                                 const Radians& headAngle)
     : _type(type)
     , _marker(marker)
     , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D, Y_AXIS_3D * -distance, &marker->GetPose()) // init w.r.t. marker
+    , _headAngle(headAngle)
     {      
       // Now make pose w.r.t. marker parent
       if(_poseWrtMarkerParent.GetWithRespectTo(*_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
@@ -51,9 +53,11 @@ namespace Anki {
     
     PreActionPose::PreActionPose(ActionType type,
                                  const Vision::KnownMarker* marker,
-                                 const Pose3d& poseWrtMarker)
+                                 const Pose3d& poseWrtMarker,
+                                 const Radians& headAngle)
     : _type(type)
     , _marker(marker)
+    , _headAngle(headAngle)
     {
       if(poseWrtMarker.GetParent() != &marker->GetPose()) {
         PRINT_NAMED_ERROR("PreActionPose.PoseWrtMarkerParentInvalid",
@@ -67,9 +71,56 @@ namespace Anki {
     } // PreActionPose Constructor
     
     
-    bool PreActionPose::GetCurrentPose(const Anki::Pose3d &markerParentPose, Anki::Pose3d &currentPose) const
+    PreActionPose::PreActionPose(const PreActionPose& canonicalPose,
+                                 const Pose3d& markerParentPose)
+    : _type(canonicalPose.GetActionType())
+    , _marker(canonicalPose.GetMarker())
+    , _poseWrtMarkerParent(markerParentPose*canonicalPose._poseWrtMarkerParent)
+    , _headAngle(canonicalPose.GetHeadAngle())
     {
-      bool validPoseFound = false;
+      _poseWrtMarkerParent.SetParent(markerParentPose.GetParent());
+      _poseWrtMarkerParent.SetName("PreActionPose");
+    }
+    
+    bool PreActionPose::IsOrientedForAction(const Pose3d& markerParentPose) const
+    {
+      /*
+      bool isCorrectlyOriented = true;
+      
+      switch(GetActionType())
+      {
+        case DOCKING:
+        {
+       */
+          // Check if currentPose is vertically oriented, and thus valid.
+          // Get unit vector, v, from parent object's origin to the current pose.
+          Point3f v(_poseWrtMarkerParent.GetTranslation() - markerParentPose.GetTranslation());
+          v.MakeUnitLength();
+          const f32 DotProdTolerance = 1.f - std::cos(DEG_TO_RAD(30));
+          
+          // Make sure that vector is roughly orthogonal to Z axis
+          const bool isCorrectlyOriented = NEAR(DotProduct(Z_AXIS_3D, v), 0.f, DotProdTolerance);
+       /*   break;
+        }
+        case ENTRY:
+        {
+          // Entry is orientation agnostic (?)
+          isCorrectlyOriented = true;
+          break;
+        }
+        default:
+          PRINT_NAMED_ERROR("PreActionPose.IsMarkerOrientedForAction.UnexpectedActionCase",
+                            "Case for action %d not implemented.\n", GetActionType());
+          assert(false);
+      }
+       */
+      return isCorrectlyOriented;
+    }
+    
+#if 0
+    Result PreActionPose::GetCurrentPose(const Pose3d &markerParentPose, Pose3d &currentPose) const
+    {
+      Result result = RESULT_OK;
       
       if(_marker->GetPose().GetParent() == &markerParentPose)
       {
@@ -77,22 +128,17 @@ namespace Anki {
         currentPose = markerParentPose * _poseWrtMarkerParent;
         currentPose.SetParent(markerParentPose.GetParent());
         
-        // Check if currentPose is vertically oriented, and thus valid.
-        // Get vector, v, from center of block to this point.
-        Point3f v(currentPose.GetTranslation() - markerParentPose.GetTranslation());
-        v.MakeUnitLength();
-        const f32 DotProdTolerance = std::cos(DEG_TO_RAD(30));
-        
-        validPoseFound = NEAR(DotProduct(Z_AXIS_3D, v), 0.f, DotProdTolerance);
-        
       } // if given pose is parent of the marker
       else {
         PRINT_NAMED_WARNING("PreActionPose.GetCurrentPose.InvalidParentPose",
                             "Given marker parent pose is not the parent of this PreActionPose's marker.\n");
+        result = RESULT_FAIL;
       }
       
-      return validPoseFound;
+      return result;
     } // GetCurrentPose()
+#endif
+    
     
 #if 0
 #pragma mark --- ActionableObject ---
@@ -105,39 +151,44 @@ namespace Anki {
       
     }
     
-    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type, const Vision::KnownMarker *marker, f32 distance)
+    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type, const Vision::KnownMarker *marker,
+                                            const f32 distance, const Radians& headAngle)
     {
-      _preActionPoses.emplace_back(type, marker, distance);
+      _preActionPoses.emplace_back(type, marker, distance, headAngle);
     } // AddPreActionPose()
     
     void ActionableObject::AddPreActionPose(PreActionPose::ActionType type,
                                             const Vision::KnownMarker* marker,
-                                            const Pose3d& poseWrtMarker)
+                                            const Pose3d& poseWrtMarker,
+                                            const Radians& headAngle)
     {
-      _preActionPoses.emplace_back(type, marker, poseWrtMarker);
+      _preActionPoses.emplace_back(type, marker, poseWrtMarker, headAngle);
     }
     
-    void ActionableObject::GetCurrentPreActionPoses(std::vector<PoseMarkerPair_t>& poseMarkerPairs,
+    
+    void ActionableObject::GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
                                                     const std::set<PreActionPose::ActionType>& withAction,
                                                     const std::set<Vision::Marker::Code>& withCode)
     {
-      const Pose3d& atPose = GetPose();
+      const Pose3d& relToObjectPose = GetPose();
       
       for(auto & preActionPose : _preActionPoses)
       {
         if((withCode.empty()   || withCode.count(preActionPose.GetMarker()->GetCode()) > 0) &&
            (withAction.empty() || withAction.count(preActionPose.GetActionType()) > 0))
         {
-          Pose3d currentPose;
-          const bool isValid = preActionPose.GetCurrentPose(atPose, currentPose);
+          PreActionPose currentPose(preActionPose, relToObjectPose);
+          
+          const bool isValid = currentPose.IsOrientedForAction(relToObjectPose);
           
           if(isValid) {
-            poseMarkerPairs.emplace_back(currentPose, *preActionPose.GetMarker());
+            preActionPoses.emplace_back(currentPose);
           }
         } // if preActionPose has correct code/action
       } // for each preActionPose
-      
-    } // GetCurrentPreActionPoses()
+
+    }
+    
     
     void ActionableObject::Visualize()
     {
@@ -157,12 +208,12 @@ namespace Anki {
       
       // Draw the pre-action poses, using a different color for each type of action
       u32 poseID = 0;
-      std::vector<ActionableObject::PoseMarkerPair_t> poses;
+      std::vector<PreActionPose> poses;
       
       GetCurrentPreActionPoses(poses, {PreActionPose::DOCKING});
       for(auto & pose : poses) {
         _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID,
-                                                                                         pose.first.GetWithRespectToOrigin(),
+                                                                                         pose.GetPose().GetWithRespectToOrigin(),
                                                                                          PreActionPose::GetVisualizeColor(PreActionPose::DOCKING)));
         ++poseID;
       }
@@ -171,7 +222,7 @@ namespace Anki {
       GetCurrentPreActionPoses(poses, {PreActionPose::ENTRY});
       for(auto & pose : poses) {
         _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID,
-                                                                                         pose.first.GetWithRespectToOrigin(),
+                                                                                         pose.GetPose().GetWithRespectToOrigin(),
                                                                                          PreActionPose::GetVisualizeColor(PreActionPose::ENTRY)));
         ++poseID;
       }

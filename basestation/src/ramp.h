@@ -58,6 +58,17 @@ namespace Anki {
       const Vision::KnownMarker* GetFrontMarker() const { return _frontMarker; }
       const Vision::KnownMarker* GetTopMarker()   const { return _topMarker;   }
       
+      // Determine whether a robot will ascend or descend the ramp, based on its
+      // relative pose. If it is above the ramp, it must be descending. If it
+      // is on the same level as the ramp, it must be ascending. If it can't be
+      // determined, UNKNOWN is returned.
+      typedef enum : u8 {
+        ASCENDING,
+        DESCENDING,
+        UNKNOWN
+      } TraversalDirection;
+      TraversalDirection IsAscendingOrDescending(const Pose3d& robotPose) const;
+      
       // Return start poses (at Ramp's current position) for going up or down
       // the ramp. The distance for ascent is from the tip of the slope.  The
       // distance for descent is from the opposite edge of the ramp.

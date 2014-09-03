@@ -14,6 +14,9 @@
 
 #include "anki/common/basestation/utils/logging/logging.h"
 
+#include "anki/cozmo/robot/cozmoConfig.h"
+
+
 namespace Anki {
   
   namespace Cozmo {
@@ -60,18 +63,18 @@ namespace Anki {
         PRINT_NAMED_ERROR("Ramp.PreAscentPoseError", "Could not get preAscentPose w.r.t. front ramp marker.\n");
       }
       _preAscentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreAscentPose");
-      AddPreActionPose(PreActionPose::ENTRY, _frontMarker, _preAscentPose);
+      AddPreActionPose(PreActionPose::ENTRY, _frontMarker, _preAscentPose, DEG_TO_RAD(-10));
       
       const Pose3d backPose(-M_PI_2, Z_AXIS_3D, {{-0.5f*PlatformLength, 0, 0}});
       AddMarker(Vision::MARKER_RAMPBACK, backPose, Ramp::MarkerSize);
       
       const Pose3d leftPose(0.f, Z_AXIS_3D, {{10.f, -0.5f*Ramp::Width, 0.f}});
       _leftMarker = &AddMarker(Vision::MARKER_RAMPLEFT, leftPose, Ramp::MarkerSize);
-      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, 100.f);
+      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, 100.f, DEG_TO_RAD(-15));
       
       const Pose3d rightPose(M_PI, Z_AXIS_3D, {{10.f,  0.5f*Ramp::Width, 0.f}});
       _rightMarker = &AddMarker(Vision::MARKER_RAMPRIGHT, rightPose, Ramp::MarkerSize);
-      AddPreActionPose(PreActionPose::DOCKING, _rightMarker, 100.f);
+      AddPreActionPose(PreActionPose::DOCKING, _rightMarker, 100.f, DEG_TO_RAD(-15));
       
       const Pose3d topPose(2.0944, {{-0.5774f, 0.5774f, -0.5774f}},
                            {{Ramp::PlatformLength*.5f - Ramp::MarkerSize*.5f, 0, Ramp::Height*.5f}});
@@ -82,7 +85,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("Ramp.PreDescentPoseError", "Could not get preDescentPose w.r.t. top ramp marker.\n");
       }
       _preDescentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreDescentPose");
-      AddPreActionPose(PreActionPose::ENTRY, _topMarker, _preDescentPose);
+      AddPreActionPose(PreActionPose::ENTRY, _topMarker, _preDescentPose, MIN_HEAD_ANGLE);
       
     } // Ramp() Constructor
     
@@ -90,6 +93,24 @@ namespace Anki {
     {
       EraseVisualization();
     }
+    
+    
+    Ramp::TraversalDirection Ramp::IsAscendingOrDescending(const Pose3d& robotPose) const
+    {
+      Pose3d robotPoseWrtRamp;
+      if(robotPose.GetWithRespectTo(*GetPose().GetParent(), robotPoseWrtRamp) == false) {
+        PRINT_NAMED_WARNING("Ramp.IsAscendingOrDescending", "Could not determine robot pose w.r.t. ramp pose's parent.\n");
+        return UNKNOWN;
+      }
+      
+      // TODO: Better selection criteria for ascent vs. descent?
+      if(robotPoseWrtRamp.GetTranslation().z() < GetPose().GetTranslation().z()) {
+        return ASCENDING;
+      } else {
+        return DESCENDING;
+      }
+    } // IsAscendingOrDescending()
+    
     
     Pose3d Ramp::GetPostAscentPose(const float wheelBase) const
     {

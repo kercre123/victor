@@ -25,7 +25,10 @@
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 
+#include "actionQueue.h"
 #include "behaviorManager.h"
+#include "ramp.h"
+
 
 namespace Anki {
   namespace Cozmo {
@@ -33,10 +36,8 @@ namespace Anki {
     // Forward declarations:
     class IMessageHandler;
     class IPathPlanner;
-    class IAction;
     class MatPiece;
     class PathDolerOuter;
-    class Ramp;    
     
     class Robot
     {
@@ -84,7 +85,7 @@ namespace Anki {
       const Pose3d&          GetLiftPose()       const {return _liftPose;}  // At current lift position!
       const State            GetState()          const;
       
-      const ObjectID         GetDockObject()     const {return _dockObjectID;}
+      //const ObjectID         GetDockObject()     const {return _dockObjectID;}
       const ObjectID         GetCarryingObject() const {return _carryingObjectID;}
       
       Result SetState(const State newState);
@@ -114,12 +115,12 @@ namespace Anki {
       // Puts Robot in FOLLOWING_PATH state. Will transition to IDLE when path is complete.
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
-      Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
+      //Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
       
       // Same as above, but select from a set poses and return the selected index.
       Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
       Result ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex);
-      Result ExecutePathToPose(const std::vector<Pose3d>& poses, const Radians headAngle, size_t& selectedIndex);
+      //Result ExecutePathToPose(const std::vector<Pose3d>& poses, const Radians headAngle, size_t& selectedIndex);
 
       // executes a test path defined in latticePlanner
       void ExecuteTestPath();
@@ -137,6 +138,7 @@ namespace Anki {
       // True if we are on the sloped part of a ramp
       bool   IsOnRamp() const { return _onRamp; }
       Result SetOnRamp(bool t);
+      void   SetRampDirection(Ramp::TraversalDirection direction) { _rampDirection = direction; }
 
       s8   GetCurrPathSegment() {return _currPathSegment;}
       bool IsTraversingPath() {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
@@ -226,7 +228,8 @@ namespace Anki {
       // is carrying, and puts it in the robot's pose chain, attached to the
       // lift. Returns RESULT_FAIL if the robot wasn't already docking with
       // a block.
-      Result PickUpDockObject();
+      Result PickUpDockObject(const ObjectID& dockObjectID,
+                              const Vision::KnownMarker* dockMarker);
       
       Result VerifyObjectPickup();
       
@@ -327,8 +330,7 @@ namespace Anki {
       bool UpdateCurrPoseFromHistory(const Pose3d& wrtParent);
       
       Result UpdateFullRobotState(const MessageRobotState& msg);
-      
-      
+            
       // ============= Reactions =============
       using ReactionCallback = std::function<Result(Robot*,Vision::ObservedMarker*)>;
       using ReactionCallbackIter = std::list<ReactionCallback>::const_iterator;
@@ -359,7 +361,8 @@ namespace Anki {
       
       BehaviorManager  _behaviorMgr;
       
-      std::queue<IAction*> _actionQueue;
+      //std::queue<IAction*> _actionQueue;
+      ActionQueue      _actionQueue;
       
       // Path Following. There are two planners, only one of which can
       // be selected at a time
@@ -374,6 +377,7 @@ namespace Anki {
       Radians          _goalAngleThreshold;
       u16              _lastSentPathID;
       u16              _lastRecvdPathID;
+      bool             _wasTraversingPath;
 
       // This functions sets _selectedPathPlanner to the appropriate
       // planner
@@ -409,9 +413,12 @@ namespace Anki {
       
       Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
       
-      bool             _onRamp;
-      Point2f          _rampStartPosition;
-      f32              _rampStartHeight;
+      // Ramping
+      bool                        _onRamp;
+      ObjectID                    _rampID;
+      Ramp::TraversalDirection    _rampDirection;
+      Point2f                     _rampStartPosition;
+      f32                         _rampStartHeight;
       
       const Pose3d _neckPose; // joint around which head rotates
       const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint
@@ -450,6 +457,7 @@ namespace Anki {
       static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
       
       // Docking
+      /*
       // Note that we don't store a pointer to the object because it
       // could deleted, but it is ok to hang onto a pointer to the
       // marker on that block, so long as we always verify the object
@@ -459,7 +467,11 @@ namespace Anki {
       const Vision::KnownMarker*  _dockMarker;
       const Vision::KnownMarker*  _dockMarker2;
       DockAction_t                _dockAction;
+       */
       Pose3d                      _dockObjectOrigPose;
+      
+      
+      
       
       // Desired pose of marker (on carried block) wrt world when the block
       // has been placed on the ground.

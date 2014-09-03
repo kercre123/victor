@@ -21,6 +21,8 @@
 
 #include "actionableObject.h"
 
+#include <list>
+
 namespace Anki {
   
   // TODO: Is this Cozmo-specific or can it be moved to coretech?
@@ -52,9 +54,13 @@ namespace Anki {
       
       IAction(Robot& robot);
       
+      virtual ~IAction() { }
+      
       // Provide a retry function that will be called by Update() if
       // FAILURE_RETRY is returned by the derived CheckIfDone() method.
       void SetRetryFunction(std::function<Result(Robot&)> retryFcn);
+      
+      Result Retry();
       
       // This is what gets called from the outside:
       virtual ActionResult Update() final; // can't override this in derived classes
@@ -83,32 +89,80 @@ namespace Anki {
     }; // class IAction
     
     
+    class ActionQueue
+    {
+    public:
+      ActionQueue();
+      
+      ~ActionQueue();
+      
+      Result   QueueNext(IAction *);
+      Result   QueueAtEnd(IAction *);
+      
+      void     Clear();
+      
+      bool     IsEmpty() const { return _queue.empty(); }
+      
+      IAction* GetCurrentAction();
+      void     PopCurrentAction();
+      
+      void Print() const;
+      
+    protected:
+      std::list<IAction*> _queue;
+    }; // class ActionQueue
+    
+    
     class DriveToPoseAction : public IAction
     {
     public:
-      DriveToPoseAction(Robot& robot, const Pose3d& pose, const Radians& headAngle);
-      DriveToPoseAction(Robot& robot, const Pose3d& pose); // with current head angle
+      DriveToPoseAction(Robot& robot, const Pose3d& pose);
+      DriveToPoseAction(Robot& robot); // Note that SetGoal() must be called befure Update()!
       
       // Let robot's planner select "best" possible pose as the goal
-      DriveToPoseAction(Robot& robot, const std::vector<Pose3d>& possiblePoses, const Radians& headAngle);
-      DriveToPoseAction(Robot& robot, const std::vector<Pose3d>& possiblePoses); // with current head angle
+      //DriveToPoseAction(Robot& robot, const std::vector<Pose3d>& possiblePoses, const Radians& headAngle);
+      //DriveToPoseAction(Robot& robot, const std::vector<Pose3d>& possiblePoses); // with current head angle
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
       virtual const std::string& GetName() const override;
       
     protected:
+      
       virtual ActionResult CheckIfDone() override;
       virtual ActionResult CheckPreconditions() override;
       
-      Pose3d   _goalPose;
-      std::vector<Pose3d> _possibleGoalPoses;
+      Result SetGoal(const Pose3d& pose);
       
-      Radians  _goalHeadAngle;
+    private:
+      bool     _isGoalSet;
+      Pose3d   _goalPose;
       f32      _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
       
     }; // class DriveToPoseAction
+    
+    
+    class DriveToObjectAction : public DriveToPoseAction
+    {
+    public:
+      DriveToObjectAction(Robot& robot, const ObjectID& objectID, const PreActionPose::ActionType& actionType);
+      
+      // TODO: Add version where marker code is specified instead of action?
+      //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
+      
+      virtual const std::string& GetName() const override;
+      
+    protected:
+      
+      virtual ActionResult CheckPreconditions() override;
+      
+      ObjectID                   _objectID;
+      PreActionPose::ActionType  _actionType;
+      
+      //std::vector<Pose3d> _possibleGoalPoses;
+      
+    }; // DriveToObjectAction
     
     
     // Turn in place by a given angle, wherever the robot is when the action
@@ -138,12 +192,18 @@ namespace Anki {
       
     protected:
       
+      // IDockAction implements these two required methods from IAction for its
+      // derived classes
       virtual ActionResult CheckPreconditions() override;
       virtual ActionResult CheckIfDone() override;
       
-      virtual Result DockWithObjectHelper(const std::vector<ActionableObject::PoseMarkerPair_t>& preActionPoseMarkerPairs,
-                                  const size_t closestIndex);
+      // This helper can be optionally overridden by a derived by class to do
+      // special things, but for simple usage, derived classes can just rely
+      // on this one.
+      virtual Result DockWithObjectHelper(const std::vector<PreActionPose>& preActionPoses,
+                                          const size_t closestIndex);
       
+      // Pure virtual methods that must be implemented by derived classes
       virtual Result SelectDockAction(ActionableObject* object) = 0;
       virtual PreActionPose::ActionType GetPreActionType() = 0;
       
@@ -152,13 +212,15 @@ namespace Anki {
       const Vision::KnownMarker*  _dockMarker2; // for bridges
       DockAction_t                _dockAction;
       Pose3d                      _dockObjectOrigPose;
-    };
+    }; // class IDockAction
 
     
     class PickUpObjectAction : public IDockAction
     {
     public:
       PickUpObjectAction(Robot& robot, ObjectID objectID);
+      
+      virtual const std::string& GetName() const override;
       
     protected:
       
@@ -171,6 +233,10 @@ namespace Anki {
     
     class CrossBridgeAction : public IDockAction
     {
+    public:
+      CrossBridgeAction(Robot& robot, ObjectID bridgeID);
+      
+      virtual const std::string& GetName() const override;
       
     protected:
       
@@ -178,7 +244,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(ActionableObject* object) override;
       
-      virtual Result DockWithObjectHelper(const std::vector<ActionableObject::PoseMarkerPair_t>& preActionPoseMarkerPairs,
+      virtual Result DockWithObjectHelper(const std::vector<PreActionPose>& preActionPoses,
                                           const size_t closestIndex) override;
       
     }; // class TraverseObjectAction
@@ -186,8 +252,14 @@ namespace Anki {
     
     class AscendOrDescendRampAction : public IDockAction
     {
+    public:
+      AscendOrDescendRampAction(Robot& robot, ObjectID rampID);
+      
+      virtual const std::string& GetName() const override;
       
     protected:
+      
+      virtual Result SelectDockAction(ActionableObject* object) override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       

@@ -123,6 +123,7 @@ namespace Anki {
     , _goalAngleThreshold(DEG_TO_RAD(10))
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
+    , _wasTraversingPath(false)
     , _forceReplanOnNextWorldChange(false)
     , _saveImages(false)
     , _camera(robotID)
@@ -141,8 +142,6 @@ namespace Anki {
     , _isPickedUp(false)
     , _state(IDLE)
     , _carryingMarker(nullptr)
-    , _dockMarker(nullptr)
-    , _dockMarker2(nullptr)
     {
       _pose.SetName("Robot_" + std::to_string(_ID));
       
@@ -271,6 +270,10 @@ namespace Anki {
       Pose3d newPose;
       
       if(IsOnRamp()) {
+        
+        // Sanity check:
+        CORETECH_ASSERT(_rampID.IsSet());
+        
         // Don't update pose history while on a ramp.
         // Instead, just compute how far the robot thinks it has gone (in the plane)
         // and compare that to where it was when it started traversing the ramp.
@@ -278,11 +281,11 @@ namespace Anki {
         
         const f32 distanceTraveled = (Point2f(msg.pose_x, msg.pose_y) - _rampStartPosition).Length();
         
-        Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_dockObjectID, BlockWorld::ObjectFamily::RAMPS));
+        Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_rampID, BlockWorld::ObjectFamily::RAMPS));
         if(ramp == nullptr) {
           PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
                             "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.\n",
-                            _ID, _dockObjectID.GetValue());
+                            _ID, _rampID.GetValue());
           return RESULT_FAIL;
         }
         
@@ -292,14 +295,19 @@ namespace Anki {
         // Initialize tilt angle assuming we are ascending
         Radians tiltAngle = ramp->GetAngle();
         
-        if(_dockAction == DA_RAMP_DESCEND) {
-          tiltAngle    *= -1.f;
-          headingAngle -= M_PI;
-        }
-        else if(_dockAction != DA_RAMP_ASCEND) {
-            PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDockActaion",
-                              "Robot is on a ramp, expecting the dock action to be either "
-                              "RAMP_ASCEND or RAMP_DESCEND, not %d.\n", _dockAction);
+        switch(_rampDirection)
+        {
+          case Ramp::DESCENDING:
+            tiltAngle    *= -1.f;
+            headingAngle -= M_PI;
+            break;
+          case Ramp::ASCENDING:
+            break;
+            
+          default:
+            PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDirection",
+                              "Robot is on a ramp, expecting the ramp direction to be either "
+                              "ASCEND or DESCENDING, not %d.\n", _rampDirection);
             return RESULT_FAIL;
         }
 
@@ -529,9 +537,9 @@ namespace Anki {
       
       
       //////// Update Robot's State Machine /////////////
-      if(!_actionQueue.empty()) {
-        IAction* currentAction = _actionQueue.front();
-        
+      IAction* currentAction = _actionQueue.GetCurrentAction();
+      if(currentAction != nullptr)
+      {
         const IAction::ActionResult result = currentAction->Update();
         switch(result)
         {
@@ -539,11 +547,11 @@ namespace Anki {
             PRINT_NAMED_INFO("Robot.Update.CurrentActionSucceeded",
                              "Robot %d succeeded running action %s. Popping it off queue.\n",
                              GetID(), currentAction->GetName().c_str());
-            _actionQueue.pop();
+            _actionQueue.PopCurrentAction();
             break;
             
           case IAction::RUNNING:
-            // Nothing to do?  Still running...
+            // Still running... (Nothing to do?)
             break;
             
           case IAction::FAILURE_PROCEED:
@@ -551,15 +559,24 @@ namespace Anki {
                              "Robot %d failed running action %s. Popping it off queue and proceeding.\n",
                              GetID(), currentAction->GetName().c_str());
 
-            _actionQueue.pop();
+            _actionQueue.PopCurrentAction();
             break;
             
           case IAction::FAILURE_ABORT:
-            PRINT_NAMED_INFO("Robot.Update.CurrentActionFailedProceeding",
+          case IAction::FAILURE_TIMEOUT: // TODO: handle this case differently?
+            PRINT_NAMED_INFO("Robot.Update.CurrentActionFailedAborting",
                              "Robot %d failed running action %s. Clearing remainder of action queue.\n",
                              GetID(), currentAction->GetName().c_str());
             
-            _actionQueue = {}; // clear the queue
+            _actionQueue.Clear();
+            break;
+            
+          case IAction::FAILURE_RETRY:
+            PRINT_NAMED_INFO("Robot.Update.CurrentActionFailedRetrying",
+                             "Robot %d failed running action %s. Retrying.\n",
+                             GetID(), currentAction->GetName().c_str());
+            
+            currentAction->Retry();
             break;
             
           default:
@@ -570,7 +587,86 @@ namespace Anki {
         } // switch(result)
       } // if actionQueue not empty
       
-      static bool wasTraversingPath = false;
+      
+      
+      // Path Traversal
+      
+      if(IsTraversingPath())
+      {
+        // If the robot is traversing a path, consider replanning it
+        if(_blockWorld.DidBlocksChange())
+        {
+          Planning::Path newPath;
+          switch(_selectedPathPlanner->GetPlan(newPath, GetPose(), _forceReplanOnNextWorldChange))
+          {
+            case IPathPlanner::DID_PLAN:
+            {
+              // clear path, but flag that we are replanning
+              ClearPath();
+              _wasTraversingPath = false;
+              _forceReplanOnNextWorldChange = false;
+              
+              PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
+              MessageClearPath clearMessage;
+              _msgHandler->SendMessage(_ID, clearMessage);
+              
+              _path = newPath;
+              PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
+              ExecutePath(_path);
+              break;
+            } // case DID_PLAN:
+              
+            case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
+            {
+              ClearPath();
+              
+              PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
+                               "Replan failed due to bad goal.\n");
+              
+              if(_reExecSequenceFcn) {
+                PRINT_NAMED_INFO("Robot.Update.Retrying",
+                                 "Retrying previous ExecuteSequence call.\n");
+                _reExecSequenceFcn();
+              } else {
+                PRINT_NAMED_INFO("Robot.Update.NoReExecFcn", "Aborting path.\n");
+                SetState(IDLE);
+              }
+              break;
+            } // PLAN_NEEDED_BUT_GOAL_FAILURE:
+              
+            case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
+            {
+              PRINT_NAMED_INFO("Robot.Update.NewStartForReplanNeeded",
+                               "Replan failed during docking due to bad start. Will try again, and hope robot moves.\n");
+              break;
+            }
+              
+            case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
+            {
+              PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
+                               "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
+              // clear the path, but don't change the state
+              ClearPath();
+              _forceReplanOnNextWorldChange = true;
+              break;
+            }
+              
+            default:
+            {
+              // Don't do anything just proceed with the current plan...
+              break;
+            }
+              
+          } // switch(GetPlan())
+        } // if blocks changed
+        
+        if (GetLastRecvdPathID() == GetLastSentPathID()) {
+          pdo_->Update(GetCurrPathSegment(), GetNumFreeSegmentSlots());
+        }
+      }
+      
+      
+#if 0
       
       switch(_state)
       {
@@ -843,6 +939,8 @@ namespace Anki {
       } // switch(state_)
       
       
+#endif // #if 0, removing old state machine
+      
       
       /////////// Update visualization ////////////
       
@@ -888,15 +986,15 @@ namespace Anki {
       // Visualize path if robot has just started traversing it.
       // Clear the path when it has stopped.
       if (!IsPickingOrPlacing()) {
-        if (!wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
+        if (!_wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
           VizManager::getInstance()->DrawPath(_ID,_path,NamedColors::EXECUTED_PATH);
-          wasTraversingPath = true;
-        } else if (wasTraversingPath && !IsTraversingPath()){
+          _wasTraversingPath = true;
+        } else if (_wasTraversingPath && !IsTraversingPath()){
           ClearPath(); // clear path and indicate that we are not replanning
           VizManager::getInstance()->ErasePath(_ID);
           VizManager::getInstance()->EraseAllPlannerObstacles(true);
           VizManager::getInstance()->EraseAllPlannerObstacles(false);
-          wasTraversingPath = false;
+          _wasTraversingPath = false;
         }
       }
 
@@ -1014,11 +1112,13 @@ namespace Anki {
       else
         return RESULT_FAIL;
     }
-    
+
+    /*
     Result Robot::ExecutePathToPose(const Pose3d& pose)
     {
       return ExecutePathToPose(pose, GetHeadAngle());
     }
+     */
     
     void Robot::SelectPlanner(const Pose3d& targetPose)
     {
@@ -1037,7 +1137,7 @@ namespace Anki {
       }
     }
 
-    Result Robot::ExecutePathToPose(const Pose3d& pose, const Radians headAngle)
+    Result Robot::ExecutePathToPose(const Pose3d& pose) //, const Radians headAngle)
     {
       Planning::Path p;
       Result lastResult = GetPathToPose(pose, p);
@@ -1047,7 +1147,7 @@ namespace Anki {
         _path = p;
         _goalPose = pose;
       
-        MoveHeadToAngle(headAngle.ToFloat(), 5, 10);
+        //MoveHeadToAngle(headAngle.ToFloat(), 5, 10);
         
         lastResult = ExecutePath(p);
       }
@@ -1084,12 +1184,8 @@ namespace Anki {
       
     } // GetPathToPose(multiple poses)
     
-    Result Robot::ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex)
-    {
-      return ExecutePathToPose(poses, GetHeadAngle(), selectedIndex);
-    }
     
-    Result Robot::ExecutePathToPose(const std::vector<Pose3d>& poses, const Radians headAngle, size_t& selectedIndex)
+    Result Robot::ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex)
     {
       Planning::Path p;
       Result lastResult = GetPathToPose(poses, selectedIndex, p);
@@ -1098,7 +1194,7 @@ namespace Anki {
         _path = p;
         _goalPose = poses[selectedIndex];
         
-        MoveHeadToAngle(headAngle.ToFloat(), 5, 10);
+        //MoveHeadToAngle(poses[selectedIndex].GetHeadAngle().ToFloat(), 5, 10);
         
         lastResult = ExecutePath(p);
       }
@@ -1391,10 +1487,61 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
+      _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, ramp->GetID(), PreActionPose::ENTRY));
+      _actionQueue.QueueAtEnd(new AscendOrDescendRampAction(*this, ramp->GetID()));
+      
+      
+      /*
       //
       // Other checks? Do we have to be carrying a block or have lift up?
       //
       
+      f32 headAngle = 0.f;
+      Pose3d goalPose;
+      
+      // Choose ascent or descent
+      switch(ramp->IsAscendingOrDescending(GetPose()))
+      {
+        case Ramp::ASCENDING:
+          goalPose   = ramp->GetPreAscentPose();
+          headAngle   = DEG_TO_RAD(-10);
+          break;
+          
+        case Ramp::DESCENDING:
+          goalPose   = ramp->GetPreDescentPose();
+          headAngle   = MIN_HEAD_ANGLE;
+          
+        case Ramp::UNKNOWN:
+        default:
+          PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.UnknownRampTraversalDirection",
+                            "Could not determine whether robot %d is ascending or descending ramp %d.\n",
+                            GetID(), ramp->GetID().GetValue());
+          return RESULT_FAIL;
+      }
+    
+      // Make the goal pose be w.r.t. the robot's current origin
+      if(goalPose.GetWithRespectTo(GetPose().FindOrigin(), goalPose) == false) {
+        PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.GoalPoseHasWrongOrigin",
+                          "Goal pose provided by specified ramp does not share "
+                          "Robot %d's origin.\n", _ID);
+        return RESULT_FAIL;
+      }
+      
+      if(GetPose().GetTranslation().z() < ramp->GetPose().GetTranslation().z()) {
+        
+        _dockMarker = ramp->GetFrontMarker();
+        _dockAction = DA_RAMP_ASCEND;
+        
+      } else {
+        
+        _dockMarker = ramp->GetTopMarker();
+        _dockAction = DA_RAMP_DESCEND;
+        
+      }
+       */
+      
+
+      /*
       _dockObjectID = ramp->GetID();
       
       // Choose ascent or descent
@@ -1415,13 +1562,7 @@ namespace Anki {
       // Unused for ramping:
       _dockMarker2 = nullptr;
       
-      // Make the goal pose be w.r.t. the robot's current origin
-      if(_goalPose.GetWithRespectTo(GetPose().FindOrigin(), _goalPose) == false) {
-        PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.GoalPoseHasWrongOrigin",
-                          "Goal pose provided by specified ramp does not share "
-                          "Robot %d's origin.\n", _ID);
-        return RESULT_FAIL;
-      }
+      
       
       _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
       _goalAngleThreshold    = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
@@ -1439,7 +1580,7 @@ namespace Anki {
       // So we know how to check for success and what to do in case of failure:
       _goalPoseActionType = PreActionPose::ENTRY;
       _reExecSequenceFcn  = [this]() { return this->ExecuteTraversalSequence(this->_dockObjectID); };
-      
+      */
       return RESULT_OK;
       
     } // ExecuteRampingSequence()
@@ -1455,11 +1596,11 @@ namespace Anki {
       
       // We are either transition onto or off of a ramp
       
-      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_dockObjectID, BlockWorld::ObjectFamily::RAMPS));
+      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_rampID, BlockWorld::ObjectFamily::RAMPS));
       if(ramp == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetOnRamp.NoRampWithID",
                           "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world.\n",
-                          _ID, _dockObjectID.GetValue());
+                          _ID, _rampID.GetValue());
         return RESULT_FAIL;
       }
       
@@ -1480,20 +1621,20 @@ namespace Anki {
         // Just do an absolute pose update, setting the robot's position to
         // where we "know" he should be when he finishes ascending or
         // descending the ramp
-        switch(_dockAction)
+        switch(_rampDirection)
         {
-          case DA_RAMP_ASCEND:
+          case Ramp::ASCENDING:
             SetPose(ramp->GetPostAscentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
             break;
             
-          case DA_RAMP_DESCEND:
+          case Ramp::DESCENDING:
             SetPose(ramp->GetPostDescentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
             break;
             
           default:
-            PRINT_NAMED_ERROR("Robot.SetOnRamp.UnexpectedRampDockActaion",
-                              "When transitioning on/off ramp, expecting the dock action to be either "
-                              "RAMP_ASCEND or RAMP_DESCEND, not %d.\n", _dockAction);
+            PRINT_NAMED_ERROR("Robot.SetOnRamp.UnexpectedRampDirection",
+                              "When transitioning on/off ramp, expecting the ramp direction to be either "
+                              "ASCENDING or DESCENDING, not %d.\n", _rampDirection);
             return RESULT_FAIL;
         }
         
@@ -1529,6 +1670,7 @@ namespace Anki {
     
     Result Robot::ExecuteTraversalSequence(ObjectID objectID)
     {
+
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecuteTraversalSequence.ObjectNotFound",
@@ -1553,17 +1695,25 @@ namespace Anki {
                             object->GetID().GetValue(), object->GetType().GetName().c_str());
         return RESULT_OK;
       }
+      
     } // ExecuteTraversalSequence()
     
     
     Result Robot::ExecuteBridgeCrossingSequence(ActionableObject *bridge)
     {
+    
       if(bridge == nullptr) {
         PRINT_NAMED_ERROR("Robot.ExecuteBridgeCrossingSequence.NullPointer",
                           "Given bridge object pointer is null.\n");
         return RESULT_FAIL;
       }
+    
+      _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, bridge->GetID(), PreActionPose::ENTRY));
+      _actionQueue.QueueAtEnd(new CrossBridgeAction(*this, bridge->GetID()));
       
+      return RESULT_OK;
+      
+      /*
       std::vector<ActionableObject::PoseMarkerPair_t> preCrossingPosePoseMarkerPairs;
       bridge->GetCurrentPreActionPoses(preCrossingPosePoseMarkerPairs, {PreActionPose::ENTRY});
       
@@ -1624,9 +1774,9 @@ namespace Anki {
       // So we know how to check for success and what to do in case of failure:
       _goalPoseActionType = PreActionPose::ENTRY;
       _reExecSequenceFcn  = [this]() { return this->ExecuteTraversalSequence(this->_dockObjectID); };
-      
+       
       return lastResult;
-      
+      */
     } // ExecuteBridgeCrossingSequence()
     
     
@@ -1634,6 +1784,18 @@ namespace Anki {
     Result Robot::ExecuteDockingSequence(ObjectID objectIDtoDockWith)
     {
       Result lastResult = RESULT_OK;
+      
+      _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, objectIDtoDockWith, PreActionPose::DOCKING));
+      
+      PickUpObjectAction* pickUpAction = new PickUpObjectAction(*this, objectIDtoDockWith);
+      auto retryLambda = [objectIDtoDockWith](Robot& robot) { return robot.ExecuteDockingSequence(objectIDtoDockWith); };
+      pickUpAction->SetRetryFunction(retryLambda);
+      
+      _actionQueue.QueueAtEnd(pickUpAction);
+      
+      return lastResult;
+      
+      /*
       
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectIDtoDockWith));
       if(object == nullptr) {
@@ -1718,7 +1880,7 @@ namespace Anki {
       _reExecSequenceFcn  = [this]() { return this->ExecuteDockingSequence(this->_dockObjectID); };
       
       return lastResult;
-      
+      */
     } // ExecuteDockingSequence()
     
     Result Robot::ExecutePlaceObjectOnGroundSequence()
@@ -1744,7 +1906,7 @@ namespace Anki {
       SetState(PLACE_OBJECT_ON_GROUND);
       
       // TODO: How to correctly set _dockMarker in case of placement failure??
-      _dockMarker = &carryingObject->GetMarkers().front(); // GetMarker(Block::FRONT_FACE);
+      //_dockMarker = &carryingObject->GetMarkers().front(); // GetMarker(Block::FRONT_FACE);
       
       
       // Set desired position of marker (via placeOnGroundPose) to be exactly where robot is now
@@ -1767,6 +1929,9 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
+      // TODO: implement using IACtion!
+      
+      /*
       if(IsCarryingObject() == false) {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.NotCarryingObject",
                           "Robot %d was told to place an object on the ground, but "
@@ -1867,7 +2032,7 @@ namespace Anki {
       //SetState(FOLLOWING_PATH); // This should be done by ExecutePathToPose above
       assert(_state == FOLLOWING_PATH);
       _nextState = PLACE_OBJECT_ON_GROUND;
-      
+      */
       return lastResult;
       
     } // ExecutePlaceObjectOnGroundSequence(atPose)
@@ -1904,37 +2069,42 @@ namespace Anki {
       }
 
       CORETECH_ASSERT(marker != nullptr);
-      
+
+      /*
       _dockObjectID = objectID;
       _dockMarker  = marker;
       
       if(_dockMarker2 == nullptr) {
         marker2 = _dockMarker;
       }
+      */
       
       _dockObjectOrigPose = object->GetPose();
       
       // Dock marker has to be a child of the dock block
-      if(_dockMarker->GetPose().GetParent() != &object->GetPose()) {
+      if(marker->GetPose().GetParent() != &object->GetPose()) {
         PRINT_NAMED_ERROR("Robot.DockWithObject.MarkerNotOnObject",
                           "Specified dock marker must be a child of the specified dock object.\n");
         return RESULT_FAIL;
       }
       
-      return SendDockWithObject(_dockMarker->GetCode(), marker2->GetCode(), _dockMarker->GetSize(), dockAction,
+      const Vision::Marker::Code code1 = marker->GetCode();
+      const Vision::Marker::Code code2 = (marker2 == nullptr ? code1 : marker2->GetCode());
+                                          
+      return SendDockWithObject(code1, code2, marker->GetSize(), dockAction,
                                 image_pixel_x, image_pixel_y, pixel_radius);
     }
     
     
-    Result Robot::PickUpDockObject()
+    Result Robot::PickUpDockObject(const ObjectID& objectID, const Vision::KnownMarker* dockMarker)
     {
-      if(!_dockObjectID.IsSet()) {
-        PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoDockObjectIDSet",
+      if(!objectID.IsSet()) {
+        PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectIDNotSet",
                           "No docking object ID set, but told to pick one up.\n");
         return RESULT_FAIL;
       }
       
-      if(_dockMarker == nullptr) {
+      if(dockMarker == nullptr) {
         PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoDockMarkerSet",
                           "No docking marker set, but told to pick up object.\n");
         return RESULT_FAIL;
@@ -1946,15 +2116,15 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_dockObjectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
-                          "Dock object with ID=%d no longer exists for picking up.\n", _dockObjectID.GetValue());
+                          "Dock object with ID=%d no longer exists for picking up.\n", objectID.GetValue());
         return RESULT_FAIL;
       }
       
-      _carryingObjectID = _dockObjectID;
-      _carryingMarker   = _dockMarker;
+      _carryingObjectID = objectID;
+      _carryingMarker   = dockMarker;
 
       // Base the object's pose relative to the lift on how far away the dock
       // marker is from the center of the block
@@ -1966,7 +2136,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      objectPoseWrtLiftPose.SetTranslation({{_dockMarker->GetPose().GetTranslation().Length() +
+      objectPoseWrtLiftPose.SetTranslation({{dockMarker->GetPose().GetTranslation().Length() +
         LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f}});
       
       // make part of the lift's pose chain so the object will now be relative to
@@ -2020,10 +2190,8 @@ namespace Anki {
         _carryingObjectID.UnSet();
         PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
       } else {
-        _carryingObjectID = _dockObjectID;  // Already set?
-        _carryingMarker   = _dockMarker;   //   "
-        _dockObjectID.UnSet();
-        _dockMarker       = nullptr;
+        //_carryingObjectID = _dockObjectID;  // Already set?
+        //_carryingMarker   = _dockMarker;   //   "
         PRINT_INFO("Object pick-up SUCCEEDED!\n");
       }
       
@@ -2122,14 +2290,10 @@ namespace Anki {
         // not be true if we were still carrying it)
         _carryingObjectID.UnSet();
         _carryingMarker   = nullptr;
-        _dockObjectID.UnSet();
-        _dockMarker       = nullptr;
         PRINT_INFO("Object placement SUCCEEDED!\n");
       } else {
         // TODO: correct to assume we are still carrying the object?
-        _dockObjectID     = _carryingObjectID;
-        _carryingObjectID.UnSet();
-        PickUpDockObject(); // re-pickup block to attach it to the lift again
+        PickUpDockObject(_carryingObjectID, _carryingMarker); // re-pickup block to attach it to the lift again
         PRINT_INFO("Object placement FAILED!\n");
         
       }
