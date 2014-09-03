@@ -132,8 +132,9 @@ int main(int argc, const char* argv[])
   const s32 u8MinDistance = atol(argv[5]);
   const s32 maxThreads = atol(argv[6]);
 
-  const s32 bufferSize = 50000000;
-  MemoryStack memory(malloc(bufferSize), bufferSize);
+  const s32 memorySize = 1000000000;
+  const s32 scratchSize = 50000000;
+  MemoryStack memory(malloc(memorySize), memorySize);
 
   std::vector<U8Bool> featuresUsed;
   FixedLengthList<const char *> labelNames;
@@ -146,23 +147,35 @@ int main(int argc, const char* argv[])
 
   // Load all inputs
   {
-    MemoryStack scratch1(malloc(bufferSize), bufferSize);
-    MemoryStack scratch2(malloc(bufferSize), bufferSize);
+    MemoryStack scratch1(malloc(scratchSize), scratchSize);
+    MemoryStack scratch2(malloc(scratchSize), scratchSize);
+
+    printf("Loading Inputs...");
 
     featuresUsed = LoadIntoList_grayvalueBool(filenamePrefix, "featuresUsed.array", scratch1, scratch2);
     labelNames = LoadIntoList_permanentBuffer<const char *>(filenamePrefix, "labelNames.array", scratch1, memory);
     labels = LoadIntoList_temporaryBuffer<s32>(filenamePrefix, "labels.array", scratch1, scratch2, memory);
     u8ThresholdsToUse = LoadIntoList_temporaryBuffer<u8>(filenamePrefix, "u8ThresholdsToUse.array", scratch1, scratch2, memory);
 
+    f64 t0 = GetTimeF64();
+
     for(s32 iFeature=0; iFeature<numFeatures; iFeature++) {
       const s32 filenameBufferLength = 1024;
       char filenameBuffer[filenameBufferLength];
       snprintf(filenameBuffer, filenameBufferLength, "featureValues%d.array", iFeature);
       featureValues[iFeature] = LoadIntoList_temporaryBuffer<u8>(filenamePrefix, filenameBuffer, scratch1, scratch2, memory);
+
+      if(iFeature > 0 && iFeature % 50 == 0) {
+        f64 t1 = GetTimeF64();
+        printf("Loaded %d/%d in %f seconds\n", iFeature, numFeatures, t1-t0);
+        t0 = t1;
+      }
     }
 
     free(scratch1.get_buffer());
     free(scratch2.get_buffer());
+
+    printf("Done loading");
   } // Load all inputs
 
   AnkiConditionalErrorAndReturnValue(
