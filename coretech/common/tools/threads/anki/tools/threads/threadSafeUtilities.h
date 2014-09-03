@@ -54,6 +54,43 @@ namespace Anki
     pthread_mutex_unlock(&mutex);
 #endif
   }
+
+#ifdef _MSC_VER
+  inline ThreadHandle CreateSimpleThread(_In_ LPTHREAD_START_ROUTINE lpStartAddress, void * parameters)
+  {
+    DWORD threadId = -1;
+    ThreadHandle handle = CreateThread(
+      NULL,        // default security attributes
+      0,           // use default stack size
+      lpStartAddress, // thread function name
+      parameters,    // argument to thread function
+      0,           // use default creation flags
+      &threadId);  // returns the thread identifier
+
+    return handle;
+  } // ThreadHandle CreateSimpleThread(_In_ LPTHREAD_START_ROUTINE lpStartAddress, void * parameters)
+#else
+  inline ThreadHandle CreateSimpleThread( void *(*start_routine) (void *), void * parameters)
+  {
+    pthread_attr_t connectionAttr;
+    pthread_attr_init(&connectionAttr);
+
+    ThreadHandle handle;
+
+    pthread_create(&handle, &connectionAttr, start_routine, parameters);
+
+    return handle;
+  } // ThreadHandle CreateSimpleThread( void *(*start_routine) (void *), void * parameters)
+#endif
+
+  inline void WaitForSimpleThread(ThreadHandle &handle)
+  {
+#ifdef _MSC_VER
+    WaitForSingleObject(handle, INFINITE);
+#else
+    pthread_join(handle, NULL);
+#endif
+  }  // void WaitForSimpleThread(ThreadHandle &handle)
 } // namespace Anki
 
 #endif // _THREAD_SAFE_UTILITES_H_
