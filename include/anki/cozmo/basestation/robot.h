@@ -85,7 +85,8 @@ namespace Anki {
       const Pose3d&          GetLiftPose()       const {return _liftPose;}  // At current lift position!
       const State            GetState()          const;
       
-      //const ObjectID         GetDockObject()     const {return _dockObjectID;}
+      const ObjectID         GetDockObject()     const {return _dockObjectID;}
+      void                   SetDockObject(const ObjectID& objectID) {_dockObjectID = objectID;}
       const ObjectID         GetCarryingObject() const {return _carryingObjectID;}
       
       Result SetState(const State newState);
@@ -138,7 +139,7 @@ namespace Anki {
       // True if we are on the sloped part of a ramp
       bool   IsOnRamp() const { return _onRamp; }
       Result SetOnRamp(bool t);
-      void   SetRampDirection(Ramp::TraversalDirection direction) { _rampDirection = direction; }
+      void   SetRamp(const ObjectID& rampID, Ramp::TraversalDirection direction);
 
       s8   GetCurrPathSegment() {return _currPathSegment;}
       bool IsTraversingPath() {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
@@ -281,6 +282,8 @@ namespace Anki {
       // Set controller gains on robot
       Result SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       Result SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
+      
+      Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle);
       
       // Set VisionSystem parameters
       Result SendSetVisionSystemParams(VisionSystemParams_t p);
@@ -449,7 +452,7 @@ namespace Anki {
       bool       _isMoving;
       State      _state, _nextState;
       
-      ObjectID                 _carryingObjectID;
+      ObjectID                   _carryingObjectID;
       const Vision::KnownMarker* _carryingMarker;
       
       // Leaves input liftPose's parent alone and computes its position w.r.t.
@@ -463,11 +466,11 @@ namespace Anki {
       // marker on that block, so long as we always verify the object
       // exists and is still valid (since, therefore, the marker must
       // be as well)
-      ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
       const Vision::KnownMarker*  _dockMarker2;
       DockAction_t                _dockAction;
        */
+      ObjectID                    _dockObjectID;
       Pose3d                      _dockObjectOrigPose;
       
       
@@ -558,8 +561,6 @@ namespace Anki {
                                 const u16 image_pixel_y,
                                 const u8 pixel_radius) const;
 
-      Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle);
-      
       // Turn on/off headlight LEDs
       Result SendHeadlight(u8 intensity);
       
@@ -601,6 +602,14 @@ namespace Anki {
     
     inline const f32 Robot::GetLiftAngle() const
     { return _currentLiftAngle; }
+    
+    inline void Robot::SetRamp(const ObjectID& rampID,
+                               Ramp::TraversalDirection direction)
+    {
+      _rampID = rampID;
+      _rampDirection = direction;
+    }
+
     
     
     //

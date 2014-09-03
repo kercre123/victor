@@ -38,8 +38,6 @@ namespace Anki {
     {
       ActionResult result = RUNNING;
       
-      PRINT_NAMED_INFO("IAction.Update", "Updating %s.\n", GetName().c_str());
-      
       // On first call to Update(), figure out the waitUntilTime
       const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       if(_waitUntilTime < 0.f) {
@@ -62,6 +60,8 @@ namespace Anki {
       {
         
         if(!_preconditionsMet) {
+          PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking preconditions.\n", GetName().c_str());
+          
           // Note that derived classes will define what to do when pre-conditions
           // are not met: if they return RUNNING, then the action will effectively
           // just wait for the preconditions to be met. Otherwise, a failure
@@ -70,11 +70,22 @@ namespace Anki {
           if(result == SUCCESS) {
             PRINT_NAMED_INFO("IAction.Update.PrecondtionsMet",
                              "Preconditions for %s successfully met.\n", GetName().c_str());
+            
+            // If preconditions were successfully met, switch result to RUNNING
+            // so that we don't think the entire action is completed. (We still
+            // need to do CheckIfDone() calls!)
+            // TODO: there's probably a tidier way to do this.
             _preconditionsMet = true;
             result = RUNNING;
+            
+            // Don't check if done until a sufficient amount of time has passed
+            // after preconditions are met
+            _waitUntilTime = currentTimeInSeconds + GetCheckIfDoneDelayInSeconds();
           }
           
         } else {
+          PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking if done.\n", GetName().c_str());
+          
           // Pre-conditions already met, just run until done
           result = CheckIfDone();
         }
@@ -158,6 +169,12 @@ namespace Anki {
     void ActionQueue::PopCurrentAction()
     {
       if(!IsEmpty()) {
+        if(_queue.front() == nullptr) {
+          PRINT_NAMED_ERROR("ActionQueue.PopCurrentAction.NullActionPointer",
+                            "About to delete and pop action pointer from queue, found it to be nullptr!\n");
+        } else {
+          delete _queue.front();
+        }
         _queue.pop_front();
       }
     }
@@ -305,11 +322,55 @@ namespace Anki {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
     
+
+    
     const std::string& DriveToObjectAction::GetName() const
     {
       static const std::string name("DriveToObjectAction");
       return name;
     }
+    
+    
+    IAction::ActionResult DriveToObjectAction::CheckPreconditionsHelper(ActionableObject* object)
+    {
+      ActionResult result = RUNNING;
+      
+      std::vector<PreActionPose> possiblePreActionPoses;
+      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType});
+      
+      if(possiblePreActionPoses.empty()) {
+        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPossiblePoses",
+                          "ActionableObject %d did not return any pre-action poses with action type %d.\n",
+                          _objectID.GetValue(), _actionType);
+        
+        result = FAILURE_ABORT;
+        
+      } else {
+        size_t selectedIndex = 0;
+        
+        // Make a vector of just poses (not preaction poses) for call to
+        // Robot::ExecutePathToPose() below
+        // TODO: Prettier way to handle this?
+        std::vector<Pose3d> possiblePoses;
+        possiblePoses.reserve(possiblePreActionPoses.size());
+        for(auto & preActionPose : possiblePreActionPoses) {
+          possiblePoses.emplace_back(preActionPose.GetPose());
+        }
+        
+        if(_robot.ExecutePathToPose(possiblePoses, selectedIndex) != RESULT_OK) {
+          result = FAILURE_ABORT;
+        } else {
+          _robot.MoveHeadToAngle(possiblePreActionPoses[selectedIndex].GetHeadAngle().ToFloat(), 5, 10);
+          SetGoal(possiblePreActionPoses[selectedIndex].GetPose());
+          result = SUCCESS;
+        }
+        
+      } // if/else possiblePreActionPoses.empty()
+      
+      return result;
+      
+    } // CheckPreconditionsHelper()
+    
     
     IAction::ActionResult DriveToObjectAction::CheckPreconditions()
     {
@@ -324,42 +385,61 @@ namespace Anki {
         result = FAILURE_ABORT;
       } else {
       
-        std::vector<PreActionPose> possiblePreActionPoses;
-        object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType});
+        result = CheckPreconditionsHelper(object);
         
-        if(possiblePreActionPoses.empty()) {
-          PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPossiblePoses",
-                            "ActionableObject %d did not return any pre-action poses with action type %d.\n",
-                            _objectID.GetValue(), _actionType);
-          
-          result = FAILURE_ABORT;
-          
-        } else {
-          size_t selectedIndex = 0;
-          
-          // Make a vector of just poses (not preaction poses) for call to
-          // Robot::ExecutePathToPose() below
-          // TODO: Prettier way to handle this?
-          std::vector<Pose3d> possiblePoses;
-          possiblePoses.reserve(possiblePreActionPoses.size());
-          for(auto & preActionPose : possiblePreActionPoses) {
-            possiblePoses.emplace_back(preActionPose.GetPose());
-          }
-          
-          if(_robot.ExecutePathToPose(possiblePoses, selectedIndex) != RESULT_OK) {
-            result = FAILURE_ABORT;
-          } else {
-            _robot.MoveHeadToAngle(possiblePreActionPoses[selectedIndex].GetHeadAngle().ToFloat(), 5, 10);
-            SetGoal(possiblePreActionPoses[selectedIndex].GetPose());
-          }
-        }
-      }
+      } // if/else object==nullptr
       
       return result;
     }
     
     
+#pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
+    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(Robot& robot, const Pose3d& placementPose)
+    : DriveToObjectAction(robot, robot.GetCarryingObject(), PreActionPose::PLACEMENT)
+    , _placementPose(placementPose)
+    {
+      
+    }
+    
+    IAction::ActionResult DriveToPlaceCarriedObjectAction::CheckPreconditions()
+    {
+      ActionResult result = SUCCESS;
+      
+      if(_robot.IsCarryingObject() == false) {
+        PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
+                          "Robot %d cannot place an object because it is not carrying anything.\n",
+                          _robot.GetID());
+        result = FAILURE_ABORT;
+      } else {
+        
+        _objectID = _robot.GetCarryingObject();
+        
+        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+        if(object == nullptr) {
+          PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NoObjectWithID",
+                            "Robot %d's block world does not have an ActionableObject with ID=%d.\n",
+                            _robot.GetID(), _objectID.GetValue());
+          
+          result = FAILURE_ABORT;
+        } else {
+          
+          // Temporarily move object to desired pose so we can get placement poses
+          // at that position
+          const Pose3d origObjectPose(object->GetPose());
+          object->SetPose(_placementPose);
+          
+          result = CheckPreconditionsHelper(object);
+          
+          // Move the object back to where it was (being carried)
+          object->SetPose(origObjectPose);
+          
+        } // if/else object==nullptr
+      } // if/else robot is carrying object
+      
+      return result;
+      
+    } // CheckPreconditions()
     
 
 #pragma mark ---- TurnInPlaceAction ----
@@ -479,6 +559,7 @@ namespace Anki {
                          "proceeding with docking.\n", closestDist);
       
         if(DockWithObjectHelper(preActionPoses, closestIndex) == RESULT_OK) {
+          _robot.SetDockObject(_dockObjectID);
           return SUCCESS;
         } else {
           return FAILURE_ABORT;
@@ -508,6 +589,8 @@ namespace Anki {
           case DA_PICKUP_LOW:
           case DA_PICKUP_HIGH:
           {
+            _robot.PickUpDockObject(_dockObjectID, _dockMarker);
+            
             lastResult = _robot.VerifyObjectPickup();
             if(lastResult != RESULT_OK) {
               PRINT_NAMED_ERROR("Robot.Update.VerifyObjectPickupFailed",
@@ -523,6 +606,8 @@ namespace Anki {
           case DA_PLACE_LOW:
           case DA_PLACE_HIGH:
           {
+            _robot.PlaceCarriedObject();
+            
             lastResult = _robot.VerifyObjectPlacement();
             if(lastResult != RESULT_OK) {
               PRINT_NAMED_ERROR("Robot.Update.VerifyObjectPlacementFailed",
@@ -561,6 +646,8 @@ namespace Anki {
             
         } // switch(_dockAction)
       }
+      
+      // TODO: Should something UN-set the robot's dock object ID?
       
       return actionResult;
     } // CheckIfDone()
@@ -619,6 +706,111 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
+#pragma mark ---- PutDownObjectAction ----
+    
+    PutDownObjectAction::PutDownObjectAction(Robot & robot)
+    : IAction(robot)
+    {
+      
+    }
+    
+    const std::string& PutDownObjectAction::GetName() const
+    {
+      static const std::string name("PutDownObjectAction");
+      return name;
+    }
+   
+    IAction::ActionResult PutDownObjectAction::CheckPreconditions()
+    {
+      ActionResult result = RUNNING;
+      
+      // Wait for robot to stop moving before proceeding with pre-conditions
+      if (_robot.IsMoving() == false)
+      {
+        // Robot must be carrying something to put something down!
+        if(_robot.IsCarryingObject() == false) {
+          PRINT_NAMED_ERROR("PutDownObjectAction.CheckPreconditions.NotCarryingObject",
+                            "Robot %d executing PutDownObjectAction but not carrying object.\n", _robot.GetID());
+          result = FAILURE_ABORT;
+        } else {
+        
+#if 0
+          // Set desired position of marker (via placeOnGroundPose) to be exactly where robot is now
+          const Pose3d& robotPose = _robot.GetPose();
+          
+          const f32 markerAngle = robotPose.GetRotationAngle<'Z'>().ToFloat();
+          
+          const Vec3f markerPt(robotPose.GetTranslation().x() + (ORIGIN_TO_LOW_LIFT_DIST_MM * cosf(markerAngle)),
+                               robotPose.GetTranslation().y() + (ORIGIN_TO_LOW_LIFT_DIST_MM * sinf(markerAngle)),
+                               robotPose.GetTranslation().z());
+          
+          Pose3d relPose(robotPose.GetRotationMatrix(), markerPt);
+          /*
+          Pose3d placementPose(robotPose.GetRotationMatrix(), markerPt);
+          
+          // Compute pose of placeOnGroundPose (which is the pose of the marker on the carried object
+          // that faces the robot when the object is placed in the desired pose on the ground)
+          // relative to robot to yield the one-time docking error signal for placing the carried object on the ground.
+          Pose3d relPose;
+          if (!placementPose.GetWithRespectTo(robotPose, relPose)) {
+            PRINT_NAMED_ERROR("PutDownObjectAction.CheckPreconditions.PlaceMentPoseError", "\n");
+            result = FAILURE_ABORT;
+          }
+           */
+          
+          PRINT_INFO("dockMarker wrt to robot pose: %f %f %f ang: %f\n", relPose.GetTranslation().x(), relPose.GetTranslation().y(), relPose.GetTranslation().z(), relPose.GetRotationAngle<'Z'>().ToFloat());
+          
+          if(_robot.SendPlaceObjectOnGround(relPose.GetTranslation().x(),
+                                            relPose.GetTranslation().y(),
+                                            relPose.GetRotationAngle<'Z'>().ToFloat() ) == RESULT_OK)
+#endif 
+          if(_robot.SendPlaceObjectOnGround(0, 0, 0) == RESULT_OK)
+          {
+            result = SUCCESS;
+          } else {
+            PRINT_NAMED_ERROR("PutDownObjectAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
+                              "Robot's SendPlaceObjectOnGround method reported failure.\n");
+            result = FAILURE_ABORT;
+          }
+          
+        } // if/else IsCarryingObject()
+      } // if robot IsMoving()
+      
+      return result;
+      
+    } // CheckPreconditions()
+    
+    
+    IAction::ActionResult PutDownObjectAction::CheckIfDone()
+    {
+      ActionResult actionResult = RUNNING;
+      
+      // Wait for robot to report it is done picking/placing and that it's not
+      // moving
+      if (!_robot.IsPickingOrPlacing() && !_robot.IsMoving())
+      {
+        // Stopped executing docking path, and should have placed carried block
+        // and backed out by now, and have head pointed at an angle to see
+        // where we just placed or picked up from.
+        // So we will check if we see a block with the same
+        // ID/Type as the one we were supposed to be picking or placing, in the
+        // right position.
+        
+        Result lastResult = _robot.VerifyObjectPlacement();
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_ERROR("Robot.Update.VerifyObjectPlacementFailed",
+                            "VerifyObjectPlacement returned error code %x.\n",
+                            lastResult);
+          actionResult = FAILURE_PROCEED;
+        } else {
+          actionResult = SUCCESS;
+        }
+
+      } // if robot is not picking/placing or moving
+      
+      return actionResult;
+      
+    } // CheckIfDone()
     
 #pragma mark ---- CrossBridgeAction ----
     
@@ -709,7 +901,7 @@ namespace Anki {
           result = RESULT_FAIL;
       }
     
-      _robot.SetRampDirection(direction);
+      _robot.SetRamp(GetDockObjectID(), direction);
       
       return result;
       

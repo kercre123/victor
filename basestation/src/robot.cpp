@@ -524,19 +524,22 @@ namespace Anki {
     {
       ////////// Update the robot's blockworld //////////
       
-      // Update the world (force robots to process their messages)
-      uint32_t numBlocksObserved = 0;
+            uint32_t numBlocksObserved = 0;
       _blockWorld.Update(numBlocksObserved);
       
-      // Update the behavior manager.
+      
+      ///////// Update the behavior manager ///////////
+      
       // TODO: This object encompasses, for the time-being, what some higher level
       // module(s) would do.  e.g. Some combination of game state, build planner,
       // personality planner, etc.
+      
       _behaviorMgr.Update();
       
       
       
       //////// Update Robot's State Machine /////////////
+      
       IAction* currentAction = _actionQueue.GetCurrentAction();
       if(currentAction != nullptr)
       {
@@ -589,7 +592,7 @@ namespace Anki {
       
       
       
-      // Path Traversal
+      ////////////  Update Path Traversal /////////////
       
       if(IsTraversingPath())
       {
@@ -629,7 +632,7 @@ namespace Anki {
                 _reExecSequenceFcn();
               } else {
                 PRINT_NAMED_INFO("Robot.Update.NoReExecFcn", "Aborting path.\n");
-                SetState(IDLE);
+                //SetState(IDLE);
               }
               break;
             } // PLAN_NEEDED_BUT_GOAL_FAILURE:
@@ -663,7 +666,8 @@ namespace Anki {
         if (GetLastRecvdPathID() == GetLastSentPathID()) {
           pdo_->Update(GetCurrPathSegment(), GetNumFreeSegmentSlots());
         }
-      }
+        
+      } // if IsTraversingPath()
       
       
 #if 0
@@ -1213,7 +1217,7 @@ namespace Anki {
     void Robot::AbortCurrentPath()
     {
       ClearPath();
-      SetState(IDLE);
+      //SetState(IDLE);
     }
     
     // =========== Motor commands ============
@@ -1470,7 +1474,7 @@ namespace Anki {
         }
       }
 
-      SetState(FOLLOWING_PATH);
+      //SetState(FOLLOWING_PATH);
       
       // for when the path is complete, can be overridden by caller if needed
       _nextState = IDLE;
@@ -1885,6 +1889,10 @@ namespace Anki {
     
     Result Robot::ExecutePlaceObjectOnGroundSequence()
     {
+      _actionQueue.QueueAtEnd(new PutDownObjectAction(*this));
+      
+      /*
+      
       if(IsCarryingObject() == false) {
         PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.NotCarryingObject",
                           "Robot %d was told to place a block on the ground, but "
@@ -1918,7 +1926,7 @@ namespace Anki {
       
       _placeOnGroundPose.SetTranslation(markerPt);
       _placeOnGroundPose.SetRotation(_pose.GetRotationMatrix());
-      
+      */
       
       return RESULT_OK;
       
@@ -1929,7 +1937,8 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      // TODO: implement using IACtion!
+      _actionQueue.QueueAtEnd(new DriveToPlaceCarriedObjectAction(*this, atPose));
+      _actionQueue.QueueAtEnd(new PutDownObjectAction(*this));
       
       /*
       if(IsCarryingObject() == false) {
@@ -2189,13 +2198,13 @@ namespace Anki {
         _blockWorld.ClearObject(_carryingObjectID);
         _carryingObjectID.UnSet();
         PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
+        return RESULT_FAIL;
       } else {
         //_carryingObjectID = _dockObjectID;  // Already set?
         //_carryingMarker   = _dockMarker;   //   "
         PRINT_INFO("Object pick-up SUCCEEDED!\n");
+        return RESULT_OK;
       }
-      
-      return RESULT_OK;
       
     } // VerifyObjectPickup()
     
@@ -2288,17 +2297,18 @@ namespace Anki {
       {
         // We've seen the object in the last half second (which could
         // not be true if we were still carrying it)
+        PRINT_INFO("Object placement SUCCEEDED!\n");
         _carryingObjectID.UnSet();
         _carryingMarker   = nullptr;
-        PRINT_INFO("Object placement SUCCEEDED!\n");
+        return RESULT_OK;
       } else {
-        // TODO: correct to assume we are still carrying the object?
-        PickUpDockObject(_carryingObjectID, _carryingMarker); // re-pickup block to attach it to the lift again
         PRINT_INFO("Object placement FAILED!\n");
-        
+        // TODO: correct to assume we are still carrying the object?
+        ObjectID tempID = _carryingObjectID;
+        _carryingObjectID.UnSet(); // needs to be unset to call PickUpDockObject()
+        PickUpDockObject(tempID, _carryingMarker); // re-pickup object to attach it to the lift again
+        return RESULT_FAIL;
       }
-      
-      return RESULT_OK;
       
     } // VerifyObjectPlacement()
 

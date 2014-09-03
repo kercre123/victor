@@ -28,8 +28,9 @@ namespace Anki {
     {
     public:
       enum ActionType {
-        DOCKING, // e.g. with objects to pick up
-        ENTRY,   // e.g. for entering a bridge or ascending/descending a ramp
+        DOCKING,   // e.g. with objects to pick up
+        PLACEMENT, // e.g. for putting a carried object down
+        ENTRY,     // e.g. for entering a bridge or ascending/descending a ramp
       };
       
       // Simple case: pose is along the normal to the marker, at the given distance
@@ -45,6 +46,9 @@ namespace Anki {
                     const Pose3d&  poseWrtMarker,
                     const Radians& headAngle);
       
+      // For creating a pre-action pose in its current position, given the
+      // canonical pre-action pose and the currennt pose of its marker's
+      // parent. Probably not generally useful, but used by ActionableObject.
       PreActionPose(const PreActionPose& canonicalPose,
                     const Pose3d& markerParentPose);
       
@@ -63,7 +67,7 @@ namespace Anki {
       const Radians& GetHeadAngle() const;
       
       // Returns true if the marker is correctly oriented for its action type.
-      // FOr example, DOCKING poses must have the marker vertical to be docked with.
+      // For example, DOCKING poses must have the marker vertical to be docked with.
       bool IsOrientedForAction(const Pose3d& markerParentPose) const;
       
       // Get the Code of the Marker this PreActionPose is "attached" to.

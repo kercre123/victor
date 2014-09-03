@@ -56,17 +56,25 @@ namespace Anki {
       
       virtual ~IAction() { }
       
+      // This Update() is what gets called from the outside.  It in turn
+      // handles timing delays and runs (protected) CheckPreconditions() and
+      // CheckIfDone() methods. Those are the virtual methods that derived
+      // classes should implement to get desired action behaviors.
+      // Note that this method is final and cannot be overridden in derived
+      // classes.
+      virtual ActionResult Update() final;
+    
+      // Override this in derived classes to get more helpful messages for
+      // debugging. Otherwise, defaults to "UnnamedAction".
+      virtual const std::string& GetName() const;
+    
       // Provide a retry function that will be called by Update() if
       // FAILURE_RETRY is returned by the derived CheckIfDone() method.
       void SetRetryFunction(std::function<Result(Robot&)> retryFcn);
       
+      // Runs the retry function if one was specified.
       Result Retry();
       
-      // This is what gets called from the outside:
-      virtual ActionResult Update() final; // can't override this in derived classes
-    
-      virtual const std::string& GetName() const; // Defaults to "UnnamedAction"
-    
     protected:
       
       Robot&        _robot;
@@ -75,8 +83,19 @@ namespace Anki {
       virtual ActionResult  CheckPreconditions() { return SUCCESS; } // Optional: default is no preconditions to meet
       virtual ActionResult  CheckIfDone() = 0;
       
-      virtual f32 GetStartDelayInSeconds() const { return 0.5f;  } // Optional: default is 0.5s delay
-      virtual f32 GetTimeoutInSeconds()    const { return 60.f;  } // Optional: default is one minute
+      //
+      // Timing delays:
+      //  (e.g. for allowing for communications to physical robot to have an effect)
+      //
+      
+      // Before checking preconditions. Optional: default is 0.5s delay
+      virtual f32 GetStartDelayInSeconds()       const { return 0.5f; }
+
+      // Before first CheckIfDone() call, after preconditions are met. Optional: default is 0.5s delay
+      virtual f32 GetCheckIfDoneDelayInSeconds() const { return 0.5f; }
+      
+      // Before giving up on entire action. Optional: default is one minute
+      virtual f32 GetTimeoutInSeconds()          const { return 60.f; }
       
     private:
       
@@ -157,12 +176,27 @@ namespace Anki {
       
       virtual ActionResult CheckPreconditions() override;
       
+      ActionResult CheckPreconditionsHelper(ActionableObject* object);
+      
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
       
       //std::vector<Pose3d> _possibleGoalPoses;
       
     }; // DriveToObjectAction
+    
+    class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
+    {
+    public:
+      DriveToPlaceCarriedObjectAction(Robot& robot, const Pose3d& placementPose);
+      
+    protected:
+      
+      virtual ActionResult CheckPreconditions() override;
+      
+      Pose3d _placementPose;
+      
+    }; // DriveToPlaceCarriedObjectAction()
     
     
     // Turn in place by a given angle, wherever the robot is when the action
@@ -207,6 +241,8 @@ namespace Anki {
       virtual Result SelectDockAction(ActionableObject* object) = 0;
       virtual PreActionPose::ActionType GetPreActionType() = 0;
       
+      const ObjectID& GetDockObjectID() const { return _dockObjectID; }
+      
       ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
       const Vision::KnownMarker*  _dockMarker2; // for bridges
@@ -230,6 +266,24 @@ namespace Anki {
       
     }; // class DockWithObjectAction
 
+    
+    class PutDownObjectAction : public IAction
+    {
+    public:
+      
+      PutDownObjectAction(Robot& robot);
+      
+      virtual const std::string& GetName() const override;
+      
+    protected:
+      
+      virtual ActionResult CheckPreconditions() override;
+      virtual ActionResult CheckIfDone() override;
+      
+      // Need longer than default for check if done:
+      virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }
+      
+    };
     
     class CrossBridgeAction : public IDockAction
     {

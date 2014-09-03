@@ -16,6 +16,7 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 
+#include "anki/cozmo/robot/cozmoConfig.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/imgproc/imgproc.hpp"
@@ -105,6 +106,10 @@ namespace Anki {
       // Add a pre-dock pose to each face, at fixed distance normal to the face:
       const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
       AddPreActionPose(PreActionPose::DOCKING, marker, DefaultPreDockPoseDistance, DEG_TO_RAD(-15));
+      
+      // Add a pre-placement pose to each face, where the robot will be sitting
+      // relative to the face when we put down the block.
+      AddPreActionPose(PreActionPose::PLACEMENT, marker, ORIGIN_TO_LOW_LIFT_DIST_MM, DEG_TO_RAD(-15));
       
       // Store a pointer to the marker on each face:
       markersByFace_[whichFace] = marker;

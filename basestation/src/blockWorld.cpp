@@ -326,6 +326,7 @@ namespace Anki
         } // for each object type
       } // for each object family
       
+      // TODO: Don't bother with this if the robot is docking? (picking/placing)??
       // Now that the occlusion maps are complete, check each unobserved object's
       // visibility in each camera
       for(auto unobserved : unobservedObjects) {
