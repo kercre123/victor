@@ -65,7 +65,7 @@ typedef struct BuildTreeThreadParameters
   const std::vector<s32*> &pNumLessThans; //< One allocated buffer for each maxSecondaryThreads. Must be allocated before calling the thread, and manually freed after the thread is complete
   const std::vector<s32*> &pNumGreaterThans; //< One allocated buffer for each maxSecondaryThreads. Must be allocated before calling the thread, and manually freed after the thread is complete
   const s32 maxLabel; //< What is the max label in labels?
-  ThreadSafeQueue<DecisionTreeWorkItem> &workQueue; //< What work needs to be done by this thread (probably just a single node)
+  ThreadSafeQueue<DecisionTreeWorkItem> &workQueue; //< What work needs to be done? Starts with just the root node.
   ThreadSafeVector<TrainingFailure> &trainingFailures; //< Which nodes could not be trained?
   ThreadSafeFixedLengthList<DecisionTreeNode> &decisionTree; //< The output decision tree
   ThreadSafeCounter<s32> &threadCount; //< Counter for the number of running threads
@@ -155,13 +155,6 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
   //
 
   const s32 numFeatures = buildTreeParams->featuresUsed.size();
-
-  std::vector<s32> featuresToCheck;
-  featuresToCheck.resize(numFeatures);
-  s32 * restrict pFeaturesToCheck = featuresToCheck.data();
-  for(s32 i=0; i<numFeatures; i++) {
-    pFeaturesToCheck[i] = i;
-  }
 
   ComputeInfoGainParameters *computeInfoGainParams[MAX_THREADS];
   ThreadHandle threadHandles[MAX_THREADS];
@@ -302,31 +295,13 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
           buildTreeParams->pNumLessThans[iThread],
           buildTreeParams->pNumGreaterThans[iThread]);
 
-#ifdef _MSC_VER
-        DWORD threadId = -1;
-        threadHandles[iThread] = CreateThread(
-          NULL,        // default security attributes
-          0,           // use default stack size
-          ComputeInfoGain, // thread function name
-          computeInfoGainParams[iThread],    // argument to thread function
-          0,           // use default creation flags
-          &threadId);  // returns the thread identifier
-#else
-        pthread_attr_t connectionAttr;
-        pthread_attr_init(&connectionAttr);
-
-        pthread_create(&(threadHandles[iThread]), &connectionAttr, ComputeInfoGain, (void *)(computeInfoGainParams[iThread]));
-#endif
+        threadHandles[iThread] = CreateSimpleThread(ComputeInfoGain, computeInfoGainParams[iThread]);
       }
 
       for(s32 iThread=0; iThread<numSecondaryThreadsToUse; iThread++) {
         // Wait for the threads to complete and combine the results
 
-#ifdef _MSC_VER
-        WaitForSingleObject(threadHandles[iThread], INFINITE);
-#else
-        pthread_join(threadHandles[iThread], NULL);
-#endif
+        WaitForSimpleThread(threadHandles[iThread]);
 
         if(computeInfoGainParams[iThread]->bestEntropy < curNode.bestEntropy) {
           curNode.bestEntropy = computeInfoGainParams[iThread]->bestEntropy;
@@ -521,6 +496,10 @@ namespace Anki
           RESULT_FAIL_INVALID_SIZE, "BuildTree", "Incorrect input size");
       }
 
+      //
+      // Allocate memory and initialize
+      //
+
       vector<s32> remaining;
       remaining.resize(numItems);
 
@@ -531,19 +510,24 @@ namespace Anki
 
       const s32 maxLabel = FindMaxLabel(labels, remaining);
 
-      //if(numPrimaryThreadsToUse == 1) {
-      const s32 minFeatureToCheck = 0;
-      const s32 maxFeatureToCheck = numFeatures - 1;
-
-      std::vector<s32*> pNumLessThans;
-      std::vector<s32*> pNumGreaterThans;
+      std::vector<std::vector<s32*> > pNumLessThans;
+      std::vector<std::vector<s32*> > pNumGreaterThans;
 
       pNumLessThans.resize(maxThreads);
       pNumGreaterThans.resize(maxThreads);
 
       for(s32 i=0; i<maxThreads; i++) {
-        pNumLessThans[i] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
-        pNumGreaterThans[i] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
+        pNumLessThans[i].resize(maxThreads);
+        pNumGreaterThans[i].resize(maxThreads);
+
+        for(s32 j=0; j<maxThreads; j++) {
+          pNumLessThans[i][j] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
+          pNumGreaterThans[i][j] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
+
+          AnkiConditionalErrorAndReturnValue(
+            pNumLessThans[i][j] && pNumGreaterThans[i][j],
+            RESULT_FAIL_OUT_OF_MEMORY, "BuildTree", "Out of memory");
+        }
       }
 
       ThreadSafeQueue<DecisionTreeWorkItem> workQueue = ThreadSafeQueue<DecisionTreeWorkItem>();
@@ -556,36 +540,58 @@ namespace Anki
 
       ThreadSafeCounter<s32> threadCount(0, maxThreads);
 
-      BuildTreeThreadParameters newParameters(
-        featuresUsed,
-        labelNames,
-        labels,
-        featureValues,
-        leafNodeFraction,
-        leafNodeNumItems,
-        u8MinDistance,
-        u8ThresholdsToUse,
-        maxThreads,
-        pNumLessThans,
-        pNumGreaterThans,
-        maxLabel,
-        workQueue,
-        trainingFailures,
-        decisionTree,
-        threadCount);
+      vector<BuildTreeThreadParameters*> newParameters;
+      newParameters.resize(maxThreads);
 
-      const ThreadResult result = BuildTreeThread(reinterpret_cast<void*>(&newParameters));
+      vector<ThreadHandle> threadHandles;
+      threadHandles.resize(maxThreads);
 
-      // Since it's only one thread, we've directly built the decision tree and are done
+      //
+      // Launch one primary thread for each maxThreads
+      //
+
+      for(s32 iThread=0; iThread<maxThreads; iThread++) {
+        newParameters[iThread] = new BuildTreeThreadParameters(
+          featuresUsed,
+          labelNames,
+          labels,
+          featureValues,
+          leafNodeFraction,
+          leafNodeNumItems,
+          u8MinDistance,
+          u8ThresholdsToUse,
+          maxThreads,
+          pNumLessThans[iThread],
+          pNumGreaterThans[iThread],
+          maxLabel,
+          workQueue,
+          trainingFailures,
+          decisionTree,
+          threadCount);
+
+        AnkiConditionalErrorAndReturnValue(
+          newParameters[iThread],
+          RESULT_FAIL_OUT_OF_MEMORY, "BuildTree", "Out of memory");
+
+        threadHandles[iThread] = CreateSimpleThread(BuildTreeThread, reinterpret_cast<void*>(newParameters[iThread]));
+      } // for(s32 iThread=0; iThread<maxThreads; iThread++)
+
+      //
+      // Wait for all threads to finish and clean up
+      //
+
+      for(s32 iThread=0; iThread<maxThreads; iThread++) {
+        WaitForSimpleThread(threadHandles[iThread]);
+      } // for(s32 i=0; i<maxThreads; i++)
 
       for(s32 i=0; i<maxThreads; i++) {
-        free(pNumLessThans[i]);
-        free(pNumGreaterThans[i]);
+        delete(newParameters[i]);
+
+        for(s32 j=0; j<maxThreads; j++) {
+          free(pNumLessThans[i][j]);
+          free(pNumGreaterThans[i][j]);
+        }
       }
-      //} else {
-      //  // TODO: implement
-      //  AnkiAssert(false);
-      //}
 
       return RESULT_OK;
     } // Result BuildTree()
