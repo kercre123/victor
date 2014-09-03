@@ -21,6 +21,10 @@ mxArray* Load(const char *filename, MemoryStack scratch)
     NULL, "Load", "Invalid inputs");
 
   FILE *fp = fopen(filename, "rb");
+  
+  AnkiConditionalErrorAndReturnValue(fp,
+    NULL, "Load", "Invalid inputs");
+  
   fseek(fp, 0, SEEK_END);
   s32 bufferLength = ftell(fp);
   fseek(fp, 0, SEEK_SET);

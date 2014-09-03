@@ -118,6 +118,8 @@ void PrintUsage()
 
 int main(int argc, const char* argv[])
 {
+  f64 time0 = GetTimeF64();
+  
   const f64 benchmarkSampleEveryNSeconds = 60.0;
 
   if(argc != 7) {
@@ -285,5 +287,9 @@ int main(int argc, const char* argv[])
     free(scratch.get_buffer());
   } // Save the output
 
+  f64 time1 = GetTimeF64();
+  
+  printf("Tree training took %f seconds. Tree is %d nodes.\n", time1-time0, static_cast<s32>(decisionTree.size()));
+  
   return 0;
 }
