@@ -18,6 +18,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/fixedLengthList.h"
 
 #include "anki/tools/threads/threadSafeUtilities.h"
+#include "anki/tools/threads/threadSafeFixedLengthList.h"
 
 #include <vector>
 
@@ -49,8 +50,8 @@ namespace Anki
       s32 depth;
       f32 bestEntropy;
       s32 whichFeature;
-      u8  u8Threshold;
       s32 leftChildIndex; //< Right child index is leftChildIndex + 1
+      u8  u8Threshold;
 
       DecisionTreeNode(
         s32 depth,
@@ -58,7 +59,7 @@ namespace Anki
         s32 whichFeature,
         u8  u8Threshold,
         s32 leftChildIndex)  //< Right child index is leftChildIndex + 1. If leftChildIndex <= -1000000, this is a leaf, with the label as the negative of leftChildIndex.
-        : depth(depth), bestEntropy(bestEntropy), whichFeature(whichFeature), u8Threshold(u8Threshold), leftChildIndex(leftChildIndex)
+        : depth(depth), bestEntropy(bestEntropy), whichFeature(whichFeature), leftChildIndex(leftChildIndex), u8Threshold(u8Threshold)
       {
       }
     } DecisionTreeNode;
@@ -135,7 +136,7 @@ namespace Anki
       const s32 u8MinDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
       const FixedLengthList<u8> &u8ThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
       const s32 maxThreads, //< Max threads to use (should be at least the number of cores)
-      std::vector<DecisionTreeNode> &decisionTree //< The output decision tree
+      ThreadSafeFixedLengthList<DecisionTreeNode> &decisionTree //< The output decision tree
       );
   } // namespace Embedded
 } // namespace Anki

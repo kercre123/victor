@@ -12,6 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/serialize.h"
 
 #define COMPRESSION_LEVEL 9
+#define MAX_TREE_NODES 1000000
 
 using namespace Anki;
 using namespace Anki::Embedded;
@@ -119,7 +120,7 @@ void PrintUsage()
 int main(int argc, const char* argv[])
 {
   f64 time0 = GetTimeF64();
-  
+
   const f64 benchmarkSampleEveryNSeconds = 60.0;
 
   if(argc != 7) {
@@ -138,6 +139,10 @@ int main(int argc, const char* argv[])
   const s32 scratchSize = 50000000;
   MemoryStack memory(malloc(memorySize), memorySize);
 
+  AnkiConditionalErrorAndReturnValue(
+    AreValid(memory),
+    -1, "run_trainDecisionTree", "Out of memory");
+
   std::vector<U8Bool> featuresUsed;
   FixedLengthList<const char *> labelNames;
   FixedLengthList<s32> labels;
@@ -151,6 +156,10 @@ int main(int argc, const char* argv[])
   {
     MemoryStack scratch1(malloc(scratchSize), scratchSize);
     MemoryStack scratch2(malloc(scratchSize), scratchSize);
+
+    AnkiConditionalErrorAndReturnValue(
+      AreValid(scratch1, scratch2),
+      -1, "run_trainDecisionTree", "Out of memory");
 
     printf("Loading Inputs...");
 
@@ -194,8 +203,12 @@ int main(int argc, const char* argv[])
   // Add a const qualifier
   FixedLengthList<const FixedLengthList<u8> > featureValuesConst = *reinterpret_cast<FixedLengthList<const FixedLengthList<u8> >* >(&featureValues);
 
-  std::vector<DecisionTreeNode> decisionTree;
+  ThreadSafeFixedLengthList<DecisionTreeNode> decisionTree(MAX_TREE_NODES, memory);
   std::vector<f32> cpuUsage;
+
+  AnkiConditionalErrorAndReturnValue(
+    AreValid(decisionTree),
+    -1, "run_trainDecisionTree", "Out of memory");
 
   volatile bool isBenchmarkingRunning = true;
 
@@ -230,12 +243,10 @@ int main(int argc, const char* argv[])
 
   *(benchmarkingParams.isRunning) = false;
 
-  // We're done with this memory once BuildTree returns
-  free(memory.get_buffer());
-
   // Save the output
   {
-    const s32 numNodes = decisionTree.size();
+    const FixedLengthList<DecisionTreeNode> unsafeDecisionTree = decisionTree.get_buffer();
+    const s32 numNodes = unsafeDecisionTree.get_size();
     const s32 saveBufferSize = 10000000 + 3 * numNodes * sizeof(DecisionTreeNode);
 
     MemoryStack scratch(malloc(saveBufferSize), saveBufferSize);
@@ -250,7 +261,7 @@ int main(int argc, const char* argv[])
       -7, "run_trainDecisionTree", "Out of memory for saving");
 
     for(s32 iNode=0; iNode<numNodes; iNode++) {
-      const DecisionTreeNode &curNode = decisionTree[iNode];
+      const DecisionTreeNode &curNode = unsafeDecisionTree[iNode];
 
       depths[iNode] = curNode.depth;
       bestEntropys[iNode] = curNode.bestEntropy;
@@ -287,9 +298,11 @@ int main(int argc, const char* argv[])
     free(scratch.get_buffer());
   } // Save the output
 
+  free(memory.get_buffer());
+
   f64 time1 = GetTimeF64();
-  
-  printf("Tree training took %f seconds. Tree is %d nodes.\n", time1-time0, static_cast<s32>(decisionTree.size()));
-  
+
+  printf("Tree training took %f seconds. Tree is %d nodes.\n", time1-time0, static_cast<s32>(decisionTree.get_buffer().get_size()));
+
   return 0;
 }

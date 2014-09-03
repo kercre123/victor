@@ -55,7 +55,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     % Train the decision tree
     if useCVersion
-%         decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse);
+        decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse);
         tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
     else
         tree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
@@ -144,8 +144,11 @@ function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, 
     tree = convertCTree(1, depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     
     figure(50); 
-    plot(cpuUsageSamples);
+    plot(cpuUsageSamples, 'b+');
     title('CPU usage over time');
+    limits = axis();
+    limits(3:4) = [0,100];
+    axis(limits)
     
     disp(sprintf('Conversion done in %f seconds (average CPU usage %f%%)', toc(convertingTic), mean(cpuUsageSamples)));
 end

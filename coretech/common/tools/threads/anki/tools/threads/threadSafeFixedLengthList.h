@@ -28,6 +28,8 @@ namespace Anki
       // The maximum size is set at object construction
       s32 get_maximumSize() const;
 
+      bool IsValid() const;
+
       // Get or release exclusive access to the buffer
       void Lock() const;
       void Unlock() const;
@@ -55,6 +57,17 @@ namespace Anki
     template<typename Type> s32 ThreadSafeFixedLengthList<Type>::get_maximumSize() const
     {
       return buffer.get_maximumSize();
+    }
+
+    template<typename Type> bool ThreadSafeFixedLengthList<Type>::IsValid() const
+    {
+      LockSimpleMutex(mutex);
+
+      const bool isValid = this->buffer.IsValid();
+
+      UnlockSimpleMutex(mutex);
+
+      return isValid;
     }
 
     template<typename Type> void ThreadSafeFixedLengthList<Type>::Lock() const
