@@ -171,6 +171,8 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
   // TODO: add ability to launch threads when the work items are far down in the tree
 
   while(buildTreeParams->workQueue.size() > 0) {
+    const f64 time0 = GetTimeF64();
+    
     DecisionTreeWorkItem workItem = buildTreeParams->workQueue.front();
     buildTreeParams->workQueue.pop();
 
@@ -329,7 +331,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
         delete(computeInfoGainParams[iThread]);
       }
     }
-
+    
     // If bestEntropy is too large, it means we could not split the data
     if(buildTreeParams->decisionTree[workItem.treeIndex].bestEntropy > 100000.0 || buildTreeParams->decisionTree[workItem.treeIndex].whichFeature < 0) {
       // TODO: there are probably very few labels, so this is an inefficent way to compute which are unique
@@ -412,6 +414,11 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
     buildTreeParams->workQueue.push(DecisionTreeWorkItem(buildTreeParams->decisionTree.size() - 2, leftRemaining, workItem.featuresUsed));
     buildTreeParams->workQueue.push(DecisionTreeWorkItem(buildTreeParams->decisionTree.size() - 1, rightRemaining, workItem.featuresUsed));
+    
+    const f64 time1 = GetTimeF64();
+    
+    printf("Computed split %d and %d, with best entropy of %f, in %f seconds\n", static_cast<s32>(leftRemaining.size()), static_cast<s32>(rightRemaining.size()), buildTreeParams->decisionTree[workItem.treeIndex].bestEntropy, time1-time0);
+    
   } // while(workQueue.size() > 0)
 
   return 0;

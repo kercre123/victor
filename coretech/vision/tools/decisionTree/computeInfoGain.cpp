@@ -112,8 +112,6 @@ namespace Anki
   {
     ThreadResult ComputeInfoGain(void *computeInfoGainParameters)
     {
-      const f64 time0 = GetTimeF64();
-
       ComputeInfoGainParameters * restrict parameters = reinterpret_cast<ComputeInfoGainParameters*>(computeInfoGainParameters);
 
       parameters->bestEntropy = FLT_MAX;
@@ -206,10 +204,6 @@ namespace Anki
           }
         } // for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++)
       } // for(s32 iFeature=0; iFeature<numFeaturesLocationsToCheck; iFeature++)
-
-      const f64 time1 = GetTimeF64();
-
-      printf(" Best entropy is %f in %f seconds\n", parameters->bestEntropy, time1-time0);
 
       return 0;
     } // ThreadResult ComputeInfoGain(void *computeInfoGainParameters)
