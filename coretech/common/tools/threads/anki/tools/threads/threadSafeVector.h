@@ -26,10 +26,7 @@ namespace Anki
     void Resize(const s32 newSize);
 
     // Returns the index where newValue was put
-    s32 Push_back(const Type &newValue);
-
-    // Returns the index where newValue was put
-    s32 Emplace_back(const Type &newValue);
+    s32 Push_back(Type newValue);
 
     // TODO: get the results out
 
@@ -59,24 +56,11 @@ namespace Anki
     UnlockSimpleMutex(mutex);
   } // ThreadSafeVector<Type>::Resize(const s32 newSize)
 
-  template<typename Type> s32 ThreadSafeVector<Type>::Push_back(const Type &newValue)
+  template<typename Type> s32 ThreadSafeVector<Type>::Push_back(Type newValue)
   {
     LockSimpleMutex(mutex);
 
     buffer.push_back(newValue);
-
-    const s32 index = buffer.size() - 1;
-
-    UnlockSimpleMutex(mutex);
-
-    return index;
-  } // ThreadSafeVector<Type>::Push_back(const Type &newValue)
-
-  template<typename Type> s32 ThreadSafeVector<Type>::Emplace_back(const Type &newValue)
-  {
-    LockSimpleMutex(mutex);
-
-    buffer.emplace_back(newValue);
 
     const s32 index = buffer.size() - 1;
 

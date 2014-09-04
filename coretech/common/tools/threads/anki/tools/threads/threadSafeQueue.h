@@ -34,8 +34,7 @@ namespace Anki
     // WARNING: None of these check the mutex lock
     const Type& Front_unsafe() const;
     void Pop_unsafe();
-    void Push_unsafe(const Type &newValue);
-    void Emplace_unsafe(const Type &&newValue);
+    void Push_unsafe(Type newValue);
     s32 Size_unsafe() const;
 
   protected:
@@ -75,14 +74,9 @@ namespace Anki
     buffer.pop();
   } // ThreadSafeQueue<Type>::Pop_unsafe()
 
-  template<typename Type> void ThreadSafeQueue<Type>::Push_unsafe(const Type &newValue)
+  template<typename Type> void ThreadSafeQueue<Type>::Push_unsafe(Type newValue)
   {
     buffer.push(newValue);
-  } // template<typename Type> ThreadSafeQueue::void Push_unsafe(Type newValue)
-
-  template<typename Type> void ThreadSafeQueue<Type>::Emplace_unsafe(const Type &&newValue)
-  {
-    buffer.emplace(newValue);
   } // template<typename Type> ThreadSafeQueue::void Push_unsafe(Type newValue)
 
   template<typename Type> s32 ThreadSafeQueue<Type>::Size_unsafe() const

@@ -22,12 +22,12 @@ typedef struct {
   s32 counts[256];
 } GrayvalueCounts;
 
-static void CountValues_u8(const u8 * restrict pFeatureValues, const vector<s32> &remaining, GrayvalueCounts &counts)
+static void CountValues_u8(const u8 * restrict pFeatureValues, const RawBuffer<s32> &remaining, GrayvalueCounts &counts)
 {
   memset(&counts.counts[0], 0, 256*sizeof(s32));
 
-  const s32 numRemaining = remaining.size();
-  const s32 * restrict pRemaining = remaining.data();
+  const s32 numRemaining = remaining.size;
+  const s32 * restrict pRemaining = remaining.buffer;
 
   for(s32 i=0; i<numRemaining; i++) {
     counts.counts[pFeatureValues[pRemaining[i]]]++;
@@ -43,14 +43,14 @@ static void ComputeNumAboveThreshold(
   const u8 curGrayvalueThreshold,
   s32 * restrict pNumLessThan,
   s32 * restrict pNumGreaterThan,
-  s32 &totalNumLessThan,
-  s32 &totalNumGreaterThan)
+  s32 &totalNumLT,
+  s32 &totalNumGE)
 {
   memset(pNumLessThan, 0, (maxLabel+1)*sizeof(s32));
   memset(pNumGreaterThan, 0, (maxLabel+1)*sizeof(s32));
 
-  totalNumLessThan = 0;
-  totalNumGreaterThan = 0;
+  totalNumLT = 0;
+  totalNumGE = 0;
 
   for(s32 iRemain=0; iRemain<numRemaining; iRemain++) {
     const s32 iImage = pRemaining[iRemain];
@@ -59,10 +59,10 @@ static void ComputeNumAboveThreshold(
     const u8 curFeatureValue = pFeatureValues[iImage];
 
     if(curFeatureValue < curGrayvalueThreshold) {
-      totalNumLessThan++;
+      totalNumLT++;
       pNumLessThan[curLabel]++;
     } else {
-      totalNumGreaterThan++;
+      totalNumGE++;
       pNumGreaterThan[curLabel]++;
     }
   }
@@ -72,15 +72,15 @@ static void ComputeNumAboveThreshold(
 template<typename Type> static Type WeightedAverageEntropy(
   const s32 * restrict pNumLessThan,
   const s32 * restrict pNumGreaterThan,
-  const s32 totalNumLessThan,
-  const s32 totalNumGreaterThan,
+  const s32 totalNumLT,
+  const s32 totalNumGE,
   const s32 maxLabel)
 {
   Type entropyLessThan = 0;
   Type entropyGreaterThan = 0;
 
-  const Type inverseTotalNumLessThan = static_cast<Type>(1) / static_cast<Type>(totalNumLessThan);
-  const Type inverseTotalNumGreaterThan = static_cast<Type>(1) / static_cast<Type>(totalNumGreaterThan);
+  const Type inverseTotalNumLessThan = static_cast<Type>(1) / static_cast<Type>(totalNumLT);
+  const Type inverseTotalNumGreaterThan = static_cast<Type>(1) / static_cast<Type>(totalNumGE);
 
   for(s32 iLabel=0; iLabel<=maxLabel; iLabel++) {
     //probabilitiesLessThan = allValuesLessThan / sum(allValuesLessThan);
@@ -98,8 +98,8 @@ template<typename Type> static Type WeightedAverageEntropy(
     }
   } // for(s32 iLabel=0; iLabel<=maxLabel; iLabel++)
 
-  const Type percent_lessThan    = static_cast<Type>(totalNumLessThan)    / static_cast<Type>(totalNumLessThan + totalNumGreaterThan);
-  const Type percent_greaterThan = static_cast<Type>(totalNumGreaterThan) / static_cast<Type>(totalNumLessThan + totalNumGreaterThan);
+  const Type percent_lessThan    = static_cast<Type>(totalNumLT)    / static_cast<Type>(totalNumLT + totalNumGE);
+  const Type percent_greaterThan = static_cast<Type>(totalNumGE) / static_cast<Type>(totalNumLT + totalNumGE);
 
   const Type weightedAverageEntropy = percent_lessThan * entropyLessThan + percent_greaterThan * entropyGreaterThan;
 
@@ -117,6 +117,8 @@ namespace Anki
       parameters->bestEntropy = FLT_MAX;
       parameters->bestFeatureIndex = -1;
       parameters->bestU8Threshold = -1;
+      parameters->totalNumLT = -1;
+      parameters->totalNumGE = -1;
 
       u8 u8Thresholds[256];
       s32 numGrayvalueThresholds;
@@ -130,12 +132,12 @@ namespace Anki
       }
 
       //const s32 numImages = parameters->featureValues[0].get_size();
-      const s32 numRemaining = parameters->remaining.size();
+      const s32 numRemaining = parameters->remaining.size;
 
       const s32 maxLabel = FindMaxLabel(parameters->labels, parameters->remaining);
 
       const s32 * restrict pLabels = parameters->labels.Pointer(0);
-      const s32 * restrict pRemaining = parameters->remaining.data();
+      const s32 * restrict pRemaining = parameters->remaining.buffer;
 
       //
       // For each feature location and grayvalue threshold, find the best entropy
@@ -166,7 +168,7 @@ namespace Anki
           }
         } // if(parameters->u8ThresholdsToUse.empty())
 
-        U8Bool &pFeaturesUsed = parameters->featuresUsed[iFeature];
+        U8Bool &pFeaturesUsed = parameters->featuresUsed.buffer[iFeature];
 
         for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++) {
           const u8 curGrayvalueThreshold = u8Thresholds[iGrayvalueThreshold];
@@ -175,8 +177,8 @@ namespace Anki
             continue;
           }
 
-          s32 totalNumLessThan = 0;
-          s32 totalNumGreaterThan = 0;
+          s32 totalNumLT = 0;
+          s32 totalNumGE = 0;
 
           ComputeNumAboveThreshold(
             pFeatureValues,
@@ -184,16 +186,16 @@ namespace Anki
             pRemaining, numRemaining,
             curGrayvalueThreshold,
             parameters->pNumLessThan, parameters->pNumGreaterThan,
-            totalNumLessThan, totalNumGreaterThan);
+            totalNumLT, totalNumGE);
 
-          if(totalNumLessThan == 0 || totalNumGreaterThan == 0) {
+          if(totalNumLT == 0 || totalNumGE == 0) {
             pFeaturesUsed.values[curGrayvalueThreshold] = true;
             continue;
           }
 
           const PRECISION entropy = WeightedAverageEntropy<PRECISION>(
             parameters->pNumLessThan, parameters->pNumGreaterThan,
-            totalNumLessThan, totalNumGreaterThan,
+            totalNumLT, totalNumGE,
             maxLabel);
 
           // The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
@@ -201,6 +203,8 @@ namespace Anki
             parameters->bestEntropy = static_cast<f32>(entropy);
             parameters->bestFeatureIndex = iFeature;
             parameters->bestU8Threshold = curGrayvalueThreshold;
+            parameters->totalNumLT = totalNumLT;
+            parameters->totalNumGE = totalNumGE;
           }
         } // for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++)
       } // for(s32 iFeature=0; iFeature<numFeaturesLocationsToCheck; iFeature++)
