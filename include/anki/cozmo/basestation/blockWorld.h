@@ -187,7 +187,11 @@ namespace Anki
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                   const ObjectsMapByType_t& objectsExisting,
                                   std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const;
-
+      
+      void FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
+                                  const std::vector<Vision::ObservableObject*>& objectsSeen,
+                                  std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const;
+      
       // Finds existing objects that intersect with objectSeen, with the exception
       // of those that are of ignoreFamilies or ignoreTypes.
       void FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
@@ -217,6 +221,7 @@ namespace Anki
                             std::list<Vision::ObservedMarker*>& lst);
       
 
+      void ClearObjectHelper(Vision::ObservableObject* object);
       ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objectIter, ObjectsMapByID_t& inContainer);
       
       //

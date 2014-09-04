@@ -183,7 +183,7 @@ namespace Anki
     //u32 __UHSUB16(const u32 val1, const u32 val2);
 
     //GE setting dual 16-bit addition and subtraction with exchange.
-    //u32 __SASX(const u32 val1, const u32 val2);
+    u32 __SASX(const u32 val1, const u32 val2);
 
     //Q setting dual 16-bit add and subtract with exchange.
     //u32 __QASX(const u32 val1, const u32 val2);
@@ -192,7 +192,7 @@ namespace Anki
     //u32 __SHASX(const u32 val1, const u32 val2);
 
     //GE setting dual 16-bit unsigned addition and subtraction with exchange.
-    //u32 __UASX(const u32 val1, const u32 val2);
+    u32 __UASX(const u32 val1, const u32 val2);
 
     //Dual 16-bit unsigned saturating addition and subtraction with exchange.
     //u32 __UQASX(const u32 val1, const u32 val2);
@@ -201,7 +201,7 @@ namespace Anki
     //u32 __UHASX(const u32 val1, const u32 val2);
 
     //GE setting dual 16-bit signed subtraction and addition with exchange.
-    //u32 __SSAX(const u32 val1, const u32 val2);
+    u32 __SSAX(const u32 val1, const u32 val2);
 
     //Q setting dual 16-bit subtract and add with exchange.
     //u32 __QSAX(const u32 val1, const u32 val2);
@@ -210,7 +210,7 @@ namespace Anki
     //u32 __SHSAX(const u32 val1, const u32 val2);
 
     //GE setting dual 16-bit unsigned subtract and add with exchange.
-    //u32 __USAX(const u32 val1, const u32 val2);
+    u32 __USAX(const u32 val1, const u32 val2);
 
     //Dual 16-bit unsigned saturating subtraction and addition with exchange.
     //u32 __UQSAX(const u32 val1, const u32 val2);
@@ -219,7 +219,7 @@ namespace Anki
     //u32 __UHSAX(const u32 val1, const u32 val2);
 
     //Unsigned sum of quad 8-bit unsigned absolute difference.
-    //u32 __USAD8(const u32 val1, const u32 val2);
+    u32 __USAD8(const u32 val1, const u32 val2);
 
     //Unsigned sum of quad 8-bit unsigned absolute difference with 32-bit accumulate.
     //u32 __USADA8(const u32 val1, const u32 val2, const u32 val3);

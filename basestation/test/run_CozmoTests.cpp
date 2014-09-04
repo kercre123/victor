@@ -83,30 +83,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
   Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
   robot.SetCameraCalibration(calib);
-  
-  // Fake a robot state update (i think we have to have received one before
-  // we can start adding vision-based poses to history)
-  MessageRobotState msg;
-  {
-    msg.timestamp = 0;
-    msg.pose_frame_id = 0;
-    msg.pose_x = 0;
-    msg.pose_y = 0;
-    msg.pose_z = 0;
-    msg.pose_angle = 0;
-    msg.headAngle = 0;
-    msg.liftAngle = 0;
     
-    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp,
-                                            msg.pose_frame_id,
-                                            msg.pose_x, msg.pose_y, msg.pose_z,
-                                            msg.pose_angle,
-                                            msg.headAngle,
-                                            msg.liftAngle), RESULT_OK);
-    
-    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
-  }
-  
   bool checkRobotPose;
   ASSERT_TRUE(JsonTools::GetValueOptional(jsonRoot, "CheckRobotPose", checkRobotPose));
 
@@ -131,6 +108,13 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   for(int i_pose=0; i_pose<NumPoses; ++i_pose)
   {
     TimeStamp_t currentTimeStamp = (i_pose+1)*100;
+
+    // Start the robot/world fresh for each pose
+    blockWorld.ClearAllExistingObjects();
+    ASSERT_EQ(robot.AddRawOdomPoseToHistory(currentTimeStamp, robot.GetPoseFrameID(), 0, 0, 0, 0, 0, 0), RESULT_OK);
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
+    
+    currentTimeStamp += 5;
     
     const Json::Value& jsonData = jsonRoot["Poses"][i_pose];
     
@@ -147,7 +131,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     // message.
     MessageRobotState msg;
     msg.timestamp = currentTimeStamp;
-    msg.pose_frame_id = 0;
+    msg.pose_frame_id = robot.GetPoseFrameID();
     msg.headAngle  = headAngle;
     msg.liftAngle  = 0;
     
@@ -158,6 +142,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       msg.pose_y = trueRobotPose.GetTranslation().y();
       msg.pose_z = trueRobotPose.GetTranslation().z();
       msg.pose_angle = trueRobotPose.GetRotationAngle<'Z'>().ToFloat();
+    } else {
+      msg.pose_x = 0;
+      msg.pose_y = 0;
+      msg.pose_z = 0;
+      msg.pose_angle = 0;
     }
     
     ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp,
@@ -167,6 +156,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                                             msg.headAngle, msg.liftAngle), RESULT_OK);
     
     ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
+    
 
     int NumMarkers;
     ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "NumMarkers", NumMarkers));
@@ -415,8 +405,8 @@ const char *visionTestJsonFiles[] = {
   "visionTest_MatPoseTest.json",
   "visionTest_TwoBlocksOnePose.json",
   "visionTest_RepeatedBlock.json",
-  "visionTest_SingleRamp.json"
-//  "visionTest_OffTheMat.json"  // Currently fails b/c of assumption robot is at z=0. TODO: Re-enable.
+  "visionTest_SingleRamp.json",
+  "visionTest_OffTheMat.json"
 };
 
 

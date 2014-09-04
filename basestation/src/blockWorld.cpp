@@ -153,38 +153,53 @@ namespace Anki
       isInitialized_ = true;
     }
     
+    void CheckForOverlapHelper(const Vision::ObservableObject* objectToMatch,
+                               Vision::ObservableObject* objectToCheck,
+                               std::vector<Vision::ObservableObject*>& overlappingObjects)
+    {
+      
+      // TODO: smarter block pose comparison
+      //const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
+      
+      //const float distToExist_mm = (objExist.second->GetPose().GetTranslation() -
+      //                              <robotThatSawMe???>->GetPose().GetTranslation()).length();
+      
+      //const float distThresh_mm = distThresholdFraction * distToExist_mm;
+      
+      Pose3d P_diff;
+      if( objectToCheck->IsSameAs(*objectToMatch, P_diff) ) {
+        overlappingObjects.push_back(objectToCheck);
+      } /*else {
+         fprintf(stdout, "Not merging: Tdiff = %.1fmm, Angle_diff=%.1fdeg\n",
+         P_diff.GetTranslation().length(), P_diff.GetRotationAngle().getDegrees());
+         objExist.second->IsSameAs(*objectSeen, distThresh_mm, angleThresh, P_diff);
+         }*/
+      
+    } // CheckForOverlapHelper()
+  
     
-    //template<class ObjectType>
     void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                             const ObjectsMapByType_t& objectsExisting,
                                             std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const
-    {      
+    {
       auto objectsExistingIter = objectsExisting.find(objectSeen->GetType());
-      if(objectsExistingIter != objectsExisting.end())
-      {
-        for(auto objExist : objectsExistingIter->second)
-        {
-          // TODO: smarter block pose comparison
-          //const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
-          
-          //const float distToExist_mm = (objExist.second->GetPose().GetTranslation() -
-          //                              <robotThatSawMe???>->GetPose().GetTranslation()).length();
-          
-          //const float distThresh_mm = distThresholdFraction * distToExist_mm;
-          
-          Pose3d P_diff;
-          if( objExist.second->IsSameAs(*objectSeen, P_diff) ) {
-            overlappingExistingObjects.push_back(objExist.second);
-          } /*else {
-            fprintf(stdout, "Not merging: Tdiff = %.1fmm, Angle_diff=%.1fdeg\n",
-                    P_diff.GetTranslation().length(), P_diff.GetRotationAngle().getDegrees());
-            objExist.second->IsSameAs(*objectSeen, distThresh_mm, angleThresh, P_diff);
-          }*/
-          
-        } // for each existing object of this type
+      if(objectsExistingIter != objectsExisting.end()) {
+        for(auto objectToCheck : objectsExistingIter->second) {
+          CheckForOverlapHelper(objectSeen, objectToCheck.second, overlappingExistingObjects);
+        }
       }
       
     } // FindOverlappingObjects()
+    
+
+    void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
+                                            const std::vector<Vision::ObservableObject*>& objectsSeen,
+                                            std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const
+    {
+      for(auto objectToCheck : objectsSeen) {
+        CheckForOverlapHelper(objectExisting, objectToCheck, overlappingSeenObjects);
+      }
+    }
     
     
     void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
@@ -571,26 +586,22 @@ namespace Anki
           if(robot->IsLocalized()) {
             // ... and the robot is already localized, then see if it is
             // localized to one of the mats it is seeing (but not "on")
-            MatPiece* alreadyLocalizedToMat = nullptr;
-            for(auto mat : matsSeen) {
-              if(mat->GetID() == robot->GetLocalizedTo()) {
-                alreadyLocalizedToMat = dynamic_cast<MatPiece*>(mat);
-                CORETECH_ASSERT(alreadyLocalizedToMat != nullptr);
-                break;
-              }
+            // Note that we must match seen and existing objects by their pose
+            // here, and not by ID, because "seen" objects have not ID assigned
+            // yet.
+
+            Vision::ObservableObject* existingMatLocalizedTo = GetObjectByID(robot->GetLocalizedTo());
+            if(existingMatLocalizedTo == nullptr) {
+              PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ExistingMatLocalizedToNull",
+                                "Robot %d is localized to mat with ID=%d, but that mat does not exist in the world.\n",
+                                robot->GetID(), robot->GetLocalizedTo().GetValue());
+              return false;
             }
             
-            if(alreadyLocalizedToMat != nullptr) {
-              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
-                               "Robot %d will re-localize to the %s mat it is not on, but already localized to.\n",
-                               robot->GetID(), alreadyLocalizedToMat->GetType().GetName().c_str());
-              
-              // The robot is localized to one of the mats it is seeing, even
-              // though it is not _on_ that mat.  Remain localized to that mat
-              // and update any others it is also seeing
-              matToLocalizeTo = alreadyLocalizedToMat;
-            }
-            else {
+            std::vector<Vision::ObservableObject*> overlappingMatsSeen;
+            FindOverlappingObjects(existingMatLocalizedTo, matsSeen, overlappingMatsSeen);
+            
+            if(overlappingMatsSeen.empty()) {
               // The robot is localized to a mat it is not seeing (and is not "on"
               // any of the mats it _is_ seeing.  Just update the poses of the
               // mats it is seeing, but don't localize to any of them.
@@ -598,11 +609,30 @@ namespace Anki
                                "Robot %d is localized to a mat it doesn't see, and will not localize to any of the %lu mats it sees but is not on.\n",
                                robot->GetID(), matsSeen.size());
             }
+            else {
+              if(overlappingMatsSeen.size() > 1) {
+                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleOverlappingMats",
+                                    "Robot %d is seeing %d (i.e. more than one) mats "
+                                    "overlapping with the existing mat it is localized to. "
+                                    "Will use first.\n", robot->GetID(), overlappingMatsSeen.size());
+              }
+              
+              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
+                               "Robot %d will re-localize to the %s mat it is not on, but already localized to.\n",
+                               robot->GetID(), overlappingMatsSeen[0]->GetType().GetName().c_str());
+              
+              // The robot is localized to one of the mats it is seeing, even
+              // though it is not _on_ that mat.  Remain localized to that mat
+              // and update any others it is also seeing
+              matToLocalizeTo = dynamic_cast<MatPiece*>(overlappingMatsSeen[0]);
+              CORETECH_ASSERT(matToLocalizeTo != nullptr);
+            }
+            
             
           } else {
             // ... and the robot is _not_ localized, choose the observed mat
             // with the closest observed marker (since that is likely to be the
-            // most accurate) and localize to that one.  Update any others.
+            // most accurate) and localize to that one.
             f32 minDistSq = -1.f;
             MatPiece* closestMat = nullptr;
             for(auto mat : matsSeen) {
@@ -673,19 +703,6 @@ namespace Anki
             //Vision::ObservableObject* existingObject = GetObjectByID(matToLocalizeTo->GetID());
             std::vector<Vision::ObservableObject*> existingObjects;
             FindOverlappingObjects(matToLocalizeTo, _existingObjects[ObjectFamily::MATS], existingObjects);
-
-            /*auto existingObjectsOfType = _existingObjects[ObjectFamily::MATS].find(matToLocalizeTo->GetType());
-            if(existingObjectsOfType != _existingObjects[ObjectFamily::MATS].end())
-            {
-              for(auto existingObjectsByID : existingObjectsOfType->second)
-              {
-                Vision::ObservableObject* candidateObject = existingObjectsByID.second;
-                if(matToLocalizeTo->IsSameAs(*candidateObject, 20.f, DEG_TO_RAD(20))) {
-                  // Found a match!
-                  existingObject = candidateObject;
-                }
-              }
-            }*/
           
             if(existingObjects.empty())
             {
@@ -1330,25 +1347,57 @@ namespace Anki
     
     void BlockWorld::ClearAllExistingObjects()
     {
-      //globalIDCounter = 0;
-      ObjectID::Reset();
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto objectsByType : objectsByFamily.second) {
+          for(auto objectsByID : objectsByType.second) {
+            ClearObjectHelper(objectsByID.second);
+          }
+        }
+      }
       
       _existingObjects.clear();
-      didObjectsChange_ = true;
+
+      ObjectID::Reset();
+    }
+    
+    void BlockWorld::ClearObjectHelper(Vision::ObservableObject* object)
+    {
+      if(object == nullptr) {
+        PRINT_NAMED_WARNING("BlockWorld.ClearObjectHelper.NullObjectPointer", "BlockWorld asked to clear a null object pointer.\n");
+      } else {
+        // Check to see if this object is the object any robot is localized to.
+        // If so, that robot needs to be delocalized:
+        for(auto & robotID : robotMgr_->GetRobotIDList()) {
+          Robot* robot = robotMgr_->GetRobotByID(robotID);
+          CORETECH_ASSERT(robot != nullptr);
+          if(robot->GetLocalizedTo() == object->GetID()) {
+            PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.DelocalizingRobot",
+                             "Delocalizing robot %d, which is currently localized to %s "
+                             "object with ID=%d, which is about to be deleted.\n",
+                             robot->GetID(), object->GetType().GetName().c_str(), object->GetID().GetValue());
+            robot->Delocalize();
+          }
+        }
+        
+        // NOTE: The object should erase its own visualization upon destruction
+        delete object;
+        
+        // Flag that we removed an object
+        didObjectsChange_ = true;
+      }
     }
     
     void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
     {
       ObjectsMapByFamily_t::iterator objectsWithFamily = _existingObjects.find(family);
       if(objectsWithFamily != _existingObjects.end()) {
-        for(auto objectsByType : objectsWithFamily->second) {
-          for(auto objectsByID : objectsByType.second) {
-            delete objectsByID.second;
+        for(auto & objectsByType : objectsWithFamily->second) {
+          for(auto & objectsByID : objectsByType.second) {
+            ClearObjectHelper(objectsByID.second);
           }
         }
         
         _existingObjects.erase(family);
-        didObjectsChange_ = true;
       }
     }
     
@@ -1358,11 +1407,10 @@ namespace Anki
         ObjectsMapByType_t::iterator objectsWithType = objectsByFamily.second.find(type);
         if(objectsWithType != objectsByFamily.second.end()) {
           for(auto & objectsByID : objectsWithType->second) {
-            delete objectsByID.second;
+            ClearObjectHelper(objectsByID.second);
           }
         
           objectsByFamily.second.erase(objectsWithType);
-          didObjectsChange_ = true;
           
           // Types are unique.  No need to keep looking
           return;
@@ -1380,12 +1428,8 @@ namespace Anki
           if(objectWithIdIter != objectsByType.second.end()) {
             
             // Remove the object from the world
-            // NOTE: The object should erase its own visualization upon destruction
-            delete objectWithIdIter->second;
+            ClearObjectHelper(objectWithIdIter->second);
             objectsByType.second.erase(objectWithIdIter);
-            
-            // Flag that we removed an object
-            didObjectsChange_ = true;
             
             // IDs are unique, so we can return as soon as the ID is found and cleared
             return true;

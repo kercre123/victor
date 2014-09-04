@@ -153,6 +153,9 @@ namespace Anki {
       // and the time it occured at in t.
       Result GetLatestVisionOnlyPose(TimeStamp_t& t, RobotPoseStamp& p) const;
       
+      // Get the last pose in history with the given frame ID.
+      Result GetLastPoseWithFrameID(const PoseFrameID_t frameID, RobotPoseStamp& p) const;
+      
       // Checks whether or not the given key is associated with a valid computed pose
       bool IsValidPoseKey(const HistPoseKey key) const;
       
