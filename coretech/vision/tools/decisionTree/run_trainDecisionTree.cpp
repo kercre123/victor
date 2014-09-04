@@ -210,8 +210,6 @@ int main(int argc, const char* argv[])
     AreValid(decisionTree),
     -1, "run_trainDecisionTree", "Out of memory");
 
-  volatile bool isBenchmarkingRunning = true;
-
   const Result result = BuildTree(
     featuresUsed,
     labelNames, labels,
@@ -224,6 +222,9 @@ int main(int argc, const char* argv[])
     decisionTree);
 
   // result could fail, but let's try to save anyway
+  if(result != RESULT_OK) {
+    CoreTechPrint("BuildTree failed, but trying to save anyway...\n");
+  }
 
   // Save the output
   {

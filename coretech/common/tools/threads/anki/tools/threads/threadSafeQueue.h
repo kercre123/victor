@@ -36,7 +36,9 @@ namespace Anki
     void Pop_unsafe();
     void Push_unsafe(Type newValue);
     s32 Size_unsafe() const;
-
+    
+    std::queue<Type>& get_buffer();
+    
   protected:
     mutable SimpleMutex mutex;
 
@@ -83,6 +85,11 @@ namespace Anki
   {
     return buffer.size();
   } // template<typename Type> bool ThreadSafeQueue::Size_unsafe()
+  
+  template<typename Type> std::queue<Type>& ThreadSafeQueue<Type>::get_buffer()
+  {
+    return buffer;
+  }
 } // namespace Anki
 
 #endif // _THREAD_SAFE_QUEUE_H_

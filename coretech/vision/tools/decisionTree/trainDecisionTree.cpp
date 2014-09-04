@@ -89,7 +89,7 @@ typedef struct DecisionTreeWorkItem
   RawBuffer<s32> remaining; // remaining: [1x552000 int32];
   RawBuffer<U8Bool> featuresUsed;
 
-  DecisionTreeWorkItem(s32 treeIndex, RawBuffer<s32> &remaining, const RawBuffer<U8Bool> &featuresUsed)
+  DecisionTreeWorkItem(s32 treeIndex, const RawBuffer<s32> &remaining, const RawBuffer<U8Bool> &featuresUsed)
     : treeIndex(treeIndex), remaining(remaining), featuresUsed(featuresUsed)
   {
   }
@@ -244,9 +244,12 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
     if(buildTreeParams->workQueue.Size_unsafe() == 0) {
       buildTreeParams->workQueue.Unlock(); //Unlock workQueue
       usleep(BUSY_WAIT_SLEEP_MICROSECONDS);
+      buildTreeParams->workQueue.Lock();
       continue;
     }
 
+    AnkiAssert(buildTreeParams->workQueue.Size_unsafe() > 0);
+    
     DecisionTreeWorkItem workItem = buildTreeParams->workQueue.Front_unsafe();
     buildTreeParams->workQueue.Pop_unsafe();
 
@@ -264,7 +267,8 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
       usleep(BUSY_WAIT_SLEEP_MICROSECONDS);
     } // while(numThreadsToUse == 0)
 
-    AnkiAssert(workItem.remaining.size > 0);
+    AnkiAssert(workItem.featuresUsed.size > 0 && workItem.featuresUsed.buffer);
+    AnkiAssert(workItem.remaining.size > 0 && workItem.remaining.buffer);
 
 #ifdef PRINT_INTERMEDIATE
     CoreTechPrint("Thread %d: %d secondary threads for %d items\n", buildTreeParams->threadId, numThreadsToUse, workItem.remaining.size);
@@ -537,9 +541,17 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
     leftFeaturesUsed.Clone(workItem.featuresUsed);
     rightFeaturesUsed.Clone(workItem.featuresUsed);
 
+    DecisionTreeWorkItem leftWorkItem(leftNodeIndex, leftRemaining, leftFeaturesUsed);
+    DecisionTreeWorkItem rightWorkItem(rightNodeIndex, rightRemaining, rightFeaturesUsed);
+    
+    AnkiAssert(leftWorkItem.remaining.buffer);
+    AnkiAssert(leftWorkItem.featuresUsed.buffer);
+    AnkiAssert(rightWorkItem.remaining.buffer);
+    AnkiAssert(rightWorkItem.featuresUsed.buffer);
+    
     buildTreeParams->workQueue.Lock(); // Lock workQueue
-    buildTreeParams->workQueue.Push_unsafe(DecisionTreeWorkItem(leftNodeIndex, leftRemaining, leftFeaturesUsed));
-    buildTreeParams->workQueue.Push_unsafe(DecisionTreeWorkItem(rightNodeIndex, rightRemaining, rightFeaturesUsed));
+    buildTreeParams->workQueue.Push_unsafe(leftWorkItem);
+    buildTreeParams->workQueue.Push_unsafe(rightWorkItem);
     buildTreeParams->workQueue.Unlock(); // Unlock workQueue
 
     workItem.featuresUsed.Free();
@@ -587,8 +599,10 @@ namespace Anki
       f64 lastTime = GetTimeF64();
 
       while(*(benchmarkingParams->isRunning)) {
+        const f64 endTime = startTime + benchmarkingParams->sampleEveryNSeconds * static_cast<f64>(benchmarkingParams->cpuUsage.size());
+        
         // Busy-wait to sleep
-        while(*(benchmarkingParams->isRunning) && (GetTimeF64() - lastTime) < benchmarkingParams->sampleEveryNSeconds) {
+        while(*(benchmarkingParams->isRunning) && (GetTimeF64() < endTime)) {
           usleep(BUSY_WAIT_SLEEP_MICROSECONDS);
         }
 
@@ -719,7 +733,7 @@ namespace Anki
       // Start benchmarking
       //
 
-      bool isBenchmarkingRunning = true;
+      volatile bool isBenchmarkingRunning = true;
 
       BenchmarkingParameters benchmarkingParams(&isBenchmarkingRunning, benchmarkSampleEveryNSeconds, cpuUsage, threadCount, numCompleted, labels.get_size());
 
