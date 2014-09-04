@@ -38,7 +38,8 @@ inline void usleep(const unsigned int microseconds) { Sleep(MAX(1, microseconds 
 
 namespace Anki
 {
-  inline void LockSimpleMutex(SimpleMutex mutex)
+  // WARNING: Linux and OSX will deadlock if the same thread locks the same mutex multiple times. Windows won't.
+  inline void LockSimpleMutex(SimpleMutex &mutex)
   {
 #ifdef _MSC_VER
     WaitForSingleObject(mutex, INFINITE);
@@ -47,7 +48,7 @@ namespace Anki
 #endif
   }
 
-  inline void UnlockSimpleMutex(SimpleMutex mutex)
+  inline void UnlockSimpleMutex(SimpleMutex &mutex)
   {
 #ifdef _MSC_VER
     ReleaseMutex(mutex);
