@@ -23,7 +23,7 @@ namespace Anki
     template<typename Type> class ThreadSafeFixedLengthList
     {
     public:
-      ThreadSafeFixedLengthList(s32 maximumSize, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false));
+      ThreadSafeFixedLengthList(s32 maximumSize, MemoryStack &memory, const Flags::Buffer flags);
 
       // The maximum size is set at object construction
       s32 get_maximumSize() const;
