@@ -1148,7 +1148,7 @@ namespace Anki
         RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
 
       bool numericalFailure;
-      const Result result = Transformations::ComputeHomographyFromQuads(quad, databaseImagesCorners, homography, numericalFailure, fastScratch);
+      Transformations::ComputeHomographyFromQuads(quad, databaseImagesCorners, homography, numericalFailure, fastScratch);
 
       // 2. For each pixel in the quad in the input image, compute the mean-absolute difference with each known marker image
       // Based off DrawFilledConvexQuadrilateral()

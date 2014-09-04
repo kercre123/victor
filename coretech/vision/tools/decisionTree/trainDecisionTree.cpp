@@ -194,7 +194,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
   //
 
   while(buildTreeParams->numCompleted.Get() < buildTreeParams->labels.get_size()) {
-    const f64 time0 = GetTimeF64();
+    // const f64 time0 = GetTimeF64();
 
     // Wait for a work item and a thread to become available
 
@@ -343,7 +343,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
         buildTreeParams->pNumLessThans[0],
         buildTreeParams->pNumGreaterThans[0]);
 
-      const ThreadResult result = ComputeInfoGain(reinterpret_cast<void*>(&newParameters));
+      ComputeInfoGain(reinterpret_cast<void*>(&newParameters));
 
       curNode.bestEntropy = newParameters.bestEntropy;
       curNode.whichFeature = newParameters.bestFeatureIndex;
@@ -492,7 +492,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
     buildTreeParams->workQueue.Push_unsafe(DecisionTreeWorkItem(rightNodeIndex, rightRemaining, workItem.featuresUsed));
     buildTreeParams->workQueue.Unlock(); // Unlock workQueue
 
-    const f64 time1 = GetTimeF64();
+    // const f64 time1 = GetTimeF64();
 
 #ifdef PRINT_INTERMEDIATE
     Anki::CoreTechPrint("Thread %d: Computed split %d and %d, with best entropy of %f, in %f seconds\n", buildTreeParams->threadId, static_cast<s32>(leftRemaining.size()), static_cast<s32>(rightRemaining.size()), curNode.bestEntropy, time1-time0);

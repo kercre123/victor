@@ -129,7 +129,7 @@ namespace Anki
         }
       }
 
-      const s32 numImages = parameters->featureValues[0].get_size();
+      //const s32 numImages = parameters->featureValues[0].get_size();
       const s32 numRemaining = parameters->remaining.size();
 
       const s32 maxLabel = FindMaxLabel(parameters->labels, parameters->remaining);

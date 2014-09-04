@@ -143,8 +143,6 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(newArray.IsValid(),
         newArray, "Array<Type>::LoadImage", "Invalid size");
 
-      s32 numBytesAllocated = 0;
-
       const u8 * restrict pCvImage = cvImage.data;
 
       for(s32 y=0; y<cvImage.rows; y++) {
@@ -221,7 +219,7 @@ namespace Anki
         uncompressedBufferStart = calloc(originalLength + MEMORY_ALIGNMENT + 64, 1);
         void * uncompressedBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(uncompressedBufferStart) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
-        const s32 compressionResult = uncompress(reinterpret_cast<Bytef*>(uncompressedBuffer), &originalLength, reinterpret_cast<Bytef*>(buffer) + 2*sizeof(s32), compressedLength);
+        uncompress(reinterpret_cast<Bytef*>(uncompressedBuffer), &originalLength, reinterpret_cast<Bytef*>(buffer) + 2*sizeof(s32), compressedLength);
 
         buffer = uncompressedBuffer;
         bufferLength = originalLength;
@@ -283,8 +281,8 @@ namespace Anki
       u8 * bufferStart = reinterpret_cast<u8*>(toSave.get_memoryStack().get_validBufferStart(startIndex));
       const s32 validUsedBytes = toSave.get_memoryStack().get_usedBytes() - startIndex;
 
-      const s32 startDiff = static_cast<s32>( reinterpret_cast<size_t>(bufferStart) - reinterpret_cast<size_t>(toSave.get_memoryStack().get_buffer()) );
-      const s32 endDiff = toSave.get_memoryStack().get_totalBytes() - toSave.get_memoryStack().get_usedBytes();
+      // const s32 startDiff = static_cast<s32>( reinterpret_cast<size_t>(bufferStart) - reinterpret_cast<size_t>(toSave.get_memoryStack().get_buffer()) );
+      // const s32 endDiff = toSave.get_memoryStack().get_totalBytes() - toSave.get_memoryStack().get_usedBytes();
 
       FILE *fp = fopen(filename, "wb");
 
@@ -355,6 +353,11 @@ namespace Anki
         if(compressed)
           free(compressed);
 
+        AnkiConditionalErrorAndReturnValue(
+          bytesWrittenForTextHeader == ARRAY_FILE_HEADER_LENGTH &&
+          bytesWritten == (compressedLength + 2*sizeof(s32)),
+          RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Save failed");
+        
 #else
         AnkiError("Array<Type>::SaveBinary", "Saving with compression requires OpenCV");
         return RESULT_FAIL;
@@ -367,6 +370,13 @@ namespace Anki
         const size_t bytesWritten = fwrite(bufferStart, 1, validUsedBytes, fp);
 
         const size_t bytesWrittenForFooter = fwrite(&SERIALIZED_BUFFER_FOOTER[0], 1, SERIALIZED_BUFFER_FOOTER_LENGTH, fp);
+        
+        AnkiConditionalErrorAndReturnValue(
+          bytesWrittenForTextHeader == ARRAY_FILE_HEADER_LENGTH &&
+          bytesWrittenForHeader == SERIALIZED_BUFFER_HEADER_LENGTH &&
+          bytesWritten == validUsedBytes &&
+          bytesWrittenForFooter == SERIALIZED_BUFFER_FOOTER_LENGTH,
+          RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Save failed");
       }
 
       fclose(fp);
