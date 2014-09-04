@@ -244,7 +244,6 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
     if(buildTreeParams->workQueue.Size_unsafe() == 0) {
       buildTreeParams->workQueue.Unlock(); //Unlock workQueue
       usleep(BUSY_WAIT_SLEEP_MICROSECONDS);
-      buildTreeParams->workQueue.Lock();
       continue;
     }
 
