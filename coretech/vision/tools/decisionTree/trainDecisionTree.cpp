@@ -21,10 +21,10 @@ using namespace Anki;
 using namespace Anki::Embedded;
 
 const s32 MAX_THREADS = 128; // Max threads
-const s32 MIN_IMAGES_FOR_MULTITHREAD = 100; // If the number of images left is below this, one one thread will be used to compute the entropy
+const s32 MIN_IMAGES_FOR_MULTITHREAD = 1000; // If the number of images left is below this, one one thread will be used to compute the entropy
 const s32 BUSY_WAIT_SLEEP_MICROSECONDS = 1000000;
 
-#define PRINT_INTERMEDIATE
+//#define PRINT_INTERMEDIATE
 #define PRINT_FAILURES
 
 // A list of UniqueCounts holds the number of instances of each value, like an integer histogram
