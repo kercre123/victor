@@ -24,6 +24,7 @@ namespace Anki
     // If delta is negative, it decrements
     // If this->value + delta is greater than maxValue, Increment will set this->value to this->maxValue
     // Returns the change between this->value, before and after the call. If this->value was not capped at this->maxValue, the return value is equal to delta.
+    // TODO: use a condition variable internally, with a producer-consumer model
     Type Increment(const Type delta);
 
     // Returns MIN(this->maxValue, value);

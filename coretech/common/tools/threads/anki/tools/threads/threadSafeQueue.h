@@ -3,7 +3,7 @@ File: threadSafeQueue.h
 Author: Peter Barnum
 Created: 2014
 
-WARNING: Difficult to use correctly. You must pair Front/Pop or Front/Unlock calls manually
+WARNING: Difficult to use correctly. You must handle Lock and Unlock manually
 
 Thread-safe queue. Works in Windows or Posix.
 
@@ -25,19 +25,18 @@ namespace Anki
   public:
     ThreadSafeQueue();
 
-    // WARNING: You must call either "Front and Pop" or "Front and Unlock"
-    // This is for efficiency, though it makes code errors potentially disasterous
-    const Type& Front() const; // WARNING: Locks the mutex, but doesn't unlock it
-    void Pop(); // WARNING: A thread can call Pop, even if it doesn't have the mutex lock
-    void Unlock() const; // WARNING: A thread can call Unlock, even if it doesn't have the mutex lock
+    // WARNING: You must Lock and Unlock manually
+    // This is for efficiency, though it makes code errors potentially disastrous
 
-    void Push(const Type &newValue);
+    void Lock() const;
+    void Unlock() const;
 
-    void Emplace(const Type &&newValue);
-
-    s32 Size() const;
-
-    bool Empty() const;
+    // WARNING: None of these check the mutex lock
+    const Type& Front_unsafe() const;
+    void Pop_unsafe();
+    void Push_unsafe(const Type &newValue);
+    void Emplace_unsafe(const Type &&newValue);
+    s32 Size_unsafe() const;
 
   protected:
     mutable SimpleMutex mutex;
@@ -56,74 +55,40 @@ namespace Anki
     buffer = std::queue<Type>();
   } // template<typename Type> ThreadSafeQueue::ThreadSafeQueue()
 
-  template<typename Type> const Type& ThreadSafeQueue<Type>::Front() const
+  template<typename Type> void ThreadSafeQueue<Type>::Lock() const
   {
     LockSimpleMutex(mutex);
-
-    return buffer.front();
-  } // template<typename Type> ThreadSafeQueue::Type Pop()
-
-  template<typename Type> void ThreadSafeQueue<Type>::Pop()
-  {
-    // TODO: check if the current thread has the lock
-
-    buffer.pop();
-
-    UnlockSimpleMutex(mutex);
-  } // ThreadSafeQueue<Type>::Pop()
+  } // ThreadSafeQueue<Type>::Lock()
 
   template<typename Type> void ThreadSafeQueue<Type>::Unlock() const
   {
-    // TODO: check if the current thread has the lock
-
     UnlockSimpleMutex(mutex);
   } // ThreadSafeQueue<Type>::Unlock()
 
-  template<typename Type> void ThreadSafeQueue<Type>::Push(const Type &newValue)
+  template<typename Type> const Type& ThreadSafeQueue<Type>::Front_unsafe() const
   {
-    LockSimpleMutex(mutex);
+    return buffer.front();
+  } // template<typename Type> ThreadSafeQueue::Type Front_unsafe()
 
+  template<typename Type> void ThreadSafeQueue<Type>::Pop_unsafe()
+  {
+    buffer.pop();
+  } // ThreadSafeQueue<Type>::Pop_unsafe()
+
+  template<typename Type> void ThreadSafeQueue<Type>::Push_unsafe(const Type &newValue)
+  {
     buffer.push(newValue);
+  } // template<typename Type> ThreadSafeQueue::void Push_unsafe(Type newValue)
 
-    UnlockSimpleMutex(mutex);
-  } // template<typename Type> ThreadSafeQueue::void Push(Type newValue)
-
-  template<typename Type> void ThreadSafeQueue<Type>::Emplace(const Type &&newValue)
+  template<typename Type> void ThreadSafeQueue<Type>::Emplace_unsafe(const Type &&newValue)
   {
-    LockSimpleMutex(mutex);
-
     buffer.emplace(newValue);
+  } // template<typename Type> ThreadSafeQueue::void Push_unsafe(Type newValue)
 
-    UnlockSimpleMutex(mutex);
-  } // template<typename Type> ThreadSafeQueue::void Push(Type newValue)
-
-  template<typename Type> s32 ThreadSafeQueue<Type>::Size() const
+  template<typename Type> s32 ThreadSafeQueue<Type>::Size_unsafe() const
   {
-    LockSimpleMutex(mutex);
-
-    s32 curSize = buffer.size();
-
-    UnlockSimpleMutex(mutex);
-
-    return curSize;
-  } // template<typename Type> bool ThreadSafeQueue::Size()
-
-  template<typename Type> bool ThreadSafeQueue<Type>::Empty() const
-  {
-    bool isEmpty;
-
-    LockSimpleMutex(mutex);
-
-    if(buffer.empty()) {
-      isEmpty = true;
-    } else {
-      isEmpty = false;
-    }
-
-    UnlockSimpleMutex(mutex);
-
-    return isEmpty;
-  } // template<typename Type> bool ThreadSafeQueue::Empty()
+    return buffer.size();
+  } // template<typename Type> bool ThreadSafeQueue::Size_unsafe()
 } // namespace Anki
 
 #endif // _THREAD_SAFE_QUEUE_H_
