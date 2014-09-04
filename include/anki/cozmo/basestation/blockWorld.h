@@ -182,9 +182,19 @@ namespace Anki
       // Adds/Removes proxObstacles based on current sensor readings and age of existing proxObstacles
       Result UpdateProxObstaclePoses(const Robot* robot);
       
+      // Finds existing objects that overlap with and are of the same type as objectSeen,
+      // where overlap is defined by the IsSameAs() function.
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                   const ObjectsMapByType_t& objectsExisting,
                                   std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const;
+
+      // Finds existing objects that intersect with objectSeen, with the exception
+      // of those that are of ignoreFamilies or ignoreTypes.
+      void FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
+                                   const std::set<ObjectFamily>& ignoreFamilies,
+                                   const std::set<ObjectType>& ignoreTypes,
+                                   std::vector<Vision::ObservableObject*>& intersectingExistingObjects,
+                                   f32 padding_mm) const;
       
       void CheckForUnobservedObjects(TimeStamp_t atTimestamp);
       

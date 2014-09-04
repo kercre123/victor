@@ -187,6 +187,39 @@ namespace Anki
     } // FindOverlappingObjects()
     
     
+    void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
+                                             const std::set<ObjectFamily>& ignoreFamiles,
+                                             const std::set<ObjectType>& ignoreTypes,
+                                             std::vector<Vision::ObservableObject*>& intersectingExistingObjects,
+                                             f32 padding_mm) const
+    {
+      for(auto & objectsByFamily : _existingObjects)
+      {
+        const bool useFamily = ignoreFamiles.find(objectsByFamily.first) == ignoreFamiles.end();
+        if(useFamily) {
+          for(auto & objectsByType : objectsByFamily.second)
+          {
+            const bool useType = ignoreTypes.find(objectsByType.first) == ignoreTypes.end();
+            if(useType) {
+              for(auto & objectAndId : objectsByType.second)
+              {
+                Vision::ObservableObject* objExist = objectAndId.second;
+
+                // Get quads of both objects and check for intersection
+                Quad2f quadExist = objExist->GetBoundingQuadXY(objExist->GetPose(), padding_mm);
+                Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
+          
+                if( quadExist.Intersects(quadSeen) ) {
+                  intersectingExistingObjects.push_back(objExist);
+                }
+              }  // for each object
+            }  // if not ignoreType
+          }  // for each type
+        }  // if not ignoreFamily
+      } // for each family
+      
+    } // FindIntersectingObjects()
+    
     
     void ClearAllOcclusionMaps(RobotManager* robotMgr)
     {
@@ -903,7 +936,7 @@ namespace Anki
           m->SetPose(obsPose);
           m->SetPoseParent(robot->GetPose().GetParent());
           
-          
+          // Check if this prox obstacle already exists
           std::vector<Vision::ObservableObject*> existingObjects;
           FindOverlappingObjects(m, _existingObjects[ObjectFamily::MARKERLESS_OBJECTS], existingObjects);
           
@@ -912,11 +945,23 @@ namespace Anki
             obj->SetLastObservedTime(lastTimestamp);
           }
           
-          // If there were any overlapping obstacles at all, there is no need to add this obstacle again.
+          // No need to add the obstacle again if it already exists
           if (!existingObjects.empty()) {
             delete m;
             return RESULT_OK;
           }
+          
+          
+          // Check if the obstacle intersects with any other existing objects in the scene.
+          std::set<ObjectFamily> ignoreFamilies;
+          std::set<ObjectType> ignoreTypes;
+          ignoreTypes.insert(MatPiece::Type::LETTERS_4x4);
+          FindIntersectingObjects(m, ignoreFamilies, ignoreTypes, existingObjects, 0);
+          if (!existingObjects.empty()) {
+            delete m;
+            return RESULT_OK;
+          }
+
           
           m->SetLastObservedTime(lastTimestamp);
           AddNewObject(ObjectFamily::MARKERLESS_OBJECTS, m);
