@@ -11,6 +11,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
+#include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -18,6 +19,12 @@
 
 #include "messageHandler.h"
 #include "vizManager.h"
+
+// The amount of time a proximity obstacle exists beyond the latest detection
+#define PROX_OBSTACLE_LIFETIME_MS  4000
+
+// The sensor value that must be met/exceeded in order to have detected an obstacle
+#define PROX_OBSTACLE_DETECT_THRESH   5
 
 namespace Anki
 {
@@ -35,6 +42,7 @@ namespace Anki
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MATS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::RAMPS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::BLOCKS;
+    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MARKERLESS_OBJECTS;
     
     // Instantiating an object family increments the unique counter:
     BlockWorld::ObjectFamily::ObjectFamily() {
@@ -423,20 +431,38 @@ namespace Anki
               for(auto & objectAndId : objectsByType.second)
               {
                 ActionableObject* object = dynamic_cast<ActionableObject*>(objectAndId.second);
-                CORETECH_THROW_IF(object == nullptr);
-                if (ignoreCarriedObjects && !object->IsBeingCarried()) {
-                  // TODO: If we are planning in the frame of the robot's current mat, this should not be GetWithRespectToOrigin()
-                  const f32 blockHeight = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
-                  
-                  // If this block's ID is not in the ignore list, then we will use it
-                  const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
-                  
-                  if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
-                  {
-                    rectangles.emplace_back(object->GetBoundingQuadXY(padding));
+                if (object != nullptr) {
+                  if (ignoreCarriedObjects && !object->IsBeingCarried()) {
+                    // TODO: If we are planning in the frame of the robot's current mat, this should not be GetWithRespectToOrigin()
+                    const f32 blockHeight = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
+                    
+                    // If this block's ID is not in the ignore list, then we will use it
+                    const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
+                    
+                    if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
+                    {
+                      rectangles.emplace_back(object->GetBoundingQuadXY(padding));
+                    }
                   }
+                  continue;
                 }
+
+                MarkerlessObject* mlObject = dynamic_cast<MarkerlessObject*>(objectAndId.second);
+                CORETECH_THROW_IF(mlObject == nullptr);
+                
+                const f32 blockHeight = mlObject->GetPose().GetWithRespectToOrigin().GetTranslation().z();
+                
+                // If this block's ID is not in the ignore list, then we will use it
+                const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
+                
+                if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
+                {
+                  rectangles.emplace_back(mlObject->Vision::ObservableObject::GetBoundingQuadXY(padding));
+                }
+                
+
               }
+              
             } // if(useType)
           } // for each type
         } // if useFamily
@@ -845,6 +871,76 @@ namespace Anki
       return objectsSeen.size();
       
     } // UpdateObjectPoses()
+
+    Result BlockWorld::UpdateProxObstaclePoses(const Robot* robot)
+    {
+      TimeStamp_t lastTimestamp = robot->GetLastMsgTimestamp();
+      
+      // Add prox obstacle if detected and one doesn't already exist
+      for (ProxSensor_t sensor = (ProxSensor_t)(0); sensor < NUM_PROX; sensor = (ProxSensor_t)(sensor + 1)) {
+        if (robot->GetProxSensorVal(sensor) >= PROX_OBSTACLE_DETECT_THRESH) {
+          
+          // Create an instance of the detected object
+          MarkerlessObject *m = new MarkerlessObject(MarkerlessObject::Type::PROX_OBSTACLE);
+          
+          // Get pose of detected object relative to robot according to which sensor it was detected by.
+          Pose3d proxTransform = robot->ProxDetectTransform[sensor];
+          
+          // Raise origin of object above ground.
+          // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
+          f32 x,y,z;
+          m->GetSize(x,y,z);
+          Pose3d raiseObject(0, Z_AXIS_3D, Vec3f(0,0,0.5f*z));
+          proxTransform = proxTransform * raiseObject;
+          
+          proxTransform.SetParent(robot->GetPose().GetParent());
+          
+
+          
+          // Compute pose of detected object
+          Pose3d obsPose(robot->GetPose());
+          obsPose = obsPose * proxTransform;
+          m->SetPose(obsPose);
+          m->SetPoseParent(robot->GetPose().GetParent());
+          
+          
+          std::vector<Vision::ObservableObject*> existingObjects;
+          FindOverlappingObjects(m, _existingObjects[ObjectFamily::MARKERLESS_OBJECTS], existingObjects);
+          
+          // Update the last observed time of existing overlapping obstacles
+          for(auto obj : existingObjects) {
+            obj->SetLastObservedTime(lastTimestamp);
+          }
+          
+          // If there were any overlapping obstacles at all, there is no need to add this obstacle again.
+          if (!existingObjects.empty()) {
+            delete m;
+            return RESULT_OK;
+          }
+          
+          m->SetLastObservedTime(lastTimestamp);
+          AddNewObject(ObjectFamily::MARKERLESS_OBJECTS, m);
+          didObjectsChange_ = true;
+        }
+      } // end for all prox sensors
+      
+      
+      // Delete object if too old
+      for (auto proxObsIter = _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].begin(); proxObsIter != _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].end(); ) {
+        if (lastTimestamp - proxObsIter->second->GetLastObservedTime() > PROX_OBSTACLE_LIFETIME_MS) {
+          
+          // Erase obstacle (with a postfix increment of the iterator)
+          delete proxObsIter->second;
+          proxObsIter = _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].erase(proxObsIter);
+          
+          didObjectsChange_ = true;
+          continue;
+        }
+        ++proxObsIter;
+      }
+      
+      return RESULT_OK;
+    }
     
     void BlockWorld::Update(uint32_t& numObjectsObserved)
     {
@@ -944,7 +1040,7 @@ namespace Anki
         // For now, look for collision with anything other than Mat objects
         // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
         // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
-        if(objectsByFamily.first != ObjectFamily::MATS)
+        if(objectsByFamily.first != ObjectFamily::MATS && objectsByFamily.first != ObjectFamily::MARKERLESS_OBJECTS)
         {
           for(auto & objectsByType : objectsByFamily.second)
           {
@@ -1046,6 +1142,17 @@ namespace Anki
       // robots in the world.
       robotMgr_->UpdateAllRobots();
 
+      
+      
+      // Find any obstacles detected by proximity sensors
+      for(auto robotID : robotMgr_->GetRobotIDList())
+      {
+        Robot* robot = robotMgr_->GetRobotByID(robotID);
+        CORETECH_ASSERT(robot != NULL);
+
+        UpdateProxObstaclePoses(robot);
+      }
+      
       
     } // Update()
     
@@ -1181,6 +1288,8 @@ namespace Anki
       //globalIDCounter = 0;
       ObjectID::Reset();
       
+      _existingObjects.clear();
+      didObjectsChange_ = true;
     }
     
     void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)

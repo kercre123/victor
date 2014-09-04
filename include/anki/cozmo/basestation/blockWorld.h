@@ -65,9 +65,10 @@ namespace Anki
         
         // Define new ObjectFamilies here:
         // (and be sure to instantiate them in the .cpp file)
-        static const ObjectFamily MATS;
-        static const ObjectFamily RAMPS;
-        static const ObjectFamily BLOCKS;
+        static const ObjectFamily MATS;     // Fixed mats, platforms, and bridges.
+        static const ObjectFamily RAMPS;    // Ramps
+        static const ObjectFamily BLOCKS;   // Blocks
+        static const ObjectFamily MARKERLESS_OBJECTS;  // Obstacles that are detected by means other than camera (e.g. prox obstacles)
         
       protected:
         static int UniqueFamilyCounter;
@@ -177,6 +178,9 @@ namespace Anki
                                PoseKeyObsMarkerMap_t& obsMarkers,
                                ObjectsMapByType_t& existingObjects,
                                const TimeStamp_t atTimestamp);
+      
+      // Adds/Removes proxObstacles based on current sensor readings and age of existing proxObstacles
+      Result UpdateProxObstaclePoses(const Robot* robot);
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                   const ObjectsMapByType_t& objectsExisting,

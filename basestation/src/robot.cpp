@@ -125,8 +125,6 @@ namespace Anki {
     , _forceReplanOnNextWorldChange(false)
     , _saveImages(false)
     , _camera(robotID)
-    , _proxLeft(0), _proxFwd(0), _proxRight(0)
-    , _proxFwdBlocked(false), _proxSidesBlocked(false)
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
@@ -177,9 +175,9 @@ namespace Anki {
       SetLiftAngle(msg.liftAngle);
 
       // Update proximity sensor values
-      SetProxSensorData(msg.proxLeft, msg.proxForward, msg.proxRight,
-                        msg.status & IS_PROX_FORWARD_BLOCKED,
-                        msg.status & IS_PROX_SIDE_BLOCKED);
+      SetProxSensorData(PROX_LEFT, msg.proxLeft, msg.status & IS_PROX_SIDE_BLOCKED);
+      SetProxSensorData(PROX_FORWARD, msg.proxForward, msg.status & IS_PROX_FORWARD_BLOCKED);
+      SetProxSensorData(PROX_RIGHT, msg.proxRight, msg.status & IS_PROX_SIDE_BLOCKED);
 
       if(DISPLAY_PROX_OVERLAY) {
         // printf("displaying: prox L,F,R (%2u, %2u, %2u), blocked: (%d,%d,%d)\n",
@@ -191,10 +189,13 @@ namespace Anki {
         VizManager::getInstance()->SetText(0,   // TODO:(bn) id??
                                            Anki::NamedColors::GREEN,
                                            "prox: (%2u, %2u, %2u) %d%d%d",
-                                           _proxLeft, _proxFwd, _proxRight,
-                                           IsProxSidesBlocked(),
-                                           IsProxForwardBlocked(),
-                                           IsProxSidesBlocked());
+                                           GetProxSensorVal(PROX_LEFT),
+                                           GetProxSensorVal(PROX_FORWARD),
+                                           GetProxSensorVal(PROX_RIGHT),
+                                           IsProxSensorBlocked(PROX_LEFT),
+                                           IsProxSensorBlocked(PROX_FORWARD),
+                                           IsProxSensorBlocked(PROX_RIGHT));
+      }
       }
       
       // Get ID of last/current path that the robot executed
@@ -2055,6 +2056,10 @@ namespace Anki {
       m.intensity = intensity;
       return _msgHandler->SendMessage(_ID, m);
     }
+    
+    const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D, Vec3f(50, 25, 0)),
+                                                  Pose3d(0, Z_AXIS_3D, Vec3f(50, 0, 0)),
+                                                  Pose3d(0, Z_AXIS_3D, Vec3f(50, -25, 0)) };
     
     const Quad2f Robot::CanonicalBoundingBoxXY({{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
                                                {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
