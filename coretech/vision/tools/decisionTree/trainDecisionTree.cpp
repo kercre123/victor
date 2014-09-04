@@ -22,7 +22,7 @@ using namespace Anki::Embedded;
 
 const s32 MAX_THREADS = 128; // Max threads
 const s32 MIN_IMAGES_FOR_MULTITHREAD = 1000; // If the number of images left is below this, one one thread will be used to compute the entropy
-const s32 BUSY_WAIT_SLEEP_MICROSECONDS = 1000000;
+const s32 BUSY_WAIT_SLEEP_MICROSECONDS = 100000;
 
 //#define PRINT_INTERMEDIATE
 #define PRINT_FAILURES
@@ -148,6 +148,7 @@ typedef struct BenchmarkingParameters
   ThreadSafeCounter<s32> &threadCount;
   ThreadSafeCounter<s32> &numCompleted;
   const s32 numTotal;
+  const ThreadSafeQueue<DecisionTreeWorkItem> &workQueue;
 
   BenchmarkingParameters(
     volatile bool * isRunning,
@@ -155,8 +156,9 @@ typedef struct BenchmarkingParameters
     std::vector<f32> &cpuUsage,
     ThreadSafeCounter<s32> &threadCount,
     ThreadSafeCounter<s32> &numCompleted,
-    const s32 numTotal)
-    : isRunning(isRunning), sampleEveryNSeconds(sampleEveryNSeconds), cpuUsage(cpuUsage), threadCount(threadCount), numCompleted(numCompleted), numTotal(numTotal)
+    const s32 numTotal,
+    const ThreadSafeQueue<DecisionTreeWorkItem> &workQueue)
+    : isRunning(isRunning), sampleEveryNSeconds(sampleEveryNSeconds), cpuUsage(cpuUsage), threadCount(threadCount), numCompleted(numCompleted), numTotal(numTotal), workQueue(workQueue)
   {
   }
 } BenchmarkingParameters;
@@ -616,9 +618,10 @@ namespace Anki
         const s32 numThreads = benchmarkingParams->threadCount.Get();
         const s32 numComplete = benchmarkingParams->numCompleted.Get();
 
-        CoreTechPrint("CPU %0.1f%% for %d threads. %d/%d = %0.2f%% completed in %0.2f seconds.\n",
+        CoreTechPrint("CPU %0.1f%% for %d threads (queue is %d long). %d/%d = %0.2f%% completed in %0.2f seconds.\n",
           curCpuUsage,
           numThreads,
+          benchmarkingParams->workQueue.Size_unsafe(),
           numComplete,
           benchmarkingParams->numTotal,
           100.0 * static_cast<f64>(numComplete) / static_cast<f64>(benchmarkingParams->numTotal),
@@ -734,7 +737,7 @@ namespace Anki
 
       volatile bool isBenchmarkingRunning = true;
 
-      BenchmarkingParameters benchmarkingParams(&isBenchmarkingRunning, benchmarkSampleEveryNSeconds, cpuUsage, threadCount, numCompleted, labels.get_size());
+      BenchmarkingParameters benchmarkingParams(&isBenchmarkingRunning, benchmarkSampleEveryNSeconds, cpuUsage, threadCount, numCompleted, labels.get_size(), workQueue);
 
       ThreadHandle benchmarkingThreadHandle = CreateSimpleThread(BenchmarkingThread, reinterpret_cast<void*>(&benchmarkingParams));
 
