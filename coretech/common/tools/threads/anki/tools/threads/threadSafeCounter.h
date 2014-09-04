@@ -63,6 +63,8 @@ namespace Anki
       this->value += trueDelta;
     }
 
+    AnkiAssert(this->value >= 0);
+
     UnlockSimpleMutex(mutex);
 
     return trueDelta;

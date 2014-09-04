@@ -112,7 +112,7 @@ template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const c
 
 void PrintUsage()
 {
-  printf(
+  CoreTechPrint(
     "Usage: run_trainDecisionTree <filenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistance> <maxThreads>\n"
     "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20 8");
 }
@@ -161,7 +161,7 @@ int main(int argc, const char* argv[])
       AreValid(scratch1, scratch2),
       -1, "run_trainDecisionTree", "Out of memory");
 
-    printf("Loading Inputs...");
+    CoreTechPrint("Loading Inputs...\n");
 
     featuresUsed = LoadIntoList_grayvalueBool(filenamePrefix, "featuresUsed.array", scratch1, scratch2);
     labelNames = LoadIntoList_permanentBuffer<const char *>(filenamePrefix, "labelNames.array", scratch1, memory);
@@ -178,7 +178,7 @@ int main(int argc, const char* argv[])
 
       if(iFeature > 0 && iFeature % 50 == 0) {
         f64 t1 = GetTimeF64();
-        printf("Loaded %d/%d in %f seconds\n", iFeature, numFeatures, t1-t0);
+        CoreTechPrint("Loaded %d/%d in %f seconds\n", iFeature, numFeatures, t1-t0);
         t0 = t1;
       }
     }
@@ -186,7 +186,7 @@ int main(int argc, const char* argv[])
     free(scratch1.get_buffer());
     free(scratch2.get_buffer());
 
-    printf("Done loading");
+    CoreTechPrint("Done loading\n");
   } // Load all inputs
 
   AnkiConditionalErrorAndReturnValue(
@@ -302,7 +302,7 @@ int main(int argc, const char* argv[])
 
   f64 time1 = GetTimeF64();
 
-  printf("Tree training took %f seconds. Tree is %d nodes.\n", time1-time0, static_cast<s32>(decisionTree.get_buffer().get_size()));
+  CoreTechPrint("Tree training took %f seconds. Tree is %d nodes.\n", time1-time0, static_cast<s32>(decisionTree.get_buffer().get_size()));
 
   return 0;
 }
