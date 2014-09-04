@@ -194,7 +194,9 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
   //
 
   while(buildTreeParams->numCompleted.Get() < buildTreeParams->labels.get_size()) {
-    // const f64 time0 = GetTimeF64();
+#ifdef PRINT_INTERMEDIATE
+    const f64 time0 = GetTimeF64();
+#endif
 
     // Wait for a work item and a thread to become available
 
@@ -492,9 +494,8 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
     buildTreeParams->workQueue.Push_unsafe(DecisionTreeWorkItem(rightNodeIndex, rightRemaining, workItem.featuresUsed));
     buildTreeParams->workQueue.Unlock(); // Unlock workQueue
 
-    // const f64 time1 = GetTimeF64();
-
 #ifdef PRINT_INTERMEDIATE
+    const f64 time1 = GetTimeF64();
     Anki::CoreTechPrint("Thread %d: Computed split %d and %d, with best entropy of %f, in %f seconds\n", buildTreeParams->threadId, static_cast<s32>(leftRemaining.size()), static_cast<s32>(rightRemaining.size()), curNode.bestEntropy, time1-time0);
 #endif
   } // while(buildTreeParams->workQueue.Size() > 0 && buildTreeParams->threadCount.Get() > 0)
@@ -551,7 +552,7 @@ namespace Anki
         const s32 numThreads = benchmarkingParams->threadCount.Get();
         const s32 numComplete = benchmarkingParams->numCompleted.Get();
 
-        CoreTechPrint("CPU %0.1f%% for %d threads. %d/%d = %0.2f%% completed int %0.2f seconds.\n",
+        CoreTechPrint("CPU %0.1f%% for %d threads. %d/%d = %0.2f%% completed in %0.2f seconds.\n",
           curCpuUsage,
           numThreads,
           numComplete,
