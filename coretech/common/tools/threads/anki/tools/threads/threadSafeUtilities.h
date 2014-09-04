@@ -22,7 +22,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ThreadHandle HANDLE
 #define ThreadResult DWORD WINAPI
 
-#define usleep Sleep
+// WARNING: Sleeps for a minimum of 1000 microseconds
+inline void usleep(const unsigned int microseconds) { Sleep(MAX(1, microseconds / 1000)); }
 
 #else
 

@@ -21,6 +21,7 @@ using namespace Anki;
 using namespace Anki::Embedded;
 
 const s32 MAX_THREADS = 128; // Max threads
+const s32 MIN_IMAGES_FOR_MULTITHREAD = 100; // If the number of images left is below this, one one thread will be used to compute the entropy
 
 typedef struct
 {
@@ -69,6 +70,7 @@ typedef struct BuildTreeThreadParameters
   ThreadSafeVector<TrainingFailure> &trainingFailures; //< Which nodes could not be trained?
   ThreadSafeFixedLengthList<DecisionTreeNode> &decisionTree; //< The output decision tree
   ThreadSafeCounter<s32> &threadCount; //< Counter for the number of running threads
+  ThreadSafeCounter<s32> &numCompleted; //< How many images have been assigned to a leaf node? If it is equal to labels.get_size(), then we're finished.
 
   BuildTreeThreadParameters(
     const vector<U8Bool> &featuresUsed,
@@ -86,8 +88,9 @@ typedef struct BuildTreeThreadParameters
     ThreadSafeQueue<DecisionTreeWorkItem> &workQueue,
     ThreadSafeVector<TrainingFailure> &trainingFailures,
     ThreadSafeFixedLengthList<DecisionTreeNode> &decisionTree,
-    ThreadSafeCounter<s32> &threadCount)
-    : featuresUsed(featuresUsed), labelNames(labelNames), labels(labels), featureValues(featureValues), leafNodeFraction(leafNodeFraction), leafNodeNumItems(leafNodeNumItems), u8MinDistance(u8MinDistance), u8ThresholdsToUse(u8ThresholdsToUse), maxSecondaryThreads(maxSecondaryThreads), pNumLessThans(pNumLessThans), pNumGreaterThans(pNumGreaterThans), maxLabel(maxLabel), workQueue(workQueue), trainingFailures(trainingFailures), decisionTree(decisionTree), threadCount(threadCount)
+    ThreadSafeCounter<s32> &threadCount,
+    ThreadSafeCounter<s32> &numCompleted)
+    : featuresUsed(featuresUsed), labelNames(labelNames), labels(labels), featureValues(featureValues), leafNodeFraction(leafNodeFraction), leafNodeNumItems(leafNodeNumItems), u8MinDistance(u8MinDistance), u8ThresholdsToUse(u8ThresholdsToUse), maxSecondaryThreads(maxSecondaryThreads), pNumLessThans(pNumLessThans), pNumGreaterThans(pNumGreaterThans), maxLabel(maxLabel), workQueue(workQueue), trainingFailures(trainingFailures), decisionTree(decisionTree), threadCount(threadCount), numCompleted(numCompleted)
   {
   }
 } BuildTreeThreadParameters;
@@ -160,16 +163,38 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
   ThreadHandle threadHandles[MAX_THREADS];
 
   //
-  // Keep popping items from the work queue, until the queue is empty.
+  // Keep popping items from the work queue, until all images are assigned to a leaf node
   //
 
-  // TODO: add ability to launch threads when the work items are far down in the tree
-
-  while(buildTreeParams->workQueue.Size() > 0) {
+  while(buildTreeParams->numCompleted.Get() < buildTreeParams->labels.get_size()) {
     const f64 time0 = GetTimeF64();
 
-    DecisionTreeWorkItem workItem = buildTreeParams->workQueue.Front();
-    buildTreeParams->workQueue.Pop();
+    // Wait for a work item and a thread to become available
+
+    buildTreeParams->workQueue.Lock(); // Lock workQueue
+
+    if(buildTreeParams->workQueue.Size_unsafe() == 0) {
+      buildTreeParams->workQueue.Unlock(); //Unlock workQueue
+      usleep(1000000);
+      continue;
+    }
+
+    DecisionTreeWorkItem workItem = buildTreeParams->workQueue.Front_unsafe();
+    buildTreeParams->workQueue.Pop_unsafe();
+
+    buildTreeParams->workQueue.Unlock(); //Unlock workQueue
+
+    // Wait for one or more threads to become available
+    s32 threadsToUse = 0;
+    while(threadsToUse == 0) {
+      if(workItem.remaining.size() < MIN_IMAGES_FOR_MULTITHREAD) {
+        threadsToUse = buildTreeParams->threadCount.Increment(1);
+      } else {
+        threadsToUse = buildTreeParams->threadCount.Increment(buildTreeParams->maxSecondaryThreads);
+      }
+
+      usleep(1000000);
+    } // while(threadsToUse == 0)
 
     AnkiAssert(workItem.remaining.size() > 0);
 
@@ -240,7 +265,11 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
       curNode.leftChildIndex = -mostCommonLabel - 1000000;
 
       // Comment or uncomment the next line as desired
-      printf("LeafNode for label = %d, or \"%s\" at depth %d\n", mostCommonLabel, buildTreeParams->labelNames[mostCommonLabel], curNode.depth);
+      Anki::CoreTechPrint("LeafNode for label = %d, or \"%s\" at depth %d\n", mostCommonLabel, buildTreeParams->labelNames[mostCommonLabel], curNode.depth);
+
+      buildTreeParams->numCompleted.Increment(workItem.remaining.size());
+
+      buildTreeParams->threadCount.Increment(-1);
 
       continue;
     } else if(!unusedFeaturesFound) {
@@ -249,7 +278,11 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
       curNode.leftChildIndex = -mostCommonLabel - 1000000;
 
       // Comment or uncomment the next line as desired
-      printf("MaxDepth LeafNode for label = %d, or \"%s\" at depth %d\n", mostCommonLabel, buildTreeParams->labelNames[mostCommonLabel], curNode.depth);
+      Anki::CoreTechPrint("MaxDepth LeafNode for label = %d, or \"%s\" at depth %d\n", mostCommonLabel, buildTreeParams->labelNames[mostCommonLabel], curNode.depth);
+
+      buildTreeParams->numCompleted.Increment(workItem.remaining.size());
+
+      buildTreeParams->threadCount.Increment(-1);
 
       continue;
     }
@@ -282,7 +315,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
       curNode.bestEntropy = newParameters.bestEntropy;
       curNode.whichFeature = newParameters.bestFeatureIndex;
       curNode.u8Threshold = newParameters.bestU8Threshold;
-    } else {
+    } else { // if(numSecondaryThreadsToUse == 1)
       const s32 numFeaturesPerThread = (numFeatures + numSecondaryThreadsToUse - 1) / numSecondaryThreadsToUse;
 
       for(s32 iThread=0; iThread<numSecondaryThreadsToUse; iThread++) {
@@ -310,8 +343,13 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
         }
 
         delete(computeInfoGainParams[iThread]);
+
+        // We don't decrement for the last thread, because we'll use that spot for this primary thread
+        if(iThread < (numSecondaryThreadsToUse - 1)) {
+          buildTreeParams->threadCount.Increment(-1);
+        }
       }
-    }
+    } // if(numSecondaryThreadsToUse == 1) ... else
 
     // If bestEntropy is too large, it means we could not split the data
     if(curNode.bestEntropy > 100000.0 || curNode.whichFeature < 0) {
@@ -326,30 +364,30 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
       buildTreeParams->trainingFailures.Push_back(failure);
 
-      printf("Could not split LeafNode for labels = {");
+      Anki::CoreTechPrint("Could not split LeafNode at depth %d for labels = {", curNode.depth);
 
       const s32 numLabels = failure.labels.size();
       for(s32 i=0; i<numLabels; i++) {
-        printf("(%d, %s), ", failure.labels[i].value, buildTreeParams->labelNames[failure.labels[i].value]);
+        Anki::CoreTechPrint("(%d, %s), ", failure.labels[i].value, buildTreeParams->labelNames[failure.labels[i].value]);
       }
 
-      printf("} at depth %d\n", curNode.depth);
-
       // TODO: show images?
+
+      buildTreeParams->numCompleted.Increment(workItem.remaining.size());
+
+      buildTreeParams->threadCount.Increment(-1);
 
       continue;
     } // if(newParameters.bestEntropy > 100000.0)
 
-    // Lock
-    buildTreeParams->decisionTree.Lock();
+    buildTreeParams->decisionTree.Lock(); // Lock decisionTree
 
     buildTreeParams->decisionTree.get_buffer().set_size(buildTreeParams->decisionTree.get_buffer().get_size() + 2);
 
     const s32 leftNodeIndex = buildTreeParams->decisionTree.get_buffer().get_size() - 2;
     const s32 rightNodeIndex = buildTreeParams->decisionTree.get_buffer().get_size() - 1;
 
-    buildTreeParams->decisionTree.Unlock();
-    // Unlock
+    buildTreeParams->decisionTree.Unlock(); // Unlock decisionTree
 
     buildTreeParams->decisionTree.get_buffer()[leftNodeIndex] = DecisionTreeNode(curNode.depth + 1, FLT_MAX, -1, 0, -1);;
     buildTreeParams->decisionTree.get_buffer()[rightNodeIndex] = DecisionTreeNode(curNode.depth + 1, FLT_MAX, -1, 0, -1);
@@ -401,13 +439,17 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
       pFeaturesUsed.values[iGray] = true;
     }
 
-    buildTreeParams->workQueue.Push(DecisionTreeWorkItem(leftNodeIndex, leftRemaining, workItem.featuresUsed));
-    buildTreeParams->workQueue.Push(DecisionTreeWorkItem(rightNodeIndex, rightRemaining, workItem.featuresUsed));
+    buildTreeParams->threadCount.Increment(-1);
+
+    buildTreeParams->workQueue.Lock(); // Lock workQueue
+    buildTreeParams->workQueue.Push_unsafe(DecisionTreeWorkItem(leftNodeIndex, leftRemaining, workItem.featuresUsed));
+    buildTreeParams->workQueue.Push_unsafe(DecisionTreeWorkItem(rightNodeIndex, rightRemaining, workItem.featuresUsed));
+    buildTreeParams->workQueue.Unlock(); // Unlock workQueue
 
     const f64 time1 = GetTimeF64();
 
-    printf("Computed split %d and %d, with best entropy of %f, in %f seconds\n", static_cast<s32>(leftRemaining.size()), static_cast<s32>(rightRemaining.size()), curNode.bestEntropy, time1-time0);
-  } // while(workQueue.size() > 0)
+    Anki::CoreTechPrint("Computed split %d and %d, with best entropy of %f, in %f seconds\n", static_cast<s32>(leftRemaining.size()), static_cast<s32>(rightRemaining.size()), curNode.bestEntropy, time1-time0);
+  } // while(buildTreeParams->workQueue.Size() > 0 && buildTreeParams->threadCount.Get() > 0)
 
   return 0;
 } // ThreadResult BuildTreeThread(void *voidParameters)
@@ -445,7 +487,7 @@ namespace Anki
       while(*(benchmarkingParams->isRunning)) {
         // Busy-wait to sleep
         while(*(benchmarkingParams->isRunning) && (GetTimeF64() - lastTime) < benchmarkingParams->sampleEveryNSeconds) {
-          usleep(10);
+          usleep(10000);
         }
 
         lastTime = GetTimeF64();
@@ -531,7 +573,9 @@ namespace Anki
       }
 
       ThreadSafeQueue<DecisionTreeWorkItem> workQueue = ThreadSafeQueue<DecisionTreeWorkItem>();
-      workQueue.Emplace(DecisionTreeWorkItem(0, remaining, featuresUsed));
+      workQueue.Lock();
+      workQueue.Emplace_unsafe(DecisionTreeWorkItem(0, remaining, featuresUsed));
+      workQueue.Unlock();
 
       ThreadSafeVector<TrainingFailure> trainingFailures = ThreadSafeVector<TrainingFailure>();
 
@@ -539,6 +583,7 @@ namespace Anki
       decisionTree.get_buffer()[0] = DecisionTreeNode(0, FLT_MAX, -1, 0, -1);
 
       ThreadSafeCounter<s32> threadCount(0, maxThreads);
+      ThreadSafeCounter<s32> numCompleted(0, s32_MAX);
 
       vector<BuildTreeThreadParameters*> newParameters;
       newParameters.resize(maxThreads);
@@ -567,7 +612,8 @@ namespace Anki
           workQueue,
           trainingFailures,
           decisionTree,
-          threadCount);
+          threadCount,
+          numCompleted);
 
         AnkiConditionalErrorAndReturnValue(
           newParameters[iThread],
