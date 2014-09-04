@@ -105,23 +105,6 @@ namespace Anki
       }
     } ComputeInfoGainParameters;
 
-    typedef struct BenchmarkingParameters
-    {
-      volatile bool * isRunning;
-      f64 sampleEveryNSeconds;
-      std::vector<f32> &cpuUsage;
-
-      BenchmarkingParameters(
-        volatile bool * isRunning,
-        f64 sampleEveryNSeconds,
-        std::vector<f32> &cpuUsage)
-        : isRunning(isRunning), sampleEveryNSeconds(sampleEveryNSeconds), cpuUsage(cpuUsage)
-      {
-      }
-    } BenchmarkingParameters;
-
-    ThreadResult BenchmarkingThread(void * voidBenchmarkingParams);
-
     ThreadResult ComputeInfoGain(void *computeInfoGainParameters);
 
     s32 FindMaxLabel(const FixedLengthList<s32> &labels, const std::vector<s32> &remaining);
@@ -136,6 +119,8 @@ namespace Anki
       const s32 u8MinDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
       const FixedLengthList<u8> &u8ThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
       const s32 maxThreads, //< Max threads to use (should be at least the number of cores)
+      f64 benchmarkSampleEveryNSeconds, //< How often to sample CPU usage for benchmarking
+      std::vector<f32> &cpuUsage, //< Sampled cpu percentages
       ThreadSafeFixedLengthList<DecisionTreeNode> &decisionTree //< The output decision tree
       );
   } // namespace Embedded

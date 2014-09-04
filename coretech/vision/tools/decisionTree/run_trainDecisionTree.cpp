@@ -121,7 +121,7 @@ int main(int argc, const char* argv[])
 {
   f64 time0 = GetTimeF64();
 
-  const f64 benchmarkSampleEveryNSeconds = 60.0;
+  const f64 benchmarkSampleEveryNSeconds = 15.0;
 
   if(argc != 7) {
     PrintUsage();
@@ -212,26 +212,6 @@ int main(int argc, const char* argv[])
 
   volatile bool isBenchmarkingRunning = true;
 
-  BenchmarkingParameters benchmarkingParams(&isBenchmarkingRunning, benchmarkSampleEveryNSeconds, cpuUsage);
-
-  ThreadHandle benchmarkingThreadHandle;
-
-#ifdef _MSC_VER
-  DWORD threadId = -1;
-  benchmarkingThreadHandle = CreateThread(
-    NULL,        // default security attributes
-    0,           // use default stack size
-    BenchmarkingThread, // thread function name
-    reinterpret_cast<void*>(&benchmarkingParams),    // argument to thread function
-    0,           // use default creation flags
-    &threadId);  // returns the thread identifier
-#else
-  pthread_attr_t connectionAttr;
-  pthread_attr_init(&connectionAttr);
-
-  pthread_create(&benchmarkingThreadHandle, &connectionAttr, BenchmarkingThread, reinterpret_cast<void*>(&benchmarkingParams));
-#endif
-
   const Result result = BuildTree(
     featuresUsed,
     labelNames, labels,
@@ -239,9 +219,11 @@ int main(int argc, const char* argv[])
     leafNodeFraction, leafNodeNumItems, u8MinDistance,
     u8ThresholdsToUse,
     maxThreads,
+    benchmarkSampleEveryNSeconds,
+    cpuUsage,
     decisionTree);
 
-  *(benchmarkingParams.isRunning) = false;
+  // result could fail, but let's try to save anyway
 
   // Save the output
   {
@@ -256,8 +238,9 @@ int main(int argc, const char* argv[])
     FixedLengthList<s32> whichFeatures(numNodes, scratch, Flags::Buffer(true, false, true));
     FixedLengthList<u8>  u8Thresholds(numNodes, scratch, Flags::Buffer(true, false, true));
     FixedLengthList<s32> leftChildIndexs(numNodes, scratch, Flags::Buffer(true, false, true));
+    FixedLengthList<f32> cpuUsageSamples(cpuUsage.size(), scratch, Flags::Buffer(true, false, true));
 
-    AnkiConditionalErrorAndReturnValue(AreValid(depths, bestEntropys, whichFeatures, u8Thresholds, leftChildIndexs),
+    AnkiConditionalErrorAndReturnValue(AreValid(depths, bestEntropys, whichFeatures, u8Thresholds, leftChildIndexs, cpuUsageSamples),
       -7, "run_trainDecisionTree", "Out of memory for saving");
 
     for(s32 iNode=0; iNode<numNodes; iNode++) {
@@ -275,19 +258,6 @@ int main(int argc, const char* argv[])
     SaveList(whichFeatures, filenamePrefix, "out_whichFeatures.array", scratch);
     SaveList(u8Thresholds, filenamePrefix, "out_u8Thresholds.array", scratch);
     SaveList(leftChildIndexs, filenamePrefix, "out_leftChildIndexs.array", scratch);
-
-    // The cpu usage thread should have finished by now
-
-#ifdef _MSC_VER
-    WaitForSingleObject(benchmarkingThreadHandle, INFINITE);
-#else
-    pthread_join(benchmarkingThreadHandle, NULL);
-#endif
-
-    FixedLengthList<f32> cpuUsageSamples(cpuUsage.size(), scratch, Flags::Buffer(true, false, true));
-
-    AnkiConditionalErrorAndReturnValue(cpuUsageSamples.IsValid(),
-      -7, "run_trainDecisionTree", "Out of memory for saving");
 
     for(u32 iSample=0; iSample<cpuUsage.size(); iSample++) {
       cpuUsageSamples[iSample] = cpuUsage[iSample];

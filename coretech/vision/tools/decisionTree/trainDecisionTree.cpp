@@ -22,6 +22,7 @@ using namespace Anki::Embedded;
 
 const s32 MAX_THREADS = 128; // Max threads
 const s32 MIN_IMAGES_FOR_MULTITHREAD = 100; // If the number of images left is below this, one one thread will be used to compute the entropy
+const s32 BUSY_WAIT_SLEEP_MICROSECONDS = 1000000;
 
 //#define PRINT_INTERMEDIATE
 #define PRINT_FAILURES
@@ -99,6 +100,27 @@ typedef struct BuildTreeThreadParameters
   {
   }
 } BuildTreeThreadParameters;
+
+typedef struct BenchmarkingParameters
+{
+  volatile bool * isRunning;
+  const f64 sampleEveryNSeconds;
+  std::vector<f32> &cpuUsage;
+  ThreadSafeCounter<s32> &threadCount;
+  ThreadSafeCounter<s32> &numCompleted;
+  const s32 numTotal;
+
+  BenchmarkingParameters(
+    volatile bool * isRunning,
+    const f64 sampleEveryNSeconds,
+    std::vector<f32> &cpuUsage,
+    ThreadSafeCounter<s32> &threadCount,
+    ThreadSafeCounter<s32> &numCompleted,
+    const s32 numTotal)
+    : isRunning(isRunning), sampleEveryNSeconds(sampleEveryNSeconds), cpuUsage(cpuUsage), threadCount(threadCount), numCompleted(numCompleted), numTotal(numTotal)
+  {
+  }
+} BenchmarkingParameters;
 
 template<typename Type> void maxAndMin(const Type * restrict pArray, const s32 * restrict pRemaining, const s32 numRemaining, Type &minValue, Type &maxValue);
 
@@ -180,7 +202,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
     if(buildTreeParams->workQueue.Size_unsafe() == 0) {
       buildTreeParams->workQueue.Unlock(); //Unlock workQueue
-      usleep(1000000);
+      usleep(BUSY_WAIT_SLEEP_MICROSECONDS);
       continue;
     }
 
@@ -198,7 +220,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
         numThreadsToUse = buildTreeParams->threadCount.Increment(buildTreeParams->maxSecondaryThreads);
       }
 
-      usleep(1000000);
+      usleep(BUSY_WAIT_SLEEP_MICROSECONDS);
     } // while(numThreadsToUse == 0)
 
     AnkiAssert(workItem.remaining.size() > 0);
@@ -508,17 +530,34 @@ namespace Anki
       // First call returns zero
       GetCpuUsage();
 
+      const f64 startTime = GetTimeF64();
+
       f64 lastTime = GetTimeF64();
 
       while(*(benchmarkingParams->isRunning)) {
         // Busy-wait to sleep
         while(*(benchmarkingParams->isRunning) && (GetTimeF64() - lastTime) < benchmarkingParams->sampleEveryNSeconds) {
-          usleep(10000);
+          usleep(BUSY_WAIT_SLEEP_MICROSECONDS);
         }
+
+        // This loop body will run every sampleEveryNSeconds seconds, and once right before quitting
 
         lastTime = GetTimeF64();
 
-        benchmarkingParams->cpuUsage.push_back(GetCpuUsage());
+        const f32 curCpuUsage = GetCpuUsage();
+
+        benchmarkingParams->cpuUsage.push_back(curCpuUsage);
+
+        const s32 numThreads = benchmarkingParams->threadCount.Get();
+        const s32 numComplete = benchmarkingParams->numCompleted.Get();
+
+        CoreTechPrint("CPU %0.1f%% for %d threads. %d/%d = %0.2f%% completed int %0.2f seconds.\n",
+          curCpuUsage,
+          numThreads,
+          numComplete,
+          benchmarkingParams->numTotal,
+          100.0 * static_cast<f64>(numComplete) / static_cast<f64>(benchmarkingParams->numTotal),
+          lastTime - startTime);
       } // while(*isRunning)
 
       return 0;
@@ -534,6 +573,8 @@ namespace Anki
       const s32 u8MinDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
       const FixedLengthList<u8> &u8ThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
       const s32 maxThreads, //< Max threads to use (should be at least the number of cores)
+      f64 benchmarkSampleEveryNSeconds, //< How often to sample CPU usage for benchmarking
+      std::vector<f32> &cpuUsage, //< Sampled cpu percentages
       ThreadSafeFixedLengthList<DecisionTreeNode> &decisionTree //< The output decision tree
       )
     {
@@ -618,6 +659,16 @@ namespace Anki
       threadHandles.resize(maxThreads);
 
       //
+      // Start benchmarking
+      //
+
+      bool isBenchmarkingRunning = true;
+
+      BenchmarkingParameters benchmarkingParams(&isBenchmarkingRunning, benchmarkSampleEveryNSeconds, cpuUsage, threadCount, numCompleted, labels.get_size());
+
+      ThreadHandle benchmarkingThreadHandle = CreateSimpleThread(BenchmarkingThread, reinterpret_cast<void*>(&benchmarkingParams));
+
+      //
       // Launch one primary thread for each maxThreads
       //
 
@@ -665,6 +716,10 @@ namespace Anki
           free(pNumGreaterThans[i][j]);
         }
       }
+
+      isBenchmarkingRunning = false;
+
+      WaitForSimpleThread(benchmarkingThreadHandle);
 
       return RESULT_OK;
     } // Result BuildTree()
