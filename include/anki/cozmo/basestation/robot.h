@@ -129,26 +129,27 @@ namespace Anki {
       Result SetOnRamp(bool t);
       void   SetRamp(const ObjectID& rampID, Ramp::TraversalDirection direction);
 
-      s8   GetCurrPathSegment() {return _currPathSegment;}
+      s8   GetCurrPathSegment() const {return _currPathSegment;}
       bool IsTraversingPath() const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
 
       u8   GetNumFreeSegmentSlots() const {return _numFreeSegmentSlots;}
       
-      u16  GetLastRecvdPathID() {return _lastRecvdPathID;}
-      u16  GetLastSentPathID() {return _lastSentPathID;}
+      u16  GetLastRecvdPathID() const {return _lastRecvdPathID;}
+      u16  GetLastSentPathID() const {return _lastSentPathID;}
 
       void SetCarryingObject(ObjectID carryObjectID) {_carryingObjectID = carryObjectID;}
       void UnSetCarryingObject() { _carryingObjectID.UnSet(); }
-      bool IsCarryingObject() {return _carryingObjectID.IsSet(); }
+      bool IsCarryingObject() const {return _carryingObjectID.IsSet(); }
       
-      bool IsPickingOrPlacing() {return _isPickingOrPlacing;}
-      bool IsPickedUp() {return _isPickedUp;}
-
-      u8 GetProxLeft() {return _proxLeft;}
-      u8 GetProxForward() {return _proxFwd;}
-      u8 GetProxRight() {return _proxRight;}
-      bool IsProxSidesBlocked() {return _proxSidesBlocked;}
-      bool IsProxForwardBlocked() {return _proxFwdBlocked;}
+      bool IsPickingOrPlacing() const {return _isPickingOrPlacing;}
+      bool IsPickedUp() const {return _isPickedUp;}
+      
+      u8 GetProxSensorVal(ProxSensor_t sensor) const {return _proxVals[sensor];}
+      bool IsProxSensorBlocked(ProxSensor_t sensor) const {return _proxBlocked[sensor];}
+      
+      // Pose of where objects are assumed to be with respect to robot pose when obstacles are detected
+      // by proximity sensors
+      static const Pose3d ProxDetectTransform[NUM_PROX];
       
       Result QueueObservedMarker(const MessageVisionMarker& msg);
       
@@ -394,8 +395,8 @@ namespace Anki {
       Vision::Camera            _camera;
       
       // Proximity sensors
-      u8 _proxLeft, _proxFwd, _proxRight;
-      bool _proxFwdBlocked, _proxSidesBlocked;
+      u8 _proxVals[NUM_PROX];
+      bool _proxBlocked[NUM_PROX];
       
       // Geometry / Pose
       std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
@@ -491,8 +492,7 @@ namespace Anki {
       void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
       void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
       void SetPickedUp(bool t);
-      void SetProxSensorData(const u8 left, const u8 forward, const u8 right,
-                             bool fwdBlocked, bool sidesBlocked) {_proxLeft=left; _proxFwd=forward; _proxRight=right; _proxFwdBlocked = fwdBlocked; _proxSidesBlocked = sidesBlocked;}
+      void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
 
       
       ///////// Messaging ////////

@@ -11,6 +11,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
+#include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -18,6 +19,12 @@
 
 #include "messageHandler.h"
 #include "vizManager.h"
+
+// The amount of time a proximity obstacle exists beyond the latest detection
+#define PROX_OBSTACLE_LIFETIME_MS  4000
+
+// The sensor value that must be met/exceeded in order to have detected an obstacle
+#define PROX_OBSTACLE_DETECT_THRESH   5
 
 namespace Anki
 {
@@ -47,6 +54,7 @@ namespace Anki
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MATS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::RAMPS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::BLOCKS;
+    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MARKERLESS_OBJECTS;
     
     // Instantiating an object family increments the unique counter:
     BlockWorld::ObjectFamily::ObjectFamily() {
@@ -167,7 +175,7 @@ namespace Anki
     void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                             const ObjectsMapByType_t& objectsExisting,
                                             std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const
-    {      
+    {
       auto objectsExistingIter = objectsExisting.find(objectSeen->GetType());
       if(objectsExistingIter != objectsExisting.end()) {
         for(auto objectToCheck : objectsExistingIter->second) {
@@ -177,10 +185,10 @@ namespace Anki
       
     } // FindOverlappingObjects()
     
-    
+
     void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
-                                const std::vector<Vision::ObservableObject*>& objectsSeen,
-                                std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const
+                                            const std::vector<Vision::ObservableObject*>& objectsSeen,
+                                            std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const
     {
       for(auto objectToCheck : objectsSeen) {
         CheckForOverlapHelper(objectExisting, objectToCheck, overlappingSeenObjects);
@@ -188,6 +196,40 @@ namespace Anki
     }
     
     
+void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
+                                             const std::set<ObjectFamily>& ignoreFamiles,
+                                             const std::set<ObjectType>& ignoreTypes,
+                                             std::vector<Vision::ObservableObject*>& intersectingExistingObjects,
+                                             f32 padding_mm) const
+    {
+      for(auto & objectsByFamily : _existingObjects)
+      {
+        const bool useFamily = ignoreFamiles.find(objectsByFamily.first) == ignoreFamiles.end();
+        if(useFamily) {
+          for(auto & objectsByType : objectsByFamily.second)
+          {
+            const bool useType = ignoreTypes.find(objectsByType.first) == ignoreTypes.end();
+            if(useType) {
+              for(auto & objectAndId : objectsByType.second)
+              {
+                Vision::ObservableObject* objExist = objectAndId.second;
+
+                // Get quads of both objects and check for intersection
+                Quad2f quadExist = objExist->GetBoundingQuadXY(objExist->GetPose(), padding_mm);
+                Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
+          
+                if( quadExist.Intersects(quadSeen) ) {
+                  intersectingExistingObjects.push_back(objExist);
+                }
+              }  // for each object
+            }  // if not ignoreType
+          }  // for each type
+        }  // if not ignoreFamily
+      } // for each family
+      
+    } // FindIntersectingObjects()
+
+
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                          ObjectsMapByType_t& objectsExisting,
                                          const TimeStamp_t atTimestamp)
@@ -401,20 +443,38 @@ namespace Anki
               for(auto & objectAndId : objectsByType.second)
               {
                 ActionableObject* object = dynamic_cast<ActionableObject*>(objectAndId.second);
-                CORETECH_THROW_IF(object == nullptr);
-                if (ignoreCarriedObjects && !object->IsBeingCarried()) {
-                  // TODO: If we are planning in the frame of the robot's current mat, this should not be GetWithRespectToOrigin()
-                  const f32 blockHeight = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
-                  
-                  // If this block's ID is not in the ignore list, then we will use it
-                  const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
-                  
-                  if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
-                  {
-                    rectangles.emplace_back(object->GetBoundingQuadXY(padding));
+                if (object != nullptr) {
+                  if (ignoreCarriedObjects && !object->IsBeingCarried()) {
+                    // TODO: If we are planning in the frame of the robot's current mat, this should not be GetWithRespectToOrigin()
+                    const f32 blockHeight = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
+                    
+                    // If this block's ID is not in the ignore list, then we will use it
+                    const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
+                    
+                    if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
+                    {
+                      rectangles.emplace_back(object->GetBoundingQuadXY(padding));
+                    }
                   }
+                  continue;
                 }
+
+                MarkerlessObject* mlObject = dynamic_cast<MarkerlessObject*>(objectAndId.second);
+                CORETECH_THROW_IF(mlObject == nullptr);
+                
+                const f32 blockHeight = mlObject->GetPose().GetWithRespectToOrigin().GetTranslation().z();
+                
+                // If this block's ID is not in the ignore list, then we will use it
+                const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
+                
+                if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
+                {
+                  rectangles.emplace_back(mlObject->Vision::ObservableObject::GetBoundingQuadXY(padding));
+                }
+                
+
               }
+              
             } // if(useType)
           } // for each type
         } // if useFamily
@@ -786,7 +846,6 @@ namespace Anki
       
     } // UpdateRobotPose()
     
-    
     size_t BlockWorld::UpdateObjectPoses(const Robot* robot,
                                          const Vision::ObservableObjectLibrary& objectLibrary,
                                          PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp,
@@ -826,6 +885,86 @@ namespace Anki
       return objectsSeen.size();
       
     } // UpdateObjectPoses()
+
+    Result BlockWorld::UpdateProxObstaclePoses()
+    {
+      TimeStamp_t lastTimestamp = robot_->GetLastMsgTimestamp();
+      
+      // Add prox obstacle if detected and one doesn't already exist
+      for (ProxSensor_t sensor = (ProxSensor_t)(0); sensor < NUM_PROX; sensor = (ProxSensor_t)(sensor + 1)) {
+        if (!robot_->IsProxSensorBlocked(sensor) && robot_->GetProxSensorVal(sensor) >= PROX_OBSTACLE_DETECT_THRESH) {
+          
+          // Create an instance of the detected object
+          MarkerlessObject *m = new MarkerlessObject(MarkerlessObject::Type::PROX_OBSTACLE);
+          
+          // Get pose of detected object relative to robot according to which sensor it was detected by.
+          Pose3d proxTransform = robot_->ProxDetectTransform[sensor];
+          
+          // Raise origin of object above ground.
+          // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
+          f32 x,y,z;
+          m->GetSize(x,y,z);
+          Pose3d raiseObject(0, Z_AXIS_3D, Vec3f(0,0,0.5f*z));
+          proxTransform = proxTransform * raiseObject;
+          
+          proxTransform.SetParent(robot_->GetPose().GetParent());
+          
+          // Compute pose of detected object
+          Pose3d obsPose(robot_->GetPose());
+          obsPose = obsPose * proxTransform;
+          m->SetPose(obsPose);
+          m->SetPoseParent(robot_->GetPose().GetParent());
+          
+          // Check if this prox obstacle already exists
+          std::vector<Vision::ObservableObject*> existingObjects;
+          FindOverlappingObjects(m, _existingObjects[ObjectFamily::MARKERLESS_OBJECTS], existingObjects);
+          
+          // Update the last observed time of existing overlapping obstacles
+          for(auto obj : existingObjects) {
+            obj->SetLastObservedTime(lastTimestamp);
+          }
+          
+          // No need to add the obstacle again if it already exists
+          if (!existingObjects.empty()) {
+            delete m;
+            return RESULT_OK;
+          }
+          
+          
+          // Check if the obstacle intersects with any other existing objects in the scene.
+          std::set<ObjectFamily> ignoreFamilies;
+          std::set<ObjectType> ignoreTypes;
+          ignoreTypes.insert(MatPiece::Type::LETTERS_4x4);
+          FindIntersectingObjects(m, ignoreFamilies, ignoreTypes, existingObjects, 0);
+          if (!existingObjects.empty()) {
+            delete m;
+            return RESULT_OK;
+          }
+
+          
+          m->SetLastObservedTime(lastTimestamp);
+          AddNewObject(ObjectFamily::MARKERLESS_OBJECTS, m);
+          didObjectsChange_ = true;
+        }
+      } // end for all prox sensors
+      
+      
+      // Delete object if too old
+      for (auto proxObsIter = _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].begin(); proxObsIter != _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].end(); ) {
+        if (lastTimestamp - proxObsIter->second->GetLastObservedTime() > PROX_OBSTACLE_LIFETIME_MS) {
+          
+          // Erase obstacle (with a postfix increment of the iterator)
+          delete proxObsIter->second;
+          proxObsIter = _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].erase(proxObsIter);
+          
+          didObjectsChange_ = true;
+          continue;
+        }
+        ++proxObsIter;
+      }
+      
+      return RESULT_OK;
+    }
     
     
     void BlockWorld::Update(uint32_t& numObjectsObserved)
@@ -916,7 +1055,7 @@ namespace Anki
         // For now, look for collision with anything other than Mat objects
         // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
         // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
-        if(objectsByFamily.first != ObjectFamily::MATS)
+        if(objectsByFamily.first != ObjectFamily::MATS && objectsByFamily.first != ObjectFamily::MARKERLESS_OBJECTS)
         {
           for(auto & objectsByType : objectsByFamily.second)
           {
@@ -1008,6 +1147,8 @@ namespace Anki
       // Toss any remaining markers?
       ClearAllObservedMarkers();
       
+      UpdateProxObstaclePoses();
+
     } // Update()
     
     Result BlockWorld::QueueObservedMarker(HistPoseKey& poseKey, Vision::ObservedMarker& marker)

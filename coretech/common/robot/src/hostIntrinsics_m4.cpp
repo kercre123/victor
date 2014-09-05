@@ -532,6 +532,82 @@ namespace Anki
 
       return register1;
     } // u32 __UQSUB16(const u32 val1, const u32 val2)
+    
+    
+    u32 __UASX(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      register1._u16x2.hi = register1._u16x2.hi + register2._u16x2.lo;
+      register1._u16x2.lo = register1._u16x2.lo - register2._u16x2.hi;
+
+      // NOT SURE IF THESE ARE SET (Documentation is inconsistent)
+      geBits._u16x2.hi = register1._u16x2.hi >= 0x10000 ? 0xFFFF : 0;
+      geBits._u16x2.lo = register1._u16x2.lo >= 0 ? 0xFFFF : 0;
+
+      return register1;
+    } //u32 __UASX(const u32 val1, const u32 val2)
+    
+    
+    u32 __USAX(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      register1._u16x2.hi = register1._u16x2.hi - register2._u16x2.lo;
+      register1._u16x2.lo = register1._u16x2.lo + register2._u16x2.hi;
+      
+      // NOT SURE IF THESE ARE SET (Documentation is inconsistent)
+      geBits._u16x2.hi = register1._u16x2.hi >= 0 ? 0xFFFF : 0;
+      geBits._u16x2.lo = register1._u16x2.lo >= 0x10000 ? 0xFFFF : 0;
+
+      return register1;
+    } // u32 __USAX(const u32 val1, const u32 val2)
+
+    u32 __SASX(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      register1._s16x2.hi = register1._s16x2.hi + register2._s16x2.lo;
+      register1._s16x2.lo = register1._s16x2.lo - register2._s16x2.hi;
+
+      // NOT SURE IF THESE ARE SET (Documentation is inconsistent)
+      geBits._s16x2.hi = register1._s16x2.hi >= 0 ? 0xFFFF : 0;
+      geBits._s16x2.lo = register1._s16x2.lo >= 0 ? 0xFFFF : 0;
+
+      return register1;
+    } //u32 __SASX(const u32 val1, const u32 val2)
+    
+    u32 __SSAX(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      register1._s16x2.hi = register1._s16x2.hi - register2._s16x2.lo;
+      register1._s16x2.lo = register1._s16x2.lo + register2._s16x2.hi;
+      
+      // NOT SURE IF THESE ARE SET (Documentation is inconsistent)
+      geBits._s16x2.hi = register1._s16x2.hi >= 0 ? 0xFFFF : 0;
+      geBits._s16x2.lo = register1._s16x2.lo >= 0 ? 0xFFFF : 0;
+
+      return register1;
+    } // u32 __SSAX(const u32 val1, const u32 val2)
+
+    u32 __USAD8(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      for(s32 i=0; i<4; i++) {
+        // Do the operation
+        register1._u8x4.v[i] = ABS(register1._u8x4.v[i] - register2._u8x4.v[i]);
+      }
+
+      return register1._u8x4.v[0] + register1._u8x4.v[1] + 
+        register1._u8x4.v[2] + register1._u8x4.v[3];
+    } // u32 __USAD8(const u32 val1, const u32 val2);
 
     s32 __SMLAD(const u32 val1, const u32 val2, const s32 accumulator)
     {
