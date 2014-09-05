@@ -250,6 +250,7 @@ namespace Anki {
       // Pure virtual methods that must be implemented by derived classes
       virtual Result SelectDockAction(ActionableObject* object) = 0;
       virtual PreActionPose::ActionType GetPreActionType() = 0;
+      virtual IAction::ActionResult Verify() const = 0;
       
       const ObjectID& GetDockObjectID() const { return _dockObjectID; }
       
@@ -257,7 +258,7 @@ namespace Anki {
       const Vision::KnownMarker*  _dockMarker;
       const Vision::KnownMarker*  _dockMarker2; // for bridges
       DockAction_t                _dockAction;
-      Pose3d                      _dockObjectOrigPose;
+
     }; // class IDockAction
 
     
@@ -273,6 +274,11 @@ namespace Anki {
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
       
       virtual Result SelectDockAction(ActionableObject* object) override;
+      
+      virtual IAction::ActionResult Verify() const override;
+      
+      // For verifying if we successfully picked up the object
+      Pose3d _dockObjectOrigPose;
       
     }; // class DockWithObjectAction
 
@@ -293,6 +299,8 @@ namespace Anki {
       // Need longer than default for check if done:
       virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }
       
+      ObjectID                    _carryingObjectID;
+      const Vision::KnownMarker*  _carryObjectMarker;
     };
     
     class CrossBridgeAction : public IDockAction
@@ -307,6 +315,8 @@ namespace Anki {
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       
       virtual Result SelectDockAction(ActionableObject* object) override;
+      
+      virtual IAction::ActionResult Verify() const override;
       
       virtual Result DockWithObjectHelper(const std::vector<PreActionPose>& preActionPoses,
                                           const size_t closestIndex) override;
@@ -324,6 +334,8 @@ namespace Anki {
     protected:
       
       virtual Result SelectDockAction(ActionableObject* object) override;
+      
+      virtual IAction::ActionResult Verify() const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       

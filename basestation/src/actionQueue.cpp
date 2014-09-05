@@ -629,74 +629,8 @@ namespace Anki {
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
         
-        Result lastResult = RESULT_OK;
-        
-        // TODO: should these be moved to virtual "Verify" methods implemented by derived classes?
-        switch(_dockAction)
-        {
-          case DA_PICKUP_LOW:
-          case DA_PICKUP_HIGH:
-          {
-            _robot.PickUpDockObject(_dockObjectID, _dockMarker);
-            
-            lastResult = _robot.VerifyObjectPickup();
-            if(lastResult != RESULT_OK) {
-              PRINT_NAMED_ERROR("IDockAction.CheckIfDone.VerifyObjectPickupFailed",
-                                "VerifyObjectPickup returned error code %x.\n",
-                                lastResult);
-              actionResult = FAILURE_PROCEED;
-            } else {
-              actionResult = SUCCESS;
-            }
-            break;
-          } // case PICKUP
-            
-          case DA_PLACE_LOW:
-          case DA_PLACE_HIGH:
-          {
-            _robot.PlaceCarriedObject();
-            
-            lastResult = _robot.VerifyObjectPlacement();
-            if(lastResult != RESULT_OK) {
-              PRINT_NAMED_ERROR("IDockAction.CheckIfDone.VerifyObjectPlacementFailed",
-                                "VerifyObjectPlacement returned error code %x.\n",
-                                lastResult);
-              actionResult = FAILURE_PROCEED;
-            } else {
-              actionResult = SUCCESS;
-            }
-            break;
-          } // case PLACE
-            
-          case DA_RAMP_ASCEND:
-          case DA_RAMP_DESCEND:
-          {
-            // TODO: Need to do some kind of verification here?
-            PRINT_NAMED_INFO("IDockAction.CheckIfDone.RampAscentOrDescentComplete",
-                             "Robot has completed going up/down ramp.\n");
-            actionResult = SUCCESS;
-            break;
-          } // case RAMP
-            
-          case DA_CROSS_BRIDGE:
-          {
-            // TODO: Need some kind of verificaiton here?
-            PRINT_NAMED_INFO("IDockAction.CheckIfDone.BridgeCrossingComplete",
-                             "Robot has completed crossing a bridge.\n");
-            actionResult = SUCCESS;
-            break;
-          }
-            
-          default:
-            PRINT_NAMED_ERROR("IDockAction.CheckIfDone.UnknownDockAction",
-                              "Reached unknown dockAction case.\n");
-            assert(false);
-            actionResult = FAILURE_ABORT;
-            
-        } // switch(_dockAction)
+        actionResult = Verify();
       }
-      
-      // TODO: Should something UN-set the robot's dock object ID?
       
       return actionResult;
     } // CheckIfDone()
@@ -734,9 +668,13 @@ namespace Anki {
     
     Result PickUpObjectAction::SelectDockAction(ActionableObject* object)
     {
+      // Record the object's original pose (before picking it up) so we can
+      // verify later whether we succeeded.
+      _dockObjectOrigPose = object->GetPose();
+      
       // Choose docking action based on block's position and whether we are
       // carrying a block
-      const f32 dockObjectHeight = object->GetPose().GetTranslation().z();
+      const f32 dockObjectHeight = _dockObjectOrigPose.GetTranslation().z();
       _dockAction = DA_PICKUP_LOW;
       
       // TODO: Stop using constant ROBOT_BOUNDING_Z for this
@@ -754,6 +692,75 @@ namespace Anki {
       
       return RESULT_OK;
     } // SelectDockAction()
+    
+    IAction::ActionResult PickUpObjectAction::Verify() const
+    {
+      if(_robot.IsCarryingObject() == false) {
+        PRINT_NAMED_ERROR("PickUpObjectAction.Verify.RobotNotCarryignObject",
+                          "Expecting robot to think its carrying an object at this point.\n");
+        return FAILURE_ABORT;
+      }
+      
+      BlockWorld& blockWorld = _robot.GetBlockWorld();
+      
+      // We should _not_ still see a object with the
+      // same type as the one we were supposed to pick up in that
+      // block's original position because we should now be carrying it.
+      Vision::ObservableObject* carryObject = blockWorld.GetObjectByID(_robot.GetCarryingObject());
+      if(carryObject == nullptr) {
+        PRINT_NAMED_ERROR("PickUpObjectAction.Verify.CarryObjectNoLongerExists",
+                          "Object %d we were carrying no longer exists in the world.\n",
+                          _robot.GetCarryingObject().GetValue());
+        return FAILURE_ABORT;
+      }
+      
+      const BlockWorld::ObjectsMapByID_t& objectsWithType = blockWorld.GetExistingObjectsByType(carryObject->GetType());
+      
+      bool objectInOriginalPoseFound = false;
+      for(auto object : objectsWithType) {
+        // TODO: Make thresholds parameters
+        // TODO: is it safe to always have useAbsRotation=true here?
+        if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, carryObject->
+                                                           GetRotationAmbiguities(),
+                                                           15.f, DEG_TO_RAD(25), true))
+        {
+          objectInOriginalPoseFound = true;
+          break;
+        }
+      }
+      
+      if(objectInOriginalPoseFound)
+      {
+        // Must not actually be carrying the object I thought I was!
+        blockWorld.ClearObject(_robot.GetCarryingObject());
+        _robot.UnSetCarryingObject();
+        PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
+        return FAILURE_RETRY;
+      } else {
+        //_carryingObjectID = _dockObjectID;  // Already set?
+        //_carryingMarker   = _dockMarker;   //   "
+        PRINT_INFO("Object pick-up SUCCEEDED!\n");
+        return SUCCESS;
+      }
+
+      
+      //////////// OLD ////
+      
+      /*
+      // Check to see if object is missing from original pose
+      Result lastResult = _robot.VerifyObjectPickup();
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("IDockAction.CheckIfDone.VerifyObjectPickupFailed",
+                          "VerifyObjectPickup returned error code %x.\n",
+                          lastResult);
+        return FAILURE_PROCEED;
+      } else {
+        return SUCCESS;
+      }
+       */
+      
+    } // Verify()
+       
     
 #pragma mark ---- PutDownObjectAction ----
     
@@ -782,37 +789,10 @@ namespace Anki {
                             "Robot %d executing PutDownObjectAction but not carrying object.\n", _robot.GetID());
           result = FAILURE_ABORT;
         } else {
+          
+          _carryingObjectID  = _robot.GetCarryingObject();
+          _carryObjectMarker = _robot.GetCarryingMarker();
         
-#if 0
-          // Set desired position of marker (via placeOnGroundPose) to be exactly where robot is now
-          const Pose3d& robotPose = _robot.GetPose();
-          
-          const f32 markerAngle = robotPose.GetRotationAngle<'Z'>().ToFloat();
-          
-          const Vec3f markerPt(robotPose.GetTranslation().x() + (ORIGIN_TO_LOW_LIFT_DIST_MM * cosf(markerAngle)),
-                               robotPose.GetTranslation().y() + (ORIGIN_TO_LOW_LIFT_DIST_MM * sinf(markerAngle)),
-                               robotPose.GetTranslation().z());
-          
-          Pose3d relPose(robotPose.GetRotationMatrix(), markerPt);
-          /*
-          Pose3d placementPose(robotPose.GetRotationMatrix(), markerPt);
-          
-          // Compute pose of placeOnGroundPose (which is the pose of the marker on the carried object
-          // that faces the robot when the object is placed in the desired pose on the ground)
-          // relative to robot to yield the one-time docking error signal for placing the carried object on the ground.
-          Pose3d relPose;
-          if (!placementPose.GetWithRespectTo(robotPose, relPose)) {
-            PRINT_NAMED_ERROR("PutDownObjectAction.CheckPreconditions.PlaceMentPoseError", "\n");
-            result = FAILURE_ABORT;
-          }
-           */
-          
-          PRINT_INFO("dockMarker wrt to robot pose: %f %f %f ang: %f\n", relPose.GetTranslation().x(), relPose.GetTranslation().y(), relPose.GetTranslation().z(), relPose.GetRotationAngle<'Z'>().ToFloat());
-          
-          if(_robot.SendPlaceObjectOnGround(relPose.GetTranslation().x(),
-                                            relPose.GetTranslation().y(),
-                                            relPose.GetRotationAngle<'Z'>().ToFloat() ) == RESULT_OK)
-#endif 
           if(_robot.SendPlaceObjectOnGround(0, 0, 0) == RESULT_OK)
           {
             result = SUCCESS;
@@ -845,6 +825,7 @@ namespace Anki {
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
         
+        /*
         Result lastResult = _robot.VerifyObjectPlacement();
         if(lastResult != RESULT_OK) {
           PRINT_NAMED_ERROR("Robot.Update.VerifyObjectPlacementFailed",
@@ -854,12 +835,41 @@ namespace Anki {
         } else {
           actionResult = SUCCESS;
         }
-
+         */
+        
+        // In place mode, we _should_ now see an object with the ID of the
+        // one we were carrying, in the place we think we left it when
+        // we placed it.
+        // TODO: check to see it ended up in the right place?
+        Vision::ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_carryingObjectID);
+        if(object == nullptr) {
+          PRINT_NAMED_ERROR("PutDownObjectAction.CheckIfDone.CarryObjectNoLongerExists",
+                            "Object %d we were carrying no longer exists in the world.\n",
+                            _robot.GetCarryingObject().GetValue());
+          return FAILURE_ABORT;
+        }
+        else if(object->GetLastObservedTime() > (_robot.GetLastMsgTimestamp()-500))
+        {
+          // We've seen the object in the last half second (which could
+          // not be true if we were still carrying it)
+          PRINT_NAMED_INFO("PutDownObjectAction.CheckIfDone.ObjectPlacementSuccess",
+                           "Verification of object placement SUCCEEDED!\n");
+          return SUCCESS;
+        } else {
+          PRINT_NAMED_INFO("PutDownObjectAction.CheckIfDone.ObjectPlacementSuccess",
+                           "Verification of object placement FAILED!\n");
+          // TODO: correct to assume we are still carrying the object?
+          _robot.PickUpObject(_carryingObjectID, _carryObjectMarker); // re-pickup object to attach it to the lift again
+          return FAILURE_RETRY;
+        }
+        
       } // if robot is not picking/placing or moving
       
       return actionResult;
       
     } // CheckIfDone()
+    
+
     
 #pragma mark ---- CrossBridgeAction ----
     
@@ -906,6 +916,14 @@ namespace Anki {
       _dockAction = DA_CROSS_BRIDGE;
       return RESULT_OK;
     } // SelectDockAction()
+    
+    IAction::ActionResult CrossBridgeAction::Verify() const
+    {
+      // TODO: Need some kind of verificaiton here?
+      PRINT_NAMED_INFO("CrossBridgeAction.Verify.BridgeCrossingComplete",
+                       "Robot has completed crossing a bridge.\n");
+      return SUCCESS;
+    } // Verify()
     
     
 #pragma mark ---- AscendOrDescendRampAction ----
@@ -955,6 +973,14 @@ namespace Anki {
       return result;
       
     } // SelectDockAction()
+    
+    IAction::ActionResult AscendOrDescendRampAction::Verify() const
+    {
+      // TODO: Need to do some kind of verification here?
+      PRINT_NAMED_INFO("AscendOrDescendRampAction.Verify.RampAscentOrDescentComplete",
+                       "Robot has completed going up/down ramp.\n");
+      return SUCCESS;
+    } // Verify()
     
     /*
     static void TestInstantiation(void)

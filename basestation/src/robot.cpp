@@ -2107,16 +2107,19 @@ namespace Anki {
 
       CORETECH_ASSERT(marker != nullptr);
 
-      /*
+      // Need to store these so that when we receive notice from the physical
+      // robot that it has picked up an object we can transition the docking
+      // object to being carried, using PickUpDockObject()
       _dockObjectID = objectID;
       _dockMarker  = marker;
       
+      /*
       if(_dockMarker2 == nullptr) {
         marker2 = _dockMarker;
       }
       */
       
-      _dockObjectOrigPose = object->GetPose();
+      //_dockObjectOrigPose = object->GetPose();
       
       // Dock marker has to be a child of the dock block
       if(marker->GetPose().GetParent() != &object->GetPose()) {
@@ -2133,7 +2136,7 @@ namespace Anki {
     }
     
     
-    Result Robot::PickUpDockObject(const ObjectID& objectID, const Vision::KnownMarker* dockMarker)
+    Result Robot::PickUpObject(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
     {
       if(!objectID.IsSet()) {
         PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectIDNotSet",
@@ -2141,7 +2144,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      if(dockMarker == nullptr) {
+      if(objectMarker == nullptr) {
         PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoDockMarkerSet",
                           "No docking marker set, but told to pick up object.\n");
         return RESULT_FAIL;
@@ -2161,7 +2164,7 @@ namespace Anki {
       }
       
       _carryingObjectID = objectID;
-      _carryingMarker   = dockMarker;
+      _carryingMarker   = objectMarker;
 
       // Base the object's pose relative to the lift on how far away the dock
       // marker is from the center of the block
@@ -2173,7 +2176,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      objectPoseWrtLiftPose.SetTranslation({{dockMarker->GetPose().GetTranslation().Length() +
+      objectPoseWrtLiftPose.SetTranslation({{objectMarker->GetPose().GetTranslation().Length() +
         LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f}});
       
       // make part of the lift's pose chain so the object will now be relative to
@@ -2191,7 +2194,7 @@ namespace Anki {
       
     } // PickUpDockBlock()
     
-    
+    /*
     Result Robot::VerifyObjectPickup()
     {
       // We should _not_ still see a object with the
@@ -2235,13 +2238,13 @@ namespace Anki {
       }
       
     } // VerifyObjectPickup()
-    
+    */
     
     Result Robot::PlaceCarriedObject() //const TimeStamp_t atTime)
     {
-      if(!_carryingObjectID.IsSet()) {
+      if(IsCarryingObject() == false) {
         PRINT_NAMED_WARNING("Robot.PlaceCarriedObject.CarryingObjectNotSpecified",
-                            "No carrying object set, but told to place one.\n");
+                            "Robot not carrying object, but told to place one.\n");
         return RESULT_FAIL;
       }
       
@@ -2254,30 +2257,7 @@ namespace Anki {
                           "Carrying object with ID=%d no longer exists.\n", _carryingObjectID.GetValue());
         return RESULT_FAIL;
       }
-      
-      /*
-      Result lastResult = RESULT_OK;
-      
-      TimeStamp_t histTime;
-      RobotPoseStamp* histPosePtr = nullptr;
-      if ((lastResult = ComputeAndInsertPoseIntoHistory(atTime, histTime, &histPosePtr)) != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.PlaceCarriedBlock.CouldNotComputeHistoricalPose", "Time %d\n", atTime);
-        return lastResult;
-      }
-      
-      Pose3d liftBasePoseAtTime(_liftBasePose);
-      liftBasePoseAtTime.SetParent(&histPosePtr->GetPose());
-      
-      Pose3d liftPoseAtTime;
-      Robot::ComputeLiftPose(histPosePtr->GetLiftAngle(), liftPoseAtTime);
-      liftPoseAtTime.SetParent(&liftBasePoseAtTime);
-      
-      Pose3d blockPoseAtTime(_carryingBlock->GetPose());
-      blockPoseAtTime.SetParent(&liftPoseAtTime);
-       
-      _carryingBlock->SetPose(blockPoseAtTime.GetWithRespectTo(Pose3d::World));
-      */
-      
+     
       Pose3d placedPose;
       if(object->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPose) == false) {
         PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.OriginMisMatch",
@@ -2295,18 +2275,14 @@ namespace Anki {
                        object->GetPose().GetTranslation().y(),
                        object->GetPose().GetTranslation().z());
 
-      // Don't reset _carryingObjectID here, because we want to know
-      // the last object we were carrying so we can verify we see it
-      // after placement. Once we *verify* we've placed it, we'll
-      // do this.
-      //_carryingObjectID = ANY_OBJECT;
-      //_carryingMarker   = nullptr;
+      _carryingObjectID.UnSet();
+      _carryingMarker = nullptr;
       
       return RESULT_OK;
       
     } // PlaceCarriedObject()
     
-    
+    /*
     Result Robot::VerifyObjectPlacement()
     {
       
@@ -2339,7 +2315,7 @@ namespace Anki {
       }
       
     } // VerifyObjectPlacement()
-
+*/
     
     Result Robot::SetHeadlight(u8 intensity)
     {

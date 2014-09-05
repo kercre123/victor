@@ -91,7 +91,7 @@ namespace Anki {
             // indicated by the lookup table, which will cast the buffer as the
             // correct message type and call the specified robot's ProcessMessage(MessageX)
             // method.
-            retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(robot, packet.data+1);
+            retVal = (this->*lookupTable_[msgID].ProcessPacketAs)(robot, packet.data+1);
           }
         }
       } // if(robotMgr_ != NULL)
@@ -251,7 +251,7 @@ namespace Anki {
 
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
-       // lastResult = robot->PickUpDockObject();
+       lastResult = robot->PickUpDockObject();
       }
       else {
         // TODO: what do we do on failure? Need to trigger reattempt?

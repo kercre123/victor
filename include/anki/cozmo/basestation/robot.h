@@ -87,7 +87,9 @@ namespace Anki {
       
       const ObjectID         GetDockObject()     const {return _dockObjectID;}
       void                   SetDockObject(const ObjectID& objectID) {_dockObjectID = objectID;}
-      const ObjectID         GetCarryingObject() const {return _carryingObjectID;}
+      
+      const ObjectID              GetCarryingObject() const {return _carryingObjectID;}
+      const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
       
       Result SetState(const State newState);
       
@@ -229,10 +231,13 @@ namespace Anki {
       // is carrying, and puts it in the robot's pose chain, attached to the
       // lift. Returns RESULT_FAIL if the robot wasn't already docking with
       // a block.
-      Result PickUpDockObject(const ObjectID& dockObjectID,
-                              const Vision::KnownMarker* dockMarker);
+      Result PickUpDockObject();
       
-      Result VerifyObjectPickup();
+      // Same as above, but with specified object
+      Result PickUpObject(const ObjectID& dockObjectID,
+                          const Vision::KnownMarker* dockMarker);
+      
+      //Result VerifyObjectPickup();
       
       // Places the block that the robot was carrying in its current position
       // w.r.t. the world, and removes it from the lift pose chain so it is no
@@ -240,7 +245,7 @@ namespace Anki {
       // report true, until it is actually verified that the placement worked.
       Result PlaceCarriedObject(); //const TimeStamp_t atTime);
       
-      Result VerifyObjectPlacement();
+      //Result VerifyObjectPlacement();
       
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
@@ -471,14 +476,7 @@ namespace Anki {
       DockAction_t                _dockAction;
        */
       ObjectID                    _dockObjectID;
-      Pose3d                      _dockObjectOrigPose;
-      
-      
-      
-      // TODO: remove this
-      // Desired pose of marker (on carried block) wrt world when the block
-      // has been placed on the ground.
-      Pose3d                      _placeOnGroundPose;
+      const Vision::KnownMarker*  _dockMarker;
       
       f32 _waitUntilTime;
 
@@ -610,6 +608,10 @@ namespace Anki {
       _rampDirection = direction;
     }
 
+    
+    inline Result Robot::PickUpDockObject() {
+      return PickUpObject(_dockObjectID, _dockMarker);
+    }
     
     
     //
