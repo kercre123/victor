@@ -338,8 +338,8 @@ namespace Anki {
     
     if(T_diff.GetAbs() < distThreshold) {
       RotationMatrix3d Rdiff(this->GetRotationMatrix());
-      Rdiff.Transpose();
-      Rdiff.preMultiplyBy(P_other.GetRotationMatrix());
+      Rdiff.Transpose(); // Invert
+      Rdiff *= P_other.GetRotationMatrix();
       
       RotationVector3d Rvec(Rdiff);
       angleDiff = Rvec.GetAngle();
@@ -428,8 +428,8 @@ namespace Anki {
     {
       // Next check to see if the rotational difference is small
       RotationMatrix3d Rdiff(this->GetRotationMatrix());
-      Rdiff.Transpose();
-      Rdiff.preMultiplyBy(P_other.GetRotationMatrix());
+      Rdiff.Transpose(); // Invert
+      Rdiff *= P_other.GetRotationMatrix();
       
       RotationVector3d Rvec(Rdiff);
       angleDiff = Rvec.GetAngle();
