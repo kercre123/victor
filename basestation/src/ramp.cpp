@@ -68,13 +68,15 @@ namespace Anki {
       const Pose3d backPose(-M_PI_2, Z_AXIS_3D, {{-0.5f*PlatformLength, 0, 0}});
       AddMarker(Vision::MARKER_RAMPBACK, backPose, Ramp::MarkerSize);
       
+      const Vec3f PreDockPoseOffset(0.f, -100.f, -0.5f*Ramp::Height);
+      
       const Pose3d leftPose(0.f, Z_AXIS_3D, {{10.f, -0.5f*Ramp::Width, 0.f}});
       _leftMarker = &AddMarker(Vision::MARKER_RAMPLEFT, leftPose, Ramp::MarkerSize);
-      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, 100.f, DEG_TO_RAD(-15));
+      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset, DEG_TO_RAD(-15));
       
       const Pose3d rightPose(M_PI, Z_AXIS_3D, {{10.f,  0.5f*Ramp::Width, 0.f}});
       _rightMarker = &AddMarker(Vision::MARKER_RAMPRIGHT, rightPose, Ramp::MarkerSize);
-      AddPreActionPose(PreActionPose::DOCKING, _rightMarker, 100.f, DEG_TO_RAD(-15));
+      AddPreActionPose(PreActionPose::DOCKING, _rightMarker, PreDockPoseOffset, DEG_TO_RAD(-15));
       
       const Pose3d topPose(2.0944, {{-0.5774f, 0.5774f, -0.5774f}},
                            {{Ramp::PlatformLength*.5f - Ramp::MarkerSize*.5f, 0, Ramp::Height*.5f}});
@@ -98,13 +100,13 @@ namespace Anki {
     Ramp::TraversalDirection Ramp::IsAscendingOrDescending(const Pose3d& robotPose) const
     {
       Pose3d robotPoseWrtRamp;
-      if(robotPose.GetWithRespectTo(*GetPose().GetParent(), robotPoseWrtRamp) == false) {
-        PRINT_NAMED_WARNING("Ramp.IsAscendingOrDescending", "Could not determine robot pose w.r.t. ramp pose's parent.\n");
+      if(robotPose.GetWithRespectTo(GetPose(), robotPoseWrtRamp) == false) {
+        PRINT_NAMED_WARNING("Ramp.IsAscendingOrDescending", "Could not determine robot pose w.r.t. ramp's pose.\n");
         return UNKNOWN;
       }
       
       // TODO: Better selection criteria for ascent vs. descent?
-      if(robotPoseWrtRamp.GetTranslation().z() < GetPose().GetTranslation().z()) {
+      if(robotPoseWrtRamp.GetTranslation().z() < 0.f) {
         return ASCENDING;
       } else {
         return DESCENDING;
@@ -259,6 +261,28 @@ namespace Anki {
       }
     }
     
+    
+    bool Ramp::IsPreActionPoseValid(const PreActionPose& preActionPose,
+                                    const Pose3d* reachableFromPose) const
+    {
+      bool isValid = ActionableObject::IsPreActionPoseValid(preActionPose, reachableFromPose);
+      if(isValid && reachableFromPose != nullptr && preActionPose.GetActionType() == PreActionPose::ENTRY) {
+        // Valid according to default check, now continue with checking reachability:
+        // Make sure reachableFrom pose is at about the same height of the ENTRY pose.
+      
+        Pose3d reachableFromWrtEntryPose;
+        if(reachableFromPose->GetWithRespectTo(*preActionPose.GetPose().GetParent(), reachableFromWrtEntryPose) == false) {
+          PRINT_NAMED_WARNING("Ramp.IsPreActionPoseValid.PoseOriginMisMatch",
+                              "Could not get specified reachableFrom pose w.r.t. entry action's pose.\n");
+          isValid = false;
+        } else {
+          const f32 zThreshold = GetHeight() * 0.3f;
+          isValid = NEAR(reachableFromWrtEntryPose.GetTranslation().z(), preActionPose.GetPose().GetTranslation().z(), zThreshold);
+        }
+      }
+      
+      return isValid;
+    }
     
   } // namespace Cozmo
 } // namespace Anki

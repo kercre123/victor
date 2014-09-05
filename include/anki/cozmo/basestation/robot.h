@@ -475,7 +475,7 @@ namespace Anki {
       
       
       
-      
+      // TODO: remove this
       // Desired pose of marker (on carried block) wrt world when the block
       // has been placed on the ground.
       Pose3d                      _placeOnGroundPose;

@@ -40,6 +40,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   using namespace Anki;
   using namespace Cozmo;
   
+  /*
   // TODO: Tighten/loosen thresholds?
   const float   objectPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
   
@@ -47,6 +48,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   const float   objectPoseAngleThresholdFarDistance  = 300.f;
   const float   objectPoseAngleNearThreshold = DEG_TO_RAD(5); // at near distance
   const float   objectPoseAngleFarThreshold  = DEG_TO_RAD(25); // at far distance
+  */
   
 //  const float objectPoseDistThreshold_mm    = 12.f;
 //  const Radians objectPoseAngleThreshold    = DEG_TO_RAD(15.f);
@@ -197,15 +199,13 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       // TODO: loop over all robots
       
       // Make sure the estimated robot pose matches the ground truth pose
-      Pose3d P_diff;
+      Vec3f Tdiff;
       const bool robotPoseMatches = trueRobotPose.IsSameAs(robot.GetPose(),
                                                            robotPoseDistThreshold_mm,
-                                                           robotPoseAngleThreshold, P_diff);
+                                                           robotPoseAngleThreshold, Tdiff);
       
       fprintf(stdout, "X/Y error in robot pose = %.2fmm, Z error = %.2fmm\n",
-              sqrtf(P_diff.GetTranslation().x()*P_diff.GetTranslation().x() +
-                    P_diff.GetTranslation().y()*P_diff.GetTranslation().y()),
-              P_diff.GetTranslation().z());
+              sqrtf(Tdiff.x()*Tdiff.x() + Tdiff.y()*Tdiff.y()), Tdiff.z());
       
       // If the robot's pose is not correct, we can't continue, because
       // all the blocks' poses will also be incorrect
@@ -272,6 +272,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         auto observedObjects = robot.GetBlockWorld().GetExistingObjectsByType(groundTruthObject->GetType());
         int matchesFound = 0;
         
+        /*
         // The threshold will vary with how far away the block actually is
         const float trueDistance = (objectPose.GetTranslation() - trueRobotPose.GetTranslation()).Length();
         const float objectPoseDistThreshold_mm = objectPoseDistThresholdFraction * trueDistance;
@@ -287,41 +288,42 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
           objectPoseAngleThreshold = (slope*(trueDistance - objectPoseAngleThresholdNearDistance) +
                                       objectPoseAngleNearThreshold);
         }
+         */
         
         for(auto & observedObject : observedObjects)
         {
-          Pose3d P_diff;
-          
           objectPose.SetParent(&observedObject.second->GetPose().FindOrigin());
           groundTruthObject->SetPose(objectPose);
           
-          if(groundTruthObject->IsSameAs(*observedObject.second,
-                                        objectPoseDistThreshold_mm,
-                                        objectPoseAngleThreshold, P_diff))
+          if(groundTruthObject->IsSameAs(*observedObject.second))
           {
             if(matchesFound > 0) {
               // We just found multiple matches for this ground truth block
-              fprintf(stdout, "Match #%d found for one ground truth %s object. "
-                      "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
-                      matchesFound+1, objectFamilyString.c_str(),
-                      P_diff.GetTranslation().Length(),
-                      objectPoseDistThreshold_mm,
-                      P_diff.GetRotationAngle().getDegrees(),
-                      objectPoseAngleThreshold.getDegrees());
+              fprintf(stdout, "Match #%d found for one ground truth %s object.\n",
+                      //"T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
+                      matchesFound+1, objectFamilyString.c_str());
+                      //P_diff.GetTranslation().Length(),
+                      //objectPoseDistThreshold_mm,
+                      //P_diff.GetRotationAngle().getDegrees(),
+                      //objectPoseAngleThreshold.getDegrees());
               
-              groundTruthObject->IsSameAs(*observedObject.second,
+              /*
+              groundTruthObject->IsSameAs(*observedObject.second
                                           objectPoseDistThreshold_mm,
                                           objectPoseAngleThreshold, P_diff);
+               */
             }
 
             if(matchesFound == 0) {
-              fprintf(stdout, "Match found for observed %s object with "
+              fprintf(stdout, "Match found for observed %s object.\n", objectFamilyString.c_str());
+              /* with "
                       "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs %.1fdeg)\n",
                       objectFamilyString.c_str(),
                       P_diff.GetTranslation().Length(),
                       objectPoseDistThreshold_mm,
                       P_diff.GetRotationAngle().getDegrees(),
                       objectPoseAngleThreshold.getDegrees());
+               */
 #if DISPLAY_ERRORS
               const Vec3f& T_true = groundTruthObject->GetPose().GetTranslation();
               
@@ -344,8 +346,8 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
             ++matchesFound;
           } else {
             fprintf(stdout, "Observed type-%d %s object %d at (%.2f,%.2f,%.2f) does not match "
-                    "type-%d ground truth at (%.2f,%.2f,%.2f). T_diff = %2fmm (vs. %.2fmm), "
-                    "Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
+                    "type-%d ground truth at (%.2f,%.2f,%.2f).\n", // T_diff = %2fmm (vs. %.2fmm), "
+                    //"Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
                     int(observedObject.second->GetType()),
                     objectFamilyString.c_str(),
                     int(observedObject.second->GetID()),
@@ -355,11 +357,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                     int(groundTruthObject->GetType()),
                     groundTruthObject->GetPose().GetTranslation().x(),
                     groundTruthObject->GetPose().GetTranslation().y(),
-                    groundTruthObject->GetPose().GetTranslation().z(),
-                    P_diff.GetTranslation().Length(),
-                    objectPoseDistThreshold_mm,
-                    P_diff.GetRotationAngle().getDegrees(),
-                    objectPoseAngleThreshold.getDegrees());
+                    groundTruthObject->GetPose().GetTranslation().z());
+                    //P_diff.GetTranslation().Length(),
+                    //objectPoseDistThreshold_mm,
+                    //P_diff.GetRotationAngle().getDegrees(),
+                    //objectPoseAngleThreshold.getDegrees());
           }
             
         } // for each observed object

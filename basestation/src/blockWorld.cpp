@@ -152,8 +152,8 @@ namespace Anki
       
       //const float distThresh_mm = distThresholdFraction * distToExist_mm;
       
-      Pose3d P_diff;
-      if( objectToCheck->IsSameAs(*objectToMatch, P_diff) ) {
+      //Pose3d P_diff;
+      if( objectToCheck->IsSameAs(*objectToMatch) ) {
         overlappingObjects.push_back(objectToCheck);
       } /*else {
          fprintf(stdout, "Not merging: Tdiff = %.1fmm, Angle_diff=%.1fdeg\n",

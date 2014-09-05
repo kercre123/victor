@@ -327,12 +327,17 @@ namespace Anki {
         // reported odometry from the physical robot
         
         // Ignore physical robot's notion of z from the message? (msg.pose_z)
-        f32 pose_z = GetPose().GetTranslation().z();
+        f32 pose_z = 0.f;
 
-        if(msg.pose_frame_id != GetPoseFrameID()) {
+        if(msg.pose_frame_id == GetPoseFrameID()) {
+          // Frame IDs match. Use the robot's current Z (but w.r.t. world origin)
+          pose_z = GetPose().GetWithRespectToOrigin().GetTranslation().z();
+        } else {
           // This is an old odometry update from a previous pose frame ID. We
           // need to look up the correct Z value to use for putting this
-          // message's (x,y) odometry info into history.
+          // message's (x,y) odometry info into history. Since it comes from
+          // pose history, it will already be w.r.t. world origin, since that's
+          // how we store everything in pose history.
           RobotPoseStamp p;
           lastResult = _poseHistory.GetLastPoseWithFrameID(msg.pose_frame_id, p);
           if(lastResult != RESULT_OK) {
@@ -345,7 +350,6 @@ namespace Anki {
         
         // Need to put the odometry update in terms of the current robot origin
         newPose = Pose3d(msg.pose_angle, Z_AXIS_3D, {{msg.pose_x, msg.pose_y, pose_z}}, _worldOrigin);
-        newPose = newPose.GetWithRespectToOrigin();
         
       } // if/else on ramp
       
@@ -587,7 +591,10 @@ namespace Anki {
                              "Robot %d failed running action %s. Retrying.\n",
                              GetID(), currentAction->GetName().c_str());
             
-            currentAction->Retry();
+            if(currentAction->Retry() != RESULT_OK) {
+              // No retry function, just clear the queue.
+              _actionQueue.Clear();
+            }
             break;
             
           default:
@@ -602,7 +609,10 @@ namespace Anki {
       
       ////////////  Update Path Traversal /////////////
       
-      if(IsTraversingPath())
+      // Note that we check IsPickOrPlacing() here because the physical robot
+      // could be following an internally-generated Dubins path for docking, but
+      // we don't want to react to that here.
+      if(IsTraversingPath() && !IsPickingOrPlacing())
       {
         // If the robot is traversing a path, consider replanning it
         if(_blockWorld.DidBlocksChange())
@@ -629,19 +639,10 @@ namespace Anki {
               
             case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
             {
-              ClearPath();
-              
               PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
-                               "Replan failed due to bad goal.\n");
-              
-              if(_reExecSequenceFcn) {
-                PRINT_NAMED_INFO("Robot.Update.Retrying",
-                                 "Retrying previous ExecuteSequence call.\n");
-                _reExecSequenceFcn();
-              } else {
-                PRINT_NAMED_INFO("Robot.Update.NoReExecFcn", "Aborting path.\n");
-                //SetState(IDLE);
-              }
+                               "Replan failed due to bad goal. Aborting path.\n");
+
+              ClearPath();
               break;
             } // PLAN_NEEDED_BUT_GOAL_FAILURE:
               
@@ -1288,12 +1289,13 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
+      /* Useful for Debug:
       PRINT_NAMED_INFO("Robot.LocalizeToMat.MatSeenChain",
                        "%s\n", matSeen->GetPose().GetNamedPathToOrigin(true).c_str());
       
       PRINT_NAMED_INFO("Robot.LocalizeToMat.ExistingMatChain",
                        "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
-      
+      */
       
       // Get computed RobotPoseStamp at the time the mat was observed.
       RobotPoseStamp* posePtr = nullptr;
@@ -1500,8 +1502,14 @@ namespace Anki {
       }
       
       _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, ramp->GetID(), PreActionPose::ENTRY));
-      _actionQueue.QueueAtEnd(new AscendOrDescendRampAction(*this, ramp->GetID()));
       
+      AscendOrDescendRampAction* ascendOrDescendAction = new AscendOrDescendRampAction(*this, ramp->GetID());
+      auto retryLambda = [ramp](Robot& robot) { return robot.ExecuteRampingSequence(ramp); };
+      ascendOrDescendAction->SetRetryFunction(retryLambda);
+      
+      _actionQueue.QueueAtEnd(ascendOrDescendAction);
+      
+      // TODO: Have the actions do this themselves?
       
       /*
       //
@@ -1701,9 +1709,9 @@ namespace Anki {
         return ExecuteRampingSequence(ramp);
       }
       else {
-        PRINT_NAMED_WARNING("Robot.ExecuteTraversalSequence.CannoTraverseObjectType",
+        PRINT_NAMED_WARNING("Robot.ExecuteTraversalSequence.CannotTraverseObjectType",
                             "Robot %d was asked to traverse object ID=%d of type %s, but "
-                            "that is not defined.\n", _ID,
+                            "that traversal is not defined.\n", _ID,
                             object->GetID().GetValue(), object->GetType().GetName().c_str());
         return RESULT_OK;
       }
@@ -1721,7 +1729,12 @@ namespace Anki {
       }
     
       _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, bridge->GetID(), PreActionPose::ENTRY));
-      _actionQueue.QueueAtEnd(new CrossBridgeAction(*this, bridge->GetID()));
+      
+      CrossBridgeAction* crossBridgeAction = new CrossBridgeAction(*this, bridge->GetID());
+      auto retryLambda = [bridge](Robot& robot) { return robot.ExecuteBridgeCrossingSequence(bridge); };
+      crossBridgeAction->SetRetryFunction(retryLambda);
+      
+      _actionQueue.QueueAtEnd(crossBridgeAction);
       
       return RESULT_OK;
       
@@ -1945,7 +1958,14 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      _actionQueue.QueueAtEnd(new DriveToPlaceCarriedObjectAction(*this, atPose));
+      // TODO: Better way to set atPose's origin/parent?
+      Pose3d atPoseWithParent(atPose);
+      atPoseWithParent.SetParent(GetWorldOrigin());
+      
+      // TODO: Better way to set final height off the ground
+      atPoseWithParent.SetTranslation({{atPose.GetTranslation().x(), atPose.GetTranslation().y(), GetPose().GetTranslation().z() + 22.f}});
+      
+      _actionQueue.QueueAtEnd(new DriveToPlaceCarriedObjectAction(*this, atPoseWithParent));
       _actionQueue.QueueAtEnd(new PutDownObjectAction(*this));
       
       /*
@@ -2186,14 +2206,14 @@ namespace Anki {
       }
       
       const BlockWorld::ObjectsMapByID_t& objectsWithType = _blockWorld.GetExistingObjectsByType(carryObject->GetType());
-      Pose3d P_diff;
+
       bool objectInOriginalPoseFound = false;
       for(auto object : objectsWithType) {
         // TODO: Make thresholds parameters
         // TODO: is it safe to always have useAbsRotation=true here?
         if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, carryObject->
                                                            GetRotationAmbiguities(),
-                                                           15.f, DEG_TO_RAD(25), true, P_diff))
+                                                           15.f, DEG_TO_RAD(25), true))
         {
           objectInOriginalPoseFound = true;
           break;

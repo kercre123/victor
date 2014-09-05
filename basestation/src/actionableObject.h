@@ -34,9 +34,18 @@ namespace Anki {
       };
       
       // Simple case: pose is along the normal to the marker, at the given distance
+      // (Aligned with center of marker)
       PreActionPose(ActionType type,
                     const Vision::KnownMarker* marker,
                     const f32 distance,
+                    const Radians& headAngle);
+      
+      // Pose is aligned with normal (facing the marker), but offset by the given
+      // vector. Note that a shift along the negative Y axis is equivalent to
+      // the simple case above. (The marker is in the X-Z plane.
+      PreActionPose(ActionType type,
+                    const Vision::KnownMarker* marker,
+                    const Vec3f& offset,
                     const Radians& headAngle);
       
       // Specify arbitrary position relative to marker
@@ -118,12 +127,13 @@ namespace Anki {
       // Return true if actions poses of any type exist for this object
       bool HasPreActionPoses() const;
       
-      // Return only those pre-action poses that are roughly aligned with the
-      // ground plane, given their parent marker's current orientation.
+      // Return only those pre-action poses that are "valid" (See protected
+      // IsPreActionPoseValid() method below.)
       // Optionally, you may filter based on ActionType and Marker Code as well.
       void GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
                                     const std::set<PreActionPose::ActionType>& withAction = std::set<PreActionPose::ActionType>(),
-                                    const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>());
+                                    const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>(),
+                                    const Pose3d* reachableFromPose = nullptr);
       
       // If the object is selected, draws it using the "selected" color, and
       // draws the pre-action poses as well (using method below).
@@ -150,15 +160,30 @@ namespace Anki {
       void SetSelected(const bool tf);
       
     protected:
+
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker* marker,
                             const f32 distance,
                             const Radians& headAngle);
       
       void AddPreActionPose(PreActionPose::ActionType type,
+                            const Vision::KnownMarker *marker,
+                            const Vec3f& offset,
+                            const Radians& headAngle);
+      
+      void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker* marker,
                             const Pose3d& poseWrtMarker,
                             const Radians& headAngle);
+ 
+      // Only "valid" poses are returned by GetCurrenPreActionPoses
+      // By default, allows any rotation around Z, but none around X/Y, meaning
+      // the pose must be vertically-oriented to be "valid". ReachableFromPose
+      // is not used by default. Derived classes can implement their own
+      // specific checks, but note that reachableFromPose could be nullptr
+      // (meaning it was unspecified).
+      virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
+                                        const Pose3d* reachableFromPose) const;
       
     private:
       

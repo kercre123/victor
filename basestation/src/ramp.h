@@ -136,6 +136,10 @@ namespace Anki {
       VizManager::Handle_t _vizHandle;
       //std::array<VizManager::Handle_t,3> _vizHandle;
       
+      virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
+                                        const Pose3d* reachableFromPose) const override;
+      
+      
     }; // class Ramp
     
     inline const Pose3d& Ramp::GetPreAscentPose() const {

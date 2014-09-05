@@ -105,6 +105,8 @@ namespace Anki {
       
     private:
       
+      void Reset();
+      
       bool          _preconditionsMet;
       f32           _waitUntilTime;
       f32           _timeoutTime;
@@ -324,6 +326,8 @@ namespace Anki {
       virtual Result SelectDockAction(ActionableObject* object) override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
+      
+      
       
     }; // class AscendOrDesceneRampAction
     

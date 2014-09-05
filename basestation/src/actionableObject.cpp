@@ -36,11 +36,21 @@ namespace Anki {
                                  const Vision::KnownMarker* marker,
                                  const f32 distance,
                                  const Radians& headAngle)
+    : PreActionPose(type, marker, Y_AXIS_3D * -distance, headAngle)
+    {
+      
+    } // PreActionPose Constructor
+
+    
+    PreActionPose::PreActionPose(ActionType type,
+                                 const Vision::KnownMarker* marker,
+                                 const Vec3f& offset,
+                                 const Radians& headAngle)
     : _type(type)
     , _marker(marker)
-    , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D, Y_AXIS_3D * -distance, &marker->GetPose()) // init w.r.t. marker
+    , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D, offset, &marker->GetPose()) // init w.r.t. marker
     , _headAngle(headAngle)
-    {      
+    {
       // Now make pose w.r.t. marker parent
       if(_poseWrtMarkerParent.GetWithRespectTo(*_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
         PRINT_NAMED_ERROR("PreActionPose.GetPoseWrtMarkerParentFailed",
@@ -49,7 +59,7 @@ namespace Anki {
       _poseWrtMarkerParent.SetName("PreActionPose");
       
     } // PreActionPose Constructor
-    
+
     
     PreActionPose::PreActionPose(ActionType type,
                                  const Vision::KnownMarker* marker,
@@ -151,10 +161,17 @@ namespace Anki {
       
     }
     
+    
     void ActionableObject::AddPreActionPose(PreActionPose::ActionType type, const Vision::KnownMarker *marker,
                                             const f32 distance, const Radians& headAngle)
     {
       _preActionPoses.emplace_back(type, marker, distance, headAngle);
+    } // AddPreActionPose()
+    
+    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type, const Vision::KnownMarker *marker,
+                                            const Vec3f& offset, const Radians& headAngle)
+    {
+      _preActionPoses.emplace_back(type, marker, offset, headAngle);
     } // AddPreActionPose()
     
     void ActionableObject::AddPreActionPose(PreActionPose::ActionType type,
@@ -165,10 +182,23 @@ namespace Anki {
       _preActionPoses.emplace_back(type, marker, poseWrtMarker, headAngle);
     }
     
+    bool ActionableObject::IsPreActionPoseValid(const PreActionPose& preActionPose,
+                                                const Pose3d* reachableFromPose) const
+    {
+      Pose3d checkPose = preActionPose.GetPose().GetWithRespectToOrigin();
+      
+      // Allow any rotation around Z, but none around X/Y, in order to keep
+      // vertically-oriented poses
+      const f32 vertAlignThresh = 1.f - std::cos(DEG_TO_RAD(30)); // TODO: tighten?
+      const bool isValid = NEAR(checkPose.GetRotationMatrix()(2,2), 1.f, vertAlignThresh);
+      
+      return isValid;
+    }
     
     void ActionableObject::GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
                                                     const std::set<PreActionPose::ActionType>& withAction,
-                                                    const std::set<Vision::Marker::Code>& withCode)
+                                                    const std::set<Vision::Marker::Code>& withCode,
+                                                    const Pose3d* reachableFromPose)
     {
       const Pose3d& relToObjectPose = GetPose();
       
@@ -179,15 +209,13 @@ namespace Anki {
         {
           PreActionPose currentPose(preActionPose, relToObjectPose);
           
-          const bool isValid = currentPose.IsOrientedForAction(relToObjectPose);
-          
-          if(isValid) {
+          if(IsPreActionPoseValid(currentPose, reachableFromPose)) {
             preActionPoses.emplace_back(currentPose);
           }
         } // if preActionPose has correct code/action
       } // for each preActionPose
-
-    }
+      
+    } // GetCurrentPreActionPoses()
     
     
     void ActionableObject::Visualize()

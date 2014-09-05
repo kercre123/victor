@@ -103,13 +103,33 @@ namespace Anki {
       
       const Vision::KnownMarker* marker = &AddMarker(code, facePose, markerSize_mm);
       
-      // Add a pre-dock pose to each face, at fixed distance normal to the face:
-      const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
-      AddPreActionPose(PreActionPose::DOCKING, marker, DefaultPreDockPoseDistance, DEG_TO_RAD(-15));
+      // The four rotation vectors for the pre-action poses created below
+      const std::array<RotationVector3d,4> preActionPoseRotations = {{
+        {0.f, Y_AXIS_3D},  {M_PI_2, Y_AXIS_3D},  {-M_PI_2, Y_AXIS_3D},  {M_PI, Y_AXIS_3D}
+      }};
+      
+      // Add a pre-dock pose to each face, at fixed distance normal to the face,
+      // and one for each orientation of the block
+      {
+        const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
+        for(auto const& Rvec : preActionPoseRotations) {
+          Pose3d preDockPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DefaultPreDockPoseDistance, -halfHeight}}, &marker->GetPose());
+          preDockPose.RotateBy(Rvec);
+          AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15));
+        }
+      }
       
       // Add a pre-placement pose to each face, where the robot will be sitting
-      // relative to the face when we put down the block.
-      AddPreActionPose(PreActionPose::PLACEMENT, marker, ORIGIN_TO_LOW_LIFT_DIST_MM, DEG_TO_RAD(-15));
+      // relative to the face when we put down the block -- one for each
+      // orientation of the block
+      {
+        const f32 DefaultPrePlacementDistance = ORIGIN_TO_LOW_LIFT_DIST_MM;
+        for(auto const& Rvec : preActionPoseRotations) {
+          Pose3d prePlacementPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DefaultPrePlacementDistance, -halfHeight}}, &marker->GetPose());
+          prePlacementPose.RotateBy(Rvec);
+          AddPreActionPose(PreActionPose::PLACEMENT, marker, prePlacementPose, DEG_TO_RAD(-15));
+        }
+      }
       
       // Store a pointer to the marker on each face:
       markersByFace_[whichFace] = marker;

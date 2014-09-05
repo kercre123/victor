@@ -26,12 +26,16 @@ namespace Anki {
     
     IAction::IAction(Robot& robot)
     : _robot(robot)
-    , _preconditionsMet(false)
-    , _waitUntilTime(-1.f)
-    , _timeoutTime(-1.f)
     , _retryFcn(nullptr)
     {
+      Reset();
+    }
     
+    void IAction::Reset()
+    {
+      _preconditionsMet = false;
+      _waitUntilTime = -1.f;
+      _timeoutTime = -1.f;
     }
     
     IAction::ActionResult  IAction::Update()
@@ -117,11 +121,11 @@ namespace Anki {
       if(_retryFcn != nullptr) {
         return _retryFcn(_robot);
       } else {
-        PRINT_NAMED_WARNING("IAction.Update.NoRetryFunction",
-                            "CheckIfDone() for %s returned FAILURE_RETRY, but no retry function is available.\n",
-                            GetName().c_str());
-        return RESULT_FAIL;
+        // No retry function provided, just reset this action.
+        Reset();
+        return RESULT_OK;
       }
+      
     } // Retry()
     
 #pragma mark ---- ActionQueue ----
@@ -213,9 +217,12 @@ namespace Anki {
       // Wait until robot reports it is no longer traversing a path
       if(!robot.IsTraversingPath())
       {
-        if(robot.GetPose().IsSameAs(goalPose, distanceThreshold, angleThreshold))
+        Vec3f Tdiff;
+        if(robot.GetPose().IsSameAs(goalPose, distanceThreshold, angleThreshold, Tdiff))
         {
-          PRINT_NAMED_INFO("Action.CheckForPathDoneHelper.Success", "Robot %d successfully finished following path.\n", robot.GetID());
+          PRINT_NAMED_INFO("Action.CheckForPathDoneHelper.Success",
+                           "Robot %d successfully finished following path (Tdiff=%.1fmm).\n",
+                           robot.GetID(), Tdiff.Length());
           robot.ClearPath(); // clear path and indicate that we are not replanning
           result = IAction::SUCCESS;
         }
@@ -223,8 +230,9 @@ namespace Anki {
         // and it is no longer executing it, but we appear to not be in position
         else if (robot.GetLastSentPathID() == robot.GetLastRecvdPathID()) {
           PRINT_NAMED_INFO("Action.CheckForPathDoneHelper.DoneNotInPlace",
-                           "Robot is done traversing path, but is not in position. lastPathID %d\n", robot.GetLastRecvdPathID());
-          result = IAction::FAILURE_PROCEED;
+                           "Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID %d\n",
+                           robot.GetLastRecvdPathID(), Tdiff.Length());
+          result = IAction::FAILURE_RETRY;
         }
         else {
           // Something went wrong: not in place and robot apparently hasn't
@@ -264,6 +272,14 @@ namespace Anki {
                           "Could not get specified pose w.r.t. robot %d's origin.\n", _robot.GetID());
         return RESULT_FAIL;
       }
+      
+      PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
+                       "Setting pose goal to (%.1f,%.1f,%.1f) @ %.1fdeg\n",
+                       _goalPose.GetTranslation().x(),
+                       _goalPose.GetTranslation().y(),
+                       _goalPose.GetTranslation().z(),
+                       RAD_TO_DEG(_goalPose.GetRotationAngle<'Z'>().ToFloat()));
+      
       _isGoalSet = true;
       
       return RESULT_OK;
@@ -317,7 +333,7 @@ namespace Anki {
     
     IAction::ActionResult DriveToPoseAction::CheckIfDone()
     {
-      return CheckForPathDoneHelper(_robot, _goalPose, _goalDistanceThreshold, _goalDistanceThreshold);
+      return CheckForPathDoneHelper(_robot, _goalPose, _goalDistanceThreshold, _goalAngleThreshold);
     } // CheckIfDone()
     
 #pragma mark ---- DriveToObjectAction ----
@@ -344,10 +360,10 @@ namespace Anki {
       ActionResult result = RUNNING;
       
       std::vector<PreActionPose> possiblePreActionPoses;
-      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType});
+      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType}, std::set<Vision::Marker::Code>(), &_robot.GetPose());
       
       if(possiblePreActionPoses.empty()) {
-        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPossiblePoses",
+        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
                           "ActionableObject %d did not return any pre-action poses with action type %d.\n",
                           _objectID.GetValue(), _actionType);
         
@@ -360,14 +376,38 @@ namespace Anki {
         // Robot::ExecutePathToPose() below
         // TODO: Prettier way to handle this?
         std::vector<Pose3d> possiblePoses;
-        possiblePoses.reserve(possiblePreActionPoses.size());
-        for(auto & preActionPose : possiblePreActionPoses) {
-          possiblePoses.emplace_back(preActionPose.GetPose());
+        for(auto & preActionPose : possiblePreActionPoses)
+        {
+          Pose3d possiblePose;
+          if(preActionPose.GetPose().GetWithRespectTo(*_robot.GetWorldOrigin(), possiblePose) == false) {
+            PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.PreActionPoseOriginProblem",
+                                "Could not get pre-action pose w.r.t. robot origin.\n");
+            
+          } else {
+
+            possiblePoses.emplace_back(possiblePose);
+            /*
+            // If this pose is at a dockable height relative to the robot, queue it
+            // as possible pose for the planner to consider. Just drop it to the
+            // z=0 height and keep only the heading angle (rotaiton around Z)
+            if(NEAR(possiblePose.GetTranslation().z(), _robot.GetPose().GetTranslation().z() + ROBOT_BOUNDING_Z*.5f, 25.f)) {
+              possiblePose.SetRotation(possiblePose.GetRotationAngle<'Z'>(), Z_AXIS_3D);
+              possiblePose.SetTranslation({{possiblePose.GetTranslation().x(), possiblePose.GetTranslation().y(), 0.f}});
+
+            }
+             */
+          }
         }
         
-        if(_robot.ExecutePathToPose(possiblePoses, selectedIndex) != RESULT_OK) {
+        if(possiblePoses.empty()) {
+          PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPossiblePoses",
+                            "No pre-action poses survived as possible docking poses.\n");
           result = FAILURE_ABORT;
-        } else {
+        }
+        else if(_robot.ExecutePathToPose(possiblePoses, selectedIndex) != RESULT_OK) {
+          result = FAILURE_ABORT;
+        }
+        else {
           _robot.MoveHeadToAngle(possiblePreActionPoses[selectedIndex].GetHeadAngle().ToFloat(), 5, 10);
           SetGoal(possiblePreActionPoses[selectedIndex].GetPose());
           result = SUCCESS;
@@ -407,7 +447,7 @@ namespace Anki {
     : DriveToObjectAction(robot, robot.GetCarryingObject(), PreActionPose::PLACEMENT)
     , _placementPose(placementPose)
     {
-      
+
     }
     
     IAction::ActionResult DriveToPlaceCarriedObjectAction::CheckPreconditions()
@@ -601,7 +641,7 @@ namespace Anki {
             
             lastResult = _robot.VerifyObjectPickup();
             if(lastResult != RESULT_OK) {
-              PRINT_NAMED_ERROR("Robot.Update.VerifyObjectPickupFailed",
+              PRINT_NAMED_ERROR("IDockAction.CheckIfDone.VerifyObjectPickupFailed",
                                 "VerifyObjectPickup returned error code %x.\n",
                                 lastResult);
               actionResult = FAILURE_PROCEED;
@@ -618,7 +658,7 @@ namespace Anki {
             
             lastResult = _robot.VerifyObjectPlacement();
             if(lastResult != RESULT_OK) {
-              PRINT_NAMED_ERROR("Robot.Update.VerifyObjectPlacementFailed",
+              PRINT_NAMED_ERROR("IDockAction.CheckIfDone.VerifyObjectPlacementFailed",
                                 "VerifyObjectPlacement returned error code %x.\n",
                                 lastResult);
               actionResult = FAILURE_PROCEED;
@@ -632,7 +672,7 @@ namespace Anki {
           case DA_RAMP_DESCEND:
           {
             // TODO: Need to do some kind of verification here?
-            PRINT_NAMED_INFO("Robot.Update.RampAscentOrDescentComplete",
+            PRINT_NAMED_INFO("IDockAction.CheckIfDone.RampAscentOrDescentComplete",
                              "Robot has completed going up/down ramp.\n");
             actionResult = SUCCESS;
             break;
@@ -641,14 +681,15 @@ namespace Anki {
           case DA_CROSS_BRIDGE:
           {
             // TODO: Need some kind of verificaiton here?
-            PRINT_NAMED_INFO("Robot.Update.BridgeCrossingComplete",
+            PRINT_NAMED_INFO("IDockAction.CheckIfDone.BridgeCrossingComplete",
                              "Robot has completed crossing a bridge.\n");
             actionResult = SUCCESS;
             break;
           }
             
           default:
-            PRINT_NAMED_ERROR("Robot.Update", "Reached unknown dockAction case.\n");
+            PRINT_NAMED_ERROR("IDockAction.CheckIfDone.UnknownDockAction",
+                              "Reached unknown dockAction case.\n");
             assert(false);
             actionResult = FAILURE_ABORT;
             
@@ -872,7 +913,7 @@ namespace Anki {
     AscendOrDescendRampAction::AscendOrDescendRampAction(Robot& robot, ObjectID rampID)
     : IDockAction(robot, rampID)
     {
-      
+
     }
     
     const std::string& AscendOrDescendRampAction::GetName() const
