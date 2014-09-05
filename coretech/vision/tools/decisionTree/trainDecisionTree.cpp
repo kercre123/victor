@@ -406,8 +406,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
         threadHandles[iThread] = CreateSimpleThread(ComputeInfoGain, computeInfoGainParams[iThread]);
       }
 
-      // Check backwards, because the last thread has the least amount of work
-      for(s32 iThread=numThreadsToUse-1; iThread>=0; iThread--) {
+      for(s32 iThread=0; iThread<numThreadsToUse; iThread++) {
         // Wait for the threads to complete and combine the results
 
         WaitForSimpleThread(threadHandles[iThread]);
@@ -422,12 +421,9 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
         delete(computeInfoGainParams[iThread]);
 
-        // We don't decrement for the last thread, because we'll use that spot for this primary thread
-        if(iThread != 0) {
 #ifdef PRINT_INTERMEDIATE
-          Anki::CoreTechPrint("Thread %d: Worker finished\n", buildTreeParams->threadId);
+        Anki::CoreTechPrint("Thread %d: Worker finished\n", buildTreeParams->threadId);
 #endif
-        }
       }
     } // if(numThreadsToUse == 1) ... else
 

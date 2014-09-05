@@ -6,7 +6,7 @@
 
 % As input, this function needs a list of labels and featureValues. Start with the following two lines for any example:
 % fiducialClassesList = decisionTree2_createClassesList();
-% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(fiducialClassesList);
+% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(fiducialClassesList);
 
 % Example:
 % [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, false);
