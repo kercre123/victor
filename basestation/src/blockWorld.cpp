@@ -928,7 +928,7 @@ namespace Anki
       
       // Add prox obstacle if detected and one doesn't already exist
       for (ProxSensor_t sensor = (ProxSensor_t)(0); sensor < NUM_PROX; sensor = (ProxSensor_t)(sensor + 1)) {
-        if (robot->GetProxSensorVal(sensor) >= PROX_OBSTACLE_DETECT_THRESH) {
+        if (!robot->IsProxSensorBlocked(sensor) && robot->GetProxSensorVal(sensor) >= PROX_OBSTACLE_DETECT_THRESH) {
           
           // Create an instance of the detected object
           MarkerlessObject *m = new MarkerlessObject(MarkerlessObject::Type::PROX_OBSTACLE);
