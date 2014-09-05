@@ -121,7 +121,7 @@ int main(int argc, const char* argv[])
 {
   f64 time0 = GetTimeF64();
 
-  const f64 benchmarkSampleEveryNSeconds = 10.0;
+  const f64 benchmarkSampleEveryNSeconds = 5.0;
 
   if(argc != 7) {
     PrintUsage();

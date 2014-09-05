@@ -25,7 +25,7 @@ const s32 MIN_IMAGES_PER_THREAD = 10; // If the number of images left is below t
 const s32 BUSY_WAIT_SLEEP_MICROSECONDS = 100000;
 
 //#define PRINT_INTERMEDIATE
-#define PRINT_FAILURES
+//#define PRINT_FAILURES
 
 // A list of UniqueCounts holds the number of instances of each value, like an integer histogram
 typedef struct
@@ -726,6 +726,8 @@ namespace Anki
 
       ThreadHandle benchmarkingThreadHandle = CreateSimpleThread(BenchmarkingThread, reinterpret_cast<void*>(&benchmarkingParams));
 
+      CoreTechPrint("Starting single thread\n");
+
       //
       // First, launch one thread, to compute the first N nodes with all threads for computing entropy
       //
@@ -755,6 +757,8 @@ namespace Anki
 
         BuildTreeThread(reinterpret_cast<void*>(&oneThreadParameters));
       }
+
+      CoreTechPrint("Single thread done, starting multi-threads.\n");
 
       //
       // Second, launch one primary thread for each maxThreads
