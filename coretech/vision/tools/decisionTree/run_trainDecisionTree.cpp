@@ -113,8 +113,8 @@ template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const c
 void PrintUsage()
 {
   CoreTechPrint(
-    "Usage: run_trainDecisionTree <filenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistance> <maxThreads>\n"
-    "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20 8");
+    "Usage: run_trainDecisionTree <inFilenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistance> <maxThreads> <outFilenamePrefix>\n"
+    "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20 8 c:/tmp/treeTrainingOut_");
 }
 
 int main(int argc, const char* argv[])
@@ -123,17 +123,18 @@ int main(int argc, const char* argv[])
 
   const f64 benchmarkSampleEveryNSeconds = 5.0;
 
-  if(argc != 7) {
+  if(argc != 8) {
     PrintUsage();
     return -10;
   }
 
-  const char * filenamePrefix = argv[1];
+  const char * inFilenamePrefix = argv[1];
   const s32 numFeatures = atol(argv[2]);
   const f32 leafNodeFraction = static_cast<f32>(atof(argv[3]));
   const s32 leafNodeNumItems = atol(argv[4]);
   const s32 u8MinDistance = atol(argv[5]);
   const s32 maxThreads = atol(argv[6]);
+  const char * outFilenamePrefix = argv[7];
 
   const s32 memorySize = 1000000000;
   const s32 scratchSize = 50000000;
@@ -163,10 +164,10 @@ int main(int argc, const char* argv[])
 
     CoreTechPrint("Loading Inputs...\n");
 
-    featuresUsed = LoadIntoList_grayvalueBool(filenamePrefix, "featuresUsed.array", scratch1, scratch2);
-    labelNames = LoadIntoList_permanentBuffer<const char *>(filenamePrefix, "labelNames.array", scratch1, memory);
-    labels = LoadIntoList_temporaryBuffer<s32>(filenamePrefix, "labels.array", scratch1, scratch2, memory);
-    u8ThresholdsToUse = LoadIntoList_temporaryBuffer<u8>(filenamePrefix, "u8ThresholdsToUse.array", scratch1, scratch2, memory);
+    featuresUsed = LoadIntoList_grayvalueBool(inFilenamePrefix, "featuresUsed.array", scratch1, scratch2);
+    labelNames = LoadIntoList_permanentBuffer<const char *>(inFilenamePrefix, "labelNames.array", scratch1, memory);
+    labels = LoadIntoList_temporaryBuffer<s32>(inFilenamePrefix, "labels.array", scratch1, scratch2, memory);
+    u8ThresholdsToUse = LoadIntoList_temporaryBuffer<u8>(inFilenamePrefix, "u8ThresholdsToUse.array", scratch1, scratch2, memory);
 
     f64 t0 = GetTimeF64();
 
@@ -174,7 +175,7 @@ int main(int argc, const char* argv[])
       const s32 filenameBufferLength = 1024;
       char filenameBuffer[filenameBufferLength];
       snprintf(filenameBuffer, filenameBufferLength, "featureValues%d.array", iFeature);
-      featureValues[iFeature] = LoadIntoList_temporaryBuffer<u8>(filenamePrefix, filenameBuffer, scratch1, scratch2, memory);
+      featureValues[iFeature] = LoadIntoList_temporaryBuffer<u8>(inFilenamePrefix, filenameBuffer, scratch1, scratch2, memory);
 
       if(iFeature > 0 && iFeature % 50 == 0) {
         f64 t1 = GetTimeF64();
@@ -254,17 +255,17 @@ int main(int argc, const char* argv[])
       leftChildIndexs[iNode] = curNode.leftChildIndex;
     } // for(s32 iNode=0; iNode<numNodes; iNode++)
 
-    SaveList(depths, filenamePrefix, "out_depths.array", scratch);
-    SaveList(bestEntropys, filenamePrefix, "out_bestEntropys.array", scratch);
-    SaveList(whichFeatures, filenamePrefix, "out_whichFeatures.array", scratch);
-    SaveList(u8Thresholds, filenamePrefix, "out_u8Thresholds.array", scratch);
-    SaveList(leftChildIndexs, filenamePrefix, "out_leftChildIndexs.array", scratch);
+    SaveList(depths, outFilenamePrefix, "depths.array", scratch);
+    SaveList(bestEntropys, outFilenamePrefix, "bestEntropys.array", scratch);
+    SaveList(whichFeatures, outFilenamePrefix, "whichFeatures.array", scratch);
+    SaveList(u8Thresholds, outFilenamePrefix, "u8Thresholds.array", scratch);
+    SaveList(leftChildIndexs, outFilenamePrefix, "leftChildIndexs.array", scratch);
 
     for(u32 iSample=0; iSample<cpuUsage.size(); iSample++) {
       cpuUsageSamples[iSample] = cpuUsage[iSample];
     } // for(s32 iNode=0; iNode<numNodes; iNode++)
 
-    SaveList(cpuUsageSamples, filenamePrefix, "out_cpuUsageSamples.array", scratch);
+    SaveList(cpuUsageSamples, outFilenamePrefix, "cpuUsageSamples.array", scratch);
 
     free(scratch.get_buffer());
   } // Save the output

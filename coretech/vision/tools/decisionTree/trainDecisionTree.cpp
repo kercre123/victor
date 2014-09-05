@@ -411,7 +411,8 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
         WaitForSimpleThread(threadHandles[iThread]);
 
-        if(computeInfoGainParams[iThread]->bestEntropy < curNode.bestEntropy) {
+        // The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
+        if(computeInfoGainParams[iThread]->bestEntropy < (curNode.bestEntropy - 1e-5)) {
           curNode.bestEntropy = computeInfoGainParams[iThread]->bestEntropy;
           curNode.whichFeature = computeInfoGainParams[iThread]->bestFeatureIndex;
           curNode.u8Threshold = computeInfoGainParams[iThread]->bestU8Threshold;
