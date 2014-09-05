@@ -1,4 +1,4 @@
-% function [labelName, labelID] = decisionTree2_query(tree, img, tform, blackValue, whiteValue)
+% function [labelName, labelID, path, failedAt] = decisionTree2_query(tree, img, tform, blackValue, whiteValue)
 
 % img = imresize(rgb2gray2(imread('/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated/dice6_000.png')), [30,30]);
 % quad = [1 1; 1 size(img,1); size(img,2) 1; size(img,2) size(img,1)];
@@ -8,11 +8,17 @@
 % quad = [1 1; 1 512; 512 1; 512 512]; tform = cp2tform(quad, [0 0; 0 1; 1 0; 1 1], 'projective');
 % for i = 1:length(files) img = imread(files{i}); [labelName, labelID] = decisionTree2_query(tree, img, tform, 0, 255); disp(sprintf('%s is %s', files{i}, labelName)); end
 
-function [labelName, labelID] = decisionTree2_query(tree, img, tform, blackValue, whiteValue)
+function [labelName, labelID, path, failedAt] = decisionTree2_query(tree, img, tform, blackValue, whiteValue, groundTruthLabel)
+    
+    if ~exist('groundTruthLabel', 'var')
+        groundTruthLabel = [];
+    end
     
     if isfield(tree, 'labelName')
         labelName = tree.labelName;
         labelID   = tree.labelID;
+        failedAt = [];
+        path = {};
     else
         img = rgb2gray2(img);
         
@@ -26,9 +32,23 @@ function [labelName, labelID] = decisionTree2_query(tree, img, tform, blackValue
         curPixel = uint8(curPixel);
         
         if curPixel < tree.u8Threshold
-            [labelName, labelID] = decisionTree2_query(tree.leftChild, img, tform, blackValue, whiteValue);
+            [labelName, labelID, path, failedAt] = decisionTree2_query(tree.leftChild, img, tform, blackValue, whiteValue, groundTruthLabel);
         else
-            [labelName, labelID] = decisionTree2_query(tree.rightChild, img, tform, blackValue, whiteValue);
+            [labelName, labelID, path, failedAt] = decisionTree2_query(tree.rightChild, img, tform, blackValue, whiteValue, groundTruthLabel);
+        end
+    end
+    
+    curNode = tree;
+    if isfield(tree, 'leftChild')
+        curNode = rmfield(curNode, 'leftChild');
+        curNode = rmfield(curNode, 'rightChild');
+    end
+    
+    path = [{curNode}, path];
+    
+    if ~isempty(groundTruthLabel)
+        if isempty(find(ismember(tree.remainingLabelNames,'0_000'), 1))
+            failedAt = tree.depth; % Actually -1, but matlab's 1 indexing
         end
     end
     

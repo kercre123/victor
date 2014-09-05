@@ -141,7 +141,7 @@ function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, 
     leftChildIndexs = mexLoadEmbeddedArray([cFilenamePrefix, 'out_leftChildIndexs.array']);
     cpuUsageSamples = mexLoadEmbeddedArray([cFilenamePrefix, 'out_cpuUsageSamples.array']);
     
-    tree = convertCTree(1, depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
+    tree = decisionTree2_convertCTree(depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     
     figure(50); 
     plot(cpuUsageSamples, 'b+');
@@ -151,35 +151,6 @@ function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, 
     axis(limits)
     
     disp(sprintf('Conversion done in %f seconds (average CPU usage %f%%)', toc(convertingTic), mean(cpuUsageSamples)));
-end
-
-function tree = convertCTree(curIndex, depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid)
-    
-    if leftChildIndexs(curIndex) < 0
-        if leftChildIndexs(curIndex) == -1
-            labelId = length(labelNames) + 1;
-            labelName = 'MARKER_UNKNOWN';
-        else
-            labelId = (-leftChildIndexs(curIndex)) - 1000000 + 1;
-            labelName = labelNames(labelId);
-        end
-        
-        tree = struct(...
-            'depth', depths(curIndex),...
-            'labelName', labelName,...
-            'labelID', labelId);
-    else
-        tree = struct(...
-            'depth', depths(curIndex),...
-            'infoGain', infoGains(curIndex),...
-            'whichFeature', whichFeatures(curIndex) + 1,...
-            'u8Threshold', u8Thresholds(curIndex),...
-            'x', double(probeLocationsXGrid(whichFeatures(curIndex) + 1)),...
-            'y', double(probeLocationsYGrid(whichFeatures(curIndex) + 1)));
-        
-        tree.leftChild = convertCTree(leftChildIndexs(curIndex) + 1, depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
-        tree.rightChild = convertCTree(leftChildIndexs(curIndex) + 2, depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
-    end
 end
 
 function numNodes = countNumNodes(tree)
