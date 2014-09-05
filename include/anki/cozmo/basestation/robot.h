@@ -42,22 +42,15 @@ namespace Anki {
     class Robot
     {
     public:
-      // Any state added here, must also be added to the static StateNames map,
-      // and to the list of valid states in the switch statement inside SetState().
-      enum State {
-        IDLE,
-        FOLLOWING_PATH,
-        BEGIN_DOCKING, // also used for ascending/descending ramps, and crossing bridges
-        DOCKING,
-        PLACE_OBJECT_ON_GROUND
-      };
-      
-      static const std::map<State, std::string> StateNames;
       
       Robot(const RobotID_t robotID, IMessageHandler* msgHandler);
       ~Robot();
       
       Result Update();
+      
+      // Returns true if robot is not traversing a path and has no current action
+      // in its queue.
+      bool IsIdle() const { return !IsTraversingPath() && _actionQueue.IsEmpty(); }
       
       // Accessors
       const RobotID_t        GetID()           const;
@@ -83,15 +76,12 @@ namespace Anki {
       bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
       
       const Pose3d&          GetLiftPose()       const {return _liftPose;}  // At current lift position!
-      const State            GetState()          const;
       
       const ObjectID         GetDockObject()     const {return _dockObjectID;}
       void                   SetDockObject(const ObjectID& objectID) {_dockObjectID = objectID;}
       
       const ObjectID              GetCarryingObject() const {return _carryingObjectID;}
       const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
-      
-      Result SetState(const State newState);
       
       void SetPose(const Pose3d &newPose);
       const Pose3d* GetWorldOrigin() const { return _worldOrigin; }
@@ -111,19 +101,15 @@ namespace Anki {
       Result TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments);
       
       // Sends a path to the robot to be immediately executed
-      // Puts Robot in FOLLOWING_PATH state. Will transition to IDLE when path is complete.
       Result ExecutePath(const Planning::Path& path);
 
       // Compute a path to a pose and execute it
-      // Puts Robot in FOLLOWING_PATH state. Will transition to IDLE when path is complete.
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
-      //Result ExecutePathToPose(const Pose3d& pose, const Radians headAngle);
       
       // Same as above, but select from a set poses and return the selected index.
       Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
       Result ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex);
-      //Result ExecutePathToPose(const std::vector<Pose3d>& poses, const Radians headAngle, size_t& selectedIndex);
 
       // executes a test path defined in latticePlanner
       void ExecuteTestPath();
@@ -144,7 +130,7 @@ namespace Anki {
       void   SetRamp(const ObjectID& rampID, Ramp::TraversalDirection direction);
 
       s8   GetCurrPathSegment() {return _currPathSegment;}
-      bool IsTraversingPath() {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
+      bool IsTraversingPath() const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
 
       u8   GetNumFreeSegmentSlots() const {return _numFreeSegmentSlots;}
       
@@ -227,7 +213,7 @@ namespace Anki {
                             const u16 image_pixel_y,
                             const u8 pixel_radius);
 
-      // Transitions the block that robot was docking with to the one that it
+      // Transitions the object that robot was docking with to the one that it
       // is carrying, and puts it in the robot's pose chain, attached to the
       // lift. Returns RESULT_FAIL if the robot wasn't already docking with
       // a block.
@@ -237,15 +223,10 @@ namespace Anki {
       Result PickUpObject(const ObjectID& dockObjectID,
                           const Vision::KnownMarker* dockMarker);
       
-      //Result VerifyObjectPickup();
-      
-      // Places the block that the robot was carrying in its current position
+      // Places the object that the robot was carrying in its current position
       // w.r.t. the world, and removes it from the lift pose chain so it is no
-      // longer attached to the robot.  Note that IsCarryingBlock() will still
-      // report true, until it is actually verified that the placement worked.
-      Result PlaceCarriedObject(); //const TimeStamp_t atTime);
-      
-      //Result VerifyObjectPlacement();
+      // longer attached to the robot.
+      Result PlaceCarriedObject();
       
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
@@ -455,7 +436,6 @@ namespace Anki {
       bool       _isPickingOrPlacing;
       bool       _isPickedUp;
       bool       _isMoving;
-      State      _state, _nextState;
       
       ObjectID                   _carryingObjectID;
       const Vision::KnownMarker* _carryingMarker;
@@ -579,9 +559,6 @@ namespace Anki {
     
     inline Vision::Camera& Robot::GetCamera(void)
     { return _camera; }
-    
-    inline const Robot::State Robot::GetState() const
-    { return _state; }
     
     inline void Robot::SetLocalizedTo(const ObjectID& toID)
     { _localizedToID = toID;}

@@ -408,7 +408,7 @@ namespace Anki {
         case EXECUTING_DOCK:
         {
           // Wait until robot finishes (goes back to IDLE)
-          if(robot_->GetState() == Robot::IDLE) {
+          if(robot_->IsIdle()) {
             StartMode(BM_None);
           }
           break;
@@ -451,7 +451,7 @@ namespace Anki {
         case DRIVE_TO_START:
         {
           // Wait for robot to be IDLE
-          if(robot_->GetState() == Robot::IDLE) {
+          if(robot_->IsIdle()) {
             Pose3d startPose(JUNE_DEMO_START_THETA,
                              Z_AXIS_3D,
                              {{JUNE_DEMO_START_X, JUNE_DEMO_START_Y, 0.f}});
@@ -505,7 +505,7 @@ namespace Anki {
           const f32 diceViewingHeadAngle = DEG_TO_RAD(-15);
 
           // Wait for robot to be IDLE
-          if(robot_->GetState() == Robot::IDLE)
+          if(robot_->IsIdle())
           {
             const BlockWorld::ObjectsMapByID_t& diceBlocks = robot_->GetBlockWorld().GetExistingObjectsByType(Block::Type::DICE);
             if(!diceBlocks.empty()) {
@@ -756,7 +756,7 @@ namespace Anki {
                 case IDLE_FACING_USER:
                 {
                   // once we get there, look up
-                  if(robot_->GetState() == Robot::IDLE) {
+                  if(robot_->IsIdle()) {
                     SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
                     CoreTechPrint("idle: looking up\n");
                     robot_->MoveHeadToAngle(headUpWaitingAngleFrustrated, 3.0, 10);
@@ -770,7 +770,7 @@ namespace Anki {
                 {
                   // once we are looking back down, turn back to the original pose
                   if(waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() &&
-                     robot_->GetState() == Robot::IDLE) {
+                     robot_->IsIdle()) {
 
                     CoreTechPrint("idle: turning back\n");
                     SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
@@ -784,7 +784,7 @@ namespace Anki {
                 case IDLE_TURNING_BACK:
                 {
                   if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
-                    if(robot_->GetState() == Robot::IDLE) {
+                    if(robot_->IsIdle()) {
                       CoreTechPrint("idle: waiting for dice\n");
                       timesIdle_ = 0;
                       idleState_ = IDLE_NONE;
@@ -820,7 +820,7 @@ namespace Anki {
         case GOTO_EXPLORATION_POSE:
         {
           const BlockWorld::ObjectsMapByID_t& blocks = robot_->GetBlockWorld().GetExistingObjectsByType(objectTypeOfInterest_);
-          if (robot_->GetState() == Robot::IDLE || !blocks.empty()) {
+          if (robot_->IsIdle() || !blocks.empty()) {
             state_ = START_EXPLORING_TURN;
           }
           break;
@@ -919,7 +919,7 @@ namespace Anki {
         case EXECUTING_DOCK:
         {
           // Wait for the robot to go back to IDLE
-          if(robot_->GetState() == Robot::IDLE)
+          if(robot_->IsIdle())
           {
             const bool donePickingUp = robot_->IsCarryingObject() &&
                                        robot_->GetBlockWorld().GetObjectByID(robot_->GetCarryingObject())->GetType() == objectToPickUp_;
@@ -975,7 +975,7 @@ namespace Anki {
         case CHECK_IT_OUT_UP:
         {
           // Wait for the robot to go back to IDLE
-          if(robot_->GetState() == Robot::IDLE &&
+          if(robot_->IsIdle() &&
              waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
           {
             // TODO:(bn) small happy chirp sound
@@ -989,7 +989,7 @@ namespace Anki {
         case CHECK_IT_OUT_DOWN:
         {
           // Wait for the robot to go back to IDLE
-          if(robot_->GetState() == Robot::IDLE &&
+          if(robot_->IsIdle() &&
              waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
           {
             // Compute pose that makes robot face user
@@ -1006,7 +1006,7 @@ namespace Anki {
         case FACE_USER:
         {
           // Wait for the robot to go back to IDLE
-          if(robot_->GetState() == Robot::IDLE)
+          if(robot_->IsIdle())
           {
             // Start nodding
             robot_->SendPlayAnimation(ANIM_HEAD_NOD);

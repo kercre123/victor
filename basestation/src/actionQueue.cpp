@@ -285,30 +285,6 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    /*
-    DriveToPoseAction::DriveToPoseAction(Robot& robot, const Pose3d& pose)
-    : DriveToPoseAction(robot, pose, robot.GetHeadAngle())
-    {
-      
-    }
-    
-    DriveToPoseAction::DriveToPoseAction(Robot& robot, const std::vector<Pose3d>& possiblePoses, const Radians& headAngle)
-    : IAction(robot)
-    , _possibleGoalPoses(possiblePoses)
-    , _goalHeadAngle(headAngle)
-    , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
-    , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
-    {
-      
-    }
-    
-    DriveToPoseAction::DriveToPoseAction(Robot& robot, const std::vector<Pose3d>& possiblePoses)
-    : DriveToPoseAction(robot, possiblePoses, robot.GetHeadAngle())
-    {
-      
-    }
-     */
-    
     const std::string& DriveToPoseAction::GetName() const
     {
       static const std::string name("DriveToPoseAction");
@@ -742,22 +718,6 @@ namespace Anki {
         PRINT_INFO("Object pick-up SUCCEEDED!\n");
         return SUCCESS;
       }
-
-      
-      //////////// OLD ////
-      
-      /*
-      // Check to see if object is missing from original pose
-      Result lastResult = _robot.VerifyObjectPickup();
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("IDockAction.CheckIfDone.VerifyObjectPickupFailed",
-                          "VerifyObjectPickup returned error code %x.\n",
-                          lastResult);
-        return FAILURE_PROCEED;
-      } else {
-        return SUCCESS;
-      }
-       */
       
     } // Verify()
        
@@ -824,22 +784,7 @@ namespace Anki {
         // So we will check if we see a block with the same
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
-        
-        /*
-        Result lastResult = _robot.VerifyObjectPlacement();
-        if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("Robot.Update.VerifyObjectPlacementFailed",
-                            "VerifyObjectPlacement returned error code %x.\n",
-                            lastResult);
-          actionResult = FAILURE_PROCEED;
-        } else {
-          actionResult = SUCCESS;
-        }
-         */
-        
-        // In place mode, we _should_ now see an object with the ID of the
-        // one we were carrying, in the place we think we left it when
-        // we placed it.
+
         // TODO: check to see it ended up in the right place?
         Vision::ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_carryingObjectID);
         if(object == nullptr) {

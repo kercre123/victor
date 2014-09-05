@@ -104,14 +104,6 @@ namespace Anki {
     
 #pragma mark --- Robot Class Implementations ---
     
-    const std::map<Robot::State, std::string> Robot::StateNames = {
-      {IDLE,                  "IDLE"},
-      {FOLLOWING_PATH,        "FOLLOWING_PATH"},
-      {BEGIN_DOCKING,         "BEGIN_DOCKING"},
-      {DOCKING,               "DOCKING"},
-      {PLACE_OBJECT_ON_GROUND, "PLACE_OBJECT_ON_GROUND"}
-    };
-    
     
     Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler)
     : _ID(robotID)
@@ -140,7 +132,6 @@ namespace Anki {
     , _currentLiftAngle(0)
     , _isPickingOrPlacing(false)
     , _isPickedUp(false)
-    , _state(IDLE)
     , _carryingMarker(nullptr)
     {
       _pose.SetName("Robot_" + std::to_string(_ID));
@@ -678,283 +669,6 @@ namespace Anki {
         
       } // if IsTraversingPath()
       
-      
-#if 0
-      
-      switch(_state)
-      {
-        case IDLE:
-        {
-          // Nothing to do in IDLE mode?
-          break;
-        } // case IDLE
-          
-        case FOLLOWING_PATH:
-        {
-          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime)
-          {
-            if(IsTraversingPath())
-            {
-              // If the robot is traversing a path, consider replanning it
-              if(_blockWorld.DidBlocksChange())
-              {
-                Planning::Path newPath;
-                switch(_selectedPathPlanner->GetPlan(newPath, GetPose(), _forceReplanOnNextWorldChange))
-                {
-                  case IPathPlanner::DID_PLAN:
-                  {
-                    // clear path, but flag that we are replanning
-                    ClearPath();
-                    wasTraversingPath = false;
-                    _forceReplanOnNextWorldChange = false;
-                    
-                    PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
-                    MessageClearPath clearMessage;
-                    _msgHandler->SendMessage(_ID, clearMessage);
-                    
-                    _path = newPath;
-                    PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
-                    ExecutePath(_path);
-                    break;
-                  } // case DID_PLAN:
-                    
-                  case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
-                  {
-                    ClearPath();
-                    
-                    PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
-                                     "Replan failed due to bad goal.\n");
-                    
-                    if(_reExecSequenceFcn) {
-                      PRINT_NAMED_INFO("Robot.Update.Retrying",
-                                       "Retrying previous ExecuteSequence call.\n");
-                      _reExecSequenceFcn();
-                    } else {
-                      PRINT_NAMED_INFO("Robot.Update.NoReExecFcn", "Aborting path.\n");
-                      SetState(IDLE);
-                    }
-                    break;
-                  } // PLAN_NEEDED_BUT_GOAL_FAILURE:
-                    
-                  case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
-                  {
-                    PRINT_NAMED_INFO("Robot.Update.NewStartForReplanNeeded",
-                                     "Replan failed during docking due to bad start. Will try again, and hope robot moves.\n");
-                    break;
-                  }
-                    
-                  case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
-                  {
-                    PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
-                                     "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
-                    // clear the path, but don't change the state
-                    ClearPath();
-                    _forceReplanOnNextWorldChange = true;
-                    break;
-                  }
-                    
-                  default:
-                  {
-                    // Don't do anything just proceed with the current plan...
-                    break;
-                  }
-                    
-                } // switch(GetPlan())
-              } // if blocks changed
-              
-              if (GetLastRecvdPathID() == GetLastSentPathID()) {
-                pdo_->Update(GetCurrPathSegment(), GetNumFreeSegmentSlots());
-              }
-            } else { // IsTraversingPath is false?
-              
-              // The last path sent was definitely received by the robot
-              // and it is no longer executing it.
-              if (_lastSentPathID == _lastRecvdPathID) {
-                PRINT_NAMED_INFO("Robot.Update.FollowToNextState", "lastPathID %d\n", _lastRecvdPathID);
-                SetState(_nextState);
-              } else {
-                PRINT_NAMED_INFO("Robot.Update.FollowPathStateButNotTraversingPath",
-                                 "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d\n",
-                                 _currPathSegment);
-              }
-            }
-            
-            // Visualize path if robot has just started traversing it.
-            // Clear the path when it has stopped.
-            if ((wasTraversingPath && !IsTraversingPath()) ||
-                _pose.IsSameAs(_goalPose, _goalDistanceThreshold, _goalAngleThreshold))
-            {
-              PRINT_INFO("Robot %d finished following path.\n", _ID);
-              ClearPath(); // clear path and indicate that we are not replanning
-              SetState(_nextState);
-            }
-          } // if waitUntilTime has passed
-          break;
-        } // case FOLLOWING_PATH
-      
-        case BEGIN_DOCKING:
-        {
-          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime) {
-            // TODO: Check that the marker was recently seen at roughly the expected image location
-            // ...
-            //const Point2f& imgCorners = dockMarker_->GetImageCorners().computeCentroid();
-            // For now, just docking to the marker no matter where it is in the image.
-            
-            // Make sure the object we were docking with still exists in the world
-            ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_dockObjectID));
-            if(dockObject == nullptr) {
-              PRINT_NAMED_ERROR("Robot.Update.ActionObjectNotFound",
-                                "Action object with ID=%d no longer exists in the world. Returning to IDLE state.\n",
-                                _dockObjectID.GetValue());
-              SetState(IDLE);
-              return RESULT_OK; // Robot updated successfully, so not FAIL?
-            }
-            
-            // Verify that we ended up near enough a PreActionPose of the right type
-            std::vector<ActionableObject::PoseMarkerPair_t> preActionPoseMarkerPairs;
-            dockObject->GetCurrentPreActionPoses(preActionPoseMarkerPairs, {_goalPoseActionType});
-            
-            const Point2f currentXY(GetPose().GetTranslation().x(),
-                                    GetPose().GetTranslation().y());
-            
-            float closestDistSq = std::numeric_limits<float>::max();
-            for(auto const& preActionPair : preActionPoseMarkerPairs) {
-              const Point2f preActionXY(preActionPair.first.GetTranslation().x(),
-                                        preActionPair.first.GetTranslation().y());
-              const float distSq = (currentXY - preActionXY).LengthSq();
-              if(distSq < closestDistSq)
-                closestDistSq = distSq;
-            }
-            
-            const float distanceToGoal = sqrtf(closestDistSq);
-            if(distanceToGoal > MAX_DISTANCE_TO_PREDOCK_POSE) {
-              PRINT_NAMED_INFO("Robot.Update.TooFarFromGoal", "Robot is too far from pre-action pose (%.1fmm), re-docking\n", distanceToGoal);
-              _reExecSequenceFcn();
-            } else {
-              PRINT_NAMED_INFO("Robot.Update.BeginDocking",
-                               "Robot is within %.1fmm of the nearest pre-action pose, "
-                               "docking with marker %d = %s (action = %d).\n",
-                               distanceToGoal, _dockMarker->GetCode(),
-                               Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
-              
-              DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
-              _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
-              SetState(DOCKING);
-            }
-          } // if _waitUntilTime has passed
-          
-          break;
-        } // case BEGIN_DOCKING
-          
-        case PLACE_OBJECT_ON_GROUND:
-        {
-          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime && !IsMoving()) {
-            if(IsCarryingObject() == false) {
-              PRINT_NAMED_ERROR("Robot.Update.NotCarryingObject",
-                                "Robot %d in PLACE_OBJECT_ON_GROUND state but not carrying object.\n", _ID);
-              break;
-            }
-            
-            _dockAction = DA_PLACE_LOW;
-            _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.5f;
-            
-            // Compute pose of placeOnGroundPose (which is the pose of the marker on the carried object
-            // that faces the robot when the object is placed in the desired pose on the ground)
-            // relative to robot to yield the one-time docking error signal for placing the carried object on the ground.
-            Pose3d relPose;
-            if (!_placeOnGroundPose.GetWithRespectTo(_pose, relPose)) {
-              PRINT_NAMED_ERROR("Robot.Update.PlaceObjectOnGroundPoseError", "\n");
-            }
-            
-            PRINT_INFO("dockMarker wrt to robot pose: %f %f %f ang: %f\n", relPose.GetTranslation().x(), relPose.GetTranslation().y(), relPose.GetTranslation().z(), relPose.GetRotationAngle<'Z'>().ToFloat());
-            
-            SendPlaceObjectOnGround(relPose.GetTranslation().x(), relPose.GetTranslation().y(), relPose.GetRotationAngle<'Z'>().ToFloat() );
-
-            SetState(DOCKING);
-          }
-          break;
-        } // case PLACE_OBJECT_ON_GROUND
-          
-        case DOCKING:
-        {
-          if (!IsPickingOrPlacing() && !IsMoving() &&
-              _waitUntilTime < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
-          {
-            // Stopped executing docking path, and should have backed out by now,
-            // and have head pointed at an angle to see where we just placed or
-            // picked up from. So we will check if we see a block with the same
-            // ID/Type as the one we were supposed to be picking or placing, in the
-            // right position.
-            
-            Result lastResult = RESULT_OK;
-            
-            switch(_dockAction)
-            {
-              case DA_PICKUP_LOW:
-              case DA_PICKUP_HIGH:
-              {
-                lastResult = VerifyObjectPickup();
-                if(lastResult != RESULT_OK) {
-                  PRINT_NAMED_ERROR("Robot.Update.VerifyObjectPickupFailed",
-                                    "VerifyObjectPickup returned error code %x.\n",
-                                    lastResult);
-                }
-                break;
-              } // case PICKUP
-                
-              case DA_PLACE_LOW:
-              case DA_PLACE_HIGH:
-              {                  
-                lastResult = VerifyObjectPlacement();
-                if(lastResult != RESULT_OK) {
-                  PRINT_NAMED_ERROR("Robot.Update.VerifyObjectPlacementFailed",
-                                    "VerifyObjectPlacement returned error code %x.\n",
-                                    lastResult);
-                }
-                break;
-              } // case PLACE
-                
-              case DA_RAMP_ASCEND:
-              case DA_RAMP_DESCEND:
-              {
-                // TODO: Need to do some kind of verification here?
-                PRINT_NAMED_INFO("Robot.Update.RampAscentOrDescentComplete",
-                                 "Robot has completed going up/down ramp.\n");
-                break;
-              } // case RAMP
-                
-              case DA_CROSS_BRIDGE:
-              {
-                // TODO: Need some kind of verificaiton here?
-                PRINT_NAMED_INFO("Robot.Update.BridgeCrossingComplete",
-                                 "Robot has completed crossing a bridge.\n");
-                break;
-              }
-                
-              default:
-                PRINT_NAMED_ERROR("Robot.Update", "Reached unknown dockAction case.\n");
-                assert(false);
-                return RESULT_FAIL;
-                
-            } // switch(_dockAction)
-            
-            SetState(IDLE);
-          }
-          break;
-        } // case DOCKING
-          
-        default:
-          PRINT_NAMED_ERROR("Robot::Update", "Transitioned to unknown state %d!\n", _state);
-          assert(false);
-          _state = IDLE;
-          return RESULT_FAIL;
-          
-      } // switch(state_)
-      
-      
-#endif // #if 0, removing old state machine
-      
-      
       /////////// Update visualization ////////////
       
       // Draw observed markers, but only if images are being streamed
@@ -1014,33 +728,8 @@ namespace Anki {
       return RESULT_OK;
       
     } // Update()
+
     
-
-    Result Robot::SetState(const State nextState)
-    {
-      Result result;
-      
-      switch(nextState) {
-        case IDLE:
-        case FOLLOWING_PATH:
-        case BEGIN_DOCKING:
-        case DOCKING:
-        case PLACE_OBJECT_ON_GROUND:
-          PRINT_INFO("Robot %d switching from state %s to state %s.\n", _ID,
-                     Robot::StateNames.at(_state).c_str(),
-                     Robot::StateNames.at(nextState).c_str());
-          _state = nextState;
-          result = RESULT_OK;
-          break;
-
-        default:
-          PRINT_NAMED_ERROR("Robot::SetState", "Trying to transition to invalid state %d!\n", nextState);
-          result = RESULT_FAIL;
-      }
-
-      return result;
-    }
-
     bool Robot::IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle) const {
       if(head_angle < MIN_HEAD_ANGLE - HEAD_ANGLE_LIMIT_MARGIN) {
         //PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Head angle (%f rad) too small.\n", head_angle);
@@ -1062,7 +751,6 @@ namespace Anki {
       }
       return true;
     }
-    
 
     
     void Robot::SetPose(const Pose3d &newPose)
@@ -1226,7 +914,6 @@ namespace Anki {
     void Robot::AbortCurrentPath()
     {
       ClearPath();
-      //SetState(IDLE);
     }
     
     // =========== Motor commands ============
@@ -1459,7 +1146,6 @@ namespace Anki {
     // Clears the path that the robot is executing which also stops the robot
     Result Robot::ClearPath()
     {
-      // TODO: SetState(IDLE) ?
       VizManager::getInstance()->ErasePath(_ID);
       pdo_->ClearPath();
       return SendClearPath();
@@ -1483,11 +1169,6 @@ namespace Anki {
           lastResult = SendExecutePath(path);
         }
       }
-
-      //SetState(FOLLOWING_PATH);
-      
-      // for when the path is complete, can be overridden by caller if needed
-      _nextState = IDLE;
       
       return lastResult;
     }
@@ -1502,105 +1183,14 @@ namespace Anki {
       }
       
       _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, ramp->GetID(), PreActionPose::ENTRY));
-      
+
+      // TODO: Have the actions set up retries themselves?
       AscendOrDescendRampAction* ascendOrDescendAction = new AscendOrDescendRampAction(*this, ramp->GetID());
       auto retryLambda = [ramp](Robot& robot) { return robot.ExecuteRampingSequence(ramp); };
       ascendOrDescendAction->SetRetryFunction(retryLambda);
       
       _actionQueue.QueueAtEnd(ascendOrDescendAction);
       
-      // TODO: Have the actions do this themselves?
-      
-      /*
-      //
-      // Other checks? Do we have to be carrying a block or have lift up?
-      //
-      
-      f32 headAngle = 0.f;
-      Pose3d goalPose;
-      
-      // Choose ascent or descent
-      switch(ramp->IsAscendingOrDescending(GetPose()))
-      {
-        case Ramp::ASCENDING:
-          goalPose   = ramp->GetPreAscentPose();
-          headAngle   = DEG_TO_RAD(-10);
-          break;
-          
-        case Ramp::DESCENDING:
-          goalPose   = ramp->GetPreDescentPose();
-          headAngle   = MIN_HEAD_ANGLE;
-          
-        case Ramp::UNKNOWN:
-        default:
-          PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.UnknownRampTraversalDirection",
-                            "Could not determine whether robot %d is ascending or descending ramp %d.\n",
-                            GetID(), ramp->GetID().GetValue());
-          return RESULT_FAIL;
-      }
-    
-      // Make the goal pose be w.r.t. the robot's current origin
-      if(goalPose.GetWithRespectTo(GetPose().FindOrigin(), goalPose) == false) {
-        PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.GoalPoseHasWrongOrigin",
-                          "Goal pose provided by specified ramp does not share "
-                          "Robot %d's origin.\n", _ID);
-        return RESULT_FAIL;
-      }
-      
-      if(GetPose().GetTranslation().z() < ramp->GetPose().GetTranslation().z()) {
-        
-        _dockMarker = ramp->GetFrontMarker();
-        _dockAction = DA_RAMP_ASCEND;
-        
-      } else {
-        
-        _dockMarker = ramp->GetTopMarker();
-        _dockAction = DA_RAMP_DESCEND;
-        
-      }
-       */
-      
-
-      /*
-      _dockObjectID = ramp->GetID();
-      
-      // Choose ascent or descent
-      // TODO: Better selection criteria for ascent vs. descent?
-      f32 headAngle = 0.f;
-      if(GetPose().GetTranslation().z() < ramp->GetPose().GetTranslation().z()) {
-        _goalPose   = ramp->GetPreAscentPose();
-        _dockMarker = ramp->GetFrontMarker();
-        _dockAction = DA_RAMP_ASCEND;
-        headAngle   = DEG_TO_RAD(-10);
-      } else {
-        _goalPose   = ramp->GetPreDescentPose();
-        _dockMarker = ramp->GetTopMarker();
-        _dockAction = DA_RAMP_DESCEND;
-        headAngle   = MIN_HEAD_ANGLE;
-      }
-      
-      // Unused for ramping:
-      _dockMarker2 = nullptr;
-      
-      
-      
-      _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
-      _goalAngleThreshold    = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
-      
-      Result lastResult = ExecutePathToPose(_goalPose, headAngle);
-      if(lastResult != RESULT_OK) {
-        return lastResult;
-      }
-      
-      _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-      //SetState(FOLLOWING_PATH); // This should be done by ExecutePathToPose
-      assert(_state == FOLLOWING_PATH);
-      _nextState = BEGIN_DOCKING;
-      
-      // So we know how to check for success and what to do in case of failure:
-      _goalPoseActionType = PreActionPose::ENTRY;
-      _reExecSequenceFcn  = [this]() { return this->ExecuteTraversalSequence(this->_dockObjectID); };
-      */
       return RESULT_OK;
       
     } // ExecuteRampingSequence()
@@ -1737,71 +1327,7 @@ namespace Anki {
       _actionQueue.QueueAtEnd(crossBridgeAction);
       
       return RESULT_OK;
-      
-      /*
-      std::vector<ActionableObject::PoseMarkerPair_t> preCrossingPosePoseMarkerPairs;
-      bridge->GetCurrentPreActionPoses(preCrossingPosePoseMarkerPairs, {PreActionPose::ENTRY});
-      
-      if(preCrossingPosePoseMarkerPairs.empty()) {
-        PRINT_NAMED_ERROR("Robot.ExecuteBridgeCrossingSequence.NoPreCrossingPoses",
-                          "Bridge did not provide any pre-crossing poses!\n");
-        return RESULT_FAIL;
-      }
-      
-      // Let the planner choose which pre-crossing pose to use. Create a vector of
-      // pose options
-      size_t selectedIndex = preCrossingPosePoseMarkerPairs.size();
-      std::vector<Pose3d> preCrossingPoses;
-      preCrossingPoses.reserve(preCrossingPosePoseMarkerPairs.size());
-      for(auto const& preCrossingPair : preCrossingPosePoseMarkerPairs) {
-        preCrossingPoses.emplace_back(preCrossingPair.first);
-        
-        // Make the pre-crossing poses be w.r.t. the robot's current origin
-        if(preCrossingPoses.back().GetWithRespectTo(GetPose().FindOrigin(), preCrossingPoses.back()) == false) {
-          PRINT_NAMED_ERROR("Robot.ExecutePreCrossingSequence.PreCrossingPoseHasWrongOrigin",
-                            "Pre-crossing pose does not share Robot %d's origin.\n", _ID);
-          return RESULT_FAIL;
-        }
-      }
-      
-      Result lastResult = ExecutePathToPose(preCrossingPoses, DEG_TO_RAD(-15), selectedIndex);
-      if(lastResult != RESULT_OK) {
-        return lastResult;
-      }
-      
-      assert(selectedIndex < preCrossingPoses.size());
-      
-      _dockAction = DA_CROSS_BRIDGE;
-      _dockObjectID = bridge->GetID();
-
-      _goalPose = preCrossingPoses[selectedIndex];
-      _dockMarker = &(preCrossingPosePoseMarkerPairs[selectedIndex].second);
-      
-      // Use the unchosen pre-crossing pose marker (the one at the other end of
-      // the bridge) as dockMarker2
-      assert(preCrossingPoses.size() == 2);
-      size_t indexForOtherEnd = 1 - selectedIndex;
-      assert(indexForOtherEnd == 0 || indexForOtherEnd == 1);
-      _dockMarker2 = &(preCrossingPosePoseMarkerPairs[indexForOtherEnd].second);
-      
-      _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
-      _goalAngleThreshold    = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
-      
-      PRINT_INFO("Executing path to nearest pre-crossing pose for selected bridge: (%.2f, %.2f) @ %.1fdeg\n",
-                 _goalPose.GetTranslation().x(),
-                 _goalPose.GetTranslation().y(),
-                 _goalPose.GetRotationAngle<'Z'>().getDegrees());
-      
-      _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-      assert(_state == FOLLOWING_PATH);
-      _nextState = BEGIN_DOCKING;
-      
-      // So we know how to check for success and what to do in case of failure:
-      _goalPoseActionType = PreActionPose::ENTRY;
-      _reExecSequenceFcn  = [this]() { return this->ExecuteTraversalSequence(this->_dockObjectID); };
-       
-      return lastResult;
-      */
+    
     } // ExecuteBridgeCrossingSequence()
     
     
@@ -1820,134 +1346,12 @@ namespace Anki {
       
       return lastResult;
       
-      /*
-      
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectIDtoDockWith));
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.DockObjectDoesNotExist",
-                          "Robot %d asked to dock with Object ID=%d, but it does not exist.",
-                          _ID, objectIDtoDockWith.GetValue());
-
-        return RESULT_FAIL;
-      }
-      
-      // Choose docking action based on block's position and whether we are
-      // carrying a block
-      const f32 dockBlockHeight = object->GetPose().GetTranslation().z();
-      _dockAction = DA_PICKUP_LOW;
-      if (dockBlockHeight > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
-        if(IsCarryingObject()) {
-          PRINT_INFO("Already carrying object. Can't dock to high object. Aborting.\n");
-          return RESULT_FAIL;
-          
-        } else {
-          _dockAction = DA_PICKUP_HIGH;
-        }
-      } else if (IsCarryingObject()) {
-        _dockAction = DA_PLACE_HIGH;
-      }
-      
-      _dockObjectID = objectIDtoDockWith;
-      _dockMarker = nullptr; // should get set to a predock pose below
-      _dockMarker2 = nullptr; // unused for regular object docking
-      
-      std::vector<ActionableObject::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      //object->GetPreDockPoses(object->GetDefaultPreDockDistance(), preDockPoseMarkerPairs);
-      object->GetCurrentPreActionPoses(preDockPoseMarkerPairs, {PreActionPose::DOCKING});
-      
-      if (preDockPoseMarkerPairs.empty()) {
-        PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.NoPreDockPoses",
-                          "Dock block did not provide any pre-dock poses!\n");
-        return RESULT_FAIL;
-      }
-      
-      // Let the planner choose which pre-dock pose to use. Create a vector of
-      // pose options
-      size_t selectedIndex = preDockPoseMarkerPairs.size();
-      std::vector<Pose3d> preDockPoses;
-      preDockPoses.reserve(preDockPoseMarkerPairs.size());
-      for(auto const& preDockPair : preDockPoseMarkerPairs) {
-        preDockPoses.emplace_back(preDockPair.first);
-        
-        // Make the predock poses be w.r.t. the robot's current origin
-        if(preDockPoses.back().GetWithRespectTo(GetPose().FindOrigin(), preDockPoses.back()) == false) {
-          PRINT_NAMED_ERROR("Robot.ExecuteDockingSequence.PreDockPoseHasWrongOrigin",
-                            "Pre-dock pose does not share Robot %d's origin.\n", _ID);
-          return RESULT_FAIL;
-        }
-
-      }
-      
-      _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
-      _goalAngleThreshold    = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD; 
-      
-      lastResult = ExecutePathToPose(preDockPoses, DEG_TO_RAD(-15), selectedIndex);
-      if(lastResult != RESULT_OK) {
-        return lastResult;
-      }
-      
-      _goalPose = preDockPoses[selectedIndex];
-      _dockMarker = &(preDockPoseMarkerPairs[selectedIndex].second);
-      
-      
-      PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
-                 _goalPose.GetTranslation().x(),
-                 _goalPose.GetTranslation().y(),
-                 _goalPose.GetRotationAngle().getDegrees());
-      
-      _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-      //SetState(FOLLOWING_PATH); // This should be done by ExecutePathToPose above
-      assert(_state == FOLLOWING_PATH);
-      _nextState = BEGIN_DOCKING;
-      
-      // So we know how to check for success and what to do in case of failure:
-      _goalPoseActionType = PreActionPose::DOCKING;
-      _reExecSequenceFcn  = [this]() { return this->ExecuteDockingSequence(this->_dockObjectID); };
-      
-      return lastResult;
-      */
     } // ExecuteDockingSequence()
+    
     
     Result Robot::ExecutePlaceObjectOnGroundSequence()
     {
       _actionQueue.QueueAtEnd(new PutDownObjectAction(*this));
-      
-      /*
-      
-      if(IsCarryingObject() == false) {
-        PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.NotCarryingObject",
-                          "Robot %d was told to place a block on the ground, but "
-                          "it is not carrying a block.\n", _ID);
-        return RESULT_FAIL;
-      }
-      
-      // Grab a pointer to the block we are supposedly carrying
-      ActionableObject* carryingObject = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_carryingObjectID));
-      if(carryingObject == nullptr) {
-        PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.CarryObjectDoesNotExist",
-                          "Robot %d thinks it is carrying a block with ID=%d, but that "
-                          "block does not exist in the world.\n",
-                          _ID, _carryingObjectID.GetValue());
-        
-        return RESULT_FAIL;
-      }
-      
-      SetState(PLACE_OBJECT_ON_GROUND);
-      
-      // TODO: How to correctly set _dockMarker in case of placement failure??
-      //_dockMarker = &carryingObject->GetMarkers().front(); // GetMarker(Block::FRONT_FACE);
-      
-      
-      // Set desired position of marker (via placeOnGroundPose) to be exactly where robot is now
-      f32 markerAngle = _pose.GetRotationAngle<'Z'>().ToFloat();
-      
-      Vec3f markerPt(_pose.GetTranslation().x() + (ORIGIN_TO_LOW_LIFT_DIST_MM * cosf(markerAngle)),
-                     _pose.GetTranslation().y() + (ORIGIN_TO_LOW_LIFT_DIST_MM * sinf(markerAngle)),
-                     _pose.GetTranslation().z());
-      
-      _placeOnGroundPose.SetTranslation(markerPt);
-      _placeOnGroundPose.SetRotation(_pose.GetRotationMatrix());
-      */
       
       return RESULT_OK;
       
@@ -1968,108 +1372,6 @@ namespace Anki {
       _actionQueue.QueueAtEnd(new DriveToPlaceCarriedObjectAction(*this, atPoseWithParent));
       _actionQueue.QueueAtEnd(new PutDownObjectAction(*this));
       
-      /*
-      if(IsCarryingObject() == false) {
-        PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.NotCarryingObject",
-                          "Robot %d was told to place an object on the ground, but "
-                          "it is not carrying a object.\n", _ID);
-        return RESULT_FAIL;
-      }
-      
-      // Grab a pointer to the block we are supposedly carrying
-      ActionableObject* carryingObject = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_carryingObjectID));
-      if(carryingObject == nullptr) {
-        PRINT_NAMED_ERROR("Robot.ExecutePlaceObjectOnGroundSequence.CarryObjectDoesNotExist",
-                          "Robot %d thinks it is carrying an object with ID=%d, but that "
-                          "object does not exist in the world.\n",
-                          _ID, _carryingObjectID.GetValue());
-        
-        return RESULT_FAIL;
-      }
-      
-      // Temporarily move the block being carried to the specified pose so we can
-      // get pre-dock poses for it
-      const Pose3d origCarryObjectPose(carryingObject->GetPose());
-      carryingObject->SetPose(atPose);
-      
-      // Get "pre-dock" poses that match the marker that we are docked to,
-      // which in this case aren't really for docking but instead where we
-      // want the robot to end up in order for the block to be
-      // at the requested pose.
-      std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
-      carryingObject->GetCurrentPreActionPoses(preDockPoseMarkerPairs,
-                                               {PreActionPose::DOCKING},
-                                               {_carryingMarker->GetCode()});
-      
-      if (preDockPoseMarkerPairs.empty()) {
-        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGroundSequence.NoPreDockPoses",
-                          "Dock block did not provide any pre-dock poses!\n");
-        return RESULT_FAIL;
-      }
-      
-      // Let the planner choose which pre-dock pose to use. Create a vector of
-      // pose options
-      size_t selectedIndex = preDockPoseMarkerPairs.size();
-      std::vector<Pose3d> preDockPoses;
-      preDockPoses.reserve(preDockPoseMarkerPairs.size());
-      for(auto const& preDockPair : preDockPoseMarkerPairs) {
-        preDockPoses.emplace_back(preDockPair.first);
-      }
-      
-      _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
-      _goalAngleThreshold    = DEG_TO_RAD(10);
-      
-      lastResult = ExecutePathToPose(preDockPoses, DEG_TO_RAD(-15), selectedIndex);
-      if(lastResult != RESULT_OK) {
-        return lastResult;
-      }
-      
-      _goalPose = preDockPoses[selectedIndex];
-      
-      // Note that even though we are not docking with a block, we need this
-      // in the case that placement fails and we need to re-pickup the block
-      // we're carrying.
-      _dockMarker = &(preDockPoseMarkerPairs[selectedIndex].second);
-
-      
-      // Compute the pose of the marker in world coords
-      if (!_dockMarker->GetPose().GetWithRespectTo(*_worldOrigin, _placeOnGroundPose))
-      {
-        PRINT_NAMED_ERROR("Robot.ExecutePlaceBlockOnGround.DockMarkerPoseFail", "\n");
-      } else {
-        // _placeOnGroundPose tranlsation is in world coords.
-        // Now update rotation to reflect absolute angle of the marker's normal in world coords.
-        std::vector<Vec3f> markerNormalVec;
-        std::vector<Vec3f> relMarkerNormalVec;
-        
-        // Vector pointing toward inside of block along the marker normal (i.e. +ve y-axis)
-        relMarkerNormalVec.emplace_back(0,1,0);
-        
-        _placeOnGroundPose.ApplyTo(relMarkerNormalVec, markerNormalVec);
-        
-        //PRINT_INFO("markerNormal: %f %f %f\n", markerNormalVec[0].x(), markerNormalVec[0].y(), markerNormalVec[0].z());
-        
-        Radians markerAbsAngle = atan2(markerNormalVec[0].y() - _placeOnGroundPose.GetTranslation().y(),
-                                       markerNormalVec[0].x() - _placeOnGroundPose.GetTranslation().x());
-        _placeOnGroundPose.SetRotation(markerAbsAngle, Z_AXIS_3D);
-        
-        PRINT_INFO("PlaceOnGroundPose: %f %f %f, ang: %f\n", _placeOnGroundPose.GetTranslation().x(), _placeOnGroundPose.GetTranslation().y(), _placeOnGroundPose.GetTranslation().z(), _placeOnGroundPose.GetRotationAngle<'Z'>().ToFloat());
-      }
-      
-      
-      // Put the carrying block back in its original pose (attached to lift)
-      carryingObject->SetPose(origCarryObjectPose);
-      
-      PRINT_INFO("Executing path to nearest pre-dock pose: (%.2f, %.2f) @ %.1fdeg\n",
-                 _goalPose.GetTranslation().x(),
-                 _goalPose.GetTranslation().y(),
-                 _goalPose.GetRotationAngle().getDegrees());
-      
-      _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
-      //SetState(FOLLOWING_PATH); // This should be done by ExecutePathToPose above
-      assert(_state == FOLLOWING_PATH);
-      _nextState = PLACE_OBJECT_ON_GROUND;
-      */
       return lastResult;
       
     } // ExecutePlaceObjectOnGroundSequence(atPose)
@@ -2112,14 +1414,6 @@ namespace Anki {
       // object to being carried, using PickUpDockObject()
       _dockObjectID = objectID;
       _dockMarker  = marker;
-      
-      /*
-      if(_dockMarker2 == nullptr) {
-        marker2 = _dockMarker;
-      }
-      */
-      
-      //_dockObjectOrigPose = object->GetPose();
       
       // Dock marker has to be a child of the dock block
       if(marker->GetPose().GetParent() != &object->GetPose()) {
@@ -2182,10 +1476,6 @@ namespace Anki {
       // make part of the lift's pose chain so the object will now be relative to
       // the lift and move with the robot
       objectPoseWrtLiftPose.SetParent(&_liftPose);
-
-      // Don't reset these until we've verified the block was actually picked up
-      //_dockBlockID = ANY_OBJECT;
-      //_dockMarker  = nullptr;
       
       object->SetPose(objectPoseWrtLiftPose);
       object->SetIsBeingCarried(true);
@@ -2194,53 +1484,8 @@ namespace Anki {
       
     } // PickUpDockBlock()
     
-    /*
-    Result Robot::VerifyObjectPickup()
-    {
-      // We should _not_ still see a object with the
-      // same type as the one we were supposed to pick up in that
-      // block's original position because we should now be carrying it.
-      Vision::ObservableObject* carryObject = _blockWorld.GetObjectByID(_carryingObjectID);
-      if(carryObject == nullptr) {
-        PRINT_NAMED_ERROR("Robot.VerifyObjectPickup.CarryObjectNoLongerExists",
-                          "Object %d we were carrying no longer exists in the world.\n",
-                          _carryingObjectID.GetValue());
-        return RESULT_FAIL;
-      }
-      
-      const BlockWorld::ObjectsMapByID_t& objectsWithType = _blockWorld.GetExistingObjectsByType(carryObject->GetType());
-
-      bool objectInOriginalPoseFound = false;
-      for(auto object : objectsWithType) {
-        // TODO: Make thresholds parameters
-        // TODO: is it safe to always have useAbsRotation=true here?
-        if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, carryObject->
-                                                           GetRotationAmbiguities(),
-                                                           15.f, DEG_TO_RAD(25), true))
-        {
-          objectInOriginalPoseFound = true;
-          break;
-        }
-      }
-      
-      if(objectInOriginalPoseFound)
-      {
-        // Must not actually be carrying the object I thought I was!
-        _blockWorld.ClearObject(_carryingObjectID);
-        _carryingObjectID.UnSet();
-        PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
-        return RESULT_FAIL;
-      } else {
-        //_carryingObjectID = _dockObjectID;  // Already set?
-        //_carryingMarker   = _dockMarker;   //   "
-        PRINT_INFO("Object pick-up SUCCEEDED!\n");
-        return RESULT_OK;
-      }
-      
-    } // VerifyObjectPickup()
-    */
     
-    Result Robot::PlaceCarriedObject() //const TimeStamp_t atTime)
+    Result Robot::PlaceCarriedObject()
     {
       if(IsCarryingObject() == false) {
         PRINT_NAMED_WARNING("Robot.PlaceCarriedObject.CarryingObjectNotSpecified",
@@ -2282,40 +1527,6 @@ namespace Anki {
       
     } // PlaceCarriedObject()
     
-    /*
-    Result Robot::VerifyObjectPlacement()
-    {
-      
-      // In place mode, we _should_ now see an object with the ID of the
-      // one we were carrying, in the place we think we left it when
-      // we placed it.
-      // TODO: check to see it ended up in the right place?
-      Vision::ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("Robot.VerifyObjectPlacement.CarryObjectNoLongerExists",
-                          "Object %d we were carrying no longer exists in the world.\n",
-                          _carryingObjectID.GetValue());
-        return RESULT_FAIL;
-      }
-      else if(object->GetLastObservedTime() > (GetLastMsgTimestamp()-500))
-      {
-        // We've seen the object in the last half second (which could
-        // not be true if we were still carrying it)
-        PRINT_INFO("Object placement SUCCEEDED!\n");
-        _carryingObjectID.UnSet();
-        _carryingMarker   = nullptr;
-        return RESULT_OK;
-      } else {
-        PRINT_INFO("Object placement FAILED!\n");
-        // TODO: correct to assume we are still carrying the object?
-        ObjectID tempID = _carryingObjectID;
-        _carryingObjectID.UnSet(); // needs to be unset to call PickUpDockObject()
-        PickUpDockObject(tempID, _carryingMarker); // re-pickup object to attach it to the lift again
-        return RESULT_FAIL;
-      }
-      
-    } // VerifyObjectPlacement()
-*/
     
     Result Robot::SetHeadlight(u8 intensity)
     {
@@ -2806,34 +2017,7 @@ namespace Anki {
                                              const f32 pose_angle,
                                              const f32 head_angle,
                                              const f32 lift_angle)
-    {
-      /*
-      if(!IsLocalized()) {
-
-        // If we aren't localized yet, we are about to be, by virtue of this pose
-        // stamp.  So we need to take the current origin (which may be the
-        // the pose parent of observed objects) and update it
-        
-        // Reverse the connection between origin and robot
-        //CORETECH_ASSERT(p.GetPose().GetParent() == _poseOrigin);
-        *_poseOrigin = _pose.GetInverse();
-        _poseOrigin->SetParent(&p.GetPose());
-        
-        // Connect the old origin's pose to the same root the robot now has.
-        // It is no longer the robot's origin, but for any of its children,
-        // it is now in the right coordinates.
-        if(_poseOrigin->GetWithRespectTo(p.GetPose().FindOrigin(), *_poseOrigin) == false) {
-          PRINT_NAMED_ERROR("Robot.AddVisionOnlyPoseToHistory.NewLocalizationOriginProblem",
-                            "Could not get pose origin w.r.t. RobotPoseStamp's pose.\n");
-          return RESULT_FAIL;
-        }
-        
-        // Now make the robot's origin point to the robot's pose's parent.
-        // TODO: avoid the icky const_cast here...
-        _poseOrigin = const_cast<Pose3d*>(p.GetPose().GetParent());
-      }
-      */
-      
+    {      
       // We have a new ("ground truth") key frame. Increment the pose frame!
       //IncrementPoseFrameID();
       ++_frameId;
