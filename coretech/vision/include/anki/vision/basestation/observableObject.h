@@ -120,18 +120,12 @@ namespace Anki {
       // comparing, e.g. for cubes or other blocks.
       virtual bool IsSameAs(const ObservableObject&  otherObject,
                             const Point3f&  distThreshold,
-                            const Radians&  angleThreshold,
-                            Pose3d& P_diff) const;
-      
-      virtual bool IsSameAs(const ObservableObject&  otherObject,
-                            const Point3f& distThreshold,
-                            const Radians& angleThreshold) const;
+                            const Radians&  angleThreshold) const;
       
       // Same as other IsSameAs() calls above, except the tolerance thresholds
       // given by the virtual members below are used (so that per-object-class
       // thresholds can be defined)
       bool IsSameAs(const ObservableObject& otherObject) const;
-      bool IsSameAs(const ObservableObject& otherObject, Pose3d& P_diff) const;
       
       virtual Point3f GetSameDistanceTolerance() const = 0;
       virtual Radians GetSameAngleTolerance() const = 0;
@@ -262,23 +256,10 @@ namespace Anki {
     inline void ObservableObject::SetPoseParent(const Pose3d* newParent) {
       pose_.SetParent(newParent);
     }
-    
-    inline bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
-                                           const Point3f&           distThreshold,
-                                           const Radians&           angleThreshold) const
-    {
-      Pose3d P_diff_temp;
-      return this->IsSameAs(otherObject, distThreshold, angleThreshold,
-                            P_diff_temp);
-    }
-    
+        
     inline std::vector<RotationMatrix3d> const& ObservableObject::GetRotationAmbiguities() const
     {
       return ObservableObject::sRotationAmbiguities;
-    }
-    
-    inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject, Pose3d& P_diff) const {
-      return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance(), P_diff);
     }
     
     inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject) const {

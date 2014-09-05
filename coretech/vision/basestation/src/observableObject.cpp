@@ -83,8 +83,7 @@ namespace Anki {
     
     bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
                                     const Point3f&           distThreshold,
-                                    const Radians&           angleThreshold,
-                                    Pose3d&                  P_diff) const
+                                    const Radians&           angleThreshold) const
     {
       // The two objects can't be the same if they aren't the same type!
       bool isSame = this->GetType() == otherObject.GetType();
@@ -125,13 +124,12 @@ namespace Anki {
                           (pose_.IsOrigin() && otherPose.GetParent() == &pose_));
           
           if(this->GetRotationAmbiguities().empty()) {
-            isSame = this->pose_.IsSameAs(otherPose, distThreshold, angleThreshold, P_diff);
+            isSame = this->pose_.IsSameAs(otherPose, distThreshold, angleThreshold);
           }
           else {
             isSame = this->pose_.IsSameAs_WithAmbiguity(otherPose,
                                                         this->GetRotationAmbiguities(),
-                                                        distThreshold, angleThreshold,
-                                                        true, P_diff);
+                                                        distThreshold, angleThreshold, true);
           } // if/else there are ambiguities
         } // if(isSame) [inner]
       } // if(isSame) [outer]

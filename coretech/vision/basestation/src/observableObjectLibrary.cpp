@@ -243,13 +243,13 @@ namespace Anki {
     {
       bool wasAdded = false;
       const Pose3d& P_other = match.first;
-      Pose3d P_diff;
+
       if(R_ambiguities.empty()) {
-        wasAdded = pose_.IsSameAs(P_other, distThreshold, angleThreshold, P_diff);
+        wasAdded = pose_.IsSameAs(P_other, distThreshold, angleThreshold);
       }
       else {
         wasAdded = pose_.IsSameAs_WithAmbiguity(P_other, R_ambiguities,
-                                                distThreshold, angleThreshold, true, P_diff);
+                                                distThreshold, angleThreshold, true);
       } // if/else the ambiguities list is empty
       
       // Note that we check to see if a pose stemming from this match's
@@ -277,6 +277,10 @@ namespace Anki {
         // so that all cluster members' KnownMarkers will be in the same
         // coordinate frame and we can use them later to recompute this
         // cluster's pose based on all its member matches.
+        
+        Pose3d P_diff = pose_.GetInverse();
+        P_diff.PreComposeWith(P_other);
+        
         if(not R_ambiguities.empty()) {
           Pose3d newPose(matches_.back().second.GetPose());
           newPose.PreComposeWith(P_diff);
