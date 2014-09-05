@@ -1172,30 +1172,7 @@ namespace Anki {
       
       return lastResult;
     }
-    
-    
-    Result Robot::ExecuteRampingSequence(Ramp* ramp)
-    {
-      if(ramp == nullptr) {
-        PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.NullPointer",
-                          "Given ramp object pointer is null.\n");
-        return RESULT_FAIL;
-      }
-      
-      _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, ramp->GetID(), PreActionPose::ENTRY));
-
-      // TODO: Have the actions set up retries themselves?
-      AscendOrDescendRampAction* ascendOrDescendAction = new AscendOrDescendRampAction(*this, ramp->GetID());
-      auto retryLambda = [ramp](Robot& robot) { return robot.ExecuteRampingSequence(ramp); };
-      ascendOrDescendAction->SetRetryFunction(retryLambda);
-      
-      _actionQueue.QueueAtEnd(ascendOrDescendAction);
-      
-      return RESULT_OK;
-      
-    } // ExecuteRampingSequence()
-    
-
+  
     
     Result Robot::SetOnRamp(bool t)
     {
@@ -1309,6 +1286,33 @@ namespace Anki {
     } // ExecuteTraversalSequence()
     
     
+    Result Robot::ExecuteRampingSequence(Ramp* ramp)
+    {
+      if(ramp == nullptr) {
+        PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.NullPointer",
+                          "Given ramp object pointer is null.\n");
+        return RESULT_FAIL;
+      }
+      
+      _actionQueue.QueueAtEnd(new CompoundActionSequential(*this,
+                                                           {new DriveToObjectAction(*this, ramp->GetID(), PreActionPose::ENTRY),
+                                                             new AscendOrDescendRampAction(*this, ramp->GetID())}));
+      /*
+      _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, ramp->GetID(), PreActionPose::ENTRY));
+      
+      // TODO: Have the actions set up retries themselves?
+      AscendOrDescendRampAction* ascendOrDescendAction = new AscendOrDescendRampAction(*this, ramp->GetID());
+      auto retryLambda = [ramp](Robot& robot) { return robot.ExecuteRampingSequence(ramp); };
+      ascendOrDescendAction->SetRetryFunction(retryLambda);
+      
+      _actionQueue.QueueAtEnd(ascendOrDescendAction);
+      */
+      
+      return RESULT_OK;
+      
+    } // ExecuteRampingSequence()
+    
+    
     Result Robot::ExecuteBridgeCrossingSequence(ActionableObject *bridge)
     {
     
@@ -1336,6 +1340,10 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
+      _actionQueue.QueueAtEnd(new CompoundActionSequential(*this,
+                                                           {new DriveToObjectAction(*this, objectIDtoDockWith, PreActionPose::DOCKING),
+                                                             new PickUpObjectAction(*this, objectIDtoDockWith)}));
+      /*
       _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, objectIDtoDockWith, PreActionPose::DOCKING));
       
       PickUpObjectAction* pickUpAction = new PickUpObjectAction(*this, objectIDtoDockWith);
@@ -1343,7 +1351,7 @@ namespace Anki {
       pickUpAction->SetRetryFunction(retryLambda);
       
       _actionQueue.QueueAtEnd(pickUpAction);
-      
+      */
       return lastResult;
       
     } // ExecuteDockingSequence()

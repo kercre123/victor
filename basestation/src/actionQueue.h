@@ -141,6 +141,41 @@ namespace Anki {
       std::list<IAction*> _queue;
     }; // class ActionQueue
     
+    // Treats a group of actions as a single action and excutes them sequentially
+    class CompoundActionSequential : public IAction
+    {
+    public:
+      CompoundActionSequential(Robot& robot, std::initializer_list<IAction*> actions);
+      
+      virtual const std::string& GetName() const override;
+      
+    protected:
+      
+      virtual ActionResult CheckIfDone() override;
+      
+      std::string _name;
+      ActionQueue _actionQueue;
+      
+    }; // class CompoundActionSequential
+    
+    // Treats a group of actions as a single action and executes them in parallel
+    // at each call to update (until all report they are done)
+    class CompoundActionParallel : public IAction
+    {
+    public:
+      CompoundActionParallel(Robot& robot, std::initializer_list<IAction*> actions);
+      
+      virtual const std::string& GetName() const override;
+      
+    protected:
+      
+      virtual ActionResult CheckIfDone() override;
+      
+      std::string _name;
+      std::list<std::pair<bool,IAction*> > _actionList;
+      
+    }; // class CompoundActionParallel
+    
     
     class DriveToPoseAction : public IAction
     {

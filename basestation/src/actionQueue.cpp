@@ -217,6 +217,112 @@ namespace Anki {
       
     } // Print()
     
+#pragma mark ---- CompoundActionSequential ----
+    
+    CompoundActionSequential::CompoundActionSequential(Robot& robot, std::initializer_list<IAction*> actions)
+    : IAction(robot)
+    , _name("[")
+    {
+      for(IAction* action : actions) {
+        _actionQueue.QueueAtEnd(action);
+        _name += action->GetName();
+        _name += "+";
+      }
+      _name += "]";
+    }
+    
+    IAction::ActionResult CompoundActionSequential::CheckIfDone()
+    {
+      ActionResult result = RUNNING;
+      
+      if(_actionQueue.IsEmpty()) {
+        result = SUCCESS;
+      } else {
+        
+        IAction* currentAction = _actionQueue.GetCurrentAction();
+        if(currentAction == nullptr) {
+          PRINT_NAMED_ERROR("CompoundActionSequential.CheckIfDone.NullActionPointer", "Found null action pointer in queue.\n");
+          result = FAILURE_ABORT;
+        }
+        else {
+          
+          const ActionResult subResult = currentAction->Update();
+          switch(subResult)
+          {
+            case IAction::SUCCESS:
+              PRINT_NAMED_INFO("CompoundActionSequential.CheckIfDone.CurrentActionSucceeded",
+                               "Compound action completed %s. Popping it off queue.\n",
+                               currentAction->GetName().c_str());
+              _actionQueue.PopCurrentAction();
+              break;
+            
+            case IAction::RUNNING:
+              // Still running... (Nothing to do?)
+              break;
+            
+              // For now, don't handle failures of constituent actions specially:
+              // just propagate their failure outward and stop processing.
+            default:
+            PRINT_NAMED_INFO("CompoundActionSequential.CheckIfDone.ConstituentActionFailed",
+                              "Constituent action of CompoundAction failed, returning failure.\n");
+              result = subResult;
+            
+          } // switch(subResult)
+        } // if/else currentAction == nullptr
+      } // if/else actionQueue not empty
+      
+      return result;
+    } // CheckIfDone()
+    
+    const std::string& CompoundActionSequential::GetName() const
+    {
+      return _name;
+    }
+    
+    
+#pragma mark ---- CompoundActionParallel ----
+    
+    CompoundActionParallel::CompoundActionParallel(Robot& robot, std::initializer_list<IAction*> actions)
+    : IAction(robot)
+    , _name("[")
+    {
+      for(IAction* action : actions) {
+        _actionList.emplace_back(false, action);
+        _name += action->GetName();
+        _name += "&";
+      }
+      _name += "]";
+    }
+    
+    IAction::ActionResult CompoundActionParallel::CheckIfDone()
+    {
+      ActionResult result = SUCCESS;
+      
+      for(auto & actionDonePair : _actionList)
+      {
+        bool& isDone = actionDonePair.first;
+        if(!isDone) {
+          IAction* subAction = actionDonePair.second;
+          const ActionResult subResult = subAction->Update();
+
+          if(subResult == SUCCESS) {
+            PRINT_NAMED_INFO("CompoundActionParallel.CheckIfDone.CurrentActionSucceeded",
+                             "Compound action completed %s. Marking it as done.\n");
+            isDone = true;
+          } else {
+            result = subResult;
+          }
+        }
+      }
+      
+      return result;
+    } // CheckIfDone()
+    
+    const std::string& CompoundActionParallel::GetName() const
+    {
+      return _name;
+    }
+    
 #pragma mark ---- CheckForPathDoneHelper ----
     
     // Helper function used by Actions that utilize ExecutePathToPose internally
