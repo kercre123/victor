@@ -35,12 +35,6 @@
 namespace Anki {
   namespace Cozmo {
     
-    static Result TestCallback(Robot* robot, Vision::ObservedMarker* marker)
-    {
-      PRINT_INFO("TestCallback!!!\n");
-      return RESULT_OK;
-    }
-    
     static bool IsMarkerCloseEnoughAndCentered(const Vision::ObservedMarker* marker, const u16 ncols)
     {
       bool result = false;
@@ -66,13 +60,6 @@ namespace Anki {
       return result;
     }
     
-    static Pose3d RotateInPlaceAroundZ(const Pose3d& pose, f32 rotationAngle)
-    {
-      const Point3f translation(pose.GetTranslation());
-      const Radians heading = pose.GetRotationAngle<'Z'>();
-      return Pose3d(heading + rotationAngle, Z_AXIS_3D, translation);
-    }
-    
     static Result ArrowCallback(Robot* robot, Vision::ObservedMarker* marker)
     {
       Result lastResult = RESULT_OK;
@@ -95,9 +82,7 @@ namespace Anki {
         }
         else if(angle >= -M_PI_4 && angle < M_PI_4) { // RIGHT
           PRINT_INFO("RIGHT Arrow!\n");
-          Pose3d rotatedPose(robot->GetPose());
-          rotatedPose.RotateBy(RotationVector3d(-M_PI_2, Z_AXIS_3D));
-          lastResult = robot->ExecutePathToPose(RotateInPlaceAroundZ(robot->GetPose(), -M_PI_2));
+          lastResult = robot->QueueAction(new TurnInPlaceAction(*robot, -M_PI_2));
         }
         else if(angle >= M_PI_4 && angle < 3*M_PI_4) { // DOWN
           PRINT_INFO("DOWN Arrow!\n");
@@ -105,7 +90,7 @@ namespace Anki {
         }
         else if(angle >= 3*M_PI_4 || angle < -3*M_PI_4) { // LEFT
           PRINT_INFO("LEFT Arrow!\n");
-          lastResult = robot->ExecutePathToPose(RotateInPlaceAroundZ(robot->GetPose(), M_PI_2));
+          lastResult = robot->QueueAction(new TurnInPlaceAction(*robot, M_PI_2));
         }
         else {
           PRINT_NAMED_ERROR("TurnCallback.UnexpectedAngle",
@@ -125,7 +110,7 @@ namespace Anki {
       
       if(IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
         PRINT_INFO("TURNAROUND Arrow!\n");
-        lastResult = robot->ExecutePathToPose(RotateInPlaceAroundZ(robot->GetPose(), M_PI));
+        lastResult = robot->QueueAction(new TurnInPlaceAction(*robot, M_PI));
       } // IfMarkerIsCloseEnoughAndCentered()
       
       return lastResult;
@@ -190,7 +175,6 @@ namespace Anki {
           CoreTechPrint("Starting ReactToMarkers behavior\n");
           
           // Testing Reactions:
-          robot_->AddReactionCallback(Vision::MARKER_ANGRYFACE,     &TestCallback);
           robot_->AddReactionCallback(Vision::MARKER_ARROW,         &ArrowCallback);
           robot_->AddReactionCallback(Vision::MARKER_STOPWITHHAND,  &StopCallback);
           robot_->AddReactionCallback(Vision::MARKER_CIRCULARARROW, &TurnAroundCallback);

@@ -319,7 +319,12 @@ namespace Anki {
       bool UpdateCurrPoseFromHistory(const Pose3d& wrtParent);
       
       Result UpdateFullRobotState(const MessageRobotState& msg);
-            
+      
+      // Queue an action, by default at the end of the Robot's current list of
+      // things to do. Actions can also be queued to occur immediately after the
+      // current action finishes ("next").
+      Result QueueAction(IAction* action, const bool next = false);
+      
       // ============= Reactions =============
       using ReactionCallback = std::function<Result(Robot*,Vision::ObservedMarker*)>;
       using ReactionCallbackIter = std::list<ReactionCallback>::const_iterator;

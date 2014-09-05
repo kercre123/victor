@@ -152,12 +152,24 @@ namespace Anki {
     
     Result ActionQueue::QueueAtEnd(IAction *action)
     {
+      if(action == nullptr) {
+        PRINT_NAMED_ERROR("ActionQueue.QueueAtEnd.NullActionPointer",
+                          "Refusing to queue a null action pointer.\n");
+        return RESULT_FAIL;
+      }
+      
       _queue.push_back(action);
       return RESULT_OK;
     }
     
     Result ActionQueue::QueueNext(Anki::Cozmo::IAction *action)
     {
+      if(action == nullptr) {
+        PRINT_NAMED_ERROR("ActionQueue.QueueNext.NullActionPointer",
+                          "Refusing to queue a null action pointer.\n");
+        return RESULT_FAIL;
+      }
+      
       if(_queue.empty()) {
         return QueueAtEnd(action);
       }

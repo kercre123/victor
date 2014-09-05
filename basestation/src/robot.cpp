@@ -2115,6 +2115,20 @@ namespace Anki {
     }
     
     
+    Result Robot::QueueAction(IAction* action, const bool next)
+    {
+      Result lastResult = RESULT_OK;
+
+      if(next) {
+        lastResult = _actionQueue.QueueNext(action);
+      } else {
+        lastResult = _actionQueue.QueueAtEnd(action);
+      }
+      
+      return lastResult;
+    } // QueueAction()
+    
+    
     Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
     {
       //CoreTechPrint("_reactionCallbacks size = %lu\n", _reactionCallbacks.size());
