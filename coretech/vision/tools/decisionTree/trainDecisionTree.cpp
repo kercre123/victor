@@ -21,7 +21,7 @@ using namespace Anki;
 using namespace Anki::Embedded;
 
 const s32 MAX_THREADS = 128; // Max threads
-const s32 MIN_IMAGES_FOR_MULTITHREAD = 1000; // If the number of images left is below this, one one thread will be used to compute the entropy
+const s32 MIN_IMAGES_PER_THREAD = 10; // If the number of images left is below this, one one thread will be used to compute the entropy
 const s32 BUSY_WAIT_SLEEP_MICROSECONDS = 100000;
 
 //#define PRINT_INTERMEDIATE
@@ -110,10 +110,10 @@ typedef struct BuildTreeThreadParameters
   const std::vector<s32*> &pNumGreaterThans; //< One allocated buffer for each maxSecondaryThreads. Must be allocated before calling the thread, and manually freed after the thread is complete
   const s32 maxLabel; //< What is the max label in labels?
   const s32 threadId; //< What is the id of the thread?
+  const s32 maxNodesToProcess; //< How many nodes should this thread process? Set to -1 to process until the queue is empty.
   ThreadSafeQueue<DecisionTreeWorkItem> &workQueue; //< What work needs to be done? Starts with just the root node.
   ThreadSafeVector<TrainingFailure> &trainingFailures; //< Which nodes could not be trained?
   ThreadSafeFixedLengthList<DecisionTreeNode> &decisionTree; //< The output decision tree
-  ThreadSafeCounter<s32> &threadCount; //< Counter for the number of running threads
   ThreadSafeCounter<s32> &numCompleted; //< How many images have been assigned to a leaf node? If it is equal to labels.get_size(), then we're finished.
 
   BuildTreeThreadParameters(
@@ -130,12 +130,12 @@ typedef struct BuildTreeThreadParameters
     const std::vector<s32*> &pNumGreaterThans,
     const s32 maxLabel,
     const s32 threadId,
+    const s32 maxNodesToProcess,
     ThreadSafeQueue<DecisionTreeWorkItem> &workQueue,
     ThreadSafeVector<TrainingFailure> &trainingFailures,
     ThreadSafeFixedLengthList<DecisionTreeNode> &decisionTree,
-    ThreadSafeCounter<s32> &threadCount,
     ThreadSafeCounter<s32> &numCompleted)
-    : featuresUsed(featuresUsed), labelNames(labelNames), labels(labels), featureValues(featureValues), leafNodeFraction(leafNodeFraction), leafNodeNumItems(leafNodeNumItems), u8MinDistance(u8MinDistance), u8ThresholdsToUse(u8ThresholdsToUse), maxSecondaryThreads(maxSecondaryThreads), pNumLessThans(pNumLessThans), pNumGreaterThans(pNumGreaterThans), maxLabel(maxLabel), threadId(threadId), workQueue(workQueue), trainingFailures(trainingFailures), decisionTree(decisionTree), threadCount(threadCount), numCompleted(numCompleted)
+    : featuresUsed(featuresUsed), labelNames(labelNames), labels(labels), featureValues(featureValues), leafNodeFraction(leafNodeFraction), leafNodeNumItems(leafNodeNumItems), u8MinDistance(u8MinDistance), u8ThresholdsToUse(u8ThresholdsToUse), maxSecondaryThreads(maxSecondaryThreads), pNumLessThans(pNumLessThans), pNumGreaterThans(pNumGreaterThans), maxLabel(maxLabel), threadId(threadId), maxNodesToProcess(maxNodesToProcess), workQueue(workQueue), trainingFailures(trainingFailures), decisionTree(decisionTree), numCompleted(numCompleted)
   {
   }
 } BuildTreeThreadParameters;
@@ -145,7 +145,6 @@ typedef struct BenchmarkingParameters
   volatile bool * isRunning;
   const f64 sampleEveryNSeconds;
   std::vector<f32> &cpuUsage;
-  ThreadSafeCounter<s32> &threadCount;
   ThreadSafeCounter<s32> &numCompleted;
   const s32 numTotal;
   const ThreadSafeQueue<DecisionTreeWorkItem> &workQueue;
@@ -154,11 +153,10 @@ typedef struct BenchmarkingParameters
     volatile bool * isRunning,
     const f64 sampleEveryNSeconds,
     std::vector<f32> &cpuUsage,
-    ThreadSafeCounter<s32> &threadCount,
     ThreadSafeCounter<s32> &numCompleted,
     const s32 numTotal,
     const ThreadSafeQueue<DecisionTreeWorkItem> &workQueue)
-    : isRunning(isRunning), sampleEveryNSeconds(sampleEveryNSeconds), cpuUsage(cpuUsage), threadCount(threadCount), numCompleted(numCompleted), numTotal(numTotal), workQueue(workQueue)
+    : isRunning(isRunning), sampleEveryNSeconds(sampleEveryNSeconds), cpuUsage(cpuUsage), numCompleted(numCompleted), numTotal(numTotal), workQueue(workQueue)
   {
   }
 } BenchmarkingParameters;
@@ -234,6 +232,8 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
   // Keep popping items from the work queue, until all images are assigned to a leaf node
   //
 
+  s32 numNodesProcessed = 0;
+
   while(buildTreeParams->numCompleted.Get() < buildTreeParams->labels.get_size()) {
 #ifdef PRINT_INTERMEDIATE
     const f64 time0 = GetTimeF64();
@@ -249,24 +249,21 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
       continue;
     }
 
+    numNodesProcessed++;
+
+    if((buildTreeParams->maxNodesToProcess > 0) && (numNodesProcessed > (buildTreeParams->maxNodesToProcess-1))) {
+      buildTreeParams->workQueue.Unlock(); //Unlock workQueue
+      break;
+    }
+
     AnkiAssert(buildTreeParams->workQueue.Size_unsafe() > 0);
-    
+
     DecisionTreeWorkItem workItem = buildTreeParams->workQueue.Front_unsafe();
     buildTreeParams->workQueue.Pop_unsafe();
 
     buildTreeParams->workQueue.Unlock(); //Unlock workQueue
 
-    // Wait for one or more threads to become available
-    s32 numThreadsToUse = 0;
-    while(numThreadsToUse == 0) {
-      if(workItem.remaining.size < MIN_IMAGES_FOR_MULTITHREAD) {
-        numThreadsToUse = buildTreeParams->threadCount.Increment(1);
-      } else {
-        numThreadsToUse = buildTreeParams->threadCount.Increment(buildTreeParams->maxSecondaryThreads);
-      }
-
-      usleep(BUSY_WAIT_SLEEP_MICROSECONDS);
-    } // while(numThreadsToUse == 0)
+    const s32 numThreadsToUse = MAX(1, MIN(buildTreeParams->maxSecondaryThreads, workItem.remaining.size / MIN_IMAGES_PER_THREAD));
 
     AnkiAssert(workItem.featuresUsed.size > 0 && workItem.featuresUsed.buffer);
     AnkiAssert(workItem.remaining.size > 0 && workItem.remaining.buffer);
@@ -347,7 +344,6 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 #endif
 
       buildTreeParams->numCompleted.Increment(workItem.remaining.size);
-      buildTreeParams->threadCount.Increment(-numThreadsToUse);
 
       workItem.featuresUsed.Free();
       workItem.remaining.Free();
@@ -363,7 +359,6 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 #endif
 
       buildTreeParams->numCompleted.Increment(workItem.remaining.size);
-      buildTreeParams->threadCount.Increment(-numThreadsToUse);
 
       workItem.featuresUsed.Free();
       workItem.remaining.Free();
@@ -432,7 +427,6 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 #ifdef PRINT_INTERMEDIATE
           Anki::CoreTechPrint("Thread %d: Worker finished\n", buildTreeParams->threadId);
 #endif
-          buildTreeParams->threadCount.Increment(-1);
         }
       }
     } // if(numThreadsToUse == 1) ... else
@@ -457,16 +451,13 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
       for(s32 i=0; i<numLabels; i++) {
         Anki::CoreTechPrint("(%d, %s), ", failure.labels[i].value, buildTreeParams->labelNames[failure.labels[i].value]);
       }
+
+      Anki::CoreTechPrint("}\n");
 #endif
 
       // TODO: show images?
 
       buildTreeParams->numCompleted.Increment(workItem.remaining.size);
-
-      // Only decrement by -1, because either
-      // a) There is only one thread
-      // b) The secondary threads have already decremented all but the last count
-      buildTreeParams->threadCount.Increment(-1);
 
       workItem.featuresUsed.Free();
       workItem.remaining.Free();
@@ -534,8 +525,6 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
     Anki::CoreTechPrint("Thread %d: Thread finished\n", buildTreeParams->threadId);
 #endif
 
-    buildTreeParams->threadCount.Increment(-1); // Only decrement by -1
-
     RawBuffer<U8Bool> leftFeaturesUsed;
     RawBuffer<U8Bool> rightFeaturesUsed;
 
@@ -544,12 +533,12 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
     DecisionTreeWorkItem leftWorkItem(leftNodeIndex, leftRemaining, leftFeaturesUsed);
     DecisionTreeWorkItem rightWorkItem(rightNodeIndex, rightRemaining, rightFeaturesUsed);
-    
+
     AnkiAssert(leftWorkItem.remaining.buffer);
     AnkiAssert(leftWorkItem.featuresUsed.buffer);
     AnkiAssert(rightWorkItem.remaining.buffer);
     AnkiAssert(rightWorkItem.featuresUsed.buffer);
-    
+
     buildTreeParams->workQueue.Lock(); // Lock workQueue
     buildTreeParams->workQueue.Push_unsafe(leftWorkItem);
     buildTreeParams->workQueue.Push_unsafe(rightWorkItem);
@@ -562,7 +551,7 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
     const f64 time1 = GetTimeF64();
     Anki::CoreTechPrint("Thread %d: Computed split %d and %d, with best entropy of %f, in %f seconds\n", buildTreeParams->threadId, static_cast<s32>(leftRemaining.size), static_cast<s32>(rightRemaining.size), curNode.bestEntropy, time1-time0);
 #endif
-  } // while(buildTreeParams->workQueue.Size() > 0 && buildTreeParams->threadCount.Get() > 0)
+  } // while(buildTreeParams->numCompleted.Get() < buildTreeParams->labels.get_size())
 
   return 0;
 } // ThreadResult BuildTreeThread(void *voidParameters)
@@ -592,16 +581,13 @@ namespace Anki
 
       AnkiAssert(benchmarkingParams->sampleEveryNSeconds >= 0.1);
 
-      // First call returns zero
-      GetCpuUsage();
-
       const f64 startTime = GetTimeF64();
 
       f64 lastTime = GetTimeF64();
 
       while(*(benchmarkingParams->isRunning)) {
         const f64 endTime = startTime + benchmarkingParams->sampleEveryNSeconds * static_cast<f64>(benchmarkingParams->cpuUsage.size());
-        
+
         // Busy-wait to sleep
         while(*(benchmarkingParams->isRunning) && (GetTimeF64() < endTime)) {
           usleep(BUSY_WAIT_SLEEP_MICROSECONDS);
@@ -615,12 +601,10 @@ namespace Anki
 
         benchmarkingParams->cpuUsage.push_back(curCpuUsage);
 
-        const s32 numThreads = benchmarkingParams->threadCount.Get();
         const s32 numComplete = benchmarkingParams->numCompleted.Get();
 
-        CoreTechPrint("CPU %0.1f%% for %d threads (queue is %d long). %d/%d = %0.2f%% completed in %0.2f seconds.\n",
+        CoreTechPrint("CPU %0.1f%% (queue is %d long). %d/%d = %0.2f%% completed in %0.2f seconds.\n",
           curCpuUsage,
-          numThreads,
           benchmarkingParams->workQueue.Size_unsafe(),
           numComplete,
           benchmarkingParams->numTotal,
@@ -646,6 +630,8 @@ namespace Anki
       ThreadSafeFixedLengthList<DecisionTreeNode> &decisionTree //< The output decision tree
       )
     {
+      const s32 numSingleThreadNodes = 1024;
+
       //
       // Check if inputs are valid
       //
@@ -722,7 +708,6 @@ namespace Anki
       decisionTree.get_buffer().set_size(1);
       decisionTree.get_buffer()[0] = DecisionTreeNode(0, FLT_MAX, -1, -1, -1, -1, 0);
 
-      ThreadSafeCounter<s32> threadCount(0, maxThreads);
       ThreadSafeCounter<s32> numCompleted(0, s32_MAX);
 
       vector<BuildTreeThreadParameters*> newParameters;
@@ -737,12 +722,42 @@ namespace Anki
 
       volatile bool isBenchmarkingRunning = true;
 
-      BenchmarkingParameters benchmarkingParams(&isBenchmarkingRunning, benchmarkSampleEveryNSeconds, cpuUsage, threadCount, numCompleted, labels.get_size(), workQueue);
+      BenchmarkingParameters benchmarkingParams(&isBenchmarkingRunning, benchmarkSampleEveryNSeconds, cpuUsage, numCompleted, labels.get_size(), workQueue);
 
       ThreadHandle benchmarkingThreadHandle = CreateSimpleThread(BenchmarkingThread, reinterpret_cast<void*>(&benchmarkingParams));
 
       //
-      // Launch one primary thread for each maxThreads
+      // First, launch one thread, to compute the first N nodes with all threads for computing entropy
+      //
+
+      {
+        const s32 threadId = 0;
+
+        BuildTreeThreadParameters oneThreadParameters(
+          featuresUsed,
+          labelNames,
+          labels,
+          featureValues,
+          leafNodeFraction,
+          leafNodeNumItems,
+          u8MinDistance,
+          u8ThresholdsToUse,
+          maxThreads,
+          pNumLessThans[threadId],
+          pNumGreaterThans[threadId],
+          maxLabel,
+          threadId,
+          numSingleThreadNodes,
+          workQueue,
+          trainingFailures,
+          decisionTree,
+          numCompleted);
+
+        BuildTreeThread(reinterpret_cast<void*>(&oneThreadParameters));
+      }
+
+      //
+      // Second, launch one primary thread for each maxThreads
       //
 
       for(s32 iThread=0; iThread<maxThreads; iThread++) {
@@ -760,10 +775,10 @@ namespace Anki
           pNumGreaterThans[iThread],
           maxLabel,
           iThread,
+          -1,
           workQueue,
           trainingFailures,
           decisionTree,
-          threadCount,
           numCompleted);
 
         AnkiConditionalErrorAndReturnValue(
