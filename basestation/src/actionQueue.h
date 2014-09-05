@@ -183,10 +183,6 @@ namespace Anki {
       DriveToPoseAction(Robot& robot, const Pose3d& pose);
       DriveToPoseAction(Robot& robot); // Note that SetGoal() must be called befure Update()!
       
-      // Let robot's planner select "best" possible pose as the goal
-      //DriveToPoseAction(Robot& robot, const std::vector<Pose3d>& possiblePoses, const Radians& headAngle);
-      //DriveToPoseAction(Robot& robot, const std::vector<Pose3d>& possiblePoses); // with current head angle
-      
       // TODO: Add methods to adjust the goal thresholds from defaults
       
       virtual const std::string& GetName() const override;
@@ -226,8 +222,6 @@ namespace Anki {
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
       
-      //std::vector<Pose3d> _possibleGoalPoses;
-      
     }; // DriveToObjectAction
     
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
@@ -263,7 +257,7 @@ namespace Anki {
       
     }; // class TurnInPlaceAction
     
-    
+    // Interface for actions that involved "docking" with an object
     class IDockAction : public IAction
     {
     public:
@@ -336,7 +330,8 @@ namespace Anki {
       
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker;
-    };
+      
+    }; // class PutDownObjectAction
     
     class CrossBridgeAction : public IDockAction
     {
@@ -356,7 +351,7 @@ namespace Anki {
       virtual Result DockWithObjectHelper(const std::vector<PreActionPose>& preActionPoses,
                                           const size_t closestIndex) override;
       
-    }; // class TraverseObjectAction
+    }; // class CrossBridgeAction
     
     
     class AscendOrDescendRampAction : public IDockAction
