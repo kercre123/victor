@@ -63,14 +63,14 @@ namespace Anki {
     static Result ArrowCallback(Robot* robot, Vision::ObservedMarker* marker)
     {
       Result lastResult = RESULT_OK;
-      
+     
       // Parameters (pass in?)
       const f32 driveSpeed = 30.f;
       
-      if(IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
+      if(robot->IsIdle() && IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
         
         Vec2f upVector = marker->GetImageCorners()[Quad::TopLeft] - marker->GetImageCorners()[Quad::BottomLeft];
-
+        
         // Decide what to do based on the orientation of the arrow
         // NOTE: Remember that Y axis points down in image coordinates.
         
@@ -108,7 +108,7 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      if(IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
+      if(robot->IsIdle() && IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
         PRINT_INFO("TURNAROUND Arrow!\n");
         lastResult = robot->QueueAction(new TurnInPlaceAction(*robot, M_PI));
       } // IfMarkerIsCloseEnoughAndCentered()
