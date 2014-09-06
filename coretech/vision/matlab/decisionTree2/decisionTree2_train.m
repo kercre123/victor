@@ -117,7 +117,7 @@ function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureVa
         pBar.set_message(sprintf('Saving inputs for C training %d/%d', iFeature, length(featureValues)));
         
         for iThread = 1:maxSavingThreads
-            index = iFeature + iThread;
+            index = iFeature + iThread - 1;
             if index > length(featureValues)
                 break;
             end

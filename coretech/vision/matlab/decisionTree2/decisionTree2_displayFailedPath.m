@@ -15,12 +15,15 @@ function decisionTree2_displayFailedPath(image, tform, labelName, labelID, black
     for iNode = 1:(length(path)-1)
         [xp, yp] = tforminv(tform, path{iNode}.x, path{iNode}.y);
         
-        if isempty(failedAt) || failedAt > iNode
-            scatter(xp, yp, 'y');
-            text(xp, yp, sprintf('%d', iNode), 'color', 'b');
+        scatter(xp, yp, 'k', 'linewidth', 5);
+        numberText = sprintf('%d', iNode);
+        
+        if isempty(failedAt) || failedAt > iNode            
+            scatter(xp, yp, 'b', 'linewidth', 1);
+            text(xp, yp, numberText, 'color', 'w');
         else
-            scatter(xp, yp, 'y');
-            text(xp, yp, sprintf('%d', iNode), 'color', 'r');
+            scatter(xp, yp, 'r');
+            text(xp, yp, numberText, 'color', 'w');
             return
         end
     end % for iNode = 1:length(path)
