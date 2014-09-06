@@ -43,6 +43,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     %cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/RelWithDebInfo/run_trainDecisionTree.exe';
     cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/Debug/run_trainDecisionTree.exe';
     maxThreads = 1;
+    maxSavingThreads = 8;
     
     parseVarargin(varargin{:});
     
@@ -55,7 +56,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     % Train the decision tree
     if useCVersion
-        decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse);
+        decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads);
         tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
     else
         tree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
@@ -78,7 +79,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     t_test = tic();
     
-    [testOnTrain_numCorrect, testOnTrain_numTotal] = testOnTrainingData(minimalTree, featureValues, labels);
+    [testOnTrain_numCorrect, testOnTrain_numTotal] = testOnTrainingData(tree, featureValues, labels);
     
     t_test = toc(t_test);
     
@@ -91,35 +92,55 @@ end % decisionTree2_train()
 
 % Save the inputs to file, for running the complete C version of the training
 % cFilenamePrefix should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
-function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse)
+function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads)
     global pBar;
         
+    totalTic = tic();
+    
     pBar.set_message('Saving inputs for C training');
     pBar.set_increment(1/(length(featureValues)+4));
     pBar.set(0);
     
-    mexSaveEmbeddedArray(uint8(featuresUsed), [cFilenamePrefix, 'featuresUsed.array']); % const std::vector<GrayvalueBool> &featuresUsed, //< numFeatures x 256
+    mexSaveEmbeddedArray(...
+        {uint8(featuresUsed), labelNames, int32(labels) - 1, uint8(u8ThresholdsToUse)},...
+        {[cFilenamePrefix, 'featuresUsed.array'], [cFilenamePrefix, 'labelNames.array'], [cFilenamePrefix, 'labels.array'], [cFilenamePrefix, 'u8ThresholdsToUse.array']});
+    
+    pBar.increment();
+    pBar.increment();
+    pBar.increment();
     pBar.increment();
     
-    mexSaveEmbeddedArray(labelNames, [cFilenamePrefix, 'labelNames.array']); % const FixedLengthList<const char *> &labelNames, //< Lookup table between index and string name
-    pBar.increment();
-    
-    mexSaveEmbeddedArray(int32(labels) - 1, [cFilenamePrefix, 'labels.array']); % const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
-    pBar.increment();
-    
-    mexSaveEmbeddedArray(uint8(u8ThresholdsToUse), [cFilenamePrefix, 'u8ThresholdsToUse.array']);
-    pBar.increment();
-    
-    for iFeature = 1:length(featureValues)
-        mexSaveEmbeddedArray(uint8(featureValues{iFeature}), [cFilenamePrefix, sprintf('featureValues%d.array', iFeature-1)]);     % const FixedLengthList<const FixedLengthList<u8> > &featureValues, //< For every feature, the value for the feature every item to train on (outer is small, inner is very large)
+    for iFeature = 1:maxSavingThreads:length(featureValues)
+        allArrays = {};
+        allFilenames = {};
+        
+        pBar.set_message(sprintf('Saving inputs for C training %d/%d', iFeature, length(featureValues)));
+        
+        for iThread = 1:maxSavingThreads
+            index = iFeature + iThread;
+            if index > length(featureValues)
+                break;
+            end
+            
+            allArrays{end+1} = uint8(featureValues{index}); %#ok<AGROW>
+            allFilenames{end+1} = [cFilenamePrefix, sprintf('featureValues%d.array', index-1)]; %#ok<AGROW>
+        end
+        
+        mexSaveEmbeddedArray(allArrays, allFilenames, 6, maxSavingThreads);
+        
+        for i = 1:maxSavingThreads
         pBar.increment();
     end
+    end
+    
+    disp(sprintf('Total time to save: %f seconds', toc(totalTic)));
+    
 end % decisionTree2_saveInputs()
 
 function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads)
     % First, run the training
     trainingTic = tic();
-    command = sprintf('"%s" "%s" %d %f %d %d %d %d', cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, maxThreads);
+    command = sprintf('"%s" "%s" %d %f %d %d %d %d %s', cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, maxThreads, [cFilenamePrefix, 'out_']);
     disp(['Starting C training: ', command]);
     result = system(command);
     disp(sprintf('C training finished in %f seconds', toc(trainingTic)));
