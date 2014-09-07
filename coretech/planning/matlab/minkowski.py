@@ -5,7 +5,15 @@ from copy import deepcopy
 
 
 def fixAngle(theta):
-    return (theta + 2*pi) % (2*pi)
+    return (theta + pi) % (2*pi) - pi
+
+def angDist(fromAngle, toAngle):
+    "returns positive angular distance"
+    ret = toAngle - fromAngle
+    while ret < 0:
+        ret += 2*pi
+    return ret
+    
 
 class Polygon:
     "A polygon defined by points"
@@ -28,8 +36,7 @@ class Polygon:
 
     def offset(self, vec):
         "returns a new polygon which has been offset by vec"
-        return Polygon(self.points + vec, self.center + vec)
-        
+        return Polygon(self.points + vec, self.center + vec)        
 
     def plot(self, style = 'r-'):
 
@@ -70,19 +77,21 @@ class Polygon:
         return neg
 
     def expandCSpace(self, robot):
-        "expands the C-space around this polygon with robot around robot.center  usin ga Minkowski difference"
+        "expands the C-space around this polygon with robot around robot.center using a Minkowski difference"
 
-        negRobot = robot.negative()
+        selfMin = 0
+        startingAngle = self.angles[0]
 
-        selfMin = self.angles.index(max(self.angles))
-        robotMin = negRobot.angles.index(max(negRobot.angles))
+        robotMin = 0
 
-        while robot.angles[robotMin] > self.angles[selfMin]:
-            robotMin = (robotMin + 1) % len(negRobot.angles)
+        minNegRobotVal = 100.0
+        for idx in range(len(robot.angles)):
+            dist = angDist(robot.angles[idx] + pi, startingAngle)
+            if dist < minNegRobotVal:
+                minNegRobotVal = dist
+                robotMin = idx
 
-        print "selfMin = %d, robotMin = %d" % (selfMin, robotMin)
-
-        start = self.findSumStartingPoint(negRobot, selfIdx = selfMin, robotIdx = robotMin)
+        start = self.findSumStartingPoint(robot, selfIdx = selfMin, robotIdx = robotMin)
 
         # now make the new points array, starting from start and
         # merging the two sets of points based on angle
@@ -94,14 +103,14 @@ class Polygon:
 
         newPoints = [np.array(start.tolist()[0])]            
 
-        while selfNum < len(self.angles) and robotNum < len(negRobot.angles):
-            if self.angles[selfIdx] > negRobot.angles[robotIdx]:
+        while selfNum < len(self.angles) and robotNum < len(robot.angles):
+            if angDist(self.angles[selfIdx], startingAngle) < angDist(robot.angles[robotIdx] + pi, startingAngle):
                 edgeVec = self.getEdgeVector(selfIdx)
                 newPoints.append(newPoints[-1].tolist() + edgeVec)
                 selfNum += 1
                 selfIdx = (selfIdx + 1) % len(self.angles)
             else:
-                edgeVec = negRobot.getEdgeVector(robotIdx)
+                edgeVec = robot.getEdgeVector(robotIdx)
                 newPoints.append(newPoints[-1].tolist() - edgeVec)
                 robotNum += 1
                 robotIdx = (robotIdx + 1) % len(robot.angles)
@@ -112,8 +121,9 @@ class Polygon:
             selfNum += 1
             selfIdx = (selfIdx + 1) % len(self.angles)
 
-        while robotNum < len(negRobot.angles):
-            edgeVec = negRobot.getEdgeVector(robotIdx)
+        while robotNum < len(robot.angles):
+
+            edgeVec = robot.getEdgeVector(robotIdx)
             newPoints.append(newPoints[-1].tolist() - edgeVec)
             robotNum += 1
             robotIdx = (robotIdx + 1) % len(robot.angles)
@@ -143,6 +153,8 @@ start = obstacle.findSumStartingPoint(robot.negative())
 robotStart = robot.offset(start - robot.center)
 
 cspace = obstacle.expandCSpace(robot)
+
+print "cspace:", cspace.angles
 
 doplot = True
 
