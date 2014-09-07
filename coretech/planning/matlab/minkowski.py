@@ -5,7 +5,7 @@ from copy import deepcopy
 
 
 def fixAngle(theta):
-    return (theta + pi) % (2*pi) - pi
+    return (theta + 2*pi) % (2*pi)
 
 class Polygon:
     "A polygon defined by points"
@@ -18,29 +18,13 @@ class Polygon:
 
         self.angles = [self._computeAngle( x, (x+1) % self.points.shape[0] ) for x in range(self.points.shape[0])]
 
-        self._sort()
-
         if center != None:
             self.center = np.matrix(center)
 
 
     def _computeAngle(self, point0, point1):
         return fixAngle(atan2(self.points[point1,1] - self.points[point0,1],
-                              self.points[point1,0] - self.points[point0,0]) + pi/2)
-
-    def _sort(self):
-        "sorts this object by angles"
-
-        # return
-
-        maxAngle = max(self.angles)
-        maxIdx = self.angles.index(maxAngle)
-
-        self.angles = self.angles[maxIdx:] + self.angles[:maxIdx]
-        
-        newPoints = self.points.tolist()
-        newPoints = newPoints[maxIdx:] + newPoints[:maxIdx]
-        self.points = np.matrix(newPoints)
+                              self.points[point1,0] - self.points[point0,0]))
 
     def offset(self, vec):
         "returns a new polygon which has been offset by vec"
@@ -63,35 +47,13 @@ class Polygon:
         if self.center != None:
             pylab.plot(self.center[0,0], self.center[0,1], 'g+')
 
-    def findSumStartingPoint_old(self, robot):
-        "find the (x,y) point to start the minkowsky sum"
-
-        # find the point on the robot that would be in contact with
-        # the first edge in self. the first edge is roughly the "top"
-        # of the polygon, so we want the point on robot which is
-        # furthest below this edge
-
-        edgeVec = self.points[1,:] - self.points[0,:]
-        perpVec = np.matrix([-edgeVec[0,1], edgeVec[0,0]])
-
-        contactPoint = robot.points.dot(perpVec.T).argmin()
-
-        # note: edge case where angles are the same is irrelevant,
-        # because you can pick them in either order and get the same
-        # result
-
-        # now put the robots contactPoint against the obstacles
-        # starting point, and return the center of the robot
-        return robot.center - robot.points[contactPoint] + self.points[0]
-
-
-    def findSumStartingPoint(self, robot):
+    def findSumStartingPoint(self, robot, selfIdx = 0, robotIdx = 0):
         "find the (x,y) point to start the minkowsky difference"
 
         # put the start of robot on top of the start of self, then return center of robot
-        robotCenterVec = robot.center - robot.points[0]
+        robotCenterVec = robot.center - robot.points[robotIdx]
 
-        return self.points[0] + robotCenterVec
+        return self.points[selfIdx] + robotCenterVec
         
     def getEdgeVector(self ,idx):
         edgePt0 = self.points[idx].tolist()[0]
@@ -100,7 +62,6 @@ class Polygon:
 
     def reverseAngles(self):
         self.angles = [ fixAngle(a + pi) for a in self.angles]
-        self._sort()
 
     def negative(self):
         "returns the negative of the polygon where all angles are reversed and object is re-sorted"
@@ -113,35 +74,49 @@ class Polygon:
 
         negRobot = robot.negative()
 
-        start = self.findSumStartingPoint(negRobot)
+        selfMin = self.angles.index(max(self.angles))
+        robotMin = negRobot.angles.index(max(negRobot.angles))
+
+        while robot.angles[robotMin] > self.angles[selfMin]:
+            robotMin = (robotMin + 1) % len(negRobot.angles)
+
+        print "selfMin = %d, robotMin = %d" % (selfMin, robotMin)
+
+        start = self.findSumStartingPoint(negRobot, selfIdx = selfMin, robotIdx = robotMin)
 
         # now make the new points array, starting from start and
         # merging the two sets of points based on angle
 
-        selfIdx = 0
-        robotIdx = 0
+        selfIdx = selfMin
+        selfNum = 0
+        robotIdx = robotMin
+        robotNum = 0
 
         newPoints = [np.array(start.tolist()[0])]            
 
-        while selfIdx < len(self.angles) and robotIdx < len(negRobot.angles):
+        while selfNum < len(self.angles) and robotNum < len(negRobot.angles):
             if self.angles[selfIdx] > negRobot.angles[robotIdx]:
                 edgeVec = self.getEdgeVector(selfIdx)
                 newPoints.append(newPoints[-1].tolist() + edgeVec)
-                selfIdx += 1
+                selfNum += 1
+                selfIdx = (selfIdx + 1) % len(self.angles)
             else:
                 edgeVec = negRobot.getEdgeVector(robotIdx)
                 newPoints.append(newPoints[-1].tolist() - edgeVec)
-                robotIdx += 1
+                robotNum += 1
+                robotIdx = (robotIdx + 1) % len(robot.angles)
 
-        while selfIdx < len(self.angles):
+        while selfNum < len(self.angles):
             edgeVec = self.getEdgeVector(selfIdx)
             newPoints.append(newPoints[-1].tolist() + edgeVec)
-            selfIdx += 1
+            selfNum += 1
+            selfIdx = (selfIdx + 1) % len(self.angles)
 
-        while robotIdx < len(negRobot.angles):
+        while robotNum < len(negRobot.angles):
             edgeVec = negRobot.getEdgeVector(robotIdx)
             newPoints.append(newPoints[-1].tolist() - edgeVec)
-            robotIdx += 1
+            robotNum += 1
+            robotIdx = (robotIdx + 1) % len(robot.angles)
 
         newPoints = np.matrix(newPoints)
         return Polygon(newPoints)
