@@ -36,7 +36,7 @@ namespace Anki
     const ColorRGBA SELECTED_OBJECT            (0.f, 1.0f, 0.0f, 0.0f);
     const ColorRGBA BLOCK_BOUNDING_QUAD        (0.f, 0.0f, 1.0f, 0.75f);
     const ColorRGBA OBSERVED_QUAD              (1.f, 0.0f, 0.0f, 0.75f);
-    const ColorRGBA ROBOT_BOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
+    const ColorRGBA _robotBOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
     const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD (1.f, 0.1f, 1.0f, 0.75f);
   }
   
@@ -62,11 +62,11 @@ namespace Anki
     }
     
     BlockWorld::BlockWorld(Robot* robot)
-    : robot_(robot)
-    , didObjectsChange_(false)
-    , enableDraw_(false)
+    : _robot(robot)
+    , _didObjectsChange(false)
+    , _enableDraw(false)
     {
-      CORETECH_ASSERT(robot_ != nullptr);
+      CORETECH_ASSERT(_robot != nullptr);
       
       // TODO: Create each known block / matpiece from a configuration/definitions file
       
@@ -275,7 +275,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
                            parentMat==nullptr ? "NO" : parentMat->GetType().GetName().c_str());
           
           // Project this new object into the robot's camera:
-          robot_->GetCamera().AddOccluder(*objSeen);
+          _robot->GetCamera().AddOccluder(*objSeen);
           /*
            PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
            "Adding object %d as an occluder for robot %d.\n",
@@ -317,7 +317,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           overlappingObjects[0]->UpdateMarkerObservationTimes(*objSeen);
           
           // Project this existing object into the robot's camera, using its new pose
-          robot_->GetCamera().AddOccluder(*overlappingObjects[0]);
+          _robot->GetCamera().AddOccluder(*overlappingObjects[0]);
           
           // Now that we've merged in objSeen, we can delete it because we
           // will no longer be using it.  Otherwise, we'd leak.
@@ -325,7 +325,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           
         } // if/else overlapping existing objects found
      
-        didObjectsChange_ = true;
+        _didObjectsChange = true;
       } // for each object seen
       
     } // AddAndUpdateObjects()
@@ -373,8 +373,8 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
       // visibility in each camera
       for(auto unobserved : unobservedObjects) {
         
-        if(unobserved.object->IsVisibleFrom(robot_->GetCamera(), DEG_TO_RAD(45), 20.f, true) &&
-           (robot_->GetDockObject() != unobserved.object->GetID()))  // We expect a docking block to disappear from view!
+        if(unobserved.object->IsVisibleFrom(_robot->GetCamera(), DEG_TO_RAD(45), 20.f, true) &&
+           (_robot->GetDockObject() != unobserved.object->GetID()))  // We expect a docking block to disappear from view!
         {
           // We "should" have seen the object! Delete it or mark it somehow
           CoreTechPrint("Removing object %d, which should have been seen, "
@@ -392,7 +392,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           // existing objects
           _existingObjects[unobserved.family][objType].erase(objID);
           
-          didObjectsChange_ = true;
+          _didObjectsChange = true;
         }
         
       } // for each unobserved object
@@ -484,11 +484,11 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
     
     
     bool BlockWorld::DidBlocksChange() const {
-      return didObjectsChange_;
+      return _didObjectsChange;
     }
 
     
-    bool BlockWorld::UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp, const TimeStamp_t atTimestamp)
+    bool BlockWorld::UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp, const TimeStamp_t atTimestamp)
     {
       bool wasPoseUpdated = false;
       
@@ -499,7 +499,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
       // Get all mat objects *seen by this robot's camera*
       std::vector<Vision::ObservableObject*> matsSeen;
       _objectLibrary[ObjectFamily::MATS].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
-                                                                  (robot->GetCamera().GetID()));
+                                                                  (_robot->GetCamera().GetID()));
 
       // Remove used markers from map container
       RemoveUsedMarkers(obsMarkersAtTimestamp);
@@ -515,12 +515,12 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           // that observed them.  Hook them up to the current robot origin now:
           CORETECH_ASSERT(object->GetPose().GetParent() != nullptr &&
                           object->GetPose().GetParent()->IsOrigin());
-          object->SetPoseParent(robot->GetWorldOrigin());
+          object->SetPoseParent(_robot->GetWorldOrigin());
           
           MatPiece* mat = dynamic_cast<MatPiece*>(object);
           CORETECH_ASSERT(mat != nullptr);
           
-          if(mat->IsPoseOn(robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
+          if(mat->IsPoseOn(_robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
             if(onMat != nullptr) {
               PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.OnMultiplMats",
                                   "Robot is 'on' multiple mats at the same time. Will just use the first for now.\n");
@@ -538,7 +538,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
         {
           PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.OnMatLocalization",
                            "Robot %d is on a %s mat and will localize to it.\n",
-                           robot->GetID(), onMat->GetType().GetName().c_str());
+                           _robot->GetID(), onMat->GetType().GetName().c_str());
           
           // If robot is "on" one of the mats it is currently seeing, localize
           // the robot to that mat
@@ -547,18 +547,18 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
         else {
           // If the robot is NOT "on" any of the mats it is seeing...
           
-          if(robot->IsLocalized()) {
+          if(_robot->IsLocalized()) {
             // ... and the robot is already localized, then see if it is
             // localized to one of the mats it is seeing (but not "on")
             // Note that we must match seen and existing objects by their pose
             // here, and not by ID, because "seen" objects have not ID assigned
             // yet.
 
-            Vision::ObservableObject* existingMatLocalizedTo = GetObjectByID(robot->GetLocalizedTo());
+            Vision::ObservableObject* existingMatLocalizedTo = GetObjectByID(_robot->GetLocalizedTo());
             if(existingMatLocalizedTo == nullptr) {
               PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ExistingMatLocalizedToNull",
                                 "Robot %d is localized to mat with ID=%d, but that mat does not exist in the world.\n",
-                                robot->GetID(), robot->GetLocalizedTo().GetValue());
+                                _robot->GetID(), _robot->GetLocalizedTo().GetValue());
               return false;
             }
             
@@ -571,19 +571,19 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
               // mats it is seeing, but don't localize to any of them.
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.NotOnMatNoLocalize",
                                "Robot %d is localized to a mat it doesn't see, and will not localize to any of the %lu mats it sees but is not on.\n",
-                               robot->GetID(), matsSeen.size());
+                               _robot->GetID(), matsSeen.size());
             }
             else {
               if(overlappingMatsSeen.size() > 1) {
                 PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleOverlappingMats",
                                     "Robot %d is seeing %d (i.e. more than one) mats "
                                     "overlapping with the existing mat it is localized to. "
-                                    "Will use first.\n", robot->GetID(), overlappingMatsSeen.size());
+                                    "Will use first.\n", _robot->GetID(), overlappingMatsSeen.size());
               }
               
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
                                "Robot %d will re-localize to the %s mat it is not on, but already localized to.\n",
-                               robot->GetID(), overlappingMatsSeen[0]->GetType().GetName().c_str());
+                               _robot->GetID(), overlappingMatsSeen[0]->GetType().GetName().c_str());
               
               // The robot is localized to one of the mats it is seeing, even
               // though it is not _on_ that mat.  Remain localized to that mat
@@ -611,7 +611,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
               
               Pose3d markerWrtRobot;
               for(auto obsMarker : observedMarkers) {
-                if(obsMarker->GetPose().GetWithRespectTo(robot->GetPose(), markerWrtRobot) == false) {
+                if(obsMarker->GetPose().GetWithRespectTo(_robot->GetPose(), markerWrtRobot) == false) {
                   PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMisMatch",
                                     "Could not get the pose of an observed marker w.r.t. the robot that "
                                     "supposedly observed it.\n");
@@ -629,7 +629,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
             
             PRINT_NAMED_INFO("BLockWorld.UpdateRobotPose.NotOnMatLocalizationToClosest",
                              "Robot %d is not on a mat but will localize to %s mat ID=%d, which is the closest.\n",
-                             robot->GetID(), closestMat->GetType().GetName().c_str(), closestMat->GetID().GetValue());
+                             _robot->GetID(), closestMat->GetType().GetName().c_str(), closestMat->GetID().GetValue());
             
             matToLocalizeTo = closestMat;
             
@@ -682,14 +682,14 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
               
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
                                "Robot %d localizing to new %s mat with ID=%d.\n",
-                               robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
+                               _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
                                existingMatPiece->GetID().GetValue());
               
             } else {
               if(existingObjects.size() > 1) {
                 PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.MultipleExistingObjectMatches",
                                  "Robot %d found multiple existing mats matching the one it "
-                                 "will localize to - using first.\n", robot->GetID());
+                                 "will localize to - using first.\n", _robot->GetID());
               }
               
               // We are localizing to an existing mat piece: do not attempt to
@@ -700,7 +700,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
               
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingToExistingMat",
                                "Robot %d localizing to existing %s mat with ID=%d.\n",
-                               robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
+                               _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
                                existingMatPiece->GetID().GetValue());
             }
           } // if/else (existingMatPieces.empty())
@@ -711,7 +711,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           
           // Now localize to that mat
           //wasPoseUpdated = LocalizeRobotToMat(robot, matToLocalizeTo, existingMatPiece);
-          if(robot->LocalizeToMat(matToLocalizeTo, existingMatPiece) == RESULT_OK) {
+          if(_robot->LocalizeToMat(matToLocalizeTo, existingMatPiece) == RESULT_OK) {
             wasPoseUpdated = true;
           }
           
@@ -763,7 +763,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
                 // TODO: do something smarter here?
               }
               
-              if(&(overlappingObjects[0]->GetPose()) != robot->GetWorldOrigin()) {
+              if(&(overlappingObjects[0]->GetPose()) != _robot->GetWorldOrigin()) {
                 // The overlapping mat object is NOT the world origin mat, whose
                 // pose we don't want to update.
                 // Update existing observed mat we saw but are not on w.r.t.
@@ -822,7 +822,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
                            Vision::MarkerTypeStrings[obsMarker->GetCode()],
                            robot->GetID());
            */
-          robot->GetCamera().AddOccluder(*obsMarker);
+          _robot->GetCamera().AddOccluder(*obsMarker);
         }
         
         /* Always re-drawing everything now
@@ -839,33 +839,32 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
 
       if(wasPoseUpdated) {
         PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.RobotPoseChain", "%s\n",
-                         robot->GetPose().GetNamedPathToOrigin(true).c_str());
+                         _robot->GetPose().GetNamedPathToOrigin(true).c_str());
       }
       
       return wasPoseUpdated;
       
     } // UpdateRobotPose()
     
-    size_t BlockWorld::UpdateObjectPoses(const Robot* robot,
-                                         const Vision::ObservableObjectLibrary& objectLibrary,
+    size_t BlockWorld::UpdateObjectPoses(const Vision::ObservableObjectLibrary& objectLibrary,
                                          PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp,
                                          ObjectsMapByType_t& existingObjects,
                                          const TimeStamp_t atTimestamp)
     {
-      didObjectsChange_ = false;
+      _didObjectsChange = false;
       
       std::vector<Vision::ObservableObject*> objectsSeen;
       
       // Don't bother with this update at all if we didn't see at least one
       // marker (which is our indication we got an update from the robot's
       // vision system
-      if(not obsMarkers_.empty()) {
+      if(not _obsMarkers.empty()) {
         
         // Extract only observed markers from obsMarkersAtTimestamp
         std::list<Vision::ObservedMarker*> obsMarkersListAtTimestamp;
         GetObsMarkerList(obsMarkersAtTimestamp, obsMarkersListAtTimestamp);
         
-        objectLibrary.CreateObjectsFromMarkers(obsMarkersListAtTimestamp, objectsSeen, robot->GetCamera().GetID());
+        objectLibrary.CreateObjectsFromMarkers(obsMarkersListAtTimestamp, objectsSeen);
         
         // Remove used markers from map
         RemoveUsedMarkers(obsMarkersAtTimestamp);
@@ -875,7 +874,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           // that observed them.  Hook them up to the current robot origin now:
           CORETECH_ASSERT(object->GetPose().GetParent() != nullptr &&
                           object->GetPose().GetParent()->IsOrigin());
-          object->SetPoseParent(robot->GetWorldOrigin());
+          object->SetPoseParent(_robot->GetWorldOrigin());
         }
         
         // Use them to add or update existing blocks in our world
@@ -888,17 +887,17 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
 
     Result BlockWorld::UpdateProxObstaclePoses()
     {
-      TimeStamp_t lastTimestamp = robot_->GetLastMsgTimestamp();
+      TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
       
       // Add prox obstacle if detected and one doesn't already exist
       for (ProxSensor_t sensor = (ProxSensor_t)(0); sensor < NUM_PROX; sensor = (ProxSensor_t)(sensor + 1)) {
-        if (!robot_->IsProxSensorBlocked(sensor) && robot_->GetProxSensorVal(sensor) >= PROX_OBSTACLE_DETECT_THRESH) {
+        if (!_robot->IsProxSensorBlocked(sensor) && _robot->GetProxSensorVal(sensor) >= PROX_OBSTACLE_DETECT_THRESH) {
           
           // Create an instance of the detected object
           MarkerlessObject *m = new MarkerlessObject(MarkerlessObject::Type::PROX_OBSTACLE);
           
           // Get pose of detected object relative to robot according to which sensor it was detected by.
-          Pose3d proxTransform = robot_->ProxDetectTransform[sensor];
+          Pose3d proxTransform = _robot->ProxDetectTransform[sensor];
           
           // Raise origin of object above ground.
           // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
@@ -907,13 +906,13 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           Pose3d raiseObject(0, Z_AXIS_3D, Vec3f(0,0,0.5f*z));
           proxTransform = proxTransform * raiseObject;
           
-          proxTransform.SetParent(robot_->GetPose().GetParent());
+          proxTransform.SetParent(_robot->GetPose().GetParent());
           
           // Compute pose of detected object
-          Pose3d obsPose(robot_->GetPose());
+          Pose3d obsPose(_robot->GetPose());
           obsPose = obsPose * proxTransform;
           m->SetPose(obsPose);
-          m->SetPoseParent(robot_->GetPose().GetParent());
+          m->SetPoseParent(_robot->GetPose().GetParent());
           
           // Check if this prox obstacle already exists
           std::vector<Vision::ObservableObject*> existingObjects;
@@ -944,7 +943,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           
           m->SetLastObservedTime(lastTimestamp);
           AddNewObject(ObjectFamily::MARKERLESS_OBJECTS, m);
-          didObjectsChange_ = true;
+          _didObjectsChange = true;
         }
       } // end for all prox sensors
       
@@ -957,7 +956,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           delete proxObsIter->second;
           proxObsIter = _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].erase(proxObsIter);
           
-          didObjectsChange_ = true;
+          _didObjectsChange = true;
           continue;
         }
         ++proxObsIter;
@@ -974,15 +973,15 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
       
       // New timestep, new set of occluders.  Get rid of anything registered as
       // an occluder with the robot's camera
-      robot_->GetCamera().ClearOccluders();
+      _robot->GetCamera().ClearOccluders();
       
       static TimeStamp_t lastObsMarkerTime = 0;
       
       // Now we're going to process all the observed messages, grouped by
       // timestamp
       size_t numUnusedMarkers = 0;
-      for(auto obsMarkerListMapIter = obsMarkers_.begin();
-          obsMarkerListMapIter != obsMarkers_.end();
+      for(auto obsMarkerListMapIter = _obsMarkers.begin();
+          obsMarkerListMapIter != _obsMarkers.end();
           ++obsMarkerListMapIter)
       {
         PoseKeyObsMarkerMap_t& currentObsMarkers = obsMarkerListMapIter->second;
@@ -998,8 +997,8 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
         // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
         // Increasing history time window would fix this, but it's not really a solution.
         for(auto poseKeyMarkerPair = currentObsMarkers.begin(); poseKeyMarkerPair != currentObsMarkers.end();) {
-          if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == robot_->GetCamera().GetID()) &&
-              !robot_->IsValidPoseKey(poseKeyMarkerPair->first)) {
+          if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == _robot->GetCamera().GetID()) &&
+              !_robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
             PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d\n", poseKeyMarkerPair->first);
             poseKeyMarkerPair = currentObsMarkers.erase(poseKeyMarkerPair++);
           } else {
@@ -1008,9 +1007,9 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
         }
         
         // Only update robot's poses using VisionMarkers while not on a ramp
-        if(!robot_->IsOnRamp()) {
+        if(!_robot->IsOnRamp()) {
           // Note that this removes markers from the list that it uses
-          UpdateRobotPose(robot_, currentObsMarkers, atTimestamp);
+          UpdateRobotPose(currentObsMarkers, atTimestamp);
         }
         
         
@@ -1019,16 +1018,14 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
         // Find any observed blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(robot_,
-                                                _objectLibrary[ObjectFamily::BLOCKS], currentObsMarkers,
+        numObjectsObserved += UpdateObjectPoses(_objectLibrary[ObjectFamily::BLOCKS], currentObsMarkers,
                                                 _existingObjects[ObjectFamily::BLOCKS], atTimestamp);
         
         //
         // Find any observed ramps from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(robot_,
-                                                _objectLibrary[ObjectFamily::RAMPS], currentObsMarkers,
+        numObjectsObserved += UpdateObjectPoses(_objectLibrary[ObjectFamily::RAMPS], currentObsMarkers,
                                                 _existingObjects[ObjectFamily::RAMPS], atTimestamp);
         
         
@@ -1044,7 +1041,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
         // visualize objects that were observed:
         CheckForUnobservedObjects(atTimestamp);
         
-      } // for element in obsMarkers_
+      } // for element in _obsMarkers
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks\n", numBlocksObserved);
       
@@ -1077,7 +1074,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
                 // Don't worry about collision while picking or placing since we
                 // are trying to get close to blocks in these modes.
                 // TODO: specify whether we are picking/placing _this_ block
-                if(!robot_->IsPickingOrPlacing())
+                if(!_robot->IsPickingOrPlacing())
                 {
                   // Check block's bounding box in same coordinates as this robot to
                   // see if it intersects with the robot's bounding box. Also check to see
@@ -1085,7 +1082,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
                   // entirely if the block isn't in the same coordinate tree as the
                   // robot.
                   Pose3d objectPoseWrtRobotOrigin;
-                  if(object->GetPose().GetWithRespectTo(robot_->GetPose().FindOrigin(), objectPoseWrtRobotOrigin) == true)
+                  if(object->GetPose().GetWithRespectTo(_robot->GetPose().FindOrigin(), objectPoseWrtRobotOrigin) == true)
                   {
                     const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
                     const f32    objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
@@ -1094,7 +1091,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
                      const f32    blockTop    = objectHeight + blockSize;
                      const f32    blockBottom = objectHeight - blockSize;
                      */
-                    const f32 robotBottom = robot_->GetPose().GetTranslation().z();
+                    const f32 robotBottom = _robot->GetPose().GetTranslation().z();
                     const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
                     
                     // TODO: Better check for being in the same plane that takes the
@@ -1108,12 +1105,12 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
                      ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
                      */
                     
-                    const bool bboxIntersects   = objectBBox.Intersects(robot_->GetBoundingQuadXY());
+                    const bool bboxIntersects   = objectBBox.Intersects(_robot->GetBoundingQuadXY());
                     
                     if( inSamePlane && bboxIntersects )
                     {
                       CoreTechPrint("Removing object %d, which intersects robot %d's bounding quad.\n",
-                                    object->GetID().GetValue(), robot_->GetID());
+                                    object->GetID().GetValue(), _robot->GetID());
                       
                       // Erase the vizualized block and its projected quad
                       //VizManager::getInstance()->EraseCuboid(object->GetID());
@@ -1156,7 +1153,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
       Result lastResult = RESULT_OK;
       
       // Finally actually queue the marker
-      obsMarkers_[marker.GetTimeStamp()].emplace(poseKey, marker);
+      _obsMarkers[marker.GetTimeStamp()].emplace(poseKey, marker);
             
       
       return lastResult;
@@ -1165,7 +1162,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
     
     void BlockWorld::ClearAllObservedMarkers()
     {
-      obsMarkers_.clear();
+      _obsMarkers.clear();
     }
     
     void BlockWorld::ClearAllExistingObjects()
@@ -1190,19 +1187,19 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
       } else {
         // Check to see if this object is the one the robot is localized to.
         // If so, the robot needs to be delocalized:
-        if(robot_->GetLocalizedTo() == object->GetID()) {
+        if(_robot->GetLocalizedTo() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.DelocalizingRobot",
                            "Delocalizing robot %d, which is currently localized to %s "
                            "object with ID=%d, which is about to be deleted.\n",
-                           robot_->GetID(), object->GetType().GetName().c_str(), object->GetID().GetValue());
-          robot_->Delocalize();
+                           _robot->GetID(), object->GetType().GetName().c_str(), object->GetID().GetValue());
+          _robot->Delocalize();
         }
         
         // NOTE: The object should erase its own visualization upon destruction
         delete object;
         
         // Flag that we removed an object
-        didObjectsChange_ = true;
+        _didObjectsChange = true;
       }
     }
     
@@ -1262,13 +1259,13 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
     
     void BlockWorld::EnableDraw(bool on)
     {
-      enableDraw_ = on;
+      _enableDraw = on;
     }
     
     void BlockWorld::DrawObsMarkers() const
     {
-      if (enableDraw_) {
-        for (auto poseKeyMarkerMapAtTimestamp : obsMarkers_) {
+      if (_enableDraw) {
+        for (auto poseKeyMarkerMapAtTimestamp : _obsMarkers) {
           for (auto poseKeyMarkerMap : poseKeyMarkerMapAtTimestamp.second) {
             const Quad2f& q = poseKeyMarkerMap.second.GetImageCorners();
             f32 scaleF = 1.0f;

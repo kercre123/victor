@@ -169,10 +169,9 @@ namespace Anki
       // Member Methods
       //
       
-      bool UpdateRobotPose(Robot* robot, PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
+      bool UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
-      size_t UpdateObjectPoses(const Robot* seenByRobot,
-                               const Vision::ObservableObjectLibrary& objectsLibrary,
+      size_t UpdateObjectPoses(const Vision::ObservableObjectLibrary& objectsLibrary,
                                PoseKeyObsMarkerMap_t& obsMarkers,
                                ObjectsMapByType_t& existingObjects,
                                const TimeStamp_t atTimestamp);
@@ -226,9 +225,9 @@ namespace Anki
       // Member Variables
       //
       
-      Robot*             robot_;
+      Robot*             _robot;
       
-      ObsMarkerListMap_t obsMarkers_;
+      ObsMarkerListMap_t _obsMarkers;
       
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
@@ -254,7 +253,7 @@ namespace Anki
       // we can easily loop over all types of objects.
       //std::array<ObjectsMap_t*, 3> allExistingObjects_;
       
-      bool didObjectsChange_;
+      bool _didObjectsChange;
       
       static const Vision::ObservableObjectLibrary EmptyObjectLibrary;
       
@@ -262,7 +261,7 @@ namespace Anki
       static const ObjectsMapByType_t  EmptyObjectMapByType;
             
       // For allowing the calling of VizManager draw functions
-      bool enableDraw_;
+      bool _enableDraw;
       
     }; // class BlockWorld
 
