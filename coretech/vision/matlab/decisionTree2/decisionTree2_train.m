@@ -12,7 +12,7 @@
 % [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, false);
 
 % Example using only 128 as the grayvalue threshold
-% [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, false, 'u8MinDistance', 255, 'u8ThresholdsToUse', 128);
+% [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, false, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
 
 % To train with the completely C version of this method, use useCVersion = true, and it will save the files to disk and launch the C training
 % [tree, minimalTree, trainingFailures] = decisionTree2_train(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, true);
@@ -36,13 +36,15 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     leafNodeFraction = 1.0; % What percent of the labels must be the same for it to be considered a leaf node?
     leafNodeNumItems = 1; % If a node has less-than-or-equal-to this number of items, it is a leaf no matter what
-    u8MinDistance = 20; % How close can the value for splitting on two values of one feature? Set to 255 to disallow splitting more than once per feature (e.g. multiple splits for one probe in the same location).
+    u8MinDistanceForSplits = 20; % How close can the value for splitting on two values of one feature? Set to 255 to disallow splitting more than once per feature (e.g. multiple splits for one probe in the same location).
+    u8MinDistanceFromThreshold = 20; % If a feature value is closer than this to the threshold, pass it to both subpaths
     u8ThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
     featuresUsed = zeros(length(featureValues), 256, 'uint8'); % If you don't want to train on some of the features or u8 thresholds, set some of the featuresUsed to true
     cFilenamePrefix = 'c:/tmp/treeTraining_'; % Temporarly location for when useCVersion = true
     %cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/RelWithDebInfo/run_trainDecisionTree.exe';
     cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/Debug/run_trainDecisionTree.exe';
     maxThreads = 1;
+    maxSavingThreads = 8;
     
     parseVarargin(varargin{:});
     
@@ -58,13 +60,13 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     % Train the decision tree
     if useCVersion
-        decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse);
-        tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
+%         decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads);
+        tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
     else
         tree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
         tree.remainingLabels = labelNames;
         
-        tree = buildTree(tree, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
+        tree = buildTree(tree, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8ThresholdsToUse);
     end
     
     if isempty(tree)
@@ -81,7 +83,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     t_test = tic();
     
-    [testOnTrain_numCorrect, testOnTrain_numTotal] = testOnTrainingData(minimalTree, featureValues, labels);
+    [testOnTrain_numCorrect, testOnTrain_numTotal] = testOnTrainingData(tree, featureValues, labels);
     
     t_test = toc(t_test);
     
@@ -94,35 +96,55 @@ end % decisionTree2_train()
 
 % Save the inputs to file, for running the complete C version of the training
 % cFilenamePrefix should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
-function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse)
+function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads)
     global pBar;
         
+    totalTic = tic();
+    
     pBar.set_message('Saving inputs for C training');
     pBar.set_increment(1/(length(featureValues)+4));
     pBar.set(0);
     
-    mexSaveEmbeddedArray(uint8(featuresUsed), [cFilenamePrefix, 'featuresUsed.array']); % const std::vector<GrayvalueBool> &featuresUsed, //< numFeatures x 256
+    mexSaveEmbeddedArray(...
+        {uint8(featuresUsed), labelNames, int32(labels) - 1, uint8(u8ThresholdsToUse)},...
+        {[cFilenamePrefix, 'featuresUsed.array'], [cFilenamePrefix, 'labelNames.array'], [cFilenamePrefix, 'labels.array'], [cFilenamePrefix, 'u8ThresholdsToUse.array']});
+    
+    pBar.increment();
+    pBar.increment();
+    pBar.increment();
     pBar.increment();
     
-    mexSaveEmbeddedArray(labelNames, [cFilenamePrefix, 'labelNames.array']); % const FixedLengthList<const char *> &labelNames, //< Lookup table between index and string name
-    pBar.increment();
-    
-    mexSaveEmbeddedArray(int32(labels) - 1, [cFilenamePrefix, 'labels.array']); % const FixedLengthList<s32> &labels, //< The label for every item to train on (very large)
-    pBar.increment();
-    
-    mexSaveEmbeddedArray(uint8(u8ThresholdsToUse), [cFilenamePrefix, 'u8ThresholdsToUse.array']);
-    pBar.increment();
-    
-    for iFeature = 1:length(featureValues)
-        mexSaveEmbeddedArray(uint8(featureValues{iFeature}), [cFilenamePrefix, sprintf('featureValues%d.array', iFeature-1)]);     % const FixedLengthList<const FixedLengthList<u8> > &featureValues, //< For every feature, the value for the feature every item to train on (outer is small, inner is very large)
+    for iFeature = 1:maxSavingThreads:length(featureValues)
+        allArrays = {};
+        allFilenames = {};
+        
+        pBar.set_message(sprintf('Saving inputs for C training %d/%d', iFeature, length(featureValues)));
+        
+        for iThread = 1:maxSavingThreads
+            index = iFeature + iThread - 1;
+            if index > length(featureValues)
+                break;
+            end
+            
+            allArrays{end+1} = uint8(featureValues{index}); %#ok<AGROW>
+            allFilenames{end+1} = [cFilenamePrefix, sprintf('featureValues%d.array', index-1)]; %#ok<AGROW>
+        end
+        
+        mexSaveEmbeddedArray(allArrays, allFilenames, 6, maxSavingThreads);
+        
+        for i = 1:maxSavingThreads
         pBar.increment();
     end
+    end
+    
+    disp(sprintf('Total time to save: %f seconds', toc(totalTic)));
+    
 end % decisionTree2_saveInputs()
 
-function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads)
+function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads)
     % First, run the training
     trainingTic = tic();
-    command = sprintf('"%s" "%s" %d %f %d %d %d %d', cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistance, maxThreads);
+    command = sprintf('"%s" "%s" %d %f %d %d %d %d "%s"', cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, maxThreads, [cFilenamePrefix, 'out_']);
     disp(['Starting C training: ', command]);
     result = system(command);
     disp(sprintf('C training finished in %f seconds', toc(trainingTic)));
@@ -211,7 +233,7 @@ function [numCorrect, numTotal] = testOnTrainingData(tree, featureValues, labels
     end
 end % testOnTrainingData()
 
-function node = buildTree(node, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse)
+function node = buildTree(node, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8ThresholdsToUse)
     global g_trainingFailures;
     global nodeId;
     global pBar;
@@ -256,7 +278,7 @@ function node = buildTree(node, featuresUsed, labelNames, labels, featureValues,
         %         useMex = false;
         numThreads = 16;
         
-        [node.infoGain, node.whichFeature, node.u8Threshold, updatedFeaturesUsed] = computeInfoGain(labels, featureValues, featuresUsed, node.remaining, u8MinDistance, u8ThresholdsToUse, useMex, numThreads);
+        [node.infoGain, node.whichFeature, node.u8Threshold, updatedFeaturesUsed] = computeInfoGain(labels, featureValues, featuresUsed, node.remaining, u8MinDistanceForSplits, u8ThresholdsToUse, useMex, numThreads);
         
         node.remainingLabels = sprintf('%s ', labelNames{mexUnique(labels(node.remaining))});
         
@@ -301,7 +323,7 @@ function node = buildTree(node, featuresUsed, labelNames, labels, featureValues,
         % Recurse left
         leftChild.remaining = leftRemaining;
         leftChild.depth = node.depth+1;
-        node.leftChild = buildTree(leftChild, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
+        node.leftChild = buildTree(leftChild, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8ThresholdsToUse);
         
         % Recurse right
         rightRemaining = node.remaining(~goLeft);
@@ -311,7 +333,7 @@ function node = buildTree(node, featuresUsed, labelNames, labels, featureValues,
         
         rightChild.remaining = rightRemaining;
         rightChild.depth = node.depth + 1;
-        node.rightChild = buildTree(rightChild, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistance, u8ThresholdsToUse);
+        node.rightChild = buildTree(rightChild, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8ThresholdsToUse);
     end % end We have unused features. So find the best one to split on
 end % buildTree()
 
@@ -415,7 +437,7 @@ function [bestEntropy, bestU8Threshold, bestFeatureIndex] = computeInfoGain_oute
     end % for iUnusedFeature = 1:numFeaturesUnused
 end % computeInfoGain_outerLoop()
 
-function [bestEntropy, bestFeatureIndex, bestU8Threshold, featuresUsed] = computeInfoGain(labels, featureValues, featuresUsed, remainingImages, u8MinDistance, u8ThresholdsToUse, useMex, numThreads)
+function [bestEntropy, bestFeatureIndex, bestU8Threshold, featuresUsed] = computeInfoGain(labels, featureValues, featuresUsed, remainingImages, u8MinDistanceForSplits, u8ThresholdsToUse, useMex, numThreads)
     totalTic = tic();
     
     unusedFeatures = find(~min(featuresUsed,[],2));
@@ -432,7 +454,7 @@ function [bestEntropy, bestFeatureIndex, bestU8Threshold, featuresUsed] = comput
     
     [bestEntropy, bestU8Threshold, bestFeatureIndex] = computeInfoGain_outerLoop(featureValues, featuresUsed, unusedFeatures, numFeaturesUnused, remainingImages, curLabels, maxLabel, u8ThresholdsToUse, numWorkItems, useMex, numThreads);
     
-    u8ThresholdsToMask = max(1, min(256, (1 + ((bestU8Threshold-u8MinDistance):(bestU8Threshold+u8MinDistance)))));
+    u8ThresholdsToMask = max(1, min(256, (1 + ((bestU8Threshold-u8MinDistanceForSplits):(bestU8Threshold+u8MinDistanceForSplits)))));
     
     if bestFeatureIndex > 0
         featuresUsed(bestFeatureIndex, u8ThresholdsToMask) = true;

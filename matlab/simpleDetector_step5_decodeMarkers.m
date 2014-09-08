@@ -149,7 +149,6 @@ function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, 
                 tform = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
                 
                 [labelName, labelID] = decisionTree2_query(tree, imgU8, tform, blackValue, whiteValue);
-                %             [labelName, labelID] = probeTree2_query(probeTree, imgU8, tform, blackValue, whiteValue);
                 
                 newMarker = VisionMarkerTrained([], 'Initialize', false);
                 

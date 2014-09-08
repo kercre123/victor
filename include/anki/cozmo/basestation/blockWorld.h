@@ -65,9 +65,10 @@ namespace Anki
         
         // Define new ObjectFamilies here:
         // (and be sure to instantiate them in the .cpp file)
-        static const ObjectFamily MATS;
-        static const ObjectFamily RAMPS;
-        static const ObjectFamily BLOCKS;
+        static const ObjectFamily MATS;     // Fixed mats, platforms, and bridges.
+        static const ObjectFamily RAMPS;    // Ramps
+        static const ObjectFamily BLOCKS;   // Blocks
+        static const ObjectFamily MARKERLESS_OBJECTS;  // Obstacles that are detected by means other than camera (e.g. prox obstacles)
         
       protected:
         static int UniqueFamilyCounter;
@@ -178,6 +179,11 @@ namespace Anki
                                ObjectsMapByType_t& existingObjects,
                                const TimeStamp_t atTimestamp);
       
+      // Adds/Removes proxObstacles based on current sensor readings and age of existing proxObstacles
+      Result UpdateProxObstaclePoses(const Robot* robot);
+      
+      // Finds existing objects that overlap with and are of the same type as objectSeen,
+      // where overlap is defined by the IsSameAs() function.
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
                                   const ObjectsMapByType_t& objectsExisting,
                                   std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const;
@@ -185,6 +191,14 @@ namespace Anki
       void FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
                                   const std::vector<Vision::ObservableObject*>& objectsSeen,
                                   std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const;
+      
+      // Finds existing objects that intersect with objectSeen, with the exception
+      // of those that are of ignoreFamilies or ignoreTypes.
+      void FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
+                                   const std::set<ObjectFamily>& ignoreFamilies,
+                                   const std::set<ObjectType>& ignoreTypes,
+                                   std::vector<Vision::ObservableObject*>& intersectingExistingObjects,
+                                   f32 padding_mm) const;
       
       void CheckForUnobservedObjects(TimeStamp_t atTimestamp);
       

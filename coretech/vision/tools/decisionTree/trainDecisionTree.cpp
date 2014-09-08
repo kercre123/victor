@@ -103,11 +103,12 @@ typedef struct BuildTreeThreadParameters
   const FixedLengthList<const FixedLengthList<u8> > &featureValues; //< For every feature, the value for the feature every item to train on (outer is small, inner is very large)
   const f32 leafNodeFraction; //< What percent of the items in a node have to be the same for it to be considered a leaf node? From [0.0, 1.0], where 1.0 is a good value.
   const s32 leafNodeNumItems; //< If the number of items in a node is equal or below this, it is a leaf. 1 is a good value.
-  const s32 u8MinDistance; //< How close can two grayvalues be to be a threshold? 100 is a good value.
+  const s32 u8MinDistanceForSplits; //< How close can two grayvalues be to be a threshold? 100 is a good value.
+  const s32 u8MinDistanceFromThreshold; //< If a feature value is closer than this to the threshold, pass it to both subpaths
   const FixedLengthList<u8> &u8ThresholdsToUse; //< If not empty, this is the list of grayvalue thresholds to use
   const s32 maxSecondaryThreads; //< If we are building the start of the tree, use one primary thread, and maxSecondaryThreads threads to compute the information fain
-  const std::vector<s32*> &pNumLessThans; //< One allocated buffer for each maxSecondaryThreads. Must be allocated before calling the thread, and manually freed after the thread is complete
-  const std::vector<s32*> &pNumGreaterThans; //< One allocated buffer for each maxSecondaryThreads. Must be allocated before calling the thread, and manually freed after the thread is complete
+  const std::vector<s32*> &pNumLTs; //< One allocated buffer for each maxSecondaryThreads. Must be allocated before calling the thread, and manually freed after the thread is complete
+  const std::vector<s32*> &pNumGEs; //< One allocated buffer for each maxSecondaryThreads. Must be allocated before calling the thread, and manually freed after the thread is complete
   const s32 maxLabel; //< What is the max label in labels?
   const s32 threadId; //< What is the id of the thread?
   const s32 maxNodesToProcess; //< How many nodes should this thread process? Set to -1 to process until the queue is empty.
@@ -123,11 +124,12 @@ typedef struct BuildTreeThreadParameters
     const FixedLengthList<const FixedLengthList<u8> > &featureValues,
     const f32 leafNodeFraction,
     const s32 leafNodeNumItems,
-    const s32 u8MinDistance,
+    const s32 u8MinDistanceForSplits,
+    const s32 u8MinDistanceFromThreshold,
     const FixedLengthList<u8> &u8ThresholdsToUse,
     const s32 maxSecondaryThreads,
-    const std::vector<s32*> &pNumLessThans,
-    const std::vector<s32*> &pNumGreaterThans,
+    const std::vector<s32*> &pNumLTs,
+    const std::vector<s32*> &pNumGEs,
     const s32 maxLabel,
     const s32 threadId,
     const s32 maxNodesToProcess,
@@ -135,7 +137,7 @@ typedef struct BuildTreeThreadParameters
     ThreadSafeVector<TrainingFailure> &trainingFailures,
     ThreadSafeFixedLengthList<DecisionTreeNode> &decisionTree,
     ThreadSafeCounter<s32> &numCompleted)
-    : featuresUsed(featuresUsed), labelNames(labelNames), labels(labels), featureValues(featureValues), leafNodeFraction(leafNodeFraction), leafNodeNumItems(leafNodeNumItems), u8MinDistance(u8MinDistance), u8ThresholdsToUse(u8ThresholdsToUse), maxSecondaryThreads(maxSecondaryThreads), pNumLessThans(pNumLessThans), pNumGreaterThans(pNumGreaterThans), maxLabel(maxLabel), threadId(threadId), maxNodesToProcess(maxNodesToProcess), workQueue(workQueue), trainingFailures(trainingFailures), decisionTree(decisionTree), numCompleted(numCompleted)
+    : featuresUsed(featuresUsed), labelNames(labelNames), labels(labels), featureValues(featureValues), leafNodeFraction(leafNodeFraction), leafNodeNumItems(leafNodeNumItems), u8MinDistanceForSplits(u8MinDistanceForSplits), u8MinDistanceFromThreshold(u8MinDistanceFromThreshold), u8ThresholdsToUse(u8ThresholdsToUse), maxSecondaryThreads(maxSecondaryThreads), pNumLTs(pNumLTs), pNumGEs(pNumGEs), maxLabel(maxLabel), threadId(threadId), maxNodesToProcess(maxNodesToProcess), workQueue(workQueue), trainingFailures(trainingFailures), decisionTree(decisionTree), numCompleted(numCompleted)
   {
   }
 } BuildTreeThreadParameters;
@@ -234,7 +236,10 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
   s32 numNodesProcessed = 0;
 
-  while(buildTreeParams->numCompleted.Get() < buildTreeParams->labels.get_size()) {
+  // NOTE: if some images are split more than once, there may be more than
+  //       buildTreeParams->labels.get_size() images at leaves. This means that some threads may
+  //       exit early.
+  while(true) {
 #ifdef PRINT_INTERMEDIATE
     const f64 time0 = GetTimeF64();
 #endif
@@ -245,6 +250,12 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
     if(buildTreeParams->workQueue.Size_unsafe() == 0) {
       buildTreeParams->workQueue.Unlock(); //Unlock workQueue
+
+      // If the queue is empty, and all images are at a leaf, exit the loop and the thread.
+      // NOTE: numCompleted may be a low estimate
+      if(buildTreeParams->numCompleted.Get() >= buildTreeParams->labels.get_size())
+        break;
+
       usleep(BUSY_WAIT_SLEEP_MICROSECONDS);
       continue;
     }
@@ -375,13 +386,13 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
       const s32 maxFeatureToCheck = numFeatures - 1;
 
       ComputeInfoGainParameters newParameters(
-        buildTreeParams->featureValues, buildTreeParams->labels, buildTreeParams->u8ThresholdsToUse, buildTreeParams->u8MinDistance,
+        buildTreeParams->featureValues, buildTreeParams->labels, buildTreeParams->u8ThresholdsToUse, buildTreeParams->u8MinDistanceForSplits, buildTreeParams->u8MinDistanceFromThreshold,
         workItem.remaining,
         minFeatureToCheck,
         maxFeatureToCheck,
         workItem.featuresUsed,
-        buildTreeParams->pNumLessThans[0],
-        buildTreeParams->pNumGreaterThans[0]);
+        buildTreeParams->pNumLTs[0],
+        buildTreeParams->pNumGEs[0]);
 
       ComputeInfoGain(reinterpret_cast<void*>(&newParameters));
 
@@ -390,18 +401,19 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
       curNode.u8Threshold = newParameters.bestU8Threshold;
       curNode.numLeft = newParameters.totalNumLT;
       curNode.numRight = newParameters.totalNumGE;
+      curNode.numLeftAndRight = newParameters.totalNumBoth;
     } else { // if(numThreadsToUse == 1)
       const s32 numFeaturesPerThread = (numFeatures + numThreadsToUse - 1) / numThreadsToUse;
 
       for(s32 iThread=0; iThread<numThreadsToUse; iThread++) {
         computeInfoGainParams[iThread] = new ComputeInfoGainParameters(
-          buildTreeParams->featureValues, buildTreeParams->labels, buildTreeParams->u8ThresholdsToUse, buildTreeParams->u8MinDistance,
+          buildTreeParams->featureValues, buildTreeParams->labels, buildTreeParams->u8ThresholdsToUse, buildTreeParams->u8MinDistanceForSplits, buildTreeParams->u8MinDistanceFromThreshold,
           workItem.remaining,
           iThread * numFeaturesPerThread,
           MIN(numFeatures - 1, (iThread+1) * numFeaturesPerThread - 1),
           workItem.featuresUsed,
-          buildTreeParams->pNumLessThans[iThread],
-          buildTreeParams->pNumGreaterThans[iThread]);
+          buildTreeParams->pNumLTs[iThread],
+          buildTreeParams->pNumGEs[iThread]);
 
         threadHandles[iThread] = CreateSimpleThread(ComputeInfoGain, computeInfoGainParams[iThread]);
       }
@@ -411,13 +423,16 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
         WaitForSimpleThread(threadHandles[iThread]);
 
-        // The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
-        if(computeInfoGainParams[iThread]->bestEntropy < (curNode.bestEntropy - 1e-5)) {
-          curNode.bestEntropy = computeInfoGainParams[iThread]->bestEntropy;
-          curNode.whichFeature = computeInfoGainParams[iThread]->bestFeatureIndex;
-          curNode.u8Threshold = computeInfoGainParams[iThread]->bestU8Threshold;
-          curNode.numLeft = computeInfoGainParams[iThread]->totalNumLT;
-          curNode.numRight = computeInfoGainParams[iThread]->totalNumGE;
+        // If the entropy is less, or the the entropy is LEQ and the mean distance is more
+        if((computeInfoGainParams[iThread]->bestEntropy < curNode.bestEntropy) ||
+          (computeInfoGainParams[iThread]->bestEntropy <= curNode.bestEntropy && computeInfoGainParams[iThread]->meanDistanceFromThreshold > curNode.meanDistanceFromThreshold)) {
+            curNode.bestEntropy = computeInfoGainParams[iThread]->bestEntropy;
+            curNode.whichFeature = computeInfoGainParams[iThread]->bestFeatureIndex;
+            curNode.numLeft = computeInfoGainParams[iThread]->totalNumLT;
+            curNode.numRight = computeInfoGainParams[iThread]->totalNumGE;
+            curNode.numLeftAndRight = computeInfoGainParams[iThread]->totalNumBoth;
+            curNode.u8Threshold = computeInfoGainParams[iThread]->bestU8Threshold;
+            curNode.meanDistanceFromThreshold = computeInfoGainParams[iThread]->meanDistanceFromThreshold;
         }
 
         delete(computeInfoGainParams[iThread]);
@@ -471,8 +486,8 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
     buildTreeParams->decisionTree.Unlock(); // Unlock decisionTree
 
-    buildTreeParams->decisionTree.get_buffer()[leftNodeIndex]  = DecisionTreeNode(curNode.depth + 1, FLT_MAX, -1, -1, -1, -1, 0);
-    buildTreeParams->decisionTree.get_buffer()[rightNodeIndex] = DecisionTreeNode(curNode.depth + 1, FLT_MAX, -1, -1, -1, -1, 0);
+    buildTreeParams->decisionTree.get_buffer()[leftNodeIndex]  = DecisionTreeNode(curNode.depth + 1, FLT_MAX, -1, -1, -1, -1, -1, 0, 255);
+    buildTreeParams->decisionTree.get_buffer()[rightNodeIndex] = DecisionTreeNode(curNode.depth + 1, FLT_MAX, -1, -1, -1, -1, -1, 0, 255);
 
     curNode.leftChildIndex = leftNodeIndex;
 
@@ -493,15 +508,21 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
     s32 * restrict pLeftRemaining = leftRemaining.buffer;
     s32 * restrict pRightRemaining = rightRemaining.buffer;
 
+    const s32 curGrayvalueThresholdS32 = curNode.u8Threshold;
+
     s32 cLeft = 0, cRight = 0;
     for(s32 iRemain=0; iRemain<numRemaining; iRemain++) {
       const s32 curRemaining = pRemaining[iRemain];
-      const u8 curFeatureValue = pFeatureValues[curRemaining];
+      const s32 curFeatureValue = pFeatureValues[curRemaining];
 
-      if(curFeatureValue < curNode.u8Threshold) {
+      // NOTE: One item may go both left and right
+
+      if(curFeatureValue < (curGrayvalueThresholdS32 + buildTreeParams->u8MinDistanceFromThreshold)) {
         pLeftRemaining[cLeft] = curRemaining;
         cLeft++;
-      } else {
+      }
+
+      if(curFeatureValue >= (curGrayvalueThresholdS32 - buildTreeParams->u8MinDistanceFromThreshold)) {
         pRightRemaining[cRight] = curRemaining;
         cRight++;
       }
@@ -511,8 +532,8 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
     AnkiAssert(cRight == curNode.numRight);
 
     // Mask out the grayvalues that are near to the chosen threshold
-    const s32 minGray = MAX(0,   curNode.u8Threshold - buildTreeParams->u8MinDistance);
-    const s32 maxGray = MIN(255, curNode.u8Threshold + buildTreeParams->u8MinDistance);
+    const s32 minGray = MAX(0,   curNode.u8Threshold - buildTreeParams->u8MinDistanceForSplits);
+    const s32 maxGray = MIN(255, curNode.u8Threshold + buildTreeParams->u8MinDistanceForSplits);
     U8Bool &pFeaturesUsed = workItem.featuresUsed.buffer[curNode.whichFeature];
     for(s32 iGray=minGray; iGray<=maxGray; iGray++) {
       pFeaturesUsed.values[iGray] = true;
@@ -619,7 +640,8 @@ namespace Anki
       const FixedLengthList<const FixedLengthList<u8> > &featureValues, //< For every feature, the value for the feature for every image (outer is small, inner is very large)
       const f32 leafNodeFraction, //< What percent of the items in a node have to be the same for it to be considered a leaf node? From [0.0, 1.0], where 1.0 is a good value.
       const s32 leafNodeNumItems, //< If the number of items in a node is equal or below this, it is a leaf. 1 is a good value.
-      const s32 u8MinDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
+      const s32 u8MinDistanceForSplits, //< How close can two grayvalues be to be a threshold? 100 is a good value.
+      const s32 u8MinDistanceFromThreshold, //< If a feature value is closer than this to the threshold, pass it to both subpaths
       const FixedLengthList<u8> &u8ThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
       const s32 maxThreads, //< Max threads to use (should be at least the number of cores)
       f64 benchmarkSampleEveryNSeconds, //< How often to sample CPU usage for benchmarking
@@ -642,7 +664,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(
         leafNodeFraction > 0.01 && leafNodeFraction <= 1.0 &&
         leafNodeNumItems >= 1 &&
-        u8MinDistance >= 0 &&
+        u8MinDistanceForSplits >= 0 &&
         maxThreads <= MAX_THREADS,
         RESULT_FAIL_INVALID_PARAMETER, "BuildTree", "Invalid parameter");
 
@@ -669,22 +691,22 @@ namespace Anki
 
       const s32 maxLabel = FindMaxLabel(labels, remaining);
 
-      std::vector<std::vector<s32*> > pNumLessThans;
-      std::vector<std::vector<s32*> > pNumGreaterThans;
+      std::vector<std::vector<s32*> > pNumLTs;
+      std::vector<std::vector<s32*> > pNumGEs;
 
-      pNumLessThans.resize(maxThreads);
-      pNumGreaterThans.resize(maxThreads);
+      pNumLTs.resize(maxThreads);
+      pNumGEs.resize(maxThreads);
 
       for(s32 i=0; i<maxThreads; i++) {
-        pNumLessThans[i].resize(maxThreads);
-        pNumGreaterThans[i].resize(maxThreads);
+        pNumLTs[i].resize(maxThreads);
+        pNumGEs[i].resize(maxThreads);
 
         for(s32 j=0; j<maxThreads; j++) {
-          pNumLessThans[i][j] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
-          pNumGreaterThans[i][j] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
+          pNumLTs[i][j] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
+          pNumGEs[i][j] = reinterpret_cast<s32*>(malloc((maxLabel+1)*sizeof(s32)));
 
           AnkiConditionalErrorAndReturnValue(
-            pNumLessThans[i][j] && pNumGreaterThans[i][j],
+            pNumLTs[i][j] && pNumGEs[i][j],
             RESULT_FAIL_OUT_OF_MEMORY, "BuildTree", "Out of memory");
         }
       }
@@ -703,7 +725,7 @@ namespace Anki
       ThreadSafeVector<TrainingFailure> trainingFailures = ThreadSafeVector<TrainingFailure>();
 
       decisionTree.get_buffer().set_size(1);
-      decisionTree.get_buffer()[0] = DecisionTreeNode(0, FLT_MAX, -1, -1, -1, -1, 0);
+      decisionTree.get_buffer()[0] = DecisionTreeNode(0, FLT_MAX, -1, -1, -1, -1, -1, 0, 255);
 
       ThreadSafeCounter<s32> numCompleted(0, s32_MAX);
 
@@ -739,11 +761,12 @@ namespace Anki
           featureValues,
           leafNodeFraction,
           leafNodeNumItems,
-          u8MinDistance,
+          u8MinDistanceForSplits,
+          u8MinDistanceFromThreshold,
           u8ThresholdsToUse,
           maxThreads,
-          pNumLessThans[threadId],
-          pNumGreaterThans[threadId],
+          pNumLTs[threadId],
+          pNumGEs[threadId],
           maxLabel,
           threadId,
           numSingleThreadNodes,
@@ -769,11 +792,12 @@ namespace Anki
           featureValues,
           leafNodeFraction,
           leafNodeNumItems,
-          u8MinDistance,
+          u8MinDistanceForSplits,
+          u8MinDistanceFromThreshold,
           u8ThresholdsToUse,
           maxThreads,
-          pNumLessThans[iThread],
-          pNumGreaterThans[iThread],
+          pNumLTs[iThread],
+          pNumGEs[iThread],
           maxLabel,
           iThread,
           -1,
@@ -801,8 +825,8 @@ namespace Anki
         delete(newParameters[i]);
 
         for(s32 j=0; j<maxThreads; j++) {
-          free(pNumLessThans[i][j]);
-          free(pNumGreaterThans[i][j]);
+          free(pNumLTs[i][j]);
+          free(pNumGEs[i][j]);
         }
       }
 

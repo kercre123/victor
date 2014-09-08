@@ -54,7 +54,12 @@ namespace Anki {
         TimeStamp_t currTime = HAL::GetTimeStamp();
         bool currBlockedFwd = false, currBlockedSides = false;
         
-        if (LiftController::GetDesiredHeight() == LIFT_HEIGHT_LOWDOCK) {
+        
+        
+        if (LiftController::IsMoving()) {
+          currBlockedSides = currBlockedFwd = true;
+          
+        } else if (LiftController::GetDesiredHeight() == LIFT_HEIGHT_LOWDOCK) {
           
           if (headAngle > -0.3f) {
             currBlockedSides = false;
