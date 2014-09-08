@@ -180,7 +180,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         if(index >= numFilenames)
           break;
 
-        mwIndex subs[2] = {0, index};
+        mwIndex subs[2] = {0, static_cast<mwIndex>(index)};
 
         const mwIndex cellIndex = mxCalcSingleSubscript(prhs[0], 2, &subs[0]);
 

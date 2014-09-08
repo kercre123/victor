@@ -40,7 +40,8 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     u8MinDistanceFromThreshold = 20; % If a feature value is closer than this to the threshold, pass it to both subpaths
     u8ThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
     featuresUsed = zeros(length(featureValues), 256, 'uint8'); % If you don't want to train on some of the features or u8 thresholds, set some of the featuresUsed to true
-    cFilenamePrefix = 'c:/tmp/treeTraining_'; % Temporarly location for when useCVersion = true
+    cInFilenamePrefix = 'c:/tmp/treeTraining_'; % Temporary location for when useCVersion = true
+    cOutFilenamePrefix = 'c:/tmp/treeTraining_out_';
     %cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/RelWithDebInfo/run_trainDecisionTree.exe';
     cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/Debug/run_trainDecisionTree.exe';
     maxThreads = 1;
@@ -51,7 +52,8 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     u8ThresholdsToUse = uint8(u8ThresholdsToUse);
     
     if ~ispc()
-        cFilenamePrefix = strrep(cFilenamePrefix, 'c:', tildeToPath());
+        cInFilenamePrefix = strrep(cInFilenamePrefix, 'c:', tildeToPath());
+        cOutFilenamePrefix = strrep(cOutFilenamePrefix, 'c:', tildeToPath());
         
         if ~isempty(strfind(cTrainingExecutable, 'C:/Anki/products-cozmo'))
             cTrainingExecutable = [tildeToPath(), '/Documents/Anki/products-cozmo/build/Xcode/bin/Debug/run_trainDecisionTree'];
@@ -60,8 +62,8 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     % Train the decision tree
     if useCVersion
-%         decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads);
-        tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
+%         decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads);
+        tree = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix, cOutFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
     else
         tree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
         tree.remainingLabels = labelNames;
@@ -75,9 +77,9 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     t_train = toc(t_start);
     
-    numNodes = countNumNodes(tree);
+    [numInternalNodes, numLeaves] = countNumNodes(tree);
     
-    disp(sprintf('Training completed in %f seconds. Tree has %d nodes.', t_train, numNodes));
+    disp(sprintf('Training completed in %f seconds. Tree has %d nodes.', t_train, numInternalNodes + numLeaves));
     
     minimalTree = decisionTree2_stripTree(tree);
     
@@ -95,8 +97,8 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
 end % decisionTree2_train()
 
 % Save the inputs to file, for running the complete C version of the training
-% cFilenamePrefix should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
-function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads)
+% cInFilenamePrefix should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
+function decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads)
     global pBar;
         
     totalTic = tic();
@@ -107,7 +109,7 @@ function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureVa
     
     mexSaveEmbeddedArray(...
         {uint8(featuresUsed), labelNames, int32(labels) - 1, uint8(u8ThresholdsToUse)},...
-        {[cFilenamePrefix, 'featuresUsed.array'], [cFilenamePrefix, 'labelNames.array'], [cFilenamePrefix, 'labels.array'], [cFilenamePrefix, 'u8ThresholdsToUse.array']});
+        {[cInFilenamePrefix, 'featuresUsed.array'], [cInFilenamePrefix, 'labelNames.array'], [cInFilenamePrefix, 'labels.array'], [cInFilenamePrefix, 'u8ThresholdsToUse.array']});
     
     pBar.increment();
     pBar.increment();
@@ -127,7 +129,7 @@ function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureVa
             end
             
             allArrays{end+1} = uint8(featureValues{index}); %#ok<AGROW>
-            allFilenames{end+1} = [cFilenamePrefix, sprintf('featureValues%d.array', index-1)]; %#ok<AGROW>
+            allFilenames{end+1} = [cInFilenamePrefix, sprintf('featureValues%d.array', index-1)]; %#ok<AGROW>
         end
         
         mexSaveEmbeddedArray(allArrays, allFilenames, 6, maxSavingThreads);
@@ -141,10 +143,10 @@ function decisionTree2_saveInputs(cFilenamePrefix, labelNames, labels, featureVa
     
 end % decisionTree2_saveInputs()
 
-function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads)
+function tree = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix, cOutFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads)
     % First, run the training
     trainingTic = tic();
-    command = sprintf('"%s" "%s" %d %f %d %d %d %d "%s"', cTrainingExecutable, cFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, maxThreads, [cFilenamePrefix, 'out_']);
+    command = sprintf('"%s" "%s" %d %f %d %d %d %d "%s"', cTrainingExecutable, cInFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, maxThreads, cOutFilenamePrefix);
     disp(['Starting C training: ', command]);
     result = system(command);
     disp(sprintf('C training finished in %f seconds', toc(trainingTic)));
@@ -159,12 +161,12 @@ function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, 
     
     disp('Loading and converting c tree to matlab format')
     
-    depths = mexLoadEmbeddedArray([cFilenamePrefix, 'out_depths.array']);
-    infoGains = mexLoadEmbeddedArray([cFilenamePrefix, 'out_bestEntropys.array']);
-    whichFeatures = mexLoadEmbeddedArray([cFilenamePrefix, 'out_whichFeatures.array']);
-    u8Thresholds = mexLoadEmbeddedArray([cFilenamePrefix, 'out_u8Thresholds.array']);
-    leftChildIndexs = mexLoadEmbeddedArray([cFilenamePrefix, 'out_leftChildIndexs.array']);
-    cpuUsageSamples = mexLoadEmbeddedArray([cFilenamePrefix, 'out_cpuUsageSamples.array']);
+    depths = mexLoadEmbeddedArray([cOutFilenamePrefix, 'depths.array']);
+    infoGains = mexLoadEmbeddedArray([cOutFilenamePrefix, 'bestEntropys.array']);
+    whichFeatures = mexLoadEmbeddedArray([cOutFilenamePrefix, 'whichFeatures.array']);
+    u8Thresholds = mexLoadEmbeddedArray([cOutFilenamePrefix, 'u8Thresholds.array']);
+    leftChildIndexs = mexLoadEmbeddedArray([cOutFilenamePrefix, 'leftChildIndexs.array']);
+    cpuUsageSamples = mexLoadEmbeddedArray([cOutFilenamePrefix, 'cpuUsageSamples.array']);
     
     tree = decisionTree2_convertCTree(depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     
@@ -178,11 +180,15 @@ function tree = decisionTree2_runCVersion(cTrainingExecutable, cFilenamePrefix, 
     disp(sprintf('Conversion done in %f seconds (average CPU usage %f%%)', toc(convertingTic), mean(cpuUsageSamples)));
 end
 
-function numNodes = countNumNodes(tree)
+function [numInternalNodes, numLeaves] = countNumNodes(tree)
     if isfield(tree, 'labelName')
-        numNodes = 1;
+        numInternalNodes = 0;
+        numLeaves = 1;
     else
-        numNodes = countNumNodes(tree.leftChild) + countNumNodes(tree.rightChild);
+        [numInternalNodesLeft, numLeavesLeft] = countNumNodes(tree.leftChild);
+        [numInternalNodesRight, numLeavesRight] = countNumNodes(tree.rightChild);
+        numLeaves = numLeavesLeft + numLeavesRight;
+        numInternalNodes = 1 + numInternalNodesLeft + numInternalNodesRight;
     end
 end % countNumNodes()
 
