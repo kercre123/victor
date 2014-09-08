@@ -167,10 +167,6 @@ namespace Anki
       const u8 * restrict bufferU8 = reinterpret_cast<const u8*>(buffer);
 
       while(curIndex < bufferLength) {
-        if(numBytesInPatternFound == bytePatternLength) {
-          return curIndex - bytePatternLength;
-        }
-
         if(bufferU8[curIndex] == bytePattern[numBytesInPatternFound]) {
           numBytesInPatternFound++;
         } else if(bufferU8[curIndex] == bytePattern[0]) {
@@ -180,6 +176,10 @@ namespace Anki
         }
 
         curIndex++;
+
+        if(numBytesInPatternFound == bytePatternLength) {
+          return curIndex - bytePatternLength;
+        }
       } // while(curIndex < bufferLength)
 
       return -1;
@@ -382,7 +382,7 @@ namespace Anki
 #else // Generic Unix or OSX
 
       const f64 numCpus = sysconf( _SC_NPROCESSORS_ONLN );
-      
+
       f64 curCpuTime;
       f64 curTime;
 
