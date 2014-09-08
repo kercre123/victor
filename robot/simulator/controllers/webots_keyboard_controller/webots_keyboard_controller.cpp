@@ -39,8 +39,8 @@ namespace Anki {
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
         
-        const f32 HEAD_SPEED_RAD_PER_SEC = 4.f;
-        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 10.f;
+        const f32 HEAD_SPEED_RAD_PER_SEC = 1.f;
+        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 3.f;
         
         
         int lastKeyPressed_ = 0;
