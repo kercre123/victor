@@ -41,35 +41,52 @@ static void ComputeNumAboveThreshold(
   const s32 * restrict pRemaining,
   const s32 numRemaining,
   const u8 curGrayvalueThreshold,
-  s32 * restrict pNumLessThan,
-  s32 * restrict pNumGreaterThan,
+  const s32 u8MinDistanceFromThreshold,
+  s32 * restrict pNumLT,
+  s32 * restrict pNumGE,
   s32 &totalNumLT,
   s32 &totalNumGE,
+  s32 &totalNumBoth,
   u8 &meanDistanceFromThreshold)
 {
-  memset(pNumLessThan, 0, (maxLabel+1)*sizeof(s32));
-  memset(pNumGreaterThan, 0, (maxLabel+1)*sizeof(s32));
+  memset(pNumLT, 0, (maxLabel+1)*sizeof(s32));
+  memset(pNumGE, 0, (maxLabel+1)*sizeof(s32));
 
   totalNumLT = 0;
   totalNumGE = 0;
+  totalNumBoth = 0;
   meanDistanceFromThreshold = 0;
 
   s32 totalDifferenceFromThreshold = 0;
+
+  const s32 curGrayvalueThresholdS32 = curGrayvalueThreshold;
 
   for(s32 iRemain=0; iRemain<numRemaining; iRemain++) {
     const s32 iImage = pRemaining[iRemain];
 
     const s32 curLabel = pLabels[iImage];
-    const u8 curFeatureValue = pFeatureValues[iImage];
+    const s32 curFeatureValue = pFeatureValues[iImage];
 
-    totalDifferenceFromThreshold += ABS(s32(curFeatureValue) - s32(curGrayvalueThreshold));
+    totalDifferenceFromThreshold += ABS(curFeatureValue - curGrayvalueThresholdS32);
 
-    if(curFeatureValue < curGrayvalueThreshold) {
+    // NOTE: One item may increment both LT and GE
+
+    s32 numAssigned = 0;
+
+    if(curFeatureValue < (curGrayvalueThresholdS32 + u8MinDistanceFromThreshold)) {
       totalNumLT++;
-      pNumLessThan[curLabel]++;
-    } else {
+      pNumLT[curLabel]++;
+      numAssigned++;
+    }
+
+    if(curFeatureValue >= (curGrayvalueThresholdS32 - u8MinDistanceFromThreshold)) {
       totalNumGE++;
-      pNumGreaterThan[curLabel]++;
+      pNumGE[curLabel]++;
+      numAssigned++;
+    }
+
+    if(numAssigned == 2) {
+      totalNumBoth++;
     }
   }
 
@@ -78,8 +95,8 @@ static void ComputeNumAboveThreshold(
 
 // Type should be f32 or f64
 template<typename Type> static Type WeightedAverageEntropy(
-  const s32 * restrict pNumLessThan,
-  const s32 * restrict pNumGreaterThan,
+  const s32 * restrict pNumLT,
+  const s32 * restrict pNumGE,
   const s32 totalNumLT,
   const s32 totalNumGE,
   const s32 maxLabel)
@@ -93,15 +110,15 @@ template<typename Type> static Type WeightedAverageEntropy(
   for(s32 iLabel=0; iLabel<=maxLabel; iLabel++) {
     //probabilitiesLessThan = allValuesLessThan / sum(allValuesLessThan);
     //entropyLessThan = -sum(probabilitiesLessThan .* log2(max(eps, probabilitiesLessThan)));
-    if(pNumLessThan[iLabel] > 0) {
-      const Type probability = static_cast<Type>(pNumLessThan[iLabel]) * inverseTotalNumLessThan;
+    if(pNumLT[iLabel] > 0) {
+      const Type probability = static_cast<Type>(pNumLT[iLabel]) * inverseTotalNumLessThan;
       entropyLessThan -= probability * log2(probability);
     }
 
     //probabilitiesGreaterThan = allValuesGreaterThan / sum(allValuesGreaterThan);
     //entropyGreaterThan = -sum(probabilitiesGreaterThan .* log2(max(eps, probabilitiesGreaterThan)));
-    if(pNumGreaterThan[iLabel] > 0) {
-      const Type probability = static_cast<Type>(pNumGreaterThan[iLabel]) * inverseTotalNumGreaterThan;
+    if(pNumGE[iLabel] > 0) {
+      const Type probability = static_cast<Type>(pNumGE[iLabel]) * inverseTotalNumGreaterThan;
       entropyGreaterThan -= probability * log2(probability);
     }
   } // for(s32 iLabel=0; iLabel<=maxLabel; iLabel++)
@@ -188,6 +205,7 @@ namespace Anki
 
           s32 totalNumLT = 0;
           s32 totalNumGE = 0;
+          s32 totalNumBoth = 0;
           u8 meanDistanceFromThreshold = 0;
 
           ComputeNumAboveThreshold(
@@ -195,17 +213,20 @@ namespace Anki
             pLabels, maxLabel,
             pRemaining, numRemaining,
             curGrayvalueThreshold,
-            parameters->pNumLessThan, parameters->pNumGreaterThan,
-            totalNumLT, totalNumGE,
+            parameters->u8MinDistanceFromThreshold,
+            parameters->pNumLT, parameters->pNumGE,
+            totalNumLT, totalNumGE, totalNumBoth,
             meanDistanceFromThreshold);
 
-          if(totalNumLT == 0 || totalNumGE == 0) {
+          AnkiAssert((totalNumLT-totalNumBoth) >= 0 && (totalNumGE-totalNumBoth) >= 0);
+
+          if((totalNumLT-totalNumBoth) <= 0 || (totalNumGE-totalNumBoth) <= 0) {
             pFeaturesUsed.values[curGrayvalueThreshold] = true;
             continue;
           }
 
           const PRECISION entropy = WeightedAverageEntropy<PRECISION>(
-            parameters->pNumLessThan, parameters->pNumGreaterThan,
+            parameters->pNumLT, parameters->pNumGE,
             totalNumLT, totalNumGE,
             maxLabel);
 
@@ -216,6 +237,7 @@ namespace Anki
               parameters->bestFeatureIndex = iFeature;
               parameters->totalNumLT = totalNumLT;
               parameters->totalNumGE = totalNumGE;
+              parameters->totalNumBoth = totalNumBoth;
               parameters->bestU8Threshold = curGrayvalueThreshold;
               parameters->meanDistanceFromThreshold = meanDistanceFromThreshold;
           }

@@ -113,8 +113,8 @@ template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const c
 void PrintUsage()
 {
   CoreTechPrint(
-    "Usage: run_trainDecisionTree <inFilenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistance> <maxThreads> <outFilenamePrefix>\n"
-    "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20 8 c:/tmp/treeTrainingOut_");
+    "Usage: run_trainDecisionTree <inFilenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistanceForSplits> <u8MinDistanceFromThreshold> <maxThreads> <outFilenamePrefix>\n"
+    "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20 40 8 c:/tmp/treeTrainingOut_");
 }
 
 int main(int argc, const char* argv[])
@@ -123,7 +123,7 @@ int main(int argc, const char* argv[])
 
   const f64 benchmarkSampleEveryNSeconds = 5.0;
 
-  if(argc != 8) {
+  if(argc != 9) {
     PrintUsage();
     return -10;
   }
@@ -132,9 +132,10 @@ int main(int argc, const char* argv[])
   const s32 numFeatures = atol(argv[2]);
   const f32 leafNodeFraction = static_cast<f32>(atof(argv[3]));
   const s32 leafNodeNumItems = atol(argv[4]);
-  const s32 u8MinDistance = atol(argv[5]);
-  const s32 maxThreads = atol(argv[6]);
-  const char * outFilenamePrefix = argv[7];
+  const s32 u8MinDistanceForSplits = atol(argv[5]);
+  const s32 u8MinDistanceFromThreshold = atol(argv[6]);
+  const s32 maxThreads = atol(argv[7]);
+  const char * outFilenamePrefix = argv[8];
 
   const s32 memorySize = 1000000000;
   const s32 scratchSize = 50000000;
@@ -215,7 +216,7 @@ int main(int argc, const char* argv[])
     featuresUsed,
     labelNames, labels,
     featureValuesConst,
-    leafNodeFraction, leafNodeNumItems, u8MinDistance,
+    leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold,
     u8ThresholdsToUse,
     maxThreads,
     benchmarkSampleEveryNSeconds,
@@ -234,6 +235,9 @@ int main(int argc, const char* argv[])
     const s32 saveBufferSize = 10000000 + 3 * numNodes * sizeof(DecisionTreeNode);
 
     MemoryStack scratch(malloc(saveBufferSize), saveBufferSize);
+
+    AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
+      -7, "run_trainDecisionTree", "Out of memory for saving");
 
     FixedLengthList<s32> depths(numNodes, scratch, Flags::Buffer(true, false, true));
     FixedLengthList<f32> bestEntropys(numNodes, scratch, Flags::Buffer(true, false, true));
