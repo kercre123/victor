@@ -49,8 +49,11 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     u8ThresholdsToUse = uint8(u8ThresholdsToUse);
     
     if ~ispc()
-        cFilenamePrefix = strrep(cFilenamePrefix, 'c:', '~');
-        assert(isempty(strfind(cTrainingExecutable, 'C:/Anki/products-cozmo'))); % You have to set the correct path
+        cFilenamePrefix = strrep(cFilenamePrefix, 'c:', tildeToPath());
+        
+        if ~isempty(strfind(cTrainingExecutable, 'C:/Anki/products-cozmo'))
+            cTrainingExecutable = [tildeToPath(), '/Documents/Anki/products-cozmo/build/Xcode/bin/Debug/run_trainDecisionTree'];
+        end
     end
     
     % Train the decision tree
