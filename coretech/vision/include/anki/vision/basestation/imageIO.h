@@ -16,7 +16,7 @@
 namespace Anki {
   namespace Vision {
     
-    void WritePGM(const char* filename, u8* imgData, u32 width, u32 height);
+    void WritePGM(const char* filename, const u8* imgData, u32 width, u32 height);
     
   } // namespace Vision
 } // namespace Anki
