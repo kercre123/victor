@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Anki, Inc. All rights reserved.
 //
 
-#ifndef __CoreTech_Vision__visionMarker__
-#define __CoreTech_Vision__visionMarker__
+#ifndef ANKI_CORETECH_VISION_MARKER_H
+#define ANKI_CORETECH_VISION_MARKER_H
 
 //#include <bitset>
 #include <map>
@@ -39,7 +39,7 @@ namespace Anki {
       
     protected:
       
-      Code code_;
+      Code _code;
       
     }; // class Marker
     
@@ -61,11 +61,11 @@ namespace Anki {
       inline void MarkUsed(bool used);
       inline bool IsUsed();
     protected:
-      TimeStamp_t    observationTime_;
-      Quad2f         imgCorners_;
-      Camera         seenByCam_;
+      TimeStamp_t    _observationTime;
+      Quad2f         _imgCorners;
+      Camera         _seenByCam;
       
-      bool           used_;
+      bool           _used;
     }; // class ObservedMarker
     
     
@@ -112,62 +112,61 @@ namespace Anki {
       TimeStamp_t GetLastObservedTime() const;
       
     protected:
-      static const Quad3f canonicalCorners3d_;
+      static const Quad3f _canonicalCorners3d;
       
-      Pose3d pose_;
-      f32    size_; // in mm
-      Quad3f corners3d_;
-      //bool   wasObserved_;
-      TimeStamp_t lastObservedTime_;
+      Pose3d       _pose;
+      f32          _size; // in mm
+      Quad3f       _corners3d;
+      TimeStamp_t  _lastObservedTime;
 
     }; // class KnownMarker
     
     
     inline const TimeStamp_t ObservedMarker::GetTimeStamp() const {
-      return observationTime_;
+      return _observationTime;
     }
     
     inline Quad2f const& ObservedMarker::GetImageCorners() const {
-      return imgCorners_;
+      return _imgCorners;
     }
     
     inline Quad3f const& KnownMarker::Get3dCorners() const {
-      return corners3d_;
+      return _corners3d;
     }
     
     inline Pose3d const& KnownMarker::GetPose() const {
-      return pose_;
+      return _pose;
     }
     
     inline Marker::Code const& Marker::GetCode() const {
-      return code_;
+      return _code;
     }
     
     inline f32 const& KnownMarker::GetSize() const {
-      return size_;
+      return _size;
     }
     
     inline Camera const& ObservedMarker::GetSeenBy() const {
-      return seenByCam_;
+      return _seenByCam;
     }
     
     inline void ObservedMarker::MarkUsed(bool used) {
-      used_ = used;
+      _used = used;
     }
     
     inline bool ObservedMarker::IsUsed() {
-      return used_;
+      return _used;
     }
     
     inline void KnownMarker::SetLastObservedTime(const TimeStamp_t atTime) {
-      lastObservedTime_ = atTime;
+      _lastObservedTime = atTime;
     }
     
     inline TimeStamp_t KnownMarker::GetLastObservedTime() const {
-      return lastObservedTime_;
+      return _lastObservedTime;
     }
 
   } // namespace Vision
 } // namespace Anki
 
-#endif // __CoreTech_Vision__visionMarker__
+#endif // ANKI_CORETECH_VISION_MARKER_H
