@@ -12,8 +12,14 @@
 
 #include "vizManager.h"
 #include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
+
+#include "anki/vision/basestation/imageIO.h"
+
+#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+
 
 namespace Anki {
   namespace Cozmo {
@@ -54,14 +60,13 @@ namespace Anki {
     }
     
     VizManager::VizManager()
+    : _isInitialized(false)
+    , _saveImages(false)
     {
       // Compute the max IDs permitted by VizObject type
       for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
         _VizObjectMaxID[i] = VizObjectBaseID[i+1] - VizObjectBaseID[i];
       }
-      
-      _isInitialized = false;
-      _imgID = 0;
     }
 
     void VizManager::SendMessage(u8 vizMsgID, void* msg)
@@ -484,11 +489,11 @@ namespace Anki {
     }
     
 
-    void VizManager::SendGreyImage(const u8* data, const Vision::CameraResolution res)
+    void VizManager::SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res)
     {
       VizImageChunk v;
       v.resolution = res;
-      v.imgId = ++_imgID;
+      v.imgId = ++(_imgID[robotID]);
       v.chunkId = 0;
       v.chunkSize = MAX_VIZ_IMAGE_CHUNK_SIZE;
       
@@ -506,6 +511,22 @@ namespace Anki {
         SendMessage( GET_MESSAGE_ID(VizImageChunk), &v );
         
         ++v.chunkId;
+      }
+      
+      if (VizManager::getInstance()->IsSavingImages()) {
+        
+        // Make sure image capture folder exists
+        if (!DirExists(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
+          if (!MakeDir(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
+            PRINT_NAMED_WARNING("Robot.ProcessImageChunk.CreateDirFailed","\n");
+          }
+        }
+        
+        // Create image file
+        char imgCaptureFilename[64];
+        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img%d.pgm", AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, _imgID[robotID]);
+        PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
+        Vision::WritePGM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
       }
     }
 

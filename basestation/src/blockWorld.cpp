@@ -897,7 +897,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           MarkerlessObject *m = new MarkerlessObject(MarkerlessObject::Type::PROX_OBSTACLE);
           
           // Get pose of detected object relative to robot according to which sensor it was detected by.
-          Pose3d proxTransform = _robot->ProxDetectTransform[sensor];
+          Pose3d proxTransform = Robot::ProxDetectTransform[sensor];
           
           // Raise origin of object above ground.
           // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.

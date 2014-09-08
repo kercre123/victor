@@ -48,40 +48,52 @@ namespace Anki {
       
       Result Update();
       
+      Result UpdateFullRobotState(const MessageRobotState& msg);
+      
       // Returns true if robot is not traversing a path and has no current action
       // in its queue.
       bool IsIdle() const { return !IsTraversingPath() && _actionQueue.IsEmpty(); }
       
       // Accessors
       const RobotID_t        GetID()           const;
-      const Pose3d&          GetPose()         const;
-      
       BlockWorld&            GetBlockWorld()   {return _blockWorld;}
-      
+      const BlockWorld&      GetBlockWorld() const { return _blockWorld;}
+      //
+      // Localization
+      //
       bool                   IsLocalized()     const {return _localizedToID.IsSet();}
       const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
       void                   SetLocalizedTo(const ObjectID& toID);
       void                   Delocalize();
       
+      Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existinMatPiece);
+      
+      // True if wheel speeds are non-zero in most recent RobotState message
+      bool   IsMoving() const {return _isMoving;}
+      
+      // True if we are on the sloped part of a ramp
+      bool   IsOnRamp() const { return _onRamp; }
+      Result SetOnRamp(bool t);
+      void   SetRamp(const ObjectID& rampID); // just sets the ramp to use, not whether robot is on it yet
+      
+      //
+      // Camera / Vision
+      //
       const Vision::Camera&             GetCamera() const;
       Vision::Camera&                   GetCamera();
       void                              SetCameraCalibration(const Vision::CameraCalibration& calib);
 	    const Vision::CameraCalibration&  GetCameraCalibration() const;
+     
+      Result QueueObservedMarker(const MessageVisionMarker& msg);
       
+      //
+      // Pose (of the robot or its parts)
+      //
+      const Pose3d&          GetPose()         const;
       const f32              GetHeadAngle()    const;
       const f32              GetLiftAngle()    const;
-
-      // Returns true if head_angle is valid.
-      // *valid_head_angle is made to equal the closest valid head angle to head_angle.
-      bool IsValidHeadAngle(f32 head_angle, f32* valid_head_angle = nullptr) const;
-      
-      const Pose3d&          GetLiftPose()       const {return _liftPose;}  // At current lift position!
-      
-      const ObjectID         GetDockObject()     const {return _dockObjectID;}
-      void                   SetDockObject(const ObjectID& objectID) {_dockObjectID = objectID;}
-      
-      const ObjectID              GetCarryingObject() const {return _carryingObjectID;}
-      const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
+      const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
+      const PoseFrameID_t    GetPoseFrameID()  const {return _frameId;}
       
       void SetPose(const Pose3d &newPose);
       const Pose3d* GetWorldOrigin() const { return _worldOrigin; }
@@ -89,69 +101,123 @@ namespace Anki {
       void SetHeadAngle(const f32& angle);
       void SetLiftAngle(const f32& angle);
       
-      //void IncrementPoseFrameID() {++_frameId;}
-      PoseFrameID_t GetPoseFrameID() const {return _frameId;}
+      // Get the bounding quad of the robot at its current or a given pose
+      Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const; // at current pose
+      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f) const; // at specific pose
       
-      Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existinMatPiece);
-      
+      //
+      // Path Following
+      //
+
       // Clears the path that the robot is executing which also stops the robot
       Result ClearPath();
-
+      
       // Removes the specified number of segments from the front and back of the path
       Result TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments);
       
       // Sends a path to the robot to be immediately executed
       Result ExecutePath(const Planning::Path& path);
-
+      
       // Compute a path to a pose and execute it
-      Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
       
       // Same as above, but select from a set poses and return the selected index.
-      Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
       Result ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex);
-
+      
       // executes a test path defined in latticePlanner
       void ExecuteTestPath();
-
+      
       IPathPlanner* GetPathPlanner() { return _longPathPlanner; }
-
+      
       void AbortCurrentPath();
       
-      // TODO: Get rid of these Set...() functions below once the processing of
-      // RobotState msg is moved into the Robot class.
-      
-      // True if wheel speeds are non-zero in most recent RobotState message
-      bool IsMoving() const {return _isMoving;}
-      
-      // True if we are on the sloped part of a ramp
-      bool   IsOnRamp() const { return _onRamp; }
-      Result SetOnRamp(bool t);
-      void   SetRamp(const ObjectID& rampID, Ramp::TraversalDirection direction);
-
-      s8   GetCurrPathSegment() const {return _currPathSegment;}
-      bool IsTraversingPath() const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
-
-      u8   GetNumFreeSegmentSlots() const {return _numFreeSegmentSlots;}
+      bool IsTraversingPath()   const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
       
       u16  GetLastRecvdPathID() const {return _lastRecvdPathID;}
-      u16  GetLastSentPathID() const {return _lastSentPathID;}
+      u16  GetLastSentPathID()  const {return _lastSentPathID;}
 
-      void SetCarryingObject(ObjectID carryObjectID) {_carryingObjectID = carryObjectID;}
-      void UnSetCarryingObject() { _carryingObjectID.UnSet(); }
-      bool IsCarryingObject() const {return _carryingObjectID.IsSet(); }
       
+      
+      //
+      // Object Docking / Carrying
+      //
+
+      const ObjectID              GetDockObject()     const {return _dockObjectID;}
+      const ObjectID              GetCarryingObject() const {return _carryingObjectID;}
+      const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
+
+      bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
       bool IsPickingOrPlacing() const {return _isPickingOrPlacing;}
-      bool IsPickedUp() const {return _isPickedUp;}
+      bool IsPickedUp()         const {return _isPickedUp;}
       
-      u8 GetProxSensorVal(ProxSensor_t sensor) const {return _proxVals[sensor];}
+      void SetCarryingObject(ObjectID carryObjectID);
+      void UnSetCarryingObject();
+      
+      // Sends a message to the robot to dock with the specified marker of the
+      // specified object that it should currently be seeing.
+      Result DockWithObject(const ObjectID objectID,
+                            const Vision::KnownMarker* marker,
+                            const Vision::KnownMarker* marker2,
+                            const DockAction_t dockAction);
+      
+      // Sends a message to the robot to dock with the specified marker of the
+      // specified object, which it should currently be seeing. If pixel_radius == u8_MAX,
+      // the marker can be seen anywhere in the image (same as above function), otherwise the
+      // marker's center must be seen at the specified image coordinates
+      // with pixel_radius pixels.
+      // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indiciate
+      // the expected marker on the end of the bridge. Otherwise, it is ignored.
+      Result DockWithObject(const ObjectID objectID,
+                            const Vision::KnownMarker* marker,
+                            const Vision::KnownMarker* marker2,
+                            const DockAction_t dockAction,
+                            const u16 image_pixel_x,
+                            const u16 image_pixel_y,
+                            const u8 pixel_radius);
+      
+      // Transitions the object that robot was docking with to the one that it
+      // is carrying, and puts it in the robot's pose chain, attached to the
+      // lift. Returns RESULT_FAIL if the robot wasn't already docking with
+      // a block.
+      Result PickUpDockObject();
+      
+      // Same as above, but with specified object
+      Result PickUpObject(const ObjectID& dockObjectID,
+                          const Vision::KnownMarker* dockMarker);
+      
+      // Places the object that the robot was carrying in its current position
+      // w.r.t. the world, and removes it from the lift pose chain so it is no
+      // longer attached to the robot.
+      Result PlaceCarriedObject();
+      
+      // Plan a path to an available docking pose of the specified object, and
+      // then dock with it.
+      Result ExecuteDockingSequence(ObjectID objectIDtoDockWith);
+      
+      // Plan a path to the pre-entry pose of an object and then proceed to
+      // "traverse" it, depending on its type. Supports, for example, Ramp and
+      // Bridge objects.
+      Result ExecuteTraversalSequence(ObjectID objectID);
+      
+      // Plan a path to place the object currently being carried at the specified
+      // pose.
+      Result ExecutePlaceObjectOnGroundSequence(const Pose3d& atPose);
+      
+      // Put the carried object down right where the robot is now
+      Result ExecutePlaceObjectOnGroundSequence();
+
+      
+      //
+      // Proximity Sensors
+      //
+      u8   GetProxSensorVal(ProxSensor_t sensor)    const {return _proxVals[sensor];}
       bool IsProxSensorBlocked(ProxSensor_t sensor) const {return _proxBlocked[sensor];}
       
-      // Pose of where objects are assumed to be with respect to robot pose when obstacles are detected
-      // by proximity sensors
+      // Pose of where objects are assumed to be with respect to robot pose when
+      // obstacles are detected by proximity sensors
       static const Pose3d ProxDetectTransform[NUM_PROX];
       
-      Result QueueObservedMarker(const MessageVisionMarker& msg);
+      
       
       ///////// Motor commands  ///////////
       
@@ -176,58 +242,6 @@ namespace Anki {
       
       Result StopAllMotors();
       
-      // Plan a path to an available docking pose of the specified object, and
-      // then dock with it.
-      Result ExecuteDockingSequence(ObjectID objectIDtoDockWith);
-      
-      // Plan a path to the pre-entry pose of an object and then proceed to
-      // "traverse" it, depending on its type. Supports, for example, Ramp and
-      // Bridge objects.
-      Result ExecuteTraversalSequence(ObjectID objectID);
-      
-      // Plan a path to place the object currently being carried at the specified
-      // pose.
-      Result ExecutePlaceObjectOnGroundSequence(const Pose3d& atPose);
-      
-      // Put the carried object down right where the robot is now
-      Result ExecutePlaceObjectOnGroundSequence();
-      
-      // Sends a message to the robot to dock with the specified marker of the
-      // specified object that it should currently be seeing.
-      Result DockWithObject(const ObjectID objectID,
-                            const Vision::KnownMarker* marker,
-                            const Vision::KnownMarker* marker2,
-                            const DockAction_t dockAction);
-      
-      // Sends a message to the robot to dock with the specified marker of the
-      // specified object, which it should currently be seeing. If pixel_radius == u8_MAX,
-      // the marker can be seen anywhere in the image (same as above function), otherwise the
-      // marker's center must be seen at the specified image coordinates
-      // with pixel_radius pixels.
-      // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indiciate
-      // the expected marker on the end of the bridge. Otherwise, it is ignored.
-      Result DockWithObject(const ObjectID objectID,
-                            const Vision::KnownMarker* marker,
-                            const Vision::KnownMarker* marker2,
-                            const DockAction_t dockAction,
-                            const u16 image_pixel_x,
-                            const u16 image_pixel_y,
-                            const u8 pixel_radius);
-
-      // Transitions the object that robot was docking with to the one that it
-      // is carrying, and puts it in the robot's pose chain, attached to the
-      // lift. Returns RESULT_FAIL if the robot wasn't already docking with
-      // a block.
-      Result PickUpDockObject();
-      
-      // Same as above, but with specified object
-      Result PickUpObject(const ObjectID& dockObjectID,
-                          const Vision::KnownMarker* dockMarker);
-      
-      // Places the object that the robot was carrying in its current position
-      // w.r.t. the world, and removes it from the lift pose chain so it is no
-      // longer attached to the robot.
-      Result PlaceCarriedObject();
       
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
@@ -235,7 +249,7 @@ namespace Anki {
       // Start a Behavior in BehaviorManager
       void StartBehaviorMode(BehaviorManager::Mode mode);
       
-      // Select next object of interst for the behavior manager
+      // Select next object of interest for the behavior manager
       void SelectNextObjectOfInterest();
       
       ///////// Messaging ////////
@@ -262,10 +276,6 @@ namespace Anki {
       // Run a test mode
       Result SendStartTestMode(const TestMode mode) const;
       
-      // Get the bounding quad of the robot at its current or a given pose
-      Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const; // at current pose
-      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f) const; // at specific pose
-      
       // Set controller gains on robot
       Result SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       Result SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
@@ -278,21 +288,6 @@ namespace Anki {
       // Play animation
       // If numLoops == 0, animation repeats forever.
       Result SendPlayAnimation(const AnimationID_t id, const u32 numLoops = 0);
-      
-      // For processing image chunks arriving from robot.
-      // Sends complete images to VizManager for visualization.
-      // If _saveImages is true, then images are saved as pgm.
-      Result ProcessImageChunk(const MessageImageChunk &msg);
-      
-      // For processing imu data chunks arriving from robot.
-      // Writes the entire log of 3-axis accelerometer and 3-axis
-      // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
-      // can be read in from Matlab. (See robot/util/imuLogsTool.m)
-      Result ProcessIMUDataChunk(MessageIMUDataChunk const& msg);
-      
-      // Enable/Disable saving of images constructed from ImageChunk messages as pgm files.
-      void SaveImages(bool on);
-      bool IsSavingImages() const;
       
       // =========== Pose history =============
       
@@ -319,7 +314,7 @@ namespace Anki {
       // Returns true if the pose is successfully updated, false otherwise.
       bool UpdateCurrPoseFromHistory(const Pose3d& wrtParent);
       
-      Result UpdateFullRobotState(const MessageRobotState& msg);
+      
       
       // Queue an action, by default at the end of the Robot's current list of
       // things to do. Actions can also be queued to occur immediately after the
@@ -374,6 +369,9 @@ namespace Anki {
       u16              _lastRecvdPathID;
       bool             _wasTraversingPath;
 
+      Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
+      Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
+      
       // This functions sets _selectedPathPlanner to the appropriate
       // planner
       void SelectPlanner(const Pose3d& targetPose);
@@ -384,10 +382,6 @@ namespace Anki {
       // block world changes, re-plan from scratch
       bool _forceReplanOnNextWorldChange;
 
-      // Whether or not images that are construted from incoming ImageChunk messages
-      // should be saved as PGM
-      bool _saveImages;
-
 	    // Robot stores the calibration, camera just gets a reference to it
       // This is so we can share the same calibration data across multiple
       // cameras (e.g. those stored inside the pose history)
@@ -395,7 +389,7 @@ namespace Anki {
       Vision::Camera            _camera;
       
       // Proximity sensors
-      u8 _proxVals[NUM_PROX];
+      u8   _proxVals[NUM_PROX];
       bool _proxBlocked[NUM_PROX];
       
       // Geometry / Pose
@@ -408,25 +402,24 @@ namespace Anki {
       
       Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
       
-      // Ramping
-      bool                        _onRamp;
-      ObjectID                    _rampID;
-      Ramp::TraversalDirection    _rampDirection;
-      Point2f                     _rampStartPosition;
-      f32                         _rampStartHeight;
-      
-      const Pose3d _neckPose; // joint around which head rotates
-      const Pose3d _headCamPose; // in canonical (untilted) position w.r.t. neck joint
+      const Pose3d _neckPose;     // joint around which head rotates
+      const Pose3d _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
       const Pose3d _liftBasePose; // around which the base rotates/lifts
-      Pose3d _liftPose;     // current, w.r.t. liftBasePose
+      Pose3d       _liftPose;     // current, w.r.t. liftBasePose
 
       f32 _currentHeadAngle;
       f32 _currentLiftAngle;
       
       static const Quad2f CanonicalBoundingBoxXY;
       
-      // Pose history
+      // Ramping
+      bool                        _onRamp;
+      ObjectID                    _rampID;
+      Point2f                     _rampStartPosition;
+      f32                         _rampStartHeight;
       
+      
+      // Pose history
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                              TimeStamp_t& t, RobotPoseStamp** p,
                                              HistPoseKey* key = nullptr,
@@ -464,8 +457,6 @@ namespace Anki {
       ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
       
-      f32 _waitUntilTime;
-
       // Plan a path to the pre-ascent/descent pose (depending on current
       // height of the robot) and then go up or down the ramp.
       Result ExecuteRampingSequence(Ramp* ramp);
@@ -583,14 +574,18 @@ namespace Anki {
     inline const f32 Robot::GetLiftAngle() const
     { return _currentLiftAngle; }
     
-    inline void Robot::SetRamp(const ObjectID& rampID,
-                               Ramp::TraversalDirection direction)
-    {
+    inline void Robot::SetRamp(const ObjectID& rampID) {
       _rampID = rampID;
-      _rampDirection = direction;
     }
 
+    inline void Robot::SetCarryingObject(ObjectID carryObjectID) {
+      _carryingObjectID = carryObjectID;
+    }
     
+    inline void Robot::UnSetCarryingObject() {
+      _carryingObjectID.UnSet();
+    }
+
     inline Result Robot::PickUpDockObject() {
       return PickUpObject(_dockObjectID, _dockMarker);
     }

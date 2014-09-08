@@ -186,8 +186,8 @@ namespace Anki {
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SaveImages const& msg)
     {
-      robot->SaveImages(msg.enableSave);
-      printf("Saving images: %s\n", robot->IsSavingImages() ? "ON" : "OFF");
+      VizManager::getInstance()->SaveImages(msg.enableSave);
+      printf("Saving images: %s\n", VizManager::getInstance()->IsSavingImages() ? "ON" : "OFF");
       return RESULT_OK;
     }
     

@@ -11,11 +11,17 @@
  **/
 
 #include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/common/basestation/utils/fileManagement.h"
+
 #include "anki/vision/CameraSettings.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+
 #include "messageHandler.h"
 #include "vizManager.h"
+
+#include <fstream>
 
 namespace Anki {
   namespace Cozmo {
@@ -218,10 +224,49 @@ namespace Anki {
     }
     
 
-    
+    // For processing image chunks arriving from robot.
+    // Sends complete images to VizManager for visualization (and possible saving).
     Result MessageHandler::ProcessMessage(Robot* robot, MessageImageChunk const& msg)
     {
-      return robot->ProcessImageChunk(msg);
+      static u8 imgID = 0;
+      static u32 totalImgSize = 0;
+      static u8 data[ 320*240 ];
+      static u32 dataSize = 0;
+      static u32 width;
+      static u32 height;
+      
+      //PRINT_INFO("Img %d, chunk %d, size %d, res %d, dataSize %d\n",
+      //           msg.imageId, msg.chunkId, msg.chunkSize, msg.resolution, dataSize);
+      
+      // Check that resolution is supported
+      if (msg.resolution != Vision::CAMERA_RES_QVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQQVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQQQVGA &&
+          msg.resolution != Vision::CAMERA_RES_VERIFICATION_SNAPSHOT
+          ) {
+        return RESULT_FAIL;
+      }
+      
+      // If msgID has changed, then start over.
+      if (msg.imageId != imgID) {
+        imgID = msg.imageId;
+        dataSize = 0;
+        width = Vision::CameraResInfo[msg.resolution].width;
+        height = Vision::CameraResInfo[msg.resolution].height;
+        totalImgSize = width * height;
+      }
+      
+      // Msgs are guaranteed to be received in order so just append data to array
+      memcpy(data + dataSize, msg.data.data(), msg.chunkSize);
+      dataSize += msg.chunkSize;
+      
+      // When dataSize matches the expected size, print to file
+      if (dataSize >= totalImgSize) {
+        VizManager::getInstance()->SendGreyImage(robot->GetID(), data, (Vision::CameraResolution)msg.resolution);
+      }
+      
+      return RESULT_OK;
     }
     
     
@@ -329,11 +374,60 @@ namespace Anki {
       return lastResult;
     }
 
-    
-
+    // For processing imu data chunks arriving from robot.
+    // Writes the entire log of 3-axis accelerometer and 3-axis
+    // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
+    // can be read in from Matlab. (See robot/util/imuLogsTool.m)
     Result MessageHandler::ProcessMessage(Robot* robot, MessageIMUDataChunk const& msg)
     {
-      return robot->ProcessIMUDataChunk(msg);
+      static u8 imuSeqID = 0;
+      static u32 dataSize = 0;
+      static s8 imuData[6][1024];  // first ax, ay, az, gx, gy, gz
+      
+      // If seqID has changed, then start over.
+      if (msg.seqId != imuSeqID) {
+        imuSeqID = msg.seqId;
+        dataSize = 0;
+      }
+      
+      // Msgs are guaranteed to be received in order so just append data to array
+      memcpy(imuData[0] + dataSize, msg.aX.data(), IMU_CHUNK_SIZE);
+      memcpy(imuData[1] + dataSize, msg.aY.data(), IMU_CHUNK_SIZE);
+      memcpy(imuData[2] + dataSize, msg.aZ.data(), IMU_CHUNK_SIZE);
+      
+      memcpy(imuData[3] + dataSize, msg.gX.data(), IMU_CHUNK_SIZE);
+      memcpy(imuData[4] + dataSize, msg.gY.data(), IMU_CHUNK_SIZE);
+      memcpy(imuData[5] + dataSize, msg.gZ.data(), IMU_CHUNK_SIZE);
+      
+      dataSize += IMU_CHUNK_SIZE;
+      
+      // When dataSize matches the expected size, print to file
+      if (msg.chunkId == msg.totalNumChunks - 1) {
+        
+        // Make sure image capture folder exists
+        if (!Anki::DirExists(AnkiUtil::kP_IMU_LOGS_DIR)) {
+          if (!MakeDir(AnkiUtil::kP_IMU_LOGS_DIR)) {
+            PRINT_NAMED_WARNING("Robot.ProcessIMUDataChunk.CreateDirFailed","\n");
+          }
+        }
+        
+        // Create image file
+        char logFilename[64];
+        snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.m", AnkiUtil::kP_IMU_LOGS_DIR, robot->GetID(), imuSeqID);
+        PRINT_INFO("Printing imu log to %s (dataSize = %d)\n", logFilename, dataSize);
+        
+        std::ofstream oFile(logFilename);
+        for (u32 axis = 0; axis < 6; ++axis) {
+          oFile << "imuData" << axis << " = [";
+          for (u32 i=0; i<dataSize; ++i) {
+            oFile << (s32)(imuData[axis][i]) << " ";
+          }
+          oFile << "];\n\n";
+        }
+        oFile.close();
+      }
+      
+      return RESULT_OK;
     }
     
     

@@ -40,7 +40,8 @@ namespace Anki {
     
     
     Ramp::Ramp()
-    : _preAscentPose(M_PI, Z_AXIS_3D,
+    : _status(UNOCCUPIED)
+    , _preAscentPose(M_PI, Z_AXIS_3D,
                      {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + Ramp::PreAscentDistance, 0, -.5f*Ramp::Height}},
                      &GetPose())
     , _preDescentPose(0, Z_AXIS_3D,
@@ -97,7 +98,7 @@ namespace Anki {
     }
     
     
-    Ramp::TraversalDirection Ramp::IsAscendingOrDescending(const Pose3d& robotPose) const
+    Ramp::TraversalDirection Ramp::WillAscendOrDescend(const Pose3d& robotPose) const
     {
       Pose3d robotPoseWrtRamp;
       if(robotPose.GetWithRespectTo(GetPose(), robotPoseWrtRamp) == false) {

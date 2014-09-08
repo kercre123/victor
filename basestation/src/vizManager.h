@@ -233,11 +233,16 @@ namespace Anki {
       */
       //void ClearAllColors();
 
+      // ==== Saving Images ====
+      
+      void SaveImages(bool on);
+      bool IsSavingImages() const;
+      
       
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
 
-      void SendGreyImage(const u8* data, const Vision::CameraResolution res);
+      void SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res);
       
       void SendTrackerQuad(const u16 topLeft_x, const u16 topLeft_y,
                            const u16 topRight_x, const u16 topRight_y,
@@ -259,7 +264,9 @@ namespace Anki {
       char               _sendBuf[MAX_VIZ_MSG_SIZE];
 
       // Image sending
-      u8                 _imgID;
+      std::map<RobotID_t, u8> _imgID;
+      
+      bool               _saveImages;
     
       // Stores the maximum ID permitted for a given VizObject type
       u32 _VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
@@ -277,6 +284,13 @@ namespace Anki {
       return _singletonInstance;
     }
     
+    inline void VizManager::SaveImages(bool on) {
+      _saveImages = on;
+    }
+    
+    inline bool VizManager::IsSavingImages() const {
+      return _saveImages;
+    }
     
     template<typename T>
     void VizManager::DrawQuad(const u32 quadType,
