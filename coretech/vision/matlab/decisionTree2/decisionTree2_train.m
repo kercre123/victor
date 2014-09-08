@@ -62,7 +62,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     % Train the decision tree
     if useCVersion
-%         decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads);
+        decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads);
         tree = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix, cOutFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
     else
         tree = struct('depth', 0, 'infoGain', 0, 'remaining', int32(1:length(labels)));
@@ -100,13 +100,25 @@ end % decisionTree2_train()
 % cInFilenamePrefix should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
 function decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads)
     global pBar;
-        
+    
     totalTic = tic();
     
     pBar.set_message('Saving inputs for C training');
     pBar.set_increment(1/(length(featureValues)+4));
     pBar.set(0);
     
+    if size(labelNames, 1) ~= 1
+        labelNames = labelNames';
+    end
+    
+    if size(labels, 1) ~= 1
+        labels = labels';
+    end
+    
+    if size(u8ThresholdsToUse,1) ~= 1
+        u8ThresholdsToUse = u8ThresholdsToUse';
+    end
+        
     mexSaveEmbeddedArray(...
         {uint8(featuresUsed), labelNames, int32(labels) - 1, uint8(u8ThresholdsToUse)},...
         {[cInFilenamePrefix, 'featuresUsed.array'], [cInFilenamePrefix, 'labelNames.array'], [cInFilenamePrefix, 'labels.array'], [cInFilenamePrefix, 'u8ThresholdsToUse.array']});
@@ -128,15 +140,21 @@ function decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, feature
                 break;
             end
             
-            allArrays{end+1} = uint8(featureValues{index}); %#ok<AGROW>
+            curFeatureValues = featureValues{index};
+            
+            if size(curFeatureValues, 1) ~= 1
+                curFeatureValues = curFeatureValues';
+            end
+            
+            allArrays{end+1} = uint8(curFeatureValues); %#ok<AGROW>
             allFilenames{end+1} = [cInFilenamePrefix, sprintf('featureValues%d.array', index-1)]; %#ok<AGROW>
         end
         
         mexSaveEmbeddedArray(allArrays, allFilenames, 6, maxSavingThreads);
         
         for i = 1:maxSavingThreads
-        pBar.increment();
-    end
+            pBar.increment();
+        end
     end
     
     disp(sprintf('Total time to save: %f seconds', toc(totalTic)));
@@ -170,7 +188,7 @@ function tree = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix
     
     tree = decisionTree2_convertCTree(depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     
-    figure(50); 
+    figure(50);
     plot(cpuUsageSamples, 'b+');
     title('CPU usage over time');
     limits = axis();

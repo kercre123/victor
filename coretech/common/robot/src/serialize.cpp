@@ -255,7 +255,7 @@ namespace Anki
 
     void* SerializedBuffer::AllocateRaw(const s32 dataLength)
     {
-      const s32 bytesRequired = RoundUp<s32>(dataLength, 4);
+      const s32 bytesRequired = RoundUp<s32>(dataLength, MEMORY_ALIGNMENT);
 
       s32 numBytesAllocated;
 

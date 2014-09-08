@@ -462,6 +462,8 @@ namespace Anki
 
       SerializeRawBasicType<Type>(objectName, data, numElements, &segment, totalDataLength);
 
+      AnkiAssert(totalDataLength >= 0);
+
       return segmentStart;
     }
 
@@ -479,6 +481,8 @@ namespace Anki
         NULL, "SerializedBuffer::PushBack", "Could not add data");
 
       SerializeRawArray<Type>(objectName, in, &segment, totalDataLength);
+
+      AnkiAssert(totalDataLength >= 0);
 
       return segmentStart;
     }
@@ -498,6 +502,8 @@ namespace Anki
         NULL, "SerializedBuffer::PushBack", "Could not add data");
 
       SerializeRawArraySlice<Type>(objectName, in, &segment, totalDataLength);
+
+      AnkiAssert(totalDataLength >= 0);
 
       return segmentStart;
     }

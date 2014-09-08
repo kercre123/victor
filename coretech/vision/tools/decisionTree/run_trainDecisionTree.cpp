@@ -31,6 +31,9 @@ template<typename Type> FixedLengthList<Type> LoadIntoList_temporaryBuffer(const
 
   Array<Type> raw = Array<Type>::LoadBinary(filenameBuffer, scratch1, scratch2);
 
+  AnkiConditionalErrorAndReturnValue(raw.get_size(0) == 1,
+    FixedLengthList<Type>(), "LoadIntoList_permanentBuffer", "Input is the wrong size");
+
   const s32 numElements = raw.get_size(0) * raw.get_size(1);
 
   FixedLengthList<Type> out = FixedLengthList<Type>(numElements, memory, Flags::Buffer(true, false, true));
@@ -38,9 +41,14 @@ template<typename Type> FixedLengthList<Type> LoadIntoList_temporaryBuffer(const
   AnkiConditionalErrorAndReturnValue(AreValid(raw, out),
     FixedLengthList<Type>(), "LoadIntoList_permanentBuffer", "Could not allocate");
 
+  memcpy(out.Pointer(0), raw.Pointer(0,0), numElements*sizeof(Type));
+
+  /*Type * restrict pOut = out.Pointer(0);
+  const Type * restrict pRaw = raw.Pointer(0,0);
+
   for(s32 i=0; i<numElements; i++) {
-    out[i] = raw.Element(i);
-  }
+  pOut[i] = pRaw[i];
+  }*/
 
   return out;
 }
