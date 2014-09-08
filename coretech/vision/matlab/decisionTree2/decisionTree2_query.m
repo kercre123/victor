@@ -19,19 +19,22 @@ function [labelName, labelID, path, failedAt] = decisionTree2_query(tree, img, t
         labelID   = tree.labelID;
         failedAt = [];
         path = {};
+        normalizedPixelValue = [];
+        xp = [];
+        yp = [];
     else
         img = rgb2gray2(img);
         
         % TODO: does this have the correct 0.5 bias?
         [xp, yp] = tforminv(tform, tree.x, tree.y);
-        xp = xp + 0.5;
-        yp = yp + 0.5;
+        xp = round(xp + 0.5);
+        yp = round(yp + 0.5);
         
-        minSubtractedValue = int32(img(round(yp),round(xp))) - blackValue;
-        curPixel = (minSubtractedValue * 255) / (whiteValue - blackValue);
-        curPixel = uint8(curPixel);
+        minSubtractedValue = int32(img(yp,xp)) - blackValue;
+        normalizedPixelValue = (minSubtractedValue * 255) / (whiteValue - blackValue);
+        normalizedPixelValue = uint8(normalizedPixelValue);
         
-        if curPixel < tree.u8Threshold
+        if normalizedPixelValue < tree.u8Threshold
             [labelName, labelID, path, failedAt] = decisionTree2_query(tree.leftChild, img, tform, blackValue, whiteValue, groundTruthLabel);
         else
             [labelName, labelID, path, failedAt] = decisionTree2_query(tree.rightChild, img, tform, blackValue, whiteValue, groundTruthLabel);
@@ -43,6 +46,10 @@ function [labelName, labelID, path, failedAt] = decisionTree2_query(tree, img, t
         curNode = rmfield(curNode, 'leftChild');
         curNode = rmfield(curNode, 'rightChild');
     end
+    
+    curNode.normalizedPixelValue = normalizedPixelValue;
+    curNode.xp = xp;
+    curNode.yp = yp;
     
     path = [{curNode}, path];
     

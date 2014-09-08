@@ -44,19 +44,25 @@ static void ComputeNumAboveThreshold(
   s32 * restrict pNumLessThan,
   s32 * restrict pNumGreaterThan,
   s32 &totalNumLT,
-  s32 &totalNumGE)
+  s32 &totalNumGE,
+  u8 &meanDistanceFromThreshold)
 {
   memset(pNumLessThan, 0, (maxLabel+1)*sizeof(s32));
   memset(pNumGreaterThan, 0, (maxLabel+1)*sizeof(s32));
 
   totalNumLT = 0;
   totalNumGE = 0;
+  meanDistanceFromThreshold = 0;
+
+  s32 totalDifferenceFromThreshold = 0;
 
   for(s32 iRemain=0; iRemain<numRemaining; iRemain++) {
     const s32 iImage = pRemaining[iRemain];
 
     const s32 curLabel = pLabels[iImage];
     const u8 curFeatureValue = pFeatureValues[iImage];
+
+    totalDifferenceFromThreshold += ABS(s32(curFeatureValue) - s32(curGrayvalueThreshold));
 
     if(curFeatureValue < curGrayvalueThreshold) {
       totalNumLT++;
@@ -66,6 +72,8 @@ static void ComputeNumAboveThreshold(
       pNumGreaterThan[curLabel]++;
     }
   }
+
+  meanDistanceFromThreshold = saturate_cast<u8>(totalDifferenceFromThreshold / numRemaining);
 }
 
 // Type should be f32 or f64
@@ -119,6 +127,7 @@ namespace Anki
       parameters->bestU8Threshold = -1;
       parameters->totalNumLT = -1;
       parameters->totalNumGE = -1;
+      parameters->meanDistanceFromThreshold = 255;
 
       u8 u8Thresholds[256];
       s32 numGrayvalueThresholds;
@@ -179,6 +188,7 @@ namespace Anki
 
           s32 totalNumLT = 0;
           s32 totalNumGE = 0;
+          u8 meanDistanceFromThreshold = 0;
 
           ComputeNumAboveThreshold(
             pFeatureValues,
@@ -186,7 +196,8 @@ namespace Anki
             pRemaining, numRemaining,
             curGrayvalueThreshold,
             parameters->pNumLessThan, parameters->pNumGreaterThan,
-            totalNumLT, totalNumGE);
+            totalNumLT, totalNumGE,
+            meanDistanceFromThreshold);
 
           if(totalNumLT == 0 || totalNumGE == 0) {
             pFeaturesUsed.values[curGrayvalueThreshold] = true;
@@ -198,13 +209,15 @@ namespace Anki
             totalNumLT, totalNumGE,
             maxLabel);
 
-          // The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
-          if(entropy < (parameters->bestEntropy - 1e-5)) {
-            parameters->bestEntropy = static_cast<f32>(entropy);
-            parameters->bestFeatureIndex = iFeature;
-            parameters->bestU8Threshold = curGrayvalueThreshold;
-            parameters->totalNumLT = totalNumLT;
-            parameters->totalNumGE = totalNumGE;
+          // If the entropy is less, or the the entropy is the same and the mean distance is more
+          if((entropy < parameters->bestEntropy) ||
+            (entropy <= parameters->bestEntropy && meanDistanceFromThreshold > parameters->meanDistanceFromThreshold)) {
+              parameters->bestEntropy = static_cast<f32>(entropy);
+              parameters->bestFeatureIndex = iFeature;
+              parameters->totalNumLT = totalNumLT;
+              parameters->totalNumGE = totalNumGE;
+              parameters->bestU8Threshold = curGrayvalueThreshold;
+              parameters->meanDistanceFromThreshold = meanDistanceFromThreshold;
           }
         } // for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++)
       } // for(s32 iFeature=0; iFeature<numFeaturesLocationsToCheck; iFeature++)

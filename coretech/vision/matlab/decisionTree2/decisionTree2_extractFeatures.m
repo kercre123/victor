@@ -111,7 +111,7 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
                         end
                         
                         if showProbePermutations
-                            imshows({imgPaddedAndBlurredResized((1+numPadPixels):(end-numPadPixels), (1+numPadPixels):(end-numPadPixels)), imresize(reshape(tmpValues, [length(probeLocationsY), length(probeLocationsX)]), size(img), 'nearest')});
+                            imshows({imgPaddedAndBlurredResized((1+numPadPixels):(end-numPadPixels), (1+numPadPixels):(end-numPadPixels)), imresize(reshape(featureValuesArray(cLabel, :), [length(probeLocationsY), length(probeLocationsX)]), size(img), 'nearest')});
                             pause(0.05);
                         end
                         

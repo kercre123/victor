@@ -54,6 +54,7 @@ namespace Anki
       s32 numLeft;
       s32 numRight;
       u8  u8Threshold;
+      u8  meanDistanceFromThreshold;
 
       DecisionTreeNode(
         s32 depth,
@@ -62,8 +63,9 @@ namespace Anki
         s32 leftChildIndex,
         s32 numLeft,
         s32 numRight,
-        u8  u8Threshold)
-        : depth(depth), bestEntropy(bestEntropy), whichFeature(whichFeature), leftChildIndex(leftChildIndex), numLeft(numLeft), numRight(numRight), u8Threshold(u8Threshold)
+        u8  u8Threshold,
+        u8  meanDistanceFromThreshold)
+        : depth(depth), bestEntropy(bestEntropy), whichFeature(whichFeature), leftChildIndex(leftChildIndex), numLeft(numLeft), numRight(numRight), u8Threshold(u8Threshold), meanDistanceFromThreshold(meanDistanceFromThreshold)
       {
       }
     } DecisionTreeNode;
@@ -112,6 +114,7 @@ namespace Anki
       s32 bestU8Threshold; //< What is the grayvalue threshold corresponding to the best entropy?
       s32 totalNumLT; //< How many images are below bestU8Threshold for feature bestFeatureIndex?
       s32 totalNumGE; //< How many images are equal or above bestU8Threshold for feature bestFeatureIndex?
+      u8 meanDistanceFromThreshold; //< It is better for features to be different from each other, so if there's a tie, the most different split will be chosen
 
       ComputeInfoGainParameters(
         const FixedLengthList<const FixedLengthList<u8> > &featureValues,

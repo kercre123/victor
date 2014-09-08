@@ -411,13 +411,15 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
         WaitForSimpleThread(threadHandles[iThread]);
 
-        // The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
-        if(computeInfoGainParams[iThread]->bestEntropy < (curNode.bestEntropy - 1e-5)) {
-          curNode.bestEntropy = computeInfoGainParams[iThread]->bestEntropy;
-          curNode.whichFeature = computeInfoGainParams[iThread]->bestFeatureIndex;
-          curNode.u8Threshold = computeInfoGainParams[iThread]->bestU8Threshold;
-          curNode.numLeft = computeInfoGainParams[iThread]->totalNumLT;
-          curNode.numRight = computeInfoGainParams[iThread]->totalNumGE;
+        // If the entropy is less, or the the entropy is LEQ and the mean distance is more
+        if((computeInfoGainParams[iThread]->bestEntropy < curNode.bestEntropy) ||
+          (computeInfoGainParams[iThread]->bestEntropy <= curNode.bestEntropy && computeInfoGainParams[iThread]->meanDistanceFromThreshold > curNode.meanDistanceFromThreshold)) {
+            curNode.bestEntropy = computeInfoGainParams[iThread]->bestEntropy;
+            curNode.whichFeature = computeInfoGainParams[iThread]->bestFeatureIndex;
+            curNode.numLeft = computeInfoGainParams[iThread]->totalNumLT;
+            curNode.numRight = computeInfoGainParams[iThread]->totalNumGE;
+            curNode.u8Threshold = computeInfoGainParams[iThread]->bestU8Threshold;
+            curNode.meanDistanceFromThreshold = computeInfoGainParams[iThread]->meanDistanceFromThreshold;
         }
 
         delete(computeInfoGainParams[iThread]);
@@ -471,8 +473,8 @@ ThreadResult BuildTreeThread(void * voidBuildTreeParams)
 
     buildTreeParams->decisionTree.Unlock(); // Unlock decisionTree
 
-    buildTreeParams->decisionTree.get_buffer()[leftNodeIndex]  = DecisionTreeNode(curNode.depth + 1, FLT_MAX, -1, -1, -1, -1, 0);
-    buildTreeParams->decisionTree.get_buffer()[rightNodeIndex] = DecisionTreeNode(curNode.depth + 1, FLT_MAX, -1, -1, -1, -1, 0);
+    buildTreeParams->decisionTree.get_buffer()[leftNodeIndex]  = DecisionTreeNode(curNode.depth + 1, FLT_MAX, -1, -1, -1, -1, 0, 255);
+    buildTreeParams->decisionTree.get_buffer()[rightNodeIndex] = DecisionTreeNode(curNode.depth + 1, FLT_MAX, -1, -1, -1, -1, 0, 255);
 
     curNode.leftChildIndex = leftNodeIndex;
 
@@ -703,7 +705,7 @@ namespace Anki
       ThreadSafeVector<TrainingFailure> trainingFailures = ThreadSafeVector<TrainingFailure>();
 
       decisionTree.get_buffer().set_size(1);
-      decisionTree.get_buffer()[0] = DecisionTreeNode(0, FLT_MAX, -1, -1, -1, -1, 0);
+      decisionTree.get_buffer()[0] = DecisionTreeNode(0, FLT_MAX, -1, -1, -1, -1, 0, 255);
 
       ThreadSafeCounter<s32> numCompleted(0, s32_MAX);
 
