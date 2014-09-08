@@ -251,18 +251,18 @@ namespace Anki {
       
       void SendMessage(u8 vizMsgID, void* msg);
       
-      static VizManager* singletonInstance_;
+      static VizManager* _singletonInstance;
       
-      bool isInitialized_;
-      UdpClient vizClient_;
+      bool               _isInitialized;
+      UdpClient          _vizClient;
       
-      char sendBuf[MAX_VIZ_MSG_SIZE];
+      char               _sendBuf[MAX_VIZ_MSG_SIZE];
 
       // Image sending
-      u8 imgID;
+      u8                 _imgID;
     
       // Stores the maximum ID permitted for a given VizObject type
-      u32 VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
+      u32 _VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
       
     }; // class VizManager
     
@@ -270,11 +270,11 @@ namespace Anki {
     inline VizManager* VizManager::getInstance()
     {
       // If we haven't already instantiated the singleton, do so now.
-      if(0 == singletonInstance_) {
-        singletonInstance_ = new VizManager();
+      if(0 == _singletonInstance) {
+        _singletonInstance = new VizManager();
       }
       
-      return singletonInstance_;
+      return _singletonInstance;
     }
     
     

@@ -18,35 +18,35 @@
 namespace Anki {
   namespace Cozmo {
     
-    VizManager* VizManager::singletonInstance_ = nullptr;
+    VizManager* VizManager::_singletonInstance = nullptr;
     
     const VizManager::Handle_t VizManager::INVALID_HANDLE = u32_MAX;
     
     void VizManager::removeInstance()
     {
       // check if the instance has been created yet
-      if(nullptr != singletonInstance_) {
-        delete singletonInstance_;
-        singletonInstance_ = nullptr;
+      if(nullptr != _singletonInstance) {
+        delete _singletonInstance;
+        _singletonInstance = nullptr;
       }
     }
     
     Result VizManager::Connect(const char *udp_host_address, const unsigned short port)
     {
       
-      if (!vizClient_.Connect(udp_host_address, port)) {
+      if (!_vizClient.Connect(udp_host_address, port)) {
         PRINT_INFO("Failed to init VizManager client (%s:%d)\n", udp_host_address, port);
-        isInitialized_ = false;
+        _isInitialized = false;
       }
           
-      isInitialized_ = true;
+      _isInitialized = true;
       
-      return isInitialized_ ? RESULT_OK : RESULT_FAIL;
+      return _isInitialized ? RESULT_OK : RESULT_FAIL;
     }
     
     Result VizManager::Disconnect()
     {
-      if (vizClient_.Disconnect()) {
+      if (_vizClient.Disconnect()) {
         return RESULT_OK;
       }
       
@@ -57,11 +57,11 @@ namespace Anki {
     {
       // Compute the max IDs permitted by VizObject type
       for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
-        VizObjectMaxID[i] = VizObjectBaseID[i+1] - VizObjectBaseID[i];
+        _VizObjectMaxID[i] = VizObjectBaseID[i+1] - VizObjectBaseID[i];
       }
       
-      isInitialized_ = false;
-      imgID = 0;
+      _isInitialized = false;
+      _imgID = 0;
     }
 
     void VizManager::SendMessage(u8 vizMsgID, void* msg)
@@ -71,9 +71,9 @@ namespace Anki {
       // TODO: Does this work for poorly packed structs?  Just use Andrew's message class creator?
       u32 msgSize = Anki::Cozmo::VizMsgLookupTable_[vizMsgID].size;
       
-      sendBuf[0] = vizMsgID;
-      memcpy(sendBuf + 1, msg, msgSize);
-      if (vizClient_.Send(sendBuf, msgSize+1) <= 0) {
+      _sendBuf[0] = vizMsgID;
+      memcpy(_sendBuf + 1, msg, msgSize);
+      if (_vizClient.Send(_sendBuf, msgSize+1) <= 0) {
         printf("Send msg %d of size %d failed\n", vizMsgID, msgSize+1);
       }
     }
@@ -121,10 +121,10 @@ namespace Anki {
                                                const Pose3d &pose,
                                                const ColorRGBA& color)
     {
-      if(robotID >= VizObjectMaxID[VIZ_OBJECT_ROBOT]) {
+      if(robotID >= _VizObjectMaxID[VIZ_OBJECT_ROBOT]) {
         PRINT_NAMED_ERROR("VizManager.DrawRobot.IDtooLarge",
                           "Specified robot ID=%d larger than maxID=%d\n",
-                          robotID, VizObjectMaxID[VIZ_OBJECT_ROBOT]);
+                          robotID, _VizObjectMaxID[VIZ_OBJECT_ROBOT]);
         return INVALID_HANDLE;
       }
       
@@ -144,10 +144,10 @@ namespace Anki {
                                                 const Pose3d &pose,
                                                 const ColorRGBA& color)
     {
-      if(blockID >= VizObjectMaxID[VIZ_OBJECT_CUBOID]) {
+      if(blockID >= _VizObjectMaxID[VIZ_OBJECT_CUBOID]) {
         PRINT_NAMED_ERROR("VizManager.DrawCuboid.IDtooLarge",
                           "Specified block ID=%d larger than maxID=%d\n",
-                          blockID, VizObjectMaxID[VIZ_OBJECT_CUBOID]);
+                          blockID, _VizObjectMaxID[VIZ_OBJECT_CUBOID]);
         return INVALID_HANDLE;
       }
       
@@ -164,10 +164,10 @@ namespace Anki {
                                                      const Pose3d &pose,
                                                      const ColorRGBA& color)
     {
-      if(preDockPoseID >= VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]) {
+      if(preDockPoseID >= _VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]) {
         PRINT_NAMED_ERROR("VizManager.DrawPreDockPose.IDtooLarge",
                           "Specified robot ID=%d larger than maxID=%d\n",
-                          preDockPoseID, VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]);
+                          preDockPoseID, _VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]);
         return INVALID_HANDLE;
       }
       
@@ -190,10 +190,10 @@ namespace Anki {
                                               const Pose3d& pose,
                                               const ColorRGBA& color)
     {
-      if(rampID >= VizObjectMaxID[VIZ_OBJECT_RAMP]) {
+      if(rampID >= _VizObjectMaxID[VIZ_OBJECT_RAMP]) {
         PRINT_NAMED_ERROR("VizManager.DrawRamp.IDtooLarge",
                           "Specified ramp ID=%d larger than maxID=%d\n",
-                          rampID, VizObjectMaxID[VIZ_OBJECT_RAMP]);
+                          rampID, _VizObjectMaxID[VIZ_OBJECT_RAMP]);
         return INVALID_HANDLE;
       }
       
@@ -213,14 +213,14 @@ namespace Anki {
     
     void VizManager::EraseRobot(const u32 robotID)
     {
-      CORETECH_ASSERT(robotID < VizObjectMaxID[VIZ_OBJECT_ROBOT]);
+      CORETECH_ASSERT(robotID < _VizObjectMaxID[VIZ_OBJECT_ROBOT]);
       EraseVizObject(VizObjectBaseID[VIZ_OBJECT_ROBOT] + robotID);
     }
     
     void VizManager::EraseCuboid(const u32 blockID)
     {
-      CORETECH_ASSERT(blockID < VizObjectMaxID[VIZ_OBJECT_CUBOID]);
-      EraseVizObject(VizObjectMaxID[VIZ_OBJECT_CUBOID] + blockID);
+      CORETECH_ASSERT(blockID < _VizObjectMaxID[VIZ_OBJECT_CUBOID]);
+      EraseVizObject(_VizObjectMaxID[VIZ_OBJECT_CUBOID] + blockID);
     }
 
     void VizManager::EraseAllCuboids()
@@ -230,7 +230,7 @@ namespace Anki {
     
     void VizManager::ErasePreDockPose(const u32 preDockPoseID)
     {
-      CORETECH_ASSERT(preDockPoseID < VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]);
+      CORETECH_ASSERT(preDockPoseID < _VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]);
       EraseVizObject(VizObjectBaseID[VIZ_OBJECT_PREDOCKPOSE] + preDockPoseID);
     }
     
@@ -488,7 +488,7 @@ namespace Anki {
     {
       VizImageChunk v;
       v.resolution = res;
-      v.imgId = ++imgID;
+      v.imgId = ++_imgID;
       v.chunkId = 0;
       v.chunkSize = MAX_VIZ_IMAGE_CHUNK_SIZE;
       
