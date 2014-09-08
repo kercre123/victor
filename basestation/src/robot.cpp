@@ -125,8 +125,9 @@ namespace Anki {
     , _forceReplanOnNextWorldChange(false)
     , _saveImages(false)
     , _camera(robotID)
-    , _proxLeft(0), _proxFwd(0), _proxRight(0)
-    , _proxFwdBlocked(false), _proxSidesBlocked(false)
+    , _poseOrigins(1)
+    , _worldOrigin(&_poseOrigins.front())
+    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
     , _onRamp(false)
     , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
@@ -156,6 +157,8 @@ namespace Anki {
       pdo_ = new PathDolerOuter(msgHandler, robotID);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
+      
+      _poseOrigins.front().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin0");
       
     } // Constructor: Robot
 
@@ -208,9 +211,9 @@ namespace Anki {
       SetLiftAngle(msg.liftAngle);
 
       // Update proximity sensor values
-      SetProxSensorData(msg.proxLeft, msg.proxForward, msg.proxRight,
-                        msg.status & IS_PROX_FORWARD_BLOCKED,
-                        msg.status & IS_PROX_SIDE_BLOCKED);
+      SetProxSensorData(PROX_LEFT, msg.proxLeft, msg.status & IS_PROX_SIDE_BLOCKED);
+      SetProxSensorData(PROX_FORWARD, msg.proxForward, msg.status & IS_PROX_FORWARD_BLOCKED);
+      SetProxSensorData(PROX_RIGHT, msg.proxRight, msg.status & IS_PROX_SIDE_BLOCKED);
 
       if(DISPLAY_PROX_OVERLAY) {
         // printf("displaying: prox L,F,R (%2u, %2u, %2u), blocked: (%d,%d,%d)\n",
@@ -222,10 +225,12 @@ namespace Anki {
         VizManager::getInstance()->SetText(0,   // TODO:(bn) id??
                                            Anki::NamedColors::GREEN,
                                            "prox: (%2u, %2u, %2u) %d%d%d",
-                                           _proxLeft, _proxFwd, _proxRight,
-                                           IsProxSidesBlocked(),
-                                           IsProxForwardBlocked(),
-                                           IsProxSidesBlocked());
+                                           GetProxSensorVal(PROX_LEFT),
+                                           GetProxSensorVal(PROX_FORWARD),
+                                           GetProxSensorVal(PROX_RIGHT),
+                                           IsProxSensorBlocked(PROX_LEFT),
+                                           IsProxSensorBlocked(PROX_FORWARD),
+                                           IsProxSensorBlocked(PROX_RIGHT));
       }
       
       // Get ID of last/current path that the robot executed
@@ -969,6 +974,34 @@ namespace Anki {
       // Make the computed robot pose use the existing mat piece as its parent
       robotPoseWrtMat.SetParent(&existingMatPiece->GetPose());
       //robotPoseWrtMat.SetName(std::string("Robot_") + std::to_string(robot->GetID()));
+      
+      // Don't snap to horizontal or discrete Z levels when we see a mat marker
+      // while on a ramp
+      if(IsOnRamp() == false)
+      {
+        // If there is any significant rotation, make sure that it is roughly
+        // around the Z axis
+        Radians rotAngle;
+        Vec3f rotAxis;
+        robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
+        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
+        const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
+        if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
+                              "Robot's Z axis is not well aligned with the world Z axis. "
+                              "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
+                              rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
+        }
+        
+        // Snap to purely horizontal rotation and surface of the mat
+        if(existingMatPiece->IsPoseOn(robotPoseWrtMat, 0, 10.f)) {
+          Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
+          robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
+          robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
+        }
+        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
+        
+      } // if robot is on ramp
       
       if(!_localizedToFixedMat && !existingMatPiece->IsMoveable()) {
         // If we have not yet seen a fixed mat, and this is a fixed mat, rejigger
@@ -2102,6 +2135,10 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
+    const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D, Vec3f(50, 25, 0)),
+                                                  Pose3d(0, Z_AXIS_3D, Vec3f(50, 0, 0)),
+                                                  Pose3d(0, Z_AXIS_3D, Vec3f(50, -25, 0)) };
+    
     const Quad2f Robot::CanonicalBoundingBoxXY({{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
                                                {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
                                                {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y}},
@@ -2333,6 +2370,7 @@ namespace Anki {
       *_worldOrigin = _pose.GetInverse();
       _worldOrigin->SetParent(&newPoseWrtNewOrigin);
       
+      
       // Connect the old origin's pose to the same root the robot now has.
       // It is no longer the robot's origin, but for any of its children,
       // it is now in the right coordinates.
@@ -2353,6 +2391,9 @@ namespace Anki {
       newOrigin->SetRotation(0, Z_AXIS_3D);
       newOrigin->SetTranslation({{0,0,0}});
       
+      // Now make the robot's origin point to the new origin
+      // TODO: avoid the icky const_cast here...
+      _worldOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
       
       return RESULT_OK;
       

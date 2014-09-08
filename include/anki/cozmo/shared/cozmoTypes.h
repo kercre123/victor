@@ -126,6 +126,14 @@ namespace Anki {
       ,SOUND_OK_DONE
       ,NUM_SOUNDS
     } SoundID_t;
+
+    // Prox sensors
+    typedef enum {
+      PROX_LEFT
+      ,PROX_FORWARD
+      ,PROX_RIGHT
+      ,NUM_PROX
+    } ProxSensor_t;
     
     
     // For DEV only
