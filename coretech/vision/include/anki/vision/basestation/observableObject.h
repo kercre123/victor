@@ -58,7 +58,7 @@ namespace Anki {
                                            const Pose3d&       atPose,
                                            const f32           size_mm);
       
-      std::list<KnownMarker> const& GetMarkers() const {return markers_;}
+      std::list<KnownMarker> const& GetMarkers() const {return _markers;}
       
       // Return a const reference to a vector all this object's Markers with the
       // specified code. The returned vector will be empty if there are no markers
@@ -112,8 +112,8 @@ namespace Anki {
       void SetPose(const Pose3d& newPose);
       void SetPoseParent(const Pose3d* newParent);
       
-      void SetLastObservedTime(TimeStamp_t t) {lastObservedTime_ = t;}
-      const TimeStamp_t GetLastObservedTime() const {return lastObservedTime_;}
+      void SetLastObservedTime(TimeStamp_t t) {_lastObservedTime = t;}
+      const TimeStamp_t GetLastObservedTime() const {return _lastObservedTime;}
       
       // Return true if this object is the same as the other. Sub-classes can
       // overload this function to provide for rotational ambiguity when
@@ -162,30 +162,28 @@ namespace Anki {
       
       //virtual const std::vector<Point3f>& GetCanonicalCorners() const = 0;
       
-      //ObjectType   type_;
-      ObjectID     ID_;
-      TimeStamp_t  lastObservedTime_;
-      
-      ColorRGBA color_;
+      ObjectID     _ID;
+      TimeStamp_t  _lastObservedTime;
+      ColorRGBA    _color;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers
-      std::list<KnownMarker> markers_;
+      std::list<KnownMarker> _markers;
       
       // Holds a LUT (by code) to all the markers of this object which have that
       // code.
-      std::map<Marker::Code, std::vector<KnownMarker*> > markersWithCode_;
+      std::map<Marker::Code, std::vector<KnownMarker*> > _markersWithCode;
       
-      bool wasObserved_;
+
       
       // For subclasses can get a modifiable pose reference
-      Pose3d& GetNonConstPose() { return pose_; }
+      Pose3d& GetNonConstPose() { return _pose; }
       
       /*
       // Canonical pose used as the parent pose for the object's markers so
       // possiblePoses for this object can be computed from observations of its
       // markers
-      Pose3d canonicalPose_;
+      Pose3d _canonicalPose;
       
       // We will represent any ambiguity in an object's pose by simply keeping
       // a list of possible poses.  Since a single (oriented) marker can
@@ -196,11 +194,11 @@ namespace Anki {
       // Note this is a separate notion than the uncertainty of each estimated
       // pose, which should be stored inside the Pose3d object, if represented
       // at all.
-      std::list<Pose3d> possiblePoses_;
+      std::list<Pose3d> _possiblePoses;
       */
     private:
       // Force setting of pose through SetPose() to keep pose name updated
-      Pose3d pose_;
+      Pose3d _pose;
       
       // Don't allow a copy constuctor, because it won't handle fixing the
       // marker pointers and pose parents
@@ -219,11 +217,11 @@ namespace Anki {
      */
     
     inline ObjectID ObservableObject::GetID() const {
-      return ID_;
+      return _ID;
     }
     
     inline const ColorRGBA& ObservableObject::GetColor() const {
-      return color_;
+      return _color;
     }
     
     /*
@@ -234,27 +232,27 @@ namespace Anki {
     
     //virtual float GetMinDim() const = 0;
     inline const Pose3d& ObservableObject::GetPose() const {
-      return pose_;
+      return _pose;
     }
     
     inline void ObservableObject::SetID() { //const ObjectID newID) {
-      ID_.Set();
+      _ID.Set();
       //ID_ = newID;
     }
   
     inline void ObservableObject::SetPose(const Pose3d& newPose) {
-      pose_ = newPose;
+      _pose = newPose;
       
       std::string poseName(GetType().GetName());
       if(poseName.empty()) {
         poseName = "Object";
       }
       poseName += "_" + std::to_string(GetID().GetValue());
-      pose_.SetName(poseName);
+      _pose.SetName(poseName);
     }
     
     inline void ObservableObject::SetPoseParent(const Pose3d* newParent) {
-      pose_.SetParent(newParent);
+      _pose.SetParent(newParent);
     }
         
     inline std::vector<RotationMatrix3d> const& ObservableObject::GetRotationAmbiguities() const
@@ -312,11 +310,11 @@ namespace Anki {
     } // GetCorners()
     
     inline void ObservableObject::SetColor(const Anki::ColorRGBA &color) {
-      color_ = color;
+      _color = color;
     }
     
     inline void ObservableObject::Visualize() {
-      Visualize(color_);
+      Visualize(_color);
     }
     
     /*

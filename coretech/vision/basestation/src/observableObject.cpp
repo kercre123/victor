@@ -32,7 +32,7 @@ namespace Anki {
     const std::vector<RotationMatrix3d> ObservableObject::sRotationAmbiguities; // default is empty
     
     ObservableObject::ObservableObject()
-    : lastObservedTime_(0), wasObserved_(false)
+    : _lastObservedTime(0)
     {
       
     }
@@ -44,7 +44,7 @@ namespace Anki {
     {
       // Return true if any of this object's markers are visible from the
       // given camera
-      for(auto & marker : markers_) {
+      for(auto & marker : _markers) {
         if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize, requireSomethingBehind)) {
           return true;
         }
@@ -61,19 +61,19 @@ namespace Anki {
     {
       // Copy the pose and set this object's pose as its parent
       Pose3d poseCopy(atPose);
-      poseCopy.SetParent(&pose_);
+      poseCopy.SetParent(&_pose);
       
       // Construct a marker at that pose and store it keyed by its code
-      markers_.emplace_back(withCode, poseCopy, size_mm);
-      markersWithCode_[withCode].push_back(&markers_.back());
+      _markers.emplace_back(withCode, poseCopy, size_mm);
+      _markersWithCode[withCode].push_back(&_markers.back());
       
-      return markers_.back();
+      return _markers.back();
     } // ObservableObject::AddMarker()
     
     std::vector<KnownMarker*> const& ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
     {
-      auto returnVec = markersWithCode_.find(withCode);
-      if(returnVec != markersWithCode_.end()) {
+      auto returnVec = _markersWithCode.find(withCode);
+      if(returnVec != _markersWithCode.end()) {
         return returnVec->second;
       }
       else {
@@ -93,17 +93,17 @@ namespace Anki {
         
         // Other object is this object's parent, leave otherPose as default
         // identity transformation and hook up parent connection.
-        if(&otherObject.GetPose() == this->pose_.GetParent()) {
+        if(&otherObject.GetPose() == _pose.GetParent()) {
           otherPose.SetParent(&otherObject.GetPose());
         }
         
-        else if(this->pose_.IsOrigin()) {
+        else if(_pose.IsOrigin()) {
           // This object is an origin, GetParent() will be null, so we can't
           // dereference it below to make them have the same parent.  So try
           // to get other pose w.r.t. this origin.  If the other object is the
           // same as an origin pose (which itself is an identity transformation)
           // then the remaining transformation should be the identity.
-          if(otherObject.GetPose().GetWithRespectTo(this->pose_, otherPose) == false) {
+          if(otherObject.GetPose().GetWithRespectTo(_pose, otherPose) == false) {
             PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
                                 "Could not get other object w.r.t. this origin object. Returning isSame == false.\n");
             isSame = false;
@@ -112,7 +112,7 @@ namespace Anki {
         
         // Otherwise, attempt to make the two poses have the same parent so they
         // are comparable
-        else if(otherObject.GetPose().GetWithRespectTo(*this->pose_.GetParent(), otherPose) == false) {
+        else if(otherObject.GetPose().GetWithRespectTo(*_pose.GetParent(), otherPose) == false) {
           PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
                               "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
           isSame = false;
@@ -120,14 +120,14 @@ namespace Anki {
         
         if(isSame) {
           
-          CORETECH_ASSERT(otherPose.GetParent() == pose_.GetParent() ||
-                          (pose_.IsOrigin() && otherPose.GetParent() == &pose_));
+          CORETECH_ASSERT(otherPose.GetParent() == _pose.GetParent() ||
+                          (_pose.IsOrigin() && otherPose.GetParent() == &_pose));
           
           if(this->GetRotationAmbiguities().empty()) {
-            isSame = this->pose_.IsSameAs(otherPose, distThreshold, angleThreshold);
+            isSame = _pose.IsSameAs(otherPose, distThreshold, angleThreshold);
           }
           else {
-            isSame = this->pose_.IsSameAs_WithAmbiguity(otherPose,
+            isSame = _pose.IsSameAs_WithAmbiguity(otherPose,
                                                         this->GetRotationAmbiguities(),
                                                         distThreshold, angleThreshold, true);
           } // if/else there are ambiguities
@@ -141,9 +141,9 @@ namespace Anki {
     void ObservableObject::ComputePossiblePoses(const ObservedMarker*     obsMarker,
                                                 std::vector<PoseMatchPair>& possiblePoses) const
     {
-      auto matchingMarkers = markersWithCode_.find(obsMarker->GetCode());
+      auto matchingMarkers = _markersWithCode.find(obsMarker->GetCode());
       
-      if(matchingMarkers != markersWithCode_.end()) {
+      if(matchingMarkers != _markersWithCode.end()) {
         
         for(auto matchingMarker : matchingMarkers->second) {
           // Note that the known marker's pose, and thus its 3d corners, are
@@ -163,7 +163,7 @@ namespace Anki {
     
     void ObservableObject::GetCorners(std::vector<Point3f>& corners) const
     {
-      this->GetCorners(pose_, corners);
+      this->GetCorners(_pose, corners);
     }
 /*
     void ObservableObject::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const {
@@ -174,7 +174,7 @@ namespace Anki {
                                               const TimeStamp_t sinceTime) const
     {
       if(sinceTime > 0) {
-        for(auto const& marker : this->markers_)
+        for(auto const& marker : this->_markers)
         {
           if(marker.GetLastObservedTime() >= sinceTime) {
             observedMarkers.push_back(&marker);
@@ -196,12 +196,12 @@ namespace Anki {
 
       // If these objects are the same type they have to have the same number of
       // markers, by definition.
-      CORETECH_ASSERT(otherMarkers.size() == markers_.size());
+      CORETECH_ASSERT(otherMarkers.size() == _markers.size());
       
       std::list<KnownMarker>::const_iterator otherMarkerIter = otherMarkers.begin();
-      std::list<KnownMarker>::iterator markerIter = markers_.begin();
+      std::list<KnownMarker>::iterator markerIter = _markers.begin();
       
-      for(;otherMarkerIter != otherMarkers.end() && markerIter != markers_.end();
+      for(;otherMarkerIter != otherMarkers.end() && markerIter != _markers.end();
           ++otherMarkerIter, ++markerIter)
       {
         markerIter->SetLastObservedTime(std::max(markerIter->GetLastObservedTime(),
@@ -215,10 +215,9 @@ namespace Anki {
     void ObservableObject::SetMarkersAsObserved(const Marker::Code& withCode,
                                                 const TimeStamp_t   atTime)
     {
-      auto markers = markersWithCode_.find(withCode);
-      if(markers != markersWithCode_.end()) {
+      auto markers = _markersWithCode.find(withCode);
+      if(markers != _markersWithCode.end()) {
         for(auto marker : markers->second) {
-          //marker->SetWasObserved(true);
           marker->SetLastObservedTime(atTime);
         }
       }
@@ -231,7 +230,7 @@ namespace Anki {
     
     Quad2f ObservableObject::GetBoundingQuadXY(const f32 padding_mm) const
     {
-      return GetBoundingQuadXY(pose_, padding_mm);
+      return GetBoundingQuadXY(_pose, padding_mm);
     }
     
     /*
