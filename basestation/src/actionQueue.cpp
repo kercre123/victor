@@ -45,6 +45,19 @@ namespace Anki {
       return name;
     }
     
+#   if USE_ACTION_CALLBACKS
+    void IActionRunner::AddCompletionCallback(ActionCompletionCallback callback)
+    {
+      _completionCallbacks.emplace_back(callback);
+    }
+    
+    void IActionRunner::RunCallbacks(ActionResult result) const
+    {
+      for(auto callback : _completionCallbacks) {
+        callback(result);
+      }
+    }
+#   endif // USE_ACTION_CALLBACKS
     
     
 #pragma mark ---- IAction ----
@@ -130,6 +143,12 @@ namespace Anki {
         result = RUNNING;
       }
       
+#     if USE_ACTION_CALLBACKS
+      if(result != RUNNING) {
+        RunCallbacks(result);
+      }
+#     endif
+      
       return result;
     } // Update()
     
@@ -151,6 +170,109 @@ namespace Anki {
       
     } // Retry()
     */
+#pragma mark ---- ActionList ----
+    
+    ActionList::ActionList()
+    : _IDcounter(0)
+    {
+      
+    }
+    
+    ActionList::~ActionList()
+    {
+      Clear();
+    }
+    
+    void ActionList::Clear()
+    {
+      _actionList.clear();
+    }
+    
+    bool ActionList::IsEmpty() const
+    {
+      return _actionList.empty();
+    }
+    
+    void ActionList::Print() const
+    {
+      if(IsEmpty()) {
+        PRINT_INFO("ActionList is empty.\n");
+      } else {
+        PRINT_INFO("ActionList contents: ");
+        for(auto const& actionMemberPair : _actionList) {
+          PRINT_INFO("%s, ", actionMemberPair.second.action->GetName().c_str());
+        }
+        PRINT_INFO("\b\b\n");
+      }
+
+    } // Print()
+    
+    Result ActionList::Update(Robot& robot)
+    {
+      Result lastResult = RESULT_OK;
+      
+      for(auto & actionMemberPair : _actionList) {
+        ActionListMember& actionMember = actionMemberPair.second;
+        assert(actionMember.action != nullptr);
+        const IActionRunner::ActionResult actionResult = actionMember.action->Update(robot);
+        
+        // If this action just finished...
+        if(actionResult != IActionRunner::RUNNING) {
+          // ...execute any callbacks registered with it
+          for(auto & callback : actionMember.completionCallbacks) {
+            callback(actionResult);
+          }
+          
+          // ...remove it from the list
+          _actionList.erase(actionMemberPair.first);
+          
+        } // if action no longer running
+      } // for each actionMemberPair
+      
+      return lastResult;
+    } // Update()
+    
+    
+    ActionList::ActionID ActionList::AddAction(IActionRunner* action, u8 numRetries)
+    {
+      if(action == nullptr) {
+        PRINT_NAMED_WARNING("ActionList.AddAction.NullActionPointer", "Refusing to add null action.\n");
+        return 0;
+      }
+      
+      ++_IDcounter;
+      
+      _actionList[_IDcounter].action = action;
+      action->SetNumRetries(numRetries);
+      
+      return _IDcounter;
+    }
+    
+    /*
+    Result ActionList::RemoveAction(ActionID ID)
+    {
+      auto actionToRemove = _actionList.find(ID);
+      if(actionToRemove != _actionList.end()) {
+        _actionList.erase(actionToRemove);
+        return RESULT_OK;
+      } else {
+        return RESULT_FAIL;
+      }
+    }
+     */
+    
+    Result ActionList::RegisterCompletionCallback(ActionID actionID,
+                                        ActionCompletionCallback callback)
+    {
+      auto actionIter = _actionList.find(actionID);
+      if(actionIter != _actionList.end()) {
+        actionIter->second.completionCallbacks.emplace_back(callback);
+        return RESULT_OK;
+      } else {
+        return RESULT_FAIL;
+      }
+    }
+
     
 #pragma mark ---- ActionQueue ----
     
@@ -311,6 +433,9 @@ namespace Anki {
             
             // if that was the last action, we're done
             if(_currentActionPair == _actions.end()) {
+#             if USE_ACTION_CALLBACKS
+              RunCallbacks(SUCCESS);
+#             endif
               return SUCCESS;
             }
             
@@ -333,6 +458,9 @@ namespace Anki {
           case FAILURE_ABORT:
           case FAILURE_TIMEOUT:
           case FAILURE_PROCEED:
+#           if USE_ACTION_CALLBACKS
+            RunCallbacks(subResult);
+#           endif
             return subResult;
             
         } // switch(result)
@@ -395,6 +523,9 @@ namespace Anki {
             case FAILURE_PROCEED:
             case FAILURE_TIMEOUT:
               // Return failure, aborting updating remaining actions the group
+#             if USE_ACTION_CALLBACKS
+              RunCallbacks(subResult);
+#             endif
               return subResult;
               
             default:
@@ -406,6 +537,12 @@ namespace Anki {
           
         } // if(!isDone)
       } // for each action in the group
+      
+#     if USE_ACTION_CALLBACKS
+      if(result != RUNNING) {
+        RunCallbacks(result);
+      }
+#     endif
       
       return result;
     } // ActionGroupParallel::Update()

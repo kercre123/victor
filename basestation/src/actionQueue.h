@@ -39,6 +39,8 @@ namespace Anki {
     // Forward Declarations:
     class Robot;
     
+#define USE_ACTION_CALLBACKS 1
+    
     class IActionRunner
     {
     public:
@@ -54,13 +56,7 @@ namespace Anki {
       
       IActionRunner();
       virtual ~IActionRunner() { }
-      
-      // This Update() is what gets called from the outside.  It in turn
-      // handles timing delays and runs (protected) CheckPreconditions() and
-      // CheckIfDone() methods. Those are the virtual methods that derived
-      // classes should implement to get desired action behaviors.
-      // Note that this method is final and cannot be overridden in derived
-      // classes.
+
       virtual ActionResult Update(Robot& robot) = 0;
       
       // If a FAILURE_RETRY is encountered, how many times will the action
@@ -76,17 +72,31 @@ namespace Anki {
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
       
+#     if USE_ACTION_CALLBACKS
+      using ActionCompletionCallback = std::function<void(ActionResult)>;
+      
+      void AddCompletionCallback(ActionCompletionCallback callback);
+#     endif
+      
     protected:
       
       bool RetriesRemain();
       
       // Derived actions can use this to set custom status messages here.
       void SetStatus(const std::string& msg);
+
+#     if USE_ACTION_CALLBACKS
+      void RunCallbacks(ActionResult result) const;
+#     endif
       
     private:
       u8 _numRetriesRemaining;
       
       std::string   _statusMsg;
+      
+#     if USE_ACTION_CALLBACKS
+      std::list<ActionCompletionCallback> _completionCallbacks;
+#     endif
       
     }; // class IActionRunner
     
@@ -105,7 +115,12 @@ namespace Anki {
       IAction();
       virtual ~IAction() { }
 
-      virtual ActionResult Update(Robot& robot) override;
+      // This Update() is what gets called from the outside.  It in turn
+      // handles timing delays and runs (protected) Init() and CheckIfDone()
+      // methods. Those are the virtual methods that specific classes should
+      // implement to get desired action behaviors. Note that this method
+      // is final and cannot be overridden by specific individual actions.
+      virtual ActionResult Update(Robot& robot) override final;
       
       // Provide a retry function that will be called by Update() if
       // FAILURE_RETRY is returned by the derived CheckIfDone() method.
@@ -144,6 +159,50 @@ namespace Anki {
       
     }; // class IAction
     
+    class ActionList
+    {
+    public:
+      using ActionID = u32;
+      using ActionCompletionCallback = std::function<void(IActionRunner::ActionResult)>;
+      
+      ActionList();
+      ~ActionList();
+      
+      Result   Update(Robot& robot);
+      
+      ActionID AddAction(IActionRunner* action, u8 numRetries = 0);
+
+      // TODO: Should action removal be allowed? What if it's in progress?
+      //Result   RemoveAction(ActionID ID);
+      
+      // TODO: Do we want to support callbacks on completion? Just use sequential grouping instead?
+      // TODO: If we use completion callbacks, maybe they should be part of IActionRunner
+      Result   RegisterCompletionCallback(ActionID actionID,
+                                          ActionCompletionCallback callback);
+      
+      bool     IsEmpty() const;
+      
+      void     Clear();
+      
+      void     Print() const;
+      
+    protected:
+      struct ActionListMember {
+        IActionRunner *action;
+        std::list<ActionCompletionCallback> completionCallbacks;
+        
+        ~ActionListMember() {
+          if(action != nullptr) {
+            delete action;
+          }
+        }
+      };
+      
+      ActionID _IDcounter;
+      
+      std::map<u32, ActionListMember> _actionList;
+      
+    }; // class ActionList
     
     class ActionQueue
     {
@@ -198,7 +257,7 @@ namespace Anki {
       
       ActionGroupSequential(std::initializer_list<IActionRunner*> actions);
       
-      virtual ActionResult Update(Robot& robot) override;
+      virtual ActionResult Update(Robot& robot) override final;
       
     private:
       std::list<std::pair<bool,IActionRunner*> >::iterator _currentActionPair;
@@ -212,7 +271,7 @@ namespace Anki {
       
       ActionGroupParallel(std::initializer_list<IActionRunner*> actions);
       
-      virtual ActionResult Update(Robot& robot) override;
+      virtual ActionResult Update(Robot& robot) override final;
       
     }; // class ActionGroupParallel
     
