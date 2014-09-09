@@ -1,6 +1,6 @@
-% function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, featureValues, labels)
+% function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, featureValues, labels, probeLocationsXGrid, probeLocationsYGrid)
 
-function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, featureValues, labels)
+function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, featureValues, labels, probeLocationsXGrid, probeLocationsYGrid)
     numImages = length(featureValues{1});
     numFeatures = length(featureValues);
     featureImageWidth = sqrt(numFeatures);
@@ -19,18 +19,22 @@ function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, feature
     pBar.set_increment(100/numImages);
     pBar.set(0);
     
+    featureValues = cell2mat(featureValues');
+    
+    % Compute the location mapping
+    samplePositions = zeros(length(probeLocationsXGrid), 1);
+    for iFeature = 1:length(probeLocationsXGrid)
+        [xp, yp] = tforminv(tform, probeLocationsXGrid(iFeature), probeLocationsYGrid(iFeature));
+        samplePositions(iFeature) = sub2ind([featureImageWidth,featureImageWidth], round(yp + 0.5), round(xp + 0.5));
+    end
+    
     numCorrect = 0;
     for iImage = 1:numImages
-        curImage = zeros(numFeatures, 1, 'uint8');
-        
         % reshape the featureValues
-        for iFeature = 1:numFeatures
-            curImage(iFeature) = featureValues{iFeature}(iImage);
-        end
+        curImage = featureValues(iImage, :);
+%         curImage = reshape(curImage, [featureImageWidth,featureImageWidth]);
         
-        curImage = reshape(curImage, [featureImageWidth,featureImageWidth]);
-        
-        [~, labelID] = decisionTree2_query(tree, curImage, tform, 0, 255);
+        [~, labelID] = decisionTree2_queryFast(tree, curImage, samplePositions, 0, 255);
         
         if labelID == labels(iImage);
             numCorrect = numCorrect + 1;
@@ -45,4 +49,6 @@ function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, feature
             pBar.increment();
         end
     end
+    
+    sprintf('Total accuracy %d/%d=%f', numCorrect, iImage, numCorrect/iImage)
 end % decisionTree2_testOnTrainingData()

@@ -9,12 +9,14 @@
 % [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(fiducialClassesList);
 
 % Example:
-% [tree, minimalTree, trainingFailures] = decisionTree2_trainC(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid);
+% [tree, minimalTree, cTree, trainingFailures, testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_trainC(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid);
 
 % Example using only 128 as the grayvalue threshold
-% [tree, minimalTree, trainingFailures] = decisionTree2_trainC(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
+% [tree, minimalTree, cTree, trainingFailures, testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_trainC(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
 
-function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_trainC(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, varargin)
+function [tree, minimalTree, cTree, trainingFailures, testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_trainC(labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, varargin)
+    
+    t_start = tic();
     
     for iFeature = 1:length(featureValues)
         assert(min(size(labels) == size(featureValues{iFeature})) == 1);
@@ -23,14 +25,14 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     leafNodeFraction = 1.0; % What percent of the labels must be the same for it to be considered a leaf node?
     leafNodeNumItems = 1; % If a node has less-than-or-equal-to this number of items, it is a leaf no matter what
     u8MinDistanceForSplits = 20; % How close can the value for splitting on two values of one feature? Set to 255 to disallow splitting more than once per feature (e.g. multiple splits for one probe in the same location).
-    u8MinDistanceFromThreshold = 2; % If a feature value is closer than this to the threshold, pass it to both subpaths
+    u8MinDistanceFromThreshold = 0; % If a feature value is closer than this to the threshold, pass it to both subpaths
     u8ThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
     featuresUsed = zeros(length(featureValues), 256, 'uint8'); % If you don't want to train on some of the features or u8 thresholds, set some of the featuresUsed to true
     cInFilenamePrefix = 'c:/tmp/treeTraining_'; % Temporary location for when useCVersion = true
     cOutFilenamePrefix = 'c:/tmp/treeTraining_out_';
     %cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/RelWithDebInfo/run_trainDecisionTree.exe';
     cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/Debug/run_trainDecisionTree.exe';
-    maxThreads = 1;
+    maxThreads = 4;
     maxSavingThreads = 8;
     
     parseVarargin(varargin{:});
@@ -48,7 +50,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     end
     
     decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads);
-    tree = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix, cOutFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
+    [tree, cTree] = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix, cOutFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
     
     if isempty(tree)
         error('Training failed!');
@@ -56,7 +58,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     t_train = toc(t_start);
     
-    [numInternalNodes, numLeaves] = countNumNodes(tree);
+    [numInternalNodes, numLeaves] = decisionTree2_countNumNodes(tree);
     
     disp(sprintf('Training completed in %f seconds. Tree has %d nodes.', t_train, numInternalNodes + numLeaves));
     
@@ -69,16 +71,19 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     t_test = toc(t_test);
     
     disp(sprintf('Tested tree on training set in %f seconds. Training accuracy: %d/%d = %0.2f%%', t_test, testOnTrain_numCorrect, testOnTrain_numTotal, 100*testOnTrain_numCorrect/testOnTrain_numTotal));
-    
-    trainingFailures = g_trainingFailures;
+
+    trainingFailures = [];
+
 end % decisionTree2_trainC()
 
 % Save the inputs to file, for running the complete C version of the training
 % cInFilenamePrefix should be the prefix for all the files to save, such as '~/tmp/trainingFiles_'
-function decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads)
-    global pBar;
-    
+function decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads)    
     totalTic = tic();
+   
+    pBar = ProgressBar('decisionTree2_train', 'CancelButton', true);
+    pBar.showTimingInfo = true;
+    pBarCleanup = onCleanup(@()delete(pBar));
     
     pBar.set_message('Saving inputs for C training');
     pBar.set_increment(1/(length(featureValues)+4));
@@ -138,7 +143,7 @@ function decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, feature
     
 end % decisionTree2_saveInputs()
 
-function tree = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix, cOutFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads)
+function [tree, cTree] = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix, cOutFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads)
     % First, run the training
     trainingTic = tic();
     command = sprintf('"%s" "%s" %d %f %d %d %d %d "%s"', cTrainingExecutable, cInFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, maxThreads, cOutFilenamePrefix);
@@ -156,14 +161,14 @@ function tree = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix
     
     disp('Loading and converting c tree to matlab format')
     
-    depths = mexLoadEmbeddedArray([cOutFilenamePrefix, 'depths.array']);
+    cTree.depths = mexLoadEmbeddedArray([cOutFilenamePrefix, 'depths.array']);
     infoGains = mexLoadEmbeddedArray([cOutFilenamePrefix, 'bestEntropys.array']);
-    whichFeatures = mexLoadEmbeddedArray([cOutFilenamePrefix, 'whichFeatures.array']);
-    u8Thresholds = mexLoadEmbeddedArray([cOutFilenamePrefix, 'u8Thresholds.array']);
-    leftChildIndexs = mexLoadEmbeddedArray([cOutFilenamePrefix, 'leftChildIndexs.array']);
+    cTree.whichFeatures = mexLoadEmbeddedArray([cOutFilenamePrefix, 'whichFeatures.array']);
+    cTree.u8Thresholds = mexLoadEmbeddedArray([cOutFilenamePrefix, 'u8Thresholds.array']);
+    cTree.leftChildIndexs = mexLoadEmbeddedArray([cOutFilenamePrefix, 'leftChildIndexs.array']);
     cpuUsageSamples = mexLoadEmbeddedArray([cOutFilenamePrefix, 'cpuUsageSamples.array']);
     
-    tree = decisionTree2_convertCTree(depths, infoGains, whichFeatures, u8Thresholds, leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
+    tree = decisionTree2_convertCTree(cTree.depths, infoGains, cTree.whichFeatures, cTree.u8Thresholds, cTree.leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     
     figure(50);
     plot(cpuUsageSamples, 'b+');

@@ -20,7 +20,7 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
     numPerturbations = 100;
     probeLocationsX = ((1:30) - .5) / 30; % Probe location assume the left edge of the image is 0 and the right edge is 1
     probeLocationsY = ((1:30) - .5) / 30;
-    probeResolutions = [512,128,32];
+    probeResolutions = [128,32];
     numPadPixels = 100;
     showProbePermutations = false;
     

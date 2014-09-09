@@ -54,7 +54,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     t_train = toc(t_start);
     
-    [numInternalNodes, numLeaves] = countNumNodes(tree);
+    [numInternalNodes, numLeaves] = decisionTree2_countNumNodes(tree);
     
     disp(sprintf('Training completed in %f seconds. Tree has %d nodes.', t_train, numInternalNodes + numLeaves));
     
@@ -72,18 +72,6 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     %     keyboard
 end % decisionTree2_train()
-
-function [numInternalNodes, numLeaves] = countNumNodes(tree)
-    if isfield(tree, 'labelName')
-        numInternalNodes = 0;
-        numLeaves = 1;
-    else
-        [numInternalNodesLeft, numLeavesLeft] = countNumNodes(tree.leftChild);
-        [numInternalNodesRight, numLeavesRight] = countNumNodes(tree.rightChild);
-        numLeaves = numLeavesLeft + numLeavesRight;
-        numInternalNodes = 1 + numInternalNodesLeft + numInternalNodesRight;
-    end
-end % countNumNodes()
 
 function node = buildTree(node, featuresUsed, labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8ThresholdsToUse)
     global g_trainingFailures;
