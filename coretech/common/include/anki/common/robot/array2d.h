@@ -161,72 +161,103 @@ namespace Anki
       return newArray;
     } // Array<Type>::LoadImage(const char * filename, MemoryStack &memory)
 
-    template<typename Type> Array<Type> Array<Type>::LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory)
+    template<typename Type> Array<Type> LoadBinaryArray_Generic(const char * filename, MemoryStack *scratch, MemoryStack *memory, void * allocatedBuffer, const s32 allocatedBufferLength)
     {
       Array<Type> newArray = Array<Type>();
 
-      AnkiConditionalErrorAndReturnValue(NotAliased(scratch, memory),
-        newArray, "Array<Type>::LoadBinary", "scratch and memory must be different");
+      MemoryStack scratch_local;
 
-      AnkiConditionalErrorAndReturnValue(filename && AreValid(scratch, memory),
-        newArray, "Array<Type>::LoadBinary", "Invalid inputs");
+      bool useMalloc;
+      if(!scratch) {
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+        AnkiAssert(!memory && allocatedBufferLength > 0);
+        useMalloc = true;
+#else
+        AnkiError("Array<Type>::LoadBinaryArray_Generic", "Using malloc OpenCV");
+        return newArray;
+#endif
+      } else {
+        AnkiAssert(memory && !allocatedBuffer && allocatedBufferLength < 0);
+        useMalloc = false;
+
+        AnkiConditionalErrorAndReturnValue(NotAliased(*scratch, *memory) && AreValid(*scratch, *memory),
+          newArray, "Array<Type>::LoadBinaryArray_Generic", "scratch and memory must be different");
+
+        scratch_local = MemoryStack(*scratch);
+      }
+
+      AnkiConditionalErrorAndReturnValue(filename,
+        newArray, "Array<Type>::LoadBinaryArray_Generic", "Invalid inputs");
 
       FILE *fp = fopen(filename, "rb");
 
       AnkiConditionalErrorAndReturnValue(fp,
-        newArray, "Array<Type>::LoadBinary", "Could not open file %s", filename);
+        newArray, "Array<Type>::LoadBinaryArray_Generic", "Could not open file %s", filename);
 
       fseek(fp, 0, SEEK_END);
-      s32 bufferLength = ftell(fp) - ARRAY_FILE_HEADER_LENGTH;
+      s32 tmpBufferLength = ftell(fp) - ARRAY_FILE_HEADER_LENGTH;
       fseek(fp, 0, SEEK_SET);
 
-      void * buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(bufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
+      void * tmpBuffer;
+      void * tmpBufferStart;
+
+      if(useMalloc) {
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+        tmpBufferStart = calloc(tmpBufferLength + 2*MEMORY_ALIGNMENT + 64, 1);
+        tmpBuffer = tmpBufferStart;
+#endif
+      } else {
+        tmpBuffer = scratch_local.Allocate(tmpBufferLength + MEMORY_ALIGNMENT + 64);
+      }
+
+      // Align tmpBuffer to MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH
+      tmpBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(tmpBuffer) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       void * uncompressedBufferStart = NULL;
 #endif
 
       // First, read the text header
-      const size_t bytesRead1 = fread(buffer, 1, ARRAY_FILE_HEADER_LENGTH, fp);
+      const size_t bytesRead1 = fread(tmpBuffer, 1, ARRAY_FILE_HEADER_LENGTH, fp);
 
-      AnkiConditionalErrorAndReturnValue(bytesRead1 == ARRAY_FILE_HEADER_LENGTH && strncmp(reinterpret_cast<const char*>(buffer), ARRAY_FILE_HEADER, ARRAY_FILE_HEADER_VALID_LENGTH) == 0,
-        newArray, "Array<Type>::LoadBinary", "File is not an Anki Embedded Array");
+      AnkiConditionalErrorAndReturnValue(bytesRead1 == ARRAY_FILE_HEADER_LENGTH && strncmp(reinterpret_cast<const char*>(tmpBuffer), ARRAY_FILE_HEADER, ARRAY_FILE_HEADER_VALID_LENGTH) == 0,
+        newArray, "Array<Type>::LoadBinaryArray_Generic", "File is not an Anki Embedded Array");
 
       bool isCompressed = false;
-      if(reinterpret_cast<const char*>(buffer)[ARRAY_FILE_HEADER_VALID_LENGTH+1] == 'z') {
+      if(reinterpret_cast<const char*>(tmpBuffer)[ARRAY_FILE_HEADER_VALID_LENGTH+1] == 'z') {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
         isCompressed = true;
 #else
-        AnkiError("Array<Type>::LoadBinary", "Loading with compression requires OpenCV");
-        return Array<Type>();
+        AnkiError("Array<Type>::LoadBinaryArray_Generic", "Loading with compression requires OpenCV");
+        return newArray;
 #endif
       }
 
       // Next, read the actual payload
-      const size_t bytesRead2 = fread(buffer, 1, bufferLength, fp);
-
-      AnkiConditionalErrorAndReturnValue(bytesRead2 > 0,
-        newArray, "Array<Type>::LoadBinary", "File is not an Anki Embedded Array");
+      const size_t bytesRead2 = fread(tmpBuffer, 1, tmpBufferLength, fp);
 
       fclose(fp);
+
+      AnkiConditionalErrorAndReturnValue(bytesRead2 > 0,
+        newArray, "Array<Type>::LoadBinaryArray_Generic", "File is not an Anki Embedded Array");
 
       // Decompress the payload, if it is compressed
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       if(isCompressed) {
-        uLongf originalLength = static_cast<uLongf>( reinterpret_cast<s32*>(buffer)[0] );
-        const s32 compressedLength = reinterpret_cast<s32*>(buffer)[1];
+        uLongf originalLength = static_cast<uLongf>( reinterpret_cast<s32*>(tmpBuffer)[0] );
+        const s32 compressedLength = reinterpret_cast<s32*>(tmpBuffer)[1];
 
         uncompressedBufferStart = calloc(originalLength + MEMORY_ALIGNMENT + 64, 1);
         void * uncompressedBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(uncompressedBufferStart) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
-        uncompress(reinterpret_cast<Bytef*>(uncompressedBuffer), &originalLength, reinterpret_cast<Bytef*>(buffer) + 2*sizeof(s32), compressedLength);
+        uncompress(reinterpret_cast<Bytef*>(uncompressedBuffer), &originalLength, reinterpret_cast<Bytef*>(tmpBuffer) + 2*sizeof(s32), compressedLength);
 
-        buffer = uncompressedBuffer;
-        bufferLength = originalLength;
+        tmpBuffer = uncompressedBuffer;
+        tmpBufferLength = originalLength;
       }
 #endif
 
-      SerializedBuffer serializedBuffer(buffer, bufferLength, Anki::Embedded::Flags::Buffer(false, true, true));
+      SerializedBuffer serializedBuffer(tmpBuffer, tmpBufferLength, Anki::Embedded::Flags::Buffer(false, true, true));
 
       SerializedBufferReconstructingIterator iterator(serializedBuffer);
 
@@ -238,26 +269,57 @@ namespace Anki
 
       if(!nextItem && strcmp(typeName, "Array") != 0) {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
+        if(useMalloc) {
+          free(tmpBufferStart);
+        }
+
         if(isCompressed) {
           free(uncompressedBufferStart);
         }
 #endif
 
-        AnkiError("Array<Type>::LoadBinary", "Could not parse data");
+        AnkiError("Array<Type>::LoadBinaryArray_Generic", "Could not parse data");
         return newArray;
       }
 
       char arrayName[128];
-      newArray = SerializedBuffer::DeserializeRawArray<Type>(&arrayName[0], &nextItem, dataLength, memory);
+      if(useMalloc) {
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+        //const s32 allocatedBufferLength = 0x3FFFFFFF;
+        //*allocatedBuffer = calloc(allocatedBufferLength + 2*MEMORY_ALIGNMENT, 1);
+
+        // Align tmpBuffer to MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH
+        void *allocatedBufferAligned = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(allocatedBuffer), MEMORY_ALIGNMENT) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH );
+
+        MemoryStack memory(allocatedBufferAligned, allocatedBufferLength);
+        newArray = SerializedBuffer::DeserializeRawArray<Type>(&arrayName[0], &nextItem, dataLength, memory);
+#endif
+      } else {
+        newArray = SerializedBuffer::DeserializeRawArray<Type>(&arrayName[0], &nextItem, dataLength, *memory);
+      }
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
+      if(useMalloc) {
+        free(tmpBufferStart);
+      }
+
       if(isCompressed) {
         free(uncompressedBufferStart);
       }
 #endif
 
       return newArray;
+    } // / LoadBinaryArray_Generic()
+
+    template<typename Type> Array<Type> Array<Type>::LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory)
+    {
+      return LoadBinaryArray_Generic<Type>(filename, &scratch, &memory, NULL, -1);
     } // Array<Type>::LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory)
+
+    template<typename Type> Array<Type> Array<Type>::LoadBinary(const char * filename, void * allocatedBuffer, const s32 allocatedBufferLength) //< allocatedBuffer must be freed manually
+    {
+      return LoadBinaryArray_Generic<Type>(filename, NULL, NULL, allocatedBuffer, allocatedBufferLength);
+    } // LoadBinaryMalloc()
 
     template<typename Type> Result Array<Type>::SaveBinary(const char * filename, const s32 compressionLevel, MemoryStack scratch) const
     {
@@ -357,7 +419,7 @@ namespace Anki
           bytesWrittenForTextHeader == ARRAY_FILE_HEADER_LENGTH &&
           bytesWritten == (compressedLength + 2*sizeof(s32)),
           RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Save failed");
-        
+
 #else
         AnkiError("Array<Type>::SaveBinary", "Saving with compression requires OpenCV");
         return RESULT_FAIL;
@@ -370,7 +432,7 @@ namespace Anki
         const size_t bytesWritten = fwrite(bufferStart, 1, validUsedBytes, fp);
 
         const size_t bytesWrittenForFooter = fwrite(&SERIALIZED_BUFFER_FOOTER[0], 1, SERIALIZED_BUFFER_FOOTER_LENGTH, fp);
-        
+
         AnkiConditionalErrorAndReturnValue(
           bytesWrittenForTextHeader == ARRAY_FILE_HEADER_LENGTH &&
           bytesWrittenForHeader == SERIALIZED_BUFFER_HEADER_LENGTH &&

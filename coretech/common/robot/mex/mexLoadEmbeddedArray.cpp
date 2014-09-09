@@ -21,10 +21,10 @@ mxArray* Load(const char *filename, MemoryStack scratch)
     NULL, "Load", "Invalid inputs");
 
   FILE *fp = fopen(filename, "rb");
-  
+
   AnkiConditionalErrorAndReturnValue(fp,
     NULL, "Load", "Invalid inputs");
-  
+
   fseek(fp, 0, SEEK_END);
   s32 bufferLength = ftell(fp);
   fseek(fp, 0, SEEK_SET);
@@ -193,7 +193,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   AnkiConditionalErrorAndReturn(nrhs == 1 && nlhs == 1, "mexLoadEmbeddedArray", "Call this function as follows: array = mexLoadEmbeddedArray(filename);");
 
+#ifdef _MSC_VER
+  // 32-bit
   const s32 bufferSize = 200000000;
+#else
+  // 64-bit
+  const s32 bufferSize = 4000000000 / numThreads;
+#endif
+
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexLoadEmbeddedArray", "Memory could not be allocated");
 

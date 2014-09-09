@@ -17,31 +17,31 @@ For internal use only. No part of this code may be used without a signed non-dis
 using namespace Anki;
 using namespace Anki::Embedded;
 
-template<typename Type> FixedLengthList<Type> LoadIntoList_temporaryBuffer(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2, MemoryStack &memory);
+template<typename Type> FixedLengthList<Type> LoadIntoList_temporaryBuffer(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2, void * allocatedBuffer, const s32 allocatedBufferLength);
 std::vector<U8Bool> LoadIntoList_grayvalueBool(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2);
 template<typename Type> FixedLengthList<Type> LoadIntoList_permanentBuffer(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch, MemoryStack &memory);
 template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch);
 
-template<typename Type> FixedLengthList<Type> LoadIntoList_temporaryBuffer(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2, MemoryStack &memory)
+template<typename Type> FixedLengthList<Type> LoadIntoList_temporaryBuffer(const char * filenamePrefix, const char * filenameSuffix, MemoryStack scratch1, MemoryStack scratch2, void * allocatedBuffer, const s32 allocatedBufferLength)
 {
   const s32 filenameBufferLength = 1024;
   char filenameBuffer[filenameBufferLength];
 
   snprintf(filenameBuffer, filenameBufferLength, "%s%s", filenamePrefix, filenameSuffix);
 
-  Array<Type> raw = Array<Type>::LoadBinary(filenameBuffer, scratch1, scratch2);
+  Array<Type> raw = Array<Type>::LoadBinary(filenameBuffer, allocatedBuffer, allocatedBufferLength);
 
   AnkiConditionalErrorAndReturnValue(raw.get_size(0) == 1,
     FixedLengthList<Type>(), "LoadIntoList_permanentBuffer", "Input is the wrong size");
 
   const s32 numElements = raw.get_size(0) * raw.get_size(1);
 
-  FixedLengthList<Type> out = FixedLengthList<Type>(numElements, memory, Flags::Buffer(true, false, true));
+  FixedLengthList<Type> out = FixedLengthList<Type>(numElements, raw.Pointer(0,0), allocatedBufferLength, Flags::Buffer(true, false, true));
 
   AnkiConditionalErrorAndReturnValue(AreValid(raw, out),
     FixedLengthList<Type>(), "LoadIntoList_permanentBuffer", "Could not allocate");
 
-  memcpy(out.Pointer(0), raw.Pointer(0,0), numElements*sizeof(Type));
+  //memcpy(out.Pointer(0), raw.Pointer(0,0), numElements*sizeof(Type));
 
   /*Type * restrict pOut = out.Pointer(0);
   const Type * restrict pRaw = raw.Pointer(0,0);
@@ -145,8 +145,16 @@ int main(int argc, const char* argv[])
   const s32 maxThreads = atol(argv[7]);
   const char * outFilenamePrefix = argv[8];
 
-  const s32 memorySize = 1000000000;
-  const s32 scratchSize = 50000000;
+#ifdef _MSC_VER
+  // 32-bit
+  const s32 memorySize = s32(1e8);
+  const s32 scratchSize = s32(1e8) / 2;
+#else
+  // 64-bit
+  const s32 memorySize = s32(1e9);
+  const s32 scratchSize = s32(1e9);
+#endif
+
   MemoryStack memory(malloc(memorySize), memorySize);
 
   AnkiConditionalErrorAndReturnValue(
@@ -162,6 +170,8 @@ int main(int argc, const char* argv[])
   AnkiConditionalErrorAndReturnValue(AreValid(featureValues),
     -5, "run_trainDecisionTree", "Invalid input");
 
+  std::vector<void*> bufferPointers;
+
   // Load all inputs
   {
     MemoryStack scratch1(malloc(scratchSize), scratchSize);
@@ -173,18 +183,51 @@ int main(int argc, const char* argv[])
 
     CoreTechPrint("Loading Inputs...\n");
 
+    // Load this first, just to figure out the right buffer size
+    s32 numImages;
+    {
+#ifdef _MSC_VER
+      // 32-bit
+      const s32 tmpBigBufferLength = s32(1e8);
+
+#else
+      // 64-bit
+      const s32 tmpBigBufferLength = s32(1e9);
+#endif
+
+      void * tmpBigBuffer = calloc(tmpBigBufferLength + 2*MEMORY_ALIGNMENT, 1);
+
+      AnkiAssert(tmpBigBuffer);
+
+      labels = LoadIntoList_temporaryBuffer<s32>(inFilenamePrefix, "labels.array", scratch1, scratch2, tmpBigBuffer, tmpBigBufferLength);
+      numImages = labels.get_size();
+      free(tmpBigBuffer);
+    }
+
+    AnkiAssert(numImages > 0);
+    //AnkiAssert((numImages * numFeatures) < 1e10);
+
     featuresUsed = LoadIntoList_grayvalueBool(inFilenamePrefix, "featuresUsed.array", scratch1, scratch2);
+
     labelNames = LoadIntoList_permanentBuffer<const char *>(inFilenamePrefix, "labelNames.array", scratch1, memory);
-    labels = LoadIntoList_temporaryBuffer<s32>(inFilenamePrefix, "labels.array", scratch1, scratch2, memory);
-    u8ThresholdsToUse = LoadIntoList_temporaryBuffer<u8>(inFilenamePrefix, "u8ThresholdsToUse.array", scratch1, scratch2, memory);
+
+    const s32 labelsBufferSize = numImages*sizeof(s32) + s32(1e4) + 2*MEMORY_ALIGNMENT;
+    bufferPointers.push_back(calloc(labelsBufferSize, 1));
+    labels = LoadIntoList_temporaryBuffer<s32>(inFilenamePrefix, "labels.array", scratch1, scratch2, bufferPointers[bufferPointers.size()-1], labelsBufferSize);
+
+    const s32 u8ThresholdsToUseBufferSize = s32(1e6);
+    bufferPointers.push_back(calloc(u8ThresholdsToUseBufferSize, 1));
+    u8ThresholdsToUse = LoadIntoList_temporaryBuffer<u8>(inFilenamePrefix, "u8ThresholdsToUse.array", scratch1, scratch2, bufferPointers[bufferPointers.size()-1], u8ThresholdsToUseBufferSize);
 
     f64 t0 = GetTimeF64();
-
+    const s32 featureValuesBufferSize = numImages + s32(1e4) + 2*MEMORY_ALIGNMENT;
     for(s32 iFeature=0; iFeature<numFeatures; iFeature++) {
+      bufferPointers.push_back(calloc(featureValuesBufferSize, 1));
+
       const s32 filenameBufferLength = 1024;
       char filenameBuffer[filenameBufferLength];
       snprintf(filenameBuffer, filenameBufferLength, "featureValues%d.array", iFeature);
-      featureValues[iFeature] = LoadIntoList_temporaryBuffer<u8>(inFilenamePrefix, filenameBuffer, scratch1, scratch2, memory);
+      featureValues[iFeature] = LoadIntoList_temporaryBuffer<u8>(inFilenamePrefix, filenameBuffer, scratch1, scratch2, bufferPointers[bufferPointers.size()-1], featureValuesBufferSize);
 
       if(iFeature > 0 && iFeature % 50 == 0) {
         f64 t1 = GetTimeF64();
@@ -234,6 +277,10 @@ int main(int argc, const char* argv[])
   // result could fail, but let's try to save anyway
   if(result != RESULT_OK) {
     CoreTechPrint("BuildTree failed, but trying to save anyway...\n");
+  }
+
+  for(u32 i=0; i<bufferPointers.size(); i++) {
+    free(bufferPointers[i]);
   }
 
   // Save the output

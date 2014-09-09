@@ -21,8 +21,6 @@ template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const
 template<typename Type> Result AllocateAndSaveCell(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch);
 template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch);
 
-const s32 bufferSize = 50000000;
-
 template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch)
 {
   AnkiAssert(!mxIsCell(matlabArray));
@@ -150,6 +148,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   if(nrhs >= 4) {
     numThreads = MAX(1, MIN(64, saturate_cast<s32>(mxGetScalar(prhs[3]))));
   }
+
+#ifdef _MSC_VER
+  // 32-bit
+  const s32 bufferSize = 400000000 / numThreads;
+#else
+  // 64-bit
+  const s32 bufferSize = 4000000000 / numThreads;
+#endif
 
   //
   // Note: This multithreading is a bit wierd, because Matlab doesn't like threads allocating their own memory. It could be improved.

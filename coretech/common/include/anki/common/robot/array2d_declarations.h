@@ -81,6 +81,7 @@ namespace Anki
       // Load or save an array saved as a debugStream.
       // compressionLevel can be from 0 (uncompressed) to 9 (most compressed). If OpenCV is not used, it must be zero.
       static Array<Type> LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory);
+      static Array<Type> LoadBinary(const char * filename, void * allocatedBuffer, const s32 allocatedBufferLength); //< allocatedBuffer must be allocated and freed manually
       Result SaveBinary(const char * filename, const s32 compressionLevel, MemoryStack scratch) const;
 
       // Pointer to the data, at a given (y,x) location
