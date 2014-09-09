@@ -393,7 +393,6 @@ namespace Anki {
       
       ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
-      const Vision::KnownMarker*  _dockMarker2; // for bridges
       DockAction_t                _dockAction;
 
     }; // class IDockAction
@@ -459,6 +458,8 @@ namespace Anki {
       virtual Result DockWithObjectHelper(Robot& robot,
                                           const std::vector<PreActionPose>& preActionPoses,
                                           const size_t closestIndex) override;
+      
+      const Vision::KnownMarker*  _dockMarker2;
       
     }; // class CrossBridgeAction
     

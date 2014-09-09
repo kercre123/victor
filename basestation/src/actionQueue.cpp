@@ -849,7 +849,6 @@ namespace Anki {
     IDockAction::IDockAction(ObjectID objectID)
     : _dockObjectID(objectID)
     , _dockMarker(nullptr)
-    , _dockMarker2(nullptr)
     {
       
     }
@@ -953,7 +952,6 @@ namespace Anki {
                                              const size_t closestIndex)
     {
       _dockMarker  = preActionPoses[closestIndex].GetMarker();
-      _dockMarker2 = nullptr;
       
       PRINT_NAMED_INFO("IDockAction.DockWithObjectHelper.BeginDocking",
                        "Docking with marker %d (%s) using action %d.\n",
@@ -961,7 +959,7 @@ namespace Anki {
                        Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
 
       
-      return robot.SendDockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
+      return robot.SendDockWithObject(_dockObjectID, _dockMarker, nullptr, _dockAction);
     }
     
     
@@ -1157,6 +1155,7 @@ namespace Anki {
     
     CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID)
     : IDockAction(bridgeID)
+    , _dockMarker2(nullptr)
     {
       
     }
