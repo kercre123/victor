@@ -161,23 +161,13 @@ namespace Anki {
     class ActionList
     {
     public:
-      using ActionID = u32;
-      using ActionCompletionCallback = std::function<void(IActionRunner::ActionResult)>;
-      
+
       ActionList();
       ~ActionList();
       
       Result   Update(Robot& robot);
       
-      ActionID AddAction(IActionRunner* action, u8 numRetries = 0);
-
-      // TODO: Should action removal be allowed? What if it's in progress?
-      //Result   RemoveAction(ActionID ID);
-      
-      // TODO: Do we want to support callbacks on completion? Just use sequential grouping instead?
-      // TODO: If we use completion callbacks, maybe they should be part of IActionRunner
-      Result   RegisterCompletionCallback(ActionID actionID,
-                                          ActionCompletionCallback callback);
+      Result   AddAction(IActionRunner* action, u8 numRetries = 0);
       
       bool     IsEmpty() const;
       
@@ -186,20 +176,8 @@ namespace Anki {
       void     Print() const;
       
     protected:
-      struct ActionListMember {
-        IActionRunner *action;
-        std::list<ActionCompletionCallback> completionCallbacks;
-        
-        ~ActionListMember() {
-          if(action != nullptr) {
-            delete action;
-          }
-        }
-      };
       
-      ActionID _IDcounter;
-      
-      std::map<u32, ActionListMember> _actionList;
+      std::list<IActionRunner*> _actionList;
       
     }; // class ActionList
     
@@ -380,15 +358,14 @@ namespace Anki {
       
       // This helper can be optionally overridden by a derived class to check
       // if the object to be docked with is available. This is called by
-      // CheckPreconditions(). If it is false, FAILURE_RETRY is returned.
+      // Init(). If it is false, FAILURE_RETRY is returned by Init().
       virtual bool IsObjectAvailable(ActionableObject* object) const { return true; }
       
-      // Pure virtual methods that must be implemented by derived classes
+      // Pure virtual methods that must be implemented by derived classes in
+      // order to define the parameters of docking and how to verify success.
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) = 0;
       virtual PreActionPose::ActionType GetPreActionType() = 0;
       virtual IAction::ActionResult Verify(Robot& robot) const = 0;
-      
-      const ObjectID& GetDockObjectID() const { return _dockObjectID; }
       
       ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;

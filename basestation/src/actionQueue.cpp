@@ -173,7 +173,6 @@ namespace Anki {
 #pragma mark ---- ActionList ----
     
     ActionList::ActionList()
-    : _IDcounter(0)
     {
       
     }
@@ -199,8 +198,8 @@ namespace Anki {
         PRINT_INFO("ActionList is empty.\n");
       } else {
         PRINT_INFO("ActionList contents: ");
-        for(auto const& actionMemberPair : _actionList) {
-          PRINT_INFO("%s, ", actionMemberPair.second.action->GetName().c_str());
+        for(auto action : _actionList) {
+          PRINT_INFO("%s, ", action->GetName().c_str());
         }
         PRINT_INFO("\b\b\n");
       }
@@ -211,41 +210,36 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      for(auto & actionMemberPair : _actionList) {
-        ActionListMember& actionMember = actionMemberPair.second;
-        assert(actionMember.action != nullptr);
-        const IActionRunner::ActionResult actionResult = actionMember.action->Update(robot);
-        
-        // If this action just finished...
+      for(auto actionIter = _actionList.begin(); actionIter != _actionList.end(); )
+      {
+        IActionRunner* action = *actionIter;
+      
+        assert(action != nullptr);
+        const IActionRunner::ActionResult actionResult = action->Update(robot);
+      
+        // If this action just finished remove it from the list
         if(actionResult != IActionRunner::RUNNING) {
-          // ...execute any callbacks registered with it
-          for(auto & callback : actionMember.completionCallbacks) {
-            callback(actionResult);
-          }
-          
-          // ...remove it from the list
-          _actionList.erase(actionMemberPair.first);
-          
-        } // if action no longer running
+          actionIter = _actionList.erase(actionIter);
+        } else {
+          ++actionIter;
+        }
       } // for each actionMemberPair
       
       return lastResult;
     } // Update()
     
     
-    ActionList::ActionID ActionList::AddAction(IActionRunner* action, u8 numRetries)
+    Result ActionList::AddAction(IActionRunner* action, u8 numRetries)
     {
       if(action == nullptr) {
         PRINT_NAMED_WARNING("ActionList.AddAction.NullActionPointer", "Refusing to add null action.\n");
-        return 0;
+        return RESULT_FAIL;
       }
       
-      ++_IDcounter;
+      _actionList.push_back(action);
+      _actionList.back()->SetNumRetries(numRetries);
       
-      _actionList[_IDcounter].action = action;
-      action->SetNumRetries(numRetries);
-      
-      return _IDcounter;
+      return RESULT_OK;
     }
     
     /*
@@ -259,7 +253,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
     }
-     */
+     
     
     Result ActionList::RegisterCompletionCallback(ActionID actionID,
                                         ActionCompletionCallback callback)
@@ -272,6 +266,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
     }
+     */
 
     
 #pragma mark ---- ActionQueue ----
@@ -1251,7 +1246,7 @@ namespace Anki {
       }
     
       // Tell robot which ramp it will be using
-      robot.SetRamp(GetDockObjectID());
+      robot.SetRamp(_dockObjectID);
       
       // Tell ramp that it is occupied and in what traversal direction
       ramp->SetStatus(direction);
