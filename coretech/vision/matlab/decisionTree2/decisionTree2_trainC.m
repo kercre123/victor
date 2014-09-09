@@ -44,8 +44,8 @@ function [tree, minimalTree, cTree, trainingFailures, testOnTrain_numCorrect, te
         cOutFilenamePrefix = strrep(cOutFilenamePrefix, 'c:', tildeToPath());
         
         if ~isempty(strfind(cTrainingExecutable, 'C:/Anki/products-cozmo'))
-            % cTrainingExecutable = [tildeToPath(), '/Documents/Anki/products-cozmo/build/Xcode/bin/Debug/run_trainDecisionTree'];
-            cTrainingExecutable = [tildeToPath(), '/Documents/Anki/products-cozmo/build/Xcode/bin/Release/run_trainDecisionTree'];
+            cTrainingExecutable = [tildeToPath(), '/Documents/Anki/products-cozmo/build/Xcode/bin/Debug/run_trainDecisionTree'];
+%             cTrainingExecutable = [tildeToPath(), '/Documents/Anki/products-cozmo/build/Xcode/bin/Release/run_trainDecisionTree'];
         end
     end
     
@@ -153,6 +153,8 @@ function [tree, cTree] = decisionTree2_runCVersion(cTrainingExecutable, cInFilen
     
     if result ~= 0
         tree = [];
+        cTree = [];
+        keyboard
         return;
     end
     

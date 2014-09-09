@@ -170,10 +170,10 @@ namespace Anki
       bool useMalloc;
       if(!scratch) {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-        AnkiAssert(!memory && allocatedBufferLength > 0);
+        AnkiAssert(!memory && allocatedBuffer && allocatedBufferLength > 0);
         useMalloc = true;
 #else
-        AnkiError("Array<Type>::LoadBinaryArray_Generic", "Using malloc OpenCV");
+        AnkiError("Array<Type>::LoadBinaryArray_Generic", "Using malloc requires OpenCV");
         return newArray;
 #endif
       } else {
@@ -285,13 +285,7 @@ namespace Anki
       char arrayName[128];
       if(useMalloc) {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-        //const s32 allocatedBufferLength = 0x3FFFFFFF;
-        //*allocatedBuffer = calloc(allocatedBufferLength + 2*MEMORY_ALIGNMENT, 1);
-
-        // Align tmpBuffer to MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH
-        void *allocatedBufferAligned = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(allocatedBuffer), MEMORY_ALIGNMENT) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH );
-
-        MemoryStack memory(allocatedBufferAligned, allocatedBufferLength);
+        MemoryStack memory(allocatedBuffer, allocatedBufferLength);
         newArray = SerializedBuffer::DeserializeRawArray<Type>(&arrayName[0], &nextItem, dataLength, memory);
 #endif
       } else {

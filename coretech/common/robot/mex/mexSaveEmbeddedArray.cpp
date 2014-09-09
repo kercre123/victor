@@ -17,35 +17,35 @@
 using namespace Anki;
 using namespace Anki::Embedded;
 
-template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch);
-template<typename Type> Result AllocateAndSaveCell(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch);
-template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch);
+template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch1, MemoryStack scratch2);
+template<typename Type> Result AllocateAndSaveCell(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch1, MemoryStack scratch2);
+template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch1, MemoryStack scratch2);
 
-template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch)
+template<typename Type> Result AllocateAndSave(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch1, MemoryStack scratch2)
 {
   AnkiAssert(!mxIsCell(matlabArray));
 
-  Array<Type> ankiArray = mxArrayToArray<Type>(matlabArray, scratch);
+  Array<Type> ankiArray = mxArrayToArray<Type>(matlabArray, scratch1);
 
   if(!ankiArray.IsValid())
     return RESULT_FAIL;
 
-  return ankiArray.SaveBinary(filename, compressionLevel, scratch);
+  return ankiArray.SaveBinary(filename, compressionLevel, scratch2);
 }
 
-template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch)
+template<> Result AllocateAndSaveCell<char*>(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch1, MemoryStack scratch2)
 {
   AnkiAssert(mxIsCell(matlabArray));
 
-  Array<char *> ankiArray = mxCellArrayToStringArray(matlabArray, scratch);
+  Array<char *> ankiArray = mxCellArrayToStringArray(matlabArray, scratch1);
 
   if(!ankiArray.IsValid())
     return RESULT_FAIL;
 
-  return ankiArray.SaveBinary(filename, compressionLevel, scratch);
+  return ankiArray.SaveBinary(filename, compressionLevel, scratch2);
 }
 
-Result Save(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch)
+Result Save(const mxArray *matlabArray, const char *filename, const s32 compressionLevel, MemoryStack scratch1, MemoryStack scratch2)
 {
   const mxClassID matlabClassId = mxGetClassID(matlabArray);
 
@@ -53,52 +53,52 @@ Result Save(const mxArray *matlabArray, const char *filename, const s32 compress
     const mxArray * firstElement = mxGetCell(matlabArray, 0);
     const mxClassID matlabCellClassId = mxGetClassID(firstElement);
     //if(matlabCellClassId == mxDOUBLE_CLASS) {
-    //  return AllocateAndSaveCell<f64>(matlabArray, filename, scratch);
+    //  return AllocateAndSaveCell<f64>(matlabArray, filename, scratch1, scratch2);
     //} else if(matlabCellClassId == mxSINGLE_CLASS) {
-    //  return AllocateAndSaveCell<f32>(matlabArray, filename, scratch);
+    //  return AllocateAndSaveCell<f32>(matlabArray, filename, scratch1, scratch2);
     //} else if(matlabCellClassId == mxINT8_CLASS) {
-    //  return AllocateAndSaveCell<s8>(matlabArray, filename, scratch);
+    //  return AllocateAndSaveCell<s8>(matlabArray, filename, scratch1, scratch2);
     //} else if(matlabCellClassId == mxUINT8_CLASS) {
-    //  return AllocateAndSaveCell<u8>(matlabArray, filename, scratch);
+    //  return AllocateAndSaveCell<u8>(matlabArray, filename, scratch1, scratch2);
     //} else if(matlabCellClassId == mxINT16_CLASS) {
-    //  return AllocateAndSaveCell<s16>(matlabArray, filename, scratch);
+    //  return AllocateAndSaveCell<s16>(matlabArray, filename, scratch1, scratch2);
     //} else if(matlabCellClassId == mxUINT16_CLASS) {
-    //  return AllocateAndSaveCell<u16>(matlabArray, filename, scratch);
+    //  return AllocateAndSaveCell<u16>(matlabArray, filename, scratch1, scratch2);
     //} else if(matlabCellClassId == mxINT32_CLASS) {
-    //  return AllocateAndSaveCell<s32>(matlabArray, filename, scratch);
+    //  return AllocateAndSaveCell<s32>(matlabArray, filename, scratch1, scratch2);
     //} else if(matlabCellClassId == mxUINT32_CLASS) {
-    //  return AllocateAndSaveCell<u32>(matlabArray, filename, scratch);
+    //  return AllocateAndSaveCell<u32>(matlabArray, filename, scratch1, scratch2);
     //} else if(matlabCellClassId == mxINT64_CLASS) {
-    //  return AllocateAndSaveCell<s64>(matlabArray, filename, scratch);
+    //  return AllocateAndSaveCell<s64>(matlabArray, filename, scratch1, scratch2);
     //} else if(matlabCellClassId == mxUINT64_CLASS) {
-    //  return AllocateAndSaveCell<u64>(matlabArray, filename, scratch);
+    //  return AllocateAndSaveCell<u64>(matlabArray, filename, scratch1, scratch2);
     //} else
     if(matlabCellClassId == mxCHAR_CLASS) {
-      return AllocateAndSaveCell<char *>(matlabArray, filename, compressionLevel, scratch);
+      return AllocateAndSaveCell<char *>(matlabArray, filename, compressionLevel, scratch1, scratch2);
     } else {
       AnkiAssert(false);
     }
   } else { // if(mxIsCell(matlabArray))
     if(matlabClassId == mxDOUBLE_CLASS) {
-      return AllocateAndSave<f64>(matlabArray, filename, compressionLevel, scratch);
+      return AllocateAndSave<f64>(matlabArray, filename, compressionLevel, scratch1, scratch2);
     } else if(matlabClassId == mxSINGLE_CLASS) {
-      return AllocateAndSave<f32>(matlabArray, filename, compressionLevel, scratch);
+      return AllocateAndSave<f32>(matlabArray, filename, compressionLevel, scratch1, scratch2);
     } else if(matlabClassId == mxINT8_CLASS) {
-      return AllocateAndSave<s8>(matlabArray, filename, compressionLevel, scratch);
+      return AllocateAndSave<s8>(matlabArray, filename, compressionLevel, scratch1, scratch2);
     } else if(matlabClassId == mxUINT8_CLASS) {
-      return AllocateAndSave<u8>(matlabArray, filename, compressionLevel, scratch);
+      return AllocateAndSave<u8>(matlabArray, filename, compressionLevel, scratch1, scratch2);
     } else if(matlabClassId == mxINT16_CLASS) {
-      return AllocateAndSave<s16>(matlabArray, filename, compressionLevel, scratch);
+      return AllocateAndSave<s16>(matlabArray, filename, compressionLevel, scratch1, scratch2);
     } else if(matlabClassId == mxUINT16_CLASS) {
-      return AllocateAndSave<u16>(matlabArray, filename, compressionLevel, scratch);
+      return AllocateAndSave<u16>(matlabArray, filename, compressionLevel, scratch1, scratch2);
     } else if(matlabClassId == mxINT32_CLASS) {
-      return AllocateAndSave<s32>(matlabArray, filename, compressionLevel, scratch);
+      return AllocateAndSave<s32>(matlabArray, filename, compressionLevel, scratch1, scratch2);
     } else if(matlabClassId == mxUINT32_CLASS) {
-      return AllocateAndSave<u32>(matlabArray, filename, compressionLevel, scratch);
+      return AllocateAndSave<u32>(matlabArray, filename, compressionLevel, scratch1, scratch2);
     } else if(matlabClassId == mxINT64_CLASS) {
-      return AllocateAndSave<s64>(matlabArray, filename, compressionLevel, scratch);
+      return AllocateAndSave<s64>(matlabArray, filename, compressionLevel, scratch1, scratch2);
     } else if(matlabClassId == mxUINT64_CLASS) {
-      return AllocateAndSave<u64>(matlabArray, filename, compressionLevel, scratch);
+      return AllocateAndSave<u64>(matlabArray, filename, compressionLevel, scratch1, scratch2);
     } else {
       AnkiAssert(false);
     }
@@ -112,14 +112,16 @@ typedef struct SaveThreadParams
   const mxArray * matlabArray;
   const char * filename;
   const s32 compressionLevel;
-  MemoryStack scratch;
+  MemoryStack scratch1;
+  MemoryStack scratch2;
 
   SaveThreadParams(
     const mxArray * matlabArray,
     const char * filename,
     const s32 compressionLevel,
-    MemoryStack scratch)
-    : matlabArray(matlabArray), filename(filename), compressionLevel(compressionLevel), scratch(scratch)
+    MemoryStack scratch1,
+    MemoryStack scratch2)
+    : matlabArray(matlabArray), filename(filename), compressionLevel(compressionLevel), scratch1(scratch1), scratch2(scratch2)
   {
   }
 } SaveThreadParams;
@@ -128,7 +130,7 @@ ThreadResult SaveThread(void * voidSaveThreadParams)
 {
   SaveThreadParams * restrict saveThreadParams = reinterpret_cast<SaveThreadParams*>(voidSaveThreadParams);
 
-  Save(saveThreadParams->matlabArray, saveThreadParams->filename, saveThreadParams->compressionLevel, saveThreadParams->scratch);
+  Save(saveThreadParams->matlabArray, saveThreadParams->filename, saveThreadParams->compressionLevel, saveThreadParams->scratch1, saveThreadParams->scratch2);
 
   return 0;
 }
@@ -154,7 +156,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 bufferSize = 400000000 / numThreads;
 #else
   // 64-bit
-  const s32 bufferSize = 4000000000 / numThreads;
+  
+  s32 bufferSize;
+  if(numThreads > 2) {
+    bufferSize = MIN(0x3fffffff, 2000000000 / numThreads);
+  } else {
+    bufferSize = 0x3fffffff;
+  }
 #endif
 
   //
@@ -172,11 +180,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     SaveThreadParams ** threadParams = reinterpret_cast<SaveThreadParams**>( mxMalloc(numThreads*sizeof(SaveThreadParams*)) );
     ThreadHandle * threadHandles = reinterpret_cast<ThreadHandle*>( mxMalloc(numThreads*sizeof(ThreadHandle)) );
-    MemoryStack * memorys = reinterpret_cast<MemoryStack*>( mxMalloc(numThreads*sizeof(MemoryStack)) );
+    MemoryStack * scratch1s = reinterpret_cast<MemoryStack*>( mxMalloc(numThreads*sizeof(MemoryStack)) );
+    MemoryStack * scratch2s = reinterpret_cast<MemoryStack*>( mxMalloc(numThreads*sizeof(MemoryStack)) );
 
     for(s32 iThread=0; iThread<numThreads; iThread++) {
-      memorys[iThread] = MemoryStack(mxMalloc(bufferSize), bufferSize);
-      AnkiConditionalErrorAndReturn(memorys[iThread].IsValid(), "mexSaveEmbeddedArray", "Memory could not be allocated");
+      scratch1s[iThread] = MemoryStack(mxMalloc(bufferSize), bufferSize);
+      scratch2s[iThread] = MemoryStack(mxMalloc(bufferSize), bufferSize);
+      AnkiConditionalErrorAndReturn(scratch1s[iThread].IsValid() && scratch2s[iThread].IsValid(), "mexSaveEmbeddedArray", "Memory could not be allocated");
     }
 
     for(s32 iFile=0; iFile<numFilenames; iFile+=numThreads) {
@@ -197,8 +207,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
           curMatlabArray,
           filenames[0][index],
           compressionLevel,
-          memorys[iThread]);
-
+          scratch1s[iThread],
+          scratch2s[iThread]);
+        
         threadHandles[iThread] = CreateSimpleThread(SaveThread, threadParams[iThread]);
       }
 
@@ -215,24 +226,28 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
 
     for(s32 iThread=0; iThread<numThreads; iThread++) {
-      mxFree(memorys[iThread].get_buffer());
+      mxFree(scratch1s[iThread].get_buffer());
+      mxFree(scratch2s[iThread].get_buffer());
     }
 
     mxFree(memory.get_buffer());
     mxFree(threadParams);
     mxFree(threadHandles);
-    mxFree(memorys);
+    mxFree(scratch1s);
+    mxFree(scratch2s);
   } else {
     AnkiConditionalErrorAndReturn(!mxIsCell(prhs[1]), "mexSaveEmbeddedArray", "If one input is a cell, both must be");
 
-    MemoryStack memory(mxMalloc(bufferSize), bufferSize);
-    AnkiConditionalErrorAndReturn(memory.IsValid(), "mexSaveEmbeddedArray", "Memory could not be allocated");
+    MemoryStack memory1(mxMalloc(bufferSize), bufferSize);
+    MemoryStack memory2(mxMalloc(bufferSize), bufferSize);
+    AnkiConditionalErrorAndReturn(memory1.IsValid() && memory2.IsValid(), "mexSaveEmbeddedArray", "Memory could not be allocated");
 
     char* filename = mxArrayToString(prhs[1]);
 
-    Save(prhs[0], filename, compressionLevel, memory);
+    Save(prhs[0], filename, compressionLevel, memory1, memory2);
 
     mxFree(filename);
-    mxFree(memory.get_buffer());
+    mxFree(memory1.get_buffer());
+    mxFree(memory2.get_buffer());
   }
 } // mexFunction()

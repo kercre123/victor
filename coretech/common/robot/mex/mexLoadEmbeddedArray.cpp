@@ -198,7 +198,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 bufferSize = 200000000;
 #else
   // 64-bit
-  const s32 bufferSize = 4000000000 / numThreads;
+  const s32 bufferSize = 0x3fffffff;
 #endif
 
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
