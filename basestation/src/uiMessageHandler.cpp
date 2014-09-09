@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "behaviorManager.h"
 #include "uiMessageHandler.h"
 #include "vizManager.h"

@@ -23,6 +23,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/tcpComms.h"
 #include "anki/cozmo/basestation/uiTcpComms.h"
 #include "anki/cozmo/basestation/utils/exceptions.h"

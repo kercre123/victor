@@ -1,0 +1,71 @@
+//
+//  robotManager.cpp
+//  Products_Cozmo
+//
+//  Created by Andrew Stein on 8/23/13.
+//  Copyright (c) 2013 Anki, Inc. All rights reserved.
+//
+
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
+
+#include "messageHandler.h"
+
+namespace Anki {
+  namespace Cozmo {
+    
+    RobotManager::RobotManager()
+    {
+      
+    }
+    
+    Result RobotManager::Init(IMessageHandler* msgHandler)
+    {
+      _msgHandler  = msgHandler;
+      //_pathPlanner = pathPlanner;
+      
+      return RESULT_OK;
+    }
+    
+    void RobotManager::AddRobot(const RobotID_t withID)
+    {
+      _robots[withID] = new Robot(withID, _msgHandler);
+      _IDs.push_back(withID);
+    }
+    
+    std::vector<RobotID_t> const& RobotManager::GetRobotIDList() const
+    {
+      return _IDs;
+    }
+    
+    // Get a pointer to a robot by ID
+    Robot* RobotManager::GetRobotByID(const RobotID_t robotID)
+    {
+      if (_robots.find(robotID) != _robots.end()) {
+        return _robots[robotID];
+      }
+      
+      return nullptr;
+    }
+    
+    size_t RobotManager::GetNumRobots() const
+    {
+      return _robots.size();
+    }
+    
+    bool RobotManager::DoesRobotExist(const RobotID_t withID) const
+    {
+      return _robots.count(withID) > 0;
+    }
+
+    
+    void RobotManager::UpdateAllRobots()
+    {
+      for (auto &r : _robots) {
+        // Call update
+        r.second->Update();
+      }
+    }
+    
+  } // namespace Cozmo
+} // namespace Anki

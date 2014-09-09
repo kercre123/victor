@@ -42,66 +42,6 @@
 namespace Anki {
   namespace Cozmo {
     
-#pragma mark --- RobotManager Class Implementations ---
-
-   
-    RobotManager::RobotManager()
-    {
-      
-    }
-    
-    Result RobotManager::Init(IMessageHandler* msgHandler)
-    {
-      _msgHandler  = msgHandler;
-      //_pathPlanner = pathPlanner;
-      
-      return RESULT_OK;
-    }
-    
-    void RobotManager::AddRobot(const RobotID_t withID)
-    {
-      _robots[withID] = new Robot(withID, _msgHandler);
-      _IDs.push_back(withID);
-    }
-    
-    std::vector<RobotID_t> const& RobotManager::GetRobotIDList() const
-    {
-      return _IDs;
-    }
-    
-    // Get a pointer to a robot by ID
-    Robot* RobotManager::GetRobotByID(const RobotID_t robotID)
-    {
-      if (_robots.find(robotID) != _robots.end()) {
-        return _robots[robotID];
-      }
-      
-      return nullptr;
-    }
-    
-    size_t RobotManager::GetNumRobots() const
-    {
-      return _robots.size();
-    }
-    
-    bool RobotManager::DoesRobotExist(const RobotID_t withID) const
-    {
-      return _robots.count(withID) > 0;
-    }
-
-    
-    void RobotManager::UpdateAllRobots()
-    {
-      for (auto &r : _robots) {
-        // Call update
-        r.second->Update();
-      }
-    }
-    
-    
-#pragma mark --- Robot Class Implementations ---
-    
-    
     Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler)
     : _ID(robotID)
     , _msgHandler(msgHandler)

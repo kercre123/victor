@@ -7,13 +7,13 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/platformPathManager.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/robot/matlabInterface.h"
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
-
-#include "anki/common/robot/matlabInterface.h"
+#include "anki/cozmo/basestation/robotManager.h"
 
 #include "ramp.h"
 
