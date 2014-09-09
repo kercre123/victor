@@ -370,15 +370,14 @@ namespace Anki {
       u16              _lastSentPathID;
       u16              _lastRecvdPathID;
       bool             _wasTraversingPath;
-
+      PathDolerOuter*  _pdo;
+      
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
       
       // This functions sets _selectedPathPlanner to the appropriate
       // planner
       void SelectPlanner(const Pose3d& targetPose);
-
-      PathDolerOuter* pdo_;
       
       // if true and we are traversing a path, then next time the
       // block world changes, re-plan from scratch
@@ -391,8 +390,8 @@ namespace Anki {
       Vision::Camera            _camera;
       
       // Proximity sensors
-      u8   _proxVals[NUM_PROX];
-      bool _proxBlocked[NUM_PROX];
+      u8               _proxVals[NUM_PROX];
+      bool             _proxBlocked[NUM_PROX];
       
       // Geometry / Pose
       std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
@@ -404,22 +403,26 @@ namespace Anki {
       
       Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
       
-      const Pose3d _neckPose;     // joint around which head rotates
-      const Pose3d _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
-      const Pose3d _liftBasePose; // around which the base rotates/lifts
-      Pose3d       _liftPose;     // current, w.r.t. liftBasePose
+      const Pose3d     _neckPose;     // joint around which head rotates
+      const Pose3d     _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
+      const Pose3d     _liftBasePose; // around which the base rotates/lifts
+      Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 
-      f32 _currentHeadAngle;
-      f32 _currentLiftAngle;
+      f32              _currentHeadAngle;
+      f32              _currentLiftAngle;
       
       static const Quad2f CanonicalBoundingBoxXY;
       
       // Ramping
-      bool                        _onRamp;
-      ObjectID                    _rampID;
-      Point2f                     _rampStartPosition;
-      f32                         _rampStartHeight;
+      bool             _onRamp;
+      ObjectID         _rampID;
+      Point2f          _rampStartPosition;
+      f32              _rampStartHeight;
       
+      // State
+      bool             _isPickingOrPlacing;
+      bool             _isPickedUp;
+      bool             _isMoving;
       
       // Pose history
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
@@ -433,31 +436,22 @@ namespace Anki {
       
       RobotPoseHistory _poseHistory;
 
-      // State
-      bool       _isPickingOrPlacing;
-      bool       _isPickedUp;
-      bool       _isMoving;
-      
-      ObjectID                   _carryingObjectID;
-      const Vision::KnownMarker* _carryingMarker;
+
       
       // Leaves input liftPose's parent alone and computes its position w.r.t.
       // liftBasePose, given the angle
       static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
       
-      // Docking
-      /*
+      // Docking / Carrying
       // Note that we don't store a pointer to the object because it
       // could deleted, but it is ok to hang onto a pointer to the
       // marker on that block, so long as we always verify the object
       // exists and is still valid (since, therefore, the marker must
       // be as well)
-      const Vision::KnownMarker*  _dockMarker;
-      const Vision::KnownMarker*  _dockMarker2;
-      DockAction_t                _dockAction;
-       */
       ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
+      ObjectID                    _carryingObjectID;
+      const Vision::KnownMarker*  _carryingMarker;
       
       // Plan a path to the pre-ascent/descent pose (depending on current
       // height of the robot) and then go up or down the ramp.
@@ -480,10 +474,10 @@ namespace Anki {
       
       ///////// Modifiers ////////
       
-      void SetCurrPathSegment(const s8 s) {_currPathSegment = s;}
+      void SetCurrPathSegment(const s8 s)     {_currPathSegment = s;}
       void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
-      void SetLastRecvdPathID(u16 path_id) {_lastRecvdPathID = path_id;}
-      void SetPickingOrPlacing(bool t) {_isPickingOrPlacing = t;}
+      void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
+      void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
       void SetPickedUp(bool t);
       void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
 
@@ -530,6 +524,7 @@ namespace Anki {
       
     }; // class Robot
 
+    
     //
     // Inline accessors:
     //

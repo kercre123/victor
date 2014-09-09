@@ -92,7 +92,7 @@ namespace Anki {
       jsonFile.close();
       
       SetHeadAngle(_currentHeadAngle);
-      pdo_ = new PathDolerOuter(msgHandler, robotID);
+      _pdo = new PathDolerOuter(msgHandler, robotID);
       _longPathPlanner  = new LatticePlanner(&_blockWorld, mprims);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
@@ -103,8 +103,8 @@ namespace Anki {
 
     Robot::~Robot()
     {
-      delete pdo_;
-      pdo_ = nullptr;
+      delete _pdo;
+      _pdo = nullptr;
 
       delete _longPathPlanner;
       _longPathPlanner = nullptr;
@@ -595,7 +595,7 @@ namespace Anki {
         } // if blocks changed
         
         if (GetLastRecvdPathID() == GetLastSentPathID()) {
-          pdo_->Update(_currPathSegment, _numFreeSegmentSlots);
+          _pdo->Update(_currPathSegment, _numFreeSegmentSlots);
         }
         
       } // if IsTraversingPath()
@@ -1113,7 +1113,7 @@ namespace Anki {
     Result Robot::ClearPath()
     {
       VizManager::getInstance()->ErasePath(_ID);
-      pdo_->ClearPath();
+      _pdo->ClearPath();
       return SendClearPath();
     }
     
@@ -1131,7 +1131,7 @@ namespace Anki {
         lastResult = ClearPath();
         if(lastResult == RESULT_OK) {
           ++_lastSentPathID;
-          pdo_->SetPath(path);
+          _pdo->SetPath(path);
           lastResult = SendExecutePath(path);
         }
       }
