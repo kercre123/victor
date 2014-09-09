@@ -795,7 +795,7 @@ namespace Anki
           u8MinDistanceForSplits,
           u8MinDistanceFromThreshold,
           u8ThresholdsToUse,
-          maxThreads,
+          1,
           pNumLTs[iThread],
           pNumGEs[iThread],
           maxLabel,

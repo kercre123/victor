@@ -229,7 +229,7 @@ int main(int argc, const char* argv[])
       snprintf(filenameBuffer, filenameBufferLength, "featureValues%d.array", iFeature);
       featureValues[iFeature] = LoadIntoList_temporaryBuffer<u8>(inFilenamePrefix, filenameBuffer, scratch1, scratch2, bufferPointers[bufferPointers.size()-1], featureValuesBufferSize);
 
-      if(iFeature > 0 && iFeature % 50 == 0) {
+      if(iFeature > 0 && iFeature % 200 == 0) {
         f64 t1 = GetTimeF64();
         CoreTechPrint("Loaded %d/%d in %f seconds\n", iFeature, numFeatures, t1-t0);
         t0 = t1;

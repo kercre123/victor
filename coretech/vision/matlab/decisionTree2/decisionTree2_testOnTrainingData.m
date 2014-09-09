@@ -73,6 +73,4 @@ function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, feature
     disp(' ');
     
     disp(sprintf('Total accuracy %d/%d = %f', sum(numCorrect), sum(numTotal), sum(numCorrect)/sum(numTotal)))
-    
-    keyboard
 end % decisionTree2_testOnTrainingData()

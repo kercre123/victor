@@ -50,6 +50,9 @@ function [tree, minimalTree, cTree, trainingFailures, testOnTrain_numCorrect, te
     end
     
     decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads);
+    
+    pause(.01);
+   
     [tree, cTree] = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix, cOutFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
     
     if isempty(tree)
@@ -66,11 +69,11 @@ function [tree, minimalTree, cTree, trainingFailures, testOnTrain_numCorrect, te
     
     t_test = tic();
     
-    [testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_testOnTrainingData(tree, featureValues, labels);
+    [testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_testOnTrainingData(tree, featureValues, labels, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     
     t_test = toc(t_test);
     
-    disp(sprintf('Tested tree on training set in %f seconds. Training accuracy: %d/%d = %0.2f%%', t_test, testOnTrain_numCorrect, testOnTrain_numTotal, 100*testOnTrain_numCorrect/testOnTrain_numTotal));
+    disp(sprintf('Tested tree on training set in %f seconds.', t_test));
 
     trainingFailures = [];
 
@@ -141,6 +144,7 @@ function decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, feature
     
     disp(sprintf('Total time to save: %f seconds', toc(totalTic)));
     
+    clear pBar;       
 end % decisionTree2_saveInputs()
 
 function [tree, cTree] = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix, cOutFilenamePrefix, numFeatures, leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads)
