@@ -536,14 +536,14 @@ namespace Anki {
       
       //////// Update Robot's State Machine /////////////
       
-      IAction* currentAction = _actionQueue.GetCurrentAction();
+      IActionRunner* currentAction = _actionQueue.GetCurrentAction();
       if(currentAction == nullptr) {
         
         VizManager::getInstance()->SetText(VizManager::TextLabelType::ACTION, NamedColors::RED, "<No Current Action>");
         
       } else {
         
-        const IAction::ActionResult result = currentAction->Update();
+        const IAction::ActionResult result = currentAction->Update(*this);
         
         VizManager::getInstance()->SetText(VizManager::TextLabelType::ACTION, NamedColors::RED,
                                            currentAction->GetStatus().c_str());
@@ -571,22 +571,12 @@ namespace Anki {
             
           case IAction::FAILURE_ABORT:
           case IAction::FAILURE_TIMEOUT: // TODO: handle this case differently?
+            case IAction::FAILURE_RETRY: // actual retries handled by IAction::Update()
             PRINT_NAMED_INFO("Robot.Update.CurrentActionFailedAborting",
                              "Robot %d failed running action %s. Clearing remainder of action queue.\n",
                              GetID(), currentAction->GetName().c_str());
             
             _actionQueue.Clear();
-            break;
-            
-          case IAction::FAILURE_RETRY:
-            PRINT_NAMED_INFO("Robot.Update.CurrentActionFailedRetrying",
-                             "Robot %d failed running action %s. Retrying.\n",
-                             GetID(), currentAction->GetName().c_str());
-            
-            if(currentAction->Retry() != RESULT_OK) {
-              // No retry function, just clear the queue.
-              _actionQueue.Clear();
-            }
             break;
             
           default:
@@ -807,9 +797,16 @@ namespace Anki {
         
     Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
     {
-      SelectPlanner(targetPose);
+      Pose3d targetPoseWrtOrigin;
+      if(targetPose.GetWithRespectTo(*GetWorldOrigin(), targetPoseWrtOrigin) == false) {
+        PRINT_NAMED_ERROR("Robot.GetPathToPose.OriginMisMatch",
+                          "Could not get target pose w.r.t. robot %d's origin.\n", GetID());
+        return RESULT_FAIL;
+      }
+      
+      SelectPlanner(targetPoseWrtOrigin);
 
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), targetPose);
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), targetPoseWrtOrigin);
 
       if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
         return RESULT_OK;
@@ -1327,9 +1324,8 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      _actionQueue.QueueAtEnd(new CompoundActionSequential(*this,
-                                                           {new DriveToObjectAction(*this, ramp->GetID(), PreActionPose::ENTRY),
-                                                             new AscendOrDescendRampAction(*this, ramp->GetID())}));
+      _actionQueue.QueueAtEnd(new ActionGroupSequential({new DriveToObjectAction(ramp->GetID(), PreActionPose::ENTRY),
+                                                         new AscendOrDescendRampAction(ramp->GetID())}));
       /*
       _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, ramp->GetID(), PreActionPose::ENTRY));
       
@@ -1355,11 +1351,13 @@ namespace Anki {
         return RESULT_FAIL;
       }
     
-      _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, bridge->GetID(), PreActionPose::ENTRY));
+      _actionQueue.QueueAtEnd(new DriveToObjectAction(bridge->GetID(), PreActionPose::ENTRY));
       
-      CrossBridgeAction* crossBridgeAction = new CrossBridgeAction(*this, bridge->GetID());
-      auto retryLambda = [bridge](Robot& robot) { return robot.ExecuteBridgeCrossingSequence(bridge); };
-      crossBridgeAction->SetRetryFunction(retryLambda);
+      CrossBridgeAction* crossBridgeAction = new CrossBridgeAction(bridge->GetID());
+      //auto retryLambda = [bridge](Robot& robot) { return robot.ExecuteBridgeCrossingSequence(bridge); };
+      
+      
+      //crossBridgeAction->SetRetryFunction(retryLambda);
       
       _actionQueue.QueueAtEnd(crossBridgeAction);
       
@@ -1373,9 +1371,10 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      _actionQueue.QueueAtEnd(new CompoundActionSequential(*this,
-                                                           {new DriveToObjectAction(*this, objectIDtoDockWith, PreActionPose::DOCKING),
-                                                             new PickUpObjectAction(*this, objectIDtoDockWith)}));
+      _actionQueue.QueueAtEnd(new ActionGroupSequential({
+        new DriveToObjectAction(objectIDtoDockWith, PreActionPose::DOCKING),
+        new PickUpObjectAction(objectIDtoDockWith)}));
+      
       /*
       _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, objectIDtoDockWith, PreActionPose::DOCKING));
       
@@ -1392,7 +1391,7 @@ namespace Anki {
     
     Result Robot::ExecutePlaceObjectOnGroundSequence()
     {
-      _actionQueue.QueueAtEnd(new PutDownObjectAction(*this));
+      _actionQueue.QueueAtEnd(new PutDownObjectAction());
       
       return RESULT_OK;
       
@@ -1411,7 +1410,7 @@ namespace Anki {
       atPoseWithParent.SetTranslation({{atPose.GetTranslation().x(), atPose.GetTranslation().y(), GetPose().GetTranslation().z() + 22.f}});
       
       _actionQueue.QueueAtEnd(new DriveToPlaceCarriedObjectAction(*this, atPoseWithParent));
-      _actionQueue.QueueAtEnd(new PutDownObjectAction(*this));
+      _actionQueue.QueueAtEnd(new PutDownObjectAction());
       
       return lastResult;
       

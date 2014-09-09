@@ -39,10 +39,10 @@ namespace Anki {
     // Forward Declarations:
     class Robot;
     
-    // Action Interface
-    class IAction
+    class IActionRunner
     {
     public:
+      
       typedef enum  {
         RUNNING,
         SUCCESS,
@@ -52,9 +52,8 @@ namespace Anki {
         FAILURE_ABORT
       } ActionResult;
       
-      IAction(Robot& robot);
-      
-      virtual ~IAction() { }
+      IActionRunner();
+      virtual ~IActionRunner() { }
       
       // This Update() is what gets called from the outside.  It in turn
       // handles timing delays and runs (protected) CheckPreconditions() and
@@ -62,32 +61,66 @@ namespace Anki {
       // classes should implement to get desired action behaviors.
       // Note that this method is final and cannot be overridden in derived
       // classes.
-      virtual ActionResult Update() final;
-    
+      virtual ActionResult Update(Robot& robot) = 0;
+      
+      // If a FAILURE_RETRY is encountered, how many times will the action
+      // be retried before return FAILURE_ABORT.
+      void SetNumRetries(const u8 numRetries) {_numRetriesRemaining = numRetries;}
+      
       // Override this in derived classes to get more helpful messages for
       // debugging. Otherwise, defaults to "UnnamedAction".
       virtual const std::string& GetName() const;
-    
-      // Provide a retry function that will be called by Update() if
-      // FAILURE_RETRY is returned by the derived CheckIfDone() method.
-      void SetRetryFunction(std::function<Result(Robot&)> retryFcn);
-      
-      // Runs the retry function if one was specified.
-      Result Retry();
+
+      virtual void Reset() = 0;
       
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
       
     protected:
       
-      Robot&        _robot;
-      
-      // Derived Actions should implement these:
-      virtual ActionResult  CheckPreconditions() { return SUCCESS; } // Optional: default is no preconditions to meet
-      virtual ActionResult  CheckIfDone() = 0;
+      bool RetriesRemain();
       
       // Derived actions can use this to set custom status messages here.
       void SetStatus(const std::string& msg);
+      
+    private:
+      u8 _numRetriesRemaining;
+      
+      std::string   _statusMsg;
+      
+    }; // class IActionRunner
+    
+    inline void IActionRunner::SetStatus(const std::string& msg) {
+      _statusMsg = msg;
+    }
+
+    
+#pragma mark ---- IAction ---
+    
+    // Action Interface
+    class IAction : public IActionRunner
+    {
+    public:
+      
+      IAction();
+      virtual ~IAction() { }
+
+      virtual ActionResult Update(Robot& robot) override;
+      
+      // Provide a retry function that will be called by Update() if
+      // FAILURE_RETRY is returned by the derived CheckIfDone() method.
+      //void SetRetryFunction(std::function<Result(Robot&)> retryFcn);
+      
+      // Runs the retry function if one was specified.
+      //Result Retry();
+      
+    protected:
+      
+      // Derived Actions should implement these. Note that StartAction can
+      // modify the robot's state, while CheckIfDone() just monitors the robot
+      // and cannot modify it.
+      virtual ActionResult  Init(Robot& robot) { return SUCCESS; } // Optional: default is no preconditions to meet
+      virtual ActionResult  CheckIfDone(const Robot& robot) = 0;
       
       //
       // Timing delays:
@@ -103,17 +136,16 @@ namespace Anki {
       // Before giving up on entire action. Optional: default is one minute
       virtual f32 GetTimeoutInSeconds()          const { return 60.f; }
       
+      virtual void Reset() override;
+      
+      // For compound actions:
+      
+      
     private:
-      
-      void Reset();
-      
+     
       bool          _preconditionsMet;
       f32           _waitUntilTime;
       f32           _timeoutTime;
-      
-      std::string   _statusMsg;
-      
-      std::function<Result(Robot&)> _retryFcn;
       
     }; // class IAction
     
@@ -125,73 +157,89 @@ namespace Anki {
       
       ~ActionQueue();
       
-      Result   QueueNext(IAction *);
-      Result   QueueAtEnd(IAction *);
+      Result   QueueNext(IActionRunner *);
+      Result   QueueAtEnd(IActionRunner *);
       
       void     Clear();
       
       bool     IsEmpty() const { return _queue.empty(); }
       
-      IAction* GetCurrentAction();
-      void     PopCurrentAction();
+      IActionRunner* GetCurrentAction();
+      void           PopCurrentAction();
       
       void Print() const;
       
     protected:
-      std::list<IAction*> _queue;
+      std::list<IActionRunner*> _queue;
     }; // class ActionQueue
     
-    // Treats a group of actions as a single action and excutes them sequentially
-    class CompoundActionSequential : public IAction
+#pragma mark ---- IActionGroup ----
+    
+    // Interface for groups of actions
+    class IActionGroup : public IActionRunner
     {
     public:
-      CompoundActionSequential(Robot& robot, std::initializer_list<IAction*> actions);
+      IActionGroup(std::initializer_list<IActionRunner*> actions);
       
-      virtual const std::string& GetName() const override;
+      // Constituent actions will be deleted upon destruction of the group
+      virtual ~IActionGroup();
+      
+      virtual const std::string& GetName() const override { return _name; }
       
     protected:
       
-      virtual ActionResult CheckIfDone() override;
+      // Call the constituent actions' Reset() methods and mark them each not done.
+      virtual void Reset() override;
       
+      std::list<std::pair<bool, IActionRunner*> > _actions;
       std::string _name;
-      ActionQueue _actionQueue;
-      
-    }; // class CompoundActionSequential
+    };
     
-    // Treats a group of actions as a single action and executes them in parallel
-    // at each call to update (until all report they are done)
-    class CompoundActionParallel : public IAction
+    
+    // Executes a group of actions sequentially
+    class ActionGroupSequential : public IActionGroup
     {
     public:
-      CompoundActionParallel(Robot& robot, std::initializer_list<IAction*> actions);
       
-      virtual const std::string& GetName() const override;
+      ActionGroupSequential(std::initializer_list<IActionRunner*> actions);
       
-    protected:
+      virtual ActionResult Update(Robot& robot) override;
       
-      virtual ActionResult CheckIfDone() override;
-      
-      std::string _name;
-      std::list<std::pair<bool,IAction*> > _actionList;
-      
-    }; // class CompoundActionParallel
+    private:
+      std::list<std::pair<bool,IActionRunner*> >::iterator _currentActionPair;
+    }; // class ActionGroupSequential
     
+    
+    // Executes a group of actions in parallel
+    class ActionGroupParallel : public IActionGroup
+    {
+    public:
+      
+      ActionGroupParallel(std::initializer_list<IActionRunner*> actions);
+      
+      virtual ActionResult Update(Robot& robot) override;
+      
+    }; // class ActionGroupParallel
+    
+    
+#pragma mark ---- Individual Action Defintions ----
+    // TODO: Move these to cozmo-specific actions file
     
     class DriveToPoseAction : public IAction
     {
     public:
-      DriveToPoseAction(Robot& robot, const Pose3d& pose);
-      DriveToPoseAction(Robot& robot); // Note that SetGoal() must be called befure Update()!
+      DriveToPoseAction(const Pose3d& pose);
+      DriveToPoseAction(); // Note that SetGoal() must be called befure Update()!
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
       virtual const std::string& GetName() const override;
       
     protected:
-      
-      virtual ActionResult CheckIfDone() override;
-      virtual ActionResult CheckPreconditions() override;
-      
+
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(const Robot& robot) override;
+
       Result SetGoal(const Pose3d& pose);
       
     private:
@@ -206,7 +254,7 @@ namespace Anki {
     class DriveToObjectAction : public DriveToPoseAction
     {
     public:
-      DriveToObjectAction(Robot& robot, const ObjectID& objectID, const PreActionPose::ActionType& actionType);
+      DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType);
       
       // TODO: Add version where marker code is specified instead of action?
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
@@ -215,9 +263,9 @@ namespace Anki {
       
     protected:
       
-      virtual ActionResult CheckPreconditions() override;
+      virtual ActionResult Init(Robot& robot) override;
       
-      ActionResult CheckPreconditionsHelper(ActionableObject* object);
+      ActionResult CheckPreconditionsHelper(Robot& robot, ActionableObject* object);
       
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
@@ -227,11 +275,11 @@ namespace Anki {
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
     {
     public:
-      DriveToPlaceCarriedObjectAction(Robot& robot, const Pose3d& placementPose);
+      DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose);
       
     protected:
       
-      virtual ActionResult CheckPreconditions() override;
+      virtual ActionResult Init(Robot& robot) override;
       
       Pose3d _placementPose;
       
@@ -243,43 +291,49 @@ namespace Anki {
     class TurnInPlaceAction : public IAction
     {
     public:
-      TurnInPlaceAction(Robot& robot, const Radians& angle);
+      TurnInPlaceAction(const Radians& angle);
       
       virtual const std::string& GetName() const override;
       
     protected:
       
-      virtual ActionResult CheckIfDone() override;
-      virtual ActionResult CheckPreconditions() override;
+      virtual ActionResult CheckIfDone(const Robot& robot) override;
+      virtual ActionResult Init(Robot& robot) override;
       
       Radians _turnAngle;
       Pose3d  _goalPose;
       
     }; // class TurnInPlaceAction
     
-    // Interface for actions that involved "docking" with an object
+    // Interface for actions that involve "docking" with an object
     class IDockAction : public IAction
     {
     public:
-      IDockAction(Robot& robot, ObjectID objectID);
+      IDockAction(ObjectID objectID);
       
     protected:
       
       // IDockAction implements these two required methods from IAction for its
       // derived classes
-      virtual ActionResult CheckPreconditions() override;
-      virtual ActionResult CheckIfDone() override;
+      virtual ActionResult Init(Robot& robot) override final;
+      virtual ActionResult CheckIfDone(const Robot& robot) override final;
       
       // This helper can be optionally overridden by a derived by class to do
       // special things, but for simple usage, derived classes can just rely
       // on this one.
-      virtual Result DockWithObjectHelper(const std::vector<PreActionPose>& preActionPoses,
+      virtual Result DockWithObjectHelper(Robot& robot,
+                                          const std::vector<PreActionPose>& preActionPoses,
                                           const size_t closestIndex);
       
+      // This helper can be optionally overridden by a derived class to check
+      // if the object to be docked with is available. This is called by
+      // CheckPreconditions(). If it is false, FAILURE_RETRY is returned.
+      virtual bool IsObjectAvailable(ActionableObject* object) const { return true; }
+      
       // Pure virtual methods that must be implemented by derived classes
-      virtual Result SelectDockAction(ActionableObject* object) = 0;
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) = 0;
       virtual PreActionPose::ActionType GetPreActionType() = 0;
-      virtual IAction::ActionResult Verify() const = 0;
+      virtual IAction::ActionResult Verify(const Robot& robot) const = 0;
       
       const ObjectID& GetDockObjectID() const { return _dockObjectID; }
       
@@ -294,7 +348,7 @@ namespace Anki {
     class PickUpObjectAction : public IDockAction
     {
     public:
-      PickUpObjectAction(Robot& robot, ObjectID objectID);
+      PickUpObjectAction(ObjectID objectID);
       
       virtual const std::string& GetName() const override;
       
@@ -302,9 +356,9 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual IAction::ActionResult Verify() const override;
+      virtual IAction::ActionResult Verify(const Robot& robot) const override;
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
@@ -316,14 +370,14 @@ namespace Anki {
     {
     public:
       
-      PutDownObjectAction(Robot& robot);
+      PutDownObjectAction();
       
       virtual const std::string& GetName() const override;
       
     protected:
       
-      virtual ActionResult CheckPreconditions() override;
-      virtual ActionResult CheckIfDone() override;
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(const Robot& robot) override;
       
       // Need longer than default for check if done:
       virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }
@@ -336,7 +390,7 @@ namespace Anki {
     class CrossBridgeAction : public IDockAction
     {
     public:
-      CrossBridgeAction(Robot& robot, ObjectID bridgeID);
+      CrossBridgeAction(ObjectID bridgeID);
       
       virtual const std::string& GetName() const override;
       
@@ -344,11 +398,12 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual IAction::ActionResult Verify() const override;
+      virtual IAction::ActionResult Verify(const Robot& robot) const override;
       
-      virtual Result DockWithObjectHelper(const std::vector<PreActionPose>& preActionPoses,
+      virtual Result DockWithObjectHelper(Robot& robot,
+                                          const std::vector<PreActionPose>& preActionPoses,
                                           const size_t closestIndex) override;
       
     }; // class CrossBridgeAction
@@ -357,19 +412,20 @@ namespace Anki {
     class AscendOrDescendRampAction : public IDockAction
     {
     public:
-      AscendOrDescendRampAction(Robot& robot, ObjectID rampID);
+      AscendOrDescendRampAction(ObjectID rampID);
       
       virtual const std::string& GetName() const override;
       
     protected:
       
-      virtual Result SelectDockAction(ActionableObject* object) override;
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual IAction::ActionResult Verify() const override;
+      virtual IAction::ActionResult Verify(const Robot& robot) const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       
-      
+      // Returns false if ramp is in use by another robot
+      virtual bool IsObjectAvailable(ActionableObject* object) const;
       
     }; // class AscendOrDesceneRampAction
     

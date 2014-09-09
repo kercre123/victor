@@ -24,9 +24,32 @@ namespace Anki {
   
   namespace Cozmo {
     
-    IAction::IAction(Robot& robot)
-    : _robot(robot)
-    , _retryFcn(nullptr)
+    IActionRunner::IActionRunner()
+    : _numRetriesRemaining(0)
+    {
+      
+    }
+    
+    bool IActionRunner::RetriesRemain()
+    {
+      if(_numRetriesRemaining > 0) {
+        --_numRetriesRemaining;
+        return true;
+      } else {
+        return false;
+      }
+    }
+    
+    const std::string& IActionRunner::GetName() const {
+      static const std::string name("UnnamedAction");
+      return name;
+    }
+    
+    
+    
+#pragma mark ---- IAction ----
+    
+    IAction::IAction()
     {
       Reset();
     }
@@ -38,7 +61,7 @@ namespace Anki {
       _timeoutTime = -1.f;
     }
     
-    IAction::ActionResult  IAction::Update()
+    IAction::ActionResult IAction::Update(Robot& robot)
     {
       ActionResult result = RUNNING;
       SetStatus(GetName());
@@ -72,7 +95,7 @@ namespace Anki {
           // are not met: if they return RUNNING, then the action will effectively
           // just wait for the preconditions to be met. Otherwise, a failure
           // will get propagated out as the return value of the Update method.
-          result = CheckPreconditions();
+          result = Init(robot);
           if(result == SUCCESS) {
             PRINT_NAMED_INFO("IAction.Update.PrecondtionsMet",
                              "Preconditions for %s successfully met.\n", GetName().c_str());
@@ -94,23 +117,23 @@ namespace Anki {
           SetStatus(GetName() + ": check if done");
           
           // Pre-conditions already met, just run until done
-          result = CheckIfDone();
+          result = CheckIfDone(robot);
         }
       } // if(currentTimeInSeconds > _waitUntilTime)
+      
+      if(result == FAILURE_RETRY && RetriesRemain()) {
+        PRINT_NAMED_INFO("IAction.Update.CurrentActionFailedRetrying",
+                         "Robot %d failed running action %s. Retrying.\n",
+                         robot.GetID(), GetName().c_str());
+        
+        Reset();
+        result = RUNNING;
+      }
       
       return result;
     } // Update()
     
-    const std::string& IAction::GetName() const {
-      static const std::string name("UnnamedAction");
-      return name;
-    }
-    
-    void IAction::SetStatus(const std::string& msg)
-    {
-      _statusMsg = msg;
-    }
-    
+    /*
     void IAction::SetRetryFunction(std::function<Result(Robot&)> retryFcn)
     {
       _retryFcn = retryFcn;
@@ -127,6 +150,7 @@ namespace Anki {
       }
       
     } // Retry()
+    */
     
 #pragma mark ---- ActionQueue ----
     
@@ -143,14 +167,14 @@ namespace Anki {
     void ActionQueue::Clear()
     {
       while(!_queue.empty()) {
-        IAction* action = _queue.front();
+        IActionRunner* action = _queue.front();
         CORETECH_ASSERT(action != nullptr);
         delete action;
         _queue.pop_front();
       }
     }
     
-    Result ActionQueue::QueueAtEnd(IAction *action)
+    Result ActionQueue::QueueAtEnd(IActionRunner *action)
     {
       if(action == nullptr) {
         PRINT_NAMED_ERROR("ActionQueue.QueueAtEnd.NullActionPointer",
@@ -162,7 +186,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result ActionQueue::QueueNext(Anki::Cozmo::IAction *action)
+    Result ActionQueue::QueueNext(IActionRunner *action)
     {
       if(action == nullptr) {
         PRINT_NAMED_ERROR("ActionQueue.QueueNext.NullActionPointer",
@@ -174,14 +198,14 @@ namespace Anki {
         return QueueAtEnd(action);
       }
       
-      std::list<IAction*>::iterator queueIter = _queue.begin();
+      std::list<IActionRunner*>::iterator queueIter = _queue.begin();
       ++queueIter;
       _queue.insert(queueIter, action);
       
       return RESULT_OK;
     }
     
-    IAction* ActionQueue::GetCurrentAction()
+    IActionRunner* ActionQueue::GetCurrentAction()
     {
       if(_queue.empty()) {
         return nullptr;
@@ -217,116 +241,171 @@ namespace Anki {
       
     } // Print()
     
+    
 #pragma mark ---- CompoundActionSequential ----
     
-    CompoundActionSequential::CompoundActionSequential(Robot& robot, std::initializer_list<IAction*> actions)
-    : IAction(robot)
-    , _name("[")
+    IActionGroup::IActionGroup(std::initializer_list<IActionRunner*> actions)
+    : _name("[")
     {
-      for(IAction* action : actions) {
-        _actionQueue.QueueAtEnd(action);
-        _name += action->GetName();
-        _name += "+";
-      }
-      _name += "]";
-    }
-    
-    IAction::ActionResult CompoundActionSequential::CheckIfDone()
-    {
-      ActionResult result = RUNNING;
-      
-      if(_actionQueue.IsEmpty()) {
-        result = SUCCESS;
-      } else {
-        
-        IAction* currentAction = _actionQueue.GetCurrentAction();
-        if(currentAction == nullptr) {
-          PRINT_NAMED_ERROR("CompoundActionSequential.CheckIfDone.NullActionPointer", "Found null action pointer in queue.\n");
-          result = FAILURE_ABORT;
+      for(IActionRunner* action : actions) {
+        if(action == nullptr) {
+          PRINT_NAMED_WARNING("IActionGroup.NullActionPointer",
+                              "Refusing to add a null action pointer to group.\n");
+        } else {
+          _actions.emplace_back(false, action);
+          _name += action->GetName();
+          _name += "+";
         }
-        else {
-          
-          const ActionResult subResult = currentAction->Update();
-          switch(subResult)
-          {
-            case IAction::SUCCESS:
-              PRINT_NAMED_INFO("CompoundActionSequential.CheckIfDone.CurrentActionSucceeded",
-                               "Compound action completed %s. Popping it off queue.\n",
-                               currentAction->GetName().c_str());
-              _actionQueue.PopCurrentAction();
-              break;
-            
-            case IAction::RUNNING:
-              // Still running... (Nothing to do?)
-              break;
-            
-              // For now, don't handle failures of constituent actions specially:
-              // just propagate their failure outward and stop processing.
-            default:
-            PRINT_NAMED_INFO("CompoundActionSequential.CheckIfDone.ConstituentActionFailed",
-                              "Constituent action of CompoundAction failed, returning failure.\n");
-              result = subResult;
-            
-          } // switch(subResult)
-        } // if/else currentAction == nullptr
-      } // if/else actionQueue not empty
-      
-      return result;
-    } // CheckIfDone()
-    
-    const std::string& CompoundActionSequential::GetName() const
-    {
-      return _name;
-    }
-    
-    
-#pragma mark ---- CompoundActionParallel ----
-    
-    CompoundActionParallel::CompoundActionParallel(Robot& robot, std::initializer_list<IAction*> actions)
-    : IAction(robot)
-    , _name("[")
-    {
-      for(IAction* action : actions) {
-        _actionList.emplace_back(false, action);
-        _name += action->GetName();
-        _name += "&";
       }
       _name += "]";
     }
     
-    IAction::ActionResult CompoundActionParallel::CheckIfDone()
+    IActionGroup::~IActionGroup()
     {
+      for(auto & actionPair : _actions) {
+        assert(actionPair.second != nullptr);
+        // TODO: issue a warning when a group is deleted without all its actions completed?
+        delete actionPair.second;
+      }
+    }
+    
+    void IActionGroup::Reset()
+    {
+      for(auto & actionPair : _actions) {
+        actionPair.first = false;
+        actionPair.second->Reset();
+      }
+    }
+    
+    ActionGroupSequential::ActionGroupSequential(std::initializer_list<IActionRunner*> actions)
+    : IActionGroup(actions)
+    , _currentActionPair(_actions.begin())
+    {
+      
+    }
+    
+    IAction::ActionResult ActionGroupSequential::Update(Robot& robot)
+    {
+      if(_currentActionPair != _actions.end())
+      {
+        bool& isDone = _currentActionPair->first;
+        assert(isDone == false);
+        
+        IActionRunner* currentAction = _currentActionPair->second;
+        assert(currentAction != nullptr); // should not have been allowed in by constructor
+        
+        const ActionResult subResult = currentAction->Update(robot);
+        switch(subResult)
+        {
+          case SUCCESS:
+          {
+            // Finished the current action, move ahead to the next
+            isDone = true; // mark as done (not strictly necessary)
+            ++_currentActionPair;
+            
+            // if that was the last action, we're done
+            if(_currentActionPair == _actions.end()) {
+              return SUCCESS;
+            }
+            
+            // Otherwise, we are still running
+            return RUNNING;
+          }
+          
+          case FAILURE_RETRY:
+            // A constituent action failed . Reset all the constituent actions
+            // and try again as long as there are retries remaining
+            if(RetriesRemain()) {
+              PRINT_NAMED_INFO("ActionGroupSequential.Update.Retrying",
+                               "%s triggered retry.\n", currentAction->GetName().c_str());
+              Reset();
+              return RUNNING;
+            }
+            // No retries remaining. Fall through:
+            
+          case RUNNING:
+          case FAILURE_ABORT:
+          case FAILURE_TIMEOUT:
+          case FAILURE_PROCEED:
+            return subResult;
+            
+        } // switch(result)
+      } // if currentAction != actions.end()
+      
+      // Shouldn't normally get here, but this means we've completed everything
+      // and are done
+      return SUCCESS;
+      
+    } // ActionGroupSequential::Update()
+    
+    
+    ActionGroupParallel::ActionGroupParallel(std::initializer_list<IActionRunner*> actions)
+    : IActionGroup(actions)
+    {
+      
+    }
+    
+    IAction::ActionResult ActionGroupParallel::Update(Robot& robot)
+    {
+      // Return success unless we encounter anything still running or failed in loop below.
+      // Note that we will return SUCCESS on the call following the one where the
+      // last action actually finishes.
       ActionResult result = SUCCESS;
       
-      for(auto & actionDonePair : _actionList)
+      for(auto & currentActionPair : _actions)
       {
-        bool& isDone = actionDonePair.first;
+        bool& isDone = currentActionPair.first;
         if(!isDone) {
-          IAction* subAction = actionDonePair.second;
-          const ActionResult subResult = subAction->Update();
-
-          if(subResult == SUCCESS) {
-            PRINT_NAMED_INFO("CompoundActionParallel.CheckIfDone.CurrentActionSucceeded",
-                             "Compound action completed %s. Marking it as done.\n");
-            isDone = true;
-          } else {
-            result = subResult;
-          }
-        }
-      }
+          IActionRunner* currentAction = currentActionPair.second;
+          assert(currentAction != nullptr); // should not have been allowed in by constructor
+          
+          const ActionResult subResult = currentAction->Update(robot);
+          switch(subResult)
+          {
+            case SUCCESS:
+              // Just finished this action, mark it as done
+              isDone = true;
+              break;
+              
+            case RUNNING:
+              // If any action is still running the group is still running
+              result = RUNNING;
+              break;
+              
+            case FAILURE_RETRY:
+              // If any retries are left, reset the group and try again.
+              if(RetriesRemain()) {
+                PRINT_NAMED_INFO("ActionGroupParallel.Update.Retrying",
+                                 "%s triggered retry.\n", currentAction->GetName().c_str());
+                Reset();
+                return RUNNING;
+              }
+              
+              // If not, just fall through to other failure handlers:
+            case FAILURE_ABORT:
+            case FAILURE_PROCEED:
+            case FAILURE_TIMEOUT:
+              // Return failure, aborting updating remaining actions the group
+              return subResult;
+              
+            default:
+              PRINT_NAMED_ERROR("ActionGroupParallel.Update.UnknownResultCase", "\n");
+              assert(false);
+              return FAILURE_ABORT;
+              
+          } // switch(subResult)
+          
+        } // if(!isDone)
+      } // for each action in the group
       
       return result;
-    } // CheckIfDone()
+    } // ActionGroupParallel::Update()
     
-    const std::string& CompoundActionParallel::GetName() const
-    {
-      return _name;
-    }
     
 #pragma mark ---- CheckForPathDoneHelper ----
     
     // Helper function used by Actions that utilize ExecutePathToPose internally
-    static IAction::ActionResult CheckForPathDoneHelper(Robot& robot, const Pose3d& goalPose,
+    static IAction::ActionResult CheckForPathDoneHelper(const Robot& robot, const Pose3d& goalPose,
                                                         const f32 distanceThreshold,
                                                         const Radians& angleThreshold)
     {
@@ -341,7 +420,8 @@ namespace Anki {
           PRINT_NAMED_INFO("Action.CheckForPathDoneHelper.Success",
                            "Robot %d successfully finished following path (Tdiff=%.1fmm).\n",
                            robot.GetID(), Tdiff.Length());
-          robot.ClearPath(); // clear path and indicate that we are not replanning
+          // TODO: Can't do this if Robot is const. Who does it?
+          //robot.ClearPath(); // clear path and indicate that we are not replanning
           result = IAction::SUCCESS;
         }
         // The last path sent was definitely received by the robot
@@ -356,8 +436,7 @@ namespace Anki {
           // Something went wrong: not in place and robot apparently hasn't
           // received all that it should have
           PRINT_NAMED_INFO("Action.CheckForPathDoneHelper.Failure",
-                           "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false. currPathSegment = %d\n",
-                           robot.GetCurrPathSegment());
+                           "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
           result = IAction::FAILURE_ABORT;
         }
       }
@@ -368,28 +447,22 @@ namespace Anki {
     
 #pragma mark ---- DriveToPoseAction ----
     
-    DriveToPoseAction::DriveToPoseAction(Robot& robot) //, const Pose3d& pose)
-    : IAction(robot)
-    , _isGoalSet(false)
+    DriveToPoseAction::DriveToPoseAction() //, const Pose3d& pose)
+    : _isGoalSet(false)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     {
       
     }
     
-    DriveToPoseAction::DriveToPoseAction(Robot& robot, const Pose3d& pose)
-    : DriveToPoseAction(robot)
+    DriveToPoseAction::DriveToPoseAction(const Pose3d& pose)
     {
       SetGoal(pose);
     }
     
     Result DriveToPoseAction::SetGoal(const Anki::Pose3d& pose)
     {
-      if(pose.GetWithRespectTo(*_robot.GetWorldOrigin(), _goalPose) == false) {
-        PRINT_NAMED_ERROR("DriveToPoseAction.SetGoal.OriginMisMatch",
-                          "Could not get specified pose w.r.t. robot %d's origin.\n", _robot.GetID());
-        return RESULT_FAIL;
-      }
+      _goalPose = pose;
       
       PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
                        "Setting pose goal to (%.1f,%.1f,%.1f) @ %.1fdeg\n",
@@ -409,7 +482,7 @@ namespace Anki {
       return name;
     }
     
-    IAction::ActionResult DriveToPoseAction::CheckPreconditions()
+    IAction::ActionResult DriveToPoseAction::Init(Robot& robot)
     {
       ActionResult result = SUCCESS;
       
@@ -418,29 +491,27 @@ namespace Anki {
                           "Goal must be set before running this action.\n");
         result = FAILURE_ABORT;
       }
-      else if(_robot.ExecutePathToPose(_goalPose) != RESULT_OK) {
+      else if(robot.ExecutePathToPose(_goalPose) != RESULT_OK) {
         result = FAILURE_ABORT;
       }
       
       return result;
     }
     
-    IAction::ActionResult DriveToPoseAction::CheckIfDone()
+    IAction::ActionResult DriveToPoseAction::CheckIfDone(const Robot& robot)
     {
-      return CheckForPathDoneHelper(_robot, _goalPose, _goalDistanceThreshold, _goalAngleThreshold);
+      return CheckForPathDoneHelper(robot, _goalPose, _goalDistanceThreshold, _goalAngleThreshold);
     } // CheckIfDone()
     
 #pragma mark ---- DriveToObjectAction ----
     
-    DriveToObjectAction::DriveToObjectAction(Robot& robot, const ObjectID& objectID, const PreActionPose::ActionType& actionType)
-    : DriveToPoseAction(robot)
-    , _objectID(objectID)
+    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType)
+    : _objectID(objectID)
     , _actionType(actionType)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
     
-
     
     const std::string& DriveToObjectAction::GetName() const
     {
@@ -449,12 +520,12 @@ namespace Anki {
     }
     
     
-    IAction::ActionResult DriveToObjectAction::CheckPreconditionsHelper(ActionableObject* object)
+    IAction::ActionResult DriveToObjectAction::CheckPreconditionsHelper(Robot& robot, ActionableObject* object)
     {
       ActionResult result = RUNNING;
       
       std::vector<PreActionPose> possiblePreActionPoses;
-      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType}, std::set<Vision::Marker::Code>(), &_robot.GetPose());
+      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType}, std::set<Vision::Marker::Code>(), &robot.GetPose());
       
       if(possiblePreActionPoses.empty()) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
@@ -473,7 +544,7 @@ namespace Anki {
         for(auto & preActionPose : possiblePreActionPoses)
         {
           Pose3d possiblePose;
-          if(preActionPose.GetPose().GetWithRespectTo(*_robot.GetWorldOrigin(), possiblePose) == false) {
+          if(preActionPose.GetPose().GetWithRespectTo(*robot.GetWorldOrigin(), possiblePose) == false) {
             PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.PreActionPoseOriginProblem",
                                 "Could not get pre-action pose w.r.t. robot origin.\n");
             
@@ -498,11 +569,11 @@ namespace Anki {
                             "No pre-action poses survived as possible docking poses.\n");
           result = FAILURE_ABORT;
         }
-        else if(_robot.ExecutePathToPose(possiblePoses, selectedIndex) != RESULT_OK) {
+        else if(robot.ExecutePathToPose(possiblePoses, selectedIndex) != RESULT_OK) {
           result = FAILURE_ABORT;
         }
         else {
-          _robot.MoveHeadToAngle(possiblePreActionPoses[selectedIndex].GetHeadAngle().ToFloat(), 5, 10);
+          robot.MoveHeadToAngle(possiblePreActionPoses[selectedIndex].GetHeadAngle().ToFloat(), 5, 10);
           SetGoal(possiblePreActionPoses[selectedIndex].GetPose());
           result = SUCCESS;
         }
@@ -514,20 +585,20 @@ namespace Anki {
     } // CheckPreconditionsHelper()
     
     
-    IAction::ActionResult DriveToObjectAction::CheckPreconditions()
+    IAction::ActionResult DriveToObjectAction::Init(Robot& robot)
     {
       ActionResult result = SUCCESS;
       
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+      ActionableObject* object = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
                           "Robot %d's block world does not have an ActionableObject with ID=%d.\n",
-                          _robot.GetID(), _objectID.GetValue());
+                          robot.GetID(), _objectID.GetValue());
         
         result = FAILURE_ABORT;
       } else {
       
-        result = CheckPreconditionsHelper(object);
+        result = CheckPreconditionsHelper(robot, object);
         
       } // if/else object==nullptr
       
@@ -537,31 +608,31 @@ namespace Anki {
     
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
-    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(Robot& robot, const Pose3d& placementPose)
-    : DriveToObjectAction(robot, robot.GetCarryingObject(), PreActionPose::PLACEMENT)
+    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose)
+    : DriveToObjectAction(robot.GetCarryingObject(), PreActionPose::PLACEMENT)
     , _placementPose(placementPose)
     {
 
     }
     
-    IAction::ActionResult DriveToPlaceCarriedObjectAction::CheckPreconditions()
+    IAction::ActionResult DriveToPlaceCarriedObjectAction::Init(Robot& robot)
     {
       ActionResult result = SUCCESS;
       
-      if(_robot.IsCarryingObject() == false) {
+      if(robot.IsCarryingObject() == false) {
         PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
                           "Robot %d cannot place an object because it is not carrying anything.\n",
-                          _robot.GetID());
+                          robot.GetID());
         result = FAILURE_ABORT;
       } else {
         
-        _objectID = _robot.GetCarryingObject();
+        _objectID = robot.GetCarryingObject();
         
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_objectID));
         if(object == nullptr) {
           PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NoObjectWithID",
                             "Robot %d's block world does not have an ActionableObject with ID=%d.\n",
-                            _robot.GetID(), _objectID.GetValue());
+                            robot.GetID(), _objectID.GetValue());
           
           result = FAILURE_ABORT;
         } else {
@@ -571,7 +642,7 @@ namespace Anki {
           const Pose3d origObjectPose(object->GetPose());
           object->SetPose(_placementPose);
           
-          result = CheckPreconditionsHelper(object);
+          result = CheckPreconditionsHelper(robot, object);
           
           // Move the object back to where it was (being carried)
           object->SetPose(origObjectPose);
@@ -586,9 +657,8 @@ namespace Anki {
 
 #pragma mark ---- TurnInPlaceAction ----
     
-    TurnInPlaceAction::TurnInPlaceAction(Robot& robot, const Radians& angle)
-    : IAction(robot)
-    , _turnAngle(angle)
+    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle)
+    : _turnAngle(angle)
     {
       
     }
@@ -599,27 +669,27 @@ namespace Anki {
       return name;
     }
     
-    IAction::ActionResult TurnInPlaceAction::CheckPreconditions()
+    IAction::ActionResult TurnInPlaceAction::Init(Robot &robot)
     {
       ActionResult result = SUCCESS;
 
       // Compute a goal pose rotated by specified angle around robot's
       // _current_ pose
-      const Radians heading = _robot.GetPose().GetRotationAngle<'Z'>();
+      const Radians heading = robot.GetPose().GetRotationAngle<'Z'>();
       
       _goalPose.SetRotation(heading + _turnAngle, Z_AXIS_3D);
-      _goalPose.SetTranslation(_robot.GetPose().GetTranslation());
+      _goalPose.SetTranslation(robot.GetPose().GetTranslation());
       
-      if(_robot.ExecutePathToPose(_goalPose) != RESULT_OK) {
+      if(robot.ExecutePathToPose(_goalPose) != RESULT_OK) {
         result = FAILURE_ABORT;
       }
 
       return result;
     }
     
-    IAction::ActionResult TurnInPlaceAction::CheckIfDone()
+    IAction::ActionResult TurnInPlaceAction::CheckIfDone(const Robot& robot)
     {
-      return CheckForPathDoneHelper(_robot, _goalPose,
+      return CheckForPathDoneHelper(robot, _goalPose,
                                     DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                                     DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
     } // CheckIfDone()
@@ -630,25 +700,28 @@ namespace Anki {
     // TODO: Define this as a constant parameter elsewhere
     #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
     
-    IDockAction::IDockAction(Robot& robot, ObjectID objectID)
-    : IAction(robot)
-    , _dockObjectID(objectID)
+    IDockAction::IDockAction(ObjectID objectID)
+    : _dockObjectID(objectID)
     , _dockMarker(nullptr)
     , _dockMarker2(nullptr)
     {
       
     }
     
-    IAction::ActionResult IDockAction::CheckPreconditions()
+    IAction::ActionResult IDockAction::Init(Robot& robot)
     {
       // Make sure the object we were docking with still exists in the world
-      ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_dockObjectID));
+      ActionableObject* dockObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_dockObjectID));
       if(dockObject == nullptr) {
         PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.ActionObjectNotFound",
                           "Action object with ID=%d no longer exists in the world.\n",
                           _dockObjectID.GetValue());
         
         return FAILURE_ABORT;
+      }
+      
+      if(!IsObjectAvailable(dockObject)) {
+        return FAILURE_RETRY;
       }
       
       // Verify that we ended up near enough a PreActionPose of the right type
@@ -663,8 +736,8 @@ namespace Anki {
         return FAILURE_ABORT;
       }
 
-      const Point2f currentXY(_robot.GetPose().GetTranslation().x(),
-                              _robot.GetPose().GetTranslation().y());
+      const Point2f currentXY(robot.GetPose().GetTranslation().x(),
+                              robot.GetPose().GetTranslation().y());
       
       float closestDistSq = std::numeric_limits<float>::max();
       size_t closestIndex = preActionPoses.size();
@@ -690,7 +763,7 @@ namespace Anki {
         return FAILURE_RETRY;
       }
       else {
-        if(SelectDockAction(dockObject) != RESULT_OK) {
+        if(SelectDockAction(robot, dockObject) != RESULT_OK) {
           PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.DockActionSelectionFailure",
                             "");
           return FAILURE_ABORT;
@@ -700,8 +773,7 @@ namespace Anki {
                          "Robot is within %.1fmm of the nearest pre-action pose, "
                          "proceeding with docking.\n", closestDist);
       
-        if(DockWithObjectHelper(preActionPoses, closestIndex) == RESULT_OK) {
-          _robot.SetDockObject(_dockObjectID);
+        if(DockWithObjectHelper(robot, preActionPoses, closestIndex) == RESULT_OK) {
           return SUCCESS;
         } else {
           return FAILURE_ABORT;
@@ -711,11 +783,11 @@ namespace Anki {
     } // CheckPreconditions()
     
     
-    IAction::ActionResult IDockAction::CheckIfDone()
+    IAction::ActionResult IDockAction::CheckIfDone(const Robot& robot)
     {
       ActionResult actionResult = RUNNING;
       
-      if (!_robot.IsPickingOrPlacing() && !_robot.IsMoving())
+      if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
       {
         // Stopped executing docking path, and should have backed out by now,
         // and have head pointed at an angle to see where we just placed or
@@ -723,14 +795,15 @@ namespace Anki {
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
         
-        actionResult = Verify();
+        actionResult = Verify(robot);
       }
       
       return actionResult;
     } // CheckIfDone()
     
     
-    Result IDockAction::DockWithObjectHelper(const std::vector<PreActionPose>& preActionPoses,
+    Result IDockAction::DockWithObjectHelper(Robot& robot,
+                                             const std::vector<PreActionPose>& preActionPoses,
                                              const size_t closestIndex)
     {
       _dockMarker  = preActionPoses[closestIndex].GetMarker();
@@ -742,14 +815,14 @@ namespace Anki {
                        Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
 
       
-      return _robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
+      return robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
     }
     
     
 #pragma mark ---- PickUpObjectAction ----
     
-    PickUpObjectAction::PickUpObjectAction(Robot& robot, ObjectID objectID)
-    : IDockAction(robot, objectID)
+    PickUpObjectAction::PickUpObjectAction(ObjectID objectID)
+    : IDockAction(objectID)
     {
       
     }
@@ -760,7 +833,7 @@ namespace Anki {
       return name;
     }
     
-    Result PickUpObjectAction::SelectDockAction(ActionableObject* object)
+    Result PickUpObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
     {
       // Record the object's original pose (before picking it up) so we can
       // verify later whether we succeeded.
@@ -773,38 +846,38 @@ namespace Anki {
       
       // TODO: Stop using constant ROBOT_BOUNDING_Z for this
       if (dockObjectHeight > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
-        if(_robot.IsCarryingObject()) {
+        if(robot.IsCarryingObject()) {
           PRINT_INFO("Already carrying object. Can't dock to high object. Aborting.\n");
           return RESULT_FAIL;
           
         } else {
           _dockAction = DA_PICKUP_HIGH;
         }
-      } else if (_robot.IsCarryingObject()) {
+      } else if (robot.IsCarryingObject()) {
         _dockAction = DA_PLACE_HIGH;
       }
       
       return RESULT_OK;
     } // SelectDockAction()
     
-    IAction::ActionResult PickUpObjectAction::Verify() const
+    IAction::ActionResult PickUpObjectAction::Verify(const Robot& robot) const
     {
-      if(_robot.IsCarryingObject() == false) {
+      if(robot.IsCarryingObject() == false) {
         PRINT_NAMED_ERROR("PickUpObjectAction.Verify.RobotNotCarryignObject",
                           "Expecting robot to think its carrying an object at this point.\n");
         return FAILURE_ABORT;
       }
       
-      BlockWorld& blockWorld = _robot.GetBlockWorld();
+      const BlockWorld& blockWorld = robot.GetBlockWorld();
       
       // We should _not_ still see a object with the
       // same type as the one we were supposed to pick up in that
       // block's original position because we should now be carrying it.
-      Vision::ObservableObject* carryObject = blockWorld.GetObjectByID(_robot.GetCarryingObject());
+      Vision::ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
       if(carryObject == nullptr) {
         PRINT_NAMED_ERROR("PickUpObjectAction.Verify.CarryObjectNoLongerExists",
                           "Object %d we were carrying no longer exists in the world.\n",
-                          _robot.GetCarryingObject().GetValue());
+                          robot.GetCarryingObject().GetValue());
         return FAILURE_ABORT;
       }
       
@@ -812,11 +885,11 @@ namespace Anki {
       
       bool objectInOriginalPoseFound = false;
       for(auto object : objectsWithType) {
-        // TODO: Make thresholds parameters
         // TODO: is it safe to always have useAbsRotation=true here?
         if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, carryObject->
                                                            GetRotationAmbiguities(),
-                                                           15.f, DEG_TO_RAD(25), true))
+                                                           carryObject->GetSameDistanceTolerance(),
+                                                           carryObject->GetSameAngleTolerance(), true))
         {
           objectInOriginalPoseFound = true;
           break;
@@ -826,8 +899,11 @@ namespace Anki {
       if(objectInOriginalPoseFound)
       {
         // Must not actually be carrying the object I thought I was!
-        blockWorld.ClearObject(_robot.GetCarryingObject());
-        _robot.UnSetCarryingObject();
+        
+        // TODO: With const Robot, can't do these here. Who does??
+        //blockWorld.ClearObject(_robot.GetCarryingObject());
+        //_robot.UnSetCarryingObject();
+        
         PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
         return FAILURE_RETRY;
       } else {
@@ -842,8 +918,7 @@ namespace Anki {
     
 #pragma mark ---- PutDownObjectAction ----
     
-    PutDownObjectAction::PutDownObjectAction(Robot & robot)
-    : IAction(robot)
+    PutDownObjectAction::PutDownObjectAction()
     {
       
     }
@@ -854,24 +929,24 @@ namespace Anki {
       return name;
     }
    
-    IAction::ActionResult PutDownObjectAction::CheckPreconditions()
+    IAction::ActionResult PutDownObjectAction::Init(Robot& robot)
     {
       ActionResult result = RUNNING;
       
       // Wait for robot to stop moving before proceeding with pre-conditions
-      if (_robot.IsMoving() == false)
+      if (robot.IsMoving() == false)
       {
         // Robot must be carrying something to put something down!
-        if(_robot.IsCarryingObject() == false) {
+        if(robot.IsCarryingObject() == false) {
           PRINT_NAMED_ERROR("PutDownObjectAction.CheckPreconditions.NotCarryingObject",
-                            "Robot %d executing PutDownObjectAction but not carrying object.\n", _robot.GetID());
+                            "Robot %d executing PutDownObjectAction but not carrying object.\n", robot.GetID());
           result = FAILURE_ABORT;
         } else {
           
-          _carryingObjectID  = _robot.GetCarryingObject();
-          _carryObjectMarker = _robot.GetCarryingMarker();
+          _carryingObjectID  = robot.GetCarryingObject();
+          _carryObjectMarker = robot.GetCarryingMarker();
         
-          if(_robot.SendPlaceObjectOnGround(0, 0, 0) == RESULT_OK)
+          if(robot.SendPlaceObjectOnGround(0, 0, 0) == RESULT_OK)
           {
             result = SUCCESS;
           } else {
@@ -888,13 +963,13 @@ namespace Anki {
     } // CheckPreconditions()
     
     
-    IAction::ActionResult PutDownObjectAction::CheckIfDone()
+    IAction::ActionResult PutDownObjectAction::CheckIfDone(const Robot& robot)
     {
       ActionResult actionResult = RUNNING;
       
       // Wait for robot to report it is done picking/placing and that it's not
       // moving
-      if (!_robot.IsPickingOrPlacing() && !_robot.IsMoving())
+      if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
       {
         // Stopped executing docking path, and should have placed carried block
         // and backed out by now, and have head pointed at an angle to see
@@ -904,14 +979,14 @@ namespace Anki {
         // right position.
 
         // TODO: check to see it ended up in the right place?
-        Vision::ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_carryingObjectID);
+        Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_carryingObjectID);
         if(object == nullptr) {
           PRINT_NAMED_ERROR("PutDownObjectAction.CheckIfDone.CarryObjectNoLongerExists",
                             "Object %d we were carrying no longer exists in the world.\n",
-                            _robot.GetCarryingObject().GetValue());
+                            robot.GetCarryingObject().GetValue());
           return FAILURE_ABORT;
         }
-        else if(object->GetLastObservedTime() > (_robot.GetLastMsgTimestamp()-500))
+        else if(object->GetLastObservedTime() > (robot.GetLastMsgTimestamp()-500))
         {
           // We've seen the object in the last half second (which could
           // not be true if we were still carrying it)
@@ -922,7 +997,8 @@ namespace Anki {
           PRINT_NAMED_INFO("PutDownObjectAction.CheckIfDone.ObjectPlacementSuccess",
                            "Verification of object placement FAILED!\n");
           // TODO: correct to assume we are still carrying the object?
-          _robot.PickUpObject(_carryingObjectID, _carryObjectMarker); // re-pickup object to attach it to the lift again
+          // TODO: Can't do this here with a const Robot reference. Where??
+          //robot.PickUpObject(_carryingObjectID, _carryObjectMarker); // re-pickup object to attach it to the lift again
           return FAILURE_RETRY;
         }
         
@@ -936,8 +1012,8 @@ namespace Anki {
     
 #pragma mark ---- CrossBridgeAction ----
     
-    CrossBridgeAction::CrossBridgeAction(Robot& robot, ObjectID bridgeID)
-    : IDockAction(robot, bridgeID)
+    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID)
+    : IDockAction(bridgeID)
     {
       
     }
@@ -948,7 +1024,8 @@ namespace Anki {
       return name;
     }
     
-    Result CrossBridgeAction::DockWithObjectHelper(const std::vector<PreActionPose>& preActionPoses,
+    Result CrossBridgeAction::DockWithObjectHelper(Robot & robot,
+                                                   const std::vector<PreActionPose>& preActionPoses,
                                                    const size_t closestIndex)
     {
       _dockMarker = preActionPoses[closestIndex].GetMarker();
@@ -971,16 +1048,16 @@ namespace Anki {
                        Vision::MarkerTypeStrings[_dockMarker2->GetCode()],
                        _dockAction);
       
-      return _robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
+      return robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
     }
     
-    Result CrossBridgeAction::SelectDockAction(ActionableObject* object)
+    Result CrossBridgeAction::SelectDockAction(Robot& robot, ActionableObject* object)
     {
       _dockAction = DA_CROSS_BRIDGE;
       return RESULT_OK;
     } // SelectDockAction()
     
-    IAction::ActionResult CrossBridgeAction::Verify() const
+    IAction::ActionResult CrossBridgeAction::Verify(const Robot& robot) const
     {
       // TODO: Need some kind of verificaiton here?
       PRINT_NAMED_INFO("CrossBridgeAction.Verify.BridgeCrossingComplete",
@@ -991,8 +1068,8 @@ namespace Anki {
     
 #pragma mark ---- AscendOrDescendRampAction ----
     
-    AscendOrDescendRampAction::AscendOrDescendRampAction(Robot& robot, ObjectID rampID)
-    : IDockAction(robot, rampID)
+    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID)
+    : IDockAction(rampID)
     {
 
     }
@@ -1003,7 +1080,7 @@ namespace Anki {
       return name;
     }
     
-    Result AscendOrDescendRampAction::SelectDockAction(ActionableObject* object)
+    Result AscendOrDescendRampAction::SelectDockAction(Robot& robot, ActionableObject* object)
     {
       Ramp* ramp = dynamic_cast<Ramp*>(object);
       if(ramp == nullptr) {
@@ -1015,7 +1092,7 @@ namespace Anki {
       Result result = RESULT_OK;
       
       // Choose ascent or descent
-      const Ramp::TraversalDirection direction = ramp->IsAscendingOrDescending(_robot.GetPose());
+      const Ramp::TraversalDirection direction = ramp->WillAscendOrDescend(robot.GetPose());
       switch(direction)
       {
         case Ramp::ASCENDING:
@@ -1031,13 +1108,30 @@ namespace Anki {
           result = RESULT_FAIL;
       }
     
-      _robot.SetRamp(GetDockObjectID(), direction);
+      // Tell robot which ramp it will be using
+      robot.SetRamp(GetDockObjectID());
+      
+      // Tell ramp that it is occupied and in what traversal direction
+      ramp->SetStatus(direction);
       
       return result;
       
     } // SelectDockAction()
     
-    IAction::ActionResult AscendOrDescendRampAction::Verify() const
+    bool AscendOrDescendRampAction::IsObjectAvailable(ActionableObject* object) const
+    {
+      Ramp* ramp = dynamic_cast<Ramp*>(object);
+      if(ramp == nullptr) {
+        PRINT_NAMED_ERROR("AscendOrDescendRampAction.IsObjectAvailable.NullRampPointer",
+                          "Could not cast generic ActionableObject into Ramp object.\n");
+        return false;
+      }
+      
+      return ramp->GetStatus() == Ramp::UNOCCUPIED;
+    }
+    
+    
+    IAction::ActionResult AscendOrDescendRampAction::Verify(const Robot& robot) const
     {
       // TODO: Need to do some kind of verification here?
       PRINT_NAMED_INFO("AscendOrDescendRampAction.Verify.RampAscentOrDescentComplete",
