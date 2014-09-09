@@ -174,25 +174,28 @@ namespace Anki {
       }
     }
     
-    Result ActionQueue::QueueAtEnd(IActionRunner *action)
+    Result ActionQueue::QueueAtEnd(IActionRunner *action, u8 numRetries)
     {
       if(action == nullptr) {
         PRINT_NAMED_ERROR("ActionQueue.QueueAtEnd.NullActionPointer",
                           "Refusing to queue a null action pointer.\n");
         return RESULT_FAIL;
       }
-      
+
+      action->SetNumRetries(numRetries);
       _queue.push_back(action);
       return RESULT_OK;
     }
     
-    Result ActionQueue::QueueNext(IActionRunner *action)
+    Result ActionQueue::QueueNext(IActionRunner *action, u8 numRetries)
     {
       if(action == nullptr) {
         PRINT_NAMED_ERROR("ActionQueue.QueueNext.NullActionPointer",
                           "Refusing to queue a null action pointer.\n");
         return RESULT_FAIL;
       }
+      
+      action->SetNumRetries(numRetries);
       
       if(_queue.empty()) {
         return QueueAtEnd(action);
@@ -498,7 +501,7 @@ namespace Anki {
       return result;
     }
     
-    IAction::ActionResult DriveToPoseAction::CheckIfDone(const Robot& robot)
+    IAction::ActionResult DriveToPoseAction::CheckIfDone(Robot& robot)
     {
       return CheckForPathDoneHelper(robot, _goalPose, _goalDistanceThreshold, _goalAngleThreshold);
     } // CheckIfDone()
@@ -687,7 +690,7 @@ namespace Anki {
       return result;
     }
     
-    IAction::ActionResult TurnInPlaceAction::CheckIfDone(const Robot& robot)
+    IAction::ActionResult TurnInPlaceAction::CheckIfDone(Robot& robot)
     {
       return CheckForPathDoneHelper(robot, _goalPose,
                                     DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
@@ -783,7 +786,7 @@ namespace Anki {
     } // CheckPreconditions()
     
     
-    IAction::ActionResult IDockAction::CheckIfDone(const Robot& robot)
+    IAction::ActionResult IDockAction::CheckIfDone(Robot& robot)
     {
       ActionResult actionResult = RUNNING;
       
@@ -815,7 +818,7 @@ namespace Anki {
                        Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
 
       
-      return robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
+      return robot.SendDockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
     }
     
     
@@ -860,7 +863,7 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    IAction::ActionResult PickUpObjectAction::Verify(const Robot& robot) const
+    IAction::ActionResult PickUpObjectAction::Verify(Robot& robot) const
     {
       if(robot.IsCarryingObject() == false) {
         PRINT_NAMED_ERROR("PickUpObjectAction.Verify.RobotNotCarryignObject",
@@ -868,7 +871,7 @@ namespace Anki {
         return FAILURE_ABORT;
       }
       
-      const BlockWorld& blockWorld = robot.GetBlockWorld();
+      BlockWorld& blockWorld = robot.GetBlockWorld();
       
       // We should _not_ still see a object with the
       // same type as the one we were supposed to pick up in that
@@ -899,10 +902,8 @@ namespace Anki {
       if(objectInOriginalPoseFound)
       {
         // Must not actually be carrying the object I thought I was!
-        
-        // TODO: With const Robot, can't do these here. Who does??
-        //blockWorld.ClearObject(_robot.GetCarryingObject());
-        //_robot.UnSetCarryingObject();
+        blockWorld.ClearObject(robot.GetCarryingObject());
+        robot.UnSetCarryingObject();
         
         PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
         return FAILURE_RETRY;
@@ -963,7 +964,7 @@ namespace Anki {
     } // CheckPreconditions()
     
     
-    IAction::ActionResult PutDownObjectAction::CheckIfDone(const Robot& robot)
+    IAction::ActionResult PutDownObjectAction::CheckIfDone(Robot& robot)
     {
       ActionResult actionResult = RUNNING;
       
@@ -997,8 +998,7 @@ namespace Anki {
           PRINT_NAMED_INFO("PutDownObjectAction.CheckIfDone.ObjectPlacementSuccess",
                            "Verification of object placement FAILED!\n");
           // TODO: correct to assume we are still carrying the object?
-          // TODO: Can't do this here with a const Robot reference. Where??
-          //robot.PickUpObject(_carryingObjectID, _carryObjectMarker); // re-pickup object to attach it to the lift again
+          robot.AttachObjectToLift(_carryingObjectID, _carryObjectMarker); // re-pickup object to attach it to the lift again
           return FAILURE_RETRY;
         }
         
@@ -1048,7 +1048,7 @@ namespace Anki {
                        Vision::MarkerTypeStrings[_dockMarker2->GetCode()],
                        _dockAction);
       
-      return robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
+      return robot.SendDockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
     }
     
     Result CrossBridgeAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -1057,7 +1057,7 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    IAction::ActionResult CrossBridgeAction::Verify(const Robot& robot) const
+    IAction::ActionResult CrossBridgeAction::Verify(Robot& robot) const
     {
       // TODO: Need some kind of verificaiton here?
       PRINT_NAMED_INFO("CrossBridgeAction.Verify.BridgeCrossingComplete",
@@ -1131,7 +1131,7 @@ namespace Anki {
     }
     
     
-    IAction::ActionResult AscendOrDescendRampAction::Verify(const Robot& robot) const
+    IAction::ActionResult AscendOrDescendRampAction::Verify(Robot& robot) const
     {
       // TODO: Need to do some kind of verification here?
       PRINT_NAMED_INFO("AscendOrDescendRampAction.Verify.RampAscentOrDescentComplete",

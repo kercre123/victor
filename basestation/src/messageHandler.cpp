@@ -296,7 +296,7 @@ namespace Anki {
 
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
-       lastResult = robot->PickUpDockObject();
+       lastResult = robot->AttachDockObjectToLift();
       }
       else {
         // TODO: what do we do on failure? Need to trigger reattempt?
@@ -312,7 +312,7 @@ namespace Anki {
       
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
-        lastResult = robot->PlaceCarriedObject(); //msg.timestamp);
+        lastResult = robot->UnattachCarriedObject(); //msg.timestamp);
       }
       else {
         // TODO: what do we do on failure? Need to trigger reattempt?

@@ -1324,18 +1324,9 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      _actionQueue.QueueAtEnd(new ActionGroupSequential({new DriveToObjectAction(ramp->GetID(), PreActionPose::ENTRY),
-                                                         new AscendOrDescendRampAction(ramp->GetID())}));
-      /*
-      _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, ramp->GetID(), PreActionPose::ENTRY));
-      
-      // TODO: Have the actions set up retries themselves?
-      AscendOrDescendRampAction* ascendOrDescendAction = new AscendOrDescendRampAction(*this, ramp->GetID());
-      auto retryLambda = [ramp](Robot& robot) { return robot.ExecuteRampingSequence(ramp); };
-      ascendOrDescendAction->SetRetryFunction(retryLambda);
-      
-      _actionQueue.QueueAtEnd(ascendOrDescendAction);
-      */
+      _actionQueue.QueueAtEnd(new ActionGroupSequential({
+        new DriveToObjectAction(ramp->GetID(), PreActionPose::ENTRY),
+        new AscendOrDescendRampAction(ramp->GetID())}), 3);
       
       return RESULT_OK;
       
@@ -1351,39 +1342,23 @@ namespace Anki {
         return RESULT_FAIL;
       }
     
-      _actionQueue.QueueAtEnd(new DriveToObjectAction(bridge->GetID(), PreActionPose::ENTRY));
-      
-      CrossBridgeAction* crossBridgeAction = new CrossBridgeAction(bridge->GetID());
-      //auto retryLambda = [bridge](Robot& robot) { return robot.ExecuteBridgeCrossingSequence(bridge); };
-      
-      
-      //crossBridgeAction->SetRetryFunction(retryLambda);
-      
-      _actionQueue.QueueAtEnd(crossBridgeAction);
+      _actionQueue.QueueAtEnd(new ActionGroupSequential({
+        new DriveToObjectAction(bridge->GetID(), PreActionPose::ENTRY),
+        new CrossBridgeAction(bridge->GetID())}), 3);
       
       return RESULT_OK;
     
     } // ExecuteBridgeCrossingSequence()
-    
-    
   
     Result Robot::ExecuteDockingSequence(ObjectID objectIDtoDockWith)
     {
       Result lastResult = RESULT_OK;
       
+      const u8 numRetries = 3;
       _actionQueue.QueueAtEnd(new ActionGroupSequential({
         new DriveToObjectAction(objectIDtoDockWith, PreActionPose::DOCKING),
-        new PickUpObjectAction(objectIDtoDockWith)}));
+        new PickUpObjectAction(objectIDtoDockWith)}), numRetries);
       
-      /*
-      _actionQueue.QueueAtEnd(new DriveToObjectAction(*this, objectIDtoDockWith, PreActionPose::DOCKING));
-      
-      PickUpObjectAction* pickUpAction = new PickUpObjectAction(*this, objectIDtoDockWith);
-      auto retryLambda = [objectIDtoDockWith](Robot& robot) { return robot.ExecuteDockingSequence(objectIDtoDockWith); };
-      pickUpAction->SetRetryFunction(retryLambda);
-      
-      _actionQueue.QueueAtEnd(pickUpAction);
-      */
       return lastResult;
       
     } // ExecuteDockingSequence()
@@ -1419,13 +1394,13 @@ namespace Anki {
     
     // Sends a message to the robot to dock with the specified block
     // that it should currently be seeing.
-    Result Robot::DockWithObject(const ObjectID objectID,
+    Result Robot::SendDockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
                                  const DockAction_t dockAction)
     {
       _dockObjectID = objectID;
-      return DockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX);
+      return SendDockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX);
     }
     
     // Sends a message to the robot to dock with the specified block
@@ -1433,13 +1408,13 @@ namespace Anki {
     // the marker can be seen anywhere in the image (same as above function), otherwise the
     // marker's center must be seen at the specified image coordinates
     // with pixel_radius pixels.
-    Result Robot::DockWithObject(const ObjectID objectID,
-                                 const Vision::KnownMarker* marker,
-                                 const Vision::KnownMarker* marker2,
-                                 const DockAction_t dockAction,
-                                 const u16 image_pixel_x,
-                                 const u16 image_pixel_y,
-                                 const u8 pixel_radius)
+    Result Robot::SendDockWithObject(const ObjectID objectID,
+                                     const Vision::KnownMarker* marker,
+                                     const Vision::KnownMarker* marker2,
+                                     const DockAction_t dockAction,
+                                     const u16 image_pixel_x,
+                                     const u16 image_pixel_y,
+                                     const u8 pixel_radius)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
@@ -1454,7 +1429,7 @@ namespace Anki {
       // robot that it has picked up an object we can transition the docking
       // object to being carried, using PickUpDockObject()
       _dockObjectID = objectID;
-      _dockMarker  = marker;
+      _dockMarker   = marker;
       
       // Dock marker has to be a child of the dock block
       if(marker->GetPose().GetParent() != &object->GetPose()) {
@@ -1464,14 +1439,41 @@ namespace Anki {
       }
       
       const Vision::Marker::Code code1 = marker->GetCode();
-      const Vision::Marker::Code code2 = (marker2 == nullptr ? code1 : marker2->GetCode());
-                                          
-      return SendDockWithObject(code1, code2, marker->GetSize(), dockAction,
-                                image_pixel_x, image_pixel_y, pixel_radius);
+      Vision::Marker::Code code2 = code1;
+      
+      if(DA_CROSS_BRIDGE == dockAction) {
+        if(marker2 == nullptr) {
+          PRINT_NAMED_ERROR("Robot.SendDockWithObject.CrossBridgeNeedsTwoMarkers",
+                            "CrossBridge action specified but without specifying second "
+                            "marker for docking.\n");
+          return RESULT_FAIL;
+        }
+        code2 = marker2->GetCode();
+      }
+      else if(marker2 != nullptr) {
+        PRINT_NAMED_WARNING("Robot.SendDockWithObject.UnusedSecondMarker",
+                            "A second marker was provided with an action other than "
+                            "CrossBridge and will be ignored.\n");
+      }
+      
+      CORETECH_ASSERT(code1 <= u8_MAX);
+      CORETECH_ASSERT(code2 <= u8_MAX);
+      
+      // Create message to send to physical robot
+      MessageDockWithObject msg;
+      msg.markerWidth_mm = marker->GetSize();
+      msg.markerType     = static_cast<u8>(code1);
+      msg.markerType2    = static_cast<u8>(code2);
+      msg.dockAction     = dockAction;
+      msg.image_pixel_x  = image_pixel_x;
+      msg.image_pixel_y  = image_pixel_y;
+      msg.pixel_radius   = pixel_radius;
+      
+      return _msgHandler->SendMessage(_ID, msg);
     }
     
     
-    Result Robot::PickUpObject(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
+    Result Robot::AttachObjectToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
     {
       if(!objectID.IsSet()) {
         PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectIDNotSet",
@@ -1523,10 +1525,10 @@ namespace Anki {
       
       return RESULT_OK;
       
-    } // PickUpDockBlock()
+    } // AttachObjectToLift()
     
     
-    Result Robot::PlaceCarriedObject()
+    Result Robot::UnattachCarriedObject()
     {
       if(IsCarryingObject() == false) {
         PRINT_NAMED_WARNING("Robot.PlaceCarriedObject.CarryingObjectNotSpecified",
@@ -1566,7 +1568,7 @@ namespace Anki {
       
       return RESULT_OK;
       
-    } // PlaceCarriedObject()
+    } // UnattachCarriedObject()
     
     
     Result Robot::SetHeadlight(u8 intensity)
@@ -1624,34 +1626,6 @@ namespace Anki {
       MessageExecutePath m;
       m.pathID = _lastSentPathID;
       PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message\n");
-      return _msgHandler->SendMessage(_ID, m);
-    }
-    
-    /*
-    Result Robot::SendDockWithBlock(const Vision::Marker::Code& markerType, const f32 markerWidth_mm, const DockAction_t dockAction) const
-    {
-      return SendDockWithBlock(markerType, markerWidth_mm, dockAction, 0, 0, u8_MAX);
-    }
-     */
-
-    
-    Result Robot::SendDockWithObject(const Vision::Marker::Code& markerType,
-                                     const Vision::Marker::Code& markerType2,
-                                     const f32 markerWidth_mm,
-                                     const DockAction_t dockAction,
-                                     const u16 image_pixel_x,
-                                     const u16 image_pixel_y,
-                                     const u8 pixel_radius) const
-    {
-      MessageDockWithObject m;
-      m.markerWidth_mm = markerWidth_mm;
-      CORETECH_ASSERT(markerType <= u8_MAX);
-      m.markerType = static_cast<u8>(markerType);
-      m.markerType2 = static_cast<u8>(markerType2);
-      m.dockAction = dockAction;
-      m.image_pixel_x = image_pixel_x;
-      m.image_pixel_y = image_pixel_y;
-      m.pixel_radius = pixel_radius;
       return _msgHandler->SendMessage(_ID, m);
     }
     

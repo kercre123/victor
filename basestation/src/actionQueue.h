@@ -116,11 +116,9 @@ namespace Anki {
       
     protected:
       
-      // Derived Actions should implement these. Note that StartAction can
-      // modify the robot's state, while CheckIfDone() just monitors the robot
-      // and cannot modify it.
+      // Derived Actions should implement these.
       virtual ActionResult  Init(Robot& robot) { return SUCCESS; } // Optional: default is no preconditions to meet
-      virtual ActionResult  CheckIfDone(const Robot& robot) = 0;
+      virtual ActionResult  CheckIfDone(Robot& robot) = 0;
       
       //
       // Timing delays:
@@ -138,9 +136,6 @@ namespace Anki {
       
       virtual void Reset() override;
       
-      // For compound actions:
-      
-      
     private:
      
       bool          _preconditionsMet;
@@ -157,8 +152,8 @@ namespace Anki {
       
       ~ActionQueue();
       
-      Result   QueueNext(IActionRunner *);
-      Result   QueueAtEnd(IActionRunner *);
+      Result   QueueNext(IActionRunner *,  u8 numRetries = 0);
+      Result   QueueAtEnd(IActionRunner *, u8 numRetires = 0);
       
       void     Clear();
       
@@ -238,7 +233,7 @@ namespace Anki {
     protected:
 
       virtual ActionResult Init(Robot& robot) override;
-      virtual ActionResult CheckIfDone(const Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
 
       Result SetGoal(const Pose3d& pose);
       
@@ -297,7 +292,7 @@ namespace Anki {
       
     protected:
       
-      virtual ActionResult CheckIfDone(const Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual ActionResult Init(Robot& robot) override;
       
       Radians _turnAngle;
@@ -316,7 +311,7 @@ namespace Anki {
       // IDockAction implements these two required methods from IAction for its
       // derived classes
       virtual ActionResult Init(Robot& robot) override final;
-      virtual ActionResult CheckIfDone(const Robot& robot) override final;
+      virtual ActionResult CheckIfDone(Robot& robot) override final;
       
       // This helper can be optionally overridden by a derived by class to do
       // special things, but for simple usage, derived classes can just rely
@@ -333,7 +328,7 @@ namespace Anki {
       // Pure virtual methods that must be implemented by derived classes
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) = 0;
       virtual PreActionPose::ActionType GetPreActionType() = 0;
-      virtual IAction::ActionResult Verify(const Robot& robot) const = 0;
+      virtual IAction::ActionResult Verify(Robot& robot) const = 0;
       
       const ObjectID& GetDockObjectID() const { return _dockObjectID; }
       
@@ -358,7 +353,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual IAction::ActionResult Verify(const Robot& robot) const override;
+      virtual IAction::ActionResult Verify(Robot& robot) const override;
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
@@ -377,7 +372,7 @@ namespace Anki {
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
-      virtual ActionResult CheckIfDone(const Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
       
       // Need longer than default for check if done:
       virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }
@@ -400,7 +395,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual IAction::ActionResult Verify(const Robot& robot) const override;
+      virtual IAction::ActionResult Verify(Robot& robot) const override;
       
       virtual Result DockWithObjectHelper(Robot& robot,
                                           const std::vector<PreActionPose>& preActionPoses,
@@ -420,7 +415,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual IAction::ActionResult Verify(const Robot& robot) const override;
+      virtual IAction::ActionResult Verify(Robot& robot) const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       

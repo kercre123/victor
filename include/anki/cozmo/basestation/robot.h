@@ -155,40 +155,42 @@ namespace Anki {
       
       // Sends a message to the robot to dock with the specified marker of the
       // specified object that it should currently be seeing.
-      Result DockWithObject(const ObjectID objectID,
+      // If pixel_radius == u8_MAX, the marker can be seen anywhere in the image,
+      // otherwise the marker's center must be seen within pixel_radius of the
+      // specified image coordinates.
+      // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indiciate
+      // the expected marker on the end of the bridge. Otherwise, it is ignored.
+      Result SendDockWithObject(const ObjectID objectID,
+                                const Vision::KnownMarker* marker,
+                                const Vision::KnownMarker* marker2,
+                                const DockAction_t dockAction,
+                                const u16 image_pixel_x,
+                                const u16 image_pixel_y,
+                                const u8 pixel_radius);
+      
+      // Same as above but without specifying image location for marker
+      Result SendDockWithObject(const ObjectID objectID,
                             const Vision::KnownMarker* marker,
                             const Vision::KnownMarker* marker2,
                             const DockAction_t dockAction);
       
-      // Sends a message to the robot to dock with the specified marker of the
-      // specified object, which it should currently be seeing. If pixel_radius == u8_MAX,
-      // the marker can be seen anywhere in the image (same as above function), otherwise the
-      // marker's center must be seen at the specified image coordinates
-      // with pixel_radius pixels.
-      // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indiciate
-      // the expected marker on the end of the bridge. Otherwise, it is ignored.
-      Result DockWithObject(const ObjectID objectID,
-                            const Vision::KnownMarker* marker,
-                            const Vision::KnownMarker* marker2,
-                            const DockAction_t dockAction,
-                            const u16 image_pixel_x,
-                            const u16 image_pixel_y,
-                            const u8 pixel_radius);
-      
       // Transitions the object that robot was docking with to the one that it
       // is carrying, and puts it in the robot's pose chain, attached to the
       // lift. Returns RESULT_FAIL if the robot wasn't already docking with
-      // a block.
-      Result PickUpDockObject();
+      // an object.
+      //Result PickUpDockObject();
+      Result AttachDockObjectToLift();
       
       // Same as above, but with specified object
-      Result PickUpObject(const ObjectID& dockObjectID,
-                          const Vision::KnownMarker* dockMarker);
+      //Result PickUpObject(const ObjectID& dockObjectID,
+      //                    const Vision::KnownMarker* dockMarker);
+      Result AttachObjectToLift(const ObjectID& dockObjectID,
+                                const Vision::KnownMarker* dockMarker);
       
       // Places the object that the robot was carrying in its current position
       // w.r.t. the world, and removes it from the lift pose chain so it is no
-      // longer attached to the robot.
-      Result PlaceCarriedObject();
+      // longer "attached" to the robot.
+      Result UnattachCarriedObject();
       
       // Plan a path to an available docking pose of the specified object, and
       // then dock with it.
@@ -522,19 +524,6 @@ namespace Anki {
       // Sends a path to the robot to be immediately executed
       Result SendExecutePath(const Planning::Path& path) const;
       
-      // Sends a message to the robot to dock with the specified object
-      // that it should currently be seeing. If pixel_radius == u8_MAX,
-      // the marker can be seen anywhere in the image (same as above function), otherwise the
-      // marker's center must be seen at the specified image coordinates
-      // with pixel_radius pixels.
-      Result SendDockWithObject(const Vision::Marker::Code& markerType,
-                                const Vision::Marker::Code& markerType2,
-                                const f32 markerWidth_mm,
-                                const DockAction_t dockAction,
-                                const u16 image_pixel_x,
-                                const u16 image_pixel_y,
-                                const u8 pixel_radius) const;
-
       // Turn on/off headlight LEDs
       Result SendHeadlight(u8 intensity);
       
@@ -586,8 +575,8 @@ namespace Anki {
       _carryingObjectID.UnSet();
     }
 
-    inline Result Robot::PickUpDockObject() {
-      return PickUpObject(_dockObjectID, _dockMarker);
+    inline Result Robot::AttachDockObjectToLift() {
+      return AttachObjectToLift(_dockObjectID, _dockMarker);
     }
     
     
