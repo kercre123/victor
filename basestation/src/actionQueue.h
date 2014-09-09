@@ -483,6 +483,38 @@ namespace Anki {
       
     }; // class AscendOrDesceneRampAction
     
+    
+    class PlayAnimationAction : public IAction
+    {
+    public:
+      PlayAnimationAction(AnimationID_t animID);
+      
+      virtual const std::string& GetName() const override;
+      
+    protected:
+      
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      
+      AnimationID_t _animID;
+      
+    }; // class PlayAnimationAction
+    
+    
+    class PlaySoundAction : public IAction
+    {
+    public:
+      PlaySoundAction(SoundID_t soundID);
+      
+      virtual const std::string& GetName() const override;
+      
+    protected:
+      
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      
+      SoundID_t _soundID;
+
+    }; // class PlaySoundAction
+    
   } // namespace Cozmo
 } // namespace Anki
 

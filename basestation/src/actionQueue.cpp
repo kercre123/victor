@@ -1282,6 +1282,52 @@ namespace Anki {
       return SUCCESS;
     } // Verify()
     
+    
+#pragma mark ---- PlayAnimationAction ----
+    
+    PlayAnimationAction::PlayAnimationAction(AnimationID_t animID)
+    : _animID(animID)
+    {
+      
+    }
+    
+    const std::string& PlayAnimationAction::GetName() const
+    {
+      static const std::string name("PlayAnimationAction");
+      return name;
+    }
+    
+    IAction::ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
+    {
+      if(robot.SendPlayAnimation(_animID) == RESULT_OK) {
+        return SUCCESS;
+      } else {
+        return FAILURE_ABORT;
+      }
+    }
+    
+#pragma mark ---- PlaySoundAction ----
+    
+    PlaySoundAction::PlaySoundAction(SoundID_t soundID)
+    : _soundID(soundID)
+    {
+      
+    }
+    
+    const std::string& PlaySoundAction::GetName() const
+    {
+      static const std::string name("PlaySoundAction");
+      return name;
+    }
+    
+    IAction::ActionResult PlaySoundAction::CheckIfDone(Robot& robot)
+    {
+      // TODO: Implement!
+      return FAILURE_ABORT;
+    }
+    
+    
+    
     /*
     static void TestInstantiation(void)
     {
