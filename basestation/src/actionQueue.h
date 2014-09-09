@@ -72,12 +72,6 @@ namespace Anki {
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
       
-#     if USE_ACTION_CALLBACKS
-      using ActionCompletionCallback = std::function<void(ActionResult)>;
-      
-      void AddCompletionCallback(ActionCompletionCallback callback);
-#     endif
-      
     protected:
       
       bool RetriesRemain();
@@ -85,16 +79,21 @@ namespace Anki {
       // Derived actions can use this to set custom status messages here.
       void SetStatus(const std::string& msg);
 
-#     if USE_ACTION_CALLBACKS
-      void RunCallbacks(ActionResult result) const;
-#     endif
-      
     private:
       u8 _numRetriesRemaining;
       
       std::string   _statusMsg;
       
+      
 #     if USE_ACTION_CALLBACKS
+    public:
+      using ActionCompletionCallback = std::function<void(ActionResult)>;
+      void  AddCompletionCallback(ActionCompletionCallback callback);
+      
+    protected:
+      void RunCallbacks(ActionResult result) const;
+      
+    private:
       std::list<ActionCompletionCallback> _completionCallbacks;
 #     endif
       
