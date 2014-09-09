@@ -289,6 +289,8 @@ namespace Anki {
     
     IAction::ActionResult ActionGroupSequential::Update(Robot& robot)
     {
+      SetStatus(GetName());
+      
       if(_currentActionPair != _actions.end())
       {
         bool& isDone = _currentActionPair->first;
@@ -298,6 +300,7 @@ namespace Anki {
         assert(currentAction != nullptr); // should not have been allowed in by constructor
         
         const ActionResult subResult = currentAction->Update(robot);
+        SetStatus(currentAction->GetStatus());
         switch(subResult)
         {
           case SUCCESS:
@@ -355,6 +358,8 @@ namespace Anki {
       // last action actually finishes.
       ActionResult result = SUCCESS;
       
+      SetStatus(GetName());
+      
       for(auto & currentActionPair : _actions)
       {
         bool& isDone = currentActionPair.first;
@@ -363,6 +368,7 @@ namespace Anki {
           assert(currentAction != nullptr); // should not have been allowed in by constructor
           
           const ActionResult subResult = currentAction->Update(robot);
+          SetStatus(currentAction->GetStatus());
           switch(subResult)
           {
             case SUCCESS:
