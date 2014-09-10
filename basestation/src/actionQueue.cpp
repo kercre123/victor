@@ -1320,7 +1320,33 @@ namespace Anki {
       return FAILURE_ABORT;
     }
     
+#pragma mark ---- WaitAction ----
     
+    WaitAction::WaitAction(f32 waitTimeInSeconds)
+    : _waitTimeInSeconds(waitTimeInSeconds)
+    , _doneTimeInSeconds(-1.f)
+    {
+      // Put the wait time with two decimals of precision in the action's name
+      char tempBuffer[32];
+      snprintf(tempBuffer, 32, "Wait%.2fSecondsAction", _waitTimeInSeconds);
+      _name = tempBuffer;
+    }
+    
+    IActionRunner::ActionResult WaitAction::Init(Robot& robot)
+    {
+      _doneTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _waitTimeInSeconds;
+      return SUCCESS;
+    }
+    
+    IActionRunner::ActionResult WaitAction::CheckIfDone(Robot& robot)
+    {
+      assert(_doneTimeInSeconds > 0.f);
+      if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _doneTimeInSeconds) {
+        return SUCCESS;
+      } else {
+        return RUNNING;
+      }
+    }
     
     /*
     static void TestInstantiation(void)

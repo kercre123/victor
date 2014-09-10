@@ -492,6 +492,26 @@ namespace Anki {
 
     }; // class PlaySoundAction
     
+    // Waits for a specified amount of time in seconds, from the time the action
+    // is begun. Returns RUNNING while waiting and SUCCESS when the time has
+    // elapsed.
+    class WaitAction : public IAction
+    {
+    public:
+      WaitAction(f32 waitTimeInSeconds);
+      
+      virtual const std::string& GetName() const override { return _name; }
+      
+    protected:
+      
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      
+      f32         _waitTimeInSeconds;
+      f32         _doneTimeInSeconds;
+      std::string _name;
+      
+    };
   } // namespace Cozmo
 } // namespace Anki
 
