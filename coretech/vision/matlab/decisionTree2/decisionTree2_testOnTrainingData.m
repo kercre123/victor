@@ -8,6 +8,7 @@
 
 function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, featureValues, labels, labelNames, probeLocationsXGrid, probeLocationsYGrid, varargin)
     useMex = false;
+    verbose = true;
     numThreads = 1;
     
     parseVarargin(varargin{:});
@@ -56,25 +57,7 @@ function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, feature
             leftChildIndexs = leftChildIndexs';
         end
         
-%         tic
-        labelIds = mexDecisionTree2_testOnTrainingData_innerLoop(featureValues, whichFeatures, u8Thresholds, leftChildIndexs, samplePositions - 1, numThreads);
-%         toc
-        
-%         tic
-        labelIds(labelIds == -1) = maxLabel + 1;
-%         toc
-        
-%         tic
-        for iImage = 1:numImages
-            labelID = labelIds(iImage);
-            
-            numTotal(labelID) = numTotal(labelID) + 1;
-
-            if labelID == labels(iImage);
-                numCorrect(labelID) = numCorrect(labelID) + 1;
-            end
-        end
-%         toc
+        [numCorrect, numTotal, labelIds] = mexDecisionTree2_testOnTrainingData_innerLoop(featureValues, whichFeatures, u8Thresholds, leftChildIndexs, samplePositions - 1, labels, numThreads);
     else % if useMex
         for iImage = 1:numImages
             curImage = featureValues(:, iImage);
@@ -98,24 +81,26 @@ function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, feature
         end
     end % if useMex ... else
     
-    assert(iImage == sum(numTotal));
+    assert(numImages == sum(numTotal));
     
     labelNames{end+1} = 'Unknown';
     
     assert(length(numCorrect) == length(labelNames) || length(numCorrect) == (length(labelNames)+1));
     
-    % Sort from worst to best accuracy
-    all = zeros(2, length(numCorrect)); 
-    all(1,:) = numCorrect./numTotal; 
-    all(2,:) = 1:length(numCorrect);
-    all = sortrows(all', 1);
-    all = all(:,2);
-    
-    for iName = 1:length(numCorrect)
-        disp(sprintf('%s %d/%d=%f', labelNames{all(iName)}, numCorrect(all(iName)), numTotal(all(iName)), numCorrect(all(iName))/numTotal(all(iName))));
+    if verbose
+        % Sort from worst to best accuracy
+        all = zeros(2, length(numCorrect)); 
+        all(1,:) = numCorrect./numTotal; 
+        all(2,:) = 1:length(numCorrect);
+        all = sortrows(all', 1);
+        all = all(:,2);
+
+        for iName = 1:length(numCorrect)
+            disp(sprintf('%s %d/%d=%f', labelNames{all(iName)}, numCorrect(all(iName)), numTotal(all(iName)), numCorrect(all(iName))/numTotal(all(iName))));
+        end
+
+        disp(' ');
     end
-    
-    disp(' ');
     
     disp(sprintf('Total accuracy %d/%d = %f', sum(numCorrect), sum(numTotal), sum(numCorrect)/sum(numTotal)))
 end % decisionTree2_testOnTrainingData()
