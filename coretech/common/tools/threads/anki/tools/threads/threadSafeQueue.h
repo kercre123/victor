@@ -3,7 +3,9 @@ File: threadSafeQueue.h
 Author: Peter Barnum
 Created: 2014
 
-Simple thread-safe queue. Works in Windows or Posix.
+WARNING: Difficult to use correctly. You must handle Lock and Unlock manually
+
+Thread-safe queue. Works in Windows or Posix.
 
 Copyright Anki, Inc. 2014
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -23,18 +25,24 @@ namespace Anki
   public:
     ThreadSafeQueue();
 
-    Type Front() const;
+    // WARNING: You must Lock and Unlock manually
+    // This is for efficiency, though it makes code errors potentially disastrous
 
-    void Pop();
+    void Lock() const;
+    void Unlock() const;
 
-    void Push(const Type &newValue);
-
-    bool Empty() const;
-
+    // WARNING: None of these check the mutex lock
+    const Type& Front_unsafe() const;
+    void Pop_unsafe();
+    void Push_unsafe(Type newValue);
+    s32 Size_unsafe() const;
+    
+    std::queue<Type>& get_buffer();
+    
   protected:
     mutable SimpleMutex mutex;
 
-    std::queue<Type> buffers;
+    std::queue<Type> buffer;
   }; // class ThreadSafeQueue
 
   template<typename Type> ThreadSafeQueue<Type>::ThreadSafeQueue()
@@ -45,56 +53,43 @@ namespace Anki
     pthread_mutex_init(&mutex, NULL);
 #endif
 
-    buffers = std::queue<Type>();
+    buffer = std::queue<Type>();
   } // template<typename Type> ThreadSafeQueue::ThreadSafeQueue()
 
-  template<typename Type> Type ThreadSafeQueue<Type>::Front() const
-  {
-    Type value;
-
-    LockSimpleMutex(mutex);
-
-    value = buffers.front();
-
-    UnlockSimpleMutex(mutex);
-
-    return value;
-  } // template<typename Type> ThreadSafeQueue::Type Pop()
-
-  template<typename Type> void ThreadSafeQueue<Type>::Pop()
+  template<typename Type> void ThreadSafeQueue<Type>::Lock() const
   {
     LockSimpleMutex(mutex);
+  } // ThreadSafeQueue<Type>::Lock()
 
-    buffers.pop();
-
-    UnlockSimpleMutex(mutex);
-  } // template<typename Type> ThreadSafeQueue::Type Pop()
-
-  template<typename Type> void ThreadSafeQueue<Type>::Push(const Type &newValue)
+  template<typename Type> void ThreadSafeQueue<Type>::Unlock() const
   {
-    LockSimpleMutex(mutex);
-
-    buffers.push(newValue);
-
     UnlockSimpleMutex(mutex);
-  } // template<typename Type> ThreadSafeQueue::void Push(Type newValue)
+  } // ThreadSafeQueue<Type>::Unlock()
 
-  template<typename Type> bool ThreadSafeQueue<Type>::Empty() const
+  template<typename Type> const Type& ThreadSafeQueue<Type>::Front_unsafe() const
   {
-    bool isEmpty;
+    return buffer.front();
+  } // template<typename Type> ThreadSafeQueue::Type Front_unsafe()
 
-    LockSimpleMutex(mutex);
+  template<typename Type> void ThreadSafeQueue<Type>::Pop_unsafe()
+  {
+    buffer.pop();
+  } // ThreadSafeQueue<Type>::Pop_unsafe()
 
-    if(buffers.empty()) {
-      isEmpty = true;
-    } else {
-      isEmpty = false;
-    }
+  template<typename Type> void ThreadSafeQueue<Type>::Push_unsafe(Type newValue)
+  {
+    buffer.push(newValue);
+  } // template<typename Type> ThreadSafeQueue::void Push_unsafe(Type newValue)
 
-    UnlockSimpleMutex(mutex);
-
-    return isEmpty;
-  } // template<typename Type> bool ThreadSafeQueue::IsEmpty()
+  template<typename Type> s32 ThreadSafeQueue<Type>::Size_unsafe() const
+  {
+    return buffer.size();
+  } // template<typename Type> bool ThreadSafeQueue::Size_unsafe()
+  
+  template<typename Type> std::queue<Type>& ThreadSafeQueue<Type>::get_buffer()
+  {
+    return buffer;
+  }
 } // namespace Anki
 
 #endif // _THREAD_SAFE_QUEUE_H_

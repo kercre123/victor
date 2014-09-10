@@ -17,7 +17,19 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities_c.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-#include "opencv2/core/core.hpp"
+namespace cv {
+  class Mat;
+  template<typename Type> class Mat_;
+
+  template<typename Type> class Point_;
+  template<typename Type> class Point3_;
+
+  typedef Point_<int> Point2i;
+  typedef Point2i Point;
+
+  template<typename Type> class Scalar_;
+  typedef Scalar_<double> Scalar;
+}
 #endif
 
 namespace Anki
@@ -103,8 +115,6 @@ namespace Anki
     template<typename Type> inline Type saturate_cast(const f64 v);
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-#include "opencv2/core/core.hpp"
-
     // Converts from typeid names to openCV types
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth);
 
@@ -135,6 +145,13 @@ namespace Anki
     f32 GetTimeF32(); // In seconds
     f64 GetTimeF64(); // In seconds
     u32 GetTimeU32(); // In microseconds
+
+    // Returns the percentage of cpu usage for this process, since the last call (100% is for the total maximum of all cores, including virtual Hyperthreaded cores).
+    // NOTE: The first call will return zero.
+    // NOTE: Only works on systems with an operating system.
+    // WARNING: The more often this function is called, the less accurate it will be. Once a second should be plenty.
+    // WARNING: Not multi-thread safe (though it should give the correct answer when called from one thread at a time)
+    f32 GetCpuUsage();
   } // namespace Embedded
 } // namespace Anki
 

@@ -11,6 +11,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/serialize.h"
 
+#define COMPRESSION_LEVEL 9
+#define MAX_TREE_NODES 1000000
+
 using namespace Anki;
 using namespace Anki::Embedded;
 
@@ -104,33 +107,42 @@ template<typename Type> Result SaveList(const FixedLengthList<Type> &in, const c
 
   const ConstArraySlice<Type> arr = in;
 
-  return arr.get_array().SaveBinary(filenameBuffer, scratch);
+  return arr.get_array().SaveBinary(filenameBuffer, COMPRESSION_LEVEL, scratch);
 }
 
 void PrintUsage()
 {
-  printf(
-    "Usage: run_trainDecisionTree <filenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistance> <maxPrimaryThreads> <maxSecondaryThreads>\n"
-    "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20 8 8");
+  CoreTechPrint(
+    "Usage: run_trainDecisionTree <inFilenamePrefix> <numFeatures> <leafNodeFraction> <leafNodeNumItems> <u8MinDistance> <maxThreads> <outFilenamePrefix>\n"
+    "Example: run_trainDecisionTree c:/tmp/treeTraining_ 900 1.0 1 20 8 c:/tmp/treeTrainingOut_");
 }
 
 int main(int argc, const char* argv[])
 {
+  f64 time0 = GetTimeF64();
+
+  const f64 benchmarkSampleEveryNSeconds = 5.0;
+
   if(argc != 8) {
     PrintUsage();
     return -10;
   }
 
-  const char * filenamePrefix = argv[1];
+  const char * inFilenamePrefix = argv[1];
   const s32 numFeatures = atol(argv[2]);
   const f32 leafNodeFraction = static_cast<f32>(atof(argv[3]));
   const s32 leafNodeNumItems = atol(argv[4]);
   const s32 u8MinDistance = atol(argv[5]);
-  const s32 maxPrimaryThreads = atol(argv[6]);
-  const s32 maxSecondaryThreads = atol(argv[7]);
+  const s32 maxThreads = atol(argv[6]);
+  const char * outFilenamePrefix = argv[7];
 
-  const s32 bufferSize = 50000000;
-  MemoryStack memory(malloc(bufferSize), bufferSize);
+  const s32 memorySize = 1000000000;
+  const s32 scratchSize = 50000000;
+  MemoryStack memory(malloc(memorySize), memorySize);
+
+  AnkiConditionalErrorAndReturnValue(
+    AreValid(memory),
+    -1, "run_trainDecisionTree", "Out of memory");
 
   std::vector<U8Bool> featuresUsed;
   FixedLengthList<const char *> labelNames;
@@ -143,23 +155,39 @@ int main(int argc, const char* argv[])
 
   // Load all inputs
   {
-    MemoryStack scratch1(malloc(bufferSize), bufferSize);
-    MemoryStack scratch2(malloc(bufferSize), bufferSize);
+    MemoryStack scratch1(malloc(scratchSize), scratchSize);
+    MemoryStack scratch2(malloc(scratchSize), scratchSize);
 
-    featuresUsed = LoadIntoList_grayvalueBool(filenamePrefix, "featuresUsed.array", scratch1, scratch2);
-    labelNames = LoadIntoList_permanentBuffer<const char *>(filenamePrefix, "labelNames.array", scratch1, memory);
-    labels = LoadIntoList_temporaryBuffer<s32>(filenamePrefix, "labels.array", scratch1, scratch2, memory);
-    u8ThresholdsToUse = LoadIntoList_temporaryBuffer<u8>(filenamePrefix, "u8ThresholdsToUse.array", scratch1, scratch2, memory);
+    AnkiConditionalErrorAndReturnValue(
+      AreValid(scratch1, scratch2),
+      -1, "run_trainDecisionTree", "Out of memory");
+
+    CoreTechPrint("Loading Inputs...\n");
+
+    featuresUsed = LoadIntoList_grayvalueBool(inFilenamePrefix, "featuresUsed.array", scratch1, scratch2);
+    labelNames = LoadIntoList_permanentBuffer<const char *>(inFilenamePrefix, "labelNames.array", scratch1, memory);
+    labels = LoadIntoList_temporaryBuffer<s32>(inFilenamePrefix, "labels.array", scratch1, scratch2, memory);
+    u8ThresholdsToUse = LoadIntoList_temporaryBuffer<u8>(inFilenamePrefix, "u8ThresholdsToUse.array", scratch1, scratch2, memory);
+
+    f64 t0 = GetTimeF64();
 
     for(s32 iFeature=0; iFeature<numFeatures; iFeature++) {
       const s32 filenameBufferLength = 1024;
       char filenameBuffer[filenameBufferLength];
       snprintf(filenameBuffer, filenameBufferLength, "featureValues%d.array", iFeature);
-      featureValues[iFeature] = LoadIntoList_temporaryBuffer<u8>(filenamePrefix, filenameBuffer, scratch1, scratch2, memory);
+      featureValues[iFeature] = LoadIntoList_temporaryBuffer<u8>(inFilenamePrefix, filenameBuffer, scratch1, scratch2, memory);
+
+      if(iFeature > 0 && iFeature % 50 == 0) {
+        f64 t1 = GetTimeF64();
+        CoreTechPrint("Loaded %d/%d in %f seconds\n", iFeature, numFeatures, t1-t0);
+        t0 = t1;
+      }
     }
 
     free(scratch1.get_buffer());
     free(scratch2.get_buffer());
+
+    CoreTechPrint("Done loading\n");
   } // Load all inputs
 
   AnkiConditionalErrorAndReturnValue(
@@ -176,37 +204,49 @@ int main(int argc, const char* argv[])
   // Add a const qualifier
   FixedLengthList<const FixedLengthList<u8> > featureValuesConst = *reinterpret_cast<FixedLengthList<const FixedLengthList<u8> >* >(&featureValues);
 
-  std::vector<DecisionTreeNode> decisionTree;
+  ThreadSafeFixedLengthList<DecisionTreeNode> decisionTree(MAX_TREE_NODES, memory);
+  std::vector<f32> cpuUsage;
+
+  AnkiConditionalErrorAndReturnValue(
+    AreValid(decisionTree),
+    -1, "run_trainDecisionTree", "Out of memory");
+
   const Result result = BuildTree(
     featuresUsed,
     labelNames, labels,
     featureValuesConst,
     leafNodeFraction, leafNodeNumItems, u8MinDistance,
     u8ThresholdsToUse,
-    maxPrimaryThreads, maxSecondaryThreads,
+    maxThreads,
+    benchmarkSampleEveryNSeconds,
+    cpuUsage,
     decisionTree);
 
-  // We're done with this memory once BuildTree returns
-  free(memory.get_buffer());
+  // result could fail, but let's try to save anyway
+  if(result != RESULT_OK) {
+    CoreTechPrint("BuildTree failed, but trying to save anyway...\n");
+  }
 
   // Save the output
   {
-    const s32 numNodes = decisionTree.size();
+    const FixedLengthList<DecisionTreeNode> unsafeDecisionTree = decisionTree.get_buffer();
+    const s32 numNodes = unsafeDecisionTree.get_size();
     const s32 saveBufferSize = 10000000 + 3 * numNodes * sizeof(DecisionTreeNode);
 
     MemoryStack scratch(malloc(saveBufferSize), saveBufferSize);
 
-    FixedLengthList<s32> depths(numNodes, scratch);
-    FixedLengthList<f32> bestEntropys(numNodes, scratch);
-    FixedLengthList<s32> whichFeatures(numNodes, scratch);
-    FixedLengthList<u8>  u8Thresholds(numNodes, scratch);
-    FixedLengthList<s32> leftChildIndexs(numNodes, scratch);
+    FixedLengthList<s32> depths(numNodes, scratch, Flags::Buffer(true, false, true));
+    FixedLengthList<f32> bestEntropys(numNodes, scratch, Flags::Buffer(true, false, true));
+    FixedLengthList<s32> whichFeatures(numNodes, scratch, Flags::Buffer(true, false, true));
+    FixedLengthList<u8>  u8Thresholds(numNodes, scratch, Flags::Buffer(true, false, true));
+    FixedLengthList<s32> leftChildIndexs(numNodes, scratch, Flags::Buffer(true, false, true));
+    FixedLengthList<f32> cpuUsageSamples(cpuUsage.size(), scratch, Flags::Buffer(true, false, true));
 
-    AnkiConditionalErrorAndReturnValue(AreValid(depths, bestEntropys, whichFeatures, u8Thresholds, leftChildIndexs),
+    AnkiConditionalErrorAndReturnValue(AreValid(depths, bestEntropys, whichFeatures, u8Thresholds, leftChildIndexs, cpuUsageSamples),
       -7, "run_trainDecisionTree", "Out of memory for saving");
 
     for(s32 iNode=0; iNode<numNodes; iNode++) {
-      const DecisionTreeNode &curNode = decisionTree[iNode];
+      const DecisionTreeNode &curNode = unsafeDecisionTree[iNode];
 
       depths[iNode] = curNode.depth;
       bestEntropys[iNode] = curNode.bestEntropy;
@@ -215,14 +255,26 @@ int main(int argc, const char* argv[])
       leftChildIndexs[iNode] = curNode.leftChildIndex;
     } // for(s32 iNode=0; iNode<numNodes; iNode++)
 
-    SaveList(depths, filenamePrefix, "out_depths.array", scratch);
-    SaveList(bestEntropys, filenamePrefix, "out_bestEntropys.array", scratch);
-    SaveList(whichFeatures, filenamePrefix, "out_whichFeatures.array", scratch);
-    SaveList(u8Thresholds, filenamePrefix, "out_u8Thresholds.array", scratch);
-    SaveList(leftChildIndexs, filenamePrefix, "out_leftChildIndexs.array", scratch);
+    SaveList(depths, outFilenamePrefix, "depths.array", scratch);
+    SaveList(bestEntropys, outFilenamePrefix, "bestEntropys.array", scratch);
+    SaveList(whichFeatures, outFilenamePrefix, "whichFeatures.array", scratch);
+    SaveList(u8Thresholds, outFilenamePrefix, "u8Thresholds.array", scratch);
+    SaveList(leftChildIndexs, outFilenamePrefix, "leftChildIndexs.array", scratch);
+
+    for(u32 iSample=0; iSample<cpuUsage.size(); iSample++) {
+      cpuUsageSamples[iSample] = cpuUsage[iSample];
+    } // for(s32 iNode=0; iNode<numNodes; iNode++)
+
+    SaveList(cpuUsageSamples, outFilenamePrefix, "cpuUsageSamples.array", scratch);
 
     free(scratch.get_buffer());
   } // Save the output
+
+  free(memory.get_buffer());
+
+  f64 time1 = GetTimeF64();
+
+  CoreTechPrint("Tree training took %f seconds. Tree is %d nodes.\n", time1-time0, static_cast<s32>(decisionTree.get_buffer().get_size()));
 
   return 0;
 }

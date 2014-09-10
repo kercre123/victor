@@ -380,7 +380,7 @@ namespace Anki
 
       Result BinaryTracker::ShowTemplate(const char * windowName, const bool waitForKeypress, const bool fitImageToWindow, const f32 displayScale) const
       {
-#ifndef ANKICORETECH_EMBEDDED_USE_OPENCV
+#if !ANKICORETECH_EMBEDDED_USE_OPENCV || defined(__GNUC__)
         return RESULT_FAIL;
 #else
         //if(!this->IsValid())
@@ -403,7 +403,7 @@ namespace Anki
           cv::waitKey();
 
         return RESULT_OK;
-#endif // #ifndef ANKICORETECH_EMBEDDED_USE_OPENCV ... #else
+#endif // #if !ANKICORETECH_EMBEDDED_USE_OPENCV ... #else
       } // Result BinaryTracker::ShowTemplate()
 
       bool BinaryTracker::IsValid() const

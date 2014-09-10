@@ -23,6 +23,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/cozmo/robot/hal.h"
 #else
 #include <sys/time.h>
+#include <sys/resource.h>
 #endif
 
 #define PrintfOneArray_FORMAT_STRING_2 "%d %d "
@@ -230,12 +231,12 @@ namespace Anki
       const f32 timeInSeconds = Anki::Cozmo::HAL::GetMicroCounter() / 1000000.0f;
 #else // Generic Unix
       timespec ts;
-      clock_GetTimeF32(CLOCK_MONOTONIC, &ts);
+      clock_gettime(CLOCK_MONOTONIC, &ts);
       const f32 timeInSeconds = (f32)(ts.tv_sec) + (f32)(ts.tv_nsec)/1000000000.0f;
 #endif
 
       return timeInSeconds;
-    }
+    } // f32 GetTimeF32()
 
     f64 GetTimeF64()
     {
@@ -276,12 +277,12 @@ namespace Anki
       const f64 timeInSeconds = Anki::Cozmo::HAL::GetMicroCounter() / 1000000.0;
 #else // Generic Unix
       timespec ts;
-      clock_GetTime(CLOCK_MONOTONIC, &ts);
+      clock_gettime(CLOCK_MONOTONIC, &ts);
       const f64 timeInSeconds = (f64)(ts.tv_sec) + (f64)(ts.tv_nsec)/1000000000.0;
 #endif
 
       return timeInSeconds;
-    }
+    } // f64 GetTimeF64()
 
     u32 GetTimeU32()
     {
@@ -316,6 +317,101 @@ namespace Anki
       clock_gettime(CLOCK_MONOTONIC, &ts);
       return (u32)ts.tv_sec * 1000000 + (u32)(ts.tv_nsec/1000);
 #endif
+    } // u32 GetTimeU32()
+
+#if defined(_MSC_VER)
+    // returns secondTime - firstTime
+    static u64 FiletimeDelta(const FILETIME &secondTime, const FILETIME &firstTime)
+    {
+      LARGE_INTEGER firstTimeI;
+      LARGE_INTEGER secondTimeI;
+
+      firstTimeI.LowPart = firstTime.dwLowDateTime;
+      firstTimeI.HighPart = firstTime.dwHighDateTime;
+
+      secondTimeI.LowPart = secondTime.dwLowDateTime;
+      secondTimeI.HighPart = secondTime.dwHighDateTime;
+
+      return secondTimeI.QuadPart - firstTimeI.QuadPart;
     }
+#endif
+
+    f32 GetCpuUsage()
+    {
+      static bool firstCall = true;
+
+      f64 percentUsage;
+
+#if defined(_MSC_VER)
+
+      FILETIME idleTime;
+      FILETIME kernelTime;
+      FILETIME userTime;
+      GetSystemTimes(&idleTime, &kernelTime, &userTime);
+
+      static FILETIME lastIdleTime;
+      static FILETIME lastKernelTime;
+      static FILETIME lastUserTime;
+      // static s32 numCpus;
+
+      if(firstCall) {
+        // SYSTEM_INFO sysinfo;
+        // GetSystemInfo( &sysinfo );
+        // numCpus = sysinfo.dwNumberOfProcessors;
+
+        percentUsage = 0;
+        firstCall = false;
+      } else {
+        const u64 idleDelta = FiletimeDelta(idleTime, lastIdleTime);
+        const u64 kernelDelta = FiletimeDelta(kernelTime, lastKernelTime);
+        const u64 userDelta = FiletimeDelta(userTime, lastUserTime);
+
+        const u64 totalSystemDelta = kernelDelta + userDelta;
+
+        //percentUsage = 100.0f * static_cast<f32>(numCpus) * static_cast<f32>(totalSystemDelta - idleDelta) / static_cast<f32>(totalSystemDelta);
+        percentUsage = 100.0 * static_cast<f64>(totalSystemDelta - idleDelta) / static_cast<f64>(totalSystemDelta);
+      }
+
+      lastIdleTime = idleTime;
+      lastKernelTime = kernelTime;
+      lastUserTime = userTime;
+
+#elif defined(__EDG__)  // ARM-MDK
+      // Cannot query on the M4
+      percentUsage = 0;
+#else // Generic Unix or OSX
+
+      const f64 numCpus = sysconf( _SC_NPROCESSORS_ONLN );
+      
+      f64 curCpuTime;
+      f64 curTime;
+
+      static f64 lastCpuTime;
+      static f64 lastTime;
+
+      struct rusage usage;
+      getrusage(RUSAGE_SELF, &usage);
+
+      curTime = GetTimeF64();
+
+      // User + system (kernel) time
+      curCpuTime =
+        static_cast<f64>(usage.ru_utime.tv_sec) + static_cast<f64>(usage.ru_utime.tv_usec) / 1000000.0 +
+        static_cast<f64>(usage.ru_stime.tv_sec) + static_cast<f64>(usage.ru_stime.tv_usec) / 1000000.0;
+
+      if(firstCall) {
+        percentUsage = 0;
+        firstCall = false;
+      } else {
+        // TODO: Check that everything works, with the number of cores and everything
+        percentUsage = 100.0 * (curCpuTime - lastCpuTime) / (curTime - lastTime) / numCpus;
+      }
+
+      lastCpuTime = curCpuTime;
+      lastTime = curTime;
+#endif
+
+      return static_cast<f32>(percentUsage);
+    } // f32 GetCpuUsage()
   } // namespace Embedded
 } // namespace Anki

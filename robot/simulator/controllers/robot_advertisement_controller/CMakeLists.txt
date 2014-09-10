@@ -22,19 +22,17 @@ set(HEADER_FILES
   ${COZMO_INCLUDE_FILES}
 )
 
-if(NOT WIN32)
-  add_executable(robot_advertisement_controller ${SOURCE_FILES} ${HEADER_FILES})
+add_executable(robot_advertisement_controller ${SOURCE_FILES} ${HEADER_FILES})
 
-  target_link_libraries(robot_advertisement_controller 
-    CppController # Webots C++ Controller
-    CoreTech_Common_Robot
-    CoreTech_Messaging_Robot
-  )
+target_link_libraries(robot_advertisement_controller 
+  CppController # Webots C++ Controller
+  CoreTech_Common_Robot
+  CoreTech_Messaging_Robot
+)
   
-  set_target_properties(robot_advertisement_controller PROPERTIES
-      FOLDER "Webots Controllers"
-  )
-endif()
+set_target_properties(robot_advertisement_controller PROPERTIES
+    FOLDER "Webots Controllers"
+)
 
 # Make sure a copy of the target exists in robot_advertisement_controller/
 # no matter where the target is actually built.

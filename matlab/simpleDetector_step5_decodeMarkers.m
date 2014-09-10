@@ -8,8 +8,8 @@ function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, 
     % imshow(label2rgb(regionImg, 'jet', 'k', 'shuffle'))
     
     persistent allMarkerImages;
-    persistent minimalProbeTree;
-    persistent minimalProbeTreeFilename;
+    persistent tree;
+    persistent treeFilename;
     
     if strcmp(embeddedConversions.extractFiducialMethod, 'matlab_exhaustive') || strcmp(embeddedConversions.extractFiducialMethod, 'c_exhaustive')
         if isempty(allMarkerImages)
@@ -131,10 +131,10 @@ function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, 
                 
                 markers{end+1} = newMarker; %#ok<AGROW>
             elseif strcmp(embeddedConversions.extractFiducialMethod, 'matlab_alternateTree')
-                if isempty(minimalProbeTree) || ~strcmp(minimalProbeTreeFilename, embeddedConversions.extractFiducialMethodParameters.treeFilename)
-                    minimalProbeTreeFilename = embeddedConversions.extractFiducialMethodParameters.treeFilename;
-                    load(embeddedConversions.extractFiducialMethodParameters.treeFilename, 'minimalProbeTree');
-                    %                 load(embeddedConversions.extractFiducialMethodParameters.treeFilename, 'probeTree');
+                if isempty(tree) || ~strcmp(treeFilename, embeddedConversions.extractFiducialMethodParameters.treeFilename)
+                    treeFilename = embeddedConversions.extractFiducialMethodParameters.treeFilename;
+%                     load(embeddedConversions.extractFiducialMethodParameters.treeFilename, 'minimalTree');
+                    load(embeddedConversions.extractFiducialMethodParameters.treeFilename, 'tree');
                 end
                 
                 imgU8 = im2uint8(img);
@@ -148,8 +148,7 @@ function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, 
                 
                 tform = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
                 
-                [labelName, labelID] = probeTree2_query(minimalProbeTree, imgU8, tform, blackValue, whiteValue);
-                %             [labelName, labelID] = probeTree2_query(probeTree, imgU8, tform, blackValue, whiteValue);
+                [labelName, labelID] = decisionTree2_query(tree, imgU8, tform, blackValue, whiteValue);
                 
                 newMarker = VisionMarkerTrained([], 'Initialize', false);
                 

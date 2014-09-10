@@ -24,31 +24,28 @@ set(SOURCE_FILES
 #  ${PROJECT_SOURCE_DIR}/basestation/src/messages.cpp
 )
 
-if(NOT WIN32)
-  add_executable(blockworld_controller 
-    ${SOURCE_FILES} 
-  )
+add_executable(blockworld_controller 
+  ${SOURCE_FILES} 
+)
 
-  target_link_libraries(blockworld_controller 
-    Cozmo_Basestation
-    CoreTech_Common_Basestation
-    CoreTech_Vision_Basestation
-    CoreTech_Planning_Basestation
-    CoreTech_Messaging_Basestation
-    CppController # Webots C++ Controller
-    jsoncpp
-    ${OPENCV_LIBS}
-  )
+target_link_libraries(blockworld_controller 
+  Cozmo_Basestation
+  CoreTech_Common_Basestation
+  CoreTech_Vision_Basestation
+  CoreTech_Planning_Basestation
+  CoreTech_Messaging_Basestation
+  CppController # Webots C++ Controller
+  jsoncpp
+  ${OPENCV_LIBS}
+)
   
-  set_target_properties(blockworld_controller PROPERTIES
-      FOLDER "Webots Controllers"
-  )
+set_target_properties(blockworld_controller PROPERTIES
+    FOLDER "Webots Controllers"
+)
 #  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
 #  XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
 #   XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
 #)
-
-endif()
 
 # Make sure a copy of the target exists  in cozmo_c_controller/
 # no matter where the target is actually built.

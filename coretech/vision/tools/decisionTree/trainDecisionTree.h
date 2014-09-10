@@ -18,6 +18,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/fixedLengthList.h"
 
 #include "anki/tools/threads/threadSafeUtilities.h"
+#include "anki/tools/threads/threadSafeFixedLengthList.h"
 
 #include <vector>
 
@@ -49,19 +50,43 @@ namespace Anki
       s32 depth;
       f32 bestEntropy;
       s32 whichFeature;
+      s32 leftChildIndex; //< Right child index is leftChildIndex + 1. If leftChildIndex <= -1000000, this is a leaf, with the label as the negative of leftChildIndex.
+      s32 numLeft;
+      s32 numRight;
       u8  u8Threshold;
-      s32 leftChildIndex; //< Right child index is leftChildIndex + 1
+      u8  meanDistanceFromThreshold;
 
       DecisionTreeNode(
         s32 depth,
         f32 bestEntropy,
         s32 whichFeature,
+        s32 leftChildIndex,
+        s32 numLeft,
+        s32 numRight,
         u8  u8Threshold,
-        s32 leftChildIndex)  //< Right child index is leftChildIndex + 1. If leftChildIndex <= -1000000, this is a leaf, with the label as the negative of leftChildIndex.
-        : depth(depth), bestEntropy(bestEntropy), whichFeature(whichFeature), u8Threshold(u8Threshold), leftChildIndex(leftChildIndex)
+        u8  meanDistanceFromThreshold)
+        : depth(depth), bestEntropy(bestEntropy), whichFeature(whichFeature), leftChildIndex(leftChildIndex), numLeft(numLeft), numRight(numRight), u8Threshold(u8Threshold), meanDistanceFromThreshold(meanDistanceFromThreshold)
       {
       }
     } DecisionTreeNode;
+
+    // Class to hold a buffer. The buffer is allocated on construction, but must be manually freed.
+    template<typename Type> class RawBuffer
+    {
+    public:
+      Type * buffer;
+      s32 size;
+
+      RawBuffer();
+
+      RawBuffer(s32 size);
+
+      // Allocate memory and clone in
+      // WARNING: Does not free memory before allocating
+      void Clone(const RawBuffer &in);
+
+      void Free();
+    }; // RawBuffer
 
     typedef struct ComputeInfoGainParameters
     {
@@ -72,12 +97,12 @@ namespace Anki
       const s32 u8MinDistance; //< How close can the value for splitting on two values of one feature? Set to 255 to disallow splitting more than once per feature (e.g. multiple splits for one probe in the same location).
 
       // Thread-specific input
-      const std::vector<s32> &remaining; //< The indexes of the remaining images
+      const RawBuffer<s32> &remaining; //< The indexes of the remaining images
       const s32 minFeatureToCheck; //< Which of the features is this thread responsible for?
       const s32 maxFeatureToCheck; //< Which of the features is this thread responsible for?
 
       // Thread-specific input/output
-      std::vector<U8Bool> &featuresUsed; //< Which features and u8 thresholds have been used? Note: All threads share one copy, because they shouldn't read or modify the same pieces.
+      RawBuffer<U8Bool> &featuresUsed; //< Which features and u8 thresholds have been used? Note: All threads share one copy, because they shouldn't read or modify the same pieces.
 
       // Thread-specific scratch
       s32 * restrict pNumLessThan; //< Must be allocated before calling the thread, and manually freed after the thread is complete
@@ -87,16 +112,19 @@ namespace Anki
       f32 bestEntropy; //< What is the best entropy that has been computed?
       s32 bestFeatureIndex; //< What is the feature index corresponding to the best entropy?
       s32 bestU8Threshold; //< What is the grayvalue threshold corresponding to the best entropy?
+      s32 totalNumLT; //< How many images are below bestU8Threshold for feature bestFeatureIndex?
+      s32 totalNumGE; //< How many images are equal or above bestU8Threshold for feature bestFeatureIndex?
+      u8 meanDistanceFromThreshold; //< It is better for features to be different from each other, so if there's a tie, the most different split will be chosen
 
       ComputeInfoGainParameters(
         const FixedLengthList<const FixedLengthList<u8> > &featureValues,
         const FixedLengthList<s32> &labels,
         const FixedLengthList<u8> &u8ThresholdsToUse,
         const s32 u8MinDistance,
-        const std::vector<s32> &remaining,
+        const RawBuffer<s32> &remaining,
         const s32 minFeatureToCheck,
         const s32 maxFeatureToCheck,
-        std::vector<U8Bool> &featuresUsed,
+        RawBuffer<U8Bool> &featuresUsed,
         s32 * restrict pNumLessThan,
         s32 * restrict pNumGreaterThan)
         : featureValues(featureValues), labels(labels), u8ThresholdsToUse(u8ThresholdsToUse), u8MinDistance(u8MinDistance), remaining(remaining), minFeatureToCheck(minFeatureToCheck), maxFeatureToCheck(maxFeatureToCheck), featuresUsed(featuresUsed), pNumLessThan(pNumLessThan), pNumGreaterThan(pNumGreaterThan), bestEntropy(-1), bestFeatureIndex(-1), bestU8Threshold(0)
@@ -106,7 +134,7 @@ namespace Anki
 
     ThreadResult ComputeInfoGain(void *computeInfoGainParameters);
 
-    s32 FindMaxLabel(const FixedLengthList<s32> &labels, const std::vector<s32> &remaining);
+    s32 FindMaxLabel(const FixedLengthList<s32> &labels, const RawBuffer<s32> &remaining);
 
     Result BuildTree(
       const std::vector<U8Bool> &featuresUsed, //< numFeatures x 256
@@ -117,9 +145,10 @@ namespace Anki
       const s32 leafNodeNumItems, //< If the number of items in a node is equal or below this, it is a leaf. 1 is a good value.
       const s32 u8MinDistance, //< How close can two grayvalues be to be a threshold? 100 is a good value.
       const FixedLengthList<u8> &u8ThresholdsToUse, //< If not empty, this is the list of grayvalue thresholds to use
-      const s32 maxPrimaryThreads, //< If we are building the end of the tree, use maxPrimaryThreads threads (one for each node), and on thread to compute the information fain
-      const s32 maxSecondaryThreads, //< If we are building the start of the tree, use one primary thread, and maxSecondaryThreads threads to compute the information fain
-      std::vector<DecisionTreeNode> &decisionTree //< The output decision tree
+      const s32 maxThreads, //< Max threads to use (should be at least the number of cores)
+      f64 benchmarkSampleEveryNSeconds, //< How often to sample CPU usage for benchmarking
+      std::vector<f32> &cpuUsage, //< Sampled cpu percentages
+      ThreadSafeFixedLengthList<DecisionTreeNode> &decisionTree //< The output decision tree
       );
   } // namespace Embedded
 } // namespace Anki

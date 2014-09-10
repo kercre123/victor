@@ -177,7 +177,7 @@ namespace Anki
           const FixedLengthList<Rectangle<s32> > &featureRectangles, //< Rectangles will be copied into this object's FixedLengthList<LBPFeature> features (which is allocated from memory)
           MemoryStack &memory);
 
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
         // Use OpenCV to load the XML file, and convert it to the native format
         // NOTE: You must modify opencv to add "friend class Anki::Embedded::Classifier::CascadeClassifier;" to cv::CascadeClassifier
         CascadeClassifier_LBP(const char * filename, MemoryStack &memory);

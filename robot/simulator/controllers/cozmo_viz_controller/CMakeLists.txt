@@ -17,22 +17,20 @@ set(HEADER_FILES
 
 )
 
-if(NOT WIN32)
-  add_executable(cozmo_viz_controller 
-    ${SOURCE_FILES} 
-    ${HEADER_FILES}
-  )
+add_executable(cozmo_viz_controller 
+  ${SOURCE_FILES} 
+  ${HEADER_FILES}
+)
 
-  target_link_libraries(cozmo_viz_controller 
-    CoreTech_Messaging_Basestation
-    CppController # Webots C++ Controller
-    ${OPENCV_LIBS}
-  )
+target_link_libraries(cozmo_viz_controller 
+  CoreTech_Messaging_Basestation
+  CppController # Webots C++ Controller
+  ${OPENCV_LIBS}
+)
 
-  set_target_properties(cozmo_viz_controller PROPERTIES
-      FOLDER "Webots Controllers"
-  )
-endif()
+set_target_properties(cozmo_viz_controller PROPERTIES
+    FOLDER "Webots Controllers"
+)
 
 # Make sure a copy of the target exists  in cozmo_viz_controller/
 # no matter where the target is actually built.

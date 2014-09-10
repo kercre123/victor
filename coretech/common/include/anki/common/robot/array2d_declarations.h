@@ -21,10 +21,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/sequences_declarations.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/objdetect/objdetect.hpp"
+namespace cv
+{
+  class Mat;
+  template<typename Type> class Mat_;
+}
 #endif
 
 namespace Anki
@@ -36,7 +37,8 @@ namespace Anki
     template<typename Type> class ConstArraySliceExpression;
 
     const s32 ARRAY_FILE_HEADER_LENGTH = 32;
-    const char ARRAY_FILE_HEADER[ARRAY_FILE_HEADER_LENGTH+1] = "\x89" "AnkiEmbeddedArray1.0           ";
+    const s32 ARRAY_FILE_HEADER_VALID_LENGTH = 14; //< How many characters are not spaces
+    const char ARRAY_FILE_HEADER[ARRAY_FILE_HEADER_LENGTH+1] = "\x89" "AnkiEArray1.2                  ";
 
     // #pragma mark --- Array Class Declaration ---
 
@@ -77,8 +79,9 @@ namespace Anki
       static Array<Type> LoadImage(const char * filename, MemoryStack &memory);
 
       // Load or save an array saved as a debugStream.
+      // compressionLevel can be from 0 (uncompressed) to 9 (most compressed). If OpenCV is not used, it must be zero.
       static Array<Type> LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory);
-      Result SaveBinary(const char * filename, MemoryStack scratch) const;
+      Result SaveBinary(const char * filename, const s32 compressionLevel, MemoryStack scratch) const;
 
       // Pointer to the data, at a given (y,x) location
       //
@@ -137,7 +140,7 @@ namespace Anki
       // like Matrix::Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out) for example.
       ConstArraySliceExpression<Type> Transpose() const;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
       // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data should be copied (though with OpenCV, it's hard to tell).
       cv::Mat_<Type>& get_CvMat_();
       const cv::Mat_<Type>& get_CvMat_() const;
@@ -231,7 +234,7 @@ namespace Anki
 
       Type * data;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
       // WARNING:
       // If the OpenCV API changes, this could cause OpenCV errors even where no OpenCV is used.
       // This will probably be easily fixable, but be aware.
