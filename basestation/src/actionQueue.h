@@ -534,13 +534,14 @@ namespace Anki {
     public:
       PlayAnimationAction(AnimationID_t animID);
       
-      virtual const std::string& GetName() const override;
+      virtual const std::string& GetName() const override { return _name; }
       
     protected:
       
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
       AnimationID_t _animID;
+      std::string   _name;
       
     }; // class PlayAnimationAction
     
@@ -550,14 +551,15 @@ namespace Anki {
     public:
       PlaySoundAction(SoundID_t soundID);
       
-      virtual const std::string& GetName() const override;
+      virtual const std::string& GetName() const override { return _name; }
       
     protected:
       
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
-      SoundID_t _soundID;
-
+      SoundID_t   _soundID;
+      std::string _name;
+      
     }; // class PlaySoundAction
     
     // Waits for a specified amount of time in seconds, from the time the action

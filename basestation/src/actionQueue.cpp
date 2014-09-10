@@ -1340,14 +1340,9 @@ namespace Anki {
     
     PlayAnimationAction::PlayAnimationAction(AnimationID_t animID)
     : _animID(animID)
+    , _name("PlayAnimation" + std::to_string(_animID) + "Action")
     {
       
-    }
-    
-    const std::string& PlayAnimationAction::GetName() const
-    {
-      static const std::string name("PlayAnimationAction");
-      return name;
     }
     
     IAction::ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
@@ -1363,16 +1358,11 @@ namespace Anki {
     
     PlaySoundAction::PlaySoundAction(SoundID_t soundID)
     : _soundID(soundID)
+    , _name("PlaySound" + std::to_string(_soundID) + "Action")
     {
       
     }
-    
-    const std::string& PlaySoundAction::GetName() const
-    {
-      static const std::string name("PlaySoundAction");
-      return name;
-    }
-    
+
     IAction::ActionResult PlaySoundAction::CheckIfDone(Robot& robot)
     {
       // TODO: Implement!
