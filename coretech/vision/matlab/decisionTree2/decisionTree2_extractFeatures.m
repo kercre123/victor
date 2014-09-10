@@ -47,10 +47,9 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
     probeLocationsYGrid = probeLocationsYGrid(:);
     
     numLabels = numBlurs*numImages*numPerturbations*numResolutions;
-    %     featureValues   = zeros(numBlurs*numImages*numPerturbations, length(probeLocationsX)*length(probeLocationsY), 'uint8');
     labelNames  = cell(length(classesList), 1);
     
-    featureValuesArray = zeros(numLabels, length(probeLocationsXGrid), 'uint8');
+    featureValues = zeros(length(probeLocationsXGrid), numLabels, 'uint8');
     labels      = zeros(numLabels, 1, 'int32');
     
     % Precompute all the perturbed probe locations once
@@ -106,8 +105,8 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
                         assert(length(inds) == length(imageCoordsX));
                         
                         % Stripe the data per-probe location
-                        for iPixel = 1:length(imageCoordsY)
-                            featureValuesArray(cLabel, iPixel) = imgPaddedAndBlurredResized(imageCoordsY(iPixel), imageCoordsX(iPixel));
+                        for iFeature = 1:length(imageCoordsY)
+                            featureValues(iFeature, cLabel) = imgPaddedAndBlurredResized(imageCoordsY(iFeature), imageCoordsX(iFeature));
                         end
                         
                         if showProbePermutations
@@ -124,12 +123,6 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
             pBar.increment();
         end % for iFile = 1:length(classesList(iClass).filenames)
     end % for iClass = 1:length(classesList)
-    
-    featureValues = cell(length(probeLocationsXGrid), 1);
-    for iProbe = 1:length(featureValues)
-        featureValues{iProbe} = featureValuesArray(:, iProbe);
-    end
-    
     %     keyboard
 end % decisionTree2_extractFeatures()
 

@@ -22,6 +22,8 @@ function [labelName, labelID] = decisionTree2_queryFast(tree, img, samplePositio
         while ~isfield(curNode, 'labelName')
             index = samplePositions(curNode.whichFeature);
             
+%             assert(index == curNode.whichFeature);
+            
             if img(index) < curNode.u8Threshold
                 curNode = curNode.leftChild;
             else

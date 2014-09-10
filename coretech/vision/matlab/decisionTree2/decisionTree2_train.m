@@ -27,16 +27,15 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     t_start = tic();
     
-    for iFeature = 1:length(featureValues)
-        assert(min(size(labels) == size(featureValues{iFeature})) == 1);
-    end
+    assert(size(labels,2) == 1);
+    assert(size(labels,1) == size(featureValues, 2));
     
     leafNodeFraction = 1.0; % What percent of the labels must be the same for it to be considered a leaf node?
     leafNodeNumItems = 1; % If a node has less-than-or-equal-to this number of items, it is a leaf no matter what
     u8MinDistanceForSplits = 20; % How close can the value for splitting on two values of one feature? Set to 255 to disallow splitting more than once per feature (e.g. multiple splits for one probe in the same location).
     u8MinDistanceFromThreshold = 2; % If a feature value is closer than this to the threshold, pass it to both subpaths
     u8ThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
-    featuresUsed = zeros(length(featureValues), 256, 'uint8'); % If you don't want to train on some of the features or u8 thresholds, set some of the featuresUsed to true
+    featuresUsed = zeros(size(featureValues,1), 256, 'uint8'); % If you don't want to train on some of the features or u8 thresholds, set some of the featuresUsed to true
     
     parseVarargin(varargin{:});
     
@@ -154,7 +153,7 @@ function node = buildTree(node, featuresUsed, labelNames, labels, featureValues,
         featuresUsed = updatedFeaturesUsed;
         
         % Recurse left and right from this node
-        goLeft = featureValues{node.whichFeature}(node.remaining) < node.u8Threshold;
+        goLeft = featureValues(node.whichFeature,node.remaining) < node.u8Threshold;
         leftRemaining = node.remaining(goLeft);
         
         % PB: Is this still ever a reasonable thing to happen? I think this would be from a bug now.
@@ -219,7 +218,7 @@ function [bestEntropy, bestU8Threshold, bestFeatureIndex] = computeInfoGain_oute
     
     for iUnusedFeature = 1:numFeaturesUnused
         curFeatureIndex = unusedFeatures(iUnusedFeature);
-        curFeatureValues = featureValues{curFeatureIndex}(remainingImages);
+        curFeatureValues = featureValues(curFeatureIndex,remainingImages)';
         
         if numWorkItems > 10000000 % 10,000,000 takes about 3 seconds
             if mod(iUnusedFeature,100) == 0

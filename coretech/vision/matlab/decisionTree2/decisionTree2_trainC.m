@@ -5,7 +5,7 @@
 % VisionMarkerTrained class hierarchy
 
 % As input, this function needs a list of labels and featureValues. Start with the following two lines for any example:
-% fiducialClassesList = decisionTree2_createClassesList();
+% classesList = decisionTree2_createClassesList();
 % [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(fiducialClassesList);
 
 % Example:
@@ -18,16 +18,15 @@ function [tree, minimalTree, cTree, trainingFailures, testOnTrain_numCorrect, te
     
     t_start = tic();
     
-    for iFeature = 1:length(featureValues)
-        assert(min(size(labels) == size(featureValues{iFeature})) == 1);
-    end
+    assert(size(labels,2) == 1);
+    assert(size(labels,1) == size(featureValues, 2));
     
     leafNodeFraction = 1.0; % What percent of the labels must be the same for it to be considered a leaf node?
     leafNodeNumItems = 1; % If a node has less-than-or-equal-to this number of items, it is a leaf no matter what
     u8MinDistanceForSplits = 20; % How close can the value for splitting on two values of one feature? Set to 255 to disallow splitting more than once per feature (e.g. multiple splits for one probe in the same location).
     u8MinDistanceFromThreshold = 0; % If a feature value is closer than this to the threshold, pass it to both subpaths
     u8ThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
-    featuresUsed = zeros(length(featureValues), 256, 'uint8'); % If you don't want to train on some of the features or u8 thresholds, set some of the featuresUsed to true
+    featuresUsed = zeros(size(featureValues,1), 256, 'uint8'); % If you don't want to train on some of the features or u8 thresholds, set some of the featuresUsed to true
     cInFilenamePrefix = 'c:/tmp/treeTraining_'; % Temporary location for when useCVersion = true
     cOutFilenamePrefix = 'c:/tmp/treeTraining_out_';
     %cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/RelWithDebInfo/run_trainDecisionTree.exe';
@@ -53,10 +52,33 @@ function [tree, minimalTree, cTree, trainingFailures, testOnTrain_numCorrect, te
     
     pause(.01);
    
-    [tree, cTree] = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix, cOutFilenamePrefix, length(featureValues), leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
+    [tree, cTree] = decisionTree2_runCVersion(cTrainingExecutable, cInFilenamePrefix, cOutFilenamePrefix, size(featureValues,1), leafNodeFraction, leafNodeNumItems, u8MinDistanceForSplits, u8MinDistanceFromThreshold, labelNames, probeLocationsXGrid, probeLocationsYGrid, maxThreads);
     
     if isempty(tree)
         error('Training failed!');
+    end
+    
+    if ~isempty(u8ThresholdsToUse)
+        vals = unique(cTree.u8Thresholds);
+        u8ThresholdsToUseS = sort(u8ThresholdsToUse);
+        
+        % There also may be a 0 threshold, which is the defaul value (used for leaves)
+        
+        if length(u8ThresholdsToUseS) == length(vals)
+            for i = 1:length(u8ThresholdsToUseS)
+                assert(u8ThresholdsToUseS(i) == vals(i));
+            end
+        elseif length(u8ThresholdsToUseS) == (length(vals)-1) && vals(1) == 0
+            for i = 1:length(u8ThresholdsToUseS)
+                assert(u8ThresholdsToUseS(i) == vals(i+1));
+            end
+        elseif length(u8ThresholdsToUseS) == (length(vals)-2) && vals(1) == 0 && vals(end) == 255
+            for i = 1:length(u8ThresholdsToUseS)
+                assert(u8ThresholdsToUseS(i) == vals(i+1));
+            end
+        else
+            assert(false)
+        end
     end
     
     t_train = toc(t_start);
@@ -89,7 +111,7 @@ function decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, feature
     pBarCleanup = onCleanup(@()delete(pBar));
     
     pBar.set_message('Saving inputs for C training');
-    pBar.set_increment(1/(length(featureValues)+4));
+    pBar.set_increment(1/(size(featureValues,1)+4));
     pBar.set(0);
     
     if size(labelNames, 1) ~= 1
@@ -113,19 +135,19 @@ function decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, feature
     pBar.increment();
     pBar.increment();
     
-    for iFeature = 1:maxSavingThreads:length(featureValues)
+    for iFeature = 1:maxSavingThreads:size(featureValues,1)
         allArrays = {};
         allFilenames = {};
         
-        pBar.set_message(sprintf('Saving inputs for C training %d/%d', iFeature, length(featureValues)));
+        pBar.set_message(sprintf('Saving inputs for C training %d/%d', iFeature, size(featureValues,1)));
         
         for iThread = 1:maxSavingThreads
             index = iFeature + iThread - 1;
-            if index > length(featureValues)
+            if index > size(featureValues,1)
                 break;
             end
             
-            curFeatureValues = featureValues{index};
+            curFeatureValues = featureValues(index,:);
             
             if size(curFeatureValues, 1) ~= 1
                 curFeatureValues = curFeatureValues';
@@ -167,12 +189,12 @@ function [tree, cTree] = decisionTree2_runCVersion(cTrainingExecutable, cInFilen
     
     disp('Loading and converting c tree to matlab format')
     
-    cTree.depths = mexLoadEmbeddedArray([cOutFilenamePrefix, 'depths.array']);
-    infoGains = mexLoadEmbeddedArray([cOutFilenamePrefix, 'bestEntropys.array']);
-    cTree.whichFeatures = mexLoadEmbeddedArray([cOutFilenamePrefix, 'whichFeatures.array']);
-    cTree.u8Thresholds = mexLoadEmbeddedArray([cOutFilenamePrefix, 'u8Thresholds.array']);
-    cTree.leftChildIndexs = mexLoadEmbeddedArray([cOutFilenamePrefix, 'leftChildIndexs.array']);
-    cpuUsageSamples = mexLoadEmbeddedArray([cOutFilenamePrefix, 'cpuUsageSamples.array']);
+    cTree.depths = mexLoadEmbeddedArray([cOutFilenamePrefix, 'depths.array'])';
+    infoGains = mexLoadEmbeddedArray([cOutFilenamePrefix, 'bestEntropys.array'])';
+    cTree.whichFeatures = mexLoadEmbeddedArray([cOutFilenamePrefix, 'whichFeatures.array'])';
+    cTree.u8Thresholds = mexLoadEmbeddedArray([cOutFilenamePrefix, 'u8Thresholds.array'])';
+    cTree.leftChildIndexs = mexLoadEmbeddedArray([cOutFilenamePrefix, 'leftChildIndexs.array'])';
+    cpuUsageSamples = mexLoadEmbeddedArray([cOutFilenamePrefix, 'cpuUsageSamples.array'])';
     
     tree = decisionTree2_convertCTree(cTree.depths, infoGains, cTree.whichFeatures, cTree.u8Thresholds, cTree.leftChildIndexs, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     

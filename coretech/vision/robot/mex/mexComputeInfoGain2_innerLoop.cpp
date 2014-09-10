@@ -16,22 +16,7 @@
 #include <cmath>
 #include <math.h>
 
-// Threading includes and defines
-#ifdef _MSC_VER
-#include <tchar.h>
-#include <strsafe.h>
-#include <windows.h>
-#define SimpleMutex HANDLE
-typedef HANDLE ThreadHandle;
-#define ThreadResult DWORD WINAPI
-#else // #ifdef _MSC_VER
-#include <unistd.h>
-#include <pthread.h>
-#include <pthread.h>
-#define SimpleMutex pthread_mutex_t
-typedef pthread_t ThreadHandle;
-#define ThreadResult void*
-#endif // #ifdef _MSC_VER ... #else
+#include "anki/tools/threads/threadSafeUtilities.h"
 
 using namespace Anki::Embedded;
 
