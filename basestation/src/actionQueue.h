@@ -158,35 +158,18 @@ namespace Anki {
       
     }; // class IAction
     
-    class ActionList
-    {
-    public:
-
-      ActionList();
-      ~ActionList();
-      
-      Result   Update(Robot& robot);
-      
-      Result   AddAction(IActionRunner* action, u8 numRetries = 0);
-      
-      bool     IsEmpty() const;
-      
-      void     Clear();
-      
-      void     Print() const;
-      
-    protected:
-      
-      std::list<IActionRunner*> _actionList;
-      
-    }; // class ActionList
-    
+    // This is an ordered list of actions to be run. It is similar to an
+    // CompoundActionSequential, but actions can be added to it dynamically,
+    // either "next" or at the end of the queue. As actions are completed,
+    // they are popped off the queue. Thus, when it is empty, it is "done".
     class ActionQueue
     {
     public:
       ActionQueue();
       
       ~ActionQueue();
+      
+      Result   Update(Robot& robot);
       
       Result   QueueNext(IActionRunner *,  u8 numRetries = 0);
       Result   QueueAtEnd(IActionRunner *, u8 numRetires = 0);
@@ -202,18 +185,70 @@ namespace Anki {
       
     protected:
       std::list<IActionRunner*> _queue;
+      
     }; // class ActionQueue
     
-#pragma mark ---- IActionGroup ----
     
-    // Interface for groups of actions
-    class IActionGroup : public IActionRunner
+    // This is a list of concurrent actions to be run, addressable by ID handle.
+    // Each slot in the list is really a queue, to which new actions can be added
+    // using that slot's ID handle. When a slot finishes, it is popped.
+    class ActionList
     {
     public:
-      IActionGroup(std::initializer_list<IActionRunner*> actions);
+      using SlotHandle = u32;
+
+      ActionList();
+      ~ActionList();
+      
+      // Updates the current action of each queue in each slot
+      Result     Update(Robot& robot);
+      
+      // Add a new action to be run concurrently, generating a new slot, whose
+      // handle is returned. If there is no desire to queue anything to run after
+      // this action, the SlotHandle can be ignored.
+      SlotHandle AddAction(IActionRunner* action, u8 numRetries = 0);
+      
+      // Queue an action into a specific slot. If that slot does not exist
+      // (perhaps because it completed before this call) it will be created.
+      Result     QueueActionNext(SlotHandle  atSlot, IActionRunner* action, u8 numRetries = 0);
+      Result     QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
+      
+      bool       IsEmpty() const;
+      
+      void       Clear();
+      
+      void       Print() const;
+      
+    protected:
+      
+      SlotHandle _slotCounter;
+      std::map<SlotHandle, ActionQueue> _queues;
+      
+    }; // class ActionList
+    
+    
+    inline Result ActionList::QueueActionNext(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      return _queues[atSlot].QueueNext(action, numRetries);
+    }
+    
+    inline Result ActionList::QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      return _queues[atSlot].QueueAtEnd(action, numRetries);
+    }
+
+    
+#pragma mark ---- ICompoundAction ----
+    
+    // Interface for compound actions, which are fixed sets of actions to be
+    // run together or in order (determined by derived type)
+    class ICompoundAction : public IActionRunner
+    {
+    public:
+      ICompoundAction(std::initializer_list<IActionRunner*> actions);
       
       // Constituent actions will be deleted upon destruction of the group
-      virtual ~IActionGroup();
+      virtual ~ICompoundAction();
       
       virtual const std::string& GetName() const override { return _name; }
       
@@ -227,30 +262,44 @@ namespace Anki {
     };
     
     
-    // Executes a group of actions sequentially
-    class ActionGroupSequential : public IActionGroup
+    // Executes a fixed set of actions sequentially
+    class CompoundActionSequential : public ICompoundAction
     {
     public:
       
-      ActionGroupSequential(std::initializer_list<IActionRunner*> actions);
+      CompoundActionSequential(std::initializer_list<IActionRunner*> actions);
       
       virtual ActionResult Update(Robot& robot) override final;
+      
+      // Add a delay, in seconds, between running each action in the group.
+      // Default is 0 (no delay).
+      void SetDelayBetweenActions(f32 seconds);
       
     private:
+      virtual void Reset() override;
+      
+      f32 _delayBetweenActionsInSeconds;
+      f32 _waitUntilTime;
       std::list<std::pair<bool,IActionRunner*> >::iterator _currentActionPair;
-    }; // class ActionGroupSequential
+    }; // class CompoundActionSequential
     
+    inline void CompoundActionSequential::SetDelayBetweenActions(f32 seconds) {
+      _delayBetweenActionsInSeconds = seconds;
+    }
     
-    // Executes a group of actions in parallel
-    class ActionGroupParallel : public IActionGroup
+    // Executes a fixed set of actions in parallel
+    class CompoundActionParallel : public ICompoundAction
     {
     public:
       
-      ActionGroupParallel(std::initializer_list<IActionRunner*> actions);
+      CompoundActionParallel(std::initializer_list<IActionRunner*> actions);
       
       virtual ActionResult Update(Robot& robot) override final;
       
-    }; // class ActionGroupParallel
+    protected:
+      CompoundActionParallel();
+      
+    }; // class CompoundActionParallel
     
     
 #pragma mark ---- Individual Action Defintions ----

@@ -20,6 +20,7 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
+
 namespace Anki {
   
   namespace Cozmo {
@@ -173,6 +174,7 @@ namespace Anki {
 #pragma mark ---- ActionList ----
     
     ActionList::ActionList()
+    : _slotCounter(0)
     {
       
     }
@@ -184,12 +186,12 @@ namespace Anki {
     
     void ActionList::Clear()
     {
-      _actionList.clear();
+      _queues.clear();
     }
     
     bool ActionList::IsEmpty() const
     {
-      return _actionList.empty();
+      return _queues.empty();
     }
     
     void ActionList::Print() const
@@ -197,11 +199,11 @@ namespace Anki {
       if(IsEmpty()) {
         PRINT_INFO("ActionList is empty.\n");
       } else {
-        PRINT_INFO("ActionList contents: ");
-        for(auto action : _actionList) {
-          PRINT_INFO("%s, ", action->GetName().c_str());
+        PRINT_INFO("ActionList contains %d queues:\n", _queues.size());
+        for(auto const& queuePair : _queues) {
+          PRINT_INFO("---");
+          queuePair.second.Print();
         }
-        PRINT_INFO("\b\b\n");
       }
 
     } // Print()
@@ -210,18 +212,15 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      for(auto actionIter = _actionList.begin(); actionIter != _actionList.end(); )
+      for(auto queueIter = _queues.begin(); queueIter != _queues.end(); )
       {
-        IActionRunner* action = *actionIter;
-      
-        assert(action != nullptr);
-        const IActionRunner::ActionResult actionResult = action->Update(robot);
-      
-        // If this action just finished remove it from the list
-        if(actionResult != IActionRunner::RUNNING) {
-          actionIter = _actionList.erase(actionIter);
+        lastResult = queueIter->second.Update(robot);
+
+        // If the queue is complete, remove it
+        if(queueIter->second.IsEmpty()) {
+          queueIter = _queues.erase(queueIter);
         } else {
-          ++actionIter;
+          ++queueIter;
         }
       } // for each actionMemberPair
       
@@ -229,45 +228,24 @@ namespace Anki {
     } // Update()
     
     
-    Result ActionList::AddAction(IActionRunner* action, u8 numRetries)
+    ActionList::SlotHandle ActionList::AddAction(IActionRunner* action, u8 numRetries)
     {
       if(action == nullptr) {
         PRINT_NAMED_WARNING("ActionList.AddAction.NullActionPointer", "Refusing to add null action.\n");
-        return RESULT_FAIL;
+        return _slotCounter;
       }
       
-      _actionList.push_back(action);
-      _actionList.back()->SetNumRetries(numRetries);
+      SlotHandle currentSlot = _slotCounter;
       
-      return RESULT_OK;
+      if(_queues[currentSlot].QueueAtEnd(action, numRetries) == RESULT_OK) {
+        _slotCounter++;
+      } else {
+        PRINT_NAMED_ERROR("ActionList.AddAction.FailedToAdd", "Failed to add action to new queue.\n");
+      }
+      
+      return currentSlot;
     }
     
-    /*
-    Result ActionList::RemoveAction(ActionID ID)
-    {
-      auto actionToRemove = _actionList.find(ID);
-      if(actionToRemove != _actionList.end()) {
-        _actionList.erase(actionToRemove);
-        return RESULT_OK;
-      } else {
-        return RESULT_FAIL;
-      }
-    }
-     
-    
-    Result ActionList::RegisterCompletionCallback(ActionID actionID,
-                                        ActionCompletionCallback callback)
-    {
-      auto actionIter = _actionList.find(actionID);
-      if(actionIter != _actionList.end()) {
-        actionIter->second.completionCallbacks.emplace_back(callback);
-        return RESULT_OK;
-      } else {
-        return RESULT_FAIL;
-      }
-    }
-     */
-
     
 #pragma mark ---- ActionQueue ----
     
@@ -325,6 +303,26 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    Result ActionQueue::Update(Robot& robot)
+    {
+      Result lastResult = RESULT_OK;
+      
+      if(!_queue.empty())
+      {
+        IActionRunner* currentAction = GetCurrentAction();
+        assert(currentAction != nullptr);
+        
+        const IAction::ActionResult actionResult = currentAction->Update(robot);
+        
+        if(actionResult != IActionRunner::RUNNING) {
+          // Current action just finished, pop it
+          PopCurrentAction();
+        }
+      } // if queue not empty
+      
+      return lastResult;
+    }
+    
     IActionRunner* ActionQueue::GetCurrentAction()
     {
       if(_queue.empty()) {
@@ -353,23 +351,24 @@ namespace Anki {
       if(IsEmpty()) {
         PRINT_INFO("ActionQueue is empty.\n");
       } else {
+        PRINT_INFO("ActionQueue with %d actions: ", _queue.size());
         for(auto action : _queue) {
           PRINT_INFO("%s, ", action->GetName().c_str());
         }
-        PRINT_INFO("\n");
+        PRINT_INFO("\b\b\n");
       }
       
     } // Print()
     
     
-#pragma mark ---- CompoundActionSequential ----
+#pragma mark ---- ICompoundAction ----
     
-    IActionGroup::IActionGroup(std::initializer_list<IActionRunner*> actions)
+    ICompoundAction::ICompoundAction(std::initializer_list<IActionRunner*> actions)
     : _name("[")
     {
       for(IActionRunner* action : actions) {
         if(action == nullptr) {
-          PRINT_NAMED_WARNING("IActionGroup.NullActionPointer",
+          PRINT_NAMED_WARNING("ICompoundAction.NullActionPointer",
                               "Refusing to add a null action pointer to group.\n");
         } else {
           _actions.emplace_back(false, action);
@@ -380,7 +379,7 @@ namespace Anki {
       _name += "]";
     }
     
-    IActionGroup::~IActionGroup()
+    ICompoundAction::~ICompoundAction()
     {
       for(auto & actionPair : _actions) {
         assert(actionPair.second != nullptr);
@@ -389,7 +388,7 @@ namespace Anki {
       }
     }
     
-    void IActionGroup::Reset()
+    void ICompoundAction::Reset()
     {
       for(auto & actionPair : _actions) {
         actionPair.first = false;
@@ -397,14 +396,24 @@ namespace Anki {
       }
     }
     
-    ActionGroupSequential::ActionGroupSequential(std::initializer_list<IActionRunner*> actions)
-    : IActionGroup(actions)
+#pragma mark ---- CompoundActionSequential ----
+    
+    CompoundActionSequential::CompoundActionSequential(std::initializer_list<IActionRunner*> actions)
+    : ICompoundAction(actions)
+    , _delayBetweenActionsInSeconds(0)
+    , _waitUntilTime(-1.f)
     , _currentActionPair(_actions.begin())
     {
       
     }
     
-    IAction::ActionResult ActionGroupSequential::Update(Robot& robot)
+    void CompoundActionSequential::Reset()
+    {
+      ICompoundAction::Reset();
+      _waitUntilTime = -1.f;
+    }
+    
+    IAction::ActionResult CompoundActionSequential::Update(Robot& robot)
     {
       SetStatus(GetName());
       
@@ -416,65 +425,80 @@ namespace Anki {
         IActionRunner* currentAction = _currentActionPair->second;
         assert(currentAction != nullptr); // should not have been allowed in by constructor
         
-        const ActionResult subResult = currentAction->Update(robot);
-        SetStatus(currentAction->GetStatus());
-        switch(subResult)
+        if(_waitUntilTime < 0.f ||
+           BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime)
         {
-          case SUCCESS:
+          const ActionResult subResult = currentAction->Update(robot);
+          SetStatus(currentAction->GetStatus());
+          switch(subResult)
           {
-            // Finished the current action, move ahead to the next
-            isDone = true; // mark as done (not strictly necessary)
-            ++_currentActionPair;
-            
-            // if that was the last action, we're done
-            if(_currentActionPair == _actions.end()) {
+            case SUCCESS:
+            {
+              // Finished the current action, move ahead to the next
+              isDone = true; // mark as done (not strictly necessary)
+              
+              if(_delayBetweenActionsInSeconds > 0.f) {
+                // If there's a delay specified, figure out how long we need to
+                // wait from now to start next action
+                _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _delayBetweenActionsInSeconds;
+              }
+              
+              ++_currentActionPair;
+              
+              // if that was the last action, we're done
+              if(_currentActionPair == _actions.end()) {
 #             if USE_ACTION_CALLBACKS
-              RunCallbacks(SUCCESS);
+                RunCallbacks(SUCCESS);
 #             endif
-              return SUCCESS;
-            }
-            
-            // Otherwise, we are still running
-            return RUNNING;
-          }
-          
-          case FAILURE_RETRY:
-            // A constituent action failed . Reset all the constituent actions
-            // and try again as long as there are retries remaining
-            if(RetriesRemain()) {
-              PRINT_NAMED_INFO("ActionGroupSequential.Update.Retrying",
-                               "%s triggered retry.\n", currentAction->GetName().c_str());
-              Reset();
+                return SUCCESS;
+              }
+              
+              // Otherwise, we are still running
               return RUNNING;
             }
-            // No retries remaining. Fall through:
-            
-          case RUNNING:
-          case FAILURE_ABORT:
-          case FAILURE_TIMEOUT:
-          case FAILURE_PROCEED:
+              
+            case FAILURE_RETRY:
+              // A constituent action failed . Reset all the constituent actions
+              // and try again as long as there are retries remaining
+              if(RetriesRemain()) {
+                PRINT_NAMED_INFO("CompoundActionSequential.Update.Retrying",
+                                 "%s triggered retry.\n", currentAction->GetName().c_str());
+                Reset();
+                return RUNNING;
+              }
+              // No retries remaining. Fall through:
+              
+            case RUNNING:
+            case FAILURE_ABORT:
+            case FAILURE_TIMEOUT:
+            case FAILURE_PROCEED:
 #           if USE_ACTION_CALLBACKS
-            RunCallbacks(subResult);
+              RunCallbacks(subResult);
 #           endif
-            return subResult;
-            
-        } // switch(result)
+              return subResult;
+              
+          } // switch(result)
+        } else {
+          return RUNNING;
+        } // if/else waitUntilTime
       } // if currentAction != actions.end()
       
       // Shouldn't normally get here, but this means we've completed everything
       // and are done
       return SUCCESS;
       
-    } // ActionGroupSequential::Update()
+    } // CompoundActionSequential::Update()
     
     
-    ActionGroupParallel::ActionGroupParallel(std::initializer_list<IActionRunner*> actions)
-    : IActionGroup(actions)
+#pragma mark ---- CompoundActionParallel ----
+    
+    CompoundActionParallel::CompoundActionParallel(std::initializer_list<IActionRunner*> actions)
+    : ICompoundAction(actions)
     {
       
     }
     
-    IAction::ActionResult ActionGroupParallel::Update(Robot& robot)
+    IAction::ActionResult CompoundActionParallel::Update(Robot& robot)
     {
       // Return success unless we encounter anything still running or failed in loop below.
       // Note that we will return SUCCESS on the call following the one where the
@@ -507,7 +531,7 @@ namespace Anki {
             case FAILURE_RETRY:
               // If any retries are left, reset the group and try again.
               if(RetriesRemain()) {
-                PRINT_NAMED_INFO("ActionGroupParallel.Update.Retrying",
+                PRINT_NAMED_INFO("CompoundActionParallel.Update.Retrying",
                                  "%s triggered retry.\n", currentAction->GetName().c_str());
                 Reset();
                 return RUNNING;
@@ -524,7 +548,7 @@ namespace Anki {
               return subResult;
               
             default:
-              PRINT_NAMED_ERROR("ActionGroupParallel.Update.UnknownResultCase", "\n");
+              PRINT_NAMED_ERROR("CompoundActionParallel.Update.UnknownResultCase", "\n");
               assert(false);
               return FAILURE_ABORT;
               
@@ -540,7 +564,7 @@ namespace Anki {
 #     endif
       
       return result;
-    } // ActionGroupParallel::Update()
+    } // CompoundActionParallel::Update()
     
     
 #pragma mark ---- CheckForPathDoneHelper ----

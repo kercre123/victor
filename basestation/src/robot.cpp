@@ -42,6 +42,8 @@
 namespace Anki {
   namespace Cozmo {
     
+    static const ActionList::SlotHandle ExecuteSequenceSlot = 0;
+    
     Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler)
     : _ID(robotID)
     , _msgHandler(msgHandler)
@@ -475,7 +477,9 @@ namespace Anki {
       
       
       //////// Update Robot's State Machine /////////////
+      _actionList.Update(*this);
       
+      /*
       IActionRunner* currentAction = _actionQueue.GetCurrentAction();
       if(currentAction == nullptr) {
         
@@ -526,7 +530,7 @@ namespace Anki {
             
         } // switch(result)
       } // if/else actionQueue not empty
-      
+      */
       
       
       ////////////  Update Path Traversal /////////////
@@ -1264,7 +1268,8 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      _actionQueue.QueueAtEnd(new ActionGroupSequential({
+      //_actionQueue.QueueAtEnd(new ActionGroupSequential({
+      _actionList.QueueActionAtEnd(ExecuteSequenceSlot, new CompoundActionSequential({
         new DriveToObjectAction(ramp->GetID(), PreActionPose::ENTRY),
         new AscendOrDescendRampAction(ramp->GetID())}), 3);
       
@@ -1282,7 +1287,8 @@ namespace Anki {
         return RESULT_FAIL;
       }
     
-      _actionQueue.QueueAtEnd(new ActionGroupSequential({
+      //_actionQueue.QueueAtEnd(new ActionGroupSequential({
+      _actionList.QueueActionAtEnd(ExecuteSequenceSlot, new CompoundActionSequential({
         new DriveToObjectAction(bridge->GetID(), PreActionPose::ENTRY),
         new CrossBridgeAction(bridge->GetID())}), 3);
       
@@ -1295,7 +1301,8 @@ namespace Anki {
       Result lastResult = RESULT_OK;
       
       const u8 numRetries = 3;
-      _actionQueue.QueueAtEnd(new ActionGroupSequential({
+      //_actionQueue.QueueAtEnd(new ActionGroupSequential({
+      _actionList.QueueActionAtEnd(ExecuteSequenceSlot, new CompoundActionSequential({
         new DriveToObjectAction(objectIDtoDockWith, PreActionPose::DOCKING),
         new PickUpObjectAction(objectIDtoDockWith)}), numRetries);
       
@@ -1306,7 +1313,8 @@ namespace Anki {
     
     Result Robot::ExecutePlaceObjectOnGroundSequence()
     {
-      _actionQueue.QueueAtEnd(new PutDownObjectAction());
+      //_actionQueue.QueueAtEnd(new PutDownObjectAction());
+      _actionList.AddAction(new PutDownObjectAction());
       
       return RESULT_OK;
       
@@ -1324,8 +1332,11 @@ namespace Anki {
       // TODO: Better way to set final height off the ground
       atPoseWithParent.SetTranslation({{atPose.GetTranslation().x(), atPose.GetTranslation().y(), GetPose().GetTranslation().z() + 22.f}});
       
-      _actionQueue.QueueAtEnd(new DriveToPlaceCarriedObjectAction(*this, atPoseWithParent));
-      _actionQueue.QueueAtEnd(new PutDownObjectAction());
+      //_actionQueue.QueueAtEnd(new DriveToPlaceCarriedObjectAction(*this, atPoseWithParent));
+      //_actionQueue.QueueAtEnd(new PutDownObjectAction());
+      _actionList.QueueActionAtEnd(ExecuteSequenceSlot, new CompoundActionSequential({
+        new DriveToPlaceCarriedObjectAction(*this, atPoseWithParent),
+        new PutDownObjectAction()}));
       
       return lastResult;
       
@@ -1335,9 +1346,9 @@ namespace Anki {
     // Sends a message to the robot to dock with the specified block
     // that it should currently be seeing.
     Result Robot::SendDockWithObject(const ObjectID objectID,
-                                 const Vision::KnownMarker* marker,
-                                 const Vision::KnownMarker* marker2,
-                                 const DockAction_t dockAction)
+                                     const Vision::KnownMarker* marker,
+                                     const Vision::KnownMarker* marker2,
+                                     const DockAction_t dockAction)
     {
       _dockObjectID = objectID;
       return SendDockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX);
@@ -1956,21 +1967,7 @@ namespace Anki {
       _msgHandler->SendMessage(GetID(), m);
     }
     
-    
-    Result Robot::QueueAction(IAction* action, const bool next)
-    {
-      Result lastResult = RESULT_OK;
-
-      if(next) {
-        lastResult = _actionQueue.QueueNext(action);
-      } else {
-        lastResult = _actionQueue.QueueAtEnd(action);
-      }
       
-      return lastResult;
-    } // QueueAction()
-    
-    
     Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
     {
       //CoreTechPrint("_reactionCallbacks size = %lu\n", _reactionCallbacks.size());

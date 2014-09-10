@@ -50,14 +50,14 @@ namespace Anki {
       
       Result UpdateFullRobotState(const MessageRobotState& msg);
       
-      // Returns true if robot is not traversing a path and has no current action
-      // in its queue.
-      bool IsIdle() const { return !IsTraversingPath() && _actionQueue.IsEmpty(); }
+      // Returns true if robot is not traversing a path and has no actions in its queue.
+      bool IsIdle() const { return !IsTraversingPath() && _actionList.IsEmpty(); }
       
       // Accessors
       const RobotID_t        GetID()           const;
       BlockWorld&            GetBlockWorld()   {return _blockWorld;}
       const BlockWorld&      GetBlockWorld() const { return _blockWorld;}
+      
       //
       // Localization
       //
@@ -321,7 +321,11 @@ namespace Anki {
       // Queue an action, by default at the end of the Robot's current list of
       // things to do. Actions can also be queued to occur immediately after the
       // current action finishes ("next").
-      Result QueueAction(IAction* action, const bool next = false);
+      //Result QueueAction(IAction* action, const bool next = false);
+
+      // Return a reference to the robot's action list for adding things for it
+      // to do.
+      ActionList& GetActionList() { return _actionList; }
       
       // ============= Reactions =============
       using ReactionCallback = std::function<Result(Robot*,Vision::ObservedMarker*)>;
@@ -353,8 +357,8 @@ namespace Anki {
       
       BehaviorManager  _behaviorMgr;
       
-      //std::queue<IAction*> _actionQueue;
-      ActionQueue      _actionQueue;
+      //ActionQueue      _actionQueue;
+      ActionList       _actionList;
       
       // Path Following. There are two planners, only one of which can
       // be selected at a time
