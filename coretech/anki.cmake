@@ -363,6 +363,7 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
   set(CXX ${MEX_COMPILER})
   unset(CMAKE_CXX_FLAGS)
   unset(CMAKE_C_FLAGS)
+  set(CMAKE_CXX_FLAGS "-largeArrayDims")
 
   # If not told otherwise, store our mex binaries in, e.g., coretech-vision/build/mex
   if(NOT DEFINED MEX_OUTPUT_PATH)
