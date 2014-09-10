@@ -386,7 +386,7 @@ Supervisor {
 				  }
 				  DistanceSensor {
 						name "proxSensorCenter"
-						translation 0.022 0 0.01
+						translation 0.022 0 0.008
 						rotation 0 1 0 0
 						type "infra-red"
 						lookupTable [ 0.0   255   0,
