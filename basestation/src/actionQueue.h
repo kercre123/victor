@@ -385,6 +385,25 @@ namespace Anki {
       
     }; // class TurnInPlaceAction
     
+    
+    class MoveHeadToAngleAction : public IAction
+    {
+    public:
+      MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance = DEG_TO_RAD(2.f));
+      
+      virtual const std::string& GetName() const override { return _name; }
+      
+    protected:
+      
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      
+      Radians     _headAngle;
+      Radians     _angleTolerance;
+      std::string _name;
+    };  // class MoveHeadToAngleAction
+    
+    
     // Interface for actions that involve "docking" with an object
     class IDockAction : public IAction
     {

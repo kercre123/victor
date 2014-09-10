@@ -860,6 +860,41 @@ namespace Anki {
     } // CheckIfDone()
     
     
+#pragma mark ---- MoveHeadToAngleAction ----
+    
+    MoveHeadToAngleAction::MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance)
+    : _headAngle(headAngle)
+    , _angleTolerance(tolerance)
+    , _name("MoveHeadTo" + std::to_string(std::round(RAD_TO_DEG(_headAngle.ToFloat()))) + "DegAction")
+    {
+
+    }
+    
+    IActionRunner::ActionResult MoveHeadToAngleAction::Init(Robot &robot)
+    {
+      // TODO: Add ability to specify speed/accel
+      if(robot.MoveHeadToAngle(_headAngle.ToFloat(), 5, 10) != RESULT_OK) {
+        return FAILURE_ABORT;
+      } else {
+        return SUCCESS;
+      }
+    }
+    
+    IActionRunner::ActionResult MoveHeadToAngleAction::CheckIfDone(Robot &robot)
+    {
+      ActionResult result = RUNNING;
+      
+      // Wait to get a state message back from the physical robot saying its head
+      // is in the commanded position
+      // TODO: Is this really necessary in practice?
+      if(NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(), _angleTolerance.ToFloat())) {
+        result = SUCCESS;
+      }
+      
+      return result;
+    }
+         
+    
 #pragma mark ---- IDockAction ----
     
     // TODO: Define this as a constant parameter elsewhere
