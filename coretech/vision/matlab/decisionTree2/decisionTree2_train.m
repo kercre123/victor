@@ -61,7 +61,7 @@ function [tree, minimalTree, trainingFailures, testOnTrain_numCorrect, testOnTra
     
     t_test = tic();
     
-    [testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_testOnTrainingData(tree, featureValues, labels, labelNames, probeLocationsXGrid, probeLocationsYGrid);
+    [testOnTrain_numCorrect, testOnTrain_numTotal] = decisionTree2_testOnTrainingData(cTree, featureValues, labels, labelNames, probeLocationsXGrid, probeLocationsYGrid);
     
     t_test = toc(t_test);
     

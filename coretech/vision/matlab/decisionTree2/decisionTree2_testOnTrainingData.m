@@ -7,8 +7,8 @@
 % [numCorrect, numTotal] = decisionTree2_testOnTrainingData(cTree, featureValues, labels, labelNames, probeLocationsXGrid, probeLocationsYGrid, 'useMex', true);
 
 function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, featureValues, labels, labelNames, probeLocationsXGrid, probeLocationsYGrid, varargin)
-    useMex = false;
-    verbose = true;
+    useMex = true;
+    verbose = false;
     numThreads = 1;
     
     parseVarargin(varargin{:});
@@ -20,14 +20,6 @@ function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, feature
     assert(length(labels) == numImages);
     
     tform = cp2tform(featureImageWidth*[0 0; 0 1; 1 0; 1 1], [0 0; 0 1; 1 0; 1 1], 'projective');
-        
-    pBar = ProgressBar('decisionTree2_train testOnTrainingData', 'CancelButton', true);
-    pBar.showTimingInfo = true;
-    pBarCleanup = onCleanup(@()delete(pBar));
-    
-    pBar.set_message(sprintf('Testing %d inputs', numImages));
-    pBar.set_increment(10000/numImages);
-    pBar.set(0);   
    
     maxLabel = max(unique(labels));
     numCorrect = zeros(maxLabel + 1, 1);
@@ -57,8 +49,16 @@ function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, feature
             leftChildIndexs = leftChildIndexs';
         end
         
-        [numCorrect, numTotal, labelIds] = mexDecisionTree2_testOnTrainingData_innerLoop(featureValues, whichFeatures, u8Thresholds, leftChildIndexs, samplePositions - 1, labels, numThreads);
+        [numCorrect, numTotal, ~] = mexDecisionTree2_testOnTrainingData_innerLoop(featureValues, whichFeatures, u8Thresholds, leftChildIndexs, samplePositions - 1, labels, numThreads);
     else % if useMex
+        pBar = ProgressBar('decisionTree2_train testOnTrainingData', 'CancelButton', true);
+        pBar.showTimingInfo = true;
+        pBarCleanup = onCleanup(@()delete(pBar));
+
+        pBar.set_message(sprintf('Testing %d inputs', numImages));
+        pBar.set_increment(10000/numImages);
+        pBar.set(0);   
+
         for iImage = 1:numImages
             curImage = featureValues(:, iImage);
 
@@ -88,6 +88,9 @@ function [numCorrect, numTotal] = decisionTree2_testOnTrainingData(tree, feature
     assert(length(numCorrect) == length(labelNames) || length(numCorrect) == (length(labelNames)+1));
     
     if verbose
+        numCorrect = double(numCorrect);
+        numTotal = double(numTotal);
+        
         % Sort from worst to best accuracy
         all = zeros(2, length(numCorrect)); 
         all(1,:) = numCorrect./numTotal; 

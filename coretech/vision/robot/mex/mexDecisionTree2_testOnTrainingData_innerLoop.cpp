@@ -32,14 +32,17 @@ static void runTree(
                     s32 * restrict pNumCorrect,
                     s32 * restrict pNumTotal,
                     s32 * restrict pLabelIds,
-                    const s32 numFeatures,
-                    const s32 numImages,
-                    const s32 treeLength)
+                    const s64 numFeatures,
+                    const s64 numImages,
+                    const s64 treeLength)
 {
-  for(s32 iImage=0; iImage<numImages; iImage++) {
+  for(s64 iImage=0; iImage<numImages; iImage++) {
     const u8 * restrict pFeatureValuesCur = pFeatureValues + iImage * numFeatures;
     
     s32 curNodeIndex = 0;
+    
+    // This assert may happen if Matlab is not compiled with -largeArrayDims
+    // AnkiAssert(pFeatureValuesCur >= pFeatureValues);
     
     while(pLeftChildIndexs[curNodeIndex] > 0) {
       const s32 curFeature = pWhichFeatures[curNodeIndex];
@@ -60,8 +63,8 @@ static void runTree(
     AnkiAssert(curLeftChildIndex < 0);
     
     if(curLeftChildIndex == -1) {
-      pNumTotal[maxLabelId-1]++;
-      pLabelIds[iImage] = maxLabelId;
+      pNumTotal[maxLabelId]++;
+      pLabelIds[iImage] = maxLabelId + 1;
     } else {
       const s32 curId = (-curLeftChildIndex) - 1000000;
       pNumTotal[curId]++;
@@ -81,9 +84,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   AnkiConditionalErrorAndReturn(nrhs == 7 && nlhs == 3, "mexDecisionTree2_testOnTrainingData_innerLoop", "Call this function as follows: [numCorrect, numTotal, labelIds] = mexDecisionTree2_testOnTrainingData_innerLoop(featureValues, cTree_whichFeatures, cTree_u8Thresholds, cTree_leftChildIndexs, samplePositions, groundTruthLabels, numThreads);");
 
-  const s32 numFeatures = mxGetM(prhs[0]);
-  const s32 numImages = mxGetN(prhs[0]);
-  const s32 treeLength = mxGetM(prhs[1]);
+  const s64 numFeatures = mxGetM(prhs[0]);
+  const s64 numImages = mxGetN(prhs[0]);
+  const s64 treeLength = mxGetM(prhs[1]);
   
   AnkiConditionalErrorAndReturn(mxGetN(prhs[1]) == 1 && mxGetN(prhs[2]) == 1 && mxGetN(prhs[3]) == 1 && mxGetN(prhs[4]) == 1 && mxGetN(prhs[5]) == 1, "mexDecisionTree2_testOnTrainingData_innerLoop", "Incorrect input size");
   
@@ -123,16 +126,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   {
     const mwSize outputDims[2] = {static_cast<mwSize>(maxLabelId+1), 1};
     plhs[0] = mxCreateNumericArray(2, outputDims, mxINT32_CLASS, mxREAL);
+    AnkiAssert(plhs[0]);
   }
   
   {
     const mwSize outputDims[2] = {static_cast<mwSize>(maxLabelId+1), 1};
     plhs[1] = mxCreateNumericArray(2, outputDims, mxINT32_CLASS, mxREAL);
+    AnkiAssert(plhs[1]);
   }
   
   {
     const mwSize outputDims[2] = {static_cast<mwSize>(numImages), 1};
     plhs[2] = mxCreateNumericArray(2, outputDims, mxINT32_CLASS, mxREAL);
+    AnkiAssert(plhs[2]);
   }
 
   s32 * const pNumCorrect= (s32 *) mxGetData(plhs[0]);
