@@ -182,7 +182,7 @@ namespace Anki {
         robot->GetBlockWorld().EnableDraw(true);
       }
 
-      return robot->SendImageRequest((ImageSendMode_t)msg.mode);
+      return robot->RequestImage((ImageSendMode_t)msg.mode);
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SaveImages const& msg)
@@ -247,7 +247,7 @@ namespace Anki {
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_AbortPath const& msg)
     {
-      robot->AbortCurrentPath();
+      robot->ClearPath();
       return RESULT_OK;
     }
 
@@ -270,12 +270,12 @@ namespace Anki {
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetHeadControllerGains const& msg)
     {
-      return robot->SendHeadControllerGains(msg.kp, msg.ki, msg.maxIntegralError);
+      return robot->SetHeadControllerGains(msg.kp, msg.ki, msg.maxIntegralError);
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetLiftControllerGains const& msg)
     {
-      return robot->SendLiftControllerGains(msg.kp, msg.ki, msg.maxIntegralError);
+      return robot->SetLiftControllerGains(msg.kp, msg.ki, msg.maxIntegralError);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SelectNextSoundScheme const& msg)
@@ -291,18 +291,18 @@ namespace Anki {
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartTestMode const& msg)
     {
-      return robot->SendStartTestMode((TestMode)msg.mode);
+      return robot->StartTestMode((TestMode)msg.mode);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_IMURequest const& msg)
     {
-      return robot->SendIMURequest(msg.length_ms);
+      return robot->RequestIMU(msg.length_ms);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlayAnimation const& msg)
     {
       SoundManager::getInstance()->Play((SoundID_t)msg.soundID);
-      return robot->SendPlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
+      return robot->PlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
     }
   
   } // namespace Cozmo

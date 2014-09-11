@@ -1116,7 +1116,7 @@ namespace Anki {
                        Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
 
       
-      return robot.SendDockWithObject(_dockObjectID, _dockMarker, nullptr, _dockAction);
+      return robot.DockWithObject(_dockObjectID, _dockMarker, nullptr, _dockAction);
     }
     
     
@@ -1245,7 +1245,7 @@ namespace Anki {
           _carryingObjectID  = robot.GetCarryingObject();
           _carryObjectMarker = robot.GetCarryingMarker();
         
-          if(robot.SendPlaceObjectOnGround(0, 0, 0) == RESULT_OK)
+          if(robot.PlaceObjectOnGround() == RESULT_OK)
           {
             result = SUCCESS;
           } else {
@@ -1296,7 +1296,7 @@ namespace Anki {
           PRINT_NAMED_INFO("PutDownObjectAction.CheckIfDone.ObjectPlacementSuccess",
                            "Verification of object placement FAILED!\n");
           // TODO: correct to assume we are still carrying the object?
-          robot.AttachObjectToLift(_carryingObjectID, _carryObjectMarker); // re-pickup object to attach it to the lift again
+          robot.SetObjectAsAttachedToLift(_carryingObjectID, _carryObjectMarker); // re-pickup object to attach it to the lift again
           return FAILURE_RETRY;
         }
         
@@ -1347,7 +1347,7 @@ namespace Anki {
                        Vision::MarkerTypeStrings[_dockMarker2->GetCode()],
                        _dockAction);
       
-      return robot.SendDockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
+      return robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
     }
     
     Result CrossBridgeAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -1436,7 +1436,7 @@ namespace Anki {
     
     IAction::ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
     {
-      if(robot.SendPlayAnimation(_animID) == RESULT_OK) {
+      if(robot.PlayAnimation(_animID) == RESULT_OK) {
         return SUCCESS;
       } else {
         return FAILURE_ABORT;

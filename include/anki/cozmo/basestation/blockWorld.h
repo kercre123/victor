@@ -78,11 +78,8 @@ namespace Anki
       using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
       using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
       
-      //static const unsigned int MaxRobots = 4;
-      //static bool ZAxisPointsUp; // normally true, false for Webots
-
       BlockWorld(Robot* robot);
-      //static BlockWorld* getInstance();
+      ~BlockWorld();
       
       // Update the BlockWorld's state by processing all queued ObservedMarkers
       // and updating robots' poses and blocks' poses from them.
@@ -93,27 +90,23 @@ namespace Anki
       
       Result QueueObservedMarker(HistPoseKey& poseKey, Vision::ObservedMarker& marker);
       
-      // Clear all existing objects in the world
+      
+      //
+      // Object Access
+      //
+      
+      // Clearing objects: all, by type, by family, or by ID
       void ClearAllExistingObjects();
-      
-      // Clear all objects with the specified family
       void ClearObjectsByFamily(const BlockWorld::ObjectFamily family);
-      
-      // Clear all objects with the specified type
       void ClearObjectsByType(const ObjectType type);
+      bool ClearObject(const ObjectID withID); // Returns true if object with ID is found and cleared, false otherwise.
       
-      // Clear an object with a specific ID. Returns true if object with that ID
-      // is found and cleared, false otherwise.
-      bool ClearObject(const ObjectID withID);
-      
-      const Vision::ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
-
-      const ObjectsMapByFamily_t& GetAllExistingObjects() const;
-      
-      const ObjectsMapByType_t& GetExistingObjectsByFamily(const ObjectFamily whichFamily) const;
-      
+      // Get objects that exist in the world, by family, type, ID, etc.
       // NOTE: Like IDs, object types are unique across objects so they can be
       //       used without specifying which family.
+      const Vision::ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
+      const ObjectsMapByFamily_t& GetAllExistingObjects() const;
+      const ObjectsMapByType_t& GetExistingObjectsByFamily(const ObjectFamily whichFamily) const;
       const ObjectsMapByID_t& GetExistingObjectsByType(const ObjectType whichType) const;
       
       // Return a pointer to an object with the specified ID. If that object
@@ -142,13 +135,14 @@ namespace Anki
       
       // Returns true if any blocks were moved, added, or deleted on the
       // last update. Useful, for example, to know whether to update the
-      // visualization.
+      // visualization or existing plans.
       bool DidBlocksChange() const;
       
-      ~BlockWorld();
       
-      
-      // === Draw functions ===
+      //
+      // Visualization
+      //
+
       void EnableDraw(bool on);
 
       // Visualize markers in image display

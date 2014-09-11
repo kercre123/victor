@@ -476,137 +476,8 @@ namespace Anki {
       _behaviorMgr.Update();
       
       
-      
       //////// Update Robot's State Machine /////////////
       _actionList.Update(*this);
-      
-      /*
-      IActionRunner* currentAction = _actionQueue.GetCurrentAction();
-      if(currentAction == nullptr) {
-        
-        VizManager::getInstance()->SetText(VizManager::TextLabelType::ACTION, NamedColors::RED, "<No Current Action>");
-        
-      } else {
-        
-        const IAction::ActionResult result = currentAction->Update(*this);
-        
-        VizManager::getInstance()->SetText(VizManager::TextLabelType::ACTION, NamedColors::RED,
-                                           currentAction->GetStatus().c_str());
-        
-        switch(result)
-        {
-          case IAction::SUCCESS:
-            PRINT_NAMED_INFO("Robot.Update.CurrentActionSucceeded",
-                             "Robot %d succeeded running action %s. Popping it off queue.\n",
-                             GetID(), currentAction->GetName().c_str());
-            _actionQueue.PopCurrentAction();
-            break;
-            
-          case IAction::RUNNING:
-            // Still running... (Nothing to do?)
-            break;
-            
-          case IAction::FAILURE_PROCEED:
-            PRINT_NAMED_INFO("Robot.Update.CurrentActionFailedProceeding",
-                             "Robot %d failed running action %s. Popping it off queue and proceeding.\n",
-                             GetID(), currentAction->GetName().c_str());
-
-            _actionQueue.PopCurrentAction();
-            break;
-            
-          case IAction::FAILURE_ABORT:
-          case IAction::FAILURE_TIMEOUT: // TODO: handle this case differently?
-            case IAction::FAILURE_RETRY: // actual retries handled by IAction::Update()
-            PRINT_NAMED_INFO("Robot.Update.CurrentActionFailedAborting",
-                             "Robot %d failed running action %s. Clearing remainder of action queue.\n",
-                             GetID(), currentAction->GetName().c_str());
-            
-            _actionQueue.Clear();
-            break;
-            
-          default:
-            PRINT_NAMED_ERROR("Robot.Update.InvalidActionResultCase",
-                              "Reached unexpected default case for ActionResult.\n");
-            return RESULT_FAIL;
-            
-        } // switch(result)
-      } // if/else actionQueue not empty
-      */
-      
-      
-      ////////////  Update Path Traversal /////////////
-      
-      // Note that we check IsPickOrPlacing() here because the physical robot
-      // could be following an internally-generated Dubins path for docking, but
-      // we don't want to react to that here.
-      if(IsTraversingPath() && !IsPickingOrPlacing())
-      {
-        /*
-        // If the robot is traversing a path, consider replanning it
-        if(_blockWorld.DidBlocksChange())
-        {
-          Planning::Path newPath;
-          switch(_selectedPathPlanner->GetPlan(newPath, GetPose(), _forceReplanOnNextWorldChange))
-          {
-            case IPathPlanner::DID_PLAN:
-            {
-              // clear path, but flag that we are replanning
-              ClearPath();
-              _wasTraversingPath = false;
-              _forceReplanOnNextWorldChange = false;
-              
-              PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path\n");
-              MessageClearPath clearMessage;
-              _msgHandler->SendMessage(_ID, clearMessage);
-              
-              _path = newPath;
-              PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot\n");
-              ExecutePath(_path);
-              break;
-            } // case DID_PLAN:
-              
-            case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
-            {
-              PRINT_NAMED_INFO("Robot.Update.NewGoalForReplanNeeded",
-                               "Replan failed due to bad goal. Aborting path.\n");
-
-              ClearPath();
-              break;
-            } // PLAN_NEEDED_BUT_GOAL_FAILURE:
-              
-            case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
-            {
-              PRINT_NAMED_INFO("Robot.Update.NewStartForReplanNeeded",
-                               "Replan failed during docking due to bad start. Will try again, and hope robot moves.\n");
-              break;
-            }
-              
-            case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
-            {
-              PRINT_NAMED_INFO("Robot.Update.NewEnvironmentForReplanNeeded",
-                               "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
-              // clear the path, but don't change the state
-              ClearPath();
-              _forceReplanOnNextWorldChange = true;
-              break;
-            }
-              
-            default:
-            {
-              // Don't do anything just proceed with the current plan...
-              break;
-            }
-              
-          } // switch(GetPlan())
-        } // if blocks changed
-        */
-        
-        // Dole out more path segments to the physical robot if needed:
-        if (GetLastRecvdPathID() == GetLastSentPathID()) {
-          _pdo->Update(_currPathSegment, _numFreeSegmentSlots);
-        }
-        
-      } // if IsTraversingPath()
       
       /////////// Update visualization ////////////
       
@@ -648,23 +519,6 @@ namespace Anki {
           carryBlock->Visualize();
         }
       }
-      
-      /* Now done by the DriveToPoseAction
-      // Visualize path if robot has just started traversing it.
-      // Clear the path when it has stopped.
-      if (!IsPickingOrPlacing()) {
-        if (!_wasTraversingPath && IsTraversingPath() && _path.GetNumSegments() > 0) {
-          VizManager::getInstance()->DrawPath(_ID,_path,NamedColors::EXECUTED_PATH);
-          _wasTraversingPath = true;
-        } else if (_wasTraversingPath && !IsTraversingPath()){
-          ClearPath(); // clear path and indicate that we are not replanning
-          VizManager::getInstance()->ErasePath(_ID);
-          VizManager::getInstance()->EraseAllPlannerObstacles(true);
-          VizManager::getInstance()->EraseAllPlannerObstacles(false);
-          _wasTraversingPath = false;
-        }
-      }
-       */
 
       return RESULT_OK;
       
@@ -764,12 +618,6 @@ namespace Anki {
         return RESULT_FAIL;
     }
 
-    /*
-    Result Robot::ExecutePathToPose(const Pose3d& pose)
-    {
-      return ExecutePathToPose(pose, GetHeadAngle());
-    }
-     */
     
     void Robot::SelectPlanner(const Pose3d& targetPose)
     {
@@ -825,11 +673,6 @@ namespace Anki {
       ExecutePath(p);
     }
     
-    void Robot::AbortCurrentPath()
-    {
-      ClearPath();
-    }
-    
     // =========== Motor commands ============
     
     // Sends message to move lift at specified speed
@@ -870,6 +713,28 @@ namespace Anki {
     {
       return SendStopAllMotors();
     }
+    
+    Result Robot::PlaceObjectOnGround()
+    {
+      if(!IsCarryingObject()) {
+        PRINT_NAMED_ERROR("Robot.PlaceObjectOnGround.NotCarryingObject",
+                          "Robot told to place object on ground, but is not carrying an object.\n");
+        return RESULT_FAIL;
+      }
+      
+      return SendPlaceObjectOnGround(0, 0, 0);
+    }
+    
+    Result Robot::PlayAnimation(const AnimationID_t animID, const u32 numLoops)
+    {
+      return SendPlayAnimation(animID, numLoops);
+    }
+    
+    Result Robot::SyncTime()
+    {
+      return SendSyncTime();
+    }
+    
 
     Result Robot::TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments)
     {
@@ -1319,29 +1184,21 @@ namespace Anki {
     } // ExecutePlaceObjectOnGroundSequence(atPose)
     
     
-    // Sends a message to the robot to dock with the specified block
-    // that it should currently be seeing.
-    Result Robot::SendDockWithObject(const ObjectID objectID,
-                                     const Vision::KnownMarker* marker,
-                                     const Vision::KnownMarker* marker2,
-                                     const DockAction_t dockAction)
+    Result Robot::DockWithObject(const ObjectID objectID,
+                                 const Vision::KnownMarker* marker,
+                                 const Vision::KnownMarker* marker2,
+                                 const DockAction_t dockAction)
     {
-      _dockObjectID = objectID;
-      return SendDockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX);
+      return DockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX);
     }
     
-    // Sends a message to the robot to dock with the specified block
-    // that it should currently be seeing. If pixel_radius == u8_MAX,
-    // the marker can be seen anywhere in the image (same as above function), otherwise the
-    // marker's center must be seen at the specified image coordinates
-    // with pixel_radius pixels.
-    Result Robot::SendDockWithObject(const ObjectID objectID,
-                                     const Vision::KnownMarker* marker,
-                                     const Vision::KnownMarker* marker2,
-                                     const DockAction_t dockAction,
-                                     const u16 image_pixel_x,
-                                     const u16 image_pixel_y,
-                                     const u8 pixel_radius)
+    Result Robot::DockWithObject(const ObjectID objectID,
+                                 const Vision::KnownMarker* marker,
+                                 const Vision::KnownMarker* marker2,
+                                 const DockAction_t dockAction,
+                                 const u16 image_pixel_x,
+                                 const u16 image_pixel_y,
+                                 const u8 pixel_radius)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
@@ -1349,9 +1206,9 @@ namespace Anki {
                           "Object with ID=%d no longer exists for docking.\n", objectID.GetValue());
         return RESULT_FAIL;
       }
-
+      
       CORETECH_ASSERT(marker != nullptr);
-
+      
       // Need to store these so that when we receive notice from the physical
       // robot that it has picked up an object we can transition the docking
       // object to being carried, using PickUpDockObject()
@@ -1364,9 +1221,25 @@ namespace Anki {
                           "Specified dock marker must be a child of the specified dock object.\n");
         return RESULT_FAIL;
       }
-      
+
+      return SendDockWithObject(marker, marker2, dockAction, image_pixel_x, image_pixel_y, pixel_radius);
+    }
+    
+    
+    // Sends a message to the robot to dock with the specified marker
+    // that it should currently be seeing. If pixel_radius == u8_MAX,
+    // the marker can be seen anywhere in the image (same as above function), otherwise the
+    // marker's center must be seen at the specified image coordinates
+    // with pixel_radius pixels.
+    Result Robot::SendDockWithObject(const Vision::KnownMarker* marker,
+                                     const Vision::KnownMarker* marker2,
+                                     const DockAction_t dockAction,
+                                     const u16 image_pixel_x,
+                                     const u16 image_pixel_y,
+                                     const u8 pixel_radius)
+    {
       const Vision::Marker::Code code1 = marker->GetCode();
-      Vision::Marker::Code code2 = code1;
+      Vision::Marker::Code       code2 = code1;
       
       if(DA_CROSS_BRIDGE == dockAction) {
         if(marker2 == nullptr) {
@@ -1400,7 +1273,7 @@ namespace Anki {
     }
     
     
-    Result Robot::AttachObjectToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
+    Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
     {
       if(!objectID.IsSet()) {
         PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectIDNotSet",
@@ -1455,7 +1328,7 @@ namespace Anki {
     } // AttachObjectToLift()
     
     
-    Result Robot::UnattachCarriedObject()
+    Result Robot::SetCarriedObjectAsUnattached()
     {
       if(IsCarryingObject() == false) {
         PRINT_NAMED_WARNING("Robot.PlaceCarriedObject.CarryingObjectNotSpecified",
@@ -1518,9 +1391,9 @@ namespace Anki {
     // ============ Messaging ================
     
     // Sync time with physical robot and trigger it robot to send back camera calibration
-    Result Robot::SendInit() const
+    Result Robot::SendSyncTime() const
     {
-      MessageRobotInit m;
+      MessageSyncTime m;
       m.robotID  = _ID;
       m.syncTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       
@@ -1738,8 +1611,8 @@ namespace Anki {
       
     } // GetBoundingBoxXY()
     
-
-    Result Robot::SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    
+    Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
     {
       MessageSetHeadControllerGains m;
       m.kp = kp;
@@ -1748,7 +1621,7 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    Result Robot::SetLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
     {
       MessageSetLiftControllerGains m;
       m.kp = kp;
@@ -1757,7 +1630,7 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SendSetVisionSystemParams(VisionSystemParams_t p)
+    Result Robot::SetSetVisionSystemParams(VisionSystemParams_t p)
     {
       MessageSetVisionSystemParams m;
       m.minExposureTime = p.minExposureTime;
@@ -1779,6 +1652,20 @@ namespace Anki {
       return RESULT_FAIL;
     }
     
+    Result Robot::StartTestMode(const TestMode mode) const
+    {
+      return SendStartTestMode(mode);
+    }
+    
+    Result Robot::RequestImage(const ImageSendMode_t mode) const
+    {
+      return SendImageRequest(mode);
+    }
+    
+    Result Robot::RequestIMU(const u32 length_ms) const
+    {
+      return SendIMURequest(length_ms);
+    }
     
     
     // ============ Pose history ===============

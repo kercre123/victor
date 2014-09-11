@@ -5,6 +5,24 @@
 //  Created by Andrew Stein on 8/23/13.
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
+/**
+ * File: robot.h
+ *
+ * Author: Andrew Stein
+ * Date:   8/23/13
+ *
+ * Description: Defines a Robot representation on the Basestation, which is 
+ *              in charge of communicating with (and mirroring the state of)
+ *              a physical (hardware) robot.  
+ *
+ *              Convention: Set*() methods do not actually command the physical
+ *              robot to do anything; they simply update some aspect of the 
+ *              state or internal representation of the Basestation Robot. 
+ *              To command the robot to "do" something, methods beginning with
+ *              other action words, or add IAction objects to its ActionList.
+ *
+ * Copyright: Anki, Inc. 2013
+ **/
 
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_H
 #define ANKI_COZMO_BASESTATION_ROBOT_H
@@ -50,8 +68,6 @@ namespace Anki {
       
       Result UpdateFullRobotState(const MessageRobotState& msg);
       
-      // Returns true if robot is not traversing a path and has no actions in its queue.
-      bool IsIdle() const { return !IsTraversingPath() && _actionList.IsEmpty(); }
       
       // Accessors
       const RobotID_t        GetID()           const;
@@ -68,11 +84,16 @@ namespace Anki {
       
       Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existinMatPiece);
       
+      // Returns true if robot is not traversing a path and has no actions in its queue.
+      bool   IsIdle() const { return !IsTraversingPath() && _actionList.IsEmpty(); }
+      
       // True if wheel speeds are non-zero in most recent RobotState message
       bool   IsMoving() const {return _isMoving;}
       
       // True if we are on the sloped part of a ramp
       bool   IsOnRamp() const { return _onRamp; }
+      
+      // Set whether or not the robot is on a ramp
       Result SetOnRamp(bool t);
       
       // Just sets the ramp to use and in which direction, not whether robot is on it yet
@@ -96,10 +117,12 @@ namespace Anki {
       const f32              GetLiftAngle()    const;
       const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
       const PoseFrameID_t    GetPoseFrameID()  const {return _frameId;}
-      
+      const Pose3d*          GetWorldOrigin() const { return _worldOrigin; }
+
+      // These change the robot's internal (basestation) representation of its
+      // pose, head angle, and lift angle, but do NOT actually command the
+      // physical robot to do anything!
       void SetPose(const Pose3d &newPose);
-      const Pose3d* GetWorldOrigin() const { return _worldOrigin; }
-      
       void SetHeadAngle(const f32& angle);
       void SetLiftAngle(const f32& angle);
       
@@ -112,6 +135,7 @@ namespace Anki {
       //
 
       // Clears the path that the robot is executing which also stops the robot
+      // (so this also aborts any current path)
       Result ClearPath();
       
       // Removes the specified number of segments from the front and back of the path
@@ -128,12 +152,10 @@ namespace Anki {
       // Sends a path to the robot to be immediately executed
       Result ExecutePath(const Planning::Path& path);
       
-      // executes a test path defined in latticePlanner
+      // Executes a test path defined in latticePlanner
       void ExecuteTestPath();
       
       IPathPlanner* GetPathPlanner() { return _selectedPathPlanner; }
-      
-      void AbortCurrentPath();
       
       bool IsTraversingPath()   const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
       
@@ -157,14 +179,14 @@ namespace Anki {
       void SetCarryingObject(ObjectID carryObjectID);
       void UnSetCarryingObject();
       
-      // Sends a message to the robot to dock with the specified marker of the
-      // specified object that it should currently be seeing.
+      // Tell the physical robot to dock with the specified marker
+      // of the specified object that it should currently be seeing.
       // If pixel_radius == u8_MAX, the marker can be seen anywhere in the image,
       // otherwise the marker's center must be seen within pixel_radius of the
       // specified image coordinates.
       // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indiciate
       // the expected marker on the end of the bridge. Otherwise, it is ignored.
-      Result SendDockWithObject(const ObjectID objectID,
+      Result DockWithObject(const ObjectID objectID,
                                 const Vision::KnownMarker* marker,
                                 const Vision::KnownMarker* marker2,
                                 const DockAction_t dockAction,
@@ -173,7 +195,7 @@ namespace Anki {
                                 const u8 pixel_radius);
       
       // Same as above but without specifying image location for marker
-      Result SendDockWithObject(const ObjectID objectID,
+      Result DockWithObject(const ObjectID objectID,
                             const Vision::KnownMarker* marker,
                             const Vision::KnownMarker* marker2,
                             const DockAction_t dockAction);
@@ -182,19 +204,36 @@ namespace Anki {
       // is carrying, and puts it in the robot's pose chain, attached to the
       // lift. Returns RESULT_FAIL if the robot wasn't already docking with
       // an object.
-      //Result PickUpDockObject();
-      Result AttachDockObjectToLift();
+      Result SetDockObjectAsAttachedToLift();
       
       // Same as above, but with specified object
-      //Result PickUpObject(const ObjectID& dockObjectID,
-      //                    const Vision::KnownMarker* dockMarker);
-      Result AttachObjectToLift(const ObjectID& dockObjectID,
-                                const Vision::KnownMarker* dockMarker);
+      Result SetObjectAsAttachedToLift(const ObjectID& dockObjectID,
+                                       const Vision::KnownMarker* dockMarker);
       
       // Places the object that the robot was carrying in its current position
       // w.r.t. the world, and removes it from the lift pose chain so it is no
       // longer "attached" to the robot.
-      Result UnattachCarriedObject();
+      Result SetCarriedObjectAsUnattached();
+      
+
+      
+      //
+      // Proximity Sensors
+      //
+      u8   GetProxSensorVal(ProxSensor_t sensor)    const {return _proxVals[sensor];}
+      bool IsProxSensorBlocked(ProxSensor_t sensor) const {return _proxBlocked[sensor];}
+      
+      // Pose of where objects are assumed to be with respect to robot pose when
+      // obstacles are detected by proximity sensors
+      static const Pose3d ProxDetectTransform[NUM_PROX];
+      
+      
+      // =========== Actions Commands =============
+      
+      // Return a reference to the robot's action list for directly adding things
+      // to do, either "now" or in queues.
+      // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
+      ActionList& GetActionList() { return _actionList; }
       
       // Plan a path to an available docking pose of the specified object, and
       // then dock with it.
@@ -211,21 +250,9 @@ namespace Anki {
       
       // Put the carried object down right where the robot is now
       Result ExecutePlaceObjectOnGroundSequence();
-
       
-      //
-      // Proximity Sensors
-      //
-      u8   GetProxSensorVal(ProxSensor_t sensor)    const {return _proxVals[sensor];}
-      bool IsProxSensorBlocked(ProxSensor_t sensor) const {return _proxBlocked[sensor];}
-      
-      // Pose of where objects are assumed to be with respect to robot pose when
-      // obstacles are detected by proximity sensors
-      static const Pose3d ProxDetectTransform[NUM_PROX];
-      
-      
-      
-      ///////// Motor commands  ///////////
+      // Below are low-level actions to tell the robot to do something "now"
+      // without using the ActionList system:
       
       // Sends message to move lift at specified speed
       Result MoveLift(const f32 speed_rad_per_sec);
@@ -248,52 +275,37 @@ namespace Anki {
       
       Result StopAllMotors();
       
+      // Send a message to the robot to place whatever it is carrying on the
+      // ground right where it is. Returns RESULT_FAIL if robot is not carrying
+      // anything.
+      Result PlaceObjectOnGround();
+      
+      // Plays specified animation numLoops times.
+      // If numLoops == 0, animation repeats forever.
+      Result PlayAnimation(const AnimationID_t animID, const u32 numLoops = 0);
+      
+      Result SyncTime();
       
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
       
+      Result RequestImage(const ImageSendMode_t mode) const;
+      
+      Result RequestIMU(const u32 length_ms) const;
+
+      // Tell the robot to start a given test mode
+      Result StartTestMode(const TestMode mode) const;
+
       // Start a Behavior in BehaviorManager
       void StartBehaviorMode(BehaviorManager::Mode mode);
       
       // Select next object of interest for the behavior manager
       void SelectNextObjectOfInterest();
       
-      ///////// Messaging ////////
-      // TODO: Most of these send functions should be private and wrapped in
-      // relevant state modifying functions. e.g. SendStopAllMotors() should be
-      // called from StopAllMotors().
-      
-      // Sync time with physical robot and trigger it robot to send back camera
-      // calibration
-      Result SendInit() const;
-      
-      // Send's robot's current pose
-      Result SendAbsLocalizationUpdate() const;
-
-      // Update the head angle on the robot
-      Result SendHeadAngleUpdate() const;
-
-      // Request camera snapshot from robot
-      Result SendImageRequest(const ImageSendMode_t mode) const;
-
-      // Request imu log from robot
-      Result SendIMURequest(const u32 length_ms) const;
-      
-      // Run a test mode
-      Result SendStartTestMode(const TestMode mode) const;
-      
-      // Set controller gains on robot
-      Result SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
-      Result SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
-      
-      Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle);
-      
-      // Set VisionSystem parameters
-      Result SendSetVisionSystemParams(VisionSystemParams_t p);
-      
-      // Play animation
-      // If numLoops == 0, animation repeats forever.
-      Result SendPlayAnimation(const AnimationID_t id, const u32 numLoops = 0);
+      // For debugging robot parameters:
+      Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
+      Result SetLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
+      Result SetSetVisionSystemParams(VisionSystemParams_t p);
       
       // =========== Pose history =============
       
@@ -319,17 +331,7 @@ namespace Anki {
       // parent pose to store the pose.
       // Returns true if the pose is successfully updated, false otherwise.
       bool UpdateCurrPoseFromHistory(const Pose3d& wrtParent);
-      
-      
-      
-      // Queue an action, by default at the end of the Robot's current list of
-      // things to do. Actions can also be queued to occur immediately after the
-      // current action finishes ("next").
-      //Result QueueAction(IAction* action, const bool next = false);
 
-      // Return a reference to the robot's action list for adding things for it
-      // to do.
-      ActionList& GetActionList() { return _actionList; }
       
       // ============= Reactions =============
       using ReactionCallback = std::function<Result(Robot*,Vision::ObservedMarker*)>;
@@ -340,7 +342,7 @@ namespace Anki {
       // used to remove the callback via the method below.
       ReactionCallbackIter AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback);
       
-      // Remove a preivously-added callback using the iterator returned by
+      // Remove a previously-added callback using the iterator returned by
       // AddReactionCallback above.
       void RemoveReactionCallback(const Vision::Marker::Code code, ReactionCallbackIter callbackToRemove);
       
@@ -349,6 +351,7 @@ namespace Anki {
       
       
     protected:
+      
       // The robot's identifier
       RobotID_t        _ID;
       
@@ -356,7 +359,6 @@ namespace Anki {
       IMessageHandler* _msgHandler;
       
       // A reference to the BlockWorld the robot lives in
-      //BlockWorld*      _world;
       BlockWorld       _blockWorld;
       
       BehaviorManager  _behaviorMgr;
@@ -373,17 +375,12 @@ namespace Anki {
       u8               _numFreeSegmentSlots;
       u16              _lastSentPathID;
       u16              _lastRecvdPathID;
-      //bool             _wasTraversingPath;
       PathDolerOuter*  _pdo;
       
       // This functions sets _selectedPathPlanner to the appropriate
       // planner
       void SelectPlanner(const Pose3d& targetPose);
       
-      // if true and we are traversing a path, then next time the
-      // block world changes, re-plan from scratch
-      //bool _forceReplanOnNextWorldChange;
-
 	    // Robot stores the calibration, camera just gets a reference to it
       // This is so we can share the same calibration data across multiple
       // cameras (e.g. those stored inside the pose history)
@@ -399,7 +396,7 @@ namespace Anki {
       Pose3d*          _worldOrigin;
       Pose3d           _pose;
       PoseFrameID_t    _frameId;
-      ObjectID         _localizedToID;
+      ObjectID         _localizedToID;       // ID of mat object robot is localized to
       bool             _localizedToFixedMat; // false until robot sees a _fixed_ mat
       
       Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
@@ -437,8 +434,6 @@ namespace Anki {
       Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose);
       
       RobotPoseHistory _poseHistory;
-
-
       
       // Leaves input liftPose's parent alone and computes its position w.r.t.
       // liftBasePose, given the angle
@@ -463,12 +458,6 @@ namespace Anki {
       // object, then cross it.
       Result ExecuteBridgeCrossingSequence(ActionableObject* object);
 
-      // What function to run when "Executing" a "Sequence" fails, and what
-      // type of PreActionPose to look for to check for success at the end
-      // of path planning
-      std::function<Result()>    _reExecSequenceFcn;
-      PreActionPose::ActionType  _goalPoseActionType;
-      
       // A place to store reaction callback functions, indexed by the type of
       // vision marker that triggers them
       std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
@@ -485,6 +474,8 @@ namespace Anki {
 
       
       ///////// Messaging ////////
+      // These methods actually do the creation of messages and sending
+      // (via MessageHandler) to the physical robot
       
       Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                        const TimeStamp_t&   t,
@@ -523,6 +514,37 @@ namespace Anki {
       // Turn on/off headlight LEDs
       Result SendHeadlight(u8 intensity);
       
+      // Sync time with physical robot and trigger it robot to send back camera
+      // calibration
+      Result SendSyncTime() const;
+      
+      // Send's robot's current pose
+      Result SendAbsLocalizationUpdate() const;
+      
+      // Update the head angle on the robot
+      Result SendHeadAngleUpdate() const;
+      
+      // Request camera snapshot from robot
+      Result SendImageRequest(const ImageSendMode_t mode) const;
+      
+      // Request imu log from robot
+      Result SendIMURequest(const u32 length_ms) const;
+      
+      // Run a test mode
+      Result SendStartTestMode(const TestMode mode) const;
+      
+      Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle);
+      
+      // Play animation
+      // If numLoops == 0, animation repeats forever.
+      Result SendPlayAnimation(const AnimationID_t id, const u32 numLoops = 0);
+      
+      Result SendDockWithObject(const Vision::KnownMarker* marker,
+                                const Vision::KnownMarker* marker2,
+                                const DockAction_t dockAction,
+                                const u16 image_pixel_x,
+                                const u16 image_pixel_y,
+                                const u8 pixel_radius);
       
     }; // class Robot
 
@@ -573,8 +595,8 @@ namespace Anki {
       _carryingObjectID.UnSet();
     }
 
-    inline Result Robot::AttachDockObjectToLift() {
-      return AttachObjectToLift(_dockObjectID, _dockMarker);
+    inline Result Robot::SetDockObjectAsAttachedToLift(){
+      return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);
     }
     
     

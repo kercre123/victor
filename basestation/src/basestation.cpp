@@ -232,7 +232,7 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
   for (auto robotIDVal : config_[AnkiUtil::kP_CONNECTED_ROBOTS]) {
     RobotID_t robotID = (RobotID_t)robotIDVal.asInt();
     robotMgr_.AddRobot(robotID);
-    robotMgr_.GetRobotByID(robotID)->SendInit();
+    robotMgr_.GetRobotByID(robotID)->SyncTime();
     
     // Uncomment to Test "reactions":
     // TODO: Make a keypress for switching to this behavior mode
