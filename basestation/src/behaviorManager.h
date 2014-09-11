@@ -36,9 +36,7 @@ namespace Anki {
       
       typedef enum {
         None,
-        PickAndPlace,
         June2014DiceDemo,
-        TraverseObject, // for ramps or bridges
         ReactToMarkers
       } Mode;
       
@@ -51,10 +49,7 @@ namespace Anki {
 
       Robot* GetRobot() const {return robot_;}
       
-      const ObjectID GetObjectOfInterest() const {return objectIDofInterest_;}
-      
-      // Select the next object in blockWorld as the block of interest
-      void SelectNextObjectOfInterest();
+      const ObjectID GetObjectOfInterest() const;
       
     protected:
       
@@ -107,10 +102,7 @@ namespace Anki {
       IdleAnimationState idleState_;
       unsigned int timesIdle_;
       Pose3d originalPose_;
-      
-      // Specific object that the robot is currently travelling to, docking to,
-      ObjectID objectIDofInterest_;
-      
+            
       // Object _type_ the robot is currently "interested in"
       ObjectType objectTypeOfInterest_;
       

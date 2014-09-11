@@ -235,6 +235,7 @@ namespace Anki {
       // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
       ActionList& GetActionList() { return _actionList; }
       
+      /*
       // Plan a path to an available docking pose of the specified object, and
       // then dock with it.
       Result ExecuteDockingSequence(ObjectID objectIDtoDockWith);
@@ -250,6 +251,7 @@ namespace Anki {
       
       // Put the carried object down right where the robot is now
       Result ExecutePlaceObjectOnGroundSequence();
+      */
       
       // Below are low-level actions to tell the robot to do something "now"
       // without using the ActionList system:
@@ -298,9 +300,7 @@ namespace Anki {
 
       // Start a Behavior in BehaviorManager
       void StartBehaviorMode(BehaviorManager::Mode mode);
-      
-      // Select next object of interest for the behavior manager
-      void SelectNextObjectOfInterest();
+     
       
       // For debugging robot parameters:
       Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
@@ -450,6 +450,7 @@ namespace Anki {
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryingMarker;
       
+      /*
       // Plan a path to the pre-ascent/descent pose (depending on current
       // height of the robot) and then go up or down the ramp.
       Result ExecuteRampingSequence(Ramp* ramp);
@@ -457,7 +458,8 @@ namespace Anki {
       // Plan a path to the nearest (?) pre-crossing pose of the specified bridge
       // object, then cross it.
       Result ExecuteBridgeCrossingSequence(ActionableObject* object);
-
+       */
+      
       // A place to store reaction callback functions, indexed by the type of
       // vision marker that triggers them
       std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;

@@ -82,10 +82,12 @@ namespace Anki {
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
       void SendExecutePathToPose(const Pose3d& p);
-      void SendExecutePlaceBlockOnGroundSequence(const Pose3d& p);
+      void SendPlaceObjectOnGroundSequence(const Pose3d& p);
+      void SendPickAndPlaceSelectedObject();
+      void SendTraverseSelectedObject();
       void SendExecuteTestPlan();
       void SendClearAllBlocks();
-      void SendSelectNextBlock();
+      void SendSelectNextObject();
       void SendExecuteBehavior(BehaviorManager::Mode mode);
       void SendAbortPath();
       void SendDrawPoseMarker(const Pose3d& p);
@@ -401,7 +403,7 @@ namespace Anki {
                 SendExecutePathToPose(poseMarkerPose_);
                 SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               } else {
-                SendExecutePlaceBlockOnGroundSequence(poseMarkerPose_);
+                SendPlaceObjectOnGroundSequence(poseMarkerPose_);
                 // Make sure head is tilted down so that it can localize well
                 SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
                 
@@ -417,7 +419,7 @@ namespace Anki {
               
             case CKEY_CYCLE_BLOCK_SELECT:
             {
-              SendSelectNextBlock();
+              SendSelectNextObject();
               break;
             }
             case CKEY_CLEAR_BLOCKS:
@@ -427,12 +429,12 @@ namespace Anki {
             }
             case CKEY_DOCK_TO_BLOCK:
             {
-              SendExecuteBehavior(BehaviorManager::PickAndPlace);
+              SendPickAndPlaceSelectedObject();
               break;
             }
             case CKEY_USE_RAMP:
             {
-              SendExecuteBehavior(BehaviorManager::TraverseObject);
+              SendTraverseSelectedObject();
               break;
             }
             case CKEY_START_DICE_DEMO:
@@ -690,9 +692,9 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendExecutePlaceBlockOnGroundSequence(const Pose3d& p)
+      void SendPlaceObjectOnGroundSequence(const Pose3d& p)
       {
-        MessageU2G_PlaceBlockOnGround m;
+        MessageU2G_PlaceObjectOnGround m;
         m.x_mm = p.GetTranslation().x();
         m.y_mm = p.GetTranslation().y();
         m.rad = p.GetRotationAngle<'Z'>().ToFloat();
@@ -712,9 +714,21 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendSelectNextBlock()
+      void SendSelectNextObject()
       {
-        MessageU2G_SelectNextBlock m;
+        MessageU2G_SelectNextObject m;
+        SendMessage(m);
+      }
+      
+      void SendPickAndPlaceSelectedObject()
+      {
+        MessageU2G_PickAndPlaceObject m;
+        SendMessage(m);
+      }
+      
+      void SendTraverseSelectedObject()
+      {
+        MessageU2G_TraverseObject m;
         SendMessage(m);
       }
       

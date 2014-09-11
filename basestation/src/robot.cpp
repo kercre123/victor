@@ -42,8 +42,6 @@
 namespace Anki {
   namespace Cozmo {
     
-    static const ActionList::SlotHandle ExecuteSequenceSlot = 0;
-    
     Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler)
     : _ID(robotID)
     , _msgHandler(msgHandler)
@@ -1069,37 +1067,7 @@ namespace Anki {
       
     } // SetOnPose()
     
-    
-    Result Robot::ExecuteTraversalSequence(ObjectID objectID)
-    {
-
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("Robot.ExecuteTraversalSequence.ObjectNotFound",
-                          "Could not get actionable object with ID = %d from world.\n", objectID.GetValue());
-        return RESULT_FAIL;
-      }
-      
-      if(object->GetType() == MatPiece::Type::LONG_BRIDGE ||
-         object->GetType() == MatPiece::Type::SHORT_BRIDGE)
-      {
-        return ExecuteBridgeCrossingSequence(object);
-      }
-      else if(object->GetType() == Ramp::Type) {
-        Ramp* ramp = dynamic_cast<Ramp*>(object);
-        assert(ramp != nullptr);
-        return ExecuteRampingSequence(ramp);
-      }
-      else {
-        PRINT_NAMED_WARNING("Robot.ExecuteTraversalSequence.CannotTraverseObjectType",
-                            "Robot %d was asked to traverse object ID=%d of type %s, but "
-                            "that traversal is not defined.\n", _ID,
-                            object->GetID().GetValue(), object->GetType().GetName().c_str());
-        return RESULT_OK;
-      }
-      
-    } // ExecuteTraversalSequence()
-    
+    /*
     
     Result Robot::ExecuteRampingSequence(Ramp* ramp)
     {
@@ -1182,7 +1150,7 @@ namespace Anki {
       return lastResult;
       
     } // ExecutePlaceObjectOnGroundSequence(atPose)
-    
+    */
     
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
@@ -1380,12 +1348,6 @@ namespace Anki {
     void Robot::StartBehaviorMode(BehaviorManager::Mode mode)
     {
       _behaviorMgr.StartMode(mode);
-    }
-    
-    
-    void Robot::SelectNextObjectOfInterest()
-    {
-      _behaviorMgr.SelectNextObjectOfInterest();
     }
     
     // ============ Messaging ================

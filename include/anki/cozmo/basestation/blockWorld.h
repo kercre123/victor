@@ -138,6 +138,8 @@ namespace Anki
       // visualization or existing plans.
       bool DidBlocksChange() const;
       
+      ObjectID GetSelectedObject() const { return _selectedObject; }
+      void     CycleSelectedObject();
       
       //
       // Visualization
@@ -248,6 +250,8 @@ namespace Anki
       //std::array<ObjectsMap_t*, 3> allExistingObjects_;
       
       bool _didObjectsChange;
+      
+      ObjectID _selectedObject;
       
       static const Vision::ObservableObjectLibrary EmptyObjectLibrary;
       

@@ -167,7 +167,7 @@ namespace Anki {
       if (msg.height_mm == LIFT_HEIGHT_LOWDOCK) {
         if(robot->IsCarryingObject()) {
           // Put the block down right here
-          return robot->ExecutePlaceObjectOnGroundSequence();
+          return robot->PlaceObjectOnGround();
         }
       }
       
@@ -213,10 +213,15 @@ namespace Anki {
       return RESULT_OK;
     }
 
-    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlaceBlockOnGround const& msg)
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlaceObjectOnGround const& msg)
     {
-      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
-      return robot->ExecutePlaceObjectOnGroundSequence(targetPose);
+      // Create an action to drive to specied pose and then put down the carried
+      // object.
+      // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
+      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot->GetWorldOrigin());
+      robot->GetActionList().AddAction(new PutDownObjectAtPoseAction(*robot, targetPose));
+
+      return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ExecuteTestPlan const& msg)
@@ -233,11 +238,32 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SelectNextBlock const& msg)
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SelectNextObject const& msg)
     {
-      robot->SelectNextObjectOfInterest();
+      robot->GetBlockWorld().CycleSelectedObject();
       return RESULT_OK;
     }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PickAndPlaceObject const& msg)
+    {
+      const u8 numRetries = 3;
+      
+      ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+      robot->GetActionList().AddAction(new DriveToAndPickUpObjectAction(selectedObjectID), numRetries);
+      
+      return RESULT_OK;
+    }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_TraverseObject const& msg)
+    {
+      const u8 numRetries = 3;
+      
+      ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+      robot->GetActionList().AddAction(new DriveToAndTraverseObjectAction(selectedObjectID), numRetries);
+      
+      return RESULT_OK;
+    }
+    
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ExecuteBehavior const& msg)
     {

@@ -142,7 +142,14 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                                                   const Pose3d &startPose,
                                                   const Pose3d &targetPose)
 {
-
+  const f32 Z_HEIGHT_DIFF_TOLERANCE = ROBOT_BOUNDING_Z * .2f;
+  if(!NEAR(startPose.GetTranslation().z(), targetPose.GetTranslation().z(),  Z_HEIGHT_DIFF_TOLERANCE)) {
+    PRINT_NAMED_ERROR("LatticePlannerImpl.GetPlan.DifferentHeights",
+                      "Can't producea  plan for start and target on different levels (%f vs. %f)\n",
+                      startPose.GetTranslation().z(), targetPose.GetTranslation().z());
+    return PLAN_NEEDED_BUT_PLAN_FAILURE;
+  }
+  
   State_c target(targetPose.GetTranslation().x(),
                     targetPose.GetTranslation().y(),
                     targetPose.GetRotationAngle<'Z'>().ToFloat());

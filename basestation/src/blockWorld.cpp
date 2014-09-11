@@ -1148,6 +1148,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
 
     } // Update()
     
+    
     Result BlockWorld::QueueObservedMarker(HistPoseKey& poseKey, Vision::ObservedMarker& marker)
     {
       Result lastResult = RESULT_OK;
@@ -1256,6 +1257,108 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
       // Never found the specified ID
       return false;
     } // ClearObject()
+    
+    
+    void BlockWorld::CycleSelectedObject()
+    {
+      if(_selectedObject.IsSet()) {
+        // Unselect current object of interest, if it still exists (Note that it may just get
+        // reselected here, but I don't think we care.)
+        // Mark new object of interest as selected so it will draw differently
+        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot->GetBlockWorld().GetObjectByID(_selectedObject));
+        if(object != nullptr) {
+          object->SetSelected(false);
+        }
+      }
+      
+      bool currSelectedObjectFound = false;
+      bool newSelectedObjectSet = false;
+      
+      // Iterate through all the objects
+      auto const & allObjects = GetAllExistingObjects();
+      for(auto const & objectsByFamily : allObjects) {
+        for (auto const & objectsByType : objectsByFamily.second) {
+          
+          //PRINT_INFO("currType: %d\n", blockType.first);
+          for (auto const & objectsByID : objectsByType.second) {
+            
+            ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
+            if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
+            {
+              //PRINT_INFO("currID: %d\n", block.first);
+              if (currSelectedObjectFound) {
+                // Current block of interest has been found.
+                // Set the new block of interest to the next block in the list.
+                _selectedObject = object->GetID();
+                newSelectedObjectSet = true;
+                //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
+                break;
+              } else if (object->GetID() == _selectedObject) {
+                currSelectedObjectFound = true;
+                //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+              }
+            }
+          } // for each ID
+          
+          if (newSelectedObjectSet) {
+            break;
+          }
+          
+        } // for each type
+        
+        if(newSelectedObjectSet) {
+          break;
+        }
+        
+      } // for each family
+      
+      // If the current object of interest was found, but a new one was not set
+      // it must have been the last block in the map. Set the new object of interest
+      // to the first object in the map as long as it's not the same object.
+      if (!currSelectedObjectFound || !newSelectedObjectSet) {
+        
+        // Find first object
+        ObjectID firstObject; // initialized to un-set
+        for(auto const & objectsByFamily : allObjects) {
+          for (auto const & objectsByType : objectsByFamily.second) {
+            for (auto const & objectsByID : objectsByType.second) {
+              const ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
+              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
+              {
+                firstObject = objectsByID.first;
+                break;
+              }
+            }
+            if (firstObject.IsSet()) {
+              break;
+            }
+          }
+          
+          if (firstObject.IsSet()) {
+            break;
+          }
+        } // for each family
+        
+        
+        if (firstObject == _selectedObject || !firstObject.IsSet()){
+          //PRINT_INFO("Only one object in existence.");
+        } else {
+          //PRINT_INFO("Setting object of interest to first block\n");
+          _selectedObject = firstObject;
+        }
+      }
+      
+      // Mark new object of interest as selected so it will draw differently
+      ActionableObject* object = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
+      if (object != nullptr) {
+        object->SetSelected(true);
+        PRINT_INFO("Object of interest: ID = %d\n", _selectedObject.GetValue());
+      } else {
+        PRINT_INFO("No object of interest found\n");
+      }
+  
+    } // CycleSelectedObject()
+    
     
     void BlockWorld::EnableDraw(bool on)
     {
