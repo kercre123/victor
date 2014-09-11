@@ -331,6 +331,10 @@ namespace Anki {
     }; // class DriveToPoseAction
     
     
+    // Uses the robot's planner to select the best pre-action pose for the
+    // specified action type. Drives there using a DriveToPoseAction. Then
+    // moves the robot's head to the angle indicated by the pre-action pose
+    // (which may be different from the angle used for path following).
     class DriveToObjectAction : public DriveToPoseAction
     {
     public:
@@ -344,18 +348,23 @@ namespace Anki {
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
       
-      ActionResult CheckPreconditionsHelper(Robot& robot, ActionableObject* object);
+      ActionResult InitHelper(Robot& robot, ActionableObject* object);
       
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
+      Radians                    _finalHeadAngle;
       
     }; // DriveToObjectAction
+    
     
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
     {
     public:
       DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose);
+      
+      virtual const std::string& GetName() const override;
       
     protected:
       
@@ -423,11 +432,6 @@ namespace Anki {
       virtual Result DockWithObjectHelper(Robot& robot,
                                           const std::vector<PreActionPose>& preActionPoses,
                                           const size_t closestIndex);
-      
-      // This helper can be optionally overridden by a derived class to check
-      // if the object to be docked with is available. This is called by
-      // Init(). If it is false, FAILURE_RETRY is returned by Init().
-      virtual bool IsObjectAvailable(ActionableObject* object) const { return true; }
       
       // Pure virtual methods that must be implemented by derived classes in
       // order to define the parameters of docking and how to verify success.
@@ -523,8 +527,9 @@ namespace Anki {
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       
-      // Returns false if ramp is in use by another robot
-      virtual bool IsObjectAvailable(ActionableObject* object) const;
+      // Give the robot a little longer to start ascending/descending before
+      // checking if it is done
+      virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.f; }
       
     }; // class AscendOrDesceneRampAction
     

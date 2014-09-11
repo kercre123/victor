@@ -74,7 +74,9 @@ namespace Anki {
       // True if we are on the sloped part of a ramp
       bool   IsOnRamp() const { return _onRamp; }
       Result SetOnRamp(bool t);
-      void   SetRamp(const ObjectID& rampID); // just sets the ramp to use, not whether robot is on it yet
+      
+      // Just sets the ramp to use and in which direction, not whether robot is on it yet
+      void   SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction);
       
       //
       // Camera / Vision
@@ -422,6 +424,7 @@ namespace Anki {
       ObjectID         _rampID;
       Point2f          _rampStartPosition;
       f32              _rampStartHeight;
+      Ramp::TraversalDirection _rampDirection;
       
       // State
       bool             _isPickingOrPlacing;
@@ -562,8 +565,9 @@ namespace Anki {
     inline const f32 Robot::GetLiftAngle() const
     { return _currentLiftAngle; }
     
-    inline void Robot::SetRamp(const ObjectID& rampID) {
+    inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
       _rampID = rampID;
+      _rampDirection = direction;
     }
 
     inline void Robot::SetCarryingObject(ObjectID carryObjectID) {

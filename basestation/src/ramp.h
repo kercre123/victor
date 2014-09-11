@@ -59,7 +59,6 @@ namespace Anki {
       const Vision::KnownMarker* GetTopMarker()   const { return _topMarker;   }
       
       typedef enum : u8 {
-        UNOCCUPIED,
         ASCENDING,
         DESCENDING,
         UNKNOWN
@@ -70,11 +69,6 @@ namespace Anki {
       // is on the same level as the ramp, it must be ascending. If it can't be
       // determined, UNKNOWN is returned.
       TraversalDirection WillAscendOrDescend(const Pose3d& robotPose) const;
-      
-      // Get/Set whether the ramp is currently in use and in what direction
-      TraversalDirection GetStatus() const { return _status; }
-      void               SetStatus(TraversalDirection newStatus) { _status = newStatus; }
-
       
       // Return start poses (at Ramp's current position) for going up or down
       // the ramp. The distance for ascent is from the tip of the slope.  The
@@ -136,9 +130,7 @@ namespace Anki {
       const Vision::KnownMarker* _rightMarker;
       const Vision::KnownMarker* _frontMarker;
       const Vision::KnownMarker* _topMarker;
-      
-      TraversalDirection _status;
-      
+            
       Pose3d _preAscentPose;
       Pose3d _preDescentPose;
       

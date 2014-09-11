@@ -411,6 +411,7 @@ namespace Anki {
     {
       ICompoundAction::Reset();
       _waitUntilTime = -1.f;
+      _currentActionPair = _actions.begin();
     }
     
     IAction::ActionResult CompoundActionSequential::Update(Robot& robot)
@@ -649,6 +650,12 @@ namespace Anki {
     
     IAction::ActionResult DriveToPoseAction::Init(Robot& robot)
     {
+      // Wait for robot to be idle before trying to drive to a new pose, to
+      // allow previously-added docking/moving actions to finish
+      if(robot.IsMoving()) {
+        return RUNNING;
+      }
+      
       ActionResult result = SUCCESS;
       
       if(!_isGoalSet) {
@@ -656,8 +663,14 @@ namespace Anki {
                           "Goal must be set before running this action.\n");
         result = FAILURE_ABORT;
       }
-      else if(robot.ExecutePathToPose(_goalPose) != RESULT_OK) {
-        result = FAILURE_ABORT;
+      else {
+        // TODO: Make it possible to set the speed/accel somewhere?
+        if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
+          result = FAILURE_ABORT;
+        }
+        if(robot.ExecutePathToPose(_goalPose) != RESULT_OK) {
+          result = FAILURE_ABORT;
+        }
       }
       
       return result;
@@ -685,7 +698,7 @@ namespace Anki {
     }
     
     
-    IAction::ActionResult DriveToObjectAction::CheckPreconditionsHelper(Robot& robot, ActionableObject* object)
+    IAction::ActionResult DriveToObjectAction::InitHelper(Robot& robot, ActionableObject* object)
     {
       ActionResult result = RUNNING;
       
@@ -737,8 +750,16 @@ namespace Anki {
         else if(robot.ExecutePathToPose(possiblePoses, selectedIndex) != RESULT_OK) {
           result = FAILURE_ABORT;
         }
+        else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
+          result = FAILURE_ABORT;
+        }
         else {
-          robot.MoveHeadToAngle(possiblePreActionPoses[selectedIndex].GetHeadAngle().ToFloat(), 5, 10);
+          // Record where we want the head to end up, but don't actually move it
+          // there yet. We'll let the path follower use whatever head angle it
+          // wants to that's good for driving and then make use of this head
+          // angle at the end, once the path is complete.
+          _finalHeadAngle = possiblePreActionPoses[selectedIndex].GetHeadAngle();
+          
           SetGoal(possiblePreActionPoses[selectedIndex].GetPose());
           result = SUCCESS;
         }
@@ -747,7 +768,7 @@ namespace Anki {
       
       return result;
       
-    } // CheckPreconditionsHelper()
+    } // InitHelper()
     
     
     IAction::ActionResult DriveToObjectAction::Init(Robot& robot)
@@ -763,14 +784,31 @@ namespace Anki {
         result = FAILURE_ABORT;
       } else {
       
-        result = CheckPreconditionsHelper(robot, object);
+        result = InitHelper(robot, object);
         
       } // if/else object==nullptr
       
       return result;
     }
     
+    IAction::ActionResult DriveToObjectAction::CheckIfDone(Robot& robot)
+    {
+      ActionResult result = DriveToPoseAction::CheckIfDone(robot);
+      
+      if(result == SUCCESS) {
+        // Just before returning success when normal DriveToPose action finishes,
+        // Set the head angle to the one selected by the pre-action pose.
+        // (We don't do this earlier because it may not be a good head angle
+        // for path following -- e.g., for the prox sensors to be usable.)
+        if(robot.MoveHeadToAngle(_finalHeadAngle.ToFloat(), 1.f, 3.f) != RESULT_OK) {
+          result = FAILURE_ABORT;
+        }
+      }
+      
+      return result;
+    }
     
+            
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose)
@@ -778,6 +816,12 @@ namespace Anki {
     , _placementPose(placementPose)
     {
 
+    }
+    
+    const std::string& DriveToPlaceCarriedObjectAction::GetName() const
+    {
+      static const std::string name("DriveToPlaceCarriedObjectAction");
+      return name;
     }
     
     IAction::ActionResult DriveToPlaceCarriedObjectAction::Init(Robot& robot)
@@ -807,7 +851,8 @@ namespace Anki {
           const Pose3d origObjectPose(object->GetPose());
           object->SetPose(_placementPose);
           
-          result = CheckPreconditionsHelper(robot, object);
+          // Call parent class's init helper
+          result = InitHelper(robot, object);
           
           // Move the object back to where it was (being carried)
           object->SetPose(origObjectPose);
@@ -909,18 +954,20 @@ namespace Anki {
     
     IAction::ActionResult IDockAction::Init(Robot& robot)
     {
+      // Wait for robot to be done moving before trying to dock with a new object, to
+      // allow previously-added docking/moving actions to finish
+      if(robot.IsMoving()) {
+        return RUNNING;
+      }
+      
       // Make sure the object we were docking with still exists in the world
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_dockObjectID));
       if(dockObject == nullptr) {
-        PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.ActionObjectNotFound",
+        PRINT_NAMED_ERROR("IDockAction.Init.ActionObjectNotFound",
                           "Action object with ID=%d no longer exists in the world.\n",
                           _dockObjectID.GetValue());
         
         return FAILURE_ABORT;
-      }
-      
-      if(!IsObjectAvailable(dockObject)) {
-        return FAILURE_RETRY;
       }
       
       // Verify that we ended up near enough a PreActionPose of the right type
@@ -928,7 +975,7 @@ namespace Anki {
       dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()});
       
       if(preActionPoses.empty()) {
-        PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.NoPreActionPoses",
+        PRINT_NAMED_ERROR("IDockAction.Init.NoPreActionPoses",
                           "Action object with ID=%d returned no pre-action poses of the given type.\n",
                           _dockObjectID.GetValue());
         
@@ -957,7 +1004,7 @@ namespace Anki {
       const f32 closestDist = sqrtf(closestDistSq);
       
       if(closestDist > MAX_DISTANCE_TO_PREDOCK_POSE) {
-        PRINT_NAMED_INFO("IDockAction.CheckPreconditions.TooFarFromGoal",
+        PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
                          "Robot is too far from pre-action pose (%.1fmm).", closestDist);
         return FAILURE_RETRY;
       }
@@ -968,7 +1015,7 @@ namespace Anki {
           return FAILURE_ABORT;
         }
         
-        PRINT_NAMED_INFO("IDockAction.CheckPreconditions.BeginDocking",
+        PRINT_NAMED_INFO("IDockAction.Init.BeginDocking",
                          "Robot is within %.1fmm of the nearest pre-action pose, "
                          "proceeding with docking.\n", closestDist);
       
@@ -1304,27 +1351,12 @@ namespace Anki {
           result = RESULT_FAIL;
       }
     
-      // Tell robot which ramp it will be using
-      robot.SetRamp(_dockObjectID);
-      
-      // Tell ramp that it is occupied and in what traversal direction
-      ramp->SetStatus(direction);
-      
+      // Tell robot which ramp it will be using, and in which direction
+      robot.SetRamp(_dockObjectID, direction);
+            
       return result;
       
     } // SelectDockAction()
-    
-    bool AscendOrDescendRampAction::IsObjectAvailable(ActionableObject* object) const
-    {
-      Ramp* ramp = dynamic_cast<Ramp*>(object);
-      if(ramp == nullptr) {
-        PRINT_NAMED_ERROR("AscendOrDescendRampAction.IsObjectAvailable.NullRampPointer",
-                          "Could not cast generic ActionableObject into Ramp object.\n");
-        return false;
-      }
-      
-      return ramp->GetStatus() == Ramp::UNOCCUPIED;
-    }
     
     
     IAction::ActionResult AscendOrDescendRampAction::Verify(Robot& robot) const
@@ -1332,6 +1364,7 @@ namespace Anki {
       // TODO: Need to do some kind of verification here?
       PRINT_NAMED_INFO("AscendOrDescendRampAction.Verify.RampAscentOrDescentComplete",
                        "Robot has completed going up/down ramp.\n");
+      
       return SUCCESS;
     } // Verify()
     

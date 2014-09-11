@@ -104,6 +104,9 @@ namespace Anki {
     // it is considered to be out of calibration.
     const f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(2.0f);
 
+    // Safe head angle for the proximity sensors to be usable with the lift
+    // either up or down
+    const f32 HEAD_ANGLE_WHILE_FOLLOWING_PATH = -0.32f;
     
     const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 33.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
     

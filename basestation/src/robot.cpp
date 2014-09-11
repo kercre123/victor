@@ -229,7 +229,7 @@ namespace Anki {
         // Initialize tilt angle assuming we are ascending
         Radians tiltAngle = ramp->GetAngle();
         
-        switch(ramp->GetStatus())
+        switch(_rampDirection)
         {
           case Ramp::DESCENDING:
             tiltAngle    *= -1.f;
@@ -241,7 +241,7 @@ namespace Anki {
           default:
             PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDirection",
                               "Robot is on a ramp, expecting the ramp direction to be either "
-                              "ASCEND or DESCENDING, not %d.\n", ramp->GetStatus());
+                              "ASCEND or DESCENDING, not %d.\n", _rampDirection);
             return RESULT_FAIL;
         }
 
@@ -1161,7 +1161,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      assert(ramp->GetStatus() == Ramp::ASCENDING || ramp->GetStatus() == Ramp::DESCENDING);
+      assert(_rampDirection == Ramp::ASCENDING || _rampDirection == Ramp::DESCENDING);
       
       const bool transitioningOnto = (t == true);
       
@@ -1180,7 +1180,7 @@ namespace Anki {
         // Just do an absolute pose update, setting the robot's position to
         // where we "know" he should be when he finishes ascending or
         // descending the ramp
-        switch(ramp->GetStatus())
+        switch(_rampDirection)
         {
           case Ramp::ASCENDING:
             SetPose(ramp->GetPostAscentPose(WHEEL_BASE_MM).GetWithRespectToOrigin());
@@ -1193,11 +1193,11 @@ namespace Anki {
           default:
             PRINT_NAMED_ERROR("Robot.SetOnRamp.UnexpectedRampDirection",
                               "When transitioning on/off ramp, expecting the ramp direction to be either "
-                              "ASCENDING or DESCENDING, not %d.\n", ramp->GetStatus());
+                              "ASCENDING or DESCENDING, not %d.\n", _rampDirection);
             return RESULT_FAIL;
         }
         
-        ramp->SetStatus(Ramp::UNOCCUPIED);
+        _rampDirection = Ramp::UNKNOWN;
         
         const TimeStamp_t timeStamp = _poseHistory.GetNewestTimeStamp();
         
