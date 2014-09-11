@@ -1003,7 +1003,6 @@ namespace Anki {
     
     IDockAction::IDockAction(ObjectID objectID)
     : _dockObjectID(objectID)
-    , _dockMarker(nullptr)
     {
       
     }
@@ -1075,14 +1074,23 @@ namespace Anki {
                          "Robot is within %.1fmm of the nearest pre-action pose, "
                          "proceeding with docking.\n", closestDist);
       
-        if(DockWithObjectHelper(robot, preActionPoses, closestIndex) == RESULT_OK) {
+        // Set dock markers
+        const Vision::KnownMarker* dockMarker1 = preActionPoses[closestIndex].GetMarker();
+        const Vision::KnownMarker* dockMarker2 = GetDockMarker2(preActionPoses, closestIndex);
+        
+        PRINT_NAMED_INFO("IDockAction.DockWithObjectHelper.BeginDocking",
+                         "Docking with marker %d (%s) using action %d.\n",
+                         dockMarker1->GetCode(),
+                         Vision::MarkerTypeStrings[dockMarker1->GetCode()], _dockAction);
+        
+        if(robot.DockWithObject(_dockObjectID, dockMarker1, dockMarker2, _dockAction) == RESULT_OK) {
           return SUCCESS;
         } else {
           return FAILURE_ABORT;
         }
       }
       
-    } // CheckPreconditions()
+    } // Init()
     
     
     IAction::ActionResult IDockAction::CheckIfDone(Robot& robot)
@@ -1102,23 +1110,7 @@ namespace Anki {
       
       return actionResult;
     } // CheckIfDone()
-    
-    
-    Result IDockAction::DockWithObjectHelper(Robot& robot,
-                                             const std::vector<PreActionPose>& preActionPoses,
-                                             const size_t closestIndex)
-    {
-      _dockMarker  = preActionPoses[closestIndex].GetMarker();
-      
-      PRINT_NAMED_INFO("IDockAction.DockWithObjectHelper.BeginDocking",
-                       "Docking with marker %d (%s) using action %d.\n",
-                       _dockMarker->GetCode(),
-                       Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
-
-      
-      return robot.DockWithObject(_dockObjectID, _dockMarker, nullptr, _dockAction);
-    }
-    
+   
     
 #pragma mark ---- PickUpObjectAction ----
     
@@ -1312,7 +1304,6 @@ namespace Anki {
     
     CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID)
     : IDockAction(bridgeID)
-    , _dockMarker2(nullptr)
     {
       
     }
@@ -1323,31 +1314,14 @@ namespace Anki {
       return name;
     }
     
-    Result CrossBridgeAction::DockWithObjectHelper(Robot & robot,
-                                                   const std::vector<PreActionPose>& preActionPoses,
-                                                   const size_t closestIndex)
+    const Vision::KnownMarker* CrossBridgeAction::GetDockMarker2(const std::vector<PreActionPose> &preActionPoses, const size_t closestIndex)
     {
-      _dockMarker = preActionPoses[closestIndex].GetMarker();
-      
       // Use the unchosen pre-crossing pose marker (the one at the other end of
       // the bridge) as dockMarker2
       assert(preActionPoses.size() == 2);
       size_t indexForOtherEnd = 1 - closestIndex;
       assert(indexForOtherEnd == 0 || indexForOtherEnd == 1);
-      _dockMarker2 = preActionPoses[indexForOtherEnd].GetMarker();
- 
-      assert(_dockMarker != nullptr);
-      assert(_dockMarker2 != nullptr);
-      
-      PRINT_NAMED_INFO("CrossBridgeAction.DockWithObjectHelper.BeginDocking",
-                       "Crossing bridge using markers %d (%s) and %d (%s) using action %d.\n",
-                       _dockMarker->GetCode(),
-                       Vision::MarkerTypeStrings[_dockMarker->GetCode()],
-                       _dockMarker2->GetCode(),
-                       Vision::MarkerTypeStrings[_dockMarker2->GetCode()],
-                       _dockAction);
-      
-      return robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction);
+      return preActionPoses[indexForOtherEnd].GetMarker();
     }
     
     Result CrossBridgeAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -1423,6 +1397,73 @@ namespace Anki {
       
       return SUCCESS;
     } // Verify()
+    
+    
+#pragma mark ---- TraverseObjectAction ----
+    
+    TraverseObjectAction::TraverseObjectAction(ObjectID objectID)
+    : _objectID(objectID)
+    , _chosenAction(nullptr)
+    {
+      
+    }
+    
+    TraverseObjectAction::~TraverseObjectAction()
+    {
+      if(_chosenAction != nullptr) {
+        delete _chosenAction;
+        _chosenAction = nullptr;
+      }
+    }
+    
+    const std::string& TraverseObjectAction::GetName() const
+    {
+      static const std::string name("TraverseObjectAction");
+      return name;
+    }
+    
+    void TraverseObjectAction::Reset()
+    {
+      if(_chosenAction != nullptr) {
+        _chosenAction->Reset();
+      }
+    }
+    
+    IActionRunner::ActionResult TraverseObjectAction::Update(Robot& robot)
+    {
+      // Select the chosen action based on the object's type, if we haven't
+      // already
+      if(_chosenAction == nullptr) {
+        ActionableObject* object = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_objectID));
+        if(object == nullptr) {
+          PRINT_NAMED_ERROR("TraverseObjectAction.Init.ObjectNotFound",
+                            "Could not get actionable object with ID = %d from world.\n", _objectID.GetValue());
+          return FAILURE_ABORT;
+        }
+        
+        if(object->GetType() == MatPiece::Type::LONG_BRIDGE ||
+           object->GetType() == MatPiece::Type::SHORT_BRIDGE)
+        {
+          _chosenAction = new CrossBridgeAction(_objectID);
+        }
+        else if(object->GetType() == Ramp::Type) {
+          _chosenAction = new AscendOrDescendRampAction(_objectID);
+        }
+        else {
+          PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",
+                            "Robot %d was asked to traverse object ID=%d of type %s, but "
+                            "that traversal is not defined.\n", robot.GetID(),
+                            object->GetID().GetValue(), object->GetType().GetName().c_str());
+          
+          return FAILURE_ABORT;
+        }
+      }
+      
+      // Now just use chosenAction's Update()
+      assert(_chosenAction != nullptr);
+      return _chosenAction->Update(robot);
+      
+    } // Update()
     
     
 #pragma mark ---- PlayAnimationAction ----

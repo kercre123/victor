@@ -426,12 +426,11 @@ namespace Anki {
       virtual ActionResult Init(Robot& robot) override final;
       virtual ActionResult CheckIfDone(Robot& robot) override final;
       
-      // This helper can be optionally overridden by a derived by class to do
-      // special things, but for simple usage, derived classes can just rely
-      // on this one.
-      virtual Result DockWithObjectHelper(Robot& robot,
-                                          const std::vector<PreActionPose>& preActionPoses,
-                                          const size_t closestIndex);
+      // Most docking actions don't use a second dock marker, but in case they
+      // do, they can override this method to choose one from the available
+      // preaction poses, given which one was closest.
+      virtual const Vision::KnownMarker* GetDockMarker2(const std::vector<PreActionPose>& preActionPoses,
+                                                        const size_t closestIndex) { return nullptr; }
       
       // Pure virtual methods that must be implemented by derived classes in
       // order to define the parameters of docking and how to verify success.
@@ -440,7 +439,6 @@ namespace Anki {
       virtual IAction::ActionResult Verify(Robot& robot) const = 0;
       
       ObjectID                    _dockObjectID;
-      const Vision::KnownMarker*  _dockMarker;
       DockAction_t                _dockAction;
 
     }; // class IDockAction
@@ -467,6 +465,20 @@ namespace Anki {
     }; // class DockWithObjectAction
 
     
+    // Common compound action
+    class DriveToAndPickUpObjectAction : public CompoundActionSequential
+    {
+    public:
+      DriveToAndPickUpObjectAction(const ObjectID& objectID)
+      : CompoundActionSequential({
+        new DriveToObjectAction(objectID, PreActionPose::DOCKING),
+        new PickUpObjectAction(objectID)})
+      {
+        
+      }
+    };
+    
+    
     class PutDownObjectAction : public IAction
     {
     public:
@@ -488,6 +500,20 @@ namespace Anki {
       
     }; // class PutDownObjectAction
     
+    
+    // Common compound action
+    class PutDownObjectAtPoseAction : public CompoundActionSequential
+    {
+    public:
+      PutDownObjectAtPoseAction(const Robot& robot, const Pose3d& placementPose)
+      : CompoundActionSequential({
+        new DriveToPlaceCarriedObjectAction(robot, placementPose),
+        new PutDownObjectAction()})
+      {
+        
+      }
+    };
+    
     class CrossBridgeAction : public IDockAction
     {
     public:
@@ -503,11 +529,10 @@ namespace Anki {
       
       virtual IAction::ActionResult Verify(Robot& robot) const override;
       
-      virtual Result DockWithObjectHelper(Robot& robot,
-                                          const std::vector<PreActionPose>& preActionPoses,
-                                          const size_t closestIndex) override;
-      
-      const Vision::KnownMarker*  _dockMarker2;
+      // Crossing a bridge _does_ require the second dockMarker,
+      // so override the virtual method for setting it
+      virtual const Vision::KnownMarker* GetDockMarker2(const std::vector<PreActionPose>& preActionPoses,
+                                                        const size_t closestIndex) override;
       
     }; // class CrossBridgeAction
     
@@ -532,6 +557,42 @@ namespace Anki {
       virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.f; }
       
     }; // class AscendOrDesceneRampAction
+    
+    
+    // This is just a selector for AscendOrDescendRampAction or
+    // CrossBridgeAction, depending on the object's type.
+    class TraverseObjectAction : public IActionRunner
+    {
+    public:
+      TraverseObjectAction(ObjectID objectID);
+      virtual ~TraverseObjectAction();
+      
+      virtual const std::string& GetName() const override;
+      
+    protected:
+      
+      // Update will just call the chosenAction's implementation
+      virtual ActionResult Update(Robot& robot) override;
+      virtual void Reset() override;
+      
+      ObjectID       _objectID;
+      IActionRunner* _chosenAction;
+      
+    }; // class TraverseObjectAction
+    
+    
+    // Common compound action
+    class DriveToAndTraverseObjectAction : public CompoundActionSequential
+    {
+    public:
+      DriveToAndTraverseObjectAction(const ObjectID& objectID)
+      : CompoundActionSequential({
+        new DriveToObjectAction(objectID, PreActionPose::ENTRY),
+        new TraverseObjectAction(objectID)})
+      {
+        
+      }
+    };
     
     
     class PlayAnimationAction : public IAction
