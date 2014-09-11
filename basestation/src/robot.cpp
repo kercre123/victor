@@ -50,12 +50,8 @@ namespace Anki {
     , _blockWorld(this)
     , _behaviorMgr(this)
     , _currPathSegment(-1)
-    , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
-    , _goalAngleThreshold(DEG_TO_RAD(10))
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
-    , _wasTraversingPath(false)
-    , _forceReplanOnNextWorldChange(false)
     , _camera(robotID)
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
@@ -184,6 +180,11 @@ namespace Anki {
       // Update other state vars
       SetCurrPathSegment( msg.currPathSegment );
       SetNumFreeSegmentSlots(msg.numFreeSegmentSlots);
+      
+      // Dole out more path segments to the physical robot if needed:
+      if (IsTraversingPath() && GetLastRecvdPathID() == GetLastSentPathID()) {
+        _pdo->Update(_currPathSegment, _numFreeSegmentSlots);
+      }
       
       //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
       SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
@@ -540,6 +541,7 @@ namespace Anki {
       // we don't want to react to that here.
       if(IsTraversingPath() && !IsPickingOrPlacing())
       {
+        /*
         // If the robot is traversing a path, consider replanning it
         if(_blockWorld.DidBlocksChange())
         {
@@ -597,7 +599,9 @@ namespace Anki {
               
           } // switch(GetPlan())
         } // if blocks changed
+        */
         
+        // Dole out more path segments to the physical robot if needed:
         if (GetLastRecvdPathID() == GetLastSentPathID()) {
           _pdo->Update(_currPathSegment, _numFreeSegmentSlots);
         }
@@ -645,6 +649,7 @@ namespace Anki {
         }
       }
       
+      /* Now done by the DriveToPoseAction
       // Visualize path if robot has just started traversing it.
       // Clear the path when it has stopped.
       if (!IsPickingOrPlacing()) {
@@ -659,6 +664,7 @@ namespace Anki {
           _wasTraversingPath = false;
         }
       }
+       */
 
       return RESULT_OK;
       
@@ -781,22 +787,6 @@ namespace Anki {
         _selectedPathPlanner = _longPathPlanner;
       }
     }
-
-    Result Robot::ExecutePathToPose(const Pose3d& pose) //, const Radians headAngle)
-    {
-      Planning::Path p;
-      Result lastResult = GetPathToPose(pose, p);
-      
-      if(lastResult == RESULT_OK)
-      {
-        _path = p;
-        _goalPose = pose;
-      
-        lastResult = ExecutePath(p);
-      }
-      
-      return lastResult;
-    }
     
     Result Robot::GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path)
     {
@@ -827,29 +817,11 @@ namespace Anki {
       
     } // GetPathToPose(multiple poses)
     
-    
-    Result Robot::ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex)
-    {
-      Planning::Path p;
-      Result lastResult = GetPathToPose(poses, selectedIndex, p);
-      
-      if(lastResult == RESULT_OK) {
-        _path = p;
-        _goalPose = poses[selectedIndex];
-        
-        //MoveHeadToAngle(poses[selectedIndex].GetHeadAngle().ToFloat(), 5, 10);
-        
-        lastResult = ExecutePath(p);
-      }
-      
-      return lastResult;
-    }
-
+  
     void Robot::ExecuteTestPath()
     {
       Planning::Path p;
       _longPathPlanner->GetTestPath(GetPose(), p);
-      _path = p;
       ExecutePath(p);
     }
     
@@ -1138,6 +1110,10 @@ namespace Anki {
           _pdo->SetPath(path);
           lastResult = SendExecutePath(path);
         }
+        
+        // Visualize path if robot has just started traversing it.
+        VizManager::getInstance()->DrawPath(_ID, path, NamedColors::EXECUTED_PATH);
+        
       }
       
       return lastResult;

@@ -429,6 +429,8 @@ namespace Anki {
     void BehaviorManager::Update_June2014DiceDemo()
     {
 
+      static const ActionList::SlotHandle TraversalSlot = 0;
+      
       constexpr float checkItOutAngleUp = DEG_TO_RAD(15);
       constexpr float checkItOutAngleDown = DEG_TO_RAD(-10);
       constexpr float checkItOutSpeed = 0.4;
@@ -443,7 +445,7 @@ namespace Anki {
                              Z_AXIS_3D,
                              {{JUNE_DEMO_START_X, JUNE_DEMO_START_Y, 0.f}});
             CoreTechPrint("Driving to demo start location\n");
-            robot_->ExecutePathToPose(startPose);
+            robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(startPose));
 
             state_ = WAITING_TO_SEE_DICE;
 
@@ -655,7 +657,8 @@ namespace Anki {
                     
                     goalPose_ = Pose3d(angle, Z_AXIS_3D, {{position.x(), position.y(), 0.f}});
                     
-                    robot_->ExecutePathToPose(goalPose_); //, diceViewingHeadAngle);
+                    robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(goalPose_));
+
                   } else {
                     CoreTechPrint("Move dice closer!\n");
                   }
@@ -686,7 +689,7 @@ namespace Anki {
 
                       Pose3d userFacingPose = robot_->GetPose();
                       userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
-                      robot_->ExecutePathToPose(userFacingPose);
+                      robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(userFacingPose));
                       CoreTechPrint("idle: facing user\n");
 
                       idleState_ = IDLE_FACING_USER;
@@ -761,7 +764,7 @@ namespace Anki {
 
                     CoreTechPrint("idle: turning back\n");
                     SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
-                    robot_->ExecutePathToPose(originalPose_);
+                    robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(originalPose_));
                     idleState_ = IDLE_TURNING_BACK;
                     waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.25;
                   }
@@ -842,7 +845,7 @@ namespace Anki {
               if (ComputeDistanceBetween(targetPose, robotPose) > 50.f) {
                 PRINT_INFO("Going to mat center for exploration (%f %f %f)\n", targetPose.GetTranslation().x(), targetPose.GetTranslation().y(), targetAngle);
                 robot_->GetPathPlanner()->AddIgnoreType(Block::Type::DICE);
-                robot_->ExecutePathToPose(targetPose);
+                robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(targetPose));
               }
 
               state_ = GOTO_EXPLORATION_POSE;
@@ -982,7 +985,7 @@ namespace Anki {
             // Compute pose that makes robot face user
             Pose3d userFacingPose = robot_->GetPose();
             userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
-            robot_->ExecutePathToPose(userFacingPose);
+            robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(userFacingPose));
 
             SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
             state_ = FACE_USER;

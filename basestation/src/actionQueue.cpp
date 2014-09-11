@@ -21,6 +21,9 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 
+#include "pathPlanner.h"
+
+
 namespace Anki {
   
   namespace Cozmo {
@@ -567,50 +570,7 @@ namespace Anki {
       return result;
     } // CompoundActionParallel::Update()
     
-    
-#pragma mark ---- CheckForPathDoneHelper ----
-    
-    // Helper function used by Actions that utilize ExecutePathToPose internally
-    static IAction::ActionResult CheckForPathDoneHelper(const Robot& robot, const Pose3d& goalPose,
-                                                        const f32 distanceThreshold,
-                                                        const Radians& angleThreshold)
-    {
-      IAction::ActionResult result = IAction::RUNNING;
-      
-      // Wait until robot reports it is no longer traversing a path
-      if(!robot.IsTraversingPath())
-      {
-        Vec3f Tdiff;
-        if(robot.GetPose().IsSameAs(goalPose, distanceThreshold, angleThreshold, Tdiff))
-        {
-          PRINT_NAMED_INFO("Action.CheckForPathDoneHelper.Success",
-                           "Robot %d successfully finished following path (Tdiff=%.1fmm).\n",
-                           robot.GetID(), Tdiff.Length());
-          // TODO: Can't do this if Robot is const. Who does it?
-          //robot.ClearPath(); // clear path and indicate that we are not replanning
-          result = IAction::SUCCESS;
-        }
-        // The last path sent was definitely received by the robot
-        // and it is no longer executing it, but we appear to not be in position
-        else if (robot.GetLastSentPathID() == robot.GetLastRecvdPathID()) {
-          PRINT_NAMED_INFO("Action.CheckForPathDoneHelper.DoneNotInPlace",
-                           "Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID %d\n",
-                           robot.GetLastRecvdPathID(), Tdiff.Length());
-          result = IAction::FAILURE_RETRY;
-        }
-        else {
-          // Something went wrong: not in place and robot apparently hasn't
-          // received all that it should have
-          PRINT_NAMED_INFO("Action.CheckForPathDoneHelper.Failure",
-                           "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
-          result = IAction::FAILURE_ABORT;
-        }
-      }
-      
-      return result;
-      
-    }
-    
+
 #pragma mark ---- DriveToPoseAction ----
     
     DriveToPoseAction::DriveToPoseAction() //, const Pose3d& pose)
@@ -664,11 +624,16 @@ namespace Anki {
         result = FAILURE_ABORT;
       }
       else {
+        Planning::Path p;
+        
         // TODO: Make it possible to set the speed/accel somewhere?
         if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
           result = FAILURE_ABORT;
         }
-        if(robot.ExecutePathToPose(_goalPose) != RESULT_OK) {
+        else if(robot.GetPathToPose(_goalPose, p) != RESULT_OK) {
+          result = FAILURE_ABORT;
+        }
+        else if(robot.ExecutePath(p) != RESULT_OK) {
           result = FAILURE_ABORT;
         }
       }
@@ -678,7 +643,100 @@ namespace Anki {
     
     IAction::ActionResult DriveToPoseAction::CheckIfDone(Robot& robot)
     {
-      return CheckForPathDoneHelper(robot, _goalPose, _goalDistanceThreshold, _goalAngleThreshold);
+      IAction::ActionResult result = IAction::RUNNING;
+      
+      // Wait until robot reports it is no longer traversing a path
+      if(robot.IsTraversingPath())
+      {
+        // If the robot is traversing a path, consider replanning it
+        if(robot.GetBlockWorld().DidBlocksChange())
+        {
+          Planning::Path newPath;
+          switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetPose(), _forceReplanOnNextWorldChange))
+          {
+            case IPathPlanner::DID_PLAN:
+            {
+              // clear path, but flag that we are replanning
+              robot.ClearPath();
+              _forceReplanOnNextWorldChange = false;
+              
+              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.UpdatePath", "sending new path to robot\n");
+              robot.ExecutePath(newPath);
+              break;
+            } // case DID_PLAN:
+              
+            case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
+            {
+              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewGoalForReplanNeeded",
+                               "Replan failed due to bad goal. Aborting path.\n");
+              
+              robot.ClearPath();
+              break;
+            } // PLAN_NEEDED_BUT_GOAL_FAILURE:
+              
+            case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
+            {
+              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewStartForReplanNeeded",
+                               "Replan failed during docking due to bad start. Will try again, and hope robot moves.\n");
+              break;
+            }
+              
+            case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
+            {
+              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewEnvironmentForReplanNeeded",
+                               "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
+              // clear the path, but don't change the state
+              robot.ClearPath();
+              _forceReplanOnNextWorldChange = true;
+              break;
+            }
+              
+            default:
+            {
+              // Don't do anything just proceed with the current plan...
+              break;
+            }
+              
+          } // switch(GetPlan())
+        } // if blocks changed
+        
+      } else {
+        Vec3f Tdiff;
+        if(robot.GetPose().IsSameAs(_goalPose, _goalDistanceThreshold, _goalAngleThreshold, Tdiff))
+        {
+          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
+                           "Robot %d successfully finished following path (Tdiff=%.1fmm).\n",
+                           robot.GetID(), Tdiff.Length());
+          
+          result = IAction::SUCCESS;
+        }
+        // The last path sent was definitely received by the robot
+        // and it is no longer executing it, but we appear to not be in position
+        else if (robot.GetLastSentPathID() == robot.GetLastRecvdPathID()) {
+          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
+                           "Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d\n",
+                           Tdiff.Length(), robot.GetLastRecvdPathID());
+          result = IAction::FAILURE_RETRY;
+        }
+        else {
+          // Something went wrong: not in place and robot apparently hasn't
+          // received all that it should have
+          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure",
+                           "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
+          result = IAction::FAILURE_ABORT;
+        }
+      }
+      
+      // If we are not running anymore, for any reason, clear the path and its
+      // visualization
+      if(result != IAction::RUNNING) {
+        robot.ClearPath(); // clear path and indicate that we are not replanning
+        VizManager::getInstance()->ErasePath(robot.GetID());
+        VizManager::getInstance()->EraseAllPlannerObstacles(true);
+        VizManager::getInstance()->EraseAllPlannerObstacles(false);
+      }
+      
+      return result;
     } // CheckIfDone()
     
 #pragma mark ---- DriveToObjectAction ----
@@ -747,21 +805,27 @@ namespace Anki {
                             "No pre-action poses survived as possible docking poses.\n");
           result = FAILURE_ABORT;
         }
-        else if(robot.ExecutePathToPose(possiblePoses, selectedIndex) != RESULT_OK) {
-          result = FAILURE_ABORT;
-        }
-        else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
-          result = FAILURE_ABORT;
-        }
         else {
-          // Record where we want the head to end up, but don't actually move it
-          // there yet. We'll let the path follower use whatever head angle it
-          // wants to that's good for driving and then make use of this head
-          // angle at the end, once the path is complete.
-          _finalHeadAngle = possiblePreActionPoses[selectedIndex].GetHeadAngle();
-          
-          SetGoal(possiblePreActionPoses[selectedIndex].GetPose());
-          result = SUCCESS;
+          Planning::Path p;
+          if(robot.GetPathToPose(possiblePoses, selectedIndex, p) != RESULT_OK) {
+            result = FAILURE_ABORT;
+          }
+          else if(robot.ExecutePath(p) != RESULT_OK) {
+            result = FAILURE_ABORT;
+          }
+          else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
+            result = FAILURE_ABORT;
+          } else {
+            SetGoal(possiblePoses[selectedIndex]);
+            
+            // Record where we want the head to end up, but don't actually move it
+            // there yet. We'll let the path follower use whatever head angle it
+            // wants to that's good for driving and then make use of this head
+            // angle at the end, once the path is complete.
+            _finalHeadAngle = possiblePreActionPoses[selectedIndex].GetHeadAngle();
+            
+            result = SUCCESS;
+          }
         }
         
       } // if/else possiblePreActionPoses.empty()

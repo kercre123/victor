@@ -205,8 +205,12 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_GotoPose const& msg)
     {
+      // TODO: Add ability specify a "slot" for where to queue this?
+      
       Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
-      return robot->ExecutePathToPose(targetPose);
+      //return robot->ExecutePathToPose(targetPose);
+      robot->GetActionList().AddAction(new DriveToPoseAction(targetPose));
+      return RESULT_OK;
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlaceBlockOnGround const& msg)

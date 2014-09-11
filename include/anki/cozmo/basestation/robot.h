@@ -116,20 +116,22 @@ namespace Anki {
       
       // Removes the specified number of segments from the front and back of the path
       Result TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments);
+
+      // Return a path to the given pose, internally selecting the best planner
+      // to use to generate it.
+      Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       
+      // Same as above, but allows the planner to also select the "best" of the
+      // given poses, returning the index of which one it selected.
+      Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
+
       // Sends a path to the robot to be immediately executed
       Result ExecutePath(const Planning::Path& path);
-      
-      // Compute a path to a pose and execute it
-      Result ExecutePathToPose(const Pose3d& pose);
-      
-      // Same as above, but select from a set poses and return the selected index.
-      Result ExecutePathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex);
       
       // executes a test path defined in latticePlanner
       void ExecuteTestPath();
       
-      IPathPlanner* GetPathPlanner() { return _longPathPlanner; }
+      IPathPlanner* GetPathPlanner() { return _selectedPathPlanner; }
       
       void AbortCurrentPath();
       
@@ -367,19 +369,12 @@ namespace Anki {
       IPathPlanner*    _selectedPathPlanner;
       IPathPlanner*    _longPathPlanner;
       IPathPlanner*    _shortPathPlanner;
-      Planning::Path   _path;
       s8               _currPathSegment;
       u8               _numFreeSegmentSlots;
-      Pose3d           _goalPose;
-      f32              _goalDistanceThreshold;
-      Radians          _goalAngleThreshold;
       u16              _lastSentPathID;
       u16              _lastRecvdPathID;
-      bool             _wasTraversingPath;
+      //bool             _wasTraversingPath;
       PathDolerOuter*  _pdo;
-      
-      Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
-      Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
       
       // This functions sets _selectedPathPlanner to the appropriate
       // planner
@@ -387,7 +382,7 @@ namespace Anki {
       
       // if true and we are traversing a path, then next time the
       // block world changes, re-plan from scratch
-      bool _forceReplanOnNextWorldChange;
+      //bool _forceReplanOnNextWorldChange;
 
 	    // Robot stores the calibration, camera just gets a reference to it
       // This is so we can share the same calibration data across multiple
