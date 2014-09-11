@@ -1112,21 +1112,21 @@ namespace Anki {
     } // CheckIfDone()
    
     
-#pragma mark ---- PickUpObjectAction ----
+#pragma mark ---- PickAndPlaceObjectAction ----
     
-    PickUpObjectAction::PickUpObjectAction(ObjectID objectID)
+    PickAndPlaceObjectAction::PickAndPlaceObjectAction(ObjectID objectID)
     : IDockAction(objectID)
     {
       
     }
     
-    const std::string& PickUpObjectAction::GetName() const
+    const std::string& PickAndPlaceObjectAction::GetName() const
     {
-      static const std::string name("PickUpObjectAction");
+      static const std::string name("PickAndPlaceObjectAction");
       return name;
     }
     
-    Result PickUpObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    Result PickAndPlaceObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
     {
       // Record the object's original pose (before picking it up) so we can
       // verify later whether we succeeded.
@@ -1153,10 +1153,10 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    IAction::ActionResult PickUpObjectAction::Verify(Robot& robot) const
+    IAction::ActionResult PickAndPlaceObjectAction::Verify(Robot& robot) const
     {
       if(robot.IsCarryingObject() == false) {
-        PRINT_NAMED_ERROR("PickUpObjectAction.Verify.RobotNotCarryignObject",
+        PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.RobotNotCarryignObject",
                           "Expecting robot to think its carrying an object at this point.\n");
         return FAILURE_ABORT;
       }
@@ -1168,7 +1168,7 @@ namespace Anki {
       // block's original position because we should now be carrying it.
       Vision::ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
       if(carryObject == nullptr) {
-        PRINT_NAMED_ERROR("PickUpObjectAction.Verify.CarryObjectNoLongerExists",
+        PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.CarryObjectNoLongerExists",
                           "Object %d we were carrying no longer exists in the world.\n",
                           robot.GetCarryingObject().GetValue());
         return FAILURE_ABORT;
@@ -1207,20 +1207,20 @@ namespace Anki {
     } // Verify()
        
     
-#pragma mark ---- PutDownObjectAction ----
+#pragma mark ---- PlaceObjectOnGroundAction ----
     
-    PutDownObjectAction::PutDownObjectAction()
+    PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
     {
       
     }
     
-    const std::string& PutDownObjectAction::GetName() const
+    const std::string& PlaceObjectOnGroundAction::GetName() const
     {
-      static const std::string name("PutDownObjectAction");
+      static const std::string name("PlaceObjectOnGroundAction");
       return name;
     }
    
-    IAction::ActionResult PutDownObjectAction::Init(Robot& robot)
+    IAction::ActionResult PlaceObjectOnGroundAction::Init(Robot& robot)
     {
       ActionResult result = RUNNING;
       
@@ -1229,8 +1229,8 @@ namespace Anki {
       {
         // Robot must be carrying something to put something down!
         if(robot.IsCarryingObject() == false) {
-          PRINT_NAMED_ERROR("PutDownObjectAction.CheckPreconditions.NotCarryingObject",
-                            "Robot %d executing PutDownObjectAction but not carrying object.\n", robot.GetID());
+          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
+                            "Robot %d executing PlaceObjectOnGroundAction but not carrying object.\n", robot.GetID());
           result = FAILURE_ABORT;
         } else {
           
@@ -1241,7 +1241,7 @@ namespace Anki {
           {
             result = SUCCESS;
           } else {
-            PRINT_NAMED_ERROR("PutDownObjectAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
+            PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
                               "Robot's SendPlaceObjectOnGround method reported failure.\n");
             result = FAILURE_ABORT;
           }
@@ -1254,7 +1254,7 @@ namespace Anki {
     } // CheckPreconditions()
     
     
-    IAction::ActionResult PutDownObjectAction::CheckIfDone(Robot& robot)
+    IAction::ActionResult PlaceObjectOnGroundAction::CheckIfDone(Robot& robot)
     {
       ActionResult actionResult = RUNNING;
       
@@ -1272,7 +1272,7 @@ namespace Anki {
         // TODO: check to see it ended up in the right place?
         Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_carryingObjectID);
         if(object == nullptr) {
-          PRINT_NAMED_ERROR("PutDownObjectAction.CheckIfDone.CarryObjectNoLongerExists",
+          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckIfDone.CarryObjectNoLongerExists",
                             "Object %d we were carrying no longer exists in the world.\n",
                             robot.GetCarryingObject().GetValue());
           return FAILURE_ABORT;
@@ -1281,11 +1281,11 @@ namespace Anki {
         {
           // We've seen the object in the last half second (which could
           // not be true if we were still carrying it)
-          PRINT_NAMED_INFO("PutDownObjectAction.CheckIfDone.ObjectPlacementSuccess",
+          PRINT_NAMED_INFO("PlaceObjectOnGroundAction.CheckIfDone.ObjectPlacementSuccess",
                            "Verification of object placement SUCCEEDED!\n");
           return SUCCESS;
         } else {
-          PRINT_NAMED_INFO("PutDownObjectAction.CheckIfDone.ObjectPlacementSuccess",
+          PRINT_NAMED_INFO("PlaceObjectOnGroundAction.CheckIfDone.ObjectPlacementSuccess",
                            "Verification of object placement FAILED!\n");
           // TODO: correct to assume we are still carrying the object?
           robot.SetObjectAsAttachedToLift(_carryingObjectID, _carryObjectMarker); // re-pickup object to attach it to the lift again
@@ -1534,7 +1534,7 @@ namespace Anki {
       ObjectID id;
       id.Set();
       
-      PickUpObjectAction action(robot, id);
+      PickAndPlaceObjectAction action(robot, id);
       AscendOrDescendRampAction action2(robot, id);
       CrossBridgeAction action3(robot, id);
     }

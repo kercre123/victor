@@ -219,7 +219,7 @@ namespace Anki {
       // object.
       // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
       Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot->GetWorldOrigin());
-      robot->GetActionList().AddAction(new PutDownObjectAtPoseAction(*robot, targetPose));
+      robot->GetActionList().AddAction(new PlaceObjectOnGroundAtPoseAction(*robot, targetPose));
 
       return RESULT_OK;
     }
@@ -249,7 +249,7 @@ namespace Anki {
       const u8 numRetries = 3;
       
       ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-      robot->GetActionList().AddAction(new DriveToAndPickUpObjectAction(selectedObjectID), numRetries);
+      robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID), numRetries);
       
       return RESULT_OK;
     }

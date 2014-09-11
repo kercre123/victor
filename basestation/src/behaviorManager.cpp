@@ -698,7 +698,7 @@ namespace Anki {
             
             robot_->DriveWheels(0.f, 0.f);
             
-            robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToAndPickUpObjectAction(dockBlock->GetID()));
+            robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPickAndPlaceObjectAction(dockBlock->GetID()));
             
             state_ = EXECUTING_DOCK;
             

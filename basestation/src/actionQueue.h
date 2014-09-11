@@ -444,10 +444,12 @@ namespace Anki {
     }; // class IDockAction
 
     
-    class PickUpObjectAction : public IDockAction
+    // If not carrying anything, picks up the specified object.
+    // If carrying an object, places it on the specified object.
+    class PickAndPlaceObjectAction : public IDockAction
     {
     public:
-      PickUpObjectAction(ObjectID objectID);
+      PickAndPlaceObjectAction(ObjectID objectID);
       
       virtual const std::string& GetName() const override;
       
@@ -466,24 +468,24 @@ namespace Anki {
 
     
     // Common compound action
-    class DriveToAndPickUpObjectAction : public CompoundActionSequential
+    class DriveToPickAndPlaceObjectAction : public CompoundActionSequential
     {
     public:
-      DriveToAndPickUpObjectAction(const ObjectID& objectID)
+      DriveToPickAndPlaceObjectAction(const ObjectID& objectID)
       : CompoundActionSequential({
         new DriveToObjectAction(objectID, PreActionPose::DOCKING),
-        new PickUpObjectAction(objectID)})
+        new PickAndPlaceObjectAction(objectID)})
       {
         
       }
     };
     
     
-    class PutDownObjectAction : public IAction
+    class PlaceObjectOnGroundAction : public IAction
     {
     public:
       
-      PutDownObjectAction();
+      PlaceObjectOnGroundAction();
       
       virtual const std::string& GetName() const override;
       
@@ -498,17 +500,17 @@ namespace Anki {
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker;
       
-    }; // class PutDownObjectAction
+    }; // class PlaceObjectOnGroundAction
     
     
     // Common compound action
-    class PutDownObjectAtPoseAction : public CompoundActionSequential
+    class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
     {
     public:
-      PutDownObjectAtPoseAction(const Robot& robot, const Pose3d& placementPose)
+      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose)
       : CompoundActionSequential({
         new DriveToPlaceCarriedObjectAction(robot, placementPose),
-        new PutDownObjectAction()})
+        new PlaceObjectOnGroundAction()})
       {
         
       }
