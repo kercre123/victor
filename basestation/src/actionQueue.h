@@ -377,7 +377,7 @@ namespace Anki {
     
     // Turn in place by a given angle, wherever the robot is when the action
     // is executed.
-    class TurnInPlaceAction : public IAction
+    class TurnInPlaceAction : public DriveToPoseAction
     {
     public:
       TurnInPlaceAction(const Radians& angle);
@@ -386,11 +386,9 @@ namespace Anki {
       
     protected:
       
-      virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual ActionResult Init(Robot& robot) override;
       
       Radians _turnAngle;
-      Pose3d  _goalPose;
       
     }; // class TurnInPlaceAction
     

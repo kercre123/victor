@@ -887,22 +887,14 @@ namespace Anki {
       // _current_ pose
       const Radians heading = robot.GetPose().GetRotationAngle<'Z'>();
       
-      _goalPose.SetRotation(heading + _turnAngle, Z_AXIS_3D);
-      _goalPose.SetTranslation(robot.GetPose().GetTranslation());
+      Pose3d rotatedPose(heading + _turnAngle, Z_AXIS_3D,
+                         robot.GetPose().GetTranslation());
       
-      if(robot.ExecutePathToPose(_goalPose) != RESULT_OK) {
-        result = FAILURE_ABORT;
-      }
-
+      SetGoal(rotatedPose);
+      
       return result;
     }
     
-    IAction::ActionResult TurnInPlaceAction::CheckIfDone(Robot& robot)
-    {
-      return CheckForPathDoneHelper(robot, _goalPose,
-                                    DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                                    DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
-    } // CheckIfDone()
     
     
 #pragma mark ---- MoveHeadToAngleAction ----
