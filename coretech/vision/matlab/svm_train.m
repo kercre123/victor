@@ -9,7 +9,7 @@
 
 function trainedSvmClassifiers = svm_train(labels, featureValues, varargin)
     
-    libsvmParameters = '-m 1000 -t 0 ';
+    libsvmParameters = '-m 5000 -t 0 ';
     
     parseVarargin(varargin{:});
     
@@ -24,6 +24,7 @@ function trainedSvmClassifiers = svm_train(labels, featureValues, varargin)
     trainedSvmClassifiers = cell(length(uniqueLabels), 1);
     
     for iLabel = 1:length(uniqueLabels)
+        tic
         labelsOneVsAll = zeros(size(labels));
         labelsOneVsAll(labels == uniqueLabels(iLabel)) = 1;
         labelsOneVsAll(labels ~= uniqueLabels(iLabel)) = -1;
@@ -31,6 +32,7 @@ function trainedSvmClassifiers = svm_train(labels, featureValues, varargin)
         weight = length(find(labelsOneVsAll==1)) / length(labelsOneVsAll);
         
         trainedSvmClassifiers{iLabel} = svmtrain(labelsOneVsAll, featureValuesF64, [libsvmParameters, sprintf('-w-1 %f', weight)]);
+        disp(sprintf('Trained %d/%d in %f seconds', iLabel, length(uniqueLabels), toc()));
     end
     
     %     training_label_vector = [1,1,1,-1,-1,-1]'; training_instance_matrix = [1,1,1,2,2,2]';
