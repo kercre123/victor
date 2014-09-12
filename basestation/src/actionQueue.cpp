@@ -1003,6 +1003,7 @@ namespace Anki {
     
     IDockAction::IDockAction(ObjectID objectID)
     : _dockObjectID(objectID)
+    , _dockMarker(nullptr)
     {
       
     }
@@ -1075,15 +1076,15 @@ namespace Anki {
                          "proceeding with docking.\n", closestDist);
       
         // Set dock markers
-        const Vision::KnownMarker* dockMarker1 = preActionPoses[closestIndex].GetMarker();
+        _dockMarker = preActionPoses[closestIndex].GetMarker();
         const Vision::KnownMarker* dockMarker2 = GetDockMarker2(preActionPoses, closestIndex);
         
         PRINT_NAMED_INFO("IDockAction.DockWithObjectHelper.BeginDocking",
                          "Docking with marker %d (%s) using action %d.\n",
-                         dockMarker1->GetCode(),
-                         Vision::MarkerTypeStrings[dockMarker1->GetCode()], _dockAction);
+                         _dockMarker->GetCode(),
+                         Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
         
-        if(robot.DockWithObject(_dockObjectID, dockMarker1, dockMarker2, _dockAction) == RESULT_OK) {
+        if(robot.DockWithObject(_dockObjectID, _dockMarker, dockMarker2, _dockAction) == RESULT_OK) {
           return SUCCESS;
         } else {
           return FAILURE_ABORT;
@@ -1153,56 +1154,115 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    IAction::ActionResult PickAndPlaceObjectAction::Verify(Robot& robot) const
+    // This helper is used both by PickAndPlaceObjectAction and PlaceObjectOnGroundAction
+    // to verify whether they succeeded.
+    static IActionRunner::ActionResult VerifyObjectPlacementHelper(Robot& robot, ObjectID objectID,
+                                                                   const Vision::KnownMarker* objectMarker)
     {
-      if(robot.IsCarryingObject() == false) {
-        PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.RobotNotCarryignObject",
-                          "Expecting robot to think its carrying an object at this point.\n");
-        return FAILURE_ABORT;
+      if(robot.IsCarryingObject() == true) {
+        PRINT_NAMED_ERROR("VerifyObjectPlacementHelper.RobotCarryignObject",
+                          "Expecting robot to think it's NOT carrying an object at this point.\n");
+        return IActionRunner::FAILURE_ABORT;
       }
       
-      BlockWorld& blockWorld = robot.GetBlockWorld();
-      
-      // We should _not_ still see a object with the
-      // same type as the one we were supposed to pick up in that
-      // block's original position because we should now be carrying it.
-      Vision::ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
-      if(carryObject == nullptr) {
-        PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.CarryObjectNoLongerExists",
+      // TODO: check to see it ended up in the right place?
+      Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("VerifyObjectPlacementHelper.CarryObjectNoLongerExists",
                           "Object %d we were carrying no longer exists in the world.\n",
                           robot.GetCarryingObject().GetValue());
-        return FAILURE_ABORT;
+        return IActionRunner::FAILURE_ABORT;
       }
-      
-      const BlockWorld::ObjectsMapByID_t& objectsWithType = blockWorld.GetExistingObjectsByType(carryObject->GetType());
-      
-      bool objectInOriginalPoseFound = false;
-      for(auto object : objectsWithType) {
-        // TODO: is it safe to always have useAbsRotation=true here?
-        if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, carryObject->
-                                                           GetRotationAmbiguities(),
-                                                           carryObject->GetSameDistanceTolerance(),
-                                                           carryObject->GetSameAngleTolerance(), true))
-        {
-          objectInOriginalPoseFound = true;
-          break;
-        }
-      }
-      
-      if(objectInOriginalPoseFound)
+      else if(object->GetLastObservedTime() > (robot.GetLastMsgTimestamp()-500))
       {
-        // Must not actually be carrying the object I thought I was!
-        blockWorld.ClearObject(robot.GetCarryingObject());
-        robot.UnSetCarryingObject();
-        
-        PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
-        return FAILURE_RETRY;
+        // We've seen the object in the last half second (which could
+        // not be true if we were still carrying it)
+        PRINT_NAMED_INFO("VerifyObjectPlacementHelper.ObjectPlacementSuccess",
+                         "Verification of object placement SUCCEEDED!\n");
+        return IActionRunner::SUCCESS;
       } else {
-        //_carryingObjectID = _dockObjectID;  // Already set?
-        //_carryingMarker   = _dockMarker;   //   "
-        PRINT_INFO("Object pick-up SUCCEEDED!\n");
-        return SUCCESS;
+        PRINT_NAMED_INFO("VerifyObjectPlacementHelper.ObjectPlacementFailure",
+                         "Verification of object placement FAILED!\n");
+        // TODO: correct to assume we are still carrying the object? Maybe object fell out of view?
+        robot.GetBlockWorld().AttachObjectToLift(objectID, objectMarker); // re-pickup object to attach it to the lift again
+        return IActionRunner::FAILURE_RETRY;
       }
+    } // VerifyObjectPlacementHelper()
+    
+    
+    IAction::ActionResult PickAndPlaceObjectAction::Verify(Robot& robot) const
+    {
+      switch(_dockAction)
+      {
+        case DA_PICKUP_LOW:
+        case DA_PICKUP_HIGH:
+        {
+          if(robot.IsCarryingObject() == false) {
+            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.RobotNotCarryignObject",
+                              "Expecting robot to think it's carrying an object at this point.\n");
+            return FAILURE_ABORT;
+          }
+          
+          BlockWorld& blockWorld = robot.GetBlockWorld();
+          
+          // We should _not_ still see a object with the
+          // same type as the one we were supposed to pick up in that
+          // block's original position because we should now be carrying it.
+          Vision::ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
+          if(carryObject == nullptr) {
+            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.CarryObjectNoLongerExists",
+                              "Object %d we were carrying no longer exists in the world.\n",
+                              robot.GetCarryingObject().GetValue());
+            return FAILURE_ABORT;
+          }
+          
+          const BlockWorld::ObjectsMapByID_t& objectsWithType = blockWorld.GetExistingObjectsByType(carryObject->GetType());
+          
+          bool objectInOriginalPoseFound = false;
+          for(auto object : objectsWithType) {
+            // TODO: is it safe to always have useAbsRotation=true here?
+            if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, carryObject->
+                                                               GetRotationAmbiguities(),
+                                                               carryObject->GetSameDistanceTolerance(),
+                                                               carryObject->GetSameAngleTolerance(), true))
+            {
+              objectInOriginalPoseFound = true;
+              break;
+            }
+          }
+          
+          if(objectInOriginalPoseFound)
+          {
+            // Must not actually be carrying the object I thought I was!
+            blockWorld.ClearObject(robot.GetCarryingObject());
+            robot.UnSetCarryingObject();
+            
+            PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
+            return FAILURE_RETRY;
+          } else {
+            //_carryingObjectID = _dockObjectID;  // Already set?
+            //_carryingMarker   = _dockMarker;   //   "
+            PRINT_INFO("Object pick-up SUCCEEDED!\n");
+            return SUCCESS;
+          }
+          break;
+        } // PICKUP
+          
+        case DA_PLACE_LOW:
+        case DA_PLACE_HIGH:
+          return VerifyObjectPlacementHelper(robot, _dockObjectID, _dockMarker);
+          
+        default:
+          PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.ReachedDefaultCase",
+                            "Don't know how to verify unexpected dockAction %d.\n", _dockAction);
+          return FAILURE_ABORT;
+          
+      } // switch(_dockAction)
+      
+      // Should not get here
+      PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.UnexpectedReturn",
+                        "All cases in switch statement should always return!\n");
+      return FAILURE_ABORT;
       
     } // Verify()
        
@@ -1254,6 +1314,7 @@ namespace Anki {
     } // CheckPreconditions()
     
     
+    
     IAction::ActionResult PlaceObjectOnGroundAction::CheckIfDone(Robot& robot)
     {
       ActionResult actionResult = RUNNING;
@@ -1269,28 +1330,7 @@ namespace Anki {
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
 
-        // TODO: check to see it ended up in the right place?
-        Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_carryingObjectID);
-        if(object == nullptr) {
-          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckIfDone.CarryObjectNoLongerExists",
-                            "Object %d we were carrying no longer exists in the world.\n",
-                            robot.GetCarryingObject().GetValue());
-          return FAILURE_ABORT;
-        }
-        else if(object->GetLastObservedTime() > (robot.GetLastMsgTimestamp()-500))
-        {
-          // We've seen the object in the last half second (which could
-          // not be true if we were still carrying it)
-          PRINT_NAMED_INFO("PlaceObjectOnGroundAction.CheckIfDone.ObjectPlacementSuccess",
-                           "Verification of object placement SUCCEEDED!\n");
-          return SUCCESS;
-        } else {
-          PRINT_NAMED_INFO("PlaceObjectOnGroundAction.CheckIfDone.ObjectPlacementSuccess",
-                           "Verification of object placement FAILED!\n");
-          // TODO: correct to assume we are still carrying the object?
-          robot.SetObjectAsAttachedToLift(_carryingObjectID, _carryObjectMarker); // re-pickup object to attach it to the lift again
-          return FAILURE_RETRY;
-        }
+        actionResult = VerifyObjectPlacementHelper(robot, _carryingObjectID, _carryObjectMarker);
         
       } // if robot is not picking/placing or moving
       

@@ -440,6 +440,7 @@ namespace Anki {
       
       ObjectID                    _dockObjectID;
       DockAction_t                _dockAction;
+      const Vision::KnownMarker*  _dockMarker;
 
     }; // class IDockAction
 
