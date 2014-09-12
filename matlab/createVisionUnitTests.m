@@ -28,6 +28,26 @@ TestWorld.AddBlock('BlockPose', Pose(pi/3*[0 0 1], [270 -32+67 BLOCK_DIM/2]), ..
 
 TestWorld.Run();
 
+%% PoseClustering
+% One robot seeing two markers on the same object, which should trigger
+% clustering the clustering of those two computed poses into one
+
+worldName = 'PoseCluster';
+TestWorld = CozmoTestWorldCreator('WorldFile', ...
+    fullfile(rootPath, ['visionTest_' worldName '.wbt']), ...
+    'CheckRobotPose', false);
+
+TestWorld.AddRobot('Name', 'Cozmo_1', ...
+    'RobotPose', Pose([0 0 0], [0 0 0]), ...
+    'HeadAngle', -10*pi/180, ...
+    'CameraResolution', [320 240]);
+
+TestWorld.AddBlock('BlockPose', Pose(pi/4*[0 0 1], [150 0 BLOCK_DIM/2]), ...
+    'BlockProto', 'Block1x1', 'BlockName', 'angryFace', 'MarkerImg', 'symbols/angryFace');
+
+TestWorld.Run();
+
+
 %% MatPoseTest
 % No blocks, just testing robot pose estimation as it moves around to
 % different poses on a mat
