@@ -130,6 +130,13 @@ namespace Anki {
       Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const; // at current pose
       Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f) const; // at specific pose
       
+      // Return current height of lift's gripper
+      f32 GetLiftHeight() const;
+      
+      // Return current bounding height of the robot, taking into account whether lift
+      // is raised
+      f32 GetHeight() const;
+      
       //
       // Path Following
       //

@@ -1574,6 +1574,16 @@ namespace Anki {
     } // GetBoundingBoxXY()
     
     
+    f32 Robot::GetHeight() const
+    {
+      return std::max(ROBOT_BOUNDING_Z, GetLiftHeight() + LIFT_HEIGHT_ABOVE_GRIPPER);
+    }
+    
+    f32 Robot::GetLiftHeight() const
+    {
+      return (std::sin(GetLiftAngle()) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
+    }
+    
     Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
     {
       MessageSetHeadControllerGains m;

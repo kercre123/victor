@@ -84,6 +84,11 @@ namespace Anki {
     // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
     const f32 LIFT_ARM_LENGTH = 64.f;
     
+    // Height of the lifter front assembly above the gripper, used to compute
+    // the overall height of the robot when the lift is up (i.e. the height is
+    // is the lift height plus this)
+    const f32 LIFT_HEIGHT_ABOVE_GRIPPER = 5.f; // approximate
+    
     // The lift height is defined as the height of the upper lift arm's wrist joint plus this offset.
     const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
     
