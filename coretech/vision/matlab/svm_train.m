@@ -9,7 +9,7 @@
 
 function trainedSvmClassifiers = svm_train(labels, featureValues, varargin)
     
-    libsvmParameters = '-m 5000 -t 0 ';
+    libsvmParameters = '-m 2000 -t 0 ';
     
     parseVarargin(varargin{:});
     

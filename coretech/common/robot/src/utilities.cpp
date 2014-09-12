@@ -24,6 +24,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #else
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <unistd.h>
 #endif
 
 #define PrintfOneArray_FORMAT_STRING_2 "%d %d "

@@ -166,11 +166,11 @@ namespace Anki
 
       bool useMalloc;
       if(!scratch) {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_MALLOC
         AnkiAssert(!memory && allocatedBuffer && allocatedBufferLength > 0);
         useMalloc = true;
 #else
-        AnkiError("Array<Type>::LoadBinaryArray_Generic", "Using malloc requires OpenCV");
+        AnkiError("Array<Type>::LoadBinaryArray_Generic", "malloc is not enabled");
         return newArray;
 #endif
       } else {
@@ -195,16 +195,18 @@ namespace Anki
       s32 tmpBufferLength = static_cast<s32>( ftell(fp) - ARRAY_FILE_HEADER_LENGTH );
       fseek(fp, 0, SEEK_SET);
 
-      void * tmpBuffer;
+      void * tmpBuffer = NULL;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_MALLOC
       void * tmpBufferStart;
 #endif
 
       if(useMalloc) {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_MALLOC
         tmpBufferStart = calloc(tmpBufferLength + 2*MEMORY_ALIGNMENT + 64, 1);
         tmpBuffer = tmpBufferStart;
+#else
+        AnkiAssert(false);
 #endif
       } else {
         tmpBuffer = scratch_local.Allocate(tmpBufferLength + MEMORY_ALIGNMENT + 64);
@@ -213,7 +215,7 @@ namespace Anki
       // Align tmpBuffer to MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH
       tmpBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(tmpBuffer) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_ZLIB
       void * uncompressedBufferStart = NULL;
 #endif
 
@@ -225,10 +227,10 @@ namespace Anki
 
       bool isCompressed = false;
       if(reinterpret_cast<const char*>(tmpBuffer)[ARRAY_FILE_HEADER_VALID_LENGTH+1] == 'z') {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_ZLIB
         isCompressed = true;
 #else
-        AnkiError("Array<Type>::LoadBinaryArray_Generic", "Loading with compression requires OpenCV");
+        AnkiError("Array<Type>::LoadBinaryArray_Generic", "zlib is not enabled");
         return newArray;
 #endif
       }
@@ -243,7 +245,7 @@ namespace Anki
 
       // Decompress the payload, if it is compressed
       if(isCompressed) {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_ZLIB
         uLongf originalLength = static_cast<uLongf>( reinterpret_cast<s32*>(tmpBuffer)[0] );
         const s32 compressedLength = reinterpret_cast<s32*>(tmpBuffer)[1];
 
@@ -253,7 +255,7 @@ namespace Anki
         uncompress(reinterpret_cast<Bytef*>(uncompressedBuffer), &originalLength, reinterpret_cast<Bytef*>(tmpBuffer) + 2*sizeof(s32), compressedLength);
 
         tmpBuffer = uncompressedBuffer;
-        tmpBufferLength = originalLength;
+        tmpBufferLength = static_cast<s32>(originalLength);
 #endif
       }
 
@@ -268,11 +270,13 @@ namespace Anki
       void * nextItem = iterator.GetNext(&typeName, &objectName, dataLength, isReportedSegmentLengthCorrect);
 
       if(!nextItem && strcmp(typeName, "Array") != 0) {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_MALLOC
         if(useMalloc) {
           free(tmpBufferStart);
         }
+#endif
 
+#if ANKICORETECH_EMBEDDED_USE_ZLIB
         if(isCompressed) {
           free(uncompressedBufferStart);
         }
@@ -301,11 +305,13 @@ namespace Anki
       }
 
       if(!(basicType_isBasicType || basicType_isString)) {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_MALLOC
         if(useMalloc) {
           free(tmpBufferStart);
         }
+#endif
 
+#if ANKICORETECH_EMBEDDED_USE_ZLIB
         if(isCompressed) {
           free(uncompressedBufferStart);
         }
@@ -318,7 +324,7 @@ namespace Anki
       MemoryStack allocater_data;
       MemoryStack *allocater = &allocater_data;
       if(useMalloc) {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_MALLOC
         *allocater = MemoryStack(allocatedBuffer, allocatedBufferLength);
 #endif
       } else {
@@ -370,11 +376,13 @@ namespace Anki
         } // if(basicType_isFloat) ... else
       } // if(basicType_isString) ... else
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_MALLOC
       if(useMalloc) {
         free(tmpBufferStart);
       }
+#endif
 
+#if ANKICORETECH_EMBEDDED_USE_ZLIB
       if(isCompressed) {
         free(uncompressedBufferStart);
       }

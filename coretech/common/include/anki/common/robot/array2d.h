@@ -32,6 +32,14 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/objdetect/objdetect.hpp"
+#endif
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#define ANKICORETECH_EMBEDDED_USE_MALLOC 1
+#define ANKICORETECH_EMBEDDED_USE_ZLIB 1
+#endif
+
+#if ANKICORETECH_EMBEDDED_USE_ZLIB
 #include "zlib.h"
 #endif
 
@@ -224,7 +232,7 @@ namespace Anki
         RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Could not open file %s", filename);
 
       if(compressionLevel > 0) {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_ZLIB
         char tmpTextHeader[ARRAY_FILE_HEADER_LENGTH+1];
         strncpy(tmpTextHeader, &ARRAY_FILE_HEADER[0], ARRAY_FILE_HEADER_LENGTH+1);
         snprintf(tmpTextHeader+ARRAY_FILE_HEADER_VALID_LENGTH+1, ARRAY_FILE_HEADER_LENGTH-ARRAY_FILE_HEADER_VALID_LENGTH, "z%s ", ZLIB_VERSION);
@@ -293,7 +301,7 @@ namespace Anki
           RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Save failed");
 
 #else
-        AnkiError("Array<Type>::SaveBinary", "Saving with compression requires OpenCV");
+        AnkiError("Array<Type>::SaveBinary", "Saving with compression requires zlib");
         return RESULT_FAIL;
 #endif
       } else {

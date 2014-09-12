@@ -334,6 +334,9 @@ namespace Anki
         Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Not enought bytes left to set the array");
 
       Array<Type> out = Array<Type>(height, width, memory);
+      
+      AnkiConditionalErrorAndReturnValue(out.IsValid(),
+        Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Could not allocate array");
 
       const s32 numElements = out.get_size(0) * out.get_size(1);
 
