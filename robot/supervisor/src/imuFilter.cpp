@@ -577,7 +577,11 @@ namespace Anki {
         pdFiltAccX_ = imu_data.acc_x * ACCEL_PICKUP_FILT_COEFF + pdFiltAccX_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
         pdFiltAccY_ = imu_data.acc_y * ACCEL_PICKUP_FILT_COEFF + pdFiltAccY_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
         pdFiltAccZ_ = imu_data.acc_z * ACCEL_PICKUP_FILT_COEFF + pdFiltAccZ_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
-        DetectPickup();
+        
+        // XXX: Commenting this out because pickup detection seems to be firing
+        //      when the robot drives up ramp (or the side of a platform) and
+        //      clearing pose history.
+        //DetectPickup();
         
         //UpdateEventDetection();
         
