@@ -279,7 +279,7 @@ namespace Anki {
         // cluster's pose based on all its member matches.
         
         Pose3d P_diff = _pose.GetInverse();
-        P_diff.PreComposeWith(P_other);
+        P_diff *= P_other;
         
         if(not R_ambiguities.empty()) {
           Pose3d newPose(_matches.back().second.GetPose());
@@ -307,7 +307,6 @@ namespace Anki {
         imgPoints.reserve(4*GetSize());
         objPoints.reserve(4*GetSize());
         
-        // TODO: Implement ability to estimate object pose with markers seen by different cameras
         const Camera* camera = &_matches.front().first->GetSeenBy();
         
         for(auto & match : _matches)
