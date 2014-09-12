@@ -649,7 +649,7 @@ namespace Anki {
         // If SelectPlanner would rather use the short path planner, let it get a
         // plan and use that one instead.
         if(_selectedPathPlanner != _longPathPlanner) {
-          _selectedPathPlanner->GetPlan(path, GetPose(), poses[selectedIndex]);
+          status = _selectedPathPlanner->GetPlan(path, GetPose(), poses[selectedIndex]);
         }
         
         if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN) {
