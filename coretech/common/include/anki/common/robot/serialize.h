@@ -319,10 +319,10 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(
         height >= 0 && height < s32(1e9) &&
-        width >= 0 && width < s32(1e10) &&
-        stride > 0 && stride < s32(1e10) &&
+        width >= 0 && width < s32(2e9) &&
+        stride > 0 && stride < s32(2e9) &&
         basicType_sizeOfType > 0 && basicType_sizeOfType < 10000 &&
-        basicType_numElements >= 0 && basicType_numElements < s32(1e10),
+        basicType_numElements >= 0 && basicType_numElements < s32(2e9),
         Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Unreasonable deserialized values");
 
       if(width > 0) {
@@ -380,13 +380,13 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(
         height >= 0 && height < s32(1e9) &&
-        width >= 0 && width < s32(1e10) &&
-        stride > 0 && stride < s32(1e10) &&
+        width >= 0 && width < s32(2e9) &&
+        stride > 0 && stride < s32(2e9) &&
         ySlice_start >= 0 &&  ySlice_increment > 0 &&
         xSlice_start >= 0 && xSlice_increment > 0 && xSlice_increment < 1000000 &&
         basicType_sizeOfType > 0 && basicType_sizeOfType < 10000 &&
-        basicType_numElements >= 0 && basicType_numElements < s32(1e10),
-  
+        basicType_numElements >= 0 && basicType_numElements < s32(2e9),
+
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Unreasonable deserialized values");
 
       if(width > 0) {

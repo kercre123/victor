@@ -163,144 +163,22 @@ namespace Anki
 
     template<typename Type> Array<Type> LoadBinaryArray_Generic(const char * filename, MemoryStack *scratch, MemoryStack *memory, void * allocatedBuffer, const s32 allocatedBufferLength)
     {
-      Array<Type> newArray = Array<Type>();
+      u16  basicType_sizeOfType;
+      bool basicType_isBasicType;
+      bool basicType_isInteger;
+      bool basicType_isSigned;
+      bool basicType_isFloat;
+      bool basicType_isString;
 
-      MemoryStack scratch_local;
+      Array<u8> rawArray = LoadBinaryArray_UnknownType(
+        filename,
+        scratch, memory,
+        allocatedBuffer, allocatedBufferLength,
+        basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString);
 
-      bool useMalloc;
-      if(!scratch) {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-        AnkiAssert(!memory && allocatedBuffer && allocatedBufferLength > 0);
-        useMalloc = true;
-#else
-        AnkiError("Array<Type>::LoadBinaryArray_Generic", "Using malloc requires OpenCV");
-        return newArray;
-#endif
-      } else {
-        AnkiAssert(memory && !allocatedBuffer && allocatedBufferLength < 0);
-        useMalloc = false;
+      // TODO: check that the types match
 
-        AnkiConditionalErrorAndReturnValue(NotAliased(*scratch, *memory) && AreValid(*scratch, *memory),
-          newArray, "Array<Type>::LoadBinaryArray_Generic", "scratch and memory must be different");
-
-        scratch_local = MemoryStack(*scratch);
-      }
-
-      AnkiConditionalErrorAndReturnValue(filename,
-        newArray, "Array<Type>::LoadBinaryArray_Generic", "Invalid inputs");
-
-      FILE *fp = fopen(filename, "rb");
-
-      AnkiConditionalErrorAndReturnValue(fp,
-        newArray, "Array<Type>::LoadBinaryArray_Generic", "Could not open file %s", filename);
-
-      fseek(fp, 0, SEEK_END);
-      s32 tmpBufferLength = ftell(fp) - ARRAY_FILE_HEADER_LENGTH;
-      fseek(fp, 0, SEEK_SET);
-
-      void * tmpBuffer;
-      void * tmpBufferStart;
-
-      if(useMalloc) {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-        tmpBufferStart = calloc(tmpBufferLength + 2*MEMORY_ALIGNMENT + 64, 1);
-        tmpBuffer = tmpBufferStart;
-#endif
-      } else {
-        tmpBuffer = scratch_local.Allocate(tmpBufferLength + MEMORY_ALIGNMENT + 64);
-      }
-
-      // Align tmpBuffer to MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH
-      tmpBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(tmpBuffer) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-      void * uncompressedBufferStart = NULL;
-#endif
-
-      // First, read the text header
-      const size_t bytesRead1 = fread(tmpBuffer, 1, ARRAY_FILE_HEADER_LENGTH, fp);
-
-      AnkiConditionalErrorAndReturnValue(bytesRead1 == ARRAY_FILE_HEADER_LENGTH && strncmp(reinterpret_cast<const char*>(tmpBuffer), ARRAY_FILE_HEADER, ARRAY_FILE_HEADER_VALID_LENGTH) == 0,
-        newArray, "Array<Type>::LoadBinaryArray_Generic", "File is not an Anki Embedded Array");
-
-      bool isCompressed = false;
-      if(reinterpret_cast<const char*>(tmpBuffer)[ARRAY_FILE_HEADER_VALID_LENGTH+1] == 'z') {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-        isCompressed = true;
-#else
-        AnkiError("Array<Type>::LoadBinaryArray_Generic", "Loading with compression requires OpenCV");
-        return newArray;
-#endif
-      }
-
-      // Next, read the actual payload
-      const size_t bytesRead2 = fread(tmpBuffer, 1, tmpBufferLength, fp);
-
-      fclose(fp);
-
-      AnkiConditionalErrorAndReturnValue(bytesRead2 > 0,
-        newArray, "Array<Type>::LoadBinaryArray_Generic", "File is not an Anki Embedded Array");
-
-      // Decompress the payload, if it is compressed
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-      if(isCompressed) {
-        uLongf originalLength = static_cast<uLongf>( reinterpret_cast<s32*>(tmpBuffer)[0] );
-        const s32 compressedLength = reinterpret_cast<s32*>(tmpBuffer)[1];
-
-        uncompressedBufferStart = calloc(originalLength + MEMORY_ALIGNMENT + 64, 1);
-        void * uncompressedBuffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(uncompressedBufferStart) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
-
-        uncompress(reinterpret_cast<Bytef*>(uncompressedBuffer), &originalLength, reinterpret_cast<Bytef*>(tmpBuffer) + 2*sizeof(s32), compressedLength);
-
-        tmpBuffer = uncompressedBuffer;
-        tmpBufferLength = originalLength;
-      }
-#endif
-
-      SerializedBuffer serializedBuffer(tmpBuffer, tmpBufferLength, Anki::Embedded::Flags::Buffer(false, true, true));
-
-      SerializedBufferReconstructingIterator iterator(serializedBuffer);
-
-      const char * typeName = NULL;
-      const char * objectName = NULL;
-      s32 dataLength;
-      bool isReportedSegmentLengthCorrect;
-      void * nextItem = iterator.GetNext(&typeName, &objectName, dataLength, isReportedSegmentLengthCorrect);
-
-      if(!nextItem && strcmp(typeName, "Array") != 0) {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-        if(useMalloc) {
-          free(tmpBufferStart);
-        }
-
-        if(isCompressed) {
-          free(uncompressedBufferStart);
-        }
-#endif
-
-        AnkiError("Array<Type>::LoadBinaryArray_Generic", "Could not parse data");
-        return newArray;
-      }
-
-      char arrayName[128];
-      if(useMalloc) {
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-        MemoryStack memory(allocatedBuffer, allocatedBufferLength);
-        newArray = SerializedBuffer::DeserializeRawArray<Type>(&arrayName[0], &nextItem, dataLength, memory);
-#endif
-      } else {
-        newArray = SerializedBuffer::DeserializeRawArray<Type>(&arrayName[0], &nextItem, dataLength, *memory);
-      }
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-      if(useMalloc) {
-        free(tmpBufferStart);
-      }
-
-      if(isCompressed) {
-        free(uncompressedBufferStart);
-      }
-#endif
+      Array<Type> newArray = *reinterpret_cast<Array<Type>*>( &rawArray );
 
       return newArray;
     } // / LoadBinaryArray_Generic()

@@ -156,7 +156,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 bufferSize = 400000000 / numThreads;
 #else
   // 64-bit
-  
+
   s32 bufferSize;
   if(numThreads > 2) {
     bufferSize = MIN(0x3fffffff, 2000000000 / numThreads);
@@ -169,9 +169,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   // Note: This multithreading is a bit wierd, because Matlab doesn't like threads allocating their own memory. It could be improved.
   //
 
-  if(mxIsCell(prhs[0])) {
-    AnkiConditionalErrorAndReturn(mxIsCell(prhs[1]), "mexSaveEmbeddedArray", "If one input is a cell, both must be");
+  bool areCellArrays = false;
 
+  if(mxIsCell(prhs[0])) {
+    if(mxIsCell(prhs[1])) {
+      areCellArrays = true;
+    } else {
+      const mxArray * curMatlabArray = mxGetCell(prhs[0], 0);
+
+      AnkiConditionalErrorAndReturn(mxIsChar(curMatlabArray), "mexSaveEmbeddedArray", "If one input is a cell both must be. The only exception is if the first input is a cell array of strings.");
+    }
+  }
+
+  if(areCellArrays) {
     MemoryStack memory(mxMalloc(100000), 100000);
     AnkiConditionalErrorAndReturn(memory.IsValid(), "mexSaveEmbeddedArray", "Memory could not be allocated");
 
@@ -209,7 +219,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
           compressionLevel,
           scratch1s[iThread],
           scratch2s[iThread]);
-        
+
         threadHandles[iThread] = CreateSimpleThread(SaveThread, threadParams[iThread]);
       }
 

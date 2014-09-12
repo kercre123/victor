@@ -287,6 +287,21 @@ namespace Anki
     protected:
       s32 numFractionalBits;
     };
+
+    // If you don't know the type of the Array you're loading, use this function directly, then cast it based on the read parameters
+    Array<u8> LoadBinaryArray_UnknownType(
+      const char * filename,
+      MemoryStack *scratch,
+      MemoryStack *memory,
+      void * allocatedBuffer,
+      const s32 allocatedBufferLength,
+      u16  &basicType_sizeOfType,
+      bool &basicType_isBasicType,
+      bool &basicType_isInteger,
+      bool &basicType_isSigned,
+      bool &basicType_isFloat,
+      bool &basicType_isString
+      );
   } // namespace Embedded
 } //namespace Anki
 
