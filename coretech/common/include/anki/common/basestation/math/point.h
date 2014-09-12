@@ -50,6 +50,11 @@ namespace Anki {
     
     // Populate all dimensions with the same scalar value
     Point(const T scalar);
+    
+    // Construct a point from a higher-dimensional point by just dropping the
+    // the last dimensions. For example, construct a 2D point from a 3D point
+    // by just using the (x,y) dimensions and ignoring z.
+    Point(const Point<N+1,T>& pt);
 
 #if __cplusplus == 201103L
     // Point(T x1, T x2, ..., T xN);
