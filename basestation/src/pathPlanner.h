@@ -30,7 +30,7 @@ namespace Anki {
     public:
 
       IPathPlanner()
-      : _ignoreFamilies({BlockWorld::ObjectFamily::MATS})
+      : _ignoreTypes({MatPiece::Type::LETTERS_4x4})
       {
         
       }
