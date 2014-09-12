@@ -23,6 +23,7 @@
 #include "anki/vision/MarkerCodeDefinitions.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -288,6 +289,70 @@ namespace Anki {
       //Pose3d poseWrtOrigin = GetPose().GetWithRespectToOrigin();
       return _size.z()*.5f;// + poseWrtOrigin.GetTranslation().z();
     } // GetDrivingSurfaceHeight()
+    
+    void MatPiece::GetUnsafeRegions(std::vector<Quad2f>& unsafeRegions, const Pose3d& atPose, const f32 padding_mm) const
+    {
+      /*
+       Quadrilateral(const Point<N,T> &cornerTopLeft,
+       const Point<N,T> &cornerBottomLeft,
+       const Point<N,T> &cornerTopRight,
+       const Point<N,T> &cornerBottomRight);
+       */
+      std::vector<Quad3f> regions;
+      
+      if(Type::LONG_BRIDGE  == GetType() ||
+         Type::SHORT_BRIDGE == GetType())
+      {
+        // Canonical unsafe regions for bridges run up the sides of the bridge
+        regions = {{
+          Quad3f({-0.5f*_size.x(), 0.5f*_size.y() + padding_mm, 0.f},
+                 {-0.5f*_size.x(), 0.5f*_size.y() - padding_mm, 0.f},
+                 { 0.5f*_size.x(), 0.5f*_size.y() + padding_mm, 0.f},
+                 { 0.5f*_size.x(), 0.5f*_size.y() - padding_mm, 0.f}),
+          Quad3f({-0.5f*_size.x(),-0.5f*_size.y() + padding_mm, 0.f},
+                 {-0.5f*_size.x(),-0.5f*_size.y() - padding_mm, 0.f},
+                 { 0.5f*_size.x(),-0.5f*_size.y() + padding_mm, 0.f},
+                 { 0.5f*_size.x(),-0.5f*_size.y() - padding_mm, 0.f})
+        }};
+      }
+      else if(Type::LARGE_PLATFORM == GetType()) {
+        // Platforms have four unsafe regions around the edges
+        regions = {{
+          Quad3f({-0.5f*_size.x() - padding_mm, 0.5f*_size.y() + padding_mm, _size.z()},
+                 {-0.5f*_size.x() - padding_mm, 0.5f*_size.y() - padding_mm, _size.z()},
+                 { 0.5f*_size.x() + padding_mm, 0.5f*_size.y() + padding_mm, _size.z()},
+                 { 0.5f*_size.x() + padding_mm, 0.5f*_size.y() - padding_mm, _size.z()}),
+          
+          Quad3f({-0.5f*_size.x() - padding_mm,-0.5f*_size.y() + padding_mm, _size.z()},
+                 {-0.5f*_size.x() - padding_mm,-0.5f*_size.y() - padding_mm, _size.z()},
+                 { 0.5f*_size.x() + padding_mm,-0.5f*_size.y() + padding_mm, _size.z()},
+                 { 0.5f*_size.x() + padding_mm,-0.5f*_size.y() - padding_mm, _size.z()}),
+          
+          Quad3f({-0.5f*_size.x() - padding_mm, 0.5f*_size.y() + padding_mm, _size.z()},
+                 {-0.5f*_size.x() - padding_mm,-0.5f*_size.y() - padding_mm, _size.z()},
+                 {-0.5f*_size.x() + padding_mm, 0.5f*_size.y() + padding_mm, _size.z()},
+                 {-0.5f*_size.x() + padding_mm,-0.5f*_size.y() - padding_mm, _size.z()}),
+          
+          Quad3f({ 0.5f*_size.x() - padding_mm, 0.5f*_size.y() + padding_mm, _size.z()},
+                 { 0.5f*_size.x() - padding_mm,-0.5f*_size.y() - padding_mm, _size.z()},
+                 { 0.5f*_size.x() + padding_mm, 0.5f*_size.y() + padding_mm, _size.z()},
+                 { 0.5f*_size.x() + padding_mm,-0.5f*_size.y() - padding_mm, _size.z()})
+        }};
+      }
+      
+      // Put the canonical regions created above at the current pose, and add them
+      // to the given vector
+      for(Quad3f const& region : regions) {
+        Quad3f regionAtPose;
+        atPose.ApplyTo(region, regionAtPose);
+        
+        // Note we are constructing a 2D quad here from the 3D one and just
+        // dropping the z coordinate
+        unsafeRegions.emplace_back(regionAtPose);
+      }
+      
+    } // GetUnsafeRegions()
+    
     
   } // namespace Cozmo
   

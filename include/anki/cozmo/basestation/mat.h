@@ -89,6 +89,15 @@ namespace Anki {
       
       bool IsMoveable() const { return _isMoveable; }
       
+      // Like GetBoundingQuadXY, but returns quads indicating unsafe regions to
+      // drive on or around this mat, such as the regions around a platform
+      // (so robot doesn't drive off) or some kind of 3D obstacle built into the
+      // mat.
+      // Note these quads are _added_ to whatever is in the given vector.
+      void GetUnsafeRegions(std::vector<Quad2f>& unsafeRegions, const Pose3d& atPose, const f32 padding_mm) const;
+      void GetUnsafeRegions(std::vector<Quad2f>& unsafeRegions, const f32 padding_mm) const; // at current pose
+      
+      
     protected:
       static const std::vector<RotationMatrix3d> _rotationAmbiguities;
       static const s32 NUM_CORNERS = 8;
@@ -110,6 +119,11 @@ namespace Anki {
       // Call the copy constructor
       return new MatPiece(this->_type);
     }
+    
+    inline void MatPiece::GetUnsafeRegions(std::vector<Quad2f>& unsafeRegions, const f32 padding_mm) const {
+      GetUnsafeRegions(unsafeRegions, GetPose(), padding_mm);
+    }
+    
     
   } // namespace Cozmo
 
