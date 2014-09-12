@@ -55,7 +55,8 @@ namespace Anki {
     
       virtual void Visualize(const ColorRGBA& color) override;
       virtual void EraseVisualization() override;
-      
+    
+      using Vision::ObservableObject::GetBoundingQuadXY;
       virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
       
       static ObjectType GetTypeByName(const std::string& name);

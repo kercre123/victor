@@ -118,26 +118,30 @@ namespace Anki
       Vision::ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
             
       // Finds all blocks in the world whose centers are within the specified
-      // heights off the ground (z dimension) and returns a vector of quads
-      // of their outlines on the ground plane (z=0).  Can also pad the
-      // bounding boxes by a specified amount. If ignoreIDs is not empty, then
-      // bounding boxes of blocks with an ID present in the set will not be
-      // returned. Analogous behavior for ignoreTypes/ignoreFamilies.
-      // The last flag indicates whether objects being carried by any robot are
-      // included in the results.
-      void GetObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
+      // heights off the ground (z dimension, relative to world origin!) and
+      // returns a vector of quads of their outlines on the ground plane (z=0).
+      // Can also pad the bounding boxes by a specified amount.
+      // If ignoreIDs is not empty, then bounding boxes of blocks with an ID
+      // present in the set will not be returned. Analogous behavior for
+      // ignoreTypes/ignoreFamilies.
+      void GetObjectBoundingBoxesXY(const f32 minHeight,
+                                    const f32 maxHeight,
                                     const f32 padding,
                                     std::vector<Quad2f>& boundingBoxes,
                                     const std::set<ObjectFamily>& ignoreFamilies = {ObjectFamily::MATS},
                                     const std::set<ObjectType>& ignoreTypes = {{}},
-                                    const std::set<ObjectID>& ignoreIDs = {{}},
-                                    const bool ignoreCarriedObjects = true) const;
+                                    const std::set<ObjectID>& ignoreIDs = {{}}) const;
+
+      // Wrapper for above that returns bounding boxes of objects that are
+      // obstacles given the robot's current z height. Objects being carried
+      // and the object the robot is localized to are not considered obstacles.
+      void GetObstacles(std::vector<Quad2f>& boundingBoxes, const f32 padding) const;
       
       // Returns true if any blocks were moved, added, or deleted on the
-      // last update. Useful, for example, to know whether to update the
-      // visualization or existing plans.
+      // last call to Update().
       bool DidObjectsChange() const;
       
+      // Get/Set currently-selected object
       ObjectID GetSelectedObject() const { return _selectedObject; }
       void     CycleSelectedObject();
       

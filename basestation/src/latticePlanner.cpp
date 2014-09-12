@@ -100,12 +100,8 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
     std::vector<Quad2f> boundingBoxes;
 
     // first check plan with slightly smaller radius to see if we need to replan
-    blockWorld_->GetObjectBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
-                                          paddingRadius,
-                                          boundingBoxes,
-                                          _parent->_ignoreFamilies,
-                                          _parent->_ignoreTypes,
-                                          _parent->_ignoreIDs);
+    blockWorld_->GetObstacles(boundingBoxes, paddingRadius);
+    
     env_.ClearObstacles();
     
     if(vizColor != nullptr) {

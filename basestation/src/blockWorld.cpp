@@ -422,15 +422,31 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
       }
     }
 
+    void BlockWorld::GetObstacles(std::vector<Quad2f>& boundingBoxes, const f32 padding) const
+    {
+      std::set<ObjectID> ignoreIDs = {
+        _robot->GetCarryingObject(), // TODO: what if robot is carrying multiple objects?
+        _robot->GetLocalizedTo()
+      };
+      
+      const Pose3d robotPoseWrtOrigin = _robot->GetPose().GetWithRespectToOrigin();
+      const f32 minHeight = robotPoseWrtOrigin.GetTranslation().z();
+      const f32 maxHeight = minHeight + _robot->GetHeight();
+      
+      GetObjectBoundingBoxesXY(minHeight, maxHeight, padding, boundingBoxes,
+                               std::set<ObjectFamily>(),
+                               std::set<ObjectType>(),
+                               ignoreIDs);
+    } // GetObstacles()
     
     
-    void BlockWorld::GetObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
+    void BlockWorld::GetObjectBoundingBoxesXY(const f32 minHeight,
+                                              const f32 maxHeight,
                                               const f32 padding,
                                               std::vector<Quad2f>& rectangles,
                                               const std::set<ObjectFamily>& ignoreFamiles,
                                               const std::set<ObjectType>& ignoreTypes,
-                                              const std::set<ObjectID>& ignoreIDs,
-                                              const bool ignoreCarriedObjects) const
+                                              const std::set<ObjectID>& ignoreIDs) const
     {
       for(auto & objectsByFamily : _existingObjects)
       {
@@ -442,39 +458,22 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
             if(useType) {
               for(auto & objectAndId : objectsByType.second)
               {
-                ActionableObject* object = dynamic_cast<ActionableObject*>(objectAndId.second);
-                if (object != nullptr) {
-                  if (ignoreCarriedObjects && !object->IsBeingCarried()) {
-                    // TODO: If we are planning in the frame of the robot's current mat, this should not be GetWithRespectToOrigin()
-                    const f32 blockHeight = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
-                    
-                    // If this block's ID is not in the ignore list, then we will use it
-                    const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
-                    
-                    if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
+                const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
+                if(useID)
+                {
+                  if(objectAndId.second == nullptr) {
+                    PRINT_NAMED_WARNING("BlockWorld.GetObjectBoundingBoxesXY.NullObjectPointer",
+                                        "ObjectID %d corresponds to NULL ObservableObject pointer.\n",
+                                        objectAndId.first.GetValue());
+                  } else {
+                    const f32 objectHeight = objectAndId.second->GetPose().GetWithRespectToOrigin().GetTranslation().z();
+                    if( (objectHeight >= minHeight) && (objectHeight <= maxHeight) )
                     {
-                      rectangles.emplace_back(object->GetBoundingQuadXY(padding));
+                      rectangles.emplace_back(objectAndId.second->GetBoundingQuadXY(padding));
                     }
                   }
-                  continue;
-                }
-
-                MarkerlessObject* mlObject = dynamic_cast<MarkerlessObject*>(objectAndId.second);
-                CORETECH_THROW_IF(mlObject == nullptr);
-                
-                const f32 blockHeight = mlObject->GetPose().GetWithRespectToOrigin().GetTranslation().z();
-                
-                // If this block's ID is not in the ignore list, then we will use it
-                const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
-                
-                if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) && useID )
-                {
-                  rectangles.emplace_back(mlObject->Vision::ObservableObject::GetBoundingQuadXY(padding));
-                }
-                
-
-              }
-              
+                } // if useID
+              } // for each ID
             } // if(useType)
           } // for each type
         } // if useFamily
@@ -1276,40 +1275,44 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
       
       // Iterate through all the objects
       auto const & allObjects = GetAllExistingObjects();
-      for(auto const & objectsByFamily : allObjects) {
-        for (auto const & objectsByType : objectsByFamily.second) {
-          
-          //PRINT_INFO("currType: %d\n", blockType.first);
-          for (auto const & objectsByID : objectsByType.second) {
+      for(auto const & objectsByFamily : allObjects)
+      {
+        // Markerless objects are not Actionable, so ignore them for selection
+        if(objectsByFamily.first != ObjectFamily::MARKERLESS_OBJECTS)
+        {
+          for (auto const & objectsByType : objectsByFamily.second){
             
-            ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
-            if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
-            {
-              //PRINT_INFO("currID: %d\n", block.first);
-              if (currSelectedObjectFound) {
-                // Current block of interest has been found.
-                // Set the new block of interest to the next block in the list.
-                _selectedObject = object->GetID();
-                newSelectedObjectSet = true;
-                //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
-                break;
-              } else if (object->GetID() == _selectedObject) {
-                currSelectedObjectFound = true;
-                //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+            //PRINT_INFO("currType: %d\n", blockType.first);
+            for (auto const & objectsByID : objectsByType.second) {
+              
+              ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
+              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
+              {
+                //PRINT_INFO("currID: %d\n", block.first);
+                if (currSelectedObjectFound) {
+                  // Current block of interest has been found.
+                  // Set the new block of interest to the next block in the list.
+                  _selectedObject = object->GetID();
+                  newSelectedObjectSet = true;
+                  //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
+                  break;
+                } else if (object->GetID() == _selectedObject) {
+                  currSelectedObjectFound = true;
+                  //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+                }
               }
+            } // for each ID
+            
+            if (newSelectedObjectSet) {
+              break;
             }
-          } // for each ID
+            
+          } // for each type
           
-          if (newSelectedObjectSet) {
+          if(newSelectedObjectSet) {
             break;
           }
-          
-        } // for each type
-        
-        if(newSelectedObjectSet) {
-          break;
-        }
-        
+        } // if family != MARKERLESS_OBJECTS
       } // for each family
       
       // If the current object of interest was found, but a new one was not set
