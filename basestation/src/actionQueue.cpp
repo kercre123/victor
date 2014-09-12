@@ -649,7 +649,7 @@ namespace Anki {
       if(robot.IsTraversingPath())
       {
         // If the robot is traversing a path, consider replanning it
-        if(robot.GetBlockWorld().DidBlocksChange())
+        if(robot.GetBlockWorld().DidObjectsChange())
         {
           Planning::Path newPath;
           switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetPose(), _forceReplanOnNextWorldChange))

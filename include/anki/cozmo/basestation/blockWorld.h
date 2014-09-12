@@ -136,7 +136,7 @@ namespace Anki
       // Returns true if any blocks were moved, added, or deleted on the
       // last update. Useful, for example, to know whether to update the
       // visualization or existing plans.
-      bool DidBlocksChange() const;
+      bool DidObjectsChange() const;
       
       ObjectID GetSelectedObject() const { return _selectedObject; }
       void     CycleSelectedObject();

@@ -483,7 +483,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
     } // GetObjectBoundingBoxesXY()
     
     
-    bool BlockWorld::DidBlocksChange() const {
+    bool BlockWorld::DidObjectsChange() const {
       return _didObjectsChange;
     }
 
