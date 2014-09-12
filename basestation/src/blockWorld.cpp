@@ -425,10 +425,36 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
     void BlockWorld::GetObstacles(std::vector<Quad2f>& boundingBoxes, const f32 padding) const
     {
       std::set<ObjectID> ignoreIDs = {
-        _robot->GetCarryingObject(), // TODO: what if robot is carrying multiple objects?
-        _robot->GetLocalizedTo()
+        _robot->GetCarryingObject() // TODO: what if robot is carrying multiple objects?
       };
       
+      // If the robot is localized, check to see if it is "on" the mat it is
+      // localized to. If so, ignore the mat as an obstacle.
+      // Note that the reason for checking IsPoseOn is that it's possible the
+      // robot is localized to a mat it sees but is not on because it has not
+      // yet seen the mat it is on. (For example, robot see side of platform
+      // and localizes to it because it hasn't seen a marker on the flat mat
+      // it is driving on.)
+      if(_robot->IsLocalized()) {
+        MatPiece* mat = dynamic_cast<MatPiece*>(GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::MATS));
+        if(mat != nullptr) {
+          if(mat->IsPoseOn(_robot->GetPose(), 0.f, .25*ROBOT_BOUNDING_Z)) {
+            // Ignore the ID of the mat we're on
+            ignoreIDs.insert(_robot->GetLocalizedTo());
+            
+            // Add any "unsafe" regions this mat has
+            mat->GetUnsafeRegions(boundingBoxes, padding);
+          }
+        } else {
+          PRINT_NAMED_WARNING("BlockWorld.GetObstacles.LocalizedToNullMat",
+                              "Robot %d is localized to object ID=%d, but "
+                              "that object returned a NULL MatPiece pointer.\n",
+                              _robot->GetID(), _robot->GetLocalizedTo().GetValue());
+        }
+      }
+      
+      // Figure out height filters in world coordinates (because GetObjectBoundingBoxesXY()
+      // uses heights of objects in world coordinates)
       const Pose3d robotPoseWrtOrigin = _robot->GetPose().GetWithRespectToOrigin();
       const f32 minHeight = robotPoseWrtOrigin.GetTranslation().z();
       const f32 maxHeight = minHeight + _robot->GetHeight();

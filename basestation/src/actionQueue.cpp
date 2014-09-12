@@ -1044,12 +1044,15 @@ namespace Anki {
       float closestDistSq = std::numeric_limits<float>::max();
       size_t closestIndex = preActionPoses.size();
       
-      //for(auto const& preActionPair : preActionPoseMarkerPairs) {
       for(size_t index=0; index < preActionPoses.size(); ++index) {
-        const PreActionPose& preActionPose = preActionPoses[index];
+        Pose3d preActionPose;
+        if(preActionPoses[index].GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), preActionPose) == false) {
+          PRINT_NAMED_WARNING("IDockAction.Init.PreActionPoseOriginProblem",
+                              "Could not get pre-action pose w.r.t. robot parent.\n");
+        }
         
-        const Point2f preActionXY(preActionPose.GetPose().GetTranslation().x(),
-                                  preActionPose.GetPose().GetTranslation().y());
+        const Point2f preActionXY(preActionPose.GetTranslation().x(),
+                                  preActionPose.GetTranslation().y());
         const float distSq = (currentXY - preActionXY).LengthSq();
         if(distSq < closestDistSq) {
           closestDistSq = distSq;
@@ -1131,15 +1134,20 @@ namespace Anki {
     {
       // Record the object's original pose (before picking it up) so we can
       // verify later whether we succeeded.
-      _dockObjectOrigPose = object->GetPose();
+      // Make it w.r.t. robot's parent so we can compare heights fairly.
+      if(object->GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), _dockObjectOrigPose) == false) {
+        PRINT_NAMED_ERROR("PickAndPlaceObjectAction.SelectDockAction.PoseWrtFailed",
+                          "Could not get pose of dock object w.r.t. robot parent.\n");
+        return RESULT_FAIL;
+      }
       
       // Choose docking action based on block's position and whether we are
       // carrying a block
-      const f32 dockObjectHeight = _dockObjectOrigPose.GetTranslation().z();
+      const f32 dockObjectHeightWrtRobot = _dockObjectOrigPose.GetTranslation().z() - robot.GetPose().GetTranslation().z();
       _dockAction = DA_PICKUP_LOW;
       
       // TODO: Stop using constant ROBOT_BOUNDING_Z for this
-      if (dockObjectHeight > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
+      if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
         if(robot.IsCarryingObject()) {
           PRINT_INFO("Already carrying object. Can't dock to high object. Aborting.\n");
           return RESULT_FAIL;
@@ -1184,7 +1192,7 @@ namespace Anki {
         PRINT_NAMED_INFO("VerifyObjectPlacementHelper.ObjectPlacementFailure",
                          "Verification of object placement FAILED!\n");
         // TODO: correct to assume we are still carrying the object? Maybe object fell out of view?
-        robot.GetBlockWorld().AttachObjectToLift(objectID, objectMarker); // re-pickup object to attach it to the lift again
+        robot.SetObjectAsAttachedToLift(objectID, objectMarker); // re-pickup object to attach it to the lift again
         return IActionRunner::FAILURE_RETRY;
       }
     } // VerifyObjectPlacementHelper()
@@ -1200,7 +1208,7 @@ namespace Anki {
           if(robot.IsCarryingObject() == false) {
             PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.RobotNotCarryignObject",
                               "Expecting robot to think it's carrying an object at this point.\n");
-            return FAILURE_ABORT;
+            return FAILURE_RETRY;
           }
           
           BlockWorld& blockWorld = robot.GetBlockWorld();
