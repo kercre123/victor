@@ -291,14 +291,6 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
             // TODO: do something smarter here?
           }
           
-          /* This is pretty verbose...
-          fprintf(stdout, "Merging observation of object type=%hu, ID=%hu at (%.1f, %.1f, %.1f)\n",
-                  objSeen->GetType(), objSeen->GetID(),
-                  objSeen->GetPose().GetTranslation().x(),
-                  objSeen->GetPose().GetTranslation().y(),
-                  objSeen->GetPose().GetTranslation().z());
-          */
-          
           /*
           Pose3d newPoseWrtOldPoseParent;
           if(objSeen->GetPose().GetWithRespectTo(*overlappingObjects[0]->GetPose().GetParent(), newPoseWrtOldPoseParent) == false) {
@@ -315,6 +307,16 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           // Update lastObserved times of this object
           overlappingObjects[0]->SetLastObservedTime(objSeen->GetLastObservedTime());
           overlappingObjects[0]->UpdateMarkerObservationTimes(*objSeen);
+          
+          /* This is pretty verbose... 
+          fprintf(stdout, "Merging observation of object type=%s, with ID=%d at (%.1f, %.1f, %.1f), timestamp=%d\n",
+                  objSeen->GetType().GetName().c_str(),
+                  overlappingObjects[0]->GetID().GetValue(),
+                  objSeen->GetPose().GetTranslation().x(),
+                  objSeen->GetPose().GetTranslation().y(),
+                  objSeen->GetPose().GetTranslation().z(),
+                  overlappingObjects[0]->GetLastObservedTime());
+          */
           
           // Project this existing object into the robot's camera, using its new pose
           _robot->GetCamera().AddOccluder(*overlappingObjects[0]);

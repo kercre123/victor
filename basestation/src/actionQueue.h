@@ -438,9 +438,13 @@ namespace Anki {
       virtual PreActionPose::ActionType GetPreActionType() = 0;
       virtual IAction::ActionResult Verify(Robot& robot) const = 0;
       
+      // Optional additional delay before verification
+      virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
+      
       ObjectID                    _dockObjectID;
       DockAction_t                _dockAction;
       const Vision::KnownMarker*  _dockMarker;
+      f32                         _waitToVerifyTime;
 
     }; // class IDockAction
 
@@ -464,6 +468,11 @@ namespace Anki {
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
+      
+      // If placing an object, we need a place to store what robot was
+      // carrying, for verification.
+      ObjectID                   _carryObjectID;
+      const Vision::KnownMarker* _carryObjectMarker;
       
     }; // class DockWithObjectAction
 

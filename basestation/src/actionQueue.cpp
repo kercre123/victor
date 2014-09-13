@@ -1010,6 +1010,8 @@ namespace Anki {
     
     IAction::ActionResult IDockAction::Init(Robot& robot)
     {
+      _waitToVerifyTime = -1.f;
+      
       // Wait for robot to be done moving before trying to dock with a new object, to
       // allow previously-added docking/moving actions to finish
       if(robot.IsMoving()) {
@@ -1103,13 +1105,21 @@ namespace Anki {
       
       if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
       {
+        const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        
+        // Set the verification time if not already set
+        if(_waitToVerifyTime < 0.f) {
+          _waitToVerifyTime = currentTime + GetVerifyDelayInSeconds();
+        }
+        
         // Stopped executing docking path, and should have backed out by now,
         // and have head pointed at an angle to see where we just placed or
         // picked up from. So we will check if we see a block with the same
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
-        
-        actionResult = Verify(robot);
+        if(currentTime >= _waitToVerifyTime) {
+          actionResult = Verify(robot);
+        }
       }
       
       return actionResult;
@@ -1157,6 +1167,12 @@ namespace Anki {
         }
       } else if (robot.IsCarryingObject()) {
         _dockAction = DA_PLACE_HIGH;
+        
+        // Need to record the object we are currently carrying because it
+        // will get unset when the robot unattaches it during placement, and
+        // we want to be able to verify that we're seeing what we just placed.
+        _carryObjectID     = robot.GetCarryingObject();
+        _carryObjectMarker = robot.GetCarryingMarker();
       }
       
       return RESULT_OK;
@@ -1196,7 +1212,7 @@ namespace Anki {
         return IActionRunner::FAILURE_RETRY;
       }
     } // VerifyObjectPlacementHelper()
-    
+
     
     IAction::ActionResult PickAndPlaceObjectAction::Verify(Robot& robot) const
     {
@@ -1258,7 +1274,7 @@ namespace Anki {
           
         case DA_PLACE_LOW:
         case DA_PLACE_HIGH:
-          return VerifyObjectPlacementHelper(robot, _dockObjectID, _dockMarker);
+          return VerifyObjectPlacementHelper(robot, _carryObjectID, _carryObjectMarker);
           
         default:
           PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.ReachedDefaultCase",
