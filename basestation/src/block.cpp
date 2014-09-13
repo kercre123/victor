@@ -103,12 +103,14 @@ namespace Anki {
       
       const Vision::KnownMarker* marker = &AddMarker(code, facePose, markerSize_mm);
       
+      // NOTE: these preaction poses are really only valid for cube blocks!!!
+      
       // The four rotation vectors for the pre-action poses created below
       const std::array<RotationVector3d,4> preActionPoseRotations = {{
         {0.f, Y_AXIS_3D},  {M_PI_2, Y_AXIS_3D},  {-M_PI_2, Y_AXIS_3D},  {M_PI, Y_AXIS_3D}
       }};
       
-      // Add a pre-dock pose to each face, at fixed distance normal to the face,
+      // Add a pre-LOW-dock pose to each face, at fixed distance normal to the face,
       // and one for each orientation of the block
       {
         const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
@@ -116,6 +118,17 @@ namespace Anki {
           Pose3d preDockPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DefaultPreDockPoseDistance, -halfHeight}}, &marker->GetPose());
           preDockPose.RotateBy(Rvec);
           AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15));
+        }
+      }
+      
+      // Add a pre-HIGH-dock pose to each face, at fixed distance normal to the face,
+      // and one for each orientation of the block
+      {
+        const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
+        for(auto const& Rvec : preActionPoseRotations) {
+          Pose3d preDockPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DefaultPreDockPoseDistance, -(halfHeight+this->GetHeight())}}, &marker->GetPose());
+          preDockPose.RotateBy(Rvec);
+          AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15)); // Note: low head angle to still look at (and dock to) block below
         }
       }
       

@@ -702,7 +702,11 @@ namespace Anki {
         
       } else {
         Vec3f Tdiff;
-        if(robot.GetPose().IsSameAs(_goalPose, _goalDistanceThreshold, _goalAngleThreshold, Tdiff))
+        
+        // HACK: Loosen z threshold bigtime:
+        const Point3f distanceThreshold(_goalDistanceThreshold, _goalDistanceThreshold, robot.GetHeight());
+        
+        if(robot.GetPose().IsSameAs(_goalPose, distanceThreshold, _goalAngleThreshold, Tdiff))
         {
           PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
                            "Robot %d successfully finished following path (Tdiff=%.1fmm).\n",
