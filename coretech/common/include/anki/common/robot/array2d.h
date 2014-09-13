@@ -203,8 +203,11 @@ namespace Anki
 
     template<typename Type> Result Array<Type>::SaveBinary(const char * filename, const s32 compressionLevel, MemoryStack scratch) const
     {
-      AnkiConditionalErrorAndReturnValue(AreValid(*this, scratch),
+      AnkiConditionalErrorAndReturnValue(AreValid(*this, scratch) && filename,
         RESULT_FAIL_INVALID_OBJECT, "Array<Type>::SaveBinary", "Invalid inputs");
+      
+      AnkiConditionalErrorAndReturnValue(compressionLevel >= 0 && compressionLevel <= 9,
+        RESULT_FAIL_INVALID_PARAMETER, "Array<Type>::SaveBinary", "Invalid compression level");
 
       // If this is a string array, add the sizes of the null terminated strings (or zero otherwise)
       const s32 stringsLength = TotalArrayStringLengths<Type>(*this);
