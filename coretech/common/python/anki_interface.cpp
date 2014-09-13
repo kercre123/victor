@@ -35,7 +35,7 @@ PyMODINIT_FUNC initNumpy(void)
    import_array();
 }
 
-template<typename Type> PyObject* arrayToNumpyArray(const Array<Type> &in)
+template<typename Type> PyObject* ArrayToNumpyArray(const Array<Type> &in)
 {
   const s32 inHeight = in.get_size(0);
   const s32 inWidth = in.get_size(1);
@@ -49,7 +49,7 @@ template<typename Type> PyObject* arrayToNumpyArray(const Array<Type> &in)
   npy_intp *pythonStrides = PyArray_STRIDES(numpyArray);
 
   AnkiConditionalErrorAndReturnValue(sizeof(Type) == pythonStrides[1],
-    NULL, "arrayToNumpyArray", "sizeof doesn't match stride");
+    NULL, "ArrayToNumpyArray", "sizeof doesn't match stride");
 
   for(s32 y=0; y<inHeight; y++) {
     const Type * restrict pIn = in.Pointer(y,0);
@@ -63,17 +63,17 @@ template<typename Type> PyObject* arrayToNumpyArray(const Array<Type> &in)
   return numpyArray;
 }
 
-PyObject* loadBinaryArray_toNumpy(const char * filename, const int maxBufferSize)
+PyObject* LoadEmbeddedArray_toNumpy(const char * filename, const int maxBufferSize)
 {
   initNumpy();
   
   AnkiConditionalErrorAndReturnValue(filename,
-    NULL, "loadBinaryArray", "Invalid inputs");
+    NULL, "LoadEmbeddedArray_toNumpy", "Invalid inputs");
 
   void * allocatedBuffer = malloc(maxBufferSize);
 
   AnkiConditionalErrorAndReturnValue(allocatedBuffer,
-    NULL, "loadBinaryArray", "Could not allocate memory");
+    NULL, "LoadEmbeddedArray_toNumpy", "Could not allocate memory");
 
   u16  basicType_sizeOfType = 0;
   bool basicType_isBasicType = false;
@@ -89,7 +89,7 @@ PyObject* loadBinaryArray_toNumpy(const char * filename, const int maxBufferSize
     basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString);
 
   if(!arrayTmp.IsValid()) {
-    AnkiError("loadBinaryArray", "Could not load array");
+    AnkiError("LoadEmbeddedArray_toNumpy", "Could not load array");
     
     if(allocatedBuffer)
       free(allocatedBuffer);
@@ -104,45 +104,45 @@ PyObject* loadBinaryArray_toNumpy(const char * filename, const int maxBufferSize
     if(basicType_isFloat) {
       if(basicType_sizeOfType == 4) {
         Array<f32> array = *reinterpret_cast<Array<f32>* >( &arrayTmp );
-        toReturn = arrayToNumpyArray(array);
+        toReturn = ArrayToNumpyArray(array);
       } else if(basicType_sizeOfType == 8) {
         Array<f64> array = *reinterpret_cast<Array<f64>* >( &arrayTmp );
-        toReturn = arrayToNumpyArray(array);
+        toReturn = ArrayToNumpyArray(array);
       } else {
-        AnkiError("loadBinaryArray", "can only load a basic type");
+        AnkiError("LoadEmbeddedArray_toNumpy", "can only load a basic type");
       }
     } else { // if(basicType_isFloat)
       if(basicType_isSigned) {
         if(basicType_sizeOfType == 1) {
           Array<s8> array = *reinterpret_cast<Array<s8>* >( &arrayTmp );
-          toReturn = arrayToNumpyArray(array);
+          toReturn = ArrayToNumpyArray(array);
         } else if(basicType_sizeOfType == 2) {
           Array<s16> array = *reinterpret_cast<Array<s16>* >( &arrayTmp );
-          toReturn = arrayToNumpyArray(array);
+          toReturn = ArrayToNumpyArray(array);
         } else if(basicType_sizeOfType == 4) {
           Array<s32> array = *reinterpret_cast<Array<s32>* >( &arrayTmp );
-          toReturn = arrayToNumpyArray(array);
+          toReturn = ArrayToNumpyArray(array);
         } else if(basicType_sizeOfType == 8) {
           Array<s64> array = *reinterpret_cast<Array<s64>* >( &arrayTmp );
-          toReturn = arrayToNumpyArray(array);
+          toReturn = ArrayToNumpyArray(array);
         } else {
-          AnkiError("loadBinaryArray", "can only load a basic type");
+          AnkiError("LoadEmbeddedArray_toNumpy", "can only load a basic type");
         }
       } else { // if(basicType_isSigned)
         if(basicType_sizeOfType == 1) {
           Array<u8> array = *reinterpret_cast<Array<u8>* >( &arrayTmp );
-          toReturn = arrayToNumpyArray(array);
+          toReturn = ArrayToNumpyArray(array);
         } else if(basicType_sizeOfType == 2) {
           Array<u16> array = *reinterpret_cast<Array<u16>* >( &arrayTmp );
-          toReturn = arrayToNumpyArray(array);
+          toReturn = ArrayToNumpyArray(array);
         } else if(basicType_sizeOfType == 4) {
           Array<u32> array = *reinterpret_cast<Array<u32>* >( &arrayTmp );
-          toReturn = arrayToNumpyArray(array);
+          toReturn = ArrayToNumpyArray(array);
         } else if(basicType_sizeOfType == 8) {
           Array<u64> array = *reinterpret_cast<Array<u64>* >( &arrayTmp );
-          toReturn = arrayToNumpyArray(array);
+          toReturn = ArrayToNumpyArray(array);
         } else {
-          AnkiError("loadBinaryArray", "can only load a basic type");
+          AnkiError("LoadEmbeddedArray_toNumpy", "can only load a basic type");
         }
       } // if(basicType_isSigned) ... else
     } // if(basicType_isFloat) ... else
@@ -153,7 +153,7 @@ PyObject* loadBinaryArray_toNumpy(const char * filename, const int maxBufferSize
 
   return toReturn;
 
-} // PyObject* LoadBinaryArray(const char * filename)
+} // PyObject* LoadEmbeddedArray(const char * filename)
 
 template<typename Type> Array<Type> NumpyArrayToArray(const PyObject *numpyArray, MemoryStack &memory)
 {
@@ -169,7 +169,7 @@ template<typename Type> Array<Type> NumpyArrayToArray(const PyObject *numpyArray
   npy_intp *pythonStrides = PyArray_STRIDES(numpyArray);
 
   AnkiConditionalErrorAndReturnValue(sizeof(Type) == pythonStrides[1],
-    Array<Type>(), "arrayToNumpyArray", "sizeof doesn't match stride");
+    Array<Type>(), "NumpyArrayToArray", "sizeof doesn't match stride");
 
   for(s32 y=0; y<arrayHeight; y++) {
     const Type * restrict pNumpyArray = reinterpret_cast<Type*>( pNumpyArray_start + y * pythonStrides[0] );
@@ -226,7 +226,7 @@ template<typename Type> s32 AllocateAndSave(const PyObject *numpyArray, const ch
     return -1;
 } // template<typename Type> Result AllocateAndSave(const PyObject *numpyArray, const char *filename, const s32 compressionLevel)
 
-int saveBinaryArray_fromNumpy(PyObject *numpyArray, const char *filename, const int compressionLevel)
+int SaveEmbeddedArray_fromNumpy(PyObject *numpyArray, const char *filename, const int compressionLevel)
 {
   // TODO: check if it is actually a numpy array
 
