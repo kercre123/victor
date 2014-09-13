@@ -1,3 +1,6 @@
+# Compile by typing "python setup.py install"
+# Requires python, with the numpy and cython packages installed
+
 from distutils.core import setup
 from Cython.Build import cythonize
 from distutils.extension import Extension
@@ -5,9 +8,9 @@ from distutils.extension import Extension
 import numpy
 
 extensions = [
-    Extension("anki", 
+    Extension("anki",
         ["anki.pyx",
-        "anki_interface.cpp", 
+        "anki_interface.cpp",
         "../robot/src/array2d.cpp",
         "../robot/src/benchmarking.cpp",
         "../robot/src/comparisons.cpp",
@@ -31,17 +34,14 @@ extensions = [
         "../robot/src/trig_fast.cpp",
         "../robot/src/utilities.cpp",
         "../robot/src/utilities_c.c",
-        "../shared/src/utilities_shared.cpp"         
+        "../shared/src/utilities_shared.cpp"
          ],
-        include_dirs = ["../include", 
-                        "../../vision/include", 
-                        numpy.get_include(),
-                        "../../../../coretech-external/opencv-2.4.8/modules/core/include/",
-                        "../../../../coretech-external/opencv-2.4.8/modules/highgui/include/",
-                        "../../../../coretech-external/opencv-2.4.8/modules/imgproc/include/",
-                        "../../../../coretech-external/opencv-2.4.8/modules/objdetect/include/"],
+        include_dirs = ["../include",
+                        "../../vision/include",
+                        numpy.get_include()],
         libraries = ["z"],
-        extra_compile_args = ["-DANKICORETECH_EMBEDDED_USE_MALLOC", "-DANKICORETECH_EMBEDDED_USE_ZLIB"]),
+        extra_compile_args = ["-DANKICORETECH_EMBEDDED_USE_MALLOC",
+                              "-DANKICORETECH_EMBEDDED_USE_ZLIB"]),
 ]
 
 setup(

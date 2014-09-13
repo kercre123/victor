@@ -1,3 +1,15 @@
+/**
+File: anki_interface.cpp
+Author: Peter Barnum
+Created: 2014-09-12
+
+Python utilities to load and save Embedded Arrays from a file. 
+The three files anki.pyx, anki_interface.cpp, and anki.h are compiled by setup.py,
+to create a python-compatible shared library.
+
+Copyright Anki, Inc. 2014
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
 
 #include <stdio.h>
 #include <iostream>
@@ -39,12 +51,15 @@ template<typename Type> PyObject* ArrayToNumpyArray(const Array<Type> &in)
 {
   const s32 inHeight = in.get_size(0);
   const s32 inWidth = in.get_size(1);
-  
+
   npy_intp dims[2] = {inHeight, inWidth};
   const s32 numpyDataType = getNumpyDataType<Type>();
-  
+
   PyObject * numpyArray = PyArray_SimpleNew(2, &dims[0], numpyDataType);
-  
+
+  AnkiConditionalErrorAndReturnValue(numpyArray,
+    NULL, "ArrayToNumpyArray", "Could not allocate numpy array");
+
   u8 * restrict pNumpyArray_start = reinterpret_cast<u8*>( PyArray_DATA(numpyArray) );
   npy_intp *pythonStrides = PyArray_STRIDES(numpyArray);
 
@@ -54,19 +69,22 @@ template<typename Type> PyObject* ArrayToNumpyArray(const Array<Type> &in)
   for(s32 y=0; y<inHeight; y++) {
     const Type * restrict pIn = in.Pointer(y,0);
     Type * restrict pNumpyArray = reinterpret_cast<Type*>( pNumpyArray_start + y * pythonStrides[0] );
-    
+
     for(s32 x=0; x<inWidth; x++) {
       pNumpyArray[x] = pIn[x];
     }
   }
-  
-  return numpyArray;
-}
 
-PyObject* LoadEmbeddedArray_toNumpy(const char * filename, const int maxBufferSize)
+  return numpyArray;
+} // template<typename Type> PyObject* ArrayToNumpyArray(const Array<Type> &in)
+
+PyObject* LoadEmbeddedArray_toNumpy(const char * filename)
 {
   initNumpy();
   
+  // TODO: vary based on the amount of memory needed
+  const int maxBufferSize = 0x3fffffff;
+
   AnkiConditionalErrorAndReturnValue(filename,
     NULL, "LoadEmbeddedArray_toNumpy", "Invalid inputs");
 
@@ -90,10 +108,10 @@ PyObject* LoadEmbeddedArray_toNumpy(const char * filename, const int maxBufferSi
 
   if(!arrayTmp.IsValid()) {
     AnkiError("LoadEmbeddedArray_toNumpy", "Could not load array");
-    
+
     if(allocatedBuffer)
       free(allocatedBuffer);
- 
+
     return NULL;
   }
 
@@ -153,18 +171,18 @@ PyObject* LoadEmbeddedArray_toNumpy(const char * filename, const int maxBufferSi
 
   return toReturn;
 
-} // PyObject* LoadEmbeddedArray(const char * filename)
+} // PyObject* LoadEmbeddedArray_toNumpy(const char * filename)
 
 template<typename Type> Array<Type> NumpyArrayToArray(const PyObject *numpyArray, MemoryStack &memory)
 {
   const s32 arrayHeight = static_cast<s32>( PyArray_DIM(numpyArray, 0) );
   const s32 arrayWidth = static_cast<s32>( PyArray_DIM(numpyArray, 1) );
-  
+
   Array<Type> array(arrayHeight, arrayWidth, memory);
-  
+
   AnkiConditionalErrorAndReturnValue(array.IsValid(),
     Array<Type>(), "NumpyArrayToArray", "Could not allocate array");
-   
+
   u8 * restrict pNumpyArray_start = reinterpret_cast<u8*>( PyArray_DATA(numpyArray) );
   npy_intp *pythonStrides = PyArray_STRIDES(numpyArray);
 
@@ -174,14 +192,14 @@ template<typename Type> Array<Type> NumpyArrayToArray(const PyObject *numpyArray
   for(s32 y=0; y<arrayHeight; y++) {
     const Type * restrict pNumpyArray = reinterpret_cast<Type*>( pNumpyArray_start + y * pythonStrides[0] );
     Type * restrict pArray = array.Pointer(y,0);
-    
+
     for(s32 x=0; x<arrayWidth; x++) {
       pArray[x] = pNumpyArray[x];
     }
   }
-  
+
   return array;
-  
+
 } // template<typename Type> Array<Type> NumpyArrayToArray(const PyObject *numpyArray, MemoryStack &memory)
 
 template<typename Type> s32 AllocateAndSave(const PyObject *numpyArray, const char *filename, const s32 compressionLevel)
@@ -197,12 +215,12 @@ template<typename Type> s32 AllocateAndSave(const PyObject *numpyArray, const ch
   if(!scratch1.IsValid() || !scratch2.IsValid()) {
     AnkiError("AllocateAndSave", "Out of memory");
 
-    if(scratch1.get_buffer())    
+    if(scratch1.get_buffer())
       free(scratch1.get_buffer());
 
-    if(scratch2.get_buffer())          
+    if(scratch2.get_buffer())
       free(scratch2.get_buffer());
-      
+
       return -1;
   }
 
@@ -211,12 +229,12 @@ template<typename Type> s32 AllocateAndSave(const PyObject *numpyArray, const ch
   if(!ankiArray.IsValid()) {
     free(scratch1.get_buffer());
     free(scratch2.get_buffer());
-    
+
     return -1;
   }
 
   const Result result = ankiArray.SaveBinary(filename, compressionLevel, scratch2);
-  
+
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());
 
@@ -224,16 +242,21 @@ template<typename Type> s32 AllocateAndSave(const PyObject *numpyArray, const ch
     return 0;
   else
     return -1;
-} // template<typename Type> Result AllocateAndSave(const PyObject *numpyArray, const char *filename, const s32 compressionLevel)
+} // template<typename Type> s32 AllocateAndSave(const PyObject *numpyArray, const char *filename, const s32 compressionLevel)
 
 int SaveEmbeddedArray_fromNumpy(PyObject *numpyArray, const char *filename, const int compressionLevel)
 {
-  // TODO: check if it is actually a numpy array
+  // TODO: support saving a lists of strings?
+
+  initNumpy();
+
+  if(!PyArray_Check(numpyArray)) {
+    AnkiError("SaveEmbeddedArray_fromNumpy", "Input is not a Numpy array");
+    return -1;
+  }
 
   const s32 numpyDataType = PyArray_TYPE(numpyArray);
 
-  // TODO: save lists of strings?
-  
   if(numpyDataType == NPY_FLOAT64) {
     return AllocateAndSave<f64>(numpyArray, filename, compressionLevel);
   } else if(numpyDataType == NPY_FLOAT32) {
@@ -259,6 +282,6 @@ int SaveEmbeddedArray_fromNumpy(PyObject *numpyArray, const char *filename, cons
   }
 
   return -1;
-}
-    
-    
+} // int SaveEmbeddedArray_fromNumpy(PyObject *numpyArray, const char *filename, const int compressionLevel)
+
+
