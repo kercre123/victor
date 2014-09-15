@@ -144,9 +144,6 @@ namespace Anki {
       
     protected:
       
-      static const std::vector<RotationMatrix3d> sRotationAmbiguities;
-      static const std::vector<KnownMarker*> sEmptyMarkerVector;
-      
       // Helper method for subclasses to use for creating bounding quads
       template<size_t NUM_CORNERS>
       static Quad2f GetBoundingQuadXY_Helper(const Pose3d& atPose,
@@ -257,7 +254,8 @@ namespace Anki {
         
     inline std::vector<RotationMatrix3d> const& ObservableObject::GetRotationAmbiguities() const
     {
-      return ObservableObject::sRotationAmbiguities;
+      static const std::vector<RotationMatrix3d> RotationAmbiguities; // default is empty
+      return RotationAmbiguities;
     }
     
     inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject) const {

@@ -26,11 +26,6 @@
 namespace Anki {
   namespace Vision {
     
-    //ObjectID ObservableObject::ObjectCounter = 0;
-    const std::vector<KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
-    
-    const std::vector<RotationMatrix3d> ObservableObject::sRotationAmbiguities; // default is empty
-    
     ObservableObject::ObservableObject()
     : _lastObservedTime(0)
     {
@@ -77,9 +72,11 @@ namespace Anki {
         return returnVec->second;
       }
       else {
-        return ObservableObject::sEmptyMarkerVector;
+        static const std::vector<KnownMarker*> EmptyMarkerVector(0);
+        return EmptyMarkerVector;
       }
     } // ObservableObject::GetMarkersWithCode()
+    
     
     bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
                                     const Point3f&           distThreshold,
