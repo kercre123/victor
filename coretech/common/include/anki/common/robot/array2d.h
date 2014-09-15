@@ -205,7 +205,7 @@ namespace Anki
     {
       AnkiConditionalErrorAndReturnValue(AreValid(*this, scratch) && filename,
         RESULT_FAIL_INVALID_OBJECT, "Array<Type>::SaveBinary", "Invalid inputs");
-      
+
       AnkiConditionalErrorAndReturnValue(compressionLevel >= 0 && compressionLevel <= 9,
         RESULT_FAIL_INVALID_PARAMETER, "Array<Type>::SaveBinary", "Invalid compression level");
 
@@ -461,30 +461,7 @@ namespace Anki
       return expression;
     }
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
-    template<typename Type> cv::Mat_<Type>& Array<Type>::get_CvMat_()
-    {
-      AnkiConditionalError(this->IsValid(), "Array<Type>::get_CvMat_", "Array<Type> is not valid");
-
-      //if(reinterpret_cast<size_t>(cvMatMirror.data) != reinterpret_cast<size_t>(this->data)) {
-      this->UpdateCvMatMirror(*this);
-      //}
-
-      return cvMatMirror;
-    }
-
-    template<typename Type> const cv::Mat_<Type>& Array<Type>::get_CvMat_() const
-    {
-      AnkiConditionalError(this->IsValid(), "Array<Type>::get_CvMat_", "Array<Type> is not valid");
-
-      this->UpdateCvMatMirror(*this);
-
-      return cvMatMirror;
-    }
-
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
     template<typename Type> s32 Array<Type>::Set(const cv::Mat_<Type> &in)
     {
       const s32 inHeight = in.rows;
@@ -533,8 +510,10 @@ namespace Anki
       }
 
       if(scaleValues) {
-        cv::Mat_<f64> scaledArray(this->get_size(0), this->get_size(1));
-        scaledArray = this->get_CvMat_();
+        cv::Mat_<f64> scaledArray;
+
+        if(ArrayToCvMat(*this, &scaledArray) != RESULT_OK)
+          return;
 
         const f64 minValue = Matrix::Min<Type>(*this);
         const f64 maxValue = Matrix::Max<Type>(*this);
@@ -545,7 +524,12 @@ namespace Anki
 
         cv::imshow(windowName, scaledArray);
       } else {
-        cv::imshow(windowName, this->get_CvMat_());
+        cv::Mat_<Type> arrayCopy;
+
+        if(ArrayToCvMat(*this, &arrayCopy) != RESULT_OK)
+          return;
+
+        cv::imshow(windowName, arrayCopy);
       }
 
       if(waitForKeypress) {
@@ -747,10 +731,6 @@ namespace Anki
       this->flags = rightHandSide.flags;
       this->data = rightHandSide.data;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
-      this->UpdateCvMatMirror(rightHandSide);
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
-
       return *this;
     }
 
@@ -793,21 +773,6 @@ namespace Anki
     {
       return flags;
     }
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
-    template<typename Type> void Array<Type>::UpdateCvMatMirror(const Array<Type> &in) const
-    {
-      //memset(&this->cvMatMirror, 0, sizeof(this->cvMatMirror));
-
-      this->cvMatMirror.refcount = NULL;
-
-      // These two should be set, because if the Array constructor was not called, these will not be initialized
-      this->cvMatMirror.step.p = this->cvMatMirror.step.buf;
-      this->cvMatMirror.size = &this->cvMatMirror.rows;
-
-      this->cvMatMirror = cv::Mat_<Type>(in.size[0], in.size[1], in.data, in.stride);
-    }
-#endif
 
     template<typename Type> void* Array<Type>::AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const Flags::Buffer flags, bool reAllocate)
     {
@@ -874,13 +839,6 @@ namespace Anki
       this->size[1] = -1;
       this->stride = -1;
       this->data = NULL;
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
-      this->cvMatMirror.step.p = this->cvMatMirror.step.buf;
-      this->cvMatMirror.size = &this->cvMatMirror.rows;
-      this->cvMatMirror.data = NULL;
-      this->cvMatMirror.refcount = NULL;
-#endif
     } // void Array<Type>::InvalidateArray()
 
     template<typename Type> Result Array<Type>::PrintBasicType(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX)  const
@@ -971,6 +929,24 @@ namespace Anki
     {
       return numFractionalBits;
     }
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    template<typename Type> Result ArrayToCvMat(const Array<Type> &in, cv::Mat *out)
+    {
+      AnkiConditionalErrorAndReturnValue(in.IsValid() && out,
+        RESULT_FAIL, "ArrayToCvMat", "This Array is invalid");
+
+      out->refcount = NULL;
+
+      // These two should be set, because if the Mat_ constructor was not called, these will not be initialized
+      out->step.p = out->step.buf;
+      out->size = &out->rows;
+
+      *out = cv::Mat_<Type>(in.get_size(0), in.get_size(1), const_cast<Type*>(in.Pointer(0,0)), static_cast<size_t>(in.get_stride()));
+
+      return RESULT_OK;
+    } // template<typename Type> Result ArrayToCvMat(const Array<Type> &in, cv::Mat *out)
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
     // #pragma mark --- Array Specializations ---
 

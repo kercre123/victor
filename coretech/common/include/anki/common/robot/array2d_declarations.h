@@ -141,11 +141,7 @@ namespace Anki
       // like Matrix::Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out) for example.
       ConstArraySliceExpression<Type> Transpose() const;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
-      // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data should be copied (though with OpenCV, it's hard to tell).
-      cv::Mat_<Type>& get_CvMat_();
-      const cv::Mat_<Type>& get_CvMat_() const;
-
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
       // Copies the OpenCV Mat. If needed, it converts from color to grayscale by averaging the color channels.
       s32 Set(const cv::Mat_<Type> &in);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
@@ -235,22 +231,6 @@ namespace Anki
 
       Type * data;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV && ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
-      // WARNING:
-      // If the OpenCV API changes, this could cause OpenCV errors even where no OpenCV is used.
-      // This will probably be easily fixable, but be aware.
-      //
-      // WARNING: Don't access this directly, even from within the Array<> class. Use get_CvMat_()
-      //
-      // NOTE: cvMatMirror is mutable, because it should really mirror this Array<>, but due to
-      //       complexity in OpenCV, it may need to be updated at arbitrary times to actually mirror
-      //       this Array<>.
-      mutable cv::Mat_<Type> cvMatMirror;
-
-      // gets called automatically by get_CvMat_()
-      void UpdateCvMatMirror(const Array<Type> &in) const;
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
-
       // Basic allocation method
       void* AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const Flags::Buffer flags, bool reAllocate);
 
@@ -302,6 +282,13 @@ namespace Anki
       bool &basicType_isFloat,
       bool &basicType_isString
       );
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    // Returns a cv::Mat that mirrors the data in the input Array.
+    // WARNING: If you copy the cv::Mat or assign it incorrectly, it will no longer mirror the input Array
+    // WARNING: This const_casts the input array, so you can unsafely modify it via the output cv::Mat
+    template<typename Type> Result ArrayToCvMat(const Array<Type> &in, cv::Mat *out);
+#endif
   } // namespace Embedded
 } //namespace Anki
 

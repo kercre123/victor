@@ -213,7 +213,7 @@ namespace Anki
 
       Result LucasKanadeTracker_SampledProjective::ShowTemplate(const char * windowName, const bool waitForKeypress, const bool fitImageToWindow) const
       {
-#if !ANKICORETECH_EMBEDDED_USE_OPENCV || !ANKICORETECH_EMBEDDED_USE_OPENCV_SIMPLE_CONVERSIONS
+#if !ANKICORETECH_EMBEDDED_USE_OPENCV
         return RESULT_FAIL;
 #else
         //if(!this->IsValid())
@@ -253,7 +253,9 @@ namespace Anki
             cv::namedWindow(windowNameTotal, CV_WINDOW_AUTOSIZE);
           }
 
-          cv::imshow(windowNameTotal, image.get_CvMat_());
+          cv::Mat_<u8> image_cvMat;
+          ArrayToCvMat(image, &image_cvMat);
+          cv::imshow(windowNameTotal, image_cvMat);
         }
 
         if(waitForKeypress)

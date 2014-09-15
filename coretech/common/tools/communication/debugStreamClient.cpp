@@ -946,7 +946,10 @@ namespace Anki
         compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
         compression_params.push_back(9);
 
-        cv::imwrite(nextObject.filename, image.get_CvMat_(), compression_params);
+        cv::Mat_<u8> image_cvMat;
+        ArrayToCvMat(image, &image_cvMat);
+
+        cv::imwrite(nextObject.filename, image_cvMat, compression_params);
 
         free(nextObject.buffer);
       } // while(true)
