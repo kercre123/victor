@@ -55,8 +55,6 @@ namespace Anki {
       
       virtual MatPiece* CloneType() const;
       
-      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
-      
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
     
       virtual void Visualize(const ColorRGBA& color) override;
@@ -99,7 +97,6 @@ namespace Anki {
       
       
     protected:
-      static const std::vector<RotationMatrix3d> _rotationAmbiguities;
       static const s32 NUM_CORNERS = 8;
       static const std::array<Point3f, MatPiece::NUM_CORNERS> _canonicalCorners;
       

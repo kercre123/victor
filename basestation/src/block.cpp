@@ -493,32 +493,36 @@ namespace Anki {
     
     //const ObjectType Block_Cube1x1::BlockType = Block::NumTypes++;
     
-    const std::vector<RotationMatrix3d> Block_Cube1x1::rotationAmbiguities_ = {
-      RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
-      RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
-      RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
-      RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
-      RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
-      RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
-    };
+    
     
     std::vector<RotationMatrix3d> const& Block_Cube1x1::GetRotationAmbiguities() const
     {
-      return Block_Cube1x1::rotationAmbiguities_;
+      static const std::vector<RotationMatrix3d> RotationAmbiguities = {
+        RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
+        RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
+        RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
+        RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
+      };
+      
+      return RotationAmbiguities;
     }
     
 #pragma mark ---  Block_2x1 Implementation ---
     
     //const ObjectType Block_2x1::BlockType = Block::NumTypes++;
     
-    const std::vector<RotationMatrix3d> Block_2x1::rotationAmbiguities_ = {
-      RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
-      RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
-    };
+    
     
     std::vector<RotationMatrix3d> const& Block_2x1::GetRotationAmbiguities() const
     {
-      return Block_2x1::rotationAmbiguities_;
+      static const std::vector<RotationMatrix3d> RotationAmbiguities = {
+        RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+        RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
+      };
+      
+      return RotationAmbiguities;
     }
 
     

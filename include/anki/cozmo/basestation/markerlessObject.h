@@ -48,9 +48,7 @@ namespace Anki {
       virtual ObjectType GetType() const override { return _type; }
       
       virtual MarkerlessObject* CloneType() const;
-      
-      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
-      
+            
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
     
       virtual void Visualize(const ColorRGBA& color) override;

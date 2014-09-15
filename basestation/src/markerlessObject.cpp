@@ -23,11 +23,7 @@ namespace Anki {
     // NOTE: Yes, there's only one type (PROX_OBSTACLE) but if we ever decide to have
     //       objects of different shapes, this makes it easier.
     const MarkerlessObject::Type MarkerlessObject::Type::PROX_OBSTACLE("PROX_OBSTACLE");
-    
-    
-    // MarkerlessObject has no rotation ambiguities but we still need to define this
-    // static const here to instatiate an empty list.
-    const std::vector<RotationMatrix3d> MarkerlessObject::_rotationAmbiguities;
+  
     
     const std::array<Point3f, MarkerlessObject::NUM_CORNERS> MarkerlessObject::_canonicalCorners = {{
       Point3f(-0.5f, -0.5f,  0.5f),
@@ -77,11 +73,6 @@ namespace Anki {
       return DEG_TO_RAD(45); // TODO: too loose?
     }
 
-    
-    std::vector<RotationMatrix3d> const& MarkerlessObject::GetRotationAmbiguities() const
-    {
-      return MarkerlessObject::_rotationAmbiguities;
-    }
     
     void MarkerlessObject::Visualize(const ColorRGBA& color)
     {

@@ -240,10 +240,7 @@ namespace Anki {
         CORETECH_ASSERT(_size.x() == _size.y())
         CORETECH_ASSERT(_size.y() == _size.z())
       }
-      
-      //static const ObjectType BlockType;
-      static const std::vector<RotationMatrix3d> rotationAmbiguities_;
-      
+            
     };
     
     /*
@@ -284,9 +281,6 @@ namespace Anki {
       {
 
       }
-      
-      //static const ObjectType BlockType;
-      static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
     };
 #pragma mark --- Inline Accessors Implementations ---

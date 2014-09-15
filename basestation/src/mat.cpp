@@ -33,11 +33,7 @@ namespace Anki {
     const MatPiece::Type MatPiece::Type::LARGE_PLATFORM("LARGE_PLATFORM");
     const MatPiece::Type MatPiece::Type::LONG_BRIDGE("LONG_BRIDGE");
     const MatPiece::Type MatPiece::Type::SHORT_BRIDGE("SHORT_BRIDGE");
-    
-    
-    // MatPiece has no rotation ambiguities but we still need to define this
-    // static const here to instatiate an empty list.
-    const std::vector<RotationMatrix3d> MatPiece::_rotationAmbiguities;
+
     
     const std::array<Point3f, MatPiece::NUM_CORNERS> MatPiece::_canonicalCorners = {{
       Point3f(-0.5f, -0.5f,  0.5f),
@@ -204,11 +200,6 @@ namespace Anki {
       return DEG_TO_RAD(45); // TODO: too loose?
     }
 
-    
-    std::vector<RotationMatrix3d> const& MatPiece::GetRotationAmbiguities() const
-    {
-      return MatPiece::_rotationAmbiguities;
-    }
     
     void MatPiece::Visualize(const ColorRGBA& color)
     {

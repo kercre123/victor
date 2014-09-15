@@ -256,12 +256,7 @@ namespace Anki
       bool _didObjectsChange;
       
       ObjectID _selectedObject;
-      
-      static const Vision::ObservableObjectLibrary EmptyObjectLibrary;
-      
-      static const ObjectsMapByID_t    EmptyObjectMapByID;
-      static const ObjectsMapByType_t  EmptyObjectMapByType;
-            
+                  
       // For allowing the calling of VizManager draw functions
       bool _enableDraw;
       
@@ -274,7 +269,8 @@ namespace Anki
       if(objectsWithFamilyIter != _objectLibrary.end()) {
         return objectsWithFamilyIter->second;
       } else {
-        return BlockWorld::EmptyObjectLibrary;
+        static const Vision::ObservableObjectLibrary EmptyObjectLibrary;
+        return EmptyObjectLibrary;
       }
     }
     
@@ -289,7 +285,8 @@ namespace Anki
       if(objectsWithFamilyIter != _existingObjects.end()) {
         return objectsWithFamilyIter->second;
       } else {
-        return BlockWorld::EmptyObjectMapByType;
+        static const BlockWorld::ObjectsMapByType_t EmptyObjectMapByType;
+        return EmptyObjectMapByType;
       }
     }
     
@@ -303,7 +300,8 @@ namespace Anki
       }
       
       // Type not found!
-      return BlockWorld::EmptyObjectMapByID;
+      static const BlockWorld::ObjectsMapByID_t EmptyObjectMapByID;
+      return EmptyObjectMapByID;
     }
     
     inline Vision::ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) const

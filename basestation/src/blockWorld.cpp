@@ -43,11 +43,6 @@ namespace Anki
   namespace Cozmo
   {
     
-    const BlockWorld::ObjectsMapByID_t   BlockWorld::EmptyObjectMapByID;
-    const BlockWorld::ObjectsMapByType_t BlockWorld::EmptyObjectMapByType;
-    
-    const Vision::ObservableObjectLibrary BlockWorld::EmptyObjectLibrary;
-
     int BlockWorld::ObjectFamily::UniqueFamilyCounter = 0;
     
     // Instantiate object families here:
