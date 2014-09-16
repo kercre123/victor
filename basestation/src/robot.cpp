@@ -1293,7 +1293,7 @@ namespace Anki {
       objectPoseWrtLiftPose.SetParent(&_liftPose);
       
       object->SetPose(objectPoseWrtLiftPose);
-      object->SetIsBeingCarried(true);
+      object->SetBeingCarried(true);
       
       return RESULT_OK;
       
@@ -1326,7 +1326,7 @@ namespace Anki {
       }
       object->SetPose(placedPose);
       
-      object->SetIsBeingCarried(false);
+      object->SetBeingCarried(false);
       
       PRINT_NAMED_INFO("Robot.PlaceCarriedObject.ObjectPlaced",
                        "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).\n",

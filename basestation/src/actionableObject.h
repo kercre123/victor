@@ -153,7 +153,7 @@ namespace Anki {
       // carried. (Should this be here? Should we have an IsCarryable() virtual
       // method?)
       bool IsBeingCarried() const;
-      void SetIsBeingCarried(const bool tf);
+      void SetBeingCarried(const bool tf);
       
       // TODO: Possibly make this more descriptive to give finer-tuned control over states and visualization options.
       bool IsSelected() const;
@@ -161,6 +161,7 @@ namespace Anki {
       
     protected:
 
+      // Wrappers for each of the PreActionPose constructors:
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker* marker,
                             const f32 distance,
@@ -209,7 +210,7 @@ namespace Anki {
       return _isBeingCarried;
     }
     
-    inline void ActionableObject::SetIsBeingCarried(const bool tf) {
+    inline void ActionableObject::SetBeingCarried(const bool tf) {
       _isBeingCarried = tf;
     }
     
