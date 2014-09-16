@@ -133,31 +133,20 @@ namespace Anki {
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
       
       virtual void GetCorners(std::vector<Point3f>& corners) const;
-      virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const = 0;
+      virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const;
       
       virtual void Visualize(); // using internal ColorRGBA
       virtual void Visualize(const ColorRGBA& color) = 0; // using specified color
       virtual void EraseVisualization() = 0;
       
       Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
-      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const = 0;
+      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
       
     protected:
       
-      // Helper method for subclasses to use for creating bounding quads
-      template<size_t NUM_CORNERS>
-      static Quad2f GetBoundingQuadXY_Helper(const Pose3d& atPose,
-                                             const Point3f& paddedSize,
-                                             const std::array<Point3f,NUM_CORNERS>& canonicalCorners);
-      
-      // Helper method for subclasses to use for getting corners at a pose
-      template<size_t NUM_CORNERS>
-      static void GetCorners_Helper(const Pose3d& atPose,
-                                    const std::array<Point3f,NUM_CORNERS>& canonicalCorners,
-                                    std::vector<Point3f>& corners);
-
-      
-      //virtual const std::vector<Point3f>& GetCanonicalCorners() const = 0;
+      // Canonical corners are properties of each derived class and define the
+      // objects' shape, in a canonical (unrotated, untranslated) state.
+      virtual const std::vector<Point3f>& GetCanonicalCorners() const = 0;
       
       ObjectID     _ID;
       TimeStamp_t  _lastObservedTime;
@@ -171,28 +160,9 @@ namespace Anki {
       // code.
       std::map<Marker::Code, std::vector<KnownMarker*> > _markersWithCode;
       
-
-      
       // For subclasses can get a modifiable pose reference
       Pose3d& GetNonConstPose() { return _pose; }
       
-      /*
-      // Canonical pose used as the parent pose for the object's markers so
-      // possiblePoses for this object can be computed from observations of its
-      // markers
-      Pose3d _canonicalPose;
-      
-      // We will represent any ambiguity in an object's pose by simply keeping
-      // a list of possible poses.  Since a single (oriented) marker can
-      // completely determine 6DoF pose, the ambiguity aries from identical
-      // markers used multiple times on an object with symmetry -- and thus
-      // there should be a small, finite, discrete set of possible poses we need
-      // to store here.
-      // Note this is a separate notion than the uncertainty of each estimated
-      // pose, which should be stored inside the Pose3d object, if represented
-      // at all.
-      std::list<Pose3d> _possiblePoses;
-      */
     private:
       // Force setting of pose through SetPose() to keep pose name updated
       Pose3d _pose;
@@ -207,11 +177,6 @@ namespace Anki {
     //
     // Inline accessors
     //
-    /*
-    inline std::set<const Camera*> const&de ObservableObject::GetObserver() const {
-      return observers_;
-    }
-     */
     
     inline ObjectID ObservableObject::GetID() const {
       return _ID;
@@ -221,20 +186,12 @@ namespace Anki {
       return _color;
     }
     
-    /*
-    inline ObjectType ObservableObject::GetType() const {
-      return type_;
-    }
-     */
-    
-    //virtual float GetMinDim() const = 0;
     inline const Pose3d& ObservableObject::GetPose() const {
       return _pose;
     }
     
     inline void ObservableObject::SetID() { //const ObjectID newID) {
       _ID.Set();
-      //ID_ = newID;
     }
   
     inline void ObservableObject::SetPose(const Pose3d& newPose) {
@@ -262,57 +219,17 @@ namespace Anki {
       return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance());
     }
     
-    // Templated methods
-    template<size_t NUM_CORNERS>
-    Quad2f ObservableObject::GetBoundingQuadXY_Helper(const Pose3d& atPose,
-                                                      const Point3f& paddedSize,
-                                                      const std::array<Point3f,NUM_CORNERS>& canonicalCorners)
-    {
-      const RotationMatrix3d& R = atPose.GetRotationMatrix();
-      
-      std::vector<Point2f> points;
-      points.reserve(NUM_CORNERS);
-      for(auto corner : canonicalCorners) {
-        // Scale canonical point to correct (padded) size
-        corner *= paddedSize;
-        
-        // Rotate to given pose
-        corner = R*corner;
-        
-        // Project onto XY plane, i.e. just drop the Z coordinate
-        points.emplace_back(corner.x(), corner.y());
-      }
-      
-      Quad2f boundingQuad = GetBoundingQuad(points);
-      
-      // Re-center
-      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
-      boundingQuad += center;
-      
-      return boundingQuad;
-    }
-    
-    template<size_t NUM_CORNERS>
-    void ObservableObject::GetCorners_Helper(const Pose3d& atPose,
-                                             const std::array<Point3f,NUM_CORNERS>& canonicalCorners,
-                                             std::vector<Point3f>& corners)
-    {
-      corners.resize(NUM_CORNERS);
-      for(s32 i=0; i<NUM_CORNERS; ++i) {
-        // Start with canonical corner
-        corners[i] = canonicalCorners[i];
-        
-        // Move to given pose
-        corners[i] = atPose * corners[i];
-      }
-    } // GetCorners()
-    
     inline void ObservableObject::SetColor(const Anki::ColorRGBA &color) {
       _color = color;
     }
     
     inline void ObservableObject::Visualize() {
       Visualize(_color);
+    }
+    
+    inline Quad2f ObservableObject::GetBoundingQuadXY(const f32 padding_mm) const
+    {
+      return GetBoundingQuadXY(_pose, padding_mm);
     }
     
     /*

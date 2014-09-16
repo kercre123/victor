@@ -162,11 +162,14 @@ namespace Anki {
     {
       this->GetCorners(_pose, corners);
     }
-/*
-    void ObservableObject::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const {
+
+  
+    void ObservableObject::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
+    {
       atPose.ApplyTo(GetCanonicalCorners(), corners);
     }
-  */
+    
+    
     void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
                                               const TimeStamp_t sinceTime) const
     {
@@ -225,10 +228,36 @@ namespace Anki {
     } // SetMarkersAsObserved()
     
     
-    Quad2f ObservableObject::GetBoundingQuadXY(const f32 padding_mm) const
+    
+    Quad2f ObservableObject::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
-      return GetBoundingQuadXY(_pose, padding_mm);
-    }
+      const std::vector<Point3f>& canonicalCorners = GetCanonicalCorners();
+      const RotationMatrix3d& R = atPose.GetRotationMatrix();
+      
+      std::vector<Point2f> points;
+      points.reserve(canonicalCorners.size());
+      for(auto corner : canonicalCorners) {
+        
+        // Move canonical point to correct (padded) size
+        corner.x() += (signbit(corner.x()) ? -padding_mm : padding_mm);
+        corner.y() += (signbit(corner.y()) ? -padding_mm : padding_mm);
+        corner.z() += (signbit(corner.z()) ? -padding_mm : padding_mm);
+        
+        // Rotate to given pose
+        corner = R*corner;
+        
+        // Project onto XY plane, i.e. just drop the Z coordinate
+        points.emplace_back(corner.x(), corner.y());
+      }
+      
+      Quad2f boundingQuad = GetBoundingQuad(points);
+      
+      // Re-center
+      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
+      boundingQuad += center;
+      
+      return boundingQuad;
+    } // GetBoundingQuadXY()
     
     /*
     Quad2f ObservableObject::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
