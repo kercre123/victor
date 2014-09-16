@@ -41,6 +41,12 @@ namespace Anki {
     return INVALID;
   }
   
+  static std::map<std::string, ObjectType*>& GetTypeNames()
+  {
+    static std::map<std::string, ObjectType*> names;
+    return names;
+  }
+
   ObjectID::StorageType ObjectID::UniqueIDCounter = 0;
   
   
@@ -51,6 +57,7 @@ namespace Anki {
     SetValue(newType);
     //printf("Adding new type %d (set size = %lu)\n", newType, GetValidTypes().size());
     GetValidTypes().insert(newType);
+    GetTypeNames()[name] = this;
   }
 
   ObjectType::ObjectType()
@@ -69,9 +76,27 @@ namespace Anki {
     }
   }
   
+  ObjectType::~ObjectType()
+  {
+    GetTypeNames().erase(_name);
+  }
+  
   int ObjectType::GetNumTypes() {
     return ObjectType::UniqueTypeCounter;
   }
+  
+  
+  ObjectType ObjectType::GetTypeByName(const std::string& name)
+  {
+    auto iter = GetTypeNames().find(name);
+    if(iter == GetTypeNames().end() || iter->second == nullptr) {
+      return GetInvalidType();
+    } else {
+      return *iter->second;
+    }
+  }
+  
+#pragma mark ---- ObjectID -----
   
   
   void ObjectID::Reset() {

@@ -25,6 +25,7 @@
 #define ANKI_CORETECH_COMMON_OBJECTTYPESANDIDS_H
 
 #include <limits>
+#include <map>
 #include <set>
 #include <string>
 
@@ -85,11 +86,15 @@ namespace Anki {
     ObjectType(const std::string& name);
     ObjectType(int value);
     
+    ~ObjectType();
+    
     const std::string& GetName() const { return _name; }
     
     static int GetNumTypes();
     
     static ObjectType GetInvalidType();
+    
+    static ObjectType GetTypeByName(const std::string& name);
     
   protected:
     
