@@ -366,7 +366,7 @@ GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
   const u32 __SMLAD_select_groundTruth[numValues][numValues] = {{0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, };
   const u32 __USAD8_groundTruth[numValues][numValues] = {{0x0, 0x3fc, 0x3f8, 0x200, 0x1fc, 0x100, 0x2fc, 0x80, 0x37c, }, {0x3fc, 0x0, 0x4, 0x1fc, 0x200, 0x2fc, 0x100, 0x37c, 0x80, }, {0x3f8, 0x4, 0x0, 0x1f8, 0x1fc, 0x2f8, 0x100, 0x378, 0x82, }, {0x200, 0x1fc, 0x1f8, 0x0, 0x4, 0x100, 0x100, 0x180, 0x17e, }, {0x1fc, 0x200, 0x1fc, 0x4, 0x0, 0x100, 0x100, 0x17e, 0x180, }, {0x100, 0x2fc, 0x2f8, 0x100, 0x100, 0x0, 0x200, 0x80, 0x27e, }, {0x2fc, 0x100, 0x100, 0x100, 0x100, 0x200, 0x0, 0x27e, 0x80, }, {0x80, 0x37c, 0x378, 0x180, 0x17e, 0x80, 0x27e, 0x0, 0x2fe, }, {0x37c, 0x80, 0x82, 0x17e, 0x180, 0x27e, 0x80, 0x2fe, 0x0, }, };
   const u32 __USAD8_select_groundTruth[numValues][numValues] = {{0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, };
-  
+
   TEST_INTRINSICS_V(__REV, numValues);
   TEST_INTRINSICS_V(__REV16, numValues);
   TEST_INTRINSICS_V(__REVSH, numValues);
@@ -398,7 +398,6 @@ GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
   TEST_INTRINSICS_VV(__UQSUB16, numValues);
   TEST_INTRINSICS_VV(__USAD8, numValues);
   TEST_INTRINSICS_VVF(__SMLAD, numValues, 5);
-
 
   //
   // A few extras
@@ -863,7 +862,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<u64>(static_cast<f32>(0XFFFFFF7FFFFFFC00ULL)) == 0xFFFFFF0000000000ULL);
 
   const u64 a = saturate_cast<u64>(static_cast<f32>(0XFFFFFF7FFFFFFFFFULL));
-#if defined(__EDG__) || defined(__APPLE_CC__)
+#if defined(__EDG__) || defined(__APPLE_CC__) || defined(__GNUC__)
   ASSERT_TRUE(a == 0xFFFFFF0000000000ULL);
 #else
   ASSERT_TRUE(a == 0xFFFFFFFFFFFFFFFFULL);
@@ -914,7 +913,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(0x7FFFFFBFFFFFFE00LL)) == 0x7FFFFF8000000000LL);
 
   const s64 c = saturate_cast<s64>(static_cast<f32>(0x7FFFFFBFFFFFFE01LL));
-#if defined(__EDG__) || defined(__APPLE_CC__)
+#if defined(__EDG__) || defined(__APPLE_CC__) || defined(__GNUC__)
   ASSERT_TRUE(c == 0x7FFFFF8000000000LL);
 #else
   ASSERT_TRUE(c == 0x7FFFFFFFFFFFFFFFLL);
@@ -924,7 +923,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(0x7FFFFFFFFFFFFDFFLL)) == 0x7FFFFFFFFFFFFC00LL);
 
   const s64 d = saturate_cast<s64>(static_cast<f64>(0x7FFFFFFFFFFFFE00LL));
-#if defined(__EDG__) || defined(__APPLE_CC__)
+#if defined(__EDG__) || defined(__APPLE_CC__) || defined(__GNUC__)
   ASSERT_TRUE(d == 0x7FFFFFFFFFFFFFFFLL);
 #else
   ASSERT_TRUE(d == 0x7FFFFFFFFFFFFC00LL);
@@ -4092,7 +4091,8 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
   // Check that the templated OpenCV matrix works
   {
-    cv::Mat_<s16> &simpleArray_cvMat = simpleArray.get_CvMat_();
+    cv::Mat_<s16> simpleArray_cvMat;
+    ASSERT_TRUE(ArrayToCvMat(simpleArray, &simpleArray_cvMat) == RESULT_OK);
     CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
     CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
 
@@ -4119,7 +4119,8 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 
   // Check that the non-templated OpenCV matrix works
   {
-    cv::Mat &simpleArray_cvMat = simpleArray.get_CvMat_();
+    cv::Mat simpleArray_cvMat;
+    ASSERT_TRUE(ArrayToCvMat(simpleArray, &simpleArray_cvMat) == RESULT_OK);
     CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
     CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
     ASSERT_EQ(42, *simpleArray.Pointer(2,0));
@@ -4358,7 +4359,7 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #endif // #ifdef RUN_PC_ONLY_TESTS
 
-#if !(ANKICORETECH_EMBEDDED_USE_GTEST)
+#if !ANKICORETECH_EMBEDDED_USE_GTEST
 s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
   numPassedTests = 0;

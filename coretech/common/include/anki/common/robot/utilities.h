@@ -17,6 +17,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/trig_fast.h"
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#include "opencv2/core/core.hpp"
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -50,7 +54,7 @@ namespace Anki
       }
     }
 
-#if defined(__APPLE_CC__) // Apple Xcode
+#if defined(__APPLE_CC__) || defined(__GNUC__)
     template<> inline unsigned long RoundUp(const unsigned long number, const unsigned long multiple)
     {
       return (number + (multiple-1)) & ~(multiple-1);
@@ -71,7 +75,7 @@ namespace Anki
       }
     }
 
-#if defined(__APPLE_CC__) // Apple Xcode
+#if defined(__APPLE_CC__) || defined(__GNUC__)
     template<> inline unsigned long RoundDown(const unsigned long number, const unsigned long multiple)
     {
       return multiple * (number/multiple);

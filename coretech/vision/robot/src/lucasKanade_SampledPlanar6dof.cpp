@@ -275,8 +275,11 @@ namespace Anki
           calibMatrix[2][0] = 0.f;           calibMatrix[2][1] = 0.f;           calibMatrix[2][2] = 1.f;
 
           cv::Mat distortionCoeffs; // TODO: currently empty, use radial distoration?
+          cv::Mat calibMatrix_cvMat;
+          calibMatrix.ArrayToCvMat(&calibMatrix_cvMat);
+
           cv::solvePnP(cvObjPoints, cvImagePoints,
-            calibMatrix.get_CvMat_(), distortionCoeffs,
+            calibMatrix_cvMat, distortionCoeffs,
             cvRvec, cvTranslation,
             false, CV_ITERATIVE);
 
@@ -570,7 +573,6 @@ namespace Anki
                       bool * restrict magNLMS_i = magnitudeImageNLMS.Pointer(i,0);
 
                       for(s32 j=1; j<numPointsX-1; ++j) {
-
                         const f32 mag      = mag_i[j];
                         const f32 magLeft  = mag_i[j-1];
                         const f32 magRight = mag_i[j+1];
@@ -715,7 +717,7 @@ namespace Anki
 
             // Get pointers for the chunk of the samples corresponding to each
             // edge, so that we can loop over them simultaneously
-            
+
 #if SAMPLE_TOP_HALF_ONLY
             // If only sampling from top half, increment half as fast to use all
             // the samples on only one half.
@@ -759,12 +761,12 @@ namespace Anki
               -derivMagnitude, derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
-      
+
             pInnerBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfWidth*signFlip,
               derivMagnitude, -derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
-            
+
             // Left/Right Edges' Top Corners:
             pOuterLeft[0]  = ComputeTemplateSample(fiducialSampleGrayValue, -templateHalfWidth, outer,
               -derivMagnitude, -derivMagnitude,
@@ -802,7 +804,7 @@ namespace Anki
                 0.f, derivMagnitude,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
-              
+
               pOuterBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfWidth*signFlip,
                 0.f, derivMagnitude*signFlip,
                 currentH, dR_dtheta,
@@ -838,9 +840,9 @@ namespace Anki
             // Top/Bottom Edges' Right Corners:
 
             pInnerTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner, -innerTemplateHalfWidth,
-               -derivMagnitude, derivMagnitude,
-               currentH, dR_dtheta,
-               this->focalLength_x, this->focalLength_y, curAtA);
+              -derivMagnitude, derivMagnitude,
+              currentH, dR_dtheta,
+              this->focalLength_x, this->focalLength_y, curAtA);
 
             pOuterTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer, -templateHalfWidth,
               derivMagnitude, -derivMagnitude,
@@ -851,12 +853,12 @@ namespace Anki
               -derivMagnitude, -derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
-            
+
             pOuterBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfWidth*signFlip,
               derivMagnitude, derivMagnitude*signFlip,
               currentH, dR_dtheta,
               this->focalLength_x, this->focalLength_y, curAtA);
-      
+
             // Left / Right Edges' Bottom Corners
             pOuterLeft[numFiducialSamplesPerEdge-1]  = ComputeTemplateSample(fiducialSampleGrayValue, -templateHalfWidth, outer,
               -derivMagnitude, derivMagnitude,
@@ -1199,7 +1201,7 @@ namespace Anki
 
       Result LucasKanadeTracker_SampledPlanar6dof::ShowTemplate(const char * windowName, const bool waitForKeypress, const bool fitImageToWindow) const
       {
-#ifndef ANKICORETECH_EMBEDDED_USE_OPENCV
+#if !ANKICORETECH_EMBEDDED_USE_OPENCV
         return RESULT_FAIL;
 #else
         //if(!this->IsValid())
@@ -1239,14 +1241,16 @@ namespace Anki
             cv::namedWindow(windowNameTotal, CV_WINDOW_AUTOSIZE);
           }
 
-          cv::imshow(windowNameTotal, image.get_CvMat_());
+          cv::Mat_<u8> image_cvMat;
+          ArrayToCvMat(image, &image_cvMat);
+          cv::imshow(windowNameTotal, image_cvMat);
         }
 
         if(waitForKeypress)
           cv::waitKey();
 
         return RESULT_OK;
-#endif // #ifndef ANKICORETECH_EMBEDDED_USE_OPENCV ... #else
+#endif // #if !ANKICORETECH_EMBEDDED_USE_OPENCV
       }
 
       bool LucasKanadeTracker_SampledPlanar6dof::IsValid() const
@@ -1958,7 +1962,7 @@ namespace Anki
         s32 &verify_meanAbsoluteDifference,
         s32 &verify_numInBounds,
         s32 &verify_numSimilarPixels,
-        MemoryStack scratch) 
+        MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
@@ -2068,7 +2072,7 @@ namespace Anki
           if(grayvalueDifference <= verify_maxPixelDifferenceS32) {
             verify_numSimilarPixels++;
           }
-          
+
 #if UPDATE_VERIFICATION_SAMPLES_DURING_TRACKING
           // Now that we're done using it, replace this verification sample
           // with the value we read out.  If tracking is deemed a success by

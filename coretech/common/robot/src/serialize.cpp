@@ -255,7 +255,7 @@ namespace Anki
 
     void* SerializedBuffer::AllocateRaw(const s32 dataLength)
     {
-      const s32 bytesRequired = RoundUp<s32>(dataLength, 4);
+      const s32 bytesRequired = RoundUp<s32>(dataLength, MEMORY_ALIGNMENT);
 
       s32 numBytesAllocated;
 
@@ -469,7 +469,7 @@ namespace Anki
       for(s32 y=0; y<inHeight; y++) {
         char const * const * restrict pIn = in.Pointer(y,0);
         for(s32 x=0; x<inWidth; x++) {
-          const s32 curStringLength = strlen(pIn[x]) + 1;
+          const s32 curStringLength = static_cast<s32>( strlen(pIn[x]) + 1 );
 
           memcpy(*buffer, pIn[x], curStringLength);
 
@@ -509,7 +509,7 @@ namespace Anki
       for(s32 y=0; y<outHeight; y++) {
         char ** restrict pOut = out.Pointer(y,0);
         for(s32 x=0; x<outWidth; x++) {
-          const s32 curStringLength = strlen(reinterpret_cast<const char*>(*buffer)) + 1;
+          const s32 curStringLength = static_cast<s32>( strlen(reinterpret_cast<const char*>(*buffer)) + 1 );
 
           AnkiConditionalErrorAndReturnValue(curStringLength <= stringsLengthLeft,
             RESULT_FAIL, "SerializedBuffer::DeserializeRawArray", "Not enought bytes left to set the array");

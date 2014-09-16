@@ -19,13 +19,15 @@ namespace Anki
   template<typename Type> class ThreadSafeCounter
   {
   public:
-    ThreadSafeCounter(Type initialValue);
+    ThreadSafeCounter(const Type initialValue, const Type maxValue);
 
     // If delta is negative, it decrements
-    // Returns the updated value
+    // If this->value + delta is greater than maxValue, Increment will set this->value to this->maxValue
+    // Returns the change between this->value, before and after the call. If this->value was not capped at this->maxValue, the return value is equal to delta.
+    // TODO: use a condition variable internally, with a producer-consumer model
     Type Increment(const Type delta);
 
-    // Returns the updated value (should always be the same as the input)
+    // Returns MIN(this->maxValue, value);
     Type Set(const Type value);
 
     // Returns the current value
@@ -35,41 +37,45 @@ namespace Anki
     mutable SimpleMutex mutex;
 
     Type value;
+    Type maxValue;
   }; // class ThreadSafeCounter
 
-  template<typename Type> ThreadSafeCounter<Type>::ThreadSafeCounter(Type initialValue)
+  template<typename Type> ThreadSafeCounter<Type>::ThreadSafeCounter(const Type initialValue, const Type maxValue)
+    : value(initialValue), maxValue(maxValue)
   {
 #ifdef _MSC_VER
     mutex = CreateMutex(NULL, FALSE, NULL);
 #else
     pthread_mutex_init(&mutex, NULL);
 #endif
-
-    value = initialValue;
   } // template<typename Type> ThreadSafeCounter::ThreadSafeCounter()
 
   template<typename Type> Type ThreadSafeCounter<Type>::Increment(const Type delta)
   {
-    Type localValue;
-
     LockSimpleMutex(mutex);
 
-    this->value += delta;
-    localValue = this->value;
+    Type trueDelta = delta;
+
+    if((this->value + delta) > this->maxValue) {
+      trueDelta = this->maxValue - this->value;
+      this->value = this->maxValue;
+    } else {
+      this->value += trueDelta;
+    }
+
+    AnkiAssert(this->value >= 0);
 
     UnlockSimpleMutex(mutex);
 
-    return localValue;
+    return trueDelta;
   } // Increment()
 
   template<typename Type> Type ThreadSafeCounter<Type>::Set(const Type value)
   {
-    Type localValue;
-
     LockSimpleMutex(mutex);
 
-    this->value = value;
-    localValue = value;
+    this->value = MIN(this->maxValue, value);
+    const Type localValue = this->value;
 
     UnlockSimpleMutex(mutex);
 
@@ -78,11 +84,9 @@ namespace Anki
 
   template<typename Type> Type ThreadSafeCounter<Type>::Get() const
   {
-    Type localValue;
-
     LockSimpleMutex(mutex);
 
-    localValue = this->value;
+    Type localValue = this->value;
 
     UnlockSimpleMutex(mutex);
 

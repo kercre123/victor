@@ -1,18 +1,18 @@
-% function [labels, featureValues] = decisionTree2_loadImages(classesList, varargin)
+% function [labels, featureValues] = decisionTree2_extractFeatures(classesList, varargin)
 
 % Load the images specified by the classesList, and generate the
 % probe images
 
 % Simple Example:
 % clear classesList; classesList(1).labelName = '0_000'; classesList(1).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_000.png'}; classesList(2).labelName = '0_090'; classesList(2).filenames = {'/Users/pbarnum/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated/0_090.png'};
-% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(classesList, 'numPerturbations', 1, 'maxPerturbPercent', 0, 'blurSigmas', [0]);
+% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 1, 'maxPerturbPercent', 0, 'blurSigmas', [0]);
 
-% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(classesList, 'blurSigmas', [0, .01], 'numPerturbations', 10, 'probeResolutions', [512,32]);
+% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'blurSigmas', [0, .01], 'numPerturbations', 10, 'probeResolutions', [512,32]);
 
 % Example:
-% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(classesList);
+% [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList);
 
-function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_loadImages(classesList, varargin)
+function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, varargin)
     %#ok<*CCAT>
     
     blurSigmas = [0, .005, .01, .02]; % as a fraction of the image diagonal
@@ -20,13 +20,13 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
     numPerturbations = 100;
     probeLocationsX = ((1:30) - .5) / 30; % Probe location assume the left edge of the image is 0 and the right edge is 1
     probeLocationsY = ((1:30) - .5) / 30;
-    probeResolutions = [512,128,32];
+    probeResolutions = [128,32];
     numPadPixels = 100;
     showProbePermutations = false;
     
     parseVarargin(varargin{:});
     
-    pBar = ProgressBar('decisionTree2_loadImages', 'CancelButton', true);
+    pBar = ProgressBar('decisionTree2_extractFeatures', 'CancelButton', true);
     pBar.showTimingInfo = true;
     pBarCleanup = onCleanup(@()delete(pBar));
     
@@ -46,14 +46,11 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
     probeLocationsXGrid = probeLocationsXGrid(:);
     probeLocationsYGrid = probeLocationsYGrid(:);
     
-    %     featureValues   = zeros(numBlurs*numImages*numPerturbations, length(probeLocationsX)*length(probeLocationsY), 'uint8');
+    numLabels = numBlurs*numImages*numPerturbations*numResolutions;
     labelNames  = cell(length(classesList), 1);
-    featureValues = cell(length(probeLocationsXGrid), 1);
-    labels      = zeros(numBlurs*numImages*numPerturbations*numResolutions, 1, 'int32');
     
-    for iProbe = 1:length(featureValues)
-        featureValues{iProbe} = zeros(numBlurs*numImages*numPerturbations*numResolutions, 1, 'uint8');
-    end
+    featureValues = zeros(length(probeLocationsXGrid), numLabels, 'uint8');
+    labels      = zeros(numLabels, 1, 'int32');
     
     % Precompute all the perturbed probe locations once
     xPerturb = cell(1, numPerturbations);
@@ -78,8 +75,8 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
     for iClass = 1:length(classesList)
         labelNames{iClass} = classesList(iClass).labelName;
         for iFile = 1:length(classesList(iClass).filenames)
-            img = imreadAlphaHelper(classesList(iClass).filenames{iFile});
-            
+            img = imreadAlphaHelper(classesList(iClass).filenames{iFile}); 
+
             imgPadded = padarray(img, [numPadPixels,numPadPixels], 255);
             
             [nrows,ncols,~] = size(img);
@@ -107,19 +104,13 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
                         % The solution is to increase the padding.
                         assert(length(inds) == length(imageCoordsX));
                         
-                        tmpValues = zeros(length(imageCoordsY), 1, 'uint8');
-                        
-                        for iPixel = 1:length(imageCoordsY)
-                            tmpValues(iPixel) = imgPaddedAndBlurredResized(imageCoordsY(iPixel), imageCoordsX(iPixel));
-                        end
-                        
                         % Stripe the data per-probe location
-                        for iProbe = 1:length(featureValues)
-                            featureValues{iProbe}(cLabel) = tmpValues(iProbe);
+                        for iFeature = 1:length(imageCoordsY)
+                            featureValues(iFeature, cLabel) = imgPaddedAndBlurredResized(imageCoordsY(iFeature), imageCoordsX(iFeature));
                         end
                         
                         if showProbePermutations
-                            imshows({imgPaddedAndBlurredResized((1+numPadPixels):(end-numPadPixels), (1+numPadPixels):(end-numPadPixels)), imresize(reshape(tmpValues, [length(probeLocationsY), length(probeLocationsX)]), size(img), 'nearest')});
+                            imshows({imgPaddedAndBlurredResized((1+numPadPixels):(end-numPadPixels), (1+numPadPixels):(end-numPadPixels)), imresize(reshape(featureValuesArray(cLabel, :), [length(probeLocationsY), length(probeLocationsX)]), size(img), 'nearest')});
                             pause(0.05);
                         end
                         
@@ -132,9 +123,8 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
             pBar.increment();
         end % for iFile = 1:length(classesList(iClass).filenames)
     end % for iClass = 1:length(classesList)
-    
     %     keyboard
-end % decisionTree2_loadImages()
+end % decisionTree2_extractFeatures()
 
 function img = imreadAlphaHelper(fname)
     

@@ -516,7 +516,7 @@ namespace Anki
       const s32 imageHeight,
       const s32 imageWidth)
     {
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
       static cv::Mat toShowImage;
       static s32 toShowImageColumn;
       static bool blinkOn = true;
@@ -777,9 +777,9 @@ namespace Anki
       blinkOn = !blinkOn;
 
       return RESULT_OK;
-#else // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#else // #if ANKICORETECH_EMBEDDED_USE_OPENCV
       return RESULT_FAIL;
-#endif // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV ... #else
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV ... #else
     }
 
     s32 GetNameIndex(const char * name, const FixedLengthList<BenchmarkElement> &outputResults)

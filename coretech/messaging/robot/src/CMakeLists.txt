@@ -13,15 +13,12 @@ file(GLOB HEADER_FILES
         "${CORETECH_MESSAGING_INCLUDE_DIR}/shared/*.h"
 )
 
-if(NOT WIN32)
-  add_library(CoreTech_Messaging_Robot
-    ${SOURCE_FILES}
-    ${HEADER_FILES}
-    ${CORETECH_MESSAGING_INCLUDE_FILES}
-  )
+add_library(CoreTech_Messaging_Robot
+  ${SOURCE_FILES}
+  ${HEADER_FILES}
+  ${CORETECH_MESSAGING_INCLUDE_FILES}
+)
   
-  set_target_properties(CoreTech_Messaging_Robot PROPERTIES
-    FOLDER "CoreTech"#/Robot"
-  )
-endif()
-
+set_target_properties(CoreTech_Messaging_Robot PROPERTIES
+  FOLDER "CoreTech"#/Robot"
+)

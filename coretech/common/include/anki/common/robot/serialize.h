@@ -318,11 +318,11 @@ namespace Anki
       EncodedArray::Deserialize(true, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(
-        height >= 0 && height < 1000000 &&
-        width >= 0 && width < 1000000 &&
-        stride > 0 && stride < 1000000 &&
+        height >= 0 && height < s32(1e9) &&
+        width >= 0 && width < s32(2e9) &&
+        stride > 0 && stride < s32(2e9) &&
         basicType_sizeOfType > 0 && basicType_sizeOfType < 10000 &&
-        basicType_numElements >= 0 && basicType_numElements < 1000000,
+        basicType_numElements >= 0 && basicType_numElements < s32(2e9),
         Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Unreasonable deserialized values");
 
       if(width > 0) {
@@ -334,6 +334,9 @@ namespace Anki
         Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Not enought bytes left to set the array");
 
       Array<Type> out = Array<Type>(height, width, memory);
+      
+      AnkiConditionalErrorAndReturnValue(out.IsValid(),
+        Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Could not allocate array");
 
       const s32 numElements = out.get_size(0) * out.get_size(1);
 
@@ -379,13 +382,14 @@ namespace Anki
       EncodedArraySlice::Deserialize(true, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(
-        height >= 0 && height < 1000000 &&
-        width >= 0 && width < 1000000 &&
-        stride > 0 && stride < 1000000 &&
+        height >= 0 && height < s32(1e9) &&
+        width >= 0 && width < s32(2e9) &&
+        stride > 0 && stride < s32(2e9) &&
         ySlice_start >= 0 &&  ySlice_increment > 0 &&
         xSlice_start >= 0 && xSlice_increment > 0 && xSlice_increment < 1000000 &&
         basicType_sizeOfType > 0 && basicType_sizeOfType < 10000 &&
-        basicType_numElements >= 0 && basicType_numElements < 1000000,
+        basicType_numElements >= 0 && basicType_numElements < s32(2e9),
+
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Unreasonable deserialized values");
 
       if(width > 0) {
@@ -462,6 +466,8 @@ namespace Anki
 
       SerializeRawBasicType<Type>(objectName, data, numElements, &segment, totalDataLength);
 
+      AnkiAssert(totalDataLength >= 0);
+
       return segmentStart;
     }
 
@@ -479,6 +485,8 @@ namespace Anki
         NULL, "SerializedBuffer::PushBack", "Could not add data");
 
       SerializeRawArray<Type>(objectName, in, &segment, totalDataLength);
+
+      AnkiAssert(totalDataLength >= 0);
 
       return segmentStart;
     }
@@ -498,6 +506,8 @@ namespace Anki
         NULL, "SerializedBuffer::PushBack", "Could not add data");
 
       SerializeRawArraySlice<Type>(objectName, in, &segment, totalDataLength);
+
+      AnkiAssert(totalDataLength >= 0);
 
       return segmentStart;
     }

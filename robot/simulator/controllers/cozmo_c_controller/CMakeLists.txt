@@ -65,29 +65,27 @@ set(HEADER_FILES
  ${COZMO_INCLUDE_FILES}
 )
 
-if(NOT WIN32)
-  add_executable(cozmo_c_controller ${SOURCE_FILES} ${HEADER_FILES})
+add_executable(cozmo_c_controller ${SOURCE_FILES} ${HEADER_FILES})
 
-  target_link_libraries(cozmo_c_controller 
-    CppController
-    CoreTech_Common_Robot
-    CoreTech_Vision_Robot
-    CoreTech_Messaging_Robot
-    CoreTech_Planning_Robot
-    # mx 
-    # eng
-    ${ALL_EMBEDDED_LIBRARIES}
-  )
+target_link_libraries(cozmo_c_controller 
+  CppController
+  CoreTech_Common_Robot
+  CoreTech_Vision_Robot
+  CoreTech_Messaging_Robot
+  CoreTech_Planning_Robot
+  # mx 
+  # eng
+  ${ALL_EMBEDDED_LIBRARIES}
+)
 
-  set_target_properties(
-    cozmo_c_controller PROPERTIES
-    COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
-    LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
-    FOLDER "Webots Controllers"
-    #XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
-    #XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
-  )
-endif()
+set_target_properties(
+  cozmo_c_controller PROPERTIES
+  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
+  LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
+  FOLDER "Webots Controllers"
+  #XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
+  #XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
+)
 
 # Make sure a copy of the target exists in cozmo_c_controller/
 # no matter where the target is actually built.

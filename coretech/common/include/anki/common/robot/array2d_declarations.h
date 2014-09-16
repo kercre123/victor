@@ -21,10 +21,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/sequences_declarations.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/objdetect/objdetect.hpp"
+namespace cv
+{
+  class Mat;
+  template<typename Type> class Mat_;
+}
 #endif
 
 namespace Anki
@@ -36,7 +37,8 @@ namespace Anki
     template<typename Type> class ConstArraySliceExpression;
 
     const s32 ARRAY_FILE_HEADER_LENGTH = 32;
-    const char ARRAY_FILE_HEADER[ARRAY_FILE_HEADER_LENGTH+1] = "\x89" "AnkiEmbeddedArray1.0           ";
+    const s32 ARRAY_FILE_HEADER_VALID_LENGTH = 14; //< How many characters are not spaces
+    const char ARRAY_FILE_HEADER[ARRAY_FILE_HEADER_LENGTH+1] = "\x89" "AnkiEArray1.2                  ";
 
     // #pragma mark --- Array Class Declaration ---
 
@@ -77,8 +79,10 @@ namespace Anki
       static Array<Type> LoadImage(const char * filename, MemoryStack &memory);
 
       // Load or save an array saved as a debugStream.
+      // compressionLevel can be from 0 (uncompressed) to 9 (most compressed). If OpenCV is not used, it must be zero.
       static Array<Type> LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory);
-      Result SaveBinary(const char * filename, MemoryStack scratch) const;
+      static Array<Type> LoadBinary(const char * filename, void * allocatedBuffer, const s32 allocatedBufferLength); //< allocatedBuffer must be allocated and freed manually
+      Result SaveBinary(const char * filename, const s32 compressionLevel, MemoryStack scratch) const;
 
       // Pointer to the data, at a given (y,x) location
       //
@@ -138,10 +142,6 @@ namespace Anki
       ConstArraySliceExpression<Type> Transpose() const;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-      // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data should be copied (though with OpenCV, it's hard to tell).
-      cv::Mat_<Type>& get_CvMat_();
-      const cv::Mat_<Type>& get_CvMat_() const;
-
       // Copies the OpenCV Mat. If needed, it converts from color to grayscale by averaging the color channels.
       s32 Set(const cv::Mat_<Type> &in);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
@@ -231,22 +231,6 @@ namespace Anki
 
       Type * data;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-      // WARNING:
-      // If the OpenCV API changes, this could cause OpenCV errors even where no OpenCV is used.
-      // This will probably be easily fixable, but be aware.
-      //
-      // WARNING: Don't access this directly, even from within the Array<> class. Use get_CvMat_()
-      //
-      // NOTE: cvMatMirror is mutable, because it should really mirror this Array<>, but due to
-      //       complexity in OpenCV, it may need to be updated at arbitrary times to actually mirror
-      //       this Array<>.
-      mutable cv::Mat_<Type> cvMatMirror;
-
-      // gets called automatically by get_CvMat_()
-      void UpdateCvMatMirror(const Array<Type> &in) const;
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
-
       // Basic allocation method
       void* AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const Flags::Buffer flags, bool reAllocate);
 
@@ -283,6 +267,28 @@ namespace Anki
     protected:
       s32 numFractionalBits;
     };
+
+    // If you don't know the type of the Array you're loading, use this function directly, then cast it based on the read parameters
+    Array<u8> LoadBinaryArray_UnknownType(
+      const char * filename,
+      MemoryStack *scratch,
+      MemoryStack *memory,
+      void * allocatedBuffer,
+      const s32 allocatedBufferLength,
+      u16  &basicType_sizeOfType,
+      bool &basicType_isBasicType,
+      bool &basicType_isInteger,
+      bool &basicType_isSigned,
+      bool &basicType_isFloat,
+      bool &basicType_isString
+      );
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    // Returns a cv::Mat that mirrors the data in the input Array.
+    // WARNING: If you copy the cv::Mat or assign it incorrectly, it will no longer mirror the input Array
+    // WARNING: This const_casts the input array, so you can unsafely modify it via the output cv::Mat
+    template<typename Type> Result ArrayToCvMat(const Array<Type> &in, cv::Mat *out);
+#endif
   } // namespace Embedded
 } //namespace Anki
 

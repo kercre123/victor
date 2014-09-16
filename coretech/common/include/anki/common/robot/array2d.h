@@ -27,6 +27,22 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/serialize_declarations.h"
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/objdetect/objdetect.hpp"
+#endif
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#define ANKICORETECH_EMBEDDED_USE_MALLOC 1
+#define ANKICORETECH_EMBEDDED_USE_ZLIB 1
+#endif
+
+#if ANKICORETECH_EMBEDDED_USE_ZLIB
+#include "zlib.h"
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -135,8 +151,6 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(newArray.IsValid(),
         newArray, "Array<Type>::LoadImage", "Invalid size");
 
-      //s32 numBytesAllocated = 0;
-
       const u8 * restrict pCvImage = cvImage.data;
 
       for(s32 y=0; y<cvImage.rows; y++) {
@@ -155,61 +169,45 @@ namespace Anki
       return newArray;
     } // Array<Type>::LoadImage(const char * filename, MemoryStack &memory)
 
-    template<typename Type> Array<Type> Array<Type>::LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory)
+    template<typename Type> Array<Type> LoadBinaryArray_Generic(const char * filename, MemoryStack *scratch, MemoryStack *memory, void * allocatedBuffer, const s32 allocatedBufferLength)
     {
-      Array<Type> newArray = Array<Type>();
+      u16  basicType_sizeOfType;
+      bool basicType_isBasicType;
+      bool basicType_isInteger;
+      bool basicType_isSigned;
+      bool basicType_isFloat;
+      bool basicType_isString;
 
-      AnkiConditionalErrorAndReturnValue(NotAliased(scratch, memory),
-        newArray, "Array<Type>::LoadBinary", "scratch and memory must be different");
+      Array<u8> rawArray = LoadBinaryArray_UnknownType(
+        filename,
+        scratch, memory,
+        allocatedBuffer, allocatedBufferLength,
+        basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString);
 
-      AnkiConditionalErrorAndReturnValue(filename && AreValid(scratch, memory),
-        newArray, "Array<Type>::LoadBinary", "Invalid inputs");
+      // TODO: check that the types match
 
-      FILE *fp = fopen(filename, "rb");
-
-      AnkiConditionalErrorAndReturnValue(fp,
-        newArray, "Array<Type>::LoadBinary", "Could not open file %s", filename);
-
-      fseek(fp, 0, SEEK_END);
-      s32 bufferLength = ftell(fp) - ARRAY_FILE_HEADER_LENGTH;
-      fseek(fp, 0, SEEK_SET);
-
-      void * buffer = reinterpret_cast<void*>( RoundUp<size_t>(reinterpret_cast<size_t>(scratch.Allocate(bufferLength + MEMORY_ALIGNMENT + 64)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH);
-
-      // First, read the text header
-      fread(buffer, ARRAY_FILE_HEADER_LENGTH, 1, fp);
-
-      AnkiConditionalErrorAndReturnValue(strcmp(reinterpret_cast<const char*>(buffer), ARRAY_FILE_HEADER) == 0,
-        newArray, "Array<Type>::LoadBinary", "File is not an Anki Embedded Array");
-
-      // Next, read the actual payload
-      fread(buffer, bufferLength, 1, fp);
-
-      fclose(fp);
-
-      SerializedBuffer serializedBuffer(buffer, bufferLength, Anki::Embedded::Flags::Buffer(false, true, true));
-
-      SerializedBufferReconstructingIterator iterator(serializedBuffer);
-
-      const char * typeName = NULL;
-      const char * objectName = NULL;
-      s32 dataLength;
-      bool isReportedSegmentLengthCorrect;
-      void * nextItem = iterator.GetNext(&typeName, &objectName, dataLength, isReportedSegmentLengthCorrect);
-
-      AnkiConditionalErrorAndReturnValue(nextItem && strcmp(typeName, "Array") == 0,
-        newArray, "Array<Type>::LoadBinary", "Could not parse data");
-
-      char arrayName[128];
-      newArray = SerializedBuffer::DeserializeRawArray<Type>(&arrayName[0], &nextItem, dataLength, memory);
+      Array<Type> newArray = *reinterpret_cast<Array<Type>*>( &rawArray );
 
       return newArray;
+    } // / LoadBinaryArray_Generic()
+
+    template<typename Type> Array<Type> Array<Type>::LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory)
+    {
+      return LoadBinaryArray_Generic<Type>(filename, &scratch, &memory, NULL, -1);
     } // Array<Type>::LoadBinary(const char * filename, MemoryStack scratch, MemoryStack &memory)
 
-    template<typename Type> Result Array<Type>::SaveBinary(const char * filename, MemoryStack scratch) const
+    template<typename Type> Array<Type> Array<Type>::LoadBinary(const char * filename, void * allocatedBuffer, const s32 allocatedBufferLength) //< allocatedBuffer must be freed manually
     {
-      AnkiConditionalErrorAndReturnValue(AreValid(*this, scratch),
+      return LoadBinaryArray_Generic<Type>(filename, NULL, NULL, allocatedBuffer, allocatedBufferLength);
+    } // LoadBinaryMalloc()
+
+    template<typename Type> Result Array<Type>::SaveBinary(const char * filename, const s32 compressionLevel, MemoryStack scratch) const
+    {
+      AnkiConditionalErrorAndReturnValue(AreValid(*this, scratch) && filename,
         RESULT_FAIL_INVALID_OBJECT, "Array<Type>::SaveBinary", "Invalid inputs");
+
+      AnkiConditionalErrorAndReturnValue(compressionLevel >= 0 && compressionLevel <= 9,
+        RESULT_FAIL_INVALID_PARAMETER, "Array<Type>::SaveBinary", "Invalid compression level");
 
       // If this is a string array, add the sizes of the null terminated strings (or zero otherwise)
       const s32 stringsLength = TotalArrayStringLengths<Type>(*this);
@@ -228,26 +226,104 @@ namespace Anki
       u8 * bufferStart = reinterpret_cast<u8*>(toSave.get_memoryStack().get_validBufferStart(startIndex));
       const s32 validUsedBytes = toSave.get_memoryStack().get_usedBytes() - startIndex;
 
-      const s32 startDiff = static_cast<s32>( reinterpret_cast<size_t>(bufferStart) - reinterpret_cast<size_t>(toSave.get_memoryStack().get_buffer()) );
-      const s32 endDiff = toSave.get_memoryStack().get_totalBytes() - toSave.get_memoryStack().get_usedBytes();
-#pragma unused (startDiff, endDiff)
-      
+      // const s32 startDiff = static_cast<s32>( reinterpret_cast<size_t>(bufferStart) - reinterpret_cast<size_t>(toSave.get_memoryStack().get_buffer()) );
+      // const s32 endDiff = toSave.get_memoryStack().get_totalBytes() - toSave.get_memoryStack().get_usedBytes();
+
       FILE *fp = fopen(filename, "wb");
 
       AnkiConditionalErrorAndReturnValue(fp,
         RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Could not open file %s", filename);
 
-      const size_t bytesWrittenForTextHeader = fwrite(&ARRAY_FILE_HEADER[0], ARRAY_FILE_HEADER_LENGTH, 1, fp);
+      if(compressionLevel > 0) {
+#if ANKICORETECH_EMBEDDED_USE_ZLIB
+        char tmpTextHeader[ARRAY_FILE_HEADER_LENGTH+1];
+        strncpy(tmpTextHeader, &ARRAY_FILE_HEADER[0], ARRAY_FILE_HEADER_LENGTH+1);
+        snprintf(tmpTextHeader+ARRAY_FILE_HEADER_VALID_LENGTH+1, ARRAY_FILE_HEADER_LENGTH-ARRAY_FILE_HEADER_VALID_LENGTH, "z%s ", ZLIB_VERSION);
 
-      const size_t bytesWrittenForHeader = fwrite(&SERIALIZED_BUFFER_HEADER[0], SERIALIZED_BUFFER_HEADER_LENGTH, 1, fp);
+        const s32 originalLength = validUsedBytes + SERIALIZED_BUFFER_HEADER_LENGTH + SERIALIZED_BUFFER_FOOTER_LENGTH;
 
-      const size_t bytesWritten = fwrite(bufferStart, validUsedBytes, 1, fp);
+        uLongf compressedLength = 128 + saturate_cast<s32>(1.1 * originalLength);
 
-      const size_t bytesWrittenForFooter = fwrite(&SERIALIZED_BUFFER_FOOTER[0], SERIALIZED_BUFFER_FOOTER_LENGTH, 1, fp);
+        void * uncompressed = malloc(originalLength);
+        void * compressed = malloc(compressedLength + 2*sizeof(s32));
 
-      // Suppress unused variable warnings:
-#pragma unused (bytesWrittenForTextHeader, bytesWrittenForHeader, bytesWritten, bytesWrittenForFooter)
-      
+        if(!uncompressed || !compressed) {
+          if(uncompressed)
+            free(uncompressed);
+
+          if(compressed)
+            free(compressed);
+
+          AnkiError("Array<Type>::SaveBinary", "Out of memory");
+
+          return RESULT_FAIL_OUT_OF_MEMORY;
+        }
+
+        // Copy the uncompressed data into one buffer
+        {
+          char * pUncompressed = reinterpret_cast<char*>(uncompressed);
+
+          memcpy(pUncompressed, &SERIALIZED_BUFFER_HEADER[0], SERIALIZED_BUFFER_HEADER_LENGTH);
+          pUncompressed += SERIALIZED_BUFFER_HEADER_LENGTH;
+
+          memcpy(pUncompressed, bufferStart, validUsedBytes);
+          pUncompressed += validUsedBytes;
+
+          memcpy(pUncompressed, &SERIALIZED_BUFFER_FOOTER[0], SERIALIZED_BUFFER_FOOTER_LENGTH);
+        }
+
+        const s32 compressionResult = compress2(reinterpret_cast<Bytef*>(compressed) + 2*sizeof(s32), &compressedLength, reinterpret_cast<Bytef*>(uncompressed), originalLength, compressionLevel);
+
+        if(compressionResult != Z_OK) {
+          if(uncompressed)
+            free(uncompressed);
+
+          if(compressed)
+            free(compressed);
+
+          AnkiError("Array<Type>::SaveBinary", "Zlib error");
+          return RESULT_FAIL_IO;
+        }
+
+        reinterpret_cast<s32*>(compressed)[0] = static_cast<s32>(originalLength);
+        reinterpret_cast<s32*>(compressed)[1] = static_cast<s32>(compressedLength);
+
+        const size_t bytesWrittenForTextHeader = fwrite(tmpTextHeader, 1, ARRAY_FILE_HEADER_LENGTH, fp);
+
+        const size_t bytesWritten = fwrite(compressed, 1, compressedLength + 2*sizeof(s32), fp);
+
+        if(uncompressed)
+          free(uncompressed);
+
+        if(compressed)
+          free(compressed);
+
+        AnkiConditionalErrorAndReturnValue(
+          bytesWrittenForTextHeader == ARRAY_FILE_HEADER_LENGTH &&
+          bytesWritten == (compressedLength + 2*sizeof(s32)),
+          RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Save failed");
+
+#else
+        AnkiError("Array<Type>::SaveBinary", "Saving with compression requires zlib");
+        return RESULT_FAIL;
+#endif
+      } else {
+        const size_t bytesWrittenForTextHeader = fwrite(&ARRAY_FILE_HEADER[0], 1, ARRAY_FILE_HEADER_LENGTH, fp);
+
+        const size_t bytesWrittenForHeader = fwrite(&SERIALIZED_BUFFER_HEADER[0], 1, SERIALIZED_BUFFER_HEADER_LENGTH, fp);
+
+        const size_t bytesWritten = fwrite(bufferStart, 1, validUsedBytes, fp);
+
+        const size_t bytesWrittenForFooter = fwrite(&SERIALIZED_BUFFER_FOOTER[0], 1, SERIALIZED_BUFFER_FOOTER_LENGTH, fp);
+
+        AnkiConditionalErrorAndReturnValue(
+          bytesWrittenForTextHeader == ARRAY_FILE_HEADER_LENGTH &&
+          bytesWrittenForHeader == SERIALIZED_BUFFER_HEADER_LENGTH &&
+          bytesWritten == validUsedBytes &&
+          bytesWrittenForFooter == SERIALIZED_BUFFER_FOOTER_LENGTH,
+          RESULT_FAIL_IO, "Array<Type>::SaveBinary", "Save failed");
+      }
+
       fclose(fp);
 
       return RESULT_OK;
@@ -386,29 +462,6 @@ namespace Anki
     }
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-    template<typename Type> cv::Mat_<Type>& Array<Type>::get_CvMat_()
-    {
-      AnkiConditionalError(this->IsValid(), "Array<Type>::get_CvMat_", "Array<Type> is not valid");
-
-      //if(reinterpret_cast<size_t>(cvMatMirror.data) != reinterpret_cast<size_t>(this->data)) {
-      this->UpdateCvMatMirror(*this);
-      //}
-
-      return cvMatMirror;
-    }
-
-    template<typename Type> const cv::Mat_<Type>& Array<Type>::get_CvMat_() const
-    {
-      AnkiConditionalError(this->IsValid(), "Array<Type>::get_CvMat_", "Array<Type> is not valid");
-
-      this->UpdateCvMatMirror(*this);
-
-      return cvMatMirror;
-    }
-
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
     template<typename Type> s32 Array<Type>::Set(const cv::Mat_<Type> &in)
     {
       const s32 inHeight = in.rows;
@@ -457,8 +510,10 @@ namespace Anki
       }
 
       if(scaleValues) {
-        cv::Mat_<f64> scaledArray(this->get_size(0), this->get_size(1));
-        scaledArray = this->get_CvMat_();
+        cv::Mat_<f64> scaledArray;
+
+        if(ArrayToCvMat(*this, &scaledArray) != RESULT_OK)
+          return;
 
         const f64 minValue = Matrix::Min<Type>(*this);
         const f64 maxValue = Matrix::Max<Type>(*this);
@@ -469,7 +524,12 @@ namespace Anki
 
         cv::imshow(windowName, scaledArray);
       } else {
-        cv::imshow(windowName, this->get_CvMat_());
+        cv::Mat_<Type> arrayCopy;
+
+        if(ArrayToCvMat(*this, &arrayCopy) != RESULT_OK)
+          return;
+
+        cv::imshow(windowName, arrayCopy);
       }
 
       if(waitForKeypress) {
@@ -671,10 +731,6 @@ namespace Anki
       this->flags = rightHandSide.flags;
       this->data = rightHandSide.data;
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-      this->UpdateCvMatMirror(rightHandSide);
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
-
       return *this;
     }
 
@@ -717,21 +773,6 @@ namespace Anki
     {
       return flags;
     }
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-    template<typename Type> void Array<Type>::UpdateCvMatMirror(const Array<Type> &in) const
-    {
-      //memset(&this->cvMatMirror, 0, sizeof(this->cvMatMirror));
-
-      this->cvMatMirror.refcount = NULL;
-
-      // These two should be set, because if the Array constructor was not called, these will not be initialized
-      this->cvMatMirror.step.p = this->cvMatMirror.step.buf;
-      this->cvMatMirror.size = &this->cvMatMirror.rows;
-
-      this->cvMatMirror = cv::Mat_<Type>(in.size[0], in.size[1], in.data, in.stride);
-    }
-#endif
 
     template<typename Type> void* Array<Type>::AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const Flags::Buffer flags, bool reAllocate)
     {
@@ -798,13 +839,6 @@ namespace Anki
       this->size[1] = -1;
       this->stride = -1;
       this->data = NULL;
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-      this->cvMatMirror.step.p = this->cvMatMirror.step.buf;
-      this->cvMatMirror.size = &this->cvMatMirror.rows;
-      this->cvMatMirror.data = NULL;
-      this->cvMatMirror.refcount = NULL;
-#endif
     } // void Array<Type>::InvalidateArray()
 
     template<typename Type> Result Array<Type>::PrintBasicType(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX)  const
@@ -895,6 +929,24 @@ namespace Anki
     {
       return numFractionalBits;
     }
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    template<typename Type> Result ArrayToCvMat(const Array<Type> &in, cv::Mat *out)
+    {
+      AnkiConditionalErrorAndReturnValue(in.IsValid() && out,
+        RESULT_FAIL, "ArrayToCvMat", "This Array is invalid");
+
+      out->refcount = NULL;
+
+      // These two should be set, because if the Mat_ constructor was not called, these will not be initialized
+      out->step.p = out->step.buf;
+      out->size = &out->rows;
+
+      *out = cv::Mat_<Type>(in.get_size(0), in.get_size(1), const_cast<Type*>(in.Pointer(0,0)), static_cast<size_t>(in.get_stride()));
+
+      return RESULT_OK;
+    } // template<typename Type> Result ArrayToCvMat(const Array<Type> &in, cv::Mat *out)
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
     // #pragma mark --- Array Specializations ---
 

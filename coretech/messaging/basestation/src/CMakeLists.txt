@@ -13,16 +13,12 @@ file(GLOB HEADER_FILES
   "${CORETECH_MESSAGING_INCLUDE_DIR}/shared/*.h"
 )
 
-if(NOT WIN32)
-  add_library(CoreTech_Messaging_Basestation 
-    ${SOURCE_FILES} 
-    ${HEADER_FILES}
-    ${CORETECH_MESSAGING_INCLUDE_FILES}  
-  )
-  
-  set_target_properties(CoreTech_Messaging_Basestation PROPERTIES
-    FOLDER "CoreTech"#/Basestation"
-  )
-endif()
-
-
+add_library(CoreTech_Messaging_Basestation 
+  ${SOURCE_FILES} 
+  ${HEADER_FILES}
+  ${CORETECH_MESSAGING_INCLUDE_FILES}  
+)
+ 
+set_target_properties(CoreTech_Messaging_Basestation PROPERTIES
+  FOLDER "CoreTech"#/Basestation"
+)

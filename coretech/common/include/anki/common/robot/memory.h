@@ -118,7 +118,7 @@ namespace Anki
       Flags::Buffer get_flags() const;
 
     protected:
-      friend SerializedBuffer;
+      friend class SerializedBuffer;
 
       void * buffer;
       s32 totalBytes;

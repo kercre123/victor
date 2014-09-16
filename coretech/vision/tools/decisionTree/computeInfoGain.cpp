@@ -22,12 +22,12 @@ typedef struct {
   s32 counts[256];
 } GrayvalueCounts;
 
-static void CountValues_u8(const u8 * restrict pFeatureValues, const vector<s32> &remaining, GrayvalueCounts &counts)
+static void CountValues_u8(const u8 * restrict pFeatureValues, const RawBuffer<s32> &remaining, GrayvalueCounts &counts)
 {
   memset(&counts.counts[0], 0, 256*sizeof(s32));
 
-  const s32 numRemaining = remaining.size();
-  const s32 * restrict pRemaining = remaining.data();
+  const s32 numRemaining = remaining.size;
+  const s32 * restrict pRemaining = remaining.buffer;
 
   for(s32 i=0; i<numRemaining; i++) {
     counts.counts[pFeatureValues[pRemaining[i]]]++;
@@ -41,65 +41,90 @@ static void ComputeNumAboveThreshold(
   const s32 * restrict pRemaining,
   const s32 numRemaining,
   const u8 curGrayvalueThreshold,
-  s32 * restrict pNumLessThan,
-  s32 * restrict pNumGreaterThan,
-  s32 &totalNumLessThan,
-  s32 &totalNumGreaterThan)
+  const s32 u8MinDistanceFromThreshold,
+  s32 * restrict pNumLT,
+  s32 * restrict pNumGE,
+  s32 &totalNumLT,
+  s32 &totalNumGE,
+  s32 &totalNumBoth,
+  u8 &meanDistanceFromThreshold)
 {
-  memset(pNumLessThan, 0, (maxLabel+1)*sizeof(s32));
-  memset(pNumGreaterThan, 0, (maxLabel+1)*sizeof(s32));
+  memset(pNumLT, 0, (maxLabel+1)*sizeof(s32));
+  memset(pNumGE, 0, (maxLabel+1)*sizeof(s32));
 
-  totalNumLessThan = 0;
-  totalNumGreaterThan = 0;
+  totalNumLT = 0;
+  totalNumGE = 0;
+  totalNumBoth = 0;
+  meanDistanceFromThreshold = 0;
+
+  s32 totalDifferenceFromThreshold = 0;
+
+  const s32 curGrayvalueThresholdS32 = curGrayvalueThreshold;
 
   for(s32 iRemain=0; iRemain<numRemaining; iRemain++) {
     const s32 iImage = pRemaining[iRemain];
 
     const s32 curLabel = pLabels[iImage];
-    const u8 curFeatureValue = pFeatureValues[iImage];
+    const s32 curFeatureValue = pFeatureValues[iImage];
 
-    if(curFeatureValue < curGrayvalueThreshold) {
-      totalNumLessThan++;
-      pNumLessThan[curLabel]++;
-    } else {
-      totalNumGreaterThan++;
-      pNumGreaterThan[curLabel]++;
+    totalDifferenceFromThreshold += ABS(curFeatureValue - curGrayvalueThresholdS32);
+
+    // NOTE: One item may increment both LT and GE
+
+    s32 numAssigned = 0;
+
+    if(curFeatureValue < (curGrayvalueThresholdS32 + u8MinDistanceFromThreshold)) {
+      totalNumLT++;
+      pNumLT[curLabel]++;
+      numAssigned++;
+    }
+
+    if(curFeatureValue >= (curGrayvalueThresholdS32 - u8MinDistanceFromThreshold)) {
+      totalNumGE++;
+      pNumGE[curLabel]++;
+      numAssigned++;
+    }
+
+    if(numAssigned == 2) {
+      totalNumBoth++;
     }
   }
+
+  meanDistanceFromThreshold = saturate_cast<u8>(totalDifferenceFromThreshold / numRemaining);
 }
 
 // Type should be f32 or f64
 template<typename Type> static Type WeightedAverageEntropy(
-  const s32 * restrict pNumLessThan,
-  const s32 * restrict pNumGreaterThan,
-  const s32 totalNumLessThan,
-  const s32 totalNumGreaterThan,
+  const s32 * restrict pNumLT,
+  const s32 * restrict pNumGE,
+  const s32 totalNumLT,
+  const s32 totalNumGE,
   const s32 maxLabel)
 {
   Type entropyLessThan = 0;
   Type entropyGreaterThan = 0;
 
-  const Type inverseTotalNumLessThan = static_cast<Type>(1) / static_cast<Type>(totalNumLessThan);
-  const Type inverseTotalNumGreaterThan = static_cast<Type>(1) / static_cast<Type>(totalNumGreaterThan);
+  const Type inverseTotalNumLessThan = static_cast<Type>(1) / static_cast<Type>(totalNumLT);
+  const Type inverseTotalNumGreaterThan = static_cast<Type>(1) / static_cast<Type>(totalNumGE);
 
   for(s32 iLabel=0; iLabel<=maxLabel; iLabel++) {
     //probabilitiesLessThan = allValuesLessThan / sum(allValuesLessThan);
     //entropyLessThan = -sum(probabilitiesLessThan .* log2(max(eps, probabilitiesLessThan)));
-    if(pNumLessThan[iLabel] > 0) {
-      const Type probability = static_cast<Type>(pNumLessThan[iLabel]) * inverseTotalNumLessThan;
+    if(pNumLT[iLabel] > 0) {
+      const Type probability = static_cast<Type>(pNumLT[iLabel]) * inverseTotalNumLessThan;
       entropyLessThan -= probability * log2(probability);
     }
 
     //probabilitiesGreaterThan = allValuesGreaterThan / sum(allValuesGreaterThan);
     //entropyGreaterThan = -sum(probabilitiesGreaterThan .* log2(max(eps, probabilitiesGreaterThan)));
-    if(pNumGreaterThan[iLabel] > 0) {
-      const Type probability = static_cast<Type>(pNumGreaterThan[iLabel]) * inverseTotalNumGreaterThan;
+    if(pNumGE[iLabel] > 0) {
+      const Type probability = static_cast<Type>(pNumGE[iLabel]) * inverseTotalNumGreaterThan;
       entropyGreaterThan -= probability * log2(probability);
     }
   } // for(s32 iLabel=0; iLabel<=maxLabel; iLabel++)
 
-  const Type percent_lessThan    = static_cast<Type>(totalNumLessThan)    / static_cast<Type>(totalNumLessThan + totalNumGreaterThan);
-  const Type percent_greaterThan = static_cast<Type>(totalNumGreaterThan) / static_cast<Type>(totalNumLessThan + totalNumGreaterThan);
+  const Type percent_lessThan    = static_cast<Type>(totalNumLT)    / static_cast<Type>(totalNumLT + totalNumGE);
+  const Type percent_greaterThan = static_cast<Type>(totalNumGE) / static_cast<Type>(totalNumLT + totalNumGE);
 
   const Type weightedAverageEntropy = percent_lessThan * entropyLessThan + percent_greaterThan * entropyGreaterThan;
 
@@ -112,13 +137,14 @@ namespace Anki
   {
     ThreadResult ComputeInfoGain(void *computeInfoGainParameters)
     {
-      const f64 time0 = GetTimeF64();
-
       ComputeInfoGainParameters * restrict parameters = reinterpret_cast<ComputeInfoGainParameters*>(computeInfoGainParameters);
 
       parameters->bestEntropy = FLT_MAX;
       parameters->bestFeatureIndex = -1;
       parameters->bestU8Threshold = -1;
+      parameters->totalNumLT = -1;
+      parameters->totalNumGE = -1;
+      parameters->meanDistanceFromThreshold = 255;
 
       u8 u8Thresholds[256];
       s32 numGrayvalueThresholds;
@@ -131,13 +157,13 @@ namespace Anki
         }
       }
 
-      const s32 numImages = parameters->featureValues[0].get_size();
-      const s32 numRemaining = parameters->remaining.size();
+      //const s32 numImages = parameters->featureValues[0].get_size();
+      const s32 numRemaining = parameters->remaining.size;
 
       const s32 maxLabel = FindMaxLabel(parameters->labels, parameters->remaining);
 
       const s32 * restrict pLabels = parameters->labels.Pointer(0);
-      const s32 * restrict pRemaining = parameters->remaining.data();
+      const s32 * restrict pRemaining = parameters->remaining.buffer;
 
       //
       // For each feature location and grayvalue threshold, find the best entropy
@@ -168,7 +194,7 @@ namespace Anki
           }
         } // if(parameters->u8ThresholdsToUse.empty())
 
-        U8Bool &pFeaturesUsed = parameters->featuresUsed[iFeature];
+        U8Bool &pFeaturesUsed = parameters->featuresUsed.buffer[iFeature];
 
         for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++) {
           const u8 curGrayvalueThreshold = u8Thresholds[iGrayvalueThreshold];
@@ -177,39 +203,46 @@ namespace Anki
             continue;
           }
 
-          s32 totalNumLessThan = 0;
-          s32 totalNumGreaterThan = 0;
+          s32 totalNumLT = 0;
+          s32 totalNumGE = 0;
+          s32 totalNumBoth = 0;
+          u8 meanDistanceFromThreshold = 0;
 
           ComputeNumAboveThreshold(
             pFeatureValues,
             pLabels, maxLabel,
             pRemaining, numRemaining,
             curGrayvalueThreshold,
-            parameters->pNumLessThan, parameters->pNumGreaterThan,
-            totalNumLessThan, totalNumGreaterThan);
+            parameters->u8MinDistanceFromThreshold,
+            parameters->pNumLT, parameters->pNumGE,
+            totalNumLT, totalNumGE, totalNumBoth,
+            meanDistanceFromThreshold);
 
-          if(totalNumLessThan == 0 || totalNumGreaterThan == 0) {
+          AnkiAssert((totalNumLT-totalNumBoth) >= 0 && (totalNumGE-totalNumBoth) >= 0);
+
+          if((totalNumLT-totalNumBoth) <= 0 || (totalNumGE-totalNumBoth) <= 0) {
             pFeaturesUsed.values[curGrayvalueThreshold] = true;
             continue;
           }
 
           const PRECISION entropy = WeightedAverageEntropy<PRECISION>(
-            parameters->pNumLessThan, parameters->pNumGreaterThan,
-            totalNumLessThan, totalNumGreaterThan,
+            parameters->pNumLT, parameters->pNumGE,
+            totalNumLT, totalNumGE,
             maxLabel);
 
-          // The extra tiny amount is to make the result more consistent between C and Matlab, and methods with different amounts of precision
-          if(entropy < (parameters->bestEntropy - 1e-5)) {
-            parameters->bestEntropy = static_cast<f32>(entropy);
-            parameters->bestFeatureIndex = iFeature;
-            parameters->bestU8Threshold = curGrayvalueThreshold;
+          // If the entropy is less, or the the entropy is the same and the mean distance is more
+          if((entropy < parameters->bestEntropy) ||
+            (entropy <= parameters->bestEntropy && meanDistanceFromThreshold > parameters->meanDistanceFromThreshold)) {
+              parameters->bestEntropy = static_cast<f32>(entropy);
+              parameters->bestFeatureIndex = iFeature;
+              parameters->totalNumLT = totalNumLT;
+              parameters->totalNumGE = totalNumGE;
+              parameters->totalNumBoth = totalNumBoth;
+              parameters->bestU8Threshold = curGrayvalueThreshold;
+              parameters->meanDistanceFromThreshold = meanDistanceFromThreshold;
           }
         } // for(s32 iGrayvalueThreshold=0; iGrayvalueThreshold<numGrayvalueThresholds; iGrayvalueThreshold++)
       } // for(s32 iFeature=0; iFeature<numFeaturesLocationsToCheck; iFeature++)
-
-      const f64 time1 = GetTimeF64();
-
-      printf(" Best entropy is %f in %f seconds\n", parameters->bestEntropy, time1-time0);
 
       return 0;
     } // ThreadResult ComputeInfoGain(void *computeInfoGainParameters)
