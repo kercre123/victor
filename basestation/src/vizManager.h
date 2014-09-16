@@ -33,7 +33,8 @@ namespace Anki {
       typedef enum : u8 {
         ACTION,
         PROX_SENSORS,
-        ERROR_SIGNAL
+        LOCALIZED_TO,
+        ERROR_SIGNAL,
       } TextLabelType;
       
       using Handle_t = u32;

@@ -943,6 +943,10 @@ namespace Anki {
       // history that it keeps.
       SendAbsLocalizationUpdate();
       
+      // Update VizText
+      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+                                         "LocalizedTo: %s", existingMatPiece->GetPose().GetName().c_str());
+      
       return RESULT_OK;
       
     } // LocalizeToMat()
