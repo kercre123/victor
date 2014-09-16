@@ -135,15 +135,15 @@ namespace Anki {
                                     const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>(),
                                     const Pose3d* reachableFromPose = nullptr);
       
-      // If the object is selected, draws it using the "selected" color, and
-      // draws the pre-action poses as well (using method below).
-      // Otherwise draws it in the object's defined color, with no pre-action poses.
+      // If the object is selected, draws it using the "selected" color.
+      // Otherwise draws it in the object's defined color.
       virtual void Visualize() override;
       virtual void Visualize(const ColorRGBA& color) = 0; 
       
-      // Draws just the pre-action poses. Called automatically by Visualize()
-      // when the object is marked as selected. (See methods above.)
-      void VisualizePreActionPoses();
+      // Draws just the pre-action poses. The reachableFrom pose (e.g. the
+      // current pose of the robot) is passed along to GetCurrenPreActionsPoses()
+      // (see above).
+      void VisualizePreActionPoses(const Pose3d* reachableFrom = nullptr);
       
       // Just erases pre-action poses (if any were drawn). Subclasses should
       // call this from their virtual EraseVisualization() implementations.

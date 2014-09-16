@@ -1442,9 +1442,26 @@ namespace Anki
             object->Visualize();
           }
         }
-        
       }
-    } // DrawAllBlocks()
+      
+      // (Re)Draw the selected object separately so we can get its pre-action poses
+      if(GetSelectedObject().IsSet()) {
+        ActionableObject* selectedObject = dynamic_cast<ActionableObject*>(GetObjectByID(GetSelectedObject()));
+        if(selectedObject == nullptr) {
+          PRINT_NAMED_ERROR("BlockWorld.DrawAllObjects.NullSelectedObject",
+                            "Selected object ID = %d, but it came back null.\n",
+                            GetSelectedObject().GetValue());
+        } else {
+          if(selectedObject->IsSelected() == false) {
+            PRINT_NAMED_WARNING("BlockWorld.DrawAllObjects.SelectionMisMatch",
+                                "Object %d is selected in BlockWorld but does not have its "
+                                "selection flag set.\n", GetSelectedObject().GetValue());
+          }
+          selectedObject->VisualizePreActionPoses(&_robot->GetPose());
+        }
+      } // if selected object is set
+      
+    } // DrawAllObjects()
     
   } // namespace Cozmo
 } // namespace Anki

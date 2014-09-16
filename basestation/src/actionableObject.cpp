@@ -184,7 +184,6 @@ namespace Anki {
       _preActionPoses.emplace_back(type, marker, offset, headAngle);
     } // AddPreActionPose()
     
-    
     void ActionableObject::AddPreActionPose(PreActionPose::ActionType type,
                                             const Vision::KnownMarker* marker,
                                             const Pose3d& poseWrtMarker,
@@ -197,12 +196,15 @@ namespace Anki {
     bool ActionableObject::IsPreActionPoseValid(const PreActionPose& preActionPose,
                                                 const Pose3d* reachableFromPose) const
     {
-      //Pose3d checkPose = preActionPose.GetPose().GetWithRespectToOrigin();
-      const Pose3d& checkPose = preActionPose.GetPose();
+      const Pose3d checkPose = preActionPose.GetPose().GetWithRespectToOrigin();
       
-      // Pose should be at ground height or it's not reachable
-      const f32 heightThresh = 15.f;
-      bool isValid = NEAR(checkPose.GetTranslation().z(), 0.f, heightThresh);
+      bool isValid = true;
+      
+      if(reachableFromPose != nullptr) {
+        // Pose should be at ground height or it's not reachable
+        const f32 heightThresh = 15.f;
+        isValid = NEAR(checkPose.GetTranslation().z(), reachableFromPose->GetWithRespectToOrigin().GetTranslation().z(), heightThresh);
+      }
       
       if(isValid) {
         // Allow any rotation around Z, but none around X/Y, in order to keep
@@ -244,13 +246,13 @@ namespace Anki {
       if(IsSelected()) {
         static const ColorRGBA SELECTED_COLOR(0.f,1.f,0.f,1.f);
         Visualize(SELECTED_COLOR);
-        VisualizePreActionPoses();
+        //VisualizePreActionPoses();
       } else {
         Visualize(GetColor());
       }
     }
     
-    void ActionableObject::VisualizePreActionPoses()
+    void ActionableObject::VisualizePreActionPoses(const Pose3d* reachableFrom)
     {
       // Draw the main object:
       //Visualize();
@@ -261,7 +263,7 @@ namespace Anki {
       
       for(PreActionPose::ActionType actionType : {PreActionPose::DOCKING, PreActionPose::ENTRY})
       {
-        GetCurrentPreActionPoses(poses, {actionType});
+        GetCurrentPreActionPoses(poses, {actionType}, std::set<Vision::Marker::Code>(), reachableFrom);
         for(auto & pose : poses) {
           _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID,
                                                                                            pose.GetPose().GetWithRespectToOrigin(),
