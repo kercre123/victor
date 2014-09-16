@@ -194,6 +194,7 @@ namespace Anki
       void FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
                                    const std::set<ObjectFamily>& ignoreFamilies,
                                    const std::set<ObjectType>& ignoreTypes,
+                                   const std::set<ObjectID>& ignoreIDs,
                                    std::vector<Vision::ObservableObject*>& intersectingExistingObjects,
                                    f32 padding_mm) const;
       

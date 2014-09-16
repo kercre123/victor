@@ -194,9 +194,10 @@ namespace Anki
     }
     
     
-void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
+    void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
                                              const std::set<ObjectFamily>& ignoreFamiles,
                                              const std::set<ObjectType>& ignoreTypes,
+                                             const std::set<ObjectID>& ignoreIDs,
                                              std::vector<Vision::ObservableObject*>& intersectingExistingObjects,
                                              f32 padding_mm) const
     {
@@ -210,15 +211,18 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
             if(useType) {
               for(auto & objectAndId : objectsByType.second)
               {
-                Vision::ObservableObject* objExist = objectAndId.second;
-
-                // Get quads of both objects and check for intersection
-                Quad2f quadExist = objExist->GetBoundingQuadXY(objExist->GetPose(), padding_mm);
-                Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
-          
-                if( quadExist.Intersects(quadSeen) ) {
-                  intersectingExistingObjects.push_back(objExist);
-                }
+                const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
+                if(useID) {
+                  Vision::ObservableObject* objExist = objectAndId.second;
+                  
+                  // Get quads of both objects and check for intersection
+                  Quad2f quadExist = objExist->GetBoundingQuadXY(objExist->GetPose(), padding_mm);
+                  Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
+                  
+                  if( quadExist.Intersects(quadSeen) ) {
+                    intersectingExistingObjects.push_back(objExist);
+                  }
+                } // if useID
               }  // for each object
             }  // if not ignoreType
           }  // for each type
@@ -957,8 +961,12 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
           // Check if the obstacle intersects with any other existing objects in the scene.
           std::set<ObjectFamily> ignoreFamilies;
           std::set<ObjectType> ignoreTypes;
-          ignoreTypes.insert(MatPiece::Type::LETTERS_4x4);
-          FindIntersectingObjects(m, ignoreFamilies, ignoreTypes, existingObjects, 0);
+          std::set<ObjectID> ignoreIDs;
+          if(_robot->IsLocalized()) {
+            // Ignore the mat object that the robot is localized to (?)
+            ignoreIDs.insert(_robot->GetLocalizedTo());
+          }
+          FindIntersectingObjects(m, ignoreFamilies, ignoreTypes, ignoreIDs, existingObjects, 0);
           if (!existingObjects.empty()) {
             delete m;
             return RESULT_OK;
