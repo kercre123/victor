@@ -151,34 +151,6 @@ namespace Anki {
       
     } // AddFace()
     
-    //unsigned int Block::numBlocks = 0;
-    
-    //ObjectType Block::NumTypes = 0;
-    
-    const std::array<Point3f, Block::NUM_CORNERS> Block::CanonicalCorners = {{
-      Point3f(-0.5f, -0.5f,  0.5f),
-      Point3f( 0.5f, -0.5f,  0.5f),
-      Point3f(-0.5f, -0.5f, -0.5f),
-      Point3f( 0.5f, -0.5f, -0.5f),
-      Point3f(-0.5f,  0.5f,  0.5f),
-      Point3f( 0.5f,  0.5f,  0.5f),
-      Point3f(-0.5f,  0.5f, -0.5f),
-      Point3f( 0.5f,  0.5f, -0.5f)
-    }};
-       
-    void Block::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
-    {
-      corners.resize(NUM_CORNERS);
-      for(s32 i=0; i<NUM_CORNERS; ++i) {
-        // Start with (zero-centered) canonical corner
-        corners[i] = Block::CanonicalCorners[i];
-        // Scale to the right size
-        corners[i] *= _size;
-        // Move to block's current pose
-        corners[i] = atPose * corners[i];
-      }
-    }
-    
     Block::Block(const ObjectType type)
     : _type(type)
     , _size(LookupBlockInfo(_type).size)
@@ -199,109 +171,50 @@ namespace Anki {
     } // Constructor: Block(type)
     
     
-    Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const
+    const std::vector<Point3f>& Block::GetCanonicalCorners() const
     {
-      return GetBoundingQuadInPlane(planeNormal, GetPose(), padding_mm);
+      static const std::vector<Point3f> CanonicalCorners = {{
+        Point3f(-0.5f, -0.5f,  0.5f),
+        Point3f( 0.5f, -0.5f,  0.5f),
+        Point3f(-0.5f, -0.5f, -0.5f),
+        Point3f( 0.5f, -0.5f, -0.5f),
+        Point3f(-0.5f,  0.5f,  0.5f),
+        Point3f( 0.5f,  0.5f,  0.5f),
+        Point3f(-0.5f,  0.5f, -0.5f),
+        Point3f( 0.5f,  0.5f, -0.5f)
+      }};
+      
+      return CanonicalCorners;
     }
     
-    
-    Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding_mm) const
+    // Override of base class method that also scales the canonical corners
+    void Block::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
     {
-      const RotationMatrix3d& R = atPose.GetRotationMatrix();
-      const Matrix_3x3f planeProjector = GetProjectionOperator(planeNormal);
-      
-      // Compute a single projection and rotation operator
-      const Matrix_3x3f PR(planeProjector*R);
-      
-      Point3f paddedSize(_size);
-      paddedSize += 2.f*padding_mm;
-      
-      std::vector<Point3f> points;
-      points.reserve(8);
-      for(auto corner : Block::CanonicalCorners) {
-        // Scale to the right block size
-        corner *= paddedSize;
+      // Start with (zero-centered) canonical corners *at unit size*
+      corners = GetCanonicalCorners();
+      for(auto & corner : corners) {
+        // Scale to the right size
+        corner *= _size;
         
-        // Rotate to given pose and project onto the given plane
-        points.emplace_back(PR*corner);
+        // Move to block's current pose
+        corner = atPose * corner;
       }
-      
-      // TODO: 3D bounding quad doesn't exist yet
-      Quad3f boundingQuad; // = GetBoundingQuad(points);
-      CORETECH_ASSERT(false);
-      
-      /*
-      // Data structure for helping me sort 3D points by their 2D distance
-      // from center in the given plane
-      struct planePoint {
-        
-        planePoint(const Point3f& pt3d, const RotationMatrix3d& R, const Matrix_3x3f& P)
-        {
-          // Rotate the point
-          Point3f pt3d_rotated( R*pt3d );
-          
-          // Project it onto the given plane (i.e. remove all variation in the
-          // direction of the normal)
-          pt_ = P*pt3d_rotated;
-          
-          length_ = pt_.length();
-        }
-        
-        bool operator<(const planePoint& other) const {
-          return this->length_ > other.length_; // sort decreasing!
-        }
-        
-        Point3f pt_;
-        f32 length_;
-      }; // struct planePoint
-      
-      const RotationMatrix3d& R = atPose.GetRotationMatrix();
-      const Matrix_3x3f planeProjector = GetProjectionOperator(planeNormal);
-      
-      // Choose the 4 points furthest from the center of the block (in the
-      // given plane)
-      std::array<planePoint,8> planeCorners = {
-        planePoint(blockCorners_[LEFT_FRONT_TOP],     R, planeProjector),
-        planePoint(blockCorners_[RIGHT_FRONT_TOP],    R, planeProjector),
-        planePoint(blockCorners_[LEFT_FRONT_BOTTOM],  R, planeProjector),
-        planePoint(blockCorners_[RIGHT_FRONT_BOTTOM], R, planeProjector),
-        planePoint(blockCorners_[LEFT_BACK_TOP],      R, planeProjector),
-        planePoint(blockCorners_[RIGHT_BACK_TOP],     R, planeProjector),
-        planePoint(blockCorners_[LEFT_BACK_BOTTOM],   R, planeProjector),
-        planePoint(blockCorners_[RIGHT_BACK_BOTTOM],  R, planeProjector)
-      };
-
-      // NOTE: Uses planePoint class's operator<, which sorts in _decreasing_ order
-      // so we get the 4 points the _largest_ distance from the center, after
-      // rotation is applied
-      std::partial_sort(planeCorners.begin(), planeCorners.begin()+4, planeCorners.end());
-      
-      Quad3f boundingQuad(planeCorners[0].pt_,
-                          planeCorners[1].pt_,
-                          planeCorners[2].pt_,
-                          planeCorners[3].pt_);
-      
-      boundingQuad = boundingQuad.SortCornersClockwise(planeNormal);
-      */
-       
-      // Re-center
-      boundingQuad += atPose.GetTranslation();
-      
-      return boundingQuad;
-      
-    } // GetBoundingBoxInPlane()
-
+    }
     
+    // Override of base class method which scales the canonical corners
+    // to the block's size
     Quad2f Block::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
+      const std::vector<Point3f>& canonicalCorners = GetCanonicalCorners();
+      
       const RotationMatrix3d& R = atPose.GetRotationMatrix();
 
       Point3f paddedSize(_size);
       paddedSize += 2.f*padding_mm;
       
       std::vector<Point2f> points;
-      points.reserve(8);
-      for(auto corner : Block::CanonicalCorners) {
+      points.reserve(canonicalCorners.size());
+      for(auto corner : canonicalCorners) {
         // Scale canonical point to correct (padded) size
         corner *= paddedSize;
         
@@ -383,15 +296,7 @@ namespace Anki {
     } // Block::GetDockingPoses()
     */
     
-    
-    const Block::FaceName Block::OppositeFaceLUT[Block::NUM_FACES] = {
-      Block::BACK_FACE,
-      Block::RIGHT_FACE,
-      Block::FRONT_FACE,
-      Block::LEFT_FACE,
-      Block::BOTTOM_FACE,
-      Block::TOP_FACE
-    };
+
     
     // prefix operator (++fname)
     Block::FaceName& operator++(Block::FaceName& fname) {
@@ -437,6 +342,15 @@ namespace Anki {
     
     Vision::KnownMarker const& Block::GetMarker(FaceName onFace) const
     {
+      static const Block::FaceName OppositeFaceLUT[Block::NUM_FACES] = {
+        Block::BACK_FACE,
+        Block::RIGHT_FACE,
+        Block::FRONT_FACE,
+        Block::LEFT_FACE,
+        Block::BOTTOM_FACE,
+        Block::TOP_FACE
+      };
+      
       const Vision::KnownMarker* markerPtr = markersByFace_[onFace];
       
       if(markerPtr == NULL) {
@@ -471,7 +385,7 @@ namespace Anki {
       ActionableObject::EraseVisualization();
     }
     
-    
+    /*
     ObjectType Block::GetTypeByName(const std::string& name)
     {
       static const std::map<std::string, Block::Type> BlockNameToTypeMap =
@@ -487,7 +401,7 @@ namespace Anki {
         return Block::Type::INVALID;
       }
     } // GetBlockTypeByName()
-    
+    */
     
 #pragma mark ---  Block_Cube1x1 Implementation ---
     

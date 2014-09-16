@@ -21,22 +21,28 @@ namespace Anki {
   
   namespace Cozmo {
     
-    const ObjectType Ramp::Type("BASIC_RAMP");
+    const Ramp::Type Ramp::Type::BASIC_RAMP("BASIC_RAMP");
     
     const f32 Ramp::Angle = atan(Height/SlopeLength);
     
-    const std::array<Point3f, Ramp::NUM_CORNERS> Ramp::CanonicalCorners = {{
-      // Bottom corners
-      Point3f(-0.5f*PlatformLength,              -0.5f*Width,  -0.5f*Height),
-      Point3f(SlopeLength + 0.5f*PlatformLength, -0.5f*Width,  -0.5f*Height),
-      Point3f(SlopeLength + 0.5f*PlatformLength,  0.5f*Width,  -0.5f*Height),
-      Point3f(-0.5f*PlatformLength,               0.5f*Width,  -0.5f*Height),
-      // Top corners:
-      Point3f(-0.5f*PlatformLength, -0.5f*Width,  0.5f*Height),
-      Point3f( 0.5f*PlatformLength, -0.5f*Width,  0.5f*Height),
-      Point3f( 0.5f*PlatformLength,  0.5f*Width,  0.5f*Height),
-      Point3f(-0.5f*PlatformLength,  0.5f*Width,  0.5f*Height),
-    }};
+    const std::vector<Point3f>& Ramp::GetCanonicalCorners() const {
+    
+      static const std::vector<Point3f> CanonicalCorners = {{
+        // Bottom corners
+        Point3f(-0.5f*PlatformLength,              -0.5f*Width,  -0.5f*Height),
+        Point3f(SlopeLength + 0.5f*PlatformLength, -0.5f*Width,  -0.5f*Height),
+        Point3f(SlopeLength + 0.5f*PlatformLength,  0.5f*Width,  -0.5f*Height),
+        Point3f(-0.5f*PlatformLength,               0.5f*Width,  -0.5f*Height),
+        // Top corners:
+        Point3f(-0.5f*PlatformLength, -0.5f*Width,  0.5f*Height),
+        Point3f( 0.5f*PlatformLength, -0.5f*Width,  0.5f*Height),
+        Point3f( 0.5f*PlatformLength,  0.5f*Width,  0.5f*Height),
+        Point3f(-0.5f*PlatformLength,  0.5f*Width,  0.5f*Height),
+      }};
+      
+      return CanonicalCorners;
+      
+    } // GetCanonicalCorners()
     
     
     Ramp::Ramp()
@@ -142,17 +148,6 @@ namespace Anki {
 #pragma mark --- Virtual Method Implementations ---
 #endif
     
-    void Ramp::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
-    {
-      corners.resize(NUM_CORNERS);
-      for(s32 i=0; i<NUM_CORNERS; ++i) {
-        // Start with canonical corner
-        corners[i] = Ramp::CanonicalCorners[i];
-
-        // Move to given pose
-        corners[i] = atPose * corners[i];
-      }
-    } // GetCorners()
     
     Ramp* Ramp::CloneType() const
     {
@@ -180,35 +175,6 @@ namespace Anki {
       ActionableObject::EraseVisualization();
     }
     
-    
-    Quad2f Ramp::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
-    {
-      const RotationMatrix3d& R = atPose.GetRotationMatrix();
-      
-      std::vector<Point2f> points;
-      points.reserve(Ramp::NUM_CORNERS);
-      for(auto corner : Ramp::CanonicalCorners) {
-        
-        // Move canonical point to correct (padded) size
-        corner.x() += (signbit(corner.x()) ? -padding_mm : padding_mm);
-        corner.y() += (signbit(corner.y()) ? -padding_mm : padding_mm);
-        corner.z() += (signbit(corner.z()) ? -padding_mm : padding_mm);
-        
-        // Rotate to given pose
-        corner = R*corner;
-        
-        // Project onto XY plane, i.e. just drop the Z coordinate
-        points.emplace_back(corner.x(), corner.y());
-      }
-      
-      Quad2f boundingQuad = GetBoundingQuad(points);
-      
-      // Re-center
-      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
-      boundingQuad += center;
-      
-      return boundingQuad;
-    } // GetBoundingQuadXY()
     
    /*
     void Ramp::GetPreDockPoses(const float distance_mm,
@@ -250,17 +216,6 @@ namespace Anki {
       return DEG_TO_RAD(45);
     }
 
-    
-    ObjectType Ramp::GetTypeByName(const std::string& name)
-    {
-      // TODO: Support other types/names
-      if(name == Ramp::Type.GetName()) {
-        return Ramp::Type;
-      } else {
-        assert(false);
-      }
-    }
-    
     
     bool Ramp::IsPreActionPoseValid(const PreActionPose& preActionPose,
                                     const Pose3d* reachableFromPose) const

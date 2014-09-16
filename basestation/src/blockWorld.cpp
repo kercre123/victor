@@ -15,6 +15,9 @@
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "bridge.h"
+#include "flatMat.h"
+#include "platform.h"
 #include "ramp.h"
 
 #include "messageHandler.h"
@@ -108,13 +111,13 @@ namespace Anki
       //
       
       // Webots mat:
-      _objectLibrary[ObjectFamily::MATS].AddObject(new MatPiece(MatPiece::Type::LETTERS_4x4));
+      _objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::LETTERS_4x4));
       
       // Platform piece:
-      _objectLibrary[ObjectFamily::MATS].AddObject(new MatPiece(MatPiece::Type::LARGE_PLATFORM));
+      _objectLibrary[ObjectFamily::MATS].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
       
       // Long Bridge
-      _objectLibrary[ObjectFamily::MATS].AddObject(new MatPiece(MatPiece::Type::LONG_BRIDGE));
+      _objectLibrary[ObjectFamily::MATS].AddObject(new Bridge(Bridge::Type::LONG_BRIDGE));
       
       // Short Bridge
       // TODO: Need to update short bridge markers so they don't look so similar to long bridge at oblique viewing angle
@@ -674,7 +677,8 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
             PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
                              "Instantiating first mat piece in the world.\n");
             
-            existingMatPiece = matToLocalizeTo->CloneType();
+            existingMatPiece = dynamic_cast<MatPiece*>(matToLocalizeTo->CloneType());
+            assert(existingMatPiece != nullptr);
             AddNewObject(existingMatPieces, existingMatPiece);
             
             existingMatPiece->SetPose( Pose3d() ); // Not really necessary, but ensures the ID makes it into the pose name, which is helpful for debugging
@@ -698,7 +702,8 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
               // world origin.
               Pose3d poseWrtWorldOrigin = matToLocalizeTo->GetPose().GetWithRespectToOrigin();
               
-              existingMatPiece = matToLocalizeTo->CloneType();
+              existingMatPiece = dynamic_cast<MatPiece*>(matToLocalizeTo->CloneType());
+              assert(existingMatPiece != nullptr);
               AddNewObject(existingMatPieces, existingMatPiece);
               existingMatPiece->SetPose(poseWrtWorldOrigin); // Do after AddNewObject, once ID is set
               
@@ -756,10 +761,7 @@ void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectS
             if(overlappingObjects.empty()) {
               // no existing mats overlapped with the mat we saw, so add it
               // as a new mat piece, relative to the world origin
-              
-              MatPiece* matSeenTemp = dynamic_cast<MatPiece*>(matSeen);
-              CORETECH_ASSERT(matSeenTemp != nullptr);
-              MatPiece* newMatPiece = matSeenTemp->CloneType();
+              Vision::ObservableObject* newMatPiece = matSeen->CloneType();
               AddNewObject(existingMatPieces, newMatPiece);
               newMatPiece->SetPose(poseWrtOrigin); // do after AddNewObject, once ID is set
               

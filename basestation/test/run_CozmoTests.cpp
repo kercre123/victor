@@ -242,12 +242,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         BlockWorld::ObjectFamily objectFamily;
         if(objectFamilyString == "Block") {
           objectFamily = BlockWorld::ObjectFamily::BLOCKS;
-          objectType = Block::GetTypeByName(objectTypeString);
-          
         } else if(objectFamilyString == "Ramp") {
           objectFamily = BlockWorld::ObjectFamily::RAMPS;
-          objectType = Ramp::GetTypeByName(objectTypeString);
         }
+        objectType = ObjectType::GetTypeByName(objectTypeString);
+
         ASSERT_TRUE(objectType.IsSet());
 
         const Vision::ObservableObject* libObject = robot.GetBlockWorld().GetObjectLibrary(objectFamily).GetObjectWithType(objectType);

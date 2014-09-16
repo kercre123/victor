@@ -222,7 +222,6 @@ namespace Anki {
       // longer "attached" to the robot.
       Result SetCarriedObjectAsUnattached();
       
-
       
       //
       // Proximity Sensors
@@ -241,24 +240,6 @@ namespace Anki {
       // to do, either "now" or in queues.
       // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
       ActionList& GetActionList() { return _actionList; }
-      
-      /*
-      // Plan a path to an available docking pose of the specified object, and
-      // then dock with it.
-      Result ExecuteDockingSequence(ObjectID objectIDtoDockWith);
-      
-      // Plan a path to the pre-entry pose of an object and then proceed to
-      // "traverse" it, depending on its type. Supports, for example, Ramp and
-      // Bridge objects.
-      Result ExecuteTraversalSequence(ObjectID objectID);
-      
-      // Plan a path to place the object currently being carried at the specified
-      // pose.
-      Result ExecutePlaceObjectOnGroundSequence(const Pose3d& atPose);
-      
-      // Put the carried object down right where the robot is now
-      Result ExecutePlaceObjectOnGroundSequence();
-      */
       
       // Below are low-level actions to tell the robot to do something "now"
       // without using the ActionList system:

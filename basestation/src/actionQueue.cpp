@@ -11,6 +11,8 @@
  **/
 
 #include "actionQueue.h"
+#include "bridge.h"
+#include "pathPlanner.h"
 #include "ramp.h"
 
 #include "anki/common/basestation/math/poseBase_impl.h"
@@ -20,8 +22,6 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-
-#include "pathPlanner.h"
 
 
 namespace Anki {
@@ -1509,12 +1509,12 @@ namespace Anki {
           return FAILURE_ABORT;
         }
         
-        if(object->GetType() == MatPiece::Type::LONG_BRIDGE ||
-           object->GetType() == MatPiece::Type::SHORT_BRIDGE)
+        if(object->GetType() == Bridge::Type::LONG_BRIDGE ||
+           object->GetType() == Bridge::Type::SHORT_BRIDGE)
         {
           _chosenAction = new CrossBridgeAction(_objectID);
         }
-        else if(object->GetType() == Ramp::Type) {
+        else if(object->GetType() == Ramp::Type::BASIC_RAMP) {
           _chosenAction = new AscendOrDescendRampAction(_objectID);
         }
         else {

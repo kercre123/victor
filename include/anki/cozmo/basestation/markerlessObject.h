@@ -13,8 +13,8 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#ifndef __Products_Cozmo__MarkerlessObject__
-#define __Products_Cozmo__MarkerlessObject__
+#ifndef ANKI_COZMO_MARKERLESSOBJECT_H
+#define ANKI_COZMO_MARKERLESSOBJECT_H
 
 #include "anki/vision/basestation/observableObject.h"
 #include "vizManager.h"
@@ -45,39 +45,39 @@ namespace Anki {
       // Inherited Virtual Methods
       //
       
-      virtual ObjectType GetType() const override { return _type; }
+      virtual ObjectType GetType() const override;
       
-      virtual MarkerlessObject* CloneType() const;
-            
+      virtual MarkerlessObject* CloneType() const override;
+      
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
-    
+      
       virtual void Visualize(const ColorRGBA& color) override;
       virtual void EraseVisualization() override;
-    
-      using Vision::ObservableObject::GetBoundingQuadXY;
-      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
-      
-      static ObjectType GetTypeByName(const std::string& name);
       
       virtual Point3f GetSameDistanceTolerance() const override;
       virtual Radians GetSameAngleTolerance() const override;
-
-    
+      
+      
       // Markerless object functions
       void GetSize(f32& x, f32& y, f32& z);
-    
+      
     protected:
-      static const std::vector<RotationMatrix3d> _rotationAmbiguities;
-      static const s32 NUM_CORNERS = 8;
-      static const std::array<Point3f, MarkerlessObject::NUM_CORNERS> _canonicalCorners;
+      
+      virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       
       const Type _type;
       
       Point3f _size;
       
+      std::vector<Point3f> _canonicalCorners;
+      
       VizManager::Handle_t _vizHandle;
-    };
+      
+    }; // class MarkerlessObject
     
+    inline ObjectType MarkerlessObject::GetType() const {
+      return _type;
+    }
     
     inline MarkerlessObject* MarkerlessObject::CloneType() const
     {
@@ -86,7 +86,7 @@ namespace Anki {
     }
     
   } // namespace Cozmo
-
+  
 } // namespace Anki
 
-#endif // __Products_Cozmo__MarkerlessObject__
+#endif // ANKI_COZMO_MARKERLESSOBJECT_H

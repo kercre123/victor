@@ -30,7 +30,6 @@ namespace Anki {
     public:
 
       IPathPlanner()
-      : _ignoreTypes({MatPiece::Type::LETTERS_4x4})
       {
         
       }
