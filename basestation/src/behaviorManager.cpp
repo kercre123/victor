@@ -11,6 +11,7 @@
  **/
 
 #include "behaviorManager.h"
+#include "cozmoActions.h"
 #include "pathPlanner.h"
 #include "vizManager.h"
 #include "soundManager.h"

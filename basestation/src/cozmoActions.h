@@ -1,33 +1,28 @@
 /**
- * File: actionQueue.h
+ * File: cozmoActions.h
  *
  * Author: Andrew Stein
  * Date:   8/29/2014
  *
- * Description: Defines IAction interface for action states for a robot.
+ * Description: Implements cozmo-specific actions, derived from the IAction interface.
  *
  *
  * Copyright: Anki, Inc. 2014
  **/
 
-#ifndef ANKI_COZMO_ACTIONQUEUE_H
-#define ANKI_COZMO_ACTIONQUEUE_H
+#ifndef ANKI_COZMO_ACTIONS_H
+#define ANKI_COZMO_ACTIONS_H
+
+#include "actionableObject.h"
+#include "actionInterface.h"
+#include "compoundActions.h"
 
 #include "anki/common/types.h"
+
 #include "anki/common/basestation/objectTypesAndIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
-#include "anki/cozmo/shared/cozmoTypes.h"
-
-#include "actionableObject.h"
-
-#include <list>
-
 namespace Anki {
-  
-  // TODO: Is this Cozmo-specific or can it be moved to coretech?
-  // (Note it does require a Robot, which is currently only present in Cozmo)
-  
   
   namespace Vision {
     // Forward Declarations:
@@ -38,272 +33,7 @@ namespace Anki {
 
     // Forward Declarations:
     class Robot;
-    
-#define USE_ACTION_CALLBACKS 1
-    
-    class IActionRunner
-    {
-    public:
-      
-      typedef enum  {
-        RUNNING,
-        SUCCESS,
-        FAILURE_TIMEOUT,
-        FAILURE_PROCEED,
-        FAILURE_RETRY,
-        FAILURE_ABORT
-      } ActionResult;
-      
-      IActionRunner();
-      virtual ~IActionRunner() { }
 
-      virtual ActionResult Update(Robot& robot) = 0;
-      
-      // If a FAILURE_RETRY is encountered, how many times will the action
-      // be retried before return FAILURE_ABORT.
-      void SetNumRetries(const u8 numRetries) {_numRetriesRemaining = numRetries;}
-      
-      // Override this in derived classes to get more helpful messages for
-      // debugging. Otherwise, defaults to "UnnamedAction".
-      virtual const std::string& GetName() const;
-
-      virtual void Reset() = 0;
-      
-      // Get last status message
-      const std::string& GetStatus() const { return _statusMsg; }
-      
-    protected:
-      
-      bool RetriesRemain();
-      
-      // Derived actions can use this to set custom status messages here.
-      void SetStatus(const std::string& msg);
-
-    private:
-      u8 _numRetriesRemaining;
-      
-      std::string   _statusMsg;
-      
-      
-#     if USE_ACTION_CALLBACKS
-    public:
-      using ActionCompletionCallback = std::function<void(ActionResult)>;
-      void  AddCompletionCallback(ActionCompletionCallback callback);
-      
-    protected:
-      void RunCallbacks(ActionResult result) const;
-      
-    private:
-      std::list<ActionCompletionCallback> _completionCallbacks;
-#     endif
-      
-    }; // class IActionRunner
-    
-    inline void IActionRunner::SetStatus(const std::string& msg) {
-      _statusMsg = msg;
-    }
-
-    
-#pragma mark ---- IAction ---
-    
-    // Action Interface
-    class IAction : public IActionRunner
-    {
-    public:
-      
-      IAction();
-      virtual ~IAction() { }
-
-      // This Update() is what gets called from the outside.  It in turn
-      // handles timing delays and runs (protected) Init() and CheckIfDone()
-      // methods. Those are the virtual methods that specific classes should
-      // implement to get desired action behaviors. Note that this method
-      // is final and cannot be overridden by specific individual actions.
-      virtual ActionResult Update(Robot& robot) override final;
-      
-      // Provide a retry function that will be called by Update() if
-      // FAILURE_RETRY is returned by the derived CheckIfDone() method.
-      //void SetRetryFunction(std::function<Result(Robot&)> retryFcn);
-      
-      // Runs the retry function if one was specified.
-      //Result Retry();
-      
-    protected:
-      
-      // Derived Actions should implement these.
-      virtual ActionResult  Init(Robot& robot) { return SUCCESS; } // Optional: default is no preconditions to meet
-      virtual ActionResult  CheckIfDone(Robot& robot) = 0;
-      
-      //
-      // Timing delays:
-      //  (e.g. for allowing for communications to physical robot to have an effect)
-      //
-      
-      // Before checking preconditions. Optional: default is 0.5s delay
-      virtual f32 GetStartDelayInSeconds()       const { return 0.5f; }
-
-      // Before first CheckIfDone() call, after preconditions are met. Optional: default is 0.5s delay
-      virtual f32 GetCheckIfDoneDelayInSeconds() const { return 0.5f; }
-      
-      // Before giving up on entire action. Optional: default is one minute
-      virtual f32 GetTimeoutInSeconds()          const { return 60.f; }
-      
-      virtual void Reset() override;
-      
-    private:
-     
-      bool          _preconditionsMet;
-      f32           _waitUntilTime;
-      f32           _timeoutTime;
-      
-    }; // class IAction
-    
-    // This is an ordered list of actions to be run. It is similar to an
-    // CompoundActionSequential, but actions can be added to it dynamically,
-    // either "next" or at the end of the queue. As actions are completed,
-    // they are popped off the queue. Thus, when it is empty, it is "done".
-    class ActionQueue
-    {
-    public:
-      ActionQueue();
-      
-      ~ActionQueue();
-      
-      Result   Update(Robot& robot);
-      
-      Result   QueueNext(IActionRunner *,  u8 numRetries = 0);
-      Result   QueueAtEnd(IActionRunner *, u8 numRetires = 0);
-      
-      void     Clear();
-      
-      bool     IsEmpty() const { return _queue.empty(); }
-      
-      IActionRunner* GetCurrentAction();
-      void           PopCurrentAction();
-      
-      void Print() const;
-      
-    protected:
-      std::list<IActionRunner*> _queue;
-      
-    }; // class ActionQueue
-    
-    
-    // This is a list of concurrent actions to be run, addressable by ID handle.
-    // Each slot in the list is really a queue, to which new actions can be added
-    // using that slot's ID handle. When a slot finishes, it is popped.
-    class ActionList
-    {
-    public:
-      using SlotHandle = u32;
-
-      ActionList();
-      ~ActionList();
-      
-      // Updates the current action of each queue in each slot
-      Result     Update(Robot& robot);
-      
-      // Add a new action to be run concurrently, generating a new slot, whose
-      // handle is returned. If there is no desire to queue anything to run after
-      // this action, the SlotHandle can be ignored.
-      SlotHandle AddAction(IActionRunner* action, u8 numRetries = 0);
-      
-      // Queue an action into a specific slot. If that slot does not exist
-      // (perhaps because it completed before this call) it will be created.
-      Result     QueueActionNext(SlotHandle  atSlot, IActionRunner* action, u8 numRetries = 0);
-      Result     QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
-      
-      bool       IsEmpty() const;
-      
-      void       Clear();
-      
-      void       Print() const;
-      
-    protected:
-      
-      SlotHandle _slotCounter;
-      std::map<SlotHandle, ActionQueue> _queues;
-      
-    }; // class ActionList
-    
-    
-    inline Result ActionList::QueueActionNext(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
-    {
-      return _queues[atSlot].QueueNext(action, numRetries);
-    }
-    
-    inline Result ActionList::QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
-    {
-      return _queues[atSlot].QueueAtEnd(action, numRetries);
-    }
-
-    
-#pragma mark ---- ICompoundAction ----
-    
-    // Interface for compound actions, which are fixed sets of actions to be
-    // run together or in order (determined by derived type)
-    class ICompoundAction : public IActionRunner
-    {
-    public:
-      ICompoundAction(std::initializer_list<IActionRunner*> actions);
-      
-      // Constituent actions will be deleted upon destruction of the group
-      virtual ~ICompoundAction();
-      
-      virtual const std::string& GetName() const override { return _name; }
-      
-    protected:
-      
-      // Call the constituent actions' Reset() methods and mark them each not done.
-      virtual void Reset() override;
-      
-      std::list<std::pair<bool, IActionRunner*> > _actions;
-      std::string _name;
-    };
-    
-    
-    // Executes a fixed set of actions sequentially
-    class CompoundActionSequential : public ICompoundAction
-    {
-    public:
-      
-      CompoundActionSequential(std::initializer_list<IActionRunner*> actions);
-      
-      virtual ActionResult Update(Robot& robot) override final;
-      
-      // Add a delay, in seconds, between running each action in the group.
-      // Default is 0 (no delay).
-      void SetDelayBetweenActions(f32 seconds);
-      
-    private:
-      virtual void Reset() override;
-      
-      f32 _delayBetweenActionsInSeconds;
-      f32 _waitUntilTime;
-      std::list<std::pair<bool,IActionRunner*> >::iterator _currentActionPair;
-    }; // class CompoundActionSequential
-    
-    inline void CompoundActionSequential::SetDelayBetweenActions(f32 seconds) {
-      _delayBetweenActionsInSeconds = seconds;
-    }
-    
-    // Executes a fixed set of actions in parallel
-    class CompoundActionParallel : public ICompoundAction
-    {
-    public:
-      
-      CompoundActionParallel(std::initializer_list<IActionRunner*> actions);
-      
-      virtual ActionResult Update(Robot& robot) override final;
-      
-    protected:
-      CompoundActionParallel();
-      
-    }; // class CompoundActionParallel
-    
-    
-#pragma mark ---- Individual Action Defintions ----
-    // TODO: Move these to cozmo-specific actions file
     
     class DriveToPoseAction : public IAction
     {
@@ -663,4 +393,4 @@ namespace Anki {
   } // namespace Cozmo
 } // namespace Anki
 
-#endif // ANKI_COZMO_ACTIONQUEUE_H
+#endif // ANKI_COZMO_ACTIONS_H

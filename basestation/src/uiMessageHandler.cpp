@@ -10,14 +10,18 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include "anki/common/basestation/utils/logging/logging.h"
+
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
+
 #include "behaviorManager.h"
+#include "cozmoActions.h"
 #include "uiMessageHandler.h"
 #include "vizManager.h"
 #include "soundManager.h"
-#include "anki/common/basestation/utils/logging/logging.h"
+
 
 
 #if(RUN_UI_MESSAGE_TCP_SERVER)
