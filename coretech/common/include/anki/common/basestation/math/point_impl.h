@@ -62,6 +62,14 @@ namespace Anki {
     }
   }
   
+  template<PointDimType N, typename T>
+  Point<N,T>::Point(const Point<N+1,T>& pt)
+  {
+    for(PointDimType i=0; i<N; ++i) {
+      this->data[i] = pt[i];
+    }
+  }
+  
 #if __cplusplus < 201103L
 
   template<PointDimType N, typename T>
@@ -117,15 +125,6 @@ namespace Anki {
   {
     for(PointDimType i=0; i<N; ++i) {
       this->data[i] = static_cast<T>(other[i]);
-    }
-    return *this;
-  }
-  
-  template<PointDimType N, typename T>
-  Point<N,T>::Point(const Point<N+1,T>& pt)
-  {
-    for(PointDimType i=0; i<N; ++i) {
-      this->data[i] = pt[i];
     }
     return *this;
   }
