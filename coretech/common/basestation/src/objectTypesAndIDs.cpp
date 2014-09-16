@@ -22,18 +22,14 @@
  **/
 
 #include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/utils/logging/logging.h"
 
 #include <cassert>
 
 namespace Anki {
-
-  ObjectType::StorageType ObjectType::UniqueTypeCounter = 0;
   
-  std::set<int>& ObjectType::GetValidTypes()
-  {
-    static std::set<int> ValidTypes;
-    return ValidTypes;
-  }
+  // Initialize static Type counter:
+  ObjectType::StorageType ObjectType::UniqueTypeCounter = 0;
   
   ObjectType ObjectType::GetInvalidType()
   {
@@ -41,50 +37,40 @@ namespace Anki {
     return INVALID;
   }
   
-  static std::map<std::string, ObjectType*>& GetTypeNames()
+  std::map<std::string, ObjectType*>& ObjectType::GetTypeNames()
   {
     static std::map<std::string, ObjectType*> names;
     return names;
   }
-
-  ObjectID::StorageType ObjectID::UniqueIDCounter = 0;
-  
   
   ObjectType::ObjectType(const std::string& name)
   : _name(name)
   {
     const int newType = UniqueTypeCounter++;
     SetValue(newType);
-    //printf("Adding new type %d (set size = %lu)\n", newType, GetValidTypes().size());
-    GetValidTypes().insert(newType);
-    GetTypeNames()[name] = this;
+    
+    if(GetTypeNames().count(name) > 0) {
+      PRINT_NAMED_WARNING("ObjectType.DuplicateTypeName",
+                          "ObjectType named '%s' already exists.\n",
+                          name.c_str());
+    } else {
+      GetTypeNames()[name] = this;
+    }
   }
 
   ObjectType::ObjectType()
-  : ObjectType("")
   {
-
-  }
-  
-  ObjectType::ObjectType(int value)
-  {
-    if(GetValidTypes().count(value) > 0) {
-      SetValue(value);
-    } else {
-      assert(false); // TODO: Better failure
-      SetToUnknown();
-    }
+    SetToUnknown();
   }
   
   ObjectType::~ObjectType()
   {
-    GetTypeNames().erase(_name);
+
   }
   
   int ObjectType::GetNumTypes() {
     return ObjectType::UniqueTypeCounter;
-  }
-  
+  }  
   
   ObjectType ObjectType::GetTypeByName(const std::string& name)
   {
@@ -98,6 +84,8 @@ namespace Anki {
   
 #pragma mark ---- ObjectID -----
   
+  // Initialize static ID counter:
+  ObjectID::StorageType ObjectID::UniqueIDCounter = 0;
   
   void ObjectID::Reset() {
     ObjectID::UniqueIDCounter = 0;

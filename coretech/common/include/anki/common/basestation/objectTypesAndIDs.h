@@ -83,9 +83,6 @@ namespace Anki {
     using StorageType = int;
     
     ObjectType();
-    ObjectType(const std::string& name);
-    ObjectType(int value);
-    
     ~ObjectType();
     
     const std::string& GetName() const { return _name; }
@@ -98,12 +95,17 @@ namespace Anki {
     
   protected:
     
+    // Derived classes can use this, but otherwise we do not want to provide a
+    // way to construct a named ObjectType dynamically at runtime. That's the
+    // whole point of this class (to be static unique named types).
+    ObjectType(const std::string& name);
+    
     static StorageType UniqueTypeCounter;
     
     // NOTE: Using static method with static variable inside to ensure the
     // set gets instantiated when needed instead of dangerously relying on static
     // initialization order.
-    static std::set<int>& GetValidTypes();
+    static std::map<std::string, ObjectType*>& GetTypeNames();
     
     std::string _name;
     
