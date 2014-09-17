@@ -209,10 +209,10 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_GotoPose const& msg)
     {
-      // TODO: Add ability specify a "slot" for where to queue this?
-      
-      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
-      //return robot->ExecutePathToPose(targetPose);
+      // TODO: Add ability to indicate z too!
+      // TODO: Better way to specify the target pose's parent
+      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
+      targetPose.SetName("GotoPoseTarget");
       robot->GetActionList().AddAction(new DriveToPoseAction(targetPose));
       return RESULT_OK;
     }
