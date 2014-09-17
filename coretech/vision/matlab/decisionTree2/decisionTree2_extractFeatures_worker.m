@@ -18,7 +18,7 @@ function [labels, featureValues] = decisionTree2_extractFeatures_worker(workQueu
     
     numLabels = numBlurs*length(workQueue)*numPerturbations*numResolutions;
     
-    labels = zeros(numLabels, 1, 'uint8');
+    labels = zeros(numLabels, 1, 'int32');
     featureValues = zeros(numFeatures, numLabels, 'uint8');
     
     cLabel = 1;

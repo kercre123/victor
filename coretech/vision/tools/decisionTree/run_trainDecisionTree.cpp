@@ -12,7 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/serialize.h"
 
 #define COMPRESSION_LEVEL 9
-#define MAX_TREE_NODES 1000000
+#define MAX_TREE_NODES 10000000
 
 using namespace Anki;
 using namespace Anki::Embedded;
