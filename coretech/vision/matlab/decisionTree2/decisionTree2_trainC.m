@@ -27,8 +27,8 @@ function [tree, minimalTree, cTree, trainingFailures, testOnTrain_numCorrect, te
     u8MinDistanceFromThreshold = 0; % If a feature value is closer than this to the threshold, pass it to both subpaths
     u8ThresholdsToUse = []; % If set, only use these grayvalues to threshold (For example, set to [128] to only split on 128);
     featuresUsed = zeros(size(featureValues,1), 256, 'uint8'); % If you don't want to train on some of the features or u8 thresholds, set some of the featuresUsed to true
-    cInFilenamePrefix = 'c:/tmp/treeTraining_'; % Temporary location for when useCVersion = true
-    cOutFilenamePrefix = 'c:/tmp/treeTraining_out_';
+    cInFilenamePrefix = 'c:/tmp/treeTraining/treeTraining_'; % Temporary location for when useCVersion = true
+    cOutFilenamePrefix = 'c:/tmp/treeTraining/treeTraining_out_';
     %cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/RelWithDebInfo/run_trainDecisionTree.exe';
     cTrainingExecutable = 'C:/Anki/products-cozmo/build/Visual Studio 11/bin/Debug/run_trainDecisionTree.exe';
     maxThreads = 4;
@@ -47,6 +47,9 @@ function [tree, minimalTree, cTree, trainingFailures, testOnTrain_numCorrect, te
 %             cTrainingExecutable = [tildeToPath(), '/Documents/Anki/products-cozmo/build/Xcode/bin/Release/run_trainDecisionTree'];
         end
     end
+    
+    [~,~,~] = mkdir(cInFilenamePrefix);
+    [~,~,~] = mkdir(cOutFilenamePrefix);
     
     decisionTree2_saveInputs(cInFilenamePrefix, labelNames, labels, featureValues, featuresUsed, u8ThresholdsToUse, maxSavingThreads);
     
@@ -205,7 +208,7 @@ function [tree, cTree] = decisionTree2_runCVersion(cTrainingExecutable, cInFilen
     limits(3:4) = [0,100];
     axis(limits)
     
-    disp(sprintf('Conversion done in %f seconds (average CPU usage %f%%)', toc(convertingTic), mean(cpuUsageSamples)));
+    disp(sprintf('Conversion done in %f seconds (average CPU usage %0.2f%%)', toc(convertingTic), mean(cpuUsageSamples)));
 end % decisionTree2_runCVersion
 
     

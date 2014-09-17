@@ -3,8 +3,8 @@ function tmp_svm_testExamples()
     
     rerunTraining = false;
     
-    suffixes = {'100', '100B', '300', '300B', '600', '600B', '1000', '1000B'};
-    %         suffixes = {'100B', '300', '300B', '600', '600B', '1000', '1000B'};
+    suffixes = {'100', '100B'};
+    % suffixes = {'100B', '300', '300B', '600', '600B', '1000', '1000B'};
     
     if rerunTraining
         for iSuffix = 1:length(suffixes)
