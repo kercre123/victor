@@ -38,6 +38,7 @@ namespace Anki {
     }
     
     DriveToPoseAction::DriveToPoseAction(const Pose3d& pose)
+    : DriveToPoseAction()
     {
       SetGoal(pose);
     }
