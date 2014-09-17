@@ -97,27 +97,34 @@ namespace Anki {
     void Platform::GetCanonicalUnsafeRegions(const f32 padding_mm,
                                            std::vector<Quad3f>& regions) const
     {
-      // Platforms have four unsafe regions around the edges
+      // TODO: Define these geometry parameters elsewhere
+      const f32 wallThickness = 3.f;
+      const f32 grooveWidth = 3.75f;
+      
+      // Platforms have four unsafe regions around the edges, inset by the space
+      // taken up by the inset for the lip (or "tongue-n-groove")
+      const f32 xdim = 0.5f*GetSize().x()-wallThickness-grooveWidth;
+      const f32 ydim = 0.5f*GetSize().y()-wallThickness-grooveWidth;
       regions = {{
-        Quad3f({-0.5f*GetSize().x()-padding_mm, 0.5f*GetSize().y() + padding_mm, 0.f},
-               {-0.5f*GetSize().x()-padding_mm, 0.5f*GetSize().y() - padding_mm, 0.f},
-               { 0.5f*GetSize().x()+padding_mm, 0.5f*GetSize().y() + padding_mm, 0.f},
-               { 0.5f*GetSize().x()+padding_mm, 0.5f*GetSize().y() - padding_mm, 0.f}),
+        Quad3f({-xdim - padding_mm, ydim + padding_mm, 0.f},
+               {-xdim - padding_mm, ydim - padding_mm, 0.f},
+               { xdim + padding_mm, ydim + padding_mm, 0.f},
+               { xdim + padding_mm, ydim - padding_mm, 0.f}),
+      
+        Quad3f({-xdim - padding_mm,-ydim + padding_mm, 0.f},
+               {-xdim - padding_mm,-ydim - padding_mm, 0.f},
+               { xdim + padding_mm,-ydim + padding_mm, 0.f},
+               { xdim + padding_mm,-ydim - padding_mm, 0.f}),
         
-        Quad3f({-0.5f*GetSize().x()-padding_mm,-0.5f*GetSize().y() + padding_mm, 0.f},
-               {-0.5f*GetSize().x()-padding_mm,-0.5f*GetSize().y() - padding_mm, 0.f},
-               { 0.5f*GetSize().x()+padding_mm,-0.5f*GetSize().y() + padding_mm, 0.f},
-               { 0.5f*GetSize().x()+padding_mm,-0.5f*GetSize().y() - padding_mm, 0.f}),
+        Quad3f({-xdim - padding_mm, ydim + padding_mm, 0.f},
+               {-xdim - padding_mm,-ydim - padding_mm, 0.f},
+               {-xdim + padding_mm, ydim + padding_mm, 0.f},
+               {-xdim + padding_mm,-ydim - padding_mm, 0.f}),
         
-        Quad3f({-0.5f*GetSize().x()-padding_mm, 0.5f*GetSize().y() + padding_mm, 0.f},
-               {-0.5f*GetSize().x()-padding_mm,-0.5f*GetSize().y() - padding_mm, 0.f},
-               {-0.5f*GetSize().x()+padding_mm, 0.5f*GetSize().y() + padding_mm, 0.f},
-               {-0.5f*GetSize().x()+padding_mm,-0.5f*GetSize().y() - padding_mm, 0.f}),
-        
-        Quad3f({ 0.5f*GetSize().x()-padding_mm, 0.5f*GetSize().y() + padding_mm, 0.f},
-               { 0.5f*GetSize().x()-padding_mm,-0.5f*GetSize().y() - padding_mm, 0.f},
-               { 0.5f*GetSize().x()+padding_mm, 0.5f*GetSize().y() + padding_mm, 0.f},
-               { 0.5f*GetSize().x()+padding_mm,-0.5f*GetSize().y() - padding_mm, 0.f})
+        Quad3f({ xdim - padding_mm, ydim + padding_mm, 0.f},
+               { xdim - padding_mm,-ydim - padding_mm, 0.f},
+               { xdim + padding_mm, ydim + padding_mm, 0.f},
+               { xdim + padding_mm,-ydim - padding_mm, 0.f})
       }};
 
     }

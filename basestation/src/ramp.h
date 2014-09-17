@@ -29,8 +29,7 @@ namespace Anki {
   
   namespace Cozmo {
     
-    // Note that a ramp's origin (o) is the center of the "block" that makes up
-    // its platform portion.
+    // Note that a ramp's origin (o) is the bottom right vertex of this diagram:
     //
     //   +------------+
     //   |              .
@@ -110,18 +109,17 @@ namespace Anki {
       
       // Model dimensions in mm (perhaps these should come from a configuration
       // file instead?)
-      constexpr static const f32 Width          = 62.f;
+      constexpr static const f32 Width          = 74.5f;
       constexpr static const f32 Height         = 44.f;
-      constexpr static const f32 SlopeLength    = 110.f;
-      constexpr static const f32 PlatformLength = 44.f;
+      constexpr static const f32 SlopeLength    = 172.f;
+      constexpr static const f32 PlatformLength = 50.f;
       constexpr static const f32 MarkerSize     = 25.f;
-      constexpr static const f32 FrontMarkerDistance = 50.f;
+      constexpr static const f32 FrontMarkerDistance = 40.f; // along sloped surface (at angle below)
       constexpr static const f32 PreDockDistance    = 90.f; // for picking up from sides
       constexpr static const f32 PreAscentDistance  = 50.f; // for ascending from bottom
       constexpr static const f32 PreDescentDistance = 30.f; // for descending from top
+      constexpr static const f32 Angle = 0.31f; // of first part of ramp, using vertex 18
       
-      static const f32 Angle;
-              
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       
       const Vision::KnownMarker* _leftMarker;

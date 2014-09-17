@@ -23,21 +23,19 @@ namespace Anki {
     
     const Ramp::Type Ramp::Type::BASIC_RAMP("BASIC_RAMP");
     
-    const f32 Ramp::Angle = atan(Height/SlopeLength);
-    
     const std::vector<Point3f>& Ramp::GetCanonicalCorners() const {
     
       static const std::vector<Point3f> CanonicalCorners = {{
         // Bottom corners
-        Point3f(-0.5f*PlatformLength,              -0.5f*Width,  -0.5f*Height),
-        Point3f(SlopeLength + 0.5f*PlatformLength, -0.5f*Width,  -0.5f*Height),
-        Point3f(SlopeLength + 0.5f*PlatformLength,  0.5f*Width,  -0.5f*Height),
-        Point3f(-0.5f*PlatformLength,               0.5f*Width,  -0.5f*Height),
+        Point3f(PlatformLength + SlopeLength,  -0.5f*Width,  0.f),
+        Point3f(SlopeLength,                   -0.5f*Width,  0.f),
+        Point3f(SlopeLength,                    0.5f*Width,  0.f),
+        Point3f(PlatformLength + SlopeLength,   0.5f*Width,  0.f),
         // Top corners:
-        Point3f(-0.5f*PlatformLength, -0.5f*Width,  0.5f*Height),
-        Point3f( 0.5f*PlatformLength, -0.5f*Width,  0.5f*Height),
-        Point3f( 0.5f*PlatformLength,  0.5f*Width,  0.5f*Height),
-        Point3f(-0.5f*PlatformLength,  0.5f*Width,  0.5f*Height),
+        Point3f(SlopeLength+PlatformLength, -0.5f*Width,  Height),
+        Point3f(SlopeLength,                -0.5f*Width,  Height),
+        Point3f(SlopeLength,                 0.5f*Width,  Height),
+        Point3f(SlopeLength+PlatformLength,  0.5f*Width,  Height),
       }};
       
       return CanonicalCorners;
@@ -46,11 +44,11 @@ namespace Anki {
     
     
     Ramp::Ramp()
-    : _preAscentPose(M_PI, Z_AXIS_3D,
-                     {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + Ramp::PreAscentDistance, 0, -.5f*Ramp::Height}},
+    : _preAscentPose(0, Z_AXIS_3D,
+                     {{-PreAscentDistance, 0.f, 0.f}},
                      &GetPose())
-    , _preDescentPose(0, Z_AXIS_3D,
-                      {{-(.5f*Ramp::PlatformLength+Ramp::PreDescentDistance), 0, 0.5f*Ramp::Height}},
+    , _preDescentPose(M_PI, Z_AXIS_3D,
+                      {{SlopeLength + PlatformLength, 0, Height}},
                       &GetPose())
     , _vizHandle(VizManager::INVALID_HANDLE)
     
@@ -58,11 +56,10 @@ namespace Anki {
       // TODO: Support multiple ramp types
       
       // Five markers:
-      const f32 angle = -atan(Ramp::SlopeLength/Ramp::Height);
-      Pose3d frontPose(angle, Y_AXIS_3D,
-                       {{Ramp::SlopeLength+Ramp::PlatformLength*.5f-Ramp::FrontMarkerDistance,
-                         0, -Ramp::Height*.5f + Ramp::Height*Ramp::FrontMarkerDistance/Ramp::SlopeLength}});
-      frontPose *= Pose3d(M_PI_2, Z_AXIS_3D, {{0,0,0}});
+      Pose3d frontPose(M_PI_2 - Ramp::Angle, Y_AXIS_3D,
+                       {{Ramp::FrontMarkerDistance*std::cos(Ramp::Angle),
+                        0, Ramp::FrontMarkerDistance*std::sin(Ramp::Angle)}});
+      frontPose *= Pose3d(-M_PI_2, Z_AXIS_3D, {{0,0,0}});
       _frontMarker = &AddMarker(Vision::MARKER_RAMPFRONT, frontPose, Ramp::MarkerSize);
       
       if(_preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), _preAscentPose) == false) {
@@ -71,21 +68,24 @@ namespace Anki {
       _preAscentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreAscentPose");
       AddPreActionPose(PreActionPose::ENTRY, _frontMarker, _preAscentPose, DEG_TO_RAD(-10));
       
-      const Pose3d backPose(-M_PI_2, Z_AXIS_3D, {{-0.5f*PlatformLength, 0, 0}});
+      const f32 SideMarkerHeight = 16.f;
+      
+      const Pose3d backPose(M_PI_2, Z_AXIS_3D, {{SlopeLength+PlatformLength, 0, SideMarkerHeight}});
       AddMarker(Vision::MARKER_RAMPBACK, backPose, Ramp::MarkerSize);
       
-      const Vec3f PreDockPoseOffset(0.f, -100.f, -0.5f*Ramp::Height);
+      const Vec3f PreDockPoseOffset(0.f, -100.f, -SideMarkerHeight);
       
-      const Pose3d leftPose(0.f, Z_AXIS_3D, {{10.f, -0.5f*Ramp::Width, 0.f}});
-      _leftMarker = &AddMarker(Vision::MARKER_RAMPLEFT, leftPose, Ramp::MarkerSize);
-      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset, DEG_TO_RAD(-15));
-      
-      const Pose3d rightPose(M_PI, Z_AXIS_3D, {{10.f,  0.5f*Ramp::Width, 0.f}});
+      const Pose3d rightPose(0.f, Z_AXIS_3D, {{120.f, -0.5f*Ramp::Width, SideMarkerHeight}});
       _rightMarker = &AddMarker(Vision::MARKER_RAMPRIGHT, rightPose, Ramp::MarkerSize);
       AddPreActionPose(PreActionPose::DOCKING, _rightMarker, PreDockPoseOffset, DEG_TO_RAD(-15));
       
-      const Pose3d topPose(2.0944, {{-0.5774f, 0.5774f, -0.5774f}},
-                           {{Ramp::PlatformLength*.5f - Ramp::MarkerSize*.5f, 0, Ramp::Height*.5f}});
+      const Pose3d leftPose(M_PI, Z_AXIS_3D, {{120.f,  0.5f*Ramp::Width, SideMarkerHeight}});
+      _leftMarker = &AddMarker(Vision::MARKER_RAMPLEFT, leftPose, Ramp::MarkerSize);
+      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset, DEG_TO_RAD(-15));
+      
+      Pose3d topPose(-M_PI_2, Y_AXIS_3D,
+                     {{Ramp::PlatformLength + Ramp::SlopeLength - Ramp::MarkerSize, 0, Ramp::Height}});
+      topPose *= Pose3d(M_PI_2, Z_AXIS_3D, {{0,0,0}});
       _topMarker = &AddMarker(Vision::MARKER_INVERTED_RAMPFRONT, topPose, Ramp::MarkerSize);
       
       
@@ -122,8 +122,8 @@ namespace Anki {
     
     Pose3d Ramp::GetPostAscentPose(const float wheelBase) const
     {
-      Pose3d pose(M_PI, Z_AXIS_3D,
-                  {{Ramp::PlatformLength*.5f - wheelBase, 0, Ramp::Height*.5f}},
+      Pose3d pose(0, Z_AXIS_3D,
+                  {{Ramp::SlopeLength + wheelBase, 0, Ramp::Height}},
                   &GetPose());
       
       //pose.PreComposeWith(GetPose());
@@ -134,8 +134,8 @@ namespace Anki {
     
     Pose3d Ramp::GetPostDescentPose(const float wheelBase) const
     {
-      Pose3d pose(0, Z_AXIS_3D,
-                  {{Ramp::PlatformLength*.5f + Ramp::SlopeLength + wheelBase, 0, -Ramp::Height*.5f}},
+      Pose3d pose(M_PI, Z_AXIS_3D,
+                  {{-wheelBase, 0, 0.f}},
                   &GetPose());
       
       //pose.PreComposeWith(GetPose());

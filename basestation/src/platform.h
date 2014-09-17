@@ -40,6 +40,7 @@ namespace Anki {
       virtual bool IsMoveable() const override { return true; }
       
     protected:
+      
       virtual void GetCanonicalUnsafeRegions(const f32 padding_mm,
                                              std::vector<Quad3f>& regions) const override;
       
