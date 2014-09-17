@@ -879,8 +879,6 @@ namespace Anki
                                          ObjectsMapByType_t& existingObjects,
                                          const TimeStamp_t atTimestamp)
     {
-      _didObjectsChange = false;
-      
       std::vector<Vision::ObservableObject*> objectsSeen;
       
       // Don't bother with this update at all if we didn't see at least one
@@ -1044,7 +1042,8 @@ namespace Anki
           UpdateRobotPose(currentObsMarkers, atTimestamp);
         }
         
-        
+        // Reset the flag telling us objects changed here, before we update any objects:
+        _didObjectsChange = false;
         
         //
         // Find any observed blocks from the remaining markers
