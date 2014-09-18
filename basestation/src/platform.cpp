@@ -30,7 +30,7 @@ namespace Anki {
     static const Point3f& GetPlatformSize(Platform::Type type)
     {
       static const std::map<Platform::Type, Point3f> Sizes = {
-        {Platform::Type::LARGE_PLATFORM, {240.f, 240.f, 44.f}},
+        {Platform::Type::LARGE_PLATFORM, {252.f, 252.f, 44.f}},
       };
       
       auto iter = Sizes.find(type);
@@ -54,8 +54,8 @@ namespace Anki {
       const f32& width  = GetSize().y();
       const f32& height = GetSize().z();
       
-      const f32 markerSize_sides = 25.f;
-      const f32 markerSize_top   = 25.f;
+      const f32 markerSize_sides = 30.f;
+      const f32 markerSize_top   = 30.f;
       
       // Front Face
       AddMarker(Vision::MARKER_PLATFORMNORTH, // Vision::MARKER_INVERTED_E,

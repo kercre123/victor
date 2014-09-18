@@ -18,7 +18,7 @@ PROTO Bridge [
   field SFFloat tongueThickness .003   # a little less than Platform grooveWidth 
   field SFFloat grooveThickness .00325 # a little more than Platform wallThickness
   
-  field SFFloat markerSize .025
+  field SFFloat markerSize .030
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
   

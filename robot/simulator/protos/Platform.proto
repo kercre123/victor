@@ -2,18 +2,23 @@
 
 PROTO Platform [
   field SFString name "Platform000"
-  field SFFloat length .240
-  field SFFloat width  .240
+  field SFFloat length .252 # outside, not driving surface
+  field SFFloat width  .252 #   "
   field SFFloat height .044
   field SFFloat grooveWidth .00375
   field SFFloat grooveDepth .00275
   field SFFloat wallThickness .003
   field SFFloat topThickness .006
   field SFString type "1" # PlatformType
+
   field SFVec3f translation 0 0 0.022
   field SFRotation rotation 0 0 1 0
+
   field SFFloat density 250
+
   field SFColor platformColor .05 .25 .05
+  field SFFloat topMarkerWidth .030
+  field SFFloat sideMarkerWidth .030
   field SFBool  useWhiteMarkerBackgrounds TRUE
   field SFString markerImg ""  # Image path relative to textures/
 ]
@@ -40,6 +45,7 @@ Solid {
       rotation 0 0 1 1.5708
       translation %{=fields.length/2}% 0 0
       image "symbols/platformNorth.png"
+      markerWidth IS sideMarkerWidth
     }
     
     # Back Face
@@ -47,6 +53,7 @@ Solid {
       rotation 0 0 1 -1.5708
       translation %{=-fields.length/2}% 0 0
       image "symbols/platformSouth.png"
+      markerWidth IS sideMarkerWidth
     }
           
     # Right Face
@@ -54,6 +61,7 @@ Solid {
       rotation 0 0 1 3.1415
       translation 0 %{=fields.width/2}% 0
       image "symbols/platformEast.png"
+      markerWidth IS sideMarkerWidth
     }
     
     # Left Face
@@ -61,6 +69,7 @@ Solid {
       rotation 0 0 1 0
       translation 0 %{=-fields.width/2}% 0
       image "symbols/platformWest.png"
+      markerWidth IS sideMarkerWidth
     }
     
     # Top Face(s)
@@ -69,24 +78,28 @@ Solid {
 			translation %{=-fields.length/4}% %{=-fields.width/4}% %{=fields.height/2}% 
 			image "letters/inverted/A.png"
 			#image "ankiLogoWithBits/ankiLogoWithBits001.png"
+			markerWidth IS topMarkerWidth
 		}
 		VisionMarker {
 			rotation 1 0 0 1.5708
 			translation %{=-fields.length/4}% %{=fields.width/4}% %{=fields.height/2}% 
 			image "letters/inverted/B.png"
 			#image "ankiLogoWithBits/ankiLogoWithBits010.png"
+			markerWidth IS topMarkerWidth
 		}
 		VisionMarker {
 			rotation 1 0 0 1.5708
 			translation %{=fields.length/4}% %{=-fields.width/4}% %{=fields.height/2}% 
 			image "letters/inverted/C.png"
 			#image "ankiLogoWithBits/ankiLogoWithBits020.png"
+			markerWidth IS topMarkerWidth
 		}
 		VisionMarker {
 			rotation 1 0 0 1.5708
 			translation %{=fields.length/4}% %{=fields.width/4}% %{=fields.height/2}% 
 			image "letters/inverted/D.png"
 			#image "ankiLogoWithBits/ankiLogoWithBits030.png"
+			markerWidth IS topMarkerWidth
 		}
 
     DEF PlatformShape Group {

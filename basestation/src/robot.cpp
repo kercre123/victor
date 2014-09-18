@@ -222,7 +222,7 @@ namespace Anki {
         }
         
         // Progress must be along ramp's direction (init assuming ascent)
-        Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>() + M_PI;
+        Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>();
         
         // Initialize tilt angle assuming we are ascending
         Radians tiltAngle = ramp->GetAngle();
@@ -231,7 +231,7 @@ namespace Anki {
         {
           case Ramp::DESCENDING:
             tiltAngle    *= -1.f;
-            headingAngle -= M_PI;
+            headingAngle += M_PI;
             break;
           case Ramp::ASCENDING:
             break;
@@ -249,7 +249,7 @@ namespace Anki {
                                      _rampStartHeight + heightAdjust);
         
         const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D);
-        const RotationMatrix3d R_tilt(-tiltAngle, Y_AXIS_3D);
+        const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D);
         
         newPose = Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent());
         //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
