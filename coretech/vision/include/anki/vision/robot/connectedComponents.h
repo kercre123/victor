@@ -51,17 +51,26 @@ namespace Anki
       return false;
     }
 
-    inline s64 ConnectedComponents::CompareConnectedComponentSegments(const ConnectedComponentSegment<u16> &a, const ConnectedComponentSegment<u16> &b)
+    template<typename Type> inline s64 ConnectedComponents::CompareConnectedComponentSegments(const ConnectedComponentSegment<Type> &a, const ConnectedComponentSegment<Type> &b)
     {
-      // Wraps zero around to MAX_u16
-      u16 idA = a.id;
-      u16 idB = b.id;
+      // Wraps zero around to the max value
+      Type idA = a.id;
+      Type idB = b.id;
 
-      idA -= 1;
-      idB -= 1;
+      if(idA <= 0) {
+        idA = saturate_cast<Type>(1e100);
+      } else {
+        idA--;
+      }
 
-      const s64 idDifference = static_cast<s64>(u16_MAX) * static_cast<s64>(u16_MAX) * (static_cast<s64>(idA) - static_cast<s64>(idB));
-      const s64 yDifference = static_cast<s64>(u16_MAX) * (static_cast<s64>(a.y) - static_cast<s64>(b.y));
+      if(idB <= 0) {
+        idB = saturate_cast<Type>(1e100);
+      } else {
+        idB--;
+      }
+
+      const s64 idDifference = (static_cast<s64>(s16_MAX)+1) * (static_cast<s64>(s16_MAX)+1) * (static_cast<s64>(idA) - static_cast<s64>(idB));
+      const s64 yDifference = (static_cast<s64>(s16_MAX)+1) * (static_cast<s64>(a.y) - static_cast<s64>(b.y));
       const s64 xStartDifference = (static_cast<s64>(a.xStart) - static_cast<s64>(b.xStart));
 
       return idDifference + yDifference + xStartDifference;

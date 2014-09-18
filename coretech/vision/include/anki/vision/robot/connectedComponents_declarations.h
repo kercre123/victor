@@ -48,9 +48,9 @@ namespace Anki
       // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
       // The ordering of components is first by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
       // TODO: Doublecheck that this is correct for corner cases
-      static inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment<u16> &a, const ConnectedComponentSegment<u16> &b);
+      template<typename Type> static inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment<Type> &a, const ConnectedComponentSegment<Type> &b);
 
-      static Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment<u16>> &extractedComponents);
+      static Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment<u16> > &extractedComponents);
 
       ConnectedComponents();
 
@@ -195,10 +195,10 @@ namespace Anki
         STATE_FINALIZED
       };
 
-      FixedLengthList<ConnectedComponentSegment<u16>> components;
-      FixedLengthList<ConnectedComponentSegment<u16>> currentComponents1d;
-      FixedLengthList<ConnectedComponentSegment<u16>> previousComponents1d;
-      FixedLengthList<ConnectedComponentSegment<u16>> newPreviousComponents1d;
+      FixedLengthList<ConnectedComponentSegment<u16> > components;
+      FixedLengthList<ConnectedComponentSegment<u16> > currentComponents1d;
+      FixedLengthList<ConnectedComponentSegment<u16> > previousComponents1d;
+      FixedLengthList<ConnectedComponentSegment<u16> > newPreviousComponents1d;
       FixedLengthList<u16> equivalentComponents;
 
       State curState;
