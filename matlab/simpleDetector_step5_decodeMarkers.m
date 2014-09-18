@@ -163,7 +163,7 @@ function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, 
                 tform = cp2tform([0 0 1 1; 0 1 0 1]', corners, 'projective');
                 newMarker.H = tform.tdata.T';
                 
-                if iscell(newMarker.codeName)
+                if iscell(newMarker.codeName) || strcmp(newMarker.codeName, 'MARKER_UNKNOWN')
                     newMarker.codeName = 'MARKER_UNKNOWN';
                     newMarker.name = newMarker.codeName;
                 else

@@ -126,41 +126,41 @@ function tmp_decisionTree2_testExamples()
 %         save ~/tmp/treeTraining/labels1000_3_results numCorrectSwitch1000_3 numTotalSwitch1000_3 numCorrectSwitch1000_3B numTotalSwitch1000_3B
 %         clear
         
-        classesList = decisionTree2_createClassesList();
-        [labelNames1000_4, labels1000_4, featureValues1000_4, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 3000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [22], 'maxPerturbPercent', 0.15);
-        [tree1000_4, minimalTree1000_4, cTree1000_4, trainingFailures1000_4, testOnTrain_numCorrect1000_4, testOnTrain_numTotal1000_4] = decisionTree2_trainC(labelNames1000_4, labels1000_4, featureValues1000_4, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
-        [labelNames1000_4B, labels1000_4B, featureValues1000_4B, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 3000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [22], 'maxPerturbPercent', 0.15);
-        [tree1000_4B, minimalTree1000_4B, cTree1000_4B, trainingFailures1000_4B, testOnTrain_numCorrect1000_4B, testOnTrain_numTotal1000_4B] = decisionTree2_trainC(labelNames1000_4B, labels1000_4B, featureValues1000_4B, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
-        [numCorrectSwitch1000_4, numTotalSwitch1000_4] = decisionTree2_testOnTrainingData(cTree1000_4, featureValues1000_4B, labels1000_4B, labelNames1000_4B, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
-        [numCorrectSwitch1000_4B, numTotalSwitch1000_4B] = decisionTree2_testOnTrainingData(cTree1000_4B, featureValues1000_4, labels1000_4, labelNames1000_4, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
-        save ~/tmp/treeTraining/labels1000_4 labelNames1000_4 labels1000_4 featureValues1000_4 probeLocationsXGrid probeLocationsYGrid tree1000_4 minimalTree1000_4 cTree1000_4 trainingFailures1000_4 testOnTrain_numCorrect1000_4 testOnTrain_numTotal1000_4 -v7.3
-        save ~/tmp/treeTraining/labels1000_4B probeLocationsXGrid probeLocationsYGrid labelNames1000_4B labels1000_4B featureValues1000_4B tree1000_4B minimalTree1000_4B cTree1000_4B trainingFailures1000_4B testOnTrain_numCorrect1000_4B testOnTrain_numTotal1000_4B -v7.3
-        save ~/tmp/treeTraining/labels1000_4_results numCorrectSwitch1000_4 numTotalSwitch1000_4 numCorrectSwitch1000_4B numTotalSwitch1000_4B
-        clear
+%         classesList = decisionTree2_createClassesList();
+%         [labelNames1000_4, labels1000_4, featureValues1000_4, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 3000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [22], 'maxPerturbPercent', 0.15);
+%         [tree1000_4, minimalTree1000_4, cTree1000_4, trainingFailures1000_4, testOnTrain_numCorrect1000_4, testOnTrain_numTotal1000_4] = decisionTree2_trainC(labelNames1000_4, labels1000_4, featureValues1000_4, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
+%         [labelNames1000_4B, labels1000_4B, featureValues1000_4B, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 3000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [22], 'maxPerturbPercent', 0.15);
+%         [tree1000_4B, minimalTree1000_4B, cTree1000_4B, trainingFailures1000_4B, testOnTrain_numCorrect1000_4B, testOnTrain_numTotal1000_4B] = decisionTree2_trainC(labelNames1000_4B, labels1000_4B, featureValues1000_4B, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
+%         [numCorrectSwitch1000_4, numTotalSwitch1000_4] = decisionTree2_testOnTrainingData(cTree1000_4, featureValues1000_4B, labels1000_4B, labelNames1000_4B, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
+%         [numCorrectSwitch1000_4B, numTotalSwitch1000_4B] = decisionTree2_testOnTrainingData(cTree1000_4B, featureValues1000_4, labels1000_4, labelNames1000_4, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
+%         save ~/tmp/treeTraining/labels1000_4 labelNames1000_4 labels1000_4 featureValues1000_4 probeLocationsXGrid probeLocationsYGrid tree1000_4 minimalTree1000_4 cTree1000_4 trainingFailures1000_4 testOnTrain_numCorrect1000_4 testOnTrain_numTotal1000_4 -v7.3
+%         save ~/tmp/treeTraining/labels1000_4B probeLocationsXGrid probeLocationsYGrid labelNames1000_4B labels1000_4B featureValues1000_4B tree1000_4B minimalTree1000_4B cTree1000_4B trainingFailures1000_4B testOnTrain_numCorrect1000_4B testOnTrain_numTotal1000_4B -v7.3
+%         save ~/tmp/treeTraining/labels1000_4_results numCorrectSwitch1000_4 numTotalSwitch1000_4 numCorrectSwitch1000_4B numTotalSwitch1000_4B
+%         clear
         
-        classesList = decisionTree2_createClassesList();
-        [labelNames1000_5, labels1000_5, featureValues1000_5, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 3000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [22], 'maxPerturbPercent', 0.1);
-        [tree1000_5, minimalTree1000_5, cTree1000_5, trainingFailures1000_5, testOnTrain_numCorrect1000_5, testOnTrain_numTotal1000_5] = decisionTree2_trainC(labelNames1000_5, labels1000_5, featureValues1000_5, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
-        [labelNames1000_5B, labels1000_5B, featureValues1000_5B, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 3000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [22], 'maxPerturbPercent', 0.1);
-        [tree1000_5B, minimalTree1000_5B, cTree1000_5B, trainingFailures1000_5B, testOnTrain_numCorrect1000_5B, testOnTrain_numTotal1000_5B] = decisionTree2_trainC(labelNames1000_5B, labels1000_5B, featureValues1000_5B, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
-        [numCorrectSwitch1000_5, numTotalSwitch1000_5] = decisionTree2_testOnTrainingData(cTree1000_5, featureValues1000_5B, labels1000_5B, labelNames1000_5B, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
-        [numCorrectSwitch1000_5B, numTotalSwitch1000_5B] = decisionTree2_testOnTrainingData(cTree1000_5B, featureValues1000_5, labels1000_5, labelNames1000_5, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
-        save ~/tmp/treeTraining/labels1000_5 labelNames1000_5 labels1000_5 featureValues1000_5 probeLocationsXGrid probeLocationsYGrid tree1000_5 minimalTree1000_5 cTree1000_5 trainingFailures1000_5 testOnTrain_numCorrect1000_5 testOnTrain_numTotal1000_5 -v7.3
-        save ~/tmp/treeTraining/labels1000_5B probeLocationsXGrid probeLocationsYGrid labelNames1000_5B labels1000_5B featureValues1000_5B tree1000_5B minimalTree1000_5B cTree1000_5B trainingFailures1000_5B testOnTrain_numCorrect1000_5B testOnTrain_numTotal1000_5B -v7.3
-        save ~/tmp/treeTraining/labels1000_5_results numCorrectSwitch1000_5 numTotalSwitch1000_5 numCorrectSwitch1000_5B numTotalSwitch1000_5B
-        clear
-        
-        classesList = decisionTree2_createClassesList();
-        [labelNames1000_6, labels1000_6, featureValues1000_6, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 1000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [20, 22, 24], 'maxPerturbPercent', 0.1);
-        [tree1000_6, minimalTree1000_6, cTree1000_6, trainingFailures1000_6, testOnTrain_numCorrect1000_6, testOnTrain_numTotal1000_6] = decisionTree2_trainC(labelNames1000_6, labels1000_6, featureValues1000_6, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
-        [labelNames1000_6B, labels1000_6B, featureValues1000_6B, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 1000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [20, 22, 24], 'maxPerturbPercent', 0.1);
-        [tree1000_6B, minimalTree1000_6B, cTree1000_6B, trainingFailures1000_6B, testOnTrain_numCorrect1000_6B, testOnTrain_numTotal1000_6B] = decisionTree2_trainC(labelNames1000_6B, labels1000_6B, featureValues1000_6B, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
-        [numCorrectSwitch1000_6, numTotalSwitch1000_6] = decisionTree2_testOnTrainingData(cTree1000_6, featureValues1000_6B, labels1000_6B, labelNames1000_6B, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
-        [numCorrectSwitch1000_6B, numTotalSwitch1000_6B] = decisionTree2_testOnTrainingData(cTree1000_6B, featureValues1000_6, labels1000_6, labelNames1000_6, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
-        save ~/tmp/treeTraining/labels1000_6 labelNames1000_6 labels1000_6 featureValues1000_6 probeLocationsXGrid probeLocationsYGrid tree1000_6 minimalTree1000_6 cTree1000_6 trainingFailures1000_6 testOnTrain_numCorrect1000_6 testOnTrain_numTotal1000_6 -v7.3
-        save ~/tmp/treeTraining/labels1000_6B probeLocationsXGrid probeLocationsYGrid labelNames1000_6B labels1000_6B featureValues1000_6B tree1000_6B minimalTree1000_6B cTree1000_6B trainingFailures1000_6B testOnTrain_numCorrect1000_6B testOnTrain_numTotal1000_6B -v7.3
-        save ~/tmp/treeTraining/labels1000_6_results numCorrectSwitch1000_6 numTotalSwitch1000_6 numCorrectSwitch1000_6B numTotalSwitch1000_6B
-        clear
+%         classesList = decisionTree2_createClassesList();
+%         [labelNames1000_5, labels1000_5, featureValues1000_5, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 3000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [22], 'maxPerturbPercent', 0.1);
+%         [tree1000_5, minimalTree1000_5, cTree1000_5, trainingFailures1000_5, testOnTrain_numCorrect1000_5, testOnTrain_numTotal1000_5] = decisionTree2_trainC(labelNames1000_5, labels1000_5, featureValues1000_5, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
+%         [labelNames1000_5B, labels1000_5B, featureValues1000_5B, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 3000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [22], 'maxPerturbPercent', 0.1);
+%         [tree1000_5B, minimalTree1000_5B, cTree1000_5B, trainingFailures1000_5B, testOnTrain_numCorrect1000_5B, testOnTrain_numTotal1000_5B] = decisionTree2_trainC(labelNames1000_5B, labels1000_5B, featureValues1000_5B, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
+%         [numCorrectSwitch1000_5, numTotalSwitch1000_5] = decisionTree2_testOnTrainingData(cTree1000_5, featureValues1000_5B, labels1000_5B, labelNames1000_5B, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
+%         [numCorrectSwitch1000_5B, numTotalSwitch1000_5B] = decisionTree2_testOnTrainingData(cTree1000_5B, featureValues1000_5, labels1000_5, labelNames1000_5, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
+%         save ~/tmp/treeTraining/labels1000_5 labelNames1000_5 labels1000_5 featureValues1000_5 probeLocationsXGrid probeLocationsYGrid tree1000_5 minimalTree1000_5 cTree1000_5 trainingFailures1000_5 testOnTrain_numCorrect1000_5 testOnTrain_numTotal1000_5 -v7.3
+%         save ~/tmp/treeTraining/labels1000_5B probeLocationsXGrid probeLocationsYGrid labelNames1000_5B labels1000_5B featureValues1000_5B tree1000_5B minimalTree1000_5B cTree1000_5B trainingFailures1000_5B testOnTrain_numCorrect1000_5B testOnTrain_numTotal1000_5B -v7.3
+%         save ~/tmp/treeTraining/labels1000_5_results numCorrectSwitch1000_5 numTotalSwitch1000_5 numCorrectSwitch1000_5B numTotalSwitch1000_5B
+%         clear
+%         
+%         classesList = decisionTree2_createClassesList();
+%         [labelNames1000_6, labels1000_6, featureValues1000_6, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 1000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [20, 22, 24], 'maxPerturbPercent', 0.1);
+%         [tree1000_6, minimalTree1000_6, cTree1000_6, trainingFailures1000_6, testOnTrain_numCorrect1000_6, testOnTrain_numTotal1000_6] = decisionTree2_trainC(labelNames1000_6, labels1000_6, featureValues1000_6, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
+%         [labelNames1000_6B, labels1000_6B, featureValues1000_6B, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, 'numPerturbations', 1000, 'blurSigmas', [0, .01, .02], 'probeResolutions', [20, 22, 24], 'maxPerturbPercent', 0.1);
+%         [tree1000_6B, minimalTree1000_6B, cTree1000_6B, trainingFailures1000_6B, testOnTrain_numCorrect1000_6B, testOnTrain_numTotal1000_6B] = decisionTree2_trainC(labelNames1000_6B, labels1000_6B, featureValues1000_6B, probeLocationsXGrid, probeLocationsYGrid, 'u8MinDistanceForSplits', 255, 'u8ThresholdsToUse', 128);
+%         [numCorrectSwitch1000_6, numTotalSwitch1000_6] = decisionTree2_testOnTrainingData(cTree1000_6, featureValues1000_6B, labels1000_6B, labelNames1000_6B, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
+%         [numCorrectSwitch1000_6B, numTotalSwitch1000_6B] = decisionTree2_testOnTrainingData(cTree1000_6B, featureValues1000_6, labels1000_6, labelNames1000_6, probeLocationsXGrid, probeLocationsYGrid, 'verbose', true);
+%         save ~/tmp/treeTraining/labels1000_6 labelNames1000_6 labels1000_6 featureValues1000_6 probeLocationsXGrid probeLocationsYGrid tree1000_6 minimalTree1000_6 cTree1000_6 trainingFailures1000_6 testOnTrain_numCorrect1000_6 testOnTrain_numTotal1000_6 -v7.3
+%         save ~/tmp/treeTraining/labels1000_6B probeLocationsXGrid probeLocationsYGrid labelNames1000_6B labels1000_6B featureValues1000_6B tree1000_6B minimalTree1000_6B cTree1000_6B trainingFailures1000_6B testOnTrain_numCorrect1000_6B testOnTrain_numTotal1000_6B -v7.3
+%         save ~/tmp/treeTraining/labels1000_6_results numCorrectSwitch1000_6 numTotalSwitch1000_6 numCorrectSwitch1000_6B numTotalSwitch1000_6B
+%         clear
     end
     
     treeSizes = zeros(12, 1);
@@ -171,9 +171,12 @@ function tmp_decisionTree2_testExamples()
     %filenames = {'100', '100', '300', '300', '600', '600', '1000', '1000', '2000', '2000B', '3000', '3000B'};
     %suffixes = {'100', '100B', '300', '300B', '600', '600B', '1000', '1000B', '2000', '2000B', '3000', '3000B'};
     
-    filenames = {'1000_2', '1000_2B', '1000_3', '1000_3B', '1000_4', '1000_4B', '1000_5', '1000_5B', '1000_6', '1000_6B'};
-    suffixes = {'1000_2', '1000_2B', '1000_3', '1000_3B', '1000_4', '1000_4B', '1000_5', '1000_5B', '1000_6', '1000_6B'};
+%     filenames = {'1000_2', '1000_2B', '1000_3', '1000_3B', '1000_4', '1000_4B', '1000_5', '1000_5B', '1000_6', '1000_6B'};
+%     suffixes = {'1000_2', '1000_2B', '1000_3', '1000_3B', '1000_4', '1000_4B', '1000_5', '1000_5B', '1000_6', '1000_6B'};
     
+    filenames = {'1000_2', '1000_3', '1000_4', '1000_5', '1000_6'};
+    suffixes = {'1000_2', '1000_3', '1000_4', '1000_5', '1000_6'};
+
     for iType = 1:length(filenames)
         [treeSizes(iType), trainPercentCorrects(iType), testPercentCorrects(iType)] = getResults([baseFilename, filenames{iType}], suffixes{iType});
     end
