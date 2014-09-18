@@ -38,6 +38,7 @@ function editGroundTruth_OpeningFcn(hObject, ~, handles, varargin)
     global markerClipboard;
     global pointsType;
     global setFigurePosition;
+    global lockResolution;
     
     curPoseIndex = 1;
     curMarkerIndex = 1;
@@ -53,6 +54,7 @@ function editGroundTruth_OpeningFcn(hObject, ~, handles, varargin)
     markerClipboard = [];
     pointsType = 'fiducialMarker';
     setFigurePosition = false;
+    lockResolution = false;
     
     setFromSavedDisplayParameters();
     
@@ -427,6 +429,15 @@ function resolutionVertical_Callback(hObject, ~, ~)
     resolutionVertical = str2double(get(hObject,'String'));
     poseChanged(true);
     
+    
+    
+    
+    
+    % --- Executes on button press in lockResolution.
+function lockResolution_Callback(hObject, ~, ~)
+    global lockResolution;
+    lockResolution = get(hObject,'Value');
+    
 function marker_clearAll_Callback(~, ~, ~)
     global jsonTestData;
     global curPoseIndex;
@@ -739,7 +750,7 @@ function detectAndAddMarkers()
     global image;
     
     % TODO
-    markers = simpleDetector(image, 'quadRefinementIterations', 0);
+    markers = simpleDetector(image, 'quadRefinementIterations', 0, 'showComponents', true);
     
     for iMarker = 1:length(markers)
         newMarker.x_imgUpperLeft = markers{iMarker}.corners(1,1);
@@ -867,13 +878,13 @@ function boundsFixed = fixBounds()
     
     curPoseIndexOriginal = curPoseIndex;
     
-    curPoseIndex = max(1, min(length(jsonTestData.Poses), curPoseIndex));    
+    curPoseIndex = max(1, min(length(jsonTestData.Poses), curPoseIndex));
     curMarkerIndex = max(1, min(curMarkerIndex, getMaxMarkerIndex(curPoseIndex)));
     
     if curDisplayType > maxDisplayType
         curDisplayType = 1;
     elseif curDisplayType < 1
-         curDisplayType = maxDisplayType;
+        curDisplayType = maxDisplayType;
     end
     
     if curPoseIndexOriginal ~= curPoseIndex || curDisplayType ~= maxDisplayType
@@ -896,6 +907,7 @@ function poseChanged(resetZoom)
     global resolutionVertical;
     global allHandles;
     global setFigurePosition;
+    global lockResolution;
     
     fixBounds();
     
@@ -905,6 +917,11 @@ function poseChanged(resetZoom)
     catch
         disp(sprintf('Could not load %s', curImageFilename));
         return;
+    end
+    
+    if ~lockResolution
+        resolutionHorizontal = size(image, 2);
+        resolutionVertical = size(image, 1);
     end
     
     [allTestNames, curTestIndex] = getTestNamesFromDirectory();
@@ -925,6 +942,7 @@ function poseChanged(resetZoom)
     set(allHandles.resolutionHorizontal, 'String', num2str(resolutionHorizontal));
     set(allHandles.resolutionVertical, 'String', num2str(resolutionVertical));
     set(allHandles.marker_max, 'String', num2str(length(jsonTestData.Poses{curPoseIndex}.VisionMarkers)));
+    set(allHandles.lockResolution, 'Value', lockResolution);
     
     if isfield(jsonTestData.Poses{curPoseIndex}, 'VisionMarkers') && length(jsonTestData.Poses{curPoseIndex}.VisionMarkers) >= curMarkerIndex
         set(allHandles.markerType, 'String', jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType(8:end));
@@ -1226,5 +1244,4 @@ function ButtonClicked(~, ~, ~)
     end
     
     poseChanged(false);
-    
     

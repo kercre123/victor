@@ -110,6 +110,8 @@
 
 % tests 94-99 are from the auto-generated tests from C:\Anki\products-cozmo\basestation\test\blockWorldTests on 2014-07-21
 
+% tests 100-107 are from the iphone5s front camera pictures
+
 function createSystemTest(outputFilename, imageCopyPath, inputDirectory, inputFilenameRange, distance, angle, light)
 
 numImagesRequired = 10; % for the .1:.1:1.0 exposures
@@ -171,9 +173,11 @@ for iIn = startIndex:endIndex
     jsonTestData.Poses{end+1} = curPose;
     exposure = exposure + 0.1;
     
-    if ~strcmpi(inputDirectory, imageCopyPath)
-        copyfile([inputDirectory,possibleInputFiles(iIn).name], imageCopyPath, 'f');
-    end
+%     if ~strcmpi(inputDirectory, imageCopyPath)
+        sceneString = sprintf('Exposure:%f Distance:%dmm Angle:%d Light:%d', exposure, distance, angle, light);
+        im = imread([inputDirectory,possibleInputFiles(iIn).name]);
+        imwrite(im, [imageCopyPath, possibleInputFiles(iIn).name], 'comment', sceneString);
+%     end
 end
 
 % For speed, also save a copy with just the filenames

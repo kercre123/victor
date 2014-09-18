@@ -2,6 +2,8 @@ function [numRegions, indexList, centroid, components2d] = simpleDetector_step3_
 
 solidThreshold = 0.5;
 sparseThreshold = .001;
+minSideLengthMultiplier = .01; % Was .03
+maxSideLengthMultiplier = .97;
 
 if DEBUG_DISPLAY
     namedFigure('InitialFiltering')
@@ -10,8 +12,8 @@ if DEBUG_DISPLAY
     title(sprintf('Initial Binary Image: %d regions', numRegions))
 end
 
-minSideLength = .03*max(nrows,ncols);
-maxSideLength = .97*min(nrows,ncols);
+minSideLength = minSideLengthMultiplier*max(nrows,ncols);
+maxSideLength = maxSideLengthMultiplier*min(nrows,ncols);
 
 minArea = minSideLength^2 - (.8*minSideLength)^2;
 maxArea = maxSideLength^2 - (.8*maxSideLength)^2;

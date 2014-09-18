@@ -92,7 +92,17 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_DetectFiduc
         markers = {};
         return;
     end
+    
+    if showComponents
+        componentsImage = zeros(size(img));
+        for iComponent = 1:length(indexList)
+            componentsImage(indexList{iComponent}) = iComponent;
+        end
 
+        figure(101);
+        imagesc(componentsImage);
+    end
+    
     if strcmp(embeddedConversions.componentRejectionTestsType, 'matlab_original') 
         [numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY);
     end
@@ -109,7 +119,7 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_DetectFiduc
             componentsImage(indexList{iComponent}) = iComponent;
         end
 
-        figure(1);
+        figure(102);
         imagesc(componentsImage);
     end
     
