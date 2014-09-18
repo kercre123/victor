@@ -15,35 +15,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    ConnectedComponentSegment::ConnectedComponentSegment()
-      : xStart(-1), xEnd(-1), y(-1), id(0)
-    {
-    } // ConnectedComponentSegment::ConnectedComponentSegment()
-
-    ConnectedComponentSegment::ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y, const u16 id)
-      : xStart(xStart), xEnd(xEnd), y(y), id(id)
-    {
-    } // ConnectedComponentSegment::ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y, const u16 id)
-
-    void ConnectedComponentSegment::Print() const
-    {
-      //CoreTechPrint("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
-      CoreTechPrint("[%d: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
-    } // void ConnectedComponentSegment::Print() const
-
-    bool ConnectedComponentSegment::operator== (const ConnectedComponentSegment &component2) const
-    {
-      if((this->xStart == component2.xStart) &&
-        (this->xEnd == component2.xEnd) &&
-        (this->y == component2.y) &&
-        (this->id == component2.id)) {
-          return true;
-      }
-
-      return false;
-    }
-
-    Result ConnectedComponents::Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &components)
+    Result ConnectedComponents::Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment<u16>> &components)
     {
       bool onComponent;
       s16 componentStart;
@@ -68,7 +40,7 @@ namespace Anki
               const s16 componentWidth = x - componentStart;
               if(componentWidth >= minComponentWidth) {
                 //                CoreTechPrint("one: %d %d\n", componentStart, x-numSkipped);
-                components.PushBack(ConnectedComponentSegment(componentStart, x-numSkipped));
+                components.PushBack(ConnectedComponentSegment<u16>(componentStart, x-numSkipped));
               }
               onComponent = false;
             }
@@ -88,7 +60,7 @@ namespace Anki
         const s16 componentWidth = binaryImageWidth - componentStart;
         if(componentWidth >= minComponentWidth) {
           //          CoreTechPrint("two: %d %d\n", componentStart, binaryImageWidth-numSkipped-1);
-          components.PushBack(ConnectedComponentSegment(componentStart, binaryImageWidth-numSkipped-1));
+          components.PushBack(ConnectedComponentSegment<u16>(componentStart, binaryImageWidth-numSkipped-1));
         }
       }
 
@@ -109,11 +81,11 @@ namespace Anki
       AnkiConditionalErrorAndReturn(maxImageWidth > 0 && maxImageWidth <= s16_MAX,
         "ConnectedComponents::ConnectedComponents", "maxImageWidth must be less than 0x7FFF");
 
-      this->components = FixedLengthList<ConnectedComponentSegment>(maxComponentSegments, memory);
+      this->components = FixedLengthList<ConnectedComponentSegment<u16>>(maxComponentSegments, memory);
 
-      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment>();
-      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment>();
-      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment>();
+      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment<u16>>();
+      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment<u16>>();
+      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment<u16>>();
       this->equivalentComponents = FixedLengthList<u16>();
 
       this->curState = STATE_CONSTRUCTED;
@@ -130,9 +102,9 @@ namespace Anki
 
       this->maximumId = 0;
 
-      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, fastMemory);
-      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, fastMemory);
-      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, fastMemory);
+      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment<u16>>(maxImageWidth, fastMemory);
+      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment<u16>>(maxImageWidth, fastMemory);
+      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment<u16>>(maxImageWidth, fastMemory);
       this->equivalentComponents = FixedLengthList<u16>(maxComponentSegments, slowMemory);
 
       u16 * restrict pEquivalentComponents = equivalentComponents.Pointer(0);
@@ -152,9 +124,9 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->curState == STATE_INITIALIZED,
         RESULT_FAIL, "ConnectedComponents::Extract2dComponents_PerRow_NextRow", "Object is not initialized");
 
-      const ConnectedComponentSegment * restrict pCurrentComponents1d = currentComponents1d.Pointer(0);
-      const ConnectedComponentSegment * restrict pPreviousComponents1d = previousComponents1d.Pointer(0);
-      ConnectedComponentSegment * restrict pNewPreviousComponents1d = newPreviousComponents1d.Pointer(0);
+      const ConnectedComponentSegment<u16> * restrict pCurrentComponents1d = currentComponents1d.Pointer(0);
+      const ConnectedComponentSegment<u16> * restrict pPreviousComponents1d = previousComponents1d.Pointer(0);
+      ConnectedComponentSegment<u16> * restrict pNewPreviousComponents1d = newPreviousComponents1d.Pointer(0);
 
       u16 * restrict pEquivalentComponents = equivalentComponents.Pointer(0);
 
@@ -186,7 +158,7 @@ namespace Anki
                 foundMatch = true;
                 firstMatchedPreviousId = pPreviousComponents1d[iPrevious].id;
 
-                const ConnectedComponentSegment newComponent(pCurrentComponents1d[iCurrent].xStart, pCurrentComponents1d[iCurrent].xEnd, whichRow, firstMatchedPreviousId);
+                const ConnectedComponentSegment<u16> newComponent(pCurrentComponents1d[iCurrent].xStart, pCurrentComponents1d[iCurrent].xEnd, whichRow, firstMatchedPreviousId);
 
                 const Result result = components.PushBack(newComponent);
 
@@ -216,7 +188,7 @@ namespace Anki
           this->maximumId++;
           firstMatchedPreviousId = this->maximumId;
 
-          const ConnectedComponentSegment newComponent(pCurrentComponents1d[iCurrent].xStart, pCurrentComponents1d[iCurrent].xEnd, whichRow, firstMatchedPreviousId);
+          const ConnectedComponentSegment<u16> newComponent(pCurrentComponents1d[iCurrent].xStart, pCurrentComponents1d[iCurrent].xEnd, whichRow, firstMatchedPreviousId);
 
           pNewPreviousComponents1d[iCurrent] = newComponent;
 
@@ -281,7 +253,7 @@ namespace Anki
 
       // Replace the id of all 1d components with their minimum equivalent id
       {
-        ConnectedComponentSegment * restrict pComponents = components.Pointer(0);
+        ConnectedComponentSegment<u16> * restrict pComponents = components.Pointer(0);
         for(s32 iComponent=0; iComponent<numComponents; iComponent++) {
           pComponents[iComponent].id = pEquivalentComponents[pComponents[iComponent].id];
         }
@@ -328,12 +300,12 @@ namespace Anki
       // Performs insersion sort
       // TODO: do bucket sort by id first, then run this
 
-      ConnectedComponentSegment * restrict pComponents = components.Pointer(0);
+      ConnectedComponentSegment<u16> * restrict pComponents = components.Pointer(0);
 
       const s32 numComponents = components.get_size();
 
       for(s32 iComponent=1; iComponent<numComponents; iComponent++) {
-        const ConnectedComponentSegment segmentToInsert = pComponents[iComponent];
+        const ConnectedComponentSegment<u16> segmentToInsert = pComponents[iComponent];
 
         s32 holePosition = iComponent;
 
@@ -350,7 +322,7 @@ namespace Anki
       this->isSortedInX = true;
 
       return RESULT_OK;
-    } // Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment> &components)
+    } // Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment<u16>> &components)
 
     Result ConnectedComponents::SortConnectedComponentSegmentsById(MemoryStack scratch)
     {
@@ -359,7 +331,7 @@ namespace Anki
 
       idCounts.SetZero();
 
-      const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
+      const ConnectedComponentSegment<u16> * restrict pConstComponents = components.Pointer(0);
       u16 * restrict pIdCounts = idCounts.Pointer(0);
 
       // Count the number of ComponenentSegments that have each id
@@ -380,8 +352,8 @@ namespace Anki
         return RESULT_OK;
       }
 
-      // NOTE: this could use a lot of space numValidComponentSegments*sizeof(ConnectedComponentSegment) = numValidComponentSegments*8
-      FixedLengthList<ConnectedComponentSegment> componentsTmp(numValidComponentSegments, scratch);
+      // NOTE: this could use a lot of space numValidComponentSegments*sizeof(ConnectedComponentSegment<u16>) = numValidComponentSegments*8
+      FixedLengthList<ConnectedComponentSegment<u16>> componentsTmp(numValidComponentSegments, scratch);
 
       // Could fail if we don't have enough scratch space
       if(!componentsTmp.IsValid())
@@ -398,7 +370,7 @@ namespace Anki
       }
 
       // Go through the list, and copy each ComponentSegment into the correct "bucket"
-      ConnectedComponentSegment * restrict pComponentsTmp = componentsTmp.Pointer(0);
+      ConnectedComponentSegment<u16> * restrict pComponentsTmp = componentsTmp.Pointer(0);
       for(s32 oldIndex=0; oldIndex<numComponents; oldIndex++) {
         const u16 id = pConstComponents[oldIndex].id;
 
@@ -411,7 +383,7 @@ namespace Anki
       } // for(s32 i=0; i<numComponents; i++)
 
       // Copy the sorted segments back to the original
-      memcpy(this->components.Pointer(0), componentsTmp.Pointer(0), totalCount*sizeof(ConnectedComponentSegment));
+      memcpy(this->components.Pointer(0), componentsTmp.Pointer(0), totalCount*sizeof(ConnectedComponentSegment<u16>));
 
       this->components.set_size(totalCount);
 
@@ -425,7 +397,7 @@ namespace Anki
       const s32 numComponents = components.get_size();
 
       this->maximumId = 0;
-      const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
+      const ConnectedComponentSegment<u16> * restrict pConstComponents = components.Pointer(0);
       for(s32 i=0; i<numComponents; i++) {
         this->maximumId = MAX(this->maximumId, pConstComponents[i].id);
       }
@@ -441,7 +413,7 @@ namespace Anki
       componentSizes.SetZero();
       componentSizes.set_size(maximumId+1);
 
-      const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
+      const ConnectedComponentSegment<u16> * restrict pConstComponents = components.Pointer(0);
       s32 * restrict pComponentSizes = componentSizes.Pointer(0);
 
       const s32 numComponents = components.get_size();
@@ -475,7 +447,7 @@ namespace Anki
       if((lastResult = ComputeComponentSizes(componentSizes)) != RESULT_OK)
         return lastResult;
 
-      const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
+      const ConnectedComponentSegment<u16> * restrict pConstComponents = components.Pointer(0);
 
       {
         Point<s32> * restrict pComponentCentroidAccumulators = componentCentroidAccumulators.Pointer(0);
@@ -520,7 +492,7 @@ namespace Anki
       const s32 numComponents = components.get_size();
       const s32 numComponentBoundingBoxes = componentBoundingBoxes.get_size();
 
-      const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
+      const ConnectedComponentSegment<u16> * restrict pConstComponents = components.Pointer(0);
       Rectangle<s16> * restrict pComponentBoundingBoxes = componentBoundingBoxes.Pointer(0);
 
       for(s32 i=0; i<numComponentBoundingBoxes; i++) {
@@ -553,7 +525,7 @@ namespace Anki
       numComponentSegments.SetZero();
       numComponentSegments.set_size(maximumId+1);
 
-      const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
+      const ConnectedComponentSegment<u16> * restrict pConstComponents = components.Pointer(0);
       s32 * restrict pNumComponentSegments = numComponentSegments.Pointer(0);
 
       const s32 numComponents = components.get_size();
@@ -571,7 +543,7 @@ namespace Anki
     {
       s32 numUsedIds = 0;
 
-      const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
+      const ConnectedComponentSegment<u16> * restrict pConstComponents = components.Pointer(0);
 
       // Compute the number of unique components
       u8 *usedIds = reinterpret_cast<u8*>(scratch.Allocate(maximumId+1));
@@ -602,7 +574,7 @@ namespace Anki
         }
       }
 
-      ConnectedComponentSegment * restrict pComponents = components.Pointer(0);
+      ConnectedComponentSegment<u16> * restrict pComponents = components.Pointer(0);
       // Convert the id numbers to the compressed id numbers
       for(s32 i=0; i<numComponents; i++) {
         pComponents[i].id = idLookupTable[pComponents[i].id];
@@ -613,11 +585,11 @@ namespace Anki
       // TODO: Think if this can modify the this->isSortedInId attribute. I think it can't
 
       return RESULT_OK;
-    } // Result CompressConnectedComponentSegmentIds(FixedLengthList<ConnectedComponentSegment> &components, MemoryStack scratch)
+    } // Result CompressConnectedComponentSegmentIds(FixedLengthList<ConnectedComponentSegment<u16>> &components, MemoryStack scratch)
 
     Result ConnectedComponents::InvalidateSmallOrLargeComponents(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch)
     {
-      const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
+      const ConnectedComponentSegment<u16> * restrict pConstComponents = components.Pointer(0);
 
       s32 *componentSizes = reinterpret_cast<s32*>(scratch.Allocate( sizeof(s32)*(maximumId+1) ));
 
@@ -636,7 +608,7 @@ namespace Anki
 
       // TODO: mark the components as invalid, instead of doing all the checks every time
 
-      ConnectedComponentSegment * restrict pComponents = components.Pointer(0);
+      ConnectedComponentSegment<u16> * restrict pComponents = components.Pointer(0);
       for(s32 i=0; i<numComponents; i++) {
         const u16 id = pComponents[i].id;
 
@@ -654,7 +626,7 @@ namespace Anki
 
     Result ConnectedComponents::InvalidateSolidOrSparseComponents(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch)
     {
-      const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
+      const ConnectedComponentSegment<u16> * restrict pConstComponents = components.Pointer(0);
 
       const s32 numComponents = components.get_size();
 
@@ -716,7 +688,7 @@ namespace Anki
         }
       }
 
-      ConnectedComponentSegment * restrict pComponents = components.Pointer(0);
+      ConnectedComponentSegment<u16> * restrict pComponents = components.Pointer(0);
       for(s32 i=0; i<numComponents; i++) {
         const u16 id = pComponents[i].id;
 
@@ -767,7 +739,7 @@ namespace Anki
 
       // If any ComponentSegment is within the shrunk bounding box, that componentId is invalid
       {
-        const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
+        const ConnectedComponentSegment<u16> * restrict pConstComponents = components.Pointer(0);
         const Rectangle<s16> * restrict pConstComponentBoundingBoxes = componentBoundingBoxes.Pointer(0);
 
         bool * restrict pValidComponents = validComponents.Pointer(0);
@@ -796,7 +768,7 @@ namespace Anki
 
       // Set all invalid ComponentSegments to zero
       {
-        ConnectedComponentSegment * restrict pComponents = components.Pointer(0);
+        ConnectedComponentSegment<u16> * restrict pComponents = components.Pointer(0);
 
         const bool * restrict pValidComponents = validComponents.Pointer(0);
 
@@ -822,7 +794,7 @@ namespace Anki
     {
       const s32 numComponents = components.get_size();
 
-      ConnectedComponentSegment * restrict pComponents = components.Pointer(0);
+      ConnectedComponentSegment<u16> * restrict pComponents = components.Pointer(0);
 
       FixedLengthList<s32> maxCenterDistanceSum(maximumId+1, scratch, Flags::Buffer(false,false,true));
 
@@ -915,7 +887,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result ConnectedComponents::PushBack(const ConnectedComponentSegment &value)
+    Result ConnectedComponents::PushBack(const ConnectedComponentSegment<u16> &value)
     {
       const Result result = components.PushBack(value);
 

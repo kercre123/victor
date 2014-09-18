@@ -22,23 +22,24 @@ namespace Anki
   namespace Embedded
   {
     // A 1d, run-length encoded piece of a 2d component
-    class ConnectedComponentSegment
+    // The type is for storing the ID. u16 is enough for QVGA, but VGA and above need s32
+    template<typename Type> class ConnectedComponentSegment
     {
     public:
       // xStart, xEnd, y use array indexes, meaning the first pixel is at (0,0), not (0.5,0.5) like true coordinates
+      Type id;
       s16 xStart, xEnd, y;
-      u16 id;
 
       ConnectedComponentSegment();
 
-      ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y = -1, const u16 id = 0);
+      ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y = -1, const Type id = 0);
 
       void Print() const;
 
       bool operator== (const ConnectedComponentSegment &component2) const;
     }; // class ConnectedComponentSegment
 
-    // A ConnectedComponents class holds a list of ConnectedComponentSegment objects
+    // A ConnectedComponents class holds a list of ConnectedComponentSegment<u16> objects
     // It can incrementally parse an input binary image per-row, updating its global list as it goes
     // It also contains various utilities to remove poor-quality components
     class ConnectedComponents
@@ -47,9 +48,9 @@ namespace Anki
       // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
       // The ordering of components is first by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
       // TODO: Doublecheck that this is correct for corner cases
-      static inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b);
+      static inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment<u16> &a, const ConnectedComponentSegment<u16> &b);
 
-      static Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents);
+      static Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment<u16>> &extractedComponents);
 
       ConnectedComponents();
 
@@ -78,7 +79,7 @@ namespace Anki
 
       // Sort the components by id. This will retain the original ordering as well, so if the
       // components are already sorted in y, the output of this method will be sorted in id and y.
-      // Requires numValidComponentSegments*sizeof(ConnectedComponentSegment) bytes of scratch
+      // Requires numValidComponentSegments*sizeof(ConnectedComponentSegment<u16>) bytes of scratch
       Result SortConnectedComponentSegmentsById(MemoryStack scratch);
 
       // The list of components may have unused ids. This function compresses the set of ids, so that
@@ -115,7 +116,7 @@ namespace Anki
       Result ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments);
 
       // Goes through the list components, and computes the number of pixels for each.
-      // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment with that id will have their ids set to zero
+      // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment<u16> with that id will have their ids set to zero
       //
       // For a ConnectedComponent that has a maximum id of N, this function requires
       // 4n + 4 bytes of scratch.
@@ -123,7 +124,7 @@ namespace Anki
 
       // Goes through the list components, and computes the "solidness", which is the ratio of
       // "numPixels / (boundingWidth*boundingHeight)". For any componentId with that is too solid or
-      // sparse (opposite of solid), all ConnectedComponentSegment with that id will have their ids
+      // sparse (opposite of solid), all ConnectedComponentSegment<u16> with that id will have their ids
       // set to zero
       //
       // The SQ26.5 parameter sparseMultiplyThreshold is set so that a component is invalid if
@@ -165,13 +166,13 @@ namespace Anki
       // TODO: what is a reasonable value? 1.0?
       Result InvalidateFilledCenterComponents_hollowRows(const f32 minHollowRatio, MemoryStack scratch);
 
-      Result PushBack(const ConnectedComponentSegment &value);
+      Result PushBack(const ConnectedComponentSegment<u16> &value);
 
       // Note that this is a const-only accessor function. The ConnectedComponets class keeps a lot
       // of tabs on sorting and maximumId and such, so no one else should be directly modifying the
       // buffers.
-      inline const ConnectedComponentSegment* Pointer(const s32 index) const;
-      inline const ConnectedComponentSegment& operator[](const s32 index) const;
+      inline const ConnectedComponentSegment<u16>* Pointer(const s32 index) const;
+      inline const ConnectedComponentSegment<u16>& operator[](const s32 index) const;
 
       bool IsValid() const;
 
@@ -194,10 +195,10 @@ namespace Anki
         STATE_FINALIZED
       };
 
-      FixedLengthList<ConnectedComponentSegment> components;
-      FixedLengthList<ConnectedComponentSegment> currentComponents1d;
-      FixedLengthList<ConnectedComponentSegment> previousComponents1d;
-      FixedLengthList<ConnectedComponentSegment> newPreviousComponents1d;
+      FixedLengthList<ConnectedComponentSegment<u16>> components;
+      FixedLengthList<ConnectedComponentSegment<u16>> currentComponents1d;
+      FixedLengthList<ConnectedComponentSegment<u16>> previousComponents1d;
+      FixedLengthList<ConnectedComponentSegment<u16>> newPreviousComponents1d;
       FixedLengthList<u16> equivalentComponents;
 
       State curState;

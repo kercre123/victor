@@ -106,7 +106,7 @@ namespace Anki
         //xStart = component(iSubComponent, 2);
         //xEnd = component(iSubComponent, 3);
         //y = component(iSubComponent, 1);
-        ConnectedComponentSegment currentSegment = components[iSegment];
+        ConnectedComponentSegment<u16> currentSegment = components[iSegment];
         currentSegment.xEnd -= boundingBox.left;
         currentSegment.xStart -= boundingBox.left;
         currentSegment.y -= boundingBox.top;

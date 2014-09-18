@@ -3369,23 +3369,23 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
   // Small square
   for(s32 y=0; y<15; y++) {
-    components.PushBack(ConnectedComponentSegment(10,24,y+4,1));
+    components.PushBack(ConnectedComponentSegment<u16>(10,24,y+4,1));
   }
 
   // Big square
   for(s32 y=0; y<30; y++) {
-    components.PushBack(ConnectedComponentSegment(100,129,y+50,2));
+    components.PushBack(ConnectedComponentSegment<u16>(100,129,y+50,2));
   }
 
   // Skewed quad
-  components.PushBack(ConnectedComponentSegment(100,300,100,3));
+  components.PushBack(ConnectedComponentSegment<u16>(100,300,100,3));
   for(s32 y=0; y<10; y++) {
-    components.PushBack(ConnectedComponentSegment(100,110,y+100,3));
+    components.PushBack(ConnectedComponentSegment<u16>(100,110,y+100,3));
   }
 
   // Tiny square
   for(s32 y=0; y<5; y++) {
-    components.PushBack(ConnectedComponentSegment(10,14,y,4));
+    components.PushBack(ConnectedComponentSegment<u16>(10,14,y,4));
   }
 
   FixedLengthList<Quadrilateral<s16> > extractedQuads(2, scratchOnchip);
@@ -3611,7 +3611,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   const s32 extractedBoundaryY_groundTruth[128] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
 
   for(s32 i=0; i<numComponents; i++) {
-    components.PushBack(ConnectedComponentSegment(xStartValues[i],xEndValues[i],yValues[i],1));
+    components.PushBack(ConnectedComponentSegment<u16>(xStartValues[i],xEndValues[i],yValues[i],1));
   }
 
   components.SortConnectedComponentSegments();
@@ -3656,16 +3656,16 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 
   ConnectedComponents components(numComponents, 640, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1004, 2, 1);
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 4, 3, 2);
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 2, 4, 3);
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(4, 6, 5, 3);
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(8, 10, 6, 3);
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 4, 7, 4);
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(6, 6, 8, 4);
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(5, 1000, 9, 5);
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1);
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(12, 12, 1, 1);
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(16, 1004, 2, 1);
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(0, 4, 3, 2);
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 2, 4, 3);
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(4, 6, 5, 3);
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(8, 10, 6, 3);
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 4, 7, 4);
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(6, 6, 8, 4);
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(5, 1000, 9, 5);
 
   components.PushBack(component0);
   components.PushBack(component1);
@@ -3705,16 +3705,16 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 
   ConnectedComponents components(numComponents, 640, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1004, 2, 1);
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 4, 3, 2);
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 2, 4, 3);
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(4, 6, 5, 3);
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(8, 10, 6, 3);
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 4, 7, 4);
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(6, 6, 8, 4);
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 1000, 9, 5);
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1);
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(12, 12, 1, 1);
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(16, 1004, 2, 1);
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(0, 4, 3, 2);
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 2, 4, 3);
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(4, 6, 5, 3);
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(8, 10, 6, 3);
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 4, 7, 4);
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(6, 6, 8, 4);
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 1000, 9, 5);
 
   components.PushBack(component0);
   components.PushBack(component1);
@@ -3755,16 +3755,16 @@ GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
 
   ConnectedComponents components(numComponents, 640, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 2, 5, 1);
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(4, 6, 5, 1);
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(0, 0, 6, 1);
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(6, 6, 6, 1);
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 1, 7, 2);
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(3, 3, 7, 2);
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(5, 7, 7, 2);
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 1, 8, 2);
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(5, 12, 8, 2);
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 10, 12, 3);
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 2, 5, 1);
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(4, 6, 5, 1);
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(0, 0, 6, 1);
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(6, 6, 6, 1);
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 1, 7, 2);
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(3, 3, 7, 2);
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(5, 7, 7, 2);
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 1, 8, 2);
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(5, 12, 8, 2);
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 10, 12, 3);
 
   components.PushBack(component0);
   components.PushBack(component1);
@@ -3812,16 +3812,16 @@ GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
 
   ConnectedComponents components(numComponents, 640, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1); // Ok
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(0, 10, 3, 1);
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(0, 10, 5, 2); // Too solid
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 10, 6, 2);
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 10, 8, 2);
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, 10, 10, 3); // Too sparse
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, 10, 100, 3);
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 0, 105, 4); // Ok
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, 0, 108, 4);
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 10, 110, 5); // Too solid
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1); // Ok
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(0, 10, 3, 1);
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(0, 10, 5, 2); // Too solid
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(0, 10, 6, 2);
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 10, 8, 2);
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(0, 10, 10, 3); // Too sparse
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(0, 10, 100, 3);
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 0, 105, 4); // Ok
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(0, 0, 108, 4);
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 10, 110, 5); // Too solid
 
   components.PushBack(component0);
   components.PushBack(component1);
@@ -3867,16 +3867,16 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
 
   ConnectedComponents components(numComponents, 640, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1004, 2, 1);
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 4, 3, 2);
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 2, 4, 3);
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(4, 6, 5, 3);
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(8, 10, 6, 3);
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 4, 7, 4);
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(6, 6, 8, 4);
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 1000, 9, 5);
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1);
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(12, 12, 1, 1);
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(16, 1004, 2, 1);
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(0, 4, 3, 2);
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 2, 4, 3);
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(4, 6, 5, 3);
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(8, 10, 6, 3);
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 4, 7, 4);
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(6, 6, 8, 4);
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 1000, 9, 5);
 
   components.PushBack(component0);
   components.PushBack(component1);
@@ -3939,16 +3939,16 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 
   ConnectedComponents components(numComponents, 640, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 0, 0, 5);  // 3
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(0, 0, 0, 10); // 4
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(0, 0, 0, 0);  // 0
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 0, 0, 101);// 6
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 0, 0, 3);  // 1
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, 0, 0, 4);  // 2
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, 0, 0, 11); // 5
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 0, 0, 3);  // 1
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, 0, 0, 3);  // 1
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 0, 0, 5);  // 3
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 0, 0, 5);  // 3
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(0, 0, 0, 10); // 4
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(0, 0, 0, 0);  // 0
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(0, 0, 0, 101);// 6
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 0, 0, 3);  // 1
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(0, 0, 0, 4);  // 2
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(0, 0, 0, 11); // 5
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 0, 0, 3);  // 1
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(0, 0, 0, 3);  // 1
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 0, 0, 5);  // 3
 
   components.PushBack(component0);
   components.PushBack(component1);
@@ -4000,7 +4000,7 @@ GTEST_TEST(CoreTech_Vision, ComponentsSize)
   CoreTechPrint("Original size: %d\n", usedBytes0);
 #endif
 
-  FixedLengthList<ConnectedComponentSegment> segmentList(numComponents, scratchOnchip);
+  FixedLengthList<ConnectedComponentSegment<u16>> segmentList(numComponents, scratchOnchip);
 
   const s32 usedBytes1 = scratchOnchip.get_usedBytes();
   const double actualSizePlusOverhead = double(usedBytes1 - usedBytes0) / double(numComponents);
@@ -4012,11 +4012,11 @@ GTEST_TEST(CoreTech_Vision, ComponentsSize)
     "Actual size (includes overhead): %d\n",
     usedBytes1,
     usedBytes1 - usedBytes0,
-    sizeof(ConnectedComponentSegment),
+    sizeof(ConnectedComponentSegment<u16>),
     actualSizePlusOverhead);
 #endif // #ifdef PRINTF_SIZE_RESULTS
 
-  const double difference = actualSizePlusOverhead - double(sizeof(ConnectedComponentSegment));
+  const double difference = actualSizePlusOverhead - double(sizeof(ConnectedComponentSegment<u16>));
   ASSERT_TRUE(difference > -0.0001 && difference < 1.0);
 
   GTEST_RETURN_HERE;
@@ -4034,16 +4034,16 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
 
   ConnectedComponents components(numComponents, 640, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, u16_MAX); // 2
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, 0); // 9
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, 0); // 7
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, u16_MAX); // 4
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 5
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, 0); // 8
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, u16_MAX); // 3
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, u16_MAX); // 1
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 6
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(42, 42, 42, 42); // 0
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(50, 100, 50, u16_MAX); // 2
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, s16_MAX, 0); // 9
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, 0, 0); // 7
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, s16_MAX, u16_MAX); // 4
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, s16_MAX, 0, 0); // 5
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(0, s16_MAX, s16_MAX, 0); // 8
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(0, s16_MAX, s16_MAX, u16_MAX); // 3
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, 0, u16_MAX); // 1
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(0, s16_MAX, 0, 0); // 6
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(42, 42, 42, 42); // 0
 
   components.PushBack(component0);
   components.PushBack(component1);
@@ -4085,16 +4085,16 @@ GTEST_TEST(CoreTech_Vision, SortComponentsById)
 
   ConnectedComponents components(numComponents, 640, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(1, 1, 1, 3); // 6
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(2, 2, 2, 1); // 0
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(3, 3, 3, 1); // 1
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(4, 4, 4, 0); // X
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(5, 5, 5, 1); // 2
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(6, 6, 6, 1); // 3
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(7, 7, 7, 1); // 4
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(8, 8, 8, 4); // 7
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(9, 9, 9, 5); // 8
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 0, 0, 1); // 5
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(1, 1, 1, 3); // 6
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(2, 2, 2, 1); // 0
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(3, 3, 3, 1); // 1
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(4, 4, 4, 0); // X
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(5, 5, 5, 1); // 2
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(6, 6, 6, 1); // 3
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(7, 7, 7, 1); // 4
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(8, 8, 8, 4); // 7
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(9, 9, 9, 5); // 8
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 0, 0, 1); // 5
 
   components.PushBack(component0);
   components.PushBack(component1);
@@ -4180,7 +4180,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
   //binaryImage.Print("binaryImage");
 
-  //FixedLengthList<ConnectedComponentSegment> extractedComponents(maxComponentSegments, scratchOnchip);
+  //FixedLengthList<ConnectedComponentSegment<u16>> extractedComponents(maxComponentSegments, scratchOnchip);
   ConnectedComponents components(maxComponentSegments, imageWidth, scratchOnchip);
   ASSERT_TRUE(components.IsValid());
 
@@ -4219,7 +4219,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   u8 * binaryImageRow = reinterpret_cast<u8*>(scratchOnchip.Allocate(imageWidth));
   memset(binaryImageRow, 0, imageWidth);
 
-  FixedLengthList<ConnectedComponentSegment> extractedComponentSegments(maxComponents, scratchOnchip);
+  FixedLengthList<ConnectedComponentSegment<u16>> extractedComponentSegments(maxComponents, scratchOnchip);
 
   for(s32 i=10; i<=15; i++) binaryImageRow[i] = 1;
   for(s32 i=25; i<=35; i++) binaryImageRow[i] = 1;
