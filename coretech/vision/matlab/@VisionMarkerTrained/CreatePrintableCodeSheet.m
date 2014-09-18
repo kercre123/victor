@@ -38,9 +38,9 @@ function CreatePrintableCodeSheet(varargin)
 %    fit). Use this, for example, to fill up a sheet when there are fewer
 %    markers in the directory than will fit on the sheet.
 %
-%  'outsideBorderWidth' [29]
+%  'outsideBorderWidth' [markerSize + 4]
 %    Add a light gray, dotted border of this size around each code. If
-%    empty, the border will not be printed.
+%    zero, the border will not be printed.
 %
 % Example Usage:
 %
@@ -59,12 +59,16 @@ pageWidth  = 11 * 25.4; % in mm
 markerImageDir = [];
 markerSize = 25; % in mm
 numPerCode = 1;
-outsideBorderWidth = 29; % in mm, empty to not use
+outsideBorderWidth = []; % in mm, empty to not use
 
 parseVarargin(varargin{:});
 
 assert(isempty(outsideBorderWidth) || outsideBorderWidth > markerSize, ...
     'If specified, outsideBorderWidth should be larger than the markerSize.');
+
+if isempty(outsideBorderWidth)
+    outsideBorderWidth = markerSize + 4;
+end
 
 % For now, assume all the training images were in a "rotated" subdir and
 % we want to create the test image from the parent of that subdir
