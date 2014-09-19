@@ -42,10 +42,24 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(startComponentIndex >= 0 && startComponentIndex < numComponents,
         RESULT_FAIL_INVALID_PARAMETER, "ComputeQuadrilateralsFromConnectedComponents", "startComponentIndex is not in range");
 
-      const u16 componentId = components[startComponentIndex].id;
+      const bool useU16 = components.get_useU16();
+      const ConnectedComponentsTemplate<u16>* componentsU16 = components.get_componentsU16();
+      const ConnectedComponentsTemplate<s32>* componentsS32 = components.get_componentsS32();
 
-      AnkiConditionalErrorAndReturnValue(componentId > 0,
-        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "componentId is not valid.");
+      u16 componentIdU16 = 0;
+      s32 componentIdS32 = 0;
+
+      if(useU16) {
+        componentIdU16 = (*componentsU16)[startComponentIndex].id;
+
+        AnkiConditionalErrorAndReturnValue(componentIdU16 > 0,
+          RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "componentId is not valid.");
+      } else {
+        componentIdS32 = (*componentsS32)[startComponentIndex].id;
+
+        AnkiConditionalErrorAndReturnValue(componentIdS32 > 0,
+          RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "componentId is not valid.");
+      }
 
       extractedBoundary.Clear();
 
@@ -57,22 +71,40 @@ namespace Anki
       //coordinate_right = max(component(:,3), [], 1);
       Rectangle<s16> boundingBox(s16_MAX, s16_MIN, s16_MAX, s16_MIN);
       endComponentIndex = numComponents - 1;
-      for(s32 i=startComponentIndex; i<numComponents; i++) {
-        if(components[i].id != componentId)
-        {
-          endComponentIndex = i-1;
-          break;
+
+      if(useU16) {
+        for(s32 i=startComponentIndex; i<numComponents; i++) {
+          if((*componentsU16)[i].id != componentIdU16) {
+            endComponentIndex = i-1;
+            break;
+          }
+
+          const s16 xStart = (*componentsU16)[i].xStart;
+          const s16 xEnd = (*componentsU16)[i].xEnd;
+          const s16 y = (*componentsU16)[i].y;
+
+          boundingBox.left = MIN(boundingBox.left, xStart);
+          boundingBox.right = MAX(boundingBox.right, xEnd+1); // +1, because the coorindate we want is the crack after the right pixel
+          boundingBox.top = MIN(boundingBox.top, y);
+          boundingBox.bottom = MAX(boundingBox.bottom, y+1); // +1, because the coorindate we want is the crack after the bottom pixel
         }
+      } else { // if(useU16)
+        for(s32 i=startComponentIndex; i<numComponents; i++) {
+          if((*componentsS32)[i].id != componentIdS32) {
+            endComponentIndex = i-1;
+            break;
+          }
 
-        const s16 xStart = components[i].xStart;
-        const s16 xEnd = components[i].xEnd;
-        const s16 y = components[i].y;
+          const s16 xStart = (*componentsS32)[i].xStart;
+          const s16 xEnd = (*componentsS32)[i].xEnd;
+          const s16 y = (*componentsS32)[i].y;
 
-        boundingBox.left = MIN(boundingBox.left, xStart);
-        boundingBox.right = MAX(boundingBox.right, xEnd+1); // +1, because the coorindate we want is the crack after the right pixel
-        boundingBox.top = MIN(boundingBox.top, y);
-        boundingBox.bottom = MAX(boundingBox.bottom, y+1); // +1, because the coorindate we want is the crack after the bottom pixel
-      }
+          boundingBox.left = MIN(boundingBox.left, xStart);
+          boundingBox.right = MAX(boundingBox.right, xEnd+1); // +1, because the coorindate we want is the crack after the right pixel
+          boundingBox.top = MIN(boundingBox.top, y);
+          boundingBox.bottom = MAX(boundingBox.bottom, y+1); // +1, because the coorindate we want is the crack after the bottom pixel
+        }
+      } // if(useU16) ... else
 
       if(boundingBox.left == s16_MAX || boundingBox.right == s16_MIN || boundingBox.top == s16_MAX || boundingBox.bottom == s16_MIN) {
         AnkiWarn("ComputeQuadrilateralsFromConnectedComponents", "Something was corrupted with the input component");

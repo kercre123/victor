@@ -3365,7 +3365,7 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
     Quadrilateral<s16>(Point<s16>(24,4), Point<s16>(10,4), Point<s16>(24,18), Point<s16>(10,18)) ,
     Quadrilateral<s16>(Point<s16>(129,50),  Point<s16>(100,50), Point<s16>(129,79), Point<s16>(100,79)) };
 
-  ConnectedComponents components(numComponents, imageWidth, scratchOnchip);
+  ConnectedComponents components(numComponents, imageWidth, true, scratchOnchip);
 
   // Small square
   for(s32 y=0; y<15; y++) {
@@ -3601,7 +3601,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
   const s32 yValues[128] = {200, 200, 201, 201, 202, 203, 204, 205, 206, 207, 207, 208, 208, 209, 209, 210, 210};
   const s32 xStartValues[128] = {102, 104, 102, 108, 102, 100, 100, 104, 100, 100, 103, 100, 103, 100, 103, 100, 103};
@@ -3654,7 +3654,7 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
   const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1);
   const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(12, 12, 1, 1);
@@ -3703,7 +3703,7 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
   const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1);
   const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(12, 12, 1, 1);
@@ -3753,7 +3753,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
   const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 2, 5, 1);
   const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(4, 6, 5, 1);
@@ -3810,7 +3810,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
   const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1); // Ok
   const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(0, 10, 3, 1);
@@ -3865,7 +3865,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
   const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1);
   const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(12, 12, 1, 1);
@@ -3937,7 +3937,7 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
   const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 0, 0, 5);  // 3
   const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(0, 0, 0, 10); // 4
@@ -4032,7 +4032,7 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
   const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(50, 100, 50, u16_MAX); // 2
   const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, s16_MAX, 0); // 9
@@ -4083,7 +4083,7 @@ GTEST_TEST(CoreTech_Vision, SortComponentsById)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
   const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(1, 1, 1, 3); // 6
   const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(2, 2, 2, 1); // 0
@@ -4181,7 +4181,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   //binaryImage.Print("binaryImage");
 
   //FixedLengthList<ConnectedComponentSegment<u16>> extractedComponents(maxComponentSegments, scratchOnchip);
-  ConnectedComponents components(maxComponentSegments, imageWidth, scratchOnchip);
+  ConnectedComponents components(maxComponentSegments, imageWidth, true, scratchOnchip);
   ASSERT_TRUE(components.IsValid());
 
   const Result result = components.Extract2dComponents_FullImage(binaryImage, minComponentWidth, maxSkipDistance, scratchOnchip);
@@ -4227,7 +4227,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   for(s32 i=43; i<=45; i++) binaryImageRow[i] = 1;
   for(s32 i=47; i<=49; i++) binaryImageRow[i] = 1;
 
-  const Result result = ConnectedComponents::Extract1dComponents(binaryImageRow, imageWidth, minComponentWidth, maxSkipDistance, extractedComponentSegments);
+  const Result result = ConnectedComponentsTemplate<u16>::Extract1dComponents(binaryImageRow, imageWidth, minComponentWidth, maxSkipDistance, extractedComponentSegments);
 
   ASSERT_TRUE(result == RESULT_OK);
 
