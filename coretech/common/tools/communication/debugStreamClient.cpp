@@ -141,20 +141,29 @@ namespace Anki
       this->isValid = false;
 
       // Clean up allocated memory
-      while(!rawMessageQueue.IsEmpty()) {
-        DebugStreamClient::RawBuffer object = rawMessageQueue.Pop();
+      rawMessageQueue.Lock();
+      while(rawMessageQueue.Size_unsafe() > 0) {
+        DebugStreamClient::RawBuffer object = rawMessageQueue.Front_unsafe();
+        rawMessageQueue.Pop_unsafe();
         free(object.data);
       }
+      rawMessageQueue.Unlock();
 
-      while(!parsedObjectQueue.IsEmpty()) {
-        DebugStreamClient::Object object = parsedObjectQueue.Pop();
+      parsedObjectQueue.Lock();
+      while(parsedObjectQueue.Size_unsafe() > 0) {
+        DebugStreamClient::Object object = parsedObjectQueue.Front_unsafe();
+        parsedObjectQueue.Pop_unsafe();
         free(object.buffer);
       }
+      parsedObjectQueue.Unlock();
 
-      while(!saveObjectQueue.IsEmpty()) {
-        DebugStreamClient::ObjectToSave object = saveObjectQueue.Pop();
+      saveObjectQueue.Lock();
+      while(saveObjectQueue.Size_unsafe() > 0) {
+        DebugStreamClient::ObjectToSave object = saveObjectQueue.Front_unsafe();
+        saveObjectQueue.Pop_unsafe();
         free(object.buffer);
       }
+      saveObjectQueue.Unlock();
 
       return RESULT_OK;
     }
@@ -248,12 +257,18 @@ namespace Anki
 
       bool foundObject = true;
       s32 attempts = 0;
-      while(parsedObjectQueue.IsEmpty()) {
-#ifdef _MSC_VER
-        Sleep(10);
-#else
+      while(true) {
+        parsedObjectQueue.Lock();
+
+        if(parsedObjectQueue.Size_unsafe() > 0) {
+          parsedObjectQueue.Unlock();
+          break;
+        }
+
+        parsedObjectQueue.Unlock();
+
         usleep(10000);
-#endif
+
         ++attempts;
         if(attempts >= maxAttempts) {
           foundObject = false;
@@ -262,7 +277,10 @@ namespace Anki
       }
 
       if(foundObject) {
-        newObject = parsedObjectQueue.Pop();
+        parsedObjectQueue.Lock();
+        newObject = parsedObjectQueue.Front_unsafe();
+        parsedObjectQueue.Pop_unsafe();
+        parsedObjectQueue.Unlock();
       } else {
         newObject = DebugStreamClient::Object();
       }
@@ -274,7 +292,9 @@ namespace Anki
     {
       DebugStreamClient::ObjectToSave toSave(object, filename);
 
-      saveObjectQueue.Push(toSave);
+      saveObjectQueue.Lock();
+      saveObjectQueue.Push_unsafe(toSave);
+      saveObjectQueue.Unlock();
 
       return RESULT_OK;
     }
@@ -348,10 +368,11 @@ namespace Anki
           bool isInteger;
           bool isSigned;
           bool isFloat;
+          bool isString;
           s32 numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
           s32 tmpDataLength = dataLength - 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, &tmpDataSegment, tmpDataLength);
+          SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, sizeOfType, isBasicType, isInteger, isSigned, isFloat, isString, numElements, &tmpDataSegment, tmpDataLength);
 
           //CoreTechPrint("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, sizeOfType, isInteger, isSigned, isFloat, numElements);
 
@@ -383,10 +404,11 @@ namespace Anki
           bool basicType_isInteger;
           bool basicType_isSigned;
           bool basicType_isFloat;
+          bool basicType_isString;
           s32 basicType_numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
           s32 tmpDataLength = dataLength - 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, tmpDataLength);
+          SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, &tmpDataSegment, tmpDataLength);
 
           newObject.bufferLength = 512 + stride * height;
           newObject.buffer = malloc(newObject.bufferLength);
@@ -505,9 +527,10 @@ namespace Anki
           bool basicType_isInteger;
           bool basicType_isSigned;
           bool basicType_isFloat;
+          bool basicType_isString;
           s32 basicType_numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
+          SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_size, xSlice_start, xSlice_increment, xSlice_size, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_isString, basicType_numElements, &tmpDataSegment, dataLength);
 
           newObject.bufferLength = 512 + stride * height;
           newObject.buffer = malloc(newObject.bufferLength);
@@ -643,8 +666,11 @@ namespace Anki
           newObject.buffer = NULL;
         }
 
-        if(newObject.IsValid())
-          parsedObjectQueue.Push(newObject);
+        if(newObject.IsValid()) {
+          parsedObjectQueue.Lock();
+          parsedObjectQueue.Push_unsafe(newObject);
+          parsedObjectQueue.Unlock();
+        }
 
         //CoreTechPrint("Received %s %s\n", newObject.typeName, newObject.objectName);
       } // while(iterator.HasNext())
@@ -660,11 +686,7 @@ namespace Anki
     {
       while(socket.Open(ipAddress, port) != RESULT_OK) {
         //CoreTechPrint("Trying again to open socket.\n");
-#ifdef _MSC_VER
-        Sleep(1000);
-#else
         usleep(1000000);
-#endif
       }
     }
 
@@ -700,11 +722,7 @@ namespace Anki
       } else {
         while(serial.Open(callingObject->serial_comPort, callingObject->serial_baudRate, callingObject->serial_parity, callingObject->serial_dataBits, callingObject->serial_stopBits) != RESULT_OK) {
           //CoreTechPrint("Trying again to open serial.\n");
-#ifdef _MSC_VER
-          Sleep(1000);
-#else
           usleep(1000000);
-#endif
         }
       }
 
@@ -720,11 +738,7 @@ namespace Anki
           {
             //CoreTechPrint("Socket read error. Attempting to reconnect...\n");
             if(lastError == RESULT_FAIL_IO_TIMEOUT) {
-#ifdef _MSC_VER
-              Sleep(1);
-#else
               usleep(1000);
-#endif
             } else {
               WaitForOpenSocket(callingObject->socket_ipAddress, callingObject->socket_port, socket);
             }
@@ -733,20 +747,12 @@ namespace Anki
           while(serial.Read(usbBuffer, CONNECTION_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
           {
             //CoreTechPrint("serial read failure. Retrying...\n");
-#ifdef _MSC_VER
-            Sleep(1);
-#else
             usleep(1000);
-#endif
           }
         }
 
         if(bytesRead == 0) {
-#ifdef _MSC_VER
-          Sleep(1);
-#else
           usleep(1000);
-#endif
           continue;
         }
 
@@ -793,7 +799,9 @@ namespace Anki
             nextRawBuffer.curDataLength += numBytesToCopy;
             nextRawBuffer.timeReceived = GetTimeF64();
 
-            callingObject->rawMessageQueue.Push(nextRawBuffer);
+            callingObject->rawMessageQueue.Lock();
+            callingObject->rawMessageQueue.Push_unsafe(nextRawBuffer);
+            callingObject->rawMessageQueue.Unlock();
 
             nextRawBuffer = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
           } else {
@@ -864,18 +872,29 @@ namespace Anki
       ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue = callingObject->parsedObjectQueue;
 
       while(true) {
-        while(rawMessageQueue.IsEmpty() && callingObject->get_isRunning()) {
-#ifdef _MSC_VER
-          Sleep(1);
-#else
+        while(true) {
+          if(!callingObject->get_isRunning())
+            break;
+
+          rawMessageQueue.Lock();
+
+          if(rawMessageQueue.Size_unsafe() > 0) {
+            rawMessageQueue.Unlock();
+            break;
+          }
+
+          rawMessageQueue.Unlock();
+
           usleep(1000);
-#endif
         }
 
         if(!callingObject->get_isRunning())
           break;
 
-        DebugStreamClient::RawBuffer nextRawBuffer = rawMessageQueue.Pop();
+        rawMessageQueue.Lock();
+        DebugStreamClient::RawBuffer nextRawBuffer = rawMessageQueue.Front_unsafe();
+        rawMessageQueue.Pop_unsafe();
+        rawMessageQueue.Unlock();
 
         ProcessRawBuffer(nextRawBuffer, parsedObjectQueue, false);
       } // while(true)
@@ -896,18 +915,29 @@ namespace Anki
       ThreadSafeQueue<DebugStreamClient::ObjectToSave> &saveObjectQueue = callingObject->saveObjectQueue;
 
       while(true) {
-        while(saveObjectQueue.IsEmpty() && callingObject->get_isRunning()) {
-#ifdef _MSC_VER
-          Sleep(10);
-#else
+        while(true) {
+          if(!callingObject->get_isRunning())
+            break;
+
+          saveObjectQueue.Lock();
+
+          if(saveObjectQueue.Size_unsafe() > 0) {
+            saveObjectQueue.Unlock();
+            break;
+          }
+
+          saveObjectQueue.Unlock();
+
           usleep(10000);
-#endif
         }
 
         if(!callingObject->get_isRunning())
           break;
 
-        const DebugStreamClient::ObjectToSave nextObject = saveObjectQueue.Pop();
+        saveObjectQueue.Lock();
+        const DebugStreamClient::ObjectToSave nextObject = saveObjectQueue.Front_unsafe();
+        saveObjectQueue.Pop_unsafe();
+        saveObjectQueue.Unlock();
 
         // TODO: save things other than images
         Array<u8> image = *(reinterpret_cast<Array<u8>*>(nextObject.startOfPayload));
@@ -916,7 +946,10 @@ namespace Anki
         compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
         compression_params.push_back(9);
 
-        cv::imwrite(nextObject.filename, image.get_CvMat_(), compression_params);
+        cv::Mat_<u8> image_cvMat;
+        ArrayToCvMat(image, &image_cvMat);
+
+        cv::imwrite(nextObject.filename, image_cvMat, compression_params);
 
         free(nextObject.buffer);
       } // while(true)

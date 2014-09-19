@@ -10,7 +10,7 @@ PROTO CozmoBot [
 
   field SFFloat headAngle          0
   field SFFloat headAngle_lowLimit -0.4363 # 25 degrees down
-  field SFFloat headAngle_highLimit 0.6109 # 35 degrees up
+  field SFFloat headAngle_highLimit 0.6981 # 40 degrees up
   
   field SFFloat liftAngle 0
   field SFFloat liftAngle_lowLimit  0
@@ -386,8 +386,8 @@ Supervisor {
 				  }
 				  DistanceSensor {
 						name "proxSensorCenter"
-						translation 0.022 0 0.015
-						rotation 0 1 0 -0.3
+						translation 0.022 0 0.008
+						rotation 0 1 0 0
 						type "infra-red"
 						lookupTable [ 0.0   255   0,
 						              0.01   200  0.1,

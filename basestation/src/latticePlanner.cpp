@@ -90,20 +90,18 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
   // TEMP: visualization doesn't work because we keep clearing all
   // quads. Once we fix vis and remove the EraseAllQuads() call, get
   // rid of the "true" so this only runs when it needs to
-  bool didBlocksChange = blockWorld_->DidBlocksChange();
-  if(!FLT_NEAR(paddingRadius, lastPaddingRadius_) ||
-     didBlocksChange)
+  const bool didObjecsChange = blockWorld_->DidObjectsChange();
+  
+  if(!isReplanning ||  // if not replanning, this must be a fresh, new plan, so we always should get obstacles
+     !FLT_NEAR(paddingRadius, lastPaddingRadius_) ||
+     didObjecsChange)
   {
     lastPaddingRadius_ = paddingRadius;
     std::vector<Quad2f> boundingBoxes;
 
     // first check plan with slightly smaller radius to see if we need to replan
-    blockWorld_->GetObjectBoundingBoxesXY(0.f, ROBOT_BOUNDING_Z,
-                                          paddingRadius,
-                                          boundingBoxes,
-                                          _parent->_ignoreFamilies,
-                                          _parent->_ignoreTypes,
-                                          _parent->_ignoreIDs);
+    blockWorld_->GetObstacles(boundingBoxes, paddingRadius);
+    
     env_.ClearObstacles();
     
     if(vizColor != nullptr) {
@@ -133,7 +131,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
                      "radius %f (last = %f), didBlocksChange %d",
                      paddingRadius,
                      lastPaddingRadius_,
-                     didBlocksChange);
+                     didObjecsChange);
   }
 }
 
@@ -142,7 +140,16 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                                                   const Pose3d &startPose,
                                                   const Pose3d &targetPose)
 {
-
+  /*
+  const f32 Z_HEIGHT_DIFF_TOLERANCE = ROBOT_BOUNDING_Z * .2f;
+  if(!NEAR(startPose.GetTranslation().z(), targetPose.GetTranslation().z(),  Z_HEIGHT_DIFF_TOLERANCE)) {
+    PRINT_NAMED_ERROR("LatticePlannerImpl.GetPlan.DifferentHeights",
+                      "Can't producea  plan for start and target on different levels (%f vs. %f)\n",
+                      startPose.GetTranslation().z(), targetPose.GetTranslation().z());
+    return PLAN_NEEDED_BUT_PLAN_FAILURE;
+  }
+   */
+  
   State_c target(targetPose.GetTranslation().x(),
                     targetPose.GetTranslation().y(),
                     targetPose.GetRotationAngle<'Z'>().ToFloat());

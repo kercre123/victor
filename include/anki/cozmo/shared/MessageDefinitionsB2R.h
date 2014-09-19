@@ -168,12 +168,11 @@ ADD_MESSAGE_MEMBER(f32, yPosition)
 ADD_MESSAGE_MEMBER(f32, headingAngle)
 END_MESSAGE_DEFINITION(AbsLocalizationUpdate)
 
-// RobotInit
-START_MESSAGE_DEFINITION(RobotInit, 1)
+// SyncTime
+START_MESSAGE_DEFINITION(SyncTime, 1)
 ADD_MESSAGE_MEMBER(u32, robotID)
 ADD_MESSAGE_MEMBER(u32, syncTime)
-// TODO: Add other members here?
-END_MESSAGE_DEFINITION(RobotInit)
+END_MESSAGE_DEFINITION(SyncTime)
 
 /*
 // TemplateInitialized

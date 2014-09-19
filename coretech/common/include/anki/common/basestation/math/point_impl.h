@@ -62,6 +62,14 @@ namespace Anki {
     }
   }
   
+  template<PointDimType N, typename T>
+  Point<N,T>::Point(const Point<N+1,T>& pt)
+  {
+    for(PointDimType i=0; i<N; ++i) {
+      this->data[i] = pt[i];
+    }
+  }
+  
 #if __cplusplus < 201103L
 
   template<PointDimType N, typename T>
@@ -177,6 +185,16 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
+  Point<N,T> Point<N,T>::operator+ (const T value) const
+  {
+    Point<N,T> res(*this);
+    for(PointDimType i=0; i<N; ++i) {
+      res[i] += value;
+    }
+    return res;
+  }
+  
+  template<PointDimType N, typename T>
   Point<N,T>& Point<N,T>::operator+= (const Point<N,T> &other)
   {
     for(PointDimType i=0; i<N; ++i) {
@@ -271,6 +289,20 @@ namespace Anki {
     PointDimType i = 1;
     while(retVal && i<N) {
       retVal = this->data[i] < other[i];
+      ++i;
+    }
+    
+    return retVal;
+  }
+  
+  template<PointDimType N, typename T>
+  bool Point<N,T>::operator> (const Point<N,T>& other) const
+  {
+    CORETECH_ASSERT(N>0);
+    bool retVal = this->data[0] > other[0];
+    PointDimType i = 1;
+    while(retVal && i<N) {
+      retVal = this->data[i] > other[i];
       ++i;
     }
     

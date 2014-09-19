@@ -16,13 +16,17 @@ function imshows(varargin)
             if strcmpi(varargin{i}, 'maximize')
                 maximizeWindows = true;
             end
-        elseif min(size(varargin{i}) == [1,1]) == 1
-            figNums = figNums - 1 + varargin{i};
+        else
+            isImage = (ndims(varargin{i}) == 2 && min(size(varargin{i}) == [1,1]) == 1) || (ndims(varargin{i}) == 3 && min(size(varargin{i}) == [1,1,1]) == 1);
+            if isImage
+                figNums = figNums - 1 + varargin{i};
+            end
         end
     end
     
     for i = 1:length(varargin)
-        if ischar(varargin{i}) || min(size(varargin{i}) == [1,1]) == 1 || isempty(varargin{i})
+        isImage = (ndims(varargin{i}) == 2 && min(size(varargin{i}) == [1,1]) == 1) || (ndims(varargin{i}) == 3 && min(size(varargin{i}) == [1,1,1]) == 1);
+        if ischar(varargin{i}) || isImage || isempty(varargin{i})
             continue;
         end
         
@@ -30,7 +34,7 @@ function imshows(varargin)
         curIms = varargin{i};
         if iscell(curIms)
             for j = 1:length(curIms)
-                subplot(1,length(curIms),j); imshow(curIms{j});
+                subplot(1,length(curIms),j); imshow(curIms{j}, 'Border', 'tight');
                 if maximizeWindows
                     set(figureHandle, 'units','normalized','outerposition',[0 0 1 1]);
                 end

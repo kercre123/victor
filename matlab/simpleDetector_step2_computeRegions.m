@@ -2,8 +2,7 @@ function [numRegions, area, indexList, bb, centroid, components2d] = simpleDetec
 
 if usePerimeterCheck
     % Perimeter not supported by mexRegionprops yet.
-    statTypes = {'Area', 'PixelIdxList', 'BoundingBox', ...
-        'Centroid', 'Perimeter'}; %#ok<UNRCH>
+    statTypes = {'Area', 'PixelIdxList', 'BoundingBox', 'Centroid', 'Perimeter'};
     stats = regionprops(binaryImg, statTypes);
     
     numRegions = length(stats);
@@ -19,7 +18,9 @@ else
     elseif strcmp(embeddedConversions.connectedComponentsType, 'matlab_approximate')
 %         minimumComponentWidth = 4;
         minimumComponentWidth = 0;
-        components2d = approximateConnectedComponents(binaryImg, minimumComponentWidth);
+        create1dRegionMap = false;
+        eightConnected = true;
+        components2d = approximateConnectedComponents(binaryImg, minimumComponentWidth, create1dRegionMap, eightConnected);
         numRegions = length(components2d);
         regionMap = zeros(size(binaryImg));
         

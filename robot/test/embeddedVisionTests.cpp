@@ -53,7 +53,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <cmath>
 
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include <iostream>
 #include <fstream>
 #endif
@@ -61,9 +61,197 @@ For internal use only. No part of this code may be used without a signed non-dis
 using namespace Anki;
 using namespace Anki::Embedded;
 
+#ifdef RUN_PC_ONLY_TESTS
+#define HUGE_BUFFER_SIZE 100000000
+static char hugeBuffer[HUGE_BUFFER_SIZE];
+#endif
+
 //#define RUN_FACE_DETECTION_GUI
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
+
+#ifdef RUN_PC_ONLY_TESTS
+GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  // Generate the list of filenames in Matlab:
+  // patterns = {'Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/*.png', 'Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/*.png'};
+  // allFiles = {};
+  // for iPattern = 1:length(patterns)
+  //   files = dir(patterns{iPattern});
+  //   for iFile = 1:length(files)
+  //     allFiles{end+1} = [strrep(patterns{iPattern}, '*.png', ''), files(iFile).name];
+  //   end
+  // end
+  // fprintf('const char * allFilenames[%d] = {', length(allFiles)); for i=1:length(allFiles) fprintf('"%s", ', allFiles{i}); end; disp('};');
+
+  const char * allFilenames[113] = {"Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits001.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits002.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits003.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits004.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits005.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits006.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits007.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits008.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits009.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits010.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits011.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits012.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits013.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits014.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits015.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits016.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits017.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits018.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits019.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits020.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits021.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits022.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits023.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits024.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits025.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits026.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits027.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits028.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits029.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits030.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits031.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits032.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits033.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits034.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits035.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits036.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits037.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits038.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits039.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits040.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits041.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits042.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits043.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits044.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits045.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits046.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits047.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits048.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits049.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits050.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits051.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits052.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits053.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits054.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits055.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits056.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits057.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits058.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits059.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits060.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits061.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits062.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits063.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/ankiLogoWithBits064.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice1.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice2.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice3.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice4.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice5.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/dice6.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/0.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/1.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/2.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/3.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/4.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/5.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/6.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/7.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/8.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/A.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/B.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/C.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/D.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/E.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/F.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/G.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/H.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/J.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/K.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/L.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/M.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/N.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/P.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/Q.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/R.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/T.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/X.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/Y.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/angryFace.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/ankiLogo.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/arrow.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/bangBangBang.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/bullseye2.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/circularArrow.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/fire.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/questionMark.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rampBack.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rampFront.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rampLeft.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rampRight.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/squarePlusCorners.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/star5.png", "Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/stopWithHand.png", };
+
+  FixedLengthList<const char*> imageFilenames(113, scratchOffchip, Flags::Buffer(true, false, true));
+  imageFilenames.Set(allFilenames, 113);
+  //imageFilenames.Print("imageFilenames");
+
+  const f64 t0 = GetTimeF64();
+  VisionMarkerImages vmi(imageFilenames, scratchHuge);
+  const f64 t1 = GetTimeF64();
+
+  //vmi.Show(50);
+
+  const char * queryImageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
+  Array<u8> queryImage(queryImageFilename, scratchHuge);
+  //queryImage.Show("queryImage", true);
+
+  Quadrilateral<f32> quad(
+    Point<f32>(64.1757f, 46.0676f),
+    Point<f32>(61.9054f, 114.8243f),
+    Point<f32>(134.8784f, 44.7703f),
+    Point<f32>(133.9054f, 115.1486f));
+
+  VisionMarker extractedMarker;
+  f32 matchQuality;
+
+  const f64 t2 = GetTimeF64();
+  vmi.MatchExhaustive(queryImage, quad, extractedMarker, matchQuality, scratchOffchip, scratchHuge);
+  const f64 t3 = GetTimeF64();
+
+  printf("Database loaded in %f seconds and quad matched in %f seconds\n", t1-t0, t3-t2);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
+#endif // #ifdef RUN_PC_ONLY_TESTS
+
+GTEST_TEST(CoreTech_Vision, LookupMarkerType)
+{
+  const s32 numNames = 24;
+
+  const char *inputNames[numNames] = {
+    "MARKER_0",
+    "marker_0",
+    "mARKER_0",
+    "0",
+    "c:\\path\\0.png",
+    "~/path/0.png",
+    "MARKER_INVERTED_ANKILOGOWITHBITS005",
+    "INVERTED_ANKILOGOWITHBITS005",
+    "inverted_ankilogowithbits005",
+    "INVeRTed_ANkiLOGOWITHBITS005",
+    "c:\\INVeRTed_ANkiLOGOWITHBITS005",
+    "~/INVeRTed_ANkiLOGOWITHBITS005",
+    "MARKER_Y",
+    "MarKER_Y",
+    "Y",
+    "y",
+    "c:\\y.png.out.mat.toast",
+    "/home/users\\crazy\\/y.hello",
+    "MARKER_UNKNOWN",
+    "UNKNOWN",
+    "unknown",
+    "UNknoOWN",
+    "\\unknown",
+    "//unknown"};
+
+  const Anki::Vision::MarkerType inputTypes[numNames] = {
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_0,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
+    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_UNKNOWN,
+    Anki::Vision::MARKER_UNKNOWN,
+    Anki::Vision::MARKER_UNKNOWN,
+    Anki::Vision::MARKER_UNKNOWN,
+    Anki::Vision::MARKER_UNKNOWN,
+    Anki::Vision::MARKER_UNKNOWN};
+
+  for(s32 i=0; i<numNames; i++) {
+    const Anki::Vision::MarkerType lookedUp = LookupMarkerType(inputNames[i]);
+    ASSERT_TRUE(lookedUp == inputTypes[i]);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, LookupMarkerType)
+
+GTEST_TEST(CoreTech_Vision, IntegerCounts_Quadrilateral)
+{
+  const Quadrilateral<f32> quad(Point<f32>(1, 5), Point<f32>(6, 6), Point<f32>(7, 11), Point<f32>(0, 11));
+
+  const s32 arrayHeight = 15;
+  const s32 arrayWidth = 15;
+
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> image(arrayHeight, arrayWidth, scratchCcm);
+
+  s32 color = 0;
+  for(s32 y=0; y<arrayHeight; y++) {
+    for(s32 x=0; x<arrayWidth; x++) {
+      image[y][x] = color;
+      color++;
+    }
+  }
+
+  //image.Print("image");
+
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    const IntegerCounts countsSkip2(image, quad, 2, 1, scratchCcm);
+
+    ASSERT_TRUE(countsSkip2.IsValid());
+
+    //countsSkip2.get_counts().Print("countsSkip2");
+
+    // counts = zeros(256,1); counts(1+(76:78))=1; counts(1+(106:110))=1;counts(1+(135:141))=1; toArray(counts')
+    const s32 countsSkip2_groundTruthData[256] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    for(s32 i=0; i<256; i++) {
+      //printf("%d) %d %d\n", i, countsSkip2.get_counts()[i], countsSkip2_groundTruthData[i]);
+      ASSERT_TRUE(countsSkip2.get_counts()[i] == countsSkip2_groundTruthData[i]);
+    }
+  }
+
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    const IntegerCounts countsSkip1(image, quad, 1, 1, scratchCcm);
+
+    ASSERT_TRUE(countsSkip1.IsValid());
+
+    //countsSkip1.get_counts().Print("countsSkip1");
+
+    // counts = zeros(256,1); counts(1+(76:78))=1; counts(1+(91:95))=1; counts(1+(106:110))=1; counts(1+(120:126))=1; counts(1+(135:141))=1; counts(1+(150:156))=1; toArray(counts')
+    const s32 countsSkip1_groundTruthData[256] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    for(s32 i=0; i<256; i++) {
+      //printf("%d) %d %d\n", i, countsSkip1.get_counts()[i], countsSkip1_groundTruthData[i]);
+      ASSERT_TRUE(countsSkip1.get_counts()[i] == countsSkip1_groundTruthData[i]);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, IntegerCounts_Quadrilateral)
+
 GTEST_TEST(CoreTech_Vision, DistanceTransform)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);

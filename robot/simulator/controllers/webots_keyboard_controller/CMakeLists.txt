@@ -23,27 +23,22 @@ set(SOURCE_FILES
   ${COZMO_BASESTATION_SRC}
 )
 
+add_executable(webots_keyboard_controller 
+  ${SOURCE_FILES} 
+)
 
-if(NOT WIN32)
-  add_executable(webots_keyboard_controller 
-    ${SOURCE_FILES} 
-  )
-
-  target_link_libraries(webots_keyboard_controller 
-    Cozmo_Basestation
-    CoreTech_Common_Basestation
-    CoreTech_Messaging_Basestation
-    CppController # Webots C++ Controller
-    jsoncpp
-    ${OPENCV_LIBS}
-  )
+target_link_libraries(webots_keyboard_controller 
+  Cozmo_Basestation
+  CoreTech_Common_Basestation
+  CoreTech_Messaging_Basestation
+  CppController # Webots C++ Controller
+  jsoncpp
+  ${OPENCV_LIBS}
+)
   
-  set_target_properties(webots_keyboard_controller PROPERTIES
-      FOLDER "Webots Controllers"
-  )
-
-
-endif()
+set_target_properties(webots_keyboard_controller PROPERTIES
+    FOLDER "Webots Controllers"
+)
 
 # Make sure a copy of the target exists  in input_controller/
 # no matter where the target is actually built.

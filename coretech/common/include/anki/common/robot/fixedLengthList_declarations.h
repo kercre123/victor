@@ -90,7 +90,7 @@ namespace Anki
 
     protected:
       // TODO: make less hacky
-      friend SerializedBuffer;
+      friend class SerializedBuffer;
     }; // class FixedLengthList
   } // namespace Embedded
 } //namespace Anki

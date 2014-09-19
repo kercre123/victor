@@ -19,73 +19,11 @@
 
 #include "anki/vision/basestation/observableObject.h"
 
+#include "preActionPose.h"
 #include "vizManager.h"
 
 namespace Anki {
   namespace Cozmo {
-    
-    class PreActionPose
-    {
-    public:
-      enum ActionType {
-        DOCKING, // e.g. with objects to pick up
-        ENTRY,   // e.g. for entering a bridge or ascending/descending a ramp
-      };
-      
-      // Simple case: pose is along the normal to the marker, at the given distance
-      PreActionPose(ActionType type,
-                    const Vision::KnownMarker* marker,
-                    f32 distance);
-      
-      // Specify arbitrary position relative to marker
-      // poseWrtMarker's parent should be the marker's pose.
-      PreActionPose(ActionType type,
-                    const Vision::KnownMarker* marker,
-                    const Pose3d& poseWrtMarker);
-      
-      // Get the type of action associated with this PreActionPose
-      ActionType GetActionType() const;
-      
-      // Get marker associated with thise PreActionPose
-      const Vision::KnownMarker* GetMarker() const;
-      
-      // Get the current PreActionPose, given the current pose of the
-      // its marker's parent. Returns true if a valid pose is found (meaning
-      // the pose is aligned with the ground plane), false otherwise.
-      bool GetCurrentPose(const Pose3d& markerParentPose,
-                          Pose3d& currentPose) const;
-      
-      
-      // Get the Code of the Marker this PreActionPose is "attached" to.
-      //const Vision::Marker::Code& GetMarkerCode() const;
-      
-      // Get PreActionPose w.r.t. the marker it is "attached" to. It is
-      // the caller's responsibility to make it w.r.t. the world origin
-      // (or other pose) if desired.
-      //const Pose3d& GetPose() const; // w.r.t. marker!
-      
-      static const ColorRGBA& GetVisualizeColor(ActionType type);
-      
-    protected:
-      
-      ActionType _type;
-      
-      const Vision::KnownMarker* _marker;
-      
-      Pose3d _poseWrtMarkerParent;
-      
-    }; // class DockingPose
-    
-    
-    inline PreActionPose::ActionType PreActionPose::GetActionType() const {
-      return _type;
-    }
-    
-    inline const Vision::KnownMarker* PreActionPose::GetMarker() const {
-      return _marker;
-    }
-    
-    
     
     class ActionableObject : public Vision::ObservableObject
     {
@@ -95,23 +33,23 @@ namespace Anki {
       // Return true if actions poses of any type exist for this object
       bool HasPreActionPoses() const;
       
-      // Return only those pre-action poses that are roughly aligned with the
-      // ground plane, given their parent marker's current orientation.
+      // Return only those pre-action poses that are "valid" (See protected
+      // IsPreActionPoseValid() method below.)
       // Optionally, you may filter based on ActionType and Marker Code as well.
-      using PoseMarkerPair_t = std::pair<Pose3d,const Vision::KnownMarker&>;
-      void GetCurrentPreActionPoses(std::vector<PoseMarkerPair_t>& poseMarkerPairs,
+      void GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
                                     const std::set<PreActionPose::ActionType>& withAction = std::set<PreActionPose::ActionType>(),
-                                    const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>());
+                                    const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>(),
+                                    const Pose3d* reachableFromPose = nullptr);
       
-      // If the object is selected, draws it using the "selected" color, and
-      // draws the pre-action poses as well (using method below).
-      // Otherwise draws it in the object's defined color, with no pre-action poses.
+      // If the object is selected, draws it using the "selected" color.
+      // Otherwise draws it in the object's defined color.
       virtual void Visualize() override;
       virtual void Visualize(const ColorRGBA& color) = 0; 
       
-      // Draws just the pre-action poses. Called automatically by Visualize()
-      // when the object is marked as selected. (See methods above.)
-      void VisualizePreActionPoses();
+      // Draws just the pre-action poses. The reachableFrom pose (e.g. the
+      // current pose of the robot) is passed along to GetCurrenPreActionsPoses()
+      // (see above).
+      void VisualizePreActionPoses(const Pose3d* reachableFrom = nullptr);
       
       // Just erases pre-action poses (if any were drawn). Subclasses should
       // call this from their virtual EraseVisualization() implementations.
@@ -121,22 +59,41 @@ namespace Anki {
       // carried. (Should this be here? Should we have an IsCarryable() virtual
       // method?)
       bool IsBeingCarried() const;
-      void SetIsBeingCarried(const bool tf);
+      void SetBeingCarried(const bool tf);
       
       // TODO: Possibly make this more descriptive to give finer-tuned control over states and visualization options.
       bool IsSelected() const;
       void SetSelected(const bool tf);
       
     protected:
+
+      // Wrappers for each of the PreActionPose constructors:
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker* marker,
-                            f32 distance);
+                            const f32 distance,
+                            const Radians& headAngle);
+      
+      void AddPreActionPose(PreActionPose::ActionType type,
+                            const Vision::KnownMarker *marker,
+                            const Vec3f& offset,
+                            const Radians& headAngle);
       
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker* marker,
-                            const Pose3d& poseWrtMarker);
+                            const Pose3d& poseWrtMarker,
+                            const Radians& headAngle);
+ 
+      // Only "valid" poses are returned by GetCurrenPreActionPoses
+      // By default, allows any rotation around Z, but none around X/Y, meaning
+      // the pose must be vertically-oriented to be "valid". ReachableFromPose
+      // is not used by default. Derived classes can implement their own
+      // specific checks, but note that reachableFromPose could be nullptr
+      // (meaning it was unspecified).
+      virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
+                                        const Pose3d* reachableFromPose) const;
       
     private:
+      
       std::vector<PreActionPose> _preActionPoses;
       
       std::vector<VizManager::Handle_t> _vizPreActionPoseHandles;
@@ -159,7 +116,7 @@ namespace Anki {
       return _isBeingCarried;
     }
     
-    inline void ActionableObject::SetIsBeingCarried(const bool tf) {
+    inline void ActionableObject::SetBeingCarried(const bool tf) {
       _isBeingCarried = tf;
     }
     

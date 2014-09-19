@@ -30,9 +30,8 @@ namespace Anki {
       
       // Returns whether or not prox sensor beam is
       // blocked by the lift.
-      bool IsLeftBlocked();
+      bool IsSideBlocked();
       bool IsForwardBlocked();
-      bool IsRightBlocked();
       
     } // namespace ProxSensors
   } // namespace Cozmo

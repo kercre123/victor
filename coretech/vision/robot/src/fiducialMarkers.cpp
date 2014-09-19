@@ -16,6 +16,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/draw_vision.h"
 
+#include "anki/vision/robot/transformations.h"
+
 #include "fiducialMarkerDefinitionType0.h"
 
 #include <assert.h>
@@ -28,6 +30,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #if defined(THIS_IS_PETES_BOARD)
 #undef OUTPUT_FAILED_MARKER_STEPS
+#endif
+
+//#define SHOW_EXHAUSTIVE_STEPS
+
+#if !ANKICORETECH_EMBEDDED_USE_OPENCV
+#undef SHOW_EXHAUSTIVE_STEPS
 #endif
 
 namespace Anki
@@ -508,8 +516,33 @@ namespace Anki
 
     VisionMarker::VisionMarker()
     {
+      this->corners = Quadrilateral<f32>(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f));
+      this->validity = UNKNOWN;
+      this->markerType = Anki::Vision::MARKER_UNKNOWN;
+      this->observedOrientation = 0;
+
+      Initialize();
+    }
+
+    VisionMarker::VisionMarker(const Quadrilateral<s16> &corners, const ValidityCode validity)
+    {
+      this->corners.SetCast<s16>(corners);
+      this->validity = validity;
+      this->markerType = Anki::Vision::MARKER_UNKNOWN;
+      this->observedOrientation = 0;
+
       Initialize();
     } // VisionMarker::VisionMarker()
+
+    VisionMarker::VisionMarker(const Quadrilateral<f32> &corners, const ValidityCode validity)
+    {
+      this->corners = corners;
+      this->validity = validity;
+      this->markerType = Anki::Vision::MARKER_UNKNOWN;
+      this->observedOrientation = 0;
+
+      Initialize();
+    }
 
     void VisionMarker::Print() const
     {
@@ -732,145 +765,71 @@ namespace Anki
       return lastResult;
     }
 
-    Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &initQuad,
+    Result VisionMarker::RefineCorners(
+      const Array<u8> &image,
       const Array<f32> &initHomography, const f32 minContrastRatio,
       const s32 refine_quadRefinementIterations, const s32 refine_numRefinementSamples, const f32 refine_quadRefinementMaxCornerChange, const f32 refine_quadRefinementMinCornerChange,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
+      Array<f32> &refinedHomography, u8 &meanGrayvalueThreshold,
       MemoryStack scratch)
     {
-      using namespace VisionMarkerDecisionTree;
-
       Result lastResult = RESULT_FAIL;
+
       this->validity = UNKNOWN;
 
-      Initialize();
-
-      BeginBenchmark("vme_brightdarkvals");
+      BeginBenchmark("vmrc_brightdarkvals");
       f32 brightValue = 0.f, darkValue = 0.f;
       bool enoughContrast = false;
-      if((lastResult = this->ComputeBrightDarkValues(image, initHomography, minContrastRatio,
-        brightValue, darkValue, enoughContrast)) != RESULT_OK) {
-          return lastResult;
+      if((lastResult = this->ComputeBrightDarkValues(image, initHomography, minContrastRatio, brightValue, darkValue, enoughContrast)) != RESULT_OK) {
+        return lastResult;
       }
-      EndBenchmark("vme_brightdarkvals");
+      EndBenchmark("vmrc_brightdarkvals");
 
-      if(enoughContrast)
-      {
+      if(enoughContrast) {
         // If the contrast is sufficient, compute the threshold and parse the marker
 
-        Quadrilateral<f32> quad;
-        Array<f32> homography(3,3,scratch);
-        AnkiConditionalErrorAndReturnValue(homography.IsValid(),
-          RESULT_FAIL_OUT_OF_MEMORY,
-          "VisionMarker::Extract",
-          "Failed to allocate homography Array.");
+        const Quadrilateral<f32> initQuad = this->corners;
 
-        const u8 meanGrayvalueThreshold = static_cast<u8>(0.5f*(brightValue+darkValue));
+        meanGrayvalueThreshold = static_cast<u8>(0.5f*(brightValue+darkValue));
 
         if(refine_quadRefinementIterations > 0) {
-          BeginBenchmark("vme_quadrefine");
+          BeginBenchmark("vmrc_quadrefine");
 
-          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, refine_quadRefinementIterations, darkValue, brightValue, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange,
-              quad, homography, scratch)) != RESULT_OK)
+          if((lastResult = RefineQuadrilateral(
+            initQuad,
+            initHomography,
+            image,
+            FIDUCIAL_SQUARE_WIDTH_FRACTION,
+            refine_quadRefinementIterations,
+            darkValue,
+            brightValue,
+            refine_numRefinementSamples,
+            refine_quadRefinementMaxCornerChange,
+            refine_quadRefinementMinCornerChange,
+            this->corners,
+            refinedHomography,
+            scratch)) != RESULT_OK)
           {
             // TODO: Don't fail? Just warn and keep original quad?
-            AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-              "RefineQuadrilateral",
-              "RefineQuadrilateral() failed with code %0x.", lastResult);
+            AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+              lastResult, "RefineQuadrilateral", "RefineQuadrilateral() failed with code %0x.", lastResult);
           }
 
-          Quadrilateral<s16> quadS16;
-          quadS16.SetCast(quad);
+          Quadrilateral<s16> refinedQuadS16;
+          refinedQuadS16.SetCast(this->corners);
 
           bool areCornersDisordered;
-          const bool isReasonable = IsQuadrilateralReasonable(quadS16, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, image.get_size(0), image.get_size(1), areCornersDisordered);
+          const bool isReasonable = IsQuadrilateralReasonable(refinedQuadS16, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, image.get_size(0), image.get_size(1), areCornersDisordered);
 
           if(!isReasonable) {
-            quad.SetCast(initQuad);
+            this->corners = initQuad;
           }
 
-          EndBenchmark("vme_quadrefine");
+          EndBenchmark("vmrc_quadrefine");
         } else {
-          // No refinement, just cast initial quad to f32 and keep initial
-          // homography
-          quad.SetCast(initQuad);
-          homography.Set(initHomography);
-        }// if(refineQuads)
-
-        BeginBenchmark("vme_classify");
-
-        //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
-
-        s32 tempLabel;
-        if((lastResult = VisionMarker::multiClassTree.Classify(image, homography,
-          meanGrayvalueThreshold, tempLabel)) != RESULT_OK) {
-            return lastResult;
+          // If we're not refining, the refined homography is the same as the initial one
+          refinedHomography.Set(initHomography);
         }
-
-        const OrientedMarkerLabel multiClassLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-
-        EndBenchmark("vme_classify");
-
-        if(multiClassLabel != MARKER_UNKNOWN && multiClassLabel != MARKER_INVALID_000) {
-          BeginBenchmark("vme_verify");
-#if USE_RED_BLACK_VERIFICATION_TREES
-          bool isVerified = false;
-
-          if((lastResult = VisionMarker::verifyRedTree.Verify(image, homography, meanGrayvalueThreshold,
-            multiClassLabel, isVerified)) != RESULT_OK) {
-              return lastResult;
-          }
-
-          if(isVerified) {
-            if((lastResult = VisionMarker::verifyBlackTree.Verify(image, homography, meanGrayvalueThreshold,
-              multiClassLabel, isVerified)) != RESULT_OK) {
-                return lastResult;
-            }
-          }
-
-#else
-          if((lastResult = VisionMarker::verificationTrees[multiClassLabel].Classify(image, homography,
-            meanGrayvalueThreshold, tempLabel)) != RESULT_OK)
-          {
-            return lastResult;
-          }
-
-          const OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-          const bool isVerified = verifyLabel == multiClassLabel;
-#endif
-          EndBenchmark("vme_verify");
-
-          if(isVerified)
-          {
-            // We have a valid, verified classification.
-
-            // 1. Get the unoriented type
-            this->markerType = RemoveOrientationLUT[multiClassLabel];
-
-            // 2. Reorder the original detected corners to the canonical ordering for
-            // this type
-            for(s32 i_corner=0; i_corner<4; ++i_corner)
-            {
-              this->corners[i_corner] = quad[CornerReorderLUT[multiClassLabel][i_corner]];
-            }
-
-            // 3. Keep track of what the original orientation was
-            this->observedOrientation = ObservedOrientationLUT[multiClassLabel];
-
-            // Mark this as a valid marker (note that reaching this point should
-            // be the only way isValid is true.
-            this->validity = VALID;
-          } else {
-#ifdef OUTPUT_FAILED_MARKER_STEPS
-            AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected\n");
-#endif
-            this->validity = UNVERIFIED;
-          } // if(verifyLabel == multiClassLabel)
-        } else {
-#ifdef OUTPUT_FAILED_MARKER_STEPS
-          AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected\n");
-#endif
-        } // if(multiClassLabel != MARKER_UNKNOWN)
       } else {
         // Not enough contrast at bright/dark pairs.
         this->validity = LOW_CONTRAST;
@@ -884,18 +843,557 @@ namespace Anki
         */
       } // if contrast is sufficient
 
+      return lastResult;
+    } // RefineCorners()
+
+    Result VisionMarker::Extract(
+      const Array<u8> &image,
+      const Array<f32> &homography, const u8 meanGrayvalueThreshold,
+      const f32 minContrastRatio,
+      MemoryStack scratch)
+    {
+      using namespace VisionMarkerDecisionTree;
+
+      Result lastResult = RESULT_FAIL;
+
+      //AnkiConditionalErrorAndReturnValue(this->validity == VisionMarker::UNKNOWN,
+      //  RESULT_FAIL, "VisionMarker::Extract", "Marker is not initialized. Perhaps RefineCorners() was not called, or Extract() was called twice.");
+
+      const Quadrilateral<f32> initQuad = this->corners;
+
+      Initialize();
+
+      BeginBenchmark("vme_classify");
+
+      //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
+
+      s32 tempLabel;
+      if((lastResult = VisionMarker::multiClassTree.Classify(image, homography, meanGrayvalueThreshold, tempLabel)) != RESULT_OK) {
+        return lastResult;
+      }
+
+      const OrientedMarkerLabel multiClassLabel = static_cast<OrientedMarkerLabel>(tempLabel);
+
+      EndBenchmark("vme_classify");
+
+      if(multiClassLabel != MARKER_UNKNOWN && multiClassLabel != MARKER_INVALID_000) {
+        BeginBenchmark("vme_verify");
+#if USE_RED_BLACK_VERIFICATION_TREES
+        bool isVerified = false;
+
+        if((lastResult = VisionMarker::verifyRedTree.Verify(image, homography, meanGrayvalueThreshold, multiClassLabel, isVerified)) != RESULT_OK) {
+          return lastResult;
+        }
+
+        if(isVerified) {
+          if((lastResult = VisionMarker::verifyBlackTree.Verify(image, homography, meanGrayvalueThreshold, multiClassLabel, isVerified)) != RESULT_OK) {
+            return lastResult;
+          }
+        }
+
+#else
+        if((lastResult = VisionMarker::verificationTrees[multiClassLabel].Classify(image, homography, meanGrayvalueThreshold, tempLabel)) != RESULT_OK)
+        {
+          return lastResult;
+        }
+
+        const OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
+        const bool isVerified = verifyLabel == multiClassLabel;
+#endif
+        EndBenchmark("vme_verify");
+
+        if(isVerified)
+        {
+          // We have a valid, verified classification.
+
+          // 1. Get the unoriented type
+          this->markerType = RemoveOrientationLUT[multiClassLabel];
+
+          // 2. Reorder the original detected corners to the canonical ordering for
+          // this type
+          const Quadrilateral<f32> initQuad = this->corners;
+          for(s32 i_corner=0; i_corner<4; ++i_corner)
+          {
+            this->corners[i_corner] = initQuad[CornerReorderLUT[multiClassLabel][i_corner]];
+          }
+
+          // 3. Keep track of what the original orientation was
+          this->observedOrientation = ObservedOrientationLUT[multiClassLabel];
+
+          // Mark this as a valid marker (note that reaching this point should
+          // be the only way isValid is true.
+          this->validity = VALID;
+        } else {
+#ifdef OUTPUT_FAILED_MARKER_STEPS
+          AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected\n");
+#endif
+          this->validity = UNVERIFIED;
+        } // if(verifyLabel == multiClassLabel)
+      } else {
+#ifdef OUTPUT_FAILED_MARKER_STEPS
+        AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected\n");
+#endif
+      } // if(multiClassLabel != MARKER_UNKNOWN)
+
       if(this->validity != VALID) {
         this->markerType = Vision::MARKER_UNKNOWN;
-        this->corners.SetCast(initQuad); // Just copy the non-reordered, non-refined corners
+        this->corners = initQuad; // Just copy the non-reordered corners
       }
 
       return lastResult;
     } // VisionMarker::Extract()
 
+    Result VisionMarker::ExtractExhaustive(
+      const VisionMarkerImages &allMarkerImages,
+      const Array<u8> &image,
+      MemoryStack fastScratch,
+      MemoryStack slowScratch)
+    {
+      VisionMarker matchedMarker;
+      f32 matchQuality;
+
+      allMarkerImages.MatchExhaustive(image, this->corners, matchedMarker, matchQuality, fastScratch, slowScratch);
+
+      return RESULT_OK;
+    }
+
     s32 VisionMarker::get_serializationSize() const
     {
       // TODO: make the correct length
       return 96 + 10*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+    }
+
+    Anki::Vision::MarkerType LookupMarkerType(const char * name)
+    {
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+      const s32 MAX_NAME_LENGTH = 1024;
+      s32 nameLength = strlen(name);
+
+      // Remove the start "marker_" if it is present
+      if(nameLength >= 7) {
+        const char *markerString = "MARKER_";
+
+        bool startIsMarker = true;
+        for(s32 i=0; i<7; i++) {
+          if(toupper(name[i]) != markerString[i]) {
+            startIsMarker = false;
+            break;
+          }
+        }
+
+        if(startIsMarker) {
+          name += 7;
+          nameLength -= 7;
+        }
+      }
+
+      // Remove anything before "/" or "\"
+      s32 lastSlashLocation = -1;
+      for(s32 i=0; i<nameLength; i++) {
+        if(name[i] == '\\' || name[i] == '/') {
+          lastSlashLocation = i;
+        }
+      }
+
+      name += lastSlashLocation + 1;
+      nameLength -= lastSlashLocation + 1;
+
+      // Remove anything after a "."
+      for(s32 i=0; i<nameLength; i++) {
+        if(name[i] == '.') {
+          nameLength = i;
+          break;
+        }
+      }
+
+      // If the name is too long, return invalid
+      if(nameLength >= MAX_NAME_LENGTH) {
+        return Anki::Vision::MARKER_UNKNOWN;
+      }
+
+      // Convert the input to upper case
+      char upperCaseName[MAX_NAME_LENGTH];
+      for(s32 i=0; i<nameLength; i++) {
+        upperCaseName[i] = toupper(name[i]);
+      }
+      upperCaseName[nameLength] = '\0';
+
+      for(s32 i=0; i<Anki::Vision::NUM_MARKER_TYPES; i++) {
+        const char * withoutPrefixName = Anki::Vision::MarkerTypeStrings[i] + 7;
+        if(strcmp(withoutPrefixName, upperCaseName) == 0) {
+          return static_cast<Anki::Vision::MarkerType>(i);
+        }
+      }
+
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
+      return Anki::Vision::MARKER_UNKNOWN;
+    }
+
+    VisionMarkerImages::VisionMarkerImages(const FixedLengthList<const char*> &imageFilenames, MemoryStack &memory)
+      : isValid(false)
+    {
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+      this->numDatabaseImages = imageFilenames.get_size();
+
+      {
+        const cv::Mat image = cv::imread(imageFilenames[0], CV_LOAD_IMAGE_UNCHANGED);
+        this->databaseImageHeight = image.rows;
+        this->databaseImageWidth = image.cols;
+
+        AnkiConditionalErrorAndReturn(databaseImageWidth == databaseImageHeight,
+          "VisionMarkerImages::VisionMarkerImages", "All images must be equal size and square");
+      }
+
+      /*images = FixedLengthList<Array<u8>>(numImages, memory, Flags::Buffer(false, false, true));*/
+      databaseImages = Array<u8>(databaseImageHeight, databaseImageWidth*numDatabaseImages, memory, Flags::Buffer(true, false, true));
+      databaseLabelIndexes = FixedLengthList<Anki::Vision::MarkerType>(numDatabaseImages, memory, Flags::Buffer(false, false, true));
+
+      for(s32 iFile=0; iFile<numDatabaseImages; iFile++) {
+        // Parse the image name, to fill in labels and indexes
+        databaseLabelIndexes[iFile] = LookupMarkerType(imageFilenames[iFile]);
+
+        // Load the image
+        cv::Mat image = cv::imread(imageFilenames[iFile], CV_LOAD_IMAGE_UNCHANGED);
+
+        AnkiConditionalErrorAndReturn(image.rows == databaseImageHeight && image.rows == databaseImageWidth,
+          "VisionMarkerImages::VisionMarkerImages", "All images must be equal size and square");
+
+        //Array<u8> imageArray(image.rows, image.cols, memory);
+
+        for(s32 y=0; y<image.rows; y++) {
+          const u8 * restrict pImage = image.data + y*image.step.buf[0];
+          u8 * restrict pImageArray = databaseImages[y];
+
+          if(image.step.buf[1] == 1) {
+            AnkiAssert(false); // TODO: implement
+          } else if(image.step.buf[1] == 3) {
+            AnkiAssert(false); // TODO: implement
+          } else if(image.step.buf[1] == 4) {
+            for(s32 x=0; x<image.cols; x++) {
+              const u8 b = pImage[4*x];
+              const u8 g = pImage[4*x + 1];
+              const u8 r = pImage[4*x + 2];
+              const u8 a = pImage[4*x + 3];
+
+              if(a < 128) {
+                pImageArray[x*numDatabaseImages + iFile] = 255;
+              } else {
+                const s32 grayValue = (r + g + b) / 3;
+                if(grayValue > 128) {
+                  pImageArray[x*numDatabaseImages + iFile] = 255;
+                } else {
+                  pImageArray[x*numDatabaseImages + iFile] = 0;
+                }
+              }
+            }
+          }
+        } // for(s32 y=0; y<image.rows; y++)
+      } // for(s32 iFile=0; iFile<numDatabaseImages; iFile++)
+
+#else
+      AnkiError("VisionMarkerImages::VisionMarkerImages", "OpenCV is required to load files");
+#endif // #if ANKI_EMBEDDED_USE_OPENCV ... #else
+
+      this->isValid = true;
+    }
+
+    VisionMarkerImages::VisionMarkerImages(const s32 numDatabaseImages, const s32 databaseImageHeight, const s32 databaseImageWidth, u8 * pDatabaseImages, Anki::Vision::MarkerType * pDatabaseLabelIndexes)
+      : numDatabaseImages(numDatabaseImages), databaseImageHeight(databaseImageHeight), databaseImageWidth(databaseImageWidth), isValid(true)
+    {
+      // Note the 2* lie about the size of the buffer
+      this->databaseImages = Array<u8>(databaseImageHeight, numDatabaseImages*databaseImageWidth, pDatabaseImages, 2*databaseImageHeight*numDatabaseImages*databaseImageWidth, Flags::Buffer(false, false, true));
+      this->databaseLabelIndexes = FixedLengthList<Anki::Vision::MarkerType>(numDatabaseImages, pDatabaseLabelIndexes, 2*numDatabaseImages*sizeof(Anki::Vision::MarkerType), Flags::Buffer(false, false, true));
+    }
+
+    Result VisionMarkerImages::Show(const s32 pauseMilliseconds) const
+    {
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+      // TODO: implement for striped
+
+      //for(s32 i=0; i<databaseImages.get_size(); i++) {
+      //  //snprintf(name, 128, "Number %d", databaseLabelIndexes[i]);
+
+      //  databaseImages[i].Show("Fiducial", false, false, false);
+      //  cv::waitKey(pauseMilliseconds);
+      //}
+#endif
+
+      return RESULT_OK;
+    }
+
+    Result VisionMarkerImages::MatchExhaustive(const Array<u8> &image, const Quadrilateral<f32> &quad, VisionMarker &extractedMarker, f32 &matchQuality, MemoryStack fastScratch, MemoryStack slowScratch) const
+    {
+      const s32 yIncrement = 1;
+      const s32 xIncrement = 1;
+
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
+      AnkiAssert(databaseImageWidth == databaseImageHeight);
+
+      AnkiConditionalErrorAndReturnValue(NotAliased(fastScratch, slowScratch),
+        RESULT_FAIL_ALIASED_MEMORY, "VisionMarkerImages::MatchExhaustive", "fastScratch and slowScratch must be different");
+
+      // 1. Compute the transformation from the quad to the known marker images
+      //allImagesCorners = [0 0 allImageSize(2) allImageSize(2); 0 allImageSize(1) 0 allImageSize(1)]';
+      Quadrilateral<f32> databaseImagesCorners(
+        Point<f32>(0.0f,0.0f),
+        Point<f32>(0.0f,static_cast<f32>(databaseImageHeight)),
+        Point<f32>(static_cast<f32>(databaseImageWidth),0.0f),
+        Point<f32>(static_cast<f32>(databaseImageWidth),static_cast<f32>(databaseImageHeight)));
+
+      Array<f32> homography(3, 3, fastScratch);
+
+      AnkiConditionalErrorAndReturnValue(homography.IsValid(),
+        RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
+
+      bool numericalFailure;
+      Transformations::ComputeHomographyFromQuads(quad, databaseImagesCorners, homography, numericalFailure, fastScratch);
+
+      // 2. For each pixel in the quad in the input image, compute the mean-absolute difference with each known marker image
+      // Based off DrawFilledConvexQuadrilateral()
+
+      const Rectangle<f32> boundingRect = quad.ComputeBoundingRectangle<f32>();
+      const Quadrilateral<f32> sortedQuad = quad.ComputeClockwiseCorners<f32>();
+
+      const f32 rect_y0 = boundingRect.top;
+      const f32 rect_y1 = boundingRect.bottom;
+
+      // For circular indexing
+      Point<f32> corners[5];
+      for(s32 i=0; i<4; i++) {
+        corners[i] = sortedQuad[i];
+      }
+      corners[4] = sortedQuad[0];
+
+      const s32 minYS32 = MAX(0,             Round<s32>(ceilf(rect_y0 - 0.5f)));
+      const s32 maxYS32 = MIN(imageHeight-1, Round<s32>(floorf(rect_y1 - 0.5f)));
+      const f32 minYF32 = minYS32 + 0.5f;
+      const f32 maxYF32 = maxYS32 + 0.5f;
+      const LinearSequence<f32> ys(minYF32, maxYF32);
+      const s32 numYs = ys.get_size();
+
+      const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+      const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+      const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; //const f32 h22 = 1.0f;
+
+      const IntegerCounts imageCounts(image, quad, 1, 1, fastScratch);
+      IntegerCounts::Statistics imageCountsStatistics = imageCounts.ComputeStatistics();
+      const u8 imageThreshold = Round<s32>(imageCountsStatistics.mean);
+
+#ifdef SHOW_EXHAUSTIVE_STEPS
+      Array<u8> originalImageBinarized(imageHeight, imageWidth, slowScratch);
+      originalImageBinarized.Set(64);
+
+      Array<Array<u8>> toShowImages(4, numDatabaseImages, slowScratch);
+      AnkiConditionalErrorAndReturnValue(toShowImages.IsValid(),
+        RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
+
+      for(s32 iRotation=0; iRotation<4; iRotation++) {
+        for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+          toShowImages[iRotation][iDatabase] = Array<u8>(imageHeight, imageWidth, slowScratch);
+
+          AnkiConditionalErrorAndReturnValue(toShowImages[iRotation][iDatabase].IsValid(),
+            RESULT_FAIL_OUT_OF_MEMORY, "VisionMarkerImages::MatchExhaustive", "Out of memory");
+
+          toShowImages[iRotation][iDatabase].Set(64);
+        }
+      }
+#endif
+
+      // Four rotations for each image
+      s32 numBytesAllocated;
+      s32 * totalDifferences = reinterpret_cast<s32*>(fastScratch.Allocate(4*sizeof(s32)*numDatabaseImages,true,numBytesAllocated));
+      s32 numInBounds = 0;
+
+      AnkiAssert(totalDifferences != NULL);
+
+      //const u8 * restrict * restrict pDatabaseImages = reinterpret_cast<const u8**>(fastScratch.Allocate(sizeof(u8*)*numDatabaseImages,true,numBytesAllocated));
+      //u8 ** pDatabaseImages = reinterpret_cast<u8**>(fastScratch.Allocate(sizeof(u8*)*numDatabaseImages,true,numBytesAllocated));
+
+      // TODO: is memory being overwritten!!!??
+
+      //AnkiAssert(pDatabaseImages != NULL);
+
+      //for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+      //  pDatabaseImages[iDatabase] = this->databaseImages[iDatabase].Pointer(0,0);
+      //}
+
+      const u8 * restrict pDatabaseImages_start = this->databaseImages.Pointer(0,0);
+
+      f32 yF32 = ys.get_start();
+      for(s32 iy=0; iy<numYs; iy+=yIncrement) {
+        // Compute all intersections
+        f32 minXF32 = FLT_MAX;
+        f32 maxXF32 = FLT_MIN;
+        for(s32 iCorner=0; iCorner<4; iCorner++) {
+          if( (corners[iCorner].y < yF32 && corners[iCorner+1].y >= yF32) || (corners[iCorner+1].y < yF32 && corners[iCorner].y >= yF32) ) {
+            const f32 dy = corners[iCorner+1].y - corners[iCorner].y;
+            const f32 dx = corners[iCorner+1].x - corners[iCorner].x;
+
+            const f32 alpha = (yF32 - corners[iCorner].y) / dy;
+
+            const f32 xIntercept = corners[iCorner].x + alpha * dx;
+
+            minXF32 = MIN(minXF32, xIntercept);
+            maxXF32 = MAX(maxXF32, xIntercept);
+          }
+        } // for(s32 iCorner=0; iCorner<4; iCorner++)
+
+        const s32 minXS32 = MAX(0,            Round<s32>(floorf(minXF32+0.5f)));
+        const s32 maxXS32 = MIN(imageWidth-1, Round<s32>(floorf(maxXF32-0.5f)));
+
+        const s32 yS32 = minYS32 + iy;
+        const u8 * restrict pImage = image.Pointer(yS32, 0);
+        for(s32 x=minXS32; x<=maxXS32; x+=xIncrement) {
+          // Do nearest-neighbor lookup from the query image to the image in the dataset
+
+          const f32 yOriginal = yF32;
+          const f32 xOriginal = static_cast<f32>(x);
+
+          // TODO: These two could be strength reduced
+          const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
+          const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
+
+          const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
+
+          const s32 xTransformed0 = Round<s32>(xTransformedRaw / normalization);
+          const s32 yTransformed0 = Round<s32>(yTransformedRaw / normalization);
+
+          // If out of bounds, continue
+          if(xTransformed0 < 0 || xTransformed0 >= databaseImageWidth || yTransformed0 < 0 || yTransformed0 >= databaseImageWidth) {
+            continue;
+          }
+
+          const s32 curImageValue = (pImage[x] > imageThreshold) ? 255 : 0;
+
+          const s32 xTransformed90 = databaseImageWidth - yTransformed0 - 1;
+          const s32 yTransformed90 = xTransformed0;
+
+          const s32 xTransformed180 = databaseImageWidth - xTransformed0 - 1;
+          const s32 yTransformed180 = databaseImageHeight - yTransformed0 - 1;
+
+          const s32 xTransformed270 = yTransformed0;
+          const s32 yTransformed270 = databaseImageHeight - xTransformed0 - 1;
+
+          numInBounds++;
+
+          const s32 xTransformed[4] = {xTransformed0, xTransformed90, xTransformed180, xTransformed270};
+          const s32 yTransformed[4] = {yTransformed0, yTransformed90, yTransformed180, yTransformed270};
+
+          // The four rotation (0, 90, 180, 270)
+          //   0: x = x         and y = y
+          //  90: x = width-y-1 and y = x
+          // 180: x = width-x-1 and y = height-y-1
+          // 270: x = y         and y = height-x-1
+
+#ifdef SHOW_EXHAUSTIVE_STEPS
+          originalImageBinarized[yS32][x] = curImageValue;
+#endif
+
+          for(s32 iRotation=0; iRotation<4; iRotation++) {
+            const u8 * restrict pDatabaseImages = pDatabaseImages_start + numDatabaseImages*(yTransformed[iRotation]*databaseImageWidth + xTransformed[iRotation]);
+
+            for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+              const s32 databaseImageValue = pDatabaseImages[iDatabase];
+              totalDifferences[numDatabaseImages*iRotation + iDatabase] += ABS(curImageValue - databaseImageValue);
+#ifdef SHOW_EXHAUSTIVE_STEPS
+              toShowImages[iRotation][iDatabase][yS32][x] = databaseImageValue;
+#endif
+            } // for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++)
+          } // for(s32 iRotation=0; iRotation<4; iRotation++)
+        } // for(s32 x=minXS32; x<=maxXS32; x+=xIncrement)
+
+        yF32 += static_cast<f32>(yIncrement);
+      } // for(s32 iy=0; iy<numYs; iy++)
+
+      // TODO: best difference among the means, and store it
+
+      s32 bestDatabaseImage = -1;
+      s32 bestDatabaseRotation = -1;
+      s32 bestDatabaseDifference = s32_MAX;
+
+#ifdef SHOW_EXHAUSTIVE_STEPS
+      image.Show("image", false, false, true);
+      originalImageBinarized.Show("originalImageBinarized", true, false, true);
+#endif
+
+      for(s32 iRotation=0; iRotation<4; iRotation++) {
+        //for(s32 iRotation=0; iRotation<1; iRotation++) {
+        for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++) {
+          //for(s32 iDatabase=60; iDatabase<90; iDatabase++) {
+          const s32 curTotalDifference = totalDifferences[numDatabaseImages*iRotation + iDatabase];
+
+          //CoreTechPrint("(%d,%d) curTotalDifference = %f\n", iRotation, iDatabase, curTotalDifference / (255.0f * static_cast<f32>(numInBounds)));
+
+#ifdef SHOW_EXHAUSTIVE_STEPS
+          toShowImages[iRotation][iDatabase].Show("database", false, false, true);
+          cv::waitKey();
+#endif
+
+          if(curTotalDifference < bestDatabaseDifference) {
+            bestDatabaseDifference = curTotalDifference;
+            bestDatabaseRotation = iRotation;
+            bestDatabaseImage = iDatabase;
+          }
+        }
+      } // for(s32 iDatabase=0; iDatabase<numDatabaseImages; iDatabase++)
+
+      extractedMarker = VisionMarker(quad, VisionMarker::VALID);
+      extractedMarker.markerType = this->databaseLabelIndexes[bestDatabaseImage];
+
+      if(bestDatabaseRotation == 0) {
+        extractedMarker.observedOrientation = 0.0f;
+      } else if(bestDatabaseRotation == 1) {
+        extractedMarker.observedOrientation = 90.0f;
+      } else if(bestDatabaseRotation == 2) {
+        extractedMarker.observedOrientation = 180.0f;
+      } else if(bestDatabaseRotation == 3) {
+        extractedMarker.observedOrientation = 270.0f;
+      }
+
+      matchQuality = bestDatabaseDifference / (255.0f * static_cast<f32>(numInBounds));
+
+      // Check if there was any nonsense in the loop
+      AnkiAssert(fastScratch.IsValid());
+
+      return RESULT_OK;
+    }
+
+    bool VisionMarkerImages::IsValid() const
+    {
+      if(!databaseImages.IsValid())
+        return false;
+
+      if(!databaseLabelIndexes.IsValid())
+        return false;
+
+      return this->isValid;
+    }
+
+    s32 VisionMarkerImages::get_numDatabaseImages() const
+    {
+      return numDatabaseImages;
+    }
+
+    s32 VisionMarkerImages::get_databaseImageHeight() const
+    {
+      return databaseImageHeight;
+    }
+
+    s32 VisionMarkerImages::get_databaseImageWidth() const
+    {
+      return databaseImageWidth;
+    }
+
+    const Array<u8>& VisionMarkerImages::get_databaseImages() const
+    {
+      return databaseImages;
+    }
+
+    const FixedLengthList<Anki::Vision::MarkerType>& VisionMarkerImages::get_databaseLabelIndexes()
+    {
+      return databaseLabelIndexes;
     }
   } // namespace Embedded
 } // namespace Anki

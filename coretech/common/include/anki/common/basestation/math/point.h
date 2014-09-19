@@ -50,6 +50,11 @@ namespace Anki {
     
     // Populate all dimensions with the same scalar value
     Point(const T scalar);
+    
+    // Construct a point from a higher-dimensional point by just dropping the
+    // the last dimensions. For example, construct a 2D point from a 3D point
+    // by just using the (x,y) dimensions and ignoring z.
+    Point(const Point<N+1,T>& pt);
 
 #if __cplusplus == 201103L
     // Point(T x1, T x2, ..., T xN);
@@ -100,6 +105,7 @@ namespace Anki {
     Point<N,T>& operator*= (const T value);
     Point<N,T>& operator/= (const T value);
     Point<N,T>  operator*  (const T value) const;
+    Point<N,T>  operator+  (const T value) const;
     Point<N,T>& operator+= (const Point<N,T> &other);
     Point<N,T>& operator-= (const Point<N,T> &other);
     Point<N,T>& operator*= (const Point<N,T> &other);
@@ -107,6 +113,7 @@ namespace Anki {
     
     // Comparison
     bool operator< (const Point<N,T>& other) const; // all elements less than
+    bool operator> (const Point<N,T>& other) const; // all elements greater than
     
     // Absolute value of each element
     Point<N,T>  GetAbs() const;

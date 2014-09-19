@@ -20,6 +20,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 //#pragma fenv_access (on)
 //#pragma STDC FENV_ACCESS ON
 
+using namespace Anki;
+
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 #include "gtest/gtest.h"
 #endif

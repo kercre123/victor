@@ -29,31 +29,27 @@ namespace Anki {
     class Robot;
     class Block;
     
-    typedef enum {
-      BM_None,
-      BM_PickAndPlace,
-      BM_June2014DiceDemo,
-      BM_TraverseObject // for ramps or bridges
-    } BehaviorMode;
     
     class BehaviorManager
     {
     public:
-      BehaviorManager();
       
-      void Init(RobotManager* robotMgr, BlockWorld* world);
+      typedef enum {
+        None,
+        June2014DiceDemo,
+        ReactToMarkers
+      } Mode;
       
-      void StartMode(BehaviorMode mode);
-      BehaviorMode GetMode() const;
+      BehaviorManager(Robot* robot);
+      
+      void StartMode(Mode mode);
+      Mode GetMode() const;
       
       void Update();
 
       Robot* GetRobot() const {return robot_;}
       
-      const ObjectID GetObjectOfInterest() const {return objectIDofInterest_;}
-      
-      // Select the next object in blockWorld as the block of interest
-      void SelectNextObjectOfInterest();
+      const ObjectID GetObjectOfInterest() const;
       
     protected:
       
@@ -84,13 +80,10 @@ namespace Anki {
         
       } BehaviorState;
       
-      RobotManager* robotMgr_;
-      BlockWorld* world_;
-      
       BehaviorState state_, nextState_, problemState_;
       void (BehaviorManager::*updateFcn_)();
 
-      BehaviorMode mode_;
+      Mode mode_;
       
       Robot* robot_;
 
@@ -109,10 +102,7 @@ namespace Anki {
       IdleAnimationState idleState_;
       unsigned int timesIdle_;
       Pose3d originalPose_;
-      
-      // Specific object that the robot is currently travelling to, docking to,
-      ObjectID objectIDofInterest_;
-      
+            
       // Object _type_ the robot is currently "interested in"
       ObjectType objectTypeOfInterest_;
       

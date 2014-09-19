@@ -533,6 +533,29 @@ namespace Anki {
       return RESULT_FAIL;
     }
     
+    Result RobotPoseHistory::GetLastPoseWithFrameID(const PoseFrameID_t frameID, RobotPoseStamp& p) const
+    {
+      // Start from end and work backward until we find a pose stamp with the
+      // specied ID. Fail if we get back to the beginning without finding it.
+      if(poses_.empty()) {
+        PRINT_NAMED_ERROR("RobotPoseHistory.GetLastPoseWithFrameID.EmptyHistory",
+                          "Looking for last pose with frame ID=%d, but pose history is empty.\n", frameID);
+        return RESULT_FAIL;
+      }
+      
+      auto poseIter = poses_.rbegin();
+      while(poseIter->second.GetFrameId() != frameID) {
+        --poseIter;
+        if(poseIter == poses_.rend()) {
+          return RESULT_FAIL;
+        }
+      }
+      
+      p = poseIter->second;
+      
+      return RESULT_OK;
+      
+    } // GetLastPoseWithFrameID()
     
     void RobotPoseHistory::CullToWindowSize()
     {

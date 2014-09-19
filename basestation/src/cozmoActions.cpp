@@ -1,0 +1,1068 @@
+/**
+ * File: cozmoActions.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   8/29/2014
+ *
+ * Description: Implements cozmo-specific actions, derived from the IAction interface.
+ *
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
+#include "cozmoActions.h"
+
+#include "bridge.h"
+#include "pathPlanner.h"
+#include "ramp.h"
+
+#include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/utils/timer.h"
+
+#include "anki/cozmo/basestation/robot.h"
+
+#include "anki/cozmo/robot/cozmoConfig.h"
+
+namespace Anki {
+  
+  namespace Cozmo {
+ 
+#pragma mark ---- DriveToPoseAction ----
+    
+    DriveToPoseAction::DriveToPoseAction() //, const Pose3d& pose)
+    : _isGoalSet(false)
+    , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
+    , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
+    {
+      
+    }
+    
+    DriveToPoseAction::DriveToPoseAction(const Pose3d& pose)
+    : DriveToPoseAction()
+    {
+      SetGoal(pose);
+    }
+    
+    Result DriveToPoseAction::SetGoal(const Anki::Pose3d& pose)
+    {
+      _goalPose = pose;
+      
+      PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
+                       "Setting pose goal to (%.1f,%.1f,%.1f) @ %.1fdeg\n",
+                       _goalPose.GetTranslation().x(),
+                       _goalPose.GetTranslation().y(),
+                       _goalPose.GetTranslation().z(),
+                       RAD_TO_DEG(_goalPose.GetRotationAngle<'Z'>().ToFloat()));
+      
+      _isGoalSet = true;
+      
+      return RESULT_OK;
+    }
+    
+    const std::string& DriveToPoseAction::GetName() const
+    {
+      static const std::string name("DriveToPoseAction");
+      return name;
+    }
+    
+    IAction::ActionResult DriveToPoseAction::Init(Robot& robot)
+    {
+      // Wait for robot to be idle before trying to drive to a new pose, to
+      // allow previously-added docking/moving actions to finish
+      if(robot.IsMoving()) {
+        return RUNNING;
+      }
+      
+      ActionResult result = SUCCESS;
+      
+      if(!_isGoalSet) {
+        PRINT_NAMED_ERROR("DriveToPoseAction.CheckPreconditions.NoGoalSet",
+                          "Goal must be set before running this action.\n");
+        result = FAILURE_ABORT;
+      }
+      else {
+        Planning::Path p;
+        
+        // TODO: Make it possible to set the speed/accel somewhere?
+        if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
+          result = FAILURE_ABORT;
+        }
+        else if(robot.GetPathToPose(_goalPose, p) != RESULT_OK) {
+          result = FAILURE_ABORT;
+        }
+        else if(robot.ExecutePath(p) != RESULT_OK) {
+          result = FAILURE_ABORT;
+        }
+      }
+      
+      return result;
+    }
+    
+    IAction::ActionResult DriveToPoseAction::CheckIfDone(Robot& robot)
+    {
+      IAction::ActionResult result = IAction::RUNNING;
+      
+      // Wait until robot reports it is no longer traversing a path
+      if(robot.IsTraversingPath())
+      {
+        // If the robot is traversing a path, consider replanning it
+        if(robot.GetBlockWorld().DidObjectsChange())
+        {
+          Planning::Path newPath;
+          switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetPose(), _forceReplanOnNextWorldChange))
+          {
+            case IPathPlanner::DID_PLAN:
+            {
+              // clear path, but flag that we are replanning
+              robot.ClearPath();
+              _forceReplanOnNextWorldChange = false;
+              
+              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.UpdatePath", "sending new path to robot\n");
+              robot.ExecutePath(newPath);
+              break;
+            } // case DID_PLAN:
+              
+            case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
+            {
+              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewGoalForReplanNeeded",
+                               "Replan failed due to bad goal. Aborting path.\n");
+              
+              robot.ClearPath();
+              break;
+            } // PLAN_NEEDED_BUT_GOAL_FAILURE:
+              
+            case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
+            {
+              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewStartForReplanNeeded",
+                               "Replan failed during docking due to bad start. Will try again, and hope robot moves.\n");
+              break;
+            }
+              
+            case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
+            {
+              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewEnvironmentForReplanNeeded",
+                               "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
+              // clear the path, but don't change the state
+              robot.ClearPath();
+              _forceReplanOnNextWorldChange = true;
+              break;
+            }
+              
+            default:
+            {
+              // Don't do anything just proceed with the current plan...
+              break;
+            }
+              
+          } // switch(GetPlan())
+        } // if blocks changed
+        
+      } else {
+        Vec3f Tdiff;
+        
+        // HACK: Loosen z threshold bigtime:
+        const Point3f distanceThreshold(_goalDistanceThreshold, _goalDistanceThreshold, robot.GetHeight());
+        
+        if(robot.GetPose().IsSameAs(_goalPose, distanceThreshold, _goalAngleThreshold, Tdiff))
+        {
+          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
+                           "Robot %d successfully finished following path (Tdiff=%.1fmm).\n",
+                           robot.GetID(), Tdiff.Length());
+          
+          result = IAction::SUCCESS;
+        }
+        // The last path sent was definitely received by the robot
+        // and it is no longer executing it, but we appear to not be in position
+        else if (robot.GetLastSentPathID() == robot.GetLastRecvdPathID()) {
+          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
+                           "Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d\n",
+                           Tdiff.Length(), robot.GetLastRecvdPathID());
+          result = IAction::FAILURE_RETRY;
+        }
+        else {
+          // Something went wrong: not in place and robot apparently hasn't
+          // received all that it should have
+          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure",
+                           "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
+          result = IAction::FAILURE_ABORT;
+        }
+      }
+      
+      // If we are not running anymore, for any reason, clear the path and its
+      // visualization
+      if(result != IAction::RUNNING) {
+        robot.ClearPath(); // clear path and indicate that we are not replanning
+        VizManager::getInstance()->ErasePath(robot.GetID());
+        VizManager::getInstance()->EraseAllPlannerObstacles(true);
+        VizManager::getInstance()->EraseAllPlannerObstacles(false);
+      }
+      
+      return result;
+    } // CheckIfDone()
+    
+#pragma mark ---- DriveToObjectAction ----
+    
+    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType)
+    : _objectID(objectID)
+    , _actionType(actionType)
+    {
+      // NOTE: _goalPose will be set later, when we check preconditions
+    }
+    
+    
+    const std::string& DriveToObjectAction::GetName() const
+    {
+      static const std::string name("DriveToObjectAction");
+      return name;
+    }
+    
+    
+    IAction::ActionResult DriveToObjectAction::InitHelper(Robot& robot, ActionableObject* object)
+    {
+      ActionResult result = RUNNING;
+      
+      std::vector<PreActionPose> possiblePreActionPoses;
+      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType}, std::set<Vision::Marker::Code>(), &robot.GetPose());
+      
+      if(possiblePreActionPoses.empty()) {
+        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
+                          "ActionableObject %d did not return any pre-action poses with action type %d.\n",
+                          _objectID.GetValue(), _actionType);
+        
+        result = FAILURE_ABORT;
+        
+      } else {
+        size_t selectedIndex = 0;
+        
+        // Make a vector of just poses (not preaction poses) for call to
+        // Robot::ExecutePathToPose() below
+        // TODO: Prettier way to handle this?
+        std::vector<Pose3d> possiblePoses;
+        for(auto & preActionPose : possiblePreActionPoses)
+        {
+          Pose3d possiblePose;
+          if(preActionPose.GetPose().GetWithRespectTo(*robot.GetWorldOrigin(), possiblePose) == false) {
+            PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.PreActionPoseOriginProblem",
+                                "Could not get pre-action pose w.r.t. robot origin.\n");
+            
+          } else {
+
+            possiblePoses.emplace_back(possiblePose);
+            /*
+            // If this pose is at a dockable height relative to the robot, queue it
+            // as possible pose for the planner to consider. Just drop it to the
+            // z=0 height and keep only the heading angle (rotaiton around Z)
+            if(NEAR(possiblePose.GetTranslation().z(), _robot.GetPose().GetTranslation().z() + ROBOT_BOUNDING_Z*.5f, 25.f)) {
+              possiblePose.SetRotation(possiblePose.GetRotationAngle<'Z'>(), Z_AXIS_3D);
+              possiblePose.SetTranslation({{possiblePose.GetTranslation().x(), possiblePose.GetTranslation().y(), 0.f}});
+
+            }
+             */
+          }
+        }
+        
+        if(possiblePoses.empty()) {
+          PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPossiblePoses",
+                            "No pre-action poses survived as possible docking poses.\n");
+          result = FAILURE_ABORT;
+        }
+        else {
+          Planning::Path p;
+          if(robot.GetPathToPose(possiblePoses, selectedIndex, p) != RESULT_OK) {
+            result = FAILURE_ABORT;
+          }
+          else if(robot.ExecutePath(p) != RESULT_OK) {
+            result = FAILURE_ABORT;
+          }
+          else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
+            result = FAILURE_ABORT;
+          } else {
+            SetGoal(possiblePoses[selectedIndex]);
+            
+            // Record where we want the head to end up, but don't actually move it
+            // there yet. We'll let the path follower use whatever head angle it
+            // wants to that's good for driving and then make use of this head
+            // angle at the end, once the path is complete.
+            _finalHeadAngle = possiblePreActionPoses[selectedIndex].GetHeadAngle();
+            
+            result = SUCCESS;
+          }
+        }
+        
+      } // if/else possiblePreActionPoses.empty()
+      
+      return result;
+      
+    } // InitHelper()
+    
+    
+    IAction::ActionResult DriveToObjectAction::Init(Robot& robot)
+    {
+      ActionResult result = SUCCESS;
+      
+      ActionableObject* object = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_objectID));
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
+                          "Robot %d's block world does not have an ActionableObject with ID=%d.\n",
+                          robot.GetID(), _objectID.GetValue());
+        
+        result = FAILURE_ABORT;
+      } else {
+      
+        result = InitHelper(robot, object);
+        
+      } // if/else object==nullptr
+      
+      return result;
+    }
+    
+    IAction::ActionResult DriveToObjectAction::CheckIfDone(Robot& robot)
+    {
+      ActionResult result = DriveToPoseAction::CheckIfDone(robot);
+      
+      if(result == SUCCESS) {
+        // Just before returning success when normal DriveToPose action finishes,
+        // Set the head angle to the one selected by the pre-action pose.
+        // (We don't do this earlier because it may not be a good head angle
+        // for path following -- e.g., for the prox sensors to be usable.)
+        if(robot.MoveHeadToAngle(_finalHeadAngle.ToFloat(), 1.f, 3.f) != RESULT_OK) {
+          result = FAILURE_ABORT;
+        }
+      }
+      
+      return result;
+    }
+    
+            
+#pragma mark ---- DriveToPlaceCarriedObjectAction ----
+    
+    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose)
+    : DriveToObjectAction(robot.GetCarryingObject(), PreActionPose::PLACEMENT)
+    , _placementPose(placementPose)
+    {
+
+    }
+    
+    const std::string& DriveToPlaceCarriedObjectAction::GetName() const
+    {
+      static const std::string name("DriveToPlaceCarriedObjectAction");
+      return name;
+    }
+    
+    IAction::ActionResult DriveToPlaceCarriedObjectAction::Init(Robot& robot)
+    {
+      ActionResult result = SUCCESS;
+      
+      if(robot.IsCarryingObject() == false) {
+        PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
+                          "Robot %d cannot place an object because it is not carrying anything.\n",
+                          robot.GetID());
+        result = FAILURE_ABORT;
+      } else {
+        
+        _objectID = robot.GetCarryingObject();
+        
+        ActionableObject* object = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_objectID));
+        if(object == nullptr) {
+          PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NoObjectWithID",
+                            "Robot %d's block world does not have an ActionableObject with ID=%d.\n",
+                            robot.GetID(), _objectID.GetValue());
+          
+          result = FAILURE_ABORT;
+        } else {
+          
+          // Temporarily move object to desired pose so we can get placement poses
+          // at that position
+          const Pose3d origObjectPose(object->GetPose());
+          object->SetPose(_placementPose);
+          
+          // Call parent class's init helper
+          result = InitHelper(robot, object);
+          
+          // Move the object back to where it was (being carried)
+          object->SetPose(origObjectPose);
+          
+        } // if/else object==nullptr
+      } // if/else robot is carrying object
+      
+      return result;
+      
+    } // CheckPreconditions()
+    
+
+#pragma mark ---- TurnInPlaceAction ----
+    
+    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle)
+    : _turnAngle(angle)
+    {
+      
+    }
+    
+    const std::string& TurnInPlaceAction::GetName() const
+    {
+      static const std::string name("TurnInPlaceAction");
+      return name;
+    }
+    
+    IAction::ActionResult TurnInPlaceAction::Init(Robot &robot)
+    {
+      ActionResult result = SUCCESS;
+
+      // Compute a goal pose rotated by specified angle around robot's
+      // _current_ pose
+      const Radians heading = robot.GetPose().GetRotationAngle<'Z'>();
+      
+      Pose3d rotatedPose(heading + _turnAngle, Z_AXIS_3D,
+                         robot.GetPose().GetTranslation());
+      
+      SetGoal(rotatedPose);
+      
+      return result;
+    }
+    
+    
+    
+#pragma mark ---- MoveHeadToAngleAction ----
+    
+    MoveHeadToAngleAction::MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance)
+    : _headAngle(headAngle)
+    , _angleTolerance(tolerance)
+    , _name("MoveHeadTo" + std::to_string(std::round(RAD_TO_DEG(_headAngle.ToFloat()))) + "DegAction")
+    {
+
+    }
+    
+    IActionRunner::ActionResult MoveHeadToAngleAction::Init(Robot &robot)
+    {
+      // TODO: Add ability to specify speed/accel
+      if(robot.MoveHeadToAngle(_headAngle.ToFloat(), 5, 10) != RESULT_OK) {
+        return FAILURE_ABORT;
+      } else {
+        return SUCCESS;
+      }
+    }
+    
+    IActionRunner::ActionResult MoveHeadToAngleAction::CheckIfDone(Robot &robot)
+    {
+      ActionResult result = RUNNING;
+      
+      // Wait to get a state message back from the physical robot saying its head
+      // is in the commanded position
+      // TODO: Is this really necessary in practice?
+      if(NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(), _angleTolerance.ToFloat())) {
+        result = SUCCESS;
+      }
+      
+      return result;
+    }
+         
+    
+#pragma mark ---- IDockAction ----
+    
+    // TODO: Define this as a constant parameter elsewhere
+    #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
+    
+    IDockAction::IDockAction(ObjectID objectID)
+    : _dockObjectID(objectID)
+    , _dockMarker(nullptr)
+    {
+      
+    }
+    
+    IAction::ActionResult IDockAction::Init(Robot& robot)
+    {
+      _waitToVerifyTime = -1.f;
+      
+      // Wait for robot to be done moving before trying to dock with a new object, to
+      // allow previously-added docking/moving actions to finish
+      if(robot.IsMoving()) {
+        return RUNNING;
+      }
+      
+      // Make sure the object we were docking with still exists in the world
+      ActionableObject* dockObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_dockObjectID));
+      if(dockObject == nullptr) {
+        PRINT_NAMED_ERROR("IDockAction.Init.ActionObjectNotFound",
+                          "Action object with ID=%d no longer exists in the world.\n",
+                          _dockObjectID.GetValue());
+        
+        return FAILURE_ABORT;
+      }
+      
+      // Verify that we ended up near enough a PreActionPose of the right type
+      std::vector<PreActionPose> preActionPoses;
+      dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()});
+      
+      if(preActionPoses.empty()) {
+        PRINT_NAMED_ERROR("IDockAction.Init.NoPreActionPoses",
+                          "Action object with ID=%d returned no pre-action poses of the given type.\n",
+                          _dockObjectID.GetValue());
+        
+        return FAILURE_ABORT;
+      }
+
+      const Point2f currentXY(robot.GetPose().GetTranslation().x(),
+                              robot.GetPose().GetTranslation().y());
+      
+      float closestDistSq = std::numeric_limits<float>::max();
+      size_t closestIndex = preActionPoses.size();
+      
+      for(size_t index=0; index < preActionPoses.size(); ++index) {
+        Pose3d preActionPose;
+        if(preActionPoses[index].GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), preActionPose) == false) {
+          PRINT_NAMED_WARNING("IDockAction.Init.PreActionPoseOriginProblem",
+                              "Could not get pre-action pose w.r.t. robot parent.\n");
+        }
+        
+        const Point2f preActionXY(preActionPose.GetTranslation().x(),
+                                  preActionPose.GetTranslation().y());
+        const float distSq = (currentXY - preActionXY).LengthSq();
+        if(distSq < closestDistSq) {
+          closestDistSq = distSq;
+          closestIndex  = index;
+        }
+      }
+      
+      const f32 closestDist = sqrtf(closestDistSq);
+      
+      if(closestDist > MAX_DISTANCE_TO_PREDOCK_POSE) {
+        PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
+                         "Robot is too far from pre-action pose (%.1fmm).", closestDist);
+        return FAILURE_RETRY;
+      }
+      else {
+        if(SelectDockAction(robot, dockObject) != RESULT_OK) {
+          PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.DockActionSelectionFailure",
+                            "");
+          return FAILURE_ABORT;
+        }
+        
+        PRINT_NAMED_INFO("IDockAction.Init.BeginDocking",
+                         "Robot is within %.1fmm of the nearest pre-action pose, "
+                         "proceeding with docking.\n", closestDist);
+      
+        // Set dock markers
+        _dockMarker = preActionPoses[closestIndex].GetMarker();
+        const Vision::KnownMarker* dockMarker2 = GetDockMarker2(preActionPoses, closestIndex);
+        
+        PRINT_NAMED_INFO("IDockAction.DockWithObjectHelper.BeginDocking",
+                         "Docking with marker %d (%s) using action %d.\n",
+                         _dockMarker->GetCode(),
+                         Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
+        
+        if(robot.DockWithObject(_dockObjectID, _dockMarker, dockMarker2, _dockAction) == RESULT_OK) {
+          return SUCCESS;
+        } else {
+          return FAILURE_ABORT;
+        }
+      }
+      
+    } // Init()
+    
+    
+    IAction::ActionResult IDockAction::CheckIfDone(Robot& robot)
+    {
+      ActionResult actionResult = RUNNING;
+      
+      if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
+      {
+        const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        
+        // Set the verification time if not already set
+        if(_waitToVerifyTime < 0.f) {
+          _waitToVerifyTime = currentTime + GetVerifyDelayInSeconds();
+        }
+        
+        // Stopped executing docking path, and should have backed out by now,
+        // and have head pointed at an angle to see where we just placed or
+        // picked up from. So we will check if we see a block with the same
+        // ID/Type as the one we were supposed to be picking or placing, in the
+        // right position.
+        if(currentTime >= _waitToVerifyTime) {
+          actionResult = Verify(robot);
+        }
+      }
+      
+      return actionResult;
+    } // CheckIfDone()
+   
+    
+#pragma mark ---- PickAndPlaceObjectAction ----
+    
+    PickAndPlaceObjectAction::PickAndPlaceObjectAction(ObjectID objectID)
+    : IDockAction(objectID)
+    {
+      
+    }
+    
+    const std::string& PickAndPlaceObjectAction::GetName() const
+    {
+      static const std::string name("PickAndPlaceObjectAction");
+      return name;
+    }
+    
+    Result PickAndPlaceObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    {
+      // Record the object's original pose (before picking it up) so we can
+      // verify later whether we succeeded.
+      // Make it w.r.t. robot's parent so we can compare heights fairly.
+      if(object->GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), _dockObjectOrigPose) == false) {
+        PRINT_NAMED_ERROR("PickAndPlaceObjectAction.SelectDockAction.PoseWrtFailed",
+                          "Could not get pose of dock object w.r.t. robot parent.\n");
+        return RESULT_FAIL;
+      }
+      
+      // Choose docking action based on block's position and whether we are
+      // carrying a block
+      const f32 dockObjectHeightWrtRobot = _dockObjectOrigPose.GetTranslation().z() - robot.GetPose().GetTranslation().z();
+      _dockAction = DA_PICKUP_LOW;
+      
+      // TODO: Stop using constant ROBOT_BOUNDING_Z for this
+      if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
+        if(robot.IsCarryingObject()) {
+          PRINT_INFO("Already carrying object. Can't dock to high object. Aborting.\n");
+          return RESULT_FAIL;
+          
+        } else {
+          _dockAction = DA_PICKUP_HIGH;
+        }
+      } else if (robot.IsCarryingObject()) {
+        _dockAction = DA_PLACE_HIGH;
+        
+        // Need to record the object we are currently carrying because it
+        // will get unset when the robot unattaches it during placement, and
+        // we want to be able to verify that we're seeing what we just placed.
+        _carryObjectID     = robot.GetCarryingObject();
+        _carryObjectMarker = robot.GetCarryingMarker();
+      }
+      
+      return RESULT_OK;
+    } // SelectDockAction()
+    
+    // This helper is used both by PickAndPlaceObjectAction and PlaceObjectOnGroundAction
+    // to verify whether they succeeded.
+    static IActionRunner::ActionResult VerifyObjectPlacementHelper(Robot& robot, ObjectID objectID,
+                                                                   const Vision::KnownMarker* objectMarker)
+    {
+      if(robot.IsCarryingObject() == true) {
+        PRINT_NAMED_ERROR("VerifyObjectPlacementHelper.RobotCarryignObject",
+                          "Expecting robot to think it's NOT carrying an object at this point.\n");
+        return IActionRunner::FAILURE_ABORT;
+      }
+      
+      // TODO: check to see it ended up in the right place?
+      Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("VerifyObjectPlacementHelper.CarryObjectNoLongerExists",
+                          "Object %d we were carrying no longer exists in the world.\n",
+                          robot.GetCarryingObject().GetValue());
+        return IActionRunner::FAILURE_ABORT;
+      }
+      else if(object->GetLastObservedTime() > (robot.GetLastMsgTimestamp()-500))
+      {
+        // We've seen the object in the last half second (which could
+        // not be true if we were still carrying it)
+        PRINT_NAMED_INFO("VerifyObjectPlacementHelper.ObjectPlacementSuccess",
+                         "Verification of object placement SUCCEEDED!\n");
+        return IActionRunner::SUCCESS;
+      } else {
+        PRINT_NAMED_INFO("VerifyObjectPlacementHelper.ObjectPlacementFailure",
+                         "Verification of object placement FAILED!\n");
+        // TODO: correct to assume we are still carrying the object? Maybe object fell out of view?
+        robot.SetObjectAsAttachedToLift(objectID, objectMarker); // re-pickup object to attach it to the lift again
+        return IActionRunner::FAILURE_RETRY;
+      }
+    } // VerifyObjectPlacementHelper()
+
+    
+    IAction::ActionResult PickAndPlaceObjectAction::Verify(Robot& robot) const
+    {
+      switch(_dockAction)
+      {
+        case DA_PICKUP_LOW:
+        case DA_PICKUP_HIGH:
+        {
+          if(robot.IsCarryingObject() == false) {
+            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.RobotNotCarryignObject",
+                              "Expecting robot to think it's carrying an object at this point.\n");
+            return FAILURE_RETRY;
+          }
+          
+          BlockWorld& blockWorld = robot.GetBlockWorld();
+          
+          // We should _not_ still see a object with the
+          // same type as the one we were supposed to pick up in that
+          // block's original position because we should now be carrying it.
+          Vision::ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
+          if(carryObject == nullptr) {
+            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.CarryObjectNoLongerExists",
+                              "Object %d we were carrying no longer exists in the world.\n",
+                              robot.GetCarryingObject().GetValue());
+            return FAILURE_ABORT;
+          }
+          
+          const BlockWorld::ObjectsMapByID_t& objectsWithType = blockWorld.GetExistingObjectsByType(carryObject->GetType());
+          
+          bool objectInOriginalPoseFound = false;
+          for(auto object : objectsWithType) {
+            // TODO: is it safe to always have useAbsRotation=true here?
+            if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, carryObject->
+                                                               GetRotationAmbiguities(),
+                                                               carryObject->GetSameDistanceTolerance(),
+                                                               carryObject->GetSameAngleTolerance(), true))
+            {
+              objectInOriginalPoseFound = true;
+              break;
+            }
+          }
+          
+          if(objectInOriginalPoseFound)
+          {
+            // Must not actually be carrying the object I thought I was!
+            blockWorld.ClearObject(robot.GetCarryingObject());
+            robot.UnSetCarryingObject();
+            
+            PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
+            return FAILURE_RETRY;
+          } else {
+            //_carryingObjectID = _dockObjectID;  // Already set?
+            //_carryingMarker   = _dockMarker;   //   "
+            PRINT_INFO("Object pick-up SUCCEEDED!\n");
+            return SUCCESS;
+          }
+          break;
+        } // PICKUP
+          
+        case DA_PLACE_LOW:
+        case DA_PLACE_HIGH:
+          return VerifyObjectPlacementHelper(robot, _carryObjectID, _carryObjectMarker);
+          
+        default:
+          PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.ReachedDefaultCase",
+                            "Don't know how to verify unexpected dockAction %d.\n", _dockAction);
+          return FAILURE_ABORT;
+          
+      } // switch(_dockAction)
+      
+      // Should not get here
+      PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.UnexpectedReturn",
+                        "All cases in switch statement should always return!\n");
+      return FAILURE_ABORT;
+      
+    } // Verify()
+       
+    
+#pragma mark ---- PlaceObjectOnGroundAction ----
+    
+    PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
+    {
+      
+    }
+    
+    const std::string& PlaceObjectOnGroundAction::GetName() const
+    {
+      static const std::string name("PlaceObjectOnGroundAction");
+      return name;
+    }
+   
+    IAction::ActionResult PlaceObjectOnGroundAction::Init(Robot& robot)
+    {
+      ActionResult result = RUNNING;
+      
+      // Wait for robot to stop moving before proceeding with pre-conditions
+      if (robot.IsMoving() == false)
+      {
+        // Robot must be carrying something to put something down!
+        if(robot.IsCarryingObject() == false) {
+          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
+                            "Robot %d executing PlaceObjectOnGroundAction but not carrying object.\n", robot.GetID());
+          result = FAILURE_ABORT;
+        } else {
+          
+          _carryingObjectID  = robot.GetCarryingObject();
+          _carryObjectMarker = robot.GetCarryingMarker();
+        
+          if(robot.PlaceObjectOnGround() == RESULT_OK)
+          {
+            result = SUCCESS;
+          } else {
+            PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
+                              "Robot's SendPlaceObjectOnGround method reported failure.\n");
+            result = FAILURE_ABORT;
+          }
+          
+        } // if/else IsCarryingObject()
+      } // if robot IsMoving()
+      
+      return result;
+      
+    } // CheckPreconditions()
+    
+    
+    
+    IAction::ActionResult PlaceObjectOnGroundAction::CheckIfDone(Robot& robot)
+    {
+      ActionResult actionResult = RUNNING;
+      
+      // Wait for robot to report it is done picking/placing and that it's not
+      // moving
+      if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
+      {
+        // Stopped executing docking path, and should have placed carried block
+        // and backed out by now, and have head pointed at an angle to see
+        // where we just placed or picked up from.
+        // So we will check if we see a block with the same
+        // ID/Type as the one we were supposed to be picking or placing, in the
+        // right position.
+
+        actionResult = VerifyObjectPlacementHelper(robot, _carryingObjectID, _carryObjectMarker);
+        
+      } // if robot is not picking/placing or moving
+      
+      return actionResult;
+      
+    } // CheckIfDone()
+    
+
+    
+#pragma mark ---- CrossBridgeAction ----
+    
+    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID)
+    : IDockAction(bridgeID)
+    {
+      
+    }
+    
+    const std::string& CrossBridgeAction::GetName() const
+    {
+      static const std::string name("CrossBridgeAction");
+      return name;
+    }
+    
+    const Vision::KnownMarker* CrossBridgeAction::GetDockMarker2(const std::vector<PreActionPose> &preActionPoses, const size_t closestIndex)
+    {
+      // Use the unchosen pre-crossing pose marker (the one at the other end of
+      // the bridge) as dockMarker2
+      assert(preActionPoses.size() == 2);
+      size_t indexForOtherEnd = 1 - closestIndex;
+      assert(indexForOtherEnd == 0 || indexForOtherEnd == 1);
+      return preActionPoses[indexForOtherEnd].GetMarker();
+    }
+    
+    Result CrossBridgeAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    {
+      _dockAction = DA_CROSS_BRIDGE;
+      return RESULT_OK;
+    } // SelectDockAction()
+    
+    IAction::ActionResult CrossBridgeAction::Verify(Robot& robot) const
+    {
+      // TODO: Need some kind of verificaiton here?
+      PRINT_NAMED_INFO("CrossBridgeAction.Verify.BridgeCrossingComplete",
+                       "Robot has completed crossing a bridge.\n");
+      return SUCCESS;
+    } // Verify()
+    
+    
+#pragma mark ---- AscendOrDescendRampAction ----
+    
+    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID)
+    : IDockAction(rampID)
+    {
+
+    }
+    
+    const std::string& AscendOrDescendRampAction::GetName() const
+    {
+      static const std::string name("AscendOrDescendRampAction");
+      return name;
+    }
+    
+    Result AscendOrDescendRampAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    {
+      Ramp* ramp = dynamic_cast<Ramp*>(object);
+      if(ramp == nullptr) {
+        PRINT_NAMED_ERROR("AscendOrDescendRampAction.SelectDockAction.NotRampObject",
+                          "Could not cast generic ActionableObject into Ramp object.\n");
+        return RESULT_FAIL;
+      }
+      
+      Result result = RESULT_OK;
+      
+      // Choose ascent or descent
+      const Ramp::TraversalDirection direction = ramp->WillAscendOrDescend(robot.GetPose());
+      switch(direction)
+      {
+        case Ramp::ASCENDING:
+          _dockAction = DA_RAMP_ASCEND;
+          break;
+          
+        case Ramp::DESCENDING:
+          _dockAction = DA_RAMP_DESCEND;
+          break;
+          
+        case Ramp::UNKNOWN:
+        default:
+          result = RESULT_FAIL;
+      }
+    
+      // Tell robot which ramp it will be using, and in which direction
+      robot.SetRamp(_dockObjectID, direction);
+            
+      return result;
+      
+    } // SelectDockAction()
+    
+    
+    IAction::ActionResult AscendOrDescendRampAction::Verify(Robot& robot) const
+    {
+      // TODO: Need to do some kind of verification here?
+      PRINT_NAMED_INFO("AscendOrDescendRampAction.Verify.RampAscentOrDescentComplete",
+                       "Robot has completed going up/down ramp.\n");
+      
+      return SUCCESS;
+    } // Verify()
+    
+    
+#pragma mark ---- TraverseObjectAction ----
+    
+    TraverseObjectAction::TraverseObjectAction(ObjectID objectID)
+    : _objectID(objectID)
+    , _chosenAction(nullptr)
+    {
+      
+    }
+    
+    TraverseObjectAction::~TraverseObjectAction()
+    {
+      if(_chosenAction != nullptr) {
+        delete _chosenAction;
+        _chosenAction = nullptr;
+      }
+    }
+    
+    const std::string& TraverseObjectAction::GetName() const
+    {
+      static const std::string name("TraverseObjectAction");
+      return name;
+    }
+    
+    void TraverseObjectAction::Reset()
+    {
+      if(_chosenAction != nullptr) {
+        _chosenAction->Reset();
+      }
+    }
+    
+    IActionRunner::ActionResult TraverseObjectAction::Update(Robot& robot)
+    {
+      // Select the chosen action based on the object's type, if we haven't
+      // already
+      if(_chosenAction == nullptr) {
+        ActionableObject* object = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_objectID));
+        if(object == nullptr) {
+          PRINT_NAMED_ERROR("TraverseObjectAction.Init.ObjectNotFound",
+                            "Could not get actionable object with ID = %d from world.\n", _objectID.GetValue());
+          return FAILURE_ABORT;
+        }
+        
+        if(object->GetType() == Bridge::Type::LONG_BRIDGE ||
+           object->GetType() == Bridge::Type::SHORT_BRIDGE)
+        {
+          _chosenAction = new CrossBridgeAction(_objectID);
+        }
+        else if(object->GetType() == Ramp::Type::BASIC_RAMP) {
+          _chosenAction = new AscendOrDescendRampAction(_objectID);
+        }
+        else {
+          PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",
+                            "Robot %d was asked to traverse object ID=%d of type %s, but "
+                            "that traversal is not defined.\n", robot.GetID(),
+                            object->GetID().GetValue(), object->GetType().GetName().c_str());
+          
+          return FAILURE_ABORT;
+        }
+      }
+      
+      // Now just use chosenAction's Update()
+      assert(_chosenAction != nullptr);
+      return _chosenAction->Update(robot);
+      
+    } // Update()
+    
+    
+#pragma mark ---- PlayAnimationAction ----
+    
+    PlayAnimationAction::PlayAnimationAction(AnimationID_t animID)
+    : _animID(animID)
+    , _name("PlayAnimation" + std::to_string(_animID) + "Action")
+    {
+      
+    }
+    
+    IAction::ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
+    {
+      if(robot.PlayAnimation(_animID) == RESULT_OK) {
+        return SUCCESS;
+      } else {
+        return FAILURE_ABORT;
+      }
+    }
+    
+#pragma mark ---- PlaySoundAction ----
+    
+    PlaySoundAction::PlaySoundAction(SoundID_t soundID)
+    : _soundID(soundID)
+    , _name("PlaySound" + std::to_string(_soundID) + "Action")
+    {
+      
+    }
+
+    IAction::ActionResult PlaySoundAction::CheckIfDone(Robot& robot)
+    {
+      // TODO: Implement!
+      return FAILURE_ABORT;
+    }
+    
+#pragma mark ---- WaitAction ----
+    
+    WaitAction::WaitAction(f32 waitTimeInSeconds)
+    : _waitTimeInSeconds(waitTimeInSeconds)
+    , _doneTimeInSeconds(-1.f)
+    {
+      // Put the wait time with two decimals of precision in the action's name
+      char tempBuffer[32];
+      snprintf(tempBuffer, 32, "Wait%.2fSecondsAction", _waitTimeInSeconds);
+      _name = tempBuffer;
+    }
+    
+    IActionRunner::ActionResult WaitAction::Init(Robot& robot)
+    {
+      _doneTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _waitTimeInSeconds;
+      return SUCCESS;
+    }
+    
+    IActionRunner::ActionResult WaitAction::CheckIfDone(Robot& robot)
+    {
+      assert(_doneTimeInSeconds > 0.f);
+      if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _doneTimeInSeconds) {
+        return SUCCESS;
+      } else {
+        return RUNNING;
+      }
+    }
+    
+    /*
+    static void TestInstantiation(void)
+    {
+      Robot robot(7, nullptr);
+      ObjectID id;
+      id.Set();
+      
+      PickAndPlaceObjectAction action(robot, id);
+      AscendOrDescendRampAction action2(robot, id);
+      CrossBridgeAction action3(robot, id);
+    }
+    */
+  } // namespace Cozmo
+} // namespace Anki

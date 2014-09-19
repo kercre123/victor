@@ -7,13 +7,13 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/platformPathManager.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/robot/matlabInterface.h"
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
-
-#include "anki/common/robot/matlabInterface.h"
+#include "anki/cozmo/basestation/robotManager.h"
 
 #include "ramp.h"
 
@@ -40,6 +40,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   using namespace Anki;
   using namespace Cozmo;
   
+  /*
   // TODO: Tighten/loosen thresholds?
   const float   objectPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
   
@@ -47,6 +48,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   const float   objectPoseAngleThresholdFarDistance  = 300.f;
   const float   objectPoseAngleNearThreshold = DEG_TO_RAD(5); // at near distance
   const float   objectPoseAngleFarThreshold  = DEG_TO_RAD(25); // at far distance
+  */
   
 //  const float objectPoseDistThreshold_mm    = 12.f;
 //  const Radians objectPoseAngleThreshold    = DEG_TO_RAD(15.f);
@@ -68,12 +70,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
   // Create the modules we need (and stubs of those we don't)
   RobotManager        robotMgr;
-  BlockWorld          blockWorld;
   MessageHandlerStub  msgHandler;
-  PathPlannerStub     pathPlanner;
-  
-  blockWorld.Init(&robotMgr);
-  robotMgr.Init(&msgHandler, &blockWorld, &pathPlanner);
+
+  robotMgr.Init(&msgHandler);
   
   robotMgr.AddRobot(0);
   Robot& robot = *robotMgr.GetRobotByID(0);
@@ -83,30 +82,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
   Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
   robot.SetCameraCalibration(calib);
-  
-  // Fake a robot state update (i think we have to have received one before
-  // we can start adding vision-based poses to history)
-  MessageRobotState msg;
-  {
-    msg.timestamp = 0;
-    msg.pose_frame_id = 0;
-    msg.pose_x = 0;
-    msg.pose_y = 0;
-    msg.pose_z = 0;
-    msg.pose_angle = 0;
-    msg.headAngle = 0;
-    msg.liftAngle = 0;
     
-    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp,
-                                            msg.pose_frame_id,
-                                            msg.pose_x, msg.pose_y, msg.pose_z,
-                                            msg.pose_angle,
-                                            msg.headAngle,
-                                            msg.liftAngle), RESULT_OK);
-    
-    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
-  }
-  
   bool checkRobotPose;
   ASSERT_TRUE(JsonTools::GetValueOptional(jsonRoot, "CheckRobotPose", checkRobotPose));
 
@@ -131,6 +107,13 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   for(int i_pose=0; i_pose<NumPoses; ++i_pose)
   {
     TimeStamp_t currentTimeStamp = (i_pose+1)*100;
+
+    // Start the robot/world fresh for each pose
+    robot.GetBlockWorld().ClearAllExistingObjects();
+    ASSERT_EQ(robot.AddRawOdomPoseToHistory(currentTimeStamp, robot.GetPoseFrameID(), 0, 0, 0, 0, 0, 0), RESULT_OK);
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
+    
+    currentTimeStamp += 5;
     
     const Json::Value& jsonData = jsonRoot["Poses"][i_pose];
     
@@ -147,7 +130,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     // message.
     MessageRobotState msg;
     msg.timestamp = currentTimeStamp;
-    msg.pose_frame_id = 0;
+    msg.pose_frame_id = robot.GetPoseFrameID();
     msg.headAngle  = headAngle;
     msg.liftAngle  = 0;
     
@@ -158,6 +141,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       msg.pose_y = trueRobotPose.GetTranslation().y();
       msg.pose_z = trueRobotPose.GetTranslation().z();
       msg.pose_angle = trueRobotPose.GetRotationAngle<'Z'>().ToFloat();
+    } else {
+      msg.pose_x = 0;
+      msg.pose_y = 0;
+      msg.pose_z = 0;
+      msg.pose_angle = 0;
     }
     
     ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp,
@@ -167,6 +155,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                                             msg.headAngle, msg.liftAngle), RESULT_OK);
     
     ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
+    
 
     int NumMarkers;
     ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "NumMarkers", NumMarkers));
@@ -190,34 +179,33 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       msg.timestamp = currentTimeStamp;
       
       // If we are not checking robot pose, don't queue mat markers
-      const bool isMatMarker = !blockWorld.GetObjectLibrary(BlockWorld::ObjectFamily::MATS).GetObjectsWithCode(msg.markerType).empty();
+      const bool isMatMarker = !robot.GetBlockWorld().GetObjectLibrary(BlockWorld::ObjectFamily::MATS).GetObjectsWithCode(msg.markerType).empty();
       if(!checkRobotPose && isMatMarker) {
         fprintf(stdout, "Skipping mat marker with code = %d ('%s'), since we are not checking robot pose.\n",
                 msg.markerType, Vision::MarkerTypeStrings[msg.markerType]);
       } else {
-        ASSERT_EQ(blockWorld.QueueObservedMarker(msg, robot), RESULT_OK);
+        ASSERT_EQ(robot.QueueObservedMarker(msg), RESULT_OK);
       }
       
     } // for each VisionMarker in the jsonFile
     
     
     // Process all the markers we've queued
-    uint32_t numObjectsObserved = 0;
-    blockWorld.Update(numObjectsObserved);
+    //uint32_t numObjectsObserved = 0;
+    //blockWorld.Update(numObjectsObserved);
+    robot.Update();
     
     if(checkRobotPose) {
       // TODO: loop over all robots
       
       // Make sure the estimated robot pose matches the ground truth pose
-      Pose3d P_diff;
+      Vec3f Tdiff;
       const bool robotPoseMatches = trueRobotPose.IsSameAs(robot.GetPose(),
                                                            robotPoseDistThreshold_mm,
-                                                           robotPoseAngleThreshold, P_diff);
+                                                           robotPoseAngleThreshold, Tdiff);
       
       fprintf(stdout, "X/Y error in robot pose = %.2fmm, Z error = %.2fmm\n",
-              sqrtf(P_diff.GetTranslation().x()*P_diff.GetTranslation().x() +
-                    P_diff.GetTranslation().y()*P_diff.GetTranslation().y()),
-              P_diff.GetTranslation().z());
+              sqrtf(Tdiff.x()*Tdiff.x() + Tdiff.y()*Tdiff.y()), Tdiff.z());
       
       // If the robot's pose is not correct, we can't continue, because
       // all the blocks' poses will also be incorrect
@@ -235,7 +223,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       const Json::Value& jsonObject = jsonRoot["Objects"];
       const int numObjectsTrue = jsonObject.size();
       
-      EXPECT_GE(numObjectsObserved, numObjectsTrue); // TODO: Should this be EXPECT_EQ?
+      //EXPECT_GE(numObjectsObserved, numObjectsTrue); // TODO: Should this be EXPECT_EQ?
       
       //if(numBlocksObserved != numBlocksTrue)
       //  break;
@@ -254,15 +242,14 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         BlockWorld::ObjectFamily objectFamily;
         if(objectFamilyString == "Block") {
           objectFamily = BlockWorld::ObjectFamily::BLOCKS;
-          objectType = Block::GetTypeByName(objectTypeString);
-          
         } else if(objectFamilyString == "Ramp") {
           objectFamily = BlockWorld::ObjectFamily::RAMPS;
-          objectType = Ramp::GetTypeByName(objectTypeString);
         }
+        objectType = ObjectType::GetTypeByName(objectTypeString);
+
         ASSERT_TRUE(objectType.IsSet());
 
-        const Vision::ObservableObject* libObject = blockWorld.GetObjectLibrary(objectFamily).GetObjectWithType(objectType);
+        const Vision::ObservableObject* libObject = robot.GetBlockWorld().GetObjectLibrary(objectFamily).GetObjectWithType(objectType);
 
         /*
         int blockTypeAsInt;
@@ -281,9 +268,10 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         // Make sure this ground truth object was seen and its estimated pose
         // matches the ground truth pose
-        auto observedObjects = blockWorld.GetExistingObjectsByType(groundTruthObject->GetType());
+        auto observedObjects = robot.GetBlockWorld().GetExistingObjectsByType(groundTruthObject->GetType());
         int matchesFound = 0;
         
+        /*
         // The threshold will vary with how far away the block actually is
         const float trueDistance = (objectPose.GetTranslation() - trueRobotPose.GetTranslation()).Length();
         const float objectPoseDistThreshold_mm = objectPoseDistThresholdFraction * trueDistance;
@@ -299,41 +287,42 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
           objectPoseAngleThreshold = (slope*(trueDistance - objectPoseAngleThresholdNearDistance) +
                                       objectPoseAngleNearThreshold);
         }
+         */
         
         for(auto & observedObject : observedObjects)
         {
-          Pose3d P_diff;
-          
           objectPose.SetParent(&observedObject.second->GetPose().FindOrigin());
           groundTruthObject->SetPose(objectPose);
           
-          if(groundTruthObject->IsSameAs(*observedObject.second,
-                                        objectPoseDistThreshold_mm,
-                                        objectPoseAngleThreshold, P_diff))
+          if(groundTruthObject->IsSameAs(*observedObject.second))
           {
             if(matchesFound > 0) {
               // We just found multiple matches for this ground truth block
-              fprintf(stdout, "Match #%d found for one ground truth %s object. "
-                      "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
-                      matchesFound+1, objectFamilyString.c_str(),
-                      P_diff.GetTranslation().Length(),
-                      objectPoseDistThreshold_mm,
-                      P_diff.GetRotationAngle().getDegrees(),
-                      objectPoseAngleThreshold.getDegrees());
+              fprintf(stdout, "Match #%d found for one ground truth %s object.\n",
+                      //"T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
+                      matchesFound+1, objectFamilyString.c_str());
+                      //P_diff.GetTranslation().Length(),
+                      //objectPoseDistThreshold_mm,
+                      //P_diff.GetRotationAngle().getDegrees(),
+                      //objectPoseAngleThreshold.getDegrees());
               
-              groundTruthObject->IsSameAs(*observedObject.second,
+              /*
+              groundTruthObject->IsSameAs(*observedObject.second
                                           objectPoseDistThreshold_mm,
                                           objectPoseAngleThreshold, P_diff);
+               */
             }
 
             if(matchesFound == 0) {
-              fprintf(stdout, "Match found for observed %s object with "
+              fprintf(stdout, "Match found for observed %s object.\n", objectFamilyString.c_str());
+              /* with "
                       "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs %.1fdeg)\n",
                       objectFamilyString.c_str(),
                       P_diff.GetTranslation().Length(),
                       objectPoseDistThreshold_mm,
                       P_diff.GetRotationAngle().getDegrees(),
                       objectPoseAngleThreshold.getDegrees());
+               */
 #if DISPLAY_ERRORS
               const Vec3f& T_true = groundTruthObject->GetPose().GetTranslation();
               
@@ -356,8 +345,8 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
             ++matchesFound;
           } else {
             fprintf(stdout, "Observed type-%d %s object %d at (%.2f,%.2f,%.2f) does not match "
-                    "type-%d ground truth at (%.2f,%.2f,%.2f). T_diff = %2fmm (vs. %.2fmm), "
-                    "Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
+                    "type-%d ground truth at (%.2f,%.2f,%.2f).\n", // T_diff = %2fmm (vs. %.2fmm), "
+                    //"Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
                     int(observedObject.second->GetType()),
                     objectFamilyString.c_str(),
                     int(observedObject.second->GetID()),
@@ -367,11 +356,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                     int(groundTruthObject->GetType()),
                     groundTruthObject->GetPose().GetTranslation().x(),
                     groundTruthObject->GetPose().GetTranslation().y(),
-                    groundTruthObject->GetPose().GetTranslation().z(),
-                    P_diff.GetTranslation().Length(),
-                    objectPoseDistThreshold_mm,
-                    P_diff.GetRotationAngle().getDegrees(),
-                    objectPoseAngleThreshold.getDegrees());
+                    groundTruthObject->GetPose().GetTranslation().z());
+                    //P_diff.GetTranslation().Length(),
+                    //objectPoseDistThreshold_mm,
+                    //P_diff.GetRotationAngle().getDegrees(),
+                    //objectPoseAngleThreshold.getDegrees());
           }
             
         } // for each observed object
@@ -384,8 +373,8 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       
     } // IF there are blocks
     else {
-      EXPECT_EQ(0, numObjectsObserved) <<
-      "No objects are defined in the JSON file, but some were observed.";
+      //EXPECT_EQ(0, numObjectsObserved) <<
+      //"No objects are defined in the JSON file, but some were observed.";
     }
   
   } // FOR each pose
@@ -411,12 +400,13 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 // This is the list of JSON files containing vision test worlds:
 // TODO: automatically get all available tests from some directory?
 const char *visionTestJsonFiles[] = {
+  "visionTest_PoseCluster.json",
   "visionTest_VaryingDistance.json",
   "visionTest_MatPoseTest.json",
   "visionTest_TwoBlocksOnePose.json",
   "visionTest_RepeatedBlock.json",
-  "visionTest_SingleRamp.json"
-//  "visionTest_OffTheMat.json"  // Currently fails b/c of assumption robot is at z=0. TODO: Re-enable.
+  "visionTest_SingleRamp.json",
+  "visionTest_OffTheMat.json"
 };
 
 

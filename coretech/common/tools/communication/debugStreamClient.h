@@ -16,7 +16,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/serialize.h"
 
 #include "communication.h"
-#include "threadSafeQueue.h"
+#include "anki/tools/threads/threadSafeQueue.h"
 
 #include <string>
 

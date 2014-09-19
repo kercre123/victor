@@ -1,6 +1,6 @@
 function probeTree = TrainProbeTree(varargin)
 
-% TODO: Use parameters from a derived class below, insetad of VisionMarkerTrained.*
+% TODO: Use parameters from a derived class below, instead of VisionMarkerTrained.*
 
 %% Parameters
 loadSavedProbeValues = false;
@@ -612,6 +612,11 @@ fprintf('Training completed in %.2f seconds (%.1f minutes), plus %.2f seconds (%
 %% Save Tree
 if saveTree
     savePath = fileparts(mfilename('fullpath'));
+    
+    % Preserve previous probeTree, for archiving (e.g. to largefiles repo)
+    movefile(fullfile(savePath, 'probeTree.mat'), fullfile(savePath, sprintf('probeTree_%s.mat',datestr(now, 30))));
+    
+    % Save the new tree
     save(fullfile(savePath, 'probeTree.mat'), 'probeTree');
     
     fprintf('Probe tree re-trained and saved.  You will need to clear any existing VisionMarkers.\n');
@@ -761,7 +766,7 @@ end
 
 
 
-end % TrainProbes()
+end % TrainProbeTree()
 
 
 function infoGain = computeInfoGain(labels, numLabels, probeValues)

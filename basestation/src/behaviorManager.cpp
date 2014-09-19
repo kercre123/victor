@@ -11,6 +11,7 @@
  **/
 
 #include "behaviorManager.h"
+#include "cozmoActions.h"
 #include "pathPlanner.h"
 #include "vizManager.h"
 #include "soundManager.h"
@@ -34,39 +35,128 @@
 
 namespace Anki {
   namespace Cozmo {
+    
+    static bool IsMarkerCloseEnoughAndCentered(const Vision::ObservedMarker* marker, const u16 ncols)
+    {
+      bool result = false;
+      
+      // Parameters:
+      const f32 minDiagSize       = 50.f;
+      const f32 maxDistFromCenter = 35.f;
+      
+      const f32 diag1 = (marker->GetImageCorners()[Quad::TopLeft]  - marker->GetImageCorners()[Quad::BottomRight]).Length();
+      const f32 diag2 = (marker->GetImageCorners()[Quad::TopRight] - marker->GetImageCorners()[Quad::BottomLeft]).Length();
+      
+      // If the marker is large enough in our field of view (this is a proxy for
+      // "close enough" without needing to compute actual pose)
+      if(diag1 >= minDiagSize && diag2 >= minDiagSize) {
+        // If the marker is centered in the field of view (this is a proxy for
+        // "robot is facing the marker")
+        const Point2f centroid = marker->GetImageCorners().ComputeCentroid();
+        if(std::abs(centroid.x() - static_cast<f32>(ncols/2)) < maxDistFromCenter) {
+          result = true;
+        }
+      }
+      
+      return result;
+    }
+    
+    static Result ArrowCallback(Robot* robot, Vision::ObservedMarker* marker)
+    {
+      Result lastResult = RESULT_OK;
+     
+      // Parameters (pass in?)
+      const f32 driveSpeed = 30.f;
+      
+      if(robot->IsIdle() && IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
         
-    BehaviorManager::BehaviorManager()
-    : robotMgr_(nullptr)
-    , world_(nullptr)
-    , mode_(BM_None)
+        Vec2f upVector = marker->GetImageCorners()[Quad::TopLeft] - marker->GetImageCorners()[Quad::BottomLeft];
+        
+        // Decide what to do based on the orientation of the arrow
+        // NOTE: Remember that Y axis points down in image coordinates.
+        
+        const f32 angle = atan2(upVector.y(), upVector.x());
+        
+        if(angle >= -3.f*M_PI_4 && angle < -M_PI_4) { // UP
+          PRINT_INFO("UP Arrow!\n");
+          lastResult = robot->DriveWheels(driveSpeed, driveSpeed);
+        }
+        else if(angle >= -M_PI_4 && angle < M_PI_4) { // RIGHT
+          PRINT_INFO("RIGHT Arrow!\n");
+          //lastResult = robot->QueueAction(new TurnInPlaceAction(-M_PI_2));
+          robot->GetActionList().AddAction(new TurnInPlaceAction(-M_PI_2));
+        }
+        else if(angle >= M_PI_4 && angle < 3*M_PI_4) { // DOWN
+          PRINT_INFO("DOWN Arrow!\n");
+          lastResult = robot->DriveWheels(-driveSpeed, -driveSpeed);
+        }
+        else if(angle >= 3*M_PI_4 || angle < -3*M_PI_4) { // LEFT
+          PRINT_INFO("LEFT Arrow!\n");
+          //lastResult = robot->QueueAction(new TurnInPlaceAction(M_PI_2));
+          robot->GetActionList().AddAction(new TurnInPlaceAction(M_PI_2));
+        }
+        else {
+          PRINT_NAMED_ERROR("TurnCallback.UnexpectedAngle",
+                            "Unexpected angle for arrow marker: %.3f radians (%.1f degrees)\n",
+                            angle, angle*180.f/M_PI);
+          lastResult = RESULT_FAIL;
+        }
+      } // IfMarkerIsCloseEnoughAndCentered()
+      
+      return lastResult;
+      
+    } // ArrowCallback()
+    
+    static Result TurnAroundCallback(Robot* robot, Vision::ObservedMarker* marker)
+    {
+      Result lastResult = RESULT_OK;
+      
+      if(robot->IsIdle() && IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
+        PRINT_INFO("TURNAROUND Arrow!\n");
+        //lastResult = robot->QueueAction(new TurnInPlaceAction(M_PI));
+        robot->GetActionList().AddAction(new TurnInPlaceAction(M_PI));
+      } // IfMarkerIsCloseEnoughAndCentered()
+      
+      return lastResult;
+    } // TurnAroundCallback()
+    
+    static Result StopCallback(Robot* robot, Vision::ObservedMarker* marker)
+    {
+      Result lastResult = RESULT_OK;
+
+      if(IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
+        lastResult = robot->StopAllMotors();
+      }
+      
+      return lastResult;
+    }
+    
+    
+    BehaviorManager::BehaviorManager(Robot* robot)
+    : mode_(None)
+    , robot_(robot)
     , distThresh_mm_(20.f)
     , angThresh_(DEG_TO_RAD(10))
 //    , objectToPickUp_(Block::UNKNOWN_BLOCK_TYPE)
 //    , objectToPlaceOn_(Block::UNKNOWN_BLOCK_TYPE)
     {
       Reset();
+      
+      // NOTE: Do not _use_ the robot_ pointer in this constructor because
+      //  this constructor is being called from Robot's constructor.
+      
+      CORETECH_ASSERT(robot_ != nullptr);
     }
 
-    void BehaviorManager::Init(RobotManager* robotMgr, BlockWorld* world)
-    {
-      robotMgr_ = robotMgr;
-      world_ = world;
-    }
-    
-    void BehaviorManager::StartMode(BehaviorMode mode)
+    void BehaviorManager::StartMode(Mode mode)
     {
       Reset();
       mode_ = mode;
       switch(mode) {
-        case BM_None:
+        case None:
           CoreTechPrint("Starting NONE behavior\n");
           break;
-        case BM_PickAndPlace:
-          CoreTechPrint("Starting PickAndPlace behavior\n");
-          nextState_ = WAITING_FOR_DOCK_BLOCK;
-          updateFcn_ = &BehaviorManager::Update_PickAndPlaceBlock;
-          break;
-        case BM_June2014DiceDemo:
+        case June2014DiceDemo:
           CoreTechPrint("Starting June demo behavior\n");
           state_     = WAITING_FOR_ROBOT;
           nextState_ = DRIVE_TO_START;
@@ -75,11 +165,17 @@ namespace Anki {
           timesIdle_ = 0;
           SoundManager::getInstance()->Play(SOUND_DEMO_START);
           break;
-        case BM_TraverseObject:
-          CoreTechPrint("Starting TraverseObject behavior\n");
-          nextState_ = WAITING_FOR_DOCK_BLOCK;
-          updateFcn_ = &BehaviorManager::Update_TraverseObject;
-          break;
+        case ReactToMarkers:
+          CoreTechPrint("Starting ReactToMarkers behavior\n");
+          
+          // Testing Reactions:
+          robot_->AddReactionCallback(Vision::MARKER_ARROW,         &ArrowCallback);
+          robot_->AddReactionCallback(Vision::MARKER_STOPWITHHAND,  &StopCallback);
+          robot_->AddReactionCallback(Vision::MARKER_CIRCULARARROW, &TurnAroundCallback);
+          
+          // Once the callbacks are added
+          StartMode(None);
+          
         default:
           PRINT_NAMED_ERROR("BehaviorManager.InvalidMode", "Invalid behavior mode");
           return;
@@ -89,7 +185,7 @@ namespace Anki {
       
     } // StartMode()
     
-    BehaviorMode BehaviorManager::GetMode() const
+    BehaviorManager::Mode BehaviorManager::GetMode() const
     {
       return mode_;
     }
@@ -99,7 +195,6 @@ namespace Anki {
       state_ = WAITING_FOR_ROBOT;
       nextState_ = state_;
       updateFcn_ = nullptr;
-      robot_ = nullptr;
       
       // Pick and Place
       
@@ -110,105 +205,11 @@ namespace Anki {
       
     } // Reset()
     
-    
-    // TODO: Make this a blockWorld function?
-    void BehaviorManager::SelectNextObjectOfInterest()
+    const ObjectID BehaviorManager::GetObjectOfInterest() const
     {
-      // Unselect current object of interest, if it still exists (Note that it may just get
-      // reselected here, but I don't think we care.)
-      // Mark new object of interest as selected so it will draw differently
-      ActionableObject* object = dynamic_cast<ActionableObject*>(world_->GetObjectByID(objectIDofInterest_));
-      if(object != nullptr) {
-        object->SetSelected(false);
-      }
-
-      bool currObjectOfInterestFound = false;
-      bool newObjectOfInterestSet = false;
-      
-      // Iterate through all the objects
-      auto const & allObjects = world_->GetAllExistingObjects();
-      for(auto const & objectsByFamily : allObjects) {
-          for (auto const & objectsByType : objectsByFamily.second) {
-            
-            //PRINT_INFO("currType: %d\n", blockType.first);
-            for (auto const & objectsByID : objectsByType.second) {
-              
-              ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
-              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
-              {
-                //PRINT_INFO("currID: %d\n", block.first);
-                if (currObjectOfInterestFound) {
-                  // Current block of interest has been found.
-                  // Set the new block of interest to the next block in the list.
-                  objectIDofInterest_ = object->GetID();
-                  newObjectOfInterestSet = true;
-                  //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
-                  break;
-                } else if (object->GetID() == objectIDofInterest_) {
-                  currObjectOfInterestFound = true;
-                  //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
-                }
-              }
-            } // for each ID
-            
-            if (newObjectOfInterestSet) {
-              break;
-            }
-            
-          } // for each type
-        
-        if(newObjectOfInterestSet) {
-          break;
-        }
-        
-      } // for each family
-      
-      // If the current object of interest was found, but a new one was not set
-      // it must have been the last block in the map. Set the new object of interest
-      // to the first object in the map as long as it's not the same object.
-      if (!currObjectOfInterestFound || !newObjectOfInterestSet) {
-        
-        // Find first object
-        ObjectID firstObject; // initialized to un-set
-        for(auto const & objectsByFamily : allObjects) {
-          for (auto const & objectsByType : objectsByFamily.second) {
-            for (auto const & objectsByID : objectsByType.second) {
-              const ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
-              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
-              {
-                firstObject = objectsByID.first;
-                break;
-              }
-            }
-            if (firstObject.IsSet()) {
-              break;
-            }
-          }
-          
-          if (firstObject.IsSet()) {
-            break;
-          }
-        } // for each family
-
-        
-        if (firstObject == objectIDofInterest_ || !firstObject.IsSet()){
-          //PRINT_INFO("Only one object in existence.");
-        } else {
-          //PRINT_INFO("Setting object of interest to first block\n");
-          objectIDofInterest_ = firstObject;
-        }
-      }
-      
-      // Mark new object of interest as selected so it will draw differently
-      object = dynamic_cast<ActionableObject*>(world_->GetObjectByID(objectIDofInterest_));
-      if (object != nullptr) {
-      object->SetSelected(true);
-      PRINT_INFO("Object of interest: ID = %d\n", objectIDofInterest_.GetValue());
-      } else {
-        PRINT_INFO("No object of interest found\n");
-      }
-      
-    } // SelectNextObjectOfInterest()
+      return robot_->GetBlockWorld().GetSelectedObject();
+    }
+    
     
     void BehaviorManager::Update()
     {
@@ -216,11 +217,9 @@ namespace Anki {
       switch(state_) {
         case WAITING_FOR_ROBOT:
         {
-          const std::vector<RobotID_t> &robotList = robotMgr_->GetRobotIDList();
-          if (!robotList.empty()) {
-            robot_ = robotMgr_->GetRobotByID(robotList[0]);
-            state_ = nextState_;
-          }
+          // Nothing to do here anymore: we should not be "waiting" on a robot
+          // because BehaviorManager is now part of a robot!
+          state_ = nextState_;
           break;
         }
         default:
@@ -236,85 +235,7 @@ namespace Anki {
     } // Update()
     
     
-    /********************************************************
-     * PickAndPlaceBlock
-     *
-     * Looks for a particular block in the world. When it sees
-     * that it is at ground-level it
-     * 1) Plans a path to a docking pose for that block
-     * 2) Docks with the block
-     * 3) Places it on any other block in the world
-     *
-     ********************************************************/
-    
-    void BehaviorManager::Update_PickAndPlaceBlock()
-    {
-      // Params for determining whether the predock pose has been reached
-      
-      robot_->ExecuteDockingSequence(objectIDofInterest_);
-      StartMode(BM_None);
-      
-      /*
-      switch(state_) {
-        case WAITING_FOR_DOCK_BLOCK:
-        {
-          // TODO: BlockWorld needs function for retrieving collision-free docking poses for a given block
-          //
-          // 1) Get all blocks in the world
-          // 2) Find one that is on the bottom level and no block is on top
-          // 3) Get collision-free docking poses
-          // 4) Find a collision-free path to one of the docking poses
-          // 5) Command path to that docking pose
-          
-          
-          // Get block object
-          DockableObject* object = dynamic_cast<DockableObject*>(world_->GetObjectByID(objectIDofInterest_));
-          if (object == nullptr) {
-            break;
-          }
-          
-          // Check that we're not already carrying a block if the block of interest is a high block.
-          if (object->GetPose().GetTranslation().z() > 44.f && robot_->IsCarryingObject()) {
-            PRINT_INFO("Already carrying object. Can't dock to high object. Aborting (0).\n");
-            StartMode(BM_None);
-            return;
-          }
 
-          if(robot_->ExecuteDockingSequence(object->GetID()) != RESULT_OK) {
-            PRINT_INFO("Robot::ExecuteDockingSequence() failed. Aborting.\n");
-            StartMode(BM_None);
-            return;
-          }
-          
-          state_ = EXECUTING_DOCK;
-          
-          break;
-        }
-        case EXECUTING_DOCK:
-        {
-          // Wait until robot finishes (goes back to IDLE)
-          if(robot_->GetState() == Robot::IDLE) {
-            StartMode(BM_None);
-          }
-          break;
-        }
-        default:
-        {
-          PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState", "Transitioned to unknown state %d!", state_);
-          StartMode(BM_None);
-          return;
-        }
-      }
-       */
-      
-    } // Update_PickAndPlaceBlock()
-    
-    void BehaviorManager::Update_TraverseObject()
-    {
-      robot_->ExecuteTraversalSequence(objectIDofInterest_);
-      StartMode(BM_None);
-    }
-    
     /********************************************************
      * June2014DiceDemo
      *
@@ -327,6 +248,8 @@ namespace Anki {
     void BehaviorManager::Update_June2014DiceDemo()
     {
 
+      static const ActionList::SlotHandle TraversalSlot = 0;
+      
       constexpr float checkItOutAngleUp = DEG_TO_RAD(15);
       constexpr float checkItOutAngleDown = DEG_TO_RAD(-10);
       constexpr float checkItOutSpeed = 0.4;
@@ -336,12 +259,12 @@ namespace Anki {
         case DRIVE_TO_START:
         {
           // Wait for robot to be IDLE
-          if(robot_->GetState() == Robot::IDLE) {
+          if(robot_->IsIdle()) {
             Pose3d startPose(JUNE_DEMO_START_THETA,
                              Z_AXIS_3D,
                              {{JUNE_DEMO_START_X, JUNE_DEMO_START_Y, 0.f}});
             CoreTechPrint("Driving to demo start location\n");
-            robot_->ExecutePathToPose(startPose);
+            robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(startPose));
 
             state_ = WAITING_TO_SEE_DICE;
 
@@ -353,7 +276,7 @@ namespace Anki {
           
         case WAITING_FOR_DICE_TO_DISAPPEAR:
         {
-          const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingObjectsByType(Block::Type::DICE);
+          const BlockWorld::ObjectsMapByID_t& diceBlocks = robot_->GetBlockWorld().GetExistingObjectsByType(Block::Type::DICE);
           
           if(diceBlocks.empty()) {
             
@@ -364,12 +287,12 @@ namespace Anki {
               state_ = WAITING_TO_SEE_DICE;
             }
           } else {
-            world_->ClearObjectsByType(Block::Type::DICE);
+            robot_->GetBlockWorld().ClearObjectsByType(Block::Type::DICE);
             diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
             if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
               // Keep clearing blocks until we don't see them anymore
               CoreTechPrint("Please move first dice away.\n");
-              robot_->SendPlayAnimation(ANIM_HEAD_NOD, 2);
+              robot_->PlayAnimation(ANIM_HEAD_NOD, 2);
               waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 5;
               SoundManager::getInstance()->Play(SOUND_WAITING4DICE2DISAPPEAR);
             }
@@ -390,16 +313,16 @@ namespace Anki {
           const f32 diceViewingHeadAngle = DEG_TO_RAD(-15);
 
           // Wait for robot to be IDLE
-          if(robot_->GetState() == Robot::IDLE)
+          if(robot_->IsIdle())
           {
-            const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingObjectsByType(Block::Type::DICE);
+            const BlockWorld::ObjectsMapByID_t& diceBlocks = robot_->GetBlockWorld().GetExistingObjectsByType(Block::Type::DICE);
             if(!diceBlocks.empty()) {
               
               if(diceBlocks.size() > 1) {
                 // Multiple dice blocks in the world, keep deleting them all
                 // until we only see one
                 CoreTechPrint("More than one dice block found!\n");
-                world_->ClearObjectsByType(Block::Type::DICE);
+                robot_->GetBlockWorld().ClearObjectsByType(Block::Type::DICE);
                 
               } else {
                 
@@ -434,7 +357,7 @@ namespace Anki {
                   diceBlock->GetObservedMarkers(diceMarkers, robot_->GetLastMsgTimestamp() - 2000);
                   if (diceMarkers.empty()) {
                     CoreTechPrint("Haven't see dice marker for a while. Deleting dice.");
-                    world_->ClearObjectsByType(Block::Type::DICE);
+                    robot_->GetBlockWorld().ClearObjectsByType(Block::Type::DICE);
                     break;
                   }
                 }
@@ -486,7 +409,7 @@ namespace Anki {
                       PRINT_NAMED_ERROR("BehaviorManager.UnknownDiceMarker",
                                         "Found unexpected marker on dice: %s!",
                                         Vision::MarkerTypeStrings[topMarker->GetCode()]);
-                      StartMode(BM_None);
+                      StartMode(None);
                       return;
                   } // switch(topMarker->GetCode())
                   
@@ -518,7 +441,7 @@ namespace Anki {
                     
                       CoreTechPrint("Set objectToPlaceOn = %s\n", objectToPlaceOn_.GetName().c_str());
 
-                      robot_->SendPlayAnimation(ANIM_HEAD_NOD, 2);
+                      robot_->PlayAnimation(ANIM_HEAD_NOD, 2);
                       waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.5;
 
                       state_ = BEGIN_EXPLORING;
@@ -553,7 +476,8 @@ namespace Anki {
                     
                     goalPose_ = Pose3d(angle, Z_AXIS_3D, {{position.x(), position.y(), 0.f}});
                     
-                    robot_->ExecutePathToPose(goalPose_, diceViewingHeadAngle);
+                    robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(goalPose_));
+
                   } else {
                     CoreTechPrint("Move dice closer!\n");
                   }
@@ -584,7 +508,7 @@ namespace Anki {
 
                       Pose3d userFacingPose = robot_->GetPose();
                       userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
-                      robot_->ExecutePathToPose(userFacingPose);
+                      robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(userFacingPose));
                       CoreTechPrint("idle: facing user\n");
 
                       idleState_ = IDLE_FACING_USER;
@@ -641,7 +565,7 @@ namespace Anki {
                 case IDLE_FACING_USER:
                 {
                   // once we get there, look up
-                  if(robot_->GetState() == Robot::IDLE) {
+                  if(robot_->IsIdle()) {
                     SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
                     CoreTechPrint("idle: looking up\n");
                     robot_->MoveHeadToAngle(headUpWaitingAngleFrustrated, 3.0, 10);
@@ -655,11 +579,11 @@ namespace Anki {
                 {
                   // once we are looking back down, turn back to the original pose
                   if(waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() &&
-                     robot_->GetState() == Robot::IDLE) {
+                     robot_->IsIdle()) {
 
                     CoreTechPrint("idle: turning back\n");
                     SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
-                    robot_->ExecutePathToPose(originalPose_);
+                    robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(originalPose_));
                     idleState_ = IDLE_TURNING_BACK;
                     waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.25;
                   }
@@ -669,7 +593,7 @@ namespace Anki {
                 case IDLE_TURNING_BACK:
                 {
                   if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
-                    if(robot_->GetState() == Robot::IDLE) {
+                    if(robot_->IsIdle()) {
                       CoreTechPrint("idle: waiting for dice\n");
                       timesIdle_ = 0;
                       idleState_ = IDLE_NONE;
@@ -704,8 +628,8 @@ namespace Anki {
         } // case BACKING_UP
         case GOTO_EXPLORATION_POSE:
         {
-          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectTypeOfInterest_);
-          if (robot_->GetState() == Robot::IDLE || !blocks.empty()) {
+          const BlockWorld::ObjectsMapByID_t& blocks = robot_->GetBlockWorld().GetExistingObjectsByType(objectTypeOfInterest_);
+          if (robot_->IsIdle() || !blocks.empty()) {
             state_ = START_EXPLORING_TURN;
           }
           break;
@@ -724,7 +648,7 @@ namespace Anki {
             
             
             // If we already know where the blockOfInterest is, then go straight to it
-            const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectTypeOfInterest_);
+            const BlockWorld::ObjectsMapByID_t& blocks = robot_->GetBlockWorld().GetExistingObjectsByType(objectTypeOfInterest_);
             if(blocks.empty()) {
               // Compute desired pose at mat center
               Pose3d robotPose = robot_->GetPose();
@@ -740,7 +664,7 @@ namespace Anki {
               if (ComputeDistanceBetween(targetPose, robotPose) > 50.f) {
                 PRINT_INFO("Going to mat center for exploration (%f %f %f)\n", targetPose.GetTranslation().x(), targetPose.GetTranslation().y(), targetAngle);
                 robot_->GetPathPlanner()->AddIgnoreType(Block::Type::DICE);
-                robot_->ExecutePathToPose(targetPose);
+                robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(targetPose));
               }
 
               state_ = GOTO_EXPLORATION_POSE;
@@ -766,7 +690,7 @@ namespace Anki {
         {
           // If we've spotted the block we're looking for, stop exploring, and
           // execute a path to that block
-          const BlockWorld::ObjectsMapByID_t& blocks = world_->GetExistingObjectsByType(objectTypeOfInterest_);
+          const BlockWorld::ObjectsMapByID_t& blocks = robot_->GetBlockWorld().GetExistingObjectsByType(objectTypeOfInterest_);
           if(!blocks.empty()) {
             // Dock with the first block of the right type that we see
             // TODO: choose the closest?
@@ -775,7 +699,7 @@ namespace Anki {
             
             robot_->DriveWheels(0.f, 0.f);
             
-            robot_->ExecuteDockingSequence(dockBlock->GetID());
+            robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPickAndPlaceObjectAction(dockBlock->GetID()));
             
             state_ = EXECUTING_DOCK;
             
@@ -804,10 +728,10 @@ namespace Anki {
         case EXECUTING_DOCK:
         {
           // Wait for the robot to go back to IDLE
-          if(robot_->GetState() == Robot::IDLE)
+          if(robot_->IsIdle())
           {
             const bool donePickingUp = robot_->IsCarryingObject() &&
-                                       world_->GetObjectByID(robot_->GetCarryingObject())->GetType() == objectToPickUp_;
+                                       robot_->GetBlockWorld().GetObjectByID(robot_->GetCarryingObject())->GetType() == objectToPickUp_;
             if(donePickingUp) {
               PRINT_INFO("Picked up block %d successfully! Going back to exploring for block to place on.\n",
                          robot_->GetCarryingObject().GetValue());
@@ -860,7 +784,7 @@ namespace Anki {
         case CHECK_IT_OUT_UP:
         {
           // Wait for the robot to go back to IDLE
-          if(robot_->GetState() == Robot::IDLE &&
+          if(robot_->IsIdle() &&
              waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
           {
             // TODO:(bn) small happy chirp sound
@@ -874,13 +798,13 @@ namespace Anki {
         case CHECK_IT_OUT_DOWN:
         {
           // Wait for the robot to go back to IDLE
-          if(robot_->GetState() == Robot::IDLE &&
+          if(robot_->IsIdle() &&
              waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())
           {
             // Compute pose that makes robot face user
             Pose3d userFacingPose = robot_->GetPose();
             userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
-            robot_->ExecutePathToPose(userFacingPose);
+            robot_->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(userFacingPose));
 
             SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
             state_ = FACE_USER;
@@ -891,10 +815,10 @@ namespace Anki {
         case FACE_USER:
         {
           // Wait for the robot to go back to IDLE
-          if(robot_->GetState() == Robot::IDLE)
+          if(robot_->IsIdle())
           {
             // Start nodding
-            robot_->SendPlayAnimation(ANIM_HEAD_NOD);
+            robot_->PlayAnimation(ANIM_HEAD_NOD);
             state_ = HAPPY_NODDING;
             PRINT_INFO("NODDING_HEAD\n");
             SoundManager::getInstance()->Play(SOUND_OK_DONE);
@@ -907,7 +831,7 @@ namespace Anki {
         case HAPPY_NODDING:
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
-            robot_->SendPlayAnimation(ANIM_BACK_AND_FORTH_EXCITED);
+            robot_->PlayAnimation(ANIM_BACK_AND_FORTH_EXCITED);
             robot_->MoveHeadToAngle(DEG_TO_RAD(-10), 1, 1);
             
             // Compute time to stop back and forth
@@ -919,9 +843,9 @@ namespace Anki {
         case BACK_AND_FORTH_EXCITED:
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
-            robot_->SendPlayAnimation(ANIM_IDLE);
-            world_->ClearAllExistingObjects();
-            StartMode(BM_June2014DiceDemo);
+            robot_->PlayAnimation(ANIM_IDLE);
+            robot_->GetBlockWorld().ClearAllExistingObjects();
+            StartMode(June2014DiceDemo);
           }
           break;
         }
@@ -929,7 +853,7 @@ namespace Anki {
         {
           PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState",
                             "Transitioned to unknown state %d!\n", state_);
-          StartMode(BM_None);
+          StartMode(None);
           return;
         }
       } // switch(state_)

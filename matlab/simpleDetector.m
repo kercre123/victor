@@ -1,3 +1,10 @@
+% function markers = simpleDetector(img, varargin)
+
+% Examples:
+% markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_edges', 'componentRejectionTestsType', 'off', 'emptyCenterDetection', 'off', 'connectedComponentsType', 'matlab_original', 'traceBoundaryType', 'matlab_approximate'));
+% markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('extractFiducialMethod', 'c_exhaustive'));
+% markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', 'c:/tmp/treeLarge.mat')));
+
 function markers = simpleDetector(img, varargin)
 
 downsampleFactor = 2;
@@ -11,7 +18,7 @@ cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPe
 decodeDownsampleFactor = 1; % use lower resolution image for decoding
 minDistanceFromImageEdge = 2; % if a quad has an corner that is too close to the edge, reject it
 DEBUG_DISPLAY = nargout==0;
-embeddedConversions = EmbeddedConversionsManager; % 1-cp2tform, 2-opencv_cp2tform
+embeddedConversions = EmbeddedConversionsManager;
 showTiming = false;
 thresholdFraction = 1; % fraction of local mean to use as threshold
 maxSmoothingFraction = 0.025; % fraction of max dim
@@ -86,7 +93,9 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_DetectFiduc
         return;
     end
 
-    [numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY);
+    if strcmp(embeddedConversions.componentRejectionTestsType, 'matlab_original') 
+        [numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY);
+    end
 
     if showTiming
         fprintf('Binary region detection took %.2f seconds.\n', toc(t_binaryRegions));

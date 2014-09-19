@@ -17,87 +17,7 @@
 
 namespace Anki {
   namespace Cozmo {
-    
-#if 0
-#pragma mark --- PreActionPose ---
-#endif
-    
-    const ColorRGBA& PreActionPose::GetVisualizeColor(ActionType type)
-    {
-      static const std::map<ActionType, ColorRGBA> ColorLUT = {
-        {DOCKING, ColorRGBA(0.f,0.f,1.f,0.5f)},
-        {ENTRY,   ColorRGBA(1.f,0.f,0.f,0.5f)}
-      };
-      
-      return ColorLUT.at(type);
-    }
-    
-    PreActionPose::PreActionPose(ActionType type,
-                                 const Vision::KnownMarker* marker,
-                                 f32 distance)
-    : _type(type)
-    , _marker(marker)
-    , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D, Y_AXIS_3D * -distance, &marker->GetPose()) // init w.r.t. marker
-    {      
-      // Now make pose w.r.t. marker parent
-      if(_poseWrtMarkerParent.GetWithRespectTo(*_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
-        PRINT_NAMED_ERROR("PreActionPose.GetPoseWrtMarkerParentFailed",
-                          "Could not get the pre-action pose w.r.t. the marker's parent.\n");
-      }
-      _poseWrtMarkerParent.SetName("PreActionPose");
-      
-    } // PreActionPose Constructor
-    
-    
-    PreActionPose::PreActionPose(ActionType type,
-                                 const Vision::KnownMarker* marker,
-                                 const Pose3d& poseWrtMarker)
-    : _type(type)
-    , _marker(marker)
-    {
-      if(poseWrtMarker.GetParent() != &marker->GetPose()) {
-        PRINT_NAMED_ERROR("PreActionPose.PoseWrtMarkerParentInvalid",
-                          "Given pose w.r.t. marker should have the marker as its parent pose.\n");
-      }
-      if(poseWrtMarker.GetWithRespectTo(*_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
-        PRINT_NAMED_ERROR("PreActionPose.GetPoseWrtMarkerParentFailed",
-                          "Could not get the pre-action pose w.r.t. the marker's parent.\n");
-      }
-      _poseWrtMarkerParent.SetName("PreActionPose");
-    } // PreActionPose Constructor
-    
-    
-    bool PreActionPose::GetCurrentPose(const Anki::Pose3d &markerParentPose, Anki::Pose3d &currentPose) const
-    {
-      bool validPoseFound = false;
-      
-      if(_marker->GetPose().GetParent() == &markerParentPose)
-      {
-        // Put the returned pose in the same frame as the marker's parent
-        currentPose = markerParentPose * _poseWrtMarkerParent;
-        currentPose.SetParent(markerParentPose.GetParent());
         
-        // Check if currentPose is vertically oriented, and thus valid.
-        // Get vector, v, from center of block to this point.
-        Point3f v(currentPose.GetTranslation() - markerParentPose.GetTranslation());
-        v.MakeUnitLength();
-        const f32 DotProdTolerance = std::cos(DEG_TO_RAD(30));
-        
-        validPoseFound = NEAR(DotProduct(Z_AXIS_3D, v), 0.f, DotProdTolerance);
-        
-      } // if given pose is parent of the marker
-      else {
-        PRINT_NAMED_WARNING("PreActionPose.GetCurrentPose.InvalidParentPose",
-                            "Given marker parent pose is not the parent of this PreActionPose's marker.\n");
-      }
-      
-      return validPoseFound;
-    } // GetCurrentPose()
-    
-#if 0
-#pragma mark --- ActionableObject ---
-#endif
-    
     ActionableObject::ActionableObject()
     : _isBeingCarried(false)
     , _isSelected(false)
@@ -105,76 +25,109 @@ namespace Anki {
       
     }
     
-    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type, const Vision::KnownMarker *marker, f32 distance)
+    
+    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type, const Vision::KnownMarker *marker,
+                                            const f32 distance, const Radians& headAngle)
     {
-      _preActionPoses.emplace_back(type, marker, distance);
+      _preActionPoses.emplace_back(type, marker, distance, headAngle);
+    } // AddPreActionPose()
+    
+    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type, const Vision::KnownMarker *marker,
+                                            const Vec3f& offset, const Radians& headAngle)
+    {
+      _preActionPoses.emplace_back(type, marker, offset, headAngle);
     } // AddPreActionPose()
     
     void ActionableObject::AddPreActionPose(PreActionPose::ActionType type,
                                             const Vision::KnownMarker* marker,
-                                            const Pose3d& poseWrtMarker)
+                                            const Pose3d& poseWrtMarker,
+                                            const Radians& headAngle)
     {
-      _preActionPoses.emplace_back(type, marker, poseWrtMarker);
+      _preActionPoses.emplace_back(type, marker, poseWrtMarker, headAngle);
     }
     
-    void ActionableObject::GetCurrentPreActionPoses(std::vector<PoseMarkerPair_t>& poseMarkerPairs,
-                                                    const std::set<PreActionPose::ActionType>& withAction,
-                                                    const std::set<Vision::Marker::Code>& withCode)
+    
+    bool ActionableObject::IsPreActionPoseValid(const PreActionPose& preActionPose,
+                                                const Pose3d* reachableFromPose) const
     {
-      const Pose3d& atPose = GetPose();
+      const Pose3d checkPose = preActionPose.GetPose().GetWithRespectToOrigin();
+      
+      bool isValid = true;
+      
+      if(reachableFromPose != nullptr) {
+        // Pose should be at ground height or it's not reachable
+        const f32 heightThresh = 15.f;
+        isValid = NEAR(checkPose.GetTranslation().z(), reachableFromPose->GetWithRespectToOrigin().GetTranslation().z(), heightThresh);
+      }
+      
+      if(isValid) {
+        // Allow any rotation around Z, but none around X/Y, in order to keep
+        // vertically-oriented poses
+        const f32 vertAlignThresh = 1.f - std::cos(DEG_TO_RAD(30)); // TODO: tighten?
+        isValid = NEAR(checkPose.GetRotationMatrix()(2,2), 1.f, vertAlignThresh);
+      }
+      
+      return isValid;
+      
+    } // IsPreActionPoseValid()
+    
+    
+    void ActionableObject::GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
+                                                    const std::set<PreActionPose::ActionType>& withAction,
+                                                    const std::set<Vision::Marker::Code>& withCode,
+                                                    const Pose3d* reachableFromPose)
+    {
+      const Pose3d& relToObjectPose = GetPose();
       
       for(auto & preActionPose : _preActionPoses)
       {
         if((withCode.empty()   || withCode.count(preActionPose.GetMarker()->GetCode()) > 0) &&
            (withAction.empty() || withAction.count(preActionPose.GetActionType()) > 0))
         {
-          Pose3d currentPose;
-          const bool isValid = preActionPose.GetCurrentPose(atPose, currentPose);
+          PreActionPose currentPose(preActionPose, relToObjectPose);
           
-          if(isValid) {
-            poseMarkerPairs.emplace_back(currentPose, *preActionPose.GetMarker());
+          if(IsPreActionPoseValid(currentPose, reachableFromPose)) {
+            preActionPoses.emplace_back(currentPose);
           }
         } // if preActionPose has correct code/action
       } // for each preActionPose
       
     } // GetCurrentPreActionPoses()
     
+    
     void ActionableObject::Visualize()
     {
       if(IsSelected()) {
         static const ColorRGBA SELECTED_COLOR(0.f,1.f,0.f,1.f);
         Visualize(SELECTED_COLOR);
-        VisualizePreActionPoses();
+        //VisualizePreActionPoses();
       } else {
         Visualize(GetColor());
       }
     }
     
-    void ActionableObject::VisualizePreActionPoses()
+    void ActionableObject::VisualizePreActionPoses(const Pose3d* reachableFrom)
     {
       // Draw the main object:
       //Visualize();
       
       // Draw the pre-action poses, using a different color for each type of action
       u32 poseID = 0;
-      std::vector<ActionableObject::PoseMarkerPair_t> poses;
+      std::vector<PreActionPose> poses;
       
-      GetCurrentPreActionPoses(poses, {PreActionPose::DOCKING});
-      for(auto & pose : poses) {
-        _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID,
-                                                                                         pose.first.GetWithRespectToOrigin(),
-                                                                                         PreActionPose::GetVisualizeColor(PreActionPose::DOCKING)));
-        ++poseID;
-      }
+      for(PreActionPose::ActionType actionType : {PreActionPose::DOCKING, PreActionPose::ENTRY})
+      {
+        GetCurrentPreActionPoses(poses, {actionType}, std::set<Vision::Marker::Code>(), reachableFrom);
+        for(auto & pose : poses) {
+          _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID,
+                                                                                           pose.GetPose().GetWithRespectToOrigin(),
+                                                                                           PreActionPose::GetVisualizeColor(actionType)));
+          ++poseID;
+        }
+        
+        poses.clear();
+      } // for each actionType
       
-      poses.clear();
-      GetCurrentPreActionPoses(poses, {PreActionPose::ENTRY});
-      for(auto & pose : poses) {
-        _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID,
-                                                                                         pose.first.GetWithRespectToOrigin(),
-                                                                                         PreActionPose::GetVisualizeColor(PreActionPose::ENTRY)));
-        ++poseID;
-      }
     } // VisualizeWithPreActionPoses()
     
     

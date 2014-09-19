@@ -103,9 +103,7 @@ namespace Anki {
       void AddFace(const FaceName whichFace,
                    const Vision::MarkerType& code,
                    const float markerSize_mm);
-      
-      static ObjectType GetTypeByName(const std::string& name);
-      
+            
       // Return a reference to the marker on a particular face of the block.
       // Symmetry convention: if no marker was set for the requested face, the
       // one on the opposite face is returned.  If none is defined for the
@@ -159,8 +157,6 @@ namespace Anki {
 
     protected:
       
-      static const FaceName OppositeFaceLUT[NUM_FACES];
-      
       Block(const ObjectType type);
       
       // Make this protected so we have to use public AddFace() method
@@ -189,15 +185,14 @@ namespace Anki {
         std::vector<BlockFaceDef_t> faces;
       } BlockInfoTableEntry_t;
       
-      //static const std::map<ObjectType, BlockInfoTableEntry_t> BlockInfoLUT_;
+      virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
+      
       static const BlockInfoTableEntry_t& LookupBlockInfo(const ObjectType type);
             
       static const std::array<Point3f,NUM_FACES> CanonicalDockingPoints;
       
-      static const std::array<Point3f,NUM_CORNERS> CanonicalCorners;
-      
       constexpr static const f32 PreDockDistance = 100.f;
-      
+
       Point3f     _size;
       std::string _name;
       
@@ -240,10 +235,7 @@ namespace Anki {
         CORETECH_ASSERT(_size.x() == _size.y())
         CORETECH_ASSERT(_size.y() == _size.z())
       }
-      
-      //static const ObjectType BlockType;
-      static const std::vector<RotationMatrix3d> rotationAmbiguities_;
-      
+            
     };
     
     /*
@@ -284,9 +276,6 @@ namespace Anki {
       {
 
       }
-      
-      //static const ObjectType BlockType;
-      static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
     };
 #pragma mark --- Inline Accessors Implementations ---

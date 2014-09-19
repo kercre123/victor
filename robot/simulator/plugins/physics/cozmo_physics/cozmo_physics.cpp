@@ -217,7 +217,7 @@ namespace Anki {
       
       // Add points along arc from startRad to endRad at arcRes_rad resolution
       float currRad = startRad;
-      float dx,dy,cosCurrRad;
+      float dx,dy;//,cosCurrRad;
       //dWebotsConsolePrintf("***** ARC rad %f (%f to %f), radius %f\n", currRad, startRad, endRad, radius);
       
       while (currRad*dir < endRad*dir) {

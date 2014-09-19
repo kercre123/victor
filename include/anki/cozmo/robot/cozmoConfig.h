@@ -37,7 +37,7 @@ namespace Anki {
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 25.f;
     const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.5f;
     const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
@@ -84,6 +84,11 @@ namespace Anki {
     // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
     const f32 LIFT_ARM_LENGTH = 64.f;
     
+    // Height of the lifter front assembly above the gripper, used to compute
+    // the overall height of the robot when the lift is up (i.e. the height is
+    // is the lift height plus this)
+    const f32 LIFT_HEIGHT_ABOVE_GRIPPER = 5.f; // approximate
+    
     // The lift height is defined as the height of the upper lift arm's wrist joint plus this offset.
     const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
     
@@ -98,12 +103,15 @@ namespace Anki {
     
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
-    const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 35.f);
+    const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 40.f);
     
     // Head angle may exceed limits by this amount before
     // it is considered to be out of calibration.
     const f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(2.0f);
 
+    // Safe head angle for the proximity sensors to be usable with the lift
+    // either up or down
+    const f32 HEAD_ANGLE_WHILE_FOLLOWING_PATH = -0.32f;
     
     const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 33.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
     

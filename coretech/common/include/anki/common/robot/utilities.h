@@ -17,11 +17,29 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/trig_fast.h"
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#include "opencv2/core/core.hpp"
+#endif
+
 namespace Anki
 {
   namespace Embedded
   {
     //template<typename Type> inline Type RoundUp(const Type number, const Type multiple)
+
+    // void* and size_t is a special case, good for aligning pointers
+    inline const void* RoundUp(const void* number, const size_t multiple)
+    {
+      const size_t numberT = reinterpret_cast<size_t>(number);
+      return reinterpret_cast<void*>( (numberT + (multiple-1)) & ~(multiple-1) );
+    }
+
+    inline void* RoundUp(void* number, const size_t multiple)
+    {
+      const size_t numberT = reinterpret_cast<size_t>(number);
+      return reinterpret_cast<void*>( (numberT + (multiple-1)) & ~(multiple-1) );
+    }
+
     template<> inline u32 RoundUp(const u32 number, const u32 multiple)
     {
       return (number + (multiple-1)) & ~(multiple-1);
@@ -36,7 +54,7 @@ namespace Anki
       }
     }
 
-#if defined(__APPLE_CC__) // Apple Xcode
+#if defined(__APPLE_CC__) || defined(__GNUC__)
     template<> inline unsigned long RoundUp(const unsigned long number, const unsigned long multiple)
     {
       return (number + (multiple-1)) & ~(multiple-1);
@@ -57,7 +75,7 @@ namespace Anki
       }
     }
 
-#if defined(__APPLE_CC__) // Apple Xcode
+#if defined(__APPLE_CC__) || defined(__GNUC__)
     template<> inline unsigned long RoundDown(const unsigned long number, const unsigned long multiple)
     {
       return multiple * (number/multiple);

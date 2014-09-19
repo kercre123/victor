@@ -9,12 +9,8 @@ file(GLOB HEADER_FILES
 	"${CORETECH_PLANNING_INCLUDE_DIR}/shared/*.h"
 )
 
-if(NOT WIN32)
-  add_library(CoreTech_Planning_Shared 
-    ${SOURCE_FILES} 
-    ${HEADER_FILES}
-    ${CORETECH_PLANNING_INCLUDE_FILES}
-  )
-endif() 
-
-
+add_library(CoreTech_Planning_Shared 
+  ${SOURCE_FILES} 
+  ${HEADER_FILES}
+  ${CORETECH_PLANNING_INCLUDE_FILES}
+)

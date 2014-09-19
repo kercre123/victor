@@ -10,6 +10,10 @@
  *              MatPiece inherits from ActionableObject since mats may have
  *              action poses for "entering" the mat, for example.
  *
+ *              Note that a mat's origin's height is at the driving surface
+ *              of the mat so that a robot's height is always near zero when it
+ *              is on a mat and does not depend on the thickness of the mat.
+ *
  *
  * Copyright: Anki, Inc. 2014
  **/
@@ -29,42 +33,12 @@ namespace Anki {
     {
     public:
       
-      // TODO: Use a MatDefinitions file, like with blocks
-      class Type : public ObjectType
-      {
-        Type(const std::string& name) : ObjectType(name) { }
-      public:
-        // Define new mat piece types here, as static const Type:
-        // (Note: don't forget to instantiate each in the .cpp file)
-        static const Type LETTERS_4x4;
-        static const Type LARGE_PLATFORM;
-        static const Type LONG_BRIDGE;
-        static const Type SHORT_BRIDGE;
-      };
-      
-      // Constructor, based on Type
-      MatPiece(Type type);
-      
       //
       // Inherited Virtual Methods
       //
-      
-      virtual ObjectType GetType() const override { return _type; }
-    
-      //virtual float GetMinDim() const {return 0;}
-      
-      virtual MatPiece* CloneType() const;
-      
-      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
-      
-      virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
     
       virtual void Visualize(const ColorRGBA& color) override;
       virtual void EraseVisualization() override;
-      
-      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
-      
-      static ObjectType GetTypeByName(const std::string& name);
       
       virtual Point3f GetSameDistanceTolerance() const override;
       virtual Radians GetSameAngleTolerance() const override;
@@ -82,35 +56,53 @@ namespace Anki {
       // Same as above, but also returns the pose w.r.t. the mat.
       bool IsPoseOn(const Pose3d& pose, const f32 heightOffset, const f32 heightTol, Pose3d& poseWrtMat) const;
       
+      // TODO: remove this now that the origin is defined to be the top surface
       // Returns top surface height w.r.t. the mat's current pose origin
-      f32 GetDrivingSurfaceHeight() const;
+      virtual f32 GetDrivingSurfaceHeight() const { return 0.f; }
       
       //void SetOrigin(const Pose3d* newOrigin);
       
-      bool IsMoveable() const { return _isMoveable; }
+      virtual bool IsMoveable() const { return false; }
+      
+      // Like GetBoundingQuadXY, but returns quads indicating unsafe regions to
+      // drive on or around this mat, such as the regions around a platform
+      // (so robot doesn't drive off) or some kind of 3D obstacle built into the
+      // mat.
+      // Note these quads are _added_ to whatever is in the given vector.
+      virtual void GetUnsafeRegions(std::vector<Quad2f>& unsafeRegions, const Pose3d& atPose, const f32 padding_mm) const;
+      void GetUnsafeRegions(std::vector<Quad2f>& unsafeRegions, const f32 padding_mm) const; // at current pose
+      
       
     protected:
-      static const std::vector<RotationMatrix3d> _rotationAmbiguities;
-      static const s32 NUM_CORNERS = 8;
-      static const std::array<Point3f, MatPiece::NUM_CORNERS> _canonicalCorners;
       
-      const Type _type;
+      // Derived classes can instantiate the MatPiece by defining its size.
+      // Generic mat pieces are not instantiable.
+      MatPiece(const Point3f& size);
+
+      virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       
-      // x = length, y = width, z = height
+      // Unsafe regions in the canonical position, given padding
+      // By default, there are no "unsafe" regions to avoid. Derived classes
+      // can override that.
+      virtual void GetCanonicalUnsafeRegions(const f32 padding_mm,
+                                             std::vector<Quad3f>& regions) const { regions.clear(); }
+
+      const Point3f& GetSize() const { return _size; }
+      
+    private:
       Point3f _size;
-      
-      bool _isMoveable;
-      
+      const std::vector<Point3f> _canonicalCorners;
       VizManager::Handle_t _vizHandle;
-    };
+      
+    }; // class MatPiece
+
     
-    
-    inline MatPiece* MatPiece::CloneType() const
-    {
-      // Call the copy constructor
-      return new MatPiece(this->_type);
+    inline void MatPiece::GetUnsafeRegions(std::vector<Quad2f>& unsafeRegions, const f32 padding_mm) const {
+      GetUnsafeRegions(unsafeRegions, GetPose(), padding_mm);
     }
     
+    
+       
   } // namespace Cozmo
 
 } // namespace Anki

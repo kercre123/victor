@@ -20,6 +20,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/decisionTree_vision.h"
 
 #include "anki/vision/robot/visionMarkerDecisionTrees.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 // For old QR-style BlockMarkers
 #define MAX_FIDUCIAL_MARKER_BITS 25
@@ -37,6 +38,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    class VisionMarker;
+
     // A BlockMarker is a location Quadrilateral, with a given blockType and faceType.
     // The blockType and faceType can be computed by a FiducialMarkerParser
     class BlockMarker
@@ -60,6 +63,43 @@ namespace Anki
       void Print() const;
     }; // class BlockMarker
 
+    class VisionMarkerImages
+    {
+    public:
+      // Load the images from disk (requires OpenCV)
+      VisionMarkerImages(const FixedLengthList<const char*> &imageFilenames, MemoryStack &memory);
+
+      // Makes a shallow copy, based on the pointers
+      VisionMarkerImages(const s32 numDatabaseImages, const s32 databaseImageHeight, const s32 databaseImageWidth, u8 * pDatabaseImages, Anki::Vision::MarkerType * pDatabaseLabelIndexes);
+
+      Result Show(const s32 pauseMilliseconds) const;
+
+      Result MatchExhaustive(const Array<u8> &image, const Quadrilateral<f32> &quad, VisionMarker &extractedMarker, f32 &matchQuality, MemoryStack fastScratch, MemoryStack slowScratch) const;
+
+      bool IsValid() const;
+
+      s32 get_numDatabaseImages() const;
+
+      s32 get_databaseImageHeight() const;
+
+      s32 get_databaseImageWidth() const;
+
+      const Array<u8>& get_databaseImages() const;
+
+      const FixedLengthList<Anki::Vision::MarkerType>& get_databaseLabelIndexes();
+
+    protected:
+      s32 numDatabaseImages;
+      s32 databaseImageHeight;
+      s32 databaseImageWidth;
+
+      Array<u8> databaseImages; //< Striped, so for a given pixel, all images data is consecutive. (e.g. the first N bytes are the pixel (0,0) for all images)
+
+      FixedLengthList<Anki::Vision::MarkerType> databaseLabelIndexes; // (aka name, aka codeName)
+
+      bool isValid;
+    };
+
     // A VisionMarker is a location Quadrilateral, with a markerType.
     class VisionMarker
     {
@@ -81,17 +121,28 @@ namespace Anki
       ValidityCode validity;
 
       VisionMarker();
+      VisionMarker(const Quadrilateral<s16> &corners, const ValidityCode validity);
+      VisionMarker(const Quadrilateral<f32> &corners, const ValidityCode validity);
 
-      Result Extract(const Array<u8> &image, const Quadrilateral<s16> &quad,
-        const Array<f32> &homography, const f32 minContrastRatio,
-        const s32 refine_quadRefinementIterations,
-        const s32 refine_numRefinementSamples,
-        const f32 refine_quadRefinementMaxCornerChange,
-        const f32 refine_quadRefinementMinCornerChange,
-        const s32 quads_minQuadArea,
-        const s32 quads_quadSymmetryThreshold,
-        const s32 quads_minDistanceFromImageEdge,
+      Result RefineCorners(
+        const Array<u8> &image,
+        const Array<f32> &initHomography, const f32 minContrastRatio,
+        const s32 refine_quadRefinementIterations, const s32 refine_numRefinementSamples, const f32 refine_quadRefinementMaxCornerChange, const f32 refine_quadRefinementMinCornerChange,
+        const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
+        Array<f32> &refinedHomography, u8 &meanGrayvalueThreshold, //< Computed for Extract()
         MemoryStack scratch);
+
+      Result Extract(
+        const Array<u8> &image,
+        const Array<f32> &homography, const u8 meanGrayvalueThreshold, //< Computed by RefineCorners()
+        const f32 minContrastRatio,
+        MemoryStack scratch);
+
+      Result ExtractExhaustive(
+        const VisionMarkerImages &allMarkerImages,
+        const Array<u8> &image,
+        MemoryStack fastScratch,
+        MemoryStack slowScratch);
 
       void Print() const;
 
@@ -212,6 +263,10 @@ namespace Anki
       // Returns -1 if the type wasn't found
       s32 FindFirstBitOfType(const FiducialMarkerParserBit::Type type, const s32 startIndex) const;
     }; // class FiducialMarkerParser
+
+    // Ignores case, and ignore any "MARKER_" prefix
+    // Also ignores anything before a "/" or "\", and anything after a ".", so you can pass in a filename
+    Anki::Vision::MarkerType LookupMarkerType(const char * name);
   } // namespace Embedded
 } // namespace Anki
 

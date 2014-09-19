@@ -9,18 +9,13 @@ file(GLOB HEADER_FILES
   "${CORETECH_PLANNING_INCLUDE_DIR}/basestation/*.h"
 )
 
-if(NOT WIN32)
-  add_library(CoreTech_Planning_Basestation 
-    ${SOURCE_FILES}
-    ${CORETECH_PLANNING_SHARED_SRC_FILES}
-    ${HEADER_FILES}
-    ${CORETECH_PLANNING_INCLUDE_FILES}  
-  )
+add_library(CoreTech_Planning_Basestation 
+  ${SOURCE_FILES}
+  ${CORETECH_PLANNING_SHARED_SRC_FILES}
+  ${HEADER_FILES}
+  ${CORETECH_PLANNING_INCLUDE_FILES}  
+)
   
-  set_target_properties(CoreTech_Planning_Basestation PROPERTIES
-    FOLDER "CoreTech"#/Basestation"
-  )
-
-endif() 
-
-
+set_target_properties(CoreTech_Planning_Basestation PROPERTIES
+  FOLDER "CoreTech"#/Basestation"
+)

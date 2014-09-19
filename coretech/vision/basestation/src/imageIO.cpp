@@ -14,7 +14,7 @@
 namespace Anki {
   namespace Vision{
   
-    void WritePGM(const char* filename, u8* imgData, u32 width, u32 height) {
+    void WritePGM(const char* filename, const u8* imgData, u32 width, u32 height) {
       FILE * fp = fopen(filename, "w");
       
       fprintf(fp, "P2 \r\n%d %d \r\n255 \r\n", width, height);

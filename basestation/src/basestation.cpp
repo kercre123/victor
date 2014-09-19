@@ -23,6 +23,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/tcpComms.h"
 #include "anki/cozmo/basestation/uiTcpComms.h"
 #include "anki/cozmo/basestation/utils/exceptions.h"
@@ -84,13 +85,13 @@ public:
   
 private:
   // Instantiate all the modules we need
-  BlockWorld blockWorld_;
+  //BlockWorld blockWorld_;
   RobotManager robotMgr_;
   MessageHandler msgHandler_;
-  BehaviorManager behaviorMgr_;
+  //BehaviorManager behaviorMgr_;
   UiMessageHandler uiMsgHandler_;
   
-  LatticePlanner *pathPlanner_;
+  //LatticePlanner *pathPlanner_;
   
   /*
    // process message queue
@@ -120,7 +121,7 @@ BasestationMainImpl::BasestationMainImpl()
 
 BasestationMainImpl::~BasestationMainImpl()
 {
-  delete pathPlanner_;
+
 }
 
   
@@ -219,25 +220,10 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
       break;
   }
   
-  
-  // read planner motion primitives
-  Json::Value mprims;
-  const std::string subPath("coretech/planning/matlab/cozmo_mprim.json");
-  const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
-
-  Json::Reader reader;
-  std::ifstream jsonFile(jsonFilename);
-  reader.parse(jsonFile, mprims);
-  jsonFile.close();
-
-  pathPlanner_ = new LatticePlanner(&blockWorld_, mprims);
-  
   // Initialize the modules by telling them about each other:
-  msgHandler_.Init(robot_comms, &robotMgr_, &blockWorld_);
-  robotMgr_.Init(&msgHandler_, &blockWorld_, pathPlanner_);
-  blockWorld_.Init(&robotMgr_);
-  behaviorMgr_.Init(&robotMgr_, &blockWorld_);
-  uiMsgHandler_.Init(ui_comms, &robotMgr_, &blockWorld_, &behaviorMgr_);
+  msgHandler_.Init(robot_comms, &robotMgr_);
+  robotMgr_.Init(&msgHandler_);
+  uiMsgHandler_.Init(ui_comms, &robotMgr_);
   
   VizManager::getInstance()->Connect(ROBOT_SIM_WORLD_HOST, VIZ_SERVER_PORT);
 
@@ -246,7 +232,11 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
   for (auto robotIDVal : config_[AnkiUtil::kP_CONNECTED_ROBOTS]) {
     RobotID_t robotID = (RobotID_t)robotIDVal.asInt();
     robotMgr_.AddRobot(robotID);
-    robotMgr_.GetRobotByID(robotID)->SendInit();
+    robotMgr_.GetRobotByID(robotID)->SyncTime();
+    
+    // Uncomment to Test "reactions":
+    // TODO: Make a keypress for switching to this behavior mode
+    robotMgr_.GetRobotByID(robotID)->StartBehaviorMode(BehaviorManager::ReactToMarkers);
   }
 
   
@@ -303,70 +293,11 @@ BasestationStatus BasestationMainImpl::Update(BaseStationTime_t currTime)
   
   msgHandler_.ProcessMessages();
     
-  // Draw observed markers, but only if images are being streamed
-  blockWorld_.DrawObsMarkers();
-  
-  // Update the world (force robots to process their messages)
-  uint32_t numBlocksObserved = 0;
-  blockWorld_.Update(numBlocksObserved);
-  
-  // Update the behavior manager.
-  // TODO: This object encompasses, for the time-being, what some higher level
-  // module(s) would do.  e.g. Some combination of game state, build planner,
-  // personality planner, etc.
-  behaviorMgr_.Update();
-  
-  
-  
+  // Let the robot manager do whatever it's gotta do to update the
+  // robots in the world.
+  robotMgr_.UpdateAllRobots();
 
-  /////////// Update visualization ////////////
-  
-  // Draw All Objects by calling their Visualize() methods.
-  blockWorld_.DrawAllObjects();
-    
-  
-  // Draw all robot poses
-  // TODO: Only send when pose has changed?
-  for(auto robotID : robotMgr_.GetRobotIDList())
-  {
-    Robot* robot = robotMgr_.GetRobotByID(robotID);
-    
-    // Always draw robot w.r.t. the origin, not in its current frame
-    Pose3d robotPoseWrtOrigin = robot->GetPose().GetWithRespectToOrigin();
-    
-    // Triangle pose marker
-    VizManager::getInstance()->DrawRobot(robotID, robotPoseWrtOrigin);
-    
-    // Full Webots CozmoBot model
-    VizManager::getInstance()->DrawRobot(robotID, robotPoseWrtOrigin, robot->GetHeadAngle(), robot->GetLiftAngle());
-    
-    // Robot bounding box
-    using namespace Quad;
-    Quad2f quadOnGround2d = robot->GetBoundingQuadXY(robotPoseWrtOrigin);
-    const f32 zHeight = robotPoseWrtOrigin.GetTranslation().z() + 0.5f;
-    Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     zHeight),
-                          Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  zHeight),
-                          Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    zHeight),
-                          Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), zHeight));
-
-    static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
-    VizManager::getInstance()->DrawRobotBoundingBox(robot->GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
-    
-    if(robot->IsCarryingObject()) {
-      ActionableObject* carryBlock = dynamic_cast<ActionableObject*>(blockWorld_.GetObjectByID(robot->GetCarryingObject()));
-      if(carryBlock == nullptr) {
-        PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist", "Robot %d is marked as carrying block %d but that block no longer exists.\n", robot->GetID(), robot->GetCarryingObject().GetValue());
-        robot->UnSetCarryingObject();
-      } else {
-        carryBlock->Visualize();
-      }
-    }
-  }
-
-  /////////// End visualization update ////////////
-
-  
-  return status;
+    return status;
 }
 
 // Converts recording / playback module status to basestation status.

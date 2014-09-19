@@ -323,7 +323,7 @@ namespace Anki
         return true;
       } // bool CascadeClassifier::IsValid() const
 
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
       CascadeClassifier_LBP::CascadeClassifier_LBP(const char * filename, MemoryStack &memory)
       {
         this->isValid = false;
@@ -698,7 +698,13 @@ namespace Anki
 
             Array<u8> tmpImHack = image;
 
-            cv::resize(tmpImHack.get_CvMat_(), scaledImage.get_CvMat_(), scaledImageSize, 0, 0, CV_INTER_LINEAR);
+            cv::Mat_<u8> tmpImHack_cvMat;
+            tmpImHack.ArrayToCvMat(&tmpImHack_cvMat);
+
+            cv::Mat_<u8> scaledImage_cvMat;
+            scaledImage.ArrayToCvMat(&scaledImage_cvMat);
+
+            cv::resize(tmpImHack_cvMat, scaledImage_cvMat, scaledImageSize, 0, 0, CV_INTER_LINEAR);
           }
 #else
           ImageProcessing::Resize(image, scaledImage);

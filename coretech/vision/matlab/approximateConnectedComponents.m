@@ -12,7 +12,7 @@
 % components2d = approximateConnectedComponents(binaryImg, 2);
 % [components2d, regionMap1d] = approximateConnectedComponents(binaryImg, 3, true);
 
-function [components2d, regionMap1d] = approximateConnectedComponents(binaryImg, minimumComponentWidth, create1dRegionMap)
+function [components2d, regionMap1d] = approximateConnectedComponents(binaryImg, minimumComponentWidth, create1dRegionMap, eightConnected)
 
 % 1. Compute 1d connected components
 % 2. Check current 1d components with previous components. Put matches in
@@ -25,6 +25,10 @@ num2dComponents = 0;
 
 if ~exist('create1dRegionMap', 'var')
     create1dRegionMap = false;
+end
+
+if ~exist('eightConnected', 'var')
+    eightConnected = false;
 end
 
 if create1dRegionMap
@@ -46,7 +50,7 @@ for y = 1:size(binaryImg, 1)
     end
     
     [components2d, num2dComponents, previousComponents1d] = ...
-        addTo2dComponents(currentComponents1d, previousComponents1d, components2d, y, num2dComponents);
+        addTo2dComponents(currentComponents1d, previousComponents1d, components2d, y, num2dComponents, eightConnected);
 end
 
 if create1dRegionMap
@@ -61,18 +65,24 @@ end % function componentIndexes = approximateConnectedComponents(binaryImg)
 % currentComponents1d components is an array of format [xStart, xEnd];
 % previousComponents1d components is an array of format [xStart, xEnd, 2dIndex];    
 function [components2d, num2dComponents, newPreviousComponents1d] =...
-    addTo2dComponents(currentComponents1d, previousComponents1d, components2d, currentRow, num2dComponents)
+    addTo2dComponents(currentComponents1d, previousComponents1d, components2d, currentRow, num2dComponents, eightConnected)
 
     newPreviousComponents1d = zeros(size(currentComponents1d,1), 3);
 
+    if eightConnected
+        extraPixelsAllowed = 1;
+    else
+        extraPixelsAllowed = 0;
+    end
+    
     for iCurrent = 1:size(currentComponents1d,1)
         foundMatch = false;
         for iPrevious = 1:size(previousComponents1d, 1)
             % The current component matches the previous one if 
             % 1. the previous start is less-than-or-equal the current end, and
             % 2. the previous end is greater-than-or-equal the current start
-            if previousComponents1d(iPrevious, 1) <= currentComponents1d(iCurrent, 2) &&... 
-               previousComponents1d(iPrevious, 2) >= currentComponents1d(iCurrent, 1) 
+            if previousComponents1d(iPrevious, 1) <= (currentComponents1d(iCurrent, 2)+extraPixelsAllowed) &&... 
+               previousComponents1d(iPrevious, 2) >= (currentComponents1d(iCurrent, 1)-extraPixelsAllowed) 
            
                 foundMatch = true;
                 componentId = previousComponents1d(iPrevious, 3);
@@ -86,7 +96,7 @@ function [components2d, num2dComponents, newPreviousComponents1d] =...
         if ~foundMatch
             componentId = num2dComponents;
             newPreviousComponents1d(iCurrent, :) = [currentComponents1d(iCurrent, 1:2), componentId];
-            components2d{end+1} = [currentRow, currentComponents1d(iCurrent, 1:2)]; % [y, xStart, xEnd]
+            components2d{end+1} = [currentRow, currentComponents1d(iCurrent, 1:2)]; %#ok<AGROW> % [y, xStart, xEnd]
             num2dComponents = num2dComponents + 1;
         end
     end    
@@ -109,7 +119,7 @@ function components1d = extract1dComponents(binaryImgRow, minimumComponentWidth)
             if binaryImgRow(x) == 0
                 componentWidth = x - componentStart;
                 if componentWidth >= minimumComponentWidth
-                    components1d(end+1, :) = [componentStart, x-1];
+                    components1d(end+1, :) = [componentStart, x-1]; %#ok<AGROW>
                 end
                 onComponent = false;
             end

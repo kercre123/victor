@@ -3,7 +3,7 @@
 #define COZMO_ROBOT
 
 #include "communication.h"
-#include "threadSafeQueue.h"
+#include "anki/tools/threads/threadSafeQueue.h"
 #include "debugStreamClient.h"
 
 #include "anki/common/robot/config.h"
@@ -75,8 +75,11 @@ int main(int argc, char ** argv)
 
         if(imageRaw->IsValid()) {
           Array<u8> image = *imageRaw;
-          //const cv::Mat_<u8> &refMat = image.get_CvMat_();
-          cv::imshow("Robot Image", image.get_CvMat_());
+
+          cv::Mat_<u8> image_cvMat;
+          ArrayToCvMat(image, &image_cvMat);
+
+          cv::imshow("Robot Image", image_cvMat);
           cv::waitKey(1);
         }
       }
@@ -112,7 +115,11 @@ int main(int argc, char ** argv)
 
       if(imageRaw->IsValid()) {
         Array<u8> image = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
-        cv::imshow("Robot Image", image.get_CvMat_());
+
+        cv::Mat_<u8> image_cvMat;
+        ArrayToCvMat(image, &image_cvMat);
+
+        cv::imshow("Robot Image", image_cvMat);
 
         parserThread.SaveObject(newObject, outputFilename);
 

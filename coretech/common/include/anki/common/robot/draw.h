@@ -73,6 +73,68 @@ namespace Anki
       return RESULT_OK;
     } // template<typename Type> Result DrawRectangle(Array<Type> &image, const Point<s16> point1, const Point<s16> point2, const s32 lineWidth, const Type lineColor, const Type backgroundColor)
 
+    template<typename Type> Result DrawFilledConvexQuadrilateral(Array<Type> &image, Quadrilateral<f32> quad, const Type color)
+    {
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
+      AnkiConditionalErrorAndReturnValue(image.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "DrawFilledConvexQuadrilateral", "image is not valid");
+
+      const Rectangle<f32> boundingRect = quad.ComputeBoundingRectangle<f32>();
+      const Quadrilateral<f32> sortedQuad = quad.ComputeClockwiseCorners<f32>();
+
+      const f32 rect_y0 = boundingRect.top;
+      const f32 rect_y1 = boundingRect.bottom;
+
+      // For circular indexing
+      Point<f32> corners[5];
+      for(s32 i=0; i<4; i++) {
+        corners[i] = sortedQuad[i];
+      }
+      corners[4] = sortedQuad[0];
+
+      const s32 minYS32 = MAX(0,             Round<s32>(ceilf(rect_y0 - 0.5f)));
+      const s32 maxYS32 = MIN(imageHeight-1, Round<s32>(floorf(rect_y1 - 0.5f)));
+      const f32 minYF32 = minYS32 + 0.5f;
+      const f32 maxYF32 = maxYS32 + 0.5f;
+      const LinearSequence<f32> ys(minYF32, maxYF32);
+      const s32 numYs = ys.get_size();
+
+      f32 y = ys.get_start();
+      for(s32 iy=0; iy<numYs; iy++) {
+        // Compute all intersections
+        f32 minXF32 = FLT_MAX;
+        f32 maxXF32 = FLT_MIN;
+        for(s32 iCorner=0; iCorner<4; iCorner++) {
+          if( (corners[iCorner].y < y && corners[iCorner+1].y >= y) || (corners[iCorner+1].y < y && corners[iCorner].y >= y) ) {
+            const f32 dy = corners[iCorner+1].y - corners[iCorner].y;
+            const f32 dx = corners[iCorner+1].x - corners[iCorner].x;
+
+            const f32 alpha = (y - corners[iCorner].y) / dy;
+
+            const f32 xIntercept = corners[iCorner].x + alpha * dx;
+
+            minXF32 = MIN(minXF32, xIntercept);
+            maxXF32 = MAX(maxXF32, xIntercept);
+          }
+        } // for(s32 iCorner=0; iCorner<4; iCorner++)
+
+        const s32 minXS32 = MAX(0,            Round<s32>(floorf(minXF32+0.5f)));
+        const s32 maxXS32 = MIN(imageWidth-1, Round<s32>(floorf(maxXF32-0.5f)));
+
+        const s32 yS32 = minYS32 + iy;
+        Type * restrict pImage = image.Pointer(yS32, 0);
+        for(s32 x=minXS32; x<=maxXS32; x++) {
+          pImage[x] = color;
+        }
+
+        y += 1.0f;
+      } // for(s32 iy=0; iy<numYs; iy++)
+
+      return RESULT_OK;
+    } // template<typename Type> Result DrawFilledConvexQuadrilateral(Array<Type> &image, Quadrilateral<f32> quad, const Type color)
+
     template<typename Type> Result DrawExampleSquaresImage(Array<Type> &image)
     {
       const s32 boxWidth = 60;

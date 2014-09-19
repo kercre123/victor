@@ -33,11 +33,119 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/serialize.h"
 #include "anki/common/robot/compress.h"
 #include "anki/common/robot/hostIntrinsics_m4.h"
+#include "anki/common/robot/draw.h"
 
 #include "embeddedTests.h"
 
 using namespace Anki;
 using namespace Anki::Embedded;
+
+GTEST_TEST(CoreTech_Common, SerializeStrings)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  const s32 arrayHeight = 3;
+  const s32 arrayWidth = 2;
+
+  Array<const char*> strings(arrayHeight,arrayWidth,scratchOffchip);
+  strings[0][0] = "Hello"; strings[0][1] = "World";
+  strings[1][0] = "What's"; strings[1][1] = "up";
+  strings[2][0] = "Doc"; strings[2][1] = "??? (Also including a quite long string here, in case there is some overflow somewhere. Possible? Likely? Hard to say. Stream of consciousness...)";
+
+  SerializedBuffer serialized(offchipBuffer+5000, 6000);
+  ASSERT_TRUE(serialized.IsValid());
+
+  serialized.PushBack("My String Array", strings);
+
+  SerializedBufferReconstructingIterator iterator(serialized);
+
+  ASSERT_TRUE(iterator.HasNext());
+
+  s32 dataLength;
+  const char * typeName = NULL;
+  const char * objectName = NULL;
+  bool isReportedSegmentLengthCorrect;
+  void * dataSegment = reinterpret_cast<u8*>(iterator.GetNext(&typeName, &objectName, dataLength, isReportedSegmentLengthCorrect));
+
+  ASSERT_TRUE(dataSegment);
+  ASSERT_TRUE(strcmp(typeName, "Array") == 0);
+  ASSERT_TRUE(strcmp(objectName, "My String Array") == 0);
+
+  char innerObjectName[128];
+  Array<char*> stringsOut = SerializedBuffer::DeserializeRawArray<char*>(&innerObjectName[0], &dataSegment, dataLength, scratchOffchip);
+
+  //strings.Print("strings");
+  //stringsOut.Print("stringsOut");
+
+  ASSERT_TRUE(AreEqualSize(strings, stringsOut));
+
+  for(s32 y=0; y<arrayHeight; y++) {
+    char const * const * restrict pStrings = strings.Pointer(y,0);
+    char const * const * restrict pStringsOut = stringsOut.Pointer(y,0);
+    for(s32 x=0; x<arrayWidth; x++) {
+      // Are the string the same?
+      ASSERT_TRUE(strcmp(pStrings[x], pStringsOut[x]) == 0);
+
+      // Are the pointer locations different?
+      ASSERT_TRUE(reinterpret_cast<size_t>(pStrings[x]) != reinterpret_cast<size_t>(pStringsOut[x]));
+    }
+  }
+
+  ASSERT_FALSE(iterator.HasNext());
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, SerializeStrings)
+
+GTEST_TEST(CoreTech_Common, DrawQuadrilateral)
+{
+  const Quadrilateral<f32> quad(Point<f32>(1, 5), Point<f32>(6, 6), Point<f32>(7, 11), Point<f32>(0, 11));
+
+  const s32 arrayHeight = 15;
+  const s32 arrayWidth = 15;
+
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> image(arrayHeight, arrayWidth, scratchCcm);
+
+  const Result result = DrawFilledConvexQuadrilateral<u8>(image, quad, 255);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //image.Print("image");
+  //image.Show("image", true, false, false);
+
+  const u8 image_groundTruthData[arrayHeight*arrayWidth] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
+    255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
+    255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  Array<u8> image_groundTruth(arrayHeight, arrayWidth, scratchCcm);
+  image_groundTruth.Set(image_groundTruthData, arrayHeight*arrayWidth);
+
+  ASSERT_TRUE(AreElementwiseEqual<u8>(image, image_groundTruth));
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, DrawQuadrilateral)
 
 #define PRINT_INTRINSICS_GROUND_TRUTH_V(intrinsic, numValues)\
 {\
@@ -199,6 +307,7 @@ GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
     PRINT_INTRINSICS_GROUND_TRUTH_VV(__QSUB16, numValues);
     PRINT_INTRINSICS_GROUND_TRUTH_VV(__USUB16, numValues);
     PRINT_INTRINSICS_GROUND_TRUTH_VV(__UQSUB16, numValues);
+    PRINT_INTRINSICS_GROUND_TRUTH_VV(__USAD8, numValues);
     PRINT_INTRINSICS_GROUND_TRUTH_VVF(__SMLAD, numValues, 5);
   } // if(printGroundTruth)
 
@@ -255,6 +364,8 @@ GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
   const u32 __UQSUB16_select_groundTruth[numValues][numValues] = {{0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, };
   const u32 __SMLAD_groundTruth[numValues][numValues] = {{0x7, 0x5, 0xfffffe03, 0xffff0107, 0xff05, 0xffff0007, 0x10005, 0xffff8007, 0x8005, }, {0x5, 0x5, 0x5, 0x5, 0x5, 0x5, 0x5, 0x5, 0x5, }, {0xfffffe03, 0x5, 0x20407, 0xfffd03, 0xff000105, 0x100fe03, 0xfeff0005, 0x807e03, 0xff7f8005, }, {0xffff0107, 0x5, 0xfffd03, 0x7efe8207, 0x81007f05, 0x7f7e0107, 0x80810005, 0x3fbe8107, 0xc0408005, }, {0xff05, 0x5, 0xff000105, 0x81007f05, 0x7f008005, 0x8080ff05, 0x7f800005, 0xc040ff05, 0x3fc00005, }, {0xffff0007, 0x5, 0x100fe03, 0x7f7e0107, 0x8080ff05, 0x7ffe0007, 0x80010005, 0x3ffe8007, 0xc0008005, }, {0x10005, 0x5, 0xfeff0005, 0x80810005, 0x7f800005, 0x80010005, 0x80000005, 0xc0010005, 0x40000005, }, {0xffff8007, 0x5, 0x807e03, 0x3fbe8107, 0xc040ff05, 0x3ffe8007, 0xc0010005, 0x3fff0007, 0xc0008005, }, {0x8005, 0x5, 0xff7f8005, 0xc0408005, 0x3fc00005, 0xc0008005, 0x40000005, 0xc0008005, 0x40000005, }, };
   const u32 __SMLAD_select_groundTruth[numValues][numValues] = {{0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, };
+  const u32 __USAD8_groundTruth[numValues][numValues] = {{0x0, 0x3fc, 0x3f8, 0x200, 0x1fc, 0x100, 0x2fc, 0x80, 0x37c, }, {0x3fc, 0x0, 0x4, 0x1fc, 0x200, 0x2fc, 0x100, 0x37c, 0x80, }, {0x3f8, 0x4, 0x0, 0x1f8, 0x1fc, 0x2f8, 0x100, 0x378, 0x82, }, {0x200, 0x1fc, 0x1f8, 0x0, 0x4, 0x100, 0x100, 0x180, 0x17e, }, {0x1fc, 0x200, 0x1fc, 0x4, 0x0, 0x100, 0x100, 0x17e, 0x180, }, {0x100, 0x2fc, 0x2f8, 0x100, 0x100, 0x0, 0x200, 0x80, 0x27e, }, {0x2fc, 0x100, 0x100, 0x100, 0x100, 0x200, 0x0, 0x27e, 0x80, }, {0x80, 0x37c, 0x378, 0x180, 0x17e, 0x80, 0x27e, 0x0, 0x2fe, }, {0x37c, 0x80, 0x82, 0x17e, 0x180, 0x27e, 0x80, 0x2fe, 0x0, }, };
+  const u32 __USAD8_select_groundTruth[numValues][numValues] = {{0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, {0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, 0x11111111, }, };
 
   TEST_INTRINSICS_V(__REV, numValues);
   TEST_INTRINSICS_V(__REV16, numValues);
@@ -285,6 +396,7 @@ GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
   TEST_INTRINSICS_VV(__QSUB16, numValues);
   TEST_INTRINSICS_VV(__USUB16, numValues);
   TEST_INTRINSICS_VV(__UQSUB16, numValues);
+  TEST_INTRINSICS_VV(__USAD8, numValues);
   TEST_INTRINSICS_VVF(__SMLAD, numValues, 5);
 
   //
@@ -750,7 +862,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<u64>(static_cast<f32>(0XFFFFFF7FFFFFFC00ULL)) == 0xFFFFFF0000000000ULL);
 
   const u64 a = saturate_cast<u64>(static_cast<f32>(0XFFFFFF7FFFFFFFFFULL));
-#if defined(__EDG__) || defined(__APPLE_CC__)
+#if defined(__EDG__) || defined(__APPLE_CC__) || defined(__GNUC__)
   ASSERT_TRUE(a == 0xFFFFFF0000000000ULL);
 #else
   ASSERT_TRUE(a == 0xFFFFFFFFFFFFFFFFULL);
@@ -801,7 +913,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(0x7FFFFFBFFFFFFE00LL)) == 0x7FFFFF8000000000LL);
 
   const s64 c = saturate_cast<s64>(static_cast<f32>(0x7FFFFFBFFFFFFE01LL));
-#if defined(__EDG__) || defined(__APPLE_CC__)
+#if defined(__EDG__) || defined(__APPLE_CC__) || defined(__GNUC__)
   ASSERT_TRUE(c == 0x7FFFFF8000000000LL);
 #else
   ASSERT_TRUE(c == 0x7FFFFFFFFFFFFFFFLL);
@@ -811,7 +923,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(0x7FFFFFFFFFFFFDFFLL)) == 0x7FFFFFFFFFFFFC00LL);
 
   const s64 d = saturate_cast<s64>(static_cast<f64>(0x7FFFFFFFFFFFFE00LL));
-#if defined(__EDG__) || defined(__APPLE_CC__)
+#if defined(__EDG__) || defined(__APPLE_CC__) || defined(__GNUC__)
   ASSERT_TRUE(d == 0x7FFFFFFFFFFFFFFFLL);
 #else
   ASSERT_TRUE(d == 0x7FFFFFFFFFFFFC00LL);
@@ -3979,7 +4091,8 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
   // Check that the templated OpenCV matrix works
   {
-    cv::Mat_<s16> &simpleArray_cvMat = simpleArray.get_CvMat_();
+    cv::Mat_<s16> simpleArray_cvMat;
+    ASSERT_TRUE(ArrayToCvMat(simpleArray, &simpleArray_cvMat) == RESULT_OK);
     CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
     CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
 
@@ -4006,7 +4119,8 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 
   // Check that the non-templated OpenCV matrix works
   {
-    cv::Mat &simpleArray_cvMat = simpleArray.get_CvMat_();
+    cv::Mat simpleArray_cvMat;
+    ASSERT_TRUE(ArrayToCvMat(simpleArray, &simpleArray_cvMat) == RESULT_OK);
     CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
     CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
     ASSERT_EQ(42, *simpleArray.Pointer(2,0));
@@ -4245,12 +4359,14 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #endif // #ifdef RUN_PC_ONLY_TESTS
 
-#if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
+#if !ANKICORETECH_EMBEDDED_USE_GTEST
 s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, SerializeStrings);
+  CALL_GTEST_TEST(CoreTech_Common, DrawQuadrilateral);
   CALL_GTEST_TEST(CoreTech_Common, HostIntrinsics_m4);
   CALL_GTEST_TEST(CoreTech_Common, VectorTypes);
   CALL_GTEST_TEST(CoreTech_Common, RoundUpAndDown);

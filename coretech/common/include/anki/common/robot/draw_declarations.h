@@ -23,6 +23,10 @@ namespace Anki
     // If lineWidth < 1, then the box will be solid. Otherwise, the inside will be filled with backgroundColor
     template<typename Type> Result DrawRectangle(Array<Type> &image, Point<s16> point1, Point<s16> point2, const s32 lineWidth, const Type lineColor, const Type backgroundColor);
 
+    // Fill in the pixels inside quad. The center of the top-left pixel is (0.5,0.5).
+    // If the quad is not convex, this function will fill a set of pixels such that: convexHull >= numPixelsFilled >= nonConvexFill
+    template<typename Type> Result DrawFilledConvexQuadrilateral(Array<Type> &image, Quadrilateral<f32> quad, const Type color);
+
     // Create a test pattern image, full of different types of squares
     // Example:
     // Array<u8> testSquaresImage = AllocateArrayFromHeap<u8>(480,640);

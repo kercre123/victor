@@ -4,11 +4,14 @@ classdef EmbeddedConversionsManager < handle
     properties(GetAccess = 'public', SetAccess = 'protected')
         homographyEstimationType;
         computeCharacteristicScaleImageType;
+        componentRejectionTestsType;
         traceBoundaryType;
         connectedComponentsType;
         completeCImplementationType;
         emptyCenterDetection;
         smallCharacterisicParameter;
+        extractFiducialMethod;
+        extractFiducialMethodParameters;
     end % PROPERTIES (get-public, set-protected)
 
     methods(Access = 'public')
@@ -18,8 +21,11 @@ classdef EmbeddedConversionsManager < handle
             homographyEstimationType_acceptable = {'matlab_original', 'opencv_cp2tform', 'c_float64', 'matlab_inhomogeneous'};
 
             computeCharacteristicScaleImageType = 'matlab_original';
-            computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_boxFilters', 'matlab_boxFilters_multiple', 'matlab_boxFilters_small', 'matlab_loops', 'matlab_loopsAndFixedPoint', 'matlab_loopsAndFixedPoint_mexFiltering', 'c_fixedPoint'};
+            computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_boxFilters', 'matlab_boxFilters_multiple', 'matlab_boxFilters_small', 'matlab_loops', 'matlab_loopsAndFixedPoint', 'matlab_loopsAndFixedPoint_mexFiltering', 'c_fixedPoint', 'matlab_edges'};
 
+            componentRejectionTestsType = 'matlab_original';
+            componentRejectionTestsType_acceptable = {'matlab_original', 'off'};
+            
             traceBoundaryType = 'matlab_original';
             traceBoundaryType_acceptable = {'matlab_original', 'matlab_loops', 'c_fixedPoint', 'matlab_approximate'};
 
@@ -31,6 +37,12 @@ classdef EmbeddedConversionsManager < handle
 
             emptyCenterDetection = 'matlab_original';
             emptyCenterDetection_acceptable = {'matlab_original', 'off'};
+            
+            extractFiducialMethod = 'matlab_original';
+            extractFiducialMethod_acceptable = {'matlab_original', 'matlab_exhaustive', 'c_exhaustive', 'matlab_alternateTree'};
+            
+            extractFiducialMethodParameters.exhaustiveMethod = 'backward';
+            extractFiducialMethodParameters.treeFilename = '';
 
             smallCharacterisicParameter = 0.9;
 
@@ -41,6 +53,9 @@ classdef EmbeddedConversionsManager < handle
 
             isAcceptable(computeCharacteristicScaleImageType_acceptable, computeCharacteristicScaleImageType);
             this.computeCharacteristicScaleImageType = computeCharacteristicScaleImageType; %#ok<*PROP>
+            
+            isAcceptable(componentRejectionTestsType_acceptable, componentRejectionTestsType);
+            this.componentRejectionTestsType = componentRejectionTestsType; %#ok<*PROP>
 
             isAcceptable(traceBoundaryType_acceptable, traceBoundaryType);
             this.traceBoundaryType = traceBoundaryType; %#ok<*PROP>
@@ -55,6 +70,11 @@ classdef EmbeddedConversionsManager < handle
             this.emptyCenterDetection = emptyCenterDetection; %#ok<*PROP>
 
             this.smallCharacterisicParameter = smallCharacterisicParameter; %#ok<*PROP>
+            
+            isAcceptable(extractFiducialMethod_acceptable, extractFiducialMethod);
+            this.extractFiducialMethod = extractFiducialMethod;
+            
+            this.extractFiducialMethodParameters = extractFiducialMethodParameters;
         end
     end % METHODS (public)
 end % classdef OptimizationManager < handle

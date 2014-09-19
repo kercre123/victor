@@ -41,6 +41,10 @@ if usePyramid
         binaryImg = binaryImg1 + binaryImg2;
 %         figure(6); imshow(binaryImg);
             return;
+    elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_edges') 
+        binaryImg = edge(img, 'canny', 0.1, 0.1);
+%         figure(6); imshow(binaryImg);
+        return
     end
     
     if showTiming

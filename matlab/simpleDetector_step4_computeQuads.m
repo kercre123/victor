@@ -140,6 +140,7 @@ for i_region = 1:numRegions
         end
     end
     
+%     figure(2); imshow(regionMap)
     if strcmp(embeddedConversions.traceBoundaryType, 'matlab_original')
 %         assert(~BlockMarker2D.UseOutsideOfSquare, ...
 %                 ['You need to set constant property ' ...
@@ -169,9 +170,10 @@ for i_region = 1:numRegions
         binaryImg = uint8(regionMap == i_region);
         boundary = mexTraceBoundary(binaryImg, [rowStart, colStart], 'n');
     elseif strcmp(embeddedConversions.traceBoundaryType, 'matlab_approximate')
-        if isempty(components2d)
-            disp('embeddedConversions.connectedComponentsType must be a run-length encoding version, like matlab_approximate');
-            keyboard
+        if ~strcmp(embeddedConversions.connectedComponentsType, 'matlab_approximate')
+%             disp('embeddedConversions.connectedComponentsType must be a run-length encoding version, like matlab_approximate');
+%             keyboard
+           components2d = convertConnectedComponentsMapToRunline(regionMap); 
         end
         
         boundary = approximateTraceBoundary(components2d{i_region});

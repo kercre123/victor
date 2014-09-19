@@ -10,13 +10,18 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include "anki/common/basestation/utils/logging/logging.h"
+
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
+
 #include "behaviorManager.h"
+#include "cozmoActions.h"
 #include "uiMessageHandler.h"
 #include "vizManager.h"
 #include "soundManager.h"
-#include "anki/common/basestation/utils/logging/logging.h"
+
 
 
 #if(RUN_UI_MESSAGE_TCP_SERVER)
@@ -29,21 +34,17 @@ namespace Anki {
   namespace Cozmo {
 
     UiMessageHandler::UiMessageHandler()
-    : comms_(NULL), robotMgr_(NULL), blockWorld_(NULL), isInitialized_(false)
+    : comms_(NULL), robotMgr_(NULL), isInitialized_(false)
     {
       
     }
     Result UiMessageHandler::Init(Comms::IComms*   comms,
-                                  RobotManager*    robotMgr,
-                                  BlockWorld*      blockWorld,
-                                  BehaviorManager* behaviorMgr)
+                                  RobotManager*    robotMgr)
     {
       Result retVal = RESULT_FAIL;
       
       comms_ = comms;
       robotMgr_ = robotMgr;
-      blockWorld_ = blockWorld;
-      behaviorMgr_ = behaviorMgr;
       
       isInitialized_ = true;
       retVal = RESULT_OK;
@@ -170,7 +171,7 @@ namespace Anki {
       if (msg.height_mm == LIFT_HEIGHT_LOWDOCK) {
         if(robot->IsCarryingObject()) {
           // Put the block down right here
-          return robot->ExecutePlaceObjectOnGroundSequence();
+          return robot->PlaceObjectOnGround();
         }
       }
       
@@ -180,18 +181,18 @@ namespace Anki {
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ImageRequest const& msg)
     {
       if (msg.mode == ISM_OFF) {
-        blockWorld_->EnableDraw(false);
+        robot->GetBlockWorld().EnableDraw(false);
       } else if (msg.mode == ISM_STREAM) {
-        blockWorld_->EnableDraw(true);
+        robot->GetBlockWorld().EnableDraw(true);
       }
 
-      return robot->SendImageRequest((ImageSendMode_t)msg.mode);
+      return robot->RequestImage((ImageSendMode_t)msg.mode);
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SaveImages const& msg)
     {
-      robot->SaveImages(msg.enableSave);
-      printf("Saving images: %s\n", robot->IsSavingImages() ? "ON" : "OFF");
+      VizManager::getInstance()->SaveImages(msg.enableSave);
+      printf("Saving images: %s\n", VizManager::getInstance()->IsSavingImages() ? "ON" : "OFF");
       return RESULT_OK;
     }
     
@@ -208,14 +209,23 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_GotoPose const& msg)
     {
-      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
-      return robot->ExecutePathToPose(targetPose);
+      // TODO: Add ability to indicate z too!
+      // TODO: Better way to specify the target pose's parent
+      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
+      targetPose.SetName("GotoPoseTarget");
+      robot->GetActionList().AddAction(new DriveToPoseAction(targetPose));
+      return RESULT_OK;
     }
 
-    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlaceBlockOnGround const& msg)
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlaceObjectOnGround const& msg)
     {
-      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
-      return robot->ExecutePlaceObjectOnGroundSequence(targetPose);
+      // Create an action to drive to specied pose and then put down the carried
+      // object.
+      // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
+      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot->GetWorldOrigin());
+      robot->GetActionList().AddAction(new PlaceObjectOnGroundAtPoseAction(*robot, targetPose));
+
+      return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ExecuteTestPlan const& msg)
@@ -227,26 +237,47 @@ namespace Anki {
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ClearAllBlocks const& msg)
     {
       VizManager::getInstance()->EraseAllVizObjects();
-      blockWorld_->ClearObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
-      blockWorld_->ClearObjectsByFamily(BlockWorld::ObjectFamily::RAMPS);
+      robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
+      robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::RAMPS);
       return RESULT_OK;
     }
     
-    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SelectNextBlock const& msg)
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SelectNextObject const& msg)
     {
-      behaviorMgr_->SelectNextObjectOfInterest();
+      robot->GetBlockWorld().CycleSelectedObject();
       return RESULT_OK;
     }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PickAndPlaceObject const& msg)
+    {
+      const u8 numRetries = 3;
+      
+      ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+      robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID), numRetries);
+      
+      return RESULT_OK;
+    }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_TraverseObject const& msg)
+    {
+      const u8 numRetries = 3;
+      
+      ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+      robot->GetActionList().AddAction(new DriveToAndTraverseObjectAction(selectedObjectID), numRetries);
+      
+      return RESULT_OK;
+    }
+    
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ExecuteBehavior const& msg)
     {
-      behaviorMgr_->StartMode((BehaviorMode)msg.behaviorMode);
+      robot->StartBehaviorMode(static_cast<BehaviorManager::Mode>(msg.behaviorMode));
       return RESULT_OK;
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_AbortPath const& msg)
     {
-      robot->AbortCurrentPath();
+      robot->ClearPath();
       return RESULT_OK;
     }
 
@@ -254,7 +285,7 @@ namespace Anki {
     {
       if (robot->IsCarryingObject()) {
         Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
-        Quad2f objectFootprint = blockWorld_->GetObjectByID(robot->GetCarryingObject())->GetBoundingQuadXY(targetPose);
+        Quad2f objectFootprint = robot->GetBlockWorld().GetObjectByID(robot->GetCarryingObject())->GetBoundingQuadXY(targetPose);
         VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
       }
 
@@ -269,12 +300,12 @@ namespace Anki {
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetHeadControllerGains const& msg)
     {
-      return robot->SendHeadControllerGains(msg.kp, msg.ki, msg.maxIntegralError);
+      return robot->SetHeadControllerGains(msg.kp, msg.ki, msg.maxIntegralError);
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetLiftControllerGains const& msg)
     {
-      return robot->SendLiftControllerGains(msg.kp, msg.ki, msg.maxIntegralError);
+      return robot->SetLiftControllerGains(msg.kp, msg.ki, msg.maxIntegralError);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SelectNextSoundScheme const& msg)
@@ -290,18 +321,18 @@ namespace Anki {
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartTestMode const& msg)
     {
-      return robot->SendStartTestMode((TestMode)msg.mode);
+      return robot->StartTestMode((TestMode)msg.mode);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_IMURequest const& msg)
     {
-      return robot->SendIMURequest(msg.length_ms);
+      return robot->RequestIMU(msg.length_ms);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlayAnimation const& msg)
     {
       SoundManager::getInstance()->Play((SoundID_t)msg.soundID);
-      return robot->SendPlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
+      return robot->PlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
     }
   
   } // namespace Cozmo

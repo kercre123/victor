@@ -56,31 +56,29 @@ set(HEADER_FILES
   #${COZMO_INCLUDE_FILES}
 )
 
-if(NOT WIN32)
-  add_executable(visionUnitTestController ${SOURCE_FILES} ${HEADER_FILES})
+add_executable(visionUnitTestController ${SOURCE_FILES} ${HEADER_FILES})
 
-  target_link_libraries(visionUnitTestController 
-    CppController
-    CoreTech_Common_Basestation
-    CoreTech_Common_Robot # for matlab interface?
-    CoreTech_Vision_Basestation
-    #CoreTech_Messaging_Shared
-    # mx 
-    # eng
-    jsoncpp
-    ${OPENCV_LIBS}
-    ${ALL_EMBEDDED_LIBRARIES}
-  )
+target_link_libraries(visionUnitTestController 
+  CppController
+  CoreTech_Common_Basestation
+  CoreTech_Common_Robot # for matlab interface?
+  CoreTech_Vision_Basestation
+  #CoreTech_Messaging_Shared
+  # mx 
+  # eng
+  jsoncpp
+  ${OPENCV_LIBS}
+  ${ALL_EMBEDDED_LIBRARIES}
+)
 
-  set_target_properties(
-    visionUnitTestController PROPERTIES
-    COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
-    LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
-    FOLDER "Unit Tests"
-    #XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
-    #XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
-  )
-endif()
+set_target_properties(
+  visionUnitTestController PROPERTIES
+  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
+  LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
+  FOLDER "Unit Tests"
+  #XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
+  #XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
+)
 
 # Make sure a copy of the target exists in cozmo_c_controller/
 # no matter where the target is actually built.

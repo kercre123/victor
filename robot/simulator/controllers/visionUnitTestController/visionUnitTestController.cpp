@@ -244,13 +244,13 @@ int main(int argc, char **argv)
     
     // Step until the head and lift are in position
     const float TOL = DEG_TO_RAD(0.5f);
-    float headErr, liftErr;
+    Radians headErr, liftErr;
     do {
       webotRobot_.step(TIME_STEP);
       headErr  = fabs(headMotor_->getPosition()  - headMotor_->getTargetposition());
       liftErr  = fabs(liftMotor_->getPosition()  - liftMotor_->getTargetposition());
-      //fprintf(stdout, "HeadErr = %.4f, LiftErr = %.4f\n", headErr, liftErr);
-    } while(headErr > TOL || liftErr > TOL);
+      //fprintf(stdout, "HeadErr = %.4f, LiftErr = %.4f\n", headErr.ToFloat(), liftErr.ToFloat());
+    } while(headErr.getAbsoluteVal() > TOL || liftErr.getAbsoluteVal() > TOL);
     //fprintf(stdout, "Head and lift in position. Continuing.\n");
     
     Json::Value currentPose;

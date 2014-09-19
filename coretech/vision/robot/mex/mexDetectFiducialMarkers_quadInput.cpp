@@ -1,3 +1,6 @@
+// TODO: update this mex file to the new API
+#if 0
+
 #include "mex.h"
 
 #include "anki/common/robot/matlabInterface.h"
@@ -86,6 +89,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   Anki::Result lastResult;
 
+  // refinedHomography and meanGrayvalueThreshold are computed by currentMarker.RefineCorners(), then used by currentMarker.Extract()
+  Array<f32> refinedHomography(3, 3, memory);
+  u8 meanGrayvalueThreshold;
+  
   for(s32 iQuad=0; iQuad<quadsS16.get_size(); iQuad++) {
     Array<f32> &currentHomography = homographies[iQuad];
     const Quadrilateral<s16> &currentQuad = quadsS16[iQuad];
@@ -103,24 +110,37 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if((lastResult = Transformations::ComputeHomographyFromQuad(currentQuad, currentHomography, numericalFailure, memory)) != Anki::RESULT_OK) {
       return;
     }
+    
+    currentMarker = VisionMarker(currentQuad, VisionMarker::UNKNOWN);
 
     if(numericalFailure) {
       currentMarker.validity = VisionMarker::NUMERICAL_FAILURE;
       continue;
     }
-
-    if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
-      decode_minContrastRatio,
-      refine_quadRefinementIterations,
-      refine_numRefinementSamples,
-      refine_quadRefinementMaxCornerChange,
-      refine_quadRefinementMinCornerChange,
-      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
-      memory)) != Anki::RESULT_OK)
+    
+    if((lastResult = currentMarker.RefineCorners(image, currentHomography, decode_minContrastRatio,
+                                                 refine_quadRefinementIterations, refine_numRefinementSamples,
+                                                 refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange,
+                                                 quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+                                                 refinedHomography, meanGrayvalueThreshold, //< Computed for Extract()
+                                                 memory)) != Anki::RESULT_OK)
     {
       return;
     }
-  }
+
+    if(currentMarker.validity == VisionMarker::LOW_CONTRAST) {
+      currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
+    } else {
+      if((lastResult = currentMarker.Extract(image,
+                                             refinedHomography,
+                                             meanGrayvalueThreshold, //< Computed by RefineCorners()
+                                             decode_minContrastRatio,
+                                             memory)) != Anki::RESULT_OK)
+      {
+        return;
+      }
+    }
+  } // for each quad
 
   // Remove invalid markers from the list
   if(!returnInvalidMarkers) {
@@ -174,6 +194,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if(nlhs >= 3) {
       mxArray* markerNamesMatlab = mxCreateCellArray(markersMatlab_ndim, markersMatlab_dims);
       for(s32 i=0; i<numMarkers; ++i) {
+        AnkiAssert(markers[i].markerType >= 0 && markers[i].markerType <= Anki::Vision::NUM_MARKER_TYPES);
         mxSetCell(markerNamesMatlab, i, mxCreateString(Anki::Vision::MarkerTypeStrings[markers[i].markerType]));
       }
       plhs[2] = markerNamesMatlab;
@@ -208,3 +229,5 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   mxFree(memory.get_buffer());
 }
+
+#endif // TODO: update this mex file to the new API

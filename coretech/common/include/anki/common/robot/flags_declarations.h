@@ -61,6 +61,7 @@ namespace Anki
         const static bool isInteger = false;
         const static bool isSigned = false;
         const static bool isFloat = false;
+        const static bool isString = false;
       };
 
       // Similar to limits.h, which Myriad doesn't have
@@ -78,6 +79,7 @@ namespace Anki
         const static bool isInteger = true;
         const static bool isSigned = false;
         const static bool isFloat = false;
+        const static bool isString = false;
       };
 
       template<> class TypeCharacteristics<u8>
@@ -87,6 +89,7 @@ namespace Anki
         const static bool isInteger = true;
         const static bool isSigned = false;
         const static bool isFloat = false;
+        const static bool isString = false;
       };
 
       template<> class TypeCharacteristics<s8>
@@ -96,6 +99,7 @@ namespace Anki
         const static bool isInteger = true;
         const static bool isSigned = true;
         const static bool isFloat = false;
+        const static bool isString = false;
       };
 
       template<> class TypeCharacteristics<u16>
@@ -105,6 +109,7 @@ namespace Anki
         const static bool isInteger = true;
         const static bool isSigned = false;
         const static bool isFloat = false;
+        const static bool isString = false;
       };
 
       template<> class TypeCharacteristics<s16>
@@ -114,6 +119,7 @@ namespace Anki
         const static bool isInteger = true;
         const static bool isSigned = true;
         const static bool isFloat = false;
+        const static bool isString = false;
       };
 
       template<> class TypeCharacteristics<u32>
@@ -123,6 +129,7 @@ namespace Anki
         const static bool isInteger = true;
         const static bool isSigned = false;
         const static bool isFloat = false;
+        const static bool isString = false;
       };
 
       template<> class TypeCharacteristics<s32>
@@ -132,6 +139,7 @@ namespace Anki
         const static bool isInteger = true;
         const static bool isSigned = true;
         const static bool isFloat = false;
+        const static bool isString = false;
       };
 
       template<> class TypeCharacteristics<u64>
@@ -141,6 +149,7 @@ namespace Anki
         const static bool isInteger = true;
         const static bool isSigned = false;
         const static bool isFloat = false;
+        const static bool isString = false;
       };
 
       template<> class TypeCharacteristics<s64>
@@ -150,6 +159,7 @@ namespace Anki
         const static bool isInteger = true;
         const static bool isSigned = true;
         const static bool isFloat = false;
+        const static bool isString = false;
       };
 
       template<> class TypeCharacteristics<f32>
@@ -159,6 +169,7 @@ namespace Anki
         const static bool isInteger = false;
         const static bool isSigned = true;
         const static bool isFloat = true;
+        const static bool isString = false;
       };
 
       template<> class TypeCharacteristics<f64>
@@ -168,6 +179,27 @@ namespace Anki
         const static bool isInteger = false;
         const static bool isSigned = true;
         const static bool isFloat = true;
+        const static bool isString = false;
+      };
+
+      template<> class TypeCharacteristics<char *>
+      {
+      public:
+        const static bool isBasicType = false;
+        const static bool isInteger = false;
+        const static bool isSigned = false;
+        const static bool isFloat = false;
+        const static bool isString = true;
+      };
+
+      template<> class TypeCharacteristics<const char *>
+      {
+      public:
+        const static bool isBasicType = false;
+        const static bool isInteger = false;
+        const static bool isSigned = false;
+        const static bool isFloat = false;
+        const static bool isString = true;
       };
 
       template<> class numeric_limits<f32>

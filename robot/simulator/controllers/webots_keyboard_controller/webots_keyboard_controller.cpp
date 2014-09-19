@@ -39,8 +39,8 @@ namespace Anki {
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
         
-        const f32 HEAD_SPEED_RAD_PER_SEC = 4.f;
-        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 10.f;
+        const f32 HEAD_SPEED_RAD_PER_SEC = 1.f;
+        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 3.f;
         
         
         int lastKeyPressed_ = 0;
@@ -59,7 +59,7 @@ namespace Anki {
           ,{0.8, 0.1, 0.1} // Place object color
         };
         
-        BehaviorMode behaviorMode_ = BM_None;
+        BehaviorManager::Mode behaviorMode_ = BehaviorManager::None;
         
         // Socket connection to basestation
         TcpClient bsClient;
@@ -82,11 +82,13 @@ namespace Anki {
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
       void SendExecutePathToPose(const Pose3d& p);
-      void SendExecutePlaceBlockOnGroundSequence(const Pose3d& p);
+      void SendPlaceObjectOnGroundSequence(const Pose3d& p);
+      void SendPickAndPlaceSelectedObject();
+      void SendTraverseSelectedObject();
       void SendExecuteTestPlan();
       void SendClearAllBlocks();
-      void SendSelectNextBlock();
-      void SendExecuteBehavior(BehaviorMode mode);
+      void SendSelectNextObject();
+      void SendExecuteBehavior(BehaviorManager::Mode mode);
       void SendAbortPath();
       void SendDrawPoseMarker(const Pose3d& p);
       void SendErasePoseMarker();
@@ -401,7 +403,7 @@ namespace Anki {
                 SendExecutePathToPose(poseMarkerPose_);
                 SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               } else {
-                SendExecutePlaceBlockOnGroundSequence(poseMarkerPose_);
+                SendPlaceObjectOnGroundSequence(poseMarkerPose_);
                 // Make sure head is tilted down so that it can localize well
                 SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
                 
@@ -417,7 +419,7 @@ namespace Anki {
               
             case CKEY_CYCLE_BLOCK_SELECT:
             {
-              SendSelectNextBlock();
+              SendSelectNextObject();
               break;
             }
             case CKEY_CLEAR_BLOCKS:
@@ -427,20 +429,20 @@ namespace Anki {
             }
             case CKEY_DOCK_TO_BLOCK:
             {
-              SendExecuteBehavior(BM_PickAndPlace);
+              SendPickAndPlaceSelectedObject();
               break;
             }
             case CKEY_USE_RAMP:
             {
-              SendExecuteBehavior(BM_TraverseObject);
+              SendTraverseSelectedObject();
               break;
             }
             case CKEY_START_DICE_DEMO:
             {
-              if (behaviorMode_ == BM_June2014DiceDemo) {
-                SendExecuteBehavior(BM_None);
+              if (behaviorMode_ == BehaviorManager::June2014DiceDemo) {
+                SendExecuteBehavior(BehaviorManager::None);
               } else {
-                SendExecuteBehavior(BM_June2014DiceDemo);
+                SendExecuteBehavior(BehaviorManager::June2014DiceDemo);
               }
               break;
             }
@@ -690,9 +692,9 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendExecutePlaceBlockOnGroundSequence(const Pose3d& p)
+      void SendPlaceObjectOnGroundSequence(const Pose3d& p)
       {
-        MessageU2G_PlaceBlockOnGround m;
+        MessageU2G_PlaceObjectOnGround m;
         m.x_mm = p.GetTranslation().x();
         m.y_mm = p.GetTranslation().y();
         m.rad = p.GetRotationAngle<'Z'>().ToFloat();
@@ -712,13 +714,25 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendSelectNextBlock()
+      void SendSelectNextObject()
       {
-        MessageU2G_SelectNextBlock m;
+        MessageU2G_SelectNextObject m;
         SendMessage(m);
       }
       
-      void SendExecuteBehavior(BehaviorMode mode)
+      void SendPickAndPlaceSelectedObject()
+      {
+        MessageU2G_PickAndPlaceObject m;
+        SendMessage(m);
+      }
+      
+      void SendTraverseSelectedObject()
+      {
+        MessageU2G_TraverseObject m;
+        SendMessage(m);
+      }
+      
+      void SendExecuteBehavior(BehaviorManager::Mode mode)
       {
         MessageU2G_ExecuteBehavior m;
         m.behaviorMode = mode;

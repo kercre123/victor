@@ -197,6 +197,38 @@ namespace Anki
       return limits.rawIn1Limits.xSize*limits.rawIn1Limits.ySize;
     }
 
+    template<typename Type> s32 ArraySlice<Type>::Set(const Type * const values, const s32 numValues)
+    {
+      Array<Type> &array = this->get_array();
+
+      AnkiConditionalErrorAndReturnValue(array.IsValid(),
+        0, "ArraySlice<Type>::Set", "Array<Type> is not valid");
+
+      const ArraySliceLimits_in1_out0<s32> limits(this->get_ySlice(), this->get_xSlice());
+
+      AnkiConditionalErrorAndReturnValue(limits.isValid,
+        0, "ArraySlice<Type>::Set", "Limits is not valid");
+
+      AnkiConditionalErrorAndReturnValue(limits.rawIn1Limits.ySize * limits.rawIn1Limits.xSize == numValues,
+        0, "ArraySlice<Type>::Set", "Limits is not valid");
+
+      s32 ci = 0;
+      for(s32 iy=0; iy<limits.rawIn1Limits.ySize; iy++) {
+        const s32 y = limits.rawIn1Limits.yStart + iy * limits.rawIn1Limits.yIncrement;
+        Type * restrict pMat = array.Pointer(y, 0);
+
+        for(s32 ix=0; ix<limits.rawIn1Limits.xSize; ix++) {
+          const s32 x = limits.rawIn1Limits.xStart + ix * limits.rawIn1Limits.xIncrement;
+          pMat[x] = values[ci];
+          ci++;
+        }
+      }
+
+      AnkiAssert(ci == limits.rawIn1Limits.ySize * limits.rawIn1Limits.xSize);
+
+      return limits.rawIn1Limits.xSize*limits.rawIn1Limits.ySize;
+    }
+
     template<typename Type> Array<Type>& ArraySlice<Type>::get_array()
     {
       return this->array;

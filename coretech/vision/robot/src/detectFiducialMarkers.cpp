@@ -170,77 +170,97 @@ namespace Anki
 #endif
 
       // 4. Compute candidate quadrilaterals from the connected components
-      BeginBenchmark("ComputeQuadrilateralsFromConnectedComponents");
-      FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratchOnchip);
+      {
+        BeginBenchmark("ComputeQuadrilateralsFromConnectedComponents");
+        FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratchOnchip);
 
-      if((lastResult = ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratchOnchip)) != RESULT_OK)
-        return lastResult;
-
-      markers.set_size(extractedQuads.get_size());
-
-      EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
-
-      // 4b. Compute a homography for each extracted quadrilateral
-      //Array<f32> refinedHomography(3,3,scratchOnchip);
-      BeginBenchmark("ComputeHomographyFromQuad");
-      for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
-        Array<f32> &currentHomography = homographies[iQuad];
-        VisionMarker &currentMarker = markers[iQuad];
-
-        bool numericalFailure;
-        if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, numericalFailure, scratchOnchip)) != RESULT_OK) {
+        if((lastResult = ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratchOnchip)) != RESULT_OK)
           return lastResult;
-        }
 
-        if(numericalFailure) {
-          currentMarker.validity = VisionMarker::NUMERICAL_FAILURE;
-        } else {
-          if(currentHomography[2][0] > maxProjectiveTermValue || currentHomography[2][1] > maxProjectiveTermValue) {
-            AnkiWarn("DetectFiducialMarkers", "Homography projective terms are unreasonably large");
+        markers.set_size(extractedQuads.get_size());
+
+        EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
+
+        // 4b. Compute a homography for each extracted quadrilateral
+        BeginBenchmark("ComputeHomographyFromQuad");
+        for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
+          Array<f32> &currentHomography = homographies[iQuad];
+          VisionMarker &currentMarker = markers[iQuad];
+
+          bool numericalFailure;
+          if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, numericalFailure, scratchOnchip)) != RESULT_OK) {
+            return lastResult;
+          }
+
+          markers[iQuad] = VisionMarker(extractedQuads[iQuad], VisionMarker::UNKNOWN);
+
+          if(numericalFailure) {
             currentMarker.validity = VisionMarker::NUMERICAL_FAILURE;
           } else {
-            currentMarker.validity = VisionMarker::VALID;
+            if(currentHomography[2][0] > maxProjectiveTermValue || currentHomography[2][1] > maxProjectiveTermValue) {
+              AnkiWarn("DetectFiducialMarkers", "Homography projective terms are unreasonably large");
+              currentMarker.validity = VisionMarker::NUMERICAL_FAILURE;
+            }
           }
-        }
 
-        //currentHomography.Print("currentHomography");
-      } // for(iQuad=0; iQuad<; iQuad++)
-      EndBenchmark("ComputeHomographyFromQuad");
+          //currentHomography.Print("currentHomography");
+        } // for(iQuad=0; iQuad<; iQuad++)
+        EndBenchmark("ComputeHomographyFromQuad");
+      }
 
       // 5. Decode fiducial markers from the candidate quadrilaterals
 
       BeginBenchmark("ExtractVisionMarker");
 
-      for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
-        const Array<f32> &currentHomography = homographies[iQuad];
-        const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
+      // refinedHomography and meanGrayvalueThreshold are computed by currentMarker.RefineCorners(), then used by currentMarker.Extract()
+      Array<f32> refinedHomography(3, 3, scratchOnchip);
+      u8 meanGrayvalueThreshold;
 
-        VisionMarker &currentMarker = markers[iQuad];
+      for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++) {
+        const Array<f32> &currentHomography = homographies[iMarker];
+        VisionMarker &currentMarker = markers[iMarker];
 
-        if(currentMarker.validity == VisionMarker::VALID) {
-          if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
+        if(currentMarker.validity == VisionMarker::UNKNOWN) {
+          // If refine_quadRefinementIterations > 0, then make this marker's corners more accurate
+          if((lastResult = currentMarker.RefineCorners(
+            image,
+            currentHomography,
             decode_minContrastRatio,
             refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange,
             quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+            refinedHomography, meanGrayvalueThreshold,
             scratchOnchip)) != RESULT_OK)
           {
             return lastResult;
           }
-        }
-      } // for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++)
+
+          if(currentMarker.validity == VisionMarker::LOW_CONTRAST) {
+            currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
+          } else {
+            if((lastResult = currentMarker.Extract(
+              image,
+              refinedHomography, meanGrayvalueThreshold,
+              decode_minContrastRatio,
+              scratchOnchip)) != RESULT_OK)
+            {
+              return lastResult;
+            }
+          }
+        } // if(currentMarker.validity == VisionMarker::UNKNOWN)
+      } // for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++)
 
       // Remove invalid markers from the list
       if(!returnInvalidMarkers) {
-        for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
-          if(markers[iQuad].validity != VisionMarker::VALID) {
-            for(s32 jQuad=iQuad; jQuad<extractedQuads.get_size(); jQuad++) {
+        for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++) {
+          if(markers[iMarker].validity != VisionMarker::VALID) {
+            for(s32 jQuad=iMarker; jQuad<markers.get_size(); jQuad++) {
               markers[jQuad] = markers[jQuad+1];
               homographies[jQuad] = homographies[jQuad+1];
             }
-            extractedQuads.set_size(extractedQuads.get_size()-1);
+            //extractedQuads.set_size(extractedQuads.get_size()-1);
             markers.set_size(markers.get_size()-1);
             homographies.set_size(homographies.get_size()-1);
-            iQuad--;
+            iMarker--;
           }
         }
       } // if(!returnInvalidMarkers)
