@@ -27,8 +27,8 @@ namespace Anki
     {
     public:
       // xStart, xEnd, y use array indexes, meaning the first pixel is at (0,0), not (0.5,0.5) like true coordinates
-      Type id;
       s16 xStart, xEnd, y;
+      Type id;
 
       ConnectedComponentSegment();
 
@@ -258,7 +258,7 @@ namespace Anki
 
       Result Print() const;
 
-      u16 get_maximumId() const;
+      s32 get_maximumId() const;
 
       s32 get_size() const;
 
@@ -267,6 +267,9 @@ namespace Anki
       bool get_isSortedInId() const;
       bool get_isSortedInY() const;
       bool get_isSortedInX() const;
+
+      const ConnectedComponentsTemplate<u16>* get_componentsU16() const;
+      const ConnectedComponentsTemplate<s32>* get_componentsS32() const;
 
       ConnectedComponentsTemplate<u16>* get_componentsU16();
       ConnectedComponentsTemplate<s32>* get_componentsS32();

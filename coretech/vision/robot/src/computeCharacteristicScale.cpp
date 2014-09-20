@@ -16,8 +16,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/imageProcessing.h"
 
-//#define HAVE_64_BIT_ARITHMETIC
-
 #define USE_ARM_ACCELERATION
 
 #ifndef USE_ARM_ACCELERATION

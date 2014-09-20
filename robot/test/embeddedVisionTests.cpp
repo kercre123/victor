@@ -3369,23 +3369,23 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
   // Small square
   for(s32 y=0; y<15; y++) {
-    components.PushBack(ConnectedComponentSegment<u16>(10,24,y+4,1));
+    components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(10,24,y+4,1));
   }
 
   // Big square
   for(s32 y=0; y<30; y++) {
-    components.PushBack(ConnectedComponentSegment<u16>(100,129,y+50,2));
+    components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(100,129,y+50,2));
   }
 
   // Skewed quad
-  components.PushBack(ConnectedComponentSegment<u16>(100,300,100,3));
+  components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(100,300,100,3));
   for(s32 y=0; y<10; y++) {
-    components.PushBack(ConnectedComponentSegment<u16>(100,110,y+100,3));
+    components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(100,110,y+100,3));
   }
 
   // Tiny square
   for(s32 y=0; y<5; y++) {
-    components.PushBack(ConnectedComponentSegment<u16>(10,14,y,4));
+    components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(10,14,y,4));
   }
 
   FixedLengthList<Quadrilateral<s16> > extractedQuads(2, scratchOnchip);
@@ -3611,7 +3611,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   const s32 extractedBoundaryY_groundTruth[128] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
 
   for(s32 i=0; i<numComponents; i++) {
-    components.PushBack(ConnectedComponentSegment<u16>(xStartValues[i],xEndValues[i],yValues[i],1));
+    components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(xStartValues[i],xEndValues[i],yValues[i],1));
   }
 
   components.SortConnectedComponentSegments();
@@ -3667,16 +3667,16 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
   const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(6, 6, 8, 4);
   const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(5, 1000, 9, 5);
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   FixedLengthList<Anki::Embedded::Rectangle<s16> > componentBoundingBoxes(numComponents, scratchOnchip);
   {
@@ -3716,16 +3716,16 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
   const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(6, 6, 8, 4);
   const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 1000, 9, 5);
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   FixedLengthList<Point<s16> > componentCentroids(numComponents, scratchOnchip);
   {
@@ -3766,16 +3766,16 @@ GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
   const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(5, 12, 8, 2);
   const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 10, 12, 3);
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   {
     const Result result = components.InvalidateFilledCenterComponents_hollowRows(minHollowRatio, scratchOnchip);
@@ -3784,16 +3784,16 @@ GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
 
   //components.Print();
 
-  ASSERT_TRUE(components.Pointer(0)->id == 1);
-  ASSERT_TRUE(components.Pointer(1)->id == 1);
-  ASSERT_TRUE(components.Pointer(2)->id == 1);
-  ASSERT_TRUE(components.Pointer(3)->id == 1);
-  ASSERT_TRUE(components.Pointer(4)->id == 0);
-  ASSERT_TRUE(components.Pointer(5)->id == 0);
-  ASSERT_TRUE(components.Pointer(6)->id == 0);
-  ASSERT_TRUE(components.Pointer(7)->id == 0);
-  ASSERT_TRUE(components.Pointer(8)->id == 0);
-  ASSERT_TRUE(components.Pointer(9)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(0)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(1)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(2)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(3)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(4)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(5)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(6)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(7)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(8)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
@@ -3823,32 +3823,32 @@ GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
   const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(0, 0, 108, 4);
   const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 10, 110, 5); // Too solid
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   {
     const Result result = components.InvalidateSolidOrSparseComponents(sparseMultiplyThreshold, solidMultiplyThreshold, scratchOnchip);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-  ASSERT_TRUE(components.Pointer(0)->id == 1);
-  ASSERT_TRUE(components.Pointer(1)->id == 1);
-  ASSERT_TRUE(components.Pointer(2)->id == 0);
-  ASSERT_TRUE(components.Pointer(3)->id == 0);
-  ASSERT_TRUE(components.Pointer(4)->id == 0);
-  ASSERT_TRUE(components.Pointer(5)->id == 0);
-  ASSERT_TRUE(components.Pointer(6)->id == 0);
-  ASSERT_TRUE(components.Pointer(7)->id == 4);
-  ASSERT_TRUE(components.Pointer(8)->id == 4);
-  ASSERT_TRUE(components.Pointer(9)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(0)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(1)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(2)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(3)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(4)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(5)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(6)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(7)->id == 4);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(8)->id == 4);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
@@ -3878,32 +3878,32 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
   const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(6, 6, 8, 4);
   const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 1000, 9, 5);
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   {
     const Result result = components.InvalidateSmallOrLargeComponents(minimumNumPixels, maximumNumPixels, scratchOnchip);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-  ASSERT_TRUE(components.Pointer(0)->id == 0);
-  ASSERT_TRUE(components.Pointer(1)->id == 0);
-  ASSERT_TRUE(components.Pointer(2)->id == 0);
-  ASSERT_TRUE(components.Pointer(3)->id == 0);
-  ASSERT_TRUE(components.Pointer(4)->id == 3);
-  ASSERT_TRUE(components.Pointer(5)->id == 3);
-  ASSERT_TRUE(components.Pointer(6)->id == 3);
-  ASSERT_TRUE(components.Pointer(7)->id == 4);
-  ASSERT_TRUE(components.Pointer(8)->id == 4);
-  ASSERT_TRUE(components.Pointer(9)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(0)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(1)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(2)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(3)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(4)->id == 3);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(5)->id == 3);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(6)->id == 3);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(7)->id == 4);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(8)->id == 4);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(9)->id == 0);
 
   {
     const Result result = components.CompressConnectedComponentSegmentIds(scratchOnchip);
@@ -3913,16 +3913,16 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
     ASSERT_TRUE(maximumId == 2);
   }
 
-  ASSERT_TRUE(components.Pointer(0)->id == 0);
-  ASSERT_TRUE(components.Pointer(1)->id == 0);
-  ASSERT_TRUE(components.Pointer(2)->id == 0);
-  ASSERT_TRUE(components.Pointer(3)->id == 0);
-  ASSERT_TRUE(components.Pointer(4)->id == 1);
-  ASSERT_TRUE(components.Pointer(5)->id == 1);
-  ASSERT_TRUE(components.Pointer(6)->id == 1);
-  ASSERT_TRUE(components.Pointer(7)->id == 2);
-  ASSERT_TRUE(components.Pointer(8)->id == 2);
-  ASSERT_TRUE(components.Pointer(9)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(0)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(1)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(2)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(3)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(4)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(5)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(6)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(7)->id == 2);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(8)->id == 2);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
@@ -3950,16 +3950,16 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
   const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(0, 0, 0, 3);  // 1
   const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 0, 0, 5);  // 3
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   {
     const Result result = components.CompressConnectedComponentSegmentIds(scratchOnchip);
@@ -3969,16 +3969,16 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
     ASSERT_TRUE(maximumId == 6);
   }
 
-  ASSERT_TRUE(components.Pointer(0)->id == 3);
-  ASSERT_TRUE(components.Pointer(1)->id == 4);
-  ASSERT_TRUE(components.Pointer(2)->id == 0);
-  ASSERT_TRUE(components.Pointer(3)->id == 6);
-  ASSERT_TRUE(components.Pointer(4)->id == 1);
-  ASSERT_TRUE(components.Pointer(5)->id == 2);
-  ASSERT_TRUE(components.Pointer(6)->id == 5);
-  ASSERT_TRUE(components.Pointer(7)->id == 1);
-  ASSERT_TRUE(components.Pointer(8)->id == 1);
-  ASSERT_TRUE(components.Pointer(9)->id == 3);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(0)->id == 3);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(1)->id == 4);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(2)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(3)->id == 6);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(4)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(5)->id == 2);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(6)->id == 5);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(7)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(8)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(9)->id == 3);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, CompressComponentIds)
@@ -4045,30 +4045,30 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
   const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(0, s16_MAX, 0, 0); // 6
   const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(42, 42, 42, 42); // 0
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   const Result result = components.SortConnectedComponentSegments();
   ASSERT_TRUE(result == RESULT_OK);
 
-  ASSERT_TRUE(*components.Pointer(0) == component9);
-  ASSERT_TRUE(*components.Pointer(1) == component7);
-  ASSERT_TRUE(*components.Pointer(2) == component0);
-  ASSERT_TRUE(*components.Pointer(3) == component6);
-  ASSERT_TRUE(*components.Pointer(4) == component3);
-  ASSERT_TRUE(*components.Pointer(5) == component4);
-  ASSERT_TRUE(*components.Pointer(6) == component8);
-  ASSERT_TRUE(*components.Pointer(7) == component2);
-  ASSERT_TRUE(*components.Pointer(8) == component5);
-  ASSERT_TRUE(*components.Pointer(9) == component1);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(0) == component9);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(1) == component7);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(2) == component0);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(3) == component6);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(4) == component3);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(5) == component4);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(6) == component8);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(7) == component2);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(8) == component5);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(9) == component1);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, SortComponents)
@@ -4096,31 +4096,31 @@ GTEST_TEST(CoreTech_Vision, SortComponentsById)
   const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(9, 9, 9, 5); // 8
   const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 0, 0, 1); // 5
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   const Result result = components.SortConnectedComponentSegmentsById(scratchOnchip);
   ASSERT_TRUE(result == RESULT_OK);
 
   ASSERT_TRUE(components.get_size() == 9);
 
-  ASSERT_TRUE(*components.Pointer(0) == component1);
-  ASSERT_TRUE(*components.Pointer(1) == component2);
-  ASSERT_TRUE(*components.Pointer(2) == component4);
-  ASSERT_TRUE(*components.Pointer(3) == component5);
-  ASSERT_TRUE(*components.Pointer(4) == component6);
-  ASSERT_TRUE(*components.Pointer(5) == component9);
-  ASSERT_TRUE(*components.Pointer(6) == component0);
-  ASSERT_TRUE(*components.Pointer(7) == component7);
-  ASSERT_TRUE(*components.Pointer(8) == component8);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(0) == component1);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(1) == component2);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(2) == component4);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(3) == component5);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(4) == component6);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(5) == component9);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(6) == component0);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(7) == component7);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(8) == component8);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, SortComponents)
@@ -4194,10 +4194,10 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   //components.Print();
 
   for(s32 i=0; i<numComponents_groundTruth; i++) {
-    ASSERT_TRUE(components.Pointer(i)->xStart == xStart_groundTruth[i]);
-    ASSERT_TRUE(components.Pointer(i)->xEnd == xEnd_groundTruth[i]);
-    ASSERT_TRUE(components.Pointer(i)->y == y_groundTruth[i]);
-    ASSERT_TRUE(components.Pointer(i)->id == id_groundTruth[i]);
+    ASSERT_TRUE(components.get_componentsU16()->Pointer(i)->xStart == xStart_groundTruth[i]);
+    ASSERT_TRUE(components.get_componentsU16()->Pointer(i)->xEnd == xEnd_groundTruth[i]);
+    ASSERT_TRUE(components.get_componentsU16()->Pointer(i)->y == y_groundTruth[i]);
+    ASSERT_TRUE(components.get_componentsU16()->Pointer(i)->id == id_groundTruth[i]);
   }
 
   GTEST_RETURN_HERE;

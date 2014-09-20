@@ -131,27 +131,49 @@ namespace Anki
       }
 
       //% 1. Compute the extreme pixels of the components, on each edge
-      //for iSubComponent = 1:size(component, 1)
-      for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++) {
-        //component(:, 1) = component(:, 1) - coordinate_top + 1;
-        //component(:, 2:3) = component(:, 2:3) - coordinate_left + 1;
-        //xStart = component(iSubComponent, 2);
-        //xEnd = component(iSubComponent, 3);
-        //y = component(iSubComponent, 1);
-        ConnectedComponentSegment<u16> currentSegment = components[iSegment];
-        currentSegment.xEnd -= boundingBox.left;
-        currentSegment.xStart -= boundingBox.left;
-        currentSegment.y -= boundingBox.top;
+      if(useU16) {
+        for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++) {
+          //component(:, 1) = component(:, 1) - coordinate_top + 1;
+          //component(:, 2:3) = component(:, 2:3) - coordinate_left + 1;
+          //xStart = component(iSubComponent, 2);
+          //xEnd = component(iSubComponent, 3);
+          //y = component(iSubComponent, 1);
+          ConnectedComponentSegment<u16> currentSegment = (*componentsU16)[iSegment];
+          currentSegment.xEnd -= boundingBox.left;
+          currentSegment.xStart -= boundingBox.left;
+          currentSegment.y -= boundingBox.top;
 
-        AnkiAssert(currentSegment.xStart >= 0);
-        for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++) {
-          edge_top[x] = MIN(edge_top[x], currentSegment.y);
-          edge_bottom[x] = MAX(edge_bottom[x], currentSegment.y);
+          AnkiAssert(currentSegment.xStart >= 0);
+          for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++) {
+            edge_top[x] = MIN(edge_top[x], currentSegment.y);
+            edge_bottom[x] = MAX(edge_bottom[x], currentSegment.y);
 
-          edge_left[currentSegment.y] = MIN(edge_left[currentSegment.y], currentSegment.xStart);
-          edge_right[currentSegment.y] = MAX(edge_right[currentSegment.y], currentSegment.xEnd);
-        } // for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++)
-      } // for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++)
+            edge_left[currentSegment.y] = MIN(edge_left[currentSegment.y], currentSegment.xStart);
+            edge_right[currentSegment.y] = MAX(edge_right[currentSegment.y], currentSegment.xEnd);
+          } // for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++)
+        } // for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++)
+      } else { // if(useU16)
+        for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++) {
+          //component(:, 1) = component(:, 1) - coordinate_top + 1;
+          //component(:, 2:3) = component(:, 2:3) - coordinate_left + 1;
+          //xStart = component(iSubComponent, 2);
+          //xEnd = component(iSubComponent, 3);
+          //y = component(iSubComponent, 1);
+          ConnectedComponentSegment<s32> currentSegment = (*componentsS32)[iSegment];
+          currentSegment.xEnd -= boundingBox.left;
+          currentSegment.xStart -= boundingBox.left;
+          currentSegment.y -= boundingBox.top;
+
+          AnkiAssert(currentSegment.xStart >= 0);
+          for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++) {
+            edge_top[x] = MIN(edge_top[x], currentSegment.y);
+            edge_bottom[x] = MAX(edge_bottom[x], currentSegment.y);
+
+            edge_left[currentSegment.y] = MIN(edge_left[currentSegment.y], currentSegment.xStart);
+            edge_right[currentSegment.y] = MAX(edge_right[currentSegment.y], currentSegment.xEnd);
+          } // for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++)
+        } // for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++)
+      } // if(useU16) ... else
 
       //#define PRINT_OUT_EDGE_LIMITS
 #ifdef PRINT_OUT_EDGE_LIMITS

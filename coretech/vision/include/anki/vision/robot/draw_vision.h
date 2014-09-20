@@ -37,17 +37,36 @@ namespace Anki
 
       const bool doScaling = (minValue == maxValue) ? false : true;
 
-      const f64 numComponents = components.get_size();
+      const s32 numComponents = components.get_size();
+
+      const bool useU16 = components.get_useU16();
+      const ConnectedComponentsTemplate<u16>* componentsU16 = components.get_componentsU16();
+      const ConnectedComponentsTemplate<s32>* componentsS32 = components.get_componentsS32();
 
       for(s32 iComponent=0; iComponent<numComponents; iComponent++) {
-        const u16 id = components[iComponent].id;
+        s32 id;
+        if(useU16) {
+          id = (*(components.get_componentsU16()))[iComponent].id;
+        } else {
+          id = (*(components.get_componentsS32()))[iComponent].id;
+        }
 
         if(id == 0)
           continue;
 
-        const s16 y = components[iComponent].y;
-        const s16 xStart = components[iComponent].xStart;
-        const s16 xEnd = components[iComponent].xEnd;
+        s16 y;
+        s16 xStart;
+        s16 xEnd;
+
+        if(useU16) {
+          y = (*componentsU16)[iComponent].y;
+          xStart = (*componentsU16)[iComponent].xStart;
+          xEnd = (*componentsU16)[iComponent].xEnd;
+        } else {
+          y = (*componentsS32)[iComponent].y;
+          xStart = (*componentsS32)[iComponent].xStart;
+          xEnd = (*componentsS32)[iComponent].xEnd;
+        }
 
         Type lineColor;
 

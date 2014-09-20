@@ -25,12 +25,12 @@ namespace Anki
     // #pragma mark --- Definitions ---
 
     template<typename Type> ConnectedComponentSegment<Type>::ConnectedComponentSegment()
-      : id(0), xStart(-1), xEnd(-1), y(-1)
+      : xStart(-1), xEnd(-1), y(-1), id(0)
     {
     } // ConnectedComponentSegment<Type>::ConnectedComponentSegment<Type>()
 
     template<typename Type> ConnectedComponentSegment<Type>::ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y, const Type id)
-      : id(id), xStart(xStart), xEnd(xEnd), y(y)
+      : xStart(xStart), xEnd(xEnd), y(y), id(id)
     {
     } // ConnectedComponentSegment<Type>::ConnectedComponentSegment<Type>(const s16 xStart, const s16 xEnd, const s16 y, const Type id)
 

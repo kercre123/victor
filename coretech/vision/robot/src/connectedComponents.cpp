@@ -141,7 +141,7 @@ namespace Anki
       else { return this->componentsS32.Print(); }
     }
 
-    u16 ConnectedComponents::get_maximumId() const
+    s32 ConnectedComponents::get_maximumId() const
     {
       if(this->useU16) { return this->componentsU16.get_maximumId(); }
       else { return this->componentsS32.get_maximumId(); }
@@ -174,6 +174,18 @@ namespace Anki
     {
       if(this->useU16) { return this->componentsU16.get_isSortedInX(); }
       else { return this->componentsS32.get_isSortedInX(); }
+    }
+
+    const ConnectedComponentsTemplate<u16>* ConnectedComponents::get_componentsU16() const
+    {
+      if(this->useU16) { return &this->componentsU16; }
+      else { return NULL; }
+    }
+
+    const ConnectedComponentsTemplate<s32>* ConnectedComponents::get_componentsS32() const
+    {
+      if(this->useU16) { return NULL; }
+      else { return &this->componentsS32; }
     }
 
     ConnectedComponentsTemplate<u16>* ConnectedComponents::get_componentsU16()
