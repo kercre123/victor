@@ -309,7 +309,8 @@ namespace Anki
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       ConnectedComponents &components,
       MemoryStack fastScratch,
-      MemoryStack slowScratch)
+      MemoryStack slowerScratch,
+      MemoryStack slowestScratch)
     {
       BeginBenchmark("ecvcs_init");
 
@@ -318,10 +319,10 @@ namespace Anki
 
       const s32 numFilterHalfWidths = filterHalfWidths.get_size();
 
-      AnkiConditionalErrorAndReturnValue(AreValid(fastScratch, slowScratch),
+      AnkiConditionalErrorAndReturnValue(AreValid(fastScratch, slowerScratch, slowestScratch),
         RESULT_FAIL_INVALID_OBJECT, "ExtractComponentsViaCharacteristicScale", "scratch is not valid");
 
-      AnkiConditionalErrorAndReturnValue(NotAliased(fastScratch, slowScratch),
+      AnkiConditionalErrorAndReturnValue(NotAliased(fastScratch, slowerScratch, slowestScratch),
         RESULT_FAIL_ALIASED_MEMORY, "ExtractComponentsViaCharacteristicScale", "fast and slow scratch buffers cannot be the same object");
 
       AnkiConditionalErrorAndReturnValue(AreValid(image, filterHalfWidths, components),
@@ -356,7 +357,7 @@ namespace Anki
       const s32 numRowsToScroll = integralImageHeight - 2*numBorderPixels;
 
       // Initialize the first integralImageHeight rows of the integralImage
-      ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, slowScratch);
+      ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, slowerScratch);
       if((lastResult = integralImage.ScrollDown(image, integralImageHeight, fastScratch)) != RESULT_OK)
         return lastResult;
 
@@ -379,7 +380,7 @@ namespace Anki
 
       u8 * restrict pBinaryImageRow = binaryImageRow[0];
 
-      if((lastResult = components.Extract2dComponents_PerRow_Initialize(fastScratch, slowScratch)) != RESULT_OK)
+      if((lastResult = components.Extract2dComponents_PerRow_Initialize(fastScratch, slowerScratch, slowestScratch)) != RESULT_OK)
         return lastResult;
 
       s32 imageY = 0;

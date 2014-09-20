@@ -1044,7 +1044,7 @@ namespace Anki
           "VisionMarkerImages::VisionMarkerImages", "All images must be equal size and square");
       }
 
-      /*images = FixedLengthList<Array<u8>>(numImages, memory, Flags::Buffer(false, false, true));*/
+      /*images = FixedLengthList<Array<u8> >(numImages, memory, Flags::Buffer(false, false, true));*/
       databaseImages = Array<u8>(databaseImageHeight, databaseImageWidth*numDatabaseImages, memory, Flags::Buffer(true, false, true));
       databaseLabelIndexes = FixedLengthList<Anki::Vision::MarkerType>(numDatabaseImages, memory, Flags::Buffer(false, false, true));
 

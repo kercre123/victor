@@ -56,7 +56,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   const s32 maxMarkers = 500;
   const s32 maxExtractedQuads = 5000;
-  const u16 maxConnectedComponentSegments = 0xFFFF; // 642*480/2 = 154000
+  const s32 maxConnectedComponentSegments = 0xFFFFF; // 0xFFFFF is a little over one million
   const s32 bufferSize = 10000000;
 
   AnkiConditionalErrorAndReturn(nrhs == 19 && nlhs >= 2 && nlhs <= 4, "mexDetectFiducialMarkers", "Call this function as following: [quads, markerTypes, <markerNames>, <markerValidity>] = mexDetectFiducialMarkers(uint8(image), scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers);");

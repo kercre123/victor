@@ -45,10 +45,10 @@ namespace Anki
         return this->componentsS32.Extract2dComponents_FullImage(binaryImage, minComponentWidth, maxSkipDistance, scratch);
     }
 
-    Result ConnectedComponents::Extract2dComponents_PerRow_Initialize(MemoryStack &fastMemory, MemoryStack &slowMemory)
+    Result ConnectedComponents::Extract2dComponents_PerRow_Initialize(MemoryStack &fastMemory, MemoryStack &slowerMemory, MemoryStack &slowestMemory)
     {
-      if(this->useU16) { return this->componentsU16.Extract2dComponents_PerRow_Initialize(fastMemory, slowMemory); }
-      else { return this->componentsS32.Extract2dComponents_PerRow_Initialize(fastMemory, slowMemory); }
+      if(this->useU16) { return this->componentsU16.Extract2dComponents_PerRow_Initialize(fastMemory, slowerMemory, slowestMemory); }
+      else { return this->componentsS32.Extract2dComponents_PerRow_Initialize(fastMemory, slowerMemory, slowestMemory); }
     }
 
     Result ConnectedComponents::Extract2dComponents_PerRow_NextRow(const u8 * restrict binaryImageRow, const s32 imageWidth, const s16 whichRow, const s16 minComponentWidth, const s16 maxSkipDistance)

@@ -152,17 +152,17 @@ namespace Anki
       AnkiConditionalErrorAndReturn(maxImageWidth > 0 && maxImageWidth <= s16_MAX,
         "ConnectedComponentsTemplate<Type>::ConnectedComponents", "maxImageWidth must be less than 0x7FFF");
 
-      this->components = FixedLengthList<ConnectedComponentSegment<Type>>(maxComponentSegments, memory);
+      this->components = FixedLengthList<ConnectedComponentSegment<Type> >(maxComponentSegments, memory);
 
-      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment<Type>>();
-      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment<Type>>();
-      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment<Type>>();
+      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment<Type> >();
+      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment<Type> >();
+      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment<Type> >();
       this->equivalentComponents = FixedLengthList<Type>();
 
       this->curState = STATE_CONSTRUCTED;
     } // ConnectedComponents(const s32 maxComponentSegments, MemoryStack &memory)
 
-    template<typename Type> Result ConnectedComponentsTemplate<Type>::Extract2dComponents_PerRow_Initialize(MemoryStack &fastMemory, MemoryStack &slowMemory)
+    template<typename Type> Result ConnectedComponentsTemplate<Type>::Extract2dComponents_PerRow_Initialize(MemoryStack &fastMemory, MemoryStack &slowerMemory, MemoryStack &slowestMemory)
     {
       const Type MAX_2D_COMPONENTS = static_cast<Type>(components.get_maximumSize());
 
@@ -173,10 +173,16 @@ namespace Anki
 
       this->maximumId = 0;
 
-      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment<Type>>(maxImageWidth, fastMemory);
-      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment<Type>>(maxImageWidth, fastMemory);
-      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment<Type>>(maxImageWidth, fastMemory);
-      this->equivalentComponents = FixedLengthList<Type>(maxComponentSegments, slowMemory);
+      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment<Type> >(maxImageWidth, fastMemory);
+      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment<Type> >(maxImageWidth, fastMemory);
+      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment<Type> >(maxImageWidth, fastMemory);
+
+      const s32 bytesRequired = 256 + MEMORY_ALIGNMENT + maxComponentSegments * sizeof(Type);
+      if(slowerMemory.ComputeLargestPossibleAllocation() >= bytesRequired) {
+        this->equivalentComponents = FixedLengthList<Type>(maxComponentSegments, slowerMemory);
+      } else {
+        this->equivalentComponents = FixedLengthList<Type>(maxComponentSegments, slowestMemory);
+      }
 
       Type * restrict pEquivalentComponents = equivalentComponents.Pointer(0);
       for(s32 i=0; i<MAX_2D_COMPONENTS; i++) {
@@ -352,7 +358,7 @@ namespace Anki
       const s32 imageHeight = binaryImage.get_size(0);
       const s32 imageWidth = binaryImage.get_size(1);
 
-      if((lastResult = Extract2dComponents_PerRow_Initialize(scratch, scratch)) != RESULT_OK)
+      if((lastResult = Extract2dComponents_PerRow_Initialize(scratch, scratch, scratch)) != RESULT_OK)
         return lastResult;
 
       for(s32 y=0; y<imageHeight; y++) {

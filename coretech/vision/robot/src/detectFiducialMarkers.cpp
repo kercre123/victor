@@ -34,7 +34,7 @@ namespace Anki
       const f32 component_minHollowRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
-      const u16 maxConnectedComponentSegments,
+      const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
       const s32 refine_quadRefinementIterations,
       const s32 refine_numRefinementSamples,
@@ -68,7 +68,12 @@ namespace Anki
 
       BeginBenchmark("ExtractComponentsViaCharacteristicScale");
 
-      ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratchOffChip);
+      ConnectedComponents extractedComponents;
+      if(maxConnectedComponentSegments <= u16_MAX) {
+        extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, true, scratchOffChip);
+      } else {
+        extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, false, scratchOffChip);
+      }
 
       AnkiConditionalErrorAndReturnValue(extractedComponents.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "extractedComponents could not be allocated");
@@ -95,7 +100,7 @@ namespace Anki
         filterHalfWidths, scaleImage_thresholdMultiplier,
         component1d_minComponentWidth, component1d_maxSkipDistance,
         extractedComponents,
-        scratchCcm, scratchOnchip)) != RESULT_OK)
+        scratchCcm, scratchOnchip, scratchOffChip)) != RESULT_OK)
       {
         /* // DEBUG: drop a display of extracted components into matlab
         Embedded::Matlab matlab(false);

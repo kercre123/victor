@@ -34,7 +34,7 @@ namespace Anki
       const f32 component_minHollowRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
-      const u16 maxConnectedComponentSegments,
+      const s32 maxConnectedComponentSegments, //< If this number is above 2^16-1, then it will use 25% more memory per component
       const s32 maxExtractedQuads,
       const s32 refine_quadRefinementIterations,
       const s32 refine_numRefinementSamples,
@@ -57,7 +57,8 @@ namespace Anki
       const s16 component1d_maxSkipDistance,
       ConnectedComponents &components,
       MemoryStack fastScratch,
-      MemoryStack slowScratch);
+      MemoryStack slowerScratch,
+      MemoryStack slowestScratch);
 
     // Used by DetectFiducialMarkers
     //
