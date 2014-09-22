@@ -304,19 +304,23 @@ namespace Anki
       // After all the initial 2d labels have been created, go through
       // equivalentComponents, and update equivalentComponents internally
       for(s32 iEquivalent=0; iEquivalent<MAX_EQUIVALENT_ITERATIONS; iEquivalent++) {
-        const s32 MAX_RECURSION_LEVEL = 1000; // If it gets anywhere near this high, there's a bug
+        const s32 MAX_RECURSION_LEVEL = 1000; // If it gets anywhere near this high, there's probably a bug
         s32 numChanges = 0;
 
         for(s32 iComponent=0; iComponent<numComponents; iComponent++) {
           // Trace back along the equivalentComponents list, to find the joined component with the minimum id
           Type minNeighbor = pEquivalentComponents[iComponent];
           if(pEquivalentComponents[minNeighbor] != minNeighbor) {
-            for(s32 recursionLevel=0; recursionLevel<MAX_RECURSION_LEVEL; recursionLevel++) {
+            s32 recursionLevel;
+            for(recursionLevel=0; recursionLevel<MAX_RECURSION_LEVEL; recursionLevel++) {
               if(pEquivalentComponents[minNeighbor] == minNeighbor)
                 break;
 
               minNeighbor = pEquivalentComponents[minNeighbor]; // "Recurse" to the next lower component in the list
             }
+
+            AnkiConditionalWarnAndReturnValue(recursionLevel < MAX_RECURSION_LEVEL, RESULT_FAIL, "extract2dComponents", "Issue with equivalentComponents minimum search (%d)", recursionLevel);
+
             numChanges++;
 
             pEquivalentComponents[iComponent] = minNeighbor;
@@ -326,8 +330,6 @@ namespace Anki
         if(numChanges == 0) {
           break;
         }
-
-        AnkiConditionalWarnAndReturnValue(numChanges < MAX_RECURSION_LEVEL, RESULT_FAIL, "extract2dComponents", "Issue with equivalentComponents minimum search (%d)", numChanges);
       } // for(s32 iEquivalent=0; iEquivalent<MAX_EQUIVALENT_ITERATIONS; iEquivalent++)
 
       // Replace the id of all 1d components with their minimum equivalent id
