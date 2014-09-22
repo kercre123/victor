@@ -212,6 +212,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
         const mxArray * curMatlabArray = mxGetCell(prhs[0], cellIndex);
 
+        const mwSize curHeight = mxGetM(curMatlabArray);
+        const mwSize curWidth = mxGetN(curMatlabArray);
+        
+        if((curWidth == 1 && curHeight > 1) || (curWidth*10 < curHeight)) {
+          mexPrintf("Warning: a Nx1 matrix is much less memory efficient than a 1xN matrix.\n");
+        }
+
         // Each thread is responsible for deleting its own
         threadParams[iThread] = new SaveThreadParams(
           curMatlabArray,
@@ -253,6 +260,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     AnkiConditionalErrorAndReturn(memory1.IsValid() && memory2.IsValid(), "mexSaveEmbeddedArray", "Memory could not be allocated");
 
     char* filename = mxArrayToString(prhs[1]);
+
+    const mwSize curHeight = mxGetM(prhs[0]);
+    const mwSize curWidth = mxGetN(prhs[0]);
+        
+    if((curWidth == 1 && curHeight > 1) || (curWidth*10 < curHeight)) {
+      mexPrintf("Warning: a Nx1 matrix is much less memory efficient than a 1xN matrix.\n");
+    }
 
     Save(prhs[0], filename, compressionLevel, memory1, memory2);
 
