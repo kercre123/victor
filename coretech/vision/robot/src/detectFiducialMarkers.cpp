@@ -115,7 +115,8 @@ namespace Anki
 
 #ifdef SHOW_DRAWN_COMPONENTS
       {
-        MemoryStack bigScratch(malloc(1000000), 1000000);
+        const s32 bigScratchSize = 1024 + image.get_size(0) * RoundUp<s32>(image.get_size(1), MEMORY_ALIGNMENT);
+        MemoryStack bigScratch(malloc(bigScratchSize), bigScratchSize);
         Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
         Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
         image.Show("image", false, false, true);
@@ -165,8 +166,9 @@ namespace Anki
 
 #ifdef SHOW_DRAWN_COMPONENTS
       {
-        CoreTechPrint("Components\n");
-        MemoryStack bigScratch(malloc(1000000), 1000000);
+        //CoreTechPrint("Components\n");
+        const s32 bigScratchSize = 1024 + image.get_size(0) * RoundUp<s32>(image.get_size(1), MEMORY_ALIGNMENT);
+        MemoryStack bigScratch(malloc(bigScratchSize), bigScratchSize);
         Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
         Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
         empty.Show("components good", true, false, true);

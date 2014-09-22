@@ -327,7 +327,7 @@ namespace Anki
           break;
         }
 
-        AnkiConditionalWarnAndReturnValue(numChanges < MAX_RECURSION_LEVEL, RESULT_FAIL, "extract2dComponents", "Issue with equivalentComponents minimum search");
+        AnkiConditionalWarnAndReturnValue(numChanges < MAX_RECURSION_LEVEL, RESULT_FAIL, "extract2dComponents", "Issue with equivalentComponents minimum search (%d)", numChanges);
       } // for(s32 iEquivalent=0; iEquivalent<MAX_EQUIVALENT_ITERATIONS; iEquivalent++)
 
       // Replace the id of all 1d components with their minimum equivalent id
