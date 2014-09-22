@@ -1,31 +1,31 @@
 
 function tmp_svm_testExamples()
     
-    rerunTraining = false;
+    rerunTraining = true;
     
-    suffixes = {'100', '100B'};
+    suffixes = {'100'};
     % suffixes = {'100B', '300', '300B', '600', '600B', '1000', '1000B'};
     
     if rerunTraining
         for iSuffix = 1:length(suffixes)
-            trainedSvmClassifiers = runTest('~/tmp/labels', suffixes{iSuffix});
+            trainedSvmClassifiers = runTest('/Volumes/FastExternal/tmp/treeTraining/labels', suffixes{iSuffix}, 'polynomial3');
             
-            save(['~/tmp/trainedSvm', suffixes{iSuffix}], 'trainedSvmClassifiers');
+            save(['~/tmp/trainedSvmPolynomial3', suffixes{iSuffix}], 'trainedSvmClassifiers');
         end
     end
     
     for iSuffix = 1:length(suffixes)
         if suffixes{iSuffix}(end) == 'B'
             finalSuffix = [suffixes{iSuffix}(1:(end-1)), ''];
-            load(['~/tmp/labels', suffixes{iSuffix}(1:(end-1))], 'probeLocationsXGrid', 'probeLocationsYGrid');
+            load(['/Volumes/FastExternal/tmp/treeTraining/labels', suffixes{iSuffix}(1:(end-1))], 'probeLocationsXGrid', 'probeLocationsYGrid');
         else
             finalSuffix = [suffixes{iSuffix}(1:end), 'B'];
-            load(['~/tmp/labels', suffixes{iSuffix}], 'probeLocationsXGrid', 'probeLocationsYGrid');
+            load(['/Volumes/FastExternal/tmp/treeTraining/labels', suffixes{iSuffix}], 'probeLocationsXGrid', 'probeLocationsYGrid');
         end
         
-        load(['~/tmp/trainedSvm', suffixes{iSuffix}]);
+        load(['~/tmp/trainedSvmPolynomial3', suffixes{iSuffix}]);
         
-        load(['~/tmp/labels', finalSuffix],...
+        load(['/Volumes/FastExternal/tmp/treeTraining/labels', finalSuffix],...
             ['labelNames', finalSuffix], ['labels', finalSuffix], ['featureValues', finalSuffix]);
         
         [numCorrect, numTotal] = computeAccuracy(trainedSvmClassifiers, labels100B, labelNames100B, featureValues100B);
@@ -35,12 +35,18 @@ function tmp_svm_testExamples()
     
 end % tmp_testExamples()
 
-function trainedSvmClassifiers = runTest(saveFilenamePrefix, suffix)
+function trainedSvmClassifiers = runTest(saveFilenamePrefix, suffix, kernelType)
     load([saveFilenamePrefix, suffix],...
         ['labelNames', suffix], ['labels', suffix], ['featureValues', suffix],...
         'probeLocationsXGrid', 'probeLocationsYGrid');
     
-    eval(['trainedSvmClassifiers = svm_train(labels', suffix, ', featureValues', suffix, ');']);
+    if strcmp(kernelType, 'linear')
+        eval(['trainedSvmClassifiers = svm_train(labels', suffix, ', featureValues', suffix, ');']);
+    elseif strcmp(kernelType, 'polynomial3')
+        eval(['trainedSvmClassifiers = svm_train(labels', suffix, ', featureValues', suffix, ', ''libsvmParameters'', ''-m 2000 -t 1 '');']);
+    else
+        keyboard
+    end
 end % runTest()
 
 
