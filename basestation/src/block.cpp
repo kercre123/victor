@@ -16,6 +16,7 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 
+#include "anki/cozmo/robot/cozmoConfig.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/imgproc/imgproc.hpp"
@@ -102,9 +103,46 @@ namespace Anki {
       
       const Vision::KnownMarker* marker = &AddMarker(code, facePose, markerSize_mm);
       
-      // Add a pre-dock pose to each face, at fixed distance normal to the face:
-      const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
-      AddPreActionPose(PreActionPose::DOCKING, marker, DefaultPreDockPoseDistance);
+      // NOTE: these preaction poses are really only valid for cube blocks!!!
+      
+      // The four rotation vectors for the pre-action poses created below
+      const std::array<RotationVector3d,4> preActionPoseRotations = {{
+        {0.f, Y_AXIS_3D},  {M_PI_2, Y_AXIS_3D},  {-M_PI_2, Y_AXIS_3D},  {M_PI, Y_AXIS_3D}
+      }};
+      
+      // Add a pre-LOW-dock pose to each face, at fixed distance normal to the face,
+      // and one for each orientation of the block
+      {
+        const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
+        for(auto const& Rvec : preActionPoseRotations) {
+          Pose3d preDockPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DefaultPreDockPoseDistance, -halfHeight}}, &marker->GetPose());
+          preDockPose.RotateBy(Rvec);
+          AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15));
+        }
+      }
+      
+      // Add a pre-HIGH-dock pose to each face, at fixed distance normal to the face,
+      // and one for each orientation of the block
+      {
+        const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
+        for(auto const& Rvec : preActionPoseRotations) {
+          Pose3d preDockPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DefaultPreDockPoseDistance, -(halfHeight+this->GetHeight())}}, &marker->GetPose());
+          preDockPose.RotateBy(Rvec);
+          AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15)); // Note: low head angle to still look at (and dock to) block below
+        }
+      }
+      
+      // Add a pre-placement pose to each face, where the robot will be sitting
+      // relative to the face when we put down the block -- one for each
+      // orientation of the block
+      {
+        const f32 DefaultPrePlacementDistance = ORIGIN_TO_LOW_LIFT_DIST_MM;
+        for(auto const& Rvec : preActionPoseRotations) {
+          Pose3d prePlacementPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DefaultPrePlacementDistance, -halfHeight}}, &marker->GetPose());
+          prePlacementPose.RotateBy(Rvec);
+          AddPreActionPose(PreActionPose::PLACEMENT, marker, prePlacementPose, DEG_TO_RAD(-15));
+        }
+      }
       
       // Store a pointer to the marker on each face:
       markersByFace_[whichFace] = marker;
@@ -112,34 +150,6 @@ namespace Anki {
       //facesWithMarkerCode_[marker.GetCode()].push_back(whichFace);
       
     } // AddFace()
-    
-    //unsigned int Block::numBlocks = 0;
-    
-    //ObjectType Block::NumTypes = 0;
-    
-    const std::array<Point3f, Block::NUM_CORNERS> Block::CanonicalCorners = {{
-      Point3f(-0.5f, -0.5f,  0.5f),
-      Point3f( 0.5f, -0.5f,  0.5f),
-      Point3f(-0.5f, -0.5f, -0.5f),
-      Point3f( 0.5f, -0.5f, -0.5f),
-      Point3f(-0.5f,  0.5f,  0.5f),
-      Point3f( 0.5f,  0.5f,  0.5f),
-      Point3f(-0.5f,  0.5f, -0.5f),
-      Point3f( 0.5f,  0.5f, -0.5f)
-    }};
-       
-    void Block::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
-    {
-      corners.resize(NUM_CORNERS);
-      for(s32 i=0; i<NUM_CORNERS; ++i) {
-        // Start with (zero-centered) canonical corner
-        corners[i] = Block::CanonicalCorners[i];
-        // Scale to the right size
-        corners[i] *= _size;
-        // Move to block's current pose
-        corners[i] = atPose * corners[i];
-      }
-    }
     
     Block::Block(const ObjectType type)
     : _type(type)
@@ -161,109 +171,50 @@ namespace Anki {
     } // Constructor: Block(type)
     
     
-    Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const
+    const std::vector<Point3f>& Block::GetCanonicalCorners() const
     {
-      return GetBoundingQuadInPlane(planeNormal, GetPose(), padding_mm);
+      static const std::vector<Point3f> CanonicalCorners = {{
+        Point3f(-0.5f, -0.5f,  0.5f),
+        Point3f( 0.5f, -0.5f,  0.5f),
+        Point3f(-0.5f, -0.5f, -0.5f),
+        Point3f( 0.5f, -0.5f, -0.5f),
+        Point3f(-0.5f,  0.5f,  0.5f),
+        Point3f( 0.5f,  0.5f,  0.5f),
+        Point3f(-0.5f,  0.5f, -0.5f),
+        Point3f( 0.5f,  0.5f, -0.5f)
+      }};
+      
+      return CanonicalCorners;
     }
     
-    
-    Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding_mm) const
+    // Override of base class method that also scales the canonical corners
+    void Block::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
     {
-      const RotationMatrix3d& R = atPose.GetRotationMatrix();
-      const Matrix_3x3f planeProjector = GetProjectionOperator(planeNormal);
-      
-      // Compute a single projection and rotation operator
-      const Matrix_3x3f PR(planeProjector*R);
-      
-      Point3f paddedSize(_size);
-      paddedSize += 2.f*padding_mm;
-      
-      std::vector<Point3f> points;
-      points.reserve(8);
-      for(auto corner : Block::CanonicalCorners) {
-        // Scale to the right block size
-        corner *= paddedSize;
+      // Start with (zero-centered) canonical corners *at unit size*
+      corners = GetCanonicalCorners();
+      for(auto & corner : corners) {
+        // Scale to the right size
+        corner *= _size;
         
-        // Rotate to given pose and project onto the given plane
-        points.emplace_back(PR*corner);
+        // Move to block's current pose
+        corner = atPose * corner;
       }
-      
-      // TODO: 3D bounding quad doesn't exist yet
-      Quad3f boundingQuad; // = GetBoundingQuad(points);
-      CORETECH_ASSERT(false);
-      
-      /*
-      // Data structure for helping me sort 3D points by their 2D distance
-      // from center in the given plane
-      struct planePoint {
-        
-        planePoint(const Point3f& pt3d, const RotationMatrix3d& R, const Matrix_3x3f& P)
-        {
-          // Rotate the point
-          Point3f pt3d_rotated( R*pt3d );
-          
-          // Project it onto the given plane (i.e. remove all variation in the
-          // direction of the normal)
-          pt_ = P*pt3d_rotated;
-          
-          length_ = pt_.length();
-        }
-        
-        bool operator<(const planePoint& other) const {
-          return this->length_ > other.length_; // sort decreasing!
-        }
-        
-        Point3f pt_;
-        f32 length_;
-      }; // struct planePoint
-      
-      const RotationMatrix3d& R = atPose.GetRotationMatrix();
-      const Matrix_3x3f planeProjector = GetProjectionOperator(planeNormal);
-      
-      // Choose the 4 points furthest from the center of the block (in the
-      // given plane)
-      std::array<planePoint,8> planeCorners = {
-        planePoint(blockCorners_[LEFT_FRONT_TOP],     R, planeProjector),
-        planePoint(blockCorners_[RIGHT_FRONT_TOP],    R, planeProjector),
-        planePoint(blockCorners_[LEFT_FRONT_BOTTOM],  R, planeProjector),
-        planePoint(blockCorners_[RIGHT_FRONT_BOTTOM], R, planeProjector),
-        planePoint(blockCorners_[LEFT_BACK_TOP],      R, planeProjector),
-        planePoint(blockCorners_[RIGHT_BACK_TOP],     R, planeProjector),
-        planePoint(blockCorners_[LEFT_BACK_BOTTOM],   R, planeProjector),
-        planePoint(blockCorners_[RIGHT_BACK_BOTTOM],  R, planeProjector)
-      };
-
-      // NOTE: Uses planePoint class's operator<, which sorts in _decreasing_ order
-      // so we get the 4 points the _largest_ distance from the center, after
-      // rotation is applied
-      std::partial_sort(planeCorners.begin(), planeCorners.begin()+4, planeCorners.end());
-      
-      Quad3f boundingQuad(planeCorners[0].pt_,
-                          planeCorners[1].pt_,
-                          planeCorners[2].pt_,
-                          planeCorners[3].pt_);
-      
-      boundingQuad = boundingQuad.SortCornersClockwise(planeNormal);
-      */
-       
-      // Re-center
-      boundingQuad += atPose.GetTranslation();
-      
-      return boundingQuad;
-      
-    } // GetBoundingBoxInPlane()
-
+    }
     
+    // Override of base class method which scales the canonical corners
+    // to the block's size
     Quad2f Block::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
+      const std::vector<Point3f>& canonicalCorners = GetCanonicalCorners();
+      
       const RotationMatrix3d& R = atPose.GetRotationMatrix();
 
       Point3f paddedSize(_size);
       paddedSize += 2.f*padding_mm;
       
       std::vector<Point2f> points;
-      points.reserve(8);
-      for(auto corner : Block::CanonicalCorners) {
+      points.reserve(canonicalCorners.size());
+      for(auto corner : canonicalCorners) {
         // Scale canonical point to correct (padded) size
         corner *= paddedSize;
         
@@ -345,15 +296,7 @@ namespace Anki {
     } // Block::GetDockingPoses()
     */
     
-    
-    const Block::FaceName Block::OppositeFaceLUT[Block::NUM_FACES] = {
-      Block::BACK_FACE,
-      Block::RIGHT_FACE,
-      Block::FRONT_FACE,
-      Block::LEFT_FACE,
-      Block::BOTTOM_FACE,
-      Block::TOP_FACE
-    };
+
     
     // prefix operator (++fname)
     Block::FaceName& operator++(Block::FaceName& fname) {
@@ -399,6 +342,15 @@ namespace Anki {
     
     Vision::KnownMarker const& Block::GetMarker(FaceName onFace) const
     {
+      static const Block::FaceName OppositeFaceLUT[Block::NUM_FACES] = {
+        Block::BACK_FACE,
+        Block::RIGHT_FACE,
+        Block::FRONT_FACE,
+        Block::LEFT_FACE,
+        Block::BOTTOM_FACE,
+        Block::TOP_FACE
+      };
+      
       const Vision::KnownMarker* markerPtr = markersByFace_[onFace];
       
       if(markerPtr == NULL) {
@@ -433,7 +385,7 @@ namespace Anki {
       ActionableObject::EraseVisualization();
     }
     
-    
+    /*
     ObjectType Block::GetTypeByName(const std::string& name)
     {
       static const std::map<std::string, Block::Type> BlockNameToTypeMap =
@@ -449,38 +401,42 @@ namespace Anki {
         return Block::Type::INVALID;
       }
     } // GetBlockTypeByName()
-    
+    */
     
 #pragma mark ---  Block_Cube1x1 Implementation ---
     
     //const ObjectType Block_Cube1x1::BlockType = Block::NumTypes++;
     
-    const std::vector<RotationMatrix3d> Block_Cube1x1::rotationAmbiguities_ = {
-      RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
-      RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
-      RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
-      RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
-      RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
-      RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
-    };
+    
     
     std::vector<RotationMatrix3d> const& Block_Cube1x1::GetRotationAmbiguities() const
     {
-      return Block_Cube1x1::rotationAmbiguities_;
+      static const std::vector<RotationMatrix3d> RotationAmbiguities = {
+        RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
+        RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
+        RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
+        RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
+      };
+      
+      return RotationAmbiguities;
     }
     
 #pragma mark ---  Block_2x1 Implementation ---
     
     //const ObjectType Block_2x1::BlockType = Block::NumTypes++;
     
-    const std::vector<RotationMatrix3d> Block_2x1::rotationAmbiguities_ = {
-      RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
-      RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
-    };
+    
     
     std::vector<RotationMatrix3d> const& Block_2x1::GetRotationAmbiguities() const
     {
-      return Block_2x1::rotationAmbiguities_;
+      static const std::vector<RotationMatrix3d> RotationAmbiguities = {
+        RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+        RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
+      };
+      
+      return RotationAmbiguities;
     }
 
     

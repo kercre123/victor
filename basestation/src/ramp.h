@@ -45,18 +45,34 @@ namespace Anki {
     class Ramp : public ActionableObject
     {
     public:
+      class Type : public ObjectType
+      {
+        Type(const std::string& name) : ObjectType(name) { }
+      public:
+        static const Type BASIC_RAMP;
+      };
       
       Ramp();
       
-      static const ObjectType Type;
-      
-      virtual ObjectType GetType() const override { return Ramp::Type; }
+      virtual ObjectType GetType() const override { return Type::BASIC_RAMP; }
       
       f32     GetHeight() const { return Height; }
       Radians GetAngle()  const { return Angle;  }
       
       const Vision::KnownMarker* GetFrontMarker() const { return _frontMarker; }
       const Vision::KnownMarker* GetTopMarker()   const { return _topMarker;   }
+      
+      typedef enum : u8 {
+        ASCENDING,
+        DESCENDING,
+        UNKNOWN
+      } TraversalDirection;
+      
+      // Determine whether a robot will ascend or descend the ramp, based on its
+      // relative pose. If it is above the ramp, it must be descending. If it
+      // is on the same level as the ramp, it must be ascending. If it can't be
+      // determined, UNKNOWN is returned.
+      TraversalDirection WillAscendOrDescend(const Pose3d& robotPose) const;
       
       // Return start poses (at Ramp's current position) for going up or down
       // the ramp. The distance for ascent is from the tip of the slope.  The
@@ -78,10 +94,8 @@ namespace Anki {
       virtual ~Ramp();
       
       virtual Ramp*   CloneType() const override;
-      virtual void    GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
       virtual void    Visualize(const ColorRGBA& color) override;
       virtual void    EraseVisualization() override;
-      virtual Quad2f  GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
       
       /*
       virtual void    GetPreDockPoses(const float distance_mm,
@@ -92,11 +106,7 @@ namespace Anki {
       virtual Point3f GetSameDistanceTolerance()  const override;
       virtual Radians GetSameAngleTolerance()     const override;
       
-      
-      static ObjectType GetTypeByName(const std::string& name);
-
     protected:
-      static const s32 NUM_CORNERS = 8;
       
       // Model dimensions in mm (perhaps these should come from a configuration
       // file instead?)
@@ -111,19 +121,23 @@ namespace Anki {
       constexpr static const f32 PreDescentDistance = 30.f; // for descending from top
       
       static const f32 Angle;
-        
-      static const std::array<Point3f, NUM_CORNERS> CanonicalCorners;
+              
+      virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       
       const Vision::KnownMarker* _leftMarker;
       const Vision::KnownMarker* _rightMarker;
       const Vision::KnownMarker* _frontMarker;
       const Vision::KnownMarker* _topMarker;
-      
+            
       Pose3d _preAscentPose;
       Pose3d _preDescentPose;
       
       VizManager::Handle_t _vizHandle;
       //std::array<VizManager::Handle_t,3> _vizHandle;
+      
+      virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
+                                        const Pose3d* reachableFromPose) const override;
+      
       
     }; // class Ramp
     

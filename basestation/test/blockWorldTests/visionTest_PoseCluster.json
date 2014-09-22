@@ -1,0 +1,65 @@
+{
+   "CameraCalibration" : {
+      "center_x" : 160.0,
+      "center_y" : 120.0,
+      "focalLength_x" : 338.5799865722656,
+      "focalLength_y" : 338.5799865722656,
+      "ncols" : 320,
+      "nrows" : 240,
+      "skew" : 0.0
+   },
+   "CheckRobotPose" : false,
+   "NumObjects" : 1,
+   "Objects" : [
+      {
+         "ObjectName" : "Block",
+         "ObjectPose" : {
+            "Angle" : 0.7853979999999999,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "Translation" : [ 150.0, 0.0, 21.754750 ]
+         },
+         "Type" : "ANGRYFACE"
+      }
+   ],
+   "Poses" : [
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_PoseCluster0.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 1.0, 0.0, 0.0 ],
+            "HeadAngle" : -0.1745330,
+            "Translation" : [ 0.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_ANGRYFACE",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 106.7347259521484,
+               "x_imgLowerRight" : 142.7042694091797,
+               "x_imgUpperLeft" : 105.3787002563477,
+               "x_imgUpperRight" : 142.4030303955078,
+               "y_imgLowerLeft" : 132.2046356201172,
+               "y_imgLowerRight" : 140.6939239501953,
+               "y_imgUpperLeft" : 77.87564086914062,
+               "y_imgUpperRight" : 79.76869964599609
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_ANGRYFACE",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 176.2904052734375,
+               "x_imgLowerRight" : 212.2632293701172,
+               "x_imgUpperLeft" : 176.5984039306641,
+               "x_imgUpperRight" : 213.6165313720703,
+               "y_imgLowerLeft" : 140.6889953613281,
+               "y_imgLowerRight" : 132.2106933593750,
+               "y_imgUpperLeft" : 79.76690673828125,
+               "y_imgUpperRight" : 77.87814331054688
+            }
+         ]
+      }
+   ],
+   "WorldTitle" : "visionTest_PoseCluster"
+}

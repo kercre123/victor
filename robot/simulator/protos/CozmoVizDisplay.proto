@@ -24,7 +24,7 @@ Supervisor {
             }
           }
           geometry Plane {
-	    size 1 1
+	          size 1 1
           }
         }
       ]
@@ -49,7 +49,7 @@ Supervisor {
             }
           }
           geometry Plane {
-	    size 1 1
+	         size 1 1
           }
         }
       ]
@@ -68,7 +68,7 @@ Supervisor {
       height 60
       pixelSize 4
       %{ end }%
-      windowPosition 1 1
+      windowPosition 0 1
     }
   ]
 

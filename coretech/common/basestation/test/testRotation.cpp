@@ -249,6 +249,22 @@ GTEST_TEST(TestRotation, AxisRotation3d)
 
 
 // TODO: move these pose tests to their own testPose.cpp file
+GTEST_TEST(TestPose, IsSameAs)
+{
+  Pose3d P1(M_PI/2, {0,1.f,0}, {10.f,20.f,30.f});
+  
+  // P3 is P1 with a slight perturbation
+  Pose3d P2(P1);
+  
+  Pose3d T_perturb(2.f * M_PI/180.f, Z_AXIS_3D, {1.f, 1.f, 1.f});
+  P2.PreComposeWith(T_perturb);
+  
+  // IsSameAs should return true
+  EXPECT_TRUE(P1.IsSameAs(P2, 5.f, 3.f*M_PI/180.f));
+  
+  
+} // TestPose:IsSameWithAmbiguity
+
 GTEST_TEST(TestPose, IsSameWithAmbiguity)
 {
   Pose3d P_ref(M_PI/2, {0,1.f,0}, {10.f,20.f,30.f});
@@ -274,33 +290,20 @@ GTEST_TEST(TestPose, IsSameWithAmbiguity)
     RotationMatrix3d({0,0,1,  1,0,0,  0,1,0})
   };
   
-  Pose3d P_diff;
-  
-  // The IsSameAs_WithAmbiguity functino should see these two poses as the same,
+  // The IsSameAs_WithAmbiguity function should see these two poses as the same,
   // though it is our job to factor out the reference pose from each, by post-
   // multiplying by its inverse.
   EXPECT_TRUE( (P1*P_ref.GetInverse()).IsSameAs_WithAmbiguity(P2*P_ref.GetInverse(),
                                                               ambiguities, 5.f,
-                                                              5*M_PI/180.f, true, P_diff) );
+                                                              5*M_PI/180.f, true) );
   
-  // The returned difference should be the ambiguous rotation we applied to P2
-  // above
-  EXPECT_NEAR( R_amb.GetAngleDiffFrom(P_diff.GetRotationMatrix()).ToFloat(), 0.f, 1.f*M_PI/180.f );
+  // The symmetric test should also pass
+  EXPECT_TRUE( (P2*P_ref.GetInverse()).IsSameAs_WithAmbiguity(P1*P_ref.GetInverse(),
+                                                              ambiguities, 5.f,
+                                                              5*M_PI/180.f, true) );
   
-  
-  // P3 is P1 with a slight perturbation
-  Pose3d P3(P1);
-  
-  Pose3d T_perturb(2.f * M_PI/180.f, Z_AXIS_3D, {1.f, 1.f, 1.f});
-  P3.PreComposeWith(T_perturb);
-  
-  // IsSameAs should return true, and the pose difference should be T_perturb
-  EXPECT_TRUE(P1.IsSameAs(P3, 5.f, 3.f*M_PI/180.f, P_diff));
-  
-  Pose3d P_temp;
-  EXPECT_TRUE(T_perturb.IsSameAs(P_diff, .01f, .1*M_PI/180.f, P_temp));
-  
-} // TestPose:IsSameWithAmbiguity
+}
+
 
 
 

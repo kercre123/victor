@@ -60,6 +60,11 @@ namespace Anki {
     
     Quadrilateral(const Quadrilateral<N,T>& quad);
     
+    // Construct from quad living in one dimension higher. Last dimension
+    // simply gets dropped. For example, this allows construction of a 2D quad
+    // from a 3D quad, by simply using the (x,y) coordinates and ignoring z.
+    Quadrilateral(const Quadrilateral<N+1,T>& quad);
+    
     void Print() const;
     
     bool operator== (const Quadrilateral<N,T> &quad2) const;

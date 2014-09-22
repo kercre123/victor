@@ -68,6 +68,16 @@ namespace Anki {
   {
   
   }
+  
+  template<QuadDimType N, typename T>
+  Quadrilateral<N,T>::Quadrilateral(const Quadrilateral<N+1,T>& quad)
+  {
+    (*this)[Quad::TopLeft]     = quad[Quad::TopLeft];
+    (*this)[Quad::TopRight]    = quad[Quad::TopRight];
+    (*this)[Quad::BottomLeft]  = quad[Quad::BottomLeft];
+    (*this)[Quad::BottomRight] = quad[Quad::BottomRight];
+  }
+  
 
   template<QuadDimType N, typename T>
   inline void Quadrilateral<N,T>::Print(void) const

@@ -302,10 +302,15 @@ namespace Anki {
   bool Pose3d::IsSameAs(const Pose3d&  P_other,
                         const Point3f& distThreshold,
                         const Radians& angleThreshold,
-                        Pose3d& P_diff) const
+                        Vec3f& T_diff,
+                        Radians& angleDiff) const
+//                        Pose3d& P_diff) const
   {
+    assert(distThreshold > 0.f);
+    assert(angleThreshold.ToFloat() > 0.f);
+    
     bool isSame = false;
-        
+    /*
     // Compute the transformation that takes P1 to P2
     // Pdiff = P_other * inv(P_this)
     P_diff = this->GetInverse();
@@ -323,6 +328,25 @@ namespace Anki {
       }
 
     } // if translation component is small enough
+    */
+    
+    // Just directly compare the translations, followed by comparing the
+    // rotation matrices.
+    // Why is this better?!
+    
+    T_diff = P_other.GetTranslation() - this->GetTranslation();
+    
+    if(T_diff.GetAbs() < distThreshold) {
+      RotationMatrix3d Rdiff(this->GetRotationMatrix());
+      Rdiff.Transpose(); // Invert
+      Rdiff *= P_other.GetRotationMatrix();
+      
+      RotationVector3d Rvec(Rdiff);
+      angleDiff = Rvec.GetAngle();
+      if(angleDiff < angleThreshold) {
+        isSame = true;
+      }
+    }
     
     return isSame;
 
@@ -334,7 +358,8 @@ namespace Anki {
                                       const Point3f&   distThreshold,
                                       const Radians&   angleThreshold,
                                       const bool       useAbsRotation,
-                                      Pose3d& P_diff) const
+                                      Vec3f& Tdiff,
+                                      Radians& angleDiff) const
   {
     bool isSame = false;
 
@@ -357,6 +382,7 @@ namespace Anki {
     // that case, P_diff = [R_amb | 0].  
     //
     
+    /*
     P_diff = this->GetInverse();
     P_diff *= P_other;
     
@@ -390,6 +416,46 @@ namespace Anki {
         }
       }
     } // if translation component is small enough
+    */
+    
+    // Just directly compare the translations, followed by comparing the
+    // rotation matrices.
+    // Why is this better?!
+    
+    Tdiff = P_other.GetTranslation() - this->GetTranslation();
+    
+    if(Tdiff.GetAbs() < distThreshold)
+    {
+      // Next check to see if the rotational difference is small
+      RotationMatrix3d Rdiff(this->GetRotationMatrix());
+      Rdiff.Transpose(); // Invert
+      Rdiff *= P_other.GetRotationMatrix();
+      
+      RotationVector3d Rvec(Rdiff);
+      angleDiff = Rvec.GetAngle();
+      
+      if(angleDiff < angleThreshold) {
+        // Rotation is same, without even considering the ambiguities
+        isSame = true;
+      } else {
+        // Need to consider ambiguities...
+        
+        if(useAbsRotation) {
+          // The ambiguities are assumed to be defined up various sign flips
+          Rdiff.Abs();
+        }
+        
+        // Check to see if the rotational part of the pose difference is
+        // similar enough to one of the rotational ambiguities
+        for(auto R_ambiguity : R_ambiguities) {
+          if(Rdiff.GetAngleDiffFrom(R_ambiguity) < angleThreshold) {
+            isSame = true;
+            break;
+          }
+        }
+        
+      }
+    }
     
     return isSame;
     

@@ -34,8 +34,6 @@ namespace Anki {
     
     class Robot;
     class RobotManager;
-    class BlockWorld;
-    class BehaviorManager;
     
     class IUiMessageHandler
     {
@@ -43,9 +41,7 @@ namespace Anki {
       
       // TODO: Change these to interface references so they can be stubbed as well
       virtual Result Init(Comms::IComms* comms,
-                          RobotManager*  robotMgr,
-                          BlockWorld*    blockWorld,
-                          BehaviorManager* behaviorMgr) = 0;
+                          RobotManager*  robotMgr) = 0;
       
       virtual Result ProcessMessages() = 0;
       
@@ -62,9 +58,7 @@ namespace Anki {
       
       // Set the message handler's communications manager
       virtual Result Init(Comms::IComms* comms,
-                          RobotManager*  robotMgr,
-                          BlockWorld*    blockWorld,
-                          BehaviorManager* behaviorMgr);
+                          RobotManager*  robotMgr);
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
@@ -77,8 +71,6 @@ namespace Anki {
       
       Comms::IComms* comms_;
       RobotManager* robotMgr_;
-      BlockWorld*   blockWorld_;
-      BehaviorManager* behaviorMgr_;
       
       bool isInitialized_;
       
@@ -115,9 +107,7 @@ namespace Anki {
       UiMessageHandlerStub() { }
       
       Result Init(Comms::IComms* comms,
-                  RobotManager*  robotMgr,
-                  BlockWorld*    blockWorld,
-                  BehaviorManager* behaviorMgr)
+                  RobotManager*  robotMgr)
       {
         return RESULT_OK;
       }

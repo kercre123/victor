@@ -64,13 +64,13 @@ namespace Anki {
       static const std::set<const ObservableObject*> sEmptyObjectVector;
       
       //std::list<const ObservableObject*> knownObjects_;
-      std::map<ObjectType, const ObservableObject*> knownObjects_;
+      std::map<ObjectType, const ObservableObject*> _knownObjects;
       
       // Store a list of pointers to all objects that have at least one marker
       // with that code.  You can then use the objects' GetMarkersWithCode()
       // method to get the list of markers on each object.
-      //std::map<Marker::Code, std::vector<const ObservableObject*> > objectsWithCode_;
-      std::map<Marker::Code, std::set<const ObservableObject*> > objectsWithCode_;
+      //std::map<Marker::Code, std::vector<const ObservableObject*> > _objectsWithCode;
+      std::map<Marker::Code, std::set<const ObservableObject*> > _objectsWithCode;
       
       // A PoseCluster is a pairing of a single pose and all the marker matches
       // that imply that pose
@@ -86,21 +86,21 @@ namespace Anki {
                            const float distThreshold, const Radians angleThreshold,
                            const std::vector<RotationMatrix3d>& R_ambiguities);
         
-        const Pose3d& GetPose() const { return pose_; }
-        const size_t  GetSize() const { return matches_.size(); }
+        const Pose3d& GetPose() const { return _pose; }
+        const size_t  GetSize() const { return _matches.size(); }
         
-        const MatchList& GetMatches() const { return matches_; }
+        const MatchList& GetMatches() const { return _matches; }
         
         // Updates pose based on all member matches. Does nothing if there is
         // only one member.
         void RecomputePose();
         
       protected:
-        Pose3d pose_;
+        Pose3d _pose;
         
-        MatchList matches_;
+        MatchList _matches;
         
-        std::set<const ObservedMarker*> obsMarkerSet_;
+        std::set<const ObservedMarker*> _obsMarkerSet;
         
       }; // class PoseCluster
       

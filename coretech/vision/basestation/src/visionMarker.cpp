@@ -18,21 +18,27 @@ namespace Anki {
   
     
     Marker::Marker(const Code& withCode)
-    : code_(withCode)
+    : _code(withCode)
     {
       
     }
     
     
     ObservedMarker::ObservedMarker(const TimeStamp_t t, const Code& withCode, const Quad2f& corners, const Camera& seenBy)
-    : Marker(withCode), observationTime_(t), imgCorners_(corners), seenByCam_(seenBy), used_(false)
+    : Marker(withCode)
+    , _observationTime(t)
+    , _imgCorners(corners)
+    , _seenByCam(seenBy)
+    , _used(false)
     {
 
     }
     
     
     KnownMarker::KnownMarker(const Code& withCode, const Pose3d& atPose, const f32 size_mm)
-    : Marker(withCode), size_(size_mm), lastObservedTime_(0)
+    : Marker(withCode)
+    , _size(size_mm)
+    , _lastObservedTime(0)
     {
       SetPose(atPose);
     }
@@ -61,7 +67,7 @@ namespace Anki {
     */
     
     // Canonical corners in X-Z plane
-    const Quad3f KnownMarker::canonicalCorners3d_ = {
+    const Quad3f KnownMarker::_canonicalCorners3d = {
       {-.5f, 0.f, .5f},
       {-.5f, 0.f,-.5f},
       { .5f, 0.f, .5f},
@@ -70,25 +76,25 @@ namespace Anki {
 
     void KnownMarker::SetPose(const Pose3d& newPose)
     {
-      CORETECH_ASSERT(size_ > 0.f);
+      CORETECH_ASSERT(_size > 0.f);
       
       // Update the pose
-      pose_ = newPose;
+      _pose = newPose;
       
       //
       // And also update the 3d corners accordingly...
       //
-      corners3d_ = Get3dCorners(pose_);
+      _corners3d = Get3dCorners(_pose);
     }
     
     
     Quad3f KnownMarker::Get3dCorners(const Pose3d& atPose) const
     {
       // Start with canonical 3d quad corners:
-      Quad3f corners3dAtPose(KnownMarker::canonicalCorners3d_);
+      Quad3f corners3dAtPose(KnownMarker::_canonicalCorners3d);
       
       // Scale to this marker's physical size:
-      corners3dAtPose *= size_;
+      corners3dAtPose *= _size;
       
       // Transform the canonical corners to this new pose
       atPose.ApplyTo(corners3dAtPose, corners3dAtPose);
@@ -136,7 +142,7 @@ namespace Anki {
       
       // Get the marker's pose relative to the camera
       Pose3d markerPoseWrtCamera;
-      if(pose_.GetWithRespectTo(camera.GetPose(), markerPoseWrtCamera) == false) {
+      if(_pose.GetWithRespectTo(camera.GetPose(), markerPoseWrtCamera) == false) {
         PRINT_NAMED_WARNING("KnownMarker.IsVisibleFrom.NotInCameraPoseTree",
                             "Marker must be in the same pose tree as the camera to check its visibility.\n");
         return false;
@@ -221,8 +227,7 @@ namespace Anki {
     Pose3d KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker) const
     {
       const Camera& camera = obsMarker.GetSeenBy();
-      return camera.ComputeObjectPose(obsMarker.GetImageCorners(),
-                                      this->corners3d_);
+      return camera.ComputeObjectPose(obsMarker.GetImageCorners(), _corners3d);
     }
     
     

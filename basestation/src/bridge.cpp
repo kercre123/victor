@@ -1,0 +1,129 @@
+/**
+ * File: bridge.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   9/15/2014
+ *
+ * Description: Implements a Bridge object.
+ *
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
+#include "anki/common/types.h"
+
+#include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/poseBase_impl.h"
+
+#include "anki/vision/MarkerCodeDefinitions.h"
+
+#include "anki/cozmo/robot/cozmoConfig.h"
+
+#include "bridge.h"
+
+namespace Anki {
+  namespace Cozmo {
+
+    const Bridge::Type Bridge::Type::LONG_BRIDGE("LONG_BRIDGE");
+    const Bridge::Type Bridge::Type::SHORT_BRIDGE("SHORT_BRIDGE");
+    
+    static f32 GetLength(Bridge::Type type)
+    {
+      static const std::map<Bridge::Type, f32> Lengths = {
+        {Bridge::Type::LONG_BRIDGE,  300.f},
+        {Bridge::Type::SHORT_BRIDGE, 200.f}
+      };
+      
+      auto iter = Lengths.find(type);
+      if(iter == Lengths.end()) {
+        PRINT_NAMED_ERROR("Bridge.GetLength.UnknownBridgeType",
+                          "No length defined for bridge type %s (%d).\n",
+                          type.GetName().c_str(), type.GetValue());
+        return 0.f;
+      } else {
+        return iter->second;
+      }
+    } // GetLength()
+    
+    
+    Bridge::Bridge(Type type)
+    : MatPiece({GetLength(type), 62., 1.f})
+    , _type(type)
+    {
+      Vision::MarkerType leftMarkerType, rightMarkerType, middleMarkerType;
+      f32 markerSize = 0.f;
+      f32 length = 0.f;
+      
+      if(Type::LONG_BRIDGE == type) {
+        length = 300.f;
+        markerSize = 25.f;
+        
+        leftMarkerType   = Vision::MARKER_BRIDGESUNLEFT;
+        rightMarkerType  = Vision::MARKER_BRIDGESUNRIGHT;
+        middleMarkerType = Vision::MARKER_BRIDGESUNMIDDLE;
+      }
+      else if(Type::SHORT_BRIDGE == type) {
+        length = 200.f;
+        markerSize = 25.f;
+        
+        leftMarkerType   = Vision::MARKER_BRIDGEMOONLEFT;
+        rightMarkerType  = Vision::MARKER_BRIDGEMOONRIGHT;
+        middleMarkerType = Vision::MARKER_BRIDGEMOONMIDDLE;
+      }
+      else {
+        PRINT_NAMED_ERROR("MatPiece.BridgeUnexpectedElse", "Should not get to else in if ladder constructing bridge-type mat.\n");
+        return;
+      }
+            
+      Pose3d preCrossingPoseLeft(0, Z_AXIS_3D, {-GetSize().x()*.5f-30.f, 0.f, 0.f}, &GetPose());
+      Pose3d preCrossingPoseRight(M_PI, Z_AXIS_3D, {GetSize().x()*.5f+30.f, 0.f, 0.f}, &GetPose());
+      
+      //Pose3d leftMarkerPose(-M_PI_2, Z_AXIS_3D, {-_size.x()*.5f+markerSize, 0.f, _size.z()});
+      //leftMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, 0.f});
+      Pose3d leftMarkerPose(-M_PI_2, X_AXIS_3D, {-GetSize().x()*.5f+markerSize, 0.f, 0.f});
+      
+      //Pose3d rightMarkerPose(M_PI_2, Z_AXIS_3D, { _size.x()*.5f-markerSize, 0.f, _size.z()});
+      //rightMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, 0.f});
+      Pose3d rightMarkerPose(-M_PI_2, X_AXIS_3D, { GetSize().x()*.5f-markerSize, 0.f, 0.f});
+      
+      const Vision::KnownMarker* leftMarker  = &AddMarker(leftMarkerType,  leftMarkerPose,  markerSize);
+      const Vision::KnownMarker* rightMarker = &AddMarker(rightMarkerType, rightMarkerPose, markerSize);
+      AddMarker(middleMarkerType, Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, 0.f}), markerSize);
+      
+      CORETECH_ASSERT(leftMarker != nullptr);
+      CORETECH_ASSERT(rightMarker != nullptr);
+      
+      if(preCrossingPoseLeft.GetWithRespectTo(leftMarker->GetPose(), preCrossingPoseLeft) == false) {
+        PRINT_NAMED_ERROR("MatPiece.PreCrossingPoseLeftError", "Could not get preCrossingLeftPose w.r.t. left bridge marker.\n");
+      }
+      AddPreActionPose(PreActionPose::ENTRY, leftMarker, preCrossingPoseLeft, MIN_HEAD_ANGLE);
+      
+      if(preCrossingPoseRight.GetWithRespectTo(rightMarker->GetPose(), preCrossingPoseRight) == false) {
+        PRINT_NAMED_ERROR("MatPiece.PreCrossingPoseRightError", "Could not get preCrossingRightPose w.r.t. right bridge marker.\n");
+      }
+      AddPreActionPose(PreActionPose::ENTRY, rightMarker, preCrossingPoseRight, MIN_HEAD_ANGLE);
+      
+    } // Bridge()
+    
+    
+    void Bridge::GetCanonicalUnsafeRegions(const f32 padding_mm,
+                                           std::vector<Quad3f>& regions) const
+    {
+      // Canonical unsafe regions for bridges run up the sides of the bridge
+      regions = {{
+        Quad3f({-0.5f*GetSize().x(), 0.5f*GetSize().y() + padding_mm, 0.f},
+               {-0.5f*GetSize().x(), 0.5f*GetSize().y() - padding_mm, 0.f},
+               { 0.5f*GetSize().x(), 0.5f*GetSize().y() + padding_mm, 0.f},
+               { 0.5f*GetSize().x(), 0.5f*GetSize().y() - padding_mm, 0.f}),
+        Quad3f({-0.5f*GetSize().x(),-0.5f*GetSize().y() + padding_mm, 0.f},
+               {-0.5f*GetSize().x(),-0.5f*GetSize().y() - padding_mm, 0.f},
+               { 0.5f*GetSize().x(),-0.5f*GetSize().y() + padding_mm, 0.f},
+               { 0.5f*GetSize().x(),-0.5f*GetSize().y() - padding_mm, 0.f})
+      }};
+    }
+    
+    
+
+    
+  } // namespace Cozmo
+} // namespace Anki

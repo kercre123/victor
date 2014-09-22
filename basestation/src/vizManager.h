@@ -30,6 +30,13 @@ namespace Anki {
     {
     public:
       
+      typedef enum : u8 {
+        ACTION,
+        PROX_SENSORS,
+        LOCALIZED_TO,
+        ERROR_SIGNAL,
+      } TextLabelType;
+      
       using Handle_t = u32;
       static const Handle_t INVALID_HANDLE;
       
@@ -215,7 +222,7 @@ namespace Anki {
       void EraseAllMatMarkers();
     
       // ==== Text functions =====
-      void SetText(const u32 labelID, const ColorRGBA& color, const char* format, ...);
+      void SetText(const TextLabelType& labelType, const ColorRGBA& color, const char* format, ...);
       
       
       // ==== Color functions =====
@@ -227,11 +234,16 @@ namespace Anki {
       */
       //void ClearAllColors();
 
+      // ==== Saving Images ====
+      
+      void SaveImages(bool on);
+      bool IsSavingImages() const;
+      
       
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
 
-      void SendGreyImage(const u8* data, const Vision::CameraResolution res);
+      void SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res);
       
       void SendTrackerQuad(const u16 topLeft_x, const u16 topLeft_y,
                            const u16 topRight_x, const u16 topRight_y,
@@ -245,18 +257,20 @@ namespace Anki {
       
       void SendMessage(u8 vizMsgID, void* msg);
       
-      static VizManager* singletonInstance_;
+      static VizManager* _singletonInstance;
       
-      bool isInitialized_;
-      UdpClient vizClient_;
+      bool               _isInitialized;
+      UdpClient          _vizClient;
       
-      char sendBuf[MAX_VIZ_MSG_SIZE];
+      char               _sendBuf[MAX_VIZ_MSG_SIZE];
 
       // Image sending
-      u8 imgID;
+      std::map<RobotID_t, u8> _imgID;
+      
+      bool               _saveImages;
     
       // Stores the maximum ID permitted for a given VizObject type
-      u32 VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
+      u32 _VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
       
     }; // class VizManager
     
@@ -264,13 +278,20 @@ namespace Anki {
     inline VizManager* VizManager::getInstance()
     {
       // If we haven't already instantiated the singleton, do so now.
-      if(0 == singletonInstance_) {
-        singletonInstance_ = new VizManager();
+      if(0 == _singletonInstance) {
+        _singletonInstance = new VizManager();
       }
       
-      return singletonInstance_;
+      return _singletonInstance;
     }
     
+    inline void VizManager::SaveImages(bool on) {
+      _saveImages = on;
+    }
+    
+    inline bool VizManager::IsSavingImages() const {
+      return _saveImages;
+    }
     
     template<typename T>
     void VizManager::DrawQuad(const u32 quadType,

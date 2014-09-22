@@ -196,10 +196,10 @@ namespace Anki {
 // #pragma --- Message Dispatch Functions ---
       
       
-      void ProcessRobotInitMessage(const RobotInit& msg)
+      void ProcessSyncTimeMessage(const SyncTime& msg)
       {
    
-        PRINT("Robot received init message from basestation with ID=%d and syncTime=%d.\n",
+        PRINT("Robot received SyncTime message from basestation with ID=%d and syncTime=%d.\n",
               msg.robotID, msg.syncTime);
         
         initReceived_ = true;

@@ -127,15 +127,16 @@ GTEST_TEST(PoseEstimation, FromQuads)
   Pose3d poseEst = camera.ComputeObjectPose(proj, marker3d);
   
   // Check if the estimated pose matches the true pose
-  Pose3d poseDiff;
-  EXPECT_TRUE(poseEst.IsSameAs(poseTrue, distThreshold, angleThreshold, poseDiff));
+  Vec3f Tdiff;
+  Radians angleDiff;
+  EXPECT_TRUE(poseEst.IsSameAs(poseTrue, distThreshold, angleThreshold, Tdiff, angleDiff));
 
   printf("Angular difference is %f degrees (threshold = %f degrees)\n",
-         poseDiff.GetRotationMatrix().GetAngle().getDegrees(),
+         angleDiff.getDegrees(),
          angleThreshold.getDegrees());
   
   printf("Translation difference is %f, threshold = %f\n",
-         poseDiff.GetTranslation().Length(),  distThreshold);
+         Tdiff.Length(),  distThreshold);
   
   
   // Check if the reprojected points match the originals

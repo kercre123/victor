@@ -243,8 +243,8 @@ namespace Anki {
     const Pose3d& FindOrigin() const;
 
     // Check to see if two poses are the same.  Return true if so.
-    // If requested, P_diff will contain the transformation from this pose to
-    // P_other.
+    // If requested, Tdiff and angleDiff will contain how different the two
+    // transformations are.
     bool IsSameAs(const Pose3d&  P_other,
                   const Point3f& distThreshold,
                   const Radians& angleThreshold) const;
@@ -252,7 +252,13 @@ namespace Anki {
     bool IsSameAs(const Pose3d&  P_other,
                   const Point3f& distThreshold,
                   const Radians& angleThreshold,
-                  Pose3d& P_diff) const;
+                  Vec3f&         Tdiff) const;
+    
+    bool IsSameAs(const Pose3d&  P_other,
+                  const Point3f& distThreshold,
+                  const Radians& angleThreshold,
+                  Vec3f&         Tdiff,
+                  Radians&       angleDiff) const;
     
     // Same as above, but with a list of rotational ambiguities to ignore.
     // True will be returned so long as the difference from P_other is
@@ -261,8 +267,17 @@ namespace Anki {
                                 const std::vector<RotationMatrix3d>& R_ambiguities,
                                 const Point3f&   distThreshold,
                                 const Radians&   angleThreshold,
+                                const bool       useAbsRotation) const;
+    
+    bool IsSameAs_WithAmbiguity(const Pose3d& P_other,
+                                const std::vector<RotationMatrix3d>& R_ambiguities,
+                                const Point3f&   distThreshold,
+                                const Radians&   angleThreshold,
                                 const bool       useAbsRotation,
-                                Pose3d& P_diff) const;
+                                Vec3f&           Tdiff,
+                                Radians&         angleDiff) const;
+    
+    // TODO: Provide IsSameAs_WithAmbiguity() wrappers that don't require Tdiff/angleDiff outputs
 
     void Print() const;
     
@@ -463,9 +478,29 @@ namespace Anki {
                                const Point3f& distThreshold,
                                const Radians& angleThreshold) const
   {
-    Pose3d P_diff_temp;
-    return IsSameAs(P_other, distThreshold, angleThreshold,
-                    P_diff_temp);
+    Vec3f Tdiff;
+    return IsSameAs(P_other, distThreshold, angleThreshold, Tdiff);
+  }
+  
+  inline bool Pose3d::IsSameAs(const Pose3d&  P_other,
+                               const Point3f& distThreshold,
+                               const Radians& angleThreshold,
+                               Vec3f& Tdiff) const
+  {
+    Radians angleDiff;
+    return IsSameAs(P_other, distThreshold, angleThreshold, Tdiff, angleDiff);
+  }
+  
+  inline bool Pose3d::IsSameAs_WithAmbiguity(const Pose3d& P_other,
+                                             const std::vector<RotationMatrix3d>& R_ambiguities,
+                                             const Point3f&   distThreshold,
+                                             const Radians&   angleThreshold,
+                                             const bool       useAbsRotation) const
+  {
+    Vec3f Tdiff;
+    Radians angleDiff;
+    return IsSameAs_WithAmbiguity(P_other, R_ambiguities, distThreshold,
+                                  angleThreshold, useAbsRotation, Tdiff, angleDiff);
   }
   
   template<typename T>
