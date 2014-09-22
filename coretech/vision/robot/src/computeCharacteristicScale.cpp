@@ -347,14 +347,16 @@ namespace Anki
 
       // TODO: choose based on amount of free memory
       if(imageWidth <= 320) {
-        integralImageHeight = 64; // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
+        integralImageHeight = MAX(2*numBorderPixels + 16, 64); // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
       } else {
         // Note: These numbers are liable to be too big to fit on the M4 efficiently
         const s32 scaleFactor = static_cast<s32>(ceilf(static_cast<f32>(imageWidth) / 320.0f));
-        integralImageHeight = 64*scaleFactor;
+        integralImageHeight = MAX(2*numBorderPixels + 16*scaleFactor, 64*scaleFactor);
       }
 
       const s32 numRowsToScroll = integralImageHeight - 2*numBorderPixels;
+      
+      AnkiAssert(numRowsToScroll > 1);
 
       // Initialize the first integralImageHeight rows of the integralImage
       ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, slowerScratch);
