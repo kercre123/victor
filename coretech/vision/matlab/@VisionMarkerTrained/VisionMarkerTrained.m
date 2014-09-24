@@ -41,13 +41,16 @@ classdef VisionMarkerTrained
         
         [img, alpha] = AddFiducial(img, varargin);
         AddFiducialBatch(inputDir, outputDir, varargin);
+        
+        trainingState = ExtractProbeValues(varargin)
         probeTree = TrainProbeTree(varargin);
+        
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
         %Corners = GetMarkerCorners(imageSize, isPadded);
         corners = GetFiducialCorners(imageSize, isPadded);
         [threshold, bright, dark] = ComputeThreshold(img, tform);
         outputString = GenerateHeaderFiles(varargin);
-        [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes();
+        [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes(tree);
 
         CreateTestImage(varargin);
         CreatePrintableCodeSheet(varargin);
