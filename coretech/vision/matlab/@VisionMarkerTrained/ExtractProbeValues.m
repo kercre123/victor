@@ -12,8 +12,9 @@ workingResolutions = VisionMarkerTrained.ProbeParameters.GridSize;
 %addRotations = false;
 addInversions = true;
 numPerturbations = 100;
+perturbationType = 'normal'; % 'normal' or 'uniform'
 blurSigmas = [0 .005 .01]; % as a fraction of the image diagonal
-perturbSigma = 1;
+perturbSigma = 1; % 'sigma' in 'normal' mode, half-width in 'uniform' mode
 saveTree = true;
 
 probeRegion = VisionMarkerTrained.ProbeRegion;
@@ -122,12 +123,20 @@ for iRes = 1:numResolutions
     Y{iRes} = probePattern.y(ones(workingResolution^2,1),:) + ygrid{iRes}*ones(1,length(probePattern.y));
     
     for iPerturb = 1:numPerturbations
-        perturbation = max(-3*sigma, min(3*sigma, sigma*randn(4,2)));
-        corners_i = corners + perturbation;
-        T = cp2tform(corners_i, corners, 'projective');
-        [xPerturb{iRes, iPerturb}, yPerturb{iRes, iPerturb}] = tforminv(T, X{iRes}, Y{iRes});
-        
-        pBar.increment();
+      switch(perturbationType)
+        case 'normal'
+          perturbation = max(-3*sigma, min(3*sigma, sigma*randn(4,2)));
+        case 'uniform'
+          perturbation = 2*sigma*rand(4,2) - sigma;
+        otherwise
+          error('Unrecognized perturbationType "%s".', perturbationType);
+      end
+      
+      corners_i = corners + perturbation;
+      T = cp2tform(corners_i, corners, 'projective');
+      [xPerturb{iRes, iPerturb}, yPerturb{iRes, iPerturb}] = tforminv(T, X{iRes}, Y{iRes});
+      
+      pBar.increment();
     end
 end
     
