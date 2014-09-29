@@ -126,6 +126,13 @@ struct I2CInterface
 };
 
 /* Goes in HAL
+enum sharpID
+{
+  left,
+  forward,
+  right
+};
+
 struct ProximityValues
 {
   uint16_t    left;
@@ -426,33 +433,33 @@ namespace Anki
       - Wakes up the next sensor to be read on the next call (~5ms later)
       - The first 3 readings will be junk
       */
-      void GetProximity(ProximityValues *prox)
+      sharpID GetProximity(ProximityValues *prox)
       {
-        static char proxNum = 0;
-        switch(proxNum)
+        static int proxID = IRleft;
+        switch(proxID)
         {
-          case 0:
+          case IRforward:
             prox->forward = (data_read(&IRForward, D2_HIGH) & 0xFF) << 8 | (data_read(&IRForward, D2_LOW) & 0xFF);
             SensorWakeup(&IRLeft);
-            proxNum++;
+            proxID = IRleft;
+            return IRforward;
             break;
             
-          case 1:
+          case IRleft:
             prox->left = (data_read(&IRLeft, D2_HIGH) & 0xFF) << 8 | (data_read(&IRLeft, D2_LOW) & 0xFF);
             SensorWakeup(&IRRight);
-            proxNum++;
+            proxID = IRright;
+            return IRleft;
             break;
           
-          case 2:
+          case IRright:
             prox->right = (data_read(&IRRight, D2_HIGH) & 0xFF) << 8 | (data_read(&IRRight, D2_LOW) & 0xFF);
             SensorWakeup(&IRForward);
-            proxNum = 0;
+            proxID = IRforward;
+            return IRright;
             break;
         }
-
-
-      }
-      
+      }  
     }
   }
 }
