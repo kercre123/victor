@@ -70,6 +70,48 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
 
+GTEST_TEST(CoreTech_Vision, LocalMaxima)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  const s32 imageHeight = 10;
+  const s32 imageWidth = 10;
+
+  const u8 image_data[imageHeight*imageWidth] = {
+    5, 5, 5, 5, 5, 5, 5, 5, 9, 5,
+    9, 9, 5, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    9, 5, 5, 5, 9, 5, 5, 5, 5, 5,
+    5, 5, 9, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 9, 5, 5, 5,
+    5, 9, 5, 5, 5, 5, 9, 5, 5, 5,
+    5, 5, 9, 5, 5, 5, 5, 5, 5, 9,
+    5, 9, 5, 5, 9, 9, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5, 9, 5};
+
+  Array<u8> image(imageHeight, imageWidth, scratchCcm);
+  FixedLengthList<Point<s16> > points(100, scratchCcm);
+
+  ASSERT_TRUE(image.IsValid());
+
+  image.Set(image_data, imageHeight*imageWidth);
+
+  const Result result = ImageProcessing::LocalMaxima<u8>(image, 3, 3, points);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  ASSERT_TRUE(points.get_size() == 2);
+
+  ASSERT_TRUE(points[0] == Point<s16>(4, 3));
+  ASSERT_TRUE(points[1] == Point<s16>(2, 4));
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, LocalMaxima)
+
 #ifdef RUN_PC_ONLY_TESTS
 GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
 {

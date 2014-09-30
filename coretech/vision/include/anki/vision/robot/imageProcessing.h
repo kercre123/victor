@@ -740,6 +740,38 @@ namespace Anki
 
         return RESULT_OK;
       } // Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
+
+      template<typename Type> Result LocalMaxima(const Array<Type> &in, const s32 searchHeight, const s32 searchWidth, FixedLengthList<Point<s16> > &points)
+      {
+        AnkiConditionalErrorAndReturnValue(AreValid(in, points),
+          RESULT_FAIL_INVALID_OBJECT, "LocalMaxima", "Invalid inputs");
+
+        // TODO: support other sizes
+        AnkiConditionalErrorAndReturnValue(searchHeight == 3 && searchWidth == 3,
+          RESULT_FAIL_INVALID_PARAMETER, "LocalMaxima", "Currently only 3x3 supported");
+
+        const s32 inHeight = in.get_size(0);
+        const s32 inWidth = in.get_size(1);
+
+        for(s32 y=1; y<(inHeight-1); y++) {
+          const Type * restrict pIn_ym1 = in.Pointer(y-1,0);
+          const Type * restrict pIn_y0 = in.Pointer(y,0);
+          const Type * restrict pIn_yp1 = in.Pointer(y+1,0);
+
+          for(s32 x=1; x<(inWidth-1); x++) {
+            const Type centerValue = pIn_y0[x];
+
+            if(centerValue > pIn_ym1[x-1] && centerValue > pIn_ym1[x] && centerValue > pIn_ym1[x+1] &&
+              centerValue > pIn_y0[x-1]   &&                             centerValue > pIn_y0[x+1] &&
+              centerValue > pIn_yp1[x-1]  && centerValue > pIn_yp1[x] && centerValue > pIn_yp1[x+1])
+            {
+              points.PushBack(Point<s16>(x,y));
+            }
+          }
+        }
+
+        return RESULT_OK;
+      } // LocalMaxima
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki

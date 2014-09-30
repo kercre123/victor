@@ -91,6 +91,13 @@ namespace Anki
       // 3x3 window, fixed-point, approximate Euclidian distance transform. Based on Borgefors "Distance transformations in digital images" 1986
       // Any pixel with grayvalue less than backgroundThreshold is treated as background
       Result DistanceTransform(const Array<u8> image, const u8 backgroundThreshold, FixedPointArray<s16> &distance);
+
+      //
+      // Morphology
+      //
+
+      // Find all searchHeightxsearchWidth local maxima (only 3x3 currently supported)
+      template<typename Type> Result LocalMaxima(const Array<Type> &in, const s32 searchHeight, const s32 searchWidth, FixedLengthList<Point<s16> > &points);
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki
