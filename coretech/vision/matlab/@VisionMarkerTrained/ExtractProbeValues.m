@@ -14,6 +14,7 @@ addInversions = true;
 numPerturbations = 100;
 perturbationType = 'normal'; % 'normal' or 'uniform'
 blurSigmas = [0 .005 .01]; % as a fraction of the image diagonal
+imageSizes = [32 64 128];
 perturbSigma = 1; % 'sigma' in 'normal' mode, half-width in 'uniform' mode
 saveTree = true;
 
@@ -87,11 +88,12 @@ labelNames = cell(1,numImages);
 
 corners = [0 0; 0 1; 1 0; 1 1];
 numBlurs = length(blurSigmas);
+numSizes = length(imageSizes);
 
 numResolutions = length(workingResolutions);
 probeValues   = cell(numResolutions,1);%numBlurs,numImages);
 gradMagValues = cell(numResolutions,1);%numBlurs,numImages);
-labels        = cell(numBlurs,numImages);
+labels        = cell(numSizes,numBlurs,numImages);
 xgrid         = cell(numResolutions,1);
 ygrid         = cell(numResolutions,1);
 resolutions   = cell(numResolutions,1);
@@ -106,8 +108,8 @@ xPerturb = cell(numResolutions, numPerturbations);
 yPerturb = cell(numResolutions, numPerturbations);
     
 for iRes = 1:numResolutions
-    probeValues{iRes} = cell(numBlurs,numImages);
-    gradMagValues{iRes} = cell(numBlurs,numImages);
+    probeValues{iRes} = cell(numSizes,numBlurs,numImages);
+    gradMagValues{iRes} = cell(numSizes,numBlurs,numImages);
     
     workingResolution = workingResolutions(iRes);
     resolutions{iRes} = iRes*ones(workingResolution^2,1);
@@ -142,7 +144,7 @@ end
     
 % Compute the perturbed probe values
 pBar.set_message(sprintf(['Interpolating perturbed probe locations ' ...
-    'from %d images at %d blurs'], numImages, numBlurs));
+    'from %d images at %d sizes and %d blurs'], numImages, numSizes, numBlurs));
 pBar.set_increment(1/numImages);
 pBar.set(0);
 for iImg = 1:numImages
@@ -155,39 +157,44 @@ for iImg = 1:numImages
     img = imreadAlphaHelper(fnames{iImg});
     %         end
     
-    [nrows,ncols,~] = size(img);
-    imageCoordsX = linspace(0, 1, ncols);
-    imageCoordsY = linspace(0, 1, nrows);
-    
     [~,labelNames{iImg}] = fileparts(fnames{iImg});
     
-    for iBlur = 1:numBlurs
-        imgBlur = img;
+    for iSize = 1:numSizes
+      imgResized = imresize(img, imageSizes(iSize)*[1 1], 'bilinear');
+      
+      [nrows,ncols,~] = size(imgResized);
+      imageCoordsX = linspace(0, 1, ncols);
+      imageCoordsY = linspace(0, 1, nrows);
+    
+      
+      for iBlur = 1:numBlurs
+        imgBlur = imgResized;
         if blurSigmas(iBlur) > 0
-            blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
-            imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma));
+          blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
+          imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma));
         end
         
         imgGradMag = single(smoothgradient(imgBlur));
         imgBlur = single(imgBlur);
         
         for iRes = 1:numResolutions
-            workingResolution = workingResolutions(iRes);
-            probeValues{iRes}{iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
-            gradMagValues{iRes}{iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
-            for iPerturb = 1:numPerturbations
-                probeValues{iRes}{iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgBlur, ...
-                    xPerturb{iRes,iPerturb}, yPerturb{iRes,iPerturb}, 'linear', 1), 2);
-                
-                gradMagValues{iRes}{iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
-                    xPerturb{iRes,iPerturb}, yPerturb{iRes,iPerturb}, 'linear', 0), 2);
-            end
-           
+          workingResolution = workingResolutions(iRes);
+          probeValues{iRes}{iSize,iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
+          gradMagValues{iRes}{iSize,iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
+          for iPerturb = 1:numPerturbations
+            probeValues{iRes}{iSize,iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgBlur, ...
+              xPerturb{iRes,iPerturb}, yPerturb{iRes,iPerturb}, 'linear', 1), 2);
+            
+            gradMagValues{iRes}{iSize,iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
+              xPerturb{iRes,iPerturb}, yPerturb{iRes,iPerturb}, 'linear', 0), 2);
+          end
+          
         end
         
-        labels{iBlur,iImg} = iImg*ones(1,numPerturbations, 'uint32');
+        labels{iSize,iBlur,iImg} = iImg*ones(1,numPerturbations, 'uint32');
         
-    end % FOR each blurSigma
+      end % FOR each blurSigma
+    end % FOR each imageSize
     
     pBar.increment();
 end
