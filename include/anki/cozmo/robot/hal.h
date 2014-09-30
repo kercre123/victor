@@ -346,13 +346,6 @@ namespace Anki
       // PROXIMITY SENSORS
       //
 
-      enum sharpID
-      {
-        IRleft,
-        IRforward,
-        IRright
-      };
-
       typedef struct
       {
         u16    left;
@@ -360,7 +353,7 @@ namespace Anki
         u16    forward;
       } ProximityValues;
       
-      sharpID GetProximity(ProximityValues *prox);
+      void GetProximity(ProximityValues *prox);
 
       
 // #pragma mark --- Battery ---
