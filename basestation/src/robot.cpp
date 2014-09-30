@@ -924,8 +924,8 @@ namespace Anki {
       //    that function checks whether the robot is already localized
       SetLocalizedTo(existingMatPiece->GetID());
       
-      
-      
+      // Overly-verbose. Use for debugging localization issues
+      /*
       PRINT_INFO("Using %s mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
                  existingMatPiece->GetType().GetName().c_str(),
                  existingMatPiece->GetID().GetValue(), GetID(),
@@ -936,6 +936,7 @@ namespace Anki {
                  GetPose().GetRotationAxis().x(),
                  GetPose().GetRotationAxis().y(),
                  GetPose().GetRotationAxis().z());
+      */
       
       // Send the ground truth pose that was computed instead of the new current
       // pose and let the robot deal with updating its current pose based on the
