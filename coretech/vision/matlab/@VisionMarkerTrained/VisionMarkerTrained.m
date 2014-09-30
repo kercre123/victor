@@ -43,6 +43,8 @@ classdef VisionMarkerTrained
         AddFiducialBatch(inputDir, outputDir, varargin);
         
         trainingState = ExtractProbeValues(varargin)
+        VisualizeExtractedProbes(data, varargin)
+        
         probeTree = TrainProbeTree(varargin);
         
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
