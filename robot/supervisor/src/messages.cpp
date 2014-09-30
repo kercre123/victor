@@ -95,6 +95,7 @@ namespace Anki {
         //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
         //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
         Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
+        Mailbox<Messages::FaceDetection>        faceDetectMailbox_;
 
         static RobotState robotState_;
         
@@ -556,6 +557,12 @@ namespace Anki {
       {
         return dockingMailbox_.getMessage(msg);
       }
+      
+      bool CheckMailbox(FaceDetection&       msg)
+      {
+        return faceDetectMailbox_.getMessage(msg);
+      }
+
       
       //
       // Templated Mailbox Implementations

@@ -141,6 +141,18 @@ namespace Anki {
       return retVal;
     } // ProcessMessage(MessageVisionMarker)
     
+    Result MessageHandler::ProcessMessage(Robot* robot, const MessageFaceDetection& msg)
+    {
+      Result retVal = RESULT_OK;
+      
+      // TODO: Do something with face detections
+      
+      PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).\n",
+                 msg.x_upperLeft, msg.y_upperLeft, msg.width, msg.height);
+      
+      return retVal;
+    } // ProcessMessage(MessageFaceDetection)
+  
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessageCameraCalibration const& msg)
     {

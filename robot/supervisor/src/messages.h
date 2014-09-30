@@ -29,18 +29,18 @@ namespace Anki {
     namespace Messages {
       
       // 1. Initial include just defines the definition modes for use below
-#include "anki/cozmo/shared/MessageDefinitions.h"
+#     include "anki/cozmo/shared/MessageDefinitions.h"
       
       // 2. Define all the message structs:
-#define MESSAGE_DEFINITION_MODE MESSAGE_STRUCT_DEFINITION_MODE
-#include "anki/cozmo/shared/MessageDefinitions.h"
+#     define MESSAGE_DEFINITION_MODE MESSAGE_STRUCT_DEFINITION_MODE
+#     include "anki/cozmo/shared/MessageDefinitions.h"
       
       // 3. Create the enumerated message IDs:
       typedef enum {
         NO_MESSAGE_ID = 0,
-#undef MESSAGE_DEFINITION_MODE
-#define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
-#include "anki/cozmo/shared/MessageDefinitions.h"
+#       undef MESSAGE_DEFINITION_MODE
+#       define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
+#       include "anki/cozmo/shared/MessageDefinitions.h"
         NUM_MSG_IDS // Final entry without comma at end
       } ID;
       
@@ -52,8 +52,8 @@ namespace Anki {
       
       // Create all the dispatch function prototypes (all implemented
       // manually in messages.cpp).  
-#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
-#include "anki/cozmo/shared/MessageDefinitionsB2R.h"
+#     define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
+#     include "anki/cozmo/shared/MessageDefinitionsB2R.h"
       
       void ProcessBTLEMessages();
       void ProcessUARTMessages();
@@ -86,13 +86,11 @@ namespace Anki {
       
       // These return true if a mailbox messages was available, and they copy
       // that message into the passed-in message struct.
-      //bool CheckMailbox(BlockMarkerObserved& msg);
-      //bool CheckMailbox(MatMarkerObserved&   msg);
-      bool CheckMailbox(VisionMarker&        msg);
+      //bool CheckMailbox(VisionMarker&        msg);
+      //bool CheckMailbox(ImageChunk&          msg);
       bool CheckMailbox(DockingErrorSignal&  msg);
-      bool CheckMailbox(ImageChunk&          msg);
-      
-      
+      bool CheckMailbox(FaceDetection&       msg);
+    
       // Returns whether or not init message was received from basestation
       bool ReceivedInit();
       
