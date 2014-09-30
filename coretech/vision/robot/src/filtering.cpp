@@ -162,7 +162,7 @@ namespace Anki
         return RESULT_OK;
       } // BoxFilterNormalize()
 
-      Result BoxFilter(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch)
+      template<> Result BoxFilter<u8,u16,u16>(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch)
       {
         AnkiConditionalErrorAndReturnValue(image.IsValid() && filtered.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "BoxFilter", "Image is invalid");
@@ -340,7 +340,7 @@ namespace Anki
         filtered(-boxHeight2,-1,0,-1).Set(0);
 
         return RESULT_OK;
-      } // Result BoxFilter(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch)
+      } // Result BoxFilter()
 
       Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch)
       {

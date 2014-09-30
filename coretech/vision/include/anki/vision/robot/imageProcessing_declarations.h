@@ -60,7 +60,11 @@ namespace Anki
       Result BoxFilterNormalize(const Array<u8> &image, const s32 boxSize, const u8 padValue,
         Array<u8> &imageNorm, MemoryStack scratch);
 
-      Result BoxFilter(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch);
+      // Fast box filter
+      // Input Arrays "image" and "filtered" can be the same (assuming their types are the same)
+      // Makes a border of zeros when the box filter goes over the image border
+      template<typename InType, typename IntermediateType, typename OutType> Result BoxFilter(const Array<InType> &image, const s32 boxHeight, const s32 boxWidth, Array<OutType> &filtered, MemoryStack scratch);
+      template<> Result BoxFilter<u8,u16,u16>(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch);
 
       //
       // Image resizing

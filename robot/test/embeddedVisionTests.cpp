@@ -627,7 +627,7 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
     Array<u16> filtered(imageHeight, imageWidth, scratchOffchip);
     filtered.Set(0xFFFF);
 
-    const Result result = ImageProcessing::BoxFilter(image, boxHeight, boxWidth, filtered, scratchOnchip);
+    const Result result = ImageProcessing::BoxFilter<u8,u16,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
 
     //filtered.Print("filtered");
 
@@ -678,7 +678,7 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
 
     BeginBenchmark("BoxFilter");
 
-    const Result result = ImageProcessing::BoxFilter(image, boxHeight, boxWidth, filtered, scratchOnchip);
+    const Result result = ImageProcessing::BoxFilter<u8,u16,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
 
     EndBenchmark("BoxFilter");
 
