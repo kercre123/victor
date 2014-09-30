@@ -276,8 +276,11 @@ namespace Anki
 
       template<typename InType, typename IntermediateType, typename OutType> Result BoxFilter(const Array<InType> &image, const s32 boxHeight, const s32 boxWidth, Array<OutType> &filtered, MemoryStack scratch)
       {
-        AnkiConditionalErrorAndReturnValue(image.IsValid() && filtered.IsValid(),
+        AnkiConditionalErrorAndReturnValue(AreValid(image, filtered),
           RESULT_FAIL_INVALID_OBJECT, "BoxFilter", "Image is invalid");
+
+        AnkiConditionalErrorAndReturnValue(NotAliased(image, filtered),
+          RESULT_FAIL_ALIASED_MEMORY, "BoxFilter", "Images are aliased");
 
         const s32 imageHeight = image.get_size(0);
         const s32 imageWidth  = image.get_size(1);

@@ -31,6 +31,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/classifier.h"
 #include "anki/vision/robot/cameraImagingPipeline.h"
 #include "anki/vision/robot/opencvLight_vision.h"
+#include "anki/vision/robot/features.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -69,6 +70,45 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 //#define RUN_FACE_DETECTION_GUI
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
+
+GTEST_TEST(CoreTech_Vision, Harris)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  const char * imageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
+  Array<u8> image = Array<u8>::LoadImage(imageFilename, scratchOffchip);
+  Array<f32> harrisImage(image.get_size(0), image.get_size(1), scratchOffchip);
+
+  ASSERT_TRUE(AreValid(image, harrisImage));
+
+  cv::Mat_<u8> imageCv;
+
+  ArrayToCvMat<u8>(image, &imageCv);
+
+  //image.Show("im", false, false, false);
+
+  const int blockSize = 11;
+  const double k = 0.04;
+
+  cv::Mat_<f32> harrisImageCv;
+  cv::cornerHarris(imageCv, harrisImageCv, blockSize, 3, k, cv::BORDER_DEFAULT);
+
+  matlab.PutOpencvMat(imageCv, "imageCv");
+  matlab.PutOpencvMat(harrisImageCv, "harrisImageCv");
+
+  const Result result = Features::CornerHarris(image, harrisImage, blockSize, static_cast<f32>(k), scratchOffchip);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //harrisImage.SetZero();
+  matlab.PutArray(harrisImage, "harrisImage");
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, LocalMaxima)
 
 GTEST_TEST(CoreTech_Vision, LocalMaxima)
 {
