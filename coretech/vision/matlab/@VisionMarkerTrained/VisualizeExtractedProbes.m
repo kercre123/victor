@@ -3,7 +3,8 @@ function VisualizeExtractedProbes(data, varargin)
 
 labels = [];
 sample = [];
-numProbes = 32;
+numProbes = VisionMarkerTrained.ProbeParameters.GridSize;
+threshold = [];
 
 parseVarargin(varargin{:});
 
@@ -29,19 +30,34 @@ end
   
 assert(~isempty(labels), 'Labels should not be empty.');
 N = length(labels);
+if N > 100
+  warning('Refusing to display more than 100 examples.');
+  N = 100;
+end
+
 numCols = ceil(sqrt(N));
 numRows = ceil(N/numCols);
 
+clf
 for i = 1:N
   subplot(numRows,numCols,i)
-  imagesc(reshape(mean(data.probeValues(:,data.labels==labels(i)),2), ...
-    numProbes, numProbes))
+  
+  if isempty(threshold)
+    img = reshape(mean(data.probeValues(:,data.labels==labels(i)),2), ...
+      numProbes, numProbes);
+  else
+    %img = reshape(mode(double(data.probeValues(:,data.labels==labels(i)) > threshold),2), ...
+    %  numProbes, numProbes);
+    img = reshape(mean(data.probeValues(:,data.labels==labels(i)),2) > threshold, ...
+      numProbes, numProbes);
+  end
+  
+  imagesc(img)
   axis image
-  title(data.labelNames{labels(i)}, 'Interpreter', 'none')
+  title(sprintf('%d: %s', labels(i), data.labelNames{labels(i)}), 'Interpreter', 'none')
 end
 
 colormap(gray)
-
 
 
 end
