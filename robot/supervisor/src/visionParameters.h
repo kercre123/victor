@@ -52,15 +52,10 @@ namespace Anki {
 #if(STREAM_DEBUG_IMAGES)
       #define SEND_DEBUG_STREAM 1
       //#define RUN_SIMPLE_TRACKING_TEST 1
-      //#define RUN_SIMPLE_FACE_DETECTION_TEST 1
       #define RUN_GROUND_TRUTHING_CAPTURE 1
       //#define SEND_IMAGE_ONLY 1      
       //#define SEND_BINARY_IMAGE_ONLY 1
       
-#if defined(RUN_SIMPLE_TRACKING_TEST) && defined(RUN_SIMPLE_FACE_DETECTION_TEST)
-#error Cannot run both RUN_SIMPLE_TRACKING_TEST and RUN_SIMPLE_FACE_DETECTION_TEST
-#endif
-
 #else
       #define SEND_DEBUG_STREAM 0
 #endif
@@ -186,6 +181,30 @@ namespace Anki {
         static const u32 FIDUCIAL_DETECTION_PERIOD_US = 1e6 / FIDUCIAL_DETECTION_SPEED_HZ;
 #endif
       }; // struct SimulatorParameters
+      
+      
+      //
+      // Face Detection
+      //
+      struct FaceDetectionParameters {
+        bool isInitialized;
+        
+        Vision::CameraResolution detectionResolution;
+        s32 faceDetectionHeight;
+        s32 faceDetectionWidth;
+        
+        double scaleFactor;
+        int minNeighbors;
+        s32 minHeight;
+        s32 minWidth;
+        s32 maxHeight;
+        s32 maxWidth;
+        s32 MAX_CANDIDATES;
+        
+        FaceDetectionParameters();
+        void Initialize();
+        
+      }; // struct FaceDetectionParameters
       
       
       //
