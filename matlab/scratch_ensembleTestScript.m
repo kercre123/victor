@@ -5,9 +5,9 @@ testMode = 'boosted';
 testOnTrainingData = false;
 
 if testOnTrainingData
-    sampleIndex = randi(size(data.probeValues,2), N);
+    sampleIndex = randi(size(data.probeValues,2), 1, N);
 else
-   %testImages = randi(length(data.fnames), N);
+  testImages = randi(length(data.fnames), 1, N);
 end
 
 correct = zeros(1,N);
@@ -24,9 +24,10 @@ for i=1:N
     
     if testOnTrainingData
         testImg = double(data.probeValues(:,sampleIndex(i)));
-        Corners = [.5 .5 32.5 32.5; .5 32.5 .5 32.5]';
+        G = VisionMarkerTrained.ProbeParameters.GridSize;
+        Corners = [.5 .5 G+.5 G+.5; .5 G+.5 .5 G+.5]';
         tform = cp2tform([VisionMarkerTrained.ProbeRegion(1) VisionMarkerTrained.ProbeRegion(1) VisionMarkerTrained.ProbeRegion(2) VisionMarkerTrained.ProbeRegion(2); VisionMarkerTrained.ProbeRegion(1) VisionMarkerTrained.ProbeRegion(2) VisionMarkerTrained.ProbeRegion(1) VisionMarkerTrained.ProbeRegion(2)]', Corners, 'projective');
-        [~,fname,~] = fileparts(data.fnames{data.labels(sampleIndex(i))});
+        [~,fname,~] = fileparts(data.labelNames{data.labels(sampleIndex(i))});
         
     else
         [testImg, ~, alpha] = imread(data.fnames{testImages(i)});
@@ -35,9 +36,12 @@ for i=1:N
         testImg = mean(im2double(testImg),3);
         testImg(alpha<.5) = 1;
         
-        testImg = separable_filter(imresize(testImg, .4*rand+.5), gaussian_kernel(.5*rand + 1));
+        imgSize = randi([32 128],1);
+        imgBlur = rand + 0.5;
+        testImg = separable_filter(imresize(testImg, imgSize*[1 1], 'bilinear'), ...
+          gaussian_kernel(imgBlur));
         
-        Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false) + .001*randn(4,2);
+        Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false) + 0.001*randn(4,2);
         tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
     end
     
@@ -54,26 +58,25 @@ for i=1:N
                 predictedClass = 'UNKNOWN';
                 correct(i) = -1;
             end
-        case 'bagged'
-            p = TestTreeEnsemble(baggedTrees, testImg, tform, .5, VisionMarkerTrained.ProbePattern);
-            
-            %     if max(p) < 1
-            %     disp('here')
-            %     keyboard
-            %     end
-            
-            [p_sorted, sortIndex] = sort(p, 'descend');
-            if p_sorted(1) > 1.5*p_sorted(2)
-                predictedClass = baggedTrees(1).labels{sortIndex(1)};
-                correct(i) = double(strcmp(predictedClass, fname));
-            else
-                predictedClass = 'UNKNOWN';
-                correct(i) = -1;
-            end
-        case 'boosted'
-            C = TestBoostedTrees(boostedTrees(1:150), testImg, tform, 0.5, VisionMarkerTrained.ProbePattern);
-            predictedClass = boostedTrees(1).labels{C};
+        case {'bagged', 'boosted'}
+          
+          switch(testMode)
+            case 'bagged'
+              p = TestTreeEnsemble(baggedTrees, testImg, tform, .5, VisionMarkerTrained.ProbePattern);
+            case 'boosted'
+              p = TestBoostedTrees(boostedTrees(1), testImg, tform, 0.5, VisionMarkerTrained.ProbePattern);
+            otherwise
+              assert(false)
+          end
+          
+          [p_sorted, sortIndex] = sort(p, 'descend');
+          if p_sorted(1) > 1*p_sorted(2)
+            predictedClass = data.labelNames{sortIndex(1)};
             correct(i) = double(strcmp(predictedClass, fname));
+          else
+            predictedClass = 'UNKNOWN';
+            correct(i) = -1;
+          end
         otherwise
             error('Unknown testMode %s', testMode);
     end
@@ -82,13 +85,13 @@ for i=1:N
     h_axes = subplot(numPlotRows,numPlotCols,i);
     hold off
     if testOnTrainingData
-        testImg = double(reshape(testImg, [32 32]));
+        testImg = double(reshape(testImg, VisionMarkerTrained.ProbeParameters.GridSize*[1 1]));
     end
     imagesc(testImg), axis image
     hold on
     plot(Corners([1 2 4 3 1],1), Corners([1 2 4 3 1],2), 'm-o');
     title(predictedClass, 'Interpreter', 'none')
-    xlabel(sprintf('p_{max} = %.2f', p_sorted(1)));
+    %xlabel(sprintf('p ratio = %.2f', p_sorted(1) - p_sorted(2)));
     switch(correct(i))
         case 0
             color = 'r';
@@ -100,7 +103,7 @@ for i=1:N
             error('WTF')
     end
     
-    pad = 5;
+    pad = .15 * size(testImg,1);
     set(h_axes, 'Box', 'on', 'XColor', color, 'YColor', color, 'LineWidth', 2, ...
         'XLim', [-pad size(testImg,2)+pad], 'YLim', [-pad size(testImg,1)+pad], ...
         'XTick', [], 'YTick', []);
@@ -117,6 +120,6 @@ delete(pBar)
 
 N = 0;
 for iTree = 1:length(tree)
-    N = N+ VisionMarkerTrained.GetNumTreeNodes(tree(iTree));
+    N = N+ VisionMarkerTrained.GetNumTreeNodes(b(iTree));
 end
 fprintf('Total ensemble nodes = %d\n', N);

@@ -61,7 +61,8 @@ else
     C(iTree, c) = trees(iTree).alpha;
   end
   
-  [~,C] = max(sum(C,1));
+  %[~,C] = max(sum(C,1));
+  C = sum(C,1);
   
 end
 
