@@ -201,6 +201,14 @@ namespace Anki {
         s32 maxWidth;
         s32 MAX_CANDIDATES;
         
+        s32 avgHeadHeight_mm;
+        
+        // Maximum number of detections in a single image that will be put
+        // into the mailbox for pickup by main execution. Note that the
+        // multi-mailbox is a circular buffer, so if there are more than 16
+        // detections in a frame, the next one will overwrite the first one.
+        static const u32 MAX_FACE_DETECTIONS = 16;
+        
         FaceDetectionParameters();
         void Initialize();
         
