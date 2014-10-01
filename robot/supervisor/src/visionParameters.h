@@ -170,6 +170,7 @@ namespace Anki {
       struct SimulatorParameters {
 #ifdef SIMULATOR
         static const u32 FIDUCIAL_DETECTION_SPEED_HZ = 5;
+        static const u32 FACE_DETECTION_SPEED_HZ     = 3;
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 60;
@@ -177,8 +178,9 @@ namespace Anki {
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 15;
 #endif
         
-        static const u32 TRACK_BLOCK_PERIOD_US = 1e6 / TRACKING_ALGORITHM_SPEED_HZ;
+        static const u32 TRACK_BLOCK_PERIOD_US        = 1e6 / TRACKING_ALGORITHM_SPEED_HZ;
         static const u32 FIDUCIAL_DETECTION_PERIOD_US = 1e6 / FIDUCIAL_DETECTION_SPEED_HZ;
+        static const u32 FACE_DETECTION_PERIOD_US     = 1e6 / FACE_DETECTION_SPEED_HZ;
 #endif
       }; // struct SimulatorParameters
       
@@ -200,8 +202,6 @@ namespace Anki {
         s32 maxHeight;
         s32 maxWidth;
         s32 MAX_CANDIDATES;
-        
-        s32 avgHeadHeight_mm;
         
         // Maximum number of detections in a single image that will be put
         // into the mailbox for pickup by main execution. Note that the

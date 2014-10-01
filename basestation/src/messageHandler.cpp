@@ -148,7 +148,21 @@ namespace Anki {
       // TODO: Do something with face detections
       
       PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).\n",
-                 msg.x_upperLeft, msg.y_upperLeft, msg.width, msg.height);
+                 robot->GetID(), msg.x_upperLeft, msg.y_upperLeft, msg.width, msg.height);
+      
+      
+      if(msg.visualize > 0) {
+        // Send tracker quad info to viz
+        const u16 left_x   = msg.x_upperLeft;
+        const u16 right_x  = left_x + msg.width;
+        const u16 top_y    = msg.y_upperLeft;
+        const u16 bottom_y = top_y + msg.height;
+        
+        VizManager::getInstance()->SendTrackerQuad(left_x, top_y,
+                                                   right_x, top_y,
+                                                   right_x, bottom_y,
+                                                   left_x, bottom_y);
+      }
       
       return retVal;
     } // ProcessMessage(MessageFaceDetection)

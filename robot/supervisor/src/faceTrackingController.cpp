@@ -24,6 +24,7 @@
 #include "messages.h"
 #include "steeringController.h"
 #include "visionParameters.h"
+#include "visionSystem.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -37,7 +38,7 @@ namespace Anki {
         
         FaceSelectionMethod _selectionMethod;
         
-        f32 _distanceFactor;
+        f32 _focalLength_pix; // scaled to detection resolution
         
         u32 _timeoutDuration_usec;
         
@@ -86,15 +87,7 @@ namespace Anki {
         
         // Get scaled focal length for the resolution we're actually doing detection
         const f32 adjFactor = static_cast<f32>(params.faceDetectionHeight) / static_cast<f32>(camInfo->nrows);
-        const f32 f_pix = camInfo->focalLength_y * adjFactor;
-        
-        // Compute factor for converting from detected height in pixels to
-        // approximate distance in mm
-        //
-        //    d_mm = (f_pix * h_mm) / h_pix;
-        //
-        // i.e., distanceFactor is the numerator of this equation.
-        _distanceFactor = static_cast<f32>(params.avgHeadHeight_mm)*f_pix;
+        _focalLength_pix = camInfo->focalLength_y * adjFactor;
         
         _isInitialized = true;
         
@@ -127,13 +120,23 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(_isInitialized, RESULT_FAIL,
                                            "FaceTrackingController.StartTracking.NotInitialized",
                                            "FaceTrackingController should be initialized before calling StartTracking().\n");
+        lastResult = Reset();
+        
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "FaceTrackingController.StartTracking.ResetFailed",
+                                           "FaceTrackingController failed calling Reset().\n");
         
         _selectionMethod = method;
         
         _timeoutDuration_usec = timeout_usec;
         
+        lastResult = VisionSystem::StartDetectingFaces();
+        
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "FaceTrackingController.StartTracking.StartDetectingFacesFailed",
+                                           "FaceTrackingController failed calling VisionSystem::StartDetectingFaces().\n");
+        
         _isStarted = true;
-        _isTracking = false;
         
         return lastResult;
       } // StartTracking()
@@ -226,24 +229,27 @@ namespace Anki {
             _isTracking = true;
             
             // Convert image positions to desired angles
+            const f32 yError_pix = static_cast<f32>(_yImageCenter - _currentFace.yCen);
+            const f32 tiltAngle = (atan_fast(yError_pix / _focalLength_pix) +
+                                   HeadController::GetAngleRad());
             
-            const f32 estimatedDistance_pix = _distanceFactor / static_cast<f32>(_currentFace.height);
+            const f32 xError_pix = static_cast<f32>(_xImageCenter - _currentFace.xCen);
+            const Radians panAngle = (atan_fast(xError_pix / _focalLength_pix) +
+                                      Localization::GetCurrentMatOrientation());
             
-            const f32 yError_pix = static_cast<f32>(_currentFace.yCen - _yImageCenter);
-            const f32 tiltAngle = atan_fast(yError_pix/estimatedDistance_pix);
-            
+            PRINT("FaceTrackingController yErr=%.1f: tiltAngle=%.1fdeg, xErr=%.1f: panAngle=%.1fdeg\n",
+                  yError_pix, RAD_TO_DEG(tiltAngle), xError_pix, panAngle.getDegrees());
+
+            // Command robot to adjust head and orientation to keep face
+            // centered
             HeadController::SetDesiredAngle(tiltAngle);
-            
-            const f32 xError_pix = static_cast<f32>(_currentFace.xCen - _xImageCenter);
-            const Radians panAngle = atan_fast(xError_pix/estimatedDistance_pix);
-            const Radians targetAngle = Localization::GetCurrentMatOrientation() + panAngle;
-            
             // TODO: Make velocity/acceleration values into parameters
-            SteeringController::ExecutePointTurn(targetAngle.ToFloat(),
-                                                 .05, .01, .01);
+            const f32 turnVelocity = (panAngle.ToFloat() < 0 ? -10.f : 10.f);
+            SteeringController::ExecutePointTurn(panAngle.ToFloat(),
+                                                 turnVelocity, 5, -5);
             
-          } else if(HAL::GetMicroCounter() > _currentFace.timeoutTime_usec) {
-            PRINT("FaceTrackingController timed out. Stopping tracking.");
+          } else if(_isTracking && HAL::GetMicroCounter() > _currentFace.timeoutTime_usec) {
+            PRINT("FaceTrackingController timed out. Stopping tracking.\n");
             _isStarted  = false;
             _isTracking = false;
           }

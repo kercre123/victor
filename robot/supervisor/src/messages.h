@@ -63,6 +63,8 @@ namespace Anki {
       // so its declaration is not automatically generated.
       void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg);
       
+      void ProcessFaceDetectionMessage(const FaceDetection& msg);
+      
       void ProcessMessage(const ID msgID, const u8* buffer);
       
       // Start looking for a particular message ID

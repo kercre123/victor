@@ -299,6 +299,9 @@ namespace Anki {
         static void SetTrackingReadyTime() {
           frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::TRACK_BLOCK_PERIOD_US;
         }
+        static void SetFaceDetectionReadTime() {
+          frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FACE_DETECTION_PERIOD_US;
+        }
 #else
         static Result Initialize() { return RESULT_OK; }
         static bool IsFrameReady() { return true; }
@@ -1378,6 +1381,10 @@ namespace Anki {
         return headCamFOV_hor_;
       }
 
+      const FaceDetectionParameters& GetFaceDetectionParams() {
+        return faceDetectionParameters_;
+      }
+      
       Result Init()
       {
         Result result = RESULT_OK;
@@ -1486,6 +1493,12 @@ namespace Anki {
       void StopTracking()
       {
         SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f, true);
+      }
+      
+      Result StartDetectingFaces()
+      {
+        mode_ = VISION_MODE_DETECTING_FACES;
+        return RESULT_OK;
       }
 
       const Embedded::FixedLengthList<Embedded::VisionMarker>& GetObservedMarkerList()
@@ -2268,6 +2281,9 @@ namespace Anki {
           Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
           
         } else if(mode_ == VISION_MODE_DETECTING_FACES) {
+          Simulator::SetFaceDetectionReadTime();
+          
+          VisionMemory::ResetBuffers();
           
           AnkiConditionalErrorAndReturnValue(faceDetectionParameters_.isInitialized, RESULT_FAIL,
                                              "VisionSystem::Update::FaceDetectionParametersNotInitialized",
@@ -2326,6 +2342,8 @@ namespace Anki {
           
           DownsampleHelper(grayscaleImage, smallImage, VisionMemory::ccmScratch_);
           
+          DownsampleAndSendImage(smallImage);
+          
           const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
           const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
           const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
@@ -2362,17 +2380,53 @@ namespace Anki {
                                            VisionMemory::onchipScratch_,
                                            VisionMemory::offchipScratch_);
           
+          f32 sendScale = 1.f;
+          if (imageSendMode_ == ISM_STREAM) {
+            const u8 scaleFactor = (1 << CameraModeInfo[faceDetectionParameters_.detectionResolution].downsamplePower[nextSendImageResolution_]);
+            
+            if(scaleFactor > 1) {
+              // Send additional downsampled image, marked for visualization
+              sendScale /= static_cast<f32>(scaleFactor);
+            }
+          }
+          
           const s32 numFaces = detectedFaces.get_size();
           for(s32 i_face = 0; i_face < numFaces; ++i_face)
           {
             Messages::FaceDetection msg;
             const Rectangle<s32>& currentFace = detectedFaces[i_face];
-            msg.x_upperLeft = static_cast<u16>(currentFace.left);
-            msg.y_upperLeft = static_cast<u16>(currentFace.top);
             msg.width       = static_cast<u16>(currentFace.get_width());
             msg.height      = static_cast<u16>(currentFace.get_height());
+            msg.x_upperLeft = static_cast<u16>(currentFace.left);
+            msg.y_upperLeft = static_cast<u16>(currentFace.top);
+            msg.visualize   = static_cast<u8>(false);
             
+            if (imageSendMode_ == ISM_STREAM) {
+              
+              if(sendScale != 1.f) {
+                // Send additional downsampled message, marked for visualization
+                Messages::FaceDetection debugMsg;
+                debugMsg.x_upperLeft = static_cast<u16>(static_cast<f32>(msg.x_upperLeft) * sendScale);
+                debugMsg.y_upperLeft = static_cast<u16>(static_cast<f32>(msg.y_upperLeft) * sendScale);
+                debugMsg.width       = static_cast<u16>(static_cast<f32>(msg.width)  * sendScale);
+                debugMsg.height      = static_cast<u16>(static_cast<f32>(msg.height) * sendScale);
+                debugMsg.visualize   = static_cast<u8>(true);
+                
+                HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::FaceDetection), &debugMsg);
+                
+              } else {
+                // Send original message, marked for visualization
+                msg.visualize = static_cast<u8>(true);
+              }
+            } // if imageSendMode_ == ISM_STREAM
+            
+            // Process the face detection message (i.e. drop it off for main
+            // execution to deal with if we are tracking)
+            Messages::ProcessFaceDetectionMessage(msg);
+            
+            // Also send a copy to the basestation
             HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::FaceDetection), &msg);
+            
           } // for each face detection
           
           DebugStream::SendFaceDetections(

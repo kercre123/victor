@@ -288,6 +288,12 @@ namespace Anki {
         dockingMailbox_.putMessage(msg);
       }
       
+      void ProcessFaceDetectionMessage(const FaceDetection& msg)
+      {
+        // Just pass the face detection along to mainExecution to deal with.
+        faceDetectMailbox_.putMessage(msg);
+      }
+      
       void ProcessBTLEMessages()
       {
         ID msgID;

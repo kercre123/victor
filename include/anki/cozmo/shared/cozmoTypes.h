@@ -28,6 +28,9 @@ namespace Anki {
     typedef enum {
       TM_NONE,
       
+      // Turns on face tracking
+      TM_FACE_TRACKING,
+      
       // Attempts to dock to a block that is placed in front of it and then place it on a block behind it.
       TM_PICK_AND_PLACE,
       

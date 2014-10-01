@@ -226,9 +226,7 @@ namespace Anki {
         maxHeight      = faceDetectionHeight;
         maxWidth       = faceDetectionWidth;
         MAX_CANDIDATES = 5000;
-        
-        avgHeadHeight_mm = 238; // ~9.4 inches
-        
+                
         isInitialized = true;
         
       } // FaceDetectionParameters::Initialize()
