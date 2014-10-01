@@ -9,7 +9,12 @@ def loadEmbeddedArray(const char * filename):
   Load the file "filename" into a numpy array. 
   """
   
-  return LoadEmbeddedArray_toNumpy(filename)
+  try:
+    return LoadEmbeddedArray_toNumpy(filename)
+  except:
+    raise Exception("Could not load from " + filename)  
+    
+  return None
 
 def saveEmbeddedArray(object numpyArray, const char * filename, const int compressionLevel):
   """

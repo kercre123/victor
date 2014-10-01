@@ -9,13 +9,19 @@
 
 % matlabCommandString is the command that is executed in each of the different Matlab processes
 
+% This can be faster if temporaryDirectory is a RAM disk. Create a 1GB (1024mb*2048=2097152) disk in OSX by typing:
+% diskutil erasevolume HFS+ 'RamDisk' `hdiutil attach -nomount ram://2097152`
+
 function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, matlabCommandString, splitFinely)
     if ~exist('splitFinely', 'var')
         splitFinely = true;
     end
     
+    matlabCommandString = strrep(matlabCommandString, '%', '%%');
+    
     if numComputeThreads == 1 || (length(workQueue) < 2)
         localWorkQueue = workQueue; %#ok<NASGU>
+        iThread = 0;
         eval(matlabCommandString);
     else
         threadCompletionMutexFilenames = cell(numComputeThreads, 1);
@@ -42,8 +48,8 @@ function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, 
                 localWorkQueue = workQueue(iWorkQueue:min(iWorkQueue+localWorkSize-1, length(workQueue))); %#ok<NASGU>
                 iWorkQueue = iWorkQueue + localWorkSize;
             end
-            
-            save(workerInputFilenames{iThread+1}, 'localWorkQueue');
+                        
+            savefast(workerInputFilenames{iThread+1}, 'localWorkQueue', 'iThread');
             
             try
                 oldWarnings = warning();
@@ -52,7 +58,6 @@ function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, 
                 warning(oldWarnings);
             catch
             end
-            
             
             % Save the commands as a script
             if ~ismac()
@@ -73,7 +78,7 @@ function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, 
             else
                 hideWindowsCommand = '';
             end
-            
+                        
             scriptText = hideWindowsCommand;
             scriptText = [scriptText, 'load(''', workerInputFilenames{iThread+1}, '''); \n']; %#ok<AGROW>
             scriptText = [scriptText, '\n%%User code starts...\n\n']; %#ok<AGROW>
@@ -104,7 +109,7 @@ function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, 
             
             system(commandString);
             
-            pause(1);
+            pause(.1);
         end
         
         % Wait for the thread to complete

@@ -160,6 +160,10 @@ namespace Anki
       bool &basicType_isString
       )
     {
+#if defined(__EDG__)
+      AnkiError("Array<Type>::LoadBinaryArray_Generic", "Cannot load files on embedded");
+      return Array<u8>();
+#else     
       Array<u8> newArray = Array<u8>();
 
       MemoryStack scratch_local;
@@ -389,6 +393,7 @@ namespace Anki
 #endif
 
       return newArray;
+#endif // #if defined(__EDG__) ... #else
     } // LoadBinaryArray_UnknownType()
   } // namespace Embedded
 } // namespace Anki

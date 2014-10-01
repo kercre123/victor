@@ -42,10 +42,24 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(startComponentIndex >= 0 && startComponentIndex < numComponents,
         RESULT_FAIL_INVALID_PARAMETER, "ComputeQuadrilateralsFromConnectedComponents", "startComponentIndex is not in range");
 
-      const u16 componentId = components[startComponentIndex].id;
+      const bool useU16 = components.get_useU16();
+      const ConnectedComponentsTemplate<u16>* componentsU16 = components.get_componentsU16();
+      const ConnectedComponentsTemplate<s32>* componentsS32 = components.get_componentsS32();
 
-      AnkiConditionalErrorAndReturnValue(componentId > 0,
-        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "componentId is not valid.");
+      u16 componentIdU16 = 0;
+      s32 componentIdS32 = 0;
+
+      if(useU16) {
+        componentIdU16 = (*componentsU16)[startComponentIndex].id;
+
+        AnkiConditionalErrorAndReturnValue(componentIdU16 > 0,
+          RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "componentId is not valid.");
+      } else {
+        componentIdS32 = (*componentsS32)[startComponentIndex].id;
+
+        AnkiConditionalErrorAndReturnValue(componentIdS32 > 0,
+          RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "componentId is not valid.");
+      }
 
       extractedBoundary.Clear();
 
@@ -57,22 +71,40 @@ namespace Anki
       //coordinate_right = max(component(:,3), [], 1);
       Rectangle<s16> boundingBox(s16_MAX, s16_MIN, s16_MAX, s16_MIN);
       endComponentIndex = numComponents - 1;
-      for(s32 i=startComponentIndex; i<numComponents; i++) {
-        if(components[i].id != componentId)
-        {
-          endComponentIndex = i-1;
-          break;
+
+      if(useU16) {
+        for(s32 i=startComponentIndex; i<numComponents; i++) {
+          if((*componentsU16)[i].id != componentIdU16) {
+            endComponentIndex = i-1;
+            break;
+          }
+
+          const s16 xStart = (*componentsU16)[i].xStart;
+          const s16 xEnd = (*componentsU16)[i].xEnd;
+          const s16 y = (*componentsU16)[i].y;
+
+          boundingBox.left = MIN(boundingBox.left, xStart);
+          boundingBox.right = MAX(boundingBox.right, xEnd+1); // +1, because the coorindate we want is the crack after the right pixel
+          boundingBox.top = MIN(boundingBox.top, y);
+          boundingBox.bottom = MAX(boundingBox.bottom, y+1); // +1, because the coorindate we want is the crack after the bottom pixel
         }
+      } else { // if(useU16)
+        for(s32 i=startComponentIndex; i<numComponents; i++) {
+          if((*componentsS32)[i].id != componentIdS32) {
+            endComponentIndex = i-1;
+            break;
+          }
 
-        const s16 xStart = components[i].xStart;
-        const s16 xEnd = components[i].xEnd;
-        const s16 y = components[i].y;
+          const s16 xStart = (*componentsS32)[i].xStart;
+          const s16 xEnd = (*componentsS32)[i].xEnd;
+          const s16 y = (*componentsS32)[i].y;
 
-        boundingBox.left = MIN(boundingBox.left, xStart);
-        boundingBox.right = MAX(boundingBox.right, xEnd+1); // +1, because the coorindate we want is the crack after the right pixel
-        boundingBox.top = MIN(boundingBox.top, y);
-        boundingBox.bottom = MAX(boundingBox.bottom, y+1); // +1, because the coorindate we want is the crack after the bottom pixel
-      }
+          boundingBox.left = MIN(boundingBox.left, xStart);
+          boundingBox.right = MAX(boundingBox.right, xEnd+1); // +1, because the coorindate we want is the crack after the right pixel
+          boundingBox.top = MIN(boundingBox.top, y);
+          boundingBox.bottom = MAX(boundingBox.bottom, y+1); // +1, because the coorindate we want is the crack after the bottom pixel
+        }
+      } // if(useU16) ... else
 
       if(boundingBox.left == s16_MAX || boundingBox.right == s16_MIN || boundingBox.top == s16_MAX || boundingBox.bottom == s16_MIN) {
         AnkiWarn("ComputeQuadrilateralsFromConnectedComponents", "Something was corrupted with the input component");
@@ -99,27 +131,49 @@ namespace Anki
       }
 
       //% 1. Compute the extreme pixels of the components, on each edge
-      //for iSubComponent = 1:size(component, 1)
-      for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++) {
-        //component(:, 1) = component(:, 1) - coordinate_top + 1;
-        //component(:, 2:3) = component(:, 2:3) - coordinate_left + 1;
-        //xStart = component(iSubComponent, 2);
-        //xEnd = component(iSubComponent, 3);
-        //y = component(iSubComponent, 1);
-        ConnectedComponentSegment currentSegment = components[iSegment];
-        currentSegment.xEnd -= boundingBox.left;
-        currentSegment.xStart -= boundingBox.left;
-        currentSegment.y -= boundingBox.top;
+      if(useU16) {
+        for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++) {
+          //component(:, 1) = component(:, 1) - coordinate_top + 1;
+          //component(:, 2:3) = component(:, 2:3) - coordinate_left + 1;
+          //xStart = component(iSubComponent, 2);
+          //xEnd = component(iSubComponent, 3);
+          //y = component(iSubComponent, 1);
+          ConnectedComponentSegment<u16> currentSegment = (*componentsU16)[iSegment];
+          currentSegment.xEnd -= boundingBox.left;
+          currentSegment.xStart -= boundingBox.left;
+          currentSegment.y -= boundingBox.top;
 
-        AnkiAssert(currentSegment.xStart >= 0);
-        for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++) {
-          edge_top[x] = MIN(edge_top[x], currentSegment.y);
-          edge_bottom[x] = MAX(edge_bottom[x], currentSegment.y);
+          AnkiAssert(currentSegment.xStart >= 0);
+          for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++) {
+            edge_top[x] = MIN(edge_top[x], currentSegment.y);
+            edge_bottom[x] = MAX(edge_bottom[x], currentSegment.y);
 
-          edge_left[currentSegment.y] = MIN(edge_left[currentSegment.y], currentSegment.xStart);
-          edge_right[currentSegment.y] = MAX(edge_right[currentSegment.y], currentSegment.xEnd);
-        } // for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++)
-      } // for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++)
+            edge_left[currentSegment.y] = MIN(edge_left[currentSegment.y], currentSegment.xStart);
+            edge_right[currentSegment.y] = MAX(edge_right[currentSegment.y], currentSegment.xEnd);
+          } // for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++)
+        } // for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++)
+      } else { // if(useU16)
+        for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++) {
+          //component(:, 1) = component(:, 1) - coordinate_top + 1;
+          //component(:, 2:3) = component(:, 2:3) - coordinate_left + 1;
+          //xStart = component(iSubComponent, 2);
+          //xEnd = component(iSubComponent, 3);
+          //y = component(iSubComponent, 1);
+          ConnectedComponentSegment<s32> currentSegment = (*componentsS32)[iSegment];
+          currentSegment.xEnd -= boundingBox.left;
+          currentSegment.xStart -= boundingBox.left;
+          currentSegment.y -= boundingBox.top;
+
+          AnkiAssert(currentSegment.xStart >= 0);
+          for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++) {
+            edge_top[x] = MIN(edge_top[x], currentSegment.y);
+            edge_bottom[x] = MAX(edge_bottom[x], currentSegment.y);
+
+            edge_left[currentSegment.y] = MIN(edge_left[currentSegment.y], currentSegment.xStart);
+            edge_right[currentSegment.y] = MAX(edge_right[currentSegment.y], currentSegment.xEnd);
+          } // for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++)
+        } // for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++)
+      } // if(useU16) ... else
 
       //#define PRINT_OUT_EDGE_LIMITS
 #ifdef PRINT_OUT_EDGE_LIMITS
