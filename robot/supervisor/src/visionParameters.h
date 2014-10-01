@@ -170,7 +170,7 @@ namespace Anki {
       struct SimulatorParameters {
 #ifdef SIMULATOR
         static const u32 FIDUCIAL_DETECTION_SPEED_HZ = 5;
-        static const u32 FACE_DETECTION_SPEED_HZ     = 3;
+        static const u32 FACE_DETECTION_SPEED_HZ     = 1;
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 60;
