@@ -56,6 +56,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/matlabInterface.h"
 #include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/hostIntrinsics_m4.h"
+#include "anki/common/robot/matrix.h"
 
 #include "anki/vision/robot/imageProcessing.h"
 
@@ -191,6 +192,114 @@ namespace Anki
           blockSize, HARRIS, k,
           scratch);
       } // CornerHarris()
+
+      Result GoodFeaturesToTrack(
+        const Array<u8> &image,
+        FixedLengthList<Point<s16> > &corners,
+        const s32 maxCorners,
+        const f32 qualityLevel,
+        const s32 blockSize,
+        const bool useHarrisDetector,
+        const f32 harrisK,
+        MemoryStack fastScratch,
+        MemoryStack slowScratch)
+      {
+        // TODO: support more
+        AnkiConditionalErrorAndReturnValue(useHarrisDetector,
+          RESULT_FAIL_INVALID_PARAMETER, "GoodFeaturesToTrack", "Only Harris suuported");
+
+        const s32 imageHeight = image.get_size(0);
+        const s32 imageWidth = image.get_size(1);
+
+        Array<f32> harrisImage(imageHeight, imageWidth, slowScratch);
+
+        AnkiConditionalErrorAndReturnValue(harrisImage.IsValid(),
+          RESULT_FAIL_OUT_OF_MEMORY, "GoodFeaturesToTrack", "Out of memory");
+
+        // Compute the harris image
+        const Result harrisResult = CornerHarris(image, harrisImage, blockSize, harrisK, slowScratch);
+
+        AnkiConditionalErrorAndReturnValue(harrisResult == RESULT_OK,
+          harrisResult, "GoodFeaturesToTrack", "Error");
+
+        FixedLengthList<f32> values(corners.get_maximumSize(), fastScratch);
+
+        AnkiConditionalErrorAndReturnValue(values.IsValid(),
+          RESULT_FAIL_OUT_OF_MEMORY, "GoodFeaturesToTrack", "Out of memory");
+
+        // Find the 3x3 local maxima
+        const Result maximaResult = ImageProcessing::LocalMaxima<f32>(harrisImage, 3, 3, corners, &values);
+
+        AnkiConditionalErrorAndReturnValue(maximaResult == RESULT_OK,
+          harrisResult, "GoodFeaturesToTrack", "Error");
+
+        // Remove values that are poor quality
+
+        const s32 numValues = values.get_size();
+        s32 numValuesNonzero = numValues;
+
+        const f32 * restrict pvalues = values.Pointer(0);
+
+        f32 maxValue = FLT_MIN;
+        for(s32 i=0; i<numValues; i++) {
+          maxValue = MAX(maxValue, values[i]);
+        }
+
+        const f32 goodThreshold = maxValue * qualityLevel;
+
+        for(s32 i=0; i<numValues; i++) {
+          if(values[i] < goodThreshold) {
+            values[i] = 0;
+            numValuesNonzero--;
+          }
+        }
+
+        //
+        // Sort the values of the maxima, and select the top maxCorners
+        //
+
+        AnkiAssert(numValuesNonzero >= 0);
+
+        if(numValuesNonzero == 0) {
+          corners.set_size(0);
+
+          return RESULT_OK;
+        }
+
+        Array<f32> sortedValues(1, values.get_size(), fastScratch);
+
+        AnkiConditionalErrorAndReturnValue(sortedValues.IsValid(),
+          RESULT_FAIL_OUT_OF_MEMORY, "GoodFeaturesToTrack", "Out of memory");
+
+        memcpy(sortedValues.Pointer(0,0), values.Pointer(0), sizeof(f32)*values.get_size());
+
+        const Result sortResult = Matrix::QuickSort<f32>(sortedValues, 1, false);
+
+        AnkiConditionalErrorAndReturnValue(sortResult == RESULT_OK,
+          harrisResult, "GoodFeaturesToTrack", "Error");
+
+        const f32 valueThreshold = MAX(1e-5f, sortedValues[0][MIN(maxCorners-1, numValues-1)]);
+
+        const f32 * restrict pValues = values.Pointer(0);
+        Point<s16> * restrict pCorners = corners.Pointer(0);
+        s32 goodIndex = 0;
+
+        // NOTE: If there are lot of items with the same value, this may not strictly pick the best values. It may also select too many on the boundary.
+        for(s32 i=0; i<numValues; i++) {
+          if(goodIndex == maxCorners) {
+            break;
+          }
+
+          if(pValues[i] >= valueThreshold) {
+            pCorners[goodIndex] = pCorners[i];
+            goodIndex++;
+          }
+        }
+
+        corners.set_size(goodIndex);
+
+        return RESULT_OK;
+      } // GoodFeaturesToTrack()
     }
   } // namespace Embedded
 } // namespace Anki

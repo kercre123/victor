@@ -81,6 +81,27 @@ GTEST_TEST(CoreTech_Vision, Harris)
 
   const char * imageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
   Array<u8> image = Array<u8>::LoadImage(imageFilename, scratchOffchip);
+
+  ASSERT_TRUE(image.IsValid());
+
+  cv::Mat imageCv;
+
+  ArrayToCvMat<u8>(image, &imageCv);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, KLT)
+
+GTEST_TEST(CoreTech_Vision, Harris)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  const char * imageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
+  Array<u8> image = Array<u8>::LoadImage(imageFilename, scratchOffchip);
   Array<f32> harrisImage(image.get_size(0), image.get_size(1), scratchOffchip);
 
   ASSERT_TRUE(AreValid(image, harrisImage));
@@ -89,23 +110,54 @@ GTEST_TEST(CoreTech_Vision, Harris)
 
   ArrayToCvMat<u8>(image, &imageCv);
 
-  //image.Show("im", false, false, false);
-
   const int blockSize = 11;
-  const double k = 0.04;
+  const double harrisK = 0.04;
 
   cv::Mat_<f32> harrisImageCv;
-  cv::cornerHarris(imageCv, harrisImageCv, blockSize, 3, k, cv::BORDER_DEFAULT);
+  cv::cornerHarris(imageCv, harrisImageCv, blockSize, 3, harrisK, cv::BORDER_DEFAULT);
 
   matlab.PutOpencvMat(imageCv, "imageCv");
   matlab.PutOpencvMat(harrisImageCv, "harrisImageCv");
 
-  const Result result = Features::CornerHarris(image, harrisImage, blockSize, static_cast<f32>(k), scratchOffchip);
 
-  ASSERT_TRUE(result == RESULT_OK);
+  const Result cornerResult = Features::CornerHarris(image, harrisImage, blockSize, static_cast<f32>(harrisK), scratchOffchip);
 
-  //harrisImage.SetZero();
+  ASSERT_TRUE(cornerResult == RESULT_OK);
+
   matlab.PutArray(harrisImage, "harrisImage");
+
+  const s32 maxCorners = 100;
+  const f32 qualityLevel = 0.3f;
+
+  FixedLengthList<Point<s16> > corners(5000, scratchHuge);
+
+  const Result trackResult = Features::GoodFeaturesToTrack(image, corners, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
+
+  ASSERT_TRUE(trackResult == RESULT_OK);
+
+  std::vector<cv::Point2f> cornersCv;
+  cv::goodFeaturesToTrack(imageCv, cornersCv, maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
+
+  cv::Mat drawnCorners(image.get_size(0), image.get_size(1), CV_8UC3);
+  cv::Mat drawnCornersCv(image.get_size(0), image.get_size(1), CV_8UC3);
+
+  matlab.EvalStringEcho("corners=zeros(0,2); cornersCv=zeros(0,2);");
+
+  for(s32 i=0; i<corners.get_size(); i++) {
+    cv::circle(drawnCorners, cv::Point(corners[i].x, corners[i].y), 2, cv::Scalar(255,0,0), -1);
+    matlab.EvalStringEcho("corners(end+1,:) = [%d,%d];", s32(corners[i].x), s32(corners[i].y));
+  }
+
+  for(s32 i=0; i<cornersCv.size(); i++) {
+    cv::circle(drawnCornersCv, cv::Point(cornersCv[i].x, cornersCv[i].y), 2, cv::Scalar(255,0,0), -1);
+    matlab.EvalStringEcho("cornersCv(end+1,:) = [%d,%d];", s32(cornersCv[i].x), s32(cornersCv[i].y));
+  }
+
+  cv::imshow("image", imageCv);
+  cv::imshow("drawnCorners", drawnCorners);
+  cv::imshow("drawnCornersCv", drawnCornersCv);
+
+  cv::waitKey();
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, LocalMaxima)
@@ -186,7 +238,7 @@ GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
   //vmi.Show(50);
 
   const char * queryImageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
-  Array<u8> queryImage(queryImageFilename, scratchHuge);
+  Array<u8> queryImage = Array<u8>::LoadImage(queryImageFilename, scratchHuge);
   //queryImage.Show("queryImage", true);
 
   Quadrilateral<f32> quad(

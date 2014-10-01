@@ -101,7 +101,8 @@ namespace Anki
       //
 
       // Find all searchHeightxsearchWidth local maxima (only 3x3 currently supported)
-      template<typename Type> Result LocalMaxima(const Array<Type> &in, const s32 searchHeight, const s32 searchWidth, FixedLengthList<Point<s16> > &points);
+      // Optionally return the values at those points
+      template<typename Type> Result LocalMaxima(const Array<Type> &in, const s32 searchHeight, const s32 searchWidth, FixedLengthList<Point<s16> > &points, FixedLengthList<Type> *values=NULL);
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki
