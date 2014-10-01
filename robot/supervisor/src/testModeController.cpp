@@ -895,7 +895,7 @@ namespace Anki {
       Result FaceTrackTestInit()
       {
         HeadController::SetDesiredAngle(0.1f);
-        return FaceTrackingController::StartTracking(FaceTrackingController::CENTERED, 500e6);
+        return FaceTrackingController::StartTracking(FaceTrackingController::CENTERED, 500);
       }
       
       Result FaceTrackTestUpdate()

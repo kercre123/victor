@@ -1536,6 +1536,33 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
+    
+    Result Robot::StartFaceTracking(u8 timeout_sec)
+    {
+      return SendStartFaceTracking(timeout_sec);
+    }
+    
+    Result Robot::StopFaceTracking()
+    {
+      return SendStopFaceTracking();
+    }
+    
+    Result Robot::SendStartFaceTracking(const u8 timeout_sec)
+    {
+      MessageFaceTracking m;
+      m.enabled = static_cast<u8>(true);
+      m.timeout_sec = timeout_sec;
+      return _msgHandler->SendMessage(_ID, m);
+    }
+    
+    Result Robot::SendStopFaceTracking()
+    {
+      MessageFaceTracking m;
+      m.enabled = static_cast<u8>(false);
+      return _msgHandler->SendMessage(_ID, m);
+    }
+    
+    
     const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D, Vec3f(50, 25, 0)),
                                                   Pose3d(0, Z_AXIS_3D, Vec3f(50, 0, 0)),
                                                   Pose3d(0, Z_AXIS_3D, Vec3f(50, -25, 0)) };

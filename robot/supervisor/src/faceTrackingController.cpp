@@ -113,7 +113,7 @@ namespace Anki {
       }
       
       
-      Result StartTracking(FaceSelectionMethod method, TimeStamp_t timeout_usec)
+      Result StartTracking(FaceSelectionMethod method, u32 timeout_sec)
       {
         Result lastResult = RESULT_OK;
        
@@ -128,7 +128,7 @@ namespace Anki {
         
         _selectionMethod = method;
         
-        _timeoutDuration_usec = timeout_usec;
+        _timeoutDuration_usec = timeout_sec * 1e6;
         
         lastResult = VisionSystem::StartDetectingFaces();
         
@@ -244,7 +244,7 @@ namespace Anki {
             // centered
             HeadController::SetDesiredAngle(tiltAngle);
             // TODO: Make velocity/acceleration values into parameters
-            const f32 turnVelocity = (panAngle.ToFloat() < 0 ? -10.f : 10.f);
+            const f32 turnVelocity = (xError_pix < 0 ? -10.f : 10.f);
             SteeringController::ExecutePointTurn(panAngle.ToFloat(),
                                                  turnVelocity, 5, -5);
             

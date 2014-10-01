@@ -28,9 +28,6 @@ namespace Anki {
     typedef enum {
       TM_NONE,
       
-      // Turns on face tracking
-      TM_FACE_TRACKING,
-      
       // Attempts to dock to a block that is placed in front of it and then place it on a block behind it.
       TM_PICK_AND_PLACE,
       
@@ -73,6 +70,9 @@ namespace Anki {
       
       // Drives all motors at max power simultaneously.
       TM_MAX_POWER_TEST,
+      
+      // Turns on face tracking
+      TM_FACE_TRACKING,
       
       TM_NUM_TESTS
     } TestMode;

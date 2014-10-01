@@ -40,7 +40,7 @@ namespace Anki {
       
       Result Init(const VisionSystem::FaceDetectionParameters& params);
 
-      Result StartTracking(FaceSelectionMethod method, TimeStamp_t timeout_usec);
+      Result StartTracking(FaceSelectionMethod method, u32 timeout_sec);
       
       Result Update();
       

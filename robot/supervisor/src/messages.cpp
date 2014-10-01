@@ -3,7 +3,9 @@
 #include "messages.h"
 #include "localization.h"
 #include "visionSystem.h"
+#include "animationController.h"
 #include "pathFollower.h"
+#include "faceTrackingController.h"
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
@@ -469,6 +471,18 @@ namespace Anki {
 
       void ProcessIMURequestMessage(const IMURequest& msg) {
         IMUFilter::RecordAndSend(msg.length_ms);
+      }
+      
+      
+      void ProcessFaceTrackingMessage(const FaceTracking& msg)
+      {
+        if(msg.enabled) {
+          PRINT("Starting face tracking with timeout = %dsec.\n", msg.timeout_sec);
+          FaceTrackingController::StartTracking(FaceTrackingController::LARGEST, msg.timeout_sec);
+        } else {
+          PRINT("Stopping face tracking.\n");
+          FaceTrackingController::Reset();
+        }
       }
       
 // ----------- Send messages -----------------

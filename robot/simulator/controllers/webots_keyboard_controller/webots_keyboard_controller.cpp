@@ -98,6 +98,8 @@ namespace Anki {
       void SendStartTestMode(TestMode mode);
       void SendIMURequest(u32 length_ms);
       void SendAnimation(AnimationID_t animId, u32 numLoops, SoundID_t soundId);
+      void SendStartFaceTracking(u8 timeout_sec);
+      void SendStopFaceTracking();
       
       void Init()
       {
@@ -159,6 +161,7 @@ namespace Anki {
         printf("         Update controller gains:  k\n");
         printf("             Cycle sound schemes:  m\n");
         printf("                 Request IMU log:  o\n");
+        printf("            Toggle face tracking:  f (Shift+f)\n");
         printf("                      Test modes:  Alt + Testmode#\n");
         printf("                Follow test plan:  t\n");
         printf("                      Print help:  ?\n");
@@ -204,6 +207,8 @@ namespace Anki {
         
         const s32 CKEY_ANIMATION_NOD = (s32)'!';
         const s32 CKEY_ANIMATION_BACK_AND_FORTH = (s32)'@';
+        
+        const s32 CKEY_TOGGLE_FACE_TRACKING = (s32)'F';
         
         int key = inputController.keyboardGetKey();
         
@@ -518,6 +523,16 @@ namespace Anki {
               break;
             }
               
+            case CKEY_TOGGLE_FACE_TRACKING:
+            {
+              if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                SendStopFaceTracking();
+              } else {
+                SendStartFaceTracking(5);
+              }
+              break;
+            }
+              
             default:
             {
               // If the last key pressed was a move wheels key, then stop wheels
@@ -805,6 +820,19 @@ namespace Anki {
         m.animationID = animId;
         m.numLoops = numLoops;
         m.soundID = soundId;
+        SendMessage(m);
+      }
+      
+      void SendStartFaceTracking(u8 timeout_sec)
+      {
+        MessageU2G_StartFaceTracking m;
+        m.timeout_sec = timeout_sec;
+        SendMessage(m);
+      }
+      
+      void SendStopFaceTracking()
+      {
+        MessageU2G_StopFaceTracking m;
         SendMessage(m);
       }
       
