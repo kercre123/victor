@@ -16,21 +16,19 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/imageProcessing.h"
 
-//#define HAVE_64_BIT_ARITHMETIC
-
 #define USE_ARM_ACCELERATION
 
 #ifndef USE_ARM_ACCELERATION
 #warning not using USE_ARM_ACCELERATION
 #endif
 
-static const s32 MAX_FILTER_HALF_WIDTH = 30;
+static const s32 MAX_FILTER_HALF_WIDTH = 64;
 
 // To normalize a sum of 1 / ((2*n+1)^2), we approximate a division as a mulitiply and shift.
 // These multiply coefficients were computed in matlab by typing:
-// n=31; bestShifts = zeros(n,1); bestMultipliers = zeros(n,1); for i=0:(n-1) [bestShifts(i+1), bestMultipliers(i+1)] = computeClosestMultiplicationShift((2*i+1)^2, 31, 8); end; toArray(bestMultipliers'); toArray(bestShifts');
-static const s32 normalizationMultiply[MAX_FILTER_HALF_WIDTH+1] = {1, 57, 41, 167, 101, 135, 97, 73, 227, 91, 149, 31, 105, 45, 39, 17, 241, 107, 191, 43, 39, 71, 129, 237, 109, 101, 187, 173, 161, 151, 141};
-static const s32 normalizationBitShifts[MAX_FILTER_HALF_WIDTH+1] = {0, 9, 10, 13, 13, 14, 14, 14, 16, 15, 16, 14, 16, 15, 15, 14, 18, 17, 18, 16, 16, 17, 18, 19, 18, 18, 19, 19, 19, 19, 19};
+// n=65; bestShifts = zeros(n,1); bestMultipliers = zeros(n,1); for i=0:(n-1) [bestShifts(i+1), bestMultipliers(i+1)] = computeClosestMultiplicationShift((2*i+1)^2, 31, 8); end; toArray(bestMultipliers'); toArray(bestShifts');
+static const s32 normalizationMultiply[MAX_FILTER_HALF_WIDTH+1] = {1, 57, 41, 167, 101, 135, 97, 73, 227, 91, 149, 31, 105, 45, 39, 17, 241, 107, 191, 43, 39, 71, 129, 237, 109, 101, 187, 173, 161, 151, 141, 33, 31, 117, 55, 13, 197, 93, 177, 21, 5, 19, 145, 139, 33, 253, 121, 29, 223, 107, 103, 99, 95, 183, 177, 85, 41, 159, 153, 37, 143, 139, 67, 65, 63};
+static const s32 normalizationBitShifts[MAX_FILTER_HALF_WIDTH+1] = {0, 9, 10, 13, 13, 14, 14, 14, 16, 15, 16, 14, 16, 15, 15, 14, 18, 17, 18, 16, 16, 17, 18, 19, 18, 18, 19, 19, 19, 19, 19, 17, 17, 19, 18, 16, 20, 19, 20, 17, 15, 17, 20, 20, 18, 21, 20, 18, 21, 20, 20, 20, 20, 21, 21, 20, 19, 21, 21, 19, 21, 21, 20, 20, 20};
 
 namespace Anki
 {
@@ -311,7 +309,8 @@ namespace Anki
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       ConnectedComponents &components,
       MemoryStack fastScratch,
-      MemoryStack slowScratch)
+      MemoryStack slowerScratch,
+      MemoryStack slowestScratch)
     {
       BeginBenchmark("ecvcs_init");
 
@@ -320,10 +319,10 @@ namespace Anki
 
       const s32 numFilterHalfWidths = filterHalfWidths.get_size();
 
-      AnkiConditionalErrorAndReturnValue(AreValid(fastScratch, slowScratch),
+      AnkiConditionalErrorAndReturnValue(AreValid(fastScratch, slowerScratch, slowestScratch),
         RESULT_FAIL_INVALID_OBJECT, "ExtractComponentsViaCharacteristicScale", "scratch is not valid");
 
-      AnkiConditionalErrorAndReturnValue(NotAliased(fastScratch, slowScratch),
+      AnkiConditionalErrorAndReturnValue(NotAliased(fastScratch, slowerScratch, slowestScratch),
         RESULT_FAIL_ALIASED_MEMORY, "ExtractComponentsViaCharacteristicScale", "fast and slow scratch buffers cannot be the same object");
 
       AnkiConditionalErrorAndReturnValue(AreValid(image, filterHalfWidths, components),
@@ -348,17 +347,19 @@ namespace Anki
 
       // TODO: choose based on amount of free memory
       if(imageWidth <= 320) {
-        integralImageHeight = 64; // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
+        integralImageHeight = MAX(2*numBorderPixels + 16, 64); // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
       } else {
         // Note: These numbers are liable to be too big to fit on the M4 efficiently
         const s32 scaleFactor = static_cast<s32>(ceilf(static_cast<f32>(imageWidth) / 320.0f));
-        integralImageHeight = 64*scaleFactor;
+        integralImageHeight = MAX(2*numBorderPixels + 16*scaleFactor, 64*scaleFactor);
       }
 
       const s32 numRowsToScroll = integralImageHeight - 2*numBorderPixels;
+      
+      AnkiAssert(numRowsToScroll > 1);
 
       // Initialize the first integralImageHeight rows of the integralImage
-      ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, slowScratch);
+      ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, slowerScratch);
       if((lastResult = integralImage.ScrollDown(image, integralImageHeight, fastScratch)) != RESULT_OK)
         return lastResult;
 
@@ -381,7 +382,7 @@ namespace Anki
 
       u8 * restrict pBinaryImageRow = binaryImageRow[0];
 
-      if((lastResult = components.Extract2dComponents_PerRow_Initialize(fastScratch, slowScratch)) != RESULT_OK)
+      if((lastResult = components.Extract2dComponents_PerRow_Initialize(fastScratch, slowerScratch, slowestScratch)) != RESULT_OK)
         return lastResult;
 
       s32 imageY = 0;
