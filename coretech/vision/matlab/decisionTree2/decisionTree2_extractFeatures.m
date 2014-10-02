@@ -15,6 +15,8 @@
 function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocationsYGrid] = decisionTree2_extractFeatures(classesList, varargin)
     %#ok<*CCAT>
     
+    entireTic = tic();
+    
     blurSigmas = [0, .005, .01, .02]; % as a fraction of the image diagonal
     maxPerturbPercent = 0.05;
     numPerturbations = 100;
@@ -23,12 +25,9 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
     probeResolutions = [128,32];
     numPadPixels = 100;
     showProbePermutations = false;
+    numThreads = 4;
     
     parseVarargin(varargin{:});
-    
-    pBar = ProgressBar('decisionTree2_extractFeatures', 'CancelButton', true);
-    pBar.showTimingInfo = true;
-    pBarCleanup = onCleanup(@()delete(pBar));
     
     corners = [0 0; 0 1; 1 0; 1 1];
     
@@ -64,77 +63,91 @@ function [labelNames, labels, featureValues, probeLocationsXGrid, probeLocations
         yPerturb{iPerturb} = yPerturb{iPerturb}(:);
     end
     
+    disp(sprintf('Computing %d perturbs, %d blurs, and %d resolutions.', numPerturbations, length(blurSigmas), length(probeResolutions)))
+    
     % Compute the perturbed probe values
-    
-    pBar.set_message(sprintf('Computing %d perturbs, %d blurs, and %d resolutions', numPerturbations, length(blurSigmas), length(probeResolutions)));
-    
-    pBar.set_increment(1/numImages);
-    pBar.set(0);
-    
-    cLabel = 1;
+    cQueue = 1;
+    workQueue = cell(length(classesList) * length(classesList(iClass).filenames), 1);
     for iClass = 1:length(classesList)
         labelNames{iClass} = classesList(iClass).labelName;
         for iFile = 1:length(classesList(iClass).filenames)
-            img = imreadAlphaHelper(classesList(iClass).filenames{iFile}); 
-
-            imgPadded = padarray(img, [numPadPixels,numPadPixels], 255);
-            
-            [nrows,ncols,~] = size(img);
-            
-            for iBlur = 1:numBlurs
-                imgPaddedAndBlurred = imgPadded;
-                
-                if blurSigmas(iBlur) > 0
-                    blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
-                    imgPaddedAndBlurred = separable_filter(imgPadded, gaussian_kernel(blurSigma));
-                end
-                
-                for iResolution = 1:numResolutions
-                    imgPaddedAndBlurredResized = imresize(imresize(imgPaddedAndBlurred, [probeResolutions(iResolution),probeResolutions(iResolution)]), size(imgPaddedAndBlurred), 'nearest');
-                    
-                    for iPerturb = 1:numPerturbations
-                        % Probe location assume the left edge of the image is 0 and the right edge is 1
-                        imageCoordsX = round(xPerturb{iPerturb} * ncols + 0.5 + numPadPixels);
-                        imageCoordsY = round(yPerturb{iPerturb} * nrows + 0.5 + numPadPixels);
-                        
-                        inds = find(imageCoordsX >= 1 & imageCoordsX <= (ncols+2*numPadPixels) & imageCoordsY >= 1 & imageCoordsY <= (nrows+2*numPadPixels));
-                        
-                        % If the perturbations are too large relative to
-                        % the padding, some indexes will be out of bounds.
-                        % The solution is to increase the padding.
-                        assert(length(inds) == length(imageCoordsX));
-                        
-                        % Stripe the data per-probe location
-                        for iFeature = 1:length(imageCoordsY)
-                            featureValues(iFeature, cLabel) = imgPaddedAndBlurredResized(imageCoordsY(iFeature), imageCoordsX(iFeature));
-                        end
-                        
-                        if showProbePermutations
-                            imshows({imgPaddedAndBlurredResized((1+numPadPixels):(end-numPadPixels), (1+numPadPixels):(end-numPadPixels)), imresize(reshape(featureValuesArray(cLabel, :), [length(probeLocationsY), length(probeLocationsX)]), size(img), 'nearest')});
-                            pause(0.05);
-                        end
-                        
-                        labels(cLabel) = iClass;
-                        cLabel = cLabel + 1;
-                    end % for iPerturb = 1:numPerturbations
-                end % for iResolution = 1:length(numResolutions)
-            end % for iBlur = 1:numBlurs
-            
-            pBar.increment();
+            curWorkItem.iClass = iClass;
+            curWorkItem.iFile = iFile;
+            workQueue{cQueue} = curWorkItem;
+            cQueue = cQueue + 1;
         end % for iFile = 1:length(classesList(iClass).filenames)
     end % for iClass = 1:length(classesList)
+    
+    parameters.xPerturb = xPerturb;
+    parameters.yPerturb = yPerturb;
+    parameters.classesList = classesList;
+    parameters.numBlurs = numBlurs;
+    parameters.numResolutions = numResolutions;
+    parameters.numPerturbations = numPerturbations;
+    parameters.numPadPixels = numPadPixels;
+    parameters.blurSigmas = blurSigmas;
+    parameters.probeResolutions = probeResolutions;
+    parameters.numFeatures = length(probeLocationsXGrid);
+
+    if numThreads == 1
+        [labels, featureValues] = decisionTree2_extractFeatures_worker(workQueue, parameters);
+    else % if numThreads == 1
+        
+        if ispc()
+            temporaryDirectory = 'c:/tmp/';
+        elseif ismac()
+            temporaryDirectory = '~/tmp/';
+            
+%             % Create a ramdisk
+%             
+%             numMegabytes = round( 10 + 1.1 * ceil((numel(featureValues) + numel(labels) * 4) / (1024*1024)) );
+%             
+%             featureValues = zeros(length(probeLocationsXGrid), numLabels, 'uint8');
+%             
+%             system('diskutil unmount /Volumes/MatlabRamDisk');
+%             
+%             command = ['diskutil erasevolume HFS+ ''MatlabRamDisk'' `hdiutil attach -nomount ram://', sprintf('%d', numMegabytes*2048), '`'];
+%             
+%             system(command);
+%             
+%             temporaryDirectory = '/Volumes/MatlabRamDisk/';
+        end
+        
+        allInputFilename = [temporaryDirectory, '/extractFeaturesAllInput.mat'];
+        outputFilenamePattern = [temporaryDirectory, '/extractFeaturesAllOutput%d.mat'];
+        
+        savefast(allInputFilename, 'parameters');
+        
+        matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , '[localLabels, localFeatureValues] = decisionTree2_extractFeatures_worker(localWorkQueue, parameters); savefast(sprintf(''', outputFilenamePattern,''', iThread), ''localLabels'', ''localFeatureValues'');'];
+        
+        runParallelProcesses(numThreads, workQueue, temporaryDirectory, matlabCommandString, false);
+        
+        cLabel = 1;
+        for iThread = 0:(numThreads-1)
+            outputFilename = sprintf(outputFilenamePattern, iThread);
+            
+            load(outputFilename);
+            delete(outputFilename);
+            
+            numLocalLabels = length(localLabels);
+            
+            labels(cLabel:(cLabel+numLocalLabels-1)) = localLabels;
+            featureValues(:, cLabel:(cLabel+numLocalLabels-1)) = localFeatureValues;
+            
+            cLabel = cLabel + numLocalLabels;
+        end
+        
+        if ismac()
+%             pause(2);
+%             system('diskutil unmount /Volumes/MatlabRamDisk');
+            delete(allInputFilename);
+        else
+            delete(allInputFilename);
+        end
+        
+    end % if numThreads == 1 ... else
+    
+    disp(sprintf('Completed %d perturbs, %d blurs, and %d resolutions in %f seconds.', numPerturbations, length(blurSigmas), length(probeResolutions), toc(entireTic)))
+    
     %     keyboard
 end % decisionTree2_extractFeatures()
-
-function img = imreadAlphaHelper(fname)
-    
-    [img, ~, alpha] = imread(fname);
-    img = mean(im2double(img),3);
-    img(alpha < .5) = 1;
-    
-    threshold = (max(img(:)) + min(img(:)))/2;
-    %     img = bwpack(img > threshold);
-    img = 255*uint8(img > threshold);
-    % img = single(img > threshold);
-    
-end % imreadAlphaHelper()

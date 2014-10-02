@@ -126,6 +126,13 @@ struct I2CInterface
 };
 
 /* Goes in HAL
+enum sharpID
+{
+  left,
+  forward,
+  right
+};
+
 struct ProximityValues
 {
   uint16_t    left;
@@ -298,16 +305,25 @@ namespace Anki
         return;
       }
 
+
+      static void SensorWakeup(I2CInterface *iface)
+      {
+        data_write(iface, 0x00,  OP1_PS | OP3); // PS mode and wakeup (operation)!
+      }
+
+
       static void SensorInit(I2CInterface *iface)
       {
-        data_write(iface, 0x01, PRST_4 | RES_A_14BIT | RANGE_A_X8);
-        data_write(iface, 0x02, INTTYPE_LEVEL | RES_P_10BIT | RANGE_P_X8);
-        data_write(iface, 0x03, INTVAL_0 | IS_130MA | PIN_PROX );
+        data_write(iface, 0x01, PRST_1 | RES_A_14BIT | RANGE_A_X8);
+        data_write(iface, 0x02, INTTYPE_PULSE | RES_P_10BIT | RANGE_P_X8);
+        //data_write(iface, 0x03, INTVAL_0 | IS_130MA | PIN_PROX );
+        data_write(iface, 0x03, INTVAL_0 | IS_130MA | PIN_FLAG_P );
         data_write(iface, PL_LOW, 0x0F); // Set proximity sensor low threshold
         data_write(iface, PL_HIGH, 0x00);
         data_write(iface, PH_LOW, 0x0F); // Set proximity sensor high threshold
         data_write(iface, PH_HIGH, 0x00); 
-        data_write(iface, 0x00, OP3 | OP2 | OP1_PS); // Enable sensor in PS mode
+        //data_write(iface, 0x00, OP3 | OP2 | OP1_PS); // Enable sensor in PS mode
+        data_write(iface, 0x00,  OP1_PS); // Enable sensor in PS mode, auto-shutdown, currently in shutdown
       }
 
 
@@ -315,26 +331,29 @@ namespace Anki
       {
        
         // Configure sharp sensors
-        IRLeft.ADDR_SLAVE_W       =   ADDR_SLAVE_W_L;
-        IRLeft.ADDR_SLAVE_R       =   ADDR_SLAVE_R_L;
-        IRLeft.GPIO_SCL           =   GPIO_SCL;
-        IRLeft.GPIO_SDA           =   GPIO_SDA1;
-        IRLeft.PIN_SCL            =   PIN_SCL;
-        IRLeft.PIN_SDA            =   PIN_SDA1;
+        // forward
+        IRForward.ADDR_SLAVE_W       =   ADDR_SLAVE_W_L;
+        IRForward.ADDR_SLAVE_R       =   ADDR_SLAVE_R_L;
+        IRForward.GPIO_SCL           =   GPIO_SCL;
+        IRForward.GPIO_SDA           =   GPIO_SDA1;
+        IRForward.PIN_SCL            =   PIN_SCL;
+        IRForward.PIN_SDA            =   PIN_SDA1;
         
-        IRForward.ADDR_SLAVE_W    =   ADDR_SLAVE_W_L;
-        IRForward.ADDR_SLAVE_R    =   ADDR_SLAVE_R_L;
-        IRForward.GPIO_SCL        =   GPIO_SCL;
-        IRForward.GPIO_SDA        =   GPIO_SDA2;
-        IRForward.PIN_SCL         =   PIN_SCL;
-        IRForward.PIN_SDA         =   PIN_SDA2;
+        // right
+        IRRight.ADDR_SLAVE_W    =   ADDR_SLAVE_W_L;
+        IRRight.ADDR_SLAVE_R    =   ADDR_SLAVE_R_L;
+        IRRight.GPIO_SCL        =   GPIO_SCL;
+        IRRight.GPIO_SDA        =   GPIO_SDA2;
+        IRRight.PIN_SCL         =   PIN_SCL;
+        IRRight.PIN_SDA         =   PIN_SDA2;
         
-        IRRight.ADDR_SLAVE_W      =   ADDR_SLAVE_W_H;
-        IRRight.ADDR_SLAVE_R      =   ADDR_SLAVE_R_H;
-        IRRight.GPIO_SCL          =   GPIO_SCL;
-        IRRight.GPIO_SDA          =   GPIO_SDA1;
-        IRRight.PIN_SCL           =   PIN_SCL;
-        IRRight.PIN_SDA           =   PIN_SDA1;
+        // left
+        IRLeft.ADDR_SLAVE_W      =   ADDR_SLAVE_W_H;
+        IRLeft.ADDR_SLAVE_R      =   ADDR_SLAVE_R_H;
+        IRLeft.GPIO_SCL          =   GPIO_SCL;
+        IRLeft.GPIO_SDA          =   GPIO_SDA1;
+        IRLeft.PIN_SCL           =   PIN_SCL;
+        IRLeft.PIN_SDA           =   PIN_SDA1;
         
         
         // Enable GPIO clocks
@@ -361,6 +380,13 @@ namespace Anki
         GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_Init(GPIOB, &GPIO_InitStructure); 
+        
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;   // test port pin
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_Init(GPIOB, &GPIO_InitStructure); 
 
         GPIO_InitStructure.GPIO_Pin = PIN_INT;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
@@ -368,6 +394,31 @@ namespace Anki
         GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
         GPIO_Init(GPIOF, &GPIO_InitStructure);     
+#if 0
+        // Set for 250 kHz clk signal. 89/1 prescaleer/period
+        TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+        RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM7, ENABLE);
+        TIM_TimeBaseStructure.TIM_Prescaler = 89;
+        TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+        TIM_TimeBaseStructure.TIM_Period = 0x0001;
+        TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+        TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+        TIM_TimeBaseInit(TIM7, &TIM_TimeBaseStructure);
+          
+      //(#) Enable the NVIC if you need to generate the update interrupt.   
+      //(#) Enable the corresponding interrupt using the function TIM_ITConfig(TIMx, TIM_IT_Update) 
+
+        // Route interrupt
+        NVIC_InitTypeDef NVIC_InitStructure;
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_InitStructure.NVIC_IRQChannel = TIM7_IRQn ;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  // ?
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; // ?
+        NVIC_Init(&NVIC_InitStructure);      
+        TIM_ITConfig(TIM7, TIM_IT_Update, ENABLE);
+        TIM_Cmd(TIM7, ENABLE);
+  #endif   
+        
 
         MicroWait(1000);
           
@@ -376,19 +427,60 @@ namespace Anki
         SensorInit(&IRRight);
       }
       
-      void GetProximity(ProximityValues *prox)
+      // Call me once per main loop iteration
+      /*
+      - Reads a sensor value
+      - Wakes up the next sensor to be read on the next call (~5ms later)
+      - The first 3 readings will be junk
+      */
+      sharpID GetProximity(ProximityValues *prox)
       {
-            prox->left = (data_read(&IRLeft, D2_HIGH) & 0xFF) << 8 | (data_read(&IRLeft, D2_LOW) & 0xFF);
+        static int proxID = IRleft;
+        switch(proxID)
+        {
+          case IRforward:
             prox->forward = (data_read(&IRForward, D2_HIGH) & 0xFF) << 8 | (data_read(&IRForward, D2_LOW) & 0xFF);
+            SensorWakeup(&IRLeft);
+            proxID = IRleft;
+            return IRforward;
+            break;
+            
+          case IRleft:
+            prox->left = (data_read(&IRLeft, D2_HIGH) & 0xFF) << 8 | (data_read(&IRLeft, D2_LOW) & 0xFF);
+            SensorWakeup(&IRRight);
+            proxID = IRright;
+            return IRleft;
+            break;
+          
+          case IRright:
             prox->right = (data_read(&IRRight, D2_HIGH) & 0xFF) << 8 | (data_read(&IRRight, D2_LOW) & 0xFF);
-        
-        // TEMP: Rewiring for prototype
-        u16 temp = prox->left;
-        prox->left = prox->right;
-        prox->right = prox->forward;
-        prox->forward = temp;
-      }
-      
+            SensorWakeup(&IRForward);
+            proxID = IRforward;
+            return IRright;
+            break;
+        }
+      }  
     }
   }
 }
+
+// XXX TODO: For more speed, bit bang I2C on interrupt instead of MicroWait
+
+#if 0
+extern "C" void TIM7_IRQHandler(void)
+{
+  TIM7->SR = 0;        // Reset interrupt flag
+  static int state = 0;
+
+  if(state == 0)
+  {
+    state = 1;
+    GPIO_SET(GPIOB, GPIO_Pin_11);
+  }
+  else
+  {
+    state = 0;
+    GPIO_RESET(GPIOB, GPIO_Pin_11);
+  }
+}
+#endif

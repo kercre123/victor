@@ -22,40 +22,129 @@ namespace Anki
   namespace Embedded
   {
     // A 1d, run-length encoded piece of a 2d component
-    class ConnectedComponentSegment
+    // The type is for storing the ID. u16 is enough for QVGA, but VGA and above need s32
+    template<typename Type> class ConnectedComponentSegment
     {
     public:
       // xStart, xEnd, y use array indexes, meaning the first pixel is at (0,0), not (0.5,0.5) like true coordinates
       s16 xStart, xEnd, y;
-      u16 id;
+      Type id;
 
       ConnectedComponentSegment();
 
-      ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y = -1, const u16 id = 0);
+      ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y = -1, const Type id = 0);
+
+      // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
+      // The ordering of components is first by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
+      // TODO: Doublecheck that this is correct for corner cases
+      static inline s64 Compare(const ConnectedComponentSegment<Type> &a, const ConnectedComponentSegment<Type> &b);
 
       void Print() const;
 
       bool operator== (const ConnectedComponentSegment &component2) const;
     }; // class ConnectedComponentSegment
 
-    // A ConnectedComponents class holds a list of ConnectedComponentSegment objects
+    // Template for ConnectedComponents. See ConnectedComponents for documentation.
+    template<typename Type> class ConnectedComponentsTemplate
+    {
+    public:
+
+      static Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment<Type> > &extractedComponents);
+
+      ConnectedComponentsTemplate();
+
+      ConnectedComponentsTemplate(const Type maxComponentSegments, const s16 maxImageWidth, MemoryStack &memory);
+
+      Result Extract2dComponents_FullImage(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, MemoryStack scratch);
+
+      Result Extract2dComponents_PerRow_Initialize(MemoryStack &fastMemory, MemoryStack &slowerMemory, MemoryStack &slowestMemory);
+      Result Extract2dComponents_PerRow_NextRow(const u8 * restrict binaryImageRow, const s32 imageWidth, const s16 whichRow, const s16 minComponentWidth, const s16 maxSkipDistance);
+      Result Extract2dComponents_PerRow_Finalize();
+
+      Result SortConnectedComponentSegments();
+
+      Result SortConnectedComponentSegmentsById(MemoryStack scratch);
+
+      Result CompressConnectedComponentSegmentIds(MemoryStack scratch);
+
+      Result ComputeComponentSizes(FixedLengthList<s32> &componentSizes);
+
+      Result ComputeComponentCentroids(FixedLengthList<Point<s16> > &componentCentroids, MemoryStack scratch);
+
+      Result ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16> > &componentBoundingBoxes);
+
+      Result ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments);
+
+      Result InvalidateSmallOrLargeComponents(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch);
+
+      Result InvalidateSolidOrSparseComponents(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch);
+
+      Result InvalidateFilledCenterComponents_shrunkRectangle(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch);
+
+      Result InvalidateFilledCenterComponents_hollowRows(const f32 minHollowRatio, MemoryStack scratch);
+
+      Result PushBack(const ConnectedComponentSegment<Type> &value);
+
+      // Note that this is a const-only accessor function. The ConnectedComponets class keeps a lot
+      // of tabs on sorting and maximumId and such, so no one else should be directly modifying the
+      // buffers.
+      inline const ConnectedComponentSegment<Type>* Pointer(const s32 index) const;
+      inline const ConnectedComponentSegment<Type>& operator[](const s32 index) const;
+
+      bool IsValid() const;
+
+      Result Print() const;
+
+      Type get_maximumId() const;
+
+      s32 get_size() const;
+
+      bool get_isSortedInId() const;
+      bool get_isSortedInY() const;
+      bool get_isSortedInX() const;
+
+    protected:
+      enum State
+      {
+        STATE_INVALID,
+        STATE_CONSTRUCTED,
+        STATE_INITIALIZED,
+        STATE_FINALIZED
+      };
+
+      FixedLengthList<ConnectedComponentSegment<Type> > components;
+      FixedLengthList<ConnectedComponentSegment<Type> > currentComponents1d;
+      FixedLengthList<ConnectedComponentSegment<Type> > previousComponents1d;
+      FixedLengthList<ConnectedComponentSegment<Type> > newPreviousComponents1d;
+      FixedLengthList<Type> equivalentComponents;
+
+      State curState;
+
+      bool isSortedInId;
+      bool isSortedInY;
+      bool isSortedInX;
+
+      Type maximumId;
+      s32 maxImageWidth;
+      s32 maxComponentSegments;
+
+      // Iterate through components, and update the maximum id
+      Result FindMaximumId();
+    }; // class ConnectedComponentsTemplate
+
+    // A ConnectedComponents class holds a list of ConnectedComponentSegment<Type> objects
     // It can incrementally parse an input binary image per-row, updating its global list as it goes
     // It also contains various utilities to remove poor-quality components
     class ConnectedComponents
     {
     public:
-      // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
-      // The ordering of components is first by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
-      // TODO: Doublecheck that this is correct for corner cases
-      static inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b);
-
-      static Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents);
 
       ConnectedComponents();
 
       // Constructor for a ConnectedComponents, pointing to user-allocated MemoryStack
       // The memory should remain valid for the entire life of the object
-      ConnectedComponents(const u16 maxComponentSegments, const u16 maxImageWidth, MemoryStack &memory);
+      ConnectedComponents(const s32 maxComponentSegments, const s16 maxImageWidth, MemoryStack &memory); //< This default constructor creates a u16 object
+      ConnectedComponents(const s32 maxComponentSegments, const s16 maxImageWidth, const bool useU16, MemoryStack &memory);
 
       // Extract 2d connected components from binaryImage All extracted components are stored in a
       // single list of ComponentSegments
@@ -68,7 +157,7 @@ namespace Anki
       // Extract2dComponents_PerRow_Finalize() is called. It does not have to be in the same
       // location as the memory used by the constructor
       // Note: fastMemory and slowMemory can be the same object pointing to the same memory
-      Result Extract2dComponents_PerRow_Initialize(MemoryStack &fastMemory, MemoryStack &slowMemory);
+      Result Extract2dComponents_PerRow_Initialize(MemoryStack &fastMemory, MemoryStack &slowerMemory, MemoryStack &slowestMemory);
       Result Extract2dComponents_PerRow_NextRow(const u8 * restrict binaryImageRow, const s32 imageWidth, const s16 whichRow, const s16 minComponentWidth, const s16 maxSkipDistance);
       Result Extract2dComponents_PerRow_Finalize();
 
@@ -78,7 +167,7 @@ namespace Anki
 
       // Sort the components by id. This will retain the original ordering as well, so if the
       // components are already sorted in y, the output of this method will be sorted in id and y.
-      // Requires numValidComponentSegments*sizeof(ConnectedComponentSegment) bytes of scratch
+      // Requires numValidComponentSegments*sizeof(ConnectedComponentSegment<u16>) bytes of scratch
       Result SortConnectedComponentSegmentsById(MemoryStack scratch);
 
       // The list of components may have unused ids. This function compresses the set of ids, so that
@@ -115,7 +204,7 @@ namespace Anki
       Result ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments);
 
       // Goes through the list components, and computes the number of pixels for each.
-      // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment with that id will have their ids set to zero
+      // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment<u16> with that id will have their ids set to zero
       //
       // For a ConnectedComponent that has a maximum id of N, this function requires
       // 4n + 4 bytes of scratch.
@@ -123,7 +212,7 @@ namespace Anki
 
       // Goes through the list components, and computes the "solidness", which is the ratio of
       // "numPixels / (boundingWidth*boundingHeight)". For any componentId with that is too solid or
-      // sparse (opposite of solid), all ConnectedComponentSegment with that id will have their ids
+      // sparse (opposite of solid), all ConnectedComponentSegment<u16> with that id will have their ids
       // set to zero
       //
       // The SQ26.5 parameter sparseMultiplyThreshold is set so that a component is invalid if
@@ -165,53 +254,31 @@ namespace Anki
       // TODO: what is a reasonable value? 1.0?
       Result InvalidateFilledCenterComponents_hollowRows(const f32 minHollowRatio, MemoryStack scratch);
 
-      Result PushBack(const ConnectedComponentSegment &value);
-
-      // Note that this is a const-only accessor function. The ConnectedComponets class keeps a lot
-      // of tabs on sorting and maximumId and such, so no one else should be directly modifying the
-      // buffers.
-      inline const ConnectedComponentSegment* Pointer(const s32 index) const;
-      inline const ConnectedComponentSegment& operator[](const s32 index) const;
-
       bool IsValid() const;
 
       Result Print() const;
 
-      u16 get_maximumId() const;
+      s32 get_maximumId() const;
 
       s32 get_size() const;
+
+      bool get_useU16() const;
 
       bool get_isSortedInId() const;
       bool get_isSortedInY() const;
       bool get_isSortedInX() const;
 
+      const ConnectedComponentsTemplate<u16>* get_componentsU16() const;
+      const ConnectedComponentsTemplate<s32>* get_componentsS32() const;
+
+      ConnectedComponentsTemplate<u16>* get_componentsU16();
+      ConnectedComponentsTemplate<s32>* get_componentsS32();
+
     protected:
-      enum State
-      {
-        STATE_INVALID,
-        STATE_CONSTRUCTED,
-        STATE_INITIALIZED,
-        STATE_FINALIZED
-      };
-
-      FixedLengthList<ConnectedComponentSegment> components;
-      FixedLengthList<ConnectedComponentSegment> currentComponents1d;
-      FixedLengthList<ConnectedComponentSegment> previousComponents1d;
-      FixedLengthList<ConnectedComponentSegment> newPreviousComponents1d;
-      FixedLengthList<u16> equivalentComponents;
-
-      State curState;
-
-      bool isSortedInId;
-      bool isSortedInY;
-      bool isSortedInX;
-
-      u16 maximumId;
-      s32 maxImageWidth;
-      s32 maxComponentSegments;
-
-      // Iterate through components, and update the maximum id
-      Result FindMaximumId();
+      // Only one of these classes will be initialized, based on the constructor
+      bool useU16;
+      ConnectedComponentsTemplate<u16> componentsU16;
+      ConnectedComponentsTemplate<s32> componentsS32;
     }; // class ConnectedComponents
   } // namespace Embedded
 } // namespace Anki

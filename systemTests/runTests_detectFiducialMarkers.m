@@ -35,7 +35,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     
     % Compute the accuracy for each test type (matlab-with-refinement, c-with-matlab-quads, etc.), and each set of parameters
     imageSize = [240,320];
-    minSideLength = round(0.03*max(imageSize(1),imageSize(2)));
+    minSideLength = round(0.01*max(imageSize(1),imageSize(2)));
     maxSideLength = round(0.97*min(imageSize(1),imageSize(2)));
     
     algorithmParameters.scaleImage_thresholdMultiplier = 1.0;
@@ -61,32 +61,32 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParameters.showImageDetectionWidth = 640;
     algorithmParameters.showImageDetections = false;
     
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.extractionFunctionName = 'c-with-refinement';
-    [resultsData_overall_cWithRefinement, resultsDirectory_curTime] = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-    disp(sprintf('resultsData_overall_cWithRefinement = %f', resultsData_overall_cWithRefinement.percentQuadsExtracted));
-    
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.refine_quadRefinementIterations = 0;
-    algorithmParametersN.extractionFunctionName = 'c-no-refinement';
-    resultsData_overall_cNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-    disp(sprintf('resultsData_overall_cNoRefinement = %f', resultsData_overall_cNoRefinement.percentQuadsExtracted));
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.extractionFunctionName = 'c-with-refinement';
+%     [resultsData_overall_cWithRefinement, resultsDirectory_curTime] = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+%     disp(sprintf('resultsData_overall_cWithRefinement = %f', resultsData_overall_cWithRefinement.percentQuadsExtracted));
+%     
+%     algorithmParametersN = algorithmParameters;
+%     algorithmParametersN.refine_quadRefinementIterations = 0;
+%     algorithmParametersN.extractionFunctionName = 'c-no-refinement';
+%     resultsData_overall_cNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+%     disp(sprintf('resultsData_overall_cNoRefinement = %f', resultsData_overall_cNoRefinement.percentQuadsExtracted));
     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.useMatlabForAll = true;
-    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-08-19_noGrayvalues_fullTree.mat'));
+    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-09-10_3000examples.mat'));
     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-altTree';
     resultsData_overall_matlabWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-    disp(sprintf('resultsData_overall_matlabWithRefinement = %f', resultsData_overall_matlabWithRefinement.percentQuadsExtracted));
+    disp(sprintf('resultsData_overall_matlabWithRefinement_altTree = %f', resultsData_overall_matlabWithRefinement.percentQuadsExtracted));
     
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.useMatlabForAll = true;
       
-    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-08-19_noGrayvalues_fullTree.mat'));
+    algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-09-10_3000examples.mat'));
     algorithmParametersN.refine_quadRefinementIterations = 0;
     algorithmParametersN.extractionFunctionName = 'matlab-no-refinement-altTree';
     resultsData_overall_matlabNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-    disp(sprintf('resultsData_overall_matlabNoRefinement = %f', resultsData_overall_matlabNoRefinement.percentQuadsExtracted));
+    disp(sprintf('resultsData_overall_matlabNoRefinement_altTree = %f', resultsData_overall_matlabNoRefinement.percentQuadsExtracted));
 
     algorithmParametersN = algorithmParameters;
     algorithmParametersN.useMatlabForAll = true;
