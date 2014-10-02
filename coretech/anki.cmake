@@ -90,6 +90,7 @@ set(OPENCV_LIBS
   opencv_highgui
   opencv_calib3d
   opencv_objdetect
+  opencv_video
 )
 
 fix_opencv_lib_names(OPENCV_LIBS)

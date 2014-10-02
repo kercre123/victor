@@ -59,6 +59,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <fstream>
 #endif
 
+#include "opencv2/video/tracking.hpp"
+
 using namespace Anki;
 using namespace Anki::Embedded;
 
@@ -71,22 +73,42 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
 
-GTEST_TEST(CoreTech_Vision, Harris)
+GTEST_TEST(CoreTech_Vision, KLT)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
 
-  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
 
-  const char * imageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
-  Array<u8> image = Array<u8>::LoadImage(imageFilename, scratchOffchip);
+  Array<u8> image1 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame23.png", scratchHuge);
+  Array<u8> image2 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame24.png", scratchHuge);
 
-  ASSERT_TRUE(image.IsValid());
+  ASSERT_TRUE(AreValid(image1, image2));
 
-  cv::Mat imageCv;
+  cv::Mat image1Cv;
+  cv::Mat image2Cv;
 
-  ArrayToCvMat<u8>(image, &imageCv);
+  ArrayToCvMat<u8>(image1, &image1Cv);
+  ArrayToCvMat<u8>(image2, &image2Cv);
+
+  std::vector<cv::Point2f> points[2];
+
+  const s32 maxCorners = 100;
+  const f32 qualityLevel = 0.3f;
+
+  cv::goodFeaturesToTrack(image1Cv, points[0], maxCorners, 0.01, 10, cv::Mat(), 3, 0, 0.04);
+
+  cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
+
+  cv::Size winSize(31,31);
+
+  std::vector<uchar> status;
+  std::vector<float> err;
+
+  calcOpticalFlowPyrLK(image1Cv, image2Cv, points[0], points[1], status, err, winSize,
+    3, termcrit, 0, 0.001);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, KLT)
@@ -118,7 +140,6 @@ GTEST_TEST(CoreTech_Vision, Harris)
 
   matlab.PutOpencvMat(imageCv, "imageCv");
   matlab.PutOpencvMat(harrisImageCv, "harrisImageCv");
-
 
   const Result cornerResult = Features::CornerHarris(image, harrisImage, blockSize, static_cast<f32>(harrisK), scratchOffchip);
 

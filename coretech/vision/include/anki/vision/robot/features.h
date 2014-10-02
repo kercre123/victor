@@ -66,23 +66,28 @@ namespace Anki
   {
     namespace Features
     {
-      //Result goodFeaturesToTrack(
-      //  const Array<u8> &image,
-      //  FixedLengthList<f32> &corners,
-      //  const s32 maxCorners,
-      //  const f32 qualityLevel,
-      //  const s32 blockSize = 3,
-      //  const bool useHarrisDetector = false,
-      //  const f32 k = 0.04);
-
       // Compute the Harris corner metric, per-pixel
-      // Similar output to the OpenCV cv::cornerHarris(), except not scaled (divide the outputs by the max, and they are similar)
+      // Similar to OpenCV cv::cornerHarris(), except not scaled (divide the outputs by the max, and they are similar)
       Result CornerHarris(
         const Array<u8> &src,
         Array<f32> &dst,
         const s32 blockSize,
         const f32 k,
         MemoryStack scratch);
+
+      // Compute the best corner points (currently only Harris is supported)
+      // Similar to OpenCV cv::goodFeaturesToTrack, with minDistance == 0
+      // WARNING: corners must be big enough to hold all candidate corners, not just maxCorners
+      Result GoodFeaturesToTrack(
+        const Array<u8> &image,
+        FixedLengthList<Point<s16> > &corners,
+        const s32 maxCorners,
+        const f32 qualityLevel,
+        const s32 blockSize,
+        const bool useHarrisDetector,
+        const f32 harrisK,
+        MemoryStack fastScratch,
+        MemoryStack slowScratch);
     }
   } // namespace Embedded
 } //namespace Anki
