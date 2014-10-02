@@ -104,6 +104,13 @@ namespace Anki
       // Returns the number of values set
       s32 Set(const Type * const values, const s32 numValues);
 
+      // Read in the input, then cast it to this object's type
+      //
+      // WARNING:
+      // This should be kept explicit, to prevent accidental casting between different datatypes.
+      template<typename InType> s32 SetCast(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true);
+      //template<typename InType> s32 SetCast(const InType * const values, const s32 numValues); // TODO: implement
+
       // Get the raw Array from the Slice. This is mainly useful for interfacing with functions that
       // don't support the full ArraySlice type, and should be used with caution.
       Array<Type>& get_array();

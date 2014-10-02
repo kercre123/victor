@@ -98,72 +98,7 @@ namespace Anki
 
     template<typename Type> s32 ArraySlice<Type>::Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose)
     {
-      AnkiConditionalErrorAndReturnValue(AreValid(*this, input),
-        0, "ArraySlice<Type>::Set", "Invalid objects");
-
-      AnkiConditionalErrorAndReturnValue(this->get_array().get_buffer() != input.get_array().get_buffer(),
-        0, "ArraySlice<Type>::Set", "Arrays must be in different memory locations");
-
-      ArraySliceLimits_in1_out1<s32> limits(
-        input.get_ySlice(), input.get_xSlice(), input.get_isTransposed(),
-        this->get_ySlice(), this->get_xSlice());
-
-      if(!limits.isValid) {
-        if(automaticTranspose) {
-          // If we're allowed to transpose, give it another shot
-          limits = ArraySliceLimits_in1_out1<s32> (input.get_ySlice(), input.get_xSlice(), !input.get_isTransposed(), this->get_ySlice(), this->get_xSlice());
-
-          if(!limits.isValid) {
-            AnkiError("ArraySlice<Type>::Set", "Subscripted assignment dimension mismatch");
-            return 0;
-          }
-        } else {
-          AnkiError("ArraySlice<Type>::Set", "Subscripted assignment dimension mismatch");
-          return 0;
-        }
-      }
-
-      Array<Type> &out1Array = this->get_array();
-      const Array<Type> &in1Array = input.get_array();
-
-      if(limits.isSimpleIteration) {
-        // If the input isn't transposed, we will do the maximally efficient loop iteration
-
-        for(s32 y=0; y<limits.ySize; y++) {
-          const Type * restrict pIn1 = in1Array.Pointer(limits.in1Y, 0);
-          Type * restrict pOut1 = out1Array.Pointer(limits.out1Y, 0);
-
-          limits.OuterIncrementTop();
-
-          for(s32 x=0; x<limits.xSize; x++) {
-            pOut1[limits.out1X] = pIn1[limits.in1X];
-
-            limits.out1X += limits.out1_xInnerIncrement;
-            limits.in1X += limits.in1_xInnerIncrement;
-          }
-
-          limits.OuterIncrementBottom();
-        }
-      } else {
-        for(s32 y=0; y<limits.ySize; y++) {
-          Type * restrict pOut1 = out1Array.Pointer(limits.out1Y, 0);
-
-          limits.OuterIncrementTop();
-
-          for(s32 x=0; x<limits.xSize; x++) {
-            const Type pIn1 = *in1Array.Pointer(limits.in1Y, limits.in1X);
-
-            pOut1[limits.out1X] = pIn1;
-
-            limits.out1X += limits.out1_xInnerIncrement;
-            limits.in1Y += limits.in1_yInnerIncrement;
-          }
-
-          limits.OuterIncrementBottom();
-        }
-      }
-
-      return limits.ySize*limits.xSize;
+      return this->SetCast<Type>(input, automaticTranspose);
     }
 
     template<typename Type> s32 ArraySlice<Type>::Set(const LinearSequence<Type> &input)
@@ -227,6 +162,76 @@ namespace Anki
       AnkiAssert(ci == limits.rawIn1Limits.ySize * limits.rawIn1Limits.xSize);
 
       return limits.rawIn1Limits.xSize*limits.rawIn1Limits.ySize;
+    }
+
+    template<typename Type> template<typename InType> s32 ArraySlice<Type>::SetCast(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true)
+    {
+      AnkiConditionalErrorAndReturnValue(AreValid(*this, input),
+        0, "ArraySlice<Type>::Set", "Invalid objects");
+
+      AnkiConditionalErrorAndReturnValue(this->get_array().get_buffer() != input.get_array().get_buffer(),
+        0, "ArraySlice<Type>::Set", "Arrays must be in different memory locations");
+
+      ArraySliceLimits_in1_out1<s32> limits(
+        input.get_ySlice(), input.get_xSlice(), input.get_isTransposed(),
+        this->get_ySlice(), this->get_xSlice());
+
+      if(!limits.isValid) {
+        if(automaticTranspose) {
+          // If we're allowed to transpose, give it another shot
+          limits = ArraySliceLimits_in1_out1<s32> (input.get_ySlice(), input.get_xSlice(), !input.get_isTransposed(), this->get_ySlice(), this->get_xSlice());
+
+          if(!limits.isValid) {
+            AnkiError("ArraySlice<Type>::Set", "Subscripted assignment dimension mismatch");
+            return 0;
+          }
+        } else {
+          AnkiError("ArraySlice<Type>::Set", "Subscripted assignment dimension mismatch");
+          return 0;
+        }
+      }
+
+      Array<Type> &out1Array = this->get_array();
+      const Array<InType> &in1Array = input.get_array();
+
+      if(limits.isSimpleIteration) {
+        // If the input isn't transposed, we will do the maximally efficient loop iteration
+
+        for(s32 y=0; y<limits.ySize; y++) {
+          const InType * restrict pIn1 = in1Array.Pointer(limits.in1Y, 0);
+          Type * restrict pOut1 = out1Array.Pointer(limits.out1Y, 0);
+
+          limits.OuterIncrementTop();
+
+          for(s32 x=0; x<limits.xSize; x++) {
+            pOut1[limits.out1X] = static_cast<Type>( pIn1[limits.in1X] );
+
+            limits.out1X += limits.out1_xInnerIncrement;
+            limits.in1X += limits.in1_xInnerIncrement;
+          }
+
+          limits.OuterIncrementBottom();
+        }
+      } else {
+        for(s32 y=0; y<limits.ySize; y++) {
+          Type * restrict pOut1 = out1Array.Pointer(limits.out1Y, 0);
+
+          limits.OuterIncrementTop();
+
+          for(s32 x=0; x<limits.xSize; x++) {
+            const InType pIn1 = *in1Array.Pointer(limits.in1Y, limits.in1X);
+
+            pOut1[limits.out1X] = static_cast<Type>( pIn1 );
+
+            limits.out1X += limits.out1_xInnerIncrement;
+            limits.in1Y += limits.in1_yInnerIncrement;
+          }
+
+          limits.OuterIncrementBottom();
+        }
+      }
+
+      return limits.ySize*limits.xSize;
     }
 
     template<typename Type> Array<Type>& ArraySlice<Type>::get_array()
