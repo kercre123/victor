@@ -149,6 +149,24 @@ namespace Anki
       return this->array.SetZero();
     }
 
+    template<typename Type> template<typename InType> s32 FixedLengthList<Type>::SetCast(const FixedLengthList<InType> &input, bool automaticTranspose)
+    {
+      AnkiAssert(this->get_maximumSize() >= input.get_maximumSize());
+
+      this->set_size(input.get_size());
+
+      const s32 inputMaximumSize = input.get_maximumSize();
+
+      const Type * restrict pThis = this->Pointer(0);
+      const InType * restrict pInput = input.Pointer(0);
+
+      for(s32 i=0; i<inputMaximumSize; i++) {
+        pThis[i] = static_cast<Type>( pInput[i] );
+      }
+
+      return inputMaximumSize;
+    }
+
     template<typename Type> inline s32 FixedLengthList<Type>::get_maximumSize() const
     {
       return this->array.get_size(1);
