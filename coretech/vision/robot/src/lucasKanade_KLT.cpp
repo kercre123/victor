@@ -352,49 +352,6 @@ namespace Anki
   {
     namespace KLT
     {
-      Result BuildOpticalFlowPyramid(
-        const Array<u8> &image,
-        FixedLengthList<Array<u8> > &pyramid,
-        const s32 numPyramidLevels,
-        MemoryStack &memory)
-      {
-        const s32 imageHeight = image.get_size(0);
-        const s32 imageWidth = image.get_size(1);
-
-        AnkiConditionalErrorAndReturnValue(image.IsValid() && numPyramidLevels >= 0,
-          RESULT_FAIL_INVALID_PARAMETER, "BuildOpticalFlowPyramid", "Invalid inputs");
-
-        for(s32 iLevel=1; iLevel<numPyramidLevels; iLevel++) {
-          const s32 scaledHeight = imageHeight >> iLevel;
-          const s32 scaledWidth = imageWidth >> iLevel;
-
-          AnkiConditionalErrorAndReturnValue(scaledHeight%2 == 0 && scaledWidth%2 == 0,
-            RESULT_FAIL_INVALID_PARAMETER, "BuildOpticalFlowPyramid", "Too many pyramid levels requested");
-        }
-
-        pyramid = FixedLengthList<Array<u8> >(numPyramidLevels + 1, memory);
-
-        AnkiConditionalErrorAndReturnValue(pyramid.IsValid(),
-          RESULT_FAIL_OUT_OF_MEMORY, "BuildOpticalFlowPyramid", "Out of memory");
-
-        pyramid[0] = image;
-
-        for(s32 iLevel=1; iLevel<=numPyramidLevels; iLevel++) {
-          const s32 scaledHeight = imageHeight >> iLevel;
-          const s32 scaledWidth = imageWidth >> iLevel;
-          pyramid[iLevel] = Array<u8>(scaledHeight, scaledWidth, memory);
-
-          AnkiConditionalErrorAndReturnValue(pyramid[iLevel].IsValid(),
-            RESULT_FAIL_OUT_OF_MEMORY, "BuildOpticalFlowPyramid", "Out of memory");
-
-          const Result result = ImageProcessing::DownsampleByTwo<u8,u32,u8>(pyramid[iLevel-1], pyramid[iLevel]);
-        } // for(s32 iLevel=1; iLevel<=numPyramidLevels; iLevel++)
-
-        pyramid.set_size(numPyramidLevels+1);
-
-        return RESULT_OK;
-      } // BuildOpticalFlowPyramid()
-
       Result CalcOpticalFlowPyrLK(
         const FixedLengthList<Array<u8> > &prevPyramid,
         const FixedLengthList<Array<u8> > &nextPyramid,

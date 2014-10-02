@@ -566,6 +566,48 @@ namespace Anki
         return RESULT_OK;
       }
 
+      template<typename InType, typename IntermediateType, typename OutType> FixedLengthList<Array<OutType> > BuildPyramid(
+        const Array<InType> &image, //< WARNING: the memory for "image" is used by the first level of the pyramid.
+        const s32 numPyramidLevels, //< The number of levels in the pyramid is numPyramidLevels + 1, so can be 0 for a single image. The image size must be evenly divisible by "2^numPyramidLevels".
+        MemoryStack &memory)  //< Memory for the output will be allocated by this function
+      {
+        const s32 imageHeight = image.get_size(0);
+        const s32 imageWidth = image.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(image.IsValid() && numPyramidLevels >= 0,
+          FixedLengthList<Array<OutType> >(), "BuildPyramid", "Invalid inputs");
+
+        for(s32 iLevel=1; iLevel<numPyramidLevels; iLevel++) {
+          const s32 scaledHeight = imageHeight >> iLevel;
+          const s32 scaledWidth = imageWidth >> iLevel;
+
+          AnkiConditionalErrorAndReturnValue(scaledHeight%2 == 0 && scaledWidth%2 == 0,
+            FixedLengthList<Array<OutType> >(), "BuildPyramid", "Too many pyramid levels requested");
+        }
+
+        FixedLengthList<Array<OutType> > pyramid(numPyramidLevels + 1, memory);
+
+        AnkiConditionalErrorAndReturnValue(pyramid.IsValid(),
+          FixedLengthList<Array<OutType> >(), "BuildPyramid", "Out of memory");
+
+        pyramid.set_size(numPyramidLevels+1);
+
+        pyramid[0] = image;
+
+        for(s32 iLevel=1; iLevel<=numPyramidLevels; iLevel++) {
+          const s32 scaledHeight = imageHeight >> iLevel;
+          const s32 scaledWidth = imageWidth >> iLevel;
+          pyramid[iLevel] = Array<OutType>(scaledHeight, scaledWidth, memory);
+
+          AnkiConditionalErrorAndReturnValue(pyramid[iLevel].IsValid(),
+            FixedLengthList<Array<OutType> >(), "BuildPyramid", "Out of memory");
+
+          const Result result = ImageProcessing::DownsampleByTwo<InType,IntermediateType,OutType>(pyramid[iLevel-1], pyramid[iLevel]);
+        } // for(s32 iLevel=1; iLevel<=numPyramidLevels; iLevel++)
+
+        return pyramid;
+      } // BuildPyramid()
+
       template<typename Type> FixedPointArray<Type> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch)
       {
         // halfWidth = ceil(num_std*sigma);

@@ -82,6 +82,12 @@ namespace Anki
       // Same output as Matlab's imresize, with 'Method'=='box'
       template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByPowerOfTwo(const Array<InType> &in, const s32 downsamplePower, Array<OutType> &out, MemoryStack scratch);
 
+      // Build a 2x downsampled pyramid from an image
+      template<typename InType, typename IntermediateType, typename OutType> FixedLengthList<Array<OutType> > BuildPyramid(
+        const Array<InType> &image, //< WARNING: the memory for "image" is used by the first level of the pyramid.
+        const s32 numPyramidLevels, //< The number of levels in the pyramid is numPyramidLevels + 1, so can be 0 for a single image. The image size must be evenly divisible by "2^numPyramidLevels".
+        MemoryStack &memory);  //< Memory for the output will be allocated by this function
+
       //
       // Color processing
       //

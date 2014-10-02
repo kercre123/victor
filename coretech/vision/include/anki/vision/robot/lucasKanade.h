@@ -327,7 +327,6 @@ namespace Anki
         static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes);
       }; // class LucasKanadeTracker_SampledProjective
       
-      
       class LucasKanadeTracker_SampledPlanar6dof : public LucasKanadeTracker_Generic
       {
         // A Projective-plus-translation LucasKanadeTracker. Unlike the general LucasKanadeTracker,
@@ -488,9 +487,7 @@ namespace Anki
                                          const f32 verifyCoordScalarInv,
                                          s32& startIndex,
                                          MemoryStack scratch);
-        
       }; // class LucasKanadeTracker_SampledPlanar6dof
-      
       
     } // namespace TemplateTracker
   } // namespace Embedded
