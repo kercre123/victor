@@ -73,6 +73,7 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
 
+#ifdef RUN_PC_ONLY_TESTS
 GTEST_TEST(CoreTech_Vision, KLT)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -93,15 +94,15 @@ GTEST_TEST(CoreTech_Vision, KLT)
   ArrayToCvMat<u8>(image1, &image1Cv);
   ArrayToCvMat<u8>(image2, &image2Cv);
 
-  std::vector<cv::Point2f> points[2];
+  std::vector<cv::Point2f> pointsCv[2];
 
-  const s32 maxCorners = 1;
+  const s32 maxCorners = 10;
   const f32 qualityLevel = 0.3f;
   const int blockSize = 11;
   const double harrisK = 0.04;
 
   std::vector<cv::Point2f> cornersCv;
-  cv::goodFeaturesToTrack(image1Cv, points[0], maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
+  cv::goodFeaturesToTrack(image1Cv, pointsCv[0], maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
 
   cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
 
@@ -113,13 +114,23 @@ GTEST_TEST(CoreTech_Vision, KLT)
   const s32 numPyramidLevels = 3;
   const f32 minEigThreshold = 0.001f;
 
-  calcOpticalFlowPyrLK(image1Cv, image2Cv, points[0], points[1], statusCv, errCv, winSize, numPyramidLevels, termcrit, 0, minEigThreshold);
+  calcOpticalFlowPyrLK(image1Cv, image2Cv, pointsCv[0], pointsCv[1], statusCv, errCv, winSize, numPyramidLevels, termcrit, 0, minEigThreshold);
 
   FixedLengthList<Array<u8> > pyramid1 = ImageProcessing::BuildPyramid<u8,u32,u8>(image1, numPyramidLevels, scratchHuge);
   FixedLengthList<Array<u8> > pyramid2 = ImageProcessing::BuildPyramid<u8,u32,u8>(image2, numPyramidLevels, scratchHuge);
 
   ASSERT_TRUE(pyramid1.IsValid());
   ASSERT_TRUE(pyramid2.IsValid());
+
+  //pyramid1[0].Show("p1 0", false, false);
+  //pyramid1[1].Show("p1 1", false, false);
+  //pyramid1[2].Show("p1 2", false, false);
+  //pyramid1[3].Show("p1 3", false, false);
+
+  //pyramid2[0].Show("p2 0", false, false);
+  //pyramid2[1].Show("p2 1", false, false);
+  //pyramid2[2].Show("p2 2", false, false);
+  //pyramid2[3].Show("p2 3", true, false);
 
   const s32 numPointsMax = 50000;
   FixedLengthList<Point<s16> > points1S16(numPointsMax, scratchHuge);
@@ -148,6 +159,34 @@ GTEST_TEST(CoreTech_Vision, KLT)
     false,
     scratchHuge);
 
+  {
+    Matlab matlab(false);
+    matlab.PutArray(image1, "image1");
+    matlab.PutArray(image2, "image2");
+
+    matlab.EvalString("points1 = zeros(0,2); points2 = zeros(0,2); points1Cv = zeros(0,2); points2Cv = zeros(0,2);");
+    for(s32 i=0; i<points1F32.get_size(); i++) {
+      matlab.EvalString("points1(end+1,:) = [%f,%f];", points1F32[i].x, points1F32[i].y);
+    }
+
+    for(s32 i=0; i<points2F32.get_size(); i++) {
+      matlab.EvalString("points2(end+1,:) = [%f,%f];", points2F32[i].x, points2F32[i].y);
+    }
+
+    for(s32 i=0; i<pointsCv[0].size(); i++) {
+      matlab.EvalString("points1Cv(end+1,:) = [%f,%f];", pointsCv[0][i].x, pointsCv[0][i].y);
+    }
+
+    for(s32 i=0; i<pointsCv[1].size(); i++) {
+      matlab.EvalString("points2Cv(end+1,:) = [%f,%f];", pointsCv[1][i].x, pointsCv[1][i].y);
+    }
+
+    matlab.EvalString("figure(1); hold off; imshow(image1); hold on; scatter(points1(:,1), points1(:,2), 'r+');");
+    matlab.EvalString("figure(2); hold off; imshow(image2); hold on; scatter(points2(:,1), points2(:,2), 'r+');");
+    matlab.EvalString("figure(3); hold off; imshow(image1); hold on; scatter(points1Cv(:,1), points1Cv(:,2), 'r+');");
+    matlab.EvalString("figure(4); hold off; imshow(image2); hold on; scatter(points2Cv(:,1), points2Cv(:,2), 'r+');");
+  }
+
   points1F32.Print("points1F32");
   points2F32.Print("points2F32");
   status.Print("status");
@@ -155,7 +194,9 @@ GTEST_TEST(CoreTech_Vision, KLT)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, KLT)
+#endif // #ifdef RUN_PC_ONLY_TESTS
 
+#ifdef RUN_PC_ONLY_TESTS
 GTEST_TEST(CoreTech_Vision, Harris)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -225,6 +266,7 @@ GTEST_TEST(CoreTech_Vision, Harris)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, LocalMaxima)
+#endif // #ifdef RUN_PC_ONLY_TESTS
 
 GTEST_TEST(CoreTech_Vision, LocalMaxima)
 {

@@ -53,6 +53,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/common/robot/fixedLengthList.h"
+#include "anki/common/robot/matlabInterface.h"
 
 using namespace Anki;
 using namespace Anki::Embedded;
@@ -131,9 +132,7 @@ static Result ComputeLKUpdate(
     prevPointS32.x = cvFloor(prevPointF32.x);
     prevPointS32.y = cvFloor(prevPointF32.y);
 
-    // TODO: set these bounds correctly
-    //if( prevPointS32.x < -windowWidth || prevPointS32.x >= imageWidth ||
-    //  prevPointS32.y < -windowHeight || prevPointS32.y >= imageHeight )
+    // TODO: Are these set correctly?
     if( prevPointS32.x < 0 || prevPointS32.x >= (imageWidth-windowWidth) ||
       prevPointS32.y < 0 || prevPointS32.y >= (imageHeight-windowHeight) )
     {
@@ -180,9 +179,9 @@ static Result ComputeLKUpdate(
           const s32 ival  = CV_DESCALE(pPrevImg[x]*iw00 + pPrevImg[x+1]*iw01 + pPrevImg[x+stepPrevImg]*iw10 + pPrevImg[x+stepPrevImg+1]*iw11, W_BITS-5);
 
           // Bilinear interpolate the value of the x and y gradients of the previous image
-          // TODO: since I'm using the half-gradient s8, do I have to scale these differently?
-          const s32 ixval = 2 * CV_DESCALE(pPrevImgDx[0]*iw00 + pPrevImgDx[1]*iw01 + pPrevImgDx[stepPrevDeriv]*iw10 + pPrevImgDx[stepPrevDeriv+1]*iw11, W_BITS);
-          const s32 iyval = 2 * CV_DESCALE(pPrevImgDy[0]*iw00 + pPrevImgDy[1]*iw01 + pPrevImgDy[stepPrevDeriv]*iw10 + pPrevImgDy[stepPrevDeriv+1]*iw11, W_BITS);
+          // The 32 multiplier is 2x for the change from -255:255, and 16x for the scaling for the Scharr (which could go up to 16*255).
+          const s32 ixval = CV_DESCALE(32 * (pPrevImgDx[x]*iw00 + pPrevImgDx[x+1]*iw01 + pPrevImgDx[x+stepPrevDeriv]*iw10 + pPrevImgDx[x+stepPrevDeriv+1]*iw11), W_BITS);
+          const s32 iyval = CV_DESCALE(32 * (pPrevImgDy[x]*iw00 + pPrevImgDy[x+1]*iw01 + pPrevImgDy[x+stepPrevDeriv]*iw10 + pPrevImgDy[x+stepPrevDeriv+1]*iw11), W_BITS);
 
           pIWinBuf[x] = (short)ival;
           pDerivXIWinBuf[x] = (short)ixval;
@@ -219,13 +218,12 @@ static Result ComputeLKUpdate(
 
     const s32 stepNextImg = nextImage.get_stride();
 
-    for(s32 j = 0; j < termination_maxCount; j++ ) {
+    s32 iteration;
+    for(iteration = 0; iteration < termination_maxCount; iteration++ ) {
       nextPointS32.x = cvFloor(nextPointF32.x);
       nextPointS32.y = cvFloor(nextPointF32.y);
 
-      // TODO: set these bounds correctly
-      //if( nextPointS32.x < -windowWidth || nextPointS32.x >= imageHeight ||
-      //  nextPointS32.y < -windowHeight || nextPointS32.y >= imageWidth )
+      // TODO: Are these set correctly?
       if( nextPointS32.x < 0 || nextPointS32.x >= (imageWidth-windowWidth) ||
         nextPointS32.y < 0 || nextPointS32.y >= (imageHeight-windowHeight) )
       {
@@ -269,7 +267,7 @@ static Result ComputeLKUpdate(
       if( deltaDot <= termination_epsilon )
         break;
 
-      if( j > 0 &&
+      if( iteration > 0 &&
         ABS(delta.x + prevDeltaF32.x) < 0.01f &&
         ABS(delta.y + prevDeltaF32.y) < 0.01f )
       {
@@ -279,7 +277,9 @@ static Result ComputeLKUpdate(
         break;
       }
       prevDeltaF32 = delta;
-    } // for(s32 j = 0; j < termination_maxCount; j++ )
+    } // for(s32 iteration = 0; iteration < termination_maxCount; iteration++ )
+
+    //printf("Point %d took %d iterations\n", ptidx, iteration);
 
     if( pStatus[ptidx] && curPyramidLevel == 0 ) {
       const Point<f32> nextPointShiftedF32 = pNextPts[ptidx] - halfWin;
@@ -304,11 +304,11 @@ static Result ComputeLKUpdate(
       f32 errval = 0.f;
 
       for( s32 y = 0; y < windowHeight; y++ ) {
-        const u8 * restrict pPrevImg = prevImage.Pointer(y + nextPointShiftedS32.y, nextPointShiftedS32.x);
+        const u8 * restrict pNextImg = nextImage.Pointer(y + nextPointShiftedS32.y, nextPointShiftedS32.x);
         const s16 * restrict pIWinBuf = IWinBuf.Pointer(y, 0);
 
         for( s32 x = 0; x < windowWidth; x++ ) {
-          s32 diff = CV_DESCALE(pPrevImg[x]*iw00 + pPrevImg[x+1]*iw01 + pPrevImg[x+stepNextImg]*iw10 + pPrevImg[x+stepNextImg+1]*iw11, W_BITS-5) - pIWinBuf[x];
+          s32 diff = CV_DESCALE(pNextImg[x]*iw00 + pNextImg[x+1]*iw01 + pNextImg[x+stepNextImg]*iw10 + pNextImg[x+stepNextImg+1]*iw11, W_BITS-5) - pIWinBuf[x];
 
           errval += ABS((f32)diff);
         } // for( s32 x = 0; x < windowWidth; x++ )
@@ -433,7 +433,7 @@ namespace Anki
             minEigThreshold,
             true,
             curPyramidLevel,
-            nextPyramid.get_size(),
+            nextPyramid.get_size() - 1,
             scratch);
 
           if(lkResult != RESULT_OK)
