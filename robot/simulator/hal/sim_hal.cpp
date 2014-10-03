@@ -787,5 +787,37 @@ namespace Anki {
       }
     } // GetProximity()
     
+    
+    void HAL::GetProximity_INT(ProximityValues *prox)
+    {
+      static int proxID = IRleft;
+      switch(proxID)
+      {
+        case IRforward:
+          prox->forward = proxCenter_->getValue();
+          prox->latest  = IRforward;
+          proxID = IRleft;
+          break;
+          
+        case IRleft:
+          prox->left = proxLeft_->getValue();
+          prox->latest = IRleft;
+          proxID = IRright;
+          break;
+          
+        case IRright:
+          prox->right = proxRight_->getValue();
+          prox->latest = IRright;
+          proxID = IRforward;
+          break;
+          
+        default:
+          AnkiAssert(false);
+      }
+      
+      prox->status = IR_GOOD;
+      return;
+    } // GetProximity_INT()
+    
   } // namespace Cozmo
 } // namespace Anki
