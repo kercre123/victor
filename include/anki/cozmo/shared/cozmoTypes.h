@@ -71,6 +71,9 @@ namespace Anki {
       // Drives all motors at max power simultaneously.
       TM_MAX_POWER_TEST,
       
+      // Turns on face tracking
+      TM_FACE_TRACKING,
+      
       TM_NUM_TESTS
     } TestMode;
 

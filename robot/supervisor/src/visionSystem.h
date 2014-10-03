@@ -154,9 +154,15 @@ namespace Anki {
       Result TakeSnapshot(const Embedded::Rectangle<s32> roi, const s32 subsample,
                           Embedded::Array<u8>& snapshot, bool& readyFlag);
 
+      
+      // Tell the vision system to switch to face-detection mode
+      Result StartDetectingFaces();
+      
       // Returns field of view (radians) of camera
       f32 GetVerticalFOV();
       f32 GetHorizontalFOV();
+      
+      const FaceDetectionParameters& GetFaceDetectionParams();
       
       
       void SetParams(const s32 integerCountsIncrement,

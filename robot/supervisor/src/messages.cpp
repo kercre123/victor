@@ -3,7 +3,9 @@
 #include "messages.h"
 #include "localization.h"
 #include "visionSystem.h"
+#include "animationController.h"
 #include "pathFollower.h"
+#include "faceTrackingController.h"
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
@@ -95,6 +97,8 @@ namespace Anki {
         //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
         //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
         Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
+        
+        MultiMailbox<Messages::FaceDetection,VisionSystem::FaceDetectionParameters::MAX_FACE_DETECTIONS> faceDetectMailbox_;
 
         static RobotState robotState_;
         
@@ -286,6 +290,12 @@ namespace Anki {
         dockingMailbox_.putMessage(msg);
       }
       
+      void ProcessFaceDetectionMessage(const FaceDetection& msg)
+      {
+        // Just pass the face detection along to mainExecution to deal with.
+        faceDetectMailbox_.putMessage(msg);
+      }
+      
       void ProcessBTLEMessages()
       {
         ID msgID;
@@ -463,6 +473,18 @@ namespace Anki {
         IMUFilter::RecordAndSend(msg.length_ms);
       }
       
+      
+      void ProcessFaceTrackingMessage(const FaceTracking& msg)
+      {
+        if(msg.enabled) {
+          PRINT("Starting face tracking with timeout = %dsec.\n", msg.timeout_sec);
+          FaceTrackingController::StartTracking(FaceTrackingController::LARGEST, msg.timeout_sec);
+        } else {
+          PRINT("Stopping face tracking.\n");
+          FaceTrackingController::Reset();
+        }
+      }
+      
 // ----------- Send messages -----------------
       
       
@@ -537,9 +559,9 @@ namespace Anki {
         return 0;
       }
       
-      
-// #pragma mark --- VisionSystem::Mailbox Template Implementations ---
-      
+#if 0
+#pragma mark --- VisionSystem::Mailbox Template Implementations ---
+#endif
       /*
       bool CheckMailbox(BlockMarkerObserved& msg)
       {
@@ -557,6 +579,11 @@ namespace Anki {
         return dockingMailbox_.getMessage(msg);
       }
       
+      bool CheckMailbox(FaceDetection&       msg)
+      {
+        return faceDetectMailbox_.getMessage(msg);
+      }
+      
       //
       // Templated Mailbox Implementations
       //
@@ -568,7 +595,8 @@ namespace Anki {
       }
       
       template<typename MSG_TYPE>
-      bool Mailbox<MSG_TYPE>::putMessage(const MSG_TYPE newMsg) {
+      bool Mailbox<MSG_TYPE>::putMessage(const MSG_TYPE newMsg)
+      {
         if(isLocked_) {
           return false;
         }
@@ -582,7 +610,8 @@ namespace Anki {
       }
       
       template<typename MSG_TYPE>
-      bool Mailbox<MSG_TYPE>::getMessage(MSG_TYPE& msgOut) {
+      bool Mailbox<MSG_TYPE>::getMessage(MSG_TYPE& msgOut)
+      {
         if(isLocked_ || beenRead_) {
           return false;
         }
@@ -601,7 +630,8 @@ namespace Anki {
       //
       
       template<typename MSG_TYPE, u8 NUM_BOXES>
-      bool MultiMailbox<MSG_TYPE,NUM_BOXES>::putMessage(const MSG_TYPE newMsg) {
+      bool MultiMailbox<MSG_TYPE,NUM_BOXES>::putMessage(const MSG_TYPE newMsg)
+      {
         if(mailboxes_[writeIndex_].putMessage(newMsg) == true) {
           advanceIndex(writeIndex_);
           return true;
@@ -612,7 +642,8 @@ namespace Anki {
       }
       
       template<typename MSG_TYPE, u8 NUM_BOXES>
-      bool MultiMailbox<MSG_TYPE,NUM_BOXES>::getMessage(MSG_TYPE& msg) {
+      bool MultiMailbox<MSG_TYPE,NUM_BOXES>::getMessage(MSG_TYPE& msg)
+      {
         if(mailboxes_[readIndex_].getMessage(msg) == true) {
           // we got a message out of the mailbox (it wasn't locked and there
           // was something in it), so move to the next mailbox
@@ -625,7 +656,8 @@ namespace Anki {
       }
    
       template<typename MSG_TYPE, u8 NUM_BOXES>
-      void MultiMailbox<MSG_TYPE,NUM_BOXES>::advanceIndex(u8 &index) {
+      void MultiMailbox<MSG_TYPE,NUM_BOXES>::advanceIndex(u8 &index)
+      {
         ++index;
         if(index == NUM_BOXES) {
           index = 0;
