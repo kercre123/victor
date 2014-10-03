@@ -9,7 +9,7 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-//#define RUN_PC_ONLY_TESTS
+#define RUN_PC_ONLY_TESTS
 //#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
@@ -82,8 +82,8 @@ GTEST_TEST(CoreTech_Vision, KLT)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
 
-  Array<u8> image1 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame23.png", scratchHuge);
-  Array<u8> image2 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame24.png", scratchHuge);
+  const Array<u8> image1 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame23.png", scratchHuge);
+  const Array<u8> image2 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame24.png", scratchHuge);
 
   ASSERT_TRUE(AreValid(image1, image2));
 
@@ -95,20 +95,63 @@ GTEST_TEST(CoreTech_Vision, KLT)
 
   std::vector<cv::Point2f> points[2];
 
-  const s32 maxCorners = 100;
+  const s32 maxCorners = 1;
   const f32 qualityLevel = 0.3f;
+  const int blockSize = 11;
+  const double harrisK = 0.04;
 
-  cv::goodFeaturesToTrack(image1Cv, points[0], maxCorners, 0.01, 10, cv::Mat(), 3, 0, 0.04);
+  std::vector<cv::Point2f> cornersCv;
+  cv::goodFeaturesToTrack(image1Cv, points[0], maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
 
   cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
 
   cv::Size winSize(31,31);
 
-  std::vector<uchar> status;
-  std::vector<float> err;
+  std::vector<uchar> statusCv;
+  std::vector<float> errCv;
 
-  calcOpticalFlowPyrLK(image1Cv, image2Cv, points[0], points[1], status, err, winSize,
-    3, termcrit, 0, 0.001);
+  const s32 numPyramidLevels = 3;
+  const f32 minEigThreshold = 0.001f;
+
+  calcOpticalFlowPyrLK(image1Cv, image2Cv, points[0], points[1], statusCv, errCv, winSize, numPyramidLevels, termcrit, 0, minEigThreshold);
+
+  FixedLengthList<Array<u8> > pyramid1 = ImageProcessing::BuildPyramid<u8,u32,u8>(image1, numPyramidLevels, scratchHuge);
+  FixedLengthList<Array<u8> > pyramid2 = ImageProcessing::BuildPyramid<u8,u32,u8>(image2, numPyramidLevels, scratchHuge);
+
+  ASSERT_TRUE(pyramid1.IsValid());
+  ASSERT_TRUE(pyramid2.IsValid());
+
+  const s32 numPointsMax = 50000;
+  FixedLengthList<Point<s16> > points1S16(numPointsMax, scratchHuge);
+  FixedLengthList<Point<f32> > points1F32(numPointsMax, scratchHuge);
+  const Result gftResult = Features::GoodFeaturesToTrack(image1, points1S16, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
+
+  ASSERT_TRUE(gftResult == RESULT_OK);
+
+  points1F32.set_size(points1S16.get_size());
+  for(s32 i=0; i<numPointsMax; i++) {
+    points1F32[i].SetCast(points1S16[i]);
+  }
+
+  FixedLengthList<Point<f32> > points2F32(numPointsMax, scratchHuge);
+
+  FixedLengthList<bool> status(numPointsMax, scratchHuge);
+  FixedLengthList<f32> err(numPointsMax, scratchHuge);
+
+  const Result kltResult = TemplateTracker::CalcOpticalFlowPyrLK(
+    pyramid1, pyramid2,
+    points1F32, points2F32,
+    status, err,
+    winSize.height, winSize.width,
+    termcrit.maxCount, static_cast<f32>(termcrit.epsilon),
+    minEigThreshold,
+    false,
+    scratchHuge);
+
+  points1F32.Print("points1F32");
+  points2F32.Print("points2F32");
+  status.Print("status");
+  err.Print("err");
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, KLT)
@@ -152,9 +195,9 @@ GTEST_TEST(CoreTech_Vision, Harris)
 
   FixedLengthList<Point<s16> > corners(5000, scratchHuge);
 
-  const Result trackResult = Features::GoodFeaturesToTrack(image, corners, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
+  const Result gftResult = Features::GoodFeaturesToTrack(image, corners, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
 
-  ASSERT_TRUE(trackResult == RESULT_OK);
+  ASSERT_TRUE(gftResult == RESULT_OK);
 
   std::vector<cv::Point2f> cornersCv;
   cv::goodFeaturesToTrack(imageCv, cornersCv, maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
@@ -169,8 +212,8 @@ GTEST_TEST(CoreTech_Vision, Harris)
     matlab.EvalStringEcho("corners(end+1,:) = [%d,%d];", s32(corners[i].x), s32(corners[i].y));
   }
 
-  for(s32 i=0; i<cornersCv.size(); i++) {
-    cv::circle(drawnCornersCv, cv::Point(cornersCv[i].x, cornersCv[i].y), 2, cv::Scalar(255,0,0), -1);
+  for(s32 i=0; i<(s32)(cornersCv.size()); i++) {
+    cv::circle(drawnCornersCv, cv::Point(s32(cornersCv[i].x), s32(cornersCv[i].y)), 2, cv::Scalar(255,0,0), -1);
     matlab.EvalStringEcho("cornersCv(end+1,:) = [%d,%d];", s32(cornersCv[i].x), s32(cornersCv[i].y));
   }
 

@@ -52,6 +52,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 //M*/
 
 #include "anki/vision/robot/imageProcessing.h"
+#include "anki/common/robot/fixedLengthList.h"
 
 using namespace Anki;
 using namespace Anki::Embedded;
@@ -59,51 +60,15 @@ using namespace Anki::Embedded;
 #define  CV_DESCALE(x,n)     (((x) + (1 << ((n)-1))) >> (n))
 #define  CV_FLT_TO_FIX(x,n)  cvRound((x)*(1<<(n)))
 
-//prevPyr[level * 1],
-//  derivI,
-//  nextPyr[level * 1],
-//  prevPts, nextPts,
-//  status, err,
-//  winSize, termination_maxCount, epsilonSquared, level, maxPyramidLevel,
-//  flags, (f32)minEigThreshold));
-
-//Result CalcOpticalFlowPyrLK(
-//      const FixedLengthList<Array<u8> > &prevPyramid,
-//      const FixedLengthList<Array<u8> > &nextPyramid,
-//      const FixedLengthList<Point<f32> > &prevPts,
-//      FixedLengthList<Point<f32> > &nextPts,
-//      FixedLengthList<bool> &status,
-//      FixedLengthList<f32> &err,
-//      const s32 windowHeight,
-//      const s32 windowWidth,
-//      const s32 termination_maxCount,
-//      const f32 termination_epsilon,
-//      const f32 minEigThreshold,
-//      MemoryStack scratch)
-
-//prevImg = &_prevImg;
-//    prevDeriv = &_prevDeriv;
-//    nextImg = &_nextImg;
-//    prevPts = _prevPts;
-//    nextPts = _nextPts;
-//    status = _status;
-//    err = _err;
-//    winSize = _winSize;
-//    criteria = _criteria;
-//    level = _level;
-//    maxPyramidLevel = _maxPyramidLevel;
-//    flags = _flags;
-//    minEigThreshold = _minEigThreshold;
-
-Result ComputeLKUpdate(
-  const Array<u8> &prevImg2,
-  const Array<s8> &prevDerivX2,
-  const Array<s8> &prevDerivY2,
-  const Array<u8> &nextImg2,
-  const FixedLengthList<Point<f32> > &prevPts2,
-  FixedLengthList<Point<f32> > &nextPts2,
-  FixedLengthList<bool> &status2,
-  FixedLengthList<f32> &err2,
+static Result ComputeLKUpdate(
+  const Array<u8> &prevImage,
+  const Array<s8> &prevDerivX,
+  const Array<s8> &prevDerivY,
+  const Array<u8> &nextImage,
+  const FixedLengthList<Point<f32> > &prevPoints,
+  FixedLengthList<Point<f32> > &nextPoints,
+  FixedLengthList<bool> &status,
+  FixedLengthList<f32> &err,
   const s32 windowHeight,
   const s32 windowWidth,
   const s32 termination_maxCount,
@@ -114,55 +79,63 @@ Result ComputeLKUpdate(
   const s32 maxPyramidLevel,
   MemoryStack scratch)
 {
+  const f32 FLT_SCALE = 1.f/(1 << 20);
+  const s32 W_BITS = 14;
+
   const Point<f32> halfWin(static_cast<f32>(windowWidth-1) * 0.5f, static_cast<f32>(windowHeight-1) * 0.5f);
 
-  const s32 imageHeight = prevImg2.get_size(0);
-  const s32 imageWidth = prevImg2.get_size(1);
+  const s32 imageHeight = prevImage.get_size(0);
+  const s32 imageWidth = prevImage.get_size(1);
 
-  //const Array<u8> &I = prevImg;
-  //const Array<u8> &J = nextImg;
+  //const Array<u8> &I = prevImage;
+  //const Array<u8> &J = nextImage;
   //const Mat& derivI = *prevDeriv;
 
-  const Point<f32> * restrict pPrevPts = prevPts2.Pointer(0);
-  Point<f32> * restrict pNextPts = nextPts2.Pointer(0);
-  bool * restrict pStatus = status2.Pointer(0);
-  f32 * restrict pErr = err2.Pointer(0);
+  const Point<f32> * restrict pPrevPts = prevPoints.Pointer(0);
+  Point<f32> * restrict pNextPts = nextPoints.Pointer(0);
+  bool * restrict pStatus = status.Pointer(0);
+  f32 * restrict pErr = err.Pointer(0);
 
   // OpenCV uses s16 for derivatives, though the inputs here are s8
   Array<s16> IWinBuf(windowHeight, windowWidth, scratch);
   Array<s16> derivXIWinBuf(windowHeight, windowWidth, scratch);
   Array<s16> derivYIWinBuf(windowHeight, windowWidth, scratch);
 
-  const s32 numPoints = nextPts2.get_size();
+  AnkiConditionalErrorAndReturnValue(AreValid(IWinBuf, derivXIWinBuf, derivYIWinBuf),
+    RESULT_FAIL_OUT_OF_MEMORY, "ComputeLKUpdate", "Out of memory");
+
+  const s32 numPoints = nextPoints.get_size();
 
   for( s32 ptidx = 0; ptidx < numPoints; ptidx++ )
   {
-    Point<f32> prevPt = pPrevPts[ptidx];
-    prevPt *= (f32)(1./(1 << curPyramidLevel));
+    Point<f32> prevPointF32 = pPrevPts[ptidx];
+    prevPointF32 *= (f32)(1./(1 << curPyramidLevel));
 
-    Point<f32> nextPt;
+    Point<f32> nextPointF32;
     if( curPyramidLevel == maxPyramidLevel ) {
       if(usePreviousFlowAsInit) {
-        nextPt = pNextPts[ptidx];
-        nextPt *= (f32)(1./(1 << curPyramidLevel));
+        nextPointF32 = pNextPts[ptidx];
+        nextPointF32 *= (f32)(1./(1 << curPyramidLevel));
       } else {
-        nextPt = prevPt;
+        nextPointF32 = prevPointF32;
       }
     } else {
-      nextPt = pNextPts[ptidx];
-      nextPt *= 2.f;
+      nextPointF32 = pNextPts[ptidx];
+      nextPointF32 *= 2.f;
     }
 
-    pNextPts[ptidx] = nextPt;
+    pNextPts[ptidx] = nextPointF32;
 
-    Point<s32> iprevPt, inextPt;
-    prevPt -= halfWin;
-    iprevPt.x = cvFloor(prevPt.x);
-    iprevPt.y = cvFloor(prevPt.y);
+    Point<s32> prevPointS32, nextPointS32;
+    prevPointF32 -= halfWin;
+    prevPointS32.x = cvFloor(prevPointF32.x);
+    prevPointS32.y = cvFloor(prevPointF32.y);
 
     // TODO: set these bounds correctly
-    if( iprevPt.x < -windowWidth || iprevPt.x >= imageWidth ||
-      iprevPt.y < -windowHeight || iprevPt.y >= imageHeight )
+    //if( prevPointS32.x < -windowWidth || prevPointS32.x >= imageWidth ||
+    //  prevPointS32.y < -windowHeight || prevPointS32.y >= imageHeight )
+    if( prevPointS32.x < 0 || prevPointS32.x >= (imageWidth-windowWidth) ||
+      prevPointS32.y < 0 || prevPointS32.y >= (imageHeight-windowHeight) )
     {
       if( curPyramidLevel == 0 )
       {
@@ -172,66 +145,64 @@ Result ComputeLKUpdate(
       continue;
     }
 
-    f32 a = prevPt.x - iprevPt.x;
-    f32 b = prevPt.y - iprevPt.y;
-    const s32 W_BITS = 14, W_BITS1 = 14;
-    const f32 FLT_SCALE = 1.f/(1 << 20);
-    s32 iw00 = cvRound((1.f - a)*(1.f - b)*(1 << W_BITS));
-    s32 iw01 = cvRound(a*(1.f - b)*(1 << W_BITS));
-    s32 iw10 = cvRound((1.f - a)*b*(1 << W_BITS));
-    s32 iw11 = (1 << W_BITS) - iw00 - iw01 - iw10;
-
-    //s32 dstep = (s32)(derivprevImg.step/derivprevImg.elemSize1());
-    const s32 stepPrevDeriv = prevDerivX2.get_stride();
-    const s32 stepPrevImg = prevImg2.get_stride();
-    const s32 stepNextImg = nextImg2.get_stride();
-
-    AnkiAssert(prevDerivX2.get_stride() == prevDerivY2.get_stride());
-
     f32 A11 = 0, A12 = 0, A22 = 0;
+    {
+      const f32 a = prevPointF32.x - prevPointS32.x;
+      const f32 b = prevPointF32.y - prevPointS32.y;
 
-    // extract the patch from the first image, compute covariation matrix of derivatives
-    for( s32 y = 0; y < windowHeight; y++ ) {
-      //const u8* src = (const u8*)prevImg.data + (y + iprevPt.y)*stepPrevImg + iprevPt.x;
-      //const s8* dsrc = (const s8*)derivprevImg.data + (y + iprevPt.y)*dstep + iprevPt.x*xxx;
-      const u8 * restrict pPrevImg = prevImg2.Pointer(y + iprevPt.y, iprevPt.x);
-      const s8 * restrict pPrevImgDx = prevDerivX2.Pointer(y + iprevPt.y, iprevPt.x);
-      const s8 * restrict pPrevImgDy = prevDerivY2.Pointer(y + iprevPt.y, iprevPt.x);
+      const s32 iw00 = cvRound((1.f - a)*(1.f - b)*(1 << W_BITS));
+      const s32 iw01 = cvRound(a*(1.f - b)*(1 << W_BITS));
+      const s32 iw10 = cvRound((1.f - a)*b*(1 << W_BITS));
+      const s32 iw11 = (1 << W_BITS) - iw00 - iw01 - iw10;
 
-      //s16* pIWinBuf = (s8*)(IWinBuf.data + y*IWinBuf.step);
-      //s16* dIptr = (s8*)(derivIWinBuf.data + y*derivIWinBuf.step);
-      s16 * restrict pIWinBuf = IWinBuf.Pointer(y, 0);
-      s16 * restrict pDerivXIWinBuf = derivXIWinBuf.Pointer(y, 0);
-      s16 * restrict pDerivYIWinBuf = derivYIWinBuf.Pointer(y, 0);
+      //s32 dstep = (s32)(derivprevImage.step/derivprevImage.elemSize1());
+      const s32 stepPrevDeriv = prevDerivX.get_stride();
+      const s32 stepPrevImg = prevImage.get_stride();
 
-      for(s32 x = 0; x < windowWidth; x++) {
-        // Bilinear interpolate the value of the previous image
-        const s32 ival  = CV_DESCALE(pPrevImg[x]*iw00 + pPrevImg[x+1]*iw01 + pPrevImg[x+stepPrevImg]*iw10 + pPrevImg[x+stepPrevImg+1]*iw11, W_BITS1-5);
+      AnkiAssert(prevDerivX.get_stride() == prevDerivY.get_stride());
 
-        // Bilinear interpolate the value of the x and y gradients of the previous image
-        // TODO: since I'm using the half-gradient s8, do I have to scale these differently?
-        const s32 ixval = CV_DESCALE(pPrevImgDx[0]*iw00 + pPrevImgDx[1]*iw01 + pPrevImgDx[stepPrevDeriv]*iw10 + pPrevImgDx[stepPrevDeriv+1]*iw11, W_BITS1);
-        const s32 iyval = CV_DESCALE(pPrevImgDy[0]*iw00 + pPrevImgDy[1]*iw01 + pPrevImgDy[stepPrevDeriv]*iw10 + pPrevImgDy[stepPrevDeriv+1]*iw11, W_BITS1);
+      // extract the patch from the first image, compute covariation matrix of derivatives
+      for( s32 y = 0; y < windowHeight; y++ ) {
+        //const u8* src = (const u8*)prevImage.data + (y + prevPointS32.y)*stepPrevImg + prevPointS32.x;
+        //const s8* dsrc = (const s8*)derivprevImage.data + (y + prevPointS32.y)*dstep + prevPointS32.x*xxx;
+        const u8 * restrict pPrevImg = prevImage.Pointer(y + prevPointS32.y, prevPointS32.x);
+        const s8 * restrict pPrevImgDx = prevDerivX.Pointer(y + prevPointS32.y, prevPointS32.x);
+        const s8 * restrict pPrevImgDy = prevDerivY.Pointer(y + prevPointS32.y, prevPointS32.x);
 
-        pIWinBuf[x] = (short)ival;
-        dIptr[0] = (short)ixval;
-        dIptr[1] = (short)iyval;
+        //s16* pIWinBuf = (s8*)(IWinBuf.data + y*IWinBuf.step);
+        //s16* dIptr = (s8*)(derivIWinBuf.data + y*derivIWinBuf.step);
+        s16 * restrict pIWinBuf = IWinBuf.Pointer(y, 0);
+        s16 * restrict pDerivXIWinBuf = derivXIWinBuf.Pointer(y, 0);
+        s16 * restrict pDerivYIWinBuf = derivYIWinBuf.Pointer(y, 0);
 
-        A11 += (f32)(ixval*ixval);
-        A12 += (f32)(ixval*iyval);
-        A22 += (f32)(iyval*iyval);
-      } // for(s32 x = 0; x < windowWidth; x++)
-    } // for( s32 y = 0; y < windowHeight; y++ )
+        for(s32 x = 0; x < windowWidth; x++) {
+          // Bilinear interpolate the value of the previous image
+          const s32 ival  = CV_DESCALE(pPrevImg[x]*iw00 + pPrevImg[x+1]*iw01 + pPrevImg[x+stepPrevImg]*iw10 + pPrevImg[x+stepPrevImg+1]*iw11, W_BITS-5);
+
+          // Bilinear interpolate the value of the x and y gradients of the previous image
+          // TODO: since I'm using the half-gradient s8, do I have to scale these differently?
+          const s32 ixval = 2 * CV_DESCALE(pPrevImgDx[0]*iw00 + pPrevImgDx[1]*iw01 + pPrevImgDx[stepPrevDeriv]*iw10 + pPrevImgDx[stepPrevDeriv+1]*iw11, W_BITS);
+          const s32 iyval = 2 * CV_DESCALE(pPrevImgDy[0]*iw00 + pPrevImgDy[1]*iw01 + pPrevImgDy[stepPrevDeriv]*iw10 + pPrevImgDy[stepPrevDeriv+1]*iw11, W_BITS);
+
+          pIWinBuf[x] = (short)ival;
+          pDerivXIWinBuf[x] = (short)ixval;
+          pDerivYIWinBuf[y] = (short)iyval;
+
+          A11 += (f32)(ixval*ixval);
+          A12 += (f32)(ixval*iyval);
+          A22 += (f32)(iyval*iyval);
+        } // for(s32 x = 0; x < windowWidth; x++)
+      } // for( s32 y = 0; y < windowHeight; y++ )
+    } // f32 A11 = 0, A12 = 0, A22 = 0;
 
     A11 *= FLT_SCALE;
     A12 *= FLT_SCALE;
     A22 *= FLT_SCALE;
 
     f32 D = A11*A22 - A12*A12;
-    f32 minEig = (A22 + A11 - std::sqrt((A11-A22)*(A11-A22) +
-      4.f*A12*A12))/(2*windowWidth*windowHeight);
+    const f32 minEig = (A22 + A11 - sqrtf((A11-A22)*(A11-A22) + 4.f*A12*A12))/(2*windowWidth*windowHeight);
 
-    pErr[ptidx] = (f32)minEig;
+    pErr[ptidx] = minEig;
 
     if( minEig < minEigThreshold || D < FLT_EPSILON )
     {
@@ -243,120 +214,124 @@ Result ComputeLKUpdate(
 
     D = 1.f/D;
 
-    nextPt -= halfWin;
-    Point<f32> prevDelta;
+    nextPointF32 -= halfWin;
+    Point<f32> prevDeltaF32;
 
-    for( j = 0; j < criteria.maxCount; j++ )
-    {
-      inextPt.x = cvFloor(nextPt.x);
-      inextPt.y = cvFloor(nextPt.y);
+    const s32 stepNextImg = nextImage.get_stride();
 
-      if( inextPt.x < -windowWidth || inextPt.x >= J.cols ||
-        inextPt.y < -windowHeight || inextPt.y >= J.rows )
+    for(s32 j = 0; j < termination_maxCount; j++ ) {
+      nextPointS32.x = cvFloor(nextPointF32.x);
+      nextPointS32.y = cvFloor(nextPointF32.y);
+
+      // TODO: set these bounds correctly
+      //if( nextPointS32.x < -windowWidth || nextPointS32.x >= imageHeight ||
+      //  nextPointS32.y < -windowHeight || nextPointS32.y >= imageWidth )
+      if( nextPointS32.x < 0 || nextPointS32.x >= (imageWidth-windowWidth) ||
+        nextPointS32.y < 0 || nextPointS32.y >= (imageHeight-windowHeight) )
       {
-        if( curPyramidLevel == 0 && status )
-          status[ptidx] = false;
+        if(curPyramidLevel == 0)
+          pStatus[ptidx] = false;
+
         break;
       }
 
-      a = nextPt.x - inextPt.x;
-      b = nextPt.y - inextPt.y;
-      iw00 = cvRound((1.f - a)*(1.f - b)*(1 << W_BITS));
-      iw01 = cvRound(a*(1.f - b)*(1 << W_BITS));
-      iw10 = cvRound((1.f - a)*b*(1 << W_BITS));
-      iw11 = (1 << W_BITS) - iw00 - iw01 - iw10;
+      const f32 a = nextPointF32.x - nextPointS32.x;
+      const f32 b = nextPointF32.y - nextPointS32.y;
+      const s32 iw00 = cvRound((1.f - a)*(1.f - b)*(1 << W_BITS));
+      const s32 iw01 = cvRound(a*(1.f - b)*(1 << W_BITS));
+      const s32 iw10 = cvRound((1.f - a)*b*(1 << W_BITS));
+      const s32 iw11 = (1 << W_BITS) - iw00 - iw01 - iw10;
       f32 b1 = 0, b2 = 0;
 
-      for( s32 y = 0; y < windowHeight; y++ )
-      {
-        const u8* Jptr = (const u8*)J.data + (y + inextPt.y)*stepNextImg + inextPt.x;
-        const s8* pIWinBuf = (const s8*)(IWinBuf.data + y*IWinBuf.step);
-        const s8* dIptr = (const s8*)(derivIWinBuf.data + y*derivIWinBuf.step);
+      for( s32 y = 0; y < windowHeight; y++ ) {
+        const u8 * restrict pNextImg = nextImage.Pointer(y + nextPointS32.y, nextPointS32.x);
+        const s16 * restrict pIWinBuf = IWinBuf.Pointer(y, 0);
+        const s16 * restrict pDerivXIWinBuf = derivXIWinBuf.Pointer(y, 0);
+        const s16 * restrict pDerivYIWinBuf = derivYIWinBuf.Pointer(y, 0);
 
-        for(s32 x = 0; x < windowWidth; x++, dIptr += 2 )
-        {
-          s32 diff = CV_DESCALE(Jptr[x]*iw00 + Jptr[x+1]*iw01 +
-            Jptr[x+stepNextImg]*iw10 + Jptr[x+stepNextImg+1]*iw11,
-            W_BITS1-5) - pIWinBuf[x];
-          b1 += (f32)(diff*dIptr[0]);
-          b2 += (f32)(diff*dIptr[1]);
-        }
-      }
+        for(s32 x = 0; x < windowWidth; x++) {
+          s32 diff = CV_DESCALE(pNextImg[x]*iw00 + pNextImg[x+1]*iw01 + pNextImg[x+stepNextImg]*iw10 + pNextImg[x+stepNextImg+1]*iw11, W_BITS-5) - pIWinBuf[x];
+
+          b1 += (f32)(diff*pDerivXIWinBuf[x]);
+          b2 += (f32)(diff*pDerivYIWinBuf[y]);
+        } // for(s32 x = 0; x < windowWidth; x++)
+      } // for( s32 y = 0; y < windowHeight; y++ )
 
       b1 *= FLT_SCALE;
       b2 *= FLT_SCALE;
 
-      Point<f32> delta( (f32)((A12*b2 - A22*b1) * D),
-        (f32)((A12*b1 - A11*b2) * D));
-      //delta = -delta;
+      const Point<f32> delta( (f32)((A12*b2 - A22*b1) * D), (f32)((A12*b1 - A11*b2) * D));
 
-      nextPt += delta;
-      pNextPts[ptidx] = nextPt + halfWin;
+      nextPointF32 += delta;
+      pNextPts[ptidx] = nextPointF32 + halfWin;
 
-      if( delta.ddot(delta) <= criteria.epsilon )
+      const f32 deltaDot = delta.x*delta.x + delta.y*delta.y;
+      if( deltaDot <= termination_epsilon )
         break;
 
-      if( j > 0 && std::abs(delta.x + prevDelta.x) < 0.01 &&
-        std::abs(delta.y + prevDelta.y) < 0.01 )
+      if( j > 0 &&
+        ABS(delta.x + prevDeltaF32.x) < 0.01f &&
+        ABS(delta.y + prevDeltaF32.y) < 0.01f )
       {
-        pNextPts[ptidx] -= delta*0.5f;
+        Point<f32> halfDelta = delta;
+        halfDelta *= 0.5f;
+        pNextPts[ptidx] -= halfDelta;
         break;
       }
-      prevDelta = delta;
-    }
+      prevDeltaF32 = delta;
+    } // for(s32 j = 0; j < termination_maxCount; j++ )
 
     if( pStatus[ptidx] && curPyramidLevel == 0 ) {
-      Point<f32> nextPoint = pNextPts[ptidx] - halfWin;
-      Point<s32>  inextPoint;
+      const Point<f32> nextPointShiftedF32 = pNextPts[ptidx] - halfWin;
+      Point<s32> nextPointShiftedS32;
 
-      inextPoint.x = cvFloor(nextPoint.x);
-      inextPoint.y = cvFloor(nextPoint.y);
+      nextPointShiftedS32.x = cvFloor(nextPointShiftedF32.x);
+      nextPointShiftedS32.y = cvFloor(nextPointShiftedF32.y);
 
-      if( inextPoint.x < -windowWidth || inextPoint.x >= J.cols ||
-        inextPoint.y < -windowHeight || inextPoint.y >= J.rows )
+      if( nextPointShiftedS32.x < -windowWidth || nextPointShiftedS32.x >= imageHeight ||
+        nextPointShiftedS32.y < -windowHeight || nextPointShiftedS32.y >= imageWidth )
       {
         pStatus[ptidx] = false;
         continue;
       }
 
-      f32 aa = nextPoint.x - inextPoint.x;
-      f32 bb = nextPoint.y - inextPoint.y;
-      iw00 = cvRound((1.f - aa)*(1.f - bb)*(1 << W_BITS));
-      iw01 = cvRound(aa*(1.f - bb)*(1 << W_BITS));
-      iw10 = cvRound((1.f - aa)*bb*(1 << W_BITS));
-      iw11 = (1 << W_BITS) - iw00 - iw01 - iw10;
+      const f32 aa = nextPointShiftedF32.x - nextPointShiftedS32.x;
+      const f32 bb = nextPointShiftedF32.y - nextPointShiftedS32.y;
+      const s32 iw00 = cvRound((1.f - aa)*(1.f - bb)*(1 << W_BITS));
+      const s32 iw01 = cvRound(aa*(1.f - bb)*(1 << W_BITS));
+      const s32 iw10 = cvRound((1.f - aa)*bb*(1 << W_BITS));
+      const s32 iw11 = (1 << W_BITS) - iw00 - iw01 - iw10;
       f32 errval = 0.f;
 
-      for( s32 y = 0; y < windowHeight; y++ )
-      {
-        const u8* Jptr = (const u8*)J.data + (y + inextPoint.y)*stepNextImg + inextPoint.x;
-        const s8* pIWinBuf = (const s8*)(IWinBuf.data + y*IWinBuf.step);
+      for( s32 y = 0; y < windowHeight; y++ ) {
+        const u8 * restrict pPrevImg = prevImage.Pointer(y + nextPointShiftedS32.y, nextPointShiftedS32.x);
+        const s16 * restrict pIWinBuf = IWinBuf.Pointer(y, 0);
 
-        for( s32 x = 0; x < windowWidth; x++ )
-        {
-          s32 diff = CV_DESCALE(Jptr[x]*iw00 + Jptr[x+1]*iw01 +
-            Jptr[x+stepNextImg]*iw10 + Jptr[x+stepNextImg+1]*iw11,
-            W_BITS1-5) - pIWinBuf[x];
-          errval += std::abs((f32)diff);
-        }
-      }
+        for( s32 x = 0; x < windowWidth; x++ ) {
+          s32 diff = CV_DESCALE(pPrevImg[x]*iw00 + pPrevImg[x+1]*iw01 + pPrevImg[x+stepNextImg]*iw10 + pPrevImg[x+stepNextImg+1]*iw11, W_BITS-5) - pIWinBuf[x];
+
+          errval += ABS((f32)diff);
+        } // for( s32 x = 0; x < windowWidth; x++ )
+      } // for( s32 y = 0; y < windowHeight; y++ )
 
       pErr[ptidx] = errval * 1.f/(32*windowWidth*windowHeight);
     } // if( pStatus[ptidx] && curPyramidLevel == 0 )
   }
+
+  return RESULT_OK;
 } // ComputeLKUpdate()
 
 namespace Anki
 {
   namespace Embedded
   {
-    namespace KLT
+    namespace TemplateTracker
     {
       Result CalcOpticalFlowPyrLK(
         const FixedLengthList<Array<u8> > &prevPyramid,
         const FixedLengthList<Array<u8> > &nextPyramid,
-        const FixedLengthList<Point<f32> > &prevPts,
-        FixedLengthList<Point<f32> > &nextPts,
+        const FixedLengthList<Point<f32> > &prevPoints,
+        FixedLengthList<Point<f32> > &nextPoints,
         FixedLengthList<bool> &status,
         FixedLengthList<f32> &err,
         const s32 windowHeight,
@@ -364,33 +339,34 @@ namespace Anki
         const s32 termination_maxCount,
         const f32 termination_epsilon,
         const f32 minEigThreshold,
+        const bool usePreviousFlowAsInit,
         MemoryStack scratch)
       {
-        const s32 numPyramidLevels = prevPyramid.get_size();
-        const s32 numPrevPoints = prevPts.get_size();
+        const s32 numPyramidLevels = prevPyramid.get_size() - 1;
+        const s32 numPrevPoints = prevPoints.get_size();
 
         //
         // Error check inputs
         //
 
-        AnkiConditionalErrorAndReturnValue(AreValid(prevPyramid, nextPyramid, prevPts, nextPts, status, err),
+        AnkiConditionalErrorAndReturnValue(AreValid(prevPyramid, nextPyramid, prevPoints, nextPoints, status, err),
           RESULT_FAIL_INVALID_OBJECT, "CalcOpticalFlowPyrLK", "Invalid inputs");
 
         AnkiConditionalErrorAndReturnValue(prevPyramid.get_size() == nextPyramid.get_size(),
           RESULT_FAIL_INVALID_PARAMETER, "CalcOpticalFlowPyrLK", "Invalid inputs");
 
         AnkiConditionalErrorAndReturnValue(
-          prevPts.get_size() <= nextPts.get_maximumSize() &&
-          nextPts.get_maximumSize() == status.get_maximumSize() &&
-          nextPts.get_maximumSize() == err.get_maximumSize(),
+          prevPoints.get_size() <= nextPoints.get_maximumSize() &&
+          nextPoints.get_maximumSize() == status.get_maximumSize() &&
+          nextPoints.get_maximumSize() == err.get_maximumSize(),
           RESULT_FAIL_INVALID_PARAMETER, "CalcOpticalFlowPyrLK", "Invalid inputs");
 
         AnkiConditionalErrorAndReturnValue(
           windowHeight > 2 && windowWidth > 2 &&
           termination_maxCount > 0 && termination_maxCount <= 100 &&
-          termination_epsilon >= 0 && termination_epsilon >= 10 &&
+          termination_epsilon >= 0 && termination_epsilon <= 10 &&
           minEigThreshold >= 0,
-          RESULT_FAIL_INVALID_PARAMETER, "BuildOpticalFlowPyramid", "Invalid inputs");
+          RESULT_FAIL_INVALID_PARAMETER, "CalcOpticalFlowPyrLK", "Invalid inputs");
 
         {
           const s32 numImages = prevPyramid.get_size();
@@ -407,7 +383,7 @@ namespace Anki
           }
         }
 
-        nextPts.set_size(numPrevPoints);
+        nextPoints.set_size(numPrevPoints);
         status.set_size(numPrevPoints);
         err.set_size(numPrevPoints);
 
@@ -415,12 +391,13 @@ namespace Anki
 
         const f32 epsilonSquared = termination_epsilon * termination_epsilon;
 
-        // dI/dx ~ Ix, dI/dy ~ Iy
-        //Mat derivIBuf;
-        //derivIBuf.create(prevPyr[0].rows + windowHeight*2, prevPyr[0].cols + windowWidth*2, CV_MAKETYPE(derivDepth, prevPyr[0].channels() * 2));
+        if(!usePreviousFlowAsInit) {
+          for(s32 i=0; i<numPrevPoints; i++) {
+            nextPoints[i] = prevPoints[i];
+          }
+        }
 
-        for(s32 curPyramidLevel = numPyramidLevels; curPyramidLevel >= 0; curPyramidLevel-- )
-        {
+        for(s32 curPyramidLevel = numPyramidLevels; curPyramidLevel >= 0; curPyramidLevel-- ) {
           PUSH_MEMORY_STACK(scratch);
 
           const Array<u8> &prevImage = prevPyramid[curPyramidLevel];
@@ -440,18 +417,31 @@ namespace Anki
           if(gradientResult != RESULT_OK)
             return gradientResult;
 
-          typedef cv::detail::LKTrackerInvoker LKTrackerInvoker;
+          const Result lkResult = ComputeLKUpdate(
+            prevPyramid[curPyramidLevel],
+            dx,
+            dy,
+            nextPyramid[curPyramidLevel],
+            prevPoints,
+            nextPoints,
+            status,
+            err,
+            windowHeight,
+            windowWidth,
+            termination_maxCount,
+            termination_epsilon,
+            minEigThreshold,
+            true,
+            curPyramidLevel,
+            nextPyramid.get_size(),
+            scratch);
 
-          parallel_for_(Range(0, npoints), LKTrackerInvoker(
-            prevPyr[curPyramidLevel * 1],
-            derivI,
-            nextPyr[curPyramidLevel * 1],
-            prevPts, nextPts,
-            status, err,
-            winSize, termination_maxCount, epsilonSquared, curPyramidLevel, maxPyramidLevel,
-            flags, (f32)minEigThreshold));
-        }
+          if(lkResult != RESULT_OK)
+            return lkResult;
+        } // for(s32 curPyramidLevel = numPyramidLevels; curPyramidLevel >= 0; curPyramidLevel-- )
+
+        return RESULT_OK;
       } // CalcOpticalFlowPyrLK()
-    } // namespace KLT
+    } // namespace TemplateTracker
   } // namespace Embedded
 } // namespace Anki
