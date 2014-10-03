@@ -424,6 +424,8 @@ namespace Anki
         IMUWriteReadPipelined(RANGE_500DPS);
         MicroWait(2);  // 2 us delay required after write
         
+        // TODO: Add lowpass filter on gyro? Pete isn't certain this is actually useful. Good. I'm a big dope, says pete.
+        
         // Verify everything that was just written
         IMUSelectDevice(IMU_GYRO);  // Deselect and reselect 
         IMUWriteReadPipelined(IMU_READ | GYRO_RANGE);

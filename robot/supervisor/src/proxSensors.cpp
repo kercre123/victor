@@ -34,7 +34,8 @@ namespace Anki {
         // Get current readings and filter
         HAL::ProximityValues currProxVals;
         HAL::GetProximity(&currProxVals);
-        
+        // TODO: Check to make sure currProxVals.status == IR_GOOD, and
+        // check .latest for sharpID of most recent sensor value
         _proxLeft = (FILT_COEFF * currProxVals.left) + ((1.f - FILT_COEFF) * _proxLeft);
         _proxFwd = (FILT_COEFF * currProxVals.forward) + ((1.f - FILT_COEFF) * _proxFwd);
         _proxRight = (FILT_COEFF * currProxVals.right) + ((1.f - FILT_COEFF) * _proxRight);
