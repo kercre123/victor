@@ -466,43 +466,7 @@ namespace Anki
         SensorInit(&iface_right); 
       }
       
-      
-      // OBSOLETE!
-      // Call me once per main loop iteration
-      /*
-      - Reads a sensor value
-      - Wakes up the next sensor to be read on the next call (~5ms later)
-      - The first 3 readings will be junk
-      */
-      sharpID GetProximity(ProximityValues *prox)
-      {
-        static int sharpID = IRleft;
-        switch(sharpID)
-        {
-          case IRforward:
-            prox->forward = (data_read(&iface_forward, D2_HIGH) & 0xFF) << 8 | (data_read(&iface_forward, D2_LOW) & 0xFF);
-            SensorWakeup(&iface_left);
-            sharpID = IRleft;
-            return IRforward;
-            break;
-            
-          case IRleft:
-            prox->left = (data_read(&iface_left, D2_HIGH) & 0xFF) << 8 | (data_read(&iface_left, D2_LOW) & 0xFF);
-            SensorWakeup(&iface_right);
-            sharpID = IRright;
-            return IRleft;
-            break;
-          
-          case IRright:
-            prox->right = (data_read(&iface_right, D2_HIGH) & 0xFF) << 8 | (data_read(&iface_right, D2_LOW) & 0xFF);
-            SensorWakeup(&iface_forward);
-            sharpID = IRforward;
-            return IRright;
-            break;
-        }
-      }  
-   
-   
+         
       // Set up an interrupt based write.
       static void SetWriteMsg(I2CInterface *iface, int word_addr, int write_data)
       {
@@ -528,7 +492,7 @@ namespace Anki
       //       - read from sensor
       // Only call once every 5ms (1 main loop)
       // current order is left -> right -> forward
-      void GetProximity_INT(ProximityValues *prox)
+      void GetProximity(ProximityValues *prox)
       {
 
         static sharpID ID = IRleft;

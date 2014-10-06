@@ -378,10 +378,7 @@ namespace Anki
       //       - read from sensor
       // Only call once every 5ms (1 main loop)
       // current order is left -> right -> forward
-      void GetProximity_INT(ProximityValues *prox);
-      
-      // Obsolete
-      sharpID GetProximity(ProximityValues *prox);
+      void GetProximity(ProximityValues *prox);
       
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
