@@ -82,7 +82,7 @@ namespace Anki {
         _isTracking = false;
         
         const HAL::CameraInfo* camInfo = HAL::GetHeadCamInfo();
-        AnkiConditionalErrorAndReturnValue(camInfo != nullptr, RESULT_FAIL,
+        AnkiConditionalErrorAndReturnValue(camInfo != NULL, RESULT_FAIL,
                                            "FaceTrackingController.Init.NullCamInfo", "Got null pointer from HAL for camera info.\n");
         
         // Get scaled focal length for the resolution we're actually doing detection

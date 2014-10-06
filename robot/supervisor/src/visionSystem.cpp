@@ -299,7 +299,7 @@ namespace Anki {
         static void SetTrackingReadyTime() {
           frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::TRACK_BLOCK_PERIOD_US;
         }
-        static void SetFaceDetectionReadTime() {
+        static void SetFaceDetectionReadyTime() {
           frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FACE_DETECTION_PERIOD_US;
         }
 #else
@@ -307,6 +307,7 @@ namespace Anki {
         static bool IsFrameReady() { return true; }
         static void SetDetectionReadyTime() { }
         static void SetTrackingReadyTime() { }
+        static void SetFaceDetectionReadyTime() {}
 #endif
       } // namespace Simulator
 
@@ -2281,7 +2282,7 @@ namespace Anki {
           Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
           
         } else if(mode_ == VISION_MODE_DETECTING_FACES) {
-          Simulator::SetFaceDetectionReadTime();
+          Simulator::SetFaceDetectionReadyTime();
           
           VisionMemory::ResetBuffers();
           

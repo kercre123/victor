@@ -773,6 +773,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
             </File>
+            <File>
+              <FileName>faceTrackingController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\faceTrackingController.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1982,6 +1987,11 @@
               <FileName>proxSensors.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>faceTrackingController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\faceTrackingController.cpp</FilePath>
             </File>
           </Files>
         </Group>
