@@ -412,43 +412,39 @@ void draw_cuboid(float x_dim, float y_dim, float z_dim)
 
 void draw_ramp(float platformLength, float slopeLength, float width, float height)
 {
-  // Webots hack
-  float halfX = platformLength*0.5f;
   float halfY = width*0.5f;
-  float halfZ = height*0.5f;
-  
   
   // TOP
   glBegin(GL_LINE_LOOP);
-  glVertex3f(  halfX,  halfY,  halfZ );
-  glVertex3f(  halfX, -halfY,  halfZ );
-  glVertex3f( -halfX, -halfY,  halfZ );
-  glVertex3f( -halfX,  halfY,  halfZ );
+  glVertex3f(  platformLength + slopeLength,  halfY,  height );
+  glVertex3f(  platformLength + slopeLength, -halfY,  height );
+  glVertex3f(  slopeLength, -halfY,  height );
+  glVertex3f(  slopeLength,  halfY,  height );
   glEnd();
   
   // BOTTOM
   glBegin(GL_LINE_LOOP);
-  glVertex3f(  halfX + slopeLength,  halfY, -halfZ );
-  glVertex3f(  halfX + slopeLength, -halfY, -halfZ );
-  glVertex3f( -halfX, -halfY, -halfZ );
-  glVertex3f( -halfX,  halfY, -halfZ );
+  glVertex3f(  platformLength + slopeLength,  halfY, 0 );
+  glVertex3f(  platformLength + slopeLength, -halfY, 0 );
+  glVertex3f( 0, -halfY, 0 );
+  glVertex3f( 0,  halfY, 0 );
   glEnd();
   
   
-  // VERTICAL EDGES
+  // VERTICAL / SLOPED EDGES
   glBegin(GL_LINES);
   
-  glVertex3f(  halfX,  halfY,  halfZ );
-  glVertex3f(  halfX + slopeLength,  halfY,  -halfZ );
+  glVertex3f(  platformLength + slopeLength,  halfY,  height );
+  glVertex3f(  platformLength + slopeLength,  halfY,  0 );
   
-  glVertex3f(  halfX, -halfY,  halfZ );
-  glVertex3f(  halfX + slopeLength, -halfY,  -halfZ );
+  glVertex3f(  platformLength + slopeLength, -halfY,  height );
+  glVertex3f(  platformLength + slopeLength, -halfY,  0 );
   
-  glVertex3f( -halfX,  halfY,  halfZ );
-  glVertex3f( -halfX,  halfY,  -halfZ );
+  glVertex3f( slopeLength,  halfY,  height );
+  glVertex3f( 0,  halfY,  0 );
   
-  glVertex3f( -halfX, -halfY,  halfZ );
-  glVertex3f( -halfX, -halfY,  -halfZ );
+  glVertex3f( slopeLength, -halfY,  height );
+  glVertex3f( 0, -halfY,  0 );
   
   glEnd();
   

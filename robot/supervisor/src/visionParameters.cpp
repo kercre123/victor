@@ -202,6 +202,35 @@ namespace Anki {
       }
       
       
+#if 0
+#pragma mark --- Face Detection Parameters ----
+#endif
+      
+      FaceDetectionParameters::FaceDetectionParameters()
+      : isInitialized(false)
+      {
+        
+      } // FaceDetectionParameters()
+      
+      void FaceDetectionParameters::Initialize()
+      {
+        detectionResolution = Vision::CAMERA_RES_QVGA;
+        
+        faceDetectionHeight = CameraModeInfo[detectionResolution].height;
+        faceDetectionWidth  = CameraModeInfo[detectionResolution].width;
+
+        scaleFactor    = 1.1;
+        minNeighbors   = 2;
+        minHeight      = 30;
+        minWidth       = 30;
+        maxHeight      = faceDetectionHeight;
+        maxWidth       = faceDetectionWidth;
+        MAX_CANDIDATES = 5000;
+                
+        isInitialized = true;
+        
+      } // FaceDetectionParameters::Initialize()
+      
 
     } // namespace VisionSystem
   } // namespace Cozmo

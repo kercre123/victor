@@ -352,16 +352,33 @@ namespace Anki
         IRforward,
         IRright
       };
+ 
+      enum sharpStatus
+      {
+        IR_GOOD,          // Hooray!
+        IR_I2C_ERROR,     // I2C is broken 
+        IR_IN_PROGRESS    // Data read already in pogress, please try again later 
+      };
 
       typedef struct
       {
-        u16    left;
-        u16    right;
-        u16    forward;
+        u16           left;
+        u16           right;
+        u16           forward;
+        sharpID       latest;   // Most up to date sensor value
+        sharpStatus   status;   // 
       } ProximityValues;
       
-      sharpID GetProximity(ProximityValues *prox);
-
+      
+      // Interrupt driven proxmity (CALL AT BEGINNING OF LOOP)
+      // Note: this function is pipelined. // latency ~= 5 ms (1 main loop)
+      //       - returns data (from last function call)
+      //       - wake up the next sensor
+      //       - wait ~3.5 ms
+      //       - read from sensor
+      // Only call once every 5ms (1 main loop)
+      // current order is left -> right -> forward
+      void GetProximity(ProximityValues *prox);
       
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
