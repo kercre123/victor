@@ -192,8 +192,8 @@ namespace Anki
           {
             int xs = _x[j];
             int ys = _y[j];
-            int x = std::abs(xs);
-            int y = std::abs(ys) << CANNY_SHIFT;
+            int x = ABS(xs);
+            int y = ABS(ys) << CANNY_SHIFT;
 
             int tg22x = x * TG22;
 

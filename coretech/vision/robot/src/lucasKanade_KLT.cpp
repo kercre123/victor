@@ -51,6 +51,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 //
 //M*/
 
+// TODO: fix for non-PC
+#ifdef __MSC_VER
+
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/matlabInterface.h"
@@ -445,3 +448,5 @@ namespace Anki
     } // namespace TemplateTracker
   } // namespace Embedded
 } // namespace Anki
+
+#endif //#ifdef __MSC_VER
