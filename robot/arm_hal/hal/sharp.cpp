@@ -1,3 +1,47 @@
+/**
+* File: sharp.cpp
+*
+* Author: Bryan Hood
+* Created: 10/7/2014
+*
+*
+* Description:
+*
+*  Driver file for Sharp proximity sensor
+*
+* This code is EXPERIMENTAL for Cozmo proto 2.x, please remove for Cozmo proto 3+
+// Goes in HAL
+enum sharpID
+{
+  IRleft,
+  IRforward,
+  IRright
+};
+
+typedef struct
+{
+  u16           left;
+  u16           right;
+  u16           forward;
+  sharpID       latest;   // Most up to date sensor value
+} ProximityValues;
+
+      // Interrupt driven proxmity (CALL AT BEGINNING OF LOOP)
+      // Note: this function is pipelined. // latency ~= 5 ms (1 main loop)
+      //       - returns data (from last function call)
+      //       - wake up the next sensor
+      //       - wait ~3.5 ms
+      //       - read from sensor
+      // Only call once every 5ms (1 main loop)
+      // current order is left -> right -> forward
+      void GetProximity(ProximityValues *prox)
+*
+*  Implementation notes:
+*
+* Copyright: Anki, Inc. 2014
+*
+**/
+
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/trig_fast.h"
@@ -11,7 +55,12 @@ GPIO_PIN_SOURCE(SDA2, GPIOD, 7);
 GPIO_PIN_SOURCE(INT, GPIOF, 7);
 GPIO_PIN_SOURCE(TRIGGER, GPIOB, 11);
 
-//#define I2C_TRIGGER
+#undef assert
+#define assert(x) if(!(x)) while(1);
+
+// I2C_TRIGGER is for debugging on the scope
+// #define I2C_TRIGGER
+
 
 // Registers
 
@@ -118,18 +167,7 @@ GPIO_PIN_SOURCE(TRIGGER, GPIOB, 11);
 // I2C configuration
 #define I2C_ACK (0)
 
-enum I2C_Msg_Status
-{
-  I2C_SUCCESS,
-  I2C_FAILURE
-};
-
-enum I2C_Sent_Flag
-{
-  I2C_SENT,
-  I2C_IN_PROGRESS,
-  I2C_UNSENT
-};
+static volatile char I2Cstate;
 
 struct I2CInterface
 {
@@ -143,47 +181,17 @@ struct I2CInterface
 
 struct I2CWrite_Msg
 {
-  I2CInterface*       IFACE;
-  char                ADDR_WORD;
-  char                DATA;
-  I2C_Sent_Flag       SENT_FLAG;
-  I2C_Msg_Status      STATUS;
+  volatile I2CInterface*    IFACE;
+  volatile char             ADDR_WORD;
+  volatile char             DATA;
 } write_msg;
 
 struct I2CRead_Msg
 {
-  I2CInterface*       IFACE;
-  char                ADDR_WORD;
-  volatile char       DATA[2];
-  I2C_Sent_Flag       SENT_FLAG;
-  I2C_Msg_Status      STATUS;
+  volatile I2CInterface*    IFACE;
+  volatile char             ADDR_WORD;
+  volatile char             DATA[2];
 } read_msg;
-
-
-/* Goes in HAL
-enum sharpID
-{
-  IRleft,
-  IRforward,
-  IRright
-};
-
-enum sharpStatus
-{
-  IR_GOOD,          // Hooray!
-  IR_I2C_ERROR,     // I2C is broken 
-  IR_IN_PROGRESS    // Data read already in pogress, please try again later 
-};
-
-typedef struct
-{
-  u16           left;
-  u16           right;
-  u16           forward;
-  sharpID       latest;   // Most up to date sensor value
-  sharpStatus   status;   // 
-} ProximityValues;
-*/
 
 
 namespace Anki
@@ -194,7 +202,8 @@ namespace Anki
     {
 
       I2CInterface iface_left, iface_forward, iface_right;
-      const u32 I2C_WAIT = 1;   // 8uS between clock edges - or 62.5KHz I2C
+      
+      const u32 I2C_WAIT = 1;   // 8uS between clock edges - or 62.5KHz I2C (these numbers are likely not valid)
 
       // Soft I2C stack, borrowed from Arduino (BSD license)
       static void DriveSCL(u8 bit, I2CInterface *iface)
@@ -353,13 +362,11 @@ namespace Anki
       {
         data_write(iface, 0x01, PRST_1 | RES_A_14BIT | RANGE_A_X8);
         data_write(iface, 0x02, INTTYPE_PULSE | RES_P_10BIT | RANGE_P_X8);
-        //data_write(iface, 0x03, INTVAL_0 | IS_130MA | PIN_PROX );
         data_write(iface, 0x03, INTVAL_0 | IS_130MA | PIN_FLAG_P );
         data_write(iface, PL_LOW, 0x0F); // Set proximity sensor low threshold
         data_write(iface, PL_HIGH, 0x00);
         data_write(iface, PH_LOW, 0x0F); // Set proximity sensor high threshold
         data_write(iface, PH_HIGH, 0x00); 
-        //data_write(iface, 0x00, OP3 | OP2 | OP1_PS); // Enable sensor in PS mode
         data_write(iface, 0x00,  OP1_PS); // Enable sensor in PS mode, auto-shutdown, currently in shutdown
       }
 
@@ -367,9 +374,7 @@ namespace Anki
       void SharpInit()
       {
         // Set message sent flags (for interrupt operation)
-        write_msg.SENT_FLAG = I2C_SENT;
-        read_msg.SENT_FLAG = I2C_SENT;
-        
+        I2Cstate = 0;
        
         // Configure sharp sensors
         // forward
@@ -453,8 +458,8 @@ namespace Anki
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_InitStructure.NVIC_IRQChannel = TIM7_IRQn ;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  // ? TODO: Figure out priority
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; // ? TODO: Figure out priority
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;  
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2; 
         NVIC_Init(&NVIC_InitStructure);      
         // TIM_ITConfig(TIM7, TIM_IT_Update, ENABLE); // Enable interrupt
         TIM_Cmd(TIM7, ENABLE);
@@ -483,7 +488,6 @@ namespace Anki
         read_msg.ADDR_WORD = word_addr;
       }
 
-
       // Interrupt driven proxmity (CALL AT BEGINNING OF LOOP)
       // Note: this function is pipelined. // latency ~= 5 ms (1 main loop)
       //       - returns data (from last function call)
@@ -497,10 +501,8 @@ namespace Anki
 
         static sharpID ID = IRleft;
         
-        if (read_msg.SENT_FLAG != I2C_SENT || write_msg.SENT_FLAG != I2C_SENT) // both messages must be sent to proceed
+        while (I2Cstate != 0) // both messages must be sent to proceed
         {
-          prox->status = IR_IN_PROGRESS;
-          return;
         }
         
         switch(ID)
@@ -529,7 +531,7 @@ namespace Anki
             SetReadMsg(&iface_forward, D2_LOW); // schedule a read 
             break;  
         }
-
+/*
         if (read_msg.STATUS == I2C_FAILURE || write_msg.STATUS == I2C_FAILURE)
           prox->status = IR_I2C_ERROR;
         else if ( read_msg.DATA[1] > 3) // should only be 10 bits, rules out double read errors
@@ -539,6 +541,7 @@ namespace Anki
           
         write_msg.SENT_FLAG = I2C_UNSENT;
         read_msg.SENT_FLAG = I2C_UNSENT;
+*/
         TIM_ITConfig(TIM7, TIM_IT_Update, ENABLE); // Enable interrupt
       }
       
@@ -554,7 +557,7 @@ Notes:
  2) Wait ~ 3.5-4 ms // wait for data to become available
  3) Data read (2 bytes) // read both bytes of data
  
- - Each interrupt represents a half I2C clock cycle. The state machine is in a switch statement
+ - Each interrupt represents a half I2C clock cycle. The I2Cstate machine is in a switch I2Cstatement
     that is linear except for 8 bit read/writes which loop 
     
  - The interrupt flag is cleared at the beginning of the routine
@@ -563,26 +566,22 @@ Notes:
 extern "C" void TIM7_IRQHandler(void)
 {
   static TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-  static char state, bits, m;
+  static char bits, m;
   
   TIM7->SR = 0;        // Reset interrupt flag
   
   // check for new messages
-  // set m, state, bits here
-  if(write_msg.SENT_FLAG == I2C_UNSENT && read_msg.SENT_FLAG == I2C_UNSENT)
+  // set m, I2Cstate, bits here
+  if(I2Cstate == 0)
   {
     m = 0x80; // reset m
     bits = 0;
-    state = 0x00;
+    I2Cstate = 0x00;
     read_msg.DATA[0] = 0x00;
     read_msg.DATA[1] = 0x00;
-    write_msg.SENT_FLAG = I2C_IN_PROGRESS;
-    read_msg.SENT_FLAG = I2C_IN_PROGRESS;
-    write_msg.STATUS = I2C_SUCCESS;
-    read_msg.STATUS = I2C_SUCCESS;
   }
   
-  switch(state)
+  switch(I2Cstate)
   {
     //// send a start bit ////
     case 0x00:  // start bit (part 1)
@@ -590,13 +589,13 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_SET(GPIO_TRIGGER, PIN_TRIGGER);
       #endif
       GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
       return;
     
     case 0x01: // start bit (part 2)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;
       
@@ -605,20 +604,20 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       (m & write_msg.IFACE->ADDR_SLAVE_W) ? GPIO_SET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA) : GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
       m >>= 1;
-      state++;
+      I2Cstate++;
       // wait
       return;
     
     case 0x03: // set clock (part 2 x 8)
       GPIO_SET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
-      m == 0 ? state++ : state--;
+      m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
       return;
     
     case 0x04: // end with a clock reset, and reset m (part 3)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL); 
       m = 0x80; // reset m
-      state++;
+      I2Cstate++;
       // wait
       return;
 
@@ -626,19 +625,19 @@ extern "C" void TIM7_IRQHandler(void)
     case 0x05: // set clock and data (part 1)
       GPIO_SET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       GPIO_SET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
       return;
                 
     case 0x06: // read ack and reset clock (part 2)
       if ((!!(GPIO_READ(write_msg.IFACE->GPIO_SDA) & write_msg.IFACE->PIN_SDA)) != I2C_ACK)
       {
-        write_msg.STATUS = I2C_FAILURE;
-        state = 0x35;
+        assert(0);
+        I2Cstate = 0x35;
       }
       else // success
       {
-        state++;
+        I2Cstate++;
       }
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
@@ -650,20 +649,20 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       (m & write_msg.ADDR_WORD) ? GPIO_SET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA) : GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
       m >>= 1;
-      state++;
+      I2Cstate++;
       // wait
       return;
     
     case 0x08: // set clock (part 2 x 8)
       GPIO_SET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
-      m == 0 ? state++ : state--;
+      m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
       return;
     
     case 0x09: // end with a clock reset and reset m (part 3)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       m = 0x80; // reset m
-      state++;
+      I2Cstate++;
       // wait
       return;
       
@@ -671,19 +670,19 @@ extern "C" void TIM7_IRQHandler(void)
     case 0x0A: // set clock and data (part 1)
       GPIO_SET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       GPIO_SET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
       return;
                 
     case 0x0B: // read data and reset clock (part 2)
       if ((!!(GPIO_READ(write_msg.IFACE->GPIO_SDA) & write_msg.IFACE->PIN_SDA)) != I2C_ACK)
       {
-        write_msg.STATUS = I2C_FAILURE;
-        state = 0x35;
+        assert(0);
+        I2Cstate = 0x35;
       }
       else // success
       {
-        state++;
+        I2Cstate++;
       }
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
@@ -695,20 +694,20 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       (m & write_msg.DATA) ? GPIO_SET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA) : GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
       m >>= 1;
-      state++;
+      I2Cstate++;
       // wait
       return;
     
     case 0x0D: // set clock (part 2 x 8)
       GPIO_SET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
-      m == 0 ? state++ : state--;
+      m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
       return;
     
     case 0x0E: // end with a clock reset and reset m (part 3)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       m = 0x80; // reset m
-      state++;
+      I2Cstate++;
       // wait
       return;
        
@@ -716,19 +715,19 @@ extern "C" void TIM7_IRQHandler(void)
     case 0x0F: // set clock and data (part 1)
       GPIO_SET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       GPIO_SET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
       return;
                 
     case 0x10: // read data and reset clock (part 2)
       if ((!!(GPIO_READ(write_msg.IFACE->GPIO_SDA) & write_msg.IFACE->PIN_SDA)) != I2C_ACK)
       {
-        write_msg.STATUS = I2C_FAILURE;
-        state = 0x35;
+        assert(0);
+        I2Cstate = 0x35;
       }
       else // success
       {
-        state++;
+        I2Cstate++;
       }
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
@@ -738,27 +737,21 @@ extern "C" void TIM7_IRQHandler(void)
     //// stop condition ////
     case 0x11: // reset data (part 1)
       GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
       return;
       
     case 0x12: // set clock (part 2)
       GPIO_SET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;
       
     case 0x13: // set data (part 3)
       GPIO_SET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
-      write_msg.SENT_FLAG = I2C_SENT; 
-      write_msg.STATUS = I2C_SUCCESS;
-
-      TIM7->ARR = 2000; // why is this double what I'm calculating???
-      // Answer: I think my ARR period of 1 is actually 2.
-      /* The counter counts from 0 to the auto-reload value (contents of the TIMx_ARR register),
-then restarts from 0 and generates a counter overflow event. */
+      TIM7->ARR = 2000; // approx 3.75 or 4 ms wait
       return;
 
 //////////////////////////////
@@ -767,14 +760,14 @@ then restarts from 0 and generates a counter overflow event. */
     //// send a start bit ////
     case 0x14:  // start bit (part 1)
       GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
-      state++;
-              TIM7->ARR = 1; // put this back
+      I2Cstate++;
+      TIM7->ARR = 1; // put this back
       // wait
       return;
     
     case 0x15: // start bit (part 2)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;
       
@@ -783,20 +776,20 @@ then restarts from 0 and generates a counter overflow event. */
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       (m & read_msg.IFACE->ADDR_SLAVE_W) ? GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA) : GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       m >>= 1;
-      state++;
+      I2Cstate++;
       // wait
       return;
     
     case 0x17: // set clock (part 2 x 8)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      m == 0 ? state++ : state--;
+      m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
       return;
     
     case 0x18: // end with a clock reset, and reset m (part 3)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL); 
       m = 0x80; // reset m
-      state++;
+      I2Cstate++;
       // wait
       return;
 
@@ -804,19 +797,19 @@ then restarts from 0 and generates a counter overflow event. */
     case 0x19: // set clock and data (part 1)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
       return;
                 
     case 0x1A: // read ack and reset clock (part 2)
       if ((!!(GPIO_READ(read_msg.IFACE->GPIO_SDA) & read_msg.IFACE->PIN_SDA)) != I2C_ACK)
       {
-        read_msg.STATUS = I2C_FAILURE;
-        state = 0x35;
+        assert(0);
+        I2Cstate = 0x35;
       }
       else // success
       {
-        state++;
+        I2Cstate++;
       }
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
@@ -828,20 +821,20 @@ then restarts from 0 and generates a counter overflow event. */
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       (m & read_msg.ADDR_WORD) ? GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA) : GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       m >>= 1;
-      state++;
+      I2Cstate++;
       // wait
       return;
     
     case 0x1C: // set clock (part 2 x 8)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      m == 0 ? state++ : state--;
+      m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
       return;
     
     case 0x1D: // end with a clock reset and reset m (part 3)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       m = 0x80; // reset m
-      state++;
+      I2Cstate++;
       // wait
       return;
       
@@ -849,19 +842,19 @@ then restarts from 0 and generates a counter overflow event. */
     case 0x1E: // set clock and data (part 1)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
       return;
                 
     case 0x1F: // read data and reset clock (part 2)
       if ((!!(GPIO_READ(read_msg.IFACE->GPIO_SDA) & read_msg.IFACE->PIN_SDA)) != I2C_ACK)
       {
-        read_msg.STATUS = I2C_FAILURE;
-        state = 0x35;
+        assert(0);
+        I2Cstate = 0x35;
       }
       else // success
       {
-        state++;
+        I2Cstate++;
       }
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
@@ -871,27 +864,26 @@ then restarts from 0 and generates a counter overflow event. */
     //// stop condition ////
     case 0x20: // set clock (part 1)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;
 
     case 0x21: // set data (part 2)
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
       return;
      
     //// send a start bit ////
     case 0x22:  // start bit (part 1)
       GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
-      state++;
-             // TIM7->ARR = 1; // put this back
+      I2Cstate++;
       // wait
       return;
     
     case 0x23: // start bit (part 2)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;
     
@@ -900,20 +892,20 @@ then restarts from 0 and generates a counter overflow event. */
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       (m & read_msg.IFACE->ADDR_SLAVE_R) ? GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA) : GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       m >>= 1;
-      state++;
+      I2Cstate++;
       // wait
       return;
     
     case 0x25: // set clock (part 2 x 8)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      m == 0 ? state++ : state--;
+      m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
       return;
     
     case 0x26: // end with a clock reset, and reset m (part 3)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL); 
       m = 0x80; // reset m
-      state++;
+      I2Cstate++;
       // wait
       return;
       
@@ -921,19 +913,19 @@ then restarts from 0 and generates a counter overflow event. */
     case 0x27: // set clock and data (part 1)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
       return;
                 
     case 0x28: // read data and reset clock (part 2)
       if ((!!(GPIO_READ(read_msg.IFACE->GPIO_SDA) & read_msg.IFACE->PIN_SDA)) != I2C_ACK)
       {
-        read_msg.STATUS = I2C_FAILURE;
-        state = 0x35;
+        assert(0);
+        I2Cstate = 0x35;
       }
       else // success
       {
-        state++;
+        I2Cstate++;
       }
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       //GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA); // (let data continue to float?!) TODO, fix the others in ACK. maybe they don't need it?
@@ -945,7 +937,7 @@ then restarts from 0 and generates a counter overflow event. */
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       read_msg.DATA[0] |= ((!!(GPIO_READ(read_msg.IFACE->GPIO_SDA) & read_msg.IFACE->PIN_SDA)));
       bits++;
-      state++;
+      I2Cstate++;
       // wait
       return;
       
@@ -953,13 +945,13 @@ then restarts from 0 and generates a counter overflow event. */
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       if(bits == 8)
       {
-        state++;
+        I2Cstate++;
         bits = 0;
       }
       else
       {
         read_msg.DATA[0] <<= 1;
-        state--;
+        I2Cstate--;
       }
       // wait
       return;
@@ -967,20 +959,20 @@ then restarts from 0 and generates a counter overflow event. */
     //// send ack ////
     case 0x2B: // set the ack
       I2C_ACK == 0 ? GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA) : GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
       return;
       
     case 0x2C: // clock high
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;
       
     case 0x2D: // clock low, let data float
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;
       
@@ -989,7 +981,7 @@ then restarts from 0 and generates a counter overflow event. */
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       read_msg.DATA[1] |= ((!!(GPIO_READ(read_msg.IFACE->GPIO_SDA) & read_msg.IFACE->PIN_SDA)));
       bits++;
-      state++;
+      I2Cstate++;
       // wait
       return;
       
@@ -997,13 +989,13 @@ then restarts from 0 and generates a counter overflow event. */
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       if(bits == 8)
       {
-        state++;
+        I2Cstate++;
         bits = 0;
       }
       else
       {
         read_msg.DATA[1] <<= 1;
-        state--;
+        I2Cstate--;
       }
       // wait
       return;
@@ -1011,13 +1003,13 @@ then restarts from 0 and generates a counter overflow event. */
     //// send nack ////
     case 0x30: // set the nack
       I2C_ACK == 0 ? GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA) : GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
-      state++;
+      I2Cstate++;
       // wait
       return;
       
     case 0x31: // clock high
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;    
     
@@ -1025,13 +1017,13 @@ then restarts from 0 and generates a counter overflow event. */
     case 0x32: // reset data (part 1)
       GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;
       
     case 0x33: // set clock (part 2)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;
 
@@ -1040,9 +1032,8 @@ then restarts from 0 and generates a counter overflow event. */
       #ifdef I2C_TRIGGER
       GPIO_RESET(GPIO_TRIGGER, PIN_TRIGGER);
       #endif
-      read_msg.STATUS = I2C_SUCCESS;
-      read_msg.SENT_FLAG = I2C_SENT;
       TIM_ITConfig(TIM7, TIM_IT_Update, DISABLE); // Disable interrupt
+      I2Cstate = 0;
       // wait
       return;
       
@@ -1050,13 +1041,13 @@ then restarts from 0 and generates a counter overflow event. */
     case 0x35: // reset data (part 1)
       GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;
       
     case 0x36: // set clock (part 2)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
-      state++;
+      I2Cstate++;
       // wait
       return;
 
@@ -1065,9 +1056,8 @@ then restarts from 0 and generates a counter overflow event. */
       #ifdef I2C_TRIGGER
       GPIO_RESET(GPIO_TRIGGER, PIN_TRIGGER);
       #endif
-      write_msg.SENT_FLAG = I2C_SENT;
-      read_msg.SENT_FLAG = I2C_SENT;
       TIM_ITConfig(TIM7, TIM_IT_Update, DISABLE); // Disable interrupt
+      I2Cstate = 0;
       // wait
       return;
 
