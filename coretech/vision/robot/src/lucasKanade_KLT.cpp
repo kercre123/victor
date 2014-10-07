@@ -51,9 +51,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 //
 //M*/
 
-// TODO: fix for non-PC
-#ifdef __MSC_VER
-
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/matlabInterface.h"
@@ -62,7 +59,7 @@ using namespace Anki;
 using namespace Anki::Embedded;
 
 #define  CV_DESCALE(x,n)     (((x) + (1 << ((n)-1))) >> (n))
-#define  CV_FLT_TO_FIX(x,n)  cvRound((x)*(1<<(n)))
+#define  CV_FLT_TO_FIX(x,n)  Round<s32>((x)*(1<<(n)))
 
 static Result ComputeLKUpdate(
   const Array<u8> &prevImage,
@@ -132,8 +129,8 @@ static Result ComputeLKUpdate(
 
     Point<s32> prevPointS32, nextPointS32;
     prevPointF32 -= halfWin;
-    prevPointS32.x = cvFloor(prevPointF32.x);
-    prevPointS32.y = cvFloor(prevPointF32.y);
+    prevPointS32.x = static_cast<s32>(floorf((prevPointF32.x)));
+    prevPointS32.y = static_cast<s32>(floorf((prevPointF32.y)));
 
     // TODO: Are these set correctly?
     if( prevPointS32.x < 0 || prevPointS32.x >= (imageWidth-windowWidth) ||
@@ -152,9 +149,9 @@ static Result ComputeLKUpdate(
       const f32 a = prevPointF32.x - prevPointS32.x;
       const f32 b = prevPointF32.y - prevPointS32.y;
 
-      const s32 iw00 = cvRound((1.f - a)*(1.f - b)*(1 << W_BITS));
-      const s32 iw01 = cvRound(a*(1.f - b)*(1 << W_BITS));
-      const s32 iw10 = cvRound((1.f - a)*b*(1 << W_BITS));
+      const s32 iw00 = Round<s32>((1.f - a)*(1.f - b)*(1 << W_BITS));
+      const s32 iw01 = Round<s32>(a*(1.f - b)*(1 << W_BITS));
+      const s32 iw10 = Round<s32>((1.f - a)*b*(1 << W_BITS));
       const s32 iw11 = (1 << W_BITS) - iw00 - iw01 - iw10;
 
       //s32 dstep = (s32)(derivprevImage.step/derivprevImage.elemSize1());
@@ -223,8 +220,8 @@ static Result ComputeLKUpdate(
 
     s32 iteration;
     for(iteration = 0; iteration < termination_maxCount; iteration++ ) {
-      nextPointS32.x = cvFloor(nextPointF32.x);
-      nextPointS32.y = cvFloor(nextPointF32.y);
+      nextPointS32.x = static_cast<s32>(floorf((nextPointF32.x)));
+      nextPointS32.y = static_cast<s32>(floorf((nextPointF32.y)));
 
       // TODO: Are these set correctly?
       if( nextPointS32.x < 0 || nextPointS32.x >= (imageWidth-windowWidth) ||
@@ -238,9 +235,9 @@ static Result ComputeLKUpdate(
 
       const f32 a = nextPointF32.x - nextPointS32.x;
       const f32 b = nextPointF32.y - nextPointS32.y;
-      const s32 iw00 = cvRound((1.f - a)*(1.f - b)*(1 << W_BITS));
-      const s32 iw01 = cvRound(a*(1.f - b)*(1 << W_BITS));
-      const s32 iw10 = cvRound((1.f - a)*b*(1 << W_BITS));
+      const s32 iw00 = Round<s32>((1.f - a)*(1.f - b)*(1 << W_BITS));
+      const s32 iw01 = Round<s32>(a*(1.f - b)*(1 << W_BITS));
+      const s32 iw10 = Round<s32>((1.f - a)*b*(1 << W_BITS));
       const s32 iw11 = (1 << W_BITS) - iw00 - iw01 - iw10;
       f32 b1 = 0, b2 = 0;
 
@@ -288,8 +285,8 @@ static Result ComputeLKUpdate(
       const Point<f32> nextPointShiftedF32 = pNextPts[ptidx] - halfWin;
       Point<s32> nextPointShiftedS32;
 
-      nextPointShiftedS32.x = cvFloor(nextPointShiftedF32.x);
-      nextPointShiftedS32.y = cvFloor(nextPointShiftedF32.y);
+      nextPointShiftedS32.x = static_cast<s32>(floorf((nextPointShiftedF32.x)));
+      nextPointShiftedS32.y = static_cast<s32>(floorf((nextPointShiftedF32.y)));
 
       if( nextPointShiftedS32.x < -windowWidth || nextPointShiftedS32.x >= imageHeight ||
         nextPointShiftedS32.y < -windowHeight || nextPointShiftedS32.y >= imageWidth )
@@ -300,9 +297,9 @@ static Result ComputeLKUpdate(
 
       const f32 aa = nextPointShiftedF32.x - nextPointShiftedS32.x;
       const f32 bb = nextPointShiftedF32.y - nextPointShiftedS32.y;
-      const s32 iw00 = cvRound((1.f - aa)*(1.f - bb)*(1 << W_BITS));
-      const s32 iw01 = cvRound(aa*(1.f - bb)*(1 << W_BITS));
-      const s32 iw10 = cvRound((1.f - aa)*bb*(1 << W_BITS));
+      const s32 iw00 = Round<s32>((1.f - aa)*(1.f - bb)*(1 << W_BITS));
+      const s32 iw01 = Round<s32>(aa*(1.f - bb)*(1 << W_BITS));
+      const s32 iw10 = Round<s32>((1.f - aa)*bb*(1 << W_BITS));
       const s32 iw11 = (1 << W_BITS) - iw00 - iw01 - iw10;
       f32 errval = 0.f;
 
@@ -448,5 +445,3 @@ namespace Anki
     } // namespace TemplateTracker
   } // namespace Embedded
 } // namespace Anki
-
-#endif //#ifdef __MSC_VER
