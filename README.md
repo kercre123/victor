@@ -73,7 +73,7 @@ date
 5) Install compilation tools
 sudo apt-get update
 sudo apt-get upgrade
-sudo apt-get install cmake g++ zlib1g-dev build-essential
+sudo apt-get install cmake g++ zlib1g-dev build-essential gcc-multilib
 
 6) In products-cozmo/build --- create 'build' folder if it doesn't exist --- run cmake twice
 cmake .. -DCMAKE_BUILD_TYPE=Release -DEMBEDDED_USE_GTEST=0 -DEMBEDDED_USE_MATLAB=0 -DEMBEDDED_USE_OPENCV=0
