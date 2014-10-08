@@ -36,6 +36,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "data/newFiducials_320x240.h"
+#include "data/simpleFiducials_320x240.h"
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
 #include "data/blockImage50_320x240.h"
@@ -3495,7 +3496,6 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       numRefinementSamples,
       quadRefinementMaxCornerChange,
       quadRefinementMinCornerChange,
-      //true, //< TODO: change back to false
       false,
       scratchCcm,
       scratchOnchip,
@@ -3582,6 +3582,106 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
+
+GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
+{
+  // Don't check if the markers were correctly detected, just check the timing
+
+  const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+  //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
+  const s32 scaleImage_numPyramidLevels = 3;
+
+  const s32 component1d_minComponentWidth = 0;
+  const s32 component1d_maxSkipDistance = 0;
+
+  const f32 minSideLength = 0.01f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
+
+  const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
+  const s32 component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
+  const s32 component_sparseMultiplyThreshold = 1000 << 5;
+  const s32 component_solidMultiplyThreshold = 2 << 5;
+
+  const f32 component_minHollowRatio = 1.0f;
+
+  const s32 maxExtractedQuads = 1000/2;
+  const s32 quads_minQuadArea = 100/4;
+  const s32 quads_quadSymmetryThreshold = 384;
+  const s32 quads_minDistanceFromImageEdge = 2;
+
+  const f32 decode_minContrastRatio = 1.25;
+
+  const s32 maxMarkers = 100;
+  //const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+  const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
+  //const s32 maxConnectedComponentSegments = 70000;
+
+  const s32 quadRefinementIterations = 5;
+  const s32 numRefinementSamples = 100;
+  const f32 quadRefinementMaxCornerChange = 5.f;
+  const f32 quadRefinementMinCornerChange = .005f;
+
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> image(simpleFiducials_320x240_HEIGHT, simpleFiducials_320x240_WIDTH, scratchOffchip);
+  image.Set(simpleFiducials_320x240, simpleFiducials_320x240_WIDTH*simpleFiducials_320x240_HEIGHT);
+
+  //image.Show("image", true);
+
+  // TODO: Check that the image loaded correctly
+  //ASSERT_TRUE(IssimpleFiducials_320x240Valid(image.Pointer(0,0), false));
+
+  FixedLengthList<VisionMarker> markers(maxMarkers, scratchCcm);
+  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchCcm);
+
+  markers.set_size(maxMarkers);
+  homographies.set_size(maxMarkers);
+
+  for(s32 i=0; i<maxMarkers; i++) {
+    Array<f32> newArray(3, 3, scratchCcm);
+    homographies[i] = newArray;
+  } // for(s32 i=0; i<maximumSize; i++)
+
+  InitBenchmarking();
+
+  {
+    const f64 time0 = GetTimeF32();
+    const Result result = DetectFiducialMarkers(
+      image,
+      markers,
+      homographies,
+      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
+      component1d_minComponentWidth, component1d_maxSkipDistance,
+      component_minimumNumPixels, component_maximumNumPixels,
+      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+      component_minHollowRatio,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+      decode_minContrastRatio,
+      maxConnectedComponentSegments,
+      maxExtractedQuads,
+      quadRefinementIterations,
+      numRefinementSamples,
+      quadRefinementMaxCornerChange,
+      quadRefinementMinCornerChange,
+      false,
+      scratchCcm,
+      scratchOnchip,
+      scratchOffchip);
+    const f64 time1 = GetTimeF32();
+
+    CoreTechPrint("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
+
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
 GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
@@ -4824,6 +4924,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
+  CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
