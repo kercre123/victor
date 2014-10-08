@@ -166,13 +166,8 @@ namespace Anki
         bool& enoughContrast);
 
       static bool areTreesInitialized;
-      static FiducialMarkerDecisionTree multiClassTree;
+      static FiducialMarkerDecisionTree multiClassTrees[VisionMarkerDecisionTree::NUM_TREES];
 
-#if USE_RED_BLACK_VERIFICATION_TREES
-      static FiducialMarkerDecisionTree verifyRedTree, verifyBlackTree;
-#else
-      static FiducialMarkerDecisionTree verificationTrees[VisionMarkerDecisionTree::NUM_MARKER_LABELS_ORIENTED];
-#endif
     }; // class VisionMarker
 
     // A FiducialMarkerParserBit object samples an input image, to determine if a given image

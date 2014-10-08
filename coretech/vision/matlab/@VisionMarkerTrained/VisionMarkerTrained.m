@@ -13,7 +13,7 @@ classdef VisionMarkerTrained
                 
         ProbeParameters = struct( ...
             'GridSize', 32, ...            %'Radius', 0.02, ...  % As a fraction of a canonical unit square 
-            'NumAngles', 8, ...       % How many samples around ring to sample
+            'NumAngles', 4, ...       % How many samples around ring to sample
             'Method', 'mean');        % How to combine points in a probe
                 
         MinContrastRatio = 1.25;  % bright/dark has to be at least this
@@ -56,6 +56,8 @@ classdef VisionMarkerTrained
 
         CreateTestImage(varargin);
         CreatePrintableCodeSheet(varargin);
+        
+        [probeValues, X, Y] = GetProbeValues(img, tform);
         
     end % Static Methods
     
@@ -307,8 +309,6 @@ classdef VisionMarkerTrained
             
         end
 
-        [probeValues, X, Y] = GetProbeValues(this, img);
-        
     end % Public Methods
     
 end % CLASSDEF TrainedVisionMarker

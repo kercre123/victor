@@ -1,11 +1,11 @@
 N = 50;
 
-testMode = 'boosted';
+testMode = 'BoostedClassificationTree';
 
 testOnTrainingData = false;
 
 if testOnTrainingData
-    sampleIndex = randi(size(data.probeValues,2), 1, N);
+  sampleIndex = randi(size(data.probeValues,2), 1, N);
 else
   testImages = randi(length(data.fnames), 1, N);
 end
@@ -36,12 +36,12 @@ for i=1:N
         testImg = mean(im2double(testImg),3);
         testImg(alpha<.5) = 1;
         
-        imgSize = randi([32 128],1);
+        imgSize = randi([20 90],1);
         imgBlur = rand + 0.5;
         testImg = separable_filter(imresize(testImg, imgSize*[1 1], 'bilinear'), ...
           gaussian_kernel(imgBlur));
         
-        Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false) + 0.001*randn(4,2);
+        Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false) + 1*randn(4,2);
         tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
     end
     
@@ -77,7 +77,23 @@ for i=1:N
             predictedClass = 'UNKNOWN';
             correct(i) = -1;
           end
-        otherwise
+          
+      case {'ClassificationTree', 'BoostedClassificationTree'}
+        if testOnTrainingData
+          probeValues = testImg;
+        else
+          probeValues = VisionMarkerTrained.GetProbeValues(testImg, tform);
+        end
+        
+        if strcmp(testMode, 'ClassificationTree')
+          predictedClass = ctree.predict(single(probeValues(:)' < .5));
+        else
+          predictedClass = boostedCTrees.predict(single(probeValues(:)'<.5));
+        end
+        
+        correct(i) = double(strcmp(predictedClass, fname));
+        
+      otherwise
             error('Unknown testMode %s', testMode);
     end
     

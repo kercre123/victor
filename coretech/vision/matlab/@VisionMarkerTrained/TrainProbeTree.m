@@ -129,6 +129,7 @@ totalExamplesToClassify = size(probeValues, 2);
 probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
 probeTree.labels = labelNames;
 
+probeValues = single(probeValues < .5);
 % try
     probeTree = buildTree(probeTree, false(size(probeValues,1),1), labels, labelNames, maxDepth);
     

@@ -159,30 +159,31 @@ for iImg = 1:numImages
     
     [~,labelNames{iImg}] = fileparts(fnames{iImg});
     
-    for iSize = 1:numSizes
-      imgResized = imresize(img, imageSizes(iSize)*[1 1], 'bilinear');
-      
-      [nrows,ncols,~] = size(imgResized);
-      imageCoordsX = linspace(0, 1, ncols);
-      imageCoordsY = linspace(0, 1, nrows);
+    [nrows,ncols,~] = size(img);
     
+    for iBlur = 1:numBlurs
+      imgBlur = img;
+      if blurSigmas(iBlur) > 0
+        blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
+        imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma));
+      end
       
-      for iBlur = 1:numBlurs
-        imgBlur = imgResized;
-        if blurSigmas(iBlur) > 0
-          blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
-          imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma));
-        end
+      imgBlur = single(imgBlur);
+      
+      for iSize = 1:numSizes
+        imgResized = imresize(imgBlur, imageSizes(iSize)*[1 1], 'bilinear');
+        imgGradMag = single(smoothgradient(imgResized));
         
-        imgGradMag = single(smoothgradient(imgBlur));
-        imgBlur = single(imgBlur);
+        [nrows,ncols,~] = size(imgResized);
+        imageCoordsX = linspace(0, 1, ncols);
+        imageCoordsY = linspace(0, 1, nrows);
         
         for iRes = 1:numResolutions
           workingResolution = workingResolutions(iRes);
           probeValues{iRes}{iSize,iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
           gradMagValues{iRes}{iSize,iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
           for iPerturb = 1:numPerturbations
-            probeValues{iRes}{iSize,iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgBlur, ...
+            probeValues{iRes}{iSize,iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgResized, ...
               xPerturb{iRes,iPerturb}, yPerturb{iRes,iPerturb}, 'linear', 1), 2);
             
             gradMagValues{iRes}{iSize,iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
