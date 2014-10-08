@@ -31,6 +31,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/classifier.h"
 #include "anki/vision/robot/cameraImagingPipeline.h"
 #include "anki/vision/robot/opencvLight_vision.h"
+#include "anki/vision/robot/features.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -58,6 +59,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <fstream>
 #endif
 
+#include "opencv2/video/tracking.hpp"
+
 using namespace Anki;
 using namespace Anki::Embedded;
 
@@ -69,6 +72,243 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 //#define RUN_FACE_DETECTION_GUI
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
+
+#ifdef RUN_PC_ONLY_TESTS
+GTEST_TEST(CoreTech_Vision, KLT)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  const Array<u8> image1 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame23.png", scratchHuge);
+  const Array<u8> image2 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame24.png", scratchHuge);
+
+  ASSERT_TRUE(AreValid(image1, image2));
+
+  cv::Mat image1Cv;
+  cv::Mat image2Cv;
+
+  ArrayToCvMat<u8>(image1, &image1Cv);
+  ArrayToCvMat<u8>(image2, &image2Cv);
+
+  std::vector<cv::Point2f> pointsCv[2];
+
+  const s32 maxCorners = 10;
+  const f32 qualityLevel = 0.3f;
+  const int blockSize = 11;
+  const double harrisK = 0.04;
+
+  std::vector<cv::Point2f> cornersCv;
+  cv::goodFeaturesToTrack(image1Cv, pointsCv[0], maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
+
+  cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
+
+  cv::Size winSize(31,31);
+
+  std::vector<uchar> statusCv;
+  std::vector<float> errCv;
+
+  const s32 numPyramidLevels = 3;
+  const f32 minEigThreshold = 0.001f;
+
+  calcOpticalFlowPyrLK(image1Cv, image2Cv, pointsCv[0], pointsCv[1], statusCv, errCv, winSize, numPyramidLevels, termcrit, 0, minEigThreshold);
+
+  FixedLengthList<Array<u8> > pyramid1 = ImageProcessing::BuildPyramid<u8,u32,u8>(image1, numPyramidLevels, scratchHuge);
+  FixedLengthList<Array<u8> > pyramid2 = ImageProcessing::BuildPyramid<u8,u32,u8>(image2, numPyramidLevels, scratchHuge);
+
+  ASSERT_TRUE(pyramid1.IsValid());
+  ASSERT_TRUE(pyramid2.IsValid());
+
+  //pyramid1[0].Show("p1 0", false, false);
+  //pyramid1[1].Show("p1 1", false, false);
+  //pyramid1[2].Show("p1 2", false, false);
+  //pyramid1[3].Show("p1 3", false, false);
+
+  //pyramid2[0].Show("p2 0", false, false);
+  //pyramid2[1].Show("p2 1", false, false);
+  //pyramid2[2].Show("p2 2", false, false);
+  //pyramid2[3].Show("p2 3", true, false);
+
+  const s32 numPointsMax = 50000;
+  FixedLengthList<Point<s16> > points1S16(numPointsMax, scratchHuge);
+  FixedLengthList<Point<f32> > points1F32(numPointsMax, scratchHuge);
+  const Result gftResult = Features::GoodFeaturesToTrack(image1, points1S16, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
+
+  ASSERT_TRUE(gftResult == RESULT_OK);
+
+  points1F32.set_size(points1S16.get_size());
+  for(s32 i=0; i<numPointsMax; i++) {
+    points1F32[i].SetCast(points1S16[i]);
+  }
+
+  FixedLengthList<Point<f32> > points2F32(numPointsMax, scratchHuge);
+
+  FixedLengthList<bool> status(numPointsMax, scratchHuge);
+  FixedLengthList<f32> err(numPointsMax, scratchHuge);
+
+  const Result kltResult = TemplateTracker::CalcOpticalFlowPyrLK(
+    pyramid1, pyramid2,
+    points1F32, points2F32,
+    status, err,
+    winSize.height, winSize.width,
+    termcrit.maxCount, static_cast<f32>(termcrit.epsilon),
+    minEigThreshold,
+    false,
+    scratchHuge);
+
+  {
+    Matlab matlab(false);
+    matlab.PutArray(image1, "image1");
+    matlab.PutArray(image2, "image2");
+
+    matlab.EvalString("points1 = zeros(0,2); points2 = zeros(0,2); points1Cv = zeros(0,2); points2Cv = zeros(0,2);");
+    for(s32 i=0; i<points1F32.get_size(); i++) {
+      matlab.EvalString("points1(end+1,:) = [%f,%f];", points1F32[i].x, points1F32[i].y);
+    }
+
+    for(s32 i=0; i<points2F32.get_size(); i++) {
+      matlab.EvalString("points2(end+1,:) = [%f,%f];", points2F32[i].x, points2F32[i].y);
+    }
+
+    for(s32 i=0; i<pointsCv[0].size(); i++) {
+      matlab.EvalString("points1Cv(end+1,:) = [%f,%f];", pointsCv[0][i].x, pointsCv[0][i].y);
+    }
+
+    for(s32 i=0; i<pointsCv[1].size(); i++) {
+      matlab.EvalString("points2Cv(end+1,:) = [%f,%f];", pointsCv[1][i].x, pointsCv[1][i].y);
+    }
+
+    matlab.EvalString("figure(1); hold off; imshow(image1); hold on; scatter(points1(:,1), points1(:,2), 'r+');");
+    matlab.EvalString("figure(2); hold off; imshow(image2); hold on; scatter(points2(:,1), points2(:,2), 'r+');");
+    matlab.EvalString("figure(3); hold off; imshow(image1); hold on; scatter(points1Cv(:,1), points1Cv(:,2), 'r+');");
+    matlab.EvalString("figure(4); hold off; imshow(image2); hold on; scatter(points2Cv(:,1), points2Cv(:,2), 'r+');");
+  }
+
+  points1F32.Print("points1F32");
+  points2F32.Print("points2F32");
+  status.Print("status");
+  err.Print("err");
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, KLT)
+#endif // #ifdef RUN_PC_ONLY_TESTS
+
+#ifdef RUN_PC_ONLY_TESTS
+GTEST_TEST(CoreTech_Vision, Harris)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  const char * imageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
+  Array<u8> image = Array<u8>::LoadImage(imageFilename, scratchOffchip);
+  Array<f32> harrisImage(image.get_size(0), image.get_size(1), scratchOffchip);
+
+  ASSERT_TRUE(AreValid(image, harrisImage));
+
+  cv::Mat_<u8> imageCv;
+
+  ArrayToCvMat<u8>(image, &imageCv);
+
+  const int blockSize = 11;
+  const double harrisK = 0.04;
+
+  cv::Mat_<f32> harrisImageCv;
+  cv::cornerHarris(imageCv, harrisImageCv, blockSize, 3, harrisK, cv::BORDER_DEFAULT);
+
+  matlab.PutOpencvMat(imageCv, "imageCv");
+  matlab.PutOpencvMat(harrisImageCv, "harrisImageCv");
+
+  const Result cornerResult = Features::CornerHarris(image, harrisImage, blockSize, static_cast<f32>(harrisK), scratchOffchip);
+
+  ASSERT_TRUE(cornerResult == RESULT_OK);
+
+  matlab.PutArray(harrisImage, "harrisImage");
+
+  const s32 maxCorners = 100;
+  const f32 qualityLevel = 0.3f;
+
+  FixedLengthList<Point<s16> > corners(5000, scratchHuge);
+
+  const Result gftResult = Features::GoodFeaturesToTrack(image, corners, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
+
+  ASSERT_TRUE(gftResult == RESULT_OK);
+
+  std::vector<cv::Point2f> cornersCv;
+  cv::goodFeaturesToTrack(imageCv, cornersCv, maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
+
+  cv::Mat drawnCorners(image.get_size(0), image.get_size(1), CV_8UC3);
+  cv::Mat drawnCornersCv(image.get_size(0), image.get_size(1), CV_8UC3);
+
+  matlab.EvalStringEcho("corners=zeros(0,2); cornersCv=zeros(0,2);");
+
+  for(s32 i=0; i<corners.get_size(); i++) {
+    cv::circle(drawnCorners, cv::Point(corners[i].x, corners[i].y), 2, cv::Scalar(255,0,0), -1);
+    matlab.EvalStringEcho("corners(end+1,:) = [%d,%d];", s32(corners[i].x), s32(corners[i].y));
+  }
+
+  for(s32 i=0; i<(s32)(cornersCv.size()); i++) {
+    cv::circle(drawnCornersCv, cv::Point(s32(cornersCv[i].x), s32(cornersCv[i].y)), 2, cv::Scalar(255,0,0), -1);
+    matlab.EvalStringEcho("cornersCv(end+1,:) = [%d,%d];", s32(cornersCv[i].x), s32(cornersCv[i].y));
+  }
+
+  cv::imshow("image", imageCv);
+  cv::imshow("drawnCorners", drawnCorners);
+  cv::imshow("drawnCornersCv", drawnCornersCv);
+
+  cv::waitKey();
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, LocalMaxima)
+#endif // #ifdef RUN_PC_ONLY_TESTS
+
+GTEST_TEST(CoreTech_Vision, LocalMaxima)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  const s32 imageHeight = 10;
+  const s32 imageWidth = 10;
+
+  const u8 image_data[imageHeight*imageWidth] = {
+    5, 5, 5, 5, 5, 5, 5, 5, 9, 5,
+    9, 9, 5, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    9, 5, 5, 5, 9, 5, 5, 5, 5, 5,
+    5, 5, 9, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 9, 5, 5, 5,
+    5, 9, 5, 5, 5, 5, 9, 5, 5, 5,
+    5, 5, 9, 5, 5, 5, 5, 5, 5, 9,
+    5, 9, 5, 5, 9, 9, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5, 9, 5};
+
+  Array<u8> image(imageHeight, imageWidth, scratchCcm);
+  FixedLengthList<Point<s16> > points(100, scratchCcm);
+
+  ASSERT_TRUE(image.IsValid());
+
+  image.Set(image_data, imageHeight*imageWidth);
+
+  const Result result = ImageProcessing::LocalMaxima<u8>(image, 3, 3, points);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  ASSERT_TRUE(points.get_size() == 2);
+
+  ASSERT_TRUE(points[0] == Point<s16>(4, 3));
+  ASSERT_TRUE(points[1] == Point<s16>(2, 4));
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, LocalMaxima)
 
 #ifdef RUN_PC_ONLY_TESTS
 GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
@@ -104,7 +344,7 @@ GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
   //vmi.Show(50);
 
   const char * queryImageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
-  Array<u8> queryImage(queryImageFilename, scratchHuge);
+  Array<u8> queryImage = Array<u8>::LoadImage(queryImageFilename, scratchHuge);
   //queryImage.Show("queryImage", true);
 
   Quadrilateral<f32> quad(
@@ -585,7 +825,7 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
     Array<u16> filtered(imageHeight, imageWidth, scratchOffchip);
     filtered.Set(0xFFFF);
 
-    const Result result = ImageProcessing::BoxFilter(image, boxHeight, boxWidth, filtered, scratchOnchip);
+    const Result result = ImageProcessing::BoxFilter<u8,u16,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
 
     //filtered.Print("filtered");
 
@@ -636,7 +876,7 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
 
     BeginBenchmark("BoxFilter");
 
-    const Result result = ImageProcessing::BoxFilter(image, boxHeight, boxWidth, filtered, scratchOnchip);
+    const Result result = ImageProcessing::BoxFilter<u8,u16,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
 
     EndBenchmark("BoxFilter");
 

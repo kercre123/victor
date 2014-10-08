@@ -760,32 +760,37 @@ namespace Anki {
     {
       return &idCard_;
     }
+   
     
-    HAL::sharpID HAL::GetProximity(ProximityValues *prox)
+    void HAL::GetProximity(ProximityValues *prox)
     {
       static int proxID = IRleft;
       switch(proxID)
       {
         case IRforward:
           prox->forward = proxCenter_->getValue();
+          prox->latest  = IRforward;
           proxID = IRleft;
-          return IRforward;
+          break;
           
         case IRleft:
           prox->left = proxLeft_->getValue();
+          prox->latest = IRleft;
           proxID = IRright;
-          return IRleft;
+          break;
           
         case IRright:
           prox->right = proxRight_->getValue();
+          prox->latest = IRright;
           proxID = IRforward;
-          return IRright;
+          break;
           
         default:
           AnkiAssert(false);
-          return static_cast<sharpID>(proxID);
       }
-    } // GetProximity()
+      
+      return;
+    } // GetProximity_INT()
     
   } // namespace Cozmo
 } // namespace Anki

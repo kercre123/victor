@@ -60,7 +60,11 @@ namespace Anki
       Result BoxFilterNormalize(const Array<u8> &image, const s32 boxSize, const u8 padValue,
         Array<u8> &imageNorm, MemoryStack scratch);
 
-      Result BoxFilter(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch);
+      // Fast box filter
+      // Input Arrays "image" and "filtered" cannot be the same
+      // Makes a border of zeros when the box filter goes over the image border
+      template<typename InType, typename IntermediateType, typename OutType> Result BoxFilter(const Array<InType> &image, const s32 boxHeight, const s32 boxWidth, Array<OutType> &filtered, MemoryStack scratch);
+      template<> Result BoxFilter<u8,u16,u16>(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch);
 
       //
       // Image resizing
@@ -78,6 +82,12 @@ namespace Anki
       // Same output as Matlab's imresize, with 'Method'=='box'
       template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByPowerOfTwo(const Array<InType> &in, const s32 downsamplePower, Array<OutType> &out, MemoryStack scratch);
 
+      // Build a 2x downsampled pyramid from an image
+      template<typename InType, typename IntermediateType, typename OutType> FixedLengthList<Array<OutType> > BuildPyramid(
+        const Array<InType> &image, //< WARNING: the memory for "image" is used by the first level of the pyramid.
+        const s32 numPyramidLevels, //< The number of levels in the pyramid is numPyramidLevels + 1, so can be 0 for a single image. The image size must be evenly divisible by "2^numPyramidLevels".
+        MemoryStack &memory);  //< Memory for the output will be allocated by this function
+
       //
       // Color processing
       //
@@ -91,6 +101,14 @@ namespace Anki
       // 3x3 window, fixed-point, approximate Euclidian distance transform. Based on Borgefors "Distance transformations in digital images" 1986
       // Any pixel with grayvalue less than backgroundThreshold is treated as background
       Result DistanceTransform(const Array<u8> image, const u8 backgroundThreshold, FixedPointArray<s16> &distance);
+
+      //
+      // Morphology
+      //
+
+      // Find all searchHeightxsearchWidth local maxima (only 3x3 currently supported)
+      // Optionally return the values at those points
+      template<typename Type> Result LocalMaxima(const Array<Type> &in, const s32 searchHeight, const s32 searchWidth, FixedLengthList<Point<s16> > &points, FixedLengthList<Type> *values=NULL);
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki

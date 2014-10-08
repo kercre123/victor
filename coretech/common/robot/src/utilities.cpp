@@ -22,7 +22,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 #elif defined(__EDG__)
 #include "anki/cozmo/robot/hal.h"
 #else
+#if defined(__ARM_ARCH_7A__)
+#include <time.h>
+#else
 #include <sys/time.h>
+#endif
 #include <sys/resource.h>
 #include <unistd.h>
 #endif

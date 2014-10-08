@@ -161,10 +161,10 @@ namespace Anki
       Type *data = static_cast<Type*>(mxGetData(mxMatrix));
 
       AnkiConditionalErrorAndReturnValue(matrixHeight <= s32_MAX,
-                                         RESULT_FAIL_INVALID_SIZE,
-                                         "Anki.PutArray<Type>",
-                                         "Matrix too large to use call to matrix.Pointer()");
-      
+        RESULT_FAIL_INVALID_SIZE,
+        "Anki.PutArray<Type>",
+        "Matrix too large to use call to matrix.Pointer()");
+
       for(mwSize y=0; y<matrixHeight; y++) {
         memcpy(data, matrix.Pointer(static_cast<s32>(y),0), matrixWidth*sizeof(Type));
         data += matrixWidth;
@@ -344,10 +344,13 @@ namespace Anki
 
     // #pragma mark --- Specializations ---
     template<> mxClassID Matlab::GetMatlabClassID<u8>();
+    template<> mxClassID Matlab::GetMatlabClassID<s8>();
     template<> mxClassID Matlab::GetMatlabClassID<u16>();
     template<> mxClassID Matlab::GetMatlabClassID<s16>();
-    template<> mxClassID Matlab::GetMatlabClassID<s32>();
     template<> mxClassID Matlab::GetMatlabClassID<u32>();
+    template<> mxClassID Matlab::GetMatlabClassID<s32>();
+    template<> mxClassID Matlab::GetMatlabClassID<u64>();
+    template<> mxClassID Matlab::GetMatlabClassID<s64>();
     template<> mxClassID Matlab::GetMatlabClassID<f32>();
     template<> mxClassID Matlab::GetMatlabClassID<f64>();
   } // namespace Embedded

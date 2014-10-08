@@ -90,6 +90,7 @@ set(OPENCV_LIBS
   opencv_highgui
   opencv_calib3d
   opencv_objdetect
+  opencv_video
 )
 
 fix_opencv_lib_names(OPENCV_LIBS)
@@ -148,7 +149,7 @@ if(NOT MATLAB_FOUND)
     set(MATLAB_ROOT "")
     set(MATLAB_INCLUDE_DIR "")
     set(MATLAB_LIBRARIES)
-    set(ZLIB_LIBRARY z pthread m)
+    set(ZLIB_LIBRARY z pthread m rt)
     set(CMD_COMMAND)
   else()
     if(NOT DEFINED MATLAB_ROOT_DIR)

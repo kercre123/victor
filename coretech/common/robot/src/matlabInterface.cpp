@@ -138,6 +138,10 @@ namespace Anki
       return mxUINT8_CLASS;
     }
 
+    template<> mxClassID Matlab::GetMatlabClassID<s8>() {
+      return mxINT8_CLASS;
+    }
+
     template<> mxClassID Matlab::GetMatlabClassID<u16>() {
       return mxUINT16_CLASS;
     }
@@ -146,12 +150,20 @@ namespace Anki
       return mxINT16_CLASS;
     }
 
+    template<> mxClassID Matlab::GetMatlabClassID<u32>() {
+      return mxUINT32_CLASS;
+    }
+
     template<> mxClassID Matlab::GetMatlabClassID<s32>() {
       return mxINT32_CLASS;
     }
 
-    template<> mxClassID Matlab::GetMatlabClassID<u32>() {
-      return mxUINT32_CLASS;
+    template<> mxClassID Matlab::GetMatlabClassID<u64>() {
+      return mxUINT64_CLASS;
+    }
+
+    template<> mxClassID Matlab::GetMatlabClassID<s64>() {
+      return mxINT64_CLASS;
     }
 
     template<> mxClassID Matlab::GetMatlabClassID<f32>() {

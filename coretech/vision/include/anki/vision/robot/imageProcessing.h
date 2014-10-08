@@ -274,6 +274,109 @@ namespace Anki
         return RESULT_OK;
       } // CreateIntegralImage()
 
+      template<typename InType, typename IntermediateType, typename OutType> Result BoxFilter(const Array<InType> &image, const s32 boxHeight, const s32 boxWidth, Array<OutType> &filtered, MemoryStack scratch)
+      {
+        AnkiConditionalErrorAndReturnValue(AreValid(image, filtered),
+          RESULT_FAIL_INVALID_OBJECT, "BoxFilter", "Image is invalid");
+
+        AnkiConditionalErrorAndReturnValue(NotAliased(image, filtered),
+          RESULT_FAIL_ALIASED_MEMORY, "BoxFilter", "Images are aliased");
+
+        const s32 imageHeight = image.get_size(0);
+        const s32 imageWidth  = image.get_size(1);
+
+        const s32 boxHeight2 = boxHeight / 2;
+        const s32 boxWidth2 = boxWidth / 2;
+
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(image, filtered),
+          RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Output normalized image must match input image's size.");
+
+        AnkiConditionalErrorAndReturnValue(boxHeight > 2 && boxWidth > 2 && IsOdd(boxWidth) && IsOdd(boxHeight),
+          RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Box filter must be greater than two and odd");
+
+        s32 y;
+
+        // Includes extra padding for simd
+        IntermediateType * restrict verticalAccumulator = reinterpret_cast<IntermediateType*>( scratch.Allocate(imageWidth*sizeof(IntermediateType) + 16) );
+        memset(verticalAccumulator, 0, imageWidth*sizeof(IntermediateType));
+
+        // Accumulate a whole boxHeight
+        for(y=0; y<boxHeight; y++) {
+          const InType * restrict pImage = image.Pointer(y,0);
+          for(s32 x=0; x<imageWidth; x++) {
+            verticalAccumulator[x] += pImage[x];
+          }
+        }
+
+        //
+        // Add the first row to the filtered image
+        //
+
+        filtered(0,boxHeight2-1,0,-1).Set(0);
+
+        {
+          // Grab the pointer to the horizontally negative-offset location in the filtered image
+          OutType * restrict pFiltered = filtered.Pointer(boxHeight2,0) - boxWidth2;
+
+          IntermediateType horizontalAccumulator = 0;
+
+          s32 x;
+          for(x=0; x<boxWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x];
+          }
+
+          filtered(boxHeight2,boxHeight2,0,boxWidth2-1).Set(0);
+
+          pFiltered[x-1] = horizontalAccumulator;
+
+          for(; x<imageWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x] - verticalAccumulator[x-boxWidth];
+            pFiltered[x] = horizontalAccumulator;
+          }
+
+          filtered(boxHeight2,boxHeight2,-boxWidth2,-1).Set(0);
+        }
+
+        //
+        // Add the remaining rows to the filtered image
+        //
+
+        for(; y<imageHeight; y++) {
+          // Grab the pointer to the horizontally negative-offset location in the filtered image
+          OutType * restrict pFiltered = filtered.Pointer(y - boxHeight2,0) - boxWidth2;
+
+          const InType * restrict pImageOld = image.Pointer(y-boxHeight,0);
+          const InType * restrict pImageNew = image.Pointer(y,0);
+
+          for(s32 x=0; x<imageWidth; x++) {
+            verticalAccumulator[x] += pImageNew[x];
+            verticalAccumulator[x] -= pImageOld[x];
+          }
+
+          IntermediateType horizontalAccumulator = 0;
+
+          s32 x;
+          for(x=0; x<boxWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x];
+          }
+
+          filtered(y-boxHeight2,y-boxHeight2,0,boxWidth2-1).Set(0);
+
+          pFiltered[x-1] = horizontalAccumulator;
+
+          for(; x<imageWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x] - verticalAccumulator[x-boxWidth];
+            pFiltered[x] = horizontalAccumulator;
+          }
+
+          filtered(y-boxHeight2,y-boxHeight2,-boxWidth2,-1).Set(0);
+        }
+
+        filtered(-boxHeight2,-1,0,-1).Set(0);
+
+        return RESULT_OK;
+      } // Result BoxFilter()
+
       template<typename InType, typename OutType> Result Resize(const Array<InType> &in, Array<OutType> &out)
       {
         AnkiConditionalErrorAndReturnValue(AreValid(in, out),
@@ -462,6 +565,48 @@ namespace Anki
 
         return RESULT_OK;
       }
+
+      template<typename InType, typename IntermediateType, typename OutType> FixedLengthList<Array<OutType> > BuildPyramid(
+        const Array<InType> &image, //< WARNING: the memory for "image" is used by the first level of the pyramid.
+        const s32 numPyramidLevels, //< The number of levels in the pyramid is numPyramidLevels + 1, so can be 0 for a single image. The image size must be evenly divisible by "2^numPyramidLevels".
+        MemoryStack &memory)  //< Memory for the output will be allocated by this function
+      {
+        const s32 imageHeight = image.get_size(0);
+        const s32 imageWidth = image.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(image.IsValid() && numPyramidLevels >= 0,
+          FixedLengthList<Array<OutType> >(), "BuildPyramid", "Invalid inputs");
+
+        for(s32 iLevel=1; iLevel<numPyramidLevels; iLevel++) {
+          const s32 scaledHeight = imageHeight >> iLevel;
+          const s32 scaledWidth = imageWidth >> iLevel;
+
+          AnkiConditionalErrorAndReturnValue(scaledHeight%2 == 0 && scaledWidth%2 == 0,
+            FixedLengthList<Array<OutType> >(), "BuildPyramid", "Too many pyramid levels requested");
+        }
+
+        FixedLengthList<Array<OutType> > pyramid(numPyramidLevels + 1, memory);
+
+        AnkiConditionalErrorAndReturnValue(pyramid.IsValid(),
+          FixedLengthList<Array<OutType> >(), "BuildPyramid", "Out of memory");
+
+        pyramid.set_size(numPyramidLevels+1);
+
+        pyramid[0] = image;
+
+        for(s32 iLevel=1; iLevel<=numPyramidLevels; iLevel++) {
+          const s32 scaledHeight = imageHeight >> iLevel;
+          const s32 scaledWidth = imageWidth >> iLevel;
+          pyramid[iLevel] = Array<OutType>(scaledHeight, scaledWidth, memory);
+
+          AnkiConditionalErrorAndReturnValue(pyramid[iLevel].IsValid(),
+            FixedLengthList<Array<OutType> >(), "BuildPyramid", "Out of memory");
+
+          const Result result = ImageProcessing::DownsampleByTwo<InType,IntermediateType,OutType>(pyramid[iLevel-1], pyramid[iLevel]);
+        } // for(s32 iLevel=1; iLevel<=numPyramidLevels; iLevel++)
+
+        return pyramid;
+      } // BuildPyramid()
 
       template<typename Type> FixedPointArray<Type> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch)
       {
@@ -740,6 +885,61 @@ namespace Anki
 
         return RESULT_OK;
       } // Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
+
+      template<typename Type> Result LocalMaxima(const Array<Type> &in, const s32 searchHeight, const s32 searchWidth, FixedLengthList<Point<s16> > &points, FixedLengthList<Type> *values)
+      {
+        AnkiConditionalErrorAndReturnValue(AreValid(in, points),
+          RESULT_FAIL_INVALID_OBJECT, "LocalMaxima", "Invalid inputs");
+
+        points.Clear();
+
+        if(values) {
+          AnkiConditionalErrorAndReturnValue(values->IsValid(),
+            RESULT_FAIL_INVALID_OBJECT, "LocalMaxima", "Invalid inputs");
+
+          values->Clear();
+        }
+
+        // TODO: support other sizes
+        AnkiConditionalErrorAndReturnValue(searchHeight == 3 && searchWidth == 3,
+          RESULT_FAIL_INVALID_PARAMETER, "LocalMaxima", "Currently only 3x3 supported");
+
+        const s32 inHeight = in.get_size(0);
+        const s32 inWidth = in.get_size(1);
+
+        for(s32 y=1; y<(inHeight-1); y++) {
+          const Type * restrict pIn_ym1 = in.Pointer(y-1,0);
+          const Type * restrict pIn_y0 = in.Pointer(y,0);
+          const Type * restrict pIn_yp1 = in.Pointer(y+1,0);
+
+          if(values) {
+            for(s32 x=1; x<(inWidth-1); x++) {
+              const Type centerValue = pIn_y0[x];
+
+              if(centerValue > pIn_ym1[x-1] && centerValue > pIn_ym1[x] && centerValue > pIn_ym1[x+1] &&
+                centerValue > pIn_y0[x-1]   &&                             centerValue > pIn_y0[x+1] &&
+                centerValue > pIn_yp1[x-1]  && centerValue > pIn_yp1[x] && centerValue > pIn_yp1[x+1])
+              {
+                points.PushBack(Point<s16>(x,y));
+                values->PushBack(centerValue);
+              }
+            }
+          } else { // if(values)
+            for(s32 x=1; x<(inWidth-1); x++) {
+              const Type centerValue = pIn_y0[x];
+
+              if(centerValue > pIn_ym1[x-1] && centerValue > pIn_ym1[x] && centerValue > pIn_ym1[x+1] &&
+                centerValue > pIn_y0[x-1]   &&                             centerValue > pIn_y0[x+1] &&
+                centerValue > pIn_yp1[x-1]  && centerValue > pIn_yp1[x] && centerValue > pIn_yp1[x+1])
+              {
+                points.PushBack(Point<s16>(x,y));
+              }
+            }
+          } // if(values) ... else
+        }
+
+        return RESULT_OK;
+      } // LocalMaxima
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki
