@@ -789,7 +789,6 @@ namespace Anki {
           AnkiAssert(false);
       }
       
-      prox->status = IR_GOOD;
       return;
     } // GetProximity_INT()
     

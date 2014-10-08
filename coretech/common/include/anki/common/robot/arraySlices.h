@@ -164,7 +164,7 @@ namespace Anki
       return limits.rawIn1Limits.xSize*limits.rawIn1Limits.ySize;
     }
 
-    template<typename Type> template<typename InType> s32 ArraySlice<Type>::SetCast(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true)
+    template<typename Type> template<typename InType> s32 ArraySlice<Type>::SetCast(const ConstArraySliceExpression<Type> &input, bool automaticTranspose)
     {
       AnkiConditionalErrorAndReturnValue(AreValid(*this, input),
         0, "ArraySlice<Type>::Set", "Invalid objects");

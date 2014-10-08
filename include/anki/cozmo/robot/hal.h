@@ -352,13 +352,6 @@ namespace Anki
         IRforward,
         IRright
       };
- 
-      enum sharpStatus
-      {
-        IR_GOOD,          // Hooray!
-        IR_I2C_ERROR,     // I2C is broken 
-        IR_IN_PROGRESS    // Data read already in pogress, please try again later 
-      };
 
       typedef struct
       {
@@ -366,7 +359,6 @@ namespace Anki
         u16           right;
         u16           forward;
         sharpID       latest;   // Most up to date sensor value
-        sharpStatus   status;   // 
       } ProximityValues;
       
       
