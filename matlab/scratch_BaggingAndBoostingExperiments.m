@@ -7,7 +7,7 @@ switch(datasetSize)
     dataTest = VisionMarkerTrained.ExtractProbeValues('maxNegativeExamples', 500, 'numPerturbations', 10, 'blurSigmas', [.003 .002], 'imageSizes', [25 45], 'addInversions', true, 'perturbationType', 'uniform', 'perturbSigma', 1.5);
 
   case 'medium'
-    data = VisionMarkerTrained.ExtractProbeValues('maxNegativeExamples', 1000, 'numPerturbations', 50, 'blurSigmas', [.001 .01], 'imageSizes', [20 40 60], 'addInversions', true, 'perturbationType', 'uniform', 'perturbSigma', 1);
+    data = VisionMarkerTrained.ExtractProbeValues('maxNegativeExamples', 5000, 'numPerturbations', 50, 'blurSigmas', [.001 .01], 'imageSizes', [20 40 60], 'addInversions', true, 'perturbationType', 'uniform', 'perturbSigma', 1);
     dataTest = VisionMarkerTrained.ExtractProbeValues('maxNegativeExamples', 100, 'numPerturbations', 10, 'blurSigmas', .003, 'imageSizes', [25 45], 'addInversions', true, 'perturbationType', 'uniform', 'perturbSigma', 1);
     
   case 'small'
@@ -19,14 +19,14 @@ switch(datasetSize)
 end
 
 % Reduce memory:
-data.probeValues = single(data.probeValues'<.5);
-dataTest.probeValues = single(dataTest.probeValues'<.5);
+data.probeValues = single(data.probeValues'>.5);
+dataTest.probeValues = single(dataTest.probeValues'>.5);
 data = rmfield(data, 'gradMagValues');
 dataTest = rmfield(dataTest, 'gradMagValues');
 
 %% Single Tree
 % compare split criteria
-criteria = {'gdi', 'twoing', 'deviance'};
+criteria = {'gdi', 'deviance'}; %, 'twoing'};
 
 ctrees = cell(1, length(criteria));
 

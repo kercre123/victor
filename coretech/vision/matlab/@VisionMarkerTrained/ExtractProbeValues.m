@@ -4,7 +4,7 @@ function [trainingState] = ExtractProbeValues(varargin)
 
 %% Parameters
 markerImageDir = VisionMarkerTrained.TrainingImageDir;
-negativeImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/negativeExamplePatches';
+negativeImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/negativeExamplePatches_old';
 maxNegativeExamples = inf;
 workingResolutions = VisionMarkerTrained.ProbeParameters.GridSize;
 %maxSamples = 100;
