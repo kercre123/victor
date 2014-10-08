@@ -10,31 +10,33 @@
 *  Driver file for Sharp proximity sensor
 *
 * This code is EXPERIMENTAL for Cozmo proto 2.x, please remove for Cozmo proto 3+
-// Goes in HAL
-enum sharpID
-{
-  IRleft,
-  IRforward,
-  IRright
-};
-
-typedef struct
-{
-  u16           left;
-  u16           right;
-  u16           forward;
-  sharpID       latest;   // Most up to date sensor value
-} ProximityValues;
-
-      // Interrupt driven proxmity (CALL AT BEGINNING OF LOOP)
-      // Note: this function is pipelined. // latency ~= 5 ms (1 main loop)
-      //       - returns data (from last function call)
-      //       - wake up the next sensor
-      //       - wait ~3.5 ms
-      //       - read from sensor
-      // Only call once every 5ms (1 main loop)
-      // current order is left -> right -> forward
-      void GetProximity(ProximityValues *prox)
+* Only returns valid data on robot #2
+* 
+* // Goes in HAL
+* enum sharpID
+* {
+*   IRleft,
+*   IRforward,
+*   IRright
+* };
+* 
+* typedef struct
+* {
+*   u16           left;
+*   u16           right;
+*   u16           forward;
+*   sharpID       latest;   // Most up to date sensor value
+* } ProximityValues;
+* 
+*       // Interrupt driven proxmity (CALL AT BEGINNING OF LOOP)
+*       // Note: this function is pipelined. // latency ~= 5 ms (1 main loop)
+*       //       - returns data (from last function call)
+*       //       - wake up the next sensor
+*       //       - wait ~3.5 ms
+*       //       - read from sensor
+*       // Only call once every 5ms (1 main loop)
+*       // current order is left -> right -> forward
+*       void GetProximity(ProximityValues *prox)
 *
 *  Implementation notes:
 *
@@ -59,7 +61,7 @@ GPIO_PIN_SOURCE(TRIGGER, GPIOB, 11);
 #define assert(x) if(!(x)) while(1);
 
 // I2C_TRIGGER is for debugging on the scope
-// #define I2C_TRIGGER
+#define I2C_TRIGGER
 
 
 // Registers
@@ -417,14 +419,14 @@ namespace Anki
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;   // This MUST be set fast otherwise reads are unreliable 
         GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;        // Changed to UP for reliability (some hardware might not have pullups???)
         GPIO_Init(GPIOD, &GPIO_InitStructure); 
         
         GPIO_InitStructure.GPIO_Pin = PIN_SDA1;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;   // This MUST be set fast otherwise reads are unreliable 
         GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;        // Changed to UP for reliability (some hardware might not have pullups???)
         GPIO_Init(GPIOB, &GPIO_InitStructure); 
         
         GPIO_InitStructure.GPIO_Pin = PIN_INT;
@@ -498,9 +500,18 @@ namespace Anki
       // current order is left -> right -> forward
       void GetProximity(ProximityValues *prox)
       {
-
-        static sharpID ID = IRleft;
+        static sharpID ID = IRleft;      
         
+        // Only continue if we are robot #2;
+        if (*(int*)(0x1FFF7A10) != 0x001d001d )
+        {
+          prox->forward = 0;
+          prox->left = 0;
+          prox->right = 0;
+          return;
+        }
+        
+
         while (I2Cstate != 0) // both messages must be sent to proceed
         {
         }
