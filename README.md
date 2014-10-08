@@ -80,4 +80,4 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DEMBEDDED_USE_GTEST=0 -DEMBEDDED_USE_MATLAB
 cmake .. -DCMAKE_BUILD_TYPE=Release -DEMBEDDED_USE_GTEST=0 -DEMBEDDED_USE_MATLAB=0 -DEMBEDDED_USE_OPENCV=0
 
 7) Make the project
-make -j3
+make -j3 ; python ../python/addSourceToGccAssembly.py /mnt/fastExtern/products-cozmo/build
