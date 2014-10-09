@@ -58,9 +58,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include <iostream>
 #include <fstream>
-#endif
-
 #include "opencv2/video/tracking.hpp"
+#endif
 
 using namespace Anki;
 using namespace Anki::Embedded;

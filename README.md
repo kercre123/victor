@@ -81,3 +81,14 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DEMBEDDED_USE_GTEST=0 -DEMBEDDED_USE_MATLAB
 
 7) Make the project
 make -j3 ; python ../python/addSourceToGccAssembly.py /mnt/fastExtern/products-cozmo/build
+
+8) Install cross-compilation on PC-based Ubuntu 14.04 (Optional)
+# On the PC, enter the following:
+sudo add-apt-repository 'deb http://us.archive.ubuntu.com/ubuntu utopic main'
+sudo apt-get update
+sudo apt-get install cmake gcc-4.9-arm-linux-gnueabihf g++-4.9-arm-linux-gnueabihf
+
+9) Build cross-compiled.  In products-cozmo/build --- create 'build' folder if it doesn't exist --- run cmake
+AR=arm-linux-gnueabihf-gcc-ar-4.9 AS=arm-linux-gnueabihf-gcc-as-4.9 CC=arm-linux-gnueabihf-gcc-4.9 CXX=arm-linux-gnueabihf-g++-4.9 cmake .. -DCMAKE_BUILD_TYPE=Release -DEMBEDDED_USE_GTEST=0 -DEMBEDDED_USE_MATLAB=0 -DEMBEDDED_USE_OPENCV=0
+make -j8
+
