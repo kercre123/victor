@@ -115,6 +115,16 @@ int main(void)
   SharpInit();
   printf("sharp..");
   
+#if 0 
+  // Prox sensor testing
+  ProximityValues prox;
+  while(1)
+  {
+    GetProximity(&prox);
+    MicroWait(5000);
+  }
+#endif
+  
 #if 0
   // Motor testing...
   while (1)
