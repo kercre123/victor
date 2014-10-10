@@ -109,17 +109,5 @@ make -j8
   ssh linaro@192.168.1.125 mkdir -p .ssh
   cat .ssh/id_rsa_cubie.pub | ssh linaro@192.168.1.125 'cat >> .ssh/authorized_keys'
 
-6) Copy binary to board and run
- 6a) Copy the file to the board by typing
-   cd Unix\ Makefiles/bin/Release/
-   scp "run_pc_embeddedTests" linaro@192.168.1.125:/home/linaro/
-   cd ../../..
- 6b) 
-   4b1) Option 1: Run on the board 
-     ~/run_pc_embeddedTests > out.txt
-   4b2) Option 2: Use ssh to remotely access
-     ssh linaro@192.168.1.125
-     ~/run_pc_embeddedTests > run_pc_embeddedTests_out.txt
- 4c) Copy the results back
-   scp linaro@192.168.1.125:/home/linaro/run_pc_embeddedTests_out.txt .
+6) Comple, upload, and run on the board, by running the file "products-cozmo/runA7.sh"
 
