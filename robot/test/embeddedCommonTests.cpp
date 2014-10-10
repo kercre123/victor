@@ -4233,27 +4233,27 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
 
   BeginBenchmark("testOuter");
 
-  const double startTimeN1 = GetTimeF32();
-  while((GetTimeF32() - startTimeN1) < 2.0/1) {}
+  const double startTimeN1 = GetTimeF64();
+  while((GetTimeF64() - startTimeN1) < 2.0/1) {}
 
   BeginBenchmark("testMiddle");
 
-  const double startTime0 = GetTimeF32();
-  while((GetTimeF32() - startTime0) < 1.0/1) {}
+  const double startTime0 = GetTimeF64();
+  while((GetTimeF64() - startTime0) < 1.0/1) {}
 
   BeginBenchmark("testInner");
-  const double startTime1 = GetTimeF32();
-  while((GetTimeF32() - startTime1) < 2.0/1) {}
+  const double startTime1 = GetTimeF64();
+  while((GetTimeF64() - startTime1) < 2.0/1) {}
   EndBenchmark("testInner");
 
   BeginBenchmark("testInner");
-  const double startTime2 = GetTimeF32();
-  while((GetTimeF32() - startTime2) < 3.0/1) {}
+  const double startTime2 = GetTimeF64();
+  while((GetTimeF64() - startTime2) < 3.0/1) {}
   EndBenchmark("testInner");
 
   BeginBenchmark("testInner");
-  const double startTime3 = GetTimeF32();
-  while((GetTimeF32() - startTime3) < 3.0/1) {}
+  const double startTime3 = GetTimeF64();
+  while((GetTimeF64() - startTime3) < 3.0/1) {}
   EndBenchmark("testInner");
 
   EndBenchmark("testMiddle");

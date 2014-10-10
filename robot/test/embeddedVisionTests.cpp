@@ -1063,7 +1063,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
       Array<u8> imageArray(grayImage.rows, grayImage.cols, scratchOffchip);
       imageArray.Set(grayImage);
 
-      const f32 t0 = GetTimeF32();
+      const f64 t0 = GetTimeF64();
 
       face_cascade.detectMultiScale(
         grayImage,
@@ -1075,7 +1075,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
         cv::Size() // Size maxSize=Size()
         );
 
-      const f32 t1 = GetTimeF32();
+      const f64 t1 = GetTimeF64();
 
       const cv::Size maxSize = cv::Size(imageArray.get_size(1), imageArray.get_size(0));
 
@@ -1089,7 +1089,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
         scratchOnchip,
         scratchOffchip);
 
-      const f32 t2 = GetTimeF32();
+      const f64 t2 = GetTimeF64();
 
       CoreTechPrint("OpenCV took %f seconds and Anki took %f seconds\n", t1-t0, t2-t1);
 
@@ -1179,7 +1179,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   // Classifier::CascadeClassifier_LBP cc(face_cascade_name, scratchOffchip);
   // cc.SaveAsHeader("c:/tmp/lbpcascade_frontalface.h", "lbpcascade_frontalface");
 
-  const f32 t0 = GetTimeF32();
+  const f64 t0 = GetTimeF64();
 
   // TODO: are these const casts okay?
   const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
@@ -1210,7 +1210,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   EndBenchmark("CascadeClassifier_LBP constructor");
 
-  const f32 t1 = GetTimeF32();
+  const f64 t1 = GetTimeF64();
 
   const Result result = cc.DetectMultiScale(
     image,
@@ -1224,7 +1224,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  const f32 t2 = GetTimeF32();
+  const f64 t2 = GetTimeF64();
 
   CoreTechPrint("Detection took %f seconds (setup time %f seconds)\n", t2-t1, t1-t0);
 
@@ -2290,7 +2290,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
 
@@ -2298,7 +2298,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     //tracker.ShowTemplate("tracker", true, true);
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2312,7 +2312,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     ASSERT_TRUE(verify_numInBounds == 121);
     ASSERT_TRUE(verify_numSimilarPixels == 115);*/
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Translation-only LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2340,13 +2340,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2360,7 +2360,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     ASSERT_TRUE(verify_numInBounds == 121);
     ASSERT_TRUE(verify_numSimilarPixels == 119);*/
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2389,13 +2389,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2409,7 +2409,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     ASSERT_TRUE(verify_numInBounds == 121);
     ASSERT_TRUE(verify_numSimilarPixels == 119);*/
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Projective LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2477,7 +2477,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //
 //    InitBenchmarking();
 //
-//    const f64 time0 = GetTimeF32();
+//    const f64 time0 = GetTimeF64();
 //
 //    TemplateTracker::LucasKanadeTracker_SampledPlanar6dof tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, maxSamplesAtBaseLevel,
 //      HEAD_CAM_CALIB_FOCAL_LENGTH_X,
@@ -2491,7 +2491,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //
 //    //tracker.ShowTemplate("tracker", true, true);
 //
-//    const f64 time1 = GetTimeF32();
+//    const f64 time1 = GetTimeF64();
 //
 //    bool verify_converged = false;
 //    s32 verify_meanAbsoluteDifference;
@@ -2505,7 +2505,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //    ASSERT_TRUE(verify_numInBounds == 121);
 //    ASSERT_TRUE(verify_numSimilarPixels == 115);*/
 //
-//    const f64 time2 = GetTimeF32();
+//    const f64 time2 = GetTimeF64();
 //
 //    CoreTechPrint("Translation-only LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
 //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2534,13 +2534,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //
 //    InitBenchmarking();
 //
-//    const f64 time0 = GetTimeF32();
+//    const f64 time0 = GetTimeF64();
 //
 //    TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
 //
 //    ASSERT_TRUE(tracker.IsValid());
 //
-//    const f64 time1 = GetTimeF32();
+//    const f64 time1 = GetTimeF64();
 //
 //    bool verify_converged = false;
 //    s32 verify_meanAbsoluteDifference;
@@ -2554,7 +2554,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //    ASSERT_TRUE(verify_numInBounds == 121);
 //    ASSERT_TRUE(verify_numSimilarPixels == 119);*/
 //
-//    const f64 time2 = GetTimeF32();
+//    const f64 time2 = GetTimeF64();
 //
 //    CoreTechPrint("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
 //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2584,7 +2584,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //
 //    InitBenchmarking();
 //
-//    const f64 time0 = GetTimeF32();
+//    const f64 time0 = GetTimeF64();
 //
 //    TemplateTracker::LucasKanadeTracker_SampledPlanar6dof tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, maxSamplesAtBaseLevel,
 //      HEAD_CAM_CALIB_FOCAL_LENGTH_X,
@@ -2596,7 +2596,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //
 //    ASSERT_TRUE(tracker.IsValid());
 //
-//    const f64 time1 = GetTimeF32();
+//    const f64 time1 = GetTimeF64();
 //
 //    bool verify_converged = false;
 //    s32 verify_meanAbsoluteDifference;
@@ -2610,7 +2610,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //    ASSERT_TRUE(verify_numInBounds == 121);
 //    ASSERT_TRUE(verify_numSimilarPixels == 119);*/
 //
-//    const f64 time2 = GetTimeF32();
+//    const f64 time2 = GetTimeF64();
 //
 //    CoreTechPrint("Projective LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
 //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2678,13 +2678,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2698,7 +2698,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     ASSERT_TRUE(verify_numInBounds == 529);
     ASSERT_TRUE(verify_numSimilarPixels == 474);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Translation-only LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2719,13 +2719,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2739,7 +2739,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     ASSERT_TRUE(verify_numInBounds == 529);
     ASSERT_TRUE(verify_numSimilarPixels == 521);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Affine LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2761,13 +2761,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2781,7 +2781,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     ASSERT_TRUE(verify_numInBounds == 529);
     ASSERT_TRUE(verify_numSimilarPixels == 521);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Projective LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2846,13 +2846,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2866,7 +2866,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     ASSERT_TRUE(verify_numInBounds == 529);
     ASSERT_TRUE(verify_numSimilarPixels == 474);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Translation-only FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2887,13 +2887,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2906,7 +2906,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     ASSERT_TRUE(verify_numInBounds == 529);
     ASSERT_TRUE(verify_numSimilarPixels == 521);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Affine FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2970,20 +2970,20 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -3004,19 +3004,19 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratchOffchip) == RESULT_OK);
     ASSERT_TRUE(verify_converged == true);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -3038,20 +3038,20 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, verify_converged, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Projective LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -3477,7 +3477,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   InitBenchmarking();
 
   {
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
     const Result result = DetectFiducialMarkers(
       image,
       markers,
@@ -3499,7 +3499,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       scratchCcm,
       scratchOnchip,
       scratchOffchip);
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     CoreTechPrint("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
 
@@ -3648,7 +3648,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   InitBenchmarking();
 
   {
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
     const Result result = DetectFiducialMarkers(
       image,
       markers,
@@ -3670,7 +3670,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
       scratchCcm,
       scratchOnchip,
       scratchOffchip);
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     CoreTechPrint("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
 
