@@ -35,10 +35,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
-#include "data/newFiducials_320x240.h"
 #include "data/simpleFiducials_320x240.h"
 
-#if !defined(JUST_FIDUCIAL_DETECTION)
+#if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
+#include "data/newFiducials_320x240.h"
 #include "data/blockImage50_320x240.h"
 #include "data/blockImages00189_80x60.h"
 #include "data/blockImages00190_80x60.h"
@@ -71,7 +71,7 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 
 //#define RUN_FACE_DETECTION_GUI
 
-#if !defined(JUST_FIDUCIAL_DETECTION)
+#if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
 
 #ifdef RUN_PC_ONLY_TESTS
 GTEST_TEST(CoreTech_Vision, KLT)
@@ -3409,8 +3409,6 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
 
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
-
 GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 {
   const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
@@ -3582,6 +3580,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
+
 GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 {
   // Don't check if the markers were correctly detected, just check the timing
@@ -3593,8 +3593,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   const s32 component1d_minComponentWidth = 0;
   const s32 component1d_maxSkipDistance = 0;
 
-  const f32 minSideLength = 0.01f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
-  const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
+  const f32 minSideLength = 0.01f*MAX(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
 
   const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
   const s32 component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
@@ -3645,10 +3645,12 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
+  const s32 numRuns = 25;
+  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements(numRuns, scratchOffchip);
+
+  for(s32 iRun=0; iRun<numRuns; iRun++) {
   InitBenchmarking();
 
-  {
-    const f64 time0 = GetTimeF64();
     const Result result = DetectFiducialMarkers(
       image,
       markers,
@@ -3670,19 +3672,97 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
       scratchCcm,
       scratchOnchip,
       scratchOffchip);
-    const f64 time1 = GetTimeF64();
-
-    CoreTechPrint("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
-
-    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     ASSERT_TRUE(result == RESULT_OK);
+
+    benchmarkElements[iRun] = ComputeBenchmarkResults(scratchOffchip);;
+
+    PrintBenchmarkResults(benchmarkElements[iRun], true, true);
+  } // for(s32 iRun=0; iRun<numRuns; iRun++)
+
+  // Check that all the lists have the same number and type of benchmarks
+  const s32 numElements = benchmarkElements[0].get_size();
+  for(s32 iRun=1; iRun<numRuns; iRun++) {
+    ASSERT_TRUE(benchmarkElements[0].get_size() == benchmarkElements[iRun].get_size());
+    for(s32 i=0; i<numElements; i++) {
+      ASSERT_TRUE(benchmarkElements[0][i].numEvents == benchmarkElements[iRun][i].numEvents);
+      ASSERT_TRUE(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) == 0);
   }
+  }
+
+  // Compute the medians
+  FixedLengthList<BenchmarkElement> medianBenchmarkElements(benchmarkElements[0].get_size(), scratchOffchip, Flags::Buffer(true, false, true));
+  Array<u32> sortedElements(1, numRuns, scratchOffchip);
+  u32 * pSortedElements = sortedElements.Pointer(0,0);
+  for(s32 i=0; i<numElements; i++) {
+    strncpy(medianBenchmarkElements[i].name, benchmarkElements[0][i].name, BenchmarkElement::NAME_LENGTH - 1);
+    medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_mean = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_min = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_max = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_total = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_mean = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_min = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_max = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_total = pSortedElements[numRuns/2];
+  } // for(s32 i=0; i<numElements; i++)
+
+  //if(iRun == 0) {
+  //  minBenchmarkElements = ComputeBenchmarkResults(scratchOffchip);
+  //} else {
+  //  PUSH_MEMORY_STACK(scratchOffchip);
+  //  FixedLengthList<BenchmarkElement> curBenchmarkElements = ComputeBenchmarkResults(scratchOffchip);
+
+  //  ASSERT_TRUE(curBenchmarkElements.get_size() == minBenchmarkElements.get_size());
+
+  //  PrintBenchmarkResults(curBenchmarkElements, true, true);
+
+  //  const s32 numElements = minBenchmarkElements.get_size();
+  //  for(s32 i=0; i<numElements; i++) {
+  //    ASSERT_TRUE(curBenchmarkElements[i].numEvents == minBenchmarkElements[i].numEvents);
+  //    ASSERT_TRUE(strcmp(curBenchmarkElements[i].name, minBenchmarkElements[i].name) == 0);
+
+  //    minBenchmarkElements[i].inclusive_mean = MIN(minBenchmarkElements[i].inclusive_mean, curBenchmarkElements[i].inclusive_mean);
+  //    minBenchmarkElements[i].inclusive_min = MIN(minBenchmarkElements[i].inclusive_min, curBenchmarkElements[i].inclusive_min);
+  //    minBenchmarkElements[i].inclusive_max = MIN(minBenchmarkElements[i].inclusive_max, curBenchmarkElements[i].inclusive_max);
+  //    minBenchmarkElements[i].inclusive_total = MIN(minBenchmarkElements[i].inclusive_total, curBenchmarkElements[i].inclusive_total);
+  //    minBenchmarkElements[i].exclusive_mean = MIN(minBenchmarkElements[i].exclusive_mean, curBenchmarkElements[i].exclusive_mean);
+  //    minBenchmarkElements[i].exclusive_min = MIN(minBenchmarkElements[i].exclusive_min, curBenchmarkElements[i].exclusive_min);
+  //    minBenchmarkElements[i].exclusive_max = MIN(minBenchmarkElements[i].exclusive_max, curBenchmarkElements[i].exclusive_max);
+  //    minBenchmarkElements[i].exclusive_total = MIN(minBenchmarkElements[i].exclusive_total, curBenchmarkElements[i].exclusive_total);
+  //  } // for(s32 i=0; i<numElements; i++)
+  //} // if(iRun == 0) ... else
+
+  PrintBenchmarkResults(medianBenchmarkElements, true, true);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 
-#if !defined(JUST_FIDUCIAL_DETECTION)
+#if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
 GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 {
   const s32 numComponents = 60;
@@ -4890,7 +4970,7 @@ GTEST_TEST(CoreTech_Vision, BoxFilterNormalize)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, BoxFilterNormalize)
 
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
 
 #if !ANKICORETECH_EMBEDDED_USE_GTEST
 s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
@@ -4898,7 +4978,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
-#if !defined(JUST_FIDUCIAL_DETECTION)
+#if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
   CALL_GTEST_TEST(CoreTech_Vision, DistanceTransform);
   CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
   CALL_GTEST_TEST(CoreTech_Vision, Canny);
@@ -4920,12 +5000,12 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
-
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
+
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
-#if !defined(JUST_FIDUCIAL_DETECTION)
+#if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
@@ -4947,7 +5027,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
   CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
   CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
 
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
