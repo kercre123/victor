@@ -10,7 +10,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 //#define RUN_PC_ONLY_TESTS
-//#define JUST_FIDUCIAL_DETECTION
+#define JUST_FIDUCIAL_DETECTION_BENCHMARK
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
@@ -3677,7 +3677,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 
     benchmarkElements[iRun] = ComputeBenchmarkResults(scratchOffchip);;
 
-    PrintBenchmarkResults(benchmarkElements[iRun], true, true);
+    //PrintBenchmarkResults(benchmarkElements[iRun], true, true);
   } // for(s32 iRun=0; iRun<numRuns; iRun++)
 
   // Check that all the lists have the same number and type of benchmarks
