@@ -551,14 +551,18 @@ namespace Anki {
 
         BeginBenchmark("vme_quadrefine_mainLoop_samples");
         
-        f32 * restrict xTransformeds = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
+/*        f32 * restrict xTransformeds = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
         f32 * restrict yTransformeds = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
         f32 * restrict x0s = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
-        f32 * restrict y0s = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
+        f32 * restrict y0s = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );*/
 
+        f32 * restrict alphaXs = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
+        f32 * restrict alphaYs = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
+        s32 * restrict y0S32s = reinterpret_cast<s32*>( scratch.Allocate(actualNumSamples * sizeof(s32)) );
+        s32 * restrict x0S32s = reinterpret_cast<s32*>( scratch.Allocate(actualNumSamples * sizeof(s32)) );
+
+        BeginBenchmark("vme_quadrefine_mainLoop_samples1");
         for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
-          //BeginBenchmark("vme_quadrefine_mainLoop_samples1");
-
           const f32 xOriginal = pX[iSample];
           const f32 yOriginal = pY[iSample];
 
@@ -579,132 +583,129 @@ namespace Anki {
 
           // If out of bounds, continue
           if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
-            //EndBenchmark("vme_quadrefine_mainLoop_samples1");
             restoreOriginal = true;
             break;
           }
 
-          xTransformeds[iSample] = xTransformed;
-          yTransformeds[iSample] = yTransformed;
-          x0s[iSample] = x0;
-          y0s[iSample] = y0;
+          const f32 alphaX = xTransformed - x0;
+          const f32 alphaY = yTransformed - y0;
 
-          //EndBenchmark("vme_quadrefine_mainLoop_samples1");
-        }//         for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
+          const s32 y0S32 = Round<s32>(y0);
+          const s32 x0S32 = Round<s32>(x0);
 
-        for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
-          //BeginBenchmark("vme_quadrefine_mainLoop_samples2");
-
-          const f32 xTransformed = xTransformeds[iSample];
-          const f32 yTransformed = yTransformeds[iSample];
-
-          const f32 x0 = x0s[iSample];
-          const f32 x1 = x0 + 1.0f;
-
-          const f32 y0 = y0s[iSample];
-          const f32 y1 = y0 + 1.0f;
+          alphaXs[iSample] = alphaX;
+          alphaYs[iSample] = alphaY;
+          x0S32s[iSample] = x0S32;
+          y0S32s[iSample] = y0S32;
 
           numInBounds++;
 
-          const f32 alphaX = xTransformed - x0;
-          const f32 alphaXinverse = 1.0f - alphaX;
+/*          xTransformeds[iSample] = xTransformed;
+          yTransformeds[iSample] = yTransformed;
+          x0s[iSample] = x0;
+          y0s[iSample] = y0;*/
 
-          const f32 alphaY = yTransformed - y0;
-          const f32 alphaYinverse = 1.0f - alphaY;
 
-          const s32 y0S32 = Round<s32>(y0);
-          const s32 y1S32 = Round<s32>(y1);
-          const s32 x0S32 = Round<s32>(x0);
+        }//         for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
+        EndBenchmark("vme_quadrefine_mainLoop_samples1");
 
-          const u8 * restrict pReference_y0 = image.Pointer(y0S32, x0S32);
-          const u8 * restrict pReference_y1 = image.Pointer(y1S32, x0S32);
+        BeginBenchmark("vme_quadrefine_mainLoop_samples2");
+        if(!restoreOriginal) {
+          for(s32 iSample=0; iSample<actualNumSamples; iSample++) {
+            const f32 alphaX = alphaXs[iSample];
+            const f32 alphaY = alphaYs[iSample];
+            const s32 y0S32 = y0S32s[iSample];
+            const s32 x0S32 = x0S32s[iSample];
 
-          const f32 pixelTL = *pReference_y0;
-          const f32 pixelTR = *(pReference_y0+1);
-          const f32 pixelBL = *pReference_y1;
-          const f32 pixelBR = *(pReference_y1+1);
+            const f32 alphaXinverse = 1.0f - alphaX;
+            const f32 alphaYinverse = 1.0f - alphaY;
 
-          const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR,
-            alphaY, alphaYinverse, alphaX, alphaXinverse);
+            const s32 y1S32 = y0S32 + 1;
 
-          const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
+            const u8 * restrict pReference_y0 = image.Pointer(y0S32, x0S32);
+            const u8 * restrict pReference_y1 = image.Pointer(y1S32, x0S32);
 
-          //EndBenchmark("vme_quadrefine_mainLoop_samples2");
+            const f32 pixelTL = *pReference_y0;
+            const f32 pixelTR = *(pReference_y0+1);
+            const f32 pixelBL = *pReference_y1;
+            const f32 pixelBR = *(pReference_y1+1);
 
-          //BeginBenchmark("vme_quadrefine_mainLoop_samples3");
+            const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-#if !defined(USE_ARM_ACCELERATION)
-          for(s32 ia=0; ia<8; ia++) {
-            for(s32 ja=ia; ja<8; ja++) {
-              AWAt_raw[ia][ja] += Arow[ia][iSample] * Arow[ja][iSample];
+            const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
+
+  #if !defined(USE_ARM_ACCELERATION)
+            for(s32 ia=0; ia<8; ia++) {
+              for(s32 ja=ia; ja<8; ja++) {
+                AWAt_raw[ia][ja] += Arow[ia][iSample] * Arow[ja][iSample];
+              }
+              b_raw[ia] += Arow[ia][iSample] * tGradientValue;
             }
-            b_raw[ia] += Arow[ia][iSample] * tGradientValue;
-          }
-#else // #if !defined(USE_ARM_ACCELERATION)
-          const f32 a0 = Arow[0][iSample];
-          const f32 a1 = Arow[1][iSample];
-          const f32 a2 = Arow[2][iSample];
-          const f32 a3 = Arow[3][iSample];
-          const f32 a4 = Arow[4][iSample];
-          const f32 a5 = Arow[5][iSample];
-          const f32 a6 = Arow[6][iSample];
-          const f32 a7 = Arow[7][iSample];
+  #else // #if !defined(USE_ARM_ACCELERATION)
+            const f32 a0 = Arow[0][iSample];
+            const f32 a1 = Arow[1][iSample];
+            const f32 a2 = Arow[2][iSample];
+            const f32 a3 = Arow[3][iSample];
+            const f32 a4 = Arow[4][iSample];
+            const f32 a5 = Arow[5][iSample];
+            const f32 a6 = Arow[6][iSample];
+            const f32 a7 = Arow[7][iSample];
 
-          AWAt_raw[0][0] += a0 * a0;
-          AWAt_raw[0][1] += a0 * a1;
-          AWAt_raw[0][2] += a0 * a2;
-          AWAt_raw[0][3] += a0 * a3;
-          AWAt_raw[0][4] += a0 * a4;
-          AWAt_raw[0][5] += a0 * a5;
-          AWAt_raw[0][6] += a0 * a6;
-          AWAt_raw[0][7] += a0 * a7;
-          b_raw[0] += a0 * tGradientValue;
+            AWAt_raw[0][0] += a0 * a0;
+            AWAt_raw[0][1] += a0 * a1;
+            AWAt_raw[0][2] += a0 * a2;
+            AWAt_raw[0][3] += a0 * a3;
+            AWAt_raw[0][4] += a0 * a4;
+            AWAt_raw[0][5] += a0 * a5;
+            AWAt_raw[0][6] += a0 * a6;
+            AWAt_raw[0][7] += a0 * a7;
+            b_raw[0] += a0 * tGradientValue;
 
-          AWAt_raw[1][1] += a1 * a1;
-          AWAt_raw[1][2] += a1 * a2;
-          AWAt_raw[1][3] += a1 * a3;
-          AWAt_raw[1][4] += a1 * a4;
-          AWAt_raw[1][5] += a1 * a5;
-          AWAt_raw[1][6] += a1 * a6;
-          AWAt_raw[1][7] += a1 * a7;
-          b_raw[1] += a1 * tGradientValue;
+            AWAt_raw[1][1] += a1 * a1;
+            AWAt_raw[1][2] += a1 * a2;
+            AWAt_raw[1][3] += a1 * a3;
+            AWAt_raw[1][4] += a1 * a4;
+            AWAt_raw[1][5] += a1 * a5;
+            AWAt_raw[1][6] += a1 * a6;
+            AWAt_raw[1][7] += a1 * a7;
+            b_raw[1] += a1 * tGradientValue;
 
-          AWAt_raw[2][2] += a2 * a2;
-          AWAt_raw[2][3] += a2 * a3;
-          AWAt_raw[2][4] += a2 * a4;
-          AWAt_raw[2][5] += a2 * a5;
-          AWAt_raw[2][6] += a2 * a6;
-          AWAt_raw[2][7] += a2 * a7;
-          b_raw[2] += a2 * tGradientValue;
+            AWAt_raw[2][2] += a2 * a2;
+            AWAt_raw[2][3] += a2 * a3;
+            AWAt_raw[2][4] += a2 * a4;
+            AWAt_raw[2][5] += a2 * a5;
+            AWAt_raw[2][6] += a2 * a6;
+            AWAt_raw[2][7] += a2 * a7;
+            b_raw[2] += a2 * tGradientValue;
 
-          AWAt_raw[3][3] += a3 * a3;
-          AWAt_raw[3][4] += a3 * a4;
-          AWAt_raw[3][5] += a3 * a5;
-          AWAt_raw[3][6] += a3 * a6;
-          AWAt_raw[3][7] += a3 * a7;
-          b_raw[3] += a3 * tGradientValue;
+            AWAt_raw[3][3] += a3 * a3;
+            AWAt_raw[3][4] += a3 * a4;
+            AWAt_raw[3][5] += a3 * a5;
+            AWAt_raw[3][6] += a3 * a6;
+            AWAt_raw[3][7] += a3 * a7;
+            b_raw[3] += a3 * tGradientValue;
 
-          AWAt_raw[4][4] += a4 * a4;
-          AWAt_raw[4][5] += a4 * a5;
-          AWAt_raw[4][6] += a4 * a6;
-          AWAt_raw[4][7] += a4 * a7;
-          b_raw[4] += a4 * tGradientValue;
+            AWAt_raw[4][4] += a4 * a4;
+            AWAt_raw[4][5] += a4 * a5;
+            AWAt_raw[4][6] += a4 * a6;
+            AWAt_raw[4][7] += a4 * a7;
+            b_raw[4] += a4 * tGradientValue;
 
-          AWAt_raw[5][5] += a5 * a5;
-          AWAt_raw[5][6] += a5 * a6;
-          AWAt_raw[5][7] += a5 * a7;
-          b_raw[5] += a5 * tGradientValue;
+            AWAt_raw[5][5] += a5 * a5;
+            AWAt_raw[5][6] += a5 * a6;
+            AWAt_raw[5][7] += a5 * a7;
+            b_raw[5] += a5 * tGradientValue;
 
-          AWAt_raw[6][6] += a6 * a6;
-          AWAt_raw[6][7] += a6 * a7;
-          b_raw[6] += a6 * tGradientValue;
+            AWAt_raw[6][6] += a6 * a6;
+            AWAt_raw[6][7] += a6 * a7;
+            b_raw[6] += a6 * tGradientValue;
 
-          AWAt_raw[7][7] += a7 * a7;
-          b_raw[7] += a7 * tGradientValue;
-#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
-
-          //EndBenchmark("vme_quadrefine_mainLoop_samples3");
-        } // for each sample
+            AWAt_raw[7][7] += a7 * a7;
+            b_raw[7] += a7 * tGradientValue;
+  #endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+          } // for(s32 iSample=0; iSample<actualNumSamples; iSample++)
+        } // if(!restoreOriginal)
+        EndBenchmark("vme_quadrefine_mainLoop_samples2");
 
         EndBenchmark("vme_quadrefine_mainLoop_samples");
 
