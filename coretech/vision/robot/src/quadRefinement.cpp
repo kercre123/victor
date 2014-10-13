@@ -487,9 +487,12 @@ namespace Anki {
       // template = (Contrast/2)*ones(size(xsquare));
       const f32 templatePixelValue = 0.5f*(darkGray + brightGray);
 
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
       const f32 xyReferenceMin = 0.0f;
-      const f32 xReferenceMax = static_cast<f32>(image.get_size(1)) - 1.0f;
-      const f32 yReferenceMax = static_cast<f32>(image.get_size(0)) - 1.0f;
+      const f32 xReferenceMax = static_cast<f32>(imageWidth) - 1.0f;
+      const f32 yReferenceMax = static_cast<f32>(imageHeight) - 1.0f;
 
       const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
 
@@ -525,8 +528,6 @@ namespace Anki {
 
       BeginBenchmark("vme_quadrefine_mainLoop");
       bool restoreOriginal = false;
-
-      
 
       for(s32 iteration=0; iteration<maxIterations && !restoreOriginal; iteration++) {
         BeginBenchmark("vme_quadrefine_mainLoop_init");
@@ -581,17 +582,17 @@ namespace Anki {
           const f32 y0 = FLT_FLOOR(yTransformed);
           const f32 y1 = y0 + 1.0f;
 
-          // If out of bounds, continue
-          if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
-            restoreOriginal = true;
-            break;
-          }
-
           const f32 alphaX = xTransformed - x0;
           const f32 alphaY = yTransformed - y0;
 
           const s32 y0S32 = Round<s32>(y0);
           const s32 x0S32 = Round<s32>(x0);
+
+          // If out of bounds, continue
+          if(x0 < 0 || x1 > (imageWidth-1) || y0 < 0 || y1 > (imageHeight-1)) {
+            restoreOriginal = true;
+            break;
+          }
 
           alphaXs[iSample] = alphaX;
           alphaYs[iSample] = alphaY;
@@ -604,8 +605,6 @@ namespace Anki {
           yTransformeds[iSample] = yTransformed;
           x0s[iSample] = x0;
           y0s[iSample] = y0;*/
-
-
         }//         for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
         EndBenchmark("vme_quadrefine_mainLoop_samples1");
 
