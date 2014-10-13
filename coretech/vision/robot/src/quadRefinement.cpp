@@ -557,10 +557,12 @@ namespace Anki {
         f32 * restrict x0s = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
         f32 * restrict y0s = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );*/
 
-        f32 * restrict alphaXs = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
+/*        f32 * restrict alphaXs = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
         f32 * restrict alphaYs = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
         s32 * restrict y0S32s = reinterpret_cast<s32*>( scratch.Allocate(actualNumSamples * sizeof(s32)) );
-        s32 * restrict x0S32s = reinterpret_cast<s32*>( scratch.Allocate(actualNumSamples * sizeof(s32)) );
+        s32 * restrict x0S32s = reinterpret_cast<s32*>( scratch.Allocate(actualNumSamples * sizeof(s32)) );*/
+
+        f32 * restrict tGradientValues = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
 
         BeginBenchmark("vme_quadrefine_mainLoop_samples1");
         for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
@@ -594,44 +596,33 @@ namespace Anki {
             break;
           }
 
-          alphaXs[iSample] = alphaX;
-          alphaYs[iSample] = alphaY;
-          x0S32s[iSample] = x0S32;
-          y0S32s[iSample] = y0S32;
+          const f32 alphaXinverse = 1.0f - alphaX;
+          const f32 alphaYinverse = 1.0f - alphaY;
 
+          const s32 y1S32 = y0S32 + 1;
+
+          const u8 * restrict pReference_y0 = image.Pointer(y0S32, x0S32);
+          const u8 * restrict pReference_y1 = image.Pointer(y1S32, x0S32);
+         
+          const f32 pixelTL = *pReference_y0;
+          const f32 pixelTR = *(pReference_y0+1);
+          const f32 pixelBL = *pReference_y1;
+          const f32 pixelBR = *(pReference_y1+1);
+
+          const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+
+          const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
+
+          tGradientValues[iSample] = tGradientValue;
+          
           numInBounds++;
-
-/*          xTransformeds[iSample] = xTransformed;
-          yTransformeds[iSample] = yTransformed;
-          x0s[iSample] = x0;
-          y0s[iSample] = y0;*/
         }//         for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
         EndBenchmark("vme_quadrefine_mainLoop_samples1");
 
         BeginBenchmark("vme_quadrefine_mainLoop_samples2");
         if(!restoreOriginal) {
           for(s32 iSample=0; iSample<actualNumSamples; iSample++) {
-            const f32 alphaX = alphaXs[iSample];
-            const f32 alphaY = alphaYs[iSample];
-            const s32 y0S32 = y0S32s[iSample];
-            const s32 x0S32 = x0S32s[iSample];
-
-            const f32 alphaXinverse = 1.0f - alphaX;
-            const f32 alphaYinverse = 1.0f - alphaY;
-
-            const s32 y1S32 = y0S32 + 1;
-
-            const u8 * restrict pReference_y0 = image.Pointer(y0S32, x0S32);
-            const u8 * restrict pReference_y1 = image.Pointer(y1S32, x0S32);
-
-            const f32 pixelTL = *pReference_y0;
-            const f32 pixelTR = *(pReference_y0+1);
-            const f32 pixelBL = *pReference_y1;
-            const f32 pixelBR = *(pReference_y1+1);
-
-            const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
-
-            const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
+            const f32 tGradientValue = tGradientValues[iSample];
 
   #if !defined(USE_ARM_ACCELERATION)
             for(s32 ia=0; ia<8; ia++) {
