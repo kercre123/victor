@@ -10,7 +10,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 //#define RUN_PC_ONLY_TESTS
-#define JUST_FIDUCIAL_DETECTION_BENCHMARK
+#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
@@ -36,9 +36,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "data/simpleFiducials_320x240.h"
-
-#if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
 #include "data/newFiducials_320x240.h"
+
+#if !defined(JUST_FIDUCIAL_DETECTION)
 #include "data/blockImage50_320x240.h"
 #include "data/blockImages00189_80x60.h"
 #include "data/blockImages00190_80x60.h"
@@ -71,7 +71,7 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 
 //#define RUN_FACE_DETECTION_GUI
 
-#if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
+#if !defined(JUST_FIDUCIAL_DETECTION)
 
 #ifdef RUN_PC_ONLY_TESTS
 GTEST_TEST(CoreTech_Vision, KLT)
@@ -3409,6 +3409,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
 
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+
 GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 {
   const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
@@ -3501,12 +3503,12 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
     CoreTechPrint("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
 
-    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+    //ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-  markers.Print("markers");
+  //markers.Print("markers");
 
   if(scaleImage_thresholdMultiplier == 65536) {
     // Grab the ground truth markers types and locations from the
@@ -3579,8 +3581,6 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
-
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
 
 GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 {
@@ -3762,7 +3762,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 
-#if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
+#if !defined(JUST_FIDUCIAL_DETECTION)
 GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 {
   const s32 numComponents = 60;
@@ -4970,7 +4970,7 @@ GTEST_TEST(CoreTech_Vision, BoxFilterNormalize)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, BoxFilterNormalize)
 
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
 #if !ANKICORETECH_EMBEDDED_USE_GTEST
 s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
@@ -4978,7 +4978,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
-#if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
+#if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, DistanceTransform);
   CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
   CALL_GTEST_TEST(CoreTech_Vision, Canny);
@@ -5000,12 +5000,12 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);
-  CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
+  CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
-#if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
+#if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
@@ -5027,7 +5027,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
   CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
   CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION_BENCHMARK)
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
