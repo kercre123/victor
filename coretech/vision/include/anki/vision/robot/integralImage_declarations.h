@@ -127,6 +127,17 @@ namespace Anki
 
       // Virtually zero-pads to the left and right of an image row
       Result PadImageRow(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
+
+      template<typename OutType> static void FilterRow_innerLoop(
+        const s32 minX,
+        const s32 maxX,
+        const s32 outputMultiply,
+        const s32 outputRightShift,
+        const s32 * restrict pIntegralImage_00,
+        const s32 * restrict pIntegralImage_01,
+        const s32 * restrict pIntegralImage_10,
+        const s32 * restrict pIntegralImage_11,
+        OutType * restrict pOutput);
     };
   } // namespace Embedded
 } //namespace Anki
