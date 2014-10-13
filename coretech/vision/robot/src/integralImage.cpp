@@ -463,14 +463,14 @@ namespace Anki
 
         s32 x = minX;
 
-        /*        for(; x<=(maxX-3); x+=4) {
-        pOutput[x]   = static_cast<u8>( ((pIntegralImage_11[x]   - pIntegralImage_10[x]   + pIntegralImage_00[x]   - pIntegralImage_01[x])   * outputMultiply) >> outputRightShift ) ;
-        pOutput[x+1] = static_cast<u8>( ((pIntegralImage_11[x+1] - pIntegralImage_10[x+1] + pIntegralImage_00[x+1] - pIntegralImage_01[x+1]) * outputMultiply) >> outputRightShift ) ;
-        pOutput[x+2] = static_cast<u8>( ((pIntegralImage_11[x+2] - pIntegralImage_10[x+2] + pIntegralImage_00[x+2] - pIntegralImage_01[x+2]) * outputMultiply) >> outputRightShift ) ;
-        pOutput[x+3] = static_cast<u8>( ((pIntegralImage_11[x+3] - pIntegralImage_10[x+3] + pIntegralImage_00[x+3] - pIntegralImage_01[x+3]) * outputMultiply) >> outputRightShift ) ;
-        }*/
+        for(; x<=(maxX-3); x+=4) {
+          pOutput[x]   = static_cast<u8>( ((pIntegralImage_11[x]   - pIntegralImage_10[x]   + pIntegralImage_00[x]   - pIntegralImage_01[x])   * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+1] = static_cast<u8>( ((pIntegralImage_11[x+1] - pIntegralImage_10[x+1] + pIntegralImage_00[x+1] - pIntegralImage_01[x+1]) * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+2] = static_cast<u8>( ((pIntegralImage_11[x+2] - pIntegralImage_10[x+2] + pIntegralImage_00[x+2] - pIntegralImage_01[x+2]) * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+3] = static_cast<u8>( ((pIntegralImage_11[x+3] - pIntegralImage_10[x+3] + pIntegralImage_00[x+3] - pIntegralImage_01[x+3]) * outputMultiply) >> outputRightShift ) ;
+        }
 
-        for(; x<=(maxX-7); x+=8) {
+        /*for(; x<=(maxX-7); x+=8) {
           pOutput[x]   = static_cast<u8>( ((pIntegralImage_11[x]   - pIntegralImage_10[x]   + pIntegralImage_00[x]   - pIntegralImage_01[x])   * outputMultiply) >> outputRightShift ) ;
           pOutput[x+1] = static_cast<u8>( ((pIntegralImage_11[x+1] - pIntegralImage_10[x+1] + pIntegralImage_00[x+1] - pIntegralImage_01[x+1]) * outputMultiply) >> outputRightShift ) ;
           pOutput[x+2] = static_cast<u8>( ((pIntegralImage_11[x+2] - pIntegralImage_10[x+2] + pIntegralImage_00[x+2] - pIntegralImage_01[x+2]) * outputMultiply) >> outputRightShift ) ;
@@ -479,7 +479,7 @@ namespace Anki
           pOutput[x+5] = static_cast<u8>( ((pIntegralImage_11[x+5] - pIntegralImage_10[x+5] + pIntegralImage_00[x+5] - pIntegralImage_01[x+5]) * outputMultiply) >> outputRightShift ) ;
           pOutput[x+6] = static_cast<u8>( ((pIntegralImage_11[x+6] - pIntegralImage_10[x+6] + pIntegralImage_00[x+6] - pIntegralImage_01[x+6]) * outputMultiply) >> outputRightShift ) ;
           pOutput[x+7] = static_cast<u8>( ((pIntegralImage_11[x+7] - pIntegralImage_10[x+7] + pIntegralImage_00[x+7] - pIntegralImage_01[x+7]) * outputMultiply) >> outputRightShift ) ;
-        }
+        }*/
 
         /*      const u32 * restrict pIntegralImageU32_00 = reinterpret_cast<const u32*>(pIntegralImage_00);
         const u32 * restrict pIntegralImageU32_01 = reinterpret_cast<const u32*>(pIntegralImage_01);

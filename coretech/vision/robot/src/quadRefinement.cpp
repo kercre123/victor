@@ -526,8 +526,10 @@ namespace Anki {
       BeginBenchmark("vme_quadrefine_mainLoop");
       bool restoreOriginal = false;
 
+      
+
       for(s32 iteration=0; iteration<maxIterations && !restoreOriginal; iteration++) {
-        //BeginBenchmark("vme_quadrefine_mainLoop_init");
+        BeginBenchmark("vme_quadrefine_mainLoop_init");
 
         const f32 h00 = refinedHomography[0][0]; const f32 h01 = refinedHomography[0][1]; const f32 h02 = refinedHomography[0][2];
         const f32 h10 = refinedHomography[1][0]; const f32 h11 = refinedHomography[1][1]; const f32 h12 = refinedHomography[1][2];
@@ -545,9 +547,15 @@ namespace Anki {
 
         s32 numInBounds = 0;
 
-        //EndBenchmark("vme_quadrefine_mainLoop_init");
+        EndBenchmark("vme_quadrefine_mainLoop_init");
 
-        //BeginBenchmark("vme_quadrefine_mainLoop_samples");
+        BeginBenchmark("vme_quadrefine_mainLoop_samples");
+        
+        f32 * restrict xTransformeds = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
+        f32 * restrict yTransformeds = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
+        f32 * restrict x0s = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
+        f32 * restrict y0s = reinterpret_cast<f32*>( scratch.Allocate(actualNumSamples * sizeof(f32)) );
+
         for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
           //BeginBenchmark("vme_quadrefine_mainLoop_samples1");
 
@@ -563,25 +571,38 @@ namespace Anki {
           const f32 xTransformed = (xTransformedRaw * normalization);
           const f32 yTransformed = (yTransformedRaw * normalization);
 
-          // DEBUG!
-          //xTransformedArray[0][iSample] = xTransformed;
-          //yTransformedArray[0][iSample] = yTransformed;
-
           const f32 x0 = FLT_FLOOR(xTransformed);
-          const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
+          const f32 x1 = x0 + 1.0f;
 
           const f32 y0 = FLT_FLOOR(yTransformed);
-          const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
+          const f32 y1 = y0 + 1.0f;
 
           // If out of bounds, continue
           if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
             //EndBenchmark("vme_quadrefine_mainLoop_samples1");
-            continue;
+            restoreOriginal = true;
+            break;
           }
 
-          //EndBenchmark("vme_quadrefine_mainLoop_samples1");
+          xTransformeds[iSample] = xTransformed;
+          yTransformeds[iSample] = yTransformed;
+          x0s[iSample] = x0;
+          y0s[iSample] = y0;
 
+          //EndBenchmark("vme_quadrefine_mainLoop_samples1");
+        }//         for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
+
+        for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
           //BeginBenchmark("vme_quadrefine_mainLoop_samples2");
+
+          const f32 xTransformed = xTransformeds[iSample];
+          const f32 yTransformed = yTransformeds[iSample];
+
+          const f32 x0 = x0s[iSample];
+          const f32 x1 = x0 + 1.0f;
+
+          const f32 y0 = y0s[iSample];
+          const f32 y1 = y0 + 1.0f;
 
           numInBounds++;
 
@@ -685,9 +706,9 @@ namespace Anki {
           //EndBenchmark("vme_quadrefine_mainLoop_samples3");
         } // for each sample
 
-        //EndBenchmark("vme_quadrefine_mainLoop_samples");
+        EndBenchmark("vme_quadrefine_mainLoop_samples");
 
-        //BeginBenchmark("vme_quadrefine_mainLoop_finalize");
+        BeginBenchmark("vme_quadrefine_mainLoop_finalize");
 
         // Put the raw A and b matrices into the Array containers
         for(s32 ia=0; ia<8; ia++) {
@@ -737,6 +758,8 @@ namespace Anki {
           //printf("Corner change at iteration %d = %f which is less than "
           //         "convergence tolerance of %f. Stopping iterations.\n",
           //         iteration, currentCornerChange, CornerConvergenceTolerance);
+
+          EndBenchmark("vme_quadrefine_mainLoop_finalize");
           break;
         }
 
@@ -752,7 +775,7 @@ namespace Anki {
         }
 #endif
 
-        //EndBenchmark("vme_quadrefine_mainLoop_finalize");
+        EndBenchmark("vme_quadrefine_mainLoop_finalize");
       } // for each iteration
 
       EndBenchmark("vme_quadrefine_mainLoop");
