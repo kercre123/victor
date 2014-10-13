@@ -10,6 +10,21 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/integralImage.h"
 
 #include "anki/common/robot/benchmarking.h"
+#include "anki/common/robot/hostIntrinsics_m4.h"
+
+#define ACCELERATION_NONE 0
+#define ACCELERATION_ARM_M4 1
+#define ACCELERATION_ARM_A7 2
+
+#define ACCELERATION_TYPE ACCELERATION_ARM_A7
+
+#if ACCELERATION_TYPE == ACCELERATION_NONE
+#warning not using USE_ARM_ACCELERATION
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+#include <arm_neon.h>
+#endif
 
 namespace Anki
 {
@@ -382,6 +397,17 @@ namespace Anki
       const s32 * restrict pIntegralImage_11,
       u8 * restrict pOutput)
     {
+#if ACCELERATION_TYPE == ACCELERATION_NONE
+      if(outputMultiply == 1 && outputRightShift == 0) {
+        for(s32 x=minX; x<=maxX; x++) {
+          pOutput[x] = static_cast<u8>( pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x] );
+        }
+      } else {
+        for(s32 x=minX; x<=maxX; x++) {
+          pOutput[x] = static_cast<u8>( ((pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x]) * outputMultiply) >> outputRightShift ) ;
+        }
+      }
+#elif ACCELERATION_TYPE == ACCELERATION_ARM_M4
       if(outputMultiply == 1 && outputRightShift == 0) {
         const s32 maxX_firstCycles = RoundUp(minX, 4);
 
@@ -421,6 +447,28 @@ namespace Anki
           pOutputU32[x] = (out0 & 0xFF) | ((out1 & 0xFF) << 8) | ((out2 & 0xFF) << 16) | ((out3 & 0xFF) << 24);
         }
       }
-    }
+#elif ACCELERATION_TYPE == ACCELERATION_ARM_A7
+      if(outputMultiply == 1 && outputRightShift == 0) {
+        for(s32 x=minX; x<=maxX; x++) {
+          pOutput[x] = static_cast<u8>( pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x] );
+        }
+      } else {
+        s32 x;
+        for(x=minX; x<=(maxX-3); x+=4) {
+          pOutput[x]   = static_cast<u8>( ((pIntegralImage_11[x]   - pIntegralImage_10[x]   + pIntegralImage_00[x]   - pIntegralImage_01[x])   * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+1] = static_cast<u8>( ((pIntegralImage_11[x+1] - pIntegralImage_10[x+1] + pIntegralImage_00[x+1] - pIntegralImage_01[x+1]) * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+2] = static_cast<u8>( ((pIntegralImage_11[x+2] - pIntegralImage_10[x+2] + pIntegralImage_00[x+2] - pIntegralImage_01[x+2]) * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+3] = static_cast<u8>( ((pIntegralImage_11[x+3] - pIntegralImage_10[x+3] + pIntegralImage_00[x+3] - pIntegralImage_01[x+3]) * outputMultiply) >> outputRightShift ) ;
+        }
+
+        for(; x<=maxX; x++) {
+          pOutput[x] = static_cast<u8>( ((pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x]) * outputMultiply) >> outputRightShift ) ;
+        }
+      }
+#else
+#error Unknown acceleration
+#endif // #if ACCELERATION_TYPE == ACCELERATION_NONE ... #else
+    } // FilterRow_innerLoop()
   } // namespace Embedded
 } //namespace Anki
+
