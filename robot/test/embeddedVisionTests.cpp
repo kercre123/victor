@@ -3737,7 +3737,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 } // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 
 #ifdef RUN_PC_ONLY_TESTS
-GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark1280)
+GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
 {
   // Don't check if the markers were correctly detected, just check the timing
 
@@ -3784,11 +3784,11 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark1280)
   Array<u8> image320(simpleFiducials_320x240_HEIGHT, simpleFiducials_320x240_WIDTH, scratchOffchip);
   image320.Set(simpleFiducials_320x240, simpleFiducials_320x240_WIDTH*simpleFiducials_320x240_HEIGHT);
 
-  Array<u8> image1280(960, 1280, scratchHuge);
-  ImageProcessing::Resize<u8,u8>(image320, image1280);
+  Array<u8> image640(480, 640, scratchHuge);
+  ImageProcessing::Resize<u8,u8>(image320, image640);
 
   //image320.Show("image320", false, false);
-  //image1280.Show("image1280", true, false);
+  //image640.Show("image640", true, false);
 
   // TODO: Check that the image loaded correctly
   //ASSERT_TRUE(IssimpleFiducials_320x240Valid(image.Pointer(0,0), false));
@@ -3804,14 +3804,14 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark1280)
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
-  const s32 numRuns = 10;
+  const s32 numRuns = 100;
   FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements(numRuns, scratchOffchip);
 
   for(s32 iRun=0; iRun<numRuns; iRun++) {
     InitBenchmarking();
 
     const Result result = DetectFiducialMarkers(
-      image1280,
+      image640,
       markers,
       homographies,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
@@ -3893,7 +3893,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark1280)
   PrintBenchmarkResults(medianBenchmarkElements, true, true);
 
   GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark1280)
+} // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
 #endif
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
@@ -5140,7 +5140,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
 #ifdef RUN_PC_ONLY_TESTS
-  CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark1280);
+  CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640);
 #endif
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
