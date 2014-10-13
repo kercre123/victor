@@ -79,6 +79,13 @@ namespace Anki
       // Returns the number of bytes set to zero
       inline s32 SetZero();
 
+      // Read in the input, then cast it to this object's type
+      //
+      // WARNING:
+      // This should be kept explicit, to prevent accidental casting between different datatypes.
+      template<typename InType> s32 SetCast(const FixedLengthList<InType> &input, bool automaticTranspose=true);
+      //template<typename InType> s32 SetCast(const InType * const values, const s32 numValues); // TODO: implement
+
       // The maximum size is set at object construction
       inline s32 get_maximumSize() const;
 

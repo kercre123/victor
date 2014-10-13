@@ -15,8 +15,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <windows.h>
 #elif defined(__EDG__)
 #include "anki/cozmo/robot/hal.h"
+#elif defined(__GNUC__)
+#if defined(__ARM_ARCH_7A__)
+#include <time.h>
 #else
 #include <sys/time.h>
+#endif
 #endif
 
 typedef enum

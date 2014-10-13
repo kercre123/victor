@@ -24,7 +24,7 @@ const s32 lbpcascade_frontalface_origWinWidth = 24;
 __declspec(align(MEMORY_ALIGNMENT_RAW))
 #endif
 const Anki::Embedded::Classifier::CascadeClassifier::Stage lbpcascade_frontalface_stages_data[lbpcascade_frontalface_stages_length + MEMORY_ALIGNMENT_RAW]
-#if defined(__EDG__)  // ARM-MDK
+#if defined(__EDG__) || defined(__GNUC__) // ARM-MDK or GCC
 __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))
 #endif
 = {
@@ -35,7 +35,7 @@ __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))
 __declspec(align(MEMORY_ALIGNMENT_RAW))
 #endif
 const Anki::Embedded::Classifier::CascadeClassifier::DTree lbpcascade_frontalface_classifiers_data[lbpcascade_frontalface_classifiers_length + MEMORY_ALIGNMENT_RAW]
-#if defined(__EDG__)  // ARM-MDK
+#if defined(__EDG__) || defined(__GNUC__) // ARM-MDK or GCC
 __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))
 #endif
 = {
@@ -46,7 +46,7 @@ __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))
 __declspec(align(MEMORY_ALIGNMENT_RAW))
 #endif
 const Anki::Embedded::Classifier::CascadeClassifier::DTreeNode lbpcascade_frontalface_nodes_data[lbpcascade_frontalface_nodes_length + MEMORY_ALIGNMENT_RAW]
-#if defined(__EDG__)  // ARM-MDK
+#if defined(__EDG__) || defined(__GNUC__) // ARM-MDK or GCC
 __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))
 #endif
 = {
@@ -57,7 +57,7 @@ __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))
 __declspec(align(MEMORY_ALIGNMENT_RAW))
 #endif
 const f32 lbpcascade_frontalface_leaves_data[lbpcascade_frontalface_leaves_length + MEMORY_ALIGNMENT_RAW]
-#if defined(__EDG__)  // ARM-MDK
+#if defined(__EDG__) || defined(__GNUC__) // ARM-MDK or GCC
 __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))
 #endif
 = {
@@ -68,7 +68,7 @@ __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))
 __declspec(align(MEMORY_ALIGNMENT_RAW))
 #endif
 const s32 lbpcascade_frontalface_subsets_data[lbpcascade_frontalface_subsets_length + MEMORY_ALIGNMENT_RAW]
-#if defined(__EDG__)  // ARM-MDK
+#if defined(__EDG__) || defined(__GNUC__) // ARM-MDK or GCC
 __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))
 #endif
 = {
@@ -79,7 +79,7 @@ __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))
 __declspec(align(MEMORY_ALIGNMENT_RAW))
 #endif
 const s32 lbpcascade_frontalface_featureRectangles_data[lbpcascade_frontalface_featureRectangles_length*4 + MEMORY_ALIGNMENT_RAW]
-#if defined(__EDG__)  // ARM-MDK
+#if defined(__EDG__) || defined(__GNUC__) // ARM-MDK or GCC
 __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))
 #endif
 = {

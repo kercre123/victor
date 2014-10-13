@@ -5,6 +5,7 @@
 #include "anki/cozmo/robot/hal.h" // simulated or real!
 #include "anki/cozmo/robot/debug.h"
 #include "messages.h"
+#include "faceTrackingController.h"
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
@@ -182,6 +183,10 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "AnimationController init failed.\n");
 
+        lastResult = FaceTrackingController::Init(VisionSystem::GetFaceDetectionParams());
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "FaceTrackingController init failed.\n");
+
         
         // Start calibration
         StartMotorCalibrationRoutine();
@@ -295,6 +300,7 @@ namespace Anki {
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
+        FaceTrackingController::Update();
         
         //////////////////////////////////////////////////////////////
         // State Machine

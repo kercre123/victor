@@ -31,6 +31,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/classifier.h"
 #include "anki/vision/robot/cameraImagingPipeline.h"
 #include "anki/vision/robot/opencvLight_vision.h"
+#include "anki/vision/robot/features.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -58,6 +59,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <fstream>
 #endif
 
+#include "opencv2/video/tracking.hpp"
+
 using namespace Anki;
 using namespace Anki::Embedded;
 
@@ -69,6 +72,243 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 //#define RUN_FACE_DETECTION_GUI
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
+
+#ifdef RUN_PC_ONLY_TESTS
+GTEST_TEST(CoreTech_Vision, KLT)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  const Array<u8> image1 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame23.png", scratchHuge);
+  const Array<u8> image2 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame24.png", scratchHuge);
+
+  ASSERT_TRUE(AreValid(image1, image2));
+
+  cv::Mat image1Cv;
+  cv::Mat image2Cv;
+
+  ArrayToCvMat<u8>(image1, &image1Cv);
+  ArrayToCvMat<u8>(image2, &image2Cv);
+
+  std::vector<cv::Point2f> pointsCv[2];
+
+  const s32 maxCorners = 10;
+  const f32 qualityLevel = 0.3f;
+  const int blockSize = 11;
+  const double harrisK = 0.04;
+
+  std::vector<cv::Point2f> cornersCv;
+  cv::goodFeaturesToTrack(image1Cv, pointsCv[0], maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
+
+  cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
+
+  cv::Size winSize(31,31);
+
+  std::vector<uchar> statusCv;
+  std::vector<float> errCv;
+
+  const s32 numPyramidLevels = 3;
+  const f32 minEigThreshold = 0.001f;
+
+  calcOpticalFlowPyrLK(image1Cv, image2Cv, pointsCv[0], pointsCv[1], statusCv, errCv, winSize, numPyramidLevels, termcrit, 0, minEigThreshold);
+
+  FixedLengthList<Array<u8> > pyramid1 = ImageProcessing::BuildPyramid<u8,u32,u8>(image1, numPyramidLevels, scratchHuge);
+  FixedLengthList<Array<u8> > pyramid2 = ImageProcessing::BuildPyramid<u8,u32,u8>(image2, numPyramidLevels, scratchHuge);
+
+  ASSERT_TRUE(pyramid1.IsValid());
+  ASSERT_TRUE(pyramid2.IsValid());
+
+  //pyramid1[0].Show("p1 0", false, false);
+  //pyramid1[1].Show("p1 1", false, false);
+  //pyramid1[2].Show("p1 2", false, false);
+  //pyramid1[3].Show("p1 3", false, false);
+
+  //pyramid2[0].Show("p2 0", false, false);
+  //pyramid2[1].Show("p2 1", false, false);
+  //pyramid2[2].Show("p2 2", false, false);
+  //pyramid2[3].Show("p2 3", true, false);
+
+  const s32 numPointsMax = 50000;
+  FixedLengthList<Point<s16> > points1S16(numPointsMax, scratchHuge);
+  FixedLengthList<Point<f32> > points1F32(numPointsMax, scratchHuge);
+  const Result gftResult = Features::GoodFeaturesToTrack(image1, points1S16, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
+
+  ASSERT_TRUE(gftResult == RESULT_OK);
+
+  points1F32.set_size(points1S16.get_size());
+  for(s32 i=0; i<numPointsMax; i++) {
+    points1F32[i].SetCast(points1S16[i]);
+  }
+
+  FixedLengthList<Point<f32> > points2F32(numPointsMax, scratchHuge);
+
+  FixedLengthList<bool> status(numPointsMax, scratchHuge);
+  FixedLengthList<f32> err(numPointsMax, scratchHuge);
+
+  const Result kltResult = TemplateTracker::CalcOpticalFlowPyrLK(
+    pyramid1, pyramid2,
+    points1F32, points2F32,
+    status, err,
+    winSize.height, winSize.width,
+    termcrit.maxCount, static_cast<f32>(termcrit.epsilon),
+    minEigThreshold,
+    false,
+    scratchHuge);
+
+  {
+    Matlab matlab(false);
+    matlab.PutArray(image1, "image1");
+    matlab.PutArray(image2, "image2");
+
+    matlab.EvalString("points1 = zeros(0,2); points2 = zeros(0,2); points1Cv = zeros(0,2); points2Cv = zeros(0,2);");
+    for(s32 i=0; i<points1F32.get_size(); i++) {
+      matlab.EvalString("points1(end+1,:) = [%f,%f];", points1F32[i].x, points1F32[i].y);
+    }
+
+    for(s32 i=0; i<points2F32.get_size(); i++) {
+      matlab.EvalString("points2(end+1,:) = [%f,%f];", points2F32[i].x, points2F32[i].y);
+    }
+
+    for(s32 i=0; i<pointsCv[0].size(); i++) {
+      matlab.EvalString("points1Cv(end+1,:) = [%f,%f];", pointsCv[0][i].x, pointsCv[0][i].y);
+    }
+
+    for(s32 i=0; i<pointsCv[1].size(); i++) {
+      matlab.EvalString("points2Cv(end+1,:) = [%f,%f];", pointsCv[1][i].x, pointsCv[1][i].y);
+    }
+
+    matlab.EvalString("figure(1); hold off; imshow(image1); hold on; scatter(points1(:,1), points1(:,2), 'r+');");
+    matlab.EvalString("figure(2); hold off; imshow(image2); hold on; scatter(points2(:,1), points2(:,2), 'r+');");
+    matlab.EvalString("figure(3); hold off; imshow(image1); hold on; scatter(points1Cv(:,1), points1Cv(:,2), 'r+');");
+    matlab.EvalString("figure(4); hold off; imshow(image2); hold on; scatter(points2Cv(:,1), points2Cv(:,2), 'r+');");
+  }
+
+  points1F32.Print("points1F32");
+  points2F32.Print("points2F32");
+  status.Print("status");
+  err.Print("err");
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, KLT)
+#endif // #ifdef RUN_PC_ONLY_TESTS
+
+#ifdef RUN_PC_ONLY_TESTS
+GTEST_TEST(CoreTech_Vision, Harris)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  const char * imageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
+  Array<u8> image = Array<u8>::LoadImage(imageFilename, scratchOffchip);
+  Array<f32> harrisImage(image.get_size(0), image.get_size(1), scratchOffchip);
+
+  ASSERT_TRUE(AreValid(image, harrisImage));
+
+  cv::Mat_<u8> imageCv;
+
+  ArrayToCvMat<u8>(image, &imageCv);
+
+  const int blockSize = 11;
+  const double harrisK = 0.04;
+
+  cv::Mat_<f32> harrisImageCv;
+  cv::cornerHarris(imageCv, harrisImageCv, blockSize, 3, harrisK, cv::BORDER_DEFAULT);
+
+  matlab.PutOpencvMat(imageCv, "imageCv");
+  matlab.PutOpencvMat(harrisImageCv, "harrisImageCv");
+
+  const Result cornerResult = Features::CornerHarris(image, harrisImage, blockSize, static_cast<f32>(harrisK), scratchOffchip);
+
+  ASSERT_TRUE(cornerResult == RESULT_OK);
+
+  matlab.PutArray(harrisImage, "harrisImage");
+
+  const s32 maxCorners = 100;
+  const f32 qualityLevel = 0.3f;
+
+  FixedLengthList<Point<s16> > corners(5000, scratchHuge);
+
+  const Result gftResult = Features::GoodFeaturesToTrack(image, corners, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
+
+  ASSERT_TRUE(gftResult == RESULT_OK);
+
+  std::vector<cv::Point2f> cornersCv;
+  cv::goodFeaturesToTrack(imageCv, cornersCv, maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
+
+  cv::Mat drawnCorners(image.get_size(0), image.get_size(1), CV_8UC3);
+  cv::Mat drawnCornersCv(image.get_size(0), image.get_size(1), CV_8UC3);
+
+  matlab.EvalStringEcho("corners=zeros(0,2); cornersCv=zeros(0,2);");
+
+  for(s32 i=0; i<corners.get_size(); i++) {
+    cv::circle(drawnCorners, cv::Point(corners[i].x, corners[i].y), 2, cv::Scalar(255,0,0), -1);
+    matlab.EvalStringEcho("corners(end+1,:) = [%d,%d];", s32(corners[i].x), s32(corners[i].y));
+  }
+
+  for(s32 i=0; i<(s32)(cornersCv.size()); i++) {
+    cv::circle(drawnCornersCv, cv::Point(s32(cornersCv[i].x), s32(cornersCv[i].y)), 2, cv::Scalar(255,0,0), -1);
+    matlab.EvalStringEcho("cornersCv(end+1,:) = [%d,%d];", s32(cornersCv[i].x), s32(cornersCv[i].y));
+  }
+
+  cv::imshow("image", imageCv);
+  cv::imshow("drawnCorners", drawnCorners);
+  cv::imshow("drawnCornersCv", drawnCornersCv);
+
+  cv::waitKey();
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, LocalMaxima)
+#endif // #ifdef RUN_PC_ONLY_TESTS
+
+GTEST_TEST(CoreTech_Vision, LocalMaxima)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  const s32 imageHeight = 10;
+  const s32 imageWidth = 10;
+
+  const u8 image_data[imageHeight*imageWidth] = {
+    5, 5, 5, 5, 5, 5, 5, 5, 9, 5,
+    9, 9, 5, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    9, 5, 5, 5, 9, 5, 5, 5, 5, 5,
+    5, 5, 9, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 9, 5, 5, 5,
+    5, 9, 5, 5, 5, 5, 9, 5, 5, 5,
+    5, 5, 9, 5, 5, 5, 5, 5, 5, 9,
+    5, 9, 5, 5, 9, 9, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5, 9, 5};
+
+  Array<u8> image(imageHeight, imageWidth, scratchCcm);
+  FixedLengthList<Point<s16> > points(100, scratchCcm);
+
+  ASSERT_TRUE(image.IsValid());
+
+  image.Set(image_data, imageHeight*imageWidth);
+
+  const Result result = ImageProcessing::LocalMaxima<u8>(image, 3, 3, points);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  ASSERT_TRUE(points.get_size() == 2);
+
+  ASSERT_TRUE(points[0] == Point<s16>(4, 3));
+  ASSERT_TRUE(points[1] == Point<s16>(2, 4));
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, LocalMaxima)
 
 #ifdef RUN_PC_ONLY_TESTS
 GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
@@ -104,7 +344,7 @@ GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
   //vmi.Show(50);
 
   const char * queryImageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
-  Array<u8> queryImage(queryImageFilename, scratchHuge);
+  Array<u8> queryImage = Array<u8>::LoadImage(queryImageFilename, scratchHuge);
   //queryImage.Show("queryImage", true);
 
   Quadrilateral<f32> quad(
@@ -585,7 +825,7 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
     Array<u16> filtered(imageHeight, imageWidth, scratchOffchip);
     filtered.Set(0xFFFF);
 
-    const Result result = ImageProcessing::BoxFilter(image, boxHeight, boxWidth, filtered, scratchOnchip);
+    const Result result = ImageProcessing::BoxFilter<u8,u16,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
 
     //filtered.Print("filtered");
 
@@ -636,7 +876,7 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
 
     BeginBenchmark("BoxFilter");
 
-    const Result result = ImageProcessing::BoxFilter(image, boxHeight, boxWidth, filtered, scratchOnchip);
+    const Result result = ImageProcessing::BoxFilter<u8,u16,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
 
     EndBenchmark("BoxFilter");
 
@@ -3180,7 +3420,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const s32 component1d_minComponentWidth = 0;
   const s32 component1d_maxSkipDistance = 0;
 
-  const f32 minSideLength = 0.03f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
+  const f32 minSideLength = 0.01f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
 
   const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
@@ -3200,8 +3440,9 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const f32 decode_minContrastRatio = 1.25;
 
   const s32 maxMarkers = 100;
-  //const u16 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
-  const u16 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
+  //const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+  const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
+  //const s32 maxConnectedComponentSegments = 70000;
 
   const s32 quadRefinementIterations = 5;
   const s32 numRefinementSamples = 100;
@@ -3365,27 +3606,27 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
     Quadrilateral<s16>(Point<s16>(24,4), Point<s16>(10,4), Point<s16>(24,18), Point<s16>(10,18)) ,
     Quadrilateral<s16>(Point<s16>(129,50),  Point<s16>(100,50), Point<s16>(129,79), Point<s16>(100,79)) };
 
-  ConnectedComponents components(numComponents, imageWidth, scratchOnchip);
+  ConnectedComponents components(numComponents, imageWidth, true, scratchOnchip);
 
   // Small square
   for(s32 y=0; y<15; y++) {
-    components.PushBack(ConnectedComponentSegment(10,24,y+4,1));
+    components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(10,24,y+4,1));
   }
 
   // Big square
   for(s32 y=0; y<30; y++) {
-    components.PushBack(ConnectedComponentSegment(100,129,y+50,2));
+    components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(100,129,y+50,2));
   }
 
   // Skewed quad
-  components.PushBack(ConnectedComponentSegment(100,300,100,3));
+  components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(100,300,100,3));
   for(s32 y=0; y<10; y++) {
-    components.PushBack(ConnectedComponentSegment(100,110,y+100,3));
+    components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(100,110,y+100,3));
   }
 
   // Tiny square
   for(s32 y=0; y<5; y++) {
-    components.PushBack(ConnectedComponentSegment(10,14,y,4));
+    components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(10,14,y,4));
   }
 
   FixedLengthList<Quadrilateral<s16> > extractedQuads(2, scratchOnchip);
@@ -3601,7 +3842,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
   const s32 yValues[128] = {200, 200, 201, 201, 202, 203, 204, 205, 206, 207, 207, 208, 208, 209, 209, 210, 210};
   const s32 xStartValues[128] = {102, 104, 102, 108, 102, 100, 100, 104, 100, 100, 103, 100, 103, 100, 103, 100, 103};
@@ -3611,7 +3852,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   const s32 extractedBoundaryY_groundTruth[128] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
 
   for(s32 i=0; i<numComponents; i++) {
-    components.PushBack(ConnectedComponentSegment(xStartValues[i],xEndValues[i],yValues[i],1));
+    components.get_componentsU16()->PushBack(ConnectedComponentSegment<u16>(xStartValues[i],xEndValues[i],yValues[i],1));
   }
 
   components.SortConnectedComponentSegments();
@@ -3654,29 +3895,29 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1004, 2, 1);
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 4, 3, 2);
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 2, 4, 3);
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(4, 6, 5, 3);
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(8, 10, 6, 3);
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 4, 7, 4);
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(6, 6, 8, 4);
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(5, 1000, 9, 5);
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1);
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(12, 12, 1, 1);
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(16, 1004, 2, 1);
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(0, 4, 3, 2);
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 2, 4, 3);
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(4, 6, 5, 3);
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(8, 10, 6, 3);
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 4, 7, 4);
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(6, 6, 8, 4);
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(5, 1000, 9, 5);
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   FixedLengthList<Anki::Embedded::Rectangle<s16> > componentBoundingBoxes(numComponents, scratchOnchip);
   {
@@ -3703,29 +3944,29 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1004, 2, 1);
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 4, 3, 2);
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 2, 4, 3);
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(4, 6, 5, 3);
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(8, 10, 6, 3);
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 4, 7, 4);
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(6, 6, 8, 4);
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 1000, 9, 5);
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1);
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(12, 12, 1, 1);
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(16, 1004, 2, 1);
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(0, 4, 3, 2);
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 2, 4, 3);
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(4, 6, 5, 3);
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(8, 10, 6, 3);
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 4, 7, 4);
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(6, 6, 8, 4);
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 1000, 9, 5);
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   FixedLengthList<Point<s16> > componentCentroids(numComponents, scratchOnchip);
   {
@@ -3753,29 +3994,29 @@ GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 2, 5, 1);
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(4, 6, 5, 1);
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(0, 0, 6, 1);
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(6, 6, 6, 1);
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 1, 7, 2);
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(3, 3, 7, 2);
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(5, 7, 7, 2);
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 1, 8, 2);
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(5, 12, 8, 2);
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 10, 12, 3);
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 2, 5, 1);
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(4, 6, 5, 1);
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(0, 0, 6, 1);
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(6, 6, 6, 1);
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 1, 7, 2);
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(3, 3, 7, 2);
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(5, 7, 7, 2);
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 1, 8, 2);
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(5, 12, 8, 2);
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 10, 12, 3);
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   {
     const Result result = components.InvalidateFilledCenterComponents_hollowRows(minHollowRatio, scratchOnchip);
@@ -3784,16 +4025,16 @@ GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
 
   //components.Print();
 
-  ASSERT_TRUE(components.Pointer(0)->id == 1);
-  ASSERT_TRUE(components.Pointer(1)->id == 1);
-  ASSERT_TRUE(components.Pointer(2)->id == 1);
-  ASSERT_TRUE(components.Pointer(3)->id == 1);
-  ASSERT_TRUE(components.Pointer(4)->id == 0);
-  ASSERT_TRUE(components.Pointer(5)->id == 0);
-  ASSERT_TRUE(components.Pointer(6)->id == 0);
-  ASSERT_TRUE(components.Pointer(7)->id == 0);
-  ASSERT_TRUE(components.Pointer(8)->id == 0);
-  ASSERT_TRUE(components.Pointer(9)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(0)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(1)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(2)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(3)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(4)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(5)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(6)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(7)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(8)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
@@ -3810,45 +4051,45 @@ GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1); // Ok
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(0, 10, 3, 1);
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(0, 10, 5, 2); // Too solid
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 10, 6, 2);
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 10, 8, 2);
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, 10, 10, 3); // Too sparse
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, 10, 100, 3);
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 0, 105, 4); // Ok
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, 0, 108, 4);
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 10, 110, 5); // Too solid
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1); // Ok
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(0, 10, 3, 1);
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(0, 10, 5, 2); // Too solid
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(0, 10, 6, 2);
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 10, 8, 2);
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(0, 10, 10, 3); // Too sparse
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(0, 10, 100, 3);
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 0, 105, 4); // Ok
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(0, 0, 108, 4);
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 10, 110, 5); // Too solid
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   {
     const Result result = components.InvalidateSolidOrSparseComponents(sparseMultiplyThreshold, solidMultiplyThreshold, scratchOnchip);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-  ASSERT_TRUE(components.Pointer(0)->id == 1);
-  ASSERT_TRUE(components.Pointer(1)->id == 1);
-  ASSERT_TRUE(components.Pointer(2)->id == 0);
-  ASSERT_TRUE(components.Pointer(3)->id == 0);
-  ASSERT_TRUE(components.Pointer(4)->id == 0);
-  ASSERT_TRUE(components.Pointer(5)->id == 0);
-  ASSERT_TRUE(components.Pointer(6)->id == 0);
-  ASSERT_TRUE(components.Pointer(7)->id == 4);
-  ASSERT_TRUE(components.Pointer(8)->id == 4);
-  ASSERT_TRUE(components.Pointer(9)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(0)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(1)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(2)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(3)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(4)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(5)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(6)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(7)->id == 4);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(8)->id == 4);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
@@ -3865,45 +4106,45 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1004, 2, 1);
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 4, 3, 2);
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 2, 4, 3);
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(4, 6, 5, 3);
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(8, 10, 6, 3);
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 4, 7, 4);
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(6, 6, 8, 4);
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 1000, 9, 5);
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 10, 0, 1);
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(12, 12, 1, 1);
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(16, 1004, 2, 1);
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(0, 4, 3, 2);
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 2, 4, 3);
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(4, 6, 5, 3);
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(8, 10, 6, 3);
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 4, 7, 4);
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(6, 6, 8, 4);
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 1000, 9, 5);
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   {
     const Result result = components.InvalidateSmallOrLargeComponents(minimumNumPixels, maximumNumPixels, scratchOnchip);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-  ASSERT_TRUE(components.Pointer(0)->id == 0);
-  ASSERT_TRUE(components.Pointer(1)->id == 0);
-  ASSERT_TRUE(components.Pointer(2)->id == 0);
-  ASSERT_TRUE(components.Pointer(3)->id == 0);
-  ASSERT_TRUE(components.Pointer(4)->id == 3);
-  ASSERT_TRUE(components.Pointer(5)->id == 3);
-  ASSERT_TRUE(components.Pointer(6)->id == 3);
-  ASSERT_TRUE(components.Pointer(7)->id == 4);
-  ASSERT_TRUE(components.Pointer(8)->id == 4);
-  ASSERT_TRUE(components.Pointer(9)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(0)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(1)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(2)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(3)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(4)->id == 3);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(5)->id == 3);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(6)->id == 3);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(7)->id == 4);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(8)->id == 4);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(9)->id == 0);
 
   {
     const Result result = components.CompressConnectedComponentSegmentIds(scratchOnchip);
@@ -3913,16 +4154,16 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
     ASSERT_TRUE(maximumId == 2);
   }
 
-  ASSERT_TRUE(components.Pointer(0)->id == 0);
-  ASSERT_TRUE(components.Pointer(1)->id == 0);
-  ASSERT_TRUE(components.Pointer(2)->id == 0);
-  ASSERT_TRUE(components.Pointer(3)->id == 0);
-  ASSERT_TRUE(components.Pointer(4)->id == 1);
-  ASSERT_TRUE(components.Pointer(5)->id == 1);
-  ASSERT_TRUE(components.Pointer(6)->id == 1);
-  ASSERT_TRUE(components.Pointer(7)->id == 2);
-  ASSERT_TRUE(components.Pointer(8)->id == 2);
-  ASSERT_TRUE(components.Pointer(9)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(0)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(1)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(2)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(3)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(4)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(5)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(6)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(7)->id == 2);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(8)->id == 2);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
@@ -3937,29 +4178,29 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 0, 0, 5);  // 3
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(0, 0, 0, 10); // 4
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(0, 0, 0, 0);  // 0
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 0, 0, 101);// 6
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 0, 0, 3);  // 1
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, 0, 0, 4);  // 2
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, 0, 0, 11); // 5
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 0, 0, 3);  // 1
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, 0, 0, 3);  // 1
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 0, 0, 5);  // 3
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(0, 0, 0, 5);  // 3
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(0, 0, 0, 10); // 4
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(0, 0, 0, 0);  // 0
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(0, 0, 0, 101);// 6
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, 0, 0, 3);  // 1
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(0, 0, 0, 4);  // 2
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(0, 0, 0, 11); // 5
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(0, 0, 0, 3);  // 1
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(0, 0, 0, 3);  // 1
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 0, 0, 5);  // 3
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   {
     const Result result = components.CompressConnectedComponentSegmentIds(scratchOnchip);
@@ -3969,16 +4210,16 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
     ASSERT_TRUE(maximumId == 6);
   }
 
-  ASSERT_TRUE(components.Pointer(0)->id == 3);
-  ASSERT_TRUE(components.Pointer(1)->id == 4);
-  ASSERT_TRUE(components.Pointer(2)->id == 0);
-  ASSERT_TRUE(components.Pointer(3)->id == 6);
-  ASSERT_TRUE(components.Pointer(4)->id == 1);
-  ASSERT_TRUE(components.Pointer(5)->id == 2);
-  ASSERT_TRUE(components.Pointer(6)->id == 5);
-  ASSERT_TRUE(components.Pointer(7)->id == 1);
-  ASSERT_TRUE(components.Pointer(8)->id == 1);
-  ASSERT_TRUE(components.Pointer(9)->id == 3);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(0)->id == 3);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(1)->id == 4);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(2)->id == 0);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(3)->id == 6);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(4)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(5)->id == 2);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(6)->id == 5);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(7)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(8)->id == 1);
+  ASSERT_TRUE(components.get_componentsU16()->Pointer(9)->id == 3);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, CompressComponentIds)
@@ -4000,7 +4241,7 @@ GTEST_TEST(CoreTech_Vision, ComponentsSize)
   CoreTechPrint("Original size: %d\n", usedBytes0);
 #endif
 
-  FixedLengthList<ConnectedComponentSegment> segmentList(numComponents, scratchOnchip);
+  FixedLengthList<ConnectedComponentSegment<u16>> segmentList(numComponents, scratchOnchip);
 
   const s32 usedBytes1 = scratchOnchip.get_usedBytes();
   const double actualSizePlusOverhead = double(usedBytes1 - usedBytes0) / double(numComponents);
@@ -4012,11 +4253,11 @@ GTEST_TEST(CoreTech_Vision, ComponentsSize)
     "Actual size (includes overhead): %d\n",
     usedBytes1,
     usedBytes1 - usedBytes0,
-    sizeof(ConnectedComponentSegment),
+    sizeof(ConnectedComponentSegment<u16>),
     actualSizePlusOverhead);
 #endif // #ifdef PRINTF_SIZE_RESULTS
 
-  const double difference = actualSizePlusOverhead - double(sizeof(ConnectedComponentSegment));
+  const double difference = actualSizePlusOverhead - double(sizeof(ConnectedComponentSegment<u16>));
   ASSERT_TRUE(difference > -0.0001 && difference < 1.0);
 
   GTEST_RETURN_HERE;
@@ -4032,43 +4273,43 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, u16_MAX); // 2
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, 0); // 9
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, 0); // 7
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, u16_MAX); // 4
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 5
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, 0); // 8
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, u16_MAX); // 3
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, u16_MAX); // 1
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 6
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(42, 42, 42, 42); // 0
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(50, 100, 50, u16_MAX); // 2
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, s16_MAX, 0); // 9
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, 0, 0); // 7
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, s16_MAX, u16_MAX); // 4
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(0, s16_MAX, 0, 0); // 5
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(0, s16_MAX, s16_MAX, 0); // 8
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(0, s16_MAX, s16_MAX, u16_MAX); // 3
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(s16_MAX, s16_MAX, 0, u16_MAX); // 1
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(0, s16_MAX, 0, 0); // 6
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(42, 42, 42, 42); // 0
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   const Result result = components.SortConnectedComponentSegments();
   ASSERT_TRUE(result == RESULT_OK);
 
-  ASSERT_TRUE(*components.Pointer(0) == component9);
-  ASSERT_TRUE(*components.Pointer(1) == component7);
-  ASSERT_TRUE(*components.Pointer(2) == component0);
-  ASSERT_TRUE(*components.Pointer(3) == component6);
-  ASSERT_TRUE(*components.Pointer(4) == component3);
-  ASSERT_TRUE(*components.Pointer(5) == component4);
-  ASSERT_TRUE(*components.Pointer(6) == component8);
-  ASSERT_TRUE(*components.Pointer(7) == component2);
-  ASSERT_TRUE(*components.Pointer(8) == component5);
-  ASSERT_TRUE(*components.Pointer(9) == component1);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(0) == component9);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(1) == component7);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(2) == component0);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(3) == component6);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(4) == component3);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(5) == component4);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(6) == component8);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(7) == component2);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(8) == component5);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(9) == component1);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, SortComponents)
@@ -4083,44 +4324,44 @@ GTEST_TEST(CoreTech_Vision, SortComponentsById)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ConnectedComponents components(numComponents, 640, scratchOnchip);
+  ConnectedComponents components(numComponents, 640, true, scratchOnchip);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(1, 1, 1, 3); // 6
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(2, 2, 2, 1); // 0
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(3, 3, 3, 1); // 1
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(4, 4, 4, 0); // X
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(5, 5, 5, 1); // 2
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(6, 6, 6, 1); // 3
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(7, 7, 7, 1); // 4
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(8, 8, 8, 4); // 7
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(9, 9, 9, 5); // 8
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 0, 0, 1); // 5
+  const ConnectedComponentSegment<u16> component0 = ConnectedComponentSegment<u16>(1, 1, 1, 3); // 6
+  const ConnectedComponentSegment<u16> component1 = ConnectedComponentSegment<u16>(2, 2, 2, 1); // 0
+  const ConnectedComponentSegment<u16> component2 = ConnectedComponentSegment<u16>(3, 3, 3, 1); // 1
+  const ConnectedComponentSegment<u16> component3 = ConnectedComponentSegment<u16>(4, 4, 4, 0); // X
+  const ConnectedComponentSegment<u16> component4 = ConnectedComponentSegment<u16>(5, 5, 5, 1); // 2
+  const ConnectedComponentSegment<u16> component5 = ConnectedComponentSegment<u16>(6, 6, 6, 1); // 3
+  const ConnectedComponentSegment<u16> component6 = ConnectedComponentSegment<u16>(7, 7, 7, 1); // 4
+  const ConnectedComponentSegment<u16> component7 = ConnectedComponentSegment<u16>(8, 8, 8, 4); // 7
+  const ConnectedComponentSegment<u16> component8 = ConnectedComponentSegment<u16>(9, 9, 9, 5); // 8
+  const ConnectedComponentSegment<u16> component9 = ConnectedComponentSegment<u16>(0, 0, 0, 1); // 5
 
-  components.PushBack(component0);
-  components.PushBack(component1);
-  components.PushBack(component2);
-  components.PushBack(component3);
-  components.PushBack(component4);
-  components.PushBack(component5);
-  components.PushBack(component6);
-  components.PushBack(component7);
-  components.PushBack(component8);
-  components.PushBack(component9);
+  components.get_componentsU16()->PushBack(component0);
+  components.get_componentsU16()->PushBack(component1);
+  components.get_componentsU16()->PushBack(component2);
+  components.get_componentsU16()->PushBack(component3);
+  components.get_componentsU16()->PushBack(component4);
+  components.get_componentsU16()->PushBack(component5);
+  components.get_componentsU16()->PushBack(component6);
+  components.get_componentsU16()->PushBack(component7);
+  components.get_componentsU16()->PushBack(component8);
+  components.get_componentsU16()->PushBack(component9);
 
   const Result result = components.SortConnectedComponentSegmentsById(scratchOnchip);
   ASSERT_TRUE(result == RESULT_OK);
 
   ASSERT_TRUE(components.get_size() == 9);
 
-  ASSERT_TRUE(*components.Pointer(0) == component1);
-  ASSERT_TRUE(*components.Pointer(1) == component2);
-  ASSERT_TRUE(*components.Pointer(2) == component4);
-  ASSERT_TRUE(*components.Pointer(3) == component5);
-  ASSERT_TRUE(*components.Pointer(4) == component6);
-  ASSERT_TRUE(*components.Pointer(5) == component9);
-  ASSERT_TRUE(*components.Pointer(6) == component0);
-  ASSERT_TRUE(*components.Pointer(7) == component7);
-  ASSERT_TRUE(*components.Pointer(8) == component8);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(0) == component1);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(1) == component2);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(2) == component4);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(3) == component5);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(4) == component6);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(5) == component9);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(6) == component0);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(7) == component7);
+  ASSERT_TRUE(*components.get_componentsU16()->Pointer(8) == component8);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, SortComponents)
@@ -4180,8 +4421,8 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
   //binaryImage.Print("binaryImage");
 
-  //FixedLengthList<ConnectedComponentSegment> extractedComponents(maxComponentSegments, scratchOnchip);
-  ConnectedComponents components(maxComponentSegments, imageWidth, scratchOnchip);
+  //FixedLengthList<ConnectedComponentSegment<u16>> extractedComponents(maxComponentSegments, scratchOnchip);
+  ConnectedComponents components(maxComponentSegments, imageWidth, true, scratchOnchip);
   ASSERT_TRUE(components.IsValid());
 
   const Result result = components.Extract2dComponents_FullImage(binaryImage, minComponentWidth, maxSkipDistance, scratchOnchip);
@@ -4194,10 +4435,10 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   //components.Print();
 
   for(s32 i=0; i<numComponents_groundTruth; i++) {
-    ASSERT_TRUE(components.Pointer(i)->xStart == xStart_groundTruth[i]);
-    ASSERT_TRUE(components.Pointer(i)->xEnd == xEnd_groundTruth[i]);
-    ASSERT_TRUE(components.Pointer(i)->y == y_groundTruth[i]);
-    ASSERT_TRUE(components.Pointer(i)->id == id_groundTruth[i]);
+    ASSERT_TRUE(components.get_componentsU16()->Pointer(i)->xStart == xStart_groundTruth[i]);
+    ASSERT_TRUE(components.get_componentsU16()->Pointer(i)->xEnd == xEnd_groundTruth[i]);
+    ASSERT_TRUE(components.get_componentsU16()->Pointer(i)->y == y_groundTruth[i]);
+    ASSERT_TRUE(components.get_componentsU16()->Pointer(i)->id == id_groundTruth[i]);
   }
 
   GTEST_RETURN_HERE;
@@ -4219,7 +4460,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   u8 * binaryImageRow = reinterpret_cast<u8*>(scratchOnchip.Allocate(imageWidth));
   memset(binaryImageRow, 0, imageWidth);
 
-  FixedLengthList<ConnectedComponentSegment> extractedComponentSegments(maxComponents, scratchOnchip);
+  FixedLengthList<ConnectedComponentSegment<u16>> extractedComponentSegments(maxComponents, scratchOnchip);
 
   for(s32 i=10; i<=15; i++) binaryImageRow[i] = 1;
   for(s32 i=25; i<=35; i++) binaryImageRow[i] = 1;
@@ -4227,7 +4468,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   for(s32 i=43; i<=45; i++) binaryImageRow[i] = 1;
   for(s32 i=47; i<=49; i++) binaryImageRow[i] = 1;
 
-  const Result result = ConnectedComponents::Extract1dComponents(binaryImageRow, imageWidth, minComponentWidth, maxSkipDistance, extractedComponentSegments);
+  const Result result = ConnectedComponentsTemplate<u16>::Extract1dComponents(binaryImageRow, imageWidth, minComponentWidth, maxSkipDistance, extractedComponentSegments);
 
   ASSERT_TRUE(result == RESULT_OK);
 

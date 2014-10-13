@@ -335,5 +335,15 @@ namespace Anki {
       return robot->PlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
     }
   
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartFaceTracking const& msg)
+    {
+      return robot->StartFaceTracking(msg.timeout_sec);
+    }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StopFaceTracking const& msg)
+    {
+      return robot->StopFaceTracking();
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

@@ -52,15 +52,10 @@ namespace Anki {
 #if(STREAM_DEBUG_IMAGES)
       #define SEND_DEBUG_STREAM 1
       //#define RUN_SIMPLE_TRACKING_TEST 1
-      //#define RUN_SIMPLE_FACE_DETECTION_TEST 1
       #define RUN_GROUND_TRUTHING_CAPTURE 1
       //#define SEND_IMAGE_ONLY 1      
       //#define SEND_BINARY_IMAGE_ONLY 1
       
-#if defined(RUN_SIMPLE_TRACKING_TEST) && defined(RUN_SIMPLE_FACE_DETECTION_TEST)
-#error Cannot run both RUN_SIMPLE_TRACKING_TEST and RUN_SIMPLE_FACE_DETECTION_TEST
-#endif
-
 #else
       #define SEND_DEBUG_STREAM 0
 #endif
@@ -175,6 +170,7 @@ namespace Anki {
       struct SimulatorParameters {
 #ifdef SIMULATOR
         static const u32 FIDUCIAL_DETECTION_SPEED_HZ = 5;
+        static const u32 FACE_DETECTION_SPEED_HZ     = 1;
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 60;
@@ -182,10 +178,41 @@ namespace Anki {
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 15;
 #endif
         
-        static const u32 TRACK_BLOCK_PERIOD_US = 1e6 / TRACKING_ALGORITHM_SPEED_HZ;
+        static const u32 TRACK_BLOCK_PERIOD_US        = 1e6 / TRACKING_ALGORITHM_SPEED_HZ;
         static const u32 FIDUCIAL_DETECTION_PERIOD_US = 1e6 / FIDUCIAL_DETECTION_SPEED_HZ;
+        static const u32 FACE_DETECTION_PERIOD_US     = 1e6 / FACE_DETECTION_SPEED_HZ;
 #endif
       }; // struct SimulatorParameters
+      
+      
+      //
+      // Face Detection
+      //
+      struct FaceDetectionParameters {
+        bool isInitialized;
+        
+        Vision::CameraResolution detectionResolution;
+        s32 faceDetectionHeight;
+        s32 faceDetectionWidth;
+        
+        double scaleFactor;
+        int minNeighbors;
+        s32 minHeight;
+        s32 minWidth;
+        s32 maxHeight;
+        s32 maxWidth;
+        s32 MAX_CANDIDATES;
+        
+        // Maximum number of detections in a single image that will be put
+        // into the mailbox for pickup by main execution. Note that the
+        // multi-mailbox is a circular buffer, so if there are more than 16
+        // detections in a frame, the next one will overwrite the first one.
+        static const u32 MAX_FACE_DETECTIONS = 16;
+        
+        FaceDetectionParameters();
+        void Initialize();
+        
+      }; // struct FaceDetectionParameters
       
       
       //

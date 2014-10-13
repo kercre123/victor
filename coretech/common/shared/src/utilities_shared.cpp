@@ -27,6 +27,15 @@ namespace Anki
       }
       return printed;
     }
+
+    int CoreTechPrint(const char * format, va_list argList)
+    {
+      int printed = 0;
+      if (CoreTechPrintFunc) {
+        printed = (*CoreTechPrintFunc)(format, argList);
+      }
+      return printed;
+    }
     
     void SetCoreTechPrintFunctionPtr( int (*fp)(const char * format, va_list))
     {

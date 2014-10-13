@@ -233,6 +233,11 @@ namespace Anki {
       // obstacles are detected by proximity sensors
       static const Pose3d ProxDetectTransform[NUM_PROX];
       
+      //
+      // Face Tracking
+      //
+      Result StartFaceTracking(u8 timeout_sec);
+      Result StopFaceTracking();
       
       // =========== Actions Commands =============
       
@@ -535,6 +540,9 @@ namespace Anki {
                                 const u16 image_pixel_x,
                                 const u16 image_pixel_y,
                                 const u8 pixel_radius);
+      
+      Result SendStartFaceTracking(const u8 timeout_sec);
+      Result SendStopFaceTracking();
       
     }; // class Robot
 

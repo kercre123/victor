@@ -222,7 +222,7 @@ namespace Anki {
         }
         
         // Progress must be along ramp's direction (init assuming ascent)
-        Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>() + M_PI;
+        Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>();
         
         // Initialize tilt angle assuming we are ascending
         Radians tiltAngle = ramp->GetAngle();
@@ -231,7 +231,7 @@ namespace Anki {
         {
           case Ramp::DESCENDING:
             tiltAngle    *= -1.f;
-            headingAngle -= M_PI;
+            headingAngle += M_PI;
             break;
           case Ramp::ASCENDING:
             break;
@@ -249,7 +249,7 @@ namespace Anki {
                                      _rampStartHeight + heightAdjust);
         
         const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D);
-        const RotationMatrix3d R_tilt(-tiltAngle, Y_AXIS_3D);
+        const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D);
         
         newPose = Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent());
         //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
@@ -924,8 +924,8 @@ namespace Anki {
       //    that function checks whether the robot is already localized
       SetLocalizedTo(existingMatPiece->GetID());
       
-      
-      
+      // Overly-verbose. Use for debugging localization issues
+      /*
       PRINT_INFO("Using %s mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
                  existingMatPiece->GetType().GetName().c_str(),
                  existingMatPiece->GetID().GetValue(), GetID(),
@@ -936,6 +936,7 @@ namespace Anki {
                  GetPose().GetRotationAxis().x(),
                  GetPose().GetRotationAxis().y(),
                  GetPose().GetRotationAxis().z());
+      */
       
       // Send the ground truth pose that was computed instead of the new current
       // pose and let the robot deal with updating its current pose based on the
@@ -1534,6 +1535,33 @@ namespace Anki {
       m.intensity = intensity;
       return _msgHandler->SendMessage(_ID, m);
     }
+    
+    
+    Result Robot::StartFaceTracking(u8 timeout_sec)
+    {
+      return SendStartFaceTracking(timeout_sec);
+    }
+    
+    Result Robot::StopFaceTracking()
+    {
+      return SendStopFaceTracking();
+    }
+    
+    Result Robot::SendStartFaceTracking(const u8 timeout_sec)
+    {
+      MessageFaceTracking m;
+      m.enabled = static_cast<u8>(true);
+      m.timeout_sec = timeout_sec;
+      return _msgHandler->SendMessage(_ID, m);
+    }
+    
+    Result Robot::SendStopFaceTracking()
+    {
+      MessageFaceTracking m;
+      m.enabled = static_cast<u8>(false);
+      return _msgHandler->SendMessage(_ID, m);
+    }
+    
     
     const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D, Vec3f(50, 25, 0)),
                                                   Pose3d(0, Z_AXIS_3D, Vec3f(50, 0, 0)),

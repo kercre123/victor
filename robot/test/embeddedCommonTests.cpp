@@ -307,7 +307,7 @@ GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
     PRINT_INTRINSICS_GROUND_TRUTH_VV(__QSUB16, numValues);
     PRINT_INTRINSICS_GROUND_TRUTH_VV(__USUB16, numValues);
     PRINT_INTRINSICS_GROUND_TRUTH_VV(__UQSUB16, numValues);
-    PRINT_INTRINSICS_GROUND_TRUTH_VV(__USAD8, numValues);
+    //PRINT_INTRINSICS_GROUND_TRUTH_VV(__USAD8, numValues); // TODO: verify implementation before using
     PRINT_INTRINSICS_GROUND_TRUTH_VVF(__SMLAD, numValues, 5);
   } // if(printGroundTruth)
 
@@ -396,7 +396,7 @@ GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
   TEST_INTRINSICS_VV(__QSUB16, numValues);
   TEST_INTRINSICS_VV(__USUB16, numValues);
   TEST_INTRINSICS_VV(__UQSUB16, numValues);
-  TEST_INTRINSICS_VV(__USAD8, numValues);
+  //TEST_INTRINSICS_VV(__USAD8, numValues); // TODO: verify implementation before using
   TEST_INTRINSICS_VVF(__SMLAD, numValues, 5);
 
   //

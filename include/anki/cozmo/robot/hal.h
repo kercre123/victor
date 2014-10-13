@@ -346,15 +346,31 @@ namespace Anki
       // PROXIMITY SENSORS
       //
 
+      enum sharpID
+      {
+        IRleft,
+        IRforward,
+        IRright
+      };
+
       typedef struct
       {
-        u16    left;
-        u16    right;
-        u16    forward;
+        u16           left;
+        u16           right;
+        u16           forward;
+        sharpID       latest;   // Most up to date sensor value
       } ProximityValues;
       
+      
+      // Interrupt driven proxmity (CALL AT BEGINNING OF LOOP)
+      // Note: this function is pipelined. // latency ~= 5 ms (1 main loop)
+      //       - returns data (from last function call)
+      //       - wake up the next sensor
+      //       - wait ~3.5 ms
+      //       - read from sensor
+      // Only call once every 5ms (1 main loop)
+      // current order is left -> right -> forward
       void GetProximity(ProximityValues *prox);
-
       
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////

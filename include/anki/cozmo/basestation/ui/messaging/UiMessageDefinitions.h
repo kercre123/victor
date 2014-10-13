@@ -189,3 +189,13 @@ ADD_MESSAGE_MEMBER(u32, numLoops)
 ADD_MESSAGE_MEMBER(u8, animationID)
 ADD_MESSAGE_MEMBER(u8, soundID)
 END_MESSAGE_DEFINITION(U2G_PlayAnimation)
+
+// StartFaceTracking
+START_MESSAGE_DEFINITION(U2G_StartFaceTracking, 1)
+//TODO: add ADD_MESSAGE_MEMBER(u8, selectionMode)
+ADD_MESSAGE_MEMBER(u8, timeout_sec)
+END_MESSAGE_DEFINITION(U2G_StartFaceTracking)
+
+// StopFaceTracking
+START_MESSAGE_DEFINITION(U2G_StopFaceTracking, 1)
+END_MESSAGE_DEFINITION(U2G_StopFaceTracking)
