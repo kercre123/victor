@@ -139,6 +139,17 @@ namespace Anki
         const s32 * restrict pIntegralImage_11,
         OutType * restrict pOutput);
     };
+
+    template<> static void ScrollingIntegralImage_u8_s32::FilterRow_innerLoop(
+      const s32 minX,
+      const s32 maxX,
+      const s32 outputMultiply,
+      const s32 outputRightShift,
+      const s32 * restrict pIntegralImage_00,
+      const s32 * restrict pIntegralImage_01,
+      const s32 * restrict pIntegralImage_10,
+      const s32 * restrict pIntegralImage_11,
+      u8 * restrict pOutput);
   } // namespace Embedded
 } //namespace Anki
 
