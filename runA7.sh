@@ -3,8 +3,16 @@ IP=192.168.1.125
 
 OUT_FILENAME=a7_out.txt
 
+#THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 mkdir build
 cd build
+
+# Delete executable
+cd Unix\ Makefiles/bin/Release/ 
+rm run_pc_embeddedTests
+cd ../../..
+mv ${OUT_FILENAME} ${OUT_FILENAME}.old
 
 # Compile and run
 AR=arm-linux-gnueabihf-gcc-ar-4.9 AS=arm-linux-gnueabihf-gcc-as-4.9 CC=arm-linux-gnueabihf-gcc-4.9 CXX=arm-linux-gnueabihf-g++-4.9 cmake .. -DCMAKE_BUILD_TYPE=Release -DEMBEDDED_USE_GTEST=0 -DEMBEDDED_USE_MATLAB=0 -DEMBEDDED_USE_OPENCV=0 -DCPU_A7=1 -DVERBOSE_AUTOVECTORIZE=1
@@ -14,12 +22,17 @@ make -j8
 python ../python/addSourceToGccAssembly.py . &
 
 # Upload the executable, run it, and get the results
-cd Unix\ Makefiles/bin/Release/ 
-scp run_pc_embeddedTests linaro@$IP:/home/linaro/
-cd ../../../..
-ssh linaro@192.168.1.125 "rm ${OUT_FILENAME} ; nice -n 0 /home/linaro/run_pc_embeddedTests > ${OUT_FILENAME}"
-mv ${OUT_FILENAME} ${OUT_FILENAME}.old
-scp "linaro@192.168.1.125:/home/linaro/${OUT_FILENAME}" .
+if [ -f "./Unix Makefiles/bin/Release/run_pc_embeddedTests" ]
+then
+  cd Unix\ Makefiles/bin/Release/ 
+  scp run_pc_embeddedTests linaro@$IP:/home/linaro/
+  cd ../../../..
+  ssh linaro@192.168.1.125 "rm ${OUT_FILENAME} ; nice -n 0 /home/linaro/run_pc_embeddedTests > ${OUT_FILENAME}"
+  scp "linaro@192.168.1.125:/home/linaro/${OUT_FILENAME}" .
+  echo "Compile succeded"
+else
+  echo "Compile failed"
+fi
 
 # Wait for the python to complete
 fg

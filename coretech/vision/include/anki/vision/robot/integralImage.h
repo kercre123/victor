@@ -66,7 +66,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<typename OutType> static void ScrollingIntegralImage_u8_s32::FilterRow_innerLoop(
+    template<typename OutType> void ScrollingIntegralImage_u8_s32::FilterRow_innerLoop(
       const s32 minX,
       const s32 maxX,
       const s32 outputMultiply,

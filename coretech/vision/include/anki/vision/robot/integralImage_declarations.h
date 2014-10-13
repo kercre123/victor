@@ -140,7 +140,7 @@ namespace Anki
         OutType * restrict pOutput);
     };
 
-    template<> static void ScrollingIntegralImage_u8_s32::FilterRow_innerLoop(
+    template<> void ScrollingIntegralImage_u8_s32::FilterRow_innerLoop(
       const s32 minX,
       const s32 maxX,
       const s32 outputMultiply,
