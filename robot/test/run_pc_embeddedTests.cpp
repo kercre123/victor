@@ -41,7 +41,7 @@ int main()
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 
   //char * filterString = "--gtest_filter=*"; // Run all tests
-  char * filterString = "--gtest_filter=*KLT*"; // Run only some tests
+  char * filterString = "--gtest_filter=*DetectFiducialMarkers_benchmark1280*"; // Run only some tests
 
   argc++;
   argv[argc-1] = filterString;
@@ -58,7 +58,7 @@ int main()
 
   s32 numPassedTests_common = 0;
   s32 numFailedTests_common = 0;
-//  RUN_ALL_COMMON_TESTS(numPassedTests_common, numFailedTests_common);
+  //  RUN_ALL_COMMON_TESTS(numPassedTests_common, numFailedTests_common);
 
   const s32 numPassedTests = numPassedTests_common + numPassedTests_vision;
   const s32 numFailedTests = numFailedTests_common + numFailedTests_vision;
