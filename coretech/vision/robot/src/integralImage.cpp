@@ -449,29 +449,41 @@ namespace Anki
       }
 #elif ACCELERATION_TYPE == ACCELERATION_ARM_A7
       if(outputMultiply == 1 && outputRightShift == 0) {
+        BeginBenchmark("integral1");
         for(s32 x=minX; x<=maxX; x++) {
           pOutput[x] = static_cast<u8>( pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x] );
         }
+        EndBenchmark("integral1");
       } else {
-/*        s32 x;
-        for(x=minX; x<=(maxX-3); x+=4) {
+//        BeginBenchmark("integral2");
+
+        s32 x = minX;
+
+/*        for(; x<=(maxX-3); x+=4) {
           pOutput[x]   = static_cast<u8>( ((pIntegralImage_11[x]   - pIntegralImage_10[x]   + pIntegralImage_00[x]   - pIntegralImage_01[x])   * outputMultiply) >> outputRightShift ) ;
           pOutput[x+1] = static_cast<u8>( ((pIntegralImage_11[x+1] - pIntegralImage_10[x+1] + pIntegralImage_00[x+1] - pIntegralImage_01[x+1]) * outputMultiply) >> outputRightShift ) ;
           pOutput[x+2] = static_cast<u8>( ((pIntegralImage_11[x+2] - pIntegralImage_10[x+2] + pIntegralImage_00[x+2] - pIntegralImage_01[x+2]) * outputMultiply) >> outputRightShift ) ;
           pOutput[x+3] = static_cast<u8>( ((pIntegralImage_11[x+3] - pIntegralImage_10[x+3] + pIntegralImage_00[x+3] - pIntegralImage_01[x+3]) * outputMultiply) >> outputRightShift ) ;
+        }*/
+
+        for(; x<=(maxX-7); x+=8) {
+          pOutput[x]   = static_cast<u8>( ((pIntegralImage_11[x]   - pIntegralImage_10[x]   + pIntegralImage_00[x]   - pIntegralImage_01[x])   * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+1] = static_cast<u8>( ((pIntegralImage_11[x+1] - pIntegralImage_10[x+1] + pIntegralImage_00[x+1] - pIntegralImage_01[x+1]) * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+2] = static_cast<u8>( ((pIntegralImage_11[x+2] - pIntegralImage_10[x+2] + pIntegralImage_00[x+2] - pIntegralImage_01[x+2]) * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+3] = static_cast<u8>( ((pIntegralImage_11[x+3] - pIntegralImage_10[x+3] + pIntegralImage_00[x+3] - pIntegralImage_01[x+3]) * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+4] = static_cast<u8>( ((pIntegralImage_11[x+4] - pIntegralImage_10[x+4] + pIntegralImage_00[x+4] - pIntegralImage_01[x+4]) * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+5] = static_cast<u8>( ((pIntegralImage_11[x+5] - pIntegralImage_10[x+5] + pIntegralImage_00[x+5] - pIntegralImage_01[x+5]) * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+6] = static_cast<u8>( ((pIntegralImage_11[x+6] - pIntegralImage_10[x+6] + pIntegralImage_00[x+6] - pIntegralImage_01[x+6]) * outputMultiply) >> outputRightShift ) ;
+          pOutput[x+7] = static_cast<u8>( ((pIntegralImage_11[x+7] - pIntegralImage_10[x+7] + pIntegralImage_00[x+7] - pIntegralImage_01[x+7]) * outputMultiply) >> outputRightShift ) ;
         }
 
-        for(; x<=maxX; x++) {
-          pOutput[x] = static_cast<u8>( ((pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x]) * outputMultiply) >> outputRightShift ) ;
-        }
-*/
-        const u32 * restrict pIntegralImageU32_00 = reinterpret_cast<const u32*>(pIntegralImage_00);
+/*      const u32 * restrict pIntegralImageU32_00 = reinterpret_cast<const u32*>(pIntegralImage_00);
         const u32 * restrict pIntegralImageU32_01 = reinterpret_cast<const u32*>(pIntegralImage_01);
         const u32 * restrict pIntegralImageU32_10 = reinterpret_cast<const u32*>(pIntegralImage_10);
         const u32 * restrict pIntegralImageU32_11 = reinterpret_cast<const u32*>(pIntegralImage_11);
 
         s32 x;
-        for(x=minX; x<=(maxX-7); x+=8) {
+        for(; x<=(maxX-7); x+=8) {
           const uint32x4_t ii00_0 = vld1q_u32(&pIntegralImageU32_00[x]);
           const uint32x4_t ii01_0 = vld1q_u32(&pIntegralImageU32_01[x]);
           const uint32x4_t ii10_0 = vld1q_u32(&pIntegralImageU32_10[x]);
@@ -495,18 +507,13 @@ namespace Anki
           const uint8x8_t normalizedBoxSumU8_10 = vmovn_u16(normalizedBoxSumU16_10);
 
           vst1_u8(&pOutput[x], normalizedBoxSumU8_10);
-
-//          const uint8x8_t  normalizedBoxSumU8  = (normalizedBoxSumU16);
-/*
-          pOutput[x]   = static_cast<u8>( ((pIntegralImage_11[x]   - pIntegralImage_10[x]   + pIntegralImage_00[x]   - pIntegralImage_01[x])   * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+1] = static_cast<u8>( ((pIntegralImage_11[x+1] - pIntegralImage_10[x+1] + pIntegralImage_00[x+1] - pIntegralImage_01[x+1]) * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+2] = static_cast<u8>( ((pIntegralImage_11[x+2] - pIntegralImage_10[x+2] + pIntegralImage_00[x+2] - pIntegralImage_01[x+2]) * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+3] = static_cast<u8>( ((pIntegralImage_11[x+3] - pIntegralImage_10[x+3] + pIntegralImage_00[x+3] - pIntegralImage_01[x+3]) * outputMultiply) >> outputRightShift ) ;*/
-        }
+        }*/
 
         for(; x<=maxX; x++) {
           pOutput[x] = static_cast<u8>( ((pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x]) * outputMultiply) >> outputRightShift ) ;
         }
+
+//        EndBenchmark("integral2");
       }
 #else
 #error Unknown acceleration

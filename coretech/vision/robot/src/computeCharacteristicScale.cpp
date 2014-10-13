@@ -391,11 +391,11 @@ namespace Anki
 
       BeginBenchmark("ecvcs_mainLoop");
       while(imageY < imageHeight) {
-        BeginBenchmark("ecvcs_filterRows");
+        //BeginBenchmark("ecvcs_filterRows");
         ecvcs_filterRows(integralImage, filterHalfWidths, imageY, filteredRows);
-        EndBenchmark("ecvcs_filterRows");
+        //EndBenchmark("ecvcs_filterRows");
 
-        BeginBenchmark("ecvcs_computeBinaryImage");
+        //BeginBenchmark("ecvcs_computeBinaryImage");
         /*
         if(scaleImage_numPyramidLevels != 3) {
         ecvcs_computeBinaryImage(image, filteredRows, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, imageY, imageWidth, pBinaryImageRow);
@@ -410,15 +410,15 @@ namespace Anki
 
         ecvcs_computeBinaryImage(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
 
-        EndBenchmark("ecvcs_computeBinaryImage");
+        //EndBenchmark("ecvcs_computeBinaryImage");
 
         // Extract the next line of connected components
-        BeginBenchmark("ecvcs_extractNextRowOfComponents");
+        //BeginBenchmark("ecvcs_extractNextRowOfComponents");
         if((lastResult = components.Extract2dComponents_PerRow_NextRow(pBinaryImageRow, imageWidth, imageY, component1d_minComponentWidth, component1d_maxSkipDistance)) != RESULT_OK)
           return lastResult;
-        EndBenchmark("ecvcs_extractNextRowOfComponents");
+        //EndBenchmark("ecvcs_extractNextRowOfComponents");
 
-        BeginBenchmark("ecvcs_scrollIntegralImage");
+        //BeginBenchmark("ecvcs_scrollIntegralImage");
 
         imageY++;
 
@@ -428,7 +428,7 @@ namespace Anki
             return lastResult;
         }
 
-        EndBenchmark("ecvcs_scrollIntegralImage");
+        //EndBenchmark("ecvcs_scrollIntegralImage");
       } // while(imageY < size(image,1))
 
       EndBenchmark("ecvcs_mainLoop");

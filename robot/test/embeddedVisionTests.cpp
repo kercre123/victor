@@ -3645,7 +3645,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
-  const s32 numRuns = 25;
+  const s32 numRuns = 100;
   FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements(numRuns, scratchOffchip);
 
   for(s32 iRun=0; iRun<numRuns; iRun++) {
