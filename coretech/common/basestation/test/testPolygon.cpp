@@ -55,7 +55,8 @@ GTEST_TEST(TestPolygon, MinAndMax)
   EXPECT_FLOAT_EQ(poly2d_copy.GetMaxY(), 1.2);
 
   Quad2f quad {{3.5f,  1.f}, { 2.f,  3.f}, { 1.f,  .1f}, { .5f,  1.2f}};
-  Poly2f polyFromQuad(quad);
+  Poly2f polyFromQuad;
+  polyFromQuad.ImportQuad2d(quad);
 
   EXPECT_FLOAT_EQ(polyFromQuad.GetMinX(), 0.5);
 

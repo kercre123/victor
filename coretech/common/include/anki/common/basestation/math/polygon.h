@@ -48,8 +48,12 @@ public:
   // (x,y) coordinates and ignoring z.
   Polygon(const Polygon<N+1,T>& other);
 
-  // Construct from a quadrilateral
-  Polygon(const Quadrilateral<N,T>& quad);
+  // Import from a 2D quad
+  // NOTE: this is difficult to make into a constructor because of SortCornersClockwise
+  void ImportQuad2d(const Quadrilateral<2, T>& quad);
+
+  // Import from a quadrilateral > 2D
+  void ImportQuad(const Quadrilateral<N, T>& quad);
 
   void Print() const;
 

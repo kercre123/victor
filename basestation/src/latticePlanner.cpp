@@ -116,15 +116,24 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
 
     unsigned int numAdded = 0;
 
-    Planning::StateTheta numAngles = (StateTheta)env_.GetNumAngles();
-    for(StateTheta theta=0; theta<numAngles; ++theta) {
+    Planning::StateTheta numAngles = (StateTheta)env_.GetNumAngles(); // TEMP: 
+    for(StateTheta theta=0; theta < numAngles; ++theta) {
+
+      // TEMP: for now just do the one we are at
+      if(env_.GetTheta(robot_->GetPose().GetRotationAngle<'Z'>().ToFloat()) != theta)
+        continue;
+
       float thetaRads = env_.GetTheta_c(theta);
 
-      Poly2f robotPoly( robot_->GetBoundingQuadXY( Pose3d{thetaRads, Z_AXIS_3D, {0.0f, 0.0f, 0.0f}}, padding ) );
+      Poly2f robotPoly;
+      robotPoly.ImportQuad2d(robot_->GetBoundingQuadXY(
+                               Pose3d{thetaRads, Z_AXIS_3D, {0.0f, 0.0f, 0.0f}},
+                               padding ) );
 
       for(auto boundingQuad : boundingBoxes) {
 
-        Poly2f boundingPoly(boundingQuad);
+        Poly2f boundingPoly;
+        boundingPoly.ImportQuad2d(boundingQuad);
 
         const Poly2f& expandedPoly =
           env_.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);

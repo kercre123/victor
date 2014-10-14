@@ -54,12 +54,41 @@ Polygon<N,T>::Polygon(const Polygon<N+1,T>& other)
 
 
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon(const Quadrilateral<N,T>& quad)
+void Polygon<N,T>::ImportQuad(const Quadrilateral<N,T>& quad)
 {
-  _points.emplace_back(quad[Quad::TopRight]);
-  _points.emplace_back(quad[Quad::BottomRight]);
-  _points.emplace_back(quad[Quad::BottomLeft]);
-  _points.emplace_back(quad[Quad::TopLeft]);
+  static_assert(N != 2, "Must use ImportQuad2D for 2d");
+
+  Quadrilateral<N,T> sortedQuad ( quad.SortCornersClockwise( Z_AXIS_3D ) );
+
+  // _points.emplace_back(sortedQuad[Quad::TopRight]);
+  // _points.emplace_back(sortedQuad[Quad::BottomRight]);
+  // _points.emplace_back(sortedQuad[Quad::BottomLeft]);
+  // _points.emplace_back(sortedQuad[Quad::TopLeft]);
+
+  _points.emplace_back(sortedQuad[Quad::TopLeft]);
+  _points.emplace_back(sortedQuad[Quad::BottomLeft]);
+  _points.emplace_back(sortedQuad[Quad::BottomRight]);
+  _points.emplace_back(sortedQuad[Quad::TopRight]);
+
+}
+
+template <PolygonDimType N, typename T>
+void Polygon<N,T>::ImportQuad2d(const Quadrilateral<2,T>& quad)
+{
+  static_assert(N == 2, "Must use ImportQuad for > 2d");
+
+  Quadrilateral<2,T> sortedQuad ( quad.SortCornersClockwise(  ) );
+
+  // _points.emplace_back(sortedQuad[Quad::TopRight]);
+  // _points.emplace_back(sortedQuad[Quad::BottomRight]);
+  // _points.emplace_back(sortedQuad[Quad::BottomLeft]);
+  // _points.emplace_back(sortedQuad[Quad::TopLeft]);
+
+  _points.emplace_back(sortedQuad[Quad::TopLeft]);
+  _points.emplace_back(sortedQuad[Quad::BottomLeft]);
+  _points.emplace_back(sortedQuad[Quad::BottomRight]);
+  _points.emplace_back(sortedQuad[Quad::TopRight]);
+
 }
 
 
@@ -163,6 +192,25 @@ template <PolygonDimType N, typename T>
 const Point<N,T>& Polygon<N,T>::operator[] (size_t idx) const
 {
   return _points[idx];
+}
+
+
+template <PolygonDimType N, typename T>
+T Polygon<N,T>::GetEdgeAngle(size_t idx) const
+{
+  assert(!_points.empty());
+
+  size_t idx2 = (idx + 1) % _points.size();
+  return atan2(_points[idx2].y() - _points[idx].y(), _points[idx2].x() - _points[idx].x());
+}
+
+template <PolygonDimType N, typename T>
+Point<N,T> Polygon<N,T>::GetEdgeVector(size_t idx) const
+{
+  assert(!_points.empty());
+
+  size_t idx2 = (idx + 1) % _points.size();
+  return _points[idx2] - _points[idx];
 }
 
 
