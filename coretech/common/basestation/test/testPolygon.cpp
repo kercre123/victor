@@ -59,5 +59,23 @@ GTEST_TEST(TestPolygon, MinAndMax)
   polyFromQuad.ImportQuad2d(quad);
 
   EXPECT_FLOAT_EQ(polyFromQuad.GetMinX(), 0.5);
-
 };
+
+GTEST_TEST(TestPolygon, center)
+{
+
+  // means should be (0, 1, 2)
+
+  Poly3f poly3d {
+    {1.0f, 1.0f, 5.0f},
+    {0.0f, 2.0f, -2.0f},
+    {-1.0f, 0.0f, 3.0f}
+  };
+
+  Point3f centroid = poly3d.ComputeCentroid();
+
+  EXPECT_FLOAT_EQ(centroid.x(), 0.0);
+  EXPECT_FLOAT_EQ(centroid.y(), 1.0);
+  EXPECT_FLOAT_EQ(centroid.z(), 2.0);
+
+}

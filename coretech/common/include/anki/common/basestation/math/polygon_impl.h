@@ -223,6 +223,27 @@ Point<N,T> Polygon<N,T>::GetEdgeVector(size_t idx) const
   return _points[idx2] - _points[idx];
 }
 
+template <PolygonDimType N, typename T>
+Point<N,T> Polygon<N,T>::ComputeCentroid() const
+{
+  Point<N, T> ret;
+
+  for(PolygonDimType dim = 0; dim < N; ++dim) {
+    ret[dim] = (T) 0;
+  }
+
+  // NOTE: this won't work for integer types!
+  T oneOverNum = ((T) 1.0) / ((T) _points.size());
+
+  for(const auto& point : _points) {
+    for(PolygonDimType dim = 0; dim < N; ++dim) {
+      ret[dim] += point[dim] * oneOverNum;
+    }
+  }
+
+  return ret;
+}
+
 
 }
 

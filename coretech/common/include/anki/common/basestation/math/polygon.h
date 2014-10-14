@@ -75,6 +75,9 @@ public:
   // Returns the vector pointing from the point at idx to the point at idx + 1 (wrapping around at the end)
   Point<N,T> GetEdgeVector(size_t idx) const;
 
+  // Compute the centroid of the points. NOTE: is currently broken for integral types!
+  Point<N,T> ComputeCentroid() const;
+
   ////////////////////////////////////////////////////////////////////////////////
   // container functions:
   ////////////////////////////////////////////////////////////////////////////////
