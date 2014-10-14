@@ -3509,6 +3509,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   }
 
   //markers.Print("markers");
+  //markers[0].Print();
 
   if(scaleImage_thresholdMultiplier == 65536) {
     // Grab the ground truth markers types and locations from the
@@ -3732,6 +3733,18 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   } // for(s32 i=0; i<numElements; i++)
 
   PrintBenchmarkResults(medianBenchmarkElements, true, true);
+
+  const f32 minDifference = 1e-4;
+  Point<f32> groundTruth[4];
+  groundTruth[0] = Point<f32>(22.2537,22.2517);
+  groundTruth[1] = Point<f32>(22.2359,56.4778);
+  groundTruth[2] = Point<f32>(56.4742,22.2397);
+  groundTruth[3] = Point<f32>(56.4890,56.4873);
+
+  for(s32 i=0; i<4; i++) {
+    ASSERT_TRUE(ABS(markers[0].corners[i].x - groundTruth[i].x) < minDifference);
+    ASSERT_TRUE(ABS(markers[0].corners[i].y - groundTruth[i].y) < minDifference);
+  }
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
