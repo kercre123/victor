@@ -14,6 +14,13 @@ def angDist(fromAngle, toAngle):
         ret += 2*pi
     return ret
     
+def projectsLeft(vec, targetVec):
+    "returns true if the target vector is to the 'left' of the line specified by vec"
+    length = np.linalg.norm(vec)
+    perpUnitVec = np.array( [ -vec[1] / length , vec[0] / length ] )
+    dot = perpUnitVec.dot(targetVec)
+
+    return dot > 0.0
 
 class Polygon:
     "A polygon defined by points"
@@ -131,18 +138,177 @@ class Polygon:
             robotIdx = (robotIdx + 1) % len(robot.angles)
 
         newPoints = np.matrix(newPoints)
-        return Polygon(newPoints)
+
+        # the last one is redundant
+        return Polygon(newPoints[:-1, :])
+
+    def computeCircumscribingCircle(self):
+        # for now, just keep the center. We could do MUCH better than this in the future
+        ret = {"center": self.center}
+        maxRadius = 0
+        for point in self.points:
+            radius = np.linalg.norm(point - self.center)
+            if radius > maxRadius:
+                maxRadius = radius
+        ret["radius"] = maxRadius
+
+        return ret
+
+    def computeInscribingCircle(self):
+        # for now, just keep the center. We could do MUCH better than this in the future
+        ret = {"center": self.center}
+
+        minRadius = 9999999.9
+        for idx in range(len(self.angles)):
+            # compute the distance from the edge to the center
+            vec = self.getEdgeVector(idx)
+            length = np.linalg.norm(vec)
+            perpUnitVec = np.array( [ vec[1] / length , -vec[0] / length ] )
+
+            if abs(perpUnitVec.dot(vec)) > 1e-5:
+                print "ERROR! math is wrong!!"
+                return None
+
+            centerVec = np.squeeze(np.asarray(self.center - self.points[idx]))
+
+            radius = perpUnitVec.dot(centerVec)
+            if radius < minRadius:
+                minRadius = radius
+
+        ret["radius"] = minRadius
+
+        return ret
+
+    def sortEdgesForCompute_old(self, inscribed, circumscribed):
+        "return the edge indcides in a nice order for checking if a point is inside, based on using"
+        "circumscribing and inscribing circles"
+
+        # compute distances to center as ratio of the circle's radii
+        edges = []
+
+        for idx in range(len(self.angles)):
+            # compute the distance from the edge to the center
+            vec = self.getEdgeVector(idx)
+            length = np.linalg.norm(vec)
+            perpUnitVec = np.array( [ vec[1] / length , -vec[0] / length ] )
+            centerVec = np.squeeze(np.asarray(self.center - self.points[idx]))
+            dist = perpUnitVec.dot(centerVec)
+
+            # percentage based on the radii
+            score = (dist - inscribed["radius"]) / (circumscribed["radius"] - inscribed["radius"])
+
+            edges.append((score, self.angles[idx], idx))
+
+        # now select edges in order of increasing score, but not with angles that are too close
+        edges.sort()
+
+        ret = []
+
+        # how close angles can be to be next to eachother in the list
+        minAngleDist = 0.4
+
+        lastAngle = edges[0][1]
+        ret.append(edges[0][2])
+        edges = edges[1:]
+
+        while edges:
+            found = False
+            for edge in edges:
+                dist = (edge[1] - lastAngle) % ( 2*pi )
+                if dist > minAngleDist:
+                    lastAngle = edge[1]
+                    ret.append(edge[2])
+                    edges.remove(edge)
+                    found = True
+                    break
+
+            if not found:
+                lastAngle = edges[0][1]
+                ret.append(edges[0][2])
+                edges.remove(edges[0])                
+
+        return ret
+
+    def sortEdgesForCompute(self, inscribed, circumscribed):
+        "return the edge indcides in a nice order for checking if a point is inside, based on using"
+        "circumscribing and inscribing circles"
+
+        numTestPoints = 16
+
+        # create some test points on the outer circle
+        testPointsX = [circumscribed["radius"] * cos(t) + circumscribed["center"][0,0]
+                       for t in np.linspace(0, 2*pi, numTestPoints+1)[:-1] ]
+        testPointsY = [circumscribed["radius"] * sin(t) + circumscribed["center"][0,1]
+                       for t in np.linspace(0, 2*pi, numTestPoints+1)[:-1]]
+
+        # add some points between the two circles
+        midRadius = 0.3*circumscribed["radius"] + 0.7*inscribed["radius"]
+        testPointsX.extend( [ midRadius * cos(t) + circumscribed["center"][0,0]
+                              for t in np.linspace(0, 2*pi, numTestPoints+1)[:-1]] )
+        testPointsY.extend( [ midRadius * sin(t) + circumscribed["center"][0,1]
+                              for t in np.linspace(0, 2*pi, numTestPoints+1)[:-1]] )
+
+        # pylab.plot(testPointsX, testPointsY, 'cd')
+
+        testPoints = np.array( zip(testPointsX, testPointsY) )
+        testPointHit = [False] * len(testPoints)
+
+        def GetNewHits(edgeIdx):
+            "helper function to get the new hits"
+            ret = [False] * len(testPoints)
+
+            edgeVec = self.getEdgeVector(edgeIdx)
+            for testIdx in range(len(testPoints)):
+                if testPointHit[testIdx]:
+                    continue
+                testVec = testPoints[testIdx] - np.squeeze(np.asarray(self.points[edgeIdx]))
+                if projectsLeft( edgeVec, testVec ):
+                    ret[testIdx] = True
+
+            return ret
+
+
+        ret = []
+
+        # keep going until we are out of edges
+        edges = range(len(self.angles))
+
+        while edges:
+
+            # iterate over each edge, and check the number of new hits
+            maxHits = -1
+            maxHitIdx = None
+            maxHitHits = None
+            for idx in edges:
+                newHits = GetNewHits(idx)
+                numNewHits = sum(newHits)
+                if numNewHits > maxHits:
+                    maxHits = numNewHits
+                    maxHitIdx = idx
+                    maxHitHits = newHits
+
+            print "adding edge %d with %d new hits" % (maxHitIdx, maxHits)
+
+            ret.append(maxHitIdx)
+            edges.remove(maxHitIdx)
+            testPointHit = [ a or b for (a,b) in zip(testPointHit, maxHitHits) ]
+
+        print "hit %d total points" % sum(testPointHit)
+
+        return ret
+
+        
 
 
 # do a crappy little test
 
 # obstacleP = [(-6.0, 3.0), (-6.3, 5.9), (-2.7, 6.2), (-3.1, 2.8)]
 # obstacleP = [(-6.0, 3.0), (-5.8, 5.9), (-2.7, 6.2), (-3.1, 2.8)]
-# obstacleP = [(-6.0, 3.0), (-6.0, 6.0), (-3.0, 6.0), (-3.0, 3.0)]
+#obstacleP = [(-6.0, 3.0), (-6.0, 6.0), (-3.0, 6.0), (-3.0, 3.0)]
 obstacleP = [(-162.156311, 135.594849), (-179.01123, 177.167496), (-138.097122, 193.755432), (-121.242203, 152.182785)]
 obstacle = Polygon(obstacleP)
 
-# robotP = [(0.0, 1.0), (1.0, -1.0), (-1.0, -1.0)]
+#robotP = [(0.0, 1.0), (1.0, -1.0), (-1.0, -1.0)]
 # robotP = [(1.0, 1.0), (1.2, 0.8), (1.4, -0.5), (0.3, -1.1), (-1.0, -0.8), (-1.4, 0.0), (-1.0, 0.4)]
 robotP = [( -55.900002, -27.100000), ( -55.900002, 27.100000), ( 22.099998, 27.100000), ( 22.099998, -27.100000)]
 # robotC = (0.0, 0.5)
@@ -161,17 +327,41 @@ cspace = obstacle.expandCSpace(robot)
 
 print "cspace:", cspace.angles
 
+circumscribed = cspace.computeCircumscribingCircle()
+inscribed = cspace.computeInscribingCircle()
+
+# edgeOrder = cspace.sortEdgesForCompute(inscribed, circumscribed)
+print "edge order:", edgeOrder
+
 doplot = True
 
 if doplot:
     pylab.figure()
     ax = pylab.subplot(1, 1, 1, aspect='equal')
 
+    edgeOrder = cspace.sortEdgesForCompute(inscribed, circumscribed)
+
     obstacle.plot('b-')
     robot.plot('r-')
     # robotStart.plot('r--')
 
     cspace.plot('m-')
+
+    X = [circumscribed["radius"] * cos(t) + circumscribed["center"][0,0] for t in np.arange(0, 2*pi, 0.05)]
+    Y = [circumscribed["radius"] * sin(t) + circumscribed["center"][0,1] for t in np.arange(0, 2*pi, 0.05)]
+    pylab.plot(X, Y, 'm--')
+
+    X = [inscribed["radius"] * cos(t) + inscribed["center"][0,0] for t in np.arange(0, 2*pi, 0.05)]
+    Y = [inscribed["radius"] * sin(t) + inscribed["center"][0,1] for t in np.arange(0, 2*pi, 0.05)]
+    pylab.plot(X, Y, 'm--')
+
+    for idx in range(len(edgeOrder)):
+        # edge edgeOrder[idx] is the idx'th most important one
+        nextPoint = ( edgeOrder[idx] + 1 ) % len(cspace.points)
+        point0 = cspace.points[edgeOrder[idx]]
+        point1 = cspace.points[nextPoint]
+        centerPt = 0.5 * (point0 + point1)
+        pylab.text(centerPt[0,0], centerPt[0,1], "%d" % idx)
 
     pylab.show()
 
