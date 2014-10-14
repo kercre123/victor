@@ -12,10 +12,22 @@
 static Anki::Embedded::Matlab matlab(false);
 #endif
 
-#define USE_ARM_ACCELERATION
+#define ACCELERATION_NONE 0
+#define ACCELERATION_ARM_M4 1
+#define ACCELERATION_ARM_A7 2
 
-#ifndef USE_ARM_ACCELERATION
+#if defined(__ARM_ARCH_7A__)
+#define ACCELERATION_TYPE ACCELERATION_ARM_A7
+#else
+#define ACCELERATION_TYPE ACCELERATION_ARM_M4
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_NONE
 #warning not using USE_ARM_ACCELERATION
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+#include <arm_neon.h>
 #endif
 
 namespace Anki {
@@ -622,17 +634,10 @@ namespace Anki {
         BeginBenchmark("vme_quadrefine_mainLoop_samples2");
         if(!restoreOriginal) {
           s32 iSample=0;
-          for(; iSample<actualNumSamples; iSample++) {
-            const f32 tGradientValue = tGradientValues[iSample];
 
-#if !defined(USE_ARM_ACCELERATION)
-            for(s32 ia=0; ia<8; ia++) {
-              for(s32 ja=ia; ja<8; ja++) {
-                AWAt_raw[ia][ja] += Arow[ia][iSample] * Arow[ja][iSample];
-              }
-              b_raw[ia] += Arow[ia][iSample] * tGradientValue;
-            }
-#else // #if !defined(USE_ARM_ACCELERATION)
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+          for(; iSample<(actualNumSamples-0); iSample++) {
+            const f32 tGradientValue = tGradientValues[iSample];
             const f32 a0 = Arow[0][iSample];
             const f32 a1 = Arow[1][iSample];
             const f32 a2 = Arow[2][iSample];
@@ -693,18 +698,82 @@ namespace Anki {
 
             AWAt_raw[7][7] += a7 * a7;
             b_raw[7] += a7 * tGradientValue;
-#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+
           } // for(s32 iSample=0; iSample<actualNumSamples; iSample++)
+#endif // #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
 
           for(; iSample<actualNumSamples; iSample++) {
             const f32 tGradientValue = tGradientValues[iSample];
 
+#if ACCELERATION_TYPE == ACCELERATION_NONE
             for(s32 ia=0; ia<8; ia++) {
               for(s32 ja=ia; ja<8; ja++) {
                 AWAt_raw[ia][ja] += Arow[ia][iSample] * Arow[ja][iSample];
               }
               b_raw[ia] += Arow[ia][iSample] * tGradientValue;
             }
+#else
+            const f32 a0 = Arow[0][iSample];
+            const f32 a1 = Arow[1][iSample];
+            const f32 a2 = Arow[2][iSample];
+            const f32 a3 = Arow[3][iSample];
+            const f32 a4 = Arow[4][iSample];
+            const f32 a5 = Arow[5][iSample];
+            const f32 a6 = Arow[6][iSample];
+            const f32 a7 = Arow[7][iSample];
+
+            AWAt_raw[0][0] += a0 * a0;
+            AWAt_raw[0][1] += a0 * a1;
+            AWAt_raw[0][2] += a0 * a2;
+            AWAt_raw[0][3] += a0 * a3;
+            AWAt_raw[0][4] += a0 * a4;
+            AWAt_raw[0][5] += a0 * a5;
+            AWAt_raw[0][6] += a0 * a6;
+            AWAt_raw[0][7] += a0 * a7;
+            b_raw[0] += a0 * tGradientValue;
+
+            AWAt_raw[1][1] += a1 * a1;
+            AWAt_raw[1][2] += a1 * a2;
+            AWAt_raw[1][3] += a1 * a3;
+            AWAt_raw[1][4] += a1 * a4;
+            AWAt_raw[1][5] += a1 * a5;
+            AWAt_raw[1][6] += a1 * a6;
+            AWAt_raw[1][7] += a1 * a7;
+            b_raw[1] += a1 * tGradientValue;
+
+            AWAt_raw[2][2] += a2 * a2;
+            AWAt_raw[2][3] += a2 * a3;
+            AWAt_raw[2][4] += a2 * a4;
+            AWAt_raw[2][5] += a2 * a5;
+            AWAt_raw[2][6] += a2 * a6;
+            AWAt_raw[2][7] += a2 * a7;
+            b_raw[2] += a2 * tGradientValue;
+
+            AWAt_raw[3][3] += a3 * a3;
+            AWAt_raw[3][4] += a3 * a4;
+            AWAt_raw[3][5] += a3 * a5;
+            AWAt_raw[3][6] += a3 * a6;
+            AWAt_raw[3][7] += a3 * a7;
+            b_raw[3] += a3 * tGradientValue;
+
+            AWAt_raw[4][4] += a4 * a4;
+            AWAt_raw[4][5] += a4 * a5;
+            AWAt_raw[4][6] += a4 * a6;
+            AWAt_raw[4][7] += a4 * a7;
+            b_raw[4] += a4 * tGradientValue;
+
+            AWAt_raw[5][5] += a5 * a5;
+            AWAt_raw[5][6] += a5 * a6;
+            AWAt_raw[5][7] += a5 * a7;
+            b_raw[5] += a5 * tGradientValue;
+
+            AWAt_raw[6][6] += a6 * a6;
+            AWAt_raw[6][7] += a6 * a7;
+            b_raw[6] += a6 * tGradientValue;
+
+            AWAt_raw[7][7] += a7 * a7;
+            b_raw[7] += a7 * tGradientValue;
+#endif // #if ACCELERATION_TYPE == ACCELERATION_NONE ... #else
           } // for(s32 iSample=0; iSample<actualNumSamples; iSample++)
         } // if(!restoreOriginal)
         EndBenchmark("vme_quadrefine_mainLoop_samples2");
