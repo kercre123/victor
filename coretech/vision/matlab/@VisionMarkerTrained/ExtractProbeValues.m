@@ -6,16 +6,19 @@ function [trainingState] = ExtractProbeValues(varargin)
 markerImageDir = VisionMarkerTrained.TrainingImageDir;
 negativeImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/negativeExamplePatches_old';
 maxNegativeExamples = inf;
-workingResolutions = VisionMarkerTrained.ProbeParameters.GridSize;
+workingResolution = VisionMarkerTrained.ProbeParameters.GridSize;
 %maxSamples = 100;
 %minInfoGain = 0;
 %addRotations = false;
+blurSigmas = [0 .01];
+imageSizes = [20 80];
+exposures = [0.8 1 1.2];
+blackPoint = 15; % assuming [0,255] range, what is unadjusted "black" at normal exposure
 addInversions = true;
 numPerturbations = 100;
 perturbationType = 'normal'; % 'normal' or 'uniform'
-blurSigmas = [0 .005 .01]; % as a fraction of the image diagonal
-imageSizes = [32 64 128];
 perturbSigma = 1; % 'sigma' in 'normal' mode, half-width in 'uniform' mode
+computeGradMag = false;
 saveTree = true;
 
 probeRegion = VisionMarkerTrained.ProbeRegion;
@@ -82,69 +85,50 @@ fprintf('Found %d total image files to train on.\n', length(fnames));
 %fnames = {'angryFace.png', 'ankiLogo.png', 'batteries3.png', ...
 %    'bullseye2.png', 'fire.png', 'squarePlusCorners.png'};
 
-numImages = length(fnames);
-labelNames = cell(1,numImages);
+numImages    = length(fnames);
+numBlurs     = length(blurSigmas);
+numSizes     = length(imageSizes);
+numExposures = length(exposures);
+
+fprintf('Will create %d samples for each of %d images = %d total samples.\n', ...
+  numBlurs*numSizes*numExposures*numPerturbations, numImages, ...
+  numBlurs*numSizes*numExposures*numPerturbations*numImages);
+
+labelNames = cell(1, numImages);
 %img = cell(1, numImages);
 
 corners = [0 0; 0 1; 1 0; 1 1];
-numBlurs = length(blurSigmas);
-numSizes = length(imageSizes);
 
-numResolutions = length(workingResolutions);
-probeValues   = cell(numResolutions,1);%numBlurs,numImages);
-gradMagValues = cell(numResolutions,1);%numBlurs,numImages);
-labels        = cell(numSizes,numBlurs,numImages);
-xgrid         = cell(numResolutions,1);
-ygrid         = cell(numResolutions,1);
-resolutions   = cell(numResolutions,1);
+labels        = cell(numImages, numBlurs, numSizes, numExposures);
 
-pBar.set_message(sprintf('Computing %d perturbed probe locations at %d resolutions', numPerturbations, numResolutions));
-pBar.set_increment(1/(numPerturbations*numResolutions));
-pBar.set(0);
-    
-X = cell(numResolutions,1);
-Y = cell(numResolutions,1);
-xPerturb = cell(numResolutions, numPerturbations);
-yPerturb = cell(numResolutions, numPerturbations);
-    
-for iRes = 1:numResolutions
-    probeValues{iRes} = cell(numSizes,numBlurs,numImages);
-    gradMagValues{iRes} = cell(numSizes,numBlurs,numImages);
-    
-    workingResolution = workingResolutions(iRes);
-    resolutions{iRes} = iRes*ones(workingResolution^2,1);
-    
-    sigma = perturbSigma/workingResolution;
-    
-    [xgrid{iRes},ygrid{iRes}] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
-    xgrid{iRes} = xgrid{iRes}(:);
-    ygrid{iRes} = ygrid{iRes}(:);
-    
-    probePattern = VisionMarkerTrained.ProbePattern(iRes);
-    X{iRes} = probePattern.x(ones(workingResolution^2,1),:) + xgrid{iRes}*ones(1,length(probePattern.x));
-    Y{iRes} = probePattern.y(ones(workingResolution^2,1),:) + ygrid{iRes}*ones(1,length(probePattern.y));
-    
-    for iPerturb = 1:numPerturbations
-      switch(perturbationType)
-        case 'normal'
-          perturbation = max(-3*sigma, min(3*sigma, sigma*randn(4,2)));
-        case 'uniform'
-          perturbation = 2*sigma*rand(4,2) - sigma;
-        otherwise
-          error('Unrecognized perturbationType "%s".', perturbationType);
-      end
-      
-      corners_i = corners + perturbation;
-      T = cp2tform(corners_i, corners, 'projective');
-      [xPerturb{iRes, iPerturb}, yPerturb{iRes, iPerturb}] = tforminv(T, X{iRes}, Y{iRes});
-      
-      pBar.increment();
-    end
+probeValues = cell(numImages, numBlurs, numSizes, numExposures, numPerturbations);
+if computeGradMag
+  gradMagValues = cell(numImages, numBlurs, numSizes, numExposures, numPerturbations);
 end
+
+perturbSigma = perturbSigma/workingResolution;
+
+if strcmp(perturbationType, 'shift')
+  % Note that i would normally use numPerturbations+1 here
+  % but I'm removing one for iPerturb==1, so it's really
+  % doing numPerturbations+1-1
+  angle = linspace(0, 2*pi, numPerturbations);
+  xShift = [0 perturbSigma*cos(angle(1:end-1))];
+  yShift = [0 perturbSigma*sin(angle(1:end-1))];
+end
+
+[xgrid,ygrid] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
+xgrid = xgrid(:);
+ygrid = ygrid(:);
+
+probePattern = VisionMarkerTrained.ProbePattern;
+X = probePattern.x(ones(workingResolution^2,1),:) + xgrid*ones(1,length(probePattern.x));
+Y = probePattern.y(ones(workingResolution^2,1),:) + ygrid*ones(1,length(probePattern.y));
+   
     
 % Compute the perturbed probe values
-pBar.set_message(sprintf(['Interpolating perturbed probe locations ' ...
-    'from %d images at %d sizes and %d blurs'], numImages, numSizes, numBlurs));
+pBar.set_message(sprintf(['Interpolating %d perturbed probe locations ' ...
+    'from %d images'], numPerturbations, numImages));
 pBar.set_increment(1/numImages);
 pBar.set(0);
 for iImg = 1:numImages
@@ -154,61 +138,86 @@ for iImg = 1:numImages
     %         elseif strcmp(fnames{iImg}, 'ALLBLACK')
     %             img{iImg} = zeros(workingResolution);
     %         else
-    img = imreadAlphaHelper(fnames{iImg});
+    imgOrig = imreadAlphaHelper(fnames{iImg});
     %         end
     
     [~,labelNames{iImg}] = fileparts(fnames{iImg});
     
-    [nrows,ncols,~] = size(img);
+    [nrowsOrig,ncolsOrig,~] = size(imgOrig);
     
+    % numBlurs, numSizes, numExposures, numPerturbations
     for iBlur = 1:numBlurs
-      imgBlur = img;
-      if blurSigmas(iBlur) > 0
-        blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
-        imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma));
+      imgBlur = single(imgOrig);
+      
+      blurSigma = blurSigmas(iBlur);
+      if blurSigma > 0
+        imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma*sqrt(nrowsOrig^2 + ncolsOrig^2)));
       end
       
-      imgBlur = single(imgBlur);
-      
       for iSize = 1:numSizes
-        imgResized = imresize(imgBlur, imageSizes(iSize)*[1 1], 'bilinear');
-        imgGradMag = single(smoothgradient(imgResized));
         
-        [nrows,ncols,~] = size(imgResized);
-        imageCoordsX = linspace(0, 1, ncols);
-        imageCoordsY = linspace(0, 1, nrows);
-        
-        for iRes = 1:numResolutions
-          workingResolution = workingResolutions(iRes);
-          probeValues{iRes}{iSize,iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
-          gradMagValues{iRes}{iSize,iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
-          for iPerturb = 1:numPerturbations
-            probeValues{iRes}{iSize,iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgResized, ...
-              xPerturb{iRes,iPerturb}, yPerturb{iRes,iPerturb}, 'linear', 1), 2);
-            
-            gradMagValues{iRes}{iSize,iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
-              xPerturb{iRes,iPerturb}, yPerturb{iRes,iPerturb}, 'linear', 0), 2);
-          end
+        imgResized = imresize(imgBlur, imageSizes(iSize)*[1 1], 'bilinear'); 
+      
+        for iExp = 1:numExposures
+          img = min(1, (imgResized+blackPoint/255)*exposures(iExp));
           
-        end
+          % Same for all perturbations in following loop
+          img = single(img);
+          [nrows,ncols,~] = size(img);
+          imageCoordsX = linspace(0, 1, ncols);
+          imageCoordsY = linspace(0, 1, nrows);
+            
+          for iPerturb = 1:numPerturbations
+            
+            if strcmp(perturbationType, 'shift')
+              xPerturb = X + xShift(iPerturb);
+              yPerturb = Y + yShift(iPerturb);
+            else
+              % Sample a perturbation of the corners
+              switch(perturbationType)
+                case 'normal'
+                  perturbation = max(-3*perturbSigma, min(3*perturbSigma, perturbSigma*randn(4,2)));
+                case 'uniform'
+                  perturbation = 2*perturbSigma*rand(4,2) - perturbSigma;
+                otherwise
+                  error('Unrecognized perturbationType "%s".', perturbationType);
+              end
+              
+              corners_i = corners + perturbation;
+              T = cp2tform(corners_i, corners, 'projective');
+              [xPerturb, yPerturb] = tforminv(T, X, Y);
+            end
+            
+            probeValues{iImg, iBlur, iSize, iExp, iPerturb} = mean(interp2(imageCoordsX, imageCoordsY, img, ...
+              xPerturb, yPerturb, 'linear', 1), 2);
+            
+            if computeGradMag
+              imgGradMag = single(smoothgradient(img));
+              gradMagValues{iImg, iBlur, iSize, iExp, iPerturb} = mean(interp2(imageCoordsX, imageCoordsY, img, ...
+                xPerturb, yPerturb, 'linear', 0), 2);
+            end
+           
+            labels{iImg, iBlur, iSize, iExp, iPerturb} = uint32(iImg);
+            
+          end % FOR each perturbation
+          
+          %labels{iImg, iBlur, iSize, iExp} = iImg*ones(1,numPerturbations, 'uint32');
+          
+        end % FOR each exposure
         
-        labels{iSize,iBlur,iImg} = iImg*ones(1,numPerturbations, 'uint32');
+      end % FOR each size
+      
+    end % FOR each blur
         
-      end % FOR each blurSigma
-    end % FOR each imageSize
-    
     pBar.increment();
-end
     
-% Stack all blurs/perturbations horizontally
-for iRes = 1:numResolutions
-    probeValues{iRes} = [probeValues{iRes}{:}];
-    gradMagValues{iRes} = [gradMagValues{iRes}{:}];
+end % FOR each image
+    
+% Stack all perturbations horizontally
+probeValues   = [probeValues{:}];
+if computeGradMag
+  gradMagValues = [gradMagValues{:}];
 end
-
-% Stack all resolutions vertically
-probeValues = vertcat(probeValues{:});
-gradMagValues = vertcat(gradMagValues{:});
 
 labels = [labels{:}];
 
@@ -260,12 +269,9 @@ pBar.set_message(sprintf(['Interpolating probe locations ' ...
 pBar.set_increment(1/numNeg);
 pBar.set(0);
 
-probeValuesNeg = cell(numResolutions,1);
-gradMagValuesNeg = cell(numResolutions,1);
-for iRes = 1:numResolutions
-    workingResolution = workingResolutions(iRes);
-    probeValuesNeg{iRes}   = zeros(workingResolution^2, numNeg, 'single');
-    gradMagValuesNeg{iRes} = zeros(workingResolution^2, numNeg, 'single');
+probeValuesNeg   = zeros(workingResolution^2, numNeg, 'single');
+if computeGradMag
+  gradMagValuesNeg = zeros(workingResolution^2, numNeg, 'single');
 end
 
 for iImg = 1:numNeg
@@ -277,33 +283,33 @@ for iImg = 1:numNeg
         imgNeg = imreadAlphaHelper(fnamesNeg{iImg});
     end
     
-    imgGradMag = single(smoothgradient(imgNeg));
+    
     imgNeg = single(imgNeg);
     
     [nrows,ncols,~] = size(imgNeg);
     imageCoordsX = linspace(0, 1, ncols);
     imageCoordsY = linspace(0, 1, nrows);
     
-    for iRes = 1:numResolutions
-        probeValuesNeg{iRes}(:,iImg) = mean(interp2(imageCoordsX, imageCoordsY, imgNeg, ...
-            X{iRes}, Y{iRes}, 'linear', 1), 2);
-        
-        gradMagValuesNeg{iRes}(:,iImg) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
-            X{iRes}, Y{iRes}, 'linear', 0), 2);
+    probeValuesNeg(:,iImg) = mean(interp2(imageCoordsX, imageCoordsY, imgNeg, ...
+      X, Y, 'linear', 1), 2);
+    
+    if computeGradMag
+      imgGradMag = single(smoothgradient(imgNeg));
+      gradMagValuesNeg(:,iImg) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
+        X, Y, 'linear', 0), 2);
     end
     
     pBar.increment();
 end % for each negative example
-
-probeValuesNeg = vertcat(probeValuesNeg{:});
-gradMagValuesNeg = vertcat(gradMagValuesNeg{:});
 
 noInfo = all(probeValuesNeg == 0 | probeValuesNeg == 1, 1);
 if any(noInfo)
     fprintf('Ignoring %d negative patches with no valid info.\n', sum(noInfo));
     numNeg = numNeg - sum(noInfo);
     probeValuesNeg(:,noInfo) = [];
-    gradMagValuesNeg(:,noInfo) = [];
+    if computeGradMag
+      gradMagValuesNeg(:,noInfo) = [];
+    end
     %fnamesNeg(noInfo) = [];
 end
 
@@ -311,14 +317,18 @@ labelNames{end+1} = 'INVALID';
 labels = [labels length(labelNames)*ones(1,numNeg,'uint32')];
 %fnames = [fnames; fnamesNeg];
 probeValues = [probeValues probeValuesNeg];
-gradMagValues = [gradMagValues gradMagValuesNeg];
+if computeGradMag
+  gradMagValues = [gradMagValues gradMagValuesNeg];
+end
 
 if addInversions
     % Add white-on-black versions of everything
     labels        = [labels labels+length(labelNames)];
     labelNames    = [labelNames cellfun(@(name)['INVERTED_' name], labelNames, 'UniformOutput', false)];
     probeValues   = [probeValues 1-probeValues];
-    gradMagValues = [gradMagValues gradMagValues];
+    if computeGradMag
+      gradMagValues = [gradMagValues gradMagValues];
+    end
     
     % Get rid of INVERTED_INVALID label -- it's just INVALID
     invertedInvalidLabel = find(strcmp(labelNames, 'INVERTED_INVALID'));
@@ -358,14 +368,15 @@ end
 %     end
 
 trainingState.probeValues   = probeValues;
-trainingState.gradMagValues = gradMagValues;
+if computeGradMag
+  trainingState.gradMagValues = gradMagValues;
+end
 trainingState.fnames        = fnames;
 trainingState.labels        = labels;
 trainingState.labelNames    = labelNames;
 trainingState.numImages     = numImages;
-trainingState.xgrid         = vertcat(xgrid{:});
-trainingState.ygrid         = vertcat(ygrid{:});
-trainingState.resolution    = vertcat(resolutions{:});
+trainingState.xgrid         = xgrid;
+trainingState.ygrid         = ygrid;
 
 fprintf('Probe extraction took %.2f seconds (%.1f minutes)\n', toc(t_start), toc(t_start)/60);
 

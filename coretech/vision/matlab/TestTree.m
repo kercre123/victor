@@ -36,7 +36,7 @@ elseif all(isfield(node, {'x', 'y', 'whichProbe'}))
             tform = maketform('affine', eye(3)); %[size(img,2)-1 0 1; 0 size(img,1)-1 1; 0 0 1]');
         end
         
-        [xi,yi] = tformfwd(tform, node.x+pattern(node.resolution).x, node.y+pattern(node.resolution).y);
+        [xi,yi] = tformfwd(tform, node.x+pattern.x, node.y+pattern.y);
         
         value = mean(interp2(img, xi(:), yi(:), 'linear')); % TODO: just use nearest?
         
