@@ -4270,6 +4270,34 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
 } // GTEST_TEST(CoreTech_Common, Benchmarking)
 #endif //#ifdef TEST_BENCHMARKING
 
+#ifdef CPU_A7
+NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  const s32 numItems = 100000;
+
+  s32 * restrict buffer = reinterpret_cast<s32*>( scratchOffchip.Allocate(numItems*sizeof(s32) );
+  s32 total = 0;
+
+  const f64 t0 = GetTimeF64();
+
+  for(s32 i=0; i<numItems; i++) {
+    total += buffer[i];
+  }
+
+  const f64 t1 = GetTimeF64();
+
+  printf("%d in %f\n", total, t1-t0);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(Coretech_Common, A7Speed)
+#endif // #ifdef CPU_A7
+
 #ifdef RUN_PC_ONLY_TESTS
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
@@ -4423,6 +4451,10 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 
 #ifdef TEST_BENCHMARKING
   CALL_GTEST_TEST(CoreTech_Common, Benchmarking);
+#endif
+
+#ifdef CPU_A7
+  CALL_GTEST_TEST(Coretech_Common, A7Speed);
 #endif
 
   return numFailedTests;
