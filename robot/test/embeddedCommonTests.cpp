@@ -4285,7 +4285,7 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
 
   const s32 numRepeats = 1;
   const s32 numItems = 20000001;
-//  const s32 numItems = 10;
+//  const s32 numItems = 17;
 
   s32 * restrict buffer = reinterpret_cast<s32*>( scratchHuge.Allocate(numItems*sizeof(s32)) );
 
@@ -4397,7 +4397,7 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
 
   const f64 t5 = GetTimeF64();
 
-for(s32 j=0; j<numRepeats; j++) {
+  for(s32 j=0; j<numRepeats; j++) {
     s32 i=0;
 
     // 8x unrolled
@@ -4444,6 +4444,50 @@ for(s32 j=0; j<numRepeats; j++) {
 
   const f64 t6 = GetTimeF64();
 
+  for(s32 j=0; j<numRepeats; j++) {
+    s32 i=0;
+
+    // 8x unrolled
+    const s32 numItems_simd = 8 * (numItems / 8) - 7;
+//    const s32 numItems_simd = 8 * (15000001 / 8) - 7;
+    s32 * restrict bufferLocal = buffer;
+    s32 tmp;
+    //for(s32 i=0; i<numItems_simd; i+=8) {
+      asm volatile(
+        ".L_iLoopStart4:\n\t"
+        "vld1.32 {q10}, [%[buffer]]!\n\t" // 3, 2, 1, 0
+        "vld1.32 {q11}, [%[buffer]]!\n\t" // 7, 6, 5, 4
+//        "vld1.32 {d20, d21}, [%[buffer]]!\n\t"
+//        "vld1.32 {d22, d23}, [%[buffer]]!\n\t"
+        "add %[i], %[i], #8\n\t"
+        "cmp %[i], %[numItems_simd]\n\t"
+        "vadd.i32 q10, q10, q11\n\t" // 37, 26, 15, 04
+        "vpadd.i32 d20, d20, d21\n\t" // 2367, 0145
+        "vpadd.i32 d20, d20, d20\n\t" // 01234567, 01234567
+        "vmov.32 %[tmp], d20[0]\n\t"
+        //"add %[buffer], %[buffer], #32\n\t"
+        "add %[total], %[total], %[tmp]\n\t"
+        "ble .L_iLoopStart4\n\t"
+          : 
+            [total] "+r" (total7), 
+            [tmp] "+r" (tmp),
+            [buffer] "+r"(bufferLocal),
+            [i] "+r"(i)
+          :
+            [numItems_simd] "r"(numItems_simd)
+          :
+            "q10", "q11", "d20", "d21", "d22", "d23");
+//    }
+
+    // Finish up the remainder
+    for(; i<numItems; i++) {
+      const s32 curItem = buffer[i];
+      total7 += curItem;
+    }
+  }
+
+  const f64 t7 = GetTimeF64();
+
   printf("\n\n");
 
   printf("%d in %f\n", total1, t1-t0);
@@ -4452,6 +4496,7 @@ for(s32 j=0; j<numRepeats; j++) {
   printf("%d in %f\n", total4, t4-t3);
   printf("%d in %f\n", total5, t5-t4);
   printf("%d in %f\n", total6, t6-t5);
+  printf("%d in %f\n", total7, t7-t6);
 
   ASSERT_TRUE(total1 == (562894465*numRepeats));
 //  ASSERT_TRUE(total2 == (562894465*numRepeats));
@@ -4459,6 +4504,7 @@ for(s32 j=0; j<numRepeats; j++) {
   ASSERT_TRUE(total4 == (562894465*numRepeats));
   ASSERT_TRUE(total5 == (562894465*numRepeats));
   ASSERT_TRUE(total6 == (562894465*numRepeats));
+  ASSERT_TRUE(total7 == (562894465*numRepeats));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(Coretech_Common, A7Speed)
