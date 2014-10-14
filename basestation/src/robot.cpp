@@ -88,7 +88,7 @@ namespace Anki {
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
-      _longPathPlanner  = new LatticePlanner(&_blockWorld, mprims);
+      _longPathPlanner  = new LatticePlanner(this, mprims);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
       

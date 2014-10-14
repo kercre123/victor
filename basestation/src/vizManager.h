@@ -15,6 +15,7 @@
 #define VIZ_MANAGER_H
 
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/polygon.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/types.h"
 #include "anki/vision/CameraSettings.h"
@@ -183,8 +184,7 @@ namespace Anki {
       template<typename T>
       void DrawPlannerObstacle(const bool isReplan,
                                const u32 quadID,
-                               const Quadrilateral<2,T>& quad,
-                               const T zHeight,
+                               const Polygon<2,T>& poly,
                                const ColorRGBA& color);
 
       template<typename T>
@@ -206,6 +206,11 @@ namespace Anki {
                     const u32 quadID,
                     const Quadrilateral<2,T>& quad,
                     const T zHeight,
+                    const ColorRGBA& color);
+
+      template<typename T>
+      void DrawPoly(const u32 polyID,
+                    const Polygon<2,T>& poly,
                     const ColorRGBA& color);
       
       // Erases the quad with the specified type and ID
@@ -360,6 +365,32 @@ namespace Anki {
       SendMessage( GET_MESSAGE_ID(VizQuad), &v );
     }
     
+    template<typename T>
+    void VizManager::DrawPoly(const u32 __polyID,
+                              const Polygon<2,T>& poly,
+                              const ColorRGBA& color)
+    {
+      // we don't have a poly viz message (yet...) so construct a path
+      // from the poly, and use the viz path stuff instead
+
+      Planning::Path polyPath;
+
+      // hack! don't want to collide with path ids
+      u32 pathId = __polyID + 2200;
+
+      size_t numPts = poly.size();
+
+      for(size_t i=0; i<numPts; ++i) {
+        size_t j = (i + 1) % numPts;
+        polyPath.AppendLine(0,
+                            poly[i].x(), poly[i].y(),
+                            poly[j].x(), poly[j].y(),
+                            1.0, 1.0, 1.0);
+      }
+
+      DrawPath(pathId, polyPath, color);
+    }
+
     
     template<typename T>
     void VizManager::DrawGenericQuad(const u32 quadID,
@@ -388,14 +419,13 @@ namespace Anki {
     
     template<typename T>
     void VizManager::DrawPlannerObstacle(const bool isReplan,
-                                         const u32 quadID,
-                                         const Quadrilateral<2,T>& quad,
-                                         const T zHeight,
+                                         const u32 polyID,
+                                         const Polygon<2,T>& poly,
                                          const ColorRGBA& color)
     {
-      const u32 quadType = (isReplan ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE);
+      // const u32 polyType = (isReplan ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE);
       
-      DrawQuad(quadType, quadID, quad, zHeight, color);
+      DrawPoly(polyID, poly, color);
     }
     
     template<typename T>
