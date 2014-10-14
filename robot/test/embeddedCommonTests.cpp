@@ -4308,7 +4308,7 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
   const f64 t1 = GetTimeF64();
 
 //  printf("\n\n");
-
+/*
   for(s32 j=0; j<numRepeats; j++) {
     for(s32 i=0; i<numItems; i++) {
       const s32 curItem = buffer[i];
@@ -4318,7 +4318,7 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
                      : "r" (total2), "r" (curItem));
     }
   }
-
+*/
   const f64 t2 = GetTimeF64();
 
   for(s32 j=0; j<numRepeats; j++) {
@@ -4358,17 +4358,107 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
 
   const f64 t4 = GetTimeF64();
 
+  for(s32 j=0; j<numRepeats; j++) {
+    s32 i=0;
+
+    // 4x unrolled
+    const s32 numItems_simd = 4 * (numItems / 4) - 3;
+    s32 * restrict bufferLocal = buffer;
+    s32 tmp1, tmp2, tmp3, tmp4;
+    //for(s32 i=0; i<numItems_simd; i+=4) {
+      asm volatile(
+        ".L_iLoopStart2:\n\t"
+        "ldr	%[tmp1], [%[buffer]]\n\t"
+        "ldr	%[tmp2], [%[buffer], #4]\n\t"
+        "ldr	%[tmp3], [%[buffer], #8]\n\t"
+        "ldr	%[tmp4], [%[buffer], #12]\n\t"
+        "add %[i], %[i], #4\n\t"
+        "cmp %[i], %[numItems_simd]\n\t"
+        "add %[total], %[total], %[tmp1]\n\t"
+        "add %[total], %[total], %[tmp2]\n\t"
+        "add %[total], %[total], %[tmp3]\n\t"
+        "add %[total], %[total], %[tmp4]\n\t"
+        "add %[buffer], %[buffer], #16\n\t"
+        "ble .L_iLoopStart2\n\t"
+          : [total] "+r" (total5), 
+            [tmp1] "+r" (tmp1), [tmp2] "+r" (tmp2), [tmp3] "+r" (tmp3), [tmp4] "+r" (tmp4),
+            [buffer] "+r"(bufferLocal),
+            [i] "+r"(i)
+          :
+            [numItems_simd] "r"(numItems_simd));
+//    }
+
+    // Finish up the remainder
+    for(; i<numItems; i++) {
+      const s32 curItem = buffer[i];
+      total5 += curItem;
+    }
+  }
+
+  const f64 t5 = GetTimeF64();
+
+for(s32 j=0; j<numRepeats; j++) {
+    s32 i=0;
+
+    // 8x unrolled
+    const s32 numItems_simd = 8 * (numItems / 8) - 7;
+    s32 * restrict bufferLocal = buffer;
+    s32 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
+    //for(s32 i=0; i<numItems_simd; i+=8) {
+      asm volatile(
+        ".L_iLoopStart3:\n\t"
+        "ldr	%[tmp1], [%[buffer]]\n\t"
+        "ldr	%[tmp2], [%[buffer], #4]\n\t"
+        "ldr	%[tmp3], [%[buffer], #8]\n\t"
+        "ldr	%[tmp4], [%[buffer], #12]\n\t"
+        "ldr	%[tmp5], [%[buffer], #16]\n\t"
+        "ldr	%[tmp6], [%[buffer], #20]\n\t"
+        "ldr	%[tmp7], [%[buffer], #24]\n\t"
+        "ldr	%[tmp8], [%[buffer], #28]\n\t"
+        "add %[i], %[i], #8\n\t"
+        "cmp %[i], %[numItems_simd]\n\t"
+        "add %[total], %[total], %[tmp1]\n\t"
+        "add %[total], %[total], %[tmp2]\n\t"
+        "add %[total], %[total], %[tmp3]\n\t"
+        "add %[total], %[total], %[tmp4]\n\t"
+        "add %[total], %[total], %[tmp5]\n\t"
+        "add %[total], %[total], %[tmp6]\n\t"
+        "add %[total], %[total], %[tmp7]\n\t"
+        "add %[total], %[total], %[tmp8]\n\t"
+        "add %[buffer], %[buffer], #32\n\t"
+        "ble .L_iLoopStart3\n\t"
+          : [total] "+r" (total6), 
+            [tmp1] "+r" (tmp1), [tmp2] "+r" (tmp2), [tmp3] "+r" (tmp3), [tmp4] "+r" (tmp4), [tmp5] "+r" (tmp5), [tmp6] "+r" (tmp6), [tmp7] "+r" (tmp7), [tmp8] "+r" (tmp8),
+            [buffer] "+r"(bufferLocal),
+            [i] "+r"(i)
+          :
+            [numItems_simd] "r"(numItems_simd));
+//    }
+
+    // Finish up the remainder
+    for(; i<numItems; i++) {
+      const s32 curItem = buffer[i];
+      total6 += curItem;
+    }
+  }
+
+  const f64 t6 = GetTimeF64();
+
   printf("\n\n");
 
   printf("%d in %f\n", total1, t1-t0);
-  printf("%d in %f\n", total2, t2-t1);
+//  printf("%d in %f\n", total2, t2-t1);
   printf("%d in %f\n", total3, t3-t2);
-  printf("%d in %f\n", total3, t4-t3);
+  printf("%d in %f\n", total4, t4-t3);
+  printf("%d in %f\n", total5, t5-t4);
+  printf("%d in %f\n", total6, t6-t5);
 
   ASSERT_TRUE(total1 == (562894465*numRepeats));
-  ASSERT_TRUE(total2 == (562894465*numRepeats));
+//  ASSERT_TRUE(total2 == (562894465*numRepeats));
   ASSERT_TRUE(total3 == (562894465*numRepeats));
   ASSERT_TRUE(total4 == (562894465*numRepeats));
+  ASSERT_TRUE(total5 == (562894465*numRepeats));
+  ASSERT_TRUE(total6 == (562894465*numRepeats));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(Coretech_Common, A7Speed)

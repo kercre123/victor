@@ -9,9 +9,14 @@ mkdir build
 cd build
 
 # Delete executable
-cd Unix\ Makefiles/bin/Release/ 
-rm run_pc_embeddedTests
-cd ../../..
+if [ -f "./Unix Makefiles/bin/Release/run_pc_embeddedTests" ]
+then
+  cd Unix\ Makefiles/bin/Release/ 
+  rm run_pc_embeddedTests
+  cd ../../..
+fi
+
+# Move output file
 mv ../${OUT_FILENAME} ../${OUT_FILENAME}.old
 
 # Compile and run
