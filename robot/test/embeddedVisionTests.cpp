@@ -3905,7 +3905,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
 
   PrintBenchmarkResults(medianBenchmarkElements, true, true);
 
-//  markers[0].Print();
+  markers[0].Print();
 
   const f32 minDifference = 1e-4;
   Point<f32> groundTruth[4];

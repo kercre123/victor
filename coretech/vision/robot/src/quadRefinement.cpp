@@ -636,69 +636,97 @@ namespace Anki {
           s32 iSample=0;
 
 #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
-          for(; iSample<(actualNumSamples-0); iSample++) {
-            const f32 tGradientValue = tGradientValues[iSample];
-            const f32 a0 = Arow[0][iSample];
+          for(; iSample<(actualNumSamples-3); iSample+=4) {
+            const float32x4_t tGradientValue_10 = vld1q_f32(&tGradientValues[iSample]);
+            const float32x2_t tGradientValue_1 = vget_high_f32(tGradientValue_10);
+            const float32x2_t tGradientValue_0 = vget_low_f32(tGradientValue_10);
+
+/*            const f32 a0 = Arow[0][iSample];
             const f32 a1 = Arow[1][iSample];
             const f32 a2 = Arow[2][iSample];
             const f32 a3 = Arow[3][iSample];
             const f32 a4 = Arow[4][iSample];
             const f32 a5 = Arow[5][iSample];
             const f32 a6 = Arow[6][iSample];
-            const f32 a7 = Arow[7][iSample];
+            const f32 a7 = Arow[7][iSample];*/
 
-            AWAt_raw[0][0] += a0 * a0;
-            AWAt_raw[0][1] += a0 * a1;
-            AWAt_raw[0][2] += a0 * a2;
-            AWAt_raw[0][3] += a0 * a3;
-            AWAt_raw[0][4] += a0 * a4;
-            AWAt_raw[0][5] += a0 * a5;
-            AWAt_raw[0][6] += a0 * a6;
-            AWAt_raw[0][7] += a0 * a7;
-            b_raw[0] += a0 * tGradientValue;
+            const float32x4_t a0 = vld1q_f32(&Arow[0][iSample]);
+            const float32x4_t a1 = vld1q_f32(&Arow[1][iSample]);
+            const float32x4_t a2 = vld1q_f32(&Arow[2][iSample]);
+            const float32x4_t a3 = vld1q_f32(&Arow[3][iSample]);
+            const float32x4_t a4 = vld1q_f32(&Arow[4][iSample]);
+            const float32x4_t a5 = vld1q_f32(&Arow[5][iSample]);
+            const float32x4_t a6 = vld1q_f32(&Arow[6][iSample]);
+            const float32x4_t a7 = vld1q_f32(&Arow[7][iSample]);
 
-            AWAt_raw[1][1] += a1 * a1;
-            AWAt_raw[1][2] += a1 * a2;
-            AWAt_raw[1][3] += a1 * a3;
-            AWAt_raw[1][4] += a1 * a4;
-            AWAt_raw[1][5] += a1 * a5;
-            AWAt_raw[1][6] += a1 * a6;
-            AWAt_raw[1][7] += a1 * a7;
-            b_raw[1] += a1 * tGradientValue;
+            const float32x2_t a0_1 = vget_high_f32(a0);
+            const float32x2_t a0_0 = vget_low_f32(a0);
+            const float32x2_t a1_1 = vget_high_f32(a1);
+            const float32x2_t a1_0 = vget_low_f32(a1);
+            const float32x2_t a2_1 = vget_high_f32(a2);
+            const float32x2_t a2_0 = vget_low_f32(a2);
+            const float32x2_t a3_1 = vget_high_f32(a3);
+            const float32x2_t a3_0 = vget_low_f32(a3);
+            const float32x2_t a4_1 = vget_high_f32(a4);
+            const float32x2_t a4_0 = vget_low_f32(a4);
+            const float32x2_t a5_1 = vget_high_f32(a5);
+            const float32x2_t a5_0 = vget_low_f32(a5);
+            const float32x2_t a6_1 = vget_high_f32(a6);
+            const float32x2_t a6_0 = vget_low_f32(a6);
+            const float32x2_t a7_1 = vget_high_f32(a7);
+            const float32x2_t a7_0 = vget_low_f32(a7);
 
-            AWAt_raw[2][2] += a2 * a2;
-            AWAt_raw[2][3] += a2 * a3;
-            AWAt_raw[2][4] += a2 * a4;
-            AWAt_raw[2][5] += a2 * a5;
-            AWAt_raw[2][6] += a2 * a6;
-            AWAt_raw[2][7] += a2 * a7;
-            b_raw[2] += a2 * tGradientValue;
+            { const float32x2_t squared = vpadd_f32(a0_0 * a0_0, a0_1 * a0_1); AWAt_raw[0][0] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a0_0 * a1_0, a0_1 * a1_1); AWAt_raw[0][1] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a0_0 * a2_0, a0_1 * a2_1); AWAt_raw[0][2] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a0_0 * a3_0, a0_1 * a3_1); AWAt_raw[0][3] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a0_0 * a4_0, a0_1 * a4_1); AWAt_raw[0][4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a0_0 * a5_0, a0_1 * a5_1); AWAt_raw[0][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a0_0 * a6_0, a0_1 * a6_1); AWAt_raw[0][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a0_0 * a7_0, a0_1 * a7_1); AWAt_raw[0][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a0_0 * tGradientValue_0, a0_1 * tGradientValue_1); b_raw[0] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
 
-            AWAt_raw[3][3] += a3 * a3;
-            AWAt_raw[3][4] += a3 * a4;
-            AWAt_raw[3][5] += a3 * a5;
-            AWAt_raw[3][6] += a3 * a6;
-            AWAt_raw[3][7] += a3 * a7;
-            b_raw[3] += a3 * tGradientValue;
+            { const float32x2_t squared = vpadd_f32(a1_0 * a1_0, a1_1 * a1_1); AWAt_raw[1][1] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a1_0 * a2_0, a1_1 * a2_1); AWAt_raw[1][2] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a1_0 * a3_0, a1_1 * a3_1); AWAt_raw[1][3] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a1_0 * a4_0, a1_1 * a4_1); AWAt_raw[1][4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a1_0 * a5_0, a1_1 * a5_1); AWAt_raw[1][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a1_0 * a6_0, a1_1 * a6_1); AWAt_raw[1][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a1_0 * a7_0, a1_1 * a7_1); AWAt_raw[1][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a1_0 * tGradientValue_0, a1_1 * tGradientValue_1); b_raw[1] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
 
-            AWAt_raw[4][4] += a4 * a4;
-            AWAt_raw[4][5] += a4 * a5;
-            AWAt_raw[4][6] += a4 * a6;
-            AWAt_raw[4][7] += a4 * a7;
-            b_raw[4] += a4 * tGradientValue;
+            { const float32x2_t squared = vpadd_f32(a2_0 * a2_0, a2_1 * a2_1); AWAt_raw[2][2] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a2_0 * a3_0, a2_1 * a3_1); AWAt_raw[2][3] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a2_0 * a4_0, a2_1 * a4_1); AWAt_raw[2][4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a2_0 * a5_0, a2_1 * a5_1); AWAt_raw[2][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a2_0 * a6_0, a2_1 * a6_1); AWAt_raw[2][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a2_0 * a7_0, a2_1 * a7_1); AWAt_raw[2][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a2_0 * tGradientValue_0, a2_1 * tGradientValue_1); b_raw[2] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
 
-            AWAt_raw[5][5] += a5 * a5;
-            AWAt_raw[5][6] += a5 * a6;
-            AWAt_raw[5][7] += a5 * a7;
-            b_raw[5] += a5 * tGradientValue;
+            { const float32x2_t squared = vpadd_f32(a3_0 * a3_0, a3_1 * a3_1); AWAt_raw[3][3] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a3_0 * a4_0, a3_1 * a4_1); AWAt_raw[3][4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a3_0 * a5_0, a3_1 * a5_1); AWAt_raw[3][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a3_0 * a6_0, a3_1 * a6_1); AWAt_raw[3][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a3_0 * a7_0, a3_1 * a7_1); AWAt_raw[3][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a3_0 * tGradientValue_0, a3_1 * tGradientValue_1); b_raw[3] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
 
-            AWAt_raw[6][6] += a6 * a6;
-            AWAt_raw[6][7] += a6 * a7;
-            b_raw[6] += a6 * tGradientValue;
-
-            AWAt_raw[7][7] += a7 * a7;
-            b_raw[7] += a7 * tGradientValue;
-
+            { const float32x2_t squared = vpadd_f32(a4_0 * a4_0, a4_1 * a4_1); AWAt_raw[4][4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a4_0 * a5_0, a4_1 * a5_1); AWAt_raw[4][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a4_0 * a6_0, a4_1 * a6_1); AWAt_raw[4][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a4_0 * a7_0, a4_1 * a7_1); AWAt_raw[4][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a4_0 * tGradientValue_0, a4_1 * tGradientValue_1); b_raw[4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            
+            { const float32x2_t squared = vpadd_f32(a5_0 * a5_0, a5_1 * a5_1); AWAt_raw[5][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a5_0 * a6_0, a5_1 * a6_1); AWAt_raw[5][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a5_0 * a7_0, a5_1 * a7_1); AWAt_raw[5][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a5_0 * tGradientValue_0, a5_1 * tGradientValue_1); b_raw[5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            
+            { const float32x2_t squared = vpadd_f32(a6_0 * a6_0, a6_1 * a6_1); AWAt_raw[6][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a6_0 * a7_0, a6_1 * a7_1); AWAt_raw[6][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a6_0 * tGradientValue_0, a6_1 * tGradientValue_1); b_raw[6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            
+            { const float32x2_t squared = vpadd_f32(a7_0 * a7_0, a7_1 * a7_1); AWAt_raw[7][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x2_t squared = vpadd_f32(a7_0 * tGradientValue_0, a7_1 * tGradientValue_1); b_raw[7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
           } // for(s32 iSample=0; iSample<actualNumSamples; iSample++)
 #endif // #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
 
