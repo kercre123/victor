@@ -12,6 +12,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/rotatedRect.h"
+#include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/shared/radians.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "json/json.h"
@@ -427,6 +428,8 @@ xythetaEnvironment::~xythetaEnvironment()
 xythetaEnvironment::xythetaEnvironment()
 {
   numAngles_ = 1<<THETA_BITS;
+  obstaclesPerAngle_.resize(numAngles_);
+
   radiansPerAngle_ = 2*M_PI/numAngles_;
   oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
   // TODO:(bn) params!
@@ -471,6 +474,8 @@ bool xythetaEnvironment::Init(const char* mprimFilename, const char* mapFile)
     }
 
     numAngles_ = 1<<THETA_BITS;
+    obstaclesPerAngle_.resize(numAngles_);
+
     radiansPerAngle_ = 2*M_PI/numAngles_;
     oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
   }
@@ -575,6 +580,25 @@ void xythetaEnvironment::ClearObstacles()
   obstacles_.clear();
 }
 
+Poly2f xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
+                                        const Poly2f& robot)
+{
+  return obstacle;
+}
+
+
+const Poly2f& xythetaEnvironment::AddObstacleWithExpansion(const Poly2f& obstacle,
+                                                           const Poly2f& robot,
+                                                           StateTheta theta,
+                                                           Cost cost)
+{
+  assert(obstaclesPerAngle_.size() > theta);
+
+  obstaclesPerAngle_[theta].emplace_back(std::make_pair(ExpandCSpace(obstacle, robot), cost));
+
+  return obstaclesPerAngle_[theta].back().first;
+}
+
 
 bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env)
 {
@@ -647,7 +671,7 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
     float signedLength = config["straight_length_mm"].asFloat();
     
-    if(abs(signedLength) > 0.001) {
+    if(std::abs(signedLength) > 0.001) {
       pathSegments_.AppendLine(0,
                                0.0,
                                0.0,
