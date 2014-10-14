@@ -11,9 +11,10 @@
  **/
 
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/basestation/math/polygon_impl.h"
+#include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/shared/radians.h"
+#include "anki/common/shared/utilities_shared.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "json/json.h"
 #include <fstream>
@@ -583,7 +584,96 @@ void xythetaEnvironment::ClearObstacles()
 Poly2f xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
                                         const Poly2f& robot)
 {
-  return obstacle;
+  assert(obstacle.size() > 0);
+  assert(robot.size() > 0);
+
+  CoreTechPrint("obstacle: ");
+  obstacle.Print();
+
+  CoreTechPrint("robot: ");
+  robot.Print();
+
+  // This algorithm is a Minkowski difference. It requires both
+  // obstacle and robot to be convex complete polygons in clockwise
+  // order. You can also see a python implementation with plotting and
+  // such in coretech/planning/matlab/minkowski.py
+
+
+  float startingAngle = obstacle.GetEdgeAngle(0);
+
+  // compute the starting point for each polygon
+  size_t obstacleStart = 0;
+  size_t robotStart = 0;
+
+  size_t robotSize = robot.size();
+  
+  float minDist = FLT_MAX;
+  for(size_t i = 0; i < robotSize; ++i) {
+    // note that we are "adding" the "negative" robot, so we will
+    // consider robot angles to be +pi (opposite)
+    Radians angle(robot.GetEdgeAngle(i) + M_PI);
+    float dist = angle.angularDistance(startingAngle, false);
+    if(dist < minDist) {
+      minDist = dist;
+      robotStart = i;
+    }
+  }
+
+  CoreTechPrint("Robot start %d\n", robotStart);
+
+  // now find the starting point where we will anchor the
+  // expansion. Remember the robot is centered at (0,0)
+  Point2f curr = obstacle[0] - robot[robotStart];
+
+  // now merge based on angle
+  Poly2f expansion;
+
+  expansion.push_back(curr);
+
+  size_t robotIdx = robotStart;
+  size_t robotNum = 0; // number of points added from the robot
+  size_t obstacleIdx = 0;
+  size_t obstacleSize = obstacle.size();
+
+
+  while( obstacleIdx < obstacleSize && robotNum < robotSize ) {
+    Radians robotAngle(robot.GetEdgeAngle(robotIdx) + M_PI);
+    float robotDiff = robotAngle.angularDistance(startingAngle, false);
+
+    Radians obstacleAngle(obstacle.GetEdgeAngle(obstacleIdx));
+    float obstacleDiff = obstacleAngle.angularDistance(startingAngle, false);
+
+    if( obstacleDiff < robotDiff ) {
+      Point2f edge = obstacle.GetEdgeVector(obstacleIdx);
+      curr += edge;
+      expansion.push_back( curr );
+      obstacleIdx++;
+    }
+    else {
+      Point2f edge = robot.GetEdgeVector(robotIdx);
+      curr -= edge;
+      expansion.push_back( curr );
+      robotNum++;
+      robotIdx = (robotIdx + 1) % robotSize;
+    }
+  }
+
+  while( obstacleIdx < obstacleSize ) {
+    Point2f edge = obstacle.GetEdgeVector(obstacleIdx);
+    curr += edge;
+    expansion.push_back( curr );
+    obstacleIdx++;
+  }
+
+  while( robotNum < robotSize ) {
+    Point2f edge = robot.GetEdgeVector(robotIdx);
+    curr -= edge;
+    expansion.push_back( curr );
+    robotNum++;
+    robotIdx = (robotIdx + 1) % robotSize;
+  }
+
+  return expansion;
 }
 
 
