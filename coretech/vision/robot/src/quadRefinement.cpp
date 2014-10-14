@@ -667,6 +667,28 @@ namespace Anki {
             AWAt_raw[2][6] += a2 * a6;
             AWAt_raw[2][7] += a2 * a7;
             b_raw[2] += a2 * tGradientValue;
+  #endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+          } // for(s32 iSample=0; iSample<actualNumSamples; iSample++)
+
+          for(s32 iSample=0; iSample<actualNumSamples; iSample++) {
+            const f32 tGradientValue = tGradientValues[iSample];
+
+  #if !defined(USE_ARM_ACCELERATION)
+            for(s32 ia=0; ia<8; ia++) {
+              for(s32 ja=ia; ja<8; ja++) {
+                AWAt_raw[ia][ja] += Arow[ia][iSample] * Arow[ja][iSample];
+              }
+              b_raw[ia] += Arow[ia][iSample] * tGradientValue;
+            }
+  #else // #if !defined(USE_ARM_ACCELERATION)
+            const f32 a0 = Arow[0][iSample];
+            const f32 a1 = Arow[1][iSample];
+            const f32 a2 = Arow[2][iSample];
+            const f32 a3 = Arow[3][iSample];
+            const f32 a4 = Arow[4][iSample];
+            const f32 a5 = Arow[5][iSample];
+            const f32 a6 = Arow[6][iSample];
+            const f32 a7 = Arow[7][iSample];
 
             AWAt_raw[3][3] += a3 * a3;
             AWAt_raw[3][4] += a3 * a4;
