@@ -142,12 +142,21 @@ class Polygon:
         # the last one is redundant
         return Polygon(newPoints[:-1, :])
 
+    def findCenterForCircles(self):
+        "returns a center point that seems good for the circumscribing and inscribing circles"
+
+        # 
+
+
+        # return np.matrix([[ self.center[0,0] + 20.0, self.center[0,1] + 10]])
+        return self.points.mean(0)
+
     def computeCircumscribingCircle(self):
         # for now, just keep the center. We could do MUCH better than this in the future
-        ret = {"center": self.center}
+        ret = {"center": self.findCenterForCircles()}
         maxRadius = 0
         for point in self.points:
-            radius = np.linalg.norm(point - self.center)
+            radius = np.linalg.norm(point - ret["center"])
             if radius > maxRadius:
                 maxRadius = radius
         ret["radius"] = maxRadius
@@ -156,7 +165,7 @@ class Polygon:
 
     def computeInscribingCircle(self):
         # for now, just keep the center. We could do MUCH better than this in the future
-        ret = {"center": self.center}
+        ret = {"center": self.findCenterForCircles()}
 
         minRadius = 9999999.9
         for idx in range(len(self.angles)):
@@ -169,7 +178,7 @@ class Polygon:
                 print "ERROR! math is wrong!!"
                 return None
 
-            centerVec = np.squeeze(np.asarray(self.center - self.points[idx]))
+            centerVec = np.squeeze(np.asarray(ret["center"] - self.points[idx]))
 
             radius = perpUnitVec.dot(centerVec)
             if radius < minRadius:
@@ -303,14 +312,15 @@ class Polygon:
 # do a crappy little test
 
 # obstacleP = [(-6.0, 3.0), (-6.3, 5.9), (-2.7, 6.2), (-3.1, 2.8)]
-# obstacleP = [(-6.0, 3.0), (-5.8, 5.9), (-2.7, 6.2), (-3.1, 2.8)]
-#obstacleP = [(-6.0, 3.0), (-6.0, 6.0), (-3.0, 6.0), (-3.0, 3.0)]
-obstacleP = [(-162.156311, 135.594849), (-179.01123, 177.167496), (-138.097122, 193.755432), (-121.242203, 152.182785)]
+obstacleP = [(-6.0, 3.0), (-5.8, 5.9), (-2.7, 6.2), (-3.1, 2.8)]
+# obstacleP = [(-6.0, 3.0), (-6.0, 6.0), (-3.0, 6.0), (-3.0, 3.0)]
+#obstacleP = [(-162.156311, 135.594849), (-179.01123, 177.167496), (-138.097122, 193.755432), (-121.242203, 152.182785)]
 obstacle = Polygon(obstacleP)
 
-#robotP = [(0.0, 1.0), (1.0, -1.0), (-1.0, -1.0)]
+# robotP = [(0.0, 1.0), (1.0, -1.0), (-1.0, -1.0)]
 # robotP = [(1.0, 1.0), (1.2, 0.8), (1.4, -0.5), (0.3, -1.1), (-1.0, -0.8), (-1.4, 0.0), (-1.0, 0.4)]
-robotP = [( -55.900002, -27.100000), ( -55.900002, 27.100000), ( 22.099998, 27.100000), ( 22.099998, -27.100000)]
+# robotP = [( -55.900002, -27.100000), ( -55.900002, 27.100000), ( 22.099998, 27.100000), ( 22.099998, -27.100000)]
+robotP = [(-0.2, 0.2), (0.2, 0.2), (0.2, -1.6), (-0.2, -1.6) ]
 # robotC = (0.0, 0.5)
 robotC = (0.0, 0.0)
 robot = Polygon(robotP, robotC)
