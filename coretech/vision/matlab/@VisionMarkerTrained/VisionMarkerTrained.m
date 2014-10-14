@@ -16,7 +16,7 @@ classdef VisionMarkerTrained
             'NumAngles', 4, ...       % How many samples around ring to sample
             'Method', 'mean');        % How to combine points in a probe
                 
-        MinContrastRatio = 1.25;  % bright/dark has to be at least this
+        MinContrastRatio = 0; %1.25;  % bright/dark has to be at least this
         
         SquareWidthFraction = 0.1; % as a fraction of the fiducial width
         FiducialPaddingFraction = 0.1; % as a fraction of the fiducial width

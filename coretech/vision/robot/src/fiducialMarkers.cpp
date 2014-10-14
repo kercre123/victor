@@ -714,6 +714,7 @@ namespace Anki
           }
         } // FOR each probe point
 
+        /*
         brightValue = static_cast<f32>(brightAccumulator) * divisor;
         darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
         if(brightValue < minContrastRatio * darkValue) {
@@ -721,6 +722,7 @@ namespace Anki
           enoughContrast = false;
           return RESULT_OK;
         }
+         */
 
         totalBrightAccumulator += brightAccumulator;
         totalDarkAccumulator   += darkAccumulator;
