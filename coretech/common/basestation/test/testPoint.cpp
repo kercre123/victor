@@ -37,6 +37,24 @@ GTEST_TEST(TestPoint, PointInitialization)
   
 }
 
+GTEST_TEST(TestPoint, Comparison)
+{
+  Point3f x(1.f, 2.f, 6.f);
+  Point3f y(4.f, 5.f, 3.f);
+
+  Point<3, f32>::CompareX comp0;
+  EXPECT_TRUE (comp0(x,y));
+  EXPECT_FALSE(comp0(y,x));
+
+  Point3f::CompareY comp1;
+  EXPECT_TRUE (comp1(x,y));
+  EXPECT_FALSE(comp1(y,x));
+
+  Point3f::CompareZ comp2;
+  EXPECT_FALSE(comp2(x,y));
+  EXPECT_TRUE (comp2(y,x));
+}
+
 GTEST_TEST(TestPoint, DotProductAndLength)
 {
   Point3f x(1.f, 2.f, 3.f);
