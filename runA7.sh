@@ -32,7 +32,7 @@ then
   cd Unix\ Makefiles/bin/Release/ 
   scp run_pc_embeddedTests linaro@$IP:/home/linaro/
   cd ../../../..
-  ssh linaro@192.168.1.125 "rm ${OUT_FILENAME} ; nice -n 0 /home/linaro/run_pc_embeddedTests > ${OUT_FILENAME}"
+  ssh linaro@192.168.1.125 "rm ${OUT_FILENAME} ; nice -n 0 taskset -c 0 /home/linaro/run_pc_embeddedTests > ${OUT_FILENAME}"
   scp "linaro@192.168.1.125:/home/linaro/${OUT_FILENAME}" .
   echo "Compile succeded"
 else
