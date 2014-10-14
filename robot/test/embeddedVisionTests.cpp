@@ -3905,6 +3905,20 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
 
   PrintBenchmarkResults(medianBenchmarkElements, true, true);
 
+//  markers[0].Print();
+
+  const f32 minDifference = 1e-4;
+  Point<f32> groundTruth[4];
+  groundTruth[0] = Point<f32>(45.0272,45.0177);
+  groundTruth[1] = Point<f32>(44.9521,113.3854);
+  groundTruth[2] = Point<f32>(113.3604,44.9779);
+  groundTruth[3] = Point<f32>(113.4568,113.4449);
+
+  for(s32 i=0; i<4; i++) {
+    ASSERT_TRUE(ABS(markers[0].corners[i].x - groundTruth[i].x) < minDifference);
+    ASSERT_TRUE(ABS(markers[0].corners[i].y - groundTruth[i].y) < minDifference);
+  }
+
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
 #endif
