@@ -673,6 +673,13 @@ Poly2f xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
     robotIdx = (robotIdx + 1) % robotSize;
   }
 
+  // the last entry is redundant, so remove it
+  // TODO:(bn) don't add it?
+  expansion.pop_back();
+
+  CoreTechPrint("c-space obstacle: ");
+  expansion.Print();
+
   return expansion;
 }
 

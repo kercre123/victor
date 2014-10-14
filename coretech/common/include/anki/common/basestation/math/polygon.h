@@ -88,6 +88,8 @@ public:
   void push_back(Point<N, T>&& val);
   void emplace_back(Point<N, T>&& val);
 
+  void pop_back();
+
   Point<N,T>& operator[] (size_t idx);
   const Point<N,T>& operator[] (size_t idx) const;
 

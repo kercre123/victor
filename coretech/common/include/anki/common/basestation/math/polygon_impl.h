@@ -60,6 +60,8 @@ void Polygon<N,T>::ImportQuad(const Quadrilateral<N,T>& quad)
 
   Quadrilateral<N,T> sortedQuad ( quad.SortCornersClockwise( Z_AXIS_3D ) );
 
+  // For some reason, these need to be backwards for things to work...
+
   // _points.emplace_back(sortedQuad[Quad::TopRight]);
   // _points.emplace_back(sortedQuad[Quad::BottomRight]);
   // _points.emplace_back(sortedQuad[Quad::BottomLeft]);
@@ -78,6 +80,8 @@ void Polygon<N,T>::ImportQuad2d(const Quadrilateral<2,T>& quad)
   static_assert(N == 2, "Must use ImportQuad for > 2d");
 
   Quadrilateral<2,T> sortedQuad ( quad.SortCornersClockwise(  ) );
+
+  // For some reason, these need to be backwards for things to work...
 
   // _points.emplace_back(sortedQuad[Quad::TopRight]);
   // _points.emplace_back(sortedQuad[Quad::BottomRight]);
@@ -174,6 +178,12 @@ template <PolygonDimType N, typename T>
 void Polygon<N,T>::emplace_back(Point<N, T>&& val)
 {
   _points.emplace_back(std::forward< Point<N,T> >(val));
+}
+
+template <PolygonDimType N, typename T>
+void Polygon<N,T>::pop_back()
+{
+  _points.pop_back();
 }
 
 template <PolygonDimType N, typename T>
