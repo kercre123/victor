@@ -40,6 +40,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 using namespace Anki;
 using namespace Anki::Embedded;
 
+#if 0
 GTEST_TEST(CoreTech_Common, SerializeStrings)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -4270,33 +4271,108 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
 } // GTEST_TEST(CoreTech_Common, Benchmarking)
 #endif //#ifdef TEST_BENCHMARKING
 
-#ifdef CPU_A7
+#endif // #if 0
+
+#if defined(__ARM_ARCH_7A__)
+#define HUGE_BUFFER_SIZE 100000000
+static char hugeBuffer[HUGE_BUFFER_SIZE];
+
 NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
 {
-  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
 
-  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+  ASSERT_TRUE(AreValid(scratchHuge));
 
-  const s32 numItems = 100000;
+  const s32 numRepeats = 1;
+  const s32 numItems = 20000001;
+//  const s32 numItems = 10;
 
-  s32 * restrict buffer = reinterpret_cast<s32*>( scratchOffchip.Allocate(numItems*sizeof(s32) );
-  s32 total = 0;
+  s32 * restrict buffer = reinterpret_cast<s32*>( scratchHuge.Allocate(numItems*sizeof(s32)) );
+
+  s32 total1 = 1, total2 = 1, total3 = 1, total4 = 1, total5 = 1, total6 = 1, total7 = 1, total8 = 1, total9 = 1, total10 = 1;
+
+  for(s32 i=0; i<numItems; i++) {
+    buffer[i] = i;
+  }
 
   const f64 t0 = GetTimeF64();
 
-  for(s32 i=0; i<numItems; i++) {
-    total += buffer[i];
-  }
+  for(s32 j=0; j<numRepeats; j++) {
+    for(s32 i=0; i<numItems; i++) {
+      const s32 curItem = buffer[i];
+      total1 += curItem;
+//      printf("%d %d\n", curItem, total1);
+    }
+  } // for(s32 j=0; j<10; j++)
 
   const f64 t1 = GetTimeF64();
 
-  printf("%d in %f\n", total, t1-t0);
+//  printf("\n\n");
+
+  for(s32 j=0; j<numRepeats; j++) {
+    for(s32 i=0; i<numItems; i++) {
+      const s32 curItem = buffer[i];
+
+      asm volatile("add	%0, %0, %2\n\t"
+                     : "=r" (total2)
+                     : "r" (total2), "r" (curItem));
+    }
+  }
+
+  const f64 t2 = GetTimeF64();
+
+  for(s32 j=0; j<numRepeats; j++) {
+    s32 * restrict bufferLocal = buffer;
+    s32 tmp;
+    for(s32 i=0; i<numItems; i++) {
+      asm volatile("ldr	%[tmp], [%[buffer]]\n\t"
+                   "add %[total], %[total], %[tmp]\n\t"
+                   "add %[buffer], %[buffer], #4\n\t"
+                     : [total] "+r" (total3), [tmp] "+r" (tmp), [buffer] "+r"(bufferLocal));
+    }
+  }
+
+  const f64 t3 = GetTimeF64();
+
+  for(s32 j=0; j<numRepeats; j++) {
+    s32 * restrict bufferLocal = buffer;
+    s32 tmp;
+    s32 i=0;
+    //for(s32 i=0; i<numItems; i++) {
+      asm volatile(
+        ".L_iLoopStart:\n\t"
+        "ldr	%[tmp], [%[buffer]]\n\t"
+        "add %[i], %[i], #1\n\t"
+        "cmp %[i], %[numItems]\n\t"
+        "add %[total], %[total], %[tmp]\n\t"
+        "add %[buffer], %[buffer], #4\n\t"
+        "ble .L_iLoopStart\n\t"
+          : [total] "+r" (total4), 
+            [tmp] "+r" (tmp), 
+            [buffer] "+r"(bufferLocal),
+            [i] "+r"(i)
+          :
+            [numItems] "r"(numItems));
+//    }
+  }
+
+  const f64 t4 = GetTimeF64();
+
+  printf("\n\n");
+
+  printf("%d in %f\n", total1, t1-t0);
+  printf("%d in %f\n", total2, t2-t1);
+  printf("%d in %f\n", total3, t3-t2);
+  printf("%d in %f\n", total3, t4-t3);
+
+  ASSERT_TRUE(total1 == (562894465*numRepeats));
+  ASSERT_TRUE(total2 == (562894465*numRepeats));
+  ASSERT_TRUE(total3 == (562894465*numRepeats));
+  ASSERT_TRUE(total4 == (562894465*numRepeats));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(Coretech_Common, A7Speed)
-#endif // #ifdef CPU_A7
+#endif // #if defined(__ARM_ARCH_7A__)
 
 #ifdef RUN_PC_ONLY_TESTS
 
@@ -4392,7 +4468,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
   numPassedTests = 0;
   numFailedTests = 0;
-
+/*
   CALL_GTEST_TEST(CoreTech_Common, SerializeStrings);
   CALL_GTEST_TEST(CoreTech_Common, DrawQuadrilateral);
   CALL_GTEST_TEST(CoreTech_Common, HostIntrinsics_m4);
@@ -4448,12 +4524,12 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, ArraySpecifiedClass);
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
-
+*/
 #ifdef TEST_BENCHMARKING
   CALL_GTEST_TEST(CoreTech_Common, Benchmarking);
 #endif
 
-#ifdef CPU_A7
+#if defined(__ARM_ARCH_7A__)
   CALL_GTEST_TEST(Coretech_Common, A7Speed);
 #endif
 

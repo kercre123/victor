@@ -54,11 +54,11 @@ int main()
 
   s32 numPassedTests_vision = 0;
   s32 numFailedTests_vision = 0;
-  RUN_ALL_VISION_TESTS(numPassedTests_vision, numFailedTests_vision);
+  //RUN_ALL_VISION_TESTS(numPassedTests_vision, numFailedTests_vision);
 
   s32 numPassedTests_common = 0;
   s32 numFailedTests_common = 0;
-  //  RUN_ALL_COMMON_TESTS(numPassedTests_common, numFailedTests_common);
+  RUN_ALL_COMMON_TESTS(numPassedTests_common, numFailedTests_common);
 
   const s32 numPassedTests = numPassedTests_common + numPassedTests_vision;
   const s32 numFailedTests = numFailedTests_common + numFailedTests_vision;
