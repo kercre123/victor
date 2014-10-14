@@ -4449,7 +4449,6 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
 
     // 8x unrolled
     const s32 numItems_simd = 8 * (numItems / 8) - 7;
-//    const s32 numItems_simd = 8 * (15000001 / 8) - 7;
     s32 * restrict bufferLocal = buffer;
     s32 tmp;
     //for(s32 i=0; i<numItems_simd; i+=8) {
@@ -4457,15 +4456,12 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
         ".L_iLoopStart4:\n\t"
         "vld1.32 {q10}, [%[buffer]]!\n\t" // 3, 2, 1, 0
         "vld1.32 {q11}, [%[buffer]]!\n\t" // 7, 6, 5, 4
-//        "vld1.32 {d20, d21}, [%[buffer]]!\n\t"
-//        "vld1.32 {d22, d23}, [%[buffer]]!\n\t"
         "add %[i], %[i], #8\n\t"
         "cmp %[i], %[numItems_simd]\n\t"
         "vadd.i32 q10, q10, q11\n\t" // 37, 26, 15, 04
         "vpadd.i32 d20, d20, d21\n\t" // 2367, 0145
         "vpadd.i32 d20, d20, d20\n\t" // 01234567, 01234567
         "vmov.32 %[tmp], d20[0]\n\t"
-        //"add %[buffer], %[buffer], #32\n\t"
         "add %[total], %[total], %[tmp]\n\t"
         "ble .L_iLoopStart4\n\t"
           : 
@@ -4488,6 +4484,184 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
 
   const f64 t7 = GetTimeF64();
 
+  for(s32 j=0; j<numRepeats; j++) {
+    s32 i=0;
+
+    // 32x unrolled
+    const s32 numItems_simd = 64 * (numItems / 64) - 63;
+    s32 * restrict bufferLocal = buffer;
+    s32 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
+    //for(s32 i=0; i<numItems_simd; i+=64) {
+      asm volatile(
+        ".L_iLoopStart5:\n\t"
+        "vld1.32 {q0}, [%[buffer]]!\n\t" 
+        "vld1.32 {q1}, [%[buffer]]!\n\t" 
+        "vld1.32 {q2}, [%[buffer]]!\n\t"
+        "vld1.32 {q3}, [%[buffer]]!\n\t"
+        "vld1.32 {q4}, [%[buffer]]!\n\t"
+        "vld1.32 {q5}, [%[buffer]]!\n\t"
+        "vld1.32 {q6}, [%[buffer]]!\n\t"
+        "vld1.32 {q7}, [%[buffer]]!\n\t"
+
+        "add %[i], %[i], #32\n\t"
+
+        "vadd.i32 q0,  q0,  q1\n\t" // 1
+        "vadd.i32 q2,  q2,  q3\n\t"
+        "vadd.i32 q4,  q4,  q5\n\t"
+        "vadd.i32 q6,  q6,  q7\n\t"
+      
+        "vpadd.i32 d0,  d0,  d1\n\t" // 2
+        "vpadd.i32 d4,  d4,  d5\n\t"
+        "vpadd.i32 d8,  d8,  d9\n\t"
+        "vpadd.i32 d12, d12, d13\n\t"
+
+        "vpadd.i32 d0,  d0,  d0\n\t" // 3
+        "vpadd.i32 d4,  d4,  d4\n\t"
+        "vpadd.i32 d8,  d8,  d8\n\t"
+        "vpadd.i32 d12, d12, d12\n\t"
+
+        "vmov.32 %[tmp1], d0[0]\n\t" // 4
+        "vmov.32 %[tmp2], d4[0]\n\t"
+        "vmov.32 %[tmp3], d8[0]\n\t"
+        "vmov.32 %[tmp4], d12[0]\n\t"
+
+        "add %[total], %[total], %[tmp1]\n\t" // 5
+        "add %[total], %[total], %[tmp2]\n\t"
+        "add %[total], %[total], %[tmp3]\n\t"
+        "add %[total], %[total], %[tmp4]\n\t"
+
+        "cmp %[i], %[numItems_simd]\n\t"
+        "ble .L_iLoopStart5\n\t"
+          : 
+            [total] "+r" (total8), 
+            [tmp1] "+r" (tmp1), [tmp2] "+r" (tmp2), [tmp3] "+r" (tmp3), [tmp4] "+r" (tmp4), [tmp5] "+r" (tmp5), [tmp6] "+r" (tmp6), [tmp7] "+r" (tmp7), [tmp8] "+r" (tmp8),
+            [buffer] "+r"(bufferLocal),
+            [i] "+r"(i)
+          :
+            [numItems_simd] "r"(numItems_simd)
+          :
+            "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15",
+            "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31");
+//    }
+
+    // Finish up the remainder
+    for(; i<numItems; i++) {
+      const s32 curItem = buffer[i];
+      total8 += curItem;
+    }
+  }
+
+  const f64 t8 = GetTimeF64();
+
+ for(s32 j=0; j<numRepeats; j++) {
+    s32 i=0;
+
+    // 64x unrolled
+    const s32 numItems_simd = 64 * (numItems / 64) - 63;
+    s32 * restrict bufferLocal = buffer;
+    s32 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
+    //for(s32 i=0; i<numItems_simd; i+=64) {
+      asm volatile(
+        ".L_iLoopStart6:\n\t"
+        "vld1.32 {q0}, [%[buffer]]!\n\t" 
+        "vld1.32 {q1}, [%[buffer]]!\n\t" 
+        "vld1.32 {q2}, [%[buffer]]!\n\t"
+        "vld1.32 {q3}, [%[buffer]]!\n\t"
+        "vld1.32 {q4}, [%[buffer]]!\n\t"
+        "vld1.32 {q5}, [%[buffer]]!\n\t"
+        "vld1.32 {q6}, [%[buffer]]!\n\t"
+        "vld1.32 {q7}, [%[buffer]]!\n\t"
+        "vld1.32 {q8}, [%[buffer]]!\n\t"
+        "vld1.32 {q9}, [%[buffer]]!\n\t"
+        "vld1.32 {q10}, [%[buffer]]!\n\t"
+        "vld1.32 {q11}, [%[buffer]]!\n\t"
+        "vld1.32 {q12}, [%[buffer]]!\n\t"
+        "vld1.32 {q13}, [%[buffer]]!\n\t"
+        "vld1.32 {q14}, [%[buffer]]!\n\t"
+        "vld1.32 {q15}, [%[buffer]]!\n\t"
+
+        "add %[i], %[i], #64\n\t"
+
+        "vadd.i32 q0,  q0,  q1\n\t" // 1
+        "vadd.i32 q2,  q2,  q3\n\t"
+        "vadd.i32 q4,  q4,  q5\n\t"
+        "vadd.i32 q6,  q6,  q7\n\t"
+        "vadd.i32 q8,  q8,  q9\n\t"
+        "vadd.i32 q10, q10, q11\n\t"
+        "vadd.i32 q12, q12, q13\n\t"
+        "vadd.i32 q14, q14, q15\n\t"
+      
+        "vpadd.i32 d0,  d0,  d1\n\t" // 2
+        "vpadd.i32 d4,  d4,  d5\n\t"
+        "vpadd.i32 d8,  d8,  d9\n\t"
+        "vpadd.i32 d12, d12, d13\n\t"
+        "vpadd.i32 d16, d16, d17\n\t"
+        "vpadd.i32 d20, d20, d21\n\t"
+        "vpadd.i32 d24, d24, d25\n\t"
+        "vpadd.i32 d28, d28, d29\n\t"
+
+        "vpadd.i32 d0,  d0,  d0\n\t" // 3
+        "vpadd.i32 d4,  d4,  d4\n\t"
+        "vpadd.i32 d8,  d8,  d8\n\t"
+        "vpadd.i32 d12, d12, d12\n\t"
+        "vpadd.i32 d16, d16, d16\n\t"
+        "vpadd.i32 d20, d20, d20\n\t"
+        "vpadd.i32 d24, d24, d24\n\t"
+        "vpadd.i32 d28, d28, d28\n\t"
+
+        "vmov.32 %[tmp1], d0[0]\n\t" // 4
+        "vmov.32 %[tmp2], d4[0]\n\t"
+        "vmov.32 %[tmp3], d8[0]\n\t"
+        "vmov.32 %[tmp4], d12[0]\n\t"
+        "vmov.32 %[tmp5], d16[0]\n\t"
+        "vmov.32 %[tmp6], d20[0]\n\t"
+        "vmov.32 %[tmp7], d24[0]\n\t"
+        "vmov.32 %[tmp8], d28[0]\n\t"
+
+     /*   "add %[tmp1], %[tmp1], %[tmp2]\n\t" // 5
+        "add %[tmp3], %[tmp3], %[tmp4]\n\t"
+        "add %[tmp5], %[tmp5], %[tmp6]\n\t"
+        "add %[tmp7], %[tmp7], %[tmp8]\n\t"
+
+        "add %[tmp1], %[tmp1], %[tmp3]\n\t"
+        "add %[tmp5], %[tmp5], %[tmp7]\n\t"
+
+        "add %[tmp1], %[tmp1], %[tmp5]\n\t"
+
+        "add %[total], %[total], %[tmp1]\n\t"*/
+
+        "add %[total], %[total], %[tmp1]\n\t"
+        "add %[total], %[total], %[tmp2]\n\t"
+        "add %[total], %[total], %[tmp3]\n\t"
+        "add %[total], %[total], %[tmp4]\n\t"
+        "add %[total], %[total], %[tmp5]\n\t"
+        "add %[total], %[total], %[tmp6]\n\t"
+        "add %[total], %[total], %[tmp7]\n\t"
+        "add %[total], %[total], %[tmp8]\n\t"
+
+        "cmp %[i], %[numItems_simd]\n\t"
+        "ble .L_iLoopStart6\n\t"
+          : 
+            [total] "+r" (total9), 
+            [tmp1] "+r" (tmp1), [tmp2] "+r" (tmp2), [tmp3] "+r" (tmp3), [tmp4] "+r" (tmp4), [tmp5] "+r" (tmp5), [tmp6] "+r" (tmp6), [tmp7] "+r" (tmp7), [tmp8] "+r" (tmp8),
+            [buffer] "+r"(bufferLocal),
+            [i] "+r"(i)
+          :
+            [numItems_simd] "r"(numItems_simd)
+          :
+            "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15",
+            "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31");
+//    }
+
+    // Finish up the remainder
+    for(; i<numItems; i++) {
+      const s32 curItem = buffer[i];
+      total9 += curItem;
+    }
+  }
+
+  const f64 t9 = GetTimeF64();
+
   printf("\n\n");
 
   printf("%d in %f\n", total1, t1-t0);
@@ -4497,6 +4671,8 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
   printf("%d in %f\n", total5, t5-t4);
   printf("%d in %f\n", total6, t6-t5);
   printf("%d in %f\n", total7, t7-t6);
+  printf("%d in %f\n", total8, t8-t7);
+  printf("%d in %f\n", total9, t9-t8);
 
   ASSERT_TRUE(total1 == (562894465*numRepeats));
 //  ASSERT_TRUE(total2 == (562894465*numRepeats));
@@ -4505,6 +4681,8 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
   ASSERT_TRUE(total5 == (562894465*numRepeats));
   ASSERT_TRUE(total6 == (562894465*numRepeats));
   ASSERT_TRUE(total7 == (562894465*numRepeats));
+  ASSERT_TRUE(total8 == (562894465*numRepeats));
+  ASSERT_TRUE(total9 == (562894465*numRepeats));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(Coretech_Common, A7Speed)
