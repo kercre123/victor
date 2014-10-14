@@ -676,14 +676,14 @@ namespace Anki {
             const float32x2_t a7_1 = vget_high_f32(a7);
             const float32x2_t a7_0 = vget_low_f32(a7);
 
-            { const float32x2_t squared = vpadd_f32(a0_0 * a0_0, a0_1 * a0_1); AWAt_raw[0][0] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a0_0 * a1_0, a0_1 * a1_1); AWAt_raw[0][1] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a0_0 * a2_0, a0_1 * a2_1); AWAt_raw[0][2] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a0_0 * a3_0, a0_1 * a3_1); AWAt_raw[0][3] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a0_0 * a4_0, a0_1 * a4_1); AWAt_raw[0][4] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a0_0 * a5_0, a0_1 * a5_1); AWAt_raw[0][5] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a0_0 * a6_0, a0_1 * a6_1); AWAt_raw[0][6] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
-            { const float32x2_t squared = vpadd_f32(a0_0 * a7_0, a0_1 * a7_1); AWAt_raw[0][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
+            { const float32x4_t squared = a0 * a0; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][0] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
+            { const float32x4_t squared = a0 * a1; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][1] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
+            { const float32x4_t squared = a0 * a2; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][2] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
+            { const float32x4_t squared = a0 * a3; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][3] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
+            { const float32x4_t squared = a0 * a4; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][4] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
+            { const float32x4_t squared = a0 * a5; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][5] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
+            { const float32x4_t squared = a0 * a6; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][6] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
+            { const float32x4_t squared = a0 * a7; const float32x2_t squaredSplit = vpadd_f32(vget_high_f32(squared), vget_low_f32(squared)); AWAt_raw[0][7] += vget_lane_f32(vpadd_f32(squaredSplit, squaredSplit), 0); }
             { const float32x2_t squared = vpadd_f32(a0_0 * tGradientValue_0, a0_1 * tGradientValue_1); b_raw[0] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
 
             { const float32x2_t squared = vpadd_f32(a1_0 * a1_0, a1_1 * a1_1); AWAt_raw[1][1] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
