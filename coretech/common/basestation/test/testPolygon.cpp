@@ -20,11 +20,16 @@ using namespace Anki;
 
 GTEST_TEST(TestPolygon, MinAndMax)
 {
-  Poly3f poly3d;
+  Poly3f poly3d {
+      {1.0f, 1.1f, 7.5f},
+      {0.0f, 1.2f, -7.5f},
+      {-1.0f, -0.8f, 30.3f}
+    };
 
-  poly3d.emplace_back( Point3f{1.0f, 1.1f, 7.5f} );
-  poly3d.emplace_back( Point3f{0.0f, 1.2f, -7.5f} );
-  poly3d.emplace_back( Point3f{-1.0f, -0.8f, 30.3f} );
+
+  // poly3d.emplace_back( Point3f{1.0f, 1.1f, 7.5f} );
+  // poly3d.emplace_back( Point3f{0.0f, 1.2f, -7.5f} );
+  // poly3d.emplace_back( Point3f{-1.0f, -0.8f, 30.3f} );
 
   EXPECT_NE(poly3d.begin(), poly3d.end());
 
@@ -39,6 +44,15 @@ GTEST_TEST(TestPolygon, MinAndMax)
   EXPECT_FLOAT_EQ(poly2d.GetMinY(), -0.8);
   EXPECT_FLOAT_EQ(poly2d.GetMaxX(), 1.0);
   EXPECT_FLOAT_EQ(poly2d.GetMaxY(), 1.2);
+
+  const Poly2f& constPoly(poly2d);
+
+  Poly2f poly2d_copy(constPoly);
+
+  EXPECT_FLOAT_EQ(poly2d_copy.GetMinX(), -1.0);
+  EXPECT_FLOAT_EQ(poly2d_copy.GetMinY(), -0.8);
+  EXPECT_FLOAT_EQ(poly2d_copy.GetMaxX(), 1.0);
+  EXPECT_FLOAT_EQ(poly2d_copy.GetMaxY(), 1.2);
 
   Quad2f quad {{3.5f,  1.f}, { 2.f,  3.f}, { 1.f,  .1f}, { .5f,  1.2f}};
   Poly2f polyFromQuad(quad);

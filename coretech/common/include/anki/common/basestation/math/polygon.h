@@ -27,16 +27,20 @@ template<PolygonDimType N, typename T>
 class Quadrilateral;
 
 template <PolygonDimType N, typename T>
-class Polygon : public std::vector< Point<N,T> >
+class Polygon
 {
+protected:
+  using PointContainer = std::vector< Point<N,T> >;
+
 public:
 
   Polygon();
   Polygon(const Polygon<N,T>& other);
 
+  // TEMP: try again without inheritence!!
   // TODO:(bn) somehow this constructor doesn't work...
-  // // Initialize polygon from list of points. Assumes points are already in clockwise order!
-  // Polygon(std::initializer_list< Point<N,T> >& points);
+  // Initialize polygon from list of points. Assumes points are already in clockwise order!
+  Polygon(std::initializer_list< Point<N,T> > points);
 
   // Construct from polygon living in one dimension higher. Last
   // dimension simply gets dropped. For example, this allows
@@ -66,6 +70,28 @@ public:
 
   // Returns the vector pointing from the point at idx to the point at idx + 1 (wrapping around at the end)
   Point<N,T> GetEdgeVector(size_t idx) const;
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // container functions:
+  ////////////////////////////////////////////////////////////////////////////////
+
+  typename PointContainer::iterator begin() {return _points.begin();}
+  typename PointContainer::iterator end() {return _points.end();}
+  typename PointContainer::const_iterator begin() const {return _points.begin();}
+  typename PointContainer::const_iterator end() const {return _points.end();}
+
+  void push_back(const Point<N, T>& val);
+  void push_back(Point<N, T>&& val);
+  void emplace_back(Point<N, T>&& val);
+
+  Point<N,T>& operator[] (size_t idx);
+  const Point<N,T>& operator[] (size_t idx) const;
+
+  size_t size() const;
+
+protected:
+
+  PointContainer _points;
 
 };
 
