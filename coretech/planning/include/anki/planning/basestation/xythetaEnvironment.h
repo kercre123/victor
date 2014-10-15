@@ -109,13 +109,15 @@ public:
 
 struct IntermediatePosition
 {
-  IntermediatePosition(State_c s, float d)
+  IntermediatePosition(State_c s, StateTheta nearestTheta, float d)
     : position(s)
     , oneOverDistanceFromLastPosition(d)
+    , nearestTheta(nearestTheta)
     {
     }
 
   State_c position;
+  StateTheta nearestTheta;
   float oneOverDistanceFromLastPosition;
 };
 
@@ -339,6 +341,10 @@ public:
                   State_c& lastSafeState,
                   xythetaPlan& validPlan) const;
 
+  // If we are going to be doing a full planner cycle, this function
+  // will be called to prepare the environment, including
+  // precomputing things, etc.
+  void PrepareForPlanning();
 
   // returns the raw underlying motion primitive. Note that it is centered at (0,0)
   const MotionPrimitive& GetRawMotionPrimitive(StateTheta theta, ActionID action) const;
@@ -367,6 +373,8 @@ public:
   inline static float GetXFromStateID(StateID sid);
   inline static float GetYFromStateID(StateID sid);
   inline static float GetThetaFromStateID(StateID sid);
+
+  // TEMP:  // TODO:(bn) explicit?
 
   inline float GetX_mm(StateXY x) const;
   inline float GetY_mm(StateXY y) const;
@@ -426,11 +434,8 @@ private:
   // First index is starting angle, second is prim ID
   std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
 
-  // Obstacles. Cost over MAX_OBSTACLE_COST means infinite cost (aka hard obstacle)
-  std::vector< std::pair<const RotatedRectangle, Cost> > obstacles_;
-
   // Obstacles per theta. First index is theta, second of pair is cost
-  std::vector< std::vector< std::pair<const FastPolygon, Cost> > > obstaclesPerAngle_;
+  std::vector< std::vector< std::pair<FastPolygon, Cost> > > obstaclesPerAngle_;
   
 
   // index is actionID
