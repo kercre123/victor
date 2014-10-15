@@ -341,7 +341,11 @@ namespace Anki {
       
       // ========= Lights ==========
       void SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color);
+     
       
+      // Abort everything the robot is doing, including path following, animations,
+      // and docking.
+      Result AbortAll();
       
     protected:
       
@@ -543,6 +547,9 @@ namespace Anki {
       
       Result SendStartFaceTracking(const u8 timeout_sec);
       Result SendStopFaceTracking();
+      
+      Result SendAbortDocking();
+      Result SendAbortAnimation();
       
     }; // class Robot
 

@@ -1856,5 +1856,41 @@ namespace Anki {
     } // RemoveReactionCallback()
     
     
+    Result Robot::AbortAll()
+    {
+      bool anyFailures = false;
+      
+      if(ClearPath() != RESULT_OK) {
+        anyFailures = true;
+      }
+      
+      if(SendAbortDocking() != RESULT_OK) {
+        anyFailures = true;
+      }
+      
+      if(SendAbortAnimation() != RESULT_OK) {
+        anyFailures = true;
+      }
+      
+      if(anyFailures) {
+        return RESULT_FAIL;
+      } else {
+        return RESULT_OK;
+      }
+      
+    }
+    
+    Result Robot::SendAbortAnimation()
+    {
+      MessageAbortAnimation m;
+      return _msgHandler->SendMessage(GetID(), m);
+    }
+    
+    Result Robot::SendAbortDocking()
+    {
+      MessageAbortDocking m;
+      return _msgHandler->SendMessage(GetID(), m);
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

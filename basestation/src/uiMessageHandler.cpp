@@ -253,7 +253,11 @@ namespace Anki {
       const u8 numRetries = 3;
       
       ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-      robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID), numRetries);
+      if(static_cast<bool>(msg.usePreDockPose)) {
+        robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID), numRetries);
+      } else {
+        robot->GetActionList().AddAction(new PickAndPlaceObjectAction(selectedObjectID), numRetries);
+      }
       
       return RESULT_OK;
     }
@@ -279,6 +283,11 @@ namespace Anki {
     {
       robot->ClearPath();
       return RESULT_OK;
+    }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_AbortAll const& msg)
+    {
+      return robot->AbortAll();
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_DrawPoseMarker const& msg)

@@ -1227,6 +1227,16 @@ namespace Anki
           _robot->Delocalize();
         }
         
+        // Check to see if this object is the one the robot is carrying.
+        if(_robot->GetCarryingObject() == object->GetID()) {
+          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingCarriedObject",
+                           "Clearing %s object %d which robot %d think it is carrying.\n",
+                           object->GetType().GetName().c_str(),
+                           object->GetID().GetValue(),
+                           _robot->GetID());
+          _robot->UnSetCarryingObject();
+        }
+        
         // NOTE: The object should erase its own visualization upon destruction
         delete object;
         

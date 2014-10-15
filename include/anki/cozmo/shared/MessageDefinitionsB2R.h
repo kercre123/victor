@@ -152,6 +152,10 @@ ADD_MESSAGE_MEMBER(u8, markerType)
 ADD_MESSAGE_MEMBER(u8, markerType2) // End marker (for bridge crossing only)
 END_MESSAGE_DEFINITION(DockWithObject)
 
+// AbortDocking
+START_MESSAGE_DEFINITION(AbortDocking, 1)
+END_MESSAGE_DEFINITION(AbortDocking)
+
 // PlaceObjectOnGround
 START_MESSAGE_DEFINITION(PlaceObjectOnGround, 1)
 ADD_MESSAGE_MEMBER(f32, rel_x_mm)    // Distance of object face center in forward axis
@@ -241,6 +245,10 @@ START_MESSAGE_DEFINITION(PlayAnimation, 1)
 ADD_MESSAGE_MEMBER(u32, numLoops)
 ADD_MESSAGE_MEMBER(u8, animationID)
 END_MESSAGE_DEFINITION(PlayAnimation)
+
+// AbortAnimation
+START_MESSAGE_DEFINITION(AbortAnimation, 1)
+END_MESSAGE_DEFINITION(AbortAnimation)
 
 // IMURequest
 START_MESSAGE_DEFINITION(IMURequest, 1)

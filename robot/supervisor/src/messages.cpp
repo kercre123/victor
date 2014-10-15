@@ -485,6 +485,16 @@ namespace Anki {
         }
       }
       
+      void ProcessAbortAnimationMessage(const AbortAnimation& msg)
+      {
+        AnimationController::Stop();
+      }
+      
+      void ProcessAbortDockingMessage(const AbortDocking& msg)
+      {
+        DockingController::ResetDocker();
+      }
+      
 // ----------- Send messages -----------------
       
       
