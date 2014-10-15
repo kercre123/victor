@@ -465,8 +465,14 @@ namespace Anki {
     IDockAction::IDockAction(ObjectID objectID)
     : _dockObjectID(objectID)
     , _dockMarker(nullptr)
+    , _maxPreActionPoseDistance(MAX_DISTANCE_TO_PREDOCK_POSE)
     {
       
+    }
+    
+    void IDockAction::SetMaxPreActionPoseDistance(f32 maxDistance)
+    {
+      _maxPreActionPoseDistance = maxDistance;
     }
     
     IAction::ActionResult IDockAction::Init(Robot& robot)
@@ -525,7 +531,7 @@ namespace Anki {
       
       const f32 closestDist = sqrtf(closestDistSq);
       
-      if(closestDist > MAX_DISTANCE_TO_PREDOCK_POSE) {
+      if(_maxPreActionPoseDistance > 0.f && closestDist > _maxPreActionPoseDistance) {
         PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
                          "Robot is too far from pre-action pose (%.1fmm).", closestDist);
         return FAILURE_RETRY;

@@ -343,8 +343,9 @@ namespace Anki {
       void SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color);
      
       
-      // Abort everything the robot is doing, including path following, animations,
-      // and docking.
+      // Abort everything the robot is doing, including path following, actions,
+      // animations, and docking. This is like the big red E-stop button.
+      // TODO: Probably need a more elegant way of doing this.
       Result AbortAll();
       
     protected:

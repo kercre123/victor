@@ -149,6 +149,10 @@ namespace Anki {
     public:
       IDockAction(ObjectID objectID);
       
+      // Use a value <= 0 to ignore how far away the robot is from the closest
+      // PreActionPose and proceed regardless.
+      void SetMaxPreActionPoseDistance(f32 maxDistance);
+      
     protected:
       
       // IDockAction implements these two required methods from IAction for its
@@ -174,6 +178,7 @@ namespace Anki {
       ObjectID                    _dockObjectID;
       DockAction_t                _dockAction;
       const Vision::KnownMarker*  _dockMarker;
+      f32                         _maxPreActionPoseDistance;
       f32                         _waitToVerifyTime;
 
     }; // class IDockAction

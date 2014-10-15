@@ -1860,6 +1860,8 @@ namespace Anki {
     {
       bool anyFailures = false;
       
+      _actionList.Clear();
+      
       if(ClearPath() != RESULT_OK) {
         anyFailures = true;
       }

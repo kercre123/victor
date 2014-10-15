@@ -256,7 +256,9 @@ namespace Anki {
       if(static_cast<bool>(msg.usePreDockPose)) {
         robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID), numRetries);
       } else {
-        robot->GetActionList().AddAction(new PickAndPlaceObjectAction(selectedObjectID), numRetries);
+        PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID);
+        action->SetMaxPreActionPoseDistance(-1.f); // disable pre-action pose distance check
+        robot->GetActionList().AddAction(action, numRetries);
       }
       
       return RESULT_OK;

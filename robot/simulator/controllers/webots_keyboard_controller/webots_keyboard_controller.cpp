@@ -94,6 +94,7 @@ namespace Anki {
       void SendSelectNextObject();
       void SendExecuteBehavior(BehaviorManager::Mode mode);
       void SendAbortPath();
+      void SendAbortAll();
       void SendDrawPoseMarker(const Pose3d& p);
       void SendErasePoseMarker();
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
@@ -483,7 +484,7 @@ namespace Anki {
               {
                 if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT + Q: Cancel everything (paths, animations, docking, etc.)
-                  
+                  SendAbortAll();
                 } else {
                   // Just Q: Just cancel path
                   SendAbortPath();
@@ -804,6 +805,12 @@ namespace Anki {
       void SendAbortPath()
       {
         MessageU2G_AbortPath m;
+        SendMessage(m);
+      }
+      
+      void SendAbortAll()
+      {
+        MessageU2G_AbortAll m;
         SendMessage(m);
       }
       
