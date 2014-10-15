@@ -247,31 +247,33 @@ namespace Anki {
       // draw bounding circles, then draw the actual polygon
       Planning::Path innerCircle;
 
-      PRINT_NAMED_INFO("VizManager.DrawPoly", "Drawing poly centered at (%f, %f) with radii %f and %f\n",
-                       poly.GetCheckCenter().x(),
-                       poly.GetCheckCenter().y(),
-                       poly.GetInscribedRadius(),
-                       poly.GetCircumscribedRadius());
+      // PRINT_NAMED_INFO("VizManager.DrawPoly", "Drawing poly centered at (%f, %f) with radii %f and %f\n",
+      //                  poly.GetCheckCenter().x(),
+      //                  poly.GetCheckCenter().y(),
+      //                  poly.GetInscribedRadius(),
+      //                  poly.GetCircumscribedRadius());
 
-      // hack! don't want to collide with path ids
-      u32 pathId = polyID + 2300;
-      innerCircle.AppendArc(0,
-                            poly.GetCheckCenter().x(), poly.GetCheckCenter().y(),
-                            poly.GetInscribedRadius(),
-                            0.0f, 2*M_PI,
-                            1.0, 1.0, 1.0);
-      DrawPath(pathId, innerCircle, color);
+      // // don't draw circles for now
 
-      Planning::Path outerCircle;
+      // // hack! don't want to collide with path ids
+      // u32 pathId = polyID + 2300;
+      // innerCircle.AppendArc(0,
+      //                       poly.GetCheckCenter().x(), poly.GetCheckCenter().y(),
+      //                       poly.GetInscribedRadius(),
+      //                       0.0f, 2*M_PI,
+      //                       1.0, 1.0, 1.0);
+      // DrawPath(pathId, innerCircle, color);
 
-      // hack! don't want to collide with path ids
-      pathId = polyID + 2400;
-      outerCircle.AppendArc(0,
-                            poly.GetCheckCenter().x(), poly.GetCheckCenter().y(),
-                            poly.GetCircumscribedRadius(),
-                            0.0f, 2*M_PI,
-                            1.0, 1.0, 1.0);
-      DrawPath(pathId, outerCircle, color);
+      // Planning::Path outerCircle;
+
+      // // hack! don't want to collide with path ids
+      // pathId = polyID + 2400;
+      // outerCircle.AppendArc(0,
+      //                       poly.GetCheckCenter().x(), poly.GetCheckCenter().y(),
+      //                       poly.GetCircumscribedRadius(),
+      //                       0.0f, 2*M_PI,
+      //                       1.0, 1.0, 1.0);
+      // DrawPath(pathId, outerCircle, color);
 
 
       DrawPoly(polyID, poly.GetSimplePolygon(), color);
@@ -364,7 +366,7 @@ namespace Anki {
                               const ColorRGBA& color)
     {
       ErasePath(pathID);
-      printf("drawing path %u of length %hhu\n", pathID, p.GetNumSegments());
+      // printf("drawing path %u of length %hhu\n", pathID, p.GetNumSegments());
       
       for (int s=0; s < p.GetNumSegments(); ++s) {
         const Planning::PathSegmentDef& seg = p.GetSegmentConstRef(s).GetDef();
@@ -428,7 +430,7 @@ namespace Anki {
       VizErasePath v;
       v.pathID = pathID;
 
-      printf("viz: erasing path %u\n", pathID);
+      // printf("viz: erasing path %u\n", pathID);
       
       SendMessage( GET_MESSAGE_ID(VizErasePath), &v );
     }

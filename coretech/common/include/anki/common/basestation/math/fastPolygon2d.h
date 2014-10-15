@@ -68,9 +68,6 @@ private:
   float _circumscribedRadiusSquared;
   float _inscribedRadiusSquared;
 
-  // TEMP: 
-public:
-
   // for the points that are between the circles, we need to check
   // that the point is inside the polygon by checking if the point is
   // "to the left" of each edge. For each edge, this vector holds a
@@ -83,9 +80,6 @@ public:
   // the vector. The optional SortEdgeVectors will re-order this for
   // efficiency
   std::vector< std::pair< Vec2f, size_t> > _perpendicularEdgeVectors;
-
-  // TEMP: 
-private:
 
   // helper functions
 

@@ -116,13 +116,10 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
     const float padding = 5.0;
 
     unsigned int numAdded = 0;
+    unsigned int vizID = 0;
 
     Planning::StateTheta numAngles = (StateTheta)env_.GetNumAngles(); // TEMP: 
     for(StateTheta theta=0; theta < numAngles; ++theta) {
-
-      // TEMP: for now just do the one we are at
-      if(env_.GetTheta(robot_->GetPose().GetRotationAngle<'Z'>().ToFloat()) != theta)
-        continue;
 
       float thetaRads = env_.GetTheta_c(theta);
 
@@ -139,21 +136,22 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
         const FastPolygon& expandedPoly =
           env_.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
 
-        if(vizColor != nullptr) {
+        // only draw the angle we are currently at
+        if(vizColor != nullptr && env_.GetTheta(robot_->GetPose().GetRotationAngle<'Z'>().ToFloat()) == theta &&
+           !isReplanning) {
+
           // TODO: manage the quadID better so we don't conflict
           // TODO:(bn) handle isReplanning with color??
-          VizManager::getInstance()->DrawPlannerObstacle(isReplanning, numAdded++, expandedPoly, *vizColor);
+          VizManager::getInstance()->DrawPlannerObstacle(isReplanning, vizID++ , expandedPoly, *vizColor);
         }
-        else {
-          numAdded++;
-        }
+        numAdded++;
       }
 
-      if(theta == 0) {
-        PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstacles.ImportedObstacles",
-                         "imported %d obstacles form blockworld",
-                         numAdded);
-      }
+      // if(theta == 0) {
+      //   PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstacles.ImportedObstacles",
+      //                    "imported %d obstacles form blockworld",
+      //                    numAdded);
+      // }
     }
 
     PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstacles.ImportedAngles",
@@ -345,6 +343,8 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                        "from (%f, %f, %f) to (%f %f %f)\n",
                        lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,
                        impl_->planner_.GetGoal().x_mm, impl_->planner_.GetGoal().y_mm, impl_->planner_.GetGoal().theta);
+
+      impl_->env_.PrepareForPlanning();
 
       if(!impl_->planner_.Replan(LATTICE_PLANNER_MAX_EXPANSIONS)) {
         PRINT_NAMED_WARNING("LatticePlanner.ReplanIfNeeded.PlannerFailed", "plan failed during replanning!\n");
