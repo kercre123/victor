@@ -11,6 +11,8 @@
  **/
 
 #include "gtest/gtest.h"
+
+#include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
@@ -25,7 +27,6 @@ GTEST_TEST(TestPolygon, MinAndMax)
       {0.0f, 1.2f, -7.5f},
       {-1.0f, -0.8f, 30.3f}
     };
-
 
   // poly3d.emplace_back( Point3f{1.0f, 1.1f, 7.5f} );
   // poly3d.emplace_back( Point3f{0.0f, 1.2f, -7.5f} );
@@ -77,5 +78,57 @@ GTEST_TEST(TestPolygon, center)
   EXPECT_FLOAT_EQ(centroid.x(), 0.0);
   EXPECT_FLOAT_EQ(centroid.y(), 1.0);
   EXPECT_FLOAT_EQ(centroid.z(), 2.0);
-
 }
+
+GTEST_TEST(TestPolygon, FastPolygonContains)
+{
+  Poly2f poly {
+    {-184.256309,  108.494849},
+    {-201.111228,  150.067496},
+    {-201.111228,  204.267496},
+    {-160.19712,   220.855432},
+    { -82.19712,   220.855432},
+    { -65.342201,  179.282785},
+    { -65.342201,  125.082785},
+    {-106.256309,  108.494849}
+  };
+
+  std::vector<Point2f> pointsInside {
+    {-200.0, 202.0},
+    {-180.0, 210.0},
+    {-132.0, 220.0},
+    {-81.0, 215.0},
+    {-68.0, 180.0},
+    {-67.0, 126.0},
+    {-180.0, 109},
+    {-188.0, 121.0},
+    {-198.0, 153.0},
+    {-146.0, 174.0},
+    {-130.0, 164.0}
+  };
+
+  std::vector<Point2f> pointsOutside {
+    {0.0, 0.0},
+    {-0.0, -0.0},
+    {-187.0, 214.0},
+    {-61.0, 215.0},
+    {-65.0, 186.0},
+    {-135.0, 107.0},
+    {-200.0, 105.0}
+  };
+
+  FastPolygon fastPoly(poly);
+
+  for(const auto& point : pointsInside) {
+    EXPECT_TRUE( fastPoly.Contains( point ) )
+      << "should contain point ("<<point.x()<<", "<<point.y()<<")";
+  }
+
+  for(const auto& point : pointsOutside) {
+    EXPECT_FALSE( fastPoly.Contains( point ) )
+      << "should not point ("<<point.x()<<", "<<point.y()<<")";
+  }
+
+  printf("did %d dot products for %d checks\n", FastPolygon::_numDotProducts, FastPolygon::_numChecks);
+}
+

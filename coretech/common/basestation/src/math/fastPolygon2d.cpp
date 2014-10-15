@@ -18,6 +18,10 @@
 
 namespace Anki {
 
+int FastPolygon::_numChecks = 0;
+int FastPolygon::_numDotProducts = 0;
+
+
 FastPolygon::FastPolygon(const Poly2f& basePolygon)
   : _poly(basePolygon)
 {
@@ -30,10 +34,50 @@ FastPolygon::FastPolygon(const Poly2f& basePolygon)
   SortEdgeVectors();
 }
 
-bool FastPolygon::Contains(float x, float y) const
+bool FastPolygon::Contains(const Point2f& testPoint) const
 {
-  // TEMP: 
-  return false;
+  // the goal here is to throw out points as quickly as
+  // possible. First compute the squared distance to the center, and
+  // do circle checks
+
+  _numChecks++;
+
+  float distSqaured =
+    std::pow( testPoint.y() - _circleCenter.y(), 2) +
+    std::pow( testPoint.x() - _circleCenter.x(), 2);
+
+  if(distSqaured > _circumscribedRadiusSquared) {
+    // definitely not inside
+    return false;
+  }
+
+  if(distSqaured < _inscribedRadiusSquared) {
+    // definitely is inside
+    return true;
+  }
+
+  // otherwise we have to check the actual edges.
+
+  size_t numPts = _poly.size();
+  assert(_perpendicularEdgeVectors.size() == numPts);
+
+  unsigned int numChecked = 0;
+
+  for(size_t i = 0; i < numPts; ++i) {
+    // if the dot product is positive, the test point is inside of the
+    // edge, so we must continue. Otherwise we can bail out early
+    float dot = Anki::DotProduct( _perpendicularEdgeVectors[i], testPoint - _poly[i] );
+
+    _numDotProducts++;
+
+    if( dot > 0.0f ) {
+      // was inside circle, but outside of an edge
+      return false;
+    }
+  }
+
+  // was inside of outer circle, and inside of all edges, so is inside
+  return true;
 }
 
 float FastPolygon::GetCircumscribedRadius() const

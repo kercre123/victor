@@ -29,7 +29,7 @@ public:
   FastPolygon(const Poly2f& basePolygon);
 
   // Returns true if the point (x,y) is inside this polygon, false otherwise
-  bool Contains(float x, float y) const;
+  bool Contains(const Point2f& testPoint) const;
 
   const Poly2f& GetSimplePolygon() const {return _poly;}
 
@@ -43,6 +43,9 @@ public:
   // plotting)
   float GetCircumscribedRadius() const;
   float GetInscribedRadius() const;
+
+  static int _numChecks;
+  static int _numDotProducts;
 
 private:
 
