@@ -38,6 +38,31 @@ FastPolygon::FastPolygon(const Poly2f& basePolygon)
   ComputeCircles();
 }
 
+
+
+/*
+ * NOTE: TODO: (bn): There is another method that could be faster,
+ * here:
+ *
+ * One you know that the point is in between the two circles (centered
+ * at the same center), then you only need to do 1 dot product check!
+ * You simply need to look at the angle between the center and the
+ * test point. then check which edge corresponds to that angle, and
+ * just check that one edge. The other edges can't matter.
+ *
+ * Imagine tracing a ray from the center, through the test point, and
+ * out. That point is inside the polygon if and only if the ray
+ * crosses the point before it crosses an edge. We can pre-compute
+ * which edge it will cross by computing for each edge the start and
+ * stop angle. Then we can just search through these until we find the
+ * correct edge, and just do one dot product!
+ *
+ * This does require an atan2, but we could probably use a very rough
+ * and fast approximation and just check two or three edges and
+ * probably save time
+ *
+ */
+
 bool FastPolygon::Contains(const Point2f& testPoint) const
 {
   // the goal here is to throw out points as quickly as
