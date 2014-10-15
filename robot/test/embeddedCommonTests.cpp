@@ -14,6 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #endif
 
 // #define RUN_PC_ONLY_TESTS
+// #define RUN_A7_ASSEMBLY_TEST
 
 #include "anki/common/robot/config.h"
 #include "anki/common/vectorTypes.h"
@@ -40,7 +41,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 using namespace Anki;
 using namespace Anki::Embedded;
 
-#if 0
 GTEST_TEST(CoreTech_Common, SerializeStrings)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -4271,9 +4271,7 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
 } // GTEST_TEST(CoreTech_Common, Benchmarking)
 #endif //#ifdef TEST_BENCHMARKING
 
-#endif // #if 0
-
-#if defined(__ARM_ARCH_7A__)
+#if defined(__ARM_ARCH_7A__) && defined(RUN_A7_ASSEMBLY_TEST)
 #define HUGE_BUFFER_SIZE 100000000
 static char hugeBuffer[HUGE_BUFFER_SIZE];
 
@@ -4983,7 +4981,7 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(Coretech_Common, A7Speed)
-#endif // #if defined(__ARM_ARCH_7A__)
+#endif // #if defined(__ARM_ARCH_7A__) && defined(RUN_A7_ASSEMBLY_TEST)
 
 #ifdef RUN_PC_ONLY_TESTS
 
@@ -5079,7 +5077,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
   numPassedTests = 0;
   numFailedTests = 0;
-/*
+
   CALL_GTEST_TEST(CoreTech_Common, SerializeStrings);
   CALL_GTEST_TEST(CoreTech_Common, DrawQuadrilateral);
   CALL_GTEST_TEST(CoreTech_Common, HostIntrinsics_m4);
@@ -5135,12 +5133,12 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, ArraySpecifiedClass);
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
-*/
+
 #ifdef TEST_BENCHMARKING
   CALL_GTEST_TEST(CoreTech_Common, Benchmarking);
 #endif
 
-#if defined(__ARM_ARCH_7A__)
+#if defined(__ARM_ARCH_7A__) && defined(RUN_A7_ASSEMBLY_TEST)
   CALL_GTEST_TEST(Coretech_Common, A7Speed);
 #endif
 
