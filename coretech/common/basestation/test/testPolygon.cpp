@@ -82,6 +82,8 @@ GTEST_TEST(TestPolygon, center)
 
 GTEST_TEST(TestPolygon, FastPolygonContains)
 {
+  FastPolygon::ResetCounts();
+
   Poly2f poly {
     {-184.256309,  108.494849},
     {-201.111228,  150.067496},
@@ -132,3 +134,70 @@ GTEST_TEST(TestPolygon, FastPolygonContains)
   printf("did %d dot products for %d checks\n", FastPolygon::_numDotProducts, FastPolygon::_numChecks);
 }
 
+GTEST_TEST(TestPolygon, FastPolygonSortedEdges)
+{
+  FastPolygon::ResetCounts();
+
+  Poly2f poly {
+    {-184.256309,  108.494849},
+    {-201.111228,  150.067496},
+    {-201.111228,  204.267496},
+    {-160.19712,   220.855432},
+    { -82.19712,   220.855432},
+    { -65.342201,  179.282785},
+    { -65.342201,  125.082785},
+    {-106.256309,  108.494849}
+  };
+
+  FastPolygon fastPoly(poly);
+
+  // Create a uniform grid of test points around the polygon
+  const float stepSize = 1.0;
+
+  std::vector<Point2f> testPoints;
+
+  for(float x = -250.0; x < -20.0; x += stepSize) {
+    for(float y = 80.0; y < 250.0; y += stepSize) {
+      testPoints.emplace_back( Point2f {x, y} );
+    }
+  }
+
+  printf("created %lu test points\n", testPoints.size());
+
+  std::vector<bool> pointInside;
+  unsigned int numInside = 0;
+  for(const auto& point : testPoints) {
+    bool inside = fastPoly.Contains(point);
+    if(inside)
+      numInside++;
+    pointInside.push_back( inside );
+  }
+
+  ASSERT_GT(numInside, testPoints.size() / 8) << "not enough points inside polygon";
+  ASSERT_LT(numInside, testPoints.size() * (7.0 / 8.0)) << "too many points inside polygon";
+
+  ASSERT_GT(FastPolygon::_numDotProducts, 0) << "not tracking dot products! must compile in debug!";
+
+  unsigned int numDotsUnsorted = FastPolygon::_numDotProducts;
+
+  ////////////////////////////////////////////////////////////////////////////////
+
+  FastPolygon::ResetCounts();
+  ASSERT_EQ(FastPolygon::_numDotProducts, 0) << "count reset didn't work!";
+
+  fastPoly.SortEdgeVectors();
+
+
+  for( size_t i=0; i<testPoints.size(); ++i) {
+    ASSERT_EQ( pointInside[i], fastPoly.Contains( testPoints[i] ) )
+      << "point["<<i<<"]: "<<testPoints[i]<<" inconsistent! Before sort, value was "<<pointInside[i];
+  }
+
+  unsigned int numDotsSorted = FastPolygon::_numDotProducts;
+  ASSERT_GT(numDotsSorted, 0) << "not correctly tracking dot products!";
+
+  EXPECT_LT(numDotsSorted, numDotsUnsorted) << "should take less work once sorted";
+
+  printf("took %u dot products unsorted, and %u sorted\n", numDotsUnsorted, numDotsSorted);
+
+}

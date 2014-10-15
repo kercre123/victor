@@ -11,8 +11,9 @@
  *
  **/
 
-#include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/math/fastPolygon2d.h"
+#include "anki/common/basestation/math/polygon_impl.h"
+#include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
 #include <cmath>
 
@@ -21,6 +22,11 @@ namespace Anki {
 int FastPolygon::_numChecks = 0;
 int FastPolygon::_numDotProducts = 0;
 
+void FastPolygon::ResetCounts()
+{
+  FastPolygon::_numChecks = 0;
+  FastPolygon::_numDotProducts = 0;
+}
 
 FastPolygon::FastPolygon(const Poly2f& basePolygon)
   : _poly(basePolygon)
@@ -30,8 +36,6 @@ FastPolygon::FastPolygon(const Poly2f& basePolygon)
   ComputeCenter();
 
   ComputeCircles();
-
-  SortEdgeVectors();
 }
 
 bool FastPolygon::Contains(const Point2f& testPoint) const
@@ -66,7 +70,8 @@ bool FastPolygon::Contains(const Point2f& testPoint) const
   for(size_t i = 0; i < numPts; ++i) {
     // if the dot product is positive, the test point is inside of the
     // edge, so we must continue. Otherwise we can bail out early
-    float dot = Anki::DotProduct( _perpendicularEdgeVectors[i], testPoint - _poly[i] );
+    size_t pointIdx = _perpendicularEdgeVectors[i].second;
+    float dot = Anki::DotProduct( _perpendicularEdgeVectors[i].first, testPoint - _poly[pointIdx] );
 
     _numDotProducts++;
 
@@ -126,8 +131,10 @@ void FastPolygon::ComputeCircles()
       _circumscribedRadiusSquared = distanceToPointSquared;
     }
 
+    size_t pointIdx = _perpendicularEdgeVectors[i].second;
+
     float distanceToEdgeSquared = std::pow(
-      Anki::DotProduct( _perpendicularEdgeVectors[i], _circleCenter - _poly[i] ),
+      Anki::DotProduct( _perpendicularEdgeVectors[i].first, _circleCenter - _poly[pointIdx] ),
       2);
     if(distanceToEdgeSquared < _inscribedRadiusSquared) {
       _inscribedRadiusSquared = distanceToEdgeSquared;
@@ -153,14 +160,101 @@ void FastPolygon::CreateEdgeVectors()
   for(size_t i = 0; i < numPts; ++i) {
     const Vec2f edgeVector( _poly.GetEdgeVector(i) );
     float oneOverNorm = 1.0 / edgeVector.Length();
-    _perpendicularEdgeVectors.emplace_back( Vec2f{ -edgeVector.y() * oneOverNorm, edgeVector.x() * oneOverNorm } );
+    _perpendicularEdgeVectors.emplace_back( std::make_pair(
+                                              Vec2f{ -edgeVector.y() * oneOverNorm, edgeVector.x() * oneOverNorm },
+                                              i) );
   }
 }
 
 void FastPolygon::SortEdgeVectors()
 {
-  // TODO:(bn) implement
+  // Sort the edges into an order that will help quickly eliminate
+  // points as not colliding.
+
+  // Create 16 test points along the circumscribing circle, and
+  // another 16 in between the two circles. These will be used to
+  // determine how good each line is at discriminating points. The
+  // bool is true if the point has already been eliminated by another
+  // line
+
+  std::vector< std::pair< bool, Point2f > > testPoints;
+
+  float outerRadius = GetCircumscribedRadius();
+
+  // inner radius is between the two, closer to the inside
+  float innerRadius = 0.3*outerRadius + 0.7*GetInscribedRadius();
+
+  float stepSize = 2 * M_PI / 16;
+  for(float theta = 0; theta <= 2*M_PI + 1e-5; theta += stepSize) {
+    testPoints.emplace_back( std::make_pair( false,
+                                             Point2f{ outerRadius * cosf(theta) + _circleCenter.x(),
+                                                      outerRadius * sinf(theta) + _circleCenter.y() }));
+    testPoints.emplace_back( std::make_pair( false,
+                                             Point2f{ innerRadius * cosf(theta) + _circleCenter.x(),
+                                                      innerRadius * sinf(theta) + _circleCenter.y() }));
+  }
+
+  
+  std::vector< std::pair< Vec2f, size_t> > sortedEdges;
+
+  size_t numEdges = _perpendicularEdgeVectors.size();
+  assert(numEdges > 0);
+
+  std::vector<bool> usedEdge(numEdges, false);
+
+  BOUNDED_WHILE( 1000, sortedEdges.size() < numEdges ) {
+    // try each edge and check how many points it would add
+    unsigned int maxHits = 0;
+    size_t bestIdx = 0;
+
+    for( size_t i=0; i < numEdges; ++i ) {
+      if( usedEdge[i] )
+        continue;
+      unsigned int newHits = CheckTestPoints(testPoints, i, true);
+      if(newHits >= maxHits) {
+        maxHits = newHits;
+        bestIdx = i;
+      }
+    }
+
+    // CoreTechPrint("DEBUG: adding edge %d with %d new hits\n", bestIdx, maxHits);
+
+    usedEdge[bestIdx] = true;
+    sortedEdges.push_back( _perpendicularEdgeVectors[bestIdx] );
+
+    // mark test points
+    CheckTestPoints(testPoints, bestIdx, false);
+  }
+
+  _perpendicularEdgeVectors.swap(sortedEdges);
 }
 
+unsigned int FastPolygon::CheckTestPoints(std::vector< std::pair< bool, Point2f > >& testPoints,
+                                          size_t edgeIdx,
+                                          bool dryRun)
+{
+
+  unsigned int newHits = 0;
+
+  for( auto& testEntry : testPoints ) {
+    if( testEntry.first ) {
+      // already used this point
+      continue;
+    }
+
+    size_t pointIdx = _perpendicularEdgeVectors[edgeIdx].second;
+    float dot = Anki::DotProduct( _perpendicularEdgeVectors[edgeIdx].first, testEntry.second - _poly[pointIdx] );
+
+    if( dot > 0.0f ) {
+      // is outside of edge, so this point is a hit! (we want to throw out as many test points as we can)
+      newHits++;
+      if(!dryRun) {
+        testEntry.first = true;
+      }
+    }
+  }
+
+  return newHits;
+}
 
 }

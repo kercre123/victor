@@ -44,6 +44,12 @@ public:
   float GetCircumscribedRadius() const;
   float GetInscribedRadius() const;
 
+  // This is an optional step that spends a little time to optimize
+  // the ordering of the edges, so that collision checks will tend to
+  // be faster
+  void SortEdgeVectors();
+
+  static void ResetCounts();
   static int _numChecks;
   static int _numDotProducts;
 
@@ -62,17 +68,24 @@ private:
   float _circumscribedRadiusSquared;
   float _inscribedRadiusSquared;
 
+  // TEMP: 
+public:
+
   // for the points that are between the circles, we need to check
   // that the point is inside the polygon by checking if the point is
   // "to the left" of each edge. For each edge, this vector holds a
   // perpendicular unit-length vector. When the test point is
   // projected onto this vector, the sign will determine if the point
-  // passes the test for this edge. This list of edges is sorted
-  // according to a heuristic which tries to put the more imformative
-  // edges first, so we can throw out a point as not collising as
-  // quickly as posisble. The test must "pass" for every single
-  // element of the list for this to be a collision
-  std::vector< Vec2f > _perpendicularEdgeVectors;
+  // passes the test for this edge. The test must "pass" for every
+  // single element of the list for this to be a collision. The first
+  // element of the pair is the vector, and the second is the
+  // corresponding index in _poly for the point defining the start of
+  // the vector. The optional SortEdgeVectors will re-order this for
+  // efficiency
+  std::vector< std::pair< Vec2f, size_t> > _perpendicularEdgeVectors;
+
+  // TEMP: 
+private:
 
   // helper functions
 
@@ -83,8 +96,13 @@ private:
   // create (unsorted) edge vectors
   void CreateEdgeVectors();
 
-  // sort the existing edge vectors
-  void SortEdgeVectors();
+  // helper for sorting function. Returns number of new points hit by
+  // the specified edge index. If dryrun is false, it will update the
+  // test points to mark that it has hit the points
+  unsigned int CheckTestPoints(std::vector< std::pair< bool, Point2f > >& testPoints,
+                               size_t edgeIdx,
+                               bool dryRun);
+  
 
 };
 
