@@ -1,6 +1,7 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 
+#include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/quad.h"
 #include "anki/common/basestation/math/polygon.h"
 #include "anki/planning/shared/path.h"
@@ -275,16 +276,16 @@ public:
 
   // returns a polygon which represents the obstacle expanded to the
   // c-space of robot, where the origin of tobot is (0,0)
-  static Poly2f ExpandCSpace(const Poly2f& obstacle,
-                             const Poly2f& robot);
+  static FastPolygon ExpandCSpace(const Poly2f& obstacle,
+                                  const Poly2f& robot);
 
   // adds an obstacle into the c-space map for the given angle with
   // the given robot footprint, centered at (0,0). Returns reference
   // to the polygon it inserted
-  const Poly2f& AddObstacleWithExpansion(const Poly2f& obstacle,
-                                         const Poly2f& robot,
-                                         StateTheta theta,
-                                         Cost cost = FATAL_OBSTACLE_COST);
+  const FastPolygon& AddObstacleWithExpansion(const Poly2f& obstacle,
+                                              const Poly2f& robot,
+                                              StateTheta theta,
+                                              Cost cost = FATAL_OBSTACLE_COST);
 
   void ClearObstacles();
 
@@ -429,7 +430,7 @@ private:
   std::vector< std::pair<const RotatedRectangle, Cost> > obstacles_;
 
   // Obstacles per theta. First index is theta, second of pair is cost
-  std::vector< std::vector< std::pair<const Poly2f, Cost> > > obstaclesPerAngle_;
+  std::vector< std::vector< std::pair<const FastPolygon, Cost> > > obstaclesPerAngle_;
   
 
   // index is actionID

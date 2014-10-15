@@ -581,8 +581,8 @@ void xythetaEnvironment::ClearObstacles()
   obstacles_.clear();
 }
 
-Poly2f xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
-                                        const Poly2f& robot)
+FastPolygon xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
+                                             const Poly2f& robot)
 {
   assert(obstacle.size() > 0);
   assert(robot.size() > 0);
@@ -680,11 +680,11 @@ Poly2f xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
   CoreTechPrint("c-space obstacle: ");
   expansion.Print();
 
-  return expansion;
+  return FastPolygon{ expansion };
 }
 
 
-const Poly2f& xythetaEnvironment::AddObstacleWithExpansion(const Poly2f& obstacle,
+const FastPolygon& xythetaEnvironment::AddObstacleWithExpansion(const Poly2f& obstacle,
                                                            const Poly2f& robot,
                                                            StateTheta theta,
                                                            Cost cost)
