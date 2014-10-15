@@ -312,15 +312,15 @@ class Polygon:
 # do a crappy little test
 
 # obstacleP = [(-6.0, 3.0), (-6.3, 5.9), (-2.7, 6.2), (-3.1, 2.8)]
-obstacleP = [(-6.0, 3.0), (-5.8, 5.9), (-2.7, 6.2), (-3.1, 2.8)]
+# obstacleP = [(-6.0, 3.0), (-5.8, 5.9), (-2.7, 6.2), (-3.1, 2.8)]
 # obstacleP = [(-6.0, 3.0), (-6.0, 6.0), (-3.0, 6.0), (-3.0, 3.0)]
-#obstacleP = [(-162.156311, 135.594849), (-179.01123, 177.167496), (-138.097122, 193.755432), (-121.242203, 152.182785)]
+obstacleP = [(-162.156311, 135.594849), (-179.01123, 177.167496), (-138.097122, 193.755432), (-121.242203, 152.182785)]
 obstacle = Polygon(obstacleP)
 
 # robotP = [(0.0, 1.0), (1.0, -1.0), (-1.0, -1.0)]
 # robotP = [(1.0, 1.0), (1.2, 0.8), (1.4, -0.5), (0.3, -1.1), (-1.0, -0.8), (-1.4, 0.0), (-1.0, 0.4)]
-# robotP = [( -55.900002, -27.100000), ( -55.900002, 27.100000), ( 22.099998, 27.100000), ( 22.099998, -27.100000)]
-robotP = [(-0.2, 0.2), (0.2, 0.2), (0.2, -1.6), (-0.2, -1.6) ]
+robotP = [( -55.900002, -27.100000), ( -55.900002, 27.100000), ( 22.099998, 27.100000), ( 22.099998, -27.100000)]
+# robotP = [(-0.2, 0.2), (0.2, 0.2), (0.2, -1.6), (-0.2, -1.6) ]
 # robotC = (0.0, 0.5)
 robotC = (0.0, 0.0)
 robot = Polygon(robotP, robotC)
@@ -335,12 +335,12 @@ robotStart = robot.offset(start - robot.center)
 
 cspace = obstacle.expandCSpace(robot)
 
-print "cspace:", cspace.angles
+print "cspace:", cspace.points
 
 circumscribed = cspace.computeCircumscribingCircle()
 inscribed = cspace.computeInscribingCircle()
 
-# edgeOrder = cspace.sortEdgesForCompute(inscribed, circumscribed)
+edgeOrder = cspace.sortEdgesForCompute(inscribed, circumscribed)
 print "edge order:", edgeOrder
 
 doplot = True
@@ -348,8 +348,6 @@ doplot = True
 if doplot:
     pylab.figure()
     ax = pylab.subplot(1, 1, 1, aspect='equal')
-
-    edgeOrder = cspace.sortEdgesForCompute(inscribed, circumscribed)
 
     obstacle.plot('b-')
     robot.plot('r-')
