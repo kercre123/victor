@@ -14,6 +14,7 @@
 #ifndef VIZ_MANAGER_H
 #define VIZ_MANAGER_H
 
+#include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/polygon.h"
 #include "anki/common/basestation/colorRGBA.h"
@@ -187,6 +188,11 @@ namespace Anki {
                                const Polygon<2,T>& poly,
                                const ColorRGBA& color);
 
+      void DrawPlannerObstacle(const bool isReplan,
+                               const u32 quadID,
+                               const FastPolygon& poly,
+                               const ColorRGBA& color);
+
       template<typename T>
       void DrawPoseMarker(const u32 quadID,
                           const Quadrilateral<2,T>& quad,
@@ -211,6 +217,10 @@ namespace Anki {
       template<typename T>
       void DrawPoly(const u32 polyID,
                     const Polygon<2,T>& poly,
+                    const ColorRGBA& color);
+
+      void DrawPoly(const u32 polyID,
+                    const FastPolygon& poly,
                     const ColorRGBA& color);
       
       // Erases the quad with the specified type and ID
@@ -427,6 +437,7 @@ namespace Anki {
       
       DrawPoly(polyID, poly, color);
     }
+
     
     template<typename T>
     void VizManager::DrawRobotBoundingBox(const u32 quadID,
