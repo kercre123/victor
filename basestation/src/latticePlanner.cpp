@@ -11,6 +11,7 @@
  *
  **/
 
+#include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
@@ -135,7 +136,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
         Poly2f boundingPoly;
         boundingPoly.ImportQuad2d(boundingQuad);
 
-        const Poly2f& expandedPoly =
+        const FastPolygon& expandedPoly =
           env_.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
 
         if(vizColor != nullptr) {
