@@ -4283,17 +4283,29 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
 
   ASSERT_TRUE(AreValid(scratchHuge));
 
-  const s32 numRepeats = 1;
-  const s32 numItems = 20000001;
-//  const s32 numItems = 17;
+/*  const s32 numRepeats = 1;
+  const s32 numItems = 20000001;*/
+
+/*  const s32 numRepeats = 10000;
+  const s32 numItems = 200;*/
+
+  const s32 numRepeats = 10000;
+  const s32 numItems = 2000;
 
   s32 * restrict buffer = reinterpret_cast<s32*>( scratchHuge.Allocate(numItems*sizeof(s32)) );
 
-  s32 total1 = 1, total2 = 1, total3 = 1, total4 = 1, total5 = 1, total6 = 1, total7 = 1, total8 = 1, total9 = 1, total10 = 1;
+  s32 total1 = 1, total2 = 1, total3 = 1, total4 = 1, total5 = 1, total6 = 1, total7 = 1, total8 = 1, total9 = 1, total10 = 1, total11 = 1, total12 = 1;
 
   for(s32 i=0; i<numItems; i++) {
     buffer[i] = i;
   }
+
+/*  s32 mrcRegister = 0;
+  asm volatile(
+  "MRC p15, 0, %[mrcRegister], c0, c0, 1"
+    : [mrcRegister] "+r"(mrcRegister));
+
+  printf("0x%x\n", mrcRegister);*/
 
   const f64 t0 = GetTimeF64();
 
@@ -4553,7 +4565,7 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
 
   const f64 t8 = GetTimeF64();
 
- for(s32 j=0; j<numRepeats; j++) {
+  for(s32 j=0; j<numRepeats; j++) {
     s32 i=0;
 
     // 64x unrolled
@@ -4662,17 +4674,299 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
 
   const f64 t9 = GetTimeF64();
 
+  for(s32 j=0; j<numRepeats; j++) {
+    s32 i=0;
+
+    // 32x unrolled
+    const s32 numItems_simd = 32 * (numItems / 32) - 31;
+    s32 * restrict bufferLocal = buffer;
+    s32 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
+    //for(s32 i=0; i<numItems_simd; i+=64) {
+      asm volatile(
+        ".L_iLoopStart7:\n\t"
+        "vld1.32 {q0}, [%[buffer]]!\n\t" 
+        "add %[i], %[i], #32\n\t"
+        "vld1.32 {q1}, [%[buffer]]!\n\t" 
+
+        "vadd.i32 q0,  q0,  q1\n\t" // 1
+
+        "vld1.32 {q2}, [%[buffer]]!\n\t"
+        "vld1.32 {q3}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d0,  d0,  d1\n\t"
+        "vadd.i32 q2,  q2,  q3\n\t"
+
+        "vld1.32 {q4}, [%[buffer]]!\n\t"
+        "vld1.32 {q5}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d0,  d0,  d0\n\t"
+        "vpadd.i32 d4,  d4,  d5\n\t"
+        "vadd.i32 q4,  q4,  q5\n\t"
+
+        "vld1.32 {q6}, [%[buffer]]!\n\t"
+        "vld1.32 {q7}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d4,  d4,  d4\n\t"
+        "vpadd.i32 d8,  d8,  d9\n\t"
+        "vadd.i32 q6,  q6,  q7\n\t"
+
+        "vpadd.i32 d12, d12, d13\n\t"
+
+        "vpadd.i32 d8,  d8,  d8\n\t"
+        "vpadd.i32 d12, d12, d12\n\t"
+
+        "vmov.32 %[tmp1], d0[0]\n\t"
+        "vmov.32 %[tmp2], d4[0]\n\t"
+        "vmov.32 %[tmp3], d8[0]\n\t"
+        "vmov.32 %[tmp4], d12[0]\n\t"
+
+        "add %[total], %[total], %[tmp1]\n\t"
+        "add %[total], %[total], %[tmp2]\n\t"
+        "add %[total], %[total], %[tmp3]\n\t"
+        "add %[total], %[total], %[tmp4]\n\t"
+
+        "cmp %[i], %[numItems_simd]\n\t"
+        "ble .L_iLoopStart7\n\t"
+          : 
+            [total] "+r" (total10), 
+            [tmp1] "+r" (tmp1), [tmp2] "+r" (tmp2), [tmp3] "+r" (tmp3), [tmp4] "+r" (tmp4), [tmp5] "+r" (tmp5), [tmp6] "+r" (tmp6), [tmp7] "+r" (tmp7), [tmp8] "+r" (tmp8),
+            [buffer] "+r"(bufferLocal),
+            [i] "+r"(i)
+          :
+            [numItems_simd] "r"(numItems_simd)
+          :
+            "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15",
+            "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31");
+//    }
+
+    // Finish up the remainder
+    for(; i<numItems; i++) {
+      const s32 curItem = buffer[i];
+      total10 += curItem;
+    }
+  }
+
+  const f64 t10 = GetTimeF64();
+
+  for(s32 j=0; j<numRepeats; j++) {
+    s32 i=0;
+
+    // 32x unrolled
+    const s32 numItems_simd = 32 * (numItems / 32) - 31;
+    s32 * restrict bufferLocal = buffer;
+    s32 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
+    //for(s32 i=0; i<numItems_simd; i+=64) {
+      asm volatile(
+        ".L_iLoopStart8:\n\t"
+        "vld1.32 {q0}, [%[buffer]]!\n\t" 
+        
+        "add %[i], %[i], #32\n\t"
+
+        "vld1.32 {q1}, [%[buffer]]!\n\t" 
+
+        "vadd.i32 q0,  q0,  q1\n\t"
+
+        "vld1.32 {q2}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d0,  d0,  d1\n\t"
+
+        "vld1.32 {q3}, [%[buffer]]!\n\t"
+
+        "vadd.i32 q2,  q2,  q3\n\t"
+
+        "vld1.32 {q4}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d0,  d0,  d0\n\t"
+        "vpadd.i32 d4,  d4,  d5\n\t"
+
+        "vld1.32 {q5}, [%[buffer]]!\n\t"
+        "vadd.i32 q4,  q4,  q5\n\t"
+
+        "vld1.32 {q6}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d4,  d4,  d4\n\t"
+        "vpadd.i32 d8,  d8,  d9\n\t"
+
+        "vld1.32 {q7}, [%[buffer]]!\n\t"
+
+        "vadd.i32 q6,  q6,  q7\n\t"
+
+        "vpadd.i32 d12, d12, d13\n\t"
+
+        "vpadd.i32 d8,  d8,  d8\n\t"
+        "vpadd.i32 d12, d12, d12\n\t"
+
+        "vmov.32 %[tmp1], d0[0]\n\t"
+        "vmov.32 %[tmp2], d4[0]\n\t"
+        "vmov.32 %[tmp3], d8[0]\n\t"
+        "vmov.32 %[tmp4], d12[0]\n\t"
+
+        "add %[total], %[total], %[tmp1]\n\t"
+        "add %[total], %[total], %[tmp2]\n\t"
+        "add %[total], %[total], %[tmp3]\n\t"
+        "add %[total], %[total], %[tmp4]\n\t"
+
+        "cmp %[i], %[numItems_simd]\n\t"
+        "ble .L_iLoopStart8\n\t"
+          : 
+            [total] "+r" (total11), 
+            [tmp1] "+r" (tmp1), [tmp2] "+r" (tmp2), [tmp3] "+r" (tmp3), [tmp4] "+r" (tmp4), [tmp5] "+r" (tmp5), [tmp6] "+r" (tmp6), [tmp7] "+r" (tmp7), [tmp8] "+r" (tmp8),
+            [buffer] "+r"(bufferLocal),
+            [i] "+r"(i)
+          :
+            [numItems_simd] "r"(numItems_simd)
+          :
+            "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15",
+            "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31");
+//    }
+
+    // Finish up the remainder
+    for(; i<numItems; i++) {
+      const s32 curItem = buffer[i];
+      total11 += curItem;
+    }
+  }
+
+  const f64 t11 = GetTimeF64();
+
+  for(s32 j=0; j<numRepeats; j++) {
+    s32 i=0;
+
+    // 64x unrolled
+    const s32 numItems_simd = 64 * (numItems / 64) - 63;
+    s32 * restrict bufferLocal = buffer;
+    s32 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
+    //for(s32 i=0; i<numItems_simd; i+=64) {
+    asm volatile(
+        ".L_iLoopStart9:\n\t"
+        "vld1.32 {q0}, [%[buffer]]!\n\t" 
+
+        "add %[i], %[i], #64\n\t"
+        "cmp %[i], %[numItems_simd]\n\t"
+
+        "vld1.32 {q1}, [%[buffer]]!\n\t" 
+
+        "vadd.i32 q0,  q0,  q1\n\t" // 1
+
+        "vld1.32 {q2}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d0,  d0,  d1\n\t"
+
+        "vld1.32 {q3}, [%[buffer]]!\n\t"
+
+        "vadd.i32 q2,  q2,  q3\n\t"
+
+        "vld1.32 {q4}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d4,  d4,  d5\n\t"
+        "vpadd.i32 d0,  d0,  d0\n\t"
+
+        "vld1.32 {q5}, [%[buffer]]!\n\t"
+
+        "vadd.i32 q4,  q4,  q5\n\t"
+
+        "vld1.32 {q6}, [%[buffer]]!\n\t"
+        "vld1.32 {q7}, [%[buffer]]!\n\t"
+
+        "vadd.i32 q6,  q6,  q7\n\t"
+
+        "vld1.32 {q8}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d8,  d8,  d9\n\t"
+        "vpadd.i32 d4,  d4,  d4\n\t"
+        "vmov.32 %[tmp1], d0[0]\n\t"
+
+        "vld1.32 {q9}, [%[buffer]]!\n\t"
+
+        "vadd.i32 q8,  q8,  q9\n\t"
+
+        "vld1.32 {q10}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d12, d12, d13\n\t"
+        "vpadd.i32 d8,  d8,  d8\n\t"
+        "vmov.32 %[tmp2], d4[0]\n\t"
+        "add %[total], %[total], %[tmp1]\n\t"
+
+        "vld1.32 {q11}, [%[buffer]]!\n\t"
+
+        "vadd.i32 q10, q10, q11\n\t"
+
+        "vld1.32 {q12}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d16, d16, d17\n\t"
+        "vpadd.i32 d12, d12, d12\n\t"
+        "vmov.32 %[tmp3], d8[0]\n\t"
+        "add %[total], %[total], %[tmp2]\n\t"
+
+        "vld1.32 {q13}, [%[buffer]]!\n\t"
+
+        "vadd.i32 q12, q12, q13\n\t"
+
+        "vld1.32 {q14}, [%[buffer]]!\n\t"
+
+        "vpadd.i32 d20, d20, d21\n\t"
+        "vpadd.i32 d16, d16, d16\n\t"
+        "vmov.32 %[tmp4], d12[0]\n\t"
+        "add %[total], %[total], %[tmp3]\n\t"
+
+        "vld1.32 {q15}, [%[buffer]]!\n\t"
+
+        "vadd.i32 q14, q14, q15\n\t"
+      
+        "vpadd.i32 d24, d24, d25\n\t"
+        "vpadd.i32 d20, d20, d20\n\t"
+        "vmov.32 %[tmp5], d16[0]\n\t"
+        "add %[total], %[total], %[tmp4]\n\t"
+
+        "vpadd.i32 d28, d28, d29\n\t"
+        "vpadd.i32 d24, d24, d24\n\t"
+        "vpadd.i32 d28, d28, d28\n\t"
+        "add %[total], %[total], %[tmp5]\n\t"
+
+        "vmov.32 %[tmp6], d20[0]\n\t"
+        "vmov.32 %[tmp7], d24[0]\n\t"
+        "vmov.32 %[tmp8], d28[0]\n\t"
+
+        "add %[total], %[total], %[tmp6]\n\t"
+        "add %[total], %[total], %[tmp7]\n\t"
+        "add %[total], %[total], %[tmp8]\n\t"
+
+        "ble .L_iLoopStart9\n\t"
+          : 
+            [total] "+r" (total12), 
+            [tmp1] "+r" (tmp1), [tmp2] "+r" (tmp2), [tmp3] "+r" (tmp3), [tmp4] "+r" (tmp4), [tmp5] "+r" (tmp5), [tmp6] "+r" (tmp6), [tmp7] "+r" (tmp7), [tmp8] "+r" (tmp8),
+            [buffer] "+r"(bufferLocal),
+            [i] "+r"(i)
+          :
+            [numItems_simd] "r"(numItems_simd)
+          :
+            "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15",
+            "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10", "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31");
+//    }
+
+    // Finish up the remainder
+    for(; i<numItems; i++) {
+      const s32 curItem = buffer[i];
+      total12 += curItem;
+    }
+  }
+
+  const f64 t12 = GetTimeF64();
+
   printf("\n\n");
 
-  printf("%d in %f\n", total1, t1-t0);
+  printf("c loop %d in %f\n", total1, t1-t0);
 //  printf("%d in %f\n", total2, t2-t1);
-  printf("%d in %f\n", total3, t3-t2);
-  printf("%d in %f\n", total4, t4-t3);
-  printf("%d in %f\n", total5, t5-t4);
-  printf("%d in %f\n", total6, t6-t5);
-  printf("%d in %f\n", total7, t7-t6);
-  printf("%d in %f\n", total8, t8-t7);
-  printf("%d in %f\n", total9, t9-t8);
+  printf("inline assembly %d in %f\n", total3, t3-t2);
+  printf("assembly loop %d in %f\n", total4, t4-t3);
+  printf("4x unrolled %d in %f\n", total5, t5-t4);
+  printf("8x unrolled %d in %f\n", total6, t6-t5);
+  printf("simd 8x %d in %f\n", total7, t7-t6);
+  printf("simd 32x %d in %f\n", total8, t8-t7);
+  printf("simd 64x %d in %f\n", total9, t9-t8);
+  printf("simd2 64x %d in %f\n", total10, t10-t9);
+  printf("simd3 32x %d in %f\n", total11, t11-t10);
+  printf("simd4 64x %d in %f\n", total12, t12-t11);
 
   ASSERT_TRUE(total1 == (562894465*numRepeats));
 //  ASSERT_TRUE(total2 == (562894465*numRepeats));
@@ -4683,6 +4977,9 @@ NO_INLINE GTEST_TEST(Coretech_Common, A7Speed)
   ASSERT_TRUE(total7 == (562894465*numRepeats));
   ASSERT_TRUE(total8 == (562894465*numRepeats));
   ASSERT_TRUE(total9 == (562894465*numRepeats));
+  ASSERT_TRUE(total10 == (562894465*numRepeats));
+  ASSERT_TRUE(total11 == (562894465*numRepeats));
+  ASSERT_TRUE(total12 == (562894465*numRepeats));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(Coretech_Common, A7Speed)
