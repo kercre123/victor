@@ -874,15 +874,21 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
     Array<u16> filtered(imageHeight, imageWidth, scratchOnchip);
     filtered.Set(0xFFFF);
 
-    BeginBenchmark("BoxFilter");
+    BeginBenchmark("BoxFilter_u8u16u16");
 
-    const Result result = ImageProcessing::BoxFilter<u8,u16,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
+    ImageProcessing::BoxFilter<u8,u16,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
 
-    EndBenchmark("BoxFilter");
+    EndBenchmark("BoxFilter_u8u16u16");
+
+    BeginBenchmark("BoxFilter_u8u32u16");
+
+    ImageProcessing::BoxFilter<u8,u32,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
+
+    EndBenchmark("BoxFilter_u8u32u16");
 
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
-    ASSERT_TRUE(result == RESULT_OK);
+    //    ASSERT_TRUE(result == RESULT_OK);
   } // Benchmarking test
 
   GTEST_RETURN_HERE;
@@ -2171,19 +2177,93 @@ GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
   ASSERT_TRUE(reinterpret_cast<size_t>(&blockImage50_320x240[0]) % MEMORY_ALIGNMENT == 0);
 
   Array<u8> in(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, const_cast<u8*>(&blockImage50_320x240[0]), blockImage50_320x240_WIDTH*blockImage50_320x240_HEIGHT, Flags::Buffer(false,false,false));
-
   Array<u8> out(60, 80, scratchOffchip);
   //in.Print("in");
 
+  ASSERT_TRUE(AreValid(in, out));
+
+  const f64 t0 = GetTimeF64();
+
   const Result result = ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in, 2, out, scratchOffchip);
+
   ASSERT_TRUE(result == RESULT_OK);
 
-  CoreTechPrint("%d %d %d %d", out[0][0], out[0][17], out[40][80-1], out[59][80-3]);
+  //CoreTechPrint("%d %d %d %d", out[0][0], out[0][17], out[40][80-1], out[59][80-3]);
 
   ASSERT_TRUE(out[0][0] == 155);
   ASSERT_TRUE(out[0][17] == 157);
   ASSERT_TRUE(out[40][80-1] == 143);
   ASSERT_TRUE(out[59][80-3] == 127);
+
+  out.SetZero();
+
+  Array<u8> tmp(120, 160, scratchOffchip);
+
+  ASSERT_TRUE(AreValid(tmp));
+
+  const Result result2 = ImageProcessing::DownsampleByTwo<u8,u32,u8>(in, tmp);
+  ASSERT_TRUE(result == RESULT_OK);
+
+  const Result result3 = ImageProcessing::DownsampleByTwo<u8,u32,u8>(tmp, out);
+  ASSERT_TRUE(result3 == RESULT_OK);
+
+  printf("%d\n", out[59][80-3]);
+
+  ASSERT_TRUE(out[0][0] == 155);
+  ASSERT_TRUE(out[0][17] == 157);
+  ASSERT_TRUE(out[40][80-1] == 143);
+  ASSERT_TRUE(out[59][80-3] == 126);
+
+  f64 totalTime1 = 0;
+  f64 totalTime2 = 0;
+
+  Array<u8> in640(480,640,scratchOffchip,Flags::Buffer(false,false,false));
+  Array<u8> out320(240,320,scratchOffchip,Flags::Buffer(false,false,false));
+
+  ASSERT_TRUE(AreValid(in640, out320));
+
+  volatile s32 numLoops = 100;
+
+  const f64 t1a = GetTimeF64();
+  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in640, 1, out320, scratchOffchip);
+  const f64 t2a = GetTimeF64();
+
+  volatile s32 i;
+  for(i=0; i<numLoops; i++) {
+    PUSH_MEMORY_STACK(scratchOffchip);
+    const f64 t1 = GetTimeF64();
+    ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in640, 1, out320, scratchOffchip);
+    const f64 t2 = GetTimeF64();
+
+    in640.Set(out320[5][5]);
+
+    totalTime1 += (t2-t1);
+  }
+
+  const f64 t1b = GetTimeF64();
+  ImageProcessing::DownsampleByTwo<u8,u32,u8>(in640, out320);
+  const f64 t2b = GetTimeF64();
+
+  for(i=0; i<numLoops; i++) {
+    const f64 t1 = GetTimeF64();
+    ImageProcessing::DownsampleByTwo<u8,u32,u8>(in640, out320);
+    const f64 t2 = GetTimeF64();
+
+    in640.Set(out320[5][5]);
+
+    totalTime2 += (t2-t1);
+  }
+
+  const f64 t3 = GetTimeF64();
+
+  const f64 t1c = GetTimeF64();
+  FixedLengthList<Array<u8> > pyramid1 = ImageProcessing::BuildPyramid<u8,u32,u8>(in640, 5, scratchOffchip);
+  const f64 t2c = GetTimeF64();
+
+  CoreTechPrint("Pyramid 5 took %f\n", t2c-t1c);
+
+  //  CoreTechPrint("DownsampleByPowerOfTwo took %f seconds per call. DownsampleByTwo took %f seconds per call.\n", (t1-t0) / 100, (t3-t2) / 100);
+  CoreTechPrint("DownsampleByPowerOfTwo took %f seconds per call (%f). DownsampleByTwo took %f seconds per call (%f). \n", totalTime1 / numLoops, totalTime2 / numLoops, t2a-t1a, t2b-t1b);
 
   //{
   //  Matlab matlab(false);
