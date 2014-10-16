@@ -617,8 +617,12 @@ void xythetaEnvironment::AddObstacle(const Quad2f& quad, Cost cost)
   
 void xythetaEnvironment::AddObstacle(const RotatedRectangle& rect, Cost cost)
 {
-  // TODO:(bn) kill this
-  assert(false);
+  Poly2f poly(rect);
+  FastPolygon fastPoly(poly);
+
+  for(size_t i=0; i<numAngles_; ++i) {
+    obstaclesPerAngle_[i].push_back( std::make_pair( fastPoly, cost ) );
+  }
 }
 
 void xythetaEnvironment::ClearObstacles()
