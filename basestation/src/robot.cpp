@@ -64,6 +64,8 @@ namespace Anki {
     , _onRamp(false)
     , _isPickingOrPlacing(false)
     , _isPickedUp(false)
+    , _isMoving(false)
+    , _isAnimating(false)
     , _carryingMarker(nullptr)
     {
       _pose.SetName("Robot_" + std::to_string(_ID));
@@ -187,6 +189,8 @@ namespace Anki {
       SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
       SetPickedUp( msg.status & IS_PICKED_UP );
+      
+      _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
       
       // TODO: Make this a parameters somewhere?
       const f32 WheelSpeedToConsiderStopped = 2.f;

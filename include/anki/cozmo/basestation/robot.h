@@ -279,6 +279,10 @@ namespace Anki {
       // If numLoops == 0, animation repeats forever.
       Result PlayAnimation(const AnimationID_t animID, const u32 numLoops = 0);
       
+      // Returns true if the robot is currently playing an animation, according
+      // to most recent state message.
+      bool IsAnimating() const;
+      
       Result SyncTime();
       
       // Turn on/off headlight LEDs
@@ -420,6 +424,7 @@ namespace Anki {
       bool             _isPickingOrPlacing;
       bool             _isPickedUp;
       bool             _isMoving;
+      bool             _isAnimating;
       
       // Pose history
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
@@ -604,6 +609,11 @@ namespace Anki {
     inline Result Robot::SetDockObjectAsAttachedToLift(){
       return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);
     }
+    
+    inline bool Robot::IsAnimating() const {
+      return _isAnimating;
+    }
+    
     
     
   } // namespace Cozmo

@@ -227,6 +227,7 @@ namespace AnimationController {
     if (IsPlaying()) {
       StopCurrent();
       queuedAnim_ = anim;
+      queuedDesiredLoops_ = currDesiredLoops_;
       return;
     }
     

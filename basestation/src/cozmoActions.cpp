@@ -1006,12 +1006,21 @@ namespace Anki {
       
     }
     
-    IAction::ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
+    IAction::ActionResult PlayAnimationAction::Init(Robot& robot)
     {
       if(robot.PlayAnimation(_animID) == RESULT_OK) {
         return SUCCESS;
       } else {
         return FAILURE_ABORT;
+      }
+    }
+    
+    IAction::ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
+    {
+      if(robot.IsAnimating()) {
+        return RUNNING;
+      } else {
+        return SUCCESS;
       }
     }
     

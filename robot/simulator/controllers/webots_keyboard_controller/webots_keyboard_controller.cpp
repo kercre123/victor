@@ -234,12 +234,38 @@ namespace Anki {
           keyboardRestart = false;
         }
         
-        int key;
-        while( (key = inputController.keyboardGetKey()) )
+        while(1)
         {
-  
-          // Extract modifier key
+          int key = inputController.keyboardGetKey();
+          
+          // Extract modifier key(s)
           int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
+          
+          // Set key to its modifier-less self
+          key &= webots::Supervisor::KEYBOARD_KEY;
+          
+          if(key == 0) {
+            break;
+          }
+          
+          // DEBUG: Display modifier key information
+          /*
+          printf("Key = '%c'", char(key));
+          if(modifier_key) {
+            printf(", with modifier keys: ");
+            if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+              printf("ALT ");
+            }
+            if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+              printf("SHIFT ");
+            }
+            if(modifier_key & webots::Supervisor::KEYBOARD_CONTROL) {
+              printf("CTRL/CMD ");
+            }
+           
+          }
+          printf("\n");
+          */
           
           // Use slow motor speeds if SHIFT is pressed
           f32 wheelSpeed = DRIVE_VELOCITY_FAST;
@@ -250,9 +276,6 @@ namespace Anki {
             liftSpeed *= 0.25;
             headSpeed *= 0.25;
           }
-          
-          // Set key to its modifier-less self
-          key &= webots::Supervisor::KEYBOARD_KEY;
           
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
@@ -540,7 +563,7 @@ namespace Anki {
                 break;
               }
                 
-                // Animations
+              // Animations
               case CKEY_ANIMATION_NOD:
               {
                 SendAnimation(ANIM_HEAD_NOD, 2, SOUND_OK_GOT_IT);

@@ -351,6 +351,7 @@ namespace Anki {
       
     protected:
       
+      virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
       AnimationID_t _animID;
