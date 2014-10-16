@@ -16,8 +16,9 @@
 #define __COMMON_BASESTATION_MATH_POLYGON_IMPL_H__
 
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/polygon.h"
+#include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/basestation/utils/helpers/compareFcns.h"
 #include "anki/common/shared/utilities_shared.h"
 
@@ -50,6 +51,15 @@ Polygon<N,T>::Polygon(const Polygon<N+1,T>& other)
     // use points N+1 constructor to drop the last dimension
     _points.emplace_back(point);
   }
+}
+
+
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const RotatedRectangle& rect)
+{
+  static_assert(N == 2, "Must use 2D for rotated rectangles");
+
+  ImportQuad2d(rect.GetQuad());
 }
 
 
