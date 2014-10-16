@@ -636,19 +636,11 @@ namespace Anki {
           s32 iSample=0;
 
 #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+#if 0
           for(; iSample<(actualNumSamples-3); iSample+=4) {
             const float32x4_t tGradientValue_10 = vld1q_f32(&tGradientValues[iSample]);
             const float32x2_t tGradientValue_1 = vget_high_f32(tGradientValue_10);
             const float32x2_t tGradientValue_0 = vget_low_f32(tGradientValue_10);
-
-/*            const f32 a0 = Arow[0][iSample];
-            const f32 a1 = Arow[1][iSample];
-            const f32 a2 = Arow[2][iSample];
-            const f32 a3 = Arow[3][iSample];
-            const f32 a4 = Arow[4][iSample];
-            const f32 a5 = Arow[5][iSample];
-            const f32 a6 = Arow[6][iSample];
-            const f32 a7 = Arow[7][iSample];*/
 
             const float32x4_t a0 = vld1q_f32(&Arow[0][iSample]);
             const float32x4_t a1 = vld1q_f32(&Arow[1][iSample]);
@@ -728,6 +720,7 @@ namespace Anki {
             { const float32x2_t squared = vpadd_f32(a7_0 * a7_0, a7_1 * a7_1); AWAt_raw[7][7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
             { const float32x2_t squared = vpadd_f32(a7_0 * tGradientValue_0, a7_1 * tGradientValue_1); b_raw[7] += vget_lane_f32(vpadd_f32(squared, squared), 0); }
           } // for(s32 iSample=0; iSample<actualNumSamples; iSample++)
+#endif
 #endif // #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
 
           for(; iSample<actualNumSamples; iSample++) {
