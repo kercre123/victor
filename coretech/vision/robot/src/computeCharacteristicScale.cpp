@@ -16,10 +16,22 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/imageProcessing.h"
 
-#define USE_ARM_ACCELERATION
+#define ACCELERATION_NONE 0
+#define ACCELERATION_ARM_M4 1
+#define ACCELERATION_ARM_A7 2
 
-#ifndef USE_ARM_ACCELERATION
-#warning not using USE_ARM_ACCELERATION
+#if defined(__ARM_ARCH_7A__)
+#define ACCELERATION_TYPE ACCELERATION_ARM_A7
+#else
+#define ACCELERATION_TYPE ACCELERATION_ARM_M4
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_NONE
+#warning not using ARM acceleration
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+#include <arm_neon.h>
 #endif
 
 static const s32 MAX_FILTER_HALF_WIDTH = 64;
@@ -157,16 +169,118 @@ namespace Anki
         pFilteredRows[i] = filteredRows[i][0];
       }
 
-      for(s32 x=0; x<imageWidth; x++) {
+      s32 x=0;
+
+      const uint8x16_t zeros8x16 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+      const uint8x16_t ones8x16  = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+//#if 0
+//      printf("here\n");
+      for(; x<(imageWidth-15); x+=16) {
+//      for(; x<100; x+=16) {
+//      for(x=334; x<335; x+=16) {
         //for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
-        const s32 dog0 = ABS(static_cast<s32>(pFilteredRows1[x]) - static_cast<s32>(pFilteredRows0[x]));
-        const s32 dog1 = ABS(static_cast<s32>(pFilteredRows2[x]) - static_cast<s32>(pFilteredRows1[x]));
-        const s32 dog2 = ABS(static_cast<s32>(pFilteredRows3[x]) - static_cast<s32>(pFilteredRows2[x]));
-        const s32 dog3 = ABS(static_cast<s32>(pFilteredRows4[x]) - static_cast<s32>(pFilteredRows3[x]));
+        const uint8x16_t filteredRow0 = vld1q_u8(&pFilteredRows0[x]);
+        const uint8x16_t filteredRow1 = vld1q_u8(&pFilteredRows1[x]);
+        const uint8x16_t filteredRow2 = vld1q_u8(&pFilteredRows2[x]);
+        const uint8x16_t filteredRow3 = vld1q_u8(&pFilteredRows3[x]);
+        const uint8x16_t filteredRow4 = vld1q_u8(&pFilteredRows4[x]);
 
-        const s32 maxValue = MAX(dog0, MAX(dog1, MAX(dog2, dog3)));
+        const uint8x16_t imageRow = vld1q_u8(&pImage[x]);
 
-        s32 scaleValue;
+        const uint8x16_t dog0 = vabdq_u8(filteredRow1, filteredRow0);
+        const uint8x16_t dog1 = vabdq_u8(filteredRow2, filteredRow1);
+        const uint8x16_t dog2 = vabdq_u8(filteredRow3, filteredRow2);
+        const uint8x16_t dog3 = vabdq_u8(filteredRow4, filteredRow3);
+
+        // TODO: try binary split
+        const uint8x16_t dogMax = vmaxq_u8(dog0, vmaxq_u8(dog1, vmaxq_u8(dog2, dog3)));
+
+/*        if(x >= 0 && imageY==160){
+          printf("filteredRow0a:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", filteredRow0[xx]); } printf("\n");
+          printf("filteredRow1a:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", filteredRow1[xx]); } printf("\n");
+          printf("filteredRow2a:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", filteredRow2[xx]); } printf("\n");
+          printf("filteredRow3a:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", filteredRow3[xx]); } printf("\n");
+          printf("filteredRow4a:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", filteredRow4[xx]); } printf("\n");
+
+          printf("filteredRow0b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pFilteredRows0[x+xx]); } printf("\n");
+          printf("filteredRow1b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pFilteredRows1[x+xx]); } printf("\n");
+          printf("filteredRow2b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pFilteredRows2[x+xx]); } printf("\n");
+          printf("filteredRow3b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pFilteredRows3[x+xx]); } printf("\n");
+          printf("filteredRow4b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pFilteredRows4[x+xx]); } printf("\n");
+
+          printf("dog0b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog0[xx]); } printf("\n");
+          printf("dog1b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog1[xx]); } printf("\n");
+          printf("dog2b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog2[xx]); } printf("\n");
+          printf("dog3b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog3[xx]); } printf("\n");
+
+          printf("dogMax:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dogMax[xx]); } printf("\n");
+        }*/
+
+        // TODO: make backwards to match the non-simd version
+        uint8x16_t scaleValue = filteredRow1;
+
+/*        if(x >= 0 && imageY==160){
+          printf("scaleValue:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValue[xx]); } printf("\n");
+        }*/
+
+        const uint8x16_t dog1IsMax = vceqq_u8(dogMax, dog1);        
+        scaleValue = vbslq_u8(dog1IsMax, filteredRow2, scaleValue);
+
+/*        if(x >= 86 && imageY==160){
+          printf("dog1isMax:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog1IsMax[xx]); } printf("\n");
+          printf("scaleValue:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValue[xx]); } printf("\n");
+        }*/
+
+        const uint8x16_t dog2IsMax = vceqq_u8(dogMax, dog2);        
+        scaleValue = vbslq_u8(dog2IsMax, filteredRow3, scaleValue);
+
+/*        if(x >= 86 && imageY==160){
+          printf("dog2isMax:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog2IsMax[xx]); } printf("\n");
+          printf("scaleValue:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValue[xx]); } printf("\n");
+        }*/
+
+        const uint8x16_t dog3IsMax = vceqq_u8(dogMax, dog3);        
+        scaleValue = vbslq_u8(dog3IsMax, filteredRow4, scaleValue);
+
+/*        if(x >= 86 && imageY==160){
+          printf("dog3isMax:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog3IsMax[xx]); } printf("\n");
+          printf("scaleValue:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValue[xx]); } printf("\n");
+        }*/
+
+        //} // for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; scaleImage_numPyramidLevels++)
+
+        const uint8x16_t scaleValueIsLarger = vcltq_u8(imageRow, scaleValue);  
+        const uint8x16_t binaryVector = vbslq_u8(scaleValueIsLarger, ones8x16, zeros8x16);
+
+/*        if(x >= 0 && imageY==160){
+          printf("(%d,%d)\n", imageY, x);
+          printf("scaleValue:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValue[xx]); } printf("\n");
+          printf("imageRow1:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", imageRow[xx]); } printf("\n");
+          printf("imageRow2:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pImage[x+xx]); } printf("\n");
+          printf("scaleValueIsLarger:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValueIsLarger[xx]); } printf("\n");
+          printf("binaryVector:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", binaryVector[xx]); } printf("\n");
+        }*/
+
+        vst1q_u8(&pBinaryImageRow[x], binaryVector);
+        //vst1q_u8(&pBinaryImageRow[x], dog0);
+      } // for(s32 x=0; x<imageWidth; x++)
+
+/*      if(x >= 0 && imageY==160){
+        printf("\n");
+      }*/
+//#endif // if 0
+
+      for(; x<imageWidth; x++) {
+        //for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
+        const s16 dog0 = ABS(static_cast<s16>(pFilteredRows1[x]) - static_cast<s16>(pFilteredRows0[x]));
+        const s16 dog1 = ABS(static_cast<s16>(pFilteredRows2[x]) - static_cast<s16>(pFilteredRows1[x]));
+        const s16 dog2 = ABS(static_cast<s16>(pFilteredRows3[x]) - static_cast<s16>(pFilteredRows2[x]));
+        const s16 dog3 = ABS(static_cast<s16>(pFilteredRows4[x]) - static_cast<s16>(pFilteredRows3[x]));
+
+        const s16 maxValue = MAX(dog0, MAX(dog1, MAX(dog2, dog3)));
+
+        u8 scaleValue;
 
         if(dog0 == maxValue) {
           scaleValue = pFilteredRows1[x];
@@ -180,12 +294,18 @@ namespace Anki
 
         //} // for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; scaleImage_numPyramidLevels++)
 
-        const s32 thresholdValue = scaleValue;
+        const u8 thresholdValue = scaleValue;
         if(pImage[x] < thresholdValue) {
+//          printf("(%d,%d)\n", imageY, x);
           pBinaryImageRow[x] = 1;
         } else {
           pBinaryImageRow[x] = 0;
         }
+
+/*        if(x>=334 && x<(334+16) && imageY==160) {
+              printf("(%d,%d) filteredRows=[%d,%d,%d,%d,%d] dog=[%d,%d,%d,%d] image=%d scaleValue=%d binary=%d\n", imageY, x, pFilteredRows0[x], pFilteredRows1[x], pFilteredRows2[x], pFilteredRows3[x], pFilteredRows4[x], dog0, dog1, dog2, dog3, pImage[x], scaleValue, pBinaryImageRow[x]);
+//            printf("Larger at (%d,%d) thresholdValue=%d Image=%d\n", imageY, x, thresholdValue, pImage[x]);
+        }*/
       } // for(s32 x=0; x<imageWidth; x++)
     } // staticInline void ecvcs_computeBinaryImage_numFilters5()
 
@@ -475,9 +595,9 @@ namespace Anki
           ecvcs_computeBinaryImage(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
         } else {
           if(scaleImage_thresholdMultiplier == 65536) {
-            ecvcs_computeBinaryImage_numFilters5(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
-          } else {
             ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
+          } else {
+            ecvcs_computeBinaryImage_numFilters5(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
           }
         }
 

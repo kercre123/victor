@@ -23,7 +23,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #endif
 
 #if ACCELERATION_TYPE == ACCELERATION_NONE
-#warning not using USE_ARM_ACCELERATION
+#warning not using ARM acceleration
 #endif
 
 #if ACCELERATION_TYPE == ACCELERATION_ARM_A7

@@ -23,7 +23,7 @@ static Anki::Embedded::Matlab matlab(false);
 #endif
 
 #if ACCELERATION_TYPE == ACCELERATION_NONE
-#warning not using USE_ARM_ACCELERATION
+#warning not using ARM acceleration
 #endif
 
 #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
