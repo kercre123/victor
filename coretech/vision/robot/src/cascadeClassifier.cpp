@@ -669,7 +669,7 @@ namespace Anki
         for(f32 factor = 1; ; factor *= scaleFactor) {
           PUSH_MEMORY_STACK(fastScratch);
 
-          //BeginBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
+          BeginBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
 
           const s32 windowHeight = Round<s32>(this->data.origWinHeight*factor);
           const s32 windowWidth = Round<s32>(this->data.origWinWidth*factor);
@@ -691,6 +691,7 @@ namespace Anki
 
           Array<u8> scaledImage(scaledImageHeight, scaledImageWidth, fastScratch, Flags::Buffer(false, false, false));
 
+          BeginBenchmark("Resize");
           // OpenCV's resize grayvalues may be 1 or so different than Anki's
 #ifdef EXACTLY_MATCH_OPENCV
           {
@@ -707,16 +708,24 @@ namespace Anki
             cv::resize(tmpImHack_cvMat, scaledImage_cvMat, scaledImageSize, 0, 0, CV_INTER_LINEAR);
           }
 #else
-          ImageProcessing::Resize(image, scaledImage);
+          //ImageProcessing::Resize(image, scaledImage);
+          ImageProcessing::DownsampleBilinear(image, scaledImage, fastScratch);
+          //scaledImage.Show("scaledImage", true);
 #endif
 
+          EndBenchmark("Resize");
+
           const s32 xyIncrement = factor > 2.0f ? 1 : 2;
+
+          BeginBenchmark("DetectSingleScale");
 
           if(DetectSingleScale(scaledImage, processingRectHeight, processingRectWidth, xyIncrement, factor, candidates, fastScratch) != RESULT_OK) {
             break;
           }
 
-          //EndBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
+          EndBenchmark("DetectSingleScale");
+
+          EndBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
         } // for(f32 factor = 1; ; factor *= scaleFactor)
 
         objects.set_size(candidates.get_size());
@@ -724,7 +733,7 @@ namespace Anki
 
         GroupRectangles(objects, minNeighbors, GROUP_EPS, fastScratch);
 
-        EndBenchmark("CascadeClassifier_LBP::DetectMultiScale");
+        //EndBenchmark("CascadeClassifier_LBP::DetectMultiScale");
 
         return RESULT_OK;
       }
@@ -763,7 +772,7 @@ namespace Anki
         EndBenchmark("CascadeClassifier_LBP::DetectSingleScale init");
 
         for(s32 y = 0; y < processingRectHeight; y += xyIncrement) {
-          BeginBenchmark("CascadeClassifier_LBP::DetectSingleScale scrollIntegralImage");
+          //BeginBenchmark("CascadeClassifier_LBP::DetectSingleScale scrollIntegralImage");
 
           if(scrollingIntegralImage.get_maxRow(this->data.origWinHeight+xyIncrement) < y) {
             const Result lastResult = scrollingIntegralImage.ScrollDown(image, scrollingIntegralImage_numScrollRows, scratch);
@@ -772,9 +781,9 @@ namespace Anki
               return lastResult;
           }
 
-          EndBenchmark("CascadeClassifier_LBP::DetectSingleScale scrollIntegralImage");
+          //EndBenchmark("CascadeClassifier_LBP::DetectSingleScale scrollIntegralImage");
 
-          BeginBenchmark("CascadeClassifier_LBP::DetectSingleScale x loop");
+          //BeginBenchmark("CascadeClassifier_LBP::DetectSingleScale x loop");
           for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
             f32 gypWeight;
 
@@ -794,7 +803,7 @@ namespace Anki
             if(result == 0)
               x += xyIncrement;
           }
-          EndBenchmark("CascadeClassifier_LBP::DetectSingleScale x loop");
+          //EndBenchmark("CascadeClassifier_LBP::DetectSingleScale x loop");
         }
 
         EndBenchmark("CascadeClassifier_LBP::DetectSingleScale");
@@ -887,3 +896,4 @@ namespace Anki
     } // namespace Classifier
   } // namespace Embedded
 } // namespace Anki
+
