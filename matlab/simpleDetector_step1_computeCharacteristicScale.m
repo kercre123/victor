@@ -46,10 +46,9 @@ if usePyramid
 %         figure(6); imshow(binaryImg);
         return
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_iterativeBox') 
-        boxWidth = 3;
+        boxWidth = 31;
         numIterations = numScales;
-        binaryImg = computeBinaryCharacteristicScaleImage_iterativeBox(img, boxWidth, numIterations, thresholdFraction);
-        keyboard
+        binaryImg = computeBinaryCharacteristicScaleImage_iterativeBox(img, boxWidth, numIterations, thresholdFraction, false);
     else
         assert(false);
     end
