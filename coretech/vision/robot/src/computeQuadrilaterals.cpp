@@ -143,17 +143,21 @@ namespace Anki
 
         // For each component (the list must be sorted):
         // 1. Trace the exterior boundary
+        //BeginBenchmark("TraceNextExteriorBoundary");
         if((lastResult = TraceNextExteriorBoundary(components, startComponentIndex, extractedBoundary, endComponentIndex, scratch)) != RESULT_OK)
           return lastResult;
+        //EndBenchmark("TraceNextExteriorBoundary");
 
         if(extractedBoundary.get_size() == 0)
           continue;
 
         startComponentIndex = endComponentIndex + 1;
 
+        //BeginBenchmark("ExtractLaplacianPeaks");
         // 2. Compute the Laplacian peaks
         if((lastResult = ExtractLaplacianPeaks(extractedBoundary, peaks, scratch)) != RESULT_OK)
           return lastResult;
+        //EndBenchmark("ExtractLaplacianPeaks");
 
         if(peaks.get_size() != 4)
           continue;
