@@ -191,10 +191,11 @@ Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, b
       size_t endObs = obstaclesPerAngle_[angle].size();
 
       for(size_t obs = 0; obs < endObs; ++obs) {
-        Point2f pt {start_x + prim->intermediatePositions[point].position.x_mm,
-            start_y + prim->intermediatePositions[point].position.y_mm};
 
-        if(obstaclesPerAngle_[angle][obs].first.Contains(pt)) {
+        if(obstaclesPerAngle_[angle][obs].first.Contains(
+             start_x + prim->intermediatePositions[point].position.x_mm,
+             start_y + prim->intermediatePositions[point].position.y_mm ) ) {
+
           penalty += obstaclesPerAngle_[angle][obs].second;
           if( penalty >= MAX_OBSTACLE_COST) {
             return penalty;
@@ -327,12 +328,10 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
 
       for(size_t obsIdx=0; obsIdx<endObs && !collision; ++obsIdx) {
 
-        // TEMP:  // TODO:(bn) consider redefining thins in terms of Point2f's
+        if( env.obstaclesPerAngle_[angle][obsIdx].first.Contains(
+              start_c_.x_mm + prim->intermediatePositions[pointIdx].position.x_mm,
+              start_c_.y_mm + prim->intermediatePositions[pointIdx].position.y_mm ) ) {
 
-        Point2f pt { start_c_.x_mm + prim->intermediatePositions[pointIdx].position.x_mm,
-            start_c_.y_mm + prim->intermediatePositions[pointIdx].position.y_mm};
-
-        if(env.obstaclesPerAngle_[angle][obsIdx].first.Contains(pt)) {
           if(env.obstaclesPerAngle_[angle][obsIdx].second >= MAX_OBSTACLE_COST) {
             collision = true;
             break;
@@ -395,7 +394,7 @@ bool xythetaEnvironment::IsInCollision(State_c c) const
   size_t endObs = obstaclesPerAngle_[angle].size();
 
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( Point2f{c.x_mm, c.y_mm} ) &&
+    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( c.x_mm, c.y_mm ) &&
        obstaclesPerAngle_[angle][obsIdx].second >= MAX_OBSTACLE_COST)
       return true;
   }
@@ -408,7 +407,7 @@ bool xythetaEnvironment::IsInSoftCollision(State s) const
   size_t endObs = obstaclesPerAngle_[angle].size();
 
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( Point2f{ GetX_mm(s.x), GetY_mm(s.y) } ))
+    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( GetX_mm(s.x), GetY_mm(s.y) ))
       return true;
   }
   return false;
@@ -420,7 +419,7 @@ Cost xythetaEnvironment::GetCollisionPenalty(State s) const
   size_t endObs = obstaclesPerAngle_[angle].size();
 
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( Point2f{ GetX_mm(s.x), GetY_mm(s.y) } ))
+    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( GetX_mm(s.x), GetY_mm(s.y) ))
       return obstaclesPerAngle_[angle][obsIdx].second;
   }
   return 0.0;

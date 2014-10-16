@@ -207,8 +207,6 @@ void xythetaPlannerImpl::InitializeHeuristic()
   costOutsideHeurMap_ = 0.0f;
   heurMap_.clear();
 
-  return;
-
   if(env_.IsInSoftCollision(goalID_)) {
     costOutsideHeurMap_ = ExpandStatesForHeur(goalID_);
     printf("expanded penalty states near goal. Cost outside map = %f\n",

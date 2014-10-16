@@ -29,7 +29,10 @@ public:
   FastPolygon(const Poly2f& basePolygon);
 
   // Returns true if the point (x,y) is inside this polygon, false otherwise
-  bool Contains(const Point2f& testPoint) const;
+  bool Contains(float x, float y) const;
+
+  // convenience function
+  bool Contains(const Point2f& pt) const;
 
   const Poly2f& GetSimplePolygon() const {return _poly;}
 

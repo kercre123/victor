@@ -154,10 +154,10 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
       // }
     }
 
-    PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstacles.ImportedAngles",
-                     "imported %d total obstacles for %d angles",
-                     numAdded,
-                     numAngles);
+    // PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstacles.ImportedAngles",
+    //                  "imported %d total obstacles for %d angles",
+    //                  numAdded,
+    //                  numAngles);
   }
   else {
     PRINT_NAMED_INFO("LatticePlanner.ImportBlockworldObstacles.NoUpdateNeeded",

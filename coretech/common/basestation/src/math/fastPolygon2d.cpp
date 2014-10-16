@@ -12,6 +12,7 @@
  **/
 
 #include "anki/common/basestation/math/fastPolygon2d.h"
+#include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
@@ -63,7 +64,7 @@ FastPolygon::FastPolygon(const Poly2f& basePolygon)
  *
  */
 
-bool FastPolygon::Contains(const Point2f& testPoint) const
+bool FastPolygon::Contains(float x, float y) const
 {
   // the goal here is to throw out points as quickly as
   // possible. First compute the squared distance to the center, and
@@ -71,9 +72,10 @@ bool FastPolygon::Contains(const Point2f& testPoint) const
 
   _numChecks++;
 
-  float distSqaured =
-    std::pow( testPoint.y() - _circleCenter.y(), 2) +
-    std::pow( testPoint.x() - _circleCenter.x(), 2);
+  float dy = y - _circleCenter.y();
+  float dx = x - _circleCenter.x();
+
+  float distSqaured = SQUARE(dx) + SQUARE(dy);
 
   if(distSqaured > _circumscribedRadiusSquared) {
     // definitely not inside
@@ -96,7 +98,13 @@ bool FastPolygon::Contains(const Point2f& testPoint) const
     // if the dot product is positive, the test point is inside of the
     // edge, so we must continue. Otherwise we can bail out early
     size_t pointIdx = _perpendicularEdgeVectors[i].second;
-    float dot = Anki::DotProduct( _perpendicularEdgeVectors[i].first, testPoint - _poly[pointIdx] );
+
+    // dot product of perpendicular vector and (x,y) - polygonPoint
+
+    float dot = _perpendicularEdgeVectors[i].first.x() * ( x - _poly[pointIdx].x() ) +
+      _perpendicularEdgeVectors[i].first.y() * ( y - _poly[pointIdx].y() ) ;
+
+    // float dot = Anki::DotProduct( _perpendicularEdgeVectors[i].first, testPoint - _poly[pointIdx] );
 
     _numDotProducts++;
 
@@ -109,6 +117,12 @@ bool FastPolygon::Contains(const Point2f& testPoint) const
   // was inside of outer circle, and inside of all edges, so is inside
   return true;
 }
+
+bool FastPolygon::Contains(const Point2f& pt) const
+{
+  return Contains(pt.x(), pt.y());
+}
+
 
 float FastPolygon::GetCircumscribedRadius() const
 {
