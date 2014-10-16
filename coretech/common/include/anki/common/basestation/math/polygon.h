@@ -39,8 +39,6 @@ public:
   Polygon();
   Polygon(const Polygon<N,T>& other);
 
-  // TEMP: try again without inheritence!!
-  // TODO:(bn) somehow this constructor doesn't work...
   // Initialize polygon from list of points. Assumes points are already in clockwise order!
   Polygon(std::initializer_list< Point<N,T> > points);
 

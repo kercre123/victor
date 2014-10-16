@@ -37,7 +37,8 @@
 
 #define DEBUG_REPLAN_CHECKS 0
 
-#define LATTICE_PLANNER_MAX_EXPANSIONS 300000000  // TEMP: 
+// a global max so planning doesn't run forever
+#define LATTICE_PLANNER_MAX_EXPANSIONS 300000000
 
 // this is in units of seconds per mm, meaning the robot would drive X
 // seconds out of the way to avoid having to drive 1 mm through the
@@ -101,10 +102,6 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
     robotPadding -= LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT;
   }
 
-
-  // TEMP: visualization doesn't work because we keep clearing all
-  // quads. Once we fix vis and remove the EraseAllQuads() call, get
-  // rid of the "true" so this only runs when it needs to
   const bool didObjecsChange = robot_->GetBlockWorld().DidObjectsChange();
   
   if(!isReplanning ||  // if not replanning, this must be a fresh, new plan, so we always should get obstacles
@@ -123,7 +120,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
     unsigned int numAdded = 0;
     unsigned int vizID = 0;
 
-    Planning::StateTheta numAngles = (StateTheta)env_.GetNumAngles(); // TEMP: 
+    Planning::StateTheta numAngles = (StateTheta)env_.GetNumAngles();
     for(StateTheta theta=0; theta < numAngles; ++theta) {
 
       float thetaRads = env_.GetTheta_c(theta);
@@ -143,12 +140,20 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
           env_.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
 
         // only draw the angle we are currently at
-        if(vizColor != nullptr && env_.GetTheta(robot_->GetPose().GetRotationAngle<'Z'>().ToFloat()) == theta &&
-           !isReplanning) {
+        if(vizColor != nullptr && env_.GetTheta(robot_->GetPose().GetRotationAngle<'Z'>().ToFloat()) == theta
+           // && !isReplanning
+          ) {
 
           // TODO: manage the quadID better so we don't conflict
           // TODO:(bn) handle isReplanning with color??
-          VizManager::getInstance()->DrawPlannerObstacle(isReplanning, vizID++ , expandedPoly, *vizColor);
+          // VizManager::getInstance()->DrawPlannerObstacle(isReplanning, vizID++ , expandedPoly, *vizColor);
+
+          // TODO:(bn) figure out a good way to visualize the
+          // multi-angle stuff. For now just draw the quads with
+          // padding
+          VizManager::getInstance()->DrawQuad (
+            isReplanning ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE,
+            vizID++, boundingQuad, 0.1f, *vizColor );
         }
         numAdded++;
       }
