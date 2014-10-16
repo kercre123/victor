@@ -169,11 +169,12 @@ namespace Anki
         pFilteredRows[i] = filteredRows[i][0];
       }
 
+      s32 x=0;
+
 #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
       const uint8x16_t zeros8x16 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
       const uint8x16_t ones8x16  = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
-      s32 x=0;
       for(; x<(imageWidth-15); x+=16) {
         const uint8x16_t filteredRow0 = vld1q_u8(&pFilteredRows0[x]);
         const uint8x16_t filteredRow1 = vld1q_u8(&pFilteredRows1[x]);
@@ -190,8 +191,8 @@ namespace Anki
 
         const uint8x16_t dogMax = vmaxq_u8(vmaxq_u8(dog0, dog1), vmaxq_u8(dog2, dog3));
 
-        const uint8x16_t dog0IsMax = vceqq_u8(dogMax, dog0);        
-        const uint8x16_t dog1IsMax = vceqq_u8(dogMax, dog1);        
+        const uint8x16_t dog0IsMax = vceqq_u8(dogMax, dog0);
+        const uint8x16_t dog1IsMax = vceqq_u8(dogMax, dog1);
         const uint8x16_t dog2IsMax = vceqq_u8(dogMax, dog2);
 
         // Backwards, so in cases of ties, the result matches the non-simd version
@@ -200,7 +201,7 @@ namespace Anki
         scaleValue = vbslq_u8(dog1IsMax, filteredRow2, scaleValue);
         scaleValue = vbslq_u8(dog0IsMax, filteredRow1, scaleValue);
 
-        const uint8x16_t scaleValueIsLarger = vcltq_u8(imageRow, scaleValue);  
+        const uint8x16_t scaleValueIsLarger = vcltq_u8(imageRow, scaleValue);
         const uint8x16_t binaryVector = vbslq_u8(scaleValueIsLarger, ones8x16, zeros8x16);
 
         vst1q_u8(&pBinaryImageRow[x], binaryVector);
