@@ -1,9 +1,11 @@
 % function markers = simpleDetector(img, varargin)
 
 % Examples:
+% markers = simpleDetector(img);
 % markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_edges', 'componentRejectionTestsType', 'off', 'emptyCenterDetection', 'off', 'connectedComponentsType', 'matlab_original', 'traceBoundaryType', 'matlab_approximate'));
 % markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('extractFiducialMethod', 'c_exhaustive'));
 % markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', 'c:/tmp/treeLarge.mat')));
+% markers = simpleDetector(img, 'embeddedConversions', EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_iterativeBox'));
 
 function markers = simpleDetector(img, varargin)
 
