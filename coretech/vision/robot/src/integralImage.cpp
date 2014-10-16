@@ -207,10 +207,14 @@ namespace Anki
             break;
           }
 
+          BeginBenchmark("scrolling_nonPadded_pad");
           if((lastResult = PadImageRow(image, curImageY, paddedRow)) != RESULT_OK)
             return lastResult;
+          EndBenchmark("scrolling_nonPadded_pad");
 
+          BeginBenchmark("scrolling_nonPadded_compute");
           ComputeIntegralImageRow(pPaddedRow, this->Pointer(curIntegralImageY-1, 0), this->Pointer(curIntegralImageY, 0), integralImageWidth);
+          EndBenchmark("scrolling_nonPadded_compute");
 
           numRowsToScroll--;
           curIntegralImageY++;
@@ -339,54 +343,52 @@ namespace Anki
 
     void ScrollingIntegralImage_u8_s32::ComputeIntegralImageRow(const u8* restrict paddedImage_currentRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth)
     {
-      const s32 integralImageWidth4 = (integralImageWidth+3) / 4;
-
-      const u32 * restrict paddedImage_currentRowU32 = reinterpret_cast<const u32*>(paddedImage_currentRow);
-
       s32 horizontalSum = 0;
-      for(s32 x=0; x<integralImageWidth4; x++) {
-        const u32 curPixel = paddedImage_currentRowU32[x];
 
-        horizontalSum += curPixel & 0xFF;
-        integralImage_currentRow[4*x] = horizontalSum;
+      s32 x = 0;
+      for(; x<integralImageWidth; x++) {
+        const u8 curPixel = paddedImage_currentRow[x];
 
-        horizontalSum += (curPixel & 0xFF00) >> 8;
-        integralImage_currentRow[4*x + 1] = horizontalSum;
-
-        horizontalSum += (curPixel & 0xFF0000) >> 16;
-        integralImage_currentRow[4*x + 2] = horizontalSum;
-
-        horizontalSum += (curPixel & 0xFF000000) >> 24;
-        integralImage_currentRow[4*x + 3] = horizontalSum;
+        horizontalSum += curPixel;
+        integralImage_currentRow[x] = horizontalSum;
       }
     }
 
     void ScrollingIntegralImage_u8_s32::ComputeIntegralImageRow(const u8 * restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth)
     {
-      const s32 integralImageWidth4 = (integralImageWidth+3) / 4;
+      s32 horizontalSum = 0;
+
+      s32 x = 0;
+
+#if ACCELERATION_TYPE == ACCELERATION_ARM_M4
+      const s32 integralImageWidth4 = (integralImageWidth-3) / 4;
 
       const u32 * restrict paddedImage_currentRowU32 = reinterpret_cast<const u32*>(paddedImage_currentRow);
 
-      s32 horizontalSum = 0;
-      //for(s32 x=0; x<integralImageWidth; x++) {
-      //  horizontalSum += paddedImage_currentRow[x];
-      //  integralImage_currentRow[x] = horizontalSum + integralImage_previousRow[x];
-      //}
-
-      for(s32 x=0; x<integralImageWidth4; x++) {
+      for(; x<integralImageWidth4; x++) {
         const u32 curPixel = paddedImage_currentRowU32[x];
-
+ 
         horizontalSum += curPixel & 0xFF;
         integralImage_currentRow[4*x] = horizontalSum + integralImage_previousRow[4*x];
-
+ 
         horizontalSum += (curPixel & 0xFF00) >> 8;
         integralImage_currentRow[4*x + 1] = horizontalSum + integralImage_previousRow[4*x + 1];
-
+ 
         horizontalSum += (curPixel & 0xFF0000) >> 16;
         integralImage_currentRow[4*x + 2] = horizontalSum + integralImage_previousRow[4*x + 2];
-
+ 
         horizontalSum += (curPixel & 0xFF000000) >> 24;
         integralImage_currentRow[4*x + 3] = horizontalSum + integralImage_previousRow[4*x + 3];
+      }
+
+      x *= 4;
+#elif ACCELERATION_TYPE == ACCELERATION_ARM_A7
+ 
+#endif
+
+      for(; x<integralImageWidth; x++) {
+        horizontalSum += paddedImage_currentRow[x];
+        integralImage_currentRow[x] = horizontalSum + integralImage_previousRow[x];
       }
     }
 
