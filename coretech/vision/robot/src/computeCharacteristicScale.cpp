@@ -42,6 +42,7 @@ namespace Anki
 
     NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
     NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
 
     NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const FixedLengthList<s32> &filterHalfWidths, const s32 imageY, FixedLengthList<Array<u8> > &filteredRows)
     {
@@ -128,7 +129,65 @@ namespace Anki
           pBinaryImageRow[x] = 0;
         }
       } // for(s32 x=0; x<imageWidth; x++)
-    } // staticInline void ecvcs_computeBinaryImage()
+    } // staticInline void ecvcs_computeBinaryImage_numFilters5()
+
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
+    {
+      AnkiAssert(filteredRows.get_size() == 5);
+      AnkiAssert(scaleImage_thresholdMultiplier == 65536);
+
+      const s32 thresholdMultiplier_numFractionalBits = 16;
+
+      const u8 * restrict pImage = image[imageY];
+
+      const u8 * restrict pFilteredRows0 = filteredRows[0][0];
+      const u8 * restrict pFilteredRows1 = filteredRows[1][0];
+      const u8 * restrict pFilteredRows2 = filteredRows[2][0];
+      const u8 * restrict pFilteredRows3 = filteredRows[3][0];
+      const u8 * restrict pFilteredRows4 = filteredRows[4][0];
+
+      const s32 imageWidth = image.get_size(1);
+
+      const s32 numFilteredRows = filteredRows.get_size();
+
+      AnkiAssert(filteredRows.get_size() <= MAX_FILTER_HALF_WIDTH);
+
+      const u8 * restrict pFilteredRows[MAX_FILTER_HALF_WIDTH+1];
+      for(s32 i=0; i<numFilteredRows; i++) {
+        pFilteredRows[i] = filteredRows[i][0];
+      }
+
+      for(s32 x=0; x<imageWidth; x++) {
+        //for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
+        const s32 dog0 = ABS(static_cast<s32>(pFilteredRows1[x]) - static_cast<s32>(pFilteredRows0[x]));
+        const s32 dog1 = ABS(static_cast<s32>(pFilteredRows2[x]) - static_cast<s32>(pFilteredRows1[x]));
+        const s32 dog2 = ABS(static_cast<s32>(pFilteredRows3[x]) - static_cast<s32>(pFilteredRows2[x]));
+        const s32 dog3 = ABS(static_cast<s32>(pFilteredRows4[x]) - static_cast<s32>(pFilteredRows3[x]));
+
+        const s32 maxValue = MAX(dog0, MAX(dog1, MAX(dog2, dog3)));
+
+        s32 scaleValue;
+
+        if(dog0 == maxValue) {
+          scaleValue = pFilteredRows1[x];
+        } else if(dog1 == maxValue) {
+          scaleValue = pFilteredRows2[x];
+        } else if(dog2 == maxValue) {
+          scaleValue = pFilteredRows3[x];
+        } else {
+          scaleValue = pFilteredRows4[x];
+        }
+
+        //} // for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; scaleImage_numPyramidLevels++)
+
+        const s32 thresholdValue = scaleValue;
+        if(pImage[x] < thresholdValue) {
+          pBinaryImageRow[x] = 1;
+        } else {
+          pBinaryImageRow[x] = 0;
+        }
+      } // for(s32 x=0; x<imageWidth; x++)
+    } // staticInline void ecvcs_computeBinaryImage_numFilters5()
 
     /*
     NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
@@ -415,20 +474,12 @@ namespace Anki
         if(numFilterHalfWidths != 5) {
           ecvcs_computeBinaryImage(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
         } else {
-          ecvcs_computeBinaryImage_numFilters5(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
+          if(scaleImage_thresholdMultiplier == 65536) {
+            ecvcs_computeBinaryImage_numFilters5(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
+          } else {
+            ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
+          }
         }
-
-        /*
-        if(scaleImage_numPyramidLevels != 3) {
-        ecvcs_computeBinaryImage(image, filteredRows, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, imageY, imageWidth, pBinaryImageRow);
-        } else {
-        if(scaleImage_thresholdMultiplier == 65536) {
-        ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(image, filteredRows, scaleImage_numPyramidLevels, imageY, imageWidth, pBinaryImageRow);
-        } else {
-        ecvcs_computeBinaryImage_numPyramids3(image, filteredRows, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, imageY, imageWidth, pBinaryImageRow);
-        }
-        }
-        */
 
         EndBenchmark("ecvcs_computeBinaryImage");
 
