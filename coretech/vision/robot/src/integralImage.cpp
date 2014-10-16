@@ -207,14 +207,14 @@ namespace Anki
             break;
           }
 
-          BeginBenchmark("scrolling_nonPadded_pad");
+          //BeginBenchmark("scrolling_nonPadded_pad");
           if((lastResult = PadImageRow(image, curImageY, paddedRow)) != RESULT_OK)
             return lastResult;
-          EndBenchmark("scrolling_nonPadded_pad");
+          //EndBenchmark("scrolling_nonPadded_pad");
 
-          BeginBenchmark("scrolling_nonPadded_compute");
+          //BeginBenchmark("scrolling_nonPadded_compute");
           ComputeIntegralImageRow(pPaddedRow, this->Pointer(curIntegralImageY-1, 0), this->Pointer(curIntegralImageY, 0), integralImageWidth);
-          EndBenchmark("scrolling_nonPadded_compute");
+          //EndBenchmark("scrolling_nonPadded_compute");
 
           numRowsToScroll--;
           curIntegralImageY++;
@@ -383,7 +383,7 @@ namespace Anki
 
       x *= 4;
 #elif ACCELERATION_TYPE == ACCELERATION_ARM_A7
- 
+    // TODO: doesn't seem possible to accelerate this much. Just loading the data takes most of the time. A manual 16x unrolling improves the speed by maybe 8%.
 #endif
 
       for(; x<integralImageWidth; x++) {

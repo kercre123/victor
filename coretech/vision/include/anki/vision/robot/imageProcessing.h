@@ -23,10 +23,22 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/hostIntrinsics_m4.h"
 
-#define USE_ARM_ACCELERATION_IMAGE_PROCESSING
+#define ACCELERATION_NONE 0
+#define ACCELERATION_ARM_M4 1
+#define ACCELERATION_ARM_A7 2
 
-#ifndef USE_ARM_ACCELERATION_IMAGE_PROCESSING
-#warning not using USE_ARM_ACCELERATION_IMAGE_PROCESSING
+#if defined(__ARM_ARCH_7A__)
+#define ACCELERATION_TYPE ACCELERATION_ARM_A7
+#else
+#define ACCELERATION_TYPE ACCELERATION_ARM_M4
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_NONE
+#warning not using ARM acceleration
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+#include <arm_neon.h>
 #endif
 
 namespace Anki
@@ -801,12 +813,33 @@ namespace Anki
 
         const s32 filterHalfWidth = filterWidth >> 1;
 
+#if ACCELERATION_TYPE == ACCELERATION_NONE || ACCELERATION_TYPE == ACCELERATION_ARM_A7
+        for(s32 x=0; x<imageWidth; x++) {
+          IntermediateType sum = 0;
+
+          for(s32 xFilter=0; xFilter<filterWidth; xFilter++) {
+            const s32 xImage = x - filterHalfWidth + filterWidth - 1 + xFilter;
+            const IntermediateType toAdd = static_cast<IntermediateType>(pPaddedImage[xImage] * pFilter[xFilter]);
+            sum += toAdd;
+          }
+
+          if(shiftType == 2) {
+            sum >>= shiftMagnitude;
+          } else if(shiftType == 1) {
+            sum <<= shiftMagnitude;
+          }
+
+          pOut[x] = static_cast<OutType>(sum);
+        } // for(s32 x=0; x<imageWidth; x++)
+#else // #if ACCELERATION_TYPE == ACCELERATION_NONE || ACCELERATION_TYPE == ACCELERATION_ARM_A7
         for(s32 x=0; x<imageWidth; x++) {
           IntermediateType sum = 0;
 
           if(sizeof(InType) == 4 && Flags::TypeCharacteristics<InType>::isSigned) {
+            s32 xFilter = 0;
+
             const s32 filterWidthSimdMax = RoundDown<s32>(filterWidth, 2);
-            for(s32 xFilter=0; xFilter<filterWidthSimdMax; xFilter+=2) {
+            for(; xFilter<filterWidthSimdMax; xFilter+=2) {
               const s32 xImage = x - filterHalfWidth + filterWidth - 1 + xFilter;
 
               const IntermediateType toAdd0 = static_cast<IntermediateType>(pPaddedImage[xImage] * pFilter[xFilter]);
@@ -815,7 +848,7 @@ namespace Anki
               sum += toAdd0 + toAdd1;
             }
 
-            for(s32 xFilter=filterWidthSimdMax; xFilter<filterWidth; xFilter++) {
+            for(; xFilter<filterWidth; xFilter++) {
               const s32 xImage = x - filterHalfWidth + filterWidth - 1 + xFilter;
               const IntermediateType toAdd = static_cast<IntermediateType>(pPaddedImage[xImage] * pFilter[xFilter]);
               sum += toAdd;
@@ -823,10 +856,12 @@ namespace Anki
           } else if(sizeof(InType) == 2 && Flags::TypeCharacteristics<InType>::isSigned) {
             //const s32 xImageOffset = x - filterHalfWidth + filterWidth - 1;
 
+            s32 xFilter = 0;
+
             s32 xImage = x - filterHalfWidth + filterWidth - 1;
 
             const s32 filterWidthSimdMax = RoundDown<s32>(filterWidth, 8);
-            for(s32 xFilter=0; xFilter<filterWidthSimdMax; xFilter+=8, xImage+=8) {
+            for(; xFilter<filterWidthSimdMax; xFilter+=8, xImage+=8) {
               //#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
               const IntermediateType toAdd0 = static_cast<IntermediateType>(pPaddedImage[xImage]   * pFilter[xFilter]);
               const IntermediateType toAdd1 = static_cast<IntermediateType>(pPaddedImage[xImage+1] * pFilter[xFilter+1]);
@@ -857,7 +892,7 @@ namespace Anki
               //#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
             }
 
-            for(s32 xFilter=filterWidthSimdMax; xFilter<filterWidth; xFilter++) {
+            for(; xFilter<filterWidth; xFilter++) {
               const s32 xImage = x - filterHalfWidth + filterWidth - 1 + xFilter;
               const IntermediateType toAdd = static_cast<IntermediateType>(pPaddedImage[xImage] * pFilter[xFilter]);
               sum += toAdd;
@@ -878,6 +913,7 @@ namespace Anki
 
           pOut[x] = static_cast<OutType>(sum);
         } // for(s32 x=0; x<imageWidth; x++)
+#endif // #if ACCELERATION_TYPE == ACCELERATION_NONE ... #else
 
         EndBenchmark("Correlate1dCircularAndSameSizeOutput");
 
@@ -945,3 +981,4 @@ namespace Anki
 } //namespace Anki
 
 #endif // _ANKICORETECHEMBEDDED_VISION_IMAGE_PROCESSING_H_
+
