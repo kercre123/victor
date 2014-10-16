@@ -142,7 +142,6 @@ SuccessorIterator::SuccessorIterator(const xythetaEnvironment* env, StateID star
     startG_(startG),
     nextAction_(0)
 {
-  // TEMP: 
   assert(start_.theta == xythetaEnvironment::GetThetaFromStateID(startID));
 }
 
@@ -339,12 +338,6 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
           else {
             // apply soft penalty, but allow the action
 
-            // TODO:(bn) this adds cost per sample, but it should probably be per time
-            // TODO:(bn) should be per unit length (or time), not per sample
-
-            // TEMP: add a length to each intermediate positions that
-            // tells you how far its been since the last one, and
-            // multiple oneOverLengh by the obstacle penalty here
             penalty += env.obstaclesPerAngle_[angle][obsIdx].second *
               prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition;
 
