@@ -348,7 +348,7 @@ static id<NSCopying> _addressOfPeripheral(CBPeripheral* peripheral) {
       
       // Set the option to get notification on disconnect, it's very likely that this isn't necessary for our needs.
       //  We only remain connected while our app is open and active.
-      if(!_connectionAttemptInProgress.peripheral.state == CBPeripheralStateConnected) {
+      if(_connectionAttemptInProgress.peripheral.state != CBPeripheralStateConnected) {
         [_centralManager connectPeripheral:_connectionAttemptInProgress.peripheral options:@{CBConnectPeripheralOptionNotifyOnDisconnectionKey:@YES}];
       }
       else {
@@ -656,8 +656,7 @@ static id<NSCopying> _addressOfPeripheral(CBPeripheral* peripheral) {
   
   BLEAdvertisement* existingAdvertisement = _advertisementsByPeripheralAddress[peripheralAddress];
   
-  // TODO: For some reason name is nil when this code is run on a mac
-  if(existingAdvertisement != nil) { // && existingAdvertisement.name != nil) {
+  if(existingAdvertisement != nil) {
     // Existing Peripheral advertisement, refresh the advertisement record
     //  and the observed RSSI.
     
@@ -685,20 +684,8 @@ static id<NSCopying> _addressOfPeripheral(CBPeripheral* peripheral) {
   }
   else {
     // New Peripheral discovered
-    BLEAdvertisement* advertisement = existingAdvertisement;
-    if (!advertisement) {
-      advertisement = [[BLEAdvertisement alloc] init];
-    }
-
-    // TODO: For some reason name is nil when this code is run on a mac
-    /*
-    if (serviceLocalName) {
-      advertisement.name = serviceLocalName;
-    }
-     */
-    advertisement.name = peripheral.name;
-    
-
+    BLEAdvertisement* advertisement = [[BLEAdvertisement alloc] init];
+    advertisement.name = serviceLocalName ?: peripheral.name;
     advertisement.timeStamp = CFAbsoluteTimeGetCurrent();
     advertisement.peripheral = peripheral;
     advertisement.discovered = YES;
