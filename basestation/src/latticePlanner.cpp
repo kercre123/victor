@@ -26,8 +26,14 @@
 #include "vizManager.h"
 
 
-#define LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK ROBOT_BOUNDING_RADIUS
-#define LATTICE_PLANNER_BOUNDING_DISTANCE ROBOT_BOUNDING_RADIUS + 5.0
+// base padding on the robot footprint
+#define LATTICE_PLANNER_ROBOT_PADDING 7.0
+
+// base padding on the obstacles
+#define LATTICE_PLANNER_OBSTACLE_PADDING 6.0
+
+// amount of padding to subtract for replan-checks. MUST be less than the above values
+#define LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT 5.0
 
 #define DEBUG_REPLAN_CHECKS 0
 
@@ -51,8 +57,7 @@ class LatticePlannerImpl
 public:
 
   LatticePlannerImpl(const Robot* robot, const Json::Value& mprims, const LatticePlanner* parent)
-    : lastPaddingRadius_(0.0)
-    , robot_(robot)
+    : robot_(robot)
     , planner_(env_)
     , _parent(parent)
     {
@@ -61,7 +66,6 @@ public:
 
   // imports and pads obstacles
   void ImportBlockworldObstacles(const bool isReplanning, const ColorRGBA* vizColor = nullptr);
-  float lastPaddingRadius_;
 
   const Robot* robot_;
   xythetaEnvironment env_;
@@ -87,8 +91,16 @@ LatticePlanner::~LatticePlanner()
 
 void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, const ColorRGBA* vizColor)
 {
-  const float paddingRadius = (isReplanning ? LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK :
-                               LATTICE_PLANNER_BOUNDING_DISTANCE);
+  float obstaclePadding = LATTICE_PLANNER_OBSTACLE_PADDING;
+  if(isReplanning) {
+    obstaclePadding -= LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT;
+  }
+
+  float robotPadding = LATTICE_PLANNER_ROBOT_PADDING;
+  if(isReplanning) {
+    robotPadding -= LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT;
+  }
+
 
   // TEMP: visualization doesn't work because we keep clearing all
   // quads. Once we fix vis and remove the EraseAllQuads() call, get
@@ -96,24 +108,17 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
   const bool didObjecsChange = robot_->GetBlockWorld().DidObjectsChange();
   
   if(!isReplanning ||  // if not replanning, this must be a fresh, new plan, so we always should get obstacles
-     !FLT_NEAR(paddingRadius, lastPaddingRadius_) ||
      didObjecsChange)
   {
-    lastPaddingRadius_ = paddingRadius;
     std::vector<Quad2f> boundingBoxes;
 
-    // first check plan with slightly smaller radius to see if we need to replan
-    // TODO:(bn) remove old padding radius!!!
-    robot_->GetBlockWorld().GetObstacles(boundingBoxes, 0.0f);
+    robot_->GetBlockWorld().GetObstacles(boundingBoxes, obstaclePadding);
     
     env_.ClearObstacles();
     
     if(vizColor != nullptr) {
       VizManager::getInstance()->EraseAllPlannerObstacles(isReplanning);
     }
-
-    // TODO:(bn) config? use old paddingRadius one once it's converted  // TEMP: 
-    const float padding = 5.0;
 
     unsigned int numAdded = 0;
     unsigned int vizID = 0;
@@ -123,10 +128,11 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
 
       float thetaRads = env_.GetTheta_c(theta);
 
+      // Get the robot polygon, and inflate it by a bit to handle error
       Poly2f robotPoly;
       robotPoly.ImportQuad2d(robot_->GetBoundingQuadXY(
                                Pose3d{thetaRads, Z_AXIS_3D, {0.0f, 0.0f, 0.0f}},
-                               padding ) );
+                               robotPadding ) );
 
       for(auto boundingQuad : boundingBoxes) {
 
@@ -161,9 +167,9 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
   }
   else {
     PRINT_NAMED_INFO("LatticePlanner.ImportBlockworldObstacles.NoUpdateNeeded",
-                     "radius %f (last = %f), didBlocksChange %d",
-                     paddingRadius,
-                     lastPaddingRadius_,
+                     "robot padding %f, obstacle padding %f , didBlocksChange %d",
+                     robotPadding,
+                     obstaclePadding,
                      didObjecsChange);
   }
 }
