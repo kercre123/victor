@@ -169,17 +169,12 @@ namespace Anki
         pFilteredRows[i] = filteredRows[i][0];
       }
 
-      s32 x=0;
-
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
       const uint8x16_t zeros8x16 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
       const uint8x16_t ones8x16  = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
-//#if 0
-//      printf("here\n");
+      s32 x=0;
       for(; x<(imageWidth-15); x+=16) {
-//      for(; x<100; x+=16) {
-//      for(x=334; x<335; x+=16) {
-        //for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
         const uint8x16_t filteredRow0 = vld1q_u8(&pFilteredRows0[x]);
         const uint8x16_t filteredRow1 = vld1q_u8(&pFilteredRows1[x]);
         const uint8x16_t filteredRow2 = vld1q_u8(&pFilteredRows2[x]);
@@ -193,83 +188,24 @@ namespace Anki
         const uint8x16_t dog2 = vabdq_u8(filteredRow3, filteredRow2);
         const uint8x16_t dog3 = vabdq_u8(filteredRow4, filteredRow3);
 
-        // TODO: try binary split
-        const uint8x16_t dogMax = vmaxq_u8(dog0, vmaxq_u8(dog1, vmaxq_u8(dog2, dog3)));
+        const uint8x16_t dogMax = vmaxq_u8(vmaxq_u8(dog0, dog1), vmaxq_u8(dog2, dog3));
 
-/*        if(x >= 0 && imageY==160){
-          printf("filteredRow0a:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", filteredRow0[xx]); } printf("\n");
-          printf("filteredRow1a:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", filteredRow1[xx]); } printf("\n");
-          printf("filteredRow2a:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", filteredRow2[xx]); } printf("\n");
-          printf("filteredRow3a:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", filteredRow3[xx]); } printf("\n");
-          printf("filteredRow4a:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", filteredRow4[xx]); } printf("\n");
-
-          printf("filteredRow0b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pFilteredRows0[x+xx]); } printf("\n");
-          printf("filteredRow1b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pFilteredRows1[x+xx]); } printf("\n");
-          printf("filteredRow2b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pFilteredRows2[x+xx]); } printf("\n");
-          printf("filteredRow3b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pFilteredRows3[x+xx]); } printf("\n");
-          printf("filteredRow4b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pFilteredRows4[x+xx]); } printf("\n");
-
-          printf("dog0b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog0[xx]); } printf("\n");
-          printf("dog1b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog1[xx]); } printf("\n");
-          printf("dog2b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog2[xx]); } printf("\n");
-          printf("dog3b:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog3[xx]); } printf("\n");
-
-          printf("dogMax:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dogMax[xx]); } printf("\n");
-        }*/
-
-        // TODO: make backwards to match the non-simd version
-        uint8x16_t scaleValue = filteredRow1;
-
-/*        if(x >= 0 && imageY==160){
-          printf("scaleValue:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValue[xx]); } printf("\n");
-        }*/
-
+        const uint8x16_t dog0IsMax = vceqq_u8(dogMax, dog0);        
         const uint8x16_t dog1IsMax = vceqq_u8(dogMax, dog1);        
-        scaleValue = vbslq_u8(dog1IsMax, filteredRow2, scaleValue);
+        const uint8x16_t dog2IsMax = vceqq_u8(dogMax, dog2);
 
-/*        if(x >= 86 && imageY==160){
-          printf("dog1isMax:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog1IsMax[xx]); } printf("\n");
-          printf("scaleValue:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValue[xx]); } printf("\n");
-        }*/
-
-        const uint8x16_t dog2IsMax = vceqq_u8(dogMax, dog2);        
+        // Backwards, so in cases of ties, the result matches the non-simd version
+        uint8x16_t scaleValue = filteredRow4;
         scaleValue = vbslq_u8(dog2IsMax, filteredRow3, scaleValue);
-
-/*        if(x >= 86 && imageY==160){
-          printf("dog2isMax:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog2IsMax[xx]); } printf("\n");
-          printf("scaleValue:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValue[xx]); } printf("\n");
-        }*/
-
-        const uint8x16_t dog3IsMax = vceqq_u8(dogMax, dog3);        
-        scaleValue = vbslq_u8(dog3IsMax, filteredRow4, scaleValue);
-
-/*        if(x >= 86 && imageY==160){
-          printf("dog3isMax:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", dog3IsMax[xx]); } printf("\n");
-          printf("scaleValue:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValue[xx]); } printf("\n");
-        }*/
-
-        //} // for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; scaleImage_numPyramidLevels++)
+        scaleValue = vbslq_u8(dog1IsMax, filteredRow2, scaleValue);
+        scaleValue = vbslq_u8(dog0IsMax, filteredRow1, scaleValue);
 
         const uint8x16_t scaleValueIsLarger = vcltq_u8(imageRow, scaleValue);  
         const uint8x16_t binaryVector = vbslq_u8(scaleValueIsLarger, ones8x16, zeros8x16);
 
-/*        if(x >= 0 && imageY==160){
-          printf("(%d,%d)\n", imageY, x);
-          printf("scaleValue:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValue[xx]); } printf("\n");
-          printf("imageRow1:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", imageRow[xx]); } printf("\n");
-          printf("imageRow2:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", pImage[x+xx]); } printf("\n");
-          printf("scaleValueIsLarger:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", scaleValueIsLarger[xx]); } printf("\n");
-          printf("binaryVector:"); for(s32 xx=0; xx<16; xx++) { printf("%d ", binaryVector[xx]); } printf("\n");
-        }*/
-
         vst1q_u8(&pBinaryImageRow[x], binaryVector);
-        //vst1q_u8(&pBinaryImageRow[x], dog0);
       } // for(s32 x=0; x<imageWidth; x++)
-
-/*      if(x >= 0 && imageY==160){
-        printf("\n");
-      }*/
-//#endif // if 0
+#endif // #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
 
       for(; x<imageWidth; x++) {
         //for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
@@ -296,168 +232,12 @@ namespace Anki
 
         const u8 thresholdValue = scaleValue;
         if(pImage[x] < thresholdValue) {
-//          printf("(%d,%d)\n", imageY, x);
           pBinaryImageRow[x] = 1;
         } else {
           pBinaryImageRow[x] = 0;
         }
-
-/*        if(x>=334 && x<(334+16) && imageY==160) {
-              printf("(%d,%d) filteredRows=[%d,%d,%d,%d,%d] dog=[%d,%d,%d,%d] image=%d scaleValue=%d binary=%d\n", imageY, x, pFilteredRows0[x], pFilteredRows1[x], pFilteredRows2[x], pFilteredRows3[x], pFilteredRows4[x], dog0, dog1, dog2, dog3, pImage[x], scaleValue, pBinaryImageRow[x]);
-//            printf("Larger at (%d,%d) thresholdValue=%d Image=%d\n", imageY, x, thresholdValue, pImage[x]);
-        }*/
       } // for(s32 x=0; x<imageWidth; x++)
     } // staticInline void ecvcs_computeBinaryImage_numFilters5()
-
-    /*
-    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
-    {
-    const u32 * restrict pImage = reinterpret_cast<const u32*>(image[imageY]);
-
-    const u32 * restrict pFilteredRows0 = reinterpret_cast<const u32*>(filteredRows[0][0]);
-    const u32 * restrict pFilteredRows1 = reinterpret_cast<const u32*>(filteredRows[1][0]);
-    const u32 * restrict pFilteredRows2 = reinterpret_cast<const u32*>(filteredRows[2][0]);
-    const u32 * restrict pFilteredRows3 = reinterpret_cast<const u32*>(filteredRows[3][0]);
-
-    u32 * restrict pBinaryImageRowU32 = reinterpret_cast<u32*>(pBinaryImageRow);
-
-    const s32 imageWidth4 = imageWidth / 4;
-
-    #if defined(USE_ARM_ACCELERATION)
-    const u32 twoFiftyFourX4 = 0xFEFEFEFEU;
-    #endif
-
-    for(s32 x=0; x<imageWidth4; x++) {
-    const u32 filteredRows0 = pFilteredRows0[x];
-    const u32 filteredRows1 = pFilteredRows1[x];
-    const u32 filteredRows2 = pFilteredRows2[x];
-    const u32 filteredRows3 = pFilteredRows3[x];
-
-    #if !defined(USE_ARM_ACCELERATION)
-    const s32 dog0_row0 = ABS(static_cast<s32>(filteredRows1 & 0xFF) - static_cast<s32>(filteredRows0 & 0xFF));
-    const s32 dog1_row0 = ABS(static_cast<s32>(filteredRows2 & 0xFF) - static_cast<s32>(filteredRows1 & 0xFF));
-    const s32 dog2_row0 = ABS(static_cast<s32>(filteredRows3 & 0xFF) - static_cast<s32>(filteredRows2 & 0xFF));
-
-    const s32 dog0_row1 = ABS(static_cast<s32>((filteredRows1 & 0xFF00) >> 8) - static_cast<s32>((filteredRows0 & 0xFF00) >> 8));
-    const s32 dog1_row1 = ABS(static_cast<s32>((filteredRows2 & 0xFF00) >> 8) - static_cast<s32>((filteredRows1 & 0xFF00) >> 8));
-    const s32 dog2_row1 = ABS(static_cast<s32>((filteredRows3 & 0xFF00) >> 8) - static_cast<s32>((filteredRows2 & 0xFF00) >> 8));
-
-    const s32 dog0_row2 = ABS(static_cast<s32>((filteredRows1 & 0xFF0000) >> 16) - static_cast<s32>((filteredRows0 & 0xFF0000) >> 16));
-    const s32 dog1_row2 = ABS(static_cast<s32>((filteredRows2 & 0xFF0000) >> 16) - static_cast<s32>((filteredRows1 & 0xFF0000) >> 16));
-    const s32 dog2_row2 = ABS(static_cast<s32>((filteredRows3 & 0xFF0000) >> 16) - static_cast<s32>((filteredRows2 & 0xFF0000) >> 16));
-
-    const s32 dog0_row3 = ABS(static_cast<s32>((filteredRows1 & 0xFF000000) >> 24) - static_cast<s32>((filteredRows0 & 0xFF000000) >> 24));
-    const s32 dog1_row3 = ABS(static_cast<s32>((filteredRows2 & 0xFF000000) >> 24) - static_cast<s32>((filteredRows1 & 0xFF000000) >> 24));
-    const s32 dog2_row3 = ABS(static_cast<s32>((filteredRows3 & 0xFF000000) >> 24) - static_cast<s32>((filteredRows2 & 0xFF000000) >> 24));
-
-    u32 scaleValue_row0;
-    u32 scaleValue_row1;
-    u32 scaleValue_row2;
-    u32 scaleValue_row3;
-
-    if(dog0_row0 > dog1_row0) {
-    if(dog0_row0 > dog2_row0) { scaleValue_row0 = pFilteredRows1[x] & 0xFF; }
-    else { scaleValue_row0 = pFilteredRows3[x] & 0xFF; }
-    } else if(dog1_row0 > dog2_row0) {
-    scaleValue_row0 = pFilteredRows2[x] & 0xFF;
-    } else {
-    scaleValue_row0 = pFilteredRows3[x] & 0xFF;
-    }
-
-    if(dog0_row1 > dog1_row1) {
-    if(dog0_row1 > dog2_row1) { scaleValue_row1 = (pFilteredRows1[x] & 0xFF00) >> 8; }
-    else { scaleValue_row1 = (pFilteredRows3[x] & 0xFF00) >> 8; }
-    } else if(dog1_row1 > dog2_row1) {
-    scaleValue_row1 = (pFilteredRows2[x] & 0xFF00) >> 8;
-    } else {
-    scaleValue_row1 = (pFilteredRows3[x] & 0xFF00) >> 8;
-    }
-
-    if(dog0_row2 > dog1_row2) {
-    if(dog0_row2 > dog2_row2) { scaleValue_row2 = (pFilteredRows1[x] & 0xFF0000) >> 16; }
-    else { scaleValue_row2 = (pFilteredRows3[x] & 0xFF0000) >> 16; }
-    } else if(dog1_row2 > dog2_row2) {
-    scaleValue_row2 = (pFilteredRows2[x] & 0xFF0000) >> 16;
-    } else {
-    scaleValue_row2 = (pFilteredRows3[x] & 0xFF0000) >> 16;
-    }
-
-    if(dog0_row3 > dog1_row3) {
-    if(dog0_row3 > dog2_row3) { scaleValue_row3 = (pFilteredRows1[x] & 0xFF000000) >> 24; }
-    else { scaleValue_row3 = (pFilteredRows3[x] & 0xFF000000) >> 24; }
-    } else if(dog1_row3 > dog2_row3) {
-    scaleValue_row3 = (pFilteredRows2[x] & 0xFF000000) >> 24;
-    } else {
-    scaleValue_row3 = (pFilteredRows3[x] & 0xFF000000) >> 24;
-    }
-
-    const u32 thresholdValue_row0 = scaleValue_row0;
-    const u32 thresholdValue_row1 = scaleValue_row1;
-    const u32 thresholdValue_row2 = scaleValue_row2;
-    const u32 thresholdValue_row3 = scaleValue_row3;
-
-    const u32 curPixel = pImage[x];
-
-    u32 binaryRow = 0;
-    if((curPixel & 0xFF)               < thresholdValue_row0) { binaryRow |= 1; }
-    if(((curPixel & 0xFF00) >> 8)      < thresholdValue_row1) { binaryRow |= (1 << 8); }
-    if(((curPixel & 0xFF0000) >> 16)   < thresholdValue_row2) { binaryRow |= (1 << 16); }
-    if(((curPixel & 0xFF000000) >> 24) < thresholdValue_row3) { binaryRow |= (1 << 24); }
-    #else // if !defined(USE_ARM_ACCELERATION)
-    // M4 intrinsic version of 4-way simd calculation
-
-    //
-    // Compute the Difference of Gaussians (DoG)
-    //
-
-    // dog0 is 4-way absolute value of filteredRows0 and filteredRows1
-    const u32 uqsub10 = __UQSUB8(filteredRows1, filteredRows0);
-    const u32 uqsub01 = __UQSUB8(filteredRows0, filteredRows1);
-    const u32 dog0 = uqsub10 | uqsub01;
-
-    const u32 uqsub21 = __UQSUB8(filteredRows2, filteredRows1);
-    const u32 uqsub12 = __UQSUB8(filteredRows1, filteredRows2);
-    const u32 dog1 = uqsub21 | uqsub12;
-
-    const u32 uqsub32 = __UQSUB8(filteredRows3, filteredRows2);
-    const u32 uqsub23 = __UQSUB8(filteredRows2, filteredRows3);
-    const u32 dog2 = uqsub32 | uqsub23;
-
-    //
-    // Compute the filteredRows corresponding to the maximum Difference of Gaussian
-    //
-
-    // dogMax012 is 4-way max of dog0, dog1, and dog2
-    __USUB8(dog0, dog1); // The answer is irrelevant, we just need to set the GE bits
-    const u32 dogMax01 = __SEL(dog0, dog1);
-
-    __USUB8(dogMax01, dog2); // The answer is irrelevant, we just need to set the GE bits
-    const u32 dogMax012 = __SEL(dogMax01, dog2);
-
-    // For the maximum dog, put the corresponding filtered row into thresholdValue
-    u32 thresholdValue = filteredRows1;
-
-    __USUB8(dog1, dogMax012); // The answer is irrelevant, we just need to set the GE bits
-    thresholdValue = __SEL(filteredRows2, thresholdValue);
-
-    __USUB8(dog2, dogMax012); // The answer is irrelevant, we just need to set the GE bits
-    thresholdValue = __SEL(filteredRows3, thresholdValue);
-
-    //
-    // Binarize the output
-    //
-
-    const u32 curPixel = pImage[x];
-
-    const u32 compareWithThreshold = __UQSUB8(thresholdValue, curPixel);
-    const u32 compareWithThresholdAndSaturate = __UQADD8(compareWithThreshold, twoFiftyFourX4);
-    const u32 binaryRow = __UQSUB8(compareWithThresholdAndSaturate, twoFiftyFourX4);
-    #endif // if !defined(USE_ARM_ACCELERATION) ... #else
-
-    pBinaryImageRowU32[x] = binaryRow;
-    } // for(s32 x=0; x<imageWidth4; x++)
-    } // staticInline void ecvcs_computeBinaryImage()
-    */
 
     NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
     {
