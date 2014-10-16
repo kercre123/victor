@@ -37,9 +37,11 @@ namespace Anki
     // These are not inlined, to make it easier to hand-optimize them. Inlining them will probably only slightly increase speed.
     NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const FixedLengthList<s32> &filterHalfWidths, const s32 imageY, FixedLengthList<Array<u8> > &filteredRows);
 
-    /*NO_INLINE void ecvcs_computeBinaryImage_numPyramids3(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
-    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);*/
+    //NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
+    //NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
+
     NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
 
     NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const FixedLengthList<s32> &filterHalfWidths, const s32 imageY, FixedLengthList<Array<u8> > &filteredRows)
     {
@@ -71,49 +73,62 @@ namespace Anki
       } // for(s32 pyramidLevel=0; pyramidLevel<=numLevels; pyramidLevel++)
     } // staticInline ecvcs_filterRows()
 
-    /*
-    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
     {
-    const s32 thresholdMultiplier_numFractionalBits = 16;
+      AnkiAssert(filteredRows.get_size() == 5);
 
-    const u8 * restrict pImage = image[imageY];
+      const s32 thresholdMultiplier_numFractionalBits = 16;
 
-    const u8 * restrict pFilteredRows0 = filteredRows[0][0];
-    const u8 * restrict pFilteredRows1 = filteredRows[1][0];
-    const u8 * restrict pFilteredRows2 = filteredRows[2][0];
-    const u8 * restrict pFilteredRows3 = filteredRows[3][0];
+      const u8 * restrict pImage = image[imageY];
 
-    for(s32 x=imageWidth-1; x>=0; x--) {
-    s32 scaleValue;
+      const u8 * restrict pFilteredRows0 = filteredRows[0][0];
+      const u8 * restrict pFilteredRows1 = filteredRows[1][0];
+      const u8 * restrict pFilteredRows2 = filteredRows[2][0];
+      const u8 * restrict pFilteredRows3 = filteredRows[3][0];
+      const u8 * restrict pFilteredRows4 = filteredRows[4][0];
 
-    //for(s32 pyramidLevel=0; pyramidLevel<3; pyramidLevel++) {
-    const s32 dog0 = ABS(static_cast<s32>(pFilteredRows1[x]) - static_cast<s32>(pFilteredRows0[x]));
-    const s32 dog1 = ABS(static_cast<s32>(pFilteredRows2[x]) - static_cast<s32>(pFilteredRows1[x]));
-    const s32 dog2 = ABS(static_cast<s32>(pFilteredRows3[x]) - static_cast<s32>(pFilteredRows2[x]));
+      const s32 imageWidth = image.get_size(1);
 
-    if(dog0 > dog1) {
-    if(dog0 > dog2) {
-    scaleValue = pFilteredRows1[x];
-    } else {
-    scaleValue = pFilteredRows3[x];
-    }
-    } else if(dog1 > dog2) {
-    scaleValue = pFilteredRows2[x];
-    } else {
-    scaleValue = pFilteredRows3[x];
-    }
+      const s32 numFilteredRows = filteredRows.get_size();
 
-    //} // for(s32 pyramidLevel=0; pyramidLevel<3; scaleImage_numPyramidLevels++)
+      AnkiAssert(filteredRows.get_size() <= MAX_FILTER_HALF_WIDTH);
 
-    const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
-    if(pImage[x] < thresholdValue) {
-    pBinaryImageRow[x] = 1;
-    } else {
-    pBinaryImageRow[x] = 0;
-    }
-    } // for(s32 x=0; x<imageWidth; x++)
+      const u8 * restrict pFilteredRows[MAX_FILTER_HALF_WIDTH+1];
+      for(s32 i=0; i<numFilteredRows; i++) {
+        pFilteredRows[i] = filteredRows[i][0];
+      }
+
+      for(s32 x=0; x<imageWidth; x++) {
+        //for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
+        const s32 dog0 = ABS(static_cast<s32>(pFilteredRows1[x]) - static_cast<s32>(pFilteredRows0[x]));
+        const s32 dog1 = ABS(static_cast<s32>(pFilteredRows2[x]) - static_cast<s32>(pFilteredRows1[x]));
+        const s32 dog2 = ABS(static_cast<s32>(pFilteredRows3[x]) - static_cast<s32>(pFilteredRows2[x]));
+        const s32 dog3 = ABS(static_cast<s32>(pFilteredRows4[x]) - static_cast<s32>(pFilteredRows3[x]));
+
+        const s32 maxValue = MAX(dog0, MAX(dog1, MAX(dog2, dog3)));
+
+        s32 scaleValue;
+
+        if(dog0 == maxValue) {
+          scaleValue = pFilteredRows1[x];
+        } else if(dog1 == maxValue) {
+          scaleValue = pFilteredRows2[x];
+        } else if(dog2 == maxValue) {
+          scaleValue = pFilteredRows3[x];
+        } else {
+          scaleValue = pFilteredRows4[x];
+        }
+
+        //} // for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; scaleImage_numPyramidLevels++)
+
+        const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
+        if(pImage[x] < thresholdValue) {
+          pBinaryImageRow[x] = 1;
+        } else {
+          pBinaryImageRow[x] = 0;
+        }
+      } // for(s32 x=0; x<imageWidth; x++)
     } // staticInline void ecvcs_computeBinaryImage()
-    */
 
     /*
     NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
@@ -355,7 +370,7 @@ namespace Anki
       }
 
       const s32 numRowsToScroll = integralImageHeight - 2*numBorderPixels;
-      
+
       AnkiAssert(numRowsToScroll > 1);
 
       // Initialize the first integralImageHeight rows of the integralImage
@@ -396,6 +411,13 @@ namespace Anki
         EndBenchmark("ecvcs_filterRows");
 
         BeginBenchmark("ecvcs_computeBinaryImage");
+
+        if(numFilterHalfWidths != 5) {
+          ecvcs_computeBinaryImage(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
+        } else {
+          ecvcs_computeBinaryImage_numFilters5(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
+        }
+
         /*
         if(scaleImage_numPyramidLevels != 3) {
         ecvcs_computeBinaryImage(image, filteredRows, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, imageY, imageWidth, pBinaryImageRow);
@@ -407,8 +429,6 @@ namespace Anki
         }
         }
         */
-
-        ecvcs_computeBinaryImage(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
 
         EndBenchmark("ecvcs_computeBinaryImage");
 
@@ -442,3 +462,4 @@ namespace Anki
     } // ExtractComponentsViaCharacteristicScale
   } // namespace Embedded
 } // namespace Anki
+
