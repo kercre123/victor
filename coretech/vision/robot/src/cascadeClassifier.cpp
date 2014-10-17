@@ -68,10 +68,22 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 //#define EXACTLY_MATCH_OPENCV
 
-#define USE_ARM_ACCELERATION
+#define ACCELERATION_NONE 0
+#define ACCELERATION_ARM_M4 1
+#define ACCELERATION_ARM_A7 2
 
-#ifndef USE_ARM_ACCELERATION
-#warning not using USE_ARM_ACCELERATION
+#if defined(__ARM_ARCH_7A__)
+#define ACCELERATION_TYPE ACCELERATION_ARM_A7
+#else
+#define ACCELERATION_TYPE ACCELERATION_ARM_M4
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_NONE
+#warning not using ARM acceleration
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+#include <arm_neon.h>
 #endif
 
 #define ANKI_CALC_SUM_(offset0, offset1, offset2, offset3, pIntegralImage) ((pIntegralImage)[offset0] - (pIntegralImage)[offset1] - (pIntegralImage)[offset2] + (pIntegralImage)[offset3])
@@ -95,6 +107,81 @@ For internal use only. No part of this code may be used without a signed non-dis
   (offset2) = (rect).left  + (step) * (rect).bottom,    \
   /* (x + w, y + h) */                                   \
   (offset3) = (rect).right + (step) * (rect).bottom
+
+using namespace Anki;
+using namespace Anki::Embedded;
+using namespace Anki::Embedded::Classifier;
+
+static Result PredictCategoricalStumpRow(
+  const CascadeClassifier_LBP &classifier,
+  const ScrollingIntegralImage_u8_s32 &integralImage,
+  const s32 imageHeight,
+  const s32 imageWidth,
+  const s32 processingRectHeight,
+  const s32 processingRectWidth,
+  const s32 xyIncrement, //< Same as openCV yStep
+  const f32 scaleFactor,
+  const s32 y,
+  bool * restrict isPixelACandidate,
+  MemoryStack scratch)
+{
+  AnkiAssert(xyIncrement >=1 && xyIncrement <= 2);
+
+  const int nstages = (int)classifier.data.stages.get_size();
+  int leafOfs = 0;
+  const size_t subsetSize = (classifier.data.ncategories + 31)/32;
+  const int* cascadeSubsets = &classifier.data.subsets[0];
+  const f32* cascadeLeaves = &classifier.data.leaves[0];
+  const CascadeClassifier::DTreeNode* cascadeNodes = &classifier.data.nodes[0];
+  const CascadeClassifier::Stage* cascadeStages = &classifier.data.stages[0];
+
+  f32 * restrict sums = reinterpret_cast<f32*>( scratch.Allocate(processingRectWidth*sizeof(s32)) );
+
+  //if(imageHeight == 180 && imageWidth == 240) {
+  const s32 curStage = 0;
+  const CascadeClassifier::Stage& stage = cascadeStages[curStage];
+
+  const int ntrees = stage.ntrees;
+
+  for(s32 x = 0; x < processingRectWidth; x++) {
+    sums[x] = 0;
+  }
+
+  for(s32 wi = 0; wi < ntrees; wi++ ) {
+    const CascadeClassifier::DTreeNode& node = cascadeNodes[wi];
+
+    for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
+      const s32 integralImageOffset = x + (y - integralImage.get_rowOffset() - 1) * (integralImage.get_stride() / sizeof(s32));
+
+      const s32 * restrict pIntegralImage = integralImage.Pointer(0,0) + integralImageOffset;
+
+      const int c = classifier.features[node.featureIdx].calc(pIntegralImage);
+
+      const int * restrict subset = &cascadeSubsets[wi*subsetSize];
+
+      sums[x] += cascadeLeaves[ subset[c>>5] & (1 << (c & 31)) ? leafOfs : leafOfs+1];
+    } // for(s32 x = 0; x < processingRectWidth; x += xyIncrement)
+
+    leafOfs += 2;
+  } // for(s32 wi = 0; wi < ntrees; wi++ )
+
+  for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
+    if( sums[x] < stage.threshold ) {
+      isPixelACandidate[x] = false;
+
+      if(xyIncrement >= 1) {
+        isPixelACandidate[x+1] = false;
+      }
+
+      if(xyIncrement == 2) {
+        isPixelACandidate[x+2] = false;
+      }
+    }
+  } // for(s32 x = 0; x < processingRectWidth; x += xyIncrement)
+  //} // if(imageHeight == 180 && imageWidth == 240)
+
+  return RESULT_OK;
+}
 
 namespace Anki
 {
@@ -802,12 +889,17 @@ namespace Anki
         const s32 winHeight = Round<s32>(this->data.origWinHeight * scaleFactor);
         const s32 winWidth = Round<s32>(this->data.origWinWidth * scaleFactor);
 
+        const s32 imageHeight = image.get_size(0);
+        const s32 imageWidth = image.get_size(1);
+
         const s32 nfeatures = this->features.get_size();
 
         const s32 scrollingIntegralImage_numScrollRows = 16;
         const s32 scrollingIntegralImage_bufferHeight = MIN(image.get_size(0)+2, winHeight + scrollingIntegralImage_numScrollRows + 2);
 
         ScrollingIntegralImage_u8_s32 scrollingIntegralImage(scrollingIntegralImage_bufferHeight, image.get_size(1), 1, scratch);
+
+        bool * restrict isPixelACandidate = reinterpret_cast<bool*>( scratch.Allocate(processingRectWidth*sizeof(bool)) );
 
         scrollingIntegralImage.ScrollDown(image, scrollingIntegralImage_bufferHeight, scratch);
 
@@ -842,26 +934,46 @@ namespace Anki
 
           //EndBenchmark("CascadeClassifier_LBP::DetectSingleScale scrollIntegralImage");
 
+          memset(isPixelACandidate, 255, processingRectWidth*sizeof(bool));
+
           //BeginBenchmark("CascadeClassifier_LBP::DetectSingleScale x loop");
+#if ACCELERATION_TYPE != ACCELERATION_NONE
+          PredictCategoricalStumpRow(
+            *this,
+            scrollingIntegralImage,
+            imageHeight,
+            imageWidth,
+            processingRectHeight,
+            processingRectWidth,
+            xyIncrement, //< Same as openCV yStep
+            scaleFactor,
+            y,
+            isPixelACandidate,
+            scratch);
+#endif // #if ACCELERATION_TYPE != ACCELERATION_NONE
+
           for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
-            f32 gypWeight;
+            if(isPixelACandidate[x]) {
+              f32 gypWeight;
 
-            const int result = this->PredictCategoricalStump(scrollingIntegralImage, Point<s16>(x,y), gypWeight);
+              const int result = this->PredictCategoricalStump(scrollingIntegralImage, Point<s16>(x,y), gypWeight);
 
-            if( result > 0 ) {
-              const s32 x0 = Round<s32>(x*scaleFactor);
-              const s32 y0 = Round<s32>(y*scaleFactor);
+              if( result > 0 ) {
+                const s32 x0 = Round<s32>(x*scaleFactor);
+                const s32 y0 = Round<s32>(y*scaleFactor);
 
-              // TODO: should be width/height minus one?
-              candidates.PushBack(Rectangle<s32>(
-                x0, x0 + winWidth,
-                y0, y0 + winHeight));
-            }
+                // TODO: should be width/height minus one?
+                candidates.PushBack(Rectangle<s32>(
+                  x0, x0 + winWidth,
+                  y0, y0 + winHeight));
+              }
 
-            // TODO: should the xStep be twice the xyIncrement?
-            if(result == 0)
-              x += xyIncrement;
-          }
+              // TODO: should the xStep be twice the xyIncrement?
+              if(result == 0)
+                x += xyIncrement;
+            } // if(isPixelACandidate[x])
+          } // for(s32 x = 0; x < processingRectWidth; x += xyIncrement)
+
           //EndBenchmark("CascadeClassifier_LBP::DetectSingleScale x loop");
         }
 

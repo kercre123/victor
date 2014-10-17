@@ -112,7 +112,7 @@ namespace Anki
 
         bool IsValid() const;
 
-      protected:
+        //protected:
         class Data
         {
         public:
@@ -208,7 +208,7 @@ namespace Anki
 
         bool IsValid() const;
 
-      protected:
+        //protected:
         FixedLengthList<LBPFeature> features;
 
         s32 PredictCategoricalStump(const ScrollingIntegralImage_u8_s32 &integralImage, const Point<s16> &location, f32& sum) const;
@@ -313,4 +313,3 @@ namespace Anki
 } //namespace Anki
 
 #endif // _ANKICORETECHEMBEDDED_VISION_CLASSIFIER_H_
-
