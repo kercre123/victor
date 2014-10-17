@@ -72,18 +72,27 @@ For internal use only. No part of this code may be used without a signed non-dis
 #warning not using USE_ARM_ACCELERATION
 #endif
 
-#define CALC_SUM_(p0, p1, p2, p3, offset) \
-  ((p0)[offset] - (p1)[offset] - (p2)[offset] + (p3)[offset])
+#define ANKI_CALC_SUM_(offset0, offset1, offset2, offset3, pIntegralImage) ((pIntegralImage)[offset0] - (pIntegralImage)[offset1] - (pIntegralImage)[offset2] + (pIntegralImage)[offset3])
 
-#define ANKI_SUM_PTRS( p0, p1, p2, p3, sum, rect, step ) \
+//#define ANKI_SUM_PTRS( p0, p1, p2, p3, sum, rect, step ) \
+//  /* (x, y) */                                           \
+//  (p0) = sum + (rect).left  + (step) * (rect).top,       \
+//  /* (x + w, y) */                                       \
+//  (p1) = sum + (rect).right + (step) * (rect).top,       \
+//  /* (x, y + h) */                                       \
+//  (p2) = sum + (rect).left  + (step) * (rect).bottom,    \
+//  /* (x + w, y + h) */                                   \
+//  (p3) = sum + (rect).right + (step) * (rect).bottom
+
+#define ANKI_SUM_OFFSETS( offset0, offset1, offset2, offset3, rect, step ) \
   /* (x, y) */                                           \
-  (p0) = sum + (rect).left  + (step) * (rect).top,       \
+  (offset0) = (rect).left  + (step) * (rect).top,       \
   /* (x + w, y) */                                       \
-  (p1) = sum + (rect).right + (step) * (rect).top,       \
+  (offset1) = (rect).right + (step) * (rect).top,       \
   /* (x, y + h) */                                       \
-  (p2) = sum + (rect).left  + (step) * (rect).bottom,    \
+  (offset2) = (rect).left  + (step) * (rect).bottom,    \
   /* (x + w, y + h) */                                   \
-  (p3) = sum + (rect).right + (step) * (rect).bottom
+  (offset3) = (rect).right + (step) * (rect).bottom
 
 namespace Anki
 {
@@ -860,7 +869,9 @@ namespace Anki
         const CascadeClassifier::DTreeNode* cascadeNodes = &this->data.nodes[0];
         const CascadeClassifier::Stage* cascadeStages = &this->data.stages[0];
 
-        const s32 offset = location.x + (location.y - integralImage.get_rowOffset() - 1) * (integralImage.get_stride() / sizeof(s32));
+        const s32 integralImageOffset = location.x + (location.y - integralImage.get_rowOffset() - 1) * (integralImage.get_stride() / sizeof(s32));
+
+        const s32 * restrict pIntegralImage = integralImage.Pointer(0,0) + integralImageOffset;
 
         for( int si = 0; si < nstages; si++ )
         {
@@ -876,7 +887,7 @@ namespace Anki
           {
             const CascadeClassifier::DTreeNode& node = cascadeNodes[nodeOfs];
 
-            const int c = this->features[node.featureIdx].calc(offset);
+            const int c = this->features[node.featureIdx].calc(pIntegralImage);
 
             const int* subset = &cascadeSubsets[nodeOfs*subsetSize];
 
@@ -895,40 +906,41 @@ namespace Anki
 
       void CascadeClassifier_LBP::LBPFeature::updatePtrs(const ScrollingIntegralImage_u8_s32 &sum)
       {
-        const int* ptr = sum.Pointer(0,0);
+        //const int* ptr = sum.Pointer(0,0);
         const s32 step = sum.get_stride() / sizeof(s32);
         Rectangle<s32> tr = rect;
 
         const s32 width = tr.right - tr.left;
         const s32 height = tr.bottom - tr.top;
 
-        ANKI_SUM_PTRS( p[0], p[1], p[4], p[5], ptr, tr, step );
+        ANKI_SUM_OFFSETS( offsets[0], offsets[1], offsets[4], offsets[5], tr, step );
         tr.left += 2*width;
         tr.right += 2*width;
 
-        ANKI_SUM_PTRS( p[2], p[3], p[6], p[7], ptr, tr, step );
+        ANKI_SUM_OFFSETS( offsets[2], offsets[3], offsets[6], offsets[7], tr, step );
         tr.top += 2*height;
         tr.bottom += 2*height;
 
-        ANKI_SUM_PTRS( p[10], p[11], p[14], p[15], ptr, tr, step );
+        ANKI_SUM_OFFSETS( offsets[10], offsets[11], offsets[14], offsets[15], tr, step );
         tr.left -= 2*width;
         tr.right -= 2*width;
 
-        ANKI_SUM_PTRS( p[8], p[9], p[12], p[13], ptr, tr, step );
+        ANKI_SUM_OFFSETS( offsets[8], offsets[9], offsets[12], offsets[13], tr, step );
       }
 
-      inline int CascadeClassifier_LBP::LBPFeature::calc(const int _offset) const
+      inline int CascadeClassifier_LBP::LBPFeature::calc(const s32 * pIntegralImage) const
       {
-        int cval = CALC_SUM_( p[5], p[6], p[9], p[10], _offset );
+        const s32 cval = ANKI_CALC_SUM_( offsets[5], offsets[6], offsets[9], offsets[10], pIntegralImage );
 
-        return (CALC_SUM_( p[0], p[1], p[4], p[5], _offset ) >= cval ? 128 : 0) |   // 0
-          (CALC_SUM_( p[1], p[2], p[5], p[6], _offset ) >= cval ? 64 : 0) |    // 1
-          (CALC_SUM_( p[2], p[3], p[6], p[7], _offset ) >= cval ? 32 : 0) |    // 2
-          (CALC_SUM_( p[6], p[7], p[10], p[11], _offset ) >= cval ? 16 : 0) |  // 5
-          (CALC_SUM_( p[10], p[11], p[14], p[15], _offset ) >= cval ? 8 : 0)|  // 8
-          (CALC_SUM_( p[9], p[10], p[13], p[14], _offset ) >= cval ? 4 : 0)|   // 7
-          (CALC_SUM_( p[8], p[9], p[12], p[13], _offset ) >= cval ? 2 : 0)|    // 6
-          (CALC_SUM_( p[4], p[5], p[8], p[9], _offset ) >= cval ? 1 : 0);
+        return
+          (ANKI_CALC_SUM_( offsets[0], offsets[1], offsets[4], offsets[5], pIntegralImage ) >= cval ? 128 : 0)   | // 0
+          (ANKI_CALC_SUM_( offsets[1], offsets[2], offsets[5], offsets[6], pIntegralImage ) >= cval ? 64 : 0)    | // 1
+          (ANKI_CALC_SUM_( offsets[2], offsets[3], offsets[6], offsets[7], pIntegralImage ) >= cval ? 32 : 0)    | // 2
+          (ANKI_CALC_SUM_( offsets[6], offsets[7], offsets[10], offsets[11], pIntegralImage ) >= cval ? 16 : 0)  | // 5
+          (ANKI_CALC_SUM_( offsets[10], offsets[11], offsets[14], offsets[15], pIntegralImage ) >= cval ? 8 : 0) | // 8
+          (ANKI_CALC_SUM_( offsets[9], offsets[10], offsets[13], offsets[14], pIntegralImage ) >= cval ? 4 : 0)  | // 7
+          (ANKI_CALC_SUM_( offsets[8], offsets[9], offsets[12], offsets[13], pIntegralImage ) >= cval ? 2 : 0)   | // 6
+          (ANKI_CALC_SUM_( offsets[4], offsets[5], offsets[8], offsets[9], pIntegralImage ) >= cval ? 1 : 0);
       }
 
       void CascadeClassifier_LBP::LBPFeature::Print() const

@@ -150,13 +150,13 @@ namespace Anki
           LBPFeature(const s32 left, const s32 right, const s32 top, const s32 bottom)
             : rect(left, right, top, bottom) {}
 
-          int calc(const int _offset) const;
+          int calc(const s32 * pIntegralImage) const;
           void updatePtrs(const ScrollingIntegralImage_u8_s32 &sum);
 
           void Print() const;
 
           Rectangle<s32> rect; //< weight and height for block
-          const s32* p[16]; //< direct pointer for fast access to integral images
+          s32 offsets[16];
         };
 
         // See CascadeClassifier
