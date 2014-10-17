@@ -156,7 +156,7 @@ namespace Anki
           void Print() const;
 
           Rectangle<s32> rect; //< weight and height for block
-          s32 offsets[16];
+          u16 offsets[16];
         };
 
         // See CascadeClassifier
@@ -313,3 +313,4 @@ namespace Anki
 } //namespace Anki
 
 #endif // _ANKICORETECHEMBEDDED_VISION_CLASSIFIER_H_
+

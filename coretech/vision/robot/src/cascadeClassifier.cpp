@@ -64,7 +64,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <time.h>
 #endif
 
-#define COUNT_CASCADE_USAGE
+//#define COUNT_CASCADE_USAGE
 
 //#define EXACTLY_MATCH_OPENCV
 
