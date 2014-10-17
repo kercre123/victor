@@ -112,7 +112,7 @@ namespace Anki
 
         bool IsValid() const;
 
-        //protected:
+      protected:
         class Data
         {
         public:
@@ -150,13 +150,13 @@ namespace Anki
           LBPFeature(const s32 left, const s32 right, const s32 top, const s32 bottom)
             : rect(left, right, top, bottom) {}
 
-          int calc(const s32 * pIntegralImage) const;
+          int calc(const int _offset) const;
           void updatePtrs(const ScrollingIntegralImage_u8_s32 &sum);
 
           void Print() const;
 
           Rectangle<s32> rect; //< weight and height for block
-          u16 offsets[16];
+          const s32* p[16]; //< direct pointer for fast access to integral images
         };
 
         // See CascadeClassifier
@@ -208,7 +208,7 @@ namespace Anki
 
         bool IsValid() const;
 
-        //protected:
+      protected:
         FixedLengthList<LBPFeature> features;
 
         s32 PredictCategoricalStump(const ScrollingIntegralImage_u8_s32 &integralImage, const Point<s16> &location, f32& sum) const;

@@ -64,258 +64,26 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <time.h>
 #endif
 
-//#define COUNT_CASCADE_USAGE
-
 //#define EXACTLY_MATCH_OPENCV
 
-#define ACCELERATION_NONE 0
-#define ACCELERATION_ARM_M4 1
-#define ACCELERATION_ARM_A7 2
+#define USE_ARM_ACCELERATION
 
-#if defined(__ARM_ARCH_7A__)
-#define ACCELERATION_TYPE ACCELERATION_ARM_A7
-#else
-#define ACCELERATION_TYPE ACCELERATION_ARM_M4
+#ifndef USE_ARM_ACCELERATION
+#warning not using USE_ARM_ACCELERATION
 #endif
 
-#if ACCELERATION_TYPE == ACCELERATION_NONE
-#warning not using ARM acceleration
-#endif
+#define CALC_SUM_(p0, p1, p2, p3, offset) \
+  ((p0)[offset] - (p1)[offset] - (p2)[offset] + (p3)[offset])
 
-#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
-#include <arm_neon.h>
-#endif
-
-#define ANKI_CALC_SUM_(offset0, offset1, offset2, offset3, pIntegralImage) ((pIntegralImage)[offset0] - (pIntegralImage)[offset1] - (pIntegralImage)[offset2] + (pIntegralImage)[offset3])
-
-//#define ANKI_SUM_PTRS( p0, p1, p2, p3, sum, rect, step ) \
-//  /* (x, y) */                                           \
-//  (p0) = sum + (rect).left  + (step) * (rect).top,       \
-//  /* (x + w, y) */                                       \
-//  (p1) = sum + (rect).right + (step) * (rect).top,       \
-//  /* (x, y + h) */                                       \
-//  (p2) = sum + (rect).left  + (step) * (rect).bottom,    \
-//  /* (x + w, y + h) */                                   \
-//  (p3) = sum + (rect).right + (step) * (rect).bottom
-
-#define ANKI_SUM_OFFSETS( offset0, offset1, offset2, offset3, rect, step ) \
+#define ANKI_SUM_PTRS( p0, p1, p2, p3, sum, rect, step ) \
   /* (x, y) */                                           \
-  (offset0) = (rect).left  + (step) * (rect).top,       \
+  (p0) = sum + (rect).left  + (step) * (rect).top,       \
   /* (x + w, y) */                                       \
-  (offset1) = (rect).right + (step) * (rect).top,       \
+  (p1) = sum + (rect).right + (step) * (rect).top,       \
   /* (x, y + h) */                                       \
-  (offset2) = (rect).left  + (step) * (rect).bottom,    \
+  (p2) = sum + (rect).left  + (step) * (rect).bottom,    \
   /* (x + w, y + h) */                                   \
-  (offset3) = (rect).right + (step) * (rect).bottom
-
-using namespace Anki;
-using namespace Anki::Embedded;
-using namespace Anki::Embedded::Classifier;
-
-static Result PredictCategoricalStumpRow(
-  const CascadeClassifier_LBP &classifier,
-  const ScrollingIntegralImage_u8_s32 &integralImage,
-  const s32 imageHeight,
-  const s32 imageWidth,
-  const s32 processingRectHeight,
-  const s32 processingRectWidth,
-  const s32 xyIncrement, //< Same as openCV yStep
-  const f32 scaleFactor,
-  const s32 y,
-  bool * restrict isPixelACandidate,
-  MemoryStack scratch)
-{
-  AnkiAssert(xyIncrement >=1 && xyIncrement <= 2);
-
-  const int nstages = (int)classifier.data.stages.get_size();
-  //int leafOfs = 0;
-  const size_t subsetSize = (classifier.data.ncategories + 31)/32;
-  const int* cascadeSubsets = &classifier.data.subsets[0];
-  const f32* cascadeLeaves = &classifier.data.leaves[0];
-  const CascadeClassifier::DTreeNode* cascadeNodes = &classifier.data.nodes[0];
-  const CascadeClassifier::Stage* cascadeStages = &classifier.data.stages[0];
-
-  f32 * restrict sums = reinterpret_cast<f32*>( scratch.Allocate(processingRectWidth*sizeof(s32)) );
-
-  if(imageHeight == 180 && imageWidth == 240) {
-    const s32 curStage = 0;
-    const CascadeClassifier::Stage& stage = cascadeStages[curStage];
-
-    const int ntrees = stage.ntrees;
-
-    for(s32 x = 0; x < processingRectWidth; x++) {
-      sums[x] = 0;
-    }
-
-    //for(s32 wi = 0; wi < ntrees; wi++ ) {
-    //  const CascadeClassifier::DTreeNode& node = cascadeNodes[wi];
-    //  const CascadeClassifier_LBP::LBPFeature feature = classifier.features[node.featureIdx];
-
-    //  const s32 integralImageOffset = (y - integralImage.get_rowOffset() - 1) * (integralImage.get_stride() / sizeof(s32));
-
-    //  const s32 * restrict pIntegralImage = integralImage.Pointer(0,0) + integralImageOffset;
-
-    //  const int * restrict subset = &cascadeSubsets[wi*subsetSize];
-
-    //  u16 offsets[16];
-
-    //  printf("wi %d) ", wi);
-    //  for(s32 i=0; i<16; i++) {
-    //    offsets[i] = feature.offsets[i];
-    //    printf("%d ", offsets[i]);
-    //  }
-    //  printf("\n");
-
-    //  for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
-    //    const s32 cval = ANKI_CALC_SUM_( offsets[5], offsets[6], offsets[9], offsets[10], pIntegralImage );
-
-    //    const s32 cHi =
-    //      (ANKI_CALC_SUM_( offsets[0], offsets[1], offsets[4], offsets[5], pIntegralImage ) >= cval ? 4 : 0)  | // 0
-    //      (ANKI_CALC_SUM_( offsets[1], offsets[2], offsets[5], offsets[6], pIntegralImage ) >= cval ? 2 : 0)  | // 1
-    //      (ANKI_CALC_SUM_( offsets[2], offsets[3], offsets[6], offsets[7], pIntegralImage ) >= cval ? 1 : 0);   // 2
-
-    //    const s32 cLo =
-    //      (ANKI_CALC_SUM_( offsets[6], offsets[7], offsets[10], offsets[11], pIntegralImage ) >= cval ? 16 : 0)  | // 5
-    //      (ANKI_CALC_SUM_( offsets[10], offsets[11], offsets[14], offsets[15], pIntegralImage ) >= cval ? 8 : 0) | // 8
-    //      (ANKI_CALC_SUM_( offsets[9], offsets[10], offsets[13], offsets[14], pIntegralImage ) >= cval ? 4 : 0)  | // 7
-    //      (ANKI_CALC_SUM_( offsets[8], offsets[9], offsets[12], offsets[13], pIntegralImage ) >= cval ? 2 : 0)   | // 6
-    //      (ANKI_CALC_SUM_( offsets[4], offsets[5], offsets[8], offsets[9], pIntegralImage ) >= cval ? 1 : 0);
-
-    //    sums[x] += cascadeLeaves[ subset[cHi] & (1 << cLo) ? leafOfs : leafOfs+1];
-
-    //    pIntegralImage++;
-    //  } // for(s32 x = 0; x < processingRectWidth; x += xyIncrement)
-
-    //  leafOfs += 2;
-    //} // for(s32 wi = 0; wi < ntrees; wi++ )
-
-    //
-    // Tree 0
-    //
-    {
-      const CascadeClassifier::DTreeNode& node = cascadeNodes[0];
-      const CascadeClassifier_LBP::LBPFeature feature = classifier.features[node.featureIdx];
-
-      const s32 integralImageOffset = (y - integralImage.get_rowOffset() - 1) * (integralImage.get_stride() / sizeof(s32));
-
-      const s32 * restrict pIntegralImage = integralImage.Pointer(0,0) + integralImageOffset;
-
-      const int * restrict subset = &cascadeSubsets[0*subsetSize];
-
-      const u16 offsets[16] = {1226, 1230, 1234, 1238, 1958, 1962, 1966, 1970, 2690, 2694, 2698, 2702, 3422, 3426, 3430, 3434};
-
-      for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
-        const s32 cval = ANKI_CALC_SUM_( offsets[5], offsets[6], offsets[9], offsets[10], pIntegralImage );
-
-        const s32 cHi =
-          (ANKI_CALC_SUM_( offsets[0], offsets[1], offsets[4], offsets[5], pIntegralImage ) >= cval ? 4 : 0)  | // 0
-          (ANKI_CALC_SUM_( offsets[1], offsets[2], offsets[5], offsets[6], pIntegralImage ) >= cval ? 2 : 0)  | // 1
-          (ANKI_CALC_SUM_( offsets[2], offsets[3], offsets[6], offsets[7], pIntegralImage ) >= cval ? 1 : 0);   // 2
-
-        const s32 cLo =
-          (ANKI_CALC_SUM_( offsets[6], offsets[7], offsets[10], offsets[11], pIntegralImage ) >= cval ? 16 : 0)  | // 5
-          (ANKI_CALC_SUM_( offsets[10], offsets[11], offsets[14], offsets[15], pIntegralImage ) >= cval ? 8 : 0) | // 8
-          (ANKI_CALC_SUM_( offsets[9], offsets[10], offsets[13], offsets[14], pIntegralImage ) >= cval ? 4 : 0)  | // 7
-          (ANKI_CALC_SUM_( offsets[8], offsets[9], offsets[12], offsets[13], pIntegralImage ) >= cval ? 2 : 0)   | // 6
-          (ANKI_CALC_SUM_( offsets[4], offsets[5], offsets[8], offsets[9], pIntegralImage ) >= cval ? 1 : 0);
-
-        sums[x] += cascadeLeaves[ subset[cHi] & (1 << cLo) ? 0 : 0+1];
-
-        pIntegralImage++;
-      } // for(s32 x = 0; x < processingRectWidth; x += xyIncrement)
-    } // Tree 0
-
-    //
-    // Tree 1
-    //
-
-    {
-      const CascadeClassifier::DTreeNode& node = cascadeNodes[1];
-      const CascadeClassifier_LBP::LBPFeature feature = classifier.features[node.featureIdx];
-
-      const s32 integralImageOffset = (y - integralImage.get_rowOffset() - 1) * (integralImage.get_stride() / sizeof(s32));
-
-      const s32 * restrict pIntegralImage = integralImage.Pointer(0,0) + integralImageOffset;
-
-      const int * restrict subset = &cascadeSubsets[1*subsetSize];
-
-      const u16 offsets[16] = {1709, 1713, 1717, 1721, 2685, 2689, 2693, 2697, 3661, 3665, 3669, 3673, 4637, 4641, 4645, 4649};
-
-      for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
-        const s32 cval = ANKI_CALC_SUM_( offsets[5], offsets[6], offsets[9], offsets[10], pIntegralImage );
-
-        const s32 cHi =
-          (ANKI_CALC_SUM_( offsets[0], offsets[1], offsets[4], offsets[5], pIntegralImage ) >= cval ? 4 : 0)  | // 0
-          (ANKI_CALC_SUM_( offsets[1], offsets[2], offsets[5], offsets[6], pIntegralImage ) >= cval ? 2 : 0)  | // 1
-          (ANKI_CALC_SUM_( offsets[2], offsets[3], offsets[6], offsets[7], pIntegralImage ) >= cval ? 1 : 0);   // 2
-
-        const s32 cLo =
-          (ANKI_CALC_SUM_( offsets[6], offsets[7], offsets[10], offsets[11], pIntegralImage ) >= cval ? 16 : 0)  | // 5
-          (ANKI_CALC_SUM_( offsets[10], offsets[11], offsets[14], offsets[15], pIntegralImage ) >= cval ? 8 : 0) | // 8
-          (ANKI_CALC_SUM_( offsets[9], offsets[10], offsets[13], offsets[14], pIntegralImage ) >= cval ? 4 : 0)  | // 7
-          (ANKI_CALC_SUM_( offsets[8], offsets[9], offsets[12], offsets[13], pIntegralImage ) >= cval ? 2 : 0)   | // 6
-          (ANKI_CALC_SUM_( offsets[4], offsets[5], offsets[8], offsets[9], pIntegralImage ) >= cval ? 1 : 0);
-
-        sums[x] += cascadeLeaves[ subset[cHi] & (1 << cLo) ? 2 : 2+1];
-
-        pIntegralImage++;
-      } // for(s32 x = 0; x < processingRectWidth; x += xyIncrement)
-    } // // Tree 1
-
-    //
-    // Tree 2
-    //
-
-    {
-      const CascadeClassifier::DTreeNode& node = cascadeNodes[2];
-      const CascadeClassifier_LBP::LBPFeature feature = classifier.features[node.featureIdx];
-
-      const s32 integralImageOffset = (y - integralImage.get_rowOffset() - 1) * (integralImage.get_stride() / sizeof(s32));
-
-      const s32 * restrict pIntegralImage = integralImage.Pointer(0,0) + integralImageOffset;
-
-      const int * restrict subset = &cascadeSubsets[2*subsetSize];
-
-      const u16 offsets[16] = {0, 6, 12, 18, 732, 738, 744, 750, 1464, 1470, 1476, 1482, 2196, 2202, 2208, 2214};
-
-      for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
-        const s32 cval = ANKI_CALC_SUM_( offsets[5], offsets[6], offsets[9], offsets[10], pIntegralImage );
-
-        const s32 cHi =
-          (ANKI_CALC_SUM_( offsets[0], offsets[1], offsets[4], offsets[5], pIntegralImage ) >= cval ? 4 : 0)  | // 0
-          (ANKI_CALC_SUM_( offsets[1], offsets[2], offsets[5], offsets[6], pIntegralImage ) >= cval ? 2 : 0)  | // 1
-          (ANKI_CALC_SUM_( offsets[2], offsets[3], offsets[6], offsets[7], pIntegralImage ) >= cval ? 1 : 0);   // 2
-
-        const s32 cLo =
-          (ANKI_CALC_SUM_( offsets[6], offsets[7], offsets[10], offsets[11], pIntegralImage ) >= cval ? 16 : 0)  | // 5
-          (ANKI_CALC_SUM_( offsets[10], offsets[11], offsets[14], offsets[15], pIntegralImage ) >= cval ? 8 : 0) | // 8
-          (ANKI_CALC_SUM_( offsets[9], offsets[10], offsets[13], offsets[14], pIntegralImage ) >= cval ? 4 : 0)  | // 7
-          (ANKI_CALC_SUM_( offsets[8], offsets[9], offsets[12], offsets[13], pIntegralImage ) >= cval ? 2 : 0)   | // 6
-          (ANKI_CALC_SUM_( offsets[4], offsets[5], offsets[8], offsets[9], pIntegralImage ) >= cval ? 1 : 0);
-
-        sums[x] += cascadeLeaves[ subset[cHi] & (1 << cLo) ? 4 : 4+1];
-
-        pIntegralImage++;
-      } // for(s32 x = 0; x < processingRectWidth; x += xyIncrement)
-    } // // Tree 2
-
-    for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
-      if( sums[x] < stage.threshold ) {
-        isPixelACandidate[x] = false;
-
-        if(xyIncrement >= 1) {
-          isPixelACandidate[x+1] = false;
-        }
-
-        if(xyIncrement == 2) {
-          isPixelACandidate[x+2] = false;
-        }
-      }
-    } // for(s32 x = 0; x < processingRectWidth; x += xyIncrement)
-  } // if(imageHeight == 180 && imageWidth == 240)
-
-  return RESULT_OK;
-}
+  (p3) = sum + (rect).right + (step) * (rect).bottom
 
 namespace Anki
 {
@@ -872,12 +640,6 @@ namespace Anki
         this->isValid = true;
       }
 
-#ifdef COUNT_CASCADE_USAGE
-      static volatile s32 g_factor;
-      s32 g_numStagesUsed[32][1024];
-      s32 g_numStagesUsedMarginalized[1024];
-      s32 g_maxStage = 0;
-#endif
       Result CascadeClassifier_LBP::DetectMultiScale(
         const Array<u8> &image,
         const f32 scaleFactor,
@@ -904,16 +666,6 @@ namespace Anki
 
         FixedLengthList<Rectangle<s32> > candidates(objects.get_maximumSize(), slowScratch);
 
-#ifdef COUNT_CASCADE_USAGE
-        for(s32 i=0; i<32; i++) {
-          for(s32 j=0; j<1024; j++) {
-            g_numStagesUsed[i][j] = 0;
-            g_numStagesUsedMarginalized[j] = 0;
-          }
-        }
-#endif
-
-        s32 iFactor = 0;
         for(f32 factor = 1; ; factor *= scaleFactor) {
           PUSH_MEMORY_STACK(fastScratch);
 
@@ -965,12 +717,6 @@ namespace Anki
 
           const s32 xyIncrement = factor > 2.0f ? 1 : 2;
 
-#ifdef COUNT_CASCADE_USAGE
-          g_factor = iFactor;
-          iFactor++;
-          printf("%dx%d\n", scaledImage.get_size(0), scaledImage.get_size(1));
-#endif
-
           BeginBenchmark("DetectSingleScale");
 
           if(DetectSingleScale(scaledImage, processingRectHeight, processingRectWidth, xyIncrement, factor, candidates, fastScratch) != RESULT_OK) {
@@ -981,21 +727,6 @@ namespace Anki
 
           EndBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
         } // for(f32 factor = 1; ; factor *= scaleFactor)
-
-#ifdef COUNT_CASCADE_USAGE
-        for(s32 i=0; i<iFactor; i++) {
-          for(s32 j=0; j<g_maxStage; j++) {
-            printf("%d ", g_numStagesUsed[i][j]);
-          }
-          printf("\n");
-        }
-
-        printf("\n");
-        for(s32 j=0; j<g_maxStage; j++) {
-          printf("%d ", g_numStagesUsedMarginalized[j]);
-        }
-        printf("\n");
-#endif
 
         objects.set_size(candidates.get_size());
         memcpy(objects.Pointer(0), candidates.Pointer(0), candidates.get_array().get_stride());
@@ -1023,17 +754,12 @@ namespace Anki
         const s32 winHeight = Round<s32>(this->data.origWinHeight * scaleFactor);
         const s32 winWidth = Round<s32>(this->data.origWinWidth * scaleFactor);
 
-        const s32 imageHeight = image.get_size(0);
-        const s32 imageWidth = image.get_size(1);
-
         const s32 nfeatures = this->features.get_size();
 
         const s32 scrollingIntegralImage_numScrollRows = 16;
         const s32 scrollingIntegralImage_bufferHeight = MIN(image.get_size(0)+2, winHeight + scrollingIntegralImage_numScrollRows + 2);
 
         ScrollingIntegralImage_u8_s32 scrollingIntegralImage(scrollingIntegralImage_bufferHeight, image.get_size(1), 1, scratch);
-
-        bool * restrict isPixelACandidate = reinterpret_cast<bool*>( scratch.Allocate(processingRectWidth*sizeof(bool)) );
 
         scrollingIntegralImage.ScrollDown(image, scrollingIntegralImage_bufferHeight, scratch);
 
@@ -1042,17 +768,6 @@ namespace Anki
         for(s32 fi = 0; fi < nfeatures; fi++) {
           this->features[fi].updatePtrs(scrollingIntegralImage);
         }
-
-#ifdef COUNT_CASCADE_USAGE
-        //for(s32 fi = 0; fi < nfeatures; fi++) {
-        //  printf("%03d) ", fi);
-        //  for(s32 j=0; j<16; j++) {
-        //    //printf("0x%04x ", this->features[fi].p[j] - scrollingIntegralImage.Pointer(0,0));
-        //    printf("0x%04x ", this->features[fi].p[j]);
-        //  }
-        //  printf("\n");
-        //}
-#endif
 
         EndBenchmark("CascadeClassifier_LBP::DetectSingleScale init");
 
@@ -1068,46 +783,26 @@ namespace Anki
 
           //EndBenchmark("CascadeClassifier_LBP::DetectSingleScale scrollIntegralImage");
 
-          memset(isPixelACandidate, 255, processingRectWidth*sizeof(bool));
-
           //BeginBenchmark("CascadeClassifier_LBP::DetectSingleScale x loop");
-#if ACCELERATION_TYPE != ACCELERATION_NONE
-          PredictCategoricalStumpRow(
-            *this,
-            scrollingIntegralImage,
-            imageHeight,
-            imageWidth,
-            processingRectHeight,
-            processingRectWidth,
-            xyIncrement, //< Same as openCV yStep
-            scaleFactor,
-            y,
-            isPixelACandidate,
-            scratch);
-#endif // #if ACCELERATION_TYPE != ACCELERATION_NONE
-
           for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
-            if(isPixelACandidate[x]) {
-              f32 gypWeight;
+            f32 gypWeight;
 
-              const int result = this->PredictCategoricalStump(scrollingIntegralImage, Point<s16>(x,y), gypWeight);
+            const int result = this->PredictCategoricalStump(scrollingIntegralImage, Point<s16>(x,y), gypWeight);
 
-              if( result > 0 ) {
-                const s32 x0 = Round<s32>(x*scaleFactor);
-                const s32 y0 = Round<s32>(y*scaleFactor);
+            if( result > 0 ) {
+              const s32 x0 = Round<s32>(x*scaleFactor);
+              const s32 y0 = Round<s32>(y*scaleFactor);
 
-                // TODO: should be width/height minus one?
-                candidates.PushBack(Rectangle<s32>(
-                  x0, x0 + winWidth,
-                  y0, y0 + winHeight));
-              }
+              // TODO: should be width/height minus one?
+              candidates.PushBack(Rectangle<s32>(
+                x0, x0 + winWidth,
+                y0, y0 + winHeight));
+            }
 
-              // TODO: should the xStep be twice the xyIncrement?
-              if(result == 0)
-                x += xyIncrement;
-            } // if(isPixelACandidate[x])
-          } // for(s32 x = 0; x < processingRectWidth; x += xyIncrement)
-
+            // TODO: should the xStep be twice the xyIncrement?
+            if(result == 0)
+              x += xyIncrement;
+          }
           //EndBenchmark("CascadeClassifier_LBP::DetectSingleScale x loop");
         }
 
@@ -1126,9 +821,7 @@ namespace Anki
         const CascadeClassifier::DTreeNode* cascadeNodes = &this->data.nodes[0];
         const CascadeClassifier::Stage* cascadeStages = &this->data.stages[0];
 
-        const s32 integralImageOffset = location.x + (location.y - integralImage.get_rowOffset() - 1) * (integralImage.get_stride() / sizeof(s32));
-
-        const s32 * restrict pIntegralImage = integralImage.Pointer(0,0) + integralImageOffset;
+        const s32 offset = location.x + (location.y - integralImage.get_rowOffset() - 1) * (integralImage.get_stride() / sizeof(s32));
 
         for( int si = 0; si < nstages; si++ )
         {
@@ -1137,16 +830,11 @@ namespace Anki
 
           sum = 0;
 
-#ifdef COUNT_CASCADE_USAGE
-          g_numStagesUsed[g_factor][si]++;
-          g_numStagesUsedMarginalized[si]++;
-#endif
-
           for( wi = 0; wi < ntrees; wi++ )
           {
             const CascadeClassifier::DTreeNode& node = cascadeNodes[nodeOfs];
 
-            const int c = this->features[node.featureIdx].calc(pIntegralImage);
+            const int c = this->features[node.featureIdx].calc(offset);
 
             const int* subset = &cascadeSubsets[nodeOfs*subsetSize];
 
@@ -1165,41 +853,40 @@ namespace Anki
 
       void CascadeClassifier_LBP::LBPFeature::updatePtrs(const ScrollingIntegralImage_u8_s32 &sum)
       {
-        //const int* ptr = sum.Pointer(0,0);
+        const int* ptr = sum.Pointer(0,0);
         const s32 step = sum.get_stride() / sizeof(s32);
         Rectangle<s32> tr = rect;
 
         const s32 width = tr.right - tr.left;
         const s32 height = tr.bottom - tr.top;
 
-        ANKI_SUM_OFFSETS( offsets[0], offsets[1], offsets[4], offsets[5], tr, step );
+        ANKI_SUM_PTRS( p[0], p[1], p[4], p[5], ptr, tr, step );
         tr.left += 2*width;
         tr.right += 2*width;
 
-        ANKI_SUM_OFFSETS( offsets[2], offsets[3], offsets[6], offsets[7], tr, step );
+        ANKI_SUM_PTRS( p[2], p[3], p[6], p[7], ptr, tr, step );
         tr.top += 2*height;
         tr.bottom += 2*height;
 
-        ANKI_SUM_OFFSETS( offsets[10], offsets[11], offsets[14], offsets[15], tr, step );
+        ANKI_SUM_PTRS( p[10], p[11], p[14], p[15], ptr, tr, step );
         tr.left -= 2*width;
         tr.right -= 2*width;
 
-        ANKI_SUM_OFFSETS( offsets[8], offsets[9], offsets[12], offsets[13], tr, step );
+        ANKI_SUM_PTRS( p[8], p[9], p[12], p[13], ptr, tr, step );
       }
 
-      inline int CascadeClassifier_LBP::LBPFeature::calc(const s32 * pIntegralImage) const
+      inline int CascadeClassifier_LBP::LBPFeature::calc(const int _offset) const
       {
-        const s32 cval = ANKI_CALC_SUM_( offsets[5], offsets[6], offsets[9], offsets[10], pIntegralImage );
+        int cval = CALC_SUM_( p[5], p[6], p[9], p[10], _offset );
 
-        return
-          (ANKI_CALC_SUM_( offsets[0], offsets[1], offsets[4], offsets[5], pIntegralImage ) >= cval ? 128 : 0)   | // 0
-          (ANKI_CALC_SUM_( offsets[1], offsets[2], offsets[5], offsets[6], pIntegralImage ) >= cval ? 64 : 0)    | // 1
-          (ANKI_CALC_SUM_( offsets[2], offsets[3], offsets[6], offsets[7], pIntegralImage ) >= cval ? 32 : 0)    | // 2
-          (ANKI_CALC_SUM_( offsets[6], offsets[7], offsets[10], offsets[11], pIntegralImage ) >= cval ? 16 : 0)  | // 5
-          (ANKI_CALC_SUM_( offsets[10], offsets[11], offsets[14], offsets[15], pIntegralImage ) >= cval ? 8 : 0) | // 8
-          (ANKI_CALC_SUM_( offsets[9], offsets[10], offsets[13], offsets[14], pIntegralImage ) >= cval ? 4 : 0)  | // 7
-          (ANKI_CALC_SUM_( offsets[8], offsets[9], offsets[12], offsets[13], pIntegralImage ) >= cval ? 2 : 0)   | // 6
-          (ANKI_CALC_SUM_( offsets[4], offsets[5], offsets[8], offsets[9], pIntegralImage ) >= cval ? 1 : 0);
+        return (CALC_SUM_( p[0], p[1], p[4], p[5], _offset ) >= cval ? 128 : 0) |   // 0
+          (CALC_SUM_( p[1], p[2], p[5], p[6], _offset ) >= cval ? 64 : 0) |    // 1
+          (CALC_SUM_( p[2], p[3], p[6], p[7], _offset ) >= cval ? 32 : 0) |    // 2
+          (CALC_SUM_( p[6], p[7], p[10], p[11], _offset ) >= cval ? 16 : 0) |  // 5
+          (CALC_SUM_( p[10], p[11], p[14], p[15], _offset ) >= cval ? 8 : 0)|  // 8
+          (CALC_SUM_( p[9], p[10], p[13], p[14], _offset ) >= cval ? 4 : 0)|   // 7
+          (CALC_SUM_( p[8], p[9], p[12], p[13], _offset ) >= cval ? 2 : 0)|    // 6
+          (CALC_SUM_( p[4], p[5], p[8], p[9], _offset ) >= cval ? 1 : 0);
       }
 
       void CascadeClassifier_LBP::LBPFeature::Print() const
@@ -1209,3 +896,4 @@ namespace Anki
     } // namespace Classifier
   } // namespace Embedded
 } // namespace Anki
+
