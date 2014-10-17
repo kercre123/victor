@@ -356,6 +356,10 @@ namespace Anki
 
       Result DownsampleBilinear(const Array<u8> &in, Array<u8> &out, MemoryStack scratch)
       {
+        const s32 numSubpixelBits = 11;
+        const u32 subpixelMultiplierU32 = 1 << numSubpixelBits;
+        const f32 subpixelMultiplierF32 = static_cast<f32>(subpixelMultiplierU32);
+
         AnkiConditionalErrorAndReturnValue(AreValid(in, out, scratch),
           RESULT_FAIL_INVALID_OBJECT, "DownsampleBilinear", "Invalid objects");
 
@@ -380,17 +384,16 @@ namespace Anki
 
         FixedLengthList<s32> inX0s_S32(outWidth, scratch);
         FixedLengthList<s32> inX1s_S32(outWidth, scratch);
-        FixedLengthList<f32> alphaXs(outWidth, scratch);
+        FixedLengthList<u32> alphaXs(outWidth, scratch);
 
         AnkiConditionalErrorAndReturnValue(AreValid(inX0s_S32, inX1s_S32, alphaXs),
           RESULT_FAIL_OUT_OF_MEMORY, "DownsampleBilinear", "Out of memory");
 
         // Compute the x coordinates
-        s32 maxSimpleX = outWidth - 1;
         {
           s32 * restrict pInX0s_S32 = inX0s_S32.Pointer(0);
           s32 * restrict pInX1s_S32 = inX1s_S32.Pointer(0);
-          f32 * restrict pAlphaXs = alphaXs.Pointer(0);
+          u32 * restrict pAlphaXs = alphaXs.Pointer(0);
 
           for(s32 x=0; x<outWidth; x++) {
             const f32 inX = xInStart + xInIncrement * static_cast<f32>(x);
@@ -411,24 +414,19 @@ namespace Anki
             if(inX1_S32 > (inWidth-1))
               inX1_S32 = inWidth-1;
 
-            if((inX0_S32+1) >= inWidth) {
-              maxSimpleX = MIN(maxSimpleX, x);
-            }
-
             const f32 inX0 = static_cast<f32>(inX0_S32);
-            //const f32 inX1 = static_cast<f32>(inX1_S32);
 
             const f32 alphaX = inX - inX0;
 
             pInX0s_S32[x] = inX0_S32;
             pInX1s_S32[x] = inX1_S32;
-            pAlphaXs[x] = alphaX;
+            pAlphaXs[x] = saturate_cast<u32>(alphaX * subpixelMultiplierF32);
           } // for(s32 x=0; x<outWidth; x++)
         }
 
         const s32 * restrict pInX0s_S32 = inX0s_S32.Pointer(0);
         const s32 * restrict pInX1s_S32 = inX1s_S32.Pointer(0);
-        const f32 * restrict pAlphaXs = alphaXs.Pointer(0);
+        const u32 * restrict pAlphaXs = alphaXs.Pointer(0);
 
         for(s32 y=0; y<outHeight; y++) {
           const f32 inY = yInStart + yInIncrement * static_cast<f32>(y);
@@ -452,49 +450,39 @@ namespace Anki
           const f32 inY0 = static_cast<f32>(inY0_S32);
           //const f32 inY1 = static_cast<f32>(inY1_S32);
 
-          const f32 alphaY = inY - inY0;
-          const f32 alphaYinverse = 1.0f - alphaY;
+          const f32 alphaYF32 = inY - inY0;
+          //const f32 alphaYinverseF32 = 1.0f - alphaYF32;
+
+          const u32 alphaYU32 = saturate_cast<u32>(alphaYF32 * subpixelMultiplierF32);
+          const u32 alphaYinverseU32 = subpixelMultiplierU32 - alphaYU32;
 
           const u8 * restrict pIn_y0 = in.Pointer(inY0_S32, 0);
           const u8 * restrict pIn_y1 = in.Pointer(inY1_S32, 0);
 
           u8 * restrict pOut = out.Pointer(y, 0);
 
-//          printf("(%d-%d) ", outWidth, maxSimpleX);
           s32 x = 0;
-          for(; x<=maxSimpleX; x++) {
-            const s32 inX0_S32 = pInX0s_S32[x];
-            const s32 inX1_S32 = inX0_S32 + 1;
-            const f32 alphaX = pAlphaXs[x];
-
-            const f32 alphaXinverse = 1.0f - alphaX;
-
-            const f32 pixelTL = static_cast<f32>(pIn_y0[inX0_S32]);
-            const f32 pixelTR = static_cast<f32>(pIn_y0[inX1_S32]);
-            const f32 pixelBL = static_cast<f32>(pIn_y1[inX0_S32]);
-            const f32 pixelBR = static_cast<f32>(pIn_y1[inX1_S32]);
-
-            const f32 interpolatedPixelValueF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
-
-            pOut[x] = RoundIfInteger<u8>(interpolatedPixelValueF32);
-          } // for(s32 x=0; x<outWidth; x++)
-
 
           for(; x<outWidth; x++) {
             const s32 inX0_S32 = pInX0s_S32[x];
             const s32 inX1_S32 = pInX1s_S32[x];
-            const f32 alphaX = pAlphaXs[x];
+            const s32 alphaX = pAlphaXs[x];
 
-            const f32 alphaXinverse = 1.0f - alphaX;
+            const u32 alphaXinverse = subpixelMultiplierU32 - alphaX;
 
-            const f32 pixelTL = static_cast<f32>(pIn_y0[inX0_S32]);
-            const f32 pixelTR = static_cast<f32>(pIn_y0[inX1_S32]);
-            const f32 pixelBL = static_cast<f32>(pIn_y1[inX0_S32]);
-            const f32 pixelBR = static_cast<f32>(pIn_y1[inX1_S32]);
+            const u8 pixelTL = pIn_y0[inX0_S32];
+            const u8 pixelTR = pIn_y0[inX1_S32];
+            const u8 pixelBL = pIn_y1[inX0_S32];
+            const u8 pixelBR = pIn_y1[inX1_S32];
 
-            const f32 interpolatedPixelValueF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+            //const f32 interpolatedPixelValueF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-            pOut[x] = RoundIfInteger<u8>(interpolatedPixelValueF32);
+            const u32 interpolatedTop = alphaXinverse*pixelTL + alphaX*pixelTR;
+            const u32 interpolatedBottom = alphaXinverse*pixelBL + alphaX*pixelBR;
+            const u32 interpolatedPixelValue = alphaYinverseU32*interpolatedTop + alphaYU32*interpolatedBottom;
+            const u32 interpolatedPixelValueScaled = (interpolatedPixelValue >> (2*numSubpixelBits));
+
+            pOut[x] = interpolatedPixelValueScaled & 0xFF;
           } // for(s32 x=0; x<outWidth; x++)
         } // for(s32 y=0; y<outHeight; y++)
 
