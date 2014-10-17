@@ -466,7 +466,7 @@ namespace Anki
           for(; x<outWidth; x++) {
             const s32 inX0_S32 = pInX0s_S32[x];
             const s32 inX1_S32 = pInX1s_S32[x];
-            const s32 alphaX = pAlphaXs[x];
+            const u32 alphaX = pAlphaXs[x];
 
             const u32 alphaXinverse = subpixelMultiplierU32 - alphaX;
 
@@ -480,7 +480,7 @@ namespace Anki
             const u32 interpolatedTop = alphaXinverse*pixelTL + alphaX*pixelTR;
             const u32 interpolatedBottom = alphaXinverse*pixelBL + alphaX*pixelBR;
             const u32 interpolatedPixelValue = alphaYinverseU32*interpolatedTop + alphaYU32*interpolatedBottom;
-            const u32 interpolatedPixelValueScaled = (interpolatedPixelValue >> (2*numSubpixelBits));
+            const u32 interpolatedPixelValueScaled = interpolatedPixelValue >> (2*numSubpixelBits);
 
             pOut[x] = interpolatedPixelValueScaled & 0xFF;
           } // for(s32 x=0; x<outWidth; x++)
