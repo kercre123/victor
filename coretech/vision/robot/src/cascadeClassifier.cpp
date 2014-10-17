@@ -640,6 +640,10 @@ namespace Anki
         this->isValid = true;
       }
 
+      static volatile s32 g_factor;
+      s32 g_numStagesUsed[32][1024];
+      s32 g_numStagesUsedMarginalized[1024];
+      s32 g_maxStage = 0;
       Result CascadeClassifier_LBP::DetectMultiScale(
         const Array<u8> &image,
         const f32 scaleFactor,
@@ -666,6 +670,14 @@ namespace Anki
 
         FixedLengthList<Rectangle<s32> > candidates(objects.get_maximumSize(), slowScratch);
 
+        for(s32 i=0; i<32; i++) {
+          for(s32 j=0; j<1024; j++) {
+            g_numStagesUsed[i][j] = 0;
+            g_numStagesUsedMarginalized[j] = 0;
+          }
+        }
+
+        s32 iFactor = 0;
         for(f32 factor = 1; ; factor *= scaleFactor) {
           PUSH_MEMORY_STACK(fastScratch);
 
@@ -717,6 +729,11 @@ namespace Anki
 
           const s32 xyIncrement = factor > 2.0f ? 1 : 2;
 
+          g_factor = iFactor;
+          iFactor++;
+
+          printf("%dx%d\n", scaledImage.get_size(0), scaledImage.get_size(1));
+
           BeginBenchmark("DetectSingleScale");
 
           if(DetectSingleScale(scaledImage, processingRectHeight, processingRectWidth, xyIncrement, factor, candidates, fastScratch) != RESULT_OK) {
@@ -727,6 +744,19 @@ namespace Anki
 
           EndBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
         } // for(f32 factor = 1; ; factor *= scaleFactor)
+
+        for(s32 i=0; i<iFactor; i++) {
+          for(s32 j=0; j<g_maxStage; j++) {
+            printf("%d ", g_numStagesUsed[i][j]);
+          }
+          printf("\n");
+        }
+
+        printf("\n");
+        for(s32 j=0; j<g_maxStage; j++) {
+          printf("%d ", g_numStagesUsedMarginalized[j]);
+        }
+        printf("\n");
 
         objects.set_size(candidates.get_size());
         memcpy(objects.Pointer(0), candidates.Pointer(0), candidates.get_array().get_stride());
@@ -768,6 +798,15 @@ namespace Anki
         for(s32 fi = 0; fi < nfeatures; fi++) {
           this->features[fi].updatePtrs(scrollingIntegralImage);
         }
+
+        //for(s32 fi = 0; fi < nfeatures; fi++) {
+        //  printf("%03d) ", fi);
+        //  for(s32 j=0; j<16; j++) {
+        //    //printf("0x%04x ", this->features[fi].p[j] - scrollingIntegralImage.Pointer(0,0));
+        //    printf("0x%04x ", this->features[fi].p[j]);
+        //  }
+        //  printf("\n");
+        //}
 
         EndBenchmark("CascadeClassifier_LBP::DetectSingleScale init");
 
@@ -829,6 +868,9 @@ namespace Anki
           int wi, ntrees = stage.ntrees;
 
           sum = 0;
+
+          g_numStagesUsed[g_factor][si]++;
+          g_numStagesUsedMarginalized[si]++;
 
           for( wi = 0; wi < ntrees; wi++ )
           {
@@ -896,4 +938,3 @@ namespace Anki
     } // namespace Classifier
   } // namespace Embedded
 } // namespace Anki
-

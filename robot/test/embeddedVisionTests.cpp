@@ -1236,7 +1236,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
-  //detectedFaces_anki[0].Print();
+  detectedFaces_anki[0].Print();
 
   ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
   ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(102, 219, 40, 156));
