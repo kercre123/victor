@@ -1239,7 +1239,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   //detectedFaces_anki[0].Print();
 
   ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
-  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(102, 219, 40, 156));
+  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(102, 219, 40, 157));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, FaceDetection)
