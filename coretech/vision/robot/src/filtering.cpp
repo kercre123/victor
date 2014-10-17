@@ -386,6 +386,7 @@ namespace Anki
           RESULT_FAIL_OUT_OF_MEMORY, "DownsampleBilinear", "Out of memory");
 
         // Compute the x coordinates
+        s32 maxSimpleX = outWidth - 1;
         {
           s32 * restrict pInX0s_S32 = inX0s_S32.Pointer(0);
           s32 * restrict pInX1s_S32 = inX1s_S32.Pointer(0);
@@ -409,6 +410,10 @@ namespace Anki
 
             if(inX1_S32 > (inWidth-1))
               inX1_S32 = inWidth-1;
+
+            if((inX0_S32+1) >= inWidth) {
+              maxSimpleX = MIN(maxSimpleX, x);
+            }
 
             const f32 inX0 = static_cast<f32>(inX0_S32);
             //const f32 inX1 = static_cast<f32>(inX1_S32);
@@ -455,30 +460,27 @@ namespace Anki
 
           u8 * restrict pOut = out.Pointer(y, 0);
 
-          for(s32 x=0; x<outWidth; x++) {
-            //const f32 inX = xInStart + xInIncrement * static_cast<f32>(x);
+//          printf("(%d-%d) ", outWidth, maxSimpleX);
+          s32 x = 0;
+          for(; x<=maxSimpleX; x++) {
+            const s32 inX0_S32 = pInX0s_S32[x];
+            const s32 inX1_S32 = inX0_S32 + 1;
+            const f32 alphaX = pAlphaXs[x];
 
-            //s32 inX0_S32 = FloorS32(inX);
-            //s32 inX1_S32 = CeilS32(inX);
+            const f32 alphaXinverse = 1.0f - alphaX;
 
-            //// Technically, we can't interpolate the borders. But this is a reasonable approximation
-            //if(inX0_S32 < 0)
-            //  inX0_S32 = 0;
+            const f32 pixelTL = static_cast<f32>(pIn_y0[inX0_S32]);
+            const f32 pixelTR = static_cast<f32>(pIn_y0[inX1_S32]);
+            const f32 pixelBL = static_cast<f32>(pIn_y1[inX0_S32]);
+            const f32 pixelBR = static_cast<f32>(pIn_y1[inX1_S32]);
 
-            //if(inX1_S32 < 0)
-            //  inX1_S32 = 0;
+            const f32 interpolatedPixelValueF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-            //if(inX0_S32 > (inWidth-1))
-            //  inX0_S32 = inWidth-1;
+            pOut[x] = RoundIfInteger<u8>(interpolatedPixelValueF32);
+          } // for(s32 x=0; x<outWidth; x++)
 
-            //if(inX1_S32 > (inWidth-1))
-            //  inX1_S32 = inWidth-1;
 
-            //const f32 inX0 = static_cast<f32>(inX0_S32);
-            ////const f32 inX1 = static_cast<f32>(inX1_S32);
-
-            //const f32 alphaX = inX - inX0;
-
+          for(; x<outWidth; x++) {
             const s32 inX0_S32 = pInX0s_S32[x];
             const s32 inX1_S32 = pInX1s_S32[x];
             const f32 alphaX = pAlphaXs[x];
