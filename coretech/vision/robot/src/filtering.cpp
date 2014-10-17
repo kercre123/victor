@@ -382,167 +382,98 @@ namespace Anki
         const f32 xInStart     = (0.5f * scale.x) - 0.5f;
         const f32 xInIncrement = scale.x;
 
-        FixedLengthList<s32> inXLefts_S32(outWidth, scratch);
-        FixedLengthList<s32> inXRights_S32(outWidth, scratch);
+        FixedLengthList<s32> inX0s_S32(outWidth, scratch);
+        FixedLengthList<s32> inX1s_S32(outWidth, scratch);
         FixedLengthList<u32> alphaXs(outWidth, scratch);
 
-        AnkiConditionalErrorAndReturnValue(AreValid(inXLefts_S32, inXRights_S32, alphaXs),
+        AnkiConditionalErrorAndReturnValue(AreValid(inX0s_S32, inX1s_S32, alphaXs),
           RESULT_FAIL_OUT_OF_MEMORY, "DownsampleBilinear", "Out of memory");
 
         // Compute the x coordinates
         {
-          s32 * restrict pInXLefts_S32 = inXLefts_S32.Pointer(0);
-          s32 * restrict pInXRights_S32 = inXRights_S32.Pointer(0);
+          s32 * restrict pInX0s_S32 = inX0s_S32.Pointer(0);
+          s32 * restrict pInX1s_S32 = inX1s_S32.Pointer(0);
           u32 * restrict pAlphaXs = alphaXs.Pointer(0);
 
           for(s32 x=0; x<outWidth; x++) {
             const f32 inX = xInStart + xInIncrement * static_cast<f32>(x);
 
-            s32 inXLeft_S32 = FloorS32(inX);
-            s32 inXRight_S32 = CeilS32(inX);
+            s32 inX0_S32 = FloorS32(inX);
+            s32 inX1_S32 = CeilS32(inX);
 
             // Technically, we can't interpolate the borders. But this is a reasonable approximation
-            if(inXLeft_S32 < 0)
-              inXLeft_S32 = 0;
+            if(inX0_S32 < 0)
+              inX0_S32 = 0;
 
-            if(inXRight_S32 < 0)
-              inXRight_S32 = 0;
+            if(inX1_S32 < 0)
+              inX1_S32 = 0;
 
-            if(inXLeft_S32 > (inWidth-1))
-              inXLeft_S32 = inWidth-1;
+            if(inX0_S32 > (inWidth-1))
+              inX0_S32 = inWidth-1;
 
-            if(inXRight_S32 > (inWidth-1))
-              inXRight_S32 = inWidth-1;
+            if(inX1_S32 > (inWidth-1))
+              inX1_S32 = inWidth-1;
 
-            const f32 inXLeft = static_cast<f32>(inXLeft_S32);
+            const f32 inX0 = static_cast<f32>(inX0_S32);
 
-            const f32 alphaX = inX - inXLeft;
+            const f32 alphaX = inX - inX0;
 
-            pInXLefts_S32[x] = inXLeft_S32;
-            pInXRights_S32[x] = inXRight_S32;
+            pInX0s_S32[x] = inX0_S32;
+            pInX1s_S32[x] = inX1_S32;
             pAlphaXs[x] = saturate_cast<u32>(alphaX * subpixelMultiplierF32);
           } // for(s32 x=0; x<outWidth; x++)
         }
 
-        const s32 * restrict pInXLefts_S32 = inXLefts_S32.Pointer(0);
-        const s32 * restrict pInXRights_S32 = inXRights_S32.Pointer(0);
+        const s32 * restrict pInX0s_S32 = inX0s_S32.Pointer(0);
+        const s32 * restrict pInX1s_S32 = inX1s_S32.Pointer(0);
         const u32 * restrict pAlphaXs = alphaXs.Pointer(0);
 
-        s32 y = 0;
-        for(; y<(outHeight-1); y+=2) {
-          const f32 inY0 = yInStart + yInIncrement * static_cast<f32>(y);
-          const f32 inY1 = yInStart + yInIncrement * static_cast<f32>(y+1);
-
-          // Technically, we can't interpolate the borders. But the MAX/MIN is a reasonable approximation
-          const s32 inY0Top_S32 = MIN(inHeight-1, MAX(0, FloorS32(inY0)));
-          const s32 inY0Bottom_S32 = MIN(inHeight-1, MAX(0, CeilS32(inY0)));
-
-          const s32 inY1Top_S32 = MIN(inHeight-1, MAX(0, FloorS32(inY1)));
-          const s32 inY1Bottom_S32 = MIN(inHeight-1, MAX(0, CeilS32(inY1)));
-
-          const f32 inY0Top = static_cast<f32>(inY0Top_S32);
-          const f32 inY1Top = static_cast<f32>(inY1Top_S32);
-
-          const f32 alphaY0F32 = inY0 - inY0Top;
-          const f32 alphaY1F32 = inY1 - inY1Top;
-
-          const u32 alphaY0U32 = saturate_cast<u32>(alphaY0F32 * subpixelMultiplierF32);
-          const u32 alphaY0inverseU32 = subpixelMultiplierU32 - alphaY0U32;
-
-          const u32 alphaY1U32 = saturate_cast<u32>(alphaY1F32 * subpixelMultiplierF32);
-          const u32 alphaY1inverseU32 = subpixelMultiplierU32 - alphaY1U32;
-
-          const u8 * restrict pInY0Top = in.Pointer(inY0Top_S32, 0);
-          const u8 * restrict pInY0Bottom = in.Pointer(inY0Bottom_S32, 0);
-
-          const u8 * restrict pInY1Top = in.Pointer(inY1Top_S32, 0);
-          const u8 * restrict pInY1Bottom = in.Pointer(inY1Bottom_S32, 0);
-
-          u8 * restrict pOut0 = out.Pointer(y, 0);
-          u8 * restrict pOut1 = out.Pointer(y+1, 0);
-
-          s32 x = 0;
-
-          for(; x<outWidth; x++) {
-            const s32 inXLeft_S32 = pInXLefts_S32[x];
-            const s32 inXRight_S32 = pInXRights_S32[x];
-            const u32 alphaX = pAlphaXs[x];
-
-            const u32 alphaXinverse = subpixelMultiplierU32 - alphaX;
-
-            const u8 pixelTL0 = pInY0Top[inXLeft_S32];
-            const u8 pixelTR0 = pInY0Top[inXRight_S32];
-            const u8 pixelBL0 = pInY0Bottom[inXLeft_S32];
-            const u8 pixelBR0 = pInY0Bottom[inXRight_S32];
-
-            const u8 pixelTL1 = pInY1Top[inXLeft_S32];
-            const u8 pixelTR1 = pInY1Top[inXRight_S32];
-            const u8 pixelBL1 = pInY1Bottom[inXLeft_S32];
-            const u8 pixelBR1 = pInY1Bottom[inXRight_S32];
-
-            //const f32 interpolatedPixelValueF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
-
-            const u32 interpolatedTop0 = alphaXinverse*pixelTL0 + alphaX*pixelTR0;
-            const u32 interpolatedBottom0 = alphaXinverse*pixelBL0 + alphaX*pixelBR0;
-            const u32 interpolatedPixelValue0 = alphaY0inverseU32*interpolatedTop0 + alphaY0U32*interpolatedBottom0;
-            const u32 interpolatedPixelValueScaled0 = interpolatedPixelValue0 >> (2*numSubpixelBits);
-
-            const u32 interpolatedTop1 = alphaXinverse*pixelTL1 + alphaX*pixelTR1;
-            const u32 interpolatedBottom1 = alphaXinverse*pixelBL1 + alphaX*pixelBR1;
-            const u32 interpolatedPixelValue1 = alphaY1inverseU32*interpolatedTop1 + alphaY1U32*interpolatedBottom1;
-            const u32 interpolatedPixelValueScaled1 = interpolatedPixelValue1 >> (2*numSubpixelBits);
-
-            pOut0[x] = interpolatedPixelValueScaled0 & 0xFF;
-            pOut1[x] = interpolatedPixelValueScaled1 & 0xFF;
-          } // for(s32 x=0; x<outWidth; x++)
-        } // for(s32 y=0; y<outHeight; y++)
-
-        for(; y<outHeight; y++) {
+        for(s32 y=0; y<outHeight; y++) {
           const f32 inY = yInStart + yInIncrement * static_cast<f32>(y);
 
-          s32 inYTop_S32 = FloorS32(inY);
-          s32 inYBottom_S32 = CeilS32(inY);
+          s32 inY0_S32 = FloorS32(inY);
+          s32 inY1_S32 = CeilS32(inY);
 
           // Technically, we can't interpolate the borders. But this is a reasonable approximation
-          if(inYTop_S32 < 0)
-            inYTop_S32 = 0;
+          if(inY0_S32 < 0)
+            inY0_S32 = 0;
 
-          if(inYBottom_S32 < 0)
-            inYBottom_S32 = 0;
+          if(inY1_S32 < 0)
+            inY1_S32 = 0;
 
-          if(inYTop_S32 > (inHeight-1))
-            inYTop_S32 = inHeight-1;
+          if(inY0_S32 > (inHeight-1))
+            inY0_S32 = inHeight-1;
 
-          if(inYBottom_S32 > (inHeight-1))
-            inYBottom_S32 = inHeight-1;
+          if(inY1_S32 > (inHeight-1))
+            inY1_S32 = inHeight-1;
 
-          const f32 inYTop = static_cast<f32>(inYTop_S32);
-          //const f32 inYBottom = static_cast<f32>(inYBottom_S32);
+          const f32 inY0 = static_cast<f32>(inY0_S32);
+          //const f32 inY1 = static_cast<f32>(inY1_S32);
 
-          const f32 alphaYF32 = inY - inYTop;
+          const f32 alphaYF32 = inY - inY0;
           //const f32 alphaYinverseF32 = 1.0f - alphaYF32;
 
           const u32 alphaYU32 = saturate_cast<u32>(alphaYF32 * subpixelMultiplierF32);
           const u32 alphaYinverseU32 = subpixelMultiplierU32 - alphaYU32;
 
-          const u8 * restrict pInYTop = in.Pointer(inYTop_S32, 0);
-          const u8 * restrict pInYBottom = in.Pointer(inYBottom_S32, 0);
+          const u8 * restrict pIn_y0 = in.Pointer(inY0_S32, 0);
+          const u8 * restrict pIn_y1 = in.Pointer(inY1_S32, 0);
 
           u8 * restrict pOut = out.Pointer(y, 0);
 
           s32 x = 0;
 
           for(; x<outWidth; x++) {
-            const s32 inXLeft_S32 = pInXLefts_S32[x];
-            const s32 inXRight_S32 = pInXRights_S32[x];
+            const s32 inX0_S32 = pInX0s_S32[x];
+            const s32 inX1_S32 = pInX1s_S32[x];
             const u32 alphaX = pAlphaXs[x];
 
             const u32 alphaXinverse = subpixelMultiplierU32 - alphaX;
 
-            const u8 pixelTL = pInYTop[inXLeft_S32];
-            const u8 pixelTR = pInYTop[inXRight_S32];
-            const u8 pixelBL = pInYBottom[inXLeft_S32];
-            const u8 pixelBR = pInYBottom[inXRight_S32];
+            const u8 pixelTL = pIn_y0[inX0_S32];
+            const u8 pixelTR = pIn_y0[inX1_S32];
+            const u8 pixelBL = pIn_y1[inX0_S32];
+            const u8 pixelBR = pIn_y1[inX1_S32];
 
             //const f32 interpolatedPixelValueF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
