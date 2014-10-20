@@ -19,6 +19,9 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 
+#include "keyFrame.h"
+#include "animation.h"
+
 namespace Anki {
   namespace Cozmo {
     namespace AnimationController {
@@ -35,6 +38,15 @@ namespace Anki {
       
       bool IsPlaying();
       
+      // For updating "canned" animations (e.g. using definitions sent over
+      // from the Basestation):
+      Result ClearCannedAnimation(const AnimationID_t whichAnimation);
+      
+      // (Adds frame to end of specified animation/subsystem)
+      Result AddKeyFrameToCannedAnimation(const KeyFrame&             keyframe,
+                                          const AnimationID_t         whichAnimation,
+                                          const Animation::SubSystems whichSubSystem);
+
     } // namespace AnimationController
   } // namespcae Cozmo
 } // namespace Anki

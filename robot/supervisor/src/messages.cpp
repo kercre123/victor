@@ -467,6 +467,7 @@ namespace Anki {
       }
       
       void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
+        //PRINT("Processing play animation message\n");
         AnimationController::Play((AnimationID_t)msg.animationID, msg.numLoops);
       }
 

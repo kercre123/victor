@@ -11,7 +11,7 @@ namespace Anki {
   namespace HeadController {
 
     namespace {
-    
+      
       const Radians ANGLE_TOLERANCE = DEG_TO_RAD(3.f);
       
       // Head angle on startup
@@ -60,6 +60,14 @@ namespace Anki {
       
       // If head comes within this distance to limit angle, trigger recalibration.
       //const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
+      
+      // Nodding
+      bool isNodding_ = false;
+      f32 preNodAngle_  = 0.f;
+      f32 nodLowAngle_  = 0.f;
+      f32 nodHighAngle_ = 0.f;
+      s32 numNodsDesired_ = 0;
+      s32 numNodsComplete_ = 0;
       
       // Calibration parameters
       typedef enum {
@@ -244,7 +252,8 @@ namespace Anki {
       accel_rad_per_sec2 = accelRad_;
     }
     
-    void SetDesiredAngle(f32 angle)
+    
+    static void SetDesiredAngle_internal(f32 angle)
     {
       // Do range check on angle
       angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
@@ -293,6 +302,15 @@ namespace Anki {
 #endif
 
       
+    } // SetDesiredAngle_internal()
+    
+    void SetDesiredAngle(f32 angle) {
+      // Stop nodding if we were
+      if(IsNodding()) {
+        isNodding_ = false;
+      }
+      
+      SetDesiredAngle_internal(angle);
     }
     
     bool IsInPosition(void) {
@@ -424,6 +442,50 @@ namespace Anki {
       Kp_ = kp;
       Ki_ = ki;
       MAX_ERROR_SUM = maxIntegralError;
+    }
+    
+    void StartNodding(const f32 lowAngle, const f32 highAngle,
+                      const f32 speed, const f32 accel,
+                      const s32 numLoops)
+    {
+      //AnkiConditionalErrorAndReturnValue(keyFrame.type != KeyFrame::HEAD_NOD, RESULT_FAIL, "HeadNodStart.WrongKeyFrameType", "\n");
+      
+      preNodAngle_ = GetAngleRad();
+      nodLowAngle_  = lowAngle;
+      nodHighAngle_ = highAngle;
+      SetSpeedAndAccel(speed, accel);
+      numNodsDesired_  = numLoops;
+      numNodsComplete_ = 0;
+      isNodding_ = true;
+      
+      SetDesiredAngle_internal(nodLowAngle_);
+      
+    } // StartNodding()
+    
+    void HeadNodUpdate()
+    {
+      if (IsInPosition()) {
+        if (GetLastCommandedAngle() == nodHighAngle_) {
+          SetDesiredAngle_internal(nodLowAngle_);
+        } else if (GetLastCommandedAngle() == nodLowAngle_) {
+          SetDesiredAngle_internal(nodHighAngle_);
+          ++numNodsComplete_;
+          if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
+            StopNodding();
+          }
+        }
+      }
+    } // HeadNodUpdate()
+    
+    void StopNodding()
+    {
+      SetDesiredAngle_internal(preNodAngle_);
+      isNodding_ = false;
+    }
+    
+    bool IsNodding()
+    {
+      return isNodding_;
     }
     
   } // namespace HeadController

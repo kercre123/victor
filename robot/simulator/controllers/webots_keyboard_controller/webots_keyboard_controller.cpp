@@ -214,6 +214,7 @@ namespace Anki {
         
         const s32 CKEY_ANIMATION_NOD = (s32)'!';
         const s32 CKEY_ANIMATION_BACK_AND_FORTH = (s32)'@';
+        const s32 CKEY_ANIMATION_BLINK = (s32)'#';
         
         const s32 CKEY_TOGGLE_FACE_TRACKING = (s32)'F';
         
@@ -572,6 +573,11 @@ namespace Anki {
               case CKEY_ANIMATION_BACK_AND_FORTH:
               {
                 SendAnimation(ANIM_BACK_AND_FORTH_EXCITED, 3, SOUND_OK_DONE);
+                break;
+              }
+              case CKEY_ANIMATION_BLINK:
+              {
+                SendAnimation(3, 5, NUM_SOUNDS);
                 break;
               }
                 

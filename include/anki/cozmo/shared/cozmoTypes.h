@@ -98,13 +98,21 @@ namespace Anki {
     // Animation ID
     // TODO: Eventually, we might want a way of sending animation definitions down from basestation
     //       but for now they're hard-coded on the robot
-    typedef enum {
+    /*typedef enum {
       ANIM_IDLE
       ,ANIM_HEAD_NOD
       ,ANIM_BACK_AND_FORTH_EXCITED
       ,ANIM_WIGGLE
       ,ANIM_NUM_ANIMATIONS
-    } AnimationID_t;
+    } AnimationID_t;*/
+    typedef u32 AnimationID_t;
+    
+    // TODO: Get rid of these once we send all of them from basestation
+    const AnimationID_t ANIM_IDLE                   = 0;
+    const AnimationID_t ANIM_HEAD_NOD               = 1;
+    const AnimationID_t ANIM_BACK_AND_FORTH_EXCITED = 2;
+    const AnimationID_t ANIM_WIGGLE                 = 3;
+    const AnimationID_t ANIM_NUM_ANIMATIONS         = 5;
     
     // List of sound schemes
     typedef enum {
