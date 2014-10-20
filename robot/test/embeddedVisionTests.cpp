@@ -4948,6 +4948,29 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
     }
   }
 
+  Array<u8> bigImage(480, 640, scratchOffchip);
+  Array<u8> bigImageFiltered(480, 640, scratchOffchip);
+
+  ASSERT_TRUE(AreValid(bigImage, bigImageFiltered));
+
+  f64 totalTime = 0;
+
+  const s32 numIterations = 100;
+  for(s32 i=0; i<numIterations; i++) {
+    const f64 t0 = GetTimeF64();
+    const Result result2 = ImageProcessing::BinomialFilter<u8,u16,u8>(bigImage, bigImageFiltered, scratchOffchip);
+    const f64 t1 = GetTimeF64();
+
+    ASSERT_TRUE(result2 == RESULT_OK);
+
+    totalTime += (t1 - t0);
+    bigImage.Set(bigImageFiltered);
+  }
+
+  printf("Binomial filtered 640x480 image in %f seconds.\n", totalTime/numIterations);
+
+
+
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
@@ -5221,7 +5244,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
   numPassedTests = 0;
   numFailedTests = 0;
-
+/*
 #if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, DistanceTransform);
   CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
@@ -5269,14 +5292,14 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
   CALL_GTEST_TEST(CoreTech_Vision, SortComponentsById);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
-  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
+  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);*/
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
-  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+/*  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
   CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
   CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
 #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
-
+*/
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
 #endif // #if !ANKICORETECH_EMBEDDED_USE_GTEST
