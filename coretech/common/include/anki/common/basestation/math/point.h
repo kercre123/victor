@@ -128,6 +128,17 @@ namespace Anki {
     // originally the origin, it cannot be made into a unit vector
     // and will be left at the origin, and zero will be returned.
     T MakeUnitLength(void);
+
+    // comparison object to compare the a single dimension
+    struct CompareX {
+      bool operator() (const Point<N,T>& lhs, const Point<N,T>& rhs) const;
+    };
+    struct CompareY {
+      bool operator() (const Point<N,T>& lhs, const Point<N,T>& rhs) const;
+    };
+    struct CompareZ {
+      bool operator() (const Point<N,T>& lhs, const Point<N,T>& rhs) const;
+    };
     
   protected:
     

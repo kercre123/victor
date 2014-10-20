@@ -433,7 +433,25 @@ namespace Anki {
     temp -= point2;
     return temp.length();
   }
-  
+
+  template<PointDimType N, typename T>
+  bool Point<N,T>::CompareX::operator ()  (const Point<N,T>& lhs, const Point<N,T>& rhs) const
+  {
+    return lhs[0] < rhs[0];
+  }
+
+  template<PointDimType N, typename T>
+  bool Point<N,T>::CompareY::operator ()  (const Point<N,T>& lhs, const Point<N,T>& rhs) const
+  {
+    return lhs[1] < rhs[1];
+  }
+
+  template<PointDimType N, typename T>
+  bool Point<N,T>::CompareZ::operator ()  (const Point<N,T>& lhs, const Point<N,T>& rhs) const
+  {
+    return lhs[2] < rhs[2];
+  }
+
   
 } // namespace Anki
 

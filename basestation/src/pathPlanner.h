@@ -18,6 +18,7 @@
 #include "anki/planning/shared/path.h"
 #include "json/json-forwards.h"
 
+#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 
 #include <set>
@@ -139,7 +140,7 @@ namespace Anki {
     {
       friend LatticePlannerImpl;
     public:
-      LatticePlanner(const BlockWorld* blockWorld, const Json::Value& mprims);
+      LatticePlanner(const Robot* robot, const Json::Value& mprims);
       virtual ~LatticePlanner();
       
       virtual EPlanStatus GetPlan(Planning::Path &path,
