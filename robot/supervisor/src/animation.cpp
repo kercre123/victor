@@ -29,7 +29,11 @@ namespace Cozmo {
   {
     PRINT("Init Animation %d\n", _ID);
     
-    _startTime_ms      = HAL::GetTimeStamp();
+    _startTime_ms = HAL::GetTimeStamp();
+    
+    _allSubSystemsReady = false;
+    
+    _isPlaying = true;
     
     /*
     _returnToOrigState = returnToOrigStateWhenDone;
@@ -47,15 +51,84 @@ namespace Cozmo {
     }
      */
     
+    // Reset each subsystem and call TransitionInto for any initial keyframes
+    // that have a relative start time of 0
     for(s32 iSubSystem=0; iSubSystem<NUM_SUBSYSTEMS; ++iSubSystem) {
       _subSystems[iSubSystem].currFrame = 0;
+      _subSystems[iSubSystem].isReady   = false;
+      
+      if(_subSystems[iSubSystem].numFrames > 0 &&
+         _subSystems[iSubSystem].frames[0].relTime_ms == 0)
+      {
+        _subSystems[iSubSystem].frames[0].TransitionInto(_startTime_ms);
+      }
     }
     
   } // Init()
   
   
+  bool Animation::CheckSubSystemReadiness()
+  {
+    if(!_allSubSystemsReady)
+    {
+      // Mark as true for now, and let the loop below unset it
+      _allSubSystemsReady = true;
+      
+      for(s32 iSubSystem=0; iSubSystem<NUM_SUBSYSTEMS; ++iSubSystem) {
+        
+        Animation::KeyFrameList& subSystem = _subSystems[iSubSystem];
+        
+        // If this subsystem isn't marked as ready yet, check it now
+        if(!subSystem.isReady) {
+          if(subSystem.numFrames == 0) {
+            // Subsystem with no keyframes is always ready
+            subSystem.isReady = true;
+          } else if(subSystem.frames[0].relTime_ms > 0) {
+            // Subsystems with first keyframe at time > 0 are always ready
+            subSystem.isReady = true;
+          } else {
+            // Check whether the first keyframe is "in position"
+            subSystem.isReady = subSystem.frames[0].IsInPosition();
+          }
+          
+          // In case this subSystem just became ready:
+          _allSubSystemsReady &= subSystem.isReady;
+          
+        } // if(!subSystem.isReady)
+        
+      } // for each subSystem
+      
+      if(_allSubSystemsReady) {
+        // If all subsystems just became ready, update the start time for this
+        // animation to now and call TransitionInto for keyframes that are
+        // first for their subsystem but do _not_ have relTime==0
+        _startTime_ms = HAL::GetTimeStamp();
+        
+        for(s32 iSubSystem=0; iSubSystem<NUM_SUBSYSTEMS; ++iSubSystem)
+        {
+          if(_subSystems[iSubSystem].numFrames > 0 &&
+             _subSystems[iSubSystem].frames[0].relTime_ms > 0)
+          {
+            _subSystems[iSubSystem].frames[0].TransitionInto(_startTime_ms);
+          }
+        } // for each subSystem
+        
+      } // if(_allSubSystemsReady)
+      
+    } // if (!_allSubSystemsReady)
+    
+    return _allSubSystemsReady;
+      
+  } // CheckSubSystemReadiness()
+  
+  
   void Animation::Update()
   {
+    if(CheckSubSystemReadiness() == false) {
+      // Wait for all subsystems to be ready
+      return;
+    }
+
     bool subSystemPlaying[NUM_SUBSYSTEMS];
     
     for(s32 iSubSystem=0; iSubSystem<NUM_SUBSYSTEMS; ++iSubSystem)
@@ -63,8 +136,8 @@ namespace Cozmo {
       // Get a reference to the current subSystem, for convenience
       Animation::KeyFrameList& subSystem = _subSystems[iSubSystem];
 
-      if(subSystem.numFrames == 0) {
-        // Skip empty subsystems
+      if(subSystem.numFrames == 0 || subSystem.currFrame >= subSystem.numFrames) {
+        // Skip empty or already-finished subsystems
         subSystemPlaying[iSubSystem] = false;
         
       } else {
@@ -107,6 +180,7 @@ namespace Cozmo {
     }
     
     if(!_isPlaying) {
+      PRINT("No subsystems in animation %d still playing. Stopping.\n", _ID);
       Stop();
     }
     
@@ -121,6 +195,11 @@ namespace Cozmo {
       LiftController::SetDesiredHeight(_origLiftHeight);
     }
      */
+    
+    for(s32 iSubSystem = 0; iSubSystem < NUM_SUBSYSTEMS; ++iSubSystem)
+    {
+      _subSystems[iSubSystem].frames[_subSystems[iSubSystem].currFrame].Stop();
+    }
     
     _isPlaying = false;
     

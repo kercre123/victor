@@ -15,83 +15,190 @@
 #include "keyFrame.h"
 #include "headController.h"
 #include "liftController.h"
+#include "steeringController.h"
 
 namespace Anki {
 namespace Cozmo {
-    
-void KeyFrame::TransitionOutOf(const TimeStamp_t animStartTime_us) const
-{
-  switch(type)
+  
+  void KeyFrame::TransitionOutOf(const TimeStamp_t animStartTime_us) const
   {
-    case KeyFrame::START_HEAD_NOD:
+    switch(type)
     {
-      HeadController::StartNodding(StartHeadNod.lowAngle,
-                                   StartHeadNod.highAngle,
-                                   StartHeadNod.speed,
-                                   StartHeadNod.accel,
-                                   0);
-      break;
-    }
-      
-    case KeyFrame::SET_LED_COLORS:
-    {
-      // TODO: Move this into some kind of LightController file/namespace
-      for(s32 iLED=0; iLED<HAL::NUM_LEDS; ++iLED) {
-        const u32& currLEDcolor = SetLEDcolors.led[iLED];
-        if(currLEDcolor != KeyFrame::UNSPECIFIED_COLOR) {
-          HAL::SetLED(static_cast<HAL::LEDId>(iLED), currLEDcolor);
-        }
+      case KeyFrame::START_HEAD_NOD:
+      {
+        HeadController::StartNodding(StartHeadNod.lowAngle,
+                                     StartHeadNod.highAngle,
+                                     StartHeadNod.speed,
+                                     StartHeadNod.accel,
+                                     0);
+        break;
       }
-      break;
-    }
-      
-  } // switch(currKeyFrame.type)
+        
+      case KeyFrame::STOP_HEAD_NOD:
+      {
+        HeadController::StopNodding();
+        break;
+      }
+        
+      case KeyFrame::START_LIFT_NOD:
+      {
+        LiftController::StartNodding(StartLiftNod.lowHeight,
+                                     StartLiftNod.highHeight,
+                                     StartLiftNod.speed,
+                                     StartLiftNod.accel,
+                                     0);
+        break;
+      }
+        
+      case KeyFrame::STOP_LIFT_NOD:
+      {
+        LiftController::StopNodding();
+        break;
+      }
+        
+      case KeyFrame::SET_LED_COLORS:
+      {
+        // TODO: Move this into some kind of LightController file/namespace
+        for(s32 iLED=0; iLED<HAL::NUM_LEDS; ++iLED) {
+          const u32& currLEDcolor = SetLEDcolors.led[iLED];
+          if(currLEDcolor != KeyFrame::UNSPECIFIED_COLOR) {
+            HAL::SetLED(static_cast<HAL::LEDId>(iLED), currLEDcolor);
+          }
+        }
+        break;
+      }
+        
+      case KeyFrame::POINT_TURN:
+      {
+        SteeringController::ExecuteDirectDrive(0.f, 0.f);
+        break;
+      }
+        
+      default:
+      {
+        // Do nothing if no TransitionOutOf behavior defined for this type
+        break;
+      }
+        
+    } // switch(type)
+    
+  } // TransitionOutOf()
   
-} // TransitionOutOf()
-
-
-void KeyFrame::TransitionInto(const TimeStamp_t animStartTime_us) const
-{
-  switch(type)
+  
+  void KeyFrame::TransitionInto(const TimeStamp_t animStartTime_ms) const
   {
-    case KeyFrame::STOP_HEAD_NOD:
+    switch(type)
     {
-      HeadController::StopNodding();
-      break;
-    }
-      
-    case KeyFrame::HEAD_ANGLE:
-    {
-      HeadController::SetAngularVelocity(SetHeadAngle.targetSpeed);
-      HeadController::SetDesiredAngle(SetHeadAngle.targetAngle);
-      
-      // TODO: Switch to method that takes desired time into account:
-      /*
-      HeadController::SetDesiredAngleAndTime(SetHeadAngle.targetAngle,
-                                             SetHeadAngle.targetSpeed,
-                                             (relTime_ms + animStartTime_ms)*1000);
-       */
-      break;
-    }
-      
-    case KeyFrame::LIFT_ANGLE:
-    {
-      
-      LiftController::SetAngularVelocity(SetLiftHeight.targetSpeed);
-      LiftController::SetDesiredHeight(SetLiftHeight.targetHeight);
-      
-      // TODO: Switch to method that takes desired time into account:
-      /*
-      LiftController::SetDesiredHeightAndTime(SetLiftHeight.targetHeight,
-                                              SetLiftHeight.targetSpeed,
-                                              (relTime_ms + animStartTime_ms)*1000);
-       */
-      break;
-    }
-      
-  } // switch(nextKeyFrame.type)
+      case KeyFrame::HEAD_ANGLE:
+      {
+        HeadController::SetAngularVelocity(SetHeadAngle.targetSpeed);
+        HeadController::SetDesiredAngle(SetHeadAngle.targetAngle);
+        
+        // TODO: Switch to method that takes desired time into account:
+        /*
+         HeadController::SetDesiredAngleAndTime(SetHeadAngle.targetAngle,
+         SetHeadAngle.targetSpeed,
+         (relTime_ms + animStartTime_ms)*1000);
+         */
+        break;
+      }
+        
+      case KeyFrame::LIFT_HEIGHT:
+      {
+        
+        LiftController::SetAngularVelocity(SetLiftHeight.targetSpeed);
+        LiftController::SetDesiredHeight(SetLiftHeight.targetHeight);
+        
+        // TODO: Switch to method that takes desired time into account:
+        /*
+         LiftController::SetDesiredHeightAndTime(SetLiftHeight.targetHeight,
+         SetLiftHeight.targetSpeed,
+         (relTime_ms + animStartTime_ms)*1000);
+         */
+        break;
+      }
+        
+      case KeyFrame::POINT_TURN:
+      {
+        // TODO: Switch to new method that accepts duration and computes the right velocity profile
+        const f32 duration_ms = animStartTime_ms + relTime_ms - HAL::GetTimeStamp();
+        const f32 wheelSpeed = (TurnInPlace.relativeAngle * WHEEL_DIST_MM * 1000.f) / (duration_ms * 2.f);
+        //const f32 wheelSpeed = (TurnInPlace.relativeAngle < 0 ? -TurnInPlace.targetSpeed : TurnInPlace.targetSpeed);
+        SteeringController::ExecuteDirectDrive(wheelSpeed, -wheelSpeed);
+        
+        break;
+      }
+        
+      default:
+      {
+        // Do nothing if no TransitionInto behavior defined for this type
+        break;
+      }
+        
+    } // switch(type)
+    
+  } // TransitionInto()
   
-} // TransitionInto()
+  bool KeyFrame::IsInPosition()
+  {
+    switch(type)
+    {
+      case KeyFrame::HEAD_ANGLE:
+        return HeadController::IsInPosition();
+        
+      case KeyFrame::LIFT_HEIGHT:
+        return LiftController::IsInPosition();
+        
+      default:
+        return true;
+        
+    } // switch(type)
+    
+  } // IsInPosition()
+  
+  
+  void KeyFrame::Stop()
+  {
+    switch(type)
+    {
+      case KeyFrame::START_HEAD_NOD:
+      {
+        HeadController::StopNodding();
+        break;
+      }
+        
+      case KeyFrame::START_LIFT_NOD:
+      {
+        LiftController::StopNodding();
+        break;
+      }
+        
+      case KeyFrame::HEAD_ANGLE:
+      {
+        HeadController::SetAngularVelocity(0.f);
+        break;
+      }
+        
+      case KeyFrame::LIFT_HEIGHT:
+      {
+        LiftController::SetAngularVelocity(0.f);
+        break;
+      }
+        
+      case KeyFrame::POINT_TURN:
+      {
+        SteeringController::ExecuteDirectDrive(0.f, 0.f);
+        break;
+      }
+        
+      default:
+      {
+        // No stopping function defined
+        break;
+      }
+        
+    } // switch(type)
+  }
   
 } // namespace Cozmo
 } // namespace Anki

@@ -110,9 +110,12 @@ namespace Anki {
     // TODO: Get rid of these once we send all of them from basestation
     const AnimationID_t ANIM_IDLE                   = 0;
     const AnimationID_t ANIM_HEAD_NOD               = 1;
-    const AnimationID_t ANIM_BACK_AND_FORTH_EXCITED = 2;
-    const AnimationID_t ANIM_WIGGLE                 = 3;
-    const AnimationID_t ANIM_NUM_ANIMATIONS         = 5;
+    const AnimationID_t ANIM_HEAD_NOD_SLOW          = 2;
+    const AnimationID_t ANIM_BACK_AND_FORTH_EXCITED = 3;
+    const AnimationID_t ANIM_WIGGLE                 = 4;
+    const AnimationID_t ANIM_BLINK                  = 5;
+    const AnimationID_t ANIM_UPDOWNLEFTRIGHT        = 6;
+    const AnimationID_t ANIM_NUM_ANIMATIONS         = 7;
     
     // List of sound schemes
     typedef enum {

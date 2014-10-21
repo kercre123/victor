@@ -69,6 +69,8 @@ namespace Anki {
         TcpClient bsClient;
         char sendBuf[128];
         
+        double lastKeyPressTime_;
+        
       } // private namespace
       
       // Forward declarations
@@ -215,6 +217,7 @@ namespace Anki {
         const s32 CKEY_ANIMATION_NOD = (s32)'!';
         const s32 CKEY_ANIMATION_BACK_AND_FORTH = (s32)'@';
         const s32 CKEY_ANIMATION_BLINK = (s32)'#';
+        const s32 CKEY_ANIMATION_TOGGLE = (s32) '~';
         
         const s32 CKEY_TOGGLE_FACE_TRACKING = (s32)'F';
         
@@ -248,6 +251,8 @@ namespace Anki {
           if(key == 0) {
             break;
           }
+          
+          lastKeyPressTime_ = inputController.getTime();
           
           // DEBUG: Display modifier key information
           /*
@@ -577,7 +582,24 @@ namespace Anki {
               }
               case CKEY_ANIMATION_BLINK:
               {
-                SendAnimation(3, 5, NUM_SOUNDS);
+                SendAnimation(ANIM_BLINK, 5, NUM_SOUNDS);
+                break;
+              }
+              case CKEY_ANIMATION_TOGGLE:
+              {
+                //const s32 NUM_ANIM_TESTS = 4;
+                //const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_HEAD_NOD, ANIM_HEAD_NOD_SLOW, ANIM_BLINK, ANIM_UPDOWNLEFTRIGHT};
+                
+                const s32 NUM_ANIM_TESTS = 2;
+                const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_BLINK, ANIM_UPDOWNLEFTRIGHT};
+                
+                static s32 iAnimTest = 0;
+                
+                SendAnimation(testAnims[iAnimTest++], 1, NUM_SOUNDS);
+                
+                if(iAnimTest == NUM_ANIM_TESTS) {
+                  iAnimTest = 0;
+                }
                 break;
               }
                 
@@ -899,11 +921,21 @@ namespace Anki {
       
       void SendAnimation(AnimationID_t animId, u32 numLoops, SoundID_t soundId)
       {
-        MessageU2G_PlayAnimation m;
-        m.animationID = animId;
-        m.numLoops = numLoops;
-        m.soundID = soundId;
-        SendMessage(m);
+        static bool lastSendTime_sec = -1e6;
+        
+        // Don't send repeated animation commands within a half second
+        if(inputController.getTime() > lastSendTime_sec + 0.5f)
+        {
+          MessageU2G_PlayAnimation m;
+          m.animationID = animId;
+          m.numLoops = numLoops;
+          m.soundID = soundId;
+          SendMessage(m);
+          lastSendTime_sec = inputController.getTime();
+        } else {
+          printf("Ignoring duplicate SendAnimation keystroke.\n");
+        }
+        
       }
       
       void SendStartFaceTracking(u8 timeout_sec)
@@ -929,12 +961,15 @@ namespace Anki {
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+// Slow down keyboard polling to avoid duplicate commands?
+const s32 KB_TIME_STEP = 2*BS_TIME_STEP;
+
 int main(int argc, char **argv)
 {
-  WebotsKeyboardController::inputController.step(BS_TIME_STEP);
+  WebotsKeyboardController::inputController.step(KB_TIME_STEP);
   WebotsKeyboardController::Init();
 
-  while (WebotsKeyboardController::inputController.step(BS_TIME_STEP) != -1)
+  while (WebotsKeyboardController::inputController.step(KB_TIME_STEP) != -1)
   {
     // Process keyboard input
     WebotsKeyboardController::Update();

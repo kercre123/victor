@@ -31,7 +31,7 @@ struct KeyFrame
     HEAD_ANGLE          = 0,
     START_HEAD_NOD      = 1,
     STOP_HEAD_NOD       = 2,
-    LIFT_ANGLE          = 3,
+    LIFT_HEIGHT         = 3,
     DRIVE_LINE_SEGMENT  = 4,
     DRIVE_ARC           = 5,
     BACK_AND_FORTH      = 6,
@@ -40,7 +40,9 @@ struct KeyFrame
     PLAY_SOUND          = 9,
     EYE_BLINK           = 10,
     SET_LED_COLORS      = 11,
-    NUM_TYPES           = 12
+    START_LIFT_NOD      = 12,
+    STOP_LIFT_NOD       = 13,
+    NUM_TYPES           = 14
   };
   
   enum TransitionType
@@ -70,7 +72,7 @@ struct KeyFrame
   };
   
   // Command a canned head nodding action between two angles
-  // Must be used in conjunction with a StopHeadNode_t keyframe after it.
+  // Must be used in conjunction with a StopHeadNod_t keyframe after it.
   struct StartHeadNod_t {
     f32 lowAngle;
     f32 highAngle;
@@ -87,6 +89,20 @@ struct KeyFrame
     f32 targetHeight;
     f32 targetSpeed;
   };
+  
+  // Command a canned lift nodding action between two heights
+  // Must be used in conjunction with a StopLiftNod_t keyframe after it.
+  struct StartLiftNod_t {
+    f32 lowHeight;
+    f32 highHeight;
+    f32 speed;
+    f32 accel;
+  };
+  
+  struct StopLiftNod_t {
+    f32 finalHeight;
+  };
+
   
   struct DriveLineSegment_t {
     f32 relativeDistance; // +ve for fwd, -ve for backward
@@ -163,7 +179,10 @@ struct KeyFrame
     
     SetHeadAngle_t     SetHeadAngle;
     StartHeadNod_t     StartHeadNod;
+    StopHeadNod_t      StopHeadNod;
     SetLiftHeight_t    SetLiftHeight;
+    StartLiftNod_t     StartLiftNod;
+    StopLiftNod_t      StopLiftNod;
     DriveLineSegment_t DriveLineSegment;
     DriveArc_t         DriveArc;
     BackAndForth_t     BackAndForth;
@@ -184,6 +203,13 @@ struct KeyFrame
   void TransitionOutOf(const u32 animStartTime_ms) const;
   void TransitionInto(const u32 animStartTime_ms)  const;
 
+  // Returns true if lift is at the target height, or head is at the target
+  // angle, etc.
+  bool IsInPosition();
+  
+  // Perform any necessary type-dependent stopping function
+  // (E.g., for HeadNodding, call StopNodding())
+  void Stop();
   
 }; // struct KeyFrame
 

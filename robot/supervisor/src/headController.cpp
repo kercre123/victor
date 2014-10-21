@@ -323,9 +323,9 @@ namespace Anki {
       
       PoseAndSpeedFilterUpdate();
       
-      if (!enable_)
+      if (!enable_) {
         return RESULT_OK;
-      
+      }
       
       // Note that a new call to SetDesiredAngle will get
       // Update() working again after it has reached a previous
@@ -433,6 +433,18 @@ namespace Anki {
         
         HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
       } // if not in position
+      else if(isNodding_)
+      { // inPosition and Nodding
+        if (GetLastCommandedAngle() == nodHighAngle_) {
+          SetDesiredAngle_internal(nodLowAngle_);
+        } else if (GetLastCommandedAngle() == nodLowAngle_) {
+          SetDesiredAngle_internal(nodHighAngle_);
+          ++numNodsComplete_;
+          if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
+            StopNodding();
+          }
+        }
+      } // else if(isNodding)
       
       return RESULT_OK;
     }
@@ -462,20 +474,6 @@ namespace Anki {
       
     } // StartNodding()
     
-    void HeadNodUpdate()
-    {
-      if (IsInPosition()) {
-        if (GetLastCommandedAngle() == nodHighAngle_) {
-          SetDesiredAngle_internal(nodLowAngle_);
-        } else if (GetLastCommandedAngle() == nodLowAngle_) {
-          SetDesiredAngle_internal(nodHighAngle_);
-          ++numNodsComplete_;
-          if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
-            StopNodding();
-          }
-        }
-      }
-    } // HeadNodUpdate()
     
     void StopNodding()
     {

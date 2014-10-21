@@ -24,78 +24,96 @@
 namespace Anki {
 namespace Cozmo {
 
-class Animation
-{
-public:
-  enum SubSystems {
-    HEAD             = 0,
-    LIFT             = 1,
-    POSE             = 2,
-    SOUND            = 3,
-    LIGHTS           = 4,
-    NUM_SUBSYSTEMS   = 5
-  };
-
-  // Methods for controlling playback:
+  class Animation
+  {
+  public:
+    
+    enum SubSystems {
+      HEAD             = 0,
+      LIFT             = 1,
+      POSE             = 2,
+      SOUND            = 3,
+      LIGHTS           = 4, // TODO: Separate eyes from other lights eventually?
+      NUM_SUBSYSTEMS   = 5
+    };
+    
+    //
+    // Methods for controlling playback:
+    //
+    
+    // Called each time an animatin is about to be played
+    void Init();
+    
+    // Called while the animation is playing
+    void Update();
+    
+    // Stop the animatin prematurely (called internally when an animation completes)
+    void Stop();
+    
+    // Query whether the animation is currently playing
+    bool IsPlaying() const;
+    
+    //
+    // Methods for defining animations:
+    //
+    
+    void Clear();
+    void SetID(AnimationID_t newID);
+    Result AddKeyFrame(const KeyFrame&             keyframe,
+                       const Animation::SubSystems whichSubSystem);
+    
+  private:
+    
+    static const s32 MAX_KEYFRAMES = 32; // per subsystem
+    
+    AnimationID_t _ID; // needed, or simply the slot it's stored in?
+    
+    // what time the animation started, relative to which each keyFrame's time
+    // is specified
+    TimeStamp_t _startTime_ms;
+    
+    bool _isPlaying;
+    
+    // Lists of keyframes for each subsystem
+    struct KeyFrameList {
+      KeyFrame frames[MAX_KEYFRAMES];
+      bool     isReady;   // true once first frame is "in position"
+      s32      numFrames;
+      s32      currFrame;
+    } _subSystems[NUM_SUBSYSTEMS];
+    
+    bool _allSubSystemsReady;
+    bool CheckSubSystemReadiness();
+    
+    /*
+     // Flag to return subsystems to their original state when the animation is
+     // complete or is stopped/interrupted. Note that this does not apply to
+     // body pose, since there is no localization during animation.
+     bool _returnToOrigState;
+     
+     // Place to store original states for each subsystem, used when
+     // returnToOrigState is true.
+     // TODO: Could probably store original angle/height in u8 (don't need so much resolution)
+     f32       _origHeadAngle;
+     f32       _origLiftHeight;
+     u32       _origLEDcolors[HAL::NUM_LEDS];
+     SoundID_t _origSoundID;
+     */
+    
+  }; // class Animation
   
-  void Init();
   
-  void Update();
+  //
+  // Inline Implementations
+  //
   
-  void Stop();
+  inline bool Animation::IsPlaying() const {
+    return _isPlaying;
+  }
   
-  bool IsPlaying() const;
-  
-  // Methods for defining animations:
-  void Clear();
-  void SetID(AnimationID_t newID);
-  Result AddKeyFrame(const KeyFrame&             keyframe,
-                     const Animation::SubSystems whichSubSystem);
-  
-private:
-  
-  static const s32 MAX_KEYFRAMES = 32; // per subsystem
-  
-  AnimationID_t _ID; // needed, or simply the slot it's stored in?
-  
-  // what time the animation started, relative to which each keyFrame's time
-  // is specified
-  TimeStamp_t _startTime_ms;
-  
-  bool _isPlaying;
-  
-  
-  // Lists of keyframes for each subsystem
-  struct KeyFrameList {
-    KeyFrame frames[MAX_KEYFRAMES];
-    s32      numFrames;
-    s32      currFrame;
-  } _subSystems[NUM_SUBSYSTEMS];
-  
-  /*
-  // Flag to return subsystems to their original state when the animation is
-  // complete or is stopped/interrupted. Note that this does not apply to
-  // body pose, since there is no localization during animation.
-  bool _returnToOrigState;
-  
-  // Place to store original states for each subsystem, used when
-  // returnToOrigState is true.
-  // TODO: Could probably store original angle/height in u8 (don't need so much resolution)
-  f32       _origHeadAngle;
-  f32       _origLiftHeight;
-  u32       _origLEDcolors[HAL::NUM_LEDS];
-  SoundID_t _origSoundID;
-  */
-  
-}; // class Animation
-
-inline bool Animation::IsPlaying() const {
-  return _isPlaying;
-}
-  
-inline void Animation::SetID(AnimationID_t newID) {
-  _ID = newID;
-}
+  inline void Animation::SetID(AnimationID_t newID) {
+    _ID = newID;
+  }
   
 } //  namespace Cozmo
 } //  namespace Anki

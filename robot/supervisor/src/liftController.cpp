@@ -94,6 +94,14 @@ namespace Anki {
         // Currently applied power
         f32 power_ = 0;
 
+        // Nodding
+        f32 preNodHeight_    = 0.f;
+        f32 nodLowHeight_    = 0.f;
+        f32 nodHighHeight_   = 0.f;
+        s32 numNodsDesired_  = 0;
+        s32 numNodsComplete_ = 0;
+        bool isNodding_ = false;
+
         
         // Calibration parameters
         typedef enum {
@@ -363,7 +371,7 @@ namespace Anki {
       }
       
       
-      void SetDesiredHeight(f32 height_mm)
+      static void SetDesiredHeight_internal(f32 height_mm)
       {
         
         // Do range check on height
@@ -469,7 +477,15 @@ namespace Anki {
               radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, accelRad_, approachSpeedRad_, desiredAngle_.ToFloat());
 #endif
         
+      } // SetDesiredHeight_internal()
+      
+      
+      void SetDesiredHeight(f32 height_mm)
+      {
+        isNodding_ = false;
+        SetDesiredHeight_internal(height_mm);
       }
+      
       
       f32 GetDesiredHeight()
       {
@@ -601,6 +617,21 @@ namespace Anki {
           power_ = CLIP(power_, -1.0, 1.0);
           HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
           
+          if(isNodding_)
+          {
+            // Note that this is inside else(not inPosition), so we must be
+            // inPosition if we get here.
+            if (GetLastCommandedHeightMM() == nodHighHeight_) {
+              SetDesiredHeight_internal(nodLowHeight_);
+            } else if (GetLastCommandedHeightMM() == nodLowHeight_) {
+              SetDesiredHeight_internal(nodHighHeight_);
+              ++numNodsComplete_;
+              if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
+                StopNodding();
+              }
+            }
+          } // if isNodding
+          
         } // if not in position
         
         
@@ -621,6 +652,35 @@ namespace Anki {
         Kp_ = kp;
         Ki_ = ki;
         MAX_ERROR_SUM = maxIntegralError;
+      }
+      
+      
+      void StartNodding(const f32 lowHeight, const f32 highHeight,
+                        const f32 speed, const f32 accel,
+                        const s32 numLoops)
+      {
+        preNodHeight_  = GetHeightMM();
+        nodLowHeight_  = lowHeight;
+        nodHighHeight_ = highHeight;
+        SetSpeedAndAccel(speed, accel);
+        numNodsDesired_  = numLoops;
+        numNodsComplete_ = 0;
+        isNodding_ = true;
+        
+        SetDesiredHeight_internal(nodLowHeight_);
+        
+      } // StartNodding()
+      
+      
+      void StopNodding()
+      {
+        SetDesiredHeight_internal(preNodHeight_);
+        isNodding_ = false;
+      }
+      
+      bool IsNodding()
+      {
+        return isNodding_;
       }
       
     } // namespace LiftController

@@ -17,6 +17,8 @@
 
 #define DEBUG_ANIMATION_CONTROLLER 0
 
+#define USE_HARDCODED_ANIMATIONS 1
+
 namespace Anki {
 namespace Cozmo {
 namespace AnimationController {
@@ -24,10 +26,10 @@ namespace AnimationController {
   namespace {
     const s32 MAX_KNOWN_ANIMATIONS = 64;
     
-    static const AnimationID_t ANIM_IDLE = MAX_KNOWN_ANIMATIONS;
+    //static const AnimationID_t ANIM_IDLE = MAX_KNOWN_ANIMATIONS;
     
-    AnimationID_t currAnim_ = ANIM_IDLE;
-    AnimationID_t queuedAnim_ = ANIM_IDLE;
+    AnimationID_t currAnimID_   = ANIM_IDLE;
+    AnimationID_t queuedAnimID_ = ANIM_IDLE;
     Animation     cannedAnimations[MAX_KNOWN_ANIMATIONS];
     
     s32 currDesiredLoops_ = 0;
@@ -73,8 +75,8 @@ namespace AnimationController {
 
   
   // Forward decl.
-  void ReallyStop();
-  void StopCurrent();
+//  void ReallyStop();
+//  void StopCurrent();
   
   
   
@@ -138,6 +140,196 @@ namespace AnimationController {
 
   // ========== End of Animation Start/Update/Stop functions ===========
   
+  static void DefineHardCodedAnimations()
+  {
+#if USE_HARDCODED_ANIMATIONS
+    //
+    // FAST HEAD NOD
+    //
+    {
+      ClearCannedAnimation(ANIM_HEAD_NOD);
+      KeyFrame kf;
+      kf.transitionIn  = KeyFrame::LINEAR;
+      kf.transitionOut = KeyFrame::LINEAR;
+      
+      // Start the nod
+      kf.type = KeyFrame::START_HEAD_NOD;
+      kf.relTime_ms = 0;
+      kf.StartHeadNod.lowAngle  = DEG_TO_RAD(-20);
+      kf.StartHeadNod.highAngle = DEG_TO_RAD( 20);
+      kf.StartHeadNod.speed     = 30.f;
+      kf.StartHeadNod.accel     = 10.f;
+      AddKeyFrameToCannedAnimation(kf, ANIM_HEAD_NOD, Animation::HEAD);
+      
+      // Stop the nod
+      kf.type = KeyFrame::STOP_HEAD_NOD;
+      kf.relTime_ms = 1000;
+      kf.StopHeadNod.finalAngle = 0.f;
+      AddKeyFrameToCannedAnimation(kf, ANIM_HEAD_NOD, Animation::HEAD);
+      
+    } // FAST HEAD NOD
+    
+    //
+    // SLOW HEAD NOD
+    //
+    {
+      ClearCannedAnimation(ANIM_HEAD_NOD_SLOW);
+      KeyFrame kf;
+      kf.transitionIn  = KeyFrame::LINEAR;
+      kf.transitionOut = KeyFrame::LINEAR;
+      
+      // Start the nod
+      kf.type = KeyFrame::START_HEAD_NOD;
+      kf.relTime_ms = 0;
+      kf.StartHeadNod.lowAngle  = DEG_TO_RAD(-25);
+      kf.StartHeadNod.highAngle = DEG_TO_RAD( 25);
+      kf.StartHeadNod.speed     = 5.f;
+      kf.StartHeadNod.accel     = 5.f;
+      AddKeyFrameToCannedAnimation(kf, ANIM_HEAD_NOD_SLOW, Animation::HEAD);
+      
+      // Stop the nod
+      kf.type = KeyFrame::STOP_HEAD_NOD;
+      kf.relTime_ms = 2000;
+      kf.StopHeadNod.finalAngle = 0.f;
+      AddKeyFrameToCannedAnimation(kf, ANIM_HEAD_NOD_SLOW, Animation::HEAD);
+      
+    } // SLOW HEAD NOD
+    
+    
+    //
+    // BLINK
+    //
+    {
+      ClearCannedAnimation(ANIM_BLINK);
+      KeyFrame kf;
+      kf.type = KeyFrame::SET_LED_COLORS;
+      kf.transitionIn = KeyFrame::INSTANT;
+      kf.transitionOut = KeyFrame::INSTANT;
+      
+      // Start with all eye segments on:
+      kf.relTime_ms = 0;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_BOTTOM]  = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_LEFT]    = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_RIGHT]   = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_TOP]     = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_BOTTOM] = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_LEFT]   = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_RIGHT]  = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_TOP]    = HAL::LED_BLUE;
+      AddKeyFrameToCannedAnimation(kf, ANIM_BLINK, Animation::LIGHTS);
+      
+      // Turn off top/bottom segments first
+      kf.relTime_ms = 1700;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_BOTTOM]  = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_LEFT]    = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_RIGHT]   = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_TOP]     = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_BOTTOM] = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_LEFT]   = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_RIGHT]  = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_TOP]    = HAL::LED_OFF;
+      AddKeyFrameToCannedAnimation(kf, ANIM_BLINK, Animation::LIGHTS);
+      
+      // Turn off all segments shortly thereafter
+      kf.relTime_ms = 1750;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_BOTTOM]  = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_LEFT]    = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_RIGHT]   = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_TOP]     = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_BOTTOM] = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_LEFT]   = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_RIGHT]  = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_TOP]    = HAL::LED_OFF;
+      AddKeyFrameToCannedAnimation(kf, ANIM_BLINK, Animation::LIGHTS);
+      
+      // Turn on left/right segments first
+      kf.relTime_ms = 1850;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_BOTTOM]  = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_LEFT]    = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_RIGHT]   = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_TOP]     = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_BOTTOM] = HAL::LED_OFF;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_LEFT]   = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_RIGHT]  = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_TOP]    = HAL::LED_OFF;
+      AddKeyFrameToCannedAnimation(kf, ANIM_BLINK, Animation::LIGHTS);
+      
+      // Turn on all segments shortly thereafter
+      kf.relTime_ms = 1900;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_BOTTOM]  = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_LEFT]    = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_RIGHT]   = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_TOP]     = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_BOTTOM] = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_LEFT]   = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_RIGHT]  = HAL::LED_BLUE;
+      kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_TOP]    = HAL::LED_BLUE;
+      AddKeyFrameToCannedAnimation(kf, ANIM_BLINK, Animation::LIGHTS);
+    } // BLINK
+    
+    //
+    // Up/Down/Left/Right
+    //  Move lift and head up and down (in opposite directions)
+    //  Then turn to the left and the to the right
+    {
+      ClearCannedAnimation(ANIM_UPDOWNLEFTRIGHT);
+      KeyFrame kf;
+      
+      // Move head up
+      kf.type = KeyFrame::HEAD_ANGLE;
+      kf.relTime_ms = 0;
+      kf.SetHeadAngle.targetAngle = DEG_TO_RAD(25.f);
+      kf.SetHeadAngle.targetSpeed = 5.f;
+      AddKeyFrameToCannedAnimation(kf, ANIM_UPDOWNLEFTRIGHT, Animation::HEAD);
+      
+      // Move lift down
+      kf.type = KeyFrame::LIFT_HEIGHT;
+      kf.relTime_ms = 0;
+      kf.SetLiftHeight.targetHeight = 0.f;
+      kf.SetLiftHeight.targetSpeed  = 50.f;
+      AddKeyFrameToCannedAnimation(kf, ANIM_UPDOWNLEFTRIGHT, Animation::LIFT);
+      
+      // Move head down
+      kf.type = KeyFrame::HEAD_ANGLE;
+      kf.relTime_ms = 750;
+      kf.SetHeadAngle.targetAngle = DEG_TO_RAD(-25.f);
+      kf.SetHeadAngle.targetSpeed = 5.f;
+      AddKeyFrameToCannedAnimation(kf, ANIM_UPDOWNLEFTRIGHT, Animation::HEAD);
+      
+      // Move lift up
+      kf.type = KeyFrame::LIFT_HEIGHT;
+      kf.relTime_ms = 750;
+      kf.SetLiftHeight.targetHeight = 75.f;
+      kf.SetLiftHeight.targetSpeed  = 50.f;
+      AddKeyFrameToCannedAnimation(kf, ANIM_UPDOWNLEFTRIGHT, Animation::LIFT);
+      
+      // Turn left
+      kf.type = KeyFrame::POINT_TURN;
+      kf.relTime_ms = 1250;
+      kf.TurnInPlace.relativeAngle = DEG_TO_RAD(-45);
+      kf.TurnInPlace.targetSpeed = 100.f;
+      AddKeyFrameToCannedAnimation(kf, ANIM_UPDOWNLEFTRIGHT, Animation::POSE);
+
+      // Turn right
+      kf.type = KeyFrame::POINT_TURN;
+      kf.relTime_ms = 2250;
+      kf.TurnInPlace.relativeAngle = DEG_TO_RAD(90);
+      kf.TurnInPlace.targetSpeed = 100.f;
+      AddKeyFrameToCannedAnimation(kf, ANIM_UPDOWNLEFTRIGHT, Animation::POSE);
+      
+      // Turn back to center
+      kf.type = KeyFrame::POINT_TURN;
+      kf.relTime_ms = 2750;
+      kf.TurnInPlace.relativeAngle = DEG_TO_RAD(-45);
+      kf.TurnInPlace.targetSpeed = 100.f;
+      AddKeyFrameToCannedAnimation(kf, ANIM_UPDOWNLEFTRIGHT, Animation::POSE);
+      
+    } // Up/Down/Left/Right
+    
+#endif // USE_HARDCODED_ANIMATIONS
+    
+  } // DefineHardCodedAnimations()
+  
   
   Result Init()
   {
@@ -159,73 +351,7 @@ namespace AnimationController {
     animStopFn_[ANIM_WIGGLE] = WiggleStop;
     */
     
-    // TEST: Define BlinkTrack
-    const AnimationID_t BLINKING = ANIM_WIGGLE;
-    ClearCannedAnimation(BLINKING);
-    KeyFrame kf;
-    kf.type = KeyFrame::SET_LED_COLORS;
-    kf.transitionIn = KeyFrame::INSTANT;
-    kf.transitionOut = KeyFrame::INSTANT;
-    
-    // Start with all eye segments on:
-    kf.relTime_ms = 0;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_BOTTOM]  = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_LEFT]    = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_RIGHT]   = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_TOP]     = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_BOTTOM] = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_LEFT]   = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_RIGHT]  = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_TOP]    = HAL::LED_BLUE;
-    AddKeyFrameToCannedAnimation(kf, BLINKING, Animation::LIGHTS);
-    
-    // Turn off top/bottom segments first
-    kf.relTime_ms = 1700;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_BOTTOM]  = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_LEFT]    = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_RIGHT]   = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_TOP]     = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_BOTTOM] = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_LEFT]   = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_RIGHT]  = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_TOP]    = HAL::LED_OFF;
-    AddKeyFrameToCannedAnimation(kf, BLINKING, Animation::LIGHTS);
-
-    // Turn off all segments shortly thereafter
-    kf.relTime_ms = 1750;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_BOTTOM]  = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_LEFT]    = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_RIGHT]   = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_TOP]     = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_BOTTOM] = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_LEFT]   = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_RIGHT]  = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_TOP]    = HAL::LED_OFF;
-    AddKeyFrameToCannedAnimation(kf, BLINKING, Animation::LIGHTS);
-    
-    // Turn on left/right segments first
-    kf.relTime_ms = 1800;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_BOTTOM]  = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_LEFT]    = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_RIGHT]   = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_TOP]     = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_BOTTOM] = HAL::LED_OFF;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_LEFT]   = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_RIGHT]  = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_TOP]    = HAL::LED_OFF;
-    AddKeyFrameToCannedAnimation(kf, BLINKING, Animation::LIGHTS);
-
-    // Turn on all segments shortly thereafter
-    kf.relTime_ms = 1850;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_BOTTOM]  = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_LEFT]    = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_RIGHT]   = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_LEFT_EYE_TOP]     = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_BOTTOM] = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_LEFT]   = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_RIGHT]  = HAL::LED_BLUE;
-    kf.SetLEDcolors.led[HAL::LED_RIGHT_EYE_TOP]    = HAL::LED_BLUE;
-    AddKeyFrameToCannedAnimation(kf, BLINKING, Animation::LIGHTS);
+    DefineHardCodedAnimations();
     
     return RESULT_OK;
   }
@@ -285,6 +411,7 @@ namespace AnimationController {
                                        "Out-of-range animation ID = %d\n", whichAnimation);
     
     cannedAnimations[whichAnimation].Clear();
+    cannedAnimations[whichAnimation].SetID(whichAnimation);
     
     return RESULT_OK;
   }
@@ -305,23 +432,24 @@ namespace AnimationController {
   {
     if (IsPlaying()) {
       
-      cannedAnimations[currAnim_].Update();
+      cannedAnimations[currAnimID_].Update();
       
-      if(!cannedAnimations[currAnim_].IsPlaying()) {
+      if(!cannedAnimations[currAnimID_].IsPlaying()) {
         // If current animation just finished
         ++numLoopsComplete_;
-        if(currDesiredLoops_ > 0 && numLoopsComplete_ < currDesiredLoops_) {
+        if(currDesiredLoops_ > 1 && numLoopsComplete_ < currDesiredLoops_) {
           // Looping: play again
-          cannedAnimations[currAnim_].Init();
+          cannedAnimations[currAnimID_].Init();
         } else {
-          currAnim_ = ANIM_IDLE;
+          currAnimID_ = ANIM_IDLE;
         }
       }
       
-    } else if (queuedAnim_ != ANIM_IDLE) {
+    } else if (queuedAnimID_ != ANIM_IDLE) {
+      PRINT("Playing queued animation %d, %d loops\n", queuedAnimID_, queuedDesiredLoops_);
       // If there's a queued animation, start it.
-      Play(queuedAnim_, queuedDesiredLoops_);
-      queuedAnim_ = ANIM_IDLE;
+      Play(queuedAnimID_, queuedDesiredLoops_);
+      queuedAnimID_ = ANIM_IDLE;
     }
     
   } // Update()
@@ -333,15 +461,10 @@ namespace AnimationController {
                          "AnimationController.Play.InvalidAnimation",
                          "Animation ID out of range.\n");
     
-    if (anim == ANIM_IDLE) {
-      // Nothing to do
-      return;
-    }
-    
     // If an animation is currently playing, stop it and queue this one.
     if (IsPlaying()) {
-      StopCurrent();
-      queuedAnim_ = anim;
+      Stop();
+      queuedAnimID_ = anim;
       queuedDesiredLoops_ = numLoops;
       return;
     }
@@ -349,19 +472,18 @@ namespace AnimationController {
     // Playing IDLE animation is equivalent to stopping currently playing
     // animation and clearing queued animation
     if (anim == ANIM_IDLE) {
-      ReallyStop();
-      queuedAnim_ = ANIM_IDLE;
+      Stop();
       return;
     }
     
     PRINT("Playing Animation %d, %d loops\n", anim, numLoops);
     
-    currAnim_         = anim;
+    currAnimID_         = anim;
     currDesiredLoops_ = numLoops;
-    numLoopsComplete_ = -1;
+    numLoopsComplete_ = 0;
     waitUntilTime_us_ = 0;
     
-    cannedAnimations[currAnim_].Init();
+    cannedAnimations[currAnimID_].Init();
     
     /*
     startingRobotAngle_ = Localization::GetCurrentMatOrientation();
@@ -377,9 +499,10 @@ namespace AnimationController {
     
   } // Play()
 
+  /*
   // Stops the current animation
   void StopCurrent() {
-    /*
+
     // If a stop function is defined, set stopping flag.
     // Otherwise, just stop.
     if (animStopFn_[currAnim_]) {
@@ -387,7 +510,6 @@ namespace AnimationController {
     } else {
       ReallyStop();
     }
-     */
   }
 
   
@@ -401,8 +523,15 @@ namespace AnimationController {
   // Stops all motors. Called when stopping conditions have finally been met.
   void ReallyStop()
   {
+   */
+  void Stop()
+  {
+    if(currAnimID_ != ANIM_IDLE) {
+      cannedAnimations[currAnimID_].Stop();
+    }
+    
     isStopping_ = wasStopping_ = false;
-    currAnim_ = ANIM_IDLE;
+    currAnimID_ = queuedAnimID_ = ANIM_IDLE;
     
     // Stop all motors, lights, and sounds
     LiftController::Enable();
@@ -417,7 +546,7 @@ namespace AnimationController {
   
   bool IsPlaying()
   {
-    return currAnim_ != ANIM_IDLE;
+    return currAnimID_ != ANIM_IDLE;
   }
   
 } // namespace AnimationController

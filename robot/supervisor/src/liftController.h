@@ -46,6 +46,14 @@ namespace Anki {
       void SetDesiredHeight(f32 height_mm);
       f32 GetDesiredHeight();
       bool IsInPosition();
+      
+      // Nod head between the two given heights at the given speed, until
+      // SetDesiredHeight() or StopNodding() are called or the number of loops (up/down cycles)
+      // is completed. If StopNodding() is called, lift will be returned to the original
+      // angle it started at. Use numLoops <= 0 to nod "forever".
+      void StartNodding(const f32 lowHeight, const f32 highHeight, const f32 speed, const f32 accel, const s32 numLoops);
+      void StopNodding();
+      bool IsNodding();
 
       // Whether or not the lift is moving.
       // False if speed is 0 for more than LIFT_STOP_TIME.
