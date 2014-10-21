@@ -135,8 +135,12 @@ namespace Anki
 
       template<typename InType, typename IntermediateType, typename OutType> Result BinomialFilter(const Array<InType> &image, Array<OutType> &imageFiltered, MemoryStack scratch)
       {
-        IntermediateType kernel[BINOMIAL_FILTER_KERNEL_SIZE];
-        kernel[0] = 1; kernel[1] = 4; kernel[2] = 6; kernel[3] = 4; kernel[4] = 1;
+        const InType kernel0 = 1;
+        const InType kernel1 = 4;
+        const InType kernel2 = 6;
+        const InType kernel3 = 4;
+        const InType kernel4 = 1;
+
         const s32 kernelShift = 4;
 
         const s32 imageHeight = image.get_size(0);
@@ -145,105 +149,89 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(AreValid(image, imageFiltered, scratch),
           RESULT_FAIL_INVALID_OBJECT, "BinomialFilter", "Invalid objects");
 
-        AnkiConditionalWarnAndReturnValue(16 == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]),
-          RESULT_FAIL, "BinomialFilter", "Kernel count is wrong");
-
-        AnkiConditionalWarnAndReturnValue(16 == (1 << kernelShift),
-          RESULT_FAIL, "BinomialFilter", "Kernel count is wrong");
-
         AnkiConditionalErrorAndReturnValue(imageHeight == imageFiltered.get_size(0) && imageWidth == imageFiltered.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "BinomialFilter", "size(image) != size(imageFiltered) (%dx%d != %dx%d)", imageHeight, imageWidth, imageHeight, imageWidth);
 
         AnkiConditionalErrorAndReturnValue(NotAliased(image, imageFiltered),
           RESULT_FAIL_ALIASED_MEMORY, "BinomialFilter", "image and imageFiltered must be different");
 
-        const s32 requiredScratch = imageHeight * RoundUp<s32>(imageWidth*sizeof(IntermediateType), MEMORY_ALIGNMENT);
-
-        AnkiConditionalErrorAndReturnValue(scratch.ComputeLargestPossibleAllocation() >= requiredScratch,
-          RESULT_FAIL_OUT_OF_MEMORY, "BinomialFilter", "Insufficient scratch memory");
-
         Array<IntermediateType> imageFilteredTmp(imageHeight, imageWidth, scratch);
+
+        AnkiAssert(imageFilteredTmp.get_stride() % sizeof(IntermediateType) == 0);
+
+        const s32 imageFilteredTmpStep = imageFilteredTmp.get_stride() / sizeof(IntermediateType);
 
         //% 1. Horizontally filter
         for(s32 y=0; y<imageHeight; y++) {
+          //
+          // First, filter horizontally
+          //
+
           const InType * restrict pImage = image.Pointer(y, 0);
           IntermediateType * restrict pImageFilteredTmp = imageFilteredTmp.Pointer(y, 0);
 
           s32 x = 0;
 
-          pImageFilteredTmp[x] = static_cast<IntermediateType>(pImage[x])*kernel[2]   + static_cast<IntermediateType>(pImage[x+1])*kernel[3] + static_cast<IntermediateType>(pImage[x+2])*kernel[4] + static_cast<IntermediateType>(pImage[x])*(kernel[0]+kernel[1]);
+          pImageFilteredTmp[x] = static_cast<IntermediateType>( (pImage[x]*kernel2 + pImage[x+1]*kernel3 + pImage[x+2]*kernel4 + pImage[x]*(kernel0+kernel1)) >> kernelShift );
           x++;
-          pImageFilteredTmp[x] = static_cast<IntermediateType>(pImage[x-1])*kernel[1] + static_cast<IntermediateType>(pImage[x])*kernel[2]   + static_cast<IntermediateType>(pImage[x+1])*kernel[3] + static_cast<IntermediateType>(pImage[x+2])*kernel[4] + static_cast<IntermediateType>(pImage[x-1])*kernel[0];
+          pImageFilteredTmp[x] = static_cast<IntermediateType>( (pImage[x-1]*kernel1 + pImage[x]*kernel2   + pImage[x+1]*kernel3 + pImage[x+2]*kernel4 + pImage[x-1]*kernel0) >> kernelShift );
           x++;
 
           for(; x<(imageWidth-2); x++) {
-            pImageFilteredTmp[x] = static_cast<IntermediateType>(pImage[x-2])*kernel[0] + static_cast<IntermediateType>(pImage[x-1])*kernel[1] + static_cast<IntermediateType>(pImage[x])*kernel[2] + static_cast<IntermediateType>(pImage[x+1])*kernel[3] + static_cast<IntermediateType>(pImage[x+2])*kernel[4];
+            pImageFilteredTmp[x] = static_cast<IntermediateType>( (pImage[x-2]*kernel0 + pImage[x-1]*kernel1 + pImage[x]*kernel2 + pImage[x+1]*kernel3 + pImage[x+2]*kernel4) >> kernelShift );
           }
 
-          pImageFilteredTmp[x] = static_cast<IntermediateType>(pImage[x-2])*kernel[0] + static_cast<IntermediateType>(pImage[x-1])*kernel[1] + static_cast<IntermediateType>(pImage[x])*kernel[2] + static_cast<IntermediateType>(pImage[x+1])*kernel[3] + static_cast<IntermediateType>(pImage[x+1])*kernel[4];
+          pImageFilteredTmp[x] = static_cast<IntermediateType>( (pImage[x-2]*kernel0 + pImage[x-1]*kernel1 + pImage[x]*kernel2 + pImage[x+1]*kernel3 + pImage[x+1]*kernel4) >> kernelShift );
           x++;
-          pImageFilteredTmp[x] = static_cast<IntermediateType>(pImage[x-2])*kernel[0] + static_cast<IntermediateType>(pImage[x-1])*kernel[1] + static_cast<IntermediateType>(pImage[x])*kernel[2] + static_cast<IntermediateType>(pImage[x])*(kernel[3]+kernel[4]);
+          pImageFilteredTmp[x] = static_cast<IntermediateType>( (pImage[x-2]*kernel0 + pImage[x-1]*kernel1 + pImage[x]*kernel2 + pImage[x]*(kernel3+kernel4)) >> kernelShift );
           x++;
-        }
 
-        //% 2. Vertically filter
-        // for y = {0,1} unrolled
-        {
-          const IntermediateType * restrict pImageFilteredTmpY0 = imageFilteredTmp.Pointer(0, 0);
-          const IntermediateType * restrict pImageFilteredTmpY1 = imageFilteredTmp.Pointer(1, 0);
-          const IntermediateType * restrict pImageFilteredTmpY2 = imageFilteredTmp.Pointer(2, 0);
-          const IntermediateType * restrict pImageFilteredTmpY3 = imageFilteredTmp.Pointer(3, 0);
+          //
+          // At a delayed line, filter vertically
+          //
 
-          OutType * restrict pImageFiltered_y0 = imageFiltered.Pointer(0, 0);
-          OutType * restrict pImageFiltered_y1 = imageFiltered.Pointer(1, 0);
-          for(s32 x=0; x<imageWidth; x++) {
-            const IntermediateType filtered0 = pImageFilteredTmpY0[x]*kernel[2] + pImageFilteredTmpY1[x]*kernel[3] + pImageFilteredTmpY2[x]*kernel[4] +
-              pImageFilteredTmpY0[x]*(kernel[0]+kernel[1]);
-            pImageFiltered_y0[x] = static_cast<OutType>(filtered0 >> (2*kernelShift));
+          if(y > 1) {
+            const IntermediateType * restrict pImageFilteredTmpYm2 = pImageFilteredTmp - 4*imageFilteredTmpStep;
+            const IntermediateType * restrict pImageFilteredTmpYm1 = pImageFilteredTmp - 3*imageFilteredTmpStep;
+            const IntermediateType * restrict pImageFilteredTmpY0  = pImageFilteredTmp - 2*imageFilteredTmpStep;
+            const IntermediateType * restrict pImageFilteredTmpYp1 = pImageFilteredTmp -   imageFilteredTmpStep;
+            const IntermediateType * restrict pImageFilteredTmpYp2 = pImageFilteredTmp;
 
-            const IntermediateType filtered1 = pImageFilteredTmpY0[x]*kernel[1] + pImageFilteredTmpY1[x]*kernel[2] + pImageFilteredTmpY2[x]*kernel[3] + pImageFilteredTmpY3[x]*kernel[4] +
-              pImageFilteredTmpY0[x]*kernel[0];
-            pImageFiltered_y1[x] = static_cast<OutType>(filtered1 >> (2*kernelShift));
-          }
-        }
+            OutType * restrict pImageFiltered = imageFiltered.Pointer(y-2, 0);
 
-        for(s32 y=2; y<(imageHeight-2); y++) {
-          const IntermediateType * restrict pImageFilteredTmpYm2 = imageFilteredTmp.Pointer(y-2, 0);
-          const IntermediateType * restrict pImageFilteredTmpYm1 = imageFilteredTmp.Pointer(y-1, 0);
-          const IntermediateType * restrict pImageFilteredTmpY0  = imageFilteredTmp.Pointer(y,   0);
-          const IntermediateType * restrict pImageFilteredTmpYp1 = imageFilteredTmp.Pointer(y+1, 0);
-          const IntermediateType * restrict pImageFilteredTmpYp2 = imageFilteredTmp.Pointer(y+2, 0);
+            if(y == 2) {
+              for(s32 x=0; x<imageWidth; x++) {
+                pImageFiltered[x] = static_cast<OutType>( (pImageFilteredTmpY0[x]*(kernel0+kernel1+kernel2) + pImageFilteredTmpYp1[x]*kernel3 + pImageFilteredTmpYp2[x]*kernel4) >> kernelShift);
+              }
+            } else if(y == 3) {
+              for(s32 x=0; x<imageWidth; x++) {
+                pImageFiltered[x] = static_cast<OutType>( (pImageFilteredTmpYm1[x]*(kernel0+kernel1) + pImageFilteredTmpY0[x]*kernel2 + pImageFilteredTmpYp1[x]*kernel3 + pImageFilteredTmpYp2[x]*kernel4) >> kernelShift);
+              }
+            } else { // y >= 4
+              for(s32 x=0; x<imageWidth; x++) {
+                pImageFiltered[x] = static_cast<OutType>( (pImageFilteredTmpYm2[x]*kernel0 + pImageFilteredTmpYm1[x]*kernel1 + pImageFilteredTmpY0[x]*kernel2 + pImageFilteredTmpYp1[x]*kernel3 + pImageFilteredTmpYp2[x]*kernel4) >> kernelShift);
+              }
+            }
+          } // if(y > 2)
+        } // for(s32 y=0; y<imageHeight; y++)
 
-          OutType * restrict pImageFiltered = imageFiltered.Pointer(y, 0);
+        // Do final two rows
 
-          for(s32 x=0; x<imageWidth; x++) {
-            const IntermediateType filtered = pImageFilteredTmpYm2[x]*kernel[0] + pImageFilteredTmpYm1[x]*kernel[1] + pImageFilteredTmpY0[x]*kernel[2] + pImageFilteredTmpYp1[x]*kernel[3] + pImageFilteredTmpYp2[x]*kernel[4];
-            pImageFiltered[x] = static_cast<OutType>(filtered >> (2*kernelShift));
-          }
-        }
+        const IntermediateType * restrict pImageFilteredTmpYEndm4 = imageFilteredTmp.Pointer(imageFilteredTmp.get_size(0)-4, 0);;
+        const IntermediateType * restrict pImageFilteredTmpYEndm3 = pImageFilteredTmpYEndm4 + imageFilteredTmpStep;
+        const IntermediateType * restrict pImageFilteredTmpYEndm2 = pImageFilteredTmpYEndm4 + 2*imageFilteredTmpStep;
+        const IntermediateType * restrict pImageFilteredTmpYEndm1 = pImageFilteredTmpYEndm4 + 3*imageFilteredTmpStep;
 
-        // for y = {imageHeight-2,imageHeight-1} unrolled
-        {
-          const IntermediateType * restrict pImageFilteredTmpYm4 = imageFilteredTmp.Pointer(imageHeight-4, 0);
-          const IntermediateType * restrict pImageFilteredTmpYm3 = imageFilteredTmp.Pointer(imageHeight-3, 0);
-          const IntermediateType * restrict pImageFilteredTmpYm2 = imageFilteredTmp.Pointer(imageHeight-2, 0);
-          const IntermediateType * restrict pImageFilteredTmpYm1 = imageFilteredTmp.Pointer(imageHeight-1, 0);
+        OutType * restrict pImageFilteredYEndm2 = imageFiltered.Pointer(imageFiltered.get_size(0)-2, 0);
+        OutType * restrict pImageFilteredYEndm1 = imageFiltered.Pointer(imageFiltered.get_size(0)-1, 0);
 
-          OutType * restrict pImageFiltered_ym2 = imageFiltered.Pointer(imageHeight-2, 0);
-          OutType * restrict pImageFiltered_ym1 = imageFiltered.Pointer(imageHeight-1, 0);
-          for(s32 x=0; x<imageWidth; x++) {
-            const IntermediateType filteredm1 = pImageFilteredTmpYm3[x]*kernel[0] + pImageFilteredTmpYm2[x]*kernel[1] + pImageFilteredTmpYm1[x]*kernel[2] +
-              pImageFilteredTmpYm1[x]*(kernel[3]+kernel[4]);
-            pImageFiltered_ym1[x] = static_cast<OutType>(filteredm1 >> (2*kernelShift));
-
-            const IntermediateType filteredm2 = pImageFilteredTmpYm4[x]*kernel[0] + pImageFilteredTmpYm3[x]*kernel[1] + pImageFilteredTmpYm2[x]*kernel[2] + pImageFilteredTmpYm1[x]*kernel[3] +
-              pImageFilteredTmpYm1[x]*kernel[4];
-            pImageFiltered_ym2[x] = static_cast<OutType>(filteredm2 >> (2*kernelShift));
-          }
+        for(s32 x=0; x<imageWidth; x++) {
+          pImageFilteredYEndm2[x] = static_cast<OutType>( (pImageFilteredTmpYEndm4[x]*kernel0 + pImageFilteredTmpYEndm3[x]*kernel1 + pImageFilteredTmpYEndm2[x]*kernel2 + pImageFilteredTmpYEndm1[x]*(kernel3+kernel4))         >> kernelShift);
+          pImageFilteredYEndm1[x] = static_cast<OutType>( (                                     pImageFilteredTmpYEndm3[x]*kernel0 + pImageFilteredTmpYEndm2[x]*kernel1 + pImageFilteredTmpYEndm1[x]*(kernel2+kernel3+kernel4)) >> kernelShift);
         }
 
         return RESULT_OK;
-      }
+      } // BinomialFilter()
 
       template<typename InType, typename OutType>
       Result CreateIntegralImage(const Array<InType> &image, Array<OutType> integralImage)

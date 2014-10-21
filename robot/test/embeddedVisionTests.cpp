@@ -4925,21 +4925,32 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
   ASSERT_TRUE(image.get_buffer()!= NULL);
   ASSERT_TRUE(imageFiltered.get_buffer()!= NULL);
 
+  *image.Pointer(0,0) = 100;
+  *image.Pointer(1,0) = 255;
   for(s32 x=0; x<imageWidth; x++) {
-    *image.Pointer(2,x) = static_cast<u8>(x);
+    *image.Pointer(2,x) = 100 + 10 * static_cast<u8>(x);
   }
+  *image.Pointer(imageHeight-2,imageWidth-1) = 100;
+  *image.Pointer(imageHeight-1,imageWidth-1) = 255;
 
-  const Result result = ImageProcessing::BinomialFilter<u8,u32,u8>(image, imageFiltered, scratchOnchip);
+  const Result result = ImageProcessing::BinomialFilter<u8,u8,u8>(image, imageFiltered, scratchOnchip);
 
-  //CoreTechPrint("image:\n");
-  //image.Print();
+  CoreTechPrint("image:\n");
+  image.Print();
 
-  //CoreTechPrint("imageFiltered:\n");
-  //imageFiltered.Print();
+  CoreTechPrint("imageFiltered:\n");
+  imageFiltered.Print();
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  const s32 correctResults[16][16] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 1, 1, 1, 2, 2, 2, 3}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+  // Compute in Matlab for array "a" with: "a2 = floor(imfilter(floor(imfilter(a, [1,4,6,4,1], 'replicate') / (2^4)), [1,4,6,4,1]', 'replicate')  / (2^4) )"
+
+  const s32 correctResults[imageHeight][imageWidth] = {
+    {96, 47, 15, 8, 8, 9, 10, 10, 11, 11},
+    {112, 66, 37, 32, 35, 37, 40, 42, 46, 50},
+    {86, 62, 49, 48, 52, 56, 60, 66, 79, 97},
+    {36, 32, 30, 32, 35, 37, 40, 49, 81, 126},
+    {6, 6, 7, 8, 8, 9, 10, 22, 73, 148}};
 
   for(s32 y=0; y<imageHeight; y++) {
     for(s32 x=0; x<imageWidth; x++) {
@@ -4958,7 +4969,7 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
   const s32 numIterations = 100;
   for(s32 i=0; i<numIterations; i++) {
     const f64 t0 = GetTimeF64();
-    const Result result2 = ImageProcessing::BinomialFilter<u8,u16,u8>(bigImage, bigImageFiltered, scratchOffchip);
+    const Result result2 = ImageProcessing::BinomialFilter<u8,u8,u8>(bigImage, bigImageFiltered, scratchOffchip);
     const f64 t1 = GetTimeF64();
 
     ASSERT_TRUE(result2 == RESULT_OK);
@@ -4968,8 +4979,6 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
   }
 
   printf("Binomial filtered 640x480 image in %f seconds.\n", totalTime/numIterations);
-
-
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, BinomialFilter)
@@ -5244,8 +5253,8 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
   numPassedTests = 0;
   numFailedTests = 0;
-/*
-#if !defined(JUST_FIDUCIAL_DETECTION)
+  /*
+  #if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, DistanceTransform);
   CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
   CALL_GTEST_TEST(CoreTech_Vision, Canny);
@@ -5267,16 +5276,16 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+  #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
-#if defined(RUN_HIGH_MEMORY_TESTS)
+  #if defined(RUN_HIGH_MEMORY_TESTS)
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640);
-#endif
+  #endif
 
-#if !defined(JUST_FIDUCIAL_DETECTION)
+  #if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
@@ -5294,12 +5303,12 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);*/
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
-/*  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+  /*  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
   CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
   CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
-*/
+  #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+  */
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
 #endif // #if !ANKICORETECH_EMBEDDED_USE_GTEST
