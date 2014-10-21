@@ -85,8 +85,251 @@ namespace Anki
           pImageFilteredTmp[x] = static_cast<u8>( (pImage[x-1]*kernel1 + pImage[x]*kernel2   + pImage[x+1]*kernel3 + pImage[x+2]*kernel4 + pImage[x-1]*kernel0) >> kernelShift );
           x++;
 
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+/*          for(; x<(imageWidth-2-7); x+=8) {
+            const uint8x8_t imageXm2 = vld1_u8(&pImage[x-2]);
+            const uint8x8_t imageXm1 = vld1_u8(&pImage[x-1]);
+            const uint8x8_t imageX0  = vld1_u8(&pImage[x]);
+            const uint8x8_t imageXp1 = vld1_u8(&pImage[x+1]);
+            const uint8x8_t imageXp2 = vld1_u8(&pImage[x+2]);
+
+            const uint16x8_t imageXm2_wide = vmovl_u8(imageXm2);
+            const uint16x8_t imageXm1_wide = vmovl_u8(imageXm1);
+            const uint16x8_t imageX0_wide  = vmovl_u8(imageX0);
+            const uint16x8_t imageXp1_wide = vmovl_u8(imageXp1);
+            const uint16x8_t imageXp2_wide = vmovl_u8(imageXp2);
+
+            const uint16x8_t dotXm2 = vmulq_n_u16(imageXm2_wide, kernel0);
+            const uint16x8_t dotXm1 = vmulq_n_u16(imageXm1_wide, kernel1);
+            const uint16x8_t dotX0  = vmulq_n_u16(imageX0_wide,  kernel2);
+            const uint16x8_t dotXp1 = vmulq_n_u16(imageXp1_wide, kernel3);
+            const uint16x8_t dotXp2 = vmulq_n_u16(imageXp2_wide, kernel4);
+
+            const uint16x8_t sum = vaddq_u16(vaddq_u16(vaddq_u16(dotXm2, dotXm1), vaddq_u16(dotX0, dotXp1)), dotXp2);
+
+            const uint8x8_t sumU8 = vmovn_u16( vshrq_n_u16(sum, kernelShift) );
+
+            vst1_u8(&pImageFilteredTmp[x], sumU8);
+          } // for(; x<(imageWidth-2-7); x+=8)
+*/
+
+/*
+          for(; x<(imageWidth-2-7); x+=8) {
+            const uint8x8_t imageXm2 = vld1_u8(&pImage[x-2]);
+            const uint8x8_t imageXm1 = vld1_u8(&pImage[x-1]);
+            const uint8x8_t imageX0  = vld1_u8(&pImage[x]);
+            const uint8x8_t imageXp1 = vld1_u8(&pImage[x+1]);
+            const uint8x8_t imageXp2 = vld1_u8(&pImage[x+2]);
+
+            const uint16x8_t imageXm2_wide = vmovl_u8(imageXm2);
+            const uint16x8_t imageXm1_wide = vmovl_u8(imageXm1);
+            const uint16x8_t imageX0_wide  = vmovl_u8(imageX0);
+            const uint16x8_t imageXp1_wide = vmovl_u8(imageXp1);
+            const uint16x8_t imageXp2_wide = vmovl_u8(imageXp2);
+
+            const uint16x8_t dotXm2 = imageXm2_wide;
+            const uint16x8_t dotXm1 = vmulq_n_u16(imageXm1_wide, 4);
+            const uint16x8_t dotX0  = vmulq_n_u16(imageX0_wide,  6);
+            const uint16x8_t dotXp1 = vmulq_n_u16(imageXp1_wide, 4);
+            const uint16x8_t dotXp2 = imageXp2_wide;
+
+            const uint16x8_t sum = dotXm2 + dotXm1 + dotX0 + dotXp1 + dotXp2;
+
+            const uint8x8_t sumU8 = vmovn_u16( vshrq_n_u16(sum, kernelShift) );
+
+            vst1_u8(&pImageFilteredTmp[x], sumU8);
+          } // for(; x<(imageWidth-2-7); x+=8)
+*/
+
+/*
+        const uint16x8_t kernel0x8 = {kernel0, kernel0, kernel0, kernel0, kernel0, kernel0, kernel0, kernel0};
+        const uint16x8_t kernel1x8 = {kernel1, kernel1, kernel1, kernel1, kernel1, kernel1, kernel1, kernel1};
+        const uint16x8_t kernel2x8 = {kernel2, kernel2, kernel2, kernel2, kernel2, kernel2, kernel2, kernel2};
+        const uint16x8_t kernel3x8 = {kernel3, kernel3, kernel3, kernel3, kernel3, kernel3, kernel3, kernel3};
+        const uint16x8_t kernel4x8 = {kernel4, kernel4, kernel4, kernel4, kernel4, kernel4, kernel4, kernel4};
+        for(; x<(imageWidth-2-7); x+=8) {
+            const uint8x8_t imageXm2 = vld1_u8(&pImage[x-2]);
+            const uint8x8_t imageXm1 = vld1_u8(&pImage[x-1]);
+            const uint8x8_t imageX0  = vld1_u8(&pImage[x]);
+            const uint8x8_t imageXp1 = vld1_u8(&pImage[x+1]);
+            const uint8x8_t imageXp2 = vld1_u8(&pImage[x+2]);
+
+            const uint16x8_t imageXm2_wide = vmovl_u8(imageXm2);
+            const uint16x8_t imageXm1_wide = vmovl_u8(imageXm1);
+            const uint16x8_t imageX0_wide  = vmovl_u8(imageX0);
+            const uint16x8_t imageXp1_wide = vmovl_u8(imageXp1);
+            const uint16x8_t imageXp2_wide = vmovl_u8(imageXp2);
+
+            const uint16x8_t dotXm2 = vmulq_u16(imageXm2_wide, kernel0x8);
+            const uint16x8_t dotXm1 = vmulq_u16(imageXm1_wide, kernel1x8);
+            const uint16x8_t dotX0  = vmulq_u16(imageX0_wide,  kernel2x8);
+            const uint16x8_t dotXp1 = vmulq_u16(imageXp1_wide, kernel3x8);
+            const uint16x8_t dotXp2 = vmulq_u16(imageXp2_wide, kernel4x8);
+
+            const uint16x8_t sum = vaddq_u16(vaddq_u16(vaddq_u16(dotXm2, dotXm1), vaddq_u16(dotX0, dotXp1)), dotXp2);
+
+            const uint8x8_t sumU8 = vmovn_u16( vshrq_n_u16(sum, kernelShift) );
+
+            vst1_u8(&pImageFilteredTmp[x], sumU8);
+          } // for(; x<(imageWidth-2-7); x+=8)
+*/
+
+        const uint16x8_t kernel0x8 = {kernel0, kernel0, kernel0, kernel0, kernel0, kernel0, kernel0, kernel0};
+        const uint16x8_t kernel1x8 = {kernel1, kernel1, kernel1, kernel1, kernel1, kernel1, kernel1, kernel1};
+        const uint16x8_t kernel2x8 = {kernel2, kernel2, kernel2, kernel2, kernel2, kernel2, kernel2, kernel2};
+        const uint16x8_t kernel3x8 = {kernel3, kernel3, kernel3, kernel3, kernel3, kernel3, kernel3, kernel3};
+        const uint16x8_t kernel4x8 = {kernel4, kernel4, kernel4, kernel4, kernel4, kernel4, kernel4, kernel4};
+
+        for(; x<(imageWidth-2-15); x+=16) {
+            const uint8x8_t imageXm2_0 = vld1_u8(&pImage[x-2]);
+            const uint8x8_t imageXm1_0 = vld1_u8(&pImage[x-1]);
+            const uint8x8_t imageX0_0  = vld1_u8(&pImage[x]);
+            const uint8x8_t imageXp1_0 = vld1_u8(&pImage[x+1]);
+            const uint8x8_t imageXp2_0 = vld1_u8(&pImage[x+2]);
+
+            const uint8x8_t imageXm2_1 = vld1_u8(&pImage[x-2+8]);
+            const uint8x8_t imageXm1_1 = vld1_u8(&pImage[x-1+8]);
+            const uint8x8_t imageX0_1  = vld1_u8(&pImage[x+8]);
+            const uint8x8_t imageXp1_1 = vld1_u8(&pImage[x+1+8]);
+            const uint8x8_t imageXp2_1 = vld1_u8(&pImage[x+2+8]);
+
+            const uint16x8_t imageXm2_wide_0 = vmovl_u8(imageXm2_0);
+            const uint16x8_t imageXm1_wide_0 = vmovl_u8(imageXm1_0);
+            const uint16x8_t imageX0_wide_0  = vmovl_u8(imageX0_0);
+            const uint16x8_t imageXp1_wide_0 = vmovl_u8(imageXp1_0);
+            const uint16x8_t imageXp2_wide_0 = vmovl_u8(imageXp2_0);
+
+            const uint16x8_t imageXm2_wide_1 = vmovl_u8(imageXm2_1);
+            const uint16x8_t imageXm1_wide_1 = vmovl_u8(imageXm1_1);
+            const uint16x8_t imageX0_wide_1  = vmovl_u8(imageX0_1);
+            const uint16x8_t imageXp1_wide_1 = vmovl_u8(imageXp1_1);
+            const uint16x8_t imageXp2_wide_1 = vmovl_u8(imageXp2_1);
+
+            const uint16x8_t dotXm2_0 = vmulq_u16(imageXm2_wide_0, kernel0x8);
+            const uint16x8_t dotXm1_0 = vmulq_u16(imageXm1_wide_0, kernel1x8);
+            const uint16x8_t dotX0_0  = vmulq_u16(imageX0_wide_0,  kernel2x8);
+            const uint16x8_t dotXp1_0 = vmulq_u16(imageXp1_wide_0, kernel3x8);
+            const uint16x8_t dotXp2_0 = vmulq_u16(imageXp2_wide_0, kernel4x8);
+
+            const uint16x8_t dotXm2_1 = vmulq_u16(imageXm2_wide_1, kernel0x8);
+            const uint16x8_t dotXm1_1 = vmulq_u16(imageXm1_wide_1, kernel1x8);
+            const uint16x8_t dotX0_1  = vmulq_u16(imageX0_wide_1,  kernel2x8);
+            const uint16x8_t dotXp1_1 = vmulq_u16(imageXp1_wide_1, kernel3x8);
+            const uint16x8_t dotXp2_1 = vmulq_u16(imageXp2_wide_1, kernel4x8);
+
+            const uint16x8_t sum_0 = dotXm2_0 + dotXm1_0 + dotX0_0 + dotXp1_0 + dotXp2_0;
+            const uint8x8_t sumU8_0 = vmovn_u16( vshrq_n_u16(sum_0, kernelShift) );
+
+            const uint16x8_t sum_1 = dotXm2_1 + dotXm1_1 + dotX0_1 + dotXp1_1 + dotXp2_1;
+            const uint8x8_t sumU8_1 = vmovn_u16( vshrq_n_u16(sum_1, kernelShift) );
+
+            vst1_u8(&pImageFilteredTmp[x], sumU8_0);
+            vst1_u8(&pImageFilteredTmp[x+8], sumU8_1);
+          } // for(; x<(imageWidth-2-15); x+=16) 
+
+/*        const uint16x8_t kernel0x8 = {kernel0, kernel0, kernel0, kernel0, kernel0, kernel0, kernel0, kernel0};
+        const uint16x8_t kernel1x8 = {kernel1, kernel1, kernel1, kernel1, kernel1, kernel1, kernel1, kernel1};
+        const uint16x8_t kernel2x8 = {kernel2, kernel2, kernel2, kernel2, kernel2, kernel2, kernel2, kernel2};
+        const uint16x8_t kernel3x8 = {kernel3, kernel3, kernel3, kernel3, kernel3, kernel3, kernel3, kernel3};
+        const uint16x8_t kernel4x8 = {kernel4, kernel4, kernel4, kernel4, kernel4, kernel4, kernel4, kernel4};
+
+        for(; x<(imageWidth-2-31); x+=32) {
+            const uint8x8_t imageXm2_0 = vld1_u8(&pImage[x-2]);
+            const uint8x8_t imageXm1_0 = vld1_u8(&pImage[x-1]);
+            const uint8x8_t imageX0_0  = vld1_u8(&pImage[x]);
+            const uint8x8_t imageXp1_0 = vld1_u8(&pImage[x+1]);
+            const uint8x8_t imageXp2_0 = vld1_u8(&pImage[x+2]);
+
+            const uint16x8_t imageXm2_wide_0 = vmovl_u8(imageXm2_0);
+            const uint16x8_t imageXm1_wide_0 = vmovl_u8(imageXm1_0);
+            const uint16x8_t imageX0_wide_0  = vmovl_u8(imageX0_0);
+            const uint16x8_t imageXp1_wide_0 = vmovl_u8(imageXp1_0);
+            const uint16x8_t imageXp2_wide_0 = vmovl_u8(imageXp2_0);
+
+            const uint16x8_t dotXm2_0 = vmulq_u16(imageXm2_wide_0, kernel0x8);
+            const uint16x8_t dotXm1_0 = vmulq_u16(imageXm1_wide_0, kernel1x8);
+            const uint16x8_t dotX0_0  = vmulq_u16(imageX0_wide_0,  kernel2x8);
+            const uint16x8_t dotXp1_0 = vmulq_u16(imageXp1_wide_0, kernel3x8);
+            const uint16x8_t dotXp2_0 = vmulq_u16(imageXp2_wide_0, kernel4x8);
+
+            const uint16x8_t sum_0 = dotXm2_0 + dotXm1_0 + dotX0_0 + dotXp1_0 + dotXp2_0;
+            const uint8x8_t sumU8_0 = vmovn_u16( vshrq_n_u16(sum_0, kernelShift) );
+
+            vst1_u8(&pImageFilteredTmp[x], sumU8_0);
+
+            const uint8x8_t imageXm2_1 = vld1_u8(&pImage[x-2+8]);
+            const uint8x8_t imageXm1_1 = vld1_u8(&pImage[x-1+8]);
+            const uint8x8_t imageX0_1  = vld1_u8(&pImage[x+8]);
+            const uint8x8_t imageXp1_1 = vld1_u8(&pImage[x+1+8]);
+            const uint8x8_t imageXp2_1 = vld1_u8(&pImage[x+2+8]);
+
+            const uint16x8_t imageXm2_wide_1 = vmovl_u8(imageXm2_1);
+            const uint16x8_t imageXm1_wide_1 = vmovl_u8(imageXm1_1);
+            const uint16x8_t imageX0_wide_1  = vmovl_u8(imageX0_1);
+            const uint16x8_t imageXp1_wide_1 = vmovl_u8(imageXp1_1);
+            const uint16x8_t imageXp2_wide_1 = vmovl_u8(imageXp2_1);
+
+            const uint16x8_t dotXm2_1 = vmulq_u16(imageXm2_wide_1, kernel0x8);
+            const uint16x8_t dotXm1_1 = vmulq_u16(imageXm1_wide_1, kernel1x8);
+            const uint16x8_t dotX0_1  = vmulq_u16(imageX0_wide_1,  kernel2x8);
+            const uint16x8_t dotXp1_1 = vmulq_u16(imageXp1_wide_1, kernel3x8);
+            const uint16x8_t dotXp2_1 = vmulq_u16(imageXp2_wide_1, kernel4x8);
+
+            const uint16x8_t sum_1 = dotXm2_1 + dotXm1_1 + dotX0_1 + dotXp1_1 + dotXp2_1;
+            const uint8x8_t sumU8_1 = vmovn_u16( vshrq_n_u16(sum_1, kernelShift) );
+
+            vst1_u8(&pImageFilteredTmp[x+8], sumU8_1);
+
+            const uint8x8_t imageXm2_2 = vld1_u8(&pImage[x-2+16]);
+            const uint8x8_t imageXm1_2 = vld1_u8(&pImage[x-1+16]);
+            const uint8x8_t imageX0_2  = vld1_u8(&pImage[x+16]);
+            const uint8x8_t imageXp1_2 = vld1_u8(&pImage[x+1+16]);
+            const uint8x8_t imageXp2_2 = vld1_u8(&pImage[x+2+16]);
+
+            const uint16x8_t imageXm2_wide_2 = vmovl_u8(imageXm2_2);
+            const uint16x8_t imageXm1_wide_2 = vmovl_u8(imageXm1_2);
+            const uint16x8_t imageX0_wide_2  = vmovl_u8(imageX0_2);
+            const uint16x8_t imageXp1_wide_2 = vmovl_u8(imageXp1_2);
+            const uint16x8_t imageXp2_wide_2 = vmovl_u8(imageXp2_2);
+
+            const uint16x8_t dotXm2_2 = vmulq_u16(imageXm2_wide_2, kernel0x8);
+            const uint16x8_t dotXm1_2 = vmulq_u16(imageXm1_wide_2, kernel1x8);
+            const uint16x8_t dotX0_2  = vmulq_u16(imageX0_wide_2,  kernel2x8);
+            const uint16x8_t dotXp1_2 = vmulq_u16(imageXp1_wide_2, kernel3x8);
+            const uint16x8_t dotXp2_2 = vmulq_u16(imageXp2_wide_2, kernel4x8);
+
+            const uint16x8_t sum_2 = dotXm2_2 + dotXm1_2 + dotX0_2 + dotXp1_2 + dotXp2_2;
+            const uint8x8_t sumU8_2 = vmovn_u16( vshrq_n_u16(sum_2, kernelShift) );
+
+            vst1_u8(&pImageFilteredTmp[x+16], sumU8_2);
+
+            const uint8x8_t imageXm2_3 = vld1_u8(&pImage[x-2+24]);
+            const uint8x8_t imageXm1_3 = vld1_u8(&pImage[x-1+24]);
+            const uint8x8_t imageX0_3  = vld1_u8(&pImage[x+24]);
+            const uint8x8_t imageXp1_3 = vld1_u8(&pImage[x+1+24]);
+            const uint8x8_t imageXp2_3 = vld1_u8(&pImage[x+2+24]);
+
+            const uint16x8_t imageXm2_wide_3 = vmovl_u8(imageXm2_3);
+            const uint16x8_t imageXm1_wide_3 = vmovl_u8(imageXm1_3);
+            const uint16x8_t imageX0_wide_3  = vmovl_u8(imageX0_3);
+            const uint16x8_t imageXp1_wide_3 = vmovl_u8(imageXp1_3);
+            const uint16x8_t imageXp2_wide_3 = vmovl_u8(imageXp2_3);
+
+            const uint16x8_t dotXm2_3 = vmulq_u16(imageXm2_wide_3, kernel0x8);
+            const uint16x8_t dotXm1_3 = vmulq_u16(imageXm1_wide_3, kernel1x8);
+            const uint16x8_t dotX0_3  = vmulq_u16(imageX0_wide_3,  kernel2x8);
+            const uint16x8_t dotXp1_3 = vmulq_u16(imageXp1_wide_3, kernel3x8);
+            const uint16x8_t dotXp2_3 = vmulq_u16(imageXp2_wide_3, kernel4x8);
+
+            const uint16x8_t sum_3 = dotXm2_3 + dotXm1_3 + dotX0_3 + dotXp1_3 + dotXp2_3;
+            const uint8x8_t sumU8_3 = vmovn_u16( vshrq_n_u16(sum_3, kernelShift) );
+
+            vst1_u8(&pImageFilteredTmp[x+24], sumU8_3);
+          } // for(; x<(imageWidth-2-31); x+=32) */
+#endif
+
           for(; x<(imageWidth-2); x++) {
-            pImageFilteredTmp[x] = static_cast<u8>( (pImage[x-2]*kernel0 + pImage[x-1]*kernel1 + pImage[x]*kernel2 + pImage[x+1]*kernel3 + pImage[x+2]*kernel4) >> kernelShift );
+            pImageFilteredTmp[x] = static_cast<u8>( (pImage[x-2]*kernel0 + pImage[x-1]*kernel1 + pImage[x]*kernel2 + pImage[x+1]*kernel3 + pImage[x+2]*kernel4) >> kernelShift );            
           }
 
           pImageFilteredTmp[x] = static_cast<u8>( (pImage[x-2]*kernel0 + pImage[x-1]*kernel1 + pImage[x]*kernel2 + pImage[x+1]*kernel3 + pImage[x+1]*kernel4) >> kernelShift );
