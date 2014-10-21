@@ -37,6 +37,7 @@ namespace Anki
       // Filter with a horizontal and vertical [1, 4, 6, 4, 1] filter
       // Handles edges by replicating the border pixel
       template<typename InType, typename IntermediateType, typename OutType> Result BinomialFilter(const Array<InType> &image, Array<OutType> &imageFiltered, MemoryStack scratch);
+      template<> Result BinomialFilter<u8,u8,u8>(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch);
 
       // A 1 dimensional, fixed point Gaussian kernel
       template<typename Type> FixedPointArray<Type> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch);

@@ -4966,7 +4966,7 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   f64 totalTime = 0;
 
-  const s32 numIterations = 100;
+  const s32 numIterations = 1;
   for(s32 i=0; i<numIterations; i++) {
     const f64 t0 = GetTimeF64();
     const Result result2 = ImageProcessing::BinomialFilter<u8,u8,u8>(bigImage, bigImageFiltered, scratchOffchip);
