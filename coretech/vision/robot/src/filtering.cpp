@@ -117,15 +117,36 @@ namespace Anki
 
             if(y == 2) {
               for(s32 x=0; x<imageWidth; x++) {
-                pImageFiltered[x] = static_cast<u8>( (pImageFilteredTmpY0[x]*(kernel0+kernel1+kernel2) + pImageFilteredTmpYp1[x]*kernel3 + pImageFilteredTmpYp2[x]*kernel4) >> kernelShift);
+                const u16 prod012 = pImageFilteredTmpY0[x]*(kernel0+kernel1+kernel2);
+                const u16 prod3   = pImageFilteredTmpYp1[x]*kernel3;
+                const u16 prod4   = pImageFilteredTmpYp2[x]*kernel4;
+
+                const u16 sum0 = prod012 + prod3 + prod4;
+
+                pImageFiltered[x] = static_cast<u8>( sum0 >> kernelShift);
               }
             } else if(y == 3) {
               for(s32 x=0; x<imageWidth; x++) {
-                pImageFiltered[x] = static_cast<u8>( (pImageFilteredTmpYm1[x]*(kernel0+kernel1) + pImageFilteredTmpY0[x]*kernel2 + pImageFilteredTmpYp1[x]*kernel3 + pImageFilteredTmpYp2[x]*kernel4) >> kernelShift);
+                const u16 prod01 = pImageFilteredTmpYm1[x]*(kernel0+kernel1);
+                const u16 prod2  = pImageFilteredTmpY0[x]*kernel2;
+                const u16 prod3  = pImageFilteredTmpYp1[x]*kernel3;
+                const u16 prod4  = pImageFilteredTmpYp2[x]*kernel4;
+
+                const u16 sum0 = prod01 + prod2 + prod3 + prod4;
+
+                pImageFiltered[x] = static_cast<u8>( sum0 >> kernelShift);
               }
             } else { // y >= 4
               for(s32 x=0; x<imageWidth; x++) {
-                pImageFiltered[x] = static_cast<u8>( (pImageFilteredTmpYm2[x]*kernel0 + pImageFilteredTmpYm1[x]*kernel1 + pImageFilteredTmpY0[x]*kernel2 + pImageFilteredTmpYp1[x]*kernel3 + pImageFilteredTmpYp2[x]*kernel4) >> kernelShift);
+                const u16 prod0 = pImageFilteredTmpYm2[x]*kernel0;
+                const u16 prod1 = pImageFilteredTmpYm1[x]*kernel1;
+                const u16 prod2 = pImageFilteredTmpY0[x]*kernel2;
+                const u16 prod3 = pImageFilteredTmpYp1[x]*kernel3;
+                const u16 prod4 = pImageFilteredTmpYp2[x]*kernel4;
+
+                const u16 sum0 = prod0 + prod1 + prod2 + prod3 + prod4;
+
+                pImageFiltered[x] = static_cast<u8>( sum0 >> kernelShift);
               }
             }
           } // if(y > 2)

@@ -4978,7 +4978,7 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
     bigImage.Set(bigImageFiltered);
   }
 
-  printf("Binomial filtered 640x480 image in %f seconds.\n", totalTime/numIterations);
+  printf("Binomial filtered 640x480 image in %fms.\n", 1000*totalTime/numIterations);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, BinomialFilter)
