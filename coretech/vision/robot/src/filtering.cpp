@@ -651,14 +651,39 @@ namespace Anki
 
         // TODO: do the edges
 
-        // scale = 8;
-        // [xUL,yUL] = meshgrid((0.5:(scale-0.5))/scale, (0.5:(scale-0.5))/scale)
-        // [xUR,yUR] = meshgrid(((scale-0.5):-1:0.5)/scale, (0.5:(scale-0.5))/scale)
-        // [xLL,yLL] = meshgrid((0.5:(scale-0.5))/scale, ((scale-0.5):-1:0.5)/scale)
-        // [xLR,yLR] = meshgrid(((scale-0.5):-1:0.5)/scale, ((scale-0.5):-1:0.5)/scale)
-
         // Just compute the boxWidth*UL in an accumulator, and as you go right, subtract and add. As you go down, subtract and add top vs bottom
 
+        // const s32 ySmall = -1;
+        {
+          const s32 ySmall = -1;
+
+          const u8 * restrict pInY0 = in.Pointer(0, 0);
+
+          for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
+            const u8 smallL = pInY0[xSmall];
+            const u8 smallR = pInY0[xSmall+1];
+
+            for(s32 dy=upsampleFactorU8>>1; dy<upsampleFactorU8; dy++) {
+              u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2 + dy, 0);
+
+              const u16 subtractAmount = smallL << 2;
+              const u16 addAmount = smallR << 2;
+
+              const s32 xBig = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
+
+              u16 curValue = (smallL << (upsamplePowerU8+2)) + ((addAmount - subtractAmount)>>1);
+
+              for(s32 dx=0; dx<upsampleFactorU8; dx++) {
+                const u8 curValueU8 = curValue >> (upsamplePowerU8+2);
+
+                pOut[xBig + dx] = curValueU8;
+
+                curValue += addAmount - subtractAmount;
+              } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
+            } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
+          } // for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++)
+        } // const s32 ySmall = -1;
+        //#if 0
         for(s32 ySmall=0; ySmall<smallHeight-1; ySmall++) {
           const u8 * restrict pInY0 = in.Pointer(ySmall, 0);
           const u8 * restrict pInY1 = in.Pointer(ySmall+1, 0);
@@ -723,7 +748,7 @@ namespace Anki
                 curValue += addAmount - subtractAmount;
               } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
             } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
-          } // for(s32 xSmall=0; xSmall<smallWidth; xSmall++)
+          } //  for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++)
 
           // const s32 xSmall = smallWidth-1;
           {
@@ -750,7 +775,39 @@ namespace Anki
               } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
             } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
           } // const s32 xSmall = smallWidth-1;
-        } // for(s32 ySmall=0; ySmall<smallHeight; ySmall++)
+        } //  for(s32 ySmall=0; ySmall<smallHeight-1; ySmall++)
+        //#endif // #if 0
+
+        // const s32 ySmall = smallHeight - 1;
+        {
+          const s32 ySmall = smallHeight - 1;
+
+          const u8 * restrict pInY0 = in.Pointer(smallHeight - 1, 0);
+
+          for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
+            const u8 smallL = pInY0[xSmall];
+            const u8 smallR = pInY0[xSmall+1];
+
+            for(s32 dy=0; dy<upsampleFactorU8>>1; dy++) {
+              u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2 + dy, 0);
+
+              const u16 subtractAmount = smallL << 2;
+              const u16 addAmount = smallR << 2;
+
+              const s32 xBig = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
+
+              u16 curValue = (smallL << (upsamplePowerU8+2)) + ((addAmount - subtractAmount)>>1);
+
+              for(s32 dx=0; dx<upsampleFactorU8; dx++) {
+                const u8 curValueU8 = curValue >> (upsamplePowerU8+2);
+
+                pOut[xBig + dx] = curValueU8;
+
+                curValue += addAmount - subtractAmount;
+              } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
+            } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
+          } // for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++)
+        } // const s32 ySmall = smallHeight - 1;
 
         return RESULT_OK;
       } // Result UpsampleBilinear(const Array<u8> &in, Array<u8> &out, MemoryStack scratch)
