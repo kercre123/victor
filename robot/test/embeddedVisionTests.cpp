@@ -141,8 +141,8 @@ GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
 
-  const s32 downsamplePower = 3;
-  const s32 upsamplePower = 4;
+  const s32 downsamplePower = 4;
+  const s32 upsamplePower = 6;
 
   const Array<u8> in = Array<u8>::LoadImage("C:/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_36_frame0.png", scratchHuge);
 
