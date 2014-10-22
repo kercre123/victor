@@ -667,10 +667,8 @@ namespace Anki
           {
             const s32 xSmall = -1;
 
-            const u8 smallUL = pInY0[0];
-            const u8 smallUR = pInY0[0];
-            const u8 smallLL = pInY1[0];
-            const u8 smallLR = pInY1[0];
+            const u8 smallU = pInY0[0];
+            const u8 smallL = pInY1[0];
 
             for(s32 dy=0; dy<upsampleFactorU8; dy++) {
               u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2 + dy, 0);
@@ -678,26 +676,15 @@ namespace Anki
               const u8 alpha = 2*upsampleFactorU8 - 2*dy - 1;
               const u8 alphaInverse = 2*dy + 1;
 
-              const u16 interpolatedPixelL0 = smallUL * alpha;
-              const u16 interpolatedPixelL1 = smallLL * alphaInverse;
+              const u16 interpolatedPixelL0 = smallU * alpha;
+              const u16 interpolatedPixelL1 = smallL * alphaInverse;
               const u16 interpolatedPixelL = interpolatedPixelL0 + interpolatedPixelL1;
-              const u16 subtractAmount = interpolatedPixelL >> (upsamplePowerU8-1);
-
-              const u16 interpolatedPixelR0 = smallUR * alpha;
-              const u16 interpolatedPixelR1 = smallLR * alphaInverse;
-              const u16 interpolatedPixelR = interpolatedPixelR0 + interpolatedPixelR1;
-              const u16 addAmount = interpolatedPixelR >> (upsamplePowerU8-1);
+              const u8 curValueU8 = interpolatedPixelL >> (upsamplePowerU8+1);
 
               const s32 xBig = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
 
-              u16 curValue = 2*interpolatedPixelL + ((addAmount - subtractAmount)>>1);
-
               for(s32 dx=upsampleFactorU8>>1; dx<upsampleFactorU8; dx++) {
-                const u8 curValueU8 = curValue >> (upsamplePowerU8+2);
-
                 pOut[xBig + dx] = curValueU8;
-
-                curValue += addAmount - subtractAmount;
               } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
             } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
           } // const s32 xSmall = -1;
@@ -742,10 +729,8 @@ namespace Anki
           {
             const s32 xSmall = smallWidth-1;
 
-            const u8 smallUL = pInY0[smallWidth-1];
-            const u8 smallUR = pInY0[smallWidth-1];
-            const u8 smallLL = pInY1[smallWidth-1];
-            const u8 smallLR = pInY1[smallWidth-1];
+            const u8 smallU = pInY0[smallWidth-1];
+            const u8 smallL = pInY1[smallWidth-1];
 
             for(s32 dy=0; dy<upsampleFactorU8; dy++) {
               u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2 + dy, 0);
@@ -753,30 +738,18 @@ namespace Anki
               const u8 alpha = 2*upsampleFactorU8 - 2*dy - 1;
               const u8 alphaInverse = 2*dy + 1;
 
-              const u16 interpolatedPixelL0 = smallUL * alpha;
-              const u16 interpolatedPixelL1 = smallLL * alphaInverse;
+              const u16 interpolatedPixelL0 = smallU * alpha;
+              const u16 interpolatedPixelL1 = smallL * alphaInverse;
               const u16 interpolatedPixelL = interpolatedPixelL0 + interpolatedPixelL1;
-              const u16 subtractAmount = interpolatedPixelL >> (upsamplePowerU8-1);
-
-              const u16 interpolatedPixelR0 = smallUR * alpha;
-              const u16 interpolatedPixelR1 = smallLR * alphaInverse;
-              const u16 interpolatedPixelR = interpolatedPixelR0 + interpolatedPixelR1;
-              const u16 addAmount = interpolatedPixelR >> (upsamplePowerU8-1);
+              const u8 curValueU8 = interpolatedPixelL >> (upsamplePowerU8+1);
 
               const s32 xBig = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
 
-              u16 curValue = 2*interpolatedPixelL + ((addAmount - subtractAmount)>>1);
-
-              //for(s32 dx=upsampleFactorU8>>1; dx<upsampleFactorU8; dx++) {
               for(s32 dx=0; dx<upsampleFactorU8>>1; dx++) {
-                const u8 curValueU8 = curValue >> (upsamplePowerU8+2);
-
                 pOut[xBig + dx] = curValueU8;
-
-                curValue += addAmount - subtractAmount;
               } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
             } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
-          } // const s32 xSmall = -1;
+          } // const s32 xSmall = smallWidth-1;
         } // for(s32 ySmall=0; ySmall<smallHeight; ySmall++)
 
         return RESULT_OK;
