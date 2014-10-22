@@ -72,6 +72,64 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 
 //#define RUN_FACE_DETECTION_GUI
 
+Result ComputeAndPrintMedianBenchmark(const FixedLengthList<FixedLengthList<BenchmarkElement> > &benchmarkElements, const s32 numRuns, MemoryStack scratch)
+{
+  // Check that all the lists have the same number and type of benchmarks
+  const s32 numElements = benchmarkElements[0].get_size();
+  for(s32 iRun=1; iRun<numRuns; iRun++) {
+    if(benchmarkElements[0].get_size() != benchmarkElements[iRun].get_size()) { return RESULT_FAIL; }
+    for(s32 i=0; i<numElements; i++) {
+      if(benchmarkElements[0][i].numEvents != benchmarkElements[iRun][i].numEvents) { return RESULT_FAIL; }
+      if(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) != 0) { return RESULT_FAIL; }
+    }
+  }
+
+  // Compute the medians
+  FixedLengthList<BenchmarkElement> medianBenchmarkElements(benchmarkElements[0].get_size(), scratch, Flags::Buffer(true, false, true));
+  Array<u32> sortedElements(1, numRuns, scratch);
+  u32 * pSortedElements = sortedElements.Pointer(0,0);
+  for(s32 i=0; i<numElements; i++) {
+    strncpy(medianBenchmarkElements[i].name, benchmarkElements[0][i].name, BenchmarkElement::NAME_LENGTH - 1);
+    medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    medianBenchmarkElements[i].inclusive_mean = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    medianBenchmarkElements[i].inclusive_min = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    medianBenchmarkElements[i].inclusive_max = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    medianBenchmarkElements[i].inclusive_total = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    medianBenchmarkElements[i].exclusive_mean = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    medianBenchmarkElements[i].exclusive_min = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    medianBenchmarkElements[i].exclusive_max = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    medianBenchmarkElements[i].exclusive_total = pSortedElements[numRuns/2];
+  } // for(s32 i=0; i<numElements; i++)
+
+  PrintBenchmarkResults(medianBenchmarkElements, true, true);
+
+  return RESULT_OK;
+} // CompueMedianBenchmark()
+
 #if !defined(JUST_FIDUCIAL_DETECTION)
 
 #ifdef RUN_PC_ONLY_TESTS
@@ -3506,6 +3564,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const f32 minSideLength = 0.01f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
 
+  const bool useIntegralImageFiltering = false;
+
   const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
   const s32 component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
   const s32 component_sparseMultiplyThreshold = 1000 << 5;
@@ -3565,6 +3625,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       image,
       markers,
       homographies,
+      useIntegralImageFiltering,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
@@ -3710,8 +3771,10 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  Array<u8> image(simpleFiducials_320x240_HEIGHT, simpleFiducials_320x240_WIDTH, scratchOffchip);
-  image.Set(simpleFiducials_320x240, simpleFiducials_320x240_WIDTH*simpleFiducials_320x240_HEIGHT);
+  //Array<u8> image(simpleFiducials_320x240_HEIGHT, simpleFiducials_320x240_WIDTH, scratchOffchip);
+  //image.Set(simpleFiducials_320x240, simpleFiducials_320x240_WIDTH*simpleFiducials_320x240_HEIGHT);
+
+  Array<u8> image = Array<u8>::LoadImage("C:/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_36_frame0.png", scratchOffchip);
 
   //image.Show("image", true);
 
@@ -3729,16 +3792,20 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
-  const s32 numRuns = 10;
-  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements(numRuns, scratchOffchip);
+  const s32 numRuns = 1;
+  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements_integral(numRuns, scratchOffchip);
+  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements_binomial(numRuns, scratchOffchip);
+
+  ASSERT_TRUE(AreValid(benchmarkElements_integral, benchmarkElements_binomial));
 
   for(s32 iRun=0; iRun<numRuns; iRun++) {
     InitBenchmarking();
 
-    const Result result = DetectFiducialMarkers(
+    const Result result_integral = DetectFiducialMarkers(
       image,
       markers,
       homographies,
+      true,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
@@ -3757,65 +3824,49 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
       scratchOnchip,
       scratchOffchip);
 
-    ASSERT_TRUE(result == RESULT_OK);
+    ASSERT_TRUE(result_integral == RESULT_OK);
 
-    benchmarkElements[iRun] = ComputeBenchmarkResults(scratchOffchip);;
+    benchmarkElements_integral[iRun] = ComputeBenchmarkResults(scratchOffchip);
+
+    //PrintBenchmarkResults(benchmarkElements[iRun], true, true);
+
+    InitBenchmarking();
+
+    const Result result_binomial = DetectFiducialMarkers(
+      image,
+      markers,
+      homographies,
+      false,
+      scaleImage_numPyramidLevels+1, scaleImage_thresholdMultiplier,
+      component1d_minComponentWidth, component1d_maxSkipDistance,
+      component_minimumNumPixels, component_maximumNumPixels,
+      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+      component_minHollowRatio,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+      decode_minContrastRatio,
+      maxConnectedComponentSegments,
+      maxExtractedQuads,
+      quadRefinementIterations,
+      numRefinementSamples,
+      quadRefinementMaxCornerChange,
+      quadRefinementMinCornerChange,
+      false,
+      scratchCcm,
+      scratchOnchip,
+      scratchOffchip);
+
+    ASSERT_TRUE(result_binomial == RESULT_OK);
+
+    benchmarkElements_binomial[iRun] = ComputeBenchmarkResults(scratchOffchip);
 
     //PrintBenchmarkResults(benchmarkElements[iRun], true, true);
   } // for(s32 iRun=0; iRun<numRuns; iRun++)
 
-  // Check that all the lists have the same number and type of benchmarks
-  const s32 numElements = benchmarkElements[0].get_size();
-  for(s32 iRun=1; iRun<numRuns; iRun++) {
-    ASSERT_TRUE(benchmarkElements[0].get_size() == benchmarkElements[iRun].get_size());
-    for(s32 i=0; i<numElements; i++) {
-      ASSERT_TRUE(benchmarkElements[0][i].numEvents == benchmarkElements[iRun][i].numEvents);
-      ASSERT_TRUE(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) == 0);
-    }
-  }
+  printf("Integral image benchmarks:\n");
+  ASSERT_TRUE(ComputeAndPrintMedianBenchmark(benchmarkElements_integral, numRuns, scratchOffchip) == RESULT_OK);
 
-  // Compute the medians
-  FixedLengthList<BenchmarkElement> medianBenchmarkElements(benchmarkElements[0].get_size(), scratchOffchip, Flags::Buffer(true, false, true));
-  Array<u32> sortedElements(1, numRuns, scratchOffchip);
-  u32 * pSortedElements = sortedElements.Pointer(0,0);
-  for(s32 i=0; i<numElements; i++) {
-    strncpy(medianBenchmarkElements[i].name, benchmarkElements[0][i].name, BenchmarkElement::NAME_LENGTH - 1);
-    medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_mean = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_min = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_max = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_total = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_mean = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_min = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_max = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_total = pSortedElements[numRuns/2];
-  } // for(s32 i=0; i<numElements; i++)
-
-  PrintBenchmarkResults(medianBenchmarkElements, true, true);
+  printf("Binomial benchmarks:\n");
+  ASSERT_TRUE(ComputeAndPrintMedianBenchmark(benchmarkElements_binomial, numRuns, scratchOffchip) == RESULT_OK);
 
   const f32 minDifference = 1e-4f;
   Point<f32> groundTruth[4];
@@ -3900,16 +3951,51 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
-  const s32 numRuns = 10;
-  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements(numRuns, scratchHuge);
+  const s32 numRuns = 1;
+  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements_integral(numRuns, scratchOffchip);
+  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements_binomial(numRuns, scratchOffchip);
+
+  ASSERT_TRUE(AreValid(benchmarkElements_integral, benchmarkElements_binomial));
 
   for(s32 iRun=0; iRun<numRuns; iRun++) {
     InitBenchmarking();
 
-    const Result result = DetectFiducialMarkers(
+    /* const Result result_integral = DetectFiducialMarkers(
+    image640,
+    markers,
+    homographies,
+    true,
+    scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
+    component1d_minComponentWidth, component1d_maxSkipDistance,
+    component_minimumNumPixels, component_maximumNumPixels,
+    component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+    component_minHollowRatio,
+    quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+    decode_minContrastRatio,
+    maxConnectedComponentSegments,
+    maxExtractedQuads,
+    quadRefinementIterations,
+    numRefinementSamples,
+    quadRefinementMaxCornerChange,
+    quadRefinementMinCornerChange,
+    false,
+    scratchOnchip,
+    scratchOffchip,
+    scratchHuge);
+
+    ASSERT_TRUE(result_integral == RESULT_OK);*/
+
+    benchmarkElements_integral[iRun] = ComputeBenchmarkResults(scratchHuge);
+
+    //PrintBenchmarkResults(benchmarkElements_integral[iRun], true, true);
+
+    InitBenchmarking();
+
+    const Result result_binomial = DetectFiducialMarkers(
       image640,
       markers,
       homographies,
+      false,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
@@ -3928,65 +4014,18 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
       scratchOffchip,
       scratchHuge);
 
-    ASSERT_TRUE(result == RESULT_OK);
+    ASSERT_TRUE(result_binomial == RESULT_OK);
 
-    benchmarkElements[iRun] = ComputeBenchmarkResults(scratchHuge);
+    benchmarkElements_binomial[iRun] = ComputeBenchmarkResults(scratchHuge);
 
-    //PrintBenchmarkResults(benchmarkElements[iRun], true, true);
+    //PrintBenchmarkResults(benchmarkElements_binomial[iRun], true, true);
   } // for(s32 iRun=0; iRun<numRuns; iRun++)
 
-  // Check that all the lists have the same number and type of benchmarks
-  const s32 numElements = benchmarkElements[0].get_size();
-  for(s32 iRun=1; iRun<numRuns; iRun++) {
-    ASSERT_TRUE(benchmarkElements[0].get_size() == benchmarkElements[iRun].get_size());
-    for(s32 i=0; i<numElements; i++) {
-      ASSERT_TRUE(benchmarkElements[0][i].numEvents == benchmarkElements[iRun][i].numEvents);
-      ASSERT_TRUE(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) == 0);
-    }
-  }
+  printf("Integral image benchmarks:\n");
+  ASSERT_TRUE(ComputeAndPrintMedianBenchmark(benchmarkElements_integral, numRuns, scratchOffchip) == RESULT_OK);
 
-  // Compute the medians
-  FixedLengthList<BenchmarkElement> medianBenchmarkElements(benchmarkElements[0].get_size(), scratchOffchip, Flags::Buffer(true, false, true));
-  Array<u32> sortedElements(1, numRuns, scratchOffchip);
-  u32 * pSortedElements = sortedElements.Pointer(0,0);
-  for(s32 i=0; i<numElements; i++) {
-    strncpy(medianBenchmarkElements[i].name, benchmarkElements[0][i].name, BenchmarkElement::NAME_LENGTH - 1);
-    medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_mean = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_min = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_max = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_total = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_mean = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_min = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_max = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_total = pSortedElements[numRuns/2];
-  } // for(s32 i=0; i<numElements; i++)
-
-  PrintBenchmarkResults(medianBenchmarkElements, true, true);
+  printf("Binomial benchmarks:\n");
+  ASSERT_TRUE(ComputeAndPrintMedianBenchmark(benchmarkElements_binomial, numRuns, scratchOffchip) == RESULT_OK);
 
   markers[0].Print();
 
@@ -5312,4 +5351,3 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
 #endif // #if !ANKICORETECH_EMBEDDED_USE_GTEST
-

@@ -27,6 +27,7 @@ namespace Anki
       const Array<u8> &image,
       FixedLengthList<VisionMarker> &markers,
       FixedLengthList<Array<f32> > &homographies,
+      const bool useIntegralImageFiltering,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
@@ -52,6 +53,17 @@ namespace Anki
     Result ExtractComponentsViaCharacteristicScale(
       const Array<u8> &image,
       const FixedLengthList<s32> &filterHalfWidths,
+      const s32 scaleImage_thresholdMultiplier,
+      const s16 component1d_minComponentWidth,
+      const s16 component1d_maxSkipDistance,
+      ConnectedComponents &components,
+      MemoryStack fastScratch,
+      MemoryStack slowerScratch,
+      MemoryStack slowestScratch);
+
+    Result ExtractComponentsViaCharacteristicScale_binomial(
+      const Array<u8> &image,
+      const s32 numPyramidLevels,
       const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth,
       const s16 component1d_maxSkipDistance,
