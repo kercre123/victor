@@ -49,6 +49,8 @@ namespace Anki
       MemoryStack slowerScratch,
       MemoryStack slowestScratch)
     {
+      const bool upsampleToFullSize = true;
+
       const s32 thresholdMultiplier_numFractionalBits = 16;
 
       //BeginBenchmark("ecvcsB_init");
@@ -138,41 +140,84 @@ namespace Anki
         //cv::waitKey();
       }
 
-      for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++) {
-        const s32 xyOutputStep = 1 << iLevel;
+      if(upsampleToFullSize) {
+        Array<u8> upsampledImage(imageHeight, imageWidth, slowestScratch);
+        Array<u8> upsampledDog(imageHeight, imageWidth, slowestScratch);
 
-        const s32 scaledHeight = imageHeight >> iLevel;
-        const s32 scaledWidth = imageWidth >> iLevel;
+        for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++) {
+          const s32 xyOutputStep = 1 << iLevel;
 
-        for(s32 yBig=0; yBig<imageHeight; yBig++) {
-          const u8 * restrict pImage = imagePyramid[iLevel].Pointer(yBig / xyOutputStep, 0);
-          const u8 * restrict pDog = dogPyramid[iLevel].Pointer(yBig / xyOutputStep, 0);
+          const s32 scaledHeight = imageHeight >> iLevel;
+          const s32 scaledWidth = imageWidth >> iLevel;
 
-          u8 * restrict pDogMax = dogMax.Pointer(yBig, 0);
-          u8 * restrict pScaleImage = scaleImage.Pointer(yBig, 0);
+          if(iLevel == 0) {
+            upsampledImage.Set(imagePyramid[iLevel]);
+            upsampledDog.Set(dogPyramid[iLevel]);
+          } else {
+            ImageProcessing::UpsampleByPowerOfTwoBilinear(imagePyramid[iLevel], iLevel, upsampledImage, slowestScratch);
+            ImageProcessing::UpsampleByPowerOfTwoBilinear(dogPyramid[iLevel], iLevel, upsampledDog, slowestScratch);
+          }
 
-          s32 xBig = 0;
-          for(s32 xSmall=0; xSmall<scaledWidth; xSmall++) {
-            const u8 curDog = pDog[xSmall];
+          for(s32 yBig=0; yBig<imageHeight; yBig++) {
+            const u8 * restrict pImage = upsampledImage.Pointer(yBig, 0);
+            const u8 * restrict pDog = upsampledDog.Pointer(yBig, 0);
 
-            for(s32 dx=0; dx<xyOutputStep; dx++) {
+            u8 * restrict pDogMax = dogMax.Pointer(yBig, 0);
+            u8 * restrict pScaleImage = scaleImage.Pointer(yBig, 0);
+
+            for(s32 xBig=0; xBig<imageWidth; xBig++) {
+              const u8 curDog = pDog[xBig];
               const u8 curDogMax = pDogMax[xBig];
 
               if(curDog > curDogMax) {
                 pDogMax[xBig] = curDog;
-                pScaleImage[xBig] = pImage[xSmall];
+                pScaleImage[xBig] = pImage[xBig];
               }
+            } // for(s32 xBig=0; xBig<imageWidth; xBig++)
+          } // for(s32 yBig=0; yBig<imageHeight; yBig++)
 
-              xBig++;
-            } // for(s32 dx=0; dx<xyOutputStep; dx++)
-          } // for(s32 xSmall=0; xSmall<scaledWidth; xSmall++)
-        } // for(s32 yBig=0; yBig<imageHeight; yBig++)
+          char name[1024];
+          snprintf(name, 1024, "dogMax"); dogMax.Show(name, false, false, true);
+          snprintf(name, 1024, "scaleImage"); scaleImage.Show(name, false, false, true);
+          cv::waitKey();
+        } // for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++)
+      } else { // if(upsampleToFullSize)
+        for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++) {
+          const s32 xyOutputStep = 1 << iLevel;
 
-        char name[1024];
-        snprintf(name, 1024, "dogMax"); dogMax.Show(name, false, false, true);
-        snprintf(name, 1024, "scaleImage"); scaleImage.Show(name, false, false, true);
-        cv::waitKey();
-      } // for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++)
+          const s32 scaledHeight = imageHeight >> iLevel;
+          const s32 scaledWidth = imageWidth >> iLevel;
+
+          for(s32 yBig=0; yBig<imageHeight; yBig++) {
+            const u8 * restrict pImage = imagePyramid[iLevel].Pointer(yBig / xyOutputStep, 0);
+            const u8 * restrict pDog = dogPyramid[iLevel].Pointer(yBig / xyOutputStep, 0);
+
+            u8 * restrict pDogMax = dogMax.Pointer(yBig, 0);
+            u8 * restrict pScaleImage = scaleImage.Pointer(yBig, 0);
+
+            s32 xBig = 0;
+            for(s32 xSmall=0; xSmall<scaledWidth; xSmall++) {
+              const u8 curDog = pDog[xSmall];
+
+              for(s32 dx=0; dx<xyOutputStep; dx++) {
+                const u8 curDogMax = pDogMax[xBig];
+
+                if(curDog > curDogMax) {
+                  pDogMax[xBig] = curDog;
+                  pScaleImage[xBig] = pImage[xSmall];
+                }
+
+                xBig++;
+              } // for(s32 dx=0; dx<xyOutputStep; dx++)
+            } // for(s32 xSmall=0; xSmall<scaledWidth; xSmall++)
+          } // for(s32 yBig=0; yBig<imageHeight; yBig++)
+
+          char name[1024];
+          snprintf(name, 1024, "dogMax"); dogMax.Show(name, false, false, true);
+          snprintf(name, 1024, "scaleImage"); scaleImage.Show(name, false, false, true);
+          cv::waitKey();
+        } // for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++)
+      } // if(upsampleToFullSize) .. else
 
       Array<u8> binaryImageTmp(imageHeight, imageWidth, slowestScratch);
 

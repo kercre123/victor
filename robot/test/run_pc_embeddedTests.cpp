@@ -41,7 +41,7 @@ int main()
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 
   //char * filterString = "--gtest_filter=*"; // Run all tests
-  char * filterString = "--gtest_filter=*UpsampleByPowerOfTwoBilinear"; // Run only some tests
+  char * filterString = "--gtest_filter=*DetectFiducialMarkers_benchmark640"; // Run only some tests
 
   argc++;
   argv[argc-1] = filterString;
