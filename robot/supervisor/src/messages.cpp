@@ -438,16 +438,16 @@ namespace Anki {
 
       void ProcessSetDefaultLightsMessage(const SetDefaultLights& msg) {
         u32 lColor = msg.eye_left_color;
-        HAL::SetLED(HAL::LED_LEFT_EYE_TOP, lColor);
-        HAL::SetLED(HAL::LED_LEFT_EYE_RIGHT, lColor);
-        HAL::SetLED(HAL::LED_LEFT_EYE_BOTTOM, lColor);
-        HAL::SetLED(HAL::LED_LEFT_EYE_LEFT, lColor);
+        HAL::SetLED(LED_LEFT_EYE_TOP, lColor);
+        HAL::SetLED(LED_LEFT_EYE_RIGHT, lColor);
+        HAL::SetLED(LED_LEFT_EYE_BOTTOM, lColor);
+        HAL::SetLED(LED_LEFT_EYE_LEFT, lColor);
 
         u32 rColor = msg.eye_right_color;
-        HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, rColor);
-        HAL::SetLED(HAL::LED_RIGHT_EYE_RIGHT, rColor);
-        HAL::SetLED(HAL::LED_RIGHT_EYE_BOTTOM, rColor);
-        HAL::SetLED(HAL::LED_RIGHT_EYE_LEFT, rColor);
+        HAL::SetLED(LED_RIGHT_EYE_TOP, rColor);
+        HAL::SetLED(LED_RIGHT_EYE_RIGHT, rColor);
+        HAL::SetLED(LED_RIGHT_EYE_BOTTOM, rColor);
+        HAL::SetLED(LED_RIGHT_EYE_LEFT, rColor);
       }
       
       void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
@@ -465,11 +465,7 @@ namespace Anki {
                                 msg.highValue,
                                 msg.percentileToMakeHigh);
       }
-      
-      void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
-        //PRINT("Processing play animation message\n");
-        AnimationController::Play((AnimationID_t)msg.animationID, msg.numLoops);
-      }
+     
 
       void ProcessIMURequestMessage(const IMURequest& msg) {
         IMUFilter::RecordAndSend(msg.length_ms);
@@ -487,15 +483,137 @@ namespace Anki {
         }
       }
       
-      void ProcessAbortAnimationMessage(const AbortAnimation& msg)
-      {
-        AnimationController::Stop();
-      }
+
       
       void ProcessAbortDockingMessage(const AbortDocking& msg)
       {
         DockingController::ResetDocker();
       }
+      
+      //
+      // Animation related:
+      //
+      
+      void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
+        //PRINT("Processing play animation message\n");
+        AnimationController::Play((AnimationID_t)msg.animationID, msg.numLoops);
+      }
+      
+      void ProcessAbortAnimationMessage(const AbortAnimation& msg)
+      {
+        AnimationController::Stop();
+      }
+      
+      void ProcessClearCannedAnimationMessage(const ClearCannedAnimation& msg)
+      {
+        AnimationController::ClearCannedAnimation(msg.animationID);
+      }
+      
+      
+      // Adds common message members to keyframe and adds it to the animation
+      // specified by the message
+      template<typename MSG_TYPE>
+      static void AddKeyFrameHelper(const MSG_TYPE& msg,
+                                    KeyFrame& kf)
+      {
+        PRINT("Adding keyframe with type %d to animation %d\n", kf.type, msg.animationID);
+        
+        kf.relTime_ms    = msg.relTime_ms;
+        kf.transitionIn  = static_cast<KeyFrameTransitionType>(msg.transitionIn);
+        kf.transitionOut = static_cast<KeyFrameTransitionType>(msg.transitionOut);
+        
+        AnimationController::AddKeyFrameToCannedAnimation(kf, static_cast<AnimationID_t>(msg.animationID));
+      } // SetCommonKeyFrameMembers()
+      
+      
+      void ProcessAddAnimKeyFrame_SetHeadAngleMessage(const AddAnimKeyFrame_SetHeadAngle& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::HEAD_ANGLE;
+        kf.SetHeadAngle.targetAngle = msg.targetAngle;
+        kf.SetHeadAngle.targetSpeed = msg.targetSpeed;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_StartHeadNodMessage(const AddAnimKeyFrame_StartHeadNod& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::START_HEAD_NOD;
+        kf.StartHeadNod.highAngle = msg.highAngle;
+        kf.StartHeadNod.lowAngle  = msg.lowAngle;
+        kf.StartHeadNod.period_ms = msg.period_ms;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_StopHeadNodMessage(const AddAnimKeyFrame_StopHeadNod& msg)
+      {
+        KeyFrame kf;
+        kf.type = KeyFrame::STOP_HEAD_NOD;
+        kf.StopHeadNod.finalAngle = msg.finalAngle;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_SetLiftHeightMessage(const AddAnimKeyFrame_SetLiftHeight& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::LIFT_HEIGHT;
+        kf.SetLiftHeight.targetHeight = msg.targetHeight_mm;
+        kf.SetLiftHeight.targetSpeed = msg.targetSpeed;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_StartLiftNodMessage(const AddAnimKeyFrame_StartLiftNod& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::START_LIFT_NOD;
+        kf.StartLiftNod.lowHeight  = msg.lowHeight_mm;
+        kf.StartLiftNod.highHeight = msg.highHeight_mm;
+        kf.StartLiftNod.period_ms  = msg.period_ms;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_StopLiftNodMessage(const AddAnimKeyFrame_StopLiftNod& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::STOP_LIFT_NOD;
+        kf.StopLiftNod.finalHeight  = msg.finalHeight_mm;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_DriveLineMessage(const AddAnimKeyFrame_DriveLine& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::DRIVE_LINE_SEGMENT;
+        kf.DriveLineSegment.relativeDistance = msg.relativeDistance_mm;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_SetLEDColorsMessage(const AddAnimKeyFrame_SetLEDColors& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::SET_LED_COLORS;
+        for(s32 iLED=0; iLED < NUM_LEDS; ++iLED) {
+          kf.SetLEDcolors.led[iLED] = msg.LEDcolors[iLED];
+        }
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      
       
 // ----------- Send messages -----------------
       

@@ -250,6 +250,91 @@ END_MESSAGE_DEFINITION(PlayAnimation)
 START_MESSAGE_DEFINITION(AbortAnimation, 1)
 END_MESSAGE_DEFINITION(AbortAnimation)
 
+// ClearCannedAnimation
+START_MESSAGE_DEFINITION(ClearCannedAnimation, 2)
+ADD_MESSAGE_MEMBER(u8, animationID)
+END_MESSAGE_DEFINITION(ClearCannedAnimation)
+
+// TODO: Make a macro for common keyframe members (but how to deal with decreasing size order?)
+
+// AddAnimKeyFrame_SetHeadAngle
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetHeadAngle, 2)
+ADD_MESSAGE_MEMBER(f32, targetAngle)
+ADD_MESSAGE_MEMBER(f32, targetSpeed)
+ADD_MESSAGE_MEMBER(u32, transitionIn)
+ADD_MESSAGE_MEMBER(u32, transitionOut)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetHeadAngle)
+
+// AddAnimKeyFrame_StartHeadNod
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartHeadNod, 2)
+ADD_MESSAGE_MEMBER(f32, lowAngle)
+ADD_MESSAGE_MEMBER(f32, highAngle)
+ADD_MESSAGE_MEMBER(u32, transitionIn)
+ADD_MESSAGE_MEMBER(u32, transitionOut)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u16, period_ms)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartHeadNod)
+
+// AddAnimKeyFrame_StopHeadNod
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_StopHeadNod, 2)
+ADD_MESSAGE_MEMBER(f32, finalAngle)
+ADD_MESSAGE_MEMBER(u32, transitionIn)
+ADD_MESSAGE_MEMBER(u32, transitionOut)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopHeadNod)
+
+// AddAnimKeyFrame_SetLiftHeight
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLiftHeight, 2)
+ADD_MESSAGE_MEMBER(f32, targetSpeed)
+ADD_MESSAGE_MEMBER(u32, transitionIn)
+ADD_MESSAGE_MEMBER(u32, transitionOut)
+ADD_MESSAGE_MEMBER(u16, targetHeight_mm)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLiftHeight)
+
+// AddAnimKeyFrame_StartLiftNod
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartLiftNod, 2)
+ADD_MESSAGE_MEMBER(u32, transitionIn)
+ADD_MESSAGE_MEMBER(u32, transitionOut)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u16, period_ms)
+ADD_MESSAGE_MEMBER(u8,  lowHeight_mm)
+ADD_MESSAGE_MEMBER(u8,  highHeight_mm)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartLiftNod)
+
+// AddAnimKeyFrame_StopLiftNod
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_StopLiftNod, 2)
+ADD_MESSAGE_MEMBER(u32, transitionIn)
+ADD_MESSAGE_MEMBER(u32, transitionOut)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  finalHeight_mm)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopLiftNod)
+
+// AddAnimKeyFrame_SetLEDColors
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLEDColors, 2)
+ADD_MESSAGE_MEMBER_ARRAY(u32, LEDcolors, 8) // TODO: How do we make NUM_LEDS here match HAL::NUM_LEDS?
+ADD_MESSAGE_MEMBER(u32, transitionIn)
+ADD_MESSAGE_MEMBER(u32, transitionOut)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLEDColors)
+
+// AddAnimKeyFrame_DriveLine
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_DriveLine, 2)
+ADD_MESSAGE_MEMBER(u32, transitionIn)
+ADD_MESSAGE_MEMBER(u32, transitionOut)
+ADD_MESSAGE_MEMBER(s16, relativeDistance_mm)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_DriveLine)
+
 // IMURequest
 START_MESSAGE_DEFINITION(IMURequest, 1)
 ADD_MESSAGE_MEMBER(u32, length_ms)

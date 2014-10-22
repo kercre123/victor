@@ -182,10 +182,10 @@ namespace Anki {
         
         
         /////// LightTest ////////
-        HAL::LEDId ledID = (HAL::LEDId)0;
+        LEDId ledID = (LEDId)0;
         u8 ledColorIdx = 0;
         const u8 LED_COLOR_LIST_SIZE = 3;
-        const HAL::LEDColor LEDColorList[LED_COLOR_LIST_SIZE] = {HAL::LED_RED, HAL::LED_GREEN, HAL::LED_BLUE};
+        const LEDColor LEDColorList[LED_COLOR_LIST_SIZE] = {LED_RED, LED_GREEN, LED_BLUE};
         ///// End of LightTest ///
         
         // Current test mode
@@ -780,7 +780,7 @@ namespace Anki {
       {
         PRINT("\n==== Starting LightTest =====\n");
         ticCnt_ = 0;
-        ledID = (HAL::LEDId)0;
+        ledID = (LEDId)0;
         ledColorIdx = 0;
         return RESULT_OK;
       }
@@ -794,9 +794,9 @@ namespace Anki {
           HAL::SetLED(ledID, LEDColorList[ledColorIdx]);
           
           // Increment led
-          ledID = (HAL::LEDId)((u8)ledID+1);
-          if (ledID == HAL::NUM_LEDS) {
-            ledID = (HAL::LEDId)0;
+          ledID = (LEDId)((u8)ledID+1);
+          if (ledID == NUM_LEDS) {
+            ledID = (LEDId)0;
             
             // Increment color
             if (++ledColorIdx == LED_COLOR_LIST_SIZE) {

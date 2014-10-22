@@ -115,7 +115,17 @@ namespace Anki {
     const AnimationID_t ANIM_WIGGLE                 = 4;
     const AnimationID_t ANIM_BLINK                  = 5;
     const AnimationID_t ANIM_UPDOWNLEFTRIGHT        = 6;
-    const AnimationID_t ANIM_NUM_ANIMATIONS         = 7;
+    const AnimationID_t ANIM_LIFT_NOD               = 7;
+    const AnimationID_t ANIM_NUM_ANIMATIONS         = 8;
+    
+    // List of KeyFrame Transition Types
+    enum KeyFrameTransitionType
+    {
+      KF_TRANSITION_LINEAR = 0
+      ,KF_TRANSITION_EASE_IN
+      ,KF_TRANSITION_EASE_OUT
+      ,KF_TRANSITION_INSTANT    // Only valid / physically-possible for LEDs!
+    };
     
     // List of sound schemes
     typedef enum {
@@ -150,6 +160,32 @@ namespace Anki {
       ,NUM_PROX
     } ProxSensor_t;
     
+    // LED identifiers and colors
+    // Updated for "neutral" (non-hardware specific) order in 2.1
+    enum LEDId {
+      LED_RIGHT_EYE_TOP = 0,
+      LED_RIGHT_EYE_RIGHT,
+      LED_RIGHT_EYE_BOTTOM,
+      LED_RIGHT_EYE_LEFT,
+      LED_LEFT_EYE_TOP,
+      LED_LEFT_EYE_RIGHT,
+      LED_LEFT_EYE_BOTTOM,
+      LED_LEFT_EYE_LEFT,
+      NUM_LEDS
+    };
+    
+    // The color format is identical to HTML Hex Triplets (RGB)
+    enum LEDColor {
+      LED_OFF =   0x000000,
+      LED_RED =   0xff0000,
+      LED_GREEN = 0x00ff00,
+      LED_YELLOW= 0xffff00,
+      LED_BLUE =  0x0000ff,
+      LED_PURPLE= 0xff00ff,
+      LED_CYAN =  0x00ffff,
+      LED_WHITE = 0xffffff
+    };
+
     
     // For DEV only
     typedef struct {

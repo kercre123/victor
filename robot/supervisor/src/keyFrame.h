@@ -28,37 +28,30 @@ struct KeyFrame
   // defining it as a new struct in the union below.
   enum Type
   {
-    HEAD_ANGLE          = 0,
-    START_HEAD_NOD      = 1,
-    STOP_HEAD_NOD       = 2,
-    LIFT_HEIGHT         = 3,
-    DRIVE_LINE_SEGMENT  = 4,
-    DRIVE_ARC           = 5,
-    BACK_AND_FORTH      = 6,
-    START_WIGGLE        = 7,
-    POINT_TURN          = 8,
-    PLAY_SOUND          = 9,
-    EYE_BLINK           = 10,
-    SET_LED_COLORS      = 11,
-    START_LIFT_NOD      = 12,
-    STOP_LIFT_NOD       = 13,
-    NUM_TYPES           = 14
+    HEAD_ANGLE = 0,
+    START_HEAD_NOD,
+    STOP_HEAD_NOD,
+    LIFT_HEIGHT,
+    DRIVE_LINE_SEGMENT,
+    DRIVE_ARC,
+    BACK_AND_FORTH,
+    START_WIGGLE,
+    POINT_TURN,
+    PLAY_SOUND,
+    EYE_BLINK,
+    SET_LED_COLORS,
+    START_LIFT_NOD,
+    STOP_LIFT_NOD,
+    NUM_TYPES
   };
-  
-  enum TransitionType
-  {
-    LINEAR              = 0,
-    EASE_IN             = 1,
-    EASE_OUT            = 2,
-    INSTANT             = 3  // Only valid / physically-possible for LEDs!
-  };
+
   
   // Common Keyframe elements:
   Type           type;
   u16            relTime_ms; // time relative to first keyframe
-  u16            duration_ms;
-  TransitionType transitionIn;
-  TransitionType transitionOut;
+  
+  KeyFrameTransitionType transitionIn;
+  KeyFrameTransitionType transitionOut;
   
   // Define all the possible type-specific KeyFrame info as structs here, and
   // then create an "instance" of each of these in the union below. It would
@@ -74,10 +67,9 @@ struct KeyFrame
   // Command a canned head nodding action between two angles
   // Must be used in conjunction with a StopHeadNod_t keyframe after it.
   struct StartHeadNod_t {
-    f32 lowAngle;
-    f32 highAngle;
-    f32 speed;
-    f32 accel;
+    f32 lowAngle;  // radians
+    f32 highAngle; // radians
+    u16 period_ms;
   };
   
   struct StopHeadNod_t {
@@ -86,26 +78,24 @@ struct KeyFrame
   
   // Directly set lift's height and speed
   struct SetLiftHeight_t {
-    f32 targetHeight;
-    f32 targetSpeed;
+    u16 targetHeight; // mm
+    u16 targetSpeed;  // mm/s
   };
   
   // Command a canned lift nodding action between two heights
   // Must be used in conjunction with a StopLiftNod_t keyframe after it.
   struct StartLiftNod_t {
-    f32 lowHeight;
-    f32 highHeight;
-    f32 speed;
-    f32 accel;
+    u8 lowHeight;  // mm
+    u8 highHeight; // mm
+    u16 period_ms;
   };
   
   struct StopLiftNod_t {
-    f32 finalHeight;
+    u8 finalHeight;
   };
-
   
   struct DriveLineSegment_t {
-    f32 relativeDistance; // +ve for fwd, -ve for backward
+    s16 relativeDistance; // in mm, +ve for fwd, -ve for backward
     f32 targetSpeed;
   };
   
@@ -164,7 +154,7 @@ struct KeyFrame
   // Set the color for all LEDs
   //
   struct SetLEDcolors_t {
-    u32 led[HAL::NUM_LEDS];
+    u32 led[NUM_LEDS];
   };
   
   // Using a union of structs here (determined by a check of the Type above)
@@ -198,8 +188,7 @@ struct KeyFrame
   // Use this value to skip setting a given LED color and leave it at whatever
   // color it was.
   static const u32 UNSPECIFIED_COLOR = 0xff000000;
-  
-  
+    
   void TransitionOutOf(const u32 animStartTime_ms) const;
   void TransitionInto(const u32 animStartTime_ms)  const;
 

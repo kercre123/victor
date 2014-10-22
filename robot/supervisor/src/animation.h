@@ -29,13 +29,15 @@ namespace Cozmo {
   public:
     
     enum SubSystems {
-      HEAD             = 0,
-      LIFT             = 1,
-      POSE             = 2,
-      SOUND            = 3,
-      LIGHTS           = 4, // TODO: Separate eyes from other lights eventually?
-      NUM_SUBSYSTEMS   = 5
+      HEAD = 0,
+      LIFT,
+      POSE,
+      SOUND,
+      LIGHTS, // TODO: Separate eyes from other lights eventually?
+      NUM_SUBSYSTEMS
     };
+    
+    Animation();
     
     //
     // Methods for controlling playback:
@@ -57,10 +59,11 @@ namespace Cozmo {
     // Methods for defining animations:
     //
     
+    // True if any subsystems have frames defined.
+    bool IsDefined();
     void Clear();
     void SetID(AnimationID_t newID);
-    Result AddKeyFrame(const KeyFrame&             keyframe,
-                       const Animation::SubSystems whichSubSystem);
+    Result AddKeyFrame(const KeyFrame& keyframe);
     
   private:
     
@@ -80,7 +83,11 @@ namespace Cozmo {
       bool     isReady;   // true once first frame is "in position"
       s32      numFrames;
       s32      currFrame;
+      
+      KeyFrameList();
     } _subSystems[NUM_SUBSYSTEMS];
+    
+    static SubSystems GetSubSystem(const KeyFrame::Type kfType);
     
     bool _allSubSystemsReady;
     bool CheckSubSystemReadiness();

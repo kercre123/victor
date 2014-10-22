@@ -63,7 +63,7 @@ namespace Anki {
       
       // Nodding
       bool isNodding_ = false;
-      f32 preNodAngle_  = 0.f;
+      //f32 preNodAngle_  = 0.f;
       f32 nodLowAngle_  = 0.f;
       f32 nodHighAngle_ = 0.f;
       s32 numNodsDesired_ = 0;
@@ -457,15 +457,20 @@ namespace Anki {
     }
     
     void StartNodding(const f32 lowAngle, const f32 highAngle,
-                      const f32 speed, const f32 accel,
-                      const s32 numLoops)
+                      const u16 period_ms, const s32 numLoops)
     {
       //AnkiConditionalErrorAndReturnValue(keyFrame.type != KeyFrame::HEAD_NOD, RESULT_FAIL, "HeadNodStart.WrongKeyFrameType", "\n");
       
-      preNodAngle_ = GetAngleRad();
+      //preNodAngle_ = GetAngleRad();
       nodLowAngle_  = lowAngle;
       nodHighAngle_ = highAngle;
-      SetSpeedAndAccel(speed, accel);
+      
+      const f32 dAngle = highAngle - lowAngle;
+      const f32 speed_rad_per_sec = (2.f * dAngle * 1000.f) / static_cast<f32>(period_ms);
+      
+      //SetAngularVelocity(speed);
+      SetSpeedAndAccel(speed_rad_per_sec, 1000.f); // TODO: need sane acceleration value
+      
       numNodsDesired_  = numLoops;
       numNodsComplete_ = 0;
       isNodding_ = true;
@@ -477,7 +482,7 @@ namespace Anki {
     
     void StopNodding()
     {
-      SetDesiredAngle_internal(preNodAngle_);
+      //SetDesiredAngle_internal(preNodAngle_);
       isNodding_ = false;
     }
     

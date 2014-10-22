@@ -25,6 +25,25 @@
 namespace Anki {
 namespace Cozmo {
   
+  Animation::Animation()
+  : _ID(0)
+  , _startTime_ms(0)
+  , _isPlaying(false)
+  , _allSubSystemsReady(false)
+  {
+
+  }
+  
+  
+  Animation::KeyFrameList::KeyFrameList()
+  : isReady(false)
+  , numFrames(0)
+  , currFrame(0)
+  {
+    
+  }
+  
+  
   void Animation::Init()
   {
     PRINT("Init Animation %d\n", _ID);
@@ -126,6 +145,7 @@ namespace Cozmo {
   {
     if(CheckSubSystemReadiness() == false) {
       // Wait for all subsystems to be ready
+      //PRINT("Waiting for all subsystems to be ready to start animation...\n");
       return;
     }
 
@@ -159,7 +179,7 @@ namespace Cozmo {
           ++subSystem.currFrame;
           
           if(subSystem.currFrame < subSystem.numFrames) {
-            PRINT("Moving to keyframe %d of %d in subsystem %d\n", subSystem.currFrame, subSystem.numFrames, iSubSystem);
+            PRINT("Moving to keyframe %d of %d in subsystem %d\n", subSystem.currFrame+1, subSystem.numFrames, iSubSystem);
             KeyFrame& nextKeyFrame = subSystem.frames[subSystem.currFrame];
             nextKeyFrame.TransitionInto(_startTime_ms);
           } else {
@@ -206,6 +226,20 @@ namespace Cozmo {
     PRINT("Stopped playing animation %d.\n", _ID);
   }
   
+  
+  bool Animation::IsDefined()
+  {
+    for(s32 iSubSystem = 0; iSubSystem < NUM_SUBSYSTEMS; ++iSubSystem)
+    {
+      if(_subSystems[iSubSystem].numFrames > 0) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  
   void Animation::Clear()
   {
     for(s32 iSubSystem = 0; iSubSystem < NUM_SUBSYSTEMS; ++iSubSystem)
@@ -216,9 +250,49 @@ namespace Cozmo {
     }
   }
   
-  Result Animation::AddKeyFrame(const KeyFrame&             keyframe,
-                                const Animation::SubSystems whichSubSystem)
+  Animation::SubSystems Animation::GetSubSystem(const KeyFrame::Type kfType)
   {
+    switch(kfType)
+    {
+      case KeyFrame::HEAD_ANGLE:
+      case KeyFrame::START_HEAD_NOD:
+      case KeyFrame::STOP_HEAD_NOD:
+        return HEAD;
+        
+      case KeyFrame::LIFT_HEIGHT:
+      case KeyFrame::START_LIFT_NOD:
+      case KeyFrame::STOP_LIFT_NOD:
+        return LIFT;
+        
+      case KeyFrame::DRIVE_LINE_SEGMENT:
+      case KeyFrame::DRIVE_ARC:
+      case KeyFrame::BACK_AND_FORTH:
+      case KeyFrame::START_WIGGLE:
+      case KeyFrame::POINT_TURN:
+      //case KeyFrame::STOP_WIGGLE:
+        return POSE;
+        
+      case KeyFrame::SET_LED_COLORS:
+      case KeyFrame::EYE_BLINK:
+        return LIGHTS;
+        
+      case KeyFrame::PLAY_SOUND:
+        return SOUND;
+        
+      default:
+        PRINT("Unknown subsystem for KeyFrame type %d.\n", kfType);
+        return NUM_SUBSYSTEMS;
+        
+    } // switch(kfType)
+    
+  } // GetSubSystem()
+  
+  
+  
+  Result Animation::AddKeyFrame(const KeyFrame& keyframe)
+  {
+    const SubSystems whichSubSystem = Animation::GetSubSystem(keyframe.type);
+    
     Animation::KeyFrameList& animSubSystem = _subSystems[whichSubSystem];
     
     AnkiConditionalErrorAndReturnValue(animSubSystem.numFrames < Animation::MAX_KEYFRAMES,

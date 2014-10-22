@@ -572,7 +572,7 @@ namespace Anki {
               // Animations
               case CKEY_ANIMATION_NOD:
               {
-                SendAnimation(ANIM_HEAD_NOD, 2, SOUND_OK_GOT_IT);
+                SendAnimation(ANIM_HEAD_NOD_SLOW, 1, SOUND_OK_GOT_IT);
                 break;
               }
               case CKEY_ANIMATION_BACK_AND_FORTH:
@@ -585,13 +585,18 @@ namespace Anki {
                 SendAnimation(ANIM_BLINK, 5, NUM_SOUNDS);
                 break;
               }
+              case (s32)'$':
+              {
+                SendAnimation(ANIM_LIFT_NOD, 1, NUM_SOUNDS);
+                break;
+              }
               case CKEY_ANIMATION_TOGGLE:
               {
                 //const s32 NUM_ANIM_TESTS = 4;
                 //const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_HEAD_NOD, ANIM_HEAD_NOD_SLOW, ANIM_BLINK, ANIM_UPDOWNLEFTRIGHT};
                 
-                const s32 NUM_ANIM_TESTS = 2;
-                const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_BLINK, ANIM_UPDOWNLEFTRIGHT};
+                const s32 NUM_ANIM_TESTS = 4;
+                const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_BLINK, ANIM_HEAD_NOD, ANIM_HEAD_NOD_SLOW, ANIM_LIFT_NOD};
                 
                 static s32 iAnimTest = 0;
                 

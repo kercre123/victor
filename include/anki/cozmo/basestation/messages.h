@@ -43,6 +43,8 @@ namespace Anki {
     {
     public:
       
+      virtual ~Message();
+      
       virtual u8 GetID() const = 0;
       
       virtual void GetBytes(u8* buffer) const = 0;

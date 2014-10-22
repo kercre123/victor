@@ -25,6 +25,11 @@
 namespace Anki {
   namespace Cozmo {
     
+    Message::~Message()
+    {
+      
+    }
+    
 #define MESSAGE_BASECLASS_NAME Message
     
     // Impelement all the message classes' constructors from byte buffers

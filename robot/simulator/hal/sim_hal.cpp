@@ -101,7 +101,7 @@ namespace Anki {
       HAL::IDCard idCard_;
       
       // Lights
-      webots::LED* leds_[HAL::NUM_LEDS] = {0};
+      webots::LED* leds_[NUM_LEDS] = {0};
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -288,15 +288,15 @@ namespace Anki {
       }
       
       // Lights
-      leds_[HAL::LED_LEFT_EYE_TOP] = webotRobot_.getLED("LeftEyeLED_top");
-      leds_[HAL::LED_LEFT_EYE_LEFT] = webotRobot_.getLED("LeftEyeLED_left");
-      leds_[HAL::LED_LEFT_EYE_RIGHT] = webotRobot_.getLED("LeftEyeLED_right");
-      leds_[HAL::LED_LEFT_EYE_BOTTOM] = webotRobot_.getLED("LeftEyeLED_bottom");
+      leds_[LED_LEFT_EYE_TOP] = webotRobot_.getLED("LeftEyeLED_top");
+      leds_[LED_LEFT_EYE_LEFT] = webotRobot_.getLED("LeftEyeLED_left");
+      leds_[LED_LEFT_EYE_RIGHT] = webotRobot_.getLED("LeftEyeLED_right");
+      leds_[LED_LEFT_EYE_BOTTOM] = webotRobot_.getLED("LeftEyeLED_bottom");
       
-      leds_[HAL::LED_RIGHT_EYE_TOP] = webotRobot_.getLED("RightEyeLED_top");
-      leds_[HAL::LED_RIGHT_EYE_LEFT] = webotRobot_.getLED("RightEyeLED_left");
-      leds_[HAL::LED_RIGHT_EYE_RIGHT] = webotRobot_.getLED("RightEyeLED_right");
-      leds_[HAL::LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
+      leds_[LED_RIGHT_EYE_TOP] = webotRobot_.getLED("RightEyeLED_top");
+      leds_[LED_RIGHT_EYE_LEFT] = webotRobot_.getLED("RightEyeLED_left");
+      leds_[LED_RIGHT_EYE_RIGHT] = webotRobot_.getLED("RightEyeLED_right");
+      leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
       
       
       isInitialized = true;

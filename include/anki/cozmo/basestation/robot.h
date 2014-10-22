@@ -477,6 +477,25 @@ namespace Anki {
       void SetPickedUp(bool t);
       void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
 
+      ///////// Animation /////////
+      class KeyFrameList
+      {
+      public:
+        ~KeyFrameList();
+        
+        void AddKeyFrame(Message* msg);
+        
+        const std::vector<Message*>& GetKeyFrameMessages() {
+          return _keyFrameMessages;
+        }
+        
+      private:
+        std::vector<Message*> _keyFrameMessages;
+      }; // class KeyFrameList
+      
+      std::map<AnimationID_t, KeyFrameList> _cannedAnimations;
+      void DefineCannedAnimations();
+      void SendCannedAnimations();
       
       ///////// Messaging ////////
       // These methods actually do the creation of messages and sending

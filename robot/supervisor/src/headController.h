@@ -54,7 +54,7 @@ namespace Anki {
       // SetDesiredAngle() or StopNodding() are called or the number of loops (up/down cycles)
       // is completed. If StopNodding() is called, head will be returned to the original
       // angle it started at. Use numLoops <= 0 to nod "forever".
-      void StartNodding(const f32 lowAngle, const f32 highAngle, const f32 speed, const f32 accel, const s32 numLoops);
+      void StartNodding(const f32 lowAngle, const f32 highAngle, const u16 period_ms, const s32 numLoops);
       void StopNodding();
       bool IsNodding();
       

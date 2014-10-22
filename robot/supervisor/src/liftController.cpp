@@ -95,7 +95,7 @@ namespace Anki {
         f32 power_ = 0;
 
         // Nodding
-        f32 preNodHeight_    = 0.f;
+        //f32 preNodHeight_    = 0.f;
         f32 nodLowHeight_    = 0.f;
         f32 nodHighHeight_   = 0.f;
         s32 numNodsDesired_  = 0;
@@ -132,7 +132,7 @@ namespace Anki {
 
       // Returns the angle between the shoulder joint and the wrist joint.
       f32 Height2Rad(f32 height_mm) {
-        assert(height_mm >= LIFT_HEIGHT_LOWDOCK && height_mm <= LIFT_HEIGHT_CARRY);
+        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
         return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
       }
       
@@ -282,6 +282,11 @@ namespace Anki {
         accel_rad_per_sec2 = accelRad_;
       }
       
+      void SetLinearVelocity(const f32 mm_per_sec)
+      {
+        const f32 rad_per_sec = Height2Rad(mm_per_sec);
+        SetAngularVelocity(rad_per_sec);
+      }
       
       void SetAngularVelocity(const f32 rad_per_sec)
       {
@@ -617,22 +622,21 @@ namespace Anki {
           power_ = CLIP(power_, -1.0, 1.0);
           HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
           
-          if(isNodding_)
-          {
-            // Note that this is inside else(not inPosition), so we must be
-            // inPosition if we get here.
-            if (GetLastCommandedHeightMM() == nodHighHeight_) {
-              SetDesiredHeight_internal(nodLowHeight_);
-            } else if (GetLastCommandedHeightMM() == nodLowHeight_) {
-              SetDesiredHeight_internal(nodHighHeight_);
-              ++numNodsComplete_;
-              if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
-                StopNodding();
-              }
-            }
-          } // if isNodding
-          
         } // if not in position
+        else if(isNodding_)
+        {
+          // Note that this is inside else(not inPosition), so we must be
+          // inPosition if we get here.
+          if (GetLastCommandedHeightMM() == nodHighHeight_) {
+            SetDesiredHeight_internal(nodLowHeight_);
+          } else if (GetLastCommandedHeightMM() == nodLowHeight_) {
+            SetDesiredHeight_internal(nodHighHeight_);
+            ++numNodsComplete_;
+            if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
+              StopNodding();
+            }
+          }
+        } // else if isNodding
         
         
         if (IsRelaxed() && calibPending_) {
@@ -656,13 +660,17 @@ namespace Anki {
       
       
       void StartNodding(const f32 lowHeight, const f32 highHeight,
-                        const f32 speed, const f32 accel,
-                        const s32 numLoops)
+                        const u16 period_ms, const s32 numLoops)
       {
-        preNodHeight_  = GetHeightMM();
+        //preNodHeight_  = GetHeightMM();
         nodLowHeight_  = lowHeight;
         nodHighHeight_ = highHeight;
-        SetSpeedAndAccel(speed, accel);
+        
+        const f32 dAngle = Height2Rad(highHeight) - Height2Rad(lowHeight);
+        const f32 speed_rad_per_sec = (2.f*dAngle*1000.f) / static_cast<f32>(period_ms);
+        
+        SetSpeedAndAccel(speed_rad_per_sec, 1000.f); // TODO: need sane acceleration value
+        
         numNodsDesired_  = numLoops;
         numNodsComplete_ = 0;
         isNodding_ = true;
@@ -674,7 +682,7 @@ namespace Anki {
       
       void StopNodding()
       {
-        SetDesiredHeight_internal(preNodHeight_);
+        //SetDesiredHeight_internal(preNodHeight_);
         isNodding_ = false;
       }
       

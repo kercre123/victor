@@ -43,9 +43,8 @@ namespace Anki {
       Result ClearCannedAnimation(const AnimationID_t whichAnimation);
       
       // (Adds frame to end of specified animation/subsystem)
-      Result AddKeyFrameToCannedAnimation(const KeyFrame&             keyframe,
-                                          const AnimationID_t         whichAnimation,
-                                          const Animation::SubSystems whichSubSystem);
+      Result AddKeyFrameToCannedAnimation(const KeyFrame&     keyframe,
+                                          const AnimationID_t whichAnimation);
 
     } // namespace AnimationController
   } // namespcae Cozmo

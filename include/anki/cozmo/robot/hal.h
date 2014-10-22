@@ -40,6 +40,7 @@
 #include "messages.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 
 #define HAVE_ACTIVE_GRIPPER 0
 
@@ -389,33 +390,9 @@ namespace Anki
 // #pragma mark --- UI LEDS ---
       /////////////////////////////////////////////////////////////////////
       // UI LEDs
-      // Updated for "neutral" (non-hardware specific) order in 2.1
-      enum LEDId {
-        LED_RIGHT_EYE_TOP = 0,
-        LED_RIGHT_EYE_RIGHT,
-        LED_RIGHT_EYE_BOTTOM,
-        LED_RIGHT_EYE_LEFT,
-        LED_LEFT_EYE_TOP,
-        LED_LEFT_EYE_RIGHT,
-        LED_LEFT_EYE_BOTTOM,
-        LED_LEFT_EYE_LEFT,
-        NUM_LEDS
-      };
-
+      
       // Set the intensity for each LED channel in the range [0, 255]
       void LEDSet(u8 leds[NUM_LEDS]);
-      
-      // The color format is identical to HTML Hex Triplets (RGB)
-      enum LEDColor {
-        LED_OFF =   0x000000,
-        LED_RED =   0xff0000,
-        LED_GREEN = 0x00ff00,
-        LED_YELLOW= 0xffff00,
-        LED_BLUE =  0x0000ff,
-        LED_PURPLE= 0xff00ff,
-        LED_CYAN =  0x00ffff,
-        LED_WHITE = 0xffffff
-      };
       
       // Light up one of the eye LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, u32 color);

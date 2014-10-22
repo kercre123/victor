@@ -28,8 +28,7 @@ namespace Cozmo {
       {
         HeadController::StartNodding(StartHeadNod.lowAngle,
                                      StartHeadNod.highAngle,
-                                     StartHeadNod.speed,
-                                     StartHeadNod.accel,
+                                     StartHeadNod.period_ms,
                                      0);
         break;
       }
@@ -37,6 +36,7 @@ namespace Cozmo {
       case KeyFrame::STOP_HEAD_NOD:
       {
         HeadController::StopNodding();
+        //HeadController::SetDesiredAngle(StopHeadNod.finalAngle);
         break;
       }
         
@@ -44,8 +44,7 @@ namespace Cozmo {
       {
         LiftController::StartNodding(StartLiftNod.lowHeight,
                                      StartLiftNod.highHeight,
-                                     StartLiftNod.speed,
-                                     StartLiftNod.accel,
+                                     StartLiftNod.period_ms,
                                      0);
         break;
       }
@@ -59,16 +58,22 @@ namespace Cozmo {
       case KeyFrame::SET_LED_COLORS:
       {
         // TODO: Move this into some kind of LightController file/namespace
-        for(s32 iLED=0; iLED<HAL::NUM_LEDS; ++iLED) {
+        for(s32 iLED=0; iLED<NUM_LEDS; ++iLED) {
           const u32& currLEDcolor = SetLEDcolors.led[iLED];
           if(currLEDcolor != KeyFrame::UNSPECIFIED_COLOR) {
-            HAL::SetLED(static_cast<HAL::LEDId>(iLED), currLEDcolor);
+            HAL::SetLED(static_cast<LEDId>(iLED), currLEDcolor);
           }
         }
         break;
       }
         
       case KeyFrame::POINT_TURN:
+      {
+        SteeringController::ExecuteDirectDrive(0.f, 0.f);
+        break;
+      }
+        
+      case KeyFrame::DRIVE_LINE_SEGMENT:
       {
         SteeringController::ExecuteDirectDrive(0.f, 0.f);
         break;
@@ -91,7 +96,9 @@ namespace Cozmo {
     {
       case KeyFrame::HEAD_ANGLE:
       {
-        HeadController::SetAngularVelocity(SetHeadAngle.targetSpeed);
+        const f32 dt_ms = animStartTime_ms + relTime_ms - HAL::GetTimeStamp();
+        const f32 dAngle = SetHeadAngle.targetAngle - HeadController::GetAngleRad();
+        HeadController::SetAngularVelocity((dAngle*1000.f) / dt_ms);
         HeadController::SetDesiredAngle(SetHeadAngle.targetAngle);
         
         // TODO: Switch to method that takes desired time into account:
@@ -105,8 +112,9 @@ namespace Cozmo {
         
       case KeyFrame::LIFT_HEIGHT:
       {
-        
-        LiftController::SetAngularVelocity(SetLiftHeight.targetSpeed);
+        const f32 dt_ms = animStartTime_ms + relTime_ms - HAL::GetTimeStamp();
+        const f32 dHeight = SetLiftHeight.targetHeight - LiftController::GetHeightMM();
+        LiftController::SetLinearVelocity((dHeight*1000.f) / dt_ms);
         LiftController::SetDesiredHeight(SetLiftHeight.targetHeight);
         
         // TODO: Switch to method that takes desired time into account:
@@ -126,6 +134,15 @@ namespace Cozmo {
         //const f32 wheelSpeed = (TurnInPlace.relativeAngle < 0 ? -TurnInPlace.targetSpeed : TurnInPlace.targetSpeed);
         SteeringController::ExecuteDirectDrive(wheelSpeed, -wheelSpeed);
         
+        break;
+      }
+        
+      case KeyFrame::DRIVE_LINE_SEGMENT:
+      {
+        // TODO: Switch to new method that accepts duration and computes the right velocity profile
+        const f32 duration_ms = animStartTime_ms + relTime_ms - HAL::GetTimeStamp();
+        const f32 wheelSpeed = (DriveLineSegment.relativeDistance * 1000.f) / duration_ms;
+        SteeringController::ExecuteDirectDrive(wheelSpeed, wheelSpeed);
         break;
       }
         
@@ -186,6 +203,12 @@ namespace Cozmo {
       }
         
       case KeyFrame::POINT_TURN:
+      {
+        SteeringController::ExecuteDirectDrive(0.f, 0.f);
+        break;
+      }
+        
+      case KeyFrame::DRIVE_LINE_SEGMENT:
       {
         SteeringController::ExecuteDirectDrive(0.f, 0.f);
         break;

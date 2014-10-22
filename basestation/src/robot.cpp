@@ -88,6 +88,13 @@ namespace Anki {
       reader.parse(jsonFile, mprims);
       jsonFile.close();
       
+      // TODO: Point DefineCannedAnimations at a json file with all animations
+      DefineCannedAnimations();
+      
+      // Immediately send the canned animations out
+      // (Eventually do this on demand elsewhere?)
+      SendCannedAnimations();
+      
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
       _longPathPlanner  = new LatticePlanner(&_blockWorld, mprims);
@@ -110,6 +117,8 @@ namespace Anki {
       _shortPathPlanner = nullptr;
       
       _selectedPathPlanner = nullptr;
+      
+      _cannedAnimations.clear();
     }
     
     void Robot::SetPickedUp(bool t)
@@ -1357,6 +1366,217 @@ namespace Anki {
     {
       _behaviorMgr.StartMode(mode);
     }
+    
+    
+    // ============ Animations ===============
+    
+    Robot::KeyFrameList::~KeyFrameList()
+    {
+      for(Message* msg : _keyFrameMessages) {
+        if(msg != nullptr) {
+          delete msg;
+        }
+      }
+    }
+    
+    void Robot::KeyFrameList::AddKeyFrame(Message* msg)
+    {
+      if(msg != nullptr) {
+        _keyFrameMessages.push_back(msg);
+      } else {
+        PRINT_NAMED_WARNING("Robot.KeyFrameList.AddKeyFrame.NullMessagePtr",
+                            "Encountered NULL message adding canned keyframe.\n");
+      }
+    }
+    
+    
+    void Robot::SendCannedAnimations()
+    {
+      for(auto & messagesByID : _cannedAnimations)
+      {
+        // First send a clear command for this animation ID, before populating
+        // it with keyframes
+        MessageClearCannedAnimation clearMsg;
+        clearMsg.animationID = messagesByID.first;
+        _msgHandler->SendMessage(_ID, clearMsg);
+
+        // Now send all the keyframe definition messages for this animation ID
+        for(auto message : messagesByID.second.GetKeyFrameMessages())
+        {
+          if(message != nullptr) {
+            _msgHandler->SendMessage(_ID, *message);
+          } else {
+            PRINT_NAMED_WARNING("Robot.SendCannedAnimations.NullMessagePtr",
+                                "Robot %d encountered NULL message sending canned animations.\n", _ID);
+          }
+        }
+      }
+    }
+    
+    void Robot::DefineCannedAnimations()
+    {
+
+      // TODO: Read these from json files
+      
+      //
+      // FAST HEAD NOD - 3 fast nods
+      //
+      {
+        // Start the nod
+        MessageAddAnimKeyFrame_StartHeadNod* startNodMsg = new MessageAddAnimKeyFrame_StartHeadNod();
+        startNodMsg->animationID = ANIM_HEAD_NOD;
+        startNodMsg->relTime_ms = 0;
+        startNodMsg->lowAngle  = DEG_TO_RAD(-10);
+        startNodMsg->highAngle = DEG_TO_RAD( 10);
+        startNodMsg->period_ms = 600;
+        _cannedAnimations[ANIM_HEAD_NOD].AddKeyFrame(startNodMsg);
+        
+        
+        // Stop the nod
+        MessageAddAnimKeyFrame_StopHeadNod* stopNodMsg = new MessageAddAnimKeyFrame_StopHeadNod();
+        stopNodMsg->animationID = ANIM_HEAD_NOD;
+        stopNodMsg->relTime_ms = 1500;
+        stopNodMsg->finalAngle = 0.f;
+        _cannedAnimations[ANIM_HEAD_NOD].AddKeyFrame(stopNodMsg);
+        
+      } // FAST HEAD NOD
+      
+      //
+      // SLOW HEAD NOD - 2 slow nods
+      //
+      {
+        // Start the nod
+        MessageAddAnimKeyFrame_StartHeadNod* startNodMsg = new MessageAddAnimKeyFrame_StartHeadNod();
+        startNodMsg->animationID = ANIM_HEAD_NOD_SLOW;
+        startNodMsg->relTime_ms = 0;
+        startNodMsg->lowAngle  = DEG_TO_RAD(-25);
+        startNodMsg->highAngle = DEG_TO_RAD( 25);
+        startNodMsg->period_ms = 1200;
+        _cannedAnimations[ANIM_HEAD_NOD_SLOW].AddKeyFrame(startNodMsg);
+        
+        
+        // Stop the nod
+        MessageAddAnimKeyFrame_StopHeadNod* stopNodMsg = new MessageAddAnimKeyFrame_StopHeadNod();
+        stopNodMsg->animationID = ANIM_HEAD_NOD_SLOW;
+        stopNodMsg->relTime_ms = 2400;
+        stopNodMsg->finalAngle = 0.f;
+        _cannedAnimations[ANIM_HEAD_NOD_SLOW].AddKeyFrame(stopNodMsg);
+      } // SLOW HEAD NOD
+      
+      //
+      // LIFT NOD
+      //
+      {
+        // Start the nod
+        MessageAddAnimKeyFrame_StartLiftNod* startNodMsg = new MessageAddAnimKeyFrame_StartLiftNod();
+        startNodMsg->animationID = ANIM_LIFT_NOD;
+        startNodMsg->relTime_ms = 0;
+        startNodMsg->lowHeight_mm  = 60;
+        startNodMsg->highHeight_mm = 75;
+        startNodMsg->period_ms = 300;
+        _cannedAnimations[ANIM_LIFT_NOD].AddKeyFrame(startNodMsg);
+        
+        // Stop the nod
+        MessageAddAnimKeyFrame_StopLiftNod* stopNodMsg = new MessageAddAnimKeyFrame_StopLiftNod();
+        stopNodMsg->animationID = ANIM_LIFT_NOD;
+        stopNodMsg->relTime_ms = 1200;
+        stopNodMsg->finalHeight_mm = 60;
+        _cannedAnimations[ANIM_LIFT_NOD].AddKeyFrame(stopNodMsg);
+        
+      } // LIFT NO
+      
+      
+      //
+      // BLINK
+      //
+      {
+        MessageAddAnimKeyFrame_SetLEDColors setLEDmsgProto;
+        setLEDmsgProto.animationID = ANIM_BLINK;
+        setLEDmsgProto.transitionIn  = KF_TRANSITION_INSTANT;
+        setLEDmsgProto.transitionOut = KF_TRANSITION_INSTANT;
+        
+        // Start with all eye segments on:
+        setLEDmsgProto.relTime_ms = 0;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_BOTTOM]  = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_LEFT]    = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_RIGHT]   = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_TOP]     = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_BOTTOM] = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_LEFT]   = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_RIGHT]  = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_TOP]    = LED_BLUE;
+        _cannedAnimations[ANIM_BLINK].AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
+        
+        // Turn off top/bottom segments first
+        setLEDmsgProto.relTime_ms = 1700;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_BOTTOM]  = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_LEFT]    = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_RIGHT]   = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_TOP]     = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_BOTTOM] = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_LEFT]   = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_RIGHT]  = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_TOP]    = LED_OFF;
+        _cannedAnimations[ANIM_BLINK].AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
+        
+        // Turn off all segments shortly thereafter
+        setLEDmsgProto.relTime_ms = 1750;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_BOTTOM]  = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_LEFT]    = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_RIGHT]   = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_TOP]     = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_BOTTOM] = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_LEFT]   = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_RIGHT]  = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_TOP]    = LED_OFF;
+        _cannedAnimations[ANIM_BLINK].AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
+        
+        // Turn on left/right segments first
+        setLEDmsgProto.relTime_ms = 1850;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_BOTTOM]  = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_LEFT]    = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_RIGHT]   = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_TOP]     = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_BOTTOM] = LED_OFF;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_LEFT]   = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_RIGHT]  = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_TOP]    = LED_OFF;
+        _cannedAnimations[ANIM_BLINK].AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
+        
+        // Turn on all segments shortly thereafter
+        setLEDmsgProto.relTime_ms = 1900;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_BOTTOM]  = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_LEFT]    = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_RIGHT]   = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_LEFT_EYE_TOP]     = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_BOTTOM] = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_LEFT]   = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_RIGHT]  = LED_BLUE;
+        setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_TOP]    = LED_BLUE;
+        _cannedAnimations[ANIM_BLINK].AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
+      } // BLINK
+      
+      //
+      // BACK_AND_FORTH_EXCITED
+      //
+      {
+        MessageAddAnimKeyFrame_DriveLine driveLineMsgProto;
+        driveLineMsgProto.animationID = ANIM_BACK_AND_FORTH_EXCITED;
+        driveLineMsgProto.transitionIn  = KF_TRANSITION_EASE_IN;
+        driveLineMsgProto.transitionOut = KF_TRANSITION_EASE_OUT;
+        
+        driveLineMsgProto.relTime_ms = 300;
+        driveLineMsgProto.relativeDistance_mm = -9;
+        _cannedAnimations[ANIM_BACK_AND_FORTH_EXCITED].AddKeyFrame(new MessageAddAnimKeyFrame_DriveLine(driveLineMsgProto));
+        
+        driveLineMsgProto.relTime_ms = 600;
+        driveLineMsgProto.relativeDistance_mm = 9;
+        _cannedAnimations[ANIM_BACK_AND_FORTH_EXCITED].AddKeyFrame(new MessageAddAnimKeyFrame_DriveLine(driveLineMsgProto));
+        
+      } // BACK_AND_FORTH_EXCITED
+      
+    } // DefineHardCodedAnimations()
+    
     
     // ============ Messaging ================
     

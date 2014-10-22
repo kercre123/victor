@@ -93,6 +93,11 @@ namespace Anki {
                               "Message %d received from invalid robot source ID %d.\n",
                               msgID, robotID);
           }
+          else if(this->lookupTable_[msgID].ProcessPacketAs == nullptr) {
+            PRINT_NAMED_ERROR("MessageHandler.ProcessPacket.NullProcessPacketFcn",
+                              "Message %d received by robot %d, but no ProcessPacketAs function defined for it.\n",
+                              msgID, robotID);
+          }
           else {
             // This calls the (macro-generated) ProcessPacketAs_MessageX() method
             // indicated by the lookup table, which will cast the buffer as the
