@@ -684,24 +684,24 @@ namespace Anki
               const u16 interpolatedPixelL0 = smallUL * alpha;
               const u16 interpolatedPixelL1 = smallLL * alphaInverse;
               const u16 interpolatedPixelL = interpolatedPixelL0 + interpolatedPixelL1;
-              const u8 subtractAmount = interpolatedPixelL >> upsamplePowerU8;
+              const u8 subtractAmount = interpolatedPixelL >> (upsamplePowerU8-1);
 
               const u16 interpolatedPixelR0 = smallUR * alpha;
               const u16 interpolatedPixelR1 = smallLR * alphaInverse;
               const u16 interpolatedPixelR = interpolatedPixelR0 + interpolatedPixelR1;
-              const u8 addAmount = interpolatedPixelR >> upsamplePowerU8;
+              const u8 addAmount = interpolatedPixelR >> (upsamplePowerU8-1);
 
-              const s32 xBig = xSmall*upsampleFactorU8 + 1;
+              const s32 xBig = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
 
               pOut[xBig] = subtractAmount;
 
-              u16 curValue = interpolatedPixelL;
-              for(s32 dx=1; dx<upsampleFactorU8; dx++) {
-                curValue += addAmount - subtractAmount;
-
-                const u8 curValueU8 = curValue >> upsamplePowerU8;
+              u16 curValue = 2*interpolatedPixelL + ((addAmount - subtractAmount) >> 2);
+              for(s32 dx=0; dx<upsampleFactorU8; dx++) {
+                const u8 curValueU8 = curValue >> (upsamplePowerU8+1);
 
                 pOut[xBig + dx] = curValueU8;
+
+                curValue += addAmount - subtractAmount;
               } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
             } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
           } // for(s32 xSmall=0; xSmall<smallHeight; xSmall++)

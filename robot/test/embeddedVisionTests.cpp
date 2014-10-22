@@ -141,8 +141,8 @@ GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
 
-  const s32 downsamplePower = 2;
-  const s32 upsamplePower = 3;
+  const s32 downsamplePower = 3;
+  const s32 upsamplePower = 4;
 
   const Array<u8> in = Array<u8>::LoadImage("C:/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_36_frame0.png", scratchHuge);
 
@@ -156,7 +156,7 @@ GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
 
   matlab.PutArray(inSmall, "inSmall");
   matlab.PutArray(out, "out");
-  matlab.EvalStringEcho("outB = imresize(inSmall, size(inSmall)*%d, 'bilinear', 'Antialiasing', false); imshows(inSmall, out, outB)", 1<<upsamplePower);
+  matlab.EvalStringEcho("outB = imresize(inSmall, size(inSmall)*%d, 'bilinear', 'Antialiasing', false); close all; imshows(inSmall, out, outB, 'maximize');", 1<<upsamplePower);
   //in.Show("in", false);
   //out.Show("out", true);
 
