@@ -237,6 +237,10 @@ namespace Anki
 
       static FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(const s32 numBenchmarkEvents, const BenchmarkEvent * benchmarkEvents, MemoryStack &memory)
       {
+        if(numBenchmarkEvents == 0) {
+          return FixedLengthList<BenchmarkElement>(0, memory, Flags::Buffer(false, false, false));
+        }
+
         AnkiConditionalErrorAndReturnValue(numBenchmarkEvents > 0 && numBenchmarkEvents < MAX_BENCHMARK_EVENTS,
           FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Invalid numBenchmarkEvents");
 
@@ -442,6 +446,10 @@ namespace Anki
 
     Result PrintBenchmarkResults(const FixedLengthList<BenchmarkElement> &results, const bool verbose, const bool microseconds)
     {
+      if(results.get_size() == 0) {
+        return RESULT_OK;
+      }
+
       const s32 scratchBufferLength = 128;
       char scratchBuffer[scratchBufferLength];
 
