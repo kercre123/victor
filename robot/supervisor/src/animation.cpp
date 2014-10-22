@@ -6,9 +6,9 @@
  *
  * Description:
  *
- *   Implements an animation, which consists of a list of keyframes for each
- *   animate-able subsystem, to be played concurrently. Note that a subsystem
- *   can have no keyframes (numFrames==0) and it will simply be ignored (and
+ *   Defines an animation, which consists of a list of keyframes for each
+ *   animate-able subsystem or "track", to be played concurrently. Note that a
+ *   track can have no keyframes (numFrames==0) and it will simply be ignored (and
  *   left unlocked) during that animation.
  *
  * Copyright: Anki, Inc. 2014
@@ -29,13 +29,13 @@ namespace Cozmo {
   : _ID(0)
   , _startTime_ms(0)
   , _isPlaying(false)
-  , _allSubSystemsReady(false)
+  , _allTracksReady(false)
   {
 
   }
   
   
-  Animation::KeyFrameList::KeyFrameList()
+  Animation::Track::Track()
   : isReady(false)
   , numFrames(0)
   , currFrame(0)
@@ -50,7 +50,7 @@ namespace Cozmo {
     
     _startTime_ms = HAL::GetTimeStamp();
     
-    _allSubSystemsReady = false;
+    _allTracksReady = false;
     
     _isPlaying = true;
     
@@ -70,103 +70,103 @@ namespace Cozmo {
     }
      */
     
-    // Reset each subsystem and call TransitionInto for any initial keyframes
+    // Reset each track and call TransitionInto for any initial keyframes
     // that have a relative start time of 0
-    for(s32 iSubSystem=0; iSubSystem<NUM_SUBSYSTEMS; ++iSubSystem) {
-      _subSystems[iSubSystem].currFrame = 0;
-      _subSystems[iSubSystem].isReady   = false;
+    for(s32 iTrack=0; iTrack<NUM_TRACKS; ++iTrack) {
+      _tracks[iTrack].currFrame = 0;
+      _tracks[iTrack].isReady   = false;
       
-      if(_subSystems[iSubSystem].numFrames > 0 &&
-         _subSystems[iSubSystem].frames[0].relTime_ms == 0)
+      if(_tracks[iTrack].numFrames > 0 &&
+         _tracks[iTrack].frames[0].relTime_ms == 0)
       {
-        _subSystems[iSubSystem].frames[0].TransitionInto(_startTime_ms);
+        _tracks[iTrack].frames[0].TransitionInto(_startTime_ms);
       }
     }
     
   } // Init()
   
   
-  bool Animation::CheckSubSystemReadiness()
+  bool Animation::CheckTrackReadiness()
   {
-    if(!_allSubSystemsReady)
+    if(!_allTracksReady)
     {
       // Mark as true for now, and let the loop below unset it
-      _allSubSystemsReady = true;
+      _allTracksReady = true;
       
-      for(s32 iSubSystem=0; iSubSystem<NUM_SUBSYSTEMS; ++iSubSystem) {
+      for(s32 iTrack=0; iTrack<NUM_TRACKS; ++iTrack) {
         
-        Animation::KeyFrameList& subSystem = _subSystems[iSubSystem];
+        Animation::Track& track = _tracks[iTrack];
         
-        // If this subsystem isn't marked as ready yet, check it now
-        if(!subSystem.isReady) {
-          if(subSystem.numFrames == 0) {
-            // Subsystem with no keyframes is always ready
-            subSystem.isReady = true;
-          } else if(subSystem.frames[0].relTime_ms > 0) {
-            // Subsystems with first keyframe at time > 0 are always ready
-            subSystem.isReady = true;
+        // If this track isn't marked as ready yet, check it now
+        if(!track.isReady) {
+          if(track.numFrames == 0) {
+            // Track with no keyframes is always ready
+            track.isReady = true;
+          } else if(track.frames[0].relTime_ms > 0) {
+            // Tracks with first keyframe at time > 0 are always ready
+            track.isReady = true;
           } else {
             // Check whether the first keyframe is "in position"
-            subSystem.isReady = subSystem.frames[0].IsInPosition();
+            track.isReady = track.frames[0].IsInPosition();
           }
           
-          // In case this subSystem just became ready:
-          _allSubSystemsReady &= subSystem.isReady;
+          // In case this track just became ready:
+          _allTracksReady &= track.isReady;
           
-        } // if(!subSystem.isReady)
+        } // if(!track.isReady)
         
-      } // for each subSystem
+      } // for each track
       
-      if(_allSubSystemsReady) {
-        // If all subsystems just became ready, update the start time for this
+      if(_allTracksReady) {
+        // If all track just became ready, update the start time for this
         // animation to now and call TransitionInto for keyframes that are
-        // first for their subsystem but do _not_ have relTime==0
+        // first for their track but do _not_ have relTime==0
         _startTime_ms = HAL::GetTimeStamp();
         
-        for(s32 iSubSystem=0; iSubSystem<NUM_SUBSYSTEMS; ++iSubSystem)
+        for(s32 iTrack=0; iTrack<NUM_TRACKS; ++iTrack)
         {
-          if(_subSystems[iSubSystem].numFrames > 0 &&
-             _subSystems[iSubSystem].frames[0].relTime_ms > 0)
+          if(_tracks[iTrack].numFrames > 0 &&
+             _tracks[iTrack].frames[0].relTime_ms > 0)
           {
-            _subSystems[iSubSystem].frames[0].TransitionInto(_startTime_ms);
+            _tracks[iTrack].frames[0].TransitionInto(_startTime_ms);
           }
-        } // for each subSystem
+        } // for each track
         
-      } // if(_allSubSystemsReady)
+      } // if(_allTracksReady)
       
-    } // if (!_allSubSystemsReady)
+    } // if (!_allTracksReady)
     
-    return _allSubSystemsReady;
+    return _allTracksReady;
       
-  } // CheckSubSystemReadiness()
+  } // CheckTrackReadiness()
   
   
   void Animation::Update()
   {
-    if(CheckSubSystemReadiness() == false) {
-      // Wait for all subsystems to be ready
-      //PRINT("Waiting for all subsystems to be ready to start animation...\n");
+    if(CheckTrackReadiness() == false) {
+      // Wait for all tracks to be ready
+      //PRINT("Waiting for all tracks to be ready to start animation...\n");
       return;
     }
 
-    bool subSystemPlaying[NUM_SUBSYSTEMS];
+    bool trackPlaying[NUM_TRACKS];
     
-    for(s32 iSubSystem=0; iSubSystem<NUM_SUBSYSTEMS; ++iSubSystem)
+    for(s32 iTrack=0; iTrack<NUM_TRACKS; ++iTrack)
     {
-      // Get a reference to the current subSystem, for convenience
-      Animation::KeyFrameList& subSystem = _subSystems[iSubSystem];
+      // Get a reference to the current track, for convenience
+      Animation::Track& track = _tracks[iTrack];
 
-      if(subSystem.numFrames == 0 || subSystem.currFrame >= subSystem.numFrames) {
-        // Skip empty or already-finished subsystems
-        subSystemPlaying[iSubSystem] = false;
+      if(track.numFrames == 0 || track.currFrame >= track.numFrames) {
+        // Skip empty or already-finished tracks
+        trackPlaying[iTrack] = false;
         
       } else {
-        // TODO: "Lock" controller for this subsystem
+        // TODO: "Lock" controller for this track
         
-        subSystemPlaying[iSubSystem] = true;
+        trackPlaying[iTrack] = true;
         
-        // Get a reference to the current frame of the current subsystem, for convenience
-        KeyFrame& currKeyFrame = subSystem.frames[subSystem.currFrame];
+        // Get a reference to the current frame of the current track, for convenience
+        KeyFrame& currKeyFrame = track.frames[track.currFrame];
         
         // Has the current keyframe's time now passed?
         const u32 absFrameTime_ms = currKeyFrame.relTime_ms + _startTime_ms;
@@ -176,31 +176,31 @@ namespace Cozmo {
           // one in the list (if there is one).
           currKeyFrame.TransitionOutOf(_startTime_ms);
           
-          ++subSystem.currFrame;
+          ++track.currFrame;
           
-          if(subSystem.currFrame < subSystem.numFrames) {
-            PRINT("Moving to keyframe %d of %d in subsystem %d\n", subSystem.currFrame+1, subSystem.numFrames, iSubSystem);
-            KeyFrame& nextKeyFrame = subSystem.frames[subSystem.currFrame];
+          if(track.currFrame < track.numFrames) {
+            PRINT("Moving to keyframe %d of %d in track %d\n", track.currFrame+1, track.numFrames, iTrack);
+            KeyFrame& nextKeyFrame = track.frames[track.currFrame];
             nextKeyFrame.TransitionInto(_startTime_ms);
           } else {
-            PRINT("Subsystem %d finished all %d of its frames\n", iSubSystem, subSystem.numFrames);
-            subSystemPlaying[iSubSystem] = false;
+            PRINT("Track %d finished all %d of its frames\n", iTrack, track.numFrames);
+            trackPlaying[iTrack] = false;
           }
           
         } // if GetTimeStamp() >= absFrameTime_ms
-      } // if/else subSystem.numFrames == 0
+      } // if/else track.numFrames == 0
       
-    } // for each subsystem
+    } // for each track
     
-    // isPlaying should be true after this loop if any of the subSystems are still
+    // isPlaying should be true after this loop if any of the tracks are still
     // playing. False otherwise.
     _isPlaying = false;
-    for(s32 iSubSystem=0; iSubSystem<NUM_SUBSYSTEMS; ++iSubSystem) {
-      _isPlaying |= subSystemPlaying[iSubSystem];
+    for(s32 iTrack=0; iTrack<NUM_TRACKS; ++iTrack) {
+      _isPlaying |= trackPlaying[iTrack];
     }
     
     if(!_isPlaying) {
-      PRINT("No subsystems in animation %d still playing. Stopping.\n", _ID);
+      PRINT("No tracks in animation %d still playing. Stopping.\n", _ID);
       Stop();
     }
     
@@ -216,9 +216,9 @@ namespace Cozmo {
     }
      */
     
-    for(s32 iSubSystem = 0; iSubSystem < NUM_SUBSYSTEMS; ++iSubSystem)
+    for(s32 iTrack = 0; iTrack < NUM_TRACKS; ++iTrack)
     {
-      _subSystems[iSubSystem].frames[_subSystems[iSubSystem].currFrame].Stop();
+      _tracks[iTrack].frames[_tracks[iTrack].currFrame].Stop();
     }
     
     _isPlaying = false;
@@ -229,9 +229,9 @@ namespace Cozmo {
   
   bool Animation::IsDefined()
   {
-    for(s32 iSubSystem = 0; iSubSystem < NUM_SUBSYSTEMS; ++iSubSystem)
+    for(s32 iTrack = 0; iTrack < NUM_TRACKS; ++iTrack)
     {
-      if(_subSystems[iSubSystem].numFrames > 0) {
+      if(_tracks[iTrack].numFrames > 0) {
         return true;
       }
     }
@@ -242,15 +242,15 @@ namespace Cozmo {
   
   void Animation::Clear()
   {
-    for(s32 iSubSystem = 0; iSubSystem < NUM_SUBSYSTEMS; ++iSubSystem)
+    for(s32 iTrack = 0; iTrack < NUM_TRACKS; ++iTrack)
     {
       // TODO: Make a Clear() method in KeyFrame and call that here:
-      _subSystems[iSubSystem].currFrame = 0;
-      _subSystems[iSubSystem].numFrames = 0;
+      _tracks[iTrack].currFrame = 0;
+      _tracks[iTrack].numFrames = 0;
     }
   }
   
-  Animation::SubSystems Animation::GetSubSystem(const KeyFrame::Type kfType)
+  Animation::TrackType Animation::GetTrack(const KeyFrame::Type kfType)
   {
     switch(kfType)
     {
@@ -280,30 +280,30 @@ namespace Cozmo {
         return SOUND;
         
       default:
-        PRINT("Unknown subsystem for KeyFrame type %d.\n", kfType);
-        return NUM_SUBSYSTEMS;
+        PRINT("Unknown track for KeyFrame type %d.\n", kfType);
+        return NUM_TRACKS;
         
     } // switch(kfType)
     
-  } // GetSubSystem()
+  } // GetTrack()
   
   
   
   Result Animation::AddKeyFrame(const KeyFrame& keyframe)
   {
-    const SubSystems whichSubSystem = Animation::GetSubSystem(keyframe.type);
+    const TrackType whichTrack = Animation::GetTrack(keyframe.type);
     
-    Animation::KeyFrameList& animSubSystem = _subSystems[whichSubSystem];
+    Animation::Track& track = _tracks[whichTrack];
     
-    AnkiConditionalErrorAndReturnValue(animSubSystem.numFrames < Animation::MAX_KEYFRAMES,
+    AnkiConditionalErrorAndReturnValue(track.numFrames < Animation::MAX_KEYFRAMES,
                                        RESULT_FAIL,
                                        "Animation.AddKeyFrame.TooManyFrames",
-                                       "No more space to add given keyframe to specified animation subsystem.\n");
+                                       "No more space to add given keyframe to specified animation track.\n");
     
-    animSubSystem.frames[animSubSystem.numFrames++] = keyframe;
+    track.frames[track.numFrames++] = keyframe;
     
-    PRINT("Added frame %d to subsystem %d of animation %d\n",
-          animSubSystem.numFrames, whichSubSystem, _ID);
+    PRINT("Added frame %d to track %d of animation %d\n",
+          track.numFrames, whichTrack, _ID);
     
     return RESULT_OK;
   }

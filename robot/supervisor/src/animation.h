@@ -7,8 +7,8 @@
  * Description:
  *
  *   Defines an animation, which consists of a list of keyframes for each 
- *   animate-able subsystem, to be played concurrently. Note that a subsystem 
- *   can have no keyframes (numFrames==0) and it will simply be ignored (and 
+ *   animate-able subsystem or "track", to be played concurrently. Note that a
+ *   track can have no keyframes (numFrames==0) and it will simply be ignored (and
  *   left unlocked) during that animation.
  *
  * Copyright: Anki, Inc. 2014
@@ -28,13 +28,13 @@ namespace Cozmo {
   {
   public:
     
-    enum SubSystems {
+    enum TrackType {
       HEAD = 0,
       LIFT,
       POSE,
       SOUND,
       LIGHTS, // TODO: Separate eyes from other lights eventually?
-      NUM_SUBSYSTEMS
+      NUM_TRACKS
     };
     
     Animation();
@@ -59,7 +59,7 @@ namespace Cozmo {
     // Methods for defining animations:
     //
     
-    // True if any subsystems have frames defined.
+    // True if any tracks have frames defined.
     bool IsDefined();
     void Clear();
     void SetID(AnimationID_t newID);
@@ -67,7 +67,7 @@ namespace Cozmo {
     
   private:
     
-    static const s32 MAX_KEYFRAMES = 32; // per subsystem
+    static const s32 MAX_KEYFRAMES = 32; // per track
     
     AnimationID_t _ID; // needed, or simply the slot it's stored in?
     
@@ -77,23 +77,23 @@ namespace Cozmo {
     
     bool _isPlaying;
     
-    // Lists of keyframes for each subsystem
-    struct KeyFrameList {
+    // Lists of keyframes for each track
+    struct Track {
       KeyFrame frames[MAX_KEYFRAMES];
       bool     isReady;   // true once first frame is "in position"
       s32      numFrames;
       s32      currFrame;
       
-      KeyFrameList();
-    } _subSystems[NUM_SUBSYSTEMS];
+      Track();
+    } _tracks[NUM_TRACKS];
     
-    static SubSystems GetSubSystem(const KeyFrame::Type kfType);
+    static TrackType GetTrack(const KeyFrame::Type kfType);
     
-    bool _allSubSystemsReady;
-    bool CheckSubSystemReadiness();
+    bool _allTracksReady;
+    bool CheckTrackReadiness();
     
     /*
-     // Flag to return subsystems to their original state when the animation is
+     // Flag to return track to their original state when the animation is
      // complete or is stopped/interrupted. Note that this does not apply to
      // body pose, since there is no localization during animation.
      bool _returnToOrigState;
