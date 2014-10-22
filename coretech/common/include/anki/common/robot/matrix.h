@@ -229,6 +229,21 @@ namespace Anki
         return Elementwise::ApplyOperation<InType, Elementwise::DotDivide<InType, IntermediateType, OutType>, OutType>(value1, in2, out);
       }
 
+      template<typename InType, typename IntermediateType, typename OutType> Result SumOfAbsDiff(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
+      {
+        return Elementwise::ApplyOperation<InType, Elementwise::SumOfAbsDiff<InType, IntermediateType, OutType>, OutType>(in1, in2, out);
+      } // template<typename Type> Result DotDivide(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
+
+      template<typename InType, typename IntermediateType, typename OutType> Result SumOfAbsDiff(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out)
+      {
+        return Elementwise::ApplyOperation<InType, Elementwise::SumOfAbsDiff<InType, IntermediateType, OutType>, OutType>(in1, value2, out);
+      }
+
+      template<typename InType, typename IntermediateType, typename OutType> Result SumOfAbsDiff(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
+      {
+        return Elementwise::ApplyOperation<InType, Elementwise::SumOfAbsDiff<InType, IntermediateType, OutType>, OutType>(value1, in2, out);
+      }
+
       template<typename InType, typename IntermediateType, typename OutType> Result Exp(const ConstArraySliceExpression<InType> &in, ArraySlice<OutType> out)
       {
         return Elementwise::ApplyOperation<InType, Elementwise::Exp<InType, IntermediateType, OutType>, OutType>(in, in, out);
