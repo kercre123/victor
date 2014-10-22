@@ -156,7 +156,7 @@ GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
 
   matlab.PutArray(inSmall, "inSmall");
   matlab.PutArray(out, "out");
-  matlab.EvalStringEcho("outB = imresize(inSmall, size(inSmall)*%d, 'bilinear', 'Antialiasing', false); close all; imshows(inSmall, out, outB, 'maximize');", 1<<upsamplePower);
+  matlab.EvalStringEcho("outB = imresize(inSmall, size(inSmall)*%d, 'bilinear', 'Antialiasing', false); close all; imshows(2*out, 2*outB, 'maximize');", 1<<upsamplePower);
   //in.Show("in", false);
   //out.Show("out", true);
 

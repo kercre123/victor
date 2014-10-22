@@ -659,6 +659,8 @@ namespace Anki
 
           const u8 * restrict pInY0 = in.Pointer(0, 0);
 
+          out(0, (upsampleFactorU8>>1)-1, 0, (upsampleFactorU8>>1)-1).Set(pInY0[0]);
+
           for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
             const u8 smallL = pInY0[xSmall];
             const u8 smallR = pInY0[xSmall+1];
@@ -682,8 +684,10 @@ namespace Anki
               } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
             } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
           } // for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++)
+
+          out(0, (upsampleFactorU8>>1)-1, -(upsampleFactorU8>>1), -1).Set(pInY0[smallWidth-1]);
         } // const s32 ySmall = -1;
-        //#if 0
+
         for(s32 ySmall=0; ySmall<smallHeight-1; ySmall++) {
           const u8 * restrict pInY0 = in.Pointer(ySmall, 0);
           const u8 * restrict pInY1 = in.Pointer(ySmall+1, 0);
@@ -776,13 +780,14 @@ namespace Anki
             } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
           } // const s32 xSmall = smallWidth-1;
         } //  for(s32 ySmall=0; ySmall<smallHeight-1; ySmall++)
-        //#endif // #if 0
 
         // const s32 ySmall = smallHeight - 1;
         {
           const s32 ySmall = smallHeight - 1;
 
           const u8 * restrict pInY0 = in.Pointer(smallHeight - 1, 0);
+
+          out(-(upsampleFactorU8>>1), -1, 0, (upsampleFactorU8>>1)-1).Set(pInY0[0]);
 
           for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
             const u8 smallL = pInY0[xSmall];
@@ -807,6 +812,8 @@ namespace Anki
               } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
             } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
           } // for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++)
+
+          out(-(upsampleFactorU8>>1), -1, -(upsampleFactorU8>>1), -1).Set(pInY0[smallWidth-1]);
         } // const s32 ySmall = smallHeight - 1;
 
         return RESULT_OK;
