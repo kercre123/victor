@@ -40,7 +40,6 @@ namespace Anki
   {
     namespace ImageProcessing
     {
-
       template<> Result BinomialFilter<u8,u8,u8>(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch)
       {
         const u8 kernel0 = 1;
@@ -93,8 +92,8 @@ namespace Anki
             const u16 prod4 = pImage[x+2]*kernel4;
 
             const u16 sum0 = prod0 + prod1 + prod2 + prod3 + prod4;
-            
-            pImageFilteredTmp[x] = static_cast<u8>( sum0 >> kernelShift );            
+
+            pImageFilteredTmp[x] = static_cast<u8>( sum0 >> kernelShift );
           }
 
           pImageFilteredTmp[x] = static_cast<u8>( (pImage[x-2]*kernel0 + pImage[x-1]*kernel1 + pImage[x]*kernel2 + pImage[x+1]*kernel3 + pImage[x+1]*kernel4) >> kernelShift );
@@ -619,6 +618,98 @@ namespace Anki
         return RESULT_OK;
       } // Result DownsampleBilinear(const Array<u8> &in, Array<u8> &out, MemoryStack scratch)
 
+      Result UpsampleByPowerOfTwoBilinear(const Array<u8> &in, const s32 upsamplePower, Array<u8> &out, MemoryStack scratch)
+      {
+        // The correct weights would be given by d2, though we approximate them in this function
+        // dSize=2; ds=zeros(dSize,dSize,4); ds(1,1,1)=1; ds(1,end,2)=1; ds(end,1,3)=1; ds(end,end,4)=1;
+        // d2 = imresize(ds, [size(ds,1), size(ds,2)]*upsampleFactor, 'bilinear', 'Antialiasing', false)
+
+        const s32 largeHeight = out.get_size(0);
+        const s32 largeWidth = out.get_size(1);
+
+        const s32 smallHeight = largeHeight >> upsamplePower;
+        const s32 smallWidth = largeWidth >> upsamplePower;
+
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out , scratch),
+          RESULT_FAIL_INVALID_OBJECT, "UpsampleByPowerOfTwoBilinear", "Invalid objects");
+
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(smallHeight, smallWidth, in),
+          RESULT_FAIL_INVALID_SIZE, "UpsampleByPowerOfTwoBilinear", "size(out) is not equal to size(in) << downsampleFactor");
+
+        AnkiConditionalErrorAndReturnValue(largeWidth % 4 == 0,
+          RESULT_FAIL_INVALID_SIZE, "UpsampleByPowerOfTwoBilinear", "The width of the in Array must be a multiple of four");
+
+        AnkiConditionalErrorAndReturnValue(upsamplePower > 0 && upsamplePower < 8,
+          RESULT_FAIL_INVALID_PARAMETER, "UpsampleByPowerOfTwoBilinear", "0 < upsamplePower < 8");
+
+        const u8 upsamplePowerU8 = upsamplePower;
+        const u8 upsampleFactorU8 = 1 << upsamplePowerU8;
+
+        // The correct weights would be given by d2, though we approximate them in this function
+        // dSize=2; ds=zeros(dSize,dSize,4); ds(1,1,1)=1; ds(1,end,2)=1; ds(end,1,3)=1; ds(end,end,4)=1;
+        // d2 = imresize(ds, [size(ds,1), size(ds,2)]*4, 'bilinear', 'Antialiasing', false)
+
+        // TODO: do the edges
+
+        // scale = 8;
+        // [xUL,yUL] = meshgrid((0.5:(scale-0.5))/scale, (0.5:(scale-0.5))/scale)
+        // [xUR,yUR] = meshgrid(((scale-0.5):-1:0.5)/scale, (0.5:(scale-0.5))/scale)
+        // [xLL,yLL] = meshgrid((0.5:(scale-0.5))/scale, ((scale-0.5):-1:0.5)/scale)
+        // [xLR,yLR] = meshgrid(((scale-0.5):-1:0.5)/scale, ((scale-0.5):-1:0.5)/scale)
+
+        // Just compute the boxWidth*UL in an accumulator, and as you go right, subtract and add. As you go down, subtract and add top vs bottom
+
+        for(s32 ySmall=0; ySmall<smallHeight-1; ySmall++) {
+          const u8 * restrict pInY0 = in.Pointer(ySmall, 0);
+          const u8 * restrict pInY1 = in.Pointer(ySmall+1, 0);
+
+          for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
+            //s32 yBig = ySmall*upsampleFactorU8 + 1;
+
+            const u8 smallUL = pInY0[xSmall];
+            const u8 smallUR = pInY0[xSmall+1];
+            const u8 smallLL = pInY1[xSmall];
+            const u8 smallLR = pInY1[xSmall+1];
+
+            //const Type interpolatedTop = alphaXinverse*pixelTL + alphaX*pixelTR;
+            //const Type interpolatedBottom = alphaXinverse*pixelBL + alphaX*pixelBR;
+            //const Type interpolatedPixel = alphaYinverse*interpolatedTop + alphaY*interpolatedBottom;
+
+            for(s32 dy=0; dy<upsampleFactorU8; dy++) {
+              u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2 + dy, 0);
+
+              const u8 alpha = upsampleFactorU8 - dy;
+              const u8 alphaInverse = dy;
+
+              const u16 interpolatedPixelL0 = smallUL * alpha;
+              const u16 interpolatedPixelL1 = smallLL * alphaInverse;
+              const u16 interpolatedPixelL = interpolatedPixelL0 + interpolatedPixelL1;
+              const u8 subtractAmount = interpolatedPixelL >> upsamplePowerU8;
+
+              const u16 interpolatedPixelR0 = smallUR * alpha;
+              const u16 interpolatedPixelR1 = smallLR * alphaInverse;
+              const u16 interpolatedPixelR = interpolatedPixelR0 + interpolatedPixelR1;
+              const u8 addAmount = interpolatedPixelR >> upsamplePowerU8;
+
+              const s32 xBig = xSmall*upsampleFactorU8 + 1;
+
+              pOut[xBig] = subtractAmount;
+
+              u16 curValue = interpolatedPixelL;
+              for(s32 dx=1; dx<upsampleFactorU8; dx++) {
+                curValue += addAmount - subtractAmount;
+
+                const u8 curValueU8 = curValue >> upsamplePowerU8;
+
+                pOut[xBig + dx] = curValueU8;
+              } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
+            } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
+          } // for(s32 xSmall=0; xSmall<smallHeight; xSmall++)
+        } // for(s32 ySmall=0; ySmall<smallHeight; ySmall++)
+
+        return RESULT_OK;
+      } // Result UpsampleBilinear(const Array<u8> &in, Array<u8> &out, MemoryStack scratch)
+
       Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch)
       {
         const s32 imageHeight = in.get_size(0);
@@ -717,4 +808,3 @@ namespace Anki
     } // namespace ImageProcessing
   } // namespace Embedded
 } // namespace Anki
-

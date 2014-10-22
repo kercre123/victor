@@ -132,7 +132,39 @@ Result ComputeAndPrintMedianBenchmark(const FixedLengthList<FixedLengthList<Benc
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
 
+GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  const s32 downsamplePower = 2;
+  const s32 upsamplePower = 3;
+
+  const Array<u8> in = Array<u8>::LoadImage("C:/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_36_frame0.png", scratchHuge);
+
+  Array<u8> inSmall(in.get_size(0)>>downsamplePower, in.get_size(1)>>downsamplePower, scratchHuge);
+
+  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in, downsamplePower, inSmall, scratchHuge);
+
+  Array<u8> out(inSmall.get_size(0)<<upsamplePower, inSmall.get_size(1)<<upsamplePower, scratchHuge);
+
+  const Result result = ImageProcessing::UpsampleByPowerOfTwoBilinear(inSmall, upsamplePower, out, scratchHuge);
+
+  matlab.PutArray(inSmall, "inSmall");
+  matlab.PutArray(out, "out");
+  matlab.EvalStringEcho("outB = imresize(inSmall, size(inSmall)*%d, 'bilinear', 'Antialiasing', false); imshows(inSmall, out, outB)", 1<<upsamplePower);
+  //in.Show("in", false);
+  //out.Show("out", true);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
+
 #ifdef RUN_PC_ONLY_TESTS
+
 GTEST_TEST(CoreTech_Vision, KLT)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
