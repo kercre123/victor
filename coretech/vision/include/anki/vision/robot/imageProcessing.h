@@ -41,24 +41,22 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <arm_neon.h>
 #endif
 
-template<int upsamplePower> void UpsampleByPowerOfTwoBilinear_innerLoop(
+template<u8 upsamplePowerU8> void UpsampleByPowerOfTwoBilinear_innerLoop(
   const u8 * restrict pInY0,
   const u8 * restrict pInY1,
   Anki::Embedded::Array<u8> &out,
   const s32 ySmall,
   const s32 smallWidth,
   const u8 upsampleFactorU8,
-  const u8 upsamplePowerU8,
   const s32 outStride);
 
-template<int upsamplePower> void UpsampleByPowerOfTwoBilinear_innerLoop(
+template<u8 upsamplePowerU8> void UpsampleByPowerOfTwoBilinear_innerLoop(
   const u8 * restrict pInY0,
   const u8 * restrict pInY1,
   Anki::Embedded::Array<u8> &out,
   const s32 ySmall,
   const s32 smallWidth,
   const u8 upsampleFactorU8,
-  const u8 upsamplePowerU8,
   const s32 outStride)
 {
   for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
@@ -1126,7 +1124,7 @@ namespace Anki
             } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
           } // const s32 xSmall = -1;
 
-          UpsampleByPowerOfTwoBilinear_innerLoop<upsamplePower>(pInY0, pInY1, out, ySmall, smallWidth, upsampleFactorU8, upsamplePowerU8, outStride);
+          UpsampleByPowerOfTwoBilinear_innerLoop<upsamplePower>(pInY0, pInY1, out, ySmall, smallWidth, upsampleFactorU8, outStride);
 
           // const s32 xSmall = smallWidth-1;
           {
