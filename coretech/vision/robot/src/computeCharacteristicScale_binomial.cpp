@@ -268,12 +268,12 @@ namespace Anki
 
           EndBenchmark("ecvcsB_scale_select");
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-          char name[1024];
-          snprintf(name, 1024, "dogMax"); dogMax.Show(name, false, false, true);
-          snprintf(name, 1024, "scaleImage"); scaleImage.Show(name, false, false, true);
-          cv::waitKey();
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
+          //#if ANKICORETECH_EMBEDDED_USE_OPENCV
+          //          char name[1024];
+          //          snprintf(name, 1024, "dogMax"); dogMax.Show(name, false, false, true);
+          //          snprintf(name, 1024, "scaleImage"); scaleImage.Show(name, false, false, true);
+          //          cv::waitKey();
+          //#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
         } // for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++)
       } // if(upsampleToFullSize) .. else
 
@@ -305,9 +305,9 @@ namespace Anki
 
       EndBenchmark("ecvcsB_binarize");
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-      binaryImageTmp.Show("binaryImageTmp", true, false, true);
-#endif
+      //#if ANKICORETECH_EMBEDDED_USE_OPENCV
+      //      binaryImageTmp.Show("binaryImageTmp", true, false, true);
+      //#endif
 
       //BeginBenchmark("ecvcsB_finalize");
       if((lastResult = components.Extract2dComponents_PerRow_Finalize()) != RESULT_OK)
