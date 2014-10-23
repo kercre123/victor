@@ -116,32 +116,7 @@ namespace Anki {
       ,KF_TRANSITION_EASE_OUT
       ,KF_TRANSITION_INSTANT    // Only valid / physically-possible for LEDs!
     };
-    
-    // List of sound schemes
-    typedef enum {
-      SOUND_SCHEME_COZMO
-      ,SOUND_SCHEME_MOVIE
-      ,NUM_SOUND_SCHEMES
-    } SoundSchemeID_t;
-    
-    // List of sound IDs
-    typedef enum {
-      SOUND_TADA
-      ,SOUND_NOPROBLEMO
-      ,SOUND_INPUT
-      ,SOUND_SWEAR
-      ,SOUND_STARTOVER
-      ,SOUND_NOTIMPRESSED
-      ,SOUND_60PERCENT
-      ,SOUND_DROID
-      ,SOUND_DEMO_START
-      ,SOUND_WAITING4DICE
-      ,SOUND_WAITING4DICE2DISAPPEAR
-      ,SOUND_OK_GOT_IT
-      ,SOUND_OK_DONE
-      ,NUM_SOUNDS
-    } SoundID_t;
-
+   
     // Prox sensors
     typedef enum {
       PROX_LEFT

@@ -1026,9 +1026,9 @@ namespace Anki {
     
 #pragma mark ---- PlaySoundAction ----
     
-    PlaySoundAction::PlaySoundAction(SoundID_t soundID)
-    : _soundID(soundID)
-    , _name("PlaySound" + std::to_string(_soundID) + "Action")
+    PlaySoundAction::PlaySoundAction(const std::string& soundName)
+    : _soundName(soundName)
+    , _name("PlaySound" + soundName + "Action")
     {
       
     }

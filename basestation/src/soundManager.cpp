@@ -143,6 +143,28 @@ namespace Anki {
       return true;
     }
     
+    SoundID_t SoundManager::GetID(const std::string& name)
+    {
+      static const std::map<std::string, SoundID_t> LUT = {
+        {"TADA",      SOUND_TADA},
+        {"OK_GOT_IT", SOUND_OK_GOT_IT},
+        {"OK_DONE",   SOUND_OK_DONE},
+        {"STARTOVER", SOUND_STARTOVER}
+      };
+
+      auto result = LUT.find(name);
+      if(result == LUT.end()) {
+        PRINT_NAMED_WARNING("SoundManager.GetID.UnknownSound", "No sound named '%s', ignoring.\n");
+        return NUM_SOUNDS;
+      } else {
+        return result->second;
+      }
+    }
+    
+    bool SoundManager::Play(const std::string& name, const u8 numLoops)
+    {
+      return Play(SoundManager::GetID(name), numLoops);
+    }
     
     bool SoundManager::Play(const SoundID_t id, const u8 numLoops)
     {

@@ -364,7 +364,7 @@ namespace Anki {
     class PlaySoundAction : public IAction
     {
     public:
-      PlaySoundAction(SoundID_t soundID);
+      PlaySoundAction(const std::string& soundName);
       
       virtual const std::string& GetName() const override { return _name; }
       
@@ -372,7 +372,7 @@ namespace Anki {
       
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
-      SoundID_t   _soundID;
+      std::string _soundName;
       std::string _name;
       
     }; // class PlaySoundAction

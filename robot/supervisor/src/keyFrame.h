@@ -133,8 +133,8 @@ struct KeyFrame
   };
   
   struct PlaySound_t {
-    SoundID_t soundID;
-    u8        numLoops;
+    u16 soundID;
+    u8  numLoops;
   };
   
   // Turn eye(s) off and back on in specified color (use 0x000000 for

@@ -629,7 +629,7 @@ namespace Anki {
         KeyFrame kf;
         
         kf.type = KeyFrame::PLAY_SOUND;
-        kf.PlaySound.soundID = static_cast<SoundID_t>(msg.soundID);
+        kf.PlaySound.soundID  = msg.soundID;
         kf.PlaySound.numLoops = msg.numLoops;
         
         AddKeyFrameHelper(msg, kf);

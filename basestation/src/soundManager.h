@@ -14,8 +14,36 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 
+#include <string>
+
 namespace Anki {
   namespace Cozmo {
+    
+    
+    // List of sound schemes
+    typedef enum {
+      SOUND_SCHEME_COZMO
+      ,SOUND_SCHEME_MOVIE
+      ,NUM_SOUND_SCHEMES
+    } SoundSchemeID_t;
+    
+    // List of sound IDs
+    typedef enum {
+      SOUND_TADA
+      ,SOUND_NOPROBLEMO
+      ,SOUND_INPUT
+      ,SOUND_SWEAR
+      ,SOUND_STARTOVER
+      ,SOUND_NOTIMPRESSED
+      ,SOUND_60PERCENT
+      ,SOUND_DROID
+      ,SOUND_DEMO_START
+      ,SOUND_WAITING4DICE
+      ,SOUND_WAITING4DICE2DISAPPEAR
+      ,SOUND_OK_GOT_IT
+      ,SOUND_OK_DONE
+      ,NUM_SOUNDS
+    } SoundID_t;
     
     // NOTE: this is a singleton class
     class SoundManager
@@ -30,9 +58,13 @@ namespace Anki {
       bool SetRootDir(const char* dir);
       
       bool Play(const SoundID_t id, const u8 numLoops=1);
+      bool Play(const std::string& name, const u8 numLoops=1);
       
       void SetScheme(const SoundSchemeID_t scheme);
       SoundSchemeID_t GetScheme() const;
+      
+      // Lookup a sound by name
+      static SoundID_t GetID(const std::string& name);
       
     protected:
       

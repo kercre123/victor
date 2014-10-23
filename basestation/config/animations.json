@@ -3,8 +3,8 @@
     { 
       "Name" : "MessageAddAnimKeyFrame_StartHeadNod", 
       "relTime_ms"   : 0, 
-      "transitionIn" : 0,
-      "transitionOut": 0, 
+      "transitionIn" : "EASE_IN",
+      "transitionOut": "EASE_OUT", 
       "lowAngle"     : -0.1745, 
       "highAngle"    :  0.1745, 
       "period_ms"    : 600
@@ -12,9 +12,9 @@
     {
       "Name" : "MessageAddAnimKeyFrame_PlaySound", 
       "relTime_ms"      : 0,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0,
-      "soundID"         : 11, 
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
+      "soundID"         : "OK_GOT_IT", 
       "numLoops"        : 3
     },
     { 
@@ -46,8 +46,8 @@
   "ANIM_BLINK" : [
     {
       "Name" : "MessageAddAnimKeyFrame_SetLEDColors", 
-      "transitionIn"   : 0,
-      "transitionOut"  : 0, 
+      "transitionIn"   : "INSTANT",
+      "transitionOut"  : "INSTANT", 
       "relTime_ms"     : 0, 
       "leftEye_bottom" : [0, 0, 255], 
       "leftEye_left"   : [0, 0, 255], 
@@ -60,8 +60,8 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetLEDColors", 
-      "transitionIn"   : 0,
-      "transitionOut"  : 0, 
+      "transitionIn"   : "INSTANT",
+      "transitionOut"  : "INSTANT", 
       "relTime_ms"     : 1650,
       "leftEye_bottom" : [0, 0, 0], 
       "leftEye_left"   : [0, 0, 255], 
@@ -74,8 +74,8 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetLEDColors", 
-      "transitionIn"   : 0,
-      "transitionOut"  : 0, 
+      "transitionIn"   : "INSTANT",
+      "transitionOut"  : "INSTANT", 
       "relTime_ms"     : 1750,
       "leftEye_bottom" : [0, 0, 0], 
       "leftEye_left"   : [0, 0, 0], 
@@ -88,8 +88,8 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetLEDColors", 
-      "transitionIn"   : 0,
-      "transitionOut"  : 0, 
+      "transitionIn"   : "INSTANT",
+      "transitionOut"  : "INSTANT", 
       "relTime_ms"     : 1850,
       "leftEye_bottom" : [0, 0, 0], 
       "leftEye_left"   : [0, 0, 255], 
@@ -102,8 +102,8 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetLEDColors", 
-      "transitionIn"   : 0,
-      "transitionOut"  : 0, 
+      "transitionIn"   : "INSTANT",
+      "transitionOut"  : "INSTANT", 
       "relTime_ms"     : 1950, 
       "leftEye_bottom" : [0, 0, 255], 
       "leftEye_left"   : [0, 0, 255], 
@@ -227,8 +227,8 @@
     {
       "Name" : "MessageAddAnimKeyFrame_SetLEDColors", 
       "relTime_ms"      : 0,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
       "rightEye_top"    : [0, 0, 0],
       "rightEye_right"  : [0, 0, 0],
       "rightEye_bottom" : [0, 0, 0],
@@ -241,8 +241,8 @@
     {
       "Name" : "MessageAddAnimKeyFrame_SetLEDColors", 
       "relTime_ms"      : 500,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
       "rightEye_top"    : [0, 255, 255],
       "rightEye_right"  : [0, 255, 255],
       "rightEye_bottom" : [0, 255, 255],
@@ -255,8 +255,8 @@
     {
       "Name" : "MessageAddAnimKeyFrame_SetLEDColors", 
       "relTime_ms"      : 800,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
       "rightEye_top"    : [0, 200, 200],
       "rightEye_right"  : [0, 200, 200],
       "rightEye_bottom" : [0, 200, 200],
@@ -269,9 +269,9 @@
     {
       "Name" : "MessageAddAnimKeyFrame_PlaySound", 
       "relTime_ms"      : 0,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0,
-      "soundID"         : 4, 
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
+      "soundID"         : "STARTOVER", 
       "numLoops"        : 1
     }
   ], 
@@ -279,23 +279,23 @@
     {
       "Name" : "MessageAddAnimKeyFrame_DriveLine", 
       "relTime_ms"      : 300,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0,
+      "transitionIn"    : "EASE_IN",
+      "transitionOut"   : "EASE_OUT",
       "relativeDistance_mm" : -9
     }, 
     {
       "Name" : "MessageAddAnimKeyFrame_PlaySound", 
       "relTime_ms"      : 0,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0,
-      "soundID"         : 12, 
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
+      "soundID"         : "OK_DONE", 
       "numLoops"        : 1
     },    
     {
       "Name" : "MessageAddAnimKeyFrame_DriveLine", 
       "relTime_ms"      : 600,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0,
+      "transitionIn"    : "EASE_IN",
+      "transitionOut"   : "EASE_OUT",
       "relativeDistance_mm" : 9
     }   
   ]
