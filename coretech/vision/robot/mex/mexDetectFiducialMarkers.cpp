@@ -65,24 +65,25 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDetectFiducialMarkers", "Memory could not be allocated");
 
   Array<u8> image                             = mxArrayToArray<u8>(prhs[0], memory);
-  const s32 scaleImage_numPyramidLevels       = static_cast<s32>(mxGetScalar(prhs[1]));
-  const s32 scaleImage_thresholdMultiplier    = Round<s32>(pow(2,16)*mxGetScalar(prhs[2])); // Convert from double to SQ15.16
-  const s16 component1d_minComponentWidth     = static_cast<s16>(mxGetScalar(prhs[3]));
-  const s16 component1d_maxSkipDistance       = static_cast<s16>(mxGetScalar(prhs[4]));
-  const s32 component_minimumNumPixels        = static_cast<s32>(mxGetScalar(prhs[5]));
-  const s32 component_maximumNumPixels        = static_cast<s32>(mxGetScalar(prhs[6]));
-  const s32 component_sparseMultiplyThreshold = Round<s32>(pow(2,5)*mxGetScalar(prhs[7])); // Convert from double to SQ26.5
-  const s32 component_solidMultiplyThreshold  = Round<s32>(pow(2,5)*mxGetScalar(prhs[8])); // Convert from double to SQ26.5
-  const f32 component_minHollowRatio          = static_cast<f32>(mxGetScalar(prhs[9]));
-  const s32 quads_minQuadArea                 = static_cast<s32>(mxGetScalar(prhs[10]));
-  const s32 quads_quadSymmetryThreshold       = Round<s32>(pow(2,8)*mxGetScalar(prhs[11])); // Convert from double to SQ23.8
-  const s32 quads_minDistanceFromImageEdge    = static_cast<s32>(mxGetScalar(prhs[12]));
-  const f32 decode_minContrastRatio           = static_cast<f32>(mxGetScalar(prhs[13]));
-  const s32 quadRefinementIterations          = static_cast<s32>(mxGetScalar(prhs[14]));
-  const s32 numRefinementSamples              = static_cast<s32>(mxGetScalar(prhs[15]));
-  const f32 quadRefinementMaxCornerChange     = static_cast<f32>(mxGetScalar(prhs[16]));
-  const f32 quadRefinementMinCornerChange     = static_cast<f32>(mxGetScalar(prhs[17]));
-  const bool returnInvalidMarkers             = static_cast<bool>(Round<s32>(mxGetScalar(prhs[18])));
+  const bool useIntegralImageFiltering        = static_cast<bool>(Round<s32>(mxGetScalar(prhs[1])));
+  const s32 scaleImage_numPyramidLevels       = static_cast<s32>(mxGetScalar(prhs[2]));
+  const s32 scaleImage_thresholdMultiplier    = Round<s32>(pow(2,16)*mxGetScalar(prhs[3])); // Convert from double to SQ15.16
+  const s16 component1d_minComponentWidth     = static_cast<s16>(mxGetScalar(prhs[4]));
+  const s16 component1d_maxSkipDistance       = static_cast<s16>(mxGetScalar(prhs[5]));
+  const s32 component_minimumNumPixels        = static_cast<s32>(mxGetScalar(prhs[6]));
+  const s32 component_maximumNumPixels        = static_cast<s32>(mxGetScalar(prhs[7]));
+  const s32 component_sparseMultiplyThreshold = Round<s32>(pow(2,5)*mxGetScalar(prhs[8])); // Convert from double to SQ26.5
+  const s32 component_solidMultiplyThreshold  = Round<s32>(pow(2,5)*mxGetScalar(prhs[9])); // Convert from double to SQ26.5
+  const f32 component_minHollowRatio          = static_cast<f32>(mxGetScalar(prhs[10]));
+  const s32 quads_minQuadArea                 = static_cast<s32>(mxGetScalar(prhs[11]));
+  const s32 quads_quadSymmetryThreshold       = Round<s32>(pow(2,8)*mxGetScalar(prhs[12])); // Convert from double to SQ23.8
+  const s32 quads_minDistanceFromImageEdge    = static_cast<s32>(mxGetScalar(prhs[13]));
+  const f32 decode_minContrastRatio           = static_cast<f32>(mxGetScalar(prhs[14]));
+  const s32 quadRefinementIterations          = static_cast<s32>(mxGetScalar(prhs[15]));
+  const s32 numRefinementSamples              = static_cast<s32>(mxGetScalar(prhs[16]));
+  const f32 quadRefinementMaxCornerChange     = static_cast<f32>(mxGetScalar(prhs[17]));
+  const f32 quadRefinementMinCornerChange     = static_cast<f32>(mxGetScalar(prhs[18]));
+  const bool returnInvalidMarkers             = static_cast<bool>(Round<s32>(mxGetScalar(prhs[19])));
 
   AnkiConditionalErrorAndReturn(image.IsValid(), "mexDetectFiducialMarkers", "Could not allocate image");
 
@@ -114,6 +115,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       image,
       markers,
       homographies,
+      useIntegralImageFiltering,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,

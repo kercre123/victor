@@ -38,6 +38,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     minSideLength = round(0.01*max(imageSize(1),imageSize(2)));
     maxSideLength = round(0.97*min(imageSize(1),imageSize(2)));
     
+    algorithmParameters.useIntegralImageFiltering = true;
     algorithmParameters.scaleImage_thresholdMultiplier = 1.0;
     algorithmParameters.scaleImage_numPyramidLevels = 3;
     algorithmParameters.component1d_minComponentWidth = 0;
