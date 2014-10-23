@@ -79,6 +79,15 @@ namespace Cozmo {
         break;
       }
         
+      case KeyFrame::PLAY_SOUND:
+      {
+        // TODO: Play streamed-in sound directly using robot speaker once available
+        // For now, though, we'll just request the basestation do it for us
+        Messages::PlaySoundOnBaseStation msg;
+        msg.soundID  = PlaySound.soundID;
+        msg.numLoops = PlaySound.numLoops;
+        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::PlaySoundOnBaseStation), &msg);
+      }
       default:
       {
         // Do nothing if no TransitionOutOf behavior defined for this type

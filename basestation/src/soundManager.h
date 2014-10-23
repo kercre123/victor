@@ -29,7 +29,7 @@ namespace Anki {
       // Set the root directory of sound files
       bool SetRootDir(const char* dir);
       
-      bool Play(const SoundID_t id);
+      bool Play(const SoundID_t id, const u8 numLoops=1);
       
       void SetScheme(const SoundSchemeID_t scheme);
       SoundSchemeID_t GetScheme() const;

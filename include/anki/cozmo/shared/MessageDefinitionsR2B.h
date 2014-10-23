@@ -201,3 +201,10 @@ ADD_MESSAGE_MEMBER(u16, width)
 ADD_MESSAGE_MEMBER(u16, height)
 ADD_MESSAGE_MEMBER(u8, visualize)
 END_MESSAGE_DEFINITION(FaceDetection)
+
+// TODO: Remove this message once we can play the sound _on_ the robot
+// PlaySound
+START_MESSAGE_DEFINITION(PlaySoundOnBaseStation, 1)
+ADD_MESSAGE_MEMBER(u16, soundID)
+ADD_MESSAGE_MEMBER(u8,  numLoops)
+END_MESSAGE_DEFINITION(PlaySoundOnBaseStation)

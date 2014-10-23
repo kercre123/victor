@@ -12,6 +12,7 @@
 #include "soundManager.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/exceptions.h"
+#include "anki/common/basestation/platformPathManager.h"
 
 #include <thread>
 #include <map>
@@ -33,7 +34,8 @@ namespace Anki {
       bool _hasRootDir;
       
       // Root directory of sounds
-      char _rootDir[512];
+      const s32 MAX_PATH_LENGTH = 512;
+      char _rootDir[MAX_PATH_LENGTH];
       
       SoundSchemeID_t _currScheme = SOUND_SCHEME_COZMO;
       
@@ -97,18 +99,21 @@ namespace Anki {
       
       if (system(NULL)) {
         _hasCmdProcessor = true;
-        SetRootDir("cozmo_sounds");
+        SetRootDir("basestation/cozmo_sounds");
       } else {
         PRINT_NAMED_WARNING("SoundManager.NoCmdProc","\n");
       }
     }
 
-    void CmdLinePlay(SoundID_t id)
+    void CmdLinePlay(SoundID_t id, const u8 numLoops)
     {
       if( !_soundTable[_currScheme].at(id).empty() ) {
-        char fullCmd[512];
-        sprintf(fullCmd, "afplay %s/%s", _rootDir, _soundTable[_currScheme].at(id).c_str());
-        system(fullCmd);
+        u8 timesPlayed = 0;
+        while(timesPlayed++ < numLoops) {
+          char fullCmd[512];
+          snprintf(fullCmd, 512, "afplay %s/%s", _rootDir, _soundTable[_currScheme].at(id).c_str());
+          system(fullCmd);
+        }
       }
       --_numActiveThreads;
     }
@@ -118,10 +123,14 @@ namespace Anki {
     {
       _hasRootDir = false;
       
+      std::string fullPath(PREPEND_SCOPED_PATH(PlatformPathManager::Resource, dir));
+      
       // Check if directory exists
       struct stat info;
-      if( stat( dir, &info ) != 0 ) {
-        PRINT_NAMED_WARNING("SoundManager.SetRootDir.NoAccess", "Could not access path %s (errno %d)\n", dir, errno);
+      if( stat( fullPath.c_str(), &info ) != 0 ) {
+        PRINT_NAMED_WARNING("SoundManager.SetRootDir.NoAccess",
+                            "Could not access path %s (errno %d)\n",
+                            fullPath.c_str(), errno);
         return false;
       }
       if (!S_ISDIR(info.st_mode)) {
@@ -130,17 +139,18 @@ namespace Anki {
       }
       
       _hasRootDir = true;
-      sprintf(_rootDir, "%s", dir);
+      snprintf(_rootDir, MAX_PATH_LENGTH, "%s", fullPath.c_str());
       return true;
     }
     
     
-    bool SoundManager::Play(const SoundID_t id)
+    bool SoundManager::Play(const SoundID_t id, const u8 numLoops)
     {
       if (_hasCmdProcessor && _hasRootDir && id < NUM_SOUNDS) {
         if (_numActiveThreads < MAX_SOUND_THREADS) {
           ++_numActiveThreads;
-          std::thread soundThread(CmdLinePlay, id);
+          
+          std::thread soundThread(CmdLinePlay, id, numLoops);
           soundThread.detach();
           return true;
         }

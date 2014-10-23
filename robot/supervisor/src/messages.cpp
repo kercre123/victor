@@ -613,7 +613,16 @@ namespace Anki {
         AddKeyFrameHelper(msg, kf);
       }
       
-      
+      void ProcessAddAnimKeyFrame_PlaySoundMessage(const AddAnimKeyFrame_PlaySound& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::PLAY_SOUND;
+        kf.PlaySound.soundID = static_cast<SoundID_t>(msg.soundID);
+        kf.PlaySound.numLoops = msg.numLoops;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
       
 // ----------- Send messages -----------------
       

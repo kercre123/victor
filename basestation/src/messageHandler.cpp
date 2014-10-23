@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "messageHandler.h"
+#include "soundManager.h"
 #include "vizManager.h"
 
 #include <fstream>
@@ -468,5 +469,13 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessagePlaySoundOnBaseStation const& msg)
+    {
+      SoundManager::getInstance()->Play(static_cast<SoundID_t>(msg.soundID), msg.numLoops);
+      return RESULT_OK;
+    }
+    
+    
   } // namespace Cozmo
 } // namespace Anki
