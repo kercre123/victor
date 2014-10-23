@@ -23,7 +23,7 @@ function varargout = compareImageResults(varargin)
     % Edit the above text to modify the response to help compareImageResults
     
     % Last Modified by GUIDE v2.5 23-Oct-2014 15:49:32
-       
+    
     % Begin initialization code - DO NOT EDIT
     gui_Singleton = 1;
     gui_State = struct('gui_Name',       mfilename, ...
@@ -67,30 +67,32 @@ function compareImageResults_OpeningFcn(hObject, eventdata, handles, varargin)
     global maxImageIndex;
     global stopLoading;
     global playWaitTime;
+    global numImageTiles;
     
     filenamePatterns = {...
         '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/dateTime_2014-10-23_13-41-34/images/c-with-refinement/*.png',...
         '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/dateTime_2014-10-23_13-41-34/images/c-with-refinement-binomial/*.png',...
         '',...
         ''};
-        
+    
     curImageIndex = 1;
     maxImageIndex = 1;
     stopLoading = zeros(length(filenamePatterns), 1);
     imageFilenames = cell(length(filenamePatterns), 1);
     playWaitTime = 0.1;
+    numImageTiles = [4,6];
     
     for iPattern = 1:length(filenamePatterns)
         imageFilenames{iPattern} = rdir(filenamePatterns{iPattern});
     end
-        
+    
     LoadImages(1);
     LoadImages(2);
     LoadImages(3);
     LoadImages(4);
     
     ShowImages()
-            
+    
     % --- Outputs from this function are returned to the command line.
 function varargout = compareImageResults_OutputFcn(hObject, eventdata, handles)
     % varargout  cell array for returning output args (see VARARGOUT);
@@ -104,7 +106,7 @@ function varargout = compareImageResults_OutputFcn(hObject, eventdata, handles)
 function setDefaultGuiObjectColor(hObject)
     if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
         set(hObject,'BackgroundColor','white');
-    end    
+    end
     
     %
     % Create Functions
@@ -113,7 +115,7 @@ function setDefaultGuiObjectColor(hObject)
 function filenamePattern1_CreateFcn(hObject, ~, ~)
     global filenamePatterns;
     setDefaultGuiObjectColor(hObject);
-    set(hObject, 'String', filenamePatterns{1});  
+    set(hObject, 'String', filenamePatterns{1});
     
 function filenamePattern2_CreateFcn(hObject, ~, ~)
     global filenamePatterns;
@@ -129,7 +131,7 @@ function filenamePattern4_CreateFcn(hObject, ~, ~)
     global filenamePatterns;
     setDefaultGuiObjectColor(hObject);
     set(hObject, 'String', filenamePatterns{4});
-        
+    
 function playWait_CreateFcn(hObject, eventdata, handles)
     global playWaitTime;
     setDefaultGuiObjectColor(hObject);
@@ -157,45 +159,51 @@ function filenamePattern3_Callback(hObject, ~, ~)
     global filenamePatterns;
     filenamePatterns{3} = get(hObject,'String');
     LoadImages(3);
-        
+    
 function filenamePattern4_Callback(hObject, ~, ~)
     global filenamePatterns;
     filenamePatterns{4} = get(hObject,'String');
     LoadImages(4);
-        
+    
 function previousImage1_Callback(~, ~, ~)
     global curImageIndex;
-    curImageIndex = max(1, curImageIndex - 1);
+    global numImageTiles;
+    curImageIndex = max(1, curImageIndex - 1*prod(numImageTiles));
     ShowImages();
     
 function previousImage2_Callback(~, ~, ~)
     global curImageIndex;
-    curImageIndex = max(1, curImageIndex - 10);
+    global numImageTiles;
+    curImageIndex = max(1, curImageIndex - 10*prod(numImageTiles));
     ShowImages();
-
+    
 function previousImage3_Callback(~, ~, ~)
     global curImageIndex;
-    curImageIndex = max(1, curImageIndex - 100);
+    global numImageTiles;
+    curImageIndex = max(1, curImageIndex - 100*prod(numImageTiles));
     ShowImages();
-
+    
 function nextImage1_Callback(~, ~, ~)
     global curImageIndex;
-    global maxImageIndex;    
-    curImageIndex = min(maxImageIndex, curImageIndex + 1);
+    global maxImageIndex;
+    global numImageTiles;
+    curImageIndex = min(maxImageIndex, curImageIndex + 1*prod(numImageTiles));
     ShowImages();
-
+    
 function nextImage2_Callback(~, ~, ~)
     global curImageIndex;
-    global maxImageIndex;    
-    curImageIndex = min(maxImageIndex, curImageIndex + 10);
+    global maxImageIndex;
+    global numImageTiles;
+    curImageIndex = min(maxImageIndex, curImageIndex + 10*prod(numImageTiles));
     ShowImages();
-
+    
 function nextImage3_Callback(~, ~, ~)
     global curImageIndex;
-    global maxImageIndex;    
-    curImageIndex = min(maxImageIndex, curImageIndex + 100);
+    global maxImageIndex;
+    global numImageTiles;
+    curImageIndex = min(maxImageIndex, curImageIndex + 100*prod(numImageTiles));
     ShowImages();
-
+    
 function playButton_Callback(~, ~, ~)
     global playWaitTime;
     global playing;
@@ -212,7 +220,7 @@ function playButton_Callback(~, ~, ~)
     end
     
     curImageIndex = min(curImageIndex, maxImageIndex);
-
+    
 function stopButton_Callback(~, ~, ~)
     global playing;
     playing = false;
@@ -224,7 +232,7 @@ function playWait_Callback(~, ~, ~)
     %
     % End Callback Functions
     %
-
+    
 function LoadImages(whichPattern)
     global filenamePatterns;
     global imageFilenames;
@@ -264,9 +272,9 @@ function LoadImages(whichPattern)
             break;
         end
         
-%         tic
-%         images{iPattern}{iFile} = imread(imageFilenames{whichPattern}(iFile).name);
-%         toc
+        %         tic
+        %         images{iPattern}{iFile} = imread(imageFilenames{whichPattern}(iFile).name);
+        %         toc
     end
     disp(sprintf('Done loading images for %d', whichPattern))
     
@@ -275,6 +283,7 @@ function ShowImages()
     global imageFilenames;
     global images;
     global curImageIndex;
+    global numImageTiles;   
     
     validPatternIndexes = [];
     for i = 1:length(filenamePatterns)
@@ -287,25 +296,42 @@ function ShowImages()
     numCols = ceil(length(validPatternIndexes) / numRows);
     
     for iPattern = 1:length(validPatternIndexes)
-        figure(200);
-        subplot(numRows, numCols, iPattern);
+        figure(200 + iPattern);
         
-        curFilename = imageFilenames{validPatternIndexes(iPattern)}(curImageIndex).name;
+        originalImageSize = [580,640];
+        resizedImageSize = round(originalImageSize * 0.5);
+        bigImage = zeros([resizedImageSize(1)*numImageTiles(1), resizedImageSize(2)*numImageTiles(2), 3], 'uint8');
         
-        if isempty(images{validPatternIndexes(iPattern)})
-            curImage = [];
-        else
-            curImage = images{validPatternIndexes(iPattern)}{curImageIndex};
-        end
-        
-        % If the image is not cached yet, load and cache it
-        if isempty(curImage)
-            curImage = imread(curFilename);
-            images{validPatternIndexes(iPattern)}{curImageIndex} = curImage;
-        end
-        
-        imshow(curImage);
+        dImage = 0;
+        for dImageY = 0:(numImageTiles(1)-1)
+            for dImageX = 0:(numImageTiles(2)-1)
+                totalImageIndex = curImageIndex + dImage;
                 
+                if totalImageIndex <= length(imageFilenames{validPatternIndexes(iPattern)})
+                    curFilename = imageFilenames{validPatternIndexes(iPattern)}(totalImageIndex).name;
+
+                    if isempty(images{validPatternIndexes(iPattern)})
+                        curImage = [];
+                    else
+                        curImage = images{validPatternIndexes(iPattern)}{totalImageIndex};
+                    end
+
+                    % If the image is not cached yet, load and cache it
+                    if isempty(curImage)
+                        curImage = imread(curFilename);
+                        images{validPatternIndexes(iPattern)}{totalImageIndex} = curImage;
+                    end
+
+                    curResizedImage = imresize(curImage, resizedImageSize);
+                    bigImage((1 + resizedImageSize(1)*dImageY):(resizedImageSize(1)*(dImageY+1)), (1 + resizedImageSize(2)*dImageX):(resizedImageSize(2)*(dImageX+1)), :) = curResizedImage;
+                end
+                
+                dImage = dImage + 1;
+            end % for dImageX = 0:(numImageTiles(2)-1)
+        end % for dImageY = 0:(numImageTiles(1)-1)
+        
+        imshow(bigImage);
+        
         slashIndex = find(curFilename == '/');
         title(curFilename((slashIndex(end)+1):end))
     end
@@ -313,7 +339,7 @@ function ShowImages()
     
     
     
-
-
-
-
+    
+    
+    
+    
