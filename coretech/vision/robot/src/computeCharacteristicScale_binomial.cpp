@@ -133,11 +133,13 @@ namespace Anki
         if((lastResult = Matrix::SumOfAbsDiff<u8,s16,u8>(imagePyramid[iLevel], blurredImagePyramid[iLevel], dogPyramid[iLevel])) != RESULT_OK)
           return lastResult;
 
+        //#if ANKICORETECH_EMBEDDED_USE_OPENCV
         //char name[1024];
         //snprintf(name, 1024, "image"); imagePyramid[iLevel].Show(name, false, false, true);
         //snprintf(name, 1024, "blurred"); blurredImagePyramid[iLevel].Show(name, false, false, true);
         //snprintf(name, 1024, "dog"); dogPyramid[iLevel].Show(name, false, false, true);
         //cv::waitKey();
+        //#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
       }
 
       if(upsampleToFullSize) {
@@ -176,10 +178,12 @@ namespace Anki
             } // for(s32 xBig=0; xBig<imageWidth; xBig++)
           } // for(s32 yBig=0; yBig<imageHeight; yBig++)
 
-          char name[1024];
-          snprintf(name, 1024, "dogMax"); dogMax.Show(name, false, false, true);
-          snprintf(name, 1024, "scaleImage"); scaleImage.Show(name, false, false, true);
-          cv::waitKey();
+          //#if ANKICORETECH_EMBEDDED_USE_OPENCV
+          //char name[1024];
+          //snprintf(name, 1024, "dogMax"); dogMax.Show(name, false, false, true);
+          //snprintf(name, 1024, "scaleImage"); scaleImage.Show(name, false, false, true);
+          //cv::waitKey();
+          //#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
         } // for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++)
       } else { // if(upsampleToFullSize)
         for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++) {
@@ -212,10 +216,12 @@ namespace Anki
             } // for(s32 xSmall=0; xSmall<scaledWidth; xSmall++)
           } // for(s32 yBig=0; yBig<imageHeight; yBig++)
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
           char name[1024];
           snprintf(name, 1024, "dogMax"); dogMax.Show(name, false, false, true);
           snprintf(name, 1024, "scaleImage"); scaleImage.Show(name, false, false, true);
           cv::waitKey();
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
         } // for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++)
       } // if(upsampleToFullSize) .. else
 
@@ -242,7 +248,9 @@ namespace Anki
           return lastResult;
       } // for(s32 y=0; y<imageHeight; y++)
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
       binaryImageTmp.Show("binaryImageTmp", true, false, true);
+#endif
 
       //BeginBenchmark("ecvcsB_finalize");
       if((lastResult = components.Extract2dComponents_PerRow_Finalize()) != RESULT_OK)
