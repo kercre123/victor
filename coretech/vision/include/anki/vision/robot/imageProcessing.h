@@ -41,6 +41,65 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <arm_neon.h>
 #endif
 
+template<int upsamplePower> void UpsampleByPowerOfTwoBilinear_innerLoop(
+  const u8 * restrict pInY0,
+  const u8 * restrict pInY1,
+  Anki::Embedded::Array<u8> &out,
+  const s32 ySmall,
+  const s32 smallWidth,
+  const u8 upsampleFactorU8,
+  const u8 upsamplePowerU8,
+  const s32 outStride);
+
+template<int upsamplePower> void UpsampleByPowerOfTwoBilinear_innerLoop(
+  const u8 * restrict pInY0,
+  const u8 * restrict pInY1,
+  Anki::Embedded::Array<u8> &out,
+  const s32 ySmall,
+  const s32 smallWidth,
+  const u8 upsampleFactorU8,
+  const u8 upsamplePowerU8,
+  const s32 outStride)
+{
+  for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
+    const u8 smallUL = pInY0[xSmall];
+    const u8 smallUR = pInY0[xSmall+1];
+    const u8 smallLL = pInY1[xSmall];
+    const u8 smallLR = pInY1[xSmall+1];
+
+    u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2, 0);
+
+    const s32 xBig0 = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
+
+    for(s32 dy=0; dy<upsampleFactorU8; dy++) {
+      const u8 alpha = 2*upsampleFactorU8 - 2*dy - 1;
+      const u8 alphaInverse = 2*dy + 1;
+
+      const u16 interpolatedPixelL0 = smallUL * alpha;
+      const u16 interpolatedPixelL1 = smallLL * alphaInverse;
+      const u16 interpolatedPixelL = interpolatedPixelL0 + interpolatedPixelL1;
+      const u16 subtractAmount = interpolatedPixelL >> (upsamplePowerU8-1);
+
+      const u16 interpolatedPixelR0 = smallUR * alpha;
+      const u16 interpolatedPixelR1 = smallLR * alphaInverse;
+      const u16 interpolatedPixelR = interpolatedPixelR0 + interpolatedPixelR1;
+      const u16 addAmount = interpolatedPixelR >> (upsamplePowerU8-1);
+
+      u16 curValue = 2*interpolatedPixelL + ((addAmount - subtractAmount)>>1);
+
+      for(s32 dx=0; dx<upsampleFactorU8; dx++) {
+        const u8 curValueU8 = curValue >> (upsamplePowerU8+2);
+
+        pOut[xBig0 + dx] = curValueU8;
+
+        curValue += addAmount - subtractAmount;
+      } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
+
+      pOut += outStride;
+    } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
+  } //  for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++)
+} // UpsampleByPowerOfTwoBilinear_innerLoop()
+
 namespace Anki
 {
   namespace Embedded
@@ -1067,43 +1126,7 @@ namespace Anki
             } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
           } // const s32 xSmall = -1;
 
-          for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
-            const u8 smallUL = pInY0[xSmall];
-            const u8 smallUR = pInY0[xSmall+1];
-            const u8 smallLL = pInY1[xSmall];
-            const u8 smallLR = pInY1[xSmall+1];
-
-            u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2, 0);
-
-            const s32 xBig0 = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
-
-            for(s32 dy=0; dy<upsampleFactorU8; dy++) {
-              const u8 alpha = 2*upsampleFactorU8 - 2*dy - 1;
-              const u8 alphaInverse = 2*dy + 1;
-
-              const u16 interpolatedPixelL0 = smallUL * alpha;
-              const u16 interpolatedPixelL1 = smallLL * alphaInverse;
-              const u16 interpolatedPixelL = interpolatedPixelL0 + interpolatedPixelL1;
-              const u16 subtractAmount = interpolatedPixelL >> (upsamplePowerU8-1);
-
-              const u16 interpolatedPixelR0 = smallUR * alpha;
-              const u16 interpolatedPixelR1 = smallLR * alphaInverse;
-              const u16 interpolatedPixelR = interpolatedPixelR0 + interpolatedPixelR1;
-              const u16 addAmount = interpolatedPixelR >> (upsamplePowerU8-1);
-
-              u16 curValue = 2*interpolatedPixelL + ((addAmount - subtractAmount)>>1);
-
-              for(s32 dx=0; dx<upsampleFactorU8; dx++) {
-                const u8 curValueU8 = curValue >> (upsamplePowerU8+2);
-
-                pOut[xBig0 + dx] = curValueU8;
-
-                curValue += addAmount - subtractAmount;
-              } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
-
-              pOut += outStride;
-            } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
-          } //  for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++)
+          UpsampleByPowerOfTwoBilinear_innerLoop<upsamplePower>(pInY0, pInY1, out, ySmall, smallWidth, upsampleFactorU8, upsamplePowerU8, outStride);
 
           // const s32 xSmall = smallWidth-1;
           {
