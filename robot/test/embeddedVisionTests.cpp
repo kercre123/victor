@@ -77,10 +77,10 @@ Result ComputeAndPrintMedianBenchmark(const FixedLengthList<FixedLengthList<Benc
   // Check that all the lists have the same number and type of benchmarks
   const s32 numElements = benchmarkElements[0].get_size();
   for(s32 iRun=1; iRun<numRuns; iRun++) {
-    if(benchmarkElements[0].get_size() != benchmarkElements[iRun].get_size()) { return RESULT_FAIL; }
+    if(benchmarkElements[0].get_size() != benchmarkElements[iRun].get_size()) { AnkiError("ComputeAndPrintMedianBenchmark", "number failure %d!=%d", benchmarkElements[0].get_size(), benchmarkElements[iRun].get_size()); return RESULT_FAIL; }
     for(s32 i=0; i<numElements; i++) {
-      if(benchmarkElements[0][i].numEvents != benchmarkElements[iRun][i].numEvents) { return RESULT_FAIL; }
-      if(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) != 0) { return RESULT_FAIL; }
+      if(benchmarkElements[0][i].numEvents != benchmarkElements[iRun][i].numEvents) { AnkiError("ComputeAndPrintMedianBenchmark", "number failure %d!=%d (%s,%s)", benchmarkElements[0][i].numEvents, benchmarkElements[iRun][i].numEvents, benchmarkElements[0][i].name, benchmarkElements[iRun][i].name); return RESULT_FAIL; }
+      if(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) != 0) { AnkiError("ComputeAndPrintMedianBenchmark", "name failure %s!=%s", benchmarkElements[0][i].name, benchmarkElements[iRun][i].name); return RESULT_FAIL; }
     }
   }
 
@@ -93,35 +93,35 @@ Result ComputeAndPrintMedianBenchmark(const FixedLengthList<FixedLengthList<Benc
     medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].inclusive_mean = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].inclusive_min = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].inclusive_max = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].inclusive_total = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].exclusive_mean = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].exclusive_min = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].exclusive_max = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].exclusive_total = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
   } // for(s32 i=0; i<numElements; i++)
 
@@ -3860,7 +3860,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 
     benchmarkElements_integral[iRun] = ComputeBenchmarkResults(scratchOffchip);
 
-    //PrintBenchmarkResults(benchmarkElements[iRun], true, true);
+    //PrintBenchmarkResults(benchmarkElements_integral[iRun], true, true);
 
     InitBenchmarking();
 
@@ -3891,7 +3891,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 
     benchmarkElements_binomial[iRun] = ComputeBenchmarkResults(scratchOffchip);
 
-    //PrintBenchmarkResults(benchmarkElements[iRun], true, true);
+    //PrintBenchmarkResults(benchmarkElements_binomial[iRun], true, true);
   } // for(s32 iRun=0; iRun<numRuns; iRun++)
 
   const f32 elementPercentile = 0; // Minimum

@@ -37,8 +37,11 @@ template<> void UpsampleByPowerOfTwoBilinear_innerLoop<1>(
   const s32 smallWidth,
   const s32 outStride)
 {
+  const u8 alphaYs[2] = {3, 1};
+  const u8 alphaYInverses[2] = {1, 3};
+
   for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
-    const u8 smallUL = pInY0[xSmall];
+    /*    const u8 smallUL = pInY0[xSmall];
     const u8 smallUR = pInY0[xSmall+1];
     const u8 smallLL = pInY1[xSmall];
     const u8 smallLR = pInY1[xSmall+1];
@@ -47,32 +50,28 @@ template<> void UpsampleByPowerOfTwoBilinear_innerLoop<1>(
 
     const s32 xBig0 = xSmall*2 + 2/2;
 
-    for(s32 dy=0; dy<2; dy++) {
-      const u8 alpha = 2*2 - 2*dy - 1;
-      const u8 alphaInverse = 2*dy + 1;
+    pOut[xBig0] = (smallUL + smallUR) >> 1;
+    pOut[xBig0 + 1] = (smallLL + smallLR) >> 1;
 
-      const u16 interpolatedPixelL0 = smallUL * alpha;
-      const u16 interpolatedPixelL1 = smallLL * alphaInverse;
-      const u16 interpolatedPixelL = interpolatedPixelL0 + interpolatedPixelL1;
-      const u16 subtractAmount = interpolatedPixelL >> (1-1);
+    pOut[xBig0 + outStride] = (smallUL + smallUR) >> 1;
+    pOut[xBig0 + outStride + 1] = (smallLL + smallLR) >> 1;
 
-      const u16 interpolatedPixelR0 = smallUR * alpha;
-      const u16 interpolatedPixelR1 = smallLR * alphaInverse;
-      const u16 interpolatedPixelR = interpolatedPixelR0 + interpolatedPixelR1;
-      const u16 addAmount = interpolatedPixelR >> (1-1);
+    pOut += 2*outStride;
+    */
+    const u8 smallUL = pInY0[xSmall];
+    const u8 smallUR = pInY0[xSmall+1];
 
-      u16 curValue = 2*interpolatedPixelL + ((addAmount - subtractAmount)>>1);
+    u8 * restrict pOut = out.Pointer(ySmall*2 + 2/2, 0);
 
-      for(s32 dx=0; dx<2; dx++) {
-        const u8 curValueU8 = curValue >> (1+2);
+    const s32 xBig0 = xSmall*2 + 2/2;
 
-        pOut[xBig0 + dx] = curValueU8;
+    pOut[xBig0] = (smallUL + smallUR) >> 1;
+    pOut[xBig0 + 1] = (smallUL + smallUR) >> 1;
 
-        curValue += addAmount - subtractAmount;
-      } // for(s32 dx=0; dx<2; dx++)
+    pOut[xBig0 + outStride] = (smallUL + smallUR) >> 1;
+    pOut[xBig0 + outStride + 1] = (smallUL + smallUR) >> 1;
 
-      pOut += outStride;
-    } // for(s32 dy=0; dy<2; dy++)
+    pOut += 2*outStride;
   } //  for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++)
 } // UpsampleByPowerOfTwoBilinear_innerLoop<1>()
 
