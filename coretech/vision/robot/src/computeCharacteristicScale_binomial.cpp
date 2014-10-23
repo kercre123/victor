@@ -153,8 +153,8 @@ namespace Anki
 
       BeginBenchmark("ecvcsB_scale");
       if(upsampleToFullSize) {
-        Array<u8> upsampledImage(imageHeight, imageWidth, slowestScratch);
-        Array<u8> upsampledDog(imageHeight, imageWidth, slowestScratch);
+        Array<u8> upsampledImageTmp(imageHeight, imageWidth, slowestScratch);
+        Array<u8> upsampledDogTmp(imageHeight, imageWidth, slowestScratch);
 
         AnkiAssert(numPyramidLevels < 6);
 
@@ -164,27 +164,47 @@ namespace Anki
           const s32 scaledHeight = imageHeight >> iLevel;
           const s32 scaledWidth = imageWidth >> iLevel;
 
-          BeginBenchmark("ecvcsB_scale_upsample");
+          Array<u8> upsampledImage;
+          Array<u8> upsampledDog;
           if(iLevel == 0) {
-            upsampledImage.Set(imagePyramid[iLevel]);
-            upsampledDog.Set(dogPyramid[iLevel]);
+            upsampledImage = imagePyramid[iLevel];
+            upsampledDog = dogPyramid[iLevel];
           } else if(iLevel == 1) {
+            BeginBenchmark("ecvcsB_scale_upsample");
+            upsampledImage = upsampledImageTmp;
+            upsampledDog = upsampledDogTmp;
             ImageProcessing::UpsampleByPowerOfTwoBilinear<1>(imagePyramid[iLevel], upsampledImage, slowestScratch);
             ImageProcessing::UpsampleByPowerOfTwoBilinear<1>(dogPyramid[iLevel], upsampledDog, slowestScratch);
+            EndBenchmark("ecvcsB_scale_upsample");
           } else if(iLevel == 2) {
+            BeginBenchmark("ecvcsB_scale_upsample");
+            upsampledImage = upsampledImageTmp;
+            upsampledDog = upsampledDogTmp;
             ImageProcessing::UpsampleByPowerOfTwoBilinear<2>(imagePyramid[iLevel], upsampledImage, slowestScratch);
             ImageProcessing::UpsampleByPowerOfTwoBilinear<2>(dogPyramid[iLevel], upsampledDog, slowestScratch);
+            EndBenchmark("ecvcsB_scale_upsample");
           } else if(iLevel == 3) {
+            BeginBenchmark("ecvcsB_scale_upsample");
+            upsampledImage = upsampledImageTmp;
+            upsampledDog = upsampledDogTmp;
             ImageProcessing::UpsampleByPowerOfTwoBilinear<3>(imagePyramid[iLevel], upsampledImage, slowestScratch);
             ImageProcessing::UpsampleByPowerOfTwoBilinear<3>(dogPyramid[iLevel], upsampledDog, slowestScratch);
+            EndBenchmark("ecvcsB_scale_upsample");
           } else if(iLevel == 4) {
+            BeginBenchmark("ecvcsB_scale_upsample");
+            upsampledImage = upsampledImageTmp;
+            upsampledDog = upsampledDogTmp;
             ImageProcessing::UpsampleByPowerOfTwoBilinear<4>(imagePyramid[iLevel], upsampledImage, slowestScratch);
             ImageProcessing::UpsampleByPowerOfTwoBilinear<4>(dogPyramid[iLevel], upsampledDog, slowestScratch);
+            EndBenchmark("ecvcsB_scale_upsample");
           } else if(iLevel == 5) {
+            BeginBenchmark("ecvcsB_scale_upsample");
+            upsampledImage = upsampledImageTmp;
+            upsampledDog = upsampledDogTmp;
             ImageProcessing::UpsampleByPowerOfTwoBilinear<5>(imagePyramid[iLevel], upsampledImage, slowestScratch);
             ImageProcessing::UpsampleByPowerOfTwoBilinear<5>(dogPyramid[iLevel], upsampledDog, slowestScratch);
+            EndBenchmark("ecvcsB_scale_upsample");
           }
-          EndBenchmark("ecvcsB_scale_upsample");
 
           BeginBenchmark("ecvcsB_scale_select");
           for(s32 yBig=0; yBig<imageHeight; yBig++) {
