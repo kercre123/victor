@@ -146,6 +146,8 @@ namespace Anki
         Array<u8> upsampledImage(imageHeight, imageWidth, slowestScratch);
         Array<u8> upsampledDog(imageHeight, imageWidth, slowestScratch);
 
+        AnkiAssert(numPyramidLevels < 6);
+
         for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++) {
           const s32 xyOutputStep = 1 << iLevel;
 
@@ -155,9 +157,21 @@ namespace Anki
           if(iLevel == 0) {
             upsampledImage.Set(imagePyramid[iLevel]);
             upsampledDog.Set(dogPyramid[iLevel]);
-          } else {
-            ImageProcessing::UpsampleByPowerOfTwoBilinear(imagePyramid[iLevel], iLevel, upsampledImage, slowestScratch);
-            ImageProcessing::UpsampleByPowerOfTwoBilinear(dogPyramid[iLevel], iLevel, upsampledDog, slowestScratch);
+          } else if(iLevel == 1) {
+            ImageProcessing::UpsampleByPowerOfTwoBilinear<1>(imagePyramid[iLevel], upsampledImage, slowestScratch);
+            ImageProcessing::UpsampleByPowerOfTwoBilinear<1>(dogPyramid[iLevel], upsampledDog, slowestScratch);
+          } else if(iLevel == 2) {
+            ImageProcessing::UpsampleByPowerOfTwoBilinear<2>(imagePyramid[iLevel], upsampledImage, slowestScratch);
+            ImageProcessing::UpsampleByPowerOfTwoBilinear<2>(dogPyramid[iLevel], upsampledDog, slowestScratch);
+          } else if(iLevel == 3) {
+            ImageProcessing::UpsampleByPowerOfTwoBilinear<3>(imagePyramid[iLevel], upsampledImage, slowestScratch);
+            ImageProcessing::UpsampleByPowerOfTwoBilinear<3>(dogPyramid[iLevel], upsampledDog, slowestScratch);
+          } else if(iLevel == 4) {
+            ImageProcessing::UpsampleByPowerOfTwoBilinear<4>(imagePyramid[iLevel], upsampledImage, slowestScratch);
+            ImageProcessing::UpsampleByPowerOfTwoBilinear<4>(dogPyramid[iLevel], upsampledDog, slowestScratch);
+          } else if(iLevel == 5) {
+            ImageProcessing::UpsampleByPowerOfTwoBilinear<5>(imagePyramid[iLevel], upsampledImage, slowestScratch);
+            ImageProcessing::UpsampleByPowerOfTwoBilinear<5>(dogPyramid[iLevel], upsampledDog, slowestScratch);
           }
 
           for(s32 yBig=0; yBig<imageHeight; yBig++) {

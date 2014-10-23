@@ -141,8 +141,8 @@ GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
 
-  const s32 downsamplePower = 2;
-  const s32 upsamplePower = 2;
+  const s32 downsamplePower = 4;
+  const s32 upsamplePower = 4;
 
   const Array<u8> in = Array<u8>::LoadImage("C:/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_36_frame0.png", scratchHuge);
 
@@ -3965,6 +3965,9 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
 
   Array<u8> image640(480, 640, scratchHuge);
   ImageProcessing::Resize<u8,u8>(image320, image640);
+
+  //matlab.PutArray(image320, "image320");
+  //matlab.PutArray(image640, "image640");
 
   //image320.Show("image320", false, false);
   //image640.Show("image640", true, false);

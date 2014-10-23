@@ -77,7 +77,8 @@ namespace Anki
 
       Result DownsampleBilinear(const Array<u8> &in, Array<u8> &out, MemoryStack scratch);
 
-      Result UpsampleByPowerOfTwoBilinear(const Array<u8> &in, const s32 upsamplePower, Array<u8> &out, MemoryStack scratch);
+      //Result UpsampleByPowerOfTwoBilinear(const Array<u8> &in, const s32 upsamplePower, Array<u8> &out, MemoryStack scratch);
+      template<int upsamplePower> Result UpsampleByPowerOfTwoBilinear(const Array<u8> &in, Array<u8> &out, MemoryStack scratch);
 
       template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByTwo(const Array<InType> &in, Array<OutType> &out);
 
