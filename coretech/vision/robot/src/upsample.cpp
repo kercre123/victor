@@ -37,20 +37,18 @@ template<> void UpsampleByPowerOfTwoBilinear_innerLoop<1>(
   const s32 smallWidth,
   const s32 outStride)
 {
-  const u8 upsampleFactorU8 = 1 << 1;
-
   for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
     const u8 smallUL = pInY0[xSmall];
     const u8 smallUR = pInY0[xSmall+1];
     const u8 smallLL = pInY1[xSmall];
     const u8 smallLR = pInY1[xSmall+1];
 
-    u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2, 0);
+    u8 * restrict pOut = out.Pointer(ySmall*2 + 2/2, 0);
 
-    const s32 xBig0 = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
+    const s32 xBig0 = xSmall*2 + 2/2;
 
-    for(s32 dy=0; dy<upsampleFactorU8; dy++) {
-      const u8 alpha = 2*upsampleFactorU8 - 2*dy - 1;
+    for(s32 dy=0; dy<2; dy++) {
+      const u8 alpha = 2*2 - 2*dy - 1;
       const u8 alphaInverse = 2*dy + 1;
 
       const u16 interpolatedPixelL0 = smallUL * alpha;
@@ -65,16 +63,16 @@ template<> void UpsampleByPowerOfTwoBilinear_innerLoop<1>(
 
       u16 curValue = 2*interpolatedPixelL + ((addAmount - subtractAmount)>>1);
 
-      for(s32 dx=0; dx<upsampleFactorU8; dx++) {
+      for(s32 dx=0; dx<2; dx++) {
         const u8 curValueU8 = curValue >> (1+2);
 
         pOut[xBig0 + dx] = curValueU8;
 
         curValue += addAmount - subtractAmount;
-      } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
+      } // for(s32 dx=0; dx<2; dx++)
 
       pOut += outStride;
-    } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
+    } // for(s32 dy=0; dy<2; dy++)
   } //  for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++)
 } // UpsampleByPowerOfTwoBilinear_innerLoop<1>()
 
@@ -86,20 +84,18 @@ template<> void UpsampleByPowerOfTwoBilinear_innerLoop<2>(
   const s32 smallWidth,
   const s32 outStride)
 {
-  const u8 upsampleFactorU8 = 1 << 2;
-
   for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
     const u8 smallUL = pInY0[xSmall];
     const u8 smallUR = pInY0[xSmall+1];
     const u8 smallLL = pInY1[xSmall];
     const u8 smallLR = pInY1[xSmall+1];
 
-    u8 * restrict pOut = out.Pointer(ySmall*upsampleFactorU8 + upsampleFactorU8/2, 0);
+    u8 * restrict pOut = out.Pointer(ySmall*4 + 4/2, 0);
 
-    const s32 xBig0 = xSmall*upsampleFactorU8 + upsampleFactorU8/2;
+    const s32 xBig0 = xSmall*4 + 4/2;
 
-    for(s32 dy=0; dy<upsampleFactorU8; dy++) {
-      const u8 alpha = 2*upsampleFactorU8 - 2*dy - 1;
+    for(s32 dy=0; dy<4; dy++) {
+      const u8 alpha = 2*4 - 2*dy - 1;
       const u8 alphaInverse = 2*dy + 1;
 
       const u16 interpolatedPixelL0 = smallUL * alpha;
@@ -114,16 +110,16 @@ template<> void UpsampleByPowerOfTwoBilinear_innerLoop<2>(
 
       u16 curValue = 2*interpolatedPixelL + ((addAmount - subtractAmount)>>1);
 
-      for(s32 dx=0; dx<upsampleFactorU8; dx++) {
+      for(s32 dx=0; dx<4; dx++) {
         const u8 curValueU8 = curValue >> (2+2);
 
         pOut[xBig0 + dx] = curValueU8;
 
         curValue += addAmount - subtractAmount;
-      } // for(s32 dx=0; dx<upsampleFactorU8; dx++)
+      } // for(s32 dx=0; dx<4; dx++)
 
       pOut += outStride;
-    } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
+    } // for(s32 dy=0; dy<4; dy++)
   } //  for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++)
 } // UpsampleByPowerOfTwoBilinear_innerLoop<2>()
 
