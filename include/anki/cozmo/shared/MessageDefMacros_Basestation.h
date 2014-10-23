@@ -43,6 +43,7 @@
 #undef MESSAGE_PROCESS_METHODS_MODE
 #undef MESSAGE_CREATE_JSON_MODE
 #undef MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE
+#undef MESSAGE_CREATEFROMJSON_LADDER_MODE
 
 #define MESSAGE_CLASS_DEFINITION_MODE         0
 #define MESSAGE_CLASS_BUFFER_CONSTRUCTOR_MODE 1
@@ -55,6 +56,7 @@
 #define MESSAGE_PROCESS_METHODS_MODE          8
 #define MESSAGE_CREATE_JSON_MODE              9
 #define MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE   10
+#define MESSAGE_CREATEFROMJSON_LADDER_MODE    11
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
 #define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
@@ -384,12 +386,12 @@ return root; \
 //    }
 //    if(not root.isMember("foo")) {
 //      fprintf(stderr, "No 'foo' member found!\n");
-//      return RESULT_FAIL;
+//      CORETECH_THROW("Unable to get message member from JSON file.");
 //    }
 //    this->foo = root["foo"];
 //    if(not root.isMember("bar")) {
 //      fprintf(stderr, "No 'bar' member found!\n");
-//      return RESULT_FAIL;
+//      CORETECH_THROW("Unable to get message member from JSON file.");
 //    }
 //    this->bar = root["bar"];
 //
@@ -428,6 +430,61 @@ if(not JsonTools::GetArrayOptional(root, QUOTE(__NAME__), this->__NAME__)) { \
 }
 
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__) }
+
+
+//
+//    Create an if/else ladder for calling the appropriate constructor for
+//    each message in a Json file, using the Name field.
+//
+//    Assumes that:
+//
+//      const Json::Value&  jsonRoot;
+//      Message*            msg;
+//      std::string         msgType;
+//
+//    are already defined.
+//
+//    Then implements the following kind of if/else ladder:
+//
+//        if("MessageFoo" == msgType) {
+//          
+//          msg = new MessageFoo(jsonRoot);
+//          
+//        } else if("MessageBar" == msgType) {
+//          
+//          msg = new MessageBar(jsonRoot);
+//          
+//        } else
+//
+//    Which should be followed by this kind of block to complete the final "else":
+//
+//        {
+//          PRINT_NAMED_WARNING("Message.CreateFromJson.UnknownMessageType",
+//                              "Encountered unknown Message type '%s' in Json file.\n",
+//                              msgType.c_str());
+//        } // if/else kfMsgType matches each string
+//
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_CREATEFROMJSON_LADDER_MODE
+
+#ifndef JSON_CONFIG_H_INCLUDED
+#error Json header must be included to use MESSAGE_CREATEFROMJSON_LADDER_MODE.
+#endif
+
+#ifndef _ANKICORETECH_COMMON_JSONTOOLS_H_
+#error JsonTools header must be included to use MESSAGE_CREATEFROMJSON_LADDER_MODE.
+#endif
+
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+if(QUOTE(GET_MESSAGE_CLASSNAME(__MSG_TYPE__)) == msgType) { \
+  msg = new GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(jsonRoot); \
+} else 
+
+
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
+
+
 
 //
 // Unrecognized mode

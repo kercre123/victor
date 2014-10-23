@@ -105,18 +105,8 @@ namespace Anki {
       ,ANIM_WIGGLE
       ,ANIM_NUM_ANIMATIONS
     } AnimationID_t;*/
-    typedef u32 AnimationID_t;
+    typedef s32 AnimationID_t;
     
-    // TODO: Get rid of these once we send all of them from basestation
-    const AnimationID_t ANIM_IDLE                   = 0;
-    const AnimationID_t ANIM_HEAD_NOD               = 1;
-    const AnimationID_t ANIM_HEAD_NOD_SLOW          = 2;
-    const AnimationID_t ANIM_BACK_AND_FORTH_EXCITED = 3;
-    const AnimationID_t ANIM_WIGGLE                 = 4;
-    const AnimationID_t ANIM_BLINK                  = 5;
-    const AnimationID_t ANIM_UPDOWNLEFTRIGHT        = 6;
-    const AnimationID_t ANIM_LIFT_NOD               = 7;
-    const AnimationID_t ANIM_NUM_ANIMATIONS         = 8;
     
     // List of KeyFrame Transition Types
     enum KeyFrameTransitionType

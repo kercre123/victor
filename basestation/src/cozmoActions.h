@@ -345,7 +345,7 @@ namespace Anki {
     class PlayAnimationAction : public IAction
     {
     public:
-      PlayAnimationAction(AnimationID_t animID);
+      PlayAnimationAction(const std::string& animName);
       
       virtual const std::string& GetName() const override { return _name; }
       
@@ -354,7 +354,8 @@ namespace Anki {
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
-      AnimationID_t _animID;
+      //AnimationID_t _animID;
+      std::string   _animName;
       std::string   _name;
       
     }; // class PlayAnimationAction

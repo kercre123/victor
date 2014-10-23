@@ -999,16 +999,16 @@ namespace Anki {
     
 #pragma mark ---- PlayAnimationAction ----
     
-    PlayAnimationAction::PlayAnimationAction(AnimationID_t animID)
-    : _animID(animID)
-    , _name("PlayAnimation" + std::to_string(_animID) + "Action")
+    PlayAnimationAction::PlayAnimationAction(const std::string& animName)
+    : _animName(animName)
+    , _name("PlayAnimation" + animName + "Action")
     {
       
     }
     
     IAction::ActionResult PlayAnimationAction::Init(Robot& robot)
     {
-      if(robot.PlayAnimation(_animID) == RESULT_OK) {
+      if(robot.PlayAnimation(_animName.c_str()) == RESULT_OK) {
         return SUCCESS;
       } else {
         return FAILURE_ABORT;

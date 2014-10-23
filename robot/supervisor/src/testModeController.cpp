@@ -722,7 +722,7 @@ namespace Anki {
       Result AnimTestInit()
       {
         PRINT("\n==== Starting AnimationTest =====\n");
-        AT_currAnim = ANIM_HEAD_NOD;
+        AT_currAnim = 0;
         AnimationController::Play(AT_currAnim, 0);
         ticCnt_ = 0;
         return RESULT_OK;
@@ -734,8 +734,16 @@ namespace Anki {
           ticCnt_ = 0;
           
           AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-          if (AT_currAnim == ANIM_NUM_ANIMATIONS) {
-            AT_currAnim = ANIM_IDLE;
+          
+          // Skip undefined animIDs
+          while(!AnimationController::IsDefined(AT_currAnim)) {
+            if (AT_currAnim == AnimationController::MAX_CANNED_ANIMATIONS) {
+              // Go back to start
+              AT_currAnim = 0;
+            } else {
+              // otherwise just incrememnt
+              AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+            }
           }
           
           PRINT("Playing animation %d\n", AT_currAnim);

@@ -343,7 +343,7 @@ namespace Anki {
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlayAnimation const& msg)
     {
       SoundManager::getInstance()->Play((SoundID_t)msg.soundID);
-      return robot->PlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
+      return robot->PlayAnimation(&(msg.animationName[0]), msg.numLoops);
     }
   
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartFaceTracking const& msg)

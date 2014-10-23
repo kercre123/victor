@@ -77,23 +77,35 @@ namespace Anki {
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
       
+      Json::Reader reader;
+      
       // Read planner motion primitives
       // TODO: Use different motions primitives depending on the type/personality of this robot
+      // TODO: Stop storing *cozmo* motion primitives in a coretech location
       Json::Value mprims;
-      const std::string subPath("coretech/planning/matlab/cozmo_mprim.json");
-      const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+      {
+        const std::string subPath = "coretech/planning/matlab/cozmo_mprim.json";
+        const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+        std::ifstream jsonFile(jsonFilename);
+        reader.parse(jsonFile, mprims);
+        jsonFile.close();
+      }
       
-      Json::Reader reader;
-      std::ifstream jsonFile(jsonFilename);
-      reader.parse(jsonFile, mprims);
-      jsonFile.close();
-      
+      Json::Value animDefs;
+      {
       // TODO: Point DefineCannedAnimations at a json file with all animations
-      DefineCannedAnimations();
+        const std::string subPath("basestation/config/animations.json");
+        const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+        std::ifstream jsonFile(jsonFilename);
+        reader.parse(jsonFile, animDefs);
+        jsonFile.close();
+      }
+      _cannedAnimations.Define();
+      _cannedAnimations.DefineFromJson(animDefs);
       
       // Immediately send the canned animations out
       // (Eventually do this on demand elsewhere?)
-      SendCannedAnimations();
+      _cannedAnimations.Send(_ID, _msgHandler);
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
@@ -118,7 +130,6 @@ namespace Anki {
       
       _selectedPathPlanner = nullptr;
       
-      _cannedAnimations.clear();
     }
     
     void Robot::SetPickedUp(bool t)
@@ -735,9 +746,9 @@ namespace Anki {
       return SendPlaceObjectOnGround(0, 0, 0);
     }
     
-    Result Robot::PlayAnimation(const AnimationID_t animID, const u32 numLoops)
+    Result Robot::PlayAnimation(const char* animName, const u32 numLoops)
     {
-      return SendPlayAnimation(animID, numLoops);
+      return SendPlayAnimation(animName, numLoops);
     }
     
     Result Robot::SyncTime()
@@ -1389,35 +1400,142 @@ namespace Anki {
       }
     }
     
-    
-    void Robot::SendCannedAnimations()
-    {
-      for(auto & messagesByID : _cannedAnimations)
-      {
-        // First send a clear command for this animation ID, before populating
-        // it with keyframes
-        MessageClearCannedAnimation clearMsg;
-        clearMsg.animationID = messagesByID.first;
-        _msgHandler->SendMessage(_ID, clearMsg);
-
-        // Now send all the keyframe definition messages for this animation ID
-        for(auto message : messagesByID.second.GetKeyFrameMessages())
-        {
-          if(message != nullptr) {
-            _msgHandler->SendMessage(_ID, *message);
-          } else {
-            PRINT_NAMED_WARNING("Robot.SendCannedAnimations.NullMessagePtr",
-                                "Robot %d encountered NULL message sending canned animations.\n", _ID);
-          }
-        }
+    Result Robot::CannedAnimationContainer::AddAnimation(const std::string& name) {
+      auto retVal = _animations.find(name);
+      if(retVal == _animations.end()) {
+        const s32 animID = _animations.size();
+        _animations[name].first = animID;
+        
+        PRINT_NAMED_INFO("CannedAnimationContainer.AddAnimation",
+                         "Adding new animation named '%s' with ID=%d\n",
+                         name.c_str(), animID);
+        
+        return RESULT_OK;
+      } else {
+        PRINT_NAMED_ERROR("CannedAnimationContainer.AddAnimation.DuplicateName",
+                          "Animation named '%s' already exists. Not adding.\n",
+                          name.c_str());
+        return RESULT_FAIL;
       }
     }
     
-    void Robot::DefineCannedAnimations()
+    Robot::KeyFrameList* Robot::CannedAnimationContainer::GetKeyFrameList(const std::string& name) {
+      auto retVal = _animations.find(name);
+      if(retVal == _animations.end()) {
+        PRINT_NAMED_ERROR("CannedAnimationContainer.GetKeyFrameList.InvalidName",
+                          "KeyFrameList requested for unknown animation '%s'.\n",
+                          name.c_str());
+        return nullptr;
+      } else {
+        return &retVal->second.second;
+      }
+    }
+    
+    s32 Robot::CannedAnimationContainer::GetID(const std::string& name) const {
+      auto retVal = _animations.find(name);
+      if(retVal == _animations.end()) {
+        PRINT_NAMED_ERROR("CannedAnimationContainer.GetID.InvalidName",
+                          "ID requested for unknown animation '%s'.\n",
+                          name.c_str());
+        return -1;
+      } else {
+        return retVal->second.first;
+      }
+    }
+
+    
+    void Robot::CannedAnimationContainer::Send(RobotID_t robotID, IMessageHandler* msgHandler)
+    {
+      for(auto & cannedAnimationByName : _animations)
+      {
+        const std::string&  name         = cannedAnimationByName.first;
+        const s32           animID       = cannedAnimationByName.second.first;
+        const KeyFrameList& keyFrameList = cannedAnimationByName.second.second;
+        
+        if(keyFrameList.IsEmpty()) {
+          PRINT_NAMED_WARNING("CannedAnimationContainer.Send.EmptyAnimation",
+                              "Refusing to send empty '%s' animation with ID=%d.\n",
+                              name.c_str(), animID);
+        } else if (animID < 0) {
+          PRINT_NAMED_WARNING("CannedAnimationContainer.Send.ZeroID",
+                              "Refusing to send '%s' animation with invalid ID=-1.\n",
+                              name.c_str());
+        } else {
+          
+          // First send a clear command for this animation ID, before populating
+          // it with keyframes
+          MessageClearCannedAnimation clearMsg;
+          clearMsg.animationID = static_cast<AnimationID_t>(animID);
+          msgHandler->SendMessage(robotID, clearMsg);
+          
+          // Now send all the keyframe definition messages for this animation ID
+          for(auto message : keyFrameList.GetMessages())
+          {
+            if(message != nullptr) {
+              PRINT_NAMED_INFO("CannedAnimationContainer.Send",
+                               "Sending '%s' animation defintion with ID=%d.\n",
+                               name.c_str(), animID);
+              
+              msgHandler->SendMessage(robotID, *message);
+            } else {
+              PRINT_NAMED_WARNING("CannedAnimationContainer.Send.NullMessagePtr",
+                                  "Robot %d encountered NULL message sending canned animations.\n", robotID);
+            }
+          } // for each message
+          
+        } // if/else ladder for keyFrameList validity
+        
+      } // for each canned animation
+      
+    } // SendCannedAnimations()
+    
+    
+    Result Robot::CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot)
+    {
+      
+      Json::Value::Members animationNames = jsonRoot.getMemberNames();
+      
+      for(auto const& animationName : animationNames)
+      {
+        // Must add the animation first to set its ID and allow the GetID and
+        // GetKeyFrameList calls below to work.
+        AddAnimation(animationName);
+        
+        const s32 numFrames = jsonRoot[animationName].size();
+        for(s32 iFrame = 0; iFrame < numFrames; ++iFrame)
+        {
+          // Semi-hack to make sure each message has the animatino ID in it.
+          // We do this here since the CreateFromJson() call below returns a
+          // pointer to a base-class message (without accessible "animationID"
+          // field).
+          const s32 animID = GetID(animationName);
+          if(animID < 0) {
+            return RESULT_FAIL;
+          }
+          jsonRoot[animationName][iFrame]["animationID"] = animID;
+          
+          Message* kfMessage = Message::CreateFromJson(jsonRoot[animationName][iFrame]);
+          if(kfMessage != nullptr) {
+            KeyFrameList* keyFrames = GetKeyFrameList(animationName);
+            if(keyFrames == nullptr) {
+              return RESULT_FAIL;
+            }
+            keyFrames->AddKeyFrame(kfMessage);
+          }
+        } // for each frame
+        
+        return RESULT_OK;
+      } // for each animation
+      
+      return RESULT_OK;
+    }
+    
+    Result Robot::CannedAnimationContainer::Define()
     {
 
       // TODO: Read these from json files
       
+      /*
       //
       // FAST HEAD NOD - 3 fast nods
       //
@@ -1440,29 +1558,39 @@ namespace Anki {
         _cannedAnimations[ANIM_HEAD_NOD].AddKeyFrame(stopNodMsg);
         
       } // FAST HEAD NOD
+      */
       
       //
       // SLOW HEAD NOD - 2 slow nods
       //
       {
+        AddAnimation("ANIM_HEAD_NOD_SLOW");
+        
+        const s32 animID = GetID("ANIM_HEAD_NOD_SLOW");
+        assert(animID >= 0);
+        
+        KeyFrameList* keyFrames = GetKeyFrameList("ANIM_HEAD_NOD_SLOW");
+        assert(keyFrames != nullptr);
+        
         // Start the nod
         MessageAddAnimKeyFrame_StartHeadNod* startNodMsg = new MessageAddAnimKeyFrame_StartHeadNod();
-        startNodMsg->animationID = ANIM_HEAD_NOD_SLOW;
+        startNodMsg->animationID = animID;
         startNodMsg->relTime_ms = 0;
         startNodMsg->lowAngle  = DEG_TO_RAD(-25);
         startNodMsg->highAngle = DEG_TO_RAD( 25);
         startNodMsg->period_ms = 1200;
-        _cannedAnimations[ANIM_HEAD_NOD_SLOW].AddKeyFrame(startNodMsg);
+        keyFrames->AddKeyFrame(startNodMsg);
         
         
         // Stop the nod
         MessageAddAnimKeyFrame_StopHeadNod* stopNodMsg = new MessageAddAnimKeyFrame_StopHeadNod();
-        stopNodMsg->animationID = ANIM_HEAD_NOD_SLOW;
+        stopNodMsg->animationID = animID;
         stopNodMsg->relTime_ms = 2400;
         stopNodMsg->finalAngle = 0.f;
-        _cannedAnimations[ANIM_HEAD_NOD_SLOW].AddKeyFrame(stopNodMsg);
+        keyFrames->AddKeyFrame(stopNodMsg);
       } // SLOW HEAD NOD
       
+      /*
       //
       // LIFT NOD
       //
@@ -1484,14 +1612,23 @@ namespace Anki {
         _cannedAnimations[ANIM_LIFT_NOD].AddKeyFrame(stopNodMsg);
         
       } // LIFT NO
-      
+      */
       
       //
       // BLINK
       //
       {
+        AddAnimation("ANIM_BLINK");
+        
+        const s32 animID = GetID("ANIM_BLINK");
+        assert(animID >= 0);
+        
+        KeyFrameList* keyFrames = GetKeyFrameList("ANIM_BLINK");
+        assert(keyFrames != nullptr);
+
+        
         MessageAddAnimKeyFrame_SetLEDColors setLEDmsgProto;
-        setLEDmsgProto.animationID = ANIM_BLINK;
+        setLEDmsgProto.animationID = animID;
         setLEDmsgProto.transitionIn  = KF_TRANSITION_INSTANT;
         setLEDmsgProto.transitionOut = KF_TRANSITION_INSTANT;
         
@@ -1505,7 +1642,7 @@ namespace Anki {
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_LEFT]   = LED_BLUE;
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_RIGHT]  = LED_BLUE;
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_TOP]    = LED_BLUE;
-        _cannedAnimations[ANIM_BLINK].AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
+        keyFrames->AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
         
         // Turn off top/bottom segments first
         setLEDmsgProto.relTime_ms = 1700;
@@ -1517,7 +1654,7 @@ namespace Anki {
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_LEFT]   = LED_BLUE;
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_RIGHT]  = LED_BLUE;
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_TOP]    = LED_OFF;
-        _cannedAnimations[ANIM_BLINK].AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
+        keyFrames->AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
         
         // Turn off all segments shortly thereafter
         setLEDmsgProto.relTime_ms = 1750;
@@ -1529,7 +1666,7 @@ namespace Anki {
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_LEFT]   = LED_OFF;
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_RIGHT]  = LED_OFF;
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_TOP]    = LED_OFF;
-        _cannedAnimations[ANIM_BLINK].AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
+        keyFrames->AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
         
         // Turn on left/right segments first
         setLEDmsgProto.relTime_ms = 1850;
@@ -1541,7 +1678,7 @@ namespace Anki {
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_LEFT]   = LED_BLUE;
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_RIGHT]  = LED_BLUE;
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_TOP]    = LED_OFF;
-        _cannedAnimations[ANIM_BLINK].AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
+        keyFrames->AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
         
         // Turn on all segments shortly thereafter
         setLEDmsgProto.relTime_ms = 1900;
@@ -1553,27 +1690,38 @@ namespace Anki {
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_LEFT]   = LED_BLUE;
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_RIGHT]  = LED_BLUE;
         setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_TOP]    = LED_BLUE;
-        _cannedAnimations[ANIM_BLINK].AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
+        keyFrames->AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
       } // BLINK
       
       //
       // BACK_AND_FORTH_EXCITED
       //
       {
+        AddAnimation("ANIM_BACK_AND_FORTH_EXCITED");
+        
+        const s32 animID = GetID("ANIM_BACK_AND_FORTH_EXCITED");
+        assert(animID >= 0);
+        
+        KeyFrameList* keyFrames = GetKeyFrameList("ANIM_BACK_AND_FORTH_EXCITED");
+        assert(keyFrames != nullptr);
+
+        
         MessageAddAnimKeyFrame_DriveLine driveLineMsgProto;
-        driveLineMsgProto.animationID = ANIM_BACK_AND_FORTH_EXCITED;
+        driveLineMsgProto.animationID = animID;
         driveLineMsgProto.transitionIn  = KF_TRANSITION_EASE_IN;
         driveLineMsgProto.transitionOut = KF_TRANSITION_EASE_OUT;
         
         driveLineMsgProto.relTime_ms = 300;
         driveLineMsgProto.relativeDistance_mm = -9;
-        _cannedAnimations[ANIM_BACK_AND_FORTH_EXCITED].AddKeyFrame(new MessageAddAnimKeyFrame_DriveLine(driveLineMsgProto));
+        keyFrames->AddKeyFrame(new MessageAddAnimKeyFrame_DriveLine(driveLineMsgProto));
         
         driveLineMsgProto.relTime_ms = 600;
         driveLineMsgProto.relativeDistance_mm = 9;
-        _cannedAnimations[ANIM_BACK_AND_FORTH_EXCITED].AddKeyFrame(new MessageAddAnimKeyFrame_DriveLine(driveLineMsgProto));
+        keyFrames->AddKeyFrame(new MessageAddAnimKeyFrame_DriveLine(driveLineMsgProto));
         
       } // BACK_AND_FORTH_EXCITED
+      
+      return RESULT_OK;
       
     } // DefineHardCodedAnimations()
     
@@ -1868,11 +2016,11 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID,m);
     }
 
-    Result Robot::SendPlayAnimation(const AnimationID_t id, const u32 numLoops)
+    Result Robot::SendPlayAnimation(const char *name, const u32 numLoops)
     {
-      if (id < ANIM_NUM_ANIMATIONS) {
-        MessagePlayAnimation m;
-        m.animationID = id;
+      MessagePlayAnimation m;
+      m.animationID = _cannedAnimations.GetID(name);
+      if(m.animationID >= 0) {
         m.numLoops = numLoops;
         return _msgHandler->SendMessage(_ID, m);
       }

@@ -104,7 +104,7 @@ namespace Anki {
       void SendSelectNextSoundScheme();
       void SendStartTestMode(TestMode mode);
       void SendIMURequest(u32 length_ms);
-      void SendAnimation(AnimationID_t animId, u32 numLoops, SoundID_t soundId);
+      void SendAnimation(const char* animName, u32 numLoops, SoundID_t soundId);
       void SendStartFaceTracking(u8 timeout_sec);
       void SendStopFaceTracking();
       
@@ -572,22 +572,22 @@ namespace Anki {
               // Animations
               case CKEY_ANIMATION_NOD:
               {
-                SendAnimation(ANIM_HEAD_NOD_SLOW, 1, SOUND_OK_GOT_IT);
+                SendAnimation("ANIM_HEAD_NOD", 1, SOUND_OK_GOT_IT);
                 break;
               }
               case CKEY_ANIMATION_BACK_AND_FORTH:
               {
-                SendAnimation(ANIM_BACK_AND_FORTH_EXCITED, 3, SOUND_OK_DONE);
+                SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3, SOUND_OK_DONE);
                 break;
               }
               case CKEY_ANIMATION_BLINK:
               {
-                SendAnimation(ANIM_BLINK, 5, NUM_SOUNDS);
+                SendAnimation("ANIM_BLINK", 5, NUM_SOUNDS);
                 break;
               }
               case (s32)'$':
               {
-                SendAnimation(ANIM_LIFT_NOD, 1, NUM_SOUNDS);
+                SendAnimation("ANIM_LIFT_NOD", 1, NUM_SOUNDS);
                 break;
               }
               case CKEY_ANIMATION_TOGGLE:
@@ -596,7 +596,7 @@ namespace Anki {
                 //const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_HEAD_NOD, ANIM_HEAD_NOD_SLOW, ANIM_BLINK, ANIM_UPDOWNLEFTRIGHT};
                 
                 const s32 NUM_ANIM_TESTS = 4;
-                const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_BLINK, ANIM_HEAD_NOD, ANIM_HEAD_NOD_SLOW, ANIM_LIFT_NOD};
+                const char* testAnims[NUM_ANIM_TESTS] = {"ANIM_BLINK", "ANIM_HEAD_NOD", "ANIM_HEAD_NOD_SLOW", "ANIM_LIFT_NOD"};
                 
                 static s32 iAnimTest = 0;
                 
@@ -924,7 +924,7 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendAnimation(AnimationID_t animId, u32 numLoops, SoundID_t soundId)
+      void SendAnimation(const char* animName, u32 numLoops, SoundID_t soundId)
       {
         static bool lastSendTime_sec = -1e6;
         
@@ -932,7 +932,8 @@ namespace Anki {
         if(inputController.getTime() > lastSendTime_sec + 0.5f)
         {
           MessageU2G_PlayAnimation m;
-          m.animationID = animId;
+          //m.animationID = animId;
+          strncpy(&(m.animationName[0]), animName, 32);
           m.numLoops = numLoops;
           m.soundID = soundId;
           SendMessage(m);

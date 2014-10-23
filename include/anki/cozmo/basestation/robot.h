@@ -277,7 +277,7 @@ namespace Anki {
       
       // Plays specified animation numLoops times.
       // If numLoops == 0, animation repeats forever.
-      Result PlayAnimation(const AnimationID_t animID, const u32 numLoops = 0);
+      Result PlayAnimation(const char* animName, const u32 numLoops = 0);
       
       // Returns true if the robot is currently playing an animation, according
       // to most recent state message.
@@ -478,24 +478,58 @@ namespace Anki {
       void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
 
       ///////// Animation /////////
+      
       class KeyFrameList
       {
       public:
+        //KeyFrameList() : _animID(-1) { }
         ~KeyFrameList();
         
         void AddKeyFrame(Message* msg);
+
+        //s32   GetID() const { return _animID; }
+        //void  SetID(s32 ID) { _animID = ID; }
         
-        const std::vector<Message*>& GetKeyFrameMessages() {
+        bool IsEmpty() const {
+          return _keyFrameMessages.empty();
+        }
+        
+        const std::vector<Message*>& GetMessages() const {
           return _keyFrameMessages;
         }
         
       private:
+        //s32 _animID;
         std::vector<Message*> _keyFrameMessages;
       }; // class KeyFrameList
       
-      std::map<AnimationID_t, KeyFrameList> _cannedAnimations;
-      void DefineCannedAnimations();
-      void SendCannedAnimations();
+      
+      class CannedAnimationContainer
+      {
+      public:
+        
+        Result Define();
+        
+        Result DefineFromJson(Json::Value& jsonRoot);
+        
+        Result AddAnimation(const std::string& name);
+        
+        KeyFrameList* GetKeyFrameList(const std::string& name);
+        
+        s32 GetID(const std::string& name) const;
+        
+        // Is there a better way to do this?
+        void Send(RobotID_t robotID, IMessageHandler* msgHandler);
+        
+      private:
+       
+        std::map<std::string, std::pair<s32, KeyFrameList> > _animations;
+        
+      }; // class Animation
+       
+      //std::map<std::string, KeyFrameList> _cannedAnimations;
+      CannedAnimationContainer _cannedAnimations;
+      
       
       ///////// Messaging ////////
       // These methods actually do the creation of messages and sending
@@ -561,7 +595,7 @@ namespace Anki {
       
       // Play animation
       // If numLoops == 0, animation repeats forever.
-      Result SendPlayAnimation(const AnimationID_t id, const u32 numLoops = 0);
+      Result SendPlayAnimation(const char* animName, const u32 numLoops = 0);
       
       Result SendDockWithObject(const Vision::KnownMarker* marker,
                                 const Vision::KnownMarker* marker2,

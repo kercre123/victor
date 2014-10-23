@@ -292,7 +292,7 @@ namespace Anki {
             if (waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
               // Keep clearing blocks until we don't see them anymore
               CoreTechPrint("Please move first dice away.\n");
-              robot_->PlayAnimation(ANIM_HEAD_NOD, 2);
+              robot_->PlayAnimation("ANIM_HEAD_NOD", 2);
               waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 5;
               SoundManager::getInstance()->Play(SOUND_WAITING4DICE2DISAPPEAR);
             }
@@ -441,7 +441,7 @@ namespace Anki {
                     
                       CoreTechPrint("Set objectToPlaceOn = %s\n", objectToPlaceOn_.GetName().c_str());
 
-                      robot_->PlayAnimation(ANIM_HEAD_NOD, 2);
+                      robot_->PlayAnimation("ANIM_HEAD_NOD", 2);
                       waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.5;
 
                       state_ = BEGIN_EXPLORING;
@@ -818,7 +818,7 @@ namespace Anki {
           if(robot_->IsIdle())
           {
             // Start nodding
-            robot_->PlayAnimation(ANIM_HEAD_NOD);
+            robot_->PlayAnimation("ANIM_HEAD_NOD");
             state_ = HAPPY_NODDING;
             PRINT_INFO("NODDING_HEAD\n");
             SoundManager::getInstance()->Play(SOUND_OK_DONE);
@@ -831,7 +831,7 @@ namespace Anki {
         case HAPPY_NODDING:
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
-            robot_->PlayAnimation(ANIM_BACK_AND_FORTH_EXCITED);
+            robot_->PlayAnimation("ANIM_BACK_AND_FORTH_EXCITED");
             robot_->MoveHeadToAngle(DEG_TO_RAD(-10), 1, 1);
             
             // Compute time to stop back and forth
@@ -843,7 +843,7 @@ namespace Anki {
         case BACK_AND_FORTH_EXCITED:
         {
           if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
-            robot_->PlayAnimation(ANIM_IDLE);
+            robot_->PlayAnimation("ANIM_IDLE");
             robot_->GetBlockWorld().ClearAllExistingObjects();
             StartMode(June2014DiceDemo);
           }

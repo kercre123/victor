@@ -24,8 +24,8 @@ namespace Cozmo {
 namespace AnimationController {
   
   namespace {
-    const s32 MAX_CANNED_ANIMATIONS = 64;
     
+    const AnimationID_t ANIM_IDLE = -1;
     //static const AnimationID_t ANIM_IDLE = MAX_KNOWN_ANIMATIONS;
     
     AnimationID_t currAnimID_   = ANIM_IDLE;
@@ -570,6 +570,14 @@ namespace AnimationController {
   bool IsPlaying()
   {
     return currAnimID_ != ANIM_IDLE;
+  }
+  
+  bool IsDefined(const AnimationID_t anim)
+  {
+    if(anim < 0 || anim >= MAX_CANNED_ANIMATIONS) {
+      return false;
+    }
+    return cannedAnimations[anim].IsDefined();
   }
   
 } // namespace AnimationController

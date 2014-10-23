@@ -1,0 +1,24 @@
+{ 
+  "Animations" : [
+    {
+      "ANIM_HEAD_NOD" : [
+        "Description" : "Fast head nod, 3 times"
+        { 
+          "Name" : "MessageAddAnimKeyFrame_StartHeadNod", 
+          "animationID" : "ANIM_HEAD_NOD",
+          "relTime_ms"  : 0, 
+          "lowAngle"    : -0.1745, # DEG_TO_RAD(-10)
+          "highAngle"   :  0.1745, # DEG_TO_RAD( 10)
+          "period_ms"   : 600
+        }, 
+        { 
+          "Name" : "MessageAddAnimKeyFrame_StopHeadNod", 
+          "animationID" : "ANIM_HEAD_NOD",
+          "relTime_ms"  : 1500,
+          "finalAngle"  : 0
+        }
+      ] 
+    }
+  ]  
+} 
+

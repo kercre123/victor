@@ -26,6 +26,8 @@ namespace Anki {
   namespace Cozmo {
     namespace AnimationController {
       
+      const s32 MAX_CANNED_ANIMATIONS = 64;
+      
       Result Init();
       
       void Update();
@@ -37,6 +39,8 @@ namespace Anki {
       void Stop();
       
       bool IsPlaying();
+      
+      bool IsDefined(const AnimationID_t anim);
       
       // For updating "canned" animations (e.g. using definitions sent over
       // from the Basestation):
