@@ -309,7 +309,7 @@ namespace Anki
           if(markers[iMarker].validity != VisionMarker::VALID) {
             for(s32 jQuad=iMarker; jQuad<markers.get_size(); jQuad++) {
               markers[jQuad] = markers[jQuad+1];
-              homographies[jQuad] = homographies[jQuad+1];
+              homographies[jQuad].Set(homographies[jQuad+1]);
             }
             //extractedQuads.set_size(extractedQuads.get_size()-1);
             markers.set_size(markers.get_size()-1);
