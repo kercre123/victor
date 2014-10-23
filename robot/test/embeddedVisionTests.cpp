@@ -11,7 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 //#define RUN_PC_ONLY_TESTS
 #define RUN_HIGH_MEMORY_TESTS
-//#define JUST_FIDUCIAL_DETECTION
+#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
@@ -154,9 +154,9 @@ GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
 
   const Result result = ImageProcessing::UpsampleByPowerOfTwoBilinear(inSmall, upsamplePower, out, scratchHuge);
 
-  matlab.PutArray(inSmall, "inSmall");
-  matlab.PutArray(out, "out");
-  matlab.EvalStringEcho("outB = imresize(inSmall, size(inSmall)*%d, 'bilinear', 'Antialiasing', false); close all; imshows(2*out, 2*outB, 'maximize');", 1<<upsamplePower);
+  //matlab.PutArray(inSmall, "inSmall");
+  //matlab.PutArray(out, "out");
+  //matlab.EvalStringEcho("outB = imresize(inSmall, size(inSmall)*%d, 'bilinear', 'Antialiasing', false); close all; imshows(2*out, 2*outB, 'maximize');", 1<<upsamplePower);
   //in.Show("in", false);
   //out.Show("out", true);
 
@@ -5324,62 +5324,62 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
   numPassedTests = 0;
   numFailedTests = 0;
-  /*
+  
   #if !defined(JUST_FIDUCIAL_DETECTION)
-  CALL_GTEST_TEST(CoreTech_Vision, DistanceTransform);
-  CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
-  CALL_GTEST_TEST(CoreTech_Vision, Canny);
-  CALL_GTEST_TEST(CoreTech_Vision, BoxFilterU8U16);
-  CALL_GTEST_TEST(CoreTech_Vision, Vignetting);
-  CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
-  CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
-  CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
-  //CALL_GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate);
-  CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
-  CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold);
-  CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold);
-  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
-  //CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
-  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective);
-  //CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof);
-  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective);
-  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine);
-  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow);
-  CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
-  CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);
+    CALL_GTEST_TEST(CoreTech_Vision, DistanceTransform);
+    CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
+    CALL_GTEST_TEST(CoreTech_Vision, Canny);
+    CALL_GTEST_TEST(CoreTech_Vision, BoxFilterU8U16);
+    CALL_GTEST_TEST(CoreTech_Vision, Vignetting);
+    CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
+    CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
+    CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
+    //CALL_GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate);
+    CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
+    CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold);
+    CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold);
+    CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
+    //CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
+    CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective);
+    //CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof);
+    CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective);
+    CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine);
+    CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow);
+    CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
+    CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);
   #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
   #if defined(RUN_HIGH_MEMORY_TESTS)
-  CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640);
+    CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640);
   #endif
 
   #if !defined(JUST_FIDUCIAL_DETECTION)
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
-  CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
-  CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
-  CALL_GTEST_TEST(CoreTech_Vision, Correlate1d);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes);
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids);
-  CALL_GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows);
-  CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
-  CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
-  CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
-  CALL_GTEST_TEST(CoreTech_Vision, ComponentsSize);
-  CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
-  CALL_GTEST_TEST(CoreTech_Vision, SortComponentsById);
-  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
-  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);*/
-  CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
-  /*  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
-  CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
-  CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
-  CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
+    CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
+    CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
+    CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
+    CALL_GTEST_TEST(CoreTech_Vision, Correlate1d);
+    CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
+    CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes);
+    CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids);
+    CALL_GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows);
+    CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
+    CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
+    CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
+    CALL_GTEST_TEST(CoreTech_Vision, ComponentsSize);
+    CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
+    CALL_GTEST_TEST(CoreTech_Vision, SortComponentsById);
+    CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
+    CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
+    CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
+    CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+    CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
+    CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
+    CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
   #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
-  */
+  
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
 #endif // #if !ANKICORETECH_EMBEDDED_USE_GTEST
