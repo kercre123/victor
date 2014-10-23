@@ -53,7 +53,7 @@ namespace Anki
 
       const s32 thresholdMultiplier_numFractionalBits = 16;
 
-      //BeginBenchmark("ecvcsB_init");
+      BeginBenchmark("ecvcsB_init");
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
@@ -115,23 +115,32 @@ namespace Anki
       if((lastResult = components.Extract2dComponents_PerRow_Initialize(fastScratch, slowerScratch, slowestScratch)) != RESULT_OK)
         return lastResult;
 
+      EndBenchmark("ecvcsB_init");
+
       //
       // First, create the whole unblurred and blurred pyramids
       //
 
       for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++) {
         if(iLevel != 0) {
+          BeginBenchmark("ecvcsB_downsample");
           //if((lastResult = ImageProcessing::DownsampleByTwo<u8,u16,u8>(imagePyramid[iLevel-1], imagePyramid[iLevel])) != RESULT_OK)
           //  return lastResult;
           if((lastResult = ImageProcessing::DownsampleByTwo<u8,u16,u8>(blurredImagePyramid[iLevel-1], imagePyramid[iLevel])) != RESULT_OK)
             return lastResult;
+
+          EndBenchmark("ecvcsB_downsample");
         }
 
+        BeginBenchmark("ecvcsB_binomial");
         if((lastResult = ImageProcessing::BinomialFilter<u8,u8,u8>(imagePyramid[iLevel], blurredImagePyramid[iLevel], slowestScratch)) != RESULT_OK)
           return lastResult;
+        EndBenchmark("ecvcsB_binomial");
 
+        BeginBenchmark("ecvcsB_SAD");
         if((lastResult = Matrix::SumOfAbsDiff<u8,s16,u8>(imagePyramid[iLevel], blurredImagePyramid[iLevel], dogPyramid[iLevel])) != RESULT_OK)
           return lastResult;
+        EndBenchmark("ecvcsB_SAD");
 
         //#if ANKICORETECH_EMBEDDED_USE_OPENCV
         //char name[1024];
@@ -142,6 +151,7 @@ namespace Anki
         //#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
       }
 
+      BeginBenchmark("ecvcsB_scale");
       if(upsampleToFullSize) {
         Array<u8> upsampledImage(imageHeight, imageWidth, slowestScratch);
         Array<u8> upsampledDog(imageHeight, imageWidth, slowestScratch);
@@ -154,6 +164,7 @@ namespace Anki
           const s32 scaledHeight = imageHeight >> iLevel;
           const s32 scaledWidth = imageWidth >> iLevel;
 
+          BeginBenchmark("ecvcsB_scale_upsample");
           if(iLevel == 0) {
             upsampledImage.Set(imagePyramid[iLevel]);
             upsampledDog.Set(dogPyramid[iLevel]);
@@ -173,7 +184,9 @@ namespace Anki
             ImageProcessing::UpsampleByPowerOfTwoBilinear<5>(imagePyramid[iLevel], upsampledImage, slowestScratch);
             ImageProcessing::UpsampleByPowerOfTwoBilinear<5>(dogPyramid[iLevel], upsampledDog, slowestScratch);
           }
+          EndBenchmark("ecvcsB_scale_upsample");
 
+          BeginBenchmark("ecvcsB_scale_select");
           for(s32 yBig=0; yBig<imageHeight; yBig++) {
             const u8 * restrict pImage = upsampledImage.Pointer(yBig, 0);
             const u8 * restrict pDog = upsampledDog.Pointer(yBig, 0);
@@ -191,6 +204,7 @@ namespace Anki
               }
             } // for(s32 xBig=0; xBig<imageWidth; xBig++)
           } // for(s32 yBig=0; yBig<imageHeight; yBig++)
+          EndBenchmark("ecvcsB_scale_select");
 
           //#if ANKICORETECH_EMBEDDED_USE_OPENCV
           //char name[1024];
@@ -205,6 +219,8 @@ namespace Anki
 
           const s32 scaledHeight = imageHeight >> iLevel;
           const s32 scaledWidth = imageWidth >> iLevel;
+
+          BeginBenchmark("ecvcsB_scale_select");
 
           for(s32 yBig=0; yBig<imageHeight; yBig++) {
             const u8 * restrict pImage = imagePyramid[iLevel].Pointer(yBig / xyOutputStep, 0);
@@ -230,6 +246,8 @@ namespace Anki
             } // for(s32 xSmall=0; xSmall<scaledWidth; xSmall++)
           } // for(s32 yBig=0; yBig<imageHeight; yBig++)
 
+          EndBenchmark("ecvcsB_scale_select");
+
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
           char name[1024];
           snprintf(name, 1024, "dogMax"); dogMax.Show(name, false, false, true);
@@ -239,8 +257,11 @@ namespace Anki
         } // for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++)
       } // if(upsampleToFullSize) .. else
 
+      EndBenchmark("ecvcsB_scale");
+
       Array<u8> binaryImageTmp(imageHeight, imageWidth, slowestScratch);
 
+      BeginBenchmark("ecvcsB_binarize");
       for(s32 y=0; y<imageHeight; y++) {
         const u8 * restrict pImage = imagePyramid[0].Pointer(y, 0);
         const u8 * restrict pScaleImage = scaleImage.Pointer(y, 0);
@@ -261,6 +282,8 @@ namespace Anki
         if((lastResult = components.Extract2dComponents_PerRow_NextRow(pBinaryImageRow, imageWidth, y, component1d_minComponentWidth, component1d_maxSkipDistance)) != RESULT_OK)
           return lastResult;
       } // for(s32 y=0; y<imageHeight; y++)
+
+      EndBenchmark("ecvcsB_binarize");
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       binaryImageTmp.Show("binaryImageTmp", true, false, true);
