@@ -49,9 +49,6 @@ template<u8 upsamplePowerU8> void UpsampleByPowerOfTwoBilinear_innerLoop(
   const s32 smallWidth,
   const s32 outStride);
 
-template<> void UpsampleByPowerOfTwoBilinear_innerLoop<1>(const u8 * restrict pInY0, const u8 * restrict pInY1, Anki::Embedded::Array<u8> &out, const s32 ySmall, const s32 smallWidth, const s32 outStride);
-template<> void UpsampleByPowerOfTwoBilinear_innerLoop<2>(const u8 * restrict pInY0, const u8 * restrict pInY1, Anki::Embedded::Array<u8> &out, const s32 ySmall, const s32 smallWidth, const s32 outStride);
-
 template<u8 upsamplePowerU8> void UpsampleByPowerOfTwoBilinear_innerLoop(
   const u8 * restrict pInY0,
   const u8 * restrict pInY1,

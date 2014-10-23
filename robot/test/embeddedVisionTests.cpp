@@ -3596,7 +3596,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const f32 minSideLength = 0.01f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
 
-  const bool useIntegralImageFiltering = false;
+  const bool useIntegralImageFiltering = true;
 
   const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
   const s32 component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
@@ -3803,10 +3803,10 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  //Array<u8> image(simpleFiducials_320x240_HEIGHT, simpleFiducials_320x240_WIDTH, scratchOffchip);
-  //image.Set(simpleFiducials_320x240, simpleFiducials_320x240_WIDTH*simpleFiducials_320x240_HEIGHT);
+  Array<u8> image(simpleFiducials_320x240_HEIGHT, simpleFiducials_320x240_WIDTH, scratchOffchip);
+  image.Set(simpleFiducials_320x240, simpleFiducials_320x240_WIDTH*simpleFiducials_320x240_HEIGHT);
 
-  Array<u8> image = Array<u8>::LoadImage("C:/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_36_frame0.png", scratchOffchip);
+  //Array<u8> image = Array<u8>::LoadImage("C:/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_36_frame0.png", scratchOffchip);
 
   //image.Show("image", true);
 
@@ -3831,37 +3831,6 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   ASSERT_TRUE(AreValid(benchmarkElements_integral, benchmarkElements_binomial));
 
   for(s32 iRun=0; iRun<numRuns; iRun++) {
-    InitBenchmarking();
-
-    const Result result_integral = DetectFiducialMarkers(
-      image,
-      markers,
-      homographies,
-      true,
-      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
-      component1d_minComponentWidth, component1d_maxSkipDistance,
-      component_minimumNumPixels, component_maximumNumPixels,
-      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
-      component_minHollowRatio,
-      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
-      decode_minContrastRatio,
-      maxConnectedComponentSegments,
-      maxExtractedQuads,
-      quadRefinementIterations,
-      numRefinementSamples,
-      quadRefinementMaxCornerChange,
-      quadRefinementMinCornerChange,
-      false,
-      scratchCcm,
-      scratchOnchip,
-      scratchOffchip);
-
-    ASSERT_TRUE(result_integral == RESULT_OK);
-
-    benchmarkElements_integral[iRun] = ComputeBenchmarkResults(scratchOffchip);
-
-    //PrintBenchmarkResults(benchmarkElements_integral[iRun], true, true);
-
     InitBenchmarking();
 
     const Result result_binomial = DetectFiducialMarkers(
@@ -3892,6 +3861,37 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
     benchmarkElements_binomial[iRun] = ComputeBenchmarkResults(scratchOffchip);
 
     //PrintBenchmarkResults(benchmarkElements_binomial[iRun], true, true);
+
+    InitBenchmarking();
+
+    const Result result_integral = DetectFiducialMarkers(
+      image,
+      markers,
+      homographies,
+      true,
+      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
+      component1d_minComponentWidth, component1d_maxSkipDistance,
+      component_minimumNumPixels, component_maximumNumPixels,
+      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+      component_minHollowRatio,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+      decode_minContrastRatio,
+      maxConnectedComponentSegments,
+      maxExtractedQuads,
+      quadRefinementIterations,
+      numRefinementSamples,
+      quadRefinementMaxCornerChange,
+      quadRefinementMinCornerChange,
+      false,
+      scratchCcm,
+      scratchOnchip,
+      scratchOffchip);
+
+    ASSERT_TRUE(result_integral == RESULT_OK);
+
+    benchmarkElements_integral[iRun] = ComputeBenchmarkResults(scratchOffchip);
+
+    //PrintBenchmarkResults(benchmarkElements_integral[iRun], true, true);
   } // for(s32 iRun=0; iRun<numRuns; iRun++)
 
   const f32 elementPercentile = 0; // Minimum
@@ -3998,37 +3998,6 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
   for(s32 iRun=0; iRun<numRuns; iRun++) {
     InitBenchmarking();
 
-    /* const Result result_integral = DetectFiducialMarkers(
-    image640,
-    markers,
-    homographies,
-    true,
-    scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
-    component1d_minComponentWidth, component1d_maxSkipDistance,
-    component_minimumNumPixels, component_maximumNumPixels,
-    component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
-    component_minHollowRatio,
-    quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
-    decode_minContrastRatio,
-    maxConnectedComponentSegments,
-    maxExtractedQuads,
-    quadRefinementIterations,
-    numRefinementSamples,
-    quadRefinementMaxCornerChange,
-    quadRefinementMinCornerChange,
-    false,
-    scratchOnchip,
-    scratchOffchip,
-    scratchHuge);
-
-    ASSERT_TRUE(result_integral == RESULT_OK);*/
-
-    benchmarkElements_integral[iRun] = ComputeBenchmarkResults(scratchHuge);
-
-    //PrintBenchmarkResults(benchmarkElements_integral[iRun], true, true);
-
-    InitBenchmarking();
-
     const Result result_binomial = DetectFiducialMarkers(
       image640,
       markers,
@@ -4057,6 +4026,37 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
     benchmarkElements_binomial[iRun] = ComputeBenchmarkResults(scratchHuge);
 
     //PrintBenchmarkResults(benchmarkElements_binomial[iRun], true, true);
+
+    InitBenchmarking();
+
+    const Result result_integral = DetectFiducialMarkers(
+      image640,
+      markers,
+      homographies,
+      true,
+      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
+      component1d_minComponentWidth, component1d_maxSkipDistance,
+      component_minimumNumPixels, component_maximumNumPixels,
+      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+      component_minHollowRatio,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+      decode_minContrastRatio,
+      maxConnectedComponentSegments,
+      maxExtractedQuads,
+      quadRefinementIterations,
+      numRefinementSamples,
+      quadRefinementMaxCornerChange,
+      quadRefinementMinCornerChange,
+      false,
+      scratchOnchip,
+      scratchOffchip,
+      scratchHuge);
+
+    ASSERT_TRUE(result_integral == RESULT_OK);
+
+    benchmarkElements_integral[iRun] = ComputeBenchmarkResults(scratchHuge);
+
+    //PrintBenchmarkResults(benchmarkElements_integral[iRun], true, true);
   } // for(s32 iRun=0; iRun<numRuns; iRun++)
 
   const f32 elementPercentile = 0; // Minimum
