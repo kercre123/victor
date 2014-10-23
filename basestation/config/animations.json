@@ -9,6 +9,14 @@
       "highAngle"    :  0.1745, 
       "period_ms"    : 600
     }, 
+    {
+      "Name" : "MessageAddAnimKeyFrame_PlaySound", 
+      "relTime_ms"      : 0,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "soundID"         : 11, 
+      "numLoops"        : 3
+    },
     { 
       "Name" : "MessageAddAnimKeyFrame_StopHeadNod", 
       "relTime_ms"   : 1500,
@@ -266,6 +274,30 @@
       "soundID"         : 4, 
       "numLoops"        : 1
     }
+  ], 
+  "ANIM_BACK_AND_FORTH_EXCITED" : [
+    {
+      "Name" : "MessageAddAnimKeyFrame_DriveLine", 
+      "relTime_ms"      : 300,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "relativeDistance_mm" : -9
+    }, 
+    {
+      "Name" : "MessageAddAnimKeyFrame_PlaySound", 
+      "relTime_ms"      : 0,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "soundID"         : 12, 
+      "numLoops"        : 1
+    },    
+    {
+      "Name" : "MessageAddAnimKeyFrame_DriveLine", 
+      "relTime_ms"      : 600,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "relativeDistance_mm" : 9
+    }   
   ]
 } 
 
