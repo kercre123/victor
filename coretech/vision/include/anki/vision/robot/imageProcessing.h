@@ -47,8 +47,10 @@ template<u8 upsamplePowerU8> void UpsampleByPowerOfTwoBilinear_innerLoop(
   Anki::Embedded::Array<u8> &out,
   const s32 ySmall,
   const s32 smallWidth,
-  const u8 upsampleFactorU8,
   const s32 outStride);
+
+template<> void UpsampleByPowerOfTwoBilinear_innerLoop<1>(const u8 * restrict pInY0, const u8 * restrict pInY1, Anki::Embedded::Array<u8> &out, const s32 ySmall, const s32 smallWidth, const s32 outStride);
+template<> void UpsampleByPowerOfTwoBilinear_innerLoop<2>(const u8 * restrict pInY0, const u8 * restrict pInY1, Anki::Embedded::Array<u8> &out, const s32 ySmall, const s32 smallWidth, const s32 outStride);
 
 template<u8 upsamplePowerU8> void UpsampleByPowerOfTwoBilinear_innerLoop(
   const u8 * restrict pInY0,
@@ -56,9 +58,10 @@ template<u8 upsamplePowerU8> void UpsampleByPowerOfTwoBilinear_innerLoop(
   Anki::Embedded::Array<u8> &out,
   const s32 ySmall,
   const s32 smallWidth,
-  const u8 upsampleFactorU8,
   const s32 outStride)
 {
+  const u8 upsampleFactorU8 = 1 << upsamplePowerU8;
+
   for(s32 xSmall=0; xSmall<smallWidth-1; xSmall++) {
     const u8 smallUL = pInY0[xSmall];
     const u8 smallUR = pInY0[xSmall+1];
@@ -1124,7 +1127,7 @@ namespace Anki
             } // for(s32 dy=0; dy<upsampleFactorU8; dy++)
           } // const s32 xSmall = -1;
 
-          UpsampleByPowerOfTwoBilinear_innerLoop<upsamplePower>(pInY0, pInY1, out, ySmall, smallWidth, upsampleFactorU8, outStride);
+          UpsampleByPowerOfTwoBilinear_innerLoop<upsamplePower>(pInY0, pInY1, out, ySmall, smallWidth, outStride);
 
           // const s32 xSmall = smallWidth-1;
           {
