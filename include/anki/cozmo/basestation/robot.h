@@ -44,6 +44,7 @@
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 
 #include "actionContainers.h"
+#include "cannedAnimationContainer.h"
 #include "behaviorManager.h"
 #include "ramp.h"
 
@@ -479,55 +480,6 @@ namespace Anki {
 
       ///////// Animation /////////
       
-      class KeyFrameList
-      {
-      public:
-        //KeyFrameList() : _animID(-1) { }
-        ~KeyFrameList();
-        
-        void AddKeyFrame(Message* msg);
-
-        //s32   GetID() const { return _animID; }
-        //void  SetID(s32 ID) { _animID = ID; }
-        
-        bool IsEmpty() const {
-          return _keyFrameMessages.empty();
-        }
-        
-        const std::vector<Message*>& GetMessages() const {
-          return _keyFrameMessages;
-        }
-        
-      private:
-        //s32 _animID;
-        std::vector<Message*> _keyFrameMessages;
-      }; // class KeyFrameList
-      
-      
-      class CannedAnimationContainer
-      {
-      public:
-        
-        Result Define();
-        
-        Result DefineFromJson(Json::Value& jsonRoot);
-        
-        Result AddAnimation(const std::string& name);
-        
-        KeyFrameList* GetKeyFrameList(const std::string& name);
-        
-        s32 GetID(const std::string& name) const;
-        
-        // Is there a better way to do this?
-        void Send(RobotID_t robotID, IMessageHandler* msgHandler);
-        
-      private:
-       
-        std::map<std::string, std::pair<s32, KeyFrameList> > _animations;
-        
-      }; // class Animation
-       
-      //std::map<std::string, KeyFrameList> _cannedAnimations;
       CannedAnimationContainer _cannedAnimations;
       
       
