@@ -59,7 +59,7 @@ namespace Anki {
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D, {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
-    , _currentHeadAngle(0)
+    , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _currentLiftAngle(0)
     , _onRamp(false)
     , _isPickingOrPlacing(false)
@@ -113,6 +113,9 @@ namespace Anki {
       _selectedPathPlanner = _longPathPlanner;
       
       _poseOrigins.front().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin0");
+      
+      
+      PlayAnimation("ANIM_WAKE_UP");
       
     } // Constructor: Robot
 

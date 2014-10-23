@@ -259,6 +259,7 @@ Result CannedAnimationContainer::DefineHardCoded()
    } // LIFT NO
    */
   
+  /*
   //
   // BLINK
   //
@@ -337,6 +338,7 @@ Result CannedAnimationContainer::DefineHardCoded()
     setLEDmsgProto.LEDcolors[LED_RIGHT_EYE_TOP]    = LED_BLUE;
     keyFrames->AddKeyFrame(new MessageAddAnimKeyFrame_SetLEDColors(setLEDmsgProto));
   } // BLINK
+  */
   
   //
   // BACK_AND_FORTH_EXCITED

@@ -419,15 +419,15 @@ if(not root.isMember(QUOTE(Name)) || root[QUOTE(Name)].asString() != GET_QUOTED_
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
 if(not JsonTools::GetValueOptional(root, QUOTE(__NAME__), this->__NAME__)) { \
   fprintf(stderr, QUOTE(No '%s' member found!\n), QUOTE(__NAME__)); \
-  CORETECH_THROW(QUOTE(Unable to get message member from JSON file.)); \
 }
+//CORETECH_THROW(QUOTE(Unable to get message member from JSON file.));
 
 
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
 if(not JsonTools::GetArrayOptional(root, QUOTE(__NAME__), this->__NAME__)) { \
   fprintf(stderr, QUOTE(No '%s' member found!\n), QUOTE(__NAME__)); \
-  CORETECH_THROW(QUOTE(Unable to get array message member from JSON file.)); \
 }
+//CORETECH_THROW(QUOTE(Unable to get array message member from JSON file.));
 
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__) }
 

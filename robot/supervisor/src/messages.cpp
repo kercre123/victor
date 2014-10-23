@@ -601,14 +601,25 @@ namespace Anki {
         AddKeyFrameHelper(msg, kf);
       }
       
+      static inline u32 GetU32ColorFromRGB(const u8 rgb[3])
+      {
+        return (rgb[0]<<16) + (rgb[1]<<8) + rgb[2];
+      }
+      
       void ProcessAddAnimKeyFrame_SetLEDColorsMessage(const AddAnimKeyFrame_SetLEDColors& msg)
       {
         KeyFrame kf;
         
         kf.type = KeyFrame::SET_LED_COLORS;
-        for(s32 iLED=0; iLED < NUM_LEDS; ++iLED) {
-          kf.SetLEDcolors.led[iLED] = msg.LEDcolors[iLED];
-        }
+        kf.SetLEDcolors.led[0] = GetU32ColorFromRGB(msg.rightEye_top);
+        kf.SetLEDcolors.led[1] = GetU32ColorFromRGB(msg.rightEye_right);
+        kf.SetLEDcolors.led[2] = GetU32ColorFromRGB(msg.rightEye_bottom);
+        kf.SetLEDcolors.led[3] = GetU32ColorFromRGB(msg.rightEye_left);
+
+        kf.SetLEDcolors.led[4] = GetU32ColorFromRGB(msg.leftEye_top);
+        kf.SetLEDcolors.led[5] = GetU32ColorFromRGB(msg.leftEye_right);
+        kf.SetLEDcolors.led[6] = GetU32ColorFromRGB(msg.leftEye_bottom);
+        kf.SetLEDcolors.led[7] = GetU32ColorFromRGB(msg.leftEye_left);
         
         AddKeyFrameHelper(msg, kf);
       }
