@@ -147,17 +147,25 @@ GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
 
   Array<u8> inSmall(in.get_size(0)>>downsamplePower, in.get_size(1)>>downsamplePower, scratchOffchip);
 
+  InitBenchmarking();
+
+  BeginBenchmark("UpsampleByPowerOfTwoBilinear_DownsampleByPowerOfTwo");
   ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in, downsamplePower, inSmall, scratchOffchip);
+  EndBenchmark("UpsampleByPowerOfTwoBilinear_DownsampleByPowerOfTwo");
 
   Array<u8> out(inSmall.get_size(0)<<upsamplePower, inSmall.get_size(1)<<upsamplePower, scratchOffchip);
 
+  BeginBenchmark("UpsampleByPowerOfTwoBilinear_UpsampleByPowerOfTwoBilinear");
   const Result result = ImageProcessing::UpsampleByPowerOfTwoBilinear<upsamplePower>(inSmall, out, scratchOffchip);
+  EndBenchmark("UpsampleByPowerOfTwoBilinear_UpsampleByPowerOfTwoBilinear");
 
   //matlab.PutArray(inSmall, "inSmall");
   //matlab.PutArray(out, "out");
   //matlab.EvalStringEcho("outB = imresize(inSmall, size(inSmall)*%d, 'bilinear', 'Antialiasing', false); close all; imshows(2*out, 2*outB, 'maximize');", 1<<upsamplePower);
   //in.Show("in", false);
   //out.Show("out", true);
+
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
@@ -177,16 +185,17 @@ GTEST_TEST(CoreTech_Vision, KLT)
 
   ASSERT_TRUE(AreValid(image1, image2));
 
-  const s32 numPyramidLevels = 3;
-  const s32 maxCorners = 10;
-  const f32 qualityLevel = 0.3f;
+  const s32 numPyramidLevels = 2;
+  const s32 maxCorners = 100;
+  const f32 qualityLevel = 0.1f;
   const int blockSize = 11;
   const double harrisK = 0.04;
   const f32 minEigThreshold = 0.001f;
-  const s32 windowWidth = 31;
+  const s32 windowWidth = 11;
   const s32 termination_maxCount = 20;
   const f32 termination_epsilon = 0.3f;
 
+  //#define TEST_OPENCV_KLT
 #ifdef TEST_OPENCV_KLT
   cv::Mat image1Cv;
   cv::Mat image2Cv;
@@ -209,8 +218,15 @@ GTEST_TEST(CoreTech_Vision, KLT)
   calcOpticalFlowPyrLK(image1Cv, image2Cv, pointsCv[0], pointsCv[1], statusCv, errCv, winSize, numPyramidLevels, termcrit, 0, minEigThreshold);
 #endif // #ifdef TEST_OPENCV_KLT
 
+  InitBenchmarking();
+
+  BeginBenchmark("KLT_Pyramid");
   FixedLengthList<Array<u8> > pyramid1 = ImageProcessing::BuildPyramid<u8,u32,u8>(image1, numPyramidLevels, scratchHuge);
+  EndBenchmark("KLT_Pyramid");
+
+  BeginBenchmark("KLT_Pyramid");
   FixedLengthList<Array<u8> > pyramid2 = ImageProcessing::BuildPyramid<u8,u32,u8>(image2, numPyramidLevels, scratchHuge);
+  EndBenchmark("KLT_Pyramid");
 
   ASSERT_TRUE(pyramid1.IsValid());
   ASSERT_TRUE(pyramid2.IsValid());
@@ -225,10 +241,12 @@ GTEST_TEST(CoreTech_Vision, KLT)
   //pyramid2[2].Show("p2 2", false, false);
   //pyramid2[3].Show("p2 3", true, false);
 
+  BeginBenchmark("KLT_GoodFeaturesToTrack");
   const s32 numPointsMax = 50000;
   FixedLengthList<Point<s16> > points1S16(numPointsMax, scratchHuge);
   FixedLengthList<Point<f32> > points1F32(numPointsMax, scratchHuge);
   const Result gftResult = Features::GoodFeaturesToTrack(image1, points1S16, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
+  EndBenchmark("KLT_GoodFeaturesToTrack");
 
   ASSERT_TRUE(gftResult == RESULT_OK);
 
@@ -242,6 +260,8 @@ GTEST_TEST(CoreTech_Vision, KLT)
   FixedLengthList<bool> status(numPointsMax, scratchHuge);
   FixedLengthList<f32> err(numPointsMax, scratchHuge);
 
+  BeginBenchmark("KLT_CalcOpticalFlowPyrLK");
+
   const Result kltResult = TemplateTracker::CalcOpticalFlowPyrLK(
     pyramid1, pyramid2,
     points1F32, points2F32,
@@ -252,19 +272,21 @@ GTEST_TEST(CoreTech_Vision, KLT)
     false,
     scratchHuge);
 
-#if ANKICORETECH_EMBEDDED_USE_MATLAB
+  EndBenchmark("KLT_CalcOpticalFlowPyrLK");
+
+#ifdef TEST_OPENCV_KLT
   {
     Matlab matlab(false);
     matlab.PutArray(image1, "image1");
     matlab.PutArray(image2, "image2");
 
-    matlab.EvalString("points1 = zeros(0,2); points2 = zeros(0,2); points1Cv = zeros(0,2); points2Cv = zeros(0,2);");
+    matlab.EvalString("points1 = zeros(0,2); points2 = zeros(0,4); points1Cv = zeros(0,2); points2Cv = zeros(0,2);");
     for(s32 i=0; i<points1F32.get_size(); i++) {
       matlab.EvalString("points1(end+1,:) = [%f,%f];", points1F32[i].x, points1F32[i].y);
     }
 
     for(s32 i=0; i<points2F32.get_size(); i++) {
-      matlab.EvalString("points2(end+1,:) = [%f,%f];", points2F32[i].x, points2F32[i].y);
+      matlab.EvalString("points2(end+1,:) = [%f,%f,%d,%f];", points2F32[i].x, points2F32[i].y, status[i], err[i]);
     }
 
     for(s32 i=0; i<pointsCv[0].size(); i++) {
@@ -275,17 +297,22 @@ GTEST_TEST(CoreTech_Vision, KLT)
       matlab.EvalString("points2Cv(end+1,:) = [%f,%f];", pointsCv[1][i].x, pointsCv[1][i].y);
     }
 
-    matlab.EvalString("figure(1); hold off; imshow(image1); hold on; scatter(points1(:,1), points1(:,2), 'r+');");
-    matlab.EvalString("figure(2); hold off; imshow(image2); hold on; scatter(points2(:,1), points2(:,2), 'r+');");
-    matlab.EvalString("figure(3); hold off; imshow(image1); hold on; scatter(points1Cv(:,1), points1Cv(:,2), 'r+');");
+    matlab.EvalString("figure(1); hold off; imshow(image1); hold on; scatter(points1(:,1), points1(:,2), 'g+');");
+    matlab.EvalString("figure(2); hold off; imshow(image2); hold on; scatter(points2(points2(:,4)<10, 1), points2(points2(:,4)<10,2), 'g+'); scatter(points2(points2(:,4)>=10, 1), points2(points2(:,4)>=10,2), 'r+');");
+    matlab.EvalString("figure(3); hold off; imshow(image1); hold on; scatter(points1Cv(:,1), points1Cv(:,2), 'g+');");
     matlab.EvalString("figure(4); hold off; imshow(image2); hold on; scatter(points2Cv(:,1), points2Cv(:,2), 'r+');");
   }
-#endif // #if ANKICORETECH_EMBEDDED_USE_MATLAB
+#endif // #ifdef TEST_OPENCV_KLT
 
-  points1F32.Print("points1F32");
-  points2F32.Print("points2F32");
-  status.Print("status");
-  err.Print("err");
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+
+  //points1F32.Print("points1F32");
+  //points2F32.Print("points2F32");
+  //status.Print("status");
+  //err.Print("err");
+
+  ASSERT_TRUE(points1F32.get_size() == 72);
+  ASSERT_TRUE(points2F32.get_size() == 72);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, KLT)
@@ -336,7 +363,11 @@ GTEST_TEST(CoreTech_Vision, Harris)
 
   FixedLengthList<Point<s16> > corners(5000, scratchHuge);
 
+  InitBenchmarking();
+
+  BeginBenchmark("GoodFeaturesToTrack Harris");
   const Result gftResult = Features::GoodFeaturesToTrack(image, corners, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
+  EndBenchmark("GoodFeaturesToTrack Harris");
 
   ASSERT_TRUE(gftResult == RESULT_OK);
 
@@ -365,6 +396,8 @@ GTEST_TEST(CoreTech_Vision, Harris)
 
   cv::waitKey();
 #endif // #ifdef TEST_OPENCV_HARRIS
+
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, LocalMaxima)
@@ -5368,16 +5401,16 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+  #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
-#if defined(RUN_HIGH_MEMORY_TESTS)
+  #if defined(RUN_HIGH_MEMORY_TESTS)
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640);
-#endif
+  #endif
 
-#if !defined(JUST_FIDUCIAL_DETECTION)
+  #if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
@@ -5399,7 +5432,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
   CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
   CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+  #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
