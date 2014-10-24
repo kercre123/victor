@@ -11,7 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 //#define RUN_PC_ONLY_TESTS
 #define RUN_HIGH_MEMORY_TESTS
-#define JUST_FIDUCIAL_DETECTION
+//#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
@@ -72,15 +72,15 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 
 //#define RUN_FACE_DETECTION_GUI
 
-Result ComputeAndPrintMedianBenchmark(const FixedLengthList<FixedLengthList<BenchmarkElement> > &benchmarkElements, const s32 numRuns, const f32 elementPercentile, MemoryStack scratch)
+Result ComputeAndPrintPercentileBenchmark(const FixedLengthList<FixedLengthList<BenchmarkElement> > &benchmarkElements, const s32 numRuns, const f32 elementPercentile, MemoryStack scratch)
 {
   // Check that all the lists have the same number and type of benchmarks
   const s32 numElements = benchmarkElements[0].get_size();
   for(s32 iRun=1; iRun<numRuns; iRun++) {
-    if(benchmarkElements[0].get_size() != benchmarkElements[iRun].get_size()) { AnkiError("ComputeAndPrintMedianBenchmark", "number failure %d!=%d", benchmarkElements[0].get_size(), benchmarkElements[iRun].get_size()); return RESULT_FAIL; }
+    if(benchmarkElements[0].get_size() != benchmarkElements[iRun].get_size()) { AnkiError("ComputeAndPrintPercentileBenchmark", "number failure %d!=%d", benchmarkElements[0].get_size(), benchmarkElements[iRun].get_size()); return RESULT_FAIL; }
     for(s32 i=0; i<numElements; i++) {
-      if(benchmarkElements[0][i].numEvents != benchmarkElements[iRun][i].numEvents) { AnkiError("ComputeAndPrintMedianBenchmark", "number failure %d!=%d (%s,%s)", benchmarkElements[0][i].numEvents, benchmarkElements[iRun][i].numEvents, benchmarkElements[0][i].name, benchmarkElements[iRun][i].name); return RESULT_FAIL; }
-      if(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) != 0) { AnkiError("ComputeAndPrintMedianBenchmark", "name failure %s!=%s", benchmarkElements[0][i].name, benchmarkElements[iRun][i].name); return RESULT_FAIL; }
+      if(benchmarkElements[0][i].numEvents != benchmarkElements[iRun][i].numEvents) { AnkiError("ComputeAndPrintPercentileBenchmark", "number failure %d!=%d (%s,%s)", benchmarkElements[0][i].numEvents, benchmarkElements[iRun][i].numEvents, benchmarkElements[0][i].name, benchmarkElements[iRun][i].name); return RESULT_FAIL; }
+      if(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) != 0) { AnkiError("ComputeAndPrintPercentileBenchmark", "name failure %s!=%s", benchmarkElements[0][i].name, benchmarkElements[iRun][i].name); return RESULT_FAIL; }
     }
   }
 
@@ -93,35 +93,35 @@ Result ComputeAndPrintMedianBenchmark(const FixedLengthList<FixedLengthList<Benc
     medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].inclusive_mean = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].inclusive_min = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].inclusive_max = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].inclusive_total = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].exclusive_mean = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].exclusive_min = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].exclusive_max = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
 
     for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintMedianBenchmark", "sort failure"); return RESULT_FAIL; }
+    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
     medianBenchmarkElements[i].exclusive_total = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
   } // for(s32 i=0; i<numElements; i++)
 
@@ -137,22 +137,21 @@ GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
 
-  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   const s32 downsamplePower = 4;
   const s32 upsamplePower = 4;
 
-  const Array<u8> in = Array<u8>::LoadImage("C:/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_36_frame0.png", scratchHuge);
+  const Array<u8> in(240, 320, const_cast<u8*>(&cozmo_date2014_04_10_time16_15_40_frame0[0]), 320*240, Flags::Buffer(false, false, true)); // = Array<u8>::LoadImage("C:/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_36_frame0.png", scratchHuge);
 
-  Array<u8> inSmall(in.get_size(0)>>downsamplePower, in.get_size(1)>>downsamplePower, scratchHuge);
+  Array<u8> inSmall(in.get_size(0)>>downsamplePower, in.get_size(1)>>downsamplePower, scratchOffchip);
 
-  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in, downsamplePower, inSmall, scratchHuge);
+  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in, downsamplePower, inSmall, scratchOffchip);
 
-  Array<u8> out(inSmall.get_size(0)<<upsamplePower, inSmall.get_size(1)<<upsamplePower, scratchHuge);
+  Array<u8> out(inSmall.get_size(0)<<upsamplePower, inSmall.get_size(1)<<upsamplePower, scratchOffchip);
 
-  const Result result = ImageProcessing::UpsampleByPowerOfTwoBilinear(inSmall, upsamplePower, out, scratchHuge);
+  const Result result = ImageProcessing::UpsampleByPowerOfTwoBilinear<upsamplePower>(inSmall, out, scratchOffchip);
 
   //matlab.PutArray(inSmall, "inSmall");
   //matlab.PutArray(out, "out");
@@ -163,8 +162,7 @@ GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
 
-#ifdef RUN_PC_ONLY_TESTS
-
+#ifdef RUN_HIGH_MEMORY_TESTS
 GTEST_TEST(CoreTech_Vision, KLT)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -174,11 +172,22 @@ GTEST_TEST(CoreTech_Vision, KLT)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
 
-  const Array<u8> image1 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame23.png", scratchHuge);
-  const Array<u8> image2 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame24.png", scratchHuge);
+  const Array<u8> image1(240, 320, const_cast<u8*>(&cozmo_date2014_01_29_time11_41_05_frame10_320x240[0]), 320*240, Flags::Buffer(false, false, true)); // = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame23.png", scratchHuge);
+  const Array<u8> image2(240, 320, const_cast<u8*>(&cozmo_date2014_01_29_time11_41_05_frame12_320x240[0]), 320*240, Flags::Buffer(false, false, true)); // = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame24.png", scratchHuge);
 
   ASSERT_TRUE(AreValid(image1, image2));
 
+  const s32 numPyramidLevels = 3;
+  const s32 maxCorners = 10;
+  const f32 qualityLevel = 0.3f;
+  const int blockSize = 11;
+  const double harrisK = 0.04;
+  const f32 minEigThreshold = 0.001f;
+  const s32 windowWidth = 31;
+  const s32 termination_maxCount = 20;
+  const f32 termination_epsilon = 0.3f;
+
+#ifdef TEST_OPENCV_KLT
   cv::Mat image1Cv;
   cv::Mat image2Cv;
 
@@ -187,25 +196,18 @@ GTEST_TEST(CoreTech_Vision, KLT)
 
   std::vector<cv::Point2f> pointsCv[2];
 
-  const s32 maxCorners = 10;
-  const f32 qualityLevel = 0.3f;
-  const int blockSize = 11;
-  const double harrisK = 0.04;
-
   std::vector<cv::Point2f> cornersCv;
   cv::goodFeaturesToTrack(image1Cv, pointsCv[0], maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
 
-  cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
+  cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, termination_maxCount, termination_epsilon);
 
-  cv::Size winSize(31,31);
+  cv::Size winSize(windowWidth,windowWidth);
 
   std::vector<uchar> statusCv;
   std::vector<float> errCv;
 
-  const s32 numPyramidLevels = 3;
-  const f32 minEigThreshold = 0.001f;
-
   calcOpticalFlowPyrLK(image1Cv, image2Cv, pointsCv[0], pointsCv[1], statusCv, errCv, winSize, numPyramidLevels, termcrit, 0, minEigThreshold);
+#endif // #ifdef TEST_OPENCV_KLT
 
   FixedLengthList<Array<u8> > pyramid1 = ImageProcessing::BuildPyramid<u8,u32,u8>(image1, numPyramidLevels, scratchHuge);
   FixedLengthList<Array<u8> > pyramid2 = ImageProcessing::BuildPyramid<u8,u32,u8>(image2, numPyramidLevels, scratchHuge);
@@ -244,12 +246,13 @@ GTEST_TEST(CoreTech_Vision, KLT)
     pyramid1, pyramid2,
     points1F32, points2F32,
     status, err,
-    winSize.height, winSize.width,
-    termcrit.maxCount, static_cast<f32>(termcrit.epsilon),
+    windowWidth, windowWidth,
+    termination_maxCount, termination_epsilon,
     minEigThreshold,
     false,
     scratchHuge);
 
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
   {
     Matlab matlab(false);
     matlab.PutArray(image1, "image1");
@@ -277,6 +280,7 @@ GTEST_TEST(CoreTech_Vision, KLT)
     matlab.EvalString("figure(3); hold off; imshow(image1); hold on; scatter(points1Cv(:,1), points1Cv(:,2), 'r+');");
     matlab.EvalString("figure(4); hold off; imshow(image2); hold on; scatter(points2Cv(:,1), points2Cv(:,2), 'r+');");
   }
+#endif // #if ANKICORETECH_EMBEDDED_USE_MATLAB
 
   points1F32.Print("points1F32");
   points2F32.Print("points2F32");
@@ -285,9 +289,8 @@ GTEST_TEST(CoreTech_Vision, KLT)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, KLT)
-#endif // #ifdef RUN_PC_ONLY_TESTS
+#endif // #ifdef RUN_HIGH_MEMORY_TESTS
 
-#ifdef RUN_PC_ONLY_TESTS
 GTEST_TEST(CoreTech_Vision, Harris)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -297,18 +300,18 @@ GTEST_TEST(CoreTech_Vision, Harris)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
 
-  const char * imageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
-  Array<u8> image = Array<u8>::LoadImage(imageFilename, scratchOffchip);
+  const Array<u8> image(240, 320, const_cast<u8*>(simpleFiducials_320x240), 320*240); // = Array<u8>::LoadImage("Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png", scratchOffchip);
   Array<f32> harrisImage(image.get_size(0), image.get_size(1), scratchOffchip);
 
   ASSERT_TRUE(AreValid(image, harrisImage));
 
+  const int blockSize = 11;
+  const double harrisK = 0.04;
+
+#ifdef TEST_OPENCV_HARRIS
   cv::Mat_<u8> imageCv;
 
   ArrayToCvMat<u8>(image, &imageCv);
-
-  const int blockSize = 11;
-  const double harrisK = 0.04;
 
   cv::Mat_<f32> harrisImageCv;
   cv::cornerHarris(imageCv, harrisImageCv, blockSize, 3, harrisK, cv::BORDER_DEFAULT);
@@ -316,11 +319,17 @@ GTEST_TEST(CoreTech_Vision, Harris)
   matlab.PutOpencvMat(imageCv, "imageCv");
   matlab.PutOpencvMat(harrisImageCv, "harrisImageCv");
 
+#endif
+
   const Result cornerResult = Features::CornerHarris(image, harrisImage, blockSize, static_cast<f32>(harrisK), scratchOffchip);
 
   ASSERT_TRUE(cornerResult == RESULT_OK);
 
-  matlab.PutArray(harrisImage, "harrisImage");
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
+  {
+    matlab.PutArray(harrisImage, "harrisImage");
+  }
+#endif // #if ANKICORETECH_EMBEDDED_USE_MATLAB
 
   const s32 maxCorners = 100;
   const f32 qualityLevel = 0.3f;
@@ -331,6 +340,7 @@ GTEST_TEST(CoreTech_Vision, Harris)
 
   ASSERT_TRUE(gftResult == RESULT_OK);
 
+#ifdef TEST_OPENCV_HARRIS
   std::vector<cv::Point2f> cornersCv;
   cv::goodFeaturesToTrack(imageCv, cornersCv, maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
 
@@ -354,10 +364,10 @@ GTEST_TEST(CoreTech_Vision, Harris)
   cv::imshow("drawnCornersCv", drawnCornersCv);
 
   cv::waitKey();
+#endif // #ifdef TEST_OPENCV_HARRIS
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, LocalMaxima)
-#endif // #ifdef RUN_PC_ONLY_TESTS
 
 GTEST_TEST(CoreTech_Vision, LocalMaxima)
 {
@@ -3898,10 +3908,10 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   //const f32 elementPercentile = 0.5f; // Median
 
   printf("Integral image benchmarks:\n");
-  ASSERT_TRUE(ComputeAndPrintMedianBenchmark(benchmarkElements_integral, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
+  ASSERT_TRUE(ComputeAndPrintPercentileBenchmark(benchmarkElements_integral, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
   printf("Binomial benchmarks:\n");
-  ASSERT_TRUE(ComputeAndPrintMedianBenchmark(benchmarkElements_binomial, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
+  ASSERT_TRUE(ComputeAndPrintPercentileBenchmark(benchmarkElements_binomial, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
   const f32 minDifference = 1e-4f;
   Point<f32> groundTruth[4];
@@ -4063,10 +4073,10 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
   //const f32 elementPercentile = 0.5f; // Median
 
   printf("Integral image benchmarks:\n");
-  ASSERT_TRUE(ComputeAndPrintMedianBenchmark(benchmarkElements_integral, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
+  ASSERT_TRUE(ComputeAndPrintPercentileBenchmark(benchmarkElements_integral, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
   printf("Binomial benchmarks:\n");
-  ASSERT_TRUE(ComputeAndPrintMedianBenchmark(benchmarkElements_binomial, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
+  ASSERT_TRUE(ComputeAndPrintPercentileBenchmark(benchmarkElements_binomial, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
   markers[0].Print();
 
@@ -5335,6 +5345,8 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numFailedTests = 0;
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
+  CALL_GTEST_TEST(CoreTech_Vision, KLT);
+  CALL_GTEST_TEST(CoreTech_Vision, Harris);
   CALL_GTEST_TEST(CoreTech_Vision, DistanceTransform);
   CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
   CALL_GTEST_TEST(CoreTech_Vision, Canny);
