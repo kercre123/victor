@@ -657,7 +657,7 @@ namespace Anki
         const s32 imageHeight = image.get_size(0);
         const s32 imageWidth = image.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(AreValid(*this, image, objects),
+        AnkiConditionalErrorAndReturnValue(AreValid(*this, image, objects) && (image.get_size(0) > 0),
           RESULT_FAIL_INVALID_OBJECT, "CascadeClassifier::DetectMultiScale", "Invalid objects");
 
         BeginBenchmark("CascadeClassifier_LBP::DetectMultiScale");
@@ -690,6 +690,9 @@ namespace Anki
             continue;
 
           Array<u8> scaledImage(scaledImageHeight, scaledImageWidth, fastScratch, Flags::Buffer(false, false, false));
+
+          AnkiConditionalErrorAndReturnValue(AreValid(scaledImage),
+            RESULT_FAIL_OUT_OF_MEMORY, "CascadeClassifier::DetectMultiScale", "Out of memory");
 
           BeginBenchmark("Resize");
           // OpenCV's resize grayvalues may be 1 or so different than Anki's
@@ -896,4 +899,3 @@ namespace Anki
     } // namespace Classifier
   } // namespace Embedded
 } // namespace Anki
-
