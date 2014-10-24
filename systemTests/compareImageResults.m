@@ -5,6 +5,11 @@
 function compareImageResults(filenamePatterns, varargin)
     global numPatterns;
     global curPattern;
+    global toLoad;
+    global imageFilenames;
+    global images;
+    global curToLoad;
+    global resizedImageSize;
     
     numPatterns = length(filenamePatterns);
     
@@ -18,9 +23,18 @@ function compareImageResults(filenamePatterns, varargin)
     
     images = cell(numPatterns, 1);
     
+    numImageTotal = 0;
+    toLoad = zeros(0,2);
+    curToLoad = 1;
     for iPattern = 1:numPatterns
         imageFilenames{iPattern} = rdir(filenamePatterns{iPattern});
-        images{iPattern} = cell(length(imageFilenames{iPattern}));
+        images{iPattern} = cell(length(imageFilenames{iPattern}), 1);
+        
+        numImageTotal = numImageTotal + length(imageFilenames{iPattern});
+        
+        for iFile = 1:length(imageFilenames{iPattern})
+            toLoad(end+1,:) = [iPattern, iFile]; %#ok<AGROW>
+        end
     end
     
     %     for iPattern = 2:numPatterns
@@ -31,12 +45,14 @@ function compareImageResults(filenamePatterns, varargin)
     %     end
     
     curImageIndex = 1;
-    maxImageIndex = length(imageFilenames{1});
     
     listOfTimers = timerfindall;
     if ~isempty(listOfTimers)
         delete(listOfTimers(:));
     end
+    
+    % Load the images in the background
+    start(timer('StartDelay', 2, 'TimerFcn', @LoadImages, 'Period', 0.01, 'ExecutionMode', 'fixedSpacing', 'TasksToExecute', numImageTotal));
     
     isRunning = true;
     while isRunning
@@ -70,7 +86,7 @@ function compareImageResults(filenamePatterns, varargin)
             end % for dImageY = 0:(numImageTiles(1)-1)
             
             imshow(bigImage);
-            %             set(figureHandle, 'units','normalized','outerposition',[0 0 1 1]);
+            % set(figureHandle, 'units','normalized','outerposition',[0 0 1 1]);
             
             slashIndex = find(curFilename == '/');
             title(curFilename((slashIndex(end)+1):end))
@@ -125,5 +141,33 @@ function compareImageResults(filenamePatterns, varargin)
         end % while isnan(curCharacter) || curCharacter < 0
     end % while isRunning
     
+function LoadImages(~, ~, ~)
+    global toLoad;
+    global imageFilenames;
+    global images;
+    global curToLoad;
+    global resizedImageSize;
     
+    %     tic
+    % Just load one before returning
+    while curToLoad <= length(toLoad)
+        iPattern = toLoad(curToLoad,1);
+        iImage = toLoad(curToLoad,2);
+        
+        if isempty(images{iPattern}{iImage})
+            curFilename = imageFilenames{iPattern}(iImage).name;
+            
+            %             disp(['loading ', curFilename]);
+            
+            images{iPattern}{iImage} = imresize(imread(curFilename), resizedImageSize);
+            
+            curToLoad = curToLoad + 1;
+            break;
+        end
+        
+        curToLoad = curToLoad + 1;
+    end
+    
+    %     fprintf('%d ', iPattern);
+    %     toc
     
