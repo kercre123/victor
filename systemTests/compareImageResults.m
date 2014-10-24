@@ -1,345 +1,129 @@
-function varargout = compareImageResults(varargin)
-    % COMPAREIMAGERESULTS MATLAB code for compareImageResults.fig
-    %      COMPAREIMAGERESULTS, by itself, creates a new COMPAREIMAGERESULTS or raises the existing
-    %      singleton*.
-    %
-    %      H = COMPAREIMAGERESULTS returns the handle to a new COMPAREIMAGERESULTS or the handle to
-    %      the existing singleton*.
-    %
-    %      COMPAREIMAGERESULTS('CALLBACK',hObject,eventData,handles,...) calls the local
-    %      function named CALLBACK in COMPAREIMAGERESULTS.M with the given input arguments.
-    %
-    %      COMPAREIMAGERESULTS('Property','Value',...) creates a new COMPAREIMAGERESULTS or raises the
-    %      existing singleton*.  Starting from the left, property value pairs are
-    %      applied to the GUI before compareImageResults_OpeningFcn gets called.  An
-    %      unrecognized property name or invalid value makes property application
-    %      stop.  All inputs are passed to compareImageResults_OpeningFcn via varargin.
-    %
-    %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
-    %      instance to run (singleton)".
-    %
-    % See also: GUIDE, GUIDATA, GUIHANDLES
+% function compareImageResults(filenamePatterns, varargin)
+
+% compareImageResults({'/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/results/dateTime_2014-10-23_13-41-34/images/c-with-refinement/*.png', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/results/dateTime_2014-10-23_13-41-34/images/c-with-refinement-binomial/*.png'});
+
+function compareImageResults(filenamePatterns, varargin)
+    global numPatterns;
+    global curPattern;
     
-    % Edit the above text to modify the response to help compareImageResults
+    numPatterns = length(filenamePatterns);
     
-    % Last Modified by GUIDE v2.5 23-Oct-2014 15:49:32
+    imageFilenames = cell(numPatterns, 1);
+    flipSpeed = 1.0;
+    numImageTiles = [4,7];
+    originalImageSize = [580,640];
+    resizedImageSize = round(originalImageSize * 0.4);
     
-    % Begin initialization code - DO NOT EDIT
-    gui_Singleton = 1;
-    gui_State = struct('gui_Name',       mfilename, ...
-        'gui_Singleton',  gui_Singleton, ...
-        'gui_OpeningFcn', @compareImageResults_OpeningFcn, ...
-        'gui_OutputFcn',  @compareImageResults_OutputFcn, ...
-        'gui_LayoutFcn',  [] , ...
-        'gui_Callback',   []);
-    if nargin && ischar(varargin{1})
-        gui_State.gui_Callback = str2func(varargin{1});
+    parseVarargin(varargin{:});
+    
+    images = cell(numPatterns, 1);
+    
+    for iPattern = 1:numPatterns
+        imageFilenames{iPattern} = rdir(filenamePatterns{iPattern});
+        images{iPattern} = cell(length(imageFilenames{iPattern}));
     end
     
-    if nargout
-        [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
-    else
-        gui_mainfcn(gui_State, varargin{:});
-    end
-    % End initialization code - DO NOT EDIT
-    
-    
-    % --- Executes just before compareImageResults is made visible.
-function compareImageResults_OpeningFcn(hObject, eventdata, handles, varargin)
-    % This function has no output args, see OutputFcn.
-    % hObject    handle to figure
-    % eventdata  reserved - to be defined in a future version of MATLAB
-    % handles    structure with handles and user data (see GUIDATA)
-    % varargin   command line arguments to compareImageResults (see VARARGIN)
-    
-    % Choose default command line output for compareImageResults
-    handles.output = hObject;
-    
-    % Update handles structure
-    guidata(hObject, handles);
-    
-    % UIWAIT makes compareImageResults wait for user response (see UIRESUME)
-    % uiwait(handles.figure1);
-    
-    global filenamePatterns;
-    global imageFilenames;
-    global curImageIndex;
-    global maxImageIndex;
-    global stopLoading;
-    global playWaitTime;
-    global numImageTiles;
-    
-    filenamePatterns = {...
-        '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/dateTime_2014-10-23_13-41-34/images/c-with-refinement/*.png',...
-        '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/dateTime_2014-10-23_13-41-34/images/c-with-refinement-binomial/*.png',...
-        '',...
-        ''};
+    %     for iPattern = 2:numPatterns
+    %         if length(imageFilenames{1}) ~= length(imageFilenames{iPattern})
+    %             disp('Different number of images in these directories')
+    %             keyboard
+    %         end
+    %     end
     
     curImageIndex = 1;
-    maxImageIndex = 1;
-    stopLoading = zeros(length(filenamePatterns), 1);
-    imageFilenames = cell(length(filenamePatterns), 1);
-    playWaitTime = 0.1;
-    numImageTiles = [4,6];
+    maxImageIndex = length(imageFilenames{1});
     
-    for iPattern = 1:length(filenamePatterns)
-        imageFilenames{iPattern} = rdir(filenamePatterns{iPattern});
+    listOfTimers = timerfindall;
+    if ~isempty(listOfTimers)
+        delete(listOfTimers(:));
     end
     
-    LoadImages(1);
-    LoadImages(2);
-    LoadImages(3);
-    LoadImages(4);
-    
-    ShowImages()
-    
-    % --- Outputs from this function are returned to the command line.
-function varargout = compareImageResults_OutputFcn(hObject, eventdata, handles)
-    % varargout  cell array for returning output args (see VARARGOUT);
-    % hObject    handle to figure
-    % eventdata  reserved - to be defined in a future version of MATLAB
-    % handles    structure with handles and user data (see GUIDATA)
-    
-    % Get default command line output from handles structure
-    varargout{1} = handles.output;
-    
-function setDefaultGuiObjectColor(hObject)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-    
-    %
-    % Create Functions
-    %
-    
-function filenamePattern1_CreateFcn(hObject, ~, ~)
-    global filenamePatterns;
-    setDefaultGuiObjectColor(hObject);
-    set(hObject, 'String', filenamePatterns{1});
-    
-function filenamePattern2_CreateFcn(hObject, ~, ~)
-    global filenamePatterns;
-    setDefaultGuiObjectColor(hObject);
-    set(hObject, 'String', filenamePatterns{2});
-    
-function filenamePattern3_CreateFcn(hObject, ~, ~)
-    global filenamePatterns;
-    setDefaultGuiObjectColor(hObject);
-    set(hObject, 'String', filenamePatterns{3});
-    
-function filenamePattern4_CreateFcn(hObject, ~, ~)
-    global filenamePatterns;
-    setDefaultGuiObjectColor(hObject);
-    set(hObject, 'String', filenamePatterns{4});
-    
-function playWait_CreateFcn(hObject, eventdata, handles)
-    global playWaitTime;
-    setDefaultGuiObjectColor(hObject);
-    set(hObject, 'String', num2str(playWaitTime));
-    
-    %
-    % End Create Functions
-    %
-    
-    %
-    % Callback Functions
-    %
-    
-function filenamePattern1_Callback(hObject, ~, ~)
-    global filenamePatterns;
-    filenamePatterns{1} = get(hObject,'String');
-    LoadImages(1);
-    
-function filenamePattern2_Callback(hObject, ~, ~)
-    global filenamePatterns;
-    filenamePatterns{2} = get(hObject,'String');
-    LoadImages(2);
-    
-function filenamePattern3_Callback(hObject, ~, ~)
-    global filenamePatterns;
-    filenamePatterns{3} = get(hObject,'String');
-    LoadImages(3);
-    
-function filenamePattern4_Callback(hObject, ~, ~)
-    global filenamePatterns;
-    filenamePatterns{4} = get(hObject,'String');
-    LoadImages(4);
-    
-function previousImage1_Callback(~, ~, ~)
-    global curImageIndex;
-    global numImageTiles;
-    curImageIndex = max(1, curImageIndex - 1*prod(numImageTiles));
-    ShowImages();
-    
-function previousImage2_Callback(~, ~, ~)
-    global curImageIndex;
-    global numImageTiles;
-    curImageIndex = max(1, curImageIndex - 10*prod(numImageTiles));
-    ShowImages();
-    
-function previousImage3_Callback(~, ~, ~)
-    global curImageIndex;
-    global numImageTiles;
-    curImageIndex = max(1, curImageIndex - 100*prod(numImageTiles));
-    ShowImages();
-    
-function nextImage1_Callback(~, ~, ~)
-    global curImageIndex;
-    global maxImageIndex;
-    global numImageTiles;
-    curImageIndex = min(maxImageIndex, curImageIndex + 1*prod(numImageTiles));
-    ShowImages();
-    
-function nextImage2_Callback(~, ~, ~)
-    global curImageIndex;
-    global maxImageIndex;
-    global numImageTiles;
-    curImageIndex = min(maxImageIndex, curImageIndex + 10*prod(numImageTiles));
-    ShowImages();
-    
-function nextImage3_Callback(~, ~, ~)
-    global curImageIndex;
-    global maxImageIndex;
-    global numImageTiles;
-    curImageIndex = min(maxImageIndex, curImageIndex + 100*prod(numImageTiles));
-    ShowImages();
-    
-function playButton_Callback(~, ~, ~)
-    global playWaitTime;
-    global playing;
-    global curImageIndex;
-    global maxImageIndex;
-    
-    playing = true;
-    while playing && curImageIndex <= maxImageIndex
-        t0 = tic();
-        curImageIndex = curImageIndex + 1;
-        ShowImages();
-        t1 = toc(t0);
-        pause(playWaitTime - t1);
-    end
-    
-    curImageIndex = min(curImageIndex, maxImageIndex);
-    
-function stopButton_Callback(~, ~, ~)
-    global playing;
-    playing = false;
-    
-function playWait_Callback(~, ~, ~)
-    global playWaitTime;
-    playWaitTime = str2num(get(hObject,'String'));
-    
-    %
-    % End Callback Functions
-    %
-    
-function LoadImages(whichPattern)
-    global filenamePatterns;
-    global imageFilenames;
-    global images;
-    global maxImageIndex;
-    global stopLoading;
-    
-    if isempty(filenamePatterns{whichPattern})
-        return;
-    end
-    
-    imageFilenames{whichPattern} = rdir(filenamePatterns{whichPattern});
-    
-    % Should be a mutex to work correctly always, but this will work most of the time
-    stopLoading(whichPattern) = true;
-    
-    for iPattern = 1:length(filenamePatterns)
-        if ~isempty(filenamePatterns{whichPattern}) && ~isempty(imageFilenames{iPattern})
-            if length(imageFilenames{whichPattern}) ~= length(imageFilenames{iPattern})
-                disp('Different number of images in these directories')
-                keyboard
-            end
-        end
-    end
-    
-    maxImageIndex = length(imageFilenames{whichPattern});
-    
-    images{whichPattern} = cell(length(imageFilenames{whichPattern}),1);
-    
-    pause(.1);
-    stopLoading(whichPattern) = false;
-    
-    disp(sprintf('Loading images for %d', whichPattern))
-    % This loading will go on in the background
-    for iFile = 1:length(imageFilenames{whichPattern})
-        if stopLoading(whichPattern)
-            break;
-        end
-        
-        %         tic
-        %         images{iPattern}{iFile} = imread(imageFilenames{whichPattern}(iFile).name);
-        %         toc
-    end
-    disp(sprintf('Done loading images for %d', whichPattern))
-    
-function ShowImages()
-    global filenamePatterns;
-    global imageFilenames;
-    global images;
-    global curImageIndex;
-    global numImageTiles;   
-    
-    validPatternIndexes = [];
-    for i = 1:length(filenamePatterns)
-        if ~isempty(filenamePatterns{i})
-            validPatternIndexes(end+1) = i; %#ok<AGROW>
-        end
-    end
-    
-    numRows = ceil(sqrt(length(validPatternIndexes)));
-    numCols = ceil(length(validPatternIndexes) / numRows);
-    
-    for iPattern = 1:length(validPatternIndexes)
-        figure(200 + iPattern);
-        
-        originalImageSize = [580,640];
-        resizedImageSize = round(originalImageSize * 0.5);
-        bigImage = zeros([resizedImageSize(1)*numImageTiles(1), resizedImageSize(2)*numImageTiles(2), 3], 'uint8');
-        
-        dImage = 0;
-        for dImageY = 0:(numImageTiles(1)-1)
-            for dImageX = 0:(numImageTiles(2)-1)
-                totalImageIndex = curImageIndex + dImage;
-                
-                if totalImageIndex <= length(imageFilenames{validPatternIndexes(iPattern)})
-                    curFilename = imageFilenames{validPatternIndexes(iPattern)}(totalImageIndex).name;
-
-                    if isempty(images{validPatternIndexes(iPattern)})
-                        curImage = [];
-                    else
-                        curImage = images{validPatternIndexes(iPattern)}{totalImageIndex};
+    isRunning = true;
+    while isRunning
+        for iPattern = 1:numPatterns
+            figureHandle = figure(200 + iPattern);
+            set(figureHandle, 'name', [sprintf('%d->%d ', curImageIndex, curImageIndex+prod(numImageTiles)-1), filenamePatterns{iPattern}])
+            
+            bigImage = zeros([resizedImageSize(1)*numImageTiles(1), resizedImageSize(2)*numImageTiles(2), 3], 'uint8');
+            
+            dImage = 0;
+            for dImageY = 0:(numImageTiles(1)-1)
+                for dImageX = 0:(numImageTiles(2)-1)
+                    totalImageIndex = curImageIndex + dImage;
+                    
+                    if totalImageIndex <= length(imageFilenames{iPattern})
+                        curFilename = imageFilenames{iPattern}(totalImageIndex).name;
+                        
+                        curImage = images{iPattern}{totalImageIndex};
+                        
+                        % If the image is not cached yet, load and cache it
+                        if isempty(curImage)
+                            curImage = imresize(imread(curFilename), resizedImageSize);
+                            images{iPattern}{totalImageIndex} = curImage;
+                        end
+                        
+                        bigImage((1 + resizedImageSize(1)*dImageY):(resizedImageSize(1)*(dImageY+1)), (1 + resizedImageSize(2)*dImageX):(resizedImageSize(2)*(dImageX+1)), :) = curImage;
                     end
-
-                    % If the image is not cached yet, load and cache it
-                    if isempty(curImage)
-                        curImage = imread(curFilename);
-                        images{validPatternIndexes(iPattern)}{totalImageIndex} = curImage;
-                    end
-
-                    curResizedImage = imresize(curImage, resizedImageSize);
-                    bigImage((1 + resizedImageSize(1)*dImageY):(resizedImageSize(1)*(dImageY+1)), (1 + resizedImageSize(2)*dImageX):(resizedImageSize(2)*(dImageX+1)), :) = curResizedImage;
+                    
+                    dImage = dImage + 1;
+                end % for dImageX = 0:(numImageTiles(2)-1)
+            end % for dImageY = 0:(numImageTiles(1)-1)
+            
+            imshow(bigImage);
+            %             set(figureHandle, 'units','normalized','outerposition',[0 0 1 1]);
+            
+            slashIndex = find(curFilename == '/');
+            title(curFilename((slashIndex(end)+1):end))
+        end % for iPattern = 1:numPatterns
+        
+        curPattern = iPattern;
+        
+        curCharacter = -1;
+        
+        while isnan(curCharacter) || curCharacter < 0
+            curCharacter = getkeywait(flipSpeed);
+            
+            for iPattern = 1:numPatterns
+                if ~ishandle(200 + iPattern)
+                    isRunning = false;
+                    break;
                 end
+            end
+            
+            if curCharacter == int32('a')
+                curImageIndex = curImageIndex - 1*prod(numImageTiles);
+            elseif curCharacter == int32('s')
+                curImageIndex = curImageIndex + 1*prod(numImageTiles);
+            elseif curCharacter == int32('d')
+                curImageIndex = curImageIndex - 10*prod(numImageTiles);
+            elseif curCharacter == int32('f')
+                curImageIndex = curImageIndex + 10*prod(numImageTiles);
+            elseif curCharacter == int32('g')
+                curImageIndex = curImageIndex - 100*prod(numImageTiles);
+            elseif curCharacter == int32('h')
+                curImageIndex = curImageIndex + 100*prod(numImageTiles);
+            elseif curCharacter == int32('q')
+                isRunning = false;
+                break;
+            elseif curCharacter == -1
+                curPattern = curPattern + 1;
                 
-                dImage = dImage + 1;
-            end % for dImageX = 0:(numImageTiles(2)-1)
-        end % for dImageY = 0:(numImageTiles(1)-1)
-        
-        imshow(bigImage);
-        
-        slashIndex = find(curFilename == '/');
-        title(curFilename((slashIndex(end)+1):end))
-    end
-    
-    
-    
-    
-    
+                if curPattern > numPatterns
+                    curPattern = 1;
+                end;
+                
+                if ishandle(200 + curPattern)
+                    figure(200 + curPattern);
+                end
+            end
+            
+            if curImageIndex < 1
+                curImageIndex = 1;
+            elseif curImageIndex > (length(imageFilenames{1}) - prod(numImageTiles) + 1)
+                curImageIndex = length(imageFilenames{1}) - prod(numImageTiles) + 1;
+            end
+        end % while isnan(curCharacter) || curCharacter < 0
+    end % while isRunning
     
     
     
