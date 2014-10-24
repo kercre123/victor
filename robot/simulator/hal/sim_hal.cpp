@@ -18,6 +18,8 @@
 
 #define BLUR_CAPTURED_IMAGES 1
 
+#define DEBUG_GRIPPER 0
+
 #if BLUR_CAPTURED_IMAGES
 #include "opencv2/imgproc/imgproc.hpp"
 #endif
@@ -475,7 +477,10 @@ namespace Anki {
       con_->lock();
       con_->enablePresence(TIME_STEP);
       isGripperEnabled_ = true;
+#     if DEBUG_GRIPPER
       PRINT("GRIPPER LOCKED!\n");
+#     endif
+      
       /*
       //Should we lock to a block which is close to the connector?
       if (!gripperEngaged_ && con_->getPresence() == 1)
@@ -497,7 +502,10 @@ namespace Anki {
       con_->unlock();
       con_->disablePresence();
       isGripperEnabled_ = false;
+#     if DEBUG_GRIPPER
       PRINT("GRIPPER UNLOCKED!\n");
+#     endif
+      
       /*
       if (gripperEngaged_)
       {

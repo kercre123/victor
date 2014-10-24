@@ -24,6 +24,7 @@ namespace Anki {
     typedef enum {
       SOUND_SCHEME_COZMO
       ,SOUND_SCHEME_MOVIE
+      ,SOUND_SCHEME_CREEP // Cozmo Robotic Emotional Engagement Playtest
       ,NUM_SOUND_SCHEMES
     } SoundSchemeID_t;
     
@@ -42,6 +43,13 @@ namespace Anki {
       ,SOUND_WAITING4DICE2DISAPPEAR
       ,SOUND_OK_GOT_IT
       ,SOUND_OK_DONE
+      ,SOUND_POWER_ON
+      ,SOUND_PHEW
+      ,SOUND_OOH
+      ,SOUND_SCREAM
+      ,SOUND_HELPME
+      ,SOUND_SCAN
+      ,SOUND_EXCITED
       ,NUM_SOUNDS
     } SoundID_t;
     
@@ -72,7 +80,16 @@ namespace Anki {
       SoundManager();
       
       static SoundManager* singletonInstance_;
-
+      
+      const std::string& GetSoundFile(SoundID_t soundID);
+      
+      bool _hasCmdProcessor;
+      bool _hasRootDir;
+      
+      std::string _rootDir;
+      
+      SoundSchemeID_t _currScheme = SOUND_SCHEME_COZMO;
+      
     }; // class SoundManager
     
     

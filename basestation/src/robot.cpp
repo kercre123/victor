@@ -114,9 +114,6 @@ namespace Anki {
       
       _poseOrigins.front().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin0");
       
-      
-      PlayAnimation("ANIM_WAKE_UP");
-      
     } // Constructor: Robot
 
     Robot::~Robot()
@@ -753,6 +750,11 @@ namespace Anki {
       return SendPlayAnimation(animName, numLoops);
     }
     
+    Result Robot::StopAnimation()
+    {
+      return SendAbortAnimation();
+    }
+    
     Result Robot::SyncTime()
     {
       return SendSyncTime();
@@ -1378,6 +1380,11 @@ namespace Anki {
     void Robot::StartBehaviorMode(BehaviorManager::Mode mode)
     {
       _behaviorMgr.StartMode(mode);
+    }
+    
+    void Robot::SetBehaviorState(BehaviorManager::BehaviorState state)
+    {
+      _behaviorMgr.SetNextState(state);
     }
     
     

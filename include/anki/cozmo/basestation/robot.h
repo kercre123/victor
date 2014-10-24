@@ -278,7 +278,9 @@ namespace Anki {
       
       // Plays specified animation numLoops times.
       // If numLoops == 0, animation repeats forever.
-      Result PlayAnimation(const char* animName, const u32 numLoops = 0);
+      Result PlayAnimation(const char* animName, const u32 numLoops = 1);
+      
+      Result StopAnimation();
       
       // Returns true if the robot is currently playing an animation, according
       // to most recent state message.
@@ -299,6 +301,9 @@ namespace Anki {
       // Start a Behavior in BehaviorManager
       void StartBehaviorMode(BehaviorManager::Mode mode);
      
+      // Set a particular behavior state (up to BehaviorManager to ignore if
+      // state is not valid for current mode)
+      void SetBehaviorState(BehaviorManager::BehaviorState state);
       
       // For debugging robot parameters:
       Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);

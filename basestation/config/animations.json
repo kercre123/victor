@@ -298,6 +298,106 @@
       "transitionOut"   : "EASE_OUT",
       "relativeDistance_mm" : 9
     }   
+  ],
+  "ANIM_SCAN" : [
+    { 
+      "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
+      "relTime_ms"      : 0,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0, 
+      "targetAngle"     : -.35, 
+      "targetSpeed"     : 0
+    }, 
+    { 
+      "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
+      "relTime_ms"      : 1500,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0, 
+      "targetAngle"     : -.35, 
+      "targetSpeed"     : 0
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_PlaySound", 
+      "relTime_ms"      : 1700,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
+      "soundID"         : "SCAN", 
+      "numLoops"        : 1
+    }, 
+    { 
+      "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
+      "relTime_ms"      : 1750,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0, 
+      "targetAngle"     : 0.35, 
+      "targetSpeed"     : 0
+    },
+    { 
+      "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
+      "relTime_ms"      : 2750,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0, 
+      "targetAngle"     : 0.35, 
+      "targetSpeed"     : 0
+    }
+  ], 
+  "ANIM_EXCITABLE_CHASE" : [
+    {
+      "Name" : "MessageAddAnimKeyFrame_PlaySound", 
+      "relTime_ms"      : 0,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
+      "soundID"         : "EXCITED", 
+      "numLoops"        : 1
+    },   
+    {
+      "Name" : "MessageAddAnimKeyFrame_StartLiftNod",
+      "relTime_ms"   : 0,
+      "transitionIn" : 0,
+      "transitionOut": 0, 
+      "lowHeight_mm" : 30,
+      "highHeight_mm": 36,
+      "period_ms"    : 300
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_StopLiftNod",
+      "relTime_ms"     : 1200,
+      "transitionIn"   : 0,
+      "transitionOut"  : 00, 
+      "finalHeight_mm" : 30
+    }
+  ],
+  "ANIM_SLEEPING" : [
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetLiftHeight",
+      "relTime_ms"   : 0,
+      "transitionIn" : 0,
+      "transitionOut": 0, 
+      "targetHeight_mm" : 30,
+      "targetSpeed"     : 0
+    },
+    { 
+      "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
+      "relTime_ms"      : 0,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0, 
+      "targetAngle"     : -1, 
+      "targetSpeed"     : 0
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetLEDColors", 
+      "relTime_ms"      : 0,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
+      "rightEye_top"    : [0, 0, 0],
+      "rightEye_right"  : [0, 0, 0],
+      "rightEye_bottom" : [0, 0, 0],
+      "rightEye_left"   : [0, 0, 0],
+      "leftEye_top"     : [0, 0, 0],
+      "leftEye_right"   : [0, 0, 0],
+      "leftEye_bottom"  : [0, 0, 0],
+      "leftEye_left"    : [0, 0, 0]
+    }
   ]
 } 
 

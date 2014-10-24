@@ -456,7 +456,7 @@ namespace AnimationController {
       if(!cannedAnimations[currAnimID_].IsPlaying()) {
         // If current animation just finished
         ++numLoopsComplete_;
-        if(currDesiredLoops_ > 1 && numLoopsComplete_ < currDesiredLoops_) {
+        if(currDesiredLoops_ == 0 ||  numLoopsComplete_ < currDesiredLoops_) {
           // Looping: play again
           cannedAnimations[currAnimID_].Init();
         } else {

@@ -20,64 +20,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define MAX_SOUND_THREADS 4
-
-
 namespace Anki {
   namespace Cozmo {
     
     namespace {
+      const int MAX_SOUND_THREADS = 4;
       
+      // putting this here (as opposed to a member in SoundManager) so that the
+      // CmdLinePlay function, which runs in its own thread, can access it and
+      // decrement it when done.
       int _numActiveThreads;
-      
-      bool _hasCmdProcessor;
-      bool _hasRootDir;
-      
-      // Root directory of sounds
-      const s32 MAX_PATH_LENGTH = 512;
-      char _rootDir[MAX_PATH_LENGTH];
-      
-      SoundSchemeID_t _currScheme = SOUND_SCHEME_COZMO;
-      
-      // Table of sound files relative to root dir
-      const std::map<SoundID_t, std::string> _soundTable[NUM_SOUND_SCHEMES] =
-      {
-        {
-          // Cozmo default sound scheme
-          {SOUND_TADA, ""}
-          ,{SOUND_NOPROBLEMO, ""}
-          ,{SOUND_INPUT, ""}
-          ,{SOUND_SWEAR, ""}
-          ,{SOUND_STARTOVER, "demo/WaitingForDice2.wav"}
-          ,{SOUND_NOTIMPRESSED, "demo/OKGotIt.wav"}
-          ,{SOUND_60PERCENT, ""}
-          ,{SOUND_DROID, ""}
-          
-          ,{SOUND_DEMO_START, ""}
-          ,{SOUND_WAITING4DICE, "demo/WaitingForDice1.wav"}
-          ,{SOUND_WAITING4DICE2DISAPPEAR, "demo/WaitingForDice2.wav"}
-          ,{SOUND_OK_GOT_IT, "demo/OKGotIt.wav"}
-          ,{SOUND_OK_DONE, "demo/OKDone.wav"}
-        }
-        ,{
-          // Movie sound scheme
-          {SOUND_TADA, "misc/tada.mp3"}
-          ,{SOUND_NOPROBLEMO, "misc/nproblem.wav"}
-          ,{SOUND_INPUT, "misc/input.wav"}
-          ,{SOUND_SWEAR, "misc/swear.wav"}
-          ,{SOUND_STARTOVER, "anchorman/startover.wav"}
-          ,{SOUND_NOTIMPRESSED, "anchorman/notimpressed.wav"}
-          ,{SOUND_60PERCENT, "anchorman/60percent.wav"}
-          ,{SOUND_DROID, "droid/droid.wav"}
-          
-          ,{SOUND_DEMO_START, "misc/swear.wav"}
-          ,{SOUND_WAITING4DICE, "misc/input.wav"}
-          ,{SOUND_WAITING4DICE2DISAPPEAR, "misc/input.wav"}
-          ,{SOUND_OK_GOT_IT, "misc/nproblem.wav"}
-          ,{SOUND_OK_DONE, "anchorman/60percent.wav"}
-        }
-      };
-      
     }
     
     SoundManager* SoundManager::singletonInstance_ = nullptr;
@@ -105,16 +57,17 @@ namespace Anki {
       }
     }
 
-    void CmdLinePlay(SoundID_t id, const u8 numLoops)
+    void CmdLinePlay(const std::string& rootDir,
+                     const std::string& soundFile,
+                     const u8           numLoops)
     {
-      if( !_soundTable[_currScheme].at(id).empty() ) {
-        u8 timesPlayed = 0;
-        while(timesPlayed++ < numLoops) {
-          char fullCmd[512];
-          snprintf(fullCmd, 512, "afplay %s/%s", _rootDir, _soundTable[_currScheme].at(id).c_str());
-          system(fullCmd);
-        }
+      u8 timesPlayed = 0;
+      while(timesPlayed++ < numLoops) {
+        char fullCmd[512];
+        snprintf(fullCmd, 512, "afplay %s/%s", rootDir.c_str(), soundFile.c_str());
+        system(fullCmd);
       }
+      
       --_numActiveThreads;
     }
 
@@ -139,9 +92,71 @@ namespace Anki {
       }
       
       _hasRootDir = true;
-      snprintf(_rootDir, MAX_PATH_LENGTH, "%s", fullPath.c_str());
+      _rootDir = fullPath;
+      
       return true;
     }
+    
+    const std::string& SoundManager::GetSoundFile(SoundID_t soundID)
+    {
+      // Table of sound files relative to root dir
+      static const std::map<SoundID_t, std::string> soundTable[NUM_SOUND_SCHEMES] =
+      {
+        {
+          // Cozmo default sound scheme
+          {SOUND_STARTOVER, "demo/WaitingForDice2.wav"}
+          ,{SOUND_NOTIMPRESSED, "demo/OKGotIt.wav"}
+          
+          ,{SOUND_WAITING4DICE, "demo/WaitingForDice1.wav"}
+          ,{SOUND_WAITING4DICE2DISAPPEAR, "demo/WaitingForDice2.wav"}
+          ,{SOUND_OK_GOT_IT, "demo/OKGotIt.wav"}
+          ,{SOUND_OK_DONE, "demo/OKDone.wav"}
+          
+        }
+        ,{
+          // Movie sound scheme
+          {SOUND_TADA, "misc/tada.mp3"}
+          ,{SOUND_NOPROBLEMO, "misc/nproblem.wav"}
+          ,{SOUND_INPUT, "misc/input.wav"}
+          ,{SOUND_SWEAR, "misc/swear.wav"}
+          ,{SOUND_STARTOVER, "anchorman/startover.wav"}
+          ,{SOUND_NOTIMPRESSED, "anchorman/notimpressed.wav"}
+          ,{SOUND_60PERCENT, "anchorman/60percent.wav"}
+          ,{SOUND_DROID, "droid/droid.wav"}
+          
+          ,{SOUND_DEMO_START, "misc/swear.wav"}
+          ,{SOUND_WAITING4DICE, "misc/input.wav"}
+          ,{SOUND_WAITING4DICE2DISAPPEAR, "misc/input.wav"}
+          ,{SOUND_OK_GOT_IT, "misc/nproblem.wav"}
+          ,{SOUND_OK_DONE, "anchorman/60percent.wav"}
+        }
+        ,{
+          // CREEP Sound Scheme
+          // TODO: Update these mappings for real playtest sounds
+          {SOUND_POWER_ON, "droid/droid.wav"}
+          ,{SOUND_PHEW,    "droid/r2d2wst2.wav"}
+          ,{SOUND_SCREAM,  "droid/r2d2wstl.wav"}
+          ,{SOUND_OOH,     "droid/r2d2wst1.wav"}
+          ,{SOUND_HELPME,  "droid/r2d2wst3.wav"}
+          ,{SOUND_SCAN,    "demo/WaitingForDice1.wav"}
+          ,{SOUND_EXCITED, "demo/OKGotIt.wav"}
+        }
+      };
+      
+      static const std::string DEFAULT("");
+      
+      auto result = soundTable[_currScheme].find(soundID);
+      if(result == soundTable[_currScheme].end()) {
+        PRINT_NAMED_WARNING("SoundManager.GetSoundFile.UndefinedID",
+                            "No file defined for sound ID %d in sound scheme %d.\n",
+                            soundID, _currScheme);
+        return DEFAULT;
+      } else {
+        return result->second;
+      }
+      
+    } // GetSoundFile()
+    
     
     SoundID_t SoundManager::GetID(const std::string& name)
     {
@@ -149,7 +164,14 @@ namespace Anki {
         {"TADA",      SOUND_TADA},
         {"OK_GOT_IT", SOUND_OK_GOT_IT},
         {"OK_DONE",   SOUND_OK_DONE},
-        {"STARTOVER", SOUND_STARTOVER}
+        {"STARTOVER", SOUND_STARTOVER},
+        {"SCAN",      SOUND_SCAN},
+        {"POWER_ON",  SOUND_POWER_ON},
+        {"PHEW",      SOUND_PHEW},
+        {"OOH",       SOUND_OOH},
+        {"SCREAM",    SOUND_SCREAM},
+        {"HELPME",    SOUND_HELPME},
+        {"EXCITED",   SOUND_EXCITED},
       };
 
       auto result = LUT.find(name);
@@ -169,10 +191,12 @@ namespace Anki {
     bool SoundManager::Play(const SoundID_t id, const u8 numLoops)
     {
       if (_hasCmdProcessor && _hasRootDir && id < NUM_SOUNDS) {
-        if (_numActiveThreads < MAX_SOUND_THREADS) {
+        const std::string& soundFile = GetSoundFile(id);
+        if( !soundFile.empty() && _numActiveThreads < MAX_SOUND_THREADS)
+        {
           ++_numActiveThreads;
           
-          std::thread soundThread(CmdLinePlay, id, numLoops);
+          std::thread soundThread(CmdLinePlay, _rootDir, soundFile, numLoops);
           soundThread.detach();
           return true;
         }

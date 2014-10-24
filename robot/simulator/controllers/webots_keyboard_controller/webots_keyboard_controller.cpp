@@ -95,6 +95,7 @@ namespace Anki {
       void SendClearAllBlocks();
       void SendSelectNextObject();
       void SendExecuteBehavior(BehaviorManager::Mode mode);
+      void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState);
       void SendAbortPath();
       void SendAbortAll();
       void SendDrawPoseMarker(const Pose3d& p);
@@ -220,6 +221,13 @@ namespace Anki {
         const s32 CKEY_ANIMATION_TOGGLE = (s32) '~';
         
         const s32 CKEY_TOGGLE_FACE_TRACKING = (s32)'F';
+        
+        // For CREEP test
+        const s32 CKEY_BEHAVIOR_EXCITED = (s32)'7';
+        const s32 CKEY_BEHAVIOR_FLEE    = (s32)'8';
+        const s32 CKEY_BEHAVIOR_SCAN    = (s32)'9';
+        const s32 CKEY_BEHAVIOR_DANCE   = (s32)'0';
+        const s32 CKEY_BEHAVIOR_HELPME  = (s32)'-';
         
         bool movingHead   = false;
         bool movingLift   = false;
@@ -481,7 +489,18 @@ namespace Anki {
               }
               case CKEY_CLEAR_BLOCKS:
               {
-                SendClearAllBlocks();
+                if(modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  if(BehaviorManager::CREEP == behaviorMode_) {
+                    behaviorMode_ = BehaviorManager::None;
+                  } else {
+                    behaviorMode_ = BehaviorManager::CREEP;
+                  }
+                  
+                  SendExecuteBehavior(behaviorMode_);
+                } else {
+                  // 'c' without SHIFT
+                  SendClearAllBlocks();
+                }
                 break;
               }
               case CKEY_DOCK_TO_BLOCK:
@@ -605,6 +624,35 @@ namespace Anki {
                 if(iAnimTest == NUM_ANIM_TESTS) {
                   iAnimTest = 0;
                 }
+                break;
+              }
+
+              //
+              // CREEP Behavior States:
+              //
+              case CKEY_BEHAVIOR_DANCE:
+              {
+                SendSetNextBehaviorState(BehaviorManager::DANCE_WITH_BLOCK);
+                break;
+              }
+              case CKEY_BEHAVIOR_EXCITED:
+              {
+                SendSetNextBehaviorState(BehaviorManager::EXCITABLE_CHASE);
+                break;
+              }
+              case CKEY_BEHAVIOR_FLEE:
+              {
+                SendSetNextBehaviorState(BehaviorManager::SCARED_FLEE);
+                break;
+              }
+              case CKEY_BEHAVIOR_HELPME:
+              {
+                SendSetNextBehaviorState(BehaviorManager::HELP_ME_STATE);
+                break;
+              }
+              case CKEY_BEHAVIOR_SCAN:
+              {
+                SendSetNextBehaviorState(BehaviorManager::SCAN);
                 break;
               }
                 
@@ -855,6 +903,13 @@ namespace Anki {
       {
         MessageU2G_ExecuteBehavior m;
         m.behaviorMode = mode;
+        SendMessage(m);
+      }
+      
+      void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState)
+      {
+        MessageU2G_SetBehaviorState m;
+        m.behaviorState = nextState;
         SendMessage(m);
       }
       

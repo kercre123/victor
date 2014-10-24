@@ -280,6 +280,12 @@ namespace Anki {
       robot->StartBehaviorMode(static_cast<BehaviorManager::Mode>(msg.behaviorMode));
       return RESULT_OK;
     }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetBehaviorState const& msg)
+    {
+      robot->SetBehaviorState(static_cast<BehaviorManager::BehaviorState>(msg.behaviorState));
+      return RESULT_OK;
+    }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_AbortPath const& msg)
     {

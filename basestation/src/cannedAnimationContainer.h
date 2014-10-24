@@ -43,6 +43,8 @@ namespace Cozmo {
       }
       
     private:
+      
+      // TODO: Store some kind of KeyFrame wrapper that holds Message* instead of Message* directly
       std::vector<Message*> _keyFrameMessages;
     }; // class KeyFrameList
     
@@ -58,6 +60,9 @@ namespace Cozmo {
     KeyFrameList* GetKeyFrameList(const std::string& name);
     
     s32 GetID(const std::string& name) const;
+    
+    // TODO: Add a way to ask how long an animation is
+    //u16 GetLengthInMilliSeconds(const std::string& name) const;
     
     // Is there a better way to do this?
     void Send(RobotID_t robotID, IMessageHandler* msgHandler);

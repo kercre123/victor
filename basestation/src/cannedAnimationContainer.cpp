@@ -92,7 +92,24 @@ namespace Cozmo {
     }
   }
 
-
+  /*
+  u16 CannedAnimationContainer::GetLengthInMilliSeconds(const std::string& name) const
+  {
+    auto result = _animations.find(name);
+    if(result == _animations.end()) {
+      PRINT_NAMED_ERROR("CannedAnimationContainer.GetLengthInMilliSeconds.InvalidName",
+                        "Length requested for unknown animation '%s'.\n",
+                        name.c_str());
+      return 0;
+    } else {
+      u16 length = 0;
+      
+      const KeyFrameList& anim = result->second.second;
+      
+    }
+  } // GetLengthInMilliSeconds()
+   */
+   
   void CannedAnimationContainer::Send(RobotID_t robotID, IMessageHandler* msgHandler)
   {
     for(auto & cannedAnimationByName : _animations)
@@ -222,7 +239,7 @@ namespace Cozmo {
           jsonFrame["soundID"] = SoundManager::GetID(jsonFrame["soundID"].asString());
         }
         
-        Message* kfMessage = Message::CreateFromJson(jsonRoot[animationName][iFrame]);
+        Message* kfMessage = Message::CreateFromJson(jsonRoot[animationName][iFrame]); 
         if(kfMessage != nullptr) {
           KeyFrameList* keyFrames = GetKeyFrameList(animationName);
           if(keyFrames == nullptr) {

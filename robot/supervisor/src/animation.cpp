@@ -22,6 +22,8 @@
 
 #include "anki/common/robot/utilities.h"
 
+#define DEBUG_ANIMATIONS 1
+
 namespace Anki {
 namespace Cozmo {
   
@@ -46,7 +48,9 @@ namespace Cozmo {
   
   void Animation::Init()
   {
+#   if DEBUG_ANIMATIONS
     PRINT("Init Animation %d\n", _ID);
+#   endif
     
     _startTime_ms = HAL::GetTimeStamp();
     
@@ -179,12 +183,16 @@ namespace Cozmo {
           ++track.currFrame;
           
           if(track.currFrame < track.numFrames) {
+#           if DEBUG_ANIMATIONS
             PRINT("Moving to keyframe %d of %d in track %d\n", track.currFrame+1, track.numFrames, iTrack);
+#           endif
             KeyFrame& nextKeyFrame = track.frames[track.currFrame];
             nextKeyFrame.TransitionInto(_startTime_ms);
           } else {
+#           if DEBUG_ANIMATIONS
             PRINT("Track %d finished all %d of its frames\n", iTrack, track.numFrames);
             trackPlaying[iTrack] = false;
+#           endif
           }
           
         } // if GetTimeStamp() >= absFrameTime_ms
@@ -200,7 +208,9 @@ namespace Cozmo {
     }
     
     if(!_isPlaying) {
+#if   DEBUG_ANIMATIONS
       PRINT("No tracks in animation %d still playing. Stopping.\n", _ID);
+#     endif
       Stop();
     }
     
@@ -223,7 +233,9 @@ namespace Cozmo {
     
     _isPlaying = false;
     
+#   if DEBUG_ANIMATIONS
     PRINT("Stopped playing animation %d.\n", _ID);
+#   endif
   }
   
   
@@ -302,8 +314,10 @@ namespace Cozmo {
     
     track.frames[track.numFrames++] = keyframe;
     
+#   if DEBUG_ANIMATIONS
     PRINT("Added frame %d to track %d of animation %d\n",
           track.numFrames, whichTrack, _ID);
+#   endif
     
     return RESULT_OK;
   }
