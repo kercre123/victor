@@ -35,6 +35,24 @@ namespace Anki
   {
     namespace ImageProcessing
     {
+      //Result UpsampleByPowerOfTwoBilinear(const Array<u8> &in, const s32 upsamplePower, Array<u8> &out, MemoryStack scratch)
+      //{
+      //  if(upsamplePower == 1) {
+      //    return UpsampleByPowerOfTwoBilinear<1>(in, out, scratch);
+      //  } else if(upsamplePower == 2) {
+      //    return UpsampleByPowerOfTwoBilinear<2>(in, out, scratch);
+      //  } else if(upsamplePower == 3) {
+      //    return UpsampleByPowerOfTwoBilinear<3>(in, out, scratch);
+      //  } else if(upsamplePower == 4) {
+      //    return UpsampleByPowerOfTwoBilinear<4>(in, out, scratch);
+      //  } else if(upsamplePower == 5) {
+      //    return UpsampleByPowerOfTwoBilinear<5>(in, out, scratch);
+      //  }
+
+      //  AnkiError("UpsampleByPowerOfTwoBilinear", "0 < upsamplePower < 6");
+
+      //  return RESULT_FAIL;
+      //} // Result UpsampleByPowerOfTwoBilinear(const Array<u8> &in, const s32 upsamplePower, Array<u8> &out, MemoryStack scratch)
     } // namespace ImageProcessing
   } // namespace Embedded
 } // namespace Anki
