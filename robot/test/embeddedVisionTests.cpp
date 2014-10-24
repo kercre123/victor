@@ -72,64 +72,6 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 
 //#define RUN_FACE_DETECTION_GUI
 
-Result ComputeAndPrintPercentileBenchmark(const FixedLengthList<FixedLengthList<BenchmarkElement> > &benchmarkElements, const s32 numRuns, const f32 elementPercentile, MemoryStack scratch)
-{
-  // Check that all the lists have the same number and type of benchmarks
-  const s32 numElements = benchmarkElements[0].get_size();
-  for(s32 iRun=1; iRun<numRuns; iRun++) {
-    if(benchmarkElements[0].get_size() != benchmarkElements[iRun].get_size()) { AnkiError("ComputeAndPrintPercentileBenchmark", "number failure %d!=%d", benchmarkElements[0].get_size(), benchmarkElements[iRun].get_size()); return RESULT_FAIL; }
-    for(s32 i=0; i<numElements; i++) {
-      if(benchmarkElements[0][i].numEvents != benchmarkElements[iRun][i].numEvents) { AnkiError("ComputeAndPrintPercentileBenchmark", "number failure %d!=%d (%s,%s)", benchmarkElements[0][i].numEvents, benchmarkElements[iRun][i].numEvents, benchmarkElements[0][i].name, benchmarkElements[iRun][i].name); return RESULT_FAIL; }
-      if(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) != 0) { AnkiError("ComputeAndPrintPercentileBenchmark", "name failure %s!=%s", benchmarkElements[0][i].name, benchmarkElements[iRun][i].name); return RESULT_FAIL; }
-    }
-  }
-
-  // Compute the medians
-  FixedLengthList<BenchmarkElement> medianBenchmarkElements(benchmarkElements[0].get_size(), scratch, Flags::Buffer(true, false, true));
-  Array<u32> sortedElements(1, numRuns, scratch);
-  u32 * pSortedElements = sortedElements.Pointer(0,0);
-  for(s32 i=0; i<numElements; i++) {
-    strncpy(medianBenchmarkElements[i].name, benchmarkElements[0][i].name, BenchmarkElement::NAME_LENGTH - 1);
-    medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
-    medianBenchmarkElements[i].inclusive_mean = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
-    medianBenchmarkElements[i].inclusive_min = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
-    medianBenchmarkElements[i].inclusive_max = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
-    medianBenchmarkElements[i].inclusive_total = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
-    medianBenchmarkElements[i].exclusive_mean = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
-    medianBenchmarkElements[i].exclusive_min = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
-    medianBenchmarkElements[i].exclusive_max = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
-    if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("ComputeAndPrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
-    medianBenchmarkElements[i].exclusive_total = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
-  } // for(s32 i=0; i<numElements; i++)
-
-  PrintBenchmarkResults(medianBenchmarkElements, true, true);
-
-  return RESULT_OK;
-} // CompueMedianBenchmark()
-
 #if !defined(JUST_FIDUCIAL_DETECTION)
 
 GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
@@ -3941,10 +3883,10 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   //const f32 elementPercentile = 0.5f; // Median
 
   printf("Integral image benchmarks:\n");
-  ASSERT_TRUE(ComputeAndPrintPercentileBenchmark(benchmarkElements_integral, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
+  ASSERT_TRUE(PrintPercentileBenchmark(benchmarkElements_integral, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
   printf("Binomial benchmarks:\n");
-  ASSERT_TRUE(ComputeAndPrintPercentileBenchmark(benchmarkElements_binomial, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
+  ASSERT_TRUE(PrintPercentileBenchmark(benchmarkElements_binomial, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
   const f32 minDifference = 1e-4f;
   Point<f32> groundTruth[4];
@@ -4106,10 +4048,10 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
   //const f32 elementPercentile = 0.5f; // Median
 
   printf("Integral image benchmarks:\n");
-  ASSERT_TRUE(ComputeAndPrintPercentileBenchmark(benchmarkElements_integral, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
+  ASSERT_TRUE(PrintPercentileBenchmark(benchmarkElements_integral, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
   printf("Binomial benchmarks:\n");
-  ASSERT_TRUE(ComputeAndPrintPercentileBenchmark(benchmarkElements_binomial, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
+  ASSERT_TRUE(PrintPercentileBenchmark(benchmarkElements_binomial, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
   markers[0].Print();
 
@@ -5401,16 +5343,16 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);
-  #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
-  #if defined(RUN_HIGH_MEMORY_TESTS)
+#if defined(RUN_HIGH_MEMORY_TESTS)
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640);
-  #endif
+#endif
 
-  #if !defined(JUST_FIDUCIAL_DETECTION)
+#if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
@@ -5432,7 +5374,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
   CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
   CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
-  #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
