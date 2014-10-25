@@ -151,6 +151,26 @@ namespace Anki {
       LED_WHITE = 0xffffff
     };
 
+    enum EyeAnimMode {
+      NONE,
+      BLINK,
+      SPIN
+    };
+    
+    enum EyeShape {
+      EYE_OPEN,
+      EYE_HALF,
+      EYE_SLIT,
+      EYE_CLOSED,
+      EYE_OFF_PUPIL_UP,
+      EYE_OFF_PUPIL_DOWN,
+      EYE_OFF_PUPIL_LEFT,
+      EYE_OFF_PUPIL_RIGHT,
+      EYE_ON_PUPIL_UP,
+      EYE_ON_PUPIL_DOWN,
+      EYE_ON_PUPIL_LEFT,
+      EYE_ON_PUPIL_RIGHT
+    };
     
     // For DEV only
     typedef struct {
