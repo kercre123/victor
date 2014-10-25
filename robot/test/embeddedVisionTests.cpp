@@ -60,6 +60,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <iostream>
 #include <fstream>
 #include "opencv2/video/tracking.hpp"
+#include "opencv2/contrib/contrib.hpp"
 #endif
 
 using namespace Anki;
@@ -73,6 +74,264 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 //#define RUN_FACE_DETECTION_GUI
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
+
+#ifdef RUN_HIGH_MEMORY_TESTS
+GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  const s32 numTrainingImages = 12;
+  FixedLengthList<Array<u8> > trainingImages(numTrainingImages, scratchHuge, Flags::Buffer(true, false, true));
+
+  char * trainingImageFilenames[numTrainingImages] = {
+    "C:/tmp/facesClipped/andrew1.jpg",
+    "C:/tmp/facesClipped/andrew2.jpg",
+    "C:/tmp/facesClipped/bryan1.jpg",
+    "C:/tmp/facesClipped/bryan2.jpg",
+    "C:/tmp/facesClipped/bryan3.jpg",
+    "C:/tmp/facesClipped/bryan4.jpg",
+    "C:/tmp/facesClipped/kevin1.jpg",
+    "C:/tmp/facesClipped/kevin2.jpg",
+    "C:/tmp/facesClipped/kevin3.jpg",
+    "C:/tmp/facesClipped/pete1.jpg",
+    "C:/tmp/facesClipped/pete2.jpg",
+    "C:/tmp/facesClipped/pete3.jpg"};
+
+  const char * labelNames[] = {"Andrew", "Bryan", "Kevin", "Pete"};
+  const s32 trainingLabels_data[numTrainingImages] = {0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3};
+  std::vector<int> cvTrainingLabels(&trainingLabels_data[0], &trainingLabels_data[0]+numTrainingImages);
+
+  const s32 MAX_CANDIDATES = 5000;
+
+  FixedLengthList<Rectangle<s32> > detectedFaces(MAX_CANDIDATES, scratchOffchip);
+
+  // TODO: are these const casts okay?
+  const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
+  const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+
+  Classifier::CascadeClassifier_LBP cc(
+    lbpcascade_frontalface_isStumpBased,
+    lbpcascade_frontalface_stageType,
+    lbpcascade_frontalface_featureType,
+    lbpcascade_frontalface_ncategories,
+    lbpcascade_frontalface_origWinHeight,
+    lbpcascade_frontalface_origWinWidth,
+    stages,
+    classifiers,
+    nodes,
+    leaves,
+    subsets,
+    featureRectangles,
+    scratchCcm);
+
+  const double scaleFactor = 1.1;
+  const int minNeighbors = 2;
+  const s32 minHeight = 30;
+  const s32 minWidth = 30;
+  const s32 trainingWidth = 64;
+
+  cv::Ptr<cv::FaceRecognizer> model = cv::createLBPHFaceRecognizer();
+  //cv::Ptr<cv::FaceRecognizer> model = cv::createFisherFaceRecognizer();
+  std::vector<cv::Mat> cvTrainingImages;
+
+  const bool showImages = false;
+  //const bool showImages = true;
+
+  for(s32 iFace=0; iFace<numTrainingImages; iFace++) {
+    PUSH_MEMORY_STACK(scratchOffchip);
+    trainingImages[iFace] = Array<u8>::LoadImage(trainingImageFilenames[iFace], scratchOffchip);
+
+    //trainingImages[iFace].Show("face", true);
+
+    const Result result = cc.DetectMultiScale(
+      trainingImages[iFace],
+      static_cast<f32>(scaleFactor),
+      minNeighbors,
+      minHeight, minWidth,
+      trainingImages[iFace].get_size(0), trainingImages[iFace].get_size(1),
+      detectedFaces,
+      scratchOffchip,
+      scratchHuge);
+
+    Array<u8> clippedImage(detectedFaces[0].get_height()+1, detectedFaces[0].get_width()+1, scratchHuge);
+    clippedImage(0,-1,0,-1).Set(trainingImages[iFace](detectedFaces[0].top, detectedFaces[0].bottom, detectedFaces[0].left, detectedFaces[0].right));
+
+    {
+      cv::Mat_<u8> arrayCopy;
+      ArrayToCvMat(clippedImage, &arrayCopy);
+      cv::Mat_<u8> arrayCopyResized = cvCreateMat(trainingWidth, trainingWidth, CV_8U);
+      cv::resize(arrayCopy, arrayCopyResized, arrayCopyResized.size());
+      cvTrainingImages.push_back(arrayCopyResized);
+    }
+
+    if(showImages) {
+      printf("%d) ", iFace);
+      detectedFaces.Print();
+
+      cv::Mat_<u8> arrayCopy;
+      ArrayToCvMat(trainingImages[iFace], &arrayCopy);
+
+      for( s32 i = 0; i < detectedFaces.get_size(); i++ )
+      {
+        cv::Point center( Round<s32>((detectedFaces[i].left + detectedFaces[i].right)*0.5), Round<s32>((detectedFaces[i].top + detectedFaces[i].bottom)*0.5) );
+        cv::ellipse( arrayCopy, center, cv::Size( Round<s32>((detectedFaces[i].right-detectedFaces[i].left)*0.5), Round<s32>((detectedFaces[i].bottom-detectedFaces[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
+      }
+
+      cv::imshow("detect", arrayCopy);
+      clippedImage.Show("clippedImage", false);
+      cv::waitKey();
+    } // if(showImages)
+  } // for(s32 iFace=0; iFace<numTrainingImages; iFace++)
+
+  //for(s32 iFace=0; iFace<numTrainingImages; iFace++) {
+  //  cv::imshow("detect", cvTrainingImages[iFace]);
+  //  cv::waitKey();
+  //}
+
+  model->train(cvTrainingImages, cvTrainingLabels);
+
+  model->save("c:/tmp/recognizer.yml");
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
+#endif // #ifdef RUN_HIGH_MEMORY_TESTS
+
+#ifdef RUN_HIGH_MEMORY_TESTS
+GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
+{
+  const s32 trainingWidth = 64;
+  const char * labelNames[] = {"Andrew", "Bryan", "Kevin", "Pete"};
+
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  cv::Ptr<cv::FaceRecognizer> model = cv::createLBPHFaceRecognizer();
+  //cv::Ptr<cv::FaceRecognizer> model = cv::createFisherFaceRecognizer();
+
+  model->load("c:/tmp/recognizer.yml");
+
+  cv::Mat cvImage;
+
+  const s32 MAX_CANDIDATES = 5000;
+
+  FixedLengthList<Rectangle<s32> > detectedFaces(MAX_CANDIDATES, scratchOffchip);
+
+  // TODO: are these const casts okay?
+  const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
+  const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+
+  Classifier::CascadeClassifier_LBP cc(
+    lbpcascade_frontalface_isStumpBased,
+    lbpcascade_frontalface_stageType,
+    lbpcascade_frontalface_featureType,
+    lbpcascade_frontalface_ncategories,
+    lbpcascade_frontalface_origWinHeight,
+    lbpcascade_frontalface_origWinWidth,
+    stages,
+    classifiers,
+    nodes,
+    leaves,
+    subsets,
+    featureRectangles,
+    scratchCcm);
+
+  const double scaleFactor = 1.1;
+  const int minNeighbors = 2;
+  const s32 minHeight = 30;
+  const s32 minWidth = 30;
+
+  cv::namedWindow("video", 1);
+
+  cv::VideoCapture cap(0);
+  while ( cap.isOpened() ) {
+    PUSH_MEMORY_STACK(scratchHuge);
+
+    cap >> cvImage;
+
+    if(cvImage.empty())
+      break;
+
+    //cv::imshow("video", cvImage);
+
+    Array<u8> image(cvImage.rows, cvImage.cols, scratchHuge);
+
+    for(s32 y=0; y<cvImage.rows; y++) {
+      const u8 * restrict pCvImage = cvImage.data + y * cvImage.step.buf[0];
+      u8 * restrict pImage = image.Pointer(y,0);
+
+      for(s32 x=0; x<cvImage.cols; x++) {
+        pImage[x] = (pCvImage[x*3] + pCvImage[x*3 + 1] + pCvImage[x*3 + 2]) / 3;
+      }
+    }
+
+    const Result result = cc.DetectMultiScale(
+      image,
+      static_cast<f32>(scaleFactor),
+      minNeighbors,
+      minHeight, minWidth,
+      image.get_size(0), image.get_size(1),
+      detectedFaces,
+      scratchOffchip,
+      scratchHuge);
+
+    cv::Mat_<u8> arrayCopy;
+    ArrayToCvMat(image, &arrayCopy);
+
+    if(detectedFaces.get_size() > 0) {
+      for( s32 i = 0; i < detectedFaces.get_size(); i++ ) {
+        cv::Point center( Round<s32>((detectedFaces[i].left + detectedFaces[i].right)*0.5), Round<s32>((detectedFaces[i].top + detectedFaces[i].bottom)*0.5) );
+        cv::ellipse( arrayCopy, center, cv::Size( Round<s32>((detectedFaces[i].right-detectedFaces[i].left)*0.5), Round<s32>((detectedFaces[i].bottom-detectedFaces[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
+
+        Array<u8> clippedImage(detectedFaces[0].get_height()+1, detectedFaces[0].get_width()+1, scratchHuge);
+        clippedImage(0,-1,0,-1).Set(image(detectedFaces[0].top, detectedFaces[0].bottom, detectedFaces[0].left, detectedFaces[0].right));
+
+        cv::Mat_<u8> cvClippedImage;
+        ArrayToCvMat(clippedImage, &cvClippedImage);
+
+        s32 predictedLabel;
+        f64 confidence;
+
+        cv::Mat_<u8> cvClippedImageResized = cvCreateMat(trainingWidth, trainingWidth, CV_8U);
+        cv::resize(cvClippedImage, cvClippedImageResized, cvClippedImageResized.size());
+
+        model->predict(cvClippedImageResized, predictedLabel, confidence);
+
+        char text[1024];
+        snprintf(text, 1024, "%s %0.0f", labelNames[predictedLabel], confidence);
+
+        printf("Predicted label: %d %s %f\n", predictedLabel, labelNames[predictedLabel], confidence);
+
+        cv::putText(arrayCopy, text, cv::Point((detectedFaces[0].left + detectedFaces[0].right)/2, (detectedFaces[0].top + detectedFaces[0].bottom)/2), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(255, 255, 255));
+      } // for( s32 i = 0; i < detectedFaces.get_size(); i++ )
+    } // if(detectedFaces.get_size() > 0)
+
+    cv::imshow("detect", arrayCopy);
+
+    //image.Show("image", false);
+
+    cv::waitKey(30);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
+#endif // #ifdef RUN_HIGH_MEMORY_TESTS
 
 GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
 {
@@ -5319,7 +5578,11 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
-#if !defined(JUST_FIDUCIAL_DETECTION)
+  CALL_GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer);
+  CALL_GTEST_TEST(CoreTech_Vision, TestFaceRecognizer);
+
+  /*
+  #if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, KLT);
   CALL_GTEST_TEST(CoreTech_Vision, Harris);
   CALL_GTEST_TEST(CoreTech_Vision, DistanceTransform);
@@ -5343,16 +5606,16 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+  #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
-#if defined(RUN_HIGH_MEMORY_TESTS)
+  #if defined(RUN_HIGH_MEMORY_TESTS)
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640);
-#endif
+  #endif
 
-#if !defined(JUST_FIDUCIAL_DETECTION)
+  #if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
@@ -5374,8 +5637,8 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
   CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
   CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
-#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
-
+  #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+  */
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
 #endif // #if !ANKICORETECH_EMBEDDED_USE_GTEST
