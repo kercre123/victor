@@ -13,9 +13,13 @@
  **/
 
 #include "keyFrame.h"
+
+#include "eyeController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "steeringController.h"
+
+#include "anki/common/robot/errorHandling.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -87,7 +91,51 @@ namespace Cozmo {
         msg.soundID  = PlaySound.soundID;
         msg.numLoops = PlaySound.numLoops;
         HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::PlaySoundOnBaseStation), &msg);
+        break;
       }
+        
+      case KeyFrame::BLINK_EYES:
+      {
+        EyeController::SetEyeColor(BlinkEyes.color);
+        EyeController::StartBlinking(BlinkEyes.timeOn_ms, BlinkEyes.timeOff_ms);
+        break;
+      }
+        
+      case KeyFrame::FLASH_EYES:
+      {
+        EyeController::SetEyeColor(FlashEyes.color);
+        EyeController::StartFlashing(FlashEyes.shape, FlashEyes.timeOn_ms, FlashEyes.timeOff_ms);
+        break;
+      }
+        
+      case KeyFrame::SET_EYE:
+      {
+        switch(SetEye.whichEye)
+        {
+          case EYE_LEFT:
+            EyeController::SetEyeColor(SetEye.color, LED_CURRENT_COLOR);
+            EyeController::SetEyeShape(SetEye.shape, EYE_CURRENT_SHAPE);
+            break;
+
+          case EYE_RIGHT:
+            EyeController::SetEyeColor(LED_CURRENT_COLOR, SetEye.color);
+            EyeController::SetEyeShape(EYE_CURRENT_SHAPE, SetEye.shape);
+            break;
+
+          case EYE_BOTH:
+            EyeController::SetEyeColor(SetEye.color);
+            EyeController::SetEyeShape(SetEye.shape);
+            break;
+
+          default:
+            AnkiError("KeyFrame.TranisionOutOf.UnknownWhichEye",
+                      "Invalid specification for SetEye.whichEye\n");
+            break;
+        }
+        
+        break;
+      }
+        
       default:
       {
         // Do nothing if no TransitionOutOf behavior defined for this type
@@ -220,6 +268,13 @@ namespace Cozmo {
       case KeyFrame::DRIVE_LINE_SEGMENT:
       {
         SteeringController::ExecuteDirectDrive(0.f, 0.f);
+        break;
+      }
+        
+      case KeyFrame::BLINK_EYES:
+      case KeyFrame::FLASH_EYES:
+      {
+        EyeController::StopAnimating();
         break;
       }
         

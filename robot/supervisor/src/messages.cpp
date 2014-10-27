@@ -635,6 +635,42 @@ namespace Anki {
         AddKeyFrameHelper(msg, kf);
       }
       
+      void ProcessAddAnimKeyFrame_SetEyeShapeAndColorMessage(const AddAnimKeyFrame_SetEyeShapeAndColor& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::SET_EYE;
+        kf.SetEye.whichEye = static_cast<WhichEye>(msg.whichEye);
+        kf.SetEye.color    = GetU32ColorFromRGB(msg.color);
+        kf.SetEye.shape    = static_cast<EyeShape>(msg.shape);
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_StartBlinkingMessage(const AddAnimKeyFrame_StartBlinking& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::BLINK_EYES;
+        kf.BlinkEyes.color      = GetU32ColorFromRGB(msg.color);
+        kf.BlinkEyes.timeOn_ms  = msg.onPeriod_ms;
+        kf.BlinkEyes.timeOff_ms = msg.offPeriod_ms;
+
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_StartFlashingEyesMessage(const AddAnimKeyFrame_StartFlashingEyes& msg)
+      {
+        KeyFrame kf;
+        kf.type = KeyFrame::FLASH_EYES;
+        kf.FlashEyes.color      = GetU32ColorFromRGB(msg.color);
+        kf.FlashEyes.timeOn_ms  = msg.onPeriod_ms;
+        kf.FlashEyes.timeOff_ms = msg.offPeriod_ms;
+        kf.FlashEyes.shape      = static_cast<EyeShape>(msg.shape);
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
 // ----------- Send messages -----------------
       
       

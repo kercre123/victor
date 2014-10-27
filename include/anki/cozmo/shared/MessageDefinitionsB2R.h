@@ -320,6 +320,7 @@ END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopLiftNod)
 // AddAnimKeyFrame_SetLEDColors
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLEDColors, 2)
 //ADD_MESSAGE_MEMBER_ARRAY(u32, LEDcolors, 8) // TODO: How do we make NUM_LEDS here match HAL::NUM_LEDS?
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
 ADD_MESSAGE_MEMBER_ARRAY(u8, rightEye_top,    3)
 ADD_MESSAGE_MEMBER_ARRAY(u8, rightEye_right,  3)
 ADD_MESSAGE_MEMBER_ARRAY(u8, rightEye_bottom, 3)
@@ -328,7 +329,6 @@ ADD_MESSAGE_MEMBER_ARRAY(u8, leftEye_top,    3)
 ADD_MESSAGE_MEMBER_ARRAY(u8, leftEye_right,  3)
 ADD_MESSAGE_MEMBER_ARRAY(u8, leftEye_bottom, 3)
 ADD_MESSAGE_MEMBER_ARRAY(u8, leftEye_left,   3)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
 ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
@@ -352,6 +352,40 @@ ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 ADD_MESSAGE_MEMBER(u8,  numLoops)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_PlaySound)
+
+// AddAnimKeyFrame_StartBlinking
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartBlinking, 2)
+ADD_MESSAGE_MEMBER(u16, onPeriod_ms)
+ADD_MESSAGE_MEMBER(u16, offPeriod_ms)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartBlinking)
+
+// AddAnimKeyFrame_SetEyeShapeAndColor
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetEyeShapeAndColor, 2)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+ADD_MESSAGE_MEMBER(u8,  shape)
+ADD_MESSAGE_MEMBER(u8,  whichEye)  // See WhichEye enum
+ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetEyeShapeAndColor)
+
+// AddAnimKeyFrame_StartFlashing
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartFlashingEyes, 2)
+ADD_MESSAGE_MEMBER(u16, onPeriod_ms)
+ADD_MESSAGE_MEMBER(u16, offPeriod_ms)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+ADD_MESSAGE_MEMBER(u8,  shape)
+ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartFlashingEyes)
 
 // IMURequest
 START_MESSAGE_DEFINITION(IMURequest, 1)

@@ -23,10 +23,12 @@ namespace EyeController {
   Result Update();
   
   // Change color without affecting mode (e.g. continue blinking)
-  void SetEyeColor(LEDColor color);
-  void SetEyeColor(LEDColor leftColor, LEDColor rightColor);
+  // Use LED_CURRENT_COLOR to keep the color as is.
+  void SetEyeColor(u32 color);
+  void SetEyeColor(u32 leftColor, u32 rightColor);
   
   // Set the eyes to a specific shape (this disables any current eye animation)
+  // Use EYE_CURRENT_SHAPE to keep the shape in whatever state it already is.
   void SetEyeShape(EyeShape shape);
   void SetEyeShape(EyeShape leftShape, EyeShape rightShape);
 
@@ -34,6 +36,10 @@ namespace EyeController {
   void StartBlinking(u16 leftOnPeriod_ms,  u16 leftOffPeriod_ms,
                      u16 rightOnPeriod_ms, u16 rightOffPeriod_ms);
 
+  void StartFlashing(EyeShape shape, u16 onPeriod_ms, u16 offPeriod_ms);
+  void StartFlashing(EyeShape leftShape, u16 leftOnPeriod_ms, u16 leftOffPeriod_ms,
+                     EyeShape rightShape, u16 rightOnPeriod_ms, u16 rightOffPeriod_ms);
+  
   // Stop blinking, cycling, etc, the eyes and leave the eyes in whatever
   // state (shape/color) they were in
   void StopAnimating();

@@ -22,7 +22,7 @@
 
 #include "anki/common/robot/utilities.h"
 
-#define DEBUG_ANIMATIONS 1
+#define DEBUG_ANIMATIONS 0
 
 namespace Anki {
 namespace Cozmo {
@@ -285,7 +285,9 @@ namespace Cozmo {
         return POSE;
         
       case KeyFrame::SET_LED_COLORS:
-      case KeyFrame::EYE_BLINK:
+      case KeyFrame::BLINK_EYES:
+      case KeyFrame::SET_EYE:
+      case KeyFrame::FLASH_EYES:
         return LIGHTS;
         
       case KeyFrame::PLAY_SOUND:

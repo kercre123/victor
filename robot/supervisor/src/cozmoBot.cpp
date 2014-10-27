@@ -9,6 +9,7 @@
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
+#include "eyeController.h"
 #include "gripController.h"
 #include "headController.h"
 #include "liftController.h"
@@ -136,7 +137,6 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "Localization System init failed.\n");
         
-        // TODO: Get VisionSystem to work on robot
         lastResult = VisionSystem::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "Vision System init failed.\n");
@@ -145,7 +145,11 @@ namespace Anki {
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PathFollower System init failed.\n");
-
+        
+        lastResult = EyeController::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "EyeController init failed.\n");
+        
         
         // Initialize subsystems if/when available:
         /*
@@ -290,7 +294,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
 
         AnimationController::Update();
-        
+        EyeController::Update();
         HeadController::Update();
         LiftController::Update();
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER

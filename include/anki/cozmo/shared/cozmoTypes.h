@@ -141,6 +141,8 @@ namespace Anki {
     
     // The color format is identical to HTML Hex Triplets (RGB)
     enum LEDColor {
+      LED_CURRENT_COLOR = 0xffffffff, // Don't change color: leave as is
+      
       LED_OFF =   0x000000,
       LED_RED =   0xff0000,
       LED_GREEN = 0x00ff00,
@@ -150,14 +152,15 @@ namespace Anki {
       LED_CYAN =  0x00ffff,
       LED_WHITE = 0xffffff
     };
-
-    enum EyeAnimMode {
-      NONE,
-      BLINK,
-      SPIN
-    };
     
+    enum WhichEye {
+      EYE_LEFT,
+      EYE_RIGHT,
+      EYE_BOTH
+    };
+
     enum EyeShape {
+      EYE_CURRENT_SHAPE = -1, // Don't change shape: leave as is
       EYE_OPEN,
       EYE_HALF,
       EYE_SLIT,

@@ -138,8 +138,9 @@ namespace Anki {
           ,{SOUND_SCREAM,  "droid/r2d2wstl.wav"}
           ,{SOUND_OOH,     "droid/r2d2wst1.wav"}
           ,{SOUND_HELPME,  "droid/r2d2wst3.wav"}
-          ,{SOUND_SCAN,    "demo/WaitingForDice1.wav"}
+          ,{SOUND_SCAN,    "demo/OKDone.wav"}
           ,{SOUND_EXCITED, "demo/OKGotIt.wav"}
+          ,{SOUND_SCARED,  "demo/WaitingForDice1.wav"}
         }
       };
       
@@ -172,6 +173,7 @@ namespace Anki {
         {"SCREAM",    SOUND_SCREAM},
         {"HELPME",    SOUND_HELPME},
         {"EXCITED",   SOUND_EXCITED},
+        {"SCARED",    SOUND_SCARED},
       };
 
       auto result = LUT.find(name);

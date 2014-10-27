@@ -38,7 +38,9 @@ struct KeyFrame
     START_WIGGLE,
     POINT_TURN,
     PLAY_SOUND,
-    EYE_BLINK,
+    BLINK_EYES,
+    FLASH_EYES,
+    SET_EYE,
     SET_LED_COLORS,
     START_LIFT_NOD,
     STOP_LIFT_NOD,
@@ -137,22 +139,29 @@ struct KeyFrame
     u8  numLoops;
   };
   
-  // Turn eye(s) off and back on in specified color (use 0x000000 for
-  // color to use the current LED color)
+  // Turn eye(s) off and back on in specified color, using a built-in blink animation
   struct BlinkEyes_t {
-    // Can specify which eye(s) to blink in order to get winking
-    enum WhichEye_t {
-      LEFT_EYE   = 0,
-      RIGHT_EYE  = 1,
-      BOTH_EYES  = 2
-    }        whichEye;
-    
-    u32      period; // for fast vs. slow blinks
+    u16      timeOn_ms;
+    u16      timeOff_ms;
     u32      color;
   };
   
-  // Set the color for all LEDs
-  //
+  // Flash eyes
+  struct FlashEyes_t {
+    u16 timeOn_ms;
+    u16 timeOff_ms;
+    u32 color;
+    EyeShape shape;
+  };
+  
+  struct SetEye_t {
+    WhichEye whichEye;
+    EyeShape shape;
+    u32      color;
+  };
+  
+  
+  // Set the color for all LEDs individually
   struct SetLEDcolors_t {
     u32 led[NUM_LEDS];
   };
@@ -167,21 +176,32 @@ struct KeyFrame
     // then things get really confusing. Seems better to group the type-specific
     // info by name this way.
     
+    // Head
     SetHeadAngle_t     SetHeadAngle;
     StartHeadNod_t     StartHeadNod;
     StopHeadNod_t      StopHeadNod;
+    
+    // Lift
     SetLiftHeight_t    SetLiftHeight;
     StartLiftNod_t     StartLiftNod;
     StopLiftNod_t      StopLiftNod;
+    
+    // Pose
     DriveLineSegment_t DriveLineSegment;
     DriveArc_t         DriveArc;
     BackAndForth_t     BackAndForth;
     StartWiggle_t      StartWiggle;
     StopWiggle_t       StopWiggle;
     TurnInPlace_t      TurnInPlace;
+    
+    // Sound
     PlaySound_t        PlaySound;
+    
+    // Lights
     BlinkEyes_t        BlinkEyes;
+    SetEye_t           SetEye;
     SetLEDcolors_t     SetLEDcolors;
+    FlashEyes_t        FlashEyes;
     
   }; // union of structs
   

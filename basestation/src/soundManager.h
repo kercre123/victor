@@ -50,6 +50,7 @@ namespace Anki {
       ,SOUND_HELPME
       ,SOUND_SCAN
       ,SOUND_EXCITED
+      ,SOUND_SCARED
       ,NUM_SOUNDS
     } SoundID_t;
     

@@ -36,6 +36,20 @@
 namespace Anki {
   namespace Cozmo {
     
+    static Result ScaredReaction(Robot* robot, Vision::ObservedMarker* marker)
+    {
+      PRINT_INFO("Saw Scary Block!\n");
+      robot->SetBehaviorState(BehaviorManager::SCARED_FLEE);
+      return RESULT_OK;
+    }
+    
+    static Result ExcitedReaction(Robot* robot, Vision::ObservedMarker* marker)
+    {
+      PRINT_INFO("Saw Exciting Block!\n");
+      robot->SetBehaviorState(BehaviorManager::EXCITABLE_CHASE);
+      return RESULT_OK;
+    }
+    
     static bool IsMarkerCloseEnoughAndCentered(const Vision::ObservedMarker* marker, const u16 ncols)
     {
       bool result = false;
@@ -220,6 +234,11 @@ namespace Anki {
           _stateAnimations[SLEEPING]        = "ANIM_SLEEPING";
           _stateAnimations[EXCITABLE_CHASE] = "ANIM_EXCITABLE_CHASE";
           _stateAnimations[SCAN]            = "ANIM_SCAN";
+          _stateAnimations[SCARED_FLEE]     = "ANIM_SCARED_FLEE";
+          
+          // Automatically switch states as reactions to certain markers:
+          _robot->AddReactionCallback(Vision::MARKER_ANGRYFACE, &ScaredReaction);
+          _robot->AddReactionCallback(Vision::MARKER_STAR5,     &ExcitedReaction);
           
           break;
         } // case CREEP

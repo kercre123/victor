@@ -24,6 +24,13 @@ namespace Cozmo {
 namespace EyeController {
   namespace {
     
+    enum EyeAnimMode {
+      NONE,
+      BLINK,
+      FLASH,
+      SPIN
+    };
+    
     EyeAnimMode _eyeAnimMode;
     
     enum EyeSegments {
@@ -38,12 +45,19 @@ namespace EyeController {
     const EyeShape BlinkAnimation[BLINK_ANIM_LENGTH] = {EYE_OPEN, EYE_HALF, EYE_CLOSED, EYE_HALF};
     
     struct Eye {
-      LEDColor      color;
+      u32           color;
       u8            animIndex;
       TimeStamp_t   nextSwitchTime;
       LEDId         segments[NUM_EYE_SEGMENTS];
       
-      TimeStamp_t   blinkTimings[BLINK_ANIM_LENGTH]; //   = {    1650,      100,        100,      100};
+      union {
+        TimeStamp_t   blinkTimings[BLINK_ANIM_LENGTH];  // set by on/off periods in StartBlinking
+        
+        struct {
+          TimeStamp_t   timings[2]; // off and on
+          EyeShape      shape;
+        } flashSettings;
+      };
     };
     
     Eye _leftEye, _rightEye;
@@ -54,7 +68,10 @@ namespace EyeController {
   // Forward declaration for helper functions
   static void SetEyeShapeHelper(Eye& eye, EyeShape shape);
   static void BlinkHelper(Eye& eye, TimeStamp_t currentTime);
-
+  static void StartBlinkingHelper(Eye& eye, TimeStamp_t currentTime,
+                                  u16 onPeriod_ms, u16 offPeriod_ms);
+  static void FlashHelper(Eye& eye, TimeStamp_t currentTime);
+  
   
   Result Init()
   {
@@ -64,25 +81,32 @@ namespace EyeController {
     _leftEye.segments[EYE_SEGMENT_LEFT]   = LED_LEFT_EYE_LEFT;
     _leftEye.segments[EYE_SEGMENT_RIGHT]  = LED_LEFT_EYE_RIGHT;
     _leftEye.segments[EYE_SEGMENT_BOTTOM] = LED_LEFT_EYE_BOTTOM;
-    
+        
     _rightEye.segments[EYE_SEGMENT_TOP]    = LED_RIGHT_EYE_TOP;
     _rightEye.segments[EYE_SEGMENT_LEFT]   = LED_RIGHT_EYE_LEFT;
     _rightEye.segments[EYE_SEGMENT_RIGHT]  = LED_RIGHT_EYE_RIGHT;
     _rightEye.segments[EYE_SEGMENT_BOTTOM] = LED_RIGHT_EYE_BOTTOM;
     
+    SetEyeColor(LED_OFF);
+    
     return RESULT_OK;
   } // Init()
   
   
-  void SetEyeColor(LEDColor color) {
+  void SetEyeColor(u32 color) {
     SetEyeColor(color, color);
   }
   
-  void SetEyeColor(LEDColor leftColor, LEDColor rightColor)
+  void SetEyeColor(u32 leftColor, u32 rightColor)
   {
     
-    _leftEye.color  = leftColor;
-    _rightEye.color = rightColor;
+    if(leftColor != LED_CURRENT_COLOR) {
+      _leftEye.color  = leftColor;
+    }
+    
+    if(rightColor != LED_CURRENT_COLOR) {
+      _rightEye.color = rightColor;
+    }
     
   } // SetEyeColor()
   
@@ -106,29 +130,40 @@ namespace EyeController {
                   onPeriod_ms, offPeriod_ms);
   }
   
-  
   void StartBlinking(u16 leftOnPeriod_ms,  u16 leftOffPeriod_ms,
                      u16 rightOnPeriod_ms, u16 rightOffPeriod_ms)
   {
     const TimeStamp_t currentTime = HAL::GetTimeStamp();
     
-    _leftEye.nextSwitchTime = currentTime;
-    _leftEye.blinkTimings[0] = leftOnPeriod_ms;
-    _leftEye.blinkTimings[1] = leftOffPeriod_ms/3;
-    _leftEye.blinkTimings[2] = _leftEye.blinkTimings[1];
-    _leftEye.blinkTimings[3] = _leftEye.blinkTimings[1];
-    _leftEye.animIndex = 0;
+    StartBlinkingHelper(_leftEye, currentTime, leftOnPeriod_ms, leftOffPeriod_ms);
     
-    _rightEye.nextSwitchTime = currentTime;
-    _rightEye.blinkTimings[0] = rightOnPeriod_ms;
-    _rightEye.blinkTimings[1] = rightOffPeriod_ms/3;
-    _rightEye.blinkTimings[2] = _rightEye.blinkTimings[1];
-    _rightEye.blinkTimings[3] = _rightEye.blinkTimings[1];
-    _rightEye.animIndex = 0;
+    StartBlinkingHelper(_rightEye, currentTime, rightOnPeriod_ms, rightOffPeriod_ms);
     
     _eyeAnimMode = BLINK;
   }
   
+  void StartFlashing(EyeShape shape, u16 onPeriod_ms, u16 offPeriod_ms)
+  {
+    StartFlashing(shape, onPeriod_ms, offPeriod_ms,
+                  shape, onPeriod_ms, offPeriod_ms);
+  }
+  
+  
+  void StartFlashing(EyeShape leftShape, u16 leftOnPeriod_ms, u16 leftOffPeriod_ms,
+                     EyeShape rightShape, u16 rightOnPeriod_ms, u16 rightOffPeriod_ms)
+  {
+    
+    _leftEye.flashSettings.shape = leftShape;
+    _leftEye.flashSettings.timings[0] = leftOffPeriod_ms;
+    _leftEye.flashSettings.timings[1] = leftOnPeriod_ms;
+    
+    _rightEye.flashSettings.shape = rightShape;
+    _rightEye.flashSettings.timings[0] = rightOffPeriod_ms;
+    _rightEye.flashSettings.timings[1] = rightOnPeriod_ms;
+    
+    _eyeAnimMode = FLASH;
+  }
+
   
   void StopAnimating()
   {
@@ -153,12 +188,42 @@ namespace EyeController {
         BlinkHelper(_rightEye, currentTime);
         break;
       }
+      case FLASH:
+      {
+        FlashHelper(_leftEye, currentTime);
+        FlashHelper(_rightEye, currentTime);
+        break;
+      }
+        
+      // TODO: Implement other modes
+        
     } // switch(_eyeAnimMode)
 
     return RESULT_OK;
     
   } // Update()
   
+  
+#if 0
+#pragma mark ---- Static Helpers ----
+#endif
+  
+  void StartBlinkingHelper(Eye& eye, TimeStamp_t currentTime,
+                                  u16 onPeriod_ms, u16 offPeriod_ms)
+  {
+    if(eye.color == LED_OFF) {
+      AnkiWarn("EyeController.StartBlinkingHelper.NoEyeColor",
+               "Eye is currently off: blinking will not have any effect.\n");
+    }
+    
+    eye.nextSwitchTime = currentTime;
+    eye.blinkTimings[0] = onPeriod_ms;
+    eye.blinkTimings[1] = offPeriod_ms/3;
+    eye.blinkTimings[2] = eye.blinkTimings[1];
+    eye.blinkTimings[3] = eye.blinkTimings[1];
+    eye.animIndex = 2;
+    
+  } // StartBlinkingHelper()
   
   
   void SetEyeShapeHelper(Eye& eye, EyeShape shape)
@@ -295,6 +360,26 @@ namespace EyeController {
     }
   } // BlinkHelper()
   
+  
+  void FlashHelper(Eye& eye, TimeStamp_t currentTime)
+  {
+    if(currentTime > eye.nextSwitchTime) {
+      ++eye.animIndex;
+      if(eye.animIndex == 2) {
+        eye.animIndex = 0;
+      }
+      
+      if(eye.animIndex == 0) {
+        // Off state
+        SetEyeShapeHelper(eye, EYE_CLOSED);
+      } else if(eye.animIndex == 1) {
+        // On state
+        SetEyeShapeHelper(eye, eye.flashSettings.shape);
+      }
+      
+      eye.nextSwitchTime = currentTime + eye.flashSettings.timings[eye.animIndex];
+    }
+  }
   
 } // namespace EyeController
 } // namespace Cozmo

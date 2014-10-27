@@ -187,6 +187,74 @@ namespace Cozmo {
     }
   } // GetTransitionType()
   
+  
+  static EyeShape GetEyeShape(const Json::Value& json)
+  {
+    static const std::map<std::string, EyeShape> LUT = {
+      {"CURRENT_SHAPE",   EYE_CURRENT_SHAPE},
+      {"OPEN",            EYE_OPEN},
+      {"HALF",            EYE_HALF},
+      {"SLIT",            EYE_SLIT},
+      {"CLOSED",          EYE_CLOSED},
+      {"OFF_PUPIL_UP",    EYE_OFF_PUPIL_UP},
+      {"OFF_PUPIL_DOWN",  EYE_OFF_PUPIL_DOWN},
+      {"OFF_PUPIL_LEFT",  EYE_OFF_PUPIL_LEFT},
+      {"OFF_PUPIL_RIGHT", EYE_OFF_PUPIL_RIGHT},
+      {"ON_PUPIL_UP",     EYE_ON_PUPIL_UP},
+      {"ON_PUPIL_DOWN",   EYE_ON_PUPIL_DOWN},
+      {"ON_PUPIL_LEFT",   EYE_ON_PUPIL_LEFT},
+      {"ON_PUPIL_RIGHT",  EYE_ON_PUPIL_RIGHT}
+    };
+    
+    const EyeShape DEFAULT = EYE_CURRENT_SHAPE;
+    
+    if(json.isString()) {
+      auto result = LUT.find(json.asString());
+      if(result == LUT.end()) {
+        PRINT_NAMED_WARNING("GetEyeShape", "Unknown eye shape '%s', returning default.\n",
+                            json.asString().c_str());
+        return DEFAULT;
+      } else {
+        return result->second;
+      }
+    } else if(json.isIntegral()) {
+      return static_cast<EyeShape>(json.asInt());
+    } else {
+      PRINT_NAMED_WARNING("GetEyeShape",
+                          "Not sure how to convert stored eye shape, returning default.\n");
+      return DEFAULT;
+    }
+  } // GetEyeShape()
+  
+  
+  static WhichEye GetWhichEye(const Json::Value& json)
+  {
+    static const std::map<std::string, WhichEye> LUT = {
+      {"BOTH",   EYE_BOTH},
+      {"LEFT",   EYE_LEFT},
+      {"RIGHT",  EYE_RIGHT}
+    };
+    
+    const WhichEye DEFAULT = EYE_BOTH;
+    
+    if(json.isString()) {
+      auto result = LUT.find(json.asString());
+      if(result == LUT.end()) {
+        PRINT_NAMED_WARNING("GetWhichEye", "Unknown eye '%s', returning default.\n",
+                            json.asString().c_str());
+        return DEFAULT;
+      } else {
+        return result->second;
+      }
+    } else if(json.isIntegral()) {
+      return static_cast<WhichEye>(json.asInt());
+    } else {
+      PRINT_NAMED_WARNING("GetWhichEye",
+                          "Not sure how to convert stored eye, returning default.\n");
+      return DEFAULT;
+    }
+  } // GetEyeShape()
+  
 
   Result CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot)
   {
@@ -237,6 +305,14 @@ namespace Cozmo {
         // Convert sound name (if specified) to SoundID (robot doesn't use strings):
         if(jsonFrame.isMember("soundID")) {
           jsonFrame["soundID"] = SoundManager::GetID(jsonFrame["soundID"].asString());
+        }
+        
+        // Convert eye shape/whichEye to enums:
+        if(jsonFrame.isMember("whichEye")) {
+          jsonFrame["whichEye"] = GetWhichEye(jsonFrame["whichEye"]);
+        }
+        if(jsonFrame.isMember("shape")) {
+          jsonFrame["shape"] = GetEyeShape(jsonFrame["shape"]);
         }
         
         Message* kfMessage = Message::CreateFromJson(jsonRoot[animationName][iFrame]); 

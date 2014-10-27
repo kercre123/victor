@@ -129,11 +129,11 @@ Block1x1 {
   markerImg "symbols/arrow.png"
 }
 Block1x1 {
-  name "Arrow4"
+  name "Star"
   translation 0 -0.26 0.0219929
   rotation 0 0 1 0.05
   blockColor 0.5 0.5 0.85
-  markerImg "symbols/arrow.png"
+  markerImg "symbols/star5.png"
 }
 Block1x1 {
   name "TurnAround"
