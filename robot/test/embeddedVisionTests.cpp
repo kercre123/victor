@@ -257,7 +257,9 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
   const s32 minHeight = 30;
   const s32 minWidth = 30;
 
-  cv::namedWindow("video", 1);
+  cv::CascadeClassifier eyeCascade;
+  /*ASSERT_TRUE(eyeCascade.load("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml"));*/
+  ASSERT_TRUE(eyeCascade.load("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_eye.xml"));
 
   cv::VideoCapture cap(0);
   while ( cap.isOpened() ) {
@@ -296,8 +298,30 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
 
     if(detectedFaces.get_size() > 0) {
       for( s32 i = 0; i < detectedFaces.get_size(); i++ ) {
+        // Detect Eyes
+        cv::Rect faceCv(detectedFaces[i].left, detectedFaces[i].top, detectedFaces[i].get_width(), detectedFaces[i].get_height());
+        cv::Mat faceROI = cvImage(faceCv);
+        std::vector<cv::Rect> eyes;
+        eyeCascade.detectMultiScale(faceROI, eyes, 1.1, 3, 0, cv::Size(), cv::Size(detectedFaces[i].get_width()/3, detectedFaces[i].get_height()/3));
+
+        //cv::imshow("faceROI", faceROI);
+
+        // Rotate and scale
+
+        // Mask out
+
+        // Predict the label
+
         cv::Point center( Round<s32>((detectedFaces[i].left + detectedFaces[i].right)*0.5), Round<s32>((detectedFaces[i].top + detectedFaces[i].bottom)*0.5) );
         cv::ellipse( arrayCopy, center, cv::Size( Round<s32>((detectedFaces[i].right-detectedFaces[i].left)*0.5), Round<s32>((detectedFaces[i].bottom-detectedFaces[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
+
+        for(s32 iEye=0; iEye<eyes.size(); iEye++) {
+          printf("eye (%d,%d) %d %d\n", eyes[iEye].x, eyes[iEye].y, eyes[iEye].width, eyes[iEye].height);
+          cv::Rect shiftedRect(detectedFaces[i].left + eyes[iEye].x, detectedFaces[i].top + eyes[iEye].y, eyes[iEye].width, eyes[iEye].height);
+
+          cv::rectangle(arrayCopy, shiftedRect, cv::Scalar(255,255,255), 3);
+          //cv::ellipse( arrayCopy, cv::Point(shiftedRect.x + shiftedRect.width/2, shiftedRect.y + shiftedRect.height/2), cv::Scalar(196,0,0));
+        }
 
         Array<u8> clippedImage(detectedFaces[0].get_height()+1, detectedFaces[0].get_width()+1, scratchHuge);
         clippedImage(0,-1,0,-1).Set(image(detectedFaces[0].top, detectedFaces[0].bottom, detectedFaces[0].left, detectedFaces[0].right));
