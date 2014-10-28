@@ -40,6 +40,8 @@ namespace EyeController {
   void StartFlashing(EyeShape leftShape, u16 leftOnPeriod_ms, u16 leftOffPeriod_ms,
                      EyeShape rightShape, u16 rightOnPeriod_ms, u16 rightOffPeriod_ms);
   
+  void StartSpinning(u16 period_ms, bool leftClockWise, bool rightClockWise);
+  
   // Stop blinking, cycling, etc, the eyes and leave the eyes in whatever
   // state (shape/color) they were in
   void StopAnimating();

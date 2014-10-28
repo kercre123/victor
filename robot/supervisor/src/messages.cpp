@@ -671,6 +671,18 @@ namespace Anki {
         AddKeyFrameHelper(msg, kf);
       }
       
+      void ProcessAddAnimKeyFrame_StartSpinningEyesMessage(const AddAnimKeyFrame_StartSpinningEyes& msg)
+      {
+        KeyFrame kf;
+        kf.type = KeyFrame::SPIN_EYES;
+        kf.SpinEyes.color          = GetU32ColorFromRGB(msg.color);
+        kf.SpinEyes.period_ms      = msg.period_ms;
+        kf.SpinEyes.leftClockwise  = msg.leftClockwise;
+        kf.SpinEyes.rightClockWise = msg.rightClockwise;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
 // ----------- Send messages -----------------
       
       

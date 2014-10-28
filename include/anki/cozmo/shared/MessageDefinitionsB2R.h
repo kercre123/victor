@@ -358,34 +358,46 @@ START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartBlinking, 2)
 ADD_MESSAGE_MEMBER(u16, onPeriod_ms)
 ADD_MESSAGE_MEMBER(u16, offPeriod_ms)
 ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
 ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartBlinking)
 
 // AddAnimKeyFrame_SetEyeShapeAndColor
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetEyeShapeAndColor, 2)
 ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
 ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 ADD_MESSAGE_MEMBER(u8,  shape)
 ADD_MESSAGE_MEMBER(u8,  whichEye)  // See WhichEye enum
-ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetEyeShapeAndColor)
 
-// AddAnimKeyFrame_StartFlashing
+// AddAnimKeyFrame_StartFlashingEyes
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartFlashingEyes, 2)
 ADD_MESSAGE_MEMBER(u16, onPeriod_ms)
 ADD_MESSAGE_MEMBER(u16, offPeriod_ms)
 ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
 ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 ADD_MESSAGE_MEMBER(u8,  shape)
-ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartFlashingEyes)
+
+// AddAnimKeyFrame_StartSpinningEyes
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartSpinningEyes, 2)
+ADD_MESSAGE_MEMBER(u16, period_ms)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+ADD_MESSAGE_MEMBER(u8,  leftClockwise)    // TODO: Could combine the two clockwise flags into one u8
+ADD_MESSAGE_MEMBER(u8,  rightClockwise)   //         "
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartSpinningEyes)
 
 // IMURequest
 START_MESSAGE_DEFINITION(IMURequest, 1)

@@ -136,6 +136,15 @@ namespace Cozmo {
         break;
       }
         
+      case KeyFrame::SPIN_EYES:
+      {
+        EyeController::SetEyeColor(SpinEyes.color);
+        EyeController::StartSpinning(SpinEyes.period_ms,
+                                     SpinEyes.leftClockwise,
+                                     SpinEyes.rightClockWise);
+        break;
+      }
+        
       default:
       {
         // Do nothing if no TransitionOutOf behavior defined for this type

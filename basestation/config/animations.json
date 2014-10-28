@@ -402,7 +402,19 @@
       "transitionOut"   : "INSTANT",
       "soundID"         : "HELPME", 
       "numLoops"        : 1
+    },
+    { 
+      "Name" : "MessageAddAnimKeyFrame_StartSpinningEyes", 
+      "relTime_ms"      : 0,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
+      "color"           : [255, 32, 0],
+      "leftClockwise"   : 0,
+      "rightClockwise"  : 1, 
+      "period_ms"       : 350
     }
+    
+    
   ]
     
 } 

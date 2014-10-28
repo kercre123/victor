@@ -40,6 +40,7 @@ struct KeyFrame
     PLAY_SOUND,
     BLINK_EYES,
     FLASH_EYES,
+    SPIN_EYES,
     SET_EYE,
     SET_LED_COLORS,
     START_LIFT_NOD,
@@ -160,6 +161,12 @@ struct KeyFrame
     u32      color;
   };
   
+  struct SpinEyes_t {
+    u16 period_ms;
+    u32 color;
+    u8  leftClockwise;
+    u8  rightClockWise;
+  };
   
   // Set the color for all LEDs individually
   struct SetLEDcolors_t {
@@ -202,6 +209,7 @@ struct KeyFrame
     SetEye_t           SetEye;
     SetLEDcolors_t     SetLEDcolors;
     FlashEyes_t        FlashEyes;
+    SpinEyes_t         SpinEyes;
     
   }; // union of structs
   
