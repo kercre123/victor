@@ -35,7 +35,34 @@ namespace Anki {
       float maxSpeed, float accel,
       float endVel, float endPos,
       float timeStep);
+    
+    /*
+    bool StartProfile_fixedDuration(float startPos, float startVel, float startAccel,
+                                    float endPos, float endVel, float endAccel,
+                                    float duration,
+                                    float timeStep);
+     */
 
+    // Starts a velocity profile with the given parameters.
+    // Assumes end velocity of 0.
+    //
+    //          pos_start: Starting position
+    //            pos_vel: Starting velocity
+    // acc_start_duration: Initial time period during which we accelerate to some velocity (i.e. vel_mid)
+    //            pos_end: End position
+    //   acc_end_duration: Final time period following the period in which we're coasting at vel_mid to approach a final speed of 0.
+    //            vel_max: Max velocity permitted. Fails if any velocity in the profile exceeds this amount.
+    //            acc_max: Max acceleration permitted. Fails if any acceleration in the profile exceeds this amount.
+    //           duration: Time period that the entire traversal from pos_start to pos_end should take.
+    //           timeStep: Time resolution at which subsequent calls to Step() will compute position and velocity.
+    bool StartProfile_fixedDuration(float pos_start, float vel_start, float acc_start_duration,
+                                    float pos_end, float acc_end_duration,
+                                    float vel_max,
+                                    float acc_max,
+                                    float duration,
+                                    float timeStep);
+
+    
     // Returns the current time.
     // currVel: Current velocity
     // currPos: Current position
@@ -43,6 +70,10 @@ namespace Anki {
     // TODO: Assuming that timestep is small enough that we don't need to care about
     //       changing speed in the middle of a timestep.
     float Step(float &currVel, float &currPos);
+
+    void DumpProfileToFile(const char* filename);
+
+    bool TargetReached();
 
   private:
     // Profile parameters
@@ -55,7 +86,8 @@ namespace Anki {
     float timeStep_;
 
     // Change in velocity per time stemp
-    float deltaVelPerTimeStep_;
+    float deltaVelPerTimeStepStart_;
+    float deltaVelPerTimeStepEnd_;
 
     // Current time in the profile
     float currTime_;
@@ -68,11 +100,7 @@ namespace Anki {
 
     // Max reachable speed (which may not be as high as the desired maxSpeed)
     float maxReachableVel_;
-
-    // +1 if approaches maxReachableVel_ from -ve side
-    // -1 if approaches maxReachableVel_ from +ve side
-    float direction_;
-
+    
     // Whether or not it's decelerating to endVel_
     bool isDecel_;
 
@@ -80,10 +108,10 @@ namespace Anki {
     bool targetReached_;
 
     // Current velocity
-    float currVel_;
+    double currVel_;
 
     // Current position
-    float currPos_;
+    double currPos_;
   };
 } // namespace Anki
 
