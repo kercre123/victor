@@ -4,7 +4,7 @@
  * Author: Kevin Yoon
  * Date:   6/18/2014
  *
- * Description: Simple sound player, that only works on mac.
+ * Description: Simple sound player, that only plays one sound at a time and only works on mac.
  *
  * Copyright: Anki, Inc. 2014
  **/
@@ -18,8 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-
-#define MAX_SOUND_THREADS 4
+#include <unistd.h>
 
 
 namespace Anki {
@@ -27,7 +26,10 @@ namespace Anki {
     
     namespace {
       
-      int _numActiveThreads;
+      bool _running;
+      bool _stopCurrSound;
+      int _soundToPlay;
+      
       
       bool _hasCmdProcessor;
       bool _hasRootDir;
@@ -78,6 +80,43 @@ namespace Anki {
       
     }
     
+    
+    void CmdLinePlay(SoundID_t id)
+    {
+      if( !_soundTable[_currScheme].at(id).empty() ) {
+        char fullCmd[512];
+        
+        // Kill whichever sound might currently be playing
+        system("pkill -f afplay");
+        
+        // Play the commanded sound
+        sprintf(fullCmd, "afplay %s/%s &", _rootDir, _soundTable[_currScheme].at(id).c_str());
+        printf("CmdPlay %d\n", id);
+        system(fullCmd);
+      }
+    }
+
+    
+    void CmdLinePlayFeeder()
+    {
+      PRINT_INFO("Started Sound Feeder thread...\n");
+      while (_running) {
+        usleep(10000);
+
+        if (_stopCurrSound) {
+          system("pkill -f afplay");
+          _stopCurrSound = false;
+        } else if (_soundToPlay >= 0) {
+          // Start sound thread
+          SoundID_t id = (SoundID_t)_soundToPlay;
+          _soundToPlay = -1;
+          std::thread soundThread(CmdLinePlay, id);
+          soundThread.detach();
+        }
+      }
+      PRINT_INFO("Terminated Sound Feeder thread\n");
+    }
+    
     SoundManager* SoundManager::singletonInstance_ = nullptr;
     
     void SoundManager::removeInstance()
@@ -91,9 +130,14 @@ namespace Anki {
     
     SoundManager::SoundManager()
     {
-      _numActiveThreads = 0;
       _hasCmdProcessor = false;
       _hasRootDir = false;
+      
+      _stopCurrSound = false;
+      _running = true;
+      std::thread soundFeederThread(CmdLinePlayFeeder);
+      soundFeederThread.detach();
+              usleep(100000);
       
       if (system(NULL)) {
         _hasCmdProcessor = true;
@@ -103,16 +147,11 @@ namespace Anki {
       }
     }
 
-    void CmdLinePlay(SoundID_t id)
+    SoundManager::~SoundManager()
     {
-      if( !_soundTable[_currScheme].at(id).empty() ) {
-        char fullCmd[512];
-        sprintf(fullCmd, "afplay %s/%s", _rootDir, _soundTable[_currScheme].at(id).c_str());
-        system(fullCmd);
-      }
-      --_numActiveThreads;
+      _running = false;
     }
-
+    
     
     bool SoundManager::SetRootDir(const char* dir)
     {
@@ -138,14 +177,16 @@ namespace Anki {
     bool SoundManager::Play(const SoundID_t id)
     {
       if (_hasCmdProcessor && _hasRootDir && id < NUM_SOUNDS) {
-        if (_numActiveThreads < MAX_SOUND_THREADS) {
-          ++_numActiveThreads;
-          std::thread soundThread(CmdLinePlay, id);
-          soundThread.detach();
-          return true;
-        }
+        _soundToPlay = id;
+        return true;
       }
       return false;
+    }
+
+    void SoundManager::Stop()
+    {
+      _soundToPlay = -1;
+      _stopCurrSound = true;
     }
     
     void SoundManager::SetScheme(const SoundSchemeID_t scheme)
