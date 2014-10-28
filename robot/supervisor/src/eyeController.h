@@ -32,9 +32,11 @@ namespace EyeController {
   void SetEyeShape(EyeShape shape);
   void SetEyeShape(EyeShape leftShape, EyeShape rightShape);
 
-  void StartBlinking(u16 onPeriod_ms, u16 offPeriod_ms);
+  // Start blinking animation. If toMiddle=false, then blink goes to bottom
+  void StartBlinking(u16 onPeriod_ms, u16 offPeriod_ms, bool toMiddle = true);
   void StartBlinking(u16 leftOnPeriod_ms,  u16 leftOffPeriod_ms,
-                     u16 rightOnPeriod_ms, u16 rightOffPeriod_ms);
+                     u16 rightOnPeriod_ms, u16 rightOffPeriod_ms,
+                     bool toMiddle = true);
 
   void StartFlashing(EyeShape shape, u16 onPeriod_ms, u16 offPeriod_ms);
   void StartFlashing(EyeShape leftShape, u16 leftOnPeriod_ms, u16 leftOffPeriod_ms,
