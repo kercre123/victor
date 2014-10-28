@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define DEBUG_SOUND_MANAGER 0
 
 namespace Anki {
   namespace Cozmo {
@@ -47,14 +48,18 @@ namespace Anki {
         fullCmd += " &";
         
         // Play the commanded sound
+#       if DEBUG_SOUND_MANAGER
         printf("CmdPlay %s [%d loop(s)]\n", soundFile.c_str(), numLoops);
+#       endif
         system(fullCmd.c_str());
 
       } // CmdLinePlay()
       
       inline void KillPlayingSounds()
       {
-        //printf("Killing afplay threads\n");
+#       if DEBUG_SOUND_MANAGER
+        printf("Killing afplay threads\n");
+#       endif
         system("pkill -f afplay");
       }
       
