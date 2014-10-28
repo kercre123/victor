@@ -292,6 +292,8 @@ namespace Cozmo {
         return LIGHTS;
         
       case KeyFrame::PLAY_SOUND:
+      case KeyFrame::WAIT_FOR_SOUND:
+      case KeyFrame::STOP_SOUND:
         return SOUND;
         
       default:

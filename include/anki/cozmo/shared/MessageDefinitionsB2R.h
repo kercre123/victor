@@ -353,6 +353,22 @@ ADD_MESSAGE_MEMBER(u8,  animationID)
 ADD_MESSAGE_MEMBER(u8,  numLoops)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_PlaySound)
 
+// AddAnimKeyFrame_WaitForSound
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_WaitForSound, 2)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_WaitForSound)
+
+// AddAnimKeyFrame_StopSound
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_StopSound, 2)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopSound)
+
 // AddAnimKeyFrame_StartBlinking
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartBlinking, 2)
 ADD_MESSAGE_MEMBER(u16, onPeriod_ms)

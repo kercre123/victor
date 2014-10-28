@@ -476,6 +476,12 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageStopSoundOnBaseStation const& msg)
+    {
+      SoundManager::getInstance()->Stop();
+      return RESULT_OK;
+    }
+    
     
   } // namespace Cozmo
 } // namespace Anki

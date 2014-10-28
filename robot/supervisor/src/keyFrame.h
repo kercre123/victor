@@ -38,6 +38,8 @@ struct KeyFrame
     START_WIGGLE,
     POINT_TURN,
     PLAY_SOUND,
+    WAIT_FOR_SOUND, // basically a no-op to allow sound to finish if no other keyframes
+    STOP_SOUND,
     BLINK_EYES,
     FLASH_EYES,
     SPIN_EYES,

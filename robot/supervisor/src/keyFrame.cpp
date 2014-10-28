@@ -94,6 +94,13 @@ namespace Cozmo {
         break;
       }
         
+      case KeyFrame::STOP_SOUND:
+      {
+        Messages::StopSoundOnBaseStation msg;
+        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::StopSoundOnBaseStation), &msg);
+        break;
+      }
+        
       case KeyFrame::BLINK_EYES:
       {
         EyeController::SetEyeColor(BlinkEyes.color);

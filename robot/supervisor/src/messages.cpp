@@ -635,6 +635,24 @@ namespace Anki {
         AddKeyFrameHelper(msg, kf);
       }
       
+      void ProcessAddAnimKeyFrame_WaitForSoundMessage(const AddAnimKeyFrame_WaitForSound& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::WAIT_FOR_SOUND;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_StopSoundMessage(const AddAnimKeyFrame_StopSound& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::STOP_SOUND;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
       void ProcessAddAnimKeyFrame_SetEyeShapeAndColorMessage(const AddAnimKeyFrame_SetEyeShapeAndColor& msg)
       {
         KeyFrame kf;

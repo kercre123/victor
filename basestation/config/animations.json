@@ -309,6 +309,12 @@
       "transitionOut"   : "INSTANT",
       "soundID"         : "SINGING", 
       "numLoops"        : 1
+    }, 
+    { 
+      "Name" : "MessageAddAnimKeyFrame_WaitForSound", 
+      "relTime_ms"      : 3800,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT"
     }
   ],
   
