@@ -108,7 +108,7 @@ namespace Anki
       //
       // WARNING:
       // This should be kept explicit, to prevent accidental casting between different datatypes.
-      template<typename InType> s32 SetCast(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true);
+      template<typename InType> s32 SetCast(const ConstArraySliceExpression<Type> &input, bool automaticTranspose);
       //template<typename InType> s32 SetCast(const InType * const values, const s32 numValues); // TODO: implement
 
       // Get the raw Array from the Slice. This is mainly useful for interfacing with functions that

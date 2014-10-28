@@ -11,8 +11,10 @@
  **/
 
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/shared/radians.h"
+#include "anki/common/shared/utilities_shared.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "json/json.h"
 #include <fstream>
@@ -140,7 +142,6 @@ SuccessorIterator::SuccessorIterator(const xythetaEnvironment* env, StateID star
     startG_(startG),
     nextAction_(0)
 {
-  // TEMP: 
   assert(start_.theta == xythetaEnvironment::GetThetaFromStateID(startID));
 }
 
@@ -167,14 +168,34 @@ Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, b
   Cost penalty = 0.0;
 
   if(checkCollisions) {
-    size_t endObs = obstacles_.size();
+    // size_t endObs = obstacles_.size();
+    // size_t endPoints = prim->intermediatePositions.size();
+    // for(size_t point=0; point < endPoints; ++point) {
+    //   for(size_t obs=0; obs < endObs; ++obs) {
+    //     float x = start_x + prim->intermediatePositions[point].position.x_mm;
+    //     float y = start_y + prim->intermediatePositions[point].position.y_mm;
+    //     if(obstacles_[obs].first.Contains(x, y)) {
+    //       penalty += obstacles_[obs].second;
+    //       if( penalty >= MAX_OBSTACLE_COST) {
+    //         return penalty;
+    //       }
+    //     }
+    //   }
+    // }
+
     size_t endPoints = prim->intermediatePositions.size();
+
     for(size_t point=0; point < endPoints; ++point) {
-      for(size_t obs=0; obs < endObs; ++obs) {
-        float x = start_x + prim->intermediatePositions[point].position.x_mm;
-        float y = start_y + prim->intermediatePositions[point].position.y_mm;
-        if(obstacles_[obs].first.Contains(x, y)) {
-          penalty += obstacles_[obs].second;
+      StateTheta angle = prim->intermediatePositions[point].nearestTheta;
+      size_t endObs = obstaclesPerAngle_[angle].size();
+
+      for(size_t obs = 0; obs < endObs; ++obs) {
+
+        if(obstaclesPerAngle_[angle][obs].first.Contains(
+             start_x + prim->intermediatePositions[point].position.x_mm,
+             start_y + prim->intermediatePositions[point].position.y_mm ) ) {
+
+          penalty += obstaclesPerAngle_[angle][obs].second;
           if( penalty >= MAX_OBSTACLE_COST) {
             return penalty;
           }
@@ -271,6 +292,15 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
   return true;
 }
 
+void xythetaEnvironment::PrepareForPlanning()
+{
+  for(size_t angle = 0; angle < numAngles_; ++angle) {
+    for( auto& obstaclePair : obstaclesPerAngle_[angle] ) {
+      obstaclePair.first.SortEdgeVectors();
+    }
+  }
+}
+
 const MotionPrimitive& xythetaEnvironment::GetRawMotionPrimitive(StateTheta theta, ActionID action) const
 {
   return allMotionPrimitives_[theta][action];
@@ -283,7 +313,6 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
     const MotionPrimitive* prim = &env.allMotionPrimitives_[start_.theta][nextAction_];
 
     // collision checking
-    size_t endObs = env.obstacles_.size();
     long endPoints = prim->intermediatePositions.size();
     bool collision = false; // fatal collision
 
@@ -291,29 +320,25 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
 
     Cost penalty = 0.0f;
 
-    for(size_t obsIdx=0; obsIdx<endObs && !collision; ++obsIdx) {
-      for(long pointIdx = endPoints-1; pointIdx >= 0; --pointIdx) {
-        float x,y;
-        x = start_c_.x_mm + prim->intermediatePositions[pointIdx].position.x_mm;
-        y = start_c_.y_mm + prim->intermediatePositions[pointIdx].position.y_mm;
+    for(long pointIdx = endPoints-1; pointIdx >= 0; --pointIdx) {
 
-        // TODO:(bn) re-write Contains to take a matrix of points to
-        // check? Store intermediate points in a matrix?
-        if(env.obstacles_[obsIdx].first.Contains(x, y)) {
-          if(env.obstacles_[obsIdx].second >= MAX_OBSTACLE_COST) {
+      StateTheta angle = prim->intermediatePositions[pointIdx].nearestTheta;
+      size_t endObs = env.obstaclesPerAngle_[angle].size();
+
+      for(size_t obsIdx=0; obsIdx<endObs && !collision; ++obsIdx) {
+
+        if( env.obstaclesPerAngle_[angle][obsIdx].first.Contains(
+              start_c_.x_mm + prim->intermediatePositions[pointIdx].position.x_mm,
+              start_c_.y_mm + prim->intermediatePositions[pointIdx].position.y_mm ) ) {
+
+          if(env.obstaclesPerAngle_[angle][obsIdx].second >= MAX_OBSTACLE_COST) {
             collision = true;
             break;
           }
           else {
             // apply soft penalty, but allow the action
 
-            // TODO:(bn) this adds cost per sample, but it should probably be per time
-            // TODO:(bn) should be per unit length (or time), not per sample
-
-            // TEMP: add a length to each intermediate positions that
-            // tells you how far its been since the last one, and
-            // multiple oneOverLengh by the obstacle penalty here
-            penalty += env.obstacles_[obsIdx].second *
+            penalty += env.obstaclesPerAngle_[angle][obsIdx].second *
               prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition;
 
             assert(!isinf(penalty));
@@ -358,9 +383,12 @@ bool xythetaEnvironment::IsInCollision(State s) const
 
 bool xythetaEnvironment::IsInCollision(State_c c) const
 {  
-  size_t endObs = obstacles_.size();
+  StateTheta angle = GetTheta(c.theta);
+  size_t endObs = obstaclesPerAngle_[angle].size();
+
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstacles_[obsIdx].first.Contains(c.x_mm, c.y_mm) && obstacles_[obsIdx].second >= MAX_OBSTACLE_COST)
+    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( c.x_mm, c.y_mm ) &&
+       obstaclesPerAngle_[angle][obsIdx].second >= MAX_OBSTACLE_COST)
       return true;
   }
   return false;
@@ -368,9 +396,11 @@ bool xythetaEnvironment::IsInCollision(State_c c) const
 
 bool xythetaEnvironment::IsInSoftCollision(State s) const
 {
-  size_t endObs = obstacles_.size();
+  StateTheta angle = s.theta;
+  size_t endObs = obstaclesPerAngle_[angle].size();
+
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstacles_[obsIdx].first.Contains(GetX_mm(s.x), GetY_mm(s.y)))
+    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( GetX_mm(s.x), GetY_mm(s.y) ))
       return true;
   }
   return false;
@@ -378,12 +408,14 @@ bool xythetaEnvironment::IsInSoftCollision(State s) const
 
 Cost xythetaEnvironment::GetCollisionPenalty(State s) const
 {
-  size_t endObs = obstacles_.size();
+  StateTheta angle = s.theta;
+  size_t endObs = obstaclesPerAngle_[angle].size();
+
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstacles_[obsIdx].first.Contains(GetX_mm(s.x), GetY_mm(s.y)))
-      return obstacles_[obsIdx].second;
+    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( GetX_mm(s.x), GetY_mm(s.y) ))
+      return obstaclesPerAngle_[angle][obsIdx].second;
   }
-  return 0.0f;
+  return 0.0;
 }
 
 void xythetaPlan::Append(const xythetaPlan& other)
@@ -427,6 +459,8 @@ xythetaEnvironment::~xythetaEnvironment()
 xythetaEnvironment::xythetaEnvironment()
 {
   numAngles_ = 1<<THETA_BITS;
+  obstaclesPerAngle_.resize(numAngles_);
+
   radiansPerAngle_ = 2*M_PI/numAngles_;
   oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
   // TODO:(bn) params!
@@ -454,7 +488,7 @@ bool xythetaEnvironment::Init(const Json::Value& mprimJson)
 
 size_t xythetaEnvironment::GetNumObstacles() const
 {
-  return obstacles_.size();
+  return obstaclesPerAngle_[0].size();
 }
 
 bool xythetaEnvironment::Init(const char* mprimFilename, const char* mapFile)
@@ -471,6 +505,8 @@ bool xythetaEnvironment::Init(const char* mprimFilename, const char* mapFile)
     }
 
     numAngles_ = 1<<THETA_BITS;
+    obstaclesPerAngle_.resize(numAngles_);
+
     radiansPerAngle_ = 2*M_PI/numAngles_;
     oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
   }
@@ -562,17 +598,155 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config)
 
 void xythetaEnvironment::AddObstacle(const Quad2f& quad, Cost cost)
 {
-  obstacles_.emplace_back(std::make_pair(RotatedRectangle{quad}, cost));
+  // for legacy purposes, add this to every single angle!
+  Poly2f poly;
+  poly.ImportQuad2d(quad);
+  FastPolygon fastPoly(poly);
+
+  for(size_t i=0; i<numAngles_; ++i) {
+    obstaclesPerAngle_[i].push_back( std::make_pair( fastPoly, cost ) );
+  }
 }
   
 void xythetaEnvironment::AddObstacle(const RotatedRectangle& rect, Cost cost)
 {
-  obstacles_.emplace_back(std::make_pair(rect, cost));
+  Poly2f poly(rect);
+  FastPolygon fastPoly(poly);
+
+  for(size_t i=0; i<numAngles_; ++i) {
+    obstaclesPerAngle_[i].push_back( std::make_pair( fastPoly, cost ) );
+  }
 }
 
 void xythetaEnvironment::ClearObstacles()
 {
-  obstacles_.clear();
+  for(size_t i=0; i<numAngles_; ++i) {
+    obstaclesPerAngle_[i].clear();
+  }
+}
+
+FastPolygon xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
+                                             const Poly2f& robot)
+{
+  // TODO:(bn) don't copy polygon into vector
+
+  assert(obstacle.size() > 0);
+  assert(robot.size() > 0);
+
+  // CoreTechPrint("obstacle: ");
+  // obstacle.Print();
+
+  // CoreTechPrint("robot: ");
+  // robot.Print();
+
+  // This algorithm is a Minkowski difference. It requires both
+  // obstacle and robot to be convex complete polygons in clockwise
+  // order. You can also see a python implementation with plotting and
+  // such in coretech/planning/matlab/minkowski.py
+
+
+  float startingAngle = obstacle.GetEdgeAngle(0);
+
+  // compute the starting point for each polygon
+  size_t obstacleStart = 0;
+  size_t robotStart = 0;
+
+  size_t robotSize = robot.size();
+  
+  float minDist = FLT_MAX;
+  for(size_t i = 0; i < robotSize; ++i) {
+    // note that we are "adding" the "negative" robot, so we will
+    // consider robot angles to be +pi (opposite)
+    Radians angle(robot.GetEdgeAngle(i) + M_PI);
+    float dist = angle.angularDistance(startingAngle, false);
+    if(dist < minDist) {
+      minDist = dist;
+      robotStart = i;
+    }
+  }
+
+  // CoreTechPrint("Robot start %d\n", robotStart);
+
+  // now find the starting point where we will anchor the
+  // expansion. Remember the robot is centered at (0,0)
+  Point2f curr = obstacle[0] - robot[robotStart];
+
+  // now merge based on angle
+  Poly2f expansion;
+
+  expansion.push_back(curr);
+
+  size_t robotIdx = robotStart;
+  size_t robotNum = 0; // number of points added from the robot
+  size_t obstacleIdx = 0;
+  size_t obstacleSize = obstacle.size();
+
+
+  while( obstacleIdx < obstacleSize && robotNum < robotSize ) {
+    Radians robotAngle(robot.GetEdgeAngle(robotIdx) + M_PI);
+    float robotDiff = robotAngle.angularDistance(startingAngle, false);
+
+    Radians obstacleAngle(obstacle.GetEdgeAngle(obstacleIdx));
+    float obstacleDiff = obstacleAngle.angularDistance(startingAngle, false);
+
+    if( obstacleDiff < robotDiff ) {
+      Point2f edge = obstacle.GetEdgeVector(obstacleIdx);
+      curr += edge;
+      expansion.push_back( curr );
+      obstacleIdx++;
+    }
+    else {
+      Point2f edge = robot.GetEdgeVector(robotIdx);
+      curr -= edge;
+      expansion.push_back( curr );
+      robotNum++;
+      robotIdx = (robotIdx + 1) % robotSize;
+    }
+  }
+
+  while( obstacleIdx < obstacleSize ) {
+    Point2f edge = obstacle.GetEdgeVector(obstacleIdx);
+    curr += edge;
+    expansion.push_back( curr );
+    obstacleIdx++;
+  }
+
+  while( robotNum < robotSize ) {
+    Point2f edge = robot.GetEdgeVector(robotIdx);
+    curr -= edge;
+    expansion.push_back( curr );
+    robotNum++;
+    robotIdx = (robotIdx + 1) % robotSize;
+  }
+
+  // the last entry is redundant, so remove it
+  // TODO:(bn) don't add it?
+  expansion.pop_back();
+
+  // CoreTechPrint("c-space obstacle: ");
+  // expansion.Print();
+
+  return FastPolygon{ expansion };
+}
+
+
+const FastPolygon& xythetaEnvironment::AddObstacleWithExpansion(const Poly2f& obstacle,
+                                                                const Poly2f& robot,
+                                                                StateTheta theta,
+                                                                Cost cost)
+{
+  if(theta >= obstaclesPerAngle_.size()) {
+    CoreTechPrint("ERROR: theta = %d, but only have %lu obstacle angles and %u angles total\n",
+                  theta,
+                  obstaclesPerAngle_.size(),
+                  numAngles_);
+    
+    theta = 0;
+  }
+
+  obstaclesPerAngle_[theta].emplace_back(std::make_pair(ExpandCSpace(obstacle, robot), cost));
+
+  return obstaclesPerAngle_[theta].back().first;
 }
 
 
@@ -617,7 +791,7 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
       penalty = 1.0 / cost;
     }
 
-    intermediatePositions.emplace_back(s, penalty);
+    intermediatePositions.emplace_back(s, env.GetTheta(s.theta),  penalty);
   }
 
   if(config.isMember("extra_cost_factor")) {
@@ -647,7 +821,7 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
     float signedLength = config["straight_length_mm"].asFloat();
     
-    if(abs(signedLength) > 0.001) {
+    if(std::abs(signedLength) > 0.001) {
       pathSegments_.AppendLine(0,
                                0.0,
                                0.0,
@@ -873,19 +1047,25 @@ bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
 {
   float x0,y0,x1,y1,len;
 
-  while(fscanf(fEnv, "%f %f %f %f %f", &x0, &y0, &x1, &y1, &len) == 5) {
-    obstacles_.emplace_back(std::make_pair(RotatedRectangle{x0, y0, x1, y1, len}, FATAL_OBSTACLE_COST));
-  }
+  assert(false);
+
+  // TEMP: fix this with polygons
+
+  // while(fscanf(fEnv, "%f %f %f %f %f", &x0, &y0, &x1, &y1, &len) == 5) {
+  //   obstacles_.emplace_back(std::make_pair(RotatedRectangle{x0, y0, x1, y1, len}, FATAL_OBSTACLE_COST));
+  // }
 
   return true;
 }
 
 void xythetaEnvironment::WriteEnvironment(const char *filename) const
 {
-  ofstream outfile(filename);
-  for(const auto& it : obstacles_) {
-    it.first.Dump(outfile);
-  }
+  // ofstream outfile(filename);
+  // for(const auto& it : obstacles_) {
+  //   it.first.Dump(outfile);
+  // }
+  assert(false);
+  // TEMP: fix this with polygons
 }
 
 SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG) const

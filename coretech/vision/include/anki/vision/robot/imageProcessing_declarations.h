@@ -74,6 +74,8 @@ namespace Anki
       // Should give the same results as Matlab's imresize, with 'AntiAliasing' == false
       template<typename InType, typename OutType> Result Resize(const Array<InType> &in, Array<OutType> &out);
 
+      Result DownsampleBilinear(const Array<u8> &in, Array<u8> &out, MemoryStack scratch);
+
       template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByTwo(const Array<InType> &in, Array<OutType> &out);
 
       // Downsample the image by 2^downsamplePower.

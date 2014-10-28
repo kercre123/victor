@@ -1,7 +1,9 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 
+#include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/quad.h"
+#include "anki/common/basestation/math/polygon.h"
 #include "anki/planning/shared/path.h"
 #include "json/json-forwards.h"
 #include "xythetaPlanner_definitions.h"
@@ -107,13 +109,15 @@ public:
 
 struct IntermediatePosition
 {
-  IntermediatePosition(State_c s, float d)
+  IntermediatePosition(State_c s, StateTheta nearestTheta, float d)
     : position(s)
     , oneOverDistanceFromLastPosition(d)
+    , nearestTheta(nearestTheta)
     {
     }
 
   State_c position;
+  StateTheta nearestTheta;
   float oneOverDistanceFromLastPosition;
 };
 
@@ -268,9 +272,22 @@ public:
   // Imports motion primitives from the given json file. Returns true if success
   bool ReadMotionPrimitives(const char* mprimFilename);
 
-  // defaults to a fatal obstacle
+  // defaults to a fatal obstacle  // TEMP: will be removed
   void AddObstacle(const RotatedRectangle& rect, Cost cost = FATAL_OBSTACLE_COST);
   void AddObstacle(const Quad2f& quad, Cost cost = FATAL_OBSTACLE_COST);
+
+  // returns a polygon which represents the obstacle expanded to the
+  // c-space of robot, where the origin of tobot is (0,0)
+  static FastPolygon ExpandCSpace(const Poly2f& obstacle,
+                                  const Poly2f& robot);
+
+  // adds an obstacle into the c-space map for the given angle with
+  // the given robot footprint, centered at (0,0). Returns reference
+  // to the polygon it inserted
+  const FastPolygon& AddObstacleWithExpansion(const Poly2f& obstacle,
+                                              const Poly2f& robot,
+                                              StateTheta theta,
+                                              Cost cost = FATAL_OBSTACLE_COST);
 
   void ClearObstacles();
 
@@ -324,6 +341,10 @@ public:
                   State_c& lastSafeState,
                   xythetaPlan& validPlan) const;
 
+  // If we are going to be doing a full planner cycle, this function
+  // will be called to prepare the environment, including
+  // precomputing things, etc.
+  void PrepareForPlanning();
 
   // returns the raw underlying motion primitive. Note that it is centered at (0,0)
   const MotionPrimitive& GetRawMotionPrimitive(StateTheta theta, ActionID action) const;
@@ -347,9 +368,13 @@ public:
   // (unlikely but possible)
   bool RoundSafe(const State_c& c, State& rounded) const;
 
+  unsigned int GetNumAngles() const {return numAngles_;}
+
   inline static float GetXFromStateID(StateID sid);
   inline static float GetYFromStateID(StateID sid);
   inline static float GetThetaFromStateID(StateID sid);
+
+  // TEMP:  // TODO:(bn) explicit?
 
   inline float GetX_mm(StateXY x) const;
   inline float GetY_mm(StateXY y) const;
@@ -409,8 +434,9 @@ private:
   // First index is starting angle, second is prim ID
   std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
 
-  // Obstacles. Cost over MAX_OBSTACLE_COST means infinite cost (aka hard obstacle)
-  std::vector< std::pair<const RotatedRectangle, Cost> > obstacles_;
+  // Obstacles per theta. First index is theta, second of pair is cost
+  std::vector< std::vector< std::pair<FastPolygon, Cost> > > obstaclesPerAngle_;
+  
 
   // index is actionID
   std::vector<ActionType> actionTypes_;

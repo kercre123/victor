@@ -17,4 +17,6 @@ add_subdirectory(matlab/CameraCapture)
 
 add_subdirectory(matlab/\@VisionMarkerTrained/private)
 
-add_subdirectory(tools/decisionTree)
+if(EMBEDDED_USE_OPENCV)
+  add_subdirectory(tools/decisionTree)
+endif()

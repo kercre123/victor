@@ -359,7 +359,7 @@ namespace Anki
           } // for(s32 iEvent=0; iEvent<numEvents; iEvent++)
         } // PUSH_MEMORY_STACK(memory);
 
-        // TODO: resize outputResults
+        outputResults.Resize(outputResults.get_size(), memory);
 
         return outputResults;
       } // ComputeBenchmarkResults()

@@ -238,6 +238,47 @@ namespace Anki {
       CORETECH_ASSERT(preDockPoseID < _VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]);
       EraseVizObject(VizObjectBaseID[VIZ_OBJECT_PREDOCKPOSE] + preDockPoseID);
     }
+
+
+    void VizManager::DrawPoly(const u32 polyID,
+                              const FastPolygon& poly,
+                              const ColorRGBA& color)
+    {
+      // draw bounding circles, then draw the actual polygon
+      Planning::Path innerCircle;
+
+      // PRINT_NAMED_INFO("VizManager.DrawPoly", "Drawing poly centered at (%f, %f) with radii %f and %f\n",
+      //                  poly.GetCheckCenter().x(),
+      //                  poly.GetCheckCenter().y(),
+      //                  poly.GetInscribedRadius(),
+      //                  poly.GetCircumscribedRadius());
+
+      // // don't draw circles for now
+
+      // // hack! don't want to collide with path ids
+      // u32 pathId = polyID + 2300;
+      // innerCircle.AppendArc(0,
+      //                       poly.GetCheckCenter().x(), poly.GetCheckCenter().y(),
+      //                       poly.GetInscribedRadius(),
+      //                       0.0f, 2*M_PI,
+      //                       1.0, 1.0, 1.0);
+      // DrawPath(pathId, innerCircle, color);
+
+      // Planning::Path outerCircle;
+
+      // // hack! don't want to collide with path ids
+      // pathId = polyID + 2400;
+      // outerCircle.AppendArc(0,
+      //                       poly.GetCheckCenter().x(), poly.GetCheckCenter().y(),
+      //                       poly.GetCircumscribedRadius(),
+      //                       0.0f, 2*M_PI,
+      //                       1.0, 1.0, 1.0);
+      // DrawPath(pathId, outerCircle, color);
+
+
+      DrawPoly(polyID, poly.GetSimplePolygon(), color);
+    }
+  
     
     
     
@@ -308,6 +349,15 @@ namespace Anki {
       SendMessage( GET_MESSAGE_ID(VizEraseObject), &v );
     }
 
+    void VizManager::DrawPlannerObstacle(const bool isReplan,
+                                         const u32 polyID,
+                                         const FastPolygon& poly,
+                                         const ColorRGBA& color)
+    {
+      // const u32 polyType = (isReplan ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE);
+      
+      DrawPoly(polyID, poly, color);
+    }
     
     // ================== Path drawing methods ====================
     
@@ -316,7 +366,7 @@ namespace Anki {
                               const ColorRGBA& color)
     {
       ErasePath(pathID);
-      printf("drawing path %u of length %hhu\n", pathID, p.GetNumSegments());
+      // printf("drawing path %u of length %hhu\n", pathID, p.GetNumSegments());
       
       for (int s=0; s < p.GetNumSegments(); ++s) {
         const Planning::PathSegmentDef& seg = p.GetSegmentConstRef(s).GetDef();
@@ -380,7 +430,7 @@ namespace Anki {
       VizErasePath v;
       v.pathID = pathID;
 
-      printf("viz: erasing path %u\n", pathID);
+      // printf("viz: erasing path %u\n", pathID);
       
       SendMessage( GET_MESSAGE_ID(VizErasePath), &v );
     }

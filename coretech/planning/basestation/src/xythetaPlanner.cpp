@@ -353,7 +353,6 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
     }
 
 
-    // TEMP: 
     if(expansions_ % 10000 == 0) {
       printf("%8d %8.5f = %8.5f + %8.5f\n",
                  expansions_,

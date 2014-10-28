@@ -61,10 +61,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 // Call a GTEST_TEST, and increment the variable numPassedTests if the test passed, and  the variable numFailedTests if the test failed.
 #define CALL_GTEST_TEST(test_case_name, test_name)\
   if(test_case_name ## __ ## test_name() == 0) {\
-  CoreTechPrint("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPASSED:" # test_case_name "__" # test_name "\n" "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");\
+  CoreTechPrint("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPASSED:" # test_case_name "__" # test_name "\n" "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");\
   numPassedTests++;\
   } else {\
-  CoreTechPrint("\n\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nFAILED:" # test_case_name "__" # test_name "\n" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n"); numFailedTests++; };
+  CoreTechPrint("\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nFAILED:" # test_case_name "__" # test_name "\n" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n"); numFailedTests++; };
 
 #endif // #if ANKICORETECH_EMBEDDED_USE_GTEST ... #else
 

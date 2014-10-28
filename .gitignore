@@ -123,3 +123,5 @@ training.mat
 build_makefile
 anki.cpp
 anki.c
+a7_out.txt
+/a7_out.txt.old
