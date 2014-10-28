@@ -4,7 +4,7 @@
  * Author: Kevin Yoon
  * Date:   6/18/2014
  *
- * Description: Simple sound player, that only works on mac.
+ * Description: Simple sound player, that only plays one sound at a time and only works on mac.
  *
  * Copyright: Anki, Inc. 2014
  **/
@@ -70,18 +70,19 @@ namespace Anki {
       bool Play(const SoundID_t id, const u8 numLoops=1);
       bool Play(const std::string& name, const u8 numLoops=1);
       
+	  void Stop();
+
       void SetScheme(const SoundSchemeID_t scheme);
       SoundSchemeID_t GetScheme() const;
       
       // Lookup a sound by name
       static SoundID_t GetID(const std::string& name);
-      
-      bool IsPlaying() const;
-      
+            
     protected:
       
       // Protected default constructor for singleton.
       SoundManager();
+      ~SoundManager();
       
       static SoundManager* singletonInstance_;
       

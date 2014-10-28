@@ -6,8 +6,6 @@
  * Modifications: 
  */
 
-#include <webots/Supervisor.hpp>
-
 #include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/cozmo/basestation/basestation.h"
@@ -21,13 +19,48 @@
 
 #include <fstream>
 
+
+
+#define USE_WEBOTS_TIMESTEP 1
+#if (USE_WEBOTS_TIMESTEP)
+#include <webots/Supervisor.hpp>
 webots::Supervisor basestationController;
+#else
+class BSTimer {
+public:
+  BSTimer() {_time = 0;}
+  
+  // TODO: This needs to wait until actual time has elapsed
+  int step(int ms) {_time += ms; return 0;}
+  int getTime() {return _time;}
+private:
+  int _time;
+};
+BSTimer basestationController;
+#endif
+
+
+// Set to 1 if you want to use BLE to communicate with robot.
+// Set to 0 if you want to use TCP to communicate with robot.
+#define USE_BLE_ROBOT_COMMS 0
+#if (USE_BLE_ROBOT_COMMS)
+#include "anki/cozmo/basestation/bleRobotManager.h"
+#include "anki/cozmo/basestation/bleComms.h"
+
+// Set this UUID to the desired robot you want to connect to
+//#define COZMO_BLE_UUID (0xbeefffff00010001)
+#define COZMO_BLE_UUID (0xbeef000200f115b5)
+#endif
+
 
 using namespace Anki;
 using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
+  // Start with a step so that we can attach to the process here for debugging
+  basestationController.step(BS_TIME_STEP);
+  
   // Get configuration JSON
   Json::Value config;
   const std::string subPath(std::string("basestation/config/") + std::string(AnkiUtil::kP_CONFIG_JSON_FILE));
@@ -44,16 +77,68 @@ int main(int argc, char **argv)
   Json::Value bmValue = JsonTools::GetValueOptional(config, "basestation_mode", (u8&)bm);
   assert(bm <= BM_PLAYBACK_SESSION);
   
-
   // Connect to robot.
   // UI-layer should handle this (whether the connection is TCP or BTLE).
   // Start basestation only when connections have been established.
   UiTCPComms uiComms;
+  
+#if (USE_BLE_ROBOT_COMMS)
+  BLEComms robotComms;
+  BLERobotManager robotBLEManager;
+#else
   TCPComms robotComms;
+#endif
   if (bm != BM_PLAYBACK_SESSION) {
+
     
-    // ====== TCP ======
+#if (USE_BLE_ROBOT_COMMS)
+    basestationController.step(BS_TIME_STEP);
+    robotBLEManager.DiscoverRobots();
+#endif
+    
+    
     while (basestationController.step(BS_TIME_STEP) != -1) {
+      
+#if (USE_BLE_ROBOT_COMMS)
+      // ====== BTLE ======
+      robotBLEManager.Update();
+      
+      if (robotBLEManager.GetNumConnectedRobots() == 0) {
+        // Get list of advertising robots and connect to one
+        std::vector<u64> advertisingRobotMfgIDs;
+        if (robotBLEManager.GetAdvertisingRobotMfgIDs(advertisingRobotMfgIDs) > 0) {
+          
+          printf("RobotBLEComms: %ld advertising robots found.\n", advertisingRobotMfgIDs.size());
+          
+          // Look for specific robot we're trying to connect to
+          bool robotFound = false;
+          int advertisingRobotIdx = 0;
+          for (advertisingRobotIdx = 0; advertisingRobotIdx<advertisingRobotMfgIDs.size(); ++advertisingRobotIdx) {
+            if (advertisingRobotMfgIDs[advertisingRobotIdx] == COZMO_BLE_UUID) {
+              robotFound = true;
+              break;
+            }
+          }
+          if (!robotFound) {
+            continue;
+          }
+
+          u64 mfgID = advertisingRobotMfgIDs[advertisingRobotIdx];
+          robotBLEManager.ConnectToRobotByMfgID(mfgID);
+          
+          // Add connected_robot ID to config
+          int robotID = robotBLEManager.GetRobotIDFromMfgID(mfgID);
+          config[AnkiUtil::kP_CONNECTED_ROBOTS].append(robotID);
+          
+          printf("RobotBLEComms: Connecting to robot %d (mfg ID=%llx)...\n", robotID, mfgID);
+          
+          robotBLEManager.StopDiscoveringRobots();
+          break;
+        }
+      }
+      
+#else
+      // ====== TCP ======
       robotComms.Update();
       
       // If not already connected to a robot, connect to the
@@ -82,9 +167,22 @@ int main(int argc, char **argv)
       if (robotComms.GetNumConnectedRobots() > 0) {
         break;
       }
+#endif
+      
     }
   } // if (bm != BM_PLAYBACK_SESSION)
   
+  
+#if (USE_BLE_ROBOT_COMMS)
+  // Wait until robot is connected
+  while (basestationController.step(BS_TIME_STEP) != -1) {
+    robotBLEManager.Update();
+    if (robotBLEManager.GetNumConnectedRobots() > 0) {
+      printf("Connected to robot!\n");
+      break;
+    }
+  }
+#endif
   
   basestationController.step(BS_TIME_STEP);
   
@@ -105,7 +203,11 @@ int main(int argc, char **argv)
     uiComms.Update();
     
     // Read messages from all robots
+#if (USE_BLE_ROBOT_COMMS)
+    robotBLEManager.Update();  // Necessary?
+#else
     robotComms.Update();
+#endif
     
     status = bs.Update(SEC_TO_NANOS(basestationController.getTime()));
     if (status != BS_OK) {

@@ -10,6 +10,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 //#define RUN_PC_ONLY_TESTS
+#define RUN_HIGH_MEMORY_TESTS
 //#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
@@ -35,6 +36,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
+#include "data/simpleFiducials_320x240.h"
 #include "data/newFiducials_320x240.h"
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
@@ -57,14 +59,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include <iostream>
 #include <fstream>
-#endif
-
 #include "opencv2/video/tracking.hpp"
+#endif
 
 using namespace Anki;
 using namespace Anki::Embedded;
 
-#ifdef RUN_PC_ONLY_TESTS
+#if defined(RUN_PC_ONLY_TESTS) || defined(RUN_HIGH_MEMORY_TESTS)
 #define HUGE_BUFFER_SIZE 100000000
 static char hugeBuffer[HUGE_BUFFER_SIZE];
 #endif
@@ -874,15 +875,21 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
     Array<u16> filtered(imageHeight, imageWidth, scratchOnchip);
     filtered.Set(0xFFFF);
 
-    BeginBenchmark("BoxFilter");
+    BeginBenchmark("BoxFilter_u8u16u16");
 
-    const Result result = ImageProcessing::BoxFilter<u8,u16,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
+    ImageProcessing::BoxFilter<u8,u16,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
 
-    EndBenchmark("BoxFilter");
+    EndBenchmark("BoxFilter_u8u16u16");
+
+    BeginBenchmark("BoxFilter_u8u32u16");
+
+    ImageProcessing::BoxFilter<u8,u32,u16>(image, boxHeight, boxWidth, filtered, scratchOnchip);
+
+    EndBenchmark("BoxFilter_u8u32u16");
 
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
-    ASSERT_TRUE(result == RESULT_OK);
+    //    ASSERT_TRUE(result == RESULT_OK);
   } // Benchmarking test
 
   GTEST_RETURN_HERE;
@@ -1063,7 +1070,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
       Array<u8> imageArray(grayImage.rows, grayImage.cols, scratchOffchip);
       imageArray.Set(grayImage);
 
-      const f32 t0 = GetTimeF32();
+      const f64 t0 = GetTimeF64();
 
       face_cascade.detectMultiScale(
         grayImage,
@@ -1075,7 +1082,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
         cv::Size() // Size maxSize=Size()
         );
 
-      const f32 t1 = GetTimeF32();
+      const f64 t1 = GetTimeF64();
 
       const cv::Size maxSize = cv::Size(imageArray.get_size(1), imageArray.get_size(0));
 
@@ -1089,7 +1096,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
         scratchOnchip,
         scratchOffchip);
 
-      const f32 t2 = GetTimeF32();
+      const f64 t2 = GetTimeF64();
 
       CoreTechPrint("OpenCV took %f seconds and Anki took %f seconds\n", t1-t0, t2-t1);
 
@@ -1179,7 +1186,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   // Classifier::CascadeClassifier_LBP cc(face_cascade_name, scratchOffchip);
   // cc.SaveAsHeader("c:/tmp/lbpcascade_frontalface.h", "lbpcascade_frontalface");
 
-  const f32 t0 = GetTimeF32();
+  const f64 t0 = GetTimeF64();
 
   // TODO: are these const casts okay?
   const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
@@ -1210,7 +1217,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   EndBenchmark("CascadeClassifier_LBP constructor");
 
-  const f32 t1 = GetTimeF32();
+  const f64 t1 = GetTimeF64();
 
   const Result result = cc.DetectMultiScale(
     image,
@@ -1224,14 +1231,16 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  const f32 t2 = GetTimeF32();
+  const f64 t2 = GetTimeF64();
 
   CoreTechPrint("Detection took %f seconds (setup time %f seconds)\n", t2-t1, t1-t0);
 
   ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
+  //detectedFaces_anki[0].Print();
+
   ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
-  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(102, 219, 39, 156));
+  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(102, 219, 40, 156));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, FaceDetection)
@@ -2171,19 +2180,93 @@ GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
   ASSERT_TRUE(reinterpret_cast<size_t>(&blockImage50_320x240[0]) % MEMORY_ALIGNMENT == 0);
 
   Array<u8> in(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, const_cast<u8*>(&blockImage50_320x240[0]), blockImage50_320x240_WIDTH*blockImage50_320x240_HEIGHT, Flags::Buffer(false,false,false));
-
   Array<u8> out(60, 80, scratchOffchip);
   //in.Print("in");
 
+  ASSERT_TRUE(AreValid(in, out));
+
+  const f64 t0 = GetTimeF64();
+
   const Result result = ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in, 2, out, scratchOffchip);
+
   ASSERT_TRUE(result == RESULT_OK);
 
-  CoreTechPrint("%d %d %d %d", out[0][0], out[0][17], out[40][80-1], out[59][80-3]);
+  //CoreTechPrint("%d %d %d %d", out[0][0], out[0][17], out[40][80-1], out[59][80-3]);
 
   ASSERT_TRUE(out[0][0] == 155);
   ASSERT_TRUE(out[0][17] == 157);
   ASSERT_TRUE(out[40][80-1] == 143);
   ASSERT_TRUE(out[59][80-3] == 127);
+
+  out.SetZero();
+
+  Array<u8> tmp(120, 160, scratchOffchip);
+
+  ASSERT_TRUE(AreValid(tmp));
+
+  const Result result2 = ImageProcessing::DownsampleByTwo<u8,u32,u8>(in, tmp);
+  ASSERT_TRUE(result == RESULT_OK);
+
+  const Result result3 = ImageProcessing::DownsampleByTwo<u8,u32,u8>(tmp, out);
+  ASSERT_TRUE(result3 == RESULT_OK);
+
+  printf("%d\n", out[59][80-3]);
+
+  ASSERT_TRUE(out[0][0] == 155);
+  ASSERT_TRUE(out[0][17] == 157);
+  ASSERT_TRUE(out[40][80-1] == 143);
+  ASSERT_TRUE(out[59][80-3] == 126);
+
+  f64 totalTime1 = 0;
+  f64 totalTime2 = 0;
+
+  Array<u8> in640(480,640,scratchOffchip,Flags::Buffer(false,false,false));
+  Array<u8> out320(240,320,scratchOffchip,Flags::Buffer(false,false,false));
+
+  ASSERT_TRUE(AreValid(in640, out320));
+
+  volatile s32 numLoops = 100;
+
+  const f64 t1a = GetTimeF64();
+  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in640, 1, out320, scratchOffchip);
+  const f64 t2a = GetTimeF64();
+
+  volatile s32 i;
+  for(i=0; i<numLoops; i++) {
+    PUSH_MEMORY_STACK(scratchOffchip);
+    const f64 t1 = GetTimeF64();
+    ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in640, 1, out320, scratchOffchip);
+    const f64 t2 = GetTimeF64();
+
+    in640.Set(out320[5][5]);
+
+    totalTime1 += (t2-t1);
+  }
+
+  const f64 t1b = GetTimeF64();
+  ImageProcessing::DownsampleByTwo<u8,u32,u8>(in640, out320);
+  const f64 t2b = GetTimeF64();
+
+  for(i=0; i<numLoops; i++) {
+    const f64 t1 = GetTimeF64();
+    ImageProcessing::DownsampleByTwo<u8,u32,u8>(in640, out320);
+    const f64 t2 = GetTimeF64();
+
+    in640.Set(out320[5][5]);
+
+    totalTime2 += (t2-t1);
+  }
+
+  const f64 t3 = GetTimeF64();
+
+  const f64 t1c = GetTimeF64();
+  FixedLengthList<Array<u8> > pyramid1 = ImageProcessing::BuildPyramid<u8,u32,u8>(in640, 5, scratchOffchip);
+  const f64 t2c = GetTimeF64();
+
+  CoreTechPrint("Pyramid 5 took %f\n", t2c-t1c);
+
+  //  CoreTechPrint("DownsampleByPowerOfTwo took %f seconds per call. DownsampleByTwo took %f seconds per call.\n", (t1-t0) / 100, (t3-t2) / 100);
+  CoreTechPrint("DownsampleByPowerOfTwo took %f seconds per call (%f). DownsampleByTwo took %f seconds per call (%f). \n", totalTime1 / numLoops, totalTime2 / numLoops, t2a-t1a, t2b-t1b);
 
   //{
   //  Matlab matlab(false);
@@ -2290,7 +2373,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
 
@@ -2298,7 +2381,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     //tracker.ShowTemplate("tracker", true, true);
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2312,7 +2395,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     ASSERT_TRUE(verify_numInBounds == 121);
     ASSERT_TRUE(verify_numSimilarPixels == 115);*/
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Translation-only LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2340,13 +2423,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2360,7 +2443,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     ASSERT_TRUE(verify_numInBounds == 121);
     ASSERT_TRUE(verify_numSimilarPixels == 119);*/
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2389,13 +2472,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2409,7 +2492,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     ASSERT_TRUE(verify_numInBounds == 121);
     ASSERT_TRUE(verify_numSimilarPixels == 119);*/
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Projective LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2477,7 +2560,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //
 //    InitBenchmarking();
 //
-//    const f64 time0 = GetTimeF32();
+//    const f64 time0 = GetTimeF64();
 //
 //    TemplateTracker::LucasKanadeTracker_SampledPlanar6dof tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, maxSamplesAtBaseLevel,
 //      HEAD_CAM_CALIB_FOCAL_LENGTH_X,
@@ -2491,7 +2574,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //
 //    //tracker.ShowTemplate("tracker", true, true);
 //
-//    const f64 time1 = GetTimeF32();
+//    const f64 time1 = GetTimeF64();
 //
 //    bool verify_converged = false;
 //    s32 verify_meanAbsoluteDifference;
@@ -2505,7 +2588,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //    ASSERT_TRUE(verify_numInBounds == 121);
 //    ASSERT_TRUE(verify_numSimilarPixels == 115);*/
 //
-//    const f64 time2 = GetTimeF32();
+//    const f64 time2 = GetTimeF64();
 //
 //    CoreTechPrint("Translation-only LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
 //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2534,13 +2617,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //
 //    InitBenchmarking();
 //
-//    const f64 time0 = GetTimeF32();
+//    const f64 time0 = GetTimeF64();
 //
 //    TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
 //
 //    ASSERT_TRUE(tracker.IsValid());
 //
-//    const f64 time1 = GetTimeF32();
+//    const f64 time1 = GetTimeF64();
 //
 //    bool verify_converged = false;
 //    s32 verify_meanAbsoluteDifference;
@@ -2554,7 +2637,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //    ASSERT_TRUE(verify_numInBounds == 121);
 //    ASSERT_TRUE(verify_numSimilarPixels == 119);*/
 //
-//    const f64 time2 = GetTimeF32();
+//    const f64 time2 = GetTimeF64();
 //
 //    CoreTechPrint("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
 //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2584,7 +2667,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //
 //    InitBenchmarking();
 //
-//    const f64 time0 = GetTimeF32();
+//    const f64 time0 = GetTimeF64();
 //
 //    TemplateTracker::LucasKanadeTracker_SampledPlanar6dof tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, maxSamplesAtBaseLevel,
 //      HEAD_CAM_CALIB_FOCAL_LENGTH_X,
@@ -2596,7 +2679,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //
 //    ASSERT_TRUE(tracker.IsValid());
 //
-//    const f64 time1 = GetTimeF32();
+//    const f64 time1 = GetTimeF64();
 //
 //    bool verify_converged = false;
 //    s32 verify_meanAbsoluteDifference;
@@ -2610,7 +2693,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 //    ASSERT_TRUE(verify_numInBounds == 121);
 //    ASSERT_TRUE(verify_numSimilarPixels == 119);*/
 //
-//    const f64 time2 = GetTimeF32();
+//    const f64 time2 = GetTimeF64();
 //
 //    CoreTechPrint("Projective LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
 //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2678,13 +2761,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2698,7 +2781,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     ASSERT_TRUE(verify_numInBounds == 529);
     ASSERT_TRUE(verify_numSimilarPixels == 474);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Translation-only LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2719,13 +2802,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2739,7 +2822,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     ASSERT_TRUE(verify_numInBounds == 529);
     ASSERT_TRUE(verify_numSimilarPixels == 521);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Affine LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2761,13 +2844,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2781,7 +2864,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     ASSERT_TRUE(verify_numInBounds == 529);
     ASSERT_TRUE(verify_numSimilarPixels == 521);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Projective LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2846,13 +2929,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2866,7 +2949,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     ASSERT_TRUE(verify_numInBounds == 529);
     ASSERT_TRUE(verify_numSimilarPixels == 474);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Translation-only FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2887,13 +2970,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
@@ -2906,7 +2989,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     ASSERT_TRUE(verify_numInBounds == 529);
     ASSERT_TRUE(verify_numSimilarPixels == 521);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Affine FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -2970,20 +3053,20 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -3004,19 +3087,19 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratchOffchip) == RESULT_OK);
     ASSERT_TRUE(verify_converged == true);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -3038,20 +3121,20 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     InitBenchmarking();
 
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
 
     TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     bool verify_converged = false;
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, verify_converged, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
 
-    const f64 time2 = GetTimeF32();
+    const f64 time2 = GetTimeF64();
 
     CoreTechPrint("Projective LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
@@ -3477,7 +3560,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   InitBenchmarking();
 
   {
-    const f64 time0 = GetTimeF32();
+    const f64 time0 = GetTimeF64();
     const Result result = DetectFiducialMarkers(
       image,
       markers,
@@ -3495,21 +3578,21 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       numRefinementSamples,
       quadRefinementMaxCornerChange,
       quadRefinementMinCornerChange,
-      //true, //< TODO: change back to false
       false,
       scratchCcm,
       scratchOnchip,
       scratchOffchip);
-    const f64 time1 = GetTimeF32();
+    const f64 time1 = GetTimeF64();
 
     CoreTechPrint("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
 
-    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+    //ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-  markers.Print("markers");
+  //markers.Print("markers");
+  //markers[0].Print();
 
   if(scaleImage_thresholdMultiplier == 65536) {
     // Grab the ground truth markers types and locations from the
@@ -3582,6 +3665,346 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
+
+GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
+{
+  // Don't check if the markers were correctly detected, just check the timing
+
+  const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+  //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
+  const s32 scaleImage_numPyramidLevels = 3;
+
+  const s32 component1d_minComponentWidth = 0;
+  const s32 component1d_maxSkipDistance = 0;
+
+  const f32 minSideLength = 0.01f*MAX(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
+
+  const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
+  const s32 component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
+  const s32 component_sparseMultiplyThreshold = 1000 << 5;
+  const s32 component_solidMultiplyThreshold = 2 << 5;
+
+  const f32 component_minHollowRatio = 1.0f;
+
+  const s32 maxExtractedQuads = 1000/2;
+  const s32 quads_minQuadArea = 100/4;
+  const s32 quads_quadSymmetryThreshold = 384;
+  const s32 quads_minDistanceFromImageEdge = 2;
+
+  const f32 decode_minContrastRatio = 1.25;
+
+  const s32 maxMarkers = 100;
+  //const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+  const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
+  //const s32 maxConnectedComponentSegments = 70000;
+
+  const s32 quadRefinementIterations = 5;
+  const s32 numRefinementSamples = 100;
+  const f32 quadRefinementMaxCornerChange = 5.f;
+  const f32 quadRefinementMinCornerChange = .005f;
+
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> image(simpleFiducials_320x240_HEIGHT, simpleFiducials_320x240_WIDTH, scratchOffchip);
+  image.Set(simpleFiducials_320x240, simpleFiducials_320x240_WIDTH*simpleFiducials_320x240_HEIGHT);
+
+  //image.Show("image", true);
+
+  // TODO: Check that the image loaded correctly
+  //ASSERT_TRUE(IssimpleFiducials_320x240Valid(image.Pointer(0,0), false));
+
+  FixedLengthList<VisionMarker> markers(maxMarkers, scratchCcm);
+  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchCcm);
+
+  markers.set_size(maxMarkers);
+  homographies.set_size(maxMarkers);
+
+  for(s32 i=0; i<maxMarkers; i++) {
+    Array<f32> newArray(3, 3, scratchCcm);
+    homographies[i] = newArray;
+  } // for(s32 i=0; i<maximumSize; i++)
+
+  const s32 numRuns = 10;
+  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements(numRuns, scratchOffchip);
+
+  for(s32 iRun=0; iRun<numRuns; iRun++) {
+    InitBenchmarking();
+
+    const Result result = DetectFiducialMarkers(
+      image,
+      markers,
+      homographies,
+      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
+      component1d_minComponentWidth, component1d_maxSkipDistance,
+      component_minimumNumPixels, component_maximumNumPixels,
+      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+      component_minHollowRatio,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+      decode_minContrastRatio,
+      maxConnectedComponentSegments,
+      maxExtractedQuads,
+      quadRefinementIterations,
+      numRefinementSamples,
+      quadRefinementMaxCornerChange,
+      quadRefinementMinCornerChange,
+      false,
+      scratchCcm,
+      scratchOnchip,
+      scratchOffchip);
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    benchmarkElements[iRun] = ComputeBenchmarkResults(scratchOffchip);;
+
+    //PrintBenchmarkResults(benchmarkElements[iRun], true, true);
+  } // for(s32 iRun=0; iRun<numRuns; iRun++)
+
+  // Check that all the lists have the same number and type of benchmarks
+  const s32 numElements = benchmarkElements[0].get_size();
+  for(s32 iRun=1; iRun<numRuns; iRun++) {
+    ASSERT_TRUE(benchmarkElements[0].get_size() == benchmarkElements[iRun].get_size());
+    for(s32 i=0; i<numElements; i++) {
+      ASSERT_TRUE(benchmarkElements[0][i].numEvents == benchmarkElements[iRun][i].numEvents);
+      ASSERT_TRUE(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) == 0);
+    }
+  }
+
+  // Compute the medians
+  FixedLengthList<BenchmarkElement> medianBenchmarkElements(benchmarkElements[0].get_size(), scratchOffchip, Flags::Buffer(true, false, true));
+  Array<u32> sortedElements(1, numRuns, scratchOffchip);
+  u32 * pSortedElements = sortedElements.Pointer(0,0);
+  for(s32 i=0; i<numElements; i++) {
+    strncpy(medianBenchmarkElements[i].name, benchmarkElements[0][i].name, BenchmarkElement::NAME_LENGTH - 1);
+    medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_mean = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_min = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_max = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_total = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_mean = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_min = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_max = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_total = pSortedElements[numRuns/2];
+  } // for(s32 i=0; i<numElements; i++)
+
+  PrintBenchmarkResults(medianBenchmarkElements, true, true);
+
+  const f32 minDifference = 1e-4f;
+  Point<f32> groundTruth[4];
+  groundTruth[0] = Point<f32>(22.2537f,22.2517f);
+  groundTruth[1] = Point<f32>(22.2359f,56.4778f);
+  groundTruth[2] = Point<f32>(56.4742f,22.2397f);
+  groundTruth[3] = Point<f32>(56.4890f,56.4873f);
+
+  for(s32 i=0; i<4; i++) {
+    ASSERT_TRUE(ABS(markers[0].corners[i].x - groundTruth[i].x) < minDifference);
+    ASSERT_TRUE(ABS(markers[0].corners[i].y - groundTruth[i].y) < minDifference);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
+
+#if defined(RUN_HIGH_MEMORY_TESTS)
+GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
+{
+  // Don't check if the markers were correctly detected, just check the timing
+
+  const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+  //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
+  const s32 scaleImage_numPyramidLevels = 3;
+
+  const s32 component1d_minComponentWidth = 0;
+  const s32 component1d_maxSkipDistance = 0;
+
+  const f32 minSideLength = 0.01f*MAX(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
+
+  const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
+  const s32 component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
+  const s32 component_sparseMultiplyThreshold = 1000 << 5;
+  const s32 component_solidMultiplyThreshold = 2 << 5;
+
+  const f32 component_minHollowRatio = 1.0f;
+
+  const s32 maxExtractedQuads = 1000/2;
+  const s32 quads_minQuadArea = 100/4;
+  const s32 quads_quadSymmetryThreshold = 384;
+  const s32 quads_minDistanceFromImageEdge = 2;
+
+  const f32 decode_minContrastRatio = 1.25;
+
+  const s32 maxMarkers = 100;
+
+  const s32 maxConnectedComponentSegments = 39000 * 16; // 322*240/2 = 38640
+
+  const s32 quadRefinementIterations = 5;
+  const s32 numRefinementSamples = 100;
+  const f32 quadRefinementMaxCornerChange = 5.f;
+  const f32 quadRefinementMinCornerChange = .005f;
+
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  Array<u8> image320(simpleFiducials_320x240_HEIGHT, simpleFiducials_320x240_WIDTH, scratchOffchip);
+  image320.Set(simpleFiducials_320x240, simpleFiducials_320x240_WIDTH*simpleFiducials_320x240_HEIGHT);
+
+  Array<u8> image640(480, 640, scratchHuge);
+  ImageProcessing::Resize<u8,u8>(image320, image640);
+
+  //image320.Show("image320", false, false);
+  //image640.Show("image640", true, false);
+
+  // TODO: Check that the image loaded correctly
+  //ASSERT_TRUE(IssimpleFiducials_320x240Valid(image.Pointer(0,0), false));
+
+  FixedLengthList<VisionMarker> markers(maxMarkers, scratchCcm);
+  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchCcm);
+
+  markers.set_size(maxMarkers);
+  homographies.set_size(maxMarkers);
+
+  for(s32 i=0; i<maxMarkers; i++) {
+    Array<f32> newArray(3, 3, scratchCcm);
+    homographies[i] = newArray;
+  } // for(s32 i=0; i<maximumSize; i++)
+
+  const s32 numRuns = 10;
+  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements(numRuns, scratchHuge);
+
+  for(s32 iRun=0; iRun<numRuns; iRun++) {
+    InitBenchmarking();
+
+    const Result result = DetectFiducialMarkers(
+      image640,
+      markers,
+      homographies,
+      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
+      component1d_minComponentWidth, component1d_maxSkipDistance,
+      component_minimumNumPixels, component_maximumNumPixels,
+      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+      component_minHollowRatio,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+      decode_minContrastRatio,
+      maxConnectedComponentSegments,
+      maxExtractedQuads,
+      quadRefinementIterations,
+      numRefinementSamples,
+      quadRefinementMaxCornerChange,
+      quadRefinementMinCornerChange,
+      false,
+      scratchOnchip,
+      scratchOffchip,
+      scratchHuge);
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    benchmarkElements[iRun] = ComputeBenchmarkResults(scratchHuge);
+
+    //PrintBenchmarkResults(benchmarkElements[iRun], true, true);
+  } // for(s32 iRun=0; iRun<numRuns; iRun++)
+
+  // Check that all the lists have the same number and type of benchmarks
+  const s32 numElements = benchmarkElements[0].get_size();
+  for(s32 iRun=1; iRun<numRuns; iRun++) {
+    ASSERT_TRUE(benchmarkElements[0].get_size() == benchmarkElements[iRun].get_size());
+    for(s32 i=0; i<numElements; i++) {
+      ASSERT_TRUE(benchmarkElements[0][i].numEvents == benchmarkElements[iRun][i].numEvents);
+      ASSERT_TRUE(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) == 0);
+    }
+  }
+
+  // Compute the medians
+  FixedLengthList<BenchmarkElement> medianBenchmarkElements(benchmarkElements[0].get_size(), scratchOffchip, Flags::Buffer(true, false, true));
+  Array<u32> sortedElements(1, numRuns, scratchOffchip);
+  u32 * pSortedElements = sortedElements.Pointer(0,0);
+  for(s32 i=0; i<numElements; i++) {
+    strncpy(medianBenchmarkElements[i].name, benchmarkElements[0][i].name, BenchmarkElement::NAME_LENGTH - 1);
+    medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_mean = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_min = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_max = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].inclusive_total = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_mean = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_min = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_max = pSortedElements[numRuns/2];
+
+    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
+    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
+    medianBenchmarkElements[i].exclusive_total = pSortedElements[numRuns/2];
+  } // for(s32 i=0; i<numElements; i++)
+
+  PrintBenchmarkResults(medianBenchmarkElements, true, true);
+
+  markers[0].Print();
+
+  const f32 minDifference = 1e-4f;
+  Point<f32> groundTruth[4];
+  groundTruth[0] = Point<f32>(45.0272f,45.0177f);
+  groundTruth[1] = Point<f32>(44.9521f,113.3854f);
+  groundTruth[2] = Point<f32>(113.3604f,44.9779f);
+  groundTruth[3] = Point<f32>(113.4568f,113.4449f);
+
+  for(s32 i=0; i<4; i++) {
+    ASSERT_TRUE(ABS(markers[0].corners[i].x - groundTruth[i].x) < minDifference);
+    ASSERT_TRUE(ABS(markers[0].corners[i].y - groundTruth[i].y) < minDifference);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
+#endif // #if defined(RUN_HIGH_MEMORY_TESTS)
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
 GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
@@ -4824,6 +5247,11 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
+  CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
+
+#if defined(RUN_HIGH_MEMORY_TESTS)
+  CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640);
+#endif
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
@@ -4852,3 +5280,4 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
 #endif // #if !ANKICORETECH_EMBEDDED_USE_GTEST
+

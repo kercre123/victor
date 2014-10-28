@@ -11,10 +11,13 @@
  *
  **/
 
+#include "anki/common/basestation/math/fastPolygon2d.h"
+#include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "anki/planning/basestation/xythetaPlanner.h"
@@ -23,12 +26,19 @@
 #include "vizManager.h"
 
 
-#define LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK ROBOT_BOUNDING_RADIUS
-#define LATTICE_PLANNER_BOUNDING_DISTANCE ROBOT_BOUNDING_RADIUS + 5.0
+// base padding on the robot footprint
+#define LATTICE_PLANNER_ROBOT_PADDING 7.0
+
+// base padding on the obstacles
+#define LATTICE_PLANNER_OBSTACLE_PADDING 6.0
+
+// amount of padding to subtract for replan-checks. MUST be less than the above values
+#define LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT 5.0
 
 #define DEBUG_REPLAN_CHECKS 0
 
-#define LATTICE_PLANNER_MAX_EXPANSIONS 300000000  // TEMP: 
+// a global max so planning doesn't run forever
+#define LATTICE_PLANNER_MAX_EXPANSIONS 300000000
 
 // this is in units of seconds per mm, meaning the robot would drive X
 // seconds out of the way to avoid having to drive 1 mm through the
@@ -47,9 +57,8 @@ class LatticePlannerImpl
 {
 public:
 
-  LatticePlannerImpl(const BlockWorld* blockWorld, const Json::Value& mprims, const LatticePlanner* parent)
-    : lastPaddingRadius_(0.0)
-    , blockWorld_(blockWorld)
+  LatticePlannerImpl(const Robot* robot, const Json::Value& mprims, const LatticePlanner* parent)
+    : robot_(robot)
     , planner_(env_)
     , _parent(parent)
     {
@@ -58,9 +67,8 @@ public:
 
   // imports and pads obstacles
   void ImportBlockworldObstacles(const bool isReplanning, const ColorRGBA* vizColor = nullptr);
-  float lastPaddingRadius_;
 
-  const BlockWorld* blockWorld_;
+  const Robot* robot_;
   xythetaEnvironment env_;
   xythetaPlanner planner_;
   xythetaPlan totalPlan_;
@@ -68,9 +76,9 @@ public:
   const LatticePlanner* _parent;
 };
 
-LatticePlanner::LatticePlanner(const BlockWorld* blockWorld, const Json::Value& mprims)
+LatticePlanner::LatticePlanner(const Robot* robot, const Json::Value& mprims)
 {
-  impl_ = new LatticePlannerImpl(blockWorld, mprims, this);
+  impl_ = new LatticePlannerImpl(robot, mprims, this);
 
   // TODO:(bn) param!
   impl_->planner_.AllowFreeTurnInPlaceAtGoal(false);
@@ -84,53 +92,89 @@ LatticePlanner::~LatticePlanner()
 
 void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, const ColorRGBA* vizColor)
 {
-  const float paddingRadius = (isReplanning ? LATTICE_PLANNER_BOUNDING_DISTANCE_REPLAN_CHECK :
-                               LATTICE_PLANNER_BOUNDING_DISTANCE);
+  float obstaclePadding = LATTICE_PLANNER_OBSTACLE_PADDING;
+  if(isReplanning) {
+    obstaclePadding -= LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT;
+  }
 
-  // TEMP: visualization doesn't work because we keep clearing all
-  // quads. Once we fix vis and remove the EraseAllQuads() call, get
-  // rid of the "true" so this only runs when it needs to
-  const bool didObjecsChange = blockWorld_->DidObjectsChange();
+  float robotPadding = LATTICE_PLANNER_ROBOT_PADDING;
+  if(isReplanning) {
+    robotPadding -= LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT;
+  }
+
+  const bool didObjecsChange = robot_->GetBlockWorld().DidObjectsChange();
   
   if(!isReplanning ||  // if not replanning, this must be a fresh, new plan, so we always should get obstacles
-     !FLT_NEAR(paddingRadius, lastPaddingRadius_) ||
      didObjecsChange)
   {
-    lastPaddingRadius_ = paddingRadius;
     std::vector<Quad2f> boundingBoxes;
 
-    // first check plan with slightly smaller radius to see if we need to replan
-    blockWorld_->GetObstacles(boundingBoxes, paddingRadius);
+    robot_->GetBlockWorld().GetObstacles(boundingBoxes, obstaclePadding);
     
     env_.ClearObstacles();
     
     if(vizColor != nullptr) {
       VizManager::getInstance()->EraseAllPlannerObstacles(isReplanning);
     }
-    unsigned int numAdded = 0;
-    for(auto boundingQuad : boundingBoxes) {
-      env_.AddObstacle(boundingQuad, DEFAULT_OBSTACLE_PENALTY);
 
-      if(vizColor != nullptr) {
-        // TODO: manage the quadID better so we don't conflict
-        // TODO:(bn) custom color for this
-        //VizManager::getInstance()->DrawQuad(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
-        VizManager::getInstance()->DrawPlannerObstacle(isReplanning, numAdded++, boundingQuad, 0.5f, *vizColor);
-        //(300 + ((int)vizColor) * 100 + numAdded++, boundingQuad, 0.5f, vizColor);
-      }
-      else {
+    unsigned int numAdded = 0;
+    unsigned int vizID = 0;
+
+    Planning::StateTheta numAngles = (StateTheta)env_.GetNumAngles();
+    for(StateTheta theta=0; theta < numAngles; ++theta) {
+
+      float thetaRads = env_.GetTheta_c(theta);
+
+      // Get the robot polygon, and inflate it by a bit to handle error
+      Poly2f robotPoly;
+      robotPoly.ImportQuad2d(robot_->GetBoundingQuadXY(
+                               Pose3d{thetaRads, Z_AXIS_3D, {0.0f, 0.0f, 0.0f}},
+                               robotPadding ) );
+
+      for(auto boundingQuad : boundingBoxes) {
+
+        Poly2f boundingPoly;
+        boundingPoly.ImportQuad2d(boundingQuad);
+
+        const FastPolygon& expandedPoly =
+          env_.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
+
+        // only draw the angle we are currently at
+        if(vizColor != nullptr && env_.GetTheta(robot_->GetPose().GetRotationAngle<'Z'>().ToFloat()) == theta
+           // && !isReplanning
+          ) {
+
+          // TODO: manage the quadID better so we don't conflict
+          // TODO:(bn) handle isReplanning with color??
+          // VizManager::getInstance()->DrawPlannerObstacle(isReplanning, vizID++ , expandedPoly, *vizColor);
+
+          // TODO:(bn) figure out a good way to visualize the
+          // multi-angle stuff. For now just draw the quads with
+          // padding
+          VizManager::getInstance()->DrawQuad (
+            isReplanning ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE,
+            vizID++, boundingQuad, 0.1f, *vizColor );
+        }
         numAdded++;
       }
+
+      // if(theta == 0) {
+      //   PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstacles.ImportedObstacles",
+      //                    "imported %d obstacles form blockworld",
+      //                    numAdded);
+      // }
     }
-    PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstacles.ImportedObstacles",
-                     "imported %d obstacles form blockworld",
-                     numAdded);
+
+    // PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstacles.ImportedAngles",
+    //                  "imported %d total obstacles for %d angles",
+    //                  numAdded,
+    //                  numAngles);
   }
   else {
     PRINT_NAMED_INFO("LatticePlanner.ImportBlockworldObstacles.NoUpdateNeeded",
-                     "radius %f (last = %f), didBlocksChange %d",
-                     paddingRadius,
-                     lastPaddingRadius_,
+                     "robot padding %f, obstacle padding %f , didBlocksChange %d",
+                     robotPadding,
+                     obstaclePadding,
                      didObjecsChange);
   }
 }
@@ -310,6 +354,8 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                        "from (%f, %f, %f) to (%f %f %f)\n",
                        lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,
                        impl_->planner_.GetGoal().x_mm, impl_->planner_.GetGoal().y_mm, impl_->planner_.GetGoal().theta);
+
+      impl_->env_.PrepareForPlanning();
 
       if(!impl_->planner_.Replan(LATTICE_PLANNER_MAX_EXPANSIONS)) {
         PRINT_NAMED_WARNING("LatticePlanner.ReplanIfNeeded.PlannerFailed", "plan failed during replanning!\n");

@@ -45,6 +45,12 @@ if usePyramid
         binaryImg = edge(img, 'canny', 0.1, 0.1);
 %         figure(6); imshow(binaryImg);
         return
+    elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_iterativeBox') 
+        boxWidth = 31;
+        numIterations = numScales;
+        binaryImg = computeBinaryCharacteristicScaleImage_iterativeBox(img, boxWidth, numIterations, thresholdFraction, false);
+    else
+        assert(false);
     end
     
     if showTiming

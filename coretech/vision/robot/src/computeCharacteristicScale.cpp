@@ -16,10 +16,22 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/imageProcessing.h"
 
-#define USE_ARM_ACCELERATION
+#define ACCELERATION_NONE 0
+#define ACCELERATION_ARM_M4 1
+#define ACCELERATION_ARM_A7 2
 
-#ifndef USE_ARM_ACCELERATION
-#warning not using USE_ARM_ACCELERATION
+#if defined(__ARM_ARCH_7A__)
+#define ACCELERATION_TYPE ACCELERATION_ARM_A7
+#else
+#define ACCELERATION_TYPE ACCELERATION_ARM_M4
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_NONE
+#warning not using ARM acceleration
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+#include <arm_neon.h>
 #endif
 
 static const s32 MAX_FILTER_HALF_WIDTH = 64;
@@ -37,9 +49,12 @@ namespace Anki
     // These are not inlined, to make it easier to hand-optimize them. Inlining them will probably only slightly increase speed.
     NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const FixedLengthList<s32> &filterHalfWidths, const s32 imageY, FixedLengthList<Array<u8> > &filteredRows);
 
-    /*NO_INLINE void ecvcs_computeBinaryImage_numPyramids3(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
-    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);*/
+    //NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
+    //NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
+
     NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
 
     NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const FixedLengthList<s32> &filterHalfWidths, const s32 imageY, FixedLengthList<Array<u8> > &filteredRows)
     {
@@ -71,199 +86,159 @@ namespace Anki
       } // for(s32 pyramidLevel=0; pyramidLevel<=numLevels; pyramidLevel++)
     } // staticInline ecvcs_filterRows()
 
-    /*
-    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
     {
-    const s32 thresholdMultiplier_numFractionalBits = 16;
+      AnkiAssert(filteredRows.get_size() == 5);
 
-    const u8 * restrict pImage = image[imageY];
+      const s32 thresholdMultiplier_numFractionalBits = 16;
 
-    const u8 * restrict pFilteredRows0 = filteredRows[0][0];
-    const u8 * restrict pFilteredRows1 = filteredRows[1][0];
-    const u8 * restrict pFilteredRows2 = filteredRows[2][0];
-    const u8 * restrict pFilteredRows3 = filteredRows[3][0];
+      const u8 * restrict pImage = image[imageY];
 
-    for(s32 x=imageWidth-1; x>=0; x--) {
-    s32 scaleValue;
+      const u8 * restrict pFilteredRows0 = filteredRows[0][0];
+      const u8 * restrict pFilteredRows1 = filteredRows[1][0];
+      const u8 * restrict pFilteredRows2 = filteredRows[2][0];
+      const u8 * restrict pFilteredRows3 = filteredRows[3][0];
+      const u8 * restrict pFilteredRows4 = filteredRows[4][0];
 
-    //for(s32 pyramidLevel=0; pyramidLevel<3; pyramidLevel++) {
-    const s32 dog0 = ABS(static_cast<s32>(pFilteredRows1[x]) - static_cast<s32>(pFilteredRows0[x]));
-    const s32 dog1 = ABS(static_cast<s32>(pFilteredRows2[x]) - static_cast<s32>(pFilteredRows1[x]));
-    const s32 dog2 = ABS(static_cast<s32>(pFilteredRows3[x]) - static_cast<s32>(pFilteredRows2[x]));
+      const s32 imageWidth = image.get_size(1);
 
-    if(dog0 > dog1) {
-    if(dog0 > dog2) {
-    scaleValue = pFilteredRows1[x];
-    } else {
-    scaleValue = pFilteredRows3[x];
-    }
-    } else if(dog1 > dog2) {
-    scaleValue = pFilteredRows2[x];
-    } else {
-    scaleValue = pFilteredRows3[x];
-    }
+      const s32 numFilteredRows = filteredRows.get_size();
 
-    //} // for(s32 pyramidLevel=0; pyramidLevel<3; scaleImage_numPyramidLevels++)
+      AnkiAssert(filteredRows.get_size() <= MAX_FILTER_HALF_WIDTH);
 
-    const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
-    if(pImage[x] < thresholdValue) {
-    pBinaryImageRow[x] = 1;
-    } else {
-    pBinaryImageRow[x] = 0;
-    }
-    } // for(s32 x=0; x<imageWidth; x++)
-    } // staticInline void ecvcs_computeBinaryImage()
-    */
+      const u8 * restrict pFilteredRows[MAX_FILTER_HALF_WIDTH+1];
+      for(s32 i=0; i<numFilteredRows; i++) {
+        pFilteredRows[i] = filteredRows[i][0];
+      }
 
-    /*
-    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
+      for(s32 x=0; x<imageWidth; x++) {
+        //for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
+        const s32 dog0 = ABS(static_cast<s32>(pFilteredRows1[x]) - static_cast<s32>(pFilteredRows0[x]));
+        const s32 dog1 = ABS(static_cast<s32>(pFilteredRows2[x]) - static_cast<s32>(pFilteredRows1[x]));
+        const s32 dog2 = ABS(static_cast<s32>(pFilteredRows3[x]) - static_cast<s32>(pFilteredRows2[x]));
+        const s32 dog3 = ABS(static_cast<s32>(pFilteredRows4[x]) - static_cast<s32>(pFilteredRows3[x]));
+
+        const s32 maxValue = MAX(dog0, MAX(dog1, MAX(dog2, dog3)));
+
+        s32 scaleValue;
+
+        if(dog0 == maxValue) {
+          scaleValue = pFilteredRows1[x];
+        } else if(dog1 == maxValue) {
+          scaleValue = pFilteredRows2[x];
+        } else if(dog2 == maxValue) {
+          scaleValue = pFilteredRows3[x];
+        } else {
+          scaleValue = pFilteredRows4[x];
+        }
+
+        //} // for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; scaleImage_numPyramidLevels++)
+
+        const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
+        if(pImage[x] < thresholdValue) {
+          pBinaryImageRow[x] = 1;
+        } else {
+          pBinaryImageRow[x] = 0;
+        }
+      } // for(s32 x=0; x<imageWidth; x++)
+    } // staticInline void ecvcs_computeBinaryImage_numFilters5()
+
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
     {
-    const u32 * restrict pImage = reinterpret_cast<const u32*>(image[imageY]);
+      AnkiAssert(filteredRows.get_size() == 5);
+      AnkiAssert(scaleImage_thresholdMultiplier == 65536);
 
-    const u32 * restrict pFilteredRows0 = reinterpret_cast<const u32*>(filteredRows[0][0]);
-    const u32 * restrict pFilteredRows1 = reinterpret_cast<const u32*>(filteredRows[1][0]);
-    const u32 * restrict pFilteredRows2 = reinterpret_cast<const u32*>(filteredRows[2][0]);
-    const u32 * restrict pFilteredRows3 = reinterpret_cast<const u32*>(filteredRows[3][0]);
+      const s32 thresholdMultiplier_numFractionalBits = 16;
 
-    u32 * restrict pBinaryImageRowU32 = reinterpret_cast<u32*>(pBinaryImageRow);
+      const u8 * restrict pImage = image[imageY];
 
-    const s32 imageWidth4 = imageWidth / 4;
+      const u8 * restrict pFilteredRows0 = filteredRows[0][0];
+      const u8 * restrict pFilteredRows1 = filteredRows[1][0];
+      const u8 * restrict pFilteredRows2 = filteredRows[2][0];
+      const u8 * restrict pFilteredRows3 = filteredRows[3][0];
+      const u8 * restrict pFilteredRows4 = filteredRows[4][0];
 
-    #if defined(USE_ARM_ACCELERATION)
-    const u32 twoFiftyFourX4 = 0xFEFEFEFEU;
-    #endif
+      const s32 imageWidth = image.get_size(1);
 
-    for(s32 x=0; x<imageWidth4; x++) {
-    const u32 filteredRows0 = pFilteredRows0[x];
-    const u32 filteredRows1 = pFilteredRows1[x];
-    const u32 filteredRows2 = pFilteredRows2[x];
-    const u32 filteredRows3 = pFilteredRows3[x];
+      const s32 numFilteredRows = filteredRows.get_size();
 
-    #if !defined(USE_ARM_ACCELERATION)
-    const s32 dog0_row0 = ABS(static_cast<s32>(filteredRows1 & 0xFF) - static_cast<s32>(filteredRows0 & 0xFF));
-    const s32 dog1_row0 = ABS(static_cast<s32>(filteredRows2 & 0xFF) - static_cast<s32>(filteredRows1 & 0xFF));
-    const s32 dog2_row0 = ABS(static_cast<s32>(filteredRows3 & 0xFF) - static_cast<s32>(filteredRows2 & 0xFF));
+      AnkiAssert(filteredRows.get_size() <= MAX_FILTER_HALF_WIDTH);
 
-    const s32 dog0_row1 = ABS(static_cast<s32>((filteredRows1 & 0xFF00) >> 8) - static_cast<s32>((filteredRows0 & 0xFF00) >> 8));
-    const s32 dog1_row1 = ABS(static_cast<s32>((filteredRows2 & 0xFF00) >> 8) - static_cast<s32>((filteredRows1 & 0xFF00) >> 8));
-    const s32 dog2_row1 = ABS(static_cast<s32>((filteredRows3 & 0xFF00) >> 8) - static_cast<s32>((filteredRows2 & 0xFF00) >> 8));
+      const u8 * restrict pFilteredRows[MAX_FILTER_HALF_WIDTH+1];
+      for(s32 i=0; i<numFilteredRows; i++) {
+        pFilteredRows[i] = filteredRows[i][0];
+      }
 
-    const s32 dog0_row2 = ABS(static_cast<s32>((filteredRows1 & 0xFF0000) >> 16) - static_cast<s32>((filteredRows0 & 0xFF0000) >> 16));
-    const s32 dog1_row2 = ABS(static_cast<s32>((filteredRows2 & 0xFF0000) >> 16) - static_cast<s32>((filteredRows1 & 0xFF0000) >> 16));
-    const s32 dog2_row2 = ABS(static_cast<s32>((filteredRows3 & 0xFF0000) >> 16) - static_cast<s32>((filteredRows2 & 0xFF0000) >> 16));
+      s32 x=0;
 
-    const s32 dog0_row3 = ABS(static_cast<s32>((filteredRows1 & 0xFF000000) >> 24) - static_cast<s32>((filteredRows0 & 0xFF000000) >> 24));
-    const s32 dog1_row3 = ABS(static_cast<s32>((filteredRows2 & 0xFF000000) >> 24) - static_cast<s32>((filteredRows1 & 0xFF000000) >> 24));
-    const s32 dog2_row3 = ABS(static_cast<s32>((filteredRows3 & 0xFF000000) >> 24) - static_cast<s32>((filteredRows2 & 0xFF000000) >> 24));
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+      const uint8x16_t zeros8x16 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+      const uint8x16_t ones8x16  = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
-    u32 scaleValue_row0;
-    u32 scaleValue_row1;
-    u32 scaleValue_row2;
-    u32 scaleValue_row3;
+      for(; x<(imageWidth-15); x+=16) {
+        const uint8x16_t filteredRow0 = vld1q_u8(&pFilteredRows0[x]);
+        const uint8x16_t filteredRow1 = vld1q_u8(&pFilteredRows1[x]);
+        const uint8x16_t filteredRow2 = vld1q_u8(&pFilteredRows2[x]);
+        const uint8x16_t filteredRow3 = vld1q_u8(&pFilteredRows3[x]);
+        const uint8x16_t filteredRow4 = vld1q_u8(&pFilteredRows4[x]);
 
-    if(dog0_row0 > dog1_row0) {
-    if(dog0_row0 > dog2_row0) { scaleValue_row0 = pFilteredRows1[x] & 0xFF; }
-    else { scaleValue_row0 = pFilteredRows3[x] & 0xFF; }
-    } else if(dog1_row0 > dog2_row0) {
-    scaleValue_row0 = pFilteredRows2[x] & 0xFF;
-    } else {
-    scaleValue_row0 = pFilteredRows3[x] & 0xFF;
-    }
+        const uint8x16_t imageRow = vld1q_u8(&pImage[x]);
 
-    if(dog0_row1 > dog1_row1) {
-    if(dog0_row1 > dog2_row1) { scaleValue_row1 = (pFilteredRows1[x] & 0xFF00) >> 8; }
-    else { scaleValue_row1 = (pFilteredRows3[x] & 0xFF00) >> 8; }
-    } else if(dog1_row1 > dog2_row1) {
-    scaleValue_row1 = (pFilteredRows2[x] & 0xFF00) >> 8;
-    } else {
-    scaleValue_row1 = (pFilteredRows3[x] & 0xFF00) >> 8;
-    }
+        const uint8x16_t dog0 = vabdq_u8(filteredRow1, filteredRow0);
+        const uint8x16_t dog1 = vabdq_u8(filteredRow2, filteredRow1);
+        const uint8x16_t dog2 = vabdq_u8(filteredRow3, filteredRow2);
+        const uint8x16_t dog3 = vabdq_u8(filteredRow4, filteredRow3);
 
-    if(dog0_row2 > dog1_row2) {
-    if(dog0_row2 > dog2_row2) { scaleValue_row2 = (pFilteredRows1[x] & 0xFF0000) >> 16; }
-    else { scaleValue_row2 = (pFilteredRows3[x] & 0xFF0000) >> 16; }
-    } else if(dog1_row2 > dog2_row2) {
-    scaleValue_row2 = (pFilteredRows2[x] & 0xFF0000) >> 16;
-    } else {
-    scaleValue_row2 = (pFilteredRows3[x] & 0xFF0000) >> 16;
-    }
+        const uint8x16_t dogMax = vmaxq_u8(vmaxq_u8(dog0, dog1), vmaxq_u8(dog2, dog3));
 
-    if(dog0_row3 > dog1_row3) {
-    if(dog0_row3 > dog2_row3) { scaleValue_row3 = (pFilteredRows1[x] & 0xFF000000) >> 24; }
-    else { scaleValue_row3 = (pFilteredRows3[x] & 0xFF000000) >> 24; }
-    } else if(dog1_row3 > dog2_row3) {
-    scaleValue_row3 = (pFilteredRows2[x] & 0xFF000000) >> 24;
-    } else {
-    scaleValue_row3 = (pFilteredRows3[x] & 0xFF000000) >> 24;
-    }
+        const uint8x16_t dog0IsMax = vceqq_u8(dogMax, dog0);
+        const uint8x16_t dog1IsMax = vceqq_u8(dogMax, dog1);
+        const uint8x16_t dog2IsMax = vceqq_u8(dogMax, dog2);
 
-    const u32 thresholdValue_row0 = scaleValue_row0;
-    const u32 thresholdValue_row1 = scaleValue_row1;
-    const u32 thresholdValue_row2 = scaleValue_row2;
-    const u32 thresholdValue_row3 = scaleValue_row3;
+        // Backwards, so in cases of ties, the result matches the non-simd version
+        uint8x16_t scaleValue = filteredRow4;
+        scaleValue = vbslq_u8(dog2IsMax, filteredRow3, scaleValue);
+        scaleValue = vbslq_u8(dog1IsMax, filteredRow2, scaleValue);
+        scaleValue = vbslq_u8(dog0IsMax, filteredRow1, scaleValue);
 
-    const u32 curPixel = pImage[x];
+        const uint8x16_t scaleValueIsLarger = vcltq_u8(imageRow, scaleValue);
+        const uint8x16_t binaryVector = vbslq_u8(scaleValueIsLarger, ones8x16, zeros8x16);
 
-    u32 binaryRow = 0;
-    if((curPixel & 0xFF)               < thresholdValue_row0) { binaryRow |= 1; }
-    if(((curPixel & 0xFF00) >> 8)      < thresholdValue_row1) { binaryRow |= (1 << 8); }
-    if(((curPixel & 0xFF0000) >> 16)   < thresholdValue_row2) { binaryRow |= (1 << 16); }
-    if(((curPixel & 0xFF000000) >> 24) < thresholdValue_row3) { binaryRow |= (1 << 24); }
-    #else // if !defined(USE_ARM_ACCELERATION)
-    // M4 intrinsic version of 4-way simd calculation
+        vst1q_u8(&pBinaryImageRow[x], binaryVector);
+      } // for(s32 x=0; x<imageWidth; x++)
+#endif // #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
 
-    //
-    // Compute the Difference of Gaussians (DoG)
-    //
+      for(; x<imageWidth; x++) {
+        //for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
+        const s16 dog0 = ABS(static_cast<s16>(pFilteredRows1[x]) - static_cast<s16>(pFilteredRows0[x]));
+        const s16 dog1 = ABS(static_cast<s16>(pFilteredRows2[x]) - static_cast<s16>(pFilteredRows1[x]));
+        const s16 dog2 = ABS(static_cast<s16>(pFilteredRows3[x]) - static_cast<s16>(pFilteredRows2[x]));
+        const s16 dog3 = ABS(static_cast<s16>(pFilteredRows4[x]) - static_cast<s16>(pFilteredRows3[x]));
 
-    // dog0 is 4-way absolute value of filteredRows0 and filteredRows1
-    const u32 uqsub10 = __UQSUB8(filteredRows1, filteredRows0);
-    const u32 uqsub01 = __UQSUB8(filteredRows0, filteredRows1);
-    const u32 dog0 = uqsub10 | uqsub01;
+        const s16 maxValue = MAX(dog0, MAX(dog1, MAX(dog2, dog3)));
 
-    const u32 uqsub21 = __UQSUB8(filteredRows2, filteredRows1);
-    const u32 uqsub12 = __UQSUB8(filteredRows1, filteredRows2);
-    const u32 dog1 = uqsub21 | uqsub12;
+        u8 scaleValue;
 
-    const u32 uqsub32 = __UQSUB8(filteredRows3, filteredRows2);
-    const u32 uqsub23 = __UQSUB8(filteredRows2, filteredRows3);
-    const u32 dog2 = uqsub32 | uqsub23;
+        if(dog0 == maxValue) {
+          scaleValue = pFilteredRows1[x];
+        } else if(dog1 == maxValue) {
+          scaleValue = pFilteredRows2[x];
+        } else if(dog2 == maxValue) {
+          scaleValue = pFilteredRows3[x];
+        } else {
+          scaleValue = pFilteredRows4[x];
+        }
 
-    //
-    // Compute the filteredRows corresponding to the maximum Difference of Gaussian
-    //
+        //} // for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; scaleImage_numPyramidLevels++)
 
-    // dogMax012 is 4-way max of dog0, dog1, and dog2
-    __USUB8(dog0, dog1); // The answer is irrelevant, we just need to set the GE bits
-    const u32 dogMax01 = __SEL(dog0, dog1);
-
-    __USUB8(dogMax01, dog2); // The answer is irrelevant, we just need to set the GE bits
-    const u32 dogMax012 = __SEL(dogMax01, dog2);
-
-    // For the maximum dog, put the corresponding filtered row into thresholdValue
-    u32 thresholdValue = filteredRows1;
-
-    __USUB8(dog1, dogMax012); // The answer is irrelevant, we just need to set the GE bits
-    thresholdValue = __SEL(filteredRows2, thresholdValue);
-
-    __USUB8(dog2, dogMax012); // The answer is irrelevant, we just need to set the GE bits
-    thresholdValue = __SEL(filteredRows3, thresholdValue);
-
-    //
-    // Binarize the output
-    //
-
-    const u32 curPixel = pImage[x];
-
-    const u32 compareWithThreshold = __UQSUB8(thresholdValue, curPixel);
-    const u32 compareWithThresholdAndSaturate = __UQADD8(compareWithThreshold, twoFiftyFourX4);
-    const u32 binaryRow = __UQSUB8(compareWithThresholdAndSaturate, twoFiftyFourX4);
-    #endif // if !defined(USE_ARM_ACCELERATION) ... #else
-
-    pBinaryImageRowU32[x] = binaryRow;
-    } // for(s32 x=0; x<imageWidth4; x++)
-    } // staticInline void ecvcs_computeBinaryImage()
-    */
+        const u8 thresholdValue = scaleValue;
+        if(pImage[x] < thresholdValue) {
+          pBinaryImageRow[x] = 1;
+        } else {
+          pBinaryImageRow[x] = 0;
+        }
+      } // for(s32 x=0; x<imageWidth; x++)
+    } // staticInline void ecvcs_computeBinaryImage_numFilters5()
 
     NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
     {
@@ -355,7 +330,7 @@ namespace Anki
       }
 
       const s32 numRowsToScroll = integralImageHeight - 2*numBorderPixels;
-      
+
       AnkiAssert(numRowsToScroll > 1);
 
       // Initialize the first integralImageHeight rows of the integralImage
@@ -391,34 +366,31 @@ namespace Anki
 
       BeginBenchmark("ecvcs_mainLoop");
       while(imageY < imageHeight) {
-        //BeginBenchmark("ecvcs_filterRows");
+        BeginBenchmark("ecvcs_filterRows");
         ecvcs_filterRows(integralImage, filterHalfWidths, imageY, filteredRows);
-        //EndBenchmark("ecvcs_filterRows");
+        EndBenchmark("ecvcs_filterRows");
 
-        //BeginBenchmark("ecvcs_computeBinaryImage");
-        /*
-        if(scaleImage_numPyramidLevels != 3) {
-        ecvcs_computeBinaryImage(image, filteredRows, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, imageY, imageWidth, pBinaryImageRow);
+        BeginBenchmark("ecvcs_computeBinaryImage");
+
+        if(numFilterHalfWidths != 5) {
+          ecvcs_computeBinaryImage(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
         } else {
-        if(scaleImage_thresholdMultiplier == 65536) {
-        ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(image, filteredRows, scaleImage_numPyramidLevels, imageY, imageWidth, pBinaryImageRow);
-        } else {
-        ecvcs_computeBinaryImage_numPyramids3(image, filteredRows, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, imageY, imageWidth, pBinaryImageRow);
+          if(scaleImage_thresholdMultiplier == 65536) {
+            ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
+          } else {
+            ecvcs_computeBinaryImage_numFilters5(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
+          }
         }
-        }
-        */
 
-        ecvcs_computeBinaryImage(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
-
-        //EndBenchmark("ecvcs_computeBinaryImage");
+        EndBenchmark("ecvcs_computeBinaryImage");
 
         // Extract the next line of connected components
-        //BeginBenchmark("ecvcs_extractNextRowOfComponents");
+        BeginBenchmark("ecvcs_extractNextRowOfComponents");
         if((lastResult = components.Extract2dComponents_PerRow_NextRow(pBinaryImageRow, imageWidth, imageY, component1d_minComponentWidth, component1d_maxSkipDistance)) != RESULT_OK)
           return lastResult;
-        //EndBenchmark("ecvcs_extractNextRowOfComponents");
+        EndBenchmark("ecvcs_extractNextRowOfComponents");
 
-        //BeginBenchmark("ecvcs_scrollIntegralImage");
+        BeginBenchmark("ecvcs_scrollIntegralImage");
 
         imageY++;
 
@@ -428,7 +400,7 @@ namespace Anki
             return lastResult;
         }
 
-        //EndBenchmark("ecvcs_scrollIntegralImage");
+        EndBenchmark("ecvcs_scrollIntegralImage");
       } // while(imageY < size(image,1))
 
       EndBenchmark("ecvcs_mainLoop");
@@ -442,3 +414,4 @@ namespace Anki
     } // ExtractComponentsViaCharacteristicScale
   } // namespace Embedded
 } // namespace Anki
+

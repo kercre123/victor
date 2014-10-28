@@ -12,10 +12,22 @@
 static Anki::Embedded::Matlab matlab(false);
 #endif
 
-#define USE_ARM_ACCELERATION
+#define ACCELERATION_NONE 0
+#define ACCELERATION_ARM_M4 1
+#define ACCELERATION_ARM_A7 2
 
-#ifndef USE_ARM_ACCELERATION
-#warning not using USE_ARM_ACCELERATION
+#if defined(__ARM_ARCH_7A__)
+#define ACCELERATION_TYPE ACCELERATION_ARM_A7
+#else
+#define ACCELERATION_TYPE ACCELERATION_ARM_M4
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_NONE
+#warning not using ARM acceleration
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+#include <arm_neon.h>
 #endif
 
 namespace Anki {
@@ -487,9 +499,12 @@ namespace Anki {
       // template = (Contrast/2)*ones(size(xsquare));
       const f32 templatePixelValue = 0.5f*(darkGray + brightGray);
 
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
       const f32 xyReferenceMin = 0.0f;
-      const f32 xReferenceMax = static_cast<f32>(image.get_size(1)) - 1.0f;
-      const f32 yReferenceMax = static_cast<f32>(image.get_size(0)) - 1.0f;
+      const f32 xReferenceMax = static_cast<f32>(imageWidth) - 1.0f;
+      const f32 yReferenceMax = static_cast<f32>(imageHeight) - 1.0f;
 
       const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
 
@@ -527,7 +542,7 @@ namespace Anki {
       bool restoreOriginal = false;
 
       for(s32 iteration=0; iteration<maxIterations && !restoreOriginal; iteration++) {
-        //BeginBenchmark("vme_quadrefine_mainLoop_init");
+        BeginBenchmark("vme_quadrefine_mainLoop_init");
 
         const f32 h00 = refinedHomography[0][0]; const f32 h01 = refinedHomography[0][1]; const f32 h02 = refinedHomography[0][2];
         const f32 h10 = refinedHomography[1][0]; const f32 h11 = refinedHomography[1][1]; const f32 h12 = refinedHomography[1][2];
@@ -545,9 +560,9 @@ namespace Anki {
 
         s32 numInBounds = 0;
 
-        //EndBenchmark("vme_quadrefine_mainLoop_init");
+        EndBenchmark("vme_quadrefine_mainLoop_init");
 
-        //BeginBenchmark("vme_quadrefine_mainLoop_samples");
+        BeginBenchmark("vme_quadrefine_mainLoop_samples");
         for(s32 iSample=0; iSample<actualNumSamples && !restoreOriginal; iSample++) {
           //BeginBenchmark("vme_quadrefine_mainLoop_samples1");
 
@@ -612,14 +627,14 @@ namespace Anki {
 
           //BeginBenchmark("vme_quadrefine_mainLoop_samples3");
 
-#if !defined(USE_ARM_ACCELERATION)
+#if ACCELERATION_TYPE == ACCELERATION_NONE
           for(s32 ia=0; ia<8; ia++) {
             for(s32 ja=ia; ja<8; ja++) {
               AWAt_raw[ia][ja] += Arow[ia][iSample] * Arow[ja][iSample];
             }
             b_raw[ia] += Arow[ia][iSample] * tGradientValue;
           }
-#else // #if !defined(USE_ARM_ACCELERATION)
+#else // #if ACCELERATION_TYPE == ACCELERATION_NONE
           const f32 a0 = Arow[0][iSample];
           const f32 a1 = Arow[1][iSample];
           const f32 a2 = Arow[2][iSample];
@@ -680,14 +695,14 @@ namespace Anki {
 
           AWAt_raw[7][7] += a7 * a7;
           b_raw[7] += a7 * tGradientValue;
-#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+#endif // #if ACCELERATION_TYPE == ACCELERATION_NONE ... #else
 
           //EndBenchmark("vme_quadrefine_mainLoop_samples3");
         } // for each sample
 
-        //EndBenchmark("vme_quadrefine_mainLoop_samples");
+        EndBenchmark("vme_quadrefine_mainLoop_samples");
 
-        //BeginBenchmark("vme_quadrefine_mainLoop_finalize");
+        BeginBenchmark("vme_quadrefine_mainLoop_finalize");
 
         // Put the raw A and b matrices into the Array containers
         for(s32 ia=0; ia<8; ia++) {
@@ -737,6 +752,8 @@ namespace Anki {
           //printf("Corner change at iteration %d = %f which is less than "
           //         "convergence tolerance of %f. Stopping iterations.\n",
           //         iteration, currentCornerChange, CornerConvergenceTolerance);
+
+          EndBenchmark("vme_quadrefine_mainLoop_finalize");
           break;
         }
 
@@ -752,7 +769,7 @@ namespace Anki {
         }
 #endif
 
-        //EndBenchmark("vme_quadrefine_mainLoop_finalize");
+        EndBenchmark("vme_quadrefine_mainLoop_finalize");
       } // for each iteration
 
       EndBenchmark("vme_quadrefine_mainLoop");

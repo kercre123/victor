@@ -9,6 +9,7 @@ add_executable(run_coreTechCommonTests
   testMatrix.cpp
   testPoint.cpp
   testQuad.cpp
+  testPolygon.cpp
   testRotation.cpp
   testRotatedRectangle.cpp
   testConfigTreeJsonCpp.cpp)

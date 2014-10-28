@@ -81,3 +81,33 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DEMBEDDED_USE_GTEST=0 -DEMBEDDED_USE_MATLAB
 
 7) Make the project
 make -j3 ; python ../python/addSourceToGccAssembly.py /mnt/fastExtern/products-cozmo/build
+
+-------------
+GCC on Linux, cross-compiled for Cubietruck (Cortex-A7)
+-------------
+
+1) Follow steps 1-3 and 5 for "GCC on Cubietruck (Cortex-A7)"
+
+2) Install cross-compilation on PC-based Ubuntu 12.04 or 14.04 (or probably others, though I haven't tested)
+# On the PC, enter the following:
+sudo add-apt-repository 'deb http://us.archive.ubuntu.com/ubuntu utopic main'
+sudo apt-get update
+sudo apt-get install cmake gcc-4.9-arm-linux-gnueabihf g++-4.9-arm-linux-gnueabihf
+sudo add-apt-repository --remove 'deb http://us.archive.ubuntu.com/ubuntu utopic main'
+sudo apt-get update
+
+3) Build cross-compiled.  In products-cozmo/build --- create 'build' folder if it doesn't exist --- run cmake
+AR=arm-linux-gnueabihf-gcc-ar-4.9 AS=arm-linux-gnueabihf-gcc-as-4.9 CC=arm-linux-gnueabihf-gcc-4.9 CXX=arm-linux-gnueabihf-g++-4.9 cmake .. -DCMAKE_BUILD_TYPE=Release -DEMBEDDED_USE_GTEST=0 -DEMBEDDED_USE_MATLAB=0 -DEMBEDDED_USE_OPENCV=0
+make -j8
+
+4) On the board, run sudo ifconfig to determine the inet addr (In the format as 192.168.1.???)
+
+5) Set up ssh key
+  # On the PC
+  ssh-keygen -t rsa
+  # For the file to save the key, choose something like "/home/yourUserId/.ssh/id_rsa_cubie"
+  ssh linaro@192.168.1.125 mkdir -p .ssh
+  cat .ssh/id_rsa_cubie.pub | ssh linaro@192.168.1.125 'cat >> .ssh/authorized_keys'
+
+6) Comple, upload, and run on the board, by running the file "products-cozmo/runA7.sh"
+

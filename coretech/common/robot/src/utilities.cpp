@@ -279,11 +279,11 @@ namespace Anki
 
       const f64 timeInSeconds = (f64)(time.tv_sec-startSeconds) + ((f64)time.tv_usec / 1000000.0);
 #elif defined(__EDG__)  // ARM-MDK
-      const f64 timeInSeconds = Anki::Cozmo::HAL::GetMicroCounter() / 1000000.0;
+      const f64 timeInSeconds = Anki::Cozmo::HAL::GetMicroCounter() * (1.0 / 1000000.0);
 #else // Generic Unix
       timespec ts;
       clock_gettime(CLOCK_MONOTONIC, &ts);
-      const f64 timeInSeconds = (f64)(ts.tv_sec) + (f64)(ts.tv_nsec)/1000000000.0;
+      const f64 timeInSeconds = (f64)(ts.tv_sec) + (f64)(ts.tv_nsec) * (1.0 / 1000000000.0);
 #endif
 
       return timeInSeconds;

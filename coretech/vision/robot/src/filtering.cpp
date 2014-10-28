@@ -16,10 +16,22 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/hostIntrinsics_m4.h"
 
-#define USE_ARM_ACCELERATION
+#define ACCELERATION_NONE 0
+#define ACCELERATION_ARM_M4 1
+#define ACCELERATION_ARM_A7 2
 
-#ifndef USE_ARM_ACCELERATION
-#warning not using USE_ARM_ACCELERATION
+#if defined(__ARM_ARCH_7A__)
+#define ACCELERATION_TYPE ACCELERATION_ARM_A7
+#else
+#define ACCELERATION_TYPE ACCELERATION_ARM_M4
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_NONE
+#warning not using ARM acceleration
+#endif
+
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+#include <arm_neon.h>
 #endif
 
 namespace Anki
@@ -342,6 +354,141 @@ namespace Anki
         return RESULT_OK;
       } // Result BoxFilter()
 
+      Result DownsampleBilinear(const Array<u8> &in, Array<u8> &out, MemoryStack scratch)
+      {
+        const s32 numSubpixelBits = 11;
+        const u32 subpixelMultiplierU32 = 1 << numSubpixelBits;
+        const f32 subpixelMultiplierF32 = static_cast<f32>(subpixelMultiplierU32);
+
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out, scratch),
+          RESULT_FAIL_INVALID_OBJECT, "DownsampleBilinear", "Invalid objects");
+
+        const s32 inHeight = in.get_size(0);
+        const s32 inWidth  = in.get_size(1);
+
+        const s32 outHeight = out.get_size(0);
+        const s32 outWidth  = out.get_size(1);
+
+        Point<f32> scale(
+          static_cast<f32>(inWidth)  / static_cast<f32>(outWidth),
+          static_cast<f32>(inHeight) / static_cast<f32>(outHeight));
+
+        AnkiConditionalErrorAndReturnValue(scale.x > 1.0f && scale.y > 1.0f,
+          RESULT_FAIL_INVALID_SIZE, "DownsampleBilinear", "out is larger than in");
+
+        const f32 yInStart     = (0.5f * scale.y) - 0.5f;
+        const f32 yInIncrement = scale.y;
+
+        const f32 xInStart     = (0.5f * scale.x) - 0.5f;
+        const f32 xInIncrement = scale.x;
+
+        FixedLengthList<s32> inX0s_S32(outWidth, scratch);
+        FixedLengthList<s32> inX1s_S32(outWidth, scratch);
+        FixedLengthList<u32> alphaXs(outWidth, scratch);
+
+        AnkiConditionalErrorAndReturnValue(AreValid(inX0s_S32, inX1s_S32, alphaXs),
+          RESULT_FAIL_OUT_OF_MEMORY, "DownsampleBilinear", "Out of memory");
+
+        // Compute the x coordinates
+        {
+          s32 * restrict pInX0s_S32 = inX0s_S32.Pointer(0);
+          s32 * restrict pInX1s_S32 = inX1s_S32.Pointer(0);
+          u32 * restrict pAlphaXs = alphaXs.Pointer(0);
+
+          for(s32 x=0; x<outWidth; x++) {
+            const f32 inX = xInStart + xInIncrement * static_cast<f32>(x);
+
+            s32 inX0_S32 = FloorS32(inX);
+            s32 inX1_S32 = CeilS32(inX);
+
+            // Technically, we can't interpolate the borders. But this is a reasonable approximation
+            if(inX0_S32 < 0)
+              inX0_S32 = 0;
+
+            if(inX1_S32 < 0)
+              inX1_S32 = 0;
+
+            if(inX0_S32 > (inWidth-1))
+              inX0_S32 = inWidth-1;
+
+            if(inX1_S32 > (inWidth-1))
+              inX1_S32 = inWidth-1;
+
+            const f32 inX0 = static_cast<f32>(inX0_S32);
+
+            const f32 alphaX = inX - inX0;
+
+            pInX0s_S32[x] = inX0_S32;
+            pInX1s_S32[x] = inX1_S32;
+            pAlphaXs[x] = saturate_cast<u32>(alphaX * subpixelMultiplierF32);
+          } // for(s32 x=0; x<outWidth; x++)
+        }
+
+        const s32 * restrict pInX0s_S32 = inX0s_S32.Pointer(0);
+        const s32 * restrict pInX1s_S32 = inX1s_S32.Pointer(0);
+        const u32 * restrict pAlphaXs = alphaXs.Pointer(0);
+
+        for(s32 y=0; y<outHeight; y++) {
+          const f32 inY = yInStart + yInIncrement * static_cast<f32>(y);
+
+          s32 inY0_S32 = FloorS32(inY);
+          s32 inY1_S32 = CeilS32(inY);
+
+          // Technically, we can't interpolate the borders. But this is a reasonable approximation
+          if(inY0_S32 < 0)
+            inY0_S32 = 0;
+
+          if(inY1_S32 < 0)
+            inY1_S32 = 0;
+
+          if(inY0_S32 > (inHeight-1))
+            inY0_S32 = inHeight-1;
+
+          if(inY1_S32 > (inHeight-1))
+            inY1_S32 = inHeight-1;
+
+          const f32 inY0 = static_cast<f32>(inY0_S32);
+          //const f32 inY1 = static_cast<f32>(inY1_S32);
+
+          const f32 alphaYF32 = inY - inY0;
+          //const f32 alphaYinverseF32 = 1.0f - alphaYF32;
+
+          const u32 alphaYU32 = saturate_cast<u32>(alphaYF32 * subpixelMultiplierF32);
+          const u32 alphaYinverseU32 = subpixelMultiplierU32 - alphaYU32;
+
+          const u8 * restrict pIn_y0 = in.Pointer(inY0_S32, 0);
+          const u8 * restrict pIn_y1 = in.Pointer(inY1_S32, 0);
+
+          u8 * restrict pOut = out.Pointer(y, 0);
+
+          s32 x = 0;
+
+          for(; x<outWidth; x++) {
+            const s32 inX0_S32 = pInX0s_S32[x];
+            const s32 inX1_S32 = pInX1s_S32[x];
+            const u32 alphaX = pAlphaXs[x];
+
+            const u32 alphaXinverse = subpixelMultiplierU32 - alphaX;
+
+            const u8 pixelTL = pIn_y0[inX0_S32];
+            const u8 pixelTR = pIn_y0[inX1_S32];
+            const u8 pixelBL = pIn_y1[inX0_S32];
+            const u8 pixelBR = pIn_y1[inX1_S32];
+
+            //const f32 interpolatedPixelValueF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+
+            const u32 interpolatedTop = alphaXinverse*pixelTL + alphaX*pixelTR;
+            const u32 interpolatedBottom = alphaXinverse*pixelBL + alphaX*pixelBR;
+            const u32 interpolatedPixelValue = alphaYinverseU32*interpolatedTop + alphaYU32*interpolatedBottom;
+            const u32 interpolatedPixelValueScaled = interpolatedPixelValue >> (2*numSubpixelBits);
+
+            pOut[x] = interpolatedPixelValueScaled & 0xFF;
+          } // for(s32 x=0; x<outWidth; x++)
+        } // for(s32 y=0; y<outHeight; y++)
+
+        return RESULT_OK;
+      } // Result DownsampleBilinear(const Array<u8> &in, Array<u8> &out, MemoryStack scratch)
+
       Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch)
       {
         const s32 imageHeight = in.get_size(0);
@@ -402,11 +549,11 @@ namespace Anki
 
           s8 * restrict pDy = dy.Pointer(y,0);
 
-#if !defined(USE_ARM_ACCELERATION)
+#if USE_ARM_ACCELERATION == ACCELERATION_NONE || USE_ARM_ACCELERATION == ACCELERATION_ARM_A7
           for(x=1; x<(imageWidth-1); x++) {
             pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) >> 1) - (static_cast<s32>(pIn_ym1[x]) >> 1) );
           }
-#else // #if !defined(USE_ARM_ACCELERATION)
+#elif USE_ARM_ACCELERATION == ACCELERATION_ARM_M4
           // pIn_ym1 and pIn_yp1 should always be aligned, so this is okay even with auto-load-merging
           for(x = 0; x<(imageWidth-7); x+=8) {
             const u32 inM3210 = *reinterpret_cast<const u32*>(pIn_ym1 + x);
@@ -427,7 +574,7 @@ namespace Anki
             *reinterpret_cast<u32*>(pDy + x) = out3210;
             *reinterpret_cast<u32*>(pDy + x + 4) = out7654;
           }
-#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+#endif // #elif USE_ARM_ACCELERATION == ACCELERATION_ARM_M4
 
           pDy[0] = 0;
           pDy[imageWidth-1] = 0;
@@ -440,3 +587,4 @@ namespace Anki
     } // namespace ImageProcessing
   } // namespace Embedded
 } // namespace Anki
+

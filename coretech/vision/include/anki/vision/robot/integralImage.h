@@ -54,63 +54,38 @@ namespace Anki
       if(minX > 0)
         memset(pOutput, 0, minX*sizeof(OutType));
 
-      // Various SIMD versions for different data type sizes
-      if(sizeof(OutType) == 1) {
-        if(outputMultiply == 1 && outputRightShift == 0) {
-          const s32 maxX_firstCycles = RoundUp(minX, 4);
-
-          for(s32 x=minX; x<maxX_firstCycles; x++) {
-            pOutput[x] = static_cast<OutType>( pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x] );
-          }
-
-          u32 * restrict pOutputU32 = reinterpret_cast<u32*>(output.Pointer(0,0));
-
-          const s32 minX_simd4 = maxX_firstCycles / 4;
-          const s32 maxX_simd4 = maxX / 4;
-          for(s32 x=minX_simd4; x<=maxX_simd4; x++) {
-            const u32 out0 = static_cast<OutType>( pIntegralImage_11[x*4] - pIntegralImage_10[x*4] + pIntegralImage_00[x*4] - pIntegralImage_01[x*4] );
-            const u32 out1 = static_cast<OutType>( pIntegralImage_11[x*4+1] - pIntegralImage_10[x*4+1] + pIntegralImage_00[x*4+1] - pIntegralImage_01[x*4+1] );
-            const u32 out2 = static_cast<OutType>( pIntegralImage_11[x*4+2] - pIntegralImage_10[x*4+2] + pIntegralImage_00[x*4+2] - pIntegralImage_01[x*4+2] );
-            const u32 out3 = static_cast<OutType>( pIntegralImage_11[x*4+3] - pIntegralImage_10[x*4+3] + pIntegralImage_00[x*4+3] - pIntegralImage_01[x*4+3] );
-
-            pOutputU32[x] = (out0 & 0xFF) | ((out1 & 0xFF) << 8) | ((out2 & 0xFF) << 16) | ((out3 & 0xFF) << 24);
-          }
-        } else {
-          const s32 maxX_firstCycles = RoundUp(minX, 4);
-
-          for(s32 x=minX; x<maxX_firstCycles; x++) {
-            pOutput[x] = static_cast<OutType>( pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x] );
-          }
-
-          u32 * restrict pOutputU32 = reinterpret_cast<u32*>(output.Pointer(0,0));
-
-          const s32 minX_simd4 = maxX_firstCycles / 4;
-          const s32 maxX_simd4 = maxX / 4;
-          for(s32 x=minX_simd4; x<=maxX_simd4; x++) {
-            const u32 out0 = static_cast<OutType>( ((pIntegralImage_11[x*4] - pIntegralImage_10[x*4] + pIntegralImage_00[x*4] - pIntegralImage_01[x*4]) * outputMultiply) >> outputRightShift );
-            const u32 out1 = static_cast<OutType>( ((pIntegralImage_11[x*4+1] - pIntegralImage_10[x*4+1] + pIntegralImage_00[x*4+1] - pIntegralImage_01[x*4+1]) * outputMultiply) >> outputRightShift );
-            const u32 out2 = static_cast<OutType>( ((pIntegralImage_11[x*4+2] - pIntegralImage_10[x*4+2] + pIntegralImage_00[x*4+2] - pIntegralImage_01[x*4+2]) * outputMultiply) >> outputRightShift );
-            const u32 out3 = static_cast<OutType>( ((pIntegralImage_11[x*4+3] - pIntegralImage_10[x*4+3] + pIntegralImage_00[x*4+3] - pIntegralImage_01[x*4+3]) * outputMultiply) >> outputRightShift );
-
-            pOutputU32[x] = (out0 & 0xFF) | ((out1 & 0xFF) << 8) | ((out2 & 0xFF) << 16) | ((out3 & 0xFF) << 24);
-          }
-        }
-      } else {
-        if(outputMultiply == 1 && outputRightShift == 0) {
-          for(s32 x=minX; x<=maxX; x++) {
-            pOutput[x] = static_cast<OutType>( pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x] );
-          }
-        } else {
-          for(s32 x=minX; x<=maxX; x++) {
-            pOutput[x] = static_cast<OutType>( ((pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x]) * outputMultiply) >> outputRightShift ) ;
-          }
-        }
-      }
+      ScrollingIntegralImage_u8_s32::FilterRow_innerLoop(
+        minX, maxX,
+        outputMultiply, outputRightShift,
+        pIntegralImage_00, pIntegralImage_01, pIntegralImage_10, pIntegralImage_11,
+        pOutput);
 
       if((maxX+1) < imageWidth)
         memset(pOutput+maxX+1, 0, (imageWidth - (maxX+1))*sizeof(OutType));
 
       return RESULT_OK;
+    }
+
+    template<typename OutType> void ScrollingIntegralImage_u8_s32::FilterRow_innerLoop(
+      const s32 minX,
+      const s32 maxX,
+      const s32 outputMultiply,
+      const s32 outputRightShift,
+      const s32 * restrict pIntegralImage_00,
+      const s32 * restrict pIntegralImage_01,
+      const s32 * restrict pIntegralImage_10,
+      const s32 * restrict pIntegralImage_11,
+      OutType * restrict pOutput)
+    {
+      if(outputMultiply == 1 && outputRightShift == 0) {
+        for(s32 x=minX; x<=maxX; x++) {
+          pOutput[x] = static_cast<OutType>( pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x] );
+        }
+      } else {
+        for(s32 x=minX; x<=maxX; x++) {
+          pOutput[x] = static_cast<OutType>( ((pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x]) * outputMultiply) >> outputRightShift ) ;
+        }
+      }
     }
   } // namespace Embedded
 } //namespace Anki
