@@ -42,7 +42,7 @@ BSTimer basestationController;
 
 // Set to 1 if you want to use BLE to communicate with robot.
 // Set to 0 if you want to use TCP to communicate with robot.
-#define USE_BLE_ROBOT_COMMS 1
+#define USE_BLE_ROBOT_COMMS 0
 #if (USE_BLE_ROBOT_COMMS)
 #include "anki/cozmo/basestation/bleRobotManager.h"
 #include "anki/cozmo/basestation/bleComms.h"
