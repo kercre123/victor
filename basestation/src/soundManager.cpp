@@ -24,7 +24,7 @@ namespace Anki {
   namespace Cozmo {
     
     namespace {
-      const int MAX_SOUND_THREADS = 4;
+      const int MAX_SOUND_THREADS = 1;
       
       // putting this here (as opposed to a member in SoundManager) so that the
       // CmdLinePlay function, which runs in its own thread, can access it and
@@ -97,6 +97,11 @@ namespace Anki {
       return true;
     }
     
+    bool SoundManager::IsPlaying() const
+    {
+      return _numActiveThreads > 0;
+    }
+    
     const std::string& SoundManager::GetSoundFile(SoundID_t soundID)
     {
       // Table of sound files relative to root dir
@@ -133,14 +138,15 @@ namespace Anki {
         ,{
           // CREEP Sound Scheme
           // TODO: Update these mappings for real playtest sounds
-          {SOUND_POWER_ON, "droid/droid.wav"}
-          ,{SOUND_PHEW,    "droid/r2d2wst2.wav"}
-          ,{SOUND_SCREAM,  "droid/r2d2wstl.wav"}
-          ,{SOUND_OOH,     "droid/r2d2wst1.wav"}
-          ,{SOUND_HELPME,  "droid/r2d2wst3.wav"}
-          ,{SOUND_SCAN,    "demo/OKDone.wav"}
-          ,{SOUND_EXCITED, "demo/OKGotIt.wav"}
-          ,{SOUND_SCARED,  "demo/WaitingForDice1.wav"}
+          {SOUND_POWER_ON,     "creep/Robot-PowerOn1Rev2.mp3"}
+          ,{SOUND_PHEW,        "creep/Robot-ReliefPhew1.mp3"}
+          ,{SOUND_SCREAM,      "creep/Robot-Scream7.mp3"}
+          ,{SOUND_OOH,         "creep/Robot-OohScream12.mp3"}
+          ,{SOUND_HELPME,      "creep/Robot-HelpMe1.mp3"}
+          ,{SOUND_SCAN,        "creep/Robot-Scanning2Rev1.mp3"}
+          ,{SOUND_HAPPY_CHASE, "creep/Robot-Happy2.mp3"}
+          ,{SOUND_FLEES,       "creep/Robot-Happy1.mp3"}
+          ,{SOUND_SINGING,     "creep/Robot-Singing1Part1-2.mp3"}
         }
       };
       
@@ -162,18 +168,19 @@ namespace Anki {
     SoundID_t SoundManager::GetID(const std::string& name)
     {
       static const std::map<std::string, SoundID_t> LUT = {
-        {"TADA",      SOUND_TADA},
-        {"OK_GOT_IT", SOUND_OK_GOT_IT},
-        {"OK_DONE",   SOUND_OK_DONE},
-        {"STARTOVER", SOUND_STARTOVER},
-        {"SCAN",      SOUND_SCAN},
-        {"POWER_ON",  SOUND_POWER_ON},
-        {"PHEW",      SOUND_PHEW},
-        {"OOH",       SOUND_OOH},
-        {"SCREAM",    SOUND_SCREAM},
-        {"HELPME",    SOUND_HELPME},
-        {"EXCITED",   SOUND_EXCITED},
-        {"SCARED",    SOUND_SCARED},
+        {"TADA",          SOUND_TADA},
+        {"OK_GOT_IT",     SOUND_OK_GOT_IT},
+        {"OK_DONE",       SOUND_OK_DONE},
+        {"STARTOVER",     SOUND_STARTOVER},
+        {"SCAN",          SOUND_SCAN},
+        {"POWER_ON",      SOUND_POWER_ON},
+        {"PHEW",          SOUND_PHEW},
+        {"OOH",           SOUND_OOH},
+        {"SCREAM",        SOUND_SCREAM},
+        {"HELPME",        SOUND_HELPME},
+        {"HAPPY_CHASE",   SOUND_HAPPY_CHASE},
+        {"FLEES",         SOUND_FLEES},
+        {"SINGING",       SOUND_SINGING}
       };
 
       auto result = LUT.find(name);

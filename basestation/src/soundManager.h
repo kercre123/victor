@@ -49,8 +49,9 @@ namespace Anki {
       ,SOUND_SCREAM
       ,SOUND_HELPME
       ,SOUND_SCAN
-      ,SOUND_EXCITED
-      ,SOUND_SCARED
+      ,SOUND_HAPPY_CHASE
+      ,SOUND_FLEES
+      ,SOUND_SINGING
       ,NUM_SOUNDS
     } SoundID_t;
     
@@ -74,6 +75,8 @@ namespace Anki {
       
       // Lookup a sound by name
       static SoundID_t GetID(const std::string& name);
+      
+      bool IsPlaying() const;
       
     protected:
       

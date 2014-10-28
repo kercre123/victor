@@ -102,7 +102,7 @@ Supervisor {
 								geometry Cylinder {
 								height 0.0322
 								radius 0.013
-								subdivision 16
+								subdivision 12
 								}
 							}
 							]
@@ -119,7 +119,7 @@ Supervisor {
 									geometry Cylinder {
 										height 0.0322
 										radius 0.013
-										subdivision 16
+										subdivision 12
 									}
 								}
 							]
@@ -183,7 +183,7 @@ Supervisor {
 							geometry Cylinder {
 								height 0.040
 								radius 0.007
-								subdivision 16
+								subdivision 12
 							}
 						}
 						DEF EYES Transform {
@@ -448,7 +448,7 @@ Supervisor {
 								geometry DEF FACE Cylinder {
 									height 0.008
 									radius 0.015
-									subdivision 24
+									subdivision 18
 								}
 							}
 						]
@@ -456,7 +456,7 @@ Supervisor {
 				  DEF HEAD_SPHERE Shape {
 						geometry Sphere {
 							radius 0.020
-							subdivision 3
+							subdivision 2
 						}
 						appearance Appearance {
 							material Material {
@@ -509,7 +509,7 @@ Supervisor {
 								geometry Cylinder {
 								height 0.039
 								radius 0.015
-								subdivision 20
+								subdivision 16
 								}
 							}
 							]
@@ -526,7 +526,7 @@ Supervisor {
 									geometry Cylinder {
 										height 0.039
 										radius 0.015
-										subdivision 20
+										subdivision 16
 									}
 								}
 							]
@@ -595,7 +595,7 @@ Supervisor {
 									geometry Cylinder {
 										height 0.011
 										radius 0.0132
-										subdivision 22
+										subdivision 18
 									}
 								 }
 								 Transform {
@@ -624,7 +624,7 @@ Supervisor {
 					geometry Cylinder {
 						height 0.003
 						radius 0.0142
-						subdivision 32
+						subdivision 24
 					}
 			  }
 			]
@@ -748,7 +748,7 @@ Supervisor {
 					geometry Cylinder {
 					height 0.048
 					radius 0.0035
-					subdivision 14
+					subdivision 10
 					}
 				}
 			
@@ -1152,7 +1152,7 @@ Supervisor {
 							geometry Cylinder {
 							height 0.048
 							radius 0.0045
-							 subdivision 14
+							 subdivision 10
 							}
 						}
 					

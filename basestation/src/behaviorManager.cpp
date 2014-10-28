@@ -202,7 +202,6 @@ namespace Anki {
           
           VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::YELLOW, GetBehaviorStateName(_state).c_str());
           
-          // TODO: Fill in transition table
           _transitionManager.Clear();
           
           SoundManager::getInstance()->SetScheme(SOUND_SCHEME_CREEP);
@@ -235,6 +234,8 @@ namespace Anki {
           _stateAnimations[EXCITABLE_CHASE] = "ANIM_EXCITABLE_CHASE";
           _stateAnimations[SCAN]            = "ANIM_SCAN";
           _stateAnimations[SCARED_FLEE]     = "ANIM_SCARED_FLEE";
+          _stateAnimations[DANCE_WITH_BLOCK]= "ANIM_SINGING";
+          _stateAnimations[HELP_ME_STATE]   = "ANIM_HELPME";
           
           // Automatically switch states as reactions to certain markers:
           _robot->AddReactionCallback(Vision::MARKER_ANGRYFACE, &ScaredReaction);
