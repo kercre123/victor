@@ -67,7 +67,7 @@ namespace Cozmo {
     
   private:
     
-    static const s32 MAX_KEYFRAMES = 32; // per track
+    static const s32 MAX_KEYFRAMES = 32; // total, shared b/w tracks
     
     AnimationID_t _ID; // needed, or simply the slot it's stored in?
     
@@ -76,11 +76,18 @@ namespace Cozmo {
     TimeStamp_t _startTime_ms;
     
     bool _isPlaying;
+
+    KeyFrame _frames[MAX_KEYFRAMES];
+    s32      _totalNumFrames;
+    bool     _framesSorted;
     
-    // Lists of keyframes for each track
+    // If not already sorted, groups keyframes by track in the _frames list, so
+    // that all keyframes of each track are contiguous in the list.
+    Result SortKeyFrames();
+
     struct Track {
-      KeyFrame frames[MAX_KEYFRAMES];
       bool     isReady;   // true once first frame is "in position"
+      s32      startOffset;
       s32      numFrames;
       s32      currFrame;
       

@@ -415,6 +415,14 @@ ADD_MESSAGE_MEMBER(u8,  leftClockwise)    // TODO: Could combine the two clockwi
 ADD_MESSAGE_MEMBER(u8,  rightClockwise)   //         "
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartSpinningEyes)
 
+// AddAnimKeyFrame_StopEyeAnimation
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_StopEyeAnimation, 2)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopEyeAnimation)
+
 // IMURequest
 START_MESSAGE_DEFINITION(IMURequest, 1)
 ADD_MESSAGE_MEMBER(u32, length_ms)

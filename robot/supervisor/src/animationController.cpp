@@ -28,25 +28,25 @@ namespace AnimationController {
     const AnimationID_t ANIM_IDLE = -1;
     //static const AnimationID_t ANIM_IDLE = MAX_KNOWN_ANIMATIONS;
     
-    AnimationID_t currAnimID_   = ANIM_IDLE;
-    AnimationID_t queuedAnimID_ = ANIM_IDLE;
-    Animation     cannedAnimations[MAX_CANNED_ANIMATIONS];
+    AnimationID_t _currAnimID   = ANIM_IDLE;
+    AnimationID_t _queuedAnimID = ANIM_IDLE;
+    Animation     _cannedAnimations[MAX_CANNED_ANIMATIONS];
     
-    s32 currDesiredLoops_ = 0;
-    s32 queuedDesiredLoops_ = 0;
-    s32 numLoopsComplete_ = 0;
-    u32 waitUntilTime_us_ = 0;
+    s32 _currDesiredLoops   = 0;
+    s32 _queuedDesiredLoops = 0;
+    s32 _numLoopsComplete   = 0;
+    u32 _waitUntilTime_us   = 0;
     
-    f32 currCmdWheelSpeed_ = 0;
+    f32 _currCmdWheelSpeed  = 0;
 //    f32 currCmdHeadAngle_ = 0;
     
-    Radians startingRobotAngle_ = 0;
+    Radians _startingRobotAngle = 0;
 //    f32 startingHeadAngle_ = 0;
 //    f32 startingHeadMaxSpeed_ = 0;
 //    f32 startingHeadStartAccel_ = 0;
     
-    bool isStopping_ = false;
-    bool wasStopping_ = false;
+    bool _isStopping  = false;
+    bool _wasStopping = false;
     
     /*
     // Function pointers for start/update/stop behavior of each animation.
@@ -89,17 +89,17 @@ namespace AnimationController {
   
   void BackAndForthStart()
   {
-    currCmdWheelSpeed_ = BAF_SPEED_MMPS;
+    _currCmdWheelSpeed = BAF_SPEED_MMPS;
   }
   
   void BackAndForthUpdate()
   {
-    if (waitUntilTime_us_ < HAL::GetMicroCounter()) {
-      currCmdWheelSpeed_ *= -1;
-      SteeringController::ExecuteDirectDrive(currCmdWheelSpeed_, currCmdWheelSpeed_);
-      waitUntilTime_us_ = HAL::GetMicroCounter() + BAF_SWITCH_PERIOD_US;
-      if (currCmdWheelSpeed_ < 0) {
-        ++numLoopsComplete_;
+    if (_waitUntilTime_us < HAL::GetMicroCounter()) {
+      _currCmdWheelSpeed *= -1;
+      SteeringController::ExecuteDirectDrive(_currCmdWheelSpeed, _currCmdWheelSpeed);
+      _waitUntilTime_us = HAL::GetMicroCounter() + BAF_SWITCH_PERIOD_US;
+      if (_currCmdWheelSpeed < 0) {
+        ++_numLoopsComplete;
       }
     }
   }
@@ -109,31 +109,31 @@ namespace AnimationController {
   
   void WiggleStart()
   {
-    currCmdWheelSpeed_ = WIGGLE_WHEEL_SPEED_MMPS;
+    _currCmdWheelSpeed = WIGGLE_WHEEL_SPEED_MMPS;
   }
   
   void WiggleUpdate()
   {
-    if (waitUntilTime_us_ < HAL::GetMicroCounter()) {
-      currCmdWheelSpeed_ *= -1;
-      SteeringController::ExecuteDirectDrive(currCmdWheelSpeed_, -currCmdWheelSpeed_);
-      waitUntilTime_us_ = HAL::GetMicroCounter() + WIGGLE_PERIOD_US;
-      if (currCmdWheelSpeed_ < 0) {
-        ++numLoopsComplete_;
+    if (_waitUntilTime_us < HAL::GetMicroCounter()) {
+      _currCmdWheelSpeed *= -1;
+      SteeringController::ExecuteDirectDrive(_currCmdWheelSpeed, -_currCmdWheelSpeed);
+      _waitUntilTime_us = HAL::GetMicroCounter() + WIGGLE_PERIOD_US;
+      if (_currCmdWheelSpeed < 0) {
+        ++_numLoopsComplete;
       }
     }
   }
   
   void WiggleStop()
   {
-    if (!wasStopping_ && isStopping_) {
+    if (!_wasStopping && _isStopping) {
       
       // Which way is closer to turn to starting orientation?
-      f32 rotSpeed = PI_F * ( (startingRobotAngle_ - Localization::GetCurrentMatOrientation()).ToFloat() > 0 ? 1 : -1);
-      SteeringController::ExecutePointTurn(startingRobotAngle_.ToFloat(), rotSpeed, 10, 10);
+      f32 rotSpeed = PI_F * ( (_startingRobotAngle - Localization::GetCurrentMatOrientation()).ToFloat() > 0 ? 1 : -1);
+      SteeringController::ExecutePointTurn(_startingRobotAngle.ToFloat(), rotSpeed, 10, 10);
       
     } else if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
-      isStopping_ = false;
+      _isStopping = false;
     }
   }
   
@@ -352,7 +352,7 @@ namespace AnimationController {
   
   
   Result Init()
-  {    
+  {
     DefineHardCodedAnimations();
     
     return RESULT_OK;
@@ -412,8 +412,8 @@ namespace AnimationController {
                                        "AnimationController.ClearCannedAnimation.InvalidAnimationID",
                                        "Out-of-range animation ID = %d\n", whichAnimation);
     
-    cannedAnimations[whichAnimation].Clear();
-    cannedAnimations[whichAnimation].SetID(whichAnimation);
+    _cannedAnimations[whichAnimation].Clear();
+    _cannedAnimations[whichAnimation].SetID(whichAnimation);
     
     return RESULT_OK;
   }
@@ -425,7 +425,7 @@ namespace AnimationController {
                                        "AnimationController.AddKeyFrameToCannedAnimation.InvalidAnimationID",
                                        "Out-of-range animation ID = %d\n", whichAnimation);
     
-    return cannedAnimations[whichAnimation].AddKeyFrame(keyframe);
+    return _cannedAnimations[whichAnimation].AddKeyFrame(keyframe);
   }
   
   
@@ -433,24 +433,24 @@ namespace AnimationController {
   {
     if (IsPlaying()) {
       
-      cannedAnimations[currAnimID_].Update();
+      _cannedAnimations[_currAnimID].Update();
       
-      if(!cannedAnimations[currAnimID_].IsPlaying()) {
+      if(!_cannedAnimations[_currAnimID].IsPlaying()) {
         // If current animation just finished
-        ++numLoopsComplete_;
-        if(currDesiredLoops_ == 0 ||  numLoopsComplete_ < currDesiredLoops_) {
+        ++_numLoopsComplete;
+        if(_currDesiredLoops == 0 ||  _numLoopsComplete < _currDesiredLoops) {
           // Looping: play again
-          cannedAnimations[currAnimID_].Init();
+          _cannedAnimations[_currAnimID].Init();
         } else {
-          currAnimID_ = ANIM_IDLE;
+          _currAnimID = ANIM_IDLE;
         }
       }
       
-    } else if (queuedAnimID_ != ANIM_IDLE) {
-      PRINT("Playing queued animation %d, %d loops\n", queuedAnimID_, queuedDesiredLoops_);
+    } else if (_queuedAnimID != ANIM_IDLE) {
+      PRINT("Playing queued animation %d, %d loops\n", _queuedAnimID, _queuedDesiredLoops);
       // If there's a queued animation, start it.
-      Play(queuedAnimID_, queuedDesiredLoops_);
-      queuedAnimID_ = ANIM_IDLE;
+      Play(_queuedAnimID, _queuedDesiredLoops);
+      _queuedAnimID = ANIM_IDLE;
     }
     
   } // Update()
@@ -462,15 +462,15 @@ namespace AnimationController {
                                   "AnimationController.Play.InvalidAnimation",
                                   "Animation ID out of range.\n");
     
-    AnkiConditionalWarnAndReturn(cannedAnimations[anim].IsDefined(),
+    AnkiConditionalWarnAndReturn(_cannedAnimations[anim].IsDefined(),
                                  "AnimationController.Play.EmptyAnimation",
                                  "Asked to play empty animation %d. Ignoring.\n", anim);
     
     // If an animation is currently playing, stop it and queue this one.
     if (IsPlaying()) {
       Stop();
-      queuedAnimID_ = anim;
-      queuedDesiredLoops_ = numLoops;
+      _queuedAnimID = anim;
+      _queuedDesiredLoops = numLoops;
       return;
     }
     
@@ -483,12 +483,12 @@ namespace AnimationController {
     
     PRINT("Playing Animation %d, %d loops\n", anim, numLoops);
     
-    currAnimID_         = anim;
-    currDesiredLoops_ = numLoops;
-    numLoopsComplete_ = 0;
-    waitUntilTime_us_ = 0;
+    _currAnimID       = anim;
+    _currDesiredLoops = numLoops;
+    _numLoopsComplete = 0;
+    _waitUntilTime_us = 0;
     
-    cannedAnimations[currAnimID_].Init();
+    _cannedAnimations[_currAnimID].Init();
     
     /*
     startingRobotAngle_ = Localization::GetCurrentMatOrientation();
@@ -531,12 +531,12 @@ namespace AnimationController {
    */
   void Stop()
   {
-    if(currAnimID_ != ANIM_IDLE) {
-      cannedAnimations[currAnimID_].Stop();
+    if(_currAnimID != ANIM_IDLE) {
+      _cannedAnimations[_currAnimID].Stop();
     }
     
-    isStopping_ = wasStopping_ = false;
-    currAnimID_ = queuedAnimID_ = ANIM_IDLE;
+    _isStopping = _wasStopping = false;
+    _currAnimID = _queuedAnimID = ANIM_IDLE;
     
     // Stop all motors, lights, and sounds
     LiftController::Enable();
@@ -551,7 +551,7 @@ namespace AnimationController {
   
   bool IsPlaying()
   {
-    return currAnimID_ != ANIM_IDLE;
+    return _currAnimID != ANIM_IDLE;
   }
   
   bool IsDefined(const AnimationID_t anim)
@@ -559,7 +559,7 @@ namespace AnimationController {
     if(anim < 0 || anim >= MAX_CANNED_ANIMATIONS) {
       return false;
     }
-    return cannedAnimations[anim].IsDefined();
+    return _cannedAnimations[anim].IsDefined();
   }
   
 } // namespace AnimationController
