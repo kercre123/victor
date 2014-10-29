@@ -17,8 +17,10 @@
 
 #include "animation.h"
 
+#include "eyeController.h"
 #include "headController.h"
 #include "liftController.h"
+#include "steeringController.h"
 
 #include "anki/common/robot/utilities.h"
 
@@ -202,6 +204,8 @@ namespace Cozmo {
       
     } // for each track
     
+    bool wasPlaying = _isPlaying;
+    
     // isPlaying should be true after this loop if any of the tracks are still
     // playing. False otherwise.
     _isPlaying = false;
@@ -209,7 +213,7 @@ namespace Cozmo {
       _isPlaying |= trackPlaying[iTrack];
     }
     
-    if(!_isPlaying) {
+    if(wasPlaying && !_isPlaying) {
 #if   DEBUG_ANIMATIONS
       PRINT("No tracks in animation %d still playing. Stopping.\n", _ID);
 #     endif
@@ -220,18 +224,14 @@ namespace Cozmo {
   
   
   void Animation::Stop()
-  {
-    /*
-    if(_returnToOrigState) {
-      HeadController::SetAngleRad(_origHeadAngle);
-      LiftController::SetDesiredHeight(_origLiftHeight);
-    }
-     */
+  {    
+    HeadController::Stop();
+    LiftController::Stop();
+    EyeController::StopAnimating();
+    SteeringController::ExecuteDirectDrive(0.f, 0.f);
     
-    for(s32 iTrack = 0; iTrack < NUM_TRACKS; ++iTrack)
-    {
-      _frames[_tracks[iTrack].startOffset + _tracks[iTrack].currFrame].Stop();
-    }
+    Messages::StopSoundOnBaseStation msg;
+    HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::StopSoundOnBaseStation), &msg);
     
     _isPlaying = false;
     

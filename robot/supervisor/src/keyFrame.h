@@ -222,11 +222,7 @@ struct KeyFrame
   // Returns true if lift is at the target height, or head is at the target
   // angle, etc.
   bool IsInPosition();
-  
-  // Perform any necessary type-dependent stopping function
-  // (E.g., for HeadNodding, call StopNodding())
-  void Stop();
-  
+    
 }; // struct KeyFrame
 
   /*

@@ -166,6 +166,9 @@ namespace Anki {
       switch(mode) {
         case None:
           CoreTechPrint("Starting NONE behavior\n");
+
+          _robot->AbortAll();
+          
           break;
           
         case June2014DiceDemo:

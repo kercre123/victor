@@ -83,6 +83,9 @@ namespace Anki {
 
       void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       
+      // Stops any nodding or movement at all.
+      void Stop();
+      
     } // namespace LiftController
   } // namespcae Cozmo
 } // namespace Anki

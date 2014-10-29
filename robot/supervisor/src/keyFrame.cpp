@@ -262,63 +262,7 @@ namespace Cozmo {
     
   } // IsInPosition()
   
-  
-  void KeyFrame::Stop()
-  {
-    switch(type)
-    {
-      case KeyFrame::START_HEAD_NOD:
-      {
-        HeadController::StopNodding();
-        break;
-      }
-        
-      case KeyFrame::START_LIFT_NOD:
-      {
-        LiftController::StopNodding();
-        break;
-      }
-        
-      case KeyFrame::HEAD_ANGLE:
-      {
-        HeadController::SetAngularVelocity(0.f);
-        break;
-      }
-        
-      case KeyFrame::LIFT_HEIGHT:
-      {
-        LiftController::SetAngularVelocity(0.f);
-        break;
-      }
-        
-      case KeyFrame::POINT_TURN:
-      {
-        SteeringController::ExecuteDirectDrive(0.f, 0.f);
-        break;
-      }
-        
-      case KeyFrame::DRIVE_LINE_SEGMENT:
-      {
-        SteeringController::ExecuteDirectDrive(0.f, 0.f);
-        break;
-      }
-        
-      case KeyFrame::BLINK_EYES:
-      case KeyFrame::FLASH_EYES:
-      {
-        EyeController::StopAnimating();
-        break;
-      }
-        
-      default:
-      {
-        // No stopping function defined
-        break;
-      }
-        
-    } // switch(type)
-  }
-  
+   
 } // namespace Cozmo
 } // namespace Anki
 

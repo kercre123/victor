@@ -136,6 +136,12 @@ namespace Anki {
       return (ABS(radSpeed_) > MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC);
     }
     
+    void Stop()
+    {
+      isNodding_ = false;
+      SetAngularVelocity(0);
+    }
+    
     void CalibrationUpdate()
     {
       if (!isCalibrated_) {

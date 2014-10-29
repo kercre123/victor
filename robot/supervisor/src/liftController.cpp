@@ -658,6 +658,11 @@ namespace Anki {
         MAX_ERROR_SUM = maxIntegralError;
       }
       
+      void Stop()
+      {
+        isNodding_ = false;
+        SetAngularVelocity(0);
+      }
       
       void StartNodding(const f32 lowHeight, const f32 highHeight,
                         const u16 period_ms, const s32 numLoops)
