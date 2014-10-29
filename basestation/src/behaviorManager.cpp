@@ -238,8 +238,8 @@ namespace Anki {
           _stateAnimations[HELP_ME_STATE]   = "ANIM_HELPME";
           
           // Automatically switch states as reactions to certain markers:
-          _robot->AddReactionCallback(Vision::MARKER_ANGRYFACE, &ScaredReaction);
-          _robot->AddReactionCallback(Vision::MARKER_STAR5,     &ExcitedReaction);
+          _robot->AddReactionCallback(Vision::MARKER_BEE,   &ScaredReaction);
+          _robot->AddReactionCallback(Vision::MARKER_KITTY, &ExcitedReaction);
           
           break;
         } // case CREEP
