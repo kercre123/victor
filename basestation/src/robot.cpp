@@ -91,20 +91,7 @@ namespace Anki {
         jsonFile.close();
       }
       
-      Json::Value animDefs;
-      {
-      // TODO: Point DefineCannedAnimations at a json file with all animations
-        const std::string subPath("basestation/config/animations.json");
-        const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
-        std::ifstream jsonFile(jsonFilename);
-        reader.parse(jsonFile, animDefs);
-        jsonFile.close();
-      }
-      _cannedAnimations.DefineFromJson(animDefs);
-      
-      // Immediately send the canned animations out
-      // (Eventually do this on demand elsewhere?)
-      _cannedAnimations.Send(_ID, _msgHandler);
+      ReadAnimationFile();
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
@@ -754,6 +741,35 @@ namespace Anki {
     {
       return SendAbortAnimation();
     }
+    
+    Result Robot::ReadAnimationFile()
+    {
+      Result lastResult = RESULT_OK;
+      
+      Json::Reader reader;
+      
+      Json::Value animDefs;
+      // TODO: Point DefineCannedAnimations at a json file with all animations
+      const std::string subPath("basestation/config/animations.json");
+      const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+      std::ifstream jsonFile(jsonFilename);
+      if(reader.parse(jsonFile, animDefs) == false) {
+        PRINT_NAMED_ERROR("Robot.ReadAnimationFaile.JsonParseFailure",
+                          "Failed to parse Json animation file.\n");
+        lastResult = RESULT_FAIL;
+      }
+      jsonFile.close();
+      
+      if(lastResult == RESULT_OK) {
+        lastResult = _cannedAnimations.DefineFromJson(animDefs);
+        if(lastResult == RESULT_OK) {
+          // Immediately send the canned animations out
+          lastResult = _cannedAnimations.Send(_ID, _msgHandler);
+        }
+      }
+      
+      return lastResult;
+    } // ReadAnimationFile()
     
     Result Robot::SyncTime()
     {

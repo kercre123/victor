@@ -351,6 +351,11 @@ namespace Anki {
       return robot->PlayAnimation(&(msg.animationName[0]), msg.numLoops);
     }
   
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ReadAnimationFile const& msg)
+    {
+      return robot->ReadAnimationFile();
+    }
+    
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartFaceTracking const& msg)
     {
       return robot->StartFaceTracking(msg.timeout_sec);
