@@ -352,25 +352,7 @@ namespace AnimationController {
   
   
   Result Init()
-  {
-    /*
-    // Populate function pointer arrays
-    animStartFn_[ANIM_IDLE] = 0;
-    animUpdateFn_[ANIM_IDLE] = 0;
-    animStopFn_[ANIM_IDLE] = 0;
-    
-    animStartFn_[ANIM_HEAD_NOD] = HeadNodStart;
-    animUpdateFn_[ANIM_HEAD_NOD] = HeadNodUpdate;
-    animStopFn_[ANIM_HEAD_NOD] = HeadNodStop;
-
-    animStartFn_[ANIM_BACK_AND_FORTH_EXCITED] = BackAndForthStart;
-    animUpdateFn_[ANIM_BACK_AND_FORTH_EXCITED] = BackAndForthUpdate;
-    
-    animStartFn_[ANIM_WIGGLE] = WiggleStart;
-    animUpdateFn_[ANIM_WIGGLE] = WiggleUpdate;
-    animStopFn_[ANIM_WIGGLE] = WiggleStop;
-    */
-    
+  {    
     DefineHardCodedAnimations();
     
     return RESULT_OK;

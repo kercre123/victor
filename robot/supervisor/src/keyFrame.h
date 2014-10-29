@@ -213,10 +213,6 @@ struct KeyFrame
     SpinEyes_t         SpinEyes;
     
   }; // union of structs
-  
-  // Use this value to skip setting a given LED color and leave it at whatever
-  // color it was.
-  static const u32 UNSPECIFIED_COLOR = 0xff000000;
     
   void TransitionOutOf(const u32 animStartTime_ms) const;
   void TransitionInto(const u32 animStartTime_ms)  const;
