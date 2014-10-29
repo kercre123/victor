@@ -33,6 +33,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/cameraImagingPipeline.h"
 #include "anki/vision/robot/opencvLight_vision.h"
 #include "anki/vision/robot/features.h"
+#include "anki/vision/robot/recognize.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -257,6 +258,10 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
   const s32 minHeight = 30;
   const s32 minWidth = 30;
 
+  const f32 eyeQualityThreshold = 1.0f / 5000.0f; //< A value between about 2000 to 5000 is good
+
+  Array<u8> faceImage = Array<u8>::LoadImage("C:/tmp/faces/peter4.jpg", scratchHuge);
+
   cv::CascadeClassifier eyeCascade;
   /*ASSERT_TRUE(eyeCascade.load("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml"));*/
   ASSERT_TRUE(eyeCascade.load("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_eye.xml"));
@@ -265,23 +270,27 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
   while ( cap.isOpened() ) {
     PUSH_MEMORY_STACK(scratchHuge);
 
-    cap >> cvImage;
+    cv::Mat_<u8> cvImageGray;
 
-    if(cvImage.empty())
-      break;
+    //const bool useSavedImage = true;
+    const bool useSavedImage = false;
+    if(!useSavedImage) {
+      cap >> cvImage;
 
-    //cv::imshow("video", cvImage);
+      if(cvImage.empty())
+        break;
 
-    Array<u8> image(cvImage.rows, cvImage.cols, scratchHuge);
+      cvtColor(cvImage, cvImageGray, CV_BGRA2GRAY);
 
-    for(s32 y=0; y<cvImage.rows; y++) {
-      const u8 * restrict pCvImage = cvImage.data + y * cvImage.step.buf[0];
-      u8 * restrict pImage = image.Pointer(y,0);
-
-      for(s32 x=0; x<cvImage.cols; x++) {
-        pImage[x] = (pCvImage[x*3] + pCvImage[x*3 + 1] + pCvImage[x*3 + 2]) / 3;
-      }
+      cv::equalizeHist(cvImageGray, cvImageGray);
+    } else {
+      ArrayToCvMat(faceImage, &cvImageGray);
+      cv::equalizeHist(cvImageGray, cvImageGray);
     }
+
+    Array<u8> image(cvImageGray.rows, cvImageGray.cols, scratchHuge);
+
+    image.Set(cvImageGray);
 
     const Result result = cc.DetectMultiScale(
       image,
@@ -296,31 +305,54 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
     cv::Mat_<u8> arrayCopy;
     ArrayToCvMat(image, &arrayCopy);
 
+    cv::Mat arrayCopyColor = cvCreateMat(arrayCopy.rows, arrayCopy.cols, CV_8UC3);
+
+    std::vector<cv::Mat> channels;
+    channels.push_back(arrayCopy);
+    channels.push_back(arrayCopy);
+    channels.push_back(arrayCopy);
+    cv::merge(channels, arrayCopyColor);
+
     if(detectedFaces.get_size() > 0) {
-      for( s32 i = 0; i < detectedFaces.get_size(); i++ ) {
-        // Detect Eyes
-        cv::Rect faceCv(detectedFaces[i].left, detectedFaces[i].top, detectedFaces[i].get_width(), detectedFaces[i].get_height());
-        cv::Mat faceROI = cvImage(faceCv);
-        std::vector<cv::Rect> eyes;
-        eyeCascade.detectMultiScale(faceROI, eyes, 1.1, 3, 0, cv::Size(), cv::Size(detectedFaces[i].get_width()/3, detectedFaces[i].get_height()/3));
+      for( s32 iFace = 0; iFace < detectedFaces.get_size(); iFace++ ) {
+        //for( s32 iFace = 1; iFace < 2; iFace++ ) {
+        std::vector<cv::Rect> detectedEyes;
+        s32 leftEyeIndex;
+        s32 rightEyeIndex;
+        f32 eyeQuality;
+        s32 faceId;
+        f64 confidence;
 
-        //cv::imshow("faceROI", faceROI);
+        const Result result = Recognize::RecognizeFace(
+          image,
+          detectedFaces[iFace],
+          eyeCascade,
+          eyeQualityThreshold,
+          detectedEyes,
+          leftEyeIndex,
+          rightEyeIndex,
+          eyeQuality,
+          faceId,
+          confidence);
 
-        // Rotate and scale
+        ASSERT_TRUE(result == RESULT_OK);
 
-        // Mask out
+        cv::Point center( Round<s32>((detectedFaces[iFace].left + detectedFaces[iFace].right)*0.5), Round<s32>((detectedFaces[iFace].top + detectedFaces[iFace].bottom)*0.5) );
+        cv::ellipse( arrayCopyColor, center, cv::Size( Round<s32>((detectedFaces[iFace].right-detectedFaces[iFace].left)*0.5), Round<s32>((detectedFaces[iFace].bottom-detectedFaces[iFace].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
 
-        // Predict the label
+        for(s32 iEye=0; iEye<detectedEyes.size(); iEye++) {
+          //printf("eye (%d,%d) %d %d\n", detectedEyes[iEye].x, detectedEyes[iEye].y, detectedEyes[iEye].width, detectedEyes[iEye].height);
+          cv::Rect shiftedRect(detectedEyes[iEye].x, detectedEyes[iEye].y, detectedEyes[iEye].width, detectedEyes[iEye].height);
 
-        cv::Point center( Round<s32>((detectedFaces[i].left + detectedFaces[i].right)*0.5), Round<s32>((detectedFaces[i].top + detectedFaces[i].bottom)*0.5) );
-        cv::ellipse( arrayCopy, center, cv::Size( Round<s32>((detectedFaces[i].right-detectedFaces[i].left)*0.5), Round<s32>((detectedFaces[i].bottom-detectedFaces[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
-
-        for(s32 iEye=0; iEye<eyes.size(); iEye++) {
-          printf("eye (%d,%d) %d %d\n", eyes[iEye].x, eyes[iEye].y, eyes[iEye].width, eyes[iEye].height);
-          cv::Rect shiftedRect(detectedFaces[i].left + eyes[iEye].x, detectedFaces[i].top + eyes[iEye].y, eyes[iEye].width, eyes[iEye].height);
-
-          cv::rectangle(arrayCopy, shiftedRect, cv::Scalar(255,255,255), 3);
-          //cv::ellipse( arrayCopy, cv::Point(shiftedRect.x + shiftedRect.width/2, shiftedRect.y + shiftedRect.height/2), cv::Scalar(196,0,0));
+          if(iEye == leftEyeIndex || iEye == rightEyeIndex) {
+            if(eyeQuality > eyeQualityThreshold) {
+              cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(0,255,0), 3);
+            } else {
+              cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(0,0,255), 3);
+            }
+          } else {
+            cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(255,255,255), 1);
+          }
         }
 
         Array<u8> clippedImage(detectedFaces[0].get_height()+1, detectedFaces[0].get_width()+1, scratchHuge);
@@ -330,7 +362,7 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
         ArrayToCvMat(clippedImage, &cvClippedImage);
 
         s32 predictedLabel;
-        f64 confidence;
+        //f64 confidence;
 
         cv::Mat_<u8> cvClippedImageResized = cvCreateMat(trainingWidth, trainingWidth, CV_8U);
         cv::resize(cvClippedImage, cvClippedImageResized, cvClippedImageResized.size());
@@ -339,14 +371,15 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
 
         char text[1024];
         snprintf(text, 1024, "%s %0.0f", labelNames[predictedLabel], confidence);
+        //snprintf(text, 1024, "%f", eyeQuality);
 
-        printf("Predicted label: %d %s %f\n", predictedLabel, labelNames[predictedLabel], confidence);
+        //printf("Predicted label: %d %s %f\n", predictedLabel, labelNames[predictedLabel], confidence);
 
-        cv::putText(arrayCopy, text, cv::Point((detectedFaces[0].left + detectedFaces[0].right)/2, (detectedFaces[0].top + detectedFaces[0].bottom)/2), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(255, 255, 255));
+        cv::putText(arrayCopyColor, text, cv::Point((detectedFaces[iFace].left + detectedFaces[iFace].right)/2, (detectedFaces[iFace].top + detectedFaces[iFace].bottom)/2), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(255, 255, 255));
       } // for( s32 i = 0; i < detectedFaces.get_size(); i++ )
     } // if(detectedFaces.get_size() > 0)
 
-    cv::imshow("detect", arrayCopy);
+    cv::imshow("detect", arrayCopyColor);
 
     //image.Show("image", false);
 
@@ -5602,7 +5635,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer);
+  //CALL_GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer);
   CALL_GTEST_TEST(CoreTech_Vision, TestFaceRecognizer);
 
   /*
