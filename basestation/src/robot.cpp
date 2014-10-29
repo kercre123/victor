@@ -756,7 +756,7 @@ namespace Anki {
       if(reader.parse(jsonFile, animDefs) == false) {
         PRINT_NAMED_ERROR("Robot.ReadAnimationFaile.JsonParseFailure",
                           "Failed to parse Json animation file.\n");
-        lastResult = RESULT_FAIL;
+//        lastResult = RESULT_FAIL;
       }
       jsonFile.close();
       

@@ -358,17 +358,16 @@ namespace Cozmo {
       MessageAddAnimKeyFrame_StartHeadNod* startNodMsg = new MessageAddAnimKeyFrame_StartHeadNod();
       startNodMsg->animationID = animID;
       startNodMsg->relTime_ms = 0;
-      startNodMsg->lowAngle  = DEG_TO_RAD(-25);
-      startNodMsg->highAngle = DEG_TO_RAD( 25);
+      startNodMsg->lowAngle_deg  = -25;
+      startNodMsg->highAngle_deg =  25;
       startNodMsg->period_ms = 1200;
       keyFrames->AddKeyFrame(startNodMsg);
-      
       
       // Stop the nod
       MessageAddAnimKeyFrame_StopHeadNod* stopNodMsg = new MessageAddAnimKeyFrame_StopHeadNod();
       stopNodMsg->animationID = animID;
       stopNodMsg->relTime_ms = 2400;
-      stopNodMsg->finalAngle = 0.f;
+      stopNodMsg->finalAngle_deg = 0;
       keyFrames->AddKeyFrame(stopNodMsg);
     } // SLOW HEAD NOD
       

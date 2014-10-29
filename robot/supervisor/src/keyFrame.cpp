@@ -24,14 +24,19 @@
 namespace Anki {
 namespace Cozmo {
   
+  static inline f32 GetAngleRad(s8 angle_deg)
+  {
+    return DEG_TO_RAD(static_cast<f32>(angle_deg));
+  }
+  
   void KeyFrame::TransitionOutOf(const TimeStamp_t animStartTime_us) const
   {
     switch(type)
     {
       case KeyFrame::START_HEAD_NOD:
       {
-        HeadController::StartNodding(StartHeadNod.lowAngle,
-                                     StartHeadNod.highAngle,
+        HeadController::StartNodding(GetAngleRad(StartHeadNod.lowAngle_deg),
+                                     GetAngleRad(StartHeadNod.highAngle_deg),
                                      StartHeadNod.period_ms,
                                      0);
         break;
@@ -59,6 +64,7 @@ namespace Cozmo {
         break;
       }
         
+      /*
       case KeyFrame::SET_LED_COLORS:
       {
         // TODO: Move this into some kind of LightController file/namespace
@@ -70,6 +76,7 @@ namespace Cozmo {
         }
         break;
       }
+       */
         
       case KeyFrame::POINT_TURN:
       {
@@ -169,10 +176,12 @@ namespace Cozmo {
     {
       case KeyFrame::HEAD_ANGLE:
       {
+        const f32 angle_rad = GetAngleRad(SetHeadAngle.angle_deg);
+        
         const f32 dt_ms = animStartTime_ms + relTime_ms - HAL::GetTimeStamp();
-        const f32 dAngle = SetHeadAngle.targetAngle - HeadController::GetAngleRad();
+        const f32 dAngle = angle_rad - HeadController::GetAngleRad();
         HeadController::SetAngularVelocity((dAngle*1000.f) / dt_ms);
-        HeadController::SetDesiredAngle(SetHeadAngle.targetAngle);
+        HeadController::SetDesiredAngle(angle_rad);
         
         // TODO: Switch to method that takes desired time into account:
         /*
@@ -203,7 +212,7 @@ namespace Cozmo {
       {
         // TODO: Switch to new method that accepts duration and computes the right velocity profile
         const f32 duration_ms = animStartTime_ms + relTime_ms - HAL::GetTimeStamp();
-        const f32 wheelSpeed = (TurnInPlace.relativeAngle * WHEEL_DIST_MM * 1000.f) / (duration_ms * 2.f);
+        const f32 wheelSpeed = (GetAngleRad(TurnInPlace.relativeAngle_deg) * WHEEL_DIST_MM * 1000.f) / (duration_ms * 2.f);
         //const f32 wheelSpeed = (TurnInPlace.relativeAngle < 0 ? -TurnInPlace.targetSpeed : TurnInPlace.targetSpeed);
         SteeringController::ExecuteDirectDrive(wheelSpeed, -wheelSpeed);
         
