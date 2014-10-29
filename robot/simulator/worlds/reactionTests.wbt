@@ -6,6 +6,7 @@ WorldInfo {
     "Date: 29 Aug 2014"
     ""
   ]
+  FPS 30
   gravity 0 0 -9.81
   physics "cozmo_physics"
   basicTimeStep 5
