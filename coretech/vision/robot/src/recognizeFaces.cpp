@@ -31,6 +31,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <arm_neon.h>
 #endif
 
+using namespace Anki;
+using namespace Anki::Embedded;
+
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
 // Use the metric of Becker2008Evaluation
@@ -117,6 +120,70 @@ static f32 EyeQuality(const cv::Rect &face, const cv::Rect &leftEye, const cv::R
 
   return 1.0f / total;
 } // static f32 EyeQuality(const cv::Rect &face, const cv::Rect &leftEye, const cv::Rect &rightEye, const f32 alpha, const f32 beta_x, const f32 beta_y, const f32 gamma)
+
+//def Distance(p1,p2):
+//  dx = p2[0] - p1[0]
+//  dy = p2[1] - p1[1]
+//  return math.sqrt(dx*dx+dy*dy)
+
+//def ScaleRotateTranslate(image, angle, center = None, new_center = None, scale = None, resample=Image.BICUBIC):
+//Result ScaleRotateTranslate(const cv::Mat_<u8> &image, const f32 angle, const f32 scaleX, const f32 scaleY, const cv::Point &center, cv::Mat_<u8> &updatedImage)
+//{
+//  const f32 x = center.x;
+//  const f32 y = center.y;
+//
+//  const f32 cosine = cosf(angle);
+//  const f32 sine = sinf(angle);
+//
+//  const f32 a = cosine/scaleX;
+//  const f32 b = sine/scaleX;
+//  const f32 c = x - x*a - y*b;
+//  const f32 d = -sine/scaleY;
+//  const f32 e = cosine/scaleY;
+//  const f32 f = y - x*d - y*e;
+//
+//  cv::Mat_<f32> transformation(1,6);
+//
+//  transformation.at<f32>(0,0) = a;
+//  transformation.at<f32>(0,1) = b;
+//  transformation.at<f32>(0,2) = c;
+//  transformation.at<f32>(0,3) = d;
+//  transformation.at<f32>(0,4) = e;
+//  transformation.at<f32>(0,5) = f;
+//
+//  updatedImage = cv::Mat_<u8>(image.size());
+//
+//  //  return image.transform(image.size, Image.AFFINE, (a,b,c,d,e,f), resample=resample)
+//  cv::transform(image, updatedImage, transformation);
+//
+//  return RESULT_OK;
+//}
+
+//def CropFace(image, eye_left=(0,0), eye_right=(0,0), offset_pct=(0.2,0.2), dest_sz = (70,70)):
+//Result CropFace(image, eye_left=(0,0), eye_right=(0,0), offset_pct=(0.2,0.2), dest_sz = (70,70)):
+//  # calculate offsets in original image
+//  offset_h = math.floor(float(offset_pct[0])*dest_sz[0])
+//  offset_v = math.floor(float(offset_pct[1])*dest_sz[1])
+//  # get the direction
+//  eye_direction = (eye_right[0] - eye_left[0], eye_right[1] - eye_left[1])
+//  # calc rotation angle in radians
+//  rotation = -math.atan2(float(eye_direction[1]),float(eye_direction[0]))
+//  # distance between them
+//  dist = Distance(eye_left, eye_right)
+//  # calculate the reference eye-width
+//  reference = dest_sz[0] - 2.0*offset_h
+//  # scale factor
+//  scale = float(dist)/float(reference)
+//  # rotate original around the left eye
+//  image = ScaleRotateTranslate(image, center=eye_left, angle=rotation)
+//  # crop the rotated image
+//  crop_xy = (eye_left[0] - scale*offset_h, eye_left[1] - scale*offset_v)
+//  crop_size = (dest_sz[0]*scale, dest_sz[1]*scale)
+//  image = image.crop((int(crop_xy[0]), int(crop_xy[1]), int(crop_xy[0]+crop_size[0]), int(crop_xy[1]+crop_size[1])))
+//  # resize it
+//  image = image.resize(dest_sz, Image.ANTIALIAS)
+//  return image
+
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
 namespace Anki
