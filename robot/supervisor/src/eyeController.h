@@ -37,6 +37,10 @@ namespace EyeController {
   void StartBlinking(u16 leftOnPeriod_ms,  u16 leftOffPeriod_ms,
                      u16 rightOnPeriod_ms, u16 rightOffPeriod_ms,
                      bool toMiddle = false);
+  
+  // Amount of time eye is "open" will vary +/- the specified number of milliseconds,
+  // uniformly distributed.
+  void SetBlinkVariability(s32 variation_ms);
 
   void StartFlashing(EyeShape shape, u16 onPeriod_ms, u16 offPeriod_ms);
   void StartFlashing(EyeShape leftShape, u16 leftOnPeriod_ms, u16 leftOffPeriod_ms,

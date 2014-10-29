@@ -144,6 +144,7 @@ struct KeyFrame
     u16      timeOn_ms;
     u16      timeOff_ms;
     u32      color;
+    u8       variability_ms;
   };
   
   // Flash eyes

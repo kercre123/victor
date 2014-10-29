@@ -673,6 +673,7 @@ namespace Anki {
         kf.BlinkEyes.color      = GetU32ColorFromRGB(msg.color);
         kf.BlinkEyes.timeOn_ms  = msg.onPeriod_ms;
         kf.BlinkEyes.timeOff_ms = msg.offPeriod_ms;
+        kf.BlinkEyes.variability_ms = msg.variability_ms;
 
         AddKeyFrameHelper(msg, kf);
       }

@@ -55,13 +55,14 @@
       "relTime_ms"     : 0, 
       "onPeriod_ms"    : 1650,
       "offPeriod_ms"   : 200,
-      "color"          : [0, 0, 255]
+      "color"          : [0, 0, 255],
+      "variability_ms" : 100
     }, 
     {
       "Name" : "MessageAddAnimKeyFrame_StopEyeAnimation", 
       "transitionIn"   : "INSTANT",
       "transitionOut"  : "INSTANT", 
-      "relTime_ms"     : 1850
+      "relTime_ms"     : 2050
     }
   ],
   
@@ -397,7 +398,8 @@
       "transitionOut"   : "INSTANT",
       "color"           : [0, 255, 135],
       "onPeriod_ms"     : 700,
-      "offPeriod_ms"    : 50
+      "offPeriod_ms"    : 50,
+      "variability_ms"  : 200
     }
   ],
   

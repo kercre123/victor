@@ -378,6 +378,7 @@ ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
 ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
+ADD_MESSAGE_MEMBER(u8,  variability_ms) // amount of variation in "open" time
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartBlinking)
 
 // AddAnimKeyFrame_SetEyeShapeAndColor

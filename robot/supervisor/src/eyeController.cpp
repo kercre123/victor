@@ -17,6 +17,7 @@
 #include "anki/cozmo/robot/hal.h"
 
 #include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/utilities.h"
 
 
 namespace Anki {
@@ -83,6 +84,8 @@ namespace EyeController {
     
     Eye _leftEye, _rightEye;
     
+    s32 _blinkVariation_ms;
+    
   }; // "private" variables
 
   
@@ -114,6 +117,8 @@ namespace EyeController {
     _rightEye.segments[EYE_SEGMENT_BOTTOM] = LED_RIGHT_EYE_BOTTOM;
     
     SetEyeColor(LED_OFF);
+    
+    _blinkVariation_ms = 200;
     
     return RESULT_OK;
   } // Init()
@@ -203,6 +208,10 @@ namespace EyeController {
     _eyeAnimMode = NONE;
   }
   
+  void SetBlinkVariability(s32 variation_ms)
+  {
+    _blinkVariation_ms = variation_ms;
+  }
   
   Result Update()
   {
@@ -219,12 +228,30 @@ namespace EyeController {
       {
         BlinkHelper(_leftEye,  currentTime, true);
         BlinkHelper(_rightEye, currentTime, true);
+        
+        // At a bit of random variation to how long eyes are open:
+        // (Need to add some variation to both eyes to keep them in sync.)
+        if(_blinkVariation_ms>0 && _leftEye.animIndex==0 && _rightEye.animIndex==0) {
+          const s32 onVariation = Embedded::RandS32(-_blinkVariation_ms, _blinkVariation_ms);
+          _leftEye.nextSwitchTime  += onVariation;
+          _rightEye.nextSwitchTime += onVariation;
+        }
+        
         break;
       }
       case BLINK_TO_BOTTOM:
       {
         BlinkHelper(_leftEye,  currentTime, false);
         BlinkHelper(_rightEye, currentTime, false);
+        
+        // At a bit of random variation to how long eyes are open:
+        // (Need to add some variation to both eyes to keep them in sync.)
+        if(_blinkVariation_ms>0 && _leftEye.animIndex==0 && _rightEye.animIndex==0) {
+          const s32 onVariation = Embedded::RandS32(-_blinkVariation_ms, _blinkVariation_ms);
+          _leftEye.nextSwitchTime  += onVariation;
+          _rightEye.nextSwitchTime += onVariation;
+        }
+        
         break;
       }
       case FLASH:
@@ -449,6 +476,7 @@ namespace EyeController {
       eye.nextSwitchTime = currentTime + (toMiddle ?
                                           eye.blinkToMiddleTimings[eye.animIndex] :
                                           eye.blinkToBottomTimings[eye.animIndex]);
+
     }
   } // BlinkHelper()
   

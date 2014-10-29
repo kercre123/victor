@@ -111,6 +111,7 @@ namespace Cozmo {
       case KeyFrame::BLINK_EYES:
       {
         EyeController::SetEyeColor(BlinkEyes.color);
+        EyeController::SetBlinkVariability(BlinkEyes.variability_ms);
         EyeController::StartBlinking(BlinkEyes.timeOn_ms, BlinkEyes.timeOff_ms);
         break;
       }
