@@ -352,7 +352,7 @@ namespace AnimationController {
   
   
   Result Init()
-  {    
+  {
     DefineHardCodedAnimations();
     
     return RESULT_OK;
@@ -483,7 +483,7 @@ namespace AnimationController {
     
     PRINT("Playing Animation %d, %d loops\n", anim, numLoops);
     
-    currAnimID_         = anim;
+    currAnimID_       = anim;
     currDesiredLoops_ = numLoops;
     numLoopsComplete_ = 0;
     waitUntilTime_us_ = 0;

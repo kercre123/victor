@@ -52,6 +52,8 @@ namespace Cozmo {
     PRINT("Init Animation %d\n", _ID);
 #   endif
     
+    SortKeyFrames();
+    
     _startTime_ms = HAL::GetTimeStamp();
     
     _allTracksReady = false;
@@ -81,9 +83,9 @@ namespace Cozmo {
       _tracks[iTrack].isReady   = false;
       
       if(_tracks[iTrack].numFrames > 0 &&
-         _tracks[iTrack].frames[0].relTime_ms == 0)
+         _frames[_tracks[iTrack].startOffset].relTime_ms == 0)
       {
-        _tracks[iTrack].frames[0].TransitionInto(_startTime_ms);
+        _frames[_tracks[iTrack].startOffset].TransitionInto(_startTime_ms);
       }
     }
     
@@ -106,12 +108,12 @@ namespace Cozmo {
           if(track.numFrames == 0) {
             // Track with no keyframes is always ready
             track.isReady = true;
-          } else if(track.frames[0].relTime_ms > 0) {
+          } else if(_frames[track.startOffset].relTime_ms > 0) {
             // Tracks with first keyframe at time > 0 are always ready
             track.isReady = true;
           } else {
             // Check whether the first keyframe is "in position"
-            track.isReady = track.frames[0].IsInPosition();
+            track.isReady = _frames[track.startOffset].IsInPosition();
           }
           
           // In case this track just became ready:
@@ -130,9 +132,9 @@ namespace Cozmo {
         for(s32 iTrack=0; iTrack<NUM_TRACKS; ++iTrack)
         {
           if(_tracks[iTrack].numFrames > 0 &&
-             _tracks[iTrack].frames[0].relTime_ms > 0)
+             _frames[_tracks[iTrack].startOffset].relTime_ms > 0)
           {
-            _tracks[iTrack].frames[0].TransitionInto(_startTime_ms);
+            _frames[_tracks[iTrack].startOffset].TransitionInto(_startTime_ms);
           }
         } // for each track
         
@@ -170,7 +172,7 @@ namespace Cozmo {
         trackPlaying[iTrack] = true;
         
         // Get a reference to the current frame of the current track, for convenience
-        KeyFrame& currKeyFrame = track.frames[track.currFrame];
+        KeyFrame& currKeyFrame = _frames[track.startOffset + track.currFrame];
         
         // Has the current keyframe's time now passed?
         const u32 absFrameTime_ms = currKeyFrame.relTime_ms + _startTime_ms;
@@ -186,7 +188,7 @@ namespace Cozmo {
 #           if DEBUG_ANIMATIONS
             PRINT("Moving to keyframe %d of %d in track %d\n", track.currFrame+1, track.numFrames, iTrack);
 #           endif
-            KeyFrame& nextKeyFrame = track.frames[track.currFrame];
+            KeyFrame& nextKeyFrame = _frames[track.startOffset + track.currFrame];
             nextKeyFrame.TransitionInto(_startTime_ms);
           } else {
 #           if DEBUG_ANIMATIONS
@@ -228,7 +230,7 @@ namespace Cozmo {
     
     for(s32 iTrack = 0; iTrack < NUM_TRACKS; ++iTrack)
     {
-      _tracks[iTrack].frames[_tracks[iTrack].currFrame].Stop();
+      _frames[_tracks[iTrack].startOffset + _tracks[iTrack].currFrame].Stop();
     }
     
     _isPlaying = false;
@@ -241,19 +243,14 @@ namespace Cozmo {
   
   bool Animation::IsDefined()
   {
-    for(s32 iTrack = 0; iTrack < NUM_TRACKS; ++iTrack)
-    {
-      if(_tracks[iTrack].numFrames > 0) {
-        return true;
-      }
-    }
-    
-    return false;
+    return _totalNumFrames > 0;
   }
   
   
   void Animation::Clear()
   {
+    _totalNumFrames = 0;
+    
     for(s32 iTrack = 0; iTrack < NUM_TRACKS; ++iTrack)
     {
       // TODO: Make a Clear() method in KeyFrame and call that here:
@@ -308,6 +305,21 @@ namespace Cozmo {
   
   Result Animation::AddKeyFrame(const KeyFrame& keyframe)
   {
+    AnkiConditionalErrorAndReturnValue(_totalNumFrames < Animation::MAX_KEYFRAMES,
+                                       RESULT_FAIL,
+                                       "Animation.AddKeyFrame.TooManyFrames",
+                                       "No more space to add given keyframe to specified animation.\n");
+
+    
+    _frames[_totalNumFrames++] = keyframe;
+    _framesSorted = false; // trigger a re-sort on next Init() now that we've got a new frame
+    
+#   if DEBUG_ANIMATIONS
+    PRINT("Added frame %d to animation %d\n",
+          _totalNumFrames, _ID);
+#   endif
+    
+    /*
     const TrackType whichTrack = Animation::GetTrack(keyframe.type);
     
     Animation::Track& track = _tracks[whichTrack];
@@ -323,6 +335,64 @@ namespace Cozmo {
     PRINT("Added frame %d to track %d of animation %d\n",
           track.numFrames, whichTrack, _ID);
 #   endif
+    */
+    
+    return RESULT_OK;
+  }
+  
+  Result Animation::SortKeyFrames()
+  {
+    if(!_framesSorted)
+    {
+      KeyFrame buffer[MAX_KEYFRAMES];
+      
+      // Copy the frames into the temp buffer, and then copy them back into the
+      // _frames array, in order. The algorithm below is certainly not optimal
+      // in terms of efficiency (we loop over the frames list NUM_TRACKS times,
+      // re-checking the type of every frame every time. But given the small
+      // number of tracks (5) and number of frames (~20-30), this seems like
+      // it's probably good enough for now.
+  
+      memcpy(buffer, _frames, _totalNumFrames*sizeof(KeyFrame));
+      
+#     if DEBUG_ANIMATIONS
+      bool sanityCheck[MAX_KEYFRAMES];
+      memset(sanityCheck, 0, sizeof(bool)*MAX_KEYFRAMES);
+#     endif
+      
+      s32 curStartOffset = 0;
+      for(s32 iTrack=0; iTrack<NUM_TRACKS; ++iTrack) {
+        _tracks[iTrack].startOffset = curStartOffset;
+        
+        const TrackType curTrackType = static_cast<TrackType>(iTrack);
+        for(s32 iFrame=0; iFrame<_totalNumFrames; ++iFrame) {
+          // If this frame should be in the current track
+          if(Animation::GetTrack(buffer[iFrame].type) == curTrackType) {
+            _frames[_tracks[iTrack].startOffset + _tracks[iTrack].numFrames++] = buffer[iFrame];
+            ++curStartOffset;
+            
+#           if DEBUG_ANIMATIONS
+            // Make sure each frame is used only once
+            AnkiConditionalWarn(!sanityCheck[iFrame],
+                                "Animation.SortKeyFrames.ReusingFrame",
+                                "Frame %d is being added to multiple tracks.\n", iFrame);
+            sanityCheck[iFrame] = true;
+#           endif
+          }
+        } // for each frame
+        
+      } // for each track
+      
+      _framesSorted = true;
+      
+#     if DEBUG_ANIMATIONS
+      for(s32 iTrack=0; iTrack<NUM_TRACKS; ++iTrack) {
+        PRINT("Track %d of animation %d has %d frames starting at offset %d.\n",
+              iTrack, _ID, _tracks[iTrack].numFrames, _tracks[iTrack].startOffset);
+      }
+#     endif
+      
+    } // if(!_framesSorted)
     
     return RESULT_OK;
   }
