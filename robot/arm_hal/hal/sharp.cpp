@@ -484,7 +484,7 @@ namespace Anki
       
       
       // Set up an interrupt based read.
-      static bool SetReadMsg(I2CInterface *iface, int word_addr)
+      static void SetReadMsg(I2CInterface *iface, int word_addr)
       {
         read_msg.IFACE = iface;
         read_msg.ADDR_WORD = word_addr;
@@ -508,6 +508,7 @@ namespace Anki
           prox->forward = 0;
           prox->left = 0;
           prox->right = 0;
+          prox->latest = IRleft;
           return;
         }
         
