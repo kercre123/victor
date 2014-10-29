@@ -8,9 +8,16 @@ add_definitions(-DCOZMO_BASESTATION)
   ${WEBOTS_CPP_INCLUDE_DIR}
   ${PROJECT_SOURCE_DIR}/basestation/src
   ${PROJECT_SOURCE_DIR}/robot/simulator/src
+
+  ${PROJECT_SOURCE_DIR}/basestation/src/BLEManager
+  ${PROJECT_SOURCE_DIR}/basestation/src/BLEManager/Central
+  ${PROJECT_SOURCE_DIR}/basestation/src/BLEManager/Networking
+  ${PROJECT_SOURCE_DIR}/basestation/src/BLEManager/Logging
+  ${PROJECT_SOURCE_DIR}/basestation/src/BLEManager/VehicleManager
 )
 
 file(GLOB COZMO_BASESTATION_SRC ${PROJECT_SOURCE_DIR}/basestation/src/*.c*)
+file(GLOB COZMO_BASESTATION_OBJC_SRC ${PROJECT_SOURCE_DIR}/basestation/src/*.m*)
 
 
 # Link paths
@@ -21,8 +28,13 @@ link_directories( ${WEBOTS_LIB_DIR} )
 set(SOURCE_FILES
   blockworld_controller.cpp
   ${COZMO_BASESTATION_SRC}
-#  ${PROJECT_SOURCE_DIR}/basestation/src/messages.cpp
+  ${COZMO_BASESTATION_OBJC_SRC}
 )
+
+# Enable ARC
+add_compile_options(-fobjc-arc)
+
+find_library(BLE_LIBRARY NAMES IOBluetooth)
 
 add_executable(blockworld_controller 
   ${SOURCE_FILES} 
@@ -37,6 +49,7 @@ target_link_libraries(blockworld_controller
   CppController # Webots C++ Controller
   jsoncpp
   ${OPENCV_LIBS}
+  ${BLE_LIBRARY}
 )
   
 set_target_properties(blockworld_controller PROPERTIES
