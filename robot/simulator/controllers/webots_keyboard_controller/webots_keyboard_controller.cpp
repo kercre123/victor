@@ -234,12 +234,16 @@ namespace Anki {
         bool movingHead   = false;
         bool movingLift   = false;
         bool movingWheels = false;
+        s8 steeringDir = 0;  // -1 = left, 0 = straight, 1 = right
+        s8 throttleDir = 0;  // -1 = reverse, 0 = stop, 1 = forward
         
         f32 leftSpeed = 0.f;
         f32 rightSpeed = 0.f;
         
         f32 commandedLiftSpeed = 0.f;
         f32 commandedHeadSpeed = 0.f;
+        
+        f32 wheelSpeed = DRIVE_VELOCITY_FAST;
         
         static bool keyboardRestart = false;
         if (keyboardRestart) {
@@ -284,7 +288,6 @@ namespace Anki {
           */
           
           // Use slow motor speeds if SHIFT is pressed
-          f32 wheelSpeed = DRIVE_VELOCITY_FAST;
           f32 liftSpeed = LIFT_SPEED_RAD_PER_SEC;
           f32 headSpeed = HEAD_SPEED_RAD_PER_SEC;
           if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
@@ -314,37 +317,25 @@ namespace Anki {
             {
               case webots::Robot::KEYBOARD_UP:
               {
-                movingWheels = true;
-                leftSpeed  += wheelSpeed;
-                rightSpeed += wheelSpeed;
-                //SendDriveWheels(wheelSpeed, wheelSpeed);
+                ++throttleDir;
                 break;
               }
                 
               case webots::Robot::KEYBOARD_DOWN:
               {
-                movingWheels = true;
-                leftSpeed  -= wheelSpeed;
-                rightSpeed -= wheelSpeed;
-                //SendDriveWheels(-wheelSpeed, -wheelSpeed);
+                --throttleDir;
                 break;
               }
                 
               case webots::Robot::KEYBOARD_LEFT:
               {
-                movingWheels = true;
-                leftSpeed  -= wheelSpeed;
-                rightSpeed += wheelSpeed;
-                //SendDriveWheels(-wheelSpeed, wheelSpeed);
+                --steeringDir;
                 break;
               }
                 
               case webots::Robot::KEYBOARD_RIGHT:
               {
-                movingWheels = true;
-                leftSpeed  += wheelSpeed;
-                rightSpeed -= wheelSpeed;
-                //SendDriveWheels(wheelSpeed, -wheelSpeed);
+                ++steeringDir;
                 break;
               }
                 
@@ -699,8 +690,23 @@ namespace Anki {
           
         } // while(key)
         
+        
+        movingWheels = throttleDir || steeringDir;
 
         if(movingWheels) {
+          
+          // Set wheel speeds based on drive commands
+          if (throttleDir > 0) {
+            leftSpeed = wheelSpeed + steeringDir * wheelSpeed;
+            rightSpeed = wheelSpeed - steeringDir * wheelSpeed;
+          } else if (throttleDir < 0) {
+            leftSpeed = -wheelSpeed - steeringDir * wheelSpeed;
+            rightSpeed = -wheelSpeed + steeringDir * wheelSpeed;
+          } else {
+            leftSpeed = steeringDir * wheelSpeed;
+            rightSpeed = -steeringDir * wheelSpeed;
+          }
+          
           SendDriveWheels(leftSpeed, rightSpeed);
           wasMovingWheels_ = true;
         } else if(wasMovingWheels_ && !movingWheels) {
