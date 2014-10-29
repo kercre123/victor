@@ -158,6 +158,12 @@ namespace Cozmo {
                                      SpinEyes.rightClockWise);
         break;
       }
+      
+      case KeyFrame::STOP_EYES:
+      {
+        EyeController::StopAnimating();
+        break;
+      }
         
       default:
       {

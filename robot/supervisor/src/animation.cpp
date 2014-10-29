@@ -281,11 +281,11 @@ namespace Cozmo {
       //case KeyFrame::STOP_WIGGLE:
         return POSE;
         
-      case KeyFrame::SET_LED_COLORS:
       case KeyFrame::BLINK_EYES:
       case KeyFrame::SET_EYE:
       case KeyFrame::FLASH_EYES:
       case KeyFrame::SPIN_EYES:
+      case KeyFrame::STOP_EYES:
         return LIGHTS;
         
       case KeyFrame::PLAY_SOUND:

@@ -56,6 +56,12 @@
       "onPeriod_ms"    : 1650,
       "offPeriod_ms"   : 200,
       "color"          : [0, 0, 255]
+    }, 
+    {
+      "Name" : "MessageAddAnimKeyFrame_StopEyeAnimation", 
+      "transitionIn"   : "INSTANT",
+      "transitionOut"  : "INSTANT", 
+      "relTime_ms"     : 1850
     }
   ],
   
@@ -338,7 +344,7 @@
       "relTime_ms"      : 3800,
       "transitionIn"    : 0,
       "transitionOut"   : 0, 
-      "angle_deg"       : 0
+      "angle_deg"       : 0 
     }
   ], 
   

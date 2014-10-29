@@ -43,8 +43,9 @@ struct KeyFrame
     BLINK_EYES,
     FLASH_EYES,
     SPIN_EYES,
+    STOP_EYES, // end any eye animation
     SET_EYE,
-    SET_LED_COLORS,
+    // SET_LED_COLORS,
     START_LIFT_NOD,
     STOP_LIFT_NOD,
     NUM_TYPES

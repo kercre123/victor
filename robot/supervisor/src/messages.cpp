@@ -701,6 +701,13 @@ namespace Anki {
         AddKeyFrameHelper(msg, kf);
       }
       
+      void ProcessAddAnimKeyFrame_StopEyeAnimationMessage(const AddAnimKeyFrame_StopEyeAnimation& msg)
+      {
+        KeyFrame kf;
+        kf.type = KeyFrame::STOP_EYES;
+        AddKeyFrameHelper(msg, kf);
+      }
+      
 // ----------- Send messages -----------------
       
       
