@@ -65,20 +65,19 @@ struct KeyFrame
   
   // Directly set the head's angle and speed
   struct SetHeadAngle_t {
-    f32 targetAngle;
-    f32 targetSpeed;
+    s8 angle_deg;
   };
   
   // Command a canned head nodding action between two angles
   // Must be used in conjunction with a StopHeadNod_t keyframe after it.
   struct StartHeadNod_t {
-    f32 lowAngle;  // radians
-    f32 highAngle; // radians
+    s8  lowAngle_deg;
+    s8  highAngle_deg;
     u16 period_ms;
   };
   
   struct StopHeadNod_t {
-    f32 finalAngle;
+    s8 finalAngle_deg;
   };
   
   // Directly set lift's height and speed
@@ -90,8 +89,8 @@ struct KeyFrame
   // Command a canned lift nodding action between two heights
   // Must be used in conjunction with a StopLiftNod_t keyframe after it.
   struct StartLiftNod_t {
-    u8 lowHeight;  // mm
-    u8 highHeight; // mm
+    u8  lowHeight;  // mm
+    u8  highHeight; // mm
     u16 period_ms;
   };
   
@@ -101,20 +100,18 @@ struct KeyFrame
   
   struct DriveLineSegment_t {
     s16 relativeDistance; // in mm, +ve for fwd, -ve for backward
-    f32 targetSpeed;
   };
   
   struct DriveArc_t {
-    f32 radius;
-    f32 sweepAngle; // +ve arcs left, -ve arcs right
-    f32 targetSpeed;
+    u8  radius_mm;
+    s16 sweepAngle_deg; // +ve arcs left, -ve arcs right
   };
   
   // Drive forward and backward primitive
   // (Can use different forward/backward distances to get a net "shimmy"
   //  forward or backward)
   struct BackAndForth_t {
-    u32 period;
+    u16 period_ms;
     u8  forwardDist_mm;
     u8  backwardDist_mm;
   };
@@ -122,9 +119,9 @@ struct KeyFrame
   // Side-to-side body wiggle primitive
   // (Can use different left/right angles to get a net "shimmy" left or right)
   struct StartWiggle_t {
-    u32 period;
-    u8  leftAngle_rad;
-    u8  rightAngle_rad;
+    u16 period_ms;
+    s8  leftAngle_deg;
+    s8  rightAngle_deg;
   };
   
   struct StopWiggle_t {
@@ -133,8 +130,7 @@ struct KeyFrame
   
   // Turn in place primitive
   struct TurnInPlace_t {
-    f32 relativeAngle; // +ve turns left, -ve turns right
-    f32 targetSpeed;
+    s16 relativeAngle_deg; // +ve turns left, -ve turns right
   };
   
   struct PlaySound_t {
@@ -170,10 +166,13 @@ struct KeyFrame
     u8  rightClockWise;
   };
   
+  // Kinda large
+  /*
   // Set the color for all LEDs individually
   struct SetLEDcolors_t {
     u32 led[NUM_LEDS];
   };
+   */
   
   // Using a union of structs here (determined by a check of the Type above)
   // instead of inheritance.
@@ -209,15 +208,11 @@ struct KeyFrame
     // Lights
     BlinkEyes_t        BlinkEyes;
     SetEye_t           SetEye;
-    SetLEDcolors_t     SetLEDcolors;
+    //SetLEDcolors_t     SetLEDcolors;
     FlashEyes_t        FlashEyes;
     SpinEyes_t         SpinEyes;
     
   }; // union of structs
-  
-  // Use this value to skip setting a given LED color and leave it at whatever
-  // color it was.
-  static const u32 UNSPECIFIED_COLOR = 0xff000000;
     
   void TransitionOutOf(const u32 animStartTime_ms) const;
   void TransitionInto(const u32 animStartTime_ms)  const;

@@ -110,8 +110,10 @@ namespace Cozmo {
   } // GetLengthInMilliSeconds()
    */
    
-  void CannedAnimationContainer::Send(RobotID_t robotID, IMessageHandler* msgHandler)
+  Result CannedAnimationContainer::Send(RobotID_t robotID, IMessageHandler* msgHandler)
   {
+    Result lastResult = RESULT_OK;
+    
     for(auto & cannedAnimationByName : _animations)
     {
       const std::string&  name         = cannedAnimationByName.first;
@@ -139,10 +141,15 @@ namespace Cozmo {
         {
           if(message != nullptr) {
             PRINT_NAMED_INFO("CannedAnimationContainer.Send",
-                             "Sending '%s' animation defintion with ID=%d.\n",
+                             "Sending '%s' animation definition with ID=%d.\n",
                              name.c_str(), animID);
             
-            msgHandler->SendMessage(robotID, *message);
+            lastResult = msgHandler->SendMessage(robotID, *message);
+            if(lastResult != RESULT_OK) {
+              PRINT_NAMED_ERROR("CannedAnimationContainer.Send.SendMessageFail",
+                                "Failed to send a keyframe message.\n");
+              return lastResult;
+            }
           } else {
             PRINT_NAMED_WARNING("CannedAnimationContainer.Send.NullMessagePtr",
                                 "Robot %d encountered NULL message sending canned animations.\n", robotID);
@@ -152,6 +159,8 @@ namespace Cozmo {
       } // if/else ladder for keyFrameList validity
       
     } // for each canned animation
+    
+    return lastResult;
     
   } // SendCannedAnimations()
 
@@ -349,17 +358,16 @@ namespace Cozmo {
       MessageAddAnimKeyFrame_StartHeadNod* startNodMsg = new MessageAddAnimKeyFrame_StartHeadNod();
       startNodMsg->animationID = animID;
       startNodMsg->relTime_ms = 0;
-      startNodMsg->lowAngle  = DEG_TO_RAD(-25);
-      startNodMsg->highAngle = DEG_TO_RAD( 25);
+      startNodMsg->lowAngle_deg  = -25;
+      startNodMsg->highAngle_deg =  25;
       startNodMsg->period_ms = 1200;
       keyFrames->AddKeyFrame(startNodMsg);
-      
       
       // Stop the nod
       MessageAddAnimKeyFrame_StopHeadNod* stopNodMsg = new MessageAddAnimKeyFrame_StopHeadNod();
       stopNodMsg->animationID = animID;
       stopNodMsg->relTime_ms = 2400;
-      stopNodMsg->finalAngle = 0.f;
+      stopNodMsg->finalAngle_deg = 0;
       keyFrames->AddKeyFrame(stopNodMsg);
     } // SLOW HEAD NOD
       

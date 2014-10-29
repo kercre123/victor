@@ -282,6 +282,9 @@ namespace Anki {
       
       Result StopAnimation();
       
+      // (Re-)Read the animation JSON file and send it to the physical robot
+      Result ReadAnimationFile();
+      
       // Returns true if the robot is currently playing an animation, according
       // to most recent state message.
       bool IsAnimating() const;

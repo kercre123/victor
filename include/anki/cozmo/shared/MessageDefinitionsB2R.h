@@ -243,7 +243,7 @@ END_MESSAGE_DEFINITION(SetVisionSystemParams)
 // PlayAnimation
 START_MESSAGE_DEFINITION(PlayAnimation, 1)
 ADD_MESSAGE_MEMBER(u32, numLoops)
-ADD_MESSAGE_MEMBER(u8, animationID)
+ADD_MESSAGE_MEMBER(u8,  animationID)
 END_MESSAGE_DEFINITION(PlayAnimation)
 
 // AbortAnimation
@@ -259,38 +259,36 @@ END_MESSAGE_DEFINITION(ClearCannedAnimation)
 
 // AddAnimKeyFrame_SetHeadAngle
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetHeadAngle, 2)
-ADD_MESSAGE_MEMBER(f32, targetAngle)
-ADD_MESSAGE_MEMBER(f32, targetSpeed)
 ADD_MESSAGE_MEMBER(u16, relTime_ms)
 ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
+ADD_MESSAGE_MEMBER(s8,  angle_deg)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetHeadAngle)
 
 // AddAnimKeyFrame_StartHeadNod
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartHeadNod, 2)
-ADD_MESSAGE_MEMBER(f32, lowAngle)
-ADD_MESSAGE_MEMBER(f32, highAngle)
 ADD_MESSAGE_MEMBER(u16, relTime_ms)
 ADD_MESSAGE_MEMBER(u16, period_ms)
 ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
+ADD_MESSAGE_MEMBER(s8,  lowAngle_deg)
+ADD_MESSAGE_MEMBER(s8,  highAngle_deg)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartHeadNod)
 
 // AddAnimKeyFrame_StopHeadNod
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_StopHeadNod, 2)
-ADD_MESSAGE_MEMBER(f32, finalAngle)
 ADD_MESSAGE_MEMBER(u16, relTime_ms)
 ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
+ADD_MESSAGE_MEMBER(s8, finalAngle_deg)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopHeadNod)
 
 // AddAnimKeyFrame_SetLiftHeight
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLiftHeight, 2)
-ADD_MESSAGE_MEMBER(f32, targetSpeed)
-ADD_MESSAGE_MEMBER(u16, targetHeight_mm)
+ADD_MESSAGE_MEMBER(u16, height_mm)
 ADD_MESSAGE_MEMBER(u16, relTime_ms)
 ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
@@ -317,6 +315,7 @@ ADD_MESSAGE_MEMBER(u8,  finalHeight_mm)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopLiftNod)
 
+/*
 // AddAnimKeyFrame_SetLEDColors
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLEDColors, 2)
 //ADD_MESSAGE_MEMBER_ARRAY(u32, LEDcolors, 8) // TODO: How do we make NUM_LEDS here match HAL::NUM_LEDS?
@@ -333,6 +332,7 @@ ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLEDColors)
+*/
 
 // AddAnimKeyFrame_DriveLine
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_DriveLine, 2)

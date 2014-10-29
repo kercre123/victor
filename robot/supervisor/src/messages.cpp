@@ -531,8 +531,7 @@ namespace Anki {
         KeyFrame kf;
         
         kf.type = KeyFrame::HEAD_ANGLE;
-        kf.SetHeadAngle.targetAngle = msg.targetAngle;
-        kf.SetHeadAngle.targetSpeed = msg.targetSpeed;
+        kf.SetHeadAngle.angle_deg = msg.angle_deg;
         
         AddKeyFrameHelper(msg, kf);
       }
@@ -542,8 +541,8 @@ namespace Anki {
         KeyFrame kf;
         
         kf.type = KeyFrame::START_HEAD_NOD;
-        kf.StartHeadNod.highAngle = msg.highAngle;
-        kf.StartHeadNod.lowAngle  = msg.lowAngle;
+        kf.StartHeadNod.highAngle_deg = msg.highAngle_deg;
+        kf.StartHeadNod.lowAngle_deg  = msg.lowAngle_deg;
         kf.StartHeadNod.period_ms = msg.period_ms;
         
         AddKeyFrameHelper(msg, kf);
@@ -553,7 +552,7 @@ namespace Anki {
       {
         KeyFrame kf;
         kf.type = KeyFrame::STOP_HEAD_NOD;
-        kf.StopHeadNod.finalAngle = msg.finalAngle;
+        kf.StopHeadNod.finalAngle_deg = msg.finalAngle_deg;
         
         AddKeyFrameHelper(msg, kf);
       }
@@ -563,8 +562,7 @@ namespace Anki {
         KeyFrame kf;
         
         kf.type = KeyFrame::LIFT_HEIGHT;
-        kf.SetLiftHeight.targetHeight = msg.targetHeight_mm;
-        kf.SetLiftHeight.targetSpeed = msg.targetSpeed;
+        kf.SetLiftHeight.targetHeight = msg.height_mm;
         
         AddKeyFrameHelper(msg, kf);
       }
@@ -606,6 +604,7 @@ namespace Anki {
         return (rgb[0]<<16) + (rgb[1]<<8) + rgb[2];
       }
       
+      /*
       void ProcessAddAnimKeyFrame_SetLEDColorsMessage(const AddAnimKeyFrame_SetLEDColors& msg)
       {
         KeyFrame kf;
@@ -623,6 +622,7 @@ namespace Anki {
         
         AddKeyFrameHelper(msg, kf);
       }
+       */
       
       void ProcessAddAnimKeyFrame_PlaySoundMessage(const AddAnimKeyFrame_PlaySound& msg)
       {

@@ -65,7 +65,7 @@ namespace Cozmo {
     //u16 GetLengthInMilliSeconds(const std::string& name) const;
     
     // Is there a better way to do this?
-    void Send(RobotID_t robotID, IMessageHandler* msgHandler);
+    Result Send(RobotID_t robotID, IMessageHandler* msgHandler);
     
   private:
     

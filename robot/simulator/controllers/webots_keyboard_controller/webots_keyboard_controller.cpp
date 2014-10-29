@@ -106,6 +106,7 @@ namespace Anki {
       void SendStartTestMode(TestMode mode);
       void SendIMURequest(u32 length_ms);
       void SendAnimation(const char* animName, u32 numLoops);
+      void SendReadAnimationFile();
       void SendStartFaceTracking(u8 timeout_sec);
       void SendStopFaceTracking();
       
@@ -219,6 +220,7 @@ namespace Anki {
         const s32 CKEY_ANIMATION_BACK_AND_FORTH = (s32)'@';
         const s32 CKEY_ANIMATION_BLINK = (s32)'#';
         const s32 CKEY_ANIMATION_TOGGLE = (s32) '~';
+        const s32 CKEY_ANIMATION_SEND_FILE = 197; // ALT+A
         
         const s32 CKEY_TOGGLE_FACE_TRACKING = (s32)'F';
         
@@ -299,14 +301,17 @@ namespace Anki {
           //       key, modifier_key, key | modifier_key, lastKeyPressed_);
           
           // Check for test mode (alt + key)
+          bool testMode = false;
           if (modifier_key == webots::Supervisor::KEYBOARD_ALT) {
             if (key >= '0' && key <= '9') {
               TestMode m = TestMode(key - '0');
               printf("Sending test mode %d\n", m);
               SendStartTestMode(m);
+              testMode = true;
             }
           }
-          else {
+          
+          if(!testMode) {
             // Check for (mostly) single key commands
             switch (key)
             {
@@ -580,6 +585,14 @@ namespace Anki {
               }
                 
               // Animations
+              case CKEY_ANIMATION_SEND_FILE:
+              {
+                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+                  // Re-read animations and send them to physical robot
+                  SendReadAnimationFile();
+                }
+                break;
+              }
               case CKEY_ANIMATION_NOD:
               {
                 SendAnimation("ANIM_HEAD_NOD", 1);
@@ -1002,6 +1015,12 @@ namespace Anki {
           printf("Ignoring duplicate SendAnimation keystroke.\n");
         }
         
+      }
+      
+      void SendReadAnimationFile()
+      {
+        MessageU2G_ReadAnimationFile m;
+        SendMessage(m);
       }
       
       void SendStartFaceTracking(u8 timeout_sec)

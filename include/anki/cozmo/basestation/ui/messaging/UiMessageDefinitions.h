@@ -198,7 +198,11 @@ START_MESSAGE_DEFINITION(U2G_PlayAnimation, 1)
 ADD_MESSAGE_MEMBER(u32, numLoops)
 //ADD_MESSAGE_MEMBER(u8, animationID)
 ADD_MESSAGE_MEMBER_ARRAY(char, animationName, 32) // TODO: don't use char arrays
-END_MESSAGE_DEFINITION(U2G_PlayAnimation)
+END_MESSAGE_DEFINITION(U2G_PlayAnimation)\
+
+// ReadAnimationFile
+START_MESSAGE_DEFINITION(U2G_ReadAnimationFile, 1)
+END_MESSAGE_DEFINITION(U2G_ReadAnimationFile)
 
 // StartFaceTracking
 START_MESSAGE_DEFINITION(U2G_StartFaceTracking, 1)

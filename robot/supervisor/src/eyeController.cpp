@@ -26,7 +26,8 @@ namespace EyeController {
     
     enum EyeAnimMode {
       NONE,
-      BLINK,
+      BLINK_TO_MIDDLE,
+      BLINK_TO_BOTTOM,
       FLASH,
       SPIN
     };
@@ -41,8 +42,14 @@ namespace EyeController {
       NUM_EYE_SEGMENTS
     };
 
-    const s32 BLINK_ANIM_LENGTH = 4;
-    const EyeShape BlinkAnimation[BLINK_ANIM_LENGTH] = {EYE_OPEN, EYE_HALF, EYE_CLOSED, EYE_HALF};
+    const s32 BLINK_TO_MIDDLE_ANIM_LENGTH = 4;
+    const EyeShape BlinkAnimation[BLINK_TO_MIDDLE_ANIM_LENGTH] = {
+      EYE_OPEN, EYE_HALF, EYE_CLOSED, EYE_HALF};
+    
+    const s32 BLINK_TO_BOTTOM_ANIM_LENGTH = 6;
+    const EyeShape BlinkAnimation_ToBtm[BLINK_TO_BOTTOM_ANIM_LENGTH] = {
+      EYE_OPEN, EYE_OFF_PUPIL_UP, EYE_ON_PUPIL_DOWN, EYE_CLOSED, EYE_ON_PUPIL_DOWN, EYE_OFF_PUPIL_UP
+    };
     
     // Spin in canonical clockwise order:
     const EyeSegments SpinAnimation[NUM_EYE_SEGMENTS] = {EYE_SEGMENT_TOP, EYE_SEGMENT_LEFT, EYE_SEGMENT_BOTTOM, EYE_SEGMENT_RIGHT};
@@ -54,7 +61,10 @@ namespace EyeController {
       LEDId         segments[NUM_EYE_SEGMENTS];
       
       union {
-        TimeStamp_t   blinkTimings[BLINK_ANIM_LENGTH];  // set by on/off periods in StartBlinking
+        
+        // set by on/off periods in StartBlinking
+        TimeStamp_t   blinkToMiddleTimings[BLINK_TO_MIDDLE_ANIM_LENGTH];
+        TimeStamp_t   blinkToBottomTimings[BLINK_TO_BOTTOM_ANIM_LENGTH];
         
         struct {
           TimeStamp_t   timings[2]; // off and on
@@ -78,9 +88,10 @@ namespace EyeController {
   
   // Forward declaration for helper functions
   static void SetEyeShapeHelper(Eye& eye, EyeShape shape);
-  static void BlinkHelper(Eye& eye, TimeStamp_t currentTime);
+  static void BlinkHelper(Eye& eye, TimeStamp_t currentTime, bool toMiddle);
   static void StartBlinkingHelper(Eye& eye, TimeStamp_t currentTime,
-                                  u16 onPeriod_ms, u16 offPeriod_ms);
+                                  u16 onPeriod_ms, u16 offPeriod_ms,
+                                  bool toMiddle);
   static void StartFlashingHelper(Eye& eye, TimeStamp_t currentTime,
                                   EyeShape shape, u16 onPeriod_ms, u16 offPeriod_ms);
   static void FlashHelper(Eye& eye, TimeStamp_t currentTime);
@@ -139,22 +150,24 @@ namespace EyeController {
   } // SetEyeShape()
 
   
-  void StartBlinking(u16 onPeriod_ms, u16 offPeriod_ms)
+  void StartBlinking(u16 onPeriod_ms, u16 offPeriod_ms, bool toMiddle)
   {
     StartBlinking(onPeriod_ms, offPeriod_ms,
-                  onPeriod_ms, offPeriod_ms);
+                  onPeriod_ms, offPeriod_ms,
+                  toMiddle);
   }
   
   void StartBlinking(u16 leftOnPeriod_ms,  u16 leftOffPeriod_ms,
-                     u16 rightOnPeriod_ms, u16 rightOffPeriod_ms)
+                     u16 rightOnPeriod_ms, u16 rightOffPeriod_ms,
+                     bool toMiddle)
   {
     const TimeStamp_t currentTime = HAL::GetTimeStamp();
     
-    StartBlinkingHelper(_leftEye, currentTime, leftOnPeriod_ms, leftOffPeriod_ms);
+    StartBlinkingHelper(_leftEye, currentTime, leftOnPeriod_ms, leftOffPeriod_ms, toMiddle);
     
-    StartBlinkingHelper(_rightEye, currentTime, rightOnPeriod_ms, rightOffPeriod_ms);
+    StartBlinkingHelper(_rightEye, currentTime, rightOnPeriod_ms, rightOffPeriod_ms, toMiddle);
     
-    _eyeAnimMode = BLINK;
+    _eyeAnimMode = (toMiddle ? BLINK_TO_MIDDLE : BLINK_TO_BOTTOM);
   }
   
   void StartFlashing(EyeShape shape, u16 onPeriod_ms, u16 offPeriod_ms)
@@ -202,10 +215,16 @@ namespace EyeController {
         // Just leave eyes as they are
         break;
       }
-      case BLINK:
+      case BLINK_TO_MIDDLE:
       {
-        BlinkHelper(_leftEye,  currentTime);
-        BlinkHelper(_rightEye, currentTime);
+        BlinkHelper(_leftEye,  currentTime, true);
+        BlinkHelper(_rightEye, currentTime, true);
+        break;
+      }
+      case BLINK_TO_BOTTOM:
+      {
+        BlinkHelper(_leftEye,  currentTime, false);
+        BlinkHelper(_rightEye, currentTime, false);
         break;
       }
       case FLASH:
@@ -235,22 +254,27 @@ namespace EyeController {
 #endif
   
   void StartBlinkingHelper(Eye& eye, TimeStamp_t currentTime,
-                           u16 onPeriod_ms, u16 offPeriod_ms)
+                           u16 onPeriod_ms, u16 offPeriod_ms,
+                           bool toMiddle)
   {
     if(eye.color == LED_OFF) {
       AnkiWarn("EyeController.StartBlinkingHelper.NoEyeColor",
                "Eye is currently off: blinking will not have any effect.\n");
     }
-   
-    if(onPeriod_ms != eye.blinkTimings[0] ||
-       offPeriod_ms/3 != eye.blinkTimings[3])
+
+
+    const s32 length = (toMiddle ? BLINK_TO_MIDDLE_ANIM_LENGTH : BLINK_TO_BOTTOM_ANIM_LENGTH);
+    TimeStamp_t* timings = (toMiddle ? eye.blinkToMiddleTimings : eye.blinkToBottomTimings);
+    
+    const TimeStamp_t offTime = offPeriod_ms/(length-1);
+    if(onPeriod_ms != timings[0] || offTime != timings[1])
     {
       eye.nextSwitchTime = currentTime;
-      eye.blinkTimings[0] = onPeriod_ms;
-      eye.blinkTimings[1] = offPeriod_ms/3;
-      eye.blinkTimings[2] = eye.blinkTimings[1];
-      eye.blinkTimings[3] = eye.blinkTimings[1];
-      eye.animIndex = 2;
+      timings[0] = onPeriod_ms;
+      for(s32 i=1; i<length; ++i) {
+        timings[i] = offTime;
+      }
+      eye.animIndex = 0;
     }
     
   } // StartBlinkingHelper()
@@ -264,6 +288,7 @@ namespace EyeController {
        onPeriod_ms != eye.flashSettings.timings[1] ||
        offPeriod_ms != eye.flashSettings.timings[0])
     {
+      eye.animIndex = 0;
       eye.flashSettings.shape = shape;
       eye.flashSettings.timings[0] = offPeriod_ms;
       eye.flashSettings.timings[1] = onPeriod_ms;
@@ -409,16 +434,21 @@ namespace EyeController {
   } // SetEyeShape()
   
   
-  void BlinkHelper(Eye& eye, TimeStamp_t currentTime)
+  void BlinkHelper(Eye& eye, TimeStamp_t currentTime, bool toMiddle)
   {
     if(currentTime > eye.nextSwitchTime) {
       ++eye.animIndex;
-      if(eye.animIndex == BLINK_ANIM_LENGTH) {
+      if(eye.animIndex == (toMiddle ? BLINK_TO_MIDDLE_ANIM_LENGTH : BLINK_TO_BOTTOM_ANIM_LENGTH)) {
         eye.animIndex = 0;
       }
       
-      SetEyeShapeHelper(eye, BlinkAnimation[eye.animIndex]);
-      eye.nextSwitchTime = currentTime + eye.blinkTimings[eye.animIndex];
+      SetEyeShapeHelper(eye, (toMiddle ?
+                              BlinkAnimation[eye.animIndex] :
+                              BlinkAnimation_ToBtm[eye.animIndex]));
+      
+      eye.nextSwitchTime = currentTime + (toMiddle ?
+                                          eye.blinkToMiddleTimings[eye.animIndex] :
+                                          eye.blinkToBottomTimings[eye.animIndex]);
     }
   } // BlinkHelper()
   
