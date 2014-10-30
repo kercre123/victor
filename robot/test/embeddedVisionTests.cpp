@@ -124,6 +124,7 @@ static Result FaceRecognizer_LoadTrainingImages(
   const s32 minHeight = 30;
   const s32 minWidth = 30;
   const s32 trainingWidth = 64;
+  const bool useHistogramPreprocess = false;
 
   trainingLabels.clear();
   trainingLabelNames.clear();
@@ -137,7 +138,22 @@ static Result FaceRecognizer_LoadTrainingImages(
     cv::Mat_<u8> arrayCopy;
     ArrayToCvMat(trainingImages[iFace], &arrayCopy);
 
-    cv::equalizeHist(arrayCopy, arrayCopy);
+    //// Preprocess
+    //if(useHistogramPreprocess) {
+    //  // Histogram preprocess
+    //  cv::equalizeHist(arrayCopy, arrayCopy);
+    //} else {
+    //  // DoG preprocess
+    //  cv::Mat_<u8> dog1(arrayCopy.rows, arrayCopy.cols);
+    //  cv::Mat_<u8> dog2(arrayCopy.rows, arrayCopy.cols);
+
+    //  cv::GaussianBlur(arrayCopy, dog1, cv::Size(7,7), 1.0);
+    //  cv::GaussianBlur(arrayCopy, dog2, cv::Size(13,13), 2.0);
+
+    //  for(s32 i=0; i<arrayCopy.rows*arrayCopy.cols; i++) {
+    //    arrayCopy.data[i] = (static_cast<s32>(dog1.data[i]) - static_cast<s32>(dog2.data[i]) + 255) >> 1;
+    //  }
+    //}
 
     trainingLabels.push_back(faceRecognizer_trainingLabels_data[iFace]);
   }

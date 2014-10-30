@@ -291,6 +291,8 @@ namespace Anki
         f64 &confidence,
         MemoryStack scratch)
       {
+        const bool useHistogramPreprocess = false;
+
         faceId = -1;
         confidence = 0;
 
@@ -298,7 +300,21 @@ namespace Anki
         ArrayToCvMat(image, &imageCv);
 
         // Preprocess
-        cv::equalizeHist(imageCv, imageCv);
+        if(useHistogramPreprocess) {
+          // Histogram preprocess
+          cv::equalizeHist(imageCv, imageCv);
+        } else {
+          // DoG preprocess
+          cv::Mat_<u8> dog1(imageCv.rows, imageCv.cols);
+          cv::Mat_<u8> dog2(imageCv.rows, imageCv.cols);
+
+          cv::GaussianBlur(imageCv, dog1, cv::Size(7,7), 1.0);
+          cv::GaussianBlur(imageCv, dog2, cv::Size(13,13), 2.0);
+
+          for(s32 i=0; i<imageCv.rows*imageCv.cols; i++) {
+            imageCv.data[i] = (static_cast<s32>(dog1.data[i]) - static_cast<s32>(dog2.data[i]) + 255) >> 1;
+          }
+        }
 
         // For each training image, find the best alignment via Affine LK
 
@@ -310,12 +326,12 @@ namespace Anki
 
         const s32 numPyramidLevels = 3;
 
-        TemplateTracker::LucasKanadeTracker_Affine templateTracker(
+        TemplateTracker::LucasKanadeTracker_Projective templateTracker(
           image,
           templateQuad,
           1.0f,
           numPyramidLevels,
-          Transformations::TRANSFORM_AFFINE,
+          Transformations::TRANSFORM_PROJECTIVE,
           scratch);
 
         Array<f32> homography(3, 3, scratch);
@@ -347,7 +363,32 @@ namespace Anki
 
           //Quadrilateral<f32> warpedQuad = intialTransformation.Transform(const Quadrilateral<f32> &in, scratch);
 
-          trainingImages[iTraining].Show("Training", false);
+          Array<u8> trainingImage(trainingImages[iTraining].get_size(0), trainingImages[iTraining].get_size(1), scratch);
+          trainingImage.Set(trainingImages[iTraining]);
+
+          cv::Mat_<u8> imageCv;
+
+          ArrayToCvMat(trainingImage, &imageCv);
+
+          // Preprocess
+          const bool useHistogramPreprocess = false;
+          if(useHistogramPreprocess) {
+            // Histogram preprocess
+            cv::equalizeHist(imageCv, imageCv);
+          } else {
+            // DoG preprocess
+            cv::Mat_<u8> dog1(imageCv.rows, imageCv.cols);
+            cv::Mat_<u8> dog2(imageCv.rows, imageCv.cols);
+
+            cv::GaussianBlur(imageCv, dog1, cv::Size(7,7), 1.0);
+            cv::GaussianBlur(imageCv, dog2, cv::Size(13,13), 2.0);
+
+            for(s32 i=0; i<imageCv.rows*imageCv.cols; i++) {
+              imageCv.data[i] = (static_cast<s32>(dog1.data[i]) - static_cast<s32>(dog2.data[i]) + 255) >> 1;
+            }
+          }
+
+          trainingImage.Show("Training", false);
           warpedImage.Show("warpedImage", false);
 
           const s32 maxIterations = 25;
@@ -359,7 +400,7 @@ namespace Anki
           s32 verify_numSimilarPixels;
 
           templateTracker.UpdateTrack(
-            trainingImages[iTraining],
+            trainingImage,
             maxIterations,
             convergenceTolerance,
             verify_maxPixelDifference,
