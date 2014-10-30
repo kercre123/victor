@@ -86,6 +86,8 @@ namespace EyeController {
     
     s32 _blinkVariation_ms;
     
+    bool _enable = false;
+    
   }; // "private" variables
 
   
@@ -120,16 +122,31 @@ namespace EyeController {
     
     _blinkVariation_ms = 200;
     
+    _enable = true;
+    
     return RESULT_OK;
   } // Init()
+
   
+  void Enable()
+  {
+    _enable = true;
+  }
+  
+  void Disable()
+  {
+    _enable = false;
+  }
   
   void SetEyeColor(u32 color) {
+    
     SetEyeColor(color, color);
   }
   
   void SetEyeColor(u32 leftColor, u32 rightColor)
   {
+    AnkiConditionalWarnAndReturn(_enable, "EyeController.SetEyeColor.Disabled",
+                                 "SetEyeColor() command ignored: EyeController is disabled.\n");
     
     if(leftColor != LED_CURRENT_COLOR) {
       _leftEye.color  = leftColor;
@@ -147,6 +164,9 @@ namespace EyeController {
   
   void SetEyeShape(EyeShape leftShape, EyeShape rightShape)
   {
+    AnkiConditionalWarnAndReturn(_enable, "EyeController.SetEyeShape.Disabled",
+                                 "SetEyeShape() command ignored: EyeController is disabled.\n");
+    
     SetEyeShapeHelper(_leftEye, leftShape);
     SetEyeShapeHelper(_rightEye, rightShape);
     
@@ -166,6 +186,9 @@ namespace EyeController {
                      u16 rightOnPeriod_ms, u16 rightOffPeriod_ms,
                      bool toMiddle)
   {
+    AnkiConditionalWarnAndReturn(_enable, "EyeController.StartBlinking.Disabled",
+                                 "StartBlinking() command ignored: EyeController is disabled.\n");
+    
     const TimeStamp_t currentTime = HAL::GetTimeStamp();
     
     StartBlinkingHelper(_leftEye, currentTime, leftOnPeriod_ms, leftOffPeriod_ms, toMiddle);
@@ -185,6 +208,9 @@ namespace EyeController {
   void StartFlashing(EyeShape leftShape, u16 leftOnPeriod_ms, u16 leftOffPeriod_ms,
                      EyeShape rightShape, u16 rightOnPeriod_ms, u16 rightOffPeriod_ms)
   {
+    AnkiConditionalWarnAndReturn(_enable, "EyeController.StartFlashing.Disabled",
+                                 "StartFlashing() command ignored: EyeController is disabled.\n");
+    
     const TimeStamp_t currentTime = HAL::GetTimeStamp();
     
     StartFlashingHelper(_leftEye, currentTime, leftShape, leftOnPeriod_ms, leftOffPeriod_ms);
@@ -195,6 +221,9 @@ namespace EyeController {
 
   void StartSpinning(u16 period_ms, bool leftClockWise, bool rightClockWise)
   {
+    AnkiConditionalWarnAndReturn(_enable, "EyeController.StartSpinning.Disabled",
+                                 "StartSpinning() command ignored: EyeController is disabled.\n");
+    
     const TimeStamp_t currentTime = HAL::GetTimeStamp();
     
     StartSpinningHelper(_leftEye, currentTime, period_ms, leftClockWise);
@@ -205,16 +234,24 @@ namespace EyeController {
   
   void StopAnimating()
   {
+    AnkiConditionalWarnAndReturn(_enable, "EyeController.StopAnimating.Disabled",
+                                 "StopAnimating() command ignored: EyeController is disabled.\n");
     _eyeAnimMode = NONE;
   }
   
   void SetBlinkVariability(s32 variation_ms)
   {
+    AnkiConditionalWarnAndReturn(_enable, "EyeController.SetBlinkVariability.Disabled",
+                                 "SetBlinkVariability() command ignored: EyeController is disabled.\n");
     _blinkVariation_ms = variation_ms;
   }
   
   Result Update()
   {
+    if(!_enable) {
+      return RESULT_OK;
+    }
+    
     TimeStamp_t currentTime = HAL::GetTimeStamp();
     
     switch(_eyeAnimMode)

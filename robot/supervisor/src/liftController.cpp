@@ -5,6 +5,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
+#include "anki/common/robot/errorHandling.h"
 
 
 #define DEBUG_LIFT_CONTROLLER 0
@@ -667,6 +668,9 @@ namespace Anki {
       void StartNodding(const f32 lowHeight, const f32 highHeight,
                         const u16 period_ms, const s32 numLoops)
       {
+        AnkiConditionalWarnAndReturn(enable_, "LiftController.StartNodding.Disabled",
+                                     "StartNodding() command ignored: LiftController is disabled.\n");
+        
         //preNodHeight_  = GetHeightMM();
         nodLowHeight_  = lowHeight;
         nodHighHeight_ = highHeight;
@@ -687,6 +691,9 @@ namespace Anki {
       
       void StopNodding()
       {
+        AnkiConditionalWarnAndReturn(enable_, "LiftController.StopNodding.Disabled",
+                                     "StopNodding() command ignored: LiftController is disabled.\n");
+        
         //SetDesiredHeight_internal(preNodHeight_);
         isNodding_ = false;
       }

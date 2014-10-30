@@ -114,6 +114,10 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
+    PRINT_NAMED_INFO("CannedAnimationContainer.Send",
+                     "Sending %d animations to robot %d.\n",
+                     _animations.size(), robotID);
+    
     for(auto & cannedAnimationByName : _animations)
     {
       const std::string&  name         = cannedAnimationByName.first;
@@ -136,14 +140,14 @@ namespace Cozmo {
         clearMsg.animationID = static_cast<AnimationID_t>(animID);
         msgHandler->SendMessage(robotID, clearMsg);
         
+        PRINT_NAMED_INFO("CannedAnimationContainer.Send",
+                         "Sending '%s' animation definition with ID=%d.\n",
+                         name.c_str(), animID);
+
         // Now send all the keyframe definition messages for this animation ID
         for(auto message : keyFrameList.GetMessages())
         {
           if(message != nullptr) {
-            PRINT_NAMED_INFO("CannedAnimationContainer.Send",
-                             "Sending '%s' animation definition with ID=%d.\n",
-                             name.c_str(), animID);
-            
             lastResult = msgHandler->SendMessage(robotID, *message);
             if(lastResult != RESULT_OK) {
               PRINT_NAMED_ERROR("CannedAnimationContainer.Send.SendMessageFail",
@@ -374,6 +378,11 @@ namespace Cozmo {
     return RESULT_OK;
     
   } // DefineHardCodedAnimations()
+  
+  void CannedAnimationContainer::Clear()
+  {
+    _animations.clear();
+  } // Clear()
 
 } // namespace Cozmo
 } // namespace Anki

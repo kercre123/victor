@@ -761,6 +761,7 @@ namespace Anki {
       jsonFile.close();
       
       if(lastResult == RESULT_OK) {
+        _cannedAnimations.Clear();
         lastResult = _cannedAnimations.DefineFromJson(animDefs);
         if(lastResult == RESULT_OK) {
           // Immediately send the canned animations out

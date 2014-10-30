@@ -67,6 +67,8 @@ namespace Cozmo {
     // Is there a better way to do this?
     Result Send(RobotID_t robotID, IMessageHandler* msgHandler);
     
+    void Clear();
+    
   private:
     
     std::map<std::string, std::pair<s32, KeyFrameList> > _animations;

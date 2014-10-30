@@ -189,7 +189,7 @@ namespace Cozmo {
         const f32 dAngle = angle_rad - HeadController::GetAngleRad();
         HeadController::SetAngularVelocity((dAngle*1000.f) / dt_ms);
         HeadController::SetDesiredAngle(angle_rad);
-        
+      
         // TODO: Switch to method that takes desired time into account:
         /*
          HeadController::SetDesiredAngleAndTime(SetHeadAngle.targetAngle,
@@ -255,6 +255,10 @@ namespace Cozmo {
       case KeyFrame::LIFT_HEIGHT:
         return LiftController::IsInPosition();
         
+      case KeyFrame::PLAY_SOUND:
+        // TODO: Add something here to check whether streaming sound from BaseStation is ready?
+        return true;
+        
       default:
         return true;
         
@@ -262,7 +266,7 @@ namespace Cozmo {
     
   } // IsInPosition()
   
-   
+  
 } // namespace Cozmo
 } // namespace Anki
 

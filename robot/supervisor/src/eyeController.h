@@ -20,6 +20,9 @@ namespace EyeController {
   
   Result Init();
   
+  void Enable();
+  void Disable();
+  
   Result Update();
   
   // Change color without affecting mode (e.g. continue blinking)

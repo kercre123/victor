@@ -96,8 +96,14 @@ namespace Cozmo {
     
     static TrackType GetTrack(const KeyFrame::Type kfType);
     
+    // Stop the track (if it is not empty)
+    void StopTrack(TrackType whichTrack);
+    
     bool _allTracksReady;
     bool CheckTrackReadiness();
+    
+    void Lock(TrackType whichTrack);
+    void Unlock(TrackType whichTrack);
     
     /*
      // Flag to return track to their original state when the animation is

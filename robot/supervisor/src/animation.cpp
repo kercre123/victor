@@ -26,6 +26,8 @@
 
 #define DEBUG_ANIMATIONS 0
 
+#define ENABLE_LOCK_AND_UNLOCK 0
+
 namespace Anki {
 namespace Cozmo {
   
@@ -84,10 +86,14 @@ namespace Cozmo {
       _tracks[iTrack].currFrame = 0;
       _tracks[iTrack].isReady   = false;
       
-      if(_tracks[iTrack].numFrames > 0 &&
-         _frames[_tracks[iTrack].startOffset].relTime_ms == 0)
-      {
-        _frames[_tracks[iTrack].startOffset].TransitionInto(_startTime_ms);
+      if(_tracks[iTrack].numFrames > 0) {
+        
+        Lock(static_cast<TrackType>(iTrack));
+        
+        if(_frames[_tracks[iTrack].startOffset].relTime_ms == 0)
+        {
+          _frames[_tracks[iTrack].startOffset].TransitionInto(_startTime_ms);
+        }
       }
     }
     
@@ -136,7 +142,9 @@ namespace Cozmo {
           if(_tracks[iTrack].numFrames > 0 &&
              _frames[_tracks[iTrack].startOffset].relTime_ms > 0)
           {
+            Unlock(static_cast<TrackType>(iTrack));
             _frames[_tracks[iTrack].startOffset].TransitionInto(_startTime_ms);
+            Lock(static_cast<TrackType>(iTrack));
           }
         } // for each track
         
@@ -182,7 +190,9 @@ namespace Cozmo {
         {
           // We are transitioning out of this keyframe and into the next
           // one in the list (if there is one).
+          Unlock(static_cast<TrackType>(iTrack));
           currKeyFrame.TransitionOutOf(_startTime_ms);
+          Lock(static_cast<TrackType>(iTrack));
           
           ++track.currFrame;
           
@@ -191,7 +201,9 @@ namespace Cozmo {
             PRINT("Moving to keyframe %d of %d in track %d\n", track.currFrame+1, track.numFrames, iTrack);
 #           endif
             KeyFrame& nextKeyFrame = _frames[track.startOffset + track.currFrame];
+            Unlock(static_cast<TrackType>(iTrack));
             nextKeyFrame.TransitionInto(_startTime_ms);
+            Lock(static_cast<TrackType>(iTrack));
           } else {
 #           if DEBUG_ANIMATIONS
             PRINT("Track %d finished all %d of its frames\n", iTrack, track.numFrames);
@@ -224,14 +236,11 @@ namespace Cozmo {
   
   
   void Animation::Stop()
-  {    
-    HeadController::Stop();
-    LiftController::Stop();
-    EyeController::StopAnimating();
-    SteeringController::ExecuteDirectDrive(0.f, 0.f);
-    
-    Messages::StopSoundOnBaseStation msg;
-    HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::StopSoundOnBaseStation), &msg);
+  {
+    // Stop any subsystems this animation was using:
+    for(s32 iTrack=0; iTrack < NUM_TRACKS; ++iTrack) {
+      StopTrack(static_cast<TrackType>(iTrack));
+    }
     
     _isPlaying = false;
     
@@ -249,7 +258,12 @@ namespace Cozmo {
   
   void Animation::Clear()
   {
+    if(_isPlaying) {
+      Stop();
+    }
+    
     _totalNumFrames = 0;
+    _framesSorted = false;
     
     for(s32 iTrack = 0; iTrack < NUM_TRACKS; ++iTrack)
     {
@@ -396,6 +410,92 @@ namespace Cozmo {
     
     return RESULT_OK;
   }
+  
+  void Animation::Lock(TrackType whichTrack)
+  {
+#   if ENABLE_LOCK_AND_UNLOCK
+    switch(whichTrack)
+    {
+      case HEAD:
+        HeadController::Disable();
+        break;
+        
+      case LIFT:
+        LiftController::Disable();
+        break;
+        
+      case LIGHTS:
+        EyeController::Disable();
+        break;
+        
+      default:
+        // Nothing to do?
+        break;
+    }
+#   endif
+  } // Lock()
+
+  
+  void Animation::Unlock(TrackType whichTrack)
+  {
+#   if ENABLE_LOCK_AND_UNLOCK
+    switch(whichTrack)
+    {
+      case HEAD:
+        HeadController::Enable();
+        break;
+        
+      case LIFT:
+        LiftController::Enable();
+        break;
+        
+      case LIGHTS:
+        EyeController::Enable();
+        break;
+        
+      default:
+        // Nothing to do?
+        break;
+    }
+#   endif
+  } // Unlock()
+
+  
+  void Animation::StopTrack(TrackType whichTrack)
+  {
+    if(_tracks[whichTrack].numFrames > 0)
+    {
+      Unlock(whichTrack);
+      
+      switch(whichTrack)
+      {
+        case HEAD:
+          HeadController::Stop();
+          break;
+          
+        case LIFT:
+          LiftController::Stop();
+          break;
+          
+        case LIGHTS:
+          EyeController::StopAnimating();
+          break;
+          
+        case POSE:
+          SteeringController::ExecuteDirectDrive(0, 0);
+          break;
+          
+        case SOUND:
+          Messages::StopSoundOnBaseStation msg;
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::StopSoundOnBaseStation), &msg);
+          break;
+          
+        default:
+          AnkiError("Animation.StopTrack.UnknownTrack", "Asked to stop unknkown track %d.\n", whichTrack);
+          break;
+      } // switch(whichTrack)
+    } // if track not empty
+  } // StopTrack()
 
   
 } // namespace Cozmo

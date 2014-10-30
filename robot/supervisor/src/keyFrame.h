@@ -222,7 +222,7 @@ struct KeyFrame
   // Returns true if lift is at the target height, or head is at the target
   // angle, etc.
   bool IsInPosition();
-    
+  
 }; // struct KeyFrame
 
   /*

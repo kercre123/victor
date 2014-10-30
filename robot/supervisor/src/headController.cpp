@@ -3,12 +3,13 @@
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
+#include "anki/common/robot/errorHandling.h"
 
 #define DEBUG_HEAD_CONTROLLER 0
 
 namespace Anki {
-  namespace Cozmo {
-  namespace HeadController {
+namespace Cozmo {
+namespace HeadController {
 
     namespace {
       
@@ -466,6 +467,9 @@ namespace Anki {
                       const u16 period_ms, const s32 numLoops)
     {
       //AnkiConditionalErrorAndReturnValue(keyFrame.type != KeyFrame::HEAD_NOD, RESULT_FAIL, "HeadNodStart.WrongKeyFrameType", "\n");
+
+      AnkiConditionalWarnAndReturn(enable_, "HeadController.StartNodding.Disabled",
+                                   "StartNodding() command ignored: HeadController is disabled.\n");
       
       //preNodAngle_ = GetAngleRad();
       nodLowAngle_  = lowAngle;
@@ -488,6 +492,9 @@ namespace Anki {
     
     void StopNodding()
     {
+      AnkiConditionalWarnAndReturn(enable_, "HeadController.StopNodding.Disabled",
+                                   "StopNodding() command ignored: HeadController is disabled.\n");
+      
       //SetDesiredAngle_internal(preNodAngle_);
       isNodding_ = false;
     }
