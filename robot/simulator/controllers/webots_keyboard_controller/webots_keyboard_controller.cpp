@@ -39,8 +39,8 @@ namespace Anki {
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
         
-        const f32 HEAD_SPEED_RAD_PER_SEC = 1.f;
-        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 3.f;
+        const f32 HEAD_SPEED_RAD_PER_SEC = 5.f;
+        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 10.f;
         
         
         //int lastKeyPressed_ = 0;
@@ -292,8 +292,8 @@ namespace Anki {
           f32 headSpeed = HEAD_SPEED_RAD_PER_SEC;
           if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
             wheelSpeed = DRIVE_VELOCITY_SLOW;
-            liftSpeed *= 0.25;
-            headSpeed *= 0.25;
+            liftSpeed *= 0.4;
+            headSpeed *= 0.5;
           }
           
           
