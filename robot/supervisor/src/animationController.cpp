@@ -30,7 +30,7 @@ namespace AnimationController {
     
     AnimationID_t _currAnimID   = ANIM_IDLE;
     AnimationID_t _queuedAnimID = ANIM_IDLE;
-    Animation     _cannedAnimations[MAX_CANNED_ANIMATIONS];
+    OFFCHIP Animation     _cannedAnimations[MAX_CANNED_ANIMATIONS];
     
     s32 _currDesiredLoops   = 0;
     s32 _queuedDesiredLoops = 0;
