@@ -199,6 +199,23 @@ namespace Cozmo {
         break;
       }
         
+      case KeyFrame::START_HEAD_NOD:
+      {
+        if(relTime_ms == 0) {
+          // Get the head in position to start animation [as fast as possible?]
+          HeadController::SetAngularVelocity(100.f);
+          HeadController::SetDesiredAngle(GetAngleRad(StartHeadNod.lowAngle_deg));
+          
+          // TODO: Switch to method that takes desired time into account:
+          /*
+           LiftController::SetDesiredHeightAndTime(SetLiftHeight.targetHeight,
+           SetLiftHeight.targetSpeed,
+           (relTime_ms + animStartTime_ms)*1000);
+           */
+        }
+        break;
+      }
+        
       case KeyFrame::LIFT_HEIGHT:
       {
         const f32 dt_ms = animStartTime_ms + relTime_ms - HAL::GetTimeStamp();
@@ -212,6 +229,23 @@ namespace Cozmo {
          SetLiftHeight.targetSpeed,
          (relTime_ms + animStartTime_ms)*1000);
          */
+        break;
+      }
+        
+      case KeyFrame::START_LIFT_NOD:
+      {
+        if(relTime_ms == 0) {
+          // Get the lift in position to start animation [as fast as possible?]
+          LiftController::SetLinearVelocity(100.f);
+          LiftController::SetDesiredHeight(StartLiftNod.lowHeight);
+          
+          // TODO: Switch to method that takes desired time into account:
+          /*
+           LiftController::SetDesiredHeightAndTime(SetLiftHeight.targetHeight,
+           SetLiftHeight.targetSpeed,
+           (relTime_ms + animStartTime_ms)*1000);
+           */
+        }
         break;
       }
         
@@ -249,9 +283,11 @@ namespace Cozmo {
   {
     switch(type)
     {
+      case KeyFrame::START_HEAD_NOD:
       case KeyFrame::HEAD_ANGLE:
         return HeadController::IsInPosition();
-        
+
+      case KeyFrame::START_LIFT_NOD:
       case KeyFrame::LIFT_HEIGHT:
         return LiftController::IsInPosition();
         
