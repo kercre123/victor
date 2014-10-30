@@ -430,7 +430,7 @@
       "transitionOut": "EASE_OUT", 
       "lowHeight_mm" : 60,
       "highHeight_mm": 78,
-      "period_ms"    : 1000
+      "period_ms"    : 1050
     },
     {
       "Name" : "MessageAddAnimKeyFrame_StopLiftNod",
@@ -447,14 +447,14 @@
       "angle_deg"       : 35
     },
     {
-      "Name" : "MessageAddAnimKeyFrame_StartFlashingEyes", 
+      "Name" : "MessageAddAnimKeyFrame_StartSpinningEyes", 
       "relTime_ms"      : 0, 
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "color"           : [0, 200, 0], 
-      "shape"           : "OPEN",
-      "onPeriod_ms"     : 500, 
-      "offPeriod_ms"    : 300
+      "leftClockwise"   : 1,
+      "rightClockwise"  : 0,  
+      "period_ms"       : 1000
     }   
   ],
   
@@ -464,7 +464,7 @@
       "relTime_ms"   : 0,
       "transitionIn" : 0,
       "transitionOut": 0, 
-      "height_mm"    : 30
+      "height_mm"    : 31
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
@@ -481,6 +481,12 @@
       "color"           : [0, 0, 0],
       "shape"           : "CLOSED",
       "whichEye"        : "BOTH"
+    }, 
+    {
+      "Name" : "MessageAddAnimKeyFrame_WaitForSound", 
+      "relTime_ms" : 10000,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT"
     }
   ], 
   
