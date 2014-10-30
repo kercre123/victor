@@ -77,6 +77,122 @@ static char hugeBuffer[HUGE_BUFFER_SIZE];
 #if !defined(JUST_FIDUCIAL_DETECTION)
 
 #ifdef RUN_HIGH_MEMORY_TESTS
+
+static Result FaceRecognizer_LoadTrainingImages(
+  FixedLengthList<Array<u8> > &trainingImages,
+  FixedLengthList<Rectangle<s32> > &faceLocations,
+  std::vector<int> &trainingLabels,
+  std::vector<std::string> &trainingLabelNames,
+  MemoryStack scratch, MemoryStack &memory)
+{
+  const s32 faceRecognizer_numTrainingImages = 8;
+
+  char * faceRecognizer_trainingImageFilenames[faceRecognizer_numTrainingImages] = {
+    "C:/tmp/faces320/andrew1.jpg",
+    "C:/tmp/faces320/andrew2.jpg",
+    "C:/tmp/faces320/bryan1.jpg",
+    "C:/tmp/faces320/bryan2.jpg",
+    "C:/tmp/faces320/kevin1.jpg",
+    "C:/tmp/faces320/kevin2.jpg",
+    "C:/tmp/faces320/peter1.jpg",
+    "C:/tmp/faces320/peter2.jpg"};
+
+  const s32 numLabelNames = 4;
+  const char * faceRecognizer_labelNames[numLabelNames] = {"Andrew", "Bryan", "Kevin", "Peter"};
+
+  const s32 faceRecognizer_trainingLabels_data[faceRecognizer_numTrainingImages] = {0, 0, 1, 1, 2, 2, 3, 3};
+
+  trainingImages = FixedLengthList<Array<u8> >(faceRecognizer_numTrainingImages, memory, Flags::Buffer(true, false, true));
+  faceLocations = FixedLengthList<Rectangle<s32> >(faceRecognizer_numTrainingImages, memory, Flags::Buffer(true, false, true));
+
+  AnkiConditionalErrorAndReturnValue(AreValid(trainingImages, faceLocations),
+    RESULT_FAIL, "FaceRecognizer_LoadTrainingImages", "Image error");
+
+  AnkiConditionalErrorAndReturnValue(NotAliased(scratch, memory),
+    RESULT_FAIL, "FaceRecognizer_LoadTrainingImages", "Aliased");
+
+  // TODO: are these const casts okay?
+  const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
+  const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+
+  const double scaleFactor = 1.1;
+  const int minNeighbors = 2;
+  const s32 minHeight = 30;
+  const s32 minWidth = 30;
+  const s32 trainingWidth = 64;
+
+  trainingLabels.clear();
+  trainingLabelNames.clear();
+
+  for(s32 iFace=0; iFace<faceRecognizer_numTrainingImages; iFace++) {
+    trainingImages[iFace] = Array<u8>::LoadImage(faceRecognizer_trainingImageFilenames[iFace], memory);
+
+    AnkiConditionalErrorAndReturnValue(trainingImages[iFace].IsValid(),
+      RESULT_FAIL, "FaceRecognizer_LoadTrainingImages", "Image error");
+
+    cv::Mat_<u8> arrayCopy;
+    ArrayToCvMat(trainingImages[iFace], &arrayCopy);
+
+    cv::equalizeHist(arrayCopy, arrayCopy);
+
+    trainingLabels.push_back(faceRecognizer_trainingLabels_data[iFace]);
+  }
+
+  for(s32 i=0; i<numLabelNames; i++) {
+    trainingLabelNames.push_back(std::string(faceRecognizer_labelNames[i]));
+  }
+
+  {
+    PUSH_MEMORY_STACK(memory);
+
+    Classifier::CascadeClassifier_LBP cc(
+      lbpcascade_frontalface_isStumpBased,
+      lbpcascade_frontalface_stageType,
+      lbpcascade_frontalface_featureType,
+      lbpcascade_frontalface_ncategories,
+      lbpcascade_frontalface_origWinHeight,
+      lbpcascade_frontalface_origWinWidth,
+      stages,
+      classifiers,
+      nodes,
+      leaves,
+      subsets,
+      featureRectangles,
+      memory);
+
+    const s32 MAX_CANDIDATES = 5000;
+
+    FixedLengthList<Rectangle<s32> > detectedFaces(MAX_CANDIDATES, memory);
+
+    for(s32 iFace=0; iFace<faceRecognizer_numTrainingImages; iFace++) {
+      detectedFaces.Clear();
+
+      const Result result = cc.DetectMultiScale(
+        trainingImages[iFace],
+        static_cast<f32>(scaleFactor),
+        minNeighbors,
+        minHeight, minWidth,
+        trainingImages[iFace].get_size(0), trainingImages[iFace].get_size(1),
+        detectedFaces,
+        scratch,
+        memory);
+
+      AnkiConditionalErrorAndReturnValue(detectedFaces.get_size() == 1,
+        RESULT_FAIL, "FaceRecognizer_LoadTrainingImages", "Only one face should be detected");
+
+      //Rectangle<f32> detectedFaceF32(static_cast<f32>(detectedFaces[0].left), static_cast<f32>(detectedFaces[0].right), static_cast<f32>(detectedFaces[0].top), static_cast<f32>(detectedFaces[0].bottom));
+
+      faceLocations[iFace] = detectedFaces[0];
+    }
+  }
+
+  return RESULT_OK;
+}
+
 GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -86,30 +202,11 @@ GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
 
-  const s32 numTrainingImages = 12;
-  FixedLengthList<Array<u8> > trainingImages(numTrainingImages, scratchHuge, Flags::Buffer(true, false, true));
+  //FixedLengthList<Array<u8> > trainingImages(faceRecognizer_numTrainingImages, scratchHuge, Flags::Buffer(true, false, true));
 
-  char * trainingImageFilenames[numTrainingImages] = {
-    "C:/tmp/facesClipped/andrew1.jpg",
-    "C:/tmp/facesClipped/andrew2.jpg",
-    "C:/tmp/facesClipped/bryan1.jpg",
-    "C:/tmp/facesClipped/bryan2.jpg",
-    "C:/tmp/facesClipped/bryan3.jpg",
-    "C:/tmp/facesClipped/bryan4.jpg",
-    "C:/tmp/facesClipped/kevin1.jpg",
-    "C:/tmp/facesClipped/kevin2.jpg",
-    "C:/tmp/facesClipped/kevin3.jpg",
-    "C:/tmp/facesClipped/pete1.jpg",
-    "C:/tmp/facesClipped/pete2.jpg",
-    "C:/tmp/facesClipped/pete3.jpg"};
+  //std::vector<int> cvTrainingLabels(&faceRecognizer_trainingLabels_data[0], &faceRecognizer_trainingLabels_data[0]+faceRecognizer_numTrainingImages);
 
-  const char * labelNames[] = {"Andrew", "Bryan", "Kevin", "Pete"};
-  const s32 trainingLabels_data[numTrainingImages] = {0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3};
-  std::vector<int> cvTrainingLabels(&trainingLabels_data[0], &trainingLabels_data[0]+numTrainingImages);
-
-  const s32 MAX_CANDIDATES = 5000;
-
-  FixedLengthList<Rectangle<s32> > detectedFaces(MAX_CANDIDATES, scratchOffchip);
+  //FixedLengthList<Rectangle<s32> > detectedFaces(MAX_CANDIDATES, scratchOffchip);
 
   // TODO: are these const casts okay?
   const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
@@ -144,27 +241,21 @@ GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
   //cv::Ptr<cv::FaceRecognizer> model = cv::createFisherFaceRecognizer();
   std::vector<cv::Mat> cvTrainingImages;
 
-  const bool showImages = false;
-  //const bool showImages = true;
+  //const bool showImages = false;
+  const bool showImages = true;
 
-  for(s32 iFace=0; iFace<numTrainingImages; iFace++) {
-    PUSH_MEMORY_STACK(scratchOffchip);
-    trainingImages[iFace] = Array<u8>::LoadImage(trainingImageFilenames[iFace], scratchOffchip);
+  FixedLengthList<Array<u8> > trainingImages;
+  FixedLengthList<Rectangle<s32> > faceLocations;
+  std::vector<int> trainingLabels;
+  std::vector<std::string> trainingLabelNames;
 
+  ASSERT_TRUE(FaceRecognizer_LoadTrainingImages(trainingImages, faceLocations, trainingLabels, trainingLabelNames, scratchOffchip, scratchHuge) == RESULT_OK);
+
+  for(s32 iFace=0; iFace<trainingImages.get_size(); iFace++) {
     //trainingImages[iFace].Show("face", true);
 
-    const Result result = cc.DetectMultiScale(
-      trainingImages[iFace],
-      static_cast<f32>(scaleFactor),
-      minNeighbors,
-      minHeight, minWidth,
-      trainingImages[iFace].get_size(0), trainingImages[iFace].get_size(1),
-      detectedFaces,
-      scratchOffchip,
-      scratchHuge);
-
-    Array<u8> clippedImage(detectedFaces[0].get_height()+1, detectedFaces[0].get_width()+1, scratchHuge);
-    clippedImage(0,-1,0,-1).Set(trainingImages[iFace](detectedFaces[0].top, detectedFaces[0].bottom, detectedFaces[0].left, detectedFaces[0].right));
+    Array<u8> clippedImage(faceLocations[iFace].get_height()+1, faceLocations[iFace].get_width()+1, scratchHuge);
+    clippedImage(0,-1,0,-1).Set(trainingImages[iFace](faceLocations[iFace].top, faceLocations[iFace].bottom, faceLocations[iFace].left, faceLocations[iFace].right));
 
     {
       cv::Mat_<u8> arrayCopy;
@@ -176,29 +267,26 @@ GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
 
     if(showImages) {
       printf("%d) ", iFace);
-      detectedFaces.Print();
+      faceLocations[iFace].Print();
 
       cv::Mat_<u8> arrayCopy;
       ArrayToCvMat(trainingImages[iFace], &arrayCopy);
 
-      for( s32 i = 0; i < detectedFaces.get_size(); i++ )
-      {
-        cv::Point center( Round<s32>((detectedFaces[i].left + detectedFaces[i].right)*0.5), Round<s32>((detectedFaces[i].top + detectedFaces[i].bottom)*0.5) );
-        cv::ellipse( arrayCopy, center, cv::Size( Round<s32>((detectedFaces[i].right-detectedFaces[i].left)*0.5), Round<s32>((detectedFaces[i].bottom-detectedFaces[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
-      }
+      cv::Point center( Round<s32>((faceLocations[iFace].left + faceLocations[iFace].right)*0.5), Round<s32>((faceLocations[iFace].top + faceLocations[iFace].bottom)*0.5) );
+      cv::ellipse( arrayCopy, center, cv::Size( Round<s32>((faceLocations[iFace].right-faceLocations[iFace].left)*0.5), Round<s32>((faceLocations[iFace].bottom-faceLocations[iFace].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
 
       cv::imshow("detect", arrayCopy);
       clippedImage.Show("clippedImage", false);
       cv::waitKey();
     } // if(showImages)
-  } // for(s32 iFace=0; iFace<numTrainingImages; iFace++)
+  } // for(s32 iFace=0; iFace<faceRecognizer_numTrainingImages; iFace++)
 
-  //for(s32 iFace=0; iFace<numTrainingImages; iFace++) {
+  //for(s32 iFace=0; iFace<faceRecognizer_numTrainingImages; iFace++) {
   //  cv::imshow("detect", cvTrainingImages[iFace]);
   //  cv::waitKey();
   //}
 
-  model->train(cvTrainingImages, cvTrainingLabels);
+  model->train(cvTrainingImages, trainingLabels);
 
   model->save("c:/tmp/recognizer.yml");
 
@@ -210,7 +298,6 @@ GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
 GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
 {
   const s32 trainingWidth = 64;
-  const char * labelNames[] = {"Andrew", "Bryan", "Kevin", "Pete"};
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -218,6 +305,12 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
   MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  FixedLengthList<Array<u8> > trainingImages;
+  FixedLengthList<Rectangle<s32> > trainingFaceLocations;
+  std::vector<int> trainingLabels;
+  std::vector<std::string> trainingLabelNames;
+  ASSERT_TRUE(FaceRecognizer_LoadTrainingImages(trainingImages, trainingFaceLocations, trainingLabels, trainingLabelNames, scratchOffchip, scratchHuge) == RESULT_OK);
 
   cv::Ptr<cv::FaceRecognizer> model = cv::createLBPHFaceRecognizer();
   //cv::Ptr<cv::FaceRecognizer> model = cv::createFisherFaceRecognizer();
@@ -260,7 +353,7 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
 
   const f32 eyeQualityThreshold = 1.0f / 5000.0f; //< A value between about 2000 to 5000 is good
 
-  Array<u8> faceImage = Array<u8>::LoadImage("C:/tmp/faces/peter4.jpg", scratchHuge);
+  Array<u8> faceImage = Array<u8>::LoadImage("C:/tmp/faces320/peter2.jpg", scratchHuge);
 
   cv::CascadeClassifier eyeCascade;
   /*ASSERT_TRUE(eyeCascade.load("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml"));*/
@@ -280,7 +373,13 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
       if(cvImage.empty())
         break;
 
+      cv::Mat_<u8> cvImageSmall(240,320);
+
       cvtColor(cvImage, cvImageGray, CV_BGRA2GRAY);
+
+      cv::resize(cvImageGray, cvImageSmall, cvImageSmall.size());
+
+      cvImageGray = cvImageSmall;
 
       cv::equalizeHist(cvImageGray, cvImageGray);
     } else {
@@ -316,47 +415,56 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
     if(detectedFaces.get_size() > 0) {
       for( s32 iFace = 0; iFace < detectedFaces.get_size(); iFace++ ) {
         //for( s32 iFace = 1; iFace < 2; iFace++ ) {
-        std::vector<cv::Rect> detectedEyes;
-        s32 leftEyeIndex;
-        s32 rightEyeIndex;
-        f32 eyeQuality;
+        //std::vector<cv::Rect> detectedEyes;
+        //s32 leftEyeIndex;
+        //s32 rightEyeIndex;
+        //f32 eyeQuality;
         s32 faceId;
         f64 confidence;
+
+        //const Result result = Recognize::RecognizeFace(
+        //  image,
+        //  detectedFaces[iFace],
+        //  eyeCascade,
+        //  eyeQualityThreshold,
+        //  detectedEyes,
+        //  leftEyeIndex,
+        //  rightEyeIndex,
+        //  eyeQuality,
+        //  faceId,
+        //  confidence);
 
         const Result result = Recognize::RecognizeFace(
           image,
           detectedFaces[iFace],
-          eyeCascade,
-          eyeQualityThreshold,
-          detectedEyes,
-          leftEyeIndex,
-          rightEyeIndex,
-          eyeQuality,
+          trainingImages,
+          trainingFaceLocations,
           faceId,
-          confidence);
+          confidence,
+          scratchHuge);
 
         ASSERT_TRUE(result == RESULT_OK);
 
         cv::Point center( Round<s32>((detectedFaces[iFace].left + detectedFaces[iFace].right)*0.5), Round<s32>((detectedFaces[iFace].top + detectedFaces[iFace].bottom)*0.5) );
         cv::ellipse( arrayCopyColor, center, cv::Size( Round<s32>((detectedFaces[iFace].right-detectedFaces[iFace].left)*0.5), Round<s32>((detectedFaces[iFace].bottom-detectedFaces[iFace].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
 
-        for(s32 iEye=0; iEye<detectedEyes.size(); iEye++) {
-          //printf("eye (%d,%d) %d %d\n", detectedEyes[iEye].x, detectedEyes[iEye].y, detectedEyes[iEye].width, detectedEyes[iEye].height);
-          cv::Rect shiftedRect(detectedEyes[iEye].x, detectedEyes[iEye].y, detectedEyes[iEye].width, detectedEyes[iEye].height);
+        //for(s32 iEye=0; iEye<detectedEyes.size(); iEye++) {
+        //  //printf("eye (%d,%d) %d %d\n", detectedEyes[iEye].x, detectedEyes[iEye].y, detectedEyes[iEye].width, detectedEyes[iEye].height);
+        //  cv::Rect shiftedRect(detectedEyes[iEye].x, detectedEyes[iEye].y, detectedEyes[iEye].width, detectedEyes[iEye].height);
 
-          if(iEye == leftEyeIndex || iEye == rightEyeIndex) {
-            if(eyeQuality > eyeQualityThreshold) {
-              cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(0,255,0), 3);
-            } else {
-              cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(0,0,255), 3);
-            }
-          } else {
-            cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(255,255,255), 1);
-          }
-        }
+        //  if(iEye == leftEyeIndex || iEye == rightEyeIndex) {
+        //    if(eyeQuality > eyeQualityThreshold) {
+        //      cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(0,255,0), 3);
+        //    } else {
+        //      cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(0,0,255), 3);
+        //    }
+        //  } else {
+        //    cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(255,255,255), 1);
+        //  }
+        //}
 
-        Array<u8> clippedImage(detectedFaces[0].get_height()+1, detectedFaces[0].get_width()+1, scratchHuge);
-        clippedImage(0,-1,0,-1).Set(image(detectedFaces[0].top, detectedFaces[0].bottom, detectedFaces[0].left, detectedFaces[0].right));
+        Array<u8> clippedImage(detectedFaces[iFace].get_height()+1, detectedFaces[iFace].get_width()+1, scratchHuge);
+        clippedImage(0,-1,0,-1).Set(image(detectedFaces[iFace].top, detectedFaces[iFace].bottom, detectedFaces[iFace].left, detectedFaces[iFace].right));
 
         cv::Mat_<u8> cvClippedImage;
         ArrayToCvMat(clippedImage, &cvClippedImage);
@@ -370,10 +478,10 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
         model->predict(cvClippedImageResized, predictedLabel, confidence);
 
         char text[1024];
-        snprintf(text, 1024, "%s %0.0f", labelNames[predictedLabel], confidence);
+        snprintf(text, 1024, "%s %0.0f", trainingLabelNames[predictedLabel].data(), confidence);
         //snprintf(text, 1024, "%f", eyeQuality);
 
-        //printf("Predicted label: %d %s %f\n", predictedLabel, labelNames[predictedLabel], confidence);
+        //printf("Predicted label: %d %s %f\n", predictedLabel, faceRecognizer_labelNames[predictedLabel], confidence);
 
         cv::putText(arrayCopyColor, text, cv::Point((detectedFaces[iFace].left + detectedFaces[iFace].right)/2, (detectedFaces[iFace].top + detectedFaces[iFace].bottom)/2), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(255, 255, 255));
       } // for( s32 i = 0; i < detectedFaces.get_size(); i++ )

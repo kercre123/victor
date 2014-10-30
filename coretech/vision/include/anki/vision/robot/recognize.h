@@ -27,17 +27,26 @@ namespace Anki
     namespace Recognize
     {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
+      //Result RecognizeFace(
+      //  const Array<u8> &image,
+      //  const Rectangle<s32> faceLocation,
+      //  cv::CascadeClassifier &eyeClassifier,
+      //  const f32 eyeQualityThreshold, //< A value between about 1/2000 to 1/5000 is good, where 0.0 is terrible and 1.0 is wonderful
+      //  std::vector<cv::Rect> &detectedEyes,
+      //  s32 &leftEyeIndex,
+      //  s32 &rightEyeIndex,
+      //  f32 &eyeQuality,
+      //  s32 &faceId,
+      //  f64 &confidence);
+
       Result RecognizeFace(
         const Array<u8> &image,
         const Rectangle<s32> faceLocation,
-        cv::CascadeClassifier &eyeClassifier,
-        const f32 eyeQualityThreshold, //< A value between about 1/2000 to 1/5000 is good, where 0.0 is terrible and 1.0 is wonderful
-        std::vector<cv::Rect> &detectedEyes,
-        s32 &leftEyeIndex,
-        s32 &rightEyeIndex,
-        f32 &eyeQuality,
+        const FixedLengthList<Array<u8> > &trainingImages,
+        const FixedLengthList<Rectangle<s32> > &trainingFaceLocations,
         s32 &faceId,
-        f64 &confidence);
+        f64 &confidence,
+        MemoryStack scratch);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
     } // namespace Recognize
   } // namespace Embedded
