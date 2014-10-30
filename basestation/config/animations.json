@@ -209,14 +209,14 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
-      "relTime_ms"      : 700,
+      "relTime_ms"      : 650,
       "transitionIn"    : 0,
       "transitionOut"   : 0, 
-      "angle_deg"       : 18
+      "angle_deg"       : 0
     }, 
     { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor",
-      "relTime_ms"      : 700,
+      "relTime_ms"      : 650,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "whichEye"        : "BOTH",
@@ -224,15 +224,8 @@
       "color"           : [0, 255, 255]
     },
     { 
-      "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
-      "relTime_ms"      : 1400,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0, 
-      "angle_deg"       : 0
-    }, 
-    { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor",
-      "relTime_ms"      : 1400,
+      "relTime_ms"      : 1300,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "whichEye"        : "BOTH",
@@ -241,14 +234,14 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
-      "relTime_ms"      : 1400,
+      "relTime_ms"      : 1300,
       "transitionIn"    : 0,
       "transitionOut"   : 0, 
-      "angle_deg"       : -18
+      "angle_deg"       : 15
     }, 
     { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor",
-      "relTime_ms"      : 2100,
+      "relTime_ms"      : 1950,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "whichEye"        : "BOTH",
@@ -257,20 +250,27 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
-      "relTime_ms"      : 2100,
+      "relTime_ms"      : 1950,
       "transitionIn"    : 0,
       "transitionOut"   : 0, 
-      "angle_deg"       : 0
+      "angle_deg"       : -15
     }, 
     { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor",
-      "relTime_ms"      : 2800,
+      "relTime_ms"      : 2600,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "whichEye"        : "BOTH",
       "shape"           : "OFF_PUPIL_RIGHT",
       "color"           : [0, 255, 255]
     },
+    { 
+      "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
+      "relTime_ms"      : 2600,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0, 
+      "angle_deg"       : 15
+    }, 
     { 
       "Name" : "MessageAddAnimKeyFrame_SetLiftHeight", 
       "relTime_ms"      : 0,
@@ -280,7 +280,7 @@
     }, 
     {
       "Name" : "MessageAddAnimKeyFrame_PlaySound", 
-      "relTime_ms"      : 700,
+      "relTime_ms"      : 650,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "soundID"         : "SCAN", 
@@ -288,7 +288,7 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor",
-      "relTime_ms"      : 3500,
+      "relTime_ms"      : 3250,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "whichEye"        : "BOTH",
@@ -297,7 +297,7 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor",
-      "relTime_ms"      : 3550,
+      "relTime_ms"      : 3300,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "whichEye"        : "BOTH",
@@ -306,7 +306,7 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor",
-      "relTime_ms"      : 3600,
+      "relTime_ms"      : 3350,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "whichEye"        : "BOTH",
@@ -315,7 +315,7 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor",
-      "relTime_ms"      : 3650,
+      "relTime_ms"      : 3400,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "whichEye"        : "BOTH",
@@ -324,7 +324,7 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor",
-      "relTime_ms"      : 3700,
+      "relTime_ms"      : 3450,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "whichEye"        : "BOTH",
@@ -333,7 +333,7 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor",
-      "relTime_ms"      : 3750,
+      "relTime_ms"      : 3500,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "whichEye"        : "BOTH",
@@ -342,7 +342,7 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
-      "relTime_ms"      : 3800,
+      "relTime_ms"      : 3500,
       "transitionIn"    : 0,
       "transitionOut"   : 0, 
       "angle_deg"       : 0 
@@ -366,11 +366,11 @@
       "transitionOut": "EASE_OUT", 
       "lowAngle_deg" : -10, 
       "highAngle_deg":  10,
-      "period_ms"    : 1000
+      "period_ms"    : 1200
     }, 
     { 
       "Name" : "MessageAddAnimKeyFrame_StopHeadNod", 
-      "relTime_ms"     : 1000,
+      "relTime_ms"     : 2400,
       "transitionIn"   : 0,
       "transitionOut"  : 0, 
       "finalAngle_deg" : -10
@@ -382,25 +382,35 @@
       "transitionOut": 0, 
       "lowHeight_mm" : 30,
       "highHeight_mm": 36,
-      "period_ms"    : 250
+      "period_ms"    : 300
     },
     {
       "Name" : "MessageAddAnimKeyFrame_StopLiftNod",
-      "relTime_ms"     : 1000,
+      "relTime_ms"     : 2400,
       "transitionIn"   : 0,
       "transitionOut"  : 0, 
       "finalHeight_mm" : 30
     },
     { 
-      "Name" : "MessageAddAnimKeyFrame_StartBlinking",
+      "Name" : "MessageAddAnimKeyFrame_StartSpinningEyes",
       "relTime_ms"      : 0,
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "color"           : [0, 255, 135],
-      "onPeriod_ms"     : 700,
-      "offPeriod_ms"    : 50,
-      "variability_ms"  : 200
-    }
+      "leftClockwise"   : 1,
+      "rightClockwise"  : 0, 
+      "period_ms"       : 380
+    },
+    { 
+      "Name" : "MessageAddAnimKeyFrame_StartBlinking",
+      "relTime_ms"      : 500,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
+      "color"           : [0, 255, 135],
+      "onPeriod_ms"     : 800,
+      "offPeriod_ms"    : 100,
+      "variability_ms"  : 75
+    }    
   ],
   
   
@@ -495,7 +505,7 @@
     }, 
     { 
       "Name" : "MessageAddAnimKeyFrame_StopHeadNod", 
-      "relTime_ms"     : 1500,
+      "relTime_ms"     : 2100,
       "transitionIn"   : 0,
       "transitionOut"  : 0, 
       "finalAngle_deg" : 20
@@ -511,7 +521,7 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_StopLiftNod",
-      "relTime_ms"     : 1500,
+      "relTime_ms"     : 2100,
       "transitionIn"   : 0,
       "transitionOut"  : 0, 
       "finalHeight_mm" : 70
@@ -522,7 +532,34 @@
       "transitionIn"    : "INSTANT",
       "transitionOut"   : "INSTANT",
       "shape"           : "OFF_PUPIL_DOWN",
-      "color"           : [223, 107, 27],
+      "color"           : [223, 157, 27],
+      "whichEye"        : "BOTH"
+    },    
+    { 
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 550,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
+      "shape"           : "OFF_PUPIL_DOWN",
+      "color"           : [223, 0, 0],
+      "whichEye"        : "BOTH"
+    },    
+    { 
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 1100,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
+      "shape"           : "OFF_PUPIL_DOWN",
+      "color"           : [223, 157, 27],
+      "whichEye"        : "BOTH"
+    },    
+    { 
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 1650,
+      "transitionIn"    : "INSTANT",
+      "transitionOut"   : "INSTANT",
+      "shape"           : "OFF_PUPIL_DOWN",
+      "color"           : [223, 0, 0],
       "whichEye"        : "BOTH"
     }
   ],
