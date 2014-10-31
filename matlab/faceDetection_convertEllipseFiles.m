@@ -1,8 +1,9 @@
 % function faceDetection_convertEllipseFiles()
 
-% ellipses = faceDetection_convertEllipseFiles('~/Documents/datasets/FDDB-originalPics', '~/Documents/datasets/FDDB-folds', '~/Documents/datasets/FDDB-folds/FDDB-ellipses.mat');
+% ellipses = faceDetection_convertEllipseFiles('~/Documents/datasets/FDDB-originalPics', '~/Documents/datasets/FDDB-folds');
+% save('~/Documents/datasets/FDDB-folds/FDDB-ellipses.mat', 'ellipses');
 
-function ellipses = faceDetection_convertEllipseFiles(fddbImageDirectory, fddbFoldsDirectory, ellipseMatFilename)
+function ellipses = faceDetection_convertEllipseFiles(fddbImageDirectory, fddbFoldsDirectory)
 
     ellipseFilenames = {};
     for iFold = 1:10
@@ -19,17 +20,20 @@ function ellipses = faceDetection_convertEllipseFiles(fddbImageDirectory, fddbFo
         while tline ~= -1
             if state == 0
                 curFilename = [fddbImageDirectory, '/', tline(1:(end-1)), '.jpg'];
+                curEllipses = {};
                 state = 1;
             elseif state == 1
                 numEllipsesLeft = str2num(tline);
                 state = 2;
             elseif state == 2
                 curEllipse = str2num(tline);
-                ellipses{end+1} = {curFilename, curEllipse(1:(end-1))}; %#ok<AGROW>
+%                 ellipses{end+1} = {curFilename, curEllipse(1:(end-1))}; %#ok<AGROW>
+                curEllipses{end+1} = {curFilename, curEllipse(1:(end-1))}; %#ok<AGROW>
 
                 numEllipsesLeft = numEllipsesLeft - 1;
 
                 if numEllipsesLeft == 0
+                    ellipses{end+1} = {curFilename, curEllipses}; %#ok<AGROW>
                     state = 0;
                 end
             else
@@ -41,6 +45,4 @@ function ellipses = faceDetection_convertEllipseFiles(fddbImageDirectory, fddbFo
 
         fclose(fileID);
     end % for iFold = 1:10
-
-    save(ellipseMatFilename, 'ellipses');
-end % function faceDetection_convertToTrainingFormat()
+end % function faceDetection_convertEllipseFiles()

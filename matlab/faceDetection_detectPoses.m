@@ -1,10 +1,10 @@
 % function faceDetection_detectPoses()
 
-% [allDetections, posemap] = faceDetection_detectPoses('~/Documents/datasets/FDDB-folds/FDDB-ellipses.mat', '~/Documents/datasets/FDDB-folds/FDDB-detectedPoses.mat');
+% load('~/Documents/datasets/FDDB-folds/FDDB-ellipses.mat', 'ellipses')
+% [allDetections, posemap] = faceDetection_detectPoses(ellipses, 1:length(ellipses), '~/Documents/datasets/FDDB-folds/FDDB-detectedPoses%d.mat');
+% save('~/Documents/datasets/FDDB-folds/FDDB-detectedPoses.mat', 'allDetections', 'posemap', '-v7.3');
 
-function [allDetections, posemap] = faceDetection_detectPoses(ellipseMatFilename, detectedPosesMatFilename)
-    load(ellipseMatFilename, 'ellipses');
-    
+function [allDetections, posemap] = faceDetection_detectPoses(ellipses, whichEllipses, filenameOutPattern)
     load face_p146_small.mat
     model.interval = 5;
     %         model.thresh = min(-0.65, model.thresh);
@@ -18,34 +18,55 @@ function [allDetections, posemap] = faceDetection_detectPoses(ellipseMatFilename
         error('Can not recognize this model');
     end
     
-    allDetections = cell(0,1);
+    %     allDetections = cell(0,1);
+    numDetections = 0;
     
-    curFilename = '';
-    for iEllipse = 1:length(ellipses)
-        if ~strcmp(curFilename, ellipses{iEllipse}{1})
-            tic
-            curFilename = ellipses{iEllipse}{1};
-            curImage = imread(curFilename);
-            
-            %                 figure(1);
-            %                 imshow(curImage);
-            
-            bs = detect(curImage, model, model.thresh);
-            bs2 = clipboxes(curImage, bs);
-            bs3 = nms_face(bs2,0.3);
-            
-            allDetections{end+1} = {curFilename, iEllipse, bs, bs2, bs3}; %#ok<AGROW>
-            
-            %                 close 1
-            %                 figure(1);
-            showboxes(curImage, bs3, posemap);
-            title('All detections above the threshold');
-            
-            save(detectedPosesMatFilename, 'allDetections', 'posemap');
-            
-            disp(sprintf('Finished %d in %f', iEllipse, toc()));
-        end
-    end % for iEllipse = 1:length(ellipses)
+    for iEllipse = whichEllipses
+        tic
+        curFilename = ellipses{iEllipse}{1};
+        curImage = imread(curFilename);
 
+        %                 figure(1);
+        %                 imshow(curImage);
+
+        if size(curImage,3) == 1
+            curImage = repmat(curImage, [1,1,3]);
+        end
+
+        bs = detect(curImage, model, model.thresh);
+        bs2 = clipboxes(curImage, bs);
+        bs3 = nms_face(bs2,0.3);
+
+        %             allDetections{end+1} = {curFilename, iEllipse, bs, bs2, bs3}; %#ok<AGROW>
+        %             allDetections{end+1} = {curFilename, iEllipse, bs3}; %#ok<AGROW>
+        save(sprintf(filenameOutPattern, iEllipse), 'curFilename', 'iEllipse', 'bs3');
+
+        numDetections = numDetections + length(bs3);
+
+        %                 close 1
+        %                 figure(1);
+        showboxes(curImage, bs3, posemap);
+        title('All detections above the threshold');
+
+        disp(sprintf('Finished %d in %f', iEllipse, toc()));
+    end % for iEllipse = 1:length(ellipses)
+    
+    disp(sprintf('Detected %d faces'), numDetections);
+    
+    if whichEllipses(1) == 1
+        allDetections = cell(length(ellipses),1);
+        cDetection = 1;
+        for iEllipse = 1:length(ellipses)
+            load(sprintf(filenameOutPattern, iEllipse), 'curFilename', 'iEllipse', 'bs3');
+            
+            allDetections{iEllipse} = {curFilename, iEllipse, bs3};
+            
+            cDetection = cDetection + 1;
+        end
+        
+        save(sprintf(filenameOutPattern, 0), 'allDetections');
+    else
+        allDetections = [];
+    end
 end % function faceDetection_detectPoses()
 
