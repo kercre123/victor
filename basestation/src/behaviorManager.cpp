@@ -203,6 +203,8 @@ namespace Anki {
           _nextState = SLEEPING;
           _stateAnimStarted = false;
           
+          _robot->PlayAnimation("ANIM_SLEEPING");
+          
           VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::YELLOW, GetBehaviorStateName(_state).c_str());
           
           _transitionManager.Clear();
@@ -236,6 +238,7 @@ namespace Anki {
           _transitionManager.AddTransition(SCARED_FLEE, NUM_STATES,      reliefEvent,  0.75);
           _transitionManager.AddTransition(NUM_STATES,  EXCITABLE_CHASE, excitedEvent, 0.6);
           
+          _transitionAnimations[NUM_STATES][SLEEPING]        = "ANIM_SLEEPING";
           _transitionAnimations[SLEEPING][NUM_STATES]        = "ANIM_WAKE_UP";
           _transitionAnimations[NUM_STATES][SCARED_FLEE]     = "ANIM_SCREAM";
           _transitionAnimations[SCARED_FLEE][SCAN]           = "ANIM_RELIEF";
@@ -280,6 +283,7 @@ namespace Anki {
         {SCAN,            "SCAN"},
         {HELP_ME_STATE,   "HELP_ME_STATE"},
         {SLEEPING,        "SLEEPING"},
+        {WAITING_FOR_ROBOT, "WAITING_FOR_ROBOT"},
       };
       
       static const std::string UNKNOWN("UNKNOWN");
@@ -380,7 +384,7 @@ namespace Anki {
         {
           // Nothing to do here anymore: we should not be "waiting" on a robot
           // because BehaviorManager is now part of a robot!
-          _state = _nextState;
+          //_state = _nextState;
           break;
         }
         default:
