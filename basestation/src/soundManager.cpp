@@ -33,7 +33,31 @@ namespace Anki {
       bool         _stopCurrSound;
       std::string  _soundToPlay;
       s32          _numLoops;
-    
+      bool         _isLocked;
+      
+      std::string GetSoundToPlay(s32& numLoops)
+      {
+        // Wait for unlock before reading sound file string
+        while(_isLocked) {
+          usleep(1000);
+        }
+        _isLocked = true;
+        numLoops = _numLoops;
+        std::string retVal(_soundToPlay);
+        _isLocked = false;
+        
+        return retVal;
+      }
+      
+      void SetSoundToPlay(const std::string soundToPlay,
+                          const s32 numLoops)
+      {
+        _isLocked = true;
+        _soundToPlay = soundToPlay;
+        _numLoops = numLoops;
+        _isLocked = false;
+      }
+      
       void CmdLinePlay(const std::string soundFile,
                        const u8 numLoops)
       {
@@ -49,7 +73,7 @@ namespace Anki {
         
         // Play the commanded sound
 #       if DEBUG_SOUND_MANAGER
-        printf("CmdPlay %s [%d loop(s)]\n", soundFile.c_str(), numLoops);
+        printf("CmdLinePlay: %s\n", fullCmd.c_str());
 #       endif
         system(fullCmd.c_str());
 
@@ -71,15 +95,19 @@ namespace Anki {
           
           if (_stopCurrSound) {
             KillPlayingSounds();
-            _numLoops = 1;
             _stopCurrSound = false;
-          } else if (!_soundToPlay.empty()) {
-            // Start sound thread
-            KillPlayingSounds();
-            std::thread soundThread(CmdLinePlay, _soundToPlay, _numLoops);
-            soundThread.detach();
-            _soundToPlay = "";
-            _numLoops = 1;
+          } else {
+            s32 numLoops;
+            std::string soundToPlay(GetSoundToPlay(numLoops));
+            
+            if (!soundToPlay.empty()) {
+              // Start sound thread
+              KillPlayingSounds();
+              std::thread soundThread(CmdLinePlay, soundToPlay, numLoops);
+              soundThread.detach();
+              
+              SetSoundToPlay("", 1);
+            }
           }
         }
         
@@ -110,6 +138,8 @@ namespace Anki {
       _stopCurrSound = false;
       _numLoops = 1;
       _running = true;
+      _isLocked = false;
+      
       std::thread soundFeederThread(CmdLinePlayFeeder);
       soundFeederThread.detach();
       usleep(100000);
@@ -255,8 +285,7 @@ namespace Anki {
         const std::string& soundFile = GetSoundFile(id);
         if( !soundFile.empty() )
         {
-          _soundToPlay = _rootDir + "/" + soundFile;
-          _numLoops = numLoops;
+          SetSoundToPlay(_rootDir + "/" + soundFile, numLoops);
           return true;
         }
       }
@@ -265,7 +294,7 @@ namespace Anki {
 
     void SoundManager::Stop()
     {
-      _soundToPlay = "";
+      SetSoundToPlay("", 1);
       _stopCurrSound = true;
     }
     
