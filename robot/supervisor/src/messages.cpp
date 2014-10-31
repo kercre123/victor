@@ -599,6 +599,16 @@ namespace Anki {
         AddKeyFrameHelper(msg, kf);
       }
       
+      void ProcessAddAnimKeyFrame_TurnInPlaceMessage(const AddAnimKeyFrame_TurnInPlace& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::POINT_TURN;
+        kf.TurnInPlace.relativeAngle_deg = msg.relativeAngle_deg;
+        
+        AddKeyFrameHelper(msg, kf);
+      }
+      
       static inline u32 GetU32ColorFromRGB(const u8 rgb[3])
       {
         return (rgb[0]<<16) + (rgb[1]<<8) + rgb[2];
@@ -706,6 +716,16 @@ namespace Anki {
       {
         KeyFrame kf;
         kf.type = KeyFrame::STOP_EYES;
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_TriggerAnimationMessage(const AddAnimKeyFrame_TriggerAnimation& msg)
+      {
+        KeyFrame kf;
+        kf.type = KeyFrame::TRIGGER_ANIMATION;
+        kf.TriggerAnimation.animID   = msg.animToPlay;
+        kf.TriggerAnimation.numLoops = msg.numLoops;
+        
         AddKeyFrameHelper(msg, kf);
       }
       

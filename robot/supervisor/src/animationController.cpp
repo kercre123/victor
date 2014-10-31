@@ -29,47 +29,16 @@ namespace AnimationController {
     //static const AnimationID_t ANIM_IDLE = MAX_KNOWN_ANIMATIONS;
     
     AnimationID_t _currAnimID   = ANIM_IDLE;
-    AnimationID_t _queuedAnimID = ANIM_IDLE;
+    //AnimationID_t _queuedAnimID = ANIM_IDLE;
     OFFCHIP Animation     _cannedAnimations[MAX_CANNED_ANIMATIONS];
     
     s32 _currDesiredLoops   = 0;
-    s32 _queuedDesiredLoops = 0;
+    //s32 _queuedDesiredLoops = 0;
     s32 _numLoopsComplete   = 0;
     u32 _waitUntilTime_us   = 0;
     
-    f32 _currCmdWheelSpeed  = 0;
-//    f32 currCmdHeadAngle_ = 0;
-    
-    Radians _startingRobotAngle = 0;
-//    f32 startingHeadAngle_ = 0;
-//    f32 startingHeadMaxSpeed_ = 0;
-//    f32 startingHeadStartAccel_ = 0;
-    
-    bool _isStopping  = false;
-    bool _wasStopping = false;
-    
-    /*
-    // Function pointers for start/update/stop behavior of each animation.
-    typedef void (*animFuncPtr)(void);
-    animFuncPtr animStartFn_[ANIM_NUM_ANIMATIONS] = {0};
-    animFuncPtr animUpdateFn_[ANIM_NUM_ANIMATIONS] = {0};  // Update functions must increment numLoops_.
-    animFuncPtr animStopFn_[ANIM_NUM_ANIMATIONS] = {0};    // Stop functions must set isStopping_ to false once stop conditions are met.
-    
-    // Start/Update/Stop functions for each type of KeyFrame
-    typedef Result (*KeyFrameFuncPtr)(const KeyFrame&);
-    KeyFrameFuncPtr keyFrameStartFn_[KeyFrame::NUM_TYPES]  = {0};
-    KeyFrameFuncPtr keyFrameUpdateFn_[KeyFrame::NUM_TYPES] = {0};
-    KeyFrameFuncPtr keyFrameStopFn_[KeyFrame::NUM_TYPES]   = {0};
-    */
-    
-    // ANIM_BACK_AND_FORTH_EXCITED
-    const f32 BAF_SPEED_MMPS = 30;
-    const u32 BAF_SWITCH_PERIOD_US = 300000;
-    
-    // ANIM_WIGGLE
-    const f32 WIGGLE_PERIOD_US = 300000;
-    const f32 WIGGLE_WHEEL_SPEED_MMPS = 30;
-
+    //bool _isStopping  = false;
+    //bool _wasStopping = false;
     
   } // "private" members
 
@@ -79,65 +48,6 @@ namespace AnimationController {
 //  void StopCurrent();
   
   
-  
-  // ============= Animation Start/Update/Stop functions ===============
-  
-  
-
-  
-  // TODO: Move back-and-forth stuff to WheelController (??)
-  
-  void BackAndForthStart()
-  {
-    _currCmdWheelSpeed = BAF_SPEED_MMPS;
-  }
-  
-  void BackAndForthUpdate()
-  {
-    if (_waitUntilTime_us < HAL::GetMicroCounter()) {
-      _currCmdWheelSpeed *= -1;
-      SteeringController::ExecuteDirectDrive(_currCmdWheelSpeed, _currCmdWheelSpeed);
-      _waitUntilTime_us = HAL::GetMicroCounter() + BAF_SWITCH_PERIOD_US;
-      if (_currCmdWheelSpeed < 0) {
-        ++_numLoopsComplete;
-      }
-    }
-  }
-  
-  
-  // TODO: Move wiggling stuff to SteeringController (??)
-  
-  void WiggleStart()
-  {
-    _currCmdWheelSpeed = WIGGLE_WHEEL_SPEED_MMPS;
-  }
-  
-  void WiggleUpdate()
-  {
-    if (_waitUntilTime_us < HAL::GetMicroCounter()) {
-      _currCmdWheelSpeed *= -1;
-      SteeringController::ExecuteDirectDrive(_currCmdWheelSpeed, -_currCmdWheelSpeed);
-      _waitUntilTime_us = HAL::GetMicroCounter() + WIGGLE_PERIOD_US;
-      if (_currCmdWheelSpeed < 0) {
-        ++_numLoopsComplete;
-      }
-    }
-  }
-  
-  void WiggleStop()
-  {
-    if (!_wasStopping && _isStopping) {
-      
-      // Which way is closer to turn to starting orientation?
-      f32 rotSpeed = PI_F * ( (_startingRobotAngle - Localization::GetCurrentMatOrientation()).ToFloat() > 0 ? 1 : -1);
-      SteeringController::ExecutePointTurn(_startingRobotAngle.ToFloat(), rotSpeed, 10, 10);
-      
-    } else if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
-      _isStopping = false;
-    }
-  }
-  
-
   // ========== End of Animation Start/Update/Stop functions ===========
   
   static void DefineHardCodedAnimations()
@@ -445,13 +355,7 @@ namespace AnimationController {
           _currAnimID = ANIM_IDLE;
         }
       }
-      
-    } else if (_queuedAnimID != ANIM_IDLE) {
-      PRINT("Playing queued animation %d, %d loops\n", _queuedAnimID, _queuedDesiredLoops);
-      // If there's a queued animation, start it.
-      Play(_queuedAnimID, _queuedDesiredLoops);
-      _queuedAnimID = ANIM_IDLE;
-    }
+    } // if(IsPlaying())
     
   } // Update()
 
@@ -466,12 +370,15 @@ namespace AnimationController {
                                  "AnimationController.Play.EmptyAnimation",
                                  "Asked to play empty animation %d. Ignoring.\n", anim);
     
+    // If animation requested is the one already playing, don't do anything
+    // Is this what we always want?
+    if(anim == _currAnimID) {
+      return;
+    }
+    
     // If an animation is currently playing, stop it and queue this one.
     if (IsPlaying()) {
       Stop();
-      _queuedAnimID = anim;
-      _queuedDesiredLoops = numLoops;
-      return;
     }
     
     // Playing IDLE animation is equivalent to stopping currently playing
@@ -535,9 +442,11 @@ namespace AnimationController {
       _cannedAnimations[_currAnimID].Stop();
     }
     
-    _isStopping = _wasStopping = false;
-    _currAnimID = _queuedAnimID = ANIM_IDLE;
-    
+    //_isStopping = _wasStopping = false;
+    //_queuedAnimID = ANIM_IDLE;
+    _currAnimID = ANIM_IDLE;
+   
+    /* This should all be done by Animation::Stop() now?
     // Stop all motors, lights, and sounds
     LiftController::Enable();
     LiftController::SetAngularVelocity(0);
@@ -546,6 +455,7 @@ namespace AnimationController {
     
     SteeringController::ExecuteDirectDrive(0, 0);
     SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
+     */
   }
   
   

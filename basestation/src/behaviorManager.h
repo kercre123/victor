@@ -201,7 +201,9 @@ namespace Anki {
       
       bool _stateAnimStarted;
       TransitionEventManager _transitionManager;
+      
       std::map<BehaviorState, std::string> _stateAnimations;
+      std::map<BehaviorState, std::map<BehaviorState, std::string> > _transitionAnimations;
       
       const std::string& GetBehaviorStateName(BehaviorState) const;
 

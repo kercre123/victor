@@ -214,31 +214,44 @@ namespace Anki {
           };
           
           std::function<void()> screamEvent = [this]() {
-            SoundManager::getInstance()->Play(SOUND_SCREAM);
-            //_robot->PlayAnimation("ANIM_OK_GOT_IT");
+            PRINT_INFO("SCREAM EVENT!\n");
+            //SoundManager::getInstance()->Play(SOUND_SCREAM);
+            _robot->PlayAnimation("ANIM_SCREAM");
           };
           
           std::function<void()> reliefEvent = [this]() {
-            SoundManager::getInstance()->Play(SOUND_PHEW);
-            //_robot->PlayAnimation("ANIM_OK_DONE");
+            PRINT_INFO("RELIEF EVENT!\n");
+            //SoundManager::getInstance()->Play(SOUND_PHEW);
+            _robot->PlayAnimation("ANIM_RELIEF");
           };
           
           std::function<void()> excitedEvent = [this]() {
-            SoundManager::getInstance()->Play(SOUND_OOH);
+            PRINT_INFO("EXCITED EVENT!\n");
+            //SoundManager::getInstance()->Play(SOUND_OOH);
+            _robot->PlayAnimation("ANIM_ALERT", 1);
           };
           
           _transitionManager.AddTransition(SLEEPING,    NUM_STATES,      wakeUpEvent,  3.0);
-          _transitionManager.AddTransition(NUM_STATES,  SCARED_FLEE,     screamEvent,  0.5);
-          _transitionManager.AddTransition(SCARED_FLEE, NUM_STATES,      reliefEvent,  0.5);
-          _transitionManager.AddTransition(NUM_STATES,  EXCITABLE_CHASE, excitedEvent, 0.5);
+          _transitionManager.AddTransition(NUM_STATES,  SCARED_FLEE,     screamEvent,  0.75);
+          _transitionManager.AddTransition(SCARED_FLEE, NUM_STATES,      reliefEvent,  0.75);
+          _transitionManager.AddTransition(NUM_STATES,  EXCITABLE_CHASE, excitedEvent, 0.6);
           
-          // TODO: Fill in state animation lookup
-          _stateAnimations[SLEEPING]        = "ANIM_SLEEPING";
-          _stateAnimations[EXCITABLE_CHASE] = "ANIM_EXCITABLE_CHASE";
-          _stateAnimations[SCAN]            = "ANIM_SCAN";
-          _stateAnimations[SCARED_FLEE]     = "ANIM_SCARED_FLEE";
-          _stateAnimations[DANCE_WITH_BLOCK]= "ANIM_SINGING";
-          _stateAnimations[HELP_ME_STATE]   = "ANIM_HELPME";
+          _transitionAnimations[SLEEPING][NUM_STATES]        = "ANIM_WAKE_UP";
+          _transitionAnimations[NUM_STATES][SCARED_FLEE]     = "ANIM_SCREAM";
+          _transitionAnimations[SCARED_FLEE][SCAN]           = "ANIM_RELIEF";
+          _transitionAnimations[NUM_STATES][EXCITABLE_CHASE] = "ANIM_ALERT";
+          _transitionAnimations[NUM_STATES][SCAN]            = "ANIM_SCAN";
+          _transitionAnimations[NUM_STATES][DANCE_WITH_BLOCK]= "ANIM_DANCING";
+          _transitionAnimations[NUM_STATES][HELP_ME_STATE]   = "ANIM_HELPME";
+          
+/*
+          _stateAnimations[SLEEPING]         = "ANIM_SLEEPING";
+          _stateAnimations[EXCITABLE_CHASE]  = "ANIM_EXCITABLE_CHASE";
+          _stateAnimations[SCAN]             = "ANIM_SCAN";
+          _stateAnimations[SCARED_FLEE]      = "ANIM_SCARED_FLEE";
+          _stateAnimations[DANCE_WITH_BLOCK] = "ANIM_DANCING";
+          _stateAnimations[HELP_ME_STATE]    = "ANIM_HELPME";
+ */
           
           // Automatically switch states as reactions to certain markers:
           _robot->AddReactionCallback(Vision::MARKER_BEE,   &ScaredReaction);
@@ -1033,19 +1046,29 @@ namespace Anki {
           toIter->second.first();
           
           // Set the waitUntilTime
-          _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + toIter->second.second;
+          const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          _waitUntilTime =  currentTime + toIter->second.second;
+          PRINT_INFO("Transitioning from %d to %d, will wait %.2f seconds from current time of %f to future time of %f.\n", fromState, toState, toIter->second.second, currentTime, _waitUntilTime);
           
           _isTransitioning = true;
-        } else if(toState != NUM_STATES) {
-          // No transition to specific "toState", check to see if there is one
-          // defined to "ANY" state for this fromState:
-          Transition(fromState, NUM_STATES);
+          
         }
-      } else if(fromState != NUM_STATES) {
+      }
+      
+      // Prioritize transitioning _to_ this state from any state over _from_
+      // this state to any, in case both exist
+      if(!_isTransitioning && fromState != NUM_STATES) {
         // No transition found from specific "fromState", check to see if there
         // is one defined from "ANY" state for this toState:
         Transition(NUM_STATES, toState);
       }
+      
+      if(!_isTransitioning && toState != NUM_STATES) {
+        // No transition to specific "toState", check to see if there is one
+        // defined to "ANY" state for this fromState:
+        Transition(fromState, NUM_STATES);
+      }
+      
     } // Transition()
     
     
@@ -1062,8 +1085,10 @@ namespace Anki {
     
     void BehaviorManager::Update_CREEP()
     {
+      /*
       // Wait for transition animation to complete if there is one
       if(_transitionManager.IsTransitioning()) {
+        //PRINT_INFO("Waiting for transition\n");
         return;
       }
       
@@ -1074,10 +1099,48 @@ namespace Anki {
         }
         _stateAnimStarted = true;
       }
+       */
       
       if(_state != _nextState) {
-        _robot->StopAnimation();
-        _transitionManager.Transition(_state, _nextState);
+        //_robot->StopAnimation();
+        //_transitionManager.Transition(_state, _nextState);
+
+        std::string animName("");
+        
+        // First see if there is a transition specific to this to/from pair
+        auto fromIter = _transitionAnimations.find(_state);
+        if(fromIter != _transitionAnimations.end()) {
+          auto toIter = fromIter->second.find(_nextState);
+          if(toIter != fromIter->second.end()) {
+            animName = toIter->second;
+          }
+        }
+
+        // Next see if there is a transition from any state to next state
+        if(animName.empty()) {
+          auto fromAnyIter = _transitionAnimations.find(NUM_STATES);
+          if(fromAnyIter != _transitionAnimations.end()) {
+            auto toIter = fromAnyIter->second.find(_nextState);
+            if(toIter != fromAnyIter->second.end()) {
+              animName = toIter->second;
+            }
+          }
+        }
+        
+        // Next see if there is a transition from current state to any state
+        if(animName.empty()) {
+          if(fromIter != _transitionAnimations.end()) {
+            auto toAnyIter = fromIter->second.find(NUM_STATES);
+            if(toAnyIter != fromIter->second.end()) {
+              animName = toAnyIter->second;
+            }
+          }
+        }
+        
+        if(!animName.empty()) {
+          _robot->PlayAnimation(animName.c_str(), 0);
+        }
+        
         _state = _nextState;
         _stateAnimStarted = false;
         VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::YELLOW, GetBehaviorStateName(_state).c_str());

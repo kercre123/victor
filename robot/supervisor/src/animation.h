@@ -34,6 +34,7 @@ namespace Cozmo {
       POSE,
       SOUND,
       LIGHTS, // TODO: Separate eyes from other lights eventually?
+      SPECIAL,
       NUM_TRACKS
     };
     

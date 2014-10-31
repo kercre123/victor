@@ -274,12 +274,15 @@ namespace Cozmo {
     
     Json::Value::Members animationNames = jsonRoot.getMemberNames();
     
+    // Add _all_ the animations first to register the IDs, so Trigger keyframes
+    // which specify another animation's name will still work (because that
+    // name should already exist, no matter the order the Json is parsed)
+    for(auto const& animationName : animationNames) {
+      AddAnimation(animationName);
+    }
+    
     for(auto const& animationName : animationNames)
     {
-      // Must add the animation first to set its ID and allow the GetID and
-      // GetKeyFrameList calls below to work.
-      AddAnimation(animationName);
-      
       const s32 animID = GetID(animationName);
       if(animID < 0) {
         return RESULT_FAIL;
@@ -314,6 +317,17 @@ namespace Cozmo {
           return RESULT_FAIL;
         }
         jsonFrame["transitionOut"] = GetTransitionType(jsonFrame["transitionOut"]);
+        
+        if(jsonFrame.isMember("animToPlay")) {
+          if(!jsonFrame["animToPlay"].isString()) {
+            PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.animToPlayString",
+                              "Expecting 'animToPlay' field for '%s' frame of '%s' animation to be a string.\n",
+                              jsonFrame["Name"].asString().c_str(),
+                              animationName.c_str());
+          } else {
+            jsonFrame["animToPlay"] = GetID(jsonFrame["animToPlay"].asString());
+          }
+        }
         
         // Convert sound name (if specified) to SoundID (robot doesn't use strings):
         if(jsonFrame.isMember("soundID")) {

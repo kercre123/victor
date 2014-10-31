@@ -613,6 +613,11 @@ namespace Anki {
                 SendAnimation("ANIM_LIFT_NOD", 1);
                 break;
               }
+              case (s32) '%':
+              {
+                SendAnimation("ANIM_ALERT", 1);
+                break;
+              }
               case CKEY_ANIMATION_TOGGLE:
               {
                 //const s32 NUM_ANIM_TESTS = 4;

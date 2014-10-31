@@ -341,7 +341,18 @@ ADD_MESSAGE_MEMBER(u16, relTime_ms)
 ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
+ADD_MESSAGE_MEMBER(u8,  variability_mm)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_DriveLine)
+
+// AddAnimKeyFrame_TurnInplace
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_TurnInPlace, 2)
+ADD_MESSAGE_MEMBER(s16, relativeAngle_deg)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+ADD_MESSAGE_MEMBER(u8,  variability_deg)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_TurnInPlace)
 
 // AddAnimKeyFrame_PlaySound
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_PlaySound, 2)
@@ -423,6 +434,16 @@ ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopEyeAnimation)
+
+// AddAnimKeyFrame_TriggerAnimation
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_TriggerAnimation, 2)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+ADD_MESSAGE_MEMBER(u8,  animToPlay)
+ADD_MESSAGE_MEMBER(u8,  numLoops)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_TriggerAnimation)
 
 // IMURequest
 START_MESSAGE_DEFINITION(IMURequest, 1)

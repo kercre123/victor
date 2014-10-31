@@ -225,6 +225,7 @@ namespace Anki {
           ,{SOUND_SCREAM,      "creep/Robot-Scream7.mp3"}
           ,{SOUND_OOH,         "creep/Robot-OohScream12.mp3"}
           ,{SOUND_HELPME,      "creep/Robot-HelpMe1.mp3"}
+          ,{SOUND_WAH_HELPME,  "creep/Robot-WahHelpMe2.mp3"}
           ,{SOUND_SCAN,        "creep/Robot-Scanning2Rev1.mp3"}
           ,{SOUND_HAPPY_CHASE, "creep/Robot-Happy2.mp3"}
           ,{SOUND_FLEES,       "creep/Robot-Happy1.mp3"}
@@ -260,6 +261,7 @@ namespace Anki {
         {"OOH",           SOUND_OOH},
         {"SCREAM",        SOUND_SCREAM},
         {"HELPME",        SOUND_HELPME},
+        {"WAH_HELPME",    SOUND_WAH_HELPME},
         {"HAPPY_CHASE",   SOUND_HAPPY_CHASE},
         {"FLEES",         SOUND_FLEES},
         {"SINGING",       SOUND_SINGING}

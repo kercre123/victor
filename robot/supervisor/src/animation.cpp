@@ -207,8 +207,8 @@ namespace Cozmo {
           } else {
 #           if DEBUG_ANIMATIONS
             PRINT("Track %d finished all %d of its frames\n", iTrack, track.numFrames);
-            trackPlaying[iTrack] = false;
 #           endif
+            trackPlaying[iTrack] = false;
           }
           
         } // if GetTimeStamp() >= absFrameTime_ms
@@ -306,6 +306,9 @@ namespace Cozmo {
       case KeyFrame::WAIT_FOR_SOUND:
       case KeyFrame::STOP_SOUND:
         return SOUND;
+        
+      case KeyFrame::TRIGGER_ANIMATION:
+        return SPECIAL;
         
       default:
         PRINT("Unknown track for KeyFrame type %d.\n", kfType);
@@ -488,6 +491,10 @@ namespace Cozmo {
         case SOUND:
           Messages::StopSoundOnBaseStation msg;
           HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::StopSoundOnBaseStation), &msg);
+          break;
+          
+        case SPECIAL:
+          // Nothing to do here
           break;
           
         default:

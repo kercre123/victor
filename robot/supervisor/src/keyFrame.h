@@ -48,6 +48,7 @@ struct KeyFrame
     // SET_LED_COLORS,
     START_LIFT_NOD,
     STOP_LIFT_NOD,
+    TRIGGER_ANIMATION,
     NUM_TYPES
   };
 
@@ -168,6 +169,11 @@ struct KeyFrame
     u8  rightClockWise;
   };
   
+  struct TriggerAnimation_t {
+    AnimationID_t animID;
+    u8            numLoops;
+  };
+  
   // Kinda large
   /*
   // Set the color for all LEDs individually
@@ -213,6 +219,9 @@ struct KeyFrame
     //SetLEDcolors_t     SetLEDcolors;
     FlashEyes_t        FlashEyes;
     SpinEyes_t         SpinEyes;
+    
+    // Special
+    TriggerAnimation_t TriggerAnimation;
     
   }; // union of structs
     

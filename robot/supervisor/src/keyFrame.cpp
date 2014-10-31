@@ -14,6 +14,7 @@
 
 #include "keyFrame.h"
 
+#include "animationController.h"
 #include "eyeController.h"
 #include "headController.h"
 #include "liftController.h"
@@ -163,6 +164,12 @@ namespace Cozmo {
       case KeyFrame::STOP_EYES:
       {
         EyeController::StopAnimating();
+        break;
+      }
+        
+      case KeyFrame::TRIGGER_ANIMATION:
+      {
+        AnimationController::Play(TriggerAnimation.animID, TriggerAnimation.numLoops);
         break;
       }
         

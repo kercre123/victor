@@ -48,6 +48,7 @@ namespace Anki {
       ,SOUND_OOH
       ,SOUND_SCREAM
       ,SOUND_HELPME
+      ,SOUND_WAH_HELPME
       ,SOUND_SCAN
       ,SOUND_HAPPY_CHASE
       ,SOUND_FLEES
