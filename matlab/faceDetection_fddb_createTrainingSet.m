@@ -1,11 +1,11 @@
 
-% function faceDetection_createTrainingSet()
+% function faceDetection_fddb_createTrainingSet()
 
 % load('~/Documents/datasets/FDDB-folds/FDDB-ellipses.mat');
 % load('~/Documents/datasets/FDDB-folds/FDDB-detectedPoses.mat');
-% faceDetection_createTrainingSet(ellipses, allDetections, posemap, '~/Documents/datasets/fddbFrontFaces.dat');
+% faceDetection_fddb_createTrainingSet(ellipses, allDetections, posemap, '~/Documents/datasets/fddbFrontFaces.dat');
 
-function faceDetection_createTrainingSet(ellipses, allDetections, posemap, outputFilename)
+function faceDetection_fddb_createTrainingSet(ellipses, allDetections, posemap, outputFilename)
         
     fileId = fopen(outputFilename, 'w');
     
@@ -103,7 +103,7 @@ function faceDetection_createTrainingSet(ellipses, allDetections, posemap, outpu
 %         keyboard
 %     end % for iEllipse = 1:length(ellipses)
     
-end % function faceDetection_createTrainingSet()
+end % function faceDetection_fddb_createTrainingSet()
 
 
 function [X,Y] = calculateEllipse(x, y, a, b, angle, steps)

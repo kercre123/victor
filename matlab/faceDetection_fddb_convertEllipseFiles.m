@@ -1,9 +1,9 @@
-% function faceDetection_convertEllipseFiles()
+% function faceDetection_fddb_convertEllipseFiles()
 
-% ellipses = faceDetection_convertEllipseFiles('~/Documents/datasets/FDDB-originalPics', '~/Documents/datasets/FDDB-folds');
+% ellipses = faceDetection_fddb_convertEllipseFiles('~/Documents/datasets/FDDB-originalPics', '~/Documents/datasets/FDDB-folds');
 % save('~/Documents/datasets/FDDB-folds/FDDB-ellipses.mat', 'ellipses');
 
-function ellipses = faceDetection_convertEllipseFiles(fddbImageDirectory, fddbFoldsDirectory)
+function ellipses = faceDetection_fddb_convertEllipseFiles(fddbImageDirectory, fddbFoldsDirectory)
 
     ellipseFilenames = {};
     for iFold = 1:10
@@ -45,4 +45,4 @@ function ellipses = faceDetection_convertEllipseFiles(fddbImageDirectory, fddbFo
 
         fclose(fileID);
     end % for iFold = 1:10
-end % function faceDetection_convertEllipseFiles()
+end % function faceDetection_fddb_convertEllipseFiles()

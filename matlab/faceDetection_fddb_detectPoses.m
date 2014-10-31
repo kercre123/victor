@@ -1,10 +1,10 @@
-% function faceDetection_detectPoses()
+% function faceDetection_fddb_detectPoses()
 
 % load('~/Documents/datasets/FDDB-folds/FDDB-ellipses.mat', 'ellipses')
-% [allDetections, posemap] = faceDetection_detectPoses(ellipses, 1:length(ellipses), '~/Documents/datasets/FDDB-folds/FDDB-detectedPoses%d.mat');
+% [allDetections, posemap] = faceDetection_fddb_detectPoses(ellipses, 1:length(ellipses), '~/Documents/datasets/FDDB-folds/FDDB-detectedPoses%d.mat');
 % save('~/Documents/datasets/FDDB-folds/FDDB-detectedPoses.mat', 'allDetections', 'posemap', '-v7.3');
 
-function [allDetections, posemap] = faceDetection_detectPoses(ellipses, whichEllipses, filenameOutPattern)
+function [allDetections, posemap] = faceDetection_fddb_detectPoses(ellipses, whichEllipses, filenameOutPattern)
     load face_p146_small.mat
     model.interval = 5;
     %         model.thresh = min(-0.65, model.thresh);
@@ -68,5 +68,5 @@ function [allDetections, posemap] = faceDetection_detectPoses(ellipses, whichEll
     else
         allDetections = [];
     end
-end % function faceDetection_detectPoses()
+end % function faceDetection_fddb_detectPoses()
 
