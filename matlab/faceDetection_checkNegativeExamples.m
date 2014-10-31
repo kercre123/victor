@@ -1,13 +1,13 @@
 
-% function faceDetection_checkNegativeSamples()
+% function faceDetection_checkNegativeExamples()
 
-% faceDetection_checkNegativeSamples('~/Documents/datasets/negativeExamples.txt');
+% faceDetection_checkNegativeExamples('~/Documents/Anki/products-cozmo-large-files/face/detection/negativeExamples.dat');
 
-function faceDetection_checkNegativeSamples(negativeExamplesFilename)
+function faceDetection_checkNegativeExamples(negativeExamplesFilename)
     %#ok<*NASGU>
     
     printAllFilenames = false;
-    checkWithFaceDetector = false;
+    checkWithFaceDetector = true;
     
     if printAllFilenames
         baseDatasetDirectory = '/Volumes/PeterMac/external';
@@ -55,7 +55,7 @@ function faceDetection_checkNegativeSamples(negativeExamplesFilename)
     end
     
     keyboard
-end % function faceDetection_checkNegativeSamples()
+end % function faceDetection_checkNegativeExamples()
 
 function filenames = getFilenames()
 end % function filenames = getFilenames()

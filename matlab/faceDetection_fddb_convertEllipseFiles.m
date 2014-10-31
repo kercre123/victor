@@ -28,7 +28,7 @@ function ellipses = faceDetection_fddb_convertEllipseFiles(fddbImageDirectory, f
             elseif state == 2
                 curEllipse = str2num(tline);
 %                 ellipses{end+1} = {curFilename, curEllipse(1:(end-1))}; %#ok<AGROW>
-                curEllipses{end+1} = {curFilename, curEllipse(1:(end-1))}; %#ok<AGROW>
+                curEllipses{end+1} = curEllipse(1:(end-1)); %#ok<AGROW>
 
                 numEllipsesLeft = numEllipsesLeft - 1;
 

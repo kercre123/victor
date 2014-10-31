@@ -3,39 +3,36 @@
 
 % load('~/Documents/datasets/FDDB-folds/FDDB-ellipses.mat');
 % load('~/Documents/datasets/FDDB-folds/FDDB-detectedPoses.mat');
-% faceDetection_fddb_createTrainingSet(ellipses, allDetections, posemap, '~/Documents/datasets/fddbFrontFaces.dat');
+% faceDetection_fddb_createTrainingSet(ellipses, allDetections, posemap, '~/Documents/Anki/products-cozmo-large-files/face/detection/fddbFrontFaces.dat');
 
 function faceDetection_fddb_createTrainingSet(ellipses, allDetections, posemap, outputFilename)
-        
+    
+    showDetections = false;
+    
     fileId = fopen(outputFilename, 'w');
     
     for iDetection = 1:length(allDetections)
-        
-        minEllipse = allDetections{iDetection}{2};
-        if iDetection == length(allDetections)
-            maxEllipse = length(ellipses);
-        else
-            maxEllipse = allDetections{iDetection+1}{2} - 1;
-        end
-        
         curImage = rgb2gray2(imread(allDetections{iDetection}{1}));
-        curImage(curImage==0) = 1;
         
         goodFaces = zeros(0,4);
         
-        for iFace = 1:length(allDetections{iDetection}{5})
+        for iFace = 1:length(allDetections{iDetection}{3})
             % Only use frontal and +-15 degrees faces
-            if abs(posemap(allDetections{iDetection}{5}(iFace).c)) > 15
+            if abs(posemap(allDetections{iDetection}{3}(iFace).c)) > 15
                 continue;
-            end                
+            end
             
-            x = mean(mean(allDetections{iDetection}{5}(iFace).xy(:,[1,3])));
-            y = mean(mean(allDetections{iDetection}{5}(iFace).xy(:,[2,4])));
+            x = mean(mean(allDetections{iDetection}{3}(iFace).xy(:,[1,3])));
+            y = mean(mean(allDetections{iDetection}{3}(iFace).xy(:,[2,4])));
+            
+            %             keyboard
+            
+            curEllipses = ellipses{iDetection}{2};
             
             bestEllipseDistance = Inf;
             bestEllipseIndex = -1;
-            for iEllipse = minEllipse:maxEllipse
-                curDistance = sqrt((x-ellipses{iEllipse}{2}(4)).^2 + (y-ellipses{iEllipse}{2}(5)).^2);
+            for iEllipse = 1:length(curEllipses)
+                curDistance = sqrt((x-curEllipses{iEllipse}(4)).^2 + (y-curEllipses{iEllipse}(5)).^2);
                 
                 if curDistance < bestEllipseDistance
                     bestEllipseDistance = curDistance;
@@ -44,16 +41,22 @@ function faceDetection_fddb_createTrainingSet(ellipses, allDetections, posemap, 
             end % for iEllipse = minEllipse:maxEllipse
             
             if bestEllipseIndex ~= -1
-                curEllipse = ellipses{bestEllipseIndex}{2};
-                bestEllipseHalfWidth = curEllipse(2);
+                bestEllipse = curEllipses{bestEllipseIndex};
+                bestEllipseHalfWidth = bestEllipse(2);
                 
-                if 2*bestEllipseHalfWidth > bestEllipseDistance
-                    hold off; 
-                    imshows(curImage); 
-                    hold on;
-                    p = calculateEllipse(curEllipse(4), curEllipse(5), curEllipse(2), curEllipse(1), curEllipse(3), 500);   plot(p(:,1), p(:,2), '.-');
-                    curRect = [curEllipse(4) - curEllipse(2), curEllipse(5) - curEllipse(1), curEllipse(2)*2, curEllipse(1)*2];            
-                    rectangle('Position', curRect);
+                if sqrt(2)*bestEllipseHalfWidth > bestEllipseDistance
+                    if showDetections
+                        hold off;
+                        imshows(curImage);
+                        hold on;
+                        p = calculateEllipse(bestEllipse(4), bestEllipse(5), bestEllipse(2), bestEllipse(1), bestEllipse(3), 500);   plot(p(:,1), p(:,2), '.-');
+                    end
+                                        
+                    curRect = [bestEllipse(4) - bestEllipse(2), bestEllipse(5) - bestEllipse(1), bestEllipse(2)*2, bestEllipse(1)*2];
+                    
+                    if showDetections
+                        rectangle('Position', curRect);
+                    end
                     
                     curRect = round(curRect);
                     curRect(1:2) = curRect(1:2) - 1; % matlab to c
@@ -67,13 +70,15 @@ function faceDetection_fddb_createTrainingSet(ellipses, allDetections, posemap, 
                     if curRect(2) + curRect(4) >= size(curImage,1)
                         curRect(4) =  size(curImage,1) - 1;
                     end
-                                        
+                    
                     goodFaces(end+1, :) = curRect; %#ok<AGROW>
                     
-                    pause(.25);
+                    if showDetections
+                        pause(.25);
+                    end
                 end
-            end
-        end % for iFace = 1:length(allDetections{iDetection}{5})
+            end % if bestEllipseIndex ~= -1
+        end % for iFace = 1:length(allDetections{iDetection}{3})
         
         numGoodFaces = size(goodFaces,1);
         if numGoodFaces > 0
@@ -94,14 +99,14 @@ function faceDetection_fddb_createTrainingSet(ellipses, allDetections, posemap, 
     
     fclose(fileId);
     
-%     curDetection = 0;
-%     for iEllipse = 1:length(ellipses)
-%         if curDetection == 0 || ~strcmp(ellipses{iEllipse}{1}, allDetections{curDetection}{1})
-%             curImage = rgb2gray2(imread(ellipses{iEllipse}{1}));
-%         end
-%         
-%         keyboard
-%     end % for iEllipse = 1:length(ellipses)
+    %     curDetection = 0;
+    %     for iEllipse = 1:length(allDetections)
+    %         if curDetection == 0 || ~strcmp(ellipses{iEllipse}{1}, allDetections{curDetection}{1})
+    %             curImage = rgb2gray2(imread(ellipses{iEllipse}{1}));
+    %         end
+    %
+    %         keyboard
+    %     end % for iEllipse = 1:length(allDetections)
     
 end % function faceDetection_fddb_createTrainingSet()
 
