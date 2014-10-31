@@ -5,6 +5,8 @@
 % save('~/Documents/datasets/FDDB-folds/FDDB-detectedPoses.mat', 'allDetections', 'posemap', '-v7.3');
 
 function [allDetections, posemap] = faceDetection_fddb_detectPoses(ellipses, whichEllipses, filenameOutPattern)
+    showDetections = false;
+    
     load face_p146_small.mat
     model.interval = 5;
     %         model.thresh = min(-0.65, model.thresh);
@@ -43,10 +45,12 @@ function [allDetections, posemap] = faceDetection_fddb_detectPoses(ellipses, whi
 
         numDetections = numDetections + length(bs3);
 
-        %                 close 1
-        %                 figure(1);
-        showboxes(curImage, bs3, posemap);
-        title('All detections above the threshold');
+        if showDetections
+            %                 close 1
+            %                 figure(1);
+            showboxes(curImage, bs3, posemap);
+            title('All detections above the threshold');
+        end
 
         disp(sprintf('Finished %d in %f', iEllipse, toc()));
     end % for iEllipse = 1:length(ellipses)
