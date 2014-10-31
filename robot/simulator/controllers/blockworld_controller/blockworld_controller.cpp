@@ -48,8 +48,7 @@ BSTimer basestationController;
 #include "anki/cozmo/basestation/bleComms.h"
 
 // Set this UUID to the desired robot you want to connect to
-//#define COZMO_BLE_UUID (0xbeefffff00010001)
-#define COZMO_BLE_UUID (0xbeef000200f115b5)
+#define COZMO_BLE_UUID (0xbeefffff00010001)
 #endif
 
 
@@ -205,9 +204,9 @@ int main(int argc, char **argv)
     // Read messages from all robots
 #if (USE_BLE_ROBOT_COMMS)
     robotBLEManager.Update();  // Necessary?
-#else
-    robotComms.Update();
 #endif
+
+    robotComms.Update();
     
     status = bs.Update(SEC_TO_NANOS(basestationController.getTime()));
     if (status != BS_OK) {
