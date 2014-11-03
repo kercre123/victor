@@ -69,6 +69,8 @@ namespace Anki {
         DANCE_WITH_BLOCK,
         SCAN,
         HELP_ME_STATE,
+        WHAT_NEXT,
+        IDLE,
         
         NUM_STATES
       } BehaviorState;

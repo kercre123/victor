@@ -203,6 +203,7 @@ namespace Anki {
           _nextState = SLEEPING;
           _stateAnimStarted = false;
           
+          // Start off in sleeping mode
           _robot->PlayAnimation("ANIM_SLEEPING");
           
           VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::YELLOW, GetBehaviorStateName(_state).c_str());
@@ -245,7 +246,9 @@ namespace Anki {
           _transitionAnimations[NUM_STATES][EXCITABLE_CHASE] = "ANIM_ALERT";
           _transitionAnimations[NUM_STATES][SCAN]            = "ANIM_SCAN";
           _transitionAnimations[NUM_STATES][DANCE_WITH_BLOCK]= "ANIM_DANCING";
-          _transitionAnimations[NUM_STATES][HELP_ME_STATE]   = "ANIM_HELPME";
+          _transitionAnimations[NUM_STATES][HELP_ME_STATE]   = "ANIM_HELPME_FRUSTRATED";
+          _transitionAnimations[NUM_STATES][WHAT_NEXT]       = "ANIM_WHAT_NEXT";
+          _transitionAnimations[NUM_STATES][IDLE]            = "ANIM_BLINK";
           
 /*
           _stateAnimations[SLEEPING]         = "ANIM_SLEEPING";
@@ -284,6 +287,8 @@ namespace Anki {
         {HELP_ME_STATE,   "HELP_ME_STATE"},
         {SLEEPING,        "SLEEPING"},
         {WAITING_FOR_ROBOT, "WAITING_FOR_ROBOT"},
+        {WHAT_NEXT        , "WHAT_NEXT"},
+        {IDLE             , "IDLE"},
       };
       
       static const std::string UNKNOWN("UNKNOWN");
@@ -309,6 +314,8 @@ namespace Anki {
         case DANCE_WITH_BLOCK:
         case SCAN:
         case HELP_ME_STATE:
+        case WHAT_NEXT:
+        case IDLE:
         {
           if(_mode == CREEP) {
             validState = true;

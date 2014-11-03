@@ -225,11 +225,13 @@ namespace Anki {
         const s32 CKEY_TOGGLE_FACE_TRACKING = (s32)'F';
         
         // For CREEP test
-        const s32 CKEY_BEHAVIOR_EXCITED = (s32)'7';
-        const s32 CKEY_BEHAVIOR_FLEE    = (s32)'8';
-        const s32 CKEY_BEHAVIOR_SCAN    = (s32)'9';
-        const s32 CKEY_BEHAVIOR_DANCE   = (s32)'0';
-        const s32 CKEY_BEHAVIOR_HELPME  = (s32)'-';
+        const s32 CKEY_BEHAVIOR_EXCITED   = (s32)'7';
+        const s32 CKEY_BEHAVIOR_FLEE      = (s32)'8';
+        const s32 CKEY_BEHAVIOR_SCAN      = (s32)'9';
+        const s32 CKEY_BEHAVIOR_DANCE     = (s32)'0';
+        const s32 CKEY_BEHAVIOR_HELPME    = (s32)'-';
+        const s32 CKEY_BEHAVIOR_WHAT_NEXT = (s32)'=';
+        const s32 CKEY_BEHAVIOR_IDLE      = (s32)'&';
         
         bool movingHead   = false;
         bool movingLift   = false;
@@ -616,7 +618,7 @@ namespace Anki {
               }
               case CKEY_ANIMATION_BLINK:
               {
-                SendAnimation("ANIM_BLINK", 5);
+                SendAnimation("ANIM_BLINK", 0);
                 break;
               }
               case (s32)'$':
@@ -670,9 +672,19 @@ namespace Anki {
                 SendSetNextBehaviorState(BehaviorManager::HELP_ME_STATE);
                 break;
               }
+              case CKEY_BEHAVIOR_WHAT_NEXT:
+              {
+                SendSetNextBehaviorState(BehaviorManager::WHAT_NEXT);
+                break;
+              }
               case CKEY_BEHAVIOR_SCAN:
               {
                 SendSetNextBehaviorState(BehaviorManager::SCAN);
+                break;
+              }
+              case CKEY_BEHAVIOR_IDLE:
+              {
+                SendSetNextBehaviorState(BehaviorManager::IDLE);
                 break;
               }
                 
