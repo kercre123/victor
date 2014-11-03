@@ -334,14 +334,14 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      Vision::Camera camera(GetCamera());
-      
-      if(!camera.IsCalibrated()) {
+      if(!GetCamera().IsCalibrated()) {
         PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
                             "Received VisionMarker message from robot before "
                             "camera calibration was set on Basestation.");
         return RESULT_FAIL;
       }
+      
+      Vision::Camera camera(GetCamera());
       
       // Get corners
       Quad2f corners;
