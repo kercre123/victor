@@ -419,26 +419,7 @@ namespace Anki {
 #if(DEBUG_LIFT_CONTROLLER)
         PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm)\n", desiredHeight_, GetHeightMM());
 #endif
-        
-           /*
-#ifdef SIMULATOR
-        // Turning gripper on and off for simulator
-        disengageGripperAtDest_ = false;
-        if (HAL::IsGripperEngaged()) {
-          if (  (desiredAngle_ == LIFT_ANGLE_HIGH_LIMIT && desiredHeight_ != LIFT_HEIGHT_CARRY)
-              ) {
-            //PRINT("WILL DISENGAGE GRIPPER AFTER FINAL LIFT POSITION REACHED\n");
-            disengageGripperAtDest_ = true;
-          }
-        } else {
-          if (  (desiredAngle_ == LIFT_ANGLE_LOW_LIMIT && desiredHeight_ != LIFT_HEIGHT_LOWDOCK)
-             || (desiredHeight_ == LIFT_HEIGHT_CARRY)
-              ) {
-            HAL::EngageGripper();
-          }
-        }
-#endif
-           */
+
         
         desiredAngle_ = Height2Rad(desiredHeight_);
         angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
@@ -491,6 +472,98 @@ namespace Anki {
         isNodding_ = false;
         SetDesiredHeight_internal(height_mm);
       }
+
+    // TODO: There is common code with the other SetDesiredHeight() that can be pulled out into a shared function.
+      void SetDesiredHeight(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+      {
+        
+        // Do range check on height
+        const f32 newDesiredHeight = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+        
+#ifdef SIMULATOR
+        if(!HAL::IsGripperEngaged()) {
+          // If the new desired height will make the lift move upward, turn on
+          // the gripper's locking mechanism so that we might pick up a block as
+          // it goes up
+          if(newDesiredHeight > desiredHeight_) {
+            HAL::EngageGripper();
+          }
+        }
+        else {
+          // If we're moving the lift down and the end goal is at low-place or
+          // high-place height, disengage the gripper when we get there
+          if(newDesiredHeight < desiredHeight_ &&
+             (newDesiredHeight == LIFT_HEIGHT_LOWDOCK ||
+              newDesiredHeight == LIFT_HEIGHT_HIGHDOCK))
+          {
+            disengageGripperAtDest_ = true;
+            disengageAtAngle_ = Height2Rad(newDesiredHeight + 3.f*LIFT_FINGER_HEIGHT);
+          }
+          else {
+            disengageGripperAtDest_ = false;
+          }
+        }
+#endif
+        
+        desiredHeight_ = newDesiredHeight;
+        
+        // Convert desired height into the necessary angle:
+#if(DEBUG_LIFT_CONTROLLER)
+        PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm), duration = %f s\n", desiredHeight_, GetHeightMM(), duration_seconds);
+#endif
+        
+        
+        desiredAngle_ = Height2Rad(desiredHeight_);
+        angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
+        
+        f32 startRadSpeed = radSpeed_;
+        f32 startRad = currentAngle_.ToFloat();
+        if (!inPosition_) {
+          startRadSpeed = currDesiredRadVel_;
+          startRad = currDesiredAngle_;
+        } else {
+          angleErrorSum_ = 0.f;
+        }
+        
+        lastLiftMovedTime_us = HAL::GetMicroCounter();
+        limitingDetected_ = false;
+        limitingExpected_ = false;
+        inPosition_ = false;
+        calibPending_ = false;
+        
+        if (FLT_NEAR(angleError_,0.f)) {
+          inPosition_ = true;
+#if(DEBUG_LIFT_CONTROLLER)
+          PRINT("Lift: Already at desired position\n");
+#endif
+          return;
+        }
+        
+        
+#if(RECALIBRATE_AT_LIMITS)
+        // Adjust approach speed to be a little faster if desired height is at a limit.
+        approachSpeedRad_ = (desiredHeight_ == LIFT_HEIGHT_LOWDOCK || desiredHeight_ == LIFT_HEIGHT_CARRY) ? 0.5 : 0.2;
+#endif
+
+        bool res = vpg_.StartProfile_fixedDuration(startRad, startRadSpeed, acc_start_frac*duration_seconds,
+                                                   desiredAngle_.ToFloat(), acc_end_frac*duration_seconds,
+                                                   MAX_LIFT_SPEED_RAD_PER_S,
+                                                   MAX_LIFT_ACCEL_RAD_PER_S2,
+                                                   duration_seconds,
+                                                   CONTROL_DT);
+        
+        if (!res) {
+          PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
+                startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+        }
+        
+#if(DEBUG_HEAD_CONTROLLER)
+        PRINT("LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
+              startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+#endif
+      }
+
+      
       
       
       f32 GetDesiredHeight()

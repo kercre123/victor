@@ -319,6 +319,59 @@ namespace HeadController {
       
       SetDesiredAngle_internal(angle);
     }
+
+    // TODO: There is common code with the other SetDesiredAngle() that can be pulled out into a shared function.
+    void SetDesiredAngle(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+    {
+      // Do range check on angle
+      angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
+      
+      desiredAngle_ = angle;
+      angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
+      
+#if(DEBUG_HEAD_CONTROLLER)
+      PRINT("HEAD (fixedDuration): SetDesiredAngle %f rads (duration %f)\n", desiredAngle_.ToFloat(), duration_seconds);
+#endif
+      
+      f32 startRadSpeed = radSpeed_;
+      f32 startRad = currentAngle_.ToFloat();
+      if (!inPosition_) {
+        startRadSpeed = currDesiredRadVel_;
+        startRad = currDesiredAngle_;
+      } else {
+        startRadSpeed = 0;
+        angleErrorSum_ = 0.f;
+      }
+      
+      inPosition_ = false;
+      
+      if (FLT_NEAR(angleError_,0.f)) {
+        inPosition_ = true;
+#if(DEBUG_HEAD_CONTROLLER)
+        PRINT("Head (fixedDuration): Already at desired position\n");
+#endif
+        return;
+      }
+      
+      // Start profile of head trajectory
+      bool res = vpg_.StartProfile_fixedDuration(startRad, startRadSpeed, acc_start_frac*duration_seconds,
+                                                 desiredAngle_.ToFloat(), acc_end_frac*duration_seconds,
+                                                 MAX_HEAD_SPEED_RAD_PER_S,
+                                                 MAX_HEAD_ACCEL_RAD_PER_S2,
+                                                 duration_seconds,
+                                                 CONTROL_DT);
+      
+      if (!res) {
+        PRINT("FAIL: HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
+              startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+      }
+      
+#if(DEBUG_HEAD_CONTROLLER)
+      PRINT("HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
+            startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+#endif
+
+    }
     
     bool IsInPosition(void) {
       return inPosition_;

@@ -16,6 +16,7 @@
 #define BASESTATION_COMMS_BLECOMMS_H_
 
 #include "anki/messaging/basestation/IComms.h"
+#include <deque>
 
 namespace Anki {
 namespace Cozmo {
@@ -51,12 +52,31 @@ public:
 
   //void SetCurrentTimestamp(BaseStationTime_t timestamp);
   
+  void Update();
+  
 private:
   unsigned int deltaSentMessages_;
   unsigned int deltaReceivedMessages_;
   unsigned int deltaSentBytes_;
   unsigned int deltaReceivedBytes_;
   BaseStationTime_t currentTimeStamp_;
+  
+  // Current message that's being received.
+  // Could be a multi-packet message.
+  unsigned int currMessageSize_;
+  unsigned int currMessageRecvdBytes_;
+  Comms::MsgPacket currMsgPacket_;
+  
+  // Received messages
+  std::deque<Comms::MsgPacket> msgQueue_;
+  
+  // Message to be sent
+  std::deque<Comms::MsgPacket> sendMsgQueue_;
+  
+  // Number of BLE packets sent since the last call to Update()
+  unsigned int numPacketsSentThisCycle_;
+  
+  size_t RealSend(const Comms::MsgPacket &p);
 };
 
 }  // namespace Comms

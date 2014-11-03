@@ -47,6 +47,13 @@ namespace Anki {
       
       // Command the desired height of the lift
       void SetDesiredHeight(f32 height_mm);
+      
+      // Command the desired height of the lift
+      // duration_seconds:  The time it should take for it to reach the desired height
+      // acc_start_frac:    The fraction of duration that it should be accelerating at the start
+      // acc_end_frac:      The fraction of duration that it should be slowing down to a stop at the end
+      void SetDesiredHeight(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds);
+      
       f32 GetDesiredHeight();
       bool IsInPosition();
       

@@ -138,6 +138,13 @@ namespace Anki {
     // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
     const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
     
+    
+    // Motor speed / accel limits
+    // TODO: These were plucked out of the sky.
+    const f32 MAX_HEAD_SPEED_RAD_PER_S = 1000;
+    const f32 MAX_HEAD_ACCEL_RAD_PER_S2 = 1000;
+    const f32 MAX_LIFT_SPEED_RAD_PER_S = 1000;
+    const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 1000;
 
     
     /***************************************************************************
