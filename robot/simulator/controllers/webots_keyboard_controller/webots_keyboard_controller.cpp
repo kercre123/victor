@@ -42,9 +42,7 @@ namespace Anki {
         const f32 HEAD_SPEED_RAD_PER_SEC = 5.f;
         const f32 HEAD_ACCEL_RAD_PER_SEC2 = 10.f;
         
-        
-        //int lastKeyPressed_ = 0;
-        //int lastKeyAndModPressed_ = 0;
+        std::set<int> lastKeysPressed_;
         
         bool wasMovingWheels_ = false;
         bool wasMovingHead_   = false;
@@ -143,6 +141,8 @@ namespace Anki {
             poseMarkerDiffuseColor_ = nd->getField("poseMarkerDiffuseColor");
           }
         }
+        
+        lastKeysPressed_.clear();
       }
       
       void PrintHelp()
@@ -252,19 +252,30 @@ namespace Anki {
           keyboardRestart = false;
         }
         
-        while(1)
-        {
+        // Get all keys pressed this tic
+        std::set<int> keysPressed_;
+        while(1) {
           int key = inputController.keyboardGetKey();
+          if (key == 0)
+            break;
           
+          keysPressed_.insert(key);
+        }
+        
+        // If exact same keys were pressed last tic, do nothing.
+        if (lastKeysPressed_ == keysPressed_) {
+          return;
+        }
+        lastKeysPressed_ = keysPressed_;
+        
+        
+        for(auto key : keysPressed_)
+        {
           // Extract modifier key(s)
           int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
           
           // Set key to its modifier-less self
           key &= webots::Supervisor::KEYBOARD_KEY;
-          
-          if(key == 0) {
-            break;
-          }
           
           lastKeyPressTime_ = inputController.getTime();
           
@@ -690,11 +701,7 @@ namespace Anki {
             } // switch
           } // if/else testMode
           
-          //lastKeyPressed_ = key;
-          //lastKeyAndModPressed_ = key | modifier_key;
-          
-        } // while(key)
-        
+        } // for(auto key : keysPressed_)
         
         movingWheels = throttleDir || steeringDir;
 
