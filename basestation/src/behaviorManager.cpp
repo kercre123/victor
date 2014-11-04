@@ -221,6 +221,7 @@ namespace Anki {
           _transitionAnimations[NUM_STATES][SCARED_FLEE]     = "ANIM_SCREAM";
           _transitionAnimations[SCARED_FLEE][SCAN]           = "ANIM_RELIEF";
           _transitionAnimations[NUM_STATES][EXCITABLE_CHASE] = "ANIM_ALERT";
+          _transitionAnimations[NUM_STATES][IDLE]            = "ANIM_GOTO_READY";
 
           // State animations play after any transition above is played, in a loop
           _stateAnimations[SLEEPING]         = "ANIM_SLEEPING";
