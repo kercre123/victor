@@ -29,14 +29,17 @@ struct KeyFrame
   enum Type
   {
     HEAD_ANGLE = 0,
+    HOLD_HEAD_ANGLE,
     START_HEAD_NOD,
     STOP_HEAD_NOD,
     LIFT_HEIGHT,
+    HOLD_LIFT_HEIGHT,
     DRIVE_LINE_SEGMENT,
     DRIVE_ARC,
     BACK_AND_FORTH,
     START_WIGGLE,
     POINT_TURN,
+    HOLD_POSE,
     PLAY_SOUND,
     WAIT_FOR_SOUND, // basically a no-op to allow sound to finish if no other keyframes
     STOP_SOUND,
@@ -72,6 +75,7 @@ struct KeyFrame
   // Directly set the head's angle and speed
   struct SetHeadAngle_t {
     s8 angle_deg;
+    u8 variability_deg;
   };
   
   // Command a canned head nodding action between two angles
@@ -137,6 +141,7 @@ struct KeyFrame
   // Turn in place primitive
   struct TurnInPlace_t {
     s16 relativeAngle_deg; // +ve turns left, -ve turns right
+    u8  variability_deg;
   };
   
   struct PlaySound_t {

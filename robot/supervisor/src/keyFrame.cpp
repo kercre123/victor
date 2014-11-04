@@ -21,6 +21,7 @@
 #include "steeringController.h"
 
 #include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/utilities.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -28,7 +29,7 @@ namespace Cozmo {
   static const u8 MIN_TRANSITION_PERCENT = 1;
   
   
-  static inline f32 GetAngleRad(s8 angle_deg)
+  static inline f32 GetAngleRad(s32 angle_deg)
   {
     return DEG_TO_RAD(static_cast<f32>(angle_deg));
   }
@@ -205,7 +206,13 @@ namespace Cozmo {
     {
       case KeyFrame::HEAD_ANGLE:
       {
-        const f32 angle_rad = GetAngleRad(SetHeadAngle.angle_deg);
+        s32 angleAdj = 0;
+        if(SetHeadAngle.variability_deg > 0) {
+          angleAdj = Embedded::RandS32(-static_cast<s32>(SetHeadAngle.variability_deg),
+                                        static_cast<s32>(SetHeadAngle.variability_deg));
+        }
+        
+        const f32 angle_rad = GetAngleRad(static_cast<s32>(SetHeadAngle.angle_deg) + angleAdj);
         
         if(relTime_ms == 0) {
           // Get into position ASAP:
@@ -290,9 +297,17 @@ namespace Cozmo {
       case KeyFrame::POINT_TURN:
       {
         // TODO: Switch to new method that accepts duration and computes the right velocity profile
+        
+        s32 angleAdj = 0;
+        if(TurnInPlace.variability_deg > 0) {
+          angleAdj = Embedded::RandS32(-static_cast<s32>(TurnInPlace.variability_deg),
+                                        static_cast<s32>(TurnInPlace.variability_deg));
+        }
+        
+        const f32 angle_rad   = GetAngleRad(static_cast<s32>(TurnInPlace.relativeAngle_deg) + angleAdj);
         const f32 duration_ms = animStartTime_ms + relTime_ms - HAL::GetTimeStamp();
-        const f32 wheelSpeed = (GetAngleRad(TurnInPlace.relativeAngle_deg) * WHEEL_DIST_MM * 1000.f) / (duration_ms * 2.f);
-        //const f32 wheelSpeed = (TurnInPlace.relativeAngle < 0 ? -TurnInPlace.targetSpeed : TurnInPlace.targetSpeed);
+        const f32 wheelSpeed  = (angle_rad * WHEEL_DIST_MM * 1000.f) / (duration_ms * 2.f);
+
         SteeringController::ExecuteDirectDrive(wheelSpeed, -wheelSpeed);
         
         break;

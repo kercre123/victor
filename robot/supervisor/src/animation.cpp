@@ -281,11 +281,13 @@ namespace Cozmo {
     switch(kfType)
     {
       case KeyFrame::HEAD_ANGLE:
+      case KeyFrame::HOLD_HEAD_ANGLE:
       case KeyFrame::START_HEAD_NOD:
       case KeyFrame::STOP_HEAD_NOD:
         return HEAD;
         
       case KeyFrame::LIFT_HEIGHT:
+      case KeyFrame::HOLD_LIFT_HEIGHT:
       case KeyFrame::START_LIFT_NOD:
       case KeyFrame::STOP_LIFT_NOD:
         return LIFT;
@@ -295,6 +297,7 @@ namespace Cozmo {
       case KeyFrame::BACK_AND_FORTH:
       case KeyFrame::START_WIGGLE:
       case KeyFrame::POINT_TURN:
+      case KeyFrame::HOLD_POSE:
       //case KeyFrame::STOP_WIGGLE:
         return POSE;
         

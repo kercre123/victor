@@ -545,8 +545,8 @@ namespace Anki {
         KeyFrame kf;
         
         kf.type = KeyFrame::HEAD_ANGLE;
-        kf.SetHeadAngle.angle_deg = msg.angle_deg;
-        
+        kf.SetHeadAngle.angle_deg       = msg.angle_deg;
+        kf.SetHeadAngle.variability_deg = msg.variability_deg;
         AddKeyFrameHelper(msg, kf);
       }
       
@@ -619,7 +619,32 @@ namespace Anki {
         
         kf.type = KeyFrame::POINT_TURN;
         kf.TurnInPlace.relativeAngle_deg = msg.relativeAngle_deg;
+        kf.TurnInPlace.variability_deg   = msg.variability_deg;
         
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_HoldHeadAngleMessage(const AddAnimKeyFrame_HoldHeadAngle& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::HOLD_HEAD_ANGLE;
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_HoldLiftHeightMessage(const AddAnimKeyFrame_HoldLiftHeight& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::HOLD_LIFT_HEIGHT;
+        AddKeyFrameHelper(msg, kf);
+      }
+      
+      void ProcessAddAnimKeyFrame_HoldPoseMessage(const AddAnimKeyFrame_HoldPose& msg)
+      {
+        KeyFrame kf;
+        
+        kf.type = KeyFrame::HOLD_POSE;
         AddKeyFrameHelper(msg, kf);
       }
       

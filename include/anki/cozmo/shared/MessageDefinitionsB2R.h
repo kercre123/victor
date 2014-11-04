@@ -270,7 +270,16 @@ ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 ADD_MESSAGE_MEMBER(s8,  angle_deg)
+ADD_MESSAGE_MEMBER(u8,  variability_deg)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetHeadAngle)
+
+// AddAnimKeyFrame_HoldHeadAngle
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldHeadAngle, 2)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldHeadAngle)
 
 // AddAnimKeyFrame_StartHeadNod
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartHeadNod, 2)
@@ -300,6 +309,14 @@ ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLiftHeight)
+
+// AddAnimKeyFrame_HoldLiftHeight
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldLiftHeight, 2)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldLiftHeight)
 
 // AddAnimKeyFrame_StartLiftNod
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartLiftNod, 2)
@@ -359,6 +376,14 @@ ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 ADD_MESSAGE_MEMBER(u8,  variability_deg)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_TurnInPlace)
+
+// AddAnimKeyFrame_HoldPose
+START_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldPose, 2)
+ADD_MESSAGE_MEMBER(u16, relTime_ms)
+ADD_MESSAGE_MEMBER(u8,  transitionIn)
+ADD_MESSAGE_MEMBER(u8,  transitionOut)
+ADD_MESSAGE_MEMBER(u8,  animationID)
+END_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldPose)
 
 // AddAnimKeyFrame_PlaySound
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_PlaySound, 2)

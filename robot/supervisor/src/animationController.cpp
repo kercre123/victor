@@ -354,6 +354,8 @@ namespace AnimationController {
         } else if(_queuedAnimID != ANIM_IDLE) {
           Play(_queuedAnimID, _queuedDesiredLoops);
           _queuedAnimID = ANIM_IDLE;
+        } else {
+          _currAnimID = ANIM_IDLE;
         }
       }
     } // if(IsPlaying())
