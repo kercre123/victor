@@ -15,7 +15,8 @@
       "transitionIn"   : 0,
       "transitionOut"  : 0,
       "soundID"        : "OK_GOT_IT", 
-      "numLoops"       : 3
+      "numLoops"       : 3, 
+      "volume"          : 100
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_StopHeadNod", 
@@ -74,7 +75,8 @@
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "soundID"         : "POWER_ON", 
-      "numLoops"        : 1
+      "numLoops"        : 1, 
+      "volume"          : 100
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_StartSpinningEyes", 
@@ -288,7 +290,8 @@
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "soundID"         : "WAH_HELPME", 
-      "numLoops"        : 1
+      "numLoops"        : 1, 
+      "volume"          : 100
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
@@ -395,7 +398,8 @@
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "soundID"         : "SCAN", 
-      "numLoops"        : 1
+      "numLoops"        : 1, 
+      "volume"          : 100
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor",
@@ -470,7 +474,8 @@
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "soundID"         : "HAPPY_CHASE", 
-      "numLoops"        : 1
+      "numLoops"        : 1, 
+      "volume"          : 100
     },   
     { 
       "Name" : "MessageAddAnimKeyFrame_StartHeadNod", 
@@ -533,7 +538,8 @@
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "soundID"         : "SINGING", 
-      "numLoops"        : 1
+      "numLoops"        : 1, 
+      "volume"          : 100
     }, 
     {
       "Name" : "MessageAddAnimKeyFrame_StartLiftNod",
@@ -643,7 +649,8 @@
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "soundID"         : "FLEES", 
-      "numLoops"        : 1
+      "numLoops"        : 1, 
+      "volume"          : 100
     }, 
     { 
       "Name" : "MessageAddAnimKeyFrame_StartHeadNod", 
@@ -697,7 +704,8 @@
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "soundID"         : "HELPME", 
-      "numLoops"        : 1
+      "numLoops"        : 1, 
+      "volume"          : 150
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
@@ -738,7 +746,8 @@
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "soundID"         : "OOH", 
-      "numLoops"        : 1
+      "numLoops"        : 1, 
+      "volume"          : 100
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
@@ -868,7 +877,8 @@
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "soundID"         : "PHEW", 
-      "numLoops"        : 1
+      "numLoops"        : 1, 
+      "volume"          : 100
     },
     {
       "Name" : "MessageAddAnimKeyFrame_TriggerAnimation", 
@@ -888,7 +898,8 @@
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "soundID"         : "SCREAM", 
-      "numLoops"        : 1
+      "numLoops"        : 1, 
+      "volume"          : 100
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 

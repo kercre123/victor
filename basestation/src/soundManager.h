@@ -68,8 +68,9 @@ namespace Anki {
       // Set the root directory of sound files
       bool SetRootDir(const char* dir);
       
-      bool Play(const SoundID_t id, const u8 numLoops=1);
-      bool Play(const std::string& name, const u8 numLoops=1);
+      // Volume for Play() methods is expressed a percentage of saved volume
+      bool Play(const SoundID_t    id,   const u8 numLoops=1, const u8 volume = 100);
+      bool Play(const std::string& name, const u8 numLoops=1, const u8 volume = 100);
       
 	  void Stop();
 

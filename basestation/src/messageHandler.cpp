@@ -472,7 +472,7 @@ namespace Anki {
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessagePlaySoundOnBaseStation const& msg)
     {
-      SoundManager::getInstance()->Play(static_cast<SoundID_t>(msg.soundID), msg.numLoops);
+      SoundManager::getInstance()->Play(static_cast<SoundID_t>(msg.soundID), msg.numLoops, msg.volume);
       return RESULT_OK;
     }
     

@@ -207,6 +207,7 @@ END_MESSAGE_DEFINITION(FaceDetection)
 START_MESSAGE_DEFINITION(PlaySoundOnBaseStation, 1)
 ADD_MESSAGE_MEMBER(u16, soundID)
 ADD_MESSAGE_MEMBER(u8,  numLoops)
+ADD_MESSAGE_MEMBER(u8,  volume)
 END_MESSAGE_DEFINITION(PlaySoundOnBaseStation)
 
 // StopSoundOnBaseStation

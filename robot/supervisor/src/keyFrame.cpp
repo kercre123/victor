@@ -111,6 +111,7 @@ namespace Cozmo {
         Messages::PlaySoundOnBaseStation msg;
         msg.soundID  = PlaySound.soundID;
         msg.numLoops = PlaySound.numLoops;
+        msg.volume   = PlaySound.volume;
         HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::PlaySoundOnBaseStation), &msg);
         break;
       }

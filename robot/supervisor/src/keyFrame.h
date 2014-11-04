@@ -142,6 +142,7 @@ struct KeyFrame
   struct PlaySound_t {
     u16 soundID;
     u8  numLoops;
+    u8  volume; // percentage
   };
   
   // Turn eye(s) off and back on in specified color, using a built-in blink animation

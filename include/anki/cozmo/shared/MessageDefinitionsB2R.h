@@ -362,6 +362,7 @@ ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 ADD_MESSAGE_MEMBER(u8,  numLoops)
+ADD_MESSAGE_MEMBER(u8,  volume)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_PlaySound)
 
 // AddAnimKeyFrame_WaitForSound
