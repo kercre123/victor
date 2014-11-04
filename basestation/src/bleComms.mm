@@ -30,6 +30,8 @@
 #endif
 
 
+#define DEBUG_BLECOMMS 0
+
 // The maximum number of packets that can be sent per call to Update()
 #define MAX_SENT_BLE_PACKETS_PER_TIC 5
 
@@ -123,6 +125,14 @@ size_t BLEComms::RealSend(const Comms::MsgPacket &p)
       return Comms::ICOMMS_SEND_FAILED_ERROR;
     }
     dataByteProgress += MAX_BLE_MSG_SIZE;
+    
+#if(DEBUG_BLECOMMS)
+    printf("Packet data sent (%u): 0x", p.dataLen);
+    for (int i=0; i < p.dataLen; ++i){
+      printf("%x", p.data[i]);
+    }
+    printf("\n");
+#endif
   }
 
   numPacketsSentThisCycle_ += numPackets;
@@ -177,9 +187,22 @@ void BLEComms::Update()
       
     unsigned char *origMsgBuffer = (unsigned char *) [vehicleMsg.msgData bytes];
     
+    #if(DEBUG_BLECOMMS)
+    printf("Packet data received (%lu): 0x", (unsigned long)vehicleMsg.msgData.length);
+    #endif
+    
     for (int i = 0; i < vehicleMsg.msgData.length; i++) {
       currMsgPacket_.data[currMessageRecvdBytes_ + i] = origMsgBuffer[i];
+      #if(DEBUG_BLECOMMS)
+      printf("%x", origMsgBuffer[i]);
+      #endif
     }
+    #if(DEBUG_BLECOMMS)
+    printf("\n");
+    #endif
+    
+
+    
     
     // Remove the message from the mutable array, releasing it and its contents
     [[[BLEVehicleManager sharedInstance] vehicleMessages] removeObjectAtIndex:0];
