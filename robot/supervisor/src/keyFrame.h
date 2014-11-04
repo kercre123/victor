@@ -57,8 +57,12 @@ struct KeyFrame
   Type           type;
   u16            relTime_ms; // time relative to first keyframe
   
-  KeyFrameTransitionType transitionIn;
-  KeyFrameTransitionType transitionOut;
+  // Transitions are stored as the percentage of the length of time between this
+  // keyframe and the previous one to use for the transition.
+  u8             transitionIn;
+  u8             transitionOut;
+  //KeyFrameTransitionType transitionIn;
+  //KeyFrameTransitionType transitionOut;
   
   // Define all the possible type-specific KeyFrame info as structs here, and
   // then create an "instance" of each of these in the union below. It would
@@ -225,8 +229,8 @@ struct KeyFrame
     
   }; // union of structs
     
-  void TransitionOutOf(const u32 animStartTime_ms) const;
-  void TransitionInto(const u32 animStartTime_ms)  const;
+  void TransitionOutOf(const u32 animStartTime_ms, const u8 nextTransitionIn = 0) const;
+  void TransitionInto(const u32 animStartTime_ms, const u8 prevTransitionOut = 0)  const;
 
   // Returns true if lift is at the target height, or head is at the target
   // angle, etc.

@@ -25,12 +25,21 @@
 namespace Anki {
 namespace Cozmo {
   
+  static const u8 MIN_TRANSITION_PERCENT = 1;
+  
+  
   static inline f32 GetAngleRad(s8 angle_deg)
   {
     return DEG_TO_RAD(static_cast<f32>(angle_deg));
   }
   
-  void KeyFrame::TransitionOutOf(const TimeStamp_t animStartTime_us) const
+  static inline f32 GetTransitionFraction(const u8 transitionPercent)
+  {
+    return 0.01f*static_cast<f32>(MAX(MIN_TRANSITION_PERCENT, transitionPercent));
+  }
+  
+  
+  void KeyFrame::TransitionOutOf(const TimeStamp_t animStartTime_us, const u8 nextTransitionIn) const
   {
     switch(type)
     {
@@ -39,7 +48,9 @@ namespace Cozmo {
         HeadController::StartNodding(GetAngleRad(StartHeadNod.lowAngle_deg),
                                      GetAngleRad(StartHeadNod.highAngle_deg),
                                      StartHeadNod.period_ms,
-                                     0);
+                                     0,
+                                     GetTransitionFraction(transitionOut),
+                                     GetTransitionFraction(nextTransitionIn));
         break;
       }
         
@@ -55,7 +66,9 @@ namespace Cozmo {
         LiftController::StartNodding(StartLiftNod.lowHeight,
                                      StartLiftNod.highHeight,
                                      StartLiftNod.period_ms,
-                                     0);
+                                     0,
+                                     GetTransitionFraction(transitionOut),
+                                     GetTransitionFraction(nextTransitionIn));
         break;
       }
         
@@ -182,9 +195,10 @@ namespace Cozmo {
     } // switch(type)
     
   } // TransitionOutOf()
+
   
-  
-  void KeyFrame::TransitionInto(const TimeStamp_t animStartTime_ms) const
+  void KeyFrame::TransitionInto(const TimeStamp_t animStartTime_ms,
+                                const u8 prevTransitionOut) const
   {
     switch(type)
     {
@@ -192,10 +206,19 @@ namespace Cozmo {
       {
         const f32 angle_rad = GetAngleRad(SetHeadAngle.angle_deg);
         
-        const f32 dt_ms = animStartTime_ms + relTime_ms - HAL::GetTimeStamp();
-        const f32 dAngle = angle_rad - HeadController::GetAngleRad();
-        HeadController::SetAngularVelocity((dAngle*1000.f) / dt_ms);
-        HeadController::SetDesiredAngle(angle_rad);
+        if(relTime_ms == 0) {
+          // Get into position ASAP:
+          HeadController::SetSpeedAndAccel(10*M_PI, 1000.f);
+          HeadController::SetDesiredAngle(angle_rad);
+        } else {
+          const f32 duration_sec = (animStartTime_ms + relTime_ms - HAL::GetTimeStamp())*0.001f;
+          HeadController::SetDesiredAngle(angle_rad,
+                                          GetTransitionFraction(prevTransitionOut),
+                                          GetTransitionFraction(transitionIn),
+                                          duration_sec);
+        }
+        
+        
       
         // TODO: Switch to method that takes desired time into account:
         /*
@@ -210,7 +233,7 @@ namespace Cozmo {
       {
         if(relTime_ms == 0) {
           // Get the head in position to start animation [as fast as possible?]
-          HeadController::SetAngularVelocity(100.f);
+          HeadController::SetSpeedAndAccel(10*M_PI, 1000.f);
           HeadController::SetDesiredAngle(GetAngleRad(StartHeadNod.lowAngle_deg));
           
           // TODO: Switch to method that takes desired time into account:
@@ -225,10 +248,17 @@ namespace Cozmo {
         
       case KeyFrame::LIFT_HEIGHT:
       {
-        const f32 dt_ms = animStartTime_ms + relTime_ms - HAL::GetTimeStamp();
-        const f32 dHeight = SetLiftHeight.targetHeight - LiftController::GetHeightMM();
-        LiftController::SetLinearVelocity((dHeight*1000.f) / dt_ms);
-        LiftController::SetDesiredHeight(SetLiftHeight.targetHeight);
+        if(relTime_ms == 0) {
+          // Get to start position ASAP
+          LiftController::SetSpeedAndAccel(1000.f, 1000.f);
+          LiftController::SetDesiredHeight(SetLiftHeight.targetHeight);
+        } else {
+          const f32 duration_sec = (animStartTime_ms + relTime_ms - HAL::GetTimeStamp())*0.001f;
+          LiftController::SetDesiredHeight(SetLiftHeight.targetHeight,
+                                           GetTransitionFraction(prevTransitionOut),
+                                           GetTransitionFraction(transitionIn),
+                                           duration_sec);
+        }
         
         // TODO: Switch to method that takes desired time into account:
         /*
@@ -243,7 +273,7 @@ namespace Cozmo {
       {
         if(relTime_ms == 0) {
           // Get the lift in position to start animation [as fast as possible?]
-          LiftController::SetLinearVelocity(100.f);
+          LiftController::SetSpeedAndAccel(1000.f, 1000.f);
           LiftController::SetDesiredHeight(StartLiftNod.lowHeight);
           
           // TODO: Switch to method that takes desired time into account:

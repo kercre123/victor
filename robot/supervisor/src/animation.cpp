@@ -188,10 +188,13 @@ namespace Cozmo {
         const u32 absFrameTime_ms = currKeyFrame.relTime_ms + _startTime_ms;
         if(HAL::GetTimeStamp() >= absFrameTime_ms)
         {
+          const u8 nextTransitionIn = (track.currFrame+1 < track.numFrames ?
+                                       _frames[track.startOffset + track.currFrame + 1].transitionIn : 0);
+          
           // We are transitioning out of this keyframe and into the next
           // one in the list (if there is one).
           Unlock(static_cast<TrackType>(iTrack));
-          currKeyFrame.TransitionOutOf(_startTime_ms);
+          currKeyFrame.TransitionOutOf(_startTime_ms, nextTransitionIn);
           Lock(static_cast<TrackType>(iTrack));
           
           ++track.currFrame;

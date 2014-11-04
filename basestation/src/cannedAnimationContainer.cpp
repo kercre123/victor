@@ -167,38 +167,6 @@ namespace Cozmo {
     return lastResult;
     
   } // SendCannedAnimations()
-
-  static KeyFrameTransitionType GetTransitionType(const Json::Value& json)
-  {
-    static const std::map<std::string, KeyFrameTransitionType> LUT = {
-      {"EASE_IN",  KF_TRANSITION_EASE_IN},
-      {"EASE_OUT", KF_TRANSITION_EASE_OUT},
-      {"STEP",     KF_TRANSITION_INSTANT},
-      {"INSTANT",  KF_TRANSITION_INSTANT},
-      {"LINEAR",   KF_TRANSITION_LINEAR}
-    };
-    
-    const KeyFrameTransitionType DEFAULT = KF_TRANSITION_LINEAR;
-    
-    if(json.isString()) {
-      
-      auto result = LUT.find(json.asString());
-      if(result == LUT.end()) {
-        PRINT_NAMED_WARNING("GetTransitionType",
-                            "Unknown transition type '%s', returning default.\n",
-                            json.asString().c_str());
-        return DEFAULT;
-      } else {
-        return result->second;
-      }
-    } else if(json.isIntegral()) {
-      return static_cast<KeyFrameTransitionType>(json.asInt());
-    } else {
-      PRINT_NAMED_WARNING("GetTransitionType",
-                          "Not sure how to convert stored transition type, returning default.\n");
-      return DEFAULT;
-    }
-  } // GetTransitionType()
   
   
   static EyeShape GetEyeShape(const Json::Value& json)
@@ -299,7 +267,6 @@ namespace Cozmo {
         // field).
         jsonFrame["animationID"] = animID;
         
-        // Convert transition type strings to values:
         if(!jsonFrame.isMember("transitionIn")) {
           PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.NoTransitionIn",
                             "Missing 'transitionIn' field for '%s' frame of '%s' animation.\n",
@@ -307,7 +274,6 @@ namespace Cozmo {
                             animationName.c_str());
           return RESULT_FAIL;
         }
-        jsonFrame["transitionIn"] = GetTransitionType(jsonFrame["transitionIn"]);
         
         if(!jsonFrame.isMember("transitionOut")) {
           PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.NoTransitionOut",
@@ -316,7 +282,6 @@ namespace Cozmo {
                             animationName.c_str());
           return RESULT_FAIL;
         }
-        jsonFrame["transitionOut"] = GetTransitionType(jsonFrame["transitionOut"]);
         
         if(jsonFrame.isMember("animToPlay")) {
           if(!jsonFrame["animToPlay"].isString()) {

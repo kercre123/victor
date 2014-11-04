@@ -102,6 +102,9 @@ namespace Anki {
         s32 numNodsDesired_  = 0;
         s32 numNodsComplete_ = 0;
         bool isNodding_ = false;
+        f32 nodEaseInFraction_  = 0.5f;
+        f32 nodEaseOutFraction_ = 0.5f;
+        f32 nodHalfPeriod_sec_  = 0.5f;
 
         
         // Calibration parameters
@@ -275,6 +278,12 @@ namespace Anki {
       {
         maxSpeedRad_ = max_speed_rad_per_sec;
         accelRad_ = accel_rad_per_sec2;
+      }
+      
+      void SetLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2)
+      {
+        maxSpeedRad_ = Height2Rad(max_speed_mm_per_sec);
+        accelRad_    = Height2Rad(accel_mm_per_sec2);
       }
       
       void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
@@ -474,7 +483,7 @@ namespace Anki {
       }
 
     // TODO: There is common code with the other SetDesiredHeight() that can be pulled out into a shared function.
-      void SetDesiredHeight(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+      static void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
       {
         
         // Do range check on height
@@ -564,6 +573,11 @@ namespace Anki {
       }
 
       
+      void SetDesiredHeight(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+      {
+        isNodding_ = false;
+        SetDesiredHeight_internal(height_mm, acc_start_frac, acc_end_frac, duration_seconds);
+      }
       
       
       f32 GetDesiredHeight()
@@ -702,9 +716,9 @@ namespace Anki {
           // Note that this is inside else(not inPosition), so we must be
           // inPosition if we get here.
           if (GetLastCommandedHeightMM() == nodHighHeight_) {
-            SetDesiredHeight_internal(nodLowHeight_);
+            SetDesiredHeight_internal(nodLowHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
           } else if (GetLastCommandedHeightMM() == nodLowHeight_) {
-            SetDesiredHeight_internal(nodHighHeight_);
+            SetDesiredHeight_internal(nodHighHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
             ++numNodsComplete_;
             if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
               StopNodding();
@@ -739,7 +753,8 @@ namespace Anki {
       }
       
       void StartNodding(const f32 lowHeight, const f32 highHeight,
-                        const u16 period_ms, const s32 numLoops)
+                        const u16 period_ms, const s32 numLoops,
+                        const f32 easeInFraction, const f32 easeOutFraction)
       {
         AnkiConditionalWarnAndReturn(enable_, "LiftController.StartNodding.Disabled",
                                      "StartNodding() command ignored: LiftController is disabled.\n");
@@ -747,17 +762,14 @@ namespace Anki {
         //preNodHeight_  = GetHeightMM();
         nodLowHeight_  = lowHeight;
         nodHighHeight_ = highHeight;
-        
-        const f32 dAngle = Height2Rad(highHeight) - Height2Rad(lowHeight);
-        const f32 speed_rad_per_sec = (2.f*dAngle*1000.f) / static_cast<f32>(period_ms);
-        
-        SetSpeedAndAccel(speed_rad_per_sec, 1000.f); // TODO: need sane acceleration value
-        
         numNodsDesired_  = numLoops;
         numNodsComplete_ = 0;
         isNodding_ = true;
+        nodEaseInFraction_ = easeInFraction;
+        nodEaseOutFraction_ = easeOutFraction;
+        nodHalfPeriod_sec_ = static_cast<f32>(period_ms) * 0.5f * 0.001f;
         
-        SetDesiredHeight_internal(nodLowHeight_);
+        SetDesiredHeight_internal(nodLowHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
         
       } // StartNodding()
       

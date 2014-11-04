@@ -519,8 +519,18 @@ namespace Anki {
         PRINT("Adding keyframe with type %d to animation %d\n", kf.type, msg.animationID);
         
         kf.relTime_ms    = msg.relTime_ms;
-        kf.transitionIn  = static_cast<KeyFrameTransitionType>(msg.transitionIn);
-        kf.transitionOut = static_cast<KeyFrameTransitionType>(msg.transitionOut);
+        
+        AnkiConditionalWarn(msg.transitionIn >= 0 && msg.transitionIn <= 100,
+                            "Messages.AddKeyFrameHelper.InvalidTransitionPercentage",
+                            "TransitionIn should be a percentage between 0 and 100.\n");
+        
+        kf.transitionIn  = CLIP(0, 100, msg.transitionIn);
+        
+        AnkiConditionalWarn(msg.transitionOut >= 0 && msg.transitionOut <= 100,
+                            "Messages.AddKeyFrameHelper.InvalidTransitionPercentage",
+                            "TransitionOut should be a percentage between 0 and 100.\n");
+        
+        kf.transitionOut = CLIP(0, 100, msg.transitionOut);
         
         AnimationController::AddKeyFrameToCannedAnimation(kf, static_cast<AnimationID_t>(msg.animationID));
       } // SetCommonKeyFrameMembers()

@@ -37,6 +37,10 @@ namespace Anki {
       void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
       void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
       
+      // Specify max velocity/acceleration in terms of linear movement instead
+      // of angular adjustment
+      void SetLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2);
+      
       f32 GetAngularVelocity();
       
       // TODO: Get rid of SetAngularVelocty?
@@ -61,7 +65,8 @@ namespace Anki {
       // SetDesiredHeight() or StopNodding() are called or the number of loops (up/down cycles)
       // is completed. If StopNodding() is called, lift will be returned to the original
       // angle it started at. Use numLoops <= 0 to nod "forever".
-      void StartNodding(const f32 lowHeight, const f32 highHeight, const u16 period_ms, const s32 numLoops);
+      void StartNodding(const f32 lowHeight, const f32 highHeight, const u16 period_ms, const s32 numLoops,
+                        const f32 easeInFraction, const f32 easeOutFraction);
       void StopNodding();
       bool IsNodding();
 

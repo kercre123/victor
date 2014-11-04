@@ -69,6 +69,9 @@ namespace HeadController {
       f32 nodHighAngle_ = 0.f;
       s32 numNodsDesired_ = 0;
       s32 numNodsComplete_ = 0;
+      f32 nodHalfPeriod_sec_ = 0.5f;
+      f32 nodEaseOutFraction_ = 0.5f;
+      f32 nodEaseInFraction_  = 0.5f;
       
       // Calibration parameters
       typedef enum {
@@ -321,7 +324,7 @@ namespace HeadController {
     }
 
     // TODO: There is common code with the other SetDesiredAngle() that can be pulled out into a shared function.
-    void SetDesiredAngle(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+    static void SetDesiredAngle_internal(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
     {
       // Do range check on angle
       angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
@@ -372,7 +375,18 @@ namespace HeadController {
 #endif
 
     }
+  
+    void SetDesiredAngle(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+    {
+      // Stop nodding if we were
+      if(IsNodding()) {
+        isNodding_ = false;
+      }
     
+      SetDesiredAngle_internal(angle, acc_start_frac, acc_end_frac, duration_seconds);
+    }
+  
+  
     bool IsInPosition(void) {
       return inPosition_;
     }
@@ -419,9 +433,9 @@ namespace HeadController {
            || ABS(currentAngle_ - desiredAngle_) < ANGLE_TOLERANCE) {
           power_ = 0.f;
           inPosition_ = true;
-#if(DEBUG_HEAD_CONTROLLER)
+#         if(DEBUG_HEAD_CONTROLLER)
           PRINT(" HEAD ANGLE REACHED (%f rad)\n", GetAngleRad() );
-#endif
+#         endif
         }
         
         
@@ -436,9 +450,9 @@ namespace HeadController {
             
             if (desiredAngle_ == currDesiredAngle_) {
               inPosition_ = true;
-#if(DEBUG_HEAD_CONTROLLER)
+#             if(DEBUG_HEAD_CONTROLLER)
               PRINT(" HEAD ANGLE REACHED (%f rad)\n", currentAngle_.ToFloat());
-#endif
+#             endif
             }
           }
         } else {
@@ -449,7 +463,7 @@ namespace HeadController {
         }
          */
         
-#if(DEBUG_HEAD_CONTROLLER)
+#       if(DEBUG_HEAD_CONTROLLER)
         PERIODIC_PRINT(100, "HEAD: currA %f, curDesA %f, desA %f, err %f, errSum %f, pwr %f, spd %f\n",
                        currentAngle_.ToFloat(),
                        currDesiredAngle_,
@@ -459,7 +473,7 @@ namespace HeadController {
                        power_,
                        radSpeed_);
         PERIODIC_PRINT(100, "  POWER terms: %f  %f\n", (Kp_ * angleError_), (Ki_ * angleErrorSum_))
-#endif
+#       endif
         
         power_ = CLIP(power_, -1.0, 1.0);
         
@@ -474,15 +488,15 @@ namespace HeadController {
                && NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_HEAD)))) {
                 
           if (!limitingDetected_) {
-#if(DEBUG_LIFT_CONTROLLER)
+#           if(DEBUG_LIFT_CONTROLLER)
             PRINT("START RECAL HEAD\n");
-#endif
+#           endif
             lastHeadMovedTime_us = HAL::GetMicroCounter();
             limitingDetected_ = true;
           } else if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
-#if(DEBUG_LIFT_CONTROLLER)
+#           if(DEBUG_LIFT_CONTROLLER)
             PRINT("END RECAL HEAD\n");
-#endif
+#           endif
             ResetLowAnglePosition();
             inPosition_ = true;
           }
@@ -496,9 +510,9 @@ namespace HeadController {
       else if(isNodding_)
       { // inPosition and Nodding
         if (GetLastCommandedAngle() == nodHighAngle_) {
-          SetDesiredAngle_internal(nodLowAngle_);
+          SetDesiredAngle_internal(nodLowAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
         } else if (GetLastCommandedAngle() == nodLowAngle_) {
-          SetDesiredAngle_internal(nodHighAngle_);
+          SetDesiredAngle_internal(nodHighAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
           ++numNodsComplete_;
           if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
             StopNodding();
@@ -517,7 +531,8 @@ namespace HeadController {
     }
     
     void StartNodding(const f32 lowAngle, const f32 highAngle,
-                      const u16 period_ms, const s32 numLoops)
+                      const u16 period_ms, const s32 numLoops,
+                      const f32 easeInFraction, const f32 easeOutFraction)
     {
       //AnkiConditionalErrorAndReturnValue(keyFrame.type != KeyFrame::HEAD_NOD, RESULT_FAIL, "HeadNodStart.WrongKeyFrameType", "\n");
 
@@ -528,17 +543,14 @@ namespace HeadController {
       nodLowAngle_  = lowAngle;
       nodHighAngle_ = highAngle;
       
-      const f32 dAngle = highAngle - lowAngle;
-      const f32 speed_rad_per_sec = (2.f * dAngle * 1000.f) / static_cast<f32>(period_ms);
-      
-      //SetAngularVelocity(speed);
-      SetSpeedAndAccel(speed_rad_per_sec, 1000.f); // TODO: need sane acceleration value
-      
       numNodsDesired_  = numLoops;
       numNodsComplete_ = 0;
       isNodding_ = true;
+      nodEaseOutFraction_ = easeOutFraction;
+      nodEaseInFraction_  = easeInFraction;
       
-      SetDesiredAngle_internal(nodLowAngle_);
+      nodHalfPeriod_sec_ = static_cast<f32>(period_ms) * .5f * 0.001f;
+      SetDesiredAngle_internal(nodLowAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
       
     } // StartNodding()
     

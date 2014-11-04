@@ -106,17 +106,7 @@ namespace Anki {
       ,ANIM_NUM_ANIMATIONS
     } AnimationID_t;*/
     typedef s32 AnimationID_t;
-    
-    
-    // List of KeyFrame Transition Types
-    enum KeyFrameTransitionType
-    {
-      KF_TRANSITION_LINEAR = 0
-      ,KF_TRANSITION_EASE_IN
-      ,KF_TRANSITION_EASE_OUT
-      ,KF_TRANSITION_INSTANT    // Only valid / physically-possible for LEDs!
-    };
-   
+      
     // Prox sensors
     typedef enum {
       PROX_LEFT
