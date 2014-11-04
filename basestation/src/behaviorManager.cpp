@@ -162,11 +162,17 @@ namespace Anki {
     void BehaviorManager::StartMode(Mode mode)
     {
       Reset();
+      Mode fromMode = _mode;
       _mode = mode;
       switch(mode) {
         case None:
           CoreTechPrint("Starting NONE behavior\n");
 
+          if(fromMode == CREEP) {
+            // If switching out of CREEP mode, go back to sleep.
+            _robot->PlayAnimation("ANIM_SLEEPING");
+          }
+          
           _robot->AbortAll();
           
           break;
