@@ -7,6 +7,8 @@
 #include "opencv2/imgproc/imgproc.hpp"
 
 #include <vector>
+#include <string.h>
+#include <cstring>
 
 #include "mex.h"
 #include "anki/common/matlab/mexWrappers.h"
@@ -16,6 +18,8 @@
 
 cv::CascadeClassifier *face_cascade = NULL;
 cv::CascadeClassifier *eyes_cascade = NULL;
+std::string faceCascadeFilename = "";
+std::string eyeCascadeFilename = "";
 
 void closeHelper(void) {
   if(face_cascade != NULL) {
@@ -47,27 +51,61 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   mexAtExit(closeHelper);
 
-  if(face_cascade == NULL) {
+  if(! (nlhs == 2 && nrhs >= 1 && nrhs <= 3))
+  {
+    mexErrMsgTxt("Usage: [faces,eyes] = mexFaceDetect(im, <faceCascadeFilename>, <eyeCascadeFilename>);\n");
+    return;
+  }
+  
+  std::string newFaceCascadeFilename = QUOTE(OPENCV_ROOT_PATH) "/data/lbpcascades/lbpcascade_frontalface.xml"; // "/data/haarcascades/haarcascade_frontalface_alt.xml"))
+  std::string newEyeCascadeFilename = QUOTE(OPENCV_ROOT_PATH) "/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml";
+  
+  if(nrhs >= 2)
+  {
+    newFaceCascadeFilename = mxArrayToString(prhs[1]);
+  }
+  
+  if(nrhs >= 3)
+  {
+    newEyeCascadeFilename = mxArrayToString(prhs[2]);
+  }
+  
+  if(strcmp(newFaceCascadeFilename.data(), faceCascadeFilename.data()) != 0)
+  {
+    if(face_cascade) {
+      delete(face_cascade);
+      face_cascade = NULL;
+    }
+    
+    faceCascadeFilename = newFaceCascadeFilename;
+    
     face_cascade = new cv::CascadeClassifier();
 
-    if(! face_cascade->load(QUOTE(OPENCV_ROOT_PATH)
-      "/data/lbpcascades/lbpcascade_frontalface.xml"))
-      //                              "/data/haarcascades/haarcascade_frontalface_alt.xml"))
+    if(! face_cascade->load(faceCascadeFilename.data()))
     {
       mexErrMsgTxt("Could not load face cascade XML data. Check path.");
     }
-    mexPrintf("Using LBP cascade.\n");
   }
 
-  if(eyes_cascade == NULL) {
+  if(strcmp(newEyeCascadeFilename.data(), eyeCascadeFilename.data()) != 0)
+  {
+    if(eyes_cascade) {
+      delete(eyes_cascade);
+      eyes_cascade = NULL;
+    }
+    
+    eyeCascadeFilename = newEyeCascadeFilename;
+    
     eyes_cascade = new cv::CascadeClassifier();
-    if(! eyes_cascade->load(QUOTE(OPENCV_ROOT_PATH)
-      "/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml"))
+    if(! eyes_cascade->load(eyeCascadeFilename.data()))
     {
       mexErrMsgTxt("Could not load eyes cascade XML data. Check path.");
+    } else
+    {
+      mexPrintf("Loaded %s\n", eyeCascadeFilename.data());
     }
   }
-
+  
   cv::Mat grayscaleFrame;
   mxArray2cvMat(prhs[0], grayscaleFrame);
 
@@ -84,8 +122,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   std::vector<cv::Rect> faces;
 
   //find faces and store them in the vector array
-  face_cascade->detectMultiScale(grayscaleFrame, faces, 1.1, 3,
-    CV_HAAR_FIND_BIGGEST_OBJECT|CV_HAAR_SCALE_IMAGE, cv::Size(30,30));
+  //face_cascade->detectMultiScale(grayscaleFrame, faces, 1.1, 3, CV_HAAR_FIND_BIGGEST_OBJECT|CV_HAAR_SCALE_IMAGE, cv::Size(30,30));
+  face_cascade->detectMultiScale(grayscaleFrame, faces, 1.05, 1, CV_HAAR_SCALE_IMAGE, cv::Size(30,30));
 
   //mexPrintf("Found %d faces.\n", faces.size());
 
