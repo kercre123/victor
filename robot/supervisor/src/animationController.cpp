@@ -29,11 +29,11 @@ namespace AnimationController {
     //static const AnimationID_t ANIM_IDLE = MAX_KNOWN_ANIMATIONS;
     
     AnimationID_t _currAnimID   = ANIM_IDLE;
-    //AnimationID_t _queuedAnimID = ANIM_IDLE;
+    AnimationID_t _queuedAnimID = ANIM_IDLE;
     OFFCHIP Animation     _cannedAnimations[MAX_CANNED_ANIMATIONS];
     
     s32 _currDesiredLoops   = 0;
-    //s32 _queuedDesiredLoops = 0;
+    s32 _queuedDesiredLoops = 0;
     s32 _numLoopsComplete   = 0;
     u32 _waitUntilTime_us   = 0;
     
@@ -351,14 +351,24 @@ namespace AnimationController {
         if(_currDesiredLoops == 0 ||  _numLoopsComplete < _currDesiredLoops) {
           // Looping: play again
           _cannedAnimations[_currAnimID].Init();
-        } else {
-          _currAnimID = ANIM_IDLE;
+        } else if(_queuedAnimID != ANIM_IDLE) {
+          Play(_queuedAnimID, _queuedDesiredLoops);
+          _queuedAnimID = ANIM_IDLE;
         }
       }
     } // if(IsPlaying())
     
   } // Update()
 
+  void TransitionAndPlay(const AnimationID_t transitionAnim,
+                         const AnimationID_t stateAnim)
+  {
+    _queuedAnimID = stateAnim;
+    _queuedDesiredLoops = 0;
+    
+    Play(transitionAnim, 1);
+  }
+  
   
   void Play(const AnimationID_t anim, const u32 numLoops)
   {
@@ -376,7 +386,7 @@ namespace AnimationController {
       return;
     }
     
-    // If an animation is currently playing, stop it and queue this one.
+    // If an animation is currently playing, stop it
     if (IsPlaying()) {
       Stop();
     }

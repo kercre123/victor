@@ -737,6 +737,12 @@ namespace Anki {
       return SendPlayAnimation(animName, numLoops);
     }
     
+    Result Robot::TransitionToStateAnimation(const char *transitionAnimName,
+                                             const char *stateAnimName)
+    {
+      return SendTransitionToStateAnimation(transitionAnimName, stateAnimName);
+    }
+    
     Result Robot::StopAnimation()
     {
       return SendAbortAnimation();
@@ -1701,6 +1707,18 @@ namespace Anki {
       m.animationID = _cannedAnimations.GetID(name);
       if(m.animationID >= 0) {
         m.numLoops = numLoops;
+        return _msgHandler->SendMessage(_ID, m);
+      }
+      return RESULT_FAIL;
+    }
+    
+    Result Robot::SendTransitionToStateAnimation(const char *transitionAnimName,
+                                                 const char *stateAnimName)
+    {
+      MessageTransitionToStateAnimation m;
+      m.transitionAnimID = _cannedAnimations.GetID(transitionAnimName);
+      m.stateAnimID      = _cannedAnimations.GetID(stateAnimName);
+      if(m.transitionAnimID >= 0 && m.stateAnimID >= 0) {
         return _msgHandler->SendMessage(_ID, m);
       }
       return RESULT_FAIL;

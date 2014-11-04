@@ -36,6 +36,10 @@ namespace Anki {
       // If numLoops == 0, then repeats until Stop() is called.
       void Play(const AnimationID_t anim, const u32 numLoops);
       
+      // Plays tranisition animation once, then starts looping the state animation
+      void TransitionAndPlay(const AnimationID_t transitionAnim,
+                             const AnimationID_t stateAnim);
+      
       void Stop();
       
       bool IsPlaying();

@@ -174,36 +174,6 @@ namespace Anki {
       bool         _isTurning;
       
       /////// CREEP vars ///////
-      class TransitionEventManager
-      {
-      public:
-        
-        TransitionEventManager();
-        
-        // Use NUM_STATES to represent "ANY" state
-        void AddTransition(BehaviorState fromState,
-                           BehaviorState toState,
-                           std::function<void()> eventFcn,
-                           double duration);
-        
-        void Transition(BehaviorState fromState,
-                        BehaviorState toState);
-        
-        bool IsTransitioning();
-        
-        void Clear() { _transitionEventLUT.clear(); }
-        
-      protected:
-        
-        bool _isTransitioning;
-        double _waitUntilTime;
-        std::map<BehaviorState, std::map<BehaviorState, std::pair<std::function<void()>, double> > > _transitionEventLUT;
-        
-      }; // TransitionEventManager
-      
-      bool _stateAnimStarted;
-      TransitionEventManager _transitionManager;
-      
       std::map<BehaviorState, std::string> _stateAnimations;
       std::map<BehaviorState, std::map<BehaviorState, std::string> > _transitionAnimations;
       

@@ -499,6 +499,10 @@ namespace Anki {
         AnimationController::Play((AnimationID_t)msg.animationID, msg.numLoops);
       }
       
+      void ProcessTransitionToStateAnimationMessage(const TransitionToStateAnimation& msg) {
+        AnimationController::TransitionAndPlay(msg.transitionAnimID, msg.stateAnimID);
+      }
+      
       void ProcessAbortAnimationMessage(const AbortAnimation& msg)
       {
         AnimationController::Stop();

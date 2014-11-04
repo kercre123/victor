@@ -21,7 +21,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define DEBUG_SOUND_MANAGER 1
+#define DEBUG_SOUND_MANAGER 0
 
 namespace Anki {
   namespace Cozmo {

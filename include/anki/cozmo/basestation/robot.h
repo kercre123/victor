@@ -280,6 +280,10 @@ namespace Anki {
       // If numLoops == 0, animation repeats forever.
       Result PlayAnimation(const char* animName, const u32 numLoops = 1);
       
+      // Plays transition animation once, then plays state animatin in a loop
+      Result TransitionToStateAnimation(const char *transitionAnimName,
+                                        const char *stateAnimName);
+      
       Result StopAnimation();
       
       // (Re-)Read the animation JSON file and send it to the physical robot
@@ -556,6 +560,9 @@ namespace Anki {
       // Play animation
       // If numLoops == 0, animation repeats forever.
       Result SendPlayAnimation(const char* animName, const u32 numLoops = 0);
+      
+      Result SendTransitionToStateAnimation(const char *transitionAnimName,
+                                            const char *stateAnimName);
       
       Result SendDockWithObject(const Vision::KnownMarker* marker,
                                 const Vision::KnownMarker* marker2,

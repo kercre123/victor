@@ -246,6 +246,12 @@ ADD_MESSAGE_MEMBER(u32, numLoops)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 END_MESSAGE_DEFINITION(PlayAnimation)
 
+// TransitionToStateAnimation
+START_MESSAGE_DEFINITION(TransitionToStateAnimation, 1)
+ADD_MESSAGE_MEMBER(u8, transitionAnimID)
+ADD_MESSAGE_MEMBER(u8, stateAnimID)
+END_MESSAGE_DEFINITION(TransitionToStateAnimation)
+
 // AbortAnimation
 START_MESSAGE_DEFINITION(AbortAnimation, 1)
 END_MESSAGE_DEFINITION(AbortAnimation)

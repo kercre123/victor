@@ -858,15 +858,7 @@
       "shape"           : "OPEN",
       "color"           : [0, 200, 0],
       "whichEye"        : "BOTH"
-    },
-    {
-      "Name" : "MessageAddAnimKeyFrame_TriggerAnimation", 
-      "relTime_ms"      : 1100,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0, 
-      "animToPlay"      : "ANIM_EXCITABLE_CHASE",
-      "numLoops"        : 0
-    } 
+    }
   ], 
   
   
@@ -881,12 +873,10 @@
       "volume"          : 100
     },
     {
-      "Name" : "MessageAddAnimKeyFrame_TriggerAnimation", 
+      "Name" : "MessageAddAnimKeyFrame_WaitForSound", 
       "relTime_ms"      : 1000,
       "transitionIn"    : 0,
-      "transitionOut"   : 0, 
-      "animToPlay"      : "ANIM_SCAN",
-      "numLoops"        : 0
+      "transitionOut"   : 0
     }  
   ],
   
@@ -933,12 +923,10 @@
       "angle_deg"       : 25
     },
     {
-      "Name" : "MessageAddAnimKeyFrame_TriggerAnimation", 
+      "Name" : "MessageAddAnimKeyFrame_WaitForSound", 
       "relTime_ms"      : 1000,
       "transitionIn"    : 0,
-      "transitionOut"   : 0, 
-      "animToPlay"      : "ANIM_SCARED_FLEE",
-      "numLoops"        : 0
+      "transitionOut"   : 0
     } 
   ]
       
