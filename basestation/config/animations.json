@@ -623,8 +623,8 @@
       "relTime_ms"   : 0, 
       "transitionIn" : 20,
       "transitionOut": 20, 
-      "lowAngle_deg" : -10, 
-      "highAngle_deg":  10,
+      "lowAngle_deg" : -15, 
+      "highAngle_deg":   5,
       "period_ms"    : 1200
     }, 
     { 
@@ -632,7 +632,7 @@
       "relTime_ms"     : 2400,
       "transitionIn"   : 0,
       "transitionOut"  : 0, 
-      "finalAngle_deg" : -10
+      "finalAngle_deg" : -15
     },
     {
       "Name" : "MessageAddAnimKeyFrame_StartLiftNod",
@@ -800,8 +800,8 @@
       "relTime_ms"   : 0, 
       "transitionIn" : 50,
       "transitionOut": 50, 
-      "lowAngle_deg" : -5, 
-      "highAngle_deg":  5,
+      "lowAngle_deg" : -10, 
+      "highAngle_deg":   0,
       "period_ms"    : 380
     }, 
     { 
@@ -809,7 +809,7 @@
       "relTime_ms"     : 2100,
       "transitionIn"   : 0,
       "transitionOut"  : 0, 
-      "finalAngle_deg" : -5
+      "finalAngle_deg" : -10
     },
     {
       "Name" : "MessageAddAnimKeyFrame_StartLiftNod",
