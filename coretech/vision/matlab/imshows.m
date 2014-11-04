@@ -14,12 +14,16 @@ function imshows(varargin)
     
     maximizeWindows = false;
     collage = false;
+    collageTitles = false;
     for i = 1:length(varargin)
         if ischar(varargin{i})
             if strcmpi(varargin{i}, 'maximize') % Maximize all figure windows
                 maximizeWindows = true;
             elseif strcmpi(varargin{i}, 'collage') % Display images within a cell array as one image
                 collage = true;
+            elseif strcmpi(varargin{i}, 'collageTitles') % Display numbers for collage
+                collage = true;
+                collageTitles = true;
             end
         else
             isImage = (ndims(varargin{i}) == 2 && min(size(varargin{i}) == [1,1]) == 1) || (ndims(varargin{i}) == 3 && min(size(varargin{i}) == [1,1,1]) == 1);
@@ -82,6 +86,9 @@ function imshows(varargin)
                     bigImWidth = bigImWidth * scaleMultiplier;
                 end
                 
+                bigImHeight = ceil(bigImHeight);
+                bigImWidth = ceil(bigImWidth);
+                
                 bigIm = zeros([bigImHeight, bigImWidth, 3], 'uint8');
                 
                 cy = 1;
@@ -115,7 +122,33 @@ function imshows(varargin)
                 hold off;
                 imshow(bigIm);
                 hold on;
-                                
+                
+                cy = 1;
+                ci = 1;
+                for y = 1:numImagesY
+                    cx = 1;
+                    for x = 1:numImagesX
+                        smallImage = twoD{y,x};
+                        
+                        if isempty(smallImage)
+                            break;
+                        end
+                                                
+                        smallImageWidth = size(smallImage, 2);
+                        
+                        if scale ~= 1
+                            smallImageWidth = floor(size(smallImage,2) * scale);
+                        end
+                        
+                        text(cx + smallImageWidth/2 - 10, cy + 10, sprintf('%d',ci), 'Color', [0.5,0.4,0.3], 'FontSize', 14);
+                        
+                        cx = cx + smallImageWidth;
+                        ci = ci + 1;
+                    end % for x = 1:numImagesX
+                    
+                    cy = cy + ceil(max(imageHeights(y,:))*scale);
+                end % for y = 1:numImagesY
+                
                 if maximizeWindows
                     set(figureHandle, 'units','normalized','outerposition',[0 0 1 1]);
                 end
