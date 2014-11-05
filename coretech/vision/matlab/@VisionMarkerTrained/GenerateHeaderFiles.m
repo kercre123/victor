@@ -209,13 +209,15 @@ arrays = cell(1, numTrees);
 maxDepths = cell(1, numTrees);
 numNodes = cell(1,numTrees);
 treeNames = cell(1, numTrees);
+leafLabels = cell(1, numTrees);
+% leafNodeArrayNames = cell(1, numTrees);
 for iTree = 1:numTrees
-  [arrays{iTree},maxDepths{iTree}] = CreateTreeArray(probeTree{iTree}, VisionMarkerTrained.ProbeRegion, VisionMarkerTrained.ProbeParameters.GridSize);
+  [arrays{iTree},maxDepths{iTree},leafLabels{iTree}] = CreateTreeArray(probeTree{iTree}, VisionMarkerTrained.ProbeRegion, VisionMarkerTrained.ProbeParameters.GridSize);
   numNodes{iTree} = length(arrays{iTree});
   
   treeNames{iTree} = sprintf('  MultiClassNodes_%d,\n', iTree);
   
-  arrayString = GetArrayString(arrays{iTree}, numFractionalBits, labelNames, []);
+  arrayString = GetArrayString(arrays{iTree}, numFractionalBits, labelNames, leafLabels{iTree}, false);
   
   decisionTreeString = [decisionTreeString sprintf([ ...
     'const u32 NUM_NODES_MULTICLASS_%d = %d;\n' ...
@@ -227,6 +229,15 @@ for iTree = 1:numTrees
     iTree, maxDepths{iTree}, ...
     iTree, iTree, ...
     [arrayString{:}])];
+  
+%   leafNodeArrayNames{iTree} = sprintf('  LeafLabels_%d,\n', iTree);
+%   
+%   decisionTreeString = [decisionTreeString sprintf([ ...
+%       'const u32 NUM_LEAF_LABELS_%d = %d;\n' ...
+%       'const u16 LeafLabels_%d[NUM_LEAF_LABELS_%d] = {\n', ...
+%       '%s' ...
+%       '};\n\n'], ...
+%       iTree, length(leafLabels{iTree}), iTree, iTree, sprintf('%d,', leafLabels{iTree}-1))];
 end
 
 decisionTreeString = [decisionTreeString sprintf([ ...
@@ -240,15 +251,24 @@ decisionTreeString = [decisionTreeString sprintf([ ...
   sprintf('%d,', numNodes{:}), ...
   sprintf('%d,', maxDepths{:}), ...
   [treeNames{:}])];
+
+% numLeafLabels = cellfun(@length, leafLabels, 'UniformOutput', false);
+% decisionTreeString = [decisionTreeString sprintf([...
+%   'const u32 NUM_LEAF_LABELS[NUM_TREES] = {%s};\n' ...
+%   'const u16* LeafLabels[NUM_TREES] = {\n' ...
+%   '%s' ...
+%   '};\n\n'], ...
+%   sprintf('%d,', numLeafLabels{:}), ...
+%   [leafNodeArrayNames{:}])];
       
 
 %% Verification trees
-if false && ~isobject(probeTree)
-  if all(isfield(probeTree, {'verifyTreeRed', 'verifyTreeBlack'}))
+if length(probeTree) == 1 && ~isobject(probeTree{1})
+  if all(isfield(probeTree{1}, {'verifyTreeRed', 'verifyTreeBlack'}))
     % "Red" Tree
-    [array,maxDepth,leafLabels] = CreateTreeArray(probeTree.verifyTreeRed);
+    [array,maxDepth,leafLabels] = CreateTreeArray(probeTree{1}.verifyTreeRed);
     
-    arrayString = GetArrayString(array, numFractionalBits, labelNames, leafLabels);
+    arrayString = GetArrayString(array, numFractionalBits, labelNames, leafLabels, true);
     
     decisionTreeString = [decisionTreeString sprintf([ ...
       'const u32 NUM_NODES_VERIFY_RED = %d;\n' ...
@@ -266,9 +286,9 @@ if false && ~isobject(probeTree)
       length(leafLabels), sprintf('%d,', leafLabels-1))];
     
     % "Black" Tree
-    [array,maxDepth,leafLabels] = CreateTreeArray(probeTree.verifyTreeBlack);
+    [array,maxDepth,leafLabels] = CreateTreeArray(probeTree{1}.verifyTreeBlack);
     
-    arrayString = GetArrayString(array, numFractionalBits, labelNames, leafLabels);
+    arrayString = GetArrayString(array, numFractionalBits, labelNames, leafLabels, true);
     
     decisionTreeString = [decisionTreeString sprintf([ ...
       'const u32 NUM_NODES_VERIFY_BLACK = %d;\n' ...
@@ -435,7 +455,7 @@ end
 
 end % FUNCTION FixedPointHelper()
 
-function arrayString = GetArrayString(array, numFractionalBits, labelNames, leafLabels)
+function arrayString = GetArrayString(array, numFractionalBits, labelNames, leafLabels, allowMultiLabelLeaves)
 
 arrayString = cell(1,length(array));
 for i = 1:length(array)
@@ -465,6 +485,8 @@ for i = 1:length(array)
             
             lineComment = sprintf('// Leaf node, label = %s', labelNames{array(i).label});
         else
+            
+          if allowMultiLabelLeaves
             % X and Y are storing the start and end indices of the labels
             % for this leaf. No fixed point conversion.
             assert(array(i).label < 0, ...
@@ -479,6 +501,14 @@ for i = 1:length(array)
             
             label = 'MAKE_LEAF(0)';
             lineComment = '// Multi-label leaf node';
+          else
+            % Use mode of the leaf labels as the label
+            x = 0;
+            y = 0;
+            labelID = mode(leafLabels);
+            label = sprintf('MAKE_LEAF(%s)', labelNames{labelID});
+            lineComment = sprintf('// Leaf node (originally multi-label), label = %s', labelNames{labelID});
+          end
         end
         
         
