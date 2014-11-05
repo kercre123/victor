@@ -247,19 +247,32 @@ end
 % Add negative examples
 fnamesNeg = {'ALLWHITE'; 'ALLBLACK'};
 if ~isempty(negativeImageDir)
-    fprintf('Reading negative image data...');
-    fnamesNeg = [fnamesNeg; getfnames(negativeImageDir, 'images', 'useFullPath', true)];
-    subDirs = getdirnames(negativeImageDir, 'chunk*');
+  fprintf('Reading negative image data...');
+  if ~iscell(negativeImageDir)
+    negativeImageDir = {negativeImageDir};
+  end
+  
+  numNegDirs = length(negativeImageDir);
+  fnamesNeg = [cell(numNegDirs,1); fnamesNeg];
+  for iNegDir = 1:numNegDirs
+    fnamesNeg{iNegDir} = getfnames(negativeImageDir{iNegDir}, 'images', 'useFullPath', true);
+    subDirs = getdirnames(negativeImageDir{iNegDir}, 'chunk*');
     numSubDirs = length(subDirs);
     if numSubDirs > 0
-        fnamesSubDirs = cell(numSubDirs,1);
-        for iSubDir = 1:length(subDirs)
-            fnamesSubDirs{iSubDir} = getfnames(fullfile(negativeImageDir, subDirs{iSubDir}), 'images', 'useFullPath', true);
-        end
-        fnamesNeg = [fnamesNeg; vertcat(fnamesSubDirs{:})];
-        clear fnamesSubDirs
+      
+      fnamesSubDirs = cell(numSubDirs,1);
+      for iSubDir = 1:length(subDirs)
+        fnamesSubDirs{iSubDir} = getfnames(fullfile(negativeImageDir, subDirs{iSubDir}), 'images', 'useFullPath', true);
+        
+      end
+      fnamesNeg{iNegDir} = [fnamesNeg{iNegDir}; vertcat(fnamesSubDirs{:})];
+      
+      clear fnamesSubDirs
     end
-    fprintf('Done. (Found %d negative examples.)\n', length(fnamesNeg));
+    
+    fnamesNeg = vertcat(fnamesNeg{:});
+  end
+  fprintf('Done. (Found %d negative examples.)\n', length(fnamesNeg));
 end
 
 numNeg = min(length(fnamesNeg), maxNegativeExamples);
