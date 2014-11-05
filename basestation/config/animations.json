@@ -174,6 +174,111 @@
   ], 
   
   
+  "ANIM_POWER_DOWN" : [
+    {
+      "Name" : "MessageAddAnimKeyFrame_PlaySound", 
+      "relTime_ms"      : 0,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "soundID"         : "POWER_DOWN", 
+      "numLoops"        : 1, 
+      "volume"          : 150
+    },
+    { 
+      "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
+      "relTime_ms"    : 1200, 
+      "transitionIn"  : 50,
+      "transitionOut" : 50, 
+      "angle_deg"     : -30, 
+      "variability_deg" : 0
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetLiftHeight",
+      "relTime_ms"    : 800, 
+      "transitionIn"  : 50,
+      "transitionOut" : 50, 
+      "height_mm"     : 28
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 0,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "color"           : [0, 255, 255],
+      "shape"           : "OPEN",
+      "whichEye"        : "BOTH"
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 125,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "color"           : [0, 200, 200],
+      "shape"           : "OPEN",
+      "whichEye"        : "BOTH"
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 250,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "color"           : [0, 150, 150],
+      "shape"           : "OPEN",
+      "whichEye"        : "BOTH"
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 375,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "color"           : [0, 100, 100],
+      "shape"           : "OPEN",
+      "whichEye"        : "BOTH"
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 500,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "color"           : [0, 50, 50],
+      "shape"           : "OPEN",
+      "whichEye"        : "BOTH"
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 700,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "color"           : [0, 50, 50],
+      "shape"           : "OFF_PUPIL_UP",
+      "whichEye"        : "BOTH"
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 800,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "color"           : [0, 50, 50],
+      "shape"           : "ON_PUPIL_DOWN",
+      "whichEye"        : "BOTH"
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 900,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "color"           : [0, 50, 50],
+      "shape"           : "CLOSED",
+      "whichEye"        : "BOTH"
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_WaitForSound", 
+      "relTime_ms"      : 1500,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0
+    }
+  ],
+  
   "ANIM_HELPME_FRUSTRATED" : [
     { 
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
@@ -322,7 +427,7 @@
       "relTime_ms"      : 2100,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "soundID"         : "WAH_HELPME", 
+      "soundID"         : "HELP_ME", 
       "numLoops"        : 1, 
       "volume"          : 100
     },
@@ -736,7 +841,7 @@
       "relTime_ms"      : 0,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "soundID"         : "HELPME", 
+      "soundID"         : "WHATS_NEXT", 
       "numLoops"        : 1, 
       "volume"          : 150
     },

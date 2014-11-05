@@ -44,11 +44,12 @@ namespace Anki {
       ,SOUND_OK_GOT_IT
       ,SOUND_OK_DONE
       ,SOUND_POWER_ON
+      ,SOUND_POWER_DOWN
       ,SOUND_PHEW
       ,SOUND_OOH
       ,SOUND_SCREAM
-      ,SOUND_HELPME
-      ,SOUND_WAH_HELPME
+      ,SOUND_WHATS_NEXT
+      ,SOUND_HELP_ME
       ,SOUND_SCAN
       ,SOUND_HAPPY_CHASE
       ,SOUND_FLEES

@@ -228,11 +228,12 @@ namespace Anki {
           // CREEP Sound Scheme
           // TODO: Update these mappings for real playtest sounds
           {SOUND_POWER_ON,     "creep/Robot-PowerOn1Rev2.mp3"}
+          ,{SOUND_POWER_DOWN,  "creep/Robot-PowerDown13B.mp3"}
           ,{SOUND_PHEW,        "creep/Robot-ReliefPhew1.mp3"}
           ,{SOUND_SCREAM,      "creep/Robot-Scream7.mp3"}
           ,{SOUND_OOH,         "creep/Robot-OohScream12.mp3"}
-          ,{SOUND_HELPME,      "creep/Robot-HelpMe1.mp3"}
-          ,{SOUND_WAH_HELPME,  "creep/Robot-WahHelpMe2.mp3"}
+          ,{SOUND_WHATS_NEXT,  "creep/Robot-WhatsNext1A.mp3"}
+          ,{SOUND_HELP_ME,     "creep/Robot-WahHelpMe2.mp3"}
           ,{SOUND_SCAN,        "creep/Robot-Scanning2Rev1.mp3"}
           ,{SOUND_HAPPY_CHASE, "creep/Robot-Happy2.mp3"}
           ,{SOUND_FLEES,       "creep/Robot-Happy1.mp3"}
@@ -264,11 +265,12 @@ namespace Anki {
         {"STARTOVER",     SOUND_STARTOVER},
         {"SCAN",          SOUND_SCAN},
         {"POWER_ON",      SOUND_POWER_ON},
+        {"POWER_DOWN",    SOUND_POWER_DOWN},
         {"PHEW",          SOUND_PHEW},
         {"OOH",           SOUND_OOH},
         {"SCREAM",        SOUND_SCREAM},
-        {"HELPME",        SOUND_HELPME},
-        {"WAH_HELPME",    SOUND_WAH_HELPME},
+        {"WHATS_NEXT",    SOUND_WHATS_NEXT},
+        {"HELP_ME",       SOUND_HELP_ME},
         {"HAPPY_CHASE",   SOUND_HAPPY_CHASE},
         {"FLEES",         SOUND_FLEES},
         {"SINGING",       SOUND_SINGING}

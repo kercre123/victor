@@ -170,10 +170,10 @@ namespace Anki {
 
           if(fromMode == CREEP) {
             // If switching out of CREEP mode, go back to sleep.
-            _robot->PlayAnimation("ANIM_SLEEPING");
+            _robot->PlayAnimation("ANIM_POWER_DOWN", 1);
           }
           
-          _robot->AbortAll();
+          //_robot->AbortAll();
           
           break;
           
