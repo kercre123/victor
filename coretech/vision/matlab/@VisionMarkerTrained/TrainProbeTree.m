@@ -7,6 +7,7 @@ trainingState = [];
 %maxSamples = 100;
 %minInfoGain = 0;
 redBlackVerifyDepth = 8;
+redBlackSampleFraction = 0.75;
 maxDepth = inf;
 addInversions = true;
 saveTree = true;
@@ -47,7 +48,7 @@ try
     numImages     = trainingState.numImages;
     xgrid         = trainingState.xgrid;
     ygrid         = trainingState.ygrid;
-    resolution    = trainingState.resolution;
+    %resolution    = trainingState.resolution;
 catch E
     error('Failed to get all required fields from training state: %s.', E.message);
 end
@@ -82,7 +83,7 @@ if probeSampleFraction < 1
     gradMagValues = gradMagValues(sampleMask,:);
     xgrid = xgrid(sampleMask,:);
     ygrid = ygrid(sampleMask,:);
-    resolution = resolution(sampleMask,:);
+    %resolution = resolution(sampleMask,:);
     fprintf('Done. (%.1f seconds)\n', toc(t_probeSample));
 end
 
@@ -129,7 +130,7 @@ totalExamplesToClassify = size(probeValues, 2);
 probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
 probeTree.labels = labelNames;
 
-probeValues = single(probeValues < .5);
+probeValues = single(probeValues > .5);
 % try
     probeTree = buildTree(probeTree, false(size(probeValues,1),1), labels, labelNames, maxDepth);
     
@@ -173,7 +174,7 @@ if redBlackVerifyDepth > 0
     % %redMask(1:2:end,1:2:end) = true;
     % %redMask(2:2:end,2:2:end) = true;
     % redMask(1:round(workingResolution/2),:) = true;
-    redMask = rand(size(probeValues,1),1) > .75;
+    redMask = rand(size(probeValues,1),1) > redBlackSampleFraction;
     %resHist = zeros(1,length(probePattern));
     
     probeTree.verifyTreeRed = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
@@ -184,7 +185,7 @@ if redBlackVerifyDepth > 0
     %bar(resHist)
     %title('Resolution Histogram after Red Tree');
     
-    blackMask = rand(size(probeValues,1),1) > .75;
+    blackMask = rand(size(probeValues,1),1) > redBlackSampleFraction;
     %resHist = zeros(1,length(probePattern));
     
     probeTree.verifyTreeBlack = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
@@ -364,7 +365,14 @@ if testTree
         %Corners = VisionMarkerTrained.GetMarkerCorners(size(testImg,1), false);
         tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
         
-        [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern);
+        [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern, true);
+        
+        if length(labelID) > 1
+          warning('Multiple labels in multiclass tree.');
+          
+          labelID = mode(labelID);
+          result = labelNames{labelID};
+        end
         
         if redBlackVerifyDepth > 0
             [redResult, redLabelID] = TestTree(probeTree.verifyTreeRed, testImg, tform, 0.5, probePattern);
@@ -494,8 +502,13 @@ end
             unusedProbes = find(~masked);
             
             infoGain = computeInfoGain(labels(node.remaining), length(labelNames), ...
-                probeValues(unusedProbes,node.remaining), weights(node.remaining));
+              probeValues(unusedProbes,node.remaining), weights(node.remaining));
             
+            % % Testing categorical info gain computation
+            % infoGain2 = computeInfoGain_nonBinary(labels(node.remaining), length(labelNames), ...
+            % double(probeValues(unusedProbes,node.remaining) > .5)+1, 2, weights(node.remaining));
+                        
+            %{
             meanInfoGain = zeros(1,length(VisionMarkerTrained.ProbeParameters.GridSize));
             %startIndex = 1;
             for iRes = 1:length(VisionMarkerTrained.ProbeParameters.GridSize)
@@ -510,7 +523,7 @@ end
             infoGain = infoGain ./ column(infoGainScale(resolution(unusedProbes))); % note we divide b/c info gains are negative and we want to scale up, which is towards zero
             %infoGainShift = meanInfoGain - meanInfoGain(1);
             %infoGain = infoGain - column(infoGainShift(resolution(unusedProbes)));
-            
+            %}
             
             %{
             if DEBUG_DISPLAY
@@ -575,7 +588,7 @@ end
             node.whichProbe = unusedProbes(whichUnusedProbe);
             node.x = xgrid(node.whichProbe);%-1)/workingResolution;
             node.y = ygrid(node.whichProbe);%-1)/workingResolution;
-            node.resolution = resolution(node.whichProbe);
+            %node.resolution = resolution(node.whichProbe);
             node.infoGain = infoGain(whichUnusedProbe);
             node.remainingLabels = sprintf('%s ', labelNames{unique(labels(node.remaining))});
             
@@ -688,6 +701,61 @@ p_on  = 1 - p_off;
 conditionalEntropy = - (p_on.*sum(markerProb_on.*log2(max(eps,markerProb_on)), 2) + ...
     p_off.*sum(markerProb_off.*log2(max(eps,markerProb_off)), 2));
 
+infoGain = currentEntropy - conditionalEntropy;
+
+end % computeInfoGain()
+
+
+
+function infoGain = computeInfoGain_nonBinary(labels, numLabels, probeValues, numValues, weights)
+                        
+% Since we are just looking for max info gain, we don't actually need to
+% compute the currentEntropy, since it's the same for all probes.  We just
+% need the probe with the lowest conditional entropy, since that will be
+% the one with the highest infoGain
+% %markerProb = max(eps,hist(labels, 1:numLabels));
+% markerProb = max(eps, accumarray(labels(:), weights(:), [numLabels 1]));
+% markerProb = markerProb/max(eps,sum(markerProb));
+% currentEntropy = -sum(markerProb.*log2(markerProb));
+currentEntropy = 0;
+
+[numProbes, numExamples] = size(probeValues);
+
+% Use the (blurred) image values directly as indications of the
+% probability a probe is "on" or "off" instead of thresholding.
+% The hope is that this discourages selecting probes near
+% edges, which will be gray ("uncertain"), instead of those far
+% from any edge in any image, since those will still be closer
+% to black or white even after blurring.
+
+%W = weights(ones(numProbes,1),:);
+
+% probeIsOn  = max(0, 1 - 2*probeValues);
+% probeIsOff = max(0, 2*probeValues - 1);
+
+markerProb  = zeros(numProbes,numLabels,numValues);
+
+% Probability of each value at each probe
+pValue = zeros(numProbes,numValues);
+for i_value = 1:numValues
+  pValue(:,i_value) = sum(probeValues==i_value,2);
+end
+pValue = max(eps, pValue/numExamples);
+
+% Conditional probability of values at each probe, given each label
+for i_probe = 1:numProbes
+  for i_value = 1:numValues
+    markerProb(i_probe,:,i_value) = max(eps, accumarray(labels(:), (probeValues(i_probe,:)==i_value)', [numLabels 1])');
+  end
+end
+
+conditionalEntropy = zeros(numProbes,1);
+for i_value = 1:numValues
+  markerProb(:,:,i_value) = markerProb(:,:,i_value) ./ (sum(markerProb(:,:,i_value),2)*ones(1,numLabels));
+
+  conditionalEntropy = conditionalEntropy - pValue(:,i_value).*sum(markerProb(:,:,i_value).*log2(max(eps,markerProb(:,:,i_value))),2);
+end
+  
 infoGain = currentEntropy - conditionalEntropy;
 
 end % computeInfoGain()

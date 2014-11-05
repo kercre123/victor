@@ -157,8 +157,14 @@ classdef VisionMarkerTrained
                 end
                 
                 [this.codeName, this.codeID] = TestTree( ...
-                    VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
-                    VisionMarkerTrained.ProbePattern);                
+                  VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
+                  VisionMarkerTrained.ProbePattern);
+                  
+                if length(this.codeID) > 1
+                  warning('Multiclass tree returned multiple labels. Choosing most frequent.');
+                  this.codeID = mode(this.codeID);
+                  this.codeName = VisionMarkerTrained.ProbeTree.labels{this.codeID};
+                end
                                 
                 if any(strcmp(this.codeName, {'UNKNOWN', 'INVALID'}))
                     this.isValid = false;
