@@ -562,8 +562,10 @@ namespace Anki {
                                                    CONTROL_DT);
         
         if (!res) {
-          PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
+          PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying other version of SetDesiredHeight()\n",
                 startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+          
+          SetDesiredHeight_internal(height_mm);
         }
         
 #if(DEBUG_HEAD_CONTROLLER)
