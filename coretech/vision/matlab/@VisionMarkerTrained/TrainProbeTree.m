@@ -185,16 +185,26 @@ else
     fnamesNeg = {'ALLWHITE'; 'ALLBLACK'};
     if ~isempty(negativeImageDir)
         fprintf('Reading negative image data...');
-        fnamesNeg = [fnamesNeg; getfnames(negativeImageDir, 'images', 'useFullPath', true)];
-        subDirs = getdirnames(negativeImageDir, 'chunk*');
-        numSubDirs = length(subDirs);
-        if numSubDirs > 0
+        if ~iscell(negativeImageDir)
+          negativeImageDir = {negativeImageDir};
+        end
+        
+        numNegDirs = length(negativeImageDir);
+        fnamesNeg = [cell(numNegDirs,1); fnamesNeg];
+        for iNegDir = 1:numNegDirs
+          fnamesNeg{iNegDir} = getfnames(negativeImageDir{iNegDir}, 'images', 'useFullPath', true);
+          subDirs = getdirnames(negativeImageDir{iNegDir}, 'chunk*');
+          numSubDirs = length(subDirs);
+          if numSubDirs > 0
             fnamesSubDirs = cell(numSubDirs,1);
             for iSubDir = 1:length(subDirs)
-                fnamesSubDirs{iSubDir} = getfnames(fullfile(negativeImageDir, subDirs{iSubDir}), 'images', 'useFullPath', true);
+              fnamesSubDirs{iSubDir} = getfnames(fullfile(negativeImageDir, subDirs{iSubDir}), 'images', 'useFullPath', true);
             end
-            fnamesNeg = [fnamesNeg; vertcat(fnamesSubDirs{:})];
+            fnamesNeg{iNegDir} = [fnamesNeg{iNegDir}; vertcat(fnamesSubDirs{:})];
             clear fnamesSubDirs
+          end
+          
+          fnamesNeg = vertcat(fnamesNeg{:});
         end
         fprintf('Done. (Found %d negative examples.)\n', length(fnamesNeg));
     end
@@ -579,7 +589,7 @@ for iImg = 1:length(fnames)
     else
         warning('Reached node with multiple remaining labels: ')
         for j = 1:length(result)
-            fprintf('%s, ', labelNames{labels(result(j))});
+            fprintf('%s, ', labelNames{labels(result{j})});
         end
         fprintf('\b\b\n');
     end
