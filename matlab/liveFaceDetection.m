@@ -10,12 +10,23 @@ function liveFaceDetection()
         im = mexCameraCapture(1, 0);
         im = rgb2gray(im(:,:,[3,2,1]));
         
-        [faces,eyes] = mexFaceDetect(im);
+        if min(size(im) == [720,1280]) == 1
+            im = imresize(im, [360,640]);
+        end
+        
+%         tic
+%         [faces,eyes] = mexFaceDetect(im, '/Users/pbarnum/Documents/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml');
+            [faces,eyes] = mexFaceDetect(im, '/Users/pbarnum/Documents/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface_part.xml');
+%         [faces,eyes] = mexFaceDetect(im, '/Users/pbarnum/Documents/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/pete_frontalface.xml');
+%         [faces,eyes] = mexFaceDetect(im, '/Users/pbarnum/Documents/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/peter_face3.xml');
+%         toc
         
         numFaces = size(faces,1);
 
         figure(1);
+        hold off;
         imshow(im);
+        hold on;
 
         for iFace = 1:numFaces
             rectangle('Position', faces(iFace,1:4), 'LineWidth', 3, 'EdgeColor', [1.0,0,0]);

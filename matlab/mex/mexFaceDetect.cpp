@@ -57,7 +57,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     return;
   }
   
-  std::string newFaceCascadeFilename = QUOTE(OPENCV_ROOT_PATH) "/data/lbpcascades/lbpcascade_frontalface.xml"; // "/data/haarcascades/haarcascade_frontalface_alt.xml"))
+  std::string newFaceCascadeFilename = QUOTE(OPENCV_ROOT_PATH) "/data/lbpcascades/lbpcascade_frontalface.xml";
   std::string newEyeCascadeFilename = QUOTE(OPENCV_ROOT_PATH) "/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml";
   
   if(nrhs >= 2)
@@ -84,6 +84,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if(! face_cascade->load(faceCascadeFilename.data()))
     {
       mexErrMsgTxt("Could not load face cascade XML data. Check path.");
+    } else
+    {
+      mexPrintf("Loaded %s\n", faceCascadeFilename.data());
     }
   }
 
@@ -122,8 +125,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   std::vector<cv::Rect> faces;
 
   //find faces and store them in the vector array
-  //face_cascade->detectMultiScale(grayscaleFrame, faces, 1.1, 3, CV_HAAR_FIND_BIGGEST_OBJECT|CV_HAAR_SCALE_IMAGE, cv::Size(30,30));
-  face_cascade->detectMultiScale(grayscaleFrame, faces, 1.05, 1, CV_HAAR_SCALE_IMAGE, cv::Size(30,30));
+  face_cascade->detectMultiScale(grayscaleFrame, faces, 1.1, 3, CV_HAAR_FIND_BIGGEST_OBJECT|CV_HAAR_SCALE_IMAGE, cv::Size(30,30));
+  //face_cascade->detectMultiScale(grayscaleFrame, faces, 1.05, 1, CV_HAAR_SCALE_IMAGE, cv::Size(30,30));
 
   //mexPrintf("Found %d faces.\n", faces.size());
 
