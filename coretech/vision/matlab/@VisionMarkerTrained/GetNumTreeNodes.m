@@ -1,17 +1,35 @@
-function [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes()
+function [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes(tree)
 
+if length(tree) > 1
+    numMulticlassNodes = 0;
+    numVerificationNodes = 0;
 
-numMulticlassNodes = GetNumNodesHelper(VisionMarkerTrained.ProbeTree);
+    for iTree = 1:length(tree)
+        [numMulticlassNodes_, numVerificationNodes_] = VisionMarkerTrained.GetNumTreeNodes(tree(iTree));
+        numMulticlassNodes = numMulticlassNodes + numMulticlassNodes_;
+        numVerificationNodes = numVerificationNodes + numVerificationNodes_;
+    end
+    
+    return
+end
 
-if all(isfield(VisionMarkerTrained.ProbeTree, {'verifyTreeRed', 'verifyTreeBlack'}))
+if nargin < 1
+    tree = VisionMarkerTrained.ProbeTree;
+end
+
+numMulticlassNodes = GetNumNodesHelper(tree);
+
+if all(isfield(tree, {'verifyTreeRed', 'verifyTreeBlack'}))
    numVerificationNodes = ...
-       GetNumNodesHelper(VisionMarkerTrained.ProbeTree.verifyTreeRed) + ...
-       GetNumNodesHelper(VisionMarkerTrained.ProbeTree.verifyTreeBlack);
+       GetNumNodesHelper(tree.verifyTreeRed) + ...
+       GetNumNodesHelper(tree.verifyTreeBlack);
 else
     numVerificationNodes = 0;
-    for iVerify = 1:length(VisionMarkerTrained.ProbeTree.verifiers)
-        numVerificationNodes = numVerificationNodes + ...
-            GetNumNodesHelper(VisionMarkerTrained.ProbeTree.verifiers(iVerify));
+    if isfield(tree, 'verifiers')
+        for iVerify = 1:length(tree.verifiers)
+            numVerificationNodes = numVerificationNodes + ...
+                GetNumNodesHelper(tree.verifiers(iVerify));
+        end
     end
 end
 

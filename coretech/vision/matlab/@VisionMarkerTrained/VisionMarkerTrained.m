@@ -13,10 +13,10 @@ classdef VisionMarkerTrained
                 
         ProbeParameters = struct( ...
             'GridSize', 32, ...            %'Radius', 0.02, ...  % As a fraction of a canonical unit square 
-            'NumAngles', 8, ...       % How many samples around ring to sample
+            'NumAngles', 4, ...       % How many samples around ring to sample
             'Method', 'mean');        % How to combine points in a probe
                 
-        MinContrastRatio = 1.25;  % bright/dark has to be at least this
+        MinContrastRatio = 0; %1.25;  % bright/dark has to be at least this
         
         SquareWidthFraction = 0.1; % as a fraction of the fiducial width
         FiducialPaddingFraction = 0.1; % as a fraction of the fiducial width
@@ -41,16 +41,23 @@ classdef VisionMarkerTrained
         
         [img, alpha] = AddFiducial(img, varargin);
         AddFiducialBatch(inputDir, outputDir, varargin);
+        
+        trainingState = ExtractProbeValues(varargin)
+        VisualizeExtractedProbes(data, varargin)
+        
         probeTree = TrainProbeTree(varargin);
+        
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
         %Corners = GetMarkerCorners(imageSize, isPadded);
         corners = GetFiducialCorners(imageSize, isPadded);
         [threshold, bright, dark] = ComputeThreshold(img, tform);
         outputString = GenerateHeaderFiles(varargin);
-        [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes();
+        [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes(tree);
 
         CreateTestImage(varargin);
         CreatePrintableCodeSheet(varargin);
+        
+        [probeValues, X, Y] = GetProbeValues(img, tform);
         
     end % Static Methods
     
@@ -302,8 +309,6 @@ classdef VisionMarkerTrained
             
         end
 
-        [probeValues, X, Y] = GetProbeValues(this, img);
-        
     end % Public Methods
     
 end % CLASSDEF TrainedVisionMarker

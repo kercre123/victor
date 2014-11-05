@@ -3,24 +3,19 @@ function probeTree = TrainProbeTree(varargin)
 % TODO: Use parameters from a derived class below, instead of VisionMarkerTrained.*
 
 %% Parameters
-loadSavedProbeValues = false;
-markerImageDir = VisionMarkerTrained.TrainingImageDir;
-negativeImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/negativeExamplePatches';
-maxNegativeExamples = inf;
-workingResolution = VisionMarkerTrained.ProbeParameters.GridSize;
+trainingState = [];
 %maxSamples = 100;
 %minInfoGain = 0;
 redBlackVerifyDepth = 8;
 maxDepth = inf;
-%addRotations = false;
 addInversions = true;
-numPerturbations = 100;
-blurSigmas = [0 .005 .01]; % as a fraction of the image diagonal
-perturbSigma = 1;
 saveTree = true;
+baggingSampleFraction = 1;
+probeSampleFraction = 1;
+maxInfoGainFraction = [];
 leafNodeFraction = 0.9; % fraction of remaining examples that must have same label to consider node a leaf
-
-probeRegion = VisionMarkerTrained.ProbeRegion; 
+testTree = true;
+weights = [];
 
 % Now using unpadded images to train
 %imageCoords = [-VisionMarkerTrained.FiducialPaddingFraction ...
@@ -33,11 +28,63 @@ parseVarargin(varargin{:});
 
 t_start = tic;
 
-if ~iscell(markerImageDir)
-    markerImageDir = {markerImageDir};
+if isempty(trainingState)
+    % If none provided, load last saved training state from file
+    trainingState = fullfile(fileparts(mfilename('fullpath')), 'trainingState.mat');
+end
+
+if ischar(trainingState)
+    trainingState = load(trainingState);
+end
+
+assert(isstruct(trainingState), 'Expecting trainingState struct.');
+try
+    probeValues   = trainingState.probeValues;
+    gradMagValues = trainingState.gradMagValues;
+    fnames        = trainingState.fnames;
+    labels        = trainingState.labels;
+    labelNames    = trainingState.labelNames;
+    numImages     = trainingState.numImages;
+    xgrid         = trainingState.xgrid;
+    ygrid         = trainingState.ygrid;
+    resolution    = trainingState.resolution;
+catch E
+    error('Failed to get all required fields from training state: %s.', E.message);
 end
 
 probePattern = VisionMarkerTrained.ProbePattern;
+
+
+if isempty(weights)
+    weights = ones(1,size(probeValues,2)) / size(probeValues,2);
+end
+
+if baggingSampleFraction < 1
+    t_bagSample = tic;
+    fprintf('Sampling %.1f%% of training examples...', baggingSampleFraction*100);
+    N = size(probeValues,2);
+    sampleIndex = randi(N, 1, ceil(baggingSampleFraction*N));
+    
+    probeValues = probeValues(:,sampleIndex);
+    gradMagValues = gradMagValues(:,sampleIndex);
+    labels = labels(sampleIndex);
+    weights = weights(sampleIndex);
+    numImages = length(sampleIndex);
+    
+    fprintf('Done. (%.1f seconds)\n', toc(t_bagSample));
+end
+
+if probeSampleFraction < 1
+    t_probeSample = tic;
+    fprintf('Sampling %.1f%% of probes...', probeSampleFraction*100);
+    sampleMask = rand(size(probeValues,1),1) < probeSampleFraction;
+    probeValues   = probeValues(sampleMask,:);
+    gradMagValues = gradMagValues(sampleMask,:);
+    xgrid = xgrid(sampleMask,:);
+    ygrid = ygrid(sampleMask,:);
+    resolution = resolution(sampleMask,:);
+    fprintf('Done. (%.1f seconds)\n', toc(t_probeSample));
+end
 
 % 
 % % TODO: move these parameters to derived classes
@@ -58,261 +105,14 @@ if ~saveTree && nargout==0
     end
 end
 
-savedStateFile = fullfile(fileparts(mfilename('fullpath')), 'trainingState.mat');
-
-if loadSavedProbeValues
-    % This load will kill the current pBar, so save that
-    load(savedStateFile); %#ok<UNRCH>
-
-    pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
-    pBar.showTimingInfo = true;
-    pBarCleanup = onCleanup(@()delete(pBar));
-
-else
-    
-    pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
-    pBar.showTimingInfo = true;
-    pBarCleanup = onCleanup(@()delete(pBar));
-
-    
-    %% Load marker images
-    numDirs = length(markerImageDir);
-    fnames = cell(numDirs,1);
-    for i_dir = 1:numDirs
-        fnames{i_dir} = getfnames(markerImageDir{i_dir}, 'images', 'useFullPath', true);
-    end
-    fnames = vertcat(fnames{:});
-    
-    if isempty(fnames)
-        error('No image files found.');
-    end
-    
-    fprintf('Found %d total image files to train on.\n', length(fnames));
-    
-    % Add special all-white and all-black images
-    %fnames = [fnames; 'ALLWHITE'; 'ALLBLACK'];
-    
-    %fnames = {'angryFace.png', 'ankiLogo.png', 'batteries3.png', ...
-    %    'bullseye2.png', 'fire.png', 'squarePlusCorners.png'};
-    
-    numImages = length(fnames);
-    labelNames = cell(1,numImages);
-    %img = cell(1, numImages);
-    
-    corners = [0 0; 0 1; 1 0; 1 1];
-    sigma = perturbSigma/workingResolution;
-    
-    numBlurs = length(blurSigmas);
-    
-    [xgrid,ygrid] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
-    %probeValues = zeros(workingResolution^2, numImages);
-    probeValues   = cell(numBlurs,numImages);
-    gradMagValues = cell(numBlurs,numImages);
-    labels        = cell(numBlurs,numImages);
-    
-    X = probePattern.x(ones(workingResolution^2,1),:) + xgrid(:)*ones(1,length(probePattern.x));
-    Y = probePattern.y(ones(workingResolution^2,1),:) + ygrid(:)*ones(1,length(probePattern.y));
-    
-    % Precompute all the perturbed probe locations once
-    pBar.set_message(sprintf('Computing %d perturbed probe locations', numPerturbations));
-    pBar.set_increment(1/numPerturbations);
-    pBar.set(0);    
-    xPerturb = cell(1, numPerturbations);
-    yPerturb = cell(1, numPerturbations);
-    for iPerturb = 1:numPerturbations
-        perturbation = max(-3*sigma, min(3*sigma, sigma*randn(4,2)));
-        corners_i = corners + perturbation;
-        T = cp2tform(corners_i, corners, 'projective');
-        [xPerturb{iPerturb}, yPerturb{iPerturb}] = tforminv(T, X, Y);
-        
-        pBar.increment();
-    end
-    
-    % Compute the perturbed probe values
-    pBar.set_message(sprintf(['Interpolating perturbed probe locations ' ...
-        'from %d images at %d blurs'], numImages, numBlurs));
-    pBar.set_increment(1/numImages);
-    pBar.set(0);
-    for iImg = 1:numImages
-        
-%         if strcmp(fnames{iImg}, 'ALLWHITE')
-%             img{iImg} = ones(workingResolution);
-%         elseif strcmp(fnames{iImg}, 'ALLBLACK')
-%             img{iImg} = zeros(workingResolution);
-%         else
-            img = imreadAlphaHelper(fnames{iImg});
-%         end
-        
-        [nrows,ncols,~] = size(img);
-        imageCoordsX = linspace(0, 1, ncols);
-        imageCoordsY = linspace(0, 1, nrows);
-                
-        [~,labelNames{iImg}] = fileparts(fnames{iImg});
-        
-        for iBlur = 1:numBlurs
-            imgBlur = img;
-            if blurSigmas(iBlur) > 0
-                blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
-                imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma));
-            end
-            
-            imgGradMag = single(smoothgradient(imgBlur));
-            imgBlur = single(imgBlur);
-            
-            probeValues{iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
-            gradMagValues{iBlur,iImg} = zeros(workingResolution^2, numPerturbations, 'single');
-            for iPerturb = 1:numPerturbations
-                probeValues{iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgBlur, ...
-                    xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1), 2);
-                
-                gradMagValues{iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
-                    xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 0), 2);
-            end
-            
-            labels{iBlur,iImg} = iImg*ones(1,numPerturbations, 'uint32');
-            
-        end % FOR each blurSigma
-        
-        pBar.increment();
-    end
-    
-    probeValues = [probeValues{:}];
-    gradMagValues = [gradMagValues{:}];
-    
-    labels = [labels{:}];
-    
-    % Add negative examples
-    fnamesNeg = {'ALLWHITE'; 'ALLBLACK'};
-    if ~isempty(negativeImageDir)
-        fprintf('Reading negative image data...');
-        if ~iscell(negativeImageDir)
-          negativeImageDir = {negativeImageDir};
-        end
-        
-        numNegDirs = length(negativeImageDir);
-        fnamesNeg = [cell(numNegDirs,1); fnamesNeg];
-        for iNegDir = 1:numNegDirs
-          fnamesNeg{iNegDir} = getfnames(negativeImageDir{iNegDir}, 'images', 'useFullPath', true);
-          subDirs = getdirnames(negativeImageDir{iNegDir}, 'chunk*');
-          numSubDirs = length(subDirs);
-          if numSubDirs > 0
-            fnamesSubDirs = cell(numSubDirs,1);
-            for iSubDir = 1:length(subDirs)
-              fnamesSubDirs{iSubDir} = getfnames(fullfile(negativeImageDir, subDirs{iSubDir}), 'images', 'useFullPath', true);
-            end
-            fnamesNeg{iNegDir} = [fnamesNeg{iNegDir}; vertcat(fnamesSubDirs{:})];
-            clear fnamesSubDirs
-          end
-          
-          fnamesNeg = vertcat(fnamesNeg{:});
-        end
-        fprintf('Done. (Found %d negative examples.)\n', length(fnamesNeg));
-    end
-    
-    numNeg = min(length(fnamesNeg), maxNegativeExamples);
-    
-    pBar.set_message(sprintf(['Interpolating probe locations ' ...
-        'from %d negative images'], numNeg));
-    pBar.set_increment(1/numNeg);
-    pBar.set(0);
-    
-    probeValuesNeg   = zeros(workingResolution^2, numNeg, 'single');
-	gradMagValuesNeg = zeros(workingResolution^2, numNeg, 'single');	
-
-    for iImg = 1:numNeg
-        if strcmp(fnamesNeg{iImg}, 'ALLWHITE')
-            imgNeg = ones(workingResolution);
-        elseif strcmp(fnamesNeg{iImg}, 'ALLBLACK')
-            imgNeg = zeros(workingResolution);
-        else
-            imgNeg = imreadAlphaHelper(fnamesNeg{iImg});
-        end
-        
-		imgGradMag = single(smoothgradient(imgNeg));
-        imgNeg = single(imgNeg);
-
-        [nrows,ncols,~] = size(imgNeg);
-        imageCoordsX = linspace(0, 1, ncols);
-        imageCoordsY = linspace(0, 1, nrows);
-        
-        probeValuesNeg(:,iImg) = mean(interp2(imageCoordsX, imageCoordsY, imgNeg, ...
-            X, Y, 'linear', 1), 2);
-        
-		gradMagValuesNeg(:,iImg) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
-            X, Y, 'linear', 0), 2);
-
-        pBar.increment();
-    end % for each negative example
-    
-    noInfo = all(probeValuesNeg == 0 | probeValuesNeg == 1, 1);
-    if any(noInfo)
-        fprintf('Ignoring %d negative patches with no valid info.\n', sum(noInfo));
-        numNeg = numNeg - sum(noInfo);
-        probeValuesNeg(:,noInfo) = [];
-  		gradMagValuesNeg(:,noInfo) = [];
-        %fnamesNeg(noInfo) = [];
-    end
-    
-    labelNames{end+1} = 'INVALID';
-    labels = [labels length(labelNames)*ones(1,numNeg,'uint32')];
-    %fnames = [fnames; fnamesNeg];
-    probeValues = [probeValues probeValuesNeg];
-    gradMagValues = [gradMagValues gradMagValuesNeg];
-    
-    if addInversions
-        % Add white-on-black versions of everything
-        labels        = [labels labels+length(labelNames)];
-        labelNames    = [labelNames cellfun(@(name)['INVERTED_' name], labelNames, 'UniformOutput', false)];
-        probeValues   = [probeValues 1-probeValues];
-        gradMagValues = [gradMagValues gradMagValues];
-        
-        % Get rid of INVERTED_INVALID label -- it's just INVALID
-        invertedInvalidLabel = find(strcmp(labelNames, 'INVERTED_INVALID'));
-        assert(invertedInvalidLabel == length(labelNames));
-        labelNames(end) = [];
-        invalidLabel = find(strcmp(labelNames, 'INVALID'));
-        labels(labels == invertedInvalidLabel) = invalidLabel;
-    end
-    
-    assert(size(probeValues,2) == length(labels));
-    assert(max(labels) == length(labelNames));
-    
-    %numLabels = numImages;
-    numImages = length(labels);
-        
-    if false && DEBUG_DISPLAY
-        namedFigure('Average Perturbed Images'); clf
-        for j = 1:numImages
-            subplot(2,ceil(numImages/2),j), hold off
-            imagesc([0 1], [0 1], reshape(mean(probeValues(:,labels==j),2), workingResolution*[1 1]));
-            axis image, hold on
-            plot(corners(:,1), corners(:,2), 'y+');
-        end
-        colormap(gray);
-    end
-    
-    %     %% Add all four rotations
-    %     if addRotations
-    %         img = cat(3, img, imrotate(img,90), imrotate(img,180), imrotate(img, 270)); %#ok<UNRCH>
-    %         if ~numPerturbations
-    %             distMap = cat(3, distMap, imrotate(distMap,90), imrotate(distMap,180), imrotate(distMap, 270));
-    %         end
-    %
-    %         labels = repmat(labels, [1 4]);
-    %
-    %         numImages = 4*numImages;
-    %     end
-
-    % Only save what we need to re-run (not all the settings!)
-    fprintf('Saving state...');
-    save(savedStateFile, 'probeValues', 'gradMagValues', 'fnames', 'labels', 'labelNames', 'numImages', 'xgrid', 'ygrid');
-    fprintf('Done.\n');
-    
-end % if loadSavedProbeValues
-
-
 
 %% Train the decision tree
+
+%resHist = zeros(1, length(probePattern));
+
+pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
+pBar.showTimingInfo = true;
+pBarCleanup = onCleanup(@()delete(pBar));
 
 pBar.set_message('Building multiclass tree');
 pBar.set(0);
@@ -329,8 +129,15 @@ totalExamplesToClassify = size(probeValues, 2);
 probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
 probeTree.labels = labelNames;
 
+probeValues = single(probeValues < .5);
 % try
-    probeTree = buildTree(probeTree, false(workingResolution), labels, labelNames, maxDepth);
+    probeTree = buildTree(probeTree, false(size(probeValues,1),1), labels, labelNames, maxDepth);
+    
+%     subplot 131
+%     bar(resHist)
+%     title('Resolution Histogram after Main Tree');
+    
+    
 % catch E
 %     switch(E.identifier)
 %         case {'BuildTree:MaxDepth', 'BuildTree:UselessSplit'}
@@ -357,23 +164,38 @@ end
 
 %% Train Red/Black Verify trees
 
-pBar.set_message('Training red/black verification trees');
-pBar.set(0);
-totalExamplesToClassify = 2*totalExamplesToClassify;
-
-redMask = false(workingResolution);
-%redMask(1:2:end,1:2:end) = true;
-%redMask(2:2:end,2:2:end) = true;
-redMask(1:round(workingResolution/2),:) = true;
-
-probeTree.verifyTreeRed = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
-probeTree.verifyTreeRed.labels = labelNames;
-probeTree.verifyTreeRed = buildTree(probeTree.verifyTreeRed, redMask, labels, labelNames, redBlackVerifyDepth);
-
-blackMask = ~redMask;
-probeTree.verifyTreeBlack = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
-probeTree.verifyTreeBlack.labels = labelNames;
-probeTree.verifyTreeBlack = buildTree(probeTree.verifyTreeBlack, blackMask, labels, labelNames, redBlackVerifyDepth);
+if redBlackVerifyDepth > 0
+    pBar.set_message('Training red/black verification trees');
+    pBar.set(0);
+    totalExamplesToClassify = 2*totalExamplesToClassify;
+    
+    % redMask = false(workingResolution);
+    % %redMask(1:2:end,1:2:end) = true;
+    % %redMask(2:2:end,2:2:end) = true;
+    % redMask(1:round(workingResolution/2),:) = true;
+    redMask = rand(size(probeValues,1),1) > .75;
+    %resHist = zeros(1,length(probePattern));
+    
+    probeTree.verifyTreeRed = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
+    probeTree.verifyTreeRed.labels = labelNames;
+    probeTree.verifyTreeRed = buildTree(probeTree.verifyTreeRed, redMask, labels, labelNames, redBlackVerifyDepth);
+    
+    %subplot 132
+    %bar(resHist)
+    %title('Resolution Histogram after Red Tree');
+    
+    blackMask = rand(size(probeValues,1),1) > .75;
+    %resHist = zeros(1,length(probePattern));
+    
+    probeTree.verifyTreeBlack = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
+    probeTree.verifyTreeBlack.labels = labelNames;
+    probeTree.verifyTreeBlack = buildTree(probeTree.verifyTreeBlack, blackMask, labels, labelNames, redBlackVerifyDepth);
+    
+    %subplot 133
+    %bar(resHist)
+    %title('Resolution Histogram after Black Tree');
+    
+end
 
 t_train = toc(t_start);
 t_start = tic;
@@ -499,117 +321,119 @@ t_start = tic;
 % end
 
 %% Test on original images
-
-if addInversions
-    invert = [false(size(fnames(:))); true(size(fnames(:)))];
-    fnames = [fnames(:); fnames(:)];
-else
-    invert = false(size(fnames));
-end
-
-fprintf('Testing on %d original images...', length(fnames));
-pBar.set_message(sprintf('Testing on %d original images...', length(fnames)));
-pBar.set_increment(1/length(fnames));
-pBar.set(0);
-
-correct = false(1,length(fnames));
-verified = false(1,length(fnames));
-
-if DEBUG_DISPLAY
-    namedFigure('Original Image Errors'), clf %#ok<UNRCH>
-    numDisplayRows = floor(sqrt(length(fnames)));
-    numDisplayCols = ceil(length(fnames)/numDisplayRows);
-end
-for iImg = 1:length(fnames) 
-    if any(strcmp(fnames{iImg}, {'ALLWHITE', 'ALLBLACK'}))
-        correct(iImg)  = true;
-        verified(iImg) = true;
-        continue;
-    end
-    
-    [testImg,~,alpha] = imread(fnames{iImg});
-    testImg = mean(im2double(testImg),3);
-    testImg(alpha < .5) = 1;
-    
-    if invert(iImg)
-       testImg = 1 - testImg; 
-    end
-    
-    % radius = probeRadius/workingResolution * size(testImg,1);
-        
-    %testImg = separable_filter(testImg, gaussian_kernel(radius/2), [], 'replicate');
-    Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false);
-    %Corners = VisionMarkerTrained.GetMarkerCorners(size(testImg,1), false);
-    tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
-    
-    [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern);
-   
-    [redResult, redLabelID] = TestTree(probeTree.verifyTreeRed, testImg, tform, 0.5, probePattern);
-    [blackResult, blackLabelID] = TestTree(probeTree.verifyTreeBlack, testImg, tform, 0.5, probePattern);
-    
-    if any(labelID == redLabelID) && any(labelID == blackLabelID)
-        assert(any(strcmp(result, redResult)) && ...
-            any(strcmp(result, blackResult)));
-        verified(iImg) = true;
-    end
-    
-    
-%     [verificationResult, verifiedID] = TestTree(probeTree.verifiers(labelID), testImg, tform, 0.5, probePattern);
-%     verified(iImg) = verifiedID == 2;
-%     if verified(iImg)
-%         assert(strcmp(verificationResult, result));
-%     end
-    
-    if ischar(result)
-        correct(iImg) = strcmp(result, labelNames{labelID});
-        
-        if ~correct(iImg)    
-            figure, imagesc(testImg), axis image, title(result)
-        end
-        
-        if DEBUG_DISPLAY % && ~correct(i)
-            h_axes = subplot(numDisplayRows,numDisplayCols,iImg); %#ok<UNRCH>
-            imagesc(testImg, 'Parent', h_axes); hold on
-            axis(h_axes, 'image');
-            TestTree(probeTree, testImg, tform, 0.5, probePattern, true);
-            plot(Corners(:,1), Corners(:,2), 'y+');
-            title(h_axes, result);
-            if ~verified(iImg)
-                color = 'b';
-            else
-                if correct(iImg)
-                    color = 'g';
-                else
-                    color = 'r';
-                end
-            end
-            set(h_axes, 'XColor', color, 'YColor', color);
-        end
-                        
+if testTree
+    if addInversions
+        invert = [false(size(fnames(:))); true(size(fnames(:)))];
+        fnames = [fnames(:); fnames(:)];
     else
-        warning('Reached node with multiple remaining labels: ')
-        for j = 1:length(result)
-            fprintf('%s, ', labelNames{labels(result{j})});
+        invert = false(size(fnames)); %#ok<UNRCH>
+    end
+    
+    fprintf('Testing on %d original images...', length(fnames));
+    pBar.set_message(sprintf('Testing on %d original images...', length(fnames)));
+    pBar.set_increment(1/length(fnames));
+    pBar.set(0);
+    
+    correct = false(1,length(fnames));
+    verified = false(1,length(fnames));
+    
+    if DEBUG_DISPLAY
+        namedFigure('Original Image Errors'), clf %#ok<UNRCH>
+        numDisplayRows = floor(sqrt(length(fnames)));
+        numDisplayCols = ceil(length(fnames)/numDisplayRows);
+    end
+    for iImg = 1:length(fnames)
+        if any(strcmp(fnames{iImg}, {'ALLWHITE', 'ALLBLACK'}))
+            correct(iImg)  = true;
+            verified(iImg) = true;
+            continue;
         end
-        fprintf('\b\b\n');
+        
+        [testImg,~,alpha] = imread(fnames{iImg});
+        testImg = mean(im2double(testImg),3);
+        testImg(alpha < .5) = 1;
+        
+        if invert(iImg)
+            testImg = 1 - testImg;
+        end
+        
+        % radius = probeRadius/workingResolution * size(testImg,1);
+        
+        %testImg = separable_filter(testImg, gaussian_kernel(radius/2), [], 'replicate');
+        Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false);
+        %Corners = VisionMarkerTrained.GetMarkerCorners(size(testImg,1), false);
+        tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+        
+        [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern);
+        
+        if redBlackVerifyDepth > 0
+            [redResult, redLabelID] = TestTree(probeTree.verifyTreeRed, testImg, tform, 0.5, probePattern);
+            [blackResult, blackLabelID] = TestTree(probeTree.verifyTreeBlack, testImg, tform, 0.5, probePattern);
+            
+            if any(labelID == redLabelID) && any(labelID == blackLabelID)
+                assert(any(strcmp(result, redResult)) && ...
+                    any(strcmp(result, blackResult)));
+                verified(iImg) = true;
+            end
+        end
+        
+        
+        %     [verificationResult, verifiedID] = TestTree(probeTree.verifiers(labelID), testImg, tform, 0.5, probePattern);
+        %     verified(iImg) = verifiedID == 2;
+        %     if verified(iImg)
+        %         assert(strcmp(verificationResult, result));
+        %     end
+        
+        if ischar(result)
+            correct(iImg) = strcmp(result, labelNames{labelID});
+            
+            if ~correct(iImg)
+                figure, imagesc(testImg), axis image, title(result)
+            end
+            
+            if DEBUG_DISPLAY % && ~correct(i)
+                h_axes = subplot(numDisplayRows,numDisplayCols,iImg); %#ok<UNRCH>
+                imagesc(testImg, 'Parent', h_axes); hold on
+                axis(h_axes, 'image');
+                TestTree(probeTree, testImg, tform, 0.5, probePattern, true);
+                plot(Corners(:,1), Corners(:,2), 'y+');
+                title(h_axes, result);
+                if ~verified(iImg)
+                    color = 'b';
+                else
+                    if correct(iImg)
+                        color = 'g';
+                    else
+                        color = 'r';
+                    end
+                end
+                set(h_axes, 'XColor', color, 'YColor', color);
+            end
+            
+        else
+            fprintf('Reached node with multiple remaining labels: ')
+            fprintf('%s, ', result{:});
+            fprintf('\b\b\n');
+        end
+        
+        pBar.increment();
+        if pBar.cancelled
+            fprintf('User cancelled testing on original images.\n');
+            break;
+        end
     end
-   
-    pBar.increment();
-    if pBar.cancelled
-        fprintf('User cancelled testing on original images.\n');
-        break;
+    fprintf('Got %d of %d original images right (%.1f%%)\n', ...
+        sum(correct), length(correct), sum(correct)/length(correct)*100);
+    if sum(correct) ~= length(correct)
+        warning('We should have ZERO errors on original images!');
     end
-end
-fprintf('Got %d of %d original images right (%.1f%%)\n', ...
-    sum(correct), length(correct), sum(correct)/length(correct)*100);
-if sum(correct) ~= length(correct)
-    warning('We should have ZERO errors on original images!');
-end
-fprintf(' %d of %d original images verified.\n', ...
-    sum(verified), length(verified));
-if sum(verified) ~= length(verified)
-    warning('All original images should verify!');
-end
+    fprintf(' %d of %d original images verified.\n', ...
+        sum(verified), length(verified));
+    if sum(verified) ~= length(verified)
+        warning('All original images should verify!');
+    end
+    
+end % if testTree
 
 t_test = toc(t_start);
 
@@ -656,8 +480,8 @@ end
 %             end
             
         elseif node.depth == maxDepth || all(masked(:))
-            node.labelID = unique(labels(node.remaining));
-            node.labelName = labelNames(node.labelID);
+            node.labelID = labels(node.remaining);
+            node.labelName = labelNames(unique(node.labelID));
             fprintf('MaxDepth LeafNode for labels = {%s\b}\n', sprintf('%s,', node.labelName{:}));
             
             pBar.add(length(node.remaining)/totalExamplesToClassify);
@@ -670,7 +494,23 @@ end
             unusedProbes = find(~masked);
             
             infoGain = computeInfoGain(labels(node.remaining), length(labelNames), ...
-                probeValues(unusedProbes,node.remaining));
+                probeValues(unusedProbes,node.remaining), weights(node.remaining));
+            
+            meanInfoGain = zeros(1,length(VisionMarkerTrained.ProbeParameters.GridSize));
+            %startIndex = 1;
+            for iRes = 1:length(VisionMarkerTrained.ProbeParameters.GridSize)
+                %res = VisionMarkerTrained.ProbeParameters.GridSize(iRes);
+                meanInfoGain(iRes) = mean(infoGain(resolution(unusedProbes) == iRes));
+                %subplot(1,length(VisionMarkerTrained.ProbeParameters.GridSize),iRes)
+                %imagesc(meanInfoGain(1)/meanInfoGain(iRes)*reshape(infoGain(startIndex:(startIndex+res^2-1)), res*[1 1])), axis image, colorbar
+                %startIndex = startIndex + res^2;
+            end
+            
+            infoGainScale = meanInfoGain / meanInfoGain(1);
+            infoGain = infoGain ./ column(infoGainScale(resolution(unusedProbes))); % note we divide b/c info gains are negative and we want to scale up, which is towards zero
+            %infoGainShift = meanInfoGain - meanInfoGain(1);
+            %infoGain = infoGain - column(infoGainShift(resolution(unusedProbes)));
+            
             
             %{
             if DEBUG_DISPLAY
@@ -686,38 +526,48 @@ end
             end
             %}
             
-            % Find all probes with the max information gain and if there
-            % are more than one, choose a random one of them
-            maxInfoGain = max(infoGain);
+            % Randomly choose from the top X fraction of the info gain
+            % (to avoid greedily always picking the max -- i.e. take a step
+            %  in the direction of random trees)
+            if ~isempty(maxInfoGainFraction)
+                [~,sortIndex] = sort(infoGain(:), 'descend');
+                
+                whichUnusedProbe = randi(ceil(maxInfoGainFraction*length(sortIndex)), 1);
+            else
             
-%             if maxInfoGain < minInfoGain
-%                 warning('Making too little progress differentiating [%s], giving up on this branch.', ...
-%                     sprintf('%s ', labelNames{labels(node.remaining)}));
-%                 %node = struct('x', -1, 'y', -1, 'whichProbe', -1);
-%                 return
-%             end
-            
-            whichUnusedProbe = find(infoGain == maxInfoGain);
-            if length(whichUnusedProbe)>1
-                % % Randomly select from those with the max score
-                % index = randperm(length(whichUnusedProbe));
-                % whichUnusedProbe = whichUnusedProbe(index(1));
+                % Find all probes with the max information gain and if there
+                % are more than one, choose a random one of them
+                maxInfoGain = max(infoGain);
                 
-                % Choose the one with the lowest edge energy since we don't
-                % want to select probes near edges if we can avoid it
-                gradMag = mean(gradMagValues(unusedProbes(whichUnusedProbe),node.remaining),2);
-                minGradMag = min(gradMag);
+                %             if maxInfoGain < minInfoGain
+                %                 warning('Making too little progress differentiating [%s], giving up on this branch.', ...
+                %                     sprintf('%s ', labelNames{labels(node.remaining)}));
+                %                 %node = struct('x', -1, 'y', -1, 'whichProbe', -1);
+                %                 return
+                %             end
                 
-                % If there are more than one with the minimum edge energy,
-                % randomly select one of them
-                minGradMagIndex = find(gradMag == minGradMag);
-                if length(minGradMagIndex) > 1
-                    index = randperm(length(minGradMagIndex));
-                    minGradMagIndex = minGradMagIndex(index(1));
-                end
-                
-                whichUnusedProbe = whichUnusedProbe(minGradMagIndex);
+                whichUnusedProbe = find(infoGain == maxInfoGain);
+                if length(whichUnusedProbe)>1
+                    % % Randomly select from those with the max score
+                    % index = randperm(length(whichUnusedProbe));
+                    % whichUnusedProbe = whichUnusedProbe(index(1));
                     
+                    % Choose the one with the lowest edge energy since we don't
+                    % want to select probes near edges if we can avoid it
+                    gradMag = mean(gradMagValues(unusedProbes(whichUnusedProbe),node.remaining),2);
+                    minGradMag = min(gradMag);
+                    
+                    % If there are more than one with the minimum edge energy,
+                    % randomly select one of them
+                    minGradMagIndex = find(gradMag == minGradMag);
+                    if length(minGradMagIndex) > 1
+                        index = randperm(length(minGradMagIndex));
+                        minGradMagIndex = minGradMagIndex(index(1));
+                    end
+                    
+                    whichUnusedProbe = whichUnusedProbe(minGradMagIndex);
+                    
+                end
             end
             
             % Choose the probe location with the highest score
@@ -725,8 +575,11 @@ end
             node.whichProbe = unusedProbes(whichUnusedProbe);
             node.x = xgrid(node.whichProbe);%-1)/workingResolution;
             node.y = ygrid(node.whichProbe);%-1)/workingResolution;
+            node.resolution = resolution(node.whichProbe);
             node.infoGain = infoGain(whichUnusedProbe);
             node.remainingLabels = sprintf('%s ', labelNames{unique(labels(node.remaining))});
+            
+            %resHist(node.resolution) = resHist(node.resolution) + 1;
             
             % Recurse left and right from this node
             goLeft = probeValues(node.whichProbe,node.remaining) < .5;
@@ -779,10 +632,10 @@ end
 end % TrainProbeTree()
 
 
-function infoGain = computeInfoGain(labels, numLabels, probeValues)
+function infoGain = computeInfoGain(labels, numLabels, probeValues, weights)
 
 % Use private mex implementation for speed
-infoGain = mexComputeInfoGain(labels, numLabels, probeValues'); % Note the transpose!
+infoGain = mexComputeInfoGain(labels, numLabels, probeValues', single(weights)); % Note the transpose!
 
 if any(isnan(infoGain(:)))
     warning('mexComputeInfoGain returned NaN values!');
@@ -795,9 +648,10 @@ return
 % compute the currentEntropy, since it's the same for all probes.  We just
 % need the probe with the lowest conditional entropy, since that will be
 % the one with the highest infoGain
-%markerProb = max(eps,hist(labels, 1:numLabels));
-%markerProb = markerProb/max(eps,sum(markerProb));
-%currentEntropy = -sum(markerProb.*log2(markerProb));
+% %markerProb = max(eps,hist(labels, 1:numLabels));
+% markerProb = max(eps, accumarray(labels(:), weights(:), [numLabels 1]));
+% markerProb = markerProb/max(eps,sum(markerProb));
+% currentEntropy = -sum(markerProb.*log2(markerProb));
 currentEntropy = 0;
 
 numProbes = size(probeValues,1);
@@ -809,8 +663,9 @@ numProbes = size(probeValues,1);
 % from any edge in any image, since those will still be closer
 % to black or white even after blurring.
 
-probeIsOff = probeValues;
-probeIsOn  = 1 - probeValues;
+W = weights(ones(numProbes,1),:);
+probeIsOff = W.*double(probeValues > 0.5);
+probeIsOn  = W.*double(~probeIsOff);
 % probeIsOn  = max(0, 1 - 2*probeValues);
 % probeIsOff = max(0, 2*probeValues - 1);
 
@@ -818,15 +673,17 @@ markerProb_on  = zeros(numProbes,numLabels);
 markerProb_off = zeros(numProbes,numLabels);
 
 for i_probe = 1:numProbes
-    markerProb_on(i_probe,:)  = max(eps, accumarray(labels(:), probeIsOn(i_probe,:)', [numLabels 1])');
+    markerProb_on(i_probe,:)  = max(eps, accumarray(labels(:), probeIsOn(i_probe,:)',  [numLabels 1])');
     markerProb_off(i_probe,:) = max(eps, accumarray(labels(:), probeIsOff(i_probe,:)', [numLabels 1])');
 end
 
 markerProb_on  = markerProb_on  ./ (sum(markerProb_on,2)*ones(1,numLabels));
 markerProb_off = markerProb_off ./ (sum(markerProb_off,2)*ones(1,numLabels));
 
-p_on = sum(probeIsOn,2)/size(probeIsOn,2);
-p_off = 1 - p_on;
+%p_on = sum(probeIsOn,2)/size(probeIsOn,2);
+%p_off = 1 - p_on;
+p_off = sum(W.*probeValues,2) / sum(weights);
+p_on  = 1 - p_off;
 
 conditionalEntropy = - (p_on.*sum(markerProb_on.*log2(max(eps,markerProb_on)), 2) + ...
     p_off.*sum(markerProb_off.*log2(max(eps,markerProb_off)), 2));
@@ -836,13 +693,4 @@ infoGain = currentEntropy - conditionalEntropy;
 end % computeInfoGain()
 
 
-function img = imreadAlphaHelper(fname)
 
-[img, ~, alpha] = imread(fname);
-img = mean(im2double(img),3);
-img(alpha < .5) = 1;
-
-threshold = (max(img(:)) + min(img(:)))/2;
-img = double(img > threshold);
-
-end % imreadAlphaHelper()

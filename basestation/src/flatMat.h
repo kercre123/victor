@@ -33,7 +33,8 @@ namespace Anki {
         // Define new mat piece types here, as static const Type:
         // (Note: don't forget to instantiate each in the .cpp file)
         static const Type LETTERS_4x4;
-        // static const ANKI_LOGO_8BIT;
+        static const Type ANKI_LOGO_8BIT;
+        static const Type LAVA_PLAYTEST;
       };
       
       FlatMat(Type type);
@@ -43,6 +44,9 @@ namespace Anki {
       virtual ObjectType GetType() const override { return _type; }
       
     protected:
+      
+      virtual void GetCanonicalUnsafeRegions(const f32 padding_mm,
+                                             std::vector<Quad3f>& regions) const override;
       
       Type _type;
       

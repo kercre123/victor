@@ -42,14 +42,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    FiducialMarkerDecisionTree VisionMarker::multiClassTree;
-
-#if USE_RED_BLACK_VERIFICATION_TREES
-    FiducialMarkerDecisionTree VisionMarker::verifyRedTree;
-    FiducialMarkerDecisionTree VisionMarker::verifyBlackTree;
-#else
-    FiducialMarkerDecisionTree VisionMarker::verificationTrees[VisionMarkerDecisionTree::NUM_MARKER_LABELS_ORIENTED];
-#endif
+    FiducialMarkerDecisionTree VisionMarker::multiClassTrees[VisionMarkerDecisionTree::NUM_TREES];
 
     bool VisionMarker::areTreesInitialized = false;
 
@@ -605,41 +598,16 @@ namespace Anki
         using namespace VisionMarkerDecisionTree;
 
         // Initialize trees on first use
-        VisionMarker::multiClassTree = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(MultiClassNodes),
-          NUM_NODES_MULTICLASS,
-          TREE_NUM_FRACTIONAL_BITS,
-          MAX_DEPTH_MULTICLASS,
-          ProbePoints_X, ProbePoints_Y,
-          NUM_PROBE_POINTS, NULL, 0);
-
-#if USE_RED_BLACK_VERIFICATION_TREES
-        VisionMarker::verifyRedTree = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(VerifyRedNodes),
-          NUM_NODES_VERIFY_RED,
-          TREE_NUM_FRACTIONAL_BITS,
-          MAX_DEPTH_VERIFY_RED,
-          ProbePoints_X, ProbePoints_Y,
-          NUM_PROBE_POINTS,
-          VerifyRedLeafLabels, NUM_LEAF_LABELS_RED);
-
-        VisionMarker::verifyBlackTree = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(VerifyBlackNodes),
-          NUM_NODES_VERIFY_BLACK,
-          TREE_NUM_FRACTIONAL_BITS,
-          MAX_DEPTH_VERIFY_BLACK,
-          ProbePoints_X, ProbePoints_Y,
-          NUM_PROBE_POINTS,
-          VerifyBlackLeafLabels, NUM_LEAF_LABELS_BLACK);
-
-#else
-        for(s32 i=0; i<NUM_MARKER_LABELS_ORIENTED; ++i)
-        {
-          VisionMarker::verificationTrees[i] = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(VerifyNodes[i]),
-            NUM_NODES_VERIFY[i],
-            TREE_NUM_FRACTIONAL_BITS,
-            MAX_DEPTH_VERIFY[i],
-            ProbePoints_X, ProbePoints_Y,
-            NUM_PROBE_POINTS);
+        for(u32 iTree = 0; iTree < NUM_TREES; ++iTree) {
+          
+          VisionMarker::multiClassTrees[iTree] = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(MultiClassNodes[iTree]),
+                                                                            NUM_NODES_MULTICLASS[iTree],
+                                                                            TREE_NUM_FRACTIONAL_BITS,
+                                                                            MAX_DEPTH_MULTICLASS[iTree],
+                                                                            ProbePoints_X, ProbePoints_Y,
+                                                                            NUM_PROBE_POINTS, NULL, 0);
         }
-#endif
+        
         VisionMarker::areTreesInitialized = true;
       } // IF trees initialized
     }
@@ -669,7 +637,7 @@ namespace Anki
 
       f32 fixedPointDivider;
 
-      const s32 numFracBits = VisionMarker::multiClassTree.get_numFractionalBits();
+      const s32 numFracBits = VisionMarker::multiClassTrees[0].get_numFractionalBits();
 
       AnkiAssert(numFracBits >= 0);
 
@@ -746,6 +714,7 @@ namespace Anki
           }
         } // FOR each probe point
 
+        /*
         brightValue = static_cast<f32>(brightAccumulator) * divisor;
         darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
         if(brightValue < minContrastRatio * darkValue) {
@@ -753,6 +722,7 @@ namespace Anki
           enoughContrast = false;
           return RESULT_OK;
         }
+         */
 
         totalBrightAccumulator += brightAccumulator;
         totalDarkAccumulator   += darkAccumulator;
@@ -867,78 +837,73 @@ namespace Anki
 
       //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
 
-      s32 tempLabel;
-      if((lastResult = VisionMarker::multiClassTree.Classify(image, homography, meanGrayvalueThreshold, tempLabel)) != RESULT_OK) {
-        return lastResult;
+      AnkiAssert(NUM_TREES <= u8_MAX);
+      u8 predictedLabelsHist[NUM_MARKER_LABELS_ORIENTED];
+      for(s32 iLabel=0; iLabel<NUM_MARKER_LABELS_ORIENTED; ++iLabel) {
+        predictedLabelsHist[iLabel] = 0;
       }
-
-      const OrientedMarkerLabel multiClassLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-
+      
+      for(s32 iTree=0; iTree < NUM_TREES; ++iTree) {
+        s32 tempLabel;
+        if((lastResult = VisionMarker::multiClassTrees[iTree].Classify(image, homography, meanGrayvalueThreshold, tempLabel)) != RESULT_OK) {
+          return lastResult;
+        }
+        AnkiAssert(tempLabel < NUM_MARKER_LABELS_ORIENTED);
+        AnkiAssert(tempLabel >= 0);
+        ++predictedLabelsHist[tempLabel];
+      }
+      
       EndBenchmark("vme_classify");
 
-      if(multiClassLabel != MARKER_UNKNOWN && multiClassLabel != MARKER_INVALID_000) {
-        BeginBenchmark("vme_verify");
-#if USE_RED_BLACK_VERIFICATION_TREES
-        bool isVerified = false;
-
-        if((lastResult = VisionMarker::verifyRedTree.Verify(image, homography, meanGrayvalueThreshold, multiClassLabel, isVerified)) != RESULT_OK) {
-          return lastResult;
+      BeginBenchmark("vme_verify");
+      // See if a majority of the trees voted for the same label
+      // TODO: use plurality of trees instead?
+      OrientedMarkerLabel labelWithMaxVotes = MARKER_UNKNOWN;
+      u8 maxVotes = 0;
+      for(s32 iLabel=0; iLabel<NUM_MARKER_LABELS_ORIENTED; ++iLabel) {
+        if(predictedLabelsHist[iLabel] > maxVotes) {
+          maxVotes = predictedLabelsHist[iLabel];
+          labelWithMaxVotes = static_cast<OrientedMarkerLabel>(iLabel);
         }
-
-        if(isVerified) {
-          if((lastResult = VisionMarker::verifyBlackTree.Verify(image, homography, meanGrayvalueThreshold, multiClassLabel, isVerified)) != RESULT_OK) {
-            return lastResult;
-          }
-        }
-
-#else
-        if((lastResult = VisionMarker::verificationTrees[multiClassLabel].Classify(image, homography, meanGrayvalueThreshold, tempLabel)) != RESULT_OK)
+      }
+      
+      AnkiConditionalErrorAndReturnValue(maxVotes>0, RESULT_FAIL, "VisionMarker.Extract.NoVotes", "No votes given to any marker label.\n")
+      AnkiConditionalErrorAndReturnValue(labelWithMaxVotes>=0, RESULT_FAIL, "VisionMarker.Extract.NoBestLabel", "No label with max votes selected.\n");
+      
+      const f32 numVotesForMajority = static_cast<f32>(NUM_TREES)*0.5f;
+      if(static_cast<f32>(maxVotes) > numVotesForMajority &&
+         labelWithMaxVotes != MARKER_INVALID_000 &&
+         labelWithMaxVotes != MARKER_UNKNOWN)
+      {
+        // We have a valid, verified classification.
+        
+        // 1. Get the unoriented type
+        this->markerType = RemoveOrientationLUT[labelWithMaxVotes];
+        
+        // 2. Reorder the original detected corners to the canonical ordering for
+        // this type
+        const Quadrilateral<f32> initQuad = this->corners;
+        for(s32 i_corner=0; i_corner<4; ++i_corner)
         {
-          return lastResult;
+          this->corners[i_corner] = initQuad[CornerReorderLUT[labelWithMaxVotes][i_corner]];
         }
-
-        const OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-        const bool isVerified = verifyLabel == multiClassLabel;
-#endif
-        EndBenchmark("vme_verify");
-
-        if(isVerified)
-        {
-          // We have a valid, verified classification.
-
-          // 1. Get the unoriented type
-          this->markerType = RemoveOrientationLUT[multiClassLabel];
-
-          // 2. Reorder the original detected corners to the canonical ordering for
-          // this type
-          const Quadrilateral<f32> initQuad = this->corners;
-          for(s32 i_corner=0; i_corner<4; ++i_corner)
-          {
-            this->corners[i_corner] = initQuad[CornerReorderLUT[multiClassLabel][i_corner]];
-          }
-
-          // 3. Keep track of what the original orientation was
-          this->observedOrientation = ObservedOrientationLUT[multiClassLabel];
-
-          // Mark this as a valid marker (note that reaching this point should
-          // be the only way isValid is true.
-          this->validity = VALID;
-        } else {
-#ifdef OUTPUT_FAILED_MARKER_STEPS
-          AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected\n");
-#endif
-          this->validity = UNVERIFIED;
-        } // if(verifyLabel == multiClassLabel)
+        
+        // 3. Keep track of what the original orientation was
+        this->observedOrientation = ObservedOrientationLUT[labelWithMaxVotes];
+        
+        // Mark this as a valid marker (note that reaching this point should
+        // be the only way isValid is true.
+        this->validity = VALID;
       } else {
-#ifdef OUTPUT_FAILED_MARKER_STEPS
-        AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected\n");
-#endif
-      } // if(multiClassLabel != MARKER_UNKNOWN)
-
-      if(this->validity != VALID) {
+#       ifdef OUTPUT_FAILED_MARKER_STEPS
+        AnkiWarn("VisionMarker::Extract", "Verify failed or UNKNOWN/INVALID marker detected.\n");
+#       endif
+        this->validity = UNVERIFIED;
         this->markerType = Vision::MARKER_UNKNOWN;
         this->corners = initQuad; // Just copy the non-reordered corners
       }
+
+      EndBenchmark("vme_verify");
 
       return lastResult;
     } // VisionMarker::Extract()
