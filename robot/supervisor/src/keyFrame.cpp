@@ -305,8 +305,8 @@ namespace Cozmo {
         }
         
         const f32 angle_rad   = GetAngleRad(static_cast<s32>(TurnInPlace.relativeAngle_deg) + angleAdj);
-        const f32 duration_ms = animStartTime_ms + relTime_ms - HAL::GetTimeStamp();
-        const f32 wheelSpeed  = (angle_rad * WHEEL_DIST_MM * 1000.f) / (duration_ms * 2.f);
+        const f32 duration_sec = (animStartTime_ms + relTime_ms - HAL::GetTimeStamp()) * 0.001f;
+        const f32 wheelSpeed  = (angle_rad * WHEEL_DIST_MM) / (duration_sec * 2.f);
 
         SteeringController::ExecuteDirectDrive(wheelSpeed, -wheelSpeed);
         
