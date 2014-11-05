@@ -101,11 +101,11 @@ RobotAdvertisementService {
 XYaxesDisplay {
 }
 DEF BeeBlock Block1x1 {
-  name "Bee"
+  name "Spider"
   translation 0.213051 0.244651 0.0219929
   rotation 0 0 1 0.05
   blockColor 0.95 0.95 0
-  markerImg "symbols/bee.png"
+  markerImg "symbols/spider.png"
 }
 
 Block1x1 {
