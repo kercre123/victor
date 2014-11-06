@@ -14,6 +14,7 @@
 
 #include <string.h>
 #include "anki/cozmo/basestation/bleComms.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
 //#import <BaseStation/baseStation.h>
 //#import <BLEManager/BLEVehicleManager.h>
 #import "BLEManager/BLEVehicleManager.h"
@@ -112,27 +113,45 @@ size_t BLEComms::RealSend(const Comms::MsgPacket &p)
     return Comms::ICOMMS_NOCONNECTION_TO_VEHICLE_ERROR;
 
   NSError *error = nil;
+  
 
+  // Copy header and data into send buffer
+  u8 sendBufSize = sizeof(RADIO_PACKET_HEADER) + 4 + p.dataLen;
+  u8 sendBuf[sendBufSize];
+  sendBuf[0] = RADIO_PACKET_HEADER[0];
+  sendBuf[1] = RADIO_PACKET_HEADER[1];
+  sendBuf[2] = p.dataLen;
+  sendBuf[3] = 0;
+  sendBuf[4] = 0;
+  sendBuf[5] = 0;
+  memcpy(sendBuf+6, p.data, p.dataLen);
+  
+  
   // Compute number of BLE packets required to send this message
-  int numPackets = p.dataLen / MAX_BLE_MSG_SIZE;
-  if (MAX_BLE_MSG_SIZE*numPackets < p.dataLen) {
+  int numPackets = sendBufSize / MAX_BLE_MSG_SIZE;
+  if (MAX_BLE_MSG_SIZE*numPackets < sendBufSize) {
     numPackets += 1;
   }
   int dataByteProgress = 0;
+  
+  
+  // Send msg
   for (int i=0; i<numPackets; ++i) {
-    if ( ![vehicleConn writeData:[NSData dataWithBytes:(p.data+dataByteProgress) length:MIN(p.dataLen-dataByteProgress,MAX_BLE_MSG_SIZE)] error:&error] ) {
+    if ( ![vehicleConn writeData:[NSData dataWithBytes:(sendBuf+dataByteProgress) length:MIN(sendBufSize-dataByteProgress,MAX_BLE_MSG_SIZE)] error:&error] ) {
       DASInfo("BTLE.SendError", "vehicleID=%d (0x%llx) error=%s", p.destId, vehicleConn.mfgID, [error.description UTF8String]);
       return Comms::ICOMMS_SEND_FAILED_ERROR;
     }
-    dataByteProgress += MAX_BLE_MSG_SIZE;
     
 #if(DEBUG_BLECOMMS)
-    printf("Packet data sent (%u): 0x", p.dataLen);
-    for (int i=0; i < p.dataLen; ++i){
-      printf("%x", p.data[i]);
+    int sentBytesThisCycle = MIN(sendBufSize-dataByteProgress,MAX_BLE_MSG_SIZE);
+    printf("Packet data sent (%u): 0x", sentBytesThisCycle);
+    for (int i=0; i < sentBytesThisCycle; ++i){
+      printf("%02x", sendBuf[dataByteProgress + i]);
     }
     printf("\n");
 #endif
+    
+    dataByteProgress += MAX_BLE_MSG_SIZE;
   }
 
   numPacketsSentThisCycle_ += numPackets;
@@ -194,7 +213,7 @@ void BLEComms::Update()
     for (int i = 0; i < vehicleMsg.msgData.length; i++) {
       currMsgPacket_.data[currMessageRecvdBytes_ + i] = origMsgBuffer[i];
       #if(DEBUG_BLECOMMS)
-      printf("%x", origMsgBuffer[i]);
+      printf("%02x", origMsgBuffer[i]);
       #endif
     }
     #if(DEBUG_BLECOMMS)
