@@ -504,13 +504,6 @@ namespace Anki
       void GetProximity(ProximityValues *prox)
       {
         static sharpID ID = IRleft;      
-        static int count = 0;
-        count++;
-        if(count == 100)
-        {
-          UARTPutString(".\r\n");
-          count = 0;
-        }
         
         // Only continue if we are robot #2;
         if (*(int*)(0x1FFF7A10) != 0x001d001d )
