@@ -107,17 +107,19 @@ int main(int argc, char **argv)
         std::vector<u64> advertisingRobotMfgIDs;
         if (robotBLEManager.GetAdvertisingRobotMfgIDs(advertisingRobotMfgIDs) > 0) {
           
-          printf("RobotBLEComms: %ld advertising robots found.\n", advertisingRobotMfgIDs.size());
+          printf("RobotBLEComms: %ld advertising robots found:", advertisingRobotMfgIDs.size());
           
           // Look for specific robot we're trying to connect to
           bool robotFound = false;
           int advertisingRobotIdx = 0;
           for (advertisingRobotIdx = 0; advertisingRobotIdx<advertisingRobotMfgIDs.size(); ++advertisingRobotIdx) {
+            printf(" %llx ", advertisingRobotMfgIDs[advertisingRobotIdx]);
             if (advertisingRobotMfgIDs[advertisingRobotIdx] == COZMO_BLE_UUID) {
               robotFound = true;
               break;
             }
           }
+          printf("\n");
           if (!robotFound) {
             continue;
           }
