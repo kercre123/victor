@@ -12,8 +12,6 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include <stdio.h>
-#include <string>
 
 #include "anki/messaging/shared/utilMessaging.h"
 
@@ -104,11 +102,11 @@ namespace Anki {
           const int headerSize = sizeof(RADIO_PACKET_HEADER);
           
           // Look for valid header
-          char* hPtr = NULL;
-          for(int i = 0; i < recvBufSize_; ++i) {
+          u8* hPtr = NULL;
+          for(int i = 0; i < recvBufSize_-1; ++i) {
             if (recvBuf_[i] == RADIO_PACKET_HEADER[0]) {
               if (recvBuf_[i+1] == RADIO_PACKET_HEADER[1]) {
-                hPtr = (char*)&(recvBuf_[i]);
+                hPtr = &(recvBuf_[i]);
                 break;
               }
             }
