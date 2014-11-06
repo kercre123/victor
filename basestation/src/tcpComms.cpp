@@ -231,7 +231,17 @@ namespace Cozmo {
       // Look for valid header
       while (c.recvDataSize >= sizeof(RADIO_PACKET_HEADER)) {
         
-        char* hPtr = std::strstr((char*)c.recvBuf,(char*)RADIO_PACKET_HEADER);
+        // Look for 0xBEEF
+        char* hPtr = NULL;
+        for(int i = 0; i < c.recvDataSize; ++i) {
+          if (c.recvBuf[i] == RADIO_PACKET_HEADER[0]) {
+            if (c.recvBuf[i+1] == RADIO_PACKET_HEADER[1]) {
+              hPtr = (char*)&(c.recvBuf[i]);
+              break;
+            }
+          }
+        }
+        
         if (hPtr == NULL) {
           // Header not found at all
           // Delete everything
