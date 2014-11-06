@@ -76,6 +76,17 @@ namespace Anki {
       else {
         const u8 msgID = packet.data[0];
         
+        // Check for invalid msgID
+        if (msgID >= NUM_MSG_IDS || msgID == 0) {
+          PRINT_NAMED_ERROR("MessageHandler.InvalidMsgId",
+                            "Received msgID is invalid (Msg %d, MaxValidID %d)\n",
+                            msgID,
+                            NUM_MSG_IDS
+                            );
+          return RESULT_FAIL;
+        }
+        
+        // Check that the msg size matches expected size
         if(lookupTable_[msgID].size != packet.dataLen-1) {
           PRINT_NAMED_ERROR("MessageHandler.MessageBufferWrongSize",
                             "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)\n",
