@@ -322,6 +322,11 @@ namespace AnimationController {
                                        "AnimationController.ClearCannedAnimation.InvalidAnimationID",
                                        "Out-of-range animation ID = %d\n", whichAnimation);
     
+    if(_currAnimID == whichAnimation) {
+      // Don't try to clear an animation that's currently playing
+      Stop();
+    }
+    
     _cannedAnimations[whichAnimation].Clear();
     _cannedAnimations[whichAnimation].SetID(whichAnimation);
     
