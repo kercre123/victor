@@ -1092,7 +1092,7 @@ namespace Anki
 
 #else
       AnkiError("VisionMarkerImages::VisionMarkerImages", "OpenCV is required to load files");
-#endif // #if ANKI_EMBEDDED_USE_OPENCV ... #else
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV ... #else
 
       this->isValid = true;
     }

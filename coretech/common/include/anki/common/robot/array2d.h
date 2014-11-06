@@ -143,8 +143,8 @@ namespace Anki
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       const cv::Mat cvImage = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
 
-      AnkiConditionalErrorAndReturnValue(cvImage.cols >= 0 && cvImage.rows >= 0,
-        newArray, "Array<Type>::LoadImage", "Invalid size");
+      AnkiConditionalErrorAndReturnValue(cvImage.cols > 0 && cvImage.rows > 0,
+        newArray, "Array<Type>::LoadImage", "Could not load image");
 
       newArray = Array<Type>(cvImage.rows, cvImage.cols, memory);
 

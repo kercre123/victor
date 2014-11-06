@@ -285,11 +285,11 @@ static Result ComputeLKUpdate(
       const Point<f32> nextPointShiftedF32 = pNextPts[ptidx] - halfWin;
       Point<s32> nextPointShiftedS32;
 
-      nextPointShiftedS32.x = static_cast<s32>(floorf((nextPointShiftedF32.x)));
-      nextPointShiftedS32.y = static_cast<s32>(floorf((nextPointShiftedF32.y)));
+      nextPointShiftedS32.x = Round<s32>(nextPointShiftedF32.x);
+      nextPointShiftedS32.y = Round<s32>(nextPointShiftedF32.y);
 
-      if( nextPointShiftedS32.x < -windowWidth || nextPointShiftedS32.x >= imageHeight ||
-        nextPointShiftedS32.y < -windowHeight || nextPointShiftedS32.y >= imageWidth )
+      if( nextPointShiftedS32.x < 0 || nextPointShiftedS32.x >= (imageWidth-windowWidth) ||
+        nextPointShiftedS32.y < 0 || nextPointShiftedS32.y >= (imageHeight-windowHeight) )
       {
         pStatus[ptidx] = false;
         continue;

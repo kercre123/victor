@@ -10,7 +10,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 //#define RUN_PC_ONLY_TESTS
-#define RUN_HIGH_MEMORY_TESTS
+//#define RUN_HIGH_MEMORY_TESTS
 //#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
@@ -33,6 +33,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/cameraImagingPipeline.h"
 #include "anki/vision/robot/opencvLight_vision.h"
 #include "anki/vision/robot/features.h"
+#include "anki/vision/robot/recognize.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -60,6 +61,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <iostream>
 #include <fstream>
 #include "opencv2/video/tracking.hpp"
+#include "opencv2/contrib/contrib.hpp"
 #endif
 
 using namespace Anki;
@@ -70,11 +72,486 @@ using namespace Anki::Embedded;
 static char hugeBuffer[HUGE_BUFFER_SIZE];
 #endif
 
-//#define RUN_FACE_DETECTION_GUI
-
 #if !defined(JUST_FIDUCIAL_DETECTION)
 
-#ifdef RUN_PC_ONLY_TESTS
+#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+static Result FaceRecognizer_LoadTrainingImages(
+  FixedLengthList<Array<u8> > &trainingImages,
+  FixedLengthList<Rectangle<s32> > &faceLocations,
+  std::vector<int> &trainingLabels,
+  std::vector<std::string> &trainingLabelNames,
+  MemoryStack scratch, MemoryStack &memory)
+{
+  const s32 faceRecognizer_numTrainingImages = 8;
+
+  char * faceRecognizer_trainingImageFilenames[faceRecognizer_numTrainingImages] = {
+    "C:/tmp/faces320/andrew1.jpg",
+    "C:/tmp/faces320/andrew2.jpg",
+    "C:/tmp/faces320/bryan1.jpg",
+    "C:/tmp/faces320/bryan2.jpg",
+    "C:/tmp/faces320/kevin1.jpg",
+    "C:/tmp/faces320/kevin2.jpg",
+    "C:/tmp/faces320/peter1.jpg",
+    "C:/tmp/faces320/peter2.jpg"};
+
+  const s32 numLabelNames = 4;
+  const char * faceRecognizer_labelNames[numLabelNames] = {"Andrew", "Bryan", "Kevin", "Peter"};
+
+  const s32 faceRecognizer_trainingLabels_data[faceRecognizer_numTrainingImages] = {0, 0, 1, 1, 2, 2, 3, 3};
+
+  trainingImages = FixedLengthList<Array<u8> >(faceRecognizer_numTrainingImages, memory, Flags::Buffer(true, false, true));
+  faceLocations = FixedLengthList<Rectangle<s32> >(faceRecognizer_numTrainingImages, memory, Flags::Buffer(true, false, true));
+
+  AnkiConditionalErrorAndReturnValue(AreValid(trainingImages, faceLocations),
+    RESULT_FAIL, "FaceRecognizer_LoadTrainingImages", "Image error");
+
+  AnkiConditionalErrorAndReturnValue(NotAliased(scratch, memory),
+    RESULT_FAIL, "FaceRecognizer_LoadTrainingImages", "Aliased");
+
+  // TODO: are these const casts okay?
+  const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
+  const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+
+  const double scaleFactor = 1.1;
+  const int minNeighbors = 2;
+  const s32 minHeight = 30;
+  const s32 minWidth = 30;
+  const s32 trainingWidth = 64;
+  const bool useHistogramPreprocess = false;
+
+  trainingLabels.clear();
+  trainingLabelNames.clear();
+
+  for(s32 iFace=0; iFace<faceRecognizer_numTrainingImages; iFace++) {
+    trainingImages[iFace] = Array<u8>::LoadImage(faceRecognizer_trainingImageFilenames[iFace], memory);
+
+    AnkiConditionalErrorAndReturnValue(trainingImages[iFace].IsValid(),
+      RESULT_FAIL, "FaceRecognizer_LoadTrainingImages", "Image error");
+
+    cv::Mat_<u8> arrayCopy;
+    ArrayToCvMat(trainingImages[iFace], &arrayCopy);
+
+    //// Preprocess
+    //if(useHistogramPreprocess) {
+    //  // Histogram preprocess
+    //  cv::equalizeHist(arrayCopy, arrayCopy);
+    //} else {
+    //  // DoG preprocess
+    //  cv::Mat_<u8> dog1(arrayCopy.rows, arrayCopy.cols);
+    //  cv::Mat_<u8> dog2(arrayCopy.rows, arrayCopy.cols);
+
+    //  cv::GaussianBlur(arrayCopy, dog1, cv::Size(7,7), 1.0);
+    //  cv::GaussianBlur(arrayCopy, dog2, cv::Size(13,13), 2.0);
+
+    //  for(s32 i=0; i<arrayCopy.rows*arrayCopy.cols; i++) {
+    //    arrayCopy.data[i] = (static_cast<s32>(dog1.data[i]) - static_cast<s32>(dog2.data[i]) + 255) >> 1;
+    //  }
+    //}
+
+    trainingLabels.push_back(faceRecognizer_trainingLabels_data[iFace]);
+  }
+
+  for(s32 i=0; i<numLabelNames; i++) {
+    trainingLabelNames.push_back(std::string(faceRecognizer_labelNames[i]));
+  }
+
+  {
+    PUSH_MEMORY_STACK(memory);
+
+    Classifier::CascadeClassifier_LBP cc(
+      lbpcascade_frontalface_isStumpBased,
+      lbpcascade_frontalface_stageType,
+      lbpcascade_frontalface_featureType,
+      lbpcascade_frontalface_ncategories,
+      lbpcascade_frontalface_origWinHeight,
+      lbpcascade_frontalface_origWinWidth,
+      stages,
+      classifiers,
+      nodes,
+      leaves,
+      subsets,
+      featureRectangles,
+      memory);
+
+    const s32 MAX_CANDIDATES = 5000;
+
+    FixedLengthList<Rectangle<s32> > detectedFaces(MAX_CANDIDATES, memory);
+
+    for(s32 iFace=0; iFace<faceRecognizer_numTrainingImages; iFace++) {
+      detectedFaces.Clear();
+
+      const Result result = cc.DetectMultiScale(
+        trainingImages[iFace],
+        static_cast<f32>(scaleFactor),
+        minNeighbors,
+        minHeight, minWidth,
+        trainingImages[iFace].get_size(0), trainingImages[iFace].get_size(1),
+        detectedFaces,
+        scratch,
+        memory);
+
+      AnkiConditionalErrorAndReturnValue(detectedFaces.get_size() == 1,
+        RESULT_FAIL, "FaceRecognizer_LoadTrainingImages", "Only one face should be detected");
+
+      //Rectangle<f32> detectedFaceF32(static_cast<f32>(detectedFaces[0].left), static_cast<f32>(detectedFaces[0].right), static_cast<f32>(detectedFaces[0].top), static_cast<f32>(detectedFaces[0].bottom));
+
+      faceLocations[iFace] = detectedFaces[0];
+    }
+  }
+
+  return RESULT_OK;
+}
+#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+
+#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  //FixedLengthList<Array<u8> > trainingImages(faceRecognizer_numTrainingImages, scratchHuge, Flags::Buffer(true, false, true));
+
+  //std::vector<int> cvTrainingLabels(&faceRecognizer_trainingLabels_data[0], &faceRecognizer_trainingLabels_data[0]+faceRecognizer_numTrainingImages);
+
+  //FixedLengthList<Rectangle<s32> > detectedFaces(MAX_CANDIDATES, scratchOffchip);
+
+  // TODO: are these const casts okay?
+  const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
+  const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+
+  Classifier::CascadeClassifier_LBP cc(
+    lbpcascade_frontalface_isStumpBased,
+    lbpcascade_frontalface_stageType,
+    lbpcascade_frontalface_featureType,
+    lbpcascade_frontalface_ncategories,
+    lbpcascade_frontalface_origWinHeight,
+    lbpcascade_frontalface_origWinWidth,
+    stages,
+    classifiers,
+    nodes,
+    leaves,
+    subsets,
+    featureRectangles,
+    scratchCcm);
+
+  const double scaleFactor = 1.1;
+  const int minNeighbors = 2;
+  const s32 minHeight = 30;
+  const s32 minWidth = 30;
+  const s32 trainingWidth = 64;
+
+  cv::Ptr<cv::FaceRecognizer> model = cv::createLBPHFaceRecognizer();
+  //cv::Ptr<cv::FaceRecognizer> model = cv::createFisherFaceRecognizer();
+  std::vector<cv::Mat> cvTrainingImages;
+
+  //const bool showImages = false;
+  const bool showImages = true;
+
+  FixedLengthList<Array<u8> > trainingImages;
+  FixedLengthList<Rectangle<s32> > faceLocations;
+  std::vector<int> trainingLabels;
+  std::vector<std::string> trainingLabelNames;
+
+  ASSERT_TRUE(FaceRecognizer_LoadTrainingImages(trainingImages, faceLocations, trainingLabels, trainingLabelNames, scratchOffchip, scratchHuge) == RESULT_OK);
+
+  for(s32 iFace=0; iFace<trainingImages.get_size(); iFace++) {
+    //trainingImages[iFace].Show("face", true);
+
+    Array<u8> clippedImage(faceLocations[iFace].get_height()+1, faceLocations[iFace].get_width()+1, scratchHuge);
+    clippedImage(0,-1,0,-1).Set(trainingImages[iFace](faceLocations[iFace].top, faceLocations[iFace].bottom, faceLocations[iFace].left, faceLocations[iFace].right));
+
+    {
+      cv::Mat_<u8> arrayCopy;
+      ArrayToCvMat(clippedImage, &arrayCopy);
+      cv::Mat_<u8> arrayCopyResized = cvCreateMat(trainingWidth, trainingWidth, CV_8U);
+      cv::resize(arrayCopy, arrayCopyResized, arrayCopyResized.size());
+      cvTrainingImages.push_back(arrayCopyResized);
+    }
+
+    if(showImages) {
+      printf("%d) ", iFace);
+      faceLocations[iFace].Print();
+
+      cv::Mat_<u8> arrayCopy;
+      ArrayToCvMat(trainingImages[iFace], &arrayCopy);
+
+      cv::Point center( Round<s32>((faceLocations[iFace].left + faceLocations[iFace].right)*0.5), Round<s32>((faceLocations[iFace].top + faceLocations[iFace].bottom)*0.5) );
+      cv::ellipse( arrayCopy, center, cv::Size( Round<s32>((faceLocations[iFace].right-faceLocations[iFace].left)*0.5), Round<s32>((faceLocations[iFace].bottom-faceLocations[iFace].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
+
+      cv::imshow("detect", arrayCopy);
+      clippedImage.Show("clippedImage", false);
+      cv::waitKey();
+    } // if(showImages)
+  } // for(s32 iFace=0; iFace<faceRecognizer_numTrainingImages; iFace++)
+
+  //for(s32 iFace=0; iFace<faceRecognizer_numTrainingImages; iFace++) {
+  //  cv::imshow("detect", cvTrainingImages[iFace]);
+  //  cv::waitKey();
+  //}
+
+  model->train(cvTrainingImages, trainingLabels);
+
+  model->save("c:/tmp/recognizer.yml");
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
+#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+
+#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
+{
+  const s32 trainingWidth = 64;
+
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchHuge(&hugeBuffer[0], HUGE_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
+
+  FixedLengthList<Array<u8> > trainingImages;
+  FixedLengthList<Rectangle<s32> > trainingFaceLocations;
+  std::vector<int> trainingLabels;
+  std::vector<std::string> trainingLabelNames;
+  ASSERT_TRUE(FaceRecognizer_LoadTrainingImages(trainingImages, trainingFaceLocations, trainingLabels, trainingLabelNames, scratchOffchip, scratchHuge) == RESULT_OK);
+
+  cv::Ptr<cv::FaceRecognizer> model = cv::createLBPHFaceRecognizer();
+  //cv::Ptr<cv::FaceRecognizer> model = cv::createFisherFaceRecognizer();
+
+  model->load("c:/tmp/recognizer.yml");
+
+  cv::Mat cvImage;
+
+  const s32 MAX_CANDIDATES = 5000;
+
+  FixedLengthList<Rectangle<s32> > detectedFaces(MAX_CANDIDATES, scratchOffchip);
+
+  // TODO: are these const casts okay?
+  const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
+  const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+
+  Classifier::CascadeClassifier_LBP cc(
+    lbpcascade_frontalface_isStumpBased,
+    lbpcascade_frontalface_stageType,
+    lbpcascade_frontalface_featureType,
+    lbpcascade_frontalface_ncategories,
+    lbpcascade_frontalface_origWinHeight,
+    lbpcascade_frontalface_origWinWidth,
+    stages,
+    classifiers,
+    nodes,
+    leaves,
+    subsets,
+    featureRectangles,
+    scratchCcm);
+
+  const double scaleFactor = 1.1;
+  const int minNeighbors = 2;
+  const s32 minHeight = 30;
+  const s32 minWidth = 30;
+
+  const f32 eyeQualityThreshold = 1.0f / 5000.0f; //< A value between about 2000 to 5000 is good
+
+  Array<u8> faceImage = Array<u8>::LoadImage("C:/tmp/faces320/peter2.jpg", scratchHuge);
+
+  cv::CascadeClassifier eyeCascade;
+  /*ASSERT_TRUE(eyeCascade.load("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml"));*/
+  ASSERT_TRUE(eyeCascade.load("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_eye.xml"));
+
+  cv::VideoCapture cap(0);
+  while ( cap.isOpened() ) {
+    PUSH_MEMORY_STACK(scratchHuge);
+
+    cv::Mat_<u8> cvImageGray;
+
+    //const bool useSavedImage = true;
+    const bool useSavedImage = false;
+    if(!useSavedImage) {
+      cap >> cvImage;
+
+      if(cvImage.empty())
+        break;
+
+      cv::Mat_<u8> cvImageSmall(240,320);
+
+      cvtColor(cvImage, cvImageGray, CV_BGRA2GRAY);
+
+      cv::resize(cvImageGray, cvImageSmall, cvImageSmall.size());
+
+      cvImageGray = cvImageSmall;
+
+      cv::equalizeHist(cvImageGray, cvImageGray);
+    } else {
+      ArrayToCvMat(faceImage, &cvImageGray);
+      cv::equalizeHist(cvImageGray, cvImageGray);
+    }
+
+    Array<u8> image(cvImageGray.rows, cvImageGray.cols, scratchHuge);
+
+    image.Set(cvImageGray);
+
+    const Result result = cc.DetectMultiScale(
+      image,
+      static_cast<f32>(scaleFactor),
+      minNeighbors,
+      minHeight, minWidth,
+      image.get_size(0), image.get_size(1),
+      detectedFaces,
+      scratchOffchip,
+      scratchHuge);
+
+    cv::Mat_<u8> arrayCopy;
+    ArrayToCvMat(image, &arrayCopy);
+
+    cv::Mat arrayCopyColor = cvCreateMat(arrayCopy.rows, arrayCopy.cols, CV_8UC3);
+
+    std::vector<cv::Mat> channels;
+    channels.push_back(arrayCopy);
+    channels.push_back(arrayCopy);
+    channels.push_back(arrayCopy);
+    cv::merge(channels, arrayCopyColor);
+
+    if(detectedFaces.get_size() > 0) {
+      for( s32 iFace = 0; iFace < detectedFaces.get_size(); iFace++ ) {
+        //for( s32 iFace = 1; iFace < 2; iFace++ ) {
+        //std::vector<cv::Rect> detectedEyes;
+        //s32 leftEyeIndex;
+        //s32 rightEyeIndex;
+        //f32 eyeQuality;
+        s32 faceId;
+        f64 confidence;
+
+        //const Result result = Recognize::RecognizeFace(
+        //  image,
+        //  detectedFaces[iFace],
+        //  eyeCascade,
+        //  eyeQualityThreshold,
+        //  detectedEyes,
+        //  leftEyeIndex,
+        //  rightEyeIndex,
+        //  eyeQuality,
+        //  faceId,
+        //  confidence);
+
+        const Result result = Recognize::RecognizeFace(
+          image,
+          detectedFaces[iFace],
+          trainingImages,
+          trainingFaceLocations,
+          faceId,
+          confidence,
+          scratchHuge);
+
+        ASSERT_TRUE(result == RESULT_OK);
+
+        cv::Point center( Round<s32>((detectedFaces[iFace].left + detectedFaces[iFace].right)*0.5), Round<s32>((detectedFaces[iFace].top + detectedFaces[iFace].bottom)*0.5) );
+        cv::ellipse( arrayCopyColor, center, cv::Size( Round<s32>((detectedFaces[iFace].right-detectedFaces[iFace].left)*0.5), Round<s32>((detectedFaces[iFace].bottom-detectedFaces[iFace].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
+
+        //for(s32 iEye=0; iEye<detectedEyes.size(); iEye++) {
+        //  //printf("eye (%d,%d) %d %d\n", detectedEyes[iEye].x, detectedEyes[iEye].y, detectedEyes[iEye].width, detectedEyes[iEye].height);
+        //  cv::Rect shiftedRect(detectedEyes[iEye].x, detectedEyes[iEye].y, detectedEyes[iEye].width, detectedEyes[iEye].height);
+
+        //  if(iEye == leftEyeIndex || iEye == rightEyeIndex) {
+        //    if(eyeQuality > eyeQualityThreshold) {
+        //      cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(0,255,0), 3);
+        //    } else {
+        //      cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(0,0,255), 3);
+        //    }
+        //  } else {
+        //    cv::rectangle(arrayCopyColor, shiftedRect, cv::Scalar(255,255,255), 1);
+        //  }
+        //}
+
+        Array<u8> clippedImage(detectedFaces[iFace].get_height()+1, detectedFaces[iFace].get_width()+1, scratchHuge);
+        clippedImage(0,-1,0,-1).Set(image(detectedFaces[iFace].top, detectedFaces[iFace].bottom, detectedFaces[iFace].left, detectedFaces[iFace].right));
+
+        cv::Mat_<u8> cvClippedImage;
+        ArrayToCvMat(clippedImage, &cvClippedImage);
+
+        s32 predictedLabel;
+        //f64 confidence;
+
+        cv::Mat_<u8> cvClippedImageResized = cvCreateMat(trainingWidth, trainingWidth, CV_8U);
+        cv::resize(cvClippedImage, cvClippedImageResized, cvClippedImageResized.size());
+
+        model->predict(cvClippedImageResized, predictedLabel, confidence);
+
+        char text[1024];
+        snprintf(text, 1024, "%s %0.0f", trainingLabelNames[predictedLabel].data(), confidence);
+        //snprintf(text, 1024, "%f", eyeQuality);
+
+        //printf("Predicted label: %d %s %f\n", predictedLabel, faceRecognizer_labelNames[predictedLabel], confidence);
+
+        cv::putText(arrayCopyColor, text, cv::Point((detectedFaces[iFace].left + detectedFaces[iFace].right)/2, (detectedFaces[iFace].top + detectedFaces[iFace].bottom)/2), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(255, 255, 255));
+      } // for( s32 i = 0; i < detectedFaces.get_size(); i++ )
+    } // if(detectedFaces.get_size() > 0)
+
+    cv::imshow("detect", arrayCopyColor);
+
+    //image.Show("image", false);
+
+    cv::waitKey(30);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
+#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
+
+GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  const s32 downsamplePower = 4;
+  const s32 upsamplePower = 4;
+
+  const Array<u8> in(240, 320, const_cast<u8*>(&cozmo_date2014_04_10_time16_15_40_frame0[0]), 320*240, Flags::Buffer(false, false, true)); // = Array<u8>::LoadImage("C:/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_36_frame0.png", scratchHuge);
+
+  Array<u8> inSmall(in.get_size(0)>>downsamplePower, in.get_size(1)>>downsamplePower, scratchOffchip);
+
+  InitBenchmarking();
+
+  BeginBenchmark("UpsampleByPowerOfTwoBilinear_DownsampleByPowerOfTwo");
+  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in, downsamplePower, inSmall, scratchOffchip);
+  EndBenchmark("UpsampleByPowerOfTwoBilinear_DownsampleByPowerOfTwo");
+
+  Array<u8> out(inSmall.get_size(0)<<upsamplePower, inSmall.get_size(1)<<upsamplePower, scratchOffchip);
+
+  BeginBenchmark("UpsampleByPowerOfTwoBilinear_UpsampleByPowerOfTwoBilinear");
+  const Result result = ImageProcessing::UpsampleByPowerOfTwoBilinear<upsamplePower>(inSmall, out, scratchOffchip);
+  EndBenchmark("UpsampleByPowerOfTwoBilinear_UpsampleByPowerOfTwoBilinear");
+
+  //matlab.PutArray(inSmall, "inSmall");
+  //matlab.PutArray(out, "out");
+  //matlab.EvalStringEcho("outB = imresize(inSmall, size(inSmall)*%d, 'bilinear', 'Antialiasing', false); close all; imshows(2*out, 2*outB, 'maximize');", 1<<upsamplePower);
+  //in.Show("in", false);
+  //out.Show("out", true);
+
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
+
+#ifdef RUN_HIGH_MEMORY_TESTS
 GTEST_TEST(CoreTech_Vision, KLT)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -84,11 +561,23 @@ GTEST_TEST(CoreTech_Vision, KLT)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
 
-  const Array<u8> image1 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame23.png", scratchHuge);
-  const Array<u8> image2 = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame24.png", scratchHuge);
+  const Array<u8> image1(240, 320, const_cast<u8*>(&cozmo_date2014_01_29_time11_41_05_frame10_320x240[0]), 320*240, Flags::Buffer(false, false, true)); // = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame23.png", scratchHuge);
+  const Array<u8> image2(240, 320, const_cast<u8*>(&cozmo_date2014_01_29_time11_41_05_frame12_320x240[0]), 320*240, Flags::Buffer(false, false, true)); // = Array<u8>::LoadImage("Z:/Box Sync/Cozmo SE/systemTestImages_all/cozmo_date2014_01_23_time15_02_46_frame24.png", scratchHuge);
 
   ASSERT_TRUE(AreValid(image1, image2));
 
+  const s32 numPyramidLevels = 2;
+  const s32 maxCorners = 100;
+  const f32 qualityLevel = 0.1f;
+  const int blockSize = 11;
+  const double harrisK = 0.04;
+  const f32 minEigThreshold = 0.001f;
+  const s32 windowWidth = 11;
+  const s32 termination_maxCount = 20;
+  const f32 termination_epsilon = 0.3f;
+
+  //#define TEST_OPENCV_KLT
+#ifdef TEST_OPENCV_KLT
   cv::Mat image1Cv;
   cv::Mat image2Cv;
 
@@ -97,28 +586,28 @@ GTEST_TEST(CoreTech_Vision, KLT)
 
   std::vector<cv::Point2f> pointsCv[2];
 
-  const s32 maxCorners = 10;
-  const f32 qualityLevel = 0.3f;
-  const int blockSize = 11;
-  const double harrisK = 0.04;
-
   std::vector<cv::Point2f> cornersCv;
   cv::goodFeaturesToTrack(image1Cv, pointsCv[0], maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
 
-  cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
+  cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, termination_maxCount, termination_epsilon);
 
-  cv::Size winSize(31,31);
+  cv::Size winSize(windowWidth,windowWidth);
 
   std::vector<uchar> statusCv;
   std::vector<float> errCv;
 
-  const s32 numPyramidLevels = 3;
-  const f32 minEigThreshold = 0.001f;
-
   calcOpticalFlowPyrLK(image1Cv, image2Cv, pointsCv[0], pointsCv[1], statusCv, errCv, winSize, numPyramidLevels, termcrit, 0, minEigThreshold);
+#endif // #ifdef TEST_OPENCV_KLT
 
+  InitBenchmarking();
+
+  BeginBenchmark("KLT_Pyramid");
   FixedLengthList<Array<u8> > pyramid1 = ImageProcessing::BuildPyramid<u8,u32,u8>(image1, numPyramidLevels, scratchHuge);
+  EndBenchmark("KLT_Pyramid");
+
+  BeginBenchmark("KLT_Pyramid");
   FixedLengthList<Array<u8> > pyramid2 = ImageProcessing::BuildPyramid<u8,u32,u8>(image2, numPyramidLevels, scratchHuge);
+  EndBenchmark("KLT_Pyramid");
 
   ASSERT_TRUE(pyramid1.IsValid());
   ASSERT_TRUE(pyramid2.IsValid());
@@ -133,10 +622,12 @@ GTEST_TEST(CoreTech_Vision, KLT)
   //pyramid2[2].Show("p2 2", false, false);
   //pyramid2[3].Show("p2 3", true, false);
 
+  BeginBenchmark("KLT_GoodFeaturesToTrack");
   const s32 numPointsMax = 50000;
   FixedLengthList<Point<s16> > points1S16(numPointsMax, scratchHuge);
   FixedLengthList<Point<f32> > points1F32(numPointsMax, scratchHuge);
   const Result gftResult = Features::GoodFeaturesToTrack(image1, points1S16, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
+  EndBenchmark("KLT_GoodFeaturesToTrack");
 
   ASSERT_TRUE(gftResult == RESULT_OK);
 
@@ -150,28 +641,33 @@ GTEST_TEST(CoreTech_Vision, KLT)
   FixedLengthList<bool> status(numPointsMax, scratchHuge);
   FixedLengthList<f32> err(numPointsMax, scratchHuge);
 
+  BeginBenchmark("KLT_CalcOpticalFlowPyrLK");
+
   const Result kltResult = TemplateTracker::CalcOpticalFlowPyrLK(
     pyramid1, pyramid2,
     points1F32, points2F32,
     status, err,
-    winSize.height, winSize.width,
-    termcrit.maxCount, static_cast<f32>(termcrit.epsilon),
+    windowWidth, windowWidth,
+    termination_maxCount, termination_epsilon,
     minEigThreshold,
     false,
     scratchHuge);
 
+  EndBenchmark("KLT_CalcOpticalFlowPyrLK");
+
+#ifdef TEST_OPENCV_KLT
   {
     Matlab matlab(false);
     matlab.PutArray(image1, "image1");
     matlab.PutArray(image2, "image2");
 
-    matlab.EvalString("points1 = zeros(0,2); points2 = zeros(0,2); points1Cv = zeros(0,2); points2Cv = zeros(0,2);");
+    matlab.EvalString("points1 = zeros(0,2); points2 = zeros(0,4); points1Cv = zeros(0,2); points2Cv = zeros(0,2);");
     for(s32 i=0; i<points1F32.get_size(); i++) {
       matlab.EvalString("points1(end+1,:) = [%f,%f];", points1F32[i].x, points1F32[i].y);
     }
 
     for(s32 i=0; i<points2F32.get_size(); i++) {
-      matlab.EvalString("points2(end+1,:) = [%f,%f];", points2F32[i].x, points2F32[i].y);
+      matlab.EvalString("points2(end+1,:) = [%f,%f,%d,%f];", points2F32[i].x, points2F32[i].y, status[i], err[i]);
     }
 
     for(s32 i=0; i<pointsCv[0].size(); i++) {
@@ -182,22 +678,28 @@ GTEST_TEST(CoreTech_Vision, KLT)
       matlab.EvalString("points2Cv(end+1,:) = [%f,%f];", pointsCv[1][i].x, pointsCv[1][i].y);
     }
 
-    matlab.EvalString("figure(1); hold off; imshow(image1); hold on; scatter(points1(:,1), points1(:,2), 'r+');");
-    matlab.EvalString("figure(2); hold off; imshow(image2); hold on; scatter(points2(:,1), points2(:,2), 'r+');");
-    matlab.EvalString("figure(3); hold off; imshow(image1); hold on; scatter(points1Cv(:,1), points1Cv(:,2), 'r+');");
+    matlab.EvalString("figure(1); hold off; imshow(image1); hold on; scatter(points1(:,1), points1(:,2), 'g+');");
+    matlab.EvalString("figure(2); hold off; imshow(image2); hold on; scatter(points2(points2(:,4)<10, 1), points2(points2(:,4)<10,2), 'g+'); scatter(points2(points2(:,4)>=10, 1), points2(points2(:,4)>=10,2), 'r+');");
+    matlab.EvalString("figure(3); hold off; imshow(image1); hold on; scatter(points1Cv(:,1), points1Cv(:,2), 'g+');");
     matlab.EvalString("figure(4); hold off; imshow(image2); hold on; scatter(points2Cv(:,1), points2Cv(:,2), 'r+');");
   }
+#endif // #ifdef TEST_OPENCV_KLT
 
-  points1F32.Print("points1F32");
-  points2F32.Print("points2F32");
-  status.Print("status");
-  err.Print("err");
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+
+  //points1F32.Print("points1F32");
+  //points2F32.Print("points2F32");
+  //status.Print("status");
+  //err.Print("err");
+
+  ASSERT_TRUE(points1F32.get_size() == 72);
+  ASSERT_TRUE(points2F32.get_size() == 72);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, KLT)
-#endif // #ifdef RUN_PC_ONLY_TESTS
+#endif // #ifdef RUN_HIGH_MEMORY_TESTS
 
-#ifdef RUN_PC_ONLY_TESTS
+#ifdef RUN_HIGH_MEMORY_TESTS
 GTEST_TEST(CoreTech_Vision, Harris)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -207,18 +709,18 @@ GTEST_TEST(CoreTech_Vision, Harris)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip, scratchHuge));
 
-  const char * imageFilename = "Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png";
-  Array<u8> image = Array<u8>::LoadImage(imageFilename, scratchOffchip);
+  const Array<u8> image(240, 320, const_cast<u8*>(simpleFiducials_320x240), 320*240); // = Array<u8>::LoadImage("Z:/Documents/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_38_frame0.png", scratchOffchip);
   Array<f32> harrisImage(image.get_size(0), image.get_size(1), scratchOffchip);
 
   ASSERT_TRUE(AreValid(image, harrisImage));
 
+  const int blockSize = 11;
+  const double harrisK = 0.04;
+
+#ifdef TEST_OPENCV_HARRIS
   cv::Mat_<u8> imageCv;
 
   ArrayToCvMat<u8>(image, &imageCv);
-
-  const int blockSize = 11;
-  const double harrisK = 0.04;
 
   cv::Mat_<f32> harrisImageCv;
   cv::cornerHarris(imageCv, harrisImageCv, blockSize, 3, harrisK, cv::BORDER_DEFAULT);
@@ -226,21 +728,32 @@ GTEST_TEST(CoreTech_Vision, Harris)
   matlab.PutOpencvMat(imageCv, "imageCv");
   matlab.PutOpencvMat(harrisImageCv, "harrisImageCv");
 
+#endif
+
   const Result cornerResult = Features::CornerHarris(image, harrisImage, blockSize, static_cast<f32>(harrisK), scratchOffchip);
 
   ASSERT_TRUE(cornerResult == RESULT_OK);
 
-  matlab.PutArray(harrisImage, "harrisImage");
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
+  {
+    matlab.PutArray(harrisImage, "harrisImage");
+  }
+#endif // #if ANKICORETECH_EMBEDDED_USE_MATLAB
 
   const s32 maxCorners = 100;
   const f32 qualityLevel = 0.3f;
 
   FixedLengthList<Point<s16> > corners(5000, scratchHuge);
 
+  InitBenchmarking();
+
+  BeginBenchmark("GoodFeaturesToTrack Harris");
   const Result gftResult = Features::GoodFeaturesToTrack(image, corners, maxCorners, qualityLevel, blockSize, true, static_cast<f32>(harrisK), scratchOffchip, scratchHuge);
+  EndBenchmark("GoodFeaturesToTrack Harris");
 
   ASSERT_TRUE(gftResult == RESULT_OK);
 
+#ifdef TEST_OPENCV_HARRIS
   std::vector<cv::Point2f> cornersCv;
   cv::goodFeaturesToTrack(imageCv, cornersCv, maxCorners, qualityLevel, 0, cv::Mat(), blockSize, true, harrisK);
 
@@ -264,10 +777,13 @@ GTEST_TEST(CoreTech_Vision, Harris)
   cv::imshow("drawnCornersCv", drawnCornersCv);
 
   cv::waitKey();
+#endif // #ifdef TEST_OPENCV_HARRIS
+
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, LocalMaxima)
-#endif // #ifdef RUN_PC_ONLY_TESTS
+#endif // #ifdef RUN_HIGH_MEMORY_TESTS
 
 GTEST_TEST(CoreTech_Vision, LocalMaxima)
 {
@@ -3506,6 +4022,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const f32 minSideLength = 0.01f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
 
+  const bool useIntegralImageFiltering = true;
+
   const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
   const s32 component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
   const s32 component_sparseMultiplyThreshold = 1000 << 5;
@@ -3565,6 +4083,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       image,
       markers,
       homographies,
+      useIntegralImageFiltering,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
@@ -3713,6 +4232,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   Array<u8> image(simpleFiducials_320x240_HEIGHT, simpleFiducials_320x240_WIDTH, scratchOffchip);
   image.Set(simpleFiducials_320x240, simpleFiducials_320x240_WIDTH*simpleFiducials_320x240_HEIGHT);
 
+  //Array<u8> image = Array<u8>::LoadImage("C:/Anki/products-cozmo-large-files/systemTestsData/images/cozmo_date2014_06_04_time16_52_36_frame0.png", scratchOffchip);
+
   //image.Show("image", true);
 
   // TODO: Check that the image loaded correctly
@@ -3729,16 +4250,51 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
-  const s32 numRuns = 10;
-  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements(numRuns, scratchOffchip);
+  const s32 numRuns = 1;
+  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements_integral(numRuns, scratchOffchip);
+  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements_binomial(numRuns, scratchOffchip);
+
+  ASSERT_TRUE(AreValid(benchmarkElements_integral, benchmarkElements_binomial));
 
   for(s32 iRun=0; iRun<numRuns; iRun++) {
     InitBenchmarking();
 
-    const Result result = DetectFiducialMarkers(
+    const Result result_binomial = DetectFiducialMarkers(
       image,
       markers,
       homographies,
+      false,
+      scaleImage_numPyramidLevels+1, scaleImage_thresholdMultiplier,
+      component1d_minComponentWidth, component1d_maxSkipDistance,
+      component_minimumNumPixels, component_maximumNumPixels,
+      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+      component_minHollowRatio,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+      decode_minContrastRatio,
+      maxConnectedComponentSegments,
+      maxExtractedQuads,
+      quadRefinementIterations,
+      numRefinementSamples,
+      quadRefinementMaxCornerChange,
+      quadRefinementMinCornerChange,
+      false,
+      scratchCcm,
+      scratchOnchip,
+      scratchOffchip);
+
+    ASSERT_TRUE(result_binomial == RESULT_OK);
+
+    benchmarkElements_binomial[iRun] = ComputeBenchmarkResults(scratchOffchip);
+
+    //PrintBenchmarkResults(benchmarkElements_binomial[iRun], true, true);
+
+    InitBenchmarking();
+
+    const Result result_integral = DetectFiducialMarkers(
+      image,
+      markers,
+      homographies,
+      true,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
@@ -3757,65 +4313,21 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
       scratchOnchip,
       scratchOffchip);
 
-    ASSERT_TRUE(result == RESULT_OK);
+    ASSERT_TRUE(result_integral == RESULT_OK);
 
-    benchmarkElements[iRun] = ComputeBenchmarkResults(scratchOffchip);;
+    benchmarkElements_integral[iRun] = ComputeBenchmarkResults(scratchOffchip);
 
-    //PrintBenchmarkResults(benchmarkElements[iRun], true, true);
+    //PrintBenchmarkResults(benchmarkElements_integral[iRun], true, true);
   } // for(s32 iRun=0; iRun<numRuns; iRun++)
 
-  // Check that all the lists have the same number and type of benchmarks
-  const s32 numElements = benchmarkElements[0].get_size();
-  for(s32 iRun=1; iRun<numRuns; iRun++) {
-    ASSERT_TRUE(benchmarkElements[0].get_size() == benchmarkElements[iRun].get_size());
-    for(s32 i=0; i<numElements; i++) {
-      ASSERT_TRUE(benchmarkElements[0][i].numEvents == benchmarkElements[iRun][i].numEvents);
-      ASSERT_TRUE(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) == 0);
-    }
-  }
+  const f32 elementPercentile = 0; // Minimum
+  //const f32 elementPercentile = 0.5f; // Median
 
-  // Compute the medians
-  FixedLengthList<BenchmarkElement> medianBenchmarkElements(benchmarkElements[0].get_size(), scratchOffchip, Flags::Buffer(true, false, true));
-  Array<u32> sortedElements(1, numRuns, scratchOffchip);
-  u32 * pSortedElements = sortedElements.Pointer(0,0);
-  for(s32 i=0; i<numElements; i++) {
-    strncpy(medianBenchmarkElements[i].name, benchmarkElements[0][i].name, BenchmarkElement::NAME_LENGTH - 1);
-    medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
+  printf("Integral image benchmarks:\n");
+  ASSERT_TRUE(PrintPercentileBenchmark(benchmarkElements_integral, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_mean = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_min = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_max = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_total = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_mean = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_min = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_max = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_total = pSortedElements[numRuns/2];
-  } // for(s32 i=0; i<numElements; i++)
-
-  PrintBenchmarkResults(medianBenchmarkElements, true, true);
+  printf("Binomial benchmarks:\n");
+  ASSERT_TRUE(PrintPercentileBenchmark(benchmarkElements_binomial, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
   const f32 minDifference = 1e-4f;
   Point<f32> groundTruth[4];
@@ -3883,6 +4395,9 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
   Array<u8> image640(480, 640, scratchHuge);
   ImageProcessing::Resize<u8,u8>(image320, image640);
 
+  //matlab.PutArray(image320, "image320");
+  //matlab.PutArray(image640, "image640");
+
   //image320.Show("image320", false, false);
   //image640.Show("image640", true, false);
 
@@ -3900,16 +4415,20 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
-  const s32 numRuns = 10;
-  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements(numRuns, scratchHuge);
+  const s32 numRuns = 2;
+  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements_integral(numRuns, scratchOffchip);
+  FixedLengthList<FixedLengthList<BenchmarkElement> > benchmarkElements_binomial(numRuns, scratchOffchip);
+
+  ASSERT_TRUE(AreValid(benchmarkElements_integral, benchmarkElements_binomial));
 
   for(s32 iRun=0; iRun<numRuns; iRun++) {
     InitBenchmarking();
 
-    const Result result = DetectFiducialMarkers(
+    const Result result_binomial = DetectFiducialMarkers(
       image640,
       markers,
       homographies,
+      false,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
@@ -3928,65 +4447,52 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
       scratchOffchip,
       scratchHuge);
 
-    ASSERT_TRUE(result == RESULT_OK);
+    ASSERT_TRUE(result_binomial == RESULT_OK);
 
-    benchmarkElements[iRun] = ComputeBenchmarkResults(scratchHuge);
+    benchmarkElements_binomial[iRun] = ComputeBenchmarkResults(scratchHuge);
 
-    //PrintBenchmarkResults(benchmarkElements[iRun], true, true);
+    //PrintBenchmarkResults(benchmarkElements_binomial[iRun], true, true);
+
+    InitBenchmarking();
+
+    const Result result_integral = DetectFiducialMarkers(
+      image640,
+      markers,
+      homographies,
+      true,
+      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
+      component1d_minComponentWidth, component1d_maxSkipDistance,
+      component_minimumNumPixels, component_maximumNumPixels,
+      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+      component_minHollowRatio,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+      decode_minContrastRatio,
+      maxConnectedComponentSegments,
+      maxExtractedQuads,
+      quadRefinementIterations,
+      numRefinementSamples,
+      quadRefinementMaxCornerChange,
+      quadRefinementMinCornerChange,
+      false,
+      scratchOnchip,
+      scratchOffchip,
+      scratchHuge);
+
+    ASSERT_TRUE(result_integral == RESULT_OK);
+
+    benchmarkElements_integral[iRun] = ComputeBenchmarkResults(scratchHuge);
+
+    //PrintBenchmarkResults(benchmarkElements_integral[iRun], true, true);
   } // for(s32 iRun=0; iRun<numRuns; iRun++)
 
-  // Check that all the lists have the same number and type of benchmarks
-  const s32 numElements = benchmarkElements[0].get_size();
-  for(s32 iRun=1; iRun<numRuns; iRun++) {
-    ASSERT_TRUE(benchmarkElements[0].get_size() == benchmarkElements[iRun].get_size());
-    for(s32 i=0; i<numElements; i++) {
-      ASSERT_TRUE(benchmarkElements[0][i].numEvents == benchmarkElements[iRun][i].numEvents);
-      ASSERT_TRUE(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) == 0);
-    }
-  }
+  const f32 elementPercentile = 0; // Minimum
+  //const f32 elementPercentile = 0.5f; // Median
 
-  // Compute the medians
-  FixedLengthList<BenchmarkElement> medianBenchmarkElements(benchmarkElements[0].get_size(), scratchOffchip, Flags::Buffer(true, false, true));
-  Array<u32> sortedElements(1, numRuns, scratchOffchip);
-  u32 * pSortedElements = sortedElements.Pointer(0,0);
-  for(s32 i=0; i<numElements; i++) {
-    strncpy(medianBenchmarkElements[i].name, benchmarkElements[0][i].name, BenchmarkElement::NAME_LENGTH - 1);
-    medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
+  printf("Integral image benchmarks:\n");
+  ASSERT_TRUE(PrintPercentileBenchmark(benchmarkElements_integral, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_mean = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_min = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_max = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].inclusive_total = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_mean = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_min = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_max = pSortedElements[numRuns/2];
-
-    for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
-    ASSERT_TRUE(Matrix::InsertionSort<u32>(sortedElements, 1) == RESULT_OK);
-    medianBenchmarkElements[i].exclusive_total = pSortedElements[numRuns/2];
-  } // for(s32 i=0; i<numElements; i++)
-
-  PrintBenchmarkResults(medianBenchmarkElements, true, true);
+  printf("Binomial benchmarks:\n");
+  ASSERT_TRUE(PrintPercentileBenchmark(benchmarkElements_binomial, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
   markers[0].Print();
 
@@ -4664,7 +5170,7 @@ GTEST_TEST(CoreTech_Vision, ComponentsSize)
   CoreTechPrint("Original size: %d\n", usedBytes0);
 #endif
 
-  FixedLengthList<ConnectedComponentSegment<u16>> segmentList(numComponents, scratchOnchip);
+  FixedLengthList<ConnectedComponentSegment<u16> > segmentList(numComponents, scratchOnchip);
 
   const s32 usedBytes1 = scratchOnchip.get_usedBytes();
   const double actualSizePlusOverhead = double(usedBytes1 - usedBytes0) / double(numComponents);
@@ -4844,7 +5350,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
   //binaryImage.Print("binaryImage");
 
-  //FixedLengthList<ConnectedComponentSegment<u16>> extractedComponents(maxComponentSegments, scratchOnchip);
+  //FixedLengthList<ConnectedComponentSegment<u16> > extractedComponents(maxComponentSegments, scratchOnchip);
   ConnectedComponents components(maxComponentSegments, imageWidth, true, scratchOnchip);
   ASSERT_TRUE(components.IsValid());
 
@@ -4883,7 +5389,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   u8 * binaryImageRow = reinterpret_cast<u8*>(scratchOnchip.Allocate(imageWidth));
   memset(binaryImageRow, 0, imageWidth);
 
-  FixedLengthList<ConnectedComponentSegment<u16>> extractedComponentSegments(maxComponents, scratchOnchip);
+  FixedLengthList<ConnectedComponentSegment<u16> > extractedComponentSegments(maxComponents, scratchOnchip);
 
   for(s32 i=10; i<=15; i++) binaryImageRow[i] = 1;
   for(s32 i=25; i<=35; i++) binaryImageRow[i] = 1;
@@ -4925,21 +5431,32 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
   ASSERT_TRUE(image.get_buffer()!= NULL);
   ASSERT_TRUE(imageFiltered.get_buffer()!= NULL);
 
+  *image.Pointer(0,0) = 100;
+  *image.Pointer(1,0) = 255;
   for(s32 x=0; x<imageWidth; x++) {
-    *image.Pointer(2,x) = static_cast<u8>(x);
+    *image.Pointer(2,x) = 100 + 10 * static_cast<u8>(x);
   }
+  *image.Pointer(imageHeight-2,imageWidth-1) = 100;
+  *image.Pointer(imageHeight-1,imageWidth-1) = 255;
 
-  const Result result = ImageProcessing::BinomialFilter<u8,u32,u8>(image, imageFiltered, scratchOnchip);
+  const Result result = ImageProcessing::BinomialFilter<u8,u8,u8>(image, imageFiltered, scratchOnchip);
 
-  //CoreTechPrint("image:\n");
-  //image.Print();
+  CoreTechPrint("image:\n");
+  image.Print();
 
-  //CoreTechPrint("imageFiltered:\n");
-  //imageFiltered.Print();
+  CoreTechPrint("imageFiltered:\n");
+  imageFiltered.Print();
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  const s32 correctResults[16][16] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 1, 1, 1, 2, 2, 2, 3}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+  // Compute in Matlab for array "a" with: "a2 = floor(imfilter(floor(imfilter(a, [1,4,6,4,1], 'replicate') / (2^4)), [1,4,6,4,1]', 'replicate')  / (2^4) )"
+
+  const s32 correctResults[imageHeight][imageWidth] = {
+    {96, 47, 15, 8, 8, 9, 10, 10, 11, 11},
+    {112, 66, 37, 32, 35, 37, 40, 42, 46, 50},
+    {86, 62, 49, 48, 52, 56, 60, 66, 79, 97},
+    {36, 32, 30, 32, 35, 37, 40, 49, 81, 126},
+    {6, 6, 7, 8, 8, 9, 10, 22, 73, 148}};
 
   for(s32 y=0; y<imageHeight; y++) {
     for(s32 x=0; x<imageWidth; x++) {
@@ -4947,6 +5464,27 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
       ASSERT_TRUE(correctResults[y][x] == *imageFiltered.Pointer(y,x));
     }
   }
+
+  Array<u8> bigImage(480, 640, scratchOffchip);
+  Array<u8> bigImageFiltered(480, 640, scratchOffchip);
+
+  ASSERT_TRUE(AreValid(bigImage, bigImageFiltered));
+
+  f64 totalTime = 0;
+
+  const s32 numIterations = 1;
+  for(s32 i=0; i<numIterations; i++) {
+    const f64 t0 = GetTimeF64();
+    const Result result2 = ImageProcessing::BinomialFilter<u8,u8,u8>(bigImage, bigImageFiltered, scratchOffchip);
+    const f64 t1 = GetTimeF64();
+
+    ASSERT_TRUE(result2 == RESULT_OK);
+
+    totalTime += (t1 - t0);
+    bigImage.Set(bigImageFiltered);
+  }
+
+  printf("Binomial filtered 640x480 image in %fms.\n", 1000*totalTime/numIterations);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, BinomialFilter)
@@ -5222,7 +5760,18 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+#ifdef RUN_PC_ONLY_TESTS
+  //CALL_GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer);
+  CALL_GTEST_TEST(CoreTech_Vision, TestFaceRecognizer);
+#endif
+
 #if !defined(JUST_FIDUCIAL_DETECTION)
+
+#ifdef RUN_HIGH_MEMORY_TESTS
+  CALL_GTEST_TEST(CoreTech_Vision, KLT);
+  CALL_GTEST_TEST(CoreTech_Vision, Harris);
+#endif
+
   CALL_GTEST_TEST(CoreTech_Vision, DistanceTransform);
   CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
   CALL_GTEST_TEST(CoreTech_Vision, Canny);
@@ -5280,4 +5829,3 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
 #endif // #if !ANKICORETECH_EMBEDDED_USE_GTEST
-

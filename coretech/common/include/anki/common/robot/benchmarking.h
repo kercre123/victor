@@ -100,6 +100,10 @@ namespace Anki
     // Compile and print out all the benchmark events that were recorded
     Result ComputeAndPrintBenchmarkResults(const bool verbose, const bool microseconds, MemoryStack scratch);
 
+    // "benchmarkElements" is a list of lists of benchmarkElements, where each list is a set from one session computed from ComputeBenchmarkResults()
+    // This function sorts them and prints the elementPercentile" percentile
+    Result PrintPercentileBenchmark(const FixedLengthList<FixedLengthList<BenchmarkElement> > &benchmarkElements, const s32 numRuns, const f32 elementPercentile, MemoryStack scratch);
+
     // Use OpenCV to display a running benchmark
     // Requires a "TotalTime" benchmark event
     // namesToDisplay can be 11 or less names

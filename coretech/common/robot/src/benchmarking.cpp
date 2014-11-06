@@ -237,6 +237,10 @@ namespace Anki
 
       static FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(const s32 numBenchmarkEvents, const BenchmarkEvent * benchmarkEvents, MemoryStack &memory)
       {
+        if(numBenchmarkEvents == 0) {
+          return FixedLengthList<BenchmarkElement>(0, memory, Flags::Buffer(false, false, false));
+        }
+
         AnkiConditionalErrorAndReturnValue(numBenchmarkEvents > 0 && numBenchmarkEvents < MAX_BENCHMARK_EVENTS,
           FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Invalid numBenchmarkEvents");
 
@@ -442,6 +446,10 @@ namespace Anki
 
     Result PrintBenchmarkResults(const FixedLengthList<BenchmarkElement> &results, const bool verbose, const bool microseconds)
     {
+      if(results.get_size() == 0) {
+        return RESULT_OK;
+      }
+
       const s32 scratchBufferLength = 128;
       char scratchBuffer[scratchBufferLength];
 
@@ -790,5 +798,63 @@ namespace Anki
     {
       return CompileBenchmarkResults::GetNameIndex(name, outputResults);
     }
+
+    Result PrintPercentileBenchmark(const FixedLengthList<FixedLengthList<BenchmarkElement> > &benchmarkElements, const s32 numRuns, const f32 elementPercentile, MemoryStack scratch)
+    {
+      // Check that all the lists have the same number and type of benchmarks
+      const s32 numElements = benchmarkElements[0].get_size();
+      for(s32 iRun=1; iRun<numRuns; iRun++) {
+        if(benchmarkElements[0].get_size() != benchmarkElements[iRun].get_size()) { AnkiError("PrintPercentileBenchmark", "number failure %d!=%d", benchmarkElements[0].get_size(), benchmarkElements[iRun].get_size()); return RESULT_FAIL; }
+        for(s32 i=0; i<numElements; i++) {
+          if(benchmarkElements[0][i].numEvents != benchmarkElements[iRun][i].numEvents) { AnkiError("PrintPercentileBenchmark", "number failure %d!=%d (%s,%s)", benchmarkElements[0][i].numEvents, benchmarkElements[iRun][i].numEvents, benchmarkElements[0][i].name, benchmarkElements[iRun][i].name); return RESULT_FAIL; }
+          if(strcmp(benchmarkElements[0][i].name, benchmarkElements[iRun][i].name) != 0) { AnkiError("PrintPercentileBenchmark", "name failure %s!=%s", benchmarkElements[0][i].name, benchmarkElements[iRun][i].name); return RESULT_FAIL; }
+        }
+      }
+
+      // Compute the medians
+      FixedLengthList<BenchmarkElement> medianBenchmarkElements(benchmarkElements[0].get_size(), scratch, Flags::Buffer(true, false, true));
+      Array<u32> sortedElements(1, numRuns, scratch);
+      u32 * pSortedElements = sortedElements.Pointer(0,0);
+      for(s32 i=0; i<numElements; i++) {
+        strncpy(medianBenchmarkElements[i].name, benchmarkElements[0][i].name, BenchmarkElement::NAME_LENGTH - 1);
+        medianBenchmarkElements[i].numEvents = benchmarkElements[0][i].numEvents;
+
+        for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_mean; }
+        if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("PrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
+        medianBenchmarkElements[i].inclusive_mean = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
+
+        for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_min; }
+        if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("PrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
+        medianBenchmarkElements[i].inclusive_min = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
+
+        for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_max; }
+        if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("PrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
+        medianBenchmarkElements[i].inclusive_max = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
+
+        for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].inclusive_total; }
+        if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("PrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
+        medianBenchmarkElements[i].inclusive_total = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
+
+        for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_mean; }
+        if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("PrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
+        medianBenchmarkElements[i].exclusive_mean = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
+
+        for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_min; }
+        if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("PrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
+        medianBenchmarkElements[i].exclusive_min = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
+
+        for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_max; }
+        if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("PrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
+        medianBenchmarkElements[i].exclusive_max = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
+
+        for(s32 iRun=0; iRun<numRuns; iRun++) { pSortedElements[iRun] = benchmarkElements[iRun][i].exclusive_total; }
+        if(Matrix::InsertionSort<u32>(sortedElements, 1) != RESULT_OK) { AnkiError("PrintPercentileBenchmark", "sort failure"); return RESULT_FAIL; }
+        medianBenchmarkElements[i].exclusive_total = pSortedElements[saturate_cast<s32>(numRuns*elementPercentile)];
+      } // for(s32 i=0; i<numElements; i++)
+
+      PrintBenchmarkResults(medianBenchmarkElements, true, true);
+
+      return RESULT_OK;
+    } // CompueMedianBenchmark()
   } // namespace Embedded
 } // namespace Anki

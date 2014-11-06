@@ -274,7 +274,11 @@ namespace Anki
           yOriginal += yGridDelta;
         } // for(s32 y=0; y<yIterationMax; y++)
 
-        verify_meanAbsoluteDifference = totalGrayvalueDifference / verify_numInBounds;
+        if(verify_numInBounds == 0) {
+          verify_meanAbsoluteDifference = 255;
+        } else {
+          verify_meanAbsoluteDifference = totalGrayvalueDifference / verify_numInBounds;
+        }
 
         return RESULT_OK;
       } // Result LucasKanadeTracker_Fast::VerifyTrack_Projective()
