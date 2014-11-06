@@ -177,7 +177,7 @@
   "ANIM_POWER_DOWN" : [
     {
       "Name" : "MessageAddAnimKeyFrame_PlaySound", 
-      "relTime_ms"      : 0,
+      "relTime_ms"      : 200,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "soundID"         : "POWER_DOWN", 
@@ -186,7 +186,7 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
-      "relTime_ms"    : 1200, 
+      "relTime_ms"    : 925, 
       "transitionIn"  : 50,
       "transitionOut" : 50, 
       "angle_deg"     : -30, 
@@ -210,7 +210,7 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
-      "relTime_ms"      : 125,
+      "relTime_ms"      : 100,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "color"           : [0, 200, 200],
@@ -219,7 +219,7 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
-      "relTime_ms"      : 250,
+      "relTime_ms"      : 225,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "color"           : [0, 150, 150],
@@ -228,7 +228,7 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
-      "relTime_ms"      : 375,
+      "relTime_ms"      : 350,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "color"           : [0, 100, 100],
@@ -237,7 +237,7 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
-      "relTime_ms"      : 500,
+      "relTime_ms"      : 475,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "color"           : [0, 50, 50],
@@ -246,7 +246,7 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
-      "relTime_ms"      : 700,
+      "relTime_ms"      : 675,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "color"           : [0, 50, 50],
@@ -255,7 +255,7 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
-      "relTime_ms"      : 800,
+      "relTime_ms"      : 775,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "color"           : [0, 50, 50],
@@ -264,10 +264,28 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
-      "relTime_ms"      : 900,
+      "relTime_ms"      : 875,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "color"           : [0, 50, 50],
+      "shape"           : "CLOSED",
+      "whichEye"        : "BOTH"
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 925,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "color"           : [0, 100, 100],
+      "shape"           : "OPEN",
+      "whichEye"        : "BOTH"
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 975,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "color"           : [0, 0, 0],
       "shape"           : "CLOSED",
       "whichEye"        : "BOTH"
     },
