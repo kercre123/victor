@@ -186,10 +186,10 @@
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle", 
-      "relTime_ms"    : 925, 
+      "relTime_ms"    : 850, 
       "transitionIn"  : 50,
-      "transitionOut" : 50, 
-      "angle_deg"     : -30, 
+      "transitionOut" : 0, 
+      "angle_deg"     : -20, 
       "variability_deg" : 0
     },
     {
@@ -272,22 +272,18 @@
       "whichEye"        : "BOTH"
     },
     {
-      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
-      "relTime_ms"      : 925,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0,
-      "color"           : [0, 100, 100],
-      "shape"           : "OPEN",
-      "whichEye"        : "BOTH"
+      "Name" : "MessageAddAnimKeyFrame_HoldHead",
+      "relTime_ms"    : 900, 
+      "transitionIn"  : 0,
+      "transitionOut" : 0
     },
     {
-      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
-      "relTime_ms"      : 975,
-      "transitionIn"    : 0,
-      "transitionOut"   : 0,
-      "color"           : [0, 0, 0],
-      "shape"           : "CLOSED",
-      "whichEye"        : "BOTH"
+      "Name" : "MessageAddAnimKeyFrame_SetHeadAngle",
+      "relTime_ms"    : 925, 
+      "transitionIn"  : 0,
+      "transitionOut" : 0, 
+      "angle_deg"     : -35, 
+      "variability_deg" : 0
     },
     {
       "Name" : "MessageAddAnimKeyFrame_WaitForSound", 
