@@ -13,6 +13,7 @@
 #include "mex.h"
 #include "anki/common/matlab/mexWrappers.h"
 #include "anki/common/constantsAndMacros.h"
+#include "anki/common/robot/utilities.h"
 
 #include "anki/common/shared/utilities_shared.h"
 
@@ -51,23 +52,47 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   mexAtExit(closeHelper);
 
-  if(! (nlhs == 2 && nrhs >= 1 && nrhs <= 3))
+  if(! (nlhs == 2 && nrhs >= 1 && nrhs <= 5))
   {
-    mexErrMsgTxt("Usage: [faces,eyes] = mexFaceDetect(im, <faceCascadeFilename>, <eyeCascadeFilename>);\n");
+    mexErrMsgTxt("Usage: [faces,eyes] = mexFaceDetect(im, <faceCascadeFilename>, <eyeCascadeFilename>, <scaleFactor>, <minNeighbors>);\n");
     return;
   }
   
   std::string newFaceCascadeFilename = QUOTE(OPENCV_ROOT_PATH) "/data/lbpcascades/lbpcascade_frontalface.xml";
   std::string newEyeCascadeFilename = QUOTE(OPENCV_ROOT_PATH) "/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml";
+  double scaleFactor = 1.1;
+  int minNeighbors = 3;
   
   if(nrhs >= 2)
   {
-    newFaceCascadeFilename = mxArrayToString(prhs[1]);
+    std::string tmpFaceCascadeFilename = mxArrayToString(prhs[1]);
+    
+    if(tmpFaceCascadeFilename.length() > 3)
+      newFaceCascadeFilename = tmpFaceCascadeFilename;
   }
   
   if(nrhs >= 3)
   {
-    newEyeCascadeFilename = mxArrayToString(prhs[2]);
+    std::string tmpEyeCascadeFilename = mxArrayToString(prhs[2]);
+    
+    if(tmpEyeCascadeFilename.length() > 3)
+      newEyeCascadeFilename = tmpEyeCascadeFilename;
+  }
+  
+  if(nrhs >= 4)
+  {
+    const double tmpScaleFactor = Anki::Embedded::saturate_cast<f64>(mxGetScalar(prhs[3]));
+    
+    if(tmpScaleFactor >= 1.0)
+      scaleFactor = tmpScaleFactor;
+  }
+  
+  if(nrhs >= 5)
+  {
+    const int tmpMinNeighbors = Anki::Embedded::saturate_cast<s32>(mxGetScalar(prhs[4]));
+    
+    if(tmpMinNeighbors >= 1.0)
+      minNeighbors = tmpMinNeighbors;
   }
   
   if(strcmp(newFaceCascadeFilename.data(), faceCascadeFilename.data()) != 0)
@@ -125,8 +150,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   std::vector<cv::Rect> faces;
 
   //find faces and store them in the vector array
-  face_cascade->detectMultiScale(grayscaleFrame, faces, 1.1, 3, CV_HAAR_FIND_BIGGEST_OBJECT|CV_HAAR_SCALE_IMAGE, cv::Size(30,30));
-  //face_cascade->detectMultiScale(grayscaleFrame, faces, 1.05, 1, CV_HAAR_SCALE_IMAGE, cv::Size(30,30));
+  face_cascade->detectMultiScale(grayscaleFrame, faces, scaleFactor, minNeighbors, CV_HAAR_FIND_BIGGEST_OBJECT|CV_HAAR_SCALE_IMAGE, cv::Size(30,30));
 
   //mexPrintf("Found %d faces.\n", faces.size());
 

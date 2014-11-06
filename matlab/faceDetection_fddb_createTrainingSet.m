@@ -3,7 +3,7 @@
 
 % load('~/Documents/datasets/FDDB-folds/FDDB-ellipses.mat');
 % load('~/Documents/datasets/FDDB-folds/FDDB-detectedPoses.mat');
-% faceDetection_fddb_createTrainingSet(ellipses, allDetections, posemap, '~/Documents/Anki/products-cozmo-large-files/face/detection/fddbFrontFaces.dat');
+% faceDetection_fddb_createTrainingSet(ellipses, allDetections, posemap, '~/Documents/Anki/products-cozmo-large-files/faceDetection/fddbFrontFaces.dat');
 
 function faceDetection_fddb_createTrainingSet(ellipses, allDetections, posemap, outputFilename)
     

@@ -16,9 +16,10 @@ function liveFaceDetection()
         
 %         tic
 %         [faces,eyes] = mexFaceDetect(im, '/Users/pbarnum/Documents/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml');
-            [faces,eyes] = mexFaceDetect(im, '/Users/pbarnum/Documents/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface_part.xml');
+%             [faces,eyes] = mexFaceDetect(im, '/Users/pbarnum/Documents/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface_part.xml');
 %         [faces,eyes] = mexFaceDetect(im, '/Users/pbarnum/Documents/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/pete_frontalface.xml');
 %         [faces,eyes] = mexFaceDetect(im, '/Users/pbarnum/Documents/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/peter_face3.xml');
+        [faces,eyes] = mexFaceDetect(im, '/Users/pbarnum/Documents/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/peter_face5.xml', '', 1.1, 4);
 %         toc
         
         numFaces = size(faces,1);
