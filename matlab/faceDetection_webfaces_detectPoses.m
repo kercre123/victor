@@ -6,7 +6,7 @@
 
 function [allDetections, posemap] = faceDetection_webfaces_detectPoses(allFaces, whichFaces, filenameOutPattern)
     showDetections = false;
-    rerunDetection = true;
+    rerunDetection = false;
     
     load face_p146_small.mat
     model.interval = 5;
@@ -53,13 +53,13 @@ function [allDetections, posemap] = faceDetection_webfaces_detectPoses(allFaces,
             disp(sprintf('Finished %d in %f', iFile, toc()));
         end % for iFile = 1:length(ellipses)
         
-        disp(sprintf('Detected %d faces'), numDetections);
+        disp(sprintf('Detected %d faces', numDetections));
     end % if rerunDetection
     
     if whichFaces(1) == 1
-        allDetections = cell(length(ellipses),1);
+        allDetections = cell(length(allFaces),1);
         cDetection = 1;
-        for iFile = 1:length(ellipses)
+        for iFile = 1:length(allFaces)
             load(sprintf(filenameOutPattern, iFile), 'curFilename', 'iFile', 'bs3');
             
             allDetections{iFile} = {curFilename, iFile, bs3};
