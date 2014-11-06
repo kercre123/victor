@@ -10,7 +10,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 //#define RUN_PC_ONLY_TESTS
-#define RUN_HIGH_MEMORY_TESTS
+//#define RUN_HIGH_MEMORY_TESTS
 //#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
@@ -72,12 +72,9 @@ using namespace Anki::Embedded;
 static char hugeBuffer[HUGE_BUFFER_SIZE];
 #endif
 
-//#define RUN_FACE_DETECTION_GUI
-
 #if !defined(JUST_FIDUCIAL_DETECTION)
 
-#ifdef RUN_HIGH_MEMORY_TESTS
-
+#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
 static Result FaceRecognizer_LoadTrainingImages(
   FixedLengthList<Array<u8> > &trainingImages,
   FixedLengthList<Rectangle<s32> > &faceLocations,
@@ -208,7 +205,9 @@ static Result FaceRecognizer_LoadTrainingImages(
 
   return RESULT_OK;
 }
+#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
 
+#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
 GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -308,9 +307,9 @@ GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer)
-#endif // #ifdef RUN_HIGH_MEMORY_TESTS
+#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
 
-#ifdef RUN_HIGH_MEMORY_TESTS
+#if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
 GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
 {
   const s32 trainingWidth = 64;
@@ -512,7 +511,7 @@ GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, TestFaceRecognizer)
-#endif // #ifdef RUN_HIGH_MEMORY_TESTS
+#endif // #if defined(RUN_HIGH_MEMORY_TESTS) && defined(RUN_PC_ONLY_TESTS)
 
 GTEST_TEST(CoreTech_Vision, UpsampleByPowerOfTwoBilinear)
 {
@@ -700,6 +699,7 @@ GTEST_TEST(CoreTech_Vision, KLT)
 } // GTEST_TEST(CoreTech_Vision, KLT)
 #endif // #ifdef RUN_HIGH_MEMORY_TESTS
 
+#ifdef RUN_HIGH_MEMORY_TESTS
 GTEST_TEST(CoreTech_Vision, Harris)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -783,6 +783,7 @@ GTEST_TEST(CoreTech_Vision, Harris)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, LocalMaxima)
+#endif // #ifdef RUN_HIGH_MEMORY_TESTS
 
 GTEST_TEST(CoreTech_Vision, LocalMaxima)
 {
@@ -5759,13 +5760,18 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+#ifdef RUN_PC_ONLY_TESTS
   //CALL_GTEST_TEST(CoreTech_Vision, TrainFaceRecognizer);
   CALL_GTEST_TEST(CoreTech_Vision, TestFaceRecognizer);
+#endif
 
-  /*
-  #if !defined(JUST_FIDUCIAL_DETECTION)
+#if !defined(JUST_FIDUCIAL_DETECTION)
+
+#ifdef RUN_HIGH_MEMORY_TESTS
   CALL_GTEST_TEST(CoreTech_Vision, KLT);
   CALL_GTEST_TEST(CoreTech_Vision, Harris);
+#endif
+
   CALL_GTEST_TEST(CoreTech_Vision, DistanceTransform);
   CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
   CALL_GTEST_TEST(CoreTech_Vision, Canny);
@@ -5787,16 +5793,16 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);
-  #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
-  #if defined(RUN_HIGH_MEMORY_TESTS)
+#if defined(RUN_HIGH_MEMORY_TESTS)
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640);
-  #endif
+#endif
 
-  #if !defined(JUST_FIDUCIAL_DETECTION)
+#if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
@@ -5818,8 +5824,8 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
   CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
   CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
-  #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
-  */
+#endif // #if !defined(JUST_FIDUCIAL_DETECTION)
+
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
 #endif // #if !ANKICORETECH_EMBEDDED_USE_GTEST
