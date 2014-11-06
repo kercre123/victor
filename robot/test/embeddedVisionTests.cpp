@@ -5170,7 +5170,7 @@ GTEST_TEST(CoreTech_Vision, ComponentsSize)
   CoreTechPrint("Original size: %d\n", usedBytes0);
 #endif
 
-  FixedLengthList<ConnectedComponentSegment<u16>> segmentList(numComponents, scratchOnchip);
+  FixedLengthList<ConnectedComponentSegment<u16> > segmentList(numComponents, scratchOnchip);
 
   const s32 usedBytes1 = scratchOnchip.get_usedBytes();
   const double actualSizePlusOverhead = double(usedBytes1 - usedBytes0) / double(numComponents);
@@ -5350,7 +5350,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
   //binaryImage.Print("binaryImage");
 
-  //FixedLengthList<ConnectedComponentSegment<u16>> extractedComponents(maxComponentSegments, scratchOnchip);
+  //FixedLengthList<ConnectedComponentSegment<u16> > extractedComponents(maxComponentSegments, scratchOnchip);
   ConnectedComponents components(maxComponentSegments, imageWidth, true, scratchOnchip);
   ASSERT_TRUE(components.IsValid());
 
@@ -5389,7 +5389,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   u8 * binaryImageRow = reinterpret_cast<u8*>(scratchOnchip.Allocate(imageWidth));
   memset(binaryImageRow, 0, imageWidth);
 
-  FixedLengthList<ConnectedComponentSegment<u16>> extractedComponentSegments(maxComponents, scratchOnchip);
+  FixedLengthList<ConnectedComponentSegment<u16> > extractedComponentSegments(maxComponents, scratchOnchip);
 
   for(s32 i=10; i<=15; i++) binaryImageRow[i] = 1;
   for(s32 i=25; i<=35; i++) binaryImageRow[i] = 1;
