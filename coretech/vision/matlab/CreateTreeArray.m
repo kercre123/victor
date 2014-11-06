@@ -90,7 +90,7 @@ if isfield(root, 'labelID')
         % This leaf has multiple labels
         array(index).x = length(leafLabels) + 1;
         array(index).label = -1;
-        leafLabels = [leafLabels row(root.labelID)];
+        leafLabels = [leafLabels row(unique(root.labelID))];
         array(index).y = length(leafLabels) + 1;        
     end
 else
