@@ -8,25 +8,35 @@ function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStat
     numAngles = length(sceneTypes.Angles);
     numLights = length(sceneTypes.Lights);
     
-    quadExtraction_events = extractEvents(resultsData_perPose, sceneTypes);
+    [groundTruth_events, quadExtraction_events, markerDetection_events, fileSizes] = extractEvents(resultsData_perPose, sceneTypes);
     
     if showPlots
         for iAngle = 1:numAngles
             for iLight = 1:numLights
                 
-                dataPoints = zeros(numCameraExposures, numDistances);
+                quadExtractionPercents = zeros(numCameraExposures, numDistances);
+                markerCorrectPercents = zeros(numCameraExposures, numDistances);
+                markerErrorCounts = zeros(numCameraExposures, numDistances);
                 for iCameraExposure = 1:numCameraExposures
                     for iDistance = 1:numDistances
-                        quadExtraction_numQuadsDetected = squeeze(quadExtraction_events(iCameraExposure, iDistance, iAngle, iLight, 1));
-                        quadExtraction_numQuadsNotIgnored = squeeze(quadExtraction_events(iCameraExposure, iDistance, iAngle, iLight, 2));
+                        numMarkersGroundTruth = squeeze(groundTruth_events(iCameraExposure, iDistance, iAngle, iLight));
                         
-                        dataPoints(iCameraExposure, iDistance) = quadExtraction_numQuadsDetected / quadExtraction_numQuadsNotIgnored;
+                        quadExtraction_numQuadsDetected = squeeze(quadExtraction_events(iCameraExposure, iDistance, iAngle, iLight));
+                        quadExtractionPercents(iCameraExposure, iDistance) = quadExtraction_numQuadsDetected / numMarkersGroundTruth;
+                        
+                        % TODO: show graphs of the marker detection statistics
+                        markerDetection_numTotallyCorrect = squeeze(markerDetection_events(iCameraExposure, iDistance, iAngle, iLight, 1));
+                        markerCorrectPercents(iCameraExposure, iDistance) = markerDetection_numTotallyCorrect / numMarkersGroundTruth;
+                        
+                        markerErrorCounts(iCameraExposure, iDistance) = ...
+                            squeeze(markerDetection_events(iCameraExposure, iDistance, iAngle, iLight, 4)) +...
+                            (squeeze(markerDetection_events(iCameraExposure, iDistance, iAngle, iLight, 3)) - squeeze(markerDetection_events(iCameraExposure, iDistance, iAngle, iLight, 1)));
                     end
                 end
                 
                 figure(iLight);
                 subplot(1,numAngles,iAngle);
-                bar(sceneTypes.Distances, dataPoints')
+                bar(sceneTypes.Distances, quadExtractionPercents')
                 shading flat
                 a = axis();
                 a(4) = 1.0;
@@ -44,7 +54,18 @@ function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStat
     
     % 3. Bar of angle, distance.
     
-    resultsData_overall.percentQuadsExtracted = sum(sum(sum(sum(quadExtraction_events(:,:,:,:,1))))) / sum(sum(sum(sum(quadExtraction_events(:,:,:,:,2)))));
+    resultsData_overall.percentQuadsExtracted = sum(sum(sum(sum(quadExtraction_events(:,:,:,:))))) / sum(sum(sum(sum(groundTruth_events(:,:,:,:)))));
+    
+    resultsData_overall.percentMarkersCorrect = sum(sum(sum(sum(markerDetection_events(:,:,:,:,1))))) / sum(sum(sum(sum(groundTruth_events(:,:,:,:)))));
+    
+    % Number of spurrios detections, plus 
+    % number of detections with the correct position, minus number totally correct
+    resultsData_overall.numMarkerErrors = ...
+        sum(sum(sum(sum(markerDetection_events(:,:,:,:,4))))) + ...
+        ( sum(sum(sum(sum(markerDetection_events(:,:,:,:,3))))) - sum(sum(sum(sum(markerDetection_events(:,:,:,:,1))))));
+    
+    resultsData_overall.uncompressedFileSizeTotal = sum(sum(sum(sum(fileSizes(:,:,:,:,1)))));
+    resultsData_overall.compressedFileSizeTotal = sum(sum(sum(sum(fileSizes(:,:,:,:,2)))));
     
     %     keyboard
 end % runTests_detectFiducialMarkers_compileOverallStats()
@@ -59,7 +80,7 @@ end % runTests_detectFiducialMarkers_compileOverallStats()
 %
 %             quadExtraction_percents = zeros(length(curEvents), 1);
 %             for iEvent = 1:length(curEvents)
-%                 quadExtraction_percents(iEvent) = curEvents(iEvent).numQuadsDetected / curEvents(iEvent).numQuadsNotIgnored;
+%                 quadExtraction_percents(iEvent) = curEvents(iEvent).numQuadsDetected / curEvents(iEvent).numMarkersGroundTruth;
 %             end
 %
 %             quadExtraction_means(iList,jList) = mean(quadExtraction_percents);
@@ -69,8 +90,11 @@ end % runTests_detectFiducialMarkers_compileOverallStats()
 %
 % end % computeStatistics()
 
-function quadExtraction_events = extractEvents(resultsData_perPose, sceneTypes)
-    quadExtraction_events = zeros(length(sceneTypes.CameraExposures), length(sceneTypes.Distances), length(sceneTypes.Angles), length(sceneTypes.Lights), 2);
+function [groundTruth_events, quadExtraction_events, markerDetection_events, fileSizes] = extractEvents(resultsData_perPose, sceneTypes)
+    groundTruth_events = zeros(length(sceneTypes.CameraExposures), length(sceneTypes.Distances), length(sceneTypes.Angles), length(sceneTypes.Lights));
+    quadExtraction_events = zeros(length(sceneTypes.CameraExposures), length(sceneTypes.Distances), length(sceneTypes.Angles), length(sceneTypes.Lights));
+    markerDetection_events = zeros(length(sceneTypes.CameraExposures), length(sceneTypes.Distances), length(sceneTypes.Angles), length(sceneTypes.Lights), 5);
+    fileSizes = zeros(length(sceneTypes.CameraExposures), length(sceneTypes.Distances), length(sceneTypes.Angles), length(sceneTypes.Lights), 2);
     
     for iTest = 1:length(resultsData_perPose)
         for iPose = 1:length(resultsData_perPose{iTest})
@@ -88,9 +112,19 @@ function quadExtraction_events = extractEvents(resultsData_perPose, sceneTypes)
                             for iAngles = 1:length(sceneTypes.Angles)
                                 if curAngle == sceneTypes.Angles(iAngles)
                                     for iLights = 1:length(sceneTypes.Lights)
-                                        if curLight == sceneTypes.Lights(iLights)                                            
-                                            quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 1) = quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 1) + curResult.numQuadsDetected;
-                                            quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 2) = quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights, 2) + curResult.numQuadsNotIgnored;
+                                        if curLight == sceneTypes.Lights(iLights)
+                                            groundTruth_events(iCameraExposures, iDistances, iAngles, iLights) = groundTruth_events(iCameraExposures, iDistances, iAngles, iLights) + curResult.numMarkersGroundTruth;
+                                            
+                                            quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights) = quadExtraction_events(iCameraExposures, iDistances, iAngles, iLights) + curResult.numQuadsDetected;
+                                            
+                                            markerDetection_events(iCameraExposures, iDistances, iAngles, iLights, 1) = markerDetection_events(iCameraExposures, iDistances, iAngles, iLights, 1) + curResult.numCorrect_positionLabelRotation;
+                                            markerDetection_events(iCameraExposures, iDistances, iAngles, iLights, 2) = markerDetection_events(iCameraExposures, iDistances, iAngles, iLights, 2) + curResult.numCorrect_positionLabel;
+                                            markerDetection_events(iCameraExposures, iDistances, iAngles, iLights, 3) = markerDetection_events(iCameraExposures, iDistances, iAngles, iLights, 3) + curResult.numCorrect_position;
+                                            markerDetection_events(iCameraExposures, iDistances, iAngles, iLights, 4) = markerDetection_events(iCameraExposures, iDistances, iAngles, iLights, 4) + curResult.numSpurriousDetections;
+                                            markerDetection_events(iCameraExposures, iDistances, iAngles, iLights, 5) = markerDetection_events(iCameraExposures, iDistances, iAngles, iLights, 5) + curResult.numUndetected;
+                                            
+                                            fileSizes(iCameraExposures, iDistances, iAngles, iLights, 1) = fileSizes(iCameraExposures, iDistances, iAngles, iLights, 1) + curResult.uncompressedFileSize;
+                                            fileSizes(iCameraExposures, iDistances, iAngles, iLights, 2) = fileSizes(iCameraExposures, iDistances, iAngles, iLights, 2) + curResult.compressedFileSize;
                                         end
                                     end % for iLights = 1:length(sceneTypes.Lights)
                                 end
@@ -100,7 +134,7 @@ function quadExtraction_events = extractEvents(resultsData_perPose, sceneTypes)
                 end
             end % for iCameraExposures = 1:length(sceneTypes.CameraExposures)
         end % for iPose = 1:length(resultsData_perPose{iTest})
-    end % for iTest = 1:length(resultsData_perPose)    
+    end % for iTest = 1:length(resultsData_perPose)
 end % computeStatistics()
 
 function sceneTypes = getSceneTypes(resultsData_perPose)

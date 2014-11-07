@@ -32,6 +32,20 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         
         image = imread([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
         
+        if strcmp(algorithmParameters.imageCompression{1}, 'none') || strcmp(algorithmParameters.imageCompression{1}, 'png')
+            fileInfo = dir([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
+        elseif strcmp(algorithmParameters.imageCompression{1}, 'jpg') || strcmp(algorithmParameters.imageCompression{1}, 'jpeg')
+            tmpFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.jpg'];
+            
+            imwrite(image, tmpFilename, 'jpg', 'Quality', algorithmParameters.imageCompression{2});
+            
+            image = imread(tmpFilename);
+            
+            fileInfo = dir(tmpFilename);
+        else
+            assert(false);
+        end
+        
         if ~isfield(jsonData.Poses{workQueue{iWork}.iPose}, 'VisionMarkers')
             assert(false);
             continue;
@@ -89,6 +103,9 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         curResultsData_basics.detectedQuads = makeCellArray(detectedQuads);
         curResultsData_basics.detectedQuadValidity = detectedQuadValidity;
         curResultsData_basics.detectedMarkers = makeCellArray(detectedMarkers);
+        
+        curResultsData_basics.uncompressedFileSize = numel(image);
+        curResultsData_basics.compressedFileSize = fileInfo.bytes;        
         
         save(workQueue{iWork}.basicStats_filename, 'curResultsData_basics', 'curTestData');
         
