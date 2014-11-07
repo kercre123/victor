@@ -252,7 +252,7 @@ if averagePerturbations
 end
 
 % Add negative examples
-fnamesNeg = {'ALLWHITE'; 'ALLBLACK'};
+fnamesNeg = {};
 if ~isempty(negativeImageDir)
   fprintf('Reading negative image data...');
   if ~iscell(negativeImageDir)
@@ -260,7 +260,7 @@ if ~isempty(negativeImageDir)
   end
   
   numNegDirs = length(negativeImageDir);
-  fnamesNeg = [cell(numNegDirs,1); fnamesNeg];
+  fnamesNeg = cell(numNegDirs,1);
   for iNegDir = 1:numNegDirs
     fnamesNeg{iNegDir} = getfnames(negativeImageDir{iNegDir}, 'images', 'useFullPath', true);
     subDirs = getdirnames(negativeImageDir{iNegDir}, 'chunk*');
@@ -281,17 +281,21 @@ if ~isempty(negativeImageDir)
   end
   fprintf('Done. (Found %d negative examples.)\n', length(fnamesNeg));
 end
-
-numNeg = min(length(fnamesNeg), maxNegativeExamples);
+fnamesNeg = [{'ALLWHITE'; 'ALLBLACK'}; fnamesNeg];
+numNeg = min(length(fnamesNeg), max(2,maxNegativeExamples));
 
 pBar.set_message(sprintf(['Interpolating probe locations ' ...
     'from %d negative images'], numNeg));
 pBar.set_increment(1/numNeg);
 pBar.set(0);
 
-probeValuesNeg   = zeros(workingResolution^2, numNeg*(double(addInversions)+1), 'single');
+probeValuesNeg = zeros(workingResolution^2, numNeg*(double(addInversions)+1), 'single');
 if computeGradMag
   gradMagValuesNeg = zeros(workingResolution^2, numNeg*(double(addInversions)+1), 'single');
+end
+
+if addInversions
+    labelNames = [labelNames cellfun(@(name)['INVERTED_' name], labelNames, 'UniformOutput', false)];
 end
 
 for iImg = 1:numNeg
@@ -309,13 +313,13 @@ for iImg = 1:numNeg
     imageCoordsX = linspace(0, 1, ncols);
     imageCoordsY = linspace(0, 1, nrows);
     
-    for iInvert = 1:(double(addInversions)+1)
-      if computeGradMag
-        imgGradMag = single(smoothgradient(imgNeg));
-        gradMagValuesNeg(:,iImg) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
-          X, Y, 'linear', 0), 2);
-      end
-      
+    if computeGradMag
+      imgGradMag = single(smoothgradient(imgNeg));
+      gradMagValuesNeg(:,iImg) = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
+        X, Y, 'linear', 0), 2);
+    end
+    
+    for iInvert = 1:(double(addInversions)+1)  
       if iInvert == 2
         imgNeg = 1 - imgNeg;
         
@@ -335,7 +339,14 @@ for iImg = 1:numNeg
     pBar.increment();
 end % for each negative example
 
-noInfo = all(probeValuesNeg == 0 | probeValuesNeg == 1, 1);
+allWhite = all(probeValuesNeg==1,1);
+allBlack = all(probeValuesNeg==0,1);
+noInfo = allWhite | allBlack;
+
+% Keep a single all-white and all-black example
+noInfo(find(allWhite,1)) = false;
+noInfo(find(allBlack,1)) = false;
+
 if any(noInfo)
     fprintf('Ignoring %d negative patches with no valid info.\n', sum(noInfo));
     numNeg = numNeg - sum(noInfo);
@@ -346,30 +357,15 @@ if any(noInfo)
     %fnamesNeg(noInfo) = [];
 end
 
-labelNames{end+1} = 'INVALID';
-labels = [labels length(labelNames)*ones(1,size(probeValuesNeg,2),'uint32')];
 %fnames = [fnames; fnamesNeg];
 probeValues = [probeValues probeValuesNeg];
 if computeGradMag
   gradMagValues = [gradMagValues gradMagValuesNeg];
 end
 
-if addInversions
-    % Add white-on-black versions of everything
-    %labels        = [labels labels+length(labelNames)];
-    labelNames    = [labelNames cellfun(@(name)['INVERTED_' name], labelNames, 'UniformOutput', false)];
-    %probeValues   = [probeValues 1-probeValues];
-    %if computeGradMag
-    %  gradMagValues = [gradMagValues gradMagValues];
-    %end
-    
-    % Get rid of INVERTED_INVALID label -- it's just INVALID
-    invertedInvalidLabel = find(strcmp(labelNames, 'INVERTED_INVALID'));
-    assert(invertedInvalidLabel == length(labelNames));
-    labelNames(end) = [];
-    invalidLabel = find(strcmp(labelNames, 'INVALID'));
-    labels(labels == invertedInvalidLabel) = invalidLabel;
-end
+labelNames{end+1} = 'INVALID';
+labels = [labels length(labelNames)*ones(1,size(probeValuesNeg,2),'uint32')];
+
 
 assert(size(probeValues,2) == length(labels));
 % assert(max(labels) == length(labelNames));
