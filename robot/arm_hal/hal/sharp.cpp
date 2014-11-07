@@ -456,6 +456,9 @@ namespace Anki
         TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
         TIM_TimeBaseInit(TIM7, &TIM_TimeBaseStructure);
         
+        TIM_SelectOnePulseMode(TIM7, TIM_OPMode_Single);
+        TIM7->EGR = TIM_PSCReloadMode_Immediate;
+        
         // Route interrupt
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -508,13 +511,15 @@ namespace Anki
           prox->forward = 0;
           prox->left = 0;
           prox->right = 0;
-          prox->latest = IRleft;
+	  prox->latest = IRleft;
           return;
         }
         
 
         while (I2Cstate != 0) // both messages must be sent to proceed
         {
+          MicroWait(1000);
+          printf("State = %i (not hex!!)\r\n", I2Cstate);
         }
         
         switch(ID)
@@ -579,7 +584,8 @@ extern "C" void TIM7_IRQHandler(void)
 {
   static TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
   static char bits, m;
-  
+  static int long_count;
+//  TIM7->CR1 &= ~0x01;           // Disable Counter
   TIM7->SR = 0;        // Reset interrupt flag
   
   // check for new messages
@@ -591,6 +597,7 @@ extern "C" void TIM7_IRQHandler(void)
     I2Cstate = 0x00;
     read_msg.DATA[0] = 0x00;
     read_msg.DATA[1] = 0x00;
+    long_count = 0;
   }
   
   switch(I2Cstate)
@@ -603,13 +610,13 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
     
     case 0x01: // start bit (part 2)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;
+      break;
       
     //// send slave_write address ////
     case 0x02: // reset clock, set data (part 1 x 8)
@@ -618,20 +625,20 @@ extern "C" void TIM7_IRQHandler(void)
       m >>= 1;
       I2Cstate++;
       // wait
-      return;
+      break;
     
     case 0x03: // set clock (part 2 x 8)
       GPIO_SET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
-      return;
+      break;
     
     case 0x04: // end with a clock reset, and reset m (part 3)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL); 
       m = 0x80; // reset m
       I2Cstate++;
       // wait
-      return;
+      break;
 
     //// receive ack ////
     case 0x05: // set clock and data (part 1)
@@ -639,7 +646,7 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_SET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
                 
     case 0x06: // read ack and reset clock (part 2)
       if ((!!(GPIO_READ(write_msg.IFACE->GPIO_SDA) & write_msg.IFACE->PIN_SDA)) != I2C_ACK)
@@ -654,7 +661,7 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
       // wait
-      return;
+      break;
       
     //// send word address ////
     case 0x07: // reset clock, set data (part 1 x 8)
@@ -663,20 +670,20 @@ extern "C" void TIM7_IRQHandler(void)
       m >>= 1;
       I2Cstate++;
       // wait
-      return;
+      break;
     
     case 0x08: // set clock (part 2 x 8)
       GPIO_SET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
-      return;
+      break;
     
     case 0x09: // end with a clock reset and reset m (part 3)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       m = 0x80; // reset m
       I2Cstate++;
       // wait
-      return;
+      break;
       
     //// receive ack ////
     case 0x0A: // set clock and data (part 1)
@@ -684,7 +691,7 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_SET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
                 
     case 0x0B: // read data and reset clock (part 2)
       if ((!!(GPIO_READ(write_msg.IFACE->GPIO_SDA) & write_msg.IFACE->PIN_SDA)) != I2C_ACK)
@@ -699,7 +706,7 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
       // wait
-      return;
+      break;
 
     //// send data ////
     case 0x0C: // reset clock, set data (part 1 x 8)
@@ -708,20 +715,20 @@ extern "C" void TIM7_IRQHandler(void)
       m >>= 1;
       I2Cstate++;
       // wait
-      return;
+      break;
     
     case 0x0D: // set clock (part 2 x 8)
       GPIO_SET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
-      return;
+      break;
     
     case 0x0E: // end with a clock reset and reset m (part 3)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       m = 0x80; // reset m
       I2Cstate++;
       // wait
-      return;
+      break;
        
     //// receive ack ////
     case 0x0F: // set clock and data (part 1)
@@ -729,7 +736,7 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_SET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
                 
     case 0x10: // read data and reset clock (part 2)
       if ((!!(GPIO_READ(write_msg.IFACE->GPIO_SDA) & write_msg.IFACE->PIN_SDA)) != I2C_ACK)
@@ -744,27 +751,35 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
       // wait
-      return;
+      break;
       
     //// stop condition ////
     case 0x11: // reset data (part 1)
       GPIO_RESET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
       
     case 0x12: // set clock (part 2)
       GPIO_SET(write_msg.IFACE->GPIO_SCL, write_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;
+      break;
       
     case 0x13: // set data (part 3)
       GPIO_SET(write_msg.IFACE->GPIO_SDA, write_msg.IFACE->PIN_SDA);
-      I2Cstate++;
+      if(long_count == 750)
+      {
+        I2Cstate++;
+        long_count = 0;
+      }
+      else
+      {
+        long_count++;
+      }
       // wait
-      TIM7->ARR = 2000; // approx 3.75 or 4 ms wait
-      return;
+      //TIM7->ARR = 2000; // approx 3.75 or 4 ms wait
+      break;
 
 //////////////////////////////
 
@@ -773,15 +788,15 @@ extern "C" void TIM7_IRQHandler(void)
     case 0x14:  // start bit (part 1)
       GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       I2Cstate++;
-      TIM7->ARR = 1; // put this back
+      //TIM7->ARR = 1; // put this back
       // wait
-      return;
+      break;
     
     case 0x15: // start bit (part 2)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;
+      break;
       
     //// send slave_write address ////
     case 0x16: // reset clock, set data (part 1 x 8)
@@ -790,20 +805,20 @@ extern "C" void TIM7_IRQHandler(void)
       m >>= 1;
       I2Cstate++;
       // wait
-      return;
+      break;
     
     case 0x17: // set clock (part 2 x 8)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
-      return;
+      break;
     
     case 0x18: // end with a clock reset, and reset m (part 3)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL); 
       m = 0x80; // reset m
       I2Cstate++;
       // wait
-      return;
+      break;
 
     //// receive ack ////
     case 0x19: // set clock and data (part 1)
@@ -811,7 +826,7 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
                 
     case 0x1A: // read ack and reset clock (part 2)
       if ((!!(GPIO_READ(read_msg.IFACE->GPIO_SDA) & read_msg.IFACE->PIN_SDA)) != I2C_ACK)
@@ -826,7 +841,7 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       // wait
-      return;
+      break;
       
     //// send word address ////
     case 0x1B: // reset clock, set data (part 1 x 8)
@@ -835,20 +850,20 @@ extern "C" void TIM7_IRQHandler(void)
       m >>= 1;
       I2Cstate++;
       // wait
-      return;
+      break;
     
     case 0x1C: // set clock (part 2 x 8)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
-      return;
+      break;
     
     case 0x1D: // end with a clock reset and reset m (part 3)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       m = 0x80; // reset m
       I2Cstate++;
       // wait
-      return;
+      break;
       
     //// receive ack ////
     case 0x1E: // set clock and data (part 1)
@@ -856,7 +871,7 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
                 
     case 0x1F: // read data and reset clock (part 2)
       if ((!!(GPIO_READ(read_msg.IFACE->GPIO_SDA) & read_msg.IFACE->PIN_SDA)) != I2C_ACK)
@@ -871,33 +886,33 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       // wait
-      return;
+      break;
      
     //// stop condition ////
     case 0x20: // set clock (part 1)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;
+      break;
 
     case 0x21: // set data (part 2)
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
      
     //// send a start bit ////
     case 0x22:  // start bit (part 1)
       GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
     
     case 0x23: // start bit (part 2)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;
+      break;
     
     //// send slave_read address ////
     case 0x24: // reset clock, set data (part 1 x 8)
@@ -906,20 +921,20 @@ extern "C" void TIM7_IRQHandler(void)
       m >>= 1;
       I2Cstate++;
       // wait
-      return;
+      break;
     
     case 0x25: // set clock (part 2 x 8)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       m == 0 ? I2Cstate++ : I2Cstate--;
       // wait
-      return;
+      break;
     
     case 0x26: // end with a clock reset, and reset m (part 3)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL); 
       m = 0x80; // reset m
       I2Cstate++;
       // wait
-      return;
+      break;
       
     //// receive ack ////
     case 0x27: // set clock and data (part 1)
@@ -927,7 +942,7 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
                 
     case 0x28: // read data and reset clock (part 2)
       if ((!!(GPIO_READ(read_msg.IFACE->GPIO_SDA) & read_msg.IFACE->PIN_SDA)) != I2C_ACK)
@@ -942,7 +957,7 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       //GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA); // (let data continue to float?!) TODO, fix the others in ACK. maybe they don't need it?
       // wait
-      return;
+      break;
 
     //// read data 1 ////
     case 0x29: // set clock high, read data (part 1)
@@ -951,7 +966,7 @@ extern "C" void TIM7_IRQHandler(void)
       bits++;
       I2Cstate++;
       // wait
-      return;
+      break;
       
     case 0x2A: // set clock low
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
@@ -966,27 +981,27 @@ extern "C" void TIM7_IRQHandler(void)
         I2Cstate--;
       }
       // wait
-      return;
+      break;
     
     //// send ack ////
     case 0x2B: // set the ack
       I2C_ACK == 0 ? GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA) : GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
       
     case 0x2C: // clock high
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;
+      break;
       
     case 0x2D: // clock low, let data float
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;
+      break;
       
     //// read data 2 ////
     case 0x2E: // set clock high, read data (part 1)
@@ -995,7 +1010,7 @@ extern "C" void TIM7_IRQHandler(void)
       bits++;
       I2Cstate++;
       // wait
-      return;
+      break;
       
     case 0x2F: // set clock low
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
@@ -1010,20 +1025,20 @@ extern "C" void TIM7_IRQHandler(void)
         I2Cstate--;
       }
       // wait
-      return;
+      break;
       
     //// send nack ////
     case 0x30: // set the nack
       I2C_ACK == 0 ? GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA) : GPIO_RESET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
       I2Cstate++;
       // wait
-      return;
+      break;
       
     case 0x31: // clock high
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;    
+      break;    
     
     //// stop condition (SUCCESS)////
     case 0x32: // reset data (part 1)
@@ -1031,13 +1046,13 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;
+      break;
       
     case 0x33: // set clock (part 2)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;
+      break;
 
     case 0x34: // set data (part 3)
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
@@ -1047,7 +1062,7 @@ extern "C" void TIM7_IRQHandler(void)
       TIM_ITConfig(TIM7, TIM_IT_Update, DISABLE); // Disable interrupt
       I2Cstate = 0;
       // wait
-      return;
+      break;
       
     //// stop condition (FAILURE) ////
     case 0x35: // reset data (part 1)
@@ -1055,13 +1070,13 @@ extern "C" void TIM7_IRQHandler(void)
       GPIO_RESET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;
+      break;
       
     case 0x36: // set clock (part 2)
       GPIO_SET(read_msg.IFACE->GPIO_SCL, read_msg.IFACE->PIN_SCL);
       I2Cstate++;
       // wait
-      return;
+      break;
 
     case 0x37: // set data (part 3)
       GPIO_SET(read_msg.IFACE->GPIO_SDA, read_msg.IFACE->PIN_SDA);
@@ -1071,9 +1086,10 @@ extern "C" void TIM7_IRQHandler(void)
       TIM_ITConfig(TIM7, TIM_IT_Update, DISABLE); // Disable interrupt
       I2Cstate = 0;
       // wait
-      return;
-
+      break;
   }
+  TIM7->CR1 = TIM_CR1_CEN | TIM_CR1_URS | TIM_CR1_OPM; // Fire off one pulse
+//   TIM7->CR1 |= 0x01;           // Ensable Counter
 }
 
 

@@ -68,6 +68,11 @@ namespace Anki
       template<typename InType, typename IntermediateType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
       template<typename InType, typename IntermediateType, typename OutType> Result DotDivide(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
+      // Sum of absolute difference (SAD)
+      template<typename InType, typename IntermediateType, typename OutType> Result SumOfAbsDiff(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result SumOfAbsDiff(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result SumOfAbsDiff(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+
       // Elementwise exponential on an array
       template<typename InType, typename IntermediateType, typename OutType> Result Exp(const ConstArraySliceExpression<InType> &in, ArraySlice<OutType> out);
 
@@ -220,6 +225,11 @@ namespace Anki
         template<typename InType, typename IntermediateType, typename OutType> class Sqrt {
         public:
           static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(sqrtf(static_cast<IntermediateType>(value1)));}
+        };
+
+        template<typename InType, typename IntermediateType, typename OutType> class SumOfAbsDiff {
+        public:
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(ABS(static_cast<IntermediateType>(value1) - static_cast<IntermediateType>(value2)));}
         };
 
         template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);

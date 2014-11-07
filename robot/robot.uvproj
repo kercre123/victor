@@ -974,6 +974,11 @@
               <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
             </File>
             <File>
+              <FileName>computeCharacteristicScale_binomial.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale_binomial.cpp</FilePath>
+            </File>
+            <File>
               <FileName>decisionTree_vision.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
@@ -2259,6 +2264,11 @@
               <FileName>computeCharacteristicScale.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>computeCharacteristicScale_binomial.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale_binomial.cpp</FilePath>
             </File>
             <File>
               <FileName>decisionTree_vision.cpp</FileName>
