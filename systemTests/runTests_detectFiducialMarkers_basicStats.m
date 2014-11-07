@@ -30,14 +30,26 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
             fprintf('Starting basicStats %d ', lastTestId);
         end
         
-        image = imread([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
-        
         if strcmp(algorithmParameters.imageCompression{1}, 'none') || strcmp(algorithmParameters.imageCompression{1}, 'png')
+            image = imread([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
             fileInfo = dir([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
         elseif strcmp(algorithmParameters.imageCompression{1}, 'jpg') || strcmp(algorithmParameters.imageCompression{1}, 'jpeg')
             tmpFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.jpg'];
             
-            imwrite(image, tmpFilename, 'jpg', 'Quality', algorithmParameters.imageCompression{2});
+            if ~exist('/usr/local/bin/convert', 'file')
+                disp('Error, ImageMagick is required to save jpg files. On mac, type "brew install ImageMagick"');
+                keyboard
+            end
+            
+            if ismac()
+                system(sprintf('/usr/local/bin/convert %s -colorspace Gray -quality %d %s', [curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile], algorithmParameters.imageCompression{2}, tmpFilename));
+            else
+                % TODO: support
+                assert(false);
+            end
+            
+            % Matlab's jpeg writer is not as good as others
+            %             imwrite(image, tmpFilename, 'jpg', 'Quality', algorithmParameters.imageCompression{2});
             
             image = imread(tmpFilename);
             
@@ -105,7 +117,7 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         curResultsData_basics.detectedMarkers = makeCellArray(detectedMarkers);
         
         curResultsData_basics.uncompressedFileSize = numel(image);
-        curResultsData_basics.compressedFileSize = fileInfo.bytes;        
+        curResultsData_basics.compressedFileSize = fileInfo.bytes;
         
         save(workQueue{iWork}.basicStats_filename, 'curResultsData_basics', 'curTestData');
         
@@ -146,11 +158,11 @@ function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrec
             queryQuad = queryQuads{iQuery};
             
             for iRotation = 0:3
-%                 distances = sqrt(sum((queryQuad - gtQuad).^2, 2));
+                %                 distances = sqrt(sum((queryQuad - gtQuad).^2, 2));
                 distances = sqrt((queryQuad(:,1) - gtQuad(:,1)).^2 + (queryQuad(:,2) - gtQuad(:,2)).^2);
                 
                 % Compute the closest match based on the mean distance
-                                
+                
                 % distance_mean = mean(distances);
                 distance_mean = (distances(1) + distances(2) + distances(3) + distances(4)) / 4;
                 

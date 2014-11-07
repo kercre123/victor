@@ -15,7 +15,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
-%   makeNewResultsDirectory = true;
+    %     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
     
     assert(exist('testJsonPattern', 'var') == 1);
@@ -121,7 +121,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     %     resultsData_overall_matlabQuadNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
     %     disp(sprintf('resultsData_overall_matlabQuadNoRefinement = %f %f %d', resultsData_overall_matlabQuadNoRefinement.percentQuadsExtracted, resultsData_overall_matlabQuadNoRefinement.percentMarkersCorrect, resultsData_overall_matlabQuadNoRefinement.numMarkerErrors));
     
-    jpgCompression = 0:5:100;
+    jpgCompression = linspace(0,100,10);
     resultsData_overall_matlabWithRefinement_jpg = cell(length(jpgCompression), 1);
     for iJpg = 1:length(jpgCompression)
         algorithmParametersN = algorithmParameters;
@@ -132,6 +132,27 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
         resultsData_overall_matlabWithRefinement_jpg{iJpg} = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
         disp(sprintf('resultsData_overall_matlabWithRefinement_jpg%d = %f %f %d fileSizePercent = %f', jpgCompression(iJpg), resultsData_overall_matlabWithRefinement_jpg{iJpg}.percentQuadsExtracted, resultsData_overall_matlabWithRefinement_jpg{iJpg}.percentMarkersCorrect, resultsData_overall_matlabWithRefinement_jpg{iJpg}.numMarkerErrors, resultsData_overall_matlabWithRefinement_jpg{iJpg}.compressedFileSizeTotal / resultsData_overall_matlabWithRefinement_jpg{iJpg}.uncompressedFileSizeTotal));
     end
+    
+    showJpgResults = true;
+    if showJpgResults
+        percentMarkersCorrect = zeros(length(jpgCompression)+2, 1);
+        compressionPercent = zeros(length(jpgCompression)+2, 1);
+        for iJpg = 1:length(jpgCompression)
+            percentMarkersCorrect(iJpg) = 100 * resultsData_overall_matlabWithRefinement_jpg{iJpg}.percentMarkersCorrect;
+            compressionPercent(iJpg) = 100 * resultsData_overall_matlabWithRefinement_jpg{iJpg}.compressedFileSizeTotal / resultsData_overall_matlabWithRefinement_jpg{iJpg}.uncompressedFileSizeTotal;
+        end
+        percentMarkersCorrect((length(jpgCompression)+1):end) = 100 * resultsData_overall_matlabWithRefinement.percentMarkersCorrect;
+        compressionPercent(length(jpgCompression)+1) = 100 * resultsData_overall_matlabWithRefinement.compressedFileSizeTotal / resultsData_overall_matlabWithRefinement.uncompressedFileSizeTotal;
+        compressionPercent(end) = 100;
+        plot(compressionPercent, percentMarkersCorrect, 'LineWidth', 3);
+        axis([0,100,0,100]);
+        xlabel('File size (percent)')
+        ylabel('Markers detected (percent)')
+        title('Accuracy of fiducial detection with different amounts of compression')
+        disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect), ']'])
+        disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent), ']'])
+    end % showJpgResults
+    
     
     %     algorithmParametersN = algorithmParameters;
     %     algorithmParametersN.useMatlabForAll = true;
