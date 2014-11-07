@@ -315,7 +315,8 @@ namespace Anki {
       // For debugging robot parameters:
       Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       Result SetLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
-      Result SetSetVisionSystemParams(VisionSystemParams_t p);
+      Result SendVisionSystemParams(VisionSystemParams_t p);
+      Result SendFaceDetectParams(FaceDetectParams_t p);
       
       // =========== Pose history =============
       

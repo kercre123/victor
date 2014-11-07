@@ -2469,6 +2469,22 @@ namespace Anki {
               autoExposure_percentileToMakeHigh);
       }
       
+      void SetFaceDetectParams(const f32 scaleFactor,
+                               const s32 minNeighbors,
+                               const s32 minObjectHeight,
+                               const s32 minObjectWidth,
+                               const s32 maxObjectHeight,
+                               const s32 maxObjectWidth)
+      {
+        PRINT("Updated VisionSystem FaceDetect params\n");
+        faceDetectionParameters_.scaleFactor = scaleFactor;
+        faceDetectionParameters_.minNeighbors = minNeighbors;
+        faceDetectionParameters_.minHeight = minObjectHeight;
+        faceDetectionParameters_.minWidth = minObjectWidth;
+        faceDetectionParameters_.maxHeight = maxObjectHeight;
+        faceDetectionParameters_.maxWidth = maxObjectWidth;
+      }
+      
     } // namespace VisionSystem
   } // namespace Cozmo
 } // namespace Anki

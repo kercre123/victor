@@ -213,3 +213,13 @@ END_MESSAGE_DEFINITION(U2G_StartFaceTracking)
 // StopFaceTracking
 START_MESSAGE_DEFINITION(U2G_StopFaceTracking, 1)
 END_MESSAGE_DEFINITION(U2G_StopFaceTracking)
+
+// SetFaceDetectParams
+START_MESSAGE_DEFINITION(U2G_SetFaceDetectParams, 1)
+ADD_MESSAGE_MEMBER(f32, scaleFactor)
+ADD_MESSAGE_MEMBER(s32, minNeighbors)
+ADD_MESSAGE_MEMBER(s32, minObjectHeight)
+ADD_MESSAGE_MEMBER(s32, minObjectWidth)
+ADD_MESSAGE_MEMBER(s32, maxObjectHeight)
+ADD_MESSAGE_MEMBER(s32, maxObjectWidth)
+END_MESSAGE_DEFINITION(U2G_SetFaceDetectParams)
