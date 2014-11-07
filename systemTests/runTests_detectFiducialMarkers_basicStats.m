@@ -7,6 +7,8 @@
 function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotationList, algorithmParameters)
     global g_rotationList;
     
+    useImageMagick = false;
+    
     g_rotationList = rotationList;
     
     lastTestId = -1;
@@ -36,20 +38,22 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         elseif strcmp(algorithmParameters.imageCompression{1}, 'jpg') || strcmp(algorithmParameters.imageCompression{1}, 'jpeg')
             tmpFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.jpg'];
             
-            if ~exist('/usr/local/bin/convert', 'file')
-                disp('Error, ImageMagick is required to save jpg files. On mac, type "brew install ImageMagick"');
-                keyboard
+            if useImageMagick
+                if ~exist('/usr/local/bin/convert', 'file')
+                    disp('Error, ImageMagick is required to save jpg files. On mac, type "brew install ImageMagick"');
+                    keyboard
+                end
+                
+                if ismac()
+                    system(sprintf('/usr/local/bin/convert %s -colorspace Gray -quality %d %s', [curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile], algorithmParameters.imageCompression{2}, tmpFilename));
+                else
+                    % TODO: support
+                    assert(false);
+                end
+            else                
+                % Matlab's jpeg writer is not as good as ImageMagick's at low bitrates
+                imwrite(image, tmpFilename, 'jpg', 'Quality', algorithmParameters.imageCompression{2});
             end
-            
-            if ismac()
-                system(sprintf('/usr/local/bin/convert %s -colorspace Gray -quality %d %s', [curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile], algorithmParameters.imageCompression{2}, tmpFilename));
-            else
-                % TODO: support
-                assert(false);
-            end
-            
-            % Matlab's jpeg writer is not as good as others
-            %             imwrite(image, tmpFilename, 'jpg', 'Quality', algorithmParameters.imageCompression{2});
             
             image = imread(tmpFilename);
             
