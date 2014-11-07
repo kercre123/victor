@@ -52,6 +52,7 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
                 end
             else                
                 % Matlab's jpeg writer is not as good as ImageMagick's at low bitrates
+                image = imread([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
                 imwrite(image, tmpFilename, 'jpg', 'Quality', algorithmParameters.imageCompression{2});
             end
             
