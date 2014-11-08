@@ -1690,7 +1690,7 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SetSetVisionSystemParams(VisionSystemParams_t p)
+    Result Robot::SendVisionSystemParams(VisionSystemParams_t p)
     {
       MessageSetVisionSystemParams m;
       m.minExposureTime = p.minExposureTime;
@@ -1699,6 +1699,18 @@ namespace Anki {
       m.integerCountsIncrement = p.integerCountsIncrement;
       m.highValue = p.highValue;
       return _msgHandler->SendMessage(_ID,m);
+    }
+    
+    Result Robot::SendFaceDetectParams(FaceDetectParams_t p)
+    {
+      MessageSetFaceDetectParams m;
+      m.scaleFactor = p.scaleFactor;
+      m.minNeighbors = p.minNeighbors;
+      m.minObjectHeight = p.minObjectHeight;
+      m.minObjectWidth = p.minObjectWidth;
+      m.maxObjectHeight = p.maxObjectHeight;
+      m.maxObjectWidth = p.maxObjectWidth;
+      return _msgHandler->SendMessage(_ID, m);
     }
 
     Result Robot::SendPlayAnimation(const char *name, const u32 numLoops)

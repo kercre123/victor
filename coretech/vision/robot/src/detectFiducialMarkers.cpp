@@ -34,6 +34,33 @@ namespace Anki
       const f32 component_minHollowRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
+      const s32 maxConnectedComponentSegments, //< If this number is above 2^16-1, then it will use 25% more memory per component
+      const s32 maxExtractedQuads,
+      const s32 refine_quadRefinementIterations,
+      const s32 refine_numRefinementSamples,
+      const f32 refine_quadRefinementMaxCornerChange,
+      const f32 refine_quadRefinementMinCornerChange,
+      const bool returnInvalidMarkers,
+      MemoryStack scratchCcm,
+      MemoryStack scratchOnchip,
+      MemoryStack scratchOffChip)
+    {
+      const bool useIntegralImageFiltering = true;
+      return DetectFiducialMarkers(image, markers, homographies, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, maxConnectedComponentSegments, maxExtractedQuads, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange, returnInvalidMarkers, scratchCcm, scratchOnchip, scratchOffChip);
+    }
+
+    Result DetectFiducialMarkers(
+      const Array<u8> &image,
+      FixedLengthList<VisionMarker> &markers,
+      FixedLengthList<Array<f32> > &homographies,
+      const bool useIntegralImageFiltering,
+      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
+      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
+      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+      const f32 component_minHollowRatio,
+      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
+      const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
       const s32 refine_quadRefinementIterations,
@@ -78,40 +105,60 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(extractedComponents.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "extractedComponents could not be allocated");
 
-      FixedLengthList<s32> filterHalfWidths(scaleImage_numPyramidLevels+2, scratchOnchip, Flags::Buffer(false, false, true));
+      if(useIntegralImageFiltering) {
+        FixedLengthList<s32> filterHalfWidths(scaleImage_numPyramidLevels+2, scratchOnchip, Flags::Buffer(false, false, true));
 
-      AnkiConditionalErrorAndReturnValue(filterHalfWidths.IsValid(),
-        RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "filterHalfWidths could not be allocated");
+        AnkiConditionalErrorAndReturnValue(filterHalfWidths.IsValid(),
+          RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "filterHalfWidths could not be allocated");
 
-      for(s32 i=0; i<(scaleImage_numPyramidLevels+2); i++) {
-        filterHalfWidths[i] = 1 << (i);
-      }
+        for(s32 i=0; i<(scaleImage_numPyramidLevels+2); i++) {
+          filterHalfWidths[i] = 1 << (i);
+        }
 
-      //const s32 halfWidthData[] = {1,2,3,4,6,8,12,16};
-      //for(s32 i=0; i<8; i++) {
-      //  filterHalfWidths[i] = halfWidthData[i];
-      //}
+        //const s32 halfWidthData[] = {1,2,3,4,6,8,12,16};
+        //for(s32 i=0; i<8; i++) {
+        //  filterHalfWidths[i] = halfWidthData[i];
+        //}
 
-      // 1. Compute the Scale image
-      // 2. Binarize the Scale image
-      // 3. Compute connected components from the binary image
-      if((lastResult = ExtractComponentsViaCharacteristicScale(
-        image,
-        filterHalfWidths, scaleImage_thresholdMultiplier,
-        component1d_minComponentWidth, component1d_maxSkipDistance,
-        extractedComponents,
-        scratchCcm, scratchOnchip, scratchOffChip)) != RESULT_OK)
-      {
-        /* // DEBUG: drop a display of extracted components into matlab
-        Embedded::Matlab matlab(false);
-        matlab.PutArray(image, "image");
-        Array<u8> empty(image.get_size(0), image.get_size(1), scratchOnchip);
-        Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
-        matlab.PutArray(empty, "empty");
-        matlab.EvalStringEcho("desktop; keyboard");
-        */
-        return lastResult;
-      }
+        // 1. Compute the Scale image
+        // 2. Binarize the Scale image
+        // 3. Compute connected components from the binary image
+        if((lastResult = ExtractComponentsViaCharacteristicScale(
+          image,
+          filterHalfWidths, scaleImage_thresholdMultiplier,
+          component1d_minComponentWidth, component1d_maxSkipDistance,
+          extractedComponents,
+          scratchCcm, scratchOnchip, scratchOffChip)) != RESULT_OK)
+        {
+          /* // DEBUG: drop a display of extracted components into matlab
+          Embedded::Matlab matlab(false);
+          matlab.PutArray(image, "image");
+          Array<u8> empty(image.get_size(0), image.get_size(1), scratchOnchip);
+          Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
+          matlab.PutArray(empty, "empty");
+          matlab.EvalStringEcho("desktop; keyboard");
+          */
+          return lastResult;
+        }
+      } else { // if(useIntegralImageFiltering)
+        if((lastResult = ExtractComponentsViaCharacteristicScale_binomial(
+          image,
+          scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
+          component1d_minComponentWidth, component1d_maxSkipDistance,
+          extractedComponents,
+          scratchCcm, scratchOnchip, scratchOffChip)) != RESULT_OK)
+        {
+          /* // DEBUG: drop a display of extracted components into matlab
+          Embedded::Matlab matlab(false);
+          matlab.PutArray(image, "image");
+          Array<u8> empty(image.get_size(0), image.get_size(1), scratchOnchip);
+          Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
+          matlab.PutArray(empty, "empty");
+          matlab.EvalStringEcho("desktop; keyboard");
+          */
+          return lastResult;
+        }
+      } // if(useIntegralImageFiltering) ... else
 
 #ifdef SHOW_DRAWN_COMPONENTS
       {
@@ -262,7 +309,7 @@ namespace Anki
           if(markers[iMarker].validity != VisionMarker::VALID) {
             for(s32 jQuad=iMarker; jQuad<markers.get_size(); jQuad++) {
               markers[jQuad] = markers[jQuad+1];
-              homographies[jQuad] = homographies[jQuad+1];
+              homographies[jQuad].Set(homographies[jQuad+1]);
             }
             //extractedQuads.set_size(extractedQuads.get_size()-1);
             markers.set_size(markers.get_size()-1);

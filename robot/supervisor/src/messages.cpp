@@ -465,7 +465,13 @@ namespace Anki {
                                 msg.highValue,
                                 msg.percentileToMakeHigh);
       }
-     
+
+      void ProcessSetFaceDetectParamsMessage(const SetFaceDetectParams& msg) {
+        VisionSystem::SetFaceDetectParams(msg.scaleFactor,
+                                          msg.minNeighbors,
+                                          msg.minObjectHeight, msg.minObjectWidth,
+                                          msg.maxObjectHeight, msg.maxObjectWidth);
+      }
 
       void ProcessIMURequestMessage(const IMURequest& msg) {
         IMUFilter::RecordAndSend(msg.length_ms);

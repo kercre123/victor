@@ -45,6 +45,29 @@ namespace Anki
       MemoryStack scratchOnchip,
       MemoryStack scratchOffChip);
 
+    Result DetectFiducialMarkers(
+      const Array<u8> &image,
+      FixedLengthList<VisionMarker> &markers,
+      FixedLengthList<Array<f32> > &homographies,
+      const bool useIntegralImageFiltering,
+      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
+      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
+      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+      const f32 component_minHollowRatio,
+      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
+      const f32 decode_minContrastRatio,
+      const s32 maxConnectedComponentSegments, //< If this number is above 2^16-1, then it will use 25% more memory per component
+      const s32 maxExtractedQuads,
+      const s32 refine_quadRefinementIterations,
+      const s32 refine_numRefinementSamples,
+      const f32 refine_quadRefinementMaxCornerChange,
+      const f32 refine_quadRefinementMinCornerChange,
+      const bool returnInvalidMarkers,
+      MemoryStack scratchCcm,
+      MemoryStack scratchOnchip,
+      MemoryStack scratchOffChip);
+
     // Used by DetectFiducialMarkers
     //
     // Compute characteristic scale, binary image, and extract connected components
@@ -52,6 +75,17 @@ namespace Anki
     Result ExtractComponentsViaCharacteristicScale(
       const Array<u8> &image,
       const FixedLengthList<s32> &filterHalfWidths,
+      const s32 scaleImage_thresholdMultiplier,
+      const s16 component1d_minComponentWidth,
+      const s16 component1d_maxSkipDistance,
+      ConnectedComponents &components,
+      MemoryStack fastScratch,
+      MemoryStack slowerScratch,
+      MemoryStack slowestScratch);
+
+    Result ExtractComponentsViaCharacteristicScale_binomial(
+      const Array<u8> &image,
+      const s32 numPyramidLevels,
       const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth,
       const s16 component1d_maxSkipDistance,

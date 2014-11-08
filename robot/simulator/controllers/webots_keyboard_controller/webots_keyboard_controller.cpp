@@ -107,6 +107,7 @@ namespace Anki {
       void SendReadAnimationFile();
       void SendStartFaceTracking(u8 timeout_sec);
       void SendStopFaceTracking();
+      void SendFaceDetectParams();
       
       void Init()
       {
@@ -584,6 +585,9 @@ namespace Anki {
                  robot_->SendSetVisionSystemParams(p);
                  }
                  */
+                
+                SendFaceDetectParams();
+                
                 break;
               }
               case CKEY_CYCLE_SOUND_SCHEME:
@@ -1058,6 +1062,23 @@ namespace Anki {
       {
         MessageU2G_StopFaceTracking m;
         SendMessage(m);
+      }
+
+      void SendFaceDetectParams()
+      {
+        if (root_) {
+          // Face Detect params
+          MessageU2G_SetFaceDetectParams p;
+          p.scaleFactor = root_->getField("fd_scaleFactor")->getSFFloat();
+          p.minNeighbors = root_->getField("fd_minNeighbors")->getSFInt32();
+          p.minObjectHeight = root_->getField("fd_minObjectHeight")->getSFInt32();
+          p.minObjectWidth = root_->getField("fd_minObjectWidth")->getSFInt32();
+          p.maxObjectHeight = root_->getField("fd_maxObjectHeight")->getSFInt32();
+          p.maxObjectWidth = root_->getField("fd_maxObjectWidth")->getSFInt32();
+          
+          printf("New Face detect params\n");
+          SendMessage(p);
+        }
       }
       
     } // namespace WebotsKeyboardController

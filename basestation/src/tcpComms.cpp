@@ -19,10 +19,6 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#include <string.h>
-#include <unistd.h>
-#include <stdio.h>
-
 // The number of bytes that can be sent out per call to Update(),
 // the assumption being Update() is called once per basestation tic.
 #define MAX_SENT_BYTES_PER_TIC 100  // Roughly 5 * 20 BLE packets which is the "maximum" amount BLE can send per tic.
@@ -33,8 +29,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  const std::string header(RADIO_PACKET_HEADER, RADIO_PACKET_HEADER + sizeof(RADIO_PACKET_HEADER));
-  const size_t HEADER_AND_TS_SIZE = header.length() + sizeof(TimeStamp_t);
+  const size_t HEADER_AND_TS_SIZE = sizeof(RADIO_PACKET_HEADER) + sizeof(TimeStamp_t);
 
   
   TCPComms::TCPComms()
@@ -251,7 +246,17 @@ namespace Cozmo {
       // Look for valid header
       while (c.recvDataSize >= sizeof(RADIO_PACKET_HEADER)) {
         
-        char* hPtr = std::strstr((char*)c.recvBuf,(char*)RADIO_PACKET_HEADER);
+        // Look for 0xBEEF
+        u8* hPtr = NULL;
+        for(int i = 0; i < c.recvDataSize-1; ++i) {
+          if (c.recvBuf[i] == RADIO_PACKET_HEADER[0]) {
+            if (c.recvBuf[i+1] == RADIO_PACKET_HEADER[1]) {
+              hPtr = &(c.recvBuf[i]);
+              break;
+            }
+          }
+        }
+        
         if (hPtr == NULL) {
           // Header not found at all
           // Delete everything
@@ -259,11 +264,11 @@ namespace Cozmo {
           break;
         }
         
-        size_t n = hPtr - (char*)c.recvBuf;
+        int n = hPtr - c.recvBuf;
         if (n != 0) {
           // Header was not found at the beginning.
           // Delete everything up until the header.
-          PRINT_NAMED_WARNING("TCPComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding %zu bytes\n", n);
+          PRINT_NAMED_WARNING("TCPComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding %d bytes\n", n);
           c.recvDataSize -= n;
           memcpy(c.recvBuf, hPtr, c.recvDataSize);
         }
