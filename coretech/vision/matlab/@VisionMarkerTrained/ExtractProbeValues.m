@@ -198,7 +198,7 @@ for iImg = 1:numImages
               
               if computeGradMag
                 imgGradMag = single(smoothgradient(img));
-                gradMagValues{iImg, iBlur, iSize, iExp, iPerturb, iInvert} = mean(interp2(imageCoordsX, imageCoordsY, img, ...
+                gradMagValues{iImg, iBlur, iSize, iExp, iPerturb, iInvert} = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
                   xPerturb, yPerturb, 'linear', 0), 2);
               end
               
@@ -253,7 +253,7 @@ end
 
 % Add negative examples
 fnamesNeg = {};
-if ~isempty(negativeImageDir)
+if ~isempty(negativeImageDir) && maxNegativeExamples > 0
   fprintf('Reading negative image data...');
   if ~iscell(negativeImageDir)
     negativeImageDir = {negativeImageDir};
