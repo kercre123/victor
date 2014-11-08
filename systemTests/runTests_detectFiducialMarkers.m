@@ -15,8 +15,26 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
-%     makeNewResultsDirectory = true;
+    %     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
+    
+    % Run everything
+    %     runWhichAlgorithms = {...
+    %         'c_with_refinement',...
+    %         'c_with_refinement_binomial',...
+    %         'c_no_refinement',...
+    %         'matlab_with_refinement_altTree',...
+    %         'matlab_no_refinement_altTree',...
+    %         'matlab_with_refinement',...
+    %         'matlab_no_refinement',...
+    %         'matlab_with_refinement_jpg'};
+    
+    % Run just the tests you want
+    runWhichAlgorithms = {...
+        'matlab_with_refinement',...
+        'matlab_with_refinement_jpg',...
+        'matlab_with_refinement_jpg_preprocess',...
+        };
     
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
@@ -61,25 +79,10 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParameters.matlab_embeddedConversions = EmbeddedConversionsManager();
     algorithmParameters.showImageDetectionWidth = 640;
     algorithmParameters.showImageDetections = false;
+    algorithmParameters.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
     
     algorithmParametersOrig = algorithmParameters;
-    
-    % Run everything
-%     runWhichAlgorithms = {...
-%         'c_with_refinement',...
-%         'c_with_refinement_binomial',...
-%         'c_no_refinement',...
-%         'matlab_with_refinement_altTree',...
-%         'matlab_no_refinement_altTree',...
-%         'matlab_with_refinement',...
-%         'matlab_no_refinement',...
-%         'matlab_with_refinement_jpg'};
-    
-    % Run just the tests you want
-    runWhichAlgorithms = {...
-        'matlab_with_refinement',...
-        'matlab_with_refinement_jpg'};
     
     if length(runWhichAlgorithms) ~= length(unique(runWhichAlgorithms))
         disp('There is a repeat');
@@ -126,30 +129,29 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
             showJpgResults = true;
             
             jpgCompression = round(linspace(0,100,10));
+            percentMarkersCorrect = zeros(length(jpgCompression)+2, 1);
+            compressionPercent = zeros(length(jpgCompression)+2, 1);
             
             for iJpg = 1:length(jpgCompression)
-                algorithmParametersN = algorithmParameters;
+                algorithmParametersN = algorithmParametersOrig;
                 algorithmParametersN.useMatlabForAll = true;
                 algorithmParametersN.extractionFunctionName = sprintf('matlab_with_refinement_jpg%d', jpgCompression(iJpg));
                 algorithmParametersN.imageCompression = {'jpg', jpgCompression(iJpg)};
                 
                 curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
-                resultsData.([runWhichAlgorithms{iAlgorithm}, sprintf('%d',jpgCompression(iJpg))]) = curResults;                
+                resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
+                
+                percentMarkersCorrect(iJpg) = 100 * curResults.percentMarkersCorrect;
+                compressionPercent(iJpg) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
+                
                 disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
             end % for iJpg = 1:length(jpgCompression)
             
             if showJpgResults
-                percentMarkersCorrect = zeros(length(jpgCompression)+2, 1);
-                compressionPercent = zeros(length(jpgCompression)+2, 1);
-                for iJpg = 1:length(jpgCompression)
-                    curResults = resultsData.([runWhichAlgorithms{iAlgorithm}, sprintf('%d',jpgCompression(iJpg))]);
-                    percentMarkersCorrect(iJpg) = 100 * curResults.percentMarkersCorrect;
-                    compressionPercent(iJpg) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
-                end
                 percentMarkersCorrect((length(jpgCompression)+1):end) = 100 * resultsData.('matlab_with_refinement').percentMarkersCorrect;
                 compressionPercent(length(jpgCompression)+1) = 100 * resultsData.('matlab_with_refinement').compressedFileSizeTotal / resultsData.('matlab_with_refinement').uncompressedFileSizeTotal;
                 compressionPercent(end) = 100;
-                plot(compressionPercent, percentMarkersCorrect, 'LineWidth', 3);
+                plot(compressionPercent, percentMarkersCorrect, 'LineWidth', 1);
                 axis([0,100,0,100]);
                 xlabel('File size (percent)')
                 ylabel('Markers detected (percent)')
@@ -158,7 +160,56 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent), ']'])
             end % showJpgResults
             
-        else 
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_with_refinement_jpg_preprocess')
+            isSimpleTest = false;
+            
+            showJpgResults = true;
+            
+            preprocessingFunctions = {...
+                @(image) (uint8((255/(255^0.4)) * double(rgb2gray2(image)).^0.4)),... % gamma correct with a factor of 0.4
+                @(image) (uint8(shiftableBF(double(rgb2gray2(image)), 1, 50, 6*1+1, 0.01))),... % O(1) bilinear filter
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -1), 1) ),... % 7 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -2), 2) ),... % 6 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -3), 3) ),... % 5 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -4), 4) ),... % 4 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -5), 5) ),... % 3 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -6), 6) ),... % 2 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -7), 7) ),... % 1 bit
+                };
+            
+            jpgCompression = round(linspace(0,100,10));
+            percentMarkersCorrect = zeros(length(jpgCompression), length(preprocessingFunctions));
+            compressionPercent = zeros(length(jpgCompression), length(preprocessingFunctions));
+            
+            for iJpg = 1:length(jpgCompression)
+                for iPreprocess = 1:length(preprocessingFunctions)
+                    algorithmParametersN = algorithmParametersOrig;
+                    algorithmParametersN.useMatlabForAll = true;
+                    algorithmParametersN.extractionFunctionName = sprintf('matlab_with_refinement_jpg%d_preprocess%d', jpgCompression(iJpg), iPreprocess);
+                    algorithmParametersN.imageCompression = {'jpg', jpgCompression(iJpg)};
+                    algorithmParametersN.preprocessingFunction = preprocessingFunctions{iPreprocess};
+                    
+                    curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+                    resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
+                    
+                    percentMarkersCorrect(iJpg,iPreprocess) = 100 * curResults.percentMarkersCorrect;
+                    compressionPercent(iJpg,iPreprocess) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
+                    
+                    disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d,%d',iJpg,iPreprocess), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+                end % for iPreprocess = 1:length(preprocessingFunctions)
+            end % for iJpg = 1:length(jpgCompression)
+            
+            if showJpgResults
+                plot(compressionPercent, percentMarkersCorrect, 'LineWidth', 1);
+                axis([0,100,0,100]);
+                xlabel('File size (percent)')
+                ylabel('Markers detected (percent)')
+                title('Accuracy of fiducial detection with different amounts of compression and preprocessing')
+                disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect), ']'])
+                disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent), ']'])
+            end % showJpgResults
+            
+        else
             % Unknown runWhichAlgorithms{iAlgorithm}
             assert(false);
         end
