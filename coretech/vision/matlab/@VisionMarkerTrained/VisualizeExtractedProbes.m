@@ -5,6 +5,7 @@ labels = [];
 sample = [];
 numProbes = VisionMarkerTrained.ProbeParameters.GridSize;
 threshold = [];
+showGradMag = false;
 
 parseVarargin(varargin{:});
 
@@ -42,11 +43,16 @@ clf
 for i = 1:N
   subplot(numRows,numCols,i)
   
+  values = data.probeValues;
+  if showGradMag
+    values = data.gradMagValues;
+  end
+  
   if isempty(threshold)
-    img = reshape(mean(data.probeValues(:,data.labels==labels(i)),2), ...
+    img = reshape(mean(values(:,data.labels==labels(i)),2), ...
       numProbes, numProbes);
   else
-    img = reshape(mode(double(data.probeValues(:,data.labels==labels(i)) > threshold),2), ...
+    img = reshape(mode(double(values(:,data.labels==labels(i)) > threshold),2), ...
       numProbes, numProbes);
     %img = reshape(mean(data.probeValues(:,data.labels==labels(i)),2) > threshold, ...
     %  numProbes, numProbes);
