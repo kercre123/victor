@@ -33,6 +33,14 @@
       "transitionIn"   : 0,
       "transitionOut"  : 0, 
       "finalAngle_deg" : 0
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_TriggerAnimation", 
+      "relTime_ms"     : 1500,
+      "transitionIn"   : 0, 
+      "transitionOut"  : 0,
+      "animToPlay"     : "ANIM_BLINK",
+      "numLoops"       : 0
     }
   ], 
   
