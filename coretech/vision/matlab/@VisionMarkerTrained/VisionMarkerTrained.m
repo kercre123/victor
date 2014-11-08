@@ -157,10 +157,40 @@ classdef VisionMarkerTrained
                     end
                 end
                 
-                [this.codeName, this.codeID] = TestTree( ...
-                  VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
-                  VisionMarkerTrained.ProbePattern);
+                if iscell(VisionMarkerTrained.ProbeTree)
+                  VerifyLabel = false;
+                  numTrees = length(VisionMarkerTrained.ProbeTree);
+                  codeNames = cell(1, numTrees);
+                  codeIDs   = cell(1, numTrees);
+                  for iTree = 1:numTrees
+                    [codeNames{iTree}, codeIDs{iTree}] = TestTree( ...
+                      VisionMarkerTrained.ProbeTree{iTree}, img, tform, threshold, ...
+                      VisionMarkerTrained.ProbePattern);
+                    if ~isscalar(codeIDs{iTree})
+                      codeIDs{iTree} = mode(codeIDs{iTree});
+                    end
+                  end
                   
+                  counts = hist([codeIDs{:}], 1:length(VisionMarkerTrained.ProbeTree{1}.labels));
+                  
+                  % Majority
+                  [maxCount,this.codeID] = max(counts);
+                  this.isValid = maxCount > 0.5*numTrees;
+                  
+%                   % Plurality (ID with most votes wins, so long as it is
+%                   % more than second-most)
+%                   [sortedCounts,sortedIDs] = sort(counts, 'descend');
+%                   this.codeID = sortedIDs(1);
+%                   this.isValid = sortedCounts(1) > sortedCounts(2);
+                  
+                  this.codeName = VisionMarkerTrained.ProbeTree{1}.labels{this.codeID};
+                  
+                else
+                  [this.codeName, this.codeID] = TestTree( ...
+                    VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
+                    VisionMarkerTrained.ProbePattern);
+                end
+                
                 if length(this.codeID) > 1
                   warning('Multiclass tree returned multiple labels. Choosing most frequent.');
                   this.codeID = mode(this.codeID);
@@ -204,14 +234,17 @@ classdef VisionMarkerTrained
                                     end
                                 end
 
-                            else
-                                assert(isfield(VisionMarkerTrained.ProbeTree, 'verifiers'));
-
+                            elseif isfield(VisionMarkerTrained.ProbeTree, 'verifiers')
                                 [verificationResult, verifiedID] = TestTree( ...
                                     VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
                                     img, tform, threshold, VisionMarkerTrained.ProbePattern);
 
                                 this.isValid = verifiedID ~= 1;
+                                
+                            else 
+                              this.isValid = true;
+                              verificationResult = this.codeName;
+                              verifiedID = this.codeID;
                             end
                         end
                     else % if VerifyLabel

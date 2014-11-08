@@ -5,7 +5,12 @@ projectRoot = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', '..')
 markerDefFile = 'coretech/vision/include/anki/vision/MarkerCodeDefinitions.h';
 decisionTreeFile = 'coretech/vision/include/anki/vision/robot/visionMarkerDecisionTrees.h';
 probeTree = VisionMarkerTrained.ProbeTree;
-labels = VisionMarkerTrained.ProbeTree.labels;
+if iscell(probeTree)
+  labels = probeTree{1}.labels;
+else
+  labels = probeTree.labels;
+end
+
 numFractionalBits = 15;
 
 parseVarargin(varargin{:});

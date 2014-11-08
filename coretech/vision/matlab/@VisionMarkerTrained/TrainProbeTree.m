@@ -3,6 +3,7 @@ function probeTree = TrainProbeTree(varargin)
 % TODO: Use parameters from a derived class below, instead of VisionMarkerTrained.*
 
 %% Parameters
+baggingIterations = 1;
 trainingState = [];
 %maxSamples = 100;
 %minInfoGain = 0;
@@ -11,7 +12,7 @@ redBlackSampleFraction = 0.75;
 maxDepth = inf;
 addInversions = true;
 saveTree = true;
-baggingSampleFraction = 1;
+baggingSampleFraction = [];
 probeSampleFraction = 1;
 maxInfoGainFraction = [];
 leafNodeFraction = 0.9; % fraction of remaining examples that must have same label to consider node a leaf
@@ -26,6 +27,20 @@ DEBUG_DISPLAY = false;
 DrawTrees = false;
 
 parseVarargin(varargin{:});
+
+
+if baggingIterations > 1
+  probeTree = cell(1, baggingIterations);
+  for iBag = 1:baggingIterations
+    fprintf('\n\n\n=== Training Bag %d of %d ===\n\n', iBag, baggingIterations);
+    probeTree{iBag} = VisionMarkerTrained.TrainProbeTree(varargin{:}, 'baggingIterations', 1, 'saveTree', false, 'testTree', false);
+  end
+  if saveTree
+    SaveTreeHelper();
+  end
+  return
+end
+
 
 t_start = tic;
 
@@ -60,9 +75,9 @@ if isempty(weights)
     weights = ones(1,size(probeValues,2)) / size(probeValues,2);
 end
 
-if baggingSampleFraction < 1
+if ~isempty(baggingSampleFraction)
     t_bagSample = tic;
-    fprintf('Sampling %.1f%% of training examples...', baggingSampleFraction*100);
+    fprintf('Sampling %.1f%% of training examples with replacement...', baggingSampleFraction*100);
     N = size(probeValues,2);
     sampleIndex = randi(N, 1, ceil(baggingSampleFraction*N));
     
@@ -365,7 +380,7 @@ if testTree
         %Corners = VisionMarkerTrained.GetMarkerCorners(size(testImg,1), false);
         tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
         
-        [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern, true);
+        [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern);
         
         if length(labelID) > 1
           warning('Multiple labels in multiclass tree.');
@@ -451,18 +466,25 @@ fprintf('Training completed in %.2f seconds (%.1f minutes), plus %.2f seconds (%
 % Used %d main tree nodes + %d verification nodes.\n', ...
 %    numMain, numVerify);
 
+
+SaveTreeHelper();
+
 %% Save Tree
-if saveTree
-    savePath = fileparts(mfilename('fullpath'));
+  function SaveTreeHelper
     
-    % Preserve previous probeTree, for archiving (e.g. to largefiles repo)
-    movefile(fullfile(savePath, 'probeTree.mat'), fullfile(savePath, sprintf('probeTree_%s.mat',datestr(now, 30))));
+    if saveTree
+      savePath = fileparts(mfilename('fullpath'));
+      
+      % Preserve previous probeTree, for archiving (e.g. to largefiles repo)
+      movefile(fullfile(savePath, 'probeTree.mat'), fullfile(savePath, sprintf('probeTree_%s.mat',datestr(now, 30))));
+      
+      % Save the new tree
+      save(fullfile(savePath, 'probeTree.mat'), 'probeTree');
+      
+      fprintf('Probe tree re-trained and saved.  You will need to clear any existing VisionMarkers.\n');
+    end
     
-    % Save the new tree
-    save(fullfile(savePath, 'probeTree.mat'), 'probeTree');
-    
-    fprintf('Probe tree re-trained and saved.  You will need to clear any existing VisionMarkers.\n');
-end
+  end
 
 
 %% buildTree() Nested Function
@@ -501,6 +523,13 @@ end
         else            
             unusedProbes = find(~masked);
             
+            % Sample those probes which have lower gradient magnitude
+            pSample = mean(gradMagValues(unusedProbes,node.remaining),2);
+            pSample = max(pSample) - pSample;
+            pSample = pSample / sum(pSample);
+            sampleIndex = mexRandP(pSample, sqrt(length(unusedProbes)));
+            unusedProbes = unusedProbes(sampleIndex);
+                    
             infoGain = computeInfoGain(labels(node.remaining), length(labelNames), ...
               probeValues(unusedProbes,node.remaining), weights(node.remaining));
             
