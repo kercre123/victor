@@ -129,8 +129,9 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
             showJpgResults = true;
             
             jpgCompression = round(linspace(0,100,10));
-            percentMarkersCorrect = zeros(length(jpgCompression)+2, 1);
-            compressionPercent = zeros(length(jpgCompression)+2, 1);
+%             jpgCompression = jpgCompression(end:-1:1);
+            percentMarkersCorrect_jpg = zeros(length(jpgCompression)+2, 1);
+            compressionPercent_jpg = zeros(length(jpgCompression)+2, 1);
             
             for iJpg = 1:length(jpgCompression)
                 algorithmParametersN = algorithmParametersOrig;
@@ -141,23 +142,24 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
                 resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
                 
-                percentMarkersCorrect(iJpg) = 100 * curResults.percentMarkersCorrect;
-                compressionPercent(iJpg) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
+                percentMarkersCorrect_jpg(iJpg) = 100 * curResults.percentMarkersCorrect;
+                compressionPercent_jpg(iJpg) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
                 
                 disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
             end % for iJpg = 1:length(jpgCompression)
             
             if showJpgResults
-                percentMarkersCorrect((length(jpgCompression)+1):end) = 100 * resultsData.('matlab_with_refinement').percentMarkersCorrect;
-                compressionPercent(length(jpgCompression)+1) = 100 * resultsData.('matlab_with_refinement').compressedFileSizeTotal / resultsData.('matlab_with_refinement').uncompressedFileSizeTotal;
-                compressionPercent(end) = 100;
-                plot(compressionPercent, percentMarkersCorrect, 'LineWidth', 1);
+                figure();
+                percentMarkersCorrect_jpg((length(jpgCompression)+1):end) = 100 * resultsData.('matlab_with_refinement').percentMarkersCorrect;
+                compressionPercent_jpg(length(jpgCompression)+1) = 100 * resultsData.('matlab_with_refinement').compressedFileSizeTotal / resultsData.('matlab_with_refinement').uncompressedFileSizeTotal;
+                compressionPercent_jpg(end) = 100;
+                plot(compressionPercent_jpg, percentMarkersCorrect_jpg, 'LineWidth', 1);
                 axis([0,100,0,100]);
                 xlabel('File size (percent)')
                 ylabel('Markers detected (percent)')
                 title('Accuracy of fiducial detection with different amounts of compression')
-                disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect), ']'])
-                disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent), ']'])
+                disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect_jpg), ']'])
+                disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent_jpg), ']'])
             end % showJpgResults
             
         elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_with_refinement_jpg_preprocess')
@@ -178,8 +180,9 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 };
             
             jpgCompression = round(linspace(0,100,10));
-            percentMarkersCorrect = zeros(length(jpgCompression), length(preprocessingFunctions));
-            compressionPercent = zeros(length(jpgCompression), length(preprocessingFunctions));
+%             jpgCompression = jpgCompression(end:-1:1);
+            percentMarkersCorrect_jpgPreprocess = zeros(length(jpgCompression), length(preprocessingFunctions));
+            compressionPercent_jpgPreprocess = zeros(length(jpgCompression), length(preprocessingFunctions));
             
             for iJpg = 1:length(jpgCompression)
                 for iPreprocess = 1:length(preprocessingFunctions)
@@ -192,21 +195,37 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                     curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
                     resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
                     
-                    percentMarkersCorrect(iJpg,iPreprocess) = 100 * curResults.percentMarkersCorrect;
-                    compressionPercent(iJpg,iPreprocess) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
+                    percentMarkersCorrect_jpgPreprocess(iJpg,iPreprocess) = 100 * curResults.percentMarkersCorrect;
+                    compressionPercent_jpgPreprocess(iJpg,iPreprocess) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
                     
                     disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d,%d',iJpg,iPreprocess), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
                 end % for iPreprocess = 1:length(preprocessingFunctions)
             end % for iJpg = 1:length(jpgCompression)
             
             if showJpgResults
-                plot(compressionPercent, percentMarkersCorrect, 'LineWidth', 1);
+                figure();
+                
+                % Add the non-preprocessed results to the beginning;                
+                percentMarkersCorrect_jpgPreprocess = [percentMarkersCorrect_jpg(1:(end-2)), percentMarkersCorrect_jpgPreprocess]; %#ok<AGROW>
+                compressionPercent_jpgPreprocess = [compressionPercent_jpg(1:(end-2)), compressionPercent_jpgPreprocess]; %#ok<AGROW>
+                
+                plot(compressionPercent_jpgPreprocess, percentMarkersCorrect_jpgPreprocess, 'LineWidth', 1);
                 axis([0,100,0,100]);
                 xlabel('File size (percent)')
                 ylabel('Markers detected (percent)')
                 title('Accuracy of fiducial detection with different amounts of compression and preprocessing')
-                disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect), ']'])
-                disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent), ']'])
+                
+                toShowString = '';
+                legendArray = {'just jpg'};
+                for iPreprocess = 1:length(preprocessingFunctions)
+                    toShowString = [toShowString, sprintf('percentMarkersCorrect(%d) = [', iPreprocess), sprintf(' %0.2f', percentMarkersCorrect_jpgPreprocess(:,iPreprocess)), sprintf(']\n')]; %#ok<AGROW>
+                    toShowString = [toShowString, sprintf('compressionPercent(%d) = [', iPreprocess), sprintf(' %0.2f', compressionPercent_jpgPreprocess(:,iPreprocess)), sprintf(']\n')]; %#ok<AGROW>
+                    legendArray{end+1} = sprintf('preprocess %d', iPreprocess); %#ok<AGROW>
+                end
+                
+                legend(legendArray);
+                
+                disp(toShowString);
             end % showJpgResults
             
         else
@@ -232,7 +251,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     
     keyboard
     
-    allCompiledResults = [];
+    allCompiledResults = resultsData;
 end % runTests_detectFiducialMarkers()
 
 function allTestData = getTestData(testJsonPattern)
