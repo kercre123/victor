@@ -5,18 +5,27 @@
       "relTime_ms"     : 0, 
       "transitionIn"   : 50,
       "transitionOut"  : 50, 
-      "lowAngle_deg"   : -10,
-      "highAngle_deg"  :  10,
-      "period_ms"      : 600
+      "lowAngle_deg"   : -7,
+      "highAngle_deg"  :  7,
+      "period_ms"      : 750
     }, 
     {
       "Name" : "MessageAddAnimKeyFrame_PlaySound", 
       "relTime_ms"     : 0,
       "transitionIn"   : 0,
       "transitionOut"  : 0,
-      "soundID"        : "OK_GOT_IT", 
-      "numLoops"       : 3, 
+      "soundID"        : "OOH", 
+      "numLoops"       : 1, 
       "volume"          : 100
+    },
+    {
+      "Name" : "MessageAddAnimKeyFrame_SetEyeShapeAndColor", 
+      "relTime_ms"      : 0,
+      "transitionIn"    : 0,
+      "transitionOut"   : 0,
+      "color"           : [0, 255, 255],
+      "shape"           : "OPEN",
+      "whichEye"        : "BOTH"
     },
     { 
       "Name" : "MessageAddAnimKeyFrame_StopHeadNod", 
@@ -1105,7 +1114,7 @@
   "ANIM_GOTO_READY" : [
     {
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle",
-      "relTime_ms" : 0, 
+      "relTime_ms" : 250, 
       "transitionIn" : 50,
       "transitionOut" : 50,
       "angle_deg"     : 0, 
@@ -1113,7 +1122,7 @@
     },
     {
       "Name" : "MessageAddAnimKeyFrame_SetLiftHeight",
-      "relTime_ms" : 0, 
+      "relTime_ms" : 250, 
       "transitionIn" : 50,
       "transitionOut" : 50,
       "height_mm"     : 28
