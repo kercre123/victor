@@ -174,6 +174,15 @@ namespace Anki {
       u8 highValue;
     } VisionSystemParams_t;
     
+    typedef struct {
+      f32 scaleFactor;
+      s32 minNeighbors;
+      s32 minObjectHeight;
+      s32 minObjectWidth;
+      s32 maxObjectHeight;
+      s32 maxObjectWidth;
+    } FaceDetectParams_t;
+    
   }
 }
 

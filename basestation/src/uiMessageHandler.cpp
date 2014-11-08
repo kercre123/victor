@@ -366,5 +366,16 @@ namespace Anki {
       return robot->StopFaceTracking();
     }
     
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetFaceDetectParams const& msg)
+    {
+      FaceDetectParams_t p;
+      p.scaleFactor = msg.scaleFactor;
+      p.minNeighbors = msg.minNeighbors;
+      p.minObjectHeight = msg.minObjectHeight;
+      p.minObjectWidth = msg.minObjectWidth;
+      p.maxObjectHeight = msg.maxObjectHeight;
+      p.maxObjectWidth = msg.maxObjectWidth;
+      return robot->SendFaceDetectParams(p);
+    }
   } // namespace Cozmo
 } // namespace Anki

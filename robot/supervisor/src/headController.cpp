@@ -365,8 +365,10 @@ namespace HeadController {
                                                  CONTROL_DT);
       
       if (!res) {
-        PRINT("FAIL: HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
+        PRINT("FAIL: HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f.  Trying other version of SetDesiredAngle()\n",
               startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+        
+        SetDesiredAngle_internal(angle);
       }
       
 #if(DEBUG_HEAD_CONTROLLER)

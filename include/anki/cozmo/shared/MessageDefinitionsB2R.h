@@ -240,6 +240,16 @@ ADD_MESSAGE_MEMBER(f32, percentileToMakeHigh)
 ADD_MESSAGE_MEMBER(u8, highValue)
 END_MESSAGE_DEFINITION(SetVisionSystemParams)
 
+// SetFaceDetectParams
+START_MESSAGE_DEFINITION(SetFaceDetectParams, 1)
+ADD_MESSAGE_MEMBER(f32, scaleFactor)
+ADD_MESSAGE_MEMBER(s32, minNeighbors)
+ADD_MESSAGE_MEMBER(s32, minObjectHeight)
+ADD_MESSAGE_MEMBER(s32, minObjectWidth)
+ADD_MESSAGE_MEMBER(s32, maxObjectHeight)
+ADD_MESSAGE_MEMBER(s32, maxObjectWidth)
+END_MESSAGE_DEFINITION(SetFaceDetectParams)
+
 // PlayAnimation
 START_MESSAGE_DEFINITION(PlayAnimation, 1)
 ADD_MESSAGE_MEMBER(u32, numLoops)
