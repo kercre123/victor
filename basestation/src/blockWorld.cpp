@@ -99,6 +99,11 @@ namespace Anki
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ARROW));
       
+      // For CREEP Test
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::SPIDER));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::KITTY));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BEE));
+      
       //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
       //
