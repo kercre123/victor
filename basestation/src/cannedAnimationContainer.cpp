@@ -16,6 +16,7 @@
 #include "soundManager.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
 
@@ -236,6 +237,32 @@ namespace Cozmo {
     }
   } // GetEyeShape()
   
+  static f32 GetHeight(const Json::Value& json)
+  {
+    static const std::map<std::string, f32> LUT = {
+      {"LOW_DOCK",  LIFT_HEIGHT_LOWDOCK},
+      {"HIGH_DOCK", LIFT_HEIGHT_HIGHDOCK},
+      {"CARRY",     LIFT_HEIGHT_CARRY},
+    };
+    
+    const f32 DEFAULT = LIFT_HEIGHT_LOWDOCK;
+    
+    if(json.isString()) {
+      auto result = LUT.find(json.asString());
+      if(result == LUT.end()) {
+        PRINT_NAMED_WARNING("GetHeight", "Unknown height '%s', returning default.\n");
+        return DEFAULT;
+      } else {
+        return result->second;
+      }
+    } else if(json.isNumeric()) {
+      return json.asFloat();
+    } else {
+      PRINT_NAMED_WARNING("GetHeight",
+                          "Encountered unknown height, returning default.\n");
+      return DEFAULT;
+    }
+  } // GetHeight()
 
   Result CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot)
   {
@@ -305,6 +332,15 @@ namespace Cozmo {
         }
         if(jsonFrame.isMember("shape")) {
           jsonFrame["shape"] = GetEyeShape(jsonFrame["shape"]);
+        }
+        
+        // Convert named lift heights to values
+        if(jsonFrame.isMember("height_mm")) {
+          jsonFrame["height_mm"]     = GetHeight(jsonFrame["height_mm"]);
+        } else if(jsonFrame.isMember("lowHeight_mm")) {
+          jsonFrame["lowHeight_mm"]  = GetHeight(jsonFrame["lowHeight_mm"]);
+        } else if(jsonFrame.isMember("highHeight_mm")) {
+          jsonFrame["highHeight_mm"] = GetHeight(jsonFrame["highHeight_mm"]);
         }
         
         Message* kfMessage = Message::CreateFromJson(jsonRoot[animationName][iFrame]); 
