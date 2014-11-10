@@ -224,11 +224,13 @@ namespace Anki {
           //  3. transition defined from current state to any state
 
           _transitionAnimations[SLEEPING][NUM_STATES]        = "ANIM_WAKE_UP";
+          _transitionAnimations[SLEEPING][IDLE]              = "ANIM_WAKE_UP";
           _transitionAnimations[NUM_STATES][SCARED_FLEE]     = "ANIM_SCREAM";
           _transitionAnimations[SCARED_FLEE][SCAN]           = "ANIM_RELIEF";
           _transitionAnimations[NUM_STATES][EXCITABLE_CHASE] = "ANIM_ALERT";
           _transitionAnimations[NUM_STATES][IDLE]            = "ANIM_GOTO_READY";
           _transitionAnimations[NUM_STATES][ACKNOWLEDGEMENT_NOD] = "ANIM_HEAD_NOD";
+          _transitionAnimations[NUM_STATES][SLEEPING]        = "ANIM_POWER_DOWN";
 
           // State animations play after any transition above is played, in a loop
           _stateAnimations[SLEEPING]         = "ANIM_SLEEPING";

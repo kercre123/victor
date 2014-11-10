@@ -610,11 +610,6 @@ namespace Anki {
                 }
                 break;
               }
-              case CKEY_ANIMATION_NOD:
-              {
-                SendAnimation("ANIM_HEAD_NOD", 1);
-                break;
-              }
               case CKEY_ANIMATION_BACK_AND_FORTH:
               {
                 SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
@@ -689,6 +684,11 @@ namespace Anki {
               case CKEY_BEHAVIOR_IDLE:
               {
                 SendSetNextBehaviorState(BehaviorManager::IDLE);
+                break;
+              }
+              case CKEY_ANIMATION_NOD:
+              {
+                SendSetNextBehaviorState(BehaviorManager::ACKNOWLEDGEMENT_NOD);
                 break;
               }
                 
