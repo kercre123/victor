@@ -14,6 +14,7 @@
 
 #include <string.h>
 #include "anki/cozmo/basestation/bleComms.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
 //#import <BaseStation/baseStation.h>
 //#import <BLEManager/BLEVehicleManager.h>
 #import "BLEManager/BLEVehicleManager.h"
@@ -29,6 +30,8 @@
 #define DASEvent(...)
 #endif
 
+
+#define DEBUG_BLECOMMS 0
 
 // The maximum number of packets that can be sent per call to Update()
 #define MAX_SENT_BLE_PACKETS_PER_TIC 5
@@ -110,18 +113,44 @@ size_t BLEComms::RealSend(const Comms::MsgPacket &p)
     return Comms::ICOMMS_NOCONNECTION_TO_VEHICLE_ERROR;
 
   NSError *error = nil;
+  
 
+  // Copy header and data into send buffer
+  u8 sendBufSize = sizeof(RADIO_PACKET_HEADER) + 4 + p.dataLen;
+  u8 sendBuf[sendBufSize];
+  sendBuf[0] = RADIO_PACKET_HEADER[0];
+  sendBuf[1] = RADIO_PACKET_HEADER[1];
+  sendBuf[2] = p.dataLen;
+  sendBuf[3] = 0;
+  sendBuf[4] = 0;
+  sendBuf[5] = 0;
+  memcpy(sendBuf+6, p.data, p.dataLen);
+  
+  
   // Compute number of BLE packets required to send this message
-  int numPackets = p.dataLen / MAX_BLE_MSG_SIZE;
-  if (MAX_BLE_MSG_SIZE*numPackets < p.dataLen) {
+  int numPackets = sendBufSize / MAX_BLE_MSG_SIZE;
+  if (MAX_BLE_MSG_SIZE*numPackets < sendBufSize) {
     numPackets += 1;
   }
   int dataByteProgress = 0;
+  
+  
+  // Send msg
   for (int i=0; i<numPackets; ++i) {
-    if ( ![vehicleConn writeData:[NSData dataWithBytes:(p.data+dataByteProgress) length:MIN(p.dataLen-dataByteProgress,MAX_BLE_MSG_SIZE)] error:&error] ) {
+    if ( ![vehicleConn writeData:[NSData dataWithBytes:(sendBuf+dataByteProgress) length:MIN(sendBufSize-dataByteProgress,MAX_BLE_MSG_SIZE)] error:&error] ) {
       DASInfo("BTLE.SendError", "vehicleID=%d (0x%llx) error=%s", p.destId, vehicleConn.mfgID, [error.description UTF8String]);
       return Comms::ICOMMS_SEND_FAILED_ERROR;
     }
+    
+#if(DEBUG_BLECOMMS)
+    int sentBytesThisCycle = MIN(sendBufSize-dataByteProgress,MAX_BLE_MSG_SIZE);
+    printf("Packet data sent (%u): 0x", sentBytesThisCycle);
+    for (int i=0; i < sentBytesThisCycle; ++i){
+      printf("%02x", sendBuf[dataByteProgress + i]);
+    }
+    printf("\n");
+#endif
+    
     dataByteProgress += MAX_BLE_MSG_SIZE;
   }
 
@@ -158,35 +187,84 @@ void BLEComms::ClearMsgPackets()
   
 void BLEComms::Update()
 {
+  const size_t HEADER_AND_TS_SIZE = sizeof(RADIO_PACKET_HEADER) + sizeof(TimeStamp_t); // BEEF + TimeStamp
+  const size_t DATALEN_SIZE = 4;
+  
   // While there are BLE packets, pull them into the msgQueue
   while ([[BLEVehicleManager sharedInstance] vehicleMessages].count > 0) {
     BLEVehicleMessage *vehicleMsg = [[[BLEVehicleManager sharedInstance] vehicleMessages] objectAtIndex:0];
     DASAssert(vehicleMsg != nil);
 
-    // If currMessageSize == 0, we're expecting the start of a message
-    if (currMessageSize_ == 0) {
+    u8 *origMsgBuffer = (u8*) [vehicleMsg.msgData bytes];
+
+    // Check for header
+    bool hasHeader = (origMsgBuffer[0] == RADIO_PACKET_HEADER[0]) && (origMsgBuffer[1] == RADIO_PACKET_HEADER[1]);
+    
+    // If currMessageSize == 0, we're expecting the start of a message.
+    // If this is the start of a message (based on appearance of header) then start a new message,
+    // even if it wasn't expected!
+    u8 startReadIdx = 0;
+    if (currMessageSize_ == 0 || hasHeader) {
+      DASAssert(vehicleMsg.msgData.length == MAX_BLE_MSG_SIZE);
+      
+      // No header found! That packet must've been dropped
+      // so send just ignore packets until we see one with a header.
+      if (!hasHeader) {
+        printf("WARN (bleComms): Expected BEEF packet, but got something else. Ignoring packet.\n");
+        [[[BLEVehicleManager sharedInstance] vehicleMessages] removeObjectAtIndex:0];
+        continue;
+      }
+
+      // Header found, but we were in the middle of reconstituting a message.
+      // Nothing to do, but ignore the message we were building and start a new one.
+      if (hasHeader && currMessageSize_ != 0) {
+        printf("WARN (bleComms): partial msg received. Dropping.\n");
+      }
+      
       currMsgPacket_.sourceId = (int)vehicleMsg.vehicleID;
-      currMsgPacket_.dataLen = vehicleMsg.msgData.length;
+      currMsgPacket_.dataLen = origMsgBuffer[HEADER_AND_TS_SIZE];
       //currMsgPacket_.timeStamp = currentTimeStamp_ - vehicleMsg.timestamp;
       currMsgPacket_.timeStamp = vehicleMsg.timestamp;
+      startReadIdx = HEADER_AND_TS_SIZE + DATALEN_SIZE;
       
-      if (currMsgPacket_.dataLen > MAX_BLE_MSG_SIZE) {
+      // If message spans multiple BLE packets, then set currMessageSize_ to the expected size of the message
+      currMessageRecvdBytes_ = 0;
+      currMessageSize_ = 0;
+      if (currMsgPacket_.dataLen > (MAX_BLE_MSG_SIZE - HEADER_AND_TS_SIZE - DATALEN_SIZE)) {
         currMessageSize_ = currMsgPacket_.dataLen;
       }
-    }
-      
-    unsigned char *origMsgBuffer = (unsigned char *) [vehicleMsg.msgData bytes];
     
-    for (int i = 0; i < vehicleMsg.msgData.length; i++) {
-      currMsgPacket_.data[currMessageRecvdBytes_ + i] = origMsgBuffer[i];
+      #if(DEBUG_BLECOMMS)
+      printf("Found BEEF (%lu), currMsgSize %u, currMsgPacket.dataLen %u\n", vehicleMsg.msgData.length, currMessageSize_, currMsgPacket_.dataLen);
+      #endif
     }
+    
+    // The index of the last byte in this packet that is valid data. (Actually, the index + 1).
+    u8 lastValidByteIdx = MIN(currMsgPacket_.dataLen - currMessageRecvdBytes_ + startReadIdx, MAX_BLE_MSG_SIZE);
+    
+    #if(DEBUG_BLECOMMS)
+    printf("Packet data received (%d): 0x", lastValidByteIdx - startReadIdx);
+    #endif
+
+    // Copy all non-header data into currMsgPacket
+    for (u8 i = startReadIdx; i < lastValidByteIdx; i++) {
+      currMsgPacket_.data[currMessageRecvdBytes_ + i - startReadIdx] = origMsgBuffer[i];
+      #if(DEBUG_BLECOMMS)
+      printf("%02x", origMsgBuffer[i]);
+      #endif
+    }
+    #if(DEBUG_BLECOMMS)
+    printf("\n");
+    #endif
+    
     
     // Remove the message from the mutable array, releasing it and its contents
     [[[BLEVehicleManager sharedInstance] vehicleMessages] removeObjectAtIndex:0];
     deltaReceivedBytes_ += vehicleMsg.msgData.length;
 
     if (currMessageSize_ > 0) {
-      currMessageRecvdBytes_ += vehicleMsg.msgData.length;
+      currMessageRecvdBytes_ += lastValidByteIdx - startReadIdx;
+      //printf("currMessageSize_ %d, currMessageRecvdBytes_ %d\n", currMessageSize_, currMessageRecvdBytes_);
       DASAssert(currMessageSize_ >= currMessageRecvdBytes_);
       if (currMessageSize_ == currMessageRecvdBytes_) {
         currMessageSize_ = 0;

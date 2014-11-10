@@ -67,7 +67,7 @@ namespace Cozmo {
     bool isInitialized_;
     
     static const int MAX_RECV_BUF_SIZE = 1920000;
-    char recvBuf[MAX_RECV_BUF_SIZE];
+    u8 recvBuf[MAX_RECV_BUF_SIZE];
     int recvDataSize = 0;
     
   };

@@ -259,9 +259,17 @@ namespace Anki {
         if(bytesAvailable >= headerSize) {
           
           // Look for valid header
-          std::string strBuf(recvBuf_, recvBuf_ + recvBufSize_);  // TODO: Just make recvBuf a string
-          std::size_t n = strBuf.find((char*)RADIO_PACKET_HEADER, 0, headerSize);
-          if (n == std::string::npos) {
+          int n = -1;
+          for(int i = 0; i < recvBufSize_-1; ++i) {
+            if (recvBuf_[i] == RADIO_PACKET_HEADER[0]) {
+              if (recvBuf_[i+1] == RADIO_PACKET_HEADER[1]) {
+                n = i;
+                break;
+              }
+            }
+          }
+          
+          if (n < 0) {
             // Header not found at all
             // Delete everything
             recvBufSize_ = 0;
@@ -269,9 +277,8 @@ namespace Anki {
           } else if (n != 0) {
             // Header was not found at the beginning.
             // Delete everything up until the header.
-            strBuf = strBuf.substr(n);
-            memcpy(recvBuf_, strBuf.c_str(), strBuf.length());
-            recvBufSize_ = strBuf.length();
+            memcpy(recvBuf_, recvBuf_ + n, recvBufSize_ - n);
+            recvBufSize_ -= n;
           }
           
           // Check if expected number of bytes are in the msg

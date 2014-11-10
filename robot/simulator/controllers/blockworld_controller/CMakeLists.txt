@@ -6,7 +6,6 @@ add_definitions(-DCOZMO_BASESTATION)
 # Include paths
   include_directories(
   ${WEBOTS_CPP_INCLUDE_DIR}
-  ${PROJECT_SOURCE_DIR}/basestation/src
   ${PROJECT_SOURCE_DIR}/robot/simulator/src
 
   ${PROJECT_SOURCE_DIR}/basestation/src/BLEManager
@@ -16,7 +15,6 @@ add_definitions(-DCOZMO_BASESTATION)
   ${PROJECT_SOURCE_DIR}/basestation/src/BLEManager/VehicleManager
 )
 
-file(GLOB COZMO_BASESTATION_SRC ${PROJECT_SOURCE_DIR}/basestation/src/*.c*)
 file(GLOB COZMO_BASESTATION_OBJC_SRC ${PROJECT_SOURCE_DIR}/basestation/src/*.m*)
 
 
@@ -27,7 +25,6 @@ link_directories( ${WEBOTS_LIB_DIR} )
 # Source files
 set(SOURCE_FILES
   blockworld_controller.cpp
-  ${COZMO_BASESTATION_SRC}
   ${COZMO_BASESTATION_OBJC_SRC}
 )
 

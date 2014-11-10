@@ -16,8 +16,6 @@
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include <unistd.h>
-#include <stdio.h>
 
 
 namespace Anki {
@@ -109,7 +107,7 @@ namespace Cozmo {
 
     if ( HasClient() ) {
       
-      int bytes_recvd = server_.Recv(recvBuf + recvDataSize, MAX_RECV_BUF_SIZE - recvDataSize);
+      int bytes_recvd = server_.Recv((char*)(recvBuf + recvDataSize), MAX_RECV_BUF_SIZE - recvDataSize);
       if (bytes_recvd == 0) {
         return;
       }
@@ -129,7 +127,17 @@ namespace Cozmo {
       // Look for valid header
       while (recvDataSize >= sizeof(RADIO_PACKET_HEADER)) {
         
-        char* hPtr = std::strstr(recvBuf,(char*)RADIO_PACKET_HEADER);
+        // Look for 0xBEEF
+        u8* hPtr = NULL;
+        for(int i = 0; i < recvDataSize-1; ++i) {
+          if (recvBuf[i] == RADIO_PACKET_HEADER[0]) {
+            if (recvBuf[i+1] == RADIO_PACKET_HEADER[1]) {
+              hPtr = &(recvBuf[i]);
+              break;
+            }
+          }
+        }
+        
         if (hPtr == NULL) {
           // Header not found at all
           // Delete everything
@@ -137,7 +145,7 @@ namespace Cozmo {
           break;
         }
         
-        size_t n = hPtr - recvBuf;
+        int n = hPtr - recvBuf;
         if (n != 0) {
           // Header was not found at the beginning.
           // Delete everything up until the header.
