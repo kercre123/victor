@@ -56,6 +56,8 @@ namespace Anki {
     // Pack into a 32-bit integer [R G B A]
     operator u32() const;
     
+    // Convert string name to color
+    
   protected:
     static constexpr f32 oneOver255 = 1.f / 255.f;
     
@@ -73,6 +75,7 @@ namespace Anki {
     extern const ColorRGBA GREEN;
     extern const ColorRGBA BLUE;
     extern const ColorRGBA YELLOW;
+    extern const ColorRGBA CYAN;
     extern const ColorRGBA ORANGE;
     extern const ColorRGBA WHITE;
     extern const ColorRGBA BLACK;
@@ -80,6 +83,8 @@ namespace Anki {
     extern const ColorRGBA DARKGREEN;
     extern const ColorRGBA OFFWHITE;
     extern const ColorRGBA DEFAULT;
+    
+    const ColorRGBA& GetByString(const std::string& name);
   } // namespace NamedColors
   
   

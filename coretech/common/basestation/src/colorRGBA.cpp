@@ -13,6 +13,9 @@
 
 #include "anki/common/basestation/colorRGBA.h"
 
+#include <map>
+#include <string>
+
 namespace Anki {
   
   ColorRGBA::ColorRGBA()
@@ -56,6 +59,7 @@ namespace Anki {
     const ColorRGBA GREEN     (0.f, 1.f, 0.f);
     const ColorRGBA BLUE      (0.f, 0.f, 1.f);
     const ColorRGBA YELLOW    (1.f, 1.f, 0.f);
+    const ColorRGBA CYAN      (0.f, 1.f, 1.f);
     const ColorRGBA ORANGE    (1.f, .5f, 0.f);
     const ColorRGBA WHITE     (1.f, 1.f, 1.f);
     const ColorRGBA BLACK     (0.f, 0.f, 0.f);
@@ -63,6 +67,37 @@ namespace Anki {
     const ColorRGBA DARKGRAY  (.3f, 0.3f, 0.3f);
     const ColorRGBA DARKGREEN (0.f, 0.5f, 0.0f);
     const ColorRGBA OFFWHITE  (0.f, 0.8f, 0.8f);
-  }
+    
+    const ColorRGBA& GetByString(const std::string& name)
+    {
+      static const std::map<std::string, const ColorRGBA& > LUT = {
+        {"RED",        RED},
+        {"GREEN",      GREEN},
+        {"BLUE",       BLUE},
+        {"YELLOW",     YELLOW},
+        {"CYAN",       CYAN},
+        {"ORANGE",     ORANGE},
+        {"WHITE",      WHITE},
+        {"BLACK",      BLACK},
+        {"DEFAULT",    DEFAULT},
+        {"DARKGRAY",   DARKGRAY},
+        {"DARKGREEN",  DARKGREEN},
+        {"OFFWHITE",   OFFWHITE},
+      };
+      
+      auto result = LUT.find(name);
+      if(result == LUT.end()) {
+        PRINT_NAMED_WARNING("NamedColors.GetByString",
+                            "Unknown color name '%s', returning default.\n",
+                            name.c_str());
+        return DEFAULT;
+      } else {
+        return result->second;
+      }
+    } // GetByName()
+    
+  } // Namespace NamedColors
+  
+
   
 } // namespace Anki
