@@ -7,6 +7,8 @@
 function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotationList, algorithmParameters)
     global g_rotationList;
     
+    useImageMagick = false;
+    
     g_rotationList = rotationList;
     
     lastTestId = -1;
@@ -31,6 +33,25 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         end
         
         image = imread([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
+        
+        if ~isempty(algorithmParameters.preprocessingFunction)
+            image = algorithmParameters.preprocessingFunction(image);
+        end
+        
+        if strcmp(algorithmParameters.imageCompression{1}, 'none') || strcmp(algorithmParameters.imageCompression{1}, 'png')            
+            fileInfo = dir([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
+        elseif strcmp(algorithmParameters.imageCompression{1}, 'jpg') || strcmp(algorithmParameters.imageCompression{1}, 'jpeg')
+            tmpFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.jpg'];
+            
+            % Note: Matlab's jpeg writer is not as good as ImageMagick's at low bitrates            
+            imwrite(image, tmpFilename, 'jpg', 'Quality', algorithmParameters.imageCompression{2});            
+            
+            image = imread(tmpFilename);
+            
+            fileInfo = dir(tmpFilename);
+        else
+            assert(false);
+        end
         
         if ~isfield(jsonData.Poses{workQueue{iWork}.iPose}, 'VisionMarkers')
             assert(false);
@@ -90,6 +111,9 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         curResultsData_basics.detectedQuadValidity = detectedQuadValidity;
         curResultsData_basics.detectedMarkers = makeCellArray(detectedMarkers);
         
+        curResultsData_basics.uncompressedFileSize = numel(image);
+        curResultsData_basics.compressedFileSize = fileInfo.bytes;
+        
         save(workQueue{iWork}.basicStats_filename, 'curResultsData_basics', 'curTestData');
         
         fprintf('.');
@@ -129,11 +153,11 @@ function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrec
             queryQuad = queryQuads{iQuery};
             
             for iRotation = 0:3
-%                 distances = sqrt(sum((queryQuad - gtQuad).^2, 2));
+                %                 distances = sqrt(sum((queryQuad - gtQuad).^2, 2));
                 distances = sqrt((queryQuad(:,1) - gtQuad(:,1)).^2 + (queryQuad(:,2) - gtQuad(:,2)).^2);
                 
                 % Compute the closest match based on the mean distance
-                                
+                
                 % distance_mean = mean(distances);
                 distance_mean = (distances(1) + distances(2) + distances(3) + distances(4)) / 4;
                 

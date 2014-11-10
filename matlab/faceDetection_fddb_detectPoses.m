@@ -57,7 +57,7 @@ function [allDetections, posemap] = faceDetection_fddb_detectPoses(ellipses, whi
             disp(sprintf('Finished %d in %f', iEllipse, toc()));
         end % for iEllipse = 1:length(ellipses)
         
-        disp(sprintf('Detected %d faces'), numDetections);
+        disp(sprintf('Detected %d faces', numDetections));
     end % if rerunDetection
     
     if whichEllipses(1) == 1

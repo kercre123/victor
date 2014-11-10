@@ -53,10 +53,13 @@ function runTests_detectFiducialMarkers_compilePerPoseStats(workQueue, allTestDa
         end
         
         curResultsData = resultsData_basics{workQueue{iWork}.iTest}{workQueue{iWork}.iPose};
+       
+        curResultsData_perPose.uncompressedFileSize = curResultsData.uncompressedFileSize;
+        curResultsData_perPose.compressedFileSize = curResultsData.compressedFileSize;
         
         curResultsData_perPose.Scene = allTestData{workQueue{iWork}.iTest}.jsonData.Poses{workQueue{iWork}.iPose}.Scene;
        
-        [curResultsData_perPose.numQuadsNotIgnored, curResultsData_perPose.numQuadsDetected] = compileQuadResults(curResultsData);
+        [curResultsData_perPose.numMarkersGroundTruth, curResultsData_perPose.numQuadsDetected] = compileQuadResults(curResultsData);
         
         [curResultsData_perPose.numCorrect_positionLabelRotation,...
             curResultsData_perPose.numCorrect_positionLabel,...
@@ -77,7 +80,7 @@ function runTests_detectFiducialMarkers_compilePerPoseStats(workQueue, allTestDa
             curResultsData_perPose.numCorrect_positionLabel,...
             curResultsData_perPose.numCorrect_position,...
             curResultsData_perPose.numQuadsDetected,...
-            curResultsData_perPose.numQuadsNotIgnored,...
+            curResultsData_perPose.numMarkersGroundTruth,...
             curResultsData_perPose.numSpurriousDetections};
         
         for iMarker = 1:length(markersToDisplay(:,3))

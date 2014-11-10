@@ -8,7 +8,8 @@
 
 function imshows(varargin)
     
-    maxCollageSize = [950,1800];
+%     maxCollageSize = [950,1800];
+    maxCollageSize = [5000,5000];
     
     figNums = 1:length(varargin);
     
@@ -123,31 +124,33 @@ function imshows(varargin)
                 imshow(bigIm);
                 hold on;
                 
-                cy = 1;
-                ci = 1;
-                for y = 1:numImagesY
-                    cx = 1;
-                    for x = 1:numImagesX
-                        smallImage = twoD{y,x};
-                        
-                        if isempty(smallImage)
-                            break;
-                        end
-                                                
-                        smallImageWidth = size(smallImage, 2);
-                        
-                        if scale ~= 1
-                            smallImageWidth = floor(size(smallImage,2) * scale);
-                        end
-                        
-                        text(cx + smallImageWidth/2 - 10, cy + 10, sprintf('%d',ci), 'Color', [0.5,0.4,0.3], 'FontSize', 14);
-                        
-                        cx = cx + smallImageWidth;
-                        ci = ci + 1;
-                    end % for x = 1:numImagesX
-                    
-                    cy = cy + ceil(max(imageHeights(y,:))*scale);
-                end % for y = 1:numImagesY
+                if collageTitles
+                    cy = 1;
+                    ci = 1;
+                    for y = 1:numImagesY
+                        cx = 1;
+                        for x = 1:numImagesX
+                            smallImage = twoD{y,x};
+
+                            if isempty(smallImage)
+                                break;
+                            end
+
+                            smallImageWidth = size(smallImage, 2);
+
+                            if scale ~= 1
+                                smallImageWidth = floor(size(smallImage,2) * scale);
+                            end
+
+                            text(cx + smallImageWidth/2 - 10, cy + 10, sprintf('%d',ci), 'Color', [0.5,0.4,0.3], 'FontSize', 14);
+
+                            cx = cx + smallImageWidth;
+                            ci = ci + 1;
+                        end % for x = 1:numImagesX
+
+                        cy = cy + ceil(max(imageHeights(y,:))*scale);
+                    end % for y = 1:numImagesY
+                end % collageTitles
                 
                 if maximizeWindows
                     set(figureHandle, 'units','normalized','outerposition',[0 0 1 1]);
