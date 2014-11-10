@@ -1,6 +1,13 @@
 { 
   "ANIM_HEAD_NOD" : [
     { 
+      "Name" : "MessageAddAnimKeyFrame_SetLiftHeight",
+      "relTime_ms" : 0, 
+      "transitionIn"   : 50,
+      "transitionOut"  : 50, 
+      "height_mm"      : 28
+    },
+    { 
       "Name" : "MessageAddAnimKeyFrame_StartHeadNod", 
       "relTime_ms"     : 0, 
       "transitionIn"   : 50,
@@ -33,14 +40,6 @@
       "transitionIn"   : 0,
       "transitionOut"  : 0, 
       "finalAngle_deg" : 0
-    },
-    {
-      "Name" : "MessageAddAnimKeyFrame_TriggerAnimation", 
-      "relTime_ms"     : 1500,
-      "transitionIn"   : 0, 
-      "transitionOut"  : 0,
-      "animToPlay"     : "ANIM_BLINK",
-      "numLoops"       : 0
     }
   ], 
   

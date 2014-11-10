@@ -228,6 +228,7 @@ namespace Anki {
           _transitionAnimations[SCARED_FLEE][SCAN]           = "ANIM_RELIEF";
           _transitionAnimations[NUM_STATES][EXCITABLE_CHASE] = "ANIM_ALERT";
           _transitionAnimations[NUM_STATES][IDLE]            = "ANIM_GOTO_READY";
+          _transitionAnimations[NUM_STATES][ACKNOWLEDGEMENT_NOD] = "ANIM_HEAD_NOD";
 
           // State animations play after any transition above is played, in a loop
           _stateAnimations[SLEEPING]         = "ANIM_SLEEPING";
@@ -238,11 +239,13 @@ namespace Anki {
           _stateAnimations[HELP_ME_STATE]    = "ANIM_HELPME_FRUSTRATED";
           _stateAnimations[WHAT_NEXT]        = "ANIM_WHAT_NEXT";
           _stateAnimations[IDLE]             = "ANIM_BLINK";
+          _stateAnimations[ACKNOWLEDGEMENT_NOD]  = "ANIM_BLINK";
  
           
           // Automatically switch states as reactions to certain markers:
-          _robot->AddReactionCallback(Vision::MARKER_BEE,   &ScaredReaction);
-          _robot->AddReactionCallback(Vision::MARKER_KITTY, &ExcitedReaction);
+          _robot->AddReactionCallback(Vision::MARKER_BEE,    &ScaredReaction);
+          _robot->AddReactionCallback(Vision::MARKER_SPIDER, &ScaredReaction);
+          _robot->AddReactionCallback(Vision::MARKER_KITTY,  &ExcitedReaction);
           
           break;
         } // case CREEP
@@ -270,6 +273,7 @@ namespace Anki {
         {WAITING_FOR_ROBOT, "WAITING_FOR_ROBOT"},
         {WHAT_NEXT        , "WHAT_NEXT"},
         {IDLE             , "IDLE"},
+        {ACKNOWLEDGEMENT_NOD, "ACKNOWLEDGEMENT_NOD"},
       };
       
       static const std::string UNKNOWN("UNKNOWN");
@@ -304,7 +308,6 @@ namespace Anki {
           break;
         }
         
-        case ACKNOWLEDGEMENT_NOD:
         case DRIVE_TO_START:
         case WAITING_TO_SEE_DICE:
         case WAITING_FOR_DICE_TO_DISAPPEAR:
@@ -320,6 +323,15 @@ namespace Anki {
         case BACK_AND_FORTH_EXCITED:
         {
           if(_mode == June2014DiceDemo) {
+            validState = true;
+          }
+          break;
+        }
+          
+        case ACKNOWLEDGEMENT_NOD:
+        {
+           // True for both of the above
+          if(_mode == June2014DiceDemo || _mode == CREEP) {
             validState = true;
           }
           break;

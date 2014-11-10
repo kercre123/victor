@@ -44,9 +44,9 @@ namespace Anki {
       
       typedef enum {
         WAITING_FOR_ROBOT,
+        ACKNOWLEDGEMENT_NOD,
         
         // June2014DiceDemo
-        ACKNOWLEDGEMENT_NOD,
         DRIVE_TO_START,
         WAITING_TO_SEE_DICE,
         WAITING_FOR_DICE_TO_DISAPPEAR,
