@@ -19,6 +19,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/common/basestation/colorRGBA.h"
 
 #include <cassert>
 
@@ -264,6 +265,22 @@ namespace Cozmo {
     }
   } // GetHeight()
 
+  static void GetColor(Json::Value& json)
+  {
+    if(json.isString()) {
+      Json::Value temp; // can't seem to turn input json into array directly
+      const ColorRGBA& color( NamedColors::GetByString(json.asString()));
+      temp[0] = color.r();
+      temp[1] = color.g();
+      temp[2] = color.b();
+      json = temp;
+    } else if(!json.isArray()) {
+      PRINT_NAMED_WARNING("GetColor", "Not sure how to translate color, not changing.\n");
+    }
+    
+  } // GetColor()
+  
+  
   Result CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot)
   {
     
@@ -341,6 +358,11 @@ namespace Cozmo {
           jsonFrame["lowHeight_mm"]  = GetHeight(jsonFrame["lowHeight_mm"]);
         } else if(jsonFrame.isMember("highHeight_mm")) {
           jsonFrame["highHeight_mm"] = GetHeight(jsonFrame["highHeight_mm"]);
+        }
+        
+        // Convert color strings if necessary (this modifies the json value directly)
+        if(jsonFrame.isMember("color")) {
+          GetColor(jsonFrame["color"]);
         }
         
         Message* kfMessage = Message::CreateFromJson(jsonRoot[animationName][iFrame]); 

@@ -30,7 +30,7 @@
       "relTime_ms"      : 0,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "color"           : [0, 255, 255],
+      "color"           : "CYAN",
       "shape"           : "OPEN",
       "whichEye"        : "BOTH"
     },
@@ -72,7 +72,7 @@
       "relTime_ms"     : 0, 
       "onPeriod_ms"    : 1650,
       "offPeriod_ms"   : 200,
-      "color"          : [0, 255, 255],
+      "color"          : "CYAN",
       "variability_ms" : 100
     }, 
     {
@@ -330,7 +330,7 @@
       "relTime_ms"      : 0,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "color"           : [0, 255, 255],
+      "color"           : "CYAN",
       "shape"           : "OPEN",
       "whichEye"        : "BOTH"
     },
@@ -393,7 +393,7 @@
       "relTime_ms"      : 2000,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "color"           : [0, 255, 255],
+      "color"           : "CYAN",
       "shape"           : "OPEN",
       "whichEye"        : "BOTH"
     },
@@ -402,7 +402,7 @@
       "relTime_ms"      : 2100,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "color"           : [0, 255, 255],
+      "color"           : "CYAN",
       "shape"           : "OFF_PUPIL_UP",
       "whichEye"        : "BOTH"
     },
@@ -411,7 +411,7 @@
       "relTime_ms"      : 2300,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "color"           : [0, 255, 255],
+      "color"           : "CYAN",
       "shape"           : "ON_PUPIL_DOWN",
       "whichEye"        : "BOTH"
     },
@@ -420,7 +420,7 @@
       "relTime_ms"      : 2500,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "color"           : [0, 255, 255],
+      "color"           : "CYAN",
       "shape"           : "CLOSED",
       "whichEye"        : "BOTH"
     }, 
@@ -502,7 +502,7 @@
       "relTime_ms"      : 4200,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "color"           : [0, 255, 255],
+      "color"           : "CYAN",
       "shape"           : "OPEN",
       "whichEye"        : "BOTH"
     }
@@ -526,7 +526,7 @@
       "relTime_ms"      : 100,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "color"           : [0, 255, 255],
+      "color"           : "CYAN",
       "shape"           : "OFF_PUPIL_LEFT",
       "whichEye"        : "BOTH"
     }, 
@@ -563,7 +563,7 @@
       "relTime_ms"      : 1500,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "color"           : [0,255,255],
+      "color"           : "CYAN",
       "onPeriod_ms"     : 1000,
       "offPeriod_ms"    :  150, 
       "variability_ms"  :  100
@@ -582,7 +582,7 @@
       "relTime_ms"      : 3050,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "color"           : [0, 255, 255],
+      "color"           : "CYAN",
       "shape"           : "OFF_PUPIL_RIGHT",
       "whichEye"        : "BOTH"
     },  
@@ -619,7 +619,7 @@
       "relTime_ms"      : 4500,
       "transitionIn"    : 0,
       "transitionOut"   : 0,
-      "color"           : [0,255,255],
+      "color"           : "CYAN",
       "onPeriod_ms"     : 1000,
       "offPeriod_ms"    :  150, 
       "variability_ms"  :  100
@@ -1084,7 +1084,7 @@
       "transitionIn"    : 0,
       "transitionOut"   : 0,
       "shape"           : "OPEN",
-      "color"           : [255, 255, 0],
+      "color"           : "YELLOW",
       "whichEye"        : "BOTH"
     },
     {
