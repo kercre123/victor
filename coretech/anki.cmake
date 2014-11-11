@@ -281,6 +281,7 @@ include_directories(
   ${EXTERNAL_DIR}/build/${OPENCV_DIR}/3rdparty/zlib
   ${EXTERNAL_DIR}/${GTEST_DIR}/include
   ${EXTERNAL_DIR}/jsoncpp
+  ${EXTERNAL_DIR}/SDL2-2.0.3/include
   ${MATLAB_INCLUDE_DIR}
 )
 

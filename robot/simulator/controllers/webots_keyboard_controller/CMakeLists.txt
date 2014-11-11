@@ -33,6 +33,7 @@ target_link_libraries(webots_keyboard_controller
   CoreTech_Messaging_Basestation
   CppController # Webots C++ Controller
   jsoncpp
+  SDL2-2.0
   ${OPENCV_LIBS}
 )
   

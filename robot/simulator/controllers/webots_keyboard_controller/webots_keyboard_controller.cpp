@@ -26,7 +26,7 @@
 // Gamepad should be in Direct mode (switch on back)
 #define ENABLE_GAMEPAD_SUPPORT 0
 #if(ENABLE_GAMEPAD_SUPPORT)
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #define DEBUG_GAMEPAD 0
 #endif
 
