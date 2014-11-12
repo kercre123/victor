@@ -389,7 +389,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     "<drawnImage> = mexDrawSystemTestResults(uint8(detectedQuads), detectedQuads_types, detectedMarkers, detectedMarkers_types, detectedMarkers_names, showImageDetectionsScale, outputFilenameImage, toShowResults);");
 
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
-  AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDetectFiducialMarkers_quadInput", "Memory could not be allocated");
+  AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDrawSystemTestResults", "Memory could not be allocated");
 
   Array<u8> inputImage = mxArrayToArray<u8>(prhs[0], memory);
   Array<Array<f64> > detectedQuadsRaw = mxCellArrayToArray<f64>(prhs[1], memory);
