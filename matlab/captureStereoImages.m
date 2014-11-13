@@ -114,14 +114,14 @@ function imagePairs = captureStereoImages(leftImageDeviceNumber, rightImageDevic
         ny_left_new = ny;
         
         % Pre-compute the necessary indices and blending coefficients to enable quick rectification: 
-        [Irec_junk_left,ind_new_left,ind_1_left,ind_2_left,ind_3_left,ind_4_left,a1_left,a2_left,a3_left,a4_left] = rect_index(zeros(ny,nx),R_L,fc_left,cc_left,kc_left,alpha_c_left,KK_left_new);
-        [Irec_junk_left,ind_new_right,ind_1_right,ind_2_right,ind_3_right,ind_4_right,a1_right,a2_right,a3_right,a4_right] = rect_index(zeros(ny,nx),R_R,fc_right,cc_right,kc_right,alpha_c_right,KK_right_new);
+        [~,ind_new_left,ind_1_left,ind_2_left,ind_3_left,ind_4_left,a1_left,a2_left,a3_left,a4_left] = rect_index(zeros(ny,nx),R_L,fc_left,cc_left,kc_left,alpha_c_left,KK_left_new);
+        [~,ind_new_right,ind_1_right,ind_2_right,ind_3_right,ind_4_right,a1_right,a2_right,a3_right,a4_right] = rect_index(zeros(ny,nx),R_R,fc_right,cc_right,kc_right,alpha_c_right,KK_right_new);
     end % if exist('stereoCalibrationFilename', 'var')
     
     mexCameraCapture(0, leftImageDeviceNumber);
     mexCameraCapture(0, rightImageDeviceNumber);
     
-    disp('Press c to capture an image. Press q to quit. (It may take a few tries)')
+    disp('Press c to capture an image. Press q to quit. (It may take a few tries). Press space if the images stop updated, it seems to unstick Matlab.')
     
     imagePairs = cell(0,1);
     while true
