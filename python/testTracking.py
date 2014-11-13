@@ -3,15 +3,21 @@ from numpy.linalg import *
 import cv2
 import pdb
 
-cap = cv2.VideoCapture(1)
-
-for i in range(0,30):
-  ret, frame = cap.read()
+matchKeypoints = True
+computeHomography = True
+firstImageFilename = "/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people.png" # Or None to use the first image captured from the camera
+useKNNMatch = False # Can't use KNN match with ORB
 
 minHessian = 400
 
 #detector = cv2.SURF( minHessian )
-detector = cv2.SIFT()
+#detector = cv2.SIFT()
+detector = cv2.ORB()
+
+cap = cv2.VideoCapture(1)
+
+for i in range(0,30):
+  ret, frame = cap.read()
 
 #cameraMatrix = \
 #   np.array([[521.6890083600868,                 0, 324.9274146511045],
@@ -31,12 +37,18 @@ mapx, mapy = cv2.initUndistortRectifyMap(cameraMatrix, distortionCoefficients, n
 
 matcher = cv2.FlannBasedMatcher
 
-ret, firstFrame = cap.read()
+if firstImageFilename is None:
+  ret, firstFrame = cap.read()
 
-firstFrameGray = cv2.cvtColor(firstFrame, cv2.COLOR_BGR2GRAY)
-firstFrameGray = cv2.resize(firstFrameGray, dsize=(640,480))
-firstFrameGray = cv2.remap(firstFrameGray, mapx, mapy, cv2.INTER_LINEAR)
-
+  firstFrameGray = cv2.cvtColor(firstFrame, cv2.COLOR_BGR2GRAY)
+  firstFrameGray = cv2.resize(firstFrameGray, dsize=(640,480))
+  firstFrameGray = cv2.remap(firstFrameGray, mapx, mapy, cv2.INTER_LINEAR)
+else:
+  firstFrameGray = cv2.imread(firstImageFilename)
+  
+  if len(firstFrameGray.shape) == 3:
+    firstFrameGray = cv2.cvtColor(firstFrameGray, cv2.COLOR_BGR2GRAY)
+    
 firstKeypoints, firstDescriptors = detector.detectAndCompute(firstFrameGray, None)
 
 # FLANN parameters
@@ -45,9 +57,7 @@ index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
 search_params = dict(checks=50)   # or pass empty dictionary
 
 flann = cv2.FlannBasedMatcher(index_params,search_params)
-
-matchKeypoints = True
-computeHomography = True
+bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
 frameNumber = 0
 while(True):
@@ -68,24 +78,33 @@ while(True):
     if matchKeypoints:
       newKeypoints, newDescriptors = detector.detectAndCompute(newFrameGray, None)
   
-      matches = flann.knnMatch(newDescriptors, firstDescriptors, k=2)
-
-      # Need to draw only good matches, so create a mask
-      matchesMask = [[0,0] for i in xrange(len(matches))]
-
-      # ratio test as per Lowe's paper
       matched_original = []
       matched_new = []
-      for i,(m,n) in enumerate(matches):
-          if m.distance < 0.7*n.distance:
-              matchesMask[i]=[1,0]
+  
+      if useKNNMatch:
+        matches = flann.knnMatch(newDescriptors, firstDescriptors, k=2)
+
+        # Need to draw only good matches, so create a mask
+        matchesMask = [[0,0] for i in xrange(len(matches))]
+
+        # ratio test as per Lowe's paper
+        for i,(m,n) in enumerate(matches):
+            if m.distance < 0.7*n.distance:
+                matchesMask[i]=[1,0]
             
-              #if m.trainIdx < len(firstKeypoints):
-              matched_original.append(firstKeypoints[m.trainIdx])
-             
-              #if m.queryIdx < len(newKeypoints):
-              matched_new.append(newKeypoints[m.queryIdx])
-    
+                matched_original.append(firstKeypoints[m.trainIdx])             
+                matched_new.append(newKeypoints[m.queryIdx])
+      else:              
+        matches = bf.match(newDescriptors, firstDescriptors)
+        matches = sorted(matches, key = lambda x:x.distance)
+        
+        for i,m in enumerate(matches):
+          if m.distance > 50:
+            break;
+            
+          matched_original.append(firstKeypoints[m.trainIdx])
+          matched_new.append(newKeypoints[m.queryIdx])
+        
       imgKeypoints1 = cv2.drawKeypoints(firstFrameGray, matched_original)  
       imgKeypoints2 = cv2.drawKeypoints(newFrameGray, matched_new)
     
@@ -133,7 +152,11 @@ while(True):
     if cv2.waitKey(50) & 0xFF == ord('q'):
         print('Breaking')
         break
-
+    elif cv2.waitKey(50) & 0xFF == ord('c'):
+      saveFilename = "/Users/pbarnum/Documents/tmp/savedImage.png"
+      print('Saving to ' + saveFilename)
+      cv2.imwrite(saveFilename, newFrameGray)
+    
 # When everything done, release the capture
 cap.release()
 cv2.destroyAllWindows()
