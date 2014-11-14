@@ -5,23 +5,33 @@ import pdb
 
 print('Starting cameras...')
 
-cap0 = cv2.VideoCapture(1)
-print('Capture0 initialized')
-
+cap0 = cv2.VideoCapture(0)
+if cap0.isOpened():
+  print('Capture0 initialized')
+else:
+  print('Capture0 initialization failure')
+  exit(1)
+  pdb.set_trace()
+    
 cap1 = cv2.VideoCapture(2)
-print('Capture1 initialized')
-
-for i in range(0,30):
+if cap1.isOpened():
+  print('Capture1 initialized')
+else:
+  print('Capture1 initialization failure')
+  exit(1)
+  pdb.set_trace()
+  
+for i in range(0,10):
   ret, frame = cap0.read()
   if frame is None:
-    print('Error')
+    print('Error 0')
     pdb.set_trace()
-
+    
   ret, frame = cap1.read()
   if frame is None:
-    print('Error')
+    print('Error 1')
     pdb.set_trace()
-
+  
 print('Cameras ready')
 
 frameNumber = 0
@@ -34,16 +44,13 @@ while(True):
     cv2.imshow('frame0', frame0)
     cv2.imshow('frame1', frame1)
 
-    cv2.waitKey(50)
-
-#    if cv2.waitKey(50) & 0xFF == ord('q'):
-#        print('Breaking')
-#        break
-#    elif cv2.waitKey(50) & 0xFF == ord('c'):
-#      saveFilename = "/Users/pbarnum/Documents/tmp/savedImage.png"
-#      print('Saving to ' + saveFilename)
-#      cv2.imwrite(saveFilename, newFrameGray)
+    c = cv2.waitKey(50)
+    
+    if (cv2.waitKey(50) & 0xFF) == ord('q'):
+        print('Breaking')
+        break
 
 # When everything done, release the capture
-cap.release()
+cap0.release()
+cap1.release()
 cv2.destroyAllWindows()
