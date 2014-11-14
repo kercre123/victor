@@ -11,6 +11,15 @@
 % Run stereo_gui
 % imagePairs = captureStereoImages(0, 1, 'Calib_Results_stereo.mat');
 
+% To save in opencv format:
+% s = toArray(kc_left'); disp(['distCoeffs1 = [', s(1:(end-3)), sprintf('];\n')]);
+% s = toArray(kc_right'); disp(['distCoeffs2 = [', s(1:(end-3)), sprintf('];\n')]);
+% s = toArray(KK_left); disp(['cameraMatrix1 = [', s(1:(end-3)), sprintf('];\n')]);
+% s = toArray(KK_right); disp(['cameraMatrix2 = [', s(1:(end-3)), sprintf('];\n')]);
+% s = toArray(R); disp(['R = [', s(1:(end-3)), sprintf('];\n')]);
+% s = toArray(T'); disp(['T = [', s(1:(end-3)), sprintf('];\n')]);
+% disp(sprintf('imageSize = [%d, %d]\n', nx, ny));
+ 
 function imagePairs = captureStereoImages(leftImageDeviceNumber, rightImageDeviceNumber, stereoCalibrationFilename)
     rectifyImages = false;
     
