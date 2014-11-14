@@ -121,7 +121,7 @@ namespace Anki {
         bool gc_buttonPressed_[GC_NUM_BUTTONS];
         
         const s16 ANALOG_INPUT_DEAD_ZONE_THRESH = 1000;
-        const f32 ANALOG_INPUT_MAX_DRIVE_SPEED = 80; // mm/s
+        const f32 ANALOG_INPUT_MAX_DRIVE_SPEED = 100; // mm/s
         const f32 MAX_ANALOG_RADIUS = 300;
         #endif // ENABLE_GAMEPAD_SUPPORT
 
@@ -1044,7 +1044,7 @@ namespace Anki {
                 case GC_BUTTON_DIR_UP:
                 case GC_BUTTON_DIR_DOWN:
                 {
-                  // Move lift
+                  // Move lift up/down. Open-loop velocity commands.
                   f32 speed_rad_per_sec = 0;
                   if (pressed) {
                     speed_rad_per_sec = (LT_held ? 0.4f : 1) * (buttonID == GC_BUTTON_DIR_UP ? 1 : -1) * LIFT_SPEED_RAD_PER_SEC;
@@ -1053,10 +1053,21 @@ namespace Anki {
                   break;
                 }
                 case GC_BUTTON_DIR_LEFT:
-                  break;
                 case GC_BUTTON_DIR_RIGHT:
+                {
+                  // Move lift to fixed position.
+                  if (pressed) {
+                    
+                    // Figure out appropriate fixed position
+                    f32 height_mm = LIFT_HEIGHT_LOWDOCK;
+                    if (buttonID == GC_BUTTON_DIR_RIGHT) {
+                      height_mm = LT_held ? LIFT_HEIGHT_HIGHDOCK : LIFT_HEIGHT_CARRY;
+                    }
+                    
+                    SendMoveLiftToHeight(height_mm, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+                  }
                   break;
-                  
+                }
                 default:
                   //printf("WARNING: Unrecognized button %d\n", sdlEvent_.jbutton.button);
                   break;
