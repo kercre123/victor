@@ -1,6 +1,6 @@
 largeFilesScriptDir = '/Users/andrew/Code/products-cozmo-large-files/systemTestsData/scripts/';
 
-doDisplay = 0;
+doDisplay = -1;
 
 matFiles = getfnames(largeFilesScriptDir, '*.mat');
 
@@ -64,6 +64,11 @@ for iFile = 1:numFiles
       probes = VisionMarkerTrained.GetProbeValues(img, tform);
       probeValues{iFile}{iPose}{iMarker} = probes(:) > threshold;
       probeValues2{iFile}{iPose}{iMarker} = column(probes > separable_filter(probes, gaussian_kernel(7)));
+      
+%       subplot 131, imagesc(probes), axis image
+%       subplot 132, imagesc(reshape(probeValues{iFile}{iPose}{iMarker}, 32, 32)), axis image
+%       subplot 133, imagesc(reshape(probeValues2{iFile}{iPose}{iMarker}, 32, 32)), axis image
+%       pause
       
       %if all(probeValues{iFile}{iPose}{iMarker} == probeValues{iFile}{iPose}{iMarker}(1))
       %  keyboard

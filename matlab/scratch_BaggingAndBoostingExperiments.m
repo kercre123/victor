@@ -304,9 +304,63 @@ end
   % Strip rotation from labelNames and add 'MARKER_'
   labelNamesUnrotated = cellfun(@(name)['MARKER_' upper(strrep(strrep(strrep(strrep(name, '_000', ''), '_090', ''), '_270', ''), '_180', ''))], data.labelNames, 'UniformOutput', false);
 
-  fprintf('Predicting with single tree.\n');
-  predictedLabels = predict(ctree, single(realData.probeValues));
-  accSingle = sum(strcmp(labelNamesUnrotated(predictedLabels), realData.markerTypes)) / length(realData.markerTypes);
+  DEBUG_DISPLAY = true;
+  
+  t = tic;  fprintf('Predicting with single tree...');
+  numExamples = size(realData.probeValues,1);
+  predictedLabels = zeros(numExamples,1);
+  
+  tree = VisionMarkerTrained.ProbeTree;
+  if ~iscell(tree)
+    tree = {tree};
+  end
+  numTrees = length(tree);
+  
+  for iExample = 1:numExamples
+    labelIDs = zeros(1, numTrees);
+    for iTree = 1:numTrees
+      
+      [~, temp] = TestTree(tree{iTree}, ...
+        realData.probeValues(iExample,:)', [], 128, VisionMarkerTrained.ProbePattern);
+      if ~isscalar(temp)
+        labelIDs(iTree) = mode(temp);
+      else
+        labelIDs(iTree) = temp;
+      end
+    end
+    predictedLabels(iExample) = mode(labelIDs);
+    if sum(labelIDs == predictedLabels(iExample)) < .5*numTrees
+      predictedLabels(iExample) = length(labelNamesUnrotated);
+    end
+    if DEBUG_DISPLAY && ~strcmp(labelNamesUnrotated{predictedLabels(iExample)}, realData.markerTypes{iExample}) && ~strcmp(labelNamesUnrotated{predictedLabels(iExample)}, 'MARKER_INVALID')
+      imagesc(reshape(realData.probeValues(iExample,:), 32, 32)), axis image
+      title({sprintf('Predicted: %s', labelNamesUnrotated{predictedLabels(iExample)}), ...
+        sprintf('Truth: %s', realData.markerTypes{iExample})}, ...
+        'Interp', 'none')
+      pause
+    end
+  end
+  
+  %predictedLabels = predict(ctree, single(realData.probeValues));
+  correct   = strcmp(labelNamesUnrotated(predictedLabels), realData.markerTypes(1:numExamples));
+  invalids  = strcmp(labelNamesUnrotated(predictedLabels), 'MARKER_INVALID');
+  
+  % "True Positives" are the ones we labeled correctly. 
+  truePosRate  = sum(correct) / length(correct);
+  
+  % "False Positives" are those that we labeled incorrectly -- without 
+  % calling them "invalid". So we reported the wrong thing. These are 
+  % *real bad*.
+  falsePosRate = sum(~correct & ~invalids) / length(correct);
+  
+  % "False Negative" are those we did not identify but that we at least
+  % labelled as "invalid", meaning we just missed them and didn't see
+  % the _wrong_ thing. These are *less bad*.
+  falseNegRate = sum(~correct &  invalids) / length(correct);
+  
+  fprintf('Done (%.1f seconds)\n', toc(t));
+  
+  %%
   
   numTreesList = [1 2 4 8 10];
   acc = zeros(1, length(numTreesList));
