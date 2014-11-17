@@ -109,10 +109,10 @@ while(True):
     leftImage = cv2.remap(leftImage, leftUndistortMapX, leftUndistortMapY, cv2.INTER_LINEAR)
     rightImage = cv2.remap(rightImage, rightUndistortMapX, rightUndistortMapY, cv2.INTER_LINEAR)
 
+  # DoG filtering (doesn't work well with the JPEG)
   #leftImage_g1 = cv2.GaussianBlur(leftImage, (0,0), 1)
   #leftImage_g2 = cv2.GaussianBlur(leftImage, (0,0), 2)
   #leftImage = leftImage_g1 - leftImage_g2
-
   #rightImage_g1 = cv2.GaussianBlur(rightImage, (0,0), 1)
   #rightImage_g2 = cv2.GaussianBlur(rightImage, (0,0), 2)
   #rightImage = rightImage_g1 - rightImage_g2
@@ -120,14 +120,6 @@ while(True):
   disparity = stereo.compute(leftImage, rightImage)
 
   disparity *= 100;
-
-  #pdb.set_trace()
-
-  #plt.imshow(disparity,'gray')
-#    plt.show()
-
-
-
 
   cv2.imshow('leftImage', leftImage)
   cv2.imshow('rightImage', rightImage)
