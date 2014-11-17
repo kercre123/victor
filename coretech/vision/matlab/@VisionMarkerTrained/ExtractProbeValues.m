@@ -12,8 +12,9 @@ workingResolution = VisionMarkerTrained.ProbeParameters.GridSize;
 %addRotations = false;
 blurSigmas = [0 .01];
 imageSizes = [20 80];
-exposures = [0.8 1 1.2];
+exposures  = [0.8 1 1.2];
 blackPoint = 15; % assuming [0,255] range, what is unadjusted "black" at normal exposure
+whitePoint = 255;
 addInversions = true;
 numPerturbations = 100;
 perturbationType = 'normal'; % 'normal' or 'uniform'
@@ -164,7 +165,7 @@ for iImg = 1:numImages
           imgResized = imresize(imgBlur, imageSizes(iSize)*[1 1], 'bilinear');
           
           for iExp = 1:numExposures
-            img = min(1, (imgResized+blackPoint/255)*exposures(iExp));
+            img = min(1, ((whitePoint-blackPoint)/255*imgResized+blackPoint/255)*exposures(iExp));
             
             % Same for all perturbations in following loop
             img = single(img);
@@ -193,13 +194,13 @@ for iImg = 1:numImages
                 [xPerturb, yPerturb] = tforminv(T, X, Y);
               end
               
-              probeValues{iImg, iBlur, iSize, iExp, iPerturb, iInvert} = mean(interp2(imageCoordsX, imageCoordsY, img, ...
-                xPerturb, yPerturb, 'linear', 1), 2);
+              probeValues{iImg, iBlur, iSize, iExp, iPerturb, iInvert} = im2uint8(mean(interp2(imageCoordsX, imageCoordsY, img, ...
+                xPerturb, yPerturb, 'linear', 1), 2));
               
               if computeGradMag
                 imgGradMag = single(smoothgradient(img));
-                gradMagValues{iImg, iBlur, iSize, iExp, iPerturb, iInvert} = mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
-                  xPerturb, yPerturb, 'linear', 0), 2);
+                gradMagValues{iImg, iBlur, iSize, iExp, iPerturb, iInvert} = im2uint8(mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
+                  xPerturb, yPerturb, 'linear', 0), 2));
               end
               
               labels{iImg, iBlur, iSize, iExp, iPerturb, iInvert} = uint32(iImg + (iInvert-1)*numImages);

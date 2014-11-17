@@ -3,6 +3,8 @@
 #endif
 
 //typedef unsigned short char16_t;
+typedef unsigned char u8;
+
 #include <mex.h>
 
 #include <cmath>
@@ -113,19 +115,15 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
         mexErrMsgTxt("labelsArray should be UINT32.");
     }
     
-#if USE_DOUBLE_PRECISION
-    if(mxGetClassID(prhs[2]) != mxDOUBLE_CLASS) {
-        mexErrMsgTxt("probeValues should be DOUBLE.");
+    if(mxGetClassID(prhs[2]) != mxUINT8_CLASS) {
+        mexErrMsgTxt("probeValues should be UINT8.");
     }
     
+#if USE_DOUBLE_PRECISION
     if(mxGetClassID(prhs[3]) != mxDOUBLE_CLASS) {
         mexErrMsgTxt("weights should be DOUBLE.");
     }
-#else
-    if(mxGetClassID(prhs[2]) != mxSINGLE_CLASS) {
-        mexErrMsgTxt("probeValues should be SINGLE.");
-    }
-    
+#else    
     if(mxGetClassID(prhs[3]) != mxSINGLE_CLASS) {
         mexErrMsgTxt("weights should be SINGLE.");
     }
@@ -145,6 +143,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
     const mwSize numExamples = mxGetM(probeValues);
     
     //const Precision oneOverNumExamples = 1. / static_cast<Precision>(numExamples);
+    const double oneOver255 = 1. / 255.;
     
     const unsigned int* labels = (unsigned int*) mxGetData(labelsArray);
     if(mxGetNumberOfElements(labelsArray) != numExamples) {
@@ -221,8 +220,9 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
     oneOverTotalWeight = Precision(1) / oneOverTotalWeight; // ... then invert.
     
     for(mwSize iProbe=0; iProbe<numProbes; ++iProbe) {
-        const Precision * currentProbe  = (const Precision*)mxGetData(probeValues) + iProbe*numExamples;
-                
+        //const Precision * currentProbe  = (const Precision*)mxGetData(probeValues) + iProbe*numExamples;
+        const u8* currentProbe = static_cast<u8*>(mxGetData(probeValues)) + iProbe*numExamples;
+        
         Precision * currentMarkerProb_on  = markerProb_on  + iProbe*numLabels;
         Precision * currentMarkerProb_off = markerProb_off + iProbe*numLabels;
            
@@ -232,12 +232,14 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
         
         // Accumulate probes into the right place based on each example's label
         for(mwSize iExample=0; iExample<numExamples; ++iExample) {
-            const unsigned int label = labels[iExample];      
+            const unsigned int label = labels[iExample]; 
+            const double currentProbeVal = static_cast<double>(currentProbe[iExample])*oneOver255;
+            
             //const Precision probeIsOn  = Precision(1) - currentProbe[iExample];
             //const Precision probeIsOff = (Precision)(currentProbe[iExample] >  Precision(0.5));
             //const Precision probeIsOn  = (Precision)(currentProbe[iExample] <= Precision(0.5));
           
-            if( (Precision)(currentProbe[iExample] <= Precision(0.5)) ) {
+            if( (Precision)(currentProbeVal <= Precision(0.5)) ) {
                 currentMarkerProb_on[label] += weights[iExample];
                 sum_on[iProbe] += weights[iExample];
             } else {
@@ -245,7 +247,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
                 sum_off[iProbe] += weights[iExample];
             }
                 
-            p_off[iProbe] += currentProbe[iExample] * weights[iExample];
+            p_off[iProbe] += currentProbeVal * weights[iExample];
             
             //currentMarkerProb_on[label]  += probeIsOn;
             //currentMarkerProb_off[label] += probeIsOff;
