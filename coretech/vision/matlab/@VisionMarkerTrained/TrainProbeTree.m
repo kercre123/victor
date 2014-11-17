@@ -5,6 +5,7 @@ function probeTree = TrainProbeTree(varargin)
 %% Parameters
 baggingIterations = 1;
 trainingState = [];
+preThreshold = true;
 %maxSamples = 100;
 %minInfoGain = 0;
 redBlackVerifyDepth = 8;
@@ -68,6 +69,8 @@ catch E
     error('Failed to get all required fields from training state: %s.', E.message);
 end
 
+assert(isa(probeValues, 'uint8'), 'Assuming probeValues are UINT8 now.');
+
 probePattern = VisionMarkerTrained.ProbePattern;
 
 
@@ -79,6 +82,7 @@ if ~isempty(baggingSampleFraction)
     t_bagSample = tic;
     fprintf('Sampling %.1f%% of training examples with replacement...', baggingSampleFraction*100);
     N = size(probeValues,2);
+    
     sampleIndex = randi(N, 1, ceil(baggingSampleFraction*N));
     
     probeValues = probeValues(:,sampleIndex);
@@ -145,7 +149,10 @@ totalExamplesToClassify = size(probeValues, 2);
 probeTree = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
 probeTree.labels = labelNames;
 
-probeValues = single(probeValues > .5);
+if preThreshold
+  probeValues = im2uint8(probeValues > 128);
+end
+
 % try
     probeTree = buildTree(probeTree, false(size(probeValues,1),1), labels, labelNames, maxDepth);
     
@@ -383,7 +390,7 @@ if testTree
         [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern);
         
         if length(labelID) > 1
-          warning('Multiple labels in multiclass tree.');
+          %warning('Multiple labels in multiclass tree.');
           
           labelID = mode(labelID);
           result = labelNames{labelID};
@@ -476,7 +483,9 @@ SaveTreeHelper();
       savePath = fileparts(mfilename('fullpath'));
       
       % Preserve previous probeTree, for archiving (e.g. to largefiles repo)
-      movefile(fullfile(savePath, 'probeTree.mat'), fullfile(savePath, sprintf('probeTree_%s.mat',datestr(now, 30))));
+      if exist(fullfile(savePath, 'probeTree.mat'), 'file')
+        movefile(fullfile(savePath, 'probeTree.mat'), fullfile(savePath, sprintf('probeTree_%s.mat',datestr(now, 30))));
+      end
       
       % Save the new tree
       save(fullfile(savePath, 'probeTree.mat'), 'probeTree');
@@ -527,9 +536,25 @@ SaveTreeHelper();
             pSample = mean(gradMagValues(unusedProbes,node.remaining),2);
             pSample = max(pSample) - pSample;
             pSample = pSample / sum(pSample);
-            sampleIndex = mexRandP(pSample, sqrt(length(unusedProbes)));
+            sampleIndex = discretesample(pSample, ceil(sqrt(length(unusedProbes))));
+            %sampleIndex = mexRandP(pSample, sqrt(length(unusedProbes)));
+            %temp = 0; temp2 = 0; x = 0; y = 0; % for use during debugging since this is a static workspace
+            
+%             % Alternative sampling method
+%             pSample = mean(gradMagValues(unusedProbes,node.remaining),2);
+%             pSample = max(pSample) - pSample;
+%             pSample = pSample / max(pSample);
+%             sampleIndex = find(pSample > .5*rand(size(pSample))+.5);
+%             temp = 0; temp2 = 0; x = 0; y = 0; % for use during debugging since this is a static workspace
+            
+%             temp = zeros(32);
+%             temp(unusedProbes) = pSample;
+%             [y,x] = ind2sub([32 32], unusedProbes(sampleIndex));
+%             hold off, imagesc(temp), axis image, hold on, plot(x + .1*randn(size(x)),y+.1*randn(size(y)),'ro')
+%             pause
+
             unusedProbes = unusedProbes(sampleIndex);
-                    
+            
             infoGain = computeInfoGain(labels(node.remaining), length(labelNames), ...
               probeValues(unusedProbes,node.remaining), weights(node.remaining));
             
