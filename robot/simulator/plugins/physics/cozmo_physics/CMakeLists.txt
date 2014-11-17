@@ -3,7 +3,7 @@
 
 # Work in progress...
 # Need to CMake to do this somehow!
-#-L/Applications/Webots/lib -lode /Applications/Webots/resources/projects/default/plugins/physics/physics.o -flat_namespace -undefined suppress -install_name @executable_path/../../plugins/physics/cozmo_physics/libcozmo_physics.dylib
+#-L/Applications/Webots/lib -lode /Applications/Webots/resources/projects/plugins/physics/physics.o -flat_namespace -undefined suppress -install_name @executable_path/../../plugins/physics/cozmo_physics/libcozmo_physics.dylib
 
 
 cmake_minimum_required(VERSION 2.8)
@@ -16,7 +16,7 @@ add_definitions(-DdDOUBLE -DMACOS)
 # Include paths
 include_directories( ${WEBOTS_APP_DIR}/include/ ${WEBOTS_APP_DIR}/include/ode/ )
 
-set(PHYSICS_O ${WEBOTS_APP_DIR}/resources/projects/default/plugins/physics/physics.o)
+set(PHYSICS_O ${WEBOTS_APP_DIR}/resources/projects/plugins/physics/physics.o)
 
 set_source_files_properties(
   ${PHYSICS_O} PROPERTIES
