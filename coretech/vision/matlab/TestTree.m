@@ -36,10 +36,15 @@ elseif all(isfield(node, {'x', 'y', 'whichProbe'}))
             tform = maketform('affine', eye(3)); %[size(img,2)-1 0 1; 0 size(img,1)-1 1; 0 0 1]');
         end
         
-        [xi,yi] = tformfwd(tform, node.x+pattern.x, node.y+pattern.y);
+        %[xi,yi] = tformfwd(tform, node.x+pattern.x, node.y+pattern.y);
+        temp = tform.tdata.T' * [node.x+pattern.x; node.y+pattern.y; ones(1,length(pattern.y))];
+        xi = temp(1,:)./temp(3,:);
+        yi = temp(2,:)./temp(3,:);
         
-        value = mean(interp2(img, xi(:), yi(:), 'linear')); % TODO: just use nearest?
-        
+        % value = mean(interp2(img, xi(:), yi(:), 'linear')); % TODO: just use nearest?
+        index = round(yi(:)) + (round(xi(:))-1)*size(img,1);
+        value = mean(img(index));
+                
         if drawProbes
             %theta = linspace(0,2*pi,24);
             if value > threshold
