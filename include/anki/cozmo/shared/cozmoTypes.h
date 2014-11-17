@@ -37,6 +37,9 @@ namespace Anki {
       // Follows an example path. Requires localization
       TM_PATH_FOLLOW,
       
+      // Cycles through PathFollower convenience functions: DriveStraight, DriveArc, DrivePointTurn
+      TM_PATH_FOLLOW_CONVENIENCE_FUNCTIONS,
+      
       // Tests ExecuteDirectDrive() or open loop control via HAL::MotorSetPower()
       TM_DIRECT_DRIVE,
       
