@@ -24,7 +24,7 @@
 
 // SDL for gamepad control (specifically Logitech Rumblepad F510)
 // Gamepad should be in Direct mode (switch on back)
-#define ENABLE_GAMEPAD_SUPPORT 0
+#define ENABLE_GAMEPAD_SUPPORT 1
 #if(ENABLE_GAMEPAD_SUPPORT)
 #include <SDL.h>
 #define DEBUG_GAMEPAD 0
@@ -183,6 +183,22 @@ namespace Anki {
         // Make root point to WebotsKeyBoardController node
         root_ = inputController.getSelf();
         poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
+        
+        #if(ENABLE_GAMEPAD_SUPPORT)
+        // Look for gamepad
+        if (SDL_Init(SDL_INIT_GAMECONTROLLER) < 0) {
+          printf("ERROR: Failed to init SDL\n");
+          return;
+        }
+        if (SDL_NumJoysticks() > 0) {
+          // Open first joystick. Assuming it's the Logitech Rumble Gamepad F510.
+          js_ = SDL_GameControllerOpen(0);
+          if (js_ == NULL) {
+            printf("ERROR: Unable to open gamepad\n");
+          }
+        }
+        #endif
+
 
       }
       
@@ -1001,10 +1017,18 @@ namespace Anki {
                   break;
                   
                 case GC_BUTTON_LB:
+                  if (LT_held) {
+                    SendClearAllBlocks();
+                  } else {
+                    SendSelectNextObject();
+                  }
                   break;
                 case GC_BUTTON_RB:
+                {
+                  bool usePreDockPose = !LT_held;
+                  SendPickAndPlaceSelectedObject(usePreDockPose);
                   break;
-                  
+                }
                 case GC_BUTTON_DIR_UP:
                 case GC_BUTTON_DIR_DOWN:
                 {
