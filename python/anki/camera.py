@@ -15,17 +15,17 @@ import numpy as np
 
 class Camera(object):
     def __init__(self, cameraMatrix, distortionCoefficients, imageSize):
-        assert type(cameraMatrix).__module__ == np.__name__, "Must be a Numpy array"
-        assert type(distortionCoefficients).__module__ == np.__name__, "Must be a Numpy array"
+        assert type(cameraMatrix).__module__ == np.__name__, 'Must be a Numpy array'
+        assert type(distortionCoefficients).__module__ == np.__name__, 'Must be a Numpy array'
 
         self.cameraMatrix = cameraMatrix
         self.distortionCoefficients = distortionCoefficients
         self.imageSize = imageSize
 
-        self.mapX, self.mapY = cv2.initUndistortRectifyMap(cameraMatrix, distortionCoefficients, np.eye(3), cameraMatrix, imageSize, cv2.CV_32FC1)
+        self.mapX, self.mapY = cv2.initUndistortRectifyMap(cameraMatrix, distortionCoefficients, np.eye(3), cameraMatrix, imageSize[::-1], cv2.CV_32FC1)
 
     def undistort(self, image, convertToGray=True):
-        assert type(image).__module__ == np.__name__, "Must be a Numpy array"
+        assert type(image).__module__ == np.__name__, 'Must be a Numpy array'
 
         if convertToGray and (len(image.shape) == 3):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

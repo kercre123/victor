@@ -1,19 +1,33 @@
-import numpy as np
-from numpy.linalg import *
+# Use python 3 types by default (uses "future" package)
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from future.builtins import *
+
 import cv2
+import numpy as np
 import pdb
+import os
 import anki
 
+print('Starting tracking')
+
 displayMatches = True
-firstImageFilename = "/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people.png" # Or None to use the first image captured from the camera
+templateImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people.png' # Or None to use the first image captured from the camera
+
+#queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/webcam_0.png' # Or None to capture images from the webcam
+#queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people.png' # Or None to capture images from the webcam
+queryImageFilename = None
+
+captureBaseFilename = '/Users/pbarnum/tmp/webcam_'
 cameraId = 0
 
 bruteForceMatchThreshold = 40
 
-cap = cv2.VideoCapture(cameraId)
+if templateImageFilename is None or queryImageFilename is None:
+    cap = cv2.VideoCapture(cameraId)
 
-for i in range(0,30):
-  ret, image = cap.read()
+    for i in range(0,10):
+      ret, image = cap.read()
 
 # Camera instrinsics are for the webcam
 mainCamera = anki.Camera(
@@ -21,26 +35,34 @@ mainCamera = anki.Camera(
               [0,	613.503595446291,	276.891781173461],
               [0,	0,	1]]),
     np.array([-0.248653804750381, -0.0186244159234586, -0.00169824021274891, 0.00422932546733130, 0]),
-    (640,480))
+    (480,640))
 
-if firstImageFilename is None:
+if templateImageFilename is None:
     ret, image = cap.read()
     image = mainCamera.undistory(image)
 else:
-    image = cv2.imread(firstImageFilename)
+    image = cv2.imread(templateImageFilename)
 
     if len(image.shape) == 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 planePattern = anki.PlanePattern(image)
 
+if queryImageFilename is not None:
+    image = cv2.imread(queryImageFilename)
+
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+saveIndex = 0
 frameNumber = 0
 while(True):
     frameNumber += 1
 
-    # Capture frame-by-frame
-    ret, image = cap.read()
-    image = mainCamera.undistort(image)
+    if queryImageFilename is None:
+        # Capture frame-by-frame
+        ret, image = cap.read()
+        image = mainCamera.undistort(image)
 
     planePattern.match(image, bruteForceMatchThreshold, displayMatches)
 
@@ -48,10 +70,20 @@ while(True):
         print('Breaking')
         break
     elif cv2.waitKey(50) & 0xFF == ord('c'):
-      saveFilename = "/Users/pbarnum/Documents/tmp/savedImage.png"
-      print('Saving to ' + saveFilename)
-      cv2.imwrite(saveFilename, newFrameGray)
+        while True:
+            imageFilename = captureBaseFilename + str(saveIndex) + '.png'
+            saveIndex += 1
+
+            if not os.path.isfile(imageFilename):
+                break
+
+        print('Saving image to ' + imageFilename)
+
+        cv2.imwrite(imageFilename, image)
 
 # When everything done, release the capture
-cap.release()
+
 cv2.destroyAllWindows()
+if templateImageFilename is None or queryImageFilename is None:
+    cap.release()
+
