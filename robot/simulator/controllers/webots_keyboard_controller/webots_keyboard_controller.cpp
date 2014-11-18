@@ -1017,10 +1017,18 @@ namespace Anki {
                   break;
                   
                 case GC_BUTTON_LB:
+                  if (LT_held) {
+                    SendClearAllBlocks();
+                  } else {
+                    SendSelectNextObject();
+                  }
                   break;
                 case GC_BUTTON_RB:
+                {
+                  bool usePreDockPose = !LT_held;
+                  SendPickAndPlaceSelectedObject(usePreDockPose);
                   break;
-                  
+                }
                 case GC_BUTTON_DIR_UP:
                 case GC_BUTTON_DIR_DOWN:
                 {
