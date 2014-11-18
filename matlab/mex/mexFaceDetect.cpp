@@ -54,7 +54,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   if(! (nlhs == 2 && nrhs >= 1 && nrhs <= 5))
   {
-    mexErrMsgTxt("Usage: [faces,eyes] = mexFaceDetect(im, <faceCascadeFilename>, <eyeCascadeFilename>, <scaleFactor>, <minNeighbors>);\n");
+    mexErrMsgTxt("Usage: [faces,eyes] = mexFaceDetect(im, <faceCascadeFilename>, <eyeCascadeFilename>, <scaleFactor>, <minNeighbors>);\nTo use the default cascade for face or eyes, use filename ''. To not use the eye cascade, use filename 'none'.\n");
     return;
   }
   
@@ -62,6 +62,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   std::string newEyeCascadeFilename = QUOTE(OPENCV_ROOT_PATH) "/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml";
   double scaleFactor = 1.1;
   int minNeighbors = 3;
+  bool useEyeCascade = true;
   
   if(nrhs >= 2)
   {
@@ -74,6 +75,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   if(nrhs >= 3)
   {
     std::string tmpEyeCascadeFilename = mxArrayToString(prhs[2]);
+    
+    if(strcmp(tmpEyeCascadeFilename.data(), "none") == 0)
+      useEyeCascade = false;
     
     if(tmpEyeCascadeFilename.length() > 3)
       newEyeCascadeFilename = tmpEyeCascadeFilename;
@@ -115,7 +119,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
   }
 
-  if(strcmp(newEyeCascadeFilename.data(), eyeCascadeFilename.data()) != 0)
+  if(useEyeCascade && strcmp(newEyeCascadeFilename.data(), eyeCascadeFilename.data()) != 0)
   {
     if(eyes_cascade) {
       delete(eyes_cascade);
@@ -159,6 +163,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   plhs[0] = mxCreateDoubleMatrix(faces.size(), 4, mxREAL);
   
   std::vector<Eye> storedEyes;
+  storedEyes.clear();
   
   double *x = mxGetPr(plhs[0]);
   double *y = x + numFaces;
@@ -173,25 +178,27 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     w[iFace] = faces[iFace].width;
     h[iFace] = faces[iFace].height;
 
-    // Try to find eyes:
-    cv::Mat faceROI = grayscaleFrame( faces[iFace] );
-    std::vector<cv::Rect> eyes;
+    if(useEyeCascade) {
+      // Try to find eyes:
+      cv::Mat faceROI = grayscaleFrame( faces[iFace] );
+      std::vector<cv::Rect> eyes;
 
-    eyes_cascade->detectMultiScale( faceROI, eyes, 1.1, 2,
-      0 |CV_HAAR_SCALE_IMAGE, cv::Size(30, 30) );
+      eyes_cascade->detectMultiScale( faceROI, eyes, 1.1, 2,
+        0 |CV_HAAR_SCALE_IMAGE, cv::Size(30, 30) );
 
-    const size_t numEyes = eyes.size();
-    for(int iEye=0; iEye<numEyes; iEye++)
-    {
-      Eye eye;
-      eye.index = double(iFace + 1);
-      eye.x = double(x[iFace] + eyes[iEye].x);
-      eye.y = double(y[iFace] + eyes[iEye].y);
-      eye.w = double(eyes[iEye].width);
-      eye.h = double(eyes[iEye].height);
-      
-      storedEyes.push_back(eye);
-    }
+      const size_t numEyes = eyes.size();
+      for(int iEye=0; iEye<numEyes; iEye++)
+      {
+        Eye eye;
+        eye.index = double(iFace + 1);
+        eye.x = double(x[iFace] + eyes[iEye].x);
+        eye.y = double(y[iFace] + eyes[iEye].y);
+        eye.w = double(eyes[iEye].width);
+        eye.h = double(eyes[iEye].height);
+        
+        storedEyes.push_back(eye);
+      }
+    } // if(useEyeCascade)
   } // FOR each face
 
   plhs[1] = mxCreateDoubleMatrix(storedEyes.size(), 5, mxREAL); // [faceIndex, left, top, width, height]
