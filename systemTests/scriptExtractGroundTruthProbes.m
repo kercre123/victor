@@ -7,7 +7,8 @@ matFiles = getfnames(largeFilesScriptDir, '*.mat');
 numFiles = length(matFiles);
 
 probeValues = cell(1, numFiles);
-probeValues2 = cell(1, numFiles);
+thresholds = cell(1, numFiles);
+% probeValues2 = cell(1, numFiles);
 markerTypes = cell(1, numFiles);
 
 pBar = ProgressBar(sprintf('Extracting probe values from %d images.', numFiles));
@@ -20,8 +21,10 @@ for iFile = 1:numFiles
   
   numPoses = length(jsonData.Poses);
   
+  
   probeValues{iFile} = cell(1, numPoses);
-  probeValues2{iFile} = cell(1, numPoses);
+  thresholds{iFile} = cell(1, numPoses);
+  %probeValues2{iFile} = cell(1, numPoses);
   markerTypes{iFile} = cell(1, numPoses);
   
   if numPoses == 1 && ~iscell(jsonData.Poses)
@@ -42,7 +45,8 @@ for iFile = 1:numFiles
     img = mean(im2double(imread(imgFile)), 3);
     
     probeValues{iFile}{iPose} = cell(1, jsonData.Poses{iPose}.NumMarkers);
-    probeValues2{iFile}{iPose} = cell(1, jsonData.Poses{iPose}.NumMarkers);
+    thresholds{iFile}{iPose} = zeros(1, jsonData.Poses{iPose}.NumMarkers);
+%     probeValues2{iFile}{iPose} = cell(1, jsonData.Poses{iPose}.NumMarkers);
     markerTypes{iFile}{iPose} = cell(1, jsonData.Poses{iPose}.NumMarkers);
     
     if jsonData.Poses{iPose}.NumMarkers == 1 && ~iscell(jsonData.Poses{iPose}.VisionMarkers)
@@ -60,10 +64,10 @@ for iFile = 1:numFiles
       
       tform = cp2tform([0 0 ; 0 1;  1 0; 1 1], corners, 'projective');
       
-      threshold = VisionMarkerTrained.ComputeThreshold(img, tform);
+      thresholds{iFile}{iPose}(iMarker) = VisionMarkerTrained.ComputeThreshold(img, tform);
       probes = VisionMarkerTrained.GetProbeValues(img, tform);
-      probeValues{iFile}{iPose}{iMarker} = probes(:) > threshold;
-      probeValues2{iFile}{iPose}{iMarker} = column(probes > separable_filter(probes, gaussian_kernel(7)));
+      probeValues{iFile}{iPose}{iMarker} = probes(:);% > threshold;
+%       probeValues2{iFile}{iPose}{iMarker} = column(probes > separable_filter(probes, gaussian_kernel(7)));
       
 %       subplot 131, imagesc(probes), axis image
 %       subplot 132, imagesc(reshape(probeValues{iFile}{iPose}{iMarker}, 32, 32)), axis image
@@ -91,13 +95,14 @@ for iFile = 1:numFiles
     end % FOR each marker
     
     probeValues{iFile}{iPose} = [probeValues{iFile}{iPose}{:}];
-    probeValues2{iFile}{iPose} = [probeValues2{iFile}{iPose}{:}];
+    %probeValues2{iFile}{iPose} = [probeValues2{iFile}{iPose}{:}];
     %markerTypes{iFile}{iPose} = [markerTypes{iFile}{iPose}{:}];
     
   end % FOR each pose
   
   probeValues{iFile} = [probeValues{iFile}{:}];
-  probeValues2{iFile} = [probeValues2{iFile}{:}];
+  thresholds{iFile} = [thresholds{iFile}{:}];
+  %probeValues2{iFile} = [probeValues2{iFile}{:}];
   markerTypes{iFile} = [markerTypes{iFile}{:}];
   
   pBar.increment();
@@ -106,11 +111,14 @@ end % FOR each file
 
 realData = struct( ...
   'probeValues', [probeValues{:}]', ...
-  'probeValues2', [probeValues2{:}]'); 
+  'thresholds', [thresholds{:}]');
+
+%   'probeValues2', [probeValues2{:}]'); 
 
 realData.markerTypes = [markerTypes{:}];
 
 clear probeValues*
+clear thresholds
 clear markerTypes
 delete(pBar)
 
