@@ -180,45 +180,9 @@ namespace Anki {
         gps_->enable(BS_TIME_STEP);
         compass_->enable(BS_TIME_STEP);
         
-        // Make root point to BlockWorldComms node
-        webots::Field* rootChildren = inputController.getRoot()->getField("children");
-        int numRootChildren = rootChildren->getCount();
-        for (int n = 0 ; n<numRootChildren; ++n) {
-          webots::Node* nd = rootChildren->getMFNode(n);
-          
-          // Get the node name
-          std::string nodeName = "";
-          webots::Field* nameField = nd->getField("name");
-          if (nameField) {
-            nodeName = nameField->getSFString();
-          }
-          
-          if (nd->getTypeName().find("Supervisor") != std::string::npos &&
-              nodeName.find("WebotsKeyboardController") != std::string::npos) {
-            root_ = nd;
-            
-            // Find pose marker color field
-            poseMarkerDiffuseColor_ = nd->getField("poseMarkerDiffuseColor");
-          }
-        }
-        
-        lastKeysPressed_.clear();
-        
-
-        #if(ENABLE_GAMEPAD_SUPPORT)
-        // Look for gamepad
-        if (SDL_Init(SDL_INIT_GAMECONTROLLER) < 0) {
-          printf("ERROR: Failed to init SDL\n");
-          return;
-        }
-        if (SDL_NumJoysticks() > 0) {
-          // Open first joystick. Assuming it's the Logitech Rumble Gamepad F510.
-          js_ = SDL_GameControllerOpen(0);
-          if (js_ == NULL) {
-            printf("ERROR: Unable to open gamepad\n");
-          }
-        }
-        #endif
+        // Make root point to WebotsKeyBoardController node
+        root_ = inputController.getSelf();
+        poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
 
       }
       

@@ -285,7 +285,7 @@ namespace Anki {
  *  5. Then revert the simulation: the plugin should now load and execute with the current simulation
  */
 
-void webots_physics_init(dWorldID world, dSpaceID space, dJointGroupID contactJointGroup) {
+void webots_physics_init() {
   /*
    * Get ODE object from the .wbt model, e.g.
    *   dBodyID body1 = dWebotsGetBodyFromDEF("MY_ROBOT");

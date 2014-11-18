@@ -66,6 +66,12 @@ namespace Anki {
       
       webots::Motor* motors_[HAL::MOTOR_COUNT];
       
+      // Motor position sensors
+      webots::PositionSensor* leftWheelPosSensor_;
+      webots::PositionSensor* rightWheelPosSensor_;
+      webots::PositionSensor* headPosSensor_;
+      webots::PositionSensor* liftPosSensor_;
+      webots::PositionSensor* motorPosSensors_[HAL::MOTOR_COUNT];
       
       
       // Gripper
@@ -143,7 +149,7 @@ namespace Anki {
         for(int i = 0; i < HAL::MOTOR_COUNT; i++)
         {
           if (motors_[i]) {
-            f32 pos = motors_[i]->getPosition();
+            f32 pos = motorPosSensors_[i]->getValue();
             posDelta = pos - motorPrevPositions_[i];
             
             // Update position
@@ -202,6 +208,12 @@ namespace Anki {
       headMotor_  = webotRobot_.getMotor("HeadMotor");
       liftMotor_  = webotRobot_.getMotor("LiftMotor");
       
+      leftWheelPosSensor_ = webotRobot_.getPositionSensor("LeftWheelMotorPosSensor");
+      rightWheelPosSensor_ = webotRobot_.getPositionSensor("RightWheelMotorPosSensor");
+      headPosSensor_ = webotRobot_.getPositionSensor("HeadMotorPosSensor");
+      liftPosSensor_ = webotRobot_.getPositionSensor("LiftMotorPosSensor");
+      
+      
       con_ = webotRobot_.getConnector("gripperConnector");
       //con_->enablePresence(TIME_STEP);
       
@@ -241,6 +253,13 @@ namespace Anki {
       motors_[MOTOR_LIFT] = liftMotor_;
       //motors_[MOTOR_GRIP] = NULL;
       
+      // Load position sensor array
+      motorPosSensors_[MOTOR_LEFT_WHEEL] = leftWheelPosSensor_;
+      motorPosSensors_[MOTOR_RIGHT_WHEEL] = rightWheelPosSensor_;
+      motorPosSensors_[MOTOR_HEAD] = headPosSensor_;
+      motorPosSensors_[MOTOR_LIFT] = liftPosSensor_;
+      
+      
       // Initialize motor positions
       for (int i=0; i < MOTOR_COUNT; ++i) {
         motorPositions_[i] = 0;
@@ -250,10 +269,10 @@ namespace Anki {
       }
       
       // Enable position measurements on head, lift, and wheel motors
-      leftWheelMotor_->enablePosition(TIME_STEP);
-      rightWheelMotor_->enablePosition(TIME_STEP);
-      headMotor_->enablePosition(TIME_STEP);
-      liftMotor_->enablePosition(TIME_STEP);
+      leftWheelPosSensor_->enable(TIME_STEP);
+      rightWheelPosSensor_->enable(TIME_STEP);
+      headPosSensor_->enable(TIME_STEP);
+      liftPosSensor_->enable(TIME_STEP);
       
       // Set speeds to 0
       leftWheelMotor_->setVelocity(0);

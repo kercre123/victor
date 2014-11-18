@@ -22,7 +22,7 @@ PROTO Ramp [
 
 ]
 {
-Solid {
+Robot {
 
 # ramp angle is computed from the position of vertex 18 in RampShape proto
 %{ rampAngle = math.atan(.033/.103) }%

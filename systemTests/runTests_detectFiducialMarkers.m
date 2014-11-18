@@ -15,8 +15,26 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
-%     makeNewResultsDirectory = true;
+    %     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
+    
+    % Run everything
+    %     runWhichAlgorithms = {...
+    %         'c_with_refinement',...
+    %         'c_with_refinement_binomial',...
+    %         'c_no_refinement',...
+    %         'matlab_with_refinement_altTree',...
+    %         'matlab_no_refinement_altTree',...
+    %         'matlab_with_refinement',...
+    %         'matlab_no_refinement',...
+    %         'matlab_with_refinement_jpg'};
+    
+    % Run just the tests you want
+    runWhichAlgorithms = {...
+        'matlab_with_refinement',...
+        'matlab_with_refinement_jpg',...
+        'matlab_with_refinement_jpg_preprocess',...
+        };
     
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
@@ -61,110 +79,171 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParameters.matlab_embeddedConversions = EmbeddedConversionsManager();
     algorithmParameters.showImageDetectionWidth = 640;
     algorithmParameters.showImageDetections = false;
+    algorithmParameters.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
+    algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
     
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.extractionFunctionName = 'c-with-refinement';
-    [resultsData_overall_cWithRefinement, resultsDirectory_curTime] = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-    disp(sprintf('resultsData_overall_cWithRefinement = %f', resultsData_overall_cWithRefinement.percentQuadsExtracted));
+    algorithmParametersOrig = algorithmParameters;
     
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.extractionFunctionName = 'c-with-refinement-binomial';
-    algorithmParametersN.useIntegralImageFiltering = false;
-    resultsData_overall_cWithRefinement_binomial = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-    disp(sprintf('resultsData_overall_cWithRefinement_binomial = %f', resultsData_overall_cWithRefinement_binomial.percentQuadsExtracted));
-     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.refine_quadRefinementIterations = 0;
-%     algorithmParametersN.extractionFunctionName = 'c-no-refinement';
-%     resultsData_overall_cNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-%     disp(sprintf('resultsData_overall_cNoRefinement = %f', resultsData_overall_cNoRefinement.percentQuadsExtracted));
+    if length(runWhichAlgorithms) ~= length(unique(runWhichAlgorithms))
+        disp('There is a repeat');
+        keyboard
+    end
     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForAll = true;
-%     algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-09-10_3000examples.mat'));
-%     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-altTree';
-%     resultsData_overall_matlabWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-%     disp(sprintf('resultsData_overall_matlabWithRefinement_altTree = %f', resultsData_overall_matlabWithRefinement.percentQuadsExtracted));
+    resultsDirectory_curTime = makeResultsDirectory(resultsDirectory, thisFileChangeTime, makeNewResultsDirectory);
     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForAll = true;      
-%     algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-09-10_3000examples.mat'));
-%     algorithmParametersN.refine_quadRefinementIterations = 0;
-%     algorithmParametersN.extractionFunctionName = 'matlab-no-refinement-altTree';
-%     resultsData_overall_matlabNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-%     disp(sprintf('resultsData_overall_matlabNoRefinement_altTree = %f', resultsData_overall_matlabNoRefinement.percentQuadsExtracted));
-
-    algorithmParametersN = algorithmParameters;
-    algorithmParametersN.useMatlabForAll = true;
-    algorithmParametersN.extractionFunctionName = 'matlab-with-refinement';
-    resultsData_overall_matlabWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-    disp(sprintf('resultsData_overall_matlabWithRefinement = %f', resultsData_overall_matlabWithRefinement.percentQuadsExtracted));
+    clear resultsData
     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForAll = true;
-%     algorithmParametersN.refine_quadRefinementIterations = 0;
-%     algorithmParametersN.extractionFunctionName = 'matlab-no-refinement';
-%     resultsData_overall_matlabNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-%     disp(sprintf('resultsData_overall_matlabNoRefinement = %f', resultsData_overall_matlabNoRefinement.percentQuadsExtracted));
+    for iAlgorithm = 1:length(runWhichAlgorithms)
+        algorithmParametersN = algorithmParametersOrig;
+        algorithmParametersN.extractionFunctionName = runWhichAlgorithms{iAlgorithm};
+        isSimpleTest = true;
+        
+        if strcmp(runWhichAlgorithms{iAlgorithm}, 'c_with_refinement')
+            % Default parameters
+            
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'c_with_refinement_binomial')
+            algorithmParametersN.useIntegralImageFiltering = false;
+            
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'c_no_refinement')
+            algorithmParametersN.refine_quadRefinementIterations = 0;
+            
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_with_refinement_altTree')
+            algorithmParametersN.useMatlabForAll = true;
+            algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-09-10_3000examples.mat'));
+            
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_no_refinement_altTree')
+            algorithmParametersN.useMatlabForAll = true;
+            algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('extractFiducialMethod', 'matlab_alternateTree', 'extractFiducialMethodParameters', struct('treeFilename', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/trainedTrees/2014-09-10_3000examples.mat'));
+            algorithmParametersN.refine_quadRefinementIterations = 0;
+            
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_with_refinement')
+            algorithmParametersN.useMatlabForAll = true;
+            
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_no_refinement')
+            algorithmParametersN.useMatlabForAll = true;
+            algorithmParametersN.refine_quadRefinementIterations = 0;
+            
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_with_refinement_jpg')
+            isSimpleTest = false;
+            
+            showJpgResults = true;
+            
+            jpgCompression = round(linspace(0,100,10));
+%             jpgCompression = jpgCompression(end:-1:1);
+            percentMarkersCorrect_jpg = zeros(length(jpgCompression)+2, 1);
+            compressionPercent_jpg = zeros(length(jpgCompression)+2, 1);
+            
+            for iJpg = 1:length(jpgCompression)
+                algorithmParametersN = algorithmParametersOrig;
+                algorithmParametersN.useMatlabForAll = true;
+                algorithmParametersN.extractionFunctionName = sprintf('matlab_with_refinement_jpg%d', jpgCompression(iJpg));
+                algorithmParametersN.imageCompression = {'jpg', jpgCompression(iJpg)};
+                
+                curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+                resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
+                
+                percentMarkersCorrect_jpg(iJpg) = 100 * curResults.percentMarkersCorrect;
+                compressionPercent_jpg(iJpg) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
+                
+                disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+            end % for iJpg = 1:length(jpgCompression)
+            
+            if showJpgResults
+                figure();
+                percentMarkersCorrect_jpg((length(jpgCompression)+1):end) = 100 * resultsData.('matlab_with_refinement').percentMarkersCorrect;
+                compressionPercent_jpg(length(jpgCompression)+1) = 100 * resultsData.('matlab_with_refinement').compressedFileSizeTotal / resultsData.('matlab_with_refinement').uncompressedFileSizeTotal;
+                compressionPercent_jpg(end) = 100;
+                plot(compressionPercent_jpg, percentMarkersCorrect_jpg, 'LineWidth', 1);
+                axis([0,100,0,100]);
+                xlabel('File size (percent)')
+                ylabel('Markers detected (percent)')
+                title('Accuracy of fiducial detection with different amounts of compression')
+                disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect_jpg), ']'])
+                disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent_jpg), ']'])
+            end % showJpgResults
+            
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_with_refinement_jpg_preprocess')
+            isSimpleTest = false;
+            
+            showJpgResults = true;
+            
+            preprocessingFunctions = {...
+                @(image) (uint8((255/(255^0.4)) * double(rgb2gray2(image)).^0.4)),... % gamma correct with a factor of 0.4
+                @(image) (uint8(shiftableBF(double(rgb2gray2(image)), 1, 50, 6*1+1, 0.01))),... % O(1) bilinear filter
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -1), 1) ),... % 7 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -2), 2) ),... % 6 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -3), 3) ),... % 5 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -4), 4) ),... % 4 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -5), 5) ),... % 3 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -6), 6) ),... % 2 bits
+                @(image) ( bitshift(bitshift(rgb2gray2(image), -7), 7) ),... % 1 bit
+                };
+            
+            jpgCompression = round(linspace(0,100,10));
+%             jpgCompression = jpgCompression(end:-1:1);
+            percentMarkersCorrect_jpgPreprocess = zeros(length(jpgCompression), length(preprocessingFunctions));
+            compressionPercent_jpgPreprocess = zeros(length(jpgCompression), length(preprocessingFunctions));
+            
+            for iJpg = 1:length(jpgCompression)
+                for iPreprocess = 1:length(preprocessingFunctions)
+                    algorithmParametersN = algorithmParametersOrig;
+                    algorithmParametersN.useMatlabForAll = true;
+                    algorithmParametersN.extractionFunctionName = sprintf('matlab_with_refinement_jpg%d_preprocess%d', jpgCompression(iJpg), iPreprocess);
+                    algorithmParametersN.imageCompression = {'jpg', jpgCompression(iJpg)};
+                    algorithmParametersN.preprocessingFunction = preprocessingFunctions{iPreprocess};
+                    
+                    curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+                    resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
+                    
+                    percentMarkersCorrect_jpgPreprocess(iJpg,iPreprocess) = 100 * curResults.percentMarkersCorrect;
+                    compressionPercent_jpgPreprocess(iJpg,iPreprocess) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
+                    
+                    disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d,%d',iJpg,iPreprocess), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+                end % for iPreprocess = 1:length(preprocessingFunctions)
+            end % for iJpg = 1:length(jpgCompression)
+            
+            if showJpgResults
+                figure();
+                
+                % Add the non-preprocessed results to the beginning;                
+                percentMarkersCorrect_jpgPreprocess = [percentMarkersCorrect_jpg(1:(end-2)), percentMarkersCorrect_jpgPreprocess]; %#ok<AGROW>
+                compressionPercent_jpgPreprocess = [compressionPercent_jpg(1:(end-2)), compressionPercent_jpgPreprocess]; %#ok<AGROW>
+                
+                plot(compressionPercent_jpgPreprocess, percentMarkersCorrect_jpgPreprocess, 'LineWidth', 1);
+                axis([0,100,0,100]);
+                xlabel('File size (percent)')
+                ylabel('Markers detected (percent)')
+                title('Accuracy of fiducial detection with different amounts of compression and preprocessing')
+                
+                toShowString = '';
+                legendArray = {'just jpg'};
+                for iPreprocess = 1:length(preprocessingFunctions)
+                    toShowString = [toShowString, sprintf('percentMarkersCorrect(%d) = [', iPreprocess), sprintf(' %0.2f', percentMarkersCorrect_jpgPreprocess(:,iPreprocess)), sprintf(']\n')]; %#ok<AGROW>
+                    toShowString = [toShowString, sprintf('compressionPercent(%d) = [', iPreprocess), sprintf(' %0.2f', compressionPercent_jpgPreprocess(:,iPreprocess)), sprintf(']\n')]; %#ok<AGROW>
+                    legendArray{end+1} = sprintf('preprocess %d', iPreprocess); %#ok<AGROW>
+                end
+                
+                legend(legendArray);
+                
+                disp(toShowString);
+            end % showJpgResults
+            
+        else
+            % Unknown runWhichAlgorithms{iAlgorithm}
+            assert(false);
+        end
+        
+        % If it's a simple test (without loops or whatnot)
+        if isSimpleTest
+            curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+            resultsData.(runWhichAlgorithms{iAlgorithm}) = curResults;
+            disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', runWhichAlgorithms{iAlgorithm}, curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+        end
+    end % for iAlgorithm = 1:length(runWhichAlgorithms)
     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForQuadExtraction = true;
-%     algorithmParametersN.extractionFunctionName = 'matlabQuad-with-refinement';
-%     resultsData_overall_matlabQuadWithRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-%     disp(sprintf('resultsData_overall_matlabQuadWithRefinement = %f', resultsData_overall_matlabQuadWithRefinement.percentQuadsExtracted));
-%     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForQuadExtraction = true;
-%     algorithmParametersN.refine_quadRefinementIterations = 0;
-%     algorithmParametersN.extractionFunctionName = 'matlabQuad-no-refinement';
-%     resultsData_overall_matlabQuadNoRefinement = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-%     disp(sprintf('resultsData_overall_matlabQuadNoRefinement = %f', resultsData_overall_matlabQuadNoRefinement.percentQuadsExtracted));
-    
-    %     algorithmParametersN = algorithmParameters;
-    %     algorithmParametersN.useMatlabForAll = true;
-    %     thresholdMultipliers = linspace(0.5,1.0,10);
-    %     smallCharacterisicParameters = linspace(0.7, 1.0, 10);
-    %     resultsData_overall_small = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
-    %     for iThresholdMultiplier = 1:length(thresholdMultipliers)
-    %         thresholdMultiplier = thresholdMultipliers(iThresholdMultiplier);
-    %
-    %         for iSmallCharacterisicParameter = 1:length(smallCharacterisicParameters)
-    %             smallCharacterisicParameter = smallCharacterisicParameters(iSmallCharacterisicParameter);
-    %
-    %             algorithmParametersN.extractionFunctionName = sprintf('matlab-with-refinement-small-all/%d/%d', iThresholdMultiplier, iSmallCharacterisicParameter);
-    %             algorithmParametersN.scaleImage_thresholdMultiplier = thresholdMultiplier;
-    %             algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', smallCharacterisicParameter);
-    %             resultsData_overall_small{iThresholdMultiplier,iSmallCharacterisicParameter} = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-    %             disp(sprintf('resultsData_overall for %d %d = %f', iThresholdMultiplier, iSmallCharacterisicParameter, resultsData_overall_small{iThresholdMultiplier,iSmallCharacterisicParameter}.percentQuadsExtracted));
-    %         end
-    %     end
-%     
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForAll = true;
-%     thresholdMultipliers = linspace(0.8,1.1,10);
-%     smallCharacterisicParameters = linspace(0.9000, 0.9667, 10);
-%     resultsData_overall_small2 = cell(length(thresholdMultipliers), length(smallCharacterisicParameters));
-%     for iThresholdMultiplier = 1:length(thresholdMultipliers)
-%         thresholdMultiplier = thresholdMultipliers(iThresholdMultiplier);
-%         
-%         for iSmallCharacterisicParameter = 1:length(smallCharacterisicParameters)
-%             smallCharacterisicParameter = smallCharacterisicParameters(iSmallCharacterisicParameter);
-%             
-%             algorithmParametersN.extractionFunctionName = sprintf('matlab-with-refinement-small/%d/%d', iThresholdMultiplier, iSmallCharacterisicParameter);
-%             algorithmParametersN.scaleImage_thresholdMultiplier = thresholdMultiplier;
-%             algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', smallCharacterisicParameter);
-%             
-%             resultsData_overall_small2{iThresholdMultiplier,iSmallCharacterisicParameter} = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
-%             disp(sprintf('resultsData_overall for %d %d = %f', iThresholdMultiplier, iSmallCharacterisicParameter, resultsData_overall_small2{iThresholdMultiplier,iSmallCharacterisicParameter}.percentQuadsExtracted));
-%         end
-%     end
-    
-%     algorithmParametersN = algorithmParameters;
-%     algorithmParametersN.useMatlabForAll = true;
-%     algorithmParametersN.extractionFunctionName = 'matlab-with-refinement-small-best';
-%     algorithmParametersN.scaleImage_thresholdMultiplier = .9333;
-%     algorithmParametersN.matlab_embeddedConversions = EmbeddedConversionsManager('computeCharacteristicScaleImageType', 'matlab_boxFilters_small', 'smallCharacterisicParameter', .9148);
-%     resultsData_overall_small2_best = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, false);
+    if ~exist('resultsDirectory_curTime', 'var')
+        keyboard;
+    end
     
     allResultsFilename = strrep(resultsDirectory_curTime, 'results/dateTime', 'resultsAt');
     allResultsFilename = [allResultsFilename(1:(end-1)), '.mat'];
@@ -172,7 +251,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     
     keyboard
     
-    allCompiledResults = [];
+    allCompiledResults = resultsData;
 end % runTests_detectFiducialMarkers()
 
 function allTestData = getTestData(testJsonPattern)
@@ -192,7 +271,7 @@ function allTestData = getTestData(testJsonPattern)
     end
 end % getTestFilenames()
 
-function [resultsData_overall, resultsDirectory_curTime] = compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, makeNewResultsDirectory, thisFileChangeTime, showPlots)
+function resultsData_overall = compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, showPlots)
     compileAllTic = tic();
     
     markerDirectoryList = {
@@ -201,8 +280,8 @@ function [resultsData_overall, resultsDirectory_curTime] = compileAll(algorithmP
         [boxSyncDirectory, '/Cozmo SE/VisionMarkers/dice/withFiducials/']};
     
     rotationList = getListOfSymmetricMarkers(markerDirectoryList);
-   
-    [workQueue_basics, workQueue_perPoseStats, workQueue_all, resultsDirectory_curTime] = computeWorkQueues(resultsDirectory, allTestData, algorithmParameters.extractionFunctionName, makeNewResultsDirectory, thisFileChangeTime);
+    
+    [workQueue_basics, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, algorithmParameters.extractionFunctionName, thisFileChangeTime);
     
     disp(sprintf('%s: workQueue_basics has %d elements and workQueue_perPoseStats has %d elements', algorithmParameters.extractionFunctionName, length(workQueue_basics), length(workQueue_perPoseStats)));
     
@@ -219,7 +298,8 @@ function [resultsData_overall, resultsDirectory_curTime] = compileAll(algorithmP
     disp(sprintf('Compile all took %f seconds', toc(compileAllTic)));
 end % compileAll()
 
-function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDirectory_curTime] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, makeNewResultsDirectory, thisFileChangeTime)
+function resultsDirectory_curTime = makeResultsDirectory(resultsDirectory, thisFileChangeTime, makeNewResultsDirectory)
+    
     thisFileChangeString = ['dateTime_', datestr(thisFileChangeTime(1).datenum, 'yyyy-mm-dd_HH-MM-SS')];
     
     [~, ~, ~] = mkdir(resultsDirectory);
@@ -244,6 +324,14 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all, resultsDi
     
     resultsDirectory_curTime = [resultsDirectory, '/', thisFileChangeString, '/'];
     resultsDirectory_curTime = strrep(resultsDirectory_curTime, '//', '/');
+    
+    [~, ~, ~] = mkdir(resultsDirectory_curTime);
+    
+end % function resultsDirectory_curTime = makeResultsDirectory()
+
+function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, thisFileChangeTime)
+    
+    resultsDirectory_curTime = makeResultsDirectory(resultsDirectory, thisFileChangeTime, false);
     
     curExtractFunction_intermediateDirectory = [resultsDirectory_curTime, 'intermediate/', extractionFunctionName, '/'];
     curExtractFunction_dataDirectory = [resultsDirectory_curTime, 'data/', extractionFunctionName, '/'];

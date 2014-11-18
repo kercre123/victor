@@ -118,9 +118,12 @@ int main(int argc, char **argv)
   webots::Motor* headMotor_  = webotRobot_.getMotor("HeadMotor");
   webots::Motor* liftMotor_  = webotRobot_.getMotor("LiftMotor");
   
+  webots::PositionSensor* headPosSensor_ = webotRobot_.getPositionSensor("HeadPosSensor");
+  webots::PositionSensor* liftPosSensor_ = webotRobot_.getPositionSensor("LiftPosSensor");
+  
   // Enable position measurements on head and lift
-  headMotor_->enablePosition(TIME_STEP);
-  liftMotor_->enablePosition(TIME_STEP);
+  headPosSensor_->enable(TIME_STEP);
+  liftPosSensor_->enable(TIME_STEP);
  
   // Lower the lift out of the way
   liftMotor_->setPosition(0.f);
@@ -247,8 +250,8 @@ int main(int argc, char **argv)
     Radians headErr, liftErr;
     do {
       webotRobot_.step(TIME_STEP);
-      headErr  = fabs(headMotor_->getPosition()  - headMotor_->getTargetposition());
-      liftErr  = fabs(liftMotor_->getPosition()  - liftMotor_->getTargetposition());
+      headErr  = fabs(headPosSensor_->getValue()  - headMotor_->getTargetPosition());
+      liftErr  = fabs(liftPosSensor_->getValue()  - liftMotor_->getTargetPosition());
       //fprintf(stdout, "HeadErr = %.4f, LiftErr = %.4f\n", headErr.ToFloat(), liftErr.ToFloat());
     } while(headErr.getAbsoluteVal() > TOL || liftErr.getAbsoluteVal() > TOL);
     //fprintf(stdout, "Head and lift in position. Continuing.\n");
