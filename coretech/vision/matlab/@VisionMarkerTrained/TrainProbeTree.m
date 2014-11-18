@@ -58,7 +58,9 @@ end
 assert(isstruct(trainingState), 'Expecting trainingState struct.');
 try
     probeValues   = trainingState.probeValues;
-    gradMagValues = trainingState.gradMagValues;
+    if ~strcmp(probeSampleMethod, 'none') && ~isempty(maxInfoGainFraction)
+      gradMagValues = trainingState.gradMagValues;
+    end
     fnames        = trainingState.fnames;
     labels        = trainingState.labels;
     labelNames    = trainingState.labelNames;
@@ -481,20 +483,28 @@ SaveTreeHelper();
   function SaveTreeHelper
     
     if saveTree
-      savePath = fileparts(mfilename('fullpath'));
+      savePath = VisionMarkerTrained.SavedTreePath;
+      saveFile = fullfile(savePath, 'probeTree.mat');
       
-      % Preserve previous probeTree, for archiving (e.g. to largefiles repo)
-      if exist(fullfile(savePath, 'probeTree.mat'), 'file')
-        movefile(fullfile(savePath, 'probeTree.mat'), fullfile(savePath, sprintf('probeTree_%s.mat',datestr(now, 30))));
+      % Preserve previous probeTree, for archiving
+      archiveFile = '';
+      if exist(saveFile, 'file')
+        archiveFile = fullfile(savePath, sprintf('probeTree_%s.mat',datestr(now, 30)));
+        movefile(saveFile, archiveFile);
       end
       
       % Save the new tree
-      save(fullfile(savePath, 'probeTree.mat'), 'probeTree');
+      save(saveFile, 'probeTree');
       
-      fprintf('Probe tree re-trained and saved.  You will need to clear any existing VisionMarkers.\n');
-    end
+      fprintf('Probe tree re-trained and saved to %s.\n', saveFile);
+      if ~isempty(archiveFile)
+        fprintf('Previous tree archived to %s.\n', archiveFile);
+      end
+      fprintf('You may need to clear any existing VisionMarkers.\n\n');
+      clear(mfilename('class')); % Force a re-load of the saved tree from disk
+    end % if saveTree
     
-  end
+  end % SaveTreeHelper()
 
 
 %% buildTree() Nested Function

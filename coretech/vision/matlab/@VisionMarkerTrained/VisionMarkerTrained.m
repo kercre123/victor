@@ -26,6 +26,10 @@ classdef VisionMarkerTrained
 
         ProbePattern = VisionMarkerTrained.CreateProbePattern();
         
+        % NOTE: this assumes large-files repo is alongside products-cozmo
+        SavedTreePath = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', '..', '..', ...
+          'products-cozmo-large-files', 'trainedTrees');
+      
         ProbeTree = VisionMarkerTrained.LoadProbeTree();
                 
         DarkProbes   = VisionMarkerTrained.CreateProbes('dark'); 
