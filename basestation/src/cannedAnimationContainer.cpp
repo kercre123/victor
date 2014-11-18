@@ -140,7 +140,9 @@ namespace Cozmo {
         // it with keyframes
         MessageClearCannedAnimation clearMsg;
         clearMsg.animationID = static_cast<AnimationID_t>(animID);
-        msgHandler->SendMessage(robotID, clearMsg);
+        if(msgHandler != nullptr) { // could be in a test environment
+          msgHandler->SendMessage(robotID, clearMsg);
+        }
         
         PRINT_NAMED_INFO("CannedAnimationContainer.Send",
                          "Sending '%s' animation definition with ID=%d.\n",
@@ -150,7 +152,9 @@ namespace Cozmo {
         for(auto message : keyFrameList.GetMessages())
         {
           if(message != nullptr) {
-            lastResult = msgHandler->SendMessage(robotID, *message);
+            if(msgHandler != nullptr) { // could be in a test environment
+              lastResult = msgHandler->SendMessage(robotID, *message);
+            }
             if(lastResult != RESULT_OK) {
               PRINT_NAMED_ERROR("CannedAnimationContainer.Send.SendMessageFail",
                                 "Failed to send a keyframe message.\n");
