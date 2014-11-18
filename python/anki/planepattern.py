@@ -19,12 +19,11 @@ from numpy.linalg import inv
 import pdb
 
 class PlanePattern(object):
-    occlusionGridSize = {'x':40, 'y':40}
+    occlusionGridSize = {'x':80, 'y':80}
 
-    hogBlockSize = {'x':20, 'y':20}
-    hogCellSize = {'x':20, 'y':20}
-
-    occlusionNormlizationPercentiles = {'low':0.1, 'high':0.9}
+    hogBlockSize = {'x':80, 'y':80}
+    hogCellSize = {'x':80, 'y':80}
+    hogNumBins = 5
 
     def __init__(self, templateImage):
         assert type(templateImage).__module__ == np.__name__, 'Must be a Numpy array'
@@ -34,76 +33,38 @@ class PlanePattern(object):
         self.detector = cv2.ORB()
         self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         self.keypoints, self.descriptors = self.detector.detectAndCompute(self.templateImage, None)
-        self.templateBlockHistogram = self.__computeBlockHistogram(templateImage)
+       
+        self.templateDescriptors = {}       
+        self.templateDescriptors['hog'] = self.__computeBlockDescriptor(templateImage, 'hog')
+        self.templateDescriptors['raw'] = self.__computeBlockDescriptor(templateImage, 'raw')
 
-    def __computeBlockHistogram(self, image):
-        hog = cv2.HOGDescriptor(
-            _winSize=(self.occlusionGridSize['x'], self.occlusionGridSize['y']),
-            _blockSize=(self.hogBlockSize['x'], self.hogBlockSize['y']),
-            _blockStride=(self.hogCellSize['x'], self.hogCellSize['y']),
-            _cellSize=(self.hogCellSize['x'], self.hogCellSize['y']),
-            _nbins=9)
+    def __computeBlockDescriptor(self, image, descriptorType):
+        
+        if descriptorType.lower() == 'hog':
+            hog = cv2.HOGDescriptor(
+                _winSize=(self.occlusionGridSize['x'], self.occlusionGridSize['y']),
+                _blockSize=(self.hogBlockSize['x'], self.hogBlockSize['y']),
+                _blockStride=(self.hogCellSize['x'], self.hogCellSize['y']),
+                _cellSize=(self.hogCellSize['x'], self.hogCellSize['y']),
+                _nbins=self.hogNumBins)
 
-#        HOGDescriptor(Size win_size=Size(64, 128), Size block_size=Size(16, 16),
-#                  Size block_stride=Size(8, 8), Size cell_size=Size(8, 8),
-#                  int nbins=9, double win_sigma=DEFAULT_WIN_SIGMA,
-#                  double threshold_L2hys=0.2, bool gamma_correction=true,
-#                  int nlevels=DEFAULT_NLEVELS);
-
-        blockHistogram = []
+        blockDescriptor = []
 
         for y in range(0, image.shape[0], PlanePattern.occlusionGridSize['y']):
-            histogramLine = []
+            blockDescriptorLine = []
             for x in range(0, image.shape[1], PlanePattern.occlusionGridSize['x']):
                 curBlock = image[y:(y+PlanePattern.occlusionGridSize['y']), x:(x+PlanePattern.occlusionGridSize['x'])]
-                des = hog.compute(curBlock)
+                
+                if descriptorType.lower() == 'hog':                
+                    des = hog.compute(curBlock)
+                elif descriptorType.lower() == 'raw':  
+                    des = curBlock.flatten()
 
-                #des = curBlock.flatten()
+                blockDescriptorLine.append(des)
 
-                histogramLine.append(des)
+            blockDescriptor.append(blockDescriptorLine)
 
-# Complex thing that doesn't work
-#                curBlock = image[y:(y+PlanePattern.occlusionGridSize['y']), x:(x+PlanePattern.occlusionGridSize['x'])]
-#                # Compute the histogram and percentiles
-#                hist,bins = histogram(curBlock, 256,[0,256])
-#                percentile = cumsum(hist)
-#                percentile = percentile.astype('float') / percentile[-1]
-#
-#                lowPercentile = 0
-#                highPercentile = 255
-#                for i,p in enumerate(percentile):
-#                    if p > PlanePattern.occlusionNormlizationPercentiles['low']:
-#                        lowPercentile = i
-#                        break
-#
-#                for i,p in enumerate(percentile[::-1]):
-#                    if p < PlanePattern.occlusionNormlizationPercentiles['high']:
-#                        highPercentile = 255-i
-#                        break
-#
-#                # Scale the values of the block by the desired percentiles
-#
-#                curBlockScaled = curBlock.astype('float')
-#                curBlockScaled -= lowPercentile
-#                curBlockScaled /= (highPercentile - lowPercentile)
-#                curBlockScaled *= 255
-#                curBlockScaled[nonzero(curBlockScaled<0)] = 0
-#                curBlockScaled[nonzero(curBlockScaled>255)] = 255
-#                curBlockScaled = curBlockScaled.astype('uint8')
-#
-#                #curBlockScaled = curBlock.copy()
-#                #curBlockScaled = cv2.normalize(curBlock, curBlockScaled, lowPercentile, highPercentile, cv2.NORM_MINMAX)
-#                #cv2.normalize(hist_item1,hist_item1,0,255,cv2.NORM_MINMAX)
-#
-#                # Recompute the histogram, and lowpass it
-#                hist,bins = histogram(curBlockScaled, 256,[0,256])
-#                blurredHist = cv2.blur(matrix(hist), (3,1))
-#
-#                histogramLine.append(blurredHist.astype('float32'))
-
-            blockHistogram.append(histogramLine)
-
-        return blockHistogram
+        return blockDescriptor
 
     def match(self, queryImage, bruteForceMatchThreshold, displayMatches=False):
         assert type(queryImage).__module__ == np.__name__, 'queryImage must be a numpy array'
@@ -149,21 +110,19 @@ class PlanePattern(object):
         # Compute the occlusion map
 
         warpedQueryImage = cv2.warpPerspective(queryImage, H, queryImage.shape[::-1])
-        queryBlockHistogram = self.__computeBlockHistogram(warpedQueryImage)
+        queryDescriptor = self.__computeBlockDescriptor(warpedQueryImage, 'hog')
 
-        correlation = zeros((len(queryBlockHistogram), len(queryBlockHistogram[0])))
-        for y, (templateLine, queryLine) in enumerate(zip(self.templateBlockHistogram, queryBlockHistogram)):
+        occlusionMap = zeros((len(queryDescriptor), len(queryDescriptor[0])))
+        for y, (templateLine, queryLine) in enumerate(zip(self.templateDescriptors['hog'], queryDescriptor)):
             for x, (templateElement, queryElement) in enumerate(zip(templateLine, queryLine)):
-                #correlation[y,x] = cv2.compareHist(templateElement, queryElement, cv2.cv.CV_COMP_CORREL)
-                correlation[y,x] = abs(templateElement-queryElement).sum() / len(templateElement)
+                #occlusionMap[y,x] = cv2.compareHist(templateElement, queryElement, cv2.cv.CV_COMP_CORREL)
+                occlusionMap[y,x] = abs(templateElement-queryElement).sum() / len(templateElement)
 
-#        correlation += 1
-#        correlation *= 255/2
-        correlation *= 255
+        occlusionMap = pow(occlusionMap, 0.5)
 
-        correlation = correlation.astype('uint8')
+        occlusionMap *= 255
 
-        #pdb.set_trace()
+        occlusionMap = occlusionMap.astype('uint8')
 
         # Optionally, display the result
 
@@ -214,9 +173,8 @@ class PlanePattern(object):
             warpedQueryImage
 
             # Draw the occlusion image
-            #correlationU8 = (correlation * 255).astype('uint8')
-            correlationU8 = cv2.resize(correlation, queryImage.shape[::-1], interpolation=cv2.INTER_NEAREST)
-            cv2.imshow('correlationU8', correlationU8)
+            occlusionMap = cv2.resize(occlusionMap, queryImage.shape[::-1], interpolation=cv2.INTER_NEAREST)
+            cv2.imshow('occlusionMapU8', occlusionMap)
 
         return H, numInliers
 

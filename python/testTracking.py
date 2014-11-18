@@ -8,17 +8,28 @@ import numpy as np
 import pdb
 import os
 import anki
+import platform
 
 print('Starting tracking')
 
 displayMatches = True
+
 templateImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people.png' # Or None to use the first image captured from the camera
+captureBaseFilename = '/Users/pbarnum/Documents/tmp/webcam_'
 
-#queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/webcam_0.png' # Or None to capture images from the webcam
-#queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people.png' # Or None to capture images from the webcam
-queryImageFilename = None
+queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/webcam_0.png' # Or None to capture images from the webcam
+#queryImageFilename = None
+    
+if platform.system() == 'Windows':
+    if templateImageFilename is not None:
+        templateImageFilename = templateImageFilename.replace('/Users/pbarnum', 'z:')
+        
+    if captureBaseFilename is not None:
+        captureBaseFilename = captureBaseFilename.replace('/Users/pbarnum', 'z:')
+        
+    if queryImageFilename is not None:
+        queryImageFilename = queryImageFilename.replace('/Users/pbarnum', 'z:')        
 
-captureBaseFilename = '/Users/pbarnum/tmp/webcam_'
 cameraId = 0
 
 bruteForceMatchThreshold = 40
