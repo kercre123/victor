@@ -113,27 +113,10 @@ namespace Anki {
         gps_->enable(BS_TIME_STEP);
         compass_->enable(BS_TIME_STEP);
         
-        // Make root point to BlockWorldComms node
-        webots::Field* rootChildren = inputController.getRoot()->getField("children");
-        int numRootChildren = rootChildren->getCount();
-        for (int n = 0 ; n<numRootChildren; ++n) {
-          webots::Node* nd = rootChildren->getMFNode(n);
-          
-          // Get the node name
-          std::string nodeName = "";
-          webots::Field* nameField = nd->getField("name");
-          if (nameField) {
-            nodeName = nameField->getSFString();
-          }
-          
-          if (nd->getTypeName().find("Supervisor") != std::string::npos &&
-              nodeName.find("WebotsKeyboardController") != std::string::npos) {
-            root_ = nd;
-            
-            // Find pose marker color field
-            poseMarkerDiffuseColor_ = nd->getField("poseMarkerDiffuseColor");
-          }
-        }
+        // Make root point to WebotsKeyBoardController node
+        root_ = inputController.getSelf();
+        poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
+
       }
       
       void PrintHelp()
