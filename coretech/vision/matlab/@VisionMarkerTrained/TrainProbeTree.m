@@ -14,6 +14,7 @@ maxDepth = inf;
 addInversions = true;
 saveTree = true;
 baggingSampleFraction = [];
+probeSampleMethod = 'gradMag'; % 'gradMag', 'alternative', 'none'
 probeSampleFraction = 1;
 maxInfoGainFraction = [];
 leafNodeFraction = 0.9; % fraction of remaining examples that must have same label to consider node a leaf
@@ -532,29 +533,39 @@ SaveTreeHelper();
         else            
             unusedProbes = find(~masked);
             
-            % Sample those probes which have lower gradient magnitude
-            pSample = mean(gradMagValues(unusedProbes,node.remaining),2);
-            pSample = max(pSample) - pSample;
-            pSample = pSample / sum(pSample);
-            sampleIndex = discretesample(pSample, ceil(sqrt(length(unusedProbes))));
-            %sampleIndex = mexRandP(pSample, sqrt(length(unusedProbes)));
-            %temp = 0; temp2 = 0; x = 0; y = 0; % for use during debugging since this is a static workspace
-            
-%             % Alternative sampling method
-%             pSample = mean(gradMagValues(unusedProbes,node.remaining),2);
-%             pSample = max(pSample) - pSample;
-%             pSample = pSample / max(pSample);
-%             sampleIndex = find(pSample > .5*rand(size(pSample))+.5);
-%             temp = 0; temp2 = 0; x = 0; y = 0; % for use during debugging since this is a static workspace
-            
-%             temp = zeros(32);
-%             temp(unusedProbes) = pSample;
-%             [y,x] = ind2sub([32 32], unusedProbes(sampleIndex));
-%             hold off, imagesc(temp), axis image, hold on, plot(x + .1*randn(size(x)),y+.1*randn(size(y)),'ro')
-%             pause
-
-            unusedProbes = unusedProbes(sampleIndex);
-            
+            if ~strcmp(probeSampleMethod, 'none')
+              switch(probeSampleMethod)
+                
+                case 'gradMag'
+                  % Sample those probes which have lower gradient magnitude
+                  pSample = mean(gradMagValues(unusedProbes,node.remaining),2);
+                  pSample = max(pSample) - pSample;
+                  pSample = pSample / sum(pSample);
+                  sampleIndex = discretesample(pSample, ceil(sqrt(length(unusedProbes))));
+                  %sampleIndex = mexRandP(pSample, sqrt(length(unusedProbes)));
+                  %temp = 0; temp2 = 0; x = 0; y = 0; % for use during debugging since this is a static workspace
+                  
+                case 'alternative'
+                  % Alternative sampling method
+                  pSample = mean(gradMagValues(unusedProbes,node.remaining),2);
+                  pSample = max(pSample) - pSample;
+                  pSample = pSample / max(pSample);
+                  sampleIndex = find(pSample > .5*rand(size(pSample))+.5);
+                  temp = 0; temp2 = 0; x = 0; y = 0; % for use during debugging since this is a static workspace
+                  
+                  %             temp = zeros(32);
+                  %             temp(unusedProbes) = pSample;
+                  %             [y,x] = ind2sub([32 32], unusedProbes(sampleIndex));
+                  %             hold off, imagesc(temp), axis image, hold on, plot(x + .1*randn(size(x)),y+.1*randn(size(y)),'ro')
+                  %             pause
+                  
+                  unusedProbes = unusedProbes(sampleIndex);
+                  
+                otherwise
+                  error('Unrecognized probeSampleMethod "%s"', probeSampleMethod);
+              end % switch(probeSampleMethod)
+            end % if ~strcmp(probeSampleMethod, 'none')
+              
             infoGain = computeInfoGain(labels(node.remaining), length(labelNames), ...
               probeValues(unusedProbes,node.remaining), weights(node.remaining));
             
