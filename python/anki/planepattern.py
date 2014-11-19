@@ -8,8 +8,9 @@ Holds an image of a planar pattern, and matches an input image to it
 """
 
 # Use python 3 types by default (uses "future" package)
+# WARNING: missing unicode_literals, because it conflicts with opencv
 from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
+                        print_function)
 from future.builtins import *
 
 import cv2
@@ -26,7 +27,9 @@ class PlanePattern(object):
     hogNumBins = 3
 
     #sparseLk = {'numPointsPerDimension':10, 'blockSizes':[(15,15),(7,7)]}
-    sparseLk = {'numPointsPerDimension':10, 'blockSizes':[(15,15)]}
+    sparseLk = {'numPointsPerDimension':25, 'blockSizes':[(15,15),(15,15)]}
+
+    useSIFTmatching = False
 
     def __init__(self, templateImage):
         assert type(templateImage).__module__ == np.__name__, 'Must be a Numpy array'
@@ -35,8 +38,17 @@ class PlanePattern(object):
         templateImage = cv2.equalizeHist(templateImage)
 
         self.templateImage = templateImage
-        self.detector = cv2.ORB()
-        self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
+        if self.useSIFTmatching:
+            self.detector = cv2.SIFT()
+
+            index_params = {'algorithm':0, 'trees':5}
+            search_params = {'checks':50}
+            self.matcher = cv2.FlannBasedMatcher(index_params, search_params)
+        else:
+            self.detector = cv2.ORB()
+            self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
         self.keypoints, self.descriptors = self.detector.detectAndCompute(self.templateImage, None)
 
         self.templateDescriptors = {}
@@ -88,22 +100,39 @@ class PlanePattern(object):
 
         # Compute matches between query and template
 
-        matches = self.matcher.match(queryDescriptors, self.descriptors)
-        matches = sorted(matches, key = lambda x:x.distance)
-
         matched_template = []
         matched_query = []
-        for i,m in enumerate(matches):
-            if m.distance > bruteForceMatchThreshold:
-                break;
 
-            matched_template.append(self.keypoints[m.trainIdx])
-            matched_query.append(queryKeypoints[m.queryIdx])
+        if self.useSIFTmatching:
+            matches = self.matcher.knnMatch(queryDescriptors, self.descriptors, k=2)
+
+            # Need to draw only good matches, so create a mask
+            matchesMask = [[0,0] for i in xrange(len(matches))]
+
+            # ratio test as per Lowe's paper
+            for i,(m,n) in enumerate(matches):
+                if m.distance < 0.7*n.distance:
+                    matchesMask[i]=[1,0]
+
+                    matched_template.append(self.keypoints[m.trainIdx])
+                    matched_query.append(queryKeypoints[m.queryIdx])
+        else:
+            matches = self.matcher.match(queryDescriptors, self.descriptors)
+            matches = sorted(matches, key = lambda x:x.distance)
+
+            for i,m in enumerate(matches):
+                if m.distance > bruteForceMatchThreshold:
+                    break;
+
+                matched_template.append(self.keypoints[m.trainIdx])
+                matched_query.append(queryKeypoints[m.queryIdx])
 
         H = eye(3)
         numInliers = 0
 
         # Compute the homography between query and template
+
+        lkErrorMap = 255*ones(queryImage.shape, 'uint8')
 
         if len(matched_template) >= 4:
             # First, use the sparse feature matches to compute a rough homography alignment
@@ -123,8 +152,6 @@ class PlanePattern(object):
 
             H = H1
 
-            #print(H)
-
             # Iterate a few times
             for iteration in range(0,len(PlanePattern.sparseLk['blockSizes'])):
                 warpedQueryImage1 = cv2.warpPerspective(queryImage, H, queryImage.shape[::-1])
@@ -142,7 +169,9 @@ class PlanePattern(object):
 
                 validInds = nonzero(status==1)[0]
 
-                #pdb.set_trace()
+                err[nonzero(status==0)[0]] = 255
+                lkErrorMap = err.astype('uint8').reshape(self.sparseLk['numPointsPerDimension'], self.sparseLk['numPointsPerDimension'])
+                lkErrorMap = cv2.resize(lkErrorMap, queryImage.shape[::-1], interpolation=cv2.INTER_NEAREST)
 
                 #TODO: pick the right value
                 if len(validInds) < 5:
@@ -181,8 +210,9 @@ class PlanePattern(object):
                 occlusionMap[y,x] = abs(templateElement-queryElement).sum()
 
         if descriptorType == 'hog':
-            occlusionMap = pow(occlusionMap, 0.5)
             occlusionMap *= 255
+
+        occlusionMap = 255*pow(occlusionMap/255, 0.5)
 
         assert occlusionMap.max() < 255.1, 'oops'
 
@@ -235,6 +265,7 @@ class PlanePattern(object):
             cv2.imshow('matches', imgKeypointsBoth)
             cv2.imshow('templateImage', self.templateImage)
             cv2.imshow('warpedQueryImage', warpedQueryImage2)
+            cv2.imshow('lkErrorMap', lkErrorMap)
 
             # Draw the occlusion image
             occlusionMap = cv2.resize(occlusionMap, queryImage.shape[::-1], interpolation=cv2.INTER_NEAREST)
