@@ -17,18 +17,18 @@ displayMatches = True
 templateImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people.png' # Or None to use the first image captured from the camera
 captureBaseFilename = '/Users/pbarnum/Documents/tmp/webcam_'
 
-queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/webcam_0.png' # Or None to capture images from the webcam
-#queryImageFilename = None
-    
+#queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/webcam_0.png' # Or None to capture images from the webcam
+queryImageFilename = None
+
 if platform.system() == 'Windows':
     if templateImageFilename is not None:
         templateImageFilename = templateImageFilename.replace('/Users/pbarnum', 'z:')
-        
+
     if captureBaseFilename is not None:
         captureBaseFilename = captureBaseFilename.replace('/Users/pbarnum', 'z:')
-        
+
     if queryImageFilename is not None:
-        queryImageFilename = queryImageFilename.replace('/Users/pbarnum', 'z:')        
+        queryImageFilename = queryImageFilename.replace('/Users/pbarnum', 'z:')
 
 cameraId = 0
 
@@ -50,9 +50,11 @@ mainCamera = anki.Camera(
 
 if templateImageFilename is None:
     ret, image = cap.read()
-    image = mainCamera.undistory(image)
+    assert image is not None, 'Could not capture image'
+    image = mainCamera.undistort(image)
 else:
     image = cv2.imread(templateImageFilename)
+    assert image is not None, 'Could not load image'
 
     if len(image.shape) == 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -61,6 +63,7 @@ planePattern = anki.PlanePattern(image)
 
 if queryImageFilename is not None:
     image = cv2.imread(queryImageFilename)
+    assert image is not None, 'Could not load image'
 
     if len(image.shape) == 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -73,6 +76,7 @@ while(True):
     if queryImageFilename is None:
         # Capture frame-by-frame
         ret, image = cap.read()
+        assert image is not None, 'Could not capture image'
         image = mainCamera.undistort(image)
 
     planePattern.match(image, bruteForceMatchThreshold, displayMatches)

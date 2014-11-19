@@ -19,27 +19,39 @@ from numpy.linalg import inv
 import pdb
 
 class PlanePattern(object):
-    occlusionGridSize = {'x':80, 'y':80}
+    occlusionGridSize = {'x':40, 'y':40}
 
-    hogBlockSize = {'x':80, 'y':80}
-    hogCellSize = {'x':80, 'y':80}
-    hogNumBins = 5
+    hogBlockSize = {'x':40, 'y':40}
+    hogCellSize = {'x':40, 'y':40}
+    hogNumBins = 3
+
+    #sparseLk = {'numPointsPerDimension':10, 'blockSizes':[(15,15),(7,7)]}
+    sparseLk = {'numPointsPerDimension':10, 'blockSizes':[(15,15)]}
 
     def __init__(self, templateImage):
         assert type(templateImage).__module__ == np.__name__, 'Must be a Numpy array'
         assert len(templateImage.shape) == 2, 'Must be 2D'
 
+        templateImage = cv2.equalizeHist(templateImage)
+
         self.templateImage = templateImage
         self.detector = cv2.ORB()
         self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         self.keypoints, self.descriptors = self.detector.detectAndCompute(self.templateImage, None)
-       
-        self.templateDescriptors = {}       
+
+        self.templateDescriptors = {}
         self.templateDescriptors['hog'] = self.__computeBlockDescriptor(templateImage, 'hog')
         self.templateDescriptors['raw'] = self.__computeBlockDescriptor(templateImage, 'raw')
 
+        self.sparseLkPoints = []
+        for y in linspace(0, templateImage.shape[0], PlanePattern.sparseLk['numPointsPerDimension']):
+            for x in linspace(0, templateImage.shape[1], PlanePattern.sparseLk['numPointsPerDimension']):
+                self.sparseLkPoints.append((x,y))
+
+        self.sparseLkPoints = array(self.sparseLkPoints).reshape(-1,1,2).astype('float32')
+
     def __computeBlockDescriptor(self, image, descriptorType):
-        
+
         if descriptorType.lower() == 'hog':
             hog = cv2.HOGDescriptor(
                 _winSize=(self.occlusionGridSize['x'], self.occlusionGridSize['y']),
@@ -54,11 +66,12 @@ class PlanePattern(object):
             blockDescriptorLine = []
             for x in range(0, image.shape[1], PlanePattern.occlusionGridSize['x']):
                 curBlock = image[y:(y+PlanePattern.occlusionGridSize['y']), x:(x+PlanePattern.occlusionGridSize['x'])]
-                
-                if descriptorType.lower() == 'hog':                
+
+                if descriptorType.lower() == 'hog':
                     des = hog.compute(curBlock)
-                elif descriptorType.lower() == 'raw':  
-                    des = curBlock.flatten()
+                elif descriptorType.lower() == 'raw':
+                    des = curBlock.flatten().astype('float32')
+                    des /= len(des)
 
                 blockDescriptorLine.append(des)
 
@@ -93,6 +106,7 @@ class PlanePattern(object):
         # Compute the homography between query and template
 
         if len(matched_template) >= 4:
+            # First, use the sparse feature matches to compute a rough homography alignment
             matchedArray_original = zeros((len(matched_template),2))
             matchedArray_query = zeros((len(matched_template),2))
 
@@ -101,26 +115,76 @@ class PlanePattern(object):
                 matchedArray_query[i,:] = matched_query[i].pt
 
             try:
-                H = cv2.findHomography( matchedArray_query, matchedArray_original, cv2.RANSAC )
-                numInliers = H[1].sum()
-                H = H[0];
+                H1 = cv2.findHomography( matchedArray_query, matchedArray_original, cv2.RANSAC )
+                numInliers = H1[1].sum()
+                H1 = H1[0];
             except:
-                H = eye(3)
+                H1 = eye(3)
+
+            H = H1
+
+            #print(H)
+
+            # Iterate a few times
+            for iteration in range(0,len(PlanePattern.sparseLk['blockSizes'])):
+                warpedQueryImage1 = cv2.warpPerspective(queryImage, H, queryImage.shape[::-1])
+                warpedQueryImage1 = cv2.equalizeHist(warpedQueryImage1)
+
+                #cv2.imshow('warpedQueryImageB' + str(iteration), warpedQueryImage1)
+
+                # Second, use sparse translational LK to get a good alignment
+
+                nextPoints, status, err = cv2.calcOpticalFlowPyrLK(
+                    self.templateImage,
+                    warpedQueryImage1,
+                    self.sparseLkPoints,
+                    None, None, None, PlanePattern.sparseLk['blockSizes'][iteration], maxLevel=3)
+
+                validInds = nonzero(status==1)[0]
+
+                #pdb.set_trace()
+
+                #TODO: pick the right value
+                if len(validInds) < 5:
+                    break
+
+                try:
+                    H2 = cv2.findHomography( nextPoints.reshape(-1,2)[validInds,:], self.sparseLkPoints.reshape(-1,2)[validInds,:], cv2.RANSAC )
+                    numInliers = H2[1].sum()
+                    H2 = H2[0];
+                except:
+                    H2 = eye(3)
+                    break
+
+                H = array(matrix(H2)*matrix(H))
+                H = H / H[2,2]
+
+            #pdb.set_trace()
+
+        #print(H)
+        #print(' ')
 
         # Compute the occlusion map
 
-        warpedQueryImage = cv2.warpPerspective(queryImage, H, queryImage.shape[::-1])
-        queryDescriptor = self.__computeBlockDescriptor(warpedQueryImage, 'hog')
+        warpedQueryImage2 = cv2.warpPerspective(queryImage, H, queryImage.shape[::-1])
+        warpedQueryImage2 = cv2.equalizeHist(warpedQueryImage2)
+
+        #descriptorType = 'hog'
+        descriptorType = 'raw'
+
+        queryDescriptor = self.__computeBlockDescriptor(warpedQueryImage2, descriptorType)
 
         occlusionMap = zeros((len(queryDescriptor), len(queryDescriptor[0])))
-        for y, (templateLine, queryLine) in enumerate(zip(self.templateDescriptors['hog'], queryDescriptor)):
+        for y, (templateLine, queryLine) in enumerate(zip(self.templateDescriptors[descriptorType], queryDescriptor)):
             for x, (templateElement, queryElement) in enumerate(zip(templateLine, queryLine)):
                 #occlusionMap[y,x] = cv2.compareHist(templateElement, queryElement, cv2.cv.CV_COMP_CORREL)
-                occlusionMap[y,x] = abs(templateElement-queryElement).sum() / len(templateElement)
+                occlusionMap[y,x] = abs(templateElement-queryElement).sum()
 
-        occlusionMap = pow(occlusionMap, 0.5)
+        if descriptorType == 'hog':
+            occlusionMap = pow(occlusionMap, 0.5)
+            occlusionMap *= 255
 
-        occlusionMap *= 255
+        assert occlusionMap.max() < 255.1, 'oops'
 
         occlusionMap = occlusionMap.astype('uint8')
 
@@ -168,9 +232,9 @@ class PlanePattern(object):
                 cv2.line(imgKeypointsBoth, pt1, pt2, (255,0,0))
 
             # Show the drawn image
-            cv2.imshow('query', imgKeypointsBoth)
-            cv2.imshow('warpedQueryImage', warpedQueryImage)
-            warpedQueryImage
+            cv2.imshow('matches', imgKeypointsBoth)
+            cv2.imshow('templateImage', self.templateImage)
+            cv2.imshow('warpedQueryImage', warpedQueryImage2)
 
             # Draw the occlusion image
             occlusionMap = cv2.resize(occlusionMap, queryImage.shape[::-1], interpolation=cv2.INTER_NEAREST)
