@@ -14,10 +14,14 @@ print('Starting tracking')
 
 displayMatches = True
 
-templateImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people.png' # Or None to use the first image captured from the camera
 captureBaseFilename = '/Users/pbarnum/Documents/tmp/webcam_'
 
-#queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/webcam_0.png' # Or None to capture images from the webcam
+# Or None to use the first image captured from the camera
+templateImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people.png'
+
+# Or None to capture images from the webcam
+#queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/webcam_0.png'
+#queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people_webcam_3.png'
 queryImageFilename = None
 
 if platform.system() == 'Windows':
@@ -47,6 +51,26 @@ mainCamera = anki.Camera(
               [0,	0,	1]]),
     np.array([-0.248653804750381, -0.0186244159234586, -0.00169824021274891, 0.00422932546733130, 0]),
     (480,640))
+
+preMatchHomographies = [
+    np.array([[1,0,0],
+              [0,1,0],
+              [0,0,1]]),
+    np.array([[2.630014, 1.242951, -524.176621],
+          [-0.325372, 5.798278, -958.557600],
+          [-0.000597, 0.005180, 1.000000]]),
+    np.array([[4.762305, 4.681719, -1002.478256],
+              [-0.814753, 20.148339, -2401.653955],
+              [-0.001467, 0.019998, 1.000000]]),
+    np.array([[-0.421779, -1.299690, 395.029482],
+              [0.269990, -4.149752, 1198.168246],
+              [0.000445, -0.004759, 1.000000]]),
+    np.array([[-0.481675, -1.343197, 420.610810],
+              [-0.272449, -4.218317, 1138.355504],
+              [-0.000316, -0.004615, 1.000000]]),
+    np.array([[-1.327539, -4.234972, 690.321761],
+              [-0.620908, -8.153917, 1118.305704],
+              [-0.001250, -0.013606, 1.000000]])]
 
 if templateImageFilename is None:
     ret, image = cap.read()
@@ -78,8 +102,9 @@ while(True):
         ret, image = cap.read()
         assert image is not None, 'Could not capture image'
         image = mainCamera.undistort(image)
+        undistortedImage = image.copy()
 
-    planePattern.match(image, bruteForceMatchThreshold, displayMatches)
+    planePattern.match(image, bruteForceMatchThreshold, preMatchHomographies, displayMatches)
 
     if cv2.waitKey(50) & 0xFF == ord('q'):
         print('Breaking')
@@ -94,7 +119,7 @@ while(True):
 
         print('Saving image to ' + imageFilename)
 
-        cv2.imwrite(imageFilename, image)
+        cv2.imwrite(imageFilename, undistortedImage)
 
 # When everything done, release the capture
 

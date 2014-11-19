@@ -14,14 +14,14 @@ function imshows(varargin)
     figNums = 1:length(varargin);
     
     maximizeWindows = false;
-    collage = false;
+    collage = true;
     collageTitles = false;
     for i = 1:length(varargin)
         if ischar(varargin{i})
             if strcmpi(varargin{i}, 'maximize') % Maximize all figure windows
                 maximizeWindows = true;
-            elseif strcmpi(varargin{i}, 'collage') % Display images within a cell array as one image
-                collage = true;
+            elseif strcmpi(varargin{i}, 'noCollage') % Don't display images within a cell array as one image
+                collage = false;
             elseif strcmpi(varargin{i}, 'collageTitles') % Display numbers for collage
                 collage = true;
                 collageTitles = true;

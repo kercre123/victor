@@ -91,41 +91,78 @@ class PlanePattern(object):
 
         return blockDescriptor
 
-    def match(self, queryImage, bruteForceMatchThreshold, displayMatches=False):
+    def match(self, queryImage, bruteForceMatchThreshold, preMatchHomographies=[eye(3)], displayMatches=False):
         assert type(queryImage).__module__ == np.__name__, 'queryImage must be a numpy array'
         assert len(queryImage.shape) == 2,'queryImage must be 2D'
         assert queryImage.shape == self.templateImage.shape, 'template and query must be the same size'
-
-        queryKeypoints, queryDescriptors = self.detector.detectAndCompute(queryImage, None)
 
         # Compute matches between query and template
 
         matched_template = []
         matched_query = []
 
-        if self.useSIFTmatching:
-            matches = self.matcher.knnMatch(queryDescriptors, self.descriptors, k=2)
+        numMatchedPoints = []
 
-            # Need to draw only good matches, so create a mask
-            matchesMask = [[0,0] for i in xrange(len(matches))]
+        for preMatchHomography in preMatchHomographies:
+            assert type(preMatchHomography).__module__ == np.__name__, 'Must be a numpy array'
 
-            # ratio test as per Lowe's paper
-            for i,(m,n) in enumerate(matches):
-                if m.distance < 0.7*n.distance:
-                    matchesMask[i]=[1,0]
+            if all(preMatchHomography == eye(3)) == True:
+                queryImageWarped = queryImage
+            else:
+                queryImageWarped = cv2.warpPerspective(queryImage, preMatchHomography, queryImage.shape[::-1])
 
-                    matched_template.append(self.keypoints[m.trainIdx])
-                    matched_query.append(queryKeypoints[m.queryIdx])
-        else:
-            matches = self.matcher.match(queryDescriptors, self.descriptors)
-            matches = sorted(matches, key = lambda x:x.distance)
+            inversePreMatchHomography = inv(preMatchHomography)
 
-            for i,m in enumerate(matches):
-                if m.distance > bruteForceMatchThreshold:
-                    break;
+            queryKeypoints, queryDescriptors = self.detector.detectAndCompute(cv2.equalizeHist(queryImageWarped), None)
 
-                matched_template.append(self.keypoints[m.trainIdx])
-                matched_query.append(queryKeypoints[m.queryIdx])
+            cur_matched_template = []
+            cur_matched_query = []
+
+            if self.useSIFTmatching:
+                matches = self.matcher.knnMatch(queryDescriptors, self.descriptors, k=2)
+
+                # Need to draw only good matches, so create a mask
+                matchesMask = [[0,0] for i in xrange(len(matches))]
+
+                # ratio test as per Lowe's paper
+                for i,(m,n) in enumerate(matches):
+                    if m.distance < 0.7*n.distance:
+                        matchesMask[i]=[1,0]
+
+                        cur_matched_template.append(self.keypoints[m.trainIdx])
+                        cur_matched_query.append(queryKeypoints[m.queryIdx])
+            else:
+                matches = self.matcher.match(queryDescriptors, self.descriptors)
+                matches = sorted(matches, key = lambda x:x.distance)
+
+                for i,m in enumerate(matches):
+                    if m.distance > bruteForceMatchThreshold:
+                        break;
+
+                    cur_matched_template.append(self.keypoints[m.trainIdx])
+                    cur_matched_query.append(queryKeypoints[m.queryIdx])
+
+            #print('Matched ' + str(len(cur_matched_template)) + ' points')
+            numMatchedPoints.append(len(cur_matched_template))
+
+            # Inverse warp all points to their non-preMatchHomography positions
+            for (template, query) in zip(cur_matched_template, cur_matched_query):
+                queryPoint = inversePreMatchHomography * matrix([query.pt[0], query.pt[1], 1]).transpose()
+                queryPoint = queryPoint / queryPoint[2]
+
+                warpedQuery = cv2.KeyPoint(x=queryPoint.tolist()[0][0],
+                                           y=queryPoint.tolist()[1][0],
+                                           _size=query.size,
+                                           _angle=query.angle,
+                                           _response=query.response,
+                                           _octave=query.octave,
+                                           _class_id=query.class_id)
+
+                matched_template.append(template)
+                matched_query.append(warpedQuery)
+
+        #pdb.set_trace()
+        print('Matched ' + str(numMatchedPoints))
 
         H = eye(3)
         numInliers = 0
