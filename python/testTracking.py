@@ -22,7 +22,8 @@ templateImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-file
 
 # Or None to capture images from the webcam
 #queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/webcam_0.png'
-#queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people_webcam_3.png'
+#queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people_webcam_0.png'
+#queryImageFilename = '/Users/pbarnum/Documents/tmp/webcam_1.png'
 queryImageFilename = None
 
 if platform.system() == 'Windows':
@@ -95,6 +96,8 @@ if queryImageFilename is not None:
 
 toUseHomographies = preMatchHomographies[:]
 
+waitKeyTime = 200
+
 saveIndex = 0
 frameNumber = 0
 while(True):
@@ -112,11 +115,10 @@ while(True):
     toUseHomographies = preMatchHomographies[:]
     toUseHomographies.append(newHomography)
 
-
-    if cv2.waitKey(50) & 0xFF == ord('q'):
+    if cv2.waitKey(waitKeyTime) & 0xFF == ord('q'):
         print('Breaking')
         break
-    elif cv2.waitKey(50) & 0xFF == ord('c'):
+    elif cv2.waitKey(waitKeyTime) & 0xFF == ord('c'):
         while True:
             imageFilename = captureBaseFilename + str(saveIndex) + '.png'
             saveIndex += 1

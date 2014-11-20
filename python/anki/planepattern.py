@@ -19,6 +19,10 @@ from numpy import *
 from numpy.linalg import inv
 import pdb
 from anki.ransac import computeHomography
+from anki.geometry import Quadrilateral
+
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 class PlanePattern(object):
     occlusionGridSize = {'x':40, 'y':40}
@@ -28,8 +32,8 @@ class PlanePattern(object):
     hogNumBins = 3
 
     #sparseLk = {'numPointsPerDimension':10, 'blockSizes':[(15,15),(7,7)]}
-    sparseLk = {'numPointsPerDimension':25, 'blockSizes':[(15,15)]}
-    #sparseLk = {'numPointsPerDimension':25, 'blockSizes':[]}
+    #sparseLk = {'numPointsPerDimension':50, 'blockSizes':[(15,15)]}
+    sparseLk = {'numPointsPerDimension':25, 'blockSizes':[]}
 
     useSIFTmatching = False
 
@@ -37,7 +41,7 @@ class PlanePattern(object):
         assert type(templateImage).__module__[:5] == np.__name__, 'Must be a Numpy array'
         assert len(templateImage.shape) == 2, 'Must be 2D'
 
-        #templateImage = cv2.equalizeHist(templateImage)
+        templateImage = cv2.equalizeHist(templateImage)
 
         self.templateImage = templateImage
 
@@ -51,7 +55,8 @@ class PlanePattern(object):
             # Default parameters, same at self.detector = cv2.ORB()
             # self.detector = cv2.ORB(nfeatures=500, scaleFactor=1.2, nlevels=8, edgeThreshold=31, firstLevel=0, WTA_K=2, patchSize=31)
 
-            self.detector = cv2.ORB(nfeatures=500, scaleFactor=1.1, nlevels=16, edgeThreshold=31, firstLevel=0, WTA_K=2, patchSize=31)
+            #self.detector = cv2.ORB(nfeatures=400, scaleFactor=1.2, nlevels=8, edgeThreshold=31, firstLevel=0, WTA_K=2, patchSize=31)
+            self.detector = cv2.ORB(nfeatures=1000, scaleFactor=1.2, nlevels=8, edgeThreshold=31, firstLevel=0, WTA_K=2)
 
 
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
@@ -120,7 +125,7 @@ class PlanePattern(object):
 
             inversePreMatchHomography = inv(preMatchHomography)
 
-            #queryImageWarped = cv2.equalizeHist(queryImageWarped)
+            queryImageWarped = cv2.equalizeHist(queryImageWarped)
             queryKeypoints, queryDescriptors = self.detector.detectAndCompute(queryImageWarped, None)
 
             cur_matched_template = []
@@ -194,6 +199,7 @@ class PlanePattern(object):
         matched_query = matched_query_good
 
         H = eye(3)
+        originalH = eye(3)
         numInliers = 0
 
         # Compute the homography between query and template
@@ -209,15 +215,24 @@ class PlanePattern(object):
                 matchedArray_original[i,:] = matched_template[i].pt
                 matchedArray_query[i,:] = matched_query[i].pt
 
-            useOpenCvRansac = False
+            useOpenCvRansac = True
 
             #try:
             if useOpenCvRansac:
-                H1 = cv2.findHomography( matchedArray_query, matchedArray_original, cv2.RANSAC, ransacReprojThreshold = 10 )
+                H1 = cv2.findHomography( matchedArray_query, matchedArray_original, cv2.RANSAC, ransacReprojThreshold = 10)
                 numInliers = H1[1].sum()
                 H1 = H1[0];
             else:
-                H1, inliners = computeHomography(matchedArray_query, matchedArray_original, self.templateImage.shape, 1000, 10)
+                # TODO: pick reasonable thresholds
+                H1, inliners = computeHomography(
+                        matchedArray_query,
+                        matchedArray_original,
+                        numIterations=1000,
+                        reprojectionThreshold=1,
+                        templateSize=self.templateImage.shape,
+                        quadOppositeSideRatioRange=[0.9, 3],
+                        quadAdjacentSideRatioRange=[0.9, 3])
+
                 numInliers = len(inliners)
 
             print('numInliers = ' + str(numInliers))
@@ -227,11 +242,34 @@ class PlanePattern(object):
                # H1 = eye(3)
 
             H = H1
+            originalH = H.copy()
 
             # Iterate a few times
             for iteration in range(0,len(PlanePattern.sparseLk['blockSizes'])):
                 warpedQueryImage1 = cv2.warpPerspective(queryImage, H, queryImage.shape[::-1])
                 warpedQueryImage1 = cv2.equalizeHist(warpedQueryImage1)
+
+                warpedTemplateSparseLkPoints = (H) * concatenate((matrix(self.sparseLkPoints), ones((self.sparseLkPoints.shape[0],1))), axis=1).transpose()
+                warpedTemplateSparseLkPoints = (warpedTemplateSparseLkPoints[0:2,:] / tile(warpedTemplateSparseLkPoints[2,:], (2,1))).transpose()
+
+                validTemplateSparseLkPoints = []
+                for i in range(0, warpedTemplateSparseLkPoints.shape[0]):
+                    if (warpedTemplateSparseLkPoints[i,0] > PlanePattern.sparseLk['blockSizes'][iteration][0]/2) and\
+                       (warpedTemplateSparseLkPoints[i,0] < (queryImage.shape[1]-PlanePattern.sparseLk['blockSizes'][iteration][0]/2)) and\
+                       (warpedTemplateSparseLkPoints[i,1] > PlanePattern.sparseLk['blockSizes'][iteration][1]/2) and\
+                       (warpedTemplateSparseLkPoints[i,1] < (queryImage.shape[0]-PlanePattern.sparseLk['blockSizes'][iteration][1]/2)):
+                           validTemplateSparseLkPoints.append(i)
+                           #pdb.set_trace()
+
+                print(len(validTemplateSparseLkPoints))
+
+                validTemplateSparseLkPoints = self.sparseLkPoints[validTemplateSparseLkPoints,:,:]
+
+                #plt.ion()
+                #plt.scatter(validTemplateSparseLkPoints[:,:,0], validTemplateSparseLkPoints[:,:,1])
+                #plt.show()
+
+                #pdb.set_trace()
 
                 #cv2.imshow('warpedQueryImageB' + str(iteration), warpedQueryImage1)
 
@@ -240,14 +278,15 @@ class PlanePattern(object):
                 nextPoints, status, err = cv2.calcOpticalFlowPyrLK(
                     self.templateImage,
                     warpedQueryImage1,
-                    self.sparseLkPoints,
+                    #self.sparseLkPoints,
+                    validTemplateSparseLkPoints,
                     None, None, None, PlanePattern.sparseLk['blockSizes'][iteration], maxLevel=3)
 
                 validInds = nonzero(status==1)[0]
 
-                err[nonzero(status==0)[0]] = 255
-                lkErrorMap = err.astype('uint8').reshape(self.sparseLk['numPointsPerDimension'], self.sparseLk['numPointsPerDimension'])
-                lkErrorMap = cv2.resize(lkErrorMap, queryImage.shape[::-1], interpolation=cv2.INTER_NEAREST)
+                #err[nonzero(status==0)[0]] = 255
+                #lkErrorMap = err.astype('uint8').reshape(self.sparseLk['numPointsPerDimension'], self.sparseLk['numPointsPerDimension'])
+                #lkErrorMap = cv2.resize(lkErrorMap, queryImage.shape[::-1], interpolation=cv2.INTER_NEAREST)
 
                 #TODO: pick the right value
                 if len(validInds) < 5:
@@ -311,24 +350,29 @@ class PlanePattern(object):
                  (queryImage.shape[1],queryImage.shape[0]),
                  (0,queryImage.shape[0])])
 
-
             originalPoints = concatenate((originalPoints, ones((4,1))), axis=1).transpose()
-
-            warpedPoints = inv(H) * originalPoints
-            warpedPoints = warpedPoints[0:2,:] / tile(warpedPoints[2,:], (2,1))
-            warpedPoints[0,:] += imgKeypoints1.shape[1]
-            warpedPoints = warpedPoints.astype('int32').transpose().tolist()
-            warpedPoints = [tuple(x) for x in warpedPoints]
 
             if numInliers >= 4:
                 quadColor = (0,255,0)
             else:
                 quadColor = (0,0,255)
 
-            cv2.line(imgKeypointsBoth, warpedPoints[0], warpedPoints[1], quadColor, 3)
-            cv2.line(imgKeypointsBoth, warpedPoints[1], warpedPoints[2], quadColor, 3)
-            cv2.line(imgKeypointsBoth, warpedPoints[2], warpedPoints[3], quadColor, 3)
-            cv2.line(imgKeypointsBoth, warpedPoints[3], warpedPoints[0], quadColor, 3)
+            warpedPoints = H * originalPoints
+            warpedPoints = warpedPoints[0:2,:] / tile(warpedPoints[2,:], (2,1))
+            warpedQuad = Quadrilateral(warpedPoints)
+            warpedQuad.draw(imgKeypointsBoth, color=quadColor, thickness=3, offset=(0,0))
+
+            warpedPoints = originalH * originalPoints
+            warpedPoints = warpedPoints[0:2,:] / tile(warpedPoints[2,:], (2,1))
+            warpedQuad = Quadrilateral(warpedPoints)
+            warpedQuad.draw(imgKeypointsBoth, color=(255,0,0), thickness=3, offset=(0,0))
+
+            #pdb.set_trace()
+
+#            cv2.line(imgKeypointsBoth, warpedPoints[0], warpedPoints[1], quadColor, 3)
+#            cv2.line(imgKeypointsBoth, warpedPoints[1], warpedPoints[2], quadColor, 3)
+#            cv2.line(imgKeypointsBoth, warpedPoints[2], warpedPoints[3], quadColor, 3)
+#            cv2.line(imgKeypointsBoth, warpedPoints[3], warpedPoints[0], quadColor, 3)
 
             # Draw keypoint matches
             for key1, key2 in zip(matched_template, matched_query):
@@ -339,13 +383,13 @@ class PlanePattern(object):
 
             # Show the drawn image
             cv2.imshow('matches', imgKeypointsBoth)
-            cv2.imshow('templateImage', self.templateImage)
+            #cv2.imshow('templateImage', self.templateImage)
             cv2.imshow('warpedQueryImage', warpedQueryImage2)
-            cv2.imshow('lkErrorMap', lkErrorMap)
+            #cv2.imshow('lkErrorMap', lkErrorMap)
 
             # Draw the occlusion image
             occlusionMap = cv2.resize(occlusionMap, queryImage.shape[::-1], interpolation=cv2.INTER_NEAREST)
-            cv2.imshow('occlusionMapU8', occlusionMap)
+            #cv2.imshow('occlusionMapU8', occlusionMap)
 
         return H, numInliers
 

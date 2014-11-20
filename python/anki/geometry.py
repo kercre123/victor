@@ -83,13 +83,13 @@ class Quadrilateral(object):
         return sortedQuad
 
     def isConvex(self):
-
-        sortedQuad = self.computeClockwiseCorners()
-
+        """
+        For checking convexity, the corners should be clockwise or counter-clockwise
+        """
         for iCorner in range(0,4):
-            corner1 = sortedQuad[iCorner]
-            corner2 = sortedQuad[(iCorner+1) % 4]
-            corner3 = sortedQuad[(iCorner+2) % 4]
+            corner1 = self.corners[iCorner]
+            corner2 = self.corners[(iCorner+1) % 4]
+            corner3 = self.corners[(iCorner+2) % 4]
 
             orientation = \
                 ((corner2[1] - corner1[1]) * (corner3[0] - corner2[0])) - \
@@ -99,3 +99,24 @@ class Quadrilateral(object):
                 return False
 
         return True
+
+    def draw(self, image, color, thickness=1, offset=(0,0)):
+
+        for i1 in range(0,4):
+            i2 = (i1+1) % 4
+
+            pt1 = tuple((array(self.corners[i1]) + array(offset)).astype('int32').tolist())
+            pt2 = tuple((array(self.corners[i2]) + array(offset)).astype('int32').tolist())
+
+            #pdb.set_trace()
+            retval, pt1, pt2 = cv2.clipLine((0, 0, image.shape[1], image.shape[0]), pt1, pt2)
+
+            if retval:
+                cv2.line(image, pt1, pt2, color, thickness)
+
+        return image
+
+    def __str__(self):
+        return str(self.corners)
+
+

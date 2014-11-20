@@ -18,12 +18,83 @@ import random
 import pdb
 from anki.geometry import Quadrilateral
 
+numFailures = {'nonConvex':0, 'quadOppositeRatio':0, 'quadAdjacentRatio':0, 'quadArea':0}
+
+def isHomographyValid(
+        homography,
+        reprojectionThreshold,
+        templateSize,
+        quadOppositeSideRatioRange,
+        quadAdjacentSideRatioRange):
+    """
+    Use some heuristics to determine if the homography is reasonable
+    """
+
+    return True
+
+    templateQuad = array([[0,0], [templateSize[0],0], [templateSize[0],templateSize[1]], [0,templateSize[1]]])
+    templateQuad = concatenate((templateQuad, ones((4,1))), axis=1).transpose()
+
+    # Check if warped quad is convex
+    warpedTemplateQuad = homography * templateQuad
+    warpedTemplateQuad = (warpedTemplateQuad[0:2,:] / tile(warpedTemplateQuad[2,:], (2,1))).transpose()
+    warpedTemplateQuad = Quadrilateral(warpedTemplateQuad)
+
+#    if not warpedTemplateQuad.isConvex():
+#        numFailures['nonConvex'] += 1
+#        return False
+
+    # Check ratios of sides, to make sure it's reasonable
+    # Check the quad area
+    warpedTemplateQuadCorners = warpedTemplateQuad.computeClockwiseCorners()
+    sideLengths = []
+    for i1 in range(0,4):
+        i2 = (i1+1) % 4
+        dist = array(warpedTemplateQuadCorners[i1]) - array(warpedTemplateQuadCorners[i2])
+        dist = sqrt(pow(dist[0],2) + pow(dist[1],2))
+        sideLengths.append(dist)
+
+    quadOppositeSideRatios = []
+    quadAdjacentSideRatios = []
+    for iBase in range(0,4):
+        iOpposite = (iBase+2) % 4
+        iAdjacent = (iBase+1) % 4
+
+        opposite1 = sideLengths[iBase] / sideLengths[iOpposite]
+        opposite2 = sideLengths[iOpposite] / sideLengths[iBase]
+
+        adjacent1 = sideLengths[iBase] / sideLengths[iAdjacent]
+        adjacent2 = sideLengths[iAdjacent] / sideLengths[iBase]
+
+        quadOppositeSideRatios.append(max(opposite1, opposite2))
+        quadAdjacentSideRatios.append(max(adjacent1, adjacent2))
+
+    if min(quadOppositeSideRatios) < min(quadOppositeSideRatioRange):
+        numFailures['quadOppositeRatio'] += 1
+        return False
+
+    if max(quadOppositeSideRatios) > max(quadOppositeSideRatioRange):
+        numFailures['quadOppositeRatio'] += 1
+        return False
+
+    if min(quadAdjacentSideRatios) < min(quadAdjacentSideRatioRange):
+        numFailures['quadAdjacentRatio'] += 1
+        return False
+
+    if max(quadAdjacentSideRatios) > max(quadAdjacentSideRatioRange):
+        numFailures['quadAdjacentRatio'] += 1
+        return False
+
+    return True
+
 def computeHomography(
         queryKeypoints,
         templateKeypoints,
-        templateSize,
         numIterations,
-        reprojectionThreshold):
+        reprojectionThreshold,
+        templateSize,
+        quadOppositeSideRatioRange,
+        quadAdjacentSideRatioRange):
 
     assert type(queryKeypoints).__module__[:5] == np.__name__, 'Must be a numpy array'
     assert type(templateKeypoints).__module__[:5] == np.__name__, 'Must be a numpy array'
@@ -43,11 +114,11 @@ def computeHomography(
 
     numKeypoints = queryKeypoints.shape[0]
 
-    templateQuad = array([[0,0], [templateSize[0],0], [templateSize[0],templateSize[1]], [0,templateSize[1]]])
-    templateQuad = concatenate((templateQuad, ones((4,1))), axis=1).transpose()
-
     bestH = eye(3)
     bestHInlierIndexes = []
+
+    for key in numFailures.keys():
+        numFailures[key] = 0
 
     for iteration in range(0, numIterations):
         sampledIndexes = random.sample(range(0,numKeypoints), 4)
@@ -61,12 +132,8 @@ def computeHomography(
         except:
             continue
 
-
-        # Check if warped quad is convex
-        warpedTemplateQuad = H * templateQuad
-        warpedTemplateQuad = (warpedTemplateQuad[0:2,:] / tile(warpedTemplateQuad[2,:], (2,1))).transpose()
-
-        if not Quadrilateral(warpedTemplateQuad).isConvex():
+        # Check validity heuristics
+        if not isHomographyValid(H, reprojectionThreshold, templateSize, quadOppositeSideRatioRange, quadAdjacentSideRatioRange):
             continue
 
         # Count the number of inliers
@@ -85,13 +152,20 @@ def computeHomography(
 
         # TODO: check for early termination
 
-    if len(bestHInlierIndexes) >= 4:
-        templateSubset = array(queryKeypoints[bestHInlierIndexes, :]).copy()
-        querySubset = array(templateKeypoints[bestHInlierIndexes, :]).copy()
+#    if len(bestHInlierIndexes) >= 4:
+#        templateSubset = array(queryKeypoints[bestHInlierIndexes, :]).copy()
+#        querySubset = array(templateKeypoints[bestHInlierIndexes, :]).copy()
+#
+#        #pdb.set_trace()
+#        bestH = cv2.findHomography(templateSubset, querySubset, 0)
+#        bestH = matrix(bestH[0]);
+#
+##        if not isHomographyValid(bestH, reprojectionThreshold, templateSize, quadOppositeSideRatioRange, quadAdjacentSideRatioRange):
+##            print('Total estimation failure')
+##            bestH = eye(3)
+##            bestHInlierIndexes = []
 
-        #pdb.set_trace()
-        bestH = cv2.findHomography(templateSubset, querySubset, 0)
-        bestH = matrix(bestH[0]);
+    print(numFailures)
 
     return bestH, bestHInlierIndexes
 
