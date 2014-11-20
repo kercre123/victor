@@ -419,87 +419,7 @@ namespace Cozmo {
     return prevRobotState_.headAngle;
   }
   
-  void VisionSystem::SetImageSendMode(ImageSendMode_t mode, Vision::CameraResolution res)
-  {
-    if (res == Vision::CAMERA_RES_QVGA ||
-        res == Vision::CAMERA_RES_QQVGA ||
-        res == Vision::CAMERA_RES_QQQVGA ||
-        res == Vision::CAMERA_RES_QQQQVGA) {
-      imageSendMode_ = mode;
-      nextSendImageResolution_ = res;
-    }
-  }
-  
-  /*
-   void VisionSystem::DownsampleAndSendImage(const Array<u8> &img)
-   {
-   // Only downsample if normal capture res is QVGA
-   if (imageSendMode_ != ISM_OFF && captureResolution_ == Vision::CAMERA_RES_QVGA) {
-   
-   // Time to send frame?
-   static u8 streamFrameCnt = 0;
-   if (imageSendMode_ == ISM_STREAM && streamFrameCnt++ != IMG_STREAM_SKIP_FRAMES) {
-   return;
-   }
-   streamFrameCnt = 0;
-   
-   
-   static u8 imgID = 0;
-   
-   // Downsample and split into image chunk message
-   const u32 xRes = CameraModeInfo[nextSendImageResolution_].width;
-   const u32 yRes = CameraModeInfo[nextSendImageResolution_].height;
-   
-   const u32 xSkip = 320 / xRes;
-   const u32 ySkip = 240 / yRes;
-   
-   const u32 numTotalBytes = xRes*yRes;
-   
-   MessageImageChunk m;
-   m.resolution = nextSendImageResolution_;
-   m.imageId = ++imgID;
-   m.chunkId = 0;
-   m.chunkSize = IMAGE_CHUNK_SIZE;
-   
-   u32 totalByteCnt = 0;
-   u32 chunkByteCnt = 0;
-   
-   //PRINT("Downsample: from %d x %d  to  %d x %d\n", img.get_size(1), img.get_size(0), xRes, yRes);
-   
-   u32 dataY = 0;
-   for (u32 y = 0; y < 240; y += ySkip, dataY++)
-   {
-   const u8* restrict rowPtr = img.Pointer(y, 0);
-   
-   u32 dataX = 0;
-   for (u32 x = 0; x < 320; x += xSkip, dataX++)
-   {
-   m.data[chunkByteCnt] = rowPtr[x];
-   ++chunkByteCnt;
-   ++totalByteCnt;
-   
-   if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
-   //PRINT("Sending image chunk %d\n", m.chunkId);
-   HAL::RadioSendMessage(GET_MESSAGE_ID(MessageImageChunk), &m);
-   ++m.chunkId;
-   chunkByteCnt = 0;
-   } else if (totalByteCnt == numTotalBytes) {
-   // This should be the last message!
-   //PRINT("Sending LAST image chunk %d\n", m.chunkId);
-   m.chunkSize = chunkByteCnt;
-   HAL::RadioSendMessage(GET_MESSAGE_ID(MessageImageChunk), &m);
-   }
-   }
-   }
-   
-   // Turn off image sending if sending single image only.
-   if (imageSendMode_ == ISM_SINGLE_SHOT) {
-   imageSendMode_ = ISM_OFF;
-   }
-   }
-   }
-   */
-  
+
   bool VisionSystem::CheckMailbox(MessageDockingErrorSignal&  msg)
   {
     return _dockingMailbox.getMessage(msg);
@@ -1843,155 +1763,10 @@ namespace Cozmo {
   
   
 #if defined(SEND_IMAGE_ONLY)
-  // In SEND_IMAGE_ONLY mode, just create a special version of update
-  
-  Result Update(const Messages::RobotState robotState)
-  {
-    // This should be called from elsewhere first, but calling it again won't hurt
-    Init();
-    
-    VisionMemory::ResetBuffers();
-    
-    frameNumber++;
-    
-    const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-    const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
-    
-    Array<u8> grayscaleImage(captureHeight, captureWidth,
-                             VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
-    
-    HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
-                        captureResolution_, false);
-    
-    BeginBenchmark("VisionSystem_CameraImagingPipeline");
-    
-    if(vignettingCorrection == VignettingCorrection_Software) {
-      BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-      
-      MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
-      FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
-      
-      for(s32 i=0; i<5; i++)
-        polynomialParameters[i] = vignettingCorrectionParameters[i];
-      
-      CorrectVignetting(grayscaleImage, polynomialParameters);
-      
-      EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-    } // if(vignettingCorrection == VignettingCorrection_Software)
-    
-    if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
-      BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-      
-      ComputeBestCameraParameters(
-                                  grayscaleImage,
-                                  Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-                                  autoExposure_integerCountsIncrement,
-                                  autoExposure_highValue,
-                                  autoExposure_percentileToMakeHigh,
-                                  autoExposure_minExposureTime, autoExposure_maxExposureTime,
-                                  autoExposure_tooHighPercentMultiplier,
-                                  exposureTime,
-                                  VisionMemory::ccmScratch_);
-      
-      EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-    }
-    
-    //if(frameNumber % 10 == 0) {
-    //if(vignettingCorrection == VignettingCorrection_Off)
-    //vignettingCorrection = VignettingCorrection_CameraHardware;
-    //else if(vignettingCorrection == VignettingCorrection_CameraHardware)
-    //vignettingCorrection = VignettingCorrection_Software;
-    //else if(vignettingCorrection == VignettingCorrection_Software)
-    //vignettingCorrection = VignettingCorrection_Off;
-    //}
-    
-    //if(vignettingCorrection == VignettingCorrection_Software) {
-    //  for(s32 y=0; y<3; y++) {
-    //    for(s32 x=0; x<3; x++) {
-    //      grayscaleImage[y][x] = 0;
-    //    }
-    //  }
-    //}
-    
-    //if(frameNumber % 25 == 0) {
-    //  if(vignettingCorrection == VignettingCorrection_Off)
-    //    vignettingCorrection = VignettingCorrection_Software;
-    //  else if(vignettingCorrection == VignettingCorrection_Software)
-    //    vignettingCorrection = VignettingCorrection_Off;
-    //}
-    
-    HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
-    
-    EndBenchmark("VisionSystem_CameraImagingPipeline");
-    
-#ifdef SEND_BINARY_IMAGE_ONLY
-    DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
-    HAL::MicroWait(250000);
-#else
-    {
-      const bool sendSmall = false;
-      
-      if(sendSmall) {
-        MemoryStack ccmScratch_local = MemoryStack(VisionMemory::ccmScratch_);
-        
-        Array<u8> grayscaleImageSmall(30, 40, ccmScratch_local);
-        u32 downsampleFactor = DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch_local);
-        DebugStream::SendImage(grayscaleImageSmall, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
-      } else {
-        DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
-        HAL::MicroWait(166666); // 6fps
-        //HAL::MicroWait(140000); //7fps
-        //HAL::MicroWait(125000); //8fps
-      }
-    }
+#  error SEND_IMAGE_ONLY doesn't really make sense for Basestation vision system.
+#elif defined(RUN_GROUND_TRUTHING_CAPTURE)
+#  error RUN_GROUND_TRUTHING_CAPTURE not implemented in Basestation vision system.
 #endif
-    
-    return RESULT_OK;
-  } // Update() [SEND_IMAGE_ONLY]
-#elif defined(RUN_GROUND_TRUTHING_CAPTURE) // #if defined(SEND_IMAGE_ONLY)
-  Result Update(const Messages::RobotState robotState)
-  {
-    // This should be called from elsewhere first, but calling it again won't hurt
-    Init();
-    
-    VisionMemory::ResetBuffers();
-    
-    frameNumber++;
-    
-    const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-    const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
-    
-    Array<u8> grayscaleImage(captureHeight, captureWidth, VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
-    
-    HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), captureResolution_, false);
-    
-    if(vignettingCorrection == VignettingCorrection_Software) {
-      MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
-      FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
-      
-      for(s32 i=0; i<5; i++)
-        polynomialParameters[i] = vignettingCorrectionParameters[i];
-      
-      CorrectVignetting(grayscaleImage, polynomialParameters);
-    } // if(vignettingCorrection == VignettingCorrection_Software)
-    
-    DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
-    
-    HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
-    
-    exposureTime += .1f;
-    
-    if(exposureTime > 1.01f) {
-      exposureTime = 0.0f;
-    }
-    
-    HAL::MicroWait(333333);
-    //HAL::MicroWait(1500000);
-    
-    return RESULT_OK;
-  } // Update() [RUN_GROUND_TRUTHING_CAPTURE]
-  
-#else
   
   // This is the regular Update() call
   Result VisionSystem::Update(const MessageRobotState robotState,
@@ -2554,8 +2329,6 @@ namespace Cozmo {
     
     return lastResult;
   } // Update() [Real]
-  
-#endif // #ifdef SEND_IMAGE_ONLY
   
   
   void VisionSystem::SetParams(const s32 integerCountsIncrement,

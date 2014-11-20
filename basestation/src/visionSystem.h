@@ -83,8 +83,6 @@ namespace Cozmo {
     Result Init(const Vision::CameraCalibration& camCalib);
     bool IsInitialized() const { return isInitialized_; }
     
-    void Stop(void); // Stops processing thread
-    
     // Accessors
     //const HAL::CameraInfo* GetCameraCalibration();
     f32 GetTrackingMarkerWidth();
@@ -166,10 +164,6 @@ namespace Cozmo {
                                  const Embedded::Point3<f32>& translationWrtCamera,
                                  Embedded::Array<f32>&        rotationWrtRobot,
                                  Embedded::Point3<f32>&       translationWrtRobot);
-    
-    // Send single or continuous images back to basestation at requested resolution.
-    // If resolution is not supported, this function does nothing.
-    void SetImageSendMode(ImageSendMode_t mode, Vision::CameraResolution res);
     
     // Tell the vision system to grab a snapshot on the next call to Update(),
     // within the specified Region of Interest (roi), subsampled by the
