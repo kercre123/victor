@@ -58,9 +58,12 @@ namespace Anki {
 
       typedef enum {
         VISION_MODE_IDLE,
+        VISION_MODE_SEND_IMAGES_TO_BASESTATION,
         VISION_MODE_LOOKING_FOR_MARKERS,
         VISION_MODE_TRACKING,
-        VISION_MODE_DETECTING_FACES
+        VISION_MODE_DETECTING_FACES,
+        
+        VISION_MODE_DEFAULT = VISION_MODE_SEND_IMAGES_TO_BASESTATION
       } VisionSystemMode;
 
 #if 0
@@ -302,6 +305,9 @@ namespace Anki {
         static void SetFaceDetectionReadyTime() {
           frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FACE_DETECTION_PERIOD_US;
         }
+        static void SetSendWifiImageReadyTime() {
+          frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::SEND_WIFI_IMAGE_PERIOD_US;
+        }
 #else
         static Result Initialize() { return RESULT_OK; }
         static bool IsFrameReady() { return true; }
@@ -363,7 +369,7 @@ namespace Anki {
       {
         if(newMarkerToTrackWasProvided_) {
           
-          mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
+          mode_                  = VISION_MODE_DEFAULT;
           numTrackFailures_      = 0;
           
           markerToTrack_ = newMarkerToTrack_;
@@ -438,6 +444,8 @@ namespace Anki {
           const u32 numTotalBytes = xRes*yRes;
 
           Messages::ImageChunk m;
+          // TODO: pass this in so it corresponds to actual frame capture time instead of send time
+          m.frameTimeStamp = HAL::GetTimeStamp();
           m.resolution = nextSendImageResolution_;
           m.imageId = ++imgID;
           m.chunkId = 0;
@@ -1399,7 +1407,7 @@ namespace Anki {
           // Initialize the VisionSystem's state (i.e. its "private member variables")
           //
 
-          mode_                      = VISION_MODE_LOOKING_FOR_MARKERS;
+          mode_                      = VISION_MODE_DEFAULT;
           markerToTrack_.Clear();
           numTrackFailures_          = 0;
 
@@ -2438,8 +2446,28 @@ namespace Anki {
                                           VisionMemory::onchipScratch_,
                                           VisionMemory::offchipScratch_);
           
+        } else if(mode_ == VISION_MODE_SEND_IMAGES_TO_BASESTATION) {
+
+          Simulator::SetSendWifiImageReadyTime();
+
+          VisionMemory::ResetBuffers();
+          
+          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          
+          Array<u8> grayscaleImage(captureHeight, captureWidth,
+                                   VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
+          
+          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
+                              captureResolution_, false);
+          
+          SetImageSendMode(ISM_STREAM, captureResolution_);
+          DownsampleAndSendImage(grayscaleImage);
+          
+          PRINT("Sent image to basestation.\n");
+          
         } else {
-          PRINT("VisionSystem::Update(): reached default case in switch statement.");
+          PRINT("VisionSystem::Update(): unknown mode = %d.", mode_);
           return RESULT_FAIL;
         } // if(converged)
 

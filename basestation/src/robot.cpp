@@ -468,6 +468,40 @@ namespace Anki {
     
     Result Robot::Update(void)
     {
+      ////////// Check for any messages from the Vision Thread ////////////
+      
+      MessageVisionMarker visionMarker;
+      if(true == _visionProcessor.CheckMailbox(visionMarker)) {
+        Result lastResult = QueueObservedMarker(visionMarker);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Root.Update.FailedToQueueVisionMarker",
+                                           "Got VisionMarker message from vision processing thread but failed to queue it.\n");
+      }
+      
+      MessageFaceDetection faceDetection;
+      if(true == _visionProcessor.CheckMailbox(faceDetection)) {
+        PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).\n",
+                   GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
+        
+        
+        if(faceDetection.visualize > 0) {
+          // Send tracker quad info to viz
+          const u16 left_x   = faceDetection.x_upperLeft;
+          const u16 right_x  = left_x + faceDetection.width;
+          const u16 top_y    = faceDetection.y_upperLeft;
+          const u16 bottom_y = top_y + faceDetection.height;
+          
+          VizManager::getInstance()->SendTrackerQuad(left_x, top_y,
+                                                     right_x, top_y,
+                                                     right_x, bottom_y,
+                                                     left_x, bottom_y);
+        }
+      }
+      
+      
+      // TODO: Check the other mailboxes
+      
+      
       ////////// Update the robot's blockworld //////////
       
       uint32_t numBlocksObserved = 0;
@@ -1593,6 +1627,34 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
+    Result Robot::ProcessImage(const Vision::Image& image)
+    {
+      Result lastResult = RESULT_OK;
+      
+      // For now, we need to reassemble a RobotState message to provide the
+      // vision system (because it is just copied from the embedded vision
+      // implementation on the robot). We'll just reassemble that from
+      // pose history, but this should not be necessary forever.
+      // NOTE: only the info found in pose history will be valid in the state message!
+      MessageRobotState robotState;
+      RobotPoseStamp p;
+      TimeStamp_t actualTimestamp;
+      _poseHistory.ComputePoseAt(image.GetTimestamp(), actualTimestamp, p, false); // TODO: use interpolation??
+      AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                         "Robot.ProcessImage.PoseHistoryFail",
+                                         "Unable to get computed pose at image timestamp of %d.\n", image.GetTimestamp());
+      robotState.timestamp = actualTimestamp;
+      robotState.headAngle = p.GetHeadAngle();
+      robotState.liftAngle = p.GetLiftAngle();
+      robotState.pose_x    = p.GetPose().GetTranslation().x();
+      robotState.pose_y    = p.GetPose().GetTranslation().y();
+      robotState.pose_z    = p.GetPose().GetTranslation().z();
+      
+      // Note this copies the image
+      _visionProcessor.SetNextImage(image, robotState);
+      
+      return lastResult;
+    }
     
     Result Robot::StartFaceTracking(u8 timeout_sec)
     {

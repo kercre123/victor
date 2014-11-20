@@ -33,6 +33,7 @@
 #include "anki/common/basestation/math/pose.h"
 
 #include "anki/vision/basestation/camera.h"
+#include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
 
 #include "anki/planning/shared/path.h"
@@ -235,9 +236,11 @@ namespace Anki {
       // obstacles are detected by proximity sensors
       static const Pose3d ProxDetectTransform[NUM_PROX];
       
+      
       //
-      // Face Tracking
+      // Vision
       //
+      Result ProcessImage(const Vision::Image& image);
       Result StartFaceTracking(u8 timeout_sec);
       Result StopFaceTracking();
       
@@ -606,6 +609,10 @@ namespace Anki {
     {
       _cameraCalibration = calib;
       _camera.SetSharedCalibration(&_cameraCalibration);
+      
+      // Now that we have camera calibration, we can start the vision
+      // processing thread
+      _visionProcessor.Start(_cameraCalibration);
     }
 
     inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const

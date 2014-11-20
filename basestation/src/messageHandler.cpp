@@ -14,6 +14,8 @@
 #include "anki/common/basestation/utils/fileManagement.h"
 
 #include "anki/vision/CameraSettings.h"
+#include "anki/vision/basestation/image.h"
+
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -305,9 +307,14 @@ namespace Anki {
       memcpy(data + dataSize, msg.data.data(), msg.chunkSize);
       dataSize += msg.chunkSize;
       
-      // When dataSize matches the expected size, print to file
+      // When dataSize matches the expected size, visualize and pass to robot
+      // for processing
       if (dataSize >= totalImgSize) {
         VizManager::getInstance()->SendGreyImage(robot->GetID(), data, (Vision::CameraResolution)msg.resolution);
+        
+        Vision::Image image(height, width, data);
+        image.SetTimestamp(msg.frameTimeStamp);
+        robot->ProcessImage(image);
       }
       
       return RESULT_OK;
