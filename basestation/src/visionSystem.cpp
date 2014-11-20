@@ -16,6 +16,8 @@
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "anki/common/shared/mailbox_impl.h"
+
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
 #include "anki/vision/basestation/image.h"
@@ -497,6 +499,27 @@ namespace Cozmo {
    }
    }
    */
+  
+  bool VisionSystem::CheckMailbox(MessageDockingErrorSignal&  msg)
+  {
+    return _dockingMailbox.getMessage(msg);
+  }
+  
+  bool VisionSystem::CheckMailbox(MessageFaceDetection&       msg)
+  {
+    return _faceDetectMailbox.getMessage(msg);
+  }
+  
+  bool VisionSystem::CheckMailbox(MessageVisionMarker&        msg)
+  {
+    return _visionMarkerMailbox.getMessage(msg);
+  }
+  
+  bool VisionSystem::CheckMailbox(MessageTrackerQuad&         msg)
+  {
+    return _trackerMailbox.getMessage(msg);
+  }
+  
   
   Result VisionSystem::LookForMarkers(
                                       const Array<u8> &grayscaleImage,

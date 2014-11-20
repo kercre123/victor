@@ -16,6 +16,8 @@
 
 #include "anki/common/types.h"
 
+#include "anki/common/shared/mailbox.h"
+
 // Robot includes should eventually go away once Basestation vision is natively
 // implemented
 #include "anki/common/robot/fixedLengthList.h"
@@ -53,49 +55,6 @@ namespace Cozmo {
     VISION_MODE_TRACKING,
     VISION_MODE_DETECTING_FACES
   } VisionSystemMode;
-  
-  //
-  // Mailboxes
-  //
-  //   "Mailboxes" are used for leaving messages from [slower]
-  //   vision processing thread to be retrieved and acted upon
-  //   by the faster robot code.
-  //
-  // TODO: Move the class definitions elsewhere
-  
-  // Single-message Mailbox Class
-  template<typename MsgType>
-  class Mailbox
-  {
-  public:
-    
-    Mailbox();
-    
-    bool putMessage(const MsgType newMsg);
-    bool getMessage(MsgType& msgOut);
-    
-  protected:
-    MsgType message_;
-    bool    beenRead_;
-    bool    isLocked_;
-  };
-  
-  // Multiple-message Mailbox Class
-  template<typename MSG_TYPE, u8 NUM_BOXES>
-  class MultiMailbox
-  {
-  public:
-    
-    bool putMessage(const MSG_TYPE newMsg);
-    bool getMessage(MSG_TYPE& msg);
-    
-  protected:
-    Mailbox<MSG_TYPE> mailboxes_[NUM_BOXES];
-    u8 readIndex_, writeIndex_;
-    
-    void advanceIndex(u8 &index);
-  };
-
   
   class VisionSystem
   {
@@ -517,37 +476,6 @@ namespace Cozmo {
 #if 0
 #pragma mark --- VisionSystem::Mailbox Template Implementations ---
 #endif
-  /*
-   bool CheckMailbox(BlockMarkerObserved& msg)
-   {
-   return blockMarkerMailbox_.getMessage(msg);
-   }
-   
-   bool CheckMailbox(MatMarkerObserved&   msg)
-   {
-   return matMarkerMailbox_.getMessage(msg);
-   }
-   */
-  
-  inline bool VisionSystem::CheckMailbox(MessageDockingErrorSignal&  msg)
-  {
-    return _dockingMailbox.getMessage(msg);
-  }
-  
-  inline bool VisionSystem::CheckMailbox(MessageFaceDetection&       msg)
-  {
-    return _faceDetectMailbox.getMessage(msg);
-  }
-  
-  inline bool VisionSystem::CheckMailbox(MessageVisionMarker&        msg)
-  {
-    return _visionMarkerMailbox.getMessage(msg);
-  }
-  
-  inline bool VisionSystem::CheckMailbox(MessageTrackerQuad&         msg)
-  {
-    return _trackerMailbox.getMessage(msg);
-  }
   
   inline bool VisionProcessingThread::CheckMailbox(MessageFaceDetection& msg)
   {
@@ -581,85 +509,6 @@ namespace Cozmo {
     return _visionSystem->CheckMailbox(msg);
   }
 
-  //
-  // Templated Mailbox Implementations
-  //
-  template<typename MSG_TYPE>
-  Mailbox<MSG_TYPE>::Mailbox()
-  : beenRead_(true)
-  {
-    
-  }
-  
-  template<typename MSG_TYPE>
-  bool Mailbox<MSG_TYPE>::putMessage(const MSG_TYPE newMsg)
-  {
-    if(isLocked_) {
-      return false;
-    }
-    else {
-      isLocked_ = true;    // Lock
-      message_  = newMsg;
-      beenRead_ = false;
-      isLocked_ = false;   // Unlock
-      return true;
-    }
-  }
-  
-  template<typename MSG_TYPE>
-  bool Mailbox<MSG_TYPE>::getMessage(MSG_TYPE& msgOut)
-  {
-    if(isLocked_ || beenRead_) {
-      return false;
-    }
-    else {
-      isLocked_ = true;   // Lock
-      msgOut = message_;
-      beenRead_ = true;
-      isLocked_ = false;  // Unlock
-      return true;
-    }
-  }
-  
-  
-  //
-  // Templated MultiMailbox Implementations
-  //
-  
-  template<typename MSG_TYPE, u8 NUM_BOXES>
-  bool MultiMailbox<MSG_TYPE,NUM_BOXES>::putMessage(const MSG_TYPE newMsg)
-  {
-    if(mailboxes_[writeIndex_].putMessage(newMsg) == true) {
-      advanceIndex(writeIndex_);
-      return true;
-    }
-    else {
-      return false;
-    }
-  }
-  
-  template<typename MSG_TYPE, u8 NUM_BOXES>
-  bool MultiMailbox<MSG_TYPE,NUM_BOXES>::getMessage(MSG_TYPE& msg)
-  {
-    if(mailboxes_[readIndex_].getMessage(msg) == true) {
-      // we got a message out of the mailbox (it wasn't locked and there
-      // was something in it), so move to the next mailbox
-      advanceIndex(readIndex_);
-      return true;
-    }
-    else {
-      return false;
-    }
-  }
-  
-  template<typename MSG_TYPE, u8 NUM_BOXES>
-  void MultiMailbox<MSG_TYPE,NUM_BOXES>::advanceIndex(u8 &index)
-  {
-    ++index;
-    if(index == NUM_BOXES) {
-      index = 0;
-    }
-  }
       
 } // namespace Cozmo
 } // namespace Anki
