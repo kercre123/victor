@@ -47,6 +47,7 @@
 #include "cannedAnimationContainer.h"
 #include "behaviorManager.h"
 #include "ramp.h"
+#include "visionSystem.h"
 
 
 namespace Anki {
@@ -376,6 +377,8 @@ namespace Anki {
       
       // A reference to the BlockWorld the robot lives in
       BlockWorld       _blockWorld;
+      
+      VisionProcessingThread _visionProcessor;
       
       BehaviorManager  _behaviorMgr;
       

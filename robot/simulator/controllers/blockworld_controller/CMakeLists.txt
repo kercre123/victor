@@ -41,6 +41,8 @@ target_link_libraries(blockworld_controller
   Cozmo_Basestation
   CoreTech_Common_Basestation
   CoreTech_Vision_Basestation
+  CoreTech_Vision_Robot  # For using embedded vision implementations on Basestation
+  CoreTech_Common_Robot  #     "
   CoreTech_Planning_Basestation
   CoreTech_Messaging_Basestation
   CppController # Webots C++ Controller

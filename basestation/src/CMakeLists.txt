@@ -34,5 +34,7 @@ target_link_libraries(Cozmo_Basestation
   CoreTech_Common_Basestation 
   CoreTech_Vision_Basestation 
   CoreTech_Planning_Basestation
+  CoreTech_Vision_Robot  # TODO: Remove once we do basestation implementation of vision
+  CoreTech_Common_Robot  # TODO: Remove once we do basestation implementation of vision
   ${ZLIB_LIBRARY}
 )
