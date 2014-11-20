@@ -115,10 +115,11 @@ while(True):
     toUseHomographies = preMatchHomographies[:]
     toUseHomographies.append(newHomography)
 
-    if cv2.waitKey(waitKeyTime) & 0xFF == ord('q'):
+    keypress = cv2.waitKey(waitKeyTime)
+    if keypress & 0xFF == ord('q'):
         print('Breaking')
         break
-    elif cv2.waitKey(waitKeyTime) & 0xFF == ord('c'):
+    elif keypress & 0xFF == ord('c'):
         while True:
             imageFilename = captureBaseFilename + str(saveIndex) + '.png'
             saveIndex += 1
