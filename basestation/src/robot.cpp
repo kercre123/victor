@@ -498,8 +498,23 @@ namespace Anki {
         }
       }
       
+      MessageTrackerQuad trackerQuad;
+      if(true == _visionProcessor.CheckMailbox(trackerQuad)) {
+        // Send tracker quad info to viz
+        VizManager::getInstance()->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
+                                                   trackerQuad.topRight_x, trackerQuad.topRight_y,
+                                                   trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
+                                                   trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
+      }
       
-      // TODO: Check the other mailboxes
+      MessageDockingErrorSignal dockingErrorSignal;
+      if(true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
+        
+        // Try to use this for closed-loop control by sending it on to the robot
+        _msgHandler->SendMessage(_ID, dockingErrorSignal);
+        
+      }
+
       
       
       ////////// Update the robot's blockworld //////////
