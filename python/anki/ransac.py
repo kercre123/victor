@@ -17,7 +17,12 @@ from numpy.linalg import inv
 import random
 import pdb
 
-def computeHomography(queryKeypoints, templateKeypoints, numIterations, reprojectionThreshold):
+def computeHomography(
+        queryKeypoints,
+        templateKeypoints,
+        numIterations,
+        reprojectionThreshold):
+
     assert type(queryKeypoints).__module__ == np.__name__, 'Must be a numpy array'
     assert type(templateKeypoints).__module__ == np.__name__, 'Must be a numpy array'
     assert len(queryKeypoints.shape) == 2, 'Must be 2D'

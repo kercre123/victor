@@ -1,0 +1,86 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Nov 19 16:23:00 2014
+
+@author: pbarnum
+"""
+
+# Use python 3 types by default (uses "future" package)
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from future.builtins import *
+
+import cv2
+import numpy as np
+from numpy import *
+from numpy.linalg import inv
+import random
+import pdb
+import math
+
+def cart2pol(x, y):
+    if (x==0) and (y==0):
+        rho = 0
+        theta = 0
+    else:
+        rho = sqrt(x*x + y*y)
+        theta = math.atan2(y, x)
+
+    return rho, theta
+
+class Quadrilateral(object):
+    """
+    A quad is a list of corners, [(x0,y0), (x1,y1), (x2,y2), (x3,y3)]
+    """
+    def __init__(self, corners):
+        assert len(corners) == 4
+
+        self.corners = corners
+
+    def computeCenter(self):
+        center = [0,0]
+
+        for i in range(0,4):
+            center[0] += self.corners[i][0];
+            center[1] += self.corners[i][1];
+
+        center[0] /= 4;
+        center[1] /= 4;
+
+        return center;
+
+    def computeClockwiseCorners(self):
+        center = self.computeCenter()
+        thetas = []
+
+        for i in range(0,4):
+            rho, theta = cart2pol(
+                self.corners[i][0] - center[0],
+                self.corners[i][1] - center[1])
+
+            thetas.append(theta)
+
+        # Sort with indexes
+        indexes = [i[0] for i in sorted(enumerate(thetas), key=lambda x:x[1])]
+
+        sortedQuad = [self.corners[i] for i in indexes]
+
+        return sortedQuad
+
+    def isConvex(self):
+
+        sortedQuad = self.computeClockwiseCorners()
+
+        for iCorner in range(0,4):
+            corner1 = sortedQuad[iCorner]
+            corner2 = sortedQuad[(iCorner+1) % 4]
+            corner3 = sortedQuad[(iCorner+2) % 4]
+
+            orientation = \
+                ((corner2[1] - corner1[1]) * (corner3[0] - corner2[0])) - \
+                ((corner2[0] - corner1[0]) * (corner3[1] - corner2[1]))
+
+            if (orientation - 0.001) > 0:
+                return False
+
+        return True
