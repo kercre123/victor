@@ -379,8 +379,8 @@ namespace Cozmo {
   {
     if(newMarkerToTrackWasProvided_) {
       
-      mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
-      numTrackFailures_      = 0;
+      mode_              |= LOOKING_FOR_MARKERS;
+      numTrackFailures_  =  0;
       
       markerToTrack_ = newMarkerToTrack_;
       
@@ -1471,7 +1471,7 @@ namespace Cozmo {
       // Initialize the VisionSystem's state (i.e. its "private member variables")
       //
       
-      mode_                      = VISION_MODE_LOOKING_FOR_MARKERS;
+      mode_                      = LOOKING_FOR_MARKERS;
       markerToTrack_.Clear();
       numTrackFailures_          = 0;
       
@@ -1571,11 +1571,12 @@ namespace Cozmo {
   void VisionSystem::StopTracking()
   {
     SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f, true);
+    mode_ &= !TRACKING;
   }
   
   Result VisionSystem::StartDetectingFaces()
   {
-    mode_ = VISION_MODE_DETECTING_FACES;
+    mode_ |= DETECTING_FACES;
     return RESULT_OK;
   }
   
@@ -2032,7 +2033,7 @@ namespace Cozmo {
     //const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
     const TimeStamp_t imageTimeStamp = robotState.timestamp;
     
-    if(mode_ == VISION_MODE_IDLE) {
+    if(mode_ & TAKING_SNAPSHOT) {
       // Nothing to do, unless a snapshot was requested
       
       if(isWaitingOnSnapshot_) {
@@ -2053,8 +2054,10 @@ namespace Cozmo {
         }
       }
       
-    }
-    else if(mode_ == VISION_MODE_LOOKING_FOR_MARKERS) {
+    } // if(mode_ & TAKING_SNAPSHOT)
+    
+    
+    if(mode_ & LOOKING_FOR_MARKERS) {
       Simulator::SetDetectionReadyTime(); // no-op on real hardware
       
       _memory.ResetBuffers();
@@ -2205,10 +2208,13 @@ namespace Cozmo {
           
           // Template initialization succeeded, switch to tracking mode:
           // TODO: Log or issue message?
-          mode_ = VISION_MODE_TRACKING;
+          mode_ |= TRACKING;
         } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
       } // for(each marker)
-    } else if(mode_ == VISION_MODE_TRACKING) {
+    } // if(mode_ & LOOKING_FOR_MARKERS)
+    
+    
+    if(mode_ & TRACKING) {
       Simulator::SetTrackingReadyTime(); // no-op on real hardware
       
       //
@@ -2375,7 +2381,10 @@ namespace Cozmo {
       
       //Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
       
-    } else if(mode_ == VISION_MODE_DETECTING_FACES) {
+    } // if(mode_ & TRACKING)
+    
+    
+    if(mode_ & DETECTING_FACES) {
       Simulator::SetFaceDetectionReadyTime();
       
       _memory.ResetBuffers();
@@ -2540,10 +2549,8 @@ namespace Cozmo {
        VisionMemory::onchipScratch_,
        VisionMemory::offchipScratch_);
        */
-    } else {
-      PRINT_INFO("VisionSystem::Update(): reached default case in switch statement.");
-      return RESULT_FAIL;
-    } // if(converged)
+      
+    } // if(mode_ & DETECTING_FACES)
     
     return lastResult;
   } // Update() [Real]

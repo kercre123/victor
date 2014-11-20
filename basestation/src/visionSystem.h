@@ -48,20 +48,20 @@ namespace Cozmo {
   // Forward declaration:
   class Robot;
   
-  // TODO: Put this inside VisionSystem
-  typedef enum {
-    VISION_MODE_IDLE,
-    VISION_MODE_LOOKING_FOR_MARKERS,
-    VISION_MODE_TRACKING,
-    VISION_MODE_DETECTING_FACES
-  } VisionSystemMode;
-  
   class VisionSystem
   {
   public:
 
     VisionSystem();
     ~VisionSystem();
+    
+    enum Mode {
+      IDLE                 = 0x00,
+      LOOKING_FOR_MARKERS  = 0x01,
+      TRACKING             = 0x02,
+      DETECTING_FACES      = 0x04,
+      TAKING_SNAPSHOT      = 0x08
+    } VisionSystemMode;
     
     void ProcessingThread(const MessageRobotState* robotState);
     
@@ -246,7 +246,7 @@ namespace Cozmo {
     f32 headCamFOV_hor_;
     Embedded::Array<f32> RcamWrtRobot_;
     
-    VisionSystemMode mode_;
+    u32 mode_;
     
     // Camera parameters
     // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
