@@ -32,10 +32,25 @@ class Quadrilateral(object):
     """
     A quad is a list of corners, [(x0,y0), (x1,y1), (x2,y2), (x3,y3)]
     """
-    def __init__(self, corners):
-        assert len(corners) == 4
 
-        self.corners = corners
+    def __init__(self, corners):
+        """
+        Initialize either with a list of corners, or with a numpy array
+        """
+
+        if type(corners).__module__[:5] == np.__name__:
+            assert (corners.shape == (4,2)) or (corners.shape == (2,4))
+
+            self.corners = []
+            if (corners.shape == (4,2)):
+                for i in range(0,4):
+                    self.corners.append((corners[i,0], corners[i,1]))
+            else:
+                for i in range(0,4):
+                    self.corners.append((corners[0,i], corners[1,i]))
+        else:
+            assert len(corners) == 4
+            self.corners = corners
 
     def computeCenter(self):
         center = [0,0]

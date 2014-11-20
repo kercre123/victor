@@ -34,7 +34,7 @@ class PlanePattern(object):
     useSIFTmatching = False
 
     def __init__(self, templateImage):
-        assert type(templateImage).__module__ == np.__name__, 'Must be a Numpy array'
+        assert type(templateImage).__module__[:5] == np.__name__, 'Must be a Numpy array'
         assert len(templateImage.shape) == 2, 'Must be 2D'
 
         #templateImage = cv2.equalizeHist(templateImage)
@@ -99,7 +99,7 @@ class PlanePattern(object):
         return blockDescriptor
 
     def match(self, queryImage, bruteForceMatchThreshold, preMatchHomographies=[eye(3)], displayMatches=False):
-        assert type(queryImage).__module__ == np.__name__, 'queryImage must be a numpy array'
+        assert type(queryImage).__module__[:5] == np.__name__, 'queryImage must be a numpy array'
         assert len(queryImage.shape) == 2, 'queryImage must be 2D'
         assert queryImage.shape == self.templateImage.shape, 'template and query must be the same size'
 
@@ -111,7 +111,7 @@ class PlanePattern(object):
         numMatchedPoints = []
 
         for preMatchHomography in preMatchHomographies:
-            assert type(preMatchHomography).__module__ == np.__name__, 'Must be a numpy array'
+            assert type(preMatchHomography).__module__[:5] == np.__name__, 'Must be a numpy array'
 
             if all(preMatchHomography == eye(3)) == True:
                 queryImageWarped = queryImage
@@ -209,20 +209,22 @@ class PlanePattern(object):
                 matchedArray_original[i,:] = matched_template[i].pt
                 matchedArray_query[i,:] = matched_query[i].pt
 
-            useOpenCvRansac = True
+            useOpenCvRansac = False
 
-            try:
-                if useOpenCvRansac:
-                    H1 = cv2.findHomography( matchedArray_query, matchedArray_original, cv2.RANSAC, ransacReprojThreshold = 10 )
-                    numInliers = H1[1].sum()
-                    H1 = H1[0];
-                else:
-                    H1, inliners = computeHomography(matchedArray_query, matchedArray_original, 1000, 10)
-                    numInliers = len(inliners)
+            #try:
+            if useOpenCvRansac:
+                H1 = cv2.findHomography( matchedArray_query, matchedArray_original, cv2.RANSAC, ransacReprojThreshold = 10 )
+                numInliers = H1[1].sum()
+                H1 = H1[0];
+            else:
+                H1, inliners = computeHomography(matchedArray_query, matchedArray_original, self.templateImage.shape, 1000, 10)
+                numInliers = len(inliners)
 
-                print('numInliers = ' + str(numInliers))
-            except:
-                H1 = eye(3)
+            print('numInliers = ' + str(numInliers))
+            print(H1)
+            #except:
+               # pdb.set_trace()
+               # H1 = eye(3)
 
             H = H1
 
