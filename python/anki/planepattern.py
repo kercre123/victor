@@ -18,6 +18,7 @@ import numpy as np
 from numpy import *
 from numpy.linalg import inv
 import pdb
+from anki.ransac import computeHomography
 
 class PlanePattern(object):
     occlusionGridSize = {'x':40, 'y':40}
@@ -27,7 +28,8 @@ class PlanePattern(object):
     hogNumBins = 3
 
     #sparseLk = {'numPointsPerDimension':10, 'blockSizes':[(15,15),(7,7)]}
-    sparseLk = {'numPointsPerDimension':25, 'blockSizes':[(15,15),(15,15)]}
+    sparseLk = {'numPointsPerDimension':25, 'blockSizes':[(15,15)]}
+    #sparseLk = {'numPointsPerDimension':25, 'blockSizes':[]}
 
     useSIFTmatching = False
 
@@ -35,7 +37,7 @@ class PlanePattern(object):
         assert type(templateImage).__module__ == np.__name__, 'Must be a Numpy array'
         assert len(templateImage.shape) == 2, 'Must be 2D'
 
-        templateImage = cv2.equalizeHist(templateImage)
+        #templateImage = cv2.equalizeHist(templateImage)
 
         self.templateImage = templateImage
 
@@ -46,7 +48,12 @@ class PlanePattern(object):
             search_params = {'checks':50}
             self.matcher = cv2.FlannBasedMatcher(index_params, search_params)
         else:
-            self.detector = cv2.ORB()
+            # Default parameters, same at self.detector = cv2.ORB()
+            # self.detector = cv2.ORB(nfeatures=500, scaleFactor=1.2, nlevels=8, edgeThreshold=31, firstLevel=0, WTA_K=2, patchSize=31)
+
+            self.detector = cv2.ORB(nfeatures=500, scaleFactor=1.1, nlevels=16, edgeThreshold=31, firstLevel=0, WTA_K=2, patchSize=31)
+
+
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
         self.keypoints, self.descriptors = self.detector.detectAndCompute(self.templateImage, None)
@@ -93,7 +100,7 @@ class PlanePattern(object):
 
     def match(self, queryImage, bruteForceMatchThreshold, preMatchHomographies=[eye(3)], displayMatches=False):
         assert type(queryImage).__module__ == np.__name__, 'queryImage must be a numpy array'
-        assert len(queryImage.shape) == 2,'queryImage must be 2D'
+        assert len(queryImage.shape) == 2, 'queryImage must be 2D'
         assert queryImage.shape == self.templateImage.shape, 'template and query must be the same size'
 
         # Compute matches between query and template
@@ -113,7 +120,8 @@ class PlanePattern(object):
 
             inversePreMatchHomography = inv(preMatchHomography)
 
-            queryKeypoints, queryDescriptors = self.detector.detectAndCompute(cv2.equalizeHist(queryImageWarped), None)
+            #queryImageWarped = cv2.equalizeHist(queryImageWarped)
+            queryKeypoints, queryDescriptors = self.detector.detectAndCompute(queryImageWarped, None)
 
             cur_matched_template = []
             cur_matched_query = []
@@ -161,8 +169,29 @@ class PlanePattern(object):
                 matched_template.append(template)
                 matched_query.append(warpedQuery)
 
+        # Remove points that were detected multiple times
+        matched_template_good = []
+        matched_query_good = []
+        closenessThreshold = 2
+        for i1, (template1,query1) in enumerate(zip(matched_template,matched_query)):
+            closeMatchId = -1
+            for i2, (template2,query2) in enumerate(zip(matched_template,matched_query)):
+                if i1 == i2:
+                    continue
+
+                if sqrt(pow(query1.pt[0] - query2.pt[0], 2) + pow(query1.pt[1] - query2.pt[1], 2)) < closenessThreshold:
+                    closeMatchId = i2
+                    break
+
+            if closeMatchId == -1 or closeMatchId > i1:
+                matched_template_good.append(template1)
+                matched_query_good.append(query1)
+
         #pdb.set_trace()
-        print('Matched ' + str(numMatchedPoints))
+        print('Matched ' + str(numMatchedPoints) + ' = ' + str(array(numMatchedPoints).sum()) + ' and kept ' + str(len(matched_template_good)))
+
+        matched_template = matched_template_good
+        matched_query = matched_query_good
 
         H = eye(3)
         numInliers = 0
@@ -180,10 +209,18 @@ class PlanePattern(object):
                 matchedArray_original[i,:] = matched_template[i].pt
                 matchedArray_query[i,:] = matched_query[i].pt
 
+            useOpenCvRansac = True
+
             try:
-                H1 = cv2.findHomography( matchedArray_query, matchedArray_original, cv2.RANSAC )
-                numInliers = H1[1].sum()
-                H1 = H1[0];
+                if useOpenCvRansac:
+                    H1 = cv2.findHomography( matchedArray_query, matchedArray_original, cv2.RANSAC, ransacReprojThreshold = 10 )
+                    numInliers = H1[1].sum()
+                    H1 = H1[0];
+                else:
+                    H1, inliners = computeHomography(matchedArray_query, matchedArray_original, 1000, 10)
+                    numInliers = len(inliners)
+
+                print('numInliers = ' + str(numInliers))
             except:
                 H1 = eye(3)
 

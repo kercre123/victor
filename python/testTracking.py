@@ -17,7 +17,8 @@ displayMatches = True
 captureBaseFilename = '/Users/pbarnum/Documents/tmp/webcam_'
 
 # Or None to use the first image captured from the camera
-templateImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people.png'
+#templateImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/people.png'
+templateImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/peopleScanned640x480.png'
 
 # Or None to capture images from the webcam
 #queryImageFilename = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/webcam_0.png'
@@ -57,8 +58,8 @@ preMatchHomographies = [
               [0,1,0],
               [0,0,1]]),
     np.array([[2.630014, 1.242951, -524.176621],
-          [-0.325372, 5.798278, -958.557600],
-          [-0.000597, 0.005180, 1.000000]]),
+              [-0.325372, 5.798278, -958.557600],
+              [-0.000597, 0.005180, 1.000000]]),
     np.array([[4.762305, 4.681719, -1002.478256],
               [-0.814753, 20.148339, -2401.653955],
               [-0.001467, 0.019998, 1.000000]]),
@@ -92,6 +93,8 @@ if queryImageFilename is not None:
     if len(image.shape) == 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+toUseHomographies = preMatchHomographies[:]
+
 saveIndex = 0
 frameNumber = 0
 while(True):
@@ -104,7 +107,11 @@ while(True):
         image = mainCamera.undistort(image)
         undistortedImage = image.copy()
 
-    planePattern.match(image, bruteForceMatchThreshold, preMatchHomographies, displayMatches)
+    newHomography = planePattern.match(image, bruteForceMatchThreshold, preMatchHomographies, displayMatches)
+
+    toUseHomographies = preMatchHomographies[:]
+    toUseHomographies.append(newHomography)
+
 
     if cv2.waitKey(50) & 0xFF == ord('q'):
         print('Breaking')
