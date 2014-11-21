@@ -2464,7 +2464,7 @@ namespace Anki {
           SetImageSendMode(ISM_STREAM, captureResolution_);
           DownsampleAndSendImage(grayscaleImage);
           
-          PRINT("Sent image to basestation.\n");
+          //PRINT("Sent image to basestation.\n");
           
         } else {
           PRINT("VisionSystem::Update(): unknown mode = %d.", mode_);
