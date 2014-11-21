@@ -14,20 +14,19 @@
 
 #include "anki/common/types.h"
 
-#if ANKICORETECH_USE_OPENCV
-#include "opencv2/core/core.hpp"
-#endif
+#include "anki/common/basestation/array2d.h"
+#include "anki/common/basestation/math/point.h"
 
 
 namespace Anki {
 namespace Vision {
 
-  class Image
-//#if ANKICORETECH_USE_OPENCV
-//  : private cv::Mat // private inheritance from cv::Mat
-//#endif
+  class Image : public Array2d<u8>
   {
   public:
+    
+    // Create an empty image
+    Image();
     
     // Allocate a new image
     Image(s32 nrows, s32 ncols);
@@ -35,42 +34,23 @@ namespace Vision {
     // Wrap image "header" around given data pointer: no allocation.
     Image(s32 nrows, s32 ncols, u8* data);
     
-    bool IsEmpty() const;
-    
-    const u8* GetDataPointer() const;
-    
     void SetTimestamp(TimeStamp_t ts);
     TimeStamp_t GetTimestamp() const;
     
     void Display(const char *windowName, bool pause = false) const;
+
+    s32 GetConnectedComponents(Array2d<s32>& labelImage,
+                               std::vector<std::vector< Point2<s32> > >& regionPoints) const;
     
   protected:
     TimeStamp_t     _timeStamp;
-    
-#   if ANKICORETECH_USE_OPENCV
-    cv::Mat_<u8> _cvMat;
-#   endif
-    
+        
   };
   
   
   //
   // Inlined implemenations
   //
-  
-  inline const u8* Image::GetDataPointer() const {
-#   if ANKICORETECH_USE_OPENCV
-    return _cvMat.ptr();
-#   endif
-  }
-  
-  inline bool Image::IsEmpty() const
-  {
-#   if ANKICORETECH_USE_OPENCV
-    return _cvMat.empty();
-#   endif
-  }
-  
   inline void Image::SetTimestamp(TimeStamp_t ts) {
     _timeStamp = ts;
   }
