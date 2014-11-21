@@ -24,16 +24,6 @@ def captureImages(videoCaptures, undistortMaps):
 
     return images
 
-def computeLk(lastImage, curImage, points0, lk_params):
-    # calculate optical flow
-    points1, st, err = cv2.calcOpticalFlowPyrLK(lastImage, curImage, points0, None, **lk_params)
-
-    # Select good points
-    goodPoints0 = points0[st==1]
-    goodPoints1 = points1[st==1]
-
-    return goodPoints0, goodPoints1
-
 def drawKeypointMatches(image, points0, points1):
     """
     draw the tracks
@@ -60,6 +50,9 @@ for cameraId in cameraIds:
 useStereoCalibration = True
 
 undistortMaps = None
+
+# Computed in Matlab with "toArray(computeStereoColormap(128), true)"
+stereoDisparityColors = np.array([[0, 0, 255], [0, 7, 255], [0, 16, 255], [0, 24, 255], [0, 32, 255], [0, 41, 255], [0, 49, 255], [0, 57, 255], [0, 65, 255], [0, 73, 255], [0, 82, 255], [0, 90, 255], [0, 99, 255], [0, 107, 255], [0, 115, 255], [0, 124, 255], [0, 132, 255], [0, 140, 255], [0, 148, 255], [0, 156, 255], [0, 165, 255], [0, 173, 255], [0, 182, 255], [0, 190, 255], [0, 198, 255], [0, 207, 255], [0, 215, 255], [0, 223, 255], [0, 231, 255], [0, 239, 255], [0, 248, 255], [0, 255, 255], [0, 255, 255], [0, 255, 248], [0, 255, 239], [0, 255, 231], [0, 255, 223], [0, 255, 215], [0, 255, 207], [0, 255, 198], [0, 255, 190], [0, 255, 182], [0, 255, 173], [0, 255, 165], [0, 255, 156], [0, 255, 148], [0, 255, 140], [0, 255, 132], [0, 255, 124], [0, 255, 115], [0, 255, 107], [0, 255, 99], [0, 255, 90], [0, 255, 82], [0, 255, 73], [0, 255, 65], [0, 255, 57], [0, 255, 49], [0, 255, 41], [0, 255, 32], [0, 255, 24], [0, 255, 16], [0, 255, 7], [0, 255, 0], [0, 255, 0], [7, 255, 0], [16, 255, 0], [24, 255, 0], [32, 255, 0], [41, 255, 0], [49, 255, 0], [57, 255, 0], [65, 255, 0], [73, 255, 0], [82, 255, 0], [90, 255, 0], [99, 255, 0], [107, 255, 0], [115, 255, 0], [124, 255, 0], [132, 255, 0], [140, 255, 0], [148, 255, 0], [156, 255, 0], [165, 255, 0], [173, 255, 0], [182, 255, 0], [190, 255, 0], [198, 255, 0], [207, 255, 0], [215, 255, 0], [223, 255, 0], [231, 255, 0], [239, 255, 0], [248, 255, 0], [255, 255, 0], [255, 255, 0], [255, 248, 0], [255, 239, 0], [255, 231, 0], [255, 223, 0], [255, 215, 0], [255, 207, 0], [255, 198, 0], [255, 190, 0], [255, 182, 0], [255, 173, 0], [255, 165, 0], [255, 156, 0], [255, 148, 0], [255, 140, 0], [255, 132, 0], [255, 124, 0], [255, 115, 0], [255, 107, 0], [255, 99, 0], [255, 90, 0], [255, 82, 0], [255, 73, 0], [255, 65, 0], [255, 57, 0], [255, 49, 0], [255, 41, 0], [255, 32, 0], [255, 24, 0], [255, 16, 0], [255, 7, 0], [255, 0, 0]])
 
 if useStereoCalibration:
   # Calibration for the Spynet stereo pair
@@ -140,27 +133,49 @@ for image in images:
 while(1):
     images = captureImages(videoCaptures, undistortMaps)
 
+    # Compute the flow
+    allFlowPoints = []
     for iImage in range(0,len(images)):
         points0 = allPoints0[iImage]
 
         curImage = images[iImage]
         lastImage = lastImages[iImage]
 
+        curFlowPoints = []
+
         for windowSize in windowSizes:
 
             flow_lk_params['winSize'] = windowSize
 
-            goodPoints0, goodPoints1 = computeLk(lastImage, curImage, points0, flow_lk_params)
-            keypointImage = drawKeypointMatches(curImage, goodPoints0, goodPoints1)
+            points1, st, err = cv2.calcOpticalFlowPyrLK(lastImage, curImage, points0, None, **flow_lk_params)
 
-            cv2.imshow('flow_' + str(iImage) + '_' + str(windowSize), keypointImage)
+            # Select good points
+            goodPoints0 = points0[st==1]
+            goodPoints1 = points1[st==1]
+
+            curFlowPoints.append({'points1':points1,'st':st,'err':err,'goodPoints0':goodPoints0,'goodPoints1':goodPoints1,'curImage':curImage, 'lastImage':lastImage, 'windowSize':windowSize, 'iImage':iImage})
+
+        allFlowPoints.append(curFlowPoints)
+
+    # Draw the flow
+    for curFlowPoints in allFlowPoints:
+        for flowPoints in curFlowPoints:
+            keypointImage = drawKeypointMatches(flowPoints['curImage'], flowPoints['goodPoints0'], flowPoints['goodPoints1'])
+            cv2.imshow('flow_' + str(flowPoints['iImage']) + '_' + str(flowPoints['windowSize']), keypointImage)
+
 
     if len(images) == 2:
+        # Compute the stereo
+        allStereoPoints = []
         for windowSize in windowSizes:
 
             stereo_lk_params['winSize'] = windowSize
 
-            goodPoints0_tmp, goodPoints1_tmp = computeLk(images[0], images[1], points0, stereo_lk_params)
+            points1, st, err = cv2.calcOpticalFlowPyrLK(images[0], images[1], points0, None, **stereo_lk_params)
+
+            # Select good points
+            goodPoints0_tmp = points0[st==1]
+            goodPoints1_tmp = points1[st==1]
 
             goodPoints0 = []
             goodPoints1 = []
@@ -170,8 +185,12 @@ while(1):
                     goodPoints0.append(point0)
                     goodPoints1.append(point1)
 
-            keypointImage = drawKeypointMatches(images[0], goodPoints0, goodPoints1)
-            cv2.imshow('stereo_' + str(windowSize), keypointImage)
+            allStereoPoints.append({'points1':points1,'st':st,'err':err,'goodPoints0':goodPoints0,'goodPoints1':goodPoints1,'images':images, 'windowSize':windowSize})
+
+        # Draw the stereo matches
+        for stereoPoints in allStereoPoints:
+            keypointImage = drawKeypointMatches(stereoPoints['images'][0], stereoPoints['goodPoints0'], stereoPoints['goodPoints1'])
+            cv2.imshow('stereo_' + str(stereoPoints['windowSize']), keypointImage)
 
     keypress = cv2.waitKey(waitKeyTime)
     if keypress & 0xFF == ord('q'):
