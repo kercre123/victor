@@ -35,7 +35,10 @@ namespace Anki
 {
 
   template<typename T>
-  class Array2d : private cv::Mat_<T> // Note the private inheritance!
+  class Array2d
+#if ANKICORETECH_USE_OPENCV
+  : private cv::Mat_<T> // Note the private inheritance!
+#endif
   {
   public:
 
@@ -53,7 +56,11 @@ namespace Anki
     // Access by row, col (for isolated access):
     T  operator() (const int row, const int col) const;
     T& operator() (const int row, const int col);
-
+    
+    // Get a pointer to the beginning of a row
+    T*       GetRow(s32 row);
+    const T* GetRow(s32 row) const;
+    
 #if ANKICORETECH_USE_OPENCV
     // Create an Array2d from a cv::Mat_<T> without copying any data
     Array2d(const cv::Mat_<T> &other);
@@ -63,31 +70,43 @@ namespace Anki
     // this Array2d. No data is copied.
     cv::Mat_<T>& get_CvMat_();
     const cv::Mat_<T>& get_CvMat_() const;
-
 #endif
 
     // Accessors:
-    inline s32 numRows() const;
-    inline s32 numCols() const;
-    inline s32 numElements() const;
+    inline s32 GetNumRows() const;
+    inline s32 GetNumCols() const;
+    inline s32 GetNumElements() const;
 
-    inline bool isEmpty() const;
+    inline bool IsEmpty() const;
 
     // Don't let the public mess with my data, but they can see it:
-    const T* getDataPointer() const;
+    const T* GetDataPointer() const;
 
     // Apply a function to every element, in place:
-    void applyScalarFunction(T (*fcn)(T));
+    void ApplyScalarFunction(T (*fcn)(T));
 
     // Apply a function pointer to every element, storing the
     // result in a separate, possibly differently-typed, result:
     template<class Tresult>
-    void applyScalarFunction(void(*fcn)(const T&, Tresult&),
+    void ApplyScalarFunction(void(*fcn)(const T&, Tresult&),
       Array2d<Tresult> &result) const;
+    
+    Array2d<T>& operator+=(const Array2d<T>& other);
+    Array2d<T>& operator-=(const Array2d<T>& other);
+    Array2d<T>& operator*=(const Array2d<T>& other);
+    Array2d<T>& operator/=(const Array2d<T>& other);
 
+    Array2d<T>& operator+=(const T& scalarValue);
+    Array2d<T>& operator-=(const T& scalarValue);
+    Array2d<T>& operator*=(const T& scalarValue);
+    Array2d<T>& operator/=(const T& scalarValue);
+    
+    // Absolute value, in place
+    Array2d<T>& Abs();
+    
   protected:
     // Sub-classes can get write access to the data:
-    T* getDataPointer();
+    T* GetDataPointer();
   }; // class Array2d(Managed)
 
   
@@ -97,8 +116,8 @@ namespace Anki
   
   // Return true iff two arrays are NEARLY equal, up to some epsilon:
   template<typename T>
-  bool nearlyEqual(const Array2d<T> &array1, const Array2d<T> &array2,
-                   const T eps = T(10)*std::numeric_limits<T>::epsilon());
+  bool IsNearlyEqual(const Array2d<T> &array1, const Array2d<T> &array2,
+                     const T eps = T(10)*std::numeric_limits<T>::epsilon());
   
   
 } //namespace Anki

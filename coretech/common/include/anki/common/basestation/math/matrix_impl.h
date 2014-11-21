@@ -145,7 +145,7 @@ namespace Anki {
   Matrix<T> Matrix<T>::operator*(const Matrix<T> &other) const
   {
     // Make sure the matrices have compatible sizes for multiplication
-    CORETECH_THROW_IF(this->numCols() != other.numRows());
+    CORETECH_THROW_IF(this->GetNumCols() != other.GetNumRows());
     
     
 #if ANKICORETECH_USE_OPENCV
@@ -164,7 +164,7 @@ namespace Anki {
   Matrix<T>& Matrix<T>::operator*=(const Matrix<T> &other)
   {
     // Make sure the matrices have compatible sizes for multiplication
-    CORETECH_THROW_IF(this->numCols() != other.numRows());
+    CORETECH_THROW_IF(this->GetNumCols() != other.GetNumRows());
     
     
 #if ANKICORETECH_USE_OPENCV
@@ -183,7 +183,7 @@ namespace Anki {
   template<typename T>
   Matrix<T>& Matrix<T>::Invert(void)
   {
-    CORETECH_THROW_IF(this->numRows() != this->numCols());
+    CORETECH_THROW_IF(this->GetNumRows() != this->GetNumCols());
     
 #if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix inversion:
@@ -199,7 +199,7 @@ namespace Anki {
   template<typename T>
   void Matrix<T>::GetInverse(Matrix<T>& outInverse) const
   {
-    CORETECH_THROW_IF(this->numRows() != this->numCols());
+    CORETECH_THROW_IF(this->GetNumRows() != this->GetNumCols());
     
 #if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix inversion:
@@ -246,8 +246,8 @@ namespace Anki {
   template<typename T>
   std::ostream& operator<<(std::ostream& out, const Matrix<T>& m)
   {
-    for (int i=0; i<m.numRows(); ++i) {
-      for (int j=0; j<m.numCols(); ++j) {
+    for (int i=0; i<m.GetNumRows(); ++i) {
+      for (int j=0; j<m.GetNumCols(); ++j) {
         out << m(i,j) << " ";
       }
       out << "\n";
@@ -486,13 +486,13 @@ namespace Anki {
   }
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  MatDimType SmallMatrix<NROWS,NCOLS,T>::numRows() const
+  MatDimType SmallMatrix<NROWS,NCOLS,T>::GetNumRows() const
   {
     return NROWS;
   }
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  MatDimType SmallMatrix<NROWS,NCOLS,T>::numCols() const
+  MatDimType SmallMatrix<NROWS,NCOLS,T>::GetNumCols() const
   {
     return NCOLS;
   }
@@ -514,7 +514,7 @@ namespace Anki {
   
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  bool nearlyEqual(const SmallMatrix<NROWS,NCOLS,T> &M1,
+  bool IsNearlyEqual(const SmallMatrix<NROWS,NCOLS,T> &M1,
                    const SmallMatrix<NROWS,NCOLS,T> &M2,
                    const T eps)
   {
@@ -531,7 +531,7 @@ namespace Anki {
   
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  SmallMatrix<NROWS,NCOLS,T> abs(const SmallMatrix<NROWS,NCOLS,T>& M)
+  SmallMatrix<NROWS,NCOLS,T> Abs(const SmallMatrix<NROWS,NCOLS,T>& M)
   {
     SmallMatrix<NROWS,NCOLS,T> Mcopy(M);
     return Mcopy.abs();

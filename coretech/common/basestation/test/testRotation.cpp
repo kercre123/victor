@@ -63,8 +63,8 @@ GTEST_TEST(TestRotation, Rotation3dNegativeAngle)
   // should be the same as the tranpose of the original matrix
   // which should be the same as the inverse of the rotation
   // matrix.
-  EXPECT_TRUE(nearlyEqual(Rmat_neg, Rt));
-  EXPECT_TRUE(nearlyEqual(Rt, Rinv));
+  EXPECT_TRUE(IsNearlyEqual(Rmat_neg, Rt));
+  EXPECT_TRUE(IsNearlyEqual(Rt, Rinv));
   
 } // TestRotation:Rotation3dNegativeAngle
 
@@ -218,32 +218,32 @@ GTEST_TEST(TestRotation, AxisRotation3d)
   RotationMatrix3d R_90z(angle, Zaxis);
   
   Point3f q = R_90x * Xaxis;
-  EXPECT_TRUE( nearlyEqual(q, Xaxis) );
+  EXPECT_TRUE( IsNearlyEqual(q, Xaxis) );
   
   q = R_90y * Xaxis;
-  EXPECT_TRUE( nearlyEqual(q, negZaxis) );
+  EXPECT_TRUE( IsNearlyEqual(q, negZaxis) );
   
   q = R_90z * Xaxis;
-  EXPECT_TRUE( nearlyEqual(q, Yaxis) );
+  EXPECT_TRUE( IsNearlyEqual(q, Yaxis) );
 
   q = R_90x * Yaxis;
-  EXPECT_TRUE( nearlyEqual(q, Zaxis) );
+  EXPECT_TRUE( IsNearlyEqual(q, Zaxis) );
   
   q = R_90z * Yaxis;
-  EXPECT_TRUE( nearlyEqual(q, negXaxis) );
+  EXPECT_TRUE( IsNearlyEqual(q, negXaxis) );
 
   RotationMatrix3d R_neg90x(-angle, Xaxis);
   RotationMatrix3d R_neg90y(-angle, Yaxis);
   RotationMatrix3d R_neg90z(-angle, Zaxis);
   
   q = R_neg90x * Xaxis;
-  EXPECT_TRUE( nearlyEqual(q, Xaxis) );
+  EXPECT_TRUE( IsNearlyEqual(q, Xaxis) );
   
   q = R_neg90y * Xaxis;
-  EXPECT_TRUE( nearlyEqual(q, Zaxis) );
+  EXPECT_TRUE( IsNearlyEqual(q, Zaxis) );
   
   q = R_neg90z * Xaxis;
-  EXPECT_TRUE( nearlyEqual(q, negYaxis) );
+  EXPECT_TRUE( IsNearlyEqual(q, negYaxis) );
   
 } // TestRotation:AxisRotation3d
 

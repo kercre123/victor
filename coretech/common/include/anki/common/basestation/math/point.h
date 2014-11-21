@@ -209,7 +209,7 @@ namespace Anki {
   bool operator== (const Point<N,T> &point1, const Point<N,T> &point2);
   
   template<PointDimType N, typename T>
-  bool nearlyEqual(const Point<N,T> &point1, const Point<N,T> &point2,
+  bool IsNearlyEqual(const Point<N,T> &point1, const Point<N,T> &point2,
                    const T eps = T(10)*std::numeric_limits<T>::epsilon());
   
   template<PointDimType N, typename T>
