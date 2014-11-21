@@ -5,8 +5,8 @@ import pdb
 import os
 #from matplotlib import pyplot as plt
 
-leftCameraId = 2
-rightCameraId = 0
+leftCameraId = 1
+rightCameraId = 2
 captureBaseFilename = '/Users/pbarnum/tmp/stereo_'
 
 computeDisparity = True
