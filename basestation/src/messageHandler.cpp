@@ -170,7 +170,7 @@ namespace Anki {
                  robot->GetID(), msg.x_upperLeft, msg.y_upperLeft, msg.width, msg.height);
       
       
-      if(msg.visualize > 0) {
+      //if(msg.visualize > 0) {
         // Send tracker quad info to viz
         const u16 left_x   = msg.x_upperLeft;
         const u16 right_x  = left_x + msg.width;
@@ -181,7 +181,7 @@ namespace Anki {
                                                    right_x, top_y,
                                                    right_x, bottom_y,
                                                    left_x, bottom_y);
-      }
+      //}
       
       return retVal;
     } // ProcessMessage(MessageFaceDetection)

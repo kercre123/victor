@@ -2303,8 +2303,9 @@ namespace Cozmo {
         msg.height      = static_cast<u16>(currentFace.get_height());
         msg.x_upperLeft = static_cast<u16>(currentFace.left);
         msg.y_upperLeft = static_cast<u16>(currentFace.top);
-        msg.visualize   = static_cast<u8>(false);
+        msg.visualize   = static_cast<u8>(true);
         
+        /*
         if (imageSendMode_ == ISM_STREAM) {
           
           if(sendScale != 1.f) {
@@ -2324,6 +2325,7 @@ namespace Cozmo {
             msg.visualize = static_cast<u8>(true);
           }
         } // if imageSendMode_ == ISM_STREAM
+        */
         
         // Process the face detection message (i.e. drop it off for main
         // execution to deal with if we are tracking)

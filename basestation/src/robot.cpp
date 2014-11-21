@@ -1673,12 +1673,16 @@ namespace Anki {
     
     Result Robot::StartFaceTracking(u8 timeout_sec)
     {
-      return SendStartFaceTracking(timeout_sec);
+      //return SendStartFaceTracking(timeout_sec);
+      _visionProcessor.EnableFaceDetection(true);
+      return RESULT_OK;
     }
     
     Result Robot::StopFaceTracking()
     {
-      return SendStopFaceTracking();
+      //return SendStopFaceTracking();
+      _visionProcessor.EnableFaceDetection(false);
+      return RESULT_OK;
     }
     
     Result Robot::SendStartFaceTracking(const u8 timeout_sec)
