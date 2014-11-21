@@ -18,6 +18,7 @@ function colors = computeStereoColormap(numDisparities)
     colors = permute(colors, [3,1,2]);
     colors = imresize(colors, [1,numDisparities], 'bilinear');
     colors = squeeze(colors);
+    colors = colors(end:-1:1,:);
     
     % colorsToShow = permute(colors, [3,1,2]);
     % colorsToShow = repmat(colorsToShow, [100,1,1]);
