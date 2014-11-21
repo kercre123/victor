@@ -473,9 +473,11 @@ namespace Anki {
       MessageVisionMarker visionMarker;
       if(true == _visionProcessor.CheckMailbox(visionMarker)) {
         Result lastResult = QueueObservedMarker(visionMarker);
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Root.Update.FailedToQueueVisionMarker",
-                                           "Got VisionMarker message from vision processing thread but failed to queue it.\n");
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_ERROR("Robot.Update.FailedToQueueVisionMarker",
+                            "Got VisionMarker message from vision processing thread but failed to queue it.\n");
+          return lastResult;
+        }
       }
       
       MessageFaceDetection faceDetection;
@@ -1654,10 +1656,12 @@ namespace Anki {
       MessageRobotState robotState;
       RobotPoseStamp p;
       TimeStamp_t actualTimestamp;
-      _poseHistory.ComputePoseAt(image.GetTimestamp(), actualTimestamp, p, false); // TODO: use interpolation??
-      AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                         "Robot.ProcessImage.PoseHistoryFail",
-                                         "Unable to get computed pose at image timestamp of %d.\n", image.GetTimestamp());
+      lastResult = _poseHistory.ComputePoseAt(image.GetTimestamp(), actualTimestamp, p, false); // TODO: use interpolation??
+      if(lastResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("Robot.ProcessImage.PoseHistoryFail",
+                        "Unable to get computed pose at image timestamp of %d.\n", image.GetTimestamp());
+        return lastResult;
+      }
       robotState.timestamp = actualTimestamp;
       robotState.headAngle = p.GetHeadAngle();
       robotState.liftAngle = p.GetLiftAngle();

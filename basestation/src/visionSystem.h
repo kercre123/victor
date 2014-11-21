@@ -4,9 +4,12 @@
  * Author: Andrew Stein
  * Date:   (various)
  *
- * Description: High-level module that controls the vision system and switches
- *              between fiducial detection and tracking and feeds results to 
- *              main execution thread via message mailboxes.
+ * Description: High-level module that controls the basestation vision system
+ *              Runs on its own thread inside VisionProcessingThread.
+ *
+ *  NOTE: Current implementation is basically a copy of the Embedded vision system
+ *    on the robot, so we can first see if vision-over-WiFi is feasible before a
+ *    native Basestation implementation of everything.
  *
  * Copyright: Anki, Inc. 2014
  **/
@@ -33,8 +36,6 @@
 #include "anki/vision/basestation/cameraCalibration.h"
 
 #include "visionParameters.h"
-
-#include <thread>
 
 namespace Anki {
   
@@ -63,9 +64,6 @@ namespace Cozmo {
       TAKING_SNAPSHOT      = 0x08
     };
     
-    void ProcessingThread(const MessageRobotState* robotState);
-    
-       
     //
     // Methods:
     //
@@ -412,95 +410,6 @@ namespace Cozmo {
     
   }; // class VisionSystem
   
-  
-  
-  class VisionProcessingThread
-  {
-  public:
-    
-    VisionProcessingThread();
-    ~VisionProcessingThread();
-    
-    void Start(Vision::CameraCalibration& camCalib);
-    void Stop();
-    
-    void SetNextImage(const Vision::Image& image,
-                      const MessageRobotState& robotState);
-    
-    // Enable/disable different types of processing
-    void EnableMarkerDetection(bool tf);
-    void EnableFaceDetection(bool tf);
-  
-    // These return true if a mailbox messages was available, and they copy
-    // that message into the passed-in message struct.
-    //bool CheckMailbox(ImageChunk&          msg);
-    bool CheckMailbox(MessageDockingErrorSignal&  msg);
-    bool CheckMailbox(MessageFaceDetection&       msg);
-    bool CheckMailbox(MessageVisionMarker&        msg);
-    bool CheckMailbox(MessageTrackerQuad&         msg);
-    
-  protected:
-    
-    VisionSystem* _visionSystem;
-    
-    Vision::CameraCalibration _camCalib;
-    
-    bool   _running;
-    bool   _isLocked; // mutex for setting image and state
-
-    Vision::Image* _currentImg;
-    Vision::Image* _nextImg;
-    
-    MessageRobotState _currentRobotState;
-    MessageRobotState _nextRobotState;
-    
-    std::thread _processingThread;
-    
-    void Processor();
-    
-    void Lock();
-    void Unlock();
-    
-    
-  }; // class VisionProcessingThread;
-  
-  
-#if 0
-#pragma mark --- VisionSystem::Mailbox Template Implementations ---
-#endif
-  
-  inline bool VisionProcessingThread::CheckMailbox(MessageFaceDetection& msg)
-  {
-    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr && _visionSystem->IsInitialized(), false,
-                                       "VisionProcessingThread.CheckMailbox.NullVisionSystem",
-                                       "CheckMailbox called before vision system instantiated and initialized.");
-    return _visionSystem->CheckMailbox(msg);
-  }
-  
-  inline bool VisionProcessingThread::CheckMailbox(MessageVisionMarker& msg)
-  {
-    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr && _visionSystem->IsInitialized(), false,
-                                       "VisionProcessingThread.CheckMailbox.NullVisionSystem",
-                                       "CheckMailbox called before vision system instantiated and initialized.");
-    return _visionSystem->CheckMailbox(msg);
-  }
-  
-  inline bool VisionProcessingThread::CheckMailbox(MessageDockingErrorSignal& msg)
-  {
-    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr && _visionSystem->IsInitialized(), false,
-                                       "VisionProcessingThread.CheckMailbox.NullVisionSystem",
-                                       "CheckMailbox called before vision system instantiated and initialized.");
-    return _visionSystem->CheckMailbox(msg);
-  }
-  
-  inline bool VisionProcessingThread::CheckMailbox(MessageTrackerQuad& msg)
-  {
-    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr && _visionSystem->IsInitialized(), false,
-                                       "VisionProcessingThread.CheckMailbox.NullVisionSystem",
-                                       "CheckMailbox called before vision system instantiated and initialized.");
-    return _visionSystem->CheckMailbox(msg);
-  }
-
       
 } // namespace Cozmo
 } // namespace Anki

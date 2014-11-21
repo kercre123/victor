@@ -48,7 +48,7 @@
 #include "cannedAnimationContainer.h"
 #include "behaviorManager.h"
 #include "ramp.h"
-#include "visionSystem.h"
+#include "visionProcessingThread.h"
 
 
 namespace Anki {
