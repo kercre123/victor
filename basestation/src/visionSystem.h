@@ -73,6 +73,9 @@ namespace Cozmo {
     Result Init(const Vision::CameraCalibration& camCalib);
     bool IsInitialized() const { return isInitialized_; }
     
+    void StartMarkerDetection();
+    void StopMarkerDetection();
+    
     // Accessors
     //const HAL::CameraInfo* GetCameraCalibration();
     f32 GetTrackingMarkerWidth();
@@ -423,6 +426,10 @@ namespace Cozmo {
     
     void SetNextImage(const Vision::Image& image,
                       const MessageRobotState& robotState);
+    
+    // Enable/disable different types of processing
+    void EnableMarkerDetection(bool tf);
+    void EnableFaceDetection(bool tf);
   
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.

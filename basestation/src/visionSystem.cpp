@@ -139,6 +139,24 @@ namespace Cozmo {
     
   } // SetNextImage()
   
+  void VisionProcessingThread::EnableMarkerDetection(bool enable)
+  {
+    if(enable) {
+      _visionSystem->StartMarkerDetection();
+    } else {
+      _visionSystem->StopMarkerDetection();
+    }
+  }
+  
+  void VisionProcessingThread::EnableFaceDetection(bool enable)
+  {
+    if(enable) {
+      _visionSystem->StartDetectingFaces();
+    } else {
+      _visionSystem->StopDetectingFaces();
+    }
+  }
+
   
   void VisionProcessingThread::Lock()
   {
@@ -276,6 +294,16 @@ namespace Cozmo {
     
     return doesMatch;
   } // MarkerToTrack::Matches()
+  
+  void VisionSystem::StartMarkerDetection()
+  {
+    mode_ |= LOOKING_FOR_MARKERS;
+  }
+  
+  void VisionSystem::StopMarkerDetection()
+  {
+    mode_ &= ~LOOKING_FOR_MARKERS;
+  }
   
 #if 0
 #pragma mark --- Simulator-Related Definitions ---
