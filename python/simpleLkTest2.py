@@ -66,42 +66,57 @@ undistortMaps = None
 stereoDisparityColors = [(255, 0, 0), (255, 7, 0), (255, 16, 0), (255, 24, 0), (255, 32, 0), (255, 41, 0), (255, 49, 0), (255, 57, 0), (255, 65, 0), (255, 73, 0), (255, 82, 0), (255, 90, 0), (255, 99, 0), (255, 107, 0), (255, 115, 0), (255, 124, 0), (255, 132, 0), (255, 140, 0), (255, 148, 0), (255, 156, 0), (255, 165, 0), (255, 173, 0), (255, 182, 0), (255, 190, 0), (255, 198, 0), (255, 207, 0), (255, 215, 0), (255, 223, 0), (255, 231, 0), (255, 239, 0), (255, 248, 0), (255, 255, 0), (255, 255, 0), (248, 255, 0), (239, 255, 0), (231, 255, 0), (223, 255, 0), (215, 255, 0), (207, 255, 0), (198, 255, 0), (190, 255, 0), (182, 255, 0), (173, 255, 0), (165, 255, 0), (156, 255, 0), (148, 255, 0), (140, 255, 0), (132, 255, 0), (124, 255, 0), (115, 255, 0), (107, 255, 0), (99, 255, 0), (90, 255, 0), (82, 255, 0), (73, 255, 0), (65, 255, 0), (57, 255, 0), (49, 255, 0), (41, 255, 0), (32, 255, 0), (24, 255, 0), (16, 255, 0), (7, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 7), (0, 255, 16), (0, 255, 24), (0, 255, 32), (0, 255, 41), (0, 255, 49), (0, 255, 57), (0, 255, 65), (0, 255, 73), (0, 255, 82), (0, 255, 90), (0, 255, 99), (0, 255, 107), (0, 255, 115), (0, 255, 124), (0, 255, 132), (0, 255, 140), (0, 255, 148), (0, 255, 156), (0, 255, 165), (0, 255, 173), (0, 255, 182), (0, 255, 190), (0, 255, 198), (0, 255, 207), (0, 255, 215), (0, 255, 223), (0, 255, 231), (0, 255, 239), (0, 255, 248), (0, 255, 255), (0, 255, 255), (0, 248, 255), (0, 239, 255), (0, 231, 255), (0, 223, 255), (0, 215, 255), (0, 207, 255), (0, 198, 255), (0, 190, 255), (0, 182, 255), (0, 173, 255), (0, 165, 255), (0, 156, 255), (0, 148, 255), (0, 140, 255), (0, 132, 255), (0, 124, 255), (0, 115, 255), (0, 107, 255), (0, 99, 255), (0, 90, 255), (0, 82, 255), (0, 73, 255), (0, 65, 255), (0, 57, 255), (0, 49, 255), (0, 41, 255), (0, 32, 255), (0, 24, 255), (0, 16, 255), (0, 7, 255), (0, 0, 255)]
 
 if useStereoCalibration:
-  # Calibration for the Spynet stereo pair
+    numDisparities = 128
+    disparityType = 'bm'
+    if disparityType == 'bm':
+        disparityWindowSize = 51
+        stereo = cv2.StereoBM(cv2.STEREO_BM_BASIC_PRESET, numDisparities, disparityWindowSize)
+    elif disparityType == 'sgbm':
+        stereo = cv2.StereoSGBM(
+            minDisparity = 0, numDisparities=128,
+            SADWindowSize=5,
+            speckleWindowSize=150, speckleRange = 2,
+            preFilterCap=4,
+            uniquenessRatio=1,
+            disp12MaxDiff = 10,
+            P1 = 600, P2 = 2400)
 
-  distCoeffs1 = np.array([0.190152, -0.472407, 0.004230, -0.006271, 0.000000]);
-  distCoeffs2 = np.array([0.169615, -0.418723, 0.000641, -0.012438, 0.000000]);
+    # Calibration for the Spynet stereo pair
 
-  cameraMatrix1 = np.array(
-    [[724.938597, 0.000000, 319.709242],
-     [0.000000, 722.297095, 291.756454],
-     [0.000000, 0.000000, 1.000000]]);
+    distCoeffs1 = np.array([0.190152, -0.472407, 0.004230, -0.006271, 0.000000]);
+    distCoeffs2 = np.array([0.169615, -0.418723, 0.000641, -0.012438, 0.000000]);
 
-  cameraMatrix2 = np.array(
-    [[742.089046, 0.000000, 305.986048],
-     [0.000000, 739.837304, 248.962878],
-     [0.000000, 0.000000, 1.000000]]);
+    cameraMatrix1 = np.array(
+      [[724.938597, 0.000000, 319.709242],
+       [0.000000, 722.297095, 291.756454],
+       [0.000000, 0.000000, 1.000000]]);
 
-  R = np.array(
-    [[0.994009, -0.022323, 0.106996],
-     [0.019794, 0.999500, 0.024641],
-     [-0.107492, -0.022376, 0.993954]]);
+    cameraMatrix2 = np.array(
+      [[742.089046, 0.000000, 305.986048],
+       [0.000000, 739.837304, 248.962878],
+       [0.000000, 0.000000, 1.000000]]);
 
-  T = np.array([-13.001413, -0.695831, 0.988237]);
+    R = np.array(
+      [[0.994009, -0.022323, 0.106996],
+       [0.019794, 0.999500, 0.024641],
+       [-0.107492, -0.022376, 0.993954]]);
 
-  imageSize = (640, 480)
+    T = np.array([-13.001413, -0.695831, 0.988237]);
 
-  [R1, R2, P1, P2, Q, validPixROI1, validPixROI2] = cv2.stereoRectify(
-    cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize, R, T)
+    imageSize = (640, 480)
 
-  leftUndistortMapX, leftUndistortMapY = cv2.initUndistortRectifyMap(
-    cameraMatrix1, distCoeffs1, R1, P1, imageSize, cv2.CV_32FC1)
+    [R1, R2, P1, P2, Q, validPixROI1, validPixROI2] = cv2.stereoRectify(
+      cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize, R, T)
 
-  rightUndistortMapX, rightUndistortMapY = cv2.initUndistortRectifyMap(
-    cameraMatrix2, distCoeffs2, R2, P2, imageSize, cv2.CV_32FC1)
+    leftUndistortMapX, leftUndistortMapY = cv2.initUndistortRectifyMap(
+      cameraMatrix1, distCoeffs1, R1, P1, imageSize, cv2.CV_32FC1)
 
-  undistortMaps = []
-  undistortMaps.append({'mapX':leftUndistortMapX, 'mapY':leftUndistortMapY})
-  undistortMaps.append({'mapX':rightUndistortMapX, 'mapY':rightUndistortMapY})
+    rightUndistortMapX, rightUndistortMapY = cv2.initUndistortRectifyMap(
+      cameraMatrix2, distCoeffs2, R2, P2, imageSize, cv2.CV_32FC1)
+
+    undistortMaps = []
+    undistortMaps.append({'mapX':leftUndistortMapX, 'mapY':leftUndistortMapY})
+    undistortMaps.append({'mapX':rightUndistortMapX, 'mapY':rightUndistortMapY})
 
 #windowSizes = [(15,15), (31,31), (51,51)]
 windowSizes = [(31,31)]
@@ -196,12 +211,21 @@ while(1):
                     goodPoints0.append(point0)
                     goodPoints1.append(point1)
 
-            allStereoPoints.append({'points1':points1,'st':st,'err':err,'goodPoints0':goodPoints0,'goodPoints1':goodPoints1,'images':images, 'windowSize':windowSize})
+            disparity = stereo.compute(images[0], images[1])
+            disparity >>= 5
+
+            allStereoPoints.append({'points1':points1,'st':st,'err':err,'goodPoints0':goodPoints0,'goodPoints1':goodPoints1,'images':images, 'windowSize':windowSize, 'disparity':disparity})
 
         # Draw the stereo matches
         for stereoPoints in allStereoPoints:
             keypointImage = drawKeypointMatches(stereoPoints['images'][0], stereoPoints['goodPoints0'], stereoPoints['goodPoints1'], stereoDisparityColors)
-            cv2.imshow('stereo_' + str(stereoPoints['windowSize']), keypointImage)
+            cv2.imshow('stereoLK_' + str(stereoPoints['windowSize']), keypointImage)
+
+            disparityToShow = stereoPoints['disparity']
+            disparityToShow[disparityToShow<0] = 0
+            disparityToShow = disparityToShow.astype('uint8')
+
+            cv2.imshow('stereoBM_' + str(stereoPoints['windowSize']), disparityToShow)
 
     keypress = cv2.waitKey(waitKeyTime)
     if keypress & 0xFF == ord('q'):
