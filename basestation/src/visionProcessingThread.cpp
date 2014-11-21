@@ -142,7 +142,7 @@ namespace Cozmo {
         // There is an image to be processed:
         
         assert(_currentImg != nullptr);
-        _visionSystem->Update(_currentRobotState, _currentImg->GetDataPointer());
+        _visionSystem->Update(_currentRobotState, _currentImg);
         
         // Clear it when done.
         delete _currentImg;

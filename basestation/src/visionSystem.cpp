@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/shared/mailbox_impl.h"
+#include "anki/vision/basestation/image_impl.h"
 
 //
 // Embedded implementation holdovers:
@@ -1639,9 +1640,33 @@ namespace Cozmo {
 #  error RUN_GROUND_TRUTHING_CAPTURE not implemented in Basestation vision system.
 #endif
   
+  Result GetImageHelper(const Vision::Image* srcImage,
+                      Array<u8>& destArray)
+  {
+    const s32 captureHeight = destArray.get_size(0);
+    const s32 captureWidth  = destArray.get_size(1);
+    
+    if(srcImage->GetNumRows() != captureHeight || srcImage->GetNumCols() != captureWidth) {
+      PRINT_NAMED_ERROR("VisionSystem.GetImageHelper.MismatchedImageSizes",
+                        "Source Vision::Image and destination Embedded::Array should "
+                        "be the same size (source is %dx%d and destinatinon is %dx%d\n",
+                        srcImage->GetNumRows(), srcImage->GetNumCols(),
+                        captureHeight, captureWidth);
+      return RESULT_FAIL_INVALID_SIZE;
+    }
+    
+    memcpy(reinterpret_cast<u8*>(destArray.get_buffer()),
+           srcImage->GetDataPointer(),
+           captureHeight*captureWidth*sizeof(u8));
+    
+    return RESULT_OK;
+    
+  } // GetImageHelper()
+
+  
   // This is the regular Update() call
   Result VisionSystem::Update(const MessageRobotState robotState,
-                              const u8* inputImage)
+                              const Vision::Image*    inputImage)
   {
     Result lastResult = RESULT_OK;
     
@@ -1690,9 +1715,7 @@ namespace Cozmo {
         Array<u8> grayscaleImage(captureHeight, captureWidth,
                                  _memory.offchipScratch_, Flags::Buffer(false,false,false));
         
-        memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureHeight*captureWidth*sizeof(u8));
-        //HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
-        //                    captureResolution_, false);
+        GetImageHelper(inputImage, grayscaleImage);
         
         if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
           PRINT_INFO("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
@@ -1716,10 +1739,7 @@ namespace Cozmo {
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                _memory.offchipScratch_, Flags::Buffer(false,false,false));
       
-      //HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
-      //  captureResolution_, false);
-      memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage,
-             captureHeight*captureWidth*sizeof(u8));
+      GetImageHelper(inputImage, grayscaleImage);
       
       if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
         PRINT_INFO("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
@@ -2200,6 +2220,29 @@ namespace Cozmo {
        */
       
     } // if(mode_ & DETECTING_FACES)
+    
+    
+    if(mode_ & LOOKING_FOR_MARKERS)
+    {
+      const bool headSame =  NEAR(robotState_.headAngle, prevRobotState_.headAngle, DEG_TO_RAD(1));
+      const bool poseSame = (NEAR(robotState_.pose_x,    prevRobotState_.pose_x,    1.f) &&
+                             NEAR(robotState_.pose_y,    prevRobotState_.pose_y,    1.f) &&
+                             NEAR(robotState_.pose_angle,prevRobotState_.pose_angle, DEG_TO_RAD(1)));
+      
+      if(headSame && poseSame && !_prevImage.IsEmpty()) {
+        
+        Vision::Image diffImage(*inputImage);
+        diffImage -= _prevImage;
+        diffImage.Abs();
+        
+
+        
+      } // if(headSame && poseSame)
+      
+      // Store a copy of the current image for next time
+      _prevImage = Vision::Image(*inputImage);
+      
+    } // if(mode_ & LOOKING_FOR_MARKERS)
     
     return lastResult;
   } // Update() [Real]

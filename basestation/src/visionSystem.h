@@ -26,6 +26,8 @@
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/geometry_declarations.h"
 
+#include "anki/common/robot/matlabInterface.h"
+
 #include "anki/vision/robot/fiducialMarkers.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
@@ -33,17 +35,13 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 
 #include "anki/cozmo/basestation/messages.h"
+
 #include "anki/vision/basestation/cameraCalibration.h"
+#include "anki/vision/basestation/image.h"
 
 #include "visionParameters.h"
 
 namespace Anki {
-  
-  // Forward declaration
-  namespace Vision {
-    class Image;
-  }
-  
 namespace Cozmo {
     
   // Forward declaration:
@@ -61,7 +59,8 @@ namespace Cozmo {
       LOOKING_FOR_MARKERS  = 0x01,
       TRACKING             = 0x02,
       DETECTING_FACES      = 0x04,
-      TAKING_SNAPSHOT      = 0x08
+      TAKING_SNAPSHOT      = 0x08,
+      LOOKING_FOR_SALIENCY = 0x10
     };
     
     //
@@ -84,7 +83,7 @@ namespace Cozmo {
     //   value and NOT by reference, since the vision system can be interrupted
     //   by main execution (which updates the state).
     Result Update(const MessageRobotState robotState,
-                  const u8*               inputImg);
+                  const Vision::Image*    inputImg);
     
     void StopTracking();
 
@@ -200,7 +199,15 @@ namespace Cozmo {
     
   protected:
     
+    // For prototyping with Matlab
+    Embedded::Matlab matlab_;
+    
+    // Previous image for doing background subtraction, e.g. for saliency
+    Vision::Image _prevImage;
+    
+    //
     // Formerly in Embedded VisionSystem "private" namespace:
+    //
     
     bool isInitialized_;
     
