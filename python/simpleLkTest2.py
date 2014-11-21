@@ -32,8 +32,14 @@ def computeLk(lastImage, curImage, points0, lk_params):
     goodPoints0 = points0[st==1]
     goodPoints1 = points1[st==1]
 
-    # draw the tracks
-    keypointImage = cv2.merge((curImage,curImage,curImage))
+    return goodPoints0, goodPoints1
+
+def drawKeypointMatches(image, points0, points1):
+    """
+    draw the tracks
+    """
+
+    keypointImage = cv2.merge((image,image,image))
 
     for i,(new,old) in enumerate(zip(goodPoints0,goodPoints1)):
         a,b = new.ravel()
@@ -41,7 +47,8 @@ def computeLk(lastImage, curImage, points0, lk_params):
         cv2.line(keypointImage, (a,b),(c,d), color[i].tolist(), 1)
         #cv2.circle(keypointImage,(a,b),3,color[i].tolist(),-1)
 
-    return keypointImage, goodPoints0, goodPoints1
+    return keypointImage
+
 
 #cameraIds = [0]
 cameraIds = [1,2]
@@ -96,11 +103,19 @@ if useStereoCalibration:
 windowSizes = [(31,31)]
 
 # Parameters for lucas kanade optical flow
-lk_params = dict( winSize  = (31,31),
-                  maxLevel = 3,
-                  criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
-                  #minEigThreshold = 1e-4)
-                  minEigThreshold = 5e-3)
+flow_lk_params = dict(winSize  = (31,31),
+                      maxLevel = 3,
+                      criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
+                      #minEigThreshold = 1e-4)
+                      minEigThreshold = 5e-3)
+
+stereo_lk_params = dict(winSize  = (31,31),
+                        maxLevel = 5,
+                        criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
+                        #minEigThreshold = 1e-4)
+                        minEigThreshold = 1e-4)
+
+stereo_lk_maxAngle = pi/16
 
 # Create some random colors
 color = np.random.randint(0,255,(10000,3))
@@ -133,19 +148,29 @@ while(1):
 
         for windowSize in windowSizes:
 
-            lk_params['winSize'] = windowSize
+            flow_lk_params['winSize'] = windowSize
 
-            keypointImage, goodPoints0, goodPoints1 = computeLk(lastImage, curImage, points0, lk_params)
+            goodPoints0, goodPoints1 = computeLk(lastImage, curImage, points0, flow_lk_params)
+            keypointImage = drawKeypointMatches(curImage, goodPoints0, goodPoints1)
 
             cv2.imshow('flow_' + str(iImage) + '_' + str(windowSize), keypointImage)
 
     if len(images) == 2:
         for windowSize in windowSizes:
 
-            lk_params['winSize'] = windowSize
+            stereo_lk_params['winSize'] = windowSize
 
-            keypointImage, goodPoints0, goodPoints1 = computeLk(images[0], images[1], points0, lk_params)
+            goodPoints0_tmp, goodPoints1_tmp = computeLk(images[0], images[1], points0, stereo_lk_params)
 
+            goodPoints0 = []
+            goodPoints1 = []
+            for point0, point1 in zip(goodPoints0_tmp, goodPoints1_tmp):
+                absAngle = abs(math.atan2(point0[1]-point1[1], point0[0]-point1[0]))
+                if absAngle <= stereo_lk_maxAngle:
+                    goodPoints0.append(point0)
+                    goodPoints1.append(point1)
+
+            keypointImage = drawKeypointMatches(images[0], goodPoints0, goodPoints1)
             cv2.imshow('stereo_' + str(windowSize), keypointImage)
 
     keypress = cv2.waitKey(waitKeyTime)
