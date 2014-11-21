@@ -177,6 +177,7 @@ namespace Cozmo {
     
     // Tell the vision system to switch to face-detection mode
     Result StartDetectingFaces();
+    Result StopDetectingFaces();
     
     // Returns field of view (radians) of camera
     f32 GetVerticalFOV();

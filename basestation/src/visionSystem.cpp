@@ -1491,12 +1491,18 @@ namespace Cozmo {
   void VisionSystem::StopTracking()
   {
     SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f, true);
-    mode_ &= !TRACKING;
+    mode_ &= ~TRACKING;
   }
   
   Result VisionSystem::StartDetectingFaces()
   {
     mode_ |= DETECTING_FACES;
+    return RESULT_OK;
+  }
+  
+  Result VisionSystem::StopDetectingFaces()
+  {
+    mode_ &= ~DETECTING_FACES;
     return RESULT_OK;
   }
   
