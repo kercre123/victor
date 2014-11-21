@@ -1,5 +1,5 @@
 /**
- * File: visionParameters.cpp
+ * File: visionParameters.cpp [Basestation]
  *
  * Author: Andrew Stein
  * Date:   3/28/2014
@@ -38,8 +38,8 @@ namespace Anki {
       void DetectFiducialMarkersParameters::Initialize()
       {
         detectionResolution = Vision::CAMERA_RES_QVGA;
-        detectionWidth  = VisionSystem::CameraModeInfo[detectionResolution].width;
-        detectionHeight = VisionSystem::CameraModeInfo[detectionResolution].height;
+        detectionWidth  = Vision::CameraResInfo[detectionResolution].width;
+        detectionHeight = Vision::CameraResInfo[detectionResolution].height;
 
 #ifdef SIMULATOR
         scaleImage_thresholdMultiplier = 32768; // 0.5*(2^16)=32768
@@ -163,8 +163,8 @@ namespace Anki {
         numPyramidLevels     = 3;
 #endif // DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
         
-        trackingImageWidth   = VisionSystem::CameraModeInfo[trackingResolution].width;
-        trackingImageHeight  = VisionSystem::CameraModeInfo[trackingResolution].height;
+        trackingImageWidth   = Vision::CameraResInfo[trackingResolution].width;
+        trackingImageHeight  = Vision::CameraResInfo[trackingResolution].height;
         
         maxIterations             = 25;
         verify_maxPixelDifference = 30;
@@ -215,8 +215,8 @@ namespace Anki {
       {
         detectionResolution = Vision::CAMERA_RES_QVGA;
         
-        faceDetectionHeight = VisionSystem::CameraModeInfo[detectionResolution].height;
-        faceDetectionWidth  = VisionSystem::CameraModeInfo[detectionResolution].width;
+        faceDetectionHeight = Vision::CameraResInfo[detectionResolution].height;
+        faceDetectionWidth  = Vision::CameraResInfo[detectionResolution].width;
 
         scaleFactor    = 1.1;
         minNeighbors   = 2;

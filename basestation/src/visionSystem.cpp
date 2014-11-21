@@ -66,19 +66,6 @@
 namespace Anki {
 namespace Cozmo {
   
-  const VisionSystem::CameraModeInfo_t VisionSystem::CameraModeInfo[Vision::CAMERA_RES_COUNT] =
-  {
-    // VGA
-    { 0xBA, 640, 480, {0, 1, 2, 3, 4} },
-    // QVGA
-    { 0xBC, 320, 240, {0, 0, 1, 2, 3} },
-    // QQVGA
-    { 0xB8, 160, 120, {0, 0, 0, 1, 2} },
-    // QQQVGA
-    { 0xBD,  80,  60, {0, 0, 0, 0, 1} },
-    // QQQQVGA
-    { 0xB7,  40,  30, {0, 0, 0, 0, 0} }
-  };
   
   VisionProcessingThread::VisionProcessingThread()
   : _visionSystem(nullptr)
@@ -1818,8 +1805,8 @@ namespace Cozmo {
       // Nothing to do, unless a snapshot was requested
       
       if(isWaitingOnSnapshot_) {
-        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+        const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+        const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
         
         
         Array<u8> grayscaleImage(captureHeight, captureWidth,
@@ -1845,8 +1832,8 @@ namespace Cozmo {
       
       //MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
       
-      const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-      const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+      const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+      const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
       
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                _memory.offchipScratch_, Flags::Buffer(false,false,false));
@@ -2005,8 +1992,8 @@ namespace Cozmo {
       MemoryStack offchipScratch_local(_memory.offchipScratch_);
       MemoryStack onchipScratch_local(_memory.onchipScratch_);
       
-      const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-      const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+      const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+      const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
       
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                onchipScratch_local, Flags::Buffer(false,false,false));
@@ -2174,8 +2161,8 @@ namespace Cozmo {
                                          "VisionSystem::Update::FaceDetectionParametersNotInitialized",
                                          "Face detection parameters not initialized before Update() in DETECTING_FACES mode.\n");
       
-      const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-      const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+      const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+      const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
       
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                _memory.offchipScratch_, Flags::Buffer(false,false,false));
@@ -2270,8 +2257,9 @@ namespace Cozmo {
       
       f32 sendScale = 1.f;
       if (imageSendMode_ == ISM_STREAM) {
-        const u8 scaleFactor = (1 << CameraModeInfo[faceDetectionParameters_.detectionResolution].downsamplePower[nextSendImageResolution_]);
-        
+        //const u8 scaleFactor = (1 << CameraModeInfo[faceDetectionParameters_.detectionResolution].downsamplePower[nextSendImageResolution_]);
+        const u8 scaleFactor = (Vision::CameraResInfo[faceDetectionParameters_.detectionResolution].width /
+                                Vision::CameraResInfo[nextSendImageResolution_].width);
         if(scaleFactor > 1) {
           // Send additional downsampled image, marked for visualization
           sendScale /= static_cast<f32>(scaleFactor);

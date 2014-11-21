@@ -61,21 +61,11 @@ namespace Cozmo {
       TRACKING             = 0x02,
       DETECTING_FACES      = 0x04,
       TAKING_SNAPSHOT      = 0x08
-    } VisionSystemMode;
+    };
     
     void ProcessingThread(const MessageRobotState* robotState);
     
-    struct CameraModeInfo_t {
-      u8  headerByte; // used to specify a frame's resolution in a packet if transmitting
-      u16 width, height;
-      u8 downsamplePower[Vision::CAMERA_RES_COUNT];
-    };
-    
-    // NOTE: To get the downsampling power to go from resoution "FROM" to
-    //       resolution "TO", use:
-    //       u8 power = CameraModeInfo[FROM].downsamplePower[TO];
-    static const CameraModeInfo_t CameraModeInfo[Vision::CAMERA_RES_COUNT];
-    
+       
     //
     // Methods:
     //
