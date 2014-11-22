@@ -11,7 +11,7 @@ import os
 import anki
 import platform
 
-def captureImages(videoCaptures, undistortMaps):
+def captureImages(videoCaptures, undistortMaps, rightImageWarpHomography):
     images =  []
     for i,cap in enumerate(videoCaptures):
         ret,image = cap.read()
@@ -19,6 +19,9 @@ def captureImages(videoCaptures, undistortMaps):
 
         if undistortMaps is not None:
             image = cv2.remap(image, undistortMaps[i]['mapX'], undistortMaps[i]['mapY'], cv2.INTER_LINEAR)
+
+            if (i == 1) and (rightImageWarpHomography is not None):
+                image = cv2.warpPerspective(image, rightImageWarpHomography, image.shape[::-1])
 
         images.append(image)
 
@@ -31,7 +34,7 @@ def drawKeypointMatches(image, points0, points1, distanceColormap=None):
 
     keypointImage = cv2.merge((image,image,image))
 
-    for i,(new,old) in enumerate(zip(goodPoints0,goodPoints1)):
+    for i,(new,old) in enumerate(zip(points0,points1)):
         a,b = new.ravel()
         c,d = old.ravel()
 
@@ -46,6 +49,29 @@ def drawKeypointMatches(image, points0, points1, distanceColormap=None):
         cv2.line(keypointImage, (a,b),(c,d), curColor, 1)
         #cv2.circle(keypointImage, (a,b), 3, curColor, -1)
 
+    return keypointImage
+
+def drawStereoFlowKeypointMatches(image, points0, points1Flow, points1Stereo, distanceColormap):
+    """
+    draw the tracks
+    """
+
+    keypointImage = cv2.merge((image,image,image))
+
+    for i, (point0,pointF,pointS) in enumerate(zip(points0,points1Flow,points1Stereo)):
+        p0x,p0y = point0.ravel()
+        pFx,pFy = pointF.ravel()
+        pSx,pSy = pointS.ravel()
+
+        if distanceColormap is None:
+            curColor = color[i].tolist()
+        else:
+            dist = int(sqrt((p0x-pSx)**2 + (p0y-pSy)**2))
+            if dist > (len(distanceColormap)-1):
+                dist = len(distanceColormap)-1
+            curColor = distanceColormap[dist]
+
+        cv2.line(keypointImage, (p0x,p0y), (pFx,pFy), curColor, 1)
 
     return keypointImage
 
@@ -58,12 +84,13 @@ for cameraId in cameraIds:
     videoCaptures.append(cv2.VideoCapture(cameraId))
 
 useStereoCalibration = True
-
 undistortMaps = None
+computeStereoBm = True
 
 # Computed in Matlab with "toArray(computeStereoColormap(128), true)"
-#stereoDisparityColors = [(0, 0, 255), (0, 7, 255), (0, 16, 255), (0, 24, 255), (0, 32, 255), (0, 41, 255), (0, 49, 255), (0, 57, 255), (0, 65, 255), (0, 73, 255), (0, 82, 255), (0, 90, 255), (0, 99, 255), (0, 107, 255), (0, 115, 255), (0, 124, 255), (0, 132, 255), (0, 140, 255), (0, 148, 255), (0, 156, 255), (0, 165, 255), (0, 173, 255), (0, 182, 255), (0, 190, 255), (0, 198, 255), (0, 207, 255), (0, 215, 255), (0, 223, 255), (0, 231, 255), (0, 239, 255), (0, 248, 255), (0, 255, 255), (0, 255, 255), (0, 255, 248), (0, 255, 239), (0, 255, 231), (0, 255, 223), (0, 255, 215), (0, 255, 207), (0, 255, 198), (0, 255, 190), (0, 255, 182), (0, 255, 173), (0, 255, 165), (0, 255, 156), (0, 255, 148), (0, 255, 140), (0, 255, 132), (0, 255, 124), (0, 255, 115), (0, 255, 107), (0, 255, 99), (0, 255, 90), (0, 255, 82), (0, 255, 73), (0, 255, 65), (0, 255, 57), (0, 255, 49), (0, 255, 41), (0, 255, 32), (0, 255, 24), (0, 255, 16), (0, 255, 7), (0, 255, 0), (0, 255, 0), (7, 255, 0), (16, 255, 0), (24, 255, 0), (32, 255, 0), (41, 255, 0), (49, 255, 0), (57, 255, 0), (65, 255, 0), (73, 255, 0), (82, 255, 0), (90, 255, 0), (99, 255, 0), (107, 255, 0), (115, 255, 0), (124, 255, 0), (132, 255, 0), (140, 255, 0), (148, 255, 0), (156, 255, 0), (165, 255, 0), (173, 255, 0), (182, 255, 0), (190, 255, 0), (198, 255, 0), (207, 255, 0), (215, 255, 0), (223, 255, 0), (231, 255, 0), (239, 255, 0), (248, 255, 0), (255, 255, 0), (255, 255, 0), (255, 248, 0), (255, 239, 0), (255, 231, 0), (255, 223, 0), (255, 215, 0), (255, 207, 0), (255, 198, 0), (255, 190, 0), (255, 182, 0), (255, 173, 0), (255, 165, 0), (255, 156, 0), (255, 148, 0), (255, 140, 0), (255, 132, 0), (255, 124, 0), (255, 115, 0), (255, 107, 0), (255, 99, 0), (255, 90, 0), (255, 82, 0), (255, 73, 0), (255, 65, 0), (255, 57, 0), (255, 49, 0), (255, 41, 0), (255, 32, 0), (255, 24, 0), (255, 16, 0), (255, 7, 0), (255, 0, 0)]
-stereoDisparityColors = [(255, 0, 0), (255, 7, 0), (255, 16, 0), (255, 24, 0), (255, 32, 0), (255, 41, 0), (255, 49, 0), (255, 57, 0), (255, 65, 0), (255, 73, 0), (255, 82, 0), (255, 90, 0), (255, 99, 0), (255, 107, 0), (255, 115, 0), (255, 124, 0), (255, 132, 0), (255, 140, 0), (255, 148, 0), (255, 156, 0), (255, 165, 0), (255, 173, 0), (255, 182, 0), (255, 190, 0), (255, 198, 0), (255, 207, 0), (255, 215, 0), (255, 223, 0), (255, 231, 0), (255, 239, 0), (255, 248, 0), (255, 255, 0), (255, 255, 0), (248, 255, 0), (239, 255, 0), (231, 255, 0), (223, 255, 0), (215, 255, 0), (207, 255, 0), (198, 255, 0), (190, 255, 0), (182, 255, 0), (173, 255, 0), (165, 255, 0), (156, 255, 0), (148, 255, 0), (140, 255, 0), (132, 255, 0), (124, 255, 0), (115, 255, 0), (107, 255, 0), (99, 255, 0), (90, 255, 0), (82, 255, 0), (73, 255, 0), (65, 255, 0), (57, 255, 0), (49, 255, 0), (41, 255, 0), (32, 255, 0), (24, 255, 0), (16, 255, 0), (7, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 7), (0, 255, 16), (0, 255, 24), (0, 255, 32), (0, 255, 41), (0, 255, 49), (0, 255, 57), (0, 255, 65), (0, 255, 73), (0, 255, 82), (0, 255, 90), (0, 255, 99), (0, 255, 107), (0, 255, 115), (0, 255, 124), (0, 255, 132), (0, 255, 140), (0, 255, 148), (0, 255, 156), (0, 255, 165), (0, 255, 173), (0, 255, 182), (0, 255, 190), (0, 255, 198), (0, 255, 207), (0, 255, 215), (0, 255, 223), (0, 255, 231), (0, 255, 239), (0, 255, 248), (0, 255, 255), (0, 255, 255), (0, 248, 255), (0, 239, 255), (0, 231, 255), (0, 223, 255), (0, 215, 255), (0, 207, 255), (0, 198, 255), (0, 190, 255), (0, 182, 255), (0, 173, 255), (0, 165, 255), (0, 156, 255), (0, 148, 255), (0, 140, 255), (0, 132, 255), (0, 124, 255), (0, 115, 255), (0, 107, 255), (0, 99, 255), (0, 90, 255), (0, 82, 255), (0, 73, 255), (0, 65, 255), (0, 57, 255), (0, 49, 255), (0, 41, 255), (0, 32, 255), (0, 24, 255), (0, 16, 255), (0, 7, 255), (0, 0, 255)]
+
+stereoDisparityColors128 = [(255, 0, 0), (255, 7, 0), (255, 16, 0), (255, 24, 0), (255, 32, 0), (255, 41, 0), (255, 49, 0), (255, 57, 0), (255, 65, 0), (255, 73, 0), (255, 82, 0), (255, 90, 0), (255, 99, 0), (255, 107, 0), (255, 115, 0), (255, 124, 0), (255, 132, 0), (255, 140, 0), (255, 148, 0), (255, 156, 0), (255, 165, 0), (255, 173, 0), (255, 182, 0), (255, 190, 0), (255, 198, 0), (255, 207, 0), (255, 215, 0), (255, 223, 0), (255, 231, 0), (255, 239, 0), (255, 248, 0), (255, 255, 0), (255, 255, 0), (248, 255, 0), (239, 255, 0), (231, 255, 0), (223, 255, 0), (215, 255, 0), (207, 255, 0), (198, 255, 0), (190, 255, 0), (182, 255, 0), (173, 255, 0), (165, 255, 0), (156, 255, 0), (148, 255, 0), (140, 255, 0), (132, 255, 0), (124, 255, 0), (115, 255, 0), (107, 255, 0), (99, 255, 0), (90, 255, 0), (82, 255, 0), (73, 255, 0), (65, 255, 0), (57, 255, 0), (49, 255, 0), (41, 255, 0), (32, 255, 0), (24, 255, 0), (16, 255, 0), (7, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 7), (0, 255, 16), (0, 255, 24), (0, 255, 32), (0, 255, 41), (0, 255, 49), (0, 255, 57), (0, 255, 65), (0, 255, 73), (0, 255, 82), (0, 255, 90), (0, 255, 99), (0, 255, 107), (0, 255, 115), (0, 255, 124), (0, 255, 132), (0, 255, 140), (0, 255, 148), (0, 255, 156), (0, 255, 165), (0, 255, 173), (0, 255, 182), (0, 255, 190), (0, 255, 198), (0, 255, 207), (0, 255, 215), (0, 255, 223), (0, 255, 231), (0, 255, 239), (0, 255, 248), (0, 255, 255), (0, 255, 255), (0, 248, 255), (0, 239, 255), (0, 231, 255), (0, 223, 255), (0, 215, 255), (0, 207, 255), (0, 198, 255), (0, 190, 255), (0, 182, 255), (0, 173, 255), (0, 165, 255), (0, 156, 255), (0, 148, 255), (0, 140, 255), (0, 132, 255), (0, 124, 255), (0, 115, 255), (0, 107, 255), (0, 99, 255), (0, 90, 255), (0, 82, 255), (0, 73, 255), (0, 65, 255), (0, 57, 255), (0, 49, 255), (0, 41, 255), (0, 32, 255), (0, 24, 255), (0, 16, 255), (0, 7, 255), (0, 0, 255)]
+stereoDisparityColors64 = [(255, 4, 0), (255, 20, 0), (255, 36, 0), (255, 53, 0), (255, 70, 0), (255, 86, 0), (255, 103, 0), (255, 119, 0), (255, 136, 0), (255, 152, 0), (255, 169, 0), (255, 185, 0), (255, 202, 0), (255, 220, 0), (255, 235, 0), (255, 251, 0), (251, 255, 0), (235, 255, 0), (220, 255, 0), (202, 255, 0), (185, 255, 0), (169, 255, 0), (152, 255, 0), (136, 255, 0), (119, 255, 0), (103, 255, 0), (86, 255, 0), (70, 255, 0), (53, 255, 0), (36, 255, 0), (20, 255, 0), (4, 255, 0), (0, 255, 4), (0, 255, 20), (0, 255, 36), (0, 255, 53), (0, 255, 70), (0, 255, 86), (0, 255, 103), (0, 255, 119), (0, 255, 136), (0, 255, 152), (0, 255, 169), (0, 255, 185), (0, 255, 202), (0, 255, 220), (0, 255, 235), (0, 255, 251), (0, 251, 255), (0, 235, 255), (0, 220, 255), (0, 202, 255), (0, 185, 255), (0, 169, 255), (0, 152, 255), (0, 136, 255), (0, 119, 255), (0, 103, 255), (0, 86, 255), (0, 70, 255), (0, 53, 255), (0, 36, 255), (0, 20, 255), (0, 4, 255)]
 
 if useStereoCalibration:
     numDisparities = 128
@@ -80,6 +107,8 @@ if useStereoCalibration:
             uniquenessRatio=1,
             disp12MaxDiff = 10,
             P1 = 600, P2 = 2400)
+
+    rightImageWarpHomography = matrix(eye(3))
 
     # Calibration for the Spynet stereo pair
 
@@ -140,7 +169,7 @@ stereo_lk_maxAngle = pi/16
 color = np.random.randint(0,255,(10000,3))
 
 # Take first frame and find corners in it
-images = captureImages(videoCaptures, undistortMaps)
+images = captureImages(videoCaptures, undistortMaps, rightImageWarpHomography)
 
 lastImages = images[:]
 
@@ -157,7 +186,7 @@ for image in images:
     allPoints0.append(points0)
 
 while(1):
-    images = captureImages(videoCaptures, undistortMaps)
+    images = captureImages(videoCaptures, undistortMaps, rightImageWarpHomography)
 
     # Compute the flow
     allFlowPoints = []
@@ -186,7 +215,7 @@ while(1):
     # Draw the flow
     for curFlowPoints in allFlowPoints:
         for flowPoints in curFlowPoints:
-            keypointImage = drawKeypointMatches(flowPoints['curImage'], flowPoints['goodPoints0'], flowPoints['goodPoints1'], stereoDisparityColors)
+            keypointImage = drawKeypointMatches(flowPoints['curImage'], flowPoints['goodPoints0'], flowPoints['goodPoints1'], stereoDisparityColors128)
             cv2.imshow('flow_' + str(flowPoints['iImage']) + '_' + str(flowPoints['windowSize']), keypointImage)
 
     # Stereo
@@ -211,26 +240,72 @@ while(1):
                     goodPoints0.append(point0)
                     goodPoints1.append(point1)
 
-            disparity = stereo.compute(images[0], images[1])
-            disparity >>= 5
+            if computeStereoBm:
+                disparity = stereo.compute(images[0], images[1])
+                disparity >>= 5
+            else:
+                disparity = None
 
             allStereoPoints.append({'points1':points1,'st':st,'err':err,'goodPoints0':goodPoints0,'goodPoints1':goodPoints1,'images':images, 'windowSize':windowSize, 'disparity':disparity})
 
         # Draw the stereo matches
         for stereoPoints in allStereoPoints:
-            keypointImage = drawKeypointMatches(stereoPoints['images'][0], stereoPoints['goodPoints0'], stereoPoints['goodPoints1'], stereoDisparityColors)
+            keypointImage = drawKeypointMatches(stereoPoints['images'][0], stereoPoints['goodPoints0'], stereoPoints['goodPoints1'], stereoDisparityColors64)
             cv2.imshow('stereoLK_' + str(stereoPoints['windowSize']), keypointImage)
 
-            disparityToShow = stereoPoints['disparity']
-            disparityToShow[disparityToShow<0] = 0
-            disparityToShow = disparityToShow.astype('uint8')
+            if stereoPoints['disparity'] is not None:
+                disparityToShow = stereoPoints['disparity']
+                disparityToShow[disparityToShow<0] = 0
+                disparityToShow = disparityToShow.astype('uint8')
 
-            cv2.imshow('stereoBM_' + str(stereoPoints['windowSize']), disparityToShow)
+                cv2.imshow('stereoBM_' + str(stereoPoints['windowSize']), disparityToShow)
+
+        # Compute the flow + stereo for every valid point
+        for flowPoints, stereoPoints in zip(allFlowPoints[0], allStereoPoints):
+
+            validIndexes = nonzero((flowPoints['st']==1) & (stereoPoints['st']==1))[0].tolist()
+
+            validIndexesStereo = []
+            for index in validIndexes:
+                point0 = points0[index].tolist()[0]
+                point1 = stereoPoints['points1'][index].tolist()[0]
+                #pdb.set_trace()
+                absAngle = abs(math.atan2(point0[1]-point1[1], point0[0]-point1[0]))
+                if absAngle <= stereo_lk_maxAngle:
+                    validIndexesStereo.append(index)
+
+            validIndexes = validIndexesStereo
+
+            goodPoints0 = points0[validIndexes]
+            goodPointsFlow = flowPoints['points1'][validIndexes]
+            goodPointsStereo = stereoPoints['points1'][validIndexes]
+
+            flowStereoImage = drawStereoFlowKeypointMatches(flowPoints['curImage'], goodPoints0, goodPointsFlow, goodPointsStereo, stereoDisparityColors64)
+
+            cv2.imshow('flowStereo' + str(stereoPoints['windowSize']), flowStereoImage)
+
 
     keypress = cv2.waitKey(waitKeyTime)
     if keypress & 0xFF == ord('q'):
         print('Breaking')
         break
+    elif keypress & 0xFF == ord('a'):
+        print('Auto-calibrating stereo')
+        goodPoints0 = allStereoPoints[0]['goodPoints0']
+        goodPoints1 = allStereoPoints[0]['goodPoints1']
+
+        p0Array = zeros((len(goodPoints0),2))
+        p1Array = zeros((len(goodPoints0),2))
+
+        # Only change based on Y difference
+        for i in range(0,len(goodPoints0)):
+            p0Array[i,:] = [goodPoints0[i][0], goodPoints0[i][1]]
+            p1Array[i,:] = [goodPoints0[i][0], goodPoints1[i][1]]
+
+        newRightImageWarpHomography, inliers = cv2.findHomography( p1Array, p0Array, cv2.RANSAC, ransacReprojThreshold = 5)
+        rightImageWarpHomography = rightImageWarpHomography*matrix(newRightImageWarpHomography)
+
+        #pdb.set_trace()
 
     # Now update the previous frame
     lastImages = images
