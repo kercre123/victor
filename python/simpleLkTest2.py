@@ -148,7 +148,8 @@ if useStereoCalibration:
     undistortMaps.append({'mapX':rightUndistortMapX, 'mapY':rightUndistortMapY})
 
 #windowSizes = [(15,15), (31,31), (51,51)]
-windowSizes = [(31,31)]
+#windowSizes = [(31,31)]
+windowSizes = [(21,21)]
 
 # Parameters for lucas kanade optical flow
 flow_lk_params = dict(winSize  = (31,31),
@@ -250,7 +251,7 @@ while(1):
 
         # Draw the stereo matches
         for stereoPoints in allStereoPoints:
-            keypointImage = drawKeypointMatches(stereoPoints['images'][0], stereoPoints['goodPoints0'], stereoPoints['goodPoints1'], stereoDisparityColors64)
+            keypointImage = drawKeypointMatches(stereoPoints['images'][0], stereoPoints['goodPoints0'], stereoPoints['goodPoints1'], stereoDisparityColors128)
             cv2.imshow('stereoLK_' + str(stereoPoints['windowSize']), keypointImage)
 
             if stereoPoints['disparity'] is not None:
@@ -280,7 +281,7 @@ while(1):
             goodPointsFlow = flowPoints['points1'][validIndexes]
             goodPointsStereo = stereoPoints['points1'][validIndexes]
 
-            flowStereoImage = drawStereoFlowKeypointMatches(flowPoints['curImage'], goodPoints0, goodPointsFlow, goodPointsStereo, stereoDisparityColors64)
+            flowStereoImage = drawStereoFlowKeypointMatches(flowPoints['curImage'], goodPoints0, goodPointsFlow, goodPointsStereo, stereoDisparityColors128)
 
             cv2.imshow('flowStereo' + str(stereoPoints['windowSize']), flowStereoImage)
 
@@ -304,6 +305,8 @@ while(1):
 
         newRightImageWarpHomography, inliers = cv2.findHomography( p1Array, p0Array, cv2.RANSAC, ransacReprojThreshold = 5)
         rightImageWarpHomography = rightImageWarpHomography*matrix(newRightImageWarpHomography)
+
+        stereo_lk_maxAngle = pi/64
 
         #pdb.set_trace()
 
