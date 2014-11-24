@@ -11,7 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 //#include "anki/common/robot/errorHandling.h"
 
 namespace Anki {
-
+   
 #define TEXT_BUFFER_SIZE 1024
 
   std::string ConvertToMatlabTypeString(const char *typeName, size_t byteDepth)
@@ -115,8 +115,12 @@ namespace Anki {
   {
     // Multithreading under Windows requires this command
     // CoInitializeEx(NULL, COINIT_MULTITHREADED);
-
-    this->ep = engOpen(NULL);
+    
+    ep = engOpen(NULL);
+    
+    if(!ep) {
+      LOG_ERROR("BaseMatlabInterface Constructor", "Failed to open Matlab engine!");
+    }
 
     if(clearWorkspace){
       EvalString("clear all");

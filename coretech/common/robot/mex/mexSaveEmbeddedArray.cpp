@@ -5,6 +5,7 @@
 
 #include "mex.h"
 
+#include "anki/common/robot/matlabConverters.h"
 #include "anki/common/robot/matlabInterface.h"
 #include "anki/common/robot/serialize.h"
 

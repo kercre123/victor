@@ -53,7 +53,7 @@ namespace Anki
     }
 
     const mwSize outputDims[2] = {numUnique, 1};
-    const mxClassID matlabClassId = Embedded::Matlab::GetMatlabClassID<Type>();
+    const mxClassID matlabClassId = GetMatlabClassID<Type>();
     mxArray* toReturn = mxCreateNumericArray(2, outputDims, matlabClassId, mxREAL);
     Type * restrict pToReturn = reinterpret_cast<Type *>( mxGetData(toReturn) );
 
