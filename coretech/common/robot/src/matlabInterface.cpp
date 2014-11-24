@@ -13,7 +13,7 @@ namespace Embedded {
   
   
   Matlab::Matlab(bool clearWorkspace)
-  : BaseMatlabInterface(clearWorkspace)
+  : SharedMatlabInterface(clearWorkspace)
   {
     
   }

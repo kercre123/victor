@@ -13,12 +13,12 @@
 
 #if ANKICORETECH_USE_MATLAB
 
-#include "anki/common/shared/baseMatlabInterface.h"
+#include "anki/common/shared/sharedMatlabInterface.h"
 #include "anki/common/basestation/matlabConverters_basestation.h"
 
 namespace Anki {
   
-  class Matlab : public BaseMatlabInterface
+  class Matlab : public SharedMatlabInterface
   {
   public:
     Matlab(bool clearWorkspace=false);

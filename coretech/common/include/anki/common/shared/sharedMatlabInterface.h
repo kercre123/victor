@@ -1,5 +1,5 @@
 /**
-File: baseMatlabInterface.h
+File: sharedMatlabInterface.h
 Author: Peter Barnum
 Created: 2013
 
@@ -12,8 +12,8 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#ifndef ANKI_CORETECH_COMMON_SHARED_BASE_MATLAB_INTERFACE_H_
-#define ANKI_CORETECH_COMMON_SHARED_BASE_MATLAB_INTERFACE_H_
+#ifndef ANKI_CORETECH_COMMON_SHARED_MATLAB_INTERFACE_H_
+#define ANKI_CORETECH_COMMON_SHARED_MATLAB_INTERFACE_H_
 
 #include "anki/common/types.h"
 #include "anki/common/shared/matlabConverters.h"
@@ -62,7 +62,7 @@ namespace Anki
   // mxClassID ConvertToMatlabType(const char *typeName, size_t byteDepth); // TODO: Remove
   std::string ConvertToMatlabTypeString(const char *typeName, size_t byteDepth);
 
-  class BaseMatlabInterface {
+  class SharedMatlabInterface {
   public:
     static const s32 COMMAND_BUFFER_SIZE = 100;
     
@@ -108,7 +108,7 @@ namespace Anki
     
     // You can't make an instance of the base class: you must use a derived
     // class, for either embedded or basestation
-    BaseMatlabInterface(bool clearWorkspace);
+    SharedMatlabInterface(bool clearWorkspace);
 
     
   }; // class Matlab
@@ -128,7 +128,7 @@ namespace Anki
   }
    */
  
-  template<typename Type> Result BaseMatlabInterface::PutOpencvMat(const cv::Mat_<Type> &matrix, const std::string name)
+  template<typename Type> Result SharedMatlabInterface::PutOpencvMat(const cv::Mat_<Type> &matrix, const std::string name)
   {
     const mwSize matrixHeight = static_cast<mwSize>(matrix.rows);
     const mwSize matrixWidth  = static_cast<mwSize>(matrix.cols);
@@ -168,7 +168,7 @@ namespace Anki
  
 
   template<typename Type>
-  Result BaseMatlabInterface::Put(const Type * values, s32 nValues, const std::string name)
+  Result SharedMatlabInterface::Put(const Type * values, s32 nValues, const std::string name)
   {
     if(!ep) {
       // TODO: How to print a message the right way for basestation vs. embedded??
@@ -190,7 +190,7 @@ namespace Anki
   } // template<typename Type> Result Matlab::Put(const Type * values, s32 nValues, const std::string name)
 
   template<typename Type>
-  Type* BaseMatlabInterface::Get(const std::string name)
+  Type* SharedMatlabInterface::Get(const std::string name)
   {
     if(!ep) {
       // TODO: How to print a message the right way for basestation vs. embedded??
@@ -235,6 +235,6 @@ namespace Anki
   */
 } // namespace Anki
 
-#endif // ANKI_CORETECH_COMMON_SHARED_BASE_MATLAB_INTERFACE_H_
+#endif // ANKI_CORETECH_COMMON_SHARED_MATLAB_INTERFACE_H_
 
 

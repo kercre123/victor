@@ -7,7 +7,7 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "anki/common/shared/baseMatlabInterface.h"
+#include "anki/common/shared/sharedMatlabInterface.h"
 //#include "anki/common/robot/errorHandling.h"
 
 namespace Anki {
@@ -70,48 +70,48 @@ namespace Anki {
   } // std::string convertToMatlabTypeString(const char *typeName, size_t byteDepth)
 
   /* Redundant with ones in matlabConverters.h
-  template<> mxClassID BaseMatlabInterface::GetMatlabClassID<u8>() {
+  template<> mxClassID SharedMatlabInterface::GetMatlabClassID<u8>() {
     return mxUINT8_CLASS;
   }
 
-  template<> mxClassID BaseMatlabInterface::GetMatlabClassID<s8>() {
+  template<> mxClassID SharedMatlabInterface::GetMatlabClassID<s8>() {
     return mxINT8_CLASS;
   }
 
-  template<> mxClassID BaseMatlabInterface::GetMatlabClassID<u16>() {
+  template<> mxClassID SharedMatlabInterface::GetMatlabClassID<u16>() {
     return mxUINT16_CLASS;
   }
 
-  template<> mxClassID BaseMatlabInterface::GetMatlabClassID<s16>() {
+  template<> mxClassID SharedMatlabInterface::GetMatlabClassID<s16>() {
     return mxINT16_CLASS;
   }
 
-  template<> mxClassID BaseMatlabInterface::GetMatlabClassID<u32>() {
+  template<> mxClassID SharedMatlabInterface::GetMatlabClassID<u32>() {
     return mxUINT32_CLASS;
   }
 
-  template<> mxClassID BaseMatlabInterface::GetMatlabClassID<s32>() {
+  template<> mxClassID SharedMatlabInterface::GetMatlabClassID<s32>() {
     return mxINT32_CLASS;
   }
 
-  template<> mxClassID BaseMatlabInterface::GetMatlabClassID<u64>() {
+  template<> mxClassID SharedMatlabInterface::GetMatlabClassID<u64>() {
     return mxUINT64_CLASS;
   }
 
-  template<> mxClassID BaseMatlabInterface::GetMatlabClassID<s64>() {
+  template<> mxClassID SharedMatlabInterface::GetMatlabClassID<s64>() {
     return mxINT64_CLASS;
   }
 
-  template<> mxClassID BaseMatlabInterface::GetMatlabClassID<f32>() {
+  template<> mxClassID SharedMatlabInterface::GetMatlabClassID<f32>() {
     return mxSINGLE_CLASS;
   }
 
-  template<> mxClassID BaseMatlabInterface::GetMatlabClassID<f64>() {
+  template<> mxClassID SharedMatlabInterface::GetMatlabClassID<f64>() {
     return mxDOUBLE_CLASS;
   }
   */
   
-  BaseMatlabInterface::BaseMatlabInterface(bool clearWorkspace)
+  SharedMatlabInterface::SharedMatlabInterface(bool clearWorkspace)
   {
     // Multithreading under Windows requires this command
     // CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -119,7 +119,7 @@ namespace Anki {
     ep = engOpen(NULL);
     
     if(!ep) {
-      LOG_ERROR("BaseMatlabInterface Constructor", "Failed to open Matlab engine!");
+      LOG_ERROR("SharedMatlabInterface Constructor", "Failed to open Matlab engine!");
     }
 
     if(clearWorkspace){
@@ -129,7 +129,7 @@ namespace Anki {
     EvalString("lastAnkiCommandBuffer=cell(0, 1);");
   }
 
-  std::string BaseMatlabInterface::EvalString(const char * const format, ...)
+  std::string SharedMatlabInterface::EvalString(const char * const format, ...)
   {
     if(!ep) {
       //AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
@@ -158,7 +158,7 @@ namespace Anki {
     return toReturn;
   }
 
-  std::string BaseMatlabInterface::EvalStringEcho(const char * const format, ...)
+  std::string SharedMatlabInterface::EvalStringEcho(const char * const format, ...)
   {
     if(!ep) {
       // AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
@@ -185,14 +185,14 @@ namespace Anki {
     std::string toReturn = std::string(buffer);
     PutString(buffer, (int)toReturn.size(), "lastAnkiCommand");
 
-    EvalString("if length(lastAnkiCommandBuffer)==%d lastAnkiCommandBuffer=lastAnkiCommandBuffer(2:end); end; lastAnkiCommandBuffer{end+1}=lastAnkiCommand;", BaseMatlabInterface::COMMAND_BUFFER_SIZE);
+    EvalString("if length(lastAnkiCommandBuffer)==%d lastAnkiCommandBuffer=lastAnkiCommandBuffer(2:end); end; lastAnkiCommandBuffer{end+1}=lastAnkiCommand;", SharedMatlabInterface::COMMAND_BUFFER_SIZE);
 
     free( buffer );
 
     return toReturn;
   }
 
-  std::string BaseMatlabInterface::EvalStringExplicit(const char * buffer)
+  std::string SharedMatlabInterface::EvalStringExplicit(const char * buffer)
   {
     if(!ep) {
       // AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
@@ -206,7 +206,7 @@ namespace Anki {
     return toReturn;
   }
 
-  std::string BaseMatlabInterface::EvalStringExplicitEcho(const char * buffer)
+  std::string SharedMatlabInterface::EvalStringExplicitEcho(const char * buffer)
   {
     if(!ep) {
       // AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
@@ -221,7 +221,7 @@ namespace Anki {
     return toReturn;
   }
 
-  mxArray* BaseMatlabInterface::GetArray(const std::string name)
+  mxArray* SharedMatlabInterface::GetArray(const std::string name)
   {
     if(!ep) {
       // AnkiConditionalErrorAndReturnValue(this->ep, NULL, "Anki.", "Matlab engine is not started/connected");
@@ -232,7 +232,7 @@ namespace Anki {
     return arr;
   }
 
-  MatlabVariableType BaseMatlabInterface::GetType(const std::string name)
+  MatlabVariableType SharedMatlabInterface::GetType(const std::string name)
   {
     if(!ep) {
       // AnkiConditionalErrorAndReturnValue(this->ep, TYPE_UNKNOWN, "Anki.", "Matlab engine is not started/connected");
@@ -266,7 +266,7 @@ namespace Anki {
   }
 
 #if defined(ANKI_USE_OPENCV)
-  Result BaseMatlabInterface::GetCvMat(const CvMat *matrix, std::string name)
+  Result SharedMatlabInterface::GetCvMat(const CvMat *matrix, std::string name)
   {
     if(!ep) {
       // AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
@@ -354,7 +354,7 @@ namespace Anki {
   }
 
   //like GetCvMat, but also allocates the CvMat* from the heap
-  CvMat* BaseMatlabInterface::GetCvMat(const std::string name)
+  CvMat* SharedMatlabInterface::GetCvMat(const std::string name)
   {
     CvMat* matrix = 0;
 
@@ -406,7 +406,7 @@ namespace Anki {
     return matrix;
   }
 
-  Result BaseMatlabInterface::PutCvMat(const CvMat *matrix, std::string name)
+  Result SharedMatlabInterface::PutCvMat(const CvMat *matrix, std::string name)
   {
     AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
 
@@ -465,7 +465,7 @@ namespace Anki {
   }
 #endif // #if defined(ANKI_USE_OPENCV)
 
-  Result BaseMatlabInterface::PutString(const char * characters, s32 nValues, const std::string name)
+  Result SharedMatlabInterface::PutString(const char * characters, s32 nValues, const std::string name)
   {
     if(!ep) {
       //AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
@@ -479,7 +479,7 @@ namespace Anki {
     return returnVal;
   }
 
-  s32 BaseMatlabInterface::SetVisible(bool isVisible)
+  s32 SharedMatlabInterface::SetVisible(bool isVisible)
   {
     if(!ep) {
       //AnkiConditionalErrorAndReturnValue(this->ep, -1, "Anki.", "Matlab engine is not started/connected");
@@ -492,7 +492,7 @@ namespace Anki {
     return returnVal;
   }
 
-  bool BaseMatlabInterface::DoesVariableExist(const std::string name)
+  bool SharedMatlabInterface::DoesVariableExist(const std::string name)
   {
     if(!ep) {
       //AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");

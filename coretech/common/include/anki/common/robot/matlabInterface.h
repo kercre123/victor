@@ -13,7 +13,7 @@
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
 
-#include "anki/common/shared/baseMatlabInterface.h"
+#include "anki/common/shared/sharedMatlabInterface.h"
 
 #include "anki/common/robot/matlabConverters_embedded.h"
 
@@ -73,7 +73,7 @@ return;\
 #endif // #ifdef ANKI_MEX_BUILD
   
   
-  class Matlab : public BaseMatlabInterface
+  class Matlab : public SharedMatlabInterface
   {
   public:
     
@@ -159,7 +159,7 @@ return;\
       quad[0].y, quad[1].y, quad[2].y, quad[3].y
     };
     
-    BaseMatlabInterface::Put<Type>(tempArray, 8, name);
+    SharedMatlabInterface::Put<Type>(tempArray, 8, name);
     
     // Reshape the array to be 4x2 -- [x(:) y(:)]
     EvalStringEcho("%s = reshape(%s, [4 2]);", name.data(), name.data());
@@ -176,7 +176,7 @@ return;\
     const std::string tmpName = name + std::string("_AnkiTMP");
     
     EvalString("%s=%s';", tmpName.data(), name.data());
-    mxArray *arrayTmp = BaseMatlabInterface::GetArray(tmpName.data());
+    mxArray *arrayTmp = SharedMatlabInterface::GetArray(tmpName.data());
     
     AnkiConditionalErrorAndReturnValue(arrayTmp, Array<Type>(0, 0, NULL, 0), "Anki.GetArray<Type>", "%s could not be got from Matlab", tmpName.data());
     
@@ -215,7 +215,7 @@ return;\
     AnkiConditionalErrorAndReturnValue(this->ep, Quadrilateral<Type>(),
                                        "Anki.Get", "Matlab engine is not started/connected");
     
-    const mxArray* mxQuad = BaseMatlabInterface::GetArray(name);
+    const mxArray* mxQuad = SharedMatlabInterface::GetArray(name);
     
     AnkiConditionalErrorAndReturnValue(mxQuad != NULL, Quadrilateral<Type>(),
                                        "Anki.GetQuad", "No variable named '%s' found.", name.c_str());
