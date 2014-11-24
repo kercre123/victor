@@ -26,7 +26,7 @@
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/geometry_declarations.h"
 
-#include "anki/common/robot/matlabInterface.h"
+//#include "anki/common/basestation/matlabInterface.h"
 
 #include "anki/vision/robot/fiducialMarkers.h"
 
@@ -200,7 +200,7 @@ namespace Cozmo {
   protected:
     
     // For prototyping with Matlab
-    Embedded::Matlab matlab_;
+    //Matlab matlab_;
     
     // Previous image for doing background subtraction, e.g. for saliency
     Vision::Image _prevImage;

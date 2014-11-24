@@ -50,7 +50,14 @@ target_link_libraries(blockworld_controller
   ${OPENCV_LIBS}
   ${BLE_LIBRARY}
 )
-  
+
+if(${ANKICORETECH_USE_MATLAB})
+  target_link_libraries(blockworld_controller
+    ${MATLAB_ENG_LIBRARY}
+    ${MATLAB_MX_LIBRARY}
+  )
+endif()
+
 set_target_properties(blockworld_controller PROPERTIES
     FOLDER "Webots Controllers"
 )

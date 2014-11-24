@@ -459,7 +459,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   cv::imwrite(outputFilenameImage, drawnImage, compression_params);
 
   if(nlhs > 0) {
-    plhs[0] = imageArrayToMxArray<u8>(drawnImage.data, drawnImage.rows, drawnImage.cols, drawnImage.channels());
+    plhs[0] = Anki::imageArrayToMxArray<u8>(drawnImage.data, drawnImage.rows, drawnImage.cols, drawnImage.channels());
   }
 
   mxFree(memory.get_buffer());
