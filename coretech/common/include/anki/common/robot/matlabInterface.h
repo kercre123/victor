@@ -1,9 +1,9 @@
 /**
- File: embeddedMatlabInterface.h
+ File: matlabInterface.h
  Author: Andrew Stein
  Created: 11/21/2014
  
- Extends shared Matlab interface to add Embedded-specific converters.
+ Extends shared Matlab interface to support Embedded-specific data structures.
  
  Copyright Anki, Inc. 2014
  For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -13,9 +13,9 @@
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
 
-#include "anki/common/shared/matlabInterface.h"
+#include "anki/common/shared/baseMatlabInterface.h"
 
-#include "anki/common/robot/matlabConverters.h"
+#include "anki/common/robot/matlabConverters_embedded.h"
 
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/errorHandling.h"

@@ -1,3 +1,22 @@
+/**
+ * File: matlabConverters_embedded.h
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 10/9/2013
+ *
+ *
+ * Description:
+ *
+ *   This file defines several conversion routines for translating
+ *   basic embedded-specific types back and forth from Matlab's mxArray type. 
+ *   It should not call any Matlab routines (e.g. via an engine or mex), nor should
+ *   it rely on STL (i.e. std::<foo>), so that it can be used extremely
+ *   portably.
+ *
+ * Copyright: Anki, Inc. 2013
+ *
+ **/
+
 #ifndef _ANKI_CORETECH_EMBEDDED_MATLAB_CONVERTERS_H_
 #define _ANKI_CORETECH_EMBEDDED_MATLAB_CONVERTERS_H_
 
@@ -79,6 +98,7 @@ namespace Embedded {
       }
     }
   } // template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat)
+  
   
   template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray, MemoryStack &memory)
   {

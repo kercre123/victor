@@ -4,10 +4,6 @@
 * Author: Andrew Stein (andrew)
 * Created: 10/9/2013
 *
-* Information on last revision to this file:
-*    $LastChangedDate$
-*    $LastChangedBy$
-*    $LastChangedRevision$
 *
 * Description:
 *

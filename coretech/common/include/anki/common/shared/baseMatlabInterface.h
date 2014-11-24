@@ -1,5 +1,5 @@
 /**
-File: matlabInterface.h
+File: baseMatlabInterface.h
 Author: Peter Barnum
 Created: 2013
 
@@ -12,8 +12,8 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#ifndef ANKI_CORETECH_COMMON_SHARED_MATLAB_INTERFACE_H_
-#define ANKI_CORETECH_COMMON_SHARED_MATLAB_INTERFACE_H_
+#ifndef ANKI_CORETECH_COMMON_SHARED_BASE_MATLAB_INTERFACE_H_
+#define ANKI_CORETECH_COMMON_SHARED_BASE_MATLAB_INTERFACE_H_
 
 #include "anki/common/types.h"
 #include "anki/common/shared/matlabConverters.h"
@@ -235,5 +235,6 @@ namespace Anki
   */
 } // namespace Anki
 
-#endif // ANKI_CORETECH_COMMON_SHARED_MATLAB_INTERFACE_H_
+#endif // ANKI_CORETECH_COMMON_SHARED_BASE_MATLAB_INTERFACE_H_
+
 

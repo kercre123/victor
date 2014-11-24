@@ -1,5 +1,5 @@
 /**
- File: basestationMatlabInterface.h
+ File: matlabInterface.h
  Author: Andrew Stein
  Created: 11/21/2014
  
@@ -13,8 +13,8 @@
 
 #if ANKICORETECH_USE_MATLAB
 
-#include "anki/common/shared/matlabInterface.h"
-
+#include "anki/common/shared/baseMatlabInterface.h"
+#include "anki/common/basestation/matlabConverters_basestation.h"
 
 namespace Anki {
   
