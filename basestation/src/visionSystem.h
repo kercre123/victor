@@ -17,6 +17,8 @@
 #ifndef ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 #define ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 
+#define ANKI_COZMO_USE_MATLAB_VISION 1
+
 #include "anki/common/types.h"
 
 #include "anki/common/shared/mailbox.h"
@@ -26,7 +28,7 @@
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/geometry_declarations.h"
 
-//#include "anki/common/basestation/matlabInterface.h"
+#include "anki/common/basestation/matlabInterface.h"
 
 #include "anki/vision/robot/fiducialMarkers.h"
 
@@ -40,6 +42,7 @@
 #include "anki/vision/basestation/image.h"
 
 #include "visionParameters.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -68,7 +71,7 @@ namespace Cozmo {
     //
     
     Result Init(const Vision::CameraCalibration& camCalib);
-    bool IsInitialized() const { return isInitialized_; }
+    bool IsInitialized() const;
     
     void StartMarkerDetection();
     void StopMarkerDetection();
@@ -199,8 +202,10 @@ namespace Cozmo {
     
   protected:
     
+#   if ANKI_COZMO_USE_MATLAB_VISION
     // For prototyping with Matlab
-    //Matlab matlab_;
+    Matlab matlab_;
+#   endif
     
     // Previous image for doing background subtraction, e.g. for saliency
     Vision::Image _prevImage;

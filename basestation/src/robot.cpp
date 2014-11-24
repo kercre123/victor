@@ -1668,6 +1668,7 @@ namespace Anki {
       robotState.pose_x    = p.GetPose().GetTranslation().x();
       robotState.pose_y    = p.GetPose().GetTranslation().y();
       robotState.pose_z    = p.GetPose().GetTranslation().z();
+      robotState.pose_angle= p.GetPose().GetRotationAngle<'Z'>().ToFloat();
       
       // Note this copies the image
       _visionProcessor.SetNextImage(image, robotState);

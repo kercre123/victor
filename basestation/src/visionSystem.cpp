@@ -226,6 +226,8 @@ namespace Cozmo {
     
     angleChange = Radians(robotState_.pose_angle) - Radians(prevRobotState_.pose_angle);
     
+    PRINT_INFO("angleChange = %.1f\n", angleChange.getDegrees());
+    
     // Position change in world (mat) coordinates
     const f32 dx = robotState_.pose_x - prevRobotState_.pose_x;
     const f32 dy = robotState_.pose_y - prevRobotState_.pose_y;
@@ -288,24 +290,48 @@ namespace Cozmo {
 
   bool VisionSystem::CheckMailbox(MessageDockingErrorSignal&  msg)
   {
-    return _dockingMailbox.getMessage(msg);
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _dockingMailbox.getMessage(msg);
+    }
+    return retVal;
   }
   
   bool VisionSystem::CheckMailbox(MessageFaceDetection&       msg)
   {
-    return _faceDetectMailbox.getMessage(msg);
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _faceDetectMailbox.getMessage(msg);
+    }
+    return retVal;
   }
   
   bool VisionSystem::CheckMailbox(MessageVisionMarker&        msg)
   {
-    return _visionMarkerMailbox.getMessage(msg);
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _visionMarkerMailbox.getMessage(msg);
+    }
+    return retVal;
   }
   
   bool VisionSystem::CheckMailbox(MessageTrackerQuad&         msg)
   {
-    return _trackerMailbox.getMessage(msg);
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _trackerMailbox.getMessage(msg);
+    }
+    return retVal;
   }
   
+  bool VisionSystem::IsInitialized() const
+  {
+    bool retVal = isInitialized_;
+#   if ANKI_COZMO_USE_MATLAB_VISION
+    retVal &= matlab_.ep != NULL;
+#   endif
+    return retVal;
+  }
   
   Result VisionSystem::LookForMarkers(
                                       const Array<u8> &grayscaleImage,
@@ -2221,26 +2247,40 @@ namespace Cozmo {
       
     } // if(mode_ & DETECTING_FACES)
     
+    // DEBUG!!!!
+    mode_ |= LOOKING_FOR_SALIENCY;
     
-    if(mode_ & LOOKING_FOR_MARKERS)
+    if(mode_ & LOOKING_FOR_SALIENCY)
     {
       const bool headSame =  NEAR(robotState_.headAngle, prevRobotState_.headAngle, DEG_TO_RAD(1));
       const bool poseSame = (NEAR(robotState_.pose_x,    prevRobotState_.pose_x,    1.f) &&
                              NEAR(robotState_.pose_y,    prevRobotState_.pose_y,    1.f) &&
                              NEAR(robotState_.pose_angle,prevRobotState_.pose_angle, DEG_TO_RAD(1)));
       
+      //PRINT_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(robotState_.pose_angle - prevRobotState_.pose_angle)));
+      
       if(headSame && poseSame && !_prevImage.IsEmpty()) {
-        
+        /*
         Vision::Image diffImage(*inputImage);
         diffImage -= _prevImage;
         diffImage.Abs();
+        */
+#       if ANKI_COZMO_USE_MATLAB_VISION
+        //matlab_.PutOpencvMat(diffImage.get_CvMat_(), "diffImage");
+        //matlab_.EvalString("imagesc(diffImage), axis image, drawnow");
         
+        matlab_.PutOpencvMat(inputImage->get_CvMat_(), "inputImage");
+        matlab_.PutOpencvMat(_prevImage.get_CvMat_(), "prevImage");
+        matlab_.EvalString("imagesc(imabsdiff(inputImage, prevImage)), axis image, colormap(gray), drawnow");
+        matlab_.EvalString("title(%d)", inputImage->GetTimestamp());
+#       endif
 
         
       } // if(headSame && poseSame)
       
       // Store a copy of the current image for next time
-      _prevImage = Vision::Image(*inputImage);
+      // TODO: switch to just swapping pointers between current and previous image
+      inputImage->CopyTo(_prevImage);
       
     } // if(mode_ & LOOKING_FOR_MARKERS)
     

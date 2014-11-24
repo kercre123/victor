@@ -139,6 +139,11 @@ namespace Cozmo {
     _visionSystem = new VisionSystem();
     _visionSystem->Init(_camCalib);
     
+    // Wait for initialization to complete (i.e. Matlab to start up, if needed)
+    while(!_visionSystem->IsInitialized()) {
+      usleep(10000);
+    }
+    
     while (_running) {
       
       if(_currentImg != nullptr) {
@@ -174,33 +179,33 @@ namespace Cozmo {
   
   bool VisionProcessingThread::CheckMailbox(MessageFaceDetection& msg)
   {
-    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr && _visionSystem->IsInitialized(), false,
+    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*&& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
-                                       "CheckMailbox called before vision system instantiated and initialized.");
+                                       "CheckMailbox called before vision system instantiated.");// and initialized.");
     return _visionSystem->CheckMailbox(msg);
   }
   
   bool VisionProcessingThread::CheckMailbox(MessageVisionMarker& msg)
   {
-    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr && _visionSystem->IsInitialized(), false,
+    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*&& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
-                                       "CheckMailbox called before vision system instantiated and initialized.");
+                                       "CheckMailbox called before vision system instantiated.");// and initialized.");
     return _visionSystem->CheckMailbox(msg);
   }
   
   bool VisionProcessingThread::CheckMailbox(MessageDockingErrorSignal& msg)
   {
-    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr && _visionSystem->IsInitialized(), false,
+    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*&& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
-                                       "CheckMailbox called before vision system instantiated and initialized.");
+                                       "CheckMailbox called before vision system instantiated.");// and initialized.");
     return _visionSystem->CheckMailbox(msg);
   }
   
   bool VisionProcessingThread::CheckMailbox(MessageTrackerQuad& msg)
   {
-    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr && _visionSystem->IsInitialized(), false,
+    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
-                                       "CheckMailbox called before vision system instantiated and initialized.");
+                                       "CheckMailbox called before vision system instantiated.");// and initialized.");
     return _visionSystem->CheckMailbox(msg);
   }
   
