@@ -75,6 +75,30 @@ def drawStereoFlowKeypointMatches(image, points0, points1Flow, points1Stereo, di
 
     return keypointImage
 
+def localMinimaness(image, halfWindowSize, x, y):
+    x = int(x)
+    y = int(y)
+    if ((halfWindowSize[0]+1) < x < (image.shape[1]-halfWindowSize[0]-2)) and ((halfWindowSize[1]+1) < y < (image.shape[0]-halfWindowSize[1]-2)):
+
+        window_00 = image[(y-halfWindowSize[1]):(y+halfWindowSize[1]+1), (x-halfWindowSize[0]):(x+halfWindowSize[0]+1)]
+
+        # x +1 or -1
+        window_n0 = image[(y-halfWindowSize[1]):(y+halfWindowSize[1]+1), (x-halfWindowSize[0]-1):(x+halfWindowSize[0])]
+        window_p0 = image[(y-halfWindowSize[1]):(y+halfWindowSize[1]+1), (x-halfWindowSize[0]+1):(x+halfWindowSize[0]+2)]
+        leftSlope = abs(window_00.astype('float64') - window_n0.astype('float64')).mean()
+        rightSlope = abs(window_00.astype('float64') - window_p0.astype('float64')).mean()
+
+        # y +1 or -1
+        window_0n = image[(y-halfWindowSize[1]-1):(y+halfWindowSize[1]), (x-halfWindowSize[0]):(x+halfWindowSize[0]+1)]
+        window_0p = image[(y-halfWindowSize[1]+1):(y+halfWindowSize[1]+2), (x-halfWindowSize[0]):(x+halfWindowSize[0]+1)]
+        topSlope = abs(window_00.astype('float64') - window_0n.astype('float64')).mean()
+        bottomSlope = abs(window_00.astype('float64') - window_0p.astype('float64')).mean()
+
+        minSlope = min([leftSlope, rightSlope, topSlope, bottomSlope])
+    else:
+        minSlope = 0
+
+    return minSlope
 
 #cameraIds = [1]
 cameraIds = [1,2]
@@ -85,7 +109,7 @@ for cameraId in cameraIds:
 
 useStereoCalibration = True
 undistortMaps = None
-computeStereoBm = True
+computeStereoBm = False
 
 # Computed in Matlab with "toArray(computeStereoColormap(128), true)"
 
@@ -233,6 +257,17 @@ while(1):
 
             points1, st, err = cv2.calcOpticalFlowPyrLK(images[0], images[1], points0, None, **stereo_lk_params)
 
+            # Compute the minima-ness of each tracked point
+            halfWindowSize = [windowSize[0] // 2, windowSize[0] // 2]
+            points0Minimaness = []
+            points1Minimaness = []
+            for (point0, point1) in zip(points0, points1):
+                minSlope0 = localMinimaness(images[0], halfWindowSize, point0[0][0], point0[0][1])
+                minSlope1 = localMinimaness(images[1], halfWindowSize, point1[0][0], point1[0][1])
+
+                points0Minimaness.append(minSlope0)
+                points1Minimaness.append(minSlope1)
+
             # Select good points
             goodPoints0_tmp = points0[st==1]
             goodPoints1_tmp = points1[st==1]
@@ -251,7 +286,8 @@ while(1):
             else:
                 disparity = None
 
-            allStereoPoints.append({'points1':points1,'st':st,'err':err,'goodPoints0':goodPoints0,'goodPoints1':goodPoints1,'images':images, 'windowSize':windowSize, 'disparity':disparity})
+            pdb.set_trace()
+            allStereoPoints.append({'points1':points1,'st':st,'err':err,'goodPoints0':goodPoints0,'goodPoints1':goodPoints1,'images':images, 'windowSize':windowSize, 'disparity':disparity, 'points0Minimaness':points0Minimaness, 'points1Minimaness':points1Minimaness})
 
         # Draw the stereo matches
         for stereoPoints in allStereoPoints:
