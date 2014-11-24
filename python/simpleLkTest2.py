@@ -76,7 +76,7 @@ def drawStereoFlowKeypointMatches(image, points0, points1Flow, points1Stereo, di
     return keypointImage
 
 
-#cameraIds = [0]
+#cameraIds = [1]
 cameraIds = [1,2]
 
 videoCaptures = []
@@ -91,6 +91,12 @@ computeStereoBm = True
 
 stereoDisparityColors128 = [(255, 0, 0), (255, 7, 0), (255, 16, 0), (255, 24, 0), (255, 32, 0), (255, 41, 0), (255, 49, 0), (255, 57, 0), (255, 65, 0), (255, 73, 0), (255, 82, 0), (255, 90, 0), (255, 99, 0), (255, 107, 0), (255, 115, 0), (255, 124, 0), (255, 132, 0), (255, 140, 0), (255, 148, 0), (255, 156, 0), (255, 165, 0), (255, 173, 0), (255, 182, 0), (255, 190, 0), (255, 198, 0), (255, 207, 0), (255, 215, 0), (255, 223, 0), (255, 231, 0), (255, 239, 0), (255, 248, 0), (255, 255, 0), (255, 255, 0), (248, 255, 0), (239, 255, 0), (231, 255, 0), (223, 255, 0), (215, 255, 0), (207, 255, 0), (198, 255, 0), (190, 255, 0), (182, 255, 0), (173, 255, 0), (165, 255, 0), (156, 255, 0), (148, 255, 0), (140, 255, 0), (132, 255, 0), (124, 255, 0), (115, 255, 0), (107, 255, 0), (99, 255, 0), (90, 255, 0), (82, 255, 0), (73, 255, 0), (65, 255, 0), (57, 255, 0), (49, 255, 0), (41, 255, 0), (32, 255, 0), (24, 255, 0), (16, 255, 0), (7, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 7), (0, 255, 16), (0, 255, 24), (0, 255, 32), (0, 255, 41), (0, 255, 49), (0, 255, 57), (0, 255, 65), (0, 255, 73), (0, 255, 82), (0, 255, 90), (0, 255, 99), (0, 255, 107), (0, 255, 115), (0, 255, 124), (0, 255, 132), (0, 255, 140), (0, 255, 148), (0, 255, 156), (0, 255, 165), (0, 255, 173), (0, 255, 182), (0, 255, 190), (0, 255, 198), (0, 255, 207), (0, 255, 215), (0, 255, 223), (0, 255, 231), (0, 255, 239), (0, 255, 248), (0, 255, 255), (0, 255, 255), (0, 248, 255), (0, 239, 255), (0, 231, 255), (0, 223, 255), (0, 215, 255), (0, 207, 255), (0, 198, 255), (0, 190, 255), (0, 182, 255), (0, 173, 255), (0, 165, 255), (0, 156, 255), (0, 148, 255), (0, 140, 255), (0, 132, 255), (0, 124, 255), (0, 115, 255), (0, 107, 255), (0, 99, 255), (0, 90, 255), (0, 82, 255), (0, 73, 255), (0, 65, 255), (0, 57, 255), (0, 49, 255), (0, 41, 255), (0, 32, 255), (0, 24, 255), (0, 16, 255), (0, 7, 255), (0, 0, 255)]
 stereoDisparityColors64 = [(255, 4, 0), (255, 20, 0), (255, 36, 0), (255, 53, 0), (255, 70, 0), (255, 86, 0), (255, 103, 0), (255, 119, 0), (255, 136, 0), (255, 152, 0), (255, 169, 0), (255, 185, 0), (255, 202, 0), (255, 220, 0), (255, 235, 0), (255, 251, 0), (251, 255, 0), (235, 255, 0), (220, 255, 0), (202, 255, 0), (185, 255, 0), (169, 255, 0), (152, 255, 0), (136, 255, 0), (119, 255, 0), (103, 255, 0), (86, 255, 0), (70, 255, 0), (53, 255, 0), (36, 255, 0), (20, 255, 0), (4, 255, 0), (0, 255, 4), (0, 255, 20), (0, 255, 36), (0, 255, 53), (0, 255, 70), (0, 255, 86), (0, 255, 103), (0, 255, 119), (0, 255, 136), (0, 255, 152), (0, 255, 169), (0, 255, 185), (0, 255, 202), (0, 255, 220), (0, 255, 235), (0, 255, 251), (0, 251, 255), (0, 235, 255), (0, 220, 255), (0, 202, 255), (0, 185, 255), (0, 169, 255), (0, 152, 255), (0, 136, 255), (0, 119, 255), (0, 103, 255), (0, 86, 255), (0, 70, 255), (0, 53, 255), (0, 36, 255), (0, 20, 255), (0, 4, 255)]
+
+if len(cameraIds) == 1:
+   useStereoCalibration = False
+
+
+rightImageWarpHomography = matrix(eye(3))
 
 if useStereoCalibration:
     numDisparities = 128
@@ -107,8 +113,6 @@ if useStereoCalibration:
             uniquenessRatio=1,
             disp12MaxDiff = 10,
             P1 = 600, P2 = 2400)
-
-    rightImageWarpHomography = matrix(eye(3))
 
     # Calibration for the Spynet stereo pair
 
@@ -149,11 +153,11 @@ if useStereoCalibration:
 
 #windowSizes = [(15,15), (31,31), (51,51)]
 #windowSizes = [(31,31)]
-windowSizes = [(21,21)]
+windowSizes = [(51,51)]
 
 # Parameters for lucas kanade optical flow
 flow_lk_params = dict(winSize  = (31,31),
-                      maxLevel = 3,
+                      maxLevel = 4,
                       criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
                       #minEigThreshold = 1e-4)
                       minEigThreshold = 5e-3)
@@ -238,8 +242,8 @@ while(1):
             for point0, point1 in zip(goodPoints0_tmp, goodPoints1_tmp):
                 absAngle = abs(math.atan2(point0[1]-point1[1], point0[0]-point1[0]))
                 if absAngle <= stereo_lk_maxAngle:
-                    goodPoints0.append(point0)
-                    goodPoints1.append(point1)
+                    goodPoints0.append(point0.tolist())
+                    goodPoints1.append(point1.tolist())
 
             if computeStereoBm:
                 disparity = stereo.compute(images[0], images[1])
@@ -251,7 +255,41 @@ while(1):
 
         # Draw the stereo matches
         for stereoPoints in allStereoPoints:
-            keypointImage = drawKeypointMatches(stereoPoints['images'][0], stereoPoints['goodPoints0'], stereoPoints['goodPoints1'], stereoDisparityColors128)
+            validPixROI1, validPixROI2
+
+            showBadMatches = True
+            if showBadMatches:
+                toShowPoints0 = [x[0] for x in points0.tolist()]
+                toShowPoints1 = [x[0] for x in stereoPoints['points1'].tolist()]
+            else:
+                toShowPoints0 = stereoPoints['goodPoints0']
+                toShowPoints1 = stereoPoints['goodPoints1']
+
+            # Remove points that are totally out of bounds
+            extraLeftBorderPixels = 0
+
+            left0 = validPixROI1[0] + extraLeftBorderPixels
+            right0 = validPixROI1[0] + validPixROI1[2]
+            top0 = validPixROI1[1]
+            bottom0 = validPixROI1[1] + validPixROI1[3]
+
+            left1 = validPixROI2[0] + extraLeftBorderPixels
+            right1 = validPixROI2[0] + validPixROI2[2]
+            top1 = validPixROI2[1]
+            bottom1 = validPixROI2[1] + validPixROI2[3]
+
+            validInds = []
+            for index, (point0, point1) in enumerate(zip(toShowPoints0, toShowPoints1)):
+                #pdb.set_trace()
+                if bottom0 > point0[1] > top0 and right0 > point0[0] > left0 and \
+                   bottom1 > point1[1] > top1 and right1 > point1[0] > left1:
+                       validInds.append(index)
+
+            toShowPoints0 = array(toShowPoints0)[validInds].astype('int32')
+            toShowPoints1 = array(toShowPoints1)[validInds].astype('int32')
+
+            keypointImage = drawKeypointMatches(stereoPoints['images'][0], toShowPoints0, toShowPoints1, stereoDisparityColors128)
+
             cv2.imshow('stereoLK_' + str(stereoPoints['windowSize']), keypointImage)
 
             if stereoPoints['disparity'] is not None:
@@ -284,7 +322,6 @@ while(1):
             flowStereoImage = drawStereoFlowKeypointMatches(flowPoints['curImage'], goodPoints0, goodPointsFlow, goodPointsStereo, stereoDisparityColors128)
 
             cv2.imshow('flowStereo' + str(stereoPoints['windowSize']), flowStereoImage)
-
 
     keypress = cv2.waitKey(waitKeyTime)
     if keypress & 0xFF == ord('q'):
