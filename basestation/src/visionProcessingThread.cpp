@@ -52,9 +52,12 @@ namespace Cozmo {
   {
     _running = false;
     
+    
     // Wait for processing thread to die before destructing since we gave it
     // a reference to *this
-    _processingThread.join();
+    if(_processingThread.joinable()) {
+      _processingThread.join();
+    }
     
     // Now that processing is complete, we can delete any images that we're
     // holding onto
