@@ -35,7 +35,6 @@
 #include <limits.h>
 
 
-
 namespace Anki
 {
 
@@ -78,6 +77,15 @@ namespace Anki
 #endif
   {
   } // Constructor: Array2d(rows, cols, &data)
+  
+  
+  template<typename T>
+  void Array2d<T>::CopyTo(Array2d<T> &other) const
+  {
+#if ANKICORETECH_USE_OPENCV
+    this->copyTo(other);
+#endif
+  }
   
   
 #if ANKICORETECH_USE_OPENCV
@@ -320,7 +328,7 @@ namespace Anki
   Array2d<T>& Array2d<T>::operator+=(const Array2d<T>& other)
   {
 #   if ANKICORETECH_USE_OPENCV
-    *this += other;
+    this->get_CvMat_() += other.get_CvMat_();
 #   endif
     return *this;
   }
@@ -329,7 +337,7 @@ namespace Anki
   Array2d<T>& Array2d<T>::operator-=(const Array2d<T>& other)
   {
 #   if ANKICORETECH_USE_OPENCV
-    *this -= other;
+    this->get_CvMat_() -= other.get_CvMat_();
 #   endif
     return *this;
   }
@@ -338,7 +346,7 @@ namespace Anki
   Array2d<T>& Array2d<T>::operator*=(const Array2d<T>& other)
   {
 #   if ANKICORETECH_USE_OPENCV
-    *this = this->mul(other);
+    this->get_CvMat_() = this->mul(other.get_CvMat_());
 #   endif
     return *this;
   }
@@ -347,7 +355,7 @@ namespace Anki
   Array2d<T>& Array2d<T>::operator/=(const Array2d<T>& other)
   {
 #   if ANKICORETECH_USE_OPENCV
-    *this /= other;
+    this->get_CvMat_() /= other.get_CvMat_();
 #   endif
     return *this;
   }
@@ -356,7 +364,7 @@ namespace Anki
   Array2d<T>& Array2d<T>::operator+=(const T& scalarValue)
   {
 #   if ANKICORETECH_USE_OPENCV
-    *this += scalarValue;
+    this->get_CvMat_() += scalarValue;
 #   endif
     return *this;
   }
@@ -365,7 +373,7 @@ namespace Anki
   Array2d<T>& Array2d<T>::operator-=(const T& scalarValue)
   {
 #   if ANKICORETECH_USE_OPENCV
-    *this -= scalarValue;
+    this->get_CvMat_() -= scalarValue;
 #   endif
     return *this;
   }
@@ -374,7 +382,7 @@ namespace Anki
   Array2d<T>& Array2d<T>::operator*=(const T& scalarValue)
   {
 #   if ANKICORETECH_USE_OPENCV
-    *this *= scalarValue;
+    this->get_CvMat_() *= scalarValue;
 #   endif
     return *this;
   }
@@ -383,7 +391,7 @@ namespace Anki
   Array2d<T>& Array2d<T>::operator/=(const T& scalarValue)
   {
 #   if ANKICORETECH_USE_OPENCV
-    *this /= scalarValue;
+    this->get_CvMat_() /= scalarValue;
 #   endif
     return *this;
   }

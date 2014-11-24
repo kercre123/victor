@@ -52,6 +52,9 @@ namespace Anki
 
     // Reference counting assignment (does not copy):
     Array2d<T>& operator= (const Array2d<T> &other);
+    
+    // Copies the data to another Array2d
+    void CopyTo(Array2d<T> &other) const;
 
     // Access by row, col (for isolated access):
     T  operator() (const int row, const int col) const;
