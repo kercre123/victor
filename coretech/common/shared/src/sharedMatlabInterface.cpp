@@ -1,5 +1,5 @@
 /**
-File: baseMatlabInterface.cpp
+File: sharedMatlabInterface.cpp
 Author: Peter Barnum
 Created: 2013
 
@@ -9,6 +9,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/shared/sharedMatlabInterface.h"
 //#include "anki/common/robot/errorHandling.h"
+
+#if (defined(ANKICORETECH_EMBEDDED_USE_MATLAB) && ANKICORETECH_EMBEDDED_USE_MATLAB) || \
+(defined(ANKICORETECH_USE_MATLAB) && ANKICORETECH_USE_MATLAB)
 
 namespace Anki {
    
@@ -512,3 +515,6 @@ namespace Anki {
   }
 
 } // namespace Anki
+
+#endif // #if (defined(ANKICORETECH_EMBEDDED_USE_MATLAB) && ANKICORETECH_EMBEDDED_USE_MATLAB) || (defined(ANKICORETECH_USE_MATLAB) && ANKICORETECH_USE_MATLAB)
+

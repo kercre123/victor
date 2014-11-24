@@ -15,6 +15,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef ANKI_CORETECH_COMMON_SHARED_MATLAB_INTERFACE_H_
 #define ANKI_CORETECH_COMMON_SHARED_MATLAB_INTERFACE_H_
 
+#if (defined(ANKICORETECH_EMBEDDED_USE_MATLAB) && ANKICORETECH_EMBEDDED_USE_MATLAB) || \
+(defined(ANKICORETECH_USE_MATLAB) && ANKICORETECH_USE_MATLAB)
+
 #include "anki/common/types.h"
 #include "anki/common/shared/matlabConverters.h"
 
@@ -234,6 +237,8 @@ namespace Anki
   template<> mxClassID BaseMatlabInterface::GetMatlabClassID<f64>();
   */
 } // namespace Anki
+
+#endif // #if (defined(ANKICORETECH_EMBEDDED_USE_MATLAB) && ANKICORETECH_EMBEDDED_USE_MATLAB) || (defined(ANKICORETECH_USE_MATLAB) && ANKICORETECH_USE_MATLAB)
 
 #endif // ANKI_CORETECH_COMMON_SHARED_MATLAB_INTERFACE_H_
 

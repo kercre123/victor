@@ -1,5 +1,7 @@
 #include "anki/common/robot/matlabInterface.h"
 
+#if (defined(ANKICORETECH_EMBEDDED_USE_MATLAB) && ANKICORETECH_EMBEDDED_USE_MATLAB)
+
 //#ifdef ANKI_MEX_BUILD
 //#include "mex.h"
 //#endif
@@ -40,3 +42,4 @@ namespace Embedded {
 } // namespace Embedded
 } // namespace Anki
 
+#endif // #if (defined(ANKICORETECH_EMBEDDED_USE_MATLAB) && ANKICORETECH_EMBEDDED_USE_MATLAB) 

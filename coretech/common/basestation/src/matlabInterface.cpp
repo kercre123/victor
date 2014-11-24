@@ -1,5 +1,6 @@
 #include "anki/common/basestation/matlabInterface.h"
 
+#if defined(ANKICORETECH_USE_MATLAB) && ANKICORETECH_USE_MATLAB
 
 namespace Anki {
 
@@ -11,3 +12,5 @@ namespace Anki {
 
   
 } // namespace Anki
+
+#endif // defined(ANKICORETECH_USE_MATLAB) && ANKICORETECH_USE_MATLAB
