@@ -8,7 +8,6 @@ function simpleLkTest2()
     cameraIds = [1,2];
     
     useStereoCalibration = true;
-    undistortMaps = [];
     computeStereoBm = false;
     
     stereoDisparityColors128 = [255, 0, 0; 255, 7, 0; 255, 16, 0; 255, 24, 0; 255, 32, 0; 255, 41, 0; 255, 49, 0; 255, 57, 0; 255, 65, 0; 255, 73, 0; 255, 82, 0; 255, 90, 0; 255, 99, 0; 255, 107, 0; 255, 115, 0; 255, 124, 0; 255, 132, 0; 255, 140, 0; 255, 148, 0; 255, 156, 0; 255, 165, 0; 255, 173, 0; 255, 182, 0; 255, 190, 0; 255, 198, 0; 255, 207, 0; 255, 215, 0; 255, 223, 0; 255, 231, 0; 255, 239, 0; 255, 248, 0; 255, 255, 0; 255, 255, 0; 248, 255, 0; 239, 255, 0; 231, 255, 0; 223, 255, 0; 215, 255, 0; 207, 255, 0; 198, 255, 0; 190, 255, 0; 182, 255, 0; 173, 255, 0; 165, 255, 0; 156, 255, 0; 148, 255, 0; 140, 255, 0; 132, 255, 0; 124, 255, 0; 115, 255, 0; 107, 255, 0; 99, 255, 0; 90, 255, 0; 82, 255, 0; 73, 255, 0; 65, 255, 0; 57, 255, 0; 49, 255, 0; 41, 255, 0; 32, 255, 0; 24, 255, 0; 16, 255, 0; 7, 255, 0; 0, 255, 0; 0, 255, 0; 0, 255, 7; 0, 255, 16; 0, 255, 24; 0, 255, 32; 0, 255, 41; 0, 255, 49; 0, 255, 57; 0, 255, 65; 0, 255, 73; 0, 255, 82; 0, 255, 90; 0, 255, 99; 0, 255, 107; 0, 255, 115; 0, 255, 124; 0, 255, 132; 0, 255, 140; 0, 255, 148; 0, 255, 156; 0, 255, 165; 0, 255, 173; 0, 255, 182; 0, 255, 190; 0, 255, 198; 0, 255, 207; 0, 255, 215; 0, 255, 223; 0, 255, 231; 0, 255, 239; 0, 255, 248; 0, 255, 255; 0, 255, 255; 0, 248, 255; 0, 239, 255; 0, 231, 255; 0, 223, 255; 0, 215, 255; 0, 207, 255; 0, 198, 255; 0, 190, 255; 0, 182, 255; 0, 173, 255; 0, 165, 255; 0, 156, 255; 0, 148, 255; 0, 140, 255; 0, 132, 255; 0, 124, 255; 0, 115, 255; 0, 107, 255; 0, 99, 255; 0, 90, 255; 0, 82, 255; 0, 73, 255; 0, 65, 255; 0, 57, 255; 0, 49, 255; 0, 41, 255; 0, 32, 255; 0, 24, 255; 0, 16, 255; 0, 7, 255; 0, 0, 255];
@@ -20,10 +19,16 @@ function simpleLkTest2()
     
     numPointsPerDimension = 50;
     
+    filterFlowWithMinimanessThreshold = false;
+    minimanessThreshold = 0.5;
+    
+    filterFlowWithErrThreshold = true;
+    maxErr = 0.2;
+    
     % Parameters for lucas kanade optical flow
     flow_lk_params = struct(...
         'winSize', [31,31],...
-        'maxLevel', 4,...
+        'maxLevel', 3,...
         'criteria', struct('type', 'Count+EPS', 'maxCount', 10, 'epsilon', 0.03),...
         'minEigThreshold', 5e-3);
     
@@ -41,7 +46,7 @@ function simpleLkTest2()
     
     undistortMaps = [];
     if useStereoCalibration
-        [stereoProcessor, undistortMaps] = initStereo(128, 'bm');
+        [stereoProcessor, undistortMaps, masks] = initStereo(128, 'bm');
     end
     
     videoCaptures = cell(length(cameraIds), 1);
@@ -59,8 +64,8 @@ function simpleLkTest2()
     
     imageSize = size(images{1});
     
-    %[allPoints0x, allPoints0y] = meshgrid(0:(imageSize(2)-1), 0:(imageSize(1)-1));
-    [points0x, points0y] = meshgrid(linspace(0, imageSize(2)-1, numPointsPerDimension),linspace(0, imageSize(1)-1, numPointsPerDimension));
+%     [points0x, points0y] = meshgrid(linspace(0, imageSize(2)-1, numPointsPerDimension),linspace(0, imageSize(1)-1, numPointsPerDimension));
+    [points0x, points0y] = meshgrid(linspace(25, imageSize(2)-26, numPointsPerDimension),linspace(25, imageSize(1)-26, numPointsPerDimension));
     points0Raw = [points0x(:), points0y(:)];
     points0 = cell(1, size(points0Raw,1));
     for i = 1:size(points0Raw,1)
@@ -74,6 +79,7 @@ function simpleLkTest2()
         allFlowPoints = {};
         for iImage = 1:length(images)
             curImage = images{iImage};
+            mask = masks{iImage};
             lastImage = lastImages{iImage};
             
             curFlowPoints = {};
@@ -86,6 +92,39 @@ function simpleLkTest2()
                     'Criteria', flow_lk_params.criteria,...
                     'MinEigThreshold', flow_lk_params.minEigThreshold);
                 
+                if filterFlowWithErrThreshold
+                    status(:) = 1;
+                    status(err > maxErr) = 0;
+                end % if filterFlowWithErrThreshold
+                
+                if filterFlowWithMinimanessThreshold
+                    curLocalMinimaness = computeLocalMinimaness(curImage, mask, windowSizes{iWindowSize});
+                    lastLocalMinimaness = computeLocalMinimaness(lastImage, mask, windowSizes{iWindowSize});
+
+                    status(:) = 1;
+                    for iPoint = 1:length(points0)
+                        if status(iPoint)
+                            p0 = [round(points0{iPoint}(2))+1, round(points0{iPoint}(1))+1];
+                            p1 = [round(points1{iPoint}(2))+1, round(points1{iPoint}(1))+1];
+
+                            if p1(1) < 1 || p1(1) > size(curImage,1) || p1(2) < 1 || p1(2) > size(curImage,2)
+                               status(iPoint) = 0;
+                               continue
+                            end
+
+                            if lastLocalMinimaness(p0(1), p0(2)) < minimanessThreshold
+                                status(iPoint) = 0;
+                                continue
+                            end
+
+                            if curLocalMinimaness(p1(1), p1(2)) < minimanessThreshold
+                                status(iPoint) = 0;
+                                continue
+                            end
+                        end % if status(iPoint)
+                    end
+                end % if filterFlowWithMinimanessThreshold
+                                
                 % Select good points
                 goodPoints0 = points0(status==1);
                 goodPoints1 = points1(status==1);
@@ -124,9 +163,9 @@ function simpleLkTest2()
                 [points1, status, err] = cv.calcOpticalFlowPyrLK(...
                     images{1}, images{2}, points0,...
                     'WinSize', windowSizes{iWindowSize},...
-                    'MaxLevel', flow_lk_params.maxLevel,...
-                    'Criteria', flow_lk_params.criteria,...
-                    'MinEigThreshold', flow_lk_params.minEigThreshold);
+                    'MaxLevel', stereo_lk_params.maxLevel,...
+                    'Criteria', stereo_lk_params.criteria,...
+                    'MinEigThreshold', stereo_lk_params.minEigThreshold);
                 
                 % Select good points
                 goodPoints0 = points0(status==1);
@@ -153,7 +192,7 @@ function simpleLkTest2()
         end % if length(images) == 2
         
         imshows(flowImagesToShow, stereoImagesToShow);
-        
+                
         pause(0.03);
 %         c = getkeywait(0.03);        
 %         if c == 'q'
@@ -162,11 +201,7 @@ function simpleLkTest2()
 %         end
         
         % Now update the previous frame
-        lastImages = images;
-        
-        %         keypointImage = drawKeypointMatches(flowPoints['curImage'], flowPoints['goodPoints0'], flowPoints['goodPoints1'], stereoDisparityColors128)
-        %         cv2.imshow('flow_' + str(flowPoints['iImage']) + '_' + str(flowPoints['windowSize']), keypointImage)
-        
+        lastImages = images;       
     end % while true    
 end % function simpleLkTest2()
 
@@ -227,7 +262,7 @@ function keypointImage = drawKeypointMatches(image, points0, points1, distanceCo
     keypointImage = cv.line(keypointImage, points0, points1, 'Colors', colors, 'Thickness', 1);
 end % function drawKeypointMatches(image, points0, points1, distanceColormap)
 
-function [stereoProcessor, undistortMaps] = initStereo(numDisparities, disparityType)
+function [stereoProcessor, undistortMaps, masks] = initStereo(numDisparities, disparityType)
     
     if strcmpi(disparityType, 'bm')
         disparityWindowSize = 51;
@@ -270,4 +305,42 @@ function [stereoProcessor, undistortMaps] = initStereo(numDisparities, disparity
     undistortMaps = cell(2,1);
     undistortMaps{1} = struct('mapX', leftUndistortMapX, 'mapY', leftUndistortMapY);
     undistortMaps{2} = struct('mapX', rightUndistortMapX, 'mapY', rightUndistortMapY);
+    
+    masks = cell(2,1);
+    
+    masks{1} = ones(imageSize(2:-1:1), 'uint8');
+    masks{1}(leftUndistortMapX(:,:,1) < 0) = 0;
+    masks{1}(leftUndistortMapX(:,:,1) >= imageSize(1)) = 0;
+    masks{1}(leftUndistortMapX(:,:,2) < 0) = 0;
+    masks{1}(leftUndistortMapX(:,:,2) >= imageSize(2)) = 0;
+    
+    masks{2} = ones(imageSize(2:-1:1), 'uint8');
+    masks{2}(rightUndistortMapX(:,:,1) < 0) = 0;
+    masks{2}(rightUndistortMapX(:,:,1) >= imageSize(1)) = 0;
+    masks{2}(rightUndistortMapX(:,:,2) < 0) = 0;
+    masks{2}(rightUndistortMapX(:,:,2) >= imageSize(2)) = 0;    
 end % function undistortMaps = computeUndistortMaps()
+
+function localMinimaness = computeLocalMinimaness(im, mask, windowSize)
+    windowSizeFilter = ones(windowSize) / prod(windowSize);
+    
+%     mask(1:windowSize(2), :) = 0;
+%     mask((end-windowSize(2)):end, :) = 0;
+%     mask(1:windowSize(1), :) = 0;
+%     mask((end-windowSize(1)):end, :) = 0;
+    
+    imDouble = double(im);
+    
+    imDouble(~mask) = nan;    
+    imDouble(1,:) = nan;
+    imDouble(end,:) = nan;
+    imDouble(:,1) = nan;
+    imDouble(:,end) = nan;
+    
+    dxNeg = imfilter(abs(imfilter(imDouble, [-0.5,0.5,0])), windowSizeFilter, 0);
+    dxPos = imfilter(abs(imfilter(imDouble, [0,0.5,-0.5])), windowSizeFilter, 0);
+    dyNeg = imfilter(abs(imfilter(imDouble, [-0.5,0.5,0]')), windowSizeFilter, 0);
+    dyPos = imfilter(abs(imfilter(imDouble, [0,0.5,-0.5]')), windowSizeFilter, 0);
+    
+    localMinimaness = min(min(min(dxNeg, dxPos), dyNeg), dyPos);
+end
