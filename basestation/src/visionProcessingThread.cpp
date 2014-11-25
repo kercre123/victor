@@ -209,6 +209,14 @@ namespace Cozmo {
     return _visionSystem->CheckMailbox(msg);
   }
   
+  bool VisionProcessingThread::CheckMailbox(MessagePanAndTiltHead& msg)
+  {
+    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
+                                       "VisionProcessingThread.CheckMailbox.NullVisionSystem",
+                                       "CheckMailbox called before vision system instantiated.");// and initialized.");
+    return _visionSystem->CheckMailbox(msg);
+  }
+  
   
 } // namespace Cozmo
 } // namespace Anki

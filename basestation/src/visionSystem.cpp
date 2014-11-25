@@ -324,6 +324,15 @@ namespace Cozmo {
     return retVal;
   }
   
+  bool VisionSystem::CheckMailbox(MessagePanAndTiltHead&         msg)
+  {
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _panTiltMailbox.getMessage(msg);
+    }
+    return retVal;
+  }
+  
   bool VisionSystem::IsInitialized() const
   {
     bool retVal = isInitialized_;
@@ -2271,6 +2280,53 @@ namespace Cozmo {
         
         matlab_.PutOpencvMat(inputImage->get_CvMat_(), "inputImage");
         matlab_.PutOpencvMat(_prevImage.get_CvMat_(), "prevImage");
+        
+        
+        matlab_.EvalString("[nrows,ncols,~] = size(inputImage); "
+                           "logImg1 = log(max(1,double(prevImage))); "
+                           "logImg2 = log(max(1,double(inputImage))); "
+                           "diff = imabsdiff(logImg1, logImg2); "
+                           //"sumDiff = sum(diff(:)); "
+                           //"x = sum(xgrid(:).*diff(:))/sumDiff; "
+                           //"y = sum(ygrid(:).*diff(:))/sumDiff; "
+                           "diffThresh = diff > log(1.5); "
+                           "stats = regionprops(diffThresh, 'Area', 'Centroid', 'PixelIdxList'); "
+                           "areas = [stats.Area]; "
+                           "keep = areas > .01*nrows*ncols & areas < .5*nrows*ncols; "
+                           "diffThresh(vertcat(stats(~keep).PixelIdxList)) = false; "
+                           "keep = find(keep); "
+                           "if ~isempty(keep), "
+                           "  [~,toTrack] = max(areas(keep)); "
+                           "  centroid = stats(keep(toTrack)).Centroid; "
+                           "else, "
+                           "  clear centroid; "
+                           "end");
+        
+        if(matlab_.DoesVariableExist("centroid")) {
+          
+          matlab_.EvalString("hold off, imagesc(diff), axis image, colormap(gray), "
+                             "title(%d), "
+                             "hold on, plot(centroid(1), centroid(2), 'go', 'MarkerSize', 10, 'LineWidth', 2); drawnow",
+                             inputImage->GetTimestamp());
+          
+          mxArray* mxCentroid = matlab_.GetArray("centroid");
+          
+          CORETECH_ASSERT(mxGetNumberOfElements(mxCentroid) == 2);
+          const f32 xCen = mxGetPr(mxCentroid)[0];
+          const f32 yCen = mxGetPr(mxCentroid)[1];
+          
+          MessagePanAndTiltHead msg;
+          
+          // Convert image positions to desired angles
+          const f32 yError_pix = static_cast<f32>(inputImage->GetNumRows())*0.5f - yCen;
+          msg.relativeHeadTiltAngle_rad = atan_fast(yError_pix / headCamInfo_->focalLength_y);
+          
+          const f32 xError_pix = static_cast<f32>(inputImage->GetNumCols())*0.5f - xCen;
+          msg.relativePanAngle_rad = atan_fast(xError_pix / headCamInfo_->focalLength_x);
+          
+          _panTiltMailbox.putMessage(msg);
+        }
+        
         matlab_.EvalString("imagesc(imabsdiff(inputImage, prevImage)), axis image, colormap(gray), drawnow");
         matlab_.EvalString("title(%d)", inputImage->GetTimestamp());
 #       endif

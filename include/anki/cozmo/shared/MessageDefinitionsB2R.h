@@ -497,3 +497,10 @@ START_MESSAGE_DEFINITION(FaceTracking, 1)
 ADD_MESSAGE_MEMBER(u8, enabled)
 ADD_MESSAGE_MEMBER(u8, timeout_sec)
 END_MESSAGE_DEFINITION(FaceTracking)
+
+// PanAndTiltHead
+START_MESSAGE_DEFINITION(PanAndTiltHead, 1)
+// TODO: make these fixed point
+ADD_MESSAGE_MEMBER(f32, relativePanAngle_rad)
+ADD_MESSAGE_MEMBER(f32, relativeHeadTiltAngle_rad)
+END_MESSAGE_DEFINITION(PanAndTiltHead)

@@ -737,6 +737,19 @@ namespace Anki {
         AddKeyFrameHelper(msg, kf);
       }
       
+      void ProcessPanAndTiltHeadMessage(const PanAndTiltHead& msg)
+      {
+        // TODO: Move this to some kind of VisualInterestTrackingController or something
+        
+        HeadController::SetDesiredAngle(msg.relativeHeadTiltAngle_rad + HeadController::GetAngleRad());
+        
+        const f32 turnVelocity = (msg.relativePanAngle_rad < 0 ? -50.f : 50.f);
+        SteeringController::ExecutePointTurn(msg.relativePanAngle_rad + Localization::GetCurrentMatOrientation().ToFloat(),
+                                             turnVelocity, 5, -5);
+
+        
+      }
+      
 // ----------- Send messages -----------------
       
       

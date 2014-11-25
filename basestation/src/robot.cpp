@@ -517,6 +517,12 @@ namespace Anki {
         
       }
 
+      MessagePanAndTiltHead panTiltHead;
+      if(true == _visionProcessor.CheckMailbox(panTiltHead)) {
+        
+        _msgHandler->SendMessage(_ID, panTiltHead);
+        
+      }
       
       
       ////////// Update the robot's blockworld //////////

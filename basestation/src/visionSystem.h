@@ -199,6 +199,7 @@ namespace Cozmo {
     bool CheckMailbox(MessageFaceDetection&       msg);
     bool CheckMailbox(MessageVisionMarker&        msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);
+    bool CheckMailbox(MessagePanAndTiltHead&      msg);
     
   protected:
     
@@ -417,6 +418,7 @@ namespace Cozmo {
     //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
     Mailbox<MessageDockingErrorSignal>   _dockingMailbox;
     Mailbox<MessageTrackerQuad>          _trackerMailbox;
+    Mailbox<MessagePanAndTiltHead>       _panTiltMailbox;
     MultiMailbox<MessageVisionMarker,  DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
     MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
     

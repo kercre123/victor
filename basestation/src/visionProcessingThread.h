@@ -56,6 +56,7 @@ namespace Cozmo {
     bool CheckMailbox(MessageFaceDetection&       msg);
     bool CheckMailbox(MessageVisionMarker&        msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);
+    bool CheckMailbox(MessagePanAndTiltHead&      msg);
     
   protected:
     
