@@ -1,22 +1,39 @@
-function [threshold, brightValue, darkValue] = ComputeThreshold(img, tform)
+function [threshold, brightValue, darkValue] = ComputeThreshold(img, tform, method)
 
-brightValues = ProbeHelper(img, tform, VisionMarkerTrained.BrightProbes);
-darkValues   = ProbeHelper(img, tform, VisionMarkerTrained.DarkProbes);
-
-if any(brightValues < VisionMarkerTrained.MinContrastRatio*darkValues)
-    % Make sure every corresponding pair of bright/dark probes has enough
-    % contrast.  
-    brightValue = [];
-    darkValue = [];
-    threshold = -1;
-    brightValue = [];
-    darkValue = [];
-else
-    % If so, compute the threshold from all of them
-    brightValue = mean(brightValues);
-    darkValue   = mean(darkValues);
-    threshold = (brightValue + darkValue)/2;
-end
+switch(method)
+  
+  case 'Otsu'
+    
+    probeValues = VisionMarkerTrained.GetProbeValues(img, tform);
+    
+    threshold = graythresh(probeValues);
+    brightMask  = probeValues >= threshold;
+    brightValue = mean(probeValues(brightMask));
+    darkValue   = mean(probeValues(~brightMask));
+    
+  case 'FiducialProbes'
+    
+    brightValues = ProbeHelper(img, tform, VisionMarkerTrained.BrightProbes);
+    darkValues   = ProbeHelper(img, tform, VisionMarkerTrained.DarkProbes);
+    
+    if any(brightValues < VisionMarkerTrained.MinContrastRatio*darkValues)
+      % Make sure every corresponding pair of bright/dark probes has enough
+      % contrast.
+      threshold = -1;
+      brightValue = [];
+      darkValue = [];
+    else
+      % If so, compute the threshold from all of them
+      brightValue = mean(brightValues);
+      darkValue   = mean(darkValues);
+      threshold = (brightValue + darkValue)/2;
+    end
+    
+  otherwise
+    
+    error('Unrecognized threshold method "%s"', method);
+    
+end % switch(method)
 
 end
 
