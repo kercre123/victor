@@ -13,7 +13,14 @@ namespace Anki {
       ISM_STREAM,
       ISM_SINGLE_SHOT
     } ImageSendMode_t;
-    
+
+    typedef enum {
+      IE_NONE,
+      IE_YUYV,
+      IE_BAYER,
+      IE_JPEG
+    }
+
     typedef enum {
       DA_PICKUP_LOW = 0,  // Docking to block at level 0
       DA_PICKUP_HIGH,     // Docking to block at level 1
@@ -24,63 +31,63 @@ namespace Anki {
       DA_CROSS_BRIDGE
     } DockAction_t;
 
-    
+
     typedef enum {
       TM_NONE,
-      
+
       // Attempts to dock to a block that is placed in front of it and then place it on a block behind it.
       TM_PICK_AND_PLACE,
-      
+
       // Follows a changing straight line path. Tests path following during docking.
       TM_DOCK_PATH,
-      
+
       // Follows an example path. Requires localization
       TM_PATH_FOLLOW,
-      
+
       // Cycles through PathFollower convenience functions: DriveStraight, DriveArc, DrivePointTurn
       TM_PATH_FOLLOW_CONVENIENCE_FUNCTIONS,
-      
+
       // Tests ExecuteDirectDrive() or open loop control via HAL::MotorSetPower()
       TM_DIRECT_DRIVE,
-      
+
       // Moves lift up and down
       TM_LIFT,
-      
+
       // Toggles between 3 main lift heights: low dock, carry, and high dock
       TM_LIFT_TOGGLE,
-      
+
       // Tilts head up and down
       TM_HEAD,
-      
+
       // Prints gyro/accel data
       TM_IMU,
-      
+
       // Cycles through all known animations
       TM_ANIMATION,
-      
+
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
       // Engages and disengages gripper
       TM_GRIPPER,
 #endif
-      
+
       // Cycle through all LEDs with different colors
       TM_LIGHTS,
-      
+
       // Drives slow and then stops.
       // Drives fast and then stops.
       // Reports stopping distance and time (in tics).
       TM_STOP_TEST,
-      
+
       // Drives all motors at max power simultaneously.
       TM_MAX_POWER_TEST,
-      
+
       // Turns on face tracking
       TM_FACE_TRACKING,
-      
+
       TM_NUM_TESTS
     } TestMode;
 
-    
+
     // Bit flags for RobotState message
     typedef enum {
       //IS_TRAVERSING_PATH    = 1,
@@ -89,15 +96,15 @@ namespace Anki {
       IS_PICKED_UP            = 0x8,
       IS_PROX_FORWARD_BLOCKED = 0x10,
       IS_PROX_SIDE_BLOCKED    = 0x20,
-      IS_ANIMATING            = 0x40      
+      IS_ANIMATING            = 0x40
     } RobotStatusFlag;
-    
-    
+
+
     // A key associated with each computed pose retrieved from history
     // to be used to check its validity at a later time.
     typedef u32 HistPoseKey;
 
-    
+
     // Animation ID
     // TODO: Eventually, we might want a way of sending animation definitions down from basestation
     //       but for now they're hard-coded on the robot
@@ -109,7 +116,7 @@ namespace Anki {
       ,ANIM_NUM_ANIMATIONS
     } AnimationID_t;*/
     typedef s32 AnimationID_t;
-      
+
     // Prox sensors
     typedef enum {
       PROX_LEFT
@@ -117,7 +124,7 @@ namespace Anki {
       ,PROX_RIGHT
       ,NUM_PROX
     } ProxSensor_t;
-    
+
     // LED identifiers and colors
     // Updated for "neutral" (non-hardware specific) order in 2.1
     enum LEDId {
@@ -131,11 +138,11 @@ namespace Anki {
       LED_LEFT_EYE_LEFT,
       NUM_LEDS
     };
-    
+
     // The color format is identical to HTML Hex Triplets (RGB)
     enum LEDColor {
       LED_CURRENT_COLOR = 0xffffffff, // Don't change color: leave as is
-      
+
       LED_OFF =   0x000000,
       LED_RED =   0xff0000,
       LED_GREEN = 0x00ff00,
@@ -145,7 +152,7 @@ namespace Anki {
       LED_CYAN =  0x00ffff,
       LED_WHITE = 0xffffff
     };
-    
+
     enum WhichEye {
       EYE_LEFT,
       EYE_RIGHT,
@@ -167,7 +174,7 @@ namespace Anki {
       EYE_ON_PUPIL_LEFT,
       EYE_ON_PUPIL_RIGHT
     };
-    
+
     // For DEV only
     typedef struct {
       s32 integerCountsIncrement;
@@ -176,7 +183,7 @@ namespace Anki {
       f32 percentileToMakeHigh;
       u8 highValue;
     } VisionSystemParams_t;
-    
+
     typedef struct {
       f32 scaleFactor;
       s32 minNeighbors;
@@ -185,7 +192,7 @@ namespace Anki {
       s32 maxObjectHeight;
       s32 maxObjectWidth;
     } FaceDetectParams_t;
-    
+
   }
 }
 
