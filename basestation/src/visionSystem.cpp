@@ -68,16 +68,16 @@ namespace Cozmo {
   using namespace Embedded;
   
   VisionSystem::VisionSystem()
-  : isInitialized_(false)
-  , headCamInfo_(nullptr)
+  : _isInitialized(false)
+  , _headCamInfo(nullptr)
   {
     
   } // VisionSystem()
   
   VisionSystem::~VisionSystem()
   {
-    if(headCamInfo_ != nullptr) {
-      delete headCamInfo_;
+    if(_headCamInfo != nullptr) {
+      delete _headCamInfo;
     }
   }
   
@@ -85,16 +85,16 @@ namespace Cozmo {
   // WARNING: ResetBuffers should be used with caution
   Result VisionSystem::VisionMemory::ResetBuffers()
   {
-    offchipScratch_ = MemoryStack(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-    onchipScratch_  = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
-    ccmScratch_     = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
+    _offchipScratch = MemoryStack(offchipBuffer, OFFCHIP_BUFFER_SIZE);
+    _onchipScratch  = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
+    _ccmScratch     = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
     
-    if(!offchipScratch_.IsValid() || !onchipScratch_.IsValid() || !ccmScratch_.IsValid()) {
+    if(!_offchipScratch.IsValid() || !_onchipScratch.IsValid() || !_ccmScratch.IsValid()) {
       PRINT_INFO("Error: InitializeScratchBuffers\n");
       return RESULT_FAIL;
     }
     
-    markers_ = FixedLengthList<VisionMarker>(VisionMemory::MAX_MARKERS, offchipScratch_);
+    _markers = FixedLengthList<VisionMarker>(VisionMemory::MAX_MARKERS, _offchipScratch);
     
     return RESULT_OK;
   }
@@ -148,12 +148,12 @@ namespace Cozmo {
   
   void VisionSystem::StartMarkerDetection()
   {
-    mode_ |= LOOKING_FOR_MARKERS;
+    _mode |= LOOKING_FOR_MARKERS;
   }
   
   void VisionSystem::StopMarkerDetection()
   {
-    mode_ &= ~LOOKING_FOR_MARKERS;
+    _mode &= ~LOOKING_FOR_MARKERS;
   }
   
 #if 0
@@ -201,19 +201,19 @@ namespace Cozmo {
 #if USE_MATLAB_TRACKER
     return MatlabVisionProcessor::GetTrackerQuad();
 #else
-    return tracker_.get_transformation().get_transformedCorners(scratch);
+    return _tracker.get_transformation().get_transformedCorners(scratch);
 #endif
   } // GetTrackerQuad()
   
   Result VisionSystem::UpdateRobotState(const MessageRobotState newRobotState)
   {
-    prevRobotState_ = robotState_;
-    robotState_     = newRobotState;
+    _prevRobotState = _robotState;
+    _robotState     = newRobotState;
     
-    if(wasCalledOnce_) {
-      havePreviousRobotState_ = true;
+    if(_wasCalledOnce) {
+      _havePreviousRobotState = true;
     } else {
-      wasCalledOnce_ = true;
+      _wasCalledOnce = true;
     }
     
     return RESULT_OK;
@@ -222,19 +222,19 @@ namespace Cozmo {
   
   void VisionSystem::GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange)
   {
-    AnkiAssert(havePreviousRobotState_);
+    AnkiAssert(_havePreviousRobotState);
     
-    angleChange = Radians(robotState_.pose_angle) - Radians(prevRobotState_.pose_angle);
+    angleChange = Radians(_robotState.pose_angle) - Radians(_prevRobotState.pose_angle);
     
     PRINT_INFO("angleChange = %.1f\n", angleChange.getDegrees());
     
     // Position change in world (mat) coordinates
-    const f32 dx = robotState_.pose_x - prevRobotState_.pose_x;
-    const f32 dy = robotState_.pose_y - prevRobotState_.pose_y;
+    const f32 dx = _robotState.pose_x - _prevRobotState.pose_x;
+    const f32 dy = _robotState.pose_y - _prevRobotState.pose_y;
     
     // Get change in robot coordinates
-    const f32 cosAngle = cosf(-prevRobotState_.pose_angle);
-    const f32 sinAngle = sinf(-prevRobotState_.pose_angle);
+    const f32 cosAngle = cosf(-_prevRobotState.pose_angle);
+    const f32 sinAngle = sinf(-_prevRobotState.pose_angle);
     xChange = dx*cosAngle - dy*sinAngle;
     yChange = dx*sinAngle + dy*cosAngle;
   } // GetPoseChange()
@@ -245,30 +245,30 @@ namespace Cozmo {
   // interrupted by main and we want all this stuff updated at once.
   Result VisionSystem::UpdateMarkerToTrack()
   {
-    if(newMarkerToTrackWasProvided_) {
+    if(_newMarkerToTrackWasProvided) {
       
-      mode_              |= LOOKING_FOR_MARKERS;
-      numTrackFailures_  =  0;
+      _mode              |= LOOKING_FOR_MARKERS;
+      _numTrackFailures  =  0;
       
-      markerToTrack_ = newMarkerToTrack_;
+      _markerToTrack = _newMarkerToTrack;
       
-      if(markerToTrack_.IsSpecified()) {
+      if(_markerToTrack.IsSpecified()) {
         
-        AnkiConditionalErrorAndReturnValue(markerToTrack_.width_mm > 0.f,
+        AnkiConditionalErrorAndReturnValue(_markerToTrack.width_mm > 0.f,
                                            RESULT_FAIL_INVALID_PARAMETER,
                                            "VisionSystem::UpdateMarkerToTrack()",
                                            "Invalid marker width specified.");
         
         // Set canonical 3D marker's corner coordinates
-        const P3P_PRECISION markerHalfWidth = markerToTrack_.width_mm * P3P_PRECISION(0.5);
-        canonicalMarker3d_[0] = Embedded::Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
-        canonicalMarker3d_[1] = Embedded::Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
-        canonicalMarker3d_[2] = Embedded::Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
-        canonicalMarker3d_[3] = Embedded::Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
+        const P3P_PRECISION markerHalfWidth = _markerToTrack.width_mm * P3P_PRECISION(0.5);
+        _canonicalMarker3d[0] = Embedded::Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
+        _canonicalMarker3d[1] = Embedded::Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
+        _canonicalMarker3d[2] = Embedded::Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
+        _canonicalMarker3d[3] = Embedded::Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
       } // if markerToTrack is valid
       
-      newMarkerToTrack_.Clear();
-      newMarkerToTrackWasProvided_ = false;
+      _newMarkerToTrack.Clear();
+      _newMarkerToTrackWasProvided = false;
     } // if newMarker provided
     
     return RESULT_OK;
@@ -278,13 +278,13 @@ namespace Cozmo {
   
   Radians VisionSystem::GetCurrentHeadAngle()
   {
-    return robotState_.headAngle;
+    return _robotState.headAngle;
   }
   
   
   Radians VisionSystem::GetPreviousHeadAngle()
   {
-    return prevRobotState_.headAngle;
+    return _prevRobotState.headAngle;
   }
   
 
@@ -335,9 +335,9 @@ namespace Cozmo {
   
   bool VisionSystem::IsInitialized() const
   {
-    bool retVal = isInitialized_;
+    bool retVal = _isInitialized;
 #   if ANKI_COZMO_USE_MATLAB_VISION
-    retVal &= matlab_.ep != NULL;
+    retVal &= _matlab.ep != NULL;
 #   endif
     return retVal;
   }
@@ -540,7 +540,7 @@ namespace Cozmo {
                                     MemoryStack &offchipMemory)
   {
     AnkiAssert(parameters.isInitialized);
-    AnkiAssert(markerToTrack_.width_mm > 0);
+    AnkiAssert(_markerToTrack.width_mm > 0);
     
 #if USE_MATLAB_TRACKER
     return MatlabVisionProcessor::InitTemplate(grayscaleImage, trackingQuad, ccmScratch);
@@ -633,11 +633,11 @@ namespace Cozmo {
                                                                     FIDUCIAL_SQUARE_WIDTH_FRACTION,
                                                                     parameters.numInteriorSamples,
                                                                     parameters.numSamplingRegions,
-                                                                    headCamInfo_->focalLength_x,
-                                                                    headCamInfo_->focalLength_y,
-                                                                    headCamInfo_->center_x,
-                                                                    headCamInfo_->center_y,
-                                                                    markerToTrack_.width_mm,
+                                                                    _headCamInfo->focalLength_x,
+                                                                    _headCamInfo->focalLength_y,
+                                                                    _headCamInfo->center_x,
+                                                                    _headCamInfo->center_y,
+                                                                    _markerToTrack.width_mm,
                                                                     ccmScratch,
                                                                     onchipMemory,
                                                                     offchipMemory);
@@ -831,7 +831,7 @@ namespace Cozmo {
       PRINT_INFO("Tracker failed: position changed too much.\n");
       trackingSucceeded = false;
     }
-    else if(markerToTrack_.checkAngleX && fabs(tracker.get_angleX()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
+    else if(_markerToTrack.checkAngleX && fabs(tracker.get_angleX()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
     {
       PRINT_INFO("Tracker failed: target X angle too large.\n");
       trackingSucceeded = false;
@@ -992,15 +992,15 @@ namespace Cozmo {
                                      term1*cH2*cR - term4*cH2 - term5*cH2 + term2*sH2 - term3*sH2);
     
     Array<f32> R_blockRelHead = Array<f32>(3,3,scratch);
-    tracker_.GetRotationMatrix(R_blockRelHead);
-    const Embedded::Point3<f32>& T_blockRelHead = tracker_.GetTranslation();
+    _tracker.GetRotationMatrix(R_blockRelHead);
+    const Embedded::Point3<f32>& T_blockRelHead = _tracker.GetTranslation();
     
     Array<f32> R_blockRelHead_new = Array<f32>(3,3,scratch);
     Embedded::Matrix::Multiply(R_geometry, R_blockRelHead, R_blockRelHead_new);
     
     Embedded::Point3<f32> T_blockRelHead_new = R_geometry*T_blockRelHead + T_geometry;
     
-    if(tracker_.UpdateRotationAndTranslation(R_blockRelHead_new,
+    if(_tracker.UpdateRotationAndTranslation(R_blockRelHead_new,
                                              T_blockRelHead_new,
                                              scratch) == RESULT_OK)
     {
@@ -1023,7 +1023,7 @@ namespace Cozmo {
     const f32 cosHeadAngle = cosf(theta_head.ToFloat());
     const f32 sinHeadAngle = sinf(theta_head.ToFloat());
     const f32 d = (trackingMarkerWidth_mm* cosHeadAngle *
-                   headCamInfo_->focalLength_y /
+                   _headCamInfo->focalLength_y /
                    observedVerticalSize_pix);
     
     // Convert to how much we've moved along (and orthogonal to) the camera's optical axis
@@ -1035,8 +1035,8 @@ namespace Cozmo {
     //    Compute pixel-per-degree of the camera and multiply by degrees rotated
     // 2. Convert horizontal shift of the robot to pixel shift, using
     //    focal length
-    f32 horizontalShift_pix = (static_cast<f32>(headCamInfo_->ncols/2) * theta_robot.ToFloat() /
-                               headCamFOV_hor_) + (T_hor_robot*headCamInfo_->focalLength_x/d);
+    f32 horizontalShift_pix = (static_cast<f32>(_headCamInfo->ncols/2) * theta_robot.ToFloat() /
+                               _headCamFOV_hor) + (T_hor_robot*_headCamInfo->focalLength_x/d);
     
     // Predict approximate scale change by comparing the distance to the
     // object before and after forward motion
@@ -1045,7 +1045,7 @@ namespace Cozmo {
     // Predict approximate vertical shift in the camera plane by comparing
     // vertical motion (orthogonal to camera's optical axis) to the focal
     // length
-    const f32 verticalShift_pix = T_ver_cam * headCamInfo_->focalLength_y/d;
+    const f32 verticalShift_pix = T_ver_cam * _headCamInfo->focalLength_y/d;
     
     PRINT("Adjusting transformation: %.3fpix H shift for %.3fdeg rotation, "
           "%.3f scaling and %.3f V shift for %.3f translation forward (%.3f cam)\n",
@@ -1054,7 +1054,7 @@ namespace Cozmo {
     
     // Adjust the Transformation
     // Note: UpdateTransformation is doing *inverse* composition (thus using the negatives)
-    if(tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_TRANSLATION) {
+    if(_tracker.get_transformation().get_transformType() == Transformations::TRANSFORM_TRANSLATION) {
       Array<f32> update(1,2,scratch);
       update[0][0] = -horizontalShift_pix;
       update[0][1] = -verticalShift_pix;
@@ -1062,7 +1062,7 @@ namespace Cozmo {
 #if USE_MATLAB_TRACKER
       MatlabVisionProcessor::UpdateTracker(update);
 #else
-      tracker_.UpdateTransformation(update, 1.f, scratch,
+      _tracker.UpdateTransformation(update, 1.f, scratch,
                                     Transformations::TRANSFORM_TRANSLATION);
 #endif
     }
@@ -1088,7 +1088,7 @@ namespace Cozmo {
 #if USE_MATLAB_TRACKER
       MatlabVisionProcessor::UpdateTracker(update);
 #else
-      tracker_.UpdateTransformation(update, 1.f, scratch,
+      _tracker.UpdateTransformation(update, 1.f, scratch,
                                     Transformations::TRANSFORM_AFFINE);
 #endif
     } // if(tracker transformation type == TRANSLATION...)
@@ -1111,8 +1111,8 @@ namespace Cozmo {
     dockErrMsg.isApproximate = true;
     
     const bool useTopBar = false; // TODO: pass in? make a docker parameter?
-    const f32 focalLength_x = headCamInfo_->focalLength_x;
-    const f32 imageResolutionWidth_pix = detectionParameters_.detectionWidth;
+    const f32 focalLength_x = _headCamInfo->focalLength_x;
+    const f32 imageResolutionWidth_pix = _detectionParameters.detectionWidth;
     
     Quadrilateral<f32> sortedQuad = currentQuad.ComputeClockwiseCorners<f32>();
     const Point<f32>& lineLeft  = (useTopBar ? sortedQuad[0] : sortedQuad[3]); // topLeft  or bottomLeft
@@ -1164,11 +1164,11 @@ namespace Cozmo {
                                                           dockErrMsg.angleErr);
 #else
     // Despite the names, fill the elements of the message with camera-centric coordinates
-    dockErrMsg.x_distErr = tracker_.GetTranslation().x;
-    dockErrMsg.y_horErr  = tracker_.GetTranslation().y;
-    dockErrMsg.z_height  = tracker_.GetTranslation().z;
+    dockErrMsg.x_distErr = _tracker.GetTranslation().x;
+    dockErrMsg.y_horErr  = _tracker.GetTranslation().y;
+    dockErrMsg.z_height  = _tracker.GetTranslation().z;
     
-    dockErrMsg.angleErr  = tracker_.get_angleY();
+    dockErrMsg.angleErr  = _tracker.get_angleY();
     
 #endif // if USE_MATLAB_TRACKER
     
@@ -1192,10 +1192,10 @@ namespace Cozmo {
     
 #warning broken
     /*P3P::computePose(currentQuad_atPrecision,
-     canonicalMarker3d_[0], canonicalMarker3d_[1],
-     canonicalMarker3d_[2], canonicalMarker3d_[3],
-     headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
-     headCamInfo_->center_x, headCamInfo_->center_y,
+     _canonicalMarker3d[0], _canonicalMarker3d[1],
+     _canonicalMarker3d[2], _canonicalMarker3d[3],
+     _headCamInfo->focalLength_x, _headCamInfo->focalLength_y,
+     _headCamInfo->center_x, _headCamInfo->center_y,
      R, T, scratch);*/
     
     // Extract what we need for the docking error signal from the block's pose:
@@ -1245,24 +1245,24 @@ namespace Cozmo {
   /*
    const HAL::CameraInfo* VisionSystem::GetCameraCalibration() {
    // TODO: is just returning the pointer to HAL's camera info struct kosher?
-   return headCamInfo_;
+   return _headCamInfo;
    }
    */
   
   f32 VisionSystem::GetTrackingMarkerWidth() {
-    return markerToTrack_.width_mm;
+    return _markerToTrack.width_mm;
   }
   
   f32 VisionSystem::GetVerticalFOV() {
-    return headCamFOV_ver_;
+    return _headCamFOV_ver;
   }
   
   f32 VisionSystem::GetHorizontalFOV() {
-    return headCamFOV_hor_;
+    return _headCamFOV_hor;
   }
   
   const FaceDetectionParameters& VisionSystem::GetFaceDetectionParams() {
-    return faceDetectionParameters_;
+    return _faceDetectionParameters;
   }
   
   VisionSystem::CameraInfo::CameraInfo(const Vision::CameraCalibration& camCalib)
@@ -1283,8 +1283,8 @@ namespace Cozmo {
   {
     Result result = RESULT_OK;
     
-    if(!isInitialized_) {
-      captureResolution_ = Vision::CAMERA_RES_QVGA;
+    if(!_isInitialized) {
+      _captureResolution = Vision::CAMERA_RES_QVGA;
       
       // WARNING: the order of these initializations matter!
       
@@ -1292,32 +1292,32 @@ namespace Cozmo {
       // Initialize the VisionSystem's state (i.e. its "private member variables")
       //
       
-      mode_                      = LOOKING_FOR_MARKERS;
-      markerToTrack_.Clear();
-      numTrackFailures_          = 0;
+      _mode                      = LOOKING_FOR_MARKERS;
+      _markerToTrack.Clear();
+      _numTrackFailures          = 0;
       
-      wasCalledOnce_             = false;
-      havePreviousRobotState_    = false;
+      _wasCalledOnce             = false;
+      _havePreviousRobotState    = false;
       
-      //headCamInfo_ = HAL::GetHeadCamInfo();
-      headCamInfo_ = new CameraInfo(camCalib);
-      if(headCamInfo_ == NULL) {
+      //_headCamInfo = HAL::GetHeadCamInfo();
+      _headCamInfo = new CameraInfo(camCalib);
+      if(_headCamInfo == NULL) {
         PRINT_INFO("Initialize() - HeadCam Info pointer is NULL!\n");
         return RESULT_FAIL;
       }
       
       // Compute FOV from focal length (currently used for tracker prediciton)
-      headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo_->nrows) /
-                                    (2.f * headCamInfo_->focalLength_y));
-      headCamFOV_hor_ = 2.f * atanf(static_cast<f32>(headCamInfo_->ncols) /
-                                    (2.f * headCamInfo_->focalLength_x));
+      _headCamFOV_ver = 2.f * atanf(static_cast<f32>(_headCamInfo->nrows) /
+                                    (2.f * _headCamInfo->focalLength_y));
+      _headCamFOV_hor = 2.f * atanf(static_cast<f32>(_headCamInfo->ncols) /
+                                    (2.f * _headCamInfo->focalLength_x));
       
-      exposureTime = 0.2f; // TODO: pick a reasonable start value
-      frameNumber = 0;
+      _exposureTime = 0.2f; // TODO: pick a reasonable start value
+      _frameNumber = 0;
       
-      detectionParameters_.Initialize();
-      trackerParameters_.Initialize();
-      faceDetectionParameters_.Initialize();
+      _detectionParameters.Initialize();
+      _trackerParameters.Initialize();
+      _faceDetectionParameters.Initialize();
       
       Simulator::Initialize();
       
@@ -1342,18 +1342,18 @@ namespace Cozmo {
       if(result != RESULT_OK) { return result; }
 #endif
       
-      RcamWrtRobot_ = Array<f32>(3,3,_memory.onchipScratch_);
+      _RcamWrtRobot = Array<f32>(3,3,_memory._onchipScratch);
       
-      markerToTrack_.Clear();
-      newMarkerToTrack_.Clear();
-      newMarkerToTrackWasProvided_ = false;
+      _markerToTrack.Clear();
+      _newMarkerToTrack.Clear();
+      _newMarkerToTrackWasProvided = false;
       
-      isWaitingOnSnapshot_ = false;
-      isSnapshotReady_ = NULL;
-      snapshotROI_ = Embedded::Rectangle<s32>(-1, -1, -1, -1);
-      snapshot_ = NULL;
+      _isWaitingOnSnapShot = false;
+      _isSnapshotReady = NULL;
+      _snapshotROI = Embedded::Rectangle<s32>(-1, -1, -1, -1);
+      _snapshot = NULL;
       
-      isInitialized_ = true;
+      _isInitialized = true;
     }
     
     return result;
@@ -1376,15 +1376,15 @@ namespace Cozmo {
                                         const f32 imageSearchRadius,
                                         const bool checkAngleX)
   {
-    newMarkerToTrack_.type              = markerTypeToTrack;
-    newMarkerToTrack_.width_mm          = markerWidth_mm;
-    newMarkerToTrack_.imageCenter       = atImageCenter;
-    newMarkerToTrack_.imageSearchRadius = imageSearchRadius;
-    newMarkerToTrack_.checkAngleX       = checkAngleX;
+    _newMarkerToTrack.type              = markerTypeToTrack;
+    _newMarkerToTrack.width_mm          = markerWidth_mm;
+    _newMarkerToTrack.imageCenter       = atImageCenter;
+    _newMarkerToTrack.imageSearchRadius = imageSearchRadius;
+    _newMarkerToTrack.checkAngleX       = checkAngleX;
     
     // Next call to Update(), we will call UpdateMarkerToTrack() and
-    // actually replace the current markerToTrack_ with the one set here.
-    newMarkerToTrackWasProvided_ = true;
+    // actually replace the current _markerToTrack with the one set here.
+    _newMarkerToTrackWasProvided = true;
     
     return RESULT_OK;
   }
@@ -1392,24 +1392,24 @@ namespace Cozmo {
   void VisionSystem::StopTracking()
   {
     SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f, true);
-    mode_ &= ~TRACKING;
+    _mode &= ~TRACKING;
   }
   
   Result VisionSystem::StartDetectingFaces()
   {
-    mode_ |= DETECTING_FACES;
+    _mode |= DETECTING_FACES;
     return RESULT_OK;
   }
   
   Result VisionSystem::StopDetectingFaces()
   {
-    mode_ &= ~DETECTING_FACES;
+    _mode &= ~DETECTING_FACES;
     return RESULT_OK;
   }
   
   const Embedded::FixedLengthList<Embedded::VisionMarker>& VisionSystem::GetObservedMarkerList()
   {
-    return _memory.markers_;
+    return _memory._markers;
   } // GetObservedMarkerList()
   
   /*
@@ -1425,10 +1425,10 @@ namespace Cozmo {
    Result lastResult = RESULT_OK;
    markerFound = false;
    
-   if(_memory.markers_.get_size() > 0)
+   if(_memory._markers.get_size() > 0)
    {
-   FixedLengthList<VisionMarker*> markersWithType(_memory.markers_.get_size(),
-   _memory.onchipScratch_);
+   FixedLengthList<VisionMarker*> markersWithType(_memory._markers.get_size(),
+   _memory._onchipScratch);
    
    AnkiConditionalErrorAndReturnValue(markersWithType.IsValid(),
    RESULT_FAIL_MEMORY,
@@ -1437,10 +1437,10 @@ namespace Cozmo {
    
    // Find all markers with specified type
    s32 numFound = 0;
-   VisionMarker  * restrict pMarker = _memory.markers_.Pointer(0);
+   VisionMarker  * restrict pMarker = _memory._markers.Pointer(0);
    VisionMarker* * restrict pMarkerWithType = markersWithType.Pointer(0);
    
-   for(s32 i=0; i<_memory.markers_.get_size(); ++i)
+   for(s32 i=0; i<_memory._markers.get_size(); ++i)
    {
    if(pMarker[i].markerType == withType) {
    pMarkerWithType[numFound++] = pMarker + i;
@@ -1490,7 +1490,7 @@ namespace Cozmo {
    }
    } // for each marker with type
    } // if numFound > 0
-   } // if(VisionMemory::markers_.get_size() > 0)
+   } // if(VisionMemory::_markers.get_size() > 0)
    
    return RESULT_OK;
    } // GetVisionMarkerPoseNearestTo()
@@ -1526,11 +1526,11 @@ namespace Cozmo {
    Point3<f32> TcamWrtRobot;
    
    Result lastResult;
-   if((lastResult = GetCamPoseWrtRobot(RcamWrtRobot_, TcamWrtRobot)) != RESULT_OK) {
+   if((lastResult = GetCamPoseWrtRobot(_RcamWrtRobot, TcamWrtRobot)) != RESULT_OK) {
    return lastResult;
    }
    
-   pointWrtRobot = RcamWrtRobot_*pointWrtCamera + TcamWrtRobot;
+   pointWrtRobot = _RcamWrtRobot*pointWrtCamera + TcamWrtRobot;
    
    return RESULT_OK;
    }
@@ -1543,15 +1543,15 @@ namespace Cozmo {
    Point3<f32> TcamWrtRobot;
    
    Result lastResult;
-   if((lastResult = GetCamPoseWrtRobot(RcamWrtRobot_, TcamWrtRobot)) != RESULT_OK) {
+   if((lastResult = GetCamPoseWrtRobot(_RcamWrtRobot, TcamWrtRobot)) != RESULT_OK) {
    return lastResult;
    }
    
-   if((lastResult = Matrix::Multiply(RcamWrtRobot_, rotationWrtCamera, rotationWrtRobot)) != RESULT_OK) {
+   if((lastResult = Matrix::Multiply(_RcamWrtRobot, rotationWrtCamera, rotationWrtRobot)) != RESULT_OK) {
    return lastResult;
    }
    
-   translationWrtRobot = RcamWrtRobot_*translationWrtCamera + TcamWrtRobot;
+   translationWrtRobot = _RcamWrtRobot*translationWrtCamera + TcamWrtRobot;
    
    return RESULT_OK;
    }
@@ -1569,10 +1569,10 @@ namespace Cozmo {
     }
     
     return P3P::computePose(sortedQuad,
-                            canonicalMarker3d_[0], canonicalMarker3d_[1],
-                            canonicalMarker3d_[2], canonicalMarker3d_[3],
-                            headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
-                            headCamInfo_->center_x, headCamInfo_->center_y,
+                            _canonicalMarker3d[0], _canonicalMarker3d[1],
+                            _canonicalMarker3d[2], _canonicalMarker3d[3],
+                            _headCamInfo->focalLength_x, _headCamInfo->focalLength_y,
+                            _headCamInfo->center_x, _headCamInfo->center_y,
                             rotation, translation);
   } // GetVisionMarkerPose()
   
@@ -1580,45 +1580,45 @@ namespace Cozmo {
   Result VisionSystem::TakeSnapshot(const Embedded::Rectangle<s32> roi, const s32 subsample,
                                     Embedded::Array<u8>& snapshot, bool& readyFlag)
   {
-    if(!isWaitingOnSnapshot_)
+    if(!_isWaitingOnSnapShot)
     {
-      snapshotROI_ = roi;
+      _snapshotROI = roi;
       
-      snapshotSubsample_ = subsample;
-      AnkiConditionalErrorAndReturnValue(snapshotSubsample_ >= 1,
+      _snapshotSubsample = subsample;
+      AnkiConditionalErrorAndReturnValue(_snapshotSubsample >= 1,
                                          RESULT_FAIL_INVALID_PARAMETER,
                                          "VisionSystem::TakeSnapshot()",
-                                         "Subsample must be >= 1. %d was specified!\n", snapshotSubsample_);
+                                         "Subsample must be >= 1. %d was specified!\n", _snapshotSubsample);
       
-      snapshot_ = &snapshot;
+      _snapshot = &snapshot;
       
-      AnkiConditionalErrorAndReturnValue(snapshot_ != NULL, RESULT_FAIL_INVALID_OBJECT,
+      AnkiConditionalErrorAndReturnValue(_snapshot != NULL, RESULT_FAIL_INVALID_OBJECT,
                                          "VisionSystem::TakeSnapshot()", "NULL snapshot pointer!\n");
       
-      AnkiConditionalErrorAndReturnValue(snapshot_->IsValid(),
+      AnkiConditionalErrorAndReturnValue(_snapshot->IsValid(),
                                          RESULT_FAIL_INVALID_OBJECT,
                                          "VisionSystem::TakeSnapshot()", "Invalid snapshot array!\n");
       
-      const s32 nrowsSnap = snapshot_->get_size(0);
-      const s32 ncolsSnap = snapshot_->get_size(1);
+      const s32 nrowsSnap = _snapshot->get_size(0);
+      const s32 ncolsSnap = _snapshot->get_size(1);
       
-      AnkiConditionalErrorAndReturnValue(nrowsSnap*snapshotSubsample_ == snapshotROI_.get_height() &&
-                                         ncolsSnap*snapshotSubsample_ == snapshotROI_.get_width(),
+      AnkiConditionalErrorAndReturnValue(nrowsSnap*_snapshotSubsample == _snapshotROI.get_height() &&
+                                         ncolsSnap*_snapshotSubsample == _snapshotROI.get_width(),
                                          RESULT_FAIL_INVALID_SIZE,
                                          "VisionSystem::TakeSnapshot()",
                                          "Snapshot ROI size (%dx%d) subsampled by %d doesn't match snapshot array size (%dx%d)!\n",
-                                         snapshotROI_.get_height(), snapshotROI_.get_width(), snapshotSubsample_, nrowsSnap, ncolsSnap);
+                                         _snapshotROI.get_height(), _snapshotROI.get_width(), _snapshotSubsample, nrowsSnap, ncolsSnap);
       
-      isSnapshotReady_ = &readyFlag;
+      _isSnapshotReady = &readyFlag;
       
-      AnkiConditionalErrorAndReturnValue(isSnapshotReady_ != NULL,
+      AnkiConditionalErrorAndReturnValue(_isSnapshotReady != NULL,
                                          RESULT_FAIL_INVALID_OBJECT,
                                          "VisionSystem::TakeSnapshot()",
                                          "NULL isSnapshotReady pointer!\n");
       
-      isWaitingOnSnapshot_ = true;
+      _isWaitingOnSnapShot = true;
       
-    } // if !isWaitingOnSnapshot_
+    } // if !_isWaitingOnSnapShot
     
     return RESULT_OK;
   } // TakeSnapshot()
@@ -1626,42 +1626,42 @@ namespace Cozmo {
   
   Result VisionSystem::TakeSnapshotHelper(const Embedded::Array<u8>& grayscaleImage)
   {
-    if(isWaitingOnSnapshot_) {
+    if(_isWaitingOnSnapShot) {
       
       const s32 nrowsFull = grayscaleImage.get_size(0);
       const s32 ncolsFull = grayscaleImage.get_size(1);
       
-      if(snapshotROI_.top    < 0 || snapshotROI_.top    >= nrowsFull-1 ||
-         snapshotROI_.bottom < 0 || snapshotROI_.bottom >= nrowsFull-1 ||
-         snapshotROI_.left   < 0 || snapshotROI_.left   >= ncolsFull-1 ||
-         snapshotROI_.right  < 0 || snapshotROI_.right  >= ncolsFull-1)
+      if(_snapshotROI.top    < 0 || _snapshotROI.top    >= nrowsFull-1 ||
+         _snapshotROI.bottom < 0 || _snapshotROI.bottom >= nrowsFull-1 ||
+         _snapshotROI.left   < 0 || _snapshotROI.left   >= ncolsFull-1 ||
+         _snapshotROI.right  < 0 || _snapshotROI.right  >= ncolsFull-1)
       {
         PRINT_INFO("VisionSystem::TakeSnapshotHelper(): Snapshot ROI out of bounds!\n");
         return RESULT_FAIL_INVALID_SIZE;
       }
       
-      const s32 nrowsSnap = snapshot_->get_size(0);
-      const s32 ncolsSnap = snapshot_->get_size(1);
+      const s32 nrowsSnap = _snapshot->get_size(0);
+      const s32 ncolsSnap = _snapshot->get_size(1);
       
-      for(s32 iFull=snapshotROI_.top, iSnap=0;
-          iFull<snapshotROI_.bottom && iSnap<nrowsSnap;
-          iFull+= snapshotSubsample_, ++iSnap)
+      for(s32 iFull=_snapshotROI.top, iSnap=0;
+          iFull<_snapshotROI.bottom && iSnap<nrowsSnap;
+          iFull+= _snapshotSubsample, ++iSnap)
       {
         const u8 * restrict pImageRow = grayscaleImage.Pointer(iFull,0);
-        u8 * restrict pSnapRow = snapshot_->Pointer(iSnap, 0);
+        u8 * restrict pSnapRow = _snapshot->Pointer(iSnap, 0);
         
-        for(s32 jFull=snapshotROI_.left, jSnap=0;
-            jFull<snapshotROI_.right && jSnap<ncolsSnap;
-            jFull+= snapshotSubsample_, ++jSnap)
+        for(s32 jFull=_snapshotROI.left, jSnap=0;
+            jFull<_snapshotROI.right && jSnap<ncolsSnap;
+            jFull+= _snapshotSubsample, ++jSnap)
         {
           pSnapRow[jSnap] = pImageRow[jFull];
         }
       }
       
-      isWaitingOnSnapshot_ = false;
-      *isSnapshotReady_ = true;
+      _isWaitingOnSnapShot = false;
+      *_isSnapshotReady = true;
       
-    } // if isWaitingOnSnapshot_
+    } // if _isWaitingOnSnapShot
     
     return RESULT_OK;
     
@@ -1708,7 +1708,7 @@ namespace Cozmo {
     AnkiConditionalErrorAndReturnValue(IsInitialized(), RESULT_FAIL,
                                        "VisionSystem.Update", "VisionSystem not initialized.\n");
     
-    frameNumber++;
+    _frameNumber++;
     
     // no-op on real hardware
     if(!Simulator::IsFrameReady()) {
@@ -1739,16 +1739,16 @@ namespace Cozmo {
     //const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
     const TimeStamp_t imageTimeStamp = robotState.timestamp;
     
-    if(mode_ & TAKING_SNAPSHOT) {
+    if(_mode & TAKING_SNAPSHOT) {
       // Nothing to do, unless a snapshot was requested
       
-      if(isWaitingOnSnapshot_) {
-        const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
-        const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
+      if(_isWaitingOnSnapShot) {
+        const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
+        const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
         
         
         Array<u8> grayscaleImage(captureHeight, captureWidth,
-                                 _memory.offchipScratch_, Flags::Buffer(false,false,false));
+                                 _memory._offchipScratch, Flags::Buffer(false,false,false));
         
         GetImageHelper(inputImage, grayscaleImage);
         
@@ -1758,21 +1758,21 @@ namespace Cozmo {
         }
       }
       
-    } // if(mode_ & TAKING_SNAPSHOT)
+    } // if(_mode & TAKING_SNAPSHOT)
     
     
-    if(mode_ & LOOKING_FOR_MARKERS) {
+    if(_mode & LOOKING_FOR_MARKERS) {
       Simulator::SetDetectionReadyTime(); // no-op on real hardware
       
       _memory.ResetBuffers();
       
-      //MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
+      //MemoryStack _offchipScratchlocal(VisionMemory::_offchipScratch);
       
-      const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
-      const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
+      const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
+      const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
       
       Array<u8> grayscaleImage(captureHeight, captureWidth,
-                               _memory.offchipScratch_, Flags::Buffer(false,false,false));
+                               _memory._offchipScratch, Flags::Buffer(false,false,false));
       
       GetImageHelper(inputImage, grayscaleImage);
       
@@ -1783,39 +1783,40 @@ namespace Cozmo {
       
       BeginBenchmark("VisionSystem_CameraImagingPipeline");
       
-      if(vignettingCorrection == VignettingCorrection_Software) {
+      if(_vignettingCorrection == VignettingCorrection_Software) {
         BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
         
-        MemoryStack onchipScratch_local = _memory.onchipScratch_;
-        FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+        MemoryStack _onchipScratchlocal = _memory._onchipScratch;
+        FixedLengthList<f32> polynomialParameters(5, _onchipScratchlocal, Flags::Buffer(false, false, true));
         
         for(s32 i=0; i<5; i++)
-          polynomialParameters[i] = vignettingCorrectionParameters[i];
+          polynomialParameters[i] = _vignettingCorrectionParameters[i];
         
         CorrectVignetting(grayscaleImage, polynomialParameters);
         
         EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-      } // if(vignettingCorrection == VignettingCorrection_Software)
+      } // if(_vignettingCorrection == VignettingCorrection_Software)
       
-      if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
+      if(_autoExposure_enabled && (_frameNumber % _autoExposure_adjustEveryNFrames) == 0) {
         BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
         
         ComputeBestCameraParameters(
                                     grayscaleImage,
                                     Embedded::Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-                                    autoExposure_integerCountsIncrement,
-                                    autoExposure_highValue,
-                                    autoExposure_percentileToMakeHigh,
-                                    autoExposure_minExposureTime, autoExposure_maxExposureTime,
-                                    autoExposure_tooHighPercentMultiplier,
-                                    exposureTime,
-                                    _memory.ccmScratch_);
+                                    _autoExposure_integerCountsIncrement,
+                                    _autoExposure_highValue,
+                                    _autoExposure_percentileToMakeHigh,
+                                    _autoExposure_minExposureTime,
+                                    _autoExposure_maxExposureTime,
+                                    _autoExposure_tooHighPercentMultiplier,
+                                    _exposureTime,
+                                    _memory._ccmScratch);
         
         EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
       }
       
       // TODO: Provide a way to specify camera parameters from basestation
-      //HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+      //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
       
       EndBenchmark("VisionSystem_CameraImagingPipeline");
       
@@ -1823,20 +1824,20 @@ namespace Cozmo {
       //DownsampleAndSendImage(grayscaleImage);
       
       if((lastResult = LookForMarkers(grayscaleImage,
-                                      detectionParameters_,
-                                      _memory.markers_,
-                                      _memory.ccmScratch_,
-                                      _memory.onchipScratch_,
-                                      _memory.offchipScratch_)) != RESULT_OK)
+                                      _detectionParameters,
+                                      _memory._markers,
+                                      _memory._ccmScratch,
+                                      _memory._onchipScratch,
+                                      _memory._offchipScratch)) != RESULT_OK)
       {
         return lastResult;
       }
       
-      const s32 numMarkers = _memory.markers_.get_size();
+      const s32 numMarkers = _memory._markers.get_size();
       bool isTrackingMarkerFound = false;
       for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
       {
-        const VisionMarker& crntMarker = _memory.markers_[i_marker];
+        const VisionMarker& crntMarker = _memory._markers[i_marker];
         
         // TODO: Let the robot do the ignoring of VisionMarkers in its mailbox
         //if (!Localization::IsOnRamp() && !IMUFilter::IsPickedUp()) {
@@ -1847,11 +1848,11 @@ namespace Cozmo {
           msg.timestamp  = imageTimeStamp;
           msg.markerType = crntMarker.markerType;
           
-          msg.x_imgLowerLeft = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x;
-          msg.y_imgLowerLeft = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y;
+          msg.x_imgLowerLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x;
+          msg.y_imgLowerLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y;
           
-          msg.x_imgUpperLeft = crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x;
-          msg.y_imgUpperLeft = crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y;
+          msg.x_imgUpperLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x;
+          msg.y_imgUpperLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y;
           
           msg.x_imgUpperRight = crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x;
           msg.y_imgUpperRight = crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y;
@@ -1865,31 +1866,31 @@ namespace Cozmo {
         }
         
         // Was the desired marker found? If so, start tracking it.
-        if(markerToTrack_.IsSpecified() && !isTrackingMarkerFound &&
-           markerToTrack_.Matches(crntMarker))
+        if(_markerToTrack.IsSpecified() && !isTrackingMarkerFound &&
+           _markerToTrack.Matches(crntMarker))
         {
           // We will start tracking the _first_ marker of the right type that
           // we see.
           // TODO: Something smarter to track the one closest to the image center or to the expected location provided by the basestation?
           isTrackingMarkerFound = true;
           
-          // I'd rather only initialize trackingQuad_ if InitTemplate() succeeds, but
+          // I'd rather only initialize _trackingQuad if InitTemplate() succeeds, but
           // InitTemplate downsamples it for the time being, since we're still doing template
           // initialization at tracking resolution instead of the eventual goal of doing it at
           // full detection resolution.
-          trackingQuad_ = crntMarker.corners;
+          _trackingQuad = crntMarker.corners;
           
           // Normalize the image
           // NOTE: This will change grayscaleImage!
-          if(trackerParameters_.normalizationFilterWidthFraction < 0.f) {
+          if(_trackerParameters.normalizationFilterWidthFraction < 0.f) {
             // Faster: normalize using mean of quad
-            lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_);
+            lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad);
           } else {
             // Slower: normalize using local averages
             // NOTE: This is currently off-chip for memory reasons, so it's slow!
-            lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
-                                                  trackerParameters_.normalizationFilterWidthFraction,
-                                                  _memory.offchipScratch_);
+            lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad,
+                                                  _trackerParameters.normalizationFilterWidthFraction,
+                                                  _memory._offchipScratch);
           }
           
           AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
@@ -1897,43 +1898,43 @@ namespace Cozmo {
                                              "BrightnessNormalizeImage failed.\n");
           
           if((lastResult = InitTemplate(grayscaleImage,
-                                        trackingQuad_,
-                                        trackerParameters_,
-                                        tracker_,
-                                        _memory.ccmScratch_,
-                                        _memory.onchipScratch_, //< NOTE: onchip is a reference
-                                        _memory.offchipScratch_)) != RESULT_OK)
+                                        _trackingQuad,
+                                        _trackerParameters,
+                                        _tracker,
+                                        _memory._ccmScratch,
+                                        _memory._onchipScratch, //< NOTE: onchip is a reference
+                                        _memory._offchipScratch)) != RESULT_OK)
           {
             return lastResult;
           }
           
           // Template initialization succeeded, switch to tracking mode:
           // TODO: Log or issue message?
-          mode_ |= TRACKING;
+          _mode |= TRACKING;
         } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
       } // for(each marker)
-    } // if(mode_ & LOOKING_FOR_MARKERS)
+    } // if(_mode & LOOKING_FOR_MARKERS)
     
     
-    if(mode_ & TRACKING) {
+    if(_mode & TRACKING) {
       Simulator::SetTrackingReadyTime(); // no-op on real hardware
       
       //
       // Capture image for tracking
       //
       
-      MemoryStack offchipScratch_local(_memory.offchipScratch_);
-      MemoryStack onchipScratch_local(_memory.onchipScratch_);
+      MemoryStack _offchipScratchlocal(_memory._offchipScratch);
+      MemoryStack _onchipScratchlocal(_memory._onchipScratch);
       
-      const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
-      const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
+      const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
+      const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
       
       Array<u8> grayscaleImage(captureHeight, captureWidth,
-                               onchipScratch_local, Flags::Buffer(false,false,false));
+                               _onchipScratchlocal, Flags::Buffer(false,false,false));
       
       memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureWidth*captureHeight*sizeof(u8));
       //HAL::CameraGetFrame(),
-      //  captureResolution_, false);
+      //  _captureResolution, false);
       
       if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
         PRINT_INFO("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
@@ -1942,34 +1943,34 @@ namespace Cozmo {
       
       BeginBenchmark("VisionSystem_CameraImagingPipeline");
       
-      if(vignettingCorrection == VignettingCorrection_Software) {
+      if(_vignettingCorrection == VignettingCorrection_Software) {
         BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
         
-        MemoryStack onchipScratch_local = _memory.onchipScratch_;
-        FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+        MemoryStack _onchipScratchlocal = _memory._onchipScratch;
+        FixedLengthList<f32> polynomialParameters(5, _onchipScratchlocal, Flags::Buffer(false, false, true));
         
         for(s32 i=0; i<5; i++)
-          polynomialParameters[i] = vignettingCorrectionParameters[i];
+          polynomialParameters[i] = _vignettingCorrectionParameters[i];
         
         CorrectVignetting(grayscaleImage, polynomialParameters);
         
         EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-      } // if(vignettingCorrection == VignettingCorrection_Software)
+      } // if(_vignettingCorrection == VignettingCorrection_Software)
       
       // TODO: allow tracking to work with exposure changes
-      /*if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
+      /*if(_autoExposure_enabled && (_frameNumber % _autoExposure_adjustEveryNFrames) == 0) {
        BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
        
        ComputeBestCameraParameters(
        grayscaleImage,
        Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-       autoExposure_integerCountsIncrement,
-       autoExposure_highValue,
-       autoExposure_percentileToMakeHigh,
-       autoExposure_minExposureTime, autoExposure_maxExposureTime,
-       autoExposure_tooHighPercentMultiplier,
-       exposureTime,
-       VisionMemory::ccmScratch_);
+       _autoExposure_integerCountsIncrement,
+       _autoExposure_highValue,
+       _autoExposure_percentileToMakeHigh,
+       _autoExposure_minExposureTime, _autoExposure_maxExposureTime,
+       _autoExposure_tooHighPercentMultiplier,
+       _exposureTime,
+       VisionMemory::_ccmScratch);
        
        EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
        }*/
@@ -1977,22 +1978,22 @@ namespace Cozmo {
       EndBenchmark("VisionSystem_CameraImagingPipeline");
       
       // TODO: Re-enable setting camera parameters from basestation vision
-      //HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+      //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
       
       // TODO: Re-enable sending of images from basestation vision
       //DownsampleAndSendImage(grayscaleImage);
       
       // Normalize the image
       // NOTE: This will change grayscaleImage!
-      if(trackerParameters_.normalizationFilterWidthFraction < 0.f) {
+      if(_trackerParameters.normalizationFilterWidthFraction < 0.f) {
         // Faster: normalize using mean of quad
-        lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_);
+        lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad);
       } else {
         // Slower: normalize using local averages
         // NOTE: This is currently off-chip for memory reasons, so it's slow!
-        lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
-                                              trackerParameters_.normalizationFilterWidthFraction,
-                                              _memory.offchipScratch_);
+        lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad,
+                                              _trackerParameters.normalizationFilterWidthFraction,
+                                              _memory._offchipScratch);
       }
       
       AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
@@ -2006,7 +2007,7 @@ namespace Cozmo {
       // think we've moved since the last tracking call.
       //
       
-      if((lastResult =TrackerPredictionUpdate(grayscaleImage, onchipScratch_local)) != RESULT_OK) {
+      if((lastResult =TrackerPredictionUpdate(grayscaleImage, _onchipScratchlocal)) != RESULT_OK) {
         PRINT_INFO("VisionSystem::Update(): TrackTemplate() failed.\n");
         return lastResult;
       }
@@ -2019,13 +2020,13 @@ namespace Cozmo {
       bool converged = false;
       
       if((lastResult = TrackTemplate(grayscaleImage,
-                                     trackingQuad_,
-                                     trackerParameters_,
-                                     tracker_,
+                                     _trackingQuad,
+                                     _trackerParameters,
+                                     _tracker,
                                      converged,
-                                     _memory.ccmScratch_,
-                                     onchipScratch_local,
-                                     offchipScratch_local)) != RESULT_OK) {
+                                     _memory._ccmScratch,
+                                     _onchipScratchlocal,
+                                     _offchipScratchlocal)) != RESULT_OK) {
         PRINT_INFO("VisionSystem::Update(): TrackTemplate() failed.\n");
         return lastResult;
       }
@@ -2040,13 +2041,13 @@ namespace Cozmo {
       
       if(converged)
       {
-        Embedded::Quadrilateral<f32> currentQuad = GetTrackerQuad(_memory.onchipScratch_);
-        FillDockErrMsg(currentQuad, dockErrMsg, _memory.onchipScratch_);
+        Embedded::Quadrilateral<f32> currentQuad = GetTrackerQuad(_memory._onchipScratch);
+        FillDockErrMsg(currentQuad, dockErrMsg, _memory._onchipScratch);
         
         // Send tracker quad if image streaming
-        if (imageSendMode_ == ISM_STREAM) {
+        if (_imageSendMode == ISM_STREAM) {
           f32 scale = 1.f;
-          for (u8 s = (u8)Vision::CAMERA_RES_QVGA; s<(u8)nextSendImageResolution_; ++s) {
+          for (u8 s = (u8)Vision::CAMERA_RES_QVGA; s<(u8)_nextSendImageResolution; ++s) {
             scale *= 0.5f;
           }
           
@@ -2065,89 +2066,89 @@ namespace Cozmo {
         }
         
         // Reset the failure counter
-        numTrackFailures_ = 0;
+        _numTrackFailures = 0;
       }
       else {
-        numTrackFailures_ += 1;
+        _numTrackFailures += 1;
         
-        if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
+        if(_numTrackFailures == MAX_TRACKING_FAILURES) {
           // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
-          SetMarkerToTrack(markerToTrack_.type,
-                           markerToTrack_.width_mm,
-                           markerToTrack_.imageCenter,
-                           markerToTrack_.imageSearchRadius,
-                           markerToTrack_.checkAngleX);
+          SetMarkerToTrack(_markerToTrack.type,
+                           _markerToTrack.width_mm,
+                           _markerToTrack.imageCenter,
+                           _markerToTrack.imageSearchRadius,
+                           _markerToTrack.checkAngleX);
         }
       }
       
       //Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
       
-    } // if(mode_ & TRACKING)
+    } // if(_mode & TRACKING)
     
     
-    if(mode_ & DETECTING_FACES) {
+    if(_mode & DETECTING_FACES) {
       Simulator::SetFaceDetectionReadyTime();
       
       _memory.ResetBuffers();
       
-      AnkiConditionalErrorAndReturnValue(faceDetectionParameters_.isInitialized, RESULT_FAIL,
+      AnkiConditionalErrorAndReturnValue(_faceDetectionParameters.isInitialized, RESULT_FAIL,
                                          "VisionSystem::Update::FaceDetectionParametersNotInitialized",
                                          "Face detection parameters not initialized before Update() in DETECTING_FACES mode.\n");
       
-      const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
-      const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
+      const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
+      const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
       
       Array<u8> grayscaleImage(captureHeight, captureWidth,
-                               _memory.offchipScratch_, Flags::Buffer(false,false,false));
+                               _memory._offchipScratch, Flags::Buffer(false,false,false));
       
       memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureHeight*captureWidth*sizeof(u8));
       //HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
-      //                    captureResolution_, false);
+      //                    _captureResolution, false);
       
       BeginBenchmark("VisionSystem_CameraImagingPipeline");
       
-      if(vignettingCorrection == VignettingCorrection_Software) {
+      if(_vignettingCorrection == VignettingCorrection_Software) {
         BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
         
-        MemoryStack onchipScratch_local = _memory.onchipScratch_;
-        FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+        MemoryStack _onchipScratchlocal = _memory._onchipScratch;
+        FixedLengthList<f32> polynomialParameters(5, _onchipScratchlocal, Flags::Buffer(false, false, true));
         
         for(s32 i=0; i<5; i++)
-          polynomialParameters[i] = vignettingCorrectionParameters[i];
+          polynomialParameters[i] = _vignettingCorrectionParameters[i];
         
         CorrectVignetting(grayscaleImage, polynomialParameters);
         
         EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-      } // if(vignettingCorrection == VignettingCorrection_Software)
+      } // if(_vignettingCorrection == VignettingCorrection_Software)
       
-      if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
+      if(_autoExposure_enabled && (_frameNumber % _autoExposure_adjustEveryNFrames) == 0) {
         BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
         
         ComputeBestCameraParameters(
                                     grayscaleImage,
                                     Embedded::Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-                                    autoExposure_integerCountsIncrement,
-                                    autoExposure_highValue,
-                                    autoExposure_percentileToMakeHigh,
-                                    autoExposure_minExposureTime, autoExposure_maxExposureTime,
-                                    autoExposure_tooHighPercentMultiplier,
-                                    exposureTime,
-                                    _memory.ccmScratch_);
+                                    _autoExposure_integerCountsIncrement,
+                                    _autoExposure_highValue,
+                                    _autoExposure_percentileToMakeHigh,
+                                    _autoExposure_minExposureTime, _autoExposure_maxExposureTime,
+                                    _autoExposure_tooHighPercentMultiplier,
+                                    _exposureTime,
+                                    _memory._ccmScratch);
         
         EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
       }
       
       // TODO: Re-enable setting camera paramters from basestation vision
-      //HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+      //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
       
       EndBenchmark("VisionSystem_CameraImagingPipeline");
       
       Array<u8> smallImage(
-                           faceDetectionParameters_.faceDetectionHeight,
-                           faceDetectionParameters_.faceDetectionWidth,
-                           _memory.onchipScratch_, Flags::Buffer(false,false,false));
+                           _faceDetectionParameters.faceDetectionHeight,
+                           _faceDetectionParameters.faceDetectionWidth,
+                           _memory._onchipScratch, Flags::Buffer(false,false,false));
       
-      DownsampleHelper(grayscaleImage, smallImage, _memory.ccmScratch_);
+      DownsampleHelper(grayscaleImage, smallImage, _memory._ccmScratch);
       
       // TODO: Re-enable sending of images from basestation vision
       //DownsampleAndSendImage(smallImage);
@@ -2172,27 +2173,27 @@ namespace Cozmo {
                                            leaves,
                                            subsets,
                                            featureRectangles,
-                                           _memory.ccmScratch_);
+                                           _memory._ccmScratch);
       
-      FixedLengthList<Embedded::Rectangle<s32> > detectedFaces(faceDetectionParameters_.MAX_CANDIDATES, _memory.offchipScratch_);
+      FixedLengthList<Embedded::Rectangle<s32> > detectedFaces(_faceDetectionParameters.MAX_CANDIDATES, _memory._offchipScratch);
       
       lastResult = cc.DetectMultiScale(
                                        smallImage,
-                                       static_cast<f32>(faceDetectionParameters_.scaleFactor),
-                                       faceDetectionParameters_.minNeighbors,
-                                       faceDetectionParameters_.minHeight,
-                                       faceDetectionParameters_.minWidth,
-                                       faceDetectionParameters_.maxHeight,
-                                       faceDetectionParameters_.maxWidth,
+                                       static_cast<f32>(_faceDetectionParameters.scaleFactor),
+                                       _faceDetectionParameters.minNeighbors,
+                                       _faceDetectionParameters.minHeight,
+                                       _faceDetectionParameters.minWidth,
+                                       _faceDetectionParameters.maxHeight,
+                                       _faceDetectionParameters.maxWidth,
                                        detectedFaces,
-                                       _memory.onchipScratch_,
-                                       _memory.offchipScratch_);
+                                       _memory._onchipScratch,
+                                       _memory._offchipScratch);
       
       f32 sendScale = 1.f;
-      if (imageSendMode_ == ISM_STREAM) {
-        //const u8 scaleFactor = (1 << CameraModeInfo[faceDetectionParameters_.detectionResolution].downsamplePower[nextSendImageResolution_]);
-        const u8 scaleFactor = (Vision::CameraResInfo[faceDetectionParameters_.detectionResolution].width /
-                                Vision::CameraResInfo[nextSendImageResolution_].width);
+      if (_imageSendMode == ISM_STREAM) {
+        //const u8 scaleFactor = (1 << CameraModeInfo[_faceDetectionParameters.detectionResolution].downsamplePower[_nextSendImageResolution]);
+        const u8 scaleFactor = (Vision::CameraResInfo[_faceDetectionParameters.detectionResolution].width /
+                                Vision::CameraResInfo[_nextSendImageResolution].width);
         if(scaleFactor > 1) {
           // Send additional downsampled image, marked for visualization
           sendScale /= static_cast<f32>(scaleFactor);
@@ -2211,7 +2212,7 @@ namespace Cozmo {
         msg.visualize   = static_cast<u8>(true);
         
         /*
-        if (imageSendMode_ == ISM_STREAM) {
+        if (_imageSendMode == ISM_STREAM) {
           
           if(sendScale != 1.f) {
             // Send additional downsampled message, marked for visualization
@@ -2229,7 +2230,7 @@ namespace Cozmo {
             // Send original message, marked for visualization
             msg.visualize = static_cast<u8>(true);
           }
-        } // if imageSendMode_ == ISM_STREAM
+        } // if _imageSendMode == ISM_STREAM
         */
         
         // Process the face detection message (i.e. drop it off for main
@@ -2249,24 +2250,24 @@ namespace Cozmo {
        grayscaleImage,
        detectedFaces,
        smallImage.get_size(1),
-       VisionMemory::ccmScratch_,
-       VisionMemory::onchipScratch_,
-       VisionMemory::offchipScratch_);
+       VisionMemory::_ccmScratch,
+       VisionMemory::_onchipScratch,
+       VisionMemory::_offchipScratch);
        */
       
-    } // if(mode_ & DETECTING_FACES)
+    } // if(_mode & DETECTING_FACES)
     
     // DEBUG!!!!
-    mode_ |= LOOKING_FOR_SALIENCY;
+    _mode |= LOOKING_FOR_SALIENCY;
     
-    if(mode_ & LOOKING_FOR_SALIENCY)
+    if(_mode & LOOKING_FOR_SALIENCY)
     {
-      const bool headSame =  NEAR(robotState_.headAngle, prevRobotState_.headAngle, DEG_TO_RAD(1));
-      const bool poseSame = (NEAR(robotState_.pose_x,    prevRobotState_.pose_x,    1.f) &&
-                             NEAR(robotState_.pose_y,    prevRobotState_.pose_y,    1.f) &&
-                             NEAR(robotState_.pose_angle,prevRobotState_.pose_angle, DEG_TO_RAD(1)));
+      const bool headSame =  NEAR(_robotState.headAngle, _prevRobotState.headAngle, DEG_TO_RAD(1));
+      const bool poseSame = (NEAR(_robotState.pose_x,    _prevRobotState.pose_x,    1.f) &&
+                             NEAR(_robotState.pose_y,    _prevRobotState.pose_y,    1.f) &&
+                             NEAR(_robotState.pose_angle,_prevRobotState.pose_angle, DEG_TO_RAD(1)));
       
-      //PRINT_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(robotState_.pose_angle - prevRobotState_.pose_angle)));
+      //PRINT_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
       
       if(headSame && poseSame && !_prevImage.IsEmpty()) {
         /*
@@ -2275,22 +2276,26 @@ namespace Cozmo {
         diffImage.Abs();
         */
 #       if ANKI_COZMO_USE_MATLAB_VISION
-        //matlab_.PutOpencvMat(diffImage.get_CvMat_(), "diffImage");
-        //matlab_.EvalString("imagesc(diffImage), axis image, drawnow");
+        //_matlab.PutOpencvMat(diffImage.get_CvMat_(), "diffImage");
+        //_matlab.EvalString("imagesc(diffImage), axis image, drawnow");
         
-        matlab_.PutOpencvMat(inputImage->get_CvMat_(), "inputImage");
-        matlab_.PutOpencvMat(_prevImage.get_CvMat_(), "prevImage");
+        _matlab.PutOpencvMat(inputImage->get_CvMat_(), "inputImage");
+        _matlab.PutOpencvMat(_prevImage.get_CvMat_(), "prevImage");
         
         
-        matlab_.EvalString("[nrows,ncols,~] = size(inputImage); "
+        _matlab.EvalString("[nrows,ncols,~] = size(inputImage); "
+                           "[xgrid,ygrid] = meshgrid(1:ncols,1:nrows); "
                            "logImg1 = log(max(1,double(prevImage))); "
                            "logImg2 = log(max(1,double(inputImage))); "
                            "diff = imabsdiff(logImg1, logImg2); "
-                           //"sumDiff = sum(diff(:)); "
-                           //"x = sum(xgrid(:).*diff(:))/sumDiff; "
-                           //"y = sum(ygrid(:).*diff(:))/sumDiff; "
                            "diffThresh = diff > log(1.5); "
-                           "stats = regionprops(diffThresh, 'Area', 'Centroid', 'PixelIdxList'); "
+                           "if any(diffThresh(:)), "
+                           "  diff(~diffThresh) = 0; "
+                           "  sumDiff = sum(diff(:)); "
+                           "  x = sum(xgrid(:).*diff(:))/sumDiff; "
+                           "  y = sum(ygrid(:).*diff(:))/sumDiff; "
+                           "  centroid = [x y]; "
+/*                           "stats = regionprops(diffThresh, 'Area', 'Centroid', 'PixelIdxList'); "
                            "areas = [stats.Area]; "
                            "keep = areas > .01*nrows*ncols & areas < .5*nrows*ncols; "
                            "diffThresh(vertcat(stats(~keep).PixelIdxList)) = false; "
@@ -2298,18 +2303,18 @@ namespace Cozmo {
                            "if ~isempty(keep), "
                            "  [~,toTrack] = max(areas(keep)); "
                            "  centroid = stats(keep(toTrack)).Centroid; "
-                           "else, "
+  */                         "else, "
                            "  clear centroid; "
                            "end");
         
-        if(matlab_.DoesVariableExist("centroid")) {
+        if(_matlab.DoesVariableExist("centroid")) {
           
-          matlab_.EvalString("hold off, imagesc(diff), axis image, colormap(gray), "
+          _matlab.EvalString("hold off, imagesc(diff), axis image, colormap(gray), "
                              "title(%d), "
                              "hold on, plot(centroid(1), centroid(2), 'go', 'MarkerSize', 10, 'LineWidth', 2); drawnow",
                              inputImage->GetTimestamp());
           
-          mxArray* mxCentroid = matlab_.GetArray("centroid");
+          mxArray* mxCentroid = _matlab.GetArray("centroid");
           
           CORETECH_ASSERT(mxGetNumberOfElements(mxCentroid) == 2);
           const f32 xCen = mxGetPr(mxCentroid)[0];
@@ -2319,16 +2324,16 @@ namespace Cozmo {
           
           // Convert image positions to desired angles
           const f32 yError_pix = static_cast<f32>(inputImage->GetNumRows())*0.5f - yCen;
-          msg.relativeHeadTiltAngle_rad = atan_fast(yError_pix / headCamInfo_->focalLength_y);
+          msg.relativeHeadTiltAngle_rad = atan_fast(yError_pix / _headCamInfo->focalLength_y);
           
           const f32 xError_pix = static_cast<f32>(inputImage->GetNumCols())*0.5f - xCen;
-          msg.relativePanAngle_rad = atan_fast(xError_pix / headCamInfo_->focalLength_x);
+          msg.relativePanAngle_rad = atan_fast(xError_pix / _headCamInfo->focalLength_x);
           
           _panTiltMailbox.putMessage(msg);
         }
         
-        matlab_.EvalString("imagesc(imabsdiff(inputImage, prevImage)), axis image, colormap(gray), drawnow");
-        matlab_.EvalString("title(%d)", inputImage->GetTimestamp());
+        _matlab.EvalString("imagesc(imabsdiff(inputImage, prevImage)), axis image, colormap(gray), drawnow");
+        _matlab.EvalString("title(%d)", inputImage->GetTimestamp());
 #       endif
 
         
@@ -2338,7 +2343,7 @@ namespace Cozmo {
       // TODO: switch to just swapping pointers between current and previous image
       inputImage->CopyTo(_prevImage);
       
-    } // if(mode_ & LOOKING_FOR_MARKERS)
+    } // if(_mode & LOOKING_FOR_MARKERS)
     
     return lastResult;
   } // Update() [Real]
@@ -2350,18 +2355,18 @@ namespace Cozmo {
                                const u8 highValue,
                                const f32 percentileToMakeHigh)
   {
-    autoExposure_integerCountsIncrement = integerCountsIncrement;
-    autoExposure_minExposureTime = minExposureTime;
-    autoExposure_maxExposureTime = maxExposureTime;
-    autoExposure_highValue = highValue;
-    autoExposure_percentileToMakeHigh = percentileToMakeHigh;
+    _autoExposure_integerCountsIncrement = integerCountsIncrement;
+    _autoExposure_minExposureTime = minExposureTime;
+    _autoExposure_maxExposureTime = maxExposureTime;
+    _autoExposure_highValue = highValue;
+    _autoExposure_percentileToMakeHigh = percentileToMakeHigh;
     
     PRINT_INFO("Changed VisionSystem params: integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
-               autoExposure_integerCountsIncrement,
-               autoExposure_minExposureTime,
-               autoExposure_maxExposureTime,
-               autoExposure_highValue,
-               autoExposure_percentileToMakeHigh);
+               _autoExposure_integerCountsIncrement,
+               _autoExposure_minExposureTime,
+               _autoExposure_maxExposureTime,
+               _autoExposure_highValue,
+               _autoExposure_percentileToMakeHigh);
   }
   
   void VisionSystem::SetFaceDetectParams(const f32 scaleFactor,
@@ -2372,12 +2377,12 @@ namespace Cozmo {
                                          const s32 maxObjectWidth)
   {
     PRINT_INFO("Updated VisionSystem FaceDetect params\n");
-    faceDetectionParameters_.scaleFactor = scaleFactor;
-    faceDetectionParameters_.minNeighbors = minNeighbors;
-    faceDetectionParameters_.minHeight = minObjectHeight;
-    faceDetectionParameters_.minWidth = minObjectWidth;
-    faceDetectionParameters_.maxHeight = maxObjectHeight;
-    faceDetectionParameters_.maxWidth = maxObjectWidth;
+    _faceDetectionParameters.scaleFactor = scaleFactor;
+    _faceDetectionParameters.minNeighbors = minNeighbors;
+    _faceDetectionParameters.minHeight = minObjectHeight;
+    _faceDetectionParameters.minWidth = minObjectWidth;
+    _faceDetectionParameters.maxHeight = maxObjectHeight;
+    _faceDetectionParameters.maxWidth = maxObjectWidth;
   }
     
 } // namespace Cozmo

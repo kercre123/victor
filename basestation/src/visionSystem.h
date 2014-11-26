@@ -205,7 +205,7 @@ namespace Cozmo {
     
 #   if ANKI_COZMO_USE_MATLAB_VISION
     // For prototyping with Matlab
-    Matlab matlab_;
+    Matlab _matlab;
 #   endif
     
     // Previous image for doing background subtraction, e.g. for saliency
@@ -215,7 +215,7 @@ namespace Cozmo {
     // Formerly in Embedded VisionSystem "private" namespace:
     //
     
-    bool isInitialized_;
+    bool _isInitialized;
     
     // Just duplicating this from HAL for vision functions to work with less re-writing
     struct CameraInfo {
@@ -226,7 +226,7 @@ namespace Cozmo {
       f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
       
       CameraInfo(const Vision::CameraCalibration& camCalib);
-    } *headCamInfo_;
+    } *_headCamInfo;
     
     enum VignettingCorrection
     {
@@ -240,32 +240,32 @@ namespace Cozmo {
     // TODO: Move this to visionParameters
     const s32 MAX_TRACKING_FAILURES = 1;
     
-    //const Anki::Cozmo::HAL::CameraInfo* headCamInfo_;
-    f32 headCamFOV_ver_;
-    f32 headCamFOV_hor_;
-    Embedded::Array<f32> RcamWrtRobot_;
+    //const Anki::Cozmo::HAL::CameraInfo* _headCamInfo;
+    f32 _headCamFOV_ver;
+    f32 _headCamFOV_hor;
+    Embedded::Array<f32> _RcamWrtRobot;
     
-    u32 mode_;
+    u32 _mode;
     
     // Camera parameters
     // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
-    f32 exposureTime;
+    f32 _exposureTime;
     
 #ifdef SIMULATOR
     // Simulator doesn't need vignetting correction on by default
-    VignettingCorrection vignettingCorrection = VignettingCorrection_Off;
+    VignettingCorrection _vignettingCorrection = VignettingCorrection_Off;
 #else
-    VignettingCorrection vignettingCorrection = VignettingCorrection_Off;
+    VignettingCorrection _vignettingCorrection = VignettingCorrection_Off;
 #endif
     // For OV7725 (cozmo 2.0)
-    //static const f32 vignettingCorrectionParameters[5] = {1.56852140958887f, -0.00619880766167132f, -0.00364222219719291f, 2.75640497906470e-05f, 1.75476361058157e-05f}; //< for vignettingCorrection == VignettingCorrection_Software, computed by fit2dCurve.m
+    //static const f32 _vignettingCorrectionParameters[5] = {1.56852140958887f, -0.00619880766167132f, -0.00364222219719291f, 2.75640497906470e-05f, 1.75476361058157e-05f}; //< for _vignettingCorrection == VignettingCorrection_Software, computed by fit2dCurve.m
     
     // For OV7739 (cozmo 2.1)
     // TODO: figure these out
-    const f32 vignettingCorrectionParameters[5] = {0,0,0,0,0};
+    const f32 _vignettingCorrectionParameters[5] = {0,0,0,0,0};
     
-    s32 frameNumber;
-    const bool autoExposure_enabled = true;
+    s32 _frameNumber;
+    const bool _autoExposure_enabled = true;
     
     // TEMP: Un-const-ing these so that we can adjust them from basestation for dev purposes.
     /*
@@ -276,13 +276,13 @@ namespace Cozmo {
      const f32 autoExposure_percentileToMakeHigh = 0.97f;
      const s32 autoExposure_adjustEveryNFrames = 1;
      */
-    s32 autoExposure_integerCountsIncrement = 3;
-    f32 autoExposure_minExposureTime = 0.02f;
-    f32 autoExposure_maxExposureTime = 0.50f;
-    u8  autoExposure_highValue = 250;
-    f32 autoExposure_percentileToMakeHigh = 0.95f;
-    f32 autoExposure_tooHighPercentMultiplier = 0.7f;
-    s32 autoExposure_adjustEveryNFrames = 2;
+    s32 _autoExposure_integerCountsIncrement = 3;
+    f32 _autoExposure_minExposureTime = 0.02f;
+    f32 _autoExposure_maxExposureTime = 0.50f;
+    u8  _autoExposure_highValue = 250;
+    f32 _autoExposure_percentileToMakeHigh = 0.95f;
+    f32 _autoExposure_tooHighPercentMultiplier = 0.7f;
+    s32 _autoExposure_adjustEveryNFrames = 2;
     
     // Tracking marker related members
     struct MarkerToTrack {
@@ -300,36 +300,36 @@ namespace Cozmo {
       bool Matches(const Embedded::VisionMarker& marker) const;
     };
     
-    MarkerToTrack markerToTrack_;
-    MarkerToTrack newMarkerToTrack_;
-    bool          newMarkerToTrackWasProvided_ = false;
+    MarkerToTrack _markerToTrack;
+    MarkerToTrack _newMarkerToTrack;
+    bool          _newMarkerToTrackWasProvided = false;
     
-    Embedded::Quadrilateral<f32>          trackingQuad_;
-    s32                         numTrackFailures_ ;
-    Tracker                     tracker_;
+    Embedded::Quadrilateral<f32>    _trackingQuad;
+    s32                             _numTrackFailures ;
+    Tracker                         _tracker;
     
-    Embedded::Point3<P3P_PRECISION>       canonicalMarker3d_[4];
+    Embedded::Point3<P3P_PRECISION> _canonicalMarker3d[4];
     
     // Snapshots of robot state
-    bool wasCalledOnce_, havePreviousRobotState_;
-    MessageRobotState robotState_, prevRobotState_;
+    bool _wasCalledOnce, _havePreviousRobotState;
+    MessageRobotState _robotState, _prevRobotState;
     
     // Parameters defined in visionParameters.h
-    DetectFiducialMarkersParameters detectionParameters_;
-    TrackerParameters               trackerParameters_;
-    FaceDetectionParameters         faceDetectionParameters_;
-    Vision::CameraResolution        captureResolution_;
+    DetectFiducialMarkersParameters _detectionParameters;
+    TrackerParameters               _trackerParameters;
+    FaceDetectionParameters         _faceDetectionParameters;
+    Vision::CameraResolution        _captureResolution;
     
     // For sending images to basestation
-    ImageSendMode_t                 imageSendMode_ = ISM_OFF;
-    Vision::CameraResolution        nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
+    ImageSendMode_t                 _imageSendMode = ISM_OFF;
+    Vision::CameraResolution        _nextSendImageResolution = Vision::CAMERA_RES_NONE;
     
     // For taking snapshots
-    bool  isWaitingOnSnapshot_;
-    bool* isSnapshotReady_;
-    Embedded::Rectangle<s32> snapshotROI_;
-    s32 snapshotSubsample_;
-    Embedded::Array<u8>* snapshot_;
+    bool                            _isWaitingOnSnapShot;
+    bool*                           _isSnapshotReady;
+    Embedded::Rectangle<s32>        _snapshotROI;
+    s32                             _snapshotSubsample;
+    Embedded::Array<u8>*            _snapshot;
     
     /* Only using static members of SimulatorParameters now
      #ifdef SIMULATOR
@@ -353,12 +353,12 @@ namespace Cozmo {
       ONCHIP  char onchipBuffer[ONCHIP_BUFFER_SIZE];
       CCM     char ccmBuffer[CCM_BUFFER_SIZE];
       
-      Embedded::MemoryStack offchipScratch_;
-      Embedded::MemoryStack onchipScratch_;
-      Embedded::MemoryStack ccmScratch_;
+      Embedded::MemoryStack _offchipScratch;
+      Embedded::MemoryStack _onchipScratch;
+      Embedded::MemoryStack _ccmScratch;
       
       // Markers is the one things that can move between functions, so it is always allocated in memory
-      Embedded::FixedLengthList<Embedded::VisionMarker> markers_;
+      Embedded::FixedLengthList<Embedded::VisionMarker> _markers;
       
       // WARNING: ResetBuffers should be used with caution
       Result ResetBuffers();
