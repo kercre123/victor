@@ -64,6 +64,9 @@ class ImageRequest(struct.Struct):
         msgId, self.imageSendMode, self.resolution = self.unpack(buffer)
         assert(msgId == self.ID)
 
+    def __repr__(self):
+        return "ImageRequest(%d, %d)" % (self.imageSendMode, self.resolution)
+
 class ImageChunk(struct.Struct):
     "ImageChunk message implementation for Python"
 
@@ -109,3 +112,10 @@ class ImageChunk(struct.Struct):
         else:
             self.data = buffer
             return ""
+
+    def __repr__(self):
+        if len(self.data) > 8:
+            dataRepr = self.data[:5] + '...'
+        else:
+            dataRepr = self.data
+        return "ImageChunk(imageId=%d, imageEncoding=%d, chunkId=%d, resolution=%d, data[%d]=%s)" % (self.imageId, self.imageEncoding, self.chunkId, self.resolution, len(self.data), dataRepr)
