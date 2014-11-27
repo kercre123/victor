@@ -6,8 +6,11 @@ __version__ = "0.0.1"
 
 
 import sys, socket, time
-import numpy
-import cv2 as cv
+try:
+    import numpy
+    import cv2 as cv
+except:
+    sys.stderr.write("Cannot import numpy or cv modules, some features will be unavailable\n")
 import messages
 
 DEFAULT_PORT = 9000
@@ -93,7 +96,7 @@ class Client(object):
     def __del__(self):
         "Stop the server on destruction"
         try:
-            self._request(messages.ISM_OFF)
+            self.stop()
         except:
             pass
 
@@ -101,10 +104,14 @@ class Client(object):
         msg = messages.ImageRequest()
         msg.imageSendMode = imageSendMode
         msg.resolution = self.resolution
-        self.sock.send(req.serialize(), self.server)
+        self.sock.sendto(msg.serialize(), self.server)
 
     def _getChunk(self):
-        return messages.deserialize(self.sock.recv(1500))
+        return messages.ImageChunk(self.sock.recv(1500))
+
+    def stop(self):
+        "Stop the sever"
+        self._request(messages.ISM_OFF)
 
     def saveSingleImage(self, fileName):
         "Grab a single image from the server and save it"
