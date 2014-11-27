@@ -18,8 +18,9 @@ namespace Anki {
       IE_NONE,
       IE_YUYV,
       IE_BAYER,
-      IE_JPEG
-    }
+      IE_JPEG,
+      IE_WEBP
+    } ImageEncoding_t;
 
     typedef enum {
       DA_PICKUP_LOW = 0,  // Docking to block at level 0

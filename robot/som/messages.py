@@ -25,10 +25,14 @@ def portableNamesToStructFormat(names):
     }
     return "".join([table.get(n, n) for n in names])
 
+ISM_OFF = 0
+ISM_STREAM = 1
+ISM_SINGLE_SHOT = 2
 IE_NONE  = 0
 IE_YUYV  = 1
 IE_BAYER = 2
 IE_JPEG  = 3
+IE_WEBP  = 4
 CAMERA_RES_VGA = 0
 CAMERA_RES_QVGA = 1
 CAMERA_RES_QQVGA = 2
