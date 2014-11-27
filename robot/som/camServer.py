@@ -141,5 +141,5 @@ class Client(object):
 
 if __name__ == "__main__":
     camera = int(sys.argv[1])
-    srv = Server(camera, port)
+    srv = Server(camera)
     srv.run()
