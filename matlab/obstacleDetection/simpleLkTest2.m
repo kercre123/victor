@@ -12,6 +12,7 @@ function simpleLkTest2(varargin)
     
     filenamePattern = '/Users/pbarnum/Documents/datasets/stereo/stereo_%sRectified_%d.png';
     whichImageNumbers = 0:3090;
+    pauseForEachFrame = false;
     
     useStereoCalibration = true;
     computeStereoBm = false;
@@ -116,7 +117,7 @@ function simpleLkTest2(varargin)
                     'MaxLevel', flow_lk_params.maxLevel,...
                     'Criteria', flow_lk_params.criteria,...
                     'MinEigThreshold', flow_lk_params.minEigThreshold);
-                
+                                
                 if filterFlowWithErrThreshold
                     status(:) = 1;
                     status(err > maxErr) = 0;
@@ -218,7 +219,16 @@ function simpleLkTest2(varargin)
         
         imshows(flowImagesToShow, stereoImagesToShow);
                 
-        pause(0.03);
+        if pauseForEachFrame
+            [~,~,c] = ginput(1);
+            if c == 'q'
+                disp('Quitting...');
+                return
+            end
+        else
+            pause(0.03);
+        end
+        
 %         c = getkeywait(0.03);        
 %         if c == 'q'
 %             disp('Quitting...');
@@ -248,124 +258,3 @@ function images = captureImages(videoCaptures, undistortMaps)
         images{end+1} = image; %#ok<AGROW>
     end % for i = 1:length(videoCaptures)
 end % function images = captureImages()
-
-% draw the tracks
-function keypointImage = drawKeypointMatches(image, points0, points1, distanceColormap)
-    
-    assert(length(points0) == length(points1));
-    
-    if ~exist('distanceColormap', 'var')
-        distanceColormap = [];
-    end
-    
-    keypointImage = repmat(image,[1,1,3]);
-    
-    colors = cell(length(points0), 1);
-    
-    for iPoint = 1:length(points0)
-        x0 = points0{iPoint}(1);
-        y0 = points0{iPoint}(2);
-        
-        x1 = points1{iPoint}(1);
-        y1 = points1{iPoint}(2);
-        
-        if isempty(distanceColormap)
-            colors{iPoint} = [255,0,0];
-        else
-            dist = sqrt((x0-x1)^2 + (y0-y1)^2);
-            dist = round(dist);
-            dist = dist + 1; % 0 is actually index 1
-            
-            if dist > length(distanceColormap)
-                dist = length(distanceColormap);
-            end
-            
-            colors{iPoint} = distanceColormap(dist, :);
-        end
-    end % for iPoint = 1:length(points0)
-    
-    keypointImage = cv.line(keypointImage, points0, points1, 'Colors', colors, 'Thickness', 1);
-end % function drawKeypointMatches(image, points0, points1, distanceColormap)
-
-function [stereoProcessor, undistortMaps, masks] = initStereo(numDisparities, disparityType)
-    
-    if strcmpi(disparityType, 'bm')
-        disparityWindowSize = 51;
-        
-        % TODO: add window size
-        stereoProcessor = cv.StereoBM('Preset', 'Basic', 'NDisparities', numDisparities);
-    else
-        assert(false);
-    end
-    
-    % Calibration for the Spynet stereo pair
-     
-    distCoeffs1 = [0.182998, -0.417100, 0.005281, -0.004976, 0.000000];
-    distCoeffs2 = [0.165733, -0.391832, 0.002453, -0.011111, 0.000000];
-
-    cameraMatrix1 = ...
-        [726.606787, 0.000000, 321.470791;
-         0.000000, 724.172303, 293.913773;
-         0.000000, 0.000000, 1.000000];
-
-    cameraMatrix2 = ...
-        [743.337415, 0.000000, 308.270936;
-         0.000000, 741.060548, 254.206903;
-         0.000000, 0.000000, 1.000000];
-
-    R = [0.993527, -0.023641, 0.111109;
-         0.021796, 0.999604, 0.017785;
-         -0.111486, -0.015248, 0.993649];
-
-    T = [-13.201223, -0.708310, 0.961289]';
-    
-    imageSize = [640, 480];
-
-    rectifyStruct = cv.stereoRectify(cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize, R, T);
-    
-    [leftUndistortMapX, leftUndistortMapY] = cv.initUndistortRectifyMap(cameraMatrix1, distCoeffs1, rectifyStruct.P1, imageSize, 'R', rectifyStruct.R1);
-    
-    [rightUndistortMapX, rightUndistortMapY] = cv.initUndistortRectifyMap(cameraMatrix2, distCoeffs2, rectifyStruct.P2, imageSize, 'R', rectifyStruct.R2);
-    
-    undistortMaps = cell(2,1);
-    undistortMaps{1} = struct('mapX', leftUndistortMapX, 'mapY', leftUndistortMapY);
-    undistortMaps{2} = struct('mapX', rightUndistortMapX, 'mapY', rightUndistortMapY);
-    
-    masks = cell(2,1);
-    
-    masks{1} = ones(imageSize(2:-1:1), 'uint8');
-    masks{1}(leftUndistortMapX(:,:,1) < 0) = 0;
-    masks{1}(leftUndistortMapX(:,:,1) >= imageSize(1)) = 0;
-    masks{1}(leftUndistortMapX(:,:,2) < 0) = 0;
-    masks{1}(leftUndistortMapX(:,:,2) >= imageSize(2)) = 0;
-    
-    masks{2} = ones(imageSize(2:-1:1), 'uint8');
-    masks{2}(rightUndistortMapX(:,:,1) < 0) = 0;
-    masks{2}(rightUndistortMapX(:,:,1) >= imageSize(1)) = 0;
-    masks{2}(rightUndistortMapX(:,:,2) < 0) = 0;
-    masks{2}(rightUndistortMapX(:,:,2) >= imageSize(2)) = 0;    
-end % function undistortMaps = computeUndistortMaps()
-
-function localMinimaness = computeLocalMinimaness(im, mask, windowSize)
-    windowSizeFilter = ones(windowSize) / prod(windowSize);
-    
-%     mask(1:windowSize(2), :) = 0;
-%     mask((end-windowSize(2)):end, :) = 0;
-%     mask(1:windowSize(1), :) = 0;
-%     mask((end-windowSize(1)):end, :) = 0;
-    
-    imDouble = double(im);
-    
-    imDouble(~mask) = nan;    
-    imDouble(1,:) = nan;
-    imDouble(end,:) = nan;
-    imDouble(:,1) = nan;
-    imDouble(:,end) = nan;
-    
-    dxNeg = imfilter(abs(imfilter(imDouble, [-0.5,0.5,0])), windowSizeFilter, 0);
-    dxPos = imfilter(abs(imfilter(imDouble, [0,0.5,-0.5])), windowSizeFilter, 0);
-    dyNeg = imfilter(abs(imfilter(imDouble, [-0.5,0.5,0]')), windowSizeFilter, 0);
-    dyPos = imfilter(abs(imfilter(imDouble, [0,0.5,-0.5]')), windowSizeFilter, 0);
-    
-    localMinimaness = min(min(min(dxNeg, dxPos), dyNeg), dyPos);
-end
