@@ -1,11 +1,17 @@
-% function simpleLkTest2()
+% function simpleLkTest2(varargin)
 
-function simpleLkTest2()
+% simpleLkTest2('useLiveFeed', true);
+% simpleLkTest2('useLiveFeed', false, 'filenamePattern','/Users/pbarnum/Documents/datasets/stereo/stereo_%sRectified_%d.png', 'whichImageNumbers', 0:3090);
+
+function simpleLkTest2(varargin)
     
     disp('Starting...');
     
-    %cameraIds = [1];
-    cameraIds = [1,2];
+    useLiveFeed = true;
+    cameraIds = [1,0];
+    
+    filenamePattern = '/Users/pbarnum/Documents/datasets/stereo/stereo_%sRectified_%d.png';
+    whichImageNumbers = 0:3090;
     
     useStereoCalibration = true;
     computeStereoBm = false;
@@ -40,6 +46,8 @@ function simpleLkTest2()
     
     stereo_lk_maxAngle = pi/16;
     
+    parseVarargin(varargin{:});
+    
     if length(cameraIds) == 1
         useStereoCalibration = false;
     end
@@ -49,13 +57,22 @@ function simpleLkTest2()
         [stereoProcessor, undistortMaps, masks] = initStereo(128, 'bm');
     end
     
-    videoCaptures = cell(length(cameraIds), 1);
-    for i = 1:length(cameraIds)
-        videoCaptures{i} = cv.VideoCapture(cameraIds(i));
-        disp(sprintf('Opened camera %d (id=%d)', i, cameraIds(i)))
+    if useLiveFeed
+        videoCaptures = cell(length(cameraIds), 1);
+        for i = 1:length(cameraIds)
+            videoCaptures{i} = cv.VideoCapture(cameraIds(i));
+            disp(sprintf('Opened camera %d (id=%d)', i, cameraIds(i)))
+        end
+
+        images = captureImages(videoCaptures, undistortMaps);
+    else
+        iImageNumber = 1;
+        leftFilename = sprintf(filenamePattern, 'left', whichImageNumbers(iImageNumber));
+        rightFilename = sprintf(filenamePattern, 'right', whichImageNumbers(iImageNumber));
+        images = {rgb2gray2(imread(leftFilename)), rgb2gray2(imread(rightFilename))};
+        iImageNumber = iImageNumber + 1;
     end
     
-    images = captureImages(videoCaptures, undistortMaps);
     lastImages = images;
     
     for i = 2:length(images)
@@ -73,7 +90,15 @@ function simpleLkTest2()
     end
     
     while true
-        images = captureImages(videoCaptures, undistortMaps);
+        if useLiveFeed
+            images = captureImages(videoCaptures, undistortMaps);
+        else
+            leftFilename = sprintf(filenamePattern, 'left', whichImageNumbers(iImageNumber));
+            rightFilename = sprintf(filenamePattern, 'right', whichImageNumbers(iImageNumber));
+            images = {rgb2gray2(imread(leftFilename)), rgb2gray2(imread(rightFilename))};
+            disp(sprintf('Image %d) %s', iImageNumber, leftFilename))
+            iImageNumber = iImageNumber + 1;
+        end
         
         % Compute the flow
         allFlowPoints = {};
@@ -293,6 +318,8 @@ function [stereoProcessor, undistortMaps, masks] = initStereo(numDisparities, di
          -0.111486, -0.015248, 0.993649];
 
     T = [-13.201223, -0.708310, 0.961289]';
+    
+    imageSize = [640, 480];
 
     rectifyStruct = cv.stereoRectify(cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize, R, T);
     

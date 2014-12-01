@@ -11,6 +11,39 @@ leftCameraId = 1
 rightCameraId = 2
 captureBaseFilename = '/Users/pbarnum/Documents/tmp/stereo/stereo_'
 
+useStereoCalibration = True
+
+if useStereoCalibration:
+    # Calibration for the Spynet stereo pair
+    distCoeffs1 = np.array([[0.182998, -0.417100, 0.005281, -0.004976, 0.000000]])
+
+    distCoeffs2 = np.array([[0.165733, -0.391832, 0.002453, -0.011111, 0.000000]])
+
+    cameraMatrix1 = np.array([[726.606787, 0.000000, 321.470791],
+              [0.000000, 724.172303, 293.913773],
+              [0.000000, 0.000000, 1.000000]])
+
+    cameraMatrix2 = np.array([[743.337415, 0.000000, 308.270936],
+              [0.000000, 741.060548, 254.206903],
+              [0.000000, 0.000000, 1.000000]])
+
+    R = np.array([[0.993527, -0.023641, 0.111109],
+              [0.021796, 0.999604, 0.017785],
+              [-0.111486, -0.015248, 0.993649]])
+
+    T = np.array([-13.201223, -0.708310, 0.961289])
+
+    imageSize = (640, 480)
+
+    [R1, R2, P1, P2, Q, validPixROI1, validPixROI2] = cv2.stereoRectify(
+        cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize, R, T)
+
+    leftUndistortMapX, leftUndistortMapY = cv2.initUndistortRectifyMap(
+        cameraMatrix1, distCoeffs1, R1, P1, imageSize, cv2.CV_32FC1)
+
+    rightUndistortMapX, rightUndistortMapY = cv2.initUndistortRectifyMap(
+        cameraMatrix2, distCoeffs2, R2, P2, imageSize, cv2.CV_32FC1)
+
 print('Starting cameras...')
 
 cap0 = cv2.VideoCapture(leftCameraId)
@@ -71,12 +104,21 @@ for images in imagesToSave:
     while True:
         leftImageFilename = captureBaseFilename + 'left_' + str(saveIndex) + '.png'
         rightImageFilename = captureBaseFilename + 'right_' + str(saveIndex) + '.png'
+        leftRectifiedImageFilename = captureBaseFilename + 'leftRectified_' + str(saveIndex) + '.png'
+        rightRectifiedImageFilename = captureBaseFilename + 'rightRectified_' + str(saveIndex) + '.png'
         saveIndex += 1
-        if (not os.path.isfile(leftImageFilename)) and (not os.path.isfile(rightImageFilename)):
-            break
+        if (not os.path.isfile(leftImageFilename)) and (not os.path.isfile(rightImageFilename)) and\
+            (not os.path.isfile(leftRectifiedImageFilename)) and (not os.path.isfile(rightRectifiedImageFilename)):
+                break
 
     cv2.imwrite(leftImageFilename, images[0])
     cv2.imwrite(rightImageFilename, images[1])
+
+    if useStereoCalibration:
+        leftRectifiedImage = cv2.remap(images[0], leftUndistortMapX, leftUndistortMapY, cv2.INTER_LINEAR)
+        rightRectifiedImage = cv2.remap(images[1], rightUndistortMapX, rightUndistortMapY, cv2.INTER_LINEAR)
+        cv2.imwrite(leftRectifiedImageFilename, leftRectifiedImage)
+        cv2.imwrite(rightRectifiedImageFilename, rightRectifiedImage)
 
 print('Done saving images')
 
