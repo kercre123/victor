@@ -140,7 +140,8 @@ class ServerTCP(ServerBase):
     def send(self, payload):
         "Send image data"
         if self.client:
-            self.client.sendall(payload)
+            sentLen = self.client.send(payload)
+            assert sentLen == len(payload)
 
     def disconnect(self):
         if self.client:
@@ -159,8 +160,8 @@ class Client(object):
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.server = (host, port)
         elif socketType == "TCP":
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.connect((host, port))
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.connect((host, port))
             self.server = "TCP"
         else:
             raise ValueError("Unsupported socket type")
@@ -176,8 +177,8 @@ class Client(object):
         msg = messages.ImageRequest()
         msg.imageSendMode = imageSendMode
         msg.resolution = self.resolution
-        if self.server == "TCP"
-            self.sock.send(msg.serialize())
+        if self.server == "TCP":
+            self.sock.sendall(msg.serialize())
         else:
             self.sock.sendto(msg.serialize(), self.server)
 
