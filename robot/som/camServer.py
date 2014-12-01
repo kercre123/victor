@@ -28,13 +28,14 @@ class ServerBase(object):
     def step(self):
         "A single server main loop iteration"
         req = self.receive()
-        if req.imageSendMode == messages.ISM_OFF:
-            self.client = None
-        else:
-            # TODO Do something with request resolution
-            self.frameNumber = 0
-            self.chunkNumber = 0
-            self.dataQueue = ""
+        if req:
+            if req.imageSendMode == messages.ISM_OFF:
+                self.client = None
+            else:
+                # TODO Do something with request resolution
+                self.frameNumber = 0
+                self.chunkNumber = 0
+                self.dataQueue = ""
         if self.client:
             if not len(self.dataQueue): # Need a new frame
                 # If single shot and have already sent
@@ -72,7 +73,7 @@ class ServerBase(object):
 class ServerUDP(ServerBase):
     "Implements server base with UDP socket"
 
-    def __init__:(self, camera=0, port=DEFAULT_PORT, encoding='.jpg', encodingParams=[1, 90]):
+    def __init__(self, camera=0, port=DEFAULT_PORT, encoding='.jpg', encodingParams=[1, 90]):
         ServerBase.__init__(self, camera, encoding, encodingParams)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(('', port))
@@ -156,5 +157,5 @@ class Client(object):
 
 if __name__ == "__main__":
     camera = int(sys.argv[1])
-    srv = Server(camera)
+    srv = ServerUDP(camera)
     srv.run()
