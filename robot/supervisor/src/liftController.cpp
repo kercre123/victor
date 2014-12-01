@@ -5,6 +5,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
+#include "anki/common/robot/errorHandling.h"
 
 
 #define DEBUG_LIFT_CONTROLLER 0
@@ -94,6 +95,17 @@ namespace Anki {
         // Currently applied power
         f32 power_ = 0;
 
+        // Nodding
+        //f32 preNodHeight_    = 0.f;
+        f32 nodLowHeight_    = 0.f;
+        f32 nodHighHeight_   = 0.f;
+        s32 numNodsDesired_  = 0;
+        s32 numNodsComplete_ = 0;
+        bool isNodding_ = false;
+        f32 nodEaseInFraction_  = 0.5f;
+        f32 nodEaseOutFraction_ = 0.5f;
+        f32 nodHalfPeriod_sec_  = 0.5f;
+
         
         // Calibration parameters
         typedef enum {
@@ -124,7 +136,7 @@ namespace Anki {
 
       // Returns the angle between the shoulder joint and the wrist joint.
       f32 Height2Rad(f32 height_mm) {
-        assert(height_mm >= LIFT_HEIGHT_LOWDOCK && height_mm <= LIFT_HEIGHT_CARRY);
+        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
         return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
       }
       
@@ -268,12 +280,23 @@ namespace Anki {
         accelRad_ = accel_rad_per_sec2;
       }
       
+      void SetLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2)
+      {
+        maxSpeedRad_ = Height2Rad(max_speed_mm_per_sec);
+        accelRad_    = Height2Rad(accel_mm_per_sec2);
+      }
+      
       void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
       {
         max_speed_rad_per_sec = maxSpeedRad_;
         accel_rad_per_sec2 = accelRad_;
       }
       
+      void SetLinearVelocity(const f32 mm_per_sec)
+      {
+        const f32 rad_per_sec = Height2Rad(mm_per_sec);
+        SetAngularVelocity(rad_per_sec);
+      }
       
       void SetAngularVelocity(const f32 rad_per_sec)
       {
@@ -363,7 +386,7 @@ namespace Anki {
       }
       
       
-      void SetDesiredHeight(f32 height_mm)
+      static void SetDesiredHeight_internal(f32 height_mm)
       {
         
         // Do range check on height
@@ -450,10 +473,17 @@ namespace Anki {
               radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, accelRad_, approachSpeedRad_, desiredAngle_.ToFloat());
 #endif
         
+      } // SetDesiredHeight_internal()
+      
+      
+      void SetDesiredHeight(f32 height_mm)
+      {
+        isNodding_ = false;
+        SetDesiredHeight_internal(height_mm);
       }
 
     // TODO: There is common code with the other SetDesiredHeight() that can be pulled out into a shared function.
-      void SetDesiredHeight(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+      static void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
       {
         
         // Do range check on height
@@ -532,8 +562,10 @@ namespace Anki {
                                                    CONTROL_DT);
         
         if (!res) {
-          PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
+          PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying other version of SetDesiredHeight()\n",
                 startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+          
+          SetDesiredHeight_internal(height_mm);
         }
         
 #if(DEBUG_HEAD_CONTROLLER)
@@ -542,6 +574,12 @@ namespace Anki {
 #endif
       }
 
+      
+      void SetDesiredHeight(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+      {
+        isNodding_ = false;
+        SetDesiredHeight_internal(height_mm, acc_start_frac, acc_end_frac, duration_seconds);
+      }
       
       
       f32 GetDesiredHeight()
@@ -675,6 +713,20 @@ namespace Anki {
           HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
           
         } // if not in position
+        else if(isNodding_)
+        {
+          // Note that this is inside else(not inPosition), so we must be
+          // inPosition if we get here.
+          if (GetLastCommandedHeightMM() == nodHighHeight_) {
+            SetDesiredHeight_internal(nodLowHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
+          } else if (GetLastCommandedHeightMM() == nodLowHeight_) {
+            SetDesiredHeight_internal(nodHighHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
+            ++numNodsComplete_;
+            if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
+              StopNodding();
+            }
+          }
+        } // else if isNodding
         
         
         if (IsRelaxed() && calibPending_) {
@@ -694,6 +746,48 @@ namespace Anki {
         Kp_ = kp;
         Ki_ = ki;
         MAX_ERROR_SUM = maxIntegralError;
+      }
+      
+      void Stop()
+      {
+        isNodding_ = false;
+        SetAngularVelocity(0);
+      }
+      
+      void StartNodding(const f32 lowHeight, const f32 highHeight,
+                        const u16 period_ms, const s32 numLoops,
+                        const f32 easeInFraction, const f32 easeOutFraction)
+      {
+        AnkiConditionalWarnAndReturn(enable_, "LiftController.StartNodding.Disabled",
+                                     "StartNodding() command ignored: LiftController is disabled.\n");
+        
+        //preNodHeight_  = GetHeightMM();
+        nodLowHeight_  = lowHeight;
+        nodHighHeight_ = highHeight;
+        numNodsDesired_  = numLoops;
+        numNodsComplete_ = 0;
+        isNodding_ = true;
+        nodEaseInFraction_ = easeInFraction;
+        nodEaseOutFraction_ = easeOutFraction;
+        nodHalfPeriod_sec_ = static_cast<f32>(period_ms) * 0.5f * 0.001f;
+        
+        SetDesiredHeight_internal(nodLowHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
+        
+      } // StartNodding()
+      
+      
+      void StopNodding()
+      {
+        AnkiConditionalWarnAndReturn(enable_, "LiftController.StopNodding.Disabled",
+                                     "StopNodding() command ignored: LiftController is disabled.\n");
+        
+        //SetDesiredHeight_internal(preNodHeight_);
+        isNodding_ = false;
+      }
+      
+      bool IsNodding()
+      {
+        return isNodding_;
       }
       
     } // namespace LiftController

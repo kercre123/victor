@@ -127,6 +127,16 @@ namespace Anki {
         
         ////// End of PathFollowTest ////
         
+        //////// PathFollowConvenienceFuncTest /////////
+        enum {
+          PFCF_DRIVE_STRAIGHT,
+          PFCF_DRIVE_ARC,
+          PFCF_DRIVE_POINT_TURN,
+          PFCF_NUM_STATES
+        };
+        u8 pfcfState_ = PFCF_DRIVE_STRAIGHT;
+        ////// End of PathFollowConvenienceFuncTest ////
+        
         
         //////// PickAndPlaceTest /////////
         enum {
@@ -182,10 +192,10 @@ namespace Anki {
         
         
         /////// LightTest ////////
-        HAL::LEDId ledID = (HAL::LEDId)0;
+        LEDId ledID = (LEDId)0;
         u8 ledColorIdx = 0;
         const u8 LED_COLOR_LIST_SIZE = 3;
-        const HAL::LEDColor LEDColorList[LED_COLOR_LIST_SIZE] = {HAL::LED_RED, HAL::LED_GREEN, HAL::LED_BLUE};
+        const LEDColor LEDColorList[LED_COLOR_LIST_SIZE] = {LED_RED, LED_GREEN, LED_BLUE};
         ///// End of LightTest ///
         
         // Current test mode
@@ -394,7 +404,6 @@ namespace Anki {
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           
           
-          
           PathFollower::StartPathTraversal();
           pathStarted_ = true;
         }
@@ -402,6 +411,61 @@ namespace Anki {
         return RESULT_OK;
       }
       
+
+      
+      
+      Result PathFollowConvenienceFuncTestInit()
+      {
+        PRINT("\n=== Starting PathFollowConvenienceFuncTest ===\n");
+        PathFollower::ClearPath();
+        pfcfState_ = PFCF_DRIVE_STRAIGHT;
+        return RESULT_OK;
+      }
+      
+      Result PathFollowConvenienceFuncTestUpdate()
+      {
+
+        
+        // Cycle through DriveStraight, DriveArc, and PointTurn
+        if (!PathFollower::IsTraversingPath()) {
+          
+          switch(pfcfState_) {
+            case PFCF_DRIVE_STRAIGHT:
+              PRINT("TM: DriveStraight\n");
+              if (!PathFollower::DriveStraight(100, 0.25, 0.25, 2)) {
+                PRINT("TM: DriveStraight failed\n");
+                return RESULT_FAIL;
+              }
+              break;
+              
+            case PFCF_DRIVE_ARC:
+              PRINT("TM: DriveArc\n");
+              if (!PathFollower::DriveArc(-PIDIV2_F, 40, 0.25, 0.25, 1)) {
+                PRINT("TM: DriveArc failed\n");
+                return RESULT_FAIL;
+              }
+
+              
+              break;
+            case PFCF_DRIVE_POINT_TURN:
+              PRINT("TM: DrivePointTurn\n");
+              if (!PathFollower::DrivePointTurn(-PIDIV2_F, 0.25, 0.25, 1)) {
+                PRINT("TM: DrivePointTurn failed\n");
+                return RESULT_FAIL;
+              }
+              break;
+            default:
+              break;
+          }
+
+          if (++pfcfState_ == PFCF_NUM_STATES) {
+            pfcfState_ = PFCF_DRIVE_STRAIGHT;
+          }
+          
+        }
+        
+        return RESULT_OK;
+      }
       
       
       Result DriveTestInit()
@@ -722,7 +786,7 @@ namespace Anki {
       Result AnimTestInit()
       {
         PRINT("\n==== Starting AnimationTest =====\n");
-        AT_currAnim = ANIM_HEAD_NOD;
+        AT_currAnim = 0;
         AnimationController::Play(AT_currAnim, 0);
         ticCnt_ = 0;
         return RESULT_OK;
@@ -734,8 +798,16 @@ namespace Anki {
           ticCnt_ = 0;
           
           AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-          if (AT_currAnim == ANIM_NUM_ANIMATIONS) {
-            AT_currAnim = ANIM_IDLE;
+          
+          // Skip undefined animIDs
+          while(!AnimationController::IsDefined(AT_currAnim)) {
+            if (AT_currAnim == AnimationController::MAX_CANNED_ANIMATIONS) {
+              // Go back to start
+              AT_currAnim = 0;
+            } else {
+              // otherwise just incrememnt
+              AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+            }
           }
           
           PRINT("Playing animation %d\n", AT_currAnim);
@@ -780,7 +852,7 @@ namespace Anki {
       {
         PRINT("\n==== Starting LightTest =====\n");
         ticCnt_ = 0;
-        ledID = (HAL::LEDId)0;
+        ledID = (LEDId)0;
         ledColorIdx = 0;
         return RESULT_OK;
       }
@@ -794,9 +866,9 @@ namespace Anki {
           HAL::SetLED(ledID, LEDColorList[ledColorIdx]);
           
           // Increment led
-          ledID = (HAL::LEDId)((u8)ledID+1);
-          if (ledID == HAL::NUM_LEDS) {
-            ledID = (HAL::LEDId)0;
+          ledID = (LEDId)((u8)ledID+1);
+          if (ledID == NUM_LEDS) {
+            ledID = (LEDId)0;
             
             // Increment color
             if (++ledColorIdx == LED_COLOR_LIST_SIZE) {
@@ -926,6 +998,10 @@ namespace Anki {
           case TM_PATH_FOLLOW:
             ret = PathFollowTestInit();
             updateFunc = PathFollowTestUpdate;
+            break;
+          case TM_PATH_FOLLOW_CONVENIENCE_FUNCTIONS:
+            ret = PathFollowConvenienceFuncTestInit();
+            updateFunc = PathFollowConvenienceFuncTestUpdate;
             break;
           case TM_DIRECT_DRIVE:
             ret = DriveTestInit();

@@ -124,6 +124,7 @@ END_MESSAGE_DEFINITION(U2G_SelectNextObject)
 
 // PickAndPlaceObject
 START_MESSAGE_DEFINITION(U2G_PickAndPlaceObject, 1)
+ADD_MESSAGE_MEMBER(u8, usePreDockPose)
 END_MESSAGE_DEFINITION(U2G_PickAndPlaceObject)
 
 // TraverseObject
@@ -139,9 +140,18 @@ START_MESSAGE_DEFINITION(U2G_ExecuteBehavior, 1)
 ADD_MESSAGE_MEMBER(u8, behaviorMode)
 END_MESSAGE_DEFINITION(U2G_ExecuteBehavior)
 
+// SetBehaviorState
+START_MESSAGE_DEFINITION(U2G_SetBehaviorState, 1)
+ADD_MESSAGE_MEMBER(u8, behaviorState)
+END_MESSAGE_DEFINITION(U2G_SetBehaviorState)
+
 // AbortPath
 START_MESSAGE_DEFINITION(U2G_AbortPath, 1)
 END_MESSAGE_DEFINITION(U2G_AbortPath)
+
+// AbortAll
+START_MESSAGE_DEFINITION(U2G_AbortAll, 1)
+END_MESSAGE_DEFINITION(U2G_AbortAll)
 
 // DrawPoseMarker
 START_MESSAGE_DEFINITION(U2G_DrawPoseMarker, 1)
@@ -186,9 +196,13 @@ END_MESSAGE_DEFINITION(U2G_IMURequest)
 // PlayAnimation
 START_MESSAGE_DEFINITION(U2G_PlayAnimation, 1)
 ADD_MESSAGE_MEMBER(u32, numLoops)
-ADD_MESSAGE_MEMBER(u8, animationID)
-ADD_MESSAGE_MEMBER(u8, soundID)
-END_MESSAGE_DEFINITION(U2G_PlayAnimation)
+//ADD_MESSAGE_MEMBER(u8, animationID)
+ADD_MESSAGE_MEMBER_ARRAY(char, animationName, 32) // TODO: don't use char arrays
+END_MESSAGE_DEFINITION(U2G_PlayAnimation)\
+
+// ReadAnimationFile
+START_MESSAGE_DEFINITION(U2G_ReadAnimationFile, 1)
+END_MESSAGE_DEFINITION(U2G_ReadAnimationFile)
 
 // StartFaceTracking
 START_MESSAGE_DEFINITION(U2G_StartFaceTracking, 1)
@@ -199,3 +213,13 @@ END_MESSAGE_DEFINITION(U2G_StartFaceTracking)
 // StopFaceTracking
 START_MESSAGE_DEFINITION(U2G_StopFaceTracking, 1)
 END_MESSAGE_DEFINITION(U2G_StopFaceTracking)
+
+// SetFaceDetectParams
+START_MESSAGE_DEFINITION(U2G_SetFaceDetectParams, 1)
+ADD_MESSAGE_MEMBER(f32, scaleFactor)
+ADD_MESSAGE_MEMBER(s32, minNeighbors)
+ADD_MESSAGE_MEMBER(s32, minObjectHeight)
+ADD_MESSAGE_MEMBER(s32, minObjectWidth)
+ADD_MESSAGE_MEMBER(s32, maxObjectHeight)
+ADD_MESSAGE_MEMBER(s32, maxObjectWidth)
+END_MESSAGE_DEFINITION(U2G_SetFaceDetectParams)

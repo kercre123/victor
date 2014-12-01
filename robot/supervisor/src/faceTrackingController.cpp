@@ -250,6 +250,7 @@ namespace Anki {
             
           } else if(_isTracking && HAL::GetMicroCounter() > _currentFace.timeoutTime_usec) {
             PRINT("FaceTrackingController timed out. Stopping tracking.\n");
+            VisionSystem::StopTracking();
             _isStarted  = false;
             _isTracking = false;
           }

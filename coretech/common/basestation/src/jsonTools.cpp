@@ -69,6 +69,12 @@ namespace JsonTools
     return node.asInt();
   }
   
+  // Char
+  template<>
+  char GetValue<char>(const Json::Value& node) {
+    return static_cast<char>(node.asInt());
+  }
+  
   // String
   template<>
   std::string GetValue<std::string>(const Json::Value& node) {

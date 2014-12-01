@@ -19,9 +19,14 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 
+#include "keyFrame.h"
+#include "animation.h"
+
 namespace Anki {
   namespace Cozmo {
     namespace AnimationController {
+      
+      const s32 MAX_CANNED_ANIMATIONS = 16;
       
       Result Init();
       
@@ -31,10 +36,24 @@ namespace Anki {
       // If numLoops == 0, then repeats until Stop() is called.
       void Play(const AnimationID_t anim, const u32 numLoops);
       
+      // Plays tranisition animation once, then starts looping the state animation
+      void TransitionAndPlay(const AnimationID_t transitionAnim,
+                             const AnimationID_t stateAnim);
+      
       void Stop();
       
       bool IsPlaying();
       
+      bool IsDefined(const AnimationID_t anim);
+      
+      // For updating "canned" animations (e.g. using definitions sent over
+      // from the Basestation):
+      Result ClearCannedAnimation(const AnimationID_t whichAnimation);
+      
+      // (Adds frame to end of specified animation/subsystem)
+      Result AddKeyFrameToCannedAnimation(const KeyFrame&     keyframe,
+                                          const AnimationID_t whichAnimation);
+
     } // namespace AnimationController
   } // namespcae Cozmo
 } // namespace Anki

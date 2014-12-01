@@ -8,15 +8,15 @@ classdef VisionMarkerTrained
         TrainingImageDir = { ...
             '~/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated', ... '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded/rotated', ...
             '~/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rotated', ...
-            '~/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated', ...}; %, ...
-            '~/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/rotated'};
+            '~/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated', ...}; % '~/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/rotated', ...
+            '~/Box Sync/Cozmo SE/VisionMarkers/creepTest/withFiducials/rotated'};
                 
         ProbeParameters = struct( ...
             'GridSize', 32, ...            %'Radius', 0.02, ...  % As a fraction of a canonical unit square 
-            'NumAngles', 8, ...       % How many samples around ring to sample
+            'NumAngles', 4, ...       % How many samples around ring to sample
             'Method', 'mean');        % How to combine points in a probe
                 
-        MinContrastRatio = 1.25;  % bright/dark has to be at least this
+        MinContrastRatio = 0; %1.25;  % bright/dark has to be at least this
         
         SquareWidthFraction = 0.1; % as a fraction of the fiducial width
         FiducialPaddingFraction = 0.1; % as a fraction of the fiducial width
@@ -26,6 +26,10 @@ classdef VisionMarkerTrained
 
         ProbePattern = VisionMarkerTrained.CreateProbePattern();
         
+        % NOTE: this assumes large-files repo is alongside products-cozmo
+        SavedTreePath = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', '..', '..', ...
+          'products-cozmo-large-files', 'trainedTrees');
+      
         ProbeTree = VisionMarkerTrained.LoadProbeTree();
                 
         DarkProbes   = VisionMarkerTrained.CreateProbes('dark'); 
@@ -41,16 +45,23 @@ classdef VisionMarkerTrained
         
         [img, alpha] = AddFiducial(img, varargin);
         AddFiducialBatch(inputDir, outputDir, varargin);
+        
+        trainingState = ExtractProbeValues(varargin)
+        VisualizeExtractedProbes(data, varargin)
+        
         probeTree = TrainProbeTree(varargin);
+        
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
         %Corners = GetMarkerCorners(imageSize, isPadded);
         corners = GetFiducialCorners(imageSize, isPadded);
         [threshold, bright, dark] = ComputeThreshold(img, tform);
         outputString = GenerateHeaderFiles(varargin);
-        [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes();
+        [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes(tree);
 
         CreateTestImage(varargin);
         CreatePrintableCodeSheet(varargin);
+        
+        [probeValues, X, Y] = GetProbeValues(img, tform);
         
     end % Static Methods
     
@@ -149,9 +160,45 @@ classdef VisionMarkerTrained
                     end
                 end
                 
-                [this.codeName, this.codeID] = TestTree( ...
+                if iscell(VisionMarkerTrained.ProbeTree)
+                  VerifyLabel = false;
+                  numTrees = length(VisionMarkerTrained.ProbeTree);
+                  codeNames = cell(1, numTrees);
+                  codeIDs   = cell(1, numTrees);
+                  for iTree = 1:numTrees
+                    [codeNames{iTree}, codeIDs{iTree}] = TestTree( ...
+                      VisionMarkerTrained.ProbeTree{iTree}, img, tform, threshold, ...
+                      VisionMarkerTrained.ProbePattern);
+                    if ~isscalar(codeIDs{iTree})
+                      codeIDs{iTree} = mode(codeIDs{iTree});
+                    end
+                  end
+                  
+                  counts = hist([codeIDs{:}], 1:length(VisionMarkerTrained.ProbeTree{1}.labels));
+                  
+                  % Majority
+                  [maxCount,this.codeID] = max(counts);
+                  this.isValid = maxCount > 0.5*numTrees;
+                  
+%                   % Plurality (ID with most votes wins, so long as it is
+%                   % more than second-most)
+%                   [sortedCounts,sortedIDs] = sort(counts, 'descend');
+%                   this.codeID = sortedIDs(1);
+%                   this.isValid = sortedCounts(1) > sortedCounts(2);
+                  
+                  this.codeName = VisionMarkerTrained.ProbeTree{1}.labels{this.codeID};
+                  
+                else
+                  [this.codeName, this.codeID] = TestTree( ...
                     VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
-                    VisionMarkerTrained.ProbePattern);                
+                    VisionMarkerTrained.ProbePattern);
+                end
+                
+                if length(this.codeID) > 1
+                  warning('Multiclass tree returned multiple labels. Choosing most frequent.');
+                  this.codeID = mode(this.codeID);
+                  this.codeName = VisionMarkerTrained.ProbeTree.labels{this.codeID};
+                end
                                 
                 if any(strcmp(this.codeName, {'UNKNOWN', 'INVALID'}))
                     this.isValid = false;
@@ -190,14 +237,17 @@ classdef VisionMarkerTrained
                                     end
                                 end
 
-                            else
-                                assert(isfield(VisionMarkerTrained.ProbeTree, 'verifiers'));
-
+                            elseif isfield(VisionMarkerTrained.ProbeTree, 'verifiers')
                                 [verificationResult, verifiedID] = TestTree( ...
                                     VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
                                     img, tform, threshold, VisionMarkerTrained.ProbePattern);
 
                                 this.isValid = verifiedID ~= 1;
+                                
+                            else 
+                              this.isValid = true;
+                              verificationResult = this.codeName;
+                              verifiedID = this.codeID;
                             end
                         end
                     else % if VerifyLabel
@@ -302,8 +352,6 @@ classdef VisionMarkerTrained
             
         end
 
-        [probeValues, X, Y] = GetProbeValues(this, img);
-        
     end % Public Methods
     
 end % CLASSDEF TrainedVisionMarker

@@ -9,6 +9,7 @@
 
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/trig_fast.h"
+#include "anki/common/shared/velocityProfileGenerator.h"
 
 #include "anki/cozmo/robot/hal.h"
 
@@ -58,6 +59,9 @@ namespace Anki
         // ID of the current path that is being followed
         // or the last path that was followed if not currently path following
         u16 lastPathID_ = 0;
+        
+        const f32 COAST_VELOCITY_MMPS = 15.f;
+        const f32 COAST_VELOCITY_RADPS = 0.4f; // Same as POINT_TURN_TERMINAL_VEL_RAD_PER_S
         
       } // Private Members
       
@@ -497,6 +501,210 @@ namespace Anki
       u16 GetLastPathID() {
         return lastPathID_;
       }
+
+      
+      
+      bool DriveStraight(f32 dist_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_sec)
+      {
+        VelocityProfileGenerator vpg;
+        
+        // Compute profile
+        f32 curr_x, curr_y;
+        Radians curr_angle;
+        Localization::GetCurrentMatPose(curr_x, curr_y, curr_angle);
+        f32 currSpeed = SpeedController::GetCurrentMeasuredVehicleSpeed();
+        
+        if (!vpg.StartProfile_fixedDuration(0, currSpeed, acc_start_frac * duration_sec,
+                                            dist_mm, acc_end_frac * duration_sec,
+                                            10000, 10000,  // TODO: maxVel, maxAccel
+                                            duration_sec, CONTROL_DT) ) {
+          
+          PRINT("PathFollower.DriveStraight.VPGRetry: Trying simple path with instantaneous accel");
+
+          if (!vpg.StartProfile_fixedDuration(0, currSpeed, 0.01 * duration_sec,
+                                              dist_mm, 0.01 * duration_sec,
+                                              10000, 10000,  // TODO: maxVel, maxAccel
+                                              duration_sec, CONTROL_DT) ) {
+          
+            PRINT("PathFollower.DriveStraight.VPGFail");
+            return false;
+          }
+        }
+
+        
+        // Compute the destination pose
+        f32 dest_x = curr_x + dist_mm * cosf(curr_angle.ToFloat());
+        f32 dest_y = curr_y + dist_mm * sinf(curr_angle.ToFloat());
+
+        
+        // Compute start and end acceleration distances.
+        // Some compensation here for lookahead distance.
+        // NOTE: PathFollower actually transitions to the speed settings of the following segment
+        //       at LOOK_AHEAD_DIST_MM before it actually reaches the next segment.
+        f32 startAccelDist = vpg.GetStartAccelDist();
+        f32 endAccelDist = vpg.GetEndAccelDist();
+        if (fabsf(endAccelDist) > LOOK_AHEAD_DIST_MM) {
+          endAccelDist -= LOOK_AHEAD_DIST_MM * SIGN(endAccelDist);
+        }
+        PRINT("DRIVE STRAIGHT: total dist %f, startDist %f, endDist %f\n", dist_mm, startAccelDist, endAccelDist);
+        
+        // Get intermediate poses: (1) after starting accel phase and (2) before ending accel phase
+        f32 int_x1 = curr_x + startAccelDist * cosf(curr_angle.ToFloat());
+        f32 int_y1 = curr_y + startAccelDist * sinf(curr_angle.ToFloat());
+
+        f32 int_x2 = dest_x - endAccelDist * cosf(curr_angle.ToFloat());
+        f32 int_y2 = dest_y - endAccelDist * sinf(curr_angle.ToFloat());
+        
+        
+        // Get intermediate speed and accels
+        f32 maxReachableVel = vpg.GetMaxReachableVel();
+        f32 startAccel = fabsf(vpg.GetStartAccel());
+        f32 endAccel = fabsf(vpg.GetEndAccel());
+
+        
+        // Create 3-segment path
+        PRINT("DriveStraight accels: start %f, end %f, vel %f\n", startAccel, endAccel, maxReachableVel);
+        PRINT("DriveStraight path: (%f, %f) to (%f, %f) to (%f, %f) to (%f, %f)\n", curr_x, curr_y, int_x1, int_y1, int_x2, int_y2, dest_x, dest_y);
+        ClearPath();
+        AppendPathSegment_Line(0, curr_x, curr_y, int_x1, int_y1, maxReachableVel, startAccel, startAccel);
+        AppendPathSegment_Line(0, int_x1, int_y1, int_x2, int_y2, maxReachableVel, startAccel, startAccel);
+        AppendPathSegment_Line(0, int_x2, int_y2, dest_x, dest_y, dist_mm > 0 ? COAST_VELOCITY_MMPS : -COAST_VELOCITY_MMPS, endAccel, endAccel);
+        StartPathTraversal();
+
+        return true;
+      }
+      
+      bool DriveArc(f32 sweep_rad, f32 radius_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_sec)
+      {
+        VelocityProfileGenerator vpg;
+        
+        // Compute profile
+        f32 curr_x, curr_y;
+        Radians curr_angle;
+        Localization::GetCurrentMatPose(curr_x, curr_y, curr_angle);
+        f32 currAngSpeed = -SpeedController::GetCurrentMeasuredVehicleSpeed() / radius_mm;
+        
+        if (!vpg.StartProfile_fixedDuration(0, currAngSpeed, acc_start_frac * duration_sec,
+                                            sweep_rad, acc_end_frac * duration_sec,
+                                            100, 100,  // TODO: maxVel, maxAccel
+                                            duration_sec, CONTROL_DT) ) {
+          
+          PRINT("PathFollower.DriveArc.VPGRetry: Trying simple path with instantaneous accel");
+          
+          if (!vpg.StartProfile_fixedDuration(0, currAngSpeed, 0.01 * duration_sec,
+                                              sweep_rad, 0.01 * duration_sec,
+                                              100, 100,  // TODO: maxVel, maxAccel
+                                              duration_sec, CONTROL_DT) ) {
+            
+            PRINT("PathFollower.DriveArc.VPGFail");
+            return false;
+          }
+        }
+        
+        // Compute x_center,y_center
+        f32 angToCenter = curr_angle.ToFloat() + (radius_mm > 0 ? -1 : 1) * PIDIV2_F;
+        f32 absRadius = fabsf(radius_mm);
+        f32 x_center = curr_x + absRadius * cosf(angToCenter);
+        f32 y_center = curr_y + absRadius * sinf(angToCenter);
+        
+        // Compute startRad relative to (x_center, y_center)
+        f32 startRad = angToCenter + PI_F;
+        
+        // Get intermediate poses: (1) after starting accel phase and (2) before ending accel phase
+        f32 startAccelSweep = vpg.GetStartAccelDist();
+        f32 endAccelSweep = vpg.GetEndAccelDist();
+        //if (endAccelDist < -LOOK_AHEAD_DIST_MM) {
+        //  endAccelDist += LOOK_AHEAD_DIST_MM;
+        //}
+        
+        
+        f32 int_ang1 = startRad + startAccelSweep;
+        f32 int_ang2 = startRad + sweep_rad - endAccelSweep;
+        
+        // Get intermediate speed and accels.
+        // Need to convert angular speeds/accel into linear speeds/accel
+        f32 targetAngSpeed = fabsf(vpg.GetMaxReachableVel());
+        f32 startAngAccel = fabsf(vpg.GetStartAccel());
+        f32 endAngAccel = fabsf(vpg.GetEndAccel());
+        
+        
+        u8 drivingFwd = SIGN(sweep_rad) != SIGN(radius_mm) ? 1 : -1;
+        f32 targetSpeed = drivingFwd * targetAngSpeed * absRadius;
+        f32 startAccel = startAngAccel * absRadius;
+        f32 endAccel = endAngAccel * absRadius;
+        
+
+        PRINT("DriveArc: curr_x,y  (%f, %f), center x,y (%f, %f), radius %f\n", curr_x, curr_y, x_center, y_center, radius_mm);
+        PRINT("DriveArc: start + sweep1 = ang1 (%f + %f = %f), end + sweep2 = ang2 ang2 (%f - %f = %f)\n", startRad, startAccelSweep, int_ang1, startRad + sweep_rad, endAccelSweep, int_ang2);
+        PRINT("DriveArc: targetSpeed %f, startAccel %f, endAccel %f\n", targetSpeed, startAccel, endAccel);
+        
+        // Create 3-segment path
+        ClearPath();
+        AppendPathSegment_Arc(0, x_center, y_center, absRadius, startRad, startAccelSweep, targetSpeed, startAccel, startAccel);
+        AppendPathSegment_Arc(0, x_center, y_center, absRadius, int_ang1, int_ang2-int_ang1, targetSpeed, startAccel, startAccel);
+        AppendPathSegment_Arc(0, x_center, y_center, absRadius, int_ang2, endAccelSweep, drivingFwd > 0 ? COAST_VELOCITY_MMPS : -COAST_VELOCITY_MMPS, endAccel, endAccel);
+        
+        StartPathTraversal();
+        
+        return true;
+      }
+      
+      bool DrivePointTurn(f32 sweep_rad, f32 acc_start_frac, f32 acc_end_frac, f32 duration_sec)
+      {
+        VelocityProfileGenerator vpg;
+        
+        f32 curr_x, curr_y;
+        Radians curr_angle;
+        Localization::GetCurrentMatPose(curr_x, curr_y, curr_angle);
+        
+        
+        if (!vpg.StartProfile_fixedDuration(0, 0, acc_start_frac * duration_sec,
+                                            sweep_rad, acc_end_frac * duration_sec,
+                                            10000, 10000,  // TODO: maxVel, maxAccel
+                                            duration_sec, CONTROL_DT)) {
+          
+          if (!vpg.StartProfile_fixedDuration(0, 0, 0.01 * duration_sec,
+                                              sweep_rad, 0.01 * duration_sec,
+                                              10000, 10000,  // TODO: maxVel, maxAccel
+                                              duration_sec, CONTROL_DT)) {
+
+            PRINT("WARN: DrivePointTurn vpg fail (sweep_rad: %f, acc_start_frac %f, acc_end_frac %f, duration_sec %f). Default to simple version \n", sweep_rad, acc_start_frac, acc_end_frac, duration_sec);
+            return false;
+          }
+          
+        }
+        
+        
+        
+        f32 targetRotVel = vpg.GetMaxReachableVel();
+        f32 startAccelSweep = vpg.GetStartAccelDist();
+        f32 endAccelSweep = vpg.GetEndAccelDist();
+        f32 startAngAccel = fabsf(vpg.GetStartAccel());
+        f32 endAngAccel = fabsf(vpg.GetEndAccel());
+
+        // Compute intermediate angles
+        f32 dest_ang = curr_angle.ToFloat() + sweep_rad;
+        f32 int_ang1 = curr_angle.ToFloat() + startAccelSweep;
+        f32 int_ang2 = dest_ang - endAccelSweep;
+
+        
+        PRINT("DrivePointTurn: start %f, int_ang1 %f, int_ang2 %f, dest %f\n", curr_angle.ToFloat(), int_ang1, int_ang2, dest_ang);
+        PRINT("DriveTurn: targetRotSpeed %f, startRotAccel %f, endRotAccel %f\n", targetRotVel, startAngAccel, endAngAccel);
+        
+        // Create 3-segment path
+        ClearPath();
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang1, targetRotVel, startAngAccel, startAngAccel);
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang2, targetRotVel, startAngAccel, startAngAccel);
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, dest_ang, sweep_rad > 0 ? COAST_VELOCITY_RADPS : -COAST_VELOCITY_RADPS, endAngAccel, endAngAccel);
+          
+        StartPathTraversal();
+        
+        return true;
+      }
+
+      
+      
+      
       
     } // namespace PathFollower
   } // namespace Cozmo

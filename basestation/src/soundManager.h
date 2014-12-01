@@ -14,8 +14,48 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 
+#include <string>
+
 namespace Anki {
   namespace Cozmo {
+    
+    
+    // List of sound schemes
+    typedef enum {
+      SOUND_SCHEME_COZMO
+      ,SOUND_SCHEME_MOVIE
+      ,SOUND_SCHEME_CREEP // Cozmo Robotic Emotional Engagement Playtest
+      ,NUM_SOUND_SCHEMES
+    } SoundSchemeID_t;
+    
+    // List of sound IDs
+    typedef enum {
+      SOUND_TADA
+      ,SOUND_NOPROBLEMO
+      ,SOUND_INPUT
+      ,SOUND_SWEAR
+      ,SOUND_STARTOVER
+      ,SOUND_NOTIMPRESSED
+      ,SOUND_60PERCENT
+      ,SOUND_DROID
+      ,SOUND_DEMO_START
+      ,SOUND_WAITING4DICE
+      ,SOUND_WAITING4DICE2DISAPPEAR
+      ,SOUND_OK_GOT_IT
+      ,SOUND_OK_DONE
+      ,SOUND_POWER_ON
+      ,SOUND_POWER_DOWN
+      ,SOUND_PHEW
+      ,SOUND_OOH
+      ,SOUND_SCREAM
+      ,SOUND_WHATS_NEXT
+      ,SOUND_HELP_ME
+      ,SOUND_SCAN
+      ,SOUND_HAPPY_CHASE
+      ,SOUND_FLEES
+      ,SOUND_SINGING
+      ,NUM_SOUNDS
+    } SoundID_t;
     
     // NOTE: this is a singleton class
     class SoundManager
@@ -29,12 +69,18 @@ namespace Anki {
       // Set the root directory of sound files
       bool SetRootDir(const char* dir);
       
-      bool Play(const SoundID_t id);
-      void Stop();
+      // Volume for Play() methods is expressed a percentage of saved volume
+      bool Play(const SoundID_t    id,   const u8 numLoops=1, const u8 volume = 100);
+      bool Play(const std::string& name, const u8 numLoops=1, const u8 volume = 100);
       
+	  void Stop();
+
       void SetScheme(const SoundSchemeID_t scheme);
       SoundSchemeID_t GetScheme() const;
       
+      // Lookup a sound by name
+      static SoundID_t GetID(const std::string& name);
+            
     protected:
       
       // Protected default constructor for singleton.
@@ -42,7 +88,16 @@ namespace Anki {
       ~SoundManager();
       
       static SoundManager* singletonInstance_;
-
+      
+      const std::string& GetSoundFile(SoundID_t soundID);
+      
+      bool _hasCmdProcessor;
+      bool _hasRootDir;
+      
+      std::string _rootDir;
+      
+      SoundSchemeID_t _currScheme = SOUND_SCHEME_COZMO;
+      
     }; // class SoundManager
     
     

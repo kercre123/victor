@@ -44,6 +44,7 @@
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 
 #include "actionContainers.h"
+#include "cannedAnimationContainer.h"
 #include "behaviorManager.h"
 #include "ramp.h"
 
@@ -277,7 +278,20 @@ namespace Anki {
       
       // Plays specified animation numLoops times.
       // If numLoops == 0, animation repeats forever.
-      Result PlayAnimation(const AnimationID_t animID, const u32 numLoops = 0);
+      Result PlayAnimation(const char* animName, const u32 numLoops = 1);
+      
+      // Plays transition animation once, then plays state animatin in a loop
+      Result TransitionToStateAnimation(const char *transitionAnimName,
+                                        const char *stateAnimName);
+      
+      Result StopAnimation();
+      
+      // (Re-)Read the animation JSON file and send it to the physical robot
+      Result ReadAnimationFile();
+      
+      // Returns true if the robot is currently playing an animation, according
+      // to most recent state message.
+      bool IsAnimating() const;
       
       Result SyncTime();
       
@@ -294,11 +308,15 @@ namespace Anki {
       // Start a Behavior in BehaviorManager
       void StartBehaviorMode(BehaviorManager::Mode mode);
      
+      // Set a particular behavior state (up to BehaviorManager to ignore if
+      // state is not valid for current mode)
+      void SetBehaviorState(BehaviorManager::BehaviorState state);
       
       // For debugging robot parameters:
       Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       Result SetLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
-      Result SetSetVisionSystemParams(VisionSystemParams_t p);
+      Result SendVisionSystemParams(VisionSystemParams_t p);
+      Result SendFaceDetectParams(FaceDetectParams_t p);
       
       // =========== Pose history =============
       
@@ -341,7 +359,12 @@ namespace Anki {
       
       // ========= Lights ==========
       void SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color);
+     
       
+      // Abort everything the robot is doing, including path following, actions,
+      // animations, and docking. This is like the big red E-stop button.
+      // TODO: Probably need a more elegant way of doing this.
+      Result AbortAll();
       
     protected:
       
@@ -415,6 +438,7 @@ namespace Anki {
       bool             _isPickingOrPlacing;
       bool             _isPickedUp;
       bool             _isMoving;
+      bool             _isAnimating;
       
       // Pose history
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
@@ -467,6 +491,10 @@ namespace Anki {
       void SetPickedUp(bool t);
       void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
 
+      ///////// Animation /////////
+      
+      CannedAnimationContainer _cannedAnimations;
+      
       
       ///////// Messaging ////////
       // These methods actually do the creation of messages and sending
@@ -532,7 +560,10 @@ namespace Anki {
       
       // Play animation
       // If numLoops == 0, animation repeats forever.
-      Result SendPlayAnimation(const AnimationID_t id, const u32 numLoops = 0);
+      Result SendPlayAnimation(const char* animName, const u32 numLoops = 0);
+      
+      Result SendTransitionToStateAnimation(const char *transitionAnimName,
+                                            const char *stateAnimName);
       
       Result SendDockWithObject(const Vision::KnownMarker* marker,
                                 const Vision::KnownMarker* marker2,
@@ -543,6 +574,9 @@ namespace Anki {
       
       Result SendStartFaceTracking(const u8 timeout_sec);
       Result SendStopFaceTracking();
+      
+      Result SendAbortDocking();
+      Result SendAbortAnimation();
       
     }; // class Robot
 
@@ -596,6 +630,11 @@ namespace Anki {
     inline Result Robot::SetDockObjectAsAttachedToLift(){
       return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);
     }
+    
+    inline bool Robot::IsAnimating() const {
+      return _isAnimating;
+    }
+    
     
     
   } // namespace Cozmo

@@ -59,11 +59,13 @@ namespace Anki {
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D, {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
-    , _currentHeadAngle(0)
+    , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _currentLiftAngle(0)
     , _onRamp(false)
     , _isPickingOrPlacing(false)
     , _isPickedUp(false)
+    , _isMoving(false)
+    , _isAnimating(false)
     , _carryingMarker(nullptr)
     {
       _pose.SetName("Robot_" + std::to_string(_ID));
@@ -75,16 +77,21 @@ namespace Anki {
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
       
+      Json::Reader reader;
+      
       // Read planner motion primitives
       // TODO: Use different motions primitives depending on the type/personality of this robot
+      // TODO: Stop storing *cozmo* motion primitives in a coretech location
       Json::Value mprims;
-      const std::string subPath("coretech/planning/matlab/cozmo_mprim.json");
-      const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+      {
+        const std::string subPath = "coretech/planning/matlab/cozmo_mprim.json";
+        const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+        std::ifstream jsonFile(jsonFilename);
+        reader.parse(jsonFile, mprims);
+        jsonFile.close();
+      }
       
-      Json::Reader reader;
-      std::ifstream jsonFile(jsonFilename);
-      reader.parse(jsonFile, mprims);
-      jsonFile.close();
+      ReadAnimationFile();
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
@@ -108,6 +115,7 @@ namespace Anki {
       _shortPathPlanner = nullptr;
       
       _selectedPathPlanner = nullptr;
+      
     }
     
     void Robot::SetPickedUp(bool t)
@@ -187,6 +195,8 @@ namespace Anki {
       SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
       SetPickedUp( msg.status & IS_PICKED_UP );
+      
+      _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
       
       // TODO: Make this a parameters somewhere?
       const f32 WheelSpeedToConsiderStopped = 2.f;
@@ -324,14 +334,14 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      Vision::Camera camera(GetCamera());
-      
-      if(!camera.IsCalibrated()) {
+      if(!GetCamera().IsCalibrated()) {
         PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
                             "Received VisionMarker message from robot before "
                             "camera calibration was set on Basestation.");
         return RESULT_FAIL;
       }
+      
+      Vision::Camera camera(GetCamera());
       
       // Get corners
       Quad2f corners;
@@ -722,10 +732,51 @@ namespace Anki {
       return SendPlaceObjectOnGround(0, 0, 0);
     }
     
-    Result Robot::PlayAnimation(const AnimationID_t animID, const u32 numLoops)
+    Result Robot::PlayAnimation(const char* animName, const u32 numLoops)
     {
-      return SendPlayAnimation(animID, numLoops);
+      return SendPlayAnimation(animName, numLoops);
     }
+    
+    Result Robot::TransitionToStateAnimation(const char *transitionAnimName,
+                                             const char *stateAnimName)
+    {
+      return SendTransitionToStateAnimation(transitionAnimName, stateAnimName);
+    }
+    
+    Result Robot::StopAnimation()
+    {
+      return SendAbortAnimation();
+    }
+    
+    Result Robot::ReadAnimationFile()
+    {
+      Result lastResult = RESULT_OK;
+      
+      Json::Reader reader;
+      
+      Json::Value animDefs;
+      // TODO: Point DefineCannedAnimations at a json file with all animations
+      const std::string subPath("basestation/config/animations.json");
+      const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+      std::ifstream jsonFile(jsonFilename);
+      if(reader.parse(jsonFile, animDefs) == false) {
+        PRINT_NAMED_ERROR("Robot.ReadAnimationFaile.JsonParseFailure",
+                          "Failed to parse Json animation file.\n");
+//        lastResult = RESULT_FAIL;
+      }
+      jsonFile.close();
+      
+      if(lastResult == RESULT_OK) {
+        _cannedAnimations.Clear();
+        lastResult = _cannedAnimations.DefineFromJson(animDefs);
+        if(lastResult == RESULT_OK) {
+          // Immediately send the canned animations out
+          lastResult = _cannedAnimations.Send(_ID, _msgHandler);
+        }
+      }
+      
+      return lastResult;
+    } // ReadAnimationFile()
     
     Result Robot::SyncTime()
     {
@@ -1354,6 +1405,12 @@ namespace Anki {
       _behaviorMgr.StartMode(mode);
     }
     
+    void Robot::SetBehaviorState(BehaviorManager::BehaviorState state)
+    {
+      _behaviorMgr.SetNextState(state);
+    }
+    
+    
     // ============ Messaging ================
     
     // Sync time with physical robot and trigger it robot to send back camera calibration
@@ -1633,7 +1690,7 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SetSetVisionSystemParams(VisionSystemParams_t p)
+    Result Robot::SendVisionSystemParams(VisionSystemParams_t p)
     {
       MessageSetVisionSystemParams m;
       m.minExposureTime = p.minExposureTime;
@@ -1643,13 +1700,37 @@ namespace Anki {
       m.highValue = p.highValue;
       return _msgHandler->SendMessage(_ID,m);
     }
-
-    Result Robot::SendPlayAnimation(const AnimationID_t id, const u32 numLoops)
+    
+    Result Robot::SendFaceDetectParams(FaceDetectParams_t p)
     {
-      if (id < ANIM_NUM_ANIMATIONS) {
-        MessagePlayAnimation m;
-        m.animationID = id;
+      MessageSetFaceDetectParams m;
+      m.scaleFactor = p.scaleFactor;
+      m.minNeighbors = p.minNeighbors;
+      m.minObjectHeight = p.minObjectHeight;
+      m.minObjectWidth = p.minObjectWidth;
+      m.maxObjectHeight = p.maxObjectHeight;
+      m.maxObjectWidth = p.maxObjectWidth;
+      return _msgHandler->SendMessage(_ID, m);
+    }
+
+    Result Robot::SendPlayAnimation(const char *name, const u32 numLoops)
+    {
+      MessagePlayAnimation m;
+      m.animationID = _cannedAnimations.GetID(name);
+      if(m.animationID >= 0) {
         m.numLoops = numLoops;
+        return _msgHandler->SendMessage(_ID, m);
+      }
+      return RESULT_FAIL;
+    }
+    
+    Result Robot::SendTransitionToStateAnimation(const char *transitionAnimName,
+                                                 const char *stateAnimName)
+    {
+      MessageTransitionToStateAnimation m;
+      m.transitionAnimID = _cannedAnimations.GetID(transitionAnimName);
+      m.stateAnimID      = _cannedAnimations.GetID(stateAnimName);
+      if(m.transitionAnimID >= 0 && m.stateAnimID >= 0) {
         return _msgHandler->SendMessage(_ID, m);
       }
       return RESULT_FAIL;
@@ -1855,6 +1936,44 @@ namespace Anki {
       }
     } // RemoveReactionCallback()
     
+    
+    Result Robot::AbortAll()
+    {
+      bool anyFailures = false;
+      
+      _actionList.Clear();
+      
+      if(ClearPath() != RESULT_OK) {
+        anyFailures = true;
+      }
+      
+      if(SendAbortDocking() != RESULT_OK) {
+        anyFailures = true;
+      }
+      
+      if(SendAbortAnimation() != RESULT_OK) {
+        anyFailures = true;
+      }
+      
+      if(anyFailures) {
+        return RESULT_FAIL;
+      } else {
+        return RESULT_OK;
+      }
+      
+    }
+    
+    Result Robot::SendAbortAnimation()
+    {
+      MessageAbortAnimation m;
+      return _msgHandler->SendMessage(GetID(), m);
+    }
+    
+    Result Robot::SendAbortDocking()
+    {
+      MessageAbortDocking m;
+      return _msgHandler->SendMessage(GetID(), m);
+    }
     
   } // namespace Cozmo
 } // namespace Anki

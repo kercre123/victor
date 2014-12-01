@@ -253,7 +253,13 @@ namespace Anki {
       const u8 numRetries = 3;
       
       ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-      robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID), numRetries);
+      if(static_cast<bool>(msg.usePreDockPose)) {
+        robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID), numRetries);
+      } else {
+        PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID);
+        action->SetMaxPreActionPoseDistance(-1.f); // disable pre-action pose distance check
+        robot->GetActionList().AddAction(action, numRetries);
+      }
       
       return RESULT_OK;
     }
@@ -274,11 +280,22 @@ namespace Anki {
       robot->StartBehaviorMode(static_cast<BehaviorManager::Mode>(msg.behaviorMode));
       return RESULT_OK;
     }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetBehaviorState const& msg)
+    {
+      robot->SetBehaviorState(static_cast<BehaviorManager::BehaviorState>(msg.behaviorState));
+      return RESULT_OK;
+    }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_AbortPath const& msg)
     {
       robot->ClearPath();
       return RESULT_OK;
+    }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_AbortAll const& msg)
+    {
+      return robot->AbortAll();
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_DrawPoseMarker const& msg)
@@ -331,10 +348,14 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlayAnimation const& msg)
     {
-      SoundManager::getInstance()->Play((SoundID_t)msg.soundID);
-      return robot->PlayAnimation((AnimationID_t)msg.animationID, msg.numLoops);
+      return robot->PlayAnimation(&(msg.animationName[0]), msg.numLoops);
     }
   
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ReadAnimationFile const& msg)
+    {
+      return robot->ReadAnimationFile();
+    }
+    
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartFaceTracking const& msg)
     {
       return robot->StartFaceTracking(msg.timeout_sec);
@@ -345,5 +366,16 @@ namespace Anki {
       return robot->StopFaceTracking();
     }
     
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetFaceDetectParams const& msg)
+    {
+      FaceDetectParams_t p;
+      p.scaleFactor = msg.scaleFactor;
+      p.minNeighbors = msg.minNeighbors;
+      p.minObjectHeight = msg.minObjectHeight;
+      p.minObjectWidth = msg.minObjectWidth;
+      p.maxObjectHeight = msg.maxObjectHeight;
+      p.maxObjectWidth = msg.maxObjectWidth;
+      return robot->SendFaceDetectParams(p);
+    }
   } // namespace Cozmo
 } // namespace Anki

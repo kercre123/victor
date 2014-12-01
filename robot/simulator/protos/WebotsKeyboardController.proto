@@ -14,11 +14,20 @@ PROTO WebotsKeyboardController [
   field SFFloat liftKi 0.03
   field SFFloat liftMaxErrorSum 10
 
+  # Vision system params
   field SFInt32 integerCountsIncrement 3
   field SFFloat minExposureTime 0.02
   field SFFloat maxExposureTime 0.98
   field SFInt32 highValue 250  
   field SFFloat percentileToMakeHigh 0.97
+
+  # Face detect params
+  field SFFloat fd_scaleFactor 1.1
+  field SFInt32 fd_minNeighbors 2
+  field SFInt32 fd_minObjectHeight 30
+  field SFInt32 fd_minObjectWidth 30
+  field SFInt32 fd_maxObjectHeight 240
+  field SFInt32 fd_maxObjectWidth 320
 ]
 {
 Supervisor {

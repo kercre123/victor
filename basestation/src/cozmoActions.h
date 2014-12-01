@@ -149,6 +149,10 @@ namespace Anki {
     public:
       IDockAction(ObjectID objectID);
       
+      // Use a value <= 0 to ignore how far away the robot is from the closest
+      // PreActionPose and proceed regardless.
+      void SetMaxPreActionPoseDistance(f32 maxDistance);
+      
     protected:
       
       // IDockAction implements these two required methods from IAction for its
@@ -174,6 +178,7 @@ namespace Anki {
       ObjectID                    _dockObjectID;
       DockAction_t                _dockAction;
       const Vision::KnownMarker*  _dockMarker;
+      f32                         _maxPreActionPoseDistance;
       f32                         _waitToVerifyTime;
 
     }; // class IDockAction
@@ -340,15 +345,17 @@ namespace Anki {
     class PlayAnimationAction : public IAction
     {
     public:
-      PlayAnimationAction(AnimationID_t animID);
+      PlayAnimationAction(const std::string& animName);
       
       virtual const std::string& GetName() const override { return _name; }
       
     protected:
       
+      virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
-      AnimationID_t _animID;
+      //AnimationID_t _animID;
+      std::string   _animName;
       std::string   _name;
       
     }; // class PlayAnimationAction
@@ -357,7 +364,7 @@ namespace Anki {
     class PlaySoundAction : public IAction
     {
     public:
-      PlaySoundAction(SoundID_t soundID);
+      PlaySoundAction(const std::string& soundName);
       
       virtual const std::string& GetName() const override { return _name; }
       
@@ -365,7 +372,7 @@ namespace Anki {
       
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
-      SoundID_t   _soundID;
+      std::string _soundName;
       std::string _name;
       
     }; // class PlaySoundAction

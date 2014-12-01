@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "messageHandler.h"
+#include "soundManager.h"
 #include "vizManager.h"
 
 #include <fstream>
@@ -102,6 +103,11 @@ namespace Anki {
           if(robot == NULL) {
             PRINT_NAMED_ERROR("MessageFromInvalidRobotSource",
                               "Message %d received from invalid robot source ID %d.\n",
+                              msgID, robotID);
+          }
+          else if(this->lookupTable_[msgID].ProcessPacketAs == nullptr) {
+            PRINT_NAMED_ERROR("MessageHandler.ProcessPacket.NullProcessPacketFcn",
+                              "Message %d received by robot %d, but no ProcessPacketAs function defined for it.\n",
                               msgID, robotID);
           }
           else {
@@ -474,5 +480,19 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessagePlaySoundOnBaseStation const& msg)
+    {
+      SoundManager::getInstance()->Play(static_cast<SoundID_t>(msg.soundID), msg.numLoops, msg.volume);
+      return RESULT_OK;
+    }
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageStopSoundOnBaseStation const& msg)
+    {
+      SoundManager::getInstance()->Stop();
+      return RESULT_OK;
+    }
+    
+    
   } // namespace Cozmo
 } // namespace Anki

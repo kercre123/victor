@@ -13,7 +13,7 @@ PROTO CozmoBot [
   field SFFloat headAngle_highLimit 0.6981 # 40 degrees up
   
   field SFFloat liftAngle 0
-  field SFFloat liftAngle_lowLimit  0
+  field SFFloat liftAngle_lowLimit  -0.01  # Should be 0, but Webots needs it to be less than liftAngle
   field SFFloat liftAngle_highLimit 1.047  # 60 degrees up
   #field SFFloat liftAngle_highLimit 0.96  # 55 degrees up
 
@@ -102,7 +102,7 @@ Supervisor {
 								geometry Cylinder {
 								height 0.0322
 								radius 0.013
-								subdivision 16
+								subdivision 12
 								}
 							}
 							]
@@ -119,7 +119,7 @@ Supervisor {
 									geometry Cylinder {
 										height 0.0322
 										radius 0.013
-										subdivision 16
+										subdivision 12
 									}
 								}
 							]
@@ -150,17 +150,21 @@ Supervisor {
 		  children [
 			HingeJoint {
 			  jointParameters HingeJointParameters {
-					dampingConstant 3
+					dampingConstant 1
 					position IS headAngle
 					maxStop IS headAngle_highLimit
 					minStop IS headAngle_lowLimit
-					position 0
 					axis 0 -1 0
 			  }
 			  %{ if not fields.vizMode then }%
-			  device RotationalMotor {
+			  device [
+			    RotationalMotor {
 					name "HeadMotor"
-			  }
+			    }
+			    PositionSensor {
+			      name "HeadMotorPosSensor"
+			    }
+			  ]
 			  %{ end }%
 			  endPoint Solid {            
 					children [
@@ -183,7 +187,7 @@ Supervisor {
 							geometry Cylinder {
 								height 0.040
 								radius 0.007
-								subdivision 16
+								subdivision 12
 							}
 						}
 						DEF EYES Transform {
@@ -364,7 +368,7 @@ Supervisor {
 						height IS cameraHeight
 						fieldOfView IS fieldOfView
 						near 0.018
-						antialiasing TRUE
+						antiAliasing TRUE
 						%{ if fields.vizMode then }%
 						pixelSize 0
 						%{ end }%
@@ -448,7 +452,7 @@ Supervisor {
 								geometry DEF FACE Cylinder {
 									height 0.008
 									radius 0.015
-									subdivision 24
+									subdivision 18
 								}
 							}
 						]
@@ -456,7 +460,7 @@ Supervisor {
 				  DEF HEAD_SPHERE Shape {
 						geometry Sphere {
 							radius 0.020
-							subdivision 3
+							subdivision 2
 						}
 						appearance Appearance {
 							material Material {
@@ -509,7 +513,7 @@ Supervisor {
 								geometry Cylinder {
 								height 0.039
 								radius 0.015
-								subdivision 20
+								subdivision 16
 								}
 							}
 							]
@@ -526,7 +530,7 @@ Supervisor {
 									geometry Cylinder {
 										height 0.039
 										radius 0.015
-										subdivision 20
+										subdivision 16
 									}
 								}
 							]
@@ -571,13 +575,18 @@ Supervisor {
 	
 		DEF LEFT_FRONT_WHEEL HingeJoint {
 		  jointParameters HingeJointParameters {
-				dampingConstant 6
+				dampingConstant 2
 				axis 0 1 0
 		  }
-		  device RotationalMotor {
+		  device [
+		    RotationalMotor {
 				name "LeftWheelMotor"
 				maxVelocity 30
-		  }
+		    }
+		    PositionSensor {
+		      name "LeftWheelMotorPosSensor"
+		    }
+		  ]
 		  endPoint Solid {
 			translation 0 0.02385 0
 				children [
@@ -595,7 +604,7 @@ Supervisor {
 									geometry Cylinder {
 										height 0.011
 										radius 0.0132
-										subdivision 22
+										subdivision 18
 									}
 								 }
 								 Transform {
@@ -624,7 +633,7 @@ Supervisor {
 					geometry Cylinder {
 						height 0.003
 						radius 0.0142
-						subdivision 32
+						subdivision 24
 					}
 			  }
 			]
@@ -640,13 +649,18 @@ Supervisor {
 		}
 		DEF RIGHT_FRONT_WHEEL HingeJoint {
 		  jointParameters HingeJointParameters {
-				dampingConstant 6
+				dampingConstant 2
 				axis 0 1 0
 		  }
-		  device RotationalMotor {
+		  device [
+		    RotationalMotor {
 				name "RightWheelMotor"
 				maxVelocity 30
-		  }
+		    }
+		    PositionSensor {
+		      name "RightWheelMotorPosSensor"
+		    }
+		  ]
 		  endPoint Solid {
 				translation 0 -0.02385 0
 				children [
@@ -748,54 +762,60 @@ Supervisor {
 					geometry Cylinder {
 					height 0.048
 					radius 0.0035
-					subdivision 14
+					subdivision 10
+					}
+					appearance Appearance {
+					  material Material { 
+					    diffuseColor IS bodyColor
+					  }
 					}
 				}
 			
 				DEF SHOULDER HingeJoint {
 					jointParameters HingeJointParameters {
 						axis 0 -1 0
-						dampingConstant 3
+						dampingConstant 1
 						position IS liftAngle
 						minStop IS liftAngle_lowLimit
 						maxStop IS liftAngle_highLimit
 					}
 					%{ if not fields.vizMode then }%
-					device RotationalMotor {
+					device [
+					  RotationalMotor {
 						name "LiftMotor"
-						maxVelocity 2
-						maxTorque 2
-					}
+					  }
+					  PositionSensor {
+					    name "LiftMotorPosSensor"
+					  }
+					]
 					%{ end }%
 					endPoint Solid {
 					children [
 
-					#GRIPPER PLATE
-					Transform {
+					    #GRIPPER PLATE
+					    Transform {
 						translation 0.0626 0 -0.012
 						children [
 							HingeJoint {
 							jointParameters HingeJointParameters {
 								axis 0 1 0
-								dampingConstant 3
-								position IS liftAngle
-								minStop IS liftAngle_lowLimit
-								maxStop IS liftAngle_highLimit
 							}
 							endPoint DEF SmallFingerGripper Solid {
+								name "GripperPlate"
 								children [
+
 								Transform {
 									translation 0.0035 -0.017 -0.012
 									children [
 										DEF GRIPPER_FINGER Group {
 											children [
-												DEF GRIPPER_FINGER_SHAPE Shape {
+												Shape {
 													appearance Appearance {
 														material Material { 
 															diffuseColor IS bodyColor
 														}
 													}
-													geometry DEF GRIPPER_FINGER_SHAPE IndexedFaceSet {
+													geometry IndexedFaceSet {
 														coord Coordinate {
 															point [
 																0 0.00075 0
@@ -837,7 +857,7 @@ Supervisor {
 									USE GRIPPER_FINGER
 									]
 								}
-							
+
 								DEF LIFTER_SHAPE Group {
 									children [
 									Transform {
@@ -913,7 +933,7 @@ Supervisor {
 											}
 										]
 									}
-								
+																	
 									Transform {
 										translation 0 0.01375 0
 										children [
@@ -1030,7 +1050,7 @@ Supervisor {
 							} # Hinge Joint
 						] # Transform children
 						} # Transform
-				
+
 						DEF LEFT_LIFT_ARM Transform {
 						translation 0 0.022 0
 						children [
@@ -1142,7 +1162,7 @@ Supervisor {
 
 					} # endPoint Transform
 				} # HingeJoint
-			
+
 				# Lower Set of Arms
 				DEF LOWER_LIFT Transform {
 					translation 0 0 -0.012
@@ -1152,7 +1172,12 @@ Supervisor {
 							geometry Cylinder {
 							height 0.048
 							radius 0.0045
-							 subdivision 14
+							 subdivision 10
+							}
+							appearance Appearance {
+							  material Material { 
+							    diffuseColor IS bodyColor
+							  }
 							}
 						}
 					
@@ -1161,13 +1186,28 @@ Supervisor {
 						DEF SHOULDER_LOWER HingeJoint {
 							jointParameters HingeJointParameters {
 								axis 0 -1 0
-								dampingConstant 3
-								position IS liftAngle
-								minStop IS liftAngle_lowLimit
-								maxStop IS liftAngle_highLimit
 							}
 							endPoint Solid {
 								children [
+
+									# Hinge to close mechanical loop back to gripper plate
+									Transform {
+									  translation 0.0626 0 -0.012
+									  children [
+									    HingeJoint {
+									      jointParameters HingeJointParameters {
+									        axis 0 1 0
+									      }
+	
+									      endPoint SolidReference { 
+										  solidName "GripperPlate"
+									      }
+									    }
+									  ]
+									}
+
+
+
 									DEF RIGHT_LIFT_ARM_LOWER Transform {
 										translation 0 -0.022 0
 										children [
@@ -1214,6 +1254,34 @@ Supervisor {
 										]
 									} # LEFT_LIFT_ARM_LOWER Transform
 								] # endPoint Solid Children (lower)
+
+
+								%{ if not fields.vizMode then }%
+								boundingObject Group {
+									children [
+										# Right arm
+										Transform {
+											translation 0 -0.02225 0
+											children [
+												USE LIFT_ARM_SHAPE
+											]
+										}
+
+										# Left arm
+										Transform {
+											translation 0 0.02225 0
+											children [
+												USE LIFT_ARM_SHAPE
+											]
+										}
+									]
+								}
+								physics Physics {
+									density 100
+								}
+								%{ end }%
+
+
 							} # endPoint Solid (lower)
 						} # DEF SHOULDER_LOWER HingeJoint
 					] # LOWER lift transform children

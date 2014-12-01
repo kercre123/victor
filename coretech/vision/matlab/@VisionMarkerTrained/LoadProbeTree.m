@@ -3,12 +3,13 @@ function tree = LoadProbeTree()
 % probe tree.
 
 try
-    tree = load('probeTree.mat', 'probeTree');
+    tree = load(fullfile(VisionMarkerTrained.SavedTreePath, 'probeTree.mat'), 'probeTree');
     tree = tree.probeTree;
 catch E
     warning('Could not load probe tree! (%s)', E.message);
     tree = [];
 end
 
-fprintf('VisionMarkerTrained decision tree loaded.\n');
+fprintf('VisionMarkerTrained decision tree loaded from %s.\n', VisionMarkerTrained.SavedTreePath);
+
 end

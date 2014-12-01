@@ -465,8 +465,14 @@ namespace Anki {
     IDockAction::IDockAction(ObjectID objectID)
     : _dockObjectID(objectID)
     , _dockMarker(nullptr)
+    , _maxPreActionPoseDistance(MAX_DISTANCE_TO_PREDOCK_POSE)
     {
       
+    }
+    
+    void IDockAction::SetMaxPreActionPoseDistance(f32 maxDistance)
+    {
+      _maxPreActionPoseDistance = maxDistance;
     }
     
     IAction::ActionResult IDockAction::Init(Robot& robot)
@@ -525,7 +531,7 @@ namespace Anki {
       
       const f32 closestDist = sqrtf(closestDistSq);
       
-      if(closestDist > MAX_DISTANCE_TO_PREDOCK_POSE) {
+      if(_maxPreActionPoseDistance > 0.f && closestDist > _maxPreActionPoseDistance) {
         PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
                          "Robot is too far from pre-action pose (%.1fmm).", closestDist);
         return FAILURE_RETRY;
@@ -993,27 +999,36 @@ namespace Anki {
     
 #pragma mark ---- PlayAnimationAction ----
     
-    PlayAnimationAction::PlayAnimationAction(AnimationID_t animID)
-    : _animID(animID)
-    , _name("PlayAnimation" + std::to_string(_animID) + "Action")
+    PlayAnimationAction::PlayAnimationAction(const std::string& animName)
+    : _animName(animName)
+    , _name("PlayAnimation" + animName + "Action")
     {
       
     }
     
-    IAction::ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
+    IAction::ActionResult PlayAnimationAction::Init(Robot& robot)
     {
-      if(robot.PlayAnimation(_animID) == RESULT_OK) {
+      if(robot.PlayAnimation(_animName.c_str()) == RESULT_OK) {
         return SUCCESS;
       } else {
         return FAILURE_ABORT;
       }
     }
     
+    IAction::ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
+    {
+      if(robot.IsAnimating()) {
+        return RUNNING;
+      } else {
+        return SUCCESS;
+      }
+    }
+    
 #pragma mark ---- PlaySoundAction ----
     
-    PlaySoundAction::PlaySoundAction(SoundID_t soundID)
-    : _soundID(soundID)
-    , _name("PlaySound" + std::to_string(_soundID) + "Action")
+    PlaySoundAction::PlaySoundAction(const std::string& soundName)
+    : _soundName(soundName)
+    , _name("PlaySound" + soundName + "Action")
     {
       
     }

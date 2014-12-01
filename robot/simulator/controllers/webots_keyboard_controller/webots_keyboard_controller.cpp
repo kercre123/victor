@@ -22,6 +22,14 @@
 #include <webots/Supervisor.hpp>
 
 
+// SDL for gamepad control (specifically Logitech Rumblepad F510)
+// Gamepad should be in Direct mode (switch on back)
+#define ENABLE_GAMEPAD_SUPPORT 1
+#if(ENABLE_GAMEPAD_SUPPORT)
+#include <SDL.h>
+#define DEBUG_GAMEPAD 0
+#endif
+
 #define BASESTATION_IP "127.0.0.1"
 
 namespace Anki {
@@ -39,12 +47,14 @@ namespace Anki {
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
         
-        const f32 HEAD_SPEED_RAD_PER_SEC = 1.f;
-        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 3.f;
+        const f32 HEAD_SPEED_RAD_PER_SEC = 5.f;
+        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 10.f;
         
+        std::set<int> lastKeysPressed_;
         
-        int lastKeyPressed_ = 0;
-        int lastKeyAndModPressed_ = 0;
+        bool wasMovingWheels_ = false;
+        bool wasMovingHead_   = false;
+        bool wasMovingLift_   = false;
         
         webots::GPS* gps_;
         webots::Compass* compass_;
@@ -65,10 +75,63 @@ namespace Anki {
         TcpClient bsClient;
         char sendBuf[128];
         
+        double lastKeyPressTime_;
+        
+        #if(ENABLE_GAMEPAD_SUPPORT)
+        SDL_GameController* js_;
+        
+        //Event handler
+        SDL_Event sdlEvent_;
+        
+        //Normalized direction
+        typedef enum {
+          GC_ANALOG_LEFT_X,
+          GC_ANALOG_LEFT_Y,
+          GC_ANALOG_RIGHT_X,
+          GC_ANALOG_RIGHT_Y,
+          GC_LT_BUTTON,
+          GC_RT_BUTTON,
+          GC_NUM_AXES
+        } GameControllerAxis_t;
+        
+        s16 gc_axisValues_[GC_NUM_AXES] = {0};
+        
+        typedef enum {
+          GC_BUTTON_A = 0,
+          GC_BUTTON_B,
+          GC_BUTTON_X,
+          GC_BUTTON_Y,
+          GC_BUTTON_BACK,
+          
+          GC_BUTTON_START = 6,
+          GC_BUTTON_ANALOG_LEFT,
+          GC_BUTTON_ANALOG_RIGHT,
+          
+          GC_BUTTON_LB = 9,
+          GC_BUTTON_RB,
+          
+          GC_BUTTON_DIR_UP = 11,
+          GC_BUTTON_DIR_DOWN,
+          GC_BUTTON_DIR_LEFT,
+          GC_BUTTON_DIR_RIGHT,
+          
+          GC_NUM_BUTTONS
+        } GameControllerButton_t;
+        
+        bool gc_buttonPressed_[GC_NUM_BUTTONS];
+        
+        const s16 ANALOG_INPUT_DEAD_ZONE_THRESH = 1000;
+        const f32 ANALOG_INPUT_MAX_DRIVE_SPEED = 100; // mm/s
+        const f32 MAX_ANALOG_RADIUS = 300;
+        #endif // ENABLE_GAMEPAD_SUPPORT
+
+        
+        
       } // private namespace
       
       // Forward declarations
       void ProcessKeystroke(void);
+      void ProcessJoystick(void);
       void PrintHelp(void);
       void SendMessage(const UiMessage& msg);
       void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps);
@@ -83,13 +146,15 @@ namespace Anki {
       void SendSetHeadlights(u8 intensity);
       void SendExecutePathToPose(const Pose3d& p);
       void SendPlaceObjectOnGroundSequence(const Pose3d& p);
-      void SendPickAndPlaceSelectedObject();
+      void SendPickAndPlaceSelectedObject(const bool usePreDockPose);
       void SendTraverseSelectedObject();
       void SendExecuteTestPlan();
       void SendClearAllBlocks();
       void SendSelectNextObject();
       void SendExecuteBehavior(BehaviorManager::Mode mode);
+      void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState);
       void SendAbortPath();
+      void SendAbortAll();
       void SendDrawPoseMarker(const Pose3d& p);
       void SendErasePoseMarker();
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
@@ -97,9 +162,11 @@ namespace Anki {
       void SendSelectNextSoundScheme();
       void SendStartTestMode(TestMode mode);
       void SendIMURequest(u32 length_ms);
-      void SendAnimation(AnimationID_t animId, u32 numLoops, SoundID_t soundId);
+      void SendAnimation(const char* animName, u32 numLoops);
+      void SendReadAnimationFile();
       void SendStartFaceTracking(u8 timeout_sec);
       void SendStopFaceTracking();
+      void SendFaceDetectParams();
       
       void Init()
       {
@@ -113,27 +180,26 @@ namespace Anki {
         gps_->enable(BS_TIME_STEP);
         compass_->enable(BS_TIME_STEP);
         
-        // Make root point to BlockWorldComms node
-        webots::Field* rootChildren = inputController.getRoot()->getField("children");
-        int numRootChildren = rootChildren->getCount();
-        for (int n = 0 ; n<numRootChildren; ++n) {
-          webots::Node* nd = rootChildren->getMFNode(n);
-          
-          // Get the node name
-          std::string nodeName = "";
-          webots::Field* nameField = nd->getField("name");
-          if (nameField) {
-            nodeName = nameField->getSFString();
-          }
-          
-          if (nd->getTypeName().find("Supervisor") != std::string::npos &&
-              nodeName.find("WebotsKeyboardController") != std::string::npos) {
-            root_ = nd;
-            
-            // Find pose marker color field
-            poseMarkerDiffuseColor_ = nd->getField("poseMarkerDiffuseColor");
+        // Make root point to WebotsKeyBoardController node
+        root_ = inputController.getSelf();
+        poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
+        
+        #if(ENABLE_GAMEPAD_SUPPORT)
+        // Look for gamepad
+        if (SDL_Init(SDL_INIT_GAMECONTROLLER) < 0) {
+          printf("ERROR: Failed to init SDL\n");
+          return;
+        }
+        if (SDL_NumJoysticks() > 0) {
+          // Open first joystick. Assuming it's the Logitech Rumble Gamepad F510.
+          js_ = SDL_GameControllerOpen(0);
+          if (js_ == NULL) {
+            printf("ERROR: Unable to open gamepad\n");
           }
         }
+        #endif
+
+
       }
       
       void PrintHelp()
@@ -155,9 +221,11 @@ namespace Anki {
         printf("              Cycle block select:  .\n");
         printf("              Clear known blocks:  c\n");
         printf("          Dock to selected block:  p\n");
+        printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");
         printf("       Start June 2014 dice demo:  j\n");
         printf("              Abort current path:  q\n");
+        printf("                Abort everything:  Shift+q\n");
         printf("         Update controller gains:  k\n");
         printf("             Cycle sound schemes:  m\n");
         printf("                 Request IMU log:  o\n");
@@ -207,10 +275,34 @@ namespace Anki {
         
         const s32 CKEY_ANIMATION_NOD = (s32)'!';
         const s32 CKEY_ANIMATION_BACK_AND_FORTH = (s32)'@';
+        const s32 CKEY_ANIMATION_BLINK = (s32)'#';
+        const s32 CKEY_ANIMATION_TOGGLE = (s32) '~';
+        const s32 CKEY_ANIMATION_SEND_FILE = 197; // ALT+A
         
         const s32 CKEY_TOGGLE_FACE_TRACKING = (s32)'F';
         
-        int key = inputController.keyboardGetKey();
+        // For CREEP test
+        const s32 CKEY_BEHAVIOR_EXCITED   = (s32)'7';
+        const s32 CKEY_BEHAVIOR_FLEE      = (s32)'8';
+        const s32 CKEY_BEHAVIOR_SCAN      = (s32)'9';
+        const s32 CKEY_BEHAVIOR_DANCE     = (s32)'0';
+        const s32 CKEY_BEHAVIOR_HELPME    = (s32)'-';
+        const s32 CKEY_BEHAVIOR_WHAT_NEXT = (s32)'=';
+        const s32 CKEY_BEHAVIOR_IDLE      = (s32)'&';
+        
+        bool movingHead   = false;
+        bool movingLift   = false;
+        bool movingWheels = false;
+        s8 steeringDir = 0;  // -1 = left, 0 = straight, 1 = right
+        s8 throttleDir = 0;  // -1 = reverse, 0 = stop, 1 = forward
+        
+        f32 leftSpeed = 0.f;
+        f32 rightSpeed = 0.f;
+        
+        f32 commandedLiftSpeed = 0.f;
+        f32 commandedHeadSpeed = 0.f;
+        
+        f32 wheelSpeed = DRIVE_VELOCITY_FAST;
         
         static bool keyboardRestart = false;
         if (keyboardRestart) {
@@ -219,354 +311,767 @@ namespace Anki {
           keyboardRestart = false;
         }
         
-        
-        // Skip if same key as before
-        if (key == lastKeyAndModPressed_)
-          return;
-        
-        // Extract modifier key
-        int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
-        
-        // Adjust wheel speed appropriately
-        f32 wheelSpeed = DRIVE_VELOCITY_FAST;
-        f32 liftSpeed = LIFT_SPEED_RAD_PER_SEC;
-        f32 headSpeed = HEAD_SPEED_RAD_PER_SEC;
-        if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
-          wheelSpeed = DRIVE_VELOCITY_SLOW;
-          liftSpeed *= 0.25;
-          headSpeed *= 0.25;
+        // Get all keys pressed this tic
+        std::set<int> keysPressed_;
+        while(1) {
+          int key = inputController.keyboardGetKey();
+          if (key == 0)
+            break;
+          
+          keysPressed_.insert(key);
         }
         
-        // Set key to its modifier-less self
-        key &= webots::Supervisor::KEYBOARD_KEY;
+        // If exact same keys were pressed last tic, do nothing.
+        if (lastKeysPressed_ == keysPressed_) {
+          return;
+        }
+        lastKeysPressed_ = keysPressed_;
         
         
-        //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
-        //       key, modifier_key, key | modifier_key, lastKeyPressed_);
-        
-        while(1) {
+        for(auto key : keysPressed_)
+        {
+          // Extract modifier key(s)
+          int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
+          
+          // Set key to its modifier-less self
+          key &= webots::Supervisor::KEYBOARD_KEY;
+          
+          lastKeyPressTime_ = inputController.getTime();
+          
+          // DEBUG: Display modifier key information
+          /*
+          printf("Key = '%c'", char(key));
+          if(modifier_key) {
+            printf(", with modifier keys: ");
+            if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+              printf("ALT ");
+            }
+            if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+              printf("SHIFT ");
+            }
+            if(modifier_key & webots::Supervisor::KEYBOARD_CONTROL) {
+              printf("CTRL/CMD ");
+            }
+           
+          }
+          printf("\n");
+          */
+          
+          // Use slow motor speeds if SHIFT is pressed
+          f32 liftSpeed = LIFT_SPEED_RAD_PER_SEC;
+          f32 headSpeed = HEAD_SPEED_RAD_PER_SEC;
+          if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+            wheelSpeed = DRIVE_VELOCITY_SLOW;
+            liftSpeed *= 0.4;
+            headSpeed *= 0.5;
+          }
+          
+          
+          //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
+          //       key, modifier_key, key | modifier_key, lastKeyPressed_);
           
           // Check for test mode (alt + key)
+          bool testMode = false;
           if (modifier_key == webots::Supervisor::KEYBOARD_ALT) {
             if (key >= '0' && key <= '9') {
               TestMode m = TestMode(key - '0');
               printf("Sending test mode %d\n", m);
               SendStartTestMode(m);
-              break;
+              testMode = true;
             }
           }
           
-          // Check for (mostly) single key commands
-          switch (key)
-          {
-            case webots::Robot::KEYBOARD_UP:
+          if(!testMode) {
+            // Check for (mostly) single key commands
+            switch (key)
             {
-              SendDriveWheels(wheelSpeed, wheelSpeed);
-              break;
-            }
-              
-            case webots::Robot::KEYBOARD_DOWN:
-            {
-              SendDriveWheels(-wheelSpeed, -wheelSpeed);
-              break;
-            }
-              
-            case webots::Robot::KEYBOARD_LEFT:
-            {
-              SendDriveWheels(-wheelSpeed, wheelSpeed);
-              break;
-            }
-              
-            case webots::Robot::KEYBOARD_RIGHT:
-            {
-              SendDriveWheels(wheelSpeed, -wheelSpeed);
-              break;
-            }
-              
-            case CKEY_HEAD_UP: //s-key: move head UP
-            {
-              const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.5 * HEAD_SPEED_RAD_PER_SEC : HEAD_SPEED_RAD_PER_SEC);
-              SendMoveHead(speed);
-              break;
-            }
-              
-            case CKEY_HEAD_DOWN: //x-key: move head DOWN
-            {
-              const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.5 * HEAD_SPEED_RAD_PER_SEC : HEAD_SPEED_RAD_PER_SEC);
-              SendMoveHead(-speed);
-              break;
-            }
-              
-            case CKEY_LIFT_UP: //a-key: move lift up
-            {
-              const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.25 * LIFT_SPEED_RAD_PER_SEC : 0.5 * LIFT_SPEED_RAD_PER_SEC);
-              SendMoveLift(speed);
-              break;
-            }
-              
-            case CKEY_LIFT_DOWN: //z-key: move lift down
-            {
-              const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.25 * LIFT_SPEED_RAD_PER_SEC : 0.5 * LIFT_SPEED_RAD_PER_SEC);
-              SendMoveLift(-speed);
-              break;
-            }
-              
-            case '1': //set lift to low dock height
-            {
-              SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
-              break;
-            }
-              
-            case '2': //set lift to high dock height
-            {
-              SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
-              break;
-            }
-              
-            case '3': //set lift to carry height
-            {
-              SendMoveLiftToHeight(LIFT_HEIGHT_CARRY, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
-              break;
-            }
-              
-            case '4': //set head to look all the way down
-            {
-              SendMoveHeadToAngle(MIN_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
-              break;
-            }
-              
-            case '5': //set head to straight ahead
-            {
-              SendMoveHeadToAngle(0, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
-              break;
-            }
-              
-            case '6': //set head to look all the way up
-            {
-              SendMoveHeadToAngle(MAX_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
-              break;
-            }
-              
-            case CKEY_UNLOCK: // Stop all motors
-            {
-              SendStopAllMotors();
-              break;
-            }
-              
-            case CKEY_REQUEST_IMG:
-            {
-              ImageSendMode_t mode = ISM_SINGLE_SHOT;
-              if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
-                static bool streamOn = false;
-                if (streamOn) {
-                  mode = ISM_OFF;
-                } else {
-                  mode = ISM_STREAM;
-                }
-                streamOn = !streamOn;
-              }
-              SendImageRequest(mode);
-              break;
-            }
-              
-            case CKEY_EXPORT_IMAGES:
-            {
-              // Toggle saving of images to pgm
-              static bool saveImages = true;
-              SendSaveImages(saveImages);
-              saveImages = !saveImages;
-              break;
-            }
-              
-            case CKEY_DISPLAY_TOGGLE:
-            {
-              static bool showObjects = false;
-              SendEnableDisplay(showObjects);
-              showObjects = !showObjects;
-              break;
-            }
-              
-            case CKEY_HEADLIGHT:
-            {
-              static bool headlightsOn = false;
-              headlightsOn = !headlightsOn;
-              SendSetHeadlights(headlightsOn ? 128 : 0);
-              break;
-            }
-            case CKEY_GOTO_POSE:
-            {
-              if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
-                poseMarkerMode_ = !poseMarkerMode_;
-                printf("Pose marker mode: %d\n", poseMarkerMode_);
-                poseMarkerDiffuseColor_->setSFColor(poseMarkerColor_[poseMarkerMode_]);
-                SendErasePoseMarker();
+              case webots::Robot::KEYBOARD_UP:
+              {
+                ++throttleDir;
                 break;
               }
-              
-              if (poseMarkerMode_ == 0) {
-                // Execute path to pose
-                SendExecutePathToPose(poseMarkerPose_);
-                SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
-              } else {
-                SendPlaceObjectOnGroundSequence(poseMarkerPose_);
-                // Make sure head is tilted down so that it can localize well
-                SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
                 
-              }
-              break;
-            }
-              
-            case CKEY_TEST_PLAN:
-            {
-              SendExecuteTestPlan();
-              break;
-            }
-              
-            case CKEY_CYCLE_BLOCK_SELECT:
-            {
-              SendSelectNextObject();
-              break;
-            }
-            case CKEY_CLEAR_BLOCKS:
-            {
-              SendClearAllBlocks();
-              break;
-            }
-            case CKEY_DOCK_TO_BLOCK:
-            {
-              SendPickAndPlaceSelectedObject();
-              break;
-            }
-            case CKEY_USE_RAMP:
-            {
-              SendTraverseSelectedObject();
-              break;
-            }
-            case CKEY_START_DICE_DEMO:
-            {
-              if (behaviorMode_ == BehaviorManager::June2014DiceDemo) {
-                SendExecuteBehavior(BehaviorManager::None);
-              } else {
-                SendExecuteBehavior(BehaviorManager::June2014DiceDemo);
-              }
-              break;
-            }
-            case CKEY_CANCEL_PATH:
-            {
-              SendAbortPath();
-              break;
-            }
-              
-            case CKEY_SET_GAINS:
-            {
-              if (root_) {
-                // Head and lift gains
-                f32 kp = root_->getField("headKp")->getSFFloat();
-                f32 ki = root_->getField("headKi")->getSFFloat();
-                f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
-                printf("New head gains: %f %f %f\n", kp, ki, maxErrorSum);
-                SendHeadControllerGains(kp, ki, maxErrorSum);
-                
-                kp = root_->getField("liftKp")->getSFFloat();
-                ki = root_->getField("liftKi")->getSFFloat();
-                maxErrorSum = root_->getField("liftMaxErrorSum")->getSFFloat();
-                printf("New lift gains: %f %f %f\n", kp, ki, maxErrorSum);
-                SendLiftControllerGains(kp, ki, maxErrorSum);
-              } else {
-                printf("No WebotsKeyboardController was found in world\n");
-              }
-              break;
-            }
-            case CKEY_SET_VISIONSYSTEM_PARAMS:
-            {
-              /*
-               if (root_) {
-               // Vision system params
-               VisionSystemParams_t p;
-               p.integerCountsIncrement = root_->getField("integerCountsIncrement")->getSFInt32();
-               p.minExposureTime = root_->getField("minExposureTime")->getSFFloat();
-               p.maxExposureTime = root_->getField("maxExposureTime")->getSFFloat();
-               p.highValue = root_->getField("highValue")->getSFInt32();
-               p.percentileToMakeHigh = root_->getField("percentileToMakeHigh")->getSFFloat();
-               printf("New VisionSystems params\n");
-               robot_->SendSetVisionSystemParams(p);
-               }
-               */
-              break;
-            }
-            case CKEY_CYCLE_SOUND_SCHEME:
-            {
-              SendSelectNextSoundScheme();
-              break;
-            }
-            case CKEY_IMU_REQUEST:
-            {
-              SendIMURequest(2000);
-              break;
-            }
-              
-            // Animations
-            case CKEY_ANIMATION_NOD:
-            {
-              SendAnimation(ANIM_HEAD_NOD, 2, SOUND_OK_GOT_IT);
-              break;
-            }
-            case CKEY_ANIMATION_BACK_AND_FORTH:
-            {
-              SendAnimation(ANIM_BACK_AND_FORTH_EXCITED, 3, SOUND_OK_DONE);
-              break;
-            }
-              
-            case CKEY_QUESTION_MARK:
-            {
-              PrintHelp();
-              break;
-            }
-              
-            case CKEY_TOGGLE_FACE_TRACKING:
-            {
-              if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
-                SendStopFaceTracking();
-              } else {
-                SendStartFaceTracking(5);
-              }
-              break;
-            }
-              
-            default:
-            {
-              // If the last key pressed was a move wheels key, then stop wheels
-              if (lastKeyPressed_ == webots::Robot::KEYBOARD_UP   ||
-                  lastKeyPressed_ == webots::Robot::KEYBOARD_DOWN ||
-                  lastKeyPressed_ == webots::Robot::KEYBOARD_LEFT ||
-                  lastKeyPressed_ == webots::Robot::KEYBOARD_RIGHT)
+              case webots::Robot::KEYBOARD_DOWN:
               {
-                SendDriveWheels(0, 0);
+                --throttleDir;
+                break;
               }
-              
-              // If the last key pressed was a move lift key then stop it.
-              if (lastKeyPressed_ == CKEY_LIFT_UP || lastKeyPressed_ == CKEY_LIFT_DOWN) {
-                SendMoveLift(0);
+                
+              case webots::Robot::KEYBOARD_LEFT:
+              {
+                --steeringDir;
+                break;
               }
-              
-              // If the last key pressed was a move head key then stop it.
-              if (lastKeyPressed_ == CKEY_HEAD_UP || lastKeyPressed_ == CKEY_HEAD_DOWN) {
-                SendMoveHead(0);
+                
+              case webots::Robot::KEYBOARD_RIGHT:
+              {
+                ++steeringDir;
+                break;
               }
-              break;
-            }
-              
-          } // switch
+                
+              case CKEY_HEAD_UP: //s-key: move head UP
+              {
+                commandedHeadSpeed += headSpeed;
+                movingHead = true;
+                break;
+              }
+                
+              case CKEY_HEAD_DOWN: //x-key: move head DOWN
+              {
+                commandedHeadSpeed -= headSpeed;
+                movingHead = true;
+                break;
+              }
+                
+              case CKEY_LIFT_UP: //a-key: move lift up
+              {
+                commandedLiftSpeed += liftSpeed;
+                movingLift = true;
+                break;
+              }
+                
+              case CKEY_LIFT_DOWN: //z-key: move lift down
+              {
+                commandedLiftSpeed -= liftSpeed;
+                movingLift = true;
+                break;
+              }
+                
+              case '1': //set lift to low dock height
+              {
+                SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case '2': //set lift to high dock height
+              {
+                SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case '3': //set lift to carry height
+              {
+                SendMoveLiftToHeight(LIFT_HEIGHT_CARRY, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case '4': //set head to look all the way down
+              {
+                SendMoveHeadToAngle(MIN_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case '5': //set head to straight ahead
+              {
+                SendMoveHeadToAngle(0, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case '6': //set head to look all the way up
+              {
+                SendMoveHeadToAngle(MAX_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case CKEY_UNLOCK: // Stop all motors
+              {
+                SendStopAllMotors();
+                break;
+              }
+                
+              case CKEY_REQUEST_IMG:
+              {
+                ImageSendMode_t mode = ISM_SINGLE_SHOT;
+                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  static bool streamOn = false;
+                  if (streamOn) {
+                    mode = ISM_OFF;
+                  } else {
+                    mode = ISM_STREAM;
+                  }
+                  streamOn = !streamOn;
+                }
+                SendImageRequest(mode);
+                break;
+              }
+                
+              case CKEY_EXPORT_IMAGES:
+              {
+                // Toggle saving of images to pgm
+                static bool saveImages = true;
+                SendSaveImages(saveImages);
+                saveImages = !saveImages;
+                break;
+              }
+                
+              case CKEY_DISPLAY_TOGGLE:
+              {
+                static bool showObjects = false;
+                SendEnableDisplay(showObjects);
+                showObjects = !showObjects;
+                break;
+              }
+                
+              case CKEY_HEADLIGHT:
+              {
+                static bool headlightsOn = false;
+                headlightsOn = !headlightsOn;
+                SendSetHeadlights(headlightsOn ? 128 : 0);
+                break;
+              }
+              case CKEY_GOTO_POSE:
+              {
+                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  poseMarkerMode_ = !poseMarkerMode_;
+                  printf("Pose marker mode: %d\n", poseMarkerMode_);
+                  poseMarkerDiffuseColor_->setSFColor(poseMarkerColor_[poseMarkerMode_]);
+                  SendErasePoseMarker();
+                  break;
+                }
+                
+                if (poseMarkerMode_ == 0) {
+                  // Execute path to pose
+                  SendExecutePathToPose(poseMarkerPose_);
+                  SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+                } else {
+                  SendPlaceObjectOnGroundSequence(poseMarkerPose_);
+                  // Make sure head is tilted down so that it can localize well
+                  SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+                  
+                }
+                break;
+              }
+                
+              case CKEY_TEST_PLAN:
+              {
+                SendExecuteTestPlan();
+                break;
+              }
+                
+              case CKEY_CYCLE_BLOCK_SELECT:
+              {
+                SendSelectNextObject();
+                break;
+              }
+              case CKEY_CLEAR_BLOCKS:
+              {
+                if(modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  if(BehaviorManager::CREEP == behaviorMode_) {
+                    behaviorMode_ = BehaviorManager::None;
+                  } else {
+                    behaviorMode_ = BehaviorManager::CREEP;
+                  }
+                  
+                  SendExecuteBehavior(behaviorMode_);
+                } else {
+                  // 'c' without SHIFT
+                  SendClearAllBlocks();
+                }
+                break;
+              }
+              case CKEY_DOCK_TO_BLOCK:
+              {
+                bool usePreDockPose = true;
+                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  // Don't go to predock pose first. I.e., just try to dock from
+                  // right there.
+                  usePreDockPose = false;
+                }
+                SendPickAndPlaceSelectedObject(usePreDockPose);
+                break;
+              }
+              case CKEY_USE_RAMP:
+              {
+                SendTraverseSelectedObject();
+                break;
+              }
+              case CKEY_START_DICE_DEMO:
+              {
+                if (behaviorMode_ == BehaviorManager::June2014DiceDemo) {
+                  SendExecuteBehavior(BehaviorManager::None);
+                } else {
+                  SendExecuteBehavior(BehaviorManager::June2014DiceDemo);
+                }
+                break;
+              }
+              case CKEY_CANCEL_PATH:
+              {
+                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  // SHIFT + Q: Cancel everything (paths, animations, docking, etc.)
+                  SendAbortAll();
+                } else {
+                  // Just Q: Just cancel path
+                  SendAbortPath();
+                }
+                break;
+              }
+                
+              case CKEY_SET_GAINS:
+              {
+                if (root_) {
+                  // Head and lift gains
+                  f32 kp = root_->getField("headKp")->getSFFloat();
+                  f32 ki = root_->getField("headKi")->getSFFloat();
+                  f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
+                  printf("New head gains: %f %f %f\n", kp, ki, maxErrorSum);
+                  SendHeadControllerGains(kp, ki, maxErrorSum);
+                  
+                  kp = root_->getField("liftKp")->getSFFloat();
+                  ki = root_->getField("liftKi")->getSFFloat();
+                  maxErrorSum = root_->getField("liftMaxErrorSum")->getSFFloat();
+                  printf("New lift gains: %f %f %f\n", kp, ki, maxErrorSum);
+                  SendLiftControllerGains(kp, ki, maxErrorSum);
+                } else {
+                  printf("No WebotsKeyboardController was found in world\n");
+                }
+                break;
+              }
+              case CKEY_SET_VISIONSYSTEM_PARAMS:
+              {
+                /*
+                 if (root_) {
+                 // Vision system params
+                 VisionSystemParams_t p;
+                 p.integerCountsIncrement = root_->getField("integerCountsIncrement")->getSFInt32();
+                 p.minExposureTime = root_->getField("minExposureTime")->getSFFloat();
+                 p.maxExposureTime = root_->getField("maxExposureTime")->getSFFloat();
+                 p.highValue = root_->getField("highValue")->getSFInt32();
+                 p.percentileToMakeHigh = root_->getField("percentileToMakeHigh")->getSFFloat();
+                 printf("New VisionSystems params\n");
+                 robot_->SendSetVisionSystemParams(p);
+                 }
+                 */
+                
+                SendFaceDetectParams();
+                
+                break;
+              }
+              case CKEY_CYCLE_SOUND_SCHEME:
+              {
+                SendSelectNextSoundScheme();
+                break;
+              }
+              case CKEY_IMU_REQUEST:
+              {
+                SendIMURequest(2000);
+                break;
+              }
+                
+              // Animations
+              case CKEY_ANIMATION_SEND_FILE:
+              {
+                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+                  // Re-read animations and send them to physical robot
+                  SendReadAnimationFile();
+                }
+                break;
+              }
+              case CKEY_ANIMATION_BACK_AND_FORTH:
+              {
+                SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
+                break;
+              }
+              case CKEY_ANIMATION_BLINK:
+              {
+                SendAnimation("ANIM_BLINK", 0);
+                break;
+              }
+              case (s32)'$':
+              {
+                SendAnimation("ANIM_LIFT_NOD", 1);
+                break;
+              }
+              case (s32) '%':
+              {
+                SendAnimation("ANIM_ALERT", 1);
+                break;
+              }
+              case CKEY_ANIMATION_TOGGLE:
+              {
+                //const s32 NUM_ANIM_TESTS = 4;
+                //const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_HEAD_NOD, ANIM_HEAD_NOD_SLOW, ANIM_BLINK, ANIM_UPDOWNLEFTRIGHT};
+                
+                const s32 NUM_ANIM_TESTS = 4;
+                const char* testAnims[NUM_ANIM_TESTS] = {"ANIM_BLINK", "ANIM_HEAD_NOD", "ANIM_HEAD_NOD_SLOW", "ANIM_LIFT_NOD"};
+                
+                static s32 iAnimTest = 0;
+                
+                SendAnimation(testAnims[iAnimTest++], 1);
+                
+                if(iAnimTest == NUM_ANIM_TESTS) {
+                  iAnimTest = 0;
+                }
+                break;
+              }
+
+              //
+              // CREEP Behavior States:
+              //
+              case CKEY_BEHAVIOR_DANCE:
+              {
+                SendSetNextBehaviorState(BehaviorManager::DANCE_WITH_BLOCK);
+                break;
+              }
+              case CKEY_BEHAVIOR_EXCITED:
+              {
+                SendSetNextBehaviorState(BehaviorManager::EXCITABLE_CHASE);
+                break;
+              }
+              case CKEY_BEHAVIOR_FLEE:
+              {
+                SendSetNextBehaviorState(BehaviorManager::SCARED_FLEE);
+                break;
+              }
+              case CKEY_BEHAVIOR_HELPME:
+              {
+                SendSetNextBehaviorState(BehaviorManager::HELP_ME_STATE);
+                break;
+              }
+              case CKEY_BEHAVIOR_WHAT_NEXT:
+              {
+                SendSetNextBehaviorState(BehaviorManager::WHAT_NEXT);
+                break;
+              }
+              case CKEY_BEHAVIOR_SCAN:
+              {
+                SendSetNextBehaviorState(BehaviorManager::SCAN);
+                break;
+              }
+              case CKEY_BEHAVIOR_IDLE:
+              {
+                SendSetNextBehaviorState(BehaviorManager::IDLE);
+                break;
+              }
+              case CKEY_ANIMATION_NOD:
+              {
+                SendSetNextBehaviorState(BehaviorManager::ACKNOWLEDGEMENT_NOD);
+                break;
+              }
+                
+              case CKEY_QUESTION_MARK:
+              {
+                PrintHelp();
+                break;
+              }
+                
+              case CKEY_TOGGLE_FACE_TRACKING:
+              {
+                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  SendStopFaceTracking();
+                } else {
+                  SendStartFaceTracking(5);
+                }
+                break;
+              }
+                
+              default:
+              {
+                // Unsupported key: ignore.
+                break;
+              }
+                
+            } // switch
+          } // if/else testMode
           
-          break;
-        }  // while(1)
+        } // for(auto key : keysPressed_)
         
-        lastKeyPressed_ = key;
-        lastKeyAndModPressed_ = key | modifier_key;
+        movingWheels = throttleDir || steeringDir;
+
+        if(movingWheels) {
+          
+          // Set wheel speeds based on drive commands
+          if (throttleDir > 0) {
+            leftSpeed = wheelSpeed + steeringDir * wheelSpeed;
+            rightSpeed = wheelSpeed - steeringDir * wheelSpeed;
+          } else if (throttleDir < 0) {
+            leftSpeed = -wheelSpeed - steeringDir * wheelSpeed;
+            rightSpeed = -wheelSpeed + steeringDir * wheelSpeed;
+          } else {
+            leftSpeed = steeringDir * wheelSpeed;
+            rightSpeed = -steeringDir * wheelSpeed;
+          }
+          
+          SendDriveWheels(leftSpeed, rightSpeed);
+          wasMovingWheels_ = true;
+        } else if(wasMovingWheels_ && !movingWheels) {
+          // If we just stopped moving the wheels:
+          SendDriveWheels(0, 0);
+          wasMovingWheels_ = false;
+        }
         
+        // If the last key pressed was a move lift key then stop it.
+        if(movingLift) {
+          SendMoveLift(commandedLiftSpeed);
+          wasMovingLift_ = true;
+        } else if (wasMovingLift_ && !movingLift) {
+          // If we just stopped moving the lift:
+          SendMoveLift(0);
+          wasMovingLift_ = false;
+        }
+        
+        if(movingHead) {
+          SendMoveHead(commandedHeadSpeed);
+          wasMovingHead_ = true;
+        } else if (wasMovingHead_ && !movingHead) {
+          // If we just stopped moving the head:
+          SendMoveHead(0);
+          wasMovingHead_ = false;
+        }
+       
         
       } // BSKeyboardController::ProcessKeyStroke()
       
+      void ProcessJoystick()
+      {
+#if(ENABLE_GAMEPAD_SUPPORT)
+        //Handle events on queue
+        while( SDL_PollEvent( &sdlEvent_ ) != 0 )
+        {
+          switch(sdlEvent_.type) {
+              
+            case SDL_CONTROLLERAXISMOTION:
+              
+              if (sdlEvent_.caxis.which == 0) {
+              
+                if (sdlEvent_.caxis.which >= GC_NUM_AXES) {
+                  printf("WARN: Invalid GameController axis event detected\n");
+                  break;
+                }
+
+                // Update value
+                gc_axisValues_[sdlEvent_.caxis.axis] = sdlEvent_.caxis.value;
+
+                // Send message depending on axis that was activated
+                switch(sdlEvent_.caxis.axis)
+                {
+                  case GC_ANALOG_LEFT_X:
+                  case GC_ANALOG_LEFT_Y:
+                  {
+                    #if(DEBUG_GAMEPAD)
+                    printf("AnalogLeft X %d  Y %d\n", gc_axisValues_[GC_ANALOG_LEFT_X], gc_axisValues_[GC_ANALOG_LEFT_Y]);
+                    #endif
+                    
+                    if (ABS(gc_axisValues_[GC_ANALOG_LEFT_X]) < ANALOG_INPUT_DEAD_ZONE_THRESH) {
+                      gc_axisValues_[GC_ANALOG_LEFT_X] = 0;
+                    }
+                    if (ABS(gc_axisValues_[GC_ANALOG_LEFT_Y]) < ANALOG_INPUT_DEAD_ZONE_THRESH) {
+                      gc_axisValues_[GC_ANALOG_LEFT_Y] = 0;
+                    }
+                    
+                    // Compute speed
+                    f32 xyMag = MIN(1.0,
+                                    sqrtf( gc_axisValues_[GC_ANALOG_LEFT_X]*gc_axisValues_[GC_ANALOG_LEFT_X] + gc_axisValues_[GC_ANALOG_LEFT_Y]*gc_axisValues_[GC_ANALOG_LEFT_Y]) / (f32)s16_MAX
+                                    );
+                    
+                    // Stop wheels if magnitude of input is low
+                    if (xyMag < 0.01f) {
+                      SendDriveWheels(0,0);
+                      break;
+                    }
+                    
+                    // Driving forward?
+                    f32 fwd = gc_axisValues_[GC_ANALOG_LEFT_Y] < 0 ? 1 : -1;
+                    
+                    // Curving right?
+                    f32 right = gc_axisValues_[GC_ANALOG_LEFT_X] > 0 ? 1 : -1;
+                  
+                    // Base wheel speed based on magnitude of input and whether or not robot is driving forward
+                    f32 baseWheelSpeed = ANALOG_INPUT_MAX_DRIVE_SPEED * xyMag * fwd;
+                  
+            
+                    // Angle of xy input used to determine curvature
+                    f32 xyAngle = fabsf(atanf(-(f32)gc_axisValues_[GC_ANALOG_LEFT_Y] / (f32)gc_axisValues_[GC_ANALOG_LEFT_X])) * (right);
+                    
+                    // Compute radius of curvature
+                    f32 roc = (xyAngle / PIDIV2_F) * MAX_ANALOG_RADIUS;
+                    
+                    
+                    // Compute individual wheel speeds
+                    f32 lwheel_speed_mmps = 0;
+                    f32 rwheel_speed_mmps = 0;
+                    if (fabsf(xyAngle) > PIDIV2_F - 0.1f) {
+                      // Straight fwd/back
+                      lwheel_speed_mmps = baseWheelSpeed;
+                      rwheel_speed_mmps = baseWheelSpeed;
+                    } else if (fabsf(xyAngle) < 0.1f) {
+                      // Turn in place
+                      lwheel_speed_mmps = right * xyMag * ANALOG_INPUT_MAX_DRIVE_SPEED;
+                      rwheel_speed_mmps = -right * xyMag * ANALOG_INPUT_MAX_DRIVE_SPEED;
+                    } else {
+                      
+                      lwheel_speed_mmps = baseWheelSpeed * (roc + (right * WHEEL_DIST_HALF_MM)) / roc;
+                      rwheel_speed_mmps = baseWheelSpeed * (roc - (right * WHEEL_DIST_HALF_MM)) / roc;
+                      
+                      // Swap wheel speeds
+                      if (fwd * right < 0) {
+                        f32 temp = lwheel_speed_mmps;
+                        lwheel_speed_mmps = rwheel_speed_mmps;
+                        rwheel_speed_mmps = temp;
+                      }
+                    }
+                    
+                    
+                    // Cap wheel speed at max
+                    if (fabsf(lwheel_speed_mmps) > ANALOG_INPUT_MAX_DRIVE_SPEED) {
+                      f32 correction = lwheel_speed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (lwheel_speed_mmps >= 0 ? 1 : -1));
+                      f32 correctionFactor = 1.f - fabsf(correction / lwheel_speed_mmps);
+                      lwheel_speed_mmps *= correctionFactor;
+                      rwheel_speed_mmps *= correctionFactor;
+                      //printf("lcorrectionFactor: %f\n", correctionFactor);
+                    }
+                    if (fabsf(rwheel_speed_mmps) > ANALOG_INPUT_MAX_DRIVE_SPEED) {
+                      f32 correction = rwheel_speed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (rwheel_speed_mmps >= 0 ? 1 : -1));
+                      f32 correctionFactor = 1.f - fabsf(correction / rwheel_speed_mmps);
+                      lwheel_speed_mmps *= correctionFactor;
+                      rwheel_speed_mmps *= correctionFactor;
+                      //printf("rcorrectionFactor: %f\n", correctionFactor);
+                    }
+                    
+                    #if(DEBUG_GAMEPAD)
+                    printf("AnalogLeft: xyMag %f, xyAngle %f, radius %f, fwd %f, right %f, lwheel %f, rwheel %f\n", xyMag, xyAngle, roc, fwd, right, lwheel_speed_mmps, rwheel_speed_mmps );
+                    #endif
+                    
+                    SendDriveWheels(lwheel_speed_mmps, rwheel_speed_mmps);
+                    
+                    break;
+                  }
+                  case GC_ANALOG_RIGHT_X:
+                  case GC_ANALOG_RIGHT_Y:
+                  {
+                    #if(DEBUG_GAMEPAD)
+                    printf("AnalogRight X %d  Y %d\n", gc_axisValues_[GC_ANALOG_RIGHT_X], gc_axisValues_[GC_ANALOG_RIGHT_Y]);
+                    #endif
+                    
+                    // Compute head speed
+                    f32 speed_rad_per_s = HEAD_SPEED_RAD_PER_SEC * (-(f32)gc_axisValues_[GC_ANALOG_RIGHT_Y] / s16_MAX);
+                    
+                    SendMoveHead(speed_rad_per_s);
+                    
+                    break;
+                  }
+                  case GC_LT_BUTTON:
+                  case GC_RT_BUTTON:
+                    #if(DEBUG_GAMEPAD)
+                    printf("Top buttons: LT %d  RT %d\n", gc_axisValues_[GC_LT_BUTTON], gc_axisValues_[GC_RT_BUTTON]);
+                    #endif
+                    break;
+                  default:
+                    printf("WARNING: Unrecognized axis %d\n", sdlEvent_.caxis.axis);
+                    break;
+                }
+                
+              } else {
+                printf("WARNING: Unrecognized source of SDL event (%d)\n", sdlEvent_.caxis.which);
+              }
+              break;
+              
+            case SDL_CONTROLLERBUTTONDOWN:
+            case SDL_CONTROLLERBUTTONUP:
+            {
+              u8 buttonID = sdlEvent_.jbutton.button;
+              gc_buttonPressed_[sdlEvent_.jbutton.button] = sdlEvent_.jbutton.state;
+              
+              bool pressed = sdlEvent_.jbutton.state; // If false, then this is a release event
+              
+              bool LT_held = gc_axisValues_[GC_LT_BUTTON];
+              bool RT_held = gc_axisValues_[GC_RT_BUTTON];
+              
+              // Process buttons that matter only when pressed
+              if (pressed) {
+                switch(buttonID) {
+                  case GC_BUTTON_A:
+                    SendSetNextBehaviorState(LT_held ? BehaviorManager::DANCE_WITH_BLOCK : BehaviorManager::EXCITABLE_CHASE);
+                    break;
+                  case GC_BUTTON_B:
+                    SendSetNextBehaviorState(BehaviorManager::SCARED_FLEE);
+                    break;
+                  case GC_BUTTON_X:
+                    SendSetNextBehaviorState(LT_held ? BehaviorManager::SCAN : BehaviorManager::IDLE);
+                    break;
+                  case GC_BUTTON_Y:
+                    SendSetNextBehaviorState(LT_held ? BehaviorManager::WHAT_NEXT : BehaviorManager::HELP_ME_STATE);
+                    break;
+                  case GC_BUTTON_BACK:
+                    break;
+                    
+                  case GC_BUTTON_START:
+                    // Toggle CREEP mode
+                    if(BehaviorManager::CREEP == behaviorMode_) {
+                      behaviorMode_ = BehaviorManager::None;
+                    } else {
+                      behaviorMode_ = BehaviorManager::CREEP;
+                    }
+                    SendExecuteBehavior(behaviorMode_);
+                    break;
+                  default:
+                    break;
+                }
+              }
+              
+              // Process buttons that matter both when pressed and released.
+              switch(buttonID) {
+                      
+                case GC_BUTTON_ANALOG_LEFT:
+                  break;
+                case GC_BUTTON_ANALOG_RIGHT:
+                  break;
+                  
+                case GC_BUTTON_LB:
+                  if (LT_held) {
+                    SendClearAllBlocks();
+                  } else {
+                    SendSelectNextObject();
+                  }
+                  break;
+                case GC_BUTTON_RB:
+                {
+                  bool usePreDockPose = !LT_held;
+                  SendPickAndPlaceSelectedObject(usePreDockPose);
+                  break;
+                }
+                case GC_BUTTON_DIR_UP:
+                case GC_BUTTON_DIR_DOWN:
+                {
+                  // Move lift up/down. Open-loop velocity commands.
+                  f32 speed_rad_per_sec = 0;
+                  if (pressed) {
+                    speed_rad_per_sec = (LT_held ? 0.4f : 1) * (buttonID == GC_BUTTON_DIR_UP ? 1 : -1) * LIFT_SPEED_RAD_PER_SEC;
+                  }
+                  SendMoveLift(speed_rad_per_sec);
+                  break;
+                }
+                case GC_BUTTON_DIR_LEFT:
+                case GC_BUTTON_DIR_RIGHT:
+                {
+                  // Move lift to fixed position.
+                  if (pressed) {
+                    
+                    // Figure out appropriate fixed position
+                    f32 height_mm = LIFT_HEIGHT_LOWDOCK;
+                    if (buttonID == GC_BUTTON_DIR_RIGHT) {
+                      height_mm = LT_held ? LIFT_HEIGHT_HIGHDOCK : LIFT_HEIGHT_CARRY;
+                    }
+                    
+                    SendMoveLiftToHeight(height_mm, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+                  }
+                  break;
+                }
+                default:
+                  //printf("WARNING: Unrecognized button %d\n", sdlEvent_.jbutton.button);
+                  break;
+              }
+              
+              #if(DEBUG_GAMEPAD)
+              printf("Button: %d  State %d, button %d, padding %d %d\n", sdlEvent_.jbutton.type, sdlEvent_.jbutton.state, sdlEvent_.jbutton.button, sdlEvent_.jbutton.padding1, sdlEvent_.jbutton.padding2);
+              #endif
+              break;
+            }
+            default:
+              break;
+          } // end switch
+        } // end while
+#endif
+      }
       
       void Update()
       {
@@ -606,6 +1111,7 @@ namespace Anki {
         }
         
         ProcessKeystroke();
+        ProcessJoystick();
         
         prevPoseMarkerPose_ = poseMarkerPose_;
       }
@@ -735,9 +1241,10 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendPickAndPlaceSelectedObject()
+      void SendPickAndPlaceSelectedObject(const bool usePreDockPose)
       {
         MessageU2G_PickAndPlaceObject m;
+        m.usePreDockPose = static_cast<u8>(usePreDockPose);
         SendMessage(m);
       }
       
@@ -754,9 +1261,22 @@ namespace Anki {
         SendMessage(m);
       }
       
+      void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState)
+      {
+        MessageU2G_SetBehaviorState m;
+        m.behaviorState = nextState;
+        SendMessage(m);
+      }
+      
       void SendAbortPath()
       {
         MessageU2G_AbortPath m;
+        SendMessage(m);
+      }
+      
+      void SendAbortAll()
+      {
+        MessageU2G_AbortAll m;
         SendMessage(m);
       }
       
@@ -814,12 +1334,28 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendAnimation(AnimationID_t animId, u32 numLoops, SoundID_t soundId)
+      void SendAnimation(const char* animName, u32 numLoops)
       {
-        MessageU2G_PlayAnimation m;
-        m.animationID = animId;
-        m.numLoops = numLoops;
-        m.soundID = soundId;
+        static bool lastSendTime_sec = -1e6;
+        
+        // Don't send repeated animation commands within a half second
+        if(inputController.getTime() > lastSendTime_sec + 0.5f)
+        {
+          MessageU2G_PlayAnimation m;
+          //m.animationID = animId;
+          strncpy(&(m.animationName[0]), animName, 32);
+          m.numLoops = numLoops;
+          SendMessage(m);
+          lastSendTime_sec = inputController.getTime();
+        } else {
+          printf("Ignoring duplicate SendAnimation keystroke.\n");
+        }
+        
+      }
+      
+      void SendReadAnimationFile()
+      {
+        MessageU2G_ReadAnimationFile m;
         SendMessage(m);
       }
       
@@ -835,6 +1371,23 @@ namespace Anki {
         MessageU2G_StopFaceTracking m;
         SendMessage(m);
       }
+
+      void SendFaceDetectParams()
+      {
+        if (root_) {
+          // Face Detect params
+          MessageU2G_SetFaceDetectParams p;
+          p.scaleFactor = root_->getField("fd_scaleFactor")->getSFFloat();
+          p.minNeighbors = root_->getField("fd_minNeighbors")->getSFInt32();
+          p.minObjectHeight = root_->getField("fd_minObjectHeight")->getSFInt32();
+          p.minObjectWidth = root_->getField("fd_minObjectWidth")->getSFInt32();
+          p.maxObjectHeight = root_->getField("fd_maxObjectHeight")->getSFInt32();
+          p.maxObjectWidth = root_->getField("fd_maxObjectWidth")->getSFInt32();
+          
+          printf("New Face detect params\n");
+          SendMessage(p);
+        }
+      }
       
     } // namespace WebotsKeyboardController
   } // namespace Cozmo
@@ -846,12 +1399,15 @@ namespace Anki {
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+// Slow down keyboard polling to avoid duplicate commands?
+const s32 KB_TIME_STEP = BS_TIME_STEP;
+
 int main(int argc, char **argv)
 {
-  WebotsKeyboardController::inputController.step(BS_TIME_STEP);
+  WebotsKeyboardController::inputController.step(KB_TIME_STEP);
   WebotsKeyboardController::Init();
 
-  while (WebotsKeyboardController::inputController.step(BS_TIME_STEP) != -1)
+  while (WebotsKeyboardController::inputController.step(KB_TIME_STEP) != -1)
   {
     // Process keyboard input
     WebotsKeyboardController::Update();

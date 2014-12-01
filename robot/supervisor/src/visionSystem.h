@@ -171,6 +171,13 @@ namespace Anki {
                      const u8 highValue,
                      const f32 percentileToMakeHigh);
 
+      void SetFaceDetectParams(const f32 scaleFactor,
+                               const s32 minNeighbors,
+                               const s32 minObjectHeight,
+                               const s32 minObjectWidth,
+                               const s32 maxObjectHeight,
+                               const s32 maxObjectWidth);
+    
     } // namespace VisionSystem
     
   } // namespace Cozmo

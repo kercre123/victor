@@ -506,12 +506,14 @@ namespace Anki {
 
         
 #if(USE_OVERLAY_DISPLAY)
-        if(movement)
+        if(movement && HAL::GetTimeStamp()%100 == 0)
         {
           using namespace Sim::OverlayDisplay;
+          
           SetText(CURR_EST_POSE, "Est. Pose: (x,y)=(%.4f, %.4f) at deg=%.1f",
                   x_, y_,
                   orientation_.getDegrees());
+           
           //PRINT("Est. Pose: (x,y)=(%.4f, %.4f) at deg=%.1f\n",
           //      x_, y_,
           //      orientation_.getDegrees());

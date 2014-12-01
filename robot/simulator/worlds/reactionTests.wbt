@@ -6,6 +6,7 @@ WorldInfo {
     "Date: 29 Aug 2014"
     ""
   ]
+  FPS 30
   gravity 0 0 -9.81
   physics "cozmo_physics"
   basicTimeStep 5
@@ -99,12 +100,19 @@ RobotAdvertisementService {
 }
 XYaxesDisplay {
 }
-DEF AngryFaceBlock Block1x1 {
-  name "AngryFace_01"
+DEF BeeBlock Block1x1 {
+  name "Bee"
+  translation 0.213051 0.44651 0.0219929
+  rotation 0 0 1 0.05
+  blockColor 0.95 0.95 0
+  markerImg "symbols/bee.png"
+}
+DEF SpiderBlock Block1x1 {
+  name "Spider"
   translation 0.213051 0.244651 0.0219929
   rotation 0 0 1 0.05
-  blockColor 0.5 0.5 0.85
-  markerImg "symbols/angryFace.png"
+  blockColor 0.95 0 0
+  markerImg "symbols/spider.png"
 }
 
 Block1x1 {
@@ -129,11 +137,11 @@ Block1x1 {
   markerImg "symbols/arrow.png"
 }
 Block1x1 {
-  name "Arrow4"
+  name "Kitty"
   translation 0 -0.26 0.0219929
   rotation 0 0 1 0.05
-  blockColor 0.5 0.5 0.85
-  markerImg "symbols/arrow.png"
+  blockColor 0.1 0.1 0.9
+  markerImg "symbols/kitty.png"
 }
 Block1x1 {
   name "TurnAround"

@@ -405,7 +405,7 @@ const char *visionTestJsonFiles[] = {
   "visionTest_MatPoseTest.json",
   "visionTest_TwoBlocksOnePose.json",
   "visionTest_RepeatedBlock.json",
-  "visionTest_SingleRamp.json",
+//  "visionTest_SingleRamp.json", // TODO: Re-enable
   "visionTest_OffTheMat.json"
 };
 

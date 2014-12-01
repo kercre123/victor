@@ -109,6 +109,9 @@ namespace Anki {
     currPos_ = startPos_;
     currTime_ = 0;
     
+    startAccelDist_ = fabsf(0.5f * (maxReachableVel_ - startVel_) / deltaVelPerTimeStepStart_ * timeStep_) * (maxReachableVel_ >= 0 ? 1 : -1);
+    endAccelDist_ = fabsf(0.5f * (endVel_ - maxReachableVel_) / deltaVelPerTimeStepEnd_ * timeStep_) * (maxReachableVel_ >= 0 ? 1 : -1);
+    
 #if(DEBUG_VPG)
     CoreTechPrint("VPG: startVel %f, startPos %f, maxSpeed %f, accel %f\n", startVel_, startPos_, maxVel_, accel_);
     CoreTechPrint("     endVel %f, endPos %f, timestep %f\n", endVel_, endPos_, timeStep_);
@@ -317,6 +320,10 @@ namespace Anki {
     currPos_ = pos_start;
     currTime_ = 0;
 
+    startAccelDist_ = fabsf(0.5f * (maxReachableVel_ - startVel_) * ts) * (maxReachableVel_ >= 0 ? 1 : -1);
+    endAccelDist_ = fabsf(0.5f * (endVel_ - maxReachableVel_) * te) * (maxReachableVel_ >= 0 ? 1 : -1);
+
+    
 #if(DEBUG_VPG)
     CoreTechPrint("VPG: startVel %f, startPos %f, endVel %f, endPos %f\n", startVel_, startPos_, endVel_, endPos_);
     CoreTechPrint("     ts %f, tm %f, te %f, total duration %f\n", ts, tm, te, duration);

@@ -37,6 +37,9 @@ namespace Anki {
       // Follows an example path. Requires localization
       TM_PATH_FOLLOW,
       
+      // Cycles through PathFollower convenience functions: DriveStraight, DriveArc, DrivePointTurn
+      TM_PATH_FOLLOW_CONVENIENCE_FUNCTIONS,
+      
       // Tests ExecuteDirectDrive() or open loop control via HAL::MotorSetPower()
       TM_DIRECT_DRIVE,
       
@@ -81,11 +84,12 @@ namespace Anki {
     // Bit flags for RobotState message
     typedef enum {
       //IS_TRAVERSING_PATH    = 1,
-      IS_CARRYING_BLOCK     = 0x2,
-      IS_PICKING_OR_PLACING = 0x4,
-      IS_PICKED_UP          = 0x8,
+      IS_CARRYING_BLOCK       = 0x2,
+      IS_PICKING_OR_PLACING   = 0x4,
+      IS_PICKED_UP            = 0x8,
       IS_PROX_FORWARD_BLOCKED = 0x10,
-      IS_PROX_SIDE_BLOCKED  = 0x20
+      IS_PROX_SIDE_BLOCKED    = 0x20,
+      IS_ANIMATING            = 0x40      
     } RobotStatusFlag;
     
     
@@ -97,39 +101,15 @@ namespace Anki {
     // Animation ID
     // TODO: Eventually, we might want a way of sending animation definitions down from basestation
     //       but for now they're hard-coded on the robot
-    typedef enum {
+    /*typedef enum {
       ANIM_IDLE
       ,ANIM_HEAD_NOD
       ,ANIM_BACK_AND_FORTH_EXCITED
       ,ANIM_WIGGLE
       ,ANIM_NUM_ANIMATIONS
-    } AnimationID_t;
-    
-    // List of sound schemes
-    typedef enum {
-      SOUND_SCHEME_COZMO
-      ,SOUND_SCHEME_MOVIE
-      ,NUM_SOUND_SCHEMES
-    } SoundSchemeID_t;
-    
-    // List of sound IDs
-    typedef enum {
-      SOUND_TADA
-      ,SOUND_NOPROBLEMO
-      ,SOUND_INPUT
-      ,SOUND_SWEAR
-      ,SOUND_STARTOVER
-      ,SOUND_NOTIMPRESSED
-      ,SOUND_60PERCENT
-      ,SOUND_DROID
-      ,SOUND_DEMO_START
-      ,SOUND_WAITING4DICE
-      ,SOUND_WAITING4DICE2DISAPPEAR
-      ,SOUND_OK_GOT_IT
-      ,SOUND_OK_DONE
-      ,NUM_SOUNDS
-    } SoundID_t;
-
+    } AnimationID_t;*/
+    typedef s32 AnimationID_t;
+      
     // Prox sensors
     typedef enum {
       PROX_LEFT
@@ -138,6 +118,55 @@ namespace Anki {
       ,NUM_PROX
     } ProxSensor_t;
     
+    // LED identifiers and colors
+    // Updated for "neutral" (non-hardware specific) order in 2.1
+    enum LEDId {
+      LED_RIGHT_EYE_TOP = 0,
+      LED_RIGHT_EYE_RIGHT,
+      LED_RIGHT_EYE_BOTTOM,
+      LED_RIGHT_EYE_LEFT,
+      LED_LEFT_EYE_TOP,
+      LED_LEFT_EYE_RIGHT,
+      LED_LEFT_EYE_BOTTOM,
+      LED_LEFT_EYE_LEFT,
+      NUM_LEDS
+    };
+    
+    // The color format is identical to HTML Hex Triplets (RGB)
+    enum LEDColor {
+      LED_CURRENT_COLOR = 0xffffffff, // Don't change color: leave as is
+      
+      LED_OFF =   0x000000,
+      LED_RED =   0xff0000,
+      LED_GREEN = 0x00ff00,
+      LED_YELLOW= 0xffff00,
+      LED_BLUE =  0x0000ff,
+      LED_PURPLE= 0xff00ff,
+      LED_CYAN =  0x00ffff,
+      LED_WHITE = 0xffffff
+    };
+    
+    enum WhichEye {
+      EYE_LEFT,
+      EYE_RIGHT,
+      EYE_BOTH
+    };
+
+    enum EyeShape {
+      EYE_CURRENT_SHAPE = -1, // Don't change shape: leave as is
+      EYE_OPEN,
+      EYE_HALF,
+      EYE_SLIT,
+      EYE_CLOSED,
+      EYE_OFF_PUPIL_UP,
+      EYE_OFF_PUPIL_DOWN,
+      EYE_OFF_PUPIL_LEFT,
+      EYE_OFF_PUPIL_RIGHT,
+      EYE_ON_PUPIL_UP,
+      EYE_ON_PUPIL_DOWN,
+      EYE_ON_PUPIL_LEFT,
+      EYE_ON_PUPIL_RIGHT
+    };
     
     // For DEV only
     typedef struct {
@@ -147,6 +176,15 @@ namespace Anki {
       f32 percentileToMakeHigh;
       u8 highValue;
     } VisionSystemParams_t;
+    
+    typedef struct {
+      f32 scaleFactor;
+      s32 minNeighbors;
+      s32 minObjectHeight;
+      s32 minObjectWidth;
+      s32 maxObjectHeight;
+      s32 maxObjectWidth;
+    } FaceDetectParams_t;
     
   }
 }

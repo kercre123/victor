@@ -43,11 +43,15 @@ namespace Anki {
     {
     public:
       
+      virtual ~Message();
+      
       virtual u8 GetID() const = 0;
       
       virtual void GetBytes(u8* buffer) const = 0;
       
-      virtual u8 GetSize() const = 0; 
+      virtual u8 GetSize() const = 0;
+      
+      static Message* CreateFromJson(const Json::Value& jsonRoot);
       
     }; // class Message
 

@@ -19,6 +19,11 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
+// The number of bytes that can be sent out per call to Update(),
+// the assumption being Update() is called once per basestation tic.
+#define MAX_SENT_BYTES_PER_TIC 100  // Roughly 5 * 20 BLE packets which is the "maximum" amount BLE can send per tic.
+
+
 #define DEBUG_TCPCOMMS 0
 
 namespace Anki {
@@ -59,7 +64,14 @@ namespace Cozmo {
     #if(DO_SIM_COMMS_LATENCY)
     // If no send latency, just send now
     if (SIM_SEND_LATENCY_SEC == 0) {
-      return RealSend(p);
+      if (bytesSentThisUpdateCycle_ + p.dataLen > MAX_SENT_BYTES_PER_TIC) {
+        #if(DEBUG_TCPCOMMS)
+        PRINT_NAMED_INFO("TCPComms.MaxSendLimitReached", "queueing message\n");
+        #endif
+      } else {
+        bytesSentThisUpdateCycle_ += p.dataLen;
+        return RealSend(p);
+      }
     }
     
     // Otherwise add to send queue
@@ -162,9 +174,18 @@ namespace Cozmo {
     
     //printf("TIME %f: Total: %d, rel: %d\n", currTime, recvdMsgPackets_.size(), numRecvRdyMsgs_);
     
-    // Send messages that are scheduled to be sent
+    // Send messages that are scheduled to be sent, up to the outgoing bytes limit.
+    bytesSentThisUpdateCycle_ = 0;
     while (!sendMsgPackets_.empty()) {
       if (sendMsgPackets_.front().first <= currTime) {
+        
+        if (bytesSentThisUpdateCycle_ + sendMsgPackets_.front().second.dataLen > MAX_SENT_BYTES_PER_TIC) {
+          #if(DEBUG_TCPCOMMS)
+          PRINT_NAMED_INFO("TCPComms.MaxSendLimitReached", "%d messages left in queue to send later\n", sendMsgPackets_.size() - 1);
+          #endif
+          break;
+        }
+        bytesSentThisUpdateCycle_ += sendMsgPackets_.front().second.dataLen;
         RealSend(sendMsgPackets_.front().second);
         sendMsgPackets_.pop_front();
       } else {

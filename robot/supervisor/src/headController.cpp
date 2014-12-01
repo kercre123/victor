@@ -3,15 +3,16 @@
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
+#include "anki/common/robot/errorHandling.h"
 
 #define DEBUG_HEAD_CONTROLLER 0
 
 namespace Anki {
-  namespace Cozmo {
-  namespace HeadController {
+namespace Cozmo {
+namespace HeadController {
 
     namespace {
-    
+      
       const Radians ANGLE_TOLERANCE = DEG_TO_RAD(3.f);
       
       // Head angle on startup
@@ -60,6 +61,17 @@ namespace Anki {
       
       // If head comes within this distance to limit angle, trigger recalibration.
       //const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
+      
+      // Nodding
+      bool isNodding_ = false;
+      //f32 preNodAngle_  = 0.f;
+      f32 nodLowAngle_  = 0.f;
+      f32 nodHighAngle_ = 0.f;
+      s32 numNodsDesired_ = 0;
+      s32 numNodsComplete_ = 0;
+      f32 nodHalfPeriod_sec_ = 0.5f;
+      f32 nodEaseOutFraction_ = 0.5f;
+      f32 nodEaseInFraction_  = 0.5f;
       
       // Calibration parameters
       typedef enum {
@@ -126,6 +138,12 @@ namespace Anki {
     bool IsMoving()
     {
       return (ABS(radSpeed_) > MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC);
+    }
+    
+    void Stop()
+    {
+      isNodding_ = false;
+      SetAngularVelocity(0);
     }
     
     void CalibrationUpdate()
@@ -244,7 +262,8 @@ namespace Anki {
       accel_rad_per_sec2 = accelRad_;
     }
     
-    void SetDesiredAngle(f32 angle)
+    
+    static void SetDesiredAngle_internal(f32 angle)
     {
       // Do range check on angle
       angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
@@ -293,10 +312,19 @@ namespace Anki {
 #endif
 
       
+    } // SetDesiredAngle_internal()
+    
+    void SetDesiredAngle(f32 angle) {
+      // Stop nodding if we were
+      if(IsNodding()) {
+        isNodding_ = false;
+      }
+      
+      SetDesiredAngle_internal(angle);
     }
 
     // TODO: There is common code with the other SetDesiredAngle() that can be pulled out into a shared function.
-    void SetDesiredAngle(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+    static void SetDesiredAngle_internal(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
     {
       // Do range check on angle
       angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
@@ -337,8 +365,10 @@ namespace Anki {
                                                  CONTROL_DT);
       
       if (!res) {
-        PRINT("FAIL: HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
+        PRINT("FAIL: HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f.  Trying other version of SetDesiredAngle()\n",
               startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+        
+        SetDesiredAngle_internal(angle);
       }
       
 #if(DEBUG_HEAD_CONTROLLER)
@@ -347,7 +377,18 @@ namespace Anki {
 #endif
 
     }
+  
+    void SetDesiredAngle(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+    {
+      // Stop nodding if we were
+      if(IsNodding()) {
+        isNodding_ = false;
+      }
     
+      SetDesiredAngle_internal(angle, acc_start_frac, acc_end_frac, duration_seconds);
+    }
+  
+  
     bool IsInPosition(void) {
       return inPosition_;
     }
@@ -358,9 +399,9 @@ namespace Anki {
       
       PoseAndSpeedFilterUpdate();
       
-      if (!enable_)
+      if (!enable_) {
         return RESULT_OK;
-      
+      }
       
       // Note that a new call to SetDesiredAngle will get
       // Update() working again after it has reached a previous
@@ -394,9 +435,9 @@ namespace Anki {
            || ABS(currentAngle_ - desiredAngle_) < ANGLE_TOLERANCE) {
           power_ = 0.f;
           inPosition_ = true;
-#if(DEBUG_HEAD_CONTROLLER)
+#         if(DEBUG_HEAD_CONTROLLER)
           PRINT(" HEAD ANGLE REACHED (%f rad)\n", GetAngleRad() );
-#endif
+#         endif
         }
         
         
@@ -411,9 +452,9 @@ namespace Anki {
             
             if (desiredAngle_ == currDesiredAngle_) {
               inPosition_ = true;
-#if(DEBUG_HEAD_CONTROLLER)
+#             if(DEBUG_HEAD_CONTROLLER)
               PRINT(" HEAD ANGLE REACHED (%f rad)\n", currentAngle_.ToFloat());
-#endif
+#             endif
             }
           }
         } else {
@@ -424,7 +465,7 @@ namespace Anki {
         }
          */
         
-#if(DEBUG_HEAD_CONTROLLER)
+#       if(DEBUG_HEAD_CONTROLLER)
         PERIODIC_PRINT(100, "HEAD: currA %f, curDesA %f, desA %f, err %f, errSum %f, pwr %f, spd %f\n",
                        currentAngle_.ToFloat(),
                        currDesiredAngle_,
@@ -434,7 +475,7 @@ namespace Anki {
                        power_,
                        radSpeed_);
         PERIODIC_PRINT(100, "  POWER terms: %f  %f\n", (Kp_ * angleError_), (Ki_ * angleErrorSum_))
-#endif
+#       endif
         
         power_ = CLIP(power_, -1.0, 1.0);
         
@@ -449,15 +490,15 @@ namespace Anki {
                && NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_HEAD)))) {
                 
           if (!limitingDetected_) {
-#if(DEBUG_LIFT_CONTROLLER)
+#           if(DEBUG_LIFT_CONTROLLER)
             PRINT("START RECAL HEAD\n");
-#endif
+#           endif
             lastHeadMovedTime_us = HAL::GetMicroCounter();
             limitingDetected_ = true;
           } else if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
-#if(DEBUG_LIFT_CONTROLLER)
+#           if(DEBUG_LIFT_CONTROLLER)
             PRINT("END RECAL HEAD\n");
-#endif
+#           endif
             ResetLowAnglePosition();
             inPosition_ = true;
           }
@@ -468,6 +509,18 @@ namespace Anki {
         
         HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
       } // if not in position
+      else if(isNodding_)
+      { // inPosition and Nodding
+        if (GetLastCommandedAngle() == nodHighAngle_) {
+          SetDesiredAngle_internal(nodLowAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
+        } else if (GetLastCommandedAngle() == nodLowAngle_) {
+          SetDesiredAngle_internal(nodHighAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
+          ++numNodsComplete_;
+          if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
+            StopNodding();
+          }
+        }
+      } // else if(isNodding)
       
       return RESULT_OK;
     }
@@ -477,6 +530,45 @@ namespace Anki {
       Kp_ = kp;
       Ki_ = ki;
       MAX_ERROR_SUM = maxIntegralError;
+    }
+    
+    void StartNodding(const f32 lowAngle, const f32 highAngle,
+                      const u16 period_ms, const s32 numLoops,
+                      const f32 easeInFraction, const f32 easeOutFraction)
+    {
+      //AnkiConditionalErrorAndReturnValue(keyFrame.type != KeyFrame::HEAD_NOD, RESULT_FAIL, "HeadNodStart.WrongKeyFrameType", "\n");
+
+      AnkiConditionalWarnAndReturn(enable_, "HeadController.StartNodding.Disabled",
+                                   "StartNodding() command ignored: HeadController is disabled.\n");
+      
+      //preNodAngle_ = GetAngleRad();
+      nodLowAngle_  = lowAngle;
+      nodHighAngle_ = highAngle;
+      
+      numNodsDesired_  = numLoops;
+      numNodsComplete_ = 0;
+      isNodding_ = true;
+      nodEaseOutFraction_ = easeOutFraction;
+      nodEaseInFraction_  = easeInFraction;
+      
+      nodHalfPeriod_sec_ = static_cast<f32>(period_ms) * .5f * 0.001f;
+      SetDesiredAngle_internal(nodLowAngle_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
+      
+    } // StartNodding()
+    
+    
+    void StopNodding()
+    {
+      AnkiConditionalWarnAndReturn(enable_, "HeadController.StopNodding.Disabled",
+                                   "StopNodding() command ignored: HeadController is disabled.\n");
+      
+      //SetDesiredAngle_internal(preNodAngle_);
+      isNodding_ = false;
+    }
+    
+    bool IsNodding()
+    {
+      return isNodding_;
     }
     
   } // namespace HeadController

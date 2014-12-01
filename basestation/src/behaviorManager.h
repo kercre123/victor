@@ -37,31 +37,14 @@ namespace Anki {
       typedef enum {
         None,
         June2014DiceDemo,
-        ReactToMarkers
+        ReactToMarkers,
+        CREEP, // "Cozmo Robotic Emotional Engagement PlayTests" - Nov 2014
       } Mode;
       
-      BehaviorManager(Robot* robot);
-      
-      void StartMode(Mode mode);
-      Mode GetMode() const;
-      
-      void Update();
-
-      Robot* GetRobot() const {return robot_;}
-      
-      const ObjectID GetObjectOfInterest() const;
-      
-    protected:
       
       typedef enum {
         WAITING_FOR_ROBOT,
         ACKNOWLEDGEMENT_NOD,
-        
-        // PickAndPlaceBlock
-        WAITING_FOR_DOCK_BLOCK,
-        EXECUTING_PATH_TO_DOCK_POSE,
-        BEGIN_DOCKING,
-        EXECUTING_DOCK,
         
         // June2014DiceDemo
         DRIVE_TO_START,
@@ -72,20 +55,48 @@ namespace Anki {
         BACKING_UP,
         BEGIN_EXPLORING,
         EXPLORING,
+        EXECUTING_DOCK,
         CHECK_IT_OUT_UP,
         CHECK_IT_OUT_DOWN,
         FACE_USER,
         HAPPY_NODDING,
         BACK_AND_FORTH_EXCITED,
         
+        // CREEP
+        SLEEPING,
+        EXCITABLE_CHASE,
+        SCARED_FLEE,
+        DANCE_WITH_BLOCK,
+        SCAN,
+        HELP_ME_STATE,
+        WHAT_NEXT,
+        IDLE,
+        
+        NUM_STATES
       } BehaviorState;
       
-      BehaviorState state_, nextState_, problemState_;
-      void (BehaviorManager::*updateFcn_)();
-
-      Mode mode_;
       
-      Robot* robot_;
+      BehaviorManager(Robot* robot);
+      
+      void StartMode(Mode mode);
+      Mode GetMode() const;
+      
+      void SetNextState(BehaviorState nextState);
+      
+      void Update();
+
+      Robot* GetRobot() const {return _robot;}
+      
+      const ObjectID GetObjectOfInterest() const;
+      
+    protected:
+      
+      BehaviorState _state, _nextState;
+      std::function<void(BehaviorManager*)> _updateFcn;
+
+      Mode _mode;
+      
+      Robot* _robot;
 
       // mini-state machine for the idle animation for June demo
       typedef enum {
@@ -99,16 +110,12 @@ namespace Anki {
         IDLE_TURNING_BACK
       } IdleAnimationState;
       
-      IdleAnimationState idleState_;
-      unsigned int timesIdle_;
-      Pose3d originalPose_;
+      IdleAnimationState _idleState;
+      unsigned int _timesIdle;
+      Pose3d _originalPose;
             
       // Object _type_ the robot is currently "interested in"
-      ObjectType objectTypeOfInterest_;
-      
-      // Thresholds for knowing we're done with a path traversal
-      f32    distThresh_mm_;
-      f32    angThresh_;
+      ObjectType _objectTypeOfInterest;
       
       void Reset();
       
@@ -118,6 +125,7 @@ namespace Anki {
       void Update_PickAndPlaceBlock();
       void Update_June2014DiceDemo();
       void Update_TraverseObject();
+      void Update_CREEP();
       
       // Waits until the current path is complete / timeout occurs.
       // If the blockOfInterest_ is no longer present in the
@@ -149,25 +157,31 @@ namespace Anki {
       //const Vision::KnownMarker *dockMarker_;
       
       // Goal pose for backing up
-      Pose3d goalPose_;
+      Pose3d _goalPose;
       
       // A general time value for gating state transitions
-      double waitUntilTime_;
+      double _waitUntilTime;
 
-      DockAction_t dockAction_;
-      
-      f32 desiredBackupDistance_;
+      f32 _desiredBackupDistance;
       
       /////// June2014DiceDemo vars ///////
       const TimeStamp_t TimeBetweenDice_ms = 1000; // 1 sec
-      ObjectType objectToPickUp_;
-      ObjectType objectToPlaceOn_;
-      TimeStamp_t  diceDeletionTime_;
-      bool wasCarryingBlockAtDockingStart_;
-      Radians explorationStartAngle_;
-      bool isTurning_;
+      ObjectType   _objectToPickUp;
+      ObjectType   _objectToPlaceOn;
+      TimeStamp_t  _diceDeletionTime;
+      bool         _wasCarryingBlockAtDockingStart;
+      Radians      _explorationStartAngle;
+      bool         _isTurning;
+      
+      /////// CREEP vars ///////
+      std::map<BehaviorState, std::string> _stateAnimations;
+      std::map<BehaviorState, std::map<BehaviorState, std::string> > _transitionAnimations;
+      
+      const std::string& GetBehaviorStateName(BehaviorState) const;
+
       
     }; // class BehaviorManager
+    
     
     
   } // namespace Cozmo

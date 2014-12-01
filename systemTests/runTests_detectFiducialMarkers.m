@@ -4,7 +4,7 @@
 % allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'z:/Box Sync');
 
 % On Mac
-% allCompiledResults = runTests_detectFiducialMarkers('~/Documents/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
+% allCompiledResults = runTests_detectFiducialMarkers('~/Code/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', '~/Code/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
 
 function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsDirectory, boxSyncDirectory)
     % To be a match, all corners of a quad must be within these thresholds
@@ -69,7 +69,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParameters.quads_minQuadArea = 100 / 4;
     algorithmParameters.quads_quadSymmetryThreshold = 2.0;
     algorithmParameters.quads_minDistanceFromImageEdge = 2;
-    algorithmParameters.decode_minContrastRatio = 1.25;
+    algorithmParameters.decode_minContrastRatio = 0; % EVERYTHING has contrast >= 1, by definition
     algorithmParameters.refine_quadRefinementMinCornerChange = 0.005;
     algorithmParameters.refine_quadRefinementMaxCornerChange = 2;
     algorithmParameters.refine_numRefinementSamples = 100;

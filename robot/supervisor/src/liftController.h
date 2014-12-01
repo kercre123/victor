@@ -37,10 +37,17 @@ namespace Anki {
       void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
       void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
       
+      // Specify max velocity/acceleration in terms of linear movement instead
+      // of angular adjustment
+      void SetLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2);
+      
       f32 GetAngularVelocity();
       
       // TODO: Get rid of SetAngularVelocty?
       void SetAngularVelocity(const f32 rad_per_sec);
+      
+      // Set speed in terms of height change instead of angular change.
+      void SetLinearVelocity(const f32 mm_per_sec);
       
       // Command the desired height of the lift
       void SetDesiredHeight(f32 height_mm);
@@ -53,6 +60,15 @@ namespace Anki {
       
       f32 GetDesiredHeight();
       bool IsInPosition();
+      
+      // Nod head between the two given heights at the given speed, until
+      // SetDesiredHeight() or StopNodding() are called or the number of loops (up/down cycles)
+      // is completed. If StopNodding() is called, lift will be returned to the original
+      // angle it started at. Use numLoops <= 0 to nod "forever".
+      void StartNodding(const f32 lowHeight, const f32 highHeight, const u16 period_ms, const s32 numLoops,
+                        const f32 easeInFraction, const f32 easeOutFraction);
+      void StopNodding();
+      bool IsNodding();
 
       // Whether or not the lift is moving.
       // False if speed is 0 for more than LIFT_STOP_TIME.
@@ -78,6 +94,9 @@ namespace Anki {
       Result Update();
 
       void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
+      
+      // Stops any nodding or movement at all.
+      void Stop();
       
     } // namespace LiftController
   } // namespcae Cozmo

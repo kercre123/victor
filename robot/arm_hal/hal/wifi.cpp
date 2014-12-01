@@ -8,7 +8,7 @@
 // #define ENABLE_WIFI_UART
 
 // Set to 1 to enable LED indicator of wifi activity
-#define ENABLE_WIFI_LED 1
+//#define ENABLE_WIFI_LED 1
 
 #ifndef ENABLE_WIFI_LED
 #define SetLED(x,y)

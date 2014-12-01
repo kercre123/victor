@@ -99,6 +99,11 @@ namespace Anki
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ARROW));
       
+      // For CREEP Test
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::SPIDER));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::KITTY));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BEE));
+      
       //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
       //
@@ -1225,6 +1230,16 @@ namespace Anki
                            "object with ID=%d, which is about to be deleted.\n",
                            _robot->GetID(), object->GetType().GetName().c_str(), object->GetID().GetValue());
           _robot->Delocalize();
+        }
+        
+        // Check to see if this object is the one the robot is carrying.
+        if(_robot->GetCarryingObject() == object->GetID()) {
+          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingCarriedObject",
+                           "Clearing %s object %d which robot %d think it is carrying.\n",
+                           object->GetType().GetName().c_str(),
+                           object->GetID().GetValue(),
+                           _robot->GetID());
+          _robot->UnSetCarryingObject();
         }
         
         // NOTE: The object should erase its own visualization upon destruction

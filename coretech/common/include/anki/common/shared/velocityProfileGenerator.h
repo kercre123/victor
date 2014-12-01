@@ -74,7 +74,17 @@ namespace Anki {
     void DumpProfileToFile(const char* filename);
 
     bool TargetReached();
-
+    
+    // Accessors that only return valid values after calling
+    // StartProfile() or StartProfile_fixedDuration().
+    float GetMaxReachableVel() { return maxReachableVel_; }
+    float GetTotalDistToTarget() { return totalDistToTarget_; }
+    float GetStartAccelDist() { return startAccelDist_; }
+    float GetEndAccelDist() { return endAccelDist_; }
+    float GetStartAccel() { return deltaVelPerTimeStepStart_ / timeStep_; }
+    float GetEndAccel() { return deltaVelPerTimeStepEnd_ / timeStep_; }
+    
+    
   private:
     // Profile parameters
     float startVel_;
@@ -112,6 +122,10 @@ namespace Anki {
 
     // Current position
     double currPos_;
+    
+    // Distances traversed during start and end acceleration phases
+    float startAccelDist_;
+    float endAccelDist_;
   };
 } // namespace Anki
 

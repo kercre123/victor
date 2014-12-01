@@ -115,8 +115,8 @@ namespace Anki {
         const f32 NSIDE_DOWN_THRESH_MMPS2 = 8000;
 
         // LED assignments
-        const HAL::LEDId INDICATOR_LED_ID = HAL::LED_LEFT_EYE_TOP;
-        const HAL::LEDId HEADLIGHT_LED_ID = HAL::LED_RIGHT_EYE_TOP;
+        const LEDId INDICATOR_LED_ID = LED_LEFT_EYE_TOP;
+        const LEDId HEADLIGHT_LED_ID = LED_RIGHT_EYE_TOP;
         
       } // "private" namespace
       
@@ -125,10 +125,10 @@ namespace Anki {
       void ToggleHeadLights() {
         static bool lightsOn = false;
         if (lightsOn) {
-          HAL::SetLED(HEADLIGHT_LED_ID, HAL::LED_OFF);
+          HAL::SetLED(HEADLIGHT_LED_ID, LED_OFF);
           lightsOn = false;
         } else {
-          HAL::SetLED(HEADLIGHT_LED_ID, HAL::LED_RED);
+          HAL::SetLED(HEADLIGHT_LED_ID, LED_RED);
           lightsOn = true;
         }
       }
@@ -136,11 +136,11 @@ namespace Anki {
       void TurnOnIndicatorLight()
       {
         TestModeController::Start(TM_NONE);
-        HAL::SetLED(INDICATOR_LED_ID, HAL::LED_RED);
+        HAL::SetLED(INDICATOR_LED_ID, LED_RED);
       }
       void TurnOffIndicatorLight()
       {
-        HAL::SetLED(INDICATOR_LED_ID, HAL::LED_OFF);
+        HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
       }
       
       void StartPickAndPlaceTest()
@@ -166,9 +166,9 @@ namespace Anki {
       {
         // TEST WITH LIGHT
         if (pickupDetected) {
-          HAL::SetLED(INDICATOR_LED_ID, HAL::LED_RED);
+          HAL::SetLED(INDICATOR_LED_ID, LED_RED);
         } else {
-          HAL::SetLED(INDICATOR_LED_ID, HAL::LED_OFF);
+          HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
         }
         
         pickedUp_ = pickupDetected;
