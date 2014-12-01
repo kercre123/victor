@@ -110,14 +110,16 @@ class ServerTCP(ServerBase):
         ServerBase.__init__(self, camera, encoding, encodingParams)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind(('', port))
+        self.sock.listen(1)
         self.sock.settimeout(0.010) # 10ms
+        self.conn = None
 
     def receive(self):
         "Receive socket traffic"
-        if self.client:
+        if self.conn:
             try:
-                recvData = self.client.recv(2000)
-            except socket.timeout():
+                recvData = self.conn.recv(2000)
+            except socket.timeout:
                 return None
             try:
                 req = messages.ImageRequest(recvData)
@@ -125,6 +127,7 @@ class ServerTCP(ServerBase):
                 sys.stderr.write("Bad request:\n\t%s\n\n" % str(e))
                 return None
             else:
+                self.client = (req, ('', 0))
                 return req
         else:
             try:
@@ -134,13 +137,14 @@ class ServerTCP(ServerBase):
             else:
                 sys.stdout.write("New connection from %s:%d\n" % addr)
                 conn.settimeout(0.010)
-                self.client = conn
+                self.conn = conn
                 return self.receive() # Call recursively to accept data on new connection
 
     def send(self, payload):
         "Send image data"
         if self.client:
-            self.client.sendall(payload)
+            sentLen = self.conn.send(payload)
+            assert sentLen == len(payload)
 
     def disconnect(self):
         if self.client:
@@ -176,7 +180,7 @@ class Client(object):
         msg = messages.ImageRequest()
         msg.imageSendMode = imageSendMode
         msg.resolution = self.resolution
-        if self.server == "TCP"
+        if self.server == "TCP":
             self.sock.send(msg.serialize())
         else:
             self.sock.sendto(msg.serialize(), self.server)
