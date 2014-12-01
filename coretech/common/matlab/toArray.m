@@ -5,6 +5,10 @@
 
 function outString = toArray(in, useNumpyStyle)
     
+    if ~exist('useNumpyStyle', 'var')
+        useNumpyStyle = false;
+    end
+    
     if isa(in, 'double') || isa(in, 'single')
         formatString = '%f, ';
     else
