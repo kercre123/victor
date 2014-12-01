@@ -25,12 +25,15 @@ class ServerBase(object):
         self.encodingParams = encodingParams
         self.client = None
 
+    def disconnect(self):
+        self.client = None
+
     def step(self):
         "A single server main loop iteration"
         req = self.receive()
         if req:
             if req.imageSendMode == messages.ISM_OFF:
-                self.client = None
+                self.disconnect()
             else:
                 # TODO Do something with request resolution
                 self.frameNumber = 0
@@ -78,6 +81,7 @@ class ServerUDP(ServerBase):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(('', port))
         self.sock.settimeout(0.010) # 10ms
+        self.sock.listen(1)
 
     def receive(self):
         "Receive socket traffic"
@@ -99,15 +103,67 @@ class ServerUDP(ServerBase):
         "Send image data"
         self.sock.sendto(payload, self.client[1])
 
+class ServerTCP(ServerBase):
+    "Implements server base with TCP socket"
+
+    def __init__(self, camera=0, port=DEFAULT_PORT, encoding='.jpg', encodingParams=[1, 90]):
+        ServerBase.__init__(self, camera, encoding, encodingParams)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.bind(('', port))
+        self.sock.settimeout(0.010) # 10ms
+
+    def receive(self):
+        "Receive socket traffic"
+        if self.client:
+            try:
+                recvData = self.client.recv(2000)
+            except socket.timeout():
+                return None
+            try:
+                req = messages.ImageRequest(recvData)
+            except Exception, e:
+                sys.stderr.write("Bad request:\n\t%s\n\n" % str(e))
+                return None
+            else:
+                return req
+        else:
+            try:
+                conn, addr = self.sock.accept()
+            except socket.timeout:
+                return None
+            else:
+                sys.stdout.write("New connection from %s:%d\n" % addr)
+                conn.settimeout(0.010)
+                self.client = conn
+                return self.receive() # Call recursively to accept data on new connection
+
+    def send(self, payload):
+        "Send image data"
+        if self.client:
+            self.client.sendall(payload)
+
+    def disconnect(self):
+        if self.client:
+            self.client.close()
+            self.client = None
+
+
 
 class Client(object):
-    "Client for UDP camera server for"
+    "Client for UDP camera server for testing"
 
-    def __init__(self, host, port=DEFAULT_PORT, resolution=messages.CAMERA_RES_VGA):
+    def __init__(self, host, port=DEFAULT_PORT, resolution=messages.CAMERA_RES_VGA, socketType="UDP"):
         "Connect to server"
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server = (host, port)
         self.resolution = resolution
+        if socketType == "UDP":
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.server = (host, port)
+        elif socketType == "TCP":
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.connect((host, port))
+            self.server = "TCP"
+        else:
+            raise ValueError("Unsupported socket type")
 
     def __del__(self):
         "Stop the server on destruction"
@@ -120,7 +176,10 @@ class Client(object):
         msg = messages.ImageRequest()
         msg.imageSendMode = imageSendMode
         msg.resolution = self.resolution
-        self.sock.sendto(msg.serialize(), self.server)
+        if self.server == "TCP"
+            self.sock.send(msg.serialize())
+        else:
+            self.sock.sendto(msg.serialize(), self.server)
 
     def _getChunk(self):
         return messages.ImageChunk(self.sock.recv(1500))
