@@ -15,40 +15,26 @@ import messages
 
 DEFAULT_PORT = 9000
 
-class Server(object):
-    "UDP socket server sending imageChunk messages"
+class ServerBase(object):
+    "imageChunk server base class"
 
-    def __init__(self, camera=0, port=DEFAULT_PORT, encoding='.jpg', encodingParams=[1, 90]):
+    def __init__(self, camera=0, encoding='.jpg', encodingParams=[1, 90]):
         "Initalize server for specified camera on given port"
         self.vc = cv.VideoCapture(camera)
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind(('', port))
-        self.sock.settimeout(0.010) # 10ms
         self.encoding = encoding
         self.encodingParams = encodingParams
         self.client = None
 
     def step(self):
         "A single server main loop iteration"
-        try:
-            recvData, addr = self.sock.recvfrom(2000)
-        except socket.timeout:
-            pass
+        req = self.receive()
+        if req.imageSendMode == messages.ISM_OFF:
+            self.client = None
         else:
-            try:
-                req = messages.ImageRequest(recvData)
-            except Exception, e:
-                sys.stderr.write("Bad request:\n\t%s\n\n" % str(e))
-            else:
-                sys.stdout.write("New connection from %s: %s\n" % (str(addr), str(req)))
-                if req.imageSendMode == messages.ISM_OFF:
-                    self.client = None
-                else:
-                    self.client = (req, addr)
-                    # TODO Do something with request resolution
-                    self.frameNumber = 0
-                    self.chunkNumber = 0
-                    self.dataQueue = ""
+            # TODO Do something with request resolution
+            self.frameNumber = 0
+            self.chunkNumber = 0
+            self.dataQueue = ""
         if self.client:
             if not len(self.dataQueue): # Need a new frame
                 # If single shot and have already sent
@@ -76,12 +62,41 @@ class Server(object):
                 # TODO: Set message resolution
                 # msg.resolution = ?????
                 self.chunkNumber += 1
-                self.sock.sendto(msg.serialize(), self.client[1])
+                self.send(msg.serialize())
 
     def run(self):
         "Run the server continuously"
         while True:
             self.step()
+
+class ServerUDP(ServerBase):
+    "Implements server base with UDP socket"
+
+    def __init__:(self, camera=0, port=DEFAULT_PORT, encoding='.jpg', encodingParams=[1, 90]):
+        ServerBase.__init__(self, camera, encoding, encodingParams)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind(('', port))
+        self.sock.settimeout(0.010) # 10ms
+
+    def receive(self):
+        "Receive socket traffic"
+        try:
+            recvData, addr = self.sock.recvfrom(2000)
+        except socket.timeout:
+            return None
+        else:
+            try:
+                req = messages.ImageRequest(recvData)
+            except Exception, e:
+                sys.stderr.write("Bad request:\n\t%s\n\n" % str(e))
+                return None
+            else:
+                self.client = (req, addr)
+                return req
+
+    def send(self, payload):
+        "Send image data"
+        self.sock.sendto(payload, self.client[1])
 
 
 class Client(object):
