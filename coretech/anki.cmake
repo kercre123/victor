@@ -288,6 +288,7 @@ set(OPENCV_MODULES_DIR ${EXTERNAL_DIR}/${OPENCV_DIR}/modules)
 
 if(WIN32)
   include_directories(${EXTERNAL_DIR}/${OPENCV_DIR}/3rdparty/zlib)
+  include_directories(${EXTERNAL_BUILD_DIR}/${OPENCV_DIR}/3rdparty/zlib)
 endif()
 
 include_directories(
