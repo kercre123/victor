@@ -18,7 +18,7 @@ DEFAULT_PORT = 9000
 class ServerBase(object):
     "imageChunk server base class"
 
-    def __init__(self, camera=0, encoding='.jpg', encodingParams=[1, 90]):
+    def __init__(self, camera, encoding, encodingParams=[]):
         "Initalize server for specified camera on given port"
         self.vc = cv.VideoCapture(camera)
         self.encoding = encoding
@@ -81,7 +81,6 @@ class ServerUDP(ServerBase):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(('', port))
         self.sock.settimeout(0.010) # 10ms
-        self.sock.listen(1)
 
     def receive(self):
         "Receive socket traffic"
