@@ -14,11 +14,14 @@ function simpleLkTest2(varargin)
     whichImageNumbers = 0:3090;
     pauseForEachFrame = false;
     
-    useStereoCalibration = true;
+    useStereoCalibration = false;
     computeStereoBm = false;
     
-    runFlowComputation = false;
+    runFlowComputation = true;
     runStereoComputation = true;
+    
+    saveOutputToFile = false;
+    outputFilenamePrefix = '/Users/pbarnum/Documents/tmp/lkOutput_';
     
     leftRightCheck = true;
     leftRightCheckThreshold = 7; % TODO: pick a good threshold
@@ -63,7 +66,11 @@ function simpleLkTest2(varargin)
     undistortMaps = [];
     if useStereoCalibration
         [stereoProcessor, undistortMaps, masks] = initStereo(128, 'bm');
+    else
+        masks = {ones(480,640), ones(480,640)};
     end
+    
+    iImageNumber = 1;
     
     if useLiveFeed
         videoCaptures = cell(length(cameraIds), 1);
@@ -74,7 +81,7 @@ function simpleLkTest2(varargin)
         
         images = captureImages(videoCaptures, undistortMaps);
     else
-        iImageNumber = 1;
+        
         leftFilename = sprintf(filenamePattern, 'left', whichImageNumbers(iImageNumber));
         rightFilename = sprintf(filenamePattern, 'right', whichImageNumbers(iImageNumber));
         images = {rgb2gray2(imread(leftFilename)), rgb2gray2(imread(rightFilename))};
@@ -98,6 +105,8 @@ function simpleLkTest2(varargin)
     end
     
     while true
+        iImageNumber = iImageNumber + 1;
+        
         if useLiveFeed
             images = captureImages(videoCaptures, undistortMaps);
         else
@@ -105,7 +114,6 @@ function simpleLkTest2(varargin)
             rightFilename = sprintf(filenamePattern, 'right', whichImageNumbers(iImageNumber));
             images = {rgb2gray2(imread(leftFilename)), rgb2gray2(imread(rightFilename))};
             disp(sprintf('Image %d) %s', iImageNumber, leftFilename))
-            iImageNumber = iImageNumber + 1;
         end
         
         % Compute the flow
@@ -177,7 +185,13 @@ function simpleLkTest2(varargin)
                 end % for jFlow in allFlowPoints{iFlow}
             end % for iFlow = 1:length(allFlowPoints)
             
-            imshows(flowImagesToShow, 0);
+            imshows(flowImagesToShow, 1);
+            
+            if saveOutputToFile
+                outImage = export_fig();
+                imwrite(outImage, [outputFilenamePrefix, sprintf('flow_%d.png', iImageNumber-1)]);                
+            end
+    
         end % if runFlowComputation
         
         % Stereo
@@ -238,7 +252,12 @@ function simpleLkTest2(varargin)
                 end % for iFlow = 1:length(allFlowPoints)
             end % if length(images) == 2
             
-            imshows(stereoImagesToShow, 1);
+            imshows(stereoImagesToShow, 2);
+            
+            if saveOutputToFile
+                outImage = export_fig();                
+                imwrite(outImage, [outputFilenamePrefix, sprintf('stereo_%d.png', iImageNumber-1)]);                
+            end
         end % if runStereoComputation
         
         if pauseForEachFrame
