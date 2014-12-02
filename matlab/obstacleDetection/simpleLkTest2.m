@@ -17,11 +17,13 @@ function simpleLkTest2(varargin)
     useStereoCalibration = false;
     computeStereoBm = false;
     
-    runFlowComputation = true;
+    runFlowComputation = false;
     runStereoComputation = true;
     
+    onlyHorizontalStereoFlow = true;
+    
     saveOutputToFile = false;
-    outputFilenamePrefix = '/Users/pbarnum/Documents/tmp/lkOutput_';
+    outputFilenamePrefix = '/Users/pbarnum/Documents/tmp/output/lkOutput2_';
     
     leftRightCheck = true;
     leftRightCheckThreshold = 7; % TODO: pick a good threshold
@@ -34,7 +36,7 @@ function simpleLkTest2(varargin)
     %windowSizes = {[31,31]}
     windowSizes = {[51,51]};
     
-    numPointsPerDimension = 25;
+    numPointsPerDimension = 50;
     
     filterFlowWithMinimanessThreshold = false;
     minimanessThreshold = 0.5;
@@ -45,7 +47,7 @@ function simpleLkTest2(varargin)
     % Parameters for lucas kanade optical flow
     flow_lk_params = struct(...
         'winSize', [31,31],...
-        'maxLevel', 3,...
+        'maxLevel', 4,...
         'criteria', struct('type', 'Count+EPS', 'maxCount', 10, 'epsilon', 0.03),...
         'minEigThreshold', 5e-3);
     
@@ -85,7 +87,6 @@ function simpleLkTest2(varargin)
         leftFilename = sprintf(filenamePattern, 'left', whichImageNumbers(iImageNumber));
         rightFilename = sprintf(filenamePattern, 'right', whichImageNumbers(iImageNumber));
         images = {rgb2gray2(imread(leftFilename)), rgb2gray2(imread(rightFilename))};
-        iImageNumber = iImageNumber + 1;
     end
     
     lastImages = images;
@@ -189,7 +190,7 @@ function simpleLkTest2(varargin)
             
             if saveOutputToFile
                 outImage = export_fig();
-                imwrite(outImage, [outputFilenamePrefix, sprintf('flow_%d.png', iImageNumber-1)]);                
+                imwrite(outImage, [outputFilenamePrefix, sprintf('flow_%d.png', whichImageNumbers(iImageNumber-1))]);                
             end
     
         end % if runFlowComputation
@@ -201,10 +202,10 @@ function simpleLkTest2(varargin)
                 % Compute the stereo
                 allStereoPoints = {};
                 for iWindowSize = 1:length(windowSizes)
-                    [points1, status, err, goodPoints0, goodPoints1] = computeFlow(images{1}, images{2}, points0, windowSizes{iWindowSize}, stereo_lk_params, false, 0, false);
+                    [points1, status, err, goodPoints0, goodPoints1] = computeFlow(images{1}, images{2}, points0, windowSizes{iWindowSize}, stereo_lk_params, false, 0, false, onlyHorizontalStereoFlow);
                     
                     if leftRightCheck
-                        [points0B, statusB, errB, ~, ~] = computeFlow(images{2}, images{1}, points1, windowSizes{iWindowSize}, stereo_lk_params, false, 0, false);
+                        [points0B, statusB, errB, ~, ~] = computeFlow(images{2}, images{1}, points1, windowSizes{iWindowSize}, stereo_lk_params, false, 0, false, onlyHorizontalStereoFlow);
                         
                         for iPoint = 1:length(points0)
                             dist = sqrt(sum((points0{iPoint} - points0B{iPoint}).^2));
@@ -256,7 +257,7 @@ function simpleLkTest2(varargin)
             
             if saveOutputToFile
                 outImage = export_fig();                
-                imwrite(outImage, [outputFilenamePrefix, sprintf('stereo_%d.png', iImageNumber-1)]);                
+                imwrite(outImage, [outputFilenamePrefix, sprintf('stereo_%d.png', whichImageNumbers(iImageNumber-1))]);                
             end
         end % if runStereoComputation
         
@@ -281,14 +282,15 @@ function simpleLkTest2(varargin)
     end % while true
 end % function simpleLkTest2()
 
-function [points1, status, err, goodPoints0, goodPoints1] = computeFlow(image0, image1, points0, windowSize, lk_params, filterFlowWithErrThreshold, maxErr, filterFlowWithMinimanessThreshold)
+function [points1, status, err, goodPoints0, goodPoints1] = computeFlow(image0, image1, points0, windowSize, lk_params, filterFlowWithErrThreshold, maxErr, filterFlowWithMinimanessThreshold, onlyHorizontalFlow)
     [points1, status, err] = cv.calcOpticalFlowPyrLK(...
         image0, image1, points0,...
         'WinSize', windowSize,...
         'MaxLevel', lk_params.maxLevel,...
         'Criteria', lk_params.criteria,...
-        'MinEigThreshold', lk_params.minEigThreshold);
-    
+        'MinEigThreshold', lk_params.minEigThreshold,...
+        'OnlyUpdateHorizontal', onlyHorizontalFlow);
+        
     if filterFlowWithErrThreshold
         status(:) = 1;
         status(err > maxErr) = 0;

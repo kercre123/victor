@@ -13,7 +13,7 @@
 % Run stereo_gui
 % imagePairs = captureStereoImages(0, 1, 'Calib_Results_stereo.mat');
 
-% To save in opencv format:
+% To save in opencv python format:
 % s = toArray(kc_left',true); disp(['distCoeffs1 = ', s]);
 % s = toArray(kc_right',true); disp(['distCoeffs2 = ', s]);
 % s = toArray(KK_left,true); disp(['cameraMatrix1 = ', s]);
@@ -22,6 +22,15 @@
 % s = toArray(T',false); disp(['T = np.array([', s(1:(end-3)), sprintf('])\n')]);
 % disp(sprintf('imageSize = (%d, %d)\n', nx, ny));
  
+% To save in opencv matlab format:
+% s = toArray(kc_left',false); disp(['distCoeffs1 = [', s(1:(end-3)), sprintf('];\n')]);
+% s = toArray(kc_right',false); disp(['distCoeffs2 = [', s(1:(end-3)), sprintf('];\n')]);
+% s = toArray(KK_left,false); disp(['cameraMatrix1 = [', s(1:(end-3)), sprintf('];\n')]);
+% s = toArray(KK_right,false); disp(['cameraMatrix2 = [', s(1:(end-3)), sprintf('];\n')]);
+% s = toArray(R,false); disp(['R = [', s(1:(end-3)), sprintf('];\n')]);
+% s = toArray(T',false); disp(['T = [', s(1:(end-3)), sprintf('];\n')]);
+% disp(sprintf('imageSize = [%d, %d];\n', nx, ny));
+
 function imagePairs = captureStereoImages(leftImageDeviceNumber, rightImageDeviceNumber, stereoCalibrationFilename)
     rectifyImages = false;
     

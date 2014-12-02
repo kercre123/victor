@@ -7,31 +7,31 @@ maxImagesToSave = 10000
 
 imagesToSave = []
 
-leftCameraId = 1
-rightCameraId = 2
+leftCameraId = 0
+rightCameraId = 1
 captureBaseFilename = '/Users/pbarnum/Documents/tmp/stereo/stereo_'
 
 useStereoCalibration = True
 
 if useStereoCalibration:
     # Calibration for the Spynet stereo pair
-    distCoeffs1 = np.array([[0.182998, -0.417100, 0.005281, -0.004976, 0.000000]])
+    distCoeffs1 = np.array([[0.164272, -0.376660, 0.000841, -0.013974, 0.000000]])
 
-    distCoeffs2 = np.array([[0.165733, -0.391832, 0.002453, -0.011111, 0.000000]])
+    distCoeffs2 = np.array([[0.168726, -0.365303, 0.006350, -0.007782, 0.000000]])
 
-    cameraMatrix1 = np.array([[726.606787, 0.000000, 321.470791],
-              [0.000000, 724.172303, 293.913773],
+    cameraMatrix1 = np.array([[740.272685, 0.000000, 303.320456],
+              [0.000000, 737.724452, 250.412135],
               [0.000000, 0.000000, 1.000000]])
 
-    cameraMatrix2 = np.array([[743.337415, 0.000000, 308.270936],
-              [0.000000, 741.060548, 254.206903],
+    cameraMatrix2 = np.array([[723.767887, 0.000000, 317.103693],
+              [0.000000, 721.290002, 295.642274],
               [0.000000, 0.000000, 1.000000]])
 
-    R = np.array([[0.993527, -0.023641, 0.111109],
-              [0.021796, 0.999604, 0.017785],
-              [-0.111486, -0.015248, 0.993649]])
+    R = np.array([[0.999395, 0.030507, -0.016679],
+              [-0.030129, 0.999293, 0.022470],
+              [0.017353, -0.021954, 0.999608]])
 
-    T = np.array([-13.201223, -0.708310, 0.961289])
+    T = np.array([-13.399603, 0.297130, 0.749115])
 
     imageSize = (640, 480)
 
