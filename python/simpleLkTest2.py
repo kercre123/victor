@@ -101,7 +101,7 @@ def localMinimaness(image, halfWindowSize, x, y):
     return minSlope
 
 #cameraIds = [1]
-cameraIds = [0,1]
+cameraIds = [1,0]
 
 videoCaptures = []
 for cameraId in cameraIds:

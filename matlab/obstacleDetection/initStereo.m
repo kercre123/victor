@@ -26,7 +26,7 @@ function [stereoProcessor, undistortMaps, masks] = initStereo(numDisparities, di
         -0.030129, 0.999293, 0.022470;
         0.017353, -0.021954, 0.999608];
 
-    T = [-13.399603, 0.297130, 0.749115];
+    T = [-13.399603, 0.297130, 0.749115]';
 
     imageSize = [640, 480];
 

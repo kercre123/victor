@@ -14,13 +14,13 @@ function simpleLkTest2(varargin)
     whichImageNumbers = 0:3090;
     pauseForEachFrame = false;
     
-    useStereoCalibration = false;
+    useStereoCalibration = true;
     computeStereoBm = false;
     
     runFlowComputation = false;
     runStereoComputation = true;
     
-    onlyHorizontalStereoFlow = true;
+    onlyHorizontalStereoFlow = false;
     
     saveOutputToFile = false;
     outputFilenamePrefix = '/Users/pbarnum/Documents/tmp/output/lkOutput2_';
@@ -32,11 +32,11 @@ function simpleLkTest2(varargin)
     stereoDisparityColors96 = [0,1,255;0,12,255;0,22,255;0,34,255;0,45,255;0,56,255;0,67,255;0,78,255;0,89,255;0,100,255;0,111,255;0,122,255;0,133,255;0,144,255;0,155,255;0,166,255;0,177,255;0,188,255;0,199,255;0,211,255;0,221,255;0,233,255;0,243,255;0,254,255;0,255,254;0,255,243;0,255,233;0,255,221;0,255,211;0,255,199;0,255,188;0,255,177;0,255,166;0,255,155;0,255,144;0,255,133;0,255,122;0,255,111;0,255,100;0,255,89;0,255,78;0,255,67;0,255,56;0,255,45;0,255,34;0,255,22;0,255,12;0,255,1;1,255,0;12,255,0;22,255,0;34,255,0;45,255,0;56,255,0;67,255,0;78,255,0;89,255,0;100,255,0;111,255,0;122,255,0;133,255,0;144,255,0;155,255,0;166,255,0;177,255,0;188,255,0;199,255,0;211,255,0;221,255,0;233,255,0;243,255,0;254,255,0;255,254,0;255,243,0;255,233,0;255,221,0;255,211,0;255,199,0;255,188,0;255,177,0;255,166,0;255,155,0;255,144,0;255,133,0;255,122,0;255,111,0;255,100,0;255,89,0;255,78,0;255,67,0;255,56,0;255,45,0;255,34,0;255,22,0;255,12,0;255,1,0];
     stereoDisparityColors64 = [0,4,255;0,20,255;0,36,255;0,53,255;0,70,255;0,86,255;0,103,255;0,119,255;0,136,255;0,152,255;0,169,255;0,185,255;0,202,255;0,220,255;0,235,255;0,251,255;0,255,251;0,255,235;0,255,220;0,255,202;0,255,185;0,255,169;0,255,152;0,255,136;0,255,119;0,255,103;0,255,86;0,255,70;0,255,53;0,255,36;0,255,20;0,255,4;4,255,0;20,255,0;36,255,0;53,255,0;70,255,0;86,255,0;103,255,0;119,255,0;136,255,0;152,255,0;169,255,0;185,255,0;202,255,0;220,255,0;235,255,0;251,255,0;255,251,0;255,235,0;255,220,0;255,202,0;255,185,0;255,169,0;255,152,0;255,136,0;255,119,0;255,103,0;255,86,0;255,70,0;255,53,0;255,36,0;255,20,0;255,4,0];
     
-    %windowSizes = {[15,15], [31,31], [51,51]}
-    %windowSizes = {[31,31]}
+    %windowSizes = {[15,15], [31,31], [51,51]};
+%     windowSizes = {[31,31]};
     windowSizes = {[51,51]};
     
-    numPointsPerDimension = 50;
+    numPointsPerDimension = 25;
     
     filterFlowWithMinimanessThreshold = false;
     minimanessThreshold = 0.5;
@@ -53,7 +53,7 @@ function simpleLkTest2(varargin)
     
     stereo_lk_params = struct(...
         'winSize' , [31,31],...
-        'maxLevel', 4,...
+        'maxLevel', 3,...
         'criteria', struct('type', 'Count+EPS', 'maxCount', 10, 'epsilon', 0.03),...
         'minEigThreshold', 1e-4);
     
@@ -247,7 +247,7 @@ function simpleLkTest2(varargin)
                     stereoImagesToShow{end+1} = keypointImage; %#ok<AGROW>
                     
                     if leftRightCheck
-                        keypointImage = drawKeypointMatches(pointsToShow.curImage, pointsToShow.goodPoints0B, pointsToShow.goodPoints1B, stereoDisparityColors96);
+                        keypointImage = drawKeypointMatches(pointsToShow.lastImage, pointsToShow.goodPoints0B, pointsToShow.goodPoints1B, stereoDisparityColors96);
                         stereoImagesToShow{end+1} = keypointImage; %#ok<AGROW>
                     end
                 end % for iFlow = 1:length(allFlowPoints)
