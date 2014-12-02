@@ -43,8 +43,12 @@ namespace Cozmo {
   
   class ConnectedRobotInfo {
   public:
-    static const int MAX_RECV_BUF_SIZE = 1920000;
+    static const int MAX_RECV_BUF_SIZE = 1920000; // TODO: Shrink this?
+#if(USE_UDP_ROBOT_COMMS)
+    UdpClient* client;
+#else
     TcpClient* client;
+#endif
     u8 recvBuf[MAX_RECV_BUF_SIZE];
     int recvDataSize = 0;
   };

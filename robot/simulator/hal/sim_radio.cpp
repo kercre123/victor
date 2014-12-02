@@ -18,6 +18,7 @@
 
 #include "anki/messaging/shared/TcpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
+#include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/utilMessaging.h"
 
 // For getting local host's IP address
@@ -29,7 +30,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-
 namespace Anki {
   namespace Cozmo {
     
@@ -37,7 +37,11 @@ namespace Anki {
       const size_t RECV_BUFFER_SIZE = 1024;
       
       // For communications with basestation
+#if(USE_UDP_ROBOT_COMMS)
+      UdpServer server;
+#else
       TcpServer server;
+#endif
       UdpClient advRegClient;
 
       u8 recvBuf_[RECV_BUFFER_SIZE];
@@ -62,6 +66,12 @@ namespace Anki {
       
       PRINT("sim_radio: Sending deregistration for robot %d\n", regMsg.robotID);
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
+    }
+    
+    // Is robot registered with advertisement service
+    bool IsRobotRegistered()
+    {
+      return regMsg.enableAdvertisement == 1;
     }
     
     const char* const HAL::GetLocalIP()
@@ -136,7 +146,9 @@ namespace Anki {
 
     void DisconnectRadio(void)
     {
+#if(USE_UDP_ROBOT_COMMS==0)
       server.DisconnectClient();
+#endif
       recvBufSize_ = 0;
       
       RegisterRobot();
@@ -145,7 +157,7 @@ namespace Anki {
     bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts)
     {
       if (server.HasClient()) {
-
+        
         // Send the message header (0xBEEF + timestamp + robotID + msgID)
         // For TCP comms, send timestamp immediately after the header.
         // This is needed on the basestation side to properly order messages.
@@ -200,9 +212,11 @@ namespace Anki {
     
     size_t RadioGetNumBytesAvailable(void)
     {
+#if(USE_UDP_ROBOT_COMMS==0)
       if (!server.HasClient()) {
         return 0;
       }
+#endif
       
       // Check for incoming data and add it to receive buffer
       int dataSize;
@@ -253,7 +267,9 @@ namespace Anki {
     {
       Messages::ID retVal = Messages::NO_MESSAGE_ID;
       
+#if(USE_UDP_ROBOT_COMMS==0)
       if (server.HasClient()) {
+#endif
         const size_t bytesAvailable = RadioGetNumBytesAvailable();
         const u32 headerSize = sizeof(RADIO_PACKET_HEADER);
         if(bytesAvailable >= headerSize) {
@@ -310,7 +326,9 @@ namespace Anki {
             }
           }
         } // if bytesAvailable > 0
+#if(USE_UDP_ROBOT_COMMS==0)
       }
+#endif
       
       return retVal;
     } // RadioGetNextMessage()
@@ -318,11 +336,17 @@ namespace Anki {
 
     void RadioUpdate()
     {
+#if(USE_UDP_ROBOT_COMMS)
+      if(server.HasClient() && IsRobotRegistered()) {
+        DeregisterRobot();
+      }
+#else
       if(!server.HasClient()) {
         if (server.Accept()) {
           DeregisterRobot();
         }
       }
+#endif
     }
 
     

@@ -222,113 +222,116 @@ namespace Cozmo {
     while ( it != connectedRobots_.end() ) {
       
       ConnectedRobotInfo &c = it->second;
+
+      while(1) { // Keep reading socket until no bytes available
       
-      int bytes_recvd = c.client->Recv((char*)c.recvBuf + c.recvDataSize,
-                                       ConnectedRobotInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
-      if (bytes_recvd == 0) {
-        it++;
-        continue;
-      }
-      if (bytes_recvd < 0) {
-        // Disconnect client
-        #if(DEBUG_TCPCOMMS)
-        printf("TcpRobotMgr: Recv failed. Disconnecting client\n");
-        #endif
-        c.client->Disconnect();
-        delete c.client;
-        connectedRobots_.erase(it++);
-        continue;
-      }
-      c.recvDataSize += bytes_recvd;
-      //PrintRecvBuf(it->first);
-      
-      
-      // Look for valid header
-      while (c.recvDataSize >= sizeof(RADIO_PACKET_HEADER)) {
-        
-        // Look for 0xBEEF
-        u8* hPtr = NULL;
-        for(int i = 0; i < c.recvDataSize-1; ++i) {
-          if (c.recvBuf[i] == RADIO_PACKET_HEADER[0]) {
-            if (c.recvBuf[i+1] == RADIO_PACKET_HEADER[1]) {
-              hPtr = &(c.recvBuf[i]);
-              break;
-            }
-          }
-        }
-        
-        if (hPtr == NULL) {
-          // Header not found at all
-          // Delete everything
-          c.recvDataSize = 0;
+        int bytes_recvd = c.client->Recv((char*)c.recvBuf + c.recvDataSize,
+                                         ConnectedRobotInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
+        if (bytes_recvd == 0) {
+          it++;
           break;
         }
-        
-        int n = hPtr - c.recvBuf;
-        if (n != 0) {
-          // Header was not found at the beginning.
-          // Delete everything up until the header.
-          PRINT_NAMED_WARNING("TCPComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding %d bytes\n", n);
-          c.recvDataSize -= n;
-          memcpy(c.recvBuf, hPtr, c.recvDataSize);
+        if (bytes_recvd < 0) {
+          // Disconnect client
+          #if(DEBUG_TCPCOMMS)
+          printf("TcpRobotMgr: Recv failed. Disconnecting client\n");
+          #endif
+          c.client->Disconnect();
+          delete c.client;
+          connectedRobots_.erase(it++);
+          break;
         }
+        c.recvDataSize += bytes_recvd;
+        //PrintRecvBuf(it->first);
         
-        // Check if expected number of bytes are in the msg
-        if (c.recvDataSize > HEADER_AND_TS_SIZE) {
-          u32 dataLen = c.recvBuf[HEADER_AND_TS_SIZE] +
-                              (c.recvBuf[HEADER_AND_TS_SIZE + 1] << 8) +
-                              (c.recvBuf[HEADER_AND_TS_SIZE + 2] << 16) +
-                              (c.recvBuf[HEADER_AND_TS_SIZE + 3] << 24);
+        
+        // Look for valid header
+        while (c.recvDataSize >= sizeof(RADIO_PACKET_HEADER)) {
           
-          if (dataLen > 255) {
-            PRINT_NAMED_WARNING("TCPComms.MsgTooBig", "Can't handle messages larger than 255 (dataLen = %d)\n", dataLen);
-            dataLen = 255;
+          // Look for 0xBEEF
+          u8* hPtr = NULL;
+          for(int i = 0; i < c.recvDataSize-1; ++i) {
+            if (c.recvBuf[i] == RADIO_PACKET_HEADER[0]) {
+              if (c.recvBuf[i+1] == RADIO_PACKET_HEADER[1]) {
+                hPtr = &(c.recvBuf[i]);
+                break;
+              }
+            }
           }
           
-          if (c.recvDataSize >= HEADER_AND_TS_SIZE + 4 + dataLen) {
+          if (hPtr == NULL) {
+            // Header not found at all
+            // Delete everything
+            c.recvDataSize = 0;
+            break;
+          }
+          
+          int n = hPtr - c.recvBuf;
+          if (n != 0) {
+            // Header was not found at the beginning.
+            // Delete everything up until the header.
+            PRINT_NAMED_WARNING("TCPComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding %d bytes\n", n);
+            c.recvDataSize -= n;
+            memcpy(c.recvBuf, hPtr, c.recvDataSize);
+          }
+          
+          // Check if expected number of bytes are in the msg
+          if (c.recvDataSize > HEADER_AND_TS_SIZE) {
+            u32 dataLen = c.recvBuf[HEADER_AND_TS_SIZE] +
+                                (c.recvBuf[HEADER_AND_TS_SIZE + 1] << 8) +
+                                (c.recvBuf[HEADER_AND_TS_SIZE + 2] << 16) +
+                                (c.recvBuf[HEADER_AND_TS_SIZE + 3] << 24);
             
-            /*
-             // Get timestamp
-             TimeStamp_t *ts = (TimeStamp_t*)&(c.recvBuf[header.length()]);
-             
-             // Create RobotMsgPacket
-             Comms::MsgPacket p;
-             p.sourceId = it->first;
-             p.dataLen = n - HEADER_AND_TS_SIZE;
-             memcpy(p.data, &c.recvBuf[HEADER_AND_TS_SIZE], p.dataLen);
-             recvdMsgPackets_.insert(std::pair<TimeStamp_t,Comms::MsgPacket>(*ts, p) );
-             */
+            if (dataLen > 255) {
+              PRINT_NAMED_WARNING("TCPComms.MsgTooBig", "Can't handle messages larger than 255 (dataLen = %d)\n", dataLen);
+              dataLen = 255;
+            }
             
-            f32 recvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-            
-            #if(DO_SIM_COMMS_LATENCY)
-            recvTime += SIM_RECV_LATENCY_SEC;
-            #endif
-            
-            recvdMsgPackets_.emplace_back(std::piecewise_construct,
-                                          std::forward_as_tuple(recvTime),
-                                          std::forward_as_tuple((s32)(it->first),
-                                                                (s32)-1,
-                                                                dataLen,
-                                                                (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE+4]),
-                                                                BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds())
-                                          );
-            
-            // Shift recvBuf contents down
-            const u8 entireMsgSize = HEADER_AND_TS_SIZE + 4 + dataLen;
-            memcpy(c.recvBuf, c.recvBuf + entireMsgSize, c.recvDataSize - entireMsgSize);
-            c.recvDataSize -= entireMsgSize;
-            
+            if (c.recvDataSize >= HEADER_AND_TS_SIZE + 4 + dataLen) {
+              
+              /*
+               // Get timestamp
+               TimeStamp_t *ts = (TimeStamp_t*)&(c.recvBuf[header.length()]);
+               
+               // Create RobotMsgPacket
+               Comms::MsgPacket p;
+               p.sourceId = it->first;
+               p.dataLen = n - HEADER_AND_TS_SIZE;
+               memcpy(p.data, &c.recvBuf[HEADER_AND_TS_SIZE], p.dataLen);
+               recvdMsgPackets_.insert(std::pair<TimeStamp_t,Comms::MsgPacket>(*ts, p) );
+               */
+              
+              f32 recvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+              
+              #if(DO_SIM_COMMS_LATENCY)
+              recvTime += SIM_RECV_LATENCY_SEC;
+              #endif
+              
+              recvdMsgPackets_.emplace_back(std::piecewise_construct,
+                                            std::forward_as_tuple(recvTime),
+                                            std::forward_as_tuple((s32)(it->first),
+                                                                  (s32)-1,
+                                                                  dataLen,
+                                                                  (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE+4]),
+                                                                  BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds())
+                                            );
+              
+              // Shift recvBuf contents down
+              const u8 entireMsgSize = HEADER_AND_TS_SIZE + 4 + dataLen;
+              memcpy(c.recvBuf, c.recvBuf + entireMsgSize, c.recvDataSize - entireMsgSize);
+              c.recvDataSize -= entireMsgSize;
+              
+            } else {
+              break;
+            }
           } else {
             break;
           }
-        } else {
-          break;
-        }
         
-      } // end while (there are still messages in the recvBuf)
+        } // end while (there are still messages in the recvBuf)
+          
+      } // end while(1) // keep reading socket until no bytes
       
-      it++;
     } // end for (each robot)
   }
   
@@ -344,8 +347,12 @@ namespace Cozmo {
     advertisingRobotsIt_t it = advertisingRobots_.find(robotID);
     if (it != advertisingRobots_.end()) {
       
-      TcpClient *client = new TcpClient();
       
+#if(USE_UDP_ROBOT_COMMS)
+      UdpClient *client = new UdpClient();
+#else
+      TcpClient *client = new TcpClient();
+#endif
       if (client->Connect((char*)it->second.robotInfo.robotAddr, it->second.robotInfo.port)) {
         #if(DEBUG_TCPCOMMS)
         printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.robotID, it->second.robotInfo.robotAddr, it->second.robotInfo.port);
