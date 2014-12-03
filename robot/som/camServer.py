@@ -25,8 +25,22 @@ class ServerBase(object):
         self.encodingParams = encodingParams
         self.client = None
         self.frameNumber = 0
+        self.adjustResolution(messages.CAMERA_RES_VGA)
     def disconnect(self):
         self.client = None
+
+    def adjustResolution(self, resEnum):
+        "Adjusts the video capture resolution settings"
+        resolutions = {
+            messages.CAMERA_RES_VGA: (640, 480),
+            messages.CAMERA_RES_QVGA: (320, 240),
+            messages.CAMERA_RES_QQVGA: (160, 120),
+            messages.CAMERA_RES_QQQVGA: (80, 60),
+            messages.CAMERA_RES_QQQQVGA: (40, 30)
+        }
+        self.vc.set(cv.CV_CAP_PROP_FRAME_WIDTH,  resolutions[resEnum][0])
+        self.vc.set(cv.CV_CAP_PROP_FRAME_HEIGHT, resolutions[resEnum][1])
+        self.resolution = resEnum
 
     def step(self):
         "A single server main loop iteration"
@@ -35,7 +49,7 @@ class ServerBase(object):
             if req.imageSendMode == messages.ISM_OFF:
                 self.disconnect()
             else:
-                # TODO Do something with request resolution
+                self.adjustResolution(req.resolution)
                 self.chunkNumber = 0
                 self.dataQueue = ""
         if self.client:
@@ -62,7 +76,7 @@ class ServerBase(object):
                 msg.imageEncoding = messages.IE_JPEG
                 msg.chunkId = self.chunkNumber
                 sys.stdout.write("Send frame %d chunk %d\n" % (self.frameNumber, self.chunkNumber))
-                msg.resolution = messages.CAMERA_RES_VGA # TODO: Set message resolution correctly
+                msg.resolution = self.resolution
                 self.chunkNumber += 1
                 self.send(msg.serialize())
 
