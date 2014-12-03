@@ -17,17 +17,20 @@ function simpleLkTest2(varargin)
     useStereoCalibration = true;
     computeStereoBm = false;
     
-    runFlowComputation = true;
+    runFlowComputation = false;
     runStereoComputation = true;
     
-    onlyHorizontalStereoFlow = false;
+    onlyHorizontalStereoFlow = true;
+    
     useBlur = false;
+    binarizeImage = false;
     
     flowOffsets = {[0,0]};
     
     stereoOffsets = {[0,0]};
 %     stereoOffsets = {[0,0], [-32,0], [-64,0], [-96,0], [-128,0]};
-%     stereoOffsets = {[0,0], [-128,0]};
+%     stereoOffsets = {[0,0], [-32,0], [-64,0], [-96,0], [-128,0]};
+%     stereoOffsets = {[0,0], [-16,0], [-32,0], [-48,0], [-64,0], [-80,0], [-96,0], [-112,0], [-128,0]};
     
     saveOutputToFile = false;
     outputFilenamePrefix = '/Users/pbarnum/Documents/tmp/output/lkOutput2_';
@@ -42,6 +45,8 @@ function simpleLkTest2(varargin)
     %windowSizes = {[15,15], [31,31], [51,51]};
 %     windowSizes = {[31,31]};
     windowSizes = {[51,51]};
+    
+    imageSize = [480, 640];
     
     numPointsPerDimension = 25;
     
@@ -76,7 +81,7 @@ function simpleLkTest2(varargin)
     if useStereoCalibration
         [stereoProcessor, undistortMaps, masks] = initStereo(128, 'bm');
     else
-        masks = {ones(480,640), ones(480,640)};
+        masks = {ones(imageSize), ones(imageSize)};
     end
     
     reverseFlowOffsets = cell(size(flowOffsets));
@@ -89,30 +94,34 @@ function simpleLkTest2(varargin)
         reverseStereoOffsets{i} = -stereoOffsets{i};
     end
     
-    iImageNumber = 1;
+    iImageNumber = 0;
     
     if useLiveFeed
         videoCaptures = cell(length(cameraIds), 1);
         for i = 1:length(cameraIds)
             videoCaptures{i} = cv.VideoCapture(cameraIds(i));
             disp(sprintf('Opened camera %d (id=%d)', i, cameraIds(i)))
-        end
-        
-        images = captureImages(videoCaptures, undistortMaps);
-    else
-        
-        leftFilename = sprintf(filenamePattern, 'left', whichImageNumbers(iImageNumber));
-        rightFilename = sprintf(filenamePattern, 'right', whichImageNumbers(iImageNumber));
-        images = {rgb2gray2(imread(leftFilename)), rgb2gray2(imread(rightFilename))};
+        end   
     end
     
-    lastImages = images;
+%     if useLiveFeed
+%         videoCaptures = cell(length(cameraIds), 1);
+%         for i = 1:length(cameraIds)
+%             videoCaptures{i} = cv.VideoCapture(cameraIds(i));
+%             disp(sprintf('Opened camera %d (id=%d)', i, cameraIds(i)))
+%         end
+%         
+%         images = captureImages(videoCaptures, undistortMaps);
+%     else
+%         
+%         leftFilename = sprintf(filenamePattern, 'left', whichImageNumbers(iImageNumber));
+%         rightFilename = sprintf(filenamePattern, 'right', whichImageNumbers(iImageNumber));
+%         images = {rgb2gray2(imread(leftFilename)), rgb2gray2(imread(rightFilename))};
+%     end
+%     
+%     lastImages = images;
     
-    for i = 2:length(images)
-        assert(min(size(images{1}) == size(images{i})));
-    end
     
-    imageSize = size(images{1});
     
     %     [points0x, points0y] = meshgrid(linspace(0, imageSize(2)-1, numPointsPerDimension),linspace(0, imageSize(1)-1, numPointsPerDimension));
     [points0x, points0y] = meshgrid(linspace(25, imageSize(2)-26, numPointsPerDimension),linspace(25, imageSize(1)-26, numPointsPerDimension));
@@ -128,11 +137,26 @@ function simpleLkTest2(varargin)
         if useLiveFeed
             images = captureImages(videoCaptures, undistortMaps);
             
+            for i = 2:length(images)
+                assert(min(size(images{1}) == size(images{i})));
+            end
+            
+            for i = 1:length(images)
+                images{i} = imresize(images{i}, imageSize);
+            end
+            
             if useBlur
-                filt = fspecial('gaussian',[21,21],5);
+%                 filt = fspecial('gaussian',[21,21],5);
+                filt = fspecial('gaussian',[5,5],1);
                 for i = 1:length(images)
                     images{i} = imfilter(images{i}, filt);
                     images{i} = cv.equalizeHist(images{i});
+                end
+            end
+            
+            if binarizeImage
+                for i = 1:length(images)
+                    images{i} = uint8(255*simpleDetector_step1_computeCharacteristicScale(0.025, size(images{i},1), size(images{i},2), 2, im2double(images{i}), 1, 1, EmbeddedConversionsManager(), 0, 0));
                 end
             end
         else
@@ -140,6 +164,11 @@ function simpleLkTest2(varargin)
             rightFilename = sprintf(filenamePattern, 'right', whichImageNumbers(iImageNumber));
             images = {rgb2gray2(imread(leftFilename)), rgb2gray2(imread(rightFilename))};
             disp(sprintf('Image %d) %s', iImageNumber, leftFilename))
+        end
+                
+        if iImageNumber == 1
+            lastImages = images;
+            continue
         end
         
         % Compute the flow
@@ -311,7 +340,7 @@ function [points1, status, err, goodPoints0, goodPoints1] = computeFlow(image0, 
     
     halfWindowSize = floor(windowSize/2);
     
-    diffs = Inf*ones(length(image1), 1);
+    diffs = Inf*ones(length(points0), 1);
     for iOffset = 1:length(offsets)
         offsetPoints0 = cell(size(points0));
         for iPoint = 1:length(offsetPoints0)
