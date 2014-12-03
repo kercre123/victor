@@ -8,7 +8,7 @@ __version__ = "0.0.1"
 import sys, socket, time
 try:
     import numpy
-    import cv2 as cv
+    import cv2
 except:
     sys.stderr.write("Cannot import numpy or cv modules, some features will be unavailable\n")
 import messages
@@ -18,29 +18,47 @@ DEFAULT_PORT = 9000
 class ServerBase(object):
     "imageChunk server base class"
 
+    CAMERA_RES_NONE = {
+        messages.CAMERA_RES_VGA: (640.0, 480.0),
+        messages.CAMERA_RES_QVGA: (320.0, 240.0),
+        messages.CAMERA_RES_QQVGA: (160.0, 120.0),
+        messages.CAMERA_RES_QQQVGA: (80.0, 60.0),
+        messages.CAMERA_RES_QQQQVGA: (40.0, 30.0),
+        messages.CAMERA_RES_NONE: (0.0, 0.0)
+    }
+
     def __init__(self, camera, encoding, encodingParams=[]):
         "Initalize server for specified camera on given port"
-        self.vc = cv.VideoCapture(camera)
+        self.vc = cv2.VideoCapture(camera)
         self.encoding = encoding
         self.encodingParams = encodingParams
         self.client = None
         self.frameNumber = 0
-        self.adjustResolution(messages.CAMERA_RES_VGA)
+
     def disconnect(self):
         self.client = None
 
-    def adjustResolution(self, resEnum):
-        "Adjusts the video capture resolution settings"
-        resolutions = {
-            messages.CAMERA_RES_VGA: (640, 480),
-            messages.CAMERA_RES_QVGA: (320, 240),
-            messages.CAMERA_RES_QQVGA: (160, 120),
-            messages.CAMERA_RES_QQQVGA: (80, 60),
-            messages.CAMERA_RES_QQQQVGA: (40, 30)
-        }
-        self.vc.set(cv.CV_CAP_PROP_FRAME_WIDTH,  resolutions[resEnum][0])
-        self.vc.set(cv.CV_CAP_PROP_FRAME_HEIGHT, resolutions[resEnum][1])
-        self.resolution = resEnum
+    @param
+    def resolution(self):
+        if self.client:
+            return self.client[0].resolution
+        else:
+            return messages.CAMERA_RES_NONE
+
+    def getEncodedImage(self):
+        "Get the encoded bytes for the next image, returns image"
+        rslt, frame = self.vc.read()
+        if rslt:
+            frame = cv2.resize(frame, self.CAMERA_RES_NONE[self.resolution])
+            rslt, frame = cv2.imencode(self.encoding, self.frame, self.encodingParams)
+            if rslt:
+                return frame.tostring()
+            else:
+                sys.stderr.write("Failed to encode frame as %s(%s)\n" % (self.encoding, str(self.encodingParams)))
+                return False
+        else:
+            sys.stderr.write("Failed to read camera frame\n")
+            return False
 
     def step(self):
         "A single server main loop iteration"
@@ -49,7 +67,6 @@ class ServerBase(object):
             if req.imageSendMode == messages.ISM_OFF:
                 self.disconnect()
             else:
-                self.adjustResolution(req.resolution)
                 self.chunkNumber = 0
                 self.dataQueue = ""
         if self.client:
@@ -58,17 +75,11 @@ class ServerBase(object):
                 if self.chunkNumber > 0 and self.client[0].imageSendMode == messages.ISM_SINGLE_SHOT:
                     self.disconnect()
                     return
-                rslt, frame = self.vc.read()
-                if rslt: # Got an image
-                    rslt, data = cv.imencode(self.encoding, frame, self.encodingParams)
-                    if rslt:
-                        self.dataQueue = data.tostring()
-                        self.chunkNumber =  0
-                        self.frameNumber += 1
-                    else:
-                        sys.stderr.write("Failed to jpeg encode frame\n")
-                else:
-                    sys.stderr.write("Failed to read camera frame\n")
+                frame = self.getEncodedImage()
+                if frame:
+                    self.dataQueue = frame
+                    self.chunkNumber =  0
+                    self.frameNumber += 1
             if len(self.dataQueue): # have a frame
                 msg = messages.ImageChunk()
                 self.dataQueue = msg.takeChunk(self.dataQueue)
@@ -167,7 +178,7 @@ class ServerTCP(ServerBase):
 class Client(object):
     "Client for UDP camera server for testing"
 
-    def __init__(self, host, port=DEFAULT_PORT, resolution=messages.CAMERA_RES_VGA, socketType="UDP"):
+    def __init__(self, host, port=DEFAULT_PORT, resolution=messages.CAMERA_RES_QVGA, socketType="UDP"):
         "Connect to server"
         self.resolution = resolution
         if socketType == "UDP":
