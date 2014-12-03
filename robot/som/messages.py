@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "a7fdcb163a07a9a1ac59184e08106d60d004ce5e" # Hash for the revision these python definitions are based on
+__version__ = "965c0e93d18548bc2d363123c58a013153a4d84a" # Hash for the revision these python definitions are based on
 
 import struct
 
@@ -46,7 +46,7 @@ CAMERA_RES_NONE = CAMERA_RES_COUNT
 class ImageRequest(struct.Struct):
     "ImageRequest message implementation for Python"
 
-    ID = 19
+    ID = 20
     FORMAT = ["u8", # ID
               "u8", # imageSendMode
               "u8", # Resolution
@@ -66,7 +66,7 @@ class ImageRequest(struct.Struct):
     def deserialize(self, buffer):
         "Deserialize received buffer"
         msgId, self.imageSendMode, self.resolution = self.unpack(buffer)
-        assert(msgId == self.ID)
+        assert msgId == self.ID, ("Wrong message id: %d vs %d" % msgId, self.ID)
 
     def __repr__(self):
         return "ImageRequest(%d, %d)" % (self.imageSendMode, self.resolution)
@@ -75,7 +75,7 @@ class ImageChunk(struct.Struct):
     "ImageChunk message implementation for Python"
 
     IMAGE_CHUNK_SIZE = 1024
-    ID = 41
+    ID = 66
     FORMAT = ["u8",   # ID
               "u16",  # chunkSize
               "u8",   # imageId
@@ -103,8 +103,8 @@ class ImageChunk(struct.Struct):
     def deserialize(self, buffer):
         "Deserialize a received message"
         msgId, size, self.imageId, self.imageEncoding, self.chunkId, self.resolution, self.data = self.unpack(buffer)
-        assert(msgId == self.ID)
-        assert(size <= self.IMAGE_CHUNK_SIZE)
+        assert msgId == self.ID, ("Wrong message id: %d vs %d" % msgId, self.ID)
+        assert size <= self.IMAGE_CHUNK_SIZE, ("Size, %d, too large" % size)
         self.data = self.data[:size]
 
     def takeChunk(self, buffer):
