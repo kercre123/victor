@@ -24,7 +24,7 @@ class ServerBase(object):
         self.encoding = encoding
         self.encodingParams = encodingParams
         self.client = None
-
+        self.frameNumber = 0
     def disconnect(self):
         self.client = None
 
@@ -36,14 +36,13 @@ class ServerBase(object):
                 self.disconnect()
             else:
                 # TODO Do something with request resolution
-                self.frameNumber = 0
                 self.chunkNumber = 0
                 self.dataQueue = ""
         if self.client:
             if not len(self.dataQueue): # Need a new frame
                 # If single shot and have already sent
-                if self.frameNumber > 0 and self.client[0].imageSendMode == messages.ISM_SINGLE_SHOT:
-                    self.client = None
+                if self.chunkNumber > 0 and self.client[0].imageSendMode == messages.ISM_SINGLE_SHOT:
+                    self.disconnect()
                     return
                 rslt, frame = self.vc.read()
                 if rslt: # Got an image
