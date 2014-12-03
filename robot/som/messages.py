@@ -42,7 +42,7 @@ CAMERA_RES_VERIFICATION_SNAPSHOT = 5
 CAMERA_RES_COUNT = 6
 CAMERA_RES_NONE = CAMERA_RES_COUNT
 
-class MessageBase(struct.Sturct):
+class MessageBase(struct.Struct):
     "Base class for messages implemented in Python"
 
     ID = 0
@@ -50,11 +50,11 @@ class MessageBase(struct.Sturct):
 
     def __init__(self):
         "Initalize the structure definition from the class format field"
-        struct.Struct.__init__(self, portableNamesToStructureFormat(self.FORMAT))
+        struct.Struct.__init__(self, portableNamesToStructFormat(self.FORMAT))
 
     def serialize(self):
         "Convert python struct into C compatable binary struct"
-        return chr(self.ID) + self.pack(self._getMembers)
+        return chr(self.ID) + self.pack(*self._getMembers())
 
     def deserialize(self, buffer):
         "Deserialize the received buffer"
