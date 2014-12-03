@@ -42,36 +42,52 @@ CAMERA_RES_VERIFICATION_SNAPSHOT = 5
 CAMERA_RES_COUNT = 6
 CAMERA_RES_NONE = CAMERA_RES_COUNT
 
+class MessageBase(struct.Sturct):
+    "Base class for messages implemented in Python"
 
-class ImageRequest(struct.Struct):
+    ID = 0
+    FOMAT = []
+
+    def __init__(self):
+        "Initalize the structure definition from the class format field"
+        struct.Struct.__init__(self, portableNamesToStructureFormat(self.FORMAT))
+
+    def serialize(self):
+        "Convert python struct into C compatable binary struct"
+        return chr(self.ID) + self.pack(self._getMembers)
+
+    def deserialize(self, buffer):
+        "Deserialize the received buffer"
+        assert ord(buffer[0]) == self.ID, ("Wrong message ID: %s, expected %d" % (buffer[0], self.ID))
+        self._setMembers(*self.unpack(buffer[1:]))
+
+
+class ImageRequest(MessageBase):
     "ImageRequest message implementation for Python"
 
     ID = 20
-    FORMAT = ["u8", # ID
-              "u8", # imageSendMode
+    FORMAT = ["u8", # imageSendMode
               "u8", # Resolution
              ]
 
     def __init__(self, buffer=None):
-        struct.Struct.__init__(self, portableNamesToStructFormat(self.FORMAT))
+        MessageBase.__init__(self)
         self.imageSendMode = IE_NONE
         self.resolution = CAMERA_RES_NONE
         if buffer:
             self.deserialize(buffer)
 
-    def serialize(self):
-        "Convert python struct into C compatable binary struct"
-        return self.pack(self.ID, self.imageSendMode, self.resolution)
+    def _getMembers(self):
+        return self.imageSendMode, self.resolution
 
-    def deserialize(self, buffer):
-        "Deserialize received buffer"
-        msgId, self.imageSendMode, self.resolution = self.unpack(buffer)
-        assert msgId == self.ID, ("Wrong message id: %d vs %d" % msgId, self.ID)
+    def _setMembers(self, ism, res):
+        self.imageSendMode = ism
+        self.resolution    = res
 
     def __repr__(self):
         return "ImageRequest(%d, %d)" % (self.imageSendMode, self.resolution)
 
-class ImageChunk(struct.Struct):
+class ImageChunk(MessageBase):
     "ImageChunk message implementation for Python"
 
     IMAGE_CHUNK_SIZE = 1024
@@ -86,7 +102,7 @@ class ImageChunk(struct.Struct):
 
     def __init__(self, buffer=None):
         "Initalizes the base class with the specified member type definitions"
-        struct.Struct.__init__(self, portableNamesToStructFormat(self.FORMAT))
+        MessageBase.__init__(self)
         self.imageId = 0
         self.imageEncoding = IE_NONE
         self.chunkId = 0
@@ -95,14 +111,12 @@ class ImageChunk(struct.Struct):
         if buffer:
             self.deserialize(buffer)
 
-    def serialize(self):
+    def _getMembers(self):
         "Convert the python class into a C struct compatible serial byte buffer"
-        return chr(self.ID) + self.pack(len(self.data), self.imageId, self.imageEncoding, self.chunkId, self.resolution, self.data)
+        return len(self.data), self.imageId, self.imageEncoding, self.chunkId, self.resolution, self.data
 
-    def deserialize(self, buffer):
-        "Deserialize a received message"
-        assert buffer[0] == self.ID, ("Wrong message id: %d vs %d" % msgId, self.ID)
-        size, self.imageId, self.imageEncoding, self.chunkId, self.resolution, self.data = self.unpack(buffer[1:])
+    def _setMembers(self, *members):
+        size, self.imageId, self.imageEncoding, self.chunkId, self.resolution, self.data = members
         assert size <= self.IMAGE_CHUNK_SIZE, ("Size, %d, too large" % size)
         self.data = self.data[:size]
 
