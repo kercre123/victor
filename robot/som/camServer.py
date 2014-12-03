@@ -63,8 +63,7 @@ class ServerBase(object):
                 msg.imageEncoding = messages.IE_JPEG
                 msg.chunkId = self.chunkNumber
                 sys.stdout.write("Send frame %d chunk %d\n" % (self.frameNumber, self.chunkNumber))
-                # TODO: Set message resolution
-                # msg.resolution = ?????
+                msg.resolution = messages.CAMERA_RES_VGA # TODO: Set message resolution correctly
                 self.chunkNumber += 1
                 self.send(msg.serialize())
 
