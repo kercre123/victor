@@ -158,12 +158,14 @@ namespace Anki {
     {
       if (server.HasClient()) {
         
+        const u16 size = Messages::GetSize(msgID);
+        
+#if(USE_UDP_ROBOT_COMMS==0)
         // Send the message header (0xBEEF + timestamp + robotID + msgID)
         // For TCP comms, send timestamp immediately after the header.
         // This is needed on the basestation side to properly order messages.
         const u8 HEADER_LENGTH = 11;
         u8 header[HEADER_LENGTH];
-        const u8 size = Messages::GetSize(msgID);
         UtilMsgError packRes = SafeUtilMsgPack(header, HEADER_LENGTH, NULL, "cciic",
                     RADIO_PACKET_HEADER[0],
                     RADIO_PACKET_HEADER[1],
@@ -180,6 +182,12 @@ namespace Anki {
           printf("ERROR: Failed to send header (%d bytes sent)\n", bytesSent);
         }
         bytesSent = server.Send((char*)buffer, size);
+#else
+        char buffWithID[size+1];
+        buffWithID[0] = msgID;
+        memcpy(buffWithID+1, buffer, size);
+        u32 bytesSent = server.Send((char*)buffWithID, size+1);
+#endif
         if (bytesSent < size) {
           printf("ERROR: Failed to send msg contents (%d bytes sent)\n", bytesSent);
           DisconnectRadio();
@@ -269,7 +277,6 @@ namespace Anki {
       
 #if(USE_UDP_ROBOT_COMMS==0)
       if (server.HasClient()) {
-#endif
         const size_t bytesAvailable = RadioGetNumBytesAvailable();
         const u32 headerSize = sizeof(RADIO_PACKET_HEADER);
         if(bytesAvailable >= headerSize) {
@@ -307,7 +314,7 @@ namespace Anki {
             
               // Check that message size is correct
               Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize+4]);
-              const u8 size = Messages::GetSize(msgID);
+              const u16 size = Messages::GetSize(msgID);
               const u32 msgLen = dataLen - 1;  // Doesn't include msgID
               
               if (msgLen != size) {
@@ -322,12 +329,35 @@ namespace Anki {
               const u32 entireMsgSize = headerSize + 4 + 1 + msgLen;
               memcpy(recvBuf_, recvBuf_ + entireMsgSize, recvBufSize_ - entireMsgSize);
               recvBufSize_ -= entireMsgSize;
-              
             }
           }
         } // if bytesAvailable > 0
-#if(USE_UDP_ROBOT_COMMS==0)
       }
+#else
+
+      // Read available datagram
+      int dataSize = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
+      if (dataSize > 0) {
+        recvBufSize_ = dataSize;
+      } else if (dataSize < 0) {
+        // Something went wrong
+        DisconnectRadio();
+        return retVal;
+      } else {
+        return retVal;
+      }
+      
+      Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[0]);
+      const u16 expectedSize = Messages::GetSize(msgID);
+
+      if ((recvBufSize_ - 1) != expectedSize) {
+        PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, expectedSize, recvBufSize_ - 1);
+      }
+      
+      // Copy message contents to buffer
+      std::memcpy((void*)buffer, recvBuf_+1, expectedSize);
+      retVal = msgID;
+
 #endif
       
       return retVal;

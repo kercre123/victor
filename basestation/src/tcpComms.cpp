@@ -92,15 +92,16 @@ namespace Cozmo {
     if (it != connectedRobots_.end()) {
       
       // Wrap message in header/footer
-      // TODO: Include timestamp too?
       char sendBuf[128];
       int sendBufLen = 0;
+#if(USE_UDP_ROBOT_COMMS==0)
       memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
       sendBufLen += sizeof(RADIO_PACKET_HEADER);
       sendBuf[sendBufLen++] = p.dataLen;
+      sendBuf[sendBufLen++] = p.dataLen >> 8;
       sendBuf[sendBufLen++] = 0;
       sendBuf[sendBufLen++] = 0;
-      sendBuf[sendBufLen++] = 0;
+#endif
       memcpy(sendBuf + sendBufLen, p.data, p.dataLen);
       sendBufLen += p.dataLen;
 
@@ -241,10 +242,11 @@ namespace Cozmo {
           connectedRobots_.erase(it++);
           break;
         }
+
+#if(USE_UDP_ROBOT_COMMS==0)
         c.recvDataSize += bytes_recvd;
         //PrintRecvBuf(it->first);
-        
-        
+
         // Look for valid header
         while (c.recvDataSize >= sizeof(RADIO_PACKET_HEADER)) {
           
@@ -317,7 +319,7 @@ namespace Cozmo {
                                             );
               
               // Shift recvBuf contents down
-              const u8 entireMsgSize = HEADER_AND_TS_SIZE + 4 + dataLen;
+              const u16 entireMsgSize = HEADER_AND_TS_SIZE + 4 + dataLen;
               memcpy(c.recvBuf, c.recvBuf + entireMsgSize, c.recvDataSize - entireMsgSize);
               c.recvDataSize -= entireMsgSize;
               
@@ -329,7 +331,29 @@ namespace Cozmo {
           }
         
         } // end while (there are still messages in the recvBuf)
-          
+
+#else
+        c.recvDataSize = bytes_recvd;        
+        
+        f32 recvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        
+        #if(DO_SIM_COMMS_LATENCY)
+        recvTime += SIM_RECV_LATENCY_SEC;
+        #endif
+        
+        recvdMsgPackets_.emplace_back(std::piecewise_construct,
+                                      std::forward_as_tuple(recvTime),
+                                      std::forward_as_tuple((s32)(it->first),
+                                                            (s32)-1,
+                                                            c.recvDataSize,
+                                                            (u8*)(c.recvBuf),
+                                                            BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds())
+                                      );
+        
+        c.recvDataSize = 0;
+#endif
+        
+        
       } // end while(1) // keep reading socket until no bytes
       
     } // end for (each robot)
