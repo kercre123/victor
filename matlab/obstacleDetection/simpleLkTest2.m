@@ -20,7 +20,13 @@ function simpleLkTest2(varargin)
     runFlowComputation = false;
     runStereoComputation = true;
     
-    onlyHorizontalStereoFlow = false;
+    onlyHorizontalStereoFlow = true;
+    
+    flowOffsets = {[0,0]};
+    
+%     stereoOffsets = {[0,0]};
+%     stereoOffsets = {[0,0], [-32,0], [-64,0], [-96,0], [-128,0]};
+    stereoOffsets = {[0,0], [64,0]};
     
     saveOutputToFile = false;
     outputFilenamePrefix = '/Users/pbarnum/Documents/tmp/output/lkOutput2_';
@@ -72,6 +78,16 @@ function simpleLkTest2(varargin)
         masks = {ones(480,640), ones(480,640)};
     end
     
+    reverseFlowOffsets = cell(size(flowOffsets));
+    for i = 1:length(flowOffsets)
+        reverseFlowOffsets{i} = -flowOffsets{i};
+    end
+    
+    reverseStereoOffsets = cell(size(flowOffsets));
+    for i = 1:length(stereoOffsets)
+        reverseStereoOffsets{i} = -stereoOffsets{i};
+    end
+    
     iImageNumber = 1;
     
     if useLiveFeed
@@ -118,7 +134,7 @@ function simpleLkTest2(varargin)
         end
         
         % Compute the flow
-        if runFlowComputation
+        if runFlowComputation           
             allFlowPoints = {};
             for iImage = 1:length(images)
                 curImage = images{iImage};
@@ -128,11 +144,10 @@ function simpleLkTest2(varargin)
                 curFlowPoints = {};
                 
                 for iWindowSize = 1:length(windowSizes)
-                    
-                    [points1, status, err, goodPoints0, goodPoints1] = computeFlow(lastImage, curImage, points0, windowSizes{iWindowSize}, flow_lk_params, filterFlowWithErrThreshold, maxErr, filterFlowWithMinimanessThreshold);
+                    [points1, status, err, goodPoints0, goodPoints1] = computeFlow(lastImage, curImage, points0, windowSizes{iWindowSize}, flow_lk_params, filterFlowWithErrThreshold, maxErr, filterFlowWithMinimanessThreshold, flowOffsets, false);
                     
                     if leftRightCheck
-                        [points0B, statusB, errB, ~, ~] = computeFlow(curImage, lastImage, points1, windowSizes{iWindowSize}, flow_lk_params, filterFlowWithErrThreshold, maxErr, filterFlowWithMinimanessThreshold);
+                        [points0B, statusB, errB, ~, ~] = computeFlow(curImage, lastImage, points1, windowSizes{iWindowSize}, flow_lk_params, filterFlowWithErrThreshold, maxErr, filterFlowWithMinimanessThreshold, reverseFlowOffsets, false);
                         
                         for iPoint = 1:length(points0)
                             dist = sqrt(sum((points0{iPoint} - points0B{iPoint}).^2));
@@ -196,62 +211,61 @@ function simpleLkTest2(varargin)
         end % if runFlowComputation
         
         % Stereo
-        if runStereoComputation
+        if runStereoComputation && length(images) == 2       
             stereoImagesToShow = {};
-            if length(images) == 2
-                % Compute the stereo
-                allStereoPoints = {};
-                for iWindowSize = 1:length(windowSizes)
-                    [points1, status, err, goodPoints0, goodPoints1] = computeFlow(images{1}, images{2}, points0, windowSizes{iWindowSize}, stereo_lk_params, false, 0, false, onlyHorizontalStereoFlow);
+            
+            % Compute the stereo
+            allStereoPoints = {};
+            for iWindowSize = 1:length(windowSizes)
+                [points1, status, err, goodPoints0, goodPoints1] = computeFlow(images{1}, images{2}, points0, windowSizes{iWindowSize}, stereo_lk_params, false, 0, false, stereoOffsets, onlyHorizontalStereoFlow);
+
+                if leftRightCheck
+                    [points0B, statusB, errB, ~, ~] = computeFlow(images{2}, images{1}, points1, windowSizes{iWindowSize}, stereo_lk_params, false, 0, false, reverseStereoOffsets, onlyHorizontalStereoFlow);
                     
-                    if leftRightCheck
-                        [points0B, statusB, errB, ~, ~] = computeFlow(images{2}, images{1}, points1, windowSizes{iWindowSize}, stereo_lk_params, false, 0, false, onlyHorizontalStereoFlow);
-                        
-                        for iPoint = 1:length(points0)
-                            dist = sqrt(sum((points0{iPoint} - points0B{iPoint}).^2));
-                            if dist > leftRightCheckThreshold
-                                statusB(iPoint) = 0;
-                            end
-                        end % for iPoint = 1:length(points0)
-                        
-                        goodPoints0B = points0B(statusB==1);
-                        goodPoints1B = points1(statusB==1);
-                    else
-                        points0B = [];
-                        statusB = [];
-                        errB = [];
-                        goodPoints0B = [];
-                        goodPoints1B = [];
-                    end
-                    
-                    allStereoPoints{end+1} = struct(...
-                        'points1', {points1},...
-                        'status', {status},...
-                        'err', {err},...
-                        'goodPoints0', {goodPoints0},...
-                        'goodPoints1', {goodPoints1},...
-                        'points0B', {points0B}, ...
-                        'statusB', {statusB},...
-                        'errB', {errB},...
-                        'goodPoints0B', {goodPoints0B},...
-                        'goodPoints1B', {goodPoints1B},...
-                        'curImage', {images{1}},...
-                        'lastImage', {images{2}},...
-                        'windowSize', windowSizes(iWindowSize)); %#ok<AGROW>
-                end % for iWindowSize = 1:length(windowSizes)
-                
-                % Draw the stereo matches
-                for iPoint = 1:length(allStereoPoints)
-                    pointsToShow = allStereoPoints{iPoint};
-                    keypointImage = drawKeypointMatches(pointsToShow.curImage, pointsToShow.goodPoints0, pointsToShow.goodPoints1, stereoDisparityColors96);
+                    for iPoint = 1:length(points0)
+                        dist = sqrt(sum((points0{iPoint} - points0B{iPoint}).^2));
+                        if dist > leftRightCheckThreshold
+                            statusB(iPoint) = 0;
+                        end
+                    end % for iPoint = 1:length(points0)
+
+                    goodPoints0B = points0B(statusB==1);
+                    goodPoints1B = points1(statusB==1);
+                else
+                    points0B = [];
+                    statusB = [];
+                    errB = [];
+                    goodPoints0B = [];
+                    goodPoints1B = [];
+                end
+
+                allStereoPoints{end+1} = struct(...
+                    'points1', {points1},...
+                    'status', {status},...
+                    'err', {err},...
+                    'goodPoints0', {goodPoints0},...
+                    'goodPoints1', {goodPoints1},...
+                    'points0B', {points0B}, ...
+                    'statusB', {statusB},...
+                    'errB', {errB},...
+                    'goodPoints0B', {goodPoints0B},...
+                    'goodPoints1B', {goodPoints1B},...
+                    'curImage', {images{1}},...
+                    'lastImage', {images{2}},...
+                    'windowSize', windowSizes(iWindowSize)); %#ok<AGROW>
+            end % for iWindowSize = 1:length(windowSizes)
+
+            % Draw the stereo matches
+            for iPoint = 1:length(allStereoPoints)
+                pointsToShow = allStereoPoints{iPoint};
+                keypointImage = drawKeypointMatches(pointsToShow.curImage, pointsToShow.goodPoints0, pointsToShow.goodPoints1, stereoDisparityColors96);
+                stereoImagesToShow{end+1} = keypointImage; %#ok<AGROW>
+
+                if leftRightCheck
+                    keypointImage = drawKeypointMatches(pointsToShow.lastImage, pointsToShow.goodPoints0B, pointsToShow.goodPoints1B, stereoDisparityColors96);
                     stereoImagesToShow{end+1} = keypointImage; %#ok<AGROW>
-                    
-                    if leftRightCheck
-                        keypointImage = drawKeypointMatches(pointsToShow.lastImage, pointsToShow.goodPoints0B, pointsToShow.goodPoints1B, stereoDisparityColors96);
-                        stereoImagesToShow{end+1} = keypointImage; %#ok<AGROW>
-                    end
-                end % for iFlow = 1:length(allFlowPoints)
-            end % if length(images) == 2
+                end
+            end % for iFlow = 1:length(allFlowPoints)
             
             imshows(stereoImagesToShow, 2);
             
@@ -259,7 +273,7 @@ function simpleLkTest2(varargin)
                 outImage = export_fig();                
                 imwrite(outImage, [outputFilenamePrefix, sprintf('stereo_%d.png', whichImageNumbers(iImageNumber-1))]);                
             end
-        end % if runStereoComputation
+        end % if runStereoComputation && length(images) == 2
         
         if pauseForEachFrame
             [~,~,c] = ginput(1);
@@ -282,14 +296,74 @@ function simpleLkTest2(varargin)
     end % while true
 end % function simpleLkTest2()
 
-function [points1, status, err, goodPoints0, goodPoints1] = computeFlow(image0, image1, points0, windowSize, lk_params, filterFlowWithErrThreshold, maxErr, filterFlowWithMinimanessThreshold, onlyHorizontalFlow)
-    [points1, status, err] = cv.calcOpticalFlowPyrLK(...
-        image0, image1, points0,...
-        'WinSize', windowSize,...
-        'MaxLevel', lk_params.maxLevel,...
-        'Criteria', lk_params.criteria,...
-        'MinEigThreshold', lk_params.minEigThreshold,...
-        'OnlyUpdateHorizontal', onlyHorizontalFlow);
+function [points1, status, err, goodPoints0, goodPoints1] = computeFlow(image0, image1, points0, windowSize, lk_params, filterFlowWithErrThreshold, maxErr, filterFlowWithMinimanessThreshold, offsets, onlyHorizontalFlow)
+    
+    halfWindowSize = floor(windowSize/2);
+    
+    diffs = Inf*ones(length(image1), 1);
+    for iOffset = 1:length(offsets)
+        offsetPoints0 = cell(size(points0));
+        for iPoint = 1:length(offsetPoints0)
+            offsetPoints0{iPoint} = points0{iPoint} + offsets{iOffset};
+        end
+        
+        [curPoints1, curStatus, curErr] = cv.calcOpticalFlowPyrLK(...
+            image0, image1, offsetPoints0,...
+            'WinSize', windowSize,...
+            'MaxLevel', lk_params.maxLevel,...
+            'Criteria', lk_params.criteria,...
+            'MinEigThreshold', lk_params.minEigThreshold,...
+            'OnlyUpdateHorizontal', onlyHorizontalFlow);
+        
+        if iOffset == 1
+            points1 = curPoints1;
+            status = zeros(size(curStatus));
+            err = curErr;
+        end
+        
+        for iPoint = 1:length(curPoints1)
+            if ~curStatus(iPoint) 
+                continue;
+            end
+
+            x0Range = round([points0{iPoint}(1)-halfWindowSize(1), points0{iPoint}(1)+halfWindowSize(1)] + 1);
+            y0Range = round([points0{iPoint}(2)-halfWindowSize(2), points0{iPoint}(2)+halfWindowSize(2)] + 1);
+
+            x1Range = round([curPoints1{iPoint}(1)-halfWindowSize(1), curPoints1{iPoint}(1)+halfWindowSize(1)] + 1);
+            y1Range = round([curPoints1{iPoint}(2)-halfWindowSize(2), curPoints1{iPoint}(2)+halfWindowSize(2)] + 1);
+
+            if min(x0Range) < 1 || max(x0Range) > size(image0,2) || min(y0Range) < 1 || max(y0Range) > size(image0,1) ||...
+               min(x1Range) < 1 || max(x1Range) > size(image1,2) || min(y1Range) < 1 || max(y1Range) > size(image1,1)
+           
+                continue;
+            end
+            
+            block0 = image0(y0Range(1):y0Range(2), x0Range(1):x0Range(2));
+            block1 = image1(y1Range(1):y1Range(2), x1Range(1):x1Range(2));
+
+            block0 = block0(:);
+            block1 = block1(:);
+
+            diff = mean(abs(block0-block1));
+            
+            if diff < diffs(iPoint)
+                diffs(iPoint) = diff;
+                points1{iPoint} = curPoints1{iPoint};
+                status(iPoint) = curStatus(iPoint);
+                err(iPoint) = curErr(iPoint);
+            end
+        end
+            
+%             inds = curStatus == 1;
+%             
+%             for ind 
+%             & curErr < err;
+%             points1(inds) = curPoints1(inds);
+%             status(inds) = curStatus(inds);
+%             err(inds) = curErr(inds);
+        
+%         keyboard
+    end
         
     if filterFlowWithErrThreshold
         status(:) = 1;
