@@ -38,7 +38,7 @@ class ServerBase(object):
     def disconnect(self):
         self.client = None
 
-    @param
+    @property
     def resolution(self):
         if self.client:
             return self.client[0].resolution
