@@ -17,16 +17,17 @@ function simpleLkTest2(varargin)
     useStereoCalibration = true;
     computeStereoBm = false;
     
-    runFlowComputation = false;
+    runFlowComputation = true;
     runStereoComputation = true;
     
-    onlyHorizontalStereoFlow = true;
+    onlyHorizontalStereoFlow = false;
+    useBlur = false;
     
     flowOffsets = {[0,0]};
     
-%     stereoOffsets = {[0,0]};
+    stereoOffsets = {[0,0]};
 %     stereoOffsets = {[0,0], [-32,0], [-64,0], [-96,0], [-128,0]};
-    stereoOffsets = {[0,0], [64,0]};
+%     stereoOffsets = {[0,0], [-128,0]};
     
     saveOutputToFile = false;
     outputFilenamePrefix = '/Users/pbarnum/Documents/tmp/output/lkOutput2_';
@@ -126,6 +127,14 @@ function simpleLkTest2(varargin)
         
         if useLiveFeed
             images = captureImages(videoCaptures, undistortMaps);
+            
+            if useBlur
+                filt = fspecial('gaussian',[21,21],5);
+                for i = 1:length(images)
+                    images{i} = imfilter(images{i}, filt);
+                    images{i} = cv.equalizeHist(images{i});
+                end
+            end
         else
             leftFilename = sprintf(filenamePattern, 'left', whichImageNumbers(iImageNumber));
             rightFilename = sprintf(filenamePattern, 'right', whichImageNumbers(iImageNumber));
@@ -256,13 +265,15 @@ function simpleLkTest2(varargin)
             end % for iWindowSize = 1:length(windowSizes)
 
             % Draw the stereo matches
-            for iPoint = 1:length(allStereoPoints)
-                pointsToShow = allStereoPoints{iPoint};
-                keypointImage = drawKeypointMatches(pointsToShow.curImage, pointsToShow.goodPoints0, pointsToShow.goodPoints1, stereoDisparityColors96);
+            for iPoints = 1:length(allStereoPoints)
+                pointsToShow = allStereoPoints{iPoints};
+                
+                
+                keypointImage = drawKeypointMatches(pointsToShow.lastImage, pointsToShow.goodPoints0, pointsToShow.goodPoints1, stereoDisparityColors96, false);
                 stereoImagesToShow{end+1} = keypointImage; %#ok<AGROW>
 
                 if leftRightCheck
-                    keypointImage = drawKeypointMatches(pointsToShow.lastImage, pointsToShow.goodPoints0B, pointsToShow.goodPoints1B, stereoDisparityColors96);
+                    keypointImage = drawKeypointMatches(pointsToShow.curImage, pointsToShow.goodPoints0B, pointsToShow.goodPoints1B, stereoDisparityColors96, false);
                     stereoImagesToShow{end+1} = keypointImage; %#ok<AGROW>
                 end
             end % for iFlow = 1:length(allFlowPoints)
