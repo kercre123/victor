@@ -218,6 +218,10 @@ class Client(object):
 
 
 if __name__ == "__main__":
-    camera = int(sys.argv[1])
-    srv = ServerUDP(camera)
-    srv.run()
+    if len(sys.argv) == 2 and sys.argv[1].isdigit():
+        camera = int(sys.argv[1])
+        srv = ServerUDP(camera)
+        srv.run()
+    elif len(sys.argv) == 3:
+        client = Client(sys.argv[1])
+        client.saveSingleImage(sys.argv[2])

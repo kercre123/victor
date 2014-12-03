@@ -76,8 +76,7 @@ class ImageChunk(struct.Struct):
 
     IMAGE_CHUNK_SIZE = 1024
     ID = 66
-    FORMAT = ["u8",   # ID
-              "u16",  # chunkSize
+    FORMAT = ["u16",  # chunkSize
               "u8",   # imageId
               "u8",   # imageEncoding
               "u8",   # chunkId
@@ -98,12 +97,12 @@ class ImageChunk(struct.Struct):
 
     def serialize(self):
         "Convert the python class into a C struct compatible serial byte buffer"
-        return self.pack(self.ID, len(self.data), self.imageId, self.imageEncoding, self.chunkId, self.resolution, self.data)
+        return chr(self.ID) + self.pack(len(self.data), self.imageId, self.imageEncoding, self.chunkId, self.resolution, self.data)
 
     def deserialize(self, buffer):
         "Deserialize a received message"
-        msgId, size, self.imageId, self.imageEncoding, self.chunkId, self.resolution, self.data = self.unpack(buffer)
-        assert msgId == self.ID, ("Wrong message id: %d vs %d" % msgId, self.ID)
+        assert buffer[0] == self.ID, ("Wrong message id: %d vs %d" % msgId, self.ID)
+        size, self.imageId, self.imageEncoding, self.chunkId, self.resolution, self.data = self.unpack(buffer[1:])
         assert size <= self.IMAGE_CHUNK_SIZE, ("Size, %d, too large" % size)
         self.data = self.data[:size]
 
