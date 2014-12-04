@@ -1,6 +1,8 @@
 % function colors = computeStereoColormap(numDisparities)
 
 % colors = computeStereoColormap(128);
+% colors = colors(:,3:-1:1); % For matlab
+
 
 function colors = computeStereoColormap(numDisparities)
     % y = r + g
