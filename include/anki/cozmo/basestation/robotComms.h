@@ -1,18 +1,18 @@
 /**
- * File: tcpComms.h
+ * File: robotComms.h
  *
  * Author: Kevin Yoon
  * Created: 1/22/2014
  *
  * Description: Interface class to allow the basestation
- * to utilize TCP socket in place of BTLE.
+ * to communicate with robots via TCP or UDP
  *
  * Copyright: Anki, Inc. 2014
  *
  **/
 
-#ifndef BASESTATION_COMMS_TCPCOMMS_H_
-#define BASESTATION_COMMS_TCPCOMMS_H_
+#ifndef BASESTATION_COMMS_ROBOTCOMMS_H_
+#define BASESTATION_COMMS_ROBOTCOMMS_H_
 
 #include <map>
 #include <vector>
@@ -55,14 +55,14 @@ namespace Cozmo {
   
   
   
-  class TCPComms : public Comms::IComms {
+  class RobotComms : public Comms::IComms {
   public:
     
     // Default constructor
-    TCPComms();
+    RobotComms();
     
     // The destructor will automatically cleans up
-    virtual ~TCPComms();
+    virtual ~RobotComms();
     
     // Returns true if we are ready to use TCP
     virtual bool IsInitialized();
@@ -152,5 +152,5 @@ namespace Cozmo {
 }  // namespace Cozmo
 }  // namespace Anki
 
-#endif  // #ifndef BASESTATION_COMMS_TCPCOMMS_H_
+#endif  // #ifndef BASESTATION_COMMS_ROBOTCOMMS_H_
 
