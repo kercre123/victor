@@ -58,7 +58,7 @@ class MessageBase(struct.Struct):
 
     def deserialize(self, buffer):
         "Deserialize the received buffer"
-        assert ord(buffer[0]) == self.ID, ("Wrong message ID: %s, expected %d" % (buffer[0], self.ID))
+        assert ord(buffer[0]) == self.ID, ("Wrong message ID: %d, expected %d" % (ord(buffer[0]), self.ID))
         self._setMembers(*self.unpack(buffer[1:]))
 
 

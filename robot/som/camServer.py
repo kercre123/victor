@@ -5,7 +5,7 @@ __author__  = "Daniel Casner"
 __version__ = "0.0.1"
 
 
-import sys, socket, time
+import sys, socket, time, math
 try:
     import numpy
     import cv2
@@ -80,7 +80,7 @@ class ServerBase(object):
                 if frame:
                     self.dataQueue = frame
                     self.chunkNumber =  0
-                    self.expectedChunks = len(frame) / messages.ImageChunk.IMAGE_CHUNK_SIZE
+                    self.expectedChunks = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
                     self.frameNumber += 1
             if len(self.dataQueue): # have a frame
                 msg = messages.ImageChunk()
@@ -89,7 +89,7 @@ class ServerBase(object):
                 msg.imageEncoding = messages.IE_JPEG
                 msg.imageChunkCount = self.expectedChunks
                 msg.chunkId = self.chunkNumber
-                sys.stdout.write("Send frame %d chunk %d\n" % (self.frameNumber, self.chunkNumber))
+                sys.stdout.write("Send frame %d chunk %d of %d\n" % (self.frameNumber, self.chunkNumber, self.expectedChunks))
                 msg.resolution = self.resolution
                 self.chunkNumber += 1
                 self.send(msg.serialize())
