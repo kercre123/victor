@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "965c0e93d18548bc2d363123c58a013153a4d84a" # Hash for the revision these python definitions are based on
+__version__ = "4b5318ae86b8725a666eab37b14f95e3e51d8f45" # Hash for the revision these python definitions are based on
 
 import struct
 
@@ -92,9 +92,10 @@ class ImageChunk(MessageBase):
 
     IMAGE_CHUNK_SIZE = 1024
     ID = 66
-    FORMAT = ["u16",  # chunkSize
-              "u8",   # imageId
+    FORMAT = ["u32",   # imageId
+              "u16",  # chunkSize
               "u8",   # imageEncoding
+              "u8",   # imageChunkCount
               "u8",   # chunkId
               "u8",   # resolution
               ("%ds" % (IMAGE_CHUNK_SIZE)) # data
@@ -105,6 +106,7 @@ class ImageChunk(MessageBase):
         MessageBase.__init__(self)
         self.imageId = 0
         self.imageEncoding = IE_NONE
+        self.imageChunkCount = 0
         self.chunkId = 0
         self.resolution = CAMERA_RES_NONE
         self.data = ""
@@ -113,10 +115,10 @@ class ImageChunk(MessageBase):
 
     def _getMembers(self):
         "Convert the python class into a C struct compatible serial byte buffer"
-        return len(self.data), self.imageId, self.imageEncoding, self.chunkId, self.resolution, self.data
+        return self.imageId, len(self.data), self.imageEncoding, self.imageChunkCount, self.chunkId, self.resolution, self.data
 
     def _setMembers(self, *members):
-        size, self.imageId, self.imageEncoding, self.chunkId, self.resolution, self.data = members
+        self.imageId, size, self.imageEncoding, self.imageChunkCount, self.chunkId, self.resolution, self.data = members
         assert size <= self.IMAGE_CHUNK_SIZE, ("Size, %d, too large" % size)
         self.data = self.data[:size]
 

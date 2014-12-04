@@ -68,6 +68,7 @@ class ServerBase(object):
                 self.disconnect()
             else:
                 self.chunkNumber = 0
+                self.expectedChunks = 0
                 self.dataQueue = ""
         if self.client:
             if not len(self.dataQueue): # Need a new frame
@@ -79,12 +80,14 @@ class ServerBase(object):
                 if frame:
                     self.dataQueue = frame
                     self.chunkNumber =  0
+                    self.expectedChunks = len(frame) / messages.ImageChunk.IMAGE_CHUNK_SIZE
                     self.frameNumber += 1
             if len(self.dataQueue): # have a frame
                 msg = messages.ImageChunk()
                 self.dataQueue = msg.takeChunk(self.dataQueue)
                 msg.imageId = self.frameNumber
                 msg.imageEncoding = messages.IE_JPEG
+                msg.imageChunkCount = self.expectedChunks
                 msg.chunkId = self.chunkNumber
                 sys.stdout.write("Send frame %d chunk %d\n" % (self.frameNumber, self.chunkNumber))
                 msg.resolution = self.resolution
