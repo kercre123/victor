@@ -4,6 +4,8 @@
 % imagePairs = captureStereoImages(0, 1);
 % filenamePattern = '~/Documents/tmp/image%d_%d.bmp'; system(sprintf('rm %s', strrep(filenamePattern, '%d', '*'))); for i=1:length(imagePairs) imwrite(imagePairs{i}{1}, sprintf(filenamePattern, 0, i)); imwrite(imagePairs{i}{2}, sprintf(filenamePattern, 1, i)); end
 
+% My printed grid pattern has squares of 24.66mmx24.66mm
+
 % To calibrate:
 % Run system('rm Calib_Results_left.mat Calib_Results_right.mat Calib_Results_stereo.mat');
 % Run calib_gui on left camera, then type system('mv Calib_Results.mat Calib_Results_left.mat');
@@ -12,13 +14,13 @@
 % imagePairs = captureStereoImages(0, 1, 'Calib_Results_stereo.mat');
 
 % To save in opencv format:
-% s = toArray(kc_left'); disp(['distCoeffs1 = [', s(1:(end-3)), sprintf('];\n')]);
-% s = toArray(kc_right'); disp(['distCoeffs2 = [', s(1:(end-3)), sprintf('];\n')]);
-% s = toArray(KK_left); disp(['cameraMatrix1 = [', s(1:(end-3)), sprintf('];\n')]);
-% s = toArray(KK_right); disp(['cameraMatrix2 = [', s(1:(end-3)), sprintf('];\n')]);
-% s = toArray(R); disp(['R = [', s(1:(end-3)), sprintf('];\n')]);
-% s = toArray(T'); disp(['T = [', s(1:(end-3)), sprintf('];\n')]);
-% disp(sprintf('imageSize = [%d, %d]\n', nx, ny));
+% s = toArray(kc_left',true); disp(['distCoeffs1 = ', s]);
+% s = toArray(kc_right',true); disp(['distCoeffs2 = ', s]);
+% s = toArray(KK_left,true); disp(['cameraMatrix1 = ', s]);
+% s = toArray(KK_right,true); disp(['cameraMatrix2 = ', s]);
+% s = toArray(R,true); disp(['R = ', s]);
+% s = toArray(T',false); disp(['T = np.array([', s(1:(end-3)), sprintf('])\n')]);
+% disp(sprintf('imageSize = (%d, %d)\n', nx, ny));
  
 function imagePairs = captureStereoImages(leftImageDeviceNumber, rightImageDeviceNumber, stereoCalibrationFilename)
     rectifyImages = false;

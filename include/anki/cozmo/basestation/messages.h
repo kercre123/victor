@@ -49,7 +49,7 @@ namespace Anki {
       
       virtual void GetBytes(u8* buffer) const = 0;
       
-      virtual u8 GetSize() const = 0;
+      virtual u16 GetSize() const = 0;
       
       static Message* CreateFromJson(const Json::Value& jsonRoot);
       

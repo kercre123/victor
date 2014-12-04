@@ -14,28 +14,28 @@ function imshows(varargin)
     figNums = 1:length(varargin);
     
     maximizeWindows = false;
-    collage = false;
+    collage = true;
     collageTitles = false;
     for i = 1:length(varargin)
         if ischar(varargin{i})
             if strcmpi(varargin{i}, 'maximize') % Maximize all figure windows
                 maximizeWindows = true;
-            elseif strcmpi(varargin{i}, 'collage') % Display images within a cell array as one image
-                collage = true;
+            elseif strcmpi(varargin{i}, 'noCollage') % Don't display images within a cell array as one image
+                collage = false;
             elseif strcmpi(varargin{i}, 'collageTitles') % Display numbers for collage
                 collage = true;
                 collageTitles = true;
             end
-        else
-            isImage = (ndims(varargin{i}) == 2 && min(size(varargin{i}) == [1,1]) == 1) || (ndims(varargin{i}) == 3 && min(size(varargin{i}) == [1,1,1]) == 1);
-            if isImage
-                figNums = figNums - 1 + varargin{i};
-            end
+         else
+             isImage = ~iscell(varargin{i}) && (ndims(varargin{i}) == 2 && min(size(varargin{i}) == [1,1]) == 1) || (ndims(varargin{i}) == 3 && min(size(varargin{i}) == [1,1,1]) == 1);
+             if isImage
+                 figNums = figNums - 1 + varargin{i};
+             end
         end
     end
     
     for i = 1:length(varargin)
-        isImage = (ndims(varargin{i}) == 2 && min(size(varargin{i}) == [1,1]) == 1) || (ndims(varargin{i}) == 3 && min(size(varargin{i}) == [1,1,1]) == 1);
+        isImage = ~iscell(varargin{i}) && (ndims(varargin{i}) == 2 && min(size(varargin{i}) == [1,1]) == 1) || (ndims(varargin{i}) == 3 && min(size(varargin{i}) == [1,1,1]) == 1);
         if ischar(varargin{i}) || isImage || isempty(varargin{i})
             continue;
         end

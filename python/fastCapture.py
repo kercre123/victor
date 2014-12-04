@@ -1,0 +1,128 @@
+import numpy as np
+import cv2
+import pdb
+import os
+
+maxImagesToSave = 10000
+
+imagesToSave = []
+
+leftCameraId = 1
+rightCameraId = 2
+captureBaseFilename = '/Users/pbarnum/Documents/tmp/stereo/stereo_'
+
+useStereoCalibration = True
+
+if useStereoCalibration:
+    # Calibration for the Spynet stereo pair
+    distCoeffs1 = np.array([[0.182998, -0.417100, 0.005281, -0.004976, 0.000000]])
+
+    distCoeffs2 = np.array([[0.165733, -0.391832, 0.002453, -0.011111, 0.000000]])
+
+    cameraMatrix1 = np.array([[726.606787, 0.000000, 321.470791],
+              [0.000000, 724.172303, 293.913773],
+              [0.000000, 0.000000, 1.000000]])
+
+    cameraMatrix2 = np.array([[743.337415, 0.000000, 308.270936],
+              [0.000000, 741.060548, 254.206903],
+              [0.000000, 0.000000, 1.000000]])
+
+    R = np.array([[0.993527, -0.023641, 0.111109],
+              [0.021796, 0.999604, 0.017785],
+              [-0.111486, -0.015248, 0.993649]])
+
+    T = np.array([-13.201223, -0.708310, 0.961289])
+
+    imageSize = (640, 480)
+
+    [R1, R2, P1, P2, Q, validPixROI1, validPixROI2] = cv2.stereoRectify(
+        cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize, R, T)
+
+    leftUndistortMapX, leftUndistortMapY = cv2.initUndistortRectifyMap(
+        cameraMatrix1, distCoeffs1, R1, P1, imageSize, cv2.CV_32FC1)
+
+    rightUndistortMapX, rightUndistortMapY = cv2.initUndistortRectifyMap(
+        cameraMatrix2, distCoeffs2, R2, P2, imageSize, cv2.CV_32FC1)
+
+print('Starting cameras...')
+
+cap0 = cv2.VideoCapture(leftCameraId)
+if cap0.isOpened():
+  print('Capture0 initialized')
+else:
+  print('Capture0 initialization failure')
+  exit(1)
+  pdb.set_trace()
+
+cap1 = cv2.VideoCapture(rightCameraId)
+if cap1.isOpened():
+  print('Capture1 initialized')
+else:
+  print('Capture1 initialization failure')
+  exit(1)
+  pdb.set_trace()
+
+for i in range(0,1):
+  ret, frame = cap0.read()
+  if frame is None:
+    print('Error 0')
+    pdb.set_trace()
+
+  ret, frame = cap1.read()
+  if frame is None:
+    print('Error 1')
+    pdb.set_trace()
+
+print('Cameras ready')
+
+saveIndex = 0
+frameNumber = 0
+while(True):
+    frameNumber += 1
+    if frameNumber > maxImagesToSave:
+        break
+
+    ret, leftImage = cap0.read()
+    ret, rightImage = cap1.read()
+
+    leftImage = cv2.cvtColor(leftImage, cv2.COLOR_BGR2GRAY)
+    rightImage = cv2.cvtColor(rightImage, cv2.COLOR_BGR2GRAY)
+
+    imagesToSave.append([leftImage, rightImage])
+
+    cv2.imshow('leftImage', leftImage)
+    cv2.imshow('rightImage', rightImage)
+
+    c = cv2.waitKey(10)
+
+    if (c & 0xFF) == ord('q'):
+        print('Breaking')
+        break
+
+print('Saving images')
+for images in imagesToSave:
+    while True:
+        leftImageFilename = captureBaseFilename + 'left_' + str(saveIndex) + '.png'
+        rightImageFilename = captureBaseFilename + 'right_' + str(saveIndex) + '.png'
+        leftRectifiedImageFilename = captureBaseFilename + 'leftRectified_' + str(saveIndex) + '.png'
+        rightRectifiedImageFilename = captureBaseFilename + 'rightRectified_' + str(saveIndex) + '.png'
+        saveIndex += 1
+        if (not os.path.isfile(leftImageFilename)) and (not os.path.isfile(rightImageFilename)) and\
+            (not os.path.isfile(leftRectifiedImageFilename)) and (not os.path.isfile(rightRectifiedImageFilename)):
+                break
+
+    cv2.imwrite(leftImageFilename, images[0])
+    cv2.imwrite(rightImageFilename, images[1])
+
+    if useStereoCalibration:
+        leftRectifiedImage = cv2.remap(images[0], leftUndistortMapX, leftUndistortMapY, cv2.INTER_LINEAR)
+        rightRectifiedImage = cv2.remap(images[1], rightUndistortMapX, rightUndistortMapY, cv2.INTER_LINEAR)
+        cv2.imwrite(leftRectifiedImageFilename, leftRectifiedImage)
+        cv2.imwrite(rightRectifiedImageFilename, rightRectifiedImage)
+
+print('Done saving images')
+
+# When everything done, release the capture
+cap0.release()
+cap1.release()
+cv2.destroyAllWindows()

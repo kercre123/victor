@@ -426,7 +426,7 @@ namespace Anki {
           streamFrameCnt = 0;
           
           
-          static u8 imgID = 0;
+          static u32 imgID = 0;
 
           // Downsample and split into image chunk message
           const u32 xRes = CameraModeInfo[nextSendImageResolution_].width;
@@ -442,6 +442,8 @@ namespace Anki {
           m.imageId = ++imgID;
           m.chunkId = 0;
           m.chunkSize = IMAGE_CHUNK_SIZE;
+          m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
+          m.imageEncoding = 0;
 
           u32 totalByteCnt = 0;
           u32 chunkByteCnt = 0;
