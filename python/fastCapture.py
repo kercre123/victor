@@ -4,6 +4,7 @@ import pdb
 import os
 from getStereoParameters import getStereoParameters
 maxImagesToSave = 10000
+from saveStereo import saveStereo
 
 imagesToSave = []
 
@@ -55,7 +56,6 @@ for i in range(0,1):
 
 print('Cameras ready')
 
-saveIndex = 0
 frameNumber = 0
 while(True):
     frameNumber += 1
@@ -81,24 +81,14 @@ while(True):
 
 print('Saving images')
 for images in imagesToSave:
-    while True:
-        leftImageFilename = captureBaseFilename + 'left_' + str(saveIndex) + '.png'
-        rightImageFilename = captureBaseFilename + 'right_' + str(saveIndex) + '.png'
-        leftRectifiedImageFilename = captureBaseFilename + 'leftRectified_' + str(saveIndex) + '.png'
-        rightRectifiedImageFilename = captureBaseFilename + 'rightRectified_' + str(saveIndex) + '.png'
-        saveIndex += 1
-        if (not os.path.isfile(leftImageFilename)) and (not os.path.isfile(rightImageFilename)) and\
-            (not os.path.isfile(leftRectifiedImageFilename)) and (not os.path.isfile(rightRectifiedImageFilename)):
-                break
-
-    cv2.imwrite(leftImageFilename, images[0])
-    cv2.imwrite(rightImageFilename, images[1])
-
     if useStereoCalibration:
         leftRectifiedImage = cv2.remap(images[0], leftUndistortMapX, leftUndistortMapY, cv2.INTER_LINEAR)
         rightRectifiedImage = cv2.remap(images[1], rightUndistortMapX, rightUndistortMapY, cv2.INTER_LINEAR)
-        cv2.imwrite(leftRectifiedImageFilename, leftRectifiedImage)
-        cv2.imwrite(rightRectifiedImageFilename, rightRectifiedImage)
+    else:
+        leftRectifiedImage = None
+        rightRectifiedImage = None
+
+    saveStereo(images[0], images[1], leftRectifiedImage, rightRectifiedImage, captureBaseFilename)
 
 print('Done saving images')
 

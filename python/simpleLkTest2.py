@@ -11,22 +11,26 @@ import os
 import anki
 import platform
 from getStereoParameters import getStereoParameters
+from saveStereo import saveStereo
 
 def captureImages(videoCaptures, undistortMaps, rightImageWarpHomography):
-    images =  []
+    imagesRaw =  []
+    imagesRectified = []
+
     for i,cap in enumerate(videoCaptures):
-        ret,image = cap.read()
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        ret,imageRaw = cap.read()
+        imageRaw = cv2.cvtColor(imageRaw, cv2.COLOR_BGR2GRAY)
 
         if undistortMaps is not None:
-            image = cv2.remap(image, undistortMaps[i]['mapX'], undistortMaps[i]['mapY'], cv2.INTER_LINEAR)
+            imageRectified = cv2.remap(imageRaw, undistortMaps[i]['mapX'], undistortMaps[i]['mapY'], cv2.INTER_LINEAR)
 
             if (i == 1) and (rightImageWarpHomography is not None):
-                image = cv2.warpPerspective(image, rightImageWarpHomography, image.shape[::-1])
+                imageRectified = cv2.warpPerspective(imageRectified, rightImageWarpHomography, imageRectified.shape[::-1])
 
-        images.append(image)
+        imagesRaw.append(imageRaw)
+        imagesRectified.append(imageRectified)
 
-    return images
+    return imagesRaw, imagesRectified
 
 def drawKeypointMatches(image, points0, points1, distanceColormap=None):
     """
@@ -102,7 +106,7 @@ def localMinimaness(image, halfWindowSize, x, y):
     return minSlope
 
 #cameraIds = [1]
-cameraIds = [0,1]
+cameraIds = [1,0]
 
 videoCaptures = []
 for cameraId in cameraIds:
@@ -113,6 +117,8 @@ undistortMaps = None
 computeStereoBm = True
 computeFlow = False
 computeStereoFlow = False
+
+captureBaseFilename = '/Users/pbarnum/tmp/stereo_'
 
 # Computed in Matlab with "toArray(computeStereoColormap(128), true)"
 
@@ -151,8 +157,8 @@ if useStereoCalibration:
         stereoParameters['cameraMatrix2'], stereoParameters['distCoeffs2'], R2, P2, stereoParameters['imageSize'], cv2.CV_32FC1)
 
     undistortMaps = []
-    undistortMaps.append({'mapX':leftUndistortMapX, 'mapY':leftUndistortMapY})
-    undistortMaps.append({'mapX':rightUndistortMapX, 'mapY':rightUndistortMapY})
+    undistortMaps.append({'mapX':leftUndistortMapX, 'mapY':leftUndistortMapY, 'roi':validPixROI1})
+    undistortMaps.append({'mapX':rightUndistortMapX, 'mapY':rightUndistortMapY, 'roi':validPixROI2})
 
 #windowSizes = [(15,15), (31,31), (51,51)]
 #windowSizes = [(31,31)]
@@ -177,7 +183,7 @@ stereo_lk_maxAngle = pi/16
 color = np.random.randint(0,255,(10000,3))
 
 # Take first frame and find corners in it
-images = captureImages(videoCaptures, undistortMaps, rightImageWarpHomography)
+imagesRaw, images = captureImages(videoCaptures, undistortMaps, rightImageWarpHomography)
 
 lastImages = images[:]
 
@@ -194,7 +200,7 @@ for image in images:
     allPoints0.append(points0)
 
 while(1):
-    images = captureImages(videoCaptures, undistortMaps, rightImageWarpHomography)
+    imagesRaw, images = captureImages(videoCaptures, undistortMaps, rightImageWarpHomography)
 
     cv2.imshow('leftImage', images[0])
     cv2.imshow('rightImage', images[1])
@@ -239,6 +245,16 @@ while(1):
             disparityToShow = disparity.copy()
             disparityToShow[disparityToShow<0] = 0
             disparityToShow = disparityToShow.astype('uint8')
+
+            roiLeft = max(undistortMaps[0]['roi'][0], undistortMaps[1]['roi'][0])
+            roiRight = min(undistortMaps[0]['roi'][0] + undistortMaps[0]['roi'][2], undistortMaps[1]['roi'][0] + undistortMaps[1]['roi'][2])
+            roiTop = max(undistortMaps[0]['roi'][1], undistortMaps[1]['roi'][1])
+            roiBottom = min(undistortMaps[0]['roi'][1] + undistortMaps[0]['roi'][3], undistortMaps[1]['roi'][1] + undistortMaps[1]['roi'][3])
+
+            disparityToShow[:,:roiLeft] = 0
+            disparityToShow[:,roiRight:] = 0
+            disparityToShow[:roiTop,:] = 0
+            disparityToShow[roiBottom:,:] = 0
 
             cv2.imshow('stereoBM_' + str(windowSize), disparityToShow)
 
@@ -344,6 +360,8 @@ while(1):
     if keypress & 0xFF == ord('q'):
         print('Breaking')
         break
+    elif keypress & 0xFF == ord('c'):
+        saveStereo(imagesRaw[0], imagesRaw[1], images[0], images[1], captureBaseFilename)
     elif keypress & 0xFF == ord('a'):
         print('Auto-calibrating stereo')
         goodPoints0 = allStereoPoints[0]['goodPoints0']
