@@ -4,6 +4,7 @@ import cv2
 import pdb
 import os
 #from matplotlib import pyplot as plt
+from getStereoParameters import getStereoParameters
 
 leftCameraId = 1
 rightCameraId = 0
@@ -14,35 +15,15 @@ disparityType = 'bm'
 useStereoCalibration = True
 
 if useStereoCalibration:
-    # Calibration for the Spynet stereo pair
-    distCoeffs1 = np.array([[0.164272, -0.376660, 0.000841, -0.013974, 0.000000]])
+    stereoParameters = getStereoParameters(True)
 
-    distCoeffs2 = np.array([[0.168726, -0.365303, 0.006350, -0.007782, 0.000000]])
-
-    cameraMatrix1 = np.array([[740.272685, 0.000000, 303.320456],
-              [0.000000, 737.724452, 250.412135],
-              [0.000000, 0.000000, 1.000000]])
-
-    cameraMatrix2 = np.array([[723.767887, 0.000000, 317.103693],
-              [0.000000, 721.290002, 295.642274],
-              [0.000000, 0.000000, 1.000000]])
-
-    R = np.array([[0.999395, 0.030507, -0.016679],
-              [-0.030129, 0.999293, 0.022470],
-              [0.017353, -0.021954, 0.999608]])
-
-    T = np.array([-13.399603, 0.297130, 0.749115])
-
-    imageSize = (640, 480)
-
-    [R1, R2, P1, P2, Q, validPixROI1, validPixROI2] = cv2.stereoRectify(
-        cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize, R, T)
+    [R1, R2, P1, P2, Q, validPixROI1, validPixROI2] = cv2.stereoRectify(stereoParameters['cameraMatrix1'], stereoParameters['distCoeffs1'], stereoParameters['cameraMatrix2'], stereoParameters['distCoeffs2'], stereoParameters['imageSize'], stereoParameters['R'], stereoParameters['T'])
 
     leftUndistortMapX, leftUndistortMapY = cv2.initUndistortRectifyMap(
-        cameraMatrix1, distCoeffs1, R1, P1, imageSize, cv2.CV_32FC1)
+        stereoParameters['cameraMatrix1'], stereoParameters['distCoeffs1'], R1, P1, stereoParameters['imageSize'], cv2.CV_32FC1)
 
     rightUndistortMapX, rightUndistortMapY = cv2.initUndistortRectifyMap(
-        cameraMatrix2, distCoeffs2, R2, P2, imageSize, cv2.CV_32FC1)
+        stereoParameters['cameraMatrix2'], stereoParameters['distCoeffs2'], R2, P2, stereoParameters['imageSize'], cv2.CV_32FC1)
 
 if computeDisparity:
     numDisparities = 128
