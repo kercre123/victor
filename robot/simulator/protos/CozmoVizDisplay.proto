@@ -4,7 +4,7 @@ PROTO CozmoVizDisplay
 [ 
   # Resolution of incoming camera images.
   # Set this to match IMG_STREAM_RES in cozmoConfig.h
-  field SFString streamResolution "QQQVGA"
+  field SFString streamResolution "QQVGA"
 ]
 {
 Supervisor {
@@ -55,7 +55,12 @@ Supervisor {
       ]
       name "cozmo_cam_viz_display"
 
-      %{ if fields.streamResolution == "QVGA" then }%
+
+      %{ if fields.streamResolution == "VGA" then }%
+      width 640
+      height 480
+      pixelSize 0.5
+      %{ elseif fields.streamResolution == "QVGA" then }%
       width 320
       height 240
       pixelSize 1

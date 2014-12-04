@@ -25,6 +25,8 @@
 
 #include <fstream>
 
+#include "opencv2/opencv.hpp"
+
 namespace Anki {
   namespace Cozmo {
     
@@ -272,25 +274,27 @@ namespace Anki {
     // Sends complete images to VizManager for visualization (and possible saving).
     Result MessageHandler::ProcessMessage(Robot* robot, MessageImageChunk const& msg)
     {
-      static u8 imgID = 0;
+      static u32 imgID = 0;
       static u32 totalImgSize = 0;
-      static u8 data[ 320*240 ];
+      static u8 data[ 3*640*480 ];
       static u32 dataSize = 0;
       static u32 width;
       static u32 height;
       
-      //PRINT_INFO("Img %d, chunk %d, size %d, res %d, dataSize %d\n",
-      //           msg.imageId, msg.chunkId, msg.chunkSize, msg.resolution, dataSize);
+      // Whether or not the current image that is being composed is valid.
+      // A dropped chunk can invalidate an image.
+      static bool isImgValid = false;
+      static u8 expectedChunkId = 0;
+      
+      //PRINT_INFO("Img %d, chunk %d, totalChunks %d, size %d, res %d, encoding %d, dataSize %d\n",
+      //           msg.imageId, msg.chunkId, msg.imageChunkCount, msg.chunkSize, msg.resolution, msg.imageEncoding, dataSize);
       
       // Check that resolution is supported
-      if (msg.resolution != Vision::CAMERA_RES_QVGA &&
-          msg.resolution != Vision::CAMERA_RES_QQVGA &&
-          msg.resolution != Vision::CAMERA_RES_QQQVGA &&
-          msg.resolution != Vision::CAMERA_RES_QQQQVGA &&
-          msg.resolution != Vision::CAMERA_RES_VERIFICATION_SNAPSHOT
-          ) {
+      if (msg.resolution >= Vision::CAMERA_RES_COUNT) {
         return RESULT_FAIL;
       }
+      
+      bool isLastChunk =  msg.chunkId == msg.imageChunkCount-1;
       
       // If msgID has changed, then start over.
       if (msg.imageId != imgID) {
@@ -299,15 +303,83 @@ namespace Anki {
         width = Vision::CameraResInfo[msg.resolution].width;
         height = Vision::CameraResInfo[msg.resolution].height;
         totalImgSize = width * height;
+        isImgValid = msg.chunkId == 0;
+        expectedChunkId = 0;
       }
       
-      // Msgs are guaranteed to be received in order so just append data to array
+      // Check if a chunk was received out of order
+      if (msg.chunkId != expectedChunkId) {
+        PRINT_NAMED_INFO("MessageImageChunk.ChunkDropped",
+                         "Expected chunk %d, got %d\n", expectedChunkId, msg.chunkId);
+        isImgValid = false;
+      }
+      expectedChunkId = msg.chunkId + 1;
+      
+      if (!isImgValid) {
+        if (isLastChunk) {
+          PRINT_NAMED_INFO("MessageImageChunk.IncompleteImage",
+                           "Received last chunk of invalidated image\n");
+        }
+        return RESULT_FAIL;
+      }
+      
+      
+      // Msgs are guaranteed to be received in order (with TCP) so just append data to array
       memcpy(data + dataSize, msg.data.data(), msg.chunkSize);
       dataSize += msg.chunkSize;
       
-      // When dataSize matches the expected size, print to file
-      if (dataSize >= totalImgSize) {
-        VizManager::getInstance()->SendGreyImage(robot->GetID(), data, (Vision::CameraResolution)msg.resolution);
+      // We've received all data when the msg chunkSize is less than the max
+      u32 imgBytes = 0;
+      cv::Mat rawImg;
+      if (isLastChunk) {
+
+        // Decompress image if necessary
+        if (msg.imageEncoding > 0) {
+
+          vector<u8> inputVec(data, data+dataSize);
+          rawImg = cv::imdecode(inputVec, CV_LOAD_IMAGE_GRAYSCALE);
+
+          // Check size
+          u32 w = rawImg.cols;
+          u32 h = rawImg.rows;
+          u32 numChannels = rawImg.channels();
+          imgBytes = w * h * numChannels;
+          //PRINT_INFO("rawImg size: %u x %u (channels %d)\n", w, h, numChannels);
+        } else {
+          // Already decompressed.
+          // Raw image bytes is the same as total received bytes.
+          imgBytes = dataSize;
+        }
+        
+        // Make sure the final image contains the expected number of bytes
+        if (imgBytes != totalImgSize) {
+          PRINT_NAMED_WARNING("MessageImageChunk.WrongNumBytesInImg",
+                              "Expected %d bytes in decompressed image. Got %d bytes\n", totalImgSize, imgBytes);
+        } else {
+          
+          // Send image to Viz
+          u8* imgToSend = data;
+          if (msg.imageEncoding > 0) {
+            /*
+            // Write image to file (recompressing as jpeg again!)
+            vector<int> compression_params;
+            compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+            compression_params.push_back(90);
+            imwrite("torpedo.jpg", rawImg);
+            */
+            
+            imgToSend = rawImg.data;
+          }
+          VizManager::getInstance()->SendGreyImage(robot->GetID(), imgToSend, (Vision::CameraResolution)msg.resolution);
+
+          
+          // TODO: Stuff and things on the image that imgToSend now points to.
+          // ...
+          
+        }
+
+        imgID = 0;
+        isImgValid = false;
       }
       
       return RESULT_OK;
