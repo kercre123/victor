@@ -18,13 +18,13 @@ DEFAULT_PORT = 9000
 class ServerBase(object):
     "imageChunk server base class"
 
-    CAMERA_RES_NONE = {
-        messages.CAMERA_RES_VGA: (640.0, 480.0),
-        messages.CAMERA_RES_QVGA: (320.0, 240.0),
-        messages.CAMERA_RES_QQVGA: (160.0, 120.0),
-        messages.CAMERA_RES_QQQVGA: (80.0, 60.0),
-        messages.CAMERA_RES_QQQQVGA: (40.0, 30.0),
-        messages.CAMERA_RES_NONE: (0.0, 0.0)
+    RESOLUTION_TUPLES = {
+        messages.CAMERA_RES_VGA: (640, 480),
+        messages.CAMERA_RES_QVGA: (320, 240),
+        messages.CAMERA_RES_QQVGA: (160, 120),
+        messages.CAMERA_RES_QQQVGA: (80, 60),
+        messages.CAMERA_RES_QQQQVGA: (40, 30),
+        messages.CAMERA_RES_NONE: (0, 0)
     }
 
     def __init__(self, camera, encoding, encodingParams=[]):
@@ -49,8 +49,8 @@ class ServerBase(object):
         "Get the encoded bytes for the next image, returns image"
         rslt, frame = self.vc.read()
         if rslt:
-            frame = cv2.resize(frame, self.CAMERA_RES_NONE[self.resolution])
-            rslt, frame = cv2.imencode(self.encoding, self.frame, self.encodingParams)
+            frame = cv2.resize(frame, self.RESOLUTION_TUPLES[self.resolution])
+            rslt, frame = cv2.imencode(self.encoding, frame, self.encodingParams)
             if rslt:
                 return frame.tostring()
             else:
