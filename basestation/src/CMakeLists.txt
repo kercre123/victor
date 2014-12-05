@@ -9,16 +9,24 @@ file(GLOB SOURCE_FILES_COMMS "comms/*.cpp")
 file(GLOB HEADER_FILES_COMMS "comms/*.h")
 
 # ui subdirectory
-file(GLOB SOURCE_FILES_UI "comms/*.cpp")
-file(GLOB HEADER_FILES_UI "comms/*.h")
+file(GLOB SOURCE_FILES_UI "ui/*.cpp")
+file(GLOB HEADER_FILES_UI "ui/*.h")
+
+# ui/messaging subdirectory
+file(GLOB SOURCE_FILES_UI_MSG "ui/messaging/*.cpp")
+file(GLOB HEADER_FILES_UI_MSG "ui/messaging/*.h")
 
 # recording subdirectory
-file(GLOB SOURCE_FILES_RECORDING "comms/*.cpp")
-file(GLOB HEADER_FILES_RECORDING "comms/*.h")
+file(GLOB SOURCE_FILES_RECORDING "recording/*.cpp")
+file(GLOB HEADER_FILES_RECORDING "recording/*.h")
 
 # utils subdirectory
-file(GLOB SOURCE_FILES_UTILS "comms/*.cpp")
-file(GLOB HEADER_FILES_UTILS "comms/*.h")
+file(GLOB SOURCE_FILES_UTILS "utils/*.cpp")
+file(GLOB HEADER_FILES_UTILS "utils/*.h")
+
+# utils/parsingConstants subdirectory
+file(GLOB SOURCE_FILES_UTILS_PARSECONSTS "utils/parsingConstants/*.cpp")
+file(GLOB HEADER_FILES_UTILS_PARSECONSTS "utils/parsingConstants/*.h")
 
 # BLEManager subdirectory (not on iOS)
 if(NOT ANKI_IOS_BUILD)
@@ -29,21 +37,25 @@ else()
   set(HEADER_FILES_BLEMGR )
 endif(NOT ANKI_IOS_BUILD)
 
-list(APPEND PRIVATE_HEADER_FILES 
+set(PRIVATE_HEADER_FILES 
   ${HEADER_FILES_ROOT} 
   ${HEADER_FILES_COMMS}
   ${HEADER_FILES_UI}
+  ${HEADER_FILES_UI_MSG}
   ${HEADER_FILES_RECORDING}
   ${HEADER_FILES_UTILS}
+  ${HEADER_FILES_UTILS_PARSECONSTS}
   ${HEADER_FILES_BLEMGR}
 )
 
-list(APPEND SOURCE_FILES
+set(SOURCE_FILES
   ${SOURCE_FILES_ROOT}
   ${SOURCE_FILES_COMMS}
   ${SOURCE_FILES_UI}
+  ${SOURCE_FILES_UI_MSG}
   ${SOURCE_FILES_RECORDING}
   ${SOURCE_FILES_UTILS}
+  ${SOURCE_FILES_UTILS_PARSECONSTS}
   ${SOURCE_FILES_BLEMGR}
 )
 
