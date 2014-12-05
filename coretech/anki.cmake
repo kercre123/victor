@@ -348,6 +348,14 @@ endif(WIN32)
 endmacro(ankiProject)
 
 #
+# A helper macro for setting xcode properties
+#  
+macro(set_xcode_property targ xc_prop_name xc_prop_val)
+    set_property( TARGET ${targ} PROPERTY XCODE_ATTRIBUTE_${xc_prop_name} ${xc_prop_val} )
+endmacro(set_xcode_property)
+
+
+#
 # A helper macro (read: hack) for appending "248d" to the opencv library names.
 #
 function(fix_opencv_lib_names NAMES)
