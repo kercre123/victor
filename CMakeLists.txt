@@ -26,9 +26,19 @@ if(ANKI_IOS_BUILD)
   set(EMBEDDED_USE_MATLAB 0)
   message(STATUS "Doing iOS build. Forcibly disabling Matlab use.")
   
+  ankiProject(Cozmo_iOS)
+  
+  # TODO: this is a weird place for this, but until we have an external iOS build, it's the only
+  #       thing we need from coretech-external for the iOS build, so i'm just doing it here for simplicity
+  add_subdirectory(${PROJECT_SOURCE_DIR}/../coretech-external/jsoncpp "${CMAKE_CURRENT_BINARY_DIR}/jsoncpp")
+  
+else()
+  
+  ankiProject(Cozmo)
+    
 endif(ANKI_IOS_BUILD)
 
-ankiProject(Cozmo)
+
 
 set(COZMO_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 file(GLOB COZMO_INCLUDE_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/shared/*.h")
