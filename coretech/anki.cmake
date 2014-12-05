@@ -379,7 +379,7 @@ endfunction(fix_opencv_lib_names)
 macro(build_mex MEX_FILE)
 
 if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB) )
-  #message(STATUS "Adding mex file ${MEX_FILE}, linked against ${MEX_LINK_LIBRARIES}")
+  message(STATUS "Adding mex file ${MEX_FILE}, linked against ${MEX_LINK_LIBRARIES}")
 
   set(CC ${MEX_COMPILER})
   set(CXX ${MEX_COMPILER})

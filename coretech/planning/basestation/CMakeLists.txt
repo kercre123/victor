@@ -3,4 +3,7 @@
 add_definitions(-DCORETECH_BASESTATION)
 
 add_subdirectory(src)
-add_subdirectory(test)
+
+if(NOT ANKI_IOS_BUILD)
+  add_subdirectory(test)
+endif()
