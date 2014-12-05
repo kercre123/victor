@@ -17,7 +17,14 @@
 #ifndef ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 #define ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 
-#define ANKI_COZMO_USE_MATLAB_VISION 1
+#if ANKICORETECH_USE_MATLAB
+   // You can manually adjust this one
+#  define ANKI_COZMO_USE_MATLAB_VISION 1
+#else
+   // Leave this one always set to 0
+#  define ANKI_COZMO_USE_MATLAB_VISION 0
+#endif
+
 
 #include "anki/common/types.h"
 
