@@ -16,6 +16,8 @@ if(ANKI_IOS_BUILD)
   
   set(CMAKE_XCODE_EFFECTIVE_PLATFORMS "-iphoneos;-iphonesimulator") 
 
+  set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "6.0")
+
   add_definitions(-DANKI_IOS_BUILD=1)
     
   # Matlab won't run on the phone of course, so override defaults or command-line
