@@ -381,7 +381,6 @@ function simpleLkTest2(varargin)
             disparity(:, [1:20, (end-20:end)]) = 0;
             disparity([1:20, (end-20):end], :) = 0;
             
-            interpolateMissing = false;
             if interpolateMissing
                 maxInterpolationGap = 5;
                 minInterpolationGapRatio = 0.85;
