@@ -1,5 +1,5 @@
 
-% function lucasKande_warpGroundTruth()
+% function warpProjective()
 
 % image: input image (must be type double)
 % H: 3x3 projective transform matrix
@@ -11,12 +11,12 @@
 % If a transformed point is outside of the volume, NaN is used
 
 % Simple case
-% result = lucasKande_warpGroundTruth(ones(60,80), [cos(.1), -sin(.1), 20; sin(.1), cos(.1), 20; 0,0,1], 2*[60,80]);
+% result = warpProjective(ones(60,80), [cos(.1), -sin(.1), 20; sin(.1), cos(.1), 20; 0,0,1], 2*[60,80]);
 
 % Add a horizontal box as a regionOfInterest
-% result = lucasKande_warpGroundTruth(ones(60,80), [cos(.1), -sin(.1), 20; sin(.1), cos(.1), 20; 0,0,1], 2*[60,80], [30,30;60,30;60,40;30,40]);
+% result = warpProjective(ones(60,80), [cos(.1), -sin(.1), 20; sin(.1), cos(.1), 20; 0,0,1], 2*[60,80], [30,30;60,30;60,40;30,40]);
 
-function [result, mask, warpedMask] = lucasKande_warpGroundTruth(image, H, outputImageSize, regionOfInterestQuad, interpMethod)
+function [result, mask, warpedMask] = warpProjective(image, H, outputImageSize, regionOfInterestQuad, interpMethod)
 
 outputImageSize = double(outputImageSize(1:2));
  
