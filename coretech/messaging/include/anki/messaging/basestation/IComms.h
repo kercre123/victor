@@ -11,6 +11,7 @@
 
 #include <string.h>
 #include "anki/common/types.h"
+#include "anki/common/basestation/exceptions.h"
 
 namespace Anki {
   namespace Comms {
@@ -31,13 +32,15 @@ namespace Anki {
     class MsgPacket {
     public:
       MsgPacket(){};
-      MsgPacket(const s32 sourceId, const s32 destId, const u8 dataLen, const u8* data, const BaseStationTime_t timestamp = 0) :
+      MsgPacket(const s32 sourceId, const s32 destId, const u16 dataLen, const u8* data, const BaseStationTime_t timestamp = 0) :
       dataLen(dataLen), sourceId(sourceId), destId(destId), timeStamp(timestamp) {
+        CORETECH_ASSERT(dataLen <= MAX_SIZE);
         memcpy(this->data, data, dataLen);
       }
       
-      u8 data[256];
-      u8 dataLen = 0;
+      static const int MAX_SIZE = 2048;
+      u8 data[MAX_SIZE];   // TODO: Make this a vector?
+      u16 dataLen = 0;
       s32 sourceId = -1;
       s32 destId = -1;
       BaseStationTime_t timeStamp = 0;

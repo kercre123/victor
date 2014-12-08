@@ -231,6 +231,11 @@ namespace Anki {
      *
      **************************************************************************/
     
+    // Comms type for Basestation-robot comms
+    // 0: Use TCP
+    // 1: Use UDP
+    #define USE_UDP_ROBOT_COMMS 1
+    
     // Packet headers/footers:
     // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
     const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
@@ -298,7 +303,7 @@ namespace Anki {
 #endif
 
     // Resolution of images that are streamed to basestation (dev purposes)
-    const Vision::CameraResolution IMG_STREAM_RES = Vision::CAMERA_RES_QQQVGA;
+    const Vision::CameraResolution IMG_STREAM_RES = Vision::CAMERA_RES_QQVGA;
     
     // Number of frames to skip when streaming images to basestation
     const u8 IMG_STREAM_SKIP_FRAMES = 2;

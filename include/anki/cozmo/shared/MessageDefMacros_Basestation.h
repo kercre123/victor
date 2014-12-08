@@ -137,7 +137,7 @@ public: \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const u8* buffer); \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const Json::Value& root); \
   virtual u8 GetID() const; \
-  virtual u8 GetSize() const; \
+  virtual u16 GetSize() const; \
   virtual void GetBytes(u8* buffer) const; \
   virtual Json::Value CreateJson() const;
 
@@ -222,7 +222,7 @@ u8 GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetID() const { \
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_CLASS_GETSIZE_MODE
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-u8 GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetSize() const { \
+u16 GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetSize() const { \
 return
 
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) sizeof(__TYPE__) +

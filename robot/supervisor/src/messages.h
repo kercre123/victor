@@ -45,7 +45,7 @@ namespace Anki {
       } ID;
       
       // Return the size of a message, given its ID
-      u8 GetSize(const ID msgID);
+      u16 GetSize(const ID msgID);
       
       // Return a const reference to the current robot state message
       RobotState const& GetRobotStateMsg();
