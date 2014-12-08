@@ -6,9 +6,10 @@
 
 function testGroundPlaneWarping()
     
-    maxMatchDistance = 2; % number of pixels
+    maxMatchDistance = 4; % number of pixels
     
-    testFeature = 'SIFT';
+    testFeature = 'ORB';
+%     testFeature = 'SIFT';
     
     image = rgb2gray2(imread('~/Documents/Anki/products-cozmo-large-files/peopleScanned640x480.png'));
     maxDimension = max(size(image));
@@ -49,18 +50,18 @@ function testGroundPlaneWarping()
     
     baseKeypointLocations = ones(3, length(baseKeypoints));
     for i = 1:length(baseKeypoints)
-        baseKeypointLocations(1:2, i) = baseKeypoints(i).pt;
+        baseKeypointLocations(1:2, i) = baseKeypoints(i).pt + 1;
     end % for iKeypoint = 1:length(baseKeypoints)
     
-    figure(1);
-    hold off;
-    imshows(largeImage, 1);
-    hold on;
-    scatter(baseKeypointLocations(1,:)+1, baseKeypointLocations(2,:)+1);
+%     figure(1);
+%     hold off;
+%     imshows(largeImage, 1);
+%     hold on;
+%     scatter(baseKeypointLocations(1,:)+1, baseKeypointLocations(2,:)+1);
     
     rotations = linspace(0, 2*pi, 17);
     rotations = rotations(1:(end-1));
-%     rotations = .9*pi;
+%     rotations = pi;
     
     for iRotation = 1:length(rotations)
         theta = rotations(iRotation);
@@ -115,32 +116,52 @@ function testGroundPlaneWarping()
             curKeypointLocations(1:2, i) = curKeypoints(i).pt;
         end % for iKeypoint = 1:length(curKeypoints)
         
-        figure(2);
-        hold off;
-        imshows(warpedImage, 2);
-        hold on;
-        scatter(curKeypointLocations(1,:)+1, curKeypointLocations(2,:)+1);
-        
-        
-        
+%         figure(2);
+%         hold off;
+%         imshows(warpedImage, 2);
+%         hold on;
+%         scatter(curKeypointLocations(1,:)+1, curKeypointLocations(2,:)+1);
+
+        imshows({largeImage,warpedImage})
+                
         warpedKeypointLocations = homography * baseKeypointLocations;
         warpedKeypointLocations = warpedKeypointLocations(1:2,:) ./ repmat(warpedKeypointLocations(3,:),[2,1]);
+        
+%         figure(3);
+%         hold off;
+% %         scatter(baseKeypointLocations(1,:)+1, baseKeypointLocations(2,:)+1);
+%         scatter(baseKeypointLocations(1,1:100)+1, baseKeypointLocations(2,1:100)+1);
+%         axis([0,800,0,800]);
+%         figure(4);
+%         hold off;
+% %         scatter(warpedKeypointLocations(1,:)+1, warpedKeypointLocations(2,:)+1, 'r+');
+%         scatter(warpedKeypointLocations(1,1:100)+1, warpedKeypointLocations(2,1:100)+1, 'r+');
+%         axis([0,800,0,800]);
         
         numCorrect = 0;
         numIncorrect = 0;
         for iMatch = 1:length(matches)
+%         for iMatch = 1:50
             %             if matches(iMatch).distance < 100
             curPoint = curKeypoints(matches(iMatch).queryIdx+1).pt';
-            basePoint = warpedKeypointLocations(:, matches(iMatch).trainIdx+1);
+%             basePoint = baseKeypointLocations(:, matches(iMatch).trainIdx+1);
+            warpedBasePoint = warpedKeypointLocations(:, matches(iMatch).trainIdx+1) - 0.5;
             
-            dist = sqrt(sum((curPoint-basePoint).^2));
+%             figure(1);
+%             scatter(basePoint(1), basePoint(2), 'b+');
+%             figure(2); 
+%             scatter(curPoint(1), curPoint(2), 'b+');
+%             scatter(warpedBasePoint(1), warpedBasePoint(2), 'ro');
+            
+            dist = sqrt(sum((curPoint-warpedBasePoint).^2));
             
             if dist <= maxMatchDistance
+%                 disp(sprintf('Correct %f', dist))
                 numCorrect = numCorrect + 1;
             else
+%                 disp(sprintf('Incorrect %f', dist))
                 numIncorrect = numIncorrect + 1;
             end
-            %             end % if matches(iMatch).distance <
         end % for iKeypoint = 1:length(baseKeypoints)
         
         disp(sprintf('Rotation %0.2f accuracy is %d:%d = %0.2f%%', theta*180/pi, numCorrect, numIncorrect, 100 * numCorrect / (numCorrect+numIncorrect)))
