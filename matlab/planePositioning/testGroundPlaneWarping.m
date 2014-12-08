@@ -4,30 +4,24 @@
 % 1. Different amounts of ground plane warping
 % 2. Different accuracy of ground warp
 
-function testGroundPlaneWarping()
+function [allResults, rotations, heightRatios, widthRatios] = testGroundPlaneWarping()
     
     maxMatchDistance = 4; % number of pixels
     
-    testFeature = 'ORB';
-%     testFeature = 'SIFT';
+    testFeatureType = 'ORB';
+    %     testFeatureType = 'SIFT';
+    
+    showIntermediate = false;
     
     image = rgb2gray2(imread('~/Documents/Anki/products-cozmo-large-files/peopleScanned640x480.png'));
     maxDimension = max(size(image));
     
-    largeImage = 255 * ones(ceil(sqrt(2)*[maxDimension,maxDimension]), 'uint8');
-    
-    extraHeight2 = floor((size(largeImage,1) - size(image,1))/2);
-    extraWidth2  = floor((size(largeImage,2) - size(image,2))/2);
-    
-    yRange = [(1+extraHeight2), (extraHeight2+size(image,1))];
-    xRange = [(1+extraWidth2),  (extraWidth2+size(image,2))];
-    
-    largeImage(yRange(1):yRange(2), xRange(1):xRange(2)) = image;
+    [paddedImage, ~, ~] = testGroundPlaneWarping_padImage(image, ceil(sqrt(2)*[maxDimension,maxDimension]));
     
     patchSize = 31;
     
-    if strcmpi(testFeature, 'ORB')
-        [baseKeypoints, baseDescriptors] = cv.ORB(largeImage,...
+    if strcmpi(testFeatureType, 'ORB')
+        [baseKeypoints, baseDescriptors] = cv.ORB(paddedImage,...
             'NFeatures', 500,...
             'ScaleFactor', 1.2,...
             'NLevels', 3,...
@@ -38,8 +32,8 @@ function testGroundPlaneWarping()
         matcher = cv.DescriptorMatcher('BruteForce-L1');
         matcher.add(baseDescriptors);
         matcher.train();
-    elseif strcmpi(testFeature, 'SIFT')
-        [baseKeypoints, baseDescriptors] = cv.SIFT(largeImage);
+    elseif strcmpi(testFeatureType, 'SIFT')
+        [baseKeypoints, baseDescriptors] = cv.SIFT(paddedImage);
         
         matcher = cv.DescriptorMatcher('FlannBased');
         matcher.add(baseDescriptors);
@@ -53,123 +47,108 @@ function testGroundPlaneWarping()
         baseKeypointLocations(1:2, i) = baseKeypoints(i).pt + 1;
     end % for iKeypoint = 1:length(baseKeypoints)
     
-%     figure(1);
-%     hold off;
-%     imshows(largeImage, 1);
-%     hold on;
-%     scatter(baseKeypointLocations(1,:)+1, baseKeypointLocations(2,:)+1);
-    
     rotations = linspace(0, 2*pi, 17);
     rotations = rotations(1:(end-1));
-%     rotations = pi;
-    
-    for iRotation = 1:length(rotations)
-        theta = rotations(iRotation);
-        
-        rotation = [cos(theta), -sin(theta), 0;
-            sin(theta), cos(theta), 0;
-            0, 0, 1];
-        
-        translationF = [1, 0, -size(largeImage,2)/2;
-            0, 1, -size(largeImage,1)/2;
-            0, 0, 1];
-        
-        translationB = eye(3);
-        translationB(1:2,3) = -translationF(1:2,3);
-        
-        homography = translationB * rotation * translationF;
-        
-        [warpedImage, ~, ~] = lucasKande_warpGroundTruth(largeImage, homography, size(largeImage));
-        warpedImage = uint8(warpedImage);
-        
-        %         imshows({largeImage, uint8(warpedImage)});
-        if strcmpi(testFeature, 'ORB')
-            [curKeypoints, curDescriptors] = cv.ORB(warpedImage,...
-                'NFeatures', 500,...
-                'ScaleFactor', 1.2,...
-                'NLevels', 3,...
-                'EdgeThreshold', patchSize,...
-                'WTA_K', 2,...
-                'PatchSize', patchSize);
-            
-            matches = matcher.match(curDescriptors);
-        elseif strcmpi(testFeature, 'SIFT')
-            [curKeypoints, curDescriptors] = cv.SIFT(warpedImage);
-            
-            rawMatches = matcher.knnMatch(curDescriptors, 2);
-            matches = [];
-            for iMatch = 1:length(rawMatches)
-                if rawMatches{iMatch}(1).distance * 0.8 < rawMatches{iMatch}(2).distance
-                    if isempty(matches)
-                        matches = rawMatches{iMatch}(1);
-                    else
-                        matches(end+1) = rawMatches{iMatch}(1); %#ok<AGROW>
-                    end                    
-                end
-            end % for iMatch = 1:length(matches)
-            
-%             keyboard
-        end
-        
-        curKeypointLocations = ones(3, length(curKeypoints));
-        for i = 1:length(curKeypoints)
-            curKeypointLocations(1:2, i) = curKeypoints(i).pt;
-        end % for iKeypoint = 1:length(curKeypoints)
-        
-%         figure(2);
-%         hold off;
-%         imshows(warpedImage, 2);
-%         hold on;
-%         scatter(curKeypointLocations(1,:)+1, curKeypointLocations(2,:)+1);
 
-        imshows({largeImage,warpedImage})
+    heightRatios = 1:-0.1:0.3;
+    widthRatios = 1:-0.1:0.6;
+        
+    allDimensions = [length(rotations), length(heightRatios), length(widthRatios)];
+    allResults = struct(...
+        'rawImage',     struct('numCorrect', {zeros(allDimensions)}, 'numIncorrect', {zeros(allDimensions)}),...
+        'unwarpedImage', struct('numCorrect', {zeros(allDimensions)}, 'numIncorrect', {zeros(allDimensions)}));
+       
+    for iRotation = 1:length(rotations)
+        for iHeight = 1:length(heightRatios)
+            for iWidth = 1:length(widthRatios)
+                homography = testGroundPlaneWarping_homographyFromParameters(paddedImage, size(image), rotations(iRotation), heightRatios(iHeight), widthRatios(iWidth));
                 
-        warpedKeypointLocations = homography * baseKeypointLocations;
-        warpedKeypointLocations = warpedKeypointLocations(1:2,:) ./ repmat(warpedKeypointLocations(3,:),[2,1]);
-        
-%         figure(3);
-%         hold off;
-% %         scatter(baseKeypointLocations(1,:)+1, baseKeypointLocations(2,:)+1);
-%         scatter(baseKeypointLocations(1,1:100)+1, baseKeypointLocations(2,1:100)+1);
-%         axis([0,800,0,800]);
-%         figure(4);
-%         hold off;
-% %         scatter(warpedKeypointLocations(1,:)+1, warpedKeypointLocations(2,:)+1, 'r+');
-%         scatter(warpedKeypointLocations(1,1:100)+1, warpedKeypointLocations(2,1:100)+1, 'r+');
-%         axis([0,800,0,800]);
-        
-        numCorrect = 0;
-        numIncorrect = 0;
-        for iMatch = 1:length(matches)
-%         for iMatch = 1:50
-            %             if matches(iMatch).distance < 100
-            curPoint = curKeypoints(matches(iMatch).queryIdx+1).pt';
-%             basePoint = baseKeypointLocations(:, matches(iMatch).trainIdx+1);
-            warpedBasePoint = warpedKeypointLocations(:, matches(iMatch).trainIdx+1) - 0.5;
-            
-%             figure(1);
-%             scatter(basePoint(1), basePoint(2), 'b+');
-%             figure(2); 
-%             scatter(curPoint(1), curPoint(2), 'b+');
-%             scatter(warpedBasePoint(1), warpedBasePoint(2), 'ro');
-            
-            dist = sqrt(sum((curPoint-warpedBasePoint).^2));
-            
-            if dist <= maxMatchDistance
-%                 disp(sprintf('Correct %f', dist))
-                numCorrect = numCorrect + 1;
-            else
-%                 disp(sprintf('Incorrect %f', dist))
-                numIncorrect = numIncorrect + 1;
-            end
-        end % for iKeypoint = 1:length(baseKeypoints)
-        
-        disp(sprintf('Rotation %0.2f accuracy is %d:%d = %0.2f%%', theta*180/pi, numCorrect, numIncorrect, 100 * numCorrect / (numCorrect+numIncorrect)))
-        pause()
-    end
+                [warpedImage, ~, ~] = warpProjective(paddedImage, homography, size(paddedImage));
+                warpedImage = uint8(warpedImage);
+                
+                [unwarpedImage, ~, ~] = warpProjective(warpedImage, inv(homography), size(paddedImage));
+                unwarpedImage = uint8(unwarpedImage);
+                
+                rawImageMatches = struct();
+                [rawImageMatches.keypoints, rawImageMatches.descriptors, rawImageMatches.matches] = computeMatches(warpedImage, testFeatureType, patchSize, matcher);
+                
+                unwarpedMatches = struct();
+                [unwarpedMatches.keypoints, unwarpedMatches.descriptors, unwarpedMatches.matches] = computeMatches(unwarpedImage, testFeatureType, patchSize, matcher);
+                
+                groundTruthKeypointLocations = homography * baseKeypointLocations;
+                groundTruthKeypointLocations = groundTruthKeypointLocations(1:2,:) ./ repmat(groundTruthKeypointLocations(3,:),[2,1]);
+                
+                [rawImage_numCorrect, rawImage_numIncorrect] = computeAccuracy(rawImageMatches, groundTruthKeypointLocations, maxMatchDistance);
+                
+                [unwarpedImage_numCorrect, unwarpedImage_numIncorrect] = computeAccuracy(unwarpedMatches, baseKeypointLocations(1:2,:), maxMatchDistance);
+                                
+                allResults.rawImage.numCorrect(iRotation, iHeight, iWidth) = allResults.rawImage.numCorrect(iRotation, iHeight, iWidth) + rawImage_numCorrect;
+                allResults.rawImage.numIncorrect(iRotation, iHeight, iWidth) = allResults.rawImage.numIncorrect(iRotation, iHeight, iWidth) + rawImage_numIncorrect;
+                
+                allResults.unwarpedImage.numCorrect(iRotation, iHeight, iWidth) = allResults.unwarpedImage.numCorrect(iRotation, iHeight, iWidth) + unwarpedImage_numCorrect;
+                allResults.unwarpedImage.numIncorrect(iRotation, iHeight, iWidth) = allResults.unwarpedImage.numIncorrect(iRotation, iHeight, iWidth) + unwarpedImage_numIncorrect;
+                                
+                disp(sprintf('Rotation:%d widthRatio:%0.2f heightRatio:%0.2f accuracy is %d:%d=%0.2f%% or %d:%d=%0.2f%%', round(rotations(iRotation)*180/pi), widthRatios(iWidth), heightRatios(iHeight), rawImage_numCorrect, rawImage_numIncorrect, 100 * rawImage_numCorrect / (rawImage_numCorrect+rawImage_numIncorrect), unwarpedImage_numCorrect, unwarpedImage_numIncorrect, 100 * unwarpedImage_numCorrect / (unwarpedImage_numCorrect+unwarpedImage_numIncorrect)))
+
+                if showIntermediate
+                    imshows(paddedImage,warpedImage,unwarpedImage)
+                    pause(0.25)
+                end
+%                 pause()
+            end % for iWidth = 1:length(widthRatios)
+        end % for iHeight = 1:length(heightRatios)
+    end % for iRotation = 1:length(rotations)
     
     keyboard
+end % function testGroundPlaneWarping()
     
+function [keypoints, descriptors, matches] = computeMatches(image, testFeatureType, patchSize, matcher)
+    if strcmpi(testFeatureType, 'ORB')
+        [keypoints, descriptors] = cv.ORB(image,...
+            'NFeatures', 500,...
+            'ScaleFactor', 1.2,...
+            'NLevels', 3,...
+            'EdgeThreshold', patchSize,...
+            'WTA_K', 2,...
+            'PatchSize', patchSize);
+
+        matches = matcher.match(descriptors);
+    elseif strcmpi(testFeatureType, 'SIFT')
+        [keypoints, descriptors] = cv.SIFT(image);
+
+        rawMatches = matcher.knnMatch(descriptors, 2);
+        matches = [];
+        for iMatch = 1:length(rawMatches)
+            if rawMatches{iMatch}(1).distance * 0.8 < rawMatches{iMatch}(2).distance
+                if isempty(matches)
+                    matches = rawMatches{iMatch}(1);
+                else
+                    matches(end+1) = rawMatches{iMatch}(1); %#ok<AGROW>
+                end
+            end
+        end % for iMatch = 1:length(matches)
+    end % if strcmpi(testFeatureType, 'ORB') ... else
+end % function computeMatches
     
-    
+function [numCorrect, numIncorrect] = computeAccuracy(matches, groundTruthKeypointLocations, maxMatchDistance)
+    curKeypointLocations = ones(3, length(matches.keypoints));
+    for i = 1:length(matches.keypoints)
+        curKeypointLocations(1:2, i) = matches.keypoints(i).pt;
+    end % for iKeypoint = 1:length(curKeypoints)
+
+    numCorrect = 0;
+    numIncorrect = 0;
+    for iMatch = 1:length(matches.matches)
+        curPoint = matches.keypoints(matches.matches(iMatch).queryIdx+1).pt';
+        warpedBasePoint = groundTruthKeypointLocations(:, matches.matches(iMatch).trainIdx+1) - 0.5;
+
+        dist = sqrt(sum((curPoint-warpedBasePoint).^2));
+
+        if dist <= maxMatchDistance
+            numCorrect = numCorrect + 1;
+        else
+            numIncorrect = numIncorrect + 1;
+        end
+    end % for iKeypoint = 1:length(baseKeypoints)
+end % function computeAccuracy()
     
