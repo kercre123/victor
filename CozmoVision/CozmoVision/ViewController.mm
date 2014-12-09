@@ -23,12 +23,17 @@
 #include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/messaging/shared/TcpClient.h"
+
+#include "anki/cozmo/basestation/visionProcessingThread.h"
+#include "anki/vision/basestation/image_impl.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 #endif
 
 // Can't this _always_ be localhost? The UI and the basestation object
 // are always on the same physical device
 //#define BASESTATION_IP "127.0.0.1"
-#define BASESTATION_IP "192.168.42.68"
+#define BASESTATION_IP "192.168.18.244"
+//#define BASESTATION_IP "192.168.19.238"
 
 using namespace Anki;
 
@@ -40,6 +45,9 @@ using namespace Anki;
   BOOL                      _isConnected;
   NSTimer*                  _connectionTimer;
   CozmoDirectionController* _directionController;
+  
+  // TODO: Move this somewhere else?
+  Cozmo::VisionProcessingThread*  _visionThread;
 }
 
 // UI Message Sending
@@ -72,7 +80,7 @@ using namespace Anki;
   _videoCamera = [[CvVideoCamera alloc] initWithParentView:_robotImageView];
   _videoCamera.delegate = self;
   _videoCamera.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
-  _videoCamera.defaultAVCaptureSessionPreset  = AVCaptureSessionPreset352x288;
+  _videoCamera.defaultAVCaptureSessionPreset  = AVCaptureSessionPreset640x480;
   _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationLandscapeLeft;
   _videoCamera.defaultFPS = 30;
   _videoCamera.grayscaleMode = NO;
@@ -81,6 +89,12 @@ using namespace Anki;
   
   // Hook up the basestation to the image viewer to start
   _basestation._imageViewer = _robotImageView;
+  _detectedMarkerLabel.hidden = YES;
+  
+  // Start up the vision thread for processing device camera images
+  Vision::CameraCalibration deviceCamCalib;
+  _visionThread = new Cozmo::VisionProcessingThread();
+  _visionThread->Start(deviceCamCalib); // TODO: Only start when device camera selected?
   
   _directionController = [[CozmoDirectionController alloc] initWithFrame:_directionControllerView.bounds];
   [_directionControllerView addSubview:_directionController];
@@ -145,25 +159,68 @@ using namespace Anki;
 #pragma mark - Protocol CvVideoCameraDelegate
 
 #ifdef __cplusplus
-- (void)processImage:(cv::Mat&)image
+- (void)processImage:(cv::Mat&)imageBGR
 {
-  
   using namespace cv;
+
+  // TODO: Make detection rectangle a QQVGA region at center of image:
+  Point2i   detectRectPt1(160,120);
+  Point2i   detectRectPt2(detectRectPt1.x + 320, detectRectPt1.y + 240);
+  cv::Rect  detectionRect(detectRectPt1, detectRectPt2);
   
-  // Do some OpenCV stuff with the image
-  Mat image_copy;
-  cvtColor(image, image_copy, COLOR_BGR2GRAY);
+  // Detection rectangle is red and label says "No Marker" unless we find a
+  // vision marker below
+  const char *labelCString = "No Markers";
+
+  Scalar detectionRectColor(0,0,255,255);
+  Cozmo::MessageVisionMarker msg;
+  while(true == _visionThread->CheckMailbox(msg)) {
+    labelCString = Vision::MarkerTypeStrings[msg.markerType];
+    detectionRectColor = {0,255,0,255};
+  }
+  
+  // Force update of label text _now_. Using trick from here:
+  // http://stackoverflow.com/questions/6835472/uilabel-text-not-being-updated
+  // because this didn't seem to work:
+  //   _detectedMarkerLabel.text = [[NSString alloc]initWithUTF8String:Vision::MarkerTypeStrings[msg.markerType]];
+  //   [_detectedMarkerLabel setNeedsDisplay];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    NSString *markerString = [[NSString alloc]initWithUTF8String:labelCString];
+    [_detectedMarkerLabel setText:markerString];
+  });
+  
+  // Create an OpenCV grayscale image from the incoming data
+  Mat_<u8> imageGray;
+  cvtColor(imageBGR, imageGray, COLOR_BGR2GRAY);
+
+  // Process image within the detection rectangle with vision processing thread:
+  Cozmo::MessageRobotState bogusState; // req'd by API, but not really necessary for marker detection
+  
+  // TODO: Use ROI feature of cv::Mat instead of copying the data out
+  // (this will require support for non-continuous image data inside the VisionSystem)
+  Mat_<u8> imageGrayROI(240,320);
+  for(s32 i=0; i<240; ++i) {
+    u8* imageGrayROI_i = imageGrayROI[i];
+    u8* imageGray_i = imageGray[detectRectPt1.y + i];
+    for(s32 j=0; j<320; ++j) {
+      imageGrayROI_i[j] =imageGray_i[detectRectPt1.x + j];
+    }
+  }
+  
+  Vision::Image ankiImage(imageGrayROI);
+  _visionThread->SetNextImage(imageGrayROI, bogusState);
   
   // invert image
-  bitwise_not(image_copy, image_copy);
+  bitwise_not(imageGray, imageGray);
   
   //Convert BGR to BGRA (three channel to four channel)
   Mat bgr;
-  cvtColor(image_copy, bgr, COLOR_GRAY2BGR);
+  cvtColor(imageGray, bgr, COLOR_GRAY2BGR);
   
-  cvtColor(bgr, image, COLOR_BGR2BGRA);
+  cvtColor(bgr, imageBGR, COLOR_BGR2BGRA);
   
-  rectangle(image, Point2i(126,94), Point2i(226,194), Scalar(0,0,255,255), 2);
+  rectangle(imageBGR, detectRectPt1, detectRectPt2, detectionRectColor, 2);
+  
 }
 
 
@@ -228,9 +285,12 @@ using namespace Anki;
   if(_cameraSelector.selectedSegmentIndex == 0) {
     [_videoCamera stop];
     _basestation._imageViewer = _robotImageView;
+    _detectedMarkerLabel.hidden = YES;
   } else if(_cameraSelector.selectedSegmentIndex == 1) {
     _basestation._imageViewer = nullptr;
     [_videoCamera start];
+    _detectedMarkerLabel.hidden = NO;
+    _detectedMarkerLabel.text = @"No Markers";
   } else {
     NSLog(@"Error: unexpected segment index in camera selector.\n");
   }

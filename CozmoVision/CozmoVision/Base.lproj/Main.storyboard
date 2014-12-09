@@ -102,6 +102,15 @@
                                 <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                                 <gestureRecognizers/>
                             </view>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No Markers" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="uKq-rJ-NBi">
+                                <rect key="frame" x="16" y="245" width="285" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                <color key="textColor" red="1" green="1" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                                <color key="shadowColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <size key="shadowOffset" width="1" height="1"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <gestureRecognizers/>
@@ -110,6 +119,7 @@
                     <simulatedOrientationMetrics key="simulatedOrientationMetrics"/>
                     <connections>
                         <outlet property="cameraSelector" destination="1kL-f1-gGN" id="jZ4-Kf-0aB"/>
+                        <outlet property="detectedMarkerLabel" destination="uKq-rJ-NBi" id="I2e-K2-u5y"/>
                         <outlet property="directionControllerView" destination="k9U-q6-fze" id="Nhp-RI-4Os"/>
                         <outlet property="directionOLabel" destination="3PS-eQ-1bZ" id="unP-QS-UW8"/>
                         <outlet property="downArrayLabel" destination="Kmj-Sv-lUQ" id="DRL-zA-wmy"/>
