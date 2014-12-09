@@ -471,7 +471,7 @@ namespace Anki {
       ////////// Check for any messages from the Vision Thread ////////////
       
       MessageVisionMarker visionMarker;
-      if(true == _visionProcessor.CheckMailbox(visionMarker)) {
+      while(true == _visionProcessor.CheckMailbox(visionMarker)) {
         Result lastResult = QueueObservedMarker(visionMarker);
         if(lastResult != RESULT_OK) {
           PRINT_NAMED_ERROR("Robot.Update.FailedToQueueVisionMarker",
@@ -481,7 +481,7 @@ namespace Anki {
       }
       
       MessageFaceDetection faceDetection;
-      if(true == _visionProcessor.CheckMailbox(faceDetection)) {
+      while(true == _visionProcessor.CheckMailbox(faceDetection)) {
         PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).\n",
                    GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
         

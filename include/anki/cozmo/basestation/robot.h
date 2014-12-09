@@ -43,12 +43,12 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/visionProcessingThread.h"
 
 #include "actionContainers.h"
 #include "cannedAnimationContainer.h"
 #include "behaviorManager.h"
 #include "ramp.h"
-#include "visionProcessingThread.h"
 
 
 namespace Anki {

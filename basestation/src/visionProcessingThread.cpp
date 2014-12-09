@@ -11,7 +11,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "visionProcessingThread.h"
+#include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "visionSystem.h"
 
 #include "anki/vision/basestation/image_impl.h"
