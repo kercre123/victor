@@ -8,69 +8,60 @@
 
 #import "CozmoDirectionController.h"
 
-#import <UIKit/UIGestureRecognizerSubclass.h>
-
 #include "anki/common/types.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 #define DEBUG_GAMEPAD 1
 
-@implementation CozmoDirectionController {
-  CozmoDirectionGestureRecognizer* _gestureRecognizer;
-}
+@implementation CozmoDirectionController
 
 - (id)initWithFrame:(CGRect)frame
 {
   self = [super initWithFrame:frame];
   if (self) {
     // Initialization code
-    //self.backgroundColor = [UIColor blueColor];
-    
-    _gestureRecognizer = [[CozmoDirectionGestureRecognizer alloc] initWithTarget:self
-                                                                      action:@selector(handleGesture:)];
-    [self addGestureRecognizer:_gestureRecognizer];
+ 
   }
   return self;
 }
 
-
-- (void)handleGesture:(CozmoDirectionGestureRecognizer *)gesture
-{
-  _leftWheelSpeed_mmps  = _gestureRecognizer.leftWheelSpeed_mmps;
-  _rightWheelSpeed_mmps = _gestureRecognizer.rightWheelSpeed_mmps;
-    NSLog(@"Updating L/R spees to %.2f / %.2f\n", _leftWheelSpeed_mmps, _rightWheelSpeed_mmps);
-}
-
-
-@end
-
-
-
-
-@implementation CozmoDirectionGestureRecognizer
-
-- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+-(void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
   [super touchesBegan:touches withEvent:event];
-  [self updateSpeedsWithTouches:touches];
+  
 }
 
-- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
+- (void) touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
   [super touchesMoved:touches withEvent:event];
   [self updateSpeedsWithTouches:touches];
 }
 
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+{
+  [super touchesEnded:touches withEvent:event];
+  _leftWheelSpeed_mmps  = 0;
+  _rightWheelSpeed_mmps = 0;
+}
+
+- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
+{
+  [super touchesCancelled:touches withEvent:event];
+  _leftWheelSpeed_mmps  = 0;
+  _rightWheelSpeed_mmps = 0;
+}
+
 - (void)updateSpeedsWithTouches:(NSSet *)touches
 {
   UITouch *touch = [touches anyObject];
-  CGPoint touchPoint = [touch locationInView:self.view];
+  CGPoint touchPoint = [touch locationInView:touch.view];
   
-  CGFloat midX  = CGRectGetMidX(self.view.bounds);
-  CGFloat width = 0.5f*CGRectGetWidth(self.view.bounds);
+  CGFloat midX  = CGRectGetMidX(touch.view.bounds);
+  CGFloat width = 0.5f*CGRectGetWidth(touch.view.bounds);
   
-  CGFloat midY   = CGRectGetMidY(self.view.bounds);
-  CGFloat height = 0.5f*CGRectGetHeight(self.view.bounds);
+  CGFloat midY   = CGRectGetMidY(touch.view.bounds);
+  CGFloat height = 0.5f*CGRectGetHeight(touch.view.bounds);
   
   CGPoint centerOffset = CGPointMake((touchPoint.x - midX)/width,
                                      (touchPoint.y - midY)/height);
@@ -92,14 +83,16 @@
   //point.y = MAX(point.y, ANALOG_INPUT_DEAD_ZONE_THRESH);
   
   // Compute speed
-  CGFloat xyMag = MIN(1.0, sqrtf( point.x*point.x + point.y*point.y));// / (f32)s16_MAX
-                  //);
+  CGFloat xyMag = MIN(1.0, sqrtf( point.x*point.x + point.y*point.y));
   
   _leftWheelSpeed_mmps = 0;
   _rightWheelSpeed_mmps = 0;
   
   // Stop wheels if magnitude of input is low
   if (xyMag > ANALOG_INPUT_DEAD_ZONE_THRESH) {
+
+    xyMag -= ANALOG_INPUT_DEAD_ZONE_THRESH;
+    xyMag /= 1.f - ANALOG_INPUT_DEAD_ZONE_THRESH;
   
     // Driving forward?
     f32 fwd = point.y < 0 ? 1 : -1;
@@ -121,11 +114,11 @@
     // Compute individual wheel speeds
     if (fabsf(xyAngle) > PIDIV2_F - 0.1f) {
       // Straight fwd/back
-      _leftWheelSpeed_mmps = baseWheelSpeed;
+      _leftWheelSpeed_mmps  = baseWheelSpeed;
       _rightWheelSpeed_mmps = baseWheelSpeed;
     } else if (fabsf(xyAngle) < 0.1f) {
       // Turn in place
-      _leftWheelSpeed_mmps = right * xyMag * ANALOG_INPUT_MAX_DRIVE_SPEED;
+      _leftWheelSpeed_mmps  = right * xyMag * ANALOG_INPUT_MAX_DRIVE_SPEED;
       _rightWheelSpeed_mmps = -right * xyMag * ANALOG_INPUT_MAX_DRIVE_SPEED;
     } else {
       
@@ -163,6 +156,6 @@
   
   } // if sufficient speed
 
-}
+} //calculateWheelSpeeds()
 
 @end

@@ -27,7 +27,7 @@
 #include <fstream>
 
 // IP Address of wherever the robot's advertising service is running
-#define DEFAULT_ADVERTISING_HOST_IP "192.168.19.238"
+#define DEFAULT_ADVERTISING_HOST_IP "192.168.42.68"
 
 #define USE_BLE_ROBOT_COMMS 0
 
