@@ -48,6 +48,7 @@ using namespace Anki;
   
   // TODO: Move this somewhere else?
   Cozmo::VisionProcessingThread*  _visionThread;
+
 }
 
 // UI Message Sending
@@ -77,18 +78,18 @@ using namespace Anki;
   [_liftHeightSlider setTransform:CGAffineTransformMakeRotation(-M_PI_2)];
   
   // Set up videoCamera for displaying device's on-board camera, but don't start it
-  _videoCamera = [[CvVideoCamera alloc] initWithParentView:_robotImageView];
+  _videoCamera = [[CvVideoCamera alloc] initWithParentView:_liveImageView];
   _videoCamera.delegate = self;
   _videoCamera.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
   _videoCamera.defaultAVCaptureSessionPreset  = AVCaptureSessionPreset640x480;
-  _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationLandscapeLeft;
+  //_videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationLandscapeLeft;
   _videoCamera.defaultFPS = 30;
   _videoCamera.grayscaleMode = NO;
   
   _basestation = [[CozmoBasestation alloc] init];
   
   // Hook up the basestation to the image viewer to start
-  _basestation._imageViewer = _robotImageView;
+  _basestation._imageViewer = _liveImageView;
   _detectedMarkerLabel.hidden = YES;
   
   // Start up the vision thread for processing device camera images
@@ -163,63 +164,75 @@ using namespace Anki;
 {
   using namespace cv;
 
-  // TODO: Make detection rectangle a QQVGA region at center of image:
-  Point2i   detectRectPt1(160,120);
-  Point2i   detectRectPt2(detectRectPt1.x + 320, detectRectPt1.y + 240);
-  cv::Rect  detectionRect(detectRectPt1, detectRectPt2);
-  
-  // Detection rectangle is red and label says "No Marker" unless we find a
-  // vision marker below
-  const char *labelCString = "No Markers";
-
-  Scalar detectionRectColor(0,0,255,255);
-  Cozmo::MessageVisionMarker msg;
-  while(true == _visionThread->CheckMailbox(msg)) {
-    labelCString = Vision::MarkerTypeStrings[msg.markerType];
-    detectionRectColor = {0,255,0,255};
-  }
-  
-  // Force update of label text _now_. Using trick from here:
-  // http://stackoverflow.com/questions/6835472/uilabel-text-not-being-updated
-  // because this didn't seem to work:
-  //   _detectedMarkerLabel.text = [[NSString alloc]initWithUTF8String:Vision::MarkerTypeStrings[msg.markerType]];
-  //   [_detectedMarkerLabel setNeedsDisplay];
-  dispatch_async(dispatch_get_main_queue(), ^{
-    NSString *markerString = [[NSString alloc]initWithUTF8String:labelCString];
-    [_detectedMarkerLabel setText:markerString];
-  });
+  // Make sure we at least call VisionThread->SetNextImage the first call!
+  static BOOL calledOnce = NO;
   
   // Create an OpenCV grayscale image from the incoming data
   Mat_<u8> imageGray;
   cvtColor(imageBGR, imageGray, COLOR_BGR2GRAY);
-
-  // Process image within the detection rectangle with vision processing thread:
-  Cozmo::MessageRobotState bogusState; // req'd by API, but not really necessary for marker detection
   
-  // TODO: Use ROI feature of cv::Mat instead of copying the data out
-  // (this will require support for non-continuous image data inside the VisionSystem)
-  Mat_<u8> imageGrayROI(240,320);
-  for(s32 i=0; i<240; ++i) {
-    u8* imageGrayROI_i = imageGrayROI[i];
-    u8* imageGray_i = imageGray[detectRectPt1.y + i];
-    for(s32 j=0; j<320; ++j) {
-      imageGrayROI_i[j] =imageGray_i[detectRectPt1.x + j];
+  // Make this static so that it stays the same color between calls unless
+  // updated via a detected marker in the IF below
+  static Scalar detectionRectColor(0,0,255,255);
+  
+  // Detection rectangle is a QVGA window centered in the VGA frame:
+  // TODO: Make smaller or square?
+  Point2i   detectRectPt1(160,120);
+  Point2i   detectRectPt2(detectRectPt1.x + 320, detectRectPt1.y + 240);
+  
+  if(!calledOnce || _visionThread->WasLastImageProcessed())
+  {
+    calledOnce = YES;
+    cv::Rect  detectionRect(detectRectPt1, detectRectPt2);
+    
+    // Detection rectangle is red and label says "No Marker" unless we find a
+    // vision marker below
+    const char *labelCString = "No Markers";
+    detectionRectColor = {0,0,255,255};
+    Cozmo::MessageVisionMarker msg;
+    while(true == _visionThread->CheckMailbox(msg)) {
+      labelCString = Vision::MarkerTypeStrings[msg.markerType];
+      detectionRectColor = {0,255,0,255};
     }
+    
+    // Force update of label text _now_. Using trick from here:
+    // http://stackoverflow.com/questions/6835472/uilabel-text-not-being-updated
+    // because this didn't seem to work:
+    //   _detectedMarkerLabel.text = [[NSString alloc]initWithUTF8String:Vision::MarkerTypeStrings[msg.markerType]];
+    //   [_detectedMarkerLabel setNeedsDisplay];
+    dispatch_async(dispatch_get_main_queue(), ^{
+      NSString *markerString = [[NSString alloc]initWithUTF8String:labelCString];
+      [_detectedMarkerLabel setText:markerString];
+    });
+    
+    // Process image within the detection rectangle with vision processing thread:
+    static const Cozmo::MessageRobotState bogusState; // req'd by API, but not really necessary for marker detection
+    
+    // TODO: Use ROI feature of cv::Mat instead of copying the data out
+    // (this will require support for non-continuous image data inside the VisionSystem)
+    Mat_<u8> imageGrayROI(240,320);
+    for(s32 i=0; i<240; ++i) {
+      u8* imageGrayROI_i = imageGrayROI[i];
+      u8* imageGray_i = imageGray[detectRectPt1.y + i];
+      for(s32 j=0; j<320; ++j) {
+        imageGrayROI_i[j] =imageGray_i[detectRectPt1.x + j];
+      }
+    }
+    
+    // Last image was processed (or this is the first call), so the vision
+    // thread is ready for a new image:
+    Vision::Image ankiImage(imageGrayROI);
+    _visionThread->SetNextImage(imageGrayROI, bogusState);
   }
   
-  Vision::Image ankiImage(imageGrayROI);
-  _visionThread->SetNextImage(imageGrayROI, bogusState);
-  
-  // invert image
+  // Invert image - why? just cause it looks neat.
   bitwise_not(imageGray, imageGray);
   
-  //Convert BGR to BGRA (three channel to four channel)
-  Mat bgr;
-  cvtColor(imageGray, bgr, COLOR_GRAY2BGR);
+  //Convert BGRA for display
+  cvtColor(imageGray, imageBGR, COLOR_GRAY2BGRA);
   
-  cvtColor(bgr, imageBGR, COLOR_BGR2BGRA);
-  
-  rectangle(imageBGR, detectRectPt1, detectRectPt2, detectionRectColor, 2);
+  // Overlay the detection rectangle on the image, in the color determined above
+  rectangle(imageBGR, detectRectPt1, detectRectPt2, detectionRectColor, 4);
   
 }
 
@@ -284,7 +297,7 @@ using namespace Anki;
   
   if(_cameraSelector.selectedSegmentIndex == 0) {
     [_videoCamera stop];
-    _basestation._imageViewer = _robotImageView;
+    _basestation._imageViewer = _liveImageView;
     _detectedMarkerLabel.hidden = YES;
   } else if(_cameraSelector.selectedSegmentIndex == 1) {
     _basestation._imageViewer = nullptr;

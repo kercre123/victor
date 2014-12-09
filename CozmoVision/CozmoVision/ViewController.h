@@ -15,7 +15,7 @@
 
 @interface ViewController : UIViewController<CvVideoCameraDelegate>
 
-@property (weak, nonatomic) IBOutlet UIImageView*   robotImageView;
+@property (weak, nonatomic) IBOutlet UIImageView*   liveImageView;
 
 @property (weak, nonatomic) IBOutlet UIView*        directionControllerView;
 @property (weak, nonatomic) IBOutlet UILabel*       directionOLabel;
