@@ -4,13 +4,13 @@
 % 1. Different amounts of ground plane warping
 % 2. Different accuracy of ground warp
 
-function [allResults, rotations, heightRatios, widthRatios] = testGroundPlaneWarping()
+% [orb_allResults, rotations, heightRatios, widthRatios] = testGroundPlaneWarping('ORB');
+% [sift_allResults, rotations, heightRatios, widthRatios] = testGroundPlaneWarping('SIFT');
+
+function [allResults, rotations, heightRatios, widthRatios] = testGroundPlaneWarping(testFeatureType)
     
     maxMatchDistance = 4; % number of pixels
-    
-    testFeatureType = 'ORB';
-    %     testFeatureType = 'SIFT';
-    
+        
     showIntermediate = false;
     
     image = rgb2gray2(imread('~/Documents/Anki/products-cozmo-large-files/peopleScanned640x480.png'));
@@ -99,7 +99,7 @@ function [allResults, rotations, heightRatios, widthRatios] = testGroundPlaneWar
         end % for iHeight = 1:length(heightRatios)
     end % for iRotation = 1:length(rotations)
     
-    keyboard
+%     keyboard
 end % function testGroundPlaneWarping()
     
 function [keypoints, descriptors, matches] = computeMatches(image, testFeatureType, patchSize, matcher)

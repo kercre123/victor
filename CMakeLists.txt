@@ -27,3 +27,7 @@ add_subdirectory(robot)
 add_subdirectory(matlab/mex)
 
 add_subdirectory(coretech)
+
+if(APPLE)
+  add_subdirectory(tools/showVoxels)
+endif()
