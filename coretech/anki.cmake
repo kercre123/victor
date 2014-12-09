@@ -280,11 +280,19 @@ if(NOT DEFINED EXTERNAL_DIR)
   set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/../coretech-external)
 endif(NOT DEFINED EXTERNAL_DIR)
 
+if(NOT DEFINED EXTERNAL_BUILD_DIR)
+  set(EXTERNAL_BUILD_DIR ${EXTERNAL_DIR}/build)  
+endif()
+
 set(OPENCV_MODULES_DIR ${EXTERNAL_DIR}/${OPENCV_DIR}/modules)
+
+if(WIN32)
+  include_directories(${EXTERNAL_DIR}/${OPENCV_DIR}/3rdparty/zlib)
+  include_directories(${EXTERNAL_BUILD_DIR}/${OPENCV_DIR}/3rdparty/zlib)
+endif()
+
 include_directories(
   ${EXTERNAL_DIR}/${OPENCV_DIR}/include
-  ${EXTERNAL_DIR}/${OPENCV_DIR}/3rdparty/zlib
-  ${EXTERNAL_DIR}/build/${OPENCV_DIR}/3rdparty/zlib
   ${EXTERNAL_DIR}/${GTEST_DIR}/include
   ${EXTERNAL_DIR}/jsoncpp
   ${EXTERNAL_DIR}/SDL2-2.0.3/include
@@ -314,14 +322,14 @@ else()
 endif()
 
 # Store our libraries in, e.g., coretech-vision/build/Xcode/lib/Debug
-set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR})
+set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR})
 
 # Store our executables such as tests in, e.g., coretech-vision/build/Xcode/bin/Debug
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/${CMAKE_GENERATOR}/bin/${BUILD_TYPE_DIR})
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/${CMAKE_GENERATOR}/bin/${BUILD_TYPE_DIR})
 
 link_directories(
   ${LIBRARY_OUTPUT_PATH}
-  ${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR}
+  ${EXTERNAL_BUILD_DIR}/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR}
 )
 
 if(ANKICORETECH_USE_MATLAB OR ANKICORETECH_EMBEDDED_USE_MATLAB)
@@ -335,13 +343,13 @@ endif()
 # Of course, OpenCV is special... (it won't (?) obey the OUTPUT_PATHs specified
 # above, so we'll add link directories for where it put its products)
 if(WIN32)
-  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/Debug)
-  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/RelWithDebInfo)
-  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/3rdparty/lib/Debug)
-  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/3rdparty/lib/RelWithDebInfo)
+  link_directories(${EXTERNAL_BUILD_DIR}/${OPENCV_DIR}/lib/Debug)
+  link_directories(${EXTERNAL_BUILD_DIR}/${OPENCV_DIR}/lib/RelWithDebInfo)
+  link_directories(${EXTERNAL_BUILD_DIR}/${OPENCV_DIR}/3rdparty/lib/Debug)
+  link_directories(${EXTERNAL_BUILD_DIR}/${OPENCV_DIR}/3rdparty/lib/RelWithDebInfo)
 else()
-  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib)
-  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/3rdparty/lib)
+  link_directories(${EXTERNAL_BUILD_DIR}/${OPENCV_DIR}/lib)
+  link_directories(${EXTERNAL_BUILD_DIR}/${OPENCV_DIR}/3rdparty/lib)
 endif(WIN32)
 
 

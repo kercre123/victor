@@ -50,7 +50,7 @@ namespace Anki {
       
       // Image message processing
       u8 imgID = 0;
-      u8 imgData[3*320*240];
+      u8 imgData[3*640*480];
       u32 imgBytes = 0;
       u32 imgWidth, imgHeight = 0;
       

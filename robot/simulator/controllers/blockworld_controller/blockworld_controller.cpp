@@ -10,7 +10,7 @@
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/basestation/tcpComms.h"
+#include "anki/cozmo/basestation/robotComms.h"
 #include "anki/cozmo/basestation/uiTcpComms.h"
 #include "json/json.h"
 
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
   BLEComms robotComms;
   BLERobotManager robotBLEManager;
 #else
-  TCPComms robotComms;
+  RobotComms robotComms;
 #endif
   if (bm != BM_PLAYBACK_SESSION) {
 

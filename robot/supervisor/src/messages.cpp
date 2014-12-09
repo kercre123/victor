@@ -30,7 +30,7 @@ namespace Anki {
         // 4. Fill in the message information lookup table:
         typedef struct {
           u8 priority;
-          u8 size;
+          u16 size;
           void (*dispatchFcn)(const u8* buffer);
         } TableEntry;
         
@@ -77,7 +77,7 @@ namespace Anki {
 
 // #pragma mark --- Messages Method Implementations ---
       
-      u8 GetSize(const ID msgID)
+      u16 GetSize(const ID msgID)
       {
         return LookupTable_[msgID].size;
       }
