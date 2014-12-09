@@ -314,10 +314,10 @@ else()
 endif()
 
 # Store our libraries in, e.g., coretech-vision/build/Xcode/lib/Debug
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR})
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR})
 
 # Store our executables such as tests in, e.g., coretech-vision/build/Xcode/bin/Debug
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/${CMAKE_GENERATOR}/bin/${BUILD_TYPE_DIR})
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/${CMAKE_GENERATOR}/bin/${BUILD_TYPE_DIR})
 
 link_directories(
   ${LIBRARY_OUTPUT_PATH}
