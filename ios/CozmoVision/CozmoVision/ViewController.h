@@ -15,22 +15,24 @@
 
 @interface ViewController : UIViewController<CvVideoCameraDelegate>
 
-@property (weak, nonatomic) IBOutlet UIImageView *robotImageView;
+@property (weak, nonatomic) IBOutlet UIImageView*   robotImageView;
 
-@property (weak, nonatomic) IBOutlet UIView *directionControllerView;
-@property (weak, nonatomic) IBOutlet UILabel *directionOLabel;
+@property (weak, nonatomic) IBOutlet UIView*        directionControllerView;
+@property (weak, nonatomic) IBOutlet UILabel*       directionOLabel;
 
-@property (weak, nonatomic) IBOutlet UILabel *upArrowLabel;
-@property (weak, nonatomic) IBOutlet UILabel *downArrayLabel;
+@property (weak, nonatomic) IBOutlet UILabel*       upArrowLabel;
+@property (weak, nonatomic) IBOutlet UILabel*       downArrayLabel;
 
-@property (weak, nonatomic) IBOutlet UISlider *headAngleSlider;
+@property (weak, nonatomic) IBOutlet UISlider*      headAngleSlider;
 - (IBAction)actionSetHeadAngle:(id)sender;
 
-@property (weak, nonatomic) IBOutlet UISlider *liftHeightSlider;
+@property (weak, nonatomic) IBOutlet UISlider*      liftHeightSlider;
 - (IBAction)actionSetLiftHeight:(id)sender;
 
-@property (weak, nonatomic) IBOutlet UISegmentedControl *cameraSelector;
+@property (weak, nonatomic) IBOutlet UISegmentedControl* cameraSelector;
 - (IBAction)actionSelectCamera:(id)sender;
+
+@property (weak, nonatomic) IBOutlet UILabel*       detectedMarkerLabel;
 
 @end
 
