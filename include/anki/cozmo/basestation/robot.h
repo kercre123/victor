@@ -112,6 +112,8 @@ namespace Anki {
      
       Result QueueObservedMarker(const MessageVisionMarker& msg);
       
+      bool GetCurrentImage(const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels);
+      
       //
       // Pose (of the robot or its parts)
       //

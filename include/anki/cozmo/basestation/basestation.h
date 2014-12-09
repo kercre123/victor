@@ -87,6 +87,9 @@ public:
   // stops game
   static void StopGame();
 */
+  
+  bool GetCurrentRobotImage(const RobotID_t robotID, const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels);
+  
 private:
 
   BasestationMainImpl* impl_;

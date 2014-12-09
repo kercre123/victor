@@ -588,6 +588,10 @@ namespace Anki {
       
     } // Update()
 
+    bool Robot::GetCurrentImage(const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels)
+    {
+      return _visionProcessor.GetCurrentImage(imageData, nrows, ncols, nchannels);
+    }
     
     static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
     {

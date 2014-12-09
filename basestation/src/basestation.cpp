@@ -82,6 +82,7 @@ public:
    static void StopGame();
    */
 
+  bool GetCurrentRobotImage(const RobotID_t robotID, const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels);
   
 private:
   // Instantiate all the modules we need
@@ -321,8 +322,19 @@ BasestationStatus BasestationMainImpl::ConvertStatus(RecordingPlaybackStatus sta
       return BS_PLAYBACK_VERSION_MISMATCH;
   }
 }
+
   
+bool BasestationMainImpl::GetCurrentRobotImage(const RobotID_t robotID, const u8* &imageData, s32& nrows, s32& ncols, s32& nchannels)
+{
+  Robot* robot = robotMgr_.GetRobotByID(robotID);
   
+  if(robot != nullptr) {
+    return robot->GetCurrentImage(imageData, nrows, ncols, nchannels);
+  } else {
+    return false;
+  }
+  
+}
 
 // =========== Start BasestationMain forwarding functions =======
   
@@ -355,6 +367,11 @@ BasestationStatus BasestationMain::UnInit()
 BasestationStatus BasestationMain::Update(BaseStationTime_t currTime)
 {
   return impl_->Update(currTime);
+}
+  
+bool BasestationMain::GetCurrentRobotImage(const RobotID_t robotID, const u8 *&imageData, s32 &nrows, s32 &ncols, s32& nchannels)
+{
+  return impl_->GetCurrentRobotImage(robotID, imageData, nrows, ncols, nchannels);
 }
   
 } // namespace Cozmo
