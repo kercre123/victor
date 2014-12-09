@@ -34,6 +34,11 @@ namespace Vision {
     // Wrap image "header" around given data pointer: no allocation.
     Image(s32 nrows, s32 ncols, u8* data);
     
+#   if ANKICORETECH_USE_OPENCV
+    // Construct from a cv::Mat_<u8>
+    Image(cv::Mat_<u8>& cvMat);
+#   endif
+    
     void SetTimestamp(TimeStamp_t ts);
     TimeStamp_t GetTimestamp() const;
     

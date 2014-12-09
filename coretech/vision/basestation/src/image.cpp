@@ -41,6 +41,14 @@ namespace Vision {
     
   }
   
+#if ANKICORETECH_USE_OPENCV
+  Image::Image(cv::Mat_<u8>& cvMat)
+  : Array2d<u8>(cvMat)
+  {
+    
+  }
+#endif
+  
   void Image::Display(const char *windowName, bool pause) const
   {
 #   if ANKICORETECH_USE_OPENCV
