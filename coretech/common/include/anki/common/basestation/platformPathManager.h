@@ -10,10 +10,12 @@
  *
  **/
 
+#ifndef ANKI_COMMON_PLATFORM_PATH_MANAGER_H_
+#define ANKI_COMMON_PLATFORM_PATH_MANAGER_H_
+
 #include <map>
 #include <string>
 //#include <array>
-
 
 namespace Anki {
   
@@ -115,3 +117,6 @@ protected: \
    */
   
 } // namespace Anki
+
+#endif // ANKI_COMMON_PLATFORM_PATH_MANAGER_H_
+
