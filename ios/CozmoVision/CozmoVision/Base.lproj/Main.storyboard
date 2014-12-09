@@ -41,9 +41,9 @@
                                     <action selector="actionSetHeadAngle:" destination="vXZ-lx-hvc" eventType="valueChanged" id="pRB-p0-tvW"/>
                                 </connections>
                             </slider>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" id="qUg-fU-57m">
-                                <rect key="frame" x="16" y="57" width="285" height="215"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" id="qUg-fU-57m">
+                                <rect key="frame" x="19" y="57" width="282" height="212"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Camera:" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="it0-g8-tgD">
                                 <rect key="frame" x="70" y="28" width="66" height="21"/>
@@ -103,7 +103,7 @@
                                 <gestureRecognizers/>
                             </view>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No Markers" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="uKq-rJ-NBi">
-                                <rect key="frame" x="16" y="245" width="285" height="21"/>
+                                <rect key="frame" x="19" y="245" width="282" height="21"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="20"/>
                                 <color key="textColor" red="1" green="1" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
@@ -125,7 +125,7 @@
                         <outlet property="downArrayLabel" destination="Kmj-Sv-lUQ" id="DRL-zA-wmy"/>
                         <outlet property="headAngleSlider" destination="fRi-kp-Wd2" id="OS6-bv-kpL"/>
                         <outlet property="liftHeightSlider" destination="fhg-hK-GaI" id="iIA-mX-fgr"/>
-                        <outlet property="robotImageView" destination="qUg-fU-57m" id="exK-M7-Xa7"/>
+                        <outlet property="liveImageView" destination="qUg-fU-57m" id="8TD-5r-k6u"/>
                         <outlet property="upArrowLabel" destination="pB7-eg-upE" id="hEd-e7-kMw"/>
                     </connections>
                 </viewController>
