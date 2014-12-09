@@ -26,6 +26,7 @@ namespace Cozmo {
   : _visionSystem(nullptr)
   , _running(false)
   , _isLocked(false)
+  , _wasLastImageProcessed(false)
   , _currentImg(nullptr)
   , _nextImg(nullptr)
   {
@@ -92,6 +93,7 @@ namespace Cozmo {
     
     _nextImg = new Vision::Image(image);
     _nextRobotState = robotState;
+    _wasLastImageProcessed = false;
     
     Unlock();
     
@@ -166,6 +168,7 @@ namespace Cozmo {
         
         assert(_currentImg != nullptr);
         _visionSystem->Update(_currentRobotState, _currentImg);
+        _wasLastImageProcessed = true;
         
         // Clear it when done.
         delete _currentImg;

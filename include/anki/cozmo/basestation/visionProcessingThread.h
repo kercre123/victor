@@ -49,6 +49,13 @@ namespace Cozmo {
     void EnableMarkerDetection(bool tf);
     void EnableFaceDetection(bool tf);
     
+    // True if marker detection has completed since last call to
+    // SetNextImage(). Use this to differentiate whether the VisionMarker
+    // mailbox is empty because there were no markers detected in the last
+    // image or because marker detection has not completed on the last image
+    // yet.
+    bool WasLastImageProcessed() const;
+    
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
@@ -68,6 +75,7 @@ namespace Cozmo {
     
     bool   _running;
     bool   _isLocked; // mutex for setting image and state
+    bool   _wasLastImageProcessed;
     
     Vision::Image* _currentImg;
     Vision::Image* _nextImg;
@@ -85,7 +93,9 @@ namespace Cozmo {
     
   }; // class VisionProcessingThread
 
-
+  inline bool VisionProcessingThread::WasLastImageProcessed() const {
+    return _wasLastImageProcessed;
+  }
 
 } // namespace Cozmo
 } // namespace Anki
