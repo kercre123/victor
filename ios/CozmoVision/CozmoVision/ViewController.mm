@@ -28,7 +28,7 @@
 // Can't this _always_ be localhost? The UI and the basestation object
 // are always on the same physical device
 //#define BASESTATION_IP "127.0.0.1"
-#define BASESTATION_IP "192.168.18.244"
+#define BASESTATION_IP "192.168.42.68"
 
 using namespace Anki;
 
@@ -222,6 +222,7 @@ using namespace Anki;
 
   [self SendMessage:m];
 }
+
 - (IBAction)actionSelectCamera:(id)sender {
   
   if(_cameraSelector.selectedSegmentIndex == 0) {

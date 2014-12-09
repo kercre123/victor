@@ -32,6 +32,5 @@
 @property (weak, nonatomic) IBOutlet UISegmentedControl *cameraSelector;
 - (IBAction)actionSelectCamera:(id)sender;
 
-
 @end
 

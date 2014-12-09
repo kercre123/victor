@@ -15,9 +15,4 @@
 
 @end
 
-@interface CozmoDirectionGestureRecognizer : UIPanGestureRecognizer
 
-@property (nonatomic, assign) CGFloat leftWheelSpeed_mmps;
-@property (nonatomic, assign) CGFloat rightWheelSpeed_mmps;
-
-@end
