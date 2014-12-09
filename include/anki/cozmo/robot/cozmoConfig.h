@@ -256,12 +256,7 @@ namespace Anki {
     // of the system one message cycle latency in the future. This way, commanded actions are applied
     // at the time they are expected in the physical world.
     const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
-    
-    // Messages that are purely for advertising when using TCP/UDP. (Maybe belongs somewhere else...)
-    // This will eventually be passed in via the GUI.
-    // The default 127.0.0.1 works fine for simulated basestation running on the same machine as the simluator.
-    const char* const ROBOT_SIM_WORLD_HOST = "127.0.0.1";
-    
+        
     // Port on which registered robots advertise.
     const u32 ROBOT_ADVERTISING_PORT = 5100;
     

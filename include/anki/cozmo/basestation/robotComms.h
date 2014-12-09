@@ -58,8 +58,8 @@ namespace Cozmo {
   class RobotComms : public Comms::IComms {
   public:
     
-    // Default constructor
-    RobotComms();
+    // Construct with the IP address to use as the advertising host
+    RobotComms(const char* advertisingHostIP);
     
     // The destructor will automatically cleans up
     virtual ~RobotComms();
@@ -105,12 +105,15 @@ namespace Cozmo {
     
     u32 GetAdvertisingRobotIDs(std::vector<int> &robotIDs);
     
+    const char* GetAdvertisingHostIP() const { return advertisingHostIP_; }
+    
     // Clears the list of advertising robots.
     void ClearAdvertisingRobots();
 
     
   private:
     
+    const char* advertisingHostIP_;
     // Connects to "advertising" server to view available unconnected robots.
     UdpClient advertisingChannelClient_;
     

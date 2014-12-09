@@ -226,7 +226,11 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
   robotMgr_.Init(&msgHandler_);
   uiMsgHandler_.Init(ui_comms, &robotMgr_);
   
-  VizManager::getInstance()->Connect(ROBOT_SIM_WORLD_HOST, VIZ_SERVER_PORT);
+  if(config.isMember("AdvertisingHostIP")) {
+    VizManager::getInstance()->Connect(config["AdvertisingHostIP"].asCString(), VIZ_SERVER_PORT);
+  } else {
+    PRINT_NAMED_WARNING("BasestationInit.NoAdvertisingIP", "No AdvertisingHostIP member in JSON config file. Not initializing VizManager.\n");
+  }
 
   
   // Instantiate and init connected robots

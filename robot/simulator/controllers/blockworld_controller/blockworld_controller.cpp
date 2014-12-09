@@ -51,6 +51,7 @@ BSTimer basestationController;
 #define COZMO_BLE_UUID (0xbeefffff00010001)
 #endif
 
+#define ROBOT_ADVERTISING_HOST_IP "127.0.0.1"
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -70,6 +71,9 @@ int main(int argc, char **argv)
   reader.parse(jsonFile, config);
   jsonFile.close();
   
+  if(!config.isMember("AdvertisingHostIP")) {
+    config["AdvertisingHostIP"] = ROBOT_ADVERTISING_HOST_IP;
+  }
   
   // Get basestation mode
   BasestationMode bm;
@@ -85,7 +89,7 @@ int main(int argc, char **argv)
   BLEComms robotComms;
   BLERobotManager robotBLEManager;
 #else
-  RobotComms robotComms;
+  RobotComms robotComms(config["AdvertisingHostIP"].asCString());
 #endif
   if (bm != BM_PLAYBACK_SESSION) {
 
