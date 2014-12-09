@@ -193,6 +193,12 @@ namespace Cozmo {
       }
     }
     #endif  // #if(DO_SIM_COMMS_LATENCY)
+    
+    static u8 pingTimer = 10;
+    if (pingTimer-- == 0) {
+      advertisingChannelClient_.Send("1",1);
+      pingTimer = 10;
+    }
   }
   
   
