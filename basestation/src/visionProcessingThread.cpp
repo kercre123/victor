@@ -135,7 +135,7 @@ namespace Cozmo {
   {
     // Wait for unlock
     BOUNDED_WHILE(10000, _isLocked) {
-      usleep(1000);
+      usleep(100);
     }
     
     _isLocked = true;
@@ -156,7 +156,7 @@ namespace Cozmo {
     
     // Wait for initialization to complete (i.e. Matlab to start up, if needed)
     while(!_visionSystem->IsInitialized()) {
-      usleep(10000);
+      usleep(500);
     }
     
     while (_running) {
@@ -178,7 +178,7 @@ namespace Cozmo {
         _nextImg = nullptr;
         Unlock();
       } else {
-        usleep(10000);
+        usleep(100);
       }
       
     } // while(_running)
