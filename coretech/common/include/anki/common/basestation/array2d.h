@@ -76,9 +76,9 @@ namespace Anki
 #endif
 
     // Accessors:
-    inline s32 GetNumRows() const;
-    inline s32 GetNumCols() const;
-    inline s32 GetNumElements() const;
+    s32 GetNumRows() const;
+    s32 GetNumCols() const;
+    s32 GetNumElements() const;
 
     inline bool IsEmpty() const;
 
