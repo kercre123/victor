@@ -42,6 +42,8 @@ namespace Vision {
     s32 GetConnectedComponents(Array2d<s32>& labelImage,
                                std::vector<std::vector< Point2<s32> > >& regionPoints) const;
     
+    using Array2d<u8>::GetDataPointer;
+    
   protected:
     TimeStamp_t     _timeStamp;
         
