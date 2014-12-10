@@ -130,6 +130,4 @@ a7_out.txt
 probeTree_*.mat
 build_ios
 ios/build
-ios/CozmoVision/CozmoVision.xcodeproj/project.pbxproj
-ios/CozmoVision/CozmoVision.xcodeproj/project.xcworkspace/xcuserdata/andrew.xcuserdatad/UserInterfaceState.xcuserstate
 ios/CozmoVision/CozmoVision.xcodeproj/xcuserdata

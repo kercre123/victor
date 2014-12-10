@@ -1,0 +1,484 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4967D9CE1A32447800EF0E90 /* libCoreTech_Common_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9BE1A31664A00EF0E90 /* libCoreTech_Common_Basestation.a */; };
+		4967D9CF1A32447800EF0E90 /* libCoreTech_Common_Robot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9BF1A31664A00EF0E90 /* libCoreTech_Common_Robot.a */; };
+		4967D9D01A32447800EF0E90 /* libCoreTech_Messaging_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C01A31664A00EF0E90 /* libCoreTech_Messaging_Basestation.a */; };
+		4967D9D11A32447800EF0E90 /* libCoreTech_Planning_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C11A31664A00EF0E90 /* libCoreTech_Planning_Basestation.a */; };
+		4967D9D21A32447800EF0E90 /* libCoreTech_Vision_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C21A31664A00EF0E90 /* libCoreTech_Vision_Basestation.a */; };
+		4967D9D31A32447800EF0E90 /* libCoreTech_Vision_Robot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C31A31664A00EF0E90 /* libCoreTech_Vision_Robot.a */; };
+		4967D9D41A32447800EF0E90 /* libCozmo_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C41A31664A00EF0E90 /* libCozmo_Basestation.a */; };
+		4967D9D51A32447800EF0E90 /* libjsoncpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9CC1A32429800EF0E90 /* libjsoncpp.a */; };
+		4967D9D71A326C8A00EF0E90 /* CozmoBasestation.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4967D9D61A326C8900EF0E90 /* CozmoBasestation.mm */; };
+		4967D9E21A36272F00EF0E90 /* CozmoDirectionController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4967D9E11A36272F00EF0E90 /* CozmoDirectionController.mm */; };
+		499F44E31A255B120050A530 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E21A255B120050A530 /* main.m */; };
+		499F44E61A255B120050A530 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E51A255B120050A530 /* AppDelegate.m */; };
+		499F44E91A255B120050A530 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E81A255B120050A530 /* ViewController.mm */; };
+		499F44EC1A255B120050A530 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 499F44EA1A255B120050A530 /* Main.storyboard */; };
+		499F44EE1A255B120050A530 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 499F44ED1A255B120050A530 /* Images.xcassets */; };
+		499F44F11A255B120050A530 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 499F44EF1A255B120050A530 /* LaunchScreen.xib */; };
+		499F45141A25672E0050A530 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F450B1A25672E0050A530 /* Accelerate.framework */; };
+		499F45151A25672E0050A530 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F450C1A25672E0050A530 /* AssetsLibrary.framework */; };
+		499F45161A25672E0050A530 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F450D1A25672E0050A530 /* AVFoundation.framework */; };
+		499F45171A25672E0050A530 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F450E1A25672E0050A530 /* CoreGraphics.framework */; };
+		499F45181A25672E0050A530 /* CoreImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F450F1A25672E0050A530 /* CoreImage.framework */; };
+		499F45191A25672E0050A530 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45101A25672E0050A530 /* CoreMedia.framework */; };
+		499F451A1A25672E0050A530 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45111A25672E0050A530 /* Foundation.framework */; };
+		499F451B1A25672E0050A530 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45121A25672E0050A530 /* QuartzCore.framework */; };
+		499F451C1A25672E0050A530 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45131A25672E0050A530 /* UIKit.framework */; };
+		49B269191A369F7900135486 /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49B269181A369F7900135486 /* opencv2.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		4967D9BE1A31664A00EF0E90 /* libCoreTech_Common_Basestation.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Common_Basestation.a; path = "../products-cozmo/build_ios/multiArchLibs/libCoreTech_Common_Basestation.a"; sourceTree = "<group>"; };
+		4967D9BF1A31664A00EF0E90 /* libCoreTech_Common_Robot.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Common_Robot.a; path = "../products-cozmo/build_ios/multiArchLibs/libCoreTech_Common_Robot.a"; sourceTree = "<group>"; };
+		4967D9C01A31664A00EF0E90 /* libCoreTech_Messaging_Basestation.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Messaging_Basestation.a; path = "../products-cozmo/build_ios/multiArchLibs/libCoreTech_Messaging_Basestation.a"; sourceTree = "<group>"; };
+		4967D9C11A31664A00EF0E90 /* libCoreTech_Planning_Basestation.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Planning_Basestation.a; path = "../products-cozmo/build_ios/multiArchLibs/libCoreTech_Planning_Basestation.a"; sourceTree = "<group>"; };
+		4967D9C21A31664A00EF0E90 /* libCoreTech_Vision_Basestation.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Vision_Basestation.a; path = "../products-cozmo/build_ios/multiArchLibs/libCoreTech_Vision_Basestation.a"; sourceTree = "<group>"; };
+		4967D9C31A31664A00EF0E90 /* libCoreTech_Vision_Robot.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Vision_Robot.a; path = "../products-cozmo/build_ios/multiArchLibs/libCoreTech_Vision_Robot.a"; sourceTree = "<group>"; };
+		4967D9C41A31664A00EF0E90 /* libCozmo_Basestation.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCozmo_Basestation.a; path = "../products-cozmo/build_ios/multiArchLibs/libCozmo_Basestation.a"; sourceTree = "<group>"; };
+		4967D9CC1A32429800EF0E90 /* libjsoncpp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjsoncpp.a; path = "../products-cozmo/build_ios/multiArchLibs/libjsoncpp.a"; sourceTree = "<group>"; };
+		4967D9D61A326C8900EF0E90 /* CozmoBasestation.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CozmoBasestation.mm; sourceTree = "<group>"; };
+		4967D9D81A326CA200EF0E90 /* CozmoBasestation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CozmoBasestation.h; sourceTree = "<group>"; };
+		4967D9E01A36272F00EF0E90 /* CozmoDirectionController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CozmoDirectionController.h; sourceTree = "<group>"; };
+		4967D9E11A36272F00EF0E90 /* CozmoDirectionController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CozmoDirectionController.mm; sourceTree = "<group>"; };
+		499F44DD1A255B120050A530 /* CozmoVision.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CozmoVision.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		499F44E11A255B120050A530 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		499F44E21A255B120050A530 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		499F44E41A255B120050A530 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		499F44E51A255B120050A530 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		499F44E71A255B120050A530 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		499F44E81A255B120050A530 /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
+		499F44EB1A255B120050A530 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		499F44ED1A255B120050A530 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		499F44F01A255B120050A530 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
+		499F450B1A25672E0050A530 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		499F450C1A25672E0050A530 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		499F450D1A25672E0050A530 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		499F450E1A25672E0050A530 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		499F450F1A25672E0050A530 /* CoreImage.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreImage.framework; path = System/Library/Frameworks/CoreImage.framework; sourceTree = SDKROOT; };
+		499F45101A25672E0050A530 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
+		499F45111A25672E0050A530 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		499F45121A25672E0050A530 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		499F45131A25672E0050A530 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		49B269181A369F7900135486 /* opencv2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = opencv2.framework; path = "../../../../coretech-external/build/opencv-ios/opencv2.framework"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		499F44DA1A255B120050A530 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4967D9CE1A32447800EF0E90 /* libCoreTech_Common_Basestation.a in Frameworks */,
+				4967D9CF1A32447800EF0E90 /* libCoreTech_Common_Robot.a in Frameworks */,
+				4967D9D01A32447800EF0E90 /* libCoreTech_Messaging_Basestation.a in Frameworks */,
+				4967D9D11A32447800EF0E90 /* libCoreTech_Planning_Basestation.a in Frameworks */,
+				4967D9D21A32447800EF0E90 /* libCoreTech_Vision_Basestation.a in Frameworks */,
+				4967D9D31A32447800EF0E90 /* libCoreTech_Vision_Robot.a in Frameworks */,
+				4967D9D41A32447800EF0E90 /* libCozmo_Basestation.a in Frameworks */,
+				4967D9D51A32447800EF0E90 /* libjsoncpp.a in Frameworks */,
+				499F451C1A25672E0050A530 /* UIKit.framework in Frameworks */,
+				499F45141A25672E0050A530 /* Accelerate.framework in Frameworks */,
+				499F45151A25672E0050A530 /* AssetsLibrary.framework in Frameworks */,
+				499F45161A25672E0050A530 /* AVFoundation.framework in Frameworks */,
+				49B269191A369F7900135486 /* opencv2.framework in Frameworks */,
+				499F45171A25672E0050A530 /* CoreGraphics.framework in Frameworks */,
+				499F45181A25672E0050A530 /* CoreImage.framework in Frameworks */,
+				499F45191A25672E0050A530 /* CoreMedia.framework in Frameworks */,
+				499F451A1A25672E0050A530 /* Foundation.framework in Frameworks */,
+				499F451B1A25672E0050A530 /* QuartzCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4967D9491A311BBC00EF0E90 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				499F44E41A255B120050A530 /* AppDelegate.h */,
+				499F44E51A255B120050A530 /* AppDelegate.m */,
+				499F44E71A255B120050A530 /* ViewController.h */,
+				499F44E81A255B120050A530 /* ViewController.mm */,
+				499F44EA1A255B120050A530 /* Main.storyboard */,
+				4967D9E01A36272F00EF0E90 /* CozmoDirectionController.h */,
+				4967D9E11A36272F00EF0E90 /* CozmoDirectionController.mm */,
+				499F44ED1A255B120050A530 /* Images.xcassets */,
+				499F44EF1A255B120050A530 /* LaunchScreen.xib */,
+			);
+			name = UI;
+			sourceTree = "<group>";
+		};
+		4967D94A1A311BC500EF0E90 /* Basestation */ = {
+			isa = PBXGroup;
+			children = (
+				4967D9D81A326CA200EF0E90 /* CozmoBasestation.h */,
+				4967D9D61A326C8900EF0E90 /* CozmoBasestation.mm */,
+			);
+			name = Basestation;
+			sourceTree = "<group>";
+		};
+		4967D9DF1A32902D00EF0E90 /* JSON Config */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "JSON Config";
+			sourceTree = "<group>";
+		};
+		499F44D41A255B120050A530 = {
+			isa = PBXGroup;
+			children = (
+				4967D9DF1A32902D00EF0E90 /* JSON Config */,
+				4967D9CC1A32429800EF0E90 /* libjsoncpp.a */,
+				4967D9BE1A31664A00EF0E90 /* libCoreTech_Common_Basestation.a */,
+				4967D9BF1A31664A00EF0E90 /* libCoreTech_Common_Robot.a */,
+				4967D9C01A31664A00EF0E90 /* libCoreTech_Messaging_Basestation.a */,
+				4967D9C11A31664A00EF0E90 /* libCoreTech_Planning_Basestation.a */,
+				4967D9C21A31664A00EF0E90 /* libCoreTech_Vision_Basestation.a */,
+				4967D9C31A31664A00EF0E90 /* libCoreTech_Vision_Robot.a */,
+				4967D9C41A31664A00EF0E90 /* libCozmo_Basestation.a */,
+				499F44DF1A255B120050A530 /* CozmoVision */,
+				499F44DE1A255B120050A530 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		499F44DE1A255B120050A530 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				499F44DD1A255B120050A530 /* CozmoVision.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		499F44DF1A255B120050A530 /* CozmoVision */ = {
+			isa = PBXGroup;
+			children = (
+				4967D94A1A311BC500EF0E90 /* Basestation */,
+				4967D9491A311BBC00EF0E90 /* UI */,
+				499F45081A255D8D0050A530 /* Frameworks */,
+				499F44E01A255B120050A530 /* Supporting Files */,
+			);
+			path = CozmoVision;
+			sourceTree = "<group>";
+		};
+		499F44E01A255B120050A530 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				499F44E11A255B120050A530 /* Info.plist */,
+				499F44E21A255B120050A530 /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		499F45081A255D8D0050A530 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				49B269181A369F7900135486 /* opencv2.framework */,
+				499F450B1A25672E0050A530 /* Accelerate.framework */,
+				499F450C1A25672E0050A530 /* AssetsLibrary.framework */,
+				499F450D1A25672E0050A530 /* AVFoundation.framework */,
+				499F450E1A25672E0050A530 /* CoreGraphics.framework */,
+				499F450F1A25672E0050A530 /* CoreImage.framework */,
+				499F45101A25672E0050A530 /* CoreMedia.framework */,
+				499F45111A25672E0050A530 /* Foundation.framework */,
+				499F45121A25672E0050A530 /* QuartzCore.framework */,
+				499F45131A25672E0050A530 /* UIKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		499F44DC1A255B120050A530 /* CozmoVision */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 499F45001A255B120050A530 /* Build configuration list for PBXNativeTarget "CozmoVision" */;
+			buildPhases = (
+				499F44D91A255B120050A530 /* Sources */,
+				499F44DA1A255B120050A530 /* Frameworks */,
+				499F44DB1A255B120050A530 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CozmoVision;
+			productName = CozmoVision;
+			productReference = 499F44DD1A255B120050A530 /* CozmoVision.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		499F44D51A255B120050A530 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0610;
+				ORGANIZATIONNAME = "Anki, Inc.";
+				TargetAttributes = {
+					499F44DC1A255B120050A530 = {
+						CreatedOnToolsVersion = 6.1;
+						DevelopmentTeam = BEJF9NAYCL;
+					};
+				};
+			};
+			buildConfigurationList = 499F44D81A255B120050A530 /* Build configuration list for PBXProject "CozmoVision" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 499F44D41A255B120050A530;
+			productRefGroup = 499F44DE1A255B120050A530 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				499F44DC1A255B120050A530 /* CozmoVision */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		499F44DB1A255B120050A530 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				499F44EC1A255B120050A530 /* Main.storyboard in Resources */,
+				499F44F11A255B120050A530 /* LaunchScreen.xib in Resources */,
+				499F44EE1A255B120050A530 /* Images.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		499F44D91A255B120050A530 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				499F44E91A255B120050A530 /* ViewController.mm in Sources */,
+				499F44E61A255B120050A530 /* AppDelegate.m in Sources */,
+				4967D9D71A326C8A00EF0E90 /* CozmoBasestation.mm in Sources */,
+				4967D9E21A36272F00EF0E90 /* CozmoDirectionController.mm in Sources */,
+				499F44E31A255B120050A530 /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		499F44EA1A255B120050A530 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				499F44EB1A255B120050A530 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		499F44EF1A255B120050A530 /* LaunchScreen.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				499F44F01A255B120050A530 /* Base */,
+			);
+			name = LaunchScreen.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		499F44FE1A255B120050A530 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"/Users/andrew/Code/products-cozmo/coretech/common/include",
+					"/Users/andrew/Code/products-cozmo/include",
+					"/Users/andrew/Code/coretech-external/jsoncpp",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PROVISIONING_PROFILE = "4619096e-e2bd-4624-a738-a396caeb1632";
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		499F44FF1A255B120050A530 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"/Users/andrew/Code/products-cozmo/coretech/common/include",
+					"/Users/andrew/Code/products-cozmo/include",
+					"/Users/andrew/Code/coretech-external/jsoncpp",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				ONLY_ACTIVE_ARCH = YES;
+				PROVISIONING_PROFILE = "4619096e-e2bd-4624-a738-a396caeb1632";
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		499F45011A255B120050A530 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Users/andrew/Code/coretech-external/build/opencv-ios/**",
+					"$(PROJECT_DIR)/CozmoVision",
+					"/Users/andrew/Code/coretech-external/build/opencv-ios",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = "ANKICORETECH_USE_OPENCV=1";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"/Users/andrew/Code/products-cozmo/coretech/vision/include",
+					"/Users/andrew/Code/products-cozmo/coretech/common/include",
+					"/Users/andrew/Code/products-cozmo/include",
+					"/Users/andrew/Code/coretech-external/jsoncpp",
+					"/Users/andrew/Code/products-cozmo/coretech/messaging/include",
+				);
+				INFOPLIST_FILE = CozmoVision/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Users/andrew/Code/products-cozmo/build_ios/multiArchLibs",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+			};
+			name = Debug;
+		};
+		499F45021A255B120050A530 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Users/andrew/Code/coretech-external/build/opencv-ios/**",
+					"$(PROJECT_DIR)/CozmoVision",
+					"/Users/andrew/Code/coretech-external/build/opencv-ios",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = "ANKICORETECH_USE_OPENCV=1";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"/Users/andrew/Code/products-cozmo/coretech/vision/include",
+					"/Users/andrew/Code/products-cozmo/coretech/common/include",
+					"/Users/andrew/Code/products-cozmo/include",
+					"/Users/andrew/Code/coretech-external/jsoncpp",
+					"/Users/andrew/Code/products-cozmo/coretech/messaging/include",
+				);
+				INFOPLIST_FILE = CozmoVision/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Users/andrew/Code/products-cozmo/build_ios/multiArchLibs",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		499F44D81A255B120050A530 /* Build configuration list for PBXProject "CozmoVision" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				499F44FE1A255B120050A530 /* Debug */,
+				499F44FF1A255B120050A530 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		499F45001A255B120050A530 /* Build configuration list for PBXNativeTarget "CozmoVision" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				499F45011A255B120050A530 /* Debug */,
+				499F45021A255B120050A530 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 499F44D51A255B120050A530 /* Project object */;
+}
