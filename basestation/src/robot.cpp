@@ -971,7 +971,7 @@ namespace Anki {
         }
       }
       
-      
+      /*
       // Don't snap to horizontal or discrete Z levels when we see a mat marker
       // while on a ramp
       if(IsOnRamp() == false)
@@ -999,7 +999,7 @@ namespace Anki {
         robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
         
       } // if robot is on ramp
-      
+      */
       
       // Add the new vision-based pose to the robot's history. Note that we use
       // the pose w.r.t. the origin for storing poses in history.
