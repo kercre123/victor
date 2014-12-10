@@ -1,29 +1,44 @@
 set(SOURCE_FILES_SHOW_VOXELS
-  showVoxels.cpp
+  
 )
 
-add_executable(showVoxels ${SOURCE_FILES_SHOW_VOXELS})
+add_library(libShowVoxels
+  showVoxels.h
+  showVoxels.cpp  
+)
 
-INCLUDE_DIRECTORIES ( /System/Library/Frameworks )
+add_executable(run_showVoxels 
+  showVoxels.h
+  run_showVoxels.cpp 
+)
+
+INCLUDE_DIRECTORIES(/System/Library/Frameworks)
 
 FIND_LIBRARY(COCOA_LIBRARY Cocoa)
-FIND_LIBRARY(GLUT_LIBRARY GLUT )
-FIND_LIBRARY(OpenGL_LIBRARY OpenGL )
+FIND_LIBRARY(GLUT_LIBRARY GLUT)
+FIND_LIBRARY(OpenGL_LIBRARY OpenGL)
 
-MARK_AS_ADVANCED (COCOA_LIBRARY
-                 GLUT_LIBRARY
-                 OpenGL_LIBRARY)
+MARK_AS_ADVANCED(
+  COCOA_LIBRARY
+  GLUT_LIBRARY
+  OpenGL_LIBRARY
+)
                  
 SET(EXTRA_LIBS ${COCOA_LIBRARY} ${GLUT_LIBRARY} ${OpenGL_LIBRARY})
 
-target_link_libraries(showVoxels
+target_link_libraries(run_showVoxels
   CoreTech_Vision_Robot
   CoreTech_Common_Robot
   ${ALL_EMBEDDED_LIBRARIES}
   SDL2-2.0
   ${EXTRA_LIBS}
+  libShowVoxels
 )
 
-set_target_properties(showVoxels PROPERTIES
+set_target_properties(libShowVoxels PROPERTIES
+  FOLDER "Tools"
+)
+
+set_target_properties(run_showVoxels PROPERTIES
   FOLDER "Tools"
 )
