@@ -25,6 +25,12 @@ For internal use only. No part of this code may be used without a signed non-dis
       {
       }
     } Voxel;
+    
+    typedef struct VoxelBuffer
+    {
+      Voxel * voxels;
+      int numVoxels;
+    } VoxelBuffer;
 
     int init(const int windowWidth, const int windowHeight);
 
@@ -32,7 +38,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
     int close();
 
-    int updateVoxels(const std::vector<Voxel> &newVoxels);
+    // Warning: the memory for newVoxels must be persistant, because it is used by gameMain()
+    int updateVoxels(const VoxelBuffer * const newVoxels);
   } // namespace Anki
 
 #endif // #ifndef __SHOW_VOXELS_H__

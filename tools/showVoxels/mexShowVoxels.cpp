@@ -1,32 +1,34 @@
-/**
-File: showVoxels.cpp
-Author: Peter Barnum
-Created: 2014-12-09
+// Show a set of voxels
 
-Show a set of voxels
+// Example:
+// TODO
 
-Based on tips at
-http://lazyfoo.net/tutorials/SDL/50_SDL_and_opengl_2/index.php
-https://www3.ntu.edu.sg/home/ehchua/programming/opengl/CG_Examples.html
+#include "mex.h"
 
-Copyright Anki, Inc. 2014
-For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
-**/
+#include "anki/common/robot/matlabInterface.h"
+#include "anki/common/robot/serialize.h"
+
+#include "anki/common/matlab/mexWrappers.h"
+#include "anki/common/matlab/mexUtilities.h"
+#include "anki/common/shared/utilities_shared.h"
 
 #include "showVoxels.h"
 
 #include <stdlib.h>
 
 using namespace Anki;
+using namespace Anki::Embedded;
 
-int main(int argc, char* args[])
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
+  
   const int WINDOW_WIDTH = 640;
   const int WINDOW_HEIGHT = 480;
 
 	//Start up SDL and create window
 	if(init(WINDOW_WIDTH, WINDOW_HEIGHT) < 0) {
-    return -1;
+    return;
 	}
   
   VoxelBuffer newVoxels;
@@ -41,6 +43,5 @@ int main(int argc, char* args[])
   
   gameMain();
   
-	return close();
-} // int main(int argc, char* args[])
-
+//  close();
+} // mexFunction()

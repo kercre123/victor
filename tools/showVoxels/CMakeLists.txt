@@ -42,3 +42,14 @@ set_target_properties(libShowVoxels PROPERTIES
 set_target_properties(run_showVoxels PROPERTIES
   FOLDER "Tools"
 )
+
+set(MEX_LINK_LIBRARIES 
+  CoreTech_Common_Robot 
+  CoreTech_Vision_Robot 
+  ${ALL_EMBEDDED_LIBRARIES}
+  SDL2-2.0
+  ${EXTRA_LIBS}
+  libShowVoxels
+)
+
+build_mex(mexShowVoxels.cpp)

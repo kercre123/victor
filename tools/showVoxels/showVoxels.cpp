@@ -26,6 +26,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <string>
 
 #include "anki/common/robot/utilities.h"
+#include "anki/common/shared/utilities_shared.h"
 
 namespace Anki
 {
@@ -38,7 +39,8 @@ namespace Anki
 
   static bool initialized = false;
   static SDL_mutex * voxelMutex = NULL;
-  static std::vector<Voxel> voxels;
+  //static std::vector<Voxel> voxels;
+  static const VoxelBuffer * restrict voxels;
 
   static int initSDL(const int windowWidth, const int windowHeight);
   static int initGL(const int windowWidth, const int windowHeight);
@@ -46,7 +48,7 @@ namespace Anki
   static int render();
   static int handleKeys( unsigned char key, int x, int y );
 
-  int updateVoxels(const std::vector<Voxel> &newVoxels)
+  int updateVoxels(const VoxelBuffer * const newVoxels)
   {
     if(!initialized)
       return -1;
@@ -62,6 +64,9 @@ namespace Anki
 
   int init(const int windowWidth, const int windowHeight)
   {
+    if(initialized)
+      return 0;
+      
     initialized = false;
 
     if(initSDL(windowWidth, windowHeight) < 0)
@@ -77,10 +82,8 @@ namespace Anki
 
   static int initSDL(const int windowWidth, const int windowHeight)
   {
-    
-
     if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0 ) {
-      printf("SDL_Init failed. SDL Error: %s\n", SDL_GetError());
+      Anki::CoreTechPrint("SDL_Init failed. SDL Error: %s\n", SDL_GetError());
       return -1;
     }
     
@@ -93,29 +96,29 @@ namespace Anki
     
     sdlWindow = SDL_CreateWindow("Voxels", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
     if(!sdlWindow) {
-      printf("SDL_CreateWindow failed. SDL Error: %s\n", SDL_GetError());
+      Anki::CoreTechPrint("SDL_CreateWindow failed. SDL Error: %s\n", SDL_GetError());
       return -2;
     }
 
     sdlGlContext = SDL_GL_CreateContext(sdlWindow);
     if(!sdlGlContext) {
-      printf("SDL_GL_CreateContext failed. SDL Error: %s\n", SDL_GetError());
+      Anki::CoreTechPrint("SDL_GL_CreateContext failed. SDL Error: %s\n", SDL_GetError());
       return -3;
     }
     
     // vsync on
     if( SDL_GL_SetSwapInterval(1) < 0 ) {
-      printf( "SDL_GL_SetSwapInterval failed. SDL Error: %s\n", SDL_GetError());
+      Anki::CoreTechPrint( "SDL_GL_SetSwapInterval failed. SDL Error: %s\n", SDL_GetError());
       return -4;
     }
     
     voxelMutex = SDL_CreateMutex();
     if (!voxelMutex) {
-      printf( "SDL_CreateMutex failed. SDL Error: %s\n", SDL_GetError());
+      Anki::CoreTechPrint( "SDL_CreateMutex failed. SDL Error: %s\n", SDL_GetError());
       return -5;
     }
     
-    SDL_StartTextInput();
+    //SDL_StartTextInput();
     
     return 0;
   } // int initSDL()
@@ -138,7 +141,9 @@ namespace Anki
 
   int close()
   {
-    SDL_StopTextInput();
+    initialized = false;
+
+    //SDL_StopTextInput();
     
     if(voxelMutex)
       SDL_DestroyMutex(voxelMutex);
@@ -170,7 +175,7 @@ namespace Anki
     
     const GLenum error = glGetError();
     if(error != GL_NO_ERROR) {
-      printf( "Error with glGetError: %s\n", gluErrorString(error) );
+      Anki::CoreTechPrint( "Error with glGetError: %s\n", gluErrorString(error) );
       return -1;
     }
     
@@ -273,9 +278,8 @@ namespace Anki
 
     SDL_LockMutex(voxelMutex);
 
-    const s32 numVoxels = voxels.size();
-    for(s32 i=0; i<numVoxels; i++) {
-        drawVoxel(voxels[i]);
+    for(s32 i=0; i<voxels->numVoxels; i++) {
+        drawVoxel(voxels->voxels[i]);
     }
     
     SDL_UnlockMutex(voxelMutex);
@@ -287,24 +291,80 @@ namespace Anki
 
   int gameMain()
   {
+    const f64 mouseMoveSpeed = 1.0;
+    const f64 mouseScrollSpeed = 1.0;
+    
+    const Uint8 *state = SDL_GetKeyboardState(NULL);
+    
+    int lastMouseX = -1;
+    int lastMouseY = -1;
+    
     bool isRunning = true;
     while(isRunning) {
+      //Anki::CoreTechPrint("Looping\n");
+      
+      SDL_PumpEvents();
+      
+      if (state[SDL_SCANCODE_RIGHT]) {
+          Anki::CoreTechPrint("Right key Pressed.\n");
+      }
+      
       //Handle events
       SDL_Event e;
       while( SDL_PollEvent( &e ) != 0 ) {
         //User requests quit
         if( e.type == SDL_QUIT ) {
+          Anki::CoreTechPrint("quit event\n");
           isRunning = false;
           break;
-        } else if( e.type == SDL_TEXTINPUT ) {
+        } else if( e.type == SDL_KEYDOWN) {
+          Anki::CoreTechPrint("keydown event\n");
+        } else if( e.type == SDL_MOUSEMOTION) {
+          //Anki::CoreTechPrint("SDL_MOUSEMOTION event 0x%x (%d,%d)\n", buttonState, x, y);
+          
+          SDL_PumpEvents();
+          int x = 0;
+          int y = 0;
+          const u32 buttonState = SDL_GetMouseState( &x, &y );
+          
+          if(lastMouseX < 0 || lastMouseY < 0) {
+            lastMouseX = x;
+            lastMouseY = y;
+            continue;
+          }
+          
+          if(buttonState & 0x1) {
+            const int dx = x - lastMouseX;
+            const int dy = y - lastMouseY;
+            cameraTheta += dx * mouseMoveSpeed;
+            cameraPhi += dy * mouseMoveSpeed;
+            
+            lastMouseX = x;
+            lastMouseY = y;
+          }
+        } // if( e.type == SDL_QUIT ) ... else
+        
+        else if( e.type == SDL_MOUSEBUTTONDOWN) {
+          //Anki::CoreTechPrint("SDL_MOUSEBUTTONDOWN event 0x%x (%d,%d)\n", buttonState, x, y);
+          SDL_PumpEvents();
           int x = 0;
           int y = 0;
           SDL_GetMouseState( &x, &y );
-
-          // If the event can't be handled, quit
-          if(handleKeys( e.text.text[ 0 ], x, y ) != 0) {
-            isRunning = false;
-          }
+          lastMouseX = x;
+          lastMouseY = y;
+        }
+        
+        else if( e.type == SDL_MOUSEBUTTONUP) {
+          //Anki::CoreTechPrint("SDL_MOUSEBUTTONUP event 0x%x (%d,%d)\n", buttonState, x, y);
+          lastMouseX = -1;
+          lastMouseY = -1;
+        } else if( e.type == SDL_MOUSEWHEEL) {
+          //Anki::CoreTechPrint("SDL_MOUSEWHEEL event\n");
+          cameraZ += mouseScrollSpeed * e.wheel.y;
+          cameraZ = MIN(0, cameraZ);
+        }
+        else {
+          //Anki::CoreTechPrint("Unknown event 0x%x\n", e.type);
         }
       } // while( SDL_PollEvent( &e ) != 0 )
 
@@ -314,27 +374,4 @@ namespace Anki
 
     return 0;
   } // int gameMain()
-
-  int main(int argc, char* args[])
-  {
-    const int WINDOW_WIDTH = 640;
-    const int WINDOW_HEIGHT = 480;
-
-    //Start up SDL and create window
-    if(init(WINDOW_WIDTH, WINDOW_HEIGHT) < 0) {
-      return -1;
-    }
-    
-    std::vector<Voxel> newVoxels;
-    newVoxels.push_back(Voxel(0, 0, 0, 1, 0, 0));
-    newVoxels.push_back(Voxel(0, 1, 0, 0, 1, 0));
-    newVoxels.push_back(Voxel(1, 0, 0, 0, 0, 1));
-    
-    updateVoxels(newVoxels);
-    
-    gameMain();
-    
-    return close();
-  } // int main(int argc, char* args[])
-
 } //   namespace Anki
