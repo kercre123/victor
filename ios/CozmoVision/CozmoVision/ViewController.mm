@@ -70,9 +70,6 @@ using namespace Anki;
   [_downArrayLabel setTransform:CGAffineTransformMakeRotation( M_PI_2)];
   [_upArrowLabel   bringSubviewToFront:_directionControllerView];
   
-  // Make sure "O" in background of D-pad is at the back
-  [_directionOLabel sendSubviewToBack:_directionControllerView];
-  
   // Make the head/lift sliders vertical
   [_headAngleSlider  setTransform:CGAffineTransformMakeRotation(-M_PI_2)];
   [_liftHeightSlider setTransform:CGAffineTransformMakeRotation(-M_PI_2)];

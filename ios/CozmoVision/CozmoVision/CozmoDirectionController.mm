@@ -11,7 +11,7 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#define DEBUG_GAMEPAD 1
+#define DEBUG_GAMEPAD 0
 
 @implementation CozmoDirectionController
 
@@ -28,7 +28,7 @@
 -(void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
   [super touchesBegan:touches withEvent:event];
-  
+  [self updateSpeedsWithTouches:touches];
 }
 
 - (void) touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
@@ -36,7 +36,6 @@
   [super touchesMoved:touches withEvent:event];
   [self updateSpeedsWithTouches:touches];
 }
-
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
