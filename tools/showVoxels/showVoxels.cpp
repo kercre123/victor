@@ -129,8 +129,8 @@ namespace Anki
     glClearDepth(1.0f);                   // Set background depth to farthest
     glEnable(GL_DEPTH_TEST);   // Enable depth testing for z-culling
     glDepthFunc(GL_LEQUAL);    // Set the type of depth-test
-    glShadeModel(GL_SMOOTH);   // Enable smooth shading
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);  // Nice perspective corrections
+    glShadeModel(GL_FLAT);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
     
     if(reshapeGL(windowWidth, windowHeight) < 0) {
       return -1;
@@ -289,7 +289,7 @@ namespace Anki
     return 0;
   } // static int render()
 
-  int gameMain()
+  int gameMain(f64 numSecondsToRun)
   {
     const f64 mouseMoveSpeed = 1.0;
     const f64 mouseScrollSpeed = 1.0;
@@ -299,22 +299,21 @@ namespace Anki
     int lastMouseX = -1;
     int lastMouseY = -1;
     
+    const f64 startTime = Anki::Embedded::GetTimeF64();
+    
     bool isRunning = true;
     while(isRunning) {
-      //Anki::CoreTechPrint("Looping\n");
-      
-      SDL_PumpEvents();
-      
-      if (state[SDL_SCANCODE_RIGHT]) {
-          Anki::CoreTechPrint("Right key Pressed.\n");
+      if(numSecondsToRun > 0 && (Anki::Embedded::GetTimeF64() - startTime) > numSecondsToRun) {
+        isRunning = false;
+        continue;
       }
-      
+
       //Handle events
       SDL_Event e;
       while( SDL_PollEvent( &e ) != 0 ) {
         //User requests quit
         if( e.type == SDL_QUIT ) {
-          Anki::CoreTechPrint("quit event\n");
+          //Anki::CoreTechPrint("quit event\n");
           isRunning = false;
           break;
         } else if( e.type == SDL_KEYDOWN) {

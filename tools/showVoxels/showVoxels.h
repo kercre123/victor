@@ -34,7 +34,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
     int init(const int windowWidth, const int windowHeight);
 
-    int gameMain();
+    int gameMain(double numSecondsToRun);
 
     int close();
 

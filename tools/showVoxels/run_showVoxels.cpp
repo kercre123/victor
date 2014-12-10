@@ -39,7 +39,7 @@ int main(int argc, char* args[])
   
   updateVoxels(&newVoxels);
   
-  gameMain();
+  gameMain(0);
   
 	return close();
 } // int main(int argc, char* args[])
