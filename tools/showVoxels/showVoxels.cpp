@@ -23,12 +23,34 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <stdio.h>
 #include <string>
 
+#include "anki/common/robot/utilities.h"
+
 static SDL_Window* sdlWindow = NULL;
 static SDL_GLContext sdlGlContext;
+
+static GLfloat cameraZ = -7.0f;
+static GLfloat cameraTheta = 0.0f;
+static GLfloat cameraPhi = 0.0f;
+
+typedef struct Voxel
+{
+  float x, y, z;
+  float red, green, blue;
+  
+  Voxel(const float x, const float y, const float z, const float red, const float green, const float blue)
+    : x(x), y(y), z(z), red(red), green(green), blue(blue)
+  {
+  }
+} Voxel;
+
+static bool initialized = false;
+static SDL_mutex * voxelMutex = NULL;
+static std::vector<Voxel> voxels;
 
 int init(const int windowWidth, const int windowHeight);
 int gameMain();
 int close();
+int updateVoxels(const std::vector<Voxel> &newVoxels);
 
 static int initSDL(const int windowWidth, const int windowHeight);
 static int initGL(const int windowWidth, const int windowHeight);
@@ -36,19 +58,39 @@ static int reshapeGL(const int windowWidth, const int windowHeight);
 static int render();
 static int handleKeys( unsigned char key, int x, int y );
 
+int updateVoxels(const std::vector<Voxel> &newVoxels)
+{
+  if(!initialized)
+    return -1;
+  
+  SDL_LockMutex(voxelMutex);
+  
+  voxels = newVoxels;
+  
+  SDL_UnlockMutex(voxelMutex);
+  
+  return 0;
+}
+
 int init(const int windowWidth, const int windowHeight)
 {
+  initialized = false;
+
   if(initSDL(windowWidth, windowHeight) < 0)
     return -1;
   
   if(initGL(windowWidth, windowHeight) < 0)
     return -2;
+  
+  initialized = true;
     
   return 0;
 } // int init()
 
 static int initSDL(const int windowWidth, const int windowHeight)
 {
+  
+
 	if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0 ) {
     printf("SDL_Init failed. SDL Error: %s\n", SDL_GetError());
     return -1;
@@ -61,7 +103,7 @@ static int initSDL(const int windowWidth, const int windowHeight)
   
   // TODO: check opengl error?
   
-	sdlWindow = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN );
+	sdlWindow = SDL_CreateWindow("Voxels", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 	if(!sdlWindow) {
     printf("SDL_CreateWindow failed. SDL Error: %s\n", SDL_GetError());
     return -2;
@@ -75,8 +117,14 @@ static int initSDL(const int windowWidth, const int windowHeight)
   
   // vsync on
 	if( SDL_GL_SetSwapInterval(1) < 0 ) {
-    printf( "SDL_GL_SetSwapInterval failed. SDL Error: %s\n", SDL_GetError() );
+    printf( "SDL_GL_SetSwapInterval failed. SDL Error: %s\n", SDL_GetError());
     return -4;
+  }
+  
+  voxelMutex = SDL_CreateMutex();
+  if (!voxelMutex) {
+    printf( "SDL_CreateMutex failed. SDL Error: %s\n", SDL_GetError());
+    return -5;
   }
   
   SDL_StartTextInput();
@@ -103,6 +151,9 @@ static int initGL(const int windowWidth, const int windowHeight)
 int close()
 {
   SDL_StopTextInput();
+  
+  if(voxelMutex)
+    SDL_DestroyMutex(voxelMutex);
 
 	//Destroy window	
 	SDL_DestroyWindow(sdlWindow);
@@ -140,105 +191,106 @@ static int reshapeGL(const int windowWidth, const int windowHeight)
 
 static int handleKeys(const unsigned char key, const int x, const int y)
 {
-	if(key == 'q')
-	{
+	if(key == 'q') {
     return 1;
-	}
+	} else if(key == '=') {
+    cameraZ += 0.5f;
+  } else if(key == '-') {
+    cameraZ -= 0.5f;
+  } else if(key == 'a') {
+    cameraTheta += 5.0f;
+  } else if(key == 'd') {
+    cameraTheta -= 5.0f;
+  } else if(key == 'w') {
+    cameraPhi += 5.0f;
+  } else if(key == 's') {
+    cameraPhi -= 5.0f;
+  }
+  
+//  cameraZ = MAX(0.0f, MIN(10000.0f, cameraZ));
+  
+/*  if(cameraTheta < 0.0f) {
+    cameraTheta = cameraTheta + 360.0f;
+  } else if(cameraTheta >= 360.0f) {
+    cameraTheta = cameraTheta - 360.0f;
+  }*/
   
   return 0;
 } // static int handleKeys()
+
+static void drawVoxel(const Voxel &voxel)
+{
+  glTranslatef(voxel.x, voxel.y, voxel.z);
+
+  // Define vertices in counter-clockwise (CCW) order with normal pointing out
+  glBegin(GL_QUADS);
+    glColor3f(voxel.red, voxel.green, voxel.blue);
+  
+    // Top face (y = 1.0f)
+    glVertex3f( 0.5f, 0.5f, -0.5f);
+    glVertex3f(-0.5f, 0.5f, -0.5f);
+    glVertex3f(-0.5f, 0.5f,  0.5f);
+    glVertex3f( 0.5f, 0.5f,  0.5f);
+
+    // Bottom face (y = -0.5f)
+    glVertex3f( 0.5f, -0.5f,  0.5f);
+    glVertex3f(-0.5f, -0.5f,  0.5f);
+    glVertex3f(-0.5f, -0.5f, -0.5f);
+    glVertex3f( 0.5f, -0.5f, -0.5f);
+
+    // Front face  (z = 0.5f)
+    glVertex3f( 0.5f,  0.5f, 0.5f);
+    glVertex3f(-0.5f,  0.5f, 0.5f);
+    glVertex3f(-0.5f, -0.5f, 0.5f);
+    glVertex3f( 0.5f, -0.5f, 0.5f);
+
+    // Back face (z = -0.5f)
+    glVertex3f( 0.5f, -0.5f, -0.5f);
+    glVertex3f(-0.5f, -0.5f, -0.5f);
+    glVertex3f(-0.5f,  0.5f, -0.5f);
+    glVertex3f( 0.5f,  0.5f, -0.5f);
+
+    // Left face (x = -0.5f)
+    glVertex3f(-0.5f,  0.5f,  0.5f);
+    glVertex3f(-0.5f,  0.5f, -0.5f);
+    glVertex3f(-0.5f, -0.5f, -0.5f);
+    glVertex3f(-0.5f, -0.5f,  0.5f);
+
+    // Right face (x = 0.5f)
+    glVertex3f(0.5f,  0.5f, -0.5f);
+    glVertex3f(0.5f,  0.5f,  0.5f);
+    glVertex3f(0.5f, -0.5f,  0.5f);
+    glVertex3f(0.5f, -0.5f, -0.5f);
+  glEnd();  // End of drawing color-cube
+  
+  glTranslatef(-voxel.x, -voxel.y, -voxel.z);
+} // void drawVoxel()
 
 static int render()
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear color and depth buffers
   glMatrixMode(GL_MODELVIEW);     // To operate on model-view matrix
 
-  // Render a color-cube consisting of 6 quads with different colors
-  glLoadIdentity();                 // Reset the model-view matrix
-  glTranslatef(1.5f, 0.0f, -7.0f);  // Move right and into the screen
+  glLoadIdentity();
+  glTranslatef(0.0f, 0.0f, cameraZ);
+  
+  const float camX = cameraZ * -sinf(cameraTheta*(M_PI/180)) * cosf((cameraPhi)*(M_PI/180));
+  const float camY = cameraZ * -sinf((cameraPhi)*(M_PI/180));
+  const float camZ = -cameraZ * cosf((cameraTheta)*(M_PI/180)) * cosf((cameraPhi)*(M_PI/180));
 
-  glBegin(GL_QUADS);                // Begin drawing the color cube with 6 quads
-    // Top face (y = 1.0f)
-    // Define vertices in counter-clockwise (CCW) order with normal pointing out
-    glColor3f(0.0f, 1.0f, 0.0f);     // Green
-    glVertex3f( 1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f,  1.0f);
-    glVertex3f( 1.0f, 1.0f,  1.0f);
+  // Set the camera position and lookat point
+  gluLookAt(camX,camY,camZ,   // Camera position
+            0.0, 0.0, 0.0,    // Look at point
+            0.0, 1.0, 0.0);   // Up vector
 
-    // Bottom face (y = -1.0f)
-    glColor3f(1.0f, 0.5f, 0.0f);     // Orange
-    glVertex3f( 1.0f, -1.0f,  1.0f);
-    glVertex3f(-1.0f, -1.0f,  1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f( 1.0f, -1.0f, -1.0f);
+  SDL_LockMutex(voxelMutex);
 
-    // Front face  (z = 1.0f)
-    glColor3f(1.0f, 0.0f, 0.0f);     // Red
-    glVertex3f( 1.0f,  1.0f, 1.0f);
-    glVertex3f(-1.0f,  1.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-    glVertex3f( 1.0f, -1.0f, 1.0f);
-
-    // Back face (z = -1.0f)
-    glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
-    glVertex3f( 1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f,  1.0f, -1.0f);
-    glVertex3f( 1.0f,  1.0f, -1.0f);
-
-    // Left face (x = -1.0f)
-    glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-    glVertex3f(-1.0f,  1.0f,  1.0f);
-    glVertex3f(-1.0f,  1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f,  1.0f);
-
-    // Right face (x = 1.0f)
-    glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
-    glVertex3f(1.0f,  1.0f, -1.0f);
-    glVertex3f(1.0f,  1.0f,  1.0f);
-    glVertex3f(1.0f, -1.0f,  1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-  glEnd();  // End of drawing color-cube
-
-  // Render a pyramid consists of 4 triangles
-  glLoadIdentity();                  // Reset the model-view matrix
-  glTranslatef(-1.5f, 0.0f, -6.0f);  // Move left and into the screen
-
-  glBegin(GL_TRIANGLES);           // Begin drawing the pyramid with 4 triangles
-    // Front
-    glColor3f(1.0f, 0.0f, 0.0f);     // Red
-    glVertex3f( 0.0f, 1.0f, 0.0f);
-    glColor3f(0.0f, 1.0f, 0.0f);     // Green
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-    glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-    glVertex3f(1.0f, -1.0f, 1.0f);
-
-    // Right
-    glColor3f(1.0f, 0.0f, 0.0f);     // Red
-    glVertex3f(0.0f, 1.0f, 0.0f);
-    glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-    glVertex3f(1.0f, -1.0f, 1.0f);
-    glColor3f(0.0f, 1.0f, 0.0f);     // Green
-    glVertex3f(1.0f, -1.0f, -1.0f);
-
-    // Back
-    glColor3f(1.0f, 0.0f, 0.0f);     // Red
-    glVertex3f(0.0f, 1.0f, 0.0f);
-    glColor3f(0.0f, 1.0f, 0.0f);     // Green
-    glVertex3f(1.0f, -1.0f, -1.0f);
-    glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-
-    // Left
-    glColor3f(1.0f,0.0f,0.0f);       // Red
-    glVertex3f( 0.0f, 1.0f, 0.0f);
-    glColor3f(0.0f,0.0f,1.0f);       // Blue
-    glVertex3f(-1.0f,-1.0f,-1.0f);
-    glColor3f(0.0f,1.0f,0.0f);       // Green
-    glVertex3f(-1.0f,-1.0f, 1.0f);
-  glEnd();   // Done drawing the pyramid
+  const s32 numVoxels = voxels.size();
+  for(s32 i=0; i<numVoxels; i++) {
+      drawVoxel(voxels[i]);
+  }
+  
+  SDL_UnlockMutex(voxelMutex);
 
   SDL_GL_SwapWindow(sdlWindow);
   
@@ -284,6 +336,13 @@ int main(int argc, char* args[])
 	if(init(WINDOW_WIDTH, WINDOW_HEIGHT) < 0) {
     return -1;
 	}
+  
+  std::vector<Voxel> newVoxels;
+  newVoxels.push_back(Voxel(0, 0, 0, 1, 0, 0));
+  newVoxels.push_back(Voxel(0, 1, 0, 0, 1, 0));
+  newVoxels.push_back(Voxel(1, 0, 0, 0, 0, 1));
+  
+  updateVoxels(newVoxels);
   
   gameMain();
   
