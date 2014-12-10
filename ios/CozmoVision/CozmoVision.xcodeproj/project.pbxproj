@@ -397,26 +397,25 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"/Users/andrew/Code/coretech-external/build/opencv-ios/**",
-					"$(PROJECT_DIR)/CozmoVision",
-					"/Users/andrew/Code/coretech-external/build/opencv-ios",
+					"\"$(SRCROOT)/../../../coretech-external/build/opencv-ios/**\"",
+					"\"$(PROJECT_DIR)/CozmoVision\"",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = "ANKICORETECH_USE_OPENCV=1";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"/Users/andrew/Code/products-cozmo/coretech/vision/include",
-					"/Users/andrew/Code/products-cozmo/coretech/common/include",
-					"/Users/andrew/Code/products-cozmo/include",
-					"/Users/andrew/Code/coretech-external/jsoncpp",
-					"/Users/andrew/Code/products-cozmo/coretech/messaging/include",
+					"\"$(SRCROOT)/../../coretech/vision/include\"",
+					"\"$(SRCROOT)/../../coretech/common/include\"",
+					"\"$(SRCROOT)/../../include\"",
+					"\"$(SRCROOT)/../../../coretech-external/jsoncpp\"",
+					"\"$(SRCROOT)/../../coretech/messaging/include",
 				);
 				INFOPLIST_FILE = CozmoVision/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"/Users/andrew/Code/products-cozmo/build_ios/multiArchLibs",
+					"\"$(SRCROOT)/../../build_ios/multiArchLibs",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -431,26 +430,25 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"/Users/andrew/Code/coretech-external/build/opencv-ios/**",
-					"$(PROJECT_DIR)/CozmoVision",
-					"/Users/andrew/Code/coretech-external/build/opencv-ios",
+					"\"$(SRCROOT)/../../../coretech-external/build/opencv-ios/**\"",
+					"\"$(PROJECT_DIR)/CozmoVision\"",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = "ANKICORETECH_USE_OPENCV=1";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"/Users/andrew/Code/products-cozmo/coretech/vision/include",
-					"/Users/andrew/Code/products-cozmo/coretech/common/include",
-					"/Users/andrew/Code/products-cozmo/include",
-					"/Users/andrew/Code/coretech-external/jsoncpp",
-					"/Users/andrew/Code/products-cozmo/coretech/messaging/include",
+					"\"$(SRCROOT)/../../coretech/vision/include\"",
+					"\"$(SRCROOT)/../../coretech/common/include\"",
+					"\"$(SRCROOT)/../../include\"",
+					"\"$(SRCROOT)/../../../coretech-external/jsoncpp\"",
+					"\"$(SRCROOT)/../../coretech/messaging/include",
 				);
 				INFOPLIST_FILE = CozmoVision/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"/Users/andrew/Code/products-cozmo/build_ios/multiArchLibs",
+					"\"$(SRCROOT)/../../build_ios/multiArchLibs",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
