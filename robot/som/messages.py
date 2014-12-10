@@ -92,7 +92,7 @@ class ImageChunk(MessageBase):
 
     IMAGE_CHUNK_SIZE = 1024
     ID = 66
-    FORMAT = ["u32",   # imageId
+    FORMAT = ["u32",  # imageId
               "u16",  # chunkSize
               "u8",   # imageEncoding
               "u8",   # imageChunkCount
@@ -138,3 +138,30 @@ class ImageChunk(MessageBase):
         else:
             dataRepr = self.data
         return "ImageChunk(imageId=%d, imageEncoding=%d, chunkId=%d, resolution=%d, data[%d]=%s)" % (self.imageId, self.imageEncoding, self.chunkId, self.resolution, len(self.data), dataRepr)
+
+
+class SoMRadioState(MessageBase):
+    """Struct for SoM Radio state information.
+    This message is not intendent to be used beyond the SoM prototype."""
+
+    ID = 129
+    FORMAT = ["u8", # wifi state
+              "u8", # bluetooth state
+              ]
+
+    def __init__(self, wifi=0, bluetooth=0, buffer=None):
+        MessageBase.__init__(self):
+        self.wifiState = wifi
+        self.blueState = bluetooth
+        if buffer:
+            self.deserialize(buffer)
+
+    def _getMembers(self):
+        return self.wifiState, self.blueState
+
+    def _setMembers(self, wifi, blue):
+        self.wifiState = wifi
+        self.blueState = blue
+
+    def __repr__(self):
+        return "SoMRadioState(wifi=%d, bluetooth=%d)" % self._getMembers
