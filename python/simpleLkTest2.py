@@ -10,22 +10,27 @@ import pdb
 import os
 import anki
 import platform
+from getStereoParameters import getStereoParameters
+from saveStereo import saveStereo
 
 def captureImages(videoCaptures, undistortMaps, rightImageWarpHomography):
-    images =  []
+    imagesRaw =  []
+    imagesRectified = []
+
     for i,cap in enumerate(videoCaptures):
-        ret,image = cap.read()
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        ret,imageRaw = cap.read()
+        imageRaw = cv2.cvtColor(imageRaw, cv2.COLOR_BGR2GRAY)
 
         if undistortMaps is not None:
-            image = cv2.remap(image, undistortMaps[i]['mapX'], undistortMaps[i]['mapY'], cv2.INTER_LINEAR)
+            imageRectified = cv2.remap(imageRaw, undistortMaps[i]['mapX'], undistortMaps[i]['mapY'], cv2.INTER_LINEAR)
 
             if (i == 1) and (rightImageWarpHomography is not None):
-                image = cv2.warpPerspective(image, rightImageWarpHomography, image.shape[::-1])
+                imageRectified = cv2.warpPerspective(imageRectified, rightImageWarpHomography, imageRectified.shape[::-1])
 
-        images.append(image)
+        imagesRaw.append(imageRaw)
+        imagesRectified.append(imageRectified)
 
-    return images
+    return imagesRaw, imagesRectified
 
 def drawKeypointMatches(image, points0, points1, distanceColormap=None):
     """
@@ -101,7 +106,7 @@ def localMinimaness(image, halfWindowSize, x, y):
     return minSlope
 
 #cameraIds = [1]
-cameraIds = [1,2]
+cameraIds = [1,0]
 
 videoCaptures = []
 for cameraId in cameraIds:
@@ -109,7 +114,11 @@ for cameraId in cameraIds:
 
 useStereoCalibration = True
 undistortMaps = None
-computeStereoBm = False
+computeStereoBm = True
+computeFlow = False
+computeStereoFlow = False
+
+captureBaseFilename = '/Users/pbarnum/tmp/stereo_'
 
 # Computed in Matlab with "toArray(computeStereoColormap(128), true)"
 
@@ -119,59 +128,37 @@ stereoDisparityColors64 = [(255, 4, 0), (255, 20, 0), (255, 36, 0), (255, 53, 0)
 if len(cameraIds) == 1:
    useStereoCalibration = False
 
-
 rightImageWarpHomography = matrix(eye(3))
 
 if useStereoCalibration:
-    numDisparities = 128
-    disparityType = 'bm'
+    numDisparities = 192
+    disparityType = 'sgbm'
     if disparityType == 'bm':
         disparityWindowSize = 51
         stereo = cv2.StereoBM(cv2.STEREO_BM_BASIC_PRESET, numDisparities, disparityWindowSize)
     elif disparityType == 'sgbm':
-        stereo = cv2.StereoSGBM(
-            minDisparity = 0, numDisparities=128,
-            SADWindowSize=5,
-            speckleWindowSize=150, speckleRange = 2,
-            preFilterCap=4,
-            uniquenessRatio=1,
-            disp12MaxDiff = 10,
-            P1 = 600, P2 = 2400)
+         stereo = cv2.StereoSGBM(
+             minDisparity = 0, numDisparities=numDisparities,
+             SADWindowSize=5,
+             speckleWindowSize=150, speckleRange = 2,
+             preFilterCap=4,
+             uniquenessRatio=1,
+             disp12MaxDiff = 10,
+             P1 = 600, P2 = 2400)
 
-    # Calibration for the Spynet stereo pair
+    stereoParameters = getStereoParameters(True)
 
-    distCoeffs1 = np.array([[0.182998, -0.417100, 0.005281, -0.004976, 0.000000]])
-
-    distCoeffs2 = np.array([[0.165733, -0.391832, 0.002453, -0.011111, 0.000000]])
-
-    cameraMatrix1 = np.array([[726.606787, 0.000000, 321.470791],
-              [0.000000, 724.172303, 293.913773],
-              [0.000000, 0.000000, 1.000000]])
-
-    cameraMatrix2 = np.array([[743.337415, 0.000000, 308.270936],
-              [0.000000, 741.060548, 254.206903],
-              [0.000000, 0.000000, 1.000000]])
-
-    R = np.array([[0.993527, -0.023641, 0.111109],
-              [0.021796, 0.999604, 0.017785],
-              [-0.111486, -0.015248, 0.993649]])
-
-    T = np.array([-13.201223, -0.708310, 0.961289])
-
-    imageSize = (640, 480)
-
-    [R1, R2, P1, P2, Q, validPixROI1, validPixROI2] = cv2.stereoRectify(
-      cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize, R, T)
+    [R1, R2, P1, P2, Q, validPixROI1, validPixROI2] = cv2.stereoRectify(stereoParameters['cameraMatrix1'], stereoParameters['distCoeffs1'], stereoParameters['cameraMatrix2'], stereoParameters['distCoeffs2'], stereoParameters['imageSize'], stereoParameters['R'], stereoParameters['T'])
 
     leftUndistortMapX, leftUndistortMapY = cv2.initUndistortRectifyMap(
-      cameraMatrix1, distCoeffs1, R1, P1, imageSize, cv2.CV_32FC1)
+        stereoParameters['cameraMatrix1'], stereoParameters['distCoeffs1'], R1, P1, stereoParameters['imageSize'], cv2.CV_32FC1)
 
     rightUndistortMapX, rightUndistortMapY = cv2.initUndistortRectifyMap(
-      cameraMatrix2, distCoeffs2, R2, P2, imageSize, cv2.CV_32FC1)
+        stereoParameters['cameraMatrix2'], stereoParameters['distCoeffs2'], R2, P2, stereoParameters['imageSize'], cv2.CV_32FC1)
 
     undistortMaps = []
-    undistortMaps.append({'mapX':leftUndistortMapX, 'mapY':leftUndistortMapY})
-    undistortMaps.append({'mapX':rightUndistortMapX, 'mapY':rightUndistortMapY})
+    undistortMaps.append({'mapX':leftUndistortMapX, 'mapY':leftUndistortMapY, 'roi':validPixROI1})
+    undistortMaps.append({'mapX':rightUndistortMapX, 'mapY':rightUndistortMapY, 'roi':validPixROI2})
 
 #windowSizes = [(15,15), (31,31), (51,51)]
 #windowSizes = [(31,31)]
@@ -196,7 +183,7 @@ stereo_lk_maxAngle = pi/16
 color = np.random.randint(0,255,(10000,3))
 
 # Take first frame and find corners in it
-images = captureImages(videoCaptures, undistortMaps, rightImageWarpHomography)
+imagesRaw, images = captureImages(videoCaptures, undistortMaps, rightImageWarpHomography)
 
 lastImages = images[:]
 
@@ -213,40 +200,65 @@ for image in images:
     allPoints0.append(points0)
 
 while(1):
-    images = captureImages(videoCaptures, undistortMaps, rightImageWarpHomography)
+    imagesRaw, images = captureImages(videoCaptures, undistortMaps, rightImageWarpHomography)
 
-    # Compute the flow
-    allFlowPoints = []
-    for iImage in range(0,len(images)):
-        points0 = allPoints0[iImage]
+    cv2.imshow('leftImage', images[0])
+    cv2.imshow('rightImage', images[1])
 
-        curImage = images[iImage]
-        lastImage = lastImages[iImage]
+    if computeFlow:
+        # Compute the flow
+        allFlowPoints = []
+        for iImage in range(0,len(images)):
+            points0 = allPoints0[iImage]
 
-        curFlowPoints = []
+            curImage = images[iImage]
+            lastImage = lastImages[iImage]
 
-        for windowSize in windowSizes:
+            curFlowPoints = []
 
-            flow_lk_params['winSize'] = windowSize
+            for windowSize in windowSizes:
 
-            points1, st, err = cv2.calcOpticalFlowPyrLK(lastImage, curImage, points0, None, **flow_lk_params)
+                flow_lk_params['winSize'] = windowSize
 
-            # Select good points
-            goodPoints0 = points0[st==1]
-            goodPoints1 = points1[st==1]
+                points1, st, err = cv2.calcOpticalFlowPyrLK(lastImage, curImage, points0, None, **flow_lk_params)
 
-            curFlowPoints.append({'points1':points1,'st':st,'err':err,'goodPoints0':goodPoints0,'goodPoints1':goodPoints1,'curImage':curImage, 'lastImage':lastImage, 'windowSize':windowSize, 'iImage':iImage})
+                # Select good points
+                goodPoints0 = points0[st==1]
+                goodPoints1 = points1[st==1]
 
-        allFlowPoints.append(curFlowPoints)
+                curFlowPoints.append({'points1':points1,'st':st,'err':err,'goodPoints0':goodPoints0,'goodPoints1':goodPoints1,'curImage':curImage, 'lastImage':lastImage, 'windowSize':windowSize, 'iImage':iImage})
 
-    # Draw the flow
-    for curFlowPoints in allFlowPoints:
-        for flowPoints in curFlowPoints:
-            keypointImage = drawKeypointMatches(flowPoints['curImage'], flowPoints['goodPoints0'], flowPoints['goodPoints1'], stereoDisparityColors128)
-            cv2.imshow('flow_' + str(flowPoints['iImage']) + '_' + str(flowPoints['windowSize']), keypointImage)
+            allFlowPoints.append(curFlowPoints)
+
+        # Draw the flow
+        for curFlowPoints in allFlowPoints:
+            for flowPoints in curFlowPoints:
+                keypointImage = drawKeypointMatches(flowPoints['curImage'], flowPoints['goodPoints0'], flowPoints['goodPoints1'], stereoDisparityColors128)
+                cv2.imshow('flow_' + str(flowPoints['iImage']) + '_' + str(flowPoints['windowSize']), keypointImage)
 
     # Stereo
-    if len(images) == 2:
+    if len(images) == 2 and computeStereoBm:
+        for windowSize in windowSizes:
+            disparity = stereo.compute(cv2.equalizeHist(images[0]), cv2.equalizeHist(images[1]))
+            disparity >>= 5
+
+            disparityToShow = disparity.copy()
+            disparityToShow[disparityToShow<0] = 0
+            disparityToShow = disparityToShow.astype('uint8')
+
+            roiLeft = max(undistortMaps[0]['roi'][0], undistortMaps[1]['roi'][0])
+            roiRight = min(undistortMaps[0]['roi'][0] + undistortMaps[0]['roi'][2], undistortMaps[1]['roi'][0] + undistortMaps[1]['roi'][2])
+            roiTop = max(undistortMaps[0]['roi'][1], undistortMaps[1]['roi'][1])
+            roiBottom = min(undistortMaps[0]['roi'][1] + undistortMaps[0]['roi'][3], undistortMaps[1]['roi'][1] + undistortMaps[1]['roi'][3])
+
+            disparityToShow[:,:roiLeft] = 0
+            disparityToShow[:,roiRight:] = 0
+            disparityToShow[:roiTop,:] = 0
+            disparityToShow[roiBottom:,:] = 0
+
+            cv2.imshow('stereoBM_' + str(windowSize), disparityToShow)
+
+    if len(images) == 2 and computeStereoFlow:
         # Compute the stereo
         allStereoPoints = []
         for windowSize in windowSizes:
@@ -278,14 +290,7 @@ while(1):
                     goodPoints0.append(point0.tolist())
                     goodPoints1.append(point1.tolist())
 
-            if computeStereoBm:
-                disparity = stereo.compute(images[0], images[1])
-                disparity >>= 5
-            else:
-                disparity = None
-
-            pdb.set_trace()
-            allStereoPoints.append({'points1':points1,'st':st,'err':err,'goodPoints0':goodPoints0,'goodPoints1':goodPoints1,'images':images, 'windowSize':windowSize, 'disparity':disparity, 'points0Minimaness':points0Minimaness, 'points1Minimaness':points1Minimaness})
+            allStereoPoints.append({'points1':points1,'st':st,'err':err,'goodPoints0':goodPoints0,'goodPoints1':goodPoints1,'images':images, 'windowSize':windowSize, 'points0Minimaness':points0Minimaness, 'points1Minimaness':points1Minimaness})
 
         # Draw the stereo matches
         for stereoPoints in allStereoPoints:
@@ -326,41 +331,37 @@ while(1):
 
             cv2.imshow('stereoLK_' + str(stereoPoints['windowSize']), keypointImage)
 
-            if stereoPoints['disparity'] is not None:
-                disparityToShow = stereoPoints['disparity']
-                disparityToShow[disparityToShow<0] = 0
-                disparityToShow = disparityToShow.astype('uint8')
-
-                cv2.imshow('stereoBM_' + str(stereoPoints['windowSize']), disparityToShow)
-
         # Compute the flow + stereo for every valid point
-        for flowPoints, stereoPoints in zip(allFlowPoints[0], allStereoPoints):
+        if False:
+            for flowPoints, stereoPoints in zip(allFlowPoints[0], allStereoPoints):
 
-            validIndexes = nonzero((flowPoints['st']==1) & (stereoPoints['st']==1))[0].tolist()
+                validIndexes = nonzero((flowPoints['st']==1) & (stereoPoints['st']==1))[0].tolist()
 
-            validIndexesStereo = []
-            for index in validIndexes:
-                point0 = points0[index].tolist()[0]
-                point1 = stereoPoints['points1'][index].tolist()[0]
-                #pdb.set_trace()
-                absAngle = abs(math.atan2(point0[1]-point1[1], point0[0]-point1[0]))
-                if absAngle <= stereo_lk_maxAngle:
-                    validIndexesStereo.append(index)
+                validIndexesStereo = []
+                for index in validIndexes:
+                    point0 = points0[index].tolist()[0]
+                    point1 = stereoPoints['points1'][index].tolist()[0]
+                    #pdb.set_trace()
+                    absAngle = abs(math.atan2(point0[1]-point1[1], point0[0]-point1[0]))
+                    if absAngle <= stereo_lk_maxAngle:
+                        validIndexesStereo.append(index)
 
-            validIndexes = validIndexesStereo
+                validIndexes = validIndexesStereo
 
-            goodPoints0 = points0[validIndexes]
-            goodPointsFlow = flowPoints['points1'][validIndexes]
-            goodPointsStereo = stereoPoints['points1'][validIndexes]
+                goodPoints0 = points0[validIndexes]
+                goodPointsFlow = flowPoints['points1'][validIndexes]
+                goodPointsStereo = stereoPoints['points1'][validIndexes]
 
-            flowStereoImage = drawStereoFlowKeypointMatches(flowPoints['curImage'], goodPoints0, goodPointsFlow, goodPointsStereo, stereoDisparityColors128)
+                flowStereoImage = drawStereoFlowKeypointMatches(flowPoints['curImage'], goodPoints0, goodPointsFlow, goodPointsStereo, stereoDisparityColors128)
 
-            cv2.imshow('flowStereo' + str(stereoPoints['windowSize']), flowStereoImage)
+                cv2.imshow('flowStereo' + str(stereoPoints['windowSize']), flowStereoImage)
 
     keypress = cv2.waitKey(waitKeyTime)
     if keypress & 0xFF == ord('q'):
         print('Breaking')
         break
+    elif keypress & 0xFF == ord('c'):
+        saveStereo(imagesRaw[0], imagesRaw[1], images[0], images[1], captureBaseFilename)
     elif keypress & 0xFF == ord('a'):
         print('Auto-calibrating stereo')
         goodPoints0 = allStereoPoints[0]['goodPoints0']

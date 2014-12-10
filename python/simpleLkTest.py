@@ -3,7 +3,7 @@ import cv2
 import pdb
 
 cap = 0
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 useFast = False
 

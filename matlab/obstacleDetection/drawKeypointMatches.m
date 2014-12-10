@@ -1,11 +1,21 @@
 
 % draw the tracks
-function keypointImage = drawKeypointMatches(image, points0, points1, distanceColormap)
+function keypointImage = drawKeypointMatches(image, points0, points1, distanceColormap, drawLines)
     
     assert(length(points0) == length(points1));
     
     if ~exist('distanceColormap', 'var')
         distanceColormap = [];
+    end
+    
+    if ~exist('drawLines', 'var')
+        drawLines = true;
+    end
+    
+    if drawLines
+        thickness = 1;
+    else
+        thickness = 11;
     end
     
     keypointImage = repmat(image,[1,1,3]);
@@ -32,8 +42,12 @@ function keypointImage = drawKeypointMatches(image, points0, points1, distanceCo
             
             colors{iPoint} = distanceColormap(dist, :);
         end
+        
+        if ~drawLines
+            points1{iPoint} = points0{iPoint};
+        end
     end % for iPoint = 1:length(points0)
     
-    keypointImage = cv.line(keypointImage, points0, points1, 'Colors', colors, 'Thickness', 1);
+    keypointImage = cv.line(keypointImage, points0, points1, 'Colors', colors, 'Thickness', thickness);
 end % function drawKeypointMatches(image, points0, points1, distanceColormap)
 

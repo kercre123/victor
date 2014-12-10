@@ -1,6 +1,8 @@
 % function colors = computeStereoColormap(numDisparities)
 
 % colors = computeStereoColormap(128);
+% colors = colors(:,3:-1:1); % For matlab
+
 
 function colors = computeStereoColormap(numDisparities)
     % y = r + g
@@ -19,6 +21,7 @@ function colors = computeStereoColormap(numDisparities)
     colors = imresize(colors, [1,numDisparities], 'bilinear');
     colors = squeeze(colors);
     colors = colors(end:-1:1,:);
+    colors(1,:) = 0;
     
     % colorsToShow = permute(colors, [3,1,2]);
     % colorsToShow = repmat(colorsToShow, [100,1,1]);
