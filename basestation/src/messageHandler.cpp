@@ -337,8 +337,8 @@ namespace Anki {
 
         // Decompress image if necessary
         if (msg.imageEncoding > 0) {
-
-          vector<u8> inputVec(data, data+dataSize);
+#if ANKICORETECH_USE_OPENCV
+          cv::vector<u8> inputVec(data, data+dataSize);
           rawImg = cv::imdecode(inputVec, CV_LOAD_IMAGE_GRAYSCALE);
 
           // Check size
@@ -347,6 +347,11 @@ namespace Anki {
           u32 numChannels = rawImg.channels();
           imgBytes = w * h * numChannels;
           //PRINT_INFO("rawImg size: %u x %u (channels %d)\n", w, h, numChannels);
+#else
+          PRINT_NAMED_ERROR("MessageImageChunk.NeedOpenCVtoDecode",
+                            "ANKICORETECH_USE_OPENCV must be 1 to use compressed images.\n");
+          return RESULT_FAIL;
+#endif
         } else {
           // Already decompressed.
           // Raw image bytes is the same as total received bytes.
@@ -362,6 +367,7 @@ namespace Anki {
           // Send image to Viz
           u8* imgToSend = data;
           if (msg.imageEncoding > 0) {
+            
             /*
             // Write image to file (recompressing as jpeg again!)
             vector<int> compression_params;
@@ -372,9 +378,8 @@ namespace Anki {
             
             imgToSend = rawImg.data;
           }
-          VizManager::getInstance()->SendGreyImage(robot->GetID(), imgToSend, (Vision::CameraResolution)msg.resolution);
-
-
+          VizManager::getInstance()->SendGreyImage(robot->GetID(), imgToSend,
+                                                   (Vision::CameraResolution)msg.resolution);
 
           // TODO: Stuff and things on the image that imgToSend now points to.
           // ...

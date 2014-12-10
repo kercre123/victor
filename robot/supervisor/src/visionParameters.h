@@ -39,6 +39,16 @@ namespace Anki {
       // Set the docker here:
 #define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
       
+      // Enable image compression for sending images to basestation vision
+      // processor (currently only supported when opencv is available):
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#  define USE_COMPRESSION_FOR_SENDING_IMAGES 1 // Change this one
+#else
+#  define USE_COMPRESSION_FOR_SENDING_IMAGES 0 // Leave this one alone
+#endif
+      
+#define IMAGE_SEND_JPEG_COMPRESSION_QUALITY 90 // 0 to 100
+      
 //#define USE_HEADER_TEMPLATE //< Currently only supported for binary tracker and battery marker
       
       // Set to 1 to use the top (or bottom) bar of the tracked marker to approximate
@@ -171,7 +181,7 @@ namespace Anki {
 #ifdef SIMULATOR
         static const u32 FIDUCIAL_DETECTION_SPEED_HZ = 5;
         static const u32 FACE_DETECTION_SPEED_HZ     = 1;
-        static const u32 SEND_WIFI_IMAGE_SPEED_HZ    = 15;
+        static const u32 SEND_WIFI_IMAGE_SPEED_HZ    = 5;
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 60;

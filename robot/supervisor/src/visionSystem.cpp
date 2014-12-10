@@ -419,6 +419,64 @@ namespace Anki {
         }
       }
 
+#if USE_COMPRESSION_FOR_SENDING_IMAGES
+      void CompressAndSendImage(const Array<u8> &img)
+      {
+        static u32 imgID = 0;
+        const cv::vector<int> compressionParams = {
+          CV_IMWRITE_JPEG_QUALITY, IMAGE_SEND_JPEG_COMPRESSION_QUALITY
+        };
+        
+        cv::Mat cvImg;
+        Result lastResult = ArrayToCvMat(img, &cvImg);
+        AnkiConditionalErrorAndReturn(lastResult == RESULT_OK,
+                                      "CompressAndSendImage.ArrayToCvMat failure.",
+                                      "Failed to convert input array to cv::Mat for compression.\n");
+        
+        cv::vector<u8> compressedBuffer;
+        cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
+        
+        const u32 numTotalBytes = compressedBuffer.size();
+        
+        Messages::ImageChunk m;
+        // TODO: pass this in so it corresponds to actual frame capture time instead of send time
+        m.frameTimeStamp = HAL::GetTimeStamp();
+        m.resolution = captureResolution_;
+        m.imageId = ++imgID;
+        m.chunkId = 0;
+        m.chunkSize = IMAGE_CHUNK_SIZE;
+        m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
+        
+        // TODO: Remove this once it comes from ImageEncoding_t in cozmoTypes.h
+        const s32 IE_JPEG = 3;
+        m.imageEncoding = IE_JPEG;
+        
+        u32 totalByteCnt = 0;
+        u32 chunkByteCnt = 0;
+        
+        for(s32 i=0; i<numTotalBytes; ++i)
+        {
+          m.data[chunkByteCnt] = compressedBuffer[i];
+          
+          ++chunkByteCnt;
+          ++totalByteCnt;
+          
+          if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
+            //PRINT("Sending image chunk %d\n", m.chunkId);
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+            ++m.chunkId;
+            chunkByteCnt = 0;
+          } else if (totalByteCnt == numTotalBytes) {
+            // This should be the last message!
+            //PRINT("Sending LAST image chunk %d\n", m.chunkId);
+            m.chunkSize = chunkByteCnt;
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+          }
+        } // for each byte in the compressed buffer
+        
+      } // CompressAndSendImage()
+#endif // USE_COMPRESSION_FOR_SENDING_IMAGES
+      
       void DownsampleAndSendImage(const Array<u8> &img)
       {
         // Only downsample if normal capture res is QVGA
@@ -2464,7 +2522,12 @@ namespace Anki {
                               captureResolution_, false);
           
           SetImageSendMode(ISM_STREAM, captureResolution_);
+          
+#if USE_COMPRESSION_FOR_SENDING_IMAGES
+          CompressAndSendImage(grayscaleImage);
+#else
           DownsampleAndSendImage(grayscaleImage);
+#endif
           
           //PRINT("Sent image to basestation.\n");
           
