@@ -161,8 +161,8 @@ namespace Anki
   static int reshapeGL(const int windowWidth, const int windowHeight)
   {
     const GLfloat fieldOfView = 45.0f;
-    const GLfloat minDistance = 0.1f;
-    const GLfloat maxDistance = 1000.0f;
+    const GLfloat minDistance = 0.01f;
+    const GLfloat maxDistance = 100000.0f;
     
     const GLfloat aspect = (GLfloat)windowWidth / (GLfloat)windowHeight;
    
