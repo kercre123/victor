@@ -19,7 +19,7 @@
 
 #if ANKICORETECH_USE_MATLAB
    // You can manually adjust this one
-#  define ANKI_COZMO_USE_MATLAB_VISION 1
+#  define ANKI_COZMO_USE_MATLAB_VISION 0
 #else
    // Leave this one always set to 0
 #  define ANKI_COZMO_USE_MATLAB_VISION 0

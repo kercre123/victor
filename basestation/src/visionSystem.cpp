@@ -2258,7 +2258,7 @@ namespace Cozmo {
     } // if(_mode & DETECTING_FACES)
     
     // DEBUG!!!!
-    _mode |= LOOKING_FOR_SALIENCY;
+    //_mode |= LOOKING_FOR_SALIENCY;
     
     if(_mode & LOOKING_FOR_SALIENCY)
     {
