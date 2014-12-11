@@ -18,7 +18,7 @@ namespace Anki
       // Swap the corners, as in the Matlab script
       quadSwapped = Quadrilateral<s16>(quad[0], quad[3], quad[1], quad[2]);
 
-      bool areCornersDisordered;
+      bool areCornersDisordered = false;
       const bool isReasonable = IsQuadrilateralReasonable(quadSwapped, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, imageHeight, imageWidth, areCornersDisordered);
 
       if(areCornersDisordered) {

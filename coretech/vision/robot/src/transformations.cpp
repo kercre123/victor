@@ -879,7 +879,9 @@ namespace Anki
           yOriginal += yGridDelta;
         } // for(s32 y=0; y<yIterationMax; y++)
 
-        meanAbsoluteDifference = totalGrayvalueDifference / numInBounds;
+        if(numInBounds > 0) {
+          meanAbsoluteDifference = totalGrayvalueDifference / numInBounds;
+        }
 
         return RESULT_OK;
       }
@@ -1025,7 +1027,9 @@ namespace Anki
           yOriginal += yGridDelta * templateCoordinateIncrement;
         } // for(s32 y=0; y<yIterationMax; y++)
 
-        meanAbsoluteDifference = totalGrayvalueDifference / numInBounds;
+        if(numInBounds > 0) {
+          meanAbsoluteDifference = totalGrayvalueDifference / numInBounds;
+        }
 
         return RESULT_OK;
       } // Result PlanarTransformation_f32::VerifyTransformation_Projective_LinearInterpolate()
