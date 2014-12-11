@@ -181,7 +181,7 @@ namespace Anki {
 #ifdef SIMULATOR
         static const u32 FIDUCIAL_DETECTION_SPEED_HZ = 5;
         static const u32 FACE_DETECTION_SPEED_HZ     = 1;
-        static const u32 SEND_WIFI_IMAGE_SPEED_HZ    = 5;
+        static const u32 SEND_WIFI_IMAGE_SPEED_HZ    = 15; // 8Hz seems to be the uppper limit before weird localization bug happens
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 60;
