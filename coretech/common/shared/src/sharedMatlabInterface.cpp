@@ -263,8 +263,9 @@ namespace Anki {
     else if(types[9] == 1){type=TYPE_DOUBLE;}
     else{type = TYPE_UNKNOWN;}
 
-    types = 0; free(types);
-
+    free(types);
+    types = 0;
+    
     return type;
   }
 
