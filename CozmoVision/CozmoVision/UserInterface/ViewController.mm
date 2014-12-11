@@ -32,7 +32,7 @@
 // Can't this _always_ be localhost? The UI and the basestation object
 // are always on the same physical device
 //#define BASESTATION_IP "127.0.0.1"
-#define BASESTATION_IP "192.168.18.244"
+#define BASESTATION_IP "192.168.19.227"
 //#define BASESTATION_IP "192.168.19.238"
 
 using namespace Anki;
@@ -69,7 +69,7 @@ using namespace Anki;
   [_upArrowLabel   setTransform:CGAffineTransformMakeRotation(-M_PI_2)];
   [_downArrayLabel setTransform:CGAffineTransformMakeRotation( M_PI_2)];
   [_upArrowLabel   bringSubviewToFront:_directionControllerView];
-  
+
   // Make the head/lift sliders vertical
   [_headAngleSlider  setTransform:CGAffineTransformMakeRotation(-M_PI_2)];
   [_liftHeightSlider setTransform:CGAffineTransformMakeRotation(-M_PI_2)];
@@ -96,7 +96,7 @@ using namespace Anki;
   
   _directionController = [[CozmoDirectionController alloc] initWithFrame:_directionControllerView.bounds];
   [_directionControllerView addSubview:_directionController];
-  
+
 #ifdef __cplusplus
   _uiClient = new TcpClient();
 #endif
@@ -137,9 +137,12 @@ using namespace Anki;
   //      _directionController.leftWheelSpeed_mmps,
   //      _directionController.rightWheelSpeed_mmps);
   
-  [self SendDriveWheels:_directionController.leftWheelSpeed_mmps
-                       :_directionController.rightWheelSpeed_mmps];
-  
+//  [self SendDriveWheels:_directionController.leftWheelSpeed_mmps
+//                       :_directionController.rightWheelSpeed_mmps];
+
+  [self SendDriveWheels:_directionPadView.leftWheelSpeed_mmps
+                       :_directionPadView.rightWheelSpeed_mmps];
+
 }
 
 
