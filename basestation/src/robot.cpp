@@ -1005,6 +1005,7 @@ namespace Anki {
       // the pose w.r.t. the origin for storing poses in history.
       //RobotPoseStamp p(robot->GetPoseFrameID(), robotPoseWrtMat.GetWithRespectToOrigin(), posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
       Pose3d robotPoseWrtOrigin = robotPoseWrtMat.GetWithRespectToOrigin();
+      
       if((lastResult = AddVisionOnlyPoseToHistory(existingMatPiece->GetLastObservedTime(),
                                                   robotPoseWrtOrigin.GetTranslation().x(),
                                                   robotPoseWrtOrigin.GetTranslation().y(),
@@ -1664,16 +1665,20 @@ namespace Anki {
       // pose history, but this should not be necessary forever.
       // NOTE: only the info found in pose history will be valid in the state message!
       MessageRobotState robotState;
+      
       RobotPoseStamp p;
       TimeStamp_t actualTimestamp;
-      lastResult = _poseHistory.ComputePoseAt(image.GetTimestamp(), actualTimestamp, p, false); // TODO: use interpolation??
+      lastResult = _poseHistory.GetRawPoseAt(image.GetTimestamp(), actualTimestamp, p);
+      //lastResult = _poseHistory.ComputePoseAt(image.GetTimestamp(), actualTimestamp, p, false); // TODO: use interpolation??
       if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("Robot.ProcessImage.PoseHistoryFail",
                         "Unable to get computed pose at image timestamp of %d.\n", image.GetTimestamp());
         return lastResult;
       }
-      robotState.timestamp = actualTimestamp;
-      robotState.headAngle = p.GetHeadAngle();
+      
+      robotState.timestamp     = actualTimestamp;
+      robotState.pose_frame_id = p.GetFrameId();
+      robotState.headAngle     = p.GetHeadAngle();
       robotState.liftAngle = p.GetLiftAngle();
       robotState.pose_x    = p.GetPose().GetTranslation().x();
       robotState.pose_y    = p.GetPose().GetTranslation().y();

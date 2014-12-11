@@ -85,9 +85,13 @@ namespace Cozmo {
   {
     Lock();
     
+    // TODO: Avoid all the allocation and deletion here!
+    
     if(_nextImg != nullptr) {
       // There's already a next image queued up. Get rid of it and replace it
       // with this new one.
+      PRINT_NAMED_INFO("VisionProcessingThread.SetNextImage.DiscardingImage",
+                       "Discarding previously-set next image before processing it.\n");
       delete _nextImg;
     }
     

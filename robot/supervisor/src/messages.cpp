@@ -228,7 +228,8 @@ namespace Anki {
         
         
         PRINT("Robot received localization update from "
-              "basestation: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
+              "basestation for time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
+              msg.timestamp,
               currentMatX, currentMatY,
               currentMatHeading.getDegrees(),
               Localization::GetPoseFrameId());

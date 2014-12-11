@@ -1737,7 +1737,7 @@ namespace Cozmo {
     // always send a RobotState message off to basestation with a matching
     // timestamp to every VisionMarker message.
     //const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
-    const TimeStamp_t imageTimeStamp = robotState.timestamp;
+    const TimeStamp_t imageTimeStamp = inputImage->GetTimestamp(); // robotState.timestamp;
     
     if(_mode & TAKING_SNAPSHOT) {
       // Nothing to do, unless a snapshot was requested
@@ -1834,6 +1834,7 @@ namespace Cozmo {
       }
       
       const s32 numMarkers = _memory._markers.get_size();
+      
       bool isTrackingMarkerFound = false;
       for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
       {
