@@ -285,7 +285,10 @@ int main(int argc, char **argv)
                           PlatformPathManager::GetInstance()->PrependPath(PlatformPathManager::Test, imgFilename).c_str(),
                           PlatformPathManager::GetInstance()->PrependPath(PlatformPathManager::Test, imgFilename).c_str());
 
-    const int numMarkers = static_cast<int>(*matlab.Get<double>("numMarkers"));
+    double *temp = matlab.Get<double>("numMarkers");
+    const int numMarkers = static_cast<int>(*temp);
+    free(temp);
+    
     fprintf(stdout, "Detected %d markers at pose %d.\n", numMarkers, i_pose);
     
     for(int i_marker=0; i_marker<numMarkers; ++i_marker) {

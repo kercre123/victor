@@ -318,6 +318,7 @@ namespace Anki {
               // Once initialization is done, broadcast a message that this robot
               // is ready to go
               Messages::RobotAvailable msg;
+              msg.robotID = HAL::GetRobotID();
               PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
               HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
          
