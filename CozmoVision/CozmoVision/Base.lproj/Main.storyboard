@@ -121,7 +121,6 @@
                         <outlet property="cameraSelector" destination="1kL-f1-gGN" id="jZ4-Kf-0aB"/>
                         <outlet property="detectedMarkerLabel" destination="uKq-rJ-NBi" id="I2e-K2-u5y"/>
                         <outlet property="directionControllerView" destination="k9U-q6-fze" id="Nhp-RI-4Os"/>
-                        <outlet property="directionOLabel" destination="3PS-eQ-1bZ" id="unP-QS-UW8"/>
                         <outlet property="downArrayLabel" destination="Kmj-Sv-lUQ" id="DRL-zA-wmy"/>
                         <outlet property="headAngleSlider" destination="fRi-kp-Wd2" id="OS6-bv-kpL"/>
                         <outlet property="liftHeightSlider" destination="fhg-hK-GaI" id="iIA-mX-fgr"/>
