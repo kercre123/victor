@@ -48,6 +48,7 @@ namespace Vision {
                                std::vector<std::vector< Point2<s32> > >& regionPoints) const;
     
     using Array2d<u8>::GetDataPointer;
+    using Array2d<u8>::IsEmpty;
     
   protected:
     TimeStamp_t     _timeStamp;
