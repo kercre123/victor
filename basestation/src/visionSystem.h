@@ -93,7 +93,7 @@ namespace Cozmo {
     //   value and NOT by reference, since the vision system can be interrupted
     //   by main execution (which updates the state).
     Result Update(const MessageRobotState robotState,
-                  const Vision::Image*    inputImg);
+                  const Vision::Image&    inputImg);
     
     void StopTracking();
 

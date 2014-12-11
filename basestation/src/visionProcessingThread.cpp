@@ -27,8 +27,6 @@ namespace Cozmo {
   , _running(false)
   , _isLocked(false)
   , _wasLastImageProcessed(false)
-  , _currentImg(nullptr)
-  , _nextImg(nullptr)
   {
     
   } // VisionSystem()
@@ -60,6 +58,7 @@ namespace Cozmo {
       _processingThread.join();
     }
     
+    /*
     // Now that processing is complete, we can delete any images that we're
     // holding onto
     if(_currentImg != nullptr) {
@@ -71,6 +70,7 @@ namespace Cozmo {
       delete _nextImg;
       _nextImg = nullptr;
     }
+     */
   }
 
 
@@ -87,6 +87,7 @@ namespace Cozmo {
     
     // TODO: Avoid all the allocation and deletion here!
     
+    /*
     if(_nextImg != nullptr) {
       // There's already a next image queued up. Get rid of it and replace it
       // with this new one.
@@ -94,8 +95,13 @@ namespace Cozmo {
                        "Discarding previously-set next image before processing it.\n");
       delete _nextImg;
     }
+     */
     
-    _nextImg = new Vision::Image(image);
+    //_nextImg = new Vision::Image(image);
+    image.CopyDataTo(_nextImg);
+    _nextImg.SetTimestamp(image.GetTimestamp());
+    
+    //_nextImg = Vision::Image(image);
     _nextRobotState = robotState;
     _wasLastImageProcessed = false;
     
@@ -105,11 +111,11 @@ namespace Cozmo {
   
   bool VisionProcessingThread::GetCurrentImage(const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels) const
   {
-    if(_running && _currentImg != nullptr) {
+    if(_running && !_currentImg.IsEmpty()) {
       // Is this thread safe? What if nrows/ncols change while we're accessing the data?
-      imageData = _currentImg->GetDataPointer();
-      nrows     = _currentImg->GetNumRows();
-      ncols     = _currentImg->GetNumCols();
+      imageData = _currentImg.GetDataPointer();
+      nrows     = _currentImg.GetNumRows();
+      ncols     = _currentImg.GetNumCols();
       nchannels = 1; // TODO: support color
       return true;
     } else {
@@ -167,22 +173,26 @@ namespace Cozmo {
     
     while (_running) {
       
-      if(_currentImg != nullptr) {
+      //if(_currentImg != nullptr) {
+      if(!_currentImg.IsEmpty()) {
         // There is an image to be processed:
         
-        assert(_currentImg != nullptr);
+        //assert(_currentImg != nullptr);
         _visionSystem->Update(_currentRobotState, _currentImg);
         _wasLastImageProcessed = true;
         
         // Clear it when done.
+        /*
         delete _currentImg;
         _currentImg = nullptr;
+         */
+        _currentImg = {};
         
-      } else if(_nextImg != nullptr) {
+      } else if(!_nextImg.IsEmpty()) {
         Lock();
         _currentImg        = _nextImg;
         _currentRobotState = _nextRobotState;
-        _nextImg = nullptr;
+        _nextImg = {};
         Unlock();
       } else {
         usleep(100);

@@ -17,16 +17,10 @@
 #include "anki/cozmo/basestation/messages.h"
 
 #include "anki/vision/basestation/cameraCalibration.h"
-
+#include "anki/vision/basestation/image.h"
 #include <thread>
 
-namespace Anki {
-  
-  // Forward declaration:
-  namespace Vision {
-    class Image;
-  }
-  
+namespace Anki {  
 namespace Cozmo {
   
   // Forward declaration
@@ -77,8 +71,8 @@ namespace Cozmo {
     bool   _isLocked; // mutex for setting image and state
     bool   _wasLastImageProcessed;
     
-    Vision::Image* _currentImg;
-    Vision::Image* _nextImg;
+    Vision::Image _currentImg;
+    Vision::Image _nextImg;
     
     MessageRobotState _currentRobotState;
     MessageRobotState _nextRobotState;

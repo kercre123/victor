@@ -1675,23 +1675,23 @@ namespace Cozmo {
 #  error RUN_GROUND_TRUTHING_CAPTURE not implemented in Basestation vision system.
 #endif
   
-  Result GetImageHelper(const Vision::Image* srcImage,
+  Result GetImageHelper(const Vision::Image& srcImage,
                       Array<u8>& destArray)
   {
     const s32 captureHeight = destArray.get_size(0);
     const s32 captureWidth  = destArray.get_size(1);
     
-    if(srcImage->GetNumRows() != captureHeight || srcImage->GetNumCols() != captureWidth) {
+    if(srcImage.GetNumRows() != captureHeight || srcImage.GetNumCols() != captureWidth) {
       PRINT_NAMED_ERROR("VisionSystem.GetImageHelper.MismatchedImageSizes",
                         "Source Vision::Image and destination Embedded::Array should "
                         "be the same size (source is %dx%d and destinatinon is %dx%d\n",
-                        srcImage->GetNumRows(), srcImage->GetNumCols(),
+                        srcImage.GetNumRows(), srcImage.GetNumCols(),
                         captureHeight, captureWidth);
       return RESULT_FAIL_INVALID_SIZE;
     }
     
     memcpy(reinterpret_cast<u8*>(destArray.get_buffer()),
-           srcImage->GetDataPointer(),
+           srcImage.GetDataPointer(),
            captureHeight*captureWidth*sizeof(u8));
     
     return RESULT_OK;
@@ -1701,7 +1701,7 @@ namespace Cozmo {
   
   // This is the regular Update() call
   Result VisionSystem::Update(const MessageRobotState robotState,
-                              const Vision::Image*    inputImage)
+                              const Vision::Image&    inputImage)
   {
     Result lastResult = RESULT_OK;
     
@@ -1737,7 +1737,7 @@ namespace Cozmo {
     // always send a RobotState message off to basestation with a matching
     // timestamp to every VisionMarker message.
     //const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
-    const TimeStamp_t imageTimeStamp = inputImage->GetTimestamp(); // robotState.timestamp;
+    const TimeStamp_t imageTimeStamp = inputImage.GetTimestamp(); // robotState.timestamp;
     
     if(_mode & TAKING_SNAPSHOT) {
       // Nothing to do, unless a snapshot was requested
@@ -1933,7 +1933,8 @@ namespace Cozmo {
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                _onchipScratchlocal, Flags::Buffer(false,false,false));
       
-      memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureWidth*captureHeight*sizeof(u8));
+      GetImageHelper(inputImage, grayscaleImage);
+      //memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureWidth*captureHeight*sizeof(u8));
       //HAL::CameraGetFrame(),
       //  _captureResolution, false);
       
@@ -2102,7 +2103,8 @@ namespace Cozmo {
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                _memory._offchipScratch, Flags::Buffer(false,false,false));
       
-      memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureHeight*captureWidth*sizeof(u8));
+      GetImageHelper(inputImage, grayscaleImage);
+      //memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureHeight*captureWidth*sizeof(u8));
       //HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
       //                    _captureResolution, false);
       
@@ -2342,9 +2344,10 @@ namespace Cozmo {
       
       // Store a copy of the current image for next time
       // TODO: switch to just swapping pointers between current and previous image
-      inputImage->CopyTo(_prevImage);
+      inputImage.CopyDataTo(_prevImage);
+      _prevImage.SetTimestamp(inputImage.GetTimestamp());
       
-    } // if(_mode & LOOKING_FOR_MARKERS)
+    } // if(_mode & LOOKING_FOR_SALIENCY)
     
     return lastResult;
   } // Update() [Real]
