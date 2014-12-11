@@ -446,9 +446,6 @@ namespace Anki {
         m.chunkId = 0;
         m.chunkSize = IMAGE_CHUNK_SIZE;
         m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
-        
-        // TODO: Remove this once it comes from ImageEncoding_t in cozmoTypes.h
-        const s32 IE_JPEG = 3;
         m.imageEncoding = IE_JPEG;
         
         u32 totalByteCnt = 0;
