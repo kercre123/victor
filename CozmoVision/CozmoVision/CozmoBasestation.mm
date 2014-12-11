@@ -219,7 +219,10 @@
 
       if(true == _basestation->GetCurrentRobotImage(1, imageDataPtr, nrows, ncols, nchannels))
       {
-        cv::Mat_<u8> cvMatImg(nrows, ncols, const_cast<unsigned char*>(imageDataPtr));
+        // TODO: Somehow get rid of this copy, but still be threadsafe
+        //cv::Mat_<u8> cvMatImg(nrows, ncols, const_cast<unsigned char*>(imageDataPtr));
+        cv::Mat_<u8> cvMatImg(nrows,ncols);
+        memcpy(cvMatImg.data, imageDataPtr, nrows*ncols*sizeof(u8));
         _imageViewer.image = [self UIImageFromCVMat:cvMatImg];
       }
     }
