@@ -43,7 +43,7 @@ ADD_MESSAGE_MEMBER(f32, fooMember1)
 ADD_MESSAGE_MEMBER(u16, fooMember2)
 ADD_MESSAGE_MEMBER(u8,  fooMember3)
 END_MESSAGE_DEFINITION(Foo)
-#endif 
+#endif
 
 START_TIMESTAMPED_MESSAGE_DEFINITION(RobotState, 1)
 ADD_MESSAGE_MEMBER(u32, pose_frame_id)
@@ -216,4 +216,3 @@ END_MESSAGE_DEFINITION(PlaySoundOnBaseStation)
 // StopSoundOnBaseStation
 START_MESSAGE_DEFINITION(StopSoundOnBaseStation, 1)
 END_MESSAGE_DEFINITION(StopSoundOnBaseStation)
-
