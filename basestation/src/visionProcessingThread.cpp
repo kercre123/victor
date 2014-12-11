@@ -34,6 +34,8 @@ namespace Cozmo {
   void VisionProcessingThread::Start(Vision::CameraCalibration& camCalib)
   {
     if(_running) {
+      PRINT_NAMED_INFO("VisionProcessingThread.Start.Restarting",
+                       "Thread already started, call Stop() and then restarting.\n");
       Stop();
     }
     
@@ -58,6 +60,8 @@ namespace Cozmo {
       _processingThread.join();
     }
     
+    _currentImg = {};
+    _nextImg    = {};
     /*
     // Now that processing is complete, we can delete any images that we're
     // holding onto
