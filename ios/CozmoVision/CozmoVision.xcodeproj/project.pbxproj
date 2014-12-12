@@ -20,7 +20,6 @@
 		499F44E31A255B120050A530 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E21A255B120050A530 /* main.m */; };
 		499F44E61A255B120050A530 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E51A255B120050A530 /* AppDelegate.m */; };
 		499F44E91A255B120050A530 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E81A255B120050A530 /* ViewController.mm */; };
-		499F44EC1A255B120050A530 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 499F44EA1A255B120050A530 /* Main.storyboard */; };
 		499F44EE1A255B120050A530 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 499F44ED1A255B120050A530 /* Images.xcassets */; };
 		499F44F11A255B120050A530 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 499F44EF1A255B120050A530 /* LaunchScreen.xib */; };
 		499F45141A25672E0050A530 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F450B1A25672E0050A530 /* Accelerate.framework */; };
@@ -33,6 +32,10 @@
 		499F451B1A25672E0050A530 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45121A25672E0050A530 /* QuartzCore.framework */; };
 		499F451C1A25672E0050A530 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45131A25672E0050A530 /* UIKit.framework */; };
 		49B269191A369F7900135486 /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49B269181A369F7900135486 /* opencv2.framework */; };
+		4E161EEB1A396EE400E08F41 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4E161EEA1A396EE400E08F41 /* Main.storyboard */; };
+		4E161EED1A396F4400E08F41 /* DevAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E161EEC1A396F4400E08F41 /* DevAssets.xcassets */; };
+		4E161EF01A39710100E08F41 /* DirectionPadView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E161EEF1A39710100E08F41 /* DirectionPadView.m */; };
+		4E528F201A3A20FB00552314 /* CozmoOperator.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -55,7 +58,6 @@
 		499F44E51A255B120050A530 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		499F44E71A255B120050A530 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		499F44E81A255B120050A530 /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
-		499F44EB1A255B120050A530 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		499F44ED1A255B120050A530 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		499F44F01A255B120050A530 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
 		499F450B1A25672E0050A530 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -68,6 +70,12 @@
 		499F45121A25672E0050A530 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		499F45131A25672E0050A530 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		49B269181A369F7900135486 /* opencv2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = opencv2.framework; path = "../../../../coretech-external/build/opencv-ios/opencv2.framework"; sourceTree = "<group>"; };
+		4E161EEA1A396EE400E08F41 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
+		4E161EEC1A396F4400E08F41 /* DevAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DevAssets.xcassets; sourceTree = "<group>"; };
+		4E161EEE1A39710100E08F41 /* DirectionPadView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DirectionPadView.h; sourceTree = "<group>"; };
+		4E161EEF1A39710100E08F41 /* DirectionPadView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DirectionPadView.m; sourceTree = "<group>"; };
+		4E528F1E1A3A20FB00552314 /* CozmoOperator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CozmoOperator.h; sourceTree = "<group>"; };
+		4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CozmoOperator.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,20 +107,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		4967D9491A311BBC00EF0E90 /* UI */ = {
+		4967D9491A311BBC00EF0E90 /* UserInterface */ = {
 			isa = PBXGroup;
 			children = (
-				499F44E41A255B120050A530 /* AppDelegate.h */,
-				499F44E51A255B120050A530 /* AppDelegate.m */,
+				4E161EEA1A396EE400E08F41 /* Main.storyboard */,
+				4E161EEC1A396F4400E08F41 /* DevAssets.xcassets */,
 				499F44E71A255B120050A530 /* ViewController.h */,
 				499F44E81A255B120050A530 /* ViewController.mm */,
-				499F44EA1A255B120050A530 /* Main.storyboard */,
 				4967D9E01A36272F00EF0E90 /* CozmoDirectionController.h */,
 				4967D9E11A36272F00EF0E90 /* CozmoDirectionController.mm */,
-				499F44ED1A255B120050A530 /* Images.xcassets */,
-				499F44EF1A255B120050A530 /* LaunchScreen.xib */,
+				4E161EE91A3967B500E08F41 /* DirectionPad */,
 			);
-			name = UI;
+			path = UserInterface;
 			sourceTree = "<group>";
 		};
 		4967D94A1A311BC500EF0E90 /* Basestation */ = {
@@ -120,6 +126,8 @@
 			children = (
 				4967D9D81A326CA200EF0E90 /* CozmoBasestation.h */,
 				4967D9D61A326C8900EF0E90 /* CozmoBasestation.mm */,
+				4E528F1E1A3A20FB00552314 /* CozmoOperator.h */,
+				4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */,
 			);
 			name = Basestation;
 			sourceTree = "<group>";
@@ -159,8 +167,12 @@
 		499F44DF1A255B120050A530 /* CozmoVision */ = {
 			isa = PBXGroup;
 			children = (
+				499F44E41A255B120050A530 /* AppDelegate.h */,
+				499F44E51A255B120050A530 /* AppDelegate.m */,
+				499F44ED1A255B120050A530 /* Images.xcassets */,
+				499F44EF1A255B120050A530 /* LaunchScreen.xib */,
 				4967D94A1A311BC500EF0E90 /* Basestation */,
-				4967D9491A311BBC00EF0E90 /* UI */,
+				4967D9491A311BBC00EF0E90 /* UserInterface */,
 				499F45081A255D8D0050A530 /* Frameworks */,
 				499F44E01A255B120050A530 /* Supporting Files */,
 			);
@@ -191,6 +203,15 @@
 				499F45131A25672E0050A530 /* UIKit.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4E161EE91A3967B500E08F41 /* DirectionPad */ = {
+			isa = PBXGroup;
+			children = (
+				4E161EEE1A39710100E08F41 /* DirectionPadView.h */,
+				4E161EEF1A39710100E08F41 /* DirectionPadView.m */,
+			);
+			name = DirectionPad;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -251,9 +272,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				499F44EC1A255B120050A530 /* Main.storyboard in Resources */,
+				4E161EED1A396F4400E08F41 /* DevAssets.xcassets in Resources */,
 				499F44F11A255B120050A530 /* LaunchScreen.xib in Resources */,
 				499F44EE1A255B120050A530 /* Images.xcassets in Resources */,
+				4E161EEB1A396EE400E08F41 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -264,8 +286,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E528F201A3A20FB00552314 /* CozmoOperator.mm in Sources */,
 				499F44E91A255B120050A530 /* ViewController.mm in Sources */,
 				499F44E61A255B120050A530 /* AppDelegate.m in Sources */,
+				4E161EF01A39710100E08F41 /* DirectionPadView.m in Sources */,
 				4967D9D71A326C8A00EF0E90 /* CozmoBasestation.mm in Sources */,
 				4967D9E21A36272F00EF0E90 /* CozmoDirectionController.mm in Sources */,
 				499F44E31A255B120050A530 /* main.m in Sources */,
@@ -275,14 +299,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		499F44EA1A255B120050A530 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				499F44EB1A255B120050A530 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
 		499F44EF1A255B120050A530 /* LaunchScreen.xib */ = {
 			isa = PBXVariantGroup;
 			children = (

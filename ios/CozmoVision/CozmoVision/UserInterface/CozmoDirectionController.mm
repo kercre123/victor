@@ -8,8 +8,8 @@
 
 #import "CozmoDirectionController.h"
 
-#include "anki/common/types.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#import <anki/common/types.h>
+#import <anki/cozmo/robot/cozmoConfig.h>
 
 #define DEBUG_GAMEPAD 0
 
