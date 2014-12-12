@@ -145,7 +145,7 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
   _backgroundCircleLayer.cornerRadius = _backgroundRadius;
 
   CGFloat joystickSize = (computeJoystickSize(viewSize.width) > kMaxJoystickSize) ? kMaxJoystickSize : computeJoystickSize(viewSize.width);
-  _boundsRadius = _boundsRadius - (joystickSize / 2.0);
+  _boundsRadius = _backgroundRadius - (joystickSize / 2.0);
   _joystickCircleView.bounds = CGRectMake(0.0, 0.0, joystickSize, joystickSize);
   _joystickCircleView.center = CGPointMake(viewSize.width / 2.0, viewSize.height / 2.0);
   _joystickCircleView.layer.cornerRadius = joystickSize / 2.0;
@@ -198,7 +198,8 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
 
 #pragma Calculate stuff
 
-// Return valid point
+// TODO: Need to fix this to work within the bounds that the joystick can move in
+// TODO: Need to add angle & magnitude thresholds
 - (void)updateJoystickPositionWithPoint:(CGPoint)point
 {
   CGFloat midX  = CGRectGetMidX(self.bounds);
@@ -218,18 +219,19 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
 - (void)calculateAngleAndMagnitude:(CGPoint)point
 {
   // Compute speed
-  _magnitude = MIN(1.0, sqrtf( (point.x * point.x) + (point.y * point.y) ));
+  CGFloat pointX = MIN(point.x, _boundsRadius);
+  CGFloat pointY = MIN(point.y, _boundsRadius);
 
+  _magnitude = MIN(1.0, sqrtf( (pointX * pointX) + (pointY * pointY) ));
 
   const CGFloat oneEightyOverPi = 180.0 / M_PI;
 
-  CGFloat angleInRads = atan2f(-point.y, point.x);
+  CGFloat angleInRads = atan2f(-pointY, pointX);
   _angleInDegrees = angleInRads * oneEightyOverPi;
 
-  float xyAngle = fabsf(atanf(-point.y / point.x));
-  xyAngle *= oneEightyOverPi;
-
-  NSLog(@"Joystick Ang atan2 %f  atan %f Mag %f", self.angleInDegrees, xyAngle, self.magnitude);
+//  float xyAngle = fabsf(atanf(-point.y / point.x));
+//  xyAngle *= oneEightyOverPi;
+//  NSLog(@"Joystick Ang atan2 %f  atan %f Mag %f", self.angleInDegrees, xyAngle, self.magnitude);
 
 }
 
@@ -315,9 +317,9 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
       //printf("rcorrectionFactor: %f\n", correctionFactor);
     }
 
-#if(DEBUG_GAMEPAD)
-    printf("AnalogLeft: xyMag %f, xyAngle %f, radius %f, fwd %f, right %f, lwheel %f, rwheel %f\n", xyMag, xyAngle, roc, fwd, right, _leftWheelSpeed_mmps, _rightWheelSpeed_mmps );
-#endif
+//#if(DEBUG_GAMEPAD)
+//    printf("AnalogLeft: xyMag %f, xyAngle %f, radius %f, fwd %f, right %f, lwheel %f, rwheel %f\n", xyMag, xyAngle, roc, fwd, right, _leftWheelSpeed_mmps, _rightWheelSpeed_mmps );
+//#endif
 
   } // if sufficient speed
 

@@ -113,10 +113,8 @@ using namespace Anki;
 
 #pragma mark - Drive Cozmo
 
-- (void)sendWheelCommandWithAngleInDegrees:(float)angle magnitude:(float)magnitude point:(CGPoint)point
+- (void)sendWheelCommandWithAngleInDegrees:(float)angle magnitude:(float)magnitude
 {
-
-
   const f32 ANALOG_INPUT_DEAD_ZONE_THRESH = .1f; //000.f / f32(s16_MAX);
   const f32 ANALOG_INPUT_MAX_DRIVE_SPEED  = 100; // mm/s
   const f32 MAX_ANALOG_RADIUS             = 300;
@@ -137,7 +135,6 @@ using namespace Anki;
     f32 angleTranslation = angle;
 
     // Driving forward?
-//    f32 fwd = (angle > -90.0 && angle < 90.0) ? 1 : -1;
     f32 fwd = (angle > 0) ? 1 : -1;
 
     // Curving right?
@@ -150,19 +147,14 @@ using namespace Anki;
     else if (angle < -90.0) {
       angleTranslation += 180.0;
     }
-
     angleTranslation = ABS(angleTranslation);
 
-//
-//    NSLog(@"send Wheel ang %f angTr %f fwd %f right %f", angle, angleTranslation, fwd, right);
 
     // Base wheel speed based on magnitude of input and whether or not robot is driving forward
     f32 baseWheelSpeed = ANALOG_INPUT_MAX_DRIVE_SPEED * magnitude * fwd;
 
     // Convert to Rads
     f32 xyAngle = DEG_TO_RAD_F32(angleTranslation) * right;
-
-    NSLog(@"compair angle %f - %f -- Mag %f - %f  -- Fwd %f - %f  -- rgt %f - %f ", xyAngle,  fabsf(atanf(-(f32)point.y/ (f32)point.x)) * (right), magnitude, MIN(1.0, sqrtf( point.x*point.x + point.y*point.y)), fwd, (float)(point.y < 0 ? 1 : -1), right, (float)(point.x > 0 ? 1 : -1) );
 
     // Compute radius of curvature
     f32 roc = (xyAngle / PIDIV2_F) * MAX_ANALOG_RADIUS;
@@ -204,6 +196,10 @@ using namespace Anki;
       _rightWheelSpeed_mmps *= correctionFactor;
       //printf("rcorrectionFactor: %f\n", correctionFactor);
     }
+
+#if(DEBUG_GAMEPAD)
+    printf("AnalogLeft: xyMag %f, xyAngle %f, radius %f, fwd %f, right %f, lwheel %f, rwheel %f\n", magnitude, xyAngle, roc, fwd, right, _leftWheelSpeed_mmps, _rightWheelSpeed_mmps );
+#endif
   }
 
   Cozmo::MessageU2G_DriveWheels message;
@@ -235,7 +231,7 @@ using namespace Anki;
 
 - (void)sendHeadCommandWithAngleRatio:(float)angle
 {
-  // TODO: Determine acceleration & max speed
+  // TODO: Fix acceleration & max speed
   [self sendHeadCommandWithAngleRatio:angle accelerationSpeedRatio:0 maxSpeedRatio:0];
 }
 
@@ -254,7 +250,7 @@ using namespace Anki;
 
 - (void)sendLiftCommandWithHeightRatio:(float)height
 {
-  // TODO: Determine acceleration & max speed
+  // TODO: Fix acceleration & max speed
   [self sendLiftCommandWithHeightRatio:height accelerationSpeedRatio:0 maxSpeedRatio:0];
 }
 

@@ -26,7 +26,7 @@
  * @param Magnitude ratio [1.0(forward) - -1.0(reverse)] => 0.0 == stop
  * @return void
  */
-- (void)sendWheelCommandWithAngleInDegrees:(float)angle magnitude:(float)magnitude point:(CGPoint)point;
+- (void)sendWheelCommandWithAngleInDegrees:(float)angle magnitude:(float)magnitude;
 
 - (void)sendWheelCommandWithLeftSpeed:(float)left right:(float)right;
 
