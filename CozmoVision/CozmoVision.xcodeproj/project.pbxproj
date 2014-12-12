@@ -35,6 +35,7 @@
 		4E161EEB1A396EE400E08F41 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4E161EEA1A396EE400E08F41 /* Main.storyboard */; };
 		4E161EED1A396F4400E08F41 /* DevAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E161EEC1A396F4400E08F41 /* DevAssets.xcassets */; };
 		4E161EF01A39710100E08F41 /* DirectionPadView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E161EEF1A39710100E08F41 /* DirectionPadView.m */; };
+		4E528F201A3A20FB00552314 /* CozmoOperator.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -73,6 +74,8 @@
 		4E161EEC1A396F4400E08F41 /* DevAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DevAssets.xcassets; sourceTree = "<group>"; };
 		4E161EEE1A39710100E08F41 /* DirectionPadView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DirectionPadView.h; sourceTree = "<group>"; };
 		4E161EEF1A39710100E08F41 /* DirectionPadView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DirectionPadView.m; sourceTree = "<group>"; };
+		4E528F1E1A3A20FB00552314 /* CozmoOperator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CozmoOperator.h; sourceTree = "<group>"; };
+		4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CozmoOperator.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,6 +126,8 @@
 			children = (
 				4967D9D81A326CA200EF0E90 /* CozmoBasestation.h */,
 				4967D9D61A326C8900EF0E90 /* CozmoBasestation.mm */,
+				4E528F1E1A3A20FB00552314 /* CozmoOperator.h */,
+				4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */,
 			);
 			name = Basestation;
 			sourceTree = "<group>";
@@ -281,6 +286,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E528F201A3A20FB00552314 /* CozmoOperator.mm in Sources */,
 				499F44E91A255B120050A530 /* ViewController.mm in Sources */,
 				499F44E61A255B120050A530 /* AppDelegate.m in Sources */,
 				4E161EF01A39710100E08F41 /* DirectionPadView.m in Sources */,

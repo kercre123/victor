@@ -1,0 +1,277 @@
+//
+//  CozmoOperator.m
+//  CozmoVision
+//
+//  Created by Jordan Rivas on 12/11/14.
+//  Copyright (c) 2014 Anki, Inc. All rights reserved.
+//
+// This Clas abstracts all the messages to drive and operate Cozmo's
+
+#import "CozmoOperator.h"
+
+#import <anki/messaging/shared/TcpClient.h>
+
+
+#define COZMO_BASESTATION // to make uiMessages definitions happy
+#import <anki/cozmo/basestation/ui/messaging/uiMessages.h>
+#import <anki/cozmo/robot/cozmoConfig.h>
+
+using namespace Anki;
+
+@interface CozmoOperator ()
+
+@property (assign, nonatomic) BOOL isConnected;
+@end
+
+@implementation CozmoOperator
+{
+  TcpClient* _uiClient;
+}
+
+
+- (instancetype)init
+{
+  if (!(self = [super init]))
+    return self;
+
+  [self commonInit];
+
+  return self;
+}
+
+- (void)commonInit
+{
+#ifdef __cplusplus
+  _uiClient = new TcpClient();
+#endif
+  _isConnected = NO;
+
+
+}
+
+- (void)dealloc
+{
+  if (_uiClient) {
+    delete _uiClient;
+    _uiClient = nil;
+  }
+}
+
+
+#pragma mark - Connection & Message Methds
+
+- (void)connectToBasestationWithIPAddress:(NSString*)ipAddress
+{
+  if (!_uiClient->IsConnected()) {
+
+    if (_uiClient->Connect([ipAddress UTF8String], Cozmo::UI_MESSAGE_SERVER_LISTEN_PORT)) {
+      // Successfully connected
+      self.isConnected = YES;
+      NSLog(@"Cozmo iOS UI connected to basestation!\n");
+    }
+    else {
+      self.isConnected = NO;
+      NSLog(@"Failed to connect to UI message server listen port\n");
+    }
+  }
+}
+
+- (void)disconnectToBasestation
+{
+  if (_uiClient->IsConnected()) {
+
+    if (_uiClient->Disconnect()) {
+      // Successful disconnect
+      self.isConnected = NO;
+      NSLog(@"Successfully disconnected from basestatoin");
+    }
+    else {
+      NSLog(@"Failed to disconnect from basestation");
+    }
+  }
+}
+
+- (void)sendMessage:(Cozmo::UiMessage&)message
+{
+  if (_isConnected) {
+    // TODO: Put this stuff in init so we don't have to do it every time?
+    char sendBuf[128];
+    memcpy(sendBuf, Cozmo::RADIO_PACKET_HEADER, sizeof(Cozmo::RADIO_PACKET_HEADER));
+
+    int sendBufLen = sizeof(Cozmo::RADIO_PACKET_HEADER);
+    sendBuf[sendBufLen++] = message.GetSize()+1;
+    sendBuf[sendBufLen++] = message.GetID();
+    message.GetBytes((u8*)(&sendBuf[sendBufLen]));
+    sendBufLen += message.GetSize();
+
+    //int bytes_sent =
+    _uiClient->Send(sendBuf, sendBufLen);
+    //printf("Sent %d bytes\n", bytes_sent);
+  } // if(_isConnected)
+}
+
+
+#pragma mark - Drive Cozmo
+
+- (void)sendWheelCommandWithAngleInDegrees:(float)angle magnitude:(float)magnitude point:(CGPoint)point
+{
+
+
+  const f32 ANALOG_INPUT_DEAD_ZONE_THRESH = .1f; //000.f / f32(s16_MAX);
+  const f32 ANALOG_INPUT_MAX_DRIVE_SPEED  = 100; // mm/s
+  const f32 MAX_ANALOG_RADIUS             = 300;
+
+//#if(DEBUG_GAMEPAD)
+//  printf("AnalogLeft X %.2f  Y %.2f\n", point.x, point.y);
+//#endif
+
+  f32 _leftWheelSpeed_mmps = 0;
+  f32 _rightWheelSpeed_mmps = 0;
+
+  // Stop wheels if magnitude of input is low
+  if (magnitude > ANALOG_INPUT_DEAD_ZONE_THRESH) {
+
+    magnitude -= ANALOG_INPUT_DEAD_ZONE_THRESH;
+    magnitude /= 1.f - ANALOG_INPUT_DEAD_ZONE_THRESH;
+
+    f32 angleTranslation = angle;
+
+    // Driving forward?
+//    f32 fwd = (angle > -90.0 && angle < 90.0) ? 1 : -1;
+    f32 fwd = (angle > 0) ? 1 : -1;
+
+    // Curving right?
+    f32 right = (angle > -90.0 && angle < 90.0) ? 1 : -1;
+
+
+    if (angle > 90.0) {
+      angleTranslation -= 180.0;
+    }
+    else if (angle < -90.0) {
+      angleTranslation += 180.0;
+    }
+
+    angleTranslation = ABS(angleTranslation);
+
+//
+//    NSLog(@"send Wheel ang %f angTr %f fwd %f right %f", angle, angleTranslation, fwd, right);
+
+    // Base wheel speed based on magnitude of input and whether or not robot is driving forward
+    f32 baseWheelSpeed = ANALOG_INPUT_MAX_DRIVE_SPEED * magnitude * fwd;
+
+    // Convert to Rads
+    f32 xyAngle = DEG_TO_RAD_F32(angleTranslation) * right;
+
+    NSLog(@"compair angle %f - %f -- Mag %f - %f  -- Fwd %f - %f  -- rgt %f - %f ", xyAngle,  fabsf(atanf(-(f32)point.y/ (f32)point.x)) * (right), magnitude, MIN(1.0, sqrtf( point.x*point.x + point.y*point.y)), fwd, (float)(point.y < 0 ? 1 : -1), right, (float)(point.x > 0 ? 1 : -1) );
+
+    // Compute radius of curvature
+    f32 roc = (xyAngle / PIDIV2_F) * MAX_ANALOG_RADIUS;
+
+    // Compute individual wheel speeds
+    if (fabsf(xyAngle) > PIDIV2_F - 0.1f) {
+      // Straight fwd/back
+      _leftWheelSpeed_mmps  = baseWheelSpeed;
+      _rightWheelSpeed_mmps = baseWheelSpeed;
+    } else if (fabsf(xyAngle) < 0.1f) {
+      // Turn in place
+      _leftWheelSpeed_mmps  = right * magnitude * ANALOG_INPUT_MAX_DRIVE_SPEED;
+      _rightWheelSpeed_mmps = -right * magnitude * ANALOG_INPUT_MAX_DRIVE_SPEED;
+    } else {
+
+      _leftWheelSpeed_mmps = baseWheelSpeed * (roc + (right * Anki::Cozmo::WHEEL_DIST_HALF_MM)) / roc;
+      _rightWheelSpeed_mmps = baseWheelSpeed * (roc - (right * Anki::Cozmo::WHEEL_DIST_HALF_MM)) / roc;
+
+      // Swap wheel speeds
+      if (fwd * right < 0) {
+        f32 temp = _leftWheelSpeed_mmps;
+        _leftWheelSpeed_mmps = _rightWheelSpeed_mmps;
+        _rightWheelSpeed_mmps = temp;
+      }
+    }
+
+    // Cap wheel speed at max
+    if (fabsf(_leftWheelSpeed_mmps) > ANALOG_INPUT_MAX_DRIVE_SPEED) {
+      const f32 correction = _leftWheelSpeed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (_leftWheelSpeed_mmps >= 0 ? 1 : -1));
+      const f32 correctionFactor = 1.f - fabsf(correction / _leftWheelSpeed_mmps);
+      _leftWheelSpeed_mmps *= correctionFactor;
+      _rightWheelSpeed_mmps *= correctionFactor;
+      //printf("lcorrectionFactor: %f\n", correctionFactor);
+    }
+    if (fabsf(_rightWheelSpeed_mmps) > ANALOG_INPUT_MAX_DRIVE_SPEED) {
+      const f32 correction = _rightWheelSpeed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (_rightWheelSpeed_mmps >= 0 ? 1 : -1));
+      const f32 correctionFactor = 1.f - fabsf(correction / _rightWheelSpeed_mmps);
+      _leftWheelSpeed_mmps *= correctionFactor;
+      _rightWheelSpeed_mmps *= correctionFactor;
+      //printf("rcorrectionFactor: %f\n", correctionFactor);
+    }
+  }
+
+  Cozmo::MessageU2G_DriveWheels message;
+  message.lwheel_speed_mmps = _leftWheelSpeed_mmps;
+  message.rwheel_speed_mmps = _rightWheelSpeed_mmps;
+  [self sendMessage:message];
+}
+
+- (void)sendWheelCommandWithLeftSpeed:(float)left right:(float)right
+{
+  Cozmo::MessageU2G_DriveWheels message;
+  message.lwheel_speed_mmps = left;
+  message.rwheel_speed_mmps = right;
+  [self sendMessage:message];
+}
+
+- (void)sendHeadCommandWithAngleRatio:(float)angle accelerationSpeedRatio:(float)acceleration maxSpeedRatio:(float)maxSpeed
+{
+  const float headAcceleration = 2.0;
+  const float headMaxSpeed = 5.0;
+
+  Cozmo::MessageU2G_SetHeadAngle message;
+  message.angle_rad = ABS((f32)angle) * ((f32)angle < 0 ? Cozmo::MIN_HEAD_ANGLE  : Cozmo::MAX_HEAD_ANGLE);
+  message.accel_rad_per_sec2 = (f32)headAcceleration;
+  message.max_speed_rad_per_sec = (f32)headMaxSpeed;
+
+  [self sendMessage:message];
+}
+
+- (void)sendHeadCommandWithAngleRatio:(float)angle
+{
+  // TODO: Determine acceleration & max speed
+  [self sendHeadCommandWithAngleRatio:angle accelerationSpeedRatio:0 maxSpeedRatio:0];
+}
+
+- (void)sendLiftCommandWithHeightRatio:(float)height accelerationSpeedRatio:(float)acceleration maxSpeedRatio:(float)maxSpeed
+{
+  const float liftAcceleration = 2.0;
+  const float liftMaxSpeed = 5.0;
+
+  Cozmo::MessageU2G_SetLiftHeight message;
+  message.height_mm = (f32)height * (Cozmo::LIFT_HEIGHT_CARRY - Cozmo::LIFT_HEIGHT_LOWDOCK) + Cozmo::LIFT_HEIGHT_LOWDOCK;
+  message.accel_rad_per_sec2 = (f32)liftAcceleration;
+  message.max_speed_rad_per_sec = (f32)liftMaxSpeed;
+
+  [self sendMessage:message];
+}
+
+- (void)sendLiftCommandWithHeightRatio:(float)height
+{
+  // TODO: Determine acceleration & max speed
+  [self sendLiftCommandWithHeightRatio:height accelerationSpeedRatio:0 maxSpeedRatio:0];
+}
+
+@end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
