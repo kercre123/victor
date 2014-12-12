@@ -546,7 +546,7 @@ namespace Anki {
       
       auto poseIter = poses_.rbegin();
       while(poseIter->second.GetFrameId() != frameID) {
-        --poseIter;
+        ++poseIter;
         if(poseIter == poses_.rend()) {
           return RESULT_FAIL;
         }
