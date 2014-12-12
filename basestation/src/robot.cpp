@@ -593,6 +593,11 @@ namespace Anki {
       return _visionProcessor.GetCurrentImage(imageData, nrows, ncols, nchannels);
     }
     
+    bool Robot::GetCurrentImage(Vision::Image& img)
+    {
+      return _visionProcessor.GetCurrentImage(img);
+    }
+    
     static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
     {
       if(head_angle < MIN_HEAD_ANGLE - HEAD_ANGLE_LIMIT_MARGIN) {

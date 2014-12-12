@@ -127,6 +127,18 @@ namespace Cozmo {
       return false;
     }
   }
+  
+  bool VisionProcessingThread::GetCurrentImage(Vision::Image& img) const
+  {
+    if(_running && !_currentImg.IsEmpty()) {
+      _currentImg.CopyDataTo(img);
+      img.SetTimestamp(_currentImg.GetTimestamp());
+      return true;
+    } else {
+      img = {};
+      return false;
+    }
+  }
 
   void VisionProcessingThread::EnableMarkerDetection(bool enable)
   {

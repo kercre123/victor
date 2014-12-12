@@ -84,6 +84,9 @@ public:
 
   bool GetCurrentRobotImage(const RobotID_t robotID, const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels);
   
+  bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img);
+
+  
 private:
   // Instantiate all the modules we need
   //BlockWorld blockWorld_;
@@ -339,6 +342,18 @@ bool BasestationMainImpl::GetCurrentRobotImage(const RobotID_t robotID, const u8
   }
   
 }
+  
+bool BasestationMainImpl::GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img)
+{
+  Robot* robot = robotMgr_.GetRobotByID(robotID);
+  
+  if(robot != nullptr) {
+    return robot->GetCurrentImage(img);
+  } else {
+    return false;
+  }
+}
+
 
 // =========== Start BasestationMain forwarding functions =======
   
@@ -376,6 +391,11 @@ BasestationStatus BasestationMain::Update(BaseStationTime_t currTime)
 bool BasestationMain::GetCurrentRobotImage(const RobotID_t robotID, const u8 *&imageData, s32 &nrows, s32 &ncols, s32& nchannels)
 {
   return impl_->GetCurrentRobotImage(robotID, imageData, nrows, ncols, nchannels);
+}
+  
+bool BasestationMain::GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img)
+{
+  return impl_->GetCurrentRobotImage(robotID, img);
 }
   
 } // namespace Cozmo

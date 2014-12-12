@@ -17,6 +17,8 @@
 #include "anki/common/types.h"
 #include "json/json.h"
 
+#include "anki/vision/basestation/image.h"
+
 namespace Anki {
 
 // forward declarations
@@ -89,6 +91,9 @@ public:
 */
   
   bool GetCurrentRobotImage(const RobotID_t robotID, const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels);
+  
+  // *Copies* into the given image object
+  bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img);
   
 private:
 
