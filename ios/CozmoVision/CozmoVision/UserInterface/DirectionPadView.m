@@ -18,6 +18,11 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
 @interface DirectionPadView ()
 // Public properties
 @property (readwrite, nonatomic) BOOL isDirty;
+
+@property (readwrite, nonatomic) CGFloat angleInDegrees;
+@property (readwrite, nonatomic) CGFloat magnitude;
+
+
 @property (readwrite, nonatomic) CGFloat leftWheelSpeed_mmps;
 @property (readwrite, nonatomic) CGFloat rightWheelSpeed_mmps;
 
@@ -172,7 +177,7 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
     case UIGestureRecognizerStateCancelled:
     case UIGestureRecognizerStateFailed:
       _joystickCircleView.center = self.centerPoint;
-      [self calculateWheelSpeeds:CGPointZero];
+      [self updateJoystickPositionWithPoint:self.centerPoint];
       break;
     case UIGestureRecognizerStatePossible:
 
@@ -205,21 +210,41 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
   CGPoint centerOffset = CGPointMake((point.x - midX)/width,
                                      (point.y - midY)/height);
 
+  [self calculateAngleAndMagnitude:centerOffset];
+
   [self calculateWheelSpeeds:centerOffset];
+}
+
+- (void)calculateAngleAndMagnitude:(CGPoint)point
+{
+  // Compute speed
+  _magnitude = MIN(1.0, sqrtf( (point.x * point.x) + (point.y * point.y) ));
+
+
+  const CGFloat oneEightyOverPi = 180.0 / M_PI;
+
+  CGFloat angleInRads = atan2f(-point.y, point.x);
+  _angleInDegrees = angleInRads * oneEightyOverPi;
+
+  float xyAngle = fabsf(atanf(-point.y / point.x));
+  xyAngle *= oneEightyOverPi;
+
+  NSLog(@"Joystick Ang atan2 %f  atan %f Mag %f", self.angleInDegrees, xyAngle, self.magnitude);
+
 }
 
 - (void)calculateWheelSpeeds:(CGPoint)point
 {
-  const CGFloat ANALOG_INPUT_DEAD_ZONE_THRESH = .1f; //000.f / f32(s16_MAX);
-  const CGFloat ANALOG_INPUT_MAX_DRIVE_SPEED  = 100; // mm/s
-  const CGFloat MAX_ANALOG_RADIUS             = 300;
+
+  _point = point;
+
+  const float ANALOG_INPUT_DEAD_ZONE_THRESH = .1f; //000.f / float(s16_MAX);
+  const float ANALOG_INPUT_MAX_DRIVE_SPEED  = 100; // mm/s
+  const float MAX_ANALOG_RADIUS             = 300;
 
 #if(DEBUG_GAMEPAD)
   printf("AnalogLeft X %.2f  Y %.2f\n", point.x, point.y);
 #endif
-
-  //point.x = MAX(point.x, ANALOG_INPUT_DEAD_ZONE_THRESH);
-  //point.y = MAX(point.y, ANALOG_INPUT_DEAD_ZONE_THRESH);
 
   // Compute speed
   CGFloat xyMag = MIN(1.0, sqrtf( point.x*point.x + point.y*point.y));
@@ -234,20 +259,20 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
     xyMag /= 1.f - ANALOG_INPUT_DEAD_ZONE_THRESH;
 
     // Driving forward?
-    CGFloat fwd = point.y < 0 ? 1 : -1;
+    float fwd = point.y < 0 ? 1 : -1;
 
     // Curving right?
-    CGFloat right = point.x > 0 ? 1 : -1;
+    float right = point.x > 0 ? 1 : -1;
 
     // Base wheel speed based on magnitude of input and whether or not robot is driving forward
-    CGFloat baseWheelSpeed = ANALOG_INPUT_MAX_DRIVE_SPEED * xyMag * fwd;
+    float baseWheelSpeed = ANALOG_INPUT_MAX_DRIVE_SPEED * xyMag * fwd;
 
 
     // Angle of xy input used to determine curvature
-    CGFloat xyAngle = fabsf(atanf(-point.y / point.x)) * (right);
+    float xyAngle = fabsf(atanf(-(float)point.y/ (float)point.x)) * (right);
 
     // Compute radius of curvature
-    CGFloat roc = (xyAngle / M_PI_2) * MAX_ANALOG_RADIUS;
+    float roc = (xyAngle / M_PI_2) * MAX_ANALOG_RADIUS;
 
 
     // Compute individual wheel speeds
@@ -261,12 +286,13 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
       _rightWheelSpeed_mmps = -right * xyMag * ANALOG_INPUT_MAX_DRIVE_SPEED;
     } else {
 
-      _leftWheelSpeed_mmps = baseWheelSpeed * (roc + (kWheelDistHalfMM)) / roc;
-      _rightWheelSpeed_mmps = baseWheelSpeed * (roc - (kWheelDistHalfMM)) / roc;
+      const CGFloat wheelDistHalfMM = 47.7f / 2.0; // distance b/w the front wheels
+      _leftWheelSpeed_mmps = baseWheelSpeed * (roc + (right * wheelDistHalfMM)) / roc;
+      _rightWheelSpeed_mmps = baseWheelSpeed * (roc - (right * wheelDistHalfMM)) / roc;
 
       // Swap wheel speeds
       if (fwd * right < 0) {
-        CGFloat temp = _leftWheelSpeed_mmps;
+        float temp = _leftWheelSpeed_mmps;
         _leftWheelSpeed_mmps = _rightWheelSpeed_mmps;
         _rightWheelSpeed_mmps = temp;
       }
@@ -275,15 +301,15 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
 
     // Cap wheel speed at max
     if (fabsf(_leftWheelSpeed_mmps) > ANALOG_INPUT_MAX_DRIVE_SPEED) {
-      const CGFloat correction = _leftWheelSpeed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (_leftWheelSpeed_mmps >= 0 ? 1 : -1));
-      const CGFloat correctionFactor = 1.f - fabsf(correction / _leftWheelSpeed_mmps);
+      const float correction = _leftWheelSpeed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (_leftWheelSpeed_mmps >= 0 ? 1 : -1));
+      const float correctionFactor = 1.f - fabsf(correction / _leftWheelSpeed_mmps);
       _leftWheelSpeed_mmps *= correctionFactor;
       _rightWheelSpeed_mmps *= correctionFactor;
       //printf("lcorrectionFactor: %f\n", correctionFactor);
     }
     if (fabsf(_rightWheelSpeed_mmps) > ANALOG_INPUT_MAX_DRIVE_SPEED) {
-      const CGFloat correction = _rightWheelSpeed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (_rightWheelSpeed_mmps >= 0 ? 1 : -1));
-      const CGFloat correctionFactor = 1.f - fabsf(correction / _rightWheelSpeed_mmps);
+      const float correction = _rightWheelSpeed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (_rightWheelSpeed_mmps >= 0 ? 1 : -1));
+      const float correctionFactor = 1.f - fabsf(correction / _rightWheelSpeed_mmps);
       _leftWheelSpeed_mmps *= correctionFactor;
       _rightWheelSpeed_mmps *= correctionFactor;
       //printf("rcorrectionFactor: %f\n", correctionFactor);
