@@ -29,10 +29,12 @@
 #include "anki/vision/MarkerCodeDefinitions.h"
 #endif
 
+#import "CozmoOperator.h"
+
 // Can't this _always_ be localhost? The UI and the basestation object
 // are always on the same physical device
 //#define BASESTATION_IP "127.0.0.1"
-#define BASESTATION_IP "192.168.18.244"
+#define BASESTATION_IP "192.168.19.227"
 //#define BASESTATION_IP "192.168.19.238"
 
 using namespace Anki;
@@ -41,8 +43,6 @@ using namespace Anki;
 {
   CvVideoCamera*            _videoCamera;
   CozmoBasestation*         _basestation;
-  TcpClient*                _uiClient; // Why isn't this UiTcpComms?
-  BOOL                      _isConnected;
   NSTimer*                  _connectionTimer;
   CozmoDirectionController* _directionController;
   
@@ -51,10 +51,7 @@ using namespace Anki;
 
 }
 
-// UI Message Sending
--(void)SendDriveWheels:(f32)lwheel_speed_mmps  :(f32)rwheel_speed_mmps;
-
--(void)SendMessage:(Cozmo::UiMessage&) msg;
+@property (strong, nonatomic) CozmoOperator* _cozmoOperator;
 
 @end
 
@@ -69,7 +66,7 @@ using namespace Anki;
   [_upArrowLabel   setTransform:CGAffineTransformMakeRotation(-M_PI_2)];
   [_downArrayLabel setTransform:CGAffineTransformMakeRotation( M_PI_2)];
   [_upArrowLabel   bringSubviewToFront:_directionControllerView];
-  
+
   // Make the head/lift sliders vertical
   [_headAngleSlider  setTransform:CGAffineTransformMakeRotation(-M_PI_2)];
   [_liftHeightSlider setTransform:CGAffineTransformMakeRotation(-M_PI_2)];
@@ -96,12 +93,10 @@ using namespace Anki;
   
   _directionController = [[CozmoDirectionController alloc] initWithFrame:_directionControllerView.bounds];
   [_directionControllerView addSubview:_directionController];
-  
-#ifdef __cplusplus
-  _uiClient = new TcpClient();
-#endif
-  _isConnected = NO;
-  
+
+
+  self._cozmoOperator = [CozmoOperator new];
+
   // Once done initializing, this will start the basestation timer loop
   //_firstHeartbeatTimestamp = _lastHeartbeatTimestamp = CFAbsoluteTimeGetCurrent();
   _connectionTimer = [NSTimer scheduledTimerWithTimeInterval:(1.0 / FRAME_RATE)
@@ -122,24 +117,15 @@ using namespace Anki;
 - (void)uiHeartbeat:(NSTimer*)timer
 {
   // Connect to basestation if not already connected
-  if (!_uiClient->IsConnected()) {
-    if (!_uiClient->Connect(BASESTATION_IP, Cozmo::UI_MESSAGE_SERVER_LISTEN_PORT)) {
-      NSLog(@"Failed to connect to UI message server listen port\n");
-      _isConnected = NO;
-      return;
-    }
-    NSLog(@"Cozmo iOS UI connected to basestation!\n");
-    _isConnected = YES;
+
+  if (!__cozmoOperator.isConnected) {
+    [__cozmoOperator connectToBasestationWithIPAddress:[NSString stringWithUTF8String:BASESTATION_IP]];
   }
 
-  
-  //NSLog(@"LeftWheel = %.2f, RightWheel = %.f\n",
-  //      _directionController.leftWheelSpeed_mmps,
-  //      _directionController.rightWheelSpeed_mmps);
-  
-  [self SendDriveWheels:_directionController.leftWheelSpeed_mmps
-                       :_directionController.rightWheelSpeed_mmps];
-  
+
+  [self._cozmoOperator sendWheelCommandWithAngleInDegrees:_directionPadView.angleInDegrees magnitude:_directionPadView.magnitude point:_directionPadView.point];
+
+//  [self._cozmoOperator sendWheelCommandWithLeftSpeed:_directionPadView.leftWheelSpeed_mmps right:_directionPadView.rightWheelSpeed_mmps];
 }
 
 
@@ -147,11 +133,7 @@ using namespace Anki;
 
 -(void)dealloc
 {
-  
-  if(_uiClient) {
-    delete _uiClient;
-    _uiClient = nullptr;
-  }
+
 }
 
 #pragma mark - Protocol CvVideoCameraDelegate
@@ -234,60 +216,14 @@ using namespace Anki;
 }
 
 
-- (void) SendMessage:(Cozmo::UiMessage&)msg
-{
-  if(_isConnected) {
-    // TODO: Put this stuff in init so we don't have to do it every time?
-    char sendBuf[128];
-    memcpy(sendBuf, Cozmo::RADIO_PACKET_HEADER, sizeof(Cozmo::RADIO_PACKET_HEADER));
-    
-    int sendBufLen = sizeof(Cozmo::RADIO_PACKET_HEADER);
-    sendBuf[sendBufLen++] = msg.GetSize()+1;
-    sendBuf[sendBufLen++] = msg.GetID();
-    msg.GetBytes((u8*)(&sendBuf[sendBufLen]));
-    sendBufLen += msg.GetSize();
-    
-    //int bytes_sent =
-    _uiClient->Send(sendBuf, sendBufLen);
-    //printf("Sent %d bytes\n", bytes_sent);
-    } // if(_isConnected)
-}
-
-
-- (void) SendDriveWheels:(f32)lwheel_speed_mmps :(f32)rwheel_speed_mmps
-{
-  Cozmo::MessageU2G_DriveWheels m;
-  m.lwheel_speed_mmps = lwheel_speed_mmps;
-  m.rwheel_speed_mmps = rwheel_speed_mmps;
-  [self SendMessage:m];
-}
-
 #endif
 
-- (IBAction)actionSetHeadAngle:(id)sender {
-  
-  Cozmo::MessageU2G_SetHeadAngle m;
-  
-  m.angle_rad = ABS(_headAngleSlider.value) * (_headAngleSlider.value < 0 ?
-                                               Cozmo::MIN_HEAD_ANGLE  :
-                                               Cozmo::MAX_HEAD_ANGLE);
-  
-  m.accel_rad_per_sec2    = 2.f;
-  m.max_speed_rad_per_sec = 5.f;
-  
-  [self SendMessage:m];
+- (IBAction)actionSetHeadAngle:(UISlider*)slider {
+  [self._cozmoOperator sendHeadCommandWithAngleRatio:slider.value];
 }
 
-- (IBAction)actionSetLiftHeight:(id)sender {
-  
-  Cozmo::MessageU2G_SetLiftHeight m;
-  
-  m.height_mm = _liftHeightSlider.value * (Cozmo::LIFT_HEIGHT_CARRY - Cozmo::LIFT_HEIGHT_LOWDOCK) + Cozmo::LIFT_HEIGHT_LOWDOCK;
-
-  m.accel_rad_per_sec2    = 2.f;
-  m.max_speed_rad_per_sec = 5.f;
-
-  [self SendMessage:m];
+- (IBAction)actionSetLiftHeight:(UISlider*)slider {
+  [self._cozmoOperator sendLiftCommandWithHeightRatio:slider.value];
 }
 
 - (IBAction)actionSelectCamera:(id)sender {

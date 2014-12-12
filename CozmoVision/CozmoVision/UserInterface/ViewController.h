@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "DirectionPadView.h"
 
 #ifdef __cplusplus
 #import <opencv2/opencv.hpp>
@@ -33,5 +34,6 @@
 
 @property (weak, nonatomic) IBOutlet UILabel*       detectedMarkerLabel;
 
+@property (weak, nonatomic) IBOutlet DirectionPadView *directionPadView;
 @end
 
