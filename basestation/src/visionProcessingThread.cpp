@@ -114,10 +114,12 @@ namespace Cozmo {
   } // SetNextImage()
   
   
-  bool VisionProcessingThread::GetCurrentImage(Vision::Image& img) const
+  bool VisionProcessingThread::GetCurrentImage(Vision::Image& img)
   {
     if(_running && !_currentImg.IsEmpty()) {
+      Lock();
       _currentImg.CopyDataTo(img);
+      Unlock();
       img.SetTimestamp(_currentImg.GetTimestamp());
       return true;
     } else {
@@ -188,7 +190,9 @@ namespace Cozmo {
         delete _currentImg;
         _currentImg = nullptr;
          */
+        Lock();
         _currentImg = {};
+        Unlock();
         
       } else if(!_nextImg.IsEmpty()) {
         Lock();
