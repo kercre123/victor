@@ -20,6 +20,9 @@
 #include "anki/common/basestation/utils/logging/DAS/DAS.h"
 #include "anki/common/basestation/jsonTools.h"
 
+// Coretech-Vision includes
+#include "anki/vision/basestation/image_impl.h"
+
 // External includes
 #include "json/json.h"
 #include <opencv2/opencv.hpp>
@@ -213,17 +216,12 @@
     
     
     if(_imageViewer) {
-      // For accessing the
-      const unsigned char*  imageDataPtr;
-      int                   nrows, ncols, nchannels;
-
-      if(true == _basestation->GetCurrentRobotImage(1, imageDataPtr, nrows, ncols, nchannels))
+      Anki::Vision::Image img;
+      if(true == _basestation->GetCurrentRobotImage(1, img))
       {
         // TODO: Somehow get rid of this copy, but still be threadsafe
         //cv::Mat_<u8> cvMatImg(nrows, ncols, const_cast<unsigned char*>(imageDataPtr));
-        cv::Mat_<u8> cvMatImg(nrows,ncols);
-        memcpy(cvMatImg.data, imageDataPtr, nrows*ncols*sizeof(u8));
-        _imageViewer.image = [self UIImageFromCVMat:cvMatImg];
+        _imageViewer.image = [self UIImageFromCVMat:img.get_CvMat_()];
       }
     }
     

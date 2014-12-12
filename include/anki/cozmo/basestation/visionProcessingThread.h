@@ -59,7 +59,6 @@ namespace Cozmo {
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
     
-    bool GetCurrentImage(const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels) const;
     bool GetCurrentImage(Vision::Image& img) const;
     
   protected:

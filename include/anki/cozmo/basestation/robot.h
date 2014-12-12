@@ -112,7 +112,7 @@ namespace Anki {
      
       Result QueueObservedMarker(const MessageVisionMarker& msg);
       
-      bool GetCurrentImage(const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels);
+      // Get a *copy* of the current image on this robot's vision processing thread
       bool GetCurrentImage(Vision::Image& img);
       
       //

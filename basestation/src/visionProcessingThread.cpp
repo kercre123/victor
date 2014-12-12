@@ -113,20 +113,6 @@ namespace Cozmo {
     
   } // SetNextImage()
   
-  bool VisionProcessingThread::GetCurrentImage(const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels) const
-  {
-    if(_running && !_currentImg.IsEmpty()) {
-      // Is this thread safe? What if nrows/ncols change while we're accessing the data?
-      imageData = _currentImg.GetDataPointer();
-      nrows     = _currentImg.GetNumRows();
-      ncols     = _currentImg.GetNumCols();
-      nchannels = 1; // TODO: support color
-      return true;
-    } else {
-      imageData = nullptr;
-      return false;
-    }
-  }
   
   bool VisionProcessingThread::GetCurrentImage(Vision::Image& img) const
   {

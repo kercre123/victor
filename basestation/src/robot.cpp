@@ -587,11 +587,6 @@ namespace Anki {
       return RESULT_OK;
       
     } // Update()
-
-    bool Robot::GetCurrentImage(const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels)
-    {
-      return _visionProcessor.GetCurrentImage(imageData, nrows, ncols, nchannels);
-    }
     
     bool Robot::GetCurrentImage(Vision::Image& img)
     {

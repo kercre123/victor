@@ -37,6 +37,7 @@ namespace Vision {
 #   if ANKICORETECH_USE_OPENCV
     // Construct from a cv::Mat_<u8>
     Image(cv::Mat_<u8>& cvMat);
+    using Array2d<u8>::get_CvMat_;
 #   endif
     
     void SetTimestamp(TimeStamp_t ts);

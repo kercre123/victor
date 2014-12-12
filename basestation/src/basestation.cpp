@@ -330,19 +330,6 @@ BasestationStatus BasestationMainImpl::ConvertStatus(RecordingPlaybackStatus sta
   }
 }
 
-  
-bool BasestationMainImpl::GetCurrentRobotImage(const RobotID_t robotID, const u8* &imageData, s32& nrows, s32& ncols, s32& nchannels)
-{
-  Robot* robot = robotMgr_.GetRobotByID(robotID);
-  
-  if(robot != nullptr) {
-    return robot->GetCurrentImage(imageData, nrows, ncols, nchannels);
-  } else {
-    return false;
-  }
-  
-}
-  
 bool BasestationMainImpl::GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img)
 {
   Robot* robot = robotMgr_.GetRobotByID(robotID);
@@ -386,11 +373,6 @@ BasestationStatus BasestationMain::UnInit()
 BasestationStatus BasestationMain::Update(BaseStationTime_t currTime)
 {
   return impl_->Update(currTime);
-}
-  
-bool BasestationMain::GetCurrentRobotImage(const RobotID_t robotID, const u8 *&imageData, s32 &nrows, s32 &ncols, s32& nchannels)
-{
-  return impl_->GetCurrentRobotImage(robotID, imageData, nrows, ncols, nchannels);
 }
   
 bool BasestationMain::GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img)
