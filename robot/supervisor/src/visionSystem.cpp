@@ -1553,6 +1553,9 @@ namespace Anki {
         // actually replace the current markerToTrack_ with the one set here.
         newMarkerToTrackWasProvided_ = true;
         
+        // Send a message up to basestation vision to start tracking:
+        //HAL::RadioSendMessage(<#const Messages::ID msgID#>, <#const void *buffer#>)
+        
         return RESULT_OK;
       }
       

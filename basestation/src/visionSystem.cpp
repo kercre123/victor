@@ -1912,6 +1912,8 @@ namespace Cozmo {
           // Template initialization succeeded, switch to tracking mode:
           // TODO: Log or issue message?
           _mode |= TRACKING;
+          _mode &= ~LOOKING_FOR_MARKERS;
+          
         } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
       } // for(each marker)
     } // if(_mode & LOOKING_FOR_MARKERS)
@@ -2084,6 +2086,7 @@ namespace Cozmo {
       }
       
       //Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
+      _dockingMailbox.putMessage(dockErrMsg);
       
     } // if(_mode & TRACKING)
     

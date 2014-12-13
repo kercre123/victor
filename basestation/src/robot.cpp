@@ -1353,6 +1353,16 @@ namespace Anki {
       msg.image_pixel_x  = image_pixel_x;
       msg.image_pixel_y  = image_pixel_y;
       msg.pixel_radius   = pixel_radius;
+    
+      // When we are "docking" with a ramp or crossing a bridge, we
+      // don't want to worry about the X angle being large (since we
+      // _expect_ it to be large, since the markers are facing upward).
+      const bool checkAngleX = !(dockAction == DA_RAMP_ASCEND  ||
+                                 dockAction == DA_RAMP_DESCEND ||
+                                 dockAction == DA_CROSS_BRIDGE);
+      
+      // Tell the VisionSystem to start tracking this marker:
+      _visionProcessor.SetMarkerToTrack(code1, marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
       
       return _msgHandler->SendMessage(_ID, msg);
     }

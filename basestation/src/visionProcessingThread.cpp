@@ -15,6 +15,7 @@
 #include "visionSystem.h"
 
 #include "anki/vision/basestation/image_impl.h"
+#include "anki/vision/markerCodeDefinitions.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
@@ -112,6 +113,23 @@ namespace Cozmo {
     Unlock();
     
   } // SetNextImage()
+  
+  
+  void VisionProcessingThread::SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
+                        const f32                    markerWidth_mm,
+                        const Point2f&               imageCenter,
+                        const f32                    radius,
+                        const bool                   checkAngleX)
+  {
+    if(_visionSystem != nullptr) {
+      Embedded::Point2f pt(imageCenter.x(), imageCenter.y());
+      Vision::MarkerType markerType = static_cast<Vision::MarkerType>(markerToTrack);
+      _visionSystem->SetMarkerToTrack(markerType, markerWidth_mm,
+                                      pt, radius, checkAngleX);
+    } else {
+      PRINT_NAMED_ERROR("VisionProcessingThread.SetMarkerToTrack.NullVisionSystem", "Cannot set vision marker to track before vision system is instantiated.\n");
+    }
+  }
   
   
   bool VisionProcessingThread::GetCurrentImage(Vision::Image& img)
