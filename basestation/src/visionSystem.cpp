@@ -248,6 +248,7 @@ namespace Cozmo {
     if(_newMarkerToTrackWasProvided) {
       
       _mode              |= LOOKING_FOR_MARKERS;
+      _mode              &= ~TRACKING; // disable tracking mode
       _numTrackFailures  =  0;
       
       _markerToTrack = _newMarkerToTrack;
@@ -1912,7 +1913,7 @@ namespace Cozmo {
           // Template initialization succeeded, switch to tracking mode:
           // TODO: Log or issue message?
           _mode |= TRACKING;
-          _mode &= ~LOOKING_FOR_MARKERS;
+          _mode &= ~LOOKING_FOR_MARKERS; // don't keep looking for markers while tracking
           
         } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
       } // for(each marker)

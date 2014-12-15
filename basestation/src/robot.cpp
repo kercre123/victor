@@ -512,6 +512,11 @@ namespace Anki {
       MessageDockingErrorSignal dockingErrorSignal;
       if(true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
         
+        // Visualize docking error signal
+        VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
+                                                   dockingErrorSignal.y_horErr,
+                                                   dockingErrorSignal.angleErr);
+        
         // Try to use this for closed-loop control by sending it on to the robot
         _msgHandler->SendMessage(_ID, dockingErrorSignal);
         
