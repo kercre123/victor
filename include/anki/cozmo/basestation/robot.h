@@ -574,6 +574,7 @@ namespace Anki {
       
       Result SendStartFaceTracking(const u8 timeout_sec);
       Result SendStopFaceTracking();
+      Result SendPing();
       
       Result SendAbortDocking();
       Result SendAbortAnimation();

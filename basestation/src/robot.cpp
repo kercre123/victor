@@ -473,6 +473,10 @@ namespace Anki {
       uint32_t numBlocksObserved = 0;
       _blockWorld.Update(numBlocksObserved);
       
+      // Send ping to keep connection alive.
+      // TODO: Don't send ping if there are already outgoing messages this tic.
+      //       This should probably be done outside of Robot at the end of the basestation tic.
+      SendPing();
       
       ///////// Update the behavior manager ///////////
       
@@ -1619,6 +1623,11 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
+    Result Robot::SendPing()
+    {
+      MessagePing m;
+      return _msgHandler->SendMessage(_ID, m);
+    }
     
     const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D, Vec3f(50, 25, 0)),
                                                   Pose3d(0, Z_AXIS_3D, Vec3f(50, 0, 0)),

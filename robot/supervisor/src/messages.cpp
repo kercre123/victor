@@ -489,7 +489,12 @@ namespace Anki {
         }
       }
       
-
+      void ProcessPingMessage(const Ping& msg)
+      {
+        // TODO: Use ping message to keep-alive connection
+        // ...
+      }
+      
       
       void ProcessAbortDockingMessage(const AbortDocking& msg)
       {
