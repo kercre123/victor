@@ -26,13 +26,13 @@
   [super viewDidLoad];
 
   self._basestation = [CozmoBasestation defaultBasestation];
-  [self.basestationStateBarItem setTitle:[self._basestation basestationStateString]];
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
   [super viewDidAppear:animated];
 
+  [self.basestationStateBarItem setTitle:[self._basestation basestationStateString]];
   [self._basestation addObserver:self forKeyPath:@"runState" options:NSKeyValueObservingOptionNew context:nil];
 }
 
