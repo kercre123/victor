@@ -240,6 +240,12 @@
   [self._currentUIResponder resignFirstResponder];
 }
 
+- (IBAction)handleAutoConnectSwitchToggle:(UISwitch*)sender
+{
+  self._basestation.autoConnect = sender.isOn;
+  [NSUserDefaults setAutoConnectRobot:sender.isOn];
+}
+
 - (IBAction)handleBasestationStartStopButtonPress:(id)sender
 {
   // Toggle Basestation states
