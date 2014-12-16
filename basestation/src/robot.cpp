@@ -478,6 +478,12 @@ namespace Anki {
                             "Got VisionMarker message from vision processing thread but failed to queue it.\n");
           return lastResult;
         }
+        
+        VizManager::getInstance()->SendVisionMarker(visionMarker.x_imgUpperLeft,  visionMarker.y_imgUpperLeft,
+                                                    visionMarker.x_imgUpperRight, visionMarker.y_imgUpperRight,
+                                                    visionMarker.x_imgLowerRight, visionMarker.y_imgLowerRight,
+                                                    visionMarker.x_imgLowerLeft,  visionMarker.y_imgLowerLeft,
+                                                    visionMarker.markerType != Vision::MARKER_UNKNOWN);
       }
       
       MessageFaceDetection faceDetection;

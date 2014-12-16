@@ -261,6 +261,12 @@ namespace Anki {
 
       void SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res);
       
+      void SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
+                            const u16 topRight_x, const u16 topRight_y,
+                            const u16 bottomRight_x, const u16 bottomRight_y,
+                            const u16 bottomLeft_x, const u16 bottomLeft_y,
+                            bool verified);
+      
       void SendTrackerQuad(const u16 topLeft_x, const u16 topLeft_y,
                            const u16 topRight_x, const u16 topRight_y,
                            const u16 bottomRight_x, const u16 bottomRight_y,

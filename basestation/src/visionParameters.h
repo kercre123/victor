@@ -95,6 +95,7 @@ namespace Anki {
         s32 numRefinementSamples;
         f32 quadRefinementMaxCornerChange;
         f32 quadRefinementMinCornerChange;
+        bool keepUnverifiedMarkers;
         
         // Methods
         DetectFiducialMarkersParameters();

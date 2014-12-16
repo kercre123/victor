@@ -390,7 +390,7 @@ namespace Cozmo {
                                                 parameters.numRefinementSamples,
                                                 parameters.quadRefinementMaxCornerChange,
                                                 parameters.quadRefinementMinCornerChange,
-                                                false,
+                                                parameters.keepUnverifiedMarkers,
                                                 ccmScratch, onchipScratch, offchipScratch);
 #endif
     
