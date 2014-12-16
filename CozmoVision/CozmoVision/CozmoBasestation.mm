@@ -440,7 +440,7 @@
 }
 
 
-# pragma mark - Public methods
+#pragma mark - Public methods
 
 - (UIImage*)imageFrameWtihRobotId:(uint8_t)robotId
 {
