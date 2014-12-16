@@ -18,10 +18,6 @@
 
 @property (weak, nonatomic) IBOutlet UIImageView*   liveImageView;
 
-@property (weak, nonatomic) IBOutlet UIView*        directionControllerView;
-
-@property (weak, nonatomic) IBOutlet UILabel*       upArrowLabel;
-@property (weak, nonatomic) IBOutlet UILabel*       downArrayLabel;
 
 @property (weak, nonatomic) IBOutlet UISlider*      headAngleSlider;
 - (IBAction)actionSetHeadAngle:(id)sender;
