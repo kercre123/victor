@@ -18,6 +18,8 @@
 
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
+#include "anki/vision/basestation/visionMarker.h"
+
 #include <thread>
 
 namespace Anki {  
@@ -39,6 +41,12 @@ namespace Cozmo {
     void SetNextImage(const Vision::Image& image,
                       const MessageRobotState& robotState);
     
+    void SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
+                          const f32                    markerWidth_mm,
+                          const Point2f&               imageCenter,
+                          const f32                    radius,
+                          const bool                   checkAngleX);
+    
     // Enable/disable different types of processing
     void EnableMarkerDetection(bool tf);
     void EnableFaceDetection(bool tf);
@@ -59,7 +67,7 @@ namespace Cozmo {
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
     
-    bool GetCurrentImage(Vision::Image& img) const;
+    bool GetCurrentImage(Vision::Image& img);
     
   protected:
     

@@ -262,6 +262,19 @@ namespace Anki {
       
     }
     
+    void ProcessVizVisionMarkerMessage(const VizVisionMarker& msg)
+    {
+      if(msg.verified) {
+        camDisp->setColor(0xff0000);
+      } else {
+        camDisp->setColor(0x0000ff);
+      }
+      camDisp->drawLine(msg.topLeft_x, msg.topLeft_y, msg.bottomLeft_x, msg.bottomLeft_y);
+      camDisp->drawLine(msg.bottomLeft_x, msg.bottomLeft_y, msg.bottomRight_x, msg.bottomRight_y);
+      camDisp->drawLine(msg.bottomRight_x, msg.bottomRight_y, msg.topRight_x, msg.topRight_y);
+      camDisp->drawLine(msg.topRight_x, msg.topRight_y, msg.topLeft_x, msg.topLeft_y);
+    }
+    
     void ProcessVizImageChunkMessage(const VizImageChunk& msg)
     {
       // If this is a new image, then reset everything
@@ -367,6 +380,7 @@ int main(int argc, char **argv)
         case VizImageChunk_ID:
         case VizSetRobot_ID:
         case VizTrackerQuad_ID:
+        case VizVisionMarker_ID:
           (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;
         // All other messages are forwarded to cozmo_physics plugin

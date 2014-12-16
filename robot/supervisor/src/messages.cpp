@@ -452,8 +452,6 @@ namespace Anki {
         }
       }
       
-
-      
       void ProcessAbortDockingMessage(const AbortDocking& msg)
       {
         DockingController::ResetDocker();
@@ -836,6 +834,8 @@ namespace Anki {
         return matMarkerMailbox_.getMessage(msg);
       }
        */
+      
+      
       
       bool CheckMailbox(DockingErrorSignal&  msg)
       {

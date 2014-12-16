@@ -265,11 +265,13 @@ namespace Anki {
     }
     
     // For visualization of docking error signal
+    /*
     Result MessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const& msg)
     {
       VizManager::getInstance()->SetDockingError(msg.x_distErr, msg.y_horErr, msg.angleErr);
       return RESULT_OK;
     }
+     */
     
 
     // For processing image chunks arriving from robot.

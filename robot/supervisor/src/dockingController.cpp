@@ -296,9 +296,10 @@ namespace Anki {
                 }
                 
               }
-              
+              /* Now done on basestation directly
               // Send to basestation for visualization
               HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::DockingErrorSignal), &dockMsg);
+               */
               continue;
             }
 

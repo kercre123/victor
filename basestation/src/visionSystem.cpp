@@ -248,6 +248,7 @@ namespace Cozmo {
     if(_newMarkerToTrackWasProvided) {
       
       _mode              |= LOOKING_FOR_MARKERS;
+      _mode              &= ~TRACKING; // disable tracking mode
       _numTrackFailures  =  0;
       
       _markerToTrack = _newMarkerToTrack;
@@ -389,7 +390,7 @@ namespace Cozmo {
                                                 parameters.numRefinementSamples,
                                                 parameters.quadRefinementMaxCornerChange,
                                                 parameters.quadRefinementMinCornerChange,
-                                                false,
+                                                parameters.keepUnverifiedMarkers,
                                                 ccmScratch, onchipScratch, offchipScratch);
 #endif
     
@@ -1912,6 +1913,8 @@ namespace Cozmo {
           // Template initialization succeeded, switch to tracking mode:
           // TODO: Log or issue message?
           _mode |= TRACKING;
+          _mode &= ~LOOKING_FOR_MARKERS; // don't keep looking for markers while tracking
+          
         } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
       } // for(each marker)
     } // if(_mode & LOOKING_FOR_MARKERS)
@@ -2084,6 +2087,7 @@ namespace Cozmo {
       }
       
       //Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
+      _dockingMailbox.putMessage(dockErrMsg);
       
     } // if(_mode & TRACKING)
     

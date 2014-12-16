@@ -85,6 +85,9 @@ namespace Anki {
         // the refinment is considered converged and stops immediately
         quadRefinementMinCornerChange = 0.005f;
         
+        // Return unknown/unverified markers (e.g. for display)
+        keepUnverifiedMarkers = false;
+        
         isInitialized = true;
       } // DetectFiducialMarkersParameters::Initialize()
 

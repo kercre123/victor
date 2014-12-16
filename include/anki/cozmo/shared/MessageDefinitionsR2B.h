@@ -83,6 +83,7 @@ ADD_MESSAGE_MEMBER(u16, markerType)
 //ADD_MESSAGE_MEMBER_ARRAY(u8, code, VISION_MARKER_CODE_LENGTH)
 END_MESSAGE_DEFINITION(VisionMarker)
 
+/*
 // DockingErrorSignal
 START_TIMESTAMPED_MESSAGE_DEFINITION(DockingErrorSignal, 1)
 ADD_MESSAGE_MEMBER(f32, x_distErr)
@@ -92,6 +93,7 @@ ADD_MESSAGE_MEMBER(f32, angleErr) // in radians
 ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
 ADD_MESSAGE_MEMBER(u8,  isApproximate)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
+*/
 
 // BlockPickedUp
 START_TIMESTAMPED_MESSAGE_DEFINITION(BlockPickedUp, 1)
