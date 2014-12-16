@@ -895,9 +895,12 @@ namespace Anki
         // be the only way isValid is true.
         this->validity = VALID;
       } else {
+        /* Disabling this since it's overly verbose now that we're using the
+           the voting scheme and lots of things don't get majority vote.
 #       ifdef OUTPUT_FAILED_MARKER_STEPS
         AnkiWarn("VisionMarker::Extract", "Verify failed or UNKNOWN/INVALID marker detected.\n");
 #       endif
+         */
         this->validity = UNVERIFIED;
         this->markerType = Vision::MARKER_UNKNOWN;
         this->corners = initQuad; // Just copy the non-reordered corners
