@@ -53,7 +53,7 @@ class MCUProxyServer(socket.socket):
 
     def recv(self):
         try:
-            recvData, addr = self.recvFrom(MTU)
+            recvData, addr = self.recvfrom(MTU)
         except socket.timeout:
             if time.time() - self.lastRecvTime > self.CLIENT_TIMEOUT:
                 if self.client:
