@@ -50,6 +50,11 @@
 
 // Change Basestation State
 
+// After setting autoConnect call -startComms to begin connnection
+// This method waits for a robot to connect then start basestation automatically
+@property (assign, nonatomic) BOOL autoConnect;
+
+// Finite control
 - (BOOL)startComms;
 // Change Basestation run state
 // Wait for 1 or more robots to connect before calling
