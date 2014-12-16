@@ -34,8 +34,9 @@
 // Can't this _always_ be localhost? The UI and the basestation object
 // are always on the same physical device
 #define BASESTATION_IP "127.0.0.1"
-//#define BASESTATION_IP "192.168.17.243"
+//#define BASESTATION_IP "192.168.19.227"
 //#define BASESTATION_IP "192.168.19.238"
+//#define BASESTATION_IP "192.168.18.244"
 
 using namespace Anki;
 
