@@ -140,7 +140,6 @@ using namespace Anki;
     // Curving right?
     f32 right = (angle > -90.0 && angle < 90.0) ? 1 : -1;
 
-
     if (angle > 90.0) {
       angleTranslation -= 180.0;
     }
@@ -252,6 +251,12 @@ using namespace Anki;
 {
   // TODO: Fix acceleration & max speed
   [self sendLiftCommandWithHeightRatio:height accelerationSpeedRatio:0 maxSpeedRatio:0];
+}
+
+- (void)sendStopAllMotorsCommand
+{
+  Cozmo::MessageU2G_StopAllMotors message;
+  [self sendMessage:message];
 }
 
 @end

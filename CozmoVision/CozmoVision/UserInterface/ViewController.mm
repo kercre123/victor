@@ -62,11 +62,6 @@ using namespace Anki;
 - (void)viewDidLoad {
   [super viewDidLoad];
   // Do any additional setup after loading the view, typically from a nib.
-  
-  // Rotate the up/down arrow labels:
-  [_upArrowLabel   setTransform:CGAffineTransformMakeRotation(-M_PI_2)];
-  [_downArrayLabel setTransform:CGAffineTransformMakeRotation( M_PI_2)];
-  [_upArrowLabel   bringSubviewToFront:_directionControllerView];
 
   // Make the head/lift sliders vertical
   [_headAngleSlider  setTransform:CGAffineTransformMakeRotation(-M_PI_2)];
@@ -82,30 +77,35 @@ using namespace Anki;
   _videoCamera.grayscaleMode = NO;
   
   _basestation = [[CozmoBasestation alloc] init];
+  [_basestation startComms];
   
   // Hook up the basestation to the image viewer to start
-  _basestation._imageViewer = _liveImageView;
+//  _basestation._imageViewer = _liveImageView;
   _detectedMarkerLabel.hidden = YES;
   
   // Start up the vision thread for processing device camera images
   Vision::CameraCalibration deviceCamCalib;
   _visionThread = new Cozmo::VisionProcessingThread();
   _visionThread->Start(deviceCamCalib); // TODO: Only start when device camera selected?
-  
-  _directionController = [[CozmoDirectionController alloc] initWithFrame:_directionControllerView.bounds];
-  [_directionControllerView addSubview:_directionController];
 
 
   self._cozmoOperator = [CozmoOperator new];
 
   // Once done initializing, this will start the basestation timer loop
-  //_firstHeartbeatTimestamp = _lastHeartbeatTimestamp = CFAbsoluteTimeGetCurrent();
-  _connectionTimer = [NSTimer scheduledTimerWithTimeInterval:(1.0 / FRAME_RATE)
-                                                     target:self
-                                                   selector:@selector(uiHeartbeat:)
-                                                   userInfo:nil
-                                                    repeats:YES];
-  
+//  _firstHeartbeatTimestamp = _lastHeartbeatTimestamp = CFAbsoluteTimeGetCurrent();
+
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+
+    if ([_basestation startBasestation]) {
+      _connectionTimer = [NSTimer scheduledTimerWithTimeInterval:(1.0 / 20.0)
+                                                          target:self
+                                                        selector:@selector(uiHeartbeat:)
+                                                        userInfo:nil
+                                                         repeats:YES];
+    }
+  });
+
+
   NSLog(@"Finished ViewController:viewDidLoad");
 }
 
@@ -119,8 +119,16 @@ using namespace Anki;
 {
   // Connect to basestation if not already connected
 
+//  if (_basestation.runState == CozmoBasestationRunStateCommsReady) {
+//    [_basestation startBasestation];
+//  }
+
+
   if (!__cozmoOperator.isConnected) {
     [__cozmoOperator connectToBasestationWithIPAddress:[NSString stringWithUTF8String:BASESTATION_IP]];
+    // Set initial State
+    [self actionSetHeadAngle:self.headAngleSlider];
+    [self actionSetLiftHeight:self.liftHeightSlider];
   }
 
 
@@ -229,18 +237,18 @@ using namespace Anki;
 
 - (IBAction)actionSelectCamera:(id)sender {
   
-  if(_cameraSelector.selectedSegmentIndex == 0) {
-    [_videoCamera stop];
-    _basestation._imageViewer = _liveImageView;
-    _detectedMarkerLabel.hidden = YES;
-  } else if(_cameraSelector.selectedSegmentIndex == 1) {
-    _basestation._imageViewer = nullptr;
-    [_videoCamera start];
-    _detectedMarkerLabel.hidden = NO;
-    _detectedMarkerLabel.text = @"No Markers";
-  } else {
-    NSLog(@"Error: unexpected segment index in camera selector.\n");
-  }
-  
+//  if(_cameraSelector.selectedSegmentIndex == 0) {
+//    [_videoCamera stop];
+//    _basestation._imageViewer = _liveImageView;
+//    _detectedMarkerLabel.hidden = YES;
+//  } else if(_cameraSelector.selectedSegmentIndex == 1) {
+//    _basestation._imageViewer = nullptr;
+//    [_videoCamera start];
+//    _detectedMarkerLabel.hidden = NO;
+//    _detectedMarkerLabel.text = @"No Markers";
+//  } else {
+//    NSLog(@"Error: unexpected segment index in camera selector.\n");
+//  }
+
 }
 @end

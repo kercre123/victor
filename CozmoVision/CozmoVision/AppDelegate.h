@@ -7,10 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
+@class CozmoBasestation;
+
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
-@property (strong, nonatomic) UIWindow *window;
+@property (strong, nonatomic) UIWindow* window;
+@property (strong, nonatomic) CozmoBasestation* basestation;
 
 
 @end

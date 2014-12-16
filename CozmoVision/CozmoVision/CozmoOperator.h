@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 
 
 @interface CozmoOperator : NSObject
@@ -22,15 +21,16 @@
 // Drive Cozmo Methods
 /*!
  * @discussion Send Wheel movment command.
- * @param Angle in degrees - 0° is straight foward
- * @param Magnitude ratio [1.0(forward) - -1.0(reverse)] => 0.0 == stop
+ * @param Angle in degrees - 0° is arch tan2
+ * @param Magnitude ratio [1.0(forward) - 0.0(stop)]
  * @return void
  */
 - (void)sendWheelCommandWithAngleInDegrees:(float)angle magnitude:(float)magnitude;
 
+// This is for debug
 - (void)sendWheelCommandWithLeftSpeed:(float)left right:(float)right;
 
-// This is not ready yet so just use simple method
+// This is not ready yet just use simple method
 ///*!
 // * @discussion Send head angle command.
 // * @param Angle using a ratio [0.0(down) - 1.0(up)]
@@ -47,7 +47,7 @@
  */
 - (void)sendHeadCommandWithAngleRatio:(float)angle;
 
-// This is not ready yet so just use simple method
+// This is not ready yet just use simple method
 ///*!
 // * @discussion Send lift height command
 // * @param Height ratio [0.0(down) - 1.0(up)]
@@ -63,4 +63,13 @@
  * @return void
  */
 - (void)sendLiftCommandWithHeightRatio:(float)height;
+
+
+/*!
+ * @discussion Send Stop All Motors command.
+ * @return void
+ */
+- (void)sendStopAllMotorsCommand;
+
+
 @end

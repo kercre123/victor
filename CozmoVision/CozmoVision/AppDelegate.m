@@ -8,6 +8,8 @@
 
 #import "AppDelegate.h"
 #import "Foundation/Foundation.h"
+#import "CozmoBasestation.h"
+#import "NSUserDefaults+UI.h"
 
 @interface AppDelegate ()
 
@@ -17,6 +19,19 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // Override point for customization after application launch.
+
+  self.basestation = [CozmoBasestation new];
+
+  NSString* ipAddress = [NSUserDefaults lastHostAdvertisingIP];
+  if (ipAddress) {
+    [self.basestation setHostAdvertisingIP:ipAddress];
+  }
+  ipAddress = [NSUserDefaults lastBasestationIP];
+  if (ipAddress) {
+    [self.basestation setBasestationIP:ipAddress];
+  }
+
+
   return YES;
 }
 
