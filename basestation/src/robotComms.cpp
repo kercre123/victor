@@ -139,8 +139,13 @@ namespace Cozmo {
         }
 #endif
         
-        advertisingRobots_[advMsg.robotID].robotInfo = advMsg;
-        advertisingRobots_[advMsg.robotID].lastSeenTime = currTime;
+        // Check if already connected to this robot.
+        // Advertisement may have arrived right after connection.
+        // If not already connected, add it to advertisement list.
+        if (connectedRobots_.find(advMsg.robotID) == connectedRobots_.end()) {
+          advertisingRobots_[advMsg.robotID].robotInfo = advMsg;
+          advertisingRobots_[advMsg.robotID].lastSeenTime = currTime;
+        }
       }
     } while(bytes_recvd > 0);
     
@@ -389,6 +394,10 @@ namespace Cozmo {
         printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.robotID, it->second.robotInfo.robotAddr, it->second.robotInfo.port);
         #endif
         connectedRobots_[robotID].client = client;
+        
+        // Remove from advertising list
+        advertisingRobots_.erase(it);
+        
         return true;
       }
     }
