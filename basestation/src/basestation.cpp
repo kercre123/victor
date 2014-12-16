@@ -229,10 +229,10 @@ BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::I
   robotMgr_.Init(&msgHandler_);
   uiMsgHandler_.Init(ui_comms, &robotMgr_);
   
-  if(config.isMember("AdvertisingHostIP")) {
-    VizManager::getInstance()->Connect(config["AdvertisingHostIP"].asCString(), VIZ_SERVER_PORT);
+  if(config.isMember("VizHostIP")) {
+    VizManager::getInstance()->Connect(config["VizHostIP"].asCString(), VIZ_SERVER_PORT);
   } else {
-    PRINT_NAMED_WARNING("BasestationInit.NoAdvertisingIP", "No AdvertisingHostIP member in JSON config file. Not initializing VizManager.\n");
+    PRINT_NAMED_WARNING("BasestationInit.NoVizHostIP", "No VizHostIP member in JSON config file. Not initializing VizManager.\n");
   }
 
   

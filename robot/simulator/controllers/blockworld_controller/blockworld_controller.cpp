@@ -52,6 +52,7 @@ BSTimer basestationController;
 #endif
 
 #define ROBOT_ADVERTISING_HOST_IP "127.0.0.1"
+#define VIZ_HOST_IP               "127.0.0.1"
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -74,6 +75,10 @@ int main(int argc, char **argv)
   if(!config.isMember("AdvertisingHostIP")) {
     config["AdvertisingHostIP"] = ROBOT_ADVERTISING_HOST_IP;
   }
+  if(!config.isMember("VizHostIP")) {
+    config["VizHostIP"] = VIZ_HOST_IP;
+  }
+  
   
   // Get basestation mode
   BasestationMode bm;
