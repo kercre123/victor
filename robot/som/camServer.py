@@ -19,6 +19,11 @@ class CameraSubServer(object):
     "imageChunk server base class"
 
     RESOLUTION_TUPLES = {
+        messages.CAMERA_RES_QUXGA: (3200, 2400),
+        messages.CAMERA_RES_QXGA: (2048, 1536),
+        messages.CAMERA_RES_UXGA: (1600, 1200),
+        messages.CAMERA_RES_XGA: (1024, 768),
+        messages.CAMERA_RES_SVGA: (800, 600),
         messages.CAMERA_RES_VGA: (640, 480),
         messages.CAMERA_RES_QVGA: (320, 240),
         messages.CAMERA_RES_QQVGA: (160, 120),
@@ -34,11 +39,7 @@ class CameraSubServer(object):
                        (0x00980911, 720),
                        (0x0098090e, 125),
                        (0x0098090f, 175)]:
-        assert yavta_w(*params), "yavta failure"
-
-        # Set ISP camera resizer
-        self.resolution = messages.CAMERA_RES_NONE
-        assert self.setResolution(messages.CAM_RES_VGA), "Could not set camera resolution"
+            assert yavta_w(*params), "yavta failure"
 
         # Setup local jpeg data receive socket
         self.encoderSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -46,6 +47,10 @@ class CameraSubServer(object):
         self.encoderSocket.settimeout(0) # Set non-blocking
         self.encoderProcess = None
         poller.register(self.encoderSocket, select.POLLIN)
+
+        # Set ISP camera resizer
+        self.resolution = messages.CAMERA_RES_NONE
+        assert self.setResolution(messages.CAMERA_RES_SVGA), "Could not set camera resolution"
 
         # Setup video data chunking state
         self.imageNumber    = 0
@@ -63,7 +68,7 @@ class CameraSubServer(object):
     def setResolution(self, resolutionEnum):
         if resolutionEnum != self.resolution:
             self.stopEncoder()
-            if subprocess.call(['media-ctl', '-v', '-f', '"mt9p031":0 [SGRBG8 1298x970 (664,541)/1298x970], "OMAP3 ISP CCDC":2 [SGRBG10 1298x970], "OMAP3 ISP preview":1 [UYVY 1298x970], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % self.RESOLUTION_TUPLES[resolutionEnum]) == 0:
+            if subprocess.call(['media-ctl', '-v', '-f', '"mt9p031":0 [SGRBG8 1298x970 (664,541)/1298x970], "OMAP3 ISP CCDC":2 [SGRBG10 1298x970], "OMAP3 ISP preview":1 [UYVY 1298x970], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % self.RESOLUTION_TUPLES[resolutionEnum]]) == 0:
                 self.resolution = resolutionEnum
                 self.startEncoder()
                 return True
@@ -103,7 +108,7 @@ class CameraSubServer(object):
             self.chunkNumber = 0
             self.expectedChunks = int(math.chail(float(len(self.dataQueue)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
             self.nextFrame = ''
-            if self.sendMode = messages.ISM_SINGLE_SHOT:
+            if self.sendMode == messages.ISM_SINGLE_SHOT:
                 self.stopEncoder()
                 self.sendMode = messages.ISM_OFF
         if self.dataQueue:
@@ -132,7 +137,7 @@ class CameraSubServer(object):
 class Client(object):
     "Client for UDP camera server for testing"
 
-    def __init__(self, host, port=DEFAULT_PORT, resolution=messages.CAMERA_RES_QVGA, socketType="UDP"):
+    def __init__(self, host, port=9000, resolution=messages.CAMERA_RES_QVGA, socketType="UDP"):
         "Connect to server"
         self.resolution = resolution
         if socketType == "UDP":

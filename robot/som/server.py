@@ -18,7 +18,7 @@ class CozmoServer(socket.socket):
 
     def __init__(self, address=('', 9000)):
         "Initalize the server and start listening on UDP"
-        socket.socket.__init__(self, socket.AF_INET, socket.SOCKET_DGRAM)
+        socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
         self.bind(address)
         self.poller = select.poll()
         self.poller.register(self, select.POLLIN)
