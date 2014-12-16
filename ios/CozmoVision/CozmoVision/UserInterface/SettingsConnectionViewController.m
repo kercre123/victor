@@ -8,6 +8,7 @@
 
 #import "SettingsConnectionViewController.h"
 #import "CozmoBasestation.h"
+#import "CozmoBasestation+UI.h"
 #import "NSUserDefaults+UI.h"
 
 @interface SettingsConnectionViewController () <UITextFieldDelegate>
@@ -159,30 +160,7 @@
 
 - (NSString*)basestatoinStateStringWithState:(CozmoBasestationRunState)state
 {
-  NSString* stateStr;
-
-  switch (state) {
-    case CozmoBasestationRunStateNone:
-      stateStr = @"NONE";
-      break;
-
-    case CozmoBasestationRunStateCommsReady:
-      stateStr = @"SEARCHING FOR ROBOT";
-      break;
-
-    case CozmoBasestationRunStateRobotConnected:
-      stateStr = @"ROBOT CONNECTED";
-      break;
-
-    case CozmoBasestationRunStateRunning:
-      stateStr = @"RUNNING";
-      break;
-
-    default:
-      break;
-  }
-
-  return [NSString stringWithFormat:@"Basestation State: %@" ,stateStr];
+  return [NSString stringWithFormat:@"Basestation State: %@", [self._basestation basestationStateString]];
 }
 
 - (NSString*)basestationHeartbeatRateStringWithValue:(double)value
@@ -279,7 +257,6 @@
     default:
       break;
   }
-
 }
 
 

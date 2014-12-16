@@ -34,6 +34,7 @@
 		49B269191A369F7900135486 /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49B269181A369F7900135486 /* opencv2.framework */; };
 		4E161EED1A396F4400E08F41 /* DevAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E161EEC1A396F4400E08F41 /* DevAssets.xcassets */; };
 		4E161EF01A39710100E08F41 /* DirectionPadView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E161EEF1A39710100E08F41 /* DirectionPadView.m */; };
+		4E1B72E41A40BCAB00C61B61 /* CozmoBasestation+UI.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E1B72E31A40BCAB00C61B61 /* CozmoBasestation+UI.m */; };
 		4E3D45821A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4E3D45811A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm */; };
 		4E528F201A3A20FB00552314 /* CozmoOperator.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */; };
 		4E7D27921A3F81F8007A9D45 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4E7D27911A3F81F8007A9D45 /* Main.storyboard */; };
@@ -78,6 +79,8 @@
 		4E161EEC1A396F4400E08F41 /* DevAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DevAssets.xcassets; sourceTree = "<group>"; };
 		4E161EEE1A39710100E08F41 /* DirectionPadView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DirectionPadView.h; sourceTree = "<group>"; };
 		4E161EEF1A39710100E08F41 /* DirectionPadView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DirectionPadView.m; sourceTree = "<group>"; };
+		4E1B72E21A40BCAB00C61B61 /* CozmoBasestation+UI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CozmoBasestation+UI.h"; sourceTree = "<group>"; };
+		4E1B72E31A40BCAB00C61B61 /* CozmoBasestation+UI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "CozmoBasestation+UI.m"; sourceTree = "<group>"; };
 		4E3D457F1A3BAC63000F5829 /* CozmoBasestationTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CozmoBasestationTypes.h; sourceTree = "<group>"; };
 		4E3D45801A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CozmoBasestation+ImageProcessing.h"; sourceTree = "<group>"; };
 		4E3D45811A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "CozmoBasestation+ImageProcessing.mm"; sourceTree = "<group>"; };
@@ -147,6 +150,8 @@
 				4967D9D61A326C8900EF0E90 /* CozmoBasestation.mm */,
 				4E3D45801A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.h */,
 				4E3D45811A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm */,
+				4E1B72E21A40BCAB00C61B61 /* CozmoBasestation+UI.h */,
+				4E1B72E31A40BCAB00C61B61 /* CozmoBasestation+UI.m */,
 				4E528F1E1A3A20FB00552314 /* CozmoOperator.h */,
 				4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */,
 			);
@@ -338,6 +343,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E528F201A3A20FB00552314 /* CozmoOperator.mm in Sources */,
+				4E1B72E41A40BCAB00C61B61 /* CozmoBasestation+UI.m in Sources */,
 				4E7D27961A3F84DB007A9D45 /* SettingsConnectionViewController.m in Sources */,
 				4EBD981B1A3FD69E00CEBC78 /* RCCozmoViewController.m in Sources */,
 				4E3D45821A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm in Sources */,
