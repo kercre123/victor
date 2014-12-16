@@ -72,7 +72,7 @@ class ImageRequest(MessageBase):
 
     def __init__(self, buffer=None):
         MessageBase.__init__(self)
-        self.imageSendMode = IE_NONE
+        self.imageSendMode = ISM_OFF
         self.resolution = CAMERA_RES_NONE
         if buffer:
             self.deserialize(buffer)
