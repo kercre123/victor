@@ -37,7 +37,12 @@
                             <constraint firstAttribute="centerX" secondItem="YPO-Oo-sze" secondAttribute="centerX" id="zxP-lW-bXy"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" id="L1d-HW-A34"/>
+                    <navigationItem key="navigationItem" title="Games" id="L1d-HW-A34">
+                        <barButtonItem key="rightBarButtonItem" title="Basestation State" id="sz0-FT-IXY"/>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="basestationStateBarItem" destination="sz0-FT-IXY" id="5ab-ck-VW9"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="fAA-iZ-yhA" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -230,7 +235,7 @@
         <!--Games-->
         <scene sceneID="qdj-xj-O2i">
             <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" hidesBottomBarWhenPushed="YES" id="Bzf-OX-1uS" sceneMemberID="viewController">
+                <navigationController title="Games" automaticallyAdjustsScrollViewInsets="NO" hidesBottomBarWhenPushed="YES" id="Bzf-OX-1uS" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Games" image="GameIcon" id="yjJ-hT-zrr"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="cCR-3Z-rvl">
