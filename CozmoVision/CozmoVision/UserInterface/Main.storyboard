@@ -27,7 +27,7 @@
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
                                 <connections>
-                                    <segue destination="1Is-1K-7FL" kind="show" id="KhB-YE-4Oe"/>
+                                    <segue destination="1Is-1K-7FL" kind="showDetail" id="KhB-YE-4Oe"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -61,10 +61,10 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="z7F-bg-DfJ">
-                                <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                                <rect key="frame" x="16" y="0.0" width="568" height="600"/>
                             </imageView>
-                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gbV-yX-3Zo" customClass="DirectionPadView">
-                                <rect key="frame" x="16" y="243" width="300" height="300"/>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="2QR-EP-Ma6" customClass="VirtualDirectionPadView">
+                                <rect key="frame" x="0.0" y="46" width="600" height="554"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                             </view>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ci0-5n-8bg">
@@ -77,32 +77,34 @@
                                 </connections>
                             </button>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="7x5-1z-bLs" customClass="VerticalSliderView">
-                                <rect key="frame" x="540" y="346" width="44" height="197"/>
+                                <rect key="frame" x="544" y="175" width="44" height="250"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="44" placeholder="YES" id="7OJ-Tl-sFU"/>
-                                    <constraint firstAttribute="height" constant="197" id="UJZ-Ea-YM1"/>
+                                    <constraint firstAttribute="height" constant="250" id="UJZ-Ea-YM1"/>
                                 </constraints>
                             </view>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="mzl-d4-jZE" customClass="VerticalSliderView">
-                                <rect key="frame" x="488" y="346" width="44" height="197"/>
+                                <rect key="frame" x="492" y="175" width="44" height="250"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="197" id="4Ex-JU-3WS"/>
-                                    <constraint firstAttribute="width" constant="44" placeholder="YES" id="egV-Ye-R8n"/>
-                                </constraints>
                             </view>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="z7F-bg-DfJ" firstAttribute="top" secondItem="pH9-wl-BY6" secondAttribute="bottom" id="07g-2r-bvX"/>
-                            <constraint firstItem="z7F-bg-DfJ" firstAttribute="leading" secondItem="TO3-6b-lFW" secondAttribute="leadingMargin" constant="-16" id="1w6-Uz-gD6"/>
+                            <constraint firstItem="2QR-EP-Ma6" firstAttribute="top" secondItem="ci0-5n-8bg" secondAttribute="bottom" constant="8" id="11E-H8-VN3"/>
+                            <constraint firstItem="z7F-bg-DfJ" firstAttribute="leading" secondItem="TO3-6b-lFW" secondAttribute="leadingMargin" id="1w6-Uz-gD6"/>
                             <constraint firstItem="7x5-1z-bLs" firstAttribute="centerY" secondItem="mzl-d4-jZE" secondAttribute="centerY" id="49o-sU-KEz"/>
-                            <constraint firstAttribute="trailingMargin" secondItem="z7F-bg-DfJ" secondAttribute="trailing" constant="-16" id="7Hu-16-l5Z"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="z7F-bg-DfJ" secondAttribute="trailing" id="7Hu-16-l5Z"/>
+                            <constraint firstItem="mzl-d4-jZE" firstAttribute="height" secondItem="7x5-1z-bLs" secondAttribute="height" id="DyE-wq-25g"/>
+                            <constraint firstItem="mzl-d4-jZE" firstAttribute="width" secondItem="7x5-1z-bLs" secondAttribute="width" id="Jwy-By-g7j"/>
                             <constraint firstItem="oTd-RL-SJf" firstAttribute="top" secondItem="z7F-bg-DfJ" secondAttribute="bottom" id="PSF-ni-O0y"/>
+                            <constraint firstAttribute="centerY" secondItem="7x5-1z-bLs" secondAttribute="centerY" id="XVV-Vd-Kcu"/>
+                            <constraint firstItem="oTd-RL-SJf" firstAttribute="top" secondItem="2QR-EP-Ma6" secondAttribute="bottom" id="awM-7U-Xci"/>
+                            <constraint firstItem="2QR-EP-Ma6" firstAttribute="leading" secondItem="TO3-6b-lFW" secondAttribute="leadingMargin" constant="-16" id="hlD-6f-Okr"/>
                             <constraint firstItem="ci0-5n-8bg" firstAttribute="leading" secondItem="TO3-6b-lFW" secondAttribute="leadingMargin" id="hqE-wi-inK"/>
-                            <constraint firstItem="oTd-RL-SJf" firstAttribute="top" secondItem="7x5-1z-bLs" secondAttribute="bottom" constant="57" id="qO0-6i-rUJ"/>
-                            <constraint firstItem="7x5-1z-bLs" firstAttribute="trailing" secondItem="TO3-6b-lFW" secondAttribute="trailingMargin" id="tbB-ud-3Gn"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="2QR-EP-Ma6" secondAttribute="trailing" constant="-16" id="sgP-58-HhJ"/>
+                            <constraint firstItem="7x5-1z-bLs" firstAttribute="trailing" secondItem="TO3-6b-lFW" secondAttribute="trailingMargin" constant="4" id="tbB-ud-3Gn"/>
                             <constraint firstItem="ci0-5n-8bg" firstAttribute="top" secondItem="pH9-wl-BY6" secondAttribute="bottom" constant="8" id="uMe-fJ-BUX"/>
                             <constraint firstItem="7x5-1z-bLs" firstAttribute="leading" secondItem="mzl-d4-jZE" secondAttribute="trailing" constant="8" id="zBz-aJ-LXW"/>
                         </constraints>
@@ -112,9 +114,10 @@
                     <nil key="simulatedBottomBarMetrics"/>
                     <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     <connections>
-                        <outlet property="cozmoHeadSlider" destination="7x5-1z-bLs" id="bWC-Hl-THf"/>
-                        <outlet property="cozmoLiftSlider" destination="mzl-d4-jZE" id="6zs-46-Xpf"/>
                         <outlet property="cozmoVisionImageView" destination="z7F-bg-DfJ" id="MNY-00-LYA"/>
+                        <outlet property="dPadView" destination="2QR-EP-Ma6" id="cdq-Zb-f8g"/>
+                        <outlet property="headSlider" destination="7x5-1z-bLs" id="B1z-jK-lpP"/>
+                        <outlet property="liftSlider" destination="mzl-d4-jZE" id="7Px-qe-xlL"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="jz0-OS-pB4" userLabel="First Responder" sceneMemberID="firstResponder"/>

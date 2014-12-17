@@ -92,6 +92,12 @@
   self.slider.center = CGPointMake(viewSize.width / 2.0, viewSize.height / 2.0);
 }
 
+- (void)setTintColor:(UIColor *)tintColor
+{
+  [super setTintColor:tintColor];
+  self.titleLabel.textColor = self.tintColor;
+  self.valueLabel.textColor = self.tintColor;
+}
 
 #pragma mark - Slider Action Methods
 
