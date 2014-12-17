@@ -58,6 +58,8 @@ namespace Anki {
     inline T GetXmax()   const;
     inline T GetYmax()   const;
     
+    void GetQuad(Quadrilateral<2,T>& quad) const;
+    
     Rectangle<T> Intersect(const Rectangle<T>& other) const;
     
     bool Contains(const Point<2,T>& point) const;
