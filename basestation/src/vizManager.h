@@ -173,6 +173,12 @@ namespace Anki {
                            const T zHeight,
                            const ColorRGBA& color);
       
+      // Draw a generic 2D quad in the camera display
+      template<typename T>
+      void DrawCameraQuad(const u32 quadID,
+                          const Quadrilateral<2,T>& quad,
+                          const ColorRGBA& color);
+      
       template<typename T>
       void DrawMatMarker(const u32 quadID,
                          const Quadrilateral<3,T>& quad,
@@ -425,6 +431,33 @@ namespace Anki {
     {
       DrawQuad(VIZ_QUAD_GENERIC_3D, quadID, quad, color);
     }
+    
+    template<typename T>
+    void VizManager::DrawCameraQuad(const u32 quadID,
+                                    const Quadrilateral<2,T>& quad,
+                                    const ColorRGBA& color)
+    {
+      using namespace Quad;
+      VizCameraQuad v;
+      v.quadID = quadID;
+      
+      v.xUpperLeft  = static_cast<f32>(quad[TopLeft].x());
+      v.yUpperLeft  = static_cast<f32>(quad[TopLeft].y());
+      
+      v.xLowerLeft  = static_cast<f32>(quad[BottomLeft].x());
+      v.yLowerLeft  = static_cast<f32>(quad[BottomLeft].y());
+      
+      v.xUpperRight = static_cast<f32>(quad[TopRight].x());
+      v.yUpperRight = static_cast<f32>(quad[TopRight].y());
+      
+      v.xLowerRight = static_cast<f32>(quad[BottomRight].x());
+      v.yLowerRight = static_cast<f32>(quad[BottomRight].y());
+      
+      v.color = u32(color);
+      
+      SendMessage( GET_MESSAGE_ID(VizCameraQuad), &v );
+    }
+
     
     template<typename T>
     void VizManager::DrawMatMarker(const u32 quadID,
