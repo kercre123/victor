@@ -85,10 +85,11 @@ int main(int argc, char **argv)
   Json::Value bmValue = JsonTools::GetValueOptional(config, "basestation_mode", (u8&)bm);
   assert(bm <= BM_PLAYBACK_SESSION);
   
-  // Connect to robot.
+  // Connect to robot and UI device.
   // UI-layer should handle this (whether the connection is TCP or BTLE).
   // Start basestation only when connections have been established.
-  UiTCPComms uiComms;
+  RobotComms uiComms(config["AdvertisingHostIP"].asCString(), UI_ADVERTISING_PORT);
+  
   
 #if (USE_BLE_ROBOT_COMMS)
   BLEComms robotComms;
@@ -173,8 +174,32 @@ int main(int argc, char **argv)
           }
         }
       }
-    
-      if (robotComms.GetNumConnectedRobots() > 0) {
+
+      // If not already connected to a UI device, connect to the
+      // first one that becomes available.
+      uiComms.Update();
+      if (uiComms.GetNumConnectedRobots() == 0) {
+        std::vector<int> advertisingUIDeviceIDs;
+        if (uiComms.GetAdvertisingRobotIDs(advertisingUIDeviceIDs) > 0) {
+          for(auto uiID : advertisingUIDeviceIDs) {
+            printf("UiComms connecting to UI device %d.\n", uiID);
+            if (uiComms.ConnectToRobotByID(uiID)) {
+              printf("Connected to UI device %d\n", uiID);
+              
+              // Add connected ui device ID to config
+              config[AnkiUtil::kP_CONNECTED_UI_DEVS].append(uiID);
+              
+              break;
+            } else {
+              printf("Failed to connect to UI device %d\n", uiID);
+              return BS_END_INIT_ERROR;
+            }
+          }
+        }
+      }
+      
+      // Don't resume until at least one robot and one ui device are connected
+      if ((robotComms.GetNumConnectedRobots() > 0) && (uiComms.GetNumConnectedRobots() > 0)) {
         break;
       }
 #endif

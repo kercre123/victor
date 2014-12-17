@@ -234,7 +234,7 @@ namespace Anki {
     // Comms type for Basestation-robot comms
     // 0: Use TCP
     // 1: Use UDP
-    #define USE_UDP_ROBOT_COMMS 1
+    #define USE_UDP_ROBOT_COMMS 0
     
     // Packet headers/footers:
     // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
@@ -280,7 +280,7 @@ namespace Anki {
     // loop increments).  So, 6 --> every 30ms, since our loop timestep is 5ms.
     const s32 STATE_MESSAGE_FREQUENCY = 6;
     
-    // Basestation server port which listens for inputController clients
+    // UI device server port which listens for basestation/game clients
     const u32 UI_MESSAGE_SERVER_LISTEN_PORT = 5200;
     
 #if SIMULATOR
