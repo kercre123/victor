@@ -295,24 +295,8 @@ namespace Cozmo {
                                 (c.recvBuf[HEADER_SIZE + 1] << 8) +
                                 (c.recvBuf[HEADER_SIZE + 2] << 16) +
                                 (c.recvBuf[HEADER_SIZE + 3] << 24);
-            if (dataLen > 255) {
-              PRINT_NAMED_WARNING("RobotComms.MsgTooBig", "Can't handle messages larger than 255 (dataLen = %d)\n", dataLen);
-              dataLen = 255;
-            }
             
             if (c.recvDataSize >= HEADER_SIZE + 4 + dataLen) {
-              
-              /*
-               // Get timestamp
-               TimeStamp_t *ts = (TimeStamp_t*)&(c.recvBuf[header.length()]);
-               
-               // Create RobotMsgPacket
-               Comms::MsgPacket p;
-               p.sourceId = it->first;
-               p.dataLen = n - HEADER_SIZE;
-               memcpy(p.data, &c.recvBuf[HEADER_SIZE], p.dataLen);
-               recvdMsgPackets_.insert(std::pair<TimeStamp_t,Comms::MsgPacket>(*ts, p) );
-               */
               
               f32 recvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
               
