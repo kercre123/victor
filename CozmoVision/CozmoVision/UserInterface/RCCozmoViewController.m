@@ -8,13 +8,19 @@
 
 #import "RCCozmoViewController.h"
 #import "CozmoBasestation.h"
-#import "CozmoDirectionController.h"
+#import "CozmoOperator.h"
 #import "CozmoObsObjectBBox.h"
+
+#import "VerticalSliderView.h"
+#import "DirectionPadView.h"
 
 @interface RCCozmoViewController () <CozmoBasestationHeartbeatListener>
 @property (weak, nonatomic) IBOutlet UIImageView *cozmoVisionImageView;
+@property (weak, nonatomic) IBOutlet VerticalSliderView *cozmoHeadSlider;
+@property (weak, nonatomic) IBOutlet VerticalSliderView *cozmoLiftSlider;
 
 @property (weak, nonatomic) CozmoBasestation *_basestation;
+@property (strong, nonatomic) CozmoOperator *_operator;
 
 @end
 
@@ -22,7 +28,28 @@
 
 - (void)viewDidLoad
 {
+  [super viewDidLoad];
+
   self._basestation = [CozmoBasestation defaultBasestation];
+  self._operator = [CozmoOperator operatorWithBasestationIPAddress:self._basestation.basestationIP];
+
+
+  // Setup UI
+  self.navigationController.navigationBarHidden = YES;
+
+  self.cozmoHeadSlider.title = @"Head";
+  self.cozmoHeadSlider.valueChangedThreshold = 0.025;
+  [self.cozmoHeadSlider setActionBlock:^(float value) {
+    [self._operator sendHeadCommandWithAngleRatio:value];
+  }];
+
+  self.cozmoLiftSlider.title = @"Lift";
+  self.cozmoLiftSlider.valueChangedThreshold = 0.025;
+  [self.cozmoLiftSlider setActionBlock:^(float value) {
+    [self._operator sendLiftCommandWithHeightRatio:value];
+  }];
+
+  self.cozmoVisionImageView.contentMode = UIViewContentModeScaleAspectFit;
 
 
 }
@@ -37,6 +64,7 @@
 - (void)viewWillDisappear:(BOOL)animated
 {
   [self._basestation removeListener:self];
+
   [super viewWillDisappear:animated];
 }
 
@@ -67,5 +95,16 @@
     //////
   }
 }
+
+
+
+#pragma mark - Handle Action Methods
+
+- (IBAction)handleExitButtonPress:(id)sender
+{
+  [self.navigationController popViewControllerAnimated:YES];
+  self.navigationController.navigationBarHidden = NO;
+}
+
 
 @end

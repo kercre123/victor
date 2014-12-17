@@ -13,6 +13,8 @@
 
 @property (readonly) BOOL isConnected;
 
++ (instancetype)operatorWithBasestationIPAddress:(NSString*)address;
+
 // Connection Methods
 - (void)connectToBasestationWithIPAddress:(NSString*)ipAddress;
 - (void)disconnectToBasestation;

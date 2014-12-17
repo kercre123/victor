@@ -8,6 +8,7 @@
 
 #import "SettingsConnectionViewController.h"
 #import "CozmoBasestation.h"
+#import "CozmoBasestation+UI.h"
 #import "NSUserDefaults+UI.h"
 
 @interface SettingsConnectionViewController () <UITextFieldDelegate>
@@ -38,10 +39,6 @@
   // Setup TextField handling
   self._orderedTextFields = @[ self.hostAddressTextField, self.basestationAddressTextField, self.basestationHeartbeatRateTextField ];
 
-  // Setup default settings
-  [self updateUIObjects];
-  [self updateUIWithBasestionState:self._basestation.runState];
-
   self.basestationStartStopButton.layer.cornerRadius = 10.0;
   self.basestationStartStopButton.layer.borderColor = [UIColor blackColor].CGColor;
   self.basestationStartStopButton.layer.borderWidth = 2.0;
@@ -55,11 +52,16 @@
 {
   [super viewDidAppear:animated];
 
+  // Setup default settings
+  [self updateUIObjects];
+  [self updateUIWithBasestionState:self._basestation.runState];
+  // KVO
   [self._basestation addObserver:self forKeyPath:@"runState" options:NSKeyValueObservingOptionNew context:nil];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
 {
+  // KVO
   [self._basestation removeObserver:self forKeyPath:@"runState" context:nil];
 
   [super viewWillDisappear:animated];
@@ -159,30 +161,7 @@
 
 - (NSString*)basestatoinStateStringWithState:(CozmoBasestationRunState)state
 {
-  NSString* stateStr;
-
-  switch (state) {
-    case CozmoBasestationRunStateNone:
-      stateStr = @"NONE";
-      break;
-
-    case CozmoBasestationRunStateCommsReady:
-      stateStr = @"SEARCHING FOR ROBOT";
-      break;
-
-    case CozmoBasestationRunStateRobotConnected:
-      stateStr = @"ROBOT CONNECTED";
-      break;
-
-    case CozmoBasestationRunStateRunning:
-      stateStr = @"RUNNING";
-      break;
-
-    default:
-      break;
-  }
-
-  return [NSString stringWithFormat:@"Basestation State: %@" ,stateStr];
+  return [NSString stringWithFormat:@"Basestation State: %@", [self._basestation basestationStateString]];
 }
 
 - (NSString*)basestationHeartbeatRateStringWithValue:(double)value
@@ -240,6 +219,12 @@
   [self._currentUIResponder resignFirstResponder];
 }
 
+- (IBAction)handleAutoConnectSwitchToggle:(UISwitch*)sender
+{
+  self._basestation.autoConnect = sender.isOn;
+  [NSUserDefaults setAutoConnectRobot:sender.isOn];
+}
+
 - (IBAction)handleBasestationStartStopButtonPress:(id)sender
 {
   // Toggle Basestation states
@@ -273,7 +258,6 @@
     default:
       break;
   }
-
 }
 
 
