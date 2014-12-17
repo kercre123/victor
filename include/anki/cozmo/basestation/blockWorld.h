@@ -149,6 +149,10 @@ namespace Anki
       ObjectID GetSelectedObject() const { return _selectedObject; }
       void     CycleSelectedObject();
       
+      // Try to select the object with the specified ID. Return true if that
+      // object ID is found and the object is successfully selected.
+      bool SelectObject(const ObjectID objectID);
+      
       //
       // Visualization
       //

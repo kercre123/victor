@@ -252,7 +252,13 @@ namespace Anki {
     {
       const u8 numRetries = 3;
       
-      ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+      ObjectID selectedObjectID;
+      if(msg.objectID < 0) {
+        selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+      } else {
+        selectedObjectID = msg.objectID;
+      }
+      
       if(static_cast<bool>(msg.usePreDockPose)) {
         robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID), numRetries);
       } else {

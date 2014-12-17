@@ -1245,6 +1245,7 @@ namespace Anki {
       {
         MessageU2G_PickAndPlaceObject m;
         m.usePreDockPose = static_cast<u8>(usePreDockPose);
+        m.objectID = -1;
         SendMessage(m);
       }
       

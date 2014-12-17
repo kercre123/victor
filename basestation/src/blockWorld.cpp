@@ -1320,13 +1320,41 @@ namespace Anki
     } // ClearObject()
     
     
+    bool BlockWorld::SelectObject(const ObjectID objectID)
+    {
+      ActionableObject* newSelection = dynamic_cast<ActionableObject*>(GetObjectByID(objectID));
+      
+      if(newSelection != nullptr) {
+        if(_selectedObject.IsSet()) {
+          // Unselect current object of interest, if it still exists (Note that it may just get
+          // reselected here, but I don't think we care.)
+          // Mark new object of interest as selected so it will draw differently
+          ActionableObject* oldSelection = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
+          if(oldSelection != nullptr) {
+            oldSelection->SetSelected(false);
+          }
+        }
+        
+        newSelection->SetSelected(true);
+        _selectedObject = objectID;
+        PRINT_INFO("Selected Object with ID=%d\n", objectID.GetValue());
+        
+        return true;
+      } else {
+        PRINT_NAMED_WARNING("BlockWorld.SelectObject.InvalidID",
+                            "Object with ID=%d not found. Not updating selected object.\n",
+                            objectID.GetValue());
+        return false;
+      }
+    } // SelectObject()
+    
     void BlockWorld::CycleSelectedObject()
     {
       if(_selectedObject.IsSet()) {
         // Unselect current object of interest, if it still exists (Note that it may just get
         // reselected here, but I don't think we care.)
         // Mark new object of interest as selected so it will draw differently
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot->GetBlockWorld().GetObjectByID(_selectedObject));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
         if(object != nullptr) {
           object->SetSelected(false);
         }

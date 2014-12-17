@@ -351,7 +351,7 @@ bool BasestationMainImpl::GetCurrentVisionMarkers(const RobotID_t robotID,
   Robot* robot = robotMgr_.GetRobotByID(robotID);
   if(robot != nullptr) {
     for(auto obsObject : robot->GetBlockWorld().GetProjectedObservedObjects()) {
-      boundingQuads.emplace_back(obsObject.first, obsObject.second);
+      boundingQuads.emplace_back(obsObject.first.GetValue(), obsObject.second);
       
       // Display
       Quad2f quad;
