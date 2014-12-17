@@ -105,10 +105,10 @@ public:
   // not cleared, so it is the caller's responsibility to empty it if desired.
   // The quad's corners are in image coordinates.
   struct ObservedObjectBoundingBox {
-    u32                objectID;
+    s32                objectID;
     Rectangle<f32>     boundingBox;
     
-    ObservedObjectBoundingBox(u32 Id, Rectangle<f32>& rect)
+    ObservedObjectBoundingBox(s32 Id, Rectangle<f32>& rect)
     : objectID(Id)
     , boundingBox(rect)
     {

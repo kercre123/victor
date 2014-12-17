@@ -269,6 +269,7 @@ namespace Anki
         
         std::vector<Point2f> projectedCorners;
         f32 observationDistance;
+        ObjectID obsID;
 
         if(overlappingObjects.empty()) {
           // no existing objects overlapped with the objects we saw, so add it
@@ -287,6 +288,7 @@ namespace Anki
           // Project this new object into the robot's camera:
           _robot->GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
           
+          obsID = objSeen->GetID();
           
           /*
            PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
@@ -320,6 +322,8 @@ namespace Anki
           overlappingObjects[0]->SetLastObservedTime(objSeen->GetLastObservedTime());
           overlappingObjects[0]->UpdateMarkerObservationTimes(*objSeen);
           
+          obsID = overlappingObjects[0]->GetID();
+          
           /* This is pretty verbose... 
           fprintf(stdout, "Merging observation of object type=%s, with ID=%d at (%.1f, %.1f, %.1f), timestamp=%d\n",
                   objSeen->GetType().GetName().c_str(),
@@ -344,7 +348,12 @@ namespace Anki
         _robot->GetCamera().AddOccluder(projectedCorners, observationDistance);
         
         Rectangle<f32> boundingBox(projectedCorners);
-        _obsProjectedObjects.emplace_back(objSeen->GetID(), boundingBox);
+        
+        if(obsID.IsUnknown()) {
+          PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.IDnotSet",
+                            "ID of new/re-observed object not set.\n");
+        }
+        _obsProjectedObjects.emplace_back(obsID, boundingBox);
 
         _didObjectsChange = true;
       } // for each object seen
