@@ -267,6 +267,9 @@ namespace Anki
           }
         }
         
+        std::vector<Point2f> projectedCorners;
+        f32 observationDistance;
+
         if(overlappingObjects.empty()) {
           // no existing objects overlapped with the objects we saw, so add it
           // as a new object
@@ -282,7 +285,9 @@ namespace Anki
                            parentMat==nullptr ? "NO" : parentMat->GetType().GetName().c_str());
           
           // Project this new object into the robot's camera:
-          _robot->GetCamera().AddOccluder(*objSeen);
+          _robot->GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
+          
+          
           /*
            PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
            "Adding object %d as an occluder for robot %d.\n",
@@ -326,7 +331,7 @@ namespace Anki
           */
           
           // Project this existing object into the robot's camera, using its new pose
-          _robot->GetCamera().AddOccluder(*overlappingObjects[0]);
+          _robot->GetCamera().ProjectObject(*overlappingObjects[0], projectedCorners, observationDistance);
           
           // Now that we've merged in objSeen, we can delete it because we
           // will no longer be using it.  Otherwise, we'd leak.
@@ -334,6 +339,13 @@ namespace Anki
           
         } // if/else overlapping existing objects found
      
+        // Use the projected corners to add an occluder and to keep track of the
+        // bounding quads of all the observed objects in this Update
+        _robot->GetCamera().AddOccluder(projectedCorners, observationDistance);
+        
+        Rectangle<f32> boundingBox(projectedCorners);
+        _obsProjectedObjects.emplace_back(objSeen->GetID(), boundingBox);
+
         _didObjectsChange = true;
       } // for each object seen
       
@@ -1009,6 +1021,9 @@ namespace Anki
       // New timestep, new set of occluders.  Get rid of anything registered as
       // an occluder with the robot's camera
       _robot->GetCamera().ClearOccluders();
+      
+      // New timestep, clear list of observed object bounding boxes
+      _obsProjectedObjects.clear();
       
       static TimeStamp_t lastObsMarkerTime = 0;
       

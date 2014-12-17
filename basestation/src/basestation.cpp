@@ -15,6 +15,7 @@
 #include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/platformPathManager.h"
@@ -82,10 +83,10 @@ public:
    static void StopGame();
    */
 
-  bool GetCurrentRobotImage(const RobotID_t robotID, const u8* &imageData, s32 &nrows, s32 &ncols, s32 &nchannels);
-  
   bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img);
 
+  bool GetCurrentVisionMarkers(const RobotID_t robotID,
+                               std::vector<BasestationMain::ObservedObjectBoundingBox>& boundingQuad);
   
 private:
   // Instantiate all the modules we need
@@ -337,6 +338,30 @@ bool BasestationMainImpl::GetCurrentRobotImage(const RobotID_t robotID, Vision::
   if(robot != nullptr) {
     return robot->GetCurrentImage(img);
   } else {
+    PRINT_NAMED_ERROR("BasestationMainImp.GetCurrentRobotImage.InvalidRobotID",
+                      "Image requested for invalid robot ID = %d.\n", robotID);
+    return false;
+  }
+}
+  
+  
+bool BasestationMainImpl::GetCurrentVisionMarkers(const RobotID_t robotID,
+                                                  std::vector<BasestationMain::ObservedObjectBoundingBox>& boundingQuads)
+{
+  Robot* robot = robotMgr_.GetRobotByID(robotID);
+  if(robot != nullptr) {
+    for(auto obsObject : robot->GetBlockWorld().GetProjectedObservedObjects()) {
+      boundingQuads.emplace_back(obsObject.first, obsObject.second);
+      
+      // Display
+      Quad2f quad;
+      obsObject.second.GetQuad(quad);
+      VizManager::getInstance()->DrawCameraQuad(0, quad, NamedColors::GREEN);
+    }
+    return true;
+  } else {
+    PRINT_NAMED_ERROR("BasestationMainImp.GetCurrentVisionMarkers.InvalidRobotID",
+                      "Image requested for invalid robot ID = %d.\n", robotID);
     return false;
   }
 }
@@ -379,6 +404,13 @@ bool BasestationMain::GetCurrentRobotImage(const RobotID_t robotID, Vision::Imag
 {
   return impl_->GetCurrentRobotImage(robotID, img);
 }
+  
+bool BasestationMain::GetCurrentVisionMarkers(const RobotID_t robotID,
+                                              std::vector<ObservedObjectBoundingBox>& boundingQuads)
+{
+  return impl_->GetCurrentVisionMarkers(robotID, boundingQuads);
+}
+
   
 } // namespace Cozmo
 } // namespace Anki

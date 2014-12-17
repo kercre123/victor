@@ -19,6 +19,9 @@
 
 #include "anki/vision/basestation/image.h"
 
+#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/math/rect.h"
+
 namespace Anki {
 
 // forward declarations
@@ -90,8 +93,31 @@ public:
   static void StopGame();
 */
   
-  // *Copies* into the given image object
+  //
+  // API for a Game to query robot/world state
+  //
+  
+  // *Copies* into the given image object. Returns true if successful.
   bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img);
+  
+  // Get the list of bounding boxes of objects a robot is "currently" seeing,
+  // paired with the object IDs they belong to. The given vector is augmented,
+  // not cleared, so it is the caller's responsibility to empty it if desired.
+  // The quad's corners are in image coordinates.
+  struct ObservedObjectBoundingBox {
+    ObjectID           objectID;
+    Rectangle<f32>     boundingBox;
+    
+    ObservedObjectBoundingBox(ObjectID Id, Rectangle<f32>& rect)
+    : objectID(Id)
+    , boundingBox(rect)
+    {
+      
+    }
+  };
+  
+  bool GetCurrentVisionMarkers(const RobotID_t robotID, std::vector<ObservedObjectBoundingBox>& boundingQuads);
+  
   
 private:
 
