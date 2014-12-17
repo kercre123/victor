@@ -50,6 +50,7 @@
 #include "behaviorManager.h"
 #include "ramp.h"
 
+#define ASYNC_VISION_PROCESSING 0
 
 namespace Anki {
   namespace Cozmo {
@@ -113,7 +114,7 @@ namespace Anki {
       Result QueueObservedMarker(const MessageVisionMarker& msg);
       
       // Get a *copy* of the current image on this robot's vision processing thread
-      bool GetCurrentImage(Vision::Image& img);
+      bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
       
       //
       // Pose (of the robot or its parts)
@@ -385,6 +386,11 @@ namespace Anki {
       BlockWorld       _blockWorld;
       
       VisionProcessingThread _visionProcessor;
+#     if !ASYNC_VISION_PROCESSING
+      Vision::Image     _image;
+      MessageRobotState _robotStateForImage;
+      bool              _haveNewImage;
+#     endif
       
       BehaviorManager  _behaviorMgr;
       
@@ -613,9 +619,13 @@ namespace Anki {
       _cameraCalibration = calib;
       _camera.SetSharedCalibration(&_cameraCalibration);
       
+#if ASYNC_VISION_PROCESSING
       // Now that we have camera calibration, we can start the vision
       // processing thread
       _visionProcessor.Start(_cameraCalibration);
+#else
+      _visionProcessor.SetCameraCalibration(_cameraCalibration);
+#endif
     }
 
     inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const

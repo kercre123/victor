@@ -98,22 +98,47 @@
   // Update Image Frame
   UIImage *updatedFrame = [self._basestation imageFrameWtihRobotId:1];
   if (updatedFrame) {
-    self.cozmoVisionImageView.image = updatedFrame;
     
     NSArray *objectBBoxes = [self._basestation boundingBoxesObservedByRobotId:1];
     
-    ///////
-    // TODO: This is temporary drawing code
-    // Drawing code
-    for(CozmoObsObjectBBox *object in objectBBoxes)
-    {
-      CGContextRef context = UIGraphicsGetCurrentContext();
-      CGContextSetRGBFillColor(context, 1.0, 1.0, 1.0, 0.0);   //this is the transparent color
-      CGContextSetRGBStrokeColor(context, 0.0, 0.0, 0.0, 0.5);
-      CGContextFillRect(context, object.boundingBox);
-      CGContextStrokeRect(context, object.boundingBox);    //this will draw the border
-    }
-    //////
+    if(objectBBoxes && objectBBoxes.count > 0) {
+      ///////
+      // TODO: This is temporary drawing code
+      // Drawing code
+      
+      // begin a graphics context of sufficient size
+      UIGraphicsBeginImageContext(updatedFrame.size);
+      
+      // draw original image into the context
+      [updatedFrame drawAtPoint:CGPointZero];
+      
+      // get the context for CoreGraphics
+      CGContextRef ctx = UIGraphicsGetCurrentContext();
+      
+
+      CGContextSetRGBStrokeColor(ctx, 0.0, 1.0, 0.0, 1.0);
+      CGContextSetLineWidth(ctx, 5.0);
+      
+      for(CozmoObsObjectBBox *object in objectBBoxes)
+      {
+        CGContextStrokeRect(ctx, object.boundingBox);
+      }
+      
+      // make image out of bitmap context
+      updatedFrame = UIGraphicsGetImageFromCurrentImageContext();
+      
+      // free the context
+      UIGraphicsEndImageContext();
+      
+      // End of temporary drawing code
+      //////
+    } else {
+      NSLog(@"No objects visible\n");
+    } // if objectBBoxes
+    
+    self.cozmoVisionImageView.image = updatedFrame;
+  } else {
+    //NSLog(@"frame not updated\n");
   }
 
   // TODO: TEMP Solution to driving robot

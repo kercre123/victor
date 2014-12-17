@@ -76,6 +76,10 @@
 
   Anki::Cozmo::BasestationMain*   _basestation;
 
+  // Timestamp of last image we asked for from the robot
+  // TODO: need one per robot?
+  Anki::TimeStamp_t               _lastImageTimestamp;
+  
   // Comms
   Anki::Cozmo::RobotComms*        _robotComms;
   Anki::Cozmo::UiTCPComms*        _uiComms;
@@ -103,6 +107,8 @@
   self._basestationIP = [NSString stringWithUTF8String:DEFAULT_BASESTATION_IP];
   [self setHeartbeatRate:DEFAULT_HEARTBEAT_RATE];
 
+  _lastImageTimestamp = 0;
+  
   return self;
 }
 
@@ -451,11 +457,12 @@
   
   UIImage *imageFrame = nil;
   Vision::Image img;
-  if (true == _basestation->GetCurrentRobotImage(robotId, img))
+  if (true == _basestation->GetCurrentRobotImage(robotId, img, _lastImageTimestamp))
   {
     // TODO: Somehow get rid of this copy, but still be threadsafe
     //cv::Mat_<u8> cvMatImg(nrows, ncols, const_cast<unsigned char*>(imageDataPtr));
     imageFrame = [self UIImageFromCVMat:img.get_CvMat_()];
+    _lastImageTimestamp = img.GetTimestamp();
   }
 
   return imageFrame;

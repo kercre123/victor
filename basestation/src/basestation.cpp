@@ -83,7 +83,7 @@ public:
    static void StopGame();
    */
 
-  bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img);
+  bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThan);
 
   bool GetCurrentVisionMarkers(const RobotID_t robotID,
                                std::vector<BasestationMain::ObservedObjectBoundingBox>& boundingQuad);
@@ -331,12 +331,12 @@ BasestationStatus BasestationMainImpl::ConvertStatus(RecordingPlaybackStatus sta
   }
 }
 
-bool BasestationMainImpl::GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img)
+bool BasestationMainImpl::GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThan)
 {
   Robot* robot = robotMgr_.GetRobotByID(robotID);
   
   if(robot != nullptr) {
-    return robot->GetCurrentImage(img);
+    return robot->GetCurrentImage(img, newerThan);
   } else {
     PRINT_NAMED_ERROR("BasestationMainImp.GetCurrentRobotImage.InvalidRobotID",
                       "Image requested for invalid robot ID = %d.\n", robotID);
@@ -350,7 +350,8 @@ bool BasestationMainImpl::GetCurrentVisionMarkers(const RobotID_t robotID,
 {
   Robot* robot = robotMgr_.GetRobotByID(robotID);
   if(robot != nullptr) {
-    for(auto obsObject : robot->GetBlockWorld().GetProjectedObservedObjects()) {
+    const BlockWorld::ObservedObjectBoundingBoxes& obsObjects = robot->GetBlockWorld().GetProjectedObservedObjects();
+    for(auto obsObject : obsObjects) {
       boundingQuads.emplace_back(obsObject.first.GetValue(), obsObject.second);
       
       // Display
@@ -400,9 +401,9 @@ BasestationStatus BasestationMain::Update(BaseStationTime_t currTime)
   return impl_->Update(currTime);
 }
   
-bool BasestationMain::GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img)
+bool BasestationMain::GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThan)
 {
-  return impl_->GetCurrentRobotImage(robotID, img);
+  return impl_->GetCurrentRobotImage(robotID, img, newerThan);
 }
   
 bool BasestationMain::GetCurrentVisionMarkers(const RobotID_t robotID,

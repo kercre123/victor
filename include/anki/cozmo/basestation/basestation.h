@@ -98,7 +98,7 @@ public:
   //
   
   // *Copies* into the given image object. Returns true if successful.
-  bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img);
+  bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThan);
   
   // Get the list of bounding boxes of objects a robot is "currently" seeing,
   // paired with the object IDs they belong to. The given vector is augmented,
@@ -116,7 +116,8 @@ public:
     }
   };
   
-  bool GetCurrentVisionMarkers(const RobotID_t robotID, std::vector<ObservedObjectBoundingBox>& boundingQuads);
+  bool GetCurrentVisionMarkers(const RobotID_t robotID,
+                               std::vector<ObservedObjectBoundingBox>& boundingQuads);
   
   
 private:
