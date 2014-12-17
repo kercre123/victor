@@ -116,11 +116,27 @@
       CGContextRef ctx = UIGraphicsGetCurrentContext();
       
 
-      CGContextSetRGBStrokeColor(ctx, 0.0, 1.0, 0.0, 1.0);
       CGContextSetLineWidth(ctx, 5.0);
       
+      
+      //UIFont *font = [UIFont systemFontOfSize:[UIFont systemFontSize]];
+      UIFont *font = [UIFont fontWithName:@"AvenirNextCondensed-Bold" size:50];
+      
+      NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+      paragraphStyle.alignment = NSTextAlignmentCenter;
+      
+      NSDictionary *attributes = @{ NSFontAttributeName:font,
+                                    NSParagraphStyleAttributeName:paragraphStyle,
+                                    NSForegroundColorAttributeName: [UIColor greenColor]};
+
+      CGContextSetRGBStrokeColor(ctx, 0.0, 1.0, 0.0, 1.0);
+
       for(CozmoObsObjectBBox *object in objectBBoxes)
       {
+        NSString* label = [NSString stringWithFormat:@"%d", object.objectID];
+
+        [label drawInRect:CGRectIntegral(object.boundingBox) withAttributes:attributes];
+        
         CGContextStrokeRect(ctx, object.boundingBox);
       }
       
