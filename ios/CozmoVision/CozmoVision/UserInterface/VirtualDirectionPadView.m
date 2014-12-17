@@ -1,21 +1,21 @@
 //
-//  DirectionPadView.m
+//  VirtualDirectionPadView.m
 //  CozmoVision
 //
 //  Created by Jordan Rivas on 12/10/14.
 //  Copyright (c) 2014 Anki, Inc. All rights reserved.
 //
 
-#import "DirectionPadView.h"
+#import "VirtualDirectionPadView.h"
 //#import <anki/common/types.h>
 
-#define kMaxJoystickSize      44.0
-#define computeJoystickSize(viewSize) (viewSize * 0.4)
+//#define kMaxJoystickSize      44.0
+//#define computeJoystickSize(viewSize) (viewSize * 0.4)
 
-const CGFloat kWheelDistMM = 47.7f; // distance b/w the front wheels
-const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
+//const CGFloat kWheelDistMM = 47.7f; // distance b/w the front wheels
+//const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
 
-@interface DirectionPadView ()
+@interface VirtualDirectionPadView ()
 // Public properties
 @property (readwrite, nonatomic) BOOL isDirty;
 
@@ -35,12 +35,14 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
 @property (readwrite, nonatomic) CGPoint lastPoint;
 
 // Drawing objects
+//@property (strong, )
 @property (strong, nonatomic) CALayer* backgroundCircleLayer;
-@property (strong, nonatomic) UIView* joystickCircleView;
+@property (strong, nonatomic) UIView* joystickView;
+@property (strong, nonatomic) UIView* thumbPuckView;
 
 @end
 
-@implementation DirectionPadView
+@implementation VirtualDirectionPadView
 
 - (instancetype)init
 {
@@ -74,81 +76,92 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
 
 - (void)commonInit
 {
+  self.backgroundColor = [UIColor clearColor];
+  self.magnitudeRadius = kDefaultMagnitudeRadius;
+  self.thumbPuckRadius = kDefaultPuckRadius;
+
   // Create Background Layer
-  self.backgroundCircleLayer = [CALayer layer];
-  self.backgroundCircleLayer.backgroundColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
-  self.backgroundCircleLayer.borderColor = [UIColor blackColor].CGColor;
-  self.backgroundCircleLayer.borderWidth = 2.0;
-  // Set size & position in -layoutSubviews
-  [self.layer addSublayer:self.backgroundCircleLayer];
+//  self.backgroundCircleLayer = [CALayer layer];
+//  self.backgroundCircleLayer.backgroundColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
+//  self.backgroundCircleLayer.borderColor = [UIColor blackColor].CGColor;
+//  self.backgroundCircleLayer.borderWidth = 2.0;
+//  // Set size & position in -layoutSubviews
+//  [self.layer addSublayer:self.backgroundCircleLayer];
 
-  self.joystickCircleView = [UIView new];
-  self.joystickCircleView.backgroundColor = [UIColor redColor];
-  self.joystickCircleView.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:1.0].CGColor;
-  self.joystickCircleView.layer.borderWidth = 1.0;
-  // Set size in -layoutSubviews
-  [self addSubview:self.joystickCircleView];
 
-  // Creat Direction Arrows Image Views
+  // Create Background view
+  self.joystickView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, self.magnitudeRadius, self.magnitudeRadius)];
+  self.joystickView.backgroundColor = [UIColor whiteColor];
+  self.joystickView.layer.cornerRadius = self.magnitudeRadius / 2.0;
+  self.joystickView.layer.borderColor = [UIColor blackColor].CGColor;
+  self.joystickView.layer.borderWidth = 1.0;
+  self.joystickView.layer.allowsGroupOpacity = YES;
+  [self addSubview:self.joystickView];
+
+
+  // Creat Direction Arrows Image Views for background view
   UIImage* upDownArrowImage = [UIImage imageNamed:@"DirectionArrowUp"];
   UIImage* leftRightArrowImage = [UIImage imageWithCGImage:upDownArrowImage.CGImage scale:upDownArrowImage.scale orientation:UIImageOrientationLeft];
 
   UIImageView *upArrow = [[UIImageView alloc] initWithImage:upDownArrowImage];
   upArrow.translatesAutoresizingMaskIntoConstraints = NO;
-  [self addSubview:upArrow];
+  [self.joystickView addSubview:upArrow];
 
   UIImageView *downArrow = [[UIImageView alloc] initWithImage:upDownArrowImage];
   downArrow.transform = CGAffineTransformMakeRotation(M_PI);
   downArrow.translatesAutoresizingMaskIntoConstraints = NO;
-  [self addSubview:downArrow];
+  [self.joystickView addSubview:downArrow];
 
   UIImageView *leftArrow = [[UIImageView alloc] initWithImage:leftRightArrowImage];
   leftArrow.translatesAutoresizingMaskIntoConstraints = NO;
-  [self addSubview:leftArrow];
+  [self.joystickView addSubview:leftArrow];
 
   UIImageView *rightArrow = [[UIImageView alloc] initWithImage:leftRightArrowImage];
   rightArrow.transform = CGAffineTransformMakeRotation(M_PI);
   rightArrow.translatesAutoresizingMaskIntoConstraints = NO;
-  [self addSubview:rightArrow];
+  [self.joystickView addSubview:rightArrow];
 
-  [self bringSubviewToFront:self.joystickCircleView];
+//  [self bringSubviewToFront:self.thumbPuckView];
 
   // Layout out Arrow IVs using Constraints
   CGFloat arrowMargin = 4.0;
-  [self addConstraint:[NSLayoutConstraint constraintWithItem:upArrow attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:arrowMargin]];
-  [self addConstraint:[NSLayoutConstraint constraintWithItem:upArrow attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0]];
+  [self.joystickView addConstraint:[NSLayoutConstraint constraintWithItem:upArrow attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.joystickView attribute:NSLayoutAttributeTop multiplier:1.0 constant:arrowMargin]];
+  [self.joystickView addConstraint:[NSLayoutConstraint constraintWithItem:upArrow attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self.joystickView attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0]];
 
-  [self addConstraint:[NSLayoutConstraint constraintWithItem:downArrow attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeBottom multiplier:1.0 constant:-arrowMargin]];
-  [self addConstraint:[NSLayoutConstraint constraintWithItem:downArrow attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0]];
+  [self.joystickView addConstraint:[NSLayoutConstraint constraintWithItem:downArrow attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.joystickView attribute:NSLayoutAttributeBottom multiplier:1.0 constant:-arrowMargin]];
+  [self.joystickView addConstraint:[NSLayoutConstraint constraintWithItem:downArrow attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self.joystickView attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0]];
 
-  [self addConstraint:[NSLayoutConstraint constraintWithItem:leftArrow attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeLeft multiplier:1.0 constant:arrowMargin]];
-  [self addConstraint:[NSLayoutConstraint constraintWithItem:leftArrow attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0]];
+  [self.joystickView addConstraint:[NSLayoutConstraint constraintWithItem:leftArrow attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.joystickView attribute:NSLayoutAttributeLeft multiplier:1.0 constant:arrowMargin]];
+  [self.joystickView addConstraint:[NSLayoutConstraint constraintWithItem:leftArrow attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.joystickView attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0]];
 
-  [self addConstraint:[NSLayoutConstraint constraintWithItem:rightArrow attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeRight multiplier:1.0 constant:-arrowMargin]];
-  [self addConstraint:[NSLayoutConstraint constraintWithItem:rightArrow attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0]];
+  [self.joystickView addConstraint:[NSLayoutConstraint constraintWithItem:rightArrow attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.joystickView attribute:NSLayoutAttributeRight multiplier:1.0 constant:-arrowMargin]];
+  [self.joystickView addConstraint:[NSLayoutConstraint constraintWithItem:rightArrow attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.joystickView attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0]];
+
+
+
+  self.thumbPuckView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, self.thumbPuckRadius, self.thumbPuckRadius)];
+  self.thumbPuckView.backgroundColor = [UIColor redColor];
+  self.thumbPuckView.layer.cornerRadius = self.thumbPuckRadius / 2.0;
+  self.thumbPuckView.layer.borderColor = [UIColor colorWithWhite:0.4 alpha:1.0].CGColor;
+  self.thumbPuckView.layer.borderWidth = 1.0;
+  // Set size in -layoutSubviews
+  [self addSubview:self.thumbPuckView];
+
+
 
   self.longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
   self.longPressGesture.minimumPressDuration = 0.0;
   [self addGestureRecognizer:self.longPressGesture];
 
+  // Initial State
+  [self showJoystickView:NO animated:NO];
+
 }
 
-- (void)layoutSubviews
+- (void)showJoystickView:(BOOL)show animated:(BOOL)animated
 {
-  [super layoutSubviews];
-
-  CGSize viewSize = self.bounds.size;
-  _centerPoint = CGPointMake(viewSize.width / 2.0, viewSize.height / 2.0);
-  _backgroundRadius = viewSize.width / 2.0;
-  // Layout Background circle
-  _backgroundCircleLayer.frame = self.bounds;
-  _backgroundCircleLayer.cornerRadius = _backgroundRadius;
-
-  CGFloat joystickSize = (computeJoystickSize(viewSize.width) > kMaxJoystickSize) ? kMaxJoystickSize : computeJoystickSize(viewSize.width);
-  _boundsRadius = _backgroundRadius - (joystickSize / 2.0);
-  _joystickCircleView.bounds = CGRectMake(0.0, 0.0, joystickSize, joystickSize);
-  _joystickCircleView.center = CGPointMake(viewSize.width / 2.0, viewSize.height / 2.0);
-  _joystickCircleView.layer.cornerRadius = joystickSize / 2.0;
+  self.joystickView.alpha = show ? 0.3 : 0.0;
+  self.thumbPuckView.alpha = show ? 1.0 : 0.0;
 }
 
 
@@ -156,28 +169,45 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
 
 - (void)handlePanGesture:(UIPanGestureRecognizer*)gesture
 {
-  CGPoint point = [gesture locationInView:self];
+  CGPoint superViewPoint = [gesture locationInView:self];
+  CGPoint point = [gesture locationInView:self.joystickView];
 
-  [self updateJoystickPositionWithPoint:point];
+//  [self updateJoystickPositionWithPoint:point];
 
   // Update Joystick
-  self.joystickCircleView.center = point;
+
 //  NSLog(@"handlePanGesture: %@, point X:%f Y: %f", gesture, point.x, point.y);
 
   switch (gesture.state) {
     case UIGestureRecognizerStateBegan:
-
+    {
+      // Set initial Position
+      self.joystickView.center = superViewPoint;
+      self.thumbPuckView.center = superViewPoint;
+      [self showJoystickView:YES animated:YES];
+    }
       break;
 
     case UIGestureRecognizerStateChanged:
-
+      self.thumbPuckView.center = superViewPoint;
+      [self updateJoystickPositionWithPoint:point];
       break;
 
     case UIGestureRecognizerStateEnded:
     case UIGestureRecognizerStateCancelled:
     case UIGestureRecognizerStateFailed:
-      _joystickCircleView.center = self.centerPoint;
-      [self updateJoystickPositionWithPoint:self.centerPoint];
+    {
+//      _thumbPuckView.center = self.centerPoint;
+//      [self updateJoystickPositionWithPoint:self.centerPoint];
+
+      // TODO: TEMP Solution to Stop robot
+      self.angleInDegrees = 0.0;
+      self.magnitude = 0.0;
+      self.leftWheelSpeed_mmps = 0.0;
+      self.rightWheelSpeed_mmps = 0.0;
+
+      [self showJoystickView:NO animated:YES];
+    }
       break;
     case UIGestureRecognizerStatePossible:
 
@@ -202,14 +232,16 @@ const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
 // TODO: Need to add angle & magnitude thresholds
 - (void)updateJoystickPositionWithPoint:(CGPoint)point
 {
-  CGFloat midX  = CGRectGetMidX(self.bounds);
-  CGFloat width = 0.5f*CGRectGetWidth(self.bounds);
+  CGFloat midX  = CGRectGetMidX(self.joystickView.bounds);
+  CGFloat width = 0.5f*CGRectGetWidth(self.joystickView.bounds);
 
-  CGFloat midY   = CGRectGetMidY(self.bounds);
-  CGFloat height = 0.5f*CGRectGetHeight(self.bounds);
+  CGFloat midY   = CGRectGetMidY(self.joystickView.bounds);
+  CGFloat height = 0.5f*CGRectGetHeight(self.joystickView.bounds);
 
   CGPoint centerOffset = CGPointMake((point.x - midX)/width,
                                      (point.y - midY)/height);
+
+  NSLog(@"updateJoystickPositionWithPoint offset x:%f y:%f", centerOffset.x, centerOffset.y);
 
   [self calculateAngleAndMagnitude:centerOffset];
 
