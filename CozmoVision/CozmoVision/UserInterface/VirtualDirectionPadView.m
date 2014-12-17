@@ -7,13 +7,7 @@
 //
 
 #import "VirtualDirectionPadView.h"
-//#import <anki/common/types.h>
 
-//#define kMaxJoystickSize      44.0
-//#define computeJoystickSize(viewSize) (viewSize * 0.4)
-
-//const CGFloat kWheelDistMM = 47.7f; // distance b/w the front wheels
-//const CGFloat kWheelDistHalfMM = kWheelDistMM / 2.f;
 
 @interface VirtualDirectionPadView ()
 // Public properties
@@ -29,18 +23,17 @@
 // Direction Pad Gesture
 @property (strong, nonatomic) UILongPressGestureRecognizer* longPressGesture;
 // Bookkeeping data
-@property (readwrite, nonatomic) CGPoint centerPoint;
-@property (readwrite, nonatomic) CGFloat backgroundRadius;
-@property (readwrite, nonatomic) CGFloat boundsRadius;
+//@property (readwrite, nonatomic) CGPoint centerPoint;
+//@property (readwrite, nonatomic) CGFloat backgroundRadius;
+//@property (readwrite, nonatomic) CGFloat boundsRadius;
 @property (readwrite, nonatomic) CGPoint lastPoint;
 
-// Drawing objects
-//@property (strong, )
-@property (strong, nonatomic) CALayer* backgroundCircleLayer;
+// View objects
 @property (strong, nonatomic) UIView* joystickView;
 @property (strong, nonatomic) UIView* thumbPuckView;
 
 @end
+
 
 @implementation VirtualDirectionPadView
 
@@ -79,15 +72,6 @@
   self.backgroundColor = [UIColor clearColor];
   self.magnitudeRadius = kDefaultMagnitudeRadius;
   self.thumbPuckRadius = kDefaultPuckRadius;
-
-  // Create Background Layer
-//  self.backgroundCircleLayer = [CALayer layer];
-//  self.backgroundCircleLayer.backgroundColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
-//  self.backgroundCircleLayer.borderColor = [UIColor blackColor].CGColor;
-//  self.backgroundCircleLayer.borderWidth = 2.0;
-//  // Set size & position in -layoutSubviews
-//  [self.layer addSublayer:self.backgroundCircleLayer];
-
 
   // Create Background view
   self.joystickView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, self.magnitudeRadius, self.magnitudeRadius)];
@@ -160,8 +144,20 @@
 
 - (void)showJoystickView:(BOOL)show animated:(BOOL)animated
 {
-  self.joystickView.alpha = show ? 0.3 : 0.0;
-  self.thumbPuckView.alpha = show ? 1.0 : 0.0;
+  CGFloat joystickAlpha = show ? 0.3 : 0.0;
+  CGFloat thumbPuckAlpha = show ? 1.0 : 0.0;
+
+  if (animated) {
+    [UIView animateWithDuration:0.2 animations:^{
+      self.joystickView.alpha = joystickAlpha;
+      self.thumbPuckView.alpha = thumbPuckAlpha;
+    }];
+  }
+  else {
+    self.joystickView.alpha = joystickAlpha;
+    self.thumbPuckView.alpha = thumbPuckAlpha;
+  }
+
 }
 
 
@@ -241,7 +237,7 @@
   CGPoint centerOffset = CGPointMake((point.x - midX)/width,
                                      (point.y - midY)/height);
 
-  NSLog(@"updateJoystickPositionWithPoint offset x:%f y:%f", centerOffset.x, centerOffset.y);
+//  NSLog(@"updateJoystickPositionWithPoint offset x:%f y:%f", centerOffset.x, centerOffset.y);
 
   [self calculateAngleAndMagnitude:centerOffset];
 
@@ -251,10 +247,10 @@
 - (void)calculateAngleAndMagnitude:(CGPoint)point
 {
   // Compute speed
-  CGFloat pointX = MIN(point.x, _boundsRadius);
-  CGFloat pointY = MIN(point.y, _boundsRadius);
+  CGFloat pointX = MIN(point.x, _magnitudeRadius);
+  CGFloat pointY = MIN(point.y, _magnitudeRadius);
 
-  _magnitude = MIN(1.0, sqrtf( (pointX * pointX) + (pointY * pointY) ));
+  _magnitude = MIN(1.0, sqrt( (double)(pointX * pointX) + (double)(pointY * pointY) ));
 
   const CGFloat oneEightyOverPi = 180.0 / M_PI;
 
