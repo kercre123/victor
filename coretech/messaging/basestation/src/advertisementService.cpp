@@ -68,12 +68,12 @@ namespace Anki {
       } while (bytes_recvd > 0);
 
       
-      // Get clients that are interested in advertising robots
+      // Get clients that are interested in knowing about advertising devices
       do {
         bytes_recvd = advertisingServer_.Recv((char*)&regMsg, sizeof(regMsg));  //NOTE: Don't actually expect to get AdvertisementRegistrationMsg here, but just need something to put stuff in. Server automatically adds client to internal list when recv is called.
         
         if (bytes_recvd > 0) {
-          std::cout << serviceName_ << ": " << "Received ping from basestation\n";
+          std::cout << serviceName_ << ": " << "Received ping from advertisement listener\n";
         }
       } while(bytes_recvd > 0);
       
@@ -83,7 +83,7 @@ namespace Anki {
         if (advertisingServer_.GetNumClients() > 0 && !connectionInfoMap_.empty()) {
           
           std::cout << serviceName_ << ": "
-                    << "Notifying " <<  advertisingServer_.GetNumClients() << " clients of advertising robots\n";
+                    << "Notifying " <<  advertisingServer_.GetNumClients() << " clients of advertising devices\n";
           
           for (it = connectionInfoMap_.begin(); it != connectionInfoMap_.end(); it++) {
             /*
