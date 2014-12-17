@@ -1,5 +1,5 @@
 //
-//  DirectionPadView.h
+//  VirtualDirectionPadView.h
 //  CozmoVision
 //
 //  Created by Jordan Rivas on 12/10/14.
@@ -8,7 +8,17 @@
 
 #import <UIKit/UIKit.h>
 
-@interface DirectionPadView : UIView
+@interface VirtualDirectionPadView : UIView
+
+#define kDefaultMagnitudeRadius     140.0
+#define kDefaultPuckRadius          30.0
+
+// Radius of magnitude in points
+@property (assign, nonatomic) CGFloat magnitudeRadius;
+// Radius of thumb puck in points
+@property (assign, nonatomic) CGFloat thumbPuckRadius;
+
+
 
 @property (readwrite, nonatomic) CGFloat angleThreshold; // Value Threshold is in points
 @property (readwrite, nonatomic) CGFloat magmitudeThreshold; // Value Threshold is in points

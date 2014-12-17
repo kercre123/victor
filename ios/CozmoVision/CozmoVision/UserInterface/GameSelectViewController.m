@@ -39,6 +39,7 @@
 - (void)viewWillDisappear:(BOOL)animated
 {
   [self._basestation removeObserver:self forKeyPath:@"runState" context:nil];
+  [super viewWillDisappear:animated];
 }
 
 

@@ -12,12 +12,13 @@
 #import "CozmoObsObjectBBox.h"
 
 #import "VerticalSliderView.h"
-#import "DirectionPadView.h"
+#import "VirtualDirectionPadView.h"
 
 @interface RCCozmoViewController () <CozmoBasestationHeartbeatListener>
 @property (weak, nonatomic) IBOutlet UIImageView *cozmoVisionImageView;
-@property (weak, nonatomic) IBOutlet VerticalSliderView *cozmoHeadSlider;
-@property (weak, nonatomic) IBOutlet VerticalSliderView *cozmoLiftSlider;
+@property (weak, nonatomic) IBOutlet VerticalSliderView *headSlider;
+@property (weak, nonatomic) IBOutlet VerticalSliderView *liftSlider;
+@property (weak, nonatomic) IBOutlet VirtualDirectionPadView *dPadView;
 
 @property (weak, nonatomic) CozmoBasestation *_basestation;
 @property (strong, nonatomic) CozmoOperator *_operator;
@@ -35,23 +36,29 @@
 
 
   // Setup UI
-  self.navigationController.navigationBarHidden = YES;
-
-  self.cozmoHeadSlider.title = @"Head";
-  self.cozmoHeadSlider.valueChangedThreshold = 0.025;
-  [self.cozmoHeadSlider setActionBlock:^(float value) {
+  self.headSlider.title = @"Head";
+  self.headSlider.valueChangedThreshold = 0.025;
+  [self.headSlider setActionBlock:^(float value) {
     [self._operator sendHeadCommandWithAngleRatio:value];
   }];
 
-  self.cozmoLiftSlider.title = @"Lift";
-  self.cozmoLiftSlider.valueChangedThreshold = 0.025;
-  [self.cozmoLiftSlider setActionBlock:^(float value) {
+  self.liftSlider.title = @"Lift";
+  self.liftSlider.valueChangedThreshold = 0.025;
+  [self.liftSlider setActionBlock:^(float value) {
     [self._operator sendLiftCommandWithHeightRatio:value];
   }];
 
   self.cozmoVisionImageView.contentMode = UIViewContentModeScaleAspectFit;
 
+  [self.view insertSubview:self.dPadView aboveSubview:self.cozmoVisionImageView];
 
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+  [[UIApplication sharedApplication] setStatusBarOrientation:UIInterfaceOrientationLandscapeRight animated:YES];
+
+  [super viewWillAppear:animated];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -68,6 +75,20 @@
   [super viewWillDisappear:animated];
 }
 
+- (NSUInteger)supportedInterfaceOrientations
+{
+  return UIInterfaceOrientationMaskLandscapeRight;
+}
+
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
+{
+  return UIInterfaceOrientationLandscapeRight;
+}
+
+- (BOOL)shouldAutorotate
+{
+  return YES;
+}
 
 
 #pragma mark - CozmoBasestationHeartbeatListener Methods
@@ -94,6 +115,10 @@
     }
     //////
   }
+
+  // TODO: TEMP Solution to driving robot
+//  [self._operator sendWheelCommandWithLeftSpeed:self.dPadView.leftWheelSpeed_mmps right:self.dPadView.rightWheelSpeed_mmps];
+  [self._operator sendWheelCommandWithAngleInDegrees:self.dPadView.angleInDegrees magnitude:self.dPadView.magnitude];
 }
 
 
@@ -102,8 +127,9 @@
 
 - (IBAction)handleExitButtonPress:(id)sender
 {
-  [self.navigationController popViewControllerAnimated:YES];
-  self.navigationController.navigationBarHidden = NO;
+  [self dismissViewControllerAnimated:YES completion:^{
+
+  }];
 }
 
 
