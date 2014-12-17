@@ -124,6 +124,7 @@ END_MESSAGE_DEFINITION(U2G_SelectNextObject)
 
 // PickAndPlaceObject
 START_MESSAGE_DEFINITION(U2G_PickAndPlaceObject, 1)
+ADD_MESSAGE_MEMBER(s32, objectID) // negative value means "currently selected object"
 ADD_MESSAGE_MEMBER(u8, usePreDockPose)
 END_MESSAGE_DEFINITION(U2G_PickAndPlaceObject)
 
