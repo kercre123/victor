@@ -55,7 +55,7 @@ class CozmoServer(socket.socket):
         targetPeriod = 1.0/loopHz
         st = time.time()
         while True:
-            self.step(max(0, targetPriod - (time.time()-st)))
+            self.step(max(0, targetPeriod - (time.time()-st)))
             st = time.time()
 
 
@@ -70,6 +70,6 @@ if __name__ == '__main__':
         host = ''
     server = CozmoServer((host, port))
     try:
-        server.run()
+        server.run(200)
     except KeyboardInterrupt:
         pass

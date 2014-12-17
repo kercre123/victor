@@ -34,6 +34,14 @@ class CameraSubServer(object):
 
     def __init__(self, poller):
         "Initalize server for specified camera on given port"
+
+        # Setup local jpeg data receive socket
+        self.encoderProcess = None
+        self.encoderSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.encoderSocket.bind(('127.0.0.1', 6000))
+        self.encoderSocket.settimeout(0) # Set non-blocking
+        poller.register(self.encoderSocket, select.POLLIN)
+
         # Initalize camera hardware?
         for params in [(0x00980911, 720),
                        (0x00980911, 720),
@@ -41,16 +49,11 @@ class CameraSubServer(object):
                        (0x0098090f, 175)]:
             assert yavta_w(*params), "yavta failure"
 
-        # Setup local jpeg data receive socket
-        self.encoderSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.encoderSocket.bind(('localhost', 6000))
-        self.encoderSocket.settimeout(0) # Set non-blocking
-        self.encoderProcess = None
-        poller.register(self.encoderSocket, select.POLLIN)
+        assert subprocess.call(['media-ctl', '-v', '-r', '-l', '"mt9p031":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]']) == 0, \
+            "media-ctl ISP setup failure"
 
         # Set ISP camera resizer
         self.resolution = messages.CAMERA_RES_NONE
-        assert self.setResolution(messages.CAMERA_RES_SVGA), "Could not set camera resolution"
 
         # Setup video data chunking state
         self.imageNumber    = 0
@@ -80,7 +83,7 @@ class CameraSubServer(object):
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
             self.encoderProcess = subprocess.Popen(['gst-launch', 'v4l2src', 'device=/dev/video6', '?',
                                                     'ffmpegcolorspace', '!', 'jpegenc', '!', 'udpsink',
-                                                    'host=localhost', 'port=6000'])
+                                                    'host=127.0.0.1', 'port=6000'])
 
     def stopEncoder(self):
         "Stop the encoder subprocess if it is running"
@@ -126,6 +129,8 @@ class CameraSubServer(object):
             self.nextFrame = self.encoderSocket.recv(MTU)
         except Exception:
             pass
+        if self.encoderProcess is not None and self.encoderProcess.poll() is not None:
+            raise Exception("Encoder sub-process has terminated")
         return outMsg
 
     def standby(self):
