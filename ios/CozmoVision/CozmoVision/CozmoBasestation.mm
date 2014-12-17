@@ -466,13 +466,14 @@
 {
   using namespace Anki;
   
-  NSMutableArray* boundingBoxes = nil;
+  NSMutableArray* boundingBoxes = [[NSMutableArray alloc] init];
   
   std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox> observations;
   if( true == _basestation->GetCurrentVisionMarkers(robotId, observations))
   {
-    for(auto observation : observations) {
-      CozmoObsObjectBBox* output;
+    // Turn each Basestation observed object into an Objective-C "CozmoObsObjectBBox" object
+    for(auto & observation : observations) {
+      CozmoObsObjectBBox* output = [[CozmoObsObjectBBox alloc] init];
       
       output.objectID = observation.objectID;
       output.boundingBox = CGRectMake(observation.boundingBox.GetX(),
