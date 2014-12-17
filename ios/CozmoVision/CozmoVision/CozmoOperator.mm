@@ -228,7 +228,8 @@ using namespace Anki;
   const float headMaxSpeed = 5.0;
 
   Cozmo::MessageU2G_SetHeadAngle message;
-  message.angle_rad = ABS((f32)angle) * ((f32)angle < 0 ? Cozmo::MIN_HEAD_ANGLE  : Cozmo::MAX_HEAD_ANGLE);
+  //message.angle_rad = ABS((f32)angle) * ((f32)angle < 0 ? Cozmo::MIN_HEAD_ANGLE  : Cozmo::MAX_HEAD_ANGLE);
+  message.angle_rad = (f32)angle * (Cozmo::MAX_HEAD_ANGLE - Cozmo::MIN_HEAD_ANGLE) + Cozmo::MIN_HEAD_ANGLE;
   message.accel_rad_per_sec2 = (f32)headAcceleration;
   message.max_speed_rad_per_sec = (f32)headMaxSpeed;
 
