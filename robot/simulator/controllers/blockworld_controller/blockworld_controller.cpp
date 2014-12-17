@@ -94,7 +94,7 @@ int main(int argc, char **argv)
   BLEComms robotComms;
   BLERobotManager robotBLEManager;
 #else
-  RobotComms robotComms(config["AdvertisingHostIP"].asCString());
+  RobotComms robotComms(config["AdvertisingHostIP"].asCString(), ROBOT_ADVERTISING_PORT);
 #endif
   if (bm != BM_PLAYBACK_SESSION) {
 

@@ -32,10 +32,10 @@ namespace Cozmo {
   const size_t HEADER_AND_TS_SIZE = sizeof(RADIO_PACKET_HEADER) + sizeof(TimeStamp_t);
 
   
-  RobotComms::RobotComms(const char* advertisingHostIP)
+  RobotComms::RobotComms(const char* advertisingHostIP, int advertisingPort)
   : advertisingHostIP_(advertisingHostIP)
   {
-    advertisingChannelClient_.Connect(advertisingHostIP_, ROBOT_ADVERTISING_PORT);
+    advertisingChannelClient_.Connect(advertisingHostIP_, advertisingPort);
     
     // TODO: Should this be done inside the poorly named Connect()?
     advertisingChannelClient_.Send("1", 1);  // Send anything just to get recognized as a client for advertising service.

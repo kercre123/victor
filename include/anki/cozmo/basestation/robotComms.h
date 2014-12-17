@@ -60,7 +60,7 @@ namespace Cozmo {
   public:
     
     // Construct with the IP address to use as the advertising host
-    RobotComms(const char* advertisingHostIP);
+    RobotComms(const char* advertisingHostIP, int advertisingPort);
     
     // The destructor will automatically cleans up
     virtual ~RobotComms();
