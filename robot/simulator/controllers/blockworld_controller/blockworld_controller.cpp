@@ -81,8 +81,9 @@ int main(int argc, char **argv)
   
   
   // Get basestation mode
-  BasestationMode bm;
-  Json::Value bmValue = JsonTools::GetValueOptional(config, "basestation_mode", (u8&)bm);
+  int bmInt;
+  Json::Value bmValue = JsonTools::GetValueOptional(config, "basestation_mode", bmInt);
+  BasestationMode bm = (BasestationMode)bmInt;
   assert(bm <= BM_PLAYBACK_SESSION);
   
   // Connect to robot and UI device.
