@@ -29,7 +29,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  const size_t HEADER_AND_TS_SIZE = sizeof(RADIO_PACKET_HEADER) + sizeof(TimeStamp_t);
+  const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
 
   
   RobotComms::RobotComms(const char* advertisingHostIP, int advertisingPort)
@@ -134,8 +134,8 @@ namespace Cozmo {
       if (bytes_recvd == sizeof(advMsg)) {
         
 #if(DEBUG_COMMS)
-        if (advertisingRobots_.find(advMsg.robotID) == advertisingRobots_.end()) {
-          printf("Detected advertising robot %d on host %s at port %d\n", advMsg.robotID, advMsg.robotAddr, advMsg.port);
+        if (advertisingRobots_.find(advMsg.id) == advertisingRobots_.end()) {
+          printf("Detected advertising robot %d on host %s at port %d\n", advMsg.id, advMsg.ip, advMsg.port);
         }
 #endif
         
@@ -156,7 +156,7 @@ namespace Cozmo {
     while(it != advertisingRobots_.end()) {
       if (currTime - it->second.lastSeenTime > ROBOT_ADVERTISING_TIMEOUT_S) {
         #if(DEBUG_COMMS)
-        printf("Removing robot %d from advertising list. (Last seen: %f, curr time: %f)\n", it->second.robotInfo.robotID, it->second.lastSeenTime, currTime);
+        printf("Removing robot %d from advertising list. (Last seen: %f, curr time: %f)\n", it->second.robotInfo.id, it->second.lastSeenTime, currTime);
         #endif
         advertisingRobots_.erase(it++);
       } else {
@@ -290,18 +290,17 @@ namespace Cozmo {
           }
           
           // Check if expected number of bytes are in the msg
-          if (c.recvDataSize > HEADER_AND_TS_SIZE) {
-            u32 dataLen = c.recvBuf[HEADER_AND_TS_SIZE] +
-                                (c.recvBuf[HEADER_AND_TS_SIZE + 1] << 8) +
-                                (c.recvBuf[HEADER_AND_TS_SIZE + 2] << 16) +
-                                (c.recvBuf[HEADER_AND_TS_SIZE + 3] << 24);
-            
+          if (c.recvDataSize > HEADER_SIZE) {
+            u32 dataLen = c.recvBuf[HEADER_SIZE] +
+                                (c.recvBuf[HEADER_SIZE + 1] << 8) +
+                                (c.recvBuf[HEADER_SIZE + 2] << 16) +
+                                (c.recvBuf[HEADER_SIZE + 3] << 24);
             if (dataLen > 255) {
               PRINT_NAMED_WARNING("RobotComms.MsgTooBig", "Can't handle messages larger than 255 (dataLen = %d)\n", dataLen);
               dataLen = 255;
             }
             
-            if (c.recvDataSize >= HEADER_AND_TS_SIZE + 4 + dataLen) {
+            if (c.recvDataSize >= HEADER_SIZE + 4 + dataLen) {
               
               /*
                // Get timestamp
@@ -310,8 +309,8 @@ namespace Cozmo {
                // Create RobotMsgPacket
                Comms::MsgPacket p;
                p.sourceId = it->first;
-               p.dataLen = n - HEADER_AND_TS_SIZE;
-               memcpy(p.data, &c.recvBuf[HEADER_AND_TS_SIZE], p.dataLen);
+               p.dataLen = n - HEADER_SIZE;
+               memcpy(p.data, &c.recvBuf[HEADER_SIZE], p.dataLen);
                recvdMsgPackets_.insert(std::pair<TimeStamp_t,Comms::MsgPacket>(*ts, p) );
                */
               
@@ -326,12 +325,12 @@ namespace Cozmo {
                                             std::forward_as_tuple((s32)(it->first),
                                                                   (s32)-1,
                                                                   dataLen,
-                                                                  (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE+4]),
+                                                                  (u8*)(&c.recvBuf[HEADER_SIZE+4]),
                                                                   BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds())
                                             );
               
               // Shift recvBuf contents down
-              const u16 entireMsgSize = HEADER_AND_TS_SIZE + 4 + dataLen;
+              const u16 entireMsgSize = HEADER_SIZE + 4 + dataLen;
               memcpy(c.recvBuf, c.recvBuf + entireMsgSize, c.recvDataSize - entireMsgSize);
               c.recvDataSize -= entireMsgSize;
               
@@ -391,7 +390,7 @@ namespace Cozmo {
 #endif
       if (client->Connect((char*)it->second.robotInfo.ip, it->second.robotInfo.port)) {
         #if(DEBUG_COMMS)
-        printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.robotID, it->second.robotInfo.robotAddr, it->second.robotInfo.port);
+        printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.id, it->second.robotInfo.ip, it->second.robotInfo.port);
         #endif
         connectedRobots_[robotID].client = client;
         

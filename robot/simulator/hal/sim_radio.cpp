@@ -155,22 +155,21 @@ namespace Anki {
       RegisterRobot();
     }
     
-    bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts)
+    bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer)
     {
       if (server.HasClient()) {
         
         const u16 size = Messages::GetSize(msgID);
         
 #if(USE_UDP_ROBOT_COMMS==0)
-        // Send the message header (0xBEEF + timestamp + robotID + msgID)
+        // Send the message header (0xBEEF + size(of following bytes) + msgID)
         // For TCP comms, send timestamp immediately after the header.
         // This is needed on the basestation side to properly order messages.
-        const u8 HEADER_LENGTH = 11;
+        const u8 HEADER_LENGTH = 7;
         u8 header[HEADER_LENGTH];
-        UtilMsgError packRes = SafeUtilMsgPack(header, HEADER_LENGTH, NULL, "cciic",
+        UtilMsgError packRes = SafeUtilMsgPack(header, HEADER_LENGTH, NULL, "ccic",
                     RADIO_PACKET_HEADER[0],
                     RADIO_PACKET_HEADER[1],
-                    ts,
                     size + 1,
                     msgID);
         

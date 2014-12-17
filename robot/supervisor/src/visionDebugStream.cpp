@@ -116,7 +116,6 @@ namespace Anki {
 
             Anki::Cozmo::HAL::UARTPutMessage(
               0,
-              0,
               bufferStart - SERIALIZED_BUFFER_HEADER_LENGTH,
               validUsedBytes + SERIALIZED_BUFFER_HEADER_LENGTH + SERIALIZED_BUFFER_FOOTER_LENGTH);
           }
