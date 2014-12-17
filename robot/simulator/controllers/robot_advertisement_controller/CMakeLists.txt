@@ -3,8 +3,6 @@
 cmake_minimum_required(VERSION 2.8)
 
 # Include paths
-file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/robot/*.h")
-
 include_directories(
   ${WEBOTS_CPP_INCLUDE_DIR}
 )
@@ -17,17 +15,11 @@ set(SOURCE_FILES
   robot_advertisement_controller.cpp
 )
 
-set(HEADER_FILES
-  ${COZMO_ROBOT_HEADER_FILES}
-  ${COZMO_INCLUDE_FILES}
-)
-
-add_executable(robot_advertisement_controller ${SOURCE_FILES} ${HEADER_FILES})
+add_executable(robot_advertisement_controller ${SOURCE_FILES})
 
 target_link_libraries(robot_advertisement_controller 
   CppController # Webots C++ Controller
-  CoreTech_Common_Robot
-  CoreTech_Messaging_Robot
+  CoreTech_Messaging_Basestation
 )
   
 set_target_properties(robot_advertisement_controller PROPERTIES
