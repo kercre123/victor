@@ -43,6 +43,9 @@ int main(int argc, char **argv)
   
   AdvertisementService robotAdService("RobotAdvertisementService");
   robotAdService.StartService(ROBOT_ADVERTISEMENT_REGISTRATION_PORT, ROBOT_ADVERTISING_PORT);
+
+  AdvertisementService uiAdService("UIAdvertisementService");
+  uiAdService.StartService(UI_ADVERTISEMENT_REGISTRATION_PORT, UI_ADVERTISING_PORT);
   
 
   // Main webots controller
@@ -62,10 +65,12 @@ int main(int argc, char **argv)
   
   while(advertisementController.step(ADVERTISEMENT_TIME_STEP_MS) != -1) {
     robotAdService.Update();
+    uiAdService.Update();
   }
   
   
   printf("Shutting down advertisement service\n");
   robotAdService.StopService();
+  uiAdService.StopService();
   return 0;
 }

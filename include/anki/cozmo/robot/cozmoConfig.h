@@ -263,6 +263,11 @@ namespace Anki {
     // Port on which simulated robot should connect to (de)register for advertisement
     const u32 ROBOT_ADVERTISEMENT_REGISTRATION_PORT = 5101;
     
+    // Port on which registered UI devices advertise.
+    const u32 UI_ADVERTISING_PORT = 5102;
+    
+    // Port on which UI device should connect to (de)register for advertisement
+    const u32 UI_ADVERTISEMENT_REGISTRATION_PORT = 5103;
     
     // If most recent advertisement message is older than this,
     // then it is no longer considered to be advertising.
