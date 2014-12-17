@@ -263,18 +263,6 @@ namespace Anki {
     // Port on which simulated robot should connect to (de)register for advertisement
     const u32 ROBOT_ADVERTISEMENT_REGISTRATION_PORT = 5101;
     
-    typedef struct {
-      u16 port;                // Port that robot is accepting connections on
-      u8 robotAddr[18];        // IP address as null terminated string
-      u8 robotID;
-      u8 enableAdvertisement;  // 1 when robot wants to advertise, 0 otherwise.
-    } RobotAdvertisementRegistration;
-    
-    typedef struct  {
-      u16 port;
-      u8 robotAddr[17];        // IP address as null terminated string
-      u8 robotID;
-    } RobotAdvertisement;
     
     // If most recent advertisement message is older than this,
     // then it is no longer considered to be advertising.

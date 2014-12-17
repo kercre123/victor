@@ -127,7 +127,7 @@ namespace Cozmo {
     f32 currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
     // Read datagrams and update advertising robots list.
-    RobotAdvertisement advMsg;
+    Comms::AdvertisementMsg advMsg;
     int bytes_recvd = 0;
     do {
       bytes_recvd = advertisingChannelClient_.Recv((char*)&advMsg, sizeof(advMsg));
@@ -142,9 +142,9 @@ namespace Cozmo {
         // Check if already connected to this robot.
         // Advertisement may have arrived right after connection.
         // If not already connected, add it to advertisement list.
-        if (connectedRobots_.find(advMsg.robotID) == connectedRobots_.end()) {
-          advertisingRobots_[advMsg.robotID].robotInfo = advMsg;
-          advertisingRobots_[advMsg.robotID].lastSeenTime = currTime;
+        if (connectedRobots_.find(advMsg.id) == connectedRobots_.end()) {
+          advertisingRobots_[advMsg.id].robotInfo = advMsg;
+          advertisingRobots_[advMsg.id].lastSeenTime = currTime;
         }
       }
     } while(bytes_recvd > 0);
@@ -389,7 +389,7 @@ namespace Cozmo {
 #else
       TcpClient *client = new TcpClient();
 #endif
-      if (client->Connect((char*)it->second.robotInfo.robotAddr, it->second.robotInfo.port)) {
+      if (client->Connect((char*)it->second.robotInfo.ip, it->second.robotInfo.port)) {
         #if(DEBUG_COMMS)
         printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.robotID, it->second.robotInfo.robotAddr, it->second.robotInfo.port);
         #endif

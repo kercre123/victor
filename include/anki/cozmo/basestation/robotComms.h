@@ -18,6 +18,7 @@
 #include <vector>
 #include <deque>
 #include <anki/messaging/basestation/IComms.h>
+#include "anki/messaging/basestation/advertisementService.h"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
@@ -36,7 +37,7 @@ namespace Anki {
 namespace Cozmo {
 
   typedef struct {
-    RobotAdvertisement robotInfo;
+    Comms::AdvertisementMsg robotInfo;
     f32 lastSeenTime;
   } RobotConnectionInfo_t;
   

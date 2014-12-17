@@ -20,6 +20,7 @@
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/utilMessaging.h"
+#include "anki/messaging/basestation/advertisementService.h"
 
 // For getting local host's IP address
 #define _GNU_SOURCE     /* To get defns of NI_MAXSERV and NI_MAXHOST */
@@ -47,7 +48,7 @@ namespace Anki {
       u8 recvBuf_[RECV_BUFFER_SIZE];
       size_t recvBufSize_ = 0;
       
-      RobotAdvertisementRegistration regMsg;
+      Comms::AdvertisementRegistrationMsg regMsg;
     }
 
     // Register robot with advertisement service
@@ -55,7 +56,7 @@ namespace Anki {
     {
       regMsg.enableAdvertisement = 1;
       
-      PRINT("sim_radio: Sending registration for robot %d at address %s on port %d\n", regMsg.robotID, regMsg.robotAddr, regMsg.port);
+      PRINT("sim_radio: Sending registration for robot %d at address %s on port %d\n", regMsg.id, regMsg.ip, regMsg.port);
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
     }
     
@@ -64,7 +65,7 @@ namespace Anki {
     {
       regMsg.enableAdvertisement = 0;
       
-      PRINT("sim_radio: Sending deregistration for robot %d\n", regMsg.robotID);
+      PRINT("sim_radio: Sending deregistration for robot %d\n", regMsg.id);
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
     }
     
@@ -129,9 +130,9 @@ namespace Anki {
 
       
       // Fill in advertisement registration message
-      regMsg.robotID = (u8)HAL::GetRobotID();
-      regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.robotID;
-      memcpy(regMsg.robotAddr, HAL::GetLocalIP(), sizeof(regMsg.robotAddr));
+      regMsg.id = (u8)HAL::GetRobotID();
+      regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.id;
+      memcpy(regMsg.ip, HAL::GetLocalIP(), sizeof(regMsg.ip));
       
       RegisterRobot();
       recvBufSize_ = 0;
