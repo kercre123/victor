@@ -82,12 +82,20 @@ return numberVal.boolValue; \
 [self PROP_NAME_SETTER ## _NUM : [NSNumber numberWithBool:boolVal]];\
 }
 
-NSString* const DefaultKeyLastHostAdvertisingIP = @"";
+
+#pragma mark - User Default Definitions
+
+NSString* const DefaultKeyLastHostAdvertisingIP = @"lastHostAdvertisingIP";
 RHUserDefaultDefinePropertyObj(NSString, lastHostAdvertisingIP, setLastHostAdvertisingIP, DefaultKeyLastHostAdvertisingIP)
 
-NSString* const DefaultKeyLastBasestationIP = @"127.0.0.1";
+NSString* const DefaultKeyLastBasestationIP = @"lastBasestationIP";
 RHUserDefaultDefinePropertyObj(NSString, lastBasestationIP, setLastBasestationIP, DefaultKeyLastBasestationIP)
 
+NSString* const DefaultKeyAutoConnectRobot = @"autoConnectRobot";
+RHUserDefaultDefinePropertyBool(autoConnectRobot, setAutoConnectRobot, DefaultKeyAutoConnectRobot, YES)
+//
+//+ (BOOL)autoConnectRobot;
+//+ (void)setAutoConnectRobot:(BOOL)autoConnect;
 
 
 

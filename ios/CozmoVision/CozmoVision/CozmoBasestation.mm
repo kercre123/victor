@@ -397,6 +397,13 @@
   if ([self attemptToConnectToRobot]) {
     if (_robotComms->GetNumConnectedRobots() > 0) {
       self.robotConnected = YES;
+
+      // Start Basestation if Auto Connect
+      if (self.autoConnect) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+          [self startBasestation];
+        });
+      }
     }
   }
 }
@@ -436,7 +443,7 @@
 }
 
 
-# pragma mark - Public methods
+#pragma mark - Public methods
 
 - (UIImage*)imageFrameWtihRobotId:(uint8_t)robotId
 {

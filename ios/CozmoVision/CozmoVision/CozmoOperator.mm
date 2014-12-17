@@ -28,6 +28,13 @@ using namespace Anki;
   TcpClient* _uiClient;
 }
 
++ (instancetype)operatorWithBasestationIPAddress:(NSString*)address
+{
+  CozmoOperator* instance = [CozmoOperator new];
+  [instance connectToBasestationWithIPAddress:address];
+  
+  return instance;
+}
 
 - (instancetype)init
 {

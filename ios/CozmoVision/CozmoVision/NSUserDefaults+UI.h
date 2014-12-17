@@ -17,5 +17,7 @@
 + (NSString*)lastBasestationIP;
 + (void)setLastBasestationIP:(NSString*)basestationIP;
 
++ (BOOL)autoConnectRobot;
++ (void)setAutoConnectRobot:(BOOL)autoConnect;
 
 @end
