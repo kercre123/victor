@@ -17,8 +17,8 @@
 
 #include "anki/common/types.h"
 
-#include "anki/cozmo/basestation/uiTcpComms.h"
-#include "anki/cozmo/basestation/game/gameMessages.h"
+#include <anki/messaging/basestation/IComms.h>
+#include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
 
 namespace Anki {
   
@@ -28,13 +28,9 @@ namespace Anki {
   
 namespace Cozmo {
   
-  // Forward definitions:
-  class Robot;
-  class RobotManager;
-
   
-#define MESSAGE_BASECLASS_NAME GameMessage
-#include "anki/cozmo/basestation/game/MessageDefinitionsG2U.h"
+#define MESSAGE_BASECLASS_NAME UiMessage
+#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitions.h"
   
   // Define interface for a GameMessage handler
   class IGameMessageHandler
@@ -42,12 +38,11 @@ namespace Cozmo {
   public:
     
     // TODO: Change these to interface references so they can be stubbed as well
-    virtual Result Init(Comms::IComms* comms,
-                        RobotManager*  robotMgr) = 0;
+    virtual Result Init(Comms::IComms* comms) = 0;
     
     virtual Result ProcessMessages() = 0;
     
-    virtual Result SendMessage(const UserDeviceID_t devID, const GameMessage& msg) = 0;
+    virtual Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) = 0;
     
   }; // class IGameMessageHandler
   
@@ -55,23 +50,23 @@ namespace Cozmo {
   // The actual GameMessage handler implementation
   class GameMessageHandler : public IGameMessageHandler
   {
+  public:
     GameMessageHandler(); // Force construction with stuff in Init()?
     
     // Set the message handler's communications manager
-    virtual Result Init(Comms::IComms* comms,
-                        RobotManager*  robotMgr);
+    virtual Result Init(Comms::IComms* comms);
     
     // As long as there are messages available from the comms object,
     // process them and pass them along to robots.
     virtual Result ProcessMessages();
     
     // Send a message to a specified ID
-    Result SendMessage(const UserDeviceID_t devID, const GameMessage& msg);
+    Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg);
+    
     
   protected:
     
     Comms::IComms* comms_;
-    RobotManager* robotMgr_;
     
     bool isInitialized_;
     
@@ -80,8 +75,8 @@ namespace Cozmo {
     Result ProcessPacket(const Comms::MsgPacket& packet);
     
     // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
-#define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
-#include "anki/cozmo/basestation/game/MessageDefinitionsG2U.h"
+#define MESSAGE_DEFINITION_MODE MESSAGE_UI_PROCESS_METHODS_MODE
+#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsG2U.h"
     
     // Fill in the message information lookup table for getting size and
     // ProcesBufferAs_MessageX function pointers according to enumerated
@@ -89,13 +84,18 @@ namespace Cozmo {
     struct {
       u8 priority;
       u8 size;
-      Result (GameMessageHandler::*ProcessPacketAs)(Robot*, const u8*);
+      Result (GameMessageHandler::*ProcessPacketAs)(RobotID_t id, const u8*);
     } lookupTable_[NUM_UI_MSG_IDS+1] = {
       {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
+      
+#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
+#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsU2G.h"
+      
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #define MESSAGE_HANDLER_CLASSNAME GameMessageHandler
-#include "anki/cozmo/basestation/game/MessageDefinitionsG2U.h"
+#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsG2U.h"
 #undef MESSAGE_HANDLER_CLASSNAME
+      
       {0, 0, 0} // Final dummy entry without comma at end
     };
     
@@ -107,8 +107,7 @@ namespace Cozmo {
   {
     GameMessageHandlerStub() { }
     
-    Result Init(Comms::IComms* comms,
-                RobotManager*  robotMgr)
+    Result Init(Comms::IComms* comms)
     {
       return RESULT_OK;
     }
@@ -120,7 +119,7 @@ namespace Cozmo {
     }
     
     // Send a message to a specified ID
-    Result SendMessage(const UserDeviceID_t devID, const GameMessage& msg) {
+    Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) {
       return RESULT_OK;
     }
 
