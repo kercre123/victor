@@ -32,6 +32,7 @@
 		499F451B1A25672E0050A530 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45121A25672E0050A530 /* QuartzCore.framework */; };
 		499F451C1A25672E0050A530 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45131A25672E0050A530 /* UIKit.framework */; };
 		49B269191A369F7900135486 /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49B269181A369F7900135486 /* opencv2.framework */; };
+		49C2C6791A41019600AA0F27 /* CozmoObsObjectBBox.m in Sources */ = {isa = PBXBuildFile; fileRef = 49C2C6781A41019600AA0F27 /* CozmoObsObjectBBox.m */; };
 		4E161EED1A396F4400E08F41 /* DevAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E161EEC1A396F4400E08F41 /* DevAssets.xcassets */; };
 		4E161EF01A39710100E08F41 /* DirectionPadView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E161EEF1A39710100E08F41 /* DirectionPadView.m */; };
 		4E3D45821A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4E3D45811A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm */; };
@@ -75,6 +76,8 @@
 		499F45121A25672E0050A530 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		499F45131A25672E0050A530 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		49B269181A369F7900135486 /* opencv2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = opencv2.framework; path = "../../../../coretech-external/build/opencv-ios/opencv2.framework"; sourceTree = "<group>"; };
+		49C2C6771A41019600AA0F27 /* CozmoObsObjectBBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CozmoObsObjectBBox.h; sourceTree = "<group>"; };
+		49C2C6781A41019600AA0F27 /* CozmoObsObjectBBox.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CozmoObsObjectBBox.m; sourceTree = "<group>"; };
 		4E161EEC1A396F4400E08F41 /* DevAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DevAssets.xcassets; sourceTree = "<group>"; };
 		4E161EEE1A39710100E08F41 /* DirectionPadView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DirectionPadView.h; sourceTree = "<group>"; };
 		4E161EEF1A39710100E08F41 /* DirectionPadView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DirectionPadView.m; sourceTree = "<group>"; };
@@ -149,6 +152,8 @@
 				4E3D45811A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm */,
 				4E528F1E1A3A20FB00552314 /* CozmoOperator.h */,
 				4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */,
+				49C2C6771A41019600AA0F27 /* CozmoObsObjectBBox.h */,
+				49C2C6781A41019600AA0F27 /* CozmoObsObjectBBox.m */,
 			);
 			name = Basestation;
 			sourceTree = "<group>";
@@ -338,6 +343,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E528F201A3A20FB00552314 /* CozmoOperator.mm in Sources */,
+				49C2C6791A41019600AA0F27 /* CozmoObsObjectBBox.m in Sources */,
 				4E7D27961A3F84DB007A9D45 /* SettingsConnectionViewController.m in Sources */,
 				4EBD981B1A3FD69E00CEBC78 /* RCCozmoViewController.m in Sources */,
 				4E3D45821A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm in Sources */,

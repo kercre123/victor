@@ -14,6 +14,8 @@
 
 #import "CozmoBasestation.h"
 
+#import "CozmoObsObjectBBox.h"
+
 
 // Cozmo includes
 #import <anki/cozmo/basestation/basestation.h>
@@ -27,6 +29,7 @@
 // Coretech-Common includes
 #import <anki/common/basestation/utils/logging/DAS/DAS.h>
 #import <anki/common/basestation/jsonTools.h>
+#import <anki/common/basestation/math/rect_impl.h>
 
 // Coretech-Vision includes
 #import <anki/vision/basestation/image_impl.h>
@@ -437,9 +440,11 @@
 
 - (UIImage*)imageFrameWtihRobotId:(uint8_t)robotId
 {
+  using namespace Anki;
+  
   UIImage *imageFrame = nil;
-  Anki::Vision::Image img;
-  if (true == _basestation->GetCurrentRobotImage(1, img))
+  Vision::Image img;
+  if (true == _basestation->GetCurrentRobotImage(robotId, img))
   {
     // TODO: Somehow get rid of this copy, but still be threadsafe
     //cv::Mat_<u8> cvMatImg(nrows, ncols, const_cast<unsigned char*>(imageDataPtr));
@@ -449,5 +454,31 @@
   return imageFrame;
 }
 
+
+- (NSArray*)boundingBoxesObservedByRobotId:(uint8_t)robotId
+{
+  using namespace Anki;
+  
+  NSMutableArray* boundingBoxes = nil;
+  
+  std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox> observations;
+  if( true == _basestation->GetCurrentVisionMarkers(robotId, observations))
+  {
+    for(auto observation : observations) {
+      CozmoObsObjectBBox* output;
+      
+      output.objectID = observation.objectID;
+      output.boundingBox = CGRectMake(observation.boundingBox.GetX(),
+                                      observation.boundingBox.GetY(),
+                                      observation.boundingBox.GetWidth(),
+                                      observation.boundingBox.GetHeight());
+
+      [boundingBoxes addObject:output];
+    }
+    
+  }
+  
+  return boundingBoxes;
+}
 
 @end
