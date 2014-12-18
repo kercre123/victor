@@ -11,10 +11,16 @@
 namespace Anki {
   namespace Comms {
     
+    typedef enum {
+      TCP = 0,
+      UDP
+    } Protocol;
+    
     typedef struct {
       unsigned short port;         // Port that advertising device is accepting connections on
       unsigned char ip[18];        // IP address as null terminated string
       unsigned char id;
+      unsigned char protocol;      // See Protocol enum
       unsigned char enableAdvertisement;  // 1 = register, 0 = deregister
     } AdvertisementRegistrationMsg;
     
@@ -22,6 +28,7 @@ namespace Anki {
       unsigned short port;
       unsigned char ip[17];        // IP address as null terminated string
       unsigned char id;
+      unsigned char protocol;      // See Protocol enum
     } AdvertisementMsg;
     
 

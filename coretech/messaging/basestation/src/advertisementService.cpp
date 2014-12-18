@@ -113,6 +113,7 @@ namespace Anki {
         
         connectionInfoMap_[regMsg.id].id = regMsg.id;
         connectionInfoMap_[regMsg.id].port = regMsg.port;
+        connectionInfoMap_[regMsg.id].protocol = regMsg.protocol;
         memcpy(connectionInfoMap_[regMsg.id].ip, regMsg.ip, sizeof(AdvertisementMsg::ip));
         
       } else {
