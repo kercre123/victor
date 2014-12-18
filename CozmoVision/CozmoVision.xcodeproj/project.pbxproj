@@ -309,6 +309,7 @@
 				499F44D91A255B120050A530 /* Sources */,
 				499F44DA1A255B120050A530 /* Frameworks */,
 				499F44DB1A255B120050A530 /* Resources */,
+				4E7515811A4246BF008E4EDD /* Copy Meta & Asset Resources */,
 			);
 			buildRules = (
 			);
@@ -365,6 +366,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		4E7515811A4246BF008E4EDD /* Copy Meta & Asset Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Meta & Asset Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/../../scripts/build/CopyResources.sh\" \"${SRCROOT}/../../resources\" \"${SRCROOT}/../../../products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		499F44D91A255B120050A530 /* Sources */ = {
