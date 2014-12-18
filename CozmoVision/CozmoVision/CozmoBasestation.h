@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "CozmoBasestationTypes.h"
-
+@class CozmoOperator;
 
 // IP Address of wherever the robot's advertising service is running
 #define DEFAULT_ADVERTISING_HOST_IP     "192.168.19.227"
@@ -53,6 +53,8 @@
 // After setting autoConnect call -startComms to begin connnection
 // This method waits for a robot to connect then start basestation automatically
 @property (assign, nonatomic) BOOL autoConnect;
+
+@property (readonly) CozmoOperator *cozmoOperator;
 
 // Finite control
 - (BOOL)startComms;
