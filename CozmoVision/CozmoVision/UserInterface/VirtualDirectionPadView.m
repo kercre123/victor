@@ -15,13 +15,16 @@
 
 @property (readwrite, nonatomic) CGFloat angleInDegrees;
 @property (readwrite, nonatomic) CGFloat magnitude;
-
+@property (readwrite, nonatomic) BOOL    isActivelyControlling;
 
 @property (readwrite, nonatomic) CGFloat leftWheelSpeed_mmps;
 @property (readwrite, nonatomic) CGFloat rightWheelSpeed_mmps;
 
 // Direction Pad Gesture
 @property (strong, nonatomic) UILongPressGestureRecognizer* longPressGesture;
+
+@property (strong, nonatomic) UITapGestureRecognizer* tapGesture;
+
 // Bookkeeping data
 //@property (readwrite, nonatomic) CGPoint centerPoint;
 //@property (readwrite, nonatomic) CGFloat backgroundRadius;
@@ -134,12 +137,19 @@
 
 
   self.longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
-  self.longPressGesture.minimumPressDuration = 0.0;
+  self.longPressGesture.minimumPressDuration = 0.2;
+  self.longPressGesture.cancelsTouchesInView = NO;
   [self addGestureRecognizer:self.longPressGesture];
 
+
+  self.tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapGesture:)];
+  self.tapGesture.cancelsTouchesInView = NO;
+  self.tapGesture.numberOfTapsRequired = 2; // look for double-tap
+  [self addGestureRecognizer:self.tapGesture];
+  
   // Initial State
   [self showJoystickView:NO animated:NO];
-
+  
 }
 
 - (void)showJoystickView:(BOOL)show animated:(BOOL)animated
@@ -181,12 +191,14 @@
       self.joystickView.center = superViewPoint;
       self.thumbPuckView.center = superViewPoint;
       [self showJoystickView:YES animated:YES];
+      self.isActivelyControlling = YES;
     }
       break;
 
     case UIGestureRecognizerStateChanged:
       self.thumbPuckView.center = superViewPoint;
       [self updateJoystickPositionWithPoint:point];
+      self.isActivelyControlling = YES;
       break;
 
     case UIGestureRecognizerStateEnded:
@@ -201,6 +213,7 @@
       self.magnitude = 0.0;
       self.leftWheelSpeed_mmps = 0.0;
       self.rightWheelSpeed_mmps = 0.0;
+      self.isActivelyControlling = NO;
 
       [self showJoystickView:NO animated:YES];
     }
@@ -220,6 +233,13 @@
 {
   // Clear flag set current point as last point
   
+}
+
+- (void)handleTapGesture:(UITapGestureRecognizer*)gesture
+{
+  if(self.doubleTapAction) {
+    self.doubleTapAction(gesture);
+  }
 }
 
 #pragma Calculate stuff

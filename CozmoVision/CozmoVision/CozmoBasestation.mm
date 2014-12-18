@@ -96,7 +96,8 @@
 - (instancetype)init
 {
   if (!(self = [super init]))
-
+    return self;
+  
   self.runState = CozmoBasestationRunStateNone;
   self.robotConnected = NO;
 
@@ -357,7 +358,7 @@
 // Main Game Update Loop
 - (void)gameHeartbeat:(NSTimer*)timer
 {
-  CFAbsoluteTime thisHeartbeatTimestamp = CFAbsoluteTimeGetCurrent();
+  CFTimeInterval thisHeartbeatTimestamp = CFAbsoluteTimeGetCurrent() - _firstHeartbeatTimestamp;
   CFTimeInterval thisHeartbeatDelta = thisHeartbeatTimestamp - _lastHeartbeatTimestamp;
   if(thisHeartbeatDelta > (__heartbeatPeriod + 0.003)) {
     DASWarn("RHLocalGame.heartBeatMissedByMS_f", "%lf", thisHeartbeatDelta * 1000.0);
@@ -429,7 +430,7 @@
 #endif
 
   // Update the basestation itself (should the basestation tell the comms to update?)
-  _basestation->Update(timestamp);
+  _basestation->Update(SEC_TO_NANOS(timestamp));
 
   // Call all listeners
   [self._heartbeatListeners makeObjectsPerformSelector:@selector(cozmoBasestationHearbeat:) withObject:self];
@@ -473,24 +474,28 @@
 {
   using namespace Anki;
   
-  NSMutableArray* boundingBoxes = [[NSMutableArray alloc] init];
+  NSMutableArray* boundingBoxes = nil;
   
   std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox> observations;
   if( true == _basestation->GetCurrentVisionMarkers(robotId, observations))
   {
-    // Turn each Basestation observed object into an Objective-C "CozmoObsObjectBBox" object
-    for(auto & observation : observations) {
-      CozmoObsObjectBBox* output = [[CozmoObsObjectBBox alloc] init];
+    if(!observations.empty())
+    {
+      boundingBoxes = [[NSMutableArray alloc] init];
       
-      output.objectID = observation.objectID;
-      output.boundingBox = CGRectMake(observation.boundingBox.GetX(),
-                                      observation.boundingBox.GetY(),
-                                      observation.boundingBox.GetWidth(),
-                                      observation.boundingBox.GetHeight());
-
-      [boundingBoxes addObject:output];
-    }
-    
+      // Turn each Basestation observed object into an Objective-C "CozmoObsObjectBBox" object
+      for(auto & observation : observations) {
+        CozmoObsObjectBBox* output = [[CozmoObsObjectBBox alloc] init];
+        
+        output.objectID = observation.objectID;
+        output.boundingBox = CGRectMake(observation.boundingBox.GetX(),
+                                        observation.boundingBox.GetY(),
+                                        observation.boundingBox.GetWidth(),
+                                        observation.boundingBox.GetHeight());
+        
+        [boundingBoxes addObject:output];
+      }
+    } // if(!observations.empty())
   }
   
   return boundingBoxes;

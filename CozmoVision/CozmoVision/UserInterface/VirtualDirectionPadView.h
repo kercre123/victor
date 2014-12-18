@@ -18,7 +18,7 @@
 // Radius of thumb puck in points
 @property (assign, nonatomic) CGFloat thumbPuckRadius;
 
-
+@property (copy, nonatomic) void(^doubleTapAction)(UIGestureRecognizer*);
 
 @property (readwrite, nonatomic) CGFloat angleThreshold; // Value Threshold is in points
 @property (readwrite, nonatomic) CGFloat magmitudeThreshold; // Value Threshold is in points
@@ -28,6 +28,8 @@
 @property (readonly) CGFloat angleInDegrees;
 @property (readonly) CGFloat magnitude;
 @property (readonly) CGPoint point;// Debug purposses
+
+@property (readonly) BOOL    isActivelyControlling;
 
 // TODO: Remove wheel speeds
 @property (readonly) CGFloat leftWheelSpeed_mmps; // Left wheel speed (1.0, -1.0) == (Foward, Reverse), 0.0 = Stop
