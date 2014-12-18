@@ -219,6 +219,10 @@ int main(int argc, char **argv)
       PRINT_NAMED_WARNING("Basestation.Update.NotOK","status %d\n", status);
     }
     
+    std::vector<BasestationMain::ObservedObjectBoundingBox> boundingQuads;
+    if(true == bs.GetCurrentVisionMarkers(1, boundingQuads) ) {
+      // TODO: stuff?
+    }
   } // while still stepping
   
   return 0;
