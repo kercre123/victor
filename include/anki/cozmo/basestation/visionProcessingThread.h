@@ -63,6 +63,9 @@ namespace Cozmo {
     void EnableMarkerDetection(bool tf);
     void EnableFaceDetection(bool tf);
     
+    // Abort any marker tracking we were doing
+    void StopMarkerTracking();
+    
     // True if marker detection has completed since last call to
     // SetNextImage(). Use this to differentiate whether the VisionMarker
     // mailbox is empty because there were no markers detected in the last

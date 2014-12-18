@@ -146,14 +146,51 @@ namespace Cozmo {
     return doesMatch;
   } // MarkerToTrack::Matches()
   
+#if 0
+#pragma mark --- Mode Controls ---
+#endif
+  
+  void VisionSystem::EnableModeHelper(Mode mode)
+  {
+    // For now only allow one thing to be enabled at a time:
+    // TODO: Allow multiple modes to run simultaneously (remove this line)
+    _mode = IDLE;
+    
+    
+    _mode |= mode;
+  }
+  
+  void VisionSystem::DisableModeHelper(Mode mode)
+  {
+    _mode &= ~mode;
+  }
+  
   void VisionSystem::StartMarkerDetection()
   {
-    _mode |= LOOKING_FOR_MARKERS;
+    EnableModeHelper(LOOKING_FOR_MARKERS);
   }
   
   void VisionSystem::StopMarkerDetection()
   {
-    _mode &= ~LOOKING_FOR_MARKERS;
+    DisableModeHelper(LOOKING_FOR_MARKERS);
+  }
+  
+  void VisionSystem::StopTracking()
+  {
+    SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f, true);
+    DisableModeHelper(TRACKING);
+  }
+  
+  Result VisionSystem::StartDetectingFaces()
+  {
+    EnableModeHelper(DETECTING_FACES);
+    return RESULT_OK;
+  }
+  
+  Result VisionSystem::StopDetectingFaces()
+  {
+    DisableModeHelper(DETECTING_FACES);
+    return RESULT_OK;
   }
   
 #if 0
@@ -226,7 +263,7 @@ namespace Cozmo {
     
     angleChange = Radians(_robotState.pose_angle) - Radians(_prevRobotState.pose_angle);
     
-    PRINT_INFO("angleChange = %.1f\n", angleChange.getDegrees());
+    //PRINT_INFO("angleChange = %.1f\n", angleChange.getDegrees());
     
     // Position change in world (mat) coordinates
     const f32 dx = _robotState.pose_x - _prevRobotState.pose_x;
@@ -1390,23 +1427,7 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  void VisionSystem::StopTracking()
-  {
-    SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f, true);
-    _mode &= ~TRACKING;
-  }
   
-  Result VisionSystem::StartDetectingFaces()
-  {
-    _mode |= DETECTING_FACES;
-    return RESULT_OK;
-  }
-  
-  Result VisionSystem::StopDetectingFaces()
-  {
-    _mode &= ~DETECTING_FACES;
-    return RESULT_OK;
-  }
   
   const Embedded::FixedLengthList<Embedded::VisionMarker>& VisionSystem::GetObservedMarkerList()
   {
@@ -1867,8 +1888,10 @@ namespace Cozmo {
           //}
         }
         
-        // Was the desired marker found? If so, start tracking it.
-        if(_markerToTrack.IsSpecified() && !isTrackingMarkerFound &&
+        // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
+        if(!(_mode & TRACKING)          &&
+           _markerToTrack.IsSpecified() &&
+           !isTrackingMarkerFound       &&
            _markerToTrack.Matches(crntMarker))
         {
           // We will start tracking the _first_ marker of the right type that
@@ -1912,8 +1935,11 @@ namespace Cozmo {
           
           // Template initialization succeeded, switch to tracking mode:
           // TODO: Log or issue message?
-          _mode |= TRACKING;
-          _mode &= ~LOOKING_FOR_MARKERS; // don't keep looking for markers while tracking
+          EnableModeHelper(TRACKING);
+
+          // Probably due to inherited shared usage of Embedded::MemoryStack usage,
+          // we can't (yet) keep looking for markers while tracking
+          DisableModeHelper(LOOKING_FOR_MARKERS);
           
         } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
       } // for(each marker)

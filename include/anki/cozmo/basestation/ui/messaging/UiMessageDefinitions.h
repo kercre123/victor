@@ -106,13 +106,17 @@ ADD_MESSAGE_MEMBER(f32, rad)
 ADD_MESSAGE_MEMBER(u8, level)
 END_MESSAGE_DEFINITION(U2G_GotoPose)
 
-// PlaceBlockOnGround
+// PlaceObjectOnGround
 START_MESSAGE_DEFINITION(U2G_PlaceObjectOnGround, 1)
 ADD_MESSAGE_MEMBER(f32, x_mm)
 ADD_MESSAGE_MEMBER(f32, y_mm)
 ADD_MESSAGE_MEMBER(f32, rad)
 ADD_MESSAGE_MEMBER(u8, level)
 END_MESSAGE_DEFINITION(U2G_PlaceObjectOnGround)
+
+// PlaceObjectOnGroundHere
+START_MESSAGE_DEFINITION(U2G_PlaceObjectOnGroundHere, 1)
+END_MESSAGE_DEFINITION(U2G_PlaceObjectOnGroundHere)
 
 // ExecuteTestPlan
 START_MESSAGE_DEFINITION(U2G_ExecuteTestPlan, 1)

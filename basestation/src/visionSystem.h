@@ -375,6 +375,8 @@ namespace Cozmo {
     
     VisionMemory _memory;
     
+    void EnableModeHelper(Mode mode);
+    void DisableModeHelper(Mode mode);
     
     Embedded::Quadrilateral<f32> GetTrackerQuad(Embedded::MemoryStack scratch);
     Result UpdateRobotState(const MessageRobotState newRobotState);

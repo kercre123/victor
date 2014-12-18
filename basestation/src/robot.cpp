@@ -1304,6 +1304,12 @@ namespace Anki {
     } // ExecutePlaceObjectOnGroundSequence(atPose)
     */
     
+    Result Robot::StopDocking()
+    {
+      _visionProcessor.StopMarkerTracking();
+      return RESULT_OK;
+    }
+    
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
@@ -1777,7 +1783,18 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    
+    Result Robot::StartLookingForMarkers()
+    {
+      _visionProcessor.EnableMarkerDetection(true);
+      return RESULT_OK;
+    }
+
+    Result Robot::StopLookingForMarkers()
+    {
+      _visionProcessor.EnableMarkerDetection(false);
+      return RESULT_OK;
+    }
+      
     const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D, Vec3f(50, 25, 0)),
                                                   Pose3d(0, Z_AXIS_3D, Vec3f(50, 0, 0)),
                                                   Pose3d(0, Z_AXIS_3D, Vec3f(50, -25, 0)) };

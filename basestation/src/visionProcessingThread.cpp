@@ -191,7 +191,11 @@ namespace Cozmo {
       _visionSystem->StopDetectingFaces();
     }
   }
-
+  
+  void VisionProcessingThread::StopMarkerTracking()
+  {
+    _visionSystem->StopTracking();
+  }
 
   void VisionProcessingThread::Lock()
   {

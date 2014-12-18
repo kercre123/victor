@@ -267,6 +267,22 @@ using namespace Anki;
   [self sendMessage:message];
 }
 
+-(void)sendPickOrPlaceObject:(NSNumber*)objectID
+{
+  if(objectID) {
+    Cozmo::MessageU2G_PickAndPlaceObject message;
+    message.objectID = objectID.integerValue;
+    message.usePreDockPose = false;
+    [self sendMessage:message];
+  }
+}
+
+-(void)sendPlaceObjectOnGroundHere
+{
+  Cozmo::MessageU2G_PlaceObjectOnGroundHere message;
+  [self sendMessage:message];
+}
+
 @end
 
 

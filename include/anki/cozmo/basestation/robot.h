@@ -229,6 +229,7 @@ namespace Anki {
       // longer "attached" to the robot.
       Result SetCarriedObjectAsUnattached();
       
+      Result StopDocking();
       
       //
       // Proximity Sensors
@@ -247,6 +248,8 @@ namespace Anki {
       Result ProcessImage(const Vision::Image& image);
       Result StartFaceTracking(u8 timeout_sec);
       Result StopFaceTracking();
+      Result StartLookingForMarkers();
+      Result StopLookingForMarkers();
       
       // =========== Actions Commands =============
       

@@ -13,12 +13,15 @@
 
 #import "VerticalSliderView.h"
 #import "VirtualDirectionPadView.h"
+#import "ObservedObjectSelector.h"
 
 @interface RCCozmoViewController () <CozmoBasestationHeartbeatListener>
 @property (weak, nonatomic) IBOutlet UIImageView *cozmoVisionImageView;
 @property (weak, nonatomic) IBOutlet VerticalSliderView *headSlider;
 @property (weak, nonatomic) IBOutlet VerticalSliderView *liftSlider;
 @property (weak, nonatomic) IBOutlet VirtualDirectionPadView *dPadView;
+
+@property (strong, nonatomic) ObservedObjectSelector *obsObjSelector;
 
 @property (weak, nonatomic) CozmoBasestation *_basestation;
 @property (strong, nonatomic) CozmoOperator *_operator;
@@ -50,8 +53,22 @@
 
   self.cozmoVisionImageView.contentMode = UIViewContentModeScaleAspectFit;
 
+  self.obsObjSelector = [ObservedObjectSelector new];
+  
   [self.view insertSubview:self.dPadView aboveSubview:self.cozmoVisionImageView];
 
+  [self.dPadView setDoubleTapAction:^(UIGestureRecognizer *gesture) {
+    CGPoint point = [gesture locationInView:self.cozmoVisionImageView];
+    CGPoint normalizedPoint = CGPointMake(point.x / self.dPadView.bounds.size.width,
+                                          point.y / self.dPadView.bounds.size.height);
+    NSNumber *objectID = [self.obsObjSelector checkForSelectedObject:normalizedPoint];
+    if(objectID) {
+      // Send message
+      NSLog(@"Selected Object %d\n", objectID.integerValue);
+      [self._operator sendPickOrPlaceObject:objectID];
+    }
+  }];
+  
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -73,6 +90,13 @@
   [self._basestation removeListener:self];
 
   [super viewWillDisappear:animated];
+}
+
+- (void)viewDidLayoutSubviews
+{
+  [super viewDidLayoutSubviews];
+  
+  //self.obsObjSelector.frame = self.cozmoVisionImageView.frame;
 }
 
 - (NSUInteger)supportedInterfaceOrientations
@@ -100,6 +124,8 @@
   if (updatedFrame) {
     
     NSArray *objectBBoxes = [self._basestation boundingBoxesObservedByRobotId:1];
+    
+    self.obsObjSelector.observedObjects = objectBBoxes;
     
     if(objectBBoxes && objectBBoxes.count > 0) {
       ///////
@@ -146,20 +172,32 @@
       // free the context
       UIGraphicsEndImageContext();
       
+      // Do we need to release the context?
+      // This suggests not:
+      //      http://stackoverflow.com/questions/3725786/do-i-need-to-release-the-context-returned-from-uigraphicsgetcurrentcontext
+      //CGContextRelease(ctx);
+
       // End of temporary drawing code
       //////
-    } else {
-      NSLog(@"No objects visible\n");
-    } // if objectBBoxes
+    }
     
     self.cozmoVisionImageView.image = updatedFrame;
-  } else {
-    //NSLog(@"frame not updated\n");
   }
 
   // TODO: TEMP Solution to driving robot
 //  [self._operator sendWheelCommandWithLeftSpeed:self.dPadView.leftWheelSpeed_mmps right:self.dPadView.rightWheelSpeed_mmps];
-  [self._operator sendWheelCommandWithAngleInDegrees:self.dPadView.angleInDegrees magnitude:self.dPadView.magnitude];
+
+  static BOOL wasActivelyControlling = NO;
+  if(self.dPadView.isActivelyControlling)
+  {
+    [self._operator sendWheelCommandWithAngleInDegrees:self.dPadView.angleInDegrees magnitude:self.dPadView.magnitude];
+    wasActivelyControlling = YES;
+  } else if(wasActivelyControlling) {
+    [self._operator sendStopAllMotorsCommand];
+    wasActivelyControlling = NO;
+  }
+  
+  //[self._operator sendPickUpObject:]
 }
 
 

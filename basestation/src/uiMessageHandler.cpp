@@ -228,6 +228,12 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlaceObjectOnGroundHere const& msg)
+    {
+      robot->GetActionList().AddAction(new PlaceObjectOnGroundAction());
+      return RESULT_OK;
+    }
+    
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ExecuteTestPlan const& msg)
     {
       robot->ExecuteTestPath();
@@ -250,7 +256,7 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PickAndPlaceObject const& msg)
     {
-      const u8 numRetries = 3;
+      const u8 numRetries = 0;
       
       ObjectID selectedObjectID;
       if(msg.objectID < 0) {
@@ -272,7 +278,7 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_TraverseObject const& msg)
     {
-      const u8 numRetries = 3;
+      const u8 numRetries = 0;
       
       ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
       robot->GetActionList().AddAction(new DriveToAndTraverseObjectAction(selectedObjectID), numRetries);

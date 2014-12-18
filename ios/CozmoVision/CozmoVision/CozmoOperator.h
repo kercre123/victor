@@ -74,4 +74,13 @@
 - (void)sendStopAllMotorsCommand;
 
 
+/*!
+ * @discussion Send Pick or Place Object command
+ * @param ObjectID
+ * @return void
+ */
+-(void)sendPickOrPlaceObject:(NSNumber*)objectID;
+
+-(void)sendPlaceObjectOnGroundHere;
+
 @end
