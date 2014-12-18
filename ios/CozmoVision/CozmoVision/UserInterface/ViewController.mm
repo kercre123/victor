@@ -132,9 +132,9 @@ using namespace Anki;
   }
 
 
-  [self._cozmoOperator sendWheelCommandWithAngleInDegrees:_directionPadView.angleInDegrees magnitude:_directionPadView.magnitude];
+  [self._cozmoOperator sendWheelCommandWithAngleInDegrees:_VirtualDirectionPadView.angleInDegrees magnitude:_VirtualDirectionPadView.magnitude];
 
-//  [self._cozmoOperator sendWheelCommandWithLeftSpeed:_directionPadView.leftWheelSpeed_mmps right:_directionPadView.rightWheelSpeed_mmps];
+//  [self._cozmoOperator sendWheelCommandWithLeftSpeed:_VirtualDirectionPadView.leftWheelSpeed_mmps right:_VirtualDirectionPadView.rightWheelSpeed_mmps];
 }
 
 
