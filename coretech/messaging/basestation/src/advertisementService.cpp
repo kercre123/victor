@@ -70,11 +70,14 @@ namespace Anki {
       
       // Get clients that are interested in knowing about advertising devices
       do {
-        bytes_recvd = advertisingServer_.Recv((char*)&regMsg, sizeof(regMsg));  //NOTE: Don't actually expect to get AdvertisementRegistrationMsg here, but just need something to put stuff in. Server automatically adds client to internal list when recv is called.
+        // Don't actually expect to get AdvertisementRegistrationMsg here,
+        // but just need something to put stuff in.
+        // Server automatically adds client to internal list when recv is called.
+        bytes_recvd = advertisingServer_.Recv((char*)&regMsg, sizeof(regMsg));
         
-        if (bytes_recvd > 0) {
-          std::cout << serviceName_ << ": " << "Received ping from advertisement listener\n";
-        }
+        //if (bytes_recvd > 0) {
+        //  std::cout << serviceName_ << ": " << "Received ping from advertisement listener\n";
+        //}
       } while(bytes_recvd > 0);
       
       
