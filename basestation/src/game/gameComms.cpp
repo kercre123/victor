@@ -251,8 +251,10 @@ namespace Cozmo {
     return server_.HasClient();
   }
   
-  
-  
+  void GameComms::DisconnectClient()
+  {
+    server_.DisconnectClient();
+  }
   
   
   // Register this UI device with advertisement service

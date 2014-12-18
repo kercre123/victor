@@ -51,7 +51,7 @@ namespace Cozmo {
     void Update();
     
     bool HasClient();
-
+    void DisconnectClient();
     
   private:
     
