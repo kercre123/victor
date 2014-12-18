@@ -45,11 +45,14 @@ namespace Cozmo {
   class ConnectedRobotInfo {
   public:
     static const int MAX_RECV_BUF_SIZE = 1920000; // TODO: Shrink this?
+    /*
 #if(USE_UDP_ROBOT_COMMS)
     UdpClient* client;
 #else
     TcpClient* client;
 #endif
+     */
+    void* client;
     u8 recvBuf[MAX_RECV_BUF_SIZE];
     int recvDataSize = 0;
   };
@@ -60,7 +63,7 @@ namespace Cozmo {
   public:
     
     // Construct with the IP address to use as the advertising host
-    RobotComms(const char* advertisingHostIP, int advertisingPort);
+    RobotComms(bool useTCP, const char* advertisingHostIP, int advertisingPort);
     
     // The destructor will automatically cleans up
     virtual ~RobotComms();
@@ -113,6 +116,9 @@ namespace Cozmo {
 
     
   private:
+    
+    // Whether or not to use TCP or UDP
+    bool useTCP_;
     
     const char* advertisingHostIP_;
     // Connects to "advertising" server to view available unconnected robots.
