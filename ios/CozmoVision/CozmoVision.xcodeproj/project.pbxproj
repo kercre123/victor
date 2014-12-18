@@ -16,10 +16,8 @@
 		4967D9D41A32447800EF0E90 /* libCozmo_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C41A31664A00EF0E90 /* libCozmo_Basestation.a */; };
 		4967D9D51A32447800EF0E90 /* libjsoncpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9CC1A32429800EF0E90 /* libjsoncpp.a */; };
 		4967D9D71A326C8A00EF0E90 /* CozmoBasestation.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4967D9D61A326C8900EF0E90 /* CozmoBasestation.mm */; };
-		4967D9E21A36272F00EF0E90 /* CozmoDirectionController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4967D9E11A36272F00EF0E90 /* CozmoDirectionController.mm */; };
 		499F44E31A255B120050A530 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E21A255B120050A530 /* main.m */; };
 		499F44E61A255B120050A530 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E51A255B120050A530 /* AppDelegate.m */; };
-		499F44E91A255B120050A530 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E81A255B120050A530 /* ViewController.mm */; };
 		499F44EE1A255B120050A530 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 499F44ED1A255B120050A530 /* Images.xcassets */; };
 		499F44F11A255B120050A530 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 499F44EF1A255B120050A530 /* LaunchScreen.xib */; };
 		499F45141A25672E0050A530 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F450B1A25672E0050A530 /* Accelerate.framework */; };
@@ -408,12 +406,10 @@
 				4E7D27961A3F84DB007A9D45 /* SettingsConnectionViewController.m in Sources */,
 				4EBD981B1A3FD69E00CEBC78 /* RCCozmoViewController.m in Sources */,
 				4E3D45821A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm in Sources */,
-				499F44E91A255B120050A530 /* ViewController.mm in Sources */,
 				499F44E61A255B120050A530 /* AppDelegate.m in Sources */,
 				4E7D279D1A3FC89F007A9D45 /* NSUserDefaults+UI.m in Sources */,
 				4E161EF01A39710100E08F41 /* VirtualDirectionPadView.m in Sources */,
 				4967D9D71A326C8A00EF0E90 /* CozmoBasestation.mm in Sources */,
-				4967D9E21A36272F00EF0E90 /* CozmoDirectionController.mm in Sources */,
 				4E1B72E71A40C62F00C61B61 /* VerticalSliderView.m in Sources */,
 				4EBD98171A3FD3FF00CEBC78 /* GameSelectViewController.m in Sources */,
 				499F44E31A255B120050A530 /* main.m in Sources */,
