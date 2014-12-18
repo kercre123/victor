@@ -1,4 +1,4 @@
-//
+  //
 //  CozmoOperator.m
 //  CozmoVision
 //
@@ -9,10 +9,9 @@
 
 #import "CozmoOperator.h"
 
-#import <anki/messaging/shared/TcpClient.h>
-
-
 #define COZMO_BASESTATION // to make uiMessages definitions happy
+#import <anki/cozmo/basestation/game/gameComms.h>
+#import <anki/cozmo/basestation/game/gameMessageHandler.h>
 #import <anki/cozmo/basestation/ui/messaging/uiMessages.h>
 #import <anki/cozmo/robot/cozmoConfig.h>
 
@@ -20,19 +19,19 @@ using namespace Anki;
 
 @interface CozmoOperator ()
 
-@property (assign, nonatomic) BOOL isConnected;
 @end
 
 @implementation CozmoOperator
 {
-  TcpClient* _uiClient;
+  Cozmo::GameMessageHandler* _gameMsgHandler;
+  Cozmo::GameComms* _gameComms;
 }
 
-+ (instancetype)operatorWithBasestationIPAddress:(NSString*)address
++ (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address
 {
   CozmoOperator* instance = [CozmoOperator new];
-  [instance connectToBasestationWithIPAddress:address];
-  
+  [instance registerToAvertisingServiceWithIPAddress:address];
+
   return instance;
 }
 
@@ -49,26 +48,40 @@ using namespace Anki;
 - (void)commonInit
 {
 #ifdef __cplusplus
-  _uiClient = new TcpClient();
+  //_uiClient = new TcpClient();
+  
 #endif
-  _isConnected = NO;
 
 
 }
 
 - (void)dealloc
 {
-  if (_uiClient) {
-    delete _uiClient;
-    _uiClient = nil;
+  if (_gameComms) {
+    delete _gameComms;
+    _gameComms = nil;
   }
+  if (_gameMsgHandler) {
+    delete _gameMsgHandler;
+    _gameMsgHandler = nil;
+  }
+  
+}
+
+- (BOOL)isConnected
+{
+  if (_gameComms) {
+    return _gameComms->HasClient();
+  }
+  return NO;
 }
 
 
 #pragma mark - Connection & Message Methds
 
-- (void)connectToBasestationWithIPAddress:(NSString*)ipAddress
+- (void)registerToAvertisingServiceWithIPAddress:(NSString*)ipAddress
 {
+  /*
   if (!_uiClient->IsConnected()) {
 
     if (_uiClient->Connect([ipAddress UTF8String], Cozmo::UI_MESSAGE_SERVER_LISTEN_PORT)) {
@@ -81,40 +94,41 @@ using namespace Anki;
       NSLog(@"Failed to connect to UI message server listen port\n");
     }
   }
+   */
+  
+  if (!_gameComms) {
+    _gameComms = new Cozmo::GameComms(Cozmo::UI_MESSAGE_SERVER_LISTEN_PORT,
+                                      [ipAddress UTF8String], Cozmo::UI_ADVERTISEMENT_REGISTRATION_PORT);
+    _gameMsgHandler = new Cozmo::GameMessageHandler();
+    _gameMsgHandler->Init(_gameComms);
+  }
+  
 }
 
 - (void)disconnectToBasestation
 {
-  if (_uiClient->IsConnected()) {
-
-    if (_uiClient->Disconnect()) {
-      // Successful disconnect
-      self.isConnected = NO;
-      NSLog(@"Successfully disconnected from basestatoin");
-    }
-    else {
-      NSLog(@"Failed to disconnect from basestation");
-    }
+  if (_gameComms->HasClient()) {
+    _gameComms->DisconnectClient();
+    NSLog(@"Successfully disconnected from basestatoin");
   }
 }
 
 - (void)sendMessage:(Cozmo::UiMessage&)message
 {
-  if (_isConnected) {
-    // TODO: Put this stuff in init so we don't have to do it every time?
-    char sendBuf[128];
-    memcpy(sendBuf, Cozmo::RADIO_PACKET_HEADER, sizeof(Cozmo::RADIO_PACKET_HEADER));
-
-    int sendBufLen = sizeof(Cozmo::RADIO_PACKET_HEADER);
-    sendBuf[sendBufLen++] = message.GetSize()+1;
-    sendBuf[sendBufLen++] = message.GetID();
-    message.GetBytes((u8*)(&sendBuf[sendBufLen]));
-    sendBufLen += message.GetSize();
-
-    //int bytes_sent =
-    _uiClient->Send(sendBuf, sendBufLen);
-    //printf("Sent %d bytes\n", bytes_sent);
+  if (self.isConnected) {
+    
+    UserDeviceID_t devID = 1; // TODO: Where does this come from?
+    _gameMsgHandler->SendMessage(devID, message);
+    
   } // if(_isConnected)
+}
+
+
+
+- (void)update
+{
+  _gameComms->Update();
+  _gameMsgHandler->ProcessMessages();
 }
 
 

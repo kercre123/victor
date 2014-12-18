@@ -14,8 +14,8 @@
 #define COZMO_UI_MESSAGEHANDLER_H
 
 #include "anki/common/types.h"
+#include <anki/messaging/basestation/IComms.h>
 #include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
-#include "anki/cozmo/basestation/uiTcpComms.h"
 
 // Enable this if you want to receive/send messages via socket connection.
 // Eventually, this should be disabled by default once the UI layer starts
@@ -80,7 +80,7 @@ namespace Anki {
       
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
 #define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitions.h"
+#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsU2G.h"
       
       // Fill in the message information lookup table for getting size and
       // ProcesBufferAs_MessageX function pointers according to enumerated
@@ -91,10 +91,14 @@ namespace Anki {
         Result (UiMessageHandler::*ProcessPacketAs)(Robot*, const u8*);
       } lookupTable_[NUM_UI_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
+        
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #define MESSAGE_HANDLER_CLASSNAME UiMessageHandler
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitions.h"
+#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsU2G.h"
 #undef MESSAGE_HANDLER_CLASSNAME
+        
+#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
+#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsG2U.h"
         {0, 0, 0} // Final dummy entry without comma at end
       };
       

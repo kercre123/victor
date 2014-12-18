@@ -13,6 +13,8 @@
 
 #include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
 #include "anki/messaging/shared/TcpClient.h"
+#include "anki/cozmo/basestation/game/gameMessageHandler.h"
+#include "anki/cozmo/basestation/game/gameComms.h"
 
 #include "behaviorManager.h"
 
@@ -31,6 +33,7 @@
 #endif
 
 #define BASESTATION_IP "127.0.0.1"
+#define UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP "127.0.0.1"
 
 namespace Anki {
   namespace Cozmo {
@@ -126,6 +129,9 @@ namespace Anki {
         #endif // ENABLE_GAMEPAD_SUPPORT
 
         
+        GameMessageHandler msgHandler_;
+        GameComms gameComms_(UI_MESSAGE_SERVER_LISTEN_PORT,
+                             UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP, UI_ADVERTISEMENT_REGISTRATION_PORT);
         
       } // private namespace
       
@@ -171,6 +177,8 @@ namespace Anki {
       void Init()
       {
         memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
+        
+        msgHandler_.Init(&gameComms_);
         
         inputController.keyboardEnable(BS_TIME_STEP);
         
@@ -1075,14 +1083,13 @@ namespace Anki {
       
       void Update()
       {
-        // Connect to basestation if not already connected
-        if (!bsClient.IsConnected()) {
-          if (!bsClient.Connect(BASESTATION_IP, UI_MESSAGE_SERVER_LISTEN_PORT)) {
-            printf("Failed to connect to UI message server listen port\n");
-            return;
-          }
-          printf("WebotsKeyboardController connected to basestation!\n");
+        gameComms_.Update();
+        
+        if (!gameComms_.HasClient()) {
+          return;
         }
+        
+        msgHandler_.ProcessMessages();
         
         
         // Update poseMarker pose
@@ -1118,15 +1125,8 @@ namespace Anki {
       
       void SendMessage(const UiMessage& msg)
       {
-        int sendBufLen = sizeof(RADIO_PACKET_HEADER);
-        sendBuf[sendBufLen++] = msg.GetSize()+1;
-        sendBuf[sendBufLen++] = msg.GetID();
-        msg.GetBytes((u8*)(&sendBuf[sendBufLen]));
-        sendBufLen += msg.GetSize();
-        
-        //int bytes_sent =
-        bsClient.Send(sendBuf, sendBufLen);
-        //printf("Sent %d bytes\n", bytes_sent);
+        UserDeviceID_t devID = 1; // TODO: Should this be a RobotID_t?
+        msgHandler_.SendMessage(devID, msg); 
       }
       
       void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps)
