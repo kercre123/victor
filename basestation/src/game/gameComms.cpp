@@ -45,6 +45,7 @@ namespace Cozmo {
         regMsg_.id = 1; // TODO: Get this ID from somewhere...
         strcpy((char*)regMsg_.ip, GetLocalIP());
         regMsg_.port = serverListenPort;
+        regMsg_.protocol = Anki::Comms::TCP;
         
         isInitialized_ = true;
       } else {

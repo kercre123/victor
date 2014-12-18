@@ -32,8 +32,8 @@ namespace Cozmo {
   const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
 
   
-  RobotComms::RobotComms(bool useTCP, const char* advertisingHostIP, int advertisingPort)
-  : useTCP_(useTCP), advertisingHostIP_(advertisingHostIP)
+  RobotComms::RobotComms(const char* advertisingHostIP, int advertisingPort)
+  : advertisingHostIP_(advertisingHostIP)
   {
     advertisingChannelClient_.Connect(advertisingHostIP_, advertisingPort);
     
@@ -96,7 +96,9 @@ namespace Cozmo {
       char sendBuf[128];
       int sendBufLen = 0;
 
-      if (useTCP_) {
+      bool isTCP = it->second.protocol == Anki::Comms::TCP;
+      
+      if (isTCP) {
         memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
         sendBufLen += sizeof(RADIO_PACKET_HEADER);
         sendBuf[sendBufLen++] = p.dataLen;
@@ -118,7 +120,7 @@ namespace Cozmo {
       
       //return it->second.client->Send(sendBuf, sendBufLen);
       
-      if (useTCP_) {
+      if (isTCP) {
         return ((TcpClient*)it->second.client)->Send(sendBuf, sendBufLen);
       } else {
         return ((UdpClient*)it->second.client)->Send(sendBuf, sendBufLen);
@@ -245,15 +247,16 @@ namespace Cozmo {
     while ( it != connectedRobots_.end() ) {
       
       ConnectedRobotInfo &c = it->second;
+      bool isTCP = c.protocol == Anki::Comms::TCP;
 
       while(1) { // Keep reading socket until no bytes available
       
 //        int bytes_recvd = c.client->Recv((char*)c.recvBuf + c.recvDataSize,
 //                                         ConnectedRobotInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
-        
 
+        
         int bytes_recvd = 0;
-        if (useTCP_) {
+        if (isTCP) {
           bytes_recvd = ((TcpClient*)c.client)->Recv((char*)c.recvBuf + c.recvDataSize,
                                                      ConnectedRobotInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
         } else {
@@ -275,7 +278,7 @@ namespace Cozmo {
 //          c.client->Disconnect();
 //          delete c.client;
           
-          if (useTCP_) {
+          if (isTCP) {
             ((TcpClient*)c.client)->Disconnect();
             delete (TcpClient*)(c.client);
           } else {
@@ -287,7 +290,7 @@ namespace Cozmo {
           break;
         }
 
-        if (useTCP_) {
+        if (isTCP) {
           c.recvDataSize += bytes_recvd;
           //PrintRecvBuf(it->first);
 
@@ -407,20 +410,23 @@ namespace Cozmo {
 #endif
        */
       
+      bool isTCP = it->second.robotInfo.protocol == Anki::Comms::TCP;
+      
       void* client;
-      if(useTCP_) {
+      if(isTCP) {
         client = (void*)(new TcpClient());
       } else {
         client = (void*)(new UdpClient());
       }
       
 //      if (client->Connect((char*)it->second.robotInfo.ip, it->second.robotInfo.port)) {
-      if ( (useTCP_  && ((TcpClient*)client)->Connect((char*)it->second.robotInfo.ip, it->second.robotInfo.port)) ||
-          (!useTCP_ && ((UdpClient*)client)->Connect((char*)it->second.robotInfo.ip, it->second.robotInfo.port)) ){
+      if ( (isTCP  && ((TcpClient*)client)->Connect((char*)it->second.robotInfo.ip, it->second.robotInfo.port)) ||
+          (!isTCP && ((UdpClient*)client)->Connect((char*)it->second.robotInfo.ip, it->second.robotInfo.port)) ){
         #if(DEBUG_COMMS)
         printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.id, it->second.robotInfo.ip, it->second.robotInfo.port);
         #endif
         connectedRobots_[robotID].client = client;
+        connectedRobots_[robotID].protocol = it->second.robotInfo.protocol;
         
         // Remove from advertising list
         advertisingRobots_.erase(it);
@@ -439,7 +445,7 @@ namespace Cozmo {
 //      it->second.client->Disconnect();
 //      delete it->second.client;
       
-      if (useTCP_) {
+      if (it->second.protocol == Anki::Comms::TCP) {
         ((TcpClient*)it->second.client)->Disconnect();
         delete (TcpClient*)(it->second.client);
       } else {
@@ -485,7 +491,7 @@ namespace Cozmo {
 //      it->second.client->Disconnect();
 //      delete it->second.client;
       
-      if (useTCP_) {
+      if (it->second.protocol == Anki::Comms::TCP) {
         ((TcpClient*)it->second.client)->Disconnect();
         delete (TcpClient*)(it->second.client);
       } else {
