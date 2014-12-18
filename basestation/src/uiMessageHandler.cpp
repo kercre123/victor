@@ -389,5 +389,16 @@ namespace Anki {
       p.maxObjectWidth = msg.maxObjectWidth;
       return robot->SendFaceDetectParams(p);
     }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartLookingForMarkers const& msg)
+    {
+      return robot->StartLookingForMarkers();
+    }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StopLookingForMarkers const& msg)
+    {
+      return robot->StopLookingForMarkers();
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

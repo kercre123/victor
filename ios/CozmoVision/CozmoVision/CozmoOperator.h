@@ -83,4 +83,6 @@
 
 -(void)sendPlaceObjectOnGroundHere;
 
+-(void)sendEnableFaceTracking:(BOOL)enable;
+
 @end

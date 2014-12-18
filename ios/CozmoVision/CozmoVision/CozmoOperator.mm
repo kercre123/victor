@@ -283,6 +283,22 @@ using namespace Anki;
   [self sendMessage:message];
 }
 
+-(void)sendEnableFaceTracking:(BOOL)enable
+{
+  if(enable) {
+    Cozmo::MessageU2G_StartFaceTracking message;
+    [self sendMessage:message];
+  } else {
+    Cozmo::MessageU2G_StopFaceTracking message;
+    [self sendMessage:message];
+    
+    // For now, we have to re-enable looking for markers because enabling
+    // face tracking turned it off
+    Cozmo::MessageU2G_StartLookingForMarkers tempMessage;
+    [self sendMessage:tempMessage];
+  }
+}
+
 @end
 
 
