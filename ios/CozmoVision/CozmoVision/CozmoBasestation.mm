@@ -13,6 +13,7 @@
 #import "CozmoBasestation+ImageProcessing.h"
 
 #import "CozmoBasestation.h"
+#import "CozmoOperator.h"
 
 #import "CozmoObsObjectBBox.h"
 
@@ -23,8 +24,7 @@
 #import <anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h>
 
 // Comms
-#import <anki/cozmo/basestation/robotComms.h>
-#import <anki/cozmo/basestation/uiTcpComms.h>
+#import <anki/cozmo/basestation/multiClientComms.h>
 
 // Coretech-Common includes
 #import <anki/common/basestation/utils/logging/DAS/DAS.h>
@@ -50,6 +50,7 @@
 
 @property (assign, nonatomic) CozmoBasestationRunState runState;
 @property (assign, nonatomic) BOOL robotConnected;
+@property (assign, nonatomic) BOOL uiConnected;
 
 // Config
 @property (strong, nonatomic) NSString* _hostAdvertisingIP;
@@ -64,6 +65,8 @@
 
 
 @property (strong, nonatomic) NSDictionary *_connectedRobots;
+
+@property (strong, nonatomic) CozmoOperator *cozmoOperator;
 
 @end
 
@@ -81,8 +84,8 @@
   Anki::TimeStamp_t               _lastImageTimestamp;
   
   // Comms
-  Anki::Cozmo::RobotComms*        _robotComms;
-  Anki::Cozmo::UiTCPComms*        _uiComms;
+  Anki::Cozmo::MultiClientComms*        _robotComms;
+  Anki::Cozmo::MultiClientComms*        _uiComms;
   
 }
 
@@ -107,8 +110,6 @@
   self._hostAdvertisingIP = [NSString stringWithUTF8String:DEFAULT_ADVERTISING_HOST_IP];
   self._basestationIP = [NSString stringWithUTF8String:DEFAULT_BASESTATION_IP];
   [self setHeartbeatRate:DEFAULT_HEARTBEAT_RATE];
-
-  _lastImageTimestamp = 0;
   
   return self;
 }
@@ -187,23 +188,27 @@
 - (BOOL)startComms
 {
   [self setupConfig];
-
+  
 # ifdef __cplusplus
   ///// Comms Init //////
   using namespace Anki;
 
+  
+  self.cozmoOperator = [CozmoOperator operatorWithAdvertisingtHostIPAddress:self._hostAdvertisingIP];
+  
+  
 #if (USE_BLE_ROBOT_COMMS)
   BLEComms robotComms;
   BLERobotManager robotBLEManager;
 #else
-  _robotComms = new Cozmo::RobotComms(_config["AdvertisingHostIP"].asCString());
+  _robotComms = new Cozmo::MultiClientComms(_config["AdvertisingHostIP"].asCString(), Cozmo::ROBOT_ADVERTISING_PORT);
 
   // Connect to robot.
   // UI-layer should handle this (whether the connection is TCP or BTLE).
   // Start basestation only when connections have been established.
-  _uiComms = new Cozmo::UiTCPComms();
+  _uiComms = new Cozmo::MultiClientComms(_config["AdvertisingHostIP"].asCString(), Cozmo::UI_ADVERTISING_PORT);
 #endif
-
+  
 #endif
 
   self.runState = CozmoBasestationRunStateCommsReady;
@@ -235,6 +240,9 @@
   if(!config.isMember("AdvertisingHostIP")) {
     _config["AdvertisingHostIP"] = self._hostAdvertisingIP.UTF8String;
   }
+  if(!config.isMember("VizHostIP")) {
+    _config["VizHostIP"] = self._hostAdvertisingIP.UTF8String;
+  }
 }
 
 
@@ -260,7 +268,7 @@
 {
   // Init basestation & connect
   BOOL didStart = NO;
-  if (self.runState == CozmoBasestationRunStateRobotConnected && self.robotConnected) {
+  if (self.runState == CozmoBasestationRunStateRobotConnected && self.robotConnected && self.uiConnected) {
     // We have connected robots. Init the basestation!
 # ifdef __cplusplus
     using namespace Anki;
@@ -315,7 +323,9 @@
     delete _basestation;
     _basestation = nil;
   }
-
+  
+  self.cozmoOperator = nil;
+  
   self.runState = CozmoBasestationRunStateNone;
   [self._heartbeatTimer invalidate];
   self._heartbeatTimer = nil;
@@ -329,18 +339,18 @@
 {
   BOOL didConnect = NO;
   std::vector<int> advertisingRobotIDs;
-  if (_robotComms->GetAdvertisingRobotIDs(advertisingRobotIDs) > 0) {
+  if (_robotComms->GetAdvertisingDeviceIDs(advertisingRobotIDs) > 0) {
 
     for(auto robotID : advertisingRobotIDs) {
       printf("RobotComms connecting to robot %d.\n", robotID);
 
-      if (_robotComms->ConnectToRobotByID(robotID)) {
+      if (_robotComms->ConnectToDeviceByID(robotID)) {
         printf("Connected to robot %d\n", robotID);
 
         // Add connected_robot ID to config
         _config[AnkiUtil::kP_CONNECTED_ROBOTS].append(robotID);
 
-        self.runState = CozmoBasestationRunStateRobotConnected;
+        //self.runState = CozmoBasestationRunStateRobotConnected;
         didConnect = YES;
 
         break;
@@ -352,6 +362,40 @@
 
   return didConnect;
 }
+
+
+#pragma mark - Connect to UI
+
+- (BOOL)attemptToConnectToUI
+{
+  BOOL didConnect = NO;
+  std::vector<int> advertisingUIDevIDs;
+  if (_uiComms->GetAdvertisingDeviceIDs(advertisingUIDevIDs) > 0) {
+    
+    for(auto uiID : advertisingUIDevIDs) {
+      printf("UiComms connecting to UI device %d.\n", uiID);
+      
+      if (_uiComms->ConnectToDeviceByID(uiID)) {
+        printf("Connected to UI dev %d\n", uiID);
+        
+        // Add connected_UI_dev ID to config
+        _config[AnkiUtil::kP_CONNECTED_UI_DEVS].append(uiID);
+        
+        //self.runState = CozmoBasestationRunStateRobotConnected;
+        didConnect = YES;
+        
+        break;
+      } else {
+        printf("Failed to connect to UI dev %d\n", uiID);
+      }
+    }
+  }
+  
+  return didConnect;
+}
+
+
+
 
 
 #pragma mark - Main Game Update Loop
@@ -400,19 +444,36 @@
   DASDebug("Basestation.gameHeartBeat()", "Waiting for robots to connect at time %f", timestamp);
   // ====== TCP ======
   _robotComms->Update();
-
+  
   if ([self attemptToConnectToRobot]) {
-    if (_robotComms->GetNumConnectedRobots() > 0) {
+    if (_robotComms->GetNumConnectedDevices() > 0) {
       self.robotConnected = YES;
-
-      // Start Basestation if Auto Connect
-      if (self.autoConnect) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-          [self startBasestation];
-        });
-      }
     }
   }
+  
+  _uiComms->Update();
+  if ([self attemptToConnectToUI]) {
+    if (_uiComms->GetNumConnectedDevices() > 0) {
+      self.uiConnected = YES;
+    }
+  }
+
+  [self.cozmoOperator update];
+  
+  // Don't change state to RobotConnected until both robot and ui are connected
+  if (self.robotConnected && self.uiConnected) {
+    self.runState = CozmoBasestationRunStateRobotConnected;
+  }
+  
+  
+  // Start Basestation if Auto Connect
+  if (self.autoConnect) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [self startBasestation];
+    });
+  }
+  
+  
 }
 
 - (void)gameHeartbeatRunningStateWithTimestamp:(CFTimeInterval)timestamp
@@ -422,6 +483,8 @@
   // Read all UI messages
   _uiComms->Update();
 
+  [self.cozmoOperator update];
+  
   // Read messages from all robots
 #if (USE_BLE_ROBOT_COMMS)
   robotBLEManager.Update();  // Necessary?

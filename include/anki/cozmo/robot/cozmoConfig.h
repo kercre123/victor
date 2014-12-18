@@ -263,18 +263,11 @@ namespace Anki {
     // Port on which simulated robot should connect to (de)register for advertisement
     const u32 ROBOT_ADVERTISEMENT_REGISTRATION_PORT = 5101;
     
-    typedef struct {
-      u16 port;                // Port that robot is accepting connections on
-      u8 robotAddr[18];        // IP address as null terminated string
-      u8 robotID;
-      u8 enableAdvertisement;  // 1 when robot wants to advertise, 0 otherwise.
-    } RobotAdvertisementRegistration;
+    // Port on which registered UI devices advertise.
+    const u32 UI_ADVERTISING_PORT = 5102;
     
-    typedef struct  {
-      u16 port;
-      u8 robotAddr[17];        // IP address as null terminated string
-      u8 robotID;
-    } RobotAdvertisement;
+    // Port on which UI device should connect to (de)register for advertisement
+    const u32 UI_ADVERTISEMENT_REGISTRATION_PORT = 5103;
     
     // If most recent advertisement message is older than this,
     // then it is no longer considered to be advertising.
@@ -287,7 +280,7 @@ namespace Anki {
     // loop increments).  So, 6 --> every 30ms, since our loop timestep is 5ms.
     const s32 STATE_MESSAGE_FREQUENCY = 6;
     
-    // Basestation server port which listens for inputController clients
+    // UI device server port which listens for basestation/game clients
     const u32 UI_MESSAGE_SERVER_LISTEN_PORT = 5200;
     
 #if SIMULATOR

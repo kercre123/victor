@@ -43,6 +43,7 @@
 		4E7D27921A3F81F8007A9D45 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4E7D27911A3F81F8007A9D45 /* Main.storyboard */; };
 		4E7D27961A3F84DB007A9D45 /* SettingsConnectionViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E7D27951A3F84DB007A9D45 /* SettingsConnectionViewController.m */; };
 		4E7D279D1A3FC89F007A9D45 /* NSUserDefaults+UI.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E7D279C1A3FC89F007A9D45 /* NSUserDefaults+UI.m */; };
+		4E97985A1A42BD2F000D06DE /* SoundCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E9798591A42BD2F000D06DE /* SoundCoordinator.m */; };
 		4EBD98171A3FD3FF00CEBC78 /* GameSelectViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4EBD98161A3FD3FF00CEBC78 /* GameSelectViewController.m */; };
 		4EBD981B1A3FD69E00CEBC78 /* RCCozmoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4EBD981A1A3FD69E00CEBC78 /* RCCozmoViewController.m */; };
 /* End PBXBuildFile section */
@@ -100,6 +101,8 @@
 		4E7D27951A3F84DB007A9D45 /* SettingsConnectionViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SettingsConnectionViewController.m; sourceTree = "<group>"; };
 		4E7D279B1A3FC89F007A9D45 /* NSUserDefaults+UI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSUserDefaults+UI.h"; sourceTree = "<group>"; };
 		4E7D279C1A3FC89F007A9D45 /* NSUserDefaults+UI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSUserDefaults+UI.m"; sourceTree = "<group>"; };
+		4E9798581A42BD2F000D06DE /* SoundCoordinator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SoundCoordinator.h; sourceTree = "<group>"; };
+		4E9798591A42BD2F000D06DE /* SoundCoordinator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SoundCoordinator.m; sourceTree = "<group>"; };
 		4EBD98151A3FD3FF00CEBC78 /* GameSelectViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameSelectViewController.h; sourceTree = "<group>"; };
 		4EBD98161A3FD3FF00CEBC78 /* GameSelectViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GameSelectViewController.m; sourceTree = "<group>"; };
 		4EBD98191A3FD69E00CEBC78 /* RCCozmoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCCozmoViewController.h; sourceTree = "<group>"; };
@@ -199,6 +202,7 @@
 				4E7D279C1A3FC89F007A9D45 /* NSUserDefaults+UI.m */,
 				499F44ED1A255B120050A530 /* Images.xcassets */,
 				499F44EF1A255B120050A530 /* LaunchScreen.xib */,
+				4E9798571A42BBED000D06DE /* System */,
 				4967D94A1A311BC500EF0E90 /* Basestation */,
 				4967D9491A311BBC00EF0E90 /* UserInterface */,
 				499F45081A255D8D0050A530 /* Frameworks */,
@@ -298,6 +302,15 @@
 			name = "Setting/Config Views";
 			sourceTree = "<group>";
 		};
+		4E9798571A42BBED000D06DE /* System */ = {
+			isa = PBXGroup;
+			children = (
+				4E9798581A42BD2F000D06DE /* SoundCoordinator.h */,
+				4E9798591A42BD2F000D06DE /* SoundCoordinator.m */,
+			);
+			path = System;
+			sourceTree = "<group>";
+		};
 		4EBD98181A3FD68000CEBC78 /* Game Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -327,6 +340,7 @@
 				499F44D91A255B120050A530 /* Sources */,
 				499F44DA1A255B120050A530 /* Frameworks */,
 				499F44DB1A255B120050A530 /* Resources */,
+				4E7515811A4246BF008E4EDD /* Copy Meta & Asset Resources */,
 			);
 			buildRules = (
 			);
@@ -384,11 +398,29 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		4E7515811A4246BF008E4EDD /* Copy Meta & Asset Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Meta & Asset Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/../../scripts/build/CopyResources.sh\" \"${SRCROOT}/../../resources\" \"${SRCROOT}/../../../products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		499F44D91A255B120050A530 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E97985A1A42BD2F000D06DE /* SoundCoordinator.m in Sources */,
 				4E528F201A3A20FB00552314 /* CozmoOperator.mm in Sources */,
 				4E1B72E41A40BCAB00C61B61 /* CozmoBasestation+UI.m in Sources */,
 				49C2C6791A41019600AA0F27 /* CozmoObsObjectBBox.m in Sources */,

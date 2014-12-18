@@ -20,6 +20,7 @@
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/utilMessaging.h"
+#include "anki/messaging/basestation/advertisementService.h"
 
 // For getting local host's IP address
 #define _GNU_SOURCE     /* To get defns of NI_MAXSERV and NI_MAXHOST */
@@ -47,7 +48,7 @@ namespace Anki {
       u8 recvBuf_[RECV_BUFFER_SIZE];
       size_t recvBufSize_ = 0;
       
-      RobotAdvertisementRegistration regMsg;
+      Comms::AdvertisementRegistrationMsg regMsg;
     }
 
     // Register robot with advertisement service
@@ -55,7 +56,7 @@ namespace Anki {
     {
       regMsg.enableAdvertisement = 1;
       
-      PRINT("sim_radio: Sending registration for robot %d at address %s on port %d\n", regMsg.robotID, regMsg.robotAddr, regMsg.port);
+      PRINT("sim_radio: Sending registration for robot %d at address %s on port %d\n", regMsg.id, regMsg.ip, regMsg.port);
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
     }
     
@@ -64,7 +65,7 @@ namespace Anki {
     {
       regMsg.enableAdvertisement = 0;
       
-      PRINT("sim_radio: Sending deregistration for robot %d\n", regMsg.robotID);
+      PRINT("sim_radio: Sending deregistration for robot %d\n", regMsg.id);
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
     }
     
@@ -129,9 +130,10 @@ namespace Anki {
 
       
       // Fill in advertisement registration message
-      regMsg.robotID = (u8)HAL::GetRobotID();
-      regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.robotID;
-      memcpy(regMsg.robotAddr, HAL::GetLocalIP(), sizeof(regMsg.robotAddr));
+      regMsg.id = (u8)HAL::GetRobotID();
+      regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.id;
+      regMsg.protocol = (USE_UDP_ROBOT_COMMS == 1) ? Anki::Comms::UDP : Anki::Comms::TCP;
+      memcpy(regMsg.ip, HAL::GetLocalIP(), sizeof(regMsg.ip));
       
       RegisterRobot();
       recvBufSize_ = 0;
@@ -154,22 +156,21 @@ namespace Anki {
       RegisterRobot();
     }
     
-    bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts)
+    bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer)
     {
       if (server.HasClient()) {
         
         const u16 size = Messages::GetSize(msgID);
         
 #if(USE_UDP_ROBOT_COMMS==0)
-        // Send the message header (0xBEEF + timestamp + robotID + msgID)
+        // Send the message header (0xBEEF + size(of following bytes) + msgID)
         // For TCP comms, send timestamp immediately after the header.
         // This is needed on the basestation side to properly order messages.
-        const u8 HEADER_LENGTH = 11;
+        const u8 HEADER_LENGTH = 7;
         u8 header[HEADER_LENGTH];
-        UtilMsgError packRes = SafeUtilMsgPack(header, HEADER_LENGTH, NULL, "cciic",
+        UtilMsgError packRes = SafeUtilMsgPack(header, HEADER_LENGTH, NULL, "ccic",
                     RADIO_PACKET_HEADER[0],
                     RADIO_PACKET_HEADER[1],
-                    ts,
                     size + 1,
                     msgID);
         

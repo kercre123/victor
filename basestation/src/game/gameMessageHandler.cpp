@@ -2,25 +2,22 @@
 
 #include "anki/common/basestation/utils/logging/logging.h"
 
-#include "anki/cozmo/basestation/robotManager.h"
 
 namespace Anki {
 namespace Cozmo {
 
   GameMessageHandler::GameMessageHandler()
-  : comms_(NULL), robotMgr_(NULL)
+  : comms_(NULL)
   {
     
   }
   
-  Result GameMessageHandler::Init(Comms::IComms* comms,
-                                  RobotManager*  robotMgr)
+  Result GameMessageHandler::Init(Comms::IComms* comms)
   {
     Result retVal = RESULT_FAIL;
     
     //TODO: PRINT_NAMED_DEBUG("MessageHandler", "Initializing comms");
     comms_ = comms;
-    robotMgr_ = robotMgr;
     
     if(comms_) {
       isInitialized_ = comms_->IsInitialized();
@@ -33,9 +30,9 @@ namespace Cozmo {
     return retVal;
   }
   
-      Result GameMessageHandler::SendMessage(const UserDeviceID_t devID, const GameMessage& msg)
+      Result GameMessageHandler::SendMessage(const UserDeviceID_t devID, const UiMessage& msg)
       {
-#if(RUN_UI_MESSAGE_TCP_SERVER)
+//#if(RUN_UI_MESSAGE_TCP_SERVER)
         
         Comms::MsgPacket p;
         p.data[0] = msg.GetID();
@@ -45,11 +42,11 @@ namespace Cozmo {
         
         return comms_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
         
-#else
+//#else
         
         //MessageQueue::getInstance()->AddMessageForUi(msg);
         
-#endif
+//#endif
         
         return RESULT_OK;
       }
@@ -59,41 +56,27 @@ namespace Cozmo {
       {
         Result retVal = RESULT_FAIL;
         
-        if(robotMgr_ == NULL) {
-          PRINT_NAMED_ERROR("GameMessageHandler.NullRobotManager",
-                            "RobotManager NULL when MessageHandler::ProcessPacket() called.\n");
+        const u8 msgID = packet.data[0];
+        
+        if(lookupTable_[msgID].size != packet.dataLen-1) {
+          PRINT_NAMED_ERROR("GameMessageHandler.MessageBufferWrongSize",
+                            "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)\n",
+                            msgID,
+                            lookupTable_[msgID].size,
+                            packet.dataLen - 1
+                            );
         }
         else {
-          const u8 msgID = packet.data[0];
+        
+          RobotID_t robotID = packet.destId;
           
-          if(lookupTable_[msgID].size != packet.dataLen-1) {
-            PRINT_NAMED_ERROR("GameMessageHandler.MessageBufferWrongSize",
-                              "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)\n",
-                              msgID,
-                              lookupTable_[msgID].size,
-                              packet.dataLen - 1
-                              );
-          }
-          else {
-            
-            if(robotMgr_->GetNumRobots() == 0) {
-              PRINT_NAMED_ERROR("UiMessageHandler.NoRobotsToControl", "\n");
-            }
-            else {
-              // TODO: For now, assuming that whatever ui is attached, it is going to control whatever robot is connected.
-              // Will eventually need a better way to map UI device to robot.
-              std::vector<RobotID_t> robotList = robotMgr_->GetRobotIDList();
-              Robot* robot = robotMgr_->GetRobotByID(robotList[0]);
-              
-              
-              // This calls the (macro-generated) ProcessPacketAs_MessageX() method
-              // indicated by the lookup table, which will cast the buffer as the
-              // correct message type and call the specified robot's ProcessMessage(MessageX)
-              // method.
-              retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(robot, packet.data+1);
-            }
-          }
-        } // if(robotMgr_ != NULL)
+          // This calls the (macro-generated) ProcessPacketAs_MessageX() method
+          // indicated by the lookup table, which will cast the buffer as the
+          // correct message type and call the specified robot's ProcessMessage(MessageX)
+          // method.
+          retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(robotID, packet.data+1);
+
+        }
         
         return retVal;
       } // ProcessBuffer()
@@ -120,9 +103,11 @@ namespace Cozmo {
       } // ProcessMessages()
       
       
-      Result GameMessageHandler::ProcessMessage(Robot* robot, MessageG2U_ObjectVisionMarker const& msg)
+      Result GameMessageHandler::ProcessMessage(RobotID_t id, MessageG2U_ObjectVisionMarker const& msg)
       {
         // TODO: Do something with this message to notify UI
+        printf("RECEIVED OBJECT VISION MARKER: objectID %d\n", msg.objectID);
+        
         return RESULT_OK;
       }
 

@@ -1,22 +1,22 @@
 /**
- * File: uiTcpComms.h
+ * File: gameComms.h
  *
  * Author: Kevin Yoon
- * Created: 7/11/2014
+ * Created: 12/16/2014
  *
- * Description: Interface class to allow the basestation
- * to accept connections from UI client devices on TCP
+ * Description: Interface class to allow UI to communicate with game
  *
  * Copyright: Anki, Inc. 2014
  *
  **/
-
-#ifndef BASESTATION_COMMS_UI_TCPCOMMS_H_
-#define BASESTATION_COMMS_UI_TCPCOMMS_H_
+#ifndef BASESTATION_COMMS_GAME_COMMS_H_
+#define BASESTATION_COMMS_GAME_COMMS_H_
 
 #include <deque>
 #include <anki/messaging/basestation/IComms.h>
+#include "anki/messaging/basestation/advertisementService.h"
 #include "anki/messaging/shared/TcpServer.h"
+#include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 
@@ -24,14 +24,14 @@ namespace Anki {
 namespace Cozmo {
 
   
-  class UiTCPComms : public Comms::IComms {
+  class GameComms : public Comms::IComms {
   public:
     
     // Default constructor
-    UiTCPComms();
+    GameComms(int serverListenPort, const char* advertisementRegIP_, int advertisementRegPort_);
     
     // The destructor will automatically cleans up
-    virtual ~UiTCPComms();
+    virtual ~GameComms();
     
     // Returns true if we are ready to use TCP
     virtual bool IsInitialized();
@@ -51,15 +51,26 @@ namespace Cozmo {
     void Update();
     
     bool HasClient();
-
+    void DisconnectClient();
     
   private:
     
+    // For connection from game
     TcpServer server_;
+    
+    // For connecting to advertisement service
+    UdpClient regClient_;
+    Comms::AdvertisementRegistrationMsg regMsg_;
+    void RegisterWithAdvertisementService();
+    void DeregisterFromAdvertisementService();
+    bool IsRegistered();
+    
     
     void ReadAllMsgPackets();
     
     void PrintRecvBuf();
+    
+    const char* const GetLocalIP();
     
     // 'Queue' of received messages from all connected user devices with their received times.
     std::deque<Comms::MsgPacket> recvdMsgPackets_;
