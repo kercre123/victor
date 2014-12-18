@@ -20,6 +20,8 @@
 @property (weak, nonatomic) IBOutlet VerticalSliderView *headSlider;
 @property (weak, nonatomic) IBOutlet VerticalSliderView *liftSlider;
 @property (weak, nonatomic) IBOutlet VirtualDirectionPadView *dPadView;
+@property (weak, nonatomic) IBOutlet UISwitch *detectFacesSwitch;
+- (IBAction)handelDetectFacesSwitch:(id)sender;
 
 @property (strong, nonatomic) ObservedObjectSelector *obsObjSelector;
 
@@ -211,5 +213,14 @@
   }];
 }
 
+
+- (IBAction)handelDetectFacesSwitch:(UISwitch*)sender {
+  [self._operator sendEnableFaceTracking:sender.on];
+  if(sender.on) {
+    self.dPadView.userInteractionEnabled = NO;
+  } else {
+    self.dPadView.userInteractionEnabled = YES;
+  }
+}
 
 @end

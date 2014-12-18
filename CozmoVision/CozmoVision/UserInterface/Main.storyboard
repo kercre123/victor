@@ -65,6 +65,21 @@
                             </imageView>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="2QR-EP-Ma6" customClass="VirtualDirectionPadView">
                                 <rect key="frame" x="0.0" y="46" width="600" height="554"/>
+                                <subviews>
+                                    <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="YnB-K5-UFp">
+                                        <rect key="frame" x="543" y="395" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="detectFacesSwitchAction:" destination="1Is-1K-7FL" eventType="valueChanged" id="nkX-hK-ar0"/>
+                                            <action selector="handelDetectFacesSwitch:" destination="1Is-1K-7FL" eventType="valueChanged" id="P3O-jg-oRx"/>
+                                        </connections>
+                                    </switch>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="DetectFaces" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="DO4-ki-8nA">
+                                        <rect key="frame" x="438" y="400" width="97" height="21"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                             </view>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ci0-5n-8bg">
@@ -116,6 +131,7 @@
                     <connections>
                         <outlet property="cozmoVisionImageView" destination="z7F-bg-DfJ" id="MNY-00-LYA"/>
                         <outlet property="dPadView" destination="2QR-EP-Ma6" id="cdq-Zb-f8g"/>
+                        <outlet property="detectFacesSwitch" destination="YnB-K5-UFp" id="WkJ-SO-WbY"/>
                         <outlet property="headSlider" destination="7x5-1z-bLs" id="B1z-jK-lpP"/>
                         <outlet property="liftSlider" destination="mzl-d4-jZE" id="7Px-qe-xlL"/>
                     </connections>
