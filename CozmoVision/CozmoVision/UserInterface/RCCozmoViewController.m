@@ -31,7 +31,7 @@
   [super viewDidLoad];
 
   self._basestation = [CozmoBasestation defaultBasestation];
-  self._operator = [CozmoOperator operatorWithBasestationIPAddress:self._basestation.basestationIP];
+  self._operator = self._basestation.cozmoOperator;
 
 
   // Setup UI
@@ -100,6 +100,8 @@
     self.cozmoVisionImageView.image = updatedFrame;
   }
 
+  [self._operator update];
+  
   // TODO: TEMP Solution to driving robot
 //  [self._operator sendWheelCommandWithLeftSpeed:self.dPadView.leftWheelSpeed_mmps right:self.dPadView.rightWheelSpeed_mmps];
   [self._operator sendWheelCommandWithAngleInDegrees:self.dPadView.angleInDegrees magnitude:self.dPadView.magnitude];
