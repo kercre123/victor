@@ -168,6 +168,8 @@ namespace Anki {
         if(actionResult != IActionRunner::RUNNING) {
           // Current action just finished, pop it
           PopCurrentAction();
+          
+          VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN, "");
         }
       } // if queue not empty
       

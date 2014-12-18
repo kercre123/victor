@@ -185,6 +185,7 @@ namespace Cozmo {
     
     const FaceDetectionParameters& GetFaceDetectionParams();
     
+    const std::string& GetCurrentModeName() const;
     
     void SetParams(const s32 integerCountsIncrement,
                    const f32 minExposureTime,

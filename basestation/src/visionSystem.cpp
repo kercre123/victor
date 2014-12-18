@@ -1303,6 +1303,27 @@ namespace Cozmo {
     return _faceDetectionParameters;
   }
   
+  const std::string& VisionSystem::GetCurrentModeName() const
+  {
+    static const std::map<Mode, std::string> LUT = {
+      {IDLE,                  "IDLE"}
+      ,{LOOKING_FOR_MARKERS,  "LOOKING_FOR_MARKERS"}
+      ,{TRACKING,             "TRACKING"}
+      ,{DETECTING_FACES,      "DETECTING_FACES"}
+      ,{TAKING_SNAPSHOT,      "TAKING_SNAPSHOT"}
+      ,{LOOKING_FOR_SALIENCY, "LOOKING_FOR_SALIENCY"}
+    };
+    
+    static const std::string UNKNOWN("UNKNOWN_VISION_MODE");
+    
+    auto result = LUT.find(static_cast<Mode>(_mode));
+    if(result == LUT.end()) {
+      return UNKNOWN;
+    } else {
+      return result->second;
+    }
+  } // GetCurrentModeName()
+  
   VisionSystem::CameraInfo::CameraInfo(const Vision::CameraCalibration& camCalib)
   : focalLength_x(camCalib.GetFocalLength_x())
   , focalLength_y(camCalib.GetFocalLength_y())

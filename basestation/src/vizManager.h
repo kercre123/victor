@@ -36,6 +36,7 @@ namespace Anki {
         ACTION,
         PROX_SENSORS,
         LOCALIZED_TO,
+        VISION_MODE,
         BEHAVIOR_STATE,
         ERROR_SIGNAL,
       } TextLabelType;

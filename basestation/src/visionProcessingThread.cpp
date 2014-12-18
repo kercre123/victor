@@ -20,6 +20,8 @@
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
+#include "vizManager.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -228,6 +230,9 @@ namespace Cozmo {
       
       _visionSystem->Update(robotState, image);
       
+      VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+                                         "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+      
     } else {
       PRINT_NAMED_ERROR("VisionProcessingThread.Update.NoCamCalib",
                         "Camera calibration must be set before calling Update().\n");
@@ -255,6 +260,9 @@ namespace Cozmo {
         
         //assert(_currentImg != nullptr);
         _visionSystem->Update(_currentRobotState, _currentImg);
+        
+        VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+                                           "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
         
         Lock();
         // Save the image we just processed
