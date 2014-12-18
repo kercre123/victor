@@ -13,11 +13,14 @@
 
 @property (readonly) BOOL isConnected;
 
-+ (instancetype)operatorWithBasestationIPAddress:(NSString*)address;
++ (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address;
 
 // Connection Methods
-- (void)connectToBasestationWithIPAddress:(NSString*)ipAddress;
-- (void)disconnectToBasestation;
+- (void)registerToAvertisingServiceWithIPAddress:(NSString*)ipAddress;
+- (void)disconnect;
+
+
+- (void)update;
 
 
 // Drive Cozmo Methods
