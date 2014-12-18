@@ -14,8 +14,8 @@
 #define COZMO_UI_MESSAGEHANDLER_H
 
 #include "anki/common/types.h"
+#include <anki/messaging/basestation/IComms.h>
 #include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
-#include "anki/cozmo/basestation/uiTcpComms.h"
 
 // Enable this if you want to receive/send messages via socket connection.
 // Eventually, this should be disabled by default once the UI layer starts

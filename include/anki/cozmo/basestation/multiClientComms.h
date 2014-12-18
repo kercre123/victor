@@ -1,18 +1,18 @@
 /**
- * File: robotComms.h
+ * File: multiClientComms.h
  *
  * Author: Kevin Yoon
  * Created: 1/22/2014
  *
- * Description: Interface class to allow the basestation
- * to communicate with robots via TCP or UDP
+ * Description: Interface class that creates multiple TCP or UDP clients to connect
+ *              and communicate with advertising devices.
  *
  * Copyright: Anki, Inc. 2014
  *
  **/
 
-#ifndef BASESTATION_COMMS_ROBOTCOMMS_H_
-#define BASESTATION_COMMS_ROBOTCOMMS_H_
+#ifndef BASESTATION_COMMS_MULTI_CLIENT_COMMS_H_
+#define BASESTATION_COMMS_MULTI_CLIENT_COMMS_H_
 
 #include <map>
 #include <vector>
@@ -37,12 +37,12 @@ namespace Anki {
 namespace Cozmo {
 
   typedef struct {
-    Comms::AdvertisementMsg robotInfo;
+    Comms::AdvertisementMsg devInfo;
     f32 lastSeenTime;
-  } RobotConnectionInfo_t;
+  } DeviceConnectionInfo_t;
   
   
-  class ConnectedRobotInfo {
+  class ConnectedDeviceInfo {
   public:
     static const int MAX_RECV_BUF_SIZE = 1920000; // TODO: Shrink this?
     /*
@@ -60,14 +60,14 @@ namespace Cozmo {
   
   
   
-  class RobotComms : public Comms::IComms {
+  class MultiClientComms : public Comms::IComms {
   public:
     
     // Construct with the IP address to use as the advertising host
-    RobotComms(const char* advertisingHostIP, int advertisingPort);
+    MultiClientComms(const char* advertisingHostIP, int advertisingPort);
     
     // The destructor will automatically cleans up
-    virtual ~RobotComms();
+    virtual ~MultiClientComms();
     
     // Returns true if we are ready to use TCP
     virtual bool IsInitialized();
@@ -87,54 +87,54 @@ namespace Cozmo {
     //virtual void SetCurrentTimestamp(BaseStationTime_t timestamp);
   
     
-    // Updates the list of advertising robots
+    // Updates the list of advertising devices
     void Update();
     
-    // Connect to a robot.
+    // Connect to a device.
     // Returns true if successfully connected
-    bool ConnectToRobotByID(int robotID);
+    bool ConnectToDeviceByID(int devID);
     
-    // Disconnect from a robot
-    void DisconnectRobotByID(int robotID);
+    // Disconnect from a device
+    void DisconnectDeviceByID(int devID);
     
-    // Connect to all advertising robots.
-    // Returns the total number of robots that are connected.
-    u32 ConnectToAllRobots();
+    // Connect to all advertising devices.
+    // Returns the total number of devices that are connected.
+    u32 ConnectToAllDevices();
     
-    // Disconnects from all robots.
-    void DisconnectAllRobots();
+    // Disconnects from all devices.
+    void DisconnectAllDevices();
     
-    u32 GetNumConnectedRobots() const { return (u32)connectedRobots_.size(); }
+    u32 GetNumConnectedDevices() const { return (u32)connectedDevices_.size(); }
     
-    u32 GetNumAdvertisingRobots() const { return (u32)advertisingRobots_.size(); }
+    u32 GetNumAdvertisingDevices() const { return (u32)advertisingDevices_.size(); }
     
-    u32 GetAdvertisingRobotIDs(std::vector<int> &robotIDs);
+    u32 GetAdvertisingDeviceIDs(std::vector<int> &robotIDs);
     
     const char* GetAdvertisingHostIP() const { return advertisingHostIP_; }
     
-    // Clears the list of advertising robots.
-    void ClearAdvertisingRobots();
+    // Clears the list of advertising devices.
+    void ClearAdvertisingDevices();
 
     
   private:
     
     const char* advertisingHostIP_;
-    // Connects to "advertising" server to view available unconnected robots.
+    // Connects to "advertising" server to view available unconnected devices.
     UdpClient advertisingChannelClient_;
     
     void ReadAllMsgPackets();
     
     void PrintRecvBuf(int robotID);
     
-    // Map of advertising robots (key: robot id)
-    using advertisingRobotsIt_t = std::map<int, RobotConnectionInfo_t>::iterator;
-    std::map<int, RobotConnectionInfo_t> advertisingRobots_;
+    // Map of advertising robots (key: dev id)
+    using advertisingDevicesIt_t = std::map<int, DeviceConnectionInfo_t>::iterator;
+    std::map<int, DeviceConnectionInfo_t> advertisingDevices_;
     
-    // Map of connected robots (key: robot id)
-    using connectedRobotsIt_t = std::map<int, ConnectedRobotInfo>::iterator;
-    std::map<int, ConnectedRobotInfo> connectedRobots_;
+    // Map of connected robots (key: dev id)
+    using connectedDevicesIt_t = std::map<int, ConnectedDeviceInfo>::iterator;
+    std::map<int, ConnectedDeviceInfo> connectedDevices_;
     
-    // 'Queue' of received messages from all connected robots with their received times.
+    // 'Queue' of received messages from all connected devices with their received times.
     //std::multimap<TimeStamp_t, Comms::MsgPacket> recvdMsgPackets_;
     //std::deque<Comms::MsgPacket> recvdMsgPackets_;
     using PacketQueue_t = std::deque< std::pair<f32, Comms::MsgPacket> >;
@@ -160,5 +160,5 @@ namespace Cozmo {
 }  // namespace Cozmo
 }  // namespace Anki
 
-#endif  // #ifndef BASESTATION_COMMS_ROBOTCOMMS_H_
+#endif  // #ifndef BASESTATION_COMMS_MULTI_CLIENT_COMMS_H_
 

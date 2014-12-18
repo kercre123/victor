@@ -1,17 +1,17 @@
 /**
- * File: robotComms.cpp
+ * File: multiClientComms.cpp
  *
  * Author: Kevin Yoon
  * Created: 1/22/2014
  *
- * Description: Interface class to allow the basestation
- * to communicate with robots via TCP or UDP
+ * Description: Interface class that creates multiple TCP or UDP clients to connect
+ *              and communicate with advertising devices.
  *
  * Copyright: Anki, Inc. 2014
  *
  **/
 
-#include "anki/cozmo/basestation/robotComms.h"
+#include "anki/cozmo/basestation/multiClientComms.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
@@ -21,7 +21,7 @@
 
 // The number of bytes that can be sent out per call to Update(),
 // the assumption being Update() is called once per basestation tic.
-#define MAX_SENT_BYTES_PER_TIC 100  // Roughly 5 * 20 BLE packets which is the "maximum" amount BLE can send per tic.
+#define MAX_SENT_BYTES_PER_TIC 10000  // Roughly 5 * 20 BLE packets which is the "maximum" amount BLE can send per tic.
 
 
 #define DEBUG_COMMS 0
@@ -32,7 +32,7 @@ namespace Cozmo {
   const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
 
   
-  RobotComms::RobotComms(const char* advertisingHostIP, int advertisingPort)
+  MultiClientComms::MultiClientComms(const char* advertisingHostIP, int advertisingPort)
   : advertisingHostIP_(advertisingHostIP)
   {
     advertisingChannelClient_.Connect(advertisingHostIP_, advertisingPort);
@@ -45,19 +45,19 @@ namespace Cozmo {
     #endif
   }
   
-  RobotComms::~RobotComms()
+  MultiClientComms::~MultiClientComms()
   {
-    DisconnectAllRobots();
+    DisconnectAllDevices();
   }
  
   
   // Returns true if we are ready to use TCP
-  bool RobotComms::IsInitialized()
+  bool MultiClientComms::IsInitialized()
   {
     return true;
   }
   
-  size_t RobotComms::Send(const Comms::MsgPacket &p)
+  size_t MultiClientComms::Send(const Comms::MsgPacket &p)
   {
     // TODO: Instead of sending immediately, maybe we should queue them and send them all at
     // once to more closely emulate BTLE.
@@ -67,7 +67,7 @@ namespace Cozmo {
     if (SIM_SEND_LATENCY_SEC == 0) {
       if (bytesSentThisUpdateCycle_ + p.dataLen > MAX_SENT_BYTES_PER_TIC) {
         #if(DEBUG_COMMS)
-        PRINT_NAMED_INFO("RobotComms.MaxSendLimitReached", "queueing message\n");
+        PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "queueing message\n");
         #endif
       } else {
         bytesSentThisUpdateCycle_ += p.dataLen;
@@ -85,12 +85,12 @@ namespace Cozmo {
     return numBytesSent;
   }
   
-  int RobotComms::RealSend(const Comms::MsgPacket &p)
+  int MultiClientComms::RealSend(const Comms::MsgPacket &p)
   {
     #endif // #if(DO_SIM_COMMS_LATENCY)
     
-    connectedRobotsIt_t it = connectedRobots_.find(p.destId);
-    if (it != connectedRobots_.end()) {
+    connectedDevicesIt_t it = connectedDevices_.find(p.destId);
+    if (it != connectedDevices_.end()) {
       
       // Wrap message in header/footer
       char sendBuf[128];
@@ -132,51 +132,51 @@ namespace Cozmo {
   }
   
   
-  void RobotComms::Update()
+  void MultiClientComms::Update()
   {
     
     f32 currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
-    // Read datagrams and update advertising robots list.
+    // Read datagrams and update advertising device list.
     Comms::AdvertisementMsg advMsg;
     int bytes_recvd = 0;
     do {
       bytes_recvd = advertisingChannelClient_.Recv((char*)&advMsg, sizeof(advMsg));
       if (bytes_recvd == sizeof(advMsg)) {
         
-        // Check if already connected to this robot.
+        // Check if already connected to this device.
         // Advertisement may have arrived right after connection.
         // If not already connected, add it to advertisement list.
-        if (connectedRobots_.find(advMsg.id) == connectedRobots_.end()) {
+        if (connectedDevices_.find(advMsg.id) == connectedDevices_.end()) {
           
 #if(DEBUG_COMMS)
-          if (advertisingRobots_.find(advMsg.id) == advertisingRobots_.end()) {
-            printf("Detected advertising robot %d on host %s at port %d\n", advMsg.id, advMsg.ip, advMsg.port);
+          if (advertisingDevices_.find(advMsg.id) == advertisingDevices_.end()) {
+            printf("Detected advertising device %d on host %s at port %d\n", advMsg.id, advMsg.ip, advMsg.port);
           }
 #endif
           
-          advertisingRobots_[advMsg.id].robotInfo = advMsg;
-          advertisingRobots_[advMsg.id].lastSeenTime = currTime;
+          advertisingDevices_[advMsg.id].devInfo = advMsg;
+          advertisingDevices_[advMsg.id].lastSeenTime = currTime;
         }
       }
     } while(bytes_recvd > 0);
     
     
     
-    // Remove robots from advertising list if they're already connected.
-    advertisingRobotsIt_t it = advertisingRobots_.begin();
-    while(it != advertisingRobots_.end()) {
+    // Remove devices from advertising list if they're already connected.
+    advertisingDevicesIt_t it = advertisingDevices_.begin();
+    while(it != advertisingDevices_.end()) {
       if (currTime - it->second.lastSeenTime > ROBOT_ADVERTISING_TIMEOUT_S) {
         #if(DEBUG_COMMS)
-        printf("Removing robot %d from advertising list. (Last seen: %f, curr time: %f)\n", it->second.robotInfo.id, it->second.lastSeenTime, currTime);
+        printf("Removing device %d from advertising list. (Last seen: %f, curr time: %f)\n", it->second.devInfo.id, it->second.lastSeenTime, currTime);
         #endif
-        advertisingRobots_.erase(it++);
+        advertisingDevices_.erase(it++);
       } else {
         ++it;
       }
     }
     
-    // Read all messages from all connected robots
+    // Read all messages from all connected devices
     ReadAllMsgPackets();
     
     #if(DO_SIM_COMMS_LATENCY)
@@ -200,7 +200,7 @@ namespace Cozmo {
         
         if (bytesSentThisUpdateCycle_ + sendMsgPackets_.front().second.dataLen > MAX_SENT_BYTES_PER_TIC) {
           #if(DEBUG_COMMS)
-          PRINT_NAMED_INFO("RobotComms.MaxSendLimitReached", "%d messages left in queue to send later\n", sendMsgPackets_.size() - 1);
+          PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "%d messages left in queue to send later\n", sendMsgPackets_.size() - 1);
           #endif
           break;
         }
@@ -221,14 +221,14 @@ namespace Cozmo {
   }
   
   
-  void RobotComms::PrintRecvBuf(int robotID)
+  void MultiClientComms::PrintRecvBuf(int devID)
   {
     #if(DEBUG_COMMS)
-    if (connectedRobots_.find(robotID) != connectedRobots_.end()) {
-      int numBytes = connectedRobots_[robotID].recvDataSize;
-      printf("Robot %d recv buffer (%d bytes): ", robotID, numBytes);
+    if (connectedDevices_.find(devID) != connectedDevices_.end()) {
+      int numBytes = connectedDevices_[devID].recvDataSize;
+      printf("Device %d recv buffer (%d bytes): ", devID, numBytes);
       for (int i=0; i<numBytes;i++){
-        u8 t = connectedRobots_[robotID].recvBuf[i];
+        u8 t = connectedDevices_[devID].recvBuf[i];
         printf("0x%x ", t);
       }
       printf("\n");
@@ -238,30 +238,30 @@ namespace Cozmo {
   }
   
   
-  void RobotComms::ReadAllMsgPackets()
+  void MultiClientComms::ReadAllMsgPackets()
   {
     
     // Read from all connected clients.
     // Enqueue complete messages.
-    connectedRobotsIt_t it = connectedRobots_.begin();
-    while ( it != connectedRobots_.end() ) {
+    connectedDevicesIt_t it = connectedDevices_.begin();
+    while ( it != connectedDevices_.end() ) {
       
-      ConnectedRobotInfo &c = it->second;
+      ConnectedDeviceInfo &c = it->second;
       bool isTCP = c.protocol == Anki::Comms::TCP;
 
       while(1) { // Keep reading socket until no bytes available
       
 //        int bytes_recvd = c.client->Recv((char*)c.recvBuf + c.recvDataSize,
-//                                         ConnectedRobotInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
+//                                         ConnectedDeviceInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
 
         
         int bytes_recvd = 0;
         if (isTCP) {
           bytes_recvd = ((TcpClient*)c.client)->Recv((char*)c.recvBuf + c.recvDataSize,
-                                                     ConnectedRobotInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
+                                                     ConnectedDeviceInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
         } else {
           bytes_recvd = ((UdpClient*)c.client)->Recv((char*)c.recvBuf + c.recvDataSize,
-                                                     ConnectedRobotInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
+                                                     ConnectedDeviceInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
         }
         
         
@@ -273,7 +273,7 @@ namespace Cozmo {
         if (bytes_recvd < 0) {
           // Disconnect client
           #if(DEBUG_COMMS)
-          printf("TcpRobotMgr: Recv failed. Disconnecting client\n");
+          printf("MultiClientComms: Recv failed. Disconnecting client\n");
           #endif
 //          c.client->Disconnect();
 //          delete c.client;
@@ -286,7 +286,7 @@ namespace Cozmo {
             delete (UdpClient*)(c.client);
           }
           
-          connectedRobots_.erase(it++);
+          connectedDevices_.erase(it++);
           break;
         }
 
@@ -319,7 +319,7 @@ namespace Cozmo {
             if (n != 0) {
               // Header was not found at the beginning.
               // Delete everything up until the header.
-              PRINT_NAMED_WARNING("RobotComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding %d bytes\n", n);
+              PRINT_NAMED_WARNING("MultiClientComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding %d bytes\n", n);
               c.recvDataSize -= n;
               memcpy(c.recvBuf, hPtr, c.recvDataSize);
             }
@@ -391,16 +391,16 @@ namespace Cozmo {
   }
   
   
-  bool RobotComms::ConnectToRobotByID(int robotID)
+  bool MultiClientComms::ConnectToDeviceByID(int devID)
   {
     // Check if already connected
-    if (connectedRobots_.find(robotID) != connectedRobots_.end()) {
+    if (connectedDevices_.find(devID) != connectedDevices_.end()) {
       return true;
     }
     
-    // Check if the robot is available to connect to
-    advertisingRobotsIt_t it = advertisingRobots_.find(robotID);
-    if (it != advertisingRobots_.end()) {
+    // Check if the device is available to connect to
+    advertisingDevicesIt_t it = advertisingDevices_.find(devID);
+    if (it != advertisingDevices_.end()) {
       
       /*
 #if(USE_UDP_ROBOT_COMMS)
@@ -410,7 +410,7 @@ namespace Cozmo {
 #endif
        */
       
-      bool isTCP = it->second.robotInfo.protocol == Anki::Comms::TCP;
+      bool isTCP = it->second.devInfo.protocol == Anki::Comms::TCP;
       
       void* client;
       if(isTCP) {
@@ -419,17 +419,17 @@ namespace Cozmo {
         client = (void*)(new UdpClient());
       }
       
-//      if (client->Connect((char*)it->second.robotInfo.ip, it->second.robotInfo.port)) {
-      if ( (isTCP  && ((TcpClient*)client)->Connect((char*)it->second.robotInfo.ip, it->second.robotInfo.port)) ||
-          (!isTCP && ((UdpClient*)client)->Connect((char*)it->second.robotInfo.ip, it->second.robotInfo.port)) ){
+//      if (client->Connect((char*)it->second.devInfo.ip, it->second.devInfo.port)) {
+      if ( (isTCP  && ((TcpClient*)client)->Connect((char*)it->second.devInfo.ip, it->second.devInfo.port)) ||
+          (!isTCP && ((UdpClient*)client)->Connect((char*)it->second.devInfo.ip, it->second.devInfo.port)) ){
         #if(DEBUG_COMMS)
-        printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.id, it->second.robotInfo.ip, it->second.robotInfo.port);
+        printf("Connected to device %d at %s:%d\n", it->second.devInfo.id, it->second.devInfo.ip, it->second.devInfo.port);
         #endif
-        connectedRobots_[robotID].client = client;
-        connectedRobots_[robotID].protocol = it->second.robotInfo.protocol;
+        connectedDevices_[devID].client = client;
+        connectedDevices_[devID].protocol = it->second.devInfo.protocol;
         
         // Remove from advertising list
-        advertisingRobots_.erase(it);
+        advertisingDevices_.erase(it);
         
         return true;
       }
@@ -438,10 +438,10 @@ namespace Cozmo {
     return false;
   }
   
-  void RobotComms::DisconnectRobotByID(int robotID)
+  void MultiClientComms::DisconnectDeviceByID(int devID)
   {
-    connectedRobotsIt_t it = connectedRobots_.find(robotID);
-    if (it != connectedRobots_.end()) {
+    connectedDevicesIt_t it = connectedDevices_.find(devID);
+    if (it != connectedDevices_.end()) {
 //      it->second.client->Disconnect();
 //      delete it->second.client;
       
@@ -453,41 +453,41 @@ namespace Cozmo {
         delete (UdpClient*)(it->second.client);
       }
       
-      connectedRobots_.erase(it);
+      connectedDevices_.erase(it);
     }
   }
   
   
-  u32 RobotComms::ConnectToAllRobots()
+  u32 MultiClientComms::ConnectToAllDevices()
   {
-    for (advertisingRobotsIt_t it = advertisingRobots_.begin(); it != advertisingRobots_.end(); it++)
+    for (advertisingDevicesIt_t it = advertisingDevices_.begin(); it != advertisingDevices_.end(); it++)
     {
-      ConnectToRobotByID(it->first);
+      ConnectToDeviceByID(it->first);
     }
     
-    return (u32)connectedRobots_.size();
+    return (u32)connectedDevices_.size();
   }
   
-  u32 RobotComms::GetAdvertisingRobotIDs(std::vector<int> &robotIDs)
+  u32 MultiClientComms::GetAdvertisingDeviceIDs(std::vector<int> &devIDs)
   {
-    robotIDs.clear();
-    for (advertisingRobotsIt_t it = advertisingRobots_.begin(); it != advertisingRobots_.end(); it++)
+    devIDs.clear();
+    for (advertisingDevicesIt_t it = advertisingDevices_.begin(); it != advertisingDevices_.end(); it++)
     {
-      robotIDs.push_back(it->first);
+      devIDs.push_back(it->first);
     }
     
-    return (u32)robotIDs.size();
+    return (u32)devIDs.size();
   }
   
   
-  void RobotComms::ClearAdvertisingRobots()
+  void MultiClientComms::ClearAdvertisingDevices()
   {
-    advertisingRobots_.clear();
+    advertisingDevices_.clear();
   }
   
-  void RobotComms::DisconnectAllRobots()
+  void MultiClientComms::DisconnectAllDevices()
   {
-    for(connectedRobotsIt_t it = connectedRobots_.begin(); it != connectedRobots_.end();) {
+    for(connectedDevicesIt_t it = connectedDevices_.begin(); it != connectedDevices_.end();) {
 //      it->second.client->Disconnect();
 //      delete it->second.client;
       
@@ -499,15 +499,15 @@ namespace Cozmo {
         delete (UdpClient*)(it->second.client);
       }
       
-      it = connectedRobots_.erase(it);
+      it = connectedDevices_.erase(it);
     }
     
-    connectedRobots_.clear();
+    connectedDevices_.clear();
   }
   
   
   // Returns true if a MsgPacket was successfully gotten
-  bool RobotComms::GetNextMsgPacket(Comms::MsgPacket& p)
+  bool MultiClientComms::GetNextMsgPacket(Comms::MsgPacket& p)
   {
     #if(DO_SIM_COMMS_LATENCY)
     if (numRecvRdyMsgs_ > 0) {
@@ -524,7 +524,7 @@ namespace Cozmo {
   }
   
   
-  u32 RobotComms::GetNumPendingMsgPackets()
+  u32 MultiClientComms::GetNumPendingMsgPackets()
   {
     #if(DO_SIM_COMMS_LATENCY)
     return numRecvRdyMsgs_;
@@ -533,7 +533,7 @@ namespace Cozmo {
     #endif
   };
   
-  void RobotComms::ClearMsgPackets()
+  void MultiClientComms::ClearMsgPackets()
   {
     recvdMsgPackets_.clear();
     

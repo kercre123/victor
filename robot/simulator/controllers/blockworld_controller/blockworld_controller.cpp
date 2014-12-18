@@ -10,8 +10,7 @@
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/basestation/robotComms.h"
-#include "anki/cozmo/basestation/uiTcpComms.h"
+#include "anki/cozmo/basestation/multiClientComms.h"
 #include "json/json.h"
 
 #include "anki/common/basestation/jsonTools.h"
@@ -89,14 +88,14 @@ int main(int argc, char **argv)
   // Connect to robot and UI device.
   // UI-layer should handle this (whether the connection is TCP or BTLE).
   // Start basestation only when connections have been established.
-  RobotComms uiComms(config["AdvertisingHostIP"].asCString(), UI_ADVERTISING_PORT);
+  MultiClientComms uiComms(config["AdvertisingHostIP"].asCString(), UI_ADVERTISING_PORT);
   
   
 #if (USE_BLE_ROBOT_COMMS)
   BLEComms robotComms;
   BLERobotManager robotBLEManager;
 #else
-  RobotComms robotComms(config["AdvertisingHostIP"].asCString(), ROBOT_ADVERTISING_PORT);
+  MultiClientComms robotComms(config["AdvertisingHostIP"].asCString(), ROBOT_ADVERTISING_PORT);
 #endif
   if (bm != BM_PLAYBACK_SESSION) {
 
@@ -113,7 +112,7 @@ int main(int argc, char **argv)
       // ====== BTLE ======
       robotBLEManager.Update();
       
-      if (robotBLEManager.GetNumConnectedRobots() == 0) {
+      if (robotBLEManager.GetNumConnectedDevices() == 0) {
         // Get list of advertising robots and connect to one
         std::vector<u64> advertisingRobotMfgIDs;
         if (robotBLEManager.GetAdvertisingRobotMfgIDs(advertisingRobotMfgIDs) > 0) {
@@ -156,12 +155,12 @@ int main(int argc, char **argv)
       // If not already connected to a robot, connect to the
       // first one that becomes available.
       // TODO: Once we have a UI, we can select the one we want to connect to in a more reasonable way.
-      if (robotComms.GetNumConnectedRobots() == 0) {
+      if (robotComms.GetNumConnectedDevices() == 0) {
         std::vector<int> advertisingRobotIDs;
-        if (robotComms.GetAdvertisingRobotIDs(advertisingRobotIDs) > 0) {
+        if (robotComms.GetAdvertisingDeviceIDs(advertisingRobotIDs) > 0) {
           for(auto robotID : advertisingRobotIDs) {
             printf("RobotComms connecting to robot %d.\n", robotID);
-            if (robotComms.ConnectToRobotByID(robotID)) {
+            if (robotComms.ConnectToDeviceByID(robotID)) {
               printf("Connected to robot %d\n", robotID);
               
               // Add connected_robot ID to config
@@ -179,12 +178,12 @@ int main(int argc, char **argv)
       // If not already connected to a UI device, connect to the
       // first one that becomes available.
       uiComms.Update();
-      if (uiComms.GetNumConnectedRobots() == 0) {
+      if (uiComms.GetNumConnectedDevices() == 0) {
         std::vector<int> advertisingUIDeviceIDs;
-        if (uiComms.GetAdvertisingRobotIDs(advertisingUIDeviceIDs) > 0) {
+        if (uiComms.GetAdvertisingDeviceIDs(advertisingUIDeviceIDs) > 0) {
           for(auto uiID : advertisingUIDeviceIDs) {
             printf("UiComms connecting to UI device %d.\n", uiID);
-            if (uiComms.ConnectToRobotByID(uiID)) {
+            if (uiComms.ConnectToDeviceByID(uiID)) {
               printf("Connected to UI device %d\n", uiID);
               
               // Add connected ui device ID to config
@@ -200,7 +199,7 @@ int main(int argc, char **argv)
       }
       
       // Don't resume until at least one robot and one ui device are connected
-      if ((robotComms.GetNumConnectedRobots() > 0) && (uiComms.GetNumConnectedRobots() > 0)) {
+      if ((robotComms.GetNumConnectedDevices() > 0) && (uiComms.GetNumConnectedDevices() > 0)) {
         break;
       }
 #endif
@@ -213,7 +212,7 @@ int main(int argc, char **argv)
   // Wait until robot is connected
   while (basestationController.step(BS_TIME_STEP) != -1) {
     robotBLEManager.Update();
-    if (robotBLEManager.GetNumConnectedRobots() > 0) {
+    if (robotBLEManager.GetNumConnectedDevices() > 0) {
       printf("Connected to robot!\n");
       break;
     }

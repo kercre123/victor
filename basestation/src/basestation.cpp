@@ -24,8 +24,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/robotComms.h"
-#include "anki/cozmo/basestation/uiTcpComms.h"
+#include "anki/cozmo/basestation/multiClientComms.h"
 #include "anki/cozmo/basestation/utils/exceptions.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
