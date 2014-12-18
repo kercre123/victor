@@ -20,31 +20,34 @@ class CozmoServer(socket.socket):
         "Initalize the server and start listening on UDP"
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
         self.bind(address)
+        self.settimeout(0)
         self.poller = select.poll()
         self.poller.register(self, select.POLLIN)
         self.subServers = [camServer.CameraSubServer(self.poller)] # Add MCU proxy sub server to list
         self.client = None
         self.lastClientRecvTime = 0.0
 
-    def recv(self, maxLen):
-        data, self.client = self.recvfrom(maxLen)
+    def clientRecv(self, maxLen):
+        try:
+            data, self.client = self.recvfrom(maxLen)
+        except:
+            return None
+        else:
+            self.lastClientRecvTime = time.time()
+            return data
 
-    def send(self, data):
+    def clientSend(self, data):
         if self.client:
             self.sendto(data, self.client)
 
     def step(self, timeout=None):
         "One main loop iteration"
-        rdyList = self.poller.poll(timeout)
-        if (self, select.POLLIN) in rdyList:
-            recvData = self.recv(MTU)
-            self.lastClientRecvTime = time.time()
-        else:
-            recvData = None
+        self.poller.poll(timeout)
+        recvData = self.clientRecv(MTU)
         for ss in self.subServers:
             outMsg = ss.poll(recvData)
             if outMsg:
-                self.send(outMsg)
+                self.clientSend(outMsg)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
             for ss in self.subServers:
                 ss.standby()
@@ -69,7 +72,8 @@ if __name__ == '__main__':
     else:
         host = ''
     server = CozmoServer((host, port))
+    sys.stdout.write("Starting server listening at ('%s', %d)\n" % (host, port))
     try:
         server.run(200)
     except KeyboardInterrupt:
-        pass
+        sys.stdout.write("Shutting down server\n")

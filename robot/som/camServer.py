@@ -49,8 +49,8 @@ class CameraSubServer(object):
                        (0x0098090f, 175)]:
             assert yavta_w(*params), "yavta failure"
 
-        assert subprocess.call(['media-ctl', '-v', '-r', '-l', '"mt9p031":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]']) == 0, \
-            "media-ctl ISP setup failure"
+        #assert subprocess.call(['media-ctl', '-v', '-r', '-l', '"mt9p031":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]']) == 0, \
+        #    "media-ctl ISP setup failure"
 
         # Set ISP camera resizer
         self.resolution = messages.CAMERA_RES_NONE
@@ -81,9 +81,7 @@ class CameraSubServer(object):
     def startEncoder(self):
         "Starts the encoder subprocess"
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
-            self.encoderProcess = subprocess.Popen(['gst-launch', 'v4l2src', 'device=/dev/video6', '?',
-                                                    'ffmpegcolorspace', '!', 'jpegenc', '!', 'udpsink',
-                                                    'host=127.0.0.1', 'port=6000'])
+            self.encoderProcess = subprocess.Popen(['./launch-gst-subprocess.sh', '127.0.0.1', '6000'])
 
     def stopEncoder(self):
         "Stop the encoder subprocess if it is running"
@@ -100,7 +98,7 @@ class CameraSubServer(object):
         if message and ord(message[0]) == messages.ImageRequest.ID:
             inMsg = messages.ImageRequest(message)
             self.sendMode = inMsg.imageSendMode
-            if inMsg.imageSendMode == inMsg.ISM_OFF:
+            if inMsg.imageSendMode == messages.ISM_OFF:
                 self.stopEncoder()
             else: # Not off, set resolution and start encoder
                 self.setResolution(inMsg.resolution)
@@ -109,7 +107,7 @@ class CameraSubServer(object):
             self.imageNumber += 1
             self.dataQueue = self.nextFrame # Queue the next one
             self.chunkNumber = 0
-            self.expectedChunks = int(math.chail(float(len(self.dataQueue)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
+            self.expectedChunks = int(math.ceil(float(len(self.dataQueue)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
             self.nextFrame = ''
             if self.sendMode == messages.ISM_SINGLE_SHOT:
                 self.stopEncoder()
@@ -127,7 +125,7 @@ class CameraSubServer(object):
         # Get a new frame if any from encoder
         try:
             self.nextFrame = self.encoderSocket.recv(MTU)
-        except Exception:
+        except:
             pass
         if self.encoderProcess is not None and self.encoderProcess.poll() is not None:
             raise Exception("Encoder sub-process has terminated")
@@ -142,7 +140,7 @@ class CameraSubServer(object):
 class Client(object):
     "Client for UDP camera server for testing"
 
-    def __init__(self, host, port=9000, resolution=messages.CAMERA_RES_QVGA, socketType="UDP"):
+    def __init__(self, host, port=9000, resolution=messages.CAMERA_RES_SVGA, socketType="UDP"):
         "Connect to server"
         self.resolution = resolution
         if socketType == "UDP":
