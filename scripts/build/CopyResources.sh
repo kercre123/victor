@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+SRCDIR="$1"
+ASSETSRDIR="$2"
+DSTDIR="$3"
+DSTDIR_META=$DSTDIR/cozmo_resources/meta/
+DSTDIR_ASSET=$DSTDIR/cozmo_resources/asset/
+
+# verify inputs
+if [ -z "$SRCDIR" ] ; then
+	echo "[$SRCDIR] is empty"
+	exit 1;
+fi
+
+if [ -z "ASSETSRDIR" ] ; then
+	echo "[$ASSETSRDIR] is empty"
+	exit 1;
+fi
+
+if [ ! -d "$SRCDIR" ] ; then
+	echo "source dir [$SRCDIR] is not provided"
+	exit 1;
+fi
+
+if [ -z "DSTDIR" ] ; then
+	echo "[&DSTDIR] is empty"
+	exit 1;
+fi
+
+# copy resources
+mkdir -p "$DSTDIR_META"
+rsync -r -t --delete $SRCDIR/ $DSTDIR_META/
+
+# copy assets
+mkdir -p "$DSTDIR_ASSET"
+rsync -r -t --delete $ASSETSRDIR/ $DSTDIR_ASSET/
