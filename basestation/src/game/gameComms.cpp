@@ -194,7 +194,6 @@ namespace Cozmo {
           }
           
           if (recvDataSize >= HEADER_SIZE + 4 + dataLen) {
-            printf("Created msg packet\n");
             recvdMsgPackets_.emplace_back( (s32)(0),  // Source device ID. Not used for anything now so just 0.
                                            (s32)-1,
                                            dataLen,
