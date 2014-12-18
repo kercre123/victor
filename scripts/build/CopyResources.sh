@@ -13,9 +13,9 @@ if [ -z "$SRCDIR" ] ; then
 	exit 1;
 fi
 
-if [ -z "ASSETSRDIR" ] ; then
+if [ -z "$ASSETSRDIR" ] ; then
 	echo "[$ASSETSRDIR] is empty"
-	exit 1;
+#	exit ;
 fi
 
 if [ ! -d "$SRCDIR" ] ; then
@@ -33,5 +33,7 @@ mkdir -p "$DSTDIR_META"
 rsync -r -t --delete $SRCDIR/ $DSTDIR_META/
 
 # copy assets
-mkdir -p "$DSTDIR_ASSET"
-rsync -r -t --delete $ASSETSRDIR/ $DSTDIR_ASSET/
+if [ -d "$ASSETSRDIR" ] ; then
+  mkdir -p "$DSTDIR_ASSET"
+  rsync -r -t --delete $ASSETSRDIR/ $DSTDIR_ASSET/
+fi
