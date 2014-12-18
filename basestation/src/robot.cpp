@@ -84,7 +84,7 @@ namespace Anki {
       // TODO: Stop storing *cozmo* motion primitives in a coretech location
       Json::Value mprims;
       {
-        const std::string subPath = "coretech/planning/matlab/cozmo_mprim.json";
+        const std::string subPath = "cozmo_mprim.json";
         const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
         std::ifstream jsonFile(jsonFilename);
         reader.parse(jsonFile, mprims);
@@ -828,8 +828,8 @@ namespace Anki {
       
       Json::Value animDefs;
       // TODO: Point DefineCannedAnimations at a json file with all animations
-      const std::string subPath("basestation/config/animations.json");
-      const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+      const std::string subPath("animations.json");
+      const std::string jsonFilename = PREPEND_SCOPED_PATH(Animation, subPath);
       std::ifstream jsonFile(jsonFilename);
       if(reader.parse(jsonFile, animDefs) == false) {
         PRINT_NAMED_ERROR("Robot.ReadAnimationFaile.JsonParseFailure",

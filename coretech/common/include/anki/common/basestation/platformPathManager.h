@@ -52,6 +52,8 @@ namespace Anki {
     enum Scope {
       Test,
       Config,
+      Animation,
+      Sound,
       Resource
       //Temp
     };

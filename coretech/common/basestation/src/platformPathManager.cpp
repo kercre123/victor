@@ -34,19 +34,37 @@ namespace Anki {
     const int MAX_PATH_LENGTH = 1024;
     char buffer[MAX_PATH_LENGTH];
     
-    if(true == PlatformPathManager_iOS_GetConfigPath(buffer, MAX_PATH_LENGTH)) {
+    if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_Test, buffer, MAX_PATH_LENGTH)) {
+      _scopePrefixes[Test] = buffer;
+    }
+
+    if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_Config, buffer, MAX_PATH_LENGTH)) {
       _scopePrefixes[Config] = buffer;
     }
-    
+
+    if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_Animation, buffer, MAX_PATH_LENGTH)) {
+      _scopePrefixes[Animation] = buffer;
+    }
+
+    if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_Sound, buffer, MAX_PATH_LENGTH)) {
+      _scopePrefixes[Sound] = buffer;
+    }
+
+    if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_Resource, buffer, MAX_PATH_LENGTH)) {
+      _scopePrefixes[Resource] = buffer;
+    }
+
 #   elif defined(SYSTEM_ROOT_PATH)
     // TODO: figure out paths at runtime on iOS?
     //#if ON_IOS
     // systemRoot_ = <Get_iOS_BundleRoot()> ??
     //#else
     // Initialize based on environment variables, set by CMAKE
-    _scopePrefixes[Test]     = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
-    _scopePrefixes[Config]   = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
-    _scopePrefixes[Resource] = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
+    _scopePrefixes[Test]      = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
+    _scopePrefixes[Config]    = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/resources/basetation/config/";
+    _scopePrefixes[Animation] = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/resources/basestation/animations/";
+    _scopePrefixes[Sound]     = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "../products-cozmo-assets/sounds/";
+    _scopePrefixes[Resource]  = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
     
 #   endif
   }

@@ -63,8 +63,7 @@ int main(int argc, char **argv)
   
   // Get configuration JSON
   Json::Value config;
-  const std::string subPath(std::string("basestation/config/") + std::string(AnkiUtil::kP_CONFIG_JSON_FILE));
-  const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+  const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, std::string(AnkiUtil::kP_CONFIG_JSON_FILE));
   
   Json::Reader reader;
   std::ifstream jsonFile(jsonFilename);
