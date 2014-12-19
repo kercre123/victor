@@ -9,6 +9,7 @@
 #import "SettingsConnectionViewController.h"
 #import "CozmoBasestation.h"
 #import "CozmoBasestation+UI.h"
+#import "CozmoOperator.h"
 #import "NSUserDefaults+UI.h"
 
 @interface SettingsConnectionViewController () <UITextFieldDelegate>
@@ -26,6 +27,9 @@
 
 @property (weak, nonatomic) CozmoBasestation* _basestation;
 
+@property (weak, nonatomic) IBOutlet UISwitch *cameraResolutionSwitch;
+@property (weak, nonatomic) IBOutlet UILabel *cameraResolutionLabel;
+
 @end
 
 @implementation SettingsConnectionViewController
@@ -42,6 +46,9 @@
   self.basestationStartStopButton.layer.cornerRadius = 10.0;
   self.basestationStartStopButton.layer.borderColor = [UIColor blackColor].CGColor;
   self.basestationStartStopButton.layer.borderWidth = 2.0;
+
+//  [self.cameraResolutionSwitch setOn:[NSUserDefaults cameraIsHighResolution]];
+  [self.cameraResolutionSwitch setOn:YES];
 
   // Set Resign First Responder Gesture
   UITapGestureRecognizer *tapGuesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleResignFirstResponderTapGesture:)];
@@ -106,6 +113,7 @@
   self.hostAddressTextField.text = self._basestation.hostAdvertisingIP;
   self.basestationAddressTextField.text = self._basestation.basestationIP;
   self.basestationHeartbeatRateTextField.text = [self basestationHeartbeatRateStringWithValue:self._basestation.heartbeatRate];
+  [self updateCameraResolutionLabel];
 }
 
 - (void)updateUIWithBasestionState:(CozmoBasestationRunState)state
@@ -115,13 +123,19 @@
 
   // Only allow config when state is None
   [self setAllowConfig:(CozmoBasestationRunStateNone == state)];
+
+  self.cameraResolutionSwitch.enabled = (CozmoBasestationRunStateRunning == state);
+}
+
+- (void)updateCameraResolutionLabel
+{
+  self.cameraResolutionLabel.text = self.cameraResolutionSwitch.isOn ? @"High Resolution" : @"Low Resolution";
 }
 
 - (void)updateBasestationStartStopButtonWithState:(CozmoBasestationRunState)state
 {
   NSString *title;
   UIColor *color;
-
   switch (state) {
     case CozmoBasestationRunStateNone:
     {
@@ -260,6 +274,12 @@
   }
 }
 
+- (IBAction)handleCameraResolutionSwitch:(UISwitch*)sender
+{
+//  [NSUserDefaults setCameraIsHighResolution:sender.isOn];
+  [self updateCameraResolutionLabel];
+  [self._basestation.cozmoOperator sendCameraResolution:sender.isOn];
+}
 
 
 @end

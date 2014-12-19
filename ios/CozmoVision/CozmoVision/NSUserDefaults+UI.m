@@ -93,10 +93,10 @@ RHUserDefaultDefinePropertyObj(NSString, lastBasestationIP, setLastBasestationIP
 
 NSString* const DefaultKeyAutoConnectRobot = @"autoConnectRobot";
 RHUserDefaultDefinePropertyBool(autoConnectRobot, setAutoConnectRobot, DefaultKeyAutoConnectRobot, YES)
-//
-//+ (BOOL)autoConnectRobot;
-//+ (void)setAutoConnectRobot:(BOOL)autoConnect;
 
+
+NSString* const DefaultKeyCameraResolution = @"cameraResolution";
+RHUserDefaultDefinePropertyBool(cameraIsHighResolution, setCameraIsHighResolution, DefaultKeyCameraResolution, YES)
 
 
 
