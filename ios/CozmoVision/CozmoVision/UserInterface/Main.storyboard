@@ -348,10 +348,23 @@
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9Wy-7V-CQs">
+                                <rect key="frame" x="16" y="284" width="51" height="31"/>
+                                <connections>
+                                    <action selector="handleCameraResolutionSwitch:" destination="ujg-tq-Qyj" eventType="valueChanged" id="aB1-zd-YoF"/>
+                                </connections>
+                            </switch>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Resolution" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wvx-KD-y58">
+                                <rect key="frame" x="73" y="289" width="82" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="SI9-OE-LAh" firstAttribute="leading" secondItem="Hlq-m6-V2v" secondAttribute="leadingMargin" id="06M-kc-NpC"/>
+                            <constraint firstItem="wvx-KD-y58" firstAttribute="leading" secondItem="9Wy-7V-CQs" secondAttribute="trailing" constant="8" id="0j6-eE-SLj"/>
                             <constraint firstItem="XSP-Vn-Hbv" firstAttribute="leading" secondItem="RSY-Vq-qhJ" secondAttribute="leading" id="2zW-5E-7mk"/>
                             <constraint firstAttribute="trailingMargin" relation="greaterThanOrEqual" secondItem="U2h-zF-t7Y" secondAttribute="trailing" id="38M-EB-z3r"/>
                             <constraint firstAttribute="trailingMargin" relation="greaterThanOrEqual" secondItem="NL0-S1-H3w" secondAttribute="trailing" id="5Fo-al-Cr3"/>
@@ -366,12 +379,15 @@
                             <constraint firstItem="XSP-Vn-Hbv" firstAttribute="top" secondItem="RSY-Vq-qhJ" secondAttribute="bottom" constant="3" id="MeD-AT-hpy"/>
                             <constraint firstItem="eGz-MJ-PPq" firstAttribute="leading" secondItem="RSY-Vq-qhJ" secondAttribute="trailing" constant="2" id="PwK-q0-1J5"/>
                             <constraint firstItem="RSY-Vq-qhJ" firstAttribute="top" secondItem="OJN-Yg-2fd" secondAttribute="bottom" constant="80" id="QAv-tP-lec"/>
+                            <constraint firstItem="wvx-KD-y58" firstAttribute="centerY" secondItem="9Wy-7V-CQs" secondAttribute="centerY" id="Qkc-lz-Yl6"/>
                             <constraint firstItem="EBq-Ir-POu" firstAttribute="top" secondItem="XSP-Vn-Hbv" secondAttribute="bottom" constant="3" id="Rbv-AG-5EW"/>
                             <constraint firstAttribute="centerX" secondItem="YkH-Nj-fYK" secondAttribute="centerX" id="YWf-cm-cyl"/>
                             <constraint firstItem="eGz-MJ-PPq" firstAttribute="centerY" secondItem="RSY-Vq-qhJ" secondAttribute="centerY" id="fc1-nL-RF0"/>
+                            <constraint firstItem="9Wy-7V-CQs" firstAttribute="top" secondItem="SI9-OE-LAh" secondAttribute="bottom" constant="53" id="kby-qE-RVL"/>
                             <constraint firstItem="YkH-Nj-fYK" firstAttribute="top" secondItem="416-s6-czb" secondAttribute="bottom" constant="8" id="khB-1q-OAZ"/>
                             <constraint firstItem="XSP-Vn-Hbv" firstAttribute="leading" secondItem="EBq-Ir-POu" secondAttribute="leading" id="mMI-b5-1vT"/>
                             <constraint firstItem="RSY-Vq-qhJ" firstAttribute="leading" secondItem="Hlq-m6-V2v" secondAttribute="leadingMargin" id="mpV-Kj-FAH"/>
+                            <constraint firstItem="9Wy-7V-CQs" firstAttribute="leading" secondItem="Hlq-m6-V2v" secondAttribute="leadingMargin" id="oWy-Fj-TJN"/>
                             <constraint firstItem="416-s6-czb" firstAttribute="centerY" secondItem="SI9-OE-LAh" secondAttribute="centerY" id="sii-1A-N6d"/>
                             <constraint firstItem="NL0-S1-H3w" firstAttribute="centerY" secondItem="EBq-Ir-POu" secondAttribute="centerY" id="uKz-oT-WUF"/>
                             <constraint firstItem="XSP-Vn-Hbv" firstAttribute="width" secondItem="EBq-Ir-POu" secondAttribute="width" id="xeG-Uu-rdN"/>
@@ -386,6 +402,8 @@
                         <outlet property="basestationHeartbeatRateTextField" destination="EBq-Ir-POu" id="VLw-t9-onU"/>
                         <outlet property="basestationStartStopButton" destination="YkH-Nj-fYK" id="YOV-e5-iff"/>
                         <outlet property="basestationStateLabel" destination="U2h-zF-t7Y" id="2Nb-Ws-WVy"/>
+                        <outlet property="cameraResolutionLabel" destination="wvx-KD-y58" id="HB3-j1-Lu8"/>
+                        <outlet property="cameraResolutionSwitch" destination="9Wy-7V-CQs" id="sxF-M2-dHB"/>
                         <outlet property="hostAddressTextField" destination="RSY-Vq-qhJ" id="wBW-Y1-6Di"/>
                     </connections>
                 </viewController>
