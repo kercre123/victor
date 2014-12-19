@@ -30,10 +30,25 @@
                                     <segue destination="1Is-1K-7FL" kind="showDetail" id="KhB-YE-4Oe"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jdy-Va-s4t">
+                                <rect key="frame" x="150" y="124" width="300" height="44"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="44" id="RFD-m6-GCg"/>
+                                    <constraint firstAttribute="width" constant="300" id="zAR-mY-lgb"/>
+                                </constraints>
+                                <state key="normal" title="Shooting Cozmo">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <segue destination="c20-tN-G1a" kind="showDetail" id="g2t-aI-Wtr"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
+                            <constraint firstAttribute="centerX" secondItem="jdy-Va-s4t" secondAttribute="centerX" id="SYw-oq-HUX"/>
                             <constraint firstItem="YPO-Oo-sze" firstAttribute="top" secondItem="NQ3-w9-GlX" secondAttribute="bottom" constant="8" id="nFv-28-0pY"/>
+                            <constraint firstItem="jdy-Va-s4t" firstAttribute="top" secondItem="YPO-Oo-sze" secondAttribute="bottom" constant="8" id="zYz-aj-yc5"/>
                             <constraint firstAttribute="centerX" secondItem="YPO-Oo-sze" secondAttribute="centerX" id="zxP-lW-bXy"/>
                         </constraints>
                     </view>
@@ -88,8 +103,8 @@
                                 <rect key="frame" x="492" y="175" width="44" height="250"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                             </view>
-                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AUJ-rk-lnJ">
-                                <rect key="frame" x="486" y="144" width="98" height="30"/>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AUJ-rk-lnJ">
+                                <rect key="frame" x="486" y="145" width="98" height="30"/>
                                 <state key="normal" title="Animation List">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
@@ -151,6 +166,82 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="jz0-OS-pB4" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="2515" y="1205"/>
+        </scene>
+        <!--Shooting Cozmo View Controller-->
+        <scene sceneID="jTx-x2-uRP">
+            <objects>
+                <viewController id="c20-tN-G1a" customClass="ShootingCozmoViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="jqS-dF-guj"/>
+                        <viewControllerLayoutGuide type="bottom" id="7E1-le-PpB"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="0xr-eg-Gte">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="acs-Oh-rvx">
+                                <rect key="frame" x="86" y="140" width="428" height="320"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="428" id="Ibj-xe-eKL"/>
+                                    <constraint firstAttribute="height" constant="320" id="YJl-8X-KnE"/>
+                                </constraints>
+                            </view>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bCj-tu-47g" customClass="BulletOverlayView">
+                                <rect key="frame" x="16" y="0.0" width="568" height="600"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <imageView opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Crosshairs" translatesAutoresizingMaskIntoConstraints="NO" id="I2i-bp-ep5">
+                                <rect key="frame" x="200" y="200" width="200" height="200"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="200" id="AZh-wo-k3d"/>
+                                    <constraint firstAttribute="width" constant="200" id="cVv-mx-aqS"/>
+                                </constraints>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Crosshairs" translatesAutoresizingMaskIntoConstraints="NO" id="uZd-6g-KD2">
+                                <rect key="frame" x="200" y="200" width="200" height="200"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="200" id="gqp-F0-iql"/>
+                                    <constraint firstAttribute="height" constant="200" id="wep-CQ-gdk"/>
+                                </constraints>
+                            </imageView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="y8D-99-GQm">
+                                <rect key="frame" x="16" y="20" width="32" height="30"/>
+                                <state key="normal" title="EXIT">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="handleExitButtonPress:" destination="c20-tN-G1a" eventType="touchUpInside" id="nOR-hH-CAq"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="centerY" secondItem="acs-Oh-rvx" secondAttribute="centerY" id="DII-2D-2qy"/>
+                            <constraint firstAttribute="bottomMargin" secondItem="bCj-tu-47g" secondAttribute="bottom" id="Jjl-ZK-ORC"/>
+                            <constraint firstItem="y8D-99-GQm" firstAttribute="leading" secondItem="0xr-eg-Gte" secondAttribute="leadingMargin" id="MrE-tU-cpT"/>
+                            <constraint firstItem="y8D-99-GQm" firstAttribute="top" secondItem="jqS-dF-guj" secondAttribute="bottom" id="NIG-7b-1DZ"/>
+                            <constraint firstItem="bCj-tu-47g" firstAttribute="top" secondItem="0xr-eg-Gte" secondAttribute="topMargin" id="RBv-aH-OGC"/>
+                            <constraint firstAttribute="centerY" secondItem="uZd-6g-KD2" secondAttribute="centerY" id="Rsk-VA-2ee"/>
+                            <constraint firstAttribute="centerX" secondItem="acs-Oh-rvx" secondAttribute="centerX" id="SUv-LY-aF1"/>
+                            <constraint firstAttribute="centerX" secondItem="uZd-6g-KD2" secondAttribute="centerX" id="gdk-Mn-ffz"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="bCj-tu-47g" secondAttribute="trailing" id="l4I-45-rDr"/>
+                            <constraint firstAttribute="centerY" secondItem="I2i-bp-ep5" secondAttribute="centerY" id="nCe-OH-vbr"/>
+                            <constraint firstAttribute="centerX" secondItem="I2i-bp-ep5" secondAttribute="centerX" id="qTR-pQ-phl"/>
+                            <constraint firstItem="bCj-tu-47g" firstAttribute="leading" secondItem="0xr-eg-Gte" secondAttribute="leadingMargin" id="yIK-KK-w4d"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="bulletOverlayView" destination="bCj-tu-47g" id="VXS-XB-OZQ"/>
+                        <outlet property="cameraView" destination="acs-Oh-rvx" id="JBV-8b-7dZ"/>
+                        <outlet property="crosshairTopImageView" destination="uZd-6g-KD2" id="Egv-W1-z5b"/>
+                        <outlet property="crosshairsImageView" destination="I2i-bp-ep5" id="BFi-kJ-I8n"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="rht-Hi-ew7" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2515" y="1883"/>
         </scene>
         <!--Connection-->
         <scene sceneID="Ylr-6z-LRl">
@@ -327,6 +418,7 @@
         </scene>
     </scenes>
     <resources>
+        <image name="Crosshairs" width="200" height="200"/>
         <image name="GameIcon" width="30" height="30"/>
         <image name="SettingsIcon" width="30" height="30"/>
     </resources>

@@ -43,8 +43,10 @@
 		4E7D279D1A3FC89F007A9D45 /* NSUserDefaults+UI.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E7D279C1A3FC89F007A9D45 /* NSUserDefaults+UI.m */; };
 		4E97985A1A42BD2F000D06DE /* SoundCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E9798591A42BD2F000D06DE /* SoundCoordinator.m */; };
 		4E97985E1A43A62E000D06DE /* RobotAnimationSelectTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E97985D1A43A62E000D06DE /* RobotAnimationSelectTableViewController.m */; };
+		4E9798651A43C5E5000D06DE /* ShootingCozmoViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4E9798641A43C5E5000D06DE /* ShootingCozmoViewController.mm */; };
 		4EBD98171A3FD3FF00CEBC78 /* GameSelectViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4EBD98161A3FD3FF00CEBC78 /* GameSelectViewController.m */; };
 		4EBD981B1A3FD69E00CEBC78 /* RCCozmoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4EBD981A1A3FD69E00CEBC78 /* RCCozmoViewController.m */; };
+		4EC04A631A440A050029DBC2 /* BulletOverlayView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4EC04A621A440A050029DBC2 /* BulletOverlayView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -104,10 +106,14 @@
 		4E9798591A42BD2F000D06DE /* SoundCoordinator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SoundCoordinator.m; sourceTree = "<group>"; };
 		4E97985C1A43A62E000D06DE /* RobotAnimationSelectTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RobotAnimationSelectTableViewController.h; sourceTree = "<group>"; };
 		4E97985D1A43A62E000D06DE /* RobotAnimationSelectTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RobotAnimationSelectTableViewController.m; sourceTree = "<group>"; };
+		4E9798631A43C5E5000D06DE /* ShootingCozmoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShootingCozmoViewController.h; sourceTree = "<group>"; };
+		4E9798641A43C5E5000D06DE /* ShootingCozmoViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ShootingCozmoViewController.mm; sourceTree = "<group>"; };
 		4EBD98151A3FD3FF00CEBC78 /* GameSelectViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameSelectViewController.h; sourceTree = "<group>"; };
 		4EBD98161A3FD3FF00CEBC78 /* GameSelectViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GameSelectViewController.m; sourceTree = "<group>"; };
 		4EBD98191A3FD69E00CEBC78 /* RCCozmoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCCozmoViewController.h; sourceTree = "<group>"; };
 		4EBD981A1A3FD69E00CEBC78 /* RCCozmoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCCozmoViewController.m; sourceTree = "<group>"; };
+		4EC04A611A440A050029DBC2 /* BulletOverlayView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BulletOverlayView.h; sourceTree = "<group>"; };
+		4EC04A621A440A050029DBC2 /* BulletOverlayView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BulletOverlayView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -322,11 +328,23 @@
 			name = "Animation Table View";
 			sourceTree = "<group>";
 		};
+		4E9798621A43C525000D06DE /* Shooting Cozmo */ = {
+			isa = PBXGroup;
+			children = (
+				4E9798631A43C5E5000D06DE /* ShootingCozmoViewController.h */,
+				4E9798641A43C5E5000D06DE /* ShootingCozmoViewController.mm */,
+				4EC04A611A440A050029DBC2 /* BulletOverlayView.h */,
+				4EC04A621A440A050029DBC2 /* BulletOverlayView.m */,
+			);
+			name = "Shooting Cozmo";
+			sourceTree = "<group>";
+		};
 		4EBD98181A3FD68000CEBC78 /* Game Views */ = {
 			isa = PBXGroup;
 			children = (
 				4EBD98151A3FD3FF00CEBC78 /* GameSelectViewController.h */,
 				4EBD98161A3FD3FF00CEBC78 /* GameSelectViewController.m */,
+				4E9798621A43C525000D06DE /* Shooting Cozmo */,
 				4EBD981C1A3FD6AB00CEBC78 /* RC Cozmo */,
 			);
 			name = "Game Views";
@@ -374,6 +392,11 @@
 					499F44DC1A255B120050A530 = {
 						CreatedOnToolsVersion = 6.1;
 						DevelopmentTeam = BEJF9NAYCL;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -443,10 +466,12 @@
 				499F44E61A255B120050A530 /* AppDelegate.m in Sources */,
 				4E7D279D1A3FC89F007A9D45 /* NSUserDefaults+UI.m in Sources */,
 				4E161EF01A39710100E08F41 /* VirtualDirectionPadView.m in Sources */,
+				4E9798651A43C5E5000D06DE /* ShootingCozmoViewController.mm in Sources */,
 				4967D9D71A326C8A00EF0E90 /* CozmoBasestation.mm in Sources */,
 				4E1B72E71A40C62F00C61B61 /* VerticalSliderView.m in Sources */,
 				4EBD98171A3FD3FF00CEBC78 /* GameSelectViewController.m in Sources */,
 				499F44E31A255B120050A530 /* main.m in Sources */,
+				4EC04A631A440A050029DBC2 /* BulletOverlayView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
