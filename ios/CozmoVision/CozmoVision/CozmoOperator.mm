@@ -313,6 +313,19 @@ using namespace Anki;
   }
 }
 
+
+- (void)sendAnimationWithName:(NSString*)animName
+{
+  Cozmo::MessageU2G_PlayAnimation message;
+  
+  // TODO: This is icky. Get actual ID from somewhere and use that
+  strncpy(&(message.animationName[0]), [animName UTF8String], 32);
+  message.numLoops = 1;
+  
+  [self sendMessage:message];
+
+}
+
 @end
 
 
