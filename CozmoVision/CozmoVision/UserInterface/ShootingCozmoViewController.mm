@@ -35,6 +35,8 @@
 @property (weak, nonatomic) IBOutlet BulletOverlayView* bulletOverlayView;
 @property (weak, nonatomic) IBOutlet UIImageView *crosshairsImageView;
 @property (weak, nonatomic) IBOutlet UIImageView *crosshairTopImageView;
+@property (weak, nonatomic) IBOutlet UIImageView *targetHitImageView;
+
 @property (assign, nonatomic) Float32 markerIntensity;
 @property (weak, nonatomic) CozmoOperator* _operator;
 @end
@@ -51,6 +53,9 @@
 
   self.crosshairTopImageView.image = [self.crosshairTopImageView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
   self.crosshairTopImageView.tintColor = [UIColor redColor];
+
+  self.targetHitImageView.layer.opacity = 0.0;
+
 
   // Set up videoCamera for displaying device's on-board camera, but don't start it
   self.cameraView.contentMode = UIViewContentModeCenter;
@@ -112,6 +117,29 @@
   [animation setFillMode:kCAFillModeRemoved];
 
   [self.crosshairsImageView.layer addAnimation:animation forKey:@"transform"];
+}
+
+- (void)animateTargetHit
+{
+
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.22 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+  CABasicAnimation* animationTransform = [CABasicAnimation animationWithKeyPath:@"transform"];
+  animationTransform.fromValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(0.20, 0.20, 1.0)];
+  animationTransform.toValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.0, 1.0, 1.0)];
+  animationTransform.duration = 0.2;
+  [animationTransform setFillMode:kCAFillModeRemoved];
+
+
+  CABasicAnimation* animationOpacity = [CABasicAnimation animationWithKeyPath:@"opacity"];
+  animationOpacity.fromValue = @1.0;
+  animationOpacity.toValue = @0.0;
+  animationOpacity.duration = 0.5;
+  [animationOpacity setFillMode:kCAFillModeRemoved];
+
+  [self.targetHitImageView.layer addAnimation:animationTransform forKey:@"transfrom"];
+  [self.targetHitImageView.layer addAnimation:animationOpacity forKey:@"opacity"];
+
+  });
 }
 
 #pragma mark - Protocol CvVideoCameraDelegate
@@ -204,6 +232,7 @@
 {
   if (self.markerIntensity > 0.5) {
     [self._operator sendAnimationWithName:@"ANIM_GOT_SHOT"];
+    [self animateTargetHit];
   }
   [[SoundCoordinator defaultCoordinator] playSoundWithFilename:@"laser/LaserFire.wav" volume:0.5];
   [self.bulletOverlayView fireLaserButtlet];

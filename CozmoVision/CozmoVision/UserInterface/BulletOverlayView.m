@@ -91,7 +91,7 @@
   leftbulletLayer.backgroundColor = [UIColor clearColor].CGColor;
   leftbulletLayer.contents = (id)laserImage.CGImage;
   leftbulletLayer.bounds = CGRectMake(0.0, 0.0, laserImage.size.width, laserImage.size.height);
-  leftbulletLayer.anchorPoint = CGPointMake(1.0, 0.9);
+  leftbulletLayer.anchorPoint = CGPointMake(0.94, 0.94);
   leftBullet.bulletLayer = leftbulletLayer;
 
 
@@ -106,7 +106,7 @@
   rightBulletLayer.backgroundColor = [UIColor clearColor].CGColor;
   rightBulletLayer.contents = (id)laserImage.CGImage;
   rightBulletLayer.bounds = CGRectMake(0.0, 0.0, laserImage.size.width, laserImage.size.height);
-  rightBulletLayer.anchorPoint = CGPointMake(1.0, 0.9);
+  rightBulletLayer.anchorPoint = CGPointMake(0.94, 0.94);
   rightBulletLayer.transform = CATransform3DMakeScale(-1.0, 1.0, 1.0);
   rightBullet.bulletLayer = rightBulletLayer;
 
