@@ -42,6 +42,7 @@
 		4E7D27961A3F84DB007A9D45 /* SettingsConnectionViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E7D27951A3F84DB007A9D45 /* SettingsConnectionViewController.m */; };
 		4E7D279D1A3FC89F007A9D45 /* NSUserDefaults+UI.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E7D279C1A3FC89F007A9D45 /* NSUserDefaults+UI.m */; };
 		4E97985A1A42BD2F000D06DE /* SoundCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E9798591A42BD2F000D06DE /* SoundCoordinator.m */; };
+		4E97985E1A43A62E000D06DE /* RobotAnimationSelectTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E97985D1A43A62E000D06DE /* RobotAnimationSelectTableViewController.m */; };
 		4EBD98171A3FD3FF00CEBC78 /* GameSelectViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4EBD98161A3FD3FF00CEBC78 /* GameSelectViewController.m */; };
 		4EBD981B1A3FD69E00CEBC78 /* RCCozmoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4EBD981A1A3FD69E00CEBC78 /* RCCozmoViewController.m */; };
 /* End PBXBuildFile section */
@@ -101,6 +102,8 @@
 		4E7D279C1A3FC89F007A9D45 /* NSUserDefaults+UI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSUserDefaults+UI.m"; sourceTree = "<group>"; };
 		4E9798581A42BD2F000D06DE /* SoundCoordinator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SoundCoordinator.h; sourceTree = "<group>"; };
 		4E9798591A42BD2F000D06DE /* SoundCoordinator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SoundCoordinator.m; sourceTree = "<group>"; };
+		4E97985C1A43A62E000D06DE /* RobotAnimationSelectTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RobotAnimationSelectTableViewController.h; sourceTree = "<group>"; };
+		4E97985D1A43A62E000D06DE /* RobotAnimationSelectTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RobotAnimationSelectTableViewController.m; sourceTree = "<group>"; };
 		4EBD98151A3FD3FF00CEBC78 /* GameSelectViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameSelectViewController.h; sourceTree = "<group>"; };
 		4EBD98161A3FD3FF00CEBC78 /* GameSelectViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GameSelectViewController.m; sourceTree = "<group>"; };
 		4EBD98191A3FD69E00CEBC78 /* RCCozmoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCCozmoViewController.h; sourceTree = "<group>"; };
@@ -287,6 +290,7 @@
 				49C305E81A42437500CCA87B /* Observed Object Selector */,
 				4E1B72E81A40C63700C61B61 /* Slider */,
 				4E161EE91A3967B500E08F41 /* Virtual Direction Pad */,
+				4E97985B1A43A5D9000D06DE /* Animation Table View */,
 			);
 			name = "UI Controls";
 			sourceTree = "<group>";
@@ -307,6 +311,15 @@
 				4E9798591A42BD2F000D06DE /* SoundCoordinator.m */,
 			);
 			path = System;
+			sourceTree = "<group>";
+		};
+		4E97985B1A43A5D9000D06DE /* Animation Table View */ = {
+			isa = PBXGroup;
+			children = (
+				4E97985C1A43A62E000D06DE /* RobotAnimationSelectTableViewController.h */,
+				4E97985D1A43A62E000D06DE /* RobotAnimationSelectTableViewController.m */,
+			);
+			name = "Animation Table View";
 			sourceTree = "<group>";
 		};
 		4EBD98181A3FD68000CEBC78 /* Game Views */ = {
@@ -419,6 +432,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E97985A1A42BD2F000D06DE /* SoundCoordinator.m in Sources */,
+				4E97985E1A43A62E000D06DE /* RobotAnimationSelectTableViewController.m in Sources */,
 				4E528F201A3A20FB00552314 /* CozmoOperator.mm in Sources */,
 				4E1B72E41A40BCAB00C61B61 /* CozmoBasestation+UI.m in Sources */,
 				49C2C6791A41019600AA0F27 /* CozmoObsObjectBBox.m in Sources */,

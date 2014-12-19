@@ -6,22 +6,24 @@
 
 + (NSString*)appBundleMetaPath
 {
-  static NSString* metaPath = nil;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
+  NSString* metaPath = nil;
+  if (!metaPath) {
     metaPath = [[NSBundle mainBundle] pathForResource:@"cozmo_resources/meta" ofType:@""];
-  });
+  }
+
+  NSLog(@"appBundleMetaPath %@", metaPath);
 
   return metaPath;
 }
 
 + (NSString*)appBundleAssetPath
 {
-  static NSString* assetPath = nil;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
+  NSString* assetPath = nil;
+  if (!assetPath) {
     assetPath = [[NSBundle mainBundle] pathForResource:@"cozmo_resources/asset" ofType:@""];
-  });
+  }
+
+  NSLog(@"appBundleAssetPath %@", assetPath);
 
   return assetPath;
 }
@@ -32,28 +34,60 @@
 
   switch (scope) {
     case PlatformPathManager_iOS_Scope_Test:
-      path = [[PlatformPathManager_iOS appBundleMetaPath] stringByAppendingString:@"/"];
+    {
+      NSString* fullPath = nil;
+      if (!fullPath) {
+        fullPath = [[PlatformPathManager_iOS appBundleMetaPath] stringByAppendingString:@"/"];
+      }
+      path = [fullPath copy];
+    }
       break;
 
     case PlatformPathManager_iOS_Scope_Config:
-      path = [[PlatformPathManager_iOS appBundleMetaPath] stringByAppendingString:@"/basestation/config/"];
+    {
+      NSString* fullPath = nil;
+      if (!fullPath) {
+        fullPath = [[PlatformPathManager_iOS appBundleMetaPath] stringByAppendingString:@"/basestation/config/"];
+      }
+      path = [fullPath copy];
+    }
       break;
 
     case PlatformPathManager_iOS_Scope_Animation:
-      path = [[PlatformPathManager_iOS appBundleMetaPath] stringByAppendingString:@"/basestation/animations/"];
+    {
+      NSString* fullPath = nil;
+      if (!fullPath) {
+        fullPath = [[PlatformPathManager_iOS appBundleMetaPath] stringByAppendingString:@"/basestation/animations/"];
+      }
+      path = [fullPath copy];
+    }
       break;
 
     case PlatformPathManager_iOS_Scope_Sound:
-      path = [[PlatformPathManager_iOS appBundleAssetPath] stringByAppendingString:@"/sounds/"];
+    {
+      NSString* fullPath = nil;
+      if (!fullPath) {
+        fullPath = [[PlatformPathManager_iOS appBundleAssetPath] stringByAppendingString:@"/sounds/"];
+      }
+      path = [fullPath copy];
+    }
       break;
 
     case PlatformPathManager_iOS_Scope_Resource:
-      path = [[PlatformPathManager_iOS appBundleMetaPath] stringByAppendingString:@"/"];
+    {
+      NSString* fullPath = nil;
+      if (!fullPath) {
+        fullPath = [[PlatformPathManager_iOS appBundleMetaPath] stringByAppendingString:@"/"];
+      }
+      path = [fullPath copy];
+    }
       break;
 
     default:
       break;
   }
+
+  NSLog(@"getPathWithScope %@", path);
 
   return path;
 }
