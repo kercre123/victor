@@ -86,6 +86,8 @@ public:
 
   bool GetCurrentVisionMarkers(const RobotID_t robotID,
                                std::vector<BasestationMain::ObservedObjectBoundingBox>& boundingQuad);
+  s32 GetAnimationID(const RobotID_t robotID,
+                     const std::string& animationName);
   
 private:
   // Instantiate all the modules we need
@@ -337,7 +339,7 @@ bool BasestationMainImpl::GetCurrentRobotImage(const RobotID_t robotID, Vision::
   if(robot != nullptr) {
     return robot->GetCurrentImage(img, newerThan);
   } else {
-    PRINT_NAMED_ERROR("BasestationMainImp.GetCurrentRobotImage.InvalidRobotID",
+    PRINT_NAMED_ERROR("BasestationMainImpl.GetCurrentRobotImage.InvalidRobotID",
                       "Image requested for invalid robot ID = %d.\n", robotID);
     return false;
   }
@@ -360,11 +362,25 @@ bool BasestationMainImpl::GetCurrentVisionMarkers(const RobotID_t robotID,
     }
     return true;
   } else {
-    PRINT_NAMED_ERROR("BasestationMainImp.GetCurrentVisionMarkers.InvalidRobotID",
+    PRINT_NAMED_ERROR("BasestationMainImpl.GetCurrentVisionMarkers.InvalidRobotID",
                       "Image requested for invalid robot ID = %d.\n", robotID);
     return false;
   }
 }
+  
+s32 BasestationMainImpl::GetAnimationID(const RobotID_t robotID,
+                                        const std::string& animationName)
+{
+  Robot* robot = robotMgr_.GetRobotByID(robotID);
+  if(robot != nullptr) {
+    return robot->GetAnimationID(animationName);
+  } else {
+    PRINT_NAMED_ERROR("BasestationMainImpl.GetAnimationID.InvalidRobotID",
+                      "Animation ID requested for invalid robot ID = %d.\n", robotID);
+    return -2;
+  }
+}
+  
 
 
 // =========== Start BasestationMain forwarding functions =======
@@ -411,6 +427,11 @@ bool BasestationMain::GetCurrentVisionMarkers(const RobotID_t robotID,
   return impl_->GetCurrentVisionMarkers(robotID, boundingQuads);
 }
 
+s32 BasestationMain::GetAnimationID(const RobotID_t robotID,
+                   const std::string& animationName)
+{
+  return impl_->GetAnimationID(robotID, animationName);
+}
   
 } // namespace Cozmo
 } // namespace Anki

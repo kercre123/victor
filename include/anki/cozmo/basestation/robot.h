@@ -291,6 +291,10 @@ namespace Anki {
       // If numLoops == 0, animation repeats forever.
       Result PlayAnimation(const char* animName, const u32 numLoops = 1);
       
+      // Return the ID matching the given name, or -1 if no animation with
+      // that name is known.
+      s32 GetAnimationID(const std::string& animationName) const;
+      
       // Plays transition animation once, then plays state animatin in a loop
       Result TransitionToStateAnimation(const char *transitionAnimName,
                                         const char *stateAnimName);

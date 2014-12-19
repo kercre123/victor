@@ -833,6 +833,11 @@ namespace Anki {
       return SendPlayAnimation(animName, numLoops);
     }
     
+    s32 Robot::GetAnimationID(const std::string& animationName) const
+    {
+      return _cannedAnimations.GetID(animationName);
+    }
+      
     Result Robot::TransitionToStateAnimation(const char *transitionAnimName,
                                              const char *stateAnimName)
     {

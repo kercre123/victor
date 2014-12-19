@@ -119,6 +119,11 @@ public:
   bool GetCurrentVisionMarkers(const RobotID_t robotID,
                                std::vector<ObservedObjectBoundingBox>& boundingQuads);
   
+  // Return the animation ID for the given robot and animation name.
+  // A negative result means failure: -1 means animation name was unknown. -2 means
+  // the robotID was invalid.
+  s32 GetAnimationID(const RobotID_t robotID,
+                     const std::string& animationName);
   
 private:
 
