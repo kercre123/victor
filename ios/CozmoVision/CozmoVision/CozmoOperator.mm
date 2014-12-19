@@ -8,6 +8,7 @@
 // This Clas abstracts all the messages to drive and operate Cozmo's
 
 #import "CozmoOperator.h"
+#import "SoundCoordinator.h"
 
 #define COZMO_BASESTATION // to make uiMessages definitions happy
 #import <anki/cozmo/basestation/game/gameComms.h>
@@ -45,13 +46,20 @@ using namespace Anki;
   return self;
 }
 
+
+void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
+{
+  std::string str(std::begin(msg.animationFilename), std::end(msg.animationFilename));
+  NSString* filename = [NSString stringWithUTF8String:str.c_str()];
+  [[SoundCoordinator defaultCoordinator] playSoundWithFilename:filename];
+}
+
 - (void)commonInit
 {
 #ifdef __cplusplus
   //_uiClient = new TcpClient();
   
 #endif
-
 
 }
 
@@ -101,6 +109,9 @@ using namespace Anki;
                                       [ipAddress UTF8String], Cozmo::UI_ADVERTISEMENT_REGISTRATION_PORT);
     _gameMsgHandler = new Cozmo::GameMessageHandler();
     _gameMsgHandler->Init(_gameComms);
+    
+    
+    _gameMsgHandler->RegisterCallbackForMessageG2U_PlaySound(&playSoundWrapper);
   }
   
 }

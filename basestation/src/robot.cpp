@@ -27,6 +27,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 #include "messageHandler.h"
+#include "uiMessageHandler.h"
 #include "ramp.h"
 #include "vizManager.h"
 
@@ -44,6 +45,7 @@ namespace Anki {
     Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler)
     : _ID(robotID)
     , _msgHandler(msgHandler)
+    , _uiMsgHandler(nullptr)  // To be removed once we have Events
     , _blockWorld(this)
 #   if !ASYNC_VISION_PROCESSING
     , _haveNewImage(false)
@@ -148,6 +150,11 @@ namespace Anki {
       ++_frameId;
     }
 
+    void Robot::SetUiMessageHandler(IUiMessageHandler *uiMsgHandler)
+    {
+      _uiMsgHandler = uiMsgHandler;
+    }
+    
     
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
     {
@@ -839,6 +846,57 @@ namespace Anki {
     {
       return _cannedAnimations.GetID(animationName);
     }
+      
+    Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
+    {
+#     if ANKI_IOS_BUILD
+      // Use iOS device to play the sound
+      if(_uiMsgHandler != nullptr)
+      {
+        // TODO: Need to assign the right device ID
+        MessageG2U_PlaySound msg;
+        msg.numLoops = 1;
+        msg.volume   = volume;
+        const std::string& filename = SoundManager::getInstance()->GetSoundFile(soundID);
+        strncpy(&(msg.animationFilename[0]), filename.c_str(), msg.animationFilename.size());
+        
+        return _uiMsgHandler->SendMessage(1, msg);
+      } else {
+        PRINT_NAMED_ERROR("Robot.PlaySound.NoUiMessageHandler",
+                          "Must set UI Message Handler before calling PlaySound.");
+        return RESULT_FAIL;
+      }
+#     else
+      
+      // Use SoundManager::
+      Result lastResult = RESULT_FAIL;
+      if(true == SoundManager::getInstance()->Play(soundID, numLoops, volume)) {
+        lastResult = RESULT_OK;
+      }
+      return lastResult;
+      
+#     endif
+    } // PlaySound()
+      
+      
+    void Robot::StopSound()
+    {
+#     if ANKI_IOS_BUILD
+      // Use iOS device to play the sound
+      if(_uiMsgHandler != nullptr)
+      {
+        // TODO: Need to assign the right device ID
+        MessageG2U_StopSound msg;
+        _uiMsgHandler->SendMessage(1, msg);
+      } else {
+        PRINT_NAMED_ERROR("Robot.StopSound.NoUiMessageHandler",
+                          "Must set UI Message Handler before calling StopSound.");
+      }
+#     else
+      SoundManager::getInstance()->Stop();
+#     endif
+    } // StopSound()
+      
       
     Result Robot::TransitionToStateAnimation(const char *transitionAnimName,
                                              const char *stateAnimName)

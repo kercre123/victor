@@ -22,7 +22,6 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "messageHandler.h"
-#include "soundManager.h"
 #include "vizManager.h"
 
 #include <fstream>
@@ -570,13 +569,13 @@ namespace Anki {
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessagePlaySoundOnBaseStation const& msg)
     {
-      SoundManager::getInstance()->Play(static_cast<SoundID_t>(msg.soundID), msg.numLoops, msg.volume);
+      robot->PlaySound(static_cast<SoundID_t>(msg.soundID), msg.numLoops, msg.volume);
       return RESULT_OK;
     }
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessageStopSoundOnBaseStation const& msg)
     {
-      SoundManager::getInstance()->Stop();
+      robot->StopSound();
       return RESULT_OK;
     }
     

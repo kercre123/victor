@@ -73,14 +73,17 @@ namespace Anki {
       bool Play(const SoundID_t    id,   const u8 numLoops=1, const u8 volume = 100);
       bool Play(const std::string& name, const u8 numLoops=1, const u8 volume = 100);
       
-	  void Stop();
+	    void Stop();
 
       void SetScheme(const SoundSchemeID_t scheme);
       SoundSchemeID_t GetScheme() const;
       
       // Lookup a sound by name
       static SoundID_t GetID(const std::string& name);
-            
+      
+      // Lookup a relative filename by ID
+      const std::string& GetSoundFile(SoundID_t soundID);
+      
     protected:
       
       // Protected default constructor for singleton.
@@ -88,8 +91,6 @@ namespace Anki {
       ~SoundManager();
       
       static SoundManager* singletonInstance_;
-      
-      const std::string& GetSoundFile(SoundID_t soundID);
       
       bool _hasCmdProcessor;
       bool _hasRootDir;

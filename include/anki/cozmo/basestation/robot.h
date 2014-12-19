@@ -49,6 +49,7 @@
 #include "cannedAnimationContainer.h"
 #include "behaviorManager.h"
 #include "ramp.h"
+#include "soundManager.h"
 
 #define ASYNC_VISION_PROCESSING 0
 
@@ -57,6 +58,7 @@ namespace Anki {
     
     // Forward declarations:
     class IMessageHandler;
+    class IUiMessageHandler;
     class IPathPlanner;
     class MatPiece;
     class PathDolerOuter;
@@ -67,6 +69,11 @@ namespace Anki {
       
       Robot(const RobotID_t robotID, IMessageHandler* msgHandler);
       ~Robot();
+      
+      
+      // Until we have Events, Robot needs a UI Message handler to trigger things
+      // out in UI land. This must be provided by this temporary Set method:
+      void SetUiMessageHandler(IUiMessageHandler* uiMsgHandler);
       
       Result Update();
       
@@ -295,6 +302,10 @@ namespace Anki {
       // that name is known.
       s32 GetAnimationID(const std::string& animationName) const;
       
+      // Ask the UI to play a sound for us
+      Result PlaySound(SoundID_t soundID, u8 numLoops, u8 volume);
+      void   StopSound();
+      
       // Plays transition animation once, then plays state animatin in a loop
       Result TransitionToStateAnimation(const char *transitionAnimName,
                                         const char *stateAnimName);
@@ -388,6 +399,10 @@ namespace Anki {
       
       // A reference to the MessageHandler that the robot uses for outgoing comms
       IMessageHandler* _msgHandler;
+      
+      // Until we have Events, robot has a UI message handler so it can trigger
+      // things out in UI world.  Note this must be set by a call to SetUiMessageHandler()
+      IUiMessageHandler* _uiMsgHandler;
       
       // A reference to the BlockWorld the robot lives in
       BlockWorld       _blockWorld;

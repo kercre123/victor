@@ -101,6 +101,6 @@ namespace Cozmo {
         
         return retVal;
       } // ProcessMessages()
-      
+  
 } // namespace Cozmo
 } // namepsace Anki
