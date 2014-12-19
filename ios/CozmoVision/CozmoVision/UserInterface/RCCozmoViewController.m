@@ -162,7 +162,7 @@
 
       for(CozmoObsObjectBBox *object in objectBBoxes)
       {
-        NSString* label = [NSString stringWithFormat:@"%d", object.objectID];
+        NSString* label = [NSString stringWithFormat:@"%ld", object.objectID];
 
         [label drawInRect:CGRectIntegral(object.boundingBox) withAttributes:attributes];
         
