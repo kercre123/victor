@@ -1393,6 +1393,11 @@ namespace Anki {
       {
         MessageU2G_StopFaceTracking m;
         SendMessage(m);
+        
+        // For now, have to re-enable marker finding b/c turning on face
+        // tracking will have stopped it:
+        MessageU2G_StartLookingForMarkers m2;
+        SendMessage(m2);
       }
 
       void SendFaceDetectParams()
