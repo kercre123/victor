@@ -29,6 +29,9 @@ namespace Anki {
     class IComms;
   }
   
+  class Radians;
+  class Pose3d;
+  
 namespace Cozmo {
 
 // Return values for basestation interface
@@ -124,6 +127,10 @@ public:
   // the robotID was invalid.
   s32 GetAnimationID(const RobotID_t robotID,
                      const std::string& animationName);
+  
+  // Query a specific robot's belief about where it is in 3D space, its head angle
+  // and it's lift position. Returns true on success.
+  bool GetRobotPose(const RobotID_t robotID, Pose3d& pose, Radians& headAngle, f32& liftHeight);
   
 private:
 
