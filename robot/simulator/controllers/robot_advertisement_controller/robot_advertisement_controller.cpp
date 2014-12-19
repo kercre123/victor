@@ -58,7 +58,8 @@ int main(int argc, char **argv)
   forcedRegistrationMsg.id = forcedRobotId;
   forcedRegistrationMsg.port = ROBOT_RADIO_BASE_PORT;
   forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
-  snprintf(forcedRegistrationMsg, sizeof(forcedRegistrationMsg.ip), "%s", forcedRobotIP);
+  forcedRegistrationMsg.enableAdvertisement = 1;
+  snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", forcedRobotIP);
   
   robotAdService.ProcessRegistrationMsg(forcedRegistrationMsg);
 #endif
