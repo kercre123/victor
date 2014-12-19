@@ -14,6 +14,7 @@
 #ifndef ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 #define ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 
+#define COZMO_BASESTATION // Make sure we get Basestation messages from the definitions file
 #include "anki/cozmo/basestation/messages.h"
 
 #include "anki/vision/basestation/cameraCalibration.h"

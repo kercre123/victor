@@ -14,4 +14,6 @@
 
 - (void)playSoundWithFilename:(NSString*)filename;
 
+- (void)playSoundWithFilename:(NSString*)filename volume:(float)volume;
+
 @end

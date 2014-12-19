@@ -43,12 +43,18 @@
 
 - (void)playSoundWithFilename:(NSString*)filename
 {
+  [self playSoundWithFilename:filename volume:1.0];
+}
+
+- (void)playSoundWithFilename:(NSString*)filename volume:(float)volume
+{
   // Create Player and play sound
   NSString* urlStr = [self._platformSoundRootDir stringByAppendingString:filename];
   NSError *error = nil;
   AVAudioPlayer* player = [[AVAudioPlayer alloc] initWithContentsOfURL:[NSURL URLWithString:urlStr] error:&error];
   if (!error) {
     // Created, add to active players
+    player.volume = volume;
     player.delegate = self;
     [self._activePlayers addObject:player];
     [player play];
