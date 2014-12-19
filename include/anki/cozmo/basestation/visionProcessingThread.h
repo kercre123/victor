@@ -35,11 +35,23 @@ namespace Cozmo {
     VisionProcessingThread();
     ~VisionProcessingThread();
     
+    //
+    // Asynchronous operation
+    //
     void Start(Vision::CameraCalibration& camCalib);
     void Stop();
     
     void SetNextImage(const Vision::Image& image,
                       const MessageRobotState& robotState);
+    
+    //
+    // Synchronous operation
+    //
+    void SetCameraCalibration(Vision::CameraCalibration& camCalib);
+    
+    void Update(const Vision::Image& image,
+                const MessageRobotState& robotState);
+
     
     void SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
                           const f32                    markerWidth_mm,
@@ -50,6 +62,9 @@ namespace Cozmo {
     // Enable/disable different types of processing
     void EnableMarkerDetection(bool tf);
     void EnableFaceDetection(bool tf);
+    
+    // Abort any marker tracking we were doing
+    void StopMarkerTracking();
     
     // True if marker detection has completed since last call to
     // SetNextImage(). Use this to differentiate whether the VisionMarker
@@ -67,13 +82,18 @@ namespace Cozmo {
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
     
-    bool GetCurrentImage(Vision::Image& img);
+    // If the current image is newer than the specified timestamp, copy it into
+    // the given img and return true.
+    bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThanTimestamp);
+    
+    bool GetLastProcessedImage(Vision::Image& img, TimeStamp_t newerThanTimestamp);
     
   protected:
     
     VisionSystem* _visionSystem;
     
     Vision::CameraCalibration _camCalib;
+    bool   _isCamCalibSet;
     
     bool   _running;
     bool   _isLocked; // mutex for setting image and state
@@ -81,6 +101,7 @@ namespace Cozmo {
     
     Vision::Image _currentImg;
     Vision::Image _nextImg;
+    Vision::Image _lastImg; // the last image we processed
     
     MessageRobotState _currentRobotState;
     MessageRobotState _nextRobotState;
@@ -97,6 +118,11 @@ namespace Cozmo {
 
   inline bool VisionProcessingThread::WasLastImageProcessed() const {
     return _wasLastImageProcessed;
+  }
+  
+  inline void VisionProcessingThread::SetCameraCalibration(Vision::CameraCalibration& camCalib) {
+    _camCalib = camCalib;
+    _isCamCalibSet = true;
   }
 
 } // namespace Cozmo

@@ -185,6 +185,7 @@ namespace Cozmo {
     
     const FaceDetectionParameters& GetFaceDetectionParams();
     
+    const std::string& GetCurrentModeName() const;
     
     void SetParams(const s32 integerCountsIncrement,
                    const f32 minExposureTime,
@@ -375,6 +376,8 @@ namespace Cozmo {
     
     VisionMemory _memory;
     
+    void EnableModeHelper(Mode mode);
+    void DisableModeHelper(Mode mode);
     
     Embedded::Quadrilateral<f32> GetTrackerQuad(Embedded::MemoryStack scratch);
     Result UpdateRobotState(const MessageRobotState newRobotState);

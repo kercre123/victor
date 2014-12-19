@@ -50,6 +50,7 @@
 #include "behaviorManager.h"
 #include "ramp.h"
 
+#define ASYNC_VISION_PROCESSING 0
 
 namespace Anki {
   namespace Cozmo {
@@ -113,7 +114,7 @@ namespace Anki {
       Result QueueObservedMarker(const MessageVisionMarker& msg);
       
       // Get a *copy* of the current image on this robot's vision processing thread
-      bool GetCurrentImage(Vision::Image& img);
+      bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
       
       //
       // Pose (of the robot or its parts)
@@ -228,6 +229,7 @@ namespace Anki {
       // longer "attached" to the robot.
       Result SetCarriedObjectAsUnattached();
       
+      Result StopDocking();
       
       //
       // Proximity Sensors
@@ -246,6 +248,8 @@ namespace Anki {
       Result ProcessImage(const Vision::Image& image);
       Result StartFaceTracking(u8 timeout_sec);
       Result StopFaceTracking();
+      Result StartLookingForMarkers();
+      Result StopLookingForMarkers();
       
       // =========== Actions Commands =============
       
@@ -286,6 +290,10 @@ namespace Anki {
       // Plays specified animation numLoops times.
       // If numLoops == 0, animation repeats forever.
       Result PlayAnimation(const char* animName, const u32 numLoops = 1);
+      
+      // Return the ID matching the given name, or -1 if no animation with
+      // that name is known.
+      s32 GetAnimationID(const std::string& animationName) const;
       
       // Plays transition animation once, then plays state animatin in a loop
       Result TransitionToStateAnimation(const char *transitionAnimName,
@@ -385,6 +393,11 @@ namespace Anki {
       BlockWorld       _blockWorld;
       
       VisionProcessingThread _visionProcessor;
+#     if !ASYNC_VISION_PROCESSING
+      Vision::Image     _image;
+      MessageRobotState _robotStateForImage;
+      bool              _haveNewImage;
+#     endif
       
       BehaviorManager  _behaviorMgr;
       
@@ -613,9 +626,13 @@ namespace Anki {
       _cameraCalibration = calib;
       _camera.SetSharedCalibration(&_cameraCalibration);
       
+#if ASYNC_VISION_PROCESSING
       // Now that we have camera calibration, we can start the vision
       // processing thread
       _visionProcessor.Start(_cameraCalibration);
+#else
+      _visionProcessor.SetCameraCalibration(_cameraCalibration);
+#endif
     }
 
     inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const

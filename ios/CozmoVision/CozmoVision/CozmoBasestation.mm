@@ -15,6 +15,8 @@
 #import "CozmoBasestation.h"
 #import "CozmoOperator.h"
 
+#import "CozmoObsObjectBBox.h"
+
 
 // Cozmo includes
 #import <anki/cozmo/basestation/basestation.h>
@@ -27,6 +29,7 @@
 // Coretech-Common includes
 #import <anki/common/basestation/utils/logging/DAS/DAS.h>
 #import <anki/common/basestation/jsonTools.h>
+#import <anki/common/basestation/math/rect_impl.h>
 
 // Coretech-Vision includes
 #import <anki/vision/basestation/image_impl.h>
@@ -76,6 +79,10 @@
 
   Anki::Cozmo::BasestationMain*   _basestation;
 
+  // Timestamp of last image we asked for from the robot
+  // TODO: need one per robot?
+  Anki::TimeStamp_t               _lastImageTimestamp;
+  
   // Comms
   Anki::Cozmo::MultiClientComms*        _robotComms;
   Anki::Cozmo::MultiClientComms*        _uiComms;
@@ -92,7 +99,8 @@
 - (instancetype)init
 {
   if (!(self = [super init]))
-
+    return self;
+  
   self.runState = CozmoBasestationRunStateNone;
   self.robotConnected = NO;
 
@@ -108,22 +116,7 @@
 
 - (void)dealloc
 {
-#ifdef __cplusplus
-  if(_uiComms) {
-    delete _uiComms;
-    _uiComms = nil;
-  }
-  
-  if(_robotComms) {
-    delete _robotComms;
-    _robotComms = nil;
-  }
-  
-  if(_basestation) {
-    delete _basestation;
-    _basestation = nil;
-  }
-#endif
+  [self stopCommsAndBasestation];
 }
 
 
@@ -312,6 +305,7 @@
   }
 
   if(_basestation) {
+    _basestation->UnInit();
     delete _basestation;
     _basestation = nil;
   }
@@ -394,7 +388,7 @@
 // Main Game Update Loop
 - (void)gameHeartbeat:(NSTimer*)timer
 {
-  CFAbsoluteTime thisHeartbeatTimestamp = CFAbsoluteTimeGetCurrent();
+  CFTimeInterval thisHeartbeatTimestamp = CFAbsoluteTimeGetCurrent() - _firstHeartbeatTimestamp;
   CFTimeInterval thisHeartbeatDelta = thisHeartbeatTimestamp - _lastHeartbeatTimestamp;
   if(thisHeartbeatDelta > (__heartbeatPeriod + 0.003)) {
     DASWarn("RHLocalGame.heartBeatMissedByMS_f", "%lf", thisHeartbeatDelta * 1000.0);
@@ -485,7 +479,7 @@
 #endif
 
   // Update the basestation itself (should the basestation tell the comms to update?)
-  _basestation->Update(timestamp);
+  _basestation->Update(SEC_TO_NANOS(timestamp));
 
   // Call all listeners
   [self._heartbeatListeners makeObjectsPerformSelector:@selector(cozmoBasestationHearbeat:) withObject:self];
@@ -509,17 +503,51 @@
 
 - (UIImage*)imageFrameWtihRobotId:(uint8_t)robotId
 {
+  using namespace Anki;
+  
   UIImage *imageFrame = nil;
-  Anki::Vision::Image img;
-  if (true == _basestation->GetCurrentRobotImage(1, img))
+  Vision::Image img;
+  if (true == _basestation->GetCurrentRobotImage(robotId, img, _lastImageTimestamp))
   {
     // TODO: Somehow get rid of this copy, but still be threadsafe
     //cv::Mat_<u8> cvMatImg(nrows, ncols, const_cast<unsigned char*>(imageDataPtr));
     imageFrame = [self UIImageFromCVMat:img.get_CvMat_()];
+    _lastImageTimestamp = img.GetTimestamp();
   }
 
   return imageFrame;
 }
 
+
+- (NSArray*)boundingBoxesObservedByRobotId:(uint8_t)robotId
+{
+  using namespace Anki;
+  
+  NSMutableArray* boundingBoxes = nil;
+  
+  std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox> observations;
+  if( true == _basestation->GetCurrentVisionMarkers(robotId, observations))
+  {
+    if(!observations.empty())
+    {
+      boundingBoxes = [[NSMutableArray alloc] init];
+      
+      // Turn each Basestation observed object into an Objective-C "CozmoObsObjectBBox" object
+      for(auto & observation : observations) {
+        CozmoObsObjectBBox* output = [[CozmoObsObjectBBox alloc] init];
+        
+        output.objectID = observation.objectID;
+        output.boundingBox = CGRectMake(observation.boundingBox.GetX(),
+                                        observation.boundingBox.GetY(),
+                                        observation.boundingBox.GetWidth(),
+                                        observation.boundingBox.GetHeight());
+        
+        [boundingBoxes addObject:output];
+      }
+    } // if(!observations.empty())
+  }
+  
+  return boundingBoxes;
+}
 
 @end

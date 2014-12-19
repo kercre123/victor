@@ -228,6 +228,12 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlaceObjectOnGroundHere const& msg)
+    {
+      robot->GetActionList().AddAction(new PlaceObjectOnGroundAction());
+      return RESULT_OK;
+    }
+    
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ExecuteTestPlan const& msg)
     {
       robot->ExecuteTestPath();
@@ -250,9 +256,15 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PickAndPlaceObject const& msg)
     {
-      const u8 numRetries = 3;
+      const u8 numRetries = 0;
       
-      ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+      ObjectID selectedObjectID;
+      if(msg.objectID < 0) {
+        selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+      } else {
+        selectedObjectID = msg.objectID;
+      }
+      
       if(static_cast<bool>(msg.usePreDockPose)) {
         robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID), numRetries);
       } else {
@@ -266,7 +278,7 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_TraverseObject const& msg)
     {
-      const u8 numRetries = 3;
+      const u8 numRetries = 0;
       
       ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
       robot->GetActionList().AddAction(new DriveToAndTraverseObjectAction(selectedObjectID), numRetries);
@@ -377,5 +389,16 @@ namespace Anki {
       p.maxObjectWidth = msg.maxObjectWidth;
       return robot->SendFaceDetectParams(p);
     }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartLookingForMarkers const& msg)
+    {
+      return robot->StartLookingForMarkers();
+    }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StopLookingForMarkers const& msg)
+    {
+      return robot->StopLookingForMarkers();
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

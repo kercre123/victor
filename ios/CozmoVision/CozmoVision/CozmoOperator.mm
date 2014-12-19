@@ -242,7 +242,8 @@ using namespace Anki;
   const float headMaxSpeed = 5.0;
 
   Cozmo::MessageU2G_SetHeadAngle message;
-  message.angle_rad = ABS((f32)angle) * ((f32)angle < 0 ? Cozmo::MIN_HEAD_ANGLE  : Cozmo::MAX_HEAD_ANGLE);
+  //message.angle_rad = ABS((f32)angle) * ((f32)angle < 0 ? Cozmo::MIN_HEAD_ANGLE  : Cozmo::MAX_HEAD_ANGLE);
+  message.angle_rad = (f32)angle * (Cozmo::MAX_HEAD_ANGLE - Cozmo::MIN_HEAD_ANGLE) + Cozmo::MIN_HEAD_ANGLE;
   message.accel_rad_per_sec2 = (f32)headAcceleration;
   message.max_speed_rad_per_sec = (f32)headMaxSpeed;
 
@@ -278,6 +279,51 @@ using namespace Anki;
 {
   Cozmo::MessageU2G_StopAllMotors message;
   [self sendMessage:message];
+}
+
+-(void)sendPickOrPlaceObject:(NSNumber*)objectID
+{
+  if(objectID) {
+    Cozmo::MessageU2G_PickAndPlaceObject message;
+    message.objectID = objectID.integerValue;
+    message.usePreDockPose = false;
+    [self sendMessage:message];
+  }
+}
+
+-(void)sendPlaceObjectOnGroundHere
+{
+  Cozmo::MessageU2G_PlaceObjectOnGroundHere message;
+  [self sendMessage:message];
+}
+
+-(void)sendEnableFaceTracking:(BOOL)enable
+{
+  if(enable) {
+    Cozmo::MessageU2G_StartFaceTracking message;
+    [self sendMessage:message];
+  } else {
+    Cozmo::MessageU2G_StopFaceTracking message;
+    [self sendMessage:message];
+    
+    // For now, we have to re-enable looking for markers because enabling
+    // face tracking turned it off
+    Cozmo::MessageU2G_StartLookingForMarkers tempMessage;
+    [self sendMessage:tempMessage];
+  }
+}
+
+
+- (void)sendAnimationWithName:(NSString*)animName
+{
+  Cozmo::MessageU2G_PlayAnimation message;
+  
+  // TODO: This is icky. Get actual ID from somewhere and use that
+  strncpy(&(message.animationName[0]), [animName UTF8String], 32);
+  message.numLoops = 1;
+  
+  [self sendMessage:message];
+
 }
 
 @end

@@ -12,7 +12,7 @@
 @class CozmoOperator;
 
 // IP Address of wherever the robot's advertising service is running
-#define DEFAULT_ADVERTISING_HOST_IP     "192.168.19.227"
+#define DEFAULT_ADVERTISING_HOST_IP     "192.168.19.238"
 // IP Address of wherever the Basestation service is running
 #define DEFAULT_BASESTATION_IP          "127.0.0.1"
 // Tick the basestation rate, ticks per second
@@ -42,11 +42,8 @@
 - (void)addListener:(id<CozmoBasestationHeartbeatListener>)listener;
 - (void)removeListener:(id<CozmoBasestationHeartbeatListener>)listener;
 
-
-// TODO: This only returns one robot right now
 - (UIImage*)imageFrameWtihRobotId:(uint8_t)robotId;
-
-
+- (NSArray*)boundingBoxesObservedByRobotId:(uint8_t)robotId;
 
 // Change Basestation State
 

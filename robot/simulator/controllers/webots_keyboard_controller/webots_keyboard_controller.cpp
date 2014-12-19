@@ -152,6 +152,7 @@ namespace Anki {
       void SendSetHeadlights(u8 intensity);
       void SendExecutePathToPose(const Pose3d& p);
       void SendPlaceObjectOnGroundSequence(const Pose3d& p);
+      void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose);
       void SendPickAndPlaceSelectedObject(const bool usePreDockPose);
       void SendTraverseSelectedObject();
       void SendExecuteTestPlan();
@@ -1257,11 +1258,17 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendPickAndPlaceSelectedObject(const bool usePreDockPose)
+      void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose)
       {
         MessageU2G_PickAndPlaceObject m;
         m.usePreDockPose = static_cast<u8>(usePreDockPose);
+        m.objectID = -1;
         SendMessage(m);
+      }
+      
+      void SendPickAndPlaceSelectedObject(const bool usePreDockPose)
+      {
+        SendPickAndPlaceObject(-1, usePreDockPose);
       }
       
       void SendTraverseSelectedObject()

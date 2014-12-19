@@ -267,6 +267,10 @@ namespace Anki
           }
         }
         
+        std::vector<Point2f> projectedCorners;
+        f32 observationDistance;
+        ObjectID obsID;
+
         if(overlappingObjects.empty()) {
           // no existing objects overlapped with the objects we saw, so add it
           // as a new object
@@ -282,7 +286,10 @@ namespace Anki
                            parentMat==nullptr ? "NO" : parentMat->GetType().GetName().c_str());
           
           // Project this new object into the robot's camera:
-          _robot->GetCamera().AddOccluder(*objSeen);
+          _robot->GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
+          
+          obsID = objSeen->GetID();
+          
           /*
            PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
            "Adding object %d as an occluder for robot %d.\n",
@@ -315,6 +322,8 @@ namespace Anki
           overlappingObjects[0]->SetLastObservedTime(objSeen->GetLastObservedTime());
           overlappingObjects[0]->UpdateMarkerObservationTimes(*objSeen);
           
+          obsID = overlappingObjects[0]->GetID();
+          
           /* This is pretty verbose... 
           fprintf(stdout, "Merging observation of object type=%s, with ID=%d at (%.1f, %.1f, %.1f), timestamp=%d\n",
                   objSeen->GetType().GetName().c_str(),
@@ -326,7 +335,7 @@ namespace Anki
           */
           
           // Project this existing object into the robot's camera, using its new pose
-          _robot->GetCamera().AddOccluder(*overlappingObjects[0]);
+          _robot->GetCamera().ProjectObject(*overlappingObjects[0], projectedCorners, observationDistance);
           
           // Now that we've merged in objSeen, we can delete it because we
           // will no longer be using it.  Otherwise, we'd leak.
@@ -334,6 +343,18 @@ namespace Anki
           
         } // if/else overlapping existing objects found
      
+        // Use the projected corners to add an occluder and to keep track of the
+        // bounding quads of all the observed objects in this Update
+        _robot->GetCamera().AddOccluder(projectedCorners, observationDistance);
+        
+        Rectangle<f32> boundingBox(projectedCorners);
+        
+        if(obsID.IsUnknown()) {
+          PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.IDnotSet",
+                            "ID of new/re-observed object not set.\n");
+        }
+        _obsProjectedObjects.emplace_back(obsID, boundingBox);
+
         _didObjectsChange = true;
       } // for each object seen
       
@@ -1010,6 +1031,9 @@ namespace Anki
       // an occluder with the robot's camera
       _robot->GetCamera().ClearOccluders();
       
+      // New timestep, clear list of observed object bounding boxes
+      _obsProjectedObjects.clear();
+      
       static TimeStamp_t lastObsMarkerTime = 0;
       
       // Now we're going to process all the observed messages, grouped by
@@ -1305,13 +1329,41 @@ namespace Anki
     } // ClearObject()
     
     
+    bool BlockWorld::SelectObject(const ObjectID objectID)
+    {
+      ActionableObject* newSelection = dynamic_cast<ActionableObject*>(GetObjectByID(objectID));
+      
+      if(newSelection != nullptr) {
+        if(_selectedObject.IsSet()) {
+          // Unselect current object of interest, if it still exists (Note that it may just get
+          // reselected here, but I don't think we care.)
+          // Mark new object of interest as selected so it will draw differently
+          ActionableObject* oldSelection = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
+          if(oldSelection != nullptr) {
+            oldSelection->SetSelected(false);
+          }
+        }
+        
+        newSelection->SetSelected(true);
+        _selectedObject = objectID;
+        PRINT_INFO("Selected Object with ID=%d\n", objectID.GetValue());
+        
+        return true;
+      } else {
+        PRINT_NAMED_WARNING("BlockWorld.SelectObject.InvalidID",
+                            "Object with ID=%d not found. Not updating selected object.\n",
+                            objectID.GetValue());
+        return false;
+      }
+    } // SelectObject()
+    
     void BlockWorld::CycleSelectedObject()
     {
       if(_selectedObject.IsSet()) {
         // Unselect current object of interest, if it still exists (Note that it may just get
         // reselected here, but I don't think we care.)
         // Mark new object of interest as selected so it will draw differently
-        ActionableObject* object = dynamic_cast<ActionableObject*>(_robot->GetBlockWorld().GetObjectByID(_selectedObject));
+        ActionableObject* object = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
         if(object != nullptr) {
           object->SetSelected(false);
         }

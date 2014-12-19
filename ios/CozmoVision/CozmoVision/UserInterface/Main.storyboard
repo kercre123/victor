@@ -88,6 +88,18 @@
                                 <rect key="frame" x="492" y="175" width="44" height="250"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                             </view>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="DetectFaces" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="DO4-ki-8nA">
+                                <rect key="frame" x="430" y="430" width="97" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="YnB-K5-UFp">
+                                <rect key="frame" x="535" y="425" width="51" height="31"/>
+                                <connections>
+                                    <action selector="handelDetectFacesSwitch:" destination="1Is-1K-7FL" eventType="valueChanged" id="P3O-jg-oRx"/>
+                                </connections>
+                            </switch>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
@@ -96,14 +108,18 @@
                             <constraint firstItem="z7F-bg-DfJ" firstAttribute="leading" secondItem="TO3-6b-lFW" secondAttribute="leadingMargin" id="1w6-Uz-gD6"/>
                             <constraint firstItem="7x5-1z-bLs" firstAttribute="centerY" secondItem="mzl-d4-jZE" secondAttribute="centerY" id="49o-sU-KEz"/>
                             <constraint firstAttribute="trailingMargin" secondItem="z7F-bg-DfJ" secondAttribute="trailing" id="7Hu-16-l5Z"/>
+                            <constraint firstItem="DO4-ki-8nA" firstAttribute="centerY" secondItem="YnB-K5-UFp" secondAttribute="centerY" id="AHJ-Ga-3pE"/>
                             <constraint firstItem="mzl-d4-jZE" firstAttribute="height" secondItem="7x5-1z-bLs" secondAttribute="height" id="DyE-wq-25g"/>
                             <constraint firstItem="mzl-d4-jZE" firstAttribute="width" secondItem="7x5-1z-bLs" secondAttribute="width" id="Jwy-By-g7j"/>
+                            <constraint firstItem="YnB-K5-UFp" firstAttribute="leading" secondItem="DO4-ki-8nA" secondAttribute="trailing" constant="8" id="NKz-ty-cjs"/>
                             <constraint firstItem="oTd-RL-SJf" firstAttribute="top" secondItem="z7F-bg-DfJ" secondAttribute="bottom" id="PSF-ni-O0y"/>
                             <constraint firstAttribute="centerY" secondItem="7x5-1z-bLs" secondAttribute="centerY" id="XVV-Vd-Kcu"/>
+                            <constraint firstItem="YnB-K5-UFp" firstAttribute="top" secondItem="7x5-1z-bLs" secondAttribute="bottom" id="anB-fl-Zky"/>
                             <constraint firstItem="oTd-RL-SJf" firstAttribute="top" secondItem="2QR-EP-Ma6" secondAttribute="bottom" id="awM-7U-Xci"/>
                             <constraint firstItem="2QR-EP-Ma6" firstAttribute="leading" secondItem="TO3-6b-lFW" secondAttribute="leadingMargin" constant="-16" id="hlD-6f-Okr"/>
                             <constraint firstItem="ci0-5n-8bg" firstAttribute="leading" secondItem="TO3-6b-lFW" secondAttribute="leadingMargin" id="hqE-wi-inK"/>
                             <constraint firstAttribute="trailingMargin" secondItem="2QR-EP-Ma6" secondAttribute="trailing" constant="-16" id="sgP-58-HhJ"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="YnB-K5-UFp" secondAttribute="trailing" id="sqZ-yE-C3q"/>
                             <constraint firstItem="7x5-1z-bLs" firstAttribute="trailing" secondItem="TO3-6b-lFW" secondAttribute="trailingMargin" constant="4" id="tbB-ud-3Gn"/>
                             <constraint firstItem="ci0-5n-8bg" firstAttribute="top" secondItem="pH9-wl-BY6" secondAttribute="bottom" constant="8" id="uMe-fJ-BUX"/>
                             <constraint firstItem="7x5-1z-bLs" firstAttribute="leading" secondItem="mzl-d4-jZE" secondAttribute="trailing" constant="8" id="zBz-aJ-LXW"/>
@@ -116,6 +132,7 @@
                     <connections>
                         <outlet property="cozmoVisionImageView" destination="z7F-bg-DfJ" id="MNY-00-LYA"/>
                         <outlet property="dPadView" destination="2QR-EP-Ma6" id="cdq-Zb-f8g"/>
+                        <outlet property="detectFacesSwitch" destination="YnB-K5-UFp" id="WkJ-SO-WbY"/>
                         <outlet property="headSlider" destination="7x5-1z-bLs" id="B1z-jK-lpP"/>
                         <outlet property="liftSlider" destination="mzl-d4-jZE" id="7Px-qe-xlL"/>
                     </connections>

@@ -45,6 +45,9 @@ namespace Anki {
     : _ID(robotID)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
+#   if !ASYNC_VISION_PROCESSING
+    , _haveNewImage(false)
+#   endif
     , _behaviorMgr(this)
     , _currPathSegment(-1)
     , _lastSentPathID(0)
@@ -468,79 +471,90 @@ namespace Anki {
     
     Result Robot::Update(void)
     {
-      ////////// Check for any messages from the Vision Thread ////////////
-      
-      MessageVisionMarker visionMarker;
-      while(true == _visionProcessor.CheckMailbox(visionMarker)) {
-        Result lastResult = QueueObservedMarker(visionMarker);
-        if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("Robot.Update.FailedToQueueVisionMarker",
-                            "Got VisionMarker message from vision processing thread but failed to queue it.\n");
-          return lastResult;
-        }
+#     if !ASYNC_VISION_PROCESSING
+      if(_haveNewImage) {
         
-        VizManager::getInstance()->SendVisionMarker(visionMarker.x_imgUpperLeft,  visionMarker.y_imgUpperLeft,
-                                                    visionMarker.x_imgUpperRight, visionMarker.y_imgUpperRight,
-                                                    visionMarker.x_imgLowerRight, visionMarker.y_imgLowerRight,
-                                                    visionMarker.x_imgLowerLeft,  visionMarker.y_imgLowerLeft,
-                                                    visionMarker.markerType != Vision::MARKER_UNKNOWN);
-      }
-      
-      MessageFaceDetection faceDetection;
-      while(true == _visionProcessor.CheckMailbox(faceDetection)) {
-        PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).\n",
-                   GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
+        _visionProcessor.Update(_image, _robotStateForImage);
+        _haveNewImage = false;
         
+#     else
+      if(_visionProcessor.WasLastImageProcessed())
+      {
+#endif
+        ////////// Check for any messages from the Vision Thread ////////////
         
-        if(faceDetection.visualize > 0) {
-          // Send tracker quad info to viz
-          const u16 left_x   = faceDetection.x_upperLeft;
-          const u16 right_x  = left_x + faceDetection.width;
-          const u16 top_y    = faceDetection.y_upperLeft;
-          const u16 bottom_y = top_y + faceDetection.height;
+        MessageVisionMarker visionMarker;
+        while(true == _visionProcessor.CheckMailbox(visionMarker)) {
+          Result lastResult = QueueObservedMarker(visionMarker);
+          if(lastResult != RESULT_OK) {
+            PRINT_NAMED_ERROR("Robot.Update.FailedToQueueVisionMarker",
+                              "Got VisionMarker message from vision processing thread but failed to queue it.\n");
+            return lastResult;
+          }
           
-          VizManager::getInstance()->SendTrackerQuad(left_x, top_y,
-                                                     right_x, top_y,
-                                                     right_x, bottom_y,
-                                                     left_x, bottom_y);
+          VizManager::getInstance()->SendVisionMarker(visionMarker.x_imgUpperLeft,  visionMarker.y_imgUpperLeft,
+                                                      visionMarker.x_imgUpperRight, visionMarker.y_imgUpperRight,
+                                                      visionMarker.x_imgLowerRight, visionMarker.y_imgLowerRight,
+                                                      visionMarker.x_imgLowerLeft,  visionMarker.y_imgLowerLeft,
+                                                      visionMarker.markerType != Vision::MARKER_UNKNOWN);
         }
-      }
-      
-      MessageTrackerQuad trackerQuad;
-      if(true == _visionProcessor.CheckMailbox(trackerQuad)) {
-        // Send tracker quad info to viz
-        VizManager::getInstance()->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
-                                                   trackerQuad.topRight_x, trackerQuad.topRight_y,
-                                                   trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
-                                                   trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
-      }
-      
-      MessageDockingErrorSignal dockingErrorSignal;
-      if(true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
         
-        // Visualize docking error signal
-        VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
-                                                   dockingErrorSignal.y_horErr,
-                                                   dockingErrorSignal.angleErr);
+        MessageFaceDetection faceDetection;
+        while(true == _visionProcessor.CheckMailbox(faceDetection)) {
+          PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).\n",
+                     GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
+          
+          
+          if(faceDetection.visualize > 0) {
+            // Send tracker quad info to viz
+            const u16 left_x   = faceDetection.x_upperLeft;
+            const u16 right_x  = left_x + faceDetection.width;
+            const u16 top_y    = faceDetection.y_upperLeft;
+            const u16 bottom_y = top_y + faceDetection.height;
+            
+            VizManager::getInstance()->SendTrackerQuad(left_x, top_y,
+                                                       right_x, top_y,
+                                                       right_x, bottom_y,
+                                                       left_x, bottom_y);
+          }
+        }
         
-        // Try to use this for closed-loop control by sending it on to the robot
-        _msgHandler->SendMessage(_ID, dockingErrorSignal);
+        MessageTrackerQuad trackerQuad;
+        if(true == _visionProcessor.CheckMailbox(trackerQuad)) {
+          // Send tracker quad info to viz
+          VizManager::getInstance()->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
+                                                     trackerQuad.topRight_x, trackerQuad.topRight_y,
+                                                     trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
+                                                     trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
+        }
         
-      }
-
-      MessagePanAndTiltHead panTiltHead;
-      if(true == _visionProcessor.CheckMailbox(panTiltHead)) {
+        MessageDockingErrorSignal dockingErrorSignal;
+        if(true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
+          
+          // Visualize docking error signal
+          VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
+                                                     dockingErrorSignal.y_horErr,
+                                                     dockingErrorSignal.angleErr);
+          
+          // Try to use this for closed-loop control by sending it on to the robot
+          _msgHandler->SendMessage(_ID, dockingErrorSignal);
+          
+        }
         
-        _msgHandler->SendMessage(_ID, panTiltHead);
+        MessagePanAndTiltHead panTiltHead;
+        if(true == _visionProcessor.CheckMailbox(panTiltHead)) {
+          
+          _msgHandler->SendMessage(_ID, panTiltHead);
+          
+        }
         
-      }
-      
-      
-      ////////// Update the robot's blockworld //////////
-      
-      uint32_t numBlocksObserved = 0;
-      _blockWorld.Update(numBlocksObserved);
-      
+        ////////// Update the robot's blockworld //////////
+        // (Note that we're only doing this if the vision processor completed)
+        
+        uint32_t numBlocksObserved = 0;
+        _blockWorld.Update(numBlocksObserved);
+        
+      } // if(_visionProcessor.WasLastImageProcessed())
       
       ///////// Update the behavior manager ///////////
       
@@ -599,9 +613,19 @@ namespace Anki {
       
     } // Update()
     
-    bool Robot::GetCurrentImage(Vision::Image& img)
+    bool Robot::GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan)
     {
-      return _visionProcessor.GetCurrentImage(img);
+#     if ASYNC_VISION_PROCESSING
+      return _visionProcessor.GetCurrentImage(img, newerThan);
+#     else
+      if(!_image.IsEmpty() && _image.GetTimestamp() > newerThan ) {
+        _image.CopyDataTo(img);
+        img.SetTimestamp(_image.GetTimestamp());
+        return true;
+      } else {
+        return false;
+      }
+#     endif
     }
     
     static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
@@ -809,6 +833,11 @@ namespace Anki {
       return SendPlayAnimation(animName, numLoops);
     }
     
+    s32 Robot::GetAnimationID(const std::string& animationName) const
+    {
+      return _cannedAnimations.GetID(animationName);
+    }
+      
     Result Robot::TransitionToStateAnimation(const char *transitionAnimName,
                                              const char *stateAnimName)
     {
@@ -1280,6 +1309,12 @@ namespace Anki {
     } // ExecutePlaceObjectOnGroundSequence(atPose)
     */
     
+    Result Robot::StopDocking()
+    {
+      _visionProcessor.StopMarkerTracking();
+      return RESULT_OK;
+    }
+    
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
@@ -1680,6 +1715,7 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
+
       // For now, we need to reassemble a RobotState message to provide the
       // vision system (because it is just copied from the embedded vision
       // implementation on the robot). We'll just reassemble that from
@@ -1706,8 +1742,19 @@ namespace Anki {
       robotState.pose_z    = p.GetPose().GetTranslation().z();
       robotState.pose_angle= p.GetPose().GetRotationAngle<'Z'>().ToFloat();
       
+#     if ASYNC_VISION_PROCESSING
+      
       // Note this copies the image
       _visionProcessor.SetNextImage(image, robotState);
+      
+#     else
+      
+      image.CopyDataTo(_image);
+      _image.SetTimestamp(image.GetTimestamp());
+      _robotStateForImage = robotState;
+      _haveNewImage = true;
+      
+#     endif
       
       return lastResult;
     }
@@ -1741,7 +1788,18 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    
+    Result Robot::StartLookingForMarkers()
+    {
+      _visionProcessor.EnableMarkerDetection(true);
+      return RESULT_OK;
+    }
+
+    Result Robot::StopLookingForMarkers()
+    {
+      _visionProcessor.EnableMarkerDetection(false);
+      return RESULT_OK;
+    }
+      
     const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D, Vec3f(50, 25, 0)),
                                                   Pose3d(0, Z_AXIS_3D, Vec3f(50, 0, 0)),
                                                   Pose3d(0, Z_AXIS_3D, Vec3f(50, -25, 0)) };

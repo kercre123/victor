@@ -77,4 +77,17 @@
 - (void)sendStopAllMotorsCommand;
 
 
+/*!
+ * @discussion Send Pick or Place Object command
+ * @param ObjectID
+ * @return void
+ */
+-(void)sendPickOrPlaceObject:(NSNumber*)objectID;
+
+-(void)sendPlaceObjectOnGroundHere;
+
+-(void)sendEnableFaceTracking:(BOOL)enable;
+
+- (void)sendAnimationWithName:(NSString*)animationName;
+
 @end

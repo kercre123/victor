@@ -20,11 +20,14 @@
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
+#include "vizManager.h"
+
 namespace Anki {
 namespace Cozmo {
   
   VisionProcessingThread::VisionProcessingThread()
   : _visionSystem(nullptr)
+  , _isCamCalibSet(false)
   , _running(false)
   , _isLocked(false)
   , _wasLastImageProcessed(false)
@@ -63,6 +66,8 @@ namespace Cozmo {
     
     _currentImg = {};
     _nextImg    = {};
+    _lastImg    = {};
+    
     /*
     // Now that processing is complete, we can delete any images that we're
     // holding onto
@@ -82,6 +87,11 @@ namespace Cozmo {
   VisionProcessingThread::~VisionProcessingThread()
   {
     Stop();
+    
+    if(_visionSystem != nullptr) {
+      delete _visionSystem;
+      _visionSystem = nullptr;
+    }
   } // ~VisionSystem()
 
 
@@ -132,18 +142,38 @@ namespace Cozmo {
   }
   
   
-  bool VisionProcessingThread::GetCurrentImage(Vision::Image& img)
+  bool VisionProcessingThread::GetCurrentImage(Vision::Image& img, TimeStamp_t newerThanTimestamp)
   {
-    if(_running && !_currentImg.IsEmpty()) {
-      Lock();
+    bool retVal = false;
+    
+    Lock();
+    if(_running && !_currentImg.IsEmpty() && _currentImg.GetTimestamp() > newerThanTimestamp) {
       _currentImg.CopyDataTo(img);
-      Unlock();
       img.SetTimestamp(_currentImg.GetTimestamp());
-      return true;
+      retVal = true;
     } else {
       img = {};
-      return false;
+      retVal = false;
     }
+    Unlock();
+    
+    return retVal;
+  }
+  
+  bool VisionProcessingThread::GetLastProcessedImage(Vision::Image& img,
+                                                     TimeStamp_t newerThanTimestamp)
+  {
+    bool retVal = false;
+    
+    Lock();
+    if(!_lastImg.IsEmpty() && _lastImg.GetTimestamp() > newerThanTimestamp) {
+      _lastImg.CopyDataTo(img);
+      img.SetTimestamp(_lastImg.GetTimestamp());
+      retVal = true;
+    }
+    Unlock();
+    
+    return retVal;
   }
 
   void VisionProcessingThread::EnableMarkerDetection(bool enable)
@@ -163,7 +193,11 @@ namespace Cozmo {
       _visionSystem->StopDetectingFaces();
     }
   }
-
+  
+  void VisionProcessingThread::StopMarkerTracking()
+  {
+    _visionSystem->StopTracking();
+  }
 
   void VisionProcessingThread::Lock()
   {
@@ -180,6 +214,31 @@ namespace Cozmo {
     _isLocked = false;
   }
 
+  void VisionProcessingThread::Update(const Vision::Image& image,
+                                      const MessageRobotState& robotState)
+  {
+    if(_isCamCalibSet) {
+      if(_visionSystem == nullptr) {
+        _visionSystem = new VisionSystem();
+        _visionSystem->Init(_camCalib);
+        
+        // Wait for initialization to complete (i.e. Matlab to start up, if needed)
+        while(!_visionSystem->IsInitialized()) {
+          usleep(500);
+        }
+      }
+      
+      _visionSystem->Update(robotState, image);
+      
+      VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+                                         "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+      
+    } else {
+      PRINT_NAMED_ERROR("VisionProcessingThread.Update.NoCamCalib",
+                        "Camera calibration must be set before calling Update().\n");
+    }
+    
+  } // Update()
 
   void VisionProcessingThread::Processor()
   {
@@ -201,14 +260,16 @@ namespace Cozmo {
         
         //assert(_currentImg != nullptr);
         _visionSystem->Update(_currentRobotState, _currentImg);
+        
+        VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+                                           "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+        
+        Lock();
+        // Save the image we just processed
+        _lastImg = _currentImg;
         _wasLastImageProcessed = true;
         
         // Clear it when done.
-        /*
-        delete _currentImg;
-        _currentImg = nullptr;
-         */
-        Lock();
         _currentImg = {};
         Unlock();
         

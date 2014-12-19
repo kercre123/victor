@@ -106,13 +106,17 @@ ADD_MESSAGE_MEMBER(f32, rad)
 ADD_MESSAGE_MEMBER(u8, level)
 END_MESSAGE_DEFINITION(U2G_GotoPose)
 
-// PlaceBlockOnGround
+// PlaceObjectOnGround
 START_MESSAGE_DEFINITION(U2G_PlaceObjectOnGround, 1)
 ADD_MESSAGE_MEMBER(f32, x_mm)
 ADD_MESSAGE_MEMBER(f32, y_mm)
 ADD_MESSAGE_MEMBER(f32, rad)
 ADD_MESSAGE_MEMBER(u8, level)
 END_MESSAGE_DEFINITION(U2G_PlaceObjectOnGround)
+
+// PlaceObjectOnGroundHere
+START_MESSAGE_DEFINITION(U2G_PlaceObjectOnGroundHere, 1)
+END_MESSAGE_DEFINITION(U2G_PlaceObjectOnGroundHere)
 
 // ExecuteTestPlan
 START_MESSAGE_DEFINITION(U2G_ExecuteTestPlan, 1)
@@ -124,6 +128,7 @@ END_MESSAGE_DEFINITION(U2G_SelectNextObject)
 
 // PickAndPlaceObject
 START_MESSAGE_DEFINITION(U2G_PickAndPlaceObject, 1)
+ADD_MESSAGE_MEMBER(s32, objectID) // negative value means "currently selected object"
 ADD_MESSAGE_MEMBER(u8, usePreDockPose)
 END_MESSAGE_DEFINITION(U2G_PickAndPlaceObject)
 
@@ -198,7 +203,7 @@ START_MESSAGE_DEFINITION(U2G_PlayAnimation, 1)
 ADD_MESSAGE_MEMBER(u32, numLoops)
 //ADD_MESSAGE_MEMBER(u8, animationID)
 ADD_MESSAGE_MEMBER_ARRAY(char, animationName, 32) // TODO: don't use char arrays
-END_MESSAGE_DEFINITION(U2G_PlayAnimation)\
+END_MESSAGE_DEFINITION(U2G_PlayAnimation)
 
 // ReadAnimationFile
 START_MESSAGE_DEFINITION(U2G_ReadAnimationFile, 1)
@@ -213,6 +218,14 @@ END_MESSAGE_DEFINITION(U2G_StartFaceTracking)
 // StopFaceTracking
 START_MESSAGE_DEFINITION(U2G_StopFaceTracking, 1)
 END_MESSAGE_DEFINITION(U2G_StopFaceTracking)
+
+// StartLookingForMarkers
+START_MESSAGE_DEFINITION(U2G_StartLookingForMarkers, 1)
+END_MESSAGE_DEFINITION(U2G_StartLookingForMarkers)
+
+// StopLookingForMarkers
+START_MESSAGE_DEFINITION(U2G_StopLookingForMarkers, 1)
+END_MESSAGE_DEFINITION(U2G_StopLookingForMarkers)
 
 // SetFaceDetectParams
 START_MESSAGE_DEFINITION(U2G_SetFaceDetectParams, 1)

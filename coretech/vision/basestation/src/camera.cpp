@@ -392,8 +392,9 @@ namespace Anki {
       _occluderList.Clear();
     }
     
-    
-    void Camera::AddOccluder(const ObservableObject& object)
+    void Camera::ProjectObject(const ObservableObject&  object,
+                               std::vector<Point2f>&    projectedCorners,
+                               f32&                     distanceFromCamera) const
     {
       Pose3d objectPoseWrtCamera;
       if(object.GetPose().GetWithRespectTo(_pose, objectPoseWrtCamera) == false) {
@@ -401,15 +402,29 @@ namespace Anki {
                           "Object must be in the same pose tree as the camera to add it as an occluder.\n");
       } else {
         std::vector<Point3f> cornersAtPose;
-        std::vector<Point2f> projectedCorners;
         
         // Project the objects's corners into the image and create an occluding
         // bounding rectangle from that
         object.GetCorners(objectPoseWrtCamera, cornersAtPose);
         Project3dPoints(cornersAtPose, projectedCorners);
-        
-        _occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.GetTranslation().z());
+        distanceFromCamera = objectPoseWrtCamera.GetTranslation().z();
       }
+    } // ProjectObject()
+    
+    void Camera::AddOccluder(const std::vector<Point2f>& projectedPoints,
+                             const f32 atDistance)
+    {
+      _occluderList.AddOccluder(projectedPoints, atDistance);
+    }
+    
+    void Camera::AddOccluder(const ObservableObject& object)
+    {
+      
+      std::vector<Point2f> projectedCorners;
+      f32 atDistance;
+      ProjectObject(object, projectedCorners, atDistance);
+      AddOccluder(projectedCorners, atDistance);
+      
     } // AddOccluder(ObservableObject)
     
     
