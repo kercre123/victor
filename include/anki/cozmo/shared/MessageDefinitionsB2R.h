@@ -250,6 +250,15 @@ ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
 ADD_MESSAGE_MEMBER(u8,  isApproximate)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
 
+// FaceDetection
+START_MESSAGE_DEFINITION(FaceDetection, 1)
+ADD_MESSAGE_MEMBER(u16, x_upperLeft)
+ADD_MESSAGE_MEMBER(u16, y_upperLeft)
+ADD_MESSAGE_MEMBER(u16, width)
+ADD_MESSAGE_MEMBER(u16, height)
+ADD_MESSAGE_MEMBER(u8, visualize)
+END_MESSAGE_DEFINITION(FaceDetection)
+
 // SetFaceDetectParams
 START_MESSAGE_DEFINITION(SetFaceDetectParams, 1)
 ADD_MESSAGE_MEMBER(f32, scaleFactor)

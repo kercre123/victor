@@ -174,6 +174,10 @@ DEF DoubleBlock Block2x1 {
   shortSideMarker "symbols/inverted/bangBangBang.png"  
 }
 
+Face {
+  translation -0.10613 -0.310172 0.17
+}
+
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
   usbChannel 10

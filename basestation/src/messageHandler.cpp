@@ -162,6 +162,7 @@ namespace Anki {
       return retVal;
     } // ProcessMessage(MessageVisionMarker)
     
+    /*
     Result MessageHandler::ProcessMessage(Robot* robot, const MessageFaceDetection& msg)
     {
       Result retVal = RESULT_OK;
@@ -187,7 +188,7 @@ namespace Anki {
       
       return retVal;
     } // ProcessMessage(MessageFaceDetection)
-  
+    */
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessageCameraCalibration const& msg)
     {

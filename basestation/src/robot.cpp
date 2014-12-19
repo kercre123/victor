@@ -517,6 +517,8 @@ namespace Anki {
                                                        right_x, bottom_y,
                                                        left_x, bottom_y);
           }
+          
+          _msgHandler->SendMessage(_ID, faceDetection);
         }
         
         MessageTrackerQuad trackerQuad;
@@ -1761,16 +1763,16 @@ namespace Anki {
     
     Result Robot::StartFaceTracking(u8 timeout_sec)
     {
-      //return SendStartFaceTracking(timeout_sec);
+      Result lastResult = SendStartFaceTracking(timeout_sec);
       _visionProcessor.EnableFaceDetection(true);
-      return RESULT_OK;
+      return lastResult;
     }
     
     Result Robot::StopFaceTracking()
     {
-      //return SendStopFaceTracking();
+      Result lastResult = SendStopFaceTracking();
       _visionProcessor.EnableFaceDetection(false);
-      return RESULT_OK;
+      return lastResult;
     }
     
     Result Robot::SendStartFaceTracking(const u8 timeout_sec)
