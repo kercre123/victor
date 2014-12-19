@@ -88,4 +88,6 @@
 
 -(void)sendEnableFaceTracking:(BOOL)enable;
 
+- (void)sendAnimationWithName:(NSString*)animationName;
+
 @end
