@@ -11,6 +11,7 @@
 #import "CozmoOperator.h"
 #import "CozmoObsObjectBBox.h"
 
+#import "RobotAnimationSelectTableViewController.h"
 #import "VerticalSliderView.h"
 #import "VirtualDirectionPadView.h"
 #import "ObservedObjectSelector.h"
@@ -66,7 +67,7 @@
     NSNumber *objectID = [self.obsObjSelector checkForSelectedObject:normalizedPoint];
     if(objectID) {
       // Send message
-      NSLog(@"Selected Object %d\n", objectID.integerValue);
+      NSLog(@"Selected Object %d\n", objectID.intValue);
       [self._operator sendPickOrPlaceObject:objectID];
     }
   }];
@@ -213,6 +214,22 @@
   [self dismissViewControllerAnimated:YES completion:^{
 
   }];
+}
+
+- (IBAction)handleAnimationListButtonPress:(id)sender
+{
+  RobotAnimationSelectTableViewController* vc = [RobotAnimationSelectTableViewController new];
+  __weak typeof(self) weakSelf = self;
+  __weak typeof(vc) weakVC = vc;
+  [vc setDidSelectAnimationAction:^(NSString *name) {
+    [weakVC dismissViewControllerAnimated:YES completion:^{
+      [weakSelf._operator sendAnimationWithName:name];
+    }];
+//    [self.navigationController popToViewController:self animated:YES];
+
+  }];
+  [self presentViewController:vc animated:YES completion:nil];
+//  [self.navigationController pushViewController:vc animated:YES];
 }
 
 

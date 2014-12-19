@@ -88,6 +88,15 @@
                                 <rect key="frame" x="492" y="175" width="44" height="250"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                             </view>
+                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AUJ-rk-lnJ">
+                                <rect key="frame" x="486" y="144" width="98" height="30"/>
+                                <state key="normal" title="Animation List">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="handleAnimationListButtonPress:" destination="1Is-1K-7FL" eventType="touchUpInside" id="ouP-l8-Fdk"/>
+                                </connections>
+                            </button>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="DetectFaces" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="DO4-ki-8nA">
                                 <rect key="frame" x="430" y="430" width="97" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
@@ -110,9 +119,11 @@
                             <constraint firstAttribute="trailingMargin" secondItem="z7F-bg-DfJ" secondAttribute="trailing" id="7Hu-16-l5Z"/>
                             <constraint firstItem="DO4-ki-8nA" firstAttribute="centerY" secondItem="YnB-K5-UFp" secondAttribute="centerY" id="AHJ-Ga-3pE"/>
                             <constraint firstItem="mzl-d4-jZE" firstAttribute="height" secondItem="7x5-1z-bLs" secondAttribute="height" id="DyE-wq-25g"/>
+                            <constraint firstItem="AUJ-rk-lnJ" firstAttribute="trailing" secondItem="TO3-6b-lFW" secondAttribute="trailingMargin" id="EB2-NR-omq"/>
                             <constraint firstItem="mzl-d4-jZE" firstAttribute="width" secondItem="7x5-1z-bLs" secondAttribute="width" id="Jwy-By-g7j"/>
                             <constraint firstItem="YnB-K5-UFp" firstAttribute="leading" secondItem="DO4-ki-8nA" secondAttribute="trailing" constant="8" id="NKz-ty-cjs"/>
                             <constraint firstItem="oTd-RL-SJf" firstAttribute="top" secondItem="z7F-bg-DfJ" secondAttribute="bottom" id="PSF-ni-O0y"/>
+                            <constraint firstItem="mzl-d4-jZE" firstAttribute="top" secondItem="AUJ-rk-lnJ" secondAttribute="bottom" id="SSP-7p-Epp"/>
                             <constraint firstAttribute="centerY" secondItem="7x5-1z-bLs" secondAttribute="centerY" id="XVV-Vd-Kcu"/>
                             <constraint firstItem="YnB-K5-UFp" firstAttribute="top" secondItem="7x5-1z-bLs" secondAttribute="bottom" id="anB-fl-Zky"/>
                             <constraint firstItem="oTd-RL-SJf" firstAttribute="top" secondItem="2QR-EP-Ma6" secondAttribute="bottom" id="awM-7U-Xci"/>
