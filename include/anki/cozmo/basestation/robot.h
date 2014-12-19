@@ -324,7 +324,8 @@ namespace Anki {
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
       
-      Result RequestImage(const ImageSendMode_t mode) const;
+      Result RequestImage(const ImageSendMode_t mode,
+                          const Vision::CameraResolution resolution) const;
       
       Result RequestIMU(const u32 length_ms) const;
 
@@ -585,7 +586,8 @@ namespace Anki {
       Result SendHeadAngleUpdate() const;
       
       // Request camera snapshot from robot
-      Result SendImageRequest(const ImageSendMode_t mode) const;
+      Result SendImageRequest(const ImageSendMode_t mode,
+                              const Vision::CameraResolution resolution) const;
       
       // Request imu log from robot
       Result SendIMURequest(const u32 length_ms) const;

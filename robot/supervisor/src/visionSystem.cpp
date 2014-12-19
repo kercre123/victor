@@ -2521,7 +2521,7 @@ namespace Anki {
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
                               captureResolution_, false);
           
-          SetImageSendMode(ISM_STREAM, captureResolution_);
+          //SetImageSendMode(ISM_STREAM, captureResolution_);
           
 #if USE_COMPRESSION_FOR_SENDING_IMAGES
           CompressAndSendImage(grayscaleImage);
