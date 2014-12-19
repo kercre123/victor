@@ -97,7 +97,7 @@ namespace Anki {
       
       std::string _rootDir;
       
-      SoundSchemeID_t _currScheme = SOUND_SCHEME_COZMO;
+      SoundSchemeID_t _currScheme = SOUND_SCHEME_CREEP;
       
     }; // class SoundManager
     

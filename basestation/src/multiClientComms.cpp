@@ -93,7 +93,7 @@ namespace Cozmo {
     if (it != connectedDevices_.end()) {
       
       // Wrap message in header/footer
-      char sendBuf[128];
+      char sendBuf[512]; // TODO: probaly larger than we need (b/c we are sending long strings)
       int sendBufLen = 0;
 
       bool isTCP = it->second.protocol == Anki::Comms::TCP;
