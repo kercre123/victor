@@ -116,22 +116,7 @@
 
 - (void)dealloc
 {
-#ifdef __cplusplus
-  if(_uiComms) {
-    delete _uiComms;
-    _uiComms = nil;
-  }
-  
-  if(_robotComms) {
-    delete _robotComms;
-    _robotComms = nil;
-  }
-  
-  if(_basestation) {
-    delete _basestation;
-    _basestation = nil;
-  }
-#endif
+  [self stopCommsAndBasestation];
 }
 
 
@@ -320,6 +305,7 @@
   }
 
   if(_basestation) {
+    _basestation->UnInit();
     delete _basestation;
     _basestation = nil;
   }
