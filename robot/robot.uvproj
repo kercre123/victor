@@ -859,11 +859,6 @@
               <FilePath>..\coretech\common\robot\src\interpolate.cpp</FilePath>
             </File>
             <File>
-              <FileName>matlabConverters.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\matlabConverters.cpp</FilePath>
-            </File>
-            <File>
               <FileName>matlabInterface.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\matlabInterface.cpp</FilePath>
@@ -922,6 +917,11 @@
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>matlabConverters.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\matlabConverters.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -2094,11 +2094,6 @@
               <FilePath>..\coretech\common\robot\src\interpolate.cpp</FilePath>
             </File>
             <File>
-              <FileName>matlabConverters.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\matlabConverters.cpp</FilePath>
-            </File>
-            <File>
               <FileName>matlabInterface.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\matlabInterface.cpp</FilePath>
@@ -2157,6 +2152,11 @@
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>matlabConverters.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\matlabConverters.cpp</FilePath>
             </File>
           </Files>
         </Group>
