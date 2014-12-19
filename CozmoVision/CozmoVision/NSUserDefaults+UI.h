@@ -20,4 +20,7 @@
 + (BOOL)autoConnectRobot;
 + (void)setAutoConnectRobot:(BOOL)autoConnect;
 
++ (BOOL)cameraIsHighResolution;
++ (void)setCameraIsHighResolution:(BOOL)isHighResolution;
+
 @end
