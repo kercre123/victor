@@ -25,15 +25,13 @@
 
 @property (strong, nonatomic) UITapGestureRecognizer* tapGesture;
 
-// Bookkeeping data
-//@property (readwrite, nonatomic) CGPoint centerPoint;
-//@property (readwrite, nonatomic) CGFloat backgroundRadius;
-//@property (readwrite, nonatomic) CGFloat boundsRadius;
-@property (readwrite, nonatomic) CGPoint lastPoint;
-
 // View objects
 @property (strong, nonatomic) UIView* joystickView;
 @property (strong, nonatomic) UIView* thumbPuckView;
+
+
+@property (assign, nonatomic) CGFloat _previousAngle;
+@property (assign, nonatomic) CGFloat _previousMagnitude;
 
 @end
 
@@ -75,6 +73,8 @@
   self.backgroundColor = [UIColor clearColor];
   self.magnitudeRadius = kDefaultMagnitudeRadius;
   self.thumbPuckRadius = kDefaultPuckRadius;
+  self.angleThreshold = kDefaultAngleThreshold;
+  self.magnitudeThreshold = kDefaultMagnitudeThreshold;
 
   // Create Background view
   self.joystickView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, self.magnitudeRadius, self.magnitudeRadius)];
@@ -107,8 +107,6 @@
   rightArrow.transform = CGAffineTransformMakeRotation(M_PI);
   rightArrow.translatesAutoresizingMaskIntoConstraints = NO;
   [self.joystickView addSubview:rightArrow];
-
-//  [self bringSubviewToFront:self.thumbPuckView];
 
   // Layout out Arrow IVs using Constraints
   CGFloat arrowMargin = 4.0;
@@ -191,6 +189,11 @@
       self.joystickView.center = superViewPoint;
       self.thumbPuckView.center = superViewPoint;
       [self showJoystickView:YES animated:YES];
+      self._previousAngle = 0.0;
+      self._previousMagnitude = 0.0;
+//      [self updateJoystickPositionWithPoint:point];
+//      self._previousAngle = self.angleInDegrees;
+//      self._previousMagnitude = self.magnitude;
       self.isActivelyControlling = YES;
     }
       break;
@@ -205,9 +208,6 @@
     case UIGestureRecognizerStateCancelled:
     case UIGestureRecognizerStateFailed:
     {
-//      _thumbPuckView.center = self.centerPoint;
-//      [self updateJoystickPositionWithPoint:self.centerPoint];
-
       // TODO: TEMP Solution to Stop robot
       self.angleInDegrees = 0.0;
       self.magnitude = 0.0;
@@ -277,10 +277,13 @@
   CGFloat angleInRads = atan2f(-pointY, pointX);
   _angleInDegrees = angleInRads * oneEightyOverPi;
 
-//  float xyAngle = fabsf(atanf(-point.y / point.x));
-//  xyAngle *= oneEightyOverPi;
-//  NSLog(@"Joystick Ang atan2 %f  atan %f Mag %f", self.angleInDegrees, xyAngle, self.magnitude);
-
+  if (ABS(__previousAngle - _angleInDegrees) > _angleThreshold || ABS(__previousMagnitude - _magnitude) > _magnitudeThreshold) {
+    __previousAngle = _angleInDegrees;
+    __previousMagnitude = _magnitude;
+    if (self.joystickMovementAction) {
+      self.joystickMovementAction(_angleInDegrees, _magnitude);
+    }
+  }
 }
 
 - (void)calculateWheelSpeeds:(CGPoint)point

@@ -38,6 +38,8 @@
 @property (weak, nonatomic) IBOutlet UIImageView *targetHitImageView;
 
 @property (assign, nonatomic) Float32 markerIntensity;
+@property (assign, nonatomic) float markerType;
+
 @property (weak, nonatomic) CozmoOperator* _operator;
 @end
 
@@ -112,7 +114,7 @@
 {
   CABasicAnimation* animation = [CABasicAnimation animationWithKeyPath:@"transform"];
   animation.fromValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.0, 1.0, 1.0)];
-  animation.toValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.05, 1.05, 1.0)];
+  animation.toValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.1, 1.1, 1.0)];
   animation.duration = 0.1;
   [animation setFillMode:kCAFillModeRemoved];
 
@@ -121,24 +123,23 @@
 
 - (void)animateTargetHit
 {
-
+  // Delay explostion
   dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.22 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+  // Transform
   CABasicAnimation* animationTransform = [CABasicAnimation animationWithKeyPath:@"transform"];
   animationTransform.fromValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(0.20, 0.20, 1.0)];
   animationTransform.toValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.0, 1.0, 1.0)];
   animationTransform.duration = 0.2;
   [animationTransform setFillMode:kCAFillModeRemoved];
 
-
   CABasicAnimation* animationOpacity = [CABasicAnimation animationWithKeyPath:@"opacity"];
   animationOpacity.fromValue = @1.0;
   animationOpacity.toValue = @0.0;
-  animationOpacity.duration = 0.5;
+  animationOpacity.duration = 0.4;
   [animationOpacity setFillMode:kCAFillModeRemoved];
 
   [self.targetHitImageView.layer addAnimation:animationTransform forKey:@"transfrom"];
   [self.targetHitImageView.layer addAnimation:animationOpacity forKey:@"opacity"];
-
   });
 }
 
@@ -173,7 +174,6 @@
 
     // Detection rectangle is red and label says "No Marker" unless we find a
     // vision marker below
-//    detectionRectColor = {0,0,255,255};
     Cozmo::MessageVisionMarker msg;
     float closestDistance = 100000.0;
     BOOL markerDetected = NO;
@@ -187,6 +187,7 @@
       if (currentDistance < closestDistance) {
         closestDistance = currentDistance;
         markerDetected = YES;
+        self.markerType = msg.markerType;
       }
     }
 
