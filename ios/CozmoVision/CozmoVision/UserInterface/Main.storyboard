@@ -53,6 +53,11 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Games" id="L1d-HW-A34">
+                        <barButtonItem key="leftBarButtonItem" title="Animations" id="1ka-df-1tb">
+                            <connections>
+                                <action selector="handleAnimationButtonPress:" destination="alu-Be-WEk" id="Gun-82-sn7"/>
+                            </connections>
+                        </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" title="Basestation State" id="sz0-FT-IXY"/>
                     </navigationItem>
                     <connections>
@@ -215,9 +220,17 @@
                                     <action selector="handleExitButtonPress:" destination="c20-tN-G1a" eventType="touchUpInside" id="nOR-hH-CAq"/>
                                 </connections>
                             </button>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Explosion" translatesAutoresizingMaskIntoConstraints="NO" id="9g2-xB-co0">
+                                <rect key="frame" x="255" y="255" width="90" height="90"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="90" id="0MX-4l-Cao"/>
+                                    <constraint firstAttribute="height" constant="90" id="yTg-rb-Mjd"/>
+                                </constraints>
+                            </imageView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
+                            <constraint firstAttribute="centerY" secondItem="9g2-xB-co0" secondAttribute="centerY" id="A95-SV-Ob0"/>
                             <constraint firstAttribute="centerY" secondItem="acs-Oh-rvx" secondAttribute="centerY" id="DII-2D-2qy"/>
                             <constraint firstAttribute="bottomMargin" secondItem="bCj-tu-47g" secondAttribute="bottom" id="Jjl-ZK-ORC"/>
                             <constraint firstItem="y8D-99-GQm" firstAttribute="leading" secondItem="0xr-eg-Gte" secondAttribute="leadingMargin" id="MrE-tU-cpT"/>
@@ -225,6 +238,7 @@
                             <constraint firstItem="bCj-tu-47g" firstAttribute="top" secondItem="0xr-eg-Gte" secondAttribute="topMargin" id="RBv-aH-OGC"/>
                             <constraint firstAttribute="centerY" secondItem="uZd-6g-KD2" secondAttribute="centerY" id="Rsk-VA-2ee"/>
                             <constraint firstAttribute="centerX" secondItem="acs-Oh-rvx" secondAttribute="centerX" id="SUv-LY-aF1"/>
+                            <constraint firstAttribute="centerX" secondItem="9g2-xB-co0" secondAttribute="centerX" id="eSq-wE-eia"/>
                             <constraint firstAttribute="centerX" secondItem="uZd-6g-KD2" secondAttribute="centerX" id="gdk-Mn-ffz"/>
                             <constraint firstAttribute="trailingMargin" secondItem="bCj-tu-47g" secondAttribute="trailing" id="l4I-45-rDr"/>
                             <constraint firstAttribute="centerY" secondItem="I2i-bp-ep5" secondAttribute="centerY" id="nCe-OH-vbr"/>
@@ -237,6 +251,7 @@
                         <outlet property="cameraView" destination="acs-Oh-rvx" id="JBV-8b-7dZ"/>
                         <outlet property="crosshairTopImageView" destination="uZd-6g-KD2" id="Egv-W1-z5b"/>
                         <outlet property="crosshairsImageView" destination="I2i-bp-ep5" id="BFi-kJ-I8n"/>
+                        <outlet property="targetHitImageView" destination="9g2-xB-co0" id="1Pl-a6-dQm"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="rht-Hi-ew7" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -419,6 +434,7 @@
     </scenes>
     <resources>
         <image name="Crosshairs" width="200" height="200"/>
+        <image name="Explosion" width="90" height="90"/>
         <image name="GameIcon" width="30" height="30"/>
         <image name="SettingsIcon" width="30" height="30"/>
     </resources>

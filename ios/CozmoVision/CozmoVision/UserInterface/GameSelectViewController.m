@@ -9,6 +9,8 @@
 #import "GameSelectViewController.h"
 #import "CozmoBasestation.h"
 #import "CozmoBasestation+UI.h"
+#import "CozmoOperator.h"
+#import "RobotAnimationSelectTableViewController.h"
 
 
 @interface GameSelectViewController ()
@@ -53,6 +55,18 @@
       [self.basestationStateBarItem setTitle:[self._basestation basestationStateString]];
     }
   }
+}
+
+
+#pragma mark - Action Mehothds
+
+- (IBAction)handleAnimationButtonPress:(id)sender
+{
+  RobotAnimationSelectTableViewController *vc = [RobotAnimationSelectTableViewController new];
+  [vc setDidSelectAnimationAction:^(NSString *name) {
+    [[[CozmoBasestation defaultBasestation] cozmoOperator] sendAnimationWithName:name];
+  }];
+  [self.navigationController pushViewController:vc animated:YES];
 }
 
 @end

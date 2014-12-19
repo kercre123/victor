@@ -73,6 +73,8 @@ const NSString* kCellReuseIdentifier = @"kCellReuseIdentifier";
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+  [tableView deselectRowAtIndexPath:indexPath animated:YES];
+  
   if (self.didSelectAnimationAction) {
     NSString* selectedTitle = _animationTitles[indexPath.row];
     self.didSelectAnimationAction(selectedTitle);

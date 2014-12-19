@@ -481,6 +481,8 @@
   // Update the basestation itself (should the basestation tell the comms to update?)
   _basestation->Update(SEC_TO_NANOS(timestamp));
 
+  [_cozmoOperator update];
+
   // Call all listeners
   [self._heartbeatListeners makeObjectsPerformSelector:@selector(cozmoBasestationHearbeat:) withObject:self];
 }

@@ -60,6 +60,10 @@
   
   [self.view insertSubview:self.dPadView aboveSubview:self.cozmoVisionImageView];
 
+  [self.dPadView setJoystickMovementAction:^(CGFloat angle, CGFloat magnitude) {
+    [self._operator sendWheelCommandWithAngleInDegrees:angle magnitude:magnitude];
+  }];
+
   [self.dPadView setDoubleTapAction:^(UIGestureRecognizer *gesture) {
     CGPoint point = [gesture locationInView:self.cozmoVisionImageView];
     CGPoint normalizedPoint = CGPointMake(point.x / self.dPadView.bounds.size.width,
@@ -162,7 +166,7 @@
 
       for(CozmoObsObjectBBox *object in objectBBoxes)
       {
-        NSString* label = [NSString stringWithFormat:@"%d", object.objectID];
+        NSString* label = [NSString stringWithFormat:@"%ld", object.objectID];
 
         [label drawInRect:CGRectIntegral(object.boundingBox) withAttributes:attributes];
         
@@ -186,23 +190,14 @@
     
     self.cozmoVisionImageView.image = updatedFrame;
   }
-
-  [self._operator update];
-  
-  // TODO: TEMP Solution to driving robot
-//  [self._operator sendWheelCommandWithLeftSpeed:self.dPadView.leftWheelSpeed_mmps right:self.dPadView.rightWheelSpeed_mmps];
-
   static BOOL wasActivelyControlling = NO;
   if(self.dPadView.isActivelyControlling)
   {
-    [self._operator sendWheelCommandWithAngleInDegrees:self.dPadView.angleInDegrees magnitude:self.dPadView.magnitude];
     wasActivelyControlling = YES;
   } else if(wasActivelyControlling) {
     [self._operator sendStopAllMotorsCommand];
     wasActivelyControlling = NO;
   }
-  
-  //[self._operator sendPickUpObject:]
 }
 
 
