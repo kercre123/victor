@@ -175,11 +175,27 @@ namespace Anki {
       void SendStopFaceTracking();
       void SendFaceDetectParams();
       
+      
+      // ======== Message handler callbacks =======
+      void ProcessMessageObjectVisionMarker(RobotID_t id, MessageG2U_ObjectVisionMarker const& msg)
+      {
+        // TODO: Do something with this message to notify UI
+        printf("RECEIVED OBJECT VISION MARKER: objectID %d\n", msg.objectID);
+      }
+
+      
+      // ===== End of message handler callbacks ====
+      
+      
       void Init()
       {
         memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
         
         msgHandler_.Init(&gameComms_);
+        
+        // Register callbacks for incoming messages from game
+        msgHandler_.RegisterCallbackForMessageG2U_ObjectVisionMarker(ProcessMessageObjectVisionMarker);
+        
         
         inputController.keyboardEnable(BS_TIME_STEP);
         

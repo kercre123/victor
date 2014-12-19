@@ -58,11 +58,15 @@ namespace Cozmo {
     
     // As long as there are messages available from the comms object,
     // process them and pass them along to robots.
+    // Returns RESULT_FAIL if no handler callback was registered for one or more of the received messages.
     virtual Result ProcessMessages();
     
     // Send a message to a specified ID
     Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg);
     
+    // Declare registration functions for message handling callbacks
+    #define MESSAGE_DEFINITION_MODE MESSAGE_UI_REG_CALLBACK_METHODS_MODE
+    #include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsG2U.h"    
     
   protected:
     
@@ -71,7 +75,8 @@ namespace Cozmo {
     bool isInitialized_;
     
     // Process a raw byte buffer as a message and send it to the specified
-    // robot
+    // robot.
+    // Returns RESULT_FAIL if no handler callback was registered for this message.
     Result ProcessPacket(const Comms::MsgPacket& packet);
     
     // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
@@ -84,7 +89,7 @@ namespace Cozmo {
     struct {
       u8 priority;
       u8 size;
-      Result (GameMessageHandler::*ProcessPacketAs)(RobotID_t id, const u8*);
+      Result (GameMessageHandler::*ProcessPacketAs)(RobotID_t id, const u8* );
     } lookupTable_[NUM_UI_MSG_IDS+1] = {
       {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
       
@@ -95,7 +100,7 @@ namespace Cozmo {
 #define MESSAGE_HANDLER_CLASSNAME GameMessageHandler
 #include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsG2U.h"
 #undef MESSAGE_HANDLER_CLASSNAME
-      
+
       {0, 0, 0} // Final dummy entry without comma at end
     };
     

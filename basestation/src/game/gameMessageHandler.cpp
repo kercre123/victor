@@ -102,15 +102,5 @@ namespace Cozmo {
         return retVal;
       } // ProcessMessages()
       
-      
-      Result GameMessageHandler::ProcessMessage(RobotID_t id, MessageG2U_ObjectVisionMarker const& msg)
-      {
-        // TODO: Do something with this message to notify UI
-        printf("RECEIVED OBJECT VISION MARKER: objectID %d\n", msg.objectID);
-        
-        return RESULT_OK;
-      }
-
-  
 } // namespace Cozmo
 } // namepsace Anki
