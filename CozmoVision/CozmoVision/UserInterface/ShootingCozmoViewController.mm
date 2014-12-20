@@ -39,7 +39,8 @@
 @property (weak, nonatomic) IBOutlet UILabel     *pointsLabel;
 
 @property (assign, nonatomic) Float32 markerIntensity;
-@property (assign, nonatomic) float markerType;
+@property (assign, nonatomic) int markerType;
+@property (assign, nonatomic) Float32 markerSize;
 
 @property (assign, nonatomic) int points;
 
@@ -178,23 +179,38 @@
     // Detection rectangle is red and label says "No Marker" unless we find a
     // vision marker below
     Cozmo::MessageVisionMarker msg;
-    float closestDistance = 100000.0;
-    BOOL markerDetected = NO;
+    float markerDistanceFromCenter = 100000.0;
+    BOOL markerInCrosshairs = NO;
     while(true == _visionThread->CheckMailbox(msg)) {
 
-      Float32 xCenter = (msg.x_imgLowerLeft + msg.x_imgLowerRight + msg.x_imgUpperLeft + msg.x_imgUpperRight) * 0.25;
-      Float32 yCenter = (msg.y_imgLowerLeft + msg.y_imgLowerRight + msg.y_imgUpperLeft + msg.y_imgUpperRight) * 0.25;
-      Float32 xDistance = xCenter - 160.0;
-      Float32 yDistance = yCenter - 120.0;
-      Float32 currentDistance = sqrt(xDistance * xDistance + yDistance * yDistance);
-      if (currentDistance < closestDistance) {
-        closestDistance = currentDistance;
-        markerDetected = YES;
+      Float32 xMin = min(min(msg.x_imgLowerLeft, msg.x_imgLowerRight),
+                         min(msg.x_imgUpperLeft, msg.x_imgUpperRight));
+      Float32 yMin = min(min(msg.y_imgLowerLeft, msg.y_imgLowerRight),
+                         min(msg.y_imgUpperLeft, msg.y_imgUpperRight));
+      
+      Float32 xMax = max(max(msg.x_imgLowerLeft, msg.x_imgLowerRight),
+                         max(msg.x_imgUpperLeft, msg.x_imgUpperRight));
+      Float32 yMax = max(max(msg.y_imgLowerLeft, msg.y_imgLowerRight),
+                         max(msg.y_imgUpperLeft, msg.y_imgUpperRight));
+      
+      
+      CGRect marker = CGRectMake(xMin, yMin, xMax-xMin, yMax-yMin);
+      
+      // See if the crosshairs at center of image is within the marker's
+      // bounding box
+      markerInCrosshairs =  CGRectContainsPoint(marker, CGPointMake(160,120));
+      if(markerInCrosshairs) {
         self.markerType = msg.markerType;
+        self.markerSize = CGRectGetHeight(marker) * CGRectGetWidth(marker);
+        
+        Float32 xDistance = CGRectGetMidX(marker) - 160.0;
+        Float32 yDistance = CGRectGetMidY(marker) - 120.0;
+        markerDistanceFromCenter = sqrt(xDistance * xDistance + yDistance * yDistance);
+        break;
       }
     }
 
-    [self updateCrosshairsWithMarkerDetected:markerDetected distance:closestDistance];
+    [self updateCrosshairsWithMarkerDetected:markerInCrosshairs distance:markerDistanceFromCenter];
 
     // Process image within the detection rectangle with vision processing thread:
     static const Cozmo::MessageRobotState bogusState; // req'd by API, but not really necessary for marker detection
@@ -235,16 +251,20 @@
 - (void)handleTapGesture:(UITapGestureRecognizer*)gesture
 {
   if (self.markerIntensity > 0.5) {
+    Float32 pointsMultiplier = 1.0;
     if(self.markerType == Anki::Vision::MARKER_SPIDER) {
       // Special animation for spider
       [self._operator sendAnimationWithName:@"ANIM_GOT_SHOT2"];
-      self.points += 50;
+      pointsMultiplier = 100.0;
     } else {
       [self._operator sendAnimationWithName:@"ANIM_GOT_SHOT"];
-      self.points += 10;
+      pointsMultiplier = 25;
     }
     [self animateTargetHit];
 
+    // Get points based on size (if you hit a larger marker, you get fewer points
+    // because it's easier)
+    self.points += pointsMultiplier*(1.0 - self.markerSize / (320*240));
     self.pointsLabel.text = [NSString stringWithFormat:@"Points: %d", self.points];
   }
   [[SoundCoordinator defaultCoordinator] playSoundWithFilename:@"laser/LaserFire.wav" volume:0.5];
