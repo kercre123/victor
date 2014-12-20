@@ -36,9 +36,12 @@
 @property (weak, nonatomic) IBOutlet UIImageView *crosshairsImageView;
 @property (weak, nonatomic) IBOutlet UIImageView *crosshairTopImageView;
 @property (weak, nonatomic) IBOutlet UIImageView *targetHitImageView;
+@property (weak, nonatomic) IBOutlet UILabel     *pointsLabel;
 
 @property (assign, nonatomic) Float32 markerIntensity;
 @property (assign, nonatomic) float markerType;
+
+@property (assign, nonatomic) int points;
 
 @property (weak, nonatomic) CozmoOperator* _operator;
 @end
@@ -232,8 +235,17 @@
 - (void)handleTapGesture:(UITapGestureRecognizer*)gesture
 {
   if (self.markerIntensity > 0.5) {
-    [self._operator sendAnimationWithName:@"ANIM_GOT_SHOT"];
+    if(self.markerType == Anki::Vision::MARKER_SPIDER) {
+      // Special animation for spider
+      [self._operator sendAnimationWithName:@"ANIM_GOT_SHOT2"];
+      self.points += 50;
+    } else {
+      [self._operator sendAnimationWithName:@"ANIM_GOT_SHOT"];
+      self.points += 10;
+    }
     [self animateTargetHit];
+
+    self.pointsLabel.text = [NSString stringWithFormat:@"Points: %d", self.points];
   }
   [[SoundCoordinator defaultCoordinator] playSoundWithFilename:@"laser/LaserFire.wav" volume:0.5];
   [self.bulletOverlayView fireLaserButtlet];
