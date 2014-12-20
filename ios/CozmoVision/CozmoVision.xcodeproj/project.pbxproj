@@ -595,7 +595,10 @@
 					"\"$(SRCROOT)/../../../coretech-external/build/opencv-ios/**\"",
 					"\"$(PROJECT_DIR)/CozmoVision\"",
 				);
-				GCC_PREPROCESSOR_DEFINITIONS = "ANKICORETECH_USE_OPENCV=1";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"ANKICORETECH_USE_OPENCV=1",
+					"COZMO_BASESTATION=1",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -628,7 +631,10 @@
 					"\"$(SRCROOT)/../../../coretech-external/build/opencv-ios/**\"",
 					"\"$(PROJECT_DIR)/CozmoVision\"",
 				);
-				GCC_PREPROCESSOR_DEFINITIONS = "ANKICORETECH_USE_OPENCV=1";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"ANKICORETECH_USE_OPENCV=1",
+					"COZMO_BASESTATION=1",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
