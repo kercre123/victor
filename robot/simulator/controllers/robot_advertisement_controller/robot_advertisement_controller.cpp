@@ -24,7 +24,7 @@
 // Physical wifi robots do not yet register/deregister with advertising service so just
 // hard-coding its connection
 #define FORCE_ADD_ROBOT 0
-const u8 forcedRobotId = 34;
+const u8 forcedRobotId = 1;
 const char* forcedRobotIP = "192.168.3.34";
 
 const int ADVERTISEMENT_TIME_STEP_MS = 60;
@@ -58,7 +58,8 @@ int main(int argc, char **argv)
   forcedRegistrationMsg.id = forcedRobotId;
   forcedRegistrationMsg.port = ROBOT_RADIO_BASE_PORT;
   forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
-  snprintf(forcedRegistrationMsg, sizeof(forcedRegistrationMsg.ip), "%s", forcedRobotIP);
+  snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", forcedRobotIP);
+  forcedRegistrationMsg.enableAdvertisement = 1;
   
   robotAdService.ProcessRegistrationMsg(forcedRegistrationMsg);
 #endif
