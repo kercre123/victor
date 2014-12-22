@@ -60,7 +60,7 @@ namespace Anki {
         // This is needed on the basestation side to properly order messages.
 
         // Send header and message content - return false if message was discarded (full buffer)
-        const u8 size = Messages::GetSize(msgID);
+        const u32 size = Messages::GetSize(msgID);
         return UARTPutMessage(msgID, (u8*)buffer, size);
 #else
         return true;
