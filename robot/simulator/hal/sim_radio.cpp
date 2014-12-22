@@ -130,7 +130,7 @@ namespace Anki {
 
       
       // Fill in advertisement registration message
-      regMsg.id = (u8)HAL::GetRobotID();
+      regMsg.id = (u8)HAL::GetIDCard()->esn;
       regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.id;
       regMsg.protocol = (USE_UDP_ROBOT_COMMS == 1) ? Anki::Comms::UDP : Anki::Comms::TCP;
       memcpy(regMsg.ip, HAL::GetLocalIP(), sizeof(regMsg.ip));

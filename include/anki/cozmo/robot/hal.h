@@ -197,8 +197,6 @@ namespace Anki
       bool IsInitialized();
       void UpdateDisplay();
 
-      s32 GetRobotID(void);
-
       // Take a step (needed for webots only)
       Result Step(void);
 

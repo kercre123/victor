@@ -194,14 +194,6 @@ namespace Anki {
     {
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
       
-      // ID card info
-      idCard_.esn = 0;
-      idCard_.modelNumber = 0;
-      idCard_.lotCode = 0;
-      idCard_.birthday = 0;
-      idCard_.hwVersion = 0;
-
-      
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
       rightWheelMotor_ = webotRobot_.getMotor("RightWheelMotor");
       
@@ -239,6 +231,14 @@ namespace Anki {
         PRINT("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
         return RESULT_FAIL;
       }
+      
+      // ID card info
+      idCard_.esn = robotID_;
+      idCard_.modelNumber = 0;
+      idCard_.lotCode = 0;
+      idCard_.birthday = 0;
+      idCard_.hwVersion = 0;
+      
       
       //Set the motors to velocity mode
       headMotor_->setPosition(WEBOTS_INFINITY);
@@ -767,11 +767,6 @@ namespace Anki {
     {
       timeStamp_ = t;
     };
-    
-    s32 HAL::GetRobotID(void)
-    {
-      return robotID_;
-    }
     
     void HAL::SetLED(LEDId led_id, u32 color) {
       if (leds_[led_id]) {

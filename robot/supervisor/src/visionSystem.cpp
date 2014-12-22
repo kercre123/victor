@@ -314,6 +314,7 @@ namespace Anki {
         static void SetDetectionReadyTime() { }
         static void SetTrackingReadyTime() { }
         static void SetFaceDetectionReadyTime() {}
+        static void SetSendWifiImageReadyTime() {}
 #endif
       } // namespace Simulator
 
