@@ -39,8 +39,8 @@ namespace Anki {
       void DetectFiducialMarkersParameters::Initialize()
       {
         detectionResolution = Vision::CAMERA_RES_QVGA;
-        detectionWidth  = CameraModeInfo[detectionResolution].width;
-        detectionHeight = CameraModeInfo[detectionResolution].height;
+        detectionWidth  = Vision::CameraResInfo[detectionResolution].width;
+        detectionHeight = Vision::CameraResInfo[detectionResolution].height;
 
 #ifdef SIMULATOR
         scaleImage_thresholdMultiplier = 32768; // 0.5*(2^16)=32768
@@ -123,8 +123,8 @@ namespace Anki {
         // Binary tracker works at QVGA (unlike LK)
         trackingResolution = Vision::CAMERA_RES_QVGA;
         
-        trackingImageWidth  = CameraModeInfo[trackingResolution].width;
-        trackingImageHeight = CameraModeInfo[trackingResolution].height;
+        trackingImageWidth  = Vision::CameraResInfo[trackingResolution].width;
+        trackingImageHeight = Vision::CameraResInfo[trackingResolution].height;
         scaleTemplateRegionPercent = 1.1f;
         
         
@@ -164,8 +164,8 @@ namespace Anki {
         numPyramidLevels     = 3;
 #endif // DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
         
-        trackingImageWidth   = CameraModeInfo[trackingResolution].width;
-        trackingImageHeight  = CameraModeInfo[trackingResolution].height;
+        trackingImageWidth   = Vision::CameraResInfo[trackingResolution].width;
+        trackingImageHeight  = Vision::CameraResInfo[trackingResolution].height;
         
         maxIterations             = 25;
         verify_maxPixelDifference = 30;
@@ -216,8 +216,8 @@ namespace Anki {
       {
         detectionResolution = Vision::CAMERA_RES_QVGA;
         
-        faceDetectionHeight = CameraModeInfo[detectionResolution].height;
-        faceDetectionWidth  = CameraModeInfo[detectionResolution].width;
+        faceDetectionHeight = Vision::CameraResInfo[detectionResolution].height;
+        faceDetectionWidth  = Vision::CameraResInfo[detectionResolution].width;
 
         scaleFactor    = 1.1;
         minNeighbors   = 2;
