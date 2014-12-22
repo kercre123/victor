@@ -9,12 +9,14 @@ file(GLOB CORETECH_PLANNING_SHARED_SRC_FILES "${CORETECH_PLANNING_SHARED_SRC_DIR
 if(APPLE)
   add_subdirectory(basestation)
 
-  # add_subdirectory(shared/src)
-  # add_subdirectory(shared/test)
+  if(NOT ANKI_IOS_BUILD)
+    # add_subdirectory(shared/src)
+    # add_subdirectory(shared/test)
 
-  add_subdirectory(robot/src)
-  # add_subdirectory(robot/test) 
+    add_subdirectory(robot/src)
+    # add_subdirectory(robot/test) 
 
-  # add_subdirectory(matlab/mex)
-  # add_subdirectory(matlab/CameraCapture)
+    # add_subdirectory(matlab/mex)
+    # add_subdirectory(matlab/CameraCapture)
+  endif()
 endif()

@@ -33,6 +33,7 @@
 #include "anki/common/basestation/math/pose.h"
 
 #include "anki/vision/basestation/camera.h"
+#include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
 
 #include "anki/planning/shared/path.h"
@@ -42,18 +43,22 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/visionProcessingThread.h"
 
 #include "actionContainers.h"
 #include "cannedAnimationContainer.h"
 #include "behaviorManager.h"
 #include "ramp.h"
+#include "soundManager.h"
 
+#define ASYNC_VISION_PROCESSING 0
 
 namespace Anki {
   namespace Cozmo {
     
     // Forward declarations:
     class IMessageHandler;
+    class IUiMessageHandler;
     class IPathPlanner;
     class MatPiece;
     class PathDolerOuter;
@@ -64,6 +69,11 @@ namespace Anki {
       
       Robot(const RobotID_t robotID, IMessageHandler* msgHandler);
       ~Robot();
+      
+      
+      // Until we have Events, Robot needs a UI Message handler to trigger things
+      // out in UI land. This must be provided by this temporary Set method:
+      void SetUiMessageHandler(IUiMessageHandler* uiMsgHandler);
       
       Result Update();
       
@@ -109,6 +119,9 @@ namespace Anki {
 	    const Vision::CameraCalibration&  GetCameraCalibration() const;
      
       Result QueueObservedMarker(const MessageVisionMarker& msg);
+      
+      // Get a *copy* of the current image on this robot's vision processing thread
+      bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
       
       //
       // Pose (of the robot or its parts)
@@ -223,6 +236,7 @@ namespace Anki {
       // longer "attached" to the robot.
       Result SetCarriedObjectAsUnattached();
       
+      Result StopDocking();
       
       //
       // Proximity Sensors
@@ -234,11 +248,15 @@ namespace Anki {
       // obstacles are detected by proximity sensors
       static const Pose3d ProxDetectTransform[NUM_PROX];
       
+      
       //
-      // Face Tracking
+      // Vision
       //
+      Result ProcessImage(const Vision::Image& image);
       Result StartFaceTracking(u8 timeout_sec);
       Result StopFaceTracking();
+      Result StartLookingForMarkers();
+      Result StopLookingForMarkers();
       
       // =========== Actions Commands =============
       
@@ -280,6 +298,14 @@ namespace Anki {
       // If numLoops == 0, animation repeats forever.
       Result PlayAnimation(const char* animName, const u32 numLoops = 1);
       
+      // Return the ID matching the given name, or -1 if no animation with
+      // that name is known.
+      s32 GetAnimationID(const std::string& animationName) const;
+      
+      // Ask the UI to play a sound for us
+      Result PlaySound(SoundID_t soundID, u8 numLoops, u8 volume);
+      void   StopSound();
+      
       // Plays transition animation once, then plays state animatin in a loop
       Result TransitionToStateAnimation(const char *transitionAnimName,
                                         const char *stateAnimName);
@@ -298,7 +324,8 @@ namespace Anki {
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
       
-      Result RequestImage(const ImageSendMode_t mode) const;
+      Result RequestImage(const ImageSendMode_t mode,
+                          const Vision::CameraResolution resolution) const;
       
       Result RequestIMU(const u32 length_ms) const;
 
@@ -374,8 +401,19 @@ namespace Anki {
       // A reference to the MessageHandler that the robot uses for outgoing comms
       IMessageHandler* _msgHandler;
       
+      // Until we have Events, robot has a UI message handler so it can trigger
+      // things out in UI world.  Note this must be set by a call to SetUiMessageHandler()
+      IUiMessageHandler* _uiMsgHandler;
+      
       // A reference to the BlockWorld the robot lives in
       BlockWorld       _blockWorld;
+      
+      VisionProcessingThread _visionProcessor;
+#     if !ASYNC_VISION_PROCESSING
+      Vision::Image     _image;
+      MessageRobotState _robotStateForImage;
+      bool              _haveNewImage;
+#     endif
       
       BehaviorManager  _behaviorMgr;
       
@@ -548,7 +586,8 @@ namespace Anki {
       Result SendHeadAngleUpdate() const;
       
       // Request camera snapshot from robot
-      Result SendImageRequest(const ImageSendMode_t mode) const;
+      Result SendImageRequest(const ImageSendMode_t mode,
+                              const Vision::CameraResolution resolution) const;
       
       // Request imu log from robot
       Result SendIMURequest(const u32 length_ms) const;
@@ -604,6 +643,14 @@ namespace Anki {
     {
       _cameraCalibration = calib;
       _camera.SetSharedCalibration(&_cameraCalibration);
+      
+#if ASYNC_VISION_PROCESSING
+      // Now that we have camera calibration, we can start the vision
+      // processing thread
+      _visionProcessor.Start(_cameraCalibration);
+#else
+      _visionProcessor.SetCameraCalibration(_cameraCalibration);
+#endif
     }
 
     inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const

@@ -3895,7 +3895,7 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   originalPointsList.Print("originalPointsList");
   transformedPointsList.Print("transformedPointsList");
 
-  bool numericalFailure;
+  bool numericalFailure = false;
   const Result result = Matrix::EstimateHomography(originalPointsList, transformedPointsList, homography, numericalFailure, scratchOnchip);
 
   ASSERT_TRUE(result == RESULT_OK);

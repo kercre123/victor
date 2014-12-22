@@ -439,6 +439,7 @@ namespace Anki {
       #endif
       
       pTransform.PreComposeWith(git->second.GetPose());
+      pTransform.SetParent(p1.GetPose().GetParent());
       p.SetPose(git->second.GetFrameId(), pTransform, p1.GetHeadAngle(), p1.GetLiftAngle());
       
       return RESULT_OK;
@@ -545,7 +546,7 @@ namespace Anki {
       
       auto poseIter = poses_.rbegin();
       while(poseIter->second.GetFrameId() != frameID) {
-        --poseIter;
+        ++poseIter;
         if(poseIter == poses_.rend()) {
           return RESULT_FAIL;
         }

@@ -134,8 +134,8 @@ namespace Anki {
     // TODO: Add explicit pseudo-inverse? (inv(A'A)*A')
     // SmallMatrix<T,NCOLS,NROWS> getPsuedoInverse(void) const;
     
-    MatDimType numRows() const;
-    MatDimType numCols() const;
+    MatDimType GetNumRows() const;
+    MatDimType GetNumCols() const;
     
 #if ANKICORETECH_USE_OPENCV
   public:
@@ -165,13 +165,13 @@ namespace Anki {
                   const SmallMatrix<NROWS,NCOLS,T> &M2);
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  bool nearlyEqual(const SmallMatrix<NROWS,NCOLS,T> &M1,
+  bool IsNearlyEqual(const SmallMatrix<NROWS,NCOLS,T> &M1,
                    const SmallMatrix<NROWS,NCOLS,T> &M2,
                    const T eps = std::numeric_limits<T>::epsilon());
   
   // Absolute value of all elements
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  SmallMatrix<NROWS,NCOLS,T> abs(const SmallMatrix<NROWS,NCOLS,T>& M);
+  SmallMatrix<NROWS,NCOLS,T> Abs(const SmallMatrix<NROWS,NCOLS,T>& M);
   
   // Generic ND matrix-point multiplication
   // Working (and output) precision (type) is Twork

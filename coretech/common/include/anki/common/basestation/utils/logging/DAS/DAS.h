@@ -187,9 +187,12 @@ extern "C" {
 
 #ifdef __OBJC__
 // DAS GameLob upload / download / search headers.
+// TODO: Put these back in
+/*
 #import "DASFileDownload.h"
 #import "DASFileUpload.h"
 #import "DASFileSearch.h"
+ */
 #endif
 
 

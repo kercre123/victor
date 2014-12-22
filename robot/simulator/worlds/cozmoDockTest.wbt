@@ -127,6 +127,9 @@ Bridge {
   rotation 0 0 1 1.5708
 }
 
+Face {
+  translation -0.10613 -0.310172 0.17
+}
 
 WebotsKeyboardController {
 }

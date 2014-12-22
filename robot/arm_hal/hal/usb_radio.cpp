@@ -51,7 +51,7 @@ namespace Anki {
     }
 
 #ifndef RUN_EMBEDDED_TESTS    
-    bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts)
+    bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer)
     {
 #if(USING_UART_RADIO)
 
@@ -60,8 +60,8 @@ namespace Anki {
         // This is needed on the basestation side to properly order messages.
 
         // Send header and message content - return false if message was discarded (full buffer)
-        const u8 size = Messages::GetSize(msgID);
-        return UARTPutMessage(msgID, ts, (u8*)buffer, size);
+        const u32 size = Messages::GetSize(msgID);
+        return UARTPutMessage(msgID, (u8*)buffer, size);
 #else
         return true;
 #endif      

@@ -198,6 +198,15 @@ namespace Anki {
     } // IsAnythingBehind()
     
     
+    void OccluderList::GetAllOccluders(std::vector<Rectangle<f32> >& occluders) const
+    {
+      for(auto rectDepthPair : rectDepthPairs_)
+      {
+        occluders.emplace_back(rectDepthPair.second);
+      }
+    }
+    
+    
   } // namespace Vision
   
 } // namespace Anki

@@ -262,6 +262,34 @@ namespace Anki {
       
     }
     
+    void ProcessVizVisionMarkerMessage(const VizVisionMarker& msg)
+    {
+      if(msg.verified) {
+        camDisp->setColor(0xff0000);
+      } else {
+        camDisp->setColor(0x0000ff);
+      }
+      camDisp->drawLine(msg.topLeft_x, msg.topLeft_y, msg.bottomLeft_x, msg.bottomLeft_y);
+      camDisp->drawLine(msg.bottomLeft_x, msg.bottomLeft_y, msg.bottomRight_x, msg.bottomRight_y);
+      camDisp->drawLine(msg.bottomRight_x, msg.bottomRight_y, msg.topRight_x, msg.topRight_y);
+      camDisp->drawLine(msg.topRight_x, msg.topRight_y, msg.topLeft_x, msg.topLeft_y);
+    }
+    
+    void ProcessVizCameraQuadMessage(const VizCameraQuad& msg)
+    {
+      const f32 oneOver255 = 1.f / 255.f;
+      
+      camDisp->setColor(msg.color >> 8);
+      u8 alpha = msg.color & 0xff;
+      if(alpha < 0xff) {
+        camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
+      }
+      camDisp->drawLine(msg.xUpperLeft, msg.yUpperLeft, msg.xLowerLeft, msg.yLowerLeft);
+      camDisp->drawLine(msg.xLowerLeft, msg.yLowerLeft, msg.xLowerRight, msg.yLowerRight);
+      camDisp->drawLine(msg.xLowerRight, msg.yLowerRight, msg.xUpperRight, msg.yUpperRight);
+      camDisp->drawLine(msg.xUpperRight, msg.yUpperRight, msg.xUpperLeft, msg.yUpperLeft);
+    }
+    
     void ProcessVizImageChunkMessage(const VizImageChunk& msg)
     {
       // If this is a new image, then reset everything
@@ -367,6 +395,8 @@ int main(int argc, char **argv)
         case VizImageChunk_ID:
         case VizSetRobot_ID:
         case VizTrackerQuad_ID:
+        case VizVisionMarker_ID:
+        case VizCameraQuad_ID:
           (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;
         // All other messages are forwarded to cozmo_physics plugin

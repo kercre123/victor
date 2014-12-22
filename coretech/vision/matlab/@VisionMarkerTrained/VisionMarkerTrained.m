@@ -54,7 +54,7 @@ classdef VisionMarkerTrained
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
         %Corners = GetMarkerCorners(imageSize, isPadded);
         corners = GetFiducialCorners(imageSize, isPadded);
-        [threshold, bright, dark] = ComputeThreshold(img, tform);
+        [threshold, bright, dark] = ComputeThreshold(img, tform, method);
         outputString = GenerateHeaderFiles(varargin);
         [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes(tree);
 
@@ -106,6 +106,7 @@ classdef VisionMarkerTrained
             UseMexCornerRefinment = false;
             VerifyLabel = true;
             Initialize = true;
+            ThresholdMethod = 'Otsu'; % 'Otsu' or 'FiducialProbes'
                         
             parseVarargin(varargin{:});
             
@@ -141,8 +142,8 @@ classdef VisionMarkerTrained
             
             this.H = tform.tdata.T';
     
-            [threshold, bright, dark] = VisionMarkerTrained.ComputeThreshold(img, tform);
-            
+            [threshold, bright, dark] = VisionMarkerTrained.ComputeThreshold(img, tform, ThresholdMethod);
+
             if threshold < 0
                 %warning('VisionMarkerTrained:TooLittleContrast', ...
                 %    'Not enough contrast to create VisionMarkerTrained.');

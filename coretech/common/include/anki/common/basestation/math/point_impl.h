@@ -326,7 +326,7 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
-  bool       nearlyEqual (const Point<N,T> &point1, const Point<N,T> &point2,
+  bool       IsNearlyEqual (const Point<N,T> &point1, const Point<N,T> &point2,
                           const T eps)
   {
     // Return true if all elements of data are equal, false otherwise.

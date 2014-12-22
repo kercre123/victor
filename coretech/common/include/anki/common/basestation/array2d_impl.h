@@ -35,7 +35,6 @@
 #include <limits.h>
 
 
-
 namespace Anki
 {
 
@@ -80,6 +79,15 @@ namespace Anki
   } // Constructor: Array2d(rows, cols, &data)
   
   
+  template<typename T>
+  void Array2d<T>::CopyDataTo(Array2d<T> &other) const
+  {
+#if ANKICORETECH_USE_OPENCV
+    this->copyTo(other);
+#endif
+  }
+  
+  
 #if ANKICORETECH_USE_OPENCV
   template<typename T>
   Array2d<T>::Array2d(const cv::Mat_<T> &other)
@@ -106,7 +114,25 @@ namespace Anki
 */
 
   template<typename T>
-  const T* Array2d<T>::getDataPointer(void) const
+  T* Array2d<T>::GetRow(s32 row)
+  {
+#if ANKICORETECH_USE_OPENCV
+    return this->operator[](row);
+#endif
+  }
+  
+  
+  template<typename T>
+  const T* Array2d<T>::GetRow(s32 row) const
+  {
+#if ANKICORETECH_USE_OPENCV
+    return this->operator[](row);
+#endif
+  }
+  
+  
+  template<typename T>
+  const T* Array2d<T>::GetDataPointer(void) const
   {
 #if ANKICORETECH_USE_OPENCV
     return this->template ptr<T>(0);
@@ -116,7 +142,7 @@ namespace Anki
   }
 
   template<typename T>
-  T* Array2d<T>::getDataPointer(void)
+  T* Array2d<T>::GetDataPointer(void)
   {
 #if ANKICORETECH_USE_OPENCV
     return this->template ptr<T>(0);
@@ -138,7 +164,7 @@ namespace Anki
   template<typename T>
   T  Array2d<T>::operator() (const int row, const int col) const
   {
-    CORETECH_THROW_IF(row >= numRows() || col >= numCols());
+    CORETECH_THROW_IF(row >= GetNumRows() || col >= GetNumCols());
     
 #if ANKICORETECH_USE_OPENCV
     // Provide thin wrapper to OpenCV's (row,col) access:
@@ -149,7 +175,7 @@ namespace Anki
   template<typename T>
   T& Array2d<T>::operator() (const int row, const int col)
   {
-    CORETECH_THROW_IF(row >= numRows() || col >= numCols());
+    CORETECH_THROW_IF(row >= GetNumRows() || col >= GetNumCols());
     
 #if ANKICORETECH_USE_OPENCV    
     // Provide thin wrapper to OpenCV's (row,col) access:
@@ -174,7 +200,7 @@ namespace Anki
 #endif // #if ANKICORETECH_USE_OPENCV
 
   template<typename T>
-  s32 Array2d<T>::numRows(void) const
+  s32 Array2d<T>::GetNumRows(void) const
   {
 #if ANKICORETECH_USE_OPENCV
     return s32(this->rows);
@@ -182,7 +208,7 @@ namespace Anki
   }
 
   template<typename T>
-  s32 Array2d<T>::numCols(void) const
+  s32 Array2d<T>::GetNumCols(void) const
   {
 #if ANKICORETECH_USE_OPENCV
     return s32(this->cols);
@@ -190,29 +216,31 @@ namespace Anki
   }
 
   template<typename T>
-  s32 Array2d<T>::numElements(void) const
+  s32 Array2d<T>::GetNumElements(void) const
   {
-    return this->numRows()*this->numCols();
+    return this->GetNumRows()*this->GetNumCols();
   }
 
   template<typename T>
-  bool Array2d<T>::isEmpty() const
+  bool Array2d<T>::IsEmpty() const
   {
+#if ANKICORETECH_USE_OPENCV
     // Thin wrapper to OpenCV's empty() check:
     return this->empty();
+#endif
   }
   
   template<typename T>
   bool operator==(const Array2d<T> &array1, const Array2d<T> &array2)
   {
-    bool equal = (array1.numRows() == array2.numRows() &&
-                  array1.numCols() == array2.numCols());
+    bool equal = (array1.GetNumRows() == array2.GetNumRows() &&
+                  array1.GetNumCols() == array2.GetNumCols());
     
     const T* data1 = array1.getDataPointer();
     const T* data2 = array2.getDataPointer();
     
     s32 i=0;
-    while(equal && i < array1.numElements())
+    while(equal && i < array1.GetNumElements())
     {
       equal = data1[i] == data2[i];
       ++i;
@@ -224,17 +252,17 @@ namespace Anki
   
   
   template<typename T>
-  bool nearlyEqual(const Array2d<T> &array1, const Array2d<T> &array2,
+  bool IsNearlyEqual(const Array2d<T> &array1, const Array2d<T> &array2,
                    const T eps)
   {
-    bool equal = (array1.numRows() == array2.numRows() &&
-                  array1.numCols() == array2.numCols());
+    bool equal = (array1.GetNumRows() == array2.GetNumRows() &&
+                  array1.GetNumCols() == array2.GetNumCols());
     
-    const T* data1 = array1.getDataPointer();
-    const T* data2 = array2.getDataPointer();
+    const T* data1 = array1.GetDataPointer();
+    const T* data2 = array2.GetDataPointer();
     
     s32 i=0;
-    while(equal && i < array1.numElements())
+    while(equal && i < array1.GetNumElements())
     {
       equal = NEAR(data1[i], data2[i], eps);
       ++i;
@@ -246,10 +274,10 @@ namespace Anki
   
 
   template<typename T>
-  void Array2d<T>::applyScalarFunction(T (*fcn)(T))
+  void Array2d<T>::ApplyScalarFunction(T (*fcn)(T))
   {
-    s32 nrows = this->numRows();
-    s32 ncols = this->numCols();
+    s32 nrows = this->GetNumRows();
+    s32 ncols = this->GetNumCols();
 
     if (this->isContinuous()) {
       ncols *= nrows;
@@ -269,11 +297,11 @@ namespace Anki
 
   template<typename T>
   template<typename Tresult>
-  void Array2d<T>::applyScalarFunction(void(*fcn)(const T&, Tresult&),
+  void Array2d<T>::ApplyScalarFunction(void(*fcn)(const T&, Tresult&),
     Array2d<Tresult> &result) const
   {
-    s32 nrows = this->numRows();
-    s32 ncols = this->numCols();
+    s32 nrows = this->GetNumRows();
+    s32 ncols = this->GetNumCols();
 
     assert(result.size() == this->size());
 
@@ -294,6 +322,90 @@ namespace Anki
     }
   } // applyScalarFunction() to separate result
 
+  
+  
+  template<typename T>
+  Array2d<T>& Array2d<T>::operator+=(const Array2d<T>& other)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->get_CvMat_() += other.get_CvMat_();
+#   endif
+    return *this;
+  }
+  
+  template<typename T>
+  Array2d<T>& Array2d<T>::operator-=(const Array2d<T>& other)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->get_CvMat_() -= other.get_CvMat_();
+#   endif
+    return *this;
+  }
+  
+  template<typename T>
+  Array2d<T>& Array2d<T>::operator*=(const Array2d<T>& other)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->get_CvMat_() = this->mul(other.get_CvMat_());
+#   endif
+    return *this;
+  }
+  
+  template<typename T>
+  Array2d<T>& Array2d<T>::operator/=(const Array2d<T>& other)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->get_CvMat_() /= other.get_CvMat_();
+#   endif
+    return *this;
+  }
+  
+  template<typename T>
+  Array2d<T>& Array2d<T>::operator+=(const T& scalarValue)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->get_CvMat_() += scalarValue;
+#   endif
+    return *this;
+  }
+  
+  template<typename T>
+  Array2d<T>& Array2d<T>::operator-=(const T& scalarValue)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->get_CvMat_() -= scalarValue;
+#   endif
+    return *this;
+  }
+  
+  template<typename T>
+  Array2d<T>& Array2d<T>::operator*=(const T& scalarValue)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->get_CvMat_() *= scalarValue;
+#   endif
+    return *this;
+  }
+  
+  template<typename T>
+  Array2d<T>& Array2d<T>::operator/=(const T& scalarValue)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->get_CvMat_() /= scalarValue;
+#   endif
+    return *this;
+  }
+  
+  
+  template<typename T>
+  Array2d<T>& Array2d<T>::Abs()
+  {
+#   if ANKICORETECH_USE_OPENCV
+    *this = cv::abs(*this);
+#   endif
+    return *this;
+  }
+  
   /* OLD: Inherit from unmanaged
 
   // This constructor uses the OpenCv managedData matrix to allocate the data,

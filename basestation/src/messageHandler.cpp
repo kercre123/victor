@@ -14,13 +14,14 @@
 #include "anki/common/basestation/utils/fileManagement.h"
 
 #include "anki/vision/CameraSettings.h"
+#include "anki/vision/basestation/image.h"
+
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "messageHandler.h"
-#include "soundManager.h"
 #include "vizManager.h"
 
 #include <fstream>
@@ -160,6 +161,7 @@ namespace Anki {
       return retVal;
     } // ProcessMessage(MessageVisionMarker)
     
+    /*
     Result MessageHandler::ProcessMessage(Robot* robot, const MessageFaceDetection& msg)
     {
       Result retVal = RESULT_OK;
@@ -170,7 +172,7 @@ namespace Anki {
                  robot->GetID(), msg.x_upperLeft, msg.y_upperLeft, msg.width, msg.height);
       
       
-      if(msg.visualize > 0) {
+      //if(msg.visualize > 0) {
         // Send tracker quad info to viz
         const u16 left_x   = msg.x_upperLeft;
         const u16 right_x  = left_x + msg.width;
@@ -181,11 +183,11 @@ namespace Anki {
                                                    right_x, top_y,
                                                    right_x, bottom_y,
                                                    left_x, bottom_y);
-      }
+      //}
       
       return retVal;
     } // ProcessMessage(MessageFaceDetection)
-  
+    */
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessageCameraCalibration const& msg)
     {
@@ -263,11 +265,13 @@ namespace Anki {
     }
     
     // For visualization of docking error signal
+    /*
     Result MessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const& msg)
     {
       VizManager::getInstance()->SetDockingError(msg.x_distErr, msg.y_horErr, msg.angleErr);
       return RESULT_OK;
     }
+     */
     
 
     // For processing image chunks arriving from robot.
@@ -335,8 +339,8 @@ namespace Anki {
 
         // Decompress image if necessary
         if (msg.imageEncoding > 0) {
-
-          vector<u8> inputVec(data, data+dataSize);
+#if ANKICORETECH_USE_OPENCV
+          cv::vector<u8> inputVec(data, data+dataSize);
           rawImg = cv::imdecode(inputVec, CV_LOAD_IMAGE_GRAYSCALE);
 
           // Check size
@@ -345,6 +349,11 @@ namespace Anki {
           u32 numChannels = rawImg.channels();
           imgBytes = w * h * numChannels;
           //PRINT_INFO("rawImg size: %u x %u (channels %d)\n", w, h, numChannels);
+#else
+          PRINT_NAMED_ERROR("MessageImageChunk.NeedOpenCVtoDecode",
+                            "ANKICORETECH_USE_OPENCV must be 1 to use compressed images.\n");
+          return RESULT_FAIL;
+#endif
         } else {
           // Already decompressed.
           // Raw image bytes is the same as total received bytes.
@@ -360,6 +369,7 @@ namespace Anki {
           // Send image to Viz
           u8* imgToSend = data;
           if (msg.imageEncoding > 0) {
+            
             /*
             // Write image to file (recompressing as jpeg again!)
             vector<int> compression_params;
@@ -370,12 +380,16 @@ namespace Anki {
             
             imgToSend = rawImg.data;
           }
-          VizManager::getInstance()->SendGreyImage(robot->GetID(), imgToSend, (Vision::CameraResolution)msg.resolution);
+          VizManager::getInstance()->SendGreyImage(robot->GetID(), imgToSend,
+                                                   (Vision::CameraResolution)msg.resolution);
 
-          
           // TODO: Stuff and things on the image that imgToSend now points to.
           // ...
-          
+
+          Vision::Image image(height, width, imgToSend);
+          image.SetTimestamp(msg.frameTimeStamp);
+          robot->ProcessImage(image);          
+
         }
 
         imgID = 0;
@@ -555,13 +569,13 @@ namespace Anki {
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessagePlaySoundOnBaseStation const& msg)
     {
-      SoundManager::getInstance()->Play(static_cast<SoundID_t>(msg.soundID), msg.numLoops, msg.volume);
+      robot->PlaySound(static_cast<SoundID_t>(msg.soundID), msg.numLoops, msg.volume);
       return RESULT_OK;
     }
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessageStopSoundOnBaseStation const& msg)
     {
-      SoundManager::getInstance()->Stop();
+      robot->StopSound();
       return RESULT_OK;
     }
     

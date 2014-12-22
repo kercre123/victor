@@ -15,23 +15,27 @@ namespace Anki {
   namespace Vision {
     typedef enum
     {
-      CAMERA_RES_VGA = 0,
-      CAMERA_RES_QVGA,
-      CAMERA_RES_QQVGA,
-      CAMERA_RES_QQQVGA,
-      CAMERA_RES_QQQQVGA,
+      CAMERA_RES_QUXGA = 0, // 3200 x 2400
+      CAMERA_RES_QXGA, // 2048 x 1536
+      CAMERA_RES_UXGA, // 1600 x 1200
+      CAMERA_RES_XGA, // 1024 x 768
+      CAMERA_RES_SVGA, // 800 x 600
+      CAMERA_RES_VGA, // 640 x 480
+      CAMERA_RES_QVGA, // 320 x 240
+      CAMERA_RES_QQVGA, // 160 x 120
+      CAMERA_RES_QQQVGA, // 80 x 60
+      CAMERA_RES_QQQQVGA, // 40 x 30
       CAMERA_RES_VERIFICATION_SNAPSHOT,
       CAMERA_RES_COUNT,
-      
       CAMERA_RES_NONE = CAMERA_RES_COUNT
     } CameraResolution;
-    
+
     typedef struct
     {
       u16 width;
       u16 height;
     } ImageDims;
-    
+
     const ImageDims CameraResInfo[CAMERA_RES_COUNT] =
     {
       {640, 480},
@@ -46,4 +50,3 @@ namespace Anki {
 } // namespace Anki
 
 #endif // ANKI_CAMERA_TYPES_H
-

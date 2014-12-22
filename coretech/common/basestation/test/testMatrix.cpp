@@ -24,13 +24,13 @@ GTEST_TEST(TestMatrix, MatrixConstructorsAndAccessors)
   cout << "Matrix A (before): \n" << A << "\n";
 #endif
  
-  ASSERT_EQ(A.numRows(), 3);
-  ASSERT_EQ(A.numCols(), 3);
+  ASSERT_EQ(A.GetNumRows(), 3);
+  ASSERT_EQ(A.GetNumCols(), 3);
   
   // Test accessors
   // Make sure matrix A is all zeros
-  for (int r=0; r< A.numRows(); ++r) {
-    for (int c=0; c<A.numCols(); ++c) {
+  for (int r=0; r< A.GetNumRows(); ++r) {
+    for (int c=0; c<A.GetNumCols(); ++c) {
       ASSERT_EQ(A(r,c), initValueA);
     }
   }
@@ -70,13 +70,13 @@ GTEST_TEST(TestMatrix, MatrixConstructorsAndAccessors)
   cout << "Matrix B (before): \n" << B << "\n";
 #endif
   
-  ASSERT_EQ(B.numRows(), 3);
-  ASSERT_EQ(B.numCols(), 4);
+  ASSERT_EQ(B.GetNumRows(), 3);
+  ASSERT_EQ(B.GetNumCols(), 4);
   
   // Test accessors
   // Make sure matrix B initial values are correct
-  for (int r=0; r< B.numRows(); ++r) {
-    for (int c=0; c<B.numCols(); ++c) {
+  for (int r=0; r< B.GetNumRows(); ++r) {
+    for (int c=0; c<B.GetNumCols(); ++c) {
       ASSERT_EQ(B(r,c), initValueB);
     }
   }
@@ -124,8 +124,8 @@ GTEST_TEST(TestMatrix, MatrixAssignFromStdVector)
   cout << "Matrix M built from std::vector: \n" << M << "\n";
 #endif
   
-  for(int i=0,k=0; i<M.numRows(); ++i) {
-    for(int j=0; j<M.numCols(); ++j, ++k) {
+  for(int i=0,k=0; i<M.GetNumRows(); ++i) {
+    for(int j=0; j<M.GetNumCols(); ++j, ++k) {
       ASSERT_EQ(M(i,j), vec[k]);
     }
   }
@@ -142,8 +142,8 @@ GTEST_TEST(TestMatrix, SmallMatrixConstructorsAndAccessors)
   
   // Test accessors
   // Make sure matrix B initial values are correct
-  for (int r=0; r< M.numRows(); ++r) {
-    for (int c=0; c<M.numCols(); ++c) {
+  for (int r=0; r< M.GetNumRows(); ++r) {
+    for (int c=0; c<M.GetNumCols(); ++c) {
       ASSERT_EQ(M(r,c), 0.f);
     }
   }
@@ -224,8 +224,8 @@ GTEST_TEST(TestMatrix, MatrixMultiplication1)
   Matrix<float> C;   // TODO: Should matrix operator= throw if dimensions change?
   C = A*B;
   
-  ASSERT_EQ(C.numRows(), 3);
-  ASSERT_EQ(C.numCols(), 3);
+  ASSERT_EQ(C.GetNumRows(), 3);
+  ASSERT_EQ(C.GetNumCols(), 3);
   
   ASSERT_EQ(C(0,0), 10.f);
   ASSERT_EQ(C(1,1), 20.f);
@@ -284,15 +284,15 @@ GTEST_TEST(TestMatrix, MatrixMatrixMultiplication)
   
   // Instantiate with result of A*B
   Matrix<double> C1(A*B);
-  EXPECT_TRUE( nearlyEqual(C1, C_expected) );
+  EXPECT_TRUE( IsNearlyEqual(C1, C_expected) );
   
   // Assign result of A*B
   Matrix<double> C2 = A * B;
-  EXPECT_TRUE( nearlyEqual(C2, C_expected) );
+  EXPECT_TRUE( IsNearlyEqual(C2, C_expected) );
   
   // Multiply in place
   Matrix<double> C3(A); C3 *= B;
-  EXPECT_TRUE( nearlyEqual(C3, C_expected) );
+  EXPECT_TRUE( IsNearlyEqual(C3, C_expected) );
 
 #ifdef DEBUG_TEST_MATRIX
   cout << "Matrix A: \n" << A << "\n";
@@ -333,8 +333,8 @@ GTEST_TEST(TestMatrix, SmallMatrixMultiplication)
   cout << "SmallMatrix C = A*B: \n" << C << "\n";
 #endif
   
-  ASSERT_EQ(C.numRows(), 3);
-  ASSERT_EQ(C.numCols(), 4);
+  ASSERT_EQ(C.GetNumRows(), 3);
+  ASSERT_EQ(C.GetNumCols(), 4);
   
   ASSERT_NEAR_EQ(C(0,0), 10.f);  ASSERT_NEAR_EQ(C(0,1), 0.f);    ASSERT_NEAR_EQ(C(0,2), 0.f);    ASSERT_NEAR_EQ(C(0,3), 0.f);
   ASSERT_NEAR_EQ(C(1,0), 0.f);   ASSERT_NEAR_EQ(C(1,1), 20.f);   ASSERT_NEAR_EQ(C(1,2), 0.f);    ASSERT_NEAR_EQ(C(1,3), 0.f);
@@ -380,8 +380,8 @@ GTEST_TEST(TestMatrix, MatrixInverse)
 #endif
   
   // Check that A is now the same as Ainv
-  for (int r=0; r< A.numRows(); ++r) {
-    for (int c=0; c<A.numCols(); ++c) {
+  for (int r=0; r< A.GetNumRows(); ++r) {
+    for (int c=0; c<A.GetNumCols(); ++c) {
       ASSERT_EQ(A(r,c), Ainv(r,c));
     }
   }
@@ -427,8 +427,8 @@ GTEST_TEST(TestMatrix, SmallMatrixInverse)
 #endif
   
   // Check that A is now the same as Ainv
-  for (int r=0; r< A.numRows(); ++r) {
-    for (int c=0; c<A.numCols(); ++c) {
+  for (int r=0; r< A.GetNumRows(); ++r) {
+    for (int c=0; c<A.GetNumCols(); ++c) {
       ASSERT_EQ(A(r,c), Ainv(r,c));
     }
   }
@@ -477,8 +477,8 @@ GTEST_TEST(TestMatrix, MatrixTranspose)
 #endif
   
   // Check that A is now the same as A_t
-  for (int r=0; r< A.numRows(); ++r) {
-    for (int c=0; c<A.numCols(); ++c) {
+  for (int r=0; r< A.GetNumRows(); ++r) {
+    for (int c=0; c<A.GetNumCols(); ++c) {
       ASSERT_EQ(A(r,c), A_t(r,c));
     }
   }
@@ -498,8 +498,8 @@ GTEST_TEST(TestMatrix, MatrixTranspose)
   cout << "Matrix B_transpose: \n" << B_t << "\n";
 #endif
   
-  ASSERT_EQ(B_t.numRows(), B.numCols());
-  ASSERT_EQ(B_t.numCols(), B.numRows());
+  ASSERT_EQ(B_t.GetNumRows(), B.GetNumCols());
+  ASSERT_EQ(B_t.GetNumCols(), B.GetNumRows());
   
   ASSERT_NEAR_EQ(B_t(0,0), 1.f); ASSERT_NEAR_EQ(B_t(0,1), 5.f); ASSERT_NEAR_EQ(B_t(0,2), 9.f);
   ASSERT_NEAR_EQ(B_t(1,0), 2.f); ASSERT_NEAR_EQ(B_t(1,1), 6.f); ASSERT_NEAR_EQ(B_t(1,2), 10.f);
@@ -509,8 +509,8 @@ GTEST_TEST(TestMatrix, MatrixTranspose)
   B.Transpose();
   
   // Check that B is now the same as B_t
-  for (int r=0; r< B.numRows(); ++r) {
-    for (int c=0; c<B.numCols(); ++c) {
+  for (int r=0; r< B.GetNumRows(); ++r) {
+    for (int c=0; c<B.GetNumCols(); ++c) {
       ASSERT_EQ(B(r,c), B_t(r,c));
     }
   }
@@ -555,8 +555,8 @@ GTEST_TEST(TestMatrix, SmallMatrixTranspose)
   cout << "SmallMatrix B_transpose: \n" << B_t << "\n";
 #endif
   
-  ASSERT_EQ(B_t.numRows(), B.numCols());
-  ASSERT_EQ(B_t.numCols(), B.numRows());
+  ASSERT_EQ(B_t.GetNumRows(), B.GetNumCols());
+  ASSERT_EQ(B_t.GetNumCols(), B.GetNumRows());
   
   ASSERT_NEAR_EQ(B_t(0,0), 1.f); ASSERT_NEAR_EQ(B_t(0,1), 5.f); ASSERT_NEAR_EQ(B_t(0,2), 9.f);
   ASSERT_NEAR_EQ(B_t(1,0), 2.f); ASSERT_NEAR_EQ(B_t(1,1), 6.f); ASSERT_NEAR_EQ(B_t(1,2), 10.f);

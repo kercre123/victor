@@ -45,6 +45,10 @@ namespace Anki {
       
       bool IsEmpty() const;
       
+      // Populates the given vector with all rectangular occluders in the list.
+      // It is the caller's responsibility to empty the vector if desired
+      void GetAllOccluders(std::vector<Rectangle<f32> >& occluders) const;
+      
     protected:
       //std::priority_queue<std::pair<Quad2f,f32>, CompareSecond<Quad2f,f32>() > quadDepthPairs_;
       

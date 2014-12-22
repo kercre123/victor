@@ -5,20 +5,25 @@ __author__  = "Daniel Casner"
 __version__ = "0.0.1"
 
 
-import sys, socket, time, math
-try:
-    import numpy
-    import cv2
-except:
-    sys.stderr.write("Cannot import numpy or cv modules, some features will be unavailable\n")
+import sys, socket, time, math, subprocess, select
 import messages
 
-DEFAULT_PORT = 9000
+MTU = 65535
 
-class ServerBase(object):
+def yavta_w(address, value):
+    "Subprocess call to yavta process"
+    return subprocess.call(['yavta', '-w', '0x%08x %d' % (address, value), '/dev/v4l-subdev8']) == 0
+
+
+class CameraSubServer(object):
     "imageChunk server base class"
 
     RESOLUTION_TUPLES = {
+        messages.CAMERA_RES_QUXGA: (3200, 2400),
+        messages.CAMERA_RES_QXGA: (2048, 1536),
+        messages.CAMERA_RES_UXGA: (1600, 1200),
+        messages.CAMERA_RES_XGA: (1024, 768),
+        messages.CAMERA_RES_SVGA: (800, 600),
         messages.CAMERA_RES_VGA: (640, 480),
         messages.CAMERA_RES_QVGA: (320, 240),
         messages.CAMERA_RES_QQVGA: (160, 120),
@@ -27,161 +32,115 @@ class ServerBase(object):
         messages.CAMERA_RES_NONE: (0, 0)
     }
 
-    def __init__(self, camera, encoding, encodingParams=[]):
+    def __init__(self, poller):
         "Initalize server for specified camera on given port"
-        self.vc = cv2.VideoCapture(camera)
-        self.encoding = encoding
-        self.encodingParams = encodingParams
-        self.client = None
-        self.frameNumber = 0
 
-    def disconnect(self):
-        self.client = None
+        # Setup local jpeg data receive socket
+        self.encoderProcess = None
+        self.encoderSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.encoderSocket.bind(('127.0.0.1', 6000))
+        self.encoderSocket.settimeout(0) # Set non-blocking
+        poller.register(self.encoderSocket, select.POLLIN)
 
-    @property
-    def resolution(self):
-        if self.client:
-            return self.client[0].resolution
-        else:
-            return messages.CAMERA_RES_NONE
+        # Initalize camera hardware?
+        for params in [(0x00980911, 720),
+                       (0x00980911, 720),
+                       (0x0098090e, 125),
+                       (0x0098090f, 175)]:
+            assert yavta_w(*params), "yavta failure"
 
-    def getEncodedImage(self):
-        "Get the encoded bytes for the next image, returns image"
-        rslt, frame = self.vc.read()
-        if rslt:
-            frame = cv2.resize(frame, self.RESOLUTION_TUPLES[self.resolution])
-            rslt, frame = cv2.imencode(self.encoding, frame, self.encodingParams)
-            if rslt:
-                return frame.tostring()
-            else:
-                sys.stderr.write("Failed to encode frame as %s(%s)\n" % (self.encoding, str(self.encodingParams)))
-                return False
-        else:
-            sys.stderr.write("Failed to read camera frame\n")
-            return False
+        #assert subprocess.call(['media-ctl', '-v', '-r', '-l', '"mt9p031":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]']) == 0, \
+        #    "media-ctl ISP setup failure"
 
-    def step(self):
-        "A single server main loop iteration"
-        req = self.receive()
-        if req:
-            if req.imageSendMode == messages.ISM_OFF:
-                self.disconnect()
-            else:
-                self.chunkNumber = 0
-                self.expectedChunks = 0
-                self.dataQueue = ""
-        if self.client:
-            if not len(self.dataQueue): # Need a new frame
-                # If single shot and have already sent
-                if self.chunkNumber > 0 and self.client[0].imageSendMode == messages.ISM_SINGLE_SHOT:
-                    self.disconnect()
-                    return
-                frame = self.getEncodedImage()
-                if frame:
-                    self.dataQueue = frame
-                    self.chunkNumber =  0
-                    self.expectedChunks = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
-                    self.frameNumber += 1
-            if len(self.dataQueue): # have a frame
-                msg = messages.ImageChunk()
-                self.dataQueue = msg.takeChunk(self.dataQueue)
-                msg.imageId = self.frameNumber
-                msg.imageEncoding = messages.IE_JPEG
-                msg.imageChunkCount = self.expectedChunks
-                msg.chunkId = self.chunkNumber
-                sys.stdout.write("Send frame %d chunk %d of %d\n" % (self.frameNumber, self.chunkNumber, self.expectedChunks))
-                msg.resolution = self.resolution
-                self.chunkNumber += 1
-                self.send(msg.serialize())
+        # Set ISP camera resizer
+        self.resolution = messages.CAMERA_RES_NONE
 
-    def run(self):
-        "Run the server continuously"
-        while True:
-            self.step()
+        # Setup video data chunking state
+        self.imageNumber    = 0
+        self.dataQueue      = ""
+        self.nextFrame      = ""
+        self.chunkNumber    = 0
+        self.expectedChunks = 0
+        self.sendMode       = messages.ISM_OFF
 
-class ServerUDP(ServerBase):
-    "Implements server base with UDP socket"
+    def __del__(self):
+        "Shut down processes in the right order"
+        self.stopEncoder()
+        self.encoderSocket.close()
 
-    def __init__(self, camera=0, port=DEFAULT_PORT, encoding='.jpg', encodingParams=[1, 90]):
-        ServerBase.__init__(self, camera, encoding, encodingParams)
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind(('', port))
-        self.sock.settimeout(0.010) # 10ms
+    def setResolution(self, resolutionEnum):
+        if resolutionEnum != self.resolution:
+            self.stopEncoder()
+            if subprocess.call(['media-ctl', '-v', '-f', '"mt9p031":0 [SGRBG8 1298x970 (664,541)/1298x970], "OMAP3 ISP CCDC":2 [SGRBG10 1298x970], "OMAP3 ISP preview":1 [UYVY 1298x970], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % self.RESOLUTION_TUPLES[resolutionEnum]]) == 0:
+                self.resolution = resolutionEnum
+                self.startEncoder()
+                return True
+        return False
 
-    def receive(self):
-        "Receive socket traffic"
+
+    def startEncoder(self):
+        "Starts the encoder subprocess"
+        if self.encoderProcess is None or self.encoderProcess.poll() is not None:
+            self.encoderProcess = subprocess.Popen(['./launch-gst-subprocess.sh', '127.0.0.1', '6000'])
+
+    def stopEncoder(self):
+        "Stop the encoder subprocess if it is running"
+        if self.encoderProcess is not None:
+            if self.encoderProcess.poll() is None:
+                self.encoderProcess.kill()
+                self.encoderProcess.wait()
+            self.encoderProcess = None
+
+    def poll(self, message=None):
+        "Poll for this subserver, passing incoming message if any and returning outgoing message if any."
+        outMsg = None
+        # Handle incoming messages if any
+        if message and ord(message[0]) == messages.ImageRequest.ID:
+            inMsg = messages.ImageRequest(message)
+            self.sendMode = inMsg.imageSendMode
+            if inMsg.imageSendMode == messages.ISM_OFF:
+                self.stopEncoder()
+            else: # Not off, set resolution and start encoder
+                self.setResolution(inMsg.resolution)
+        # Handle encoder data and buffering
+        if not self.dataQueue and self.nextFrame: # If we've used up the frame we were sending and a new one is available
+            self.imageNumber += 1
+            self.dataQueue = self.nextFrame # Queue the next one
+            self.chunkNumber = 0
+            self.expectedChunks = int(math.ceil(float(len(self.dataQueue)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
+            self.nextFrame = ''
+            if self.sendMode == messages.ISM_SINGLE_SHOT:
+                self.stopEncoder()
+                self.sendMode = messages.ISM_OFF
+        if self.dataQueue:
+            msg = messages.ImageChunk()
+            self.dataQueue = msg.takeChunk(self.dataQueue)
+            msg.imageId = self.imageNumber
+            msg.imageEncoding = messages.IE_JPEG
+            msg.imageChunkCount = self.expectedChunks
+            msg.chunkId = self.chunkNumber
+            msg.resolution = self.resolution
+            self.chunkNumber += 1
+            outMsg = msg.serialize()
+        # Get a new frame if any from encoder
         try:
-            recvData, addr = self.sock.recvfrom(2000)
-        except socket.timeout:
-            return None
-        else:
-            try:
-                req = messages.ImageRequest(recvData)
-            except Exception, e:
-                sys.stderr.write("Bad request:\n\t%s\n\n" % str(e))
-                return None
-            else:
-                self.client = (req, addr)
-                return req
+            self.nextFrame = self.encoderSocket.recv(MTU)
+        except:
+            pass
+        if self.encoderProcess is not None and self.encoderProcess.poll() is not None:
+            raise Exception("Encoder sub-process has terminated")
+        return outMsg
 
-    def send(self, payload):
-        "Send image data"
-        self.sock.sendto(payload, self.client[1])
-
-class ServerTCP(ServerBase):
-    "Implements server base with TCP socket"
-
-    def __init__(self, camera=0, port=DEFAULT_PORT, encoding='.jpg', encodingParams=[1, 90]):
-        ServerBase.__init__(self, camera, encoding, encodingParams)
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.bind(('', port))
-        self.sock.listen(1)
-        self.sock.settimeout(0.010) # 10ms
-        self.conn = None
-
-    def receive(self):
-        "Receive socket traffic"
-        if self.conn:
-            try:
-                recvData = self.conn.recv(2000)
-            except socket.timeout:
-                return None
-            try:
-                req = messages.ImageRequest(recvData)
-            except Exception, e:
-                sys.stderr.write("Bad request:\n\t%s\n\n" % str(e))
-                return None
-            else:
-                self.client = (req, ('', 0))
-                return req
-        else:
-            try:
-                conn, addr = self.sock.accept()
-            except socket.timeout:
-                return None
-            else:
-                sys.stdout.write("New connection from %s:%d\n" % addr)
-                conn.settimeout(0.010)
-                self.conn = conn
-                return self.receive() # Call recursively to accept data on new connection
-
-    def send(self, payload):
-        "Send image data"
-        if self.client:
-            sentLen = self.conn.send(payload)
-            assert sentLen == len(payload)
-
-    def disconnect(self):
-        if self.client:
-            self.client.close()
-            self.client = None
-
+    def standby(self):
+        "Put the sub server into standby mode"
+        self.stopEncoder()
+        self.sendMode = messages.ISM_OFF
 
 
 class Client(object):
     "Client for UDP camera server for testing"
 
-    def __init__(self, host, port=DEFAULT_PORT, resolution=messages.CAMERA_RES_QVGA, socketType="UDP"):
+    def __init__(self, host, port=9000, resolution=messages.CAMERA_RES_SVGA, socketType="UDP"):
         "Connect to server"
         self.resolution = resolution
         if socketType == "UDP":

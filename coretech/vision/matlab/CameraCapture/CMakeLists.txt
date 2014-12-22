@@ -1,28 +1,32 @@
 # coretech-vision/matlab/CameraCapture/CMakeLists.txt
 
-#
-# mexCameraCapture
-#
-set(MEX_LINK_LIBRARIES 
-  CoreTech_Common_Robot
-  CoreTech_Vision_Robot
-  ${OPENCV_LIBS})
+# TODO: Should this check ANKICORETECH_USE_MATLAB instead (would require changes to mexCameraCapture.cpp source)
+if(ANKICORETECH_EMBEDDED_USE_MATLAB)
 
-build_mex(mexCameraCapture.cpp)
+  #
+  # mexCameraCapture
+  #
+  set(MEX_LINK_LIBRARIES 
+    CoreTech_Common_Robot
+    CoreTech_Vision_Robot
+    ${OPENCV_LIBS})
+
+  build_mex(mexCameraCapture.cpp)
 
 
-#
-# mexWifiCameraCapture
-#
+  #
+  # mexWifiCameraCapture
+  #
 
-include_directories(../../../common/tools/communication)
+  include_directories(../../../common/tools/communication)
 
-set(MEX_LINK_LIBRARIES
-  CoreTech_Common_Robot
-  CoreTech_Vision_Robot
-  DebugStreamClient
-  ${OPENCV_LIBS})
+  set(MEX_LINK_LIBRARIES
+    CoreTech_Common_Robot
+    CoreTech_Vision_Robot
+    DebugStreamClient
+    ${OPENCV_LIBS})
 
-build_mex(mexWifiCameraCapture.cpp)
+  build_mex(mexWifiCameraCapture.cpp)
 
+endif()
    

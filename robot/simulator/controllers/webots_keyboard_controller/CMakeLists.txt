@@ -35,6 +35,7 @@ target_link_libraries(webots_keyboard_controller
   jsoncpp
   SDL2-2.0
   ${OPENCV_LIBS}
+  ${ALL_EMBEDDED_LIBRARIES}
 )
   
 set_target_properties(webots_keyboard_controller PROPERTIES

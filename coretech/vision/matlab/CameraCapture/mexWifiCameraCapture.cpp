@@ -138,7 +138,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       image.Show("Robot Image", false);
 #endif
       //mexPrintf("Captured %dx%d frame.\n", image.get_size(1), image.get_size(0));
-      plhs[0] = Anki::Embedded::arrayToMxArray(image);
+      plhs[0] = arrayToMxArray(image);
     } else {
       // Return an empty frame
       //mexWarnMsgTxt("Returning empty frame!");

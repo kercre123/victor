@@ -332,7 +332,7 @@ link_directories(
   ${EXTERNAL_BUILD_DIR}/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR}
 )
 
-if(ANKICORETECH_USE_MATLAB)
+if(ANKICORETECH_USE_MATLAB OR ANKICORETECH_EMBEDDED_USE_MATLAB)
   link_directories(
     ${MATLAB_MEX_LIBRARY_PATH}
     ${MATLAB_MX_LIBRARY_PATH}
@@ -354,6 +354,14 @@ endif(WIN32)
 
 
 endmacro(ankiProject)
+
+#
+# A helper macro for setting xcode properties
+#  
+macro(set_xcode_property targ xc_prop_name xc_prop_val)
+    set_property( TARGET ${targ} PROPERTY XCODE_ATTRIBUTE_${xc_prop_name} ${xc_prop_val} )
+endmacro(set_xcode_property)
+
 
 #
 # A helper macro (read: hack) for appending "248d" to the opencv library names.
@@ -458,7 +466,7 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
     jsoncpp
   )
 
-  if(ANKICORETECH_USE_MATLAB)
+  if(ANKICORETECH_USE_MATLAB OR ANKICORETECH_EMBEDDED_USE_MATLAB)
     target_link_libraries(${OUTPUT_NAME}
       ${MATLAB_MEX_LIBRARY}
       ${MATLAB_MX_LIBRARY}

@@ -10,10 +10,12 @@
  *
  **/
 
+#ifndef ANKI_COMMON_PLATFORM_PATH_MANAGER_H_
+#define ANKI_COMMON_PLATFORM_PATH_MANAGER_H_
+
 #include <map>
 #include <string>
 //#include <array>
-
 
 namespace Anki {
   
@@ -50,6 +52,8 @@ namespace Anki {
     enum Scope {
       Test,
       Config,
+      Animation,
+      Sound,
       Resource
       //Temp
     };
@@ -115,3 +119,6 @@ protected: \
    */
   
 } // namespace Anki
+
+#endif // ANKI_COMMON_PLATFORM_PATH_MANAGER_H_
+

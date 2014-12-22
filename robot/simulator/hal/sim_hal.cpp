@@ -194,14 +194,6 @@ namespace Anki {
     {
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
       
-      // ID card info
-      idCard_.esn = 0;
-      idCard_.modelNumber = 0;
-      idCard_.lotCode = 0;
-      idCard_.birthday = 0;
-      idCard_.hwVersion = 0;
-
-      
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
       rightWheelMotor_ = webotRobot_.getMotor("RightWheelMotor");
       
@@ -239,6 +231,14 @@ namespace Anki {
         PRINT("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
         return RESULT_FAIL;
       }
+      
+      // ID card info
+      idCard_.esn = robotID_;
+      idCard_.modelNumber = 0;
+      idCard_.lotCode = 0;
+      idCard_.birthday = 0;
+      idCard_.hwVersion = 0;
+      
       
       //Set the motors to velocity mode
       headMotor_->setPosition(WEBOTS_INFINITY);
@@ -682,61 +682,64 @@ namespace Anki {
     void HAL::CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
     {
       // TODO: enableLight?
+      AnkiConditionalErrorAndReturn(frame != NULL, "SimHAL.CameraGetFrame.NullFramePointer",
+                                    "NULL frame pointer provided to CameraGetFrame(), check "
+                                    "to make sure the image allocation succeeded.\n");
       
       const u8* image = headCam_->getImage();
-      if(image == NULL) {
-        PRINT("CameraGetFrame(): no image captured!");
+      
+      AnkiConditionalErrorAndReturn(image != NULL, "SimHAL.CameraGetFrame.NullImagePointer",
+                                    "NULL image pointer returned from simulated camera's getFrame() method.\n");
+      
+      // Set the increment / windowsize for downsampling
+      s32 inc = 1;
+      s32 pixel = 0;
+      
+      // TODO: add averaging once we support it in hardware
+      const bool supportAveraging = false;
+      
+      if(supportAveraging) {
+        AnkiAssert(false);
+        // Need a way to get downsampling increment (LUT for resolution based on res?)
+        //AnkiAssert(headCamInfo_.nrows >= HAL::CameraModeInfo[res].height);
+        //inc = headCamInfo_.nrows / HAL::CameraModeInfo[res].height;
       }
-      else {
-        // Set the increment / windowsize for downsampling
-        s32 inc = 1;
-        s32 pixel = 0;
-        
-        // TODO: add averaging once we support it in hardware
-        const bool supportAveraging = false;
-        
-        if(supportAveraging) {
-          AnkiAssert(false);
-          // Need a way to get downsampling increment (LUT for resolution based on res?)
-          //AnkiAssert(headCamInfo_.nrows >= HAL::CameraModeInfo[res].height);
-          //inc = headCamInfo_.nrows / HAL::CameraModeInfo[res].height;
+      
+      if(inc == 1)
+      {
+        // No averaging
+        for (s32 y=0; y < headCamInfo_.nrows; y++) {
+          for (s32 x=0; x < headCamInfo_.ncols; x++) {
+            frame[pixel++] = webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x, y);
+          }
         }
-        
-        if(inc == 1)
+      } else {
+        // Average [inc x inc] windows
+        for (s32 y = 0; y < headCamInfo_.nrows; y += inc)
         {
-          // No averaging
-          for (s32 y=0; y < headCamInfo_.nrows; y++) {
-            for (s32 x=0; x < headCamInfo_.ncols; x++) {
-              frame[pixel++] = webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x, y);
-            }
-          }
-        } else {
-          // Average [inc x inc] windows
-          for (s32 y = 0; y < headCamInfo_.nrows; y += inc)
+          for (s32 x = 0; x < headCamInfo_.ncols; x += inc)
           {
-            for (s32 x = 0; x < headCamInfo_.ncols; x += inc)
+            s32 sum = 0;
+            for (s32 y1 = y; y1 < y + inc; y1++)
             {
-              s32 sum = 0;
-              for (s32 y1 = y; y1 < y + inc; y1++)
+              for (s32 x1 = x; x1 < x + inc; x1++)
               {
-                for (s32 x1 = x; x1 < x + inc; x1++)
-                {
-                  //int index = x1 + y1 * headCamInfo_.ncols;
-                  //sum += frame[index];
-                  sum += webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x1, y1);
-                }
+                //int index = x1 + y1 * headCamInfo_.ncols;
+                //sum += frame[index];
+                sum += webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x1, y1);
               }
-              frame[pixel++] = (sum / (inc * inc));
             }
+            frame[pixel++] = (sum / (inc * inc));
           }
-        } // if averaging or not
+        }
+      } // if averaging or not
       
 #if BLUR_CAPTURED_IMAGES
-        // Add some blur to simulated images
-        cv::Mat_<u8> cvImg(headCamInfo_.nrows, headCamInfo_.ncols, frame);
-        cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
+      // Add some blur to simulated images
+      cv::Mat_<u8> cvImg(headCamInfo_.nrows, headCamInfo_.ncols, frame);
+      cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
 #endif
-      } // if image==NULL or not
+
       
     } // CameraGetFrame()
     
@@ -764,11 +767,6 @@ namespace Anki {
     {
       timeStamp_ = t;
     };
-    
-    s32 HAL::GetRobotID(void)
-    {
-      return robotID_;
-    }
     
     void HAL::SetLED(LEDId led_id, u32 color) {
       if (leds_[led_id]) {

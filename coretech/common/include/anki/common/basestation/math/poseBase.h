@@ -45,9 +45,6 @@ namespace Anki {
   {
   public:
  
-    PoseBase();
-    PoseBase(const PoseNd* parentPose, const std::string& name);
-
     void SetParent(const PoseNd* otherPose) { CORETECH_ASSERT(otherPose != this); _parent = otherPose; }
     const PoseNd* GetParent() const { return _parent; }
     
@@ -64,6 +61,12 @@ namespace Anki {
     const std::string& GetName() const { return _name; }
     
   protected:
+    
+    // We don't want to actually publicly create PoseBase objects: just derived
+    // classes like Pose2d and Pose3d
+    PoseBase();
+    PoseBase(const PoseNd* parentPose, const std::string& name);
+    
     //static const PoseNd* _sWorld;
     //static std::list<PoseNd> Origins;
     

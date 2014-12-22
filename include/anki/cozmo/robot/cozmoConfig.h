@@ -37,7 +37,7 @@ namespace Anki {
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 25.f;
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 27.f;
     const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.5f;
     const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
@@ -234,7 +234,7 @@ namespace Anki {
     // Comms type for Basestation-robot comms
     // 0: Use TCP
     // 1: Use UDP
-    #define USE_UDP_ROBOT_COMMS 1
+    #define USE_UDP_ROBOT_COMMS 0
     
     // Packet headers/footers:
     // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
@@ -256,30 +256,18 @@ namespace Anki {
     // of the system one message cycle latency in the future. This way, commanded actions are applied
     // at the time they are expected in the physical world.
     const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
-    
-    // Messages that are purely for advertising when using TCP/UDP. (Maybe belongs somewhere else...)
-    // This will eventually be passed in via the GUI.
-    // The default 127.0.0.1 works fine for simulated basestation running on the same machine as the simluator.
-    const char* const ROBOT_SIM_WORLD_HOST = "127.0.0.1";
-    
+        
     // Port on which registered robots advertise.
     const u32 ROBOT_ADVERTISING_PORT = 5100;
     
     // Port on which simulated robot should connect to (de)register for advertisement
     const u32 ROBOT_ADVERTISEMENT_REGISTRATION_PORT = 5101;
     
-    typedef struct {
-      u16 port;                // Port that robot is accepting connections on
-      u8 robotAddr[18];        // IP address as null terminated string
-      u8 robotID;
-      u8 enableAdvertisement;  // 1 when robot wants to advertise, 0 otherwise.
-    } RobotAdvertisementRegistration;
+    // Port on which registered UI devices advertise.
+    const u32 UI_ADVERTISING_PORT = 5102;
     
-    typedef struct  {
-      u16 port;
-      u8 robotAddr[17];        // IP address as null terminated string
-      u8 robotID;
-    } RobotAdvertisement;
+    // Port on which UI device should connect to (de)register for advertisement
+    const u32 UI_ADVERTISEMENT_REGISTRATION_PORT = 5103;
     
     // If most recent advertisement message is older than this,
     // then it is no longer considered to be advertising.
@@ -292,7 +280,7 @@ namespace Anki {
     // loop increments).  So, 6 --> every 30ms, since our loop timestep is 5ms.
     const s32 STATE_MESSAGE_FREQUENCY = 6;
     
-    // Basestation server port which listens for inputController clients
+    // UI device server port which listens for basestation/game clients
     const u32 UI_MESSAGE_SERVER_LISTEN_PORT = 5200;
     
 #if SIMULATOR
@@ -303,7 +291,7 @@ namespace Anki {
 #endif
 
     // Resolution of images that are streamed to basestation (dev purposes)
-    const Vision::CameraResolution IMG_STREAM_RES = Vision::CAMERA_RES_QQVGA;
+    const Vision::CameraResolution IMG_STREAM_RES = Vision::CAMERA_RES_QVGA;
     
     // Number of frames to skip when streaming images to basestation
     const u8 IMG_STREAM_SKIP_FRAMES = 2;

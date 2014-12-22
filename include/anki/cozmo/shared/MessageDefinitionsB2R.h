@@ -240,6 +240,25 @@ ADD_MESSAGE_MEMBER(f32, percentileToMakeHigh)
 ADD_MESSAGE_MEMBER(u8, highValue)
 END_MESSAGE_DEFINITION(SetVisionSystemParams)
 
+// DockingErrorSignal
+START_TIMESTAMPED_MESSAGE_DEFINITION(DockingErrorSignal, 1)
+ADD_MESSAGE_MEMBER(f32, x_distErr)
+ADD_MESSAGE_MEMBER(f32, y_horErr)
+ADD_MESSAGE_MEMBER(f32, z_height)
+ADD_MESSAGE_MEMBER(f32, angleErr) // in radians
+ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
+ADD_MESSAGE_MEMBER(u8,  isApproximate)
+END_MESSAGE_DEFINITION(DockingErrorSignal)
+
+// FaceDetection
+START_MESSAGE_DEFINITION(FaceDetection, 1)
+ADD_MESSAGE_MEMBER(u16, x_upperLeft)
+ADD_MESSAGE_MEMBER(u16, y_upperLeft)
+ADD_MESSAGE_MEMBER(u16, width)
+ADD_MESSAGE_MEMBER(u16, height)
+ADD_MESSAGE_MEMBER(u8, visualize)
+END_MESSAGE_DEFINITION(FaceDetection)
+
 // SetFaceDetectParams
 START_MESSAGE_DEFINITION(SetFaceDetectParams, 1)
 ADD_MESSAGE_MEMBER(f32, scaleFactor)
@@ -501,3 +520,10 @@ END_MESSAGE_DEFINITION(FaceTracking)
 // Ping
 START_MESSAGE_DEFINITION(Ping, 1)
 END_MESSAGE_DEFINITION(Ping)
+
+// PanAndTiltHead
+START_MESSAGE_DEFINITION(PanAndTiltHead, 1)
+// TODO: make these fixed point
+ADD_MESSAGE_MEMBER(f32, relativePanAngle_rad)
+ADD_MESSAGE_MEMBER(f32, relativeHeadTiltAngle_rad)
+END_MESSAGE_DEFINITION(PanAndTiltHead)

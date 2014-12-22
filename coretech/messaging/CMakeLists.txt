@@ -6,10 +6,13 @@ if(APPLE)
   file(GLOB CORETECH_MESSAGING_INCLUDE_FILES "${CORETECH_MESSAGING_INCLUDE_DIR}/*.h")
 
   add_subdirectory(basestation/src)
-  #add_subdirectory(basestation/test)
+  
+  if(NOT ANKI_IOS_BUILD)
+    #add_subdirectory(basestation/test)
 
-  add_subdirectory(robot/src)
-  #add_subdirectory(robot/test) 
+    add_subdirectory(robot/src)
+    #add_subdirectory(robot/test) 
 
-  #add_subdirectory(shared/src)
+    #add_subdirectory(shared/src)
+  endif()
 endif()

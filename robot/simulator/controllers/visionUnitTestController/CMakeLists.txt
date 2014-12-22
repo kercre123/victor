@@ -61,15 +61,22 @@ add_executable(visionUnitTestController ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(visionUnitTestController 
   CppController
   CoreTech_Common_Basestation
-  CoreTech_Common_Robot # for matlab interface?
+  #CoreTech_Common_Robot # for matlab interface?
   CoreTech_Vision_Basestation
   #CoreTech_Messaging_Shared
   # mx 
   # eng
   jsoncpp
   ${OPENCV_LIBS}
-  ${ALL_EMBEDDED_LIBRARIES}
+  #${ALL_EMBEDDED_LIBRARIES}
 )
+
+if(ANKICORETECH_USE_MATLAB)
+  target_link_libraries(visionUnitTestController
+    ${MATLAB_MEX_LIBRARY}
+    ${MATLAB_ENG_LIBRARY}
+    ${MATLAB_MX_LIBRARY})
+endif()
 
 set_target_properties(
   visionUnitTestController PROPERTIES

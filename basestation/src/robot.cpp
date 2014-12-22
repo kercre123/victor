@@ -27,6 +27,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 #include "messageHandler.h"
+#include "uiMessageHandler.h"
 #include "ramp.h"
 #include "vizManager.h"
 
@@ -44,7 +45,11 @@ namespace Anki {
     Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler)
     : _ID(robotID)
     , _msgHandler(msgHandler)
+    , _uiMsgHandler(nullptr)  // To be removed once we have Events
     , _blockWorld(this)
+#   if !ASYNC_VISION_PROCESSING
+    , _haveNewImage(false)
+#   endif
     , _behaviorMgr(this)
     , _currPathSegment(-1)
     , _lastSentPathID(0)
@@ -84,7 +89,7 @@ namespace Anki {
       // TODO: Stop storing *cozmo* motion primitives in a coretech location
       Json::Value mprims;
       {
-        const std::string subPath = "coretech/planning/matlab/cozmo_mprim.json";
+        const std::string subPath = "cozmo_mprim.json";
         const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
         std::ifstream jsonFile(jsonFilename);
         reader.parse(jsonFile, mprims);
@@ -145,6 +150,11 @@ namespace Anki {
       ++_frameId;
     }
 
+    void Robot::SetUiMessageHandler(IUiMessageHandler *uiMsgHandler)
+    {
+      _uiMsgHandler = uiMsgHandler;
+    }
+    
     
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
     {
@@ -468,10 +478,92 @@ namespace Anki {
     
     Result Robot::Update(void)
     {
-      ////////// Update the robot's blockworld //////////
-      
-      uint32_t numBlocksObserved = 0;
-      _blockWorld.Update(numBlocksObserved);
+#     if !ASYNC_VISION_PROCESSING
+      if(_haveNewImage) {
+        
+        _visionProcessor.Update(_image, _robotStateForImage);
+        _haveNewImage = false;
+        
+#     else
+      if(_visionProcessor.WasLastImageProcessed())
+      {
+#endif
+        ////////// Check for any messages from the Vision Thread ////////////
+        
+        MessageVisionMarker visionMarker;
+        while(true == _visionProcessor.CheckMailbox(visionMarker)) {
+          Result lastResult = QueueObservedMarker(visionMarker);
+          if(lastResult != RESULT_OK) {
+            PRINT_NAMED_ERROR("Robot.Update.FailedToQueueVisionMarker",
+                              "Got VisionMarker message from vision processing thread but failed to queue it.\n");
+            return lastResult;
+          }
+          
+          VizManager::getInstance()->SendVisionMarker(visionMarker.x_imgUpperLeft,  visionMarker.y_imgUpperLeft,
+                                                      visionMarker.x_imgUpperRight, visionMarker.y_imgUpperRight,
+                                                      visionMarker.x_imgLowerRight, visionMarker.y_imgLowerRight,
+                                                      visionMarker.x_imgLowerLeft,  visionMarker.y_imgLowerLeft,
+                                                      visionMarker.markerType != Vision::MARKER_UNKNOWN);
+        }
+        
+        MessageFaceDetection faceDetection;
+        while(true == _visionProcessor.CheckMailbox(faceDetection)) {
+          PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).\n",
+                     GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
+          
+          
+          if(faceDetection.visualize > 0) {
+            // Send tracker quad info to viz
+            const u16 left_x   = faceDetection.x_upperLeft;
+            const u16 right_x  = left_x + faceDetection.width;
+            const u16 top_y    = faceDetection.y_upperLeft;
+            const u16 bottom_y = top_y + faceDetection.height;
+            
+            VizManager::getInstance()->SendTrackerQuad(left_x, top_y,
+                                                       right_x, top_y,
+                                                       right_x, bottom_y,
+                                                       left_x, bottom_y);
+          }
+          
+          _msgHandler->SendMessage(_ID, faceDetection);
+        }
+        
+        MessageTrackerQuad trackerQuad;
+        if(true == _visionProcessor.CheckMailbox(trackerQuad)) {
+          // Send tracker quad info to viz
+          VizManager::getInstance()->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
+                                                     trackerQuad.topRight_x, trackerQuad.topRight_y,
+                                                     trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
+                                                     trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
+        }
+        
+        MessageDockingErrorSignal dockingErrorSignal;
+        if(true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
+          
+          // Visualize docking error signal
+          VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
+                                                     dockingErrorSignal.y_horErr,
+                                                     dockingErrorSignal.angleErr);
+          
+          // Try to use this for closed-loop control by sending it on to the robot
+          _msgHandler->SendMessage(_ID, dockingErrorSignal);
+          
+        }
+        
+        MessagePanAndTiltHead panTiltHead;
+        if(true == _visionProcessor.CheckMailbox(panTiltHead)) {
+          
+          _msgHandler->SendMessage(_ID, panTiltHead);
+          
+        }
+        
+        ////////// Update the robot's blockworld //////////
+        // (Note that we're only doing this if the vision processor completed)
+        
+        uint32_t numBlocksObserved = 0;
+        _blockWorld.Update(numBlocksObserved);
+        
+      } // if(_visionProcessor.WasLastImageProcessed())
       
       // Send ping to keep connection alive.
       // TODO: Don't send ping if there are already outgoing messages this tic.
@@ -534,7 +626,21 @@ namespace Anki {
       return RESULT_OK;
       
     } // Update()
-
+    
+    bool Robot::GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan)
+    {
+#     if ASYNC_VISION_PROCESSING
+      return _visionProcessor.GetCurrentImage(img, newerThan);
+#     else
+      if(!_image.IsEmpty() && _image.GetTimestamp() > newerThan ) {
+        _image.CopyDataTo(img);
+        img.SetTimestamp(_image.GetTimestamp());
+        return true;
+      } else {
+        return false;
+      }
+#     endif
+    }
     
     static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
     {
@@ -741,6 +847,62 @@ namespace Anki {
       return SendPlayAnimation(animName, numLoops);
     }
     
+    s32 Robot::GetAnimationID(const std::string& animationName) const
+    {
+      return _cannedAnimations.GetID(animationName);
+    }
+      
+    Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
+    {
+#     if ANKI_IOS_BUILD
+      // Use iOS device to play the sound
+      if(_uiMsgHandler != nullptr)
+      {
+        // TODO: Need to assign the right device ID
+        MessageG2U_PlaySound msg;
+        msg.numLoops = 1;
+        msg.volume   = volume;
+        const std::string& filename = SoundManager::getInstance()->GetSoundFile(soundID);
+        strncpy(&(msg.animationFilename[0]), filename.c_str(), msg.animationFilename.size());
+        
+        return _uiMsgHandler->SendMessage(1, msg);
+      } else {
+        PRINT_NAMED_ERROR("Robot.PlaySound.NoUiMessageHandler",
+                          "Must set UI Message Handler before calling PlaySound.");
+        return RESULT_FAIL;
+      }
+#     else
+      
+      // Use SoundManager::
+      Result lastResult = RESULT_FAIL;
+      if(true == SoundManager::getInstance()->Play(soundID, numLoops, volume)) {
+        lastResult = RESULT_OK;
+      }
+      return lastResult;
+      
+#     endif
+    } // PlaySound()
+      
+      
+    void Robot::StopSound()
+    {
+#     if ANKI_IOS_BUILD
+      // Use iOS device to play the sound
+      if(_uiMsgHandler != nullptr)
+      {
+        // TODO: Need to assign the right device ID
+        MessageG2U_StopSound msg;
+        _uiMsgHandler->SendMessage(1, msg);
+      } else {
+        PRINT_NAMED_ERROR("Robot.StopSound.NoUiMessageHandler",
+                          "Must set UI Message Handler before calling StopSound.");
+      }
+#     else
+      SoundManager::getInstance()->Stop();
+#     endif
+    } // StopSound()
+      
+      
     Result Robot::TransitionToStateAnimation(const char *transitionAnimName,
                                              const char *stateAnimName)
     {
@@ -760,8 +922,8 @@ namespace Anki {
       
       Json::Value animDefs;
       // TODO: Point DefineCannedAnimations at a json file with all animations
-      const std::string subPath("basestation/config/animations.json");
-      const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+      const std::string subPath("animations.json");
+      const std::string jsonFilename = PREPEND_SCOPED_PATH(Animation, subPath);
       std::ifstream jsonFile(jsonFilename);
       if(reader.parse(jsonFile, animDefs) == false) {
         PRINT_NAMED_ERROR("Robot.ReadAnimationFaile.JsonParseFailure",
@@ -914,7 +1076,7 @@ namespace Anki {
         }
       }
       
-      
+      /*
       // Don't snap to horizontal or discrete Z levels when we see a mat marker
       // while on a ramp
       if(IsOnRamp() == false)
@@ -942,12 +1104,13 @@ namespace Anki {
         robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
         
       } // if robot is on ramp
-      
+      */
       
       // Add the new vision-based pose to the robot's history. Note that we use
       // the pose w.r.t. the origin for storing poses in history.
       //RobotPoseStamp p(robot->GetPoseFrameID(), robotPoseWrtMat.GetWithRespectToOrigin(), posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
       Pose3d robotPoseWrtOrigin = robotPoseWrtMat.GetWithRespectToOrigin();
+      
       if((lastResult = AddVisionOnlyPoseToHistory(existingMatPiece->GetLastObservedTime(),
                                                   robotPoseWrtOrigin.GetTranslation().x(),
                                                   robotPoseWrtOrigin.GetTranslation().y(),
@@ -1211,6 +1374,12 @@ namespace Anki {
     } // ExecutePlaceObjectOnGroundSequence(atPose)
     */
     
+    Result Robot::StopDocking()
+    {
+      _visionProcessor.StopMarkerTracking();
+      return RESULT_OK;
+    }
+    
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
@@ -1295,6 +1464,16 @@ namespace Anki {
       msg.image_pixel_x  = image_pixel_x;
       msg.image_pixel_y  = image_pixel_y;
       msg.pixel_radius   = pixel_radius;
+    
+      // When we are "docking" with a ramp or crossing a bridge, we
+      // don't want to worry about the X angle being large (since we
+      // _expect_ it to be large, since the markers are facing upward).
+      const bool checkAngleX = !(dockAction == DA_RAMP_ASCEND  ||
+                                 dockAction == DA_RAMP_DESCEND ||
+                                 dockAction == DA_CROSS_BRIDGE);
+      // Tell the VisionSystem to start tracking this marker:
+      
+      _visionProcessor.SetMarkerToTrack(code1, marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
       
       return _msgHandler->SendMessage(_ID, msg);
     }
@@ -1424,7 +1603,16 @@ namespace Anki {
       m.robotID  = _ID;
       m.syncTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       
-      return _msgHandler->SendMessage(_ID, m);
+      Result result = _msgHandler->SendMessage(_ID, m);
+      
+      // For specifying resolution for basestation vision:
+      // (Start with QVGA)
+      MessageImageRequest mImg;
+      mImg.imageSendMode = ISM_STREAM;
+      mImg.resolution    = Vision::CAMERA_RES_QVGA;
+      _msgHandler->SendMessage(_ID, mImg);
+      
+      return result;
     }
     
     // Clears the path that the robot is executing which also stops the robot
@@ -1563,12 +1751,12 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
 
-    Result Robot::SendImageRequest(const ImageSendMode_t mode) const
+    Result Robot::SendImageRequest(const ImageSendMode_t mode, const Vision::CameraResolution resolution) const
     {
       MessageImageRequest m;
       
       m.imageSendMode = mode;
-      m.resolution = IMG_STREAM_RES;
+      m.resolution    = resolution;
       
       return _msgHandler->SendMessage(_ID, m);
     }
@@ -1597,15 +1785,66 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
+    Result Robot::ProcessImage(const Vision::Image& image)
+    {
+      Result lastResult = RESULT_OK;
+      
+
+      // For now, we need to reassemble a RobotState message to provide the
+      // vision system (because it is just copied from the embedded vision
+      // implementation on the robot). We'll just reassemble that from
+      // pose history, but this should not be necessary forever.
+      // NOTE: only the info found in pose history will be valid in the state message!
+      MessageRobotState robotState;
+      
+      RobotPoseStamp p;
+      TimeStamp_t actualTimestamp;
+      lastResult = _poseHistory.GetRawPoseAt(image.GetTimestamp(), actualTimestamp, p);
+      //lastResult = _poseHistory.ComputePoseAt(image.GetTimestamp(), actualTimestamp, p, false); // TODO: use interpolation??
+      if(lastResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("Robot.ProcessImage.PoseHistoryFail",
+                        "Unable to get computed pose at image timestamp of %d.\n", image.GetTimestamp());
+        return lastResult;
+      }
+      
+      robotState.timestamp     = actualTimestamp;
+      robotState.pose_frame_id = p.GetFrameId();
+      robotState.headAngle     = p.GetHeadAngle();
+      robotState.liftAngle = p.GetLiftAngle();
+      robotState.pose_x    = p.GetPose().GetTranslation().x();
+      robotState.pose_y    = p.GetPose().GetTranslation().y();
+      robotState.pose_z    = p.GetPose().GetTranslation().z();
+      robotState.pose_angle= p.GetPose().GetRotationAngle<'Z'>().ToFloat();
+      
+#     if ASYNC_VISION_PROCESSING
+      
+      // Note this copies the image
+      _visionProcessor.SetNextImage(image, robotState);
+      
+#     else
+      
+      image.CopyDataTo(_image);
+      _image.SetTimestamp(image.GetTimestamp());
+      _robotStateForImage = robotState;
+      _haveNewImage = true;
+      
+#     endif
+      
+      return lastResult;
+    }
     
     Result Robot::StartFaceTracking(u8 timeout_sec)
     {
-      return SendStartFaceTracking(timeout_sec);
+      Result lastResult = SendStartFaceTracking(timeout_sec);
+      _visionProcessor.EnableFaceDetection(true);
+      return lastResult;
     }
     
     Result Robot::StopFaceTracking()
     {
-      return SendStopFaceTracking();
+      Result lastResult = SendStopFaceTracking();
+      _visionProcessor.EnableFaceDetection(false);
+      return lastResult;
     }
     
     Result Robot::SendStartFaceTracking(const u8 timeout_sec)
@@ -1628,7 +1867,19 @@ namespace Anki {
       MessagePing m;
       return _msgHandler->SendMessage(_ID, m);
     }
-    
+
+    Result Robot::StartLookingForMarkers()
+    {
+      _visionProcessor.EnableMarkerDetection(true);
+      return RESULT_OK;
+    }
+
+    Result Robot::StopLookingForMarkers()
+    {
+      _visionProcessor.EnableMarkerDetection(false);
+      return RESULT_OK;
+    }
+      
     const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D, Vec3f(50, 25, 0)),
                                                   Pose3d(0, Z_AXIS_3D, Vec3f(50, 0, 0)),
                                                   Pose3d(0, Z_AXIS_3D, Vec3f(50, -25, 0)) };
@@ -1750,9 +2001,9 @@ namespace Anki {
       return SendStartTestMode(mode);
     }
     
-    Result Robot::RequestImage(const ImageSendMode_t mode) const
+    Result Robot::RequestImage(const ImageSendMode_t mode, const Vision::CameraResolution resolution) const
     {
-      return SendImageRequest(mode);
+      return SendImageRequest(mode, resolution);
     }
     
     Result Robot::RequestIMU(const u32 length_ms) const

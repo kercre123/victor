@@ -197,8 +197,6 @@ namespace Anki
       bool IsInitialized();
       void UpdateDisplay();
 
-      s32 GetRobotID(void);
-
       // Take a step (needed for webots only)
       Result Step(void);
 
@@ -272,7 +270,7 @@ namespace Anki
 
       // Puts an entire message, with the usual header/footer
       // Returns false is there wasn't enough space to buffer the message
-      bool UARTPutMessage(u8 msgID, u32 timestamp, u8* buffer, u32 length);
+      bool UARTPutMessage(u8 msgID, u8* buffer, u32 length);
       
       void UARTPutString(const char* s);
       int UARTGetChar(u32 timeout = 0);
@@ -409,7 +407,7 @@ namespace Anki
       Messages::ID RadioGetNextMessage(u8* buffer);
 
       // Returns true if the message has been sent to the basestation
-      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts = HAL::GetTimeStamp());
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer);
 
       
       /////////////////////////////////////////////////////////////////////

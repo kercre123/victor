@@ -38,7 +38,7 @@
 #define USE_MATLAB_DETECTION 1
 
 #if USE_MATLAB_DETECTION
-#include "anki/common/robot/matlabInterface.h"
+#include "anki/common/basestation/matlabInterface.h"
 #else
 #include "visionParameters.h"
 #include "anki/vision/robot/fiducialDetection.h"
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
   
 #if USE_MATLAB_DETECTION
   // Create a Matlab engine and initialize the path
-  Embedded::Matlab matlab(false);
+  Matlab matlab(false);
   matlab.EvalStringEcho("run(fullfile('..', '..', '..', '..', 'matlab', 'initCozmoPath'));");
 #else
   Anki::Cozmo::VisionSystem::DetectFiducialMarkersParameters detectionParams;
@@ -285,7 +285,10 @@ int main(int argc, char **argv)
                           PlatformPathManager::GetInstance()->PrependPath(PlatformPathManager::Test, imgFilename).c_str(),
                           PlatformPathManager::GetInstance()->PrependPath(PlatformPathManager::Test, imgFilename).c_str());
 
-    const int numMarkers = static_cast<int>(*matlab.Get<double>("numMarkers"));
+    double *temp = matlab.Get<double>("numMarkers");
+    const int numMarkers = static_cast<int>(*temp);
+    free(temp);
+    
     fprintf(stdout, "Detected %d markers at pose %d.\n", numMarkers, i_pose);
     
     for(int i_marker=0; i_marker<numMarkers; ++i_marker) {
