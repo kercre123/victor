@@ -24,7 +24,6 @@
 // Physical wifi robots do not yet register/deregister with advertising service so just
 // hard-coding its connection
 #define FORCE_ADD_ROBOT 0
-const u8 forcedRobotId = 34;
 const u8 forcedRobotId = 1;
 const char* forcedRobotIP = "192.168.3.34";
 
