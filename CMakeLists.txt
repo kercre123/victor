@@ -63,6 +63,11 @@ if(NOT ANKI_IOS_BUILD)
   add_subdirectory(robot)
   #add_subdirectory(test)
   add_subdirectory(matlab/mex)
+
+  if(APPLE)
+    add_subdirectory(tools/showVoxels)
+  endif()
+
 endif()
 
 

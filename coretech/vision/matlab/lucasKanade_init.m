@@ -1,7 +1,7 @@
 % function lucasKanade_init()
 
 % templateImage = zeros(16,16); for y=1:size(templateImage,1) templateImage(y,:) = y*(1:size(templateImage,2)); end;
-% newImage = lucasKande_warpGroundTruth(templateImage, [cos(.1), -sin(.1), 0; sin(.1), cos(.1), 0; 0,0,1], size(templateImage));
+% newImage = warpProjective(templateImage, [cos(.1), -sin(.1), 0; sin(.1), cos(.1), 0; 0,0,1], size(templateImage));
 % templateQuad = [5,4;10,4;10,8;5,8];
 % numScales = 2;
 

@@ -5,12 +5,18 @@
 
 % simpleLkTest2('useLiveFeed', false, 'runFlowComputation', false, 'runStereoComputation', false, 'runStereoBmComputation', true, 'filenamePattern','/Users/pbarnum/Documents/Anki/products-cozmo-large-files/stereo/stereoDataset/stereo_%sRectified_%d.png', 'whichImageNumbers', 0:50, 'pauseForEachFrame', false, 'saveOutputToFile', true, 'outputFilenamePrefix', '/Users/pbarnum/Documents/tmp/output2/lkOutput3twoPass_');
 
+
+% Show voxels
+% simpleLkTest2('useLiveFeed', false, 'runFlowComputation', false, 'runStereoComputation', false, 'runStereoBmComputation', true, 'filenamePattern','/Users/pbarnum/Documents/Anki/products-cozmo-large-files/stereo/stereoDataset/stereo_%sRectified_%d.png', 'whichImageNumbers', 0:50, 'pauseForEachFrame', false, 'drawVoxels', true);
+
+% simpleLkTest2('useLiveFeed', true, 'pauseForEachFrame', false, 'drawVoxels', true);
+
 function simpleLkTest2(varargin)
     
     disp('Starting...');
     
     useLiveFeed = true;
-    cameraIds = [1,0];
+    cameraIds = [0,1];
     
     filenamePattern = '/Users/pbarnum/Documents/datasets/stereo/stereo_%sRectified_%d.png';
     whichImageNumbers = 0:3090;
@@ -18,6 +24,8 @@ function simpleLkTest2(varargin)
     
     useStereoCalibration = true;
     computeStereoBm = false;
+    drawVoxels = false;
+    voxelsUseDepthColor = true;
     
     runFlowComputation = false;
     runStereoComputation = false;
@@ -133,25 +141,6 @@ function simpleLkTest2(varargin)
             disp(sprintf('Opened camera %d (id=%d)', i, cameraIds(i)))
         end
     end
-    
-    %     if useLiveFeed
-    %         videoCaptures = cell(length(cameraIds), 1);
-    %         for i = 1:length(cameraIds)
-    %             videoCaptures{i} = cv.VideoCapture(cameraIds(i));
-    %             disp(sprintf('Opened camera %d (id=%d)', i, cameraIds(i)))
-    %         end
-    %
-    %         images = captureImages(videoCaptures, undistortMaps);
-    %     else
-    %
-    %         leftFilename = sprintf(filenamePattern, 'left', whichImageNumbers(iImageNumber));
-    %         rightFilename = sprintf(filenamePattern, 'right', whichImageNumbers(iImageNumber));
-    %         images = {rgb2gray2(imread(leftFilename)), rgb2gray2(imread(rightFilename))};
-    %     end
-    %
-    %     lastImages = images;
-    
-    
     
     %     [points0x, points0y] = meshgrid(linspace(0, imageSize(2)-1, numPointsPerDimension),linspace(0, imageSize(1)-1, numPointsPerDimension));
     [points0x, points0y] = meshgrid(linspace(25, imageSize(2)-26, numPointsPerDimension),linspace(25, imageSize(1)-26, numPointsPerDimension));
@@ -433,13 +422,51 @@ function simpleLkTest2(varargin)
             
             imshows({disparityToShowBoth,0,colorDisparityToShowBoth}, 3);
             
+            if drawVoxels
+                validInds = find(disparity > 0);
+                [xs, ys] = meshgrid(1:size(disparity,2), 1:size(disparity,1));
+                xs = xs - mean(xs(:));
+                ys = ys - mean(ys(:));
+                
+                voxels = zeros([6,length(validInds)], 'single');
+                voxels(1,:) = -xs(validInds);
+                voxels(2,:) = -ys(validInds);
+                %scaledDepths = 1000000 * (1 ./ single(disparity(validInds)));
+                %scaledDepths(scaledDepths>5000) = 5000;
+                %scaledDepths = scaledDepths - median(scaledDepths(:));
+                %scaledDepths(scaledDepths>5000) = 5000;
+                %                 scaledDepths = scaledDepths - median(scaledDepths(:));
+                scaledDepths = -single(disparity(validInds));
+                voxels(3,:) = scaledDepths;
+                
+                if voxelsUseDepthColor
+                    rc = colorDisparityToShow(:,:,1);
+                    gc = colorDisparityToShow(:,:,2);
+                    bc = colorDisparityToShow(:,:,3);
+                    
+                    voxels(4,:) = single(rc(validInds)') / 255;
+                    voxels(5,:) = single(gc(validInds)') / 255;
+                    voxels(6,:) = single(bc(validInds)') / 255;
+                else
+                    voxels(4:6,:) = repmat(single(leftIm(validInds)')*(1/255), [3,1]);
+                end
+                
+                if pauseForEachFrame
+                    secondsToWait = 0;
+                else
+                    secondsToWait = 0.5;
+                end
+                
+                mexShowVoxels(voxels, secondsToWait);
+            end
+            
             if saveOutputToFile
                 imwrite(disparityToShowBoth, [outputFilenamePrefix, sprintf('stereoBm_%d.png', whichImageNumbers(iImageNumber-1))]);
                 imwrite(colorDisparityToShowBoth, [outputFilenamePrefix, sprintf('stereoBmColor_%d.png', whichImageNumbers(iImageNumber-1))]);
             end
         end % if runStereoBmComputation && length(images) == 2
         
-        if pauseForEachFrame
+        if pauseForEachFrame && ~drawVoxels
             [~,~,c] = ginput(1);
             if c == 'q'
                 disp('Quitting...');

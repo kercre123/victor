@@ -37,7 +37,7 @@ function [labelName, labelID, minDifference] = visionMarker_exhaustiveMatch_sear
                 
                 allImagesCorners = allImagesCorners([3,1,4,2],:);
                 
-                [warpedImages{iRotation}, ~, ~] = lucasKande_warpGroundTruth(allImages{iImage}{1}, tforms{iRotation}.tdata.T', size(img));
+                [warpedImages{iRotation}, ~, ~] = warpProjective(allImages{iImage}{1}, tforms{iRotation}.tdata.T', size(img));
                 
                 warpedPixels = warpedImages{iRotation}(imgMask);
                 warpedPixels(isnan(warpedPixels)) = 0;
@@ -53,7 +53,7 @@ function [labelName, labelID, minDifference] = visionMarker_exhaustiveMatch_sear
         for iRotation = 1:4
             tforms{iRotation} = cp2tform(allImagesCorners, corners, 'projective');
             
-            [warpedImages{iRotation}, ~, ~] = lucasKande_warpGroundTruth(img, tforms{iRotation}.tdata.Tinv', size(allImages{1}{1}));
+            [warpedImages{iRotation}, ~, ~] = warpProjective(img, tforms{iRotation}.tdata.Tinv', size(allImages{1}{1}));
             
             allImagesCorners = allImagesCorners([3,1,4,2],:);
         end
@@ -101,7 +101,7 @@ function [labelName, labelID, minDifference] = visionMarker_exhaustiveMatch_sear
         for iRotation = 1:4
             tforms{iRotation} = cp2tform(allImagesCorners, corners, 'projective');
             
-            [warpedImages{iRotation}, ~, ~] = lucasKande_warpGroundTruth(imgNoEdges, tforms{iRotation}.tdata.Tinv', size(allImages{1}{1}), [], 'nearest');
+            [warpedImages{iRotation}, ~, ~] = warpProjective(imgNoEdges, tforms{iRotation}.tdata.Tinv', size(allImages{1}{1}), [], 'nearest');
             warpedInds{iRotation} = find(~isnan(warpedImages{iRotation}));
             
             allImagesCorners = allImagesCorners([3,1,4,2],:);

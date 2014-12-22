@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "4b5318ae86b8725a666eab37b14f95e3e51d8f45" # Hash for the revision these python definitions are based on
+__version__ = "3d2303be1f2e2073d4d9f0884c1af575efe46c42" # Hash for the revision these python definitions are based on
 
 import struct
 
@@ -33,13 +33,18 @@ IE_YUYV  = 1
 IE_BAYER = 2
 IE_JPEG  = 3
 IE_WEBP  = 4
-CAMERA_RES_VGA = 0
-CAMERA_RES_QVGA = 1
-CAMERA_RES_QQVGA = 2
-CAMERA_RES_QQQVGA = 3
-CAMERA_RES_QQQQVGA = 4
-CAMERA_RES_VERIFICATION_SNAPSHOT = 5
-CAMERA_RES_COUNT = 6
+CAMERA_RES_QUXGA = 0
+CAMERA_RES_QXGA = 1
+CAMERA_RES_UXGA = 2
+CAMERA_RES_XGA = 3
+CAMERA_RES_SVGA = 4
+CAMERA_RES_VGA = 5
+CAMERA_RES_QVGA = 6
+CAMERA_RES_QQVGA = 7
+CAMERA_RES_QQQVGA = 8
+CAMERA_RES_QQQQVGA = 9
+CAMERA_RES_VERIFICATION_SNAPSHOT = 10
+CAMERA_RES_COUNT = 11
 CAMERA_RES_NONE = CAMERA_RES_COUNT
 
 class MessageBase(struct.Struct):
@@ -72,7 +77,7 @@ class ImageRequest(MessageBase):
 
     def __init__(self, buffer=None):
         MessageBase.__init__(self)
-        self.imageSendMode = IE_NONE
+        self.imageSendMode = ISM_OFF
         self.resolution = CAMERA_RES_NONE
         if buffer:
             self.deserialize(buffer)
@@ -150,7 +155,7 @@ class SoMRadioState(MessageBase):
               ]
 
     def __init__(self, wifi=0, bluetooth=0, buffer=None):
-        MessageBase.__init__(self):
+        MessageBase.__init__(self)
         self.wifiState = wifi
         self.blueState = bluetooth
         if buffer:

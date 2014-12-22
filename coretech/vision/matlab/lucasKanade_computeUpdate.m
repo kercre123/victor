@@ -1,19 +1,19 @@
 % function lucasKanade_computeUpdate()
 
 % templateImage = zeros(16,16); for y=1:size(templateImage,1) templateImage(y,:) = y*(1:size(templateImage,2)); end;
-% warpedTemplateImage = lucasKande_warpGroundTruth(templateImage, [1,0,0.5; 0,1,0.1; 0,0,1], size(templateImage));
+% warpedTemplateImage = warpProjective(templateImage, [1,0,0.5; 0,1,0.1; 0,0,1], size(templateImage));
 % templateQuad = [5,4;10,4;10,8;5,8];
 % numScales = 2;
 
 % templateImage = zeros(120,160); for y=1:size(templateImage,1) templateImage(y,:) = y*(1:size(templateImage,2)); end;
-% warpedTemplateImage = lucasKande_warpGroundTruth(templateImage, [1,0,0.5; 0,1,0.1; 0,0,1], size(templateImage));
+% warpedTemplateImage = warpProjective(templateImage, [1,0,0.5; 0,1,0.1; 0,0,1], size(templateImage));
 % templateQuad = [50,50;50,100;100,100;100,50];
 % numScales = 4;
 
 % templateImage = zeros(120,160); for y=1:size(templateImage,1) templateImage(y,:) = y*(1:size(templateImage,2)); end;
 % templateImage = templateImage / max(templateImage(:)); templateImage = round(50*templateImage);
 % templateQuad = [3,3;3,152;142,152;142,3];
-% [warpedTemplateImage, mask, warpedMask] = lucasKande_warpGroundTruth(templateImage, [1,0,1; 0,1,0; 0,0,1], size(templateImage), templateQuad);
+% [warpedTemplateImage, mask, warpedMask] = warpProjective(templateImage, [1,0,1; 0,1,0; 0,0,1], size(templateImage), templateQuad);
 % warpedTemplateImage(isnan(warpedTemplateImage)) = 0;
 % templateQuad = [5,5;5,150;140,150;140,5];
 % numScales = 4;
