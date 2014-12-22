@@ -41,6 +41,8 @@ target_link_libraries(blockworld_controller
   Cozmo_Basestation
   CoreTech_Common_Basestation
   CoreTech_Vision_Basestation
+  CoreTech_Vision_Robot  # For using embedded vision implementations on Basestation
+  CoreTech_Common_Robot  #     "
   CoreTech_Planning_Basestation
   CoreTech_Messaging_Basestation
   CppController # Webots C++ Controller
@@ -48,7 +50,14 @@ target_link_libraries(blockworld_controller
   ${OPENCV_LIBS}
   ${BLE_LIBRARY}
 )
-  
+
+if(${ANKICORETECH_USE_MATLAB})
+  target_link_libraries(blockworld_controller
+    ${MATLAB_ENG_LIBRARY}
+    ${MATLAB_MX_LIBRARY}
+  )
+endif()
+
 set_target_properties(blockworld_controller PROPERTIES
     FOLDER "Webots Controllers"
 )

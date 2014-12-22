@@ -73,8 +73,6 @@ target_link_libraries(cozmo_c_controller
   CoreTech_Vision_Robot
   CoreTech_Messaging_Robot
   CoreTech_Planning_Robot
-  # mx 
-  # eng
   ${ALL_EMBEDDED_LIBRARIES}
 )
 

@@ -160,11 +160,16 @@ namespace Anki {
         IActionRunner* currentAction = GetCurrentAction();
         assert(currentAction != nullptr);
         
+        VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN,
+                                           "Action: %s", currentAction->GetName().c_str());
+        
         const IAction::ActionResult actionResult = currentAction->Update(robot);
         
         if(actionResult != IActionRunner::RUNNING) {
           // Current action just finished, pop it
           PopCurrentAction();
+          
+          VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN, "");
         }
       } // if queue not empty
       

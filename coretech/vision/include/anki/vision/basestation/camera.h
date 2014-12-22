@@ -97,12 +97,26 @@ namespace Anki {
       template<size_t NumPoints>
       void Project3dPoints(const std::array<Point3f,NumPoints> &objPoints,
                            std::array<Point2f,NumPoints>       &imgPoints) const;
+      
+      // Project an object's corners into the camera and also return the object's
+      // distance from the camera's origin
+      void ProjectObject(const ObservableObject&  object,
+                         std::vector<Point2f>&    projectedCorners,
+                         f32&                     distanceFromCamera) const;
 
       // Register an object as an "occluder" for this camera
       void AddOccluder(const ObservableObject& object);
       
       // Register a KnownMarker as an "occluder" for this camera
       void AddOccluder(const KnownMarker& marker);
+      
+      // Add arbitrary projected points as an occluder (their bounding box
+      // will form the actual occluder)
+      void AddOccluder(const std::vector<Point2f>& projectedPoints,
+                       const f32 atDistance);
+      
+      // Return all the occluders for this camera
+      void GetAllOccluders(std::vector<Rectangle<f32> >& occluders) const;
       
       // Clear all occluders known to this camera
       void ClearOccluders();
@@ -202,6 +216,10 @@ namespace Anki {
       }
     } // // Project3dPoints(std::array)
     
+    inline void Camera::GetAllOccluders(std::vector<Rectangle<f32> >& occluders) const
+    {
+      _occluderList.GetAllOccluders(occluders);
+    }
     
   } // namesapce Vision
 } // namespace Anki

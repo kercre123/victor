@@ -42,10 +42,27 @@ namespace Anki {
     bool operator==(const UniqueEnumeratedValue& other) const { return _value == other._value; }
     bool operator!=(const UniqueEnumeratedValue& other) const { return _value != other._value; }
     bool operator< (const UniqueEnumeratedValue& other) const { return _value <  other._value; }
+    
+    bool operator==(const StorageType value) const { return _value == value; }
+    bool operator!=(const StorageType value) const { return _value != value; }
+    bool operator< (const StorageType value) const { return _value <  value; }
 
+    //
+    // The ability to assign from a value or from another UniqueEnumeratedValue
+    // is a bit weird since it means you can have another one of these objects
+    // in existance with the same ID (so it isn't really unique). This sort of
+    // assignment should only be used as a means of selecting/finding a specific
+    // UniqueEnumeratedValue.
+    //
+    
     // Assignment
     UniqueEnumeratedValue<StorageType>& operator=(const UniqueEnumeratedValue<StorageType>& other) {
       _value = other._value;
+      return *this;
+    }
+    
+    UniqueEnumeratedValue<StorageType>& operator=(const StorageType value) {
+      _value = value;
       return *this;
     }
     
@@ -124,6 +141,8 @@ namespace Anki {
     static void Reset();
     
     void Set();
+    
+    using UniqueEnumeratedValue<int>::operator=;
     
   }; // class ObjectID
   

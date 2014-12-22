@@ -58,9 +58,12 @@ namespace Anki {
 
       typedef enum {
         VISION_MODE_IDLE,
+        VISION_MODE_SEND_IMAGES_TO_BASESTATION,
         VISION_MODE_LOOKING_FOR_MARKERS,
         VISION_MODE_TRACKING,
-        VISION_MODE_DETECTING_FACES
+        VISION_MODE_DETECTING_FACES,
+        
+        VISION_MODE_DEFAULT = VISION_MODE_SEND_IMAGES_TO_BASESTATION
       } VisionSystemMode;
 
 #if 0
@@ -302,12 +305,16 @@ namespace Anki {
         static void SetFaceDetectionReadyTime() {
           frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FACE_DETECTION_PERIOD_US;
         }
+        static void SetSendWifiImageReadyTime() {
+          frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::SEND_WIFI_IMAGE_PERIOD_US;
+        }
 #else
         static Result Initialize() { return RESULT_OK; }
         static bool IsFrameReady() { return true; }
         static void SetDetectionReadyTime() { }
         static void SetTrackingReadyTime() { }
         static void SetFaceDetectionReadyTime() {}
+        static void SetSendWifiImageReadyTime() {}
 #endif
       } // namespace Simulator
 
@@ -363,7 +370,7 @@ namespace Anki {
       {
         if(newMarkerToTrackWasProvided_) {
           
-          mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
+          mode_                  = VISION_MODE_DEFAULT;
           numTrackFailures_      = 0;
           
           markerToTrack_ = newMarkerToTrack_;
@@ -413,6 +420,61 @@ namespace Anki {
         }
       }
 
+#if USE_COMPRESSION_FOR_SENDING_IMAGES
+      void CompressAndSendImage(const Array<u8> &img)
+      {
+        static u32 imgID = 0;
+        const cv::vector<int> compressionParams = {
+          CV_IMWRITE_JPEG_QUALITY, IMAGE_SEND_JPEG_COMPRESSION_QUALITY
+        };
+        
+        cv::Mat cvImg;
+        Result lastResult = ArrayToCvMat(img, &cvImg);
+        AnkiConditionalErrorAndReturn(lastResult == RESULT_OK,
+                                      "CompressAndSendImage.ArrayToCvMat failure.",
+                                      "Failed to convert input array to cv::Mat for compression.\n");
+        
+        cv::vector<u8> compressedBuffer;
+        cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
+        
+        const u32 numTotalBytes = compressedBuffer.size();
+        
+        Messages::ImageChunk m;
+        // TODO: pass this in so it corresponds to actual frame capture time instead of send time
+        m.frameTimeStamp = HAL::GetTimeStamp();
+        m.resolution = captureResolution_;
+        m.imageId = ++imgID;
+        m.chunkId = 0;
+        m.chunkSize = IMAGE_CHUNK_SIZE;
+        m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
+        m.imageEncoding = IE_JPEG;
+        
+        u32 totalByteCnt = 0;
+        u32 chunkByteCnt = 0;
+        
+        for(s32 i=0; i<numTotalBytes; ++i)
+        {
+          m.data[chunkByteCnt] = compressedBuffer[i];
+          
+          ++chunkByteCnt;
+          ++totalByteCnt;
+          
+          if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
+            //PRINT("Sending image chunk %d\n", m.chunkId);
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+            ++m.chunkId;
+            chunkByteCnt = 0;
+          } else if (totalByteCnt == numTotalBytes) {
+            // This should be the last message!
+            //PRINT("Sending LAST image chunk %d\n", m.chunkId);
+            m.chunkSize = chunkByteCnt;
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+          }
+        } // for each byte in the compressed buffer
+        
+      } // CompressAndSendImage()
+#endif // USE_COMPRESSION_FOR_SENDING_IMAGES
+      
       void DownsampleAndSendImage(const Array<u8> &img)
       {
         // Only downsample if normal capture res is QVGA
@@ -429,8 +491,8 @@ namespace Anki {
           static u32 imgID = 0;
 
           // Downsample and split into image chunk message
-          const u32 xRes = CameraModeInfo[nextSendImageResolution_].width;
-          const u32 yRes = CameraModeInfo[nextSendImageResolution_].height;
+          const u32 xRes = Vision::CameraResInfo[nextSendImageResolution_].width;
+          const u32 yRes = Vision::CameraResInfo[nextSendImageResolution_].height;
 
           const u32 xSkip = 320 / xRes;
           const u32 ySkip = 240 / yRes;
@@ -438,6 +500,8 @@ namespace Anki {
           const u32 numTotalBytes = xRes*yRes;
 
           Messages::ImageChunk m;
+          // TODO: pass this in so it corresponds to actual frame capture time instead of send time
+          m.frameTimeStamp = HAL::GetTimeStamp();
           m.resolution = nextSendImageResolution_;
           m.imageId = ++imgID;
           m.chunkId = 0;
@@ -1401,7 +1465,7 @@ namespace Anki {
           // Initialize the VisionSystem's state (i.e. its "private member variables")
           //
 
-          mode_                      = VISION_MODE_LOOKING_FOR_MARKERS;
+          mode_                      = VISION_MODE_DEFAULT;
           markerToTrack_.Clear();
           numTrackFailures_          = 0;
 
@@ -1489,6 +1553,9 @@ namespace Anki {
         // Next call to Update(), we will call UpdateMarkerToTrack() and
         // actually replace the current markerToTrack_ with the one set here.
         newMarkerToTrackWasProvided_ = true;
+        
+        // Send a message up to basestation vision to start tracking:
+        //HAL::RadioSendMessage(<#const Messages::ID msgID#>, <#const void *buffer#>)
         
         return RESULT_OK;
       }
@@ -1777,8 +1844,8 @@ namespace Anki {
 
         frameNumber++;
 
-        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+        const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+        const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
 
         Array<u8> grayscaleImage(captureHeight, captureWidth,
           VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
@@ -1881,8 +1948,8 @@ namespace Anki {
 
         frameNumber++;
 
-        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+        const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+        const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
 
         Array<u8> grayscaleImage(captureHeight, captureWidth, VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
 
@@ -1956,8 +2023,8 @@ namespace Anki {
           // Nothing to do, unless a snapshot was requested
           
           if(isWaitingOnSnapshot_) {
-            const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-            const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+            const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+            const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
             
             Array<u8> grayscaleImage(captureHeight, captureWidth,
                                      VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
@@ -1979,8 +2046,8 @@ namespace Anki {
 
           //MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
 
-          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+          const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
 
           Array<u8> grayscaleImage(captureHeight, captureWidth,
             VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
@@ -2130,8 +2197,8 @@ namespace Anki {
           MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
           MemoryStack onchipScratch_local(VisionMemory::onchipScratch_);
 
-          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+          const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
 
           Array<u8> grayscaleImage(captureHeight, captureWidth,
             onchipScratch_local, Flags::Buffer(false,false,false));
@@ -2292,8 +2359,8 @@ namespace Anki {
                                              "VisionSystem::Update::FaceDetectionParametersNotInitialized",
                                              "Face detection parameters not initialized before Update() in DETECTING_FACES mode.\n");
           
-          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+          const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
           
           Array<u8> grayscaleImage(captureHeight, captureWidth,
                                    VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
@@ -2385,7 +2452,10 @@ namespace Anki {
           
           f32 sendScale = 1.f;
           if (imageSendMode_ == ISM_STREAM) {
-            const u8 scaleFactor = (1 << CameraModeInfo[faceDetectionParameters_.detectionResolution].downsamplePower[nextSendImageResolution_]);
+            //const u8 scaleFactor = (1 << CameraModeInfo[faceDetectionParameters_.detectionResolution].downsamplePower[nextSendImageResolution_]);
+            
+            const u8 scaleFactor = (Vision::CameraResInfo[faceDetectionParameters_.detectionResolution].width /
+                                    Vision::CameraResInfo[nextSendImageResolution_].width);
             
             if(scaleFactor > 1) {
               // Send additional downsampled image, marked for visualization
@@ -2440,8 +2510,33 @@ namespace Anki {
                                           VisionMemory::onchipScratch_,
                                           VisionMemory::offchipScratch_);
           
+        } else if(mode_ == VISION_MODE_SEND_IMAGES_TO_BASESTATION) {
+
+          Simulator::SetSendWifiImageReadyTime();
+
+          VisionMemory::ResetBuffers();
+          
+          const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+          const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
+          
+          Array<u8> grayscaleImage(captureHeight, captureWidth,
+                                   VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
+          
+          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
+                              captureResolution_, false);
+          
+          //SetImageSendMode(ISM_STREAM, captureResolution_);
+          
+#if USE_COMPRESSION_FOR_SENDING_IMAGES
+          CompressAndSendImage(grayscaleImage);
+#else
+          DownsampleAndSendImage(grayscaleImage);
+#endif
+          
+          //PRINT("Sent image to basestation.\n");
+          
         } else {
-          PRINT("VisionSystem::Update(): reached default case in switch statement.");
+          PRINT("VisionSystem::Update(): unknown mode = %d.", mode_);
           return RESULT_FAIL;
         } // if(converged)
 

@@ -1,5 +1,8 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
+
+#include "anki/common/shared/mailbox_impl.h"
+
 #include "messages.h"
 #include "localization.h"
 #include "visionSystem.h"
@@ -49,47 +52,6 @@ namespace Anki {
         const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;
         ID lookForID_ = NO_MESSAGE_ID;
         u32 lookingStartTime_ = 0;
-        
-        //
-        // Mailboxes
-        //
-        //   "Mailboxes" are used for leaving messages from slower
-        //   vision processing in LongExecution to be retrieved and acted upon
-        //   by the faster MainExecution.
-        //
-        
-        // Single-message Mailbox Class
-        template<typename MsgType>
-        class Mailbox
-        {
-        public:
-          
-          Mailbox();
-          
-          bool putMessage(const MsgType newMsg);
-          bool getMessage(MsgType& msgOut);
-          
-        protected:
-          MsgType message_;
-          bool    beenRead_;
-          bool    isLocked_;
-        };
-        
-        // Multiple-message Mailbox Class
-        template<typename MSG_TYPE, u8 NUM_BOXES>
-        class MultiMailbox
-        {
-        public:
-        
-          bool putMessage(const MSG_TYPE newMsg);
-          bool getMessage(MSG_TYPE& msg);
-        
-        protected:
-          Mailbox<MSG_TYPE> mailboxes_[NUM_BOXES];
-          u8 readIndex_, writeIndex_;
-          
-          void advanceIndex(u8 &index);
-        };
         
         
         // Mailboxes for different types of messages that the vision
@@ -266,7 +228,8 @@ namespace Anki {
         
         
         PRINT("Robot received localization update from "
-              "basestation: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
+              "basestation for time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
+              msg.timestamp,
               currentMatX, currentMatY,
               currentMatHeading.getDegrees(),
               Localization::GetPoseFrameId());
@@ -488,8 +451,6 @@ namespace Anki {
           FaceTrackingController::Reset();
         }
       }
-      
-
       
       void ProcessAbortDockingMessage(const AbortDocking& msg)
       {
@@ -775,6 +736,19 @@ namespace Anki {
         AddKeyFrameHelper(msg, kf);
       }
       
+      void ProcessPanAndTiltHeadMessage(const PanAndTiltHead& msg)
+      {
+        // TODO: Move this to some kind of VisualInterestTrackingController or something
+        
+        HeadController::SetDesiredAngle(msg.relativeHeadTiltAngle_rad + HeadController::GetAngleRad());
+        
+        const f32 turnVelocity = (msg.relativePanAngle_rad < 0 ? -50.f : 50.f);
+        SteeringController::ExecutePointTurn(msg.relativePanAngle_rad + Localization::GetCurrentMatOrientation().ToFloat(),
+                                             turnVelocity, 5, -5);
+
+        
+      }
+      
 // ----------- Send messages -----------------
       
       
@@ -849,9 +823,6 @@ namespace Anki {
         return 0;
       }
       
-#if 0
-#pragma mark --- VisionSystem::Mailbox Template Implementations ---
-#endif
       /*
       bool CheckMailbox(BlockMarkerObserved& msg)
       {
@@ -864,6 +835,8 @@ namespace Anki {
       }
        */
       
+      
+      
       bool CheckMailbox(DockingErrorSignal&  msg)
       {
         return dockingMailbox_.getMessage(msg);
@@ -872,86 +845,6 @@ namespace Anki {
       bool CheckMailbox(FaceDetection&       msg)
       {
         return faceDetectMailbox_.getMessage(msg);
-      }
-      
-      //
-      // Templated Mailbox Implementations
-      //
-      template<typename MSG_TYPE>
-      Mailbox<MSG_TYPE>::Mailbox()
-      : beenRead_(true)
-      {
-      
-      }
-      
-      template<typename MSG_TYPE>
-      bool Mailbox<MSG_TYPE>::putMessage(const MSG_TYPE newMsg)
-      {
-        if(isLocked_) {
-          return false;
-        }
-        else {
-          isLocked_ = true;    // Lock
-          message_  = newMsg;
-          beenRead_ = false;
-          isLocked_ = false;   // Unlock
-          return true;
-        }
-      }
-      
-      template<typename MSG_TYPE>
-      bool Mailbox<MSG_TYPE>::getMessage(MSG_TYPE& msgOut)
-      {
-        if(isLocked_ || beenRead_) {
-          return false;
-        }
-        else {
-          isLocked_ = true;   // Lock
-          msgOut = message_;
-          beenRead_ = true;
-          isLocked_ = false;  // Unlock
-          return true;
-        }
-      }
-      
-      
-      //
-      // Templated MultiMailbox Implementations
-      //
-      
-      template<typename MSG_TYPE, u8 NUM_BOXES>
-      bool MultiMailbox<MSG_TYPE,NUM_BOXES>::putMessage(const MSG_TYPE newMsg)
-      {
-        if(mailboxes_[writeIndex_].putMessage(newMsg) == true) {
-          advanceIndex(writeIndex_);
-          return true;
-        }
-        else {
-          return false;
-        }
-      }
-      
-      template<typename MSG_TYPE, u8 NUM_BOXES>
-      bool MultiMailbox<MSG_TYPE,NUM_BOXES>::getMessage(MSG_TYPE& msg)
-      {
-        if(mailboxes_[readIndex_].getMessage(msg) == true) {
-          // we got a message out of the mailbox (it wasn't locked and there
-          // was something in it), so move to the next mailbox
-          advanceIndex(readIndex_);
-          return true;
-        }
-        else {
-          return false;
-        }
-      }
-   
-      template<typename MSG_TYPE, u8 NUM_BOXES>
-      void MultiMailbox<MSG_TYPE,NUM_BOXES>::advanceIndex(u8 &index)
-      {
-        ++index;
-        if(index == NUM_BOXES) {
-          index = 0;
-        }
       }
 
       

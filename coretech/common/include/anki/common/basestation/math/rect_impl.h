@@ -83,6 +83,22 @@ namespace Anki {
   template<typename T>
   T Rectangle<T>::GetYmax()   const
   { return y + height; }
+
+  template<typename T>
+  void Rectangle<T>::GetQuad(Quadrilateral<2,T>& quad) const
+  {
+    quad[Quad::TopLeft].x() = x;
+    quad[Quad::TopLeft].y() = y;
+    
+    quad[Quad::BottomLeft].x() = x;
+    quad[Quad::BottomLeft].y() = y + height;
+    
+    quad[Quad::TopRight].x() = x + width;
+    quad[Quad::TopRight].y() = y;
+    
+    quad[Quad::BottomRight].x() = x + width;
+    quad[Quad::BottomRight].y() = y + height;
+  }
   
   
   template<typename T>

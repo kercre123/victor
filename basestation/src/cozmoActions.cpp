@@ -586,6 +586,12 @@ namespace Anki {
         // right position.
         if(currentTime >= _waitToVerifyTime) {
           actionResult = Verify(robot);
+          
+          // If docking fails, go back to looking for markers?
+          if(actionResult != SUCCESS) {
+            robot.StartLookingForMarkers();
+            robot.StopDocking();
+          }
         }
       }
       
@@ -689,7 +695,7 @@ namespace Anki {
         case DA_PICKUP_HIGH:
         {
           if(robot.IsCarryingObject() == false) {
-            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.RobotNotCarryignObject",
+            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.RobotNotCarryingObject",
                               "Expecting robot to think it's carrying an object at this point.\n");
             return FAILURE_RETRY;
           }

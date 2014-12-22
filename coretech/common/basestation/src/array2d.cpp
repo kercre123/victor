@@ -11,6 +11,6 @@ namespace Anki
     Array2d<float> stuff(100,100);
 
     // Exponentiate "stuff" in place:
-    stuff.applyScalarFunction(expf);
+    stuff.ApplyScalarFunction(expf);
   }
 } // namespace Anki

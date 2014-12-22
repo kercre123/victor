@@ -8,6 +8,11 @@ file(GLOB SHARED_SOURCE_FILES ../../shared/src/*.cpp)
 file(GLOB_RECURSE PRIVATE_HEADER_FILES *.h)
 file(GLOB_RECURSE HEADER_FILES ${CORETECH_COMMON_INCLUDE_DIR}/basestation/ *.h)
 
+if(ANKI_IOS_BUILD)
+  file(GLOB OBJC_SOURCE_FILES *.m*)
+  list(APPEND SOURCE_FILES ${OBJC_SOURCE_FILES})
+endif(ANKI_IOS_BUILD)
+
 file(GLOB SHARED_HEADER_FILES 
   ../../shared/src/*.h
   ${CORETECH_COMMON_INCLUDE_DIR}/shared/*.h
@@ -25,4 +30,6 @@ add_library(CoreTech_Common_Basestation
 set_target_properties(CoreTech_Common_Basestation PROPERTIES
   FOLDER "CoreTech"#/Basestation"
 )
+
+
 

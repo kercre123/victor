@@ -13,6 +13,8 @@
 
 #include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
 #include "anki/messaging/shared/TcpClient.h"
+#include "anki/cozmo/basestation/game/gameMessageHandler.h"
+#include "anki/cozmo/basestation/game/gameComms.h"
 
 #include "behaviorManager.h"
 
@@ -31,6 +33,7 @@
 #endif
 
 #define BASESTATION_IP "127.0.0.1"
+#define UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP "127.0.0.1"
 
 namespace Anki {
   namespace Cozmo {
@@ -126,6 +129,9 @@ namespace Anki {
         #endif // ENABLE_GAMEPAD_SUPPORT
 
         
+        GameMessageHandler msgHandler_;
+        GameComms gameComms_(UI_MESSAGE_SERVER_LISTEN_PORT,
+                             UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP, UI_ADVERTISEMENT_REGISTRATION_PORT);
         
       } // private namespace
       
@@ -140,12 +146,13 @@ namespace Anki {
       void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel);
       void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel);
       void SendStopAllMotors();
-      void SendImageRequest(u8 mode);
+      void SendImageRequest(u8 mode, u8 resolution);
       void SendSaveImages(bool on);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
       void SendExecutePathToPose(const Pose3d& p);
       void SendPlaceObjectOnGroundSequence(const Pose3d& p);
+      void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose);
       void SendPickAndPlaceSelectedObject(const bool usePreDockPose);
       void SendTraverseSelectedObject();
       void SendExecuteTestPlan();
@@ -168,9 +175,27 @@ namespace Anki {
       void SendStopFaceTracking();
       void SendFaceDetectParams();
       
+      
+      // ======== Message handler callbacks =======
+      void ProcessMessageObjectVisionMarker(RobotID_t id, MessageG2U_ObjectVisionMarker const& msg)
+      {
+        // TODO: Do something with this message to notify UI
+        printf("RECEIVED OBJECT VISION MARKER: objectID %d\n", msg.objectID);
+      }
+
+      
+      // ===== End of message handler callbacks ====
+      
+      
       void Init()
       {
         memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
+        
+        msgHandler_.Init(&gameComms_);
+        
+        // Register callbacks for incoming messages from game
+        msgHandler_.RegisterCallbackForMessageG2U_ObjectVisionMarker(ProcessMessageObjectVisionMarker);
+        
         
         inputController.keyboardEnable(BS_TIME_STEP);
         
@@ -491,7 +516,7 @@ namespace Anki {
                   }
                   streamOn = !streamOn;
                 }
-                SendImageRequest(mode);
+                SendImageRequest(mode, IMG_STREAM_RES);
                 break;
               }
                 
@@ -1075,14 +1100,13 @@ namespace Anki {
       
       void Update()
       {
-        // Connect to basestation if not already connected
-        if (!bsClient.IsConnected()) {
-          if (!bsClient.Connect(BASESTATION_IP, UI_MESSAGE_SERVER_LISTEN_PORT)) {
-            printf("Failed to connect to UI message server listen port\n");
-            return;
-          }
-          printf("WebotsKeyboardController connected to basestation!\n");
+        gameComms_.Update();
+        
+        if (!gameComms_.HasClient()) {
+          return;
         }
+        
+        msgHandler_.ProcessMessages();
         
         
         // Update poseMarker pose
@@ -1118,15 +1142,8 @@ namespace Anki {
       
       void SendMessage(const UiMessage& msg)
       {
-        int sendBufLen = sizeof(RADIO_PACKET_HEADER);
-        sendBuf[sendBufLen++] = msg.GetSize()+1;
-        sendBuf[sendBufLen++] = msg.GetID();
-        msg.GetBytes((u8*)(&sendBuf[sendBufLen]));
-        sendBufLen += msg.GetSize();
-        
-        //int bytes_sent =
-        bsClient.Send(sendBuf, sendBufLen);
-        //printf("Sent %d bytes\n", bytes_sent);
+        UserDeviceID_t devID = 1; // TODO: Should this be a RobotID_t?
+        msgHandler_.SendMessage(devID, msg); 
       }
       
       void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps)
@@ -1175,10 +1192,11 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendImageRequest(u8 mode)
+      void SendImageRequest(u8 mode, u8 resolution)
       {
         MessageU2G_ImageRequest m;
         m.mode = mode;
+        m.resolution = resolution;
         SendMessage(m);
       }
       
@@ -1241,11 +1259,17 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendPickAndPlaceSelectedObject(const bool usePreDockPose)
+      void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose)
       {
         MessageU2G_PickAndPlaceObject m;
         m.usePreDockPose = static_cast<u8>(usePreDockPose);
+        m.objectID = -1;
         SendMessage(m);
+      }
+      
+      void SendPickAndPlaceSelectedObject(const bool usePreDockPose)
+      {
+        SendPickAndPlaceObject(-1, usePreDockPose);
       }
       
       void SendTraverseSelectedObject()
@@ -1370,6 +1394,11 @@ namespace Anki {
       {
         MessageU2G_StopFaceTracking m;
         SendMessage(m);
+        
+        // For now, have to re-enable marker finding b/c turning on face
+        // tracking will have stopped it:
+        MessageU2G_StartLookingForMarkers m2;
+        SendMessage(m2);
       }
 
       void SendFaceDetectParams()

@@ -13,7 +13,12 @@ target_link_libraries(run_pc_embeddedTests
   CoreTech_Vision_Robot
   CoreTech_Common_Robot
   ${ALL_EMBEDDED_LIBRARIES})
-  
+
+if(${ANKICORETECH_EMBEDDED_USE_MATLAB})
+  target_link_libraries(run_pc_embeddedTests
+    ${MATLAB_MEX_LIBRARY})
+endif()
+
 set_target_properties(run_pc_embeddedTests PROPERTIES
   FOLDER "Unit Tests"
 )

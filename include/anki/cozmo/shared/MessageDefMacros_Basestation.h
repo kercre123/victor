@@ -41,6 +41,8 @@
 #undef MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
 #undef MESSAGE_ENUM_DEFINITION_MODE
 #undef MESSAGE_PROCESS_METHODS_MODE
+#undef MESSAGE_UI_REG_CALLBACK_METHODS_MODE
+#undef MESSAGE_UI_PROCESS_METHODS_MODE
 #undef MESSAGE_CREATE_JSON_MODE
 #undef MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE
 #undef MESSAGE_CREATEFROMJSON_LADDER_MODE
@@ -54,9 +56,11 @@
 #define MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE 6
 #define MESSAGE_ENUM_DEFINITION_MODE          7
 #define MESSAGE_PROCESS_METHODS_MODE          8
-#define MESSAGE_CREATE_JSON_MODE              9
-#define MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE   10
-#define MESSAGE_CREATEFROMJSON_LADDER_MODE    11
+#define MESSAGE_UI_REG_CALLBACK_METHODS_MODE       9
+#define MESSAGE_UI_PROCESS_METHODS_MODE       10
+#define MESSAGE_CREATE_JSON_MODE              11
+#define MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE   12
+#define MESSAGE_CREATEFROMJSON_LADDER_MODE    13
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
 #define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
@@ -82,6 +86,8 @@
 #define GET_MESSAGE_CLASSNAME(__MSG_TYPE__) Message##__MSG_TYPE__
 #define GET_QUOTED_MESSAGE_CLASSNAME(__MSG_TYPE__) QUOTE(GET_MESSAGE_CLASSNAME(__MSG_TYPE__))
 #define GET_DISPATCH_FCN_NAME(__MSG_TYPE__) ProcessPacketAs_Message##__MSG_TYPE__
+#define GET_REGISTER_FCN_NAME(__MSG_TYPE__) RegisterCallbackForMessage##__MSG_TYPE__
+#define GET_CALLBACK_FCN_NAME(__MSG_TYPE__) CallbackForMessage##__MSG_TYPE__
 #define GET_MESSAGE_ID(__MSG_TYPE__) __MSG_TYPE__##_ID
 
 // Time-stamped message definiton (for now) just uses regular start-message
@@ -167,6 +173,27 @@ inline u8 get_##__NAME__##Length() const { return __LENGTH__; }
 //
 //    MessageFooBar::MessageFooBar(const u8* buffer);
 //    {
+//      {
+//        f32 tmp;
+//        memcpy(&tmp, buffer, sizeof(tmp));
+//        foo = tmp;
+//      }
+//      buffer += sizeof(f32);
+//      {
+//        u16 tmp;
+//        memcpy(&tmp, buffer, sizeof(tmp));
+//        bar = tmp;
+//      }
+//      buffer += sizeof(u16);
+//    }
+//
+// See here for why I'm using the tmp variables above:
+//   http://www.splinter.com.au/what-do-do-with-excarmdaalign-on-an-iphone-ap/
+//
+//
+// OLD Method using reinterpret_cast -- Dangerous, can cause memory alignment problems
+//    MessageFooBar::MessageFooBar(const u8* buffer);
+//    {
 //      foo = *(reinterpret_cast<const f32*>(buffer));
 //      buffer += sizeof(f32);
 //      bar = *(reinterpret_cast<const u16*>(buffer));
@@ -177,15 +204,28 @@ inline u8 get_##__NAME__##Length() const { return __LENGTH__; }
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
 GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const u8* buffer) { 
 
+// These
+//#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
+//__NAME__ = *(reinterpret_cast<const __TYPE__*>(buffer)); \
+//buffer += sizeof(__TYPE__);
+
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
-__NAME__ = *(reinterpret_cast<const __TYPE__*>(buffer)); \
+{ __TYPE__ tmp; memcpy(&tmp, buffer, sizeof(tmp)); __NAME__ = tmp; } \
 buffer += sizeof(__TYPE__);
 
+//#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
+//std::copy(reinterpret_cast<const __TYPE__*>(buffer), \
+//          reinterpret_cast<const __TYPE__*>(buffer)+__LENGTH__, \
+//          __NAME__.begin()); \
+//buffer += __LENGTH__*sizeof(__TYPE__);
+
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
-std::copy(reinterpret_cast<const __TYPE__*>(buffer), \
-          reinterpret_cast<const __TYPE__*>(buffer)+__LENGTH__, \
-          __NAME__.begin()); \
-buffer += __LENGTH__*sizeof(__TYPE__);
+for(s32 i=0; i<__LENGTH__; ++i) { \
+  memcpy(&(__NAME__[i]), buffer, sizeof(__TYPE__)); \
+  buffer += sizeof(__TYPE__); \
+}
+
+
 //memcpy(__NAME__, buffer, __LENGTH__*sizeof(__TYPE__));
 
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__) } // close the constructor function
@@ -238,9 +278,9 @@ return
 // For example:
 //
 //    void MessageFooBar::GetBytes(u8* buffer) const {
-//      *(reinterpret_cast<f32*>(buffer)) = foo;
+//      memcpy(buffer, &foo, sizeof(foo));
 //      buffer += sizeof(f32);
-//      *(reinterpret_cast<u16*>(buffer)) = bar;
+//      memcpy(buffer, &bar, sizeof(bar));
 //      buffer += sizeof(u16);
 //    }
 //
@@ -250,8 +290,9 @@ return
 void GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetBytes(u8* buffer) const {
 
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
-*(reinterpret_cast<__TYPE__*>(buffer)) = __NAME__; \
+memcpy(buffer, &__NAME__, sizeof(__NAME__)); \
 buffer += sizeof(__TYPE__);
+//*(reinterpret_cast<__TYPE__*>(buffer)) = __NAME__; \ OLD!
 
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
 memcpy(buffer, &(__NAME__[0]), __LENGTH__*sizeof(__TYPE__)); \
@@ -326,11 +367,45 @@ inline Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(Robot* robot, const u8* buffer
 { \
   const GET_MESSAGE_CLASSNAME(__MSG_TYPE__) msg(buffer); \
   return ProcessMessage(robot, msg); \
-}
+} \
+
 
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__)
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
+
+
+
+
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_UI_REG_CALLBACK_METHODS_MODE
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+inline void GET_REGISTER_FCN_NAME(__MSG_TYPE__)(void(*fPtr)(RobotID_t, GET_MESSAGE_CLASSNAME(__MSG_TYPE__) const&)) \
+{ \
+  GET_CALLBACK_FCN_NAME(__MSG_TYPE__) = fPtr; \
+}
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
+
+
+
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_UI_PROCESS_METHODS_MODE
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+void (*GET_CALLBACK_FCN_NAME(__MSG_TYPE__))(RobotID_t, GET_MESSAGE_CLASSNAME(__MSG_TYPE__) const&) = NULL; \
+inline Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(RobotID_t id, const u8* buffer) \
+{ \
+  if (GET_CALLBACK_FCN_NAME(__MSG_TYPE__)) { \
+    const GET_MESSAGE_CLASSNAME(__MSG_TYPE__) msg(buffer); \
+    GET_CALLBACK_FCN_NAME(__MSG_TYPE__)(id, msg); \
+    return RESULT_OK; \
+  } \
+  return RESULT_FAIL; \
+}
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
+
+
 
 
 //

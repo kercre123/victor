@@ -130,7 +130,8 @@ namespace Anki {
         
         _timeoutDuration_usec = timeout_sec * 1e6;
         
-        lastResult = VisionSystem::StartDetectingFaces();
+        // Disabled when doing vision processing on the basestation
+        //lastResult = VisionSystem::StartDetectingFaces();
         
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "FaceTrackingController.StartTracking.StartDetectingFacesFailed",
@@ -243,11 +244,14 @@ namespace Anki {
             // Command robot to adjust head and orientation to keep face
             // centered
             HeadController::SetDesiredAngle(tiltAngle);
+            SteeringController::ExecuteDirectDrive(-100 * (panAngle - Localization::GetCurrentMatOrientation()).ToFloat(),
+                                                    100 * (panAngle - Localization::GetCurrentMatOrientation()).ToFloat());
+            /*
             // TODO: Make velocity/acceleration values into parameters
             const f32 turnVelocity = (xError_pix < 0 ? -10.f : 10.f);
             SteeringController::ExecutePointTurn(panAngle.ToFloat(),
                                                  turnVelocity, 5, -5);
-            
+            */
           } else if(_isTracking && HAL::GetMicroCounter() > _currentFace.timeoutTime_usec) {
             PRINT("FaceTrackingController timed out. Stopping tracking.\n");
             VisionSystem::StopTracking();

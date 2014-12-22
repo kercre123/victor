@@ -223,8 +223,10 @@ namespace Anki
       timeInSeconds = (f32)(counter.QuadPart - startCounter) / frequency;
 #elif defined(__APPLE_CC__)
       struct timeval time;
+#     ifndef ANKI_IOS_BUILD
+      // TODO: Fix build error when using this in an iOS build for arm architectures
       gettimeofday(&time, NULL);
-
+#     endif
       // Subtract startSeconds, so the floating point number has reasonable precision
       static long startSeconds = 0;
       if(startSeconds == 0) {
@@ -269,8 +271,11 @@ namespace Anki
       timeInSeconds = (f64)(counter.QuadPart - startCounter) / frequency;
 #elif defined(__APPLE_CC__)
       struct timeval time;
+#     ifndef ANKI_IOS_BUILD
+      // TODO: Fix build error when using this in an iOS build for arm architectures
       gettimeofday(&time, NULL);
-
+#     endif
+      
       // Subtract startSeconds, so the floating point number has reasonable precision
       static long startSeconds = 0;
       if(startSeconds == 0) {
@@ -306,8 +311,11 @@ namespace Anki
       return static_cast<u32>((counter.QuadPart - startCounter) & 0xFFFFFFFF);
 #elif defined(__APPLE_CC__)
       struct timeval time;
+#     ifndef ANKI_IOS_BUILD
+      // TODO: Fix build error when using this in an iOS build for arm architectures
       gettimeofday(&time, NULL);
-
+#     endif 
+      
       // Subtract startSeconds, so the floating point number has reasonable precision
       static long startSeconds = 0;
       if(startSeconds == 0) {
