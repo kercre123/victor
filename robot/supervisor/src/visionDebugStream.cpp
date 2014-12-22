@@ -149,8 +149,8 @@ namespace Anki {
             }
           }
 
-          const s32 height = CameraModeInfo[debugStreamResolution_].height;
-          const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+          const s32 height = Vision::CameraResInfo[debugStreamResolution_].height;
+          const s32 width  = Vision::CameraResInfo[debugStreamResolution_].width;
 
           Array<u8> imageSmall(height, width, offchipScratch);
           DownsampleHelper(image, imageSmall, ccmScratch);
@@ -180,8 +180,8 @@ namespace Anki {
           Result result = RESULT_OK;
 
 #if SEND_DEBUG_STREAM
-          const s32 height = CameraModeInfo[debugStreamResolution_].height;
-          const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+          const s32 height = Vision::CameraResInfo[debugStreamResolution_].height;
+          const s32 width  = Vision::CameraResInfo[debugStreamResolution_].width;
 
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferData_[0], DEBUG_STREAM_BUFFER_SIZE);
 
@@ -255,8 +255,8 @@ namespace Anki {
           Result result = RESULT_OK;
 
 #if SEND_DEBUG_STREAM
-          const s32 height = CameraModeInfo[debugStreamResolution_].height;
-          const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+          const s32 height = Vision::CameraResInfo[debugStreamResolution_].height;
+          const s32 width  = Vision::CameraResInfo[debugStreamResolution_].width;
 
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferData_[0], DEBUG_STREAM_BUFFER_SIZE);
 
@@ -349,8 +349,8 @@ namespace Anki {
 
           edgeLists.Serialize("Edge List", debugStreamBuffer_);
 
-          const s32 height = CameraModeInfo[debugStreamResolution_].height;
-          const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+          const s32 height = Vision::CameraResInfo[debugStreamResolution_].height;
+          const s32 width  = Vision::CameraResInfo[debugStreamResolution_].width;
 
           Array<u8> imageSmall(height, width, offchipScratch);
 

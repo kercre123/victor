@@ -491,8 +491,8 @@ namespace Anki {
           static u32 imgID = 0;
 
           // Downsample and split into image chunk message
-          const u32 xRes = CameraModeInfo[nextSendImageResolution_].width;
-          const u32 yRes = CameraModeInfo[nextSendImageResolution_].height;
+          const u32 xRes = Vision::CameraResInfo[nextSendImageResolution_].width;
+          const u32 yRes = Vision::CameraResInfo[nextSendImageResolution_].height;
 
           const u32 xSkip = 320 / xRes;
           const u32 ySkip = 240 / yRes;
@@ -1844,8 +1844,8 @@ namespace Anki {
 
         frameNumber++;
 
-        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+        const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+        const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
 
         Array<u8> grayscaleImage(captureHeight, captureWidth,
           VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
@@ -1948,8 +1948,8 @@ namespace Anki {
 
         frameNumber++;
 
-        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+        const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+        const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
 
         Array<u8> grayscaleImage(captureHeight, captureWidth, VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
 
@@ -2023,8 +2023,8 @@ namespace Anki {
           // Nothing to do, unless a snapshot was requested
           
           if(isWaitingOnSnapshot_) {
-            const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-            const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+            const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+            const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
             
             Array<u8> grayscaleImage(captureHeight, captureWidth,
                                      VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
@@ -2046,8 +2046,8 @@ namespace Anki {
 
           //MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
 
-          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+          const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
 
           Array<u8> grayscaleImage(captureHeight, captureWidth,
             VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
@@ -2197,8 +2197,8 @@ namespace Anki {
           MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
           MemoryStack onchipScratch_local(VisionMemory::onchipScratch_);
 
-          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+          const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
 
           Array<u8> grayscaleImage(captureHeight, captureWidth,
             onchipScratch_local, Flags::Buffer(false,false,false));
@@ -2359,8 +2359,8 @@ namespace Anki {
                                              "VisionSystem::Update::FaceDetectionParametersNotInitialized",
                                              "Face detection parameters not initialized before Update() in DETECTING_FACES mode.\n");
           
-          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+          const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
           
           Array<u8> grayscaleImage(captureHeight, captureWidth,
                                    VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
@@ -2452,7 +2452,10 @@ namespace Anki {
           
           f32 sendScale = 1.f;
           if (imageSendMode_ == ISM_STREAM) {
-            const u8 scaleFactor = (1 << CameraModeInfo[faceDetectionParameters_.detectionResolution].downsamplePower[nextSendImageResolution_]);
+            //const u8 scaleFactor = (1 << CameraModeInfo[faceDetectionParameters_.detectionResolution].downsamplePower[nextSendImageResolution_]);
+            
+            const u8 scaleFactor = (Vision::CameraResInfo[faceDetectionParameters_.detectionResolution].width /
+                                    Vision::CameraResInfo[nextSendImageResolution_].width);
             
             if(scaleFactor > 1) {
               // Send additional downsampled image, marked for visualization
@@ -2513,8 +2516,8 @@ namespace Anki {
 
           VisionMemory::ResetBuffers();
           
-          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+          const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
           
           Array<u8> grayscaleImage(captureHeight, captureWidth,
                                    VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));

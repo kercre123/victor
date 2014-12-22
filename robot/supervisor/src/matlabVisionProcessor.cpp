@@ -77,7 +77,9 @@ namespace Anki {
           
           initTrackerAtFullRes_ = false;
           
-          scaleFactor_ = (1<<VisionSystem::CameraModeInfo[Vision::CAMERA_RES_QVGA].downsamplePower[trackerParameters_.trackingResolution]);
+          //scaleFactor_ = (1<<VisionSystem::CameraModeInfo[Vision::CAMERA_RES_QVGA].downsamplePower[trackerParameters_.trackingResolution]);
+          scaleFactor_ = (Vision::CameraResInfo[Vision::CAMERA_RES_QVGA].width /
+                          Vision::CameraResInfo[trackerParameters_.trackingResolution].width);
           haveTemplate_ = false;
           
           //scaleTemplateRegionPercent_ = 0.1f;

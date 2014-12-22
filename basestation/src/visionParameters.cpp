@@ -125,8 +125,8 @@ namespace Anki {
         // Binary tracker works at QVGA (unlike LK)
         trackingResolution = Vision::CAMERA_RES_QVGA;
         
-        trackingImageWidth  = CameraModeInfo[trackingResolution].width;
-        trackingImageHeight = CameraModeInfo[trackingResolution].height;
+        trackingImageWidth  = Vision::CameraResInfo[trackingResolution].width;
+        trackingImageHeight = Vision::CameraResInfo[trackingResolution].height;
         scaleTemplateRegionPercent = 1.1f;
         
         
