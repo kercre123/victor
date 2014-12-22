@@ -81,6 +81,7 @@ END_MESSAGE_DEFINITION(U2G_StopAllMotors)
 // ImageRequest
 START_MESSAGE_DEFINITION(U2G_ImageRequest, 1)
 ADD_MESSAGE_MEMBER(u8, mode)
+ADD_MESSAGE_MEMBER(u8, resolution)
 END_MESSAGE_DEFINITION(U2G_ImageRequest)
 
 // SaveImages
@@ -236,3 +237,5 @@ ADD_MESSAGE_MEMBER(s32, minObjectWidth)
 ADD_MESSAGE_MEMBER(s32, maxObjectHeight)
 ADD_MESSAGE_MEMBER(s32, maxObjectWidth)
 END_MESSAGE_DEFINITION(U2G_SetFaceDetectParams)
+
+

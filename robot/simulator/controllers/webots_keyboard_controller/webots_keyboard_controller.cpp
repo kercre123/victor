@@ -146,7 +146,7 @@ namespace Anki {
       void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel);
       void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel);
       void SendStopAllMotors();
-      void SendImageRequest(u8 mode);
+      void SendImageRequest(u8 mode, u8 resolution);
       void SendSaveImages(bool on);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
@@ -516,7 +516,7 @@ namespace Anki {
                   }
                   streamOn = !streamOn;
                 }
-                SendImageRequest(mode);
+                SendImageRequest(mode, IMG_STREAM_RES);
                 break;
               }
                 
@@ -1192,10 +1192,11 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendImageRequest(u8 mode)
+      void SendImageRequest(u8 mode, u8 resolution)
       {
         MessageU2G_ImageRequest m;
         m.mode = mode;
+        m.resolution = resolution;
         SendMessage(m);
       }
       
@@ -1393,6 +1394,11 @@ namespace Anki {
       {
         MessageU2G_StopFaceTracking m;
         SendMessage(m);
+        
+        // For now, have to re-enable marker finding b/c turning on face
+        // tracking will have stopped it:
+        MessageU2G_StartLookingForMarkers m2;
+        SendMessage(m2);
       }
 
       void SendFaceDetectParams()

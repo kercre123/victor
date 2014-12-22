@@ -90,4 +90,6 @@
 
 - (void)sendAnimationWithName:(NSString*)animationName;
 
+- (void)sendCameraResolution:(BOOL)isHigh;
+
 @end

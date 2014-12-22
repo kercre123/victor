@@ -1598,7 +1598,16 @@ namespace Anki {
       m.robotID  = _ID;
       m.syncTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       
-      return _msgHandler->SendMessage(_ID, m);
+      Result result = _msgHandler->SendMessage(_ID, m);
+      
+      // For specifying resolution for basestation vision:
+      // (Start with QVGA)
+      MessageImageRequest mImg;
+      mImg.imageSendMode = ISM_STREAM;
+      mImg.resolution    = Vision::CAMERA_RES_QVGA;
+      _msgHandler->SendMessage(_ID, mImg);
+      
+      return result;
     }
     
     // Clears the path that the robot is executing which also stops the robot
@@ -1737,12 +1746,12 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
 
-    Result Robot::SendImageRequest(const ImageSendMode_t mode) const
+    Result Robot::SendImageRequest(const ImageSendMode_t mode, const Vision::CameraResolution resolution) const
     {
       MessageImageRequest m;
       
       m.imageSendMode = mode;
-      m.resolution = IMG_STREAM_RES;
+      m.resolution    = resolution;
       
       return _msgHandler->SendMessage(_ID, m);
     }
@@ -1981,9 +1990,9 @@ namespace Anki {
       return SendStartTestMode(mode);
     }
     
-    Result Robot::RequestImage(const ImageSendMode_t mode) const
+    Result Robot::RequestImage(const ImageSendMode_t mode, const Vision::CameraResolution resolution) const
     {
-      return SendImageRequest(mode);
+      return SendImageRequest(mode, resolution);
     }
     
     Result Robot::RequestIMU(const u32 length_ms) const

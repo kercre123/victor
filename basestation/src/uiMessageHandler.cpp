@@ -186,7 +186,8 @@ namespace Anki {
         robot->GetBlockWorld().EnableDraw(true);
       }
 
-      return robot->RequestImage((ImageSendMode_t)msg.mode);
+      return robot->RequestImage((ImageSendMode_t)msg.mode,
+                                 (Vision::CameraResolution)msg.resolution);
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SaveImages const& msg)
