@@ -23,7 +23,8 @@
 
 // Physical wifi robots do not yet register/deregister with advertising service so just
 // hard-coding its connection
-#define FORCE_ADD_ROBOT 0
+const bool FORCE_ADD_ROBOT = false;
+const bool FORCED_ROBOT_IS_SIM = false;
 const u8 forcedRobotId = 1;
 const char* forcedRobotIP = "192.168.3.34";
 
@@ -52,17 +53,17 @@ int main(int argc, char **argv)
   webots::Supervisor advertisementController;
 
   
-#if(FORCE_ADD_ROBOT)
-  // Force add physical robot since it's not registering by itself yet.
-  AdvertisementRegistrationMsg forcedRegistrationMsg;
-  forcedRegistrationMsg.id = forcedRobotId;
-  forcedRegistrationMsg.port = ROBOT_RADIO_BASE_PORT;
-  forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
-  forcedRegistrationMsg.enableAdvertisement = 1;
-  snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", forcedRobotIP);
-  
-  robotAdService.ProcessRegistrationMsg(forcedRegistrationMsg);
-#endif
+  if (FORCE_ADD_ROBOT) {
+    // Force add physical robot since it's not registering by itself yet.
+    AdvertisementRegistrationMsg forcedRegistrationMsg;
+    forcedRegistrationMsg.id = forcedRobotId;
+    forcedRegistrationMsg.port = ROBOT_RADIO_BASE_PORT + (FORCED_ROBOT_IS_SIM ? forcedRobotId : 0);
+    forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
+    forcedRegistrationMsg.enableAdvertisement = 1;
+    snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", forcedRobotIP);
+    
+    robotAdService.ProcessRegistrationMsg(forcedRegistrationMsg);
+  }
   
   
   while(advertisementController.step(ADVERTISEMENT_TIME_STEP_MS) != -1) {
