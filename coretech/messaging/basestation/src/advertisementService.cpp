@@ -127,6 +127,11 @@ namespace Anki {
 
     }
   
+    void AdvertisementService::DeregisterAllAdvertisers()
+    {
+      connectionInfoMap_.clear();
+    }
+    
     
   }  // namespace Comms
 }  // namespace Anki

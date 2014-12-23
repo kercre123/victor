@@ -55,7 +55,9 @@ namespace Anki {
       
       // Exposed so that you can force-add an advertiser via API
       void ProcessRegistrationMsg(const AdvertisementRegistrationMsg &msg);
-      
+
+      // Clears the list of advertising devices
+      void DeregisterAllAdvertisers();
       
     protected:
 
