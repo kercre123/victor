@@ -25,6 +25,7 @@
 
 // Comms
 #import <anki/cozmo/basestation/multiClientComms.h>
+#import <anki/messaging/basestation/advertisementService.h>
 
 // Coretech-Common includes
 #import <anki/common/basestation/utils/logging/DAS/DAS.h>
@@ -45,6 +46,14 @@
 #define USE_BLE_ROBOT_COMMS 0
 
 #define PERIOD(frameRate) ( 1.0 / frameRate )
+
+// For connecting to physical robot
+// TODO: Expose these to UI
+const bool FORCE_ADD_ROBOT = false;
+const bool FORCED_ROBOT_IS_SIM = false;
+const u8 forcedRobotId = 1;
+const char* forcedRobotIP = "192.168.3.34";
+
 
 @interface CozmoBasestation ()
 
@@ -86,7 +95,9 @@
   // Comms
   Anki::Cozmo::MultiClientComms*        _robotComms;
   Anki::Cozmo::MultiClientComms*        _uiComms;
-  
+ 
+  Anki::Comms::AdvertisementService*    _robotAdService;
+  Anki::Comms::AdvertisementService*    _uiAdService;
 }
 
 
@@ -180,6 +191,29 @@
 
   
   self.cozmoOperator = [CozmoOperator operatorWithAdvertisingtHostIPAddress:self._hostAdvertisingIP];
+  
+
+  // Start advertising services
+  _robotAdService = new Comms::AdvertisementService("RobotAdvertisementService");
+  _robotAdService->StartService(Cozmo::ROBOT_ADVERTISEMENT_REGISTRATION_PORT, Cozmo::ROBOT_ADVERTISING_PORT);
+  
+  _uiAdService = new Comms::AdvertisementService("UiAdvertisementService");
+  _uiAdService->StartService(Cozmo::UI_ADVERTISEMENT_REGISTRATION_PORT, Cozmo::UI_ADVERTISING_PORT);
+  
+  
+  // Force add a robot
+  if (FORCE_ADD_ROBOT) {
+    // Force add physical robot since it's not registering by itself yet.
+    Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
+    forcedRegistrationMsg.id = forcedRobotId;
+    forcedRegistrationMsg.port = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (FORCED_ROBOT_IS_SIM ? forcedRobotId : 0);
+    forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
+    forcedRegistrationMsg.enableAdvertisement = 1;
+    snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", forcedRobotIP);
+    
+    _robotAdService->ProcessRegistrationMsg(forcedRegistrationMsg);
+  }
+
   
   
 #if (USE_BLE_ROBOT_COMMS)
@@ -428,12 +462,24 @@
 - (void)gameHeartbeatCommsReadyStateWithTimestamp:(CFTimeInterval)timestamp
 {
   DASDebug("Basestation.gameHeartBeat()", "Waiting for robots to connect at time %f", timestamp);
+  
+  // Tics advertisement services
+  _robotAdService->Update();
+  _uiAdService->Update();
+  
+  
   // ====== TCP ======
   _robotComms->Update();
   
   if ([self attemptToConnectToRobot]) {
     if (_robotComms->GetNumConnectedDevices() > 0) {
       self.robotConnected = YES;
+      
+      if (FORCE_ADD_ROBOT) {
+        // Forcefully added robot advertiser can't remove itself (otherwise it could have registered itself)
+        // so remove it here.
+        _robotAdService->DeregisterAllAdvertisers();
+      }
     }
   }
   
@@ -466,6 +512,11 @@
 {
   DASDebug("Basestation.gameHeartBeat()", "Basestation heartbeat at time %f", timestamp);
 
+  // Tics advertisement services
+  //_robotAdService->Update();
+  //_uiAdService->Update();
+  
+  
   // Read all UI messages
   _uiComms->Update();
 
