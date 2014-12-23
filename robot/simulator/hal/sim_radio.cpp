@@ -119,14 +119,14 @@ namespace Anki {
     }
     
     
-    Result InitSimRadio(s32 robotID)
+    Result InitSimRadio(const char* advertisementIP)
     {
-      server.StartListening(ROBOT_RADIO_BASE_PORT + robotID);
+      server.StartListening(ROBOT_RADIO_BASE_PORT + HAL::GetIDCard()->esn);
       
       // Register with advertising service by sending IP and port info
       // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
       //       We also assume that when working with simluated robots on Webots, the advertisement service is running on the same host.
-      advRegClient.Connect("127.0.0.1", ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
+      advRegClient.Connect(advertisementIP, ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
 
       
       // Fill in advertisement registration message

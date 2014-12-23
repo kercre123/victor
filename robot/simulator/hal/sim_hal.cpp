@@ -188,7 +188,7 @@ namespace Anki {
 #pragma mark --- Simulated Hardware Method Implementations ---
     
     // Forward Declaration.  This is implemented in sim_radio.cpp
-    Result InitSimRadio(s32 robotID);
+    Result InitSimRadio(const char* advertisementIP);
     
     Result HAL::Init()
     {
@@ -303,7 +303,16 @@ namespace Anki {
       proxCenter_->enable(TIME_STEP);
       proxRight_->enable(TIME_STEP);
       
-      if(InitSimRadio(robotID_) == RESULT_FAIL) {
+      // Get advertisement host IP
+      webots::Field *advertisementHostField = webotRobot_.getSelf()->getField("advertisementHost");
+      std::string advertisementIP = "127.0.0.1";
+      if (advertisementHostField) {
+        advertisementIP = advertisementHostField->getSFString();
+      } else {
+        printf("No valid advertisement IP found\n");
+      }
+      
+      if(InitSimRadio(advertisementIP.c_str()) == RESULT_FAIL) {
         PRINT("Failed to initialize Simulated Radio.\n");
         return RESULT_FAIL;
       }

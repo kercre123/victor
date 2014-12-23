@@ -1,5 +1,8 @@
 #VRML_SIM V7.3.0 utf8
 PROTO CozmoBot [
+
+  field SFString advertisementHost "127.0.0.1"
+
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
   field SFString name "Cozmo"
