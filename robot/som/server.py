@@ -27,6 +27,19 @@ class CozmoServer(socket.socket):
         self.client = None
         self.lastClientRecvTime = 0.0
 
+
+    def fprintf(self, fh, fmt, *params):
+        "Writes to file handle"
+        fh.write(fmt % params)
+
+    def printOut(self, fmt, *params):
+        "Writes to stdout"
+        self.fprintf(sys.stdout, fmt, *params)
+
+    def printErr(self, fmt, *params):
+        "Writes to stderr"
+        self.fprintf(sys.stderr, fmt, *params)
+
     def clientRecv(self, maxLen):
         try:
             data, self.client = self.recvfrom(maxLen)
@@ -49,6 +62,7 @@ class CozmoServer(socket.socket):
             if outMsg:
                 self.clientSend(outMsg)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
+
             for ss in self.subServers:
                 ss.standby()
             self.client = None
