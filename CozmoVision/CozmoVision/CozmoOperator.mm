@@ -343,7 +343,7 @@ void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
   Cozmo::MessageU2G_ImageRequest message;
   // HACK
   message.mode = 1;
-  message.resolution = isHigh ? 1 : 3;
+  message.resolution = isHigh ? Vision::CAMERA_RES_QVGA : Vision::CAMERA_RES_QQQVGA;
 
   [self sendMessage:message];
 }
