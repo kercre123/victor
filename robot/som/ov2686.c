@@ -20,8 +20,6 @@
 #include <media/v4l2-chip-ident.h>
 #include <media/v4l2-mediabus.h>
 
-#include "ov2686.h"
-
 #if 1
 #define SENSDBG(fmt, ...) printk(KERN_INFO fmt, ## __VA_ARGS__)
 #else
@@ -113,297 +111,6 @@ static inline struct ov2686_info *to_state(struct v4l2_subdev *sd)
 {
   return container_of(sd, struct ov2686_info, sd);
 }
-
-/*
- * The default register settings, as obtained from OmniVision.  There
- * is really no making sense of most of these - lots of "reserved" values
- * and such.
- *
- * These settings provide VGA YUYV(or UYVY depending on OMAP3 ISP bridge configuration).
- */
-
-
-static struct regval_list ov2686_default_regs[] = {
-  {REG_REG12, REG12_RESET },
-  {REG_PWC0, 0x0c} , // Power is at 1.8 v
-/*
-** Apparently soft reset reg_0x12.bit7 = 1 enables
-** both pll and rata/control outputs
-** It creates deadly consequences for omap isp.
-** During init soft reset must be issued
-** We try to follow reset with disabling outputs as closely in time
-** as possible
-*/
-  {REG_REG0C,  REG0C_UV_SWAP |
-   (0 &  (REG0C_DATAOUT_ENABLE | REG0C_CTLOUT_ENABLE)) |
-   0},
-  {0x48, 0x42 }, // Omnivision magic
-  {REG_ANA1, 0x43 }, // More magic
-  {0x4c, 0x73},
-  {REG_REG81, 0xFF}, // Enable SDE functions
-  {REG_AECGM, 0x44},
-  {REG_REG16, 0x03},
-  {0x39, 0x80},
-  {REG_REG1E, 0xb1},
-  /* Format */
-  // YUV
-  {REG_REG12, 0x00},
-  {REG_REG82, 0x03}, // YUV422
-  {REG_REGD0, 0x48}, // Boundary offset
-  {REG_REG80, 0x7f},
-  {REG_REG3E, 0x30}, // Double pclk for YUV format
-
-  {REG_REG22, 0x00},
-
-  /* Resolution */
-  {REG_HSTART, 0x69},
-  {REG_HSIZE, 0xa4},
-  {REG_VSTART, 0x0c},
-  {REG_VSIZE, 0xf6},
-
-  {REG_REGC8, (VGA_WIDTH>>8)&3},
-  {REG_REGC9, VGA_WIDTH & 0xff}, //;ISP input hsize (640)
-  {REG_REGCA, (VGA_HEIGHT >>8)&1},
-  {REG_REGCB, VGA_HEIGHT&0xff }, //;ISP input vsize (480)
-
-  {REG_REGCC, (VGA_WIDTH>>8)&3},
-  {REG_REGCD, VGA_WIDTH & 0xff}, //;ISP output hsize (640)
-  {REG_REGCE, (VGA_HEIGHT >>8)&1},
-  {REG_REGCF, VGA_HEIGHT&0xff }, //;ISP output vsize (480)
-
-  /* Lens Correction */
-  {REG_LCC0, 0x90},
-  {REG_LCC1, 0x00},
-  {REG_LCC2, 0x00},
-  {REG_LCC3, 0x10},
-  {REG_LCC4, 0x30},
-  {REG_LCC5, 0x29},
-  {REG_LCC6, 0x26},
-
-  /* Color Matrix */
-  {REG_REGBB, 0x80},
-  {REG_REGBC, 0x62},
-  {REG_REGBD, 0x1e},
-  {REG_REGBE, 0x26},
-  {REG_REGBF, 0x7b},
-  {REG_REGC0, 0xac},
-  {REG_REGC1, 0x1e},
-
-  /* Edge + Denoise */
-  {REG_REGB7, 0x05},
-  {REG_REGB8, 0x09},
-  {REG_REGB9, 0x00},
-  {REG_REGBA, 0x18},
-
-  /* UVAdjust */
-  {REG_UVCTR0, 0x4A},
-  {REG_UVCTR1, 0x9F},
-  {REG_UVCTR2, 0x48},
-  {REG_UVCTR3, 0x32},
-
-  /* AEC/AGC target */
-  {REG_WPT, 0x78},
-  {REG_BPT, 0x68},
-  {REG_VPT, 0xb3},
-
-  /* Gamma */
-  {REG_GAM(1), 0x0b},
-  {REG_GAM(2), 0x15},
-  {REG_GAM(3), 0x2a},
-  {REG_GAM(4), 0x51},
-  {REG_GAM(5), 0x63},
-  {REG_GAM(6), 0x74},
-  {REG_GAM(7), 0x83},
-  {REG_GAM(8), 0x91},
-  {REG_GAM(9), 0x9e},
-  {REG_GAM(10), 0xaa},
-  {REG_GAM(11), 0xbe},
-  {REG_GAM(12), 0xce},
-  {REG_GAM(13), 0xe5},
-  {REG_GAM(14), 0xf3},
-  {REG_GAM(15), 0xfb},
-  {REG_SLOPE, 0x06},
-
-
-  /* AWB */
-  /* Simple */
-//;42 8e 92 ; simple AWB
-//;42 96 ff
-//;42 97 00 ;unlimit AWB range.
-
-  /* Advanced */
-  {REG_AWB(0), 0x5d},
-  {REG_AWB(1), 0x11},
-  {REG_AWB(2), 0x12},
-  {REG_AWB(3), 0x11},
-  {REG_AWB(4), 0x50},
-  {REG_AWB(5), 0x22},
-  {REG_AWB(6), 0xd1},
-  {REG_AWB(7), 0xa7},
-  {REG_AWB(8), 0x23},
-  {REG_AWB(9), 0x3b},
-  {REG_AWB(10), 0xff},
-  {REG_AWB(11), 0x00},
-  {REG_AWB(12), 0x4a},
-  {REG_AWB(13), 0x46},
-  {REG_AWB(14), 0x3d},
-  {REG_AWB(15), 0x3a},
-  {REG_AWB(16), 0xf0},
-  {REG_AWB(17), 0xf0},
-  {REG_AWB(18), 0xf0},
-  {REG_AWB(19), 0xff},
-  {REG_AWB(20), 0x56},
-  {REG_AWB(21), 0x55},
-  {REG_AWB(22), 0x13},
-
-  /* General Control */
-  {REG_BD50ST, 0x9a},
-  {REG_BD60ST, 0x80},
-  {REG_AECGM, 0x23},
-
-  {REG_REG14, 0x28},
-  {REG_REG13, 0xf7},
-/*
-*	rate = clock(divider+1)
-*	0 - 30 fps
-*	1 - 15 fps
-* 	2 - 10 fps
-*	3 - 7.5 fps
-*/
-  {REG_CLKRC, 0x00},
-
-  {REG_0E, 0x01,0x3},	// set drive strength to x2
-
-  REGVAL_LIST_END	/* END MARKER */
-};
-
-
-/*
- * Output video format register settings
- * RGB656 and YUV422 come from OV
- */
-static const struct regval_list ov2686_fmt_yuv422[] = {
-  {REG_REG12, 0x00, 0x3f},
-  {REG_REG82, 0x03, 0x03},
-  {REG_REG3E, 0x10, 0x10},
-  REGVAL_LIST_END
-};
-
-static const struct regval_list ov2686_fmt_yvu422[] = {
-  {REG_REG0C, 0x00, REG0C_UV_SWAP },
-  {REG_REG12, 0x00, 0x3f},
-  {REG_REG82, 0x03, 0x03},
-  {REG_REG3E, 0x10, 0x10},
-  REGVAL_LIST_END
-};
-
-static const struct regval_list ov2686_fmt_rgb565[] = {
-  {REG_REG12, 0x06, 0x3f},
-  {REG_REG82, 0x03, 0x03},
-  {REG_REG3E, 0x10, 0x10},
-  REGVAL_LIST_END
-};
-
-/*
- * Frame interval register settings
- * values come from OmniVision.
- * Frame rates are more then just pll, AEC related values change as well
- */
-static const struct regval_list ov2686_15fps[] = {
-  {REG_BD50ST, 0x4c},
-  {REG_BD60ST, 0x3f},
-  {REG_AECGM, 0x57 },
-  {REG_REG20, 0x0},
-  {REG_CLKRC, 0x1, CLK_SCALE},
-  REGVAL_LIST_END
-};
-
-static const struct regval_list ov2686_30fps[] = {
-  {REG_BD50ST, 0x9a},
-  {REG_BD60ST, 0x80},
-  {REG_AECGM, 0x23 },
-  {REG_REG20, 0x0},
-  {REG_CLKRC, 0x0, CLK_SCALE},
-  REGVAL_LIST_END
-};
-
-static const struct ov2686_interval ov2686_intervals[] = {
-  {ov2686_30fps,{33300,1000000}}, /* 30fps */
-  {ov2686_15fps,{15000,1000000}}, /* 15fps */
-};
-
-/*
- * Video format definitions
- */
-static struct ov2686_format_struct {
-  struct v4l2_mbus_framefmt format;
-  const struct regval_list *regs;
-} ov2686_formats[] = {
-
-/*
-** Sensor interface is 8 bits wide
-** Control of YU vs UY is facilitated by omap3isp
-** For boards whith different byte ordering consider undefining
-** ISP_BRIDGE_LE below
-*/
-#define ISP_BRIDGE_LE
-#if defined(ISP_BRIDGE_LE)
-  {
-    .format = {
-      .width= VGA_WIDTH,
-      .height = VGA_HEIGHT,
-      .code	= V4L2_MBUS_FMT_UYVY8_2X8,
-      .colorspace	= V4L2_COLORSPACE_JPEG,
-      .field =  V4L2_FIELD_NONE,
-    },
-    .regs 		= ov2686_fmt_yuv422,
-  },
-  {
-    .format = {
-      .width= VGA_WIDTH,
-      .height = VGA_HEIGHT,
-      .code	=V4L2_MBUS_FMT_RGB565_2X8_LE,
-      .colorspace	= V4L2_COLORSPACE_SRGB,
-      .field =  V4L2_FIELD_NONE,
-    },
-    .regs		= ov2686_fmt_rgb565,
-  },
-#else
-  {
-    .format = {
-      .width= VGA_WIDTH,
-      .height = VGA_HEIGHT,
-      .code	= V4L2_MBUS_FMT_YUYV8_2X8,
-      .colorspace	= V4L2_COLORSPACE_JPEG,
-      .field =  V4L2_FIELD_NONE,
-    },
-    .regs 		= ov2686_fmt_yuv422,
-  },
-  {
-    .format = {
-      .width= VGA_WIDTH,
-      .height = VGA_HEIGHT,
-      .code	= V4L2_MBUS_FMT_YVYU8_2X8, //?1X8
-      .colorspace	= V4L2_COLORSPACE_JPEG,
-      .field =  V4L2_FIELD_NONE,
-    },
-    .regs 		= ov2686_fmt_yvu422,
-  },
-  {
-    .format = {
-      .width= VGA_WIDTH,
-      .height = VGA_HEIGHT,
-      .code	=V4L2_MBUS_FMT_RGB565_2X8_BE,
-      .colorspace	= V4L2_COLORSPACE_SRGB,
-      .field =  V4L2_FIELD_NONE,
-    },
-    .regs		= ov2686_fmt_rgb565,
-  },
-#endif
-
-};
-#define N_OV2686_FMTS ARRAY_SIZE(ov2686_formats)
-
 
 static int ov2686_read(struct v4l2_subdev *sd, unsigned char reg,
     unsigned char *value)
@@ -537,7 +244,8 @@ static int ov2686_detect(struct v4l2_subdev *sd)
 static int ov2686_set_scaling( struct v4l2_subdev *sd)
 {
   struct ov2686_info *info = to_state(sd);
-  int ret;
+  int ret = 0;
+  /* Dissable for now
   ret =  ov2686_write(sd,REG_REGC8,(info->curr_crop.width >> 8) &3);
   if (ret >= 0) ret = ov2686_write(sd,REG_REGC9,info->curr_crop.width & 0xff);
   if (ret >= 0) ret = ov2686_write(sd,REG_REGCA,(info->curr_crop.height >> 8) & 3);
@@ -546,6 +254,7 @@ static int ov2686_set_scaling( struct v4l2_subdev *sd)
   if (ret >= 0) ret = ov2686_write(sd,REG_REGCD,info->fmt->format.width & 0xff);
   if (ret >= 0) ret = ov2686_write(sd,REG_REGCE,(info->fmt->format.height >> 8) & 3);
   if (ret >= 0) ret = ov2686_write(sd,REG_REGCF,info->fmt->format.height & 0xff);
+  */
   return ret;
 }
 
@@ -876,7 +585,8 @@ static int ov2686_s_hue(struct v4l2_subdev *sd, int value)
 #define HUE_MIN -180
 #define HUE_MAX 180
 #define HUE_STEP 5
-  int ret;
+  int ret = 0;
+  /* Disable for now
   int sinth, costh;
   unsigned char sign_hue;
   if (value < -180 || value > 180)
@@ -888,7 +598,7 @@ static int ov2686_s_hue(struct v4l2_subdev *sd, int value)
   if (costh < 0) costh = -costh;
   sinth = ((sinth << 4)+124) / 125;	// x = x*128/1000;
   costh = ((costh << 4)+124) / 125;	// x = x*128/1000;
-
+  */
   /* Sight bits go into bits 0:1:4:5 of reg 0xDC
    * 0.1.4.5
    * 1.0.0.0 := 0 <= theta < pi/2
@@ -896,7 +606,8 @@ static int ov2686_s_hue(struct v4l2_subdev *sd, int value)
    * 1.0.1.1 := pi/2 < theta
    * 0.1.1.1 := theta < -pi/2
    */
-     if (value >= 0 ) {
+  /*
+  if (value >= 0 ) {
     if (value < 90) sign_hue = 0x01;
     else sign_hue = 0x31;
   } else {
@@ -913,7 +624,7 @@ static int ov2686_s_hue(struct v4l2_subdev *sd, int value)
   if (ret >= 0) ret = ov2686_write(sd,REG_REGD6, costh);
   if (ret >= 0) ret = ov2686_write(sd,REG_REGD7, sinth);
   if (ret >= 0) ret = ov2686_write_mask(sd,REG_REGDC,sign_hue,0x33);
-
+  */
   return ret;
 }
 
@@ -921,7 +632,8 @@ static int ov2686_s_brightness(struct v4l2_subdev *sd, int value)
 {
 #define BRIGHTNESS_MIN -255
 #define BRIGHTNESS_MAX 255
-  int ret;
+  int ret = 0;
+  /* Disable for now
   unsigned char v, sign_bright;
   struct ov2686_info *info = to_state(sd);
 
@@ -944,7 +656,7 @@ static int ov2686_s_brightness(struct v4l2_subdev *sd, int value)
 
   if (ret >= 0) ret = ov2686_write_mask(sd, REG_SDECTRL, SDECTRL_CONT_EN, SDECTRL_CONT_EN);
   if (ret >= 0) ret = ov2686_write_mask(sd, REG_REGDC, sign_bright, 0x8);
-
+  */
   return ret;
 }
 
@@ -954,7 +666,8 @@ static int ov2686_s_contrast(struct v4l2_subdev *sd, int value)
 #define CONTRAST_MAX 4
   // For some reason setting contrast sets brightness as well
   // If brightnesss is undesirable, set it after setting contrast
-  int ret;
+  int ret = 0;
+  /* Disable for now
   unsigned char v, sign_cont, imply_brightness;
   struct ov2686_info *info = to_state(sd);
 
@@ -988,37 +701,40 @@ static int ov2686_s_contrast(struct v4l2_subdev *sd, int value)
   }
   if (ret >= 0) ret = ov2686_write_mask(sd, REG_REGDC, sign_cont, 0x4);
   if (ret >= 0) ret = ov2686_write_mask(sd, REG_SDECTRL, SDECTRL_CONT_EN, SDECTRL_CONT_EN);
-
+  */
   return ret;
 }
 
 
 static int ov2686_s_hflip(struct v4l2_subdev *sd, int value)
 {
-  int ret;
-
+  int ret = 0;
+  /* Disable for now
   unsigned char v = (value) ? REG0C_MIRROR : 0;
   ret = ov2686_write_mask(sd,REG_REG0C, v, REG0C_MIRROR);
+  */
   return ret;
 }
 
 static int ov2686_s_vflip(struct v4l2_subdev *sd, int value)
 {
-  int ret;
-
+  int ret = 0;
+  /* Disable for now
   unsigned char v = (value) ? REG0C_VFLIP : 0;
   ret = ov2686_write_mask(sd,REG_REG0C, v, REG0C_VFLIP);
+  */
   return ret;
 }
 static int ov2686_s_sharpness(struct v4l2_subdev *sd, int value)
 {
 #define SHARPNESS_MIN -1
 #define SHARPNESS_MAX 5
-  int ret;
-  if (-1 == value) { /* Sharpness off */
+  int ret = 0;
+  /* Disable for now
+  if (-1 == value) { // Sharpness off
     ret = ov2686_write_mask(sd, REG_REGB4, 0x20,0x20);
     if (ret >= 0) ret = ov2686_write_mask(sd, REG_REGB6, 0,0x1f);
-  } else if (0 == value) { /* Sharpness Auto */
+  } else if (0 == value) { // Sharpness Auto
     ret = ov2686_write_mask(sd, REG_REGB4, 0,0x20);
     if (ret >= 0) ret = ov2686_write_mask(sd, REG_REGB6, 2,0x1f);
     if (ret >= 0) ret = ov2686_write(sd, REG_REGB8, 9);
@@ -1029,13 +745,15 @@ static int ov2686_s_sharpness(struct v4l2_subdev *sd, int value)
     ret = ov2686_write_mask(sd, REG_REGB4, 0x20,0x20);
     if (ret >= 0) ret = ov2686_write_mask(sd, REG_REGB6, sharp_vals[value-1],0x1f);
   }
+  */
   return ret;
 }
 static int ov2686_s_saturation(struct v4l2_subdev *sd, int value)
 {
 #define SATURATION_MIN -1
 #define SATURATION_MAX 8
-  int ret;
+  int ret = 0;
+  /* Disable for now
   if ((value < SATURATION_MIN) || (value > SATURATION_MAX)) return -ERANGE;
   if (-1 == value) {
     ret = ov2686_write_mask(sd, REG_SDECTRL, 0,SDECTRL_SAT_EN);
@@ -1046,6 +764,7 @@ static int ov2686_s_saturation(struct v4l2_subdev *sd, int value)
       ret |= ov2686_write(sd,REG_REGD9,value<<4);
     }
   }
+  */
   return ret;
 }
 static int ov2686_s_exposure(struct v4l2_subdev *sd, int value)
@@ -1069,18 +788,21 @@ static int ov2686_s_exposure(struct v4l2_subdev *sd, int value)
     /* 1.3EV */ { 0x98 , 0x88 , 0xe3 },
     /* 1.7EV */ { 0xa0 , 0x90 , 0xe3 },
         };
-  int ret;
+  int ret = 0;
+  /* disable for now
   int	index = value - EXPOSURE_MIN;
   if ((index < 0) || (index > ARRAY_SIZE(exposure_avg) )) return -ERANGE;
   ret=ov2686_write(sd,REG_WPT,exposure_avg[index].WPT);
   ret=ov2686_write(sd,REG_BPT,exposure_avg[index].BPT);
   ret=ov2686_write(sd,REG_VPT,exposure_avg[index].VPT);
+  */
   return ret;
 }
 
 static int ov2686_s_colorfx(struct v4l2_subdev *sd, int value)
 {
-  int ret = -EINVAL;
+  int ret = 0;
+  /* Disable for now
   switch(value) {
   case V4L2_COLORFX_NONE:
     ret = ov2686_write_mask(sd,REG_REG28, 0, 0x80);
@@ -1114,7 +836,7 @@ static int ov2686_s_colorfx(struct v4l2_subdev *sd, int value)
     ret |= ov2686_write(sd,REG_REGDA, 0x60);
     ret |= ov2686_write(sd,REG_REGDB, 0x60);
     break;
-  case V4L2_COLORFX_EMBOSS: /* Reddish */
+  case V4L2_COLORFX_EMBOSS: // Reddish
     ret = ov2686_write_mask(sd,REG_REG28, 0, 0x80);
     ret |= ov2686_write_mask(sd, REG_SDECTRL, SDECTRL_FIX_UV,SDECTRL_FIX_UV);
     ret |= ov2686_write(sd,REG_REGDA, 0x80);
@@ -1125,6 +847,7 @@ static int ov2686_s_colorfx(struct v4l2_subdev *sd, int value)
   default:
     return -EINVAL;
   }
+  */
   return ret;
 }
 
@@ -1136,6 +859,7 @@ static int ov2686_test_pattern(struct v4l2_subdev *sd, int value)
  * 2: Framecount intenciry color bar
  * 3: Solid color bar
  */
+ /* Disable for now
   switch(value) {
   case 0:
     ov2686_write_mask(sd, REG_REG82, 0x0, 0xc);
@@ -1151,6 +875,8 @@ static int ov2686_test_pattern(struct v4l2_subdev *sd, int value)
     return ov2686_write_mask(sd, REG_REG82, 0xc, 0xc);
   }
   return -ERANGE;
+  */
+  return 0;
 }
 
 static int ov2686_s_ctrl(struct v4l2_ctrl *ctrl)
