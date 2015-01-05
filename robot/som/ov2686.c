@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2015 Anki Inc.
  *
- * Based on OmniVision OV2686 Camera Driver and OmniVision OV7670 Camera Driver
+ * Based on OmniVision OV7690 Camera Driver and OmniVision OV7670 Camera Driver
  *
  */
 
@@ -59,6 +59,8 @@
  */
 #define OV2686_I2C_ADDR 0x78
 
+#define V4L2_CID_TEST_PATTERN   (V4L2_CID_USER_BASE | 0x1001)
+
 /* Registers */
 
 
@@ -80,6 +82,13 @@ struct ov2686_interval
 {
   const struct regval_list *regs;
   struct v4l2_fract interval;
+};
+
+struct ov2686_platform_data {
+  int (*s_xclk) (struct v4l2_subdev *s, u32 on);
+  int min_width;			/* Filter out smaller sizes */
+  int min_height;			/* Filter out smaller sizes */
+  int clock_speed;		/* External clock speed (MHz) */
 };
 
 /*
@@ -129,7 +138,7 @@ static int ov2686_read(struct v4l2_subdev *sd, unsigned char reg,
       .addr	= client->addr,
       .flags	= I2C_M_RD,
       .len	= 1,
-      .buf	= val,
+      .buf	= value,
     },
   };
 
@@ -158,7 +167,7 @@ static int ov2686_write(struct v4l2_subdev *sd, unsigned char reg,
   reg = swab16(reg);
 
   buf.reg = reg;
-  buf.val = val;
+  buf.val = value;
 
   msg.addr	= client->addr;
   msg.flags	= 0;
@@ -317,16 +326,17 @@ static int ov2686_g_frame_interval(struct v4l2_subdev *sd,
                                    struct v4l2_subdev_frame_interval *fi)
 {
 
-  struct ov2686_info *info = to_state(sd);
+  /*struct ov2686_info *info = to_state(sd);
 
         fi->interval = info->curr_fi->interval;
-
+ */
         return 0;
 }
 
 static int ov2686_s_frame_interval(struct v4l2_subdev *sd,
                                    struct v4l2_subdev_frame_interval *fi)
 {
+  /*
   struct ov2686_info *info = to_state(sd);
   int i, fr_time;
   unsigned int err, min_err = UINT_MAX;
@@ -346,7 +356,7 @@ static int ov2686_s_frame_interval(struct v4l2_subdev *sd,
   }
 
   info->curr_fi = fiv;
-
+  */
         return 0;
 }
 
@@ -359,10 +369,11 @@ static int ov2686_enum_mbus_code(struct v4l2_subdev *sd,
                                   struct v4l2_subdev_mbus_code_enum *code)
 {
 
-  if ((code->pad) || (code->index >= N_OV2686_FMTS ))
+  /*if ((code->pad) || (code->index >= N_OV2686_FMTS ))
       return -EINVAL;
 
   code->code = ov2686_formats[code->index].format.code;
+  */
   return 0;
 
 }
@@ -370,6 +381,7 @@ static int ov2686_enum_frame_size(struct v4l2_subdev *sd,
           struct v4l2_subdev_fh *fh,
           struct v4l2_subdev_frame_size_enum *fse)
 {
+  /*
   int i =  N_OV2686_FMTS;
   if (fse->index > 0) return -EINVAL;
 
@@ -382,10 +394,11 @@ static int ov2686_enum_frame_size(struct v4l2_subdev *sd,
   fse->max_width = OV2686_WINDOW_MAX_WIDTH ;
   fse->min_height = OV2686_WINDOW_MIN_HEIGHT;
   fse->max_height = OV2686_WINDOW_MAX_HEIGHT;
-
+  */
   return 0;
 }
 
+/*
 static struct v4l2_mbus_framefmt *
 __ov2686_get_pad_format(struct ov2686_info *info, struct v4l2_subdev_fh *fh,
                          unsigned int pad, u32 which)
@@ -413,11 +426,13 @@ __ov2686_get_pad_crop(struct ov2686_info *info, struct v4l2_subdev_fh *fh,
     return NULL;
   }
 }
+*/
 
 static int ov2686_get_format(struct v4l2_subdev *sd,
                               struct v4l2_subdev_fh *fh,
                               struct v4l2_subdev_format *fmt)
 {
+  /*
   struct ov2686_info *info = to_state(sd);
   struct v4l2_mbus_framefmt *__format;
 
@@ -425,6 +440,7 @@ static int ov2686_get_format(struct v4l2_subdev *sd,
              fmt->which);
   if (__format == NULL) return -EINVAL;
   fmt->format = *__format;
+  */
   return 0;
 }
 
@@ -432,6 +448,7 @@ static int ov2686_set_format(struct v4l2_subdev *sd,
                               struct v4l2_subdev_fh *fh,
                               struct v4l2_subdev_format *format)
 {
+  /*
   struct ov2686_info *info = to_state(sd);
   struct v4l2_mbus_framefmt *__format;
   struct v4l2_rect *__crop;
@@ -443,13 +460,13 @@ static int ov2686_set_format(struct v4l2_subdev *sd,
       (info->streaming))
     return -EBUSY;
 
-  /* match format against array of supported formats */
+  // match format against array of supported formats
   while (--i)
     if (ov2686_formats[i].format.code == format->format.code) break;
   info->fmt =  &ov2686_formats[i];
 
   __crop = __ov2686_get_pad_crop(info, fh, format->pad, format->which);
-  /* ov2686 can only scale size down, not up */
+  //  can only scale size down, not up
   width = clamp_t(unsigned int, ALIGN(format->format.width, 2),
                         OV2686_WINDOW_MIN_WIDTH, __crop->width);
   height = clamp_t(unsigned int, ALIGN(format->format.height, 2),
@@ -461,6 +478,7 @@ static int ov2686_set_format(struct v4l2_subdev *sd,
   __format->width = width;
   __format->height = height;
   format->format = *__format;
+  */
   return 0;
 }
 
@@ -468,6 +486,7 @@ static int ov2686_get_crop(struct v4l2_subdev *sd,
          struct v4l2_subdev_fh *fh,
          struct v4l2_subdev_crop *crop)
 {
+  /*
   struct ov2686_info *info = to_state(sd);
   struct v4l2_rect *rect;
 
@@ -476,18 +495,19 @@ static int ov2686_get_crop(struct v4l2_subdev *sd,
   if (!rect)
     return -EINVAL;
   crop->rect = *rect;
-
+  */
   return 0;
 }
 static int ov2686_set_crop(struct v4l2_subdev *sd,
          struct v4l2_subdev_fh *fh,
          struct v4l2_subdev_crop *crop)
 {
+  /*
   struct ov2686_info *info = to_state(sd);
   struct v4l2_mbus_framefmt *__format;
   struct v4l2_rect *__crop;
   struct v4l2_rect rect;
-  /* It is unclear how to control left corner of crop rectangle */
+  // It is unclear how to control left corner of crop rectangle
   rect.left =0;
   rect.top = 0;
   rect.width = clamp(ALIGN(crop->rect.width, 2),
@@ -499,9 +519,8 @@ static int ov2686_set_crop(struct v4l2_subdev *sd,
   __crop = __ov2686_get_pad_crop(info, fh, crop->pad, crop->which);
 
   if (rect.width != __crop->width || rect.height != __crop->height) {
-    /* Reset the output image size if the crop rectangle size has
-                 * been modified.
-                 */
+    // Reset the output image size if the crop rectangle size has
+    // been modified.
     __format = __ov2686_get_pad_format(info, fh, crop->pad,
                crop->which);
                 __format->width = rect.width;
@@ -510,7 +529,7 @@ static int ov2686_set_crop(struct v4l2_subdev *sd,
 
         *__crop = rect;
         crop->rect = rect;
-
+  */
   return 0;
 }
 
@@ -518,7 +537,7 @@ static int ov2686_enum_frame_interval(struct v4l2_subdev *sd,
                               struct v4l2_subdev_fh *fh,
                               struct v4l2_subdev_frame_interval_enum *fie)
 {
-
+  /*
         if (fie->index > ARRAY_SIZE(ov2686_intervals))
                 return -EINVAL;
 
@@ -528,7 +547,7 @@ static int ov2686_enum_frame_interval(struct v4l2_subdev *sd,
                               OV2686_WINDOW_MAX_HEIGHT, 1, 0);
 
         fie->interval = ov2686_intervals[fie->index].interval;
-
+        */
         return 0;
 }
 
@@ -981,7 +1000,7 @@ static int ov2686_g_chip_ident(struct v4l2_subdev *sd,
   SENSDBG("%s id:%d none:%d\n",
          __FUNCTION__, chip->ident, V4L2_IDENT_NONE);
 //	return v4l2_chip_ident_i2c_client(client, chip, V4L2_IDENT_OV2686, 0);
-  chip->ident =  V4L2_IDENT_OV2686;
+  chip->ident =  V4L2_IDENT_OV7690; // Mascarading as earlier device
   chip->revision = 0;
 
   return 0;
@@ -1216,7 +1235,7 @@ static int ov2686_probe(struct i2c_client *client,
 
   info->sd.internal_ops = &ov2686_subdev_internal_ops;
 
-  info->fmt = &ov2686_formats[0];
+  //info->fmt = &ov2686_formats[0];
 
   info->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
@@ -1225,7 +1244,7 @@ static int ov2686_probe(struct i2c_client *client,
         info->curr_crop.left = 0;
         info->curr_crop.top = 0;
 
-  info->curr_fi = &ov2686_intervals[0];
+  //info->curr_fi = &ov2686_intervals[0];
 
   info->pad.flags = MEDIA_PAD_FL_SOURCE;
 #if defined(CONFIG_MEDIA_CONTROLLER)
