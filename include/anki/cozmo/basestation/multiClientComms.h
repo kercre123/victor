@@ -63,8 +63,10 @@ namespace Cozmo {
   class MultiClientComms : public Comms::IComms {
   public:
     
-    // Construct with the IP address to use as the advertising host
-    MultiClientComms(const char* advertisingHostIP, int advertisingPort);
+    MultiClientComms();
+    
+    // Init with the IP address to use as the advertising host
+    Result Init(const char* advertisingHostIP, int advertisingPort);
     
     // The destructor will automatically cleans up
     virtual ~MultiClientComms();
@@ -117,6 +119,8 @@ namespace Cozmo {
 
     
   private:
+    
+    bool isInitialized_;
     
     const char* advertisingHostIP_;
     // Connects to "advertising" server to view available unconnected devices.

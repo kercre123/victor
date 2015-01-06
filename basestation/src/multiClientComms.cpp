@@ -31,11 +31,21 @@ namespace Cozmo {
   
   const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
 
-  
-  MultiClientComms::MultiClientComms(const char* advertisingHostIP, int advertisingPort)
-  : advertisingHostIP_(advertisingHostIP)
+  MultiClientComms::MultiClientComms()
+  : isInitialized_(false)
   {
-    advertisingChannelClient_.Connect(advertisingHostIP_, advertisingPort);
+    
+  }
+  
+  Result MultiClientComms::Init(const char* advertisingHostIP, int advertisingPort)
+  {
+    advertisingHostIP_ = advertisingHostIP;
+    
+    if(false == advertisingChannelClient_.Connect(advertisingHostIP_, advertisingPort)) {
+      PRINT_NAMED_ERROR("MultiClientComms.Init", "Failed to connect to advertising host at %s "
+                        "on port %d.\n", advertisingHostIP_, advertisingPort);
+      return RESULT_FAIL;
+    }
     
     // TODO: Should this be done inside the poorly named Connect()?
     advertisingChannelClient_.Send("1", 1);  // Send anything just to get recognized as a client for advertising service.
@@ -43,6 +53,8 @@ namespace Cozmo {
     #if(DO_SIM_COMMS_LATENCY)
     numRecvRdyMsgs_ = 0;
     #endif
+    
+    return RESULT_OK;
   }
   
   MultiClientComms::~MultiClientComms()
