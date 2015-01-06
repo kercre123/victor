@@ -41,6 +41,7 @@ namespace Cozmo {
   public:
     
     CozmoEngineImpl();
+    virtual ~CozmoEngineImpl();
     
     virtual Result Init(const Json::Value& config);
     
@@ -64,6 +65,10 @@ namespace Cozmo {
     bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
     
   protected:
+    
+    // Derived classes must implement any special initialization in this method,
+    // which is called by Init().
+    virtual Result InitInternal() = 0;
     
     // Derived classes must implement any per-tic updating they need done in this method.
     // Public Update() calls this automatically.
@@ -90,6 +95,11 @@ namespace Cozmo {
   
   CozmoEngineImpl::CozmoEngineImpl()
   : _isInitialized(false)
+  {
+    
+  }
+  
+  CozmoEngineImpl::~CozmoEngineImpl()
   {
     
   }
@@ -129,6 +139,12 @@ namespace Cozmo {
                                 _config[AnkiUtil::kP_UI_ADVERTISING_PORT].asInt());
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize GameComms.\n");
+      return lastResult;
+    }
+    
+    lastResult = InitInternal();
+    if(lastResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("CozomEngine.Init", "Failed calling internal init.\n");
       return lastResult;
     }
     
@@ -278,6 +294,7 @@ namespace Cozmo {
     
   protected:
     
+    virtual Result InitInternal() override;
     virtual Result UpdateInternal(const BaseStationTime_t currTime_ns) override;
     
     BasestationMain              _basestation;
@@ -325,6 +342,21 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  Result CozmoEngineHostImpl::InitInternal()
+  {
+    if(!_config.isMember(AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR)) {
+      PRINT_NAMED_WARNING("CozmoEngine.Init", "No NumRobotsToWaitFor defined in Json config, defaulting to 1.\n");
+      _config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 1;
+    }
+    
+    if(!_config.isMember(AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR)) {
+      PRINT_NAMED_WARNING("CozmoEngine.Init", "No NumUiDevicesToWaitFor defined in Json config, defaulting to 1.\n");
+      _config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
+    }
+    
+    return RESULT_OK;
+  }
+  
   
   Result CozmoEngineHostImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
   {
@@ -332,6 +364,10 @@ namespace Cozmo {
     if(_isBasestationStarted) {
       // TODO: Handle different basestation return codes
       _basestation.Update(currTime_ns);
+    } else if(_robotComms.GetNumConnectedDevices() >= _config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR].asInt() &&
+              _uiComms.GetNumConnectedDevices()    >= _config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR].asInt()) {
+      // We have connected to enough robots and devices:
+      StartBasestation();
     } else {
       // Tics advertisement services
       _robotAdvertisementService.Update();
@@ -350,10 +386,6 @@ namespace Cozmo {
     assert(_impl != nullptr);
   }
   
-  Result CozmoEngineHost::StartBasestation() {
-    return StartBasestation();
-  }
-  
   
 #if 0
 #pragma mark -
@@ -367,6 +399,7 @@ namespace Cozmo {
     
   protected:
     
+    virtual Result InitInternal() override;
     virtual Result UpdateInternal(const BaseStationTime_t currTime_ns) override;
     
   }; // class CozmoEngineClientImpl
@@ -374,6 +407,13 @@ namespace Cozmo {
   CozmoEngineClientImpl::CozmoEngineClientImpl()
   {
     
+  }
+  
+  Result CozmoEngineClientImpl::InitInternal()
+  {
+    // TODO: Do client-specific init here
+    
+    return RESULT_OK;
   }
   
   Result CozmoEngineClientImpl::UpdateInternal(const BaseStationTime_t currTime_ns)

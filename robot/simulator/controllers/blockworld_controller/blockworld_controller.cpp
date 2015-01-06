@@ -72,67 +72,66 @@ int main(int argc, char **argv)
   reader.parse(jsonFile, config);
   jsonFile.close();
   
-  if(!config.isMember("AdvertisingHostIP")) {
-    config["AdvertisingHostIP"] = ROBOT_ADVERTISING_HOST_IP;
+  if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
+    config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
   }
   if(!config.isMember("VizHostIP")) {
     config["VizHostIP"] = VIZ_HOST_IP;
   }
+  if(!config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
+    config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = ROBOT_ADVERTISING_PORT;
+  }
+  if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
+    config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
+  }
   
   CozmoEngineHost cozmoEngine;
   
-  cozmoEngine.Init(config);
-  
   // Get basestation mode
+  BasestationMode bm = BM_DEFAULT;
   int bmInt;
-  Json::Value bmValue = JsonTools::GetValueOptional(config, "basestation_mode", bmInt);
-  BasestationMode bm = (BasestationMode)bmInt;
-  assert(bm <= BM_PLAYBACK_SESSION);
+  if(JsonTools::GetValueOptional(config, AnkiUtil::kP_BASESTATION_MODE, bmInt)) {
+    BasestationMode bm = (BasestationMode)bmInt;
+    assert(bm <= BM_PLAYBACK_SESSION);
+  } 
   
   if (bm != BM_PLAYBACK_SESSION) {
     
     // Wait for at least one robot and UI device to connect
-    bool isRobotConnected = false;
-    bool isUiDeviceConnected = false;
-
-    while (basestationController.step(BS_TIME_STEP) != -1 &&
-           (!isRobotConnected || !isUiDeviceConnected))
-    {
-      std::vector<CozmoEngine::AdvertisingRobot> advertisingRobots;
-      cozmoEngine.GetAdvertisingRobots(advertisingRobots);
-      for(auto robot : advertisingRobots) {
-        if(cozmoEngine.ConnectToRobot(robot)) {
-          isRobotConnected = true;
-        }
-      }
-      
-      std::vector<CozmoEngine::AdvertisingUiDevice> advertisingUiDevices;
-      cozmoEngine.GetAdvertisingUiDevices(advertisingUiDevices);
-      for(auto device : advertisingUiDevices) {
-        if(cozmoEngine.ConnectToUiDevice(device)) {
-          isUiDeviceConnected = true;
-        }
-      }
-    }
+    config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 1;
+    config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
+    
+  } else {
+    
+    config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
+    config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
     
   } // if (bm != BM_PLAYBACK_SESSION)
   
-  basestationController.step(BS_TIME_STEP);
   
-  // We have connected robots. Start the basestation loop!
-  Result status = cozmoEngine.StartBasestation();
-  //  BasestationStatus status = bs.Init(&robotComms, &uiComms, config, bm);
-  if (status != RESULT_OK) {
-    PRINT_NAMED_ERROR("CozmoEngine.StartupFail","Status %d\n", status);
-    return -1;
-  }
+  cozmoEngine.Init(config);
+  
   
   //
   // Main Execution loop: step the world forward forever
   //
   while (basestationController.step(BS_TIME_STEP) != -1)
   {
-    status = cozmoEngine.Update(SEC_TO_NANOS(basestationController.getTime()));
+    // Connect to any robots we see:
+    std::vector<CozmoEngine::AdvertisingRobot> advertisingRobots;
+    cozmoEngine.GetAdvertisingRobots(advertisingRobots);
+    for(auto robot : advertisingRobots) {
+      cozmoEngine.ConnectToRobot(robot);
+    }
+    
+    // Connect to any UI devices we see:
+    std::vector<CozmoEngine::AdvertisingUiDevice> advertisingUiDevices;
+    cozmoEngine.GetAdvertisingUiDevices(advertisingUiDevices);
+    for(auto device : advertisingUiDevices) {
+      cozmoEngine.ConnectToUiDevice(device);
+    }
+
+    Result status = cozmoEngine.Update(SEC_TO_NANOS(basestationController.getTime()));
     if (status != RESULT_OK) {
       PRINT_NAMED_WARNING("CozmoEngine.Update.NotOK","Status %d\n", status);
     }

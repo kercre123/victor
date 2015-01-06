@@ -148,9 +148,12 @@ namespace Cozmo {
     
     // Get basestation mode out of the config
     int modeInt;
-    Json::Value bmValue = JsonTools::GetValueOptional(config, AnkiUtil::kP_BASESTATION_MODE, modeInt);
-    mode_ = static_cast<BasestationMode>(modeInt);
-    assert(mode_ <= BM_PLAYBACK_SESSION);
+    if(JsonTools::GetValueOptional(config, AnkiUtil::kP_BASESTATION_MODE, modeInt)) {
+      mode_ = static_cast<BasestationMode>(modeInt);
+      assert(mode_ <= BM_PLAYBACK_SESSION);
+    } else {
+      mode_ = BM_DEFAULT;
+    }
     
     PRINT_INFO("Starting basestation mode %d\n", mode_);
     switch(mode_)

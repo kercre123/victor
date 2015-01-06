@@ -102,8 +102,6 @@ namespace Cozmo {
     
     virtual bool IsHost() const override { return true; }
     
-    Result StartBasestation();
-    
   }; // class CozmoEngineHost
   
   
@@ -114,8 +112,6 @@ namespace Cozmo {
     CozmoEngineClient();
     
     virtual bool IsHost() const override { return false; }
-    
-    void SetHostIP(const char ipAddress);
     
   }; // class CozmoEngineClient
   
