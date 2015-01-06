@@ -386,6 +386,12 @@ namespace Cozmo {
     assert(_impl != nullptr);
   }
   
+  CozmoEngineHostImpl* CozmoEngineHost::GetHostImpl()
+  {
+    CozmoEngineHostImpl* hostImpl = reinterpret_cast<CozmoEngineHostImpl*>(_impl);
+    assert(hostImpl != nullptr); // was new'd in the constructor, so this should not happen!
+    return hostImpl;
+  }
   
 #if 0
 #pragma mark -
@@ -434,6 +440,12 @@ namespace Cozmo {
     assert(_impl != nullptr);
   }
   
+  CozmoEngineClientImpl* CozmoEngineClient::GetClientImpl()
+  {
+    CozmoEngineClientImpl* clientImpl = reinterpret_cast<CozmoEngineClientImpl*>(_impl);
+    assert(clientImpl != nullptr); // was new'd in the constructor, so this should not happen!
+    return clientImpl;
+  }
   
   
 #undef FREE_HELPER

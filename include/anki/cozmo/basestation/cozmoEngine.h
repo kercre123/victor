@@ -43,6 +43,7 @@ namespace Cozmo {
   
   class CozmoEngineImpl;
   class CozmoEngineHostImpl;
+  class CozmoEngineClientImpl;
   
   class CozmoEngine
   {
@@ -102,6 +103,10 @@ namespace Cozmo {
     
     virtual bool IsHost() const override { return true; }
     
+    
+  protected:
+    CozmoEngineHostImpl* GetHostImpl();
+    
   }; // class CozmoEngineHost
   
   
@@ -112,6 +117,9 @@ namespace Cozmo {
     CozmoEngineClient();
     
     virtual bool IsHost() const override { return false; }
+    
+  protected:
+    CozmoEngineClientImpl* GetClientImpl();
     
   }; // class CozmoEngineClient
   
