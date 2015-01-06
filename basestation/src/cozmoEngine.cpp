@@ -41,7 +41,6 @@ namespace Cozmo {
   public:
     
     CozmoEngineImpl();
-    virtual ~CozmoEngineImpl();
     
     virtual Result Init(const Json::Value& config);
     
@@ -140,11 +139,13 @@ namespace Cozmo {
   
   void CozmoEngineImpl::GetAdvertisingRobots(std::vector<AdvertisingRobot>& advertisingRobots)
   {
+    _robotComms.Update();
     _robotComms.GetAdvertisingDeviceIDs(advertisingRobots);
   }
   
   void CozmoEngineImpl::GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices)
   {
+    _uiComms.Update();
     _uiComms.GetAdvertisingDeviceIDs(advertisingUiDevices);
   }
   
@@ -230,8 +231,11 @@ namespace Cozmo {
     }
   }
   
-  Result CozmoEngine::Update(const Time currTime_sec)
-  {
+  Result CozmoEngine::Init(const Json::Value& config) {
+    return _impl->Init(config);
+  }
+  
+  Result CozmoEngine::Update(const Time currTime_sec) {
     return _impl->Update(SEC_TO_NANOS(currTime_sec));
   }
   
@@ -269,7 +273,6 @@ namespace Cozmo {
   {
   public:
     CozmoEngineHostImpl();
-    ~CozmoEngineHostImpl();
  
     Result StartBasestation();
     
@@ -297,11 +300,6 @@ namespace Cozmo {
     
     _uiAdvertisementService.StartService(UI_ADVERTISEMENT_REGISTRATION_PORT,
                                          UI_ADVERTISING_PORT);
-
-  }
-  
-  CozmoEngineHostImpl::~CozmoEngineHostImpl()
-  {
 
   }
   
@@ -352,6 +350,11 @@ namespace Cozmo {
     assert(_impl != nullptr);
   }
   
+  Result CozmoEngineHost::StartBasestation() {
+    return StartBasestation();
+  }
+  
+  
 #if 0
 #pragma mark -
 #pragma mark Derived Client Class Implementations
@@ -361,7 +364,6 @@ namespace Cozmo {
   {
   public:
     CozmoEngineClientImpl();
-    ~CozmoEngineClientImpl();
     
   protected:
     
@@ -369,7 +371,10 @@ namespace Cozmo {
     
   }; // class CozmoEngineClientImpl
 
-  
+  CozmoEngineClientImpl::CozmoEngineClientImpl()
+  {
+    
+  }
   
   Result CozmoEngineClientImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
   {

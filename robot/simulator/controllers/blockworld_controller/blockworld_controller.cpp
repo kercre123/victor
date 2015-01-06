@@ -6,6 +6,8 @@
  * Modifications: 
  */
 
+#include "anki/cozmo/basestation/cozmoEngine.h"
+
 #include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/cozmo/basestation/basestation.h"
@@ -77,6 +79,9 @@ int main(int argc, char **argv)
     config["VizHostIP"] = VIZ_HOST_IP;
   }
   
+  CozmoEngineHost cozmoEngine;
+  
+  cozmoEngine.Init(config);
   
   // Get basestation mode
   int bmInt;
@@ -84,147 +89,41 @@ int main(int argc, char **argv)
   BasestationMode bm = (BasestationMode)bmInt;
   assert(bm <= BM_PLAYBACK_SESSION);
   
-  // Connect to robot and UI device.
-  // UI-layer should handle this (whether the connection is TCP or BTLE).
-  // Start basestation only when connections have been established.
-  MultiClientComms uiComms(config["AdvertisingHostIP"].asCString(), UI_ADVERTISING_PORT);
-  
-  
-#if (USE_BLE_ROBOT_COMMS)
-  BLEComms robotComms;
-  BLERobotManager robotBLEManager;
-#else
-  MultiClientComms robotComms(config["AdvertisingHostIP"].asCString(), ROBOT_ADVERTISING_PORT);
-#endif
   if (bm != BM_PLAYBACK_SESSION) {
+    
+    // Wait for at least one robot and UI device to connect
+    bool isRobotConnected = false;
+    bool isUiDeviceConnected = false;
 
-    
-#if (USE_BLE_ROBOT_COMMS)
-    basestationController.step(BS_TIME_STEP);
-    robotBLEManager.DiscoverRobots();
-#endif
-    
-    
-    while (basestationController.step(BS_TIME_STEP) != -1) {
-      
-#if (USE_BLE_ROBOT_COMMS)
-      // ====== BTLE ======
-      robotBLEManager.Update();
-      
-      if (robotBLEManager.GetNumConnectedDevices() == 0) {
-        // Get list of advertising robots and connect to one
-        std::vector<u64> advertisingRobotMfgIDs;
-        if (robotBLEManager.GetAdvertisingRobotMfgIDs(advertisingRobotMfgIDs) > 0) {
-          
-          printf("RobotBLEComms: %ld advertising robots found:", advertisingRobotMfgIDs.size());
-          
-          // Look for specific robot we're trying to connect to
-          bool robotFound = false;
-          int advertisingRobotIdx = 0;
-          for (advertisingRobotIdx = 0; advertisingRobotIdx<advertisingRobotMfgIDs.size(); ++advertisingRobotIdx) {
-            printf(" %llx ", advertisingRobotMfgIDs[advertisingRobotIdx]);
-            if (advertisingRobotMfgIDs[advertisingRobotIdx] == COZMO_BLE_UUID) {
-              robotFound = true;
-              break;
-            }
-          }
-          printf("\n");
-          if (!robotFound) {
-            continue;
-          }
-
-          u64 mfgID = advertisingRobotMfgIDs[advertisingRobotIdx];
-          robotBLEManager.ConnectToRobotByMfgID(mfgID);
-          
-          // Add connected_robot ID to config
-          int robotID = robotBLEManager.GetRobotIDFromMfgID(mfgID);
-          config[AnkiUtil::kP_CONNECTED_ROBOTS].append(robotID);
-          
-          printf("RobotBLEComms: Connecting to robot %d (mfg ID=%llx)...\n", robotID, mfgID);
-          
-          robotBLEManager.StopDiscoveringRobots();
-          break;
+    while (basestationController.step(BS_TIME_STEP) != -1 &&
+           (!isRobotConnected || !isUiDeviceConnected))
+    {
+      std::vector<CozmoEngine::AdvertisingRobot> advertisingRobots;
+      cozmoEngine.GetAdvertisingRobots(advertisingRobots);
+      for(auto robot : advertisingRobots) {
+        if(cozmoEngine.ConnectToRobot(robot)) {
+          isRobotConnected = true;
         }
       }
       
-#else
-      // ====== TCP ======
-      robotComms.Update();
-      
-      // If not already connected to a robot, connect to the
-      // first one that becomes available.
-      // TODO: Once we have a UI, we can select the one we want to connect to in a more reasonable way.
-      if (robotComms.GetNumConnectedDevices() == 0) {
-        std::vector<int> advertisingRobotIDs;
-        if (robotComms.GetAdvertisingDeviceIDs(advertisingRobotIDs) > 0) {
-          for(auto robotID : advertisingRobotIDs) {
-            printf("RobotComms connecting to robot %d.\n", robotID);
-            if (robotComms.ConnectToDeviceByID(robotID)) {
-              printf("Connected to robot %d\n", robotID);
-              
-              // Add connected_robot ID to config
-              config[AnkiUtil::kP_CONNECTED_ROBOTS].append(robotID);
-              
-              break;
-            } else {
-              printf("Failed to connect to robot %d\n", robotID);
-              return BS_END_INIT_ERROR;
-            }
-          }
+      std::vector<CozmoEngine::AdvertisingUiDevice> advertisingUiDevices;
+      cozmoEngine.GetAdvertisingUiDevices(advertisingUiDevices);
+      for(auto device : advertisingUiDevices) {
+        if(cozmoEngine.ConnectToUiDevice(device)) {
+          isUiDeviceConnected = true;
         }
       }
-
-      // If not already connected to a UI device, connect to the
-      // first one that becomes available.
-      uiComms.Update();
-      if (uiComms.GetNumConnectedDevices() == 0) {
-        std::vector<int> advertisingUIDeviceIDs;
-        if (uiComms.GetAdvertisingDeviceIDs(advertisingUIDeviceIDs) > 0) {
-          for(auto uiID : advertisingUIDeviceIDs) {
-            printf("UiComms connecting to UI device %d.\n", uiID);
-            if (uiComms.ConnectToDeviceByID(uiID)) {
-              printf("Connected to UI device %d\n", uiID);
-              
-              // Add connected ui device ID to config
-              config[AnkiUtil::kP_CONNECTED_UI_DEVS].append(uiID);
-              
-              break;
-            } else {
-              printf("Failed to connect to UI device %d\n", uiID);
-              return BS_END_INIT_ERROR;
-            }
-          }
-        }
-      }
-      
-      // Don't resume until at least one robot and one ui device are connected
-      if ((robotComms.GetNumConnectedDevices() > 0) && (uiComms.GetNumConnectedDevices() > 0)) {
-        break;
-      }
-#endif
-      
     }
+    
   } // if (bm != BM_PLAYBACK_SESSION)
-  
-  
-#if (USE_BLE_ROBOT_COMMS)
-  // Wait until robot is connected
-  while (basestationController.step(BS_TIME_STEP) != -1) {
-    robotBLEManager.Update();
-    if (robotBLEManager.GetNumConnectedDevices() > 0) {
-      printf("Connected to robot!\n");
-      break;
-    }
-  }
-#endif
   
   basestationController.step(BS_TIME_STEP);
   
   // We have connected robots. Start the basestation loop!
-  BasestationMain bs;
-  BasestationStatus status = bs.Init(&robotComms, &uiComms, config, bm);
-  if (status != BS_OK) {
-    PRINT_NAMED_ERROR("Basestation.Init.Fail","status %d\n", status);
+  Result status = cozmoEngine.StartBasestation();
+  //  BasestationStatus status = bs.Init(&robotComms, &uiComms, config, bm);
+  if (status != RESULT_OK) {
+    PRINT_NAMED_ERROR("CozmoEngine.StartupFail","Status %d\n", status);
     return -1;
   }
   
@@ -233,25 +132,17 @@ int main(int argc, char **argv)
   //
   while (basestationController.step(BS_TIME_STEP) != -1)
   {
-    // Read all UI messages
-    uiComms.Update();
-    
-    // Read messages from all robots
-#if (USE_BLE_ROBOT_COMMS)
-    robotBLEManager.Update();  // Necessary?
-#endif
-
-    robotComms.Update();
-    
-    status = bs.Update(SEC_TO_NANOS(basestationController.getTime()));
-    if (status != BS_OK) {
-      PRINT_NAMED_WARNING("Basestation.Update.NotOK","status %d\n", status);
+    status = cozmoEngine.Update(SEC_TO_NANOS(basestationController.getTime()));
+    if (status != RESULT_OK) {
+      PRINT_NAMED_WARNING("CozmoEngine.Update.NotOK","Status %d\n", status);
     }
     
+    /*
     std::vector<BasestationMain::ObservedObjectBoundingBox> boundingQuads;
     if(true == bs.GetCurrentVisionMarkers(1, boundingQuads) ) {
       // TODO: stuff?
     }
+     */
   } // while still stepping
   
   return 0;

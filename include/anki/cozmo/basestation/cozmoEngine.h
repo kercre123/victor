@@ -99,9 +99,10 @@ namespace Cozmo {
   {
   public:
     CozmoEngineHost();
-    virtual ~CozmoEngineHost();
     
     virtual bool IsHost() const override { return true; }
+    
+    Result StartBasestation();
     
   }; // class CozmoEngineHost
   
@@ -111,7 +112,6 @@ namespace Cozmo {
   public:
     
     CozmoEngineClient();
-    virtual ~CozmoEngineClient();
     
     virtual bool IsHost() const override { return false; }
     
