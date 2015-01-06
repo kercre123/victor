@@ -37,7 +37,7 @@ namespace Anki {
       
     }
     Result MessageHandler::Init(Comms::IComms* comms,
-                                    RobotManager*  robotMgr)
+                                RobotManager*  robotMgr)
     {
       Result retVal = RESULT_FAIL;
       

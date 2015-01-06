@@ -54,7 +54,7 @@ namespace Cozmo {
     // Initializes components of basestation
     // RETURNS: BS_OK, or BS_END_INIT_ERROR
     //BasestationStatus Init(const MetaGame::GameParameters& params, IComms* comms, boost::property_tree::ptree &config, BasestationMode mode);
-    BasestationStatus Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config, BasestationMode mode);
+    BasestationStatus Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config);
     
     BasestationMode GetMode();
     
@@ -139,16 +139,21 @@ namespace Cozmo {
   }
 
 
-  BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config, BasestationMode mode)
+  BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config)
   {
     BasestationStatus status = BS_OK;
     
     // Copy config
     config_ = config;
     
-    PRINT_INFO("Starting basestation mode %d\n", mode);
-    mode_ = mode;
-    switch(mode)
+    // Get basestation mode out of the config
+    int modeInt;
+    Json::Value bmValue = JsonTools::GetValueOptional(config, AnkiUtil::kP_BASESTATION_MODE, modeInt);
+    mode_ = static_cast<BasestationMode>(modeInt);
+    assert(mode_ <= BM_PLAYBACK_SESSION);
+    
+    PRINT_INFO("Starting basestation mode %d\n", mode_);
+    switch(mode_)
     {
       case BM_RECORD_SESSION:
       {
@@ -420,9 +425,9 @@ namespace Cozmo {
     delete impl_;
   }
 
-  BasestationStatus BasestationMain::Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config, BasestationMode mode)
+  BasestationStatus BasestationMain::Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config)
   {
-    return impl_->Init(robot_comms, ui_comms, config, mode);
+    return impl_->Init(robot_comms, ui_comms, config);
   }
 
   BasestationMode BasestationMain::GetMode()
