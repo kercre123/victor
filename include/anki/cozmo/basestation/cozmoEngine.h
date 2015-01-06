@@ -32,77 +32,76 @@
 #ifndef ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 #define ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 
+#include "anki/cozmo/basestation/messages.h"
+
 #include "anki/vision/basestation/image.h"
 
 #include "json/json.h"
 
 namespace Anki {
-  
-  namespace Comms {
-    class AdvertisementService;
-    class IComms;
-  }
-  
 namespace Cozmo {
-
-  // Forward declarations:
-  class VisionProcessingThread;
-  class IMessageHandler;
-  class MultiClientComms;
+  
+  class CozmoEngineImpl;
+  class CozmoEngineHostImpl;
   
   class CozmoEngine
   {
   public:
     
     CozmoEngine();
-    ~CozmoEngine();
+    virtual ~CozmoEngine();
     
     virtual bool IsHost() const = 0;
     
-    virtual Result Init(const Json::Value& config);
+    Result Init(const Json::Value& config);
     
     // Hook this up to whatever is ticking the game "heartbeat"
-    virtual Result Update();
+    using Time = unsigned long long int;
+    Result Update(const Time currTime_sec);
     
     // Provide an image from the device's camera for processing with the engine's
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
     
+    // TODO: Package up other stuff (like name?) into Robot/UiDevice identifiers. For now, just alias int.
+    using AdvertisingRobot = int;
+    using AdvertisingUiDevice = int;
+    
+    // Get list of available robots / UI devices
+    void GetAdvertisingRobots(std::vector<AdvertisingRobot>& advertisingRobots);
+    void GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices);
+    
+    // Request a connection to a specific robot / UI device from the list returned above.
+    // Returns true on successful connection, false otherwise.
+    bool ConnectToRobot(AdvertisingRobot whichRobot);
+    bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
+    
+    // TODO: Add IsConnected methods
+    /*
+    // Check to see if a specified robot / UI device is connected
+    bool IsRobotConnected(AdvertisingRobot whichRobot) const;
+    bool IsUiDeviceConnected(AdvertisingUiDevice whichDevice) const;
+    */
+    
+    // TODO: Remove this in favor of it being handled via messages instead of direct API polling
+    bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
+    
   protected:
-    bool _isInitialized;
-    
-    VisionProcessingThread* _robotVisionThread;
-    VisionProcessingThread* _deviceVisionThread;
-    
-    MultiClientComms* _robotComms;
-    MultiClientComms* _gameComms;
-    
-    IMessageHandler* _robotVisionMsgHandler;
-    IMessageHandler* _deviceVisionMsgHandler;
+    CozmoEngineImpl* _impl;
     
   }; // class CozmoEngine
   
   
   // TODO: Move derived classes to their own files
   
-  // Forward declarations:
-  class BasestationMain;
   
   class CozmoEngineHost : public CozmoEngine
   {
   public:
     CozmoEngineHost();
-    ~CozmoEngineHost();
+    virtual ~CozmoEngineHost();
     
     virtual bool IsHost() const override { return true; }
-    
-    virtual Result Update() override;
-    
-  protected:
-    BasestationMain* _basestation;
-    
-    Comms::AdvertisementService* _robotAdvertisementService;
-    Comms::AdvertisementService* _uiAdvertisementService;
     
   }; // class CozmoEngineHost
   
@@ -112,6 +111,7 @@ namespace Cozmo {
   public:
     
     CozmoEngineClient();
+    virtual ~CozmoEngineClient();
     
     virtual bool IsHost() const override { return false; }
     
