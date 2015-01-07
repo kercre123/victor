@@ -149,3 +149,4 @@ ios/build
 ios/CozmoVision/CozmoVision.xcodeproj/xcuserdata
 coretech/vision/matlab/@VisionMarkerTrained/trainingState_*.*
 tools/modulate_led/Project/LCD/MDK-ARM/Demo/
+*.uvgui.*
