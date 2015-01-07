@@ -28,6 +28,12 @@
 
 #include "opencv2/opencv.hpp"
 
+// Uncomment to allow interprocess access to the camera stream (e.g. Matlab)
+//#define STREAM_IMAGES_VIA_FILESYSTEM 1
+#if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
+#include "anki/common/basestation/array2d_impl.h"
+#endif
+
 namespace Anki {
   namespace Cozmo {
     
@@ -388,8 +394,25 @@ namespace Anki {
 
           Vision::Image image(height, width, imgToSend);
           image.SetTimestamp(msg.frameTimeStamp);
-          robot->ProcessImage(image);          
+          
+#if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
+          // Create a 50mb ramdisk on OSX at "/Volumes/RamDisk/" by typing: diskutil erasevolume HFS+ 'RamDisk' `hdiutil attach -nomount ram://100000`
+          static const char * const g_queueImages_filenamePattern = "/Volumes/RamDisk/robotImage%04d.bmp";
+          static const s32 g_queueImages_queueLength = 70; // Must be at least the FPS of the camera. But higher numbers may cause more lag for the consuming process.
+          static s32 g_queueImages_queueIndex = 0;
+          
+          char filename[256];
+          snprintf(filename, 256, g_queueImages_filenamePattern, g_queueImages_queueIndex);
+          
+          cv::imwrite(filename, image.get_CvMat_());
 
+          g_queueImages_queueIndex++;
+          
+          if(g_queueImages_queueIndex >= g_queueImages_queueLength)
+            g_queueImages_queueIndex = 0;
+#endif // #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
+          
+          robot->ProcessImage(image);          
         }
 
         imgID = 0;
