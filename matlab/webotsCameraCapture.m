@@ -1,8 +1,8 @@
-% function image = webotsCameraCapture() 
+% function image = webotsCameraCapture()
 
-% To capture images from the webots process, do the following: 
-% 
-% 1. In basestation/src/messageHandler.cpp, uncomment 
+% To capture images from the webots process, do the following:
+%
+% 1. In basestation/src/messageHandler.cpp, uncomment
 %    "//#define STREAM_IMAGES_VIA_FILESYSTEM 1"
 %
 % 2. If you're using a single robot, in
@@ -16,7 +16,7 @@
 %
 % 4. In the webots window, type shift-i to start streaming images
 %
-% 5. In Matlab, run "image = webotsCameraCapture();". It blocks until 
+% 5. In Matlab, run "image = webotsCameraCapture();". It blocks until
 %    webots received a new image
 
 function image = webotsCameraCapture(varargin)
@@ -28,7 +28,7 @@ function image = webotsCameraCapture(varargin)
     % timeout = 0;
     
     parseVarargin(varargin{:});
-
+    
     persistent lastIndex;
     persistent lastTimestamp;
     
@@ -39,10 +39,10 @@ function image = webotsCameraCapture(varargin)
     if isempty(lastTimestamp)
         lastTimestamp = 0;
     end
-     
+    
     while true
         files = dir([filenameDirectory, '*.bmp']);
-
+        
         datenums = zeros(length(files), 1);
         for i = 1:length(files)
             datenums(i) = files(i).datenum;
@@ -60,7 +60,7 @@ function image = webotsCameraCapture(varargin)
                 break;
             end
         end
-                
+        
         if foundNewImage
             lastTimestamp = datenums(lastIndex);
             inputFilename = [filenameDirectory, files(lastIndex).name];
