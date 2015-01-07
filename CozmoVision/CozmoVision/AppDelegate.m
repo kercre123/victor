@@ -31,11 +31,13 @@
     [self.basestation setBasestationIP:ipAddress];
   }
 
+  /*
   // If autoConnect - Start comms, connect robot & start basestation
   self.basestation.autoConnect = [NSUserDefaults autoConnectRobot];
   if (self.basestation.autoConnect) {
     [self.basestation startComms];
   }
+   */
 
 
   return YES;

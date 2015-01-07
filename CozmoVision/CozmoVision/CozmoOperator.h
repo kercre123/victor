@@ -17,7 +17,7 @@
 
 // Connection Methods
 - (void)registerToAvertisingServiceWithIPAddress:(NSString*)ipAddress;
-- (void)disconnect;
+//- (void)disconnect;
 
 
 - (void)update;

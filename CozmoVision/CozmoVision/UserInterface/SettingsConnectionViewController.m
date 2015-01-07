@@ -243,6 +243,13 @@
 {
   // Toggle Basestation states
 
+  // TODO: Get whether host from UI
+  BOOL isHost = YES;
+  
+  [self updateBasestationConfig];
+  [self._basestation start:isHost];
+  
+  /*
   switch (self._basestation.runState) {
     case CozmoBasestationRunStateNone:
     {
@@ -272,6 +279,7 @@
     default:
       break;
   }
+   */
 }
 
 - (IBAction)handleCameraResolutionSwitch:(UISwitch*)sender

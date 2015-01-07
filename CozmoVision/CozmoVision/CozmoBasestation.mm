@@ -22,10 +22,11 @@
 #import <anki/cozmo/basestation/basestation.h>
 #import <anki/cozmo/robot/cozmoConfig.h>
 #import <anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h>
+#import <anki/cozmo/basestation/cozmoEngine.h>
 
 // Comms
-#import <anki/cozmo/basestation/multiClientComms.h>
-#import <anki/messaging/basestation/advertisementService.h>
+//#import <anki/cozmo/basestation/multiClientComms.h>
+//#import <anki/messaging/basestation/advertisementService.h>
 
 // Coretech-Common includes
 #import <anki/common/basestation/utils/logging/DAS/DAS.h>
@@ -50,14 +51,15 @@
 // For connecting to physical robot
 // TODO: Expose these to UI
 const bool FORCE_ADD_ROBOT = false;
-const bool FORCED_ROBOT_IS_SIM = false;
+const bool FORCED_ROBOT_IS_SIM = true;
 const u8 forcedRobotId = 1;
-const char* forcedRobotIP = "192.168.3.34";
+const char* forcedRobotIP = "192.168.19.238";
 
 
 @interface CozmoBasestation ()
 
-@property (assign, nonatomic) CozmoBasestationRunState runState;
+//@property (assign, nonatomic) CozmoBasestationRunState runState;
+@property (assign, nonatomic) BOOL engineRunning;
 @property (assign, nonatomic) BOOL robotConnected;
 @property (assign, nonatomic) BOOL uiConnected;
 
@@ -86,18 +88,20 @@ const char* forcedRobotIP = "192.168.3.34";
   CFAbsoluteTime _firstHeartbeatTimestamp;
   CFAbsoluteTime _lastHeartbeatTimestamp;
 
-  Anki::Cozmo::BasestationMain*   _basestation;
+  Anki::Cozmo::CozmoEngine*       _cozmoEngine;
+  
+  //Anki::Cozmo::BasestationMain*   _basestation;
 
   // Timestamp of last image we asked for from the robot
   // TODO: need one per robot?
   Anki::TimeStamp_t               _lastImageTimestamp;
   
   // Comms
-  Anki::Cozmo::MultiClientComms*        _robotComms;
-  Anki::Cozmo::MultiClientComms*        _uiComms;
+  //Anki::Cozmo::MultiClientComms*        _robotComms;
+  //Anki::Cozmo::MultiClientComms*        _uiComms;
  
-  Anki::Comms::AdvertisementService*    _robotAdService;
-  Anki::Comms::AdvertisementService*    _uiAdService;
+  //Anki::Comms::AdvertisementService*    _robotAdService;
+  //Anki::Comms::AdvertisementService*    _uiAdService;
 }
 
 
@@ -112,7 +116,10 @@ const char* forcedRobotIP = "192.168.3.34";
   if (!(self = [super init]))
     return self;
   
-  self.runState = CozmoBasestationRunStateNone;
+  _cozmoEngine = nullptr;
+  
+  //self.runState = CozmoBasestationRunStateNone;
+  self.engineRunning  = NO;
   self.robotConnected = NO;
 
   self._heartbeatListeners = [NSMutableArray new];
@@ -181,66 +188,45 @@ const char* forcedRobotIP = "192.168.3.34";
 
 #pragma mark - Basestation state methods
 
-- (BOOL)startComms
+- (BOOL) start:(BOOL)asHost
 {
+  // Put all the settings in the Json config file
   [self setupConfig];
-  
-# ifdef __cplusplus
-  ///// Comms Init //////
-  using namespace Anki;
-
   
   self.cozmoOperator = [CozmoOperator operatorWithAdvertisingtHostIPAddress:self._hostAdvertisingIP];
   
-
-  // Start advertising services
-  _robotAdService = new Comms::AdvertisementService("RobotAdvertisementService");
-  _robotAdService->StartService(Cozmo::ROBOT_ADVERTISEMENT_REGISTRATION_PORT, Cozmo::ROBOT_ADVERTISING_PORT);
-  
-  _uiAdService = new Comms::AdvertisementService("UiAdvertisementService");
-  _uiAdService->StartService(Cozmo::UI_ADVERTISEMENT_REGISTRATION_PORT, Cozmo::UI_ADVERTISING_PORT);
-  
-  
-  // Force add a robot
-  if (FORCE_ADD_ROBOT) {
-    // Force add physical robot since it's not registering by itself yet.
-    Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
-    forcedRegistrationMsg.id = forcedRobotId;
-    forcedRegistrationMsg.port = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (FORCED_ROBOT_IS_SIM ? forcedRobotId : 0);
-    forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
-    forcedRegistrationMsg.enableAdvertisement = 1;
-    snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", forcedRobotIP);
-    
-    _robotAdService->ProcessRegistrationMsg(forcedRegistrationMsg);
+  if(_cozmoEngine != nullptr) {
+    delete _cozmoEngine;
+    _cozmoEngine = nullptr;
   }
-
   
+  if(asHost) {
+    Anki::Cozmo::CozmoEngineHost* cozmoEngineHost = new Anki::Cozmo::CozmoEngineHost();
+    cozmoEngineHost->Init(_config);
+    
+    // Force add a robot
+    if (FORCE_ADD_ROBOT) {
+      cozmoEngineHost->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
+    }
   
-#if (USE_BLE_ROBOT_COMMS)
-  BLEComms robotComms;
-  BLERobotManager robotBLEManager;
-#else
-  _robotComms = new Cozmo::MultiClientComms(_config["AdvertisingHostIP"].asCString(), Cozmo::ROBOT_ADVERTISING_PORT);
-
-  // Connect to robot.
-  // UI-layer should handle this (whether the connection is TCP or BTLE).
-  // Start basestation only when connections have been established.
-  _uiComms = new Cozmo::MultiClientComms(_config["AdvertisingHostIP"].asCString(), Cozmo::UI_ADVERTISING_PORT);
-#endif
+    _cozmoEngine = cozmoEngineHost;
+    
+  } else { // as Client
+    Anki::Cozmo::CozmoEngineClient* cozmoEngineClient = new Anki::Cozmo::CozmoEngineClient();
+    cozmoEngineClient->Init(_config);
+    _cozmoEngine = cozmoEngineClient;
+  }
   
-#endif
-
-  self.runState = CozmoBasestationRunStateCommsReady;
-
   [self resetHeartbeatTimer];
-
+  
+  self.engineRunning = YES;
+  
   return YES;
 }
 
+
 - (void)setupConfig
 {
-  // Get configuration JSON
-  Json::Value config;
   /*
    //const std::string subPath(std::string("basestation/config/") + std::string(AnkiUtil::kP_CONFIG_JSON_FILE));
    //const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
@@ -255,13 +241,18 @@ const char* forcedRobotIP = "192.168.3.34";
    Json::Value bmValue = JsonTools::GetValueOptional(config, "basestation_mode", (u8&)bm);
    assert(bm <= Cozmo::BM_PLAYBACK_SESSION);
    */
-  _config = config;
-  if(!config.isMember("AdvertisingHostIP")) {
-    _config["AdvertisingHostIP"] = self._hostAdvertisingIP.UTF8String;
-  }
-  if(!config.isMember("VizHostIP")) {
-    _config["VizHostIP"] = self._hostAdvertisingIP.UTF8String;
-  }
+
+  // Put all settings into the config file for initializing the CozmoEngine
+  _config[AnkiUtil::kP_ADVERTISING_HOST_IP] = self._hostAdvertisingIP.UTF8String;
+  _config[AnkiUtil::kP_VIZ_HOST_IP] = self._hostAdvertisingIP.UTF8String;
+  
+  // TODO: Provide ability to set these from app?
+  _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = Anki::Cozmo::ROBOT_ADVERTISING_PORT;
+  _config[AnkiUtil::kP_UI_ADVERTISING_PORT]    = Anki::Cozmo::UI_ADVERTISING_PORT;
+  
+  _config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR]     = 1;
+  _config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
+  
 }
 
 
@@ -283,138 +274,21 @@ const char* forcedRobotIP = "192.168.3.34";
                                                          repeats:YES];
 }
 
-- (BOOL)startBasestation
-{
-  // Init basestation & connect
-  BOOL didStart = NO;
-  if (self.runState == CozmoBasestationRunStateRobotConnected && self.robotConnected && self.uiConnected) {
-    // We have connected robots. Init the basestation!
-# ifdef __cplusplus
-    using namespace Anki;
-    _basestation = new Cozmo::BasestationMain();
-#endif
-
-    Cozmo::BasestationStatus status = _basestation->Init(_robotComms, _uiComms, _config, Cozmo::BM_DEFAULT);
-    if (status == Cozmo::BS_OK) {
-      self.runState = CozmoBasestationRunStateRunning;
-      didStart = YES;
-    }
-    else {
-      NSLog(@"Basestation.Init.Failed with status %d\n", status);
-    }
-
-#if (USE_BLE_ROBOT_COMMS)
-    basestationController.step(BS_TIME_STEP);
-    robotBLEManager.DiscoverRobots();
-#endif
-
-
-#if (USE_BLE_ROBOT_COMMS)
-    // Wait until robot is connected
-    while (basestationController.step(BS_TIME_STEP) != -1) {
-      robotBLEManager.Update();
-      if (robotBLEManager.GetNumConnectedRobots() > 0) {
-        printf("Connected to robot!\n");
-        break;
-      }
-    }
-#endif
-  }
-  return didStart;
-
-}
-
 - (void)stopCommsAndBasestation
 {
-  // Kill basestation
-#ifdef __cplusplus
-  if(_uiComms) {
-    delete _uiComms;
-    _uiComms = nil;
-  }
-
-  if(_robotComms) {
-    delete _robotComms;
-    _robotComms = nil;
-  }
-
-  if(_basestation) {
-    _basestation->UnInit();
-    delete _basestation;
-    _basestation = nil;
+  if(_cozmoEngine != nullptr) {
+    delete _cozmoEngine;
+    _cozmoEngine = nullptr;
   }
   
   self.cozmoOperator = nil;
   
-  self.runState = CozmoBasestationRunStateNone;
+  //self.runState = CozmoBasestationRunStateNone;
+  self.engineRunning = NO;
+  
   [self._heartbeatTimer invalidate];
   self._heartbeatTimer = nil;
-#endif
 }
-
-
-#pragma mark - Connect to Robot
-
-- (BOOL)attemptToConnectToRobot
-{
-  BOOL didConnect = NO;
-  std::vector<int> advertisingRobotIDs;
-  if (_robotComms->GetAdvertisingDeviceIDs(advertisingRobotIDs) > 0) {
-
-    for(auto robotID : advertisingRobotIDs) {
-      printf("RobotComms connecting to robot %d.\n", robotID);
-
-      if (_robotComms->ConnectToDeviceByID(robotID)) {
-        printf("Connected to robot %d\n", robotID);
-
-        // Add connected_robot ID to config
-        _config[AnkiUtil::kP_CONNECTED_ROBOTS].append(robotID);
-
-        //self.runState = CozmoBasestationRunStateRobotConnected;
-        didConnect = YES;
-
-        break;
-      } else {
-        printf("Failed to connect to robot %d\n", robotID);
-      }
-    }
-  }
-
-  return didConnect;
-}
-
-
-#pragma mark - Connect to UI
-
-- (BOOL)attemptToConnectToUI
-{
-  BOOL didConnect = NO;
-  std::vector<int> advertisingUIDevIDs;
-  if (_uiComms->GetAdvertisingDeviceIDs(advertisingUIDevIDs) > 0) {
-    
-    for(auto uiID : advertisingUIDevIDs) {
-      printf("UiComms connecting to UI device %d.\n", uiID);
-      
-      if (_uiComms->ConnectToDeviceByID(uiID)) {
-        printf("Connected to UI dev %d\n", uiID);
-        
-        // Add connected_UI_dev ID to config
-        _config[AnkiUtil::kP_CONNECTED_UI_DEVS].append(uiID);
-        
-        //self.runState = CozmoBasestationRunStateRobotConnected;
-        didConnect = YES;
-        
-        break;
-      } else {
-        printf("Failed to connect to UI dev %d\n", uiID);
-      }
-    }
-  }
-  
-  return didConnect;
-}
-
-
 
 
 
@@ -429,113 +303,42 @@ const char* forcedRobotIP = "192.168.3.34";
   }
   _lastHeartbeatTimestamp = thisHeartbeatTimestamp;
 
-  switch (_runState) {
-    case CozmoBasestationRunStateNone:
-    {
-      // Do Nothing
-    }
-      break;
-
-    case CozmoBasestationRunStateCommsReady:
-    {
-      [self gameHeartbeatCommsReadyStateWithTimestamp:thisHeartbeatTimestamp];
-    }
-      break;
-
-    case CozmoBasestationRunStateRobotConnected:
-    {
-      // Wait for basestation to start
-    }
-      break;
-
-    case CozmoBasestationRunStateRunning:
-    {
-      [self gameHeartbeatRunningStateWithTimestamp:thisHeartbeatTimestamp];
-    }
-      break;
-
-    default:
-      break;
-  }
-}
-
-- (void)gameHeartbeatCommsReadyStateWithTimestamp:(CFTimeInterval)timestamp
-{
-  DASDebug("Basestation.gameHeartBeat()", "Waiting for robots to connect at time %f", timestamp);
+  // For now connect to anything that's available (until desired number of robots/devices reached)
+  // Eventually, display available robots/devices in the UI and use a button
+  // press to select ones to connect to.
   
-  // Tics advertisement services
-  _robotAdService->Update();
-  _uiAdService->Update();
-  
-  
-  // ====== TCP ======
-  _robotComms->Update();
-  
-  if ([self attemptToConnectToRobot]) {
-    if (_robotComms->GetNumConnectedDevices() > 0) {
-      self.robotConnected = YES;
-      
-      if (FORCE_ADD_ROBOT) {
-        // Forcefully added robot advertiser can't remove itself (otherwise it could have registered itself)
-        // so remove it here.
-        _robotAdService->DeregisterAllAdvertisers();
+  {
+    using namespace Anki::Cozmo;
+    
+    // Connect to any robots we see:
+    static bool haveRobot = false;
+    if(!haveRobot) {
+      std::vector<CozmoEngine::AdvertisingRobot> advertisingRobots;
+      _cozmoEngine->GetAdvertisingRobots(advertisingRobots);
+      for(auto robot : advertisingRobots) {
+        if(_cozmoEngine->ConnectToRobot(robot)) {
+          NSLog(@"Connected to robot %d\n", robot);
+          haveRobot = true;
+        }
       }
     }
-  }
-  
-  _uiComms->Update();
-  if ([self attemptToConnectToUI]) {
-    if (_uiComms->GetNumConnectedDevices() > 0) {
-      self.uiConnected = YES;
+    
+    // Connect to any UI devices we see:
+    std::vector<CozmoEngine::AdvertisingUiDevice> advertisingUiDevices;
+    _cozmoEngine->GetAdvertisingUiDevices(advertisingUiDevices);
+    for(auto device : advertisingUiDevices) {
+      if(_cozmoEngine->ConnectToUiDevice(device)) {
+        NSLog(@"Connected to UI device %d\n", device);
+      }
+    }
+    
+    [self.cozmoOperator update];
+    
+    Anki::Result status = _cozmoEngine->Update(thisHeartbeatTimestamp);
+    if (status != Anki::RESULT_OK) {
+      DASWarn("CozmoEngine.Update.NotOK","Status %d\n", status);
     }
   }
-
-  [self.cozmoOperator update];
-  
-  // Don't change state to RobotConnected until both robot and ui are connected
-  if (self.robotConnected && self.uiConnected) {
-    self.runState = CozmoBasestationRunStateRobotConnected;
-  }
-  
-  
-  // Start Basestation if Auto Connect
-  if (self.autoConnect) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      [self startBasestation];
-    });
-  }
-  
-  
-}
-
-- (void)gameHeartbeatRunningStateWithTimestamp:(CFTimeInterval)timestamp
-{
-  DASDebug("Basestation.gameHeartBeat()", "Basestation heartbeat at time %f", timestamp);
-
-  // Tics advertisement services
-  //_robotAdService->Update();
-  //_uiAdService->Update();
-  
-  
-  // Read all UI messages
-  _uiComms->Update();
-
-  [self.cozmoOperator update];
-  
-  // Read messages from all robots
-#if (USE_BLE_ROBOT_COMMS)
-  robotBLEManager.Update();  // Necessary?
-#else
-  _robotComms->Update();
-#endif
-
-  // Update the basestation itself (should the basestation tell the comms to update?)
-  _basestation->Update(SEC_TO_NANOS(timestamp));
-
-  [_cozmoOperator update];
-
-  // Call all listeners
-  [self._heartbeatListeners makeObjectsPerformSelector:@selector(cozmoBasestationHearbeat:) withObject:self];
 }
 
 
@@ -560,7 +363,7 @@ const char* forcedRobotIP = "192.168.3.34";
   
   UIImage *imageFrame = nil;
   Vision::Image img;
-  if (true == _basestation->GetCurrentRobotImage(robotId, img, _lastImageTimestamp))
+  if (true == _cozmoEngine->GetCurrentRobotImage(robotId, img, _lastImageTimestamp))
   {
     // TODO: Somehow get rid of this copy, but still be threadsafe
     //cv::Mat_<u8> cvMatImg(nrows, ncols, const_cast<unsigned char*>(imageDataPtr));
@@ -579,7 +382,7 @@ const char* forcedRobotIP = "192.168.3.34";
   NSMutableArray* boundingBoxes = nil;
   
   std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox> observations;
-  if( true == _basestation->GetCurrentVisionMarkers(robotId, observations))
+  if( true == _cozmoEngine->GetCurrentVisionMarkers(robotId, observations))
   {
     if(!observations.empty())
     {

@@ -10,7 +10,6 @@
 #import "CozmoOperator.h"
 #import "SoundCoordinator.h"
 
-#define COZMO_BASESTATION // to make uiMessages definitions happy
 #import <anki/cozmo/basestation/game/gameComms.h>
 #import <anki/cozmo/basestation/game/gameMessageHandler.h>
 #import <anki/cozmo/basestation/ui/messaging/uiMessages.h>
