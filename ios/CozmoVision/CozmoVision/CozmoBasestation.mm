@@ -339,6 +339,10 @@ const char* forcedRobotIP = "192.168.19.238";
     if (status != Anki::RESULT_OK) {
       DASWarn("CozmoEngine.Update.NotOK","Status %d\n", status);
     }
+
+    // Call all listeners:
+    [self._heartbeatListeners makeObjectsPerformSelector:@selector(cozmoBasestationHearbeat:) withObject:self];
+
   }
 }
 
