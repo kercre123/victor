@@ -12,11 +12,14 @@
 @class CozmoOperator;
 
 // IP Address of wherever the robot's advertising service is running
-#define DEFAULT_ADVERTISING_HOST_IP     "192.168.19.238"
+#define DEFAULT_ADVERTISING_HOST_IP     "127.0.0.1"
 // IP Address of wherever the Basestation service is running
 #define DEFAULT_BASESTATION_IP          "127.0.0.1"
 // Tick the basestation rate, ticks per second
 #define DEFAULT_HEARTBEAT_RATE          40.0
+
+// Add this?
+//#define VIZ_HOST_IP                     "127.0.0.1"
 
 @interface CozmoBasestation : NSObject
 
@@ -54,10 +57,11 @@
 @property (readonly) CozmoOperator *cozmoOperator;
 
 // Finite control
-- (BOOL)startComms;
+- (BOOL)start:(BOOL)asHost;
+
 // Change Basestation run state
 // Wait for 1 or more robots to connect before calling
-- (BOOL)startBasestation;
+//- (BOOL)startBasestation;
 - (void)stopCommsAndBasestation;
 
 
