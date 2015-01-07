@@ -17,9 +17,8 @@
 #define DEFAULT_BASESTATION_IP          "127.0.0.1"
 // Tick the basestation rate, ticks per second
 #define DEFAULT_HEARTBEAT_RATE          40.0
-
-// Add this?
-//#define VIZ_HOST_IP                     "127.0.0.1"
+// IP Address of wherever the visualization (Webots) is running
+#define DEFAULT_VIZ_HOST_IP             "192.168.19.238"
 
 @interface CozmoBasestation : NSObject
 

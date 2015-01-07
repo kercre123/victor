@@ -249,6 +249,7 @@ const char* forcedRobotIP = "192.168.19.238";
   // TODO: Provide ability to set these from app?
   _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = Anki::Cozmo::ROBOT_ADVERTISING_PORT;
   _config[AnkiUtil::kP_UI_ADVERTISING_PORT]    = Anki::Cozmo::UI_ADVERTISING_PORT;
+  _config[AnkiUtil::kP_VIZ_HOST_IP]            = DEFAULT_VIZ_HOST_IP;
   
   _config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR]     = 1;
   _config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
